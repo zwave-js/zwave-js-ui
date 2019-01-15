@@ -71,7 +71,7 @@
 </v-toolbar>
 <main>
   <v-content>
-      <router-view @showSnackbar="showSnackbar" @createDevice="createDevice" @importFile="importFile"/>
+      <router-view @showSnackbar="showSnackbar"/>
   </v-content>
 </main>
 
@@ -91,16 +91,7 @@
 
 <script>
 
-import axios from 'axios'
-
-import { loadProgressBar } from 'axios-progress-bar'
-
-if(process.env.NODE_ENV === 'development')
-  axios.defaults.baseURL = location.protocol + '//' + location.hostname + ':8091/api';
-else
-  axios.defaults.baseURL = '/api';
-
-loadProgressBar();
+import ConfigApis from '@/apis/ConfigApis'
 
 export default {
   name: 'app',
@@ -144,7 +135,6 @@ export default {
   },
 	watch: {
   	'$route': function(value) {
-
       switch (value.name) {
         case 'Main':
         this.title = '';
@@ -154,19 +144,19 @@ export default {
       }
     }
   },
-  beforeMount(){
+  created(){
     var self = this;
-    axios.get(`/tags_config`)
-    .then(response => {
-      if(response.data.success)
-        self.$store.dispatch('init', response.data)
-      else {
-        self.showSnackbar("Error while retriving Tags configuration, check console");
+    ConfigApis.getConfig()
+    .then(data => {
+      if(!data.success){
+        self.showSnackbar("Error while retriving configuration, check console");
         console.log(response);
+      }else{
+        self.$store.dispatch('init', data)
       }
     })
     .catch(e => {
-      self.showSnackbar("Error while retriving Tags configuration, check console");
+      self.showSnackbar("Error while retriving configuration, check console");
       console.log(e);
     })
   },

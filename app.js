@@ -6,7 +6,6 @@ cookieParser = require('cookie-parser'),
 bodyParser = require('body-parser'),
 app = express(),
 fs = require('fs'),
-jsonfile = require('jsonfile'),
 SerialPort = require('serialport'),
 cors = require('cors'),
 ZWaveClient = reqlib('/lib/ZwaveClient'),
@@ -28,6 +27,26 @@ app.use('/', express.static(utils.joinPath(utils.getPath(), 'dist')));
 
 app.use(cors());
 
+// ----- APIs ------
+
+//get config
+app.get('/api/config', function(req, res) {
+  SerialPort.list(function (err, ports) {
+    if (err) {
+      console.log(err);
+      res.json({success:false, message: "Error getting serial ports", config: {}, serial_ports:[]});
+    }else{
+      res.json({success:true, config: {}, serial_ports: ports.map(p => p.comName)});
+    }
+  })
+});
+
+//update config
+app.post('/api/config', function(req, res) {
+
+  res.json({success:true, message: "Settings updated"});
+});
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   var err = new Error('Not Found');
@@ -48,7 +67,7 @@ app.use(function(err, req, res, next) {
   res.redirect('/');
 });
 
-var options = {port: '/dev/ttyACM0', logging: 'off', saveConfig: true};
+var options = {port: '/dev/ttyACM0', logging: true, saveConfig: true};
 
 var client = new ZWaveClient(options);
 
