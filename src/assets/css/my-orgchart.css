@@ -1,0 +1,73 @@
+#chart-container{
+  display: flex;
+  overflow-x: scroll;
+}
+.custom-chart.l2r {
+  position: relative !important;
+  display: flex !important;
+  min-height: 0 !important;
+}
+.custom-chart>table:first-child {
+  margin: 0 !important;
+}
+.custom-chart .node .content{
+  border-color: #b3d4fc;
+  justify-content: center;
+  max-width: 120px !important;
+}
+
+.custom-chart .node .title {
+  background-color: #1976d2;
+  font-family: Roboto,sans-serif;
+  font-size: 14px !important;
+  padding-top: 2px;
+}
+
+.custom-chart .node.focused, .custom-chart .node:hover {
+  background-color: #b3d4fc;
+}
+
+.edge {
+    border: solid black;
+    border-width: 0 3px 3px 0;
+    display: inline-block;
+    padding: 3px;
+    visibility: hidden;
+}
+
+.edge.verticalEdge, .edge.horizontalEdge {
+    height: auto !important;
+    width: auto !important;
+}
+
+.edge.verticalEdge{
+  left: 46% !important;
+}
+
+.edge.horizontalEdge{
+  top: 46% !important;
+}
+
+.edge.fa-chevron-right {
+    visibility: visible;
+    transform: rotate(-45deg);
+    -webkit-transform: rotate(-45deg);
+}
+
+.edge.fa-chevron-left {
+    visibility: visible;
+    transform: rotate(135deg);
+    -webkit-transform: rotate(135deg);
+}
+
+.edge.fa-chevron-up {
+    visibility: visible;
+    transform: rotate(-135deg);
+    -webkit-transform: rotate(-135deg);
+}
+
+.edge.fa-chevron-down {
+    visibility: visible;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+}

@@ -4,6 +4,10 @@ logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.DS_Store
+
+# Distribution path
+/dist/
 
 # Runtime data
 pids
@@ -59,3 +63,16 @@ typings/
 
 # next.js build output
 .next
+
+# Zwave configuration files and logs
+OZW_Log.txt
+zwcfg_*.xml
+zwscene.xml
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
