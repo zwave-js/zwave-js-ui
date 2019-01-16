@@ -3,89 +3,102 @@
 /**
  * Module dependencies.
  */
+ var reqlib = require('app-root-path').require,
+ jsonStore = reqlib('/lib/jsonStore.js'),
+ store = reqlib('/config/store.js'),
+ conf = reqlib('/config/app.js');
 
-var reqlib = require('app-root-path').require;
-var app = reqlib('/app');
-var debug = require('debug')('zwavetomqtt:server');
-var http = require('http');
+// jsonstore is a singleton instance that handles the json configuration files
+// used in the application. Init it before anything else than start app.
+// if jsonstore fails exit the application
+ jsonStore.init(store)
+ .then((data) => {
 
-/**
- * Get port from environment and store in Express.
- */
+   var app = reqlib('app.js');
+   var http = require('http');
 
-var port = normalizePort(process.env.PORT || '8091');
-app.set('port', port);
+   /**
+    * Normalize a port into a number, string, or false.
+    */
 
-/**
- * Create HTTP server.
- */
+   function normalizePort(val) {
+     var port = parseInt(val, 10);
 
-var server = http.createServer(app);
+     if (isNaN(port)) {
+       // named pipe
+       return val;
+     }
 
-/**
- * Listen on provided port, on all network interfaces.
- */
+     if (port >= 0) {
+       // port number
+       return port;
+     }
 
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
+     return false;
+   }
 
-/**
- * Normalize a port into a number, string, or false.
- */
+   /**
+    * Event listener for HTTP server "error" event.
+    */
 
-function normalizePort(val) {
-  var port = parseInt(val, 10);
+   function onError(error) {
+     if (error.syscall !== 'listen') {
+       throw error;
+     }
 
-  if (isNaN(port)) {
-    // named pipe
-    return val;
-  }
+     var bind = typeof port === 'string'
+       ? 'Pipe ' + port
+       : 'Port ' + port;
 
-  if (port >= 0) {
-    // port number
-    return port;
-  }
+     // handle specific listen errors with friendly messages
+     switch (error.code) {
+       case 'EACCES':
+         console.error(bind + ' requires elevated privileges');
+         process.exit(1);
+         break;
+       case 'EADDRINUSE':
+         console.error(bind + ' is already in use');
+         process.exit(1);
+         break;
+       default:
+         throw error;
+     }
+   }
 
-  return false;
-}
+   /**
+    * Event listener for HTTP server "listening" event.
+    */
 
-/**
- * Event listener for HTTP server "error" event.
- */
+   function onListening() {
+     var addr = server.address();
+     var bind = typeof addr === 'string'
+       ? 'pipe ' + addr
+       : 'port ' + addr.port;
+     console.log('Listening on ' + bind);
+   }
 
-function onError(error) {
-  if (error.syscall !== 'listen') {
-    throw error;
-  }
+   /**
+    * Get port from environment and store in Express.
+    */
 
-  var bind = typeof port === 'string'
-    ? 'Pipe ' + port
-    : 'Port ' + port;
+   var port = normalizePort(process.env.PORT || conf.port);
+   app.set('port', port);
 
-  // handle specific listen errors with friendly messages
-  switch (error.code) {
-    case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
-      process.exit(1);
-      break;
-    case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
-      process.exit(1);
-      break;
-    default:
-      throw error;
-  }
-}
+   /**
+    * Create HTTP server.
+    */
 
-/**
- * Event listener for HTTP server "listening" event.
- */
+   var server = http.createServer(app);
 
-function onListening() {
-  var addr = server.address();
-  var bind = typeof addr === 'string'
-    ? 'pipe ' + addr
-    : 'port ' + addr.port;
-  debug('Listening on ' + bind);
-}
+   /**
+    * Listen on provided port, on all network interfaces.
+    */
+
+   server.listen(port);
+   server.on('error', onError);
+   server.on('listening', onListening);
+
+ })
+ .catch(err => {
+   console.error(err);
+ })

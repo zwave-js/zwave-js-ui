@@ -1,17 +1,17 @@
-const GROUPS = ["Tags", "Devices", "Measurements"];
-
 export const state = {
   serial_ports: [],
   zwave: {},
   mqtt: {},
-  general: {}
+  devices: [],
+  gateway: {}
 }
 
 export const getters = {
   serial_ports: state => state.serial_ports,
   zwave: state => state.zwave,
   mqtt: state => state.mqtt,
-  general: state => state.general
+  devices: state => state.devices,
+  gateway: state => state.gateway
 }
 
 export const actions = {
@@ -27,7 +27,28 @@ export const mutations = {
     if(conf){
       state.zwave = conf.zwave || {};
       state.mqtt = conf.mqtt || {};
-      state.general = conf.general || {};
+      state.gateway = conf.gateway || {};
+    }
+
+    if(!state.gateway.values) state.gateway.values = [];
+
+    if(options.devices){
+      for (var k in options.devices) {
+        var d = options.devices[k];
+        d.value = k;
+
+        var values = []
+
+        for(var id in d.values){
+          var val = d.values[id];
+          val.value_id = id;
+          values.push(val)
+        }
+
+        d.values = values;
+
+        state.devices.push(d)
+      }
     }
 
     if(options.serial_ports)

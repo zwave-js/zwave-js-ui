@@ -7,10 +7,16 @@ bodyParser = require('body-parser'),
 app = express(),
 fs = require('fs'),
 SerialPort = require('serialport'),
+jsonStore = reqlib('/lib/jsonStore.js'),
 cors = require('cors'),
 ZWaveClient = reqlib('/lib/ZwaveClient'),
+MqttClient = reqlib('/lib/MqttClient'),
+Gateway = reqlib('/lib/Gateway'),
 uniqid = require('uniqid'),
+store = reqlib('config/store.js'),
 utils = reqlib('/lib/utils.js');
+
+var gw; //the gateway instance
 
 console.log("Application path:", utils.getPath(true));
 
@@ -27,6 +33,22 @@ app.use('/', express.static(utils.joinPath(utils.getPath(), 'dist')));
 
 app.use(cors());
 
+function startGateway(){
+  var config = jsonStore.get(store.config);
+
+  var mqtt, zwave;
+
+  if(config.mqtt){
+    mqtt = new MqttClient(config.mqtt);
+  }
+
+  if(config.zwave){
+    zwave = new ZWaveClient(config.zwave);
+  }
+
+  gw = new Gateway(config.gateway, zwave, mqtt);
+}
+
 // ----- APIs ------
 
 //get config
@@ -34,17 +56,24 @@ app.get('/api/config', function(req, res) {
   SerialPort.list(function (err, ports) {
     if (err) {
       console.log(err);
-      res.json({success:false, message: "Error getting serial ports", config: {}, serial_ports:[]});
+      res.json({success:false, message: "Error getting serial ports", serial_ports:[]});
     }else{
-      res.json({success:true, config: {}, serial_ports: ports.map(p => p.comName)});
+      var devices = gw.zwave ? gw.zwave.devices : {};
+      res.json({success:true, config: jsonStore.get(store.config), devices: devices, serial_ports: ports.map(p => p.comName)});
     }
   })
 });
 
 //update config
 app.post('/api/config', function(req, res) {
-
-  res.json({success:true, message: "Settings updated"});
+  jsonStore.put(store.config, req.body)
+  .then(data => {
+    res.json({success: true, message: "Configuration updated successfully"});
+    startGateway();
+  }).catch(err => {
+    console.log(err);
+    res.json({success: false, message: err.message})
+  })
 });
 
 // catch 404 and forward to error handler
@@ -67,12 +96,14 @@ app.use(function(err, req, res, next) {
   res.redirect('/');
 });
 
-var options = {port: '/dev/ttyACM0', logging: true, saveConfig: true};
+startGateway();
 
-var client = new ZWaveClient(options);
+process.removeAllListeners('SIGINT');
 
-process.on('SIGINT', function(){
-  client.close();
+process.on('SIGINT', function() {
+  console.log('Closing...');
+  gw.close();
+  process.exit();
 });
 
 module.exports = app;

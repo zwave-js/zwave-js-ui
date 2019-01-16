@@ -104,10 +104,10 @@ export default {
   data () {
     return {
       pages: [
-        { icon: 'local_offer', title: 'Settings', path: '/' },
-        { icon: 'settings_ethernet', title: 'Modbus', path: '/clients' },
-        { icon: 'wifi', title: 'MQTT', path: '/mqtt_clients' },
-        { icon: 'info', title: 'Status', path: '/status' },
+        { icon: 'settings', title: 'Settings', path: '/' },
+        // { icon: 'settings_ethernet', title: 'Modbus', path: '/clients' },
+        // { icon: 'wifi', title: 'MQTT', path: '/mqtt_clients' },
+        // { icon: 'info', title: 'Status', path: '/status' },
       ],
       drawer: false,
       title: 'Zwave',
@@ -115,21 +115,21 @@ export default {
       snackbar: false,
       snackbarText: "",
       items: [
-        {
-          icon: "file_download",
-          func: this.importConfiguration,
-          tooltip: "Import Configuration"
-        },
-        {
-          icon: "file_upload",
-          func: this.exportConfiguration,
-          tooltip: "Export Configuration",
-        },
-        {
-          icon: "save",
-          func: this.saveConfiguration,
-          tooltip: "Save Configuration"
-        },
+        // {
+        //   icon: "file_download",
+        //   func: this.importConfiguration,
+        //   tooltip: "Import Configuration"
+        // },
+        // {
+        //   icon: "file_upload",
+        //   func: this.exportConfiguration,
+        //   tooltip: "Export Configuration",
+        // },
+        // {
+        //   icon: "save",
+        //   func: this.saveConfiguration,
+        //   tooltip: "Save Configuration"
+        // },
       ]
     }
   },
