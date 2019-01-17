@@ -104,8 +104,8 @@ export default {
   data () {
     return {
       pages: [
-        { icon: 'settings', title: 'Settings', path: '/' },
-        // { icon: 'settings_ethernet', title: 'Modbus', path: '/clients' },
+        { icon: 'widgets', title: 'Control Panel', path: '/' },
+        { icon: 'settings', title: 'Settings', path: '/settings' },
         // { icon: 'wifi', title: 'MQTT', path: '/mqtt_clients' },
         // { icon: 'info', title: 'Status', path: '/status' },
       ],

@@ -33,15 +33,18 @@ export const mutations = {
     if(!state.gateway.values) state.gateway.values = [];
 
     if(options.devices){
+      // devices is an object where key is the device ID and value contains
+      // device informations
       for (var k in options.devices) {
         var d = options.devices[k];
         d.value = k;
 
-        var values = []
+        var values = [];
 
+        // device.values is an object where key is the valueID (cmdClass-instance-index) and value contains
+        // value informations
         for(var id in d.values){
           var val = d.values[id];
-          val.value_id = id;
           values.push(val)
         }
 

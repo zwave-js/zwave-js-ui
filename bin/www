@@ -98,6 +98,7 @@
    server.on('error', onError);
    server.on('listening', onListening);
 
+   app.startSocket(server);
  })
  .catch(err => {
    console.error(err);

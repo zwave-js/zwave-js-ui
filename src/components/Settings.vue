@@ -11,7 +11,7 @@
           <v-container style="display:inline-block">
             <v-layout style="margin-bottom:10px;" wrap>
               <v-flex xs6>
-                <v-autocomplete
+                <v-combobox
                 v-model="zwave.port"
                 label="Serial Port"
                 hint="Ex /dev/ttyUSB0"
@@ -19,7 +19,7 @@
                 :rules="[rules.required]"
                 required
                 :items="serial_ports"
-                ></v-autocomplete>
+                ></v-combobox>
               </v-flex>
               <v-flex xs6 >
                 <v-text-field
@@ -230,14 +230,14 @@
             </v-flex>
             <v-flex xs6>
               <v-switch
-              label="Enable Poll"
-              v-model="editedValue.enablePoll"
+              label="Is broadcast"
+              v-model="editedValue.isBroadcast"
               ></v-switch>
             </v-flex>
             <v-flex xs6>
               <v-switch
-              label="Is broadcast"
-              v-model="editedValue.isBroadcast"
+              label="Enable Poll"
+              v-model="editedValue.enablePoll"
               ></v-switch>
             </v-flex>
             <v-flex v-if="editedValue.enablePoll" xs6>
@@ -271,9 +271,10 @@
       <template slot="items" slot-scope="props">
         <td>{{ deviceName(props.item.device) }}</td>
         <td>{{ `${props.item.value.label} (${props.item.value.value_id})` }}</td>
-        <td class="text-xs-right">{{ props.item.topic }}</td>
-        <td class="text-xs-right">{{ props.item.postOperation }}</td>
-        <td class="text-xs-right">{{ props.item.enablePoll ? ("Every " + props.item.pollInterval + "s") : '' }}</td>
+        <td class="text-xs">{{ props.item.topic }}</td>
+        <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
+        <td class="text-xs">{{ props.item.isBroadcast ? 'Yes' : 'No' }}</td>
+        <td class="text-xs">{{ props.item.enablePoll ? ("Every " + props.item.pollInterval + "s") : 'No' }}</td>
         <td class="justify-center layout px-0">
           <v-icon
             small
@@ -308,7 +309,7 @@ import { mapGetters, mapMutations } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 
 export default {
-  name: 'Main',
+  name: 'Settings',
   computed: {
     deviceValues(){
       var device = this.devices.find(d => d.value == this.editedValue.device);
@@ -348,6 +349,7 @@ export default {
         { text: 'Value', value: 'value', sortable:false},
         { text: 'Topic', value: 'topic'},
         { text: 'Post Operation', value: 'postOperation'},
+        { text: 'Broadcast', value: 'isBroadcast'},
         { text: 'Poll', value: 'enablePoll'},
         { text: 'Actions', sortable: false }
       ],

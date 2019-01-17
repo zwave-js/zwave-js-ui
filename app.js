@@ -17,6 +17,7 @@ store = reqlib('config/store.js'),
 utils = reqlib('/lib/utils.js');
 
 var gw; //the gateway instance
+let io;
 
 console.log("Application path:", utils.getPath(true));
 
@@ -43,10 +44,40 @@ function startGateway(){
   }
 
   if(config.zwave){
-    zwave = new ZWaveClient(config.zwave);
+    zwave = new ZWaveClient(config.zwave, io);
   }
 
   gw = new Gateway(config.gateway, zwave, mqtt);
+}
+
+app.startSocket = function(server){
+  io = require('socket.io')(server);
+
+  if(gw.zwave) gw.zwave.socket = io;
+
+  io.on('connection', function(socket) {
+
+    console.log("New connection", socket.id);
+
+    if(gw.zwave)
+      socket.emit('NODES', gw.zwave.nodes)
+
+    socket.on('ZWAVE_API', function(data) {
+      console.log("Zwave api call:", data.api, data.args);
+        if(gw.zwave){
+          gw.zwave.callApi(data.api, ...data.args);
+
+          if(data.refreshNode && data.node > 0){
+            gw.zwave.callApi('refreshNodeInfo', data.node);
+          }
+        }
+    });
+
+    socket.on('disconnect', function(){
+      console.log('User disconnected', socket.id);
+    });
+
+  });
 }
 
 // ----- APIs ------
@@ -69,6 +100,7 @@ app.post('/api/config', function(req, res) {
   jsonStore.put(store.config, req.body)
   .then(data => {
     res.json({success: true, message: "Configuration updated successfully"});
+    gw.close();
     startGateway();
   }).catch(err => {
     console.log(err);
