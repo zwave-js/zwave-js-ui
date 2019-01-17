@@ -73,12 +73,11 @@
 
           <!--BOOLEAN-->
 
-          <v-layout v-for="v in selectedNode.values" row>
+          <v-layout v-for="(v, index) in selectedNode.values" :key="index" row>
             <v-flex v-if="v.read_only" xs4>
               <v-text-field
               :label="v.label"
               disabled
-              :type="v.type == 'string' ? 'text' : 'number'"
               :suffix="v.units"
               v-model="v.value"
               ></v-text-field>
@@ -117,10 +116,9 @@
               v-if="v.type == 'button'"
               color="primary"
               dark
-              :label="v.label"
               @click="updateValue(v)"
               class="mb-2"
-              >Test</v-btn>
+              >{{v.label}}</v-btn>
 
             </v-flex>
 
@@ -215,7 +213,6 @@ export default {
     },
     sendCntAction(){
       if(this.cnt_action){
-        debugger;
         var data = {
           api: this.cnt_action,
           args: [],
@@ -246,7 +243,9 @@ export default {
         api: 'setValue',
         args: [v.node_id, v.class_id, v.instance, v.index, v.type == "button" ? true : v.newValue],
       }
-      this.socket.emit('ZWAVE_API', data)
+      v.toUpdate = true;
+
+      this.socket.emit('ZWAVE_API', data);
     }
   },
   mounted() {
@@ -298,8 +297,17 @@ export default {
     });
 
     this.socket.on('VALUE_UPDATED', (data) => {
-      var node =
-      Object.assign(this.nodes[data.node_id], data);
+      var node = this.nodes[data.node_id];
+      if(node){
+        var index = node.values.findIndex(v => v.value_id == data.value_id);
+        if(index >= 0) {
+          if(this.nodes[data.node_id].values[index].toUpdate){
+            this.nodes[data.node_id].values[index].toUpdate = false;
+            this.showSnackbar("Value updated");
+          }
+          Object.assign(this.nodes[data.node_id].values[index], data);
+        }
+      }
     });
   },
   beforeDestroy() {
