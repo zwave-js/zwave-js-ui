@@ -110,7 +110,7 @@ export default {
         // { icon: 'info', title: 'Status', path: '/status' },
       ],
       drawer: false,
-      title: 'Zwave',
+      title: '',
       mini: true,
       snackbar: false,
       snackbarText: "",
@@ -136,8 +136,11 @@ export default {
 	watch: {
   	'$route': function(value) {
       switch (value.name) {
-        case 'Main':
-        this.title = '';
+        case 'Settings':
+        this.title = 'Settings';
+        break;
+        case 'ControlPanel':
+        this.title = 'Control Panel';
         break;
         default:
         this.title = '';

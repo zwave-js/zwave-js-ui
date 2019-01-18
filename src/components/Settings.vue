@@ -52,6 +52,17 @@
         <v-container style="display:inline-block" grid-list-md>
           <v-layout style="margin-bottom:10px;" wrap>
 
+            <v-flex xs12>
+              <v-text-field
+              v-model="mqtt.name"
+              label="Name"
+              :rules="[rules.required, rules.validName]"
+              hint="Unique name that identify this gateway"
+              required
+              >
+            </v-text-field>
+          </v-flex>
+
             <v-flex xs12 sm6 md4>
               <v-text-field
               v-model="mqtt.host"
@@ -88,20 +99,20 @@
         <v-text-field
         v-model="mqtt.prefix"
         label="Prefix"
-        :rules="[rules.required]"
+        :rules="[rules.required, rules.validName]"
         hint="The prefix to add to each topic"
         required
         >
       </v-text-field>
     </v-flex>
     <v-flex xs12 sm6 md4>
-      <v-autocomplete
+      <v-select
       v-model="mqtt.qos"
       label="QoS"
       :rules="[rules.required]"
       required
       :items="[0,1,2]"
-      ></v-autocomplete>
+      ></v-select>
     </v-flex>
     <v-flex xs12 sm6 md4>
       <v-switch
@@ -392,7 +403,10 @@ export default {
           valid = !isNaN(value) || !!value; //isNaN is for 0 as valid value
 
           return valid || 'This field is required.'
-        }
+        },
+        validName: (value) => {
+          return  !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\]/.\s]/g.test(value) || 'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
+        },
       },
     }
   },

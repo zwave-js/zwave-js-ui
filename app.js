@@ -65,7 +65,9 @@ app.startSocket = function(server){
     socket.on('ZWAVE_API', function(data) {
       console.log("Zwave api call:", data.api, data.args);
         if(gw.zwave){
-          gw.zwave.callApi(data.api, ...data.args);
+          var result = gw.zwave.callApi(data.api, ...data.args);
+          result.api = data.api;
+          socket.emit("API_RETURN", result);
 
           if(data.refreshNode && data.node > 0){
             gw.zwave.callApi('refreshNodeInfo', data.node);
