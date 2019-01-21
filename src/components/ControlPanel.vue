@@ -43,13 +43,14 @@
         <v-data-table
         :headers="headers"
         :items="nodes"
+        :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
         class="elevation-1"
         >
         <template slot="items" slot-scope="props">
           <tr style="cursor:pointer;" v-if="props.item" :active="selectedNode == props.item" @click="selectedNode == props.item ? selectedNode = null : selectedNode = props.item">
             <td>{{ props.item.node_id }}</td>
             <td>{{ props.item.type }}</td>
-            <td>{{ props.item.ready ? (`${props.item.product} (${props.item.manufacturer})`) : '' }}</td>
+            <td>{{ props.item.ready ? (props.item.product + ' (' + props.item.manufacturer + ')') : '' }}</td>
             <td>{{ props.item.name }}</td>
             <td>{{ props.item.loc }}</td>
             <td>{{ props.item.status}}</td>
@@ -73,10 +74,8 @@
     </v-tabs>
   </v-toolbar>
 
-    <v-tabs-items v-model="currentTab">
-      <v-tab-item
-      key="node"
-      >
+  <v-tabs-items v-model="currentTab">
+    <v-tab-item key="node">
       <v-container v-if="selectedNode" fluid>
 
         <v-layout row>
@@ -123,7 +122,7 @@
 
         <v-layout column>
           <v-layout v-for="(v, index) in selectedNode.values" :key="index" row>
-            <v-flex xs8>
+            <v-flex xs12>
               <ValueID
               @updateValue="updateValue"
               v-model="selectedNode.values[index]"
@@ -142,18 +141,187 @@
 
     </v-tab-item>
 
-    <v-tab-item
-    key="groups"
-    >
+    <v-tab-item key="groups">
 
-  </v-tab-item>
+      <v-container grid-list-md>
+        <v-layout wrap>
 
-  <v-tab-item
-  key="scenes"
-  >
+        <v-flex xs12 sm6>
+          <v-select
+          label="Node"
+          v-model="group.node"
+          :items="nodes.filter(n => !!n)"
+          return-object
+          item-text="_name"
+          ></v-select>
+        </v-flex>
 
-</v-tab-item>
-</v-tabs-items>
+        <v-flex v-if="group.node" xs12 sm6>
+          <v-select
+          label="Group"
+          v-model="group.group"
+          @input="getAssociations"
+          :items="group.node.groups"
+          ></v-select>
+        </v-flex>
+
+        <v-flex v-if="group.group" xs12 sm6>
+          <v-text-field
+          label="Current associations"
+          disabled
+          :value="group.associations"
+          ></v-text-field>
+        </v-flex>
+
+        <v-flex v-if="group.node" xs12 sm6>
+          <v-select
+          label="Target"
+          v-model="group.target"
+          :items="nodes.filter(n => !!n && n != group.node)"
+          return-object
+          item-text="_name"
+          ></v-select>
+        </v-flex>
+
+        <v-flex xs12 sm6>
+          <v-switch
+          label="Multi instance"
+          presistent-hint
+          hint="Enable this target node supports multi instance associations"
+          v-model="group.multiInstance"
+          ></v-switch>
+        </v-flex>
+
+        <v-flex v-if="group.multiInstance" xs12 sm6>
+          <v-text-field
+          v-model.number="group.targetInstance"
+          label="Instance ID"
+          hint="Target node instance ID"
+          type="number"
+          />
+        </v-flex>
+
+        <v-flex v-if="group.node && group.target && group.group" xs12>
+          <v-btn color="primary" @click.native="addAssociation" dark class="mb-2">Add</v-btn>
+          <v-btn color="primary" @click.native="removeAssociation" dark class="mb-2">Remove</v-btn>
+        </v-flex>
+
+      </v-layout>
+    </v-container>
+
+    </v-tab-item>
+
+    <v-tab-item key="scenes">
+
+      <v-container grid-list-md>
+        <v-layout wrap>
+
+          <v-flex xs12 sm6>
+            <v-select
+            label="Scene"
+            v-model="selectedScene"
+            :items="scenes"
+            item-text="label"
+            item-value="sceneid"
+            append-outer-icon="delete"
+            @click:append-outer="removeScene"
+            ></v-select>
+          </v-flex>
+
+          <v-flex xs12 sm6>
+            <v-text-field
+            label="New Scene"
+            append-outer-icon="send"
+            @click:append-outer="createScene"
+            v-model="newScene"
+            ></v-text-field>
+          </v-flex>
+
+        </v-layout>
+
+        <v-dialog v-if="selectedScene" v-model="dialogValue" max-width="500px">
+                <v-btn slot="activator" color="primary" dark class="mb-2">New Value</v-btn>
+                <v-card>
+                  <v-card-title>
+                    <span class="headline">{{ dialogTitle }}</span>
+                  </v-card-title>
+
+                  <v-card-text>
+                    <v-container grid-list-md>
+                      <v-layout wrap>
+                        <v-flex xs12>
+                          <v-select
+                          v-model="editedValue.node"
+                          label="Node"
+                          required
+                          return-object
+                          item-text="_name"
+                          item-value="node_id"
+                          :items="nodes.filter(n => !!n)"
+                          ></v-select>
+                        </v-flex>
+                        <v-flex v-if="editedValue.node" xs12>
+                          <v-select
+                          v-model="editedValue.value"
+                          label="Value"
+                          required
+                          return-object
+                          item-text="label"
+                          item-value="value_id"
+                          :items="editedValue.node.values"
+                          ></v-select>
+                        </v-flex>
+                        <v-flex v-if="editedValue.value" xs12>
+                          <ValueID
+                          disable_send
+                          v-model="editedValue.value"
+                          ></ValueID>
+                      </v-flex>
+                      </v-layout>
+                    </v-container>
+                  </v-card-text>
+
+                  <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="blue darken-1" flat @click="closeDialog">Cancel</v-btn>
+                    <v-btn color="blue darken-1" flat @click="saveValue">Save</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-toolbar>
+            <v-data-table
+              v-if="selectedScene"
+              :headers="headers_values"
+              :items="scene_values"
+              class="elevation-1"
+            >
+              <template slot="items" slot-scope="props">
+                <td class="text-xs">{{ props.item.value_id }}</td>
+                <td class="text-xs">{{ props.item.node_id }}</td>
+                <td class="text-xs">{{ props.item.label }}</td>
+                <td class="text-xs">{{ props.item.value }}</td>
+                <td class="justify-center layout px-0">
+                  <v-icon
+                    small
+                    class="mr-2"
+                    @click="editItem(props.item)"
+                  >
+                    edit
+                  </v-icon>
+                  <v-icon
+                    small
+                    @click="deleteItem(props.item)"
+                  >
+                    delete
+                  </v-icon>
+                </td>
+              </template>
+            </v-data-table>
+
+      </v-container>
+    </v-tab-item>
+
+  </v-tabs-items>
 
 </v-card-text>
 </v-card>
@@ -177,13 +345,27 @@ export default {
     ValueID
   },
   computed: {
+    dialogTitle () {
+        return this.editedIndex === -1 ? 'New Item' : 'Edit Item'
+    },
   },
   watch: {
+    dialogValue (val) {
+      val || this.closeDialog()
+    },
     selectedNode(){
       if(this.selectedNode){
         this.newName = this.selectedNode.name;
         this.newLoc = this.selectedNode.loc;
         this.node_action = null;
+      }
+    },
+    selectedScene(){
+      this.refreshValues();
+    },
+    currentTab(){
+      if(this.currentTab == 2){
+        this.refreshScenes();
       }
     }
   },
@@ -191,6 +373,21 @@ export default {
     return {
       socket : null,
       nodes: [],
+      scenes: [],
+      selectedScene: null,
+      newScene: '',
+      scene_values: [],
+      dialogValue: false,
+      editedValue: {},
+      editedIndex: -1,
+      headers_values: [
+        { text: 'Value ID', value: 'value_id'},
+        { text: 'Node', value: 'node_id'},
+        { text: 'Label', value: 'label'},
+        { text: 'Value', value: 'value'},
+        { text: 'Actions', sortable: false }
+      ],
+      group: {},
       currentTab: 0,
       socket_status: 'Disconnected',
       node_action: 'requestNetworkUpdate',
@@ -260,6 +457,101 @@ export default {
     showSnackbar(text){
       this.$emit('showSnackbar', text);
     },
+    refreshValues(){
+      if(this.selectedScene){
+        var data = {
+          api: 'sceneGetValues',
+          args: [this.selectedScene],
+        }
+        this.socket.emit('ZWAVE_API', data)
+      }
+    },
+    refreshScenes(){
+      var data = {
+        api: 'getScenes',
+        args: [],
+      }
+      this.socket.emit('ZWAVE_API', data)
+    },
+    createScene(){
+      if(this.newScene){
+        var data = {
+          api: 'createScene',
+          args: [this.newScene],
+        }
+        this.socket.emit('ZWAVE_API', data);
+
+        this.refreshScenes();
+      }
+    },
+    removeScene(){
+      if(this.selectedScene){
+        var data = {
+          api: 'removeScene',
+          args: [this.selectedScene],
+        }
+        this.socket.emit('ZWAVE_API', data)
+
+        this.refreshScenes();
+      }
+    },
+    editItem (item) {
+      this.editedIndex = this.scene_values.indexOf(item);
+      var node = this.nodes[item.node_id];
+      var value = node.values.find(v => v.value_id == item.value_id);
+
+      value = Object.assign({}, value);
+      value.newValue = item.value;
+
+      this.editedValue = {node: node, value: value};
+      this.dialogValue = true;
+    },
+    deleteItem (item) {
+      const index = this.scene_values.indexOf(item)
+      if(confirm('Are you sure you want to delete this item?')){
+        var value = this.scene_values[index];
+        var data = {
+          api: 'removeSceneValue',
+          args: [this.selectedScene, value.node_id, value.class_id, value.instance, value.index],
+        }
+
+        this.socket.emit('ZWAVE_API', data)
+        this.refreshValues();
+      }
+    },
+    closeDialog () {
+      this.dialogValue = false
+      setTimeout(() => {
+        this.editedValue = {};
+        this.editedIndex = -1
+      }, 300)
+    },
+    saveValue () {
+      var value, data;
+
+      if (this.editedIndex > -1) {
+        value = this.scene_values[this.editedIndex];
+        data = {
+          api: 'removeSceneValue',
+          args: [this.selectedScene, value.node_id, value.class_id, value.instance, value.index],
+        }
+
+        this.socket.emit('ZWAVE_API', data)
+      }
+
+      value = this.editedValue.value;
+      value.value = value.newValue;
+
+      data = {
+        api: 'addSceneValue',
+        args: [this.selectedScene, value.node_id, value.class_id, value.instance, value.index],
+      }
+
+      this.socket.emit('ZWAVE_API', data);
+      this.refreshValues();
+
+      this.closeDialog()
+    },
     sendCntAction(){
       if(this.cnt_action){
         var data = {
@@ -303,6 +595,45 @@ export default {
       }
       this.socket.emit('ZWAVE_API', data)
     },
+    getAssociations(){
+      var g = this.group;
+      if(g && g.node){
+        var data = {
+          api: 'getAssociations',
+          args: [g.node.node_id, g.group],
+        }
+
+        this.socket.emit('ZWAVE_API', data)
+      }
+    },
+    addAssociation(){
+      var g = this.group;
+      if(g && g.node && g.target){
+        var data = {
+          api: 'addAssociation',
+          args: [g.node.node_id, g.group, g.target.node_id],
+          refreshAssociations: true
+        }
+
+        if(g.multiInstance){
+          data.args.push(g.targetInstance || 0)
+        }
+
+        this.socket.emit('ZWAVE_API', data)
+      }
+    },
+    removeAssociation(){
+      var g = this.group;
+      if(g && g.node && g.target){
+        var data = {
+          api: 'removeAssociation',
+          args: [g.node.node_id, g.group, g.target.node_id],
+          refreshAssociations: true
+        }
+
+        this.socket.emit('ZWAVE_API', data)
+      }
+    },
     updateValue(v){
       var data = {
         api: 'setValue',
@@ -320,21 +651,27 @@ export default {
           values.push(n.values[k]);
         }
         n.values = values;
+        this.setName(n);
       }
+    },
+    setName(n){
+      n._name = n.name || "NodeID_" + n.node_id
     }
   },
   mounted() {
+
+    var self = this;
 
     this.socket = io(ConfigApis.getSocketIP());
 
     this.socket.on('connect', () => {
       console.log("Socket connected");
-      this.socket_status = "connected";
+      self.socket_status = "connected";
     });
 
     this.socket.on('disconnect', () => {
       console.log("Socket closed");
-      this.socket_status = "disconnected";
+      self.socket_status = "disconnected";
     });
 
     this.socket.on('error', () => {
@@ -343,51 +680,60 @@ export default {
 
     this.socket.on('reconnecting', () => {
       console.log("Socket reconnecting");
-      this.socket_status = "reconnecting";
+      self.socket_status = "reconnecting";
     });
 
     this.socket.on('NODES', (data) => {
       //convert node values in array
       for (var i = 0; i < data.length; i++) {
-        this.initNode(data[i])
+        self.initNode(data[i])
       }
-      this.nodes = data;
+      self.nodes = data;
     });
 
     this.socket.on('NODE_UPDATED', (data) => {
-      if(this.nodes[data.node_id]){
+      if(self.nodes[data.node_id]){
         delete data.values;
-        Object.assign(this.nodes[data.node_id], data)
+        self.setName(data);
+        Object.assign(self.nodes[data.node_id], data)
       }
       else{
-        this.initNode(data);
-        this.nodes[data.node_id] = data;
+        self.initNode(data);
+        self.nodes[data.node_id] = data;
       }
     });
 
     this.socket.on('VALUE_UPDATED', (data) => {
-      var node = this.nodes[data.node_id];
+      var node = self.nodes[data.node_id];
       if(node && node.values){
         var index = node.values.findIndex(v => v.value_id == data.value_id);
         if(index >= 0) {
-          if(this.nodes[data.node_id].values[index].toUpdate){
-            this.nodes[data.node_id].values[index].toUpdate = false;
-            this.showSnackbar("Value updated");
+          if(self.nodes[data.node_id].values[index].toUpdate){
+            self.nodes[data.node_id].values[index].toUpdate = false;
+            self.showSnackbar("Value updated");
           }
 
           if(!data.newValue)
           data.newValue = data.value;
 
-          Object.assign(this.nodes[data.node_id].values[index], data);
+          Object.assign(self.nodes[data.node_id].values[index], data);
         }
       }
     });
 
     this.socket.on('API_RETURN', (data) => {
       if(data.success){
-        this.showSnackbar("Successfully call api " + data.api);
+        self.showSnackbar("Successfully call api " + data.api);
+        if(data.api == "getAssociations"){
+          data.result = data.result.map(a => self.nodes[a].name || a);
+          self.$set(self.group, 'associations', data.result.join(', '));
+        }else if(data.api == 'getScenes'){
+          self.scenes = data.result;
+        }else if(data.api == 'sceneGetValues'){
+          self.scene_values = data.result;
+        }
       }else{
-        this.showSnackbar("Error when calling api " + data.api + ": " + data.message);
+        self.showSnackbar("Error when calling api " + data.api + ": " + data.message);
       }
     });
 

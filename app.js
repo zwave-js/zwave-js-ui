@@ -72,6 +72,14 @@ app.startSocket = function(server){
           if(data.refreshNode && data.node > 0){
             gw.zwave.callApi('refreshNodeInfo', data.node);
           }
+
+          if(data.refreshAssociations){
+            setTimeout(function(){
+              result = gw.zwave.callApi('getAssociations', ...data.args);
+              result.api = 'getAssociations';
+              socket.emit("API_RETURN", result);
+            }, 300)
+          }
         }
     });
 

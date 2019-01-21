@@ -281,7 +281,7 @@
     >
       <template slot="items" slot-scope="props">
         <td>{{ deviceName(props.item.device) }}</td>
-        <td>{{ `${props.item.value.label} (${props.item.value.value_id})` }}</td>
+        <td>{{ props.item.value.label + ' (' + props.item.value.value_id + ')' }}</td>
         <td class="text-xs">{{ props.item.topic }}</td>
         <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
         <td class="text-xs">{{ props.item.isBroadcast ? 'Yes' : 'No' }}</td>

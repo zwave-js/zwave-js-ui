@@ -110,7 +110,7 @@ export default {
         // { icon: 'info', title: 'Status', path: '/status' },
       ],
       drawer: false,
-      title: '',
+      title: 'Control Panel',
       mini: true,
       snackbar: false,
       snackbarText: "",
