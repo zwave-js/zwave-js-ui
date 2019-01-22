@@ -223,8 +223,6 @@
             :items="scenes"
             item-text="label"
             item-value="sceneid"
-            append-outer-icon="delete"
-            @click:append-outer="removeScene"
             ></v-select>
           </v-flex>
 
@@ -237,86 +235,51 @@
             ></v-text-field>
           </v-flex>
 
+          <v-flex v-if="selectedScene" xs12>
+            <v-btn color="red darken-1" flat @click="removeScene">Delete</v-btn>
+            <v-btn color="green darken-1" flat @click="activateScene">Activate</v-btn>
+            <v-btn color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
+          </v-flex>
+
         </v-layout>
 
-        <v-dialog v-if="selectedScene" v-model="dialogValue" max-width="500px">
-                <v-btn slot="activator" color="primary" dark class="mb-2">New Value</v-btn>
-                <v-card>
-                  <v-card-title>
-                    <span class="headline">{{ dialogTitle }}</span>
-                  </v-card-title>
+        <DialogSceneValue
+        @save="saveValue"
+        @close="closeDialog"
+        v-model="dialogValue"
+        :title="dialogTitle"
+        :editedValue="editedValue"
+        :nodes="nodes"
+        />
 
-                  <v-card-text>
-                    <v-container grid-list-md>
-                      <v-layout wrap>
-                        <v-flex xs12>
-                          <v-select
-                          v-model="editedValue.node"
-                          label="Node"
-                          required
-                          return-object
-                          item-text="_name"
-                          item-value="node_id"
-                          :items="nodes.filter(n => !!n)"
-                          ></v-select>
-                        </v-flex>
-                        <v-flex v-if="editedValue.node" xs12>
-                          <v-select
-                          v-model="editedValue.value"
-                          label="Value"
-                          required
-                          return-object
-                          item-text="label"
-                          item-value="value_id"
-                          :items="editedValue.node.values"
-                          ></v-select>
-                        </v-flex>
-                        <v-flex v-if="editedValue.value" xs12>
-                          <ValueID
-                          disable_send
-                          v-model="editedValue.value"
-                          ></ValueID>
-                      </v-flex>
-                      </v-layout>
-                    </v-container>
-                  </v-card-text>
-
-                  <v-card-actions>
-                    <v-spacer></v-spacer>
-                    <v-btn color="blue darken-1" flat @click="closeDialog">Cancel</v-btn>
-                    <v-btn color="blue darken-1" flat @click="saveValue">Save</v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-            </v-toolbar>
-            <v-data-table
-              v-if="selectedScene"
-              :headers="headers_values"
-              :items="scene_values"
-              class="elevation-1"
-            >
-              <template slot="items" slot-scope="props">
-                <td class="text-xs">{{ props.item.value_id }}</td>
-                <td class="text-xs">{{ props.item.node_id }}</td>
-                <td class="text-xs">{{ props.item.label }}</td>
-                <td class="text-xs">{{ props.item.value }}</td>
-                <td class="justify-center layout px-0">
-                  <v-icon
-                    small
-                    class="mr-2"
-                    @click="editItem(props.item)"
-                  >
-                    edit
-                  </v-icon>
-                  <v-icon
-                    small
-                    @click="deleteItem(props.item)"
-                  >
-                    delete
-                  </v-icon>
-                </td>
-              </template>
-            </v-data-table>
+        <v-data-table
+          v-if="selectedScene"
+          :headers="headers_values"
+          :items="scene_values"
+          class="elevation-1"
+        >
+          <template slot="items" slot-scope="props">
+            <td class="text-xs">{{ props.item.value_id }}</td>
+            <td class="text-xs">{{ props.item.node_id }}</td>
+            <td class="text-xs">{{ props.item.label }}</td>
+            <td class="text-xs">{{ props.item.value }}</td>
+            <td class="justify-center layout px-0">
+              <v-icon
+                small
+                class="mr-2"
+                @click="editItem(props.item)"
+              >
+                edit
+              </v-icon>
+              <v-icon
+                small
+                @click="deleteItem(props.item)"
+              >
+                delete
+              </v-icon>
+            </td>
+          </template>
+        </v-data-table>
 
       </v-container>
     </v-tab-item>
@@ -336,17 +299,20 @@ import value from '@/apis/ConfigApis'
 
 import ValueID from '@/components/ValueId'
 
+import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
+
 //https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client';
 
 export default {
   name: 'ControlPanel',
   components:{
-    ValueID
+    ValueID,
+    DialogSceneValue
   },
   computed: {
     dialogTitle () {
-        return this.editedIndex === -1 ? 'New Item' : 'Edit Item'
+        return this.editedIndex === -1 ? 'New Value' : 'Edit Value'
     },
   },
   watch: {
@@ -366,6 +332,9 @@ export default {
     currentTab(){
       if(this.currentTab == 2){
         this.refreshScenes();
+      }else{
+        this.selectedScene = null;
+        this.scene_values = [];
       }
     }
   },
@@ -492,7 +461,17 @@ export default {
         }
         this.socket.emit('ZWAVE_API', data)
 
+        this.selectedScene = null;
         this.refreshScenes();
+      }
+    },
+    activateScene(){
+      if(this.selectedScene){
+        var data = {
+          api: 'activateScene',
+          args: [this.selectedScene],
+        }
+        this.socket.emit('ZWAVE_API', data)
       }
     },
     editItem (item) {
@@ -544,7 +523,7 @@ export default {
 
       data = {
         api: 'addSceneValue',
-        args: [this.selectedScene, value.node_id, value.class_id, value.instance, value.index],
+        args: [this.selectedScene, value, value.value],
       }
 
       this.socket.emit('ZWAVE_API', data);
