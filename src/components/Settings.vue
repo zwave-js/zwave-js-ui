@@ -63,33 +63,22 @@
             </v-text-field>
           </v-flex>
 
-            <v-flex xs12 sm6 md4>
-              <v-text-field
-              v-model="mqtt.host"
-              label="Host url"
-              :rules="[rules.required]"
-              hint="The host url"
-              required
-              >
-            </v-text-field>
-          </v-flex>
           <v-flex xs12 sm6 md4>
             <v-text-field
-            v-model.number="mqtt.port"
-            label="Port"
+            v-model="mqtt.host"
+            label="Host url"
             :rules="[rules.required]"
-            hint="Host Port"
+            hint="The host url"
             required
-            type="number"
             >
           </v-text-field>
         </v-flex>
         <v-flex xs12 sm6 md4>
           <v-text-field
-          v-model.number="mqtt.reconnectPeriod"
-          label="Reconnect period (ms)"
-          hint="Reconnection period"
+          v-model.number="mqtt.port"
+          label="Port"
           :rules="[rules.required]"
+          hint="Host Port"
           required
           type="number"
           >
@@ -97,67 +86,78 @@
       </v-flex>
       <v-flex xs12 sm6 md4>
         <v-text-field
-        v-model="mqtt.prefix"
-        label="Prefix"
-        :rules="[rules.required, rules.validName]"
-        hint="The prefix to add to each topic"
+        v-model.number="mqtt.reconnectPeriod"
+        label="Reconnect period (ms)"
+        hint="Reconnection period"
+        :rules="[rules.required]"
         required
+        type="number"
         >
       </v-text-field>
     </v-flex>
     <v-flex xs12 sm6 md4>
-      <v-select
-      v-model="mqtt.qos"
-      label="QoS"
-      :rules="[rules.required]"
-      required
-      :items="[0,1,2]"
-      ></v-select>
-    </v-flex>
-    <v-flex xs12 sm6 md4>
-      <v-switch
-      hint="Set retain flag to true for outgoing messages"
-      persistent-hint
-      label="Retain"
-      v-model="mqtt.retain"
-      ></v-switch>
-    </v-flex>
-    <v-flex xs12>
-      <v-switch
-      hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"
-      persistent-hint
-      label="Clean"
-      v-model="mqtt.clean"
-      ></v-switch>
-    </v-flex>
-    <v-flex xs12>
-      <v-switch
-      hint="Does this client require auth?"
-      persistent-hint
-      label="Auth"
-      v-model="mqtt.auth"
-      ></v-switch>
-    </v-flex>
-    <v-flex v-if="mqtt.auth" xs12 sm6>
       <v-text-field
-      v-model="mqtt.username"
-      label="Username"
-      :rules="[requiredUser]"
+      v-model="mqtt.prefix"
+      label="Prefix"
+      :rules="[rules.required, rules.validName]"
+      hint="The prefix to add to each topic"
       required
       >
     </v-text-field>
   </v-flex>
+  <v-flex xs12 sm6 md4>
+    <v-select
+    v-model="mqtt.qos"
+    label="QoS"
+    :rules="[rules.required]"
+    required
+    :items="[0,1,2]"
+    ></v-select>
+  </v-flex>
+  <v-flex xs12 sm6 md4>
+    <v-switch
+    hint="Set retain flag to true for outgoing messages"
+    persistent-hint
+    label="Retain"
+    v-model="mqtt.retain"
+    ></v-switch>
+  </v-flex>
+  <v-flex xs12>
+    <v-switch
+    hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"
+    persistent-hint
+    label="Clean"
+    v-model="mqtt.clean"
+    ></v-switch>
+  </v-flex>
+  <v-flex xs12>
+    <v-switch
+    hint="Does this client require auth?"
+    persistent-hint
+    label="Auth"
+    v-model="mqtt.auth"
+    ></v-switch>
+  </v-flex>
   <v-flex v-if="mqtt.auth" xs12 sm6>
     <v-text-field
-    v-model="mqtt.password"
-    label="Password"
-    :rules="[requiredPassword]"
+    v-model="mqtt.username"
+    label="Username"
+    :rules="[requiredUser]"
     required
-    :append-icon="e1 ? 'visibility' : 'visibility_off'"
-    @click:append="() => (e1 = !e1)"
-    :type="e1 ? 'password' : 'text'"
     >
   </v-text-field>
+</v-flex>
+<v-flex v-if="mqtt.auth" xs12 sm6>
+  <v-text-field
+  v-model="mqtt.password"
+  label="Password"
+  :rules="[requiredPassword]"
+  required
+  :append-icon="e1 ? 'visibility' : 'visibility_off'"
+  @click:append="() => (e1 = !e1)"
+  :type="e1 ? 'password' : 'text'"
+  >
+</v-text-field>
 </v-flex>
 </v-layout>
 </v-container>
@@ -193,116 +193,49 @@
   </v-flex>
 </v-container>
 
-<v-dialog v-if="gateway.type == 2" v-model="dialogValue" max-width="500px">
-        <v-btn slot="activator" color="primary" dark class="mb-2">New Value</v-btn>
-        <v-card>
-          <v-card-title>
-            <span class="headline">{{ dialogTitle }}</span>
-          </v-card-title>
+<v-btn v-if="gateway.type == 2" color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
 
-          <v-card-text>
-            <v-container grid-list-md>
-              <v-layout wrap>
-                <v-flex xs12>
-                  <v-select
-                  v-model="editedValue.device"
-                  label="Device"
-                  required
-                  item-text="name"
-                  :items="devices"
-                  ></v-select>
-                </v-flex>
-                <v-flex xs12>
-                  <v-select
-                  v-model="editedValue.value"
-                  label="Value"
-                  required
-                  return-object
-                  item-text="label"
-                  item-value="value_id"
-                  :items="deviceValues"
-                  ></v-select>
-                </v-flex>
-                <v-flex xs12>
-                  <v-text-field
-                  v-model="editedValue.topic"
-                  label="Topic"
-                  required
-                  >
-                </v-text-field>
-              </v-flex>
-              <v-flex xs6>
-                <v-text-field
-                v-model="editedValue.postOperation"
-                label="Post operation"
-                required
-                >
-              </v-text-field>
-            </v-flex>
-            <v-flex xs6>
-              <v-switch
-              label="Is broadcast"
-              v-model="editedValue.isBroadcast"
-              ></v-switch>
-            </v-flex>
-            <v-flex xs6>
-              <v-switch
-              label="Enable Poll"
-              v-model="editedValue.enablePoll"
-              ></v-switch>
-            </v-flex>
-            <v-flex v-if="editedValue.enablePoll" xs6>
-              <v-text-field
-              v-model.number="editedValue.pollInterval"
-              label="Poll interval"
-              hint="Seconds between each poll"
-              required
-              type="number"
-              >
-            </v-text-field>
-          </v-flex>
-              </v-layout>
-            </v-container>
-          </v-card-text>
+<DialogGatewayValue
+@save="saveValue"
+@close="closeDialog"
+v-model="dialogValue"
+:title="dialogTitle"
+:editedValue="editedValue"
+:devices="devices"
+/>
 
-          <v-card-actions>
-            <v-spacer></v-spacer>
-            <v-btn color="blue darken-1" flat @click="closeDialog">Cancel</v-btn>
-            <v-btn color="blue darken-1" flat @click="saveValue">Save</v-btn>
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-toolbar>
-    <v-data-table
-      v-if="gateway.type == 2"
-      :headers="headers"
-      :items="gateway.values"
-      class="elevation-1"
+<v-data-table
+v-if="gateway.type == 2"
+:headers="headers"
+:items="gateway.values"
+:rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
+class="elevation-1"
+>
+<template slot="items" slot-scope="props">
+  <td>{{ deviceName(props.item.device) }}</td>
+  <td>{{ props.item.value.label + ' (' + props.item.value.value_id + ')' }}</td>
+  <td class="text-xs">{{ props.item.topic }}</td>
+  <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
+  <td class="text-xs">{{ props.item.isBroadcast ? 'Yes' : 'No' }}</td>
+  <td class="text-xs">{{ props.item.enablePoll ? ("Intensity " + props.item.pollIntensity) : 'No' }}</td>
+  <td class="justify-center layout px-0">
+    <v-icon
+    small
+    class="mr-2"
+    @click="editItem(props.item)"
     >
-      <template slot="items" slot-scope="props">
-        <td>{{ deviceName(props.item.device) }}</td>
-        <td>{{ props.item.value.label + ' (' + props.item.value.value_id + ')' }}</td>
-        <td class="text-xs">{{ props.item.topic }}</td>
-        <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
-        <td class="text-xs">{{ props.item.isBroadcast ? 'Yes' : 'No' }}</td>
-        <td class="text-xs">{{ props.item.enablePoll ? ("Every " + props.item.pollInterval + "s") : 'No' }}</td>
-        <td class="justify-center layout px-0">
-          <v-icon
-            small
-            class="mr-2"
-            @click="editItem(props.item)"
-          >
-            edit
-          </v-icon>
-          <v-icon
-            small
-            @click="deleteItem(props.item)"
-          >
-            delete
-          </v-icon>
-        </td>
-      </template>
-    </v-data-table>
+    edit
+  </v-icon>
+  <v-icon
+  small
+  @click="deleteItem(props.item)"
+  >
+  delete
+</v-icon>
+</td>
+</template>
+</v-data-table>
+
 
 </v-form>
 </v-card-text>
@@ -319,15 +252,16 @@
 import { mapGetters, mapMutations } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 
+import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
+
 export default {
   name: 'Settings',
+  components:{
+    DialogGatewayValue
+  },
   computed: {
-    deviceValues(){
-      var device = this.devices.find(d => d.value == this.editedValue.device);
-      return device ? device.values : [];
-    },
     dialogTitle () {
-        return this.editedIndex === -1 ? 'New Item' : 'Edit Item'
+      return this.editedIndex === -1 ? 'New Item' : 'Edit Item'
     },
     requiredUser(){
       return (this.mqtt.auth && !!this.mqtt.username) || 'This field is required.'

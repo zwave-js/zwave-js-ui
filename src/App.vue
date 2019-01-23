@@ -14,7 +14,7 @@
         <v-list class="pa-0">
           <v-list-tile avatar>
             <v-list-tile-avatar>
-              <img src="/static/logo.png" >
+              <img style="border-radius: 0;" src="/static/logo.png" >
             </v-list-tile-avatar>
             <v-list-tile-content>
               <v-list-tile-title>ZWave2MQTT</v-list-tile-title>
@@ -100,6 +100,64 @@ export default {
       this.snackbarText = text;
       this.snackbar = true;
     },
+    importFile : function(callback)
+    {
+      var self = this;
+      // Check for the various File API support.
+      if(window.File && window.FileReader && window.FileList && window.Blob)
+      {
+        var input = document.createElement('input');
+        input.type = "file";
+        input.addEventListener("change", function(event)
+        {
+          var files = event.target.files;
+
+          if(files && files.length > 0)
+          {
+            var file = files[0];
+            var reader = new FileReader();
+
+            reader.addEventListener("load", function(fileReaderEvent)
+            {
+              var jsonObject = {};
+              var err;
+              var data = fileReaderEvent.target.result;
+
+              try {
+                jsonObject = JSON.parse(data);
+              } catch (e) {
+                self.showSnackbar("Error while parsing input file, check console for more info")
+                console.log(e);
+                err = e;
+              }
+
+              callback(err, jsonObject);
+            });
+
+            reader.readAsText(file);
+          }
+
+        });
+
+        input.click();
+      }
+      else
+      {
+        alert('Unable to load a file in this browser.');
+      }
+    },
+    exportConfiguration: function(data, fileName){
+      var contentType = 'application/octet-stream';
+      var a = document.createElement('a');
+      
+      var blob = new Blob([JSON.stringify(data)], {'type': contentType});
+
+      document.body.appendChild(a);
+      a.href = window.URL.createObjectURL(blob);
+      a.download = fileName + ".json";
+      a.target="_self";
+      a.click();
+    }
   },
   data () {
     return {

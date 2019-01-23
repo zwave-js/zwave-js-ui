@@ -44,6 +44,7 @@
         :headers="headers"
         :items="nodes"
         :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
+        item-key="node_id"
         class="elevation-1"
         >
         <template slot="items" slot-scope="props">
@@ -74,7 +75,11 @@
     </v-tabs>
   </v-toolbar>
 
+  <!-- TABS -->
+
   <v-tabs-items v-model="currentTab">
+
+    <!-- TAB NODE INFO -->
     <v-tab-item key="node">
       <v-container v-if="selectedNode" fluid>
 
@@ -121,14 +126,56 @@
         <v-subheader>Values</v-subheader>
 
         <v-layout column>
-          <v-layout v-for="(v, index) in selectedNode.values" :key="index" row>
-            <v-flex xs12>
-              <ValueID
-              @updateValue="updateValue"
-              v-model="selectedNode.values[index]"
-              ></ValueID>
-            </v-flex>
-          </v-layout>
+
+          <v-expansion-panel>
+            <v-expansion-panel-content>
+              <div slot="header">User</div>
+              <v-card>
+                <v-card-text>
+                  <v-flex v-for="(v, index) in selectedNode.values.filter(v => v.genre == 'user')" :key="index" xs12>
+                    <ValueID
+                    @updateValue="updateValue"
+                    v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
+                    ></ValueID>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+
+
+          <v-expansion-panel>
+            <v-expansion-panel-content>
+              <div slot="header">Configuration</div>
+              <v-card>
+                <v-card-text>
+                  <v-flex v-for="(v, index) in selectedNode.values.filter(v => v.genre == 'config')" :key="index" xs12>
+                    <ValueID
+                    @updateValue="updateValue"
+                    v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
+                    ></ValueID>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+
+          <v-expansion-panel>
+            <v-expansion-panel-content>
+              <div slot="header">System</div>
+              <v-card>
+                <v-card-text>
+                  <v-flex v-for="(v, index) in selectedNode.values.filter(v => v.genre == 'system')" :key="index" xs12>
+                    <ValueID
+                    @updateValue="updateValue"
+                    v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
+                    ></ValueID>
+                  </v-flex>
+                </v-card-text>
+              </v-card>
+            </v-expansion-panel-content>
+          </v-expansion-panel>
+
         </v-layout>
       </v-container>
 
@@ -141,6 +188,7 @@
 
     </v-tab-item>
 
+    <!-- TAB GROUPS -->
     <v-tab-item key="groups">
 
       <v-container grid-list-md>
@@ -211,6 +259,7 @@
 
     </v-tab-item>
 
+    <!-- TAB SCENES -->
     <v-tab-item key="scenes">
 
       <v-container grid-list-md>
