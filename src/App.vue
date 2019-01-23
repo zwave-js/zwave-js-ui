@@ -21,6 +21,7 @@
             </v-list-tile-content>
           </v-list-tile>
         </v-list>
+
       </v-toolbar>
     <v-divider></v-divider>
     <v-list>
@@ -46,32 +47,10 @@
 <v-toolbar fixed app>
   <v-toolbar-side-icon @click.native.stop="mini = !mini"></v-toolbar-side-icon>
   <v-toolbar-title>{{title}}</v-toolbar-title>
-  <v-spacer></v-spacer>
-
-    <v-menu v-for="item in items" :key="item.text" bottom left>
-      <v-btn slot="activator" icon @click.native="item.func">
-        <v-tooltip bottom>
-        <v-icon dark color="primary" slot="activator">{{item.icon}}</v-icon>
-        <span>{{item.tooltip}}</span>
-      </v-tooltip>
-      </v-btn>
-
-      <v-list v-if="item.menu">
-        <v-list-tile
-          v-for="(menu, i) in item.menu"
-          :key="i"
-          @click="menu.func"
-        >
-          <v-list-tile-title>{{ menu.title }}</v-list-tile-title>
-        </v-list-tile>
-      </v-list>
-
-    </v-menu>
-
 </v-toolbar>
 <main>
   <v-content>
-      <router-view @showSnackbar="showSnackbar"/>
+      <router-view @import="importFile" @export="exportConfiguration" @showSnackbar="showSnackbar"/>
   </v-content>
 </main>
 
@@ -149,7 +128,7 @@ export default {
     exportConfiguration: function(data, fileName){
       var contentType = 'application/octet-stream';
       var a = document.createElement('a');
-      
+
       var blob = new Blob([JSON.stringify(data)], {'type': contentType});
 
       document.body.appendChild(a);
@@ -163,32 +142,13 @@ export default {
     return {
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
-        { icon: 'settings', title: 'Settings', path: '/settings' },
-        // { icon: 'wifi', title: 'MQTT', path: '/mqtt_clients' },
-        // { icon: 'info', title: 'Status', path: '/status' },
+        { icon: 'settings', title: 'Settings', path: '/settings' }
       ],
       drawer: false,
       title: 'Control Panel',
       mini: true,
       snackbar: false,
-      snackbarText: "",
-      items: [
-        // {
-        //   icon: "file_download",
-        //   func: this.importConfiguration,
-        //   tooltip: "Import Configuration"
-        // },
-        // {
-        //   icon: "file_upload",
-        //   func: this.exportConfiguration,
-        //   tooltip: "Export Configuration",
-        // },
-        // {
-        //   icon: "save",
-        //   func: this.saveConfiguration,
-        //   tooltip: "Save Configuration"
-        // },
-      ]
+      snackbarText: ""
     }
   },
 	watch: {

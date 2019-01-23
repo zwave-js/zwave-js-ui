@@ -127,7 +127,7 @@
 
         <v-layout column>
 
-          <v-expansion-panel>
+          <v-expansion-panel class="elevation-0">
             <v-expansion-panel-content>
               <div slot="header">User</div>
               <v-card>
@@ -143,8 +143,9 @@
             </v-expansion-panel-content>
           </v-expansion-panel>
 
+          <v-divider></v-divider>
 
-          <v-expansion-panel>
+          <v-expansion-panel class="elevation-0">
             <v-expansion-panel-content>
               <div slot="header">Configuration</div>
               <v-card>
@@ -160,7 +161,9 @@
             </v-expansion-panel-content>
           </v-expansion-panel>
 
-          <v-expansion-panel>
+          <v-divider></v-divider>
+
+          <v-expansion-panel class="elevation-0">
             <v-expansion-panel-content>
               <div slot="header">System</div>
               <v-card>
@@ -175,6 +178,8 @@
               </v-card>
             </v-expansion-panel-content>
           </v-expansion-panel>
+
+          <v-divider></v-divider>
 
         </v-layout>
       </v-container>
