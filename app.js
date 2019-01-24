@@ -76,6 +76,16 @@ app.startSocket = function(server){
     });
 
   });
+
+  const interceptor = function(write) {
+		return function(...args) {
+			io.emit("DEBUG", args[0].toString())
+			write.apply(process.stdout, args);
+		};
+	}
+
+  process.stdout.write = interceptor(process.stdout.write);
+  process.stderr.write = interceptor(process.stderr.write);
 }
 
 // ----- APIs ------

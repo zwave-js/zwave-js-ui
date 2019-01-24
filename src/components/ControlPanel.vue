@@ -71,6 +71,7 @@
       <v-tab key="node">Node</v-tab>
       <v-tab key="groups">Groups</v-tab>
       <v-tab key="scenes">Scenes</v-tab>
+      <v-tab key="scenes">Debug</v-tab>
 
     </v-tabs>
   </v-toolbar>
@@ -343,6 +344,34 @@
       </v-container>
     </v-tab-item>
 
+    <!-- TAB SCENES -->
+    <v-tab-item key="debug">
+
+      <v-container grid-list-md>
+        <v-layout wrap>
+          <v-flex xs12>
+            <v-btn color="green darken-1" flat @click="debugActive = true">Start</v-btn>
+            <v-btn color="red darken-1" flat @click="debugActive = false">Stop</v-btn>
+            <v-btn color="blue darken-1" flat @click="debug = []">Clear</v-btn>
+          </v-flex>
+          <v-flex xs12>
+            <v-textarea
+            id="debug_window"
+            no-resize
+            readonly
+            flat
+            solo
+            class="body-1"
+            disabled
+            rows="20"
+            :value="debug.join('')"
+            ></v-textarea>
+          </v-flex>
+        </v-layout>
+      </v-container>
+    </v-tab-item>
+
+
   </v-tabs-items>
 
 </v-card-text>
@@ -395,6 +424,12 @@ export default {
         this.selectedScene = null;
         this.scene_values = [];
       }
+
+      if(this.currentTab == 3){
+        this.debugActive = true;
+      }else{
+        this.debugActive = false;
+      }
     }
   },
   data () {
@@ -402,6 +437,8 @@ export default {
       socket : null,
       nodes: [],
       scenes: [],
+      debug: [],
+      debugActive: false,
       selectedScene: null,
       newScene: '',
       scene_values: [],
@@ -657,6 +694,17 @@ export default {
     this.socket.on('reconnecting', () => {
       console.log("Socket reconnecting");
       self.socket_status = "reconnecting";
+    });
+
+    this.socket.on('DEBUG', (data) => {
+      if(self.debugActive){
+        self.debug.push((new Date).toISOString() + ': ' + data);
+
+        if(self.debug.length > 300) self.debug.shift();
+
+        var textarea = document.getElementById('debug_window');
+        textarea.scrollTop = textarea.scrollHeight;
+      }
     });
 
     this.socket.on('NODES', (data) => {
