@@ -127,6 +127,7 @@
 
         <v-layout column>
 
+          <!-- USER VALUES -->
           <v-expansion-panel class="elevation-0">
             <v-expansion-panel-content>
               <div slot="header">User</div>
@@ -145,6 +146,7 @@
 
           <v-divider></v-divider>
 
+          <!-- CONFIG VALUES -->
           <v-expansion-panel class="elevation-0">
             <v-expansion-panel-content>
               <div slot="header">Configuration</div>
@@ -163,6 +165,7 @@
 
           <v-divider></v-divider>
 
+          <!-- SYSTEM VALUES -->
           <v-expansion-panel class="elevation-0">
             <v-expansion-panel-content>
               <div slot="header">System</div>
@@ -205,6 +208,7 @@
           v-model="group.node"
           :items="nodes.filter(n => !!n)"
           return-object
+          @change="resetGroup"
           item-text="_name"
           ></v-select>
         </v-flex>
@@ -285,7 +289,7 @@
             label="New Scene"
             append-outer-icon="send"
             @click:append-outer="createScene"
-            v-model="newScene"
+            v-model.trim="newScene"
             ></v-text-field>
           </v-flex>
 
@@ -317,6 +321,7 @@
             <td class="text-xs">{{ props.item.node_id }}</td>
             <td class="text-xs">{{ props.item.label }}</td>
             <td class="text-xs">{{ props.item.value }}</td>
+            <td class="text-xs">{{ props.item.timeout ? 'After ' + props.item.timeout + 's' : 'No' }}</td>
             <td class="justify-center layout px-0">
               <v-icon
                 small
@@ -408,6 +413,7 @@ export default {
         { text: 'Node', value: 'node_id'},
         { text: 'Label', value: 'label'},
         { text: 'Value', value: 'value'},
+        { text: 'Timeout', value: 'timeout'},
         { text: 'Actions', sortable: false }
       ],
       group: {},
@@ -480,52 +486,38 @@ export default {
     showSnackbar(text){
       this.$emit('showSnackbar', text);
     },
-    refreshValues(){
-      if(this.selectedScene){
-        var data = {
-          api: 'sceneGetValues',
-          args: [this.selectedScene],
-        }
-        this.socket.emit('ZWAVE_API', data)
-      }
-    },
-    refreshScenes(){
+    apiRequest(apiName, args){
       var data = {
-        api: 'getScenes',
-        args: [],
+        api: apiName,
+        args: args,
       }
       this.socket.emit('ZWAVE_API', data)
     },
+    refreshValues(){
+      if(this.selectedScene){
+        this.apiRequest('sceneGetValues', [this.selectedScene]);
+      }
+    },
+    refreshScenes(){
+      this.apiRequest('getScenes', []);
+    },
     createScene(){
       if(this.newScene){
-        var data = {
-          api: 'createScene',
-          args: [this.newScene],
-        }
-        this.socket.emit('ZWAVE_API', data);
-
+        this.apiRequest('createScene', [this.newScene]);
         this.refreshScenes();
+        this.newScene = "";
       }
     },
     removeScene(){
       if(this.selectedScene){
-        var data = {
-          api: 'removeScene',
-          args: [this.selectedScene],
-        }
-        this.socket.emit('ZWAVE_API', data)
-
+        this.apiRequest('removeScene', [this.selectedScene]);
         this.selectedScene = null;
         this.refreshScenes();
       }
     },
     activateScene(){
       if(this.selectedScene){
-        var data = {
-          api: 'activateScene',
-          args: [this.selectedScene],
-        }
-        this.socket.emit('ZWAVE_API', data)
+        this.apiRequest('activateScene', [this.selectedScene]);
       }
     },
     editItem (item) {
@@ -536,19 +528,12 @@ export default {
       value = Object.assign({}, value);
       value.newValue = item.value;
 
-      this.editedValue = {node: node, value: value};
+      this.editedValue = {node: node, value: value, timeout: this.scene_values[this.editedIndex].timeout};
       this.dialogValue = true;
     },
-    deleteItem (item) {
-      const index = this.scene_values.indexOf(item)
+    deleteItem (value) {
       if(confirm('Are you sure you want to delete this item?')){
-        var value = this.scene_values[index];
-        var data = {
-          api: 'removeSceneValue',
-          args: [this.selectedScene, value.node_id, value.class_id, value.instance, value.index],
-        }
-
-        this.socket.emit('ZWAVE_API', data)
+        this.apiRequest('removeSceneValue', [this.selectedScene, value.node_id, value.class_id, value.instance, value.index]);
         this.refreshValues();
       }
     },
@@ -560,121 +545,79 @@ export default {
       }, 300)
     },
     saveValue () {
-      var value, data;
-
-      if (this.editedIndex > -1) {
-        value = this.scene_values[this.editedIndex];
-        data = {
-          api: 'removeSceneValue',
-          args: [this.selectedScene, value.node_id, value.class_id, value.instance, value.index],
-        }
-
-        this.socket.emit('ZWAVE_API', data)
-      }
-
-      value = this.editedValue.value;
+      var value = this.editedValue.value;
       value.value = value.newValue;
 
-      data = {
-        api: 'addSceneValue',
-        args: [this.selectedScene, value, value.value],
-      }
-
-      this.socket.emit('ZWAVE_API', data);
+      // if value already exists it will be updated
+      this.apiRequest('addSceneValue', [this.selectedScene, value, value.value, this.editedValue.timeout]);
       this.refreshValues();
 
       this.closeDialog()
     },
     sendCntAction(){
       if(this.cnt_action){
-        var data = {
-          api: this.cnt_action,
-          args: [],
-        }
-        this.socket.emit('ZWAVE_API', data)
+        this.apiRequest(this.cnt_action, [])
       }
     },
     sendNodeAction(){
       if(this.selectedNode){
-        var data = {
-          api: this.node_action,
-          args: [this.selectedNode.node_id],
-        }
-        this.socket.emit('ZWAVE_API', data)
+        this.apiRequest(this.node_action, [this.selectedNode.node_id])
       }
     },
     saveConfiguration(){
-      var data = {
-        api: 'writeConfig',
-        args: [],
-      }
-      this.socket.emit('ZWAVE_API', data)
+      this.apiRequest('writeConfig', []);
     },
     updateName(){
-      var data = {
-        api: 'setNodeName',
-        args: [this.selectedNode.node_id, this.newName],
-        refreshNode: true,
-        node: this.selectedNode.node_id
+      if(this.selectedNode){
+        this.apiRequest('setNodeName', [this.selectedNode.node_id, this.newName])
+        this.apiRequest('refreshNodeInfo', [this.selectedNode.node_id]);
       }
-      this.socket.emit('ZWAVE_API', data)
     },
     updateLoc(){
-      var data = {
-        api: 'setNodeLocation',
-        args: [this.selectedNode.node_id, this.newLoc],
-        refreshNode: true,
-        node: this.selectedNode.node_id
+      if(this.selectedNode){
+        this.apiRequest('setNodeLocation', [this.selectedNode.node_id, this.newLoc])
+        this.apiRequest('refreshNodeInfo', [this.selectedNode.node_id]);
       }
-      this.socket.emit('ZWAVE_API', data)
+    },
+    resetGroup(){
+      this.$set(this.group, 'associations', []);
+      this.$set(this.group, 'group', -1);
     },
     getAssociations(){
       var g = this.group;
       if(g && g.node){
-        var data = {
-          api: 'getAssociations',
-          args: [g.node.node_id, g.group],
-        }
-
-        this.socket.emit('ZWAVE_API', data)
+        this.apiRequest('getAssociations', [g.node.node_id, g.group])
       }
     },
     addAssociation(){
       var g = this.group;
       if(g && g.node && g.target){
-        var data = {
-          api: 'addAssociation',
-          args: [g.node.node_id, g.group, g.target.node_id],
-          refreshAssociations: true
-        }
+        var args = [g.node.node_id, g.group, g.target.node_id];
 
         if(g.multiInstance){
-          data.args.push(g.targetInstance || 0)
+          args.push(g.targetInstance || 0)
         }
 
-        this.socket.emit('ZWAVE_API', data)
+        this.apiRequest('addAssociation', args);
+
+        // wait a moment before refresh to check if the node
+        // has been added to the group correctly
+        setTimeout(this.getAssociations, 500);
       }
     },
     removeAssociation(){
       var g = this.group;
       if(g && g.node && g.target){
-        var data = {
-          api: 'removeAssociation',
-          args: [g.node.node_id, g.group, g.target.node_id],
-          refreshAssociations: true
-        }
 
-        this.socket.emit('ZWAVE_API', data)
+        this.apiRequest('removeAssociation', [g.node.node_id, g.group, g.target.node_id])
+        // wait a moment before refresh to check if the node
+        // has been added to the group correctly
+        setTimeout(this.getAssociations, 500);
       }
     },
     updateValue(v){
-      var data = {
-        api: 'setValue',
-        args: [v.node_id, v.class_id, v.instance, v.index, v.type == "button" ? true : v.newValue],
-      }
+      this.apiRequest('setValue', [v.node_id, v.class_id, v.instance, v.index, v.type == "button" ? true : v.newValue])
       v.toUpdate = true;
-
-      this.socket.emit('ZWAVE_API', data);
     },
     initNode(n){
       if(n){
@@ -757,16 +700,20 @@ export default {
     this.socket.on('API_RETURN', (data) => {
       if(data.success){
         self.showSnackbar("Successfully call api " + data.api);
-        if(data.api == "getAssociations"){
-          data.result = data.result.map(a => self.nodes[a].name || a);
+        switch(data.api){
+          case "getAssociations":
+          data.result = data.result.map(a => self.nodes[a]._name || a);
           self.$set(self.group, 'associations', data.result.join(', '));
-        }else if(data.api == 'getScenes'){
+          break;
+          case "getScenes":
           self.scenes = data.result;
-        }else if(data.api == 'sceneGetValues'){
+          break;
+          case "sceneGetValues":
           self.scene_values = data.result;
+          break;
         }
       }else{
-        self.showSnackbar("Error when calling api " + data.api + ": " + data.message);
+        self.showSnackbar("Error while calling api " + data.api + ": " + data.message);
       }
     });
 

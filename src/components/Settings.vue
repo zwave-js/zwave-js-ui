@@ -142,6 +142,14 @@
         v-model="mqtt.retain"
         ></v-switch>
       </v-flex>
+      <v-flex xs12 sm6 md4>
+        <v-switch
+        hint="Enable persistent storage of packets (QoS > 0) while client is offline. If disabled the in memory store will be used."
+        persistent-hint
+        label="Store"
+        v-model="mqtt.store"
+        ></v-switch>
+      </v-flex>
       <v-flex xs12>
         <v-switch
         hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"

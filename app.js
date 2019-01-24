@@ -60,27 +60,15 @@ app.startSocket = function(server){
     console.log("New connection", socket.id);
 
     if(gw.zwave)
-      socket.emit('NODES', gw.zwave.nodes)
+    socket.emit('NODES', gw.zwave.nodes)
 
     socket.on('ZWAVE_API', function(data) {
       console.log("Zwave api call:", data.api, data.args);
-        if(gw.zwave){
-          var result = gw.zwave.callApi(data.api, ...data.args);
-          result.api = data.api;
-          socket.emit("API_RETURN", result);
-
-          if(data.refreshNode && data.node > 0){
-            gw.zwave.callApi('refreshNodeInfo', data.node);
-          }
-
-          if(data.refreshAssociations){
-            setTimeout(function(){
-              result = gw.zwave.callApi('getAssociations', ...data.args);
-              result.api = 'getAssociations';
-              socket.emit("API_RETURN", result);
-            }, 300)
-          }
-        }
+      if(gw.zwave){
+        var result = gw.zwave.callApi(data.api, ...data.args);
+        result.api = data.api;
+        socket.emit("API_RETURN", result);
+      }
     });
 
     socket.on('disconnect', function(){

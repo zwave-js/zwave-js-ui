@@ -41,6 +41,18 @@
                 v-model="editedValue.value"
                 ></ValueID>
               </v-flex>
+              <v-flex xs12>
+                <v-text-field
+                v-model.number="editedValue.timeout"
+                label="Timeout"
+                hint="Seconds to wait before send this value. Set to 0 to send immediatly"
+                suffix="s"
+                :rules="[positive]"
+                required
+                type="number"
+                >
+              </v-text-field>
+            </v-flex>
             </v-layout>
           </v-form>
         </v-container>
@@ -78,6 +90,7 @@ export default {
     return {
       valid: true,
       required: v => !!v || 'This field is required',
+      positive: v => v >= 0 || 'Value must be positive',
       validValue: [
         v => !!v || 'This field is required',
         v => (v && !v.read_only) || 'This value is Read Only',
