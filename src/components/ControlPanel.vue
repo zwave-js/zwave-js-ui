@@ -6,21 +6,9 @@
       <v-card-text>
 
         <v-container fluid>
-          <v-layout row>
+          <v-layout>
 
-            <v-flex xs1>
-              <v-tooltip bottom>
-                <v-icon
-                size="50"
-                slot="activator"
-                style="cursor:default"
-                :color="socket_status == 'connected' ? 'green' : (socket_status == 'disconnected' ? 'red' : 'yellow')"
-                >swap_horizontal_circle</v-icon>
-                <span>{{socket_status}}</span>
-              </v-tooltip>
-            </v-flex>
-
-            <v-flex xs3>
+            <v-flex xs12 sm6 md4>
               <v-select
               label="Actions"
               append-outer-icon="send"
@@ -29,13 +17,28 @@
               @click:append-outer="sendCntAction"
               ></v-select>
             </v-flex>
-            <v-spacer></v-spacer>
-            <v-btn
-            color="primary"
-            dark
-            @click="saveConfiguration"
-            class="mb-2"
-            >Save Configuration</v-btn>
+
+            <v-flex xs12 sm6 md4 align-self-center>
+              <v-btn icon @click.native="saveConfiguration">
+                <v-tooltip bottom>
+                <v-icon dark color="primary" slot="activator">save</v-icon>
+                <span>Write Configuration</span>
+              </v-tooltip>
+              </v-btn>
+              <v-btn icon @click.native="importConfiguration">
+                <v-tooltip bottom>
+                <v-icon dark color="primary" slot="activator">file_upload</v-icon>
+                <span>Import Configuration</span>
+              </v-tooltip>
+              </v-btn>
+              <v-btn icon @click.native="exportConfiguration">
+                <v-tooltip bottom>
+                <v-icon dark color="primary" slot="activator">file_download</v-icon>
+                <span>Export Configuration</span>
+              </v-tooltip>
+              </v-btn>
+            </v-flex>
+
           </v-layout>
         </v-container>
 
@@ -61,7 +64,8 @@
 
       <v-toolbar
       tabs
-      class="elevation-0"
+      style="margin-top:10px"
+      class="elevation-1"
       >
       <v-tabs
       v-model="currentTab"
@@ -71,14 +75,14 @@
       <v-tab key="node">Node</v-tab>
       <v-tab key="groups">Groups</v-tab>
       <v-tab key="scenes">Scenes</v-tab>
-      <v-tab key="scenes">Debug</v-tab>
+      <v-tab key="debug">Debug</v-tab>
 
     </v-tabs>
   </v-toolbar>
 
   <!-- TABS -->
 
-  <v-tabs-items v-model="currentTab">
+  <v-tabs-items class="elevation-1" v-model="currentTab">
 
     <!-- TAB NODE INFO -->
     <v-tab-item key="node">
@@ -275,6 +279,17 @@
       <v-container grid-list-md>
         <v-layout wrap>
 
+          <v-flex xs12>
+            <v-btn flat @click.native="importScenes">
+              Import
+              <v-icon right dark color="primary">file_upload</v-icon>
+            </v-btn>
+            <v-btn flat @click.native="exportScenes">
+              Export
+              <v-icon right dark color="primary">file_download</v-icon>
+            </v-btn>
+          </v-flex>
+
           <v-flex xs12 sm6>
             <v-select
             label="Scene"
@@ -344,7 +359,7 @@
       </v-container>
     </v-tab-item>
 
-    <!-- TAB SCENES -->
+    <!-- TAB Debug -->
     <v-tab-item key="debug">
 
       <v-container grid-list-md>
@@ -357,6 +372,8 @@
           <v-flex xs12>
             <v-textarea
             id="debug_window"
+            outline
+            hide-details
             no-resize
             readonly
             flat
@@ -392,6 +409,8 @@ import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 //https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client';
 
+const MAX_DEBUG_LINES = 300;
+
 export default {
   name: 'ControlPanel',
   components:{
@@ -401,7 +420,7 @@ export default {
   computed: {
     dialogTitle () {
         return this.editedIndex === -1 ? 'New Value' : 'Edit Value'
-    },
+    }
   },
   watch: {
     dialogValue (val) {
@@ -455,7 +474,6 @@ export default {
       ],
       group: {},
       currentTab: 0,
-      socket_status: 'Disconnected',
       node_action: 'requestNetworkUpdate',
       node_actions:[
         {
@@ -522,6 +540,51 @@ export default {
   methods: {
     showSnackbar(text){
       this.$emit('showSnackbar', text);
+    },
+    importConfiguration(){
+      var self = this;
+      if(confirm('Attention! This operation will override current zwave xml file and cannot be undone')){
+        self.$emit('import', 'xml', function(err, data){
+          if(!err && data){
+            ConfigApis.importConfig({data: data})
+            .then(data => {
+              self.showSnackbar(data.message);
+            })
+            .catch(error => {
+              console.log(error);
+            });
+          }
+        });
+      }
+    },
+    exportConfiguration(){
+      var self = this;
+      ConfigApis.exportConfig()
+      .then(data => {
+        self.showSnackbar(data.message)
+        if(data.success){
+          self.$emit('export', data.data, 'zwcfg_' + data.homeHex, 'xml');
+        }
+      })
+      .catch(error => {
+        console.log(error);
+      });
+    },
+    importScenes(){
+      var self = this;
+      if(confirm('Attention! This operation will override all current scenes and cannot be undone')){
+        this.$emit('import', 'json', function(err, scenes){
+          //TODO: add checks on file entries
+          if(scenes instanceof Array){
+            self.apiRequest('setScenes', [scenes]);
+          }else{
+            self.showSnackbar("Imported file not valid")
+          }
+        });
+      }
+    },
+    exportScenes(){
+      this.$emit('export', this.scenes, 'scenes');
     },
     apiRequest(apiName, args){
       var data = {
@@ -679,12 +742,12 @@ export default {
 
     this.socket.on('connect', () => {
       console.log("Socket connected");
-      self.socket_status = "connected";
+      self.$emit("updateStatus" ,"Connected", "green");
     });
 
     this.socket.on('disconnect', () => {
       console.log("Socket closed");
-      self.socket_status = "disconnected";
+      self.$emit("updateStatus" ,"Disconnected", "red");
     });
 
     this.socket.on('error', () => {
@@ -693,14 +756,14 @@ export default {
 
     this.socket.on('reconnecting', () => {
       console.log("Socket reconnecting");
-      self.socket_status = "reconnecting";
+      self.$emit("updateStatus" ,"Reconnecting", "yellow");
     });
 
     this.socket.on('DEBUG', (data) => {
       if(self.debugActive){
         self.debug.push((new Date).toISOString() + ': ' + data);
 
-        if(self.debug.length > 300) self.debug.shift();
+        if(self.debug.length > MAX_DEBUG_LINES) self.debug.shift();
 
         var textarea = document.getElementById('debug_window');
         textarea.scrollTop = textarea.scrollHeight;
@@ -747,7 +810,6 @@ export default {
 
     this.socket.on('API_RETURN', (data) => {
       if(data.success){
-        self.showSnackbar("Successfully call api " + data.api);
         switch(data.api){
           case "getAssociations":
           data.result = data.result.map(a => self.nodes[a]._name || a);
@@ -756,9 +818,15 @@ export default {
           case "getScenes":
           self.scenes = data.result;
           break;
+          case "setScenes":
+          self.scenes = data.result;
+          self.showSnackbar("Successfully updated scenes");
+          break;
           case "sceneGetValues":
           self.scene_values = data.result;
           break;
+          default:
+          self.showSnackbar("Successfully call api " + data.api);
         }
       }else{
         self.showSnackbar("Error while calling api " + data.api + ": " + data.message);

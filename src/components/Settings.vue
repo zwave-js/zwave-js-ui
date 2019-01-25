@@ -281,9 +281,9 @@ v-model="dialogValue"
 </v-card-text>
 <v-card-actions>
   <v-spacer></v-spacer>
-  <v-btn class="white--text" color="purple darken-1" @click="importSettings">Import<v-icon right dark>file_upload</v-icon></v-btn>
-  <v-btn class="white--text" color="green darken-1" @click="exportSettings">Export<v-icon right dark>file_download</v-icon></v-btn>
-  <v-btn class="white--text" color="blue darken-1" type="submit" form="form_settings">Save<v-icon right dark>save</v-icon></v-btn>
+  <v-btn color="purple darken-1" flat @click="importSettings">Import<v-icon right dark>file_upload</v-icon></v-btn>
+  <v-btn color="green darken-1" flat @click="exportSettings">Export<v-icon right dark>file_download</v-icon></v-btn>
+  <v-btn color="blue darken-1" flat type="submit" form="form_settings">Save<v-icon right dark>save</v-icon></v-btn>
 </v-card-actions>
 </v-card>
 </v-container>
@@ -392,7 +392,7 @@ export default {
     },
     importSettings(){
       var self = this;
-      this.$emit('import', function(err, settings){
+      this.$emit('import', 'json', function(err, settings){
         if(settings.zwave && settings.mqtt && settings.gateway){
           Object.assign(self.zwave, settings.zwave);
           Object.assign(self.mqtt, settings.mqtt);
@@ -458,8 +458,24 @@ export default {
     }
   }
 },
-created (){
+mounted (){
+  //hide socket status indicator from toolbar
+  this.$emit('updateStatus');
 
+  var self = this;
+  ConfigApis.getConfig()
+  .then(data => {
+    if(!data.success){
+      self.showSnackbar("Error while retriving configuration, check console");
+      console.log(response);
+    }else{
+      self.$store.dispatch('init', data)
+    }
+  })
+  .catch(e => {
+    self.showSnackbar("Error while retriving configuration, check console");
+    console.log(e);
+  })
 }
 }
 

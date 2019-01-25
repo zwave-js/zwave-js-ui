@@ -91,7 +91,7 @@ app.startSocket = function(server){
 // ----- APIs ------
 
 //get config
-app.get('/api/config', function(req, res) {
+app.get('/api/settings', function(req, res) {
   SerialPort.list(function (err, ports) {
     if (err) {
       console.log(err);
@@ -103,8 +103,51 @@ app.get('/api/config', function(req, res) {
   })
 });
 
+//get config
+app.get('/api/exportConfig', function(req, res) {
+  if(gw.zwave && gw.zwave.client && gw.zwave.ozwConfig && gw.zwave.ozwConfig.name){
+    var result = gw.zwave.callApi('writeConfig');
+    var homeHex = gw.zwave.ozwConfig.name;
+
+    if(result.success){
+      var filePath = utils.joinPath(utils.getPath(true), 'zwcfg_' + homeHex + '.xml');
+      fs.readFile(filePath, 'utf8', function(err, data){
+        if(err)
+          res.json({success: false, message: err.message})
+        else{
+          res.json({success:true, homeHex: homeHex, data: data, message: "Successfully exported file"});
+        }
+      })
+    }else{
+      res.json(result);
+    }
+
+  }else{
+    return res.json({success: false, message: "Zwave client not ready"})
+  }
+});
+
+//import config
+app.post('/api/importConfig', function(req, res) {
+  if(gw.zwave && gw.zwave.client && gw.zwave.ozwConfig && gw.zwave.ozwConfig.name){
+
+    var filePath = utils.joinPath(utils.getPath(true), 'zwcfg_' + gw.zwave.ozwConfig.name + '.xml');
+
+    fs.writeFile(filePath, req.body.data, 'utf8', function(err){
+      if(err)
+        res.json({success: false, message: err.message})
+      else{
+        res.json({success:true, message: "Successfully imported file"});
+      }
+    })
+
+  }else{
+    return res.json({success: false, message: "Zwave client not ready"})
+  }
+});
+
 //update config
-app.post('/api/config', function(req, res) {
+app.post('/api/settings', function(req, res) {
   jsonStore.put(store.config, req.body)
   .then(data => {
     res.json({success: true, message: "Configuration updated successfully"});

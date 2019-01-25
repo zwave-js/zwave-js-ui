@@ -47,10 +47,18 @@
 <v-toolbar fixed app>
   <v-toolbar-side-icon @click.native.stop="mini = !mini"></v-toolbar-side-icon>
   <v-toolbar-title>{{title}}</v-toolbar-title>
+
+  <v-spacer></v-spacer>
+
+  <v-tooltip v-if="status" bottom>
+    <v-icon dark medium style="cursor:default;" :color="statusColor || 'primary'" slot="activator">swap_horizontal_circle</v-icon>
+    <span>{{status}}</span>
+  </v-tooltip>
+
 </v-toolbar>
 <main>
   <v-content>
-      <router-view @import="importFile" @export="exportConfiguration" @showSnackbar="showSnackbar"/>
+      <router-view @updateStatus="updateStatus" @import="importFile" @export="exportConfiguration" @showSnackbar="showSnackbar"/>
   </v-content>
 </main>
 
@@ -70,8 +78,6 @@
 
 <script>
 
-import ConfigApis from '@/apis/ConfigApis'
-
 export default {
   name: 'app',
   methods: {
@@ -79,7 +85,11 @@ export default {
       this.snackbarText = text;
       this.snackbar = true;
     },
-    importFile : function(callback)
+    updateStatus: function(status, color){
+      this.status = status;
+      this.statusColor = color;
+    },
+    importFile : function(ext, callback)
     {
       var self = this;
       // Check for the various File API support.
@@ -98,19 +108,20 @@ export default {
 
             reader.addEventListener("load", function(fileReaderEvent)
             {
-              var jsonObject = {};
               var err;
               var data = fileReaderEvent.target.result;
 
-              try {
-                jsonObject = JSON.parse(data);
-              } catch (e) {
-                self.showSnackbar("Error while parsing input file, check console for more info")
-                console.log(e);
-                err = e;
+              if(ext == 'json'){
+                try {
+                  data = JSON.parse(data);
+                } catch (e) {
+                  self.showSnackbar("Error while parsing input file, check console for more info")
+                  console.log(e);
+                  err = e;
+                }
               }
 
-              callback(err, jsonObject);
+              callback(err, data);
             });
 
             reader.readAsText(file);
@@ -125,15 +136,15 @@ export default {
         alert('Unable to load a file in this browser.');
       }
     },
-    exportConfiguration: function(data, fileName){
-      var contentType = 'application/octet-stream';
+    exportConfiguration: function(data, fileName, ext){
+      var contentType = ext == 'xml' ? 'text/xml' : 'application/octet-stream';
       var a = document.createElement('a');
 
-      var blob = new Blob([JSON.stringify(data)], {'type': contentType});
+      var blob = new Blob([ext == 'xml' ? data : JSON.stringify(data)], {'type': contentType});
 
       document.body.appendChild(a);
       a.href = window.URL.createObjectURL(blob);
-      a.download = fileName + ".json";
+      a.download = fileName + "." + (ext ? ext : "json");
       a.target="_self";
       a.click();
     }
@@ -144,7 +155,10 @@ export default {
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' }
       ],
+      status: "",
+      statusColor: "",
       drawer: false,
+      topbar: [],
       title: 'Control Panel',
       mini: true,
       snackbar: false,
@@ -164,22 +178,6 @@ export default {
         this.title = '';
       }
     }
-  },
-  created(){
-    var self = this;
-    ConfigApis.getConfig()
-    .then(data => {
-      if(!data.success){
-        self.showSnackbar("Error while retriving configuration, check console");
-        console.log(response);
-      }else{
-        self.$store.dispatch('init', data)
-      }
-    })
-    .catch(e => {
-      self.showSnackbar("Error while retriving configuration, check console");
-      console.log(e);
-    })
-  },
+  }
 }
 </script>
