@@ -1,7 +1,13 @@
+
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
+
+![Zwave](static/logo.png)
+
 # Zwave2Mqtt
 Fully configurable Zwave to MQTT gateway and Control Panel using NodeJS and Vue.
 
-### Installation
+## Installation
 
 1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system. If you are using Ubuntu:
 
@@ -37,7 +43,7 @@ npm run build
 
 6. Go to http://localhost:8091
 
-### Development
+## Development
 
 Developers who wants to debug the application have to open 2 terminals.
 
@@ -45,7 +51,7 @@ In first terminal run `npm run dev` to start webpack-dev for front-end developin
 
 In the second terminal run `nodemon --inspect bin/www` to start the backend server
 
-### Usage
+## Usage
 
 The Gateway has 3 modes:
 
@@ -78,3 +84,8 @@ The Gateway has 3 modes:
 - `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
 - `node_name`: the name of the node, if not set will be `nodeID_<node_id>`
 - `value_topic`: the topic of the value. This is manually configured by popolating a table with the values that I want to read from each device of a specific type in my network. Once scan is complete The gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
+
+
+## Authors
+
+[Daniel Lando](https://github.com/robertsLando)
