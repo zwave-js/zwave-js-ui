@@ -12,6 +12,7 @@ Fully configurable Zwave to MQTT Gateway and Control Panel.
 - **Backend**: NodeJS, Express, socket.io Webpack
 - **Frontend**: Vue,  socket.io [Vuetify](https://github.com/vuetifyjs/vuetify)
 
+**Development in progress, any contribution is welcome**
 
 ## Installation
 
