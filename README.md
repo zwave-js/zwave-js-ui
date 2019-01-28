@@ -9,8 +9,8 @@
 
 Fully configurable Zwave to MQTT Gateway and Control Panel.
 
-- **Backend**: NodeJS, Express, socket.io Webpack
-- **Frontend**: Vue,  socket.io [Vuetify](https://github.com/vuetifyjs/vuetify)
+- **Backend**: NodeJS, Express, socket.io, Webpack
+- **Frontend**: Vue,  socket.io, [Vuetify](https://github.com/vuetifyjs/vuetify)
 
 **Development in progress, any contribution is welcome**
 
@@ -75,7 +75,7 @@ Zwave settings are:
 - **Network key** (Optional): Zwave network key if security is enabled
 - **Logging**: Enable/Disable Openzwave Library logging
 - **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for peristent node information like node name and location
-- **Poll interval**: Interval in milliseconds between pools
+- **Poll interval**: Interval in milliseconds between polls
 
 
 #### MQTT
@@ -274,6 +274,12 @@ to the topic without `/set` suffix.
 #### Debug
 
 ![Debug](docs/debug.png)
+
+## TODOs
+
+- Dockerize application
+- Package application with PKG
+- Add unit test
 
 
 ## Authors
