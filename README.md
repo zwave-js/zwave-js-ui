@@ -7,7 +7,7 @@
 
 # Zwave2Mqtt
 
-Fully configurable Zwave to MQTT gateway and Control Panel.
+Fully configurable Zwave to MQTT Gateway and Control Panel.
 
 - **Backend**: NodeJS, Express, socket.io Webpack
 - **Frontend**: Vue,  socket.io [Vuetify](https://github.com/vuetifyjs/vuetify)
@@ -15,19 +15,21 @@ Fully configurable Zwave to MQTT gateway and Control Panel.
 
 ## Installation
 
-1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system. If you are using Ubuntu:
+1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
 
-```sh
-sudo apt-get install libudev-dev
-cd ~
-wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
-tar zxvf openzwave-*.gz
-cd openzwave-* && make && sudo make install
-export LD_LIBRARY_PATH=/usr/local/lib
-sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib' /etc/environment
+  If you are using Ubuntu:
+
+  ```sh
+  sudo apt-get install libudev-dev
+  cd ~
+  wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
+  tar zxvf openzwave-*.gz
+  cd openzwave-* && make && sudo make install
+  export LD_LIBRARY_PATH=/usr/local/lib64
+  sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
 ```
 
-For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
+  For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
 
 2. Test the library: go to openzwave directory `cd openzwave-*` and run the command
 
