@@ -62,9 +62,7 @@ In the second terminal run `nodemon --inspect bin/www` to start the backend serv
 
 ## Usage
 
-Firstly you need to open the browser at the link http://localhost:8091 and edit the settings.
-
-You need to enter the configuration parameters for Zwave, MQTT and the Gateway.
+Firstly you need to open the browser at the link http://localhost:8091 and edit the settings for Zwave, MQTT and the Gateway.
 
 #### Zwave
 
@@ -83,7 +81,7 @@ Mqtt settings are:
 
 - **Name**: A unique name that identify the Gateway.
 - **Host**: The url of the broker
-- **Port**: Port the broker is listening on
+- **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
 - **QoS**: Quality Of Service (check MQTT specs) of outcoming packets
@@ -98,74 +96,75 @@ Gateway settings are:
 
 - **Gateway type**: This setting specify the logic used to publish Zwave Nodes Values in MQTT topics. At the moment there are 3 possible configuration, two are automatic (all values are published in a specific topic) and one allows to manually configure which values you want to publish for each device type:
 
-1. **ValueId Topics**: *Automatically configured*. The topic where zwave values are published will be:
+  1. **ValueId Topics**: *Automatically configured*. The topic where zwave values are published will be:
 
-`<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
+  `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
 
-- `mqtt_prefix`: the prefix set in Mqtt Settings
-- `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
-- `node_id`: the unique numerical id of the node in Zwave network
-- `class_id`: the numerical class id of the value
-- `instance`: the numerical value of value instance
-- `index`: the numerical index of the value
+    - `mqtt_prefix`: the prefix set in Mqtt Settings
+    - `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
+    - `node_id`: the unique numerical id of the node in Zwave network
+    - `class_id`: the numerical class id of the value
+    - `instance`: the numerical value of value instance
+    - `index`: the numerical index of the value
 
-2. **Named Topics**: *Automatically configured*. The topic where zwave values are published will be:
 
-`<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<value_label>`
+  2. **Named Topics**: *Automatically configured*. The topic where zwave values are published will be:
 
-- `mqtt_prefix`: the prefix set in Mqtt Settings
-- `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
-- `node_name`: the name of the node, if not set will be `nodeID_<node_id>`
-- `class_name`: the node class name corrisponding to given class id or `unknownClass_<class_id>` if the class name is not found
-- `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
+  `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<value_label>`
 
-3. **Configured Manually**: *Needs configuration*. The topic where zwave values are published will be:
+    - `mqtt_prefix`: the prefix set in Mqtt Settings
+    - `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
+    - `node_name`: the name of the node, if not set will be `nodeID_<node_id>`
+    - `class_name`: the node class name corrisponding to given class id or `unknownClass_<class_id>` if the class name is not found
+    - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
 
-`<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
 
-- `mqtt_prefix`: the prefix set in Mqtt Settings
-- `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
-- `node_name`: the name of the node, if not set will be `nodeID_<node_id>`
-- `value_topic`: the topic of the value. This is manually configured in Gateway settings by popolating a table with the values that I want to read from each device of a specific type in my network. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
+  3. **Configured Manually**: *Needs configuration*. The topic where zwave values are published will be:
+
+  `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
+
+    - `mqtt_prefix`: the prefix set in Mqtt Settings
+    - `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
+    - `node_name`: the name of the node, if not set will be `nodeID_<node_id>`
+    - `value_topic`: the topic of the value. This is manually configured in Gateway settings by popolating a table with the values that I want to read from each device of a specific type in my network. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
 
 - **Payload type**: The content of the payload when an update is published:
   - **JSON Time-Value**: The payload will be a JSON object like:
 
-```json
-{
-  "time": 1548683523859,
-  "value": 10
-}
-```
+    ```json
+    {
+      "time": 1548683523859,
+      "value": 10
+    }
+    ```
 
   - **Entire Zwave value Object**
   The payload will contain all info of a value from Zwave network:
 
-  ```json
-  {
-    "value_id": "3-64-1-0",
-    "node_id": 3,
-    "class_id": 64,
-    "type": "list",
-    "genre": "user",
-    "instance": 1,
-    "index": 0,
-    "label": "Mode",
-    "units": "",
-    "help": "",
-    "read_only": false,
-    "write_only": false,
-    "min": 0,
-    "max": 0,
-    "is_polled": false,
-    "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
-    "value": "Off",
-  }
-   ```
+    ```json
+    {
+      "value_id": "3-64-1-0",
+      "node_id": 3,
+      "class_id": 64,
+      "type": "list",
+      "genre": "user",
+      "instance": 1,
+      "index": 0,
+      "label": "Mode",
+      "units": "",
+      "help": "",
+      "read_only": false,
+      "write_only": false,
+      "min": 0,
+      "max": 0,
+      "is_polled": false,
+      "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
+      "value": "Off",
+    }
+     ```
+  - **Just value**: The payload will contain only the row Numeric/String value
 
-   - **Just value**: The payload will contain only the row Numeric/String value
-
-- **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
+  - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 
 ## Features
 
@@ -176,25 +175,84 @@ Gateway settings are:
   - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 
+## MQTT APIs
+
+You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple usign MQTT.
+
+#### Zwave APIs
+
+To call a Zwave API you just need to publish a JSON object like:
+
+```json
+{
+  "args": [2,1]
+}
+```
+
+Where `args` is an array with the args used to call the api, the topic is:
+
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/<api_name>/set`
+
+The result will be publised on the same topic without `/set`
+
+Example: If I publish the previous json object to the topic
+
+`zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/getAssociations/set`
+
+I will get this response:
+
+```json
+{
+  "success":true,
+  "message":"Success zwave api call",
+  "result":[1]
+}
+```
+
+`result` will contain the value returned from the API. In this example I will get an array with all node IDs that are associated to the group 1 (lifeline) of node 2.
+
+#### Set values
+
+To write a value using MQTT you just need to send the value to set in the same topic where the value updates are published by adding the suffix `/set` to the topic.
+
+Example with gateway type `named topics`:
+
+If I publish the value `25.5` (also a payload with a json object with the value in `value` property is accepted) to the topic
+`zwave/office/nodeID_4/thermostat_setpoint/heating/set`
+
+I will set the Heating setpoint of node 4 to 25. To check if the value has been successfully write just check when the value changes on the topic:
+
+`zwave/office/nodeID_4/thermostat_setpoint/heating`
+
+#### Broadcast
+
+You can send broadcast values to all devices of a certain type in the network. Broadcast API is accessible from:
+
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic>/set`
+
+`value_topic` depends on the type of the gateway.
+
+It works like the set value API without the node name and location properties. If the API is correctly called the same payload of the request will be published to the topic without `/set` suffix.
+
 ## Screenshots
 
-Settings
+#### Settings
 
 ![OpenZWave](docs/settings.png)
 
-Control Panel
+#### Control Panel
 
 ![Control Panel](docs/OZW_Panel_Node.png)
 
-Groups associations
+#### Groups associations
 
 ![Groups](docs/groups_associations.png)
 
-Scenes
+#### Scenes
 
 ![Scenes](docs/scenes.png)
 
-Debug
+#### Debug
 
 ![Debug](docs/debug.png)
 
