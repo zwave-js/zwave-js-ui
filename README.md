@@ -278,6 +278,7 @@ to the topic without `/set` suffix.
 ## TODOs
 
 - Dockerize application
+- Better logging using Winston logger
 - Package application with PKG
 - Add unit test
 
@@ -285,3 +286,5 @@ to the topic without `/set` suffix.
 ## Authors
 
 [Daniel Lando](https://github.com/robertsLando)
+
+Support me on Patreon: https://www.patreon.com/join/2409916?
