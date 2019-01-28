@@ -56,9 +56,9 @@ npm run build
 Developers who wants to debug the application have to open 2 terminals.
 
 In first terminal run `npm run dev` to start webpack-dev for front-end developing and hot reloading at http://localhost:8092
-(**THE PORT IS 8092 FOR DEVELOPING**)
+(**THE PORT FOR DEVELOPING IS 8092**)
 
-In the second terminal run `nodemon --inspect bin/www` to start the backend server with automatically restart after changes (if you don't have nodemon installed: `npm install -g nodemon`)
+In the second terminal run `nodemon --inspect bin/www` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
 
 ## Usage
 
@@ -166,6 +166,17 @@ Gateway settings are:
 
   - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 
+
+Once finished press `SAVE` and gateway will start Zwave Network Scan, go to 'Control Panel' section and wait until
+the scan is done to check devices discovered and manage them.
+
+Settings are stored in a JSON file that you can easily import/export for backup purposes.
+
+By default Node status (true if node is ready false if node is dead) will be published in:
+
+`<mqtt_prefix>/<?node_location>/<node_name>/status`
+
+
 ## Features
 
 - Configurable Zwave to Mqtt Gateway
@@ -213,26 +224,31 @@ I will get this response:
 
 #### Set values
 
-To write a value using MQTT you just need to send the value to set in the same topic where the value updates are published by adding the suffix `/set` to the topic.
+To write a value using MQTT you just need to send the value to set in the same topic where the value updates are published by adding the suffix `/set` to the topic (**READONLY VALUES CANNOT BE WRITE**).
 
-Example with gateway type `named topics`:
+Example with gateway configured with `named topics`:
 
-If I publish the value `25.5` (also a payload with a json object with the value in `value` property is accepted) to the topic
+If I publish the value `25.5` (also a payload with a JSON object with the value in `value` property is accepted) to the topic
+
 `zwave/office/nodeID_4/thermostat_setpoint/heating/set`
 
-I will set the Heating setpoint of node 4 to 25. To check if the value has been successfully write just check when the value changes on the topic:
+I will set the Heating setpoint of the node with id `4` located in the `office` to `25.5`. To check if the value has been successfully write just check when the value changes on the topic:
 
 `zwave/office/nodeID_4/thermostat_setpoint/heating`
 
 #### Broadcast
 
-You can send broadcast values to all devices of a certain type in the network. Broadcast API is accessible from:
+You can send broadcast values to *all devices of a certain type* in the network.
+
+Broadcast API is accessible from:
 
 `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic>/set`
 
-`value_topic` depends on the type of the gateway.
+- `value_topic`: depends on the type of the gateway.
 
-It works like the set value API without the node name and location properties. If the API is correctly called the same payload of the request will be published to the topic without `/set` suffix.
+It works like the set value API without the node name and location properties.
+If the API is correctly called the same payload of the request will be published
+to the topic without `/set` suffix.
 
 ## Screenshots
 
