@@ -3,18 +3,19 @@
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
 
 ![OpenZWave](docs/OZW_Logo.png)
+**TO**
 ![MQTT](docs/MQTT-Logo.png)
 
-# Zwave2Mqtt
+# Zwave To MQTT
 
-Fully configurable Zwave to MQTT Gateway and Control Panel.
+Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 - **Backend**: NodeJS, Express, socket.io, Webpack
 - **Frontend**: Vue,  socket.io, [Vuetify](https://github.com/vuetifyjs/vuetify)
 
-**Development in progress, any contribution is welcome**
+**DEVELOPMENT IN PROGRESS, ANY CONTRIBUTION AND BUG REPORT IS WELCOME**
 
-## Installation
+## Installation :electric_plug:
 
 1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
 
@@ -54,7 +55,7 @@ npm run build
 
 6. Go to http://localhost:8091
 
-## Development
+## Development :nerd_face:
 
 Developers who wants to debug the application have to open 2 terminals.
 
@@ -63,7 +64,7 @@ In first terminal run `npm run dev` to start webpack-dev for front-end developin
 
 In the second terminal run `nodemon --inspect bin/www` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
 
-## Usage
+## Usage :wrench:
 
 Firstly you need to open the browser at the link http://localhost:8091 and edit the settings for Zwave, MQTT and the Gateway.
 
@@ -87,11 +88,11 @@ Mqtt settings are:
 - **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
-- **QoS**: Quality Of Service (check MQTT specs) of outcoming packets
-- **Retain**: The retain flag of outcoming packets
+- **QoS**: Quality Of Service (check MQTT specs) of outgoing packets
+- **Retain**: The retain flag of outgoing packets
 - **Clean**: Sets the clean flag when connecting to the broker
-- **Store**: Enable/Disable persistent storage of packets. If disabled in memory storage will be used but all packets stored in memory are lost in case of shutdowns or unexpected errors.
-- **Auth**: Enable this if broker requires auth. If so you need to enter also a valid username and password.
+- **Store**: Enable/Disable persistent storage of packets (QoS > 0). If disabled in memory storage will be used but all packets stored in memory are lost in case of shutdowns or unexpected errors.
+- **Auth**: Enable this if broker requires auth. If so you need to enter also a valid **username** and **password**.
 
 #### Gateway
 
@@ -104,7 +105,7 @@ Gateway settings are:
   `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
 
     - `mqtt_prefix`: the prefix set in Mqtt Settings
-    - `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
+    - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
     - `node_id`: the unique numerical id of the node in Zwave network
     - `class_id`: the numerical class id of the value
     - `instance`: the numerical value of value instance
@@ -116,8 +117,8 @@ Gateway settings are:
   `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<value_label>`
 
     - `mqtt_prefix`: the prefix set in Mqtt Settings
-    - `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
-    - `node_name`: the name of the node, if not set will be `nodeID_<node_id>`
+    - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+    - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
     - `class_name`: the node class name corrisponding to given class id or `unknownClass_<class_id>` if the class name is not found
     - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
 
@@ -127,8 +128,8 @@ Gateway settings are:
   `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
 
     - `mqtt_prefix`: the prefix set in Mqtt Settings
-    - `node_location`: the location of the Zwave Node (optional, if not present will not be added to the topic)
-    - `node_name`: the name of the node, if not set will be `nodeID_<node_id>`
+    - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+    - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
     - `value_topic`: the topic of the value. This is manually configured in Gateway settings by popolating a table with the values that I want to read from each device of a specific type in my network. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
 
 - **Payload type**: The content of the payload when an update is published:
@@ -167,29 +168,30 @@ Gateway settings are:
      ```
   - **Just value**: The payload will contain only the row Numeric/String value
 
-  - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
+- **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, go to 'Control Panel' section and wait until
-the scan is done to check devices discovered and manage them.
+the scan is completed to check discovered devices and manage them.
 
-Settings are stored in a JSON file that you can easily import/export for backup purposes.
+Settings, scenes and Zwave configuration are stored in JSON/xml files that you can easily import/export for backup purposes.
 
-By default Node status (true if node is ready false if node is dead) will be published in:
+By default Node status (`true` if node is ready `false` if node is dead) will be published in:
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
 
 
-## Features
+## Features :star:
 
 - Configurable Zwave to Mqtt Gateway
-- Log debug in UI
 - Zwave Control Panel:
   - **Nodes management**: check nodes status in the network, change nodes `name` and `location`, get nodes values and configure them, send actions to controller and import/export zwave configuration files
   - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
+- Log debug in UI
 
-## MQTT APIs
+
+## MQTT APIs :gift:
 
 You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple usign MQTT.
 
@@ -241,19 +243,19 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 #### Broadcast
 
-You can send broadcast values to *all devices of a certain type* in the network.
+You can send broadcast values to *all devices of a certain type* in the network (actually this only works with manually configured gateway).
 
 Broadcast API is accessible from:
 
 `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic>/set`
 
-- `value_topic`: depends on the type of the gateway.
+- `value_topic`: the topic of this value configured in gateway settings (value must have the flag `isBroadcast` set to true).
 
 It works like the set value API without the node name and location properties.
 If the API is correctly called the same payload of the request will be published
 to the topic without `/set` suffix.
 
-## Screenshots
+## Screenshots :movie_camera:
 
 #### Settings
 
@@ -275,7 +277,7 @@ to the topic without `/set` suffix.
 
 ![Debug](docs/debug.png)
 
-## TODOs
+## TODOs :pencil:
 
 - Dockerize application
 - Better logging using Winston logger
@@ -283,8 +285,8 @@ to the topic without `/set` suffix.
 - Add unit test
 
 
-## Authors
+## Author :bowtie:
 
 [Daniel Lando](https://github.com/robertsLando)
 
-Support me on Patreon: https://www.patreon.com/join/2409916?
+Support me on [Patreon](https://www.patreon.com/join/2409916) :heart:
