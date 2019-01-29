@@ -255,7 +255,7 @@ It works like the set value API without the node name and location properties.
 If the API is correctly called the same payload of the request will be published
 to the topic without `/set` suffix.
 
-## Screenshots :movie_camera:
+## Screenshots :camera:
 
 #### Settings
 
@@ -279,10 +279,10 @@ to the topic without `/set` suffix.
 
 ## TODOs :pencil:
 
-- Dockerize application
-- Better logging using Winston logger
-- Package application with PKG
-- Add unit test
+- [ ] Dockerize application
+- [ ] Better logging using Winston logger
+- [ ] Package application with PKG
+- [ ] Add unit test
 
 
 ## Author :bowtie:
