@@ -6,6 +6,7 @@
  var reqlib = require('app-root-path').require,
  jsonStore = reqlib('/lib/jsonStore.js'),
  store = reqlib('/config/store.js'),
+ debug = require('debug')('z2m:App'),
  conf = reqlib('/config/app.js');
 
 // jsonstore is a singleton instance that handles the json configuration files
@@ -74,7 +75,7 @@
      var bind = typeof addr === 'string'
        ? 'pipe ' + addr
        : 'port ' + addr.port;
-     console.log('Listening on ' + bind);
+     debug('Listening on', bind);
    }
 
    /**

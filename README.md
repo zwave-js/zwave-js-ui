@@ -279,8 +279,8 @@ to the topic without `/set` suffix.
 
 ## TODOs :pencil:
 
+- [x] Better logging
 - [ ] Dockerize application
-- [ ] Better logging using Winston logger
 - [ ] Package application with PKG
 - [ ] Add unit test
 

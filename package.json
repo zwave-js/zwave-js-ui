@@ -6,11 +6,13 @@
   "private": false,
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
-    "start": "node bin/www",
+    "dev:server": "DEBUG=z2m:* nodemon bin/www",
+    "start": "DEBUG=z2m:* node bin/www",
     "lint": "eslint --ext .js,.vue src",
     "build": "node build/build.js"
   },
   "dependencies": {
+    "ansi_up": "^3.0.0",
     "app-root-path": "^2.1.0",
     "axios": "^0.17.1",
     "axios-progress-bar": "^1.2.0",
@@ -19,6 +21,7 @@
     "body-parser": "~1.18.2",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.4",
+    "debug": "^4.1.1",
     "express": "^4.15.5",
     "jsonfile": "^4.0.0",
     "morgan": "~1.9.0",

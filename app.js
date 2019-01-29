@@ -14,12 +14,13 @@ MqttClient = reqlib('/lib/MqttClient'),
 Gateway = reqlib('/lib/Gateway'),
 uniqid = require('uniqid'),
 store = reqlib('config/store.js'),
+debug = require('debug')('z2m:App'),
 utils = reqlib('/lib/utils.js');
 
 var gw; //the gateway instance
 let io;
 
-console.log("Application path:", utils.getPath(true));
+debug("Application path:" + utils.getPath(true));
 
 // view engine setup
 app.set('views', utils.joinPath(utils.getPath(), 'views'));
@@ -57,13 +58,13 @@ app.startSocket = function(server){
 
   io.on('connection', function(socket) {
 
-    console.log("New connection", socket.id);
+    debug("New connection", socket.id);
 
     if(gw.zwave)
     socket.emit('NODES', gw.zwave.nodes)
 
     socket.on('ZWAVE_API', function(data) {
-      console.log("Zwave api call:", data.api, data.args);
+      debug("Zwave api call:", data.api, data.args);
       if(gw.zwave){
         var result = gw.zwave.callApi(data.api, ...data.args);
         result.api = data.api;
@@ -72,7 +73,7 @@ app.startSocket = function(server){
     });
 
     socket.on('disconnect', function(){
-      console.log('User disconnected', socket.id);
+      debug('User disconnected', socket.id);
     });
 
   });
@@ -94,7 +95,7 @@ app.startSocket = function(server){
 app.get('/api/settings', function(req, res) {
   SerialPort.list(function (err, ports) {
     if (err) {
-      console.log(err);
+      debug(err);
       res.json({success:false, message: "Error getting serial ports", serial_ports:[]});
     }else{
       var devices = gw.zwave ? gw.zwave.devices : {};
@@ -154,7 +155,7 @@ app.post('/api/settings', function(req, res) {
     gw.close();
     startGateway();
   }).catch(err => {
-    console.log(err);
+    debug(err);
     res.json({success: false, message: err.message})
   })
 });
@@ -172,7 +173,7 @@ app.use(function(err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
 
-  console.log(err);
+  debug(err);
 
   // render the error page
   res.status(err.status || 500);
@@ -184,7 +185,7 @@ startGateway();
 process.removeAllListeners('SIGINT');
 
 process.on('SIGINT', function() {
-  console.log('Closing...');
+  debug('Closing...');
   gw.close();
   process.exit();
 });

@@ -370,19 +370,12 @@
             <v-btn color="blue darken-1" flat @click="debug = []">Clear</v-btn>
           </v-flex>
           <v-flex xs12>
-            <v-textarea
+            <div
             id="debug_window"
-            outline
-            hide-details
-            no-resize
-            readonly
-            flat
-            solo
+            style="height:400px;width:100%;overflow-y:scroll;"
             class="body-1"
-            disabled
-            rows="20"
-            :value="debug.join('')"
-            ></v-textarea>
+            v-html="debug.join('')"
+            ></div>
           </v-flex>
         </v-layout>
       </v-container>
@@ -403,6 +396,10 @@ import ConfigApis from '@/apis/ConfigApis'
 import value from '@/apis/ConfigApis'
 
 import ValueID from '@/components/ValueId'
+
+import {default as AnsiUp} from 'ansi_up';
+
+const ansi_up = new AnsiUp();
 
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 
@@ -761,6 +758,8 @@ export default {
 
     this.socket.on('DEBUG', (data) => {
       if(self.debugActive){
+        data = ansi_up.ansi_to_html(data);
+        data = data.replace(/\n/g, '</br>');
         self.debug.push((new Date).toISOString() + ': ' + data);
 
         if(self.debug.length > MAX_DEBUG_LINES) self.debug.shift();
