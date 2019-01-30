@@ -36,19 +36,19 @@ app.use('/', express.static(utils.joinPath(utils.getPath(), 'dist')));
 app.use(cors());
 
 function startGateway(){
-  var config = jsonStore.get(store.config);
+  var settings = jsonStore.get(store.settings);
 
   var mqtt, zwave;
 
-  if(config.mqtt){
-    mqtt = new MqttClient(config.mqtt);
+  if(settings.mqtt){
+    mqtt = new MqttClient(settings.mqtt);
   }
 
-  if(config.zwave){
-    zwave = new ZWaveClient(config.zwave, io);
+  if(settings.zwave){
+    zwave = new ZWaveClient(settings.zwave, io);
   }
 
-  gw = new Gateway(config.gateway, zwave, mqtt);
+  gw = new Gateway(settings.gateway, zwave, mqtt);
 }
 
 app.startSocket = function(server){
@@ -91,7 +91,7 @@ app.startSocket = function(server){
 
 // ----- APIs ------
 
-//get config
+//get settings
 app.get('/api/settings', function(req, res) {
   SerialPort.list(function (err, ports) {
     if (err) {
@@ -99,7 +99,7 @@ app.get('/api/settings', function(req, res) {
       res.json({success:false, message: "Error getting serial ports", serial_ports:[]});
     }else{
       var devices = gw.zwave ? gw.zwave.devices : {};
-      res.json({success:true, config: jsonStore.get(store.config), devices: devices, serial_ports: ports.map(p => p.comName)});
+      res.json({success:true, settings: jsonStore.get(store.settings), devices: devices, serial_ports: ports.map(p => p.comName)});
     }
   })
 });
@@ -147,9 +147,9 @@ app.post('/api/importConfig', function(req, res) {
   }
 });
 
-//update config
+//update settings
 app.post('/api/settings', function(req, res) {
-  jsonStore.put(store.config, req.body)
+  jsonStore.put(store.settings, req.body)
   .then(data => {
     res.json({success: true, message: "Configuration updated successfully"});
     gw.close();

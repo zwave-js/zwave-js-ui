@@ -394,9 +394,7 @@ export default {
       var self = this;
       this.$emit('import', 'json', function(err, settings){
         if(settings.zwave && settings.mqtt && settings.gateway){
-          Object.assign(self.zwave, settings.zwave);
-          Object.assign(self.mqtt, settings.mqtt);
-          Object.assign(self.gateway, settings.gateway);
+          self.$store.dispatch('import', settings)
           self.showSnackbar("Configuration imported successfully")
         }else{
           self.showSnackbar("Imported settings not valid")

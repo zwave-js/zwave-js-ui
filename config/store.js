@@ -1,5 +1,5 @@
 // config/store.js
 module.exports = {
-	'config' : {file: 'config.json', default: {}} ,
+	'settings' : {file: 'settings.json', default: {}} ,
 	'scenes' : {file: 'scenes.json', default: []} ,
 };
