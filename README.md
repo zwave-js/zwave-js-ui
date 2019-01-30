@@ -46,8 +46,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
      cd ~
      mkdir Zwave2Mqtt
      cd Zwave2Mqtt
-     wget https://github.com/robertsLando/Zwave2Mqtt/files/2811961/zwave2mqtt-v1.0.0.zip
-     unzip zwave2mqtt-v1.0.0.zip
+     wget https://github.com/robertsLando/Zwave2Mqtt/releases/download/v1.0.0-beta.1/zwave2mqtt-v1.0.0_PKG.zip
+     unzip zwave2mqtt-v1.0.0_PKG.zip
      ./zwave2mqtt
      ```
 
