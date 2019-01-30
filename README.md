@@ -39,21 +39,27 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
   > replace `/dev/ttyACM0` with the USB port where your controller is connected
 
-3. Clone this repo:
+3. Now you can use the packaged version or clone this repo and build the project:
+  1. For the packaged version:
+     ```sh
+     cd ~
+     mkdir Zwave2Mqtt
+     cd Zwave2Mqtt
+     curl zwave2mqtt-v1.0.0.zip
+     unzip zwave2mqtt-v1.0.0.zip
+     DEBUG=z2m:* ./zwave2mqtt
 
-`git clone https://github.com/robertsLando/Zwave2Mqtt.git`
+     ```
+  2. If you want to compile last code from github:
 
-4. Install modules and build the project:
-
-```sh
-cd Zwave2Mqtt
-npm install
-npm run build
-```
-
-5. Start the application: `npm start`
-
-6. Go to http://localhost:8091
+    ```sh
+    git clone https://github.com/robertsLando/Zwave2Mqtt.git
+    cd Zwave2Mqtt
+    npm install
+    npm run build
+    npm start
+    ```
+    - Open the browser http://localhost:8091
 
 ## Development :nerd_face:
 
@@ -63,6 +69,8 @@ In first terminal run `npm run dev` to start webpack-dev for front-end developin
 (**THE PORT FOR DEVELOPING IS 8092**)
 
 In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
+
+To package the application run `npm run pkg` command and follow the steps
 
 ## Usage :wrench:
 
@@ -280,7 +288,7 @@ to the topic without `/set` suffix.
 
 - [x] Better logging
 - [ ] Dockerize application
-- [ ] Package application with PKG
+- [x] Package application with PKG
 - [ ] Add unit test
 
 
