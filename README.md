@@ -40,28 +40,28 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   > replace `/dev/ttyACM0` with the USB port where your controller is connected
 
 3. Now you can use the packaged version or clone this repo and build the project:
-  1. For the packaged version:
 
-     ```sh
-     cd ~
-     mkdir Zwave2Mqtt
-     cd Zwave2Mqtt
-     wget https://github.com/robertsLando/Zwave2Mqtt/releases/download/v1.0.0-beta.1/zwave2mqtt-v1.0.0_PKG.zip
-     unzip zwave2mqtt-v1.0.0_PKG.zip
-     ./zwave2mqtt
-     ```
+    - For the packaged version:
 
-  2. If you want to compile last code from github:
+       ```sh
+       cd ~
+       mkdir Zwave2Mqtt
+       cd Zwave2Mqtt
+       wget https://github.com/robertsLando/Zwave2Mqtt/releases/download/v1.0.0-beta.1/zwave2mqtt-v1.0.0_PKG.zip
+       unzip zwave2mqtt-v1.0.0_PKG.zip
+       ./zwave2mqtt
+       ```
 
-    ```sh
-    git clone https://github.com/robertsLando/Zwave2Mqtt.git
-    cd Zwave2Mqtt
-    npm install
-    npm run build
-    npm start
-    ```
+    - If you want to compile last code from github:
 
-   - Open the browser http://localhost:8091
+      ```sh
+      git clone https://github.com/robertsLando/Zwave2Mqtt.git
+      cd Zwave2Mqtt
+      npm install
+      npm run build
+      npm start
+      ```
+4. Open the browser http://localhost:8091
 
 ## Development :nerd_face:
 
