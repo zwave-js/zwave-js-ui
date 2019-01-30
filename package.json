@@ -1,15 +1,29 @@
 {
   "name": "zwave2mqtt",
   "version": "1.0.0",
+  "bin": "bin/www",
   "description": "Zwave To MQTT Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
   "private": false,
+  "pkg": {
+    "scripts": [
+      "lib/**/*.js",
+      "config/**/*.js",
+      "app.js"
+    ],
+    "assets": [
+      "views/**/*",
+      "static/**/*",
+      "dist/**/*"
+    ]
+  },
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
     "dev:server": "DEBUG=z2m:* nodemon bin/www",
     "start": "DEBUG=z2m:* node bin/www",
     "lint": "eslint --ext .js,.vue src",
-    "build": "node build/build.js"
+    "build": "node build/build.js",
+    "pkg": "sudo chmod +x package.sh && ./package.sh"
   },
   "dependencies": {
     "ansi_up": "^3.0.0",
