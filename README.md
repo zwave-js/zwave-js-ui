@@ -48,7 +48,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
      cd Zwave2Mqtt
      wget https://github.com/robertsLando/Zwave2Mqtt/files/2811961/zwave2mqtt-v1.0.0.zip
      unzip zwave2mqtt-v1.0.0.zip
-     DEBUG=z2m:* ./zwave2mqtt
+     ./zwave2mqtt
      ```
 
   2. If you want to compile last code from github:
@@ -60,7 +60,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     npm run build
     npm start
     ```
-    
+
    - Open the browser http://localhost:8091
 
 ## Development :nerd_face:

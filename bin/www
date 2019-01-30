@@ -9,6 +9,9 @@
  debug = require('debug')('z2m:App'),
  conf = reqlib('/config/app.js');
 
+//Enable debug by default
+ require('debug').enable('z2m:*');
+
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
 // if jsonstore fails exit the application

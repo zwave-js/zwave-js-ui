@@ -19,8 +19,8 @@
   },
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
-    "dev:server": "DEBUG=z2m:* nodemon bin/www",
-    "start": "DEBUG=z2m:* node bin/www",
+    "dev:server": "nodemon bin/www",
+    "start": "node bin/www",
     "lint": "eslint --ext .js,.vue src",
     "build": "node build/build.js",
     "pkg": "sudo chmod +x package.sh && ./package.sh"
