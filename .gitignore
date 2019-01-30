@@ -9,6 +9,7 @@ yarn-error.log*
 # Distribution path
 /dist/
 /store/
+/pkg/
 
 # Runtime data
 pids
