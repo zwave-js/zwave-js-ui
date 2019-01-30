@@ -62,7 +62,7 @@ Developers who wants to debug the application have to open 2 terminals.
 In first terminal run `npm run dev` to start webpack-dev for front-end developing and hot reloading at http://localhost:8092
 (**THE PORT FOR DEVELOPING IS 8092**)
 
-In the second terminal run `nodemon --inspect bin/www` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
+In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
 
 ## Usage :wrench:
 
@@ -70,7 +70,7 @@ Firstly you need to open the browser at the link http://localhost:8091 and edit 
 
 #### Zwave
 
-Zwave settings are:
+Zwave settings:
 
 - **Serial port**: The serial port where your controller is connected
 - **Network key** (Optional): Zwave network key if security is enabled
@@ -81,7 +81,7 @@ Zwave settings are:
 
 #### MQTT
 
-Mqtt settings are:
+Mqtt settings:
 
 - **Name**: A unique name that identify the Gateway.
 - **Host**: The url of the broker
@@ -96,7 +96,7 @@ Mqtt settings are:
 
 #### Gateway
 
-Gateway settings are:
+Gateway settings:
 
 - **Gateway type**: This setting specify the logic used to publish Zwave Nodes Values in MQTT topics. At the moment there are 3 possible configuration, two are automatic (all values are published in a specific topic) and one allows to manually configure which values you want to publish for each device type:
 
@@ -171,10 +171,9 @@ Gateway settings are:
 - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 
 
-Once finished press `SAVE` and gateway will start Zwave Network Scan, go to 'Control Panel' section and wait until
-the scan is completed to check discovered devices and manage them.
+Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
-Settings, scenes and Zwave configuration are stored in JSON/xml files that you can easily import/export for backup purposes.
+Settings, scenes and Zwave configuration are stored in `JSON/xml` files that you can easily **import/export** for backup purposes.
 
 By default Node status (`true` if node is ready `false` if node is dead) will be published in:
 
@@ -215,7 +214,7 @@ Example: If I publish the previous json object to the topic
 
 `zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/getAssociations/set`
 
-I will get this response:
+I will get this response (in the same topic without the suffix `/set`):
 
 ```json
 {
