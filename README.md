@@ -60,8 +60,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     npm run build
     npm start
     ```
-
-    - Open the browser http://localhost:8091
+    
+   - Open the browser http://localhost:8091
 
 ## Development :nerd_face:
 
