@@ -41,6 +41,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 3. Now you can use the packaged version or clone this repo and build the project:
   1. For the packaged version:
+
      ```sh
      cd ~
      mkdir Zwave2Mqtt
@@ -48,8 +49,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
      wget https://github.com/robertsLando/Zwave2Mqtt/files/2811961/zwave2mqtt-v1.0.0.zip
      unzip zwave2mqtt-v1.0.0.zip
      DEBUG=z2m:* ./zwave2mqtt
-
      ```
+
   2. If you want to compile last code from github:
 
     ```sh
@@ -59,6 +60,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     npm run build
     npm start
     ```
+
     - Open the browser http://localhost:8091
 
 ## Development :nerd_face:
