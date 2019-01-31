@@ -497,6 +497,14 @@ export default {
       cnt_action: 'healNetwork',
       cnt_actions:[
         {
+          text: "Add Node (inclusion)",
+          value: "addNode"
+        },
+        {
+          text: "Remove Node (exclusion)",
+          value: "removeNode"
+        },
+        {
           text: "Heal Network",
           value: "healNetwork"
         },

@@ -39,7 +39,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
   > replace `/dev/ttyACM0` with the USB port where your controller is connected
 
-3. Now you can use the packaged version or clone this repo and build the project:
+3. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
 
     - For the packaged version:
 
@@ -292,6 +292,7 @@ to the topic without `/set` suffix.
 - [ ] Dockerize application
 - [x] Package application with PKG
 - [ ] Add unit test
+- [ ] JSON validator for settings and scenes
 
 
 ## Author :bowtie:
