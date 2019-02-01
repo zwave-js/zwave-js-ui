@@ -61,7 +61,7 @@ app.startSocket = function(server){
     debug("New connection", socket.id);
 
     if(gw.zwave)
-    socket.emit('NODES', gw.zwave.nodes)
+    socket.emit('INIT', {nodes: gw.zwave.nodes, info: gw.zwave.ozwConfig, error:gw.zwave.error, cntStatus: gw.zwave.cntStatus})
 
     socket.on('ZWAVE_API', function(data) {
       debug("Zwave api call:", data.api, data.args);

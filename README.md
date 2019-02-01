@@ -189,6 +189,14 @@ By default Node status (`true` if node is ready `false` if node is dead) will be
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
 
+#### Nodes Management
+
+To add a node using the UI select the controller Action `Add Node (inclusion)`, click send (:airplane:) button to enable the inclusion mode in your controller and enable the inclusion mode in your device to. `Controller status` will be `waiting` when inclusion has been successfully enabled on the controller and `completed` when the node has been successfully added. Wait few seconds and your node will be visible in the table once ready.
+
+To add a node using the UI select the controller Action `Remove Node (exlusion)`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` will be `waiting` when exclusion has been successfully enabled on the controller and `completed` when the node has been successfully removed. Wait few seconds and your node will be removed from the table.
+
+To replace a failed node using the UI you have to check if the Node is failed using `Has node failed` command. If Controller status says `NodeFailed` the node can be replaced, if not controller will say `NodeOk`. Sometimes to update node state and make it failed you firstly need to send `Update return route` command than send `Has node failed` and check if the status now is `NodeFailed`. If so you can replace the node using the command `Replace Failed Node`, now the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
+
 
 ## Features :star:
 

@@ -6,19 +6,45 @@
       <v-card-text>
 
         <v-container fluid>
+
           <v-layout>
+            <v-flex xs12 sm3 md2 mr-2>
+              <v-text-field
+              label="Home ID"
+              disabled
+              v-model="homeid"
+              ></v-text-field>
+            </v-flex>
+            <v-flex xs12 sm3 md2>
+              <v-text-field
+              label="Home Hex"
+              disabled
+              v-model="homeHex"
+              ></v-text-field>
+            </v-flex>
+          </v-layout>
+
+          <v-layout>
+
+            <v-flex xs12 sm3 md2 mr-2>
+              <v-text-field
+                label="Controller status"
+                disabled
+                v-model="cnt_status"
+              ></v-text-field>
+            </v-flex>
 
             <v-flex xs12 sm6 md4>
               <v-select
               label="Actions"
               append-outer-icon="send"
               v-model="cnt_action"
-              :items="cnt_actions"
+              :items="cnt_actions.concat(node_actions)"
               @click:append-outer="sendCntAction"
               ></v-select>
             </v-flex>
 
-            <v-flex xs12 sm6 md4 align-self-center>
+            <v-flex xs12 sm6 md3 align-self-center>
               <v-btn icon @click.native="saveConfiguration">
                 <v-tooltip bottom>
                 <v-icon dark color="primary" slot="activator">save</v-icon>
@@ -42,6 +68,11 @@
           </v-layout>
         </v-container>
 
+        <v-layout row wrap>
+          <v-flex xs12 ml-2>
+            <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
+          </v-flex>
+        </v-layout>
 
         <v-data-table
         :headers="headers"
@@ -51,13 +82,21 @@
         class="elevation-1"
         >
         <template slot="items" slot-scope="props">
-          <tr style="cursor:pointer;" v-if="props.item" :active="selectedNode == props.item" @click="selectedNode == props.item ? selectedNode = null : selectedNode = props.item">
+          <tr style="cursor:pointer;" v-if="!props.item.failed" :active="selectedNode == props.item" @click="selectedNode == props.item ? selectedNode = null : selectedNode = props.item">
             <td>{{ props.item.node_id }}</td>
             <td>{{ props.item.type }}</td>
             <td>{{ props.item.ready ? (props.item.product + ' (' + props.item.manufacturer + ')') : '' }}</td>
             <td>{{ props.item.name }}</td>
             <td>{{ props.item.loc }}</td>
             <td>{{ props.item.status}}</td>
+          </tr>
+          <tr v-else-if="showHidden" :active="selectedNode == props.item" @click="selectedNode == props.item ? selectedNode = null : selectedNode = props.item">
+            <td>{{ props.item.node_id }}</td>
+            <td>{{ props.item.type }}</td>
+            <td>{{ '' }}</td>
+            <td>{{ '' }}</td>
+            <td>{{ '' }}</td>
+            <td>{{ props.item.status }}</td>
           </tr>
         </template>
       </v-data-table>
@@ -128,9 +167,9 @@
           </v-flex>
         </v-layout>
 
-        <v-subheader>Values</v-subheader>
+        <v-layout v-if="selectedNode.values" column>
 
-        <v-layout column>
+          <v-subheader>Values</v-subheader>
 
           <!-- USER VALUES -->
           <v-expansion-panel class="elevation-0">
@@ -454,8 +493,12 @@ export default {
       nodes: [],
       scenes: [],
       debug: [],
+      homeid: "",
+      homeHex: "",
+      showHidden: false,
       debugActive: false,
       selectedScene: null,
+      cnt_status: 'Unknown',
       newScene: '',
       scene_values: [],
       dialogValue: false,
@@ -490,8 +533,24 @@ export default {
           value: "sendNodeInformation"
         },
         {
-          text: "Replace node",
+          text: "Request network update",
+          value: "requestNetworkUpdate"
+        },
+        {
+          text: "Node statistic",
+          value: "getNodeStatistics"
+        },
+        {
+          text: "Has node failed",
+          value: "hasNodeFailed"
+        },
+        {
+          text: "Replace failed node",
           value: "replaceFailedNode"
+        },
+        {
+          text: "Replication send",
+          value: "replicationSend"
         },
       ],
       cnt_action: 'healNetwork',
@@ -505,8 +564,28 @@ export default {
           value: "removeNode"
         },
         {
+          text: "Transfer primary role",
+          value: "transferPrimaryRole"
+        },
+        {
+          text: "Create new primary",
+          value: "createNewPrimary"
+        },
+        {
+          text: "Receive configuration",
+          value: "receiveConfiguration"
+        },
+        {
+          text: "Cancel Command",
+          value: "cancelControllerCommand"
+        },
+        {
           text: "Heal Network",
           value: "healNetwork"
+        },
+        {
+          text: "Driver statistic",
+          value: "getDriverStatistics"
         },
         {
           text: "Hard reset",
@@ -661,7 +740,19 @@ export default {
     },
     sendCntAction(){
       if(this.cnt_action){
-        this.apiRequest(this.cnt_action, [])
+        var args = []
+        var askId = this.node_actions.find(a => a.value == this.cnt_action);
+        if(askId) {
+          var id = parseInt(prompt("Node ID"));
+
+          if(isNaN(id)) {
+            this.showMessage("Node ID must be an integer value")
+            return;
+          }
+          args.push(id);
+        }
+
+        this.apiRequest(this.cnt_action, args)
       }
     },
     sendNodeAction(){
@@ -724,16 +815,21 @@ export default {
       this.apiRequest('setValue', [v.node_id, v.class_id, v.instance, v.index, v.type == "button" ? true : v.newValue])
       v.toUpdate = true;
     },
+    jsonToList(obj){
+      var s = "";
+      for (var k in obj)
+        s += k+': '+obj[k]+'\n'
+
+      return s;
+    },
     initNode(n){
-      if(n){
-        var values = [];
-        for (var k in n.values) {
-          n.values[k].newValue = n.values[k].value;
-          values.push(n.values[k]);
-        }
-        n.values = values;
-        this.setName(n);
+      var values = [];
+      for (var k in n.values) {
+        n.values[k].newValue = n.values[k].value;
+        values.push(n.values[k]);
       }
+      n.values = values;
+      this.setName(n);
     },
     setName(n){
       n._name = n.name || "NodeID_" + n.node_id
@@ -764,6 +860,19 @@ export default {
       self.$emit("updateStatus" ,"Reconnecting", "yellow");
     });
 
+    this.socket.on('CONTROLLER_CMD', (data) => {
+      self.cnt_status = data.help;
+    });
+
+    this.socket.on('DRIVER_READY', (info) => {
+      self.homeid = info.homeid;
+      self.homeHex = info.name;
+    });
+
+    this.socket.on('NODE_REMOVED', (node) => {
+      self.$set(self.nodes, node.node_id, node)
+    });
+
     this.socket.on('DEBUG', (data) => {
       if(self.debugActive){
         data = ansi_up.ansi_to_html(data);
@@ -777,23 +886,32 @@ export default {
       }
     });
 
-    this.socket.on('NODES', (data) => {
+    this.socket.on('INIT', (data) => {
       //convert node values in array
-      for (var i = 0; i < data.length; i++) {
-        self.initNode(data[i])
+      var nodes = data.nodes;
+      for (var i = 0; i < nodes.length; i++) {
+        self.initNode(nodes[i])
       }
-      self.nodes = data;
+      self.nodes = nodes;
+      self.cnt_status = data.error ? data.error : data.cntStatus;
+      self.homeid = data.info.homeid;
+      self.homeHex = data.info.name;
     });
 
     this.socket.on('NODE_UPDATED', (data) => {
-      if(self.nodes[data.node_id]){
+      if(self.nodes[data.node_id] && !self.nodes[data.node_id].failed){
         delete data.values;
         self.setName(data);
         Object.assign(self.nodes[data.node_id], data)
       }
       else{
         self.initNode(data);
-        self.nodes[data.node_id] = data;
+
+        //add missing nodes
+        while(self.nodes.length < data.node_id)
+          self.nodes.push({node_id: self.nodes.length, failed: true, status: "Removed"});
+
+        self.$set(self.nodes, data.node_id, data);
       }
     });
 
@@ -831,6 +949,12 @@ export default {
           break;
           case "sceneGetValues":
           self.scene_values = data.result;
+          break;
+          case "getDriverStatistics":
+          confirm("Driver statistics \n" + self.jsonToList(data.result))
+          break;
+          case "getNodeStatistics":
+          confirm("Node statistics \n" + self.jsonToList(data.result))
           break;
           default:
           self.showSnackbar("Successfully call api " + data.api);
