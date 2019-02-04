@@ -889,7 +889,8 @@ export default {
       if(self.debugActive){
         data = ansi_up.ansi_to_html(data);
         data = data.replace(/\n/g, '</br>');
-        self.debug.push((new Date).toISOString() + ': ' + data);
+        //\b[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z\b
+        self.debug.push(data);
 
         if(self.debug.length > MAX_DEBUG_LINES) self.debug.shift();
 
