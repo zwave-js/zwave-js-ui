@@ -54,7 +54,7 @@
                   :rules="[rules.required]"
                   required
                   suffix="millis"
-                  hint="Milliseconds between each pull"
+                  hint="Milliseconds between each pull (should not be less than 1s per device)"
                   type="number"
                   >
                 </v-text-field>

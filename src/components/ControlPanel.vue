@@ -683,11 +683,15 @@ export default {
       this.$emit('export', this.scenes, 'scenes');
     },
     apiRequest(apiName, args){
-      var data = {
-        api: apiName,
-        args: args,
+      if(this.socket.connected){
+        var data = {
+          api: apiName,
+          args: args,
+        }
+        this.socket.emit('ZWAVE_API', data)
+      }else{
+        this.showSnackbar("Socket disconnected")
       }
-      this.socket.emit('ZWAVE_API', data)
     },
     refreshValues(){
       if(this.selectedScene){
