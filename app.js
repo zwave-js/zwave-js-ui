@@ -14,7 +14,7 @@ MqttClient = reqlib('/lib/MqttClient'),
 Gateway = reqlib('/lib/Gateway'),
 uniqid = require('uniqid'),
 store = reqlib('config/store.js'),
-debug = require('debug')('z2m:App'),
+debug = reqlib('/lib/debug')('App'),
 utils = reqlib('/lib/utils.js');
 
 var gw; //the gateway instance

@@ -549,8 +549,16 @@ export default {
           value: "replaceFailedNode"
         },
         {
+          text: "Heal node",
+          value: "healNetworkNode"
+        },
+        {
           text: "Replication send",
           value: "replicationSend"
+        },
+        {
+          text: "Test node",
+          value: "testNetworkNode"
         },
       ],
       cnt_action: 'healNetwork',
@@ -594,6 +602,10 @@ export default {
         {
           text: "Soft reset",
           value: "softReset"
+        },
+        {
+          text: "Test network",
+          value: "testNetwork"
         }
       ],
       newName: '',
