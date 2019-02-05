@@ -260,17 +260,28 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 #### Broadcast
 
-You can send broadcast values to *all devices of a certain type* in the network (actually this only works with manually configured gateway).
+You can send broadcast values to *all values with a specific suffix* in the network.
 
 Broadcast API is accessible from:
 
-`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic>/set`
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic_suffix>/set`
 
-- `value_topic`: the topic of this value configured in gateway settings (value must have the flag `isBroadcast` set to true).
+- `value_topic_suffix`: the suffix of the topic of the value I want to control using broadcast.
 
 It works like the set value API without the node name and location properties.
 If the API is correctly called the same payload of the request will be published
 to the topic without `/set` suffix.
+
+Example of broadcast command (gateway configured as `named topics`):
+
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating/set`
+
+Payload: `25.5`
+
+All nodes with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
+
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
+
 
 ## Screenshots :camera:
 
