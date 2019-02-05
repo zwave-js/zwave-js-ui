@@ -50,14 +50,6 @@
           </v-flex>
           <v-flex xs6>
             <v-switch
-            label="Broadcast"
-            hint="Enable this to allow brodcast commands to this value"
-            persistent-hint
-            v-model="editedValue.isBroadcast"
-            ></v-switch>
-          </v-flex>
-          <v-flex xs6>
-            <v-switch
             label="Poll"
             hint="Enable poll of this value"
             persistent-hint
