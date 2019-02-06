@@ -59,6 +59,15 @@
                   >
                 </v-text-field>
               </v-flex>
+              <v-flex xs6>
+                <v-text-field
+                v-model.trim="zwave.configPath"
+                label="Config Path"
+                required
+                hint="Path to devices library DB. If not set the default path will be used based on your OS"
+                >
+              </v-text-field>
+            </v-flex>
               </v-layout>
               </v-card-text>
             </v-card>

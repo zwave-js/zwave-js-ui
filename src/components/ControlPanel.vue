@@ -147,6 +147,8 @@
             <v-text-field
             label="New name"
             append-outer-icon="send"
+            :error="nameError"
+            :error-messages="nameError"
             v-model.trim="newName"
             @click:append-outer="updateName"
             ></v-text-field>
@@ -162,6 +164,8 @@
             label="New Location"
             append-outer-icon="send"
             v-model.trim="newLoc"
+            :error="locError"
+            :error-messages="locError"
             @click:append-outer="updateLoc"
             ></v-text-field>
           </v-flex>
@@ -462,6 +466,12 @@ export default {
     dialogValue (val) {
       val || this.closeDialog()
     },
+    newName(val){
+      this.nameError = /["+*\s]+/g.test(val) ? "Remove \" + * and blank space charaters" : false;
+    },
+    newLoc(val){
+      this.locError = /["+*\s]+/g.test(val) ? "Remove \" + * and blank space charaters" : false;
+    },
     selectedNode(){
       if(this.selectedNode){
         this.newName = this.selectedNode.name;
@@ -609,6 +619,8 @@ export default {
         }
       ],
       newName: '',
+      nameError: false,
+      locError: false,
       newLoc: '',
       selectedNode: null,
       headers: [
@@ -780,13 +792,13 @@ export default {
       this.apiRequest('writeConfig', []);
     },
     updateName(){
-      if(this.selectedNode){
+      if(this.selectedNode && !this.nameError){
         this.apiRequest('setNodeName', [this.selectedNode.node_id, this.newName])
         this.apiRequest('refreshNodeInfo', [this.selectedNode.node_id]);
       }
     },
     updateLoc(){
-      if(this.selectedNode){
+      if(this.selectedNode && !this.locError){
         this.apiRequest('setNodeLocation', [this.selectedNode.node_id, this.newLoc])
         this.apiRequest('refreshNodeInfo', [this.selectedNode.node_id]);
       }

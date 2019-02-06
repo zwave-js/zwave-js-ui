@@ -106,7 +106,7 @@ export default {
       return device ? device.values : [];
     },
     requiredIntensity(){
-      return (!this.editedValue.enablePoll || (this.editedValue.enablePoll && this.editedValue.pollIntensity >= 0)) || 'Min value is 0'
+      return (!this.editedValue.enablePoll || (this.editedValue.enablePoll && this.editedValue.pollIntensity > 0)) || 'Min value is 1'
     }
   },
   data() {
