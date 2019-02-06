@@ -47,6 +47,14 @@
                   v-model="zwave.saveConfig"
                   ></v-switch>
                 </v-flex>
+                <v-flex xs12 sm6>
+                  <v-switch
+                  hint="Assume Devices that support the Wakeup Class are awake when starting up OZW"
+                  persistent-hint
+                  label="Assume awake"
+                  v-model="zwave.assumeAwake"
+                  ></v-switch>
+                </v-flex>
                 <v-flex xs6>
                   <v-text-field
                   v-model.number="zwave.pollInterval"
