@@ -92,7 +92,7 @@
                 <v-layout wrap>
                 <v-flex xs12 sm6 md4>
                   <v-text-field
-                  v-model="mqtt.name"
+                  v-model.trim="mqtt.name"
                   label="Name"
                   :rules="[rules.required, rules.validName]"
                   hint="Unique name that identify this gateway"
@@ -102,7 +102,7 @@
               </v-flex>
               <v-flex xs12 sm6 md4>
                 <v-text-field
-                v-model="mqtt.host"
+                v-model.trim="mqtt.host"
                 label="Host url"
                 :rules="[rules.required]"
                 hint="The host url"
@@ -134,7 +134,7 @@
         </v-flex>
         <v-flex xs12 sm6 md4>
           <v-text-field
-          v-model="mqtt.prefix"
+          v-model.trim="mqtt.prefix"
           label="Prefix"
           :rules="[rules.required, rules.validName]"
           hint="The prefix to add to each topic"
@@ -244,7 +244,6 @@
       </v-flex>
 
       <v-data-table
-      v-if="gateway.type == 2"
       :headers="headers"
       :items="gateway.values"
       :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
@@ -276,7 +275,7 @@
       </v-data-table>
     </v-layout>
     </v-card-text>
-    <v-card-actions v-if="gateway.type == 2" >
+    <v-card-actions>
       <v-btn color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
     </v-card-actions>
   </v-card>
@@ -289,6 +288,7 @@
 @save="saveValue"
 @close="closeDialog"
 v-model="dialogValue"
+:gw_type="gateway.type"
 :title="dialogTitle"
 :editedValue="editedValue"
 :devices="devices"

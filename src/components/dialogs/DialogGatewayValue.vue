@@ -33,9 +33,9 @@
               </v-flex>
               <v-flex xs12>
                 <v-text-field
-                v-model="editedValue.topic"
+                v-model.trim="editedValue.topic"
                 label="Topic"
-                :rules="[required]"
+                :rules="[requiredTopic]"
                 required
                 >
               </v-text-field>
@@ -91,6 +91,7 @@ export default {
   },
   props: {
     value: Boolean,
+    gw_type: Number,
     title: String,
     editedValue: Object,
     devices: Array,
@@ -107,6 +108,9 @@ export default {
     },
     requiredIntensity(){
       return (!this.editedValue.enablePoll || (this.editedValue.enablePoll && this.editedValue.pollIntensity > 0)) || 'Min value is 1'
+    },
+    requiredTopic(){
+      return (this.gw_type != 2 || !!this.editedValue.topic) || "Topic required";
     }
   },
   data() {
