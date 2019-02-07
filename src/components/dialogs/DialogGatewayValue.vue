@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="value" max-width="500px">
+  <v-dialog v-model="value" max-width="500px" persistent>
     <v-card>
       <v-card-title>
         <span class="headline">{{ title }}</span>
@@ -94,11 +94,11 @@ export default {
     gw_type: Number,
     title: String,
     editedValue: Object,
-    devices: Array,
+    devices: Array
   },
   watch: {
     value(val){
-      this.$refs.form.resetValidation()
+      this.$refs.form.resetValidation();
     }
   },
   computed:{
