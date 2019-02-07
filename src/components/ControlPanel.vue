@@ -147,7 +147,7 @@
             <v-text-field
             label="New name"
             append-outer-icon="send"
-            :error="nameError"
+            :error="!!nameError"
             :error-messages="nameError"
             v-model.trim="newName"
             @click:append-outer="updateName"
@@ -164,7 +164,7 @@
             label="New Location"
             append-outer-icon="send"
             v-model.trim="newLoc"
-            :error="locError"
+            :error="!!locError"
             :error-messages="locError"
             @click:append-outer="updateLoc"
             ></v-text-field>
@@ -467,10 +467,10 @@ export default {
       val || this.closeDialog()
     },
     newName(val){
-      this.nameError = /["+*\s]+/g.test(val) ? "Remove \" + * and blank space charaters" : false;
+      this.nameError = /["+*\s]+/g.test(val) ? "Remove \" + * and blank space charaters" : null;
     },
     newLoc(val){
-      this.locError = /["+*\s]+/g.test(val) ? "Remove \" + * and blank space charaters" : false;
+      this.locError = /["+*\s]+/g.test(val) ? "Remove \" + * and blank space charaters" : null;
     },
     selectedNode(){
       if(this.selectedNode){
@@ -619,8 +619,8 @@ export default {
         }
       ],
       newName: '',
-      nameError: false,
-      locError: false,
+      nameError: null,
+      locError: null,
       newLoc: '',
       selectedNode: null,
       headers: [
