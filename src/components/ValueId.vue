@@ -2,7 +2,7 @@
 
   <div v-if="value.read_only">
     <v-text-field
-    :label="value.label"
+    :label="value.label +' ('+value.value_id+')'"
     disabled
     :suffix="value.units"
     :hint="value.help || ''"
@@ -13,7 +13,7 @@
   <div v-else>
       <v-text-field
       v-if="['byte', 'short', 'decimal', 'string'].indexOf(value.type) >= 0"
-      :label="value.label"
+      :label="value.label +' ('+value.value_id+')'"
       :type="value.type == 'string' ? 'text' : 'number'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.units"
@@ -27,7 +27,7 @@
       <v-select
       v-if="value.type == 'list'"
       :items="value.values"
-      :label="value.label"
+      :label="value.label +' ('+value.value_id+')'"
       :hint="value.help || ''"
       :append-outer-icon="!disable_send ? 'send' : null"
       v-model="value.newValue"
@@ -36,20 +36,24 @@
 
       <v-switch
       v-if="value.type == 'bool'"
-      :label="value.label"
+      :label="value.label +' ('+value.value_id+')'"
       :hint="value.help || ''"
+      persistent-hint
       v-model="value.newValue"
       @change="updateValue(value)"
       ></v-switch>
 
-      <v-btn
-      v-if="value.type == 'button'"
-      color="primary"
-      :hint="value.help || ''"
-      dark
-      @click="updateValue(value)"
-      class="mb-2"
-      >{{value.label}}</v-btn>
+      <v-tooltip right>
+        <v-btn
+        v-if="value.type == 'button'"
+        slot="activator"
+        color="primary"
+        dark
+        @click="updateValue(value)"
+        class="mb-2"
+        >{{value.label}}</v-btn>
+      <span>{{' ('+value.value_id+')' + (value.help || '')}}</span>
+    </v-tooltip>
 
   </div>
 </template>

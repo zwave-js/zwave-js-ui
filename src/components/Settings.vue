@@ -254,18 +254,19 @@
         <td>{{ props.item.value.label + ' (' + props.item.value.value_id + ')' }}</td>
         <td class="text-xs">{{ props.item.topic }}</td>
         <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
-        <td class="text-xs">{{ props.item.isBroadcast ? 'Yes' : 'No' }}</td>
         <td class="text-xs">{{ props.item.enablePoll ? ("Intensity " + props.item.pollIntensity) : 'No' }}</td>
         <td class="justify-center layout px-0">
           <v-icon
           small
           class="mr-2"
+          color="green"
           @click="editItem(props.item)"
           >
           edit
         </v-icon>
         <v-icon
         small
+        color="red"
         @click="deleteItem(props.item)"
         >
         delete
@@ -353,7 +354,6 @@ export default {
         { text: 'Value', value: 'value', sortable:false},
         { text: 'Topic', value: 'topic'},
         { text: 'Post Operation', value: 'postOperation'},
-        { text: 'Broadcast', value: 'isBroadcast'},
         { text: 'Poll', value: 'enablePoll'},
         { text: 'Actions', sortable: false }
       ],
@@ -447,7 +447,7 @@ export default {
     },
     deviceName(deviceID){
       var device = this.devices.find(d => d.value == deviceID);
-      return device ? device.name : "";
+      return device ? device.name : deviceID;
     },
     saveValue () {
       if (this.editedIndex > -1) {

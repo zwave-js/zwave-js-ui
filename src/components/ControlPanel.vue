@@ -254,7 +254,7 @@
           <v-select
           label="Node"
           v-model="group.node"
-          :items="nodes.filter(n => !!n)"
+          :items="nodes.filter(n => !n.failed)"
           return-object
           @change="resetGroup"
           item-text="_name"
@@ -282,7 +282,7 @@
           <v-select
           label="Target"
           v-model="group.target"
-          :items="nodes.filter(n => !!n && n != group.node)"
+          :items="nodes.filter(n => !n.failed && n != group.node)"
           return-object
           item-text="_name"
           ></v-select>
