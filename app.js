@@ -96,11 +96,9 @@ app.get('/api/settings', function(req, res) {
   SerialPort.list(function (err, ports) {
     if (err) {
       debug(err);
-      res.json({success:false, message: "Error getting serial ports", serial_ports:[]});
-    }else{
-      var devices = gw.zwave ? gw.zwave.devices : {};
-      res.json({success:true, settings: jsonStore.get(store.settings), devices: devices, serial_ports: ports.map(p => p.comName)});
     }
+    var devices = gw.zwave ? gw.zwave.devices : {};
+    res.json({success:true, settings: jsonStore.get(store.settings), devices: devices, serial_ports: ports ? ports.map(p => p.comName) : []});
   })
 });
 
