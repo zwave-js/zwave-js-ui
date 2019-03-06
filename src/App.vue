@@ -22,12 +22,13 @@
           </v-list-tile>
         </v-list>
 
-      </v-toolbar>
+    </v-toolbar>
     <v-divider></v-divider>
     <v-list>
       <v-list-tile
       v-for="item in pages"
       :key="item.title"
+      @click.stop="mini ? mini = true : mini = false"
       :to="item.path == '#' ? '' : item.path"
       >
         <v-list-tile-action>
@@ -37,7 +38,6 @@
           <v-list-tile-title>{{ item.title }}</v-list-tile-title>
         </v-list-tile-content>
       </v-list-tile>
-    </v-list>
     </v-list>
     <v-footer absolute v-if="!mini" class="pa-3">
     <div>Innovation System &copy; {{ new Date().getFullYear() }}</div>

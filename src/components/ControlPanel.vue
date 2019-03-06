@@ -780,6 +780,11 @@ export default {
           args.push(id);
         }
 
+        if(this.cnt_action == "addNode"){
+          var secure = confirm("Start inclusion in in security mode?");
+          args.push(secure);
+        }
+
         this.apiRequest(this.cnt_action, args)
       }
     },
