@@ -126,12 +126,13 @@ Gateway settings:
 
   2. **Named Topics**: *Automatically configured*. The topic where zwave values are published will be:
 
-  `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<value_label>`
+  `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
 
     - `mqtt_prefix`: the prefix set in Mqtt Settings
     - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
     - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
     - `class_name`: the node class name corrisponding to given class id or `unknownClass_<class_id>` if the class name is not found
+    - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
     - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
 
 
