@@ -150,8 +150,7 @@ app.post('/api/settings', function(req, res) {
   jsonStore.put(store.settings, req.body)
   .then(data => {
     res.json({success: true, message: "Configuration updated successfully"});
-    gw.close();
-    startGateway();
+    gw.close(() => startGateway());
   }).catch(err => {
     debug(err);
     res.json({success: false, message: err.message})
@@ -184,8 +183,7 @@ process.removeAllListeners('SIGINT');
 
 process.on('SIGINT', function() {
   debug('Closing...');
-  gw.close();
-  process.exit();
+  gw.close(() => process.exit());
 });
 
 module.exports = app;
