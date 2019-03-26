@@ -60,6 +60,7 @@ options=(
 	"armv7"
 	"armv6"
 	"x86"
+	"alpine"
 )
 echo ''
 select option in "${options[@]}"; do
@@ -82,6 +83,11 @@ select option in "${options[@]}"; do
 		4)
 			echo "## Creating application package in $PKG_FOLDER folder"
 			sudo pkg package.json -t node8-linux-x86 --out-path $PKG_FOLDER
+			break
+			;;
+		5)
+			echo "## Creating application package in $PKG_FOLDER folder"
+			sudo pkg package.json -t node8-alpine-x64 --out-path $PKG_FOLDER
 			break
 			;;
 		*)
