@@ -116,7 +116,7 @@ do
   let "i = $i + 1"
 done
 
-echo "## Create folders needed (backups, logs and icons) and copy widgets lib"
+echo "## Create folders needed"
 cd $PKG_FOLDER
 mkdir store -p
 echo "## Create zip file $APP-v$VERSION"
