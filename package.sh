@@ -99,7 +99,7 @@ select option in "${options[@]}"; do
 done
 
 echo "## Check for .node files to include in executable folder"
-declare TO_INCLUDE=($(find ./node_modules/ -type f -name "*.node"))
+declare TO_INCLUDE=($(find ./node_modules/ -type f -name "*.node" | grep -v obj.target))
 
 TOTAL_INCLUDE=${#TO_INCLUDE[@]}
 
