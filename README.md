@@ -17,6 +17,23 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 ## Installation :electric_plug:
 
+### :tada: NEW :tada: Using DOCKER
+
+```bash
+# Pull the image from DockerHub
+docker pull robertslando/zwave2mqtt:latest
+# Create a volume for presistence data
+docker volume create zwave2mqtt
+# Start the container
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app robertslando/zwave2mqtt:latest
+```
+
+> Replace `/dev/ttyACM0` with your serial device
+
+Enjoy :smile:
+
+### NodeJS or PKG version
+
 1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
 
   If you are using Ubuntu:
@@ -311,13 +328,12 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 ## TODOs :pencil:
 
 - [x] Better logging
-- [ ] Dockerize application
+- [x] Dockerize application
 - [x] Package application with PKG
 - [ ] Add unit test
 - [ ] JSON validator for settings and scenes
 - [ ] Better nodes status management using 'testNode'
 - [ ] Network graph to show neightborns using [vue-d3-network](https://github.com/emiliorizzo/vue-d3-network)
-
 
 ## Author :bowtie:
 
