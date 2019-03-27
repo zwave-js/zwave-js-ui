@@ -1,3 +1,4 @@
+# Zwave To MQTT
 
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
@@ -6,16 +7,14 @@
 **TO**
 ![MQTT](docs/MQTT-Logo.png)
 
-# Zwave To MQTT
-
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 - **Backend**: NodeJS, Express, socket.io, Mqttjs, openzwave-shared, Webpack
 - **Frontend**: Vue,  socket.io, [Vuetify](https://github.com/vuetifyjs/vuetify)
 
-**DEVELOPMENT IN PROGRESS, ANY CONTRIBUTION AND BUG REPORT IS WELCOME**
+> **DEVELOPMENT IN PROGRESS, ANY CONTRIBUTION AND BUG REPORT IS WELCOME**
 
-## Installation :electric_plug:
+## :electric_plug: Installation
 
 ### :tada: NEW :tada: Using DOCKER
 
@@ -36,25 +35,25 @@ Enjoy :smile:
 
 1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
 
-  If you are using Ubuntu:
+    If you are using Ubuntu:
 
-  ```sh
-  sudo apt-get install libudev-dev
-  cd ~
-  wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
-  tar zxvf openzwave-*.gz
-  cd openzwave-* && make && sudo make install
-  export LD_LIBRARY_PATH=/usr/local/lib64
-  sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
-```
+    ```sh
+    sudo apt-get install libudev-dev
+    cd ~
+    wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
+    tar zxvf openzwave-*.gz
+    cd openzwave-* && make && sudo make install
+    export LD_LIBRARY_PATH=/usr/local/lib64
+    sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
+    ```
 
-  For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
+    For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
 
 2. Test the library: go to openzwave directory `cd openzwave-*` and run the command
 
-  `MinOZW /dev/ttyACM0`
+    `MinOZW /dev/ttyACM0`
 
-  > replace `/dev/ttyACM0` with the USB port where your controller is connected
+    > replace `/dev/ttyACM0` with the USB port where your controller is connected
 
 3. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
 
@@ -78,24 +77,25 @@ Enjoy :smile:
       npm run build
       npm start
       ```
-4. Open the browser http://localhost:8091
 
-## Development :nerd_face:
+4. Open the browser <http://localhost:8091>
+
+## :nerd_face: Development
 
 Developers who wants to debug the application have to open 2 terminals.
 
-In first terminal run `npm run dev` to start webpack-dev for front-end developing and hot reloading at http://localhost:8092
+In first terminal run `npm run dev` to start webpack-dev for front-end developing and hot reloading at <http://localhost:8092>
 (**THE PORT FOR DEVELOPING IS 8092**)
 
 In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
 
 To package the application run `npm run pkg` command and follow the steps
 
-## Usage :wrench:
+## :wrench: Usage
 
-Firstly you need to open the browser at the link http://localhost:8091 and edit the settings for Zwave, MQTT and the Gateway.
+Firstly you need to open the browser at the link <http://localhost:8091> and edit the settings for Zwave, MQTT and the Gateway.
 
-#### Zwave
+### Zwave
 
 Zwave settings:
 
@@ -107,8 +107,7 @@ Zwave settings:
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
 
-
-#### MQTT
+### MQTT
 
 Mqtt settings:
 
@@ -123,7 +122,7 @@ Mqtt settings:
 - **Store**: Enable/Disable persistent storage of packets (QoS > 0). If disabled in memory storage will be used but all packets stored in memory are lost in case of shutdowns or unexpected errors.
 - **Auth**: Enable this if broker requires auth. If so you need to enter also a valid **username** and **password**.
 
-#### Gateway
+### Gateway
 
 Gateway settings:
 
@@ -131,36 +130,34 @@ Gateway settings:
 
   1. **ValueId Topics**: *Automatically configured*. The topic where zwave values are published will be:
 
-  `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
+      `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
 
-    - `mqtt_prefix`: the prefix set in Mqtt Settings
-    - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-    - `node_id`: the unique numerical id of the node in Zwave network
-    - `class_id`: the numerical class id of the value
-    - `instance`: the numerical value of value instance
-    - `index`: the numerical index of the value
-
+      - `mqtt_prefix`: the prefix set in Mqtt Settings
+      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+      - `node_id`: the unique numerical id of the node in Zwave network
+      - `class_id`: the numerical class id of the value
+      - `instance`: the numerical value of value instance
+      - `index`: the numerical index of the value
 
   2. **Named Topics**: *Automatically configured*. The topic where zwave values are published will be:
 
-  `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
+      `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
 
-    - `mqtt_prefix`: the prefix set in Mqtt Settings
-    - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-    - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-    - `class_name`: the node class name corrisponding to given class id or `unknownClass_<class_id>` if the class name is not found
-    - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
-    - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
-
+      - `mqtt_prefix`: the prefix set in Mqtt Settings
+      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
+      - `class_name`: the node class name corrisponding to given class id or `unknownClass_<class_id>` if the class name is not found
+      - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
+      - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
 
   3. **Configured Manually**: *Needs configuration*. The topic where zwave values are published will be:
 
-  `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
+      `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
 
-    - `mqtt_prefix`: the prefix set in Mqtt Settings
-    - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-    - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-    - `value_topic`: the topic of the value. This is manually configured in Gateway settings by popolating a table with the values that I want to read from each device of a specific type in my network. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
+      - `mqtt_prefix`: the prefix set in Mqtt Settings
+      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
+      - `value_topic`: the topic of the value. This is manually configured in Gateway settings by popolating a table with the values that I want to read from each device of a specific type in my network. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
 
 - **Payload type**: The content of the payload when an update is published:
   - **JSON Time-Value**: The payload will be a JSON object like:
@@ -175,31 +172,31 @@ Gateway settings:
   - **Entire Zwave value Object**
   The payload will contain all info of a value from Zwave network:
 
-    ```json
-    {
-      "value_id": "3-64-1-0",
-      "node_id": 3,
-      "class_id": 64,
-      "type": "list",
-      "genre": "user",
-      "instance": 1,
-      "index": 0,
-      "label": "Mode",
-      "units": "",
-      "help": "",
-      "read_only": false,
-      "write_only": false,
-      "min": 0,
-      "max": 0,
-      "is_polled": false,
-      "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
-      "value": "Off",
-    }
-     ```
+      ```json
+      {
+        "value_id": "3-64-1-0",
+        "node_id": 3,
+        "class_id": 64,
+        "type": "list",
+        "genre": "user",
+        "instance": 1,
+        "index": 0,
+        "label": "Mode",
+        "units": "",
+        "help": "",
+        "read_only": false,
+        "write_only": false,
+        "min": 0,
+        "max": 0,
+        "is_polled": false,
+        "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
+        "value": "Off",
+      }
+      ```
+
   - **Just value**: The payload will contain only the row Numeric/String value
 
 - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
-
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
@@ -217,8 +214,7 @@ To add a node using the UI select the controller Action `Remove Node (exlusion)`
 
 To replace a failed node using the UI you have to check if the Node is failed using `Has node failed` command. If Controller status says `NodeFailed` the node can be replaced, if not controller will say `NodeOk`. Sometimes to update node state and make it failed you firstly need to send `Update return route` command than send `Has node failed` and check if the status now is `NodeFailed`. If so you can replace the node using the command `Replace Failed Node`, now the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
 
-
-## Features :star:
+## :star: Features
 
 - Configurable Zwave to Mqtt Gateway
 - Zwave Control Panel:
@@ -227,12 +223,11 @@ To replace a failed node using the UI you have to check if the Node is failed us
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 - Log debug in UI
 
-
-## MQTT APIs :gift:
+## :gift: MQTT APIs
 
 You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple usign MQTT.
 
-#### Zwave APIs
+### Zwave APIs
 
 To call a Zwave API you just need to publish a JSON object like:
 
@@ -264,7 +259,7 @@ I will get this response (in the same topic without the suffix `/set`):
 
 `result` will contain the value returned from the API. In this example I will get an array with all node IDs that are associated to the group 1 (lifeline) of node 2.
 
-#### Set values
+### Set values
 
 To write a value using MQTT you just need to send the value to set in the same topic where the value updates are published by adding the suffix `/set` to the topic (**READONLY VALUES CANNOT BE WRITE**).
 
@@ -278,7 +273,7 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 `zwave/office/nodeID_4/thermostat_setpoint/heating`
 
-#### Broadcast
+### Broadcast
 
 You can send broadcast values to *all values with a specific suffix* in the network.
 
@@ -302,30 +297,29 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 `zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
 
+## :camera: Screenshots
 
-## Screenshots :camera:
-
-#### Settings
+### Settings
 
 ![OpenZWave](docs/settings.png)
 
-#### Control Panel
+### Control Panel
 
 ![Control Panel](docs/OZW_Panel_Node.png)
 
-#### Groups associations
+### Groups associations
 
 ![Groups](docs/groups_associations.png)
 
-#### Scenes
+### Scenes
 
 ![Scenes](docs/scenes.png)
 
-#### Debug
+### Debug
 
 ![Debug](docs/debug.png)
 
-## TODOs :pencil:
+## :pencil: TODOs
 
 - [x] Better logging
 - [x] Dockerize application
@@ -335,7 +329,7 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 - [ ] Better nodes status management using 'testNode'
 - [ ] Network graph to show neightborns using [vue-d3-network](https://github.com/emiliorizzo/vue-d3-network)
 
-## Author :bowtie:
+## :bowtie: Author
 
 [Daniel Lando](https://github.com/robertsLando)
 
