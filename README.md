@@ -15,15 +15,11 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 - **Backend**: NodeJS, Express, socket.io, Mqttjs, openzwave-shared, Webpack
 - **Frontend**: Vue,  socket.io, [Vuetify](https://github.com/vuetifyjs/vuetify)
 
-> **DEVELOPMENT IN PROGRESS, ANY CONTRIBUTION AND BUG REPORT IS WELCOME**
-
 ## :electric_plug: Installation
 
 ### :tada: NEW :tada: Using DOCKER
 
 ```bash
-# Pull the image from DockerHub
-docker pull robertslando/zwave2mqtt:latest
 # Create a volume for presistence data
 docker volume create zwave2mqtt
 # Start the container
