@@ -19,7 +19,6 @@
                 :rules="[required]"
                 item-value="node_id"
                 :items="nodes.filter(n => !!n)"
-                required
                 ></v-select>
               </v-flex>
               <v-flex v-if="editedValue.node" xs12>
@@ -32,7 +31,6 @@
                 :rules="validValue"
                 item-value="value_id"
                 :items="editedValue.node.values"
-                required
                 ></v-select>
               </v-flex>
               <v-flex v-if="editedValue.value" xs12>

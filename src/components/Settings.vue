@@ -255,6 +255,7 @@
         <td class="text-xs">{{ props.item.topic }}</td>
         <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
         <td class="text-xs">{{ props.item.enablePoll ? ("Intensity " + props.item.pollIntensity) : 'No' }}</td>
+        <td class="text-xs">{{ props.item.verifyChanges ? "Verified" : 'Not Verified' }}</td>
         <td class="justify-center layout px-0">
           <v-icon
           small
@@ -274,7 +275,6 @@
       </td>
       </template>
       </v-data-table>
-    </v-layout>
     </v-card-text>
     <v-card-actions>
       <v-btn color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
@@ -355,6 +355,7 @@ export default {
         { text: 'Topic', value: 'topic'},
         { text: 'Post Operation', value: 'postOperation'},
         { text: 'Poll', value: 'enablePoll'},
+        { text: 'Changes', value: 'verifyChanges'},
         { text: 'Actions', sortable: false }
       ],
       e1: true,

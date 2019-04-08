@@ -40,10 +40,11 @@
                 >
               </v-text-field>
             </v-flex>
-            <v-flex xs6>
+            <v-flex xs12>
               <v-text-field
               v-model="editedValue.postOperation"
               label="Post operation"
+              hint="Example: '/10' '*100' '+20'"
               required
               >
             </v-text-field>
@@ -56,7 +57,7 @@
             v-model="editedValue.enablePoll"
             ></v-switch>
           </v-flex>
-          <v-flex v-if="editedValue.enablePoll" xs6>
+        <v-flex v-if="editedValue.enablePoll" xs6>
             <v-text-field
             v-model.number="editedValue.pollIntensity"
             label="Poll intensity"
@@ -65,6 +66,15 @@
             type="number"
             >
           </v-text-field>
+        </v-flex>
+
+        <v-flex xs6>
+            <v-switch
+            label="Verify changes"
+            hint="Verify changes of this value"
+            persistent-hint
+            v-model="editedValue.verifyChanges"
+            ></v-switch>
         </v-flex>
 
       </v-layout>
