@@ -1,6 +1,5 @@
 var express = require('express'),
 reqlib = require('app-root-path').require,
-path = require('path'),
 logger = require('morgan'),
 cookieParser = require('cookie-parser'),
 bodyParser = require('body-parser'),
