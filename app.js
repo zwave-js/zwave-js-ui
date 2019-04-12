@@ -12,7 +12,6 @@ cors = require('cors'),
 ZWaveClient = reqlib('/lib/ZwaveClient'),
 MqttClient = reqlib('/lib/MqttClient'),
 Gateway = reqlib('/lib/Gateway'),
-uniqid = require('uniqid'),
 store = reqlib('config/store.js'),
 debug = reqlib('/lib/debug')('App'),
 utils = reqlib('/lib/utils.js');
