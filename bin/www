@@ -1,14 +1,13 @@
 #!/usr/bin/env node
-/* eslint-disable one-var */
 
 /**
  * Module dependencies.
  */
-var reqlib = require('app-root-path').require,
-  jsonStore = reqlib('/lib/jsonStore.js'),
-  store = reqlib('/config/store.js'),
-  debug = reqlib('/lib/debug')('App'),
-  conf = reqlib('/config/app.js')
+var reqlib = require('app-root-path').require
+var jsonStore = reqlib('/lib/jsonStore.js')
+var store = reqlib('/config/store.js')
+var debug = reqlib('/lib/debug')('App')
+var conf = reqlib('/config/app.js')
 
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
