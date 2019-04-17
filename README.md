@@ -62,7 +62,7 @@ Enjoy :smile:
        cd ~
        mkdir Zwave2Mqtt
        cd Zwave2Mqtt
-       wget https://github.com/robertsLando/Zwave2Mqtt/releases/download/1.0.0/zwave2mqtt-v1.0.0.zip
+       wget https://github.com/OpenZWave/Zwave2Mqtt/releases/download/1.0.0/zwave2mqtt-v1.0.0.zip
        unzip zwave2mqtt-v1.0.0_PKG.zip
        ./zwave2mqtt
        ```
@@ -70,7 +70,7 @@ Enjoy :smile:
     - If you want to compile last code from github:
 
       ```sh
-      git clone https://github.com/robertsLando/Zwave2Mqtt.git
+      git clone https://github.com/OpenZWave/Zwave2Mqtt
       cd Zwave2Mqtt
       npm install
       npm run build
