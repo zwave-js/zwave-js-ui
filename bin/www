@@ -8,18 +8,34 @@ var jsonStore = reqlib('/lib/jsonStore.js')
 var store = reqlib('/config/store.js')
 var debug = reqlib('/lib/debug')('App')
 var conf = reqlib('/config/app.js')
+var utils = reqlib('/lib/utils.js')
+var Promise = require('bluebird')
 
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
 // if jsonstore fails exit the application
 jsonStore.init(store)
-  .then((data) => {
+  .then(() => {
+    var fs = require('fs')
+    var getFiles = (dir) => new Promise((resolve, reject) => fs.readdir(dir, (err, files) => err ? reject(err) : resolve(files)))
+    return getFiles(utils.getPath(true))
+  })
+  .then((files) => {
+    var path = require('path')
+    var fs = require('fs')
+    var moveIfExists = (path, newPath) => new Promise((resolve, reject) => fs.rename(path, newPath, (err) => (!err || err.code === 'ENOENT') ? resolve() : reject(err)))
+    files = files.filter(f => (path.basename(f) === 'OZW_Log.txt' || path.basename(f).endsWith('.xml')))
+    return Promise.map(files, function (f) {
+      return moveIfExists(f, utils.joinPath(path.dirname(f), 'store', path.basename(f)))
+    })
+  })
+  .then(() => {
     var app = reqlib('app.js')
     var http = require('http')
 
     /**
-    * Normalize a port into a number, string, or false.
-    */
+     * Normalize a port into a number, string, or false.
+     */
 
     function normalizePort (val) {
       var port = parseInt(val, 10)
@@ -38,8 +54,8 @@ jsonStore.init(store)
     }
 
     /**
-    * Event listener for HTTP server "error" event.
-    */
+     * Event listener for HTTP server "error" event.
+     */
 
     function onError (error) {
       if (error.syscall !== 'listen') {
@@ -64,8 +80,8 @@ jsonStore.init(store)
     }
 
     /**
-    * Event listener for HTTP server "listening" event.
-    */
+     * Event listener for HTTP server "listening" event.
+     */
 
     function onListening () {
       var addr = server.address()
@@ -76,21 +92,21 @@ jsonStore.init(store)
     }
 
     /**
-    * Get port from environment and store in Express.
-    */
+     * Get port from environment and store in Express.
+     */
 
     var port = normalizePort(process.env.PORT || conf.port)
     app.set('port', port)
 
     /**
-    * Create HTTP server.
-    */
+     * Create HTTP server.
+     */
 
     var server = http.createServer(app)
 
     /**
-    * Listen on provided port, on all network interfaces.
-    */
+     * Listen on provided port, on all network interfaces.
+     */
 
     server.listen(port)
     server.on('error', onError)

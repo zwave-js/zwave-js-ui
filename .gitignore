@@ -66,11 +66,6 @@ typings/
 # next.js build output
 .next
 
-# Zwave configuration files and logs
-OZW_Log.txt
-zwcfg_*.xml
-zwscene.xml
-
 # Editor directories and files
 .idea
 .vscode
