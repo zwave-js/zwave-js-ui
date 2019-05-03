@@ -119,6 +119,7 @@ Mqtt settings:
 - **Retain**: The retain flag of outgoing packets
 - **Clean**: Sets the clean flag when connecting to the broker
 - **Store**: Enable/Disable persistent storage of packets (QoS > 0). If disabled in memory storage will be used but all packets stored in memory are lost in case of shutdowns or unexpected errors.
+- **Allow self signed certs**: When using encrypted protocols, set this to true to allow self signed certificates (**WARNING** this could expose you to man in the middle attacks)
 - **Auth**: Enable this if broker requires auth. If so you need to enter also a valid **username** and **password**.
 
 ### Gateway

@@ -169,13 +169,21 @@
                     </v-flex>
                     <v-flex xs12 sm6>
                       <v-switch
+                        hint="Enable this when using self signed certificates"
+                        persistent-hint
+                        label="Allow self signed certs"
+                        v-model="mqtt.allowSelfsigned"
+                      ></v-switch>
+                    </v-flex>
+                    <v-flex xs12 sm4>
+                      <v-switch
                         hint="Does this client require auth?"
                         persistent-hint
                         label="Auth"
                         v-model="mqtt.auth"
                       ></v-switch>
                     </v-flex>
-                    <v-flex v-if="mqtt.auth" xs12 sm6>
+                    <v-flex v-if="mqtt.auth" xs12 sm4>
                       <v-text-field
                         v-model="mqtt.username"
                         label="Username"
@@ -183,7 +191,7 @@
                         required
                       ></v-text-field>
                     </v-flex>
-                    <v-flex v-if="mqtt.auth" xs12 sm6>
+                    <v-flex v-if="mqtt.auth" xs12 sm4>
                       <v-text-field
                         v-model="mqtt.password"
                         label="Password"
