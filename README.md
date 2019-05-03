@@ -111,7 +111,7 @@ Zwave settings:
 Mqtt settings:
 
 - **Name**: A unique name that identify the Gateway.
-- **Host**: The url of the broker
+- **Host**: The url of the broker. Insert here the protocol if present, example: `tls://loscalhost`. Mqtt supports this protocols:  `mqtt`, `mqtts`, `tcp`, `tls`, `ws`, `wss`. At the moment `wss` and `mqtts` protocols are not supported because they require cert and key files
 - **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
