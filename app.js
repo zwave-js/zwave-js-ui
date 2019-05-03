@@ -12,6 +12,7 @@ ZWaveClient = reqlib('/lib/ZwaveClient'),
 MqttClient = reqlib('/lib/MqttClient'),
 Gateway = reqlib('/lib/Gateway'),
 store = reqlib('config/store.js'),
+config = reqlib('config/app.js'),
 debug = reqlib('/lib/debug')('App'),
 utils = reqlib('/lib/utils.js');
 
@@ -107,7 +108,7 @@ app.get('/api/exportConfig', function(req, res) {
     var homeHex = gw.zwave.ozwConfig.name;
 
     if(result.success){
-      var filePath = utils.joinPath(utils.getPath(true), 'zwcfg_' + homeHex + '.xml');
+      var filePath = utils.joinPath(utils.getPath(true), config.storeDir, 'zwcfg_' + homeHex + '.xml');
       fs.readFile(filePath, 'utf8', function(err, data){
         if(err)
           res.json({success: false, message: err.message})
@@ -128,7 +129,7 @@ app.get('/api/exportConfig', function(req, res) {
 app.post('/api/importConfig', function(req, res) {
   if(gw.zwave && gw.zwave.client && gw.zwave.ozwConfig && gw.zwave.ozwConfig.name){
 
-    var filePath = utils.joinPath(utils.getPath(true), 'zwcfg_' + gw.zwave.ozwConfig.name + '.xml');
+    var filePath = utils.joinPath(utils.getPath(true), config.storeDir, 'zwcfg_' + gw.zwave.ozwConfig.name + '.xml');
 
     fs.writeFile(filePath, req.body.data, 'utf8', function(err){
       if(err)

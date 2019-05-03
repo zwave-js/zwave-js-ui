@@ -200,7 +200,7 @@ Gateway settings:
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
-Settings, scenes and Zwave configuration are stored in `JSON/xml` files that you can easily **import/export** for backup purposes.
+Settings, scenes and Zwave configuration are stored in `JSON/xml` files under project `store` folder that you can easily **import/export** for backup purposes.
 
 By default Node status (`true` if node is ready `false` if node is dead) will be published in:
 
