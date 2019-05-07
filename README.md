@@ -28,6 +28,10 @@ docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt
 # Using local folder as persistence
 mkdir store
 docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwave2mqtt:latest
+
+# As a service
+wget https://raw.githubusercontent.com/robertsLando/Zwave2Mqtt-docker/master/compose/docker-compose.yml
+docker-compose up
 ```
 
 > Replace `/dev/ttyACM0` with your serial device
