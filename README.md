@@ -17,7 +17,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 ## :electric_plug: Installation
 
-### :tada DOCKER way
+### :tada: DOCKER way
 
 Check [docker repo](https://github.com/robertsLando/Zwave2Mqtt-docker#install) for more info
 
