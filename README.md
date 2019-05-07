@@ -17,13 +17,17 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 ## :electric_plug: Installation
 
-### :tada: NEW :tada: Using DOCKER
+### :tada DOCKER way
+
+Check [docker repo](https://github.com/robertsLando/Zwave2Mqtt-docker#install) for more info
 
 ```bash
-# Create a volume for presistence data
-docker volume create zwave2mqtt
-# Start the container
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app robertslando/zwave2mqtt:latest
+# Using volumes as persistence
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app/store robertslando/zwave2mqtt:latest
+
+# Using local folder as persistence
+mkdir store
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwave2mqtt:latest
 ```
 
 > Replace `/dev/ttyACM0` with your serial device
