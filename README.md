@@ -147,7 +147,9 @@ Gateway settings:
       - `instance`: the numerical value of value instance
       - `index`: the numerical index of the value
 
-  2. **Named Topics**: *Automatically configured*. The topic where zwave values are published will be:
+  2. **Named Topics**: *Automatically configured*. **DEPRECATED** After a discussion with Openzwave author lib we discurage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). YOu can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
+  
+      The topic where zwave values are published will be:
 
       `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
 
@@ -332,6 +334,7 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 - [x] Better logging
 - [x] Dockerize application
 - [x] Package application with PKG
+- [ ] HASS integration, check [zegbee2mqtt](https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/homeassistant.js)
 - [ ] Add unit test
 - [ ] JSON validator for settings and scenes
 - [ ] Better nodes status management using 'testNode'
