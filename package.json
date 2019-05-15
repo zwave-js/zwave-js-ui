@@ -39,7 +39,7 @@
     },
     "scripts": {
       "beforeStart": "npm run changelog",
-      "afterBump": "npm run pkg"
+      "afterBump": "./package.sh --release"
     },
     "npm": {
       "publish": false

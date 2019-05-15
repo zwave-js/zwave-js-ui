@@ -44,59 +44,69 @@ echo "Version: $VERSION"
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
-if ask "Re-build $APP?"; then
-  echo "## Building application"
-  npm run build
-fi
 
-echo '###################################################'
-echo '## Choose architecture to build'
-echo '###################################################'
-echo ' '
-echo 'Your architecture is' $(arch)
-PS3="Architecture: >"
-options=(
-	"x64"
-	"armv7"
-	"armv6"
-	"x86"
-	"alpine"
-)
-echo ''
-select option in "${options[@]}"; do
-	case "$REPLY" in
-		1)
-			echo "## Creating application package in $PKG_FOLDER folder"
-			sudo pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER
-			break
-			;;
-		2)
-			echo "## Creating application package in $PKG_FOLDER folder"
-			sudo pkg package.json -t node8-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
-			break
-			;;
-		3)
-			echo "## Creating application package in $PKG_FOLDER folder"
-			sudo pkg package.json -t node8-linux-armv6 --out-path $PKG_FOLDER --public-packages=*
-			break
-			;;
-		4)
-			echo "## Creating application package in $PKG_FOLDER folder"
-			sudo pkg package.json -t node8-linux-x86 --out-path $PKG_FOLDER
-			break
-			;;
-		5)
-			echo "## Creating application package in $PKG_FOLDER folder"
-			sudo pkg package.json -t node8-alpine-x64 --out-path $PKG_FOLDER
-			break
-			;;
-		*)
-			echo '####################'
-			echo '## Invalid option ##'
-			echo '####################'
-			exit
-	esac
-done
+if [ ! -z "$1" ]; then
+	echo "## Building application..."
+	echo ''
+	npm run build
+	echo "Executing command: pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER"
+	pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER
+else
+
+	if ask "Re-build $APP?"; then
+		echo "## Building application"
+		npm run build
+	fi
+
+	echo '###################################################'
+	echo '## Choose architecture to build'
+	echo '###################################################'
+	echo ' '
+	echo 'Your architecture is' $(arch)
+	PS3="Architecture: >"
+	options=(
+		"x64"
+		"armv7"
+		"armv6"
+		"x86"
+		"alpine"
+	)
+	echo ''
+	select option in "${options[@]}"; do
+		case "$REPLY" in
+			1)
+				echo "## Creating application package in $PKG_FOLDER folder"
+				sudo pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER
+				break
+				;;
+			2)
+				echo "## Creating application package in $PKG_FOLDER folder"
+				sudo pkg package.json -t node8-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
+				break
+				;;
+			3)
+				echo "## Creating application package in $PKG_FOLDER folder"
+				sudo pkg package.json -t node8-linux-armv6 --out-path $PKG_FOLDER --public-packages=*
+				break
+				;;
+			4)
+				echo "## Creating application package in $PKG_FOLDER folder"
+				sudo pkg package.json -t node8-linux-x86 --out-path $PKG_FOLDER
+				break
+				;;
+			5)
+				echo "## Creating application package in $PKG_FOLDER folder"
+				sudo pkg package.json -t node8-alpine-x64 --out-path $PKG_FOLDER
+				break
+				;;
+			*)
+				echo '####################'
+				echo '## Invalid option ##'
+				echo '####################'
+				exit
+		esac
+	done
+fi
 
 echo "## Check for .node files to include in executable folder"
 declare TO_INCLUDE=($(find ./node_modules/ -type f -name "*.node" | grep -v obj.target))
