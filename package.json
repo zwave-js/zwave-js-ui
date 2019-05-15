@@ -36,7 +36,8 @@
       "tagName": "v${version}"
     },
     "scripts": {
-      "beforeStart": "npm run build && npm run changelog"
+      "beforeStart": "npm run changelog",
+      "afterBump": "npm run build"
     },
     "npm": {
       "publish": false
