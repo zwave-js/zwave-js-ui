@@ -24,15 +24,19 @@
     "lint": "eslint --ext .js,.vue src",
     "build": "node build/build.js",
     "pkg": "sudo chmod +x package.sh && ./package.sh",
-    "changes": "auto-changelog -p",
+    "changelog": "auto-changelog -p",
     "release": "release-it"
   },
   "release-it": {
+    "github": {
+      "release": true,
+      "assets": ["pkg/*.zip"]
+    },
     "git": {
       "tagName": "v${version}"
     },
     "scripts": {
-      "beforeStart": "npm run build && npm run changes"
+      "beforeStart": "npm run build && npm run changelog"
     },
     "npm": {
       "publish": false
