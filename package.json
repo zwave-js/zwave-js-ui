@@ -1,6 +1,6 @@
 {
   "name": "zwave2mqtt",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "bin": "bin/www",
   "description": "Zwave To MQTT Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
@@ -30,7 +30,9 @@
   "release-it": {
     "github": {
       "release": true,
-      "assets": ["pkg/*.zip"]
+      "assets": [
+        "pkg/*.zip"
+      ]
     },
     "git": {
       "tagName": "v${version}"
