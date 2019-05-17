@@ -47,7 +47,10 @@
   },
   "auto-changelog": {
     "unreleased": true,
-    "commitLimit": false
+    "commitLimit": false,
+    "replaceText": {
+      "^-[\\s]*": ""
+    }
   },
   "dependencies": {
     "ansi_up": "^3.0.0",
