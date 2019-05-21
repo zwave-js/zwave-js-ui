@@ -23,13 +23,26 @@
                 <v-select
                   v-model="editedValue.value"
                   label="Value"
+                  :hint="editedValue.value ? editedValue.value.help : ''"
                   required
                   return-object
                   :rules="[required]"
                   item-text="label"
                   item-value="value_id"
                   :items="deviceValues"
-                ></v-select>
+                >
+                 <template slot="selection" slot-scope="data">
+                   {{ data.item.label + (data.item.instance > 1 ? " - Instance " +  data.item.instance : "") }}
+                 </template>
+                  <template slot="item" slot-scope="data">
+                    <template>
+                      <v-list-tile-content>
+                        <v-list-tile-title>{{ data.item.label + (data.item.instance > 1 ? " - Instance " +  data.item.instance : "") }}</v-list-tile-title>
+                        <v-list-tile-sub-title style="max-width:500px" class="text-truncate text-no-wrap">{{ data.item.help }}</v-list-tile-sub-title>
+                      </v-list-tile-content>
+                    </template>
+                  </template>
+                </v-select>
               </v-flex>
               <v-flex xs12>
                 <v-text-field
