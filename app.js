@@ -22,7 +22,7 @@ let io;
 debug("Application path:" + utils.getPath(true));
 
 // view engine setup
-app.set('views', utils.joinPath(utils.getPath(), 'views'));
+app.set('views', utils.joinPath(false, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
@@ -30,7 +30,7 @@ app.use(bodyParser.json({limit: "50mb"}));
 app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
 app.use(cookieParser());
 
-app.use('/', express.static(utils.joinPath(utils.getPath(), 'dist')));
+app.use('/', express.static(utils.joinPath(false, 'dist')));
 
 app.use(cors());
 
@@ -108,7 +108,7 @@ app.get('/api/exportConfig', function(req, res) {
     var homeHex = gw.zwave.ozwConfig.name;
 
     if(result.success){
-      var filePath = utils.joinPath(utils.getPath(true), config.storeDir, 'zwcfg_' + homeHex + '.xml');
+      var filePath = utils.joinPath(true, config.storeDir, 'zwcfg_' + homeHex + '.xml');
       fs.readFile(filePath, 'utf8', function(err, data){
         if(err)
           res.json({success: false, message: err.message})
@@ -129,7 +129,7 @@ app.get('/api/exportConfig', function(req, res) {
 app.post('/api/importConfig', function(req, res) {
   if(gw.zwave && gw.zwave.client && gw.zwave.ozwConfig && gw.zwave.ozwConfig.name){
 
-    var filePath = utils.joinPath(utils.getPath(true), config.storeDir, 'zwcfg_' + gw.zwave.ozwConfig.name + '.xml');
+    var filePath = utils.joinPath(true, config.storeDir, 'zwcfg_' + gw.zwave.ozwConfig.name + '.xml');
 
     fs.writeFile(filePath, req.body.data, 'utf8', function(err){
       if(err)
