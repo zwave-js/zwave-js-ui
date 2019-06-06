@@ -37,9 +37,8 @@
     "git": {
       "tagName": "v${version}"
     },
-    "scripts": {
-      "beforeStart": "npm run changelog",
-      "afterBump": "./package.sh --release"
+    "hooks": {
+      "after:bump": "./package.sh --release && npm run changelog"
     },
     "npm": {
       "publish": false
