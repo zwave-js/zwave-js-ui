@@ -60,7 +60,7 @@
 
         <v-data-table
           :headers="headers"
-          :items="nodes"
+          :items="tableNodes"
           :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
           item-key="node_id"
           class="elevation-1"
@@ -68,28 +68,15 @@
           <template slot="items" slot-scope="props">
             <tr
               style="cursor:pointer;"
-              v-if="!props.item.failed"
               :active="selectedNode == props.item"
               @click="selectedNode == props.item ? selectedNode = null : selectedNode = props.item"
             >
               <td>{{ props.item.node_id }}</td>
               <td>{{ props.item.type }}</td>
               <td>{{ props.item.ready ? (props.item.product + ' (' + props.item.manufacturer + ')') : '' }}</td>
-              <td>{{ props.item.name }}</td>
-              <td>{{ props.item.loc }}</td>
+              <td>{{ props.item.name || '' }}</td>
+              <td>{{ props.item.loc || '' }}</td>
               <td>{{ props.item.status}}</td>
-            </tr>
-            <tr
-              v-else-if="showHidden"
-              :active="selectedNode == props.item"
-              @click="selectedNode == props.item ? selectedNode = null : selectedNode = props.item"
-            >
-              <td>{{ props.item.node_id }}</td>
-              <td>{{ props.item.type }}</td>
-              <td>{{ '' }}</td>
-              <td>{{ '' }}</td>
-              <td>{{ '' }}</td>
-              <td>{{ props.item.status }}</td>
             </tr>
           </template>
         </v-data-table>
@@ -422,6 +409,9 @@ export default {
   computed: {
     dialogTitle() {
       return this.editedIndex === -1 ? "New Value" : "Edit Value";
+    },
+    tableNodes() {
+      return this.showHidden ? this.nodes : this.nodes.filter(n => !n.failed)
     }
   },
   watch: {
