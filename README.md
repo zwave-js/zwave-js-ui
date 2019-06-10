@@ -107,10 +107,10 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 Zwave settings:
 
 - **Serial port**: The serial port where your controller is connected
-- **Network key** (Optional): Zwave network key if security is enabled
+- **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"0xCA,0xFE,0xBA,0xBE,.... "` whithout spaces (16 bytes total)
 - **Logging**: Enable/Disable Openzwave Library logging
 - **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for peristent node information like node name and location
-- **Poll interval**: Interval in milliseconds between polls
+- **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
 
@@ -147,7 +147,7 @@ Gateway settings:
       - `instance`: the numerical value of value instance
       - `index`: the numerical index of the value
 
-  2. **Named Topics**: *Automatically configured*. **DEPRECATED** After a discussion with Openzwave author lib we discurage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). YOu can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
+  2. **Named Topics**: *Automatically configured*. **DEPRECATED** After a discussion with Openzwave author lib we discurage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
   
       The topic where zwave values are published will be:
 
