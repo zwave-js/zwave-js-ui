@@ -16,7 +16,7 @@
               <img style="border-radius: 0;" src="/static/logo.png">
             </v-list-tile-avatar>
             <v-list-tile-content>
-              <v-list-tile-title>ZWave2MQTT</v-list-tile-title>
+              <v-list-tile-title>{{"ZWave2MQTT v" + version}}</v-list-tile-title>
             </v-list-tile-content>
           </v-list-tile>
         </v-list>
@@ -153,6 +153,7 @@ export default {
   },
   data() {
     return {
+      version: process.env.VERSION,
       pages: [
         { icon: "widgets", title: "Control Panel", path: "/" },
         { icon: "settings", title: "Settings", path: "/settings" }
