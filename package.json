@@ -24,7 +24,7 @@
     "lint": "eslint --ext .js,.vue src",
     "build": "node build/build.js",
     "pkg": "sudo chmod +x package.sh && ./package.sh",
-    "changelog": "auto-changelog && git add CHANGELOG.md",
+    "changelog": "auto-changelog -p && git add CHANGELOG.md",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it"
   },
   "release-it": {
