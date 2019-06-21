@@ -50,6 +50,9 @@ Enjoy :smile:
     wget http://old.openzwave.com/downloads/openzwave-1.4.1.tar.gz
     tar zxvf openzwave-*.gz
     cd openzwave-* && make && sudo make install
+    sudo ln -s /usr/local/lib64/libopenzwave.so /usr/local/lib/libopenzwave.so
+    sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/libopenzwave.so.1.4
+    sudo ldconfig
     export LD_LIBRARY_PATH=/usr/local/lib64
     sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
     ```
