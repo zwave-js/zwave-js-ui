@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 ask() {
 	# http://djm.me/ask
@@ -109,7 +110,7 @@ else
 fi
 
 echo "## Check for .node files to include in executable folder"
-declare TO_INCLUDE=($(find ./node_modules/ -type f -name "*.node" | grep -v obj.target))
+mapfile -t TO_INCLUDE < <(find ./node_modules/ -type f -name "*.node" | grep -v obj.target)
 
 TOTAL_INCLUDE=${#TO_INCLUDE[@]}
 
