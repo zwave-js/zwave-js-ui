@@ -77,27 +77,27 @@ else
 		case "$REPLY" in
 			1)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				sudo pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER
+				pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER
 				break
 				;;
 			2)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				sudo pkg package.json -t node8-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
+				pkg package.json -t node8-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
 				break
 				;;
 			3)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				sudo pkg package.json -t node8-linux-armv6 --out-path $PKG_FOLDER --public-packages=*
+				pkg package.json -t node8-linux-armv6 --out-path $PKG_FOLDER --public-packages=*
 				break
 				;;
 			4)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				sudo pkg package.json -t node8-linux-x86 --out-path $PKG_FOLDER
+				pkg package.json -t node8-linux-x86 --out-path $PKG_FOLDER
 				break
 				;;
 			5)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				sudo pkg package.json -t node8-alpine-x64 --out-path $PKG_FOLDER
+				pkg package.json -t node8-alpine-x64 --out-path $PKG_FOLDER
 				break
 				;;
 			*)
