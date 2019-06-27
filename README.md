@@ -122,7 +122,7 @@ Zwave settings:
 Mqtt settings:
 
 - **Name**: A unique name that identify the Gateway.
-- **Host**: The url of the broker. Insert here the protocol if present, example: `tls://localhost`. Mqtt supports this protocols:  `mqtt`, `mqtts`, `tcp`, `tls`, `ws`, `wss`. At the moment `wss` and `mqtts` protocols are not supported because they require cert and key files
+- **Host**: The url of the broker. Insert here the protocol if present, example: `tls://localhost`. Mqtt supports this protocols:  `mqtt`, `mqtts`, `tcp`, `tls`, `ws`, `wss`, `wss` and `mqtts`
 - **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
@@ -131,6 +131,7 @@ Mqtt settings:
 - **Clean**: Sets the clean flag when connecting to the broker
 - **Store**: Enable/Disable persistent storage of packets (QoS > 0). If disabled in memory storage will be used but all packets stored in memory are lost in case of shutdowns or unexpected errors.
 - **Allow self signed certs**: When using encrypted protocols, set this to true to allow self signed certificates (**WARNING** this could expose you to man in the middle attacks)
+- **Ca Cert and Key**: Certificate Authority, Client Key and Client Certificate files required for secured connections (if broker requires valid certificates, this fields can be leave empty otherwise)
 - **Auth**: Enable this if broker requires auth. If so you need to enter also a valid **username** and **password**.
 
 ### Gateway
