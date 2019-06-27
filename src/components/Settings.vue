@@ -167,13 +167,37 @@
                         v-model="mqtt.store"
                       ></v-switch>
                     </v-flex>
-                    <v-flex xs12 sm6>
+                    <v-flex xs12 sm6 v-if="secure">
                       <v-switch
                         hint="Enable this when using self signed certificates"
                         persistent-hint
                         label="Allow self signed certs"
                         v-model="mqtt.allowSelfsigned"
                       ></v-switch>
+                    </v-flex>
+                    <v-flex xs12 sm6 md4 v-if="secure">
+                      <file-input
+                        label="Key.pem"
+                        keyProp="_key"
+                        v-model="mqtt.key"
+                        @onFileSelect="onFileSelect"
+                      ></file-input>
+                    </v-flex>
+                    <v-flex xs12 sm6 md4 v-if="secure">
+                      <file-input
+                        label="Cert.pem"
+                        keyProp="_cert"
+                        v-model="mqtt.cert"
+                        @onFileSelect="onFileSelect"
+                      ></file-input>
+                    </v-flex>
+                    <v-flex xs12 sm6 md4 v-if="secure">
+                      <file-input
+                        label="Ca.pem"
+                        keyProp="_ca"
+                        v-model="mqtt.ca"
+                        @onFileSelect="onFileSelect"
+                      ></file-input>
                     </v-flex>
                     <v-flex xs12 sm4>
                       <v-switch
@@ -307,15 +331,33 @@
 <script>
 import { mapGetters, mapMutations } from "vuex";
 import ConfigApis from "@/apis/ConfigApis";
+import fileInput from "@/components/custom/file-input.vue";
+import url from "url";
 
 import DialogGatewayValue from "@/components/dialogs/DialogGatewayValue";
 
 export default {
   name: "Settings",
   components: {
-    DialogGatewayValue
+    DialogGatewayValue,
+    fileInput
   },
   computed: {
+    secure() {
+      if (!this.mqtt.host) return false;
+      const parsed = url.parse(this.mqtt.host);
+
+      const secure =
+        ["mqtts:", "wss:", "wxs:", "alis:", "tls:"].indexOf(parsed.protocol) >=
+        0;
+
+      if (!secure) {
+        this.mqtt.key = this.mqtt._key = this.mqtt.cert = this.mqtt._cert = this.mqtt.ca = this.mqtt._ca =
+          "";
+      }
+
+      return secure;
+    },
     dialogTitle() {
       return this.editedIndex === -1 ? "New Item" : "Edit Item";
     },
@@ -400,6 +442,21 @@ export default {
     };
   },
   methods: {
+    readFile(file, callback) {
+      const reader = new FileReader();
+
+      reader.onload = e => callback(e.target.result);
+      reader.readAsText(file);
+    },
+    onFileSelect(data) {
+      var file = data.files[0];
+      var self = this;
+      if (file) {
+        this.readFile(file, text => (self.mqtt[data.key] = text));
+      } else {
+        self.mqtt[data.key] = "";
+      }
+    },
     showSnackbar(text) {
       this.$emit("showSnackbar", text);
     },
