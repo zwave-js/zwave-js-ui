@@ -483,8 +483,12 @@ export default {
       node_action: "requestNetworkUpdate",
       node_actions: [
         {
-          text: "Update neighbor",
+          text: "Update neighbors",
           value: "requestNodeNeighborUpdate"
+        },
+        {
+          text: "Get Node neighbors",
+          value: "getNodeNeighbors"
         },
         {
           text: "Update return route",
@@ -975,6 +979,9 @@ export default {
             break;
           case "sceneGetValues":
             self.scene_values = data.result;
+            break;
+          case "getNodeNeighbors":
+            confirm("Node neighbors \n" + self.jsonToList(data.result));
             break;
           case "getDriverStatistics":
             confirm("Driver statistics \n" + self.jsonToList(data.result));
