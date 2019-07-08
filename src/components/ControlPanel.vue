@@ -244,17 +244,19 @@
                 </v-flex>
 
                 <v-flex v-if="group.group" xs12 sm6>
-                  <v-text-field label="Current associations" disabled :value="group.associations"></v-text-field>
+                  <v-textarea label="Current associations" auto-grow readonly :value="group.associations"></v-textarea>
                 </v-flex>
 
                 <v-flex v-if="group.node" xs12 sm6>
-                  <v-select
+                  <v-combobox
                     label="Target"
                     v-model="group.target"
                     :items="nodes.filter(n => !n.failed && n != group.node)"
                     return-object
+                    hint="Select the node from the list or digit the node ID"
+                    persistent-hint
                     item-text="_name"
-                  ></v-select>
+                  ></v-combobox>
                 </v-flex>
 
                 <v-flex xs12 sm6>
@@ -807,8 +809,10 @@ export default {
     },
     addAssociation() {
       var g = this.group;
-      if (g && g.node && g.target) {
-        var args = [g.node.node_id, g.group, g.target.node_id];
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+
+      if (g && g.node && target) {
+        var args = [g.node.node_id, g.group, target];
 
         if (g.multiInstance) {
           args.push(g.targetInstance || 0);
@@ -823,11 +827,12 @@ export default {
     },
     removeAssociation() {
       var g = this.group;
-      if (g && g.node && g.target) {
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+      if (g && g.node && target) {
         this.apiRequest("removeAssociation", [
           g.node.node_id,
           g.group,
-          g.target.node_id
+          target
         ]);
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
@@ -968,7 +973,7 @@ export default {
         switch (data.api) {
           case "getAssociations":
             data.result = data.result.map(a => self.nodes[a]._name || a);
-            self.$set(self.group, "associations", data.result.join(", "));
+            self.$set(self.group, "associations", data.result.join("\n"));
             break;
           case "getScenes":
             self.scenes = data.result;
