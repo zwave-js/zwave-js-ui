@@ -7,8 +7,9 @@ assignees: robertsLando
 
 ---
 
-** Version **
+**Version**
 
+Build/Run method
 - [ ] Docker
 - [ ] PKG
 - [ ] Manually built (git clone - npm install - npm run build ) 
