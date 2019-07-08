@@ -1,7 +1,7 @@
 ---
 name: Question / Help
 about: Ask for support
-title: "[question]"
+title: "[question] "
 labels: question
 assignees: robertsLando
 
