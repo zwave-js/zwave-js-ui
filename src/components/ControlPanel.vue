@@ -30,22 +30,16 @@
             </v-flex>
 
             <v-flex xs12 sm6 md3 align-self-center>
-              <v-btn icon @click.native="saveConfiguration">
-                <v-tooltip bottom>
-                  <v-icon dark color="primary" slot="activator">save</v-icon>
-                  <span>Write Configuration</span>
-                </v-tooltip>
-              </v-btn>
               <v-btn icon @click.native="importConfiguration">
                 <v-tooltip bottom>
                   <v-icon dark color="primary" slot="activator">file_upload</v-icon>
-                  <span>Import Configuration</span>
+                  <span>Import nodes.json Configuration</span>
                 </v-tooltip>
               </v-btn>
               <v-btn icon @click.native="exportConfiguration">
                 <v-tooltip bottom>
                   <v-icon dark color="primary" slot="activator">file_download</v-icon>
-                  <span>Export Configuration</span>
+                  <span>Export nodes.json Configuration</span>
                 </v-tooltip>
               </v-btn>
             </v-flex>
@@ -616,7 +610,7 @@ export default {
           "Attention! This operation will override current zwave xml file and cannot be undone"
         )
       ) {
-        self.$emit("import", "xml", function(err, data) {
+        self.$emit("import", "json", function(err, data) {
           if (!err && data) {
             ConfigApis.importConfig({ data: data })
               .then(data => {
@@ -635,7 +629,7 @@ export default {
         .then(data => {
           self.showSnackbar(data.message);
           if (data.success) {
-            self.$emit("export", data.data, "zwcfg_" + data.homeHex, "xml");
+            self.$emit("export", data.data, "nodes", "json");
           }
         })
         .catch(error => {
@@ -785,7 +779,6 @@ export default {
           this.selectedNode.node_id,
           this.newName
         ]);
-        this.apiRequest("refreshNodeInfo", [this.selectedNode.node_id]);
       }
     },
     updateLoc() {
@@ -794,7 +787,6 @@ export default {
           this.selectedNode.node_id,
           this.newLoc
         ]);
-        this.apiRequest("refreshNodeInfo", [this.selectedNode.node_id]);
       }
     },
     resetGroup() {

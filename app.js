@@ -1,20 +1,20 @@
 var express = require('express'),
-reqlib = require('app-root-path').require,
-logger = require('morgan'),
-cookieParser = require('cookie-parser'),
-bodyParser = require('body-parser'),
-app = express(),
-fs = require('fs'),
-SerialPort = require('serialport'),
-jsonStore = reqlib('/lib/jsonStore.js'),
-cors = require('cors'),
-ZWaveClient = reqlib('/lib/ZwaveClient'),
-MqttClient = reqlib('/lib/MqttClient'),
-Gateway = reqlib('/lib/Gateway'),
-store = reqlib('config/store.js'),
-config = reqlib('config/app.js'),
-debug = reqlib('/lib/debug')('App'),
-utils = reqlib('/lib/utils.js');
+  reqlib = require('app-root-path').require,
+  logger = require('morgan'),
+  cookieParser = require('cookie-parser'),
+  bodyParser = require('body-parser'),
+  app = express(),
+  fs = require('fs'),
+  SerialPort = require('serialport'),
+  jsonStore = reqlib('/lib/jsonStore.js'),
+  cors = require('cors'),
+  ZWaveClient = reqlib('/lib/ZwaveClient'),
+  MqttClient = reqlib('/lib/MqttClient'),
+  Gateway = reqlib('/lib/Gateway'),
+  store = reqlib('config/store.js'),
+  config = reqlib('config/app.js'),
+  debug = reqlib('/lib/debug')('App'),
+  utils = reqlib('/lib/utils.js');
 
 var gw; //the gateway instance
 let io;
@@ -26,63 +26,63 @@ app.set('views', utils.joinPath(false, 'views'));
 app.set('view engine', 'ejs');
 
 app.use(logger('dev'));
-app.use(bodyParser.json({limit: "50mb"}));
-app.use(bodyParser.urlencoded({limit: "50mb", extended: true, parameterLimit:50000}));
+app.use(bodyParser.json({ limit: "50mb" }));
+app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }));
 app.use(cookieParser());
 
 app.use('/', express.static(utils.joinPath(false, 'dist')));
 
 app.use(cors());
 
-function startGateway(){
+function startGateway() {
   var settings = jsonStore.get(store.settings);
 
   var mqtt, zwave;
 
-  if(settings.mqtt){
+  if (settings.mqtt) {
     mqtt = new MqttClient(settings.mqtt);
   }
 
-  if(settings.zwave){
+  if (settings.zwave) {
     zwave = new ZWaveClient(settings.zwave, io);
   }
 
   gw = new Gateway(settings.gateway, zwave, mqtt);
 }
 
-app.startSocket = function(server){
+app.startSocket = function (server) {
   io = require('socket.io')(server);
 
-  if(gw.zwave) gw.zwave.socket = io;
+  if (gw.zwave) gw.zwave.socket = io;
 
-  io.on('connection', function(socket) {
+  io.on('connection', function (socket) {
 
     debug("New connection", socket.id);
 
-    if(gw.zwave)
-    socket.emit('INIT', {nodes: gw.zwave.nodes, info: gw.zwave.ozwConfig, error:gw.zwave.error, cntStatus: gw.zwave.cntStatus})
+    if (gw.zwave)
+      socket.emit('INIT', { nodes: gw.zwave.nodes, info: gw.zwave.ozwConfig, error: gw.zwave.error, cntStatus: gw.zwave.cntStatus })
 
-    socket.on('ZWAVE_API', function(data) {
+    socket.on('ZWAVE_API', async function (data) {
       debug("Zwave api call:", data.api, data.args);
-      if(gw.zwave){
-        var result = gw.zwave.callApi(data.api, ...data.args);
+      if (gw.zwave) {
+        var result = await gw.zwave.callApi(data.api, ...data.args);
         result.api = data.api;
         socket.emit("API_RETURN", result);
       }
     });
 
-    socket.on('disconnect', function(){
+    socket.on('disconnect', function () {
       debug('User disconnected', socket.id);
     });
 
   });
 
-  const interceptor = function(write) {
-		return function(...args) {
-			io.emit("DEBUG", args[0].toString())
-			write.apply(process.stdout, args);
-		};
-	}
+  const interceptor = function (write) {
+    return function (...args) {
+      io.emit("DEBUG", args[0].toString())
+      write.apply(process.stdout, args);
+    };
+  }
 
   process.stdout.write = interceptor(process.stdout.write);
   process.stderr.write = interceptor(process.stderr.write);
@@ -91,81 +91,71 @@ app.startSocket = function(server){
 // ----- APIs ------
 
 //get settings
-app.get('/api/settings', function(req, res) {
+app.get('/api/settings', function (req, res) {
   SerialPort.list(function (err, ports) {
     if (err) {
       debug(err);
     }
     var devices = gw.zwave ? gw.zwave.devices : {};
-    res.json({success:true, settings: jsonStore.get(store.settings), devices: devices, serial_ports: ports ? ports.map(p => p.comName) : []});
+    res.json({ success: true, settings: jsonStore.get(store.settings), devices: devices, serial_ports: ports ? ports.map(p => p.comName) : [] });
   })
 });
 
 //get config
-app.get('/api/exportConfig', function(req, res) {
-  if(gw.zwave && gw.zwave.client && gw.zwave.ozwConfig && gw.zwave.ozwConfig.name){
-    var result = gw.zwave.callApi('writeConfig');
-    var homeHex = gw.zwave.ozwConfig.name;
-
-    if(result.success){
-      var filePath = utils.joinPath(true, config.storeDir, 'zwcfg_' + homeHex + '.xml');
-      fs.readFile(filePath, 'utf8', function(err, data){
-        if(err)
-          res.json({success: false, message: err.message})
-        else{
-          res.json({success:true, homeHex: homeHex, data: data, message: "Successfully exported file"});
-        }
-      })
-    }else{
-      res.json(result);
-    }
-
-  }else{
-    return res.json({success: false, message: "Zwave client not ready"})
-  }
+app.get('/api/exportConfig', function (req, res) {
+  return res.json({success: true, data: jsonStore.get(store.nodes), message: "Successfully exported nodes JSON configuration"})
 });
 
 //import config
-app.post('/api/importConfig', function(req, res) {
-  if(gw.zwave && gw.zwave.client && gw.zwave.ozwConfig && gw.zwave.ozwConfig.name){
+app.post('/api/importConfig', async function (req, res) {
+  var config = req.body.data;
+  try {
 
-    var filePath = utils.joinPath(true, config.storeDir, 'zwcfg_' + gw.zwave.ozwConfig.name + '.xml');
+    if (!gw.zwave) throw Error("Zwave client not inited")
 
-    fs.writeFile(filePath, req.body.data, 'utf8', function(err){
-      if(err)
-        res.json({success: false, message: err.message})
-      else{
-        res.json({success:true, message: "Successfully imported file"});
+    if (!Array.isArray(config)) throw Error("Configuration not valid")
+    else {
+      for (let i = 0; i < config.length; i++) {
+        const e = config[i];
+        if (e && (!e.hasOwnProperty('name') || !e.hasOwnProperty('loc'))) {
+          throw Error("Configuration not valid")
+        }else if(e){
+          await gw.zwave.callApi("setNodeName", i, e.name || "")
+          await gw.zwave.callApi("setNodeLocation", i, e.loc || "")
+        }
       }
-    })
+    }
 
-  }else{
-    return res.json({success: false, message: "Zwave client not ready"})
+    res.json({success: true, message: "Configuration imported successfully"});
+
+  } catch (error) {
+    debug(error.message)
+    return res.json({ success: false, message: error.message });
   }
 });
 
 //update settings
-app.post('/api/settings', function(req, res) {
+app.post('/api/settings', function (req, res) {
   jsonStore.put(store.settings, req.body)
-  .then(data => {
-    res.json({success: true, message: "Configuration updated successfully"});
-    gw.close();
-    startGateway();
-  }).catch(err => {
-    debug(err);
-    res.json({success: false, message: err.message})
-  })
+    .then(data => {
+      res.json({ success: true, message: "Configuration updated successfully" });
+      gw.close();
+      startGateway();
+    }).catch(err => {
+      debug(err);
+      res.json({ success: false, message: err.message })
+    })
 });
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   var err = new Error('Not Found');
   err.status = 404;
   next(err);
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
@@ -181,7 +171,7 @@ startGateway();
 
 process.removeAllListeners('SIGINT');
 
-process.on('SIGINT', function() {
+process.on('SIGINT', function () {
   debug('Closing...');
   gw.close();
   process.exit();
