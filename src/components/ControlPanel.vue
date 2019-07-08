@@ -607,7 +607,7 @@ export default {
       var self = this;
       if (
         confirm(
-          "Attention! This operation will override current zwave xml file and cannot be undone"
+          "Attention: This will override all existing nodes names and location"
         )
       ) {
         self.$emit("import", "json", function(err, data) {
