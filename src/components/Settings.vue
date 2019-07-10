@@ -258,6 +258,12 @@
                       ></v-select>
                     </v-flex>
                   </v-layout>
+                  <v-flex v-if="gateway.type === 0" xs6>
+                    <v-switch
+                      label="Use nodes name instead of numeric nodeIDs"
+                      v-model="gateway.nodeNames"
+                    ></v-switch>
+                  </v-flex>
                   <v-flex xs6>
                     <v-switch
                       label="Send 'list' values as integer index"
@@ -401,7 +407,7 @@ export default {
           value: 0
         },
         {
-          text: "Named topics",
+          text: "Named topics (DEPRECATED)",
           value: 1
         },
         {

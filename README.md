@@ -211,6 +211,7 @@ Gateway settings:
   - **Just value**: The payload will contain only the row Numeric/String value
 
 - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
+- **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
