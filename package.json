@@ -9,6 +9,7 @@
     "scripts": [
       "lib/**/*.js",
       "config/**/*.js",
+      "hass/**/*.js",
       "app.js"
     ],
     "assets": [
