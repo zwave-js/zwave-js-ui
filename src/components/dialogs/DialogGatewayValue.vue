@@ -45,6 +45,16 @@
                 </v-select>
               </v-flex>
               <v-flex xs12>
+                <v-select
+                  v-model="editedValue.device_class"
+                  label="Device Class"
+                  hint="Specify a device class for Home assistant"
+                  required
+                  item-text="name"
+                  :items="deviceClasses"
+                ></v-select>
+              </v-flex>
+              <v-flex xs12>
                 <v-text-field
                   v-model.trim="editedValue.topic"
                   label="Topic"
@@ -123,6 +133,17 @@ export default {
     deviceValues() {
       var device = this.devices.find(d => d.value == this.editedValue.device);
       return device ? device.values : [];
+    },
+    deviceClasses() {
+      var v = this.editedValue.value;
+
+      if(!v) return [];
+    
+      if(v.class_id == 0x30) // sensor binary
+        return ['battery', 'cold', 'connectivity', 'door', 'garage_door', 'gas', 'heat', 'light', 'lock', 'moisture', 'motion', 'moving', 'occupancy', 'opening', 'plug', 'power', 'presence', 'problem', 'safety', 'smoke', 'sound', 'vibration', 'window']
+
+      if( v.class_id === 0x31 || v.class_id === 0x32) //sensor multileve and meters
+        return ['battery', 'humidity', 'illuminance', 'signal_strength', 'temperature', 'power', 'pressure', 'timestamp']
     },
     requiredIntensity() {
       return (
