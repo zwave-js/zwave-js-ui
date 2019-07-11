@@ -118,6 +118,7 @@ Zwave settings:
 - **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
+- **Hass discovery**: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#star-Home-Assistant-integration-BETA))
 
 ### MQTT
 
@@ -234,6 +235,7 @@ To replace a failed node using the UI you have to check if the Node is failed us
 ## :star: Features
 
 - Configurable Zwave to Mqtt Gateway
+- Home Assistant integration (**beta**)
 - Zwave Control Panel:
   - **Nodes management**: check all nodes dicovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
   - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/OpenZWave/Zwave2Mqtt/issues/45)). This change is back compatibile with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
@@ -244,6 +246,36 @@ To replace a failed node using the UI you have to check if the Node is failed us
 ## :gift: MQTT APIs
 
 You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple usign MQTT.
+
+## :star: Home Assistant integration (BETA)
+
+**At least Home Assistant >= 0.84 is required!**
+
+The easiest way to integrate Zwave2Mqtt with Home Assistant is by
+using [MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/).
+This allows Zwave2Mqtt to automatically add devices to Home Assistant.
+
+To achieve the best possible integration (including MQTT discovery):
+- In your **Zwave2Mqtt** gateway settings setenable `Homeassistant discovery` flag
+- In your **Home Assistant** `configuration.yaml`:
+```yaml
+mqtt:
+  discovery: true
+  broker: [YOUR MQTT BROKER]  # Remove if you want to use builtin-in MQTT broker
+  birth_message:
+    topic: 'hass/status'
+    payload: 'online'
+  will_message:
+    topic: 'hass/status'
+    payload: 'offline'
+```
+
+Mind you that if you want to use the embedded broker of Home Assistant you
+have to [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
+
+Zwave2Mqtt is expecting Home Assistant to send it's birth/will
+messages to `hass/status`. Be sure to add this to your `configuration.yaml` if you want
+Zwave2Mqtt to resend the cached values when Home Assistant restarts
 
 ### Zwave APIs
 
