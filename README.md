@@ -174,7 +174,7 @@ Gateway settings:
       - `mqtt_prefix`: the prefix set in Mqtt Settings
       - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
       - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-      - `value_topic`: the topic of the value. This is manually configured in Gateway settings by popolating a table with the values that I want to read from each device of a specific type in my network. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
+      - `value_topic`: the topic you want to use for that value (take from gateway values table).
 
 - **Payload type**: The content of the payload when an update is published:
   - **JSON Time-Value**: The payload will be a JSON object like:
@@ -224,7 +224,19 @@ By default Node status (`true` if node is ready `false` if node is dead) will be
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
 
-#### Nodes Management
+#### Gateway values table
+
+The Gateway values table can be used with all gateway types to customize specific values topic for each device type found in the network and do some operations with them. Each value has this properties:
+
+- **Device**: The device type. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
+- **Value**: The value you want to customize
+- **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
+- **Topic**: The topic to use for this value. It is the topic added  after topic prefix, node name and location. If gateway type is different than `Manual` this can be leave blank and the value topic will be the one based on the gateway configuration choosed
+- **Post operation**: If you want to convert your value (eg. '/10' '/100' '*10' '*100')
+- **Poll**: Enable this to set the value `enablePoll` flag
+- **Verify Changes**: Used to verify changes of this values
+
+## Nodes Management
 
 To add a node using the UI select the controller Action `Add Node (inclusion)`, click send (:airplane:) button to enable the inclusion mode in your controller and enable the inclusion mode in your device to. `Controller status` will be `waiting` when inclusion has been successfully enabled on the controller and `completed` when the node has been successfully added. Wait few seconds and your node will be visible in the table once ready.
 
@@ -256,8 +268,10 @@ using [MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/).
 This allows Zwave2Mqtt to automatically add devices to Home Assistant.
 
 To achieve the best possible integration (including MQTT discovery):
-- In your **Zwave2Mqtt** gateway settings setenable `Homeassistant discovery` flag
+
+- In your **Zwave2Mqtt** gateway settings enable `Homeassistant discovery` flag
 - In your **Home Assistant** `configuration.yaml`:
+
 ```yaml
 mqtt:
   discovery: true
@@ -275,7 +289,9 @@ have to [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embed
 
 Zwave2Mqtt is expecting Home Assistant to send it's birth/will
 messages to `hass/status`. Be sure to add this to your `configuration.yaml` if you want
-Zwave2Mqtt to resend the cached values when Home Assistant restarts
+Zwave2Mqtt to resend the cached values when Home Assistant restarts.
+
+Devices are auto-detected but you can set custom a `device_class` to values using Gateway value table.
 
 ### Zwave APIs
 
