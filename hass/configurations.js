@@ -1,5 +1,8 @@
+// List of Home-Assistant configuration for MQTT Discovery
+// https://www.home-assistant.io/docs/mqtt/discovery/
+
 module.exports = {
-  // Binary sensor
+  // Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
   'binary_sensor_occupancy': {
     type: 'binary_sensor',
     object_id: 'occupancy',
@@ -111,7 +114,7 @@ module.exports = {
     }
   },
 
-  // Sensor
+  // Sensor https://www.home-assistant.io/components/sensor.mqtt
   'sensor_generic': {
     type: 'sensor',
     object_id: 'generic',
@@ -247,7 +250,7 @@ module.exports = {
     }
   },
 
-  // Light
+  // Light https://www.home-assistant.io/components/light.mqtt
   'light_rgb': {
     type: 'light',
     object_id: 'light',
@@ -268,7 +271,7 @@ module.exports = {
     }
   },
 
-  // Switch
+  // Switch https://www.home-assistant.io/components/switch.mqtt
   'switch': {
     type: 'switch',
     object_id: 'switch',
@@ -280,7 +283,7 @@ module.exports = {
     }
   },
 
-  // Cover
+  // Cover https://www.home-assistant.io/components/cover.mqtt
   'cover': {
     type: 'cover',
     object_id: 'cover',
@@ -302,7 +305,7 @@ module.exports = {
     }
   },
 
-  // Lock
+  // Lock https://www.home-assistant.io/components/lock.mqtt
   'lock': {
     type: 'lock',
     object_id: 'lock',
@@ -312,7 +315,7 @@ module.exports = {
     }
   },
 
-  // Thermostat/HVAC
+  // Thermostat/HVAC https://www.home-assistant.io/components/climate.mqtt
   'thermostat': {
     type: 'climate',
     object_id: 'climate',
@@ -331,7 +334,7 @@ module.exports = {
     }
   },
 
-  // Fan
+  // Fan https://www.home-assistant.io/components/fan.mqtt/
   'fan': {
     type: 'fan',
     object_id: 'fan',
