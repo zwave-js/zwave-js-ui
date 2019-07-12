@@ -1,6 +1,6 @@
 /* eslint-disable quotes */
 module.exports = {
-  '411-1-1': [{
+  '411-1-1': [{ // Heatit Thermostat TF 021 (ThermoFloor AS)
     type: 'climate',
     object_id: 'thermostat',
     values: ['64-1-0', '49-1-1', '67-1-1', '67-1-2'],
