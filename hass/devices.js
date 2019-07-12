@@ -10,7 +10,6 @@ module.exports = {
       max_temp: 30,
       modes: ['off', 'heat', 'cool'],
       mode_state_topic: '64-1-0',
-      mode_state_template: '{{ value_json.value }}',
       mode_command_topic: true,
       current_temperature_topic: '49-1-1',
       current_temperature_template: '{{ value_json.value }}',
