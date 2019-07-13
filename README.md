@@ -255,10 +255,6 @@ To replace a failed node using the UI you have to check if the Node is failed us
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 - Log debug in UI
 
-## :gift: MQTT APIs
-
-You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple usign MQTT.
-
 ## :star: Home Assistant integration (BETA)
 
 **At least Home Assistant >= 0.84 is required!**
@@ -291,7 +287,51 @@ Zwave2Mqtt is expecting Home Assistant to send it's birth/will
 messages to `hass/status`. Be sure to add this to your `configuration.yaml` if you want
 Zwave2Mqtt to resend the cached values when Home Assistant restarts.
 
-Devices are auto-detected but you can set custom a `device_class` to values using Gateway value table.
+Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered divice doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
+
+### Custom Components
+
+At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT neeeds to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device. Example:
+
+```js
+{ // Heatit Thermostat TF 021 (ThermoFloor AS)
+    type: 'climate',
+    object_id: 'thermostat',
+    values: ['64-1-0', '49-1-1', '67-1-1', '67-1-2'],
+    mode_map: {'off': 'Off', 'heat': 'Heat (Default)', 'cool': 'Cool'},
+    setpoint_topic: { "Heat (Default)": '67-1-1', "Cool": '67-1-2' },
+    default_setpoint: '67-1-1',
+    discovery_payload: {
+      min_temp: 15,
+      max_temp: 30,
+      modes: ['off', 'heat', 'cool'],
+      mode_state_topic: '64-1-0',
+      mode_command_topic: true,
+      current_temperature_topic: '49-1-1',
+      current_temperature_template: '{{ value_json.value }}',
+      temperature_state_template: '{{ value_json.value }}',
+      temperature_command_topic: true
+    }
+  }
+```
+
+- **type**: The hass [MQTT component](https://www.home-assistant.io/components/mqtt/) type
+- **object_id**: The unique id of this object (must be unique for the device)
+- **values**: Array of values used by this component
+- **mode_map**: Key-Value object where keys are [MQTT Climate](https://www.home-assistant.io/components/climate.mqtt/) modes and values are the matching thermostat modes values
+- **setpoint_topic**: Key-Value object where keys are the modes of the Zwave thermostat and values are the matching setpoint `value_id` (use this if your thermostat has more than one setpoint)
+- **default_setpoint**: The default thermostat setpoint.
+- **discovery_payload**: The payload sent to hass to discover this device
+  - **min_temp/max_temp**: Min/Max temperature of the thermostat
+  - **modes**: Array of Hass Climate supported modes. Allowed values are `[“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]`
+  - **mode_state_topic**: `value_id` of mode value
+  - **current_temperature_topic**: `value_id` of current temperature value
+  - **current_temperature_template/temperature_state_template**: Template used to fetch the value from the MQTT payload
+  - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Hass to hange this values
+
+## :gift: MQTT APIs
+
+You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple usign MQTT.
 
 ### Zwave APIs
 
