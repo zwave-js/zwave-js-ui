@@ -139,9 +139,10 @@ app.post('/api/settings', function (req, res) {
   jsonStore.put(store.settings, req.body)
     .then(data => {
       res.json({ success: true, message: "Configuration updated successfully" });
-      gw.close();
-      startGateway();
-    }).catch(err => {
+      return gw.close();
+    })
+    .then(() => startGateway())
+    .catch(err => {
       debug(err);
       res.json({ success: false, message: err.message })
     })
