@@ -210,21 +210,35 @@
               <v-layout v-if="hassDevices.length > 0" column>
                 <v-subheader>Home Assistant - Devices</v-subheader>
 
-                <v-layout v-if="hassDevices.length > 0" raw>
-                  <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
-                    <template slot="items" slot-scope="props">
-                      <td class="text-xs">{{ props.item.id }}</td>
-                      <td class="text-xs">{{ props.item.type }}</td>
-                      <td class="text-xs">{{ props.item.object_id }}</td>
-                      <td
-                        class="text-xs"
-                      >{{ JSON.stringify(props.item.discovery_payload, null, 2) }}</td>
-                      <td class="justify-center layout px-0">
-                        <v-icon small class="mr-2" @click="editItemHass(props.item)">edit</v-icon>
-                        <v-icon small @click="deleteItemHass(props.item)">delete</v-icon>
-                      </td>
-                    </template>
-                  </v-data-table>
+                <!-- HASS DEVICES -->
+                <v-layout v-if="hassDevices.length > 0" raw wrap>
+                  <v-flex xs12 md6 pa-1>
+                    <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
+                      <template slot="items" slot-scope="props">
+                        <tr
+                          style="cursor:pointer;"
+                          :active="selectedDevice == props.item"
+                          @click="selectedDevice == props.item ? selectedDevice = null : selectedDevice = props.item"
+                        >
+                          <td class="text-xs">{{ props.item.id }}</td>
+                          <td class="text-xs">{{ props.item.type }}</td>
+                          <td class="text-xs">{{ props.item.object_id }}</td>
+                          <td>
+                            <v-icon small color="blue" class="mr-2" @click="rediscoverDevice(props.item)">refresh</v-icon>
+                            <v-icon small color="red" @click="deleteDevice(props.item)">delete</v-icon>
+                          </td>
+                        </tr>
+                      </template>
+                    </v-data-table>
+                  </v-flex>
+                  <v-flex xs12 md6 pa-1>
+                    <v-textarea
+                      label="Hass Device JSON"
+                      auto-grow
+                      readonly
+                      :value="selectedDevice ? JSON.stringify(selectedDevice, null, 2) : null"
+                    ></v-textarea>
+                  </v-flex>
                 </v-layout>
               </v-layout>
             </v-container>
@@ -369,9 +383,9 @@
                   <td
                     class="text-xs"
                   >{{ props.item.timeout ? 'After ' + props.item.timeout + 's' : 'No' }}</td>
-                  <td class="justify-center layout px-0">
-                    <v-icon small class="mr-2" @click="editItem(props.item)">edit</v-icon>
-                    <v-icon small @click="deleteItem(props.item)">delete</v-icon>
+                  <td>
+                    <v-icon small color="green" class="mr-2" @click="editItem(props.item)">edit</v-icon>
+                    <v-icon small color="red" @click="deleteItem(props.item)">delete</v-icon>
                   </td>
                 </template>
               </v-data-table>
@@ -467,6 +481,7 @@ export default {
         this.newName = this.selectedNode.name;
         this.newLoc = this.selectedNode.loc;
         this.node_action = null;
+        this.selectedDevice = null;
       }
     },
     selectedScene() {
@@ -518,6 +533,7 @@ export default {
         { text: "Object id", value: "object_id" },
         { text: "Actions", sortable: false }
       ],
+      selectedDevice: null,
       group: {},
       currentTab: 0,
       node_action: "requestNetworkUpdate",
@@ -764,6 +780,12 @@ export default {
         ]);
         this.refreshValues();
       }
+    },
+    deleteDevice(item){
+      this.socket.emit("HASS_API", {apiName: 'delete', device: item});
+    },
+    rediscoverDevice(item){
+      this.socket.emit("HASS_API", {apiName: 'discover', device:item})
     },
     closeDialog() {
       this.dialogValue = false;

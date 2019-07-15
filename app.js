@@ -71,6 +71,17 @@ app.startSocket = function (server) {
       }
     });
 
+    socket.on('HASS_API', function (data) {
+      switch (data.apiName) {
+        case 'delete':
+          gw.publishDiscovery(data.device, true)
+          break;
+        case 'discover':
+          gw.publishDiscovery(data.device)
+          break;
+      }
+    })
+
     socket.on('disconnect', function () {
       debug('User disconnected', socket.id);
     });
