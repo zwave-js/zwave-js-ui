@@ -206,6 +206,27 @@
 
                 <v-divider></v-divider>
               </v-layout>
+
+              <v-layout v-if="hassDevices.length > 0" column>
+                <v-subheader>Home Assistant - Devices</v-subheader>
+
+                <v-layout v-if="hassDevices.length > 0" raw>
+                  <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
+                    <template slot="items" slot-scope="props">
+                      <td class="text-xs">{{ props.item.id }}</td>
+                      <td class="text-xs">{{ props.item.type }}</td>
+                      <td class="text-xs">{{ props.item.object_id }}</td>
+                      <td
+                        class="text-xs"
+                      >{{ JSON.stringify(props.item.discovery_payload, null, 2) }}</td>
+                      <td class="justify-center layout px-0">
+                        <v-icon small class="mr-2" @click="editItemHass(props.item)">edit</v-icon>
+                        <v-icon small @click="deleteItemHass(props.item)">delete</v-icon>
+                      </td>
+                    </template>
+                  </v-data-table>
+                </v-layout>
+              </v-layout>
             </v-container>
 
             <v-container v-if="!selectedNode">
@@ -238,7 +259,12 @@
                 </v-flex>
 
                 <v-flex v-if="group.group" xs12 sm6>
-                  <v-textarea label="Current associations" auto-grow readonly :value="group.associations"></v-textarea>
+                  <v-textarea
+                    label="Current associations"
+                    auto-grow
+                    readonly
+                    :value="group.associations"
+                  ></v-textarea>
                 </v-flex>
 
                 <v-flex v-if="group.node" xs12 sm6>
@@ -331,7 +357,7 @@
 
               <v-data-table
                 v-if="selectedScene"
-                :headers="headers_values"
+                :headers="headers_scenes"
                 :items="scene_values"
                 class="elevation-1"
               >
@@ -407,7 +433,19 @@ export default {
       return this.editedIndex === -1 ? "New Value" : "Edit Value";
     },
     tableNodes() {
-      return this.showHidden ? this.nodes : this.nodes.filter(n => !n.failed)
+      return this.showHidden ? this.nodes : this.nodes.filter(n => !n.failed);
+    },
+    hassDevices() {
+      var devices = [];
+      if (this.selectedNode && this.selectedNode.hassDevices) {
+        for (const id in this.selectedNode.hassDevices) {
+          var d = JSON.parse(JSON.stringify(this.selectedNode.hassDevices[id]));
+          d.id = id;
+          devices.push(d);
+        }
+      }
+
+      return devices;
     }
   },
   watch: {
@@ -466,12 +504,18 @@ export default {
       dialogValue: false,
       editedValue: {},
       editedIndex: -1,
-      headers_values: [
+      headers_scenes: [
         { text: "Value ID", value: "value_id" },
         { text: "Node", value: "node_id" },
         { text: "Label", value: "label" },
         { text: "Value", value: "value" },
         { text: "Timeout", value: "timeout" },
+        { text: "Actions", sortable: false }
+      ],
+      headers_hass: [
+        { text: "Id", value: "id" },
+        { text: "Type", value: "type" },
+        { text: "Object id", value: "object_id" },
         { text: "Actions", sortable: false }
       ],
       group: {},
@@ -801,7 +845,7 @@ export default {
     },
     addAssociation() {
       var g = this.group;
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id;
 
       if (g && g.node && target) {
         var args = [g.node.node_id, g.group, target];
@@ -819,13 +863,9 @@ export default {
     },
     removeAssociation() {
       var g = this.group;
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id;
       if (g && g.node && target) {
-        this.apiRequest("removeAssociation", [
-          g.node.node_id,
-          g.group,
-          target
-        ]);
+        this.apiRequest("removeAssociation", [g.node.node_id, g.group, target]);
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
         setTimeout(this.getAssociations, 500);
