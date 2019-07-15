@@ -291,6 +291,17 @@ Zwave2Mqtt to resend the cached values when Home Assistant restarts.
 
 Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered divice doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
 
+### Components management
+
+To see the components that have been discovered by Zwave2Mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
+
+If you select a device it's configuration will be displayed as a JSON object on the right. In the action column you can trigger two actions, in order:
+
+- `Discover`: Re-discover this device using the `discoveryTopic` and `discovery_payload` of the configuration
+- `Delete`: Delete the device from Hass entities
+
+![Hass Devices](docs/hass_devices.png)
+
 ### Custom Components
 
 At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT neeeds to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device. Example:
