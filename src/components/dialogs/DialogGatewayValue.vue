@@ -49,10 +49,16 @@
                   v-model="editedValue.device_class"
                   label="Device Class"
                   hint="Specify a device class for Home assistant"
-                  required
                   item-text="name"
                   :items="deviceClasses"
                 ></v-select>
+              </v-flex>
+              <v-flex xs12>
+               <v-text-field
+                  v-model.number="editedValue.icon"
+                  hint="Specify a device icon for Home assistant, format is <prefix>:<icons-alias> (Eg: 'mdi:water'). Check http://materialdesignicons.com/"
+                  label="Device Icon"
+                ></v-text-field>
               </v-flex>
               <v-flex xs12>
                 <v-text-field
