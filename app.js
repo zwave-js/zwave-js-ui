@@ -74,12 +74,16 @@ app.startSocket = function (server) {
     socket.on('HASS_API', function (data) {
       switch (data.apiName) {
         case 'delete':
-          // TODO: Update device in node
           gw.publishDiscovery(data.device, true, data.node_id)
           break;
         case 'discover':
-          // TODO: Update device in node
           gw.publishDiscovery(data.device, false, data.node_id)
+          break;
+        case 'update':
+          gw.updateDevice(data.device, data.node_id)
+          break;
+        case 'store':
+          gw.storeDevices(data.devices, data.node_id)
           break;
       }
     })
@@ -116,7 +120,7 @@ app.get('/api/settings', function (req, res) {
 
 //get config
 app.get('/api/exportConfig', function (req, res) {
-  return res.json({success: true, data: jsonStore.get(store.nodes), message: "Successfully exported nodes JSON configuration"})
+  return res.json({ success: true, data: jsonStore.get(store.nodes), message: "Successfully exported nodes JSON configuration" })
 });
 
 //import config
@@ -132,14 +136,14 @@ app.post('/api/importConfig', async function (req, res) {
         const e = config[i];
         if (e && (!e.hasOwnProperty('name') || !e.hasOwnProperty('loc'))) {
           throw Error("Configuration not valid")
-        }else if(e){
+        } else if (e) {
           await gw.zwave.callApi("setNodeName", i, e.name || "")
           await gw.zwave.callApi("setNodeLocation", i, e.loc || "")
         }
       }
     }
 
-    res.json({success: true, message: "Configuration imported successfully"});
+    res.json({ success: true, message: "Configuration imported successfully" });
 
   } catch (error) {
     debug(error.message)

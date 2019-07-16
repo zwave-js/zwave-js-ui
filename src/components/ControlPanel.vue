@@ -825,7 +825,10 @@ export default {
     },
     rediscoverDevice() {
       var device = this.selectedDevice;
-      if (device && confirm("Are you sure you want to re-discover selected device?"))
+      if (
+        device &&
+        confirm("Are you sure you want to re-discover selected device?")
+      )
         this.socket.emit("HASS_API", {
           apiName: "discover",
           device: device,
@@ -840,13 +843,18 @@ export default {
           this.selectedDevice.id,
           updated
         );
-        this.socket.emit("HASS_API", { apiName: "update", device: updated });
+        this.socket.emit("HASS_API", {
+          apiName: "update",
+          device: updated,
+          node_id: this.selectedNode.node_id
+        });
       }
     },
     storeDevices() {
       this.socket.emit("HASS_API", {
         apiName: "store",
-        devices: this.selectedNode.hassDevices
+        devices: this.selectedNode.hassDevices,
+        node_id: this.selectedNode.node_id
       });
     },
     closeDialog() {
