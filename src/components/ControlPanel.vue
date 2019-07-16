@@ -225,6 +225,7 @@
                           <td class="text-xs">{{ props.item.id }}</td>
                           <td class="text-xs">{{ props.item.type }}</td>
                           <td class="text-xs">{{ props.item.object_id }}</td>
+                          <td class="text-xs">{{ props.item.persistent ? 'Yes' : 'No' }}</td>
                         </tr>
                       </template>
                     </v-data-table>
@@ -551,7 +552,8 @@ export default {
       headers_hass: [
         { text: "Id", value: "id" },
         { text: "Type", value: "type" },
-        { text: "Object id", value: "object_id" }
+        { text: "Object id", value: "object_id" },
+        { text: "Persistent", value: "persistent" }
       ],
       selectedDevice: null,
       errorDevice: false,
@@ -1084,7 +1086,7 @@ export default {
 
           if (!data.newValue) data.newValue = data.value;
 
-          Object.assign(self.nodes[data.node_id].values[index], data);
+          self.$set(self.nodes[data.node_id].values, index, data);
         }
       }
     });

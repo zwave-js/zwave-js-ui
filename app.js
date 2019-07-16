@@ -80,10 +80,10 @@ app.startSocket = function (server) {
           gw.publishDiscovery(data.device, false, data.node_id)
           break;
         case 'update':
-          gw.updateDevice(data.device, data.node_id)
+          gw.zwave.updateDevice(data.device, data.node_id)
           break;
         case 'store':
-          gw.storeDevices(data.devices, data.node_id)
+          gw.zwave.storeDevices(data.devices, data.node_id)
           break;
       }
     })
