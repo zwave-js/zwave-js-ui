@@ -215,6 +215,7 @@ Gateway settings:
 - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#star-Home-Assistant-integration-BETA))
+- **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
@@ -252,7 +253,7 @@ To add a node using the UI select the controller Action `Add Node (inclusion)`, 
 
 To add a node using the UI select the controller Action `Remove Node (exlusion)`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` will be `waiting` when exclusion has been successfully enabled on the controller and `completed` when the node has been successfully removed. Wait few seconds and your node will be removed from the table.
 
-To replace a failed node using the UI you have to check if the Node is failed using `Has node failed` command. If Controller status says `NodeFailed` the node can be replaced, if not controller will say `NodeOk`. Sometimes to update node state and make it failed you firstly need to send `Update return route` command than send `Has node failed` and check if the status now is `NodeFailed`. If so you can replace the node using the command `Replace Failed Node`, now the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
+To replace a failed node from the UI you have to use the command `Replace Failed Node`, if everything is ok the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
 
 ## :star: Features
 
@@ -282,6 +283,7 @@ To achieve the best possible integration (including MQTT discovery):
 ```yaml
 mqtt:
   discovery: true
+  discovery_prefix: <your_discovery_prefix>
   broker: [YOUR MQTT BROKER]  # Remove if you want to use builtin-in MQTT broker
   birth_message:
     topic: 'hass/status'
