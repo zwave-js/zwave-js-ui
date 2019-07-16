@@ -213,6 +213,8 @@
                 <!-- HASS DEVICES -->
                 <v-layout v-if="hassDevices.length > 0" raw wrap>
                   <v-flex xs12 md6 pa-1>
+                    <v-btn color="blue darken-1" flat @click.native="storeDevices">Store</v-btn>
+
                     <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
                       <template slot="items" slot-scope="props">
                         <tr
@@ -223,20 +225,34 @@
                           <td class="text-xs">{{ props.item.id }}</td>
                           <td class="text-xs">{{ props.item.type }}</td>
                           <td class="text-xs">{{ props.item.object_id }}</td>
-                          <td>
-                            <v-icon small color="blue" class="mr-2" @click="rediscoverDevice(props.item)">refresh</v-icon>
-                            <v-icon small color="red" @click="deleteDevice(props.item)">delete</v-icon>
-                          </td>
                         </tr>
                       </template>
                     </v-data-table>
                   </v-flex>
                   <v-flex xs12 md6 pa-1>
+                    <v-btn
+                      color="blue darken-1"
+                      :disabled="errorDevice"
+                      flat
+                      @click.native="updateDevice"
+                    >Update</v-btn>
+                    <v-btn
+                      color="green darken-1"
+                      :disabled="errorDevice"
+                      flat
+                      @click.native="rediscoverDevice"
+                    >Rediscover</v-btn>
+                    <v-btn
+                      color="red darken-1"
+                      :disabled="errorDevice"
+                      flat
+                      @click.native="deleteDevice"
+                    >Delete</v-btn>
                     <v-textarea
                       label="Hass Device JSON"
                       auto-grow
-                      readonly
-                      :value="selectedDevice ? JSON.stringify(selectedDevice, null, 2) : null"
+                      :rules="[validJSONdevice]"
+                      v-model="deviceJSON"
                     ></v-textarea>
                   </v-flex>
                 </v-layout>
@@ -484,6 +500,11 @@ export default {
         this.selectedDevice = null;
       }
     },
+    selectedDevice() {
+      this.deviceJSON = this.selectedDevice
+        ? JSON.stringify(this.selectedDevice, null, 2)
+        : "";
+    },
     selectedScene() {
       this.refreshValues();
     },
@@ -530,10 +551,11 @@ export default {
       headers_hass: [
         { text: "Id", value: "id" },
         { text: "Type", value: "type" },
-        { text: "Object id", value: "object_id" },
-        { text: "Actions", sortable: false }
+        { text: "Object id", value: "object_id" }
       ],
       selectedDevice: null,
+      errorDevice: false,
+      deviceJSON: "",
       group: {},
       currentTab: 0,
       node_action: "requestNetworkUpdate",
@@ -663,6 +685,17 @@ export default {
     showSnackbar(text) {
       this.$emit("showSnackbar", text);
     },
+    validJSONdevice() {
+      var valid = true;
+      try {
+        JSON.parse(this.deviceJSON);
+      } catch (error) {
+        valid = false;
+      }
+      this.errorDevice = !valid;
+
+      return valid || "JSON test failed";
+    },
     importConfiguration() {
       var self = this;
       if (
@@ -781,11 +814,40 @@ export default {
         this.refreshValues();
       }
     },
-    deleteDevice(item){
-      this.socket.emit("HASS_API", {apiName: 'delete', device: item});
+    deleteDevice() {
+      var device = this.selectedDevice;
+      if (device && confirm("Are you sure you want to delete selected device?"))
+        this.socket.emit("HASS_API", {
+          apiName: "delete",
+          device: device,
+          node_id: this.selectedNode.node_id
+        });
     },
-    rediscoverDevice(item){
-      this.socket.emit("HASS_API", {apiName: 'discover', device:item})
+    rediscoverDevice() {
+      var device = this.selectedDevice;
+      if (device && confirm("Are you sure you want to re-discover selected device?"))
+        this.socket.emit("HASS_API", {
+          apiName: "discover",
+          device: device,
+          node_id: this.selectedNode.node_id
+        });
+    },
+    updateDevice() {
+      if (!this.errorDevice) {
+        var updated = JSON.parse(this.deviceJSON);
+        this.$set(
+          this.selectedNode.hassDevices,
+          this.selectedDevice.id,
+          updated
+        );
+        this.socket.emit("HASS_API", { apiName: "update", device: updated });
+      }
+    },
+    storeDevices() {
+      this.socket.emit("HASS_API", {
+        apiName: "store",
+        devices: this.selectedNode.hassDevices
+      });
     },
     closeDialog() {
       this.dialogValue = false;
@@ -986,13 +1048,8 @@ export default {
     });
 
     this.socket.on("NODE_UPDATED", data => {
-      if (self.nodes[data.node_id] && !self.nodes[data.node_id].failed) {
-        delete data.values;
-        self.setName(data);
-        Object.assign(self.nodes[data.node_id], data);
-      } else {
-        self.initNode(data);
-
+      self.initNode(data);
+      if (!self.nodes[data.node_id] || self.nodes[data.node_id].failed) {
         //add missing nodes
         while (self.nodes.length < data.node_id)
           self.nodes.push({
@@ -1000,9 +1057,11 @@ export default {
             failed: true,
             status: "Removed"
           });
-
-        self.$set(self.nodes, data.node_id, data);
       }
+      self.$set(self.nodes, data.node_id, data);
+
+      if (this.selectedNode && this.selectedNode.node_id === data.node_id)
+        this.selectedNode = self.nodes[data.node_id];
     });
 
     this.socket.on("VALUE_UPDATED", data => {

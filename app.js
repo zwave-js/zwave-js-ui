@@ -74,10 +74,12 @@ app.startSocket = function (server) {
     socket.on('HASS_API', function (data) {
       switch (data.apiName) {
         case 'delete':
-          gw.publishDiscovery(data.device, true)
+          // TODO: Update device in node
+          gw.publishDiscovery(data.device, true, data.node_id)
           break;
         case 'discover':
-          gw.publishDiscovery(data.device)
+          // TODO: Update device in node
+          gw.publishDiscovery(data.device, false, data.node_id)
           break;
       }
     })
