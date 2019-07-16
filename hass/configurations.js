@@ -33,6 +33,16 @@ module.exports = {
       device_class: 'door'
     }
   },
+  'binary_sensor_lock': {
+    type: 'binary_sensor',
+    object_id: 'lock',
+    discovery_payload: {
+      payload_on: false,
+      payload_off: true,
+      value_template: '{{ value_json.value }}',
+      device_class: 'lock'
+    }
+  },
   'binary_sensor_water_leak': {
     type: 'binary_sensor',
     object_id: 'water_leak',
