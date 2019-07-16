@@ -216,14 +216,23 @@ Gateway settings:
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#star-Home-Assistant-integration-BETA))
 
-
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
 Settings, scenes and Zwave configuration are stored in `JSON/xml` files under project `store` folder that you can easily **import/export** for backup purposes.
 
-By default Node status (`true` if node is ready `false` if node is dead) will be published in:
+#### Special topics
+
+- **Node status** (`true` if node is ready `false` otherwise) will be published in:
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
+
+- **Node events** (value will be the event code) will be published in:
+
+`<mqtt_prefix>/<?node_location>/<node_name>/event`
+
+- **Scene events** (value will be the scene event code) will be published in:
+
+`<mqtt_prefix>/<?node_location>/<node_name>/scene/event`
 
 #### Gateway values table
 
