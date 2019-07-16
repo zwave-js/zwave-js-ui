@@ -71,7 +71,7 @@ app.startSocket = function (server) {
       }
     });
 
-    socket.on('HASS_API', function (data) {
+    socket.on('HASS_API', async function (data) {
       switch (data.apiName) {
         case 'delete':
           gw.publishDiscovery(data.device, true, data.node_id)
@@ -83,7 +83,7 @@ app.startSocket = function (server) {
           gw.zwave.updateDevice(data.device, data.node_id)
           break;
         case 'store':
-          gw.zwave.storeDevices(data.devices, data.node_id)
+          await gw.zwave.storeDevices(data.devices, data.node_id)
           break;
       }
     })
@@ -139,6 +139,8 @@ app.post('/api/importConfig', async function (req, res) {
         } else if (e) {
           await gw.zwave.callApi("setNodeName", i, e.name || "")
           await gw.zwave.callApi("setNodeLocation", i, e.loc || "")
+          if(e.hassDevices)
+            await gw.zwave.storeDevices(e.hassDevices, i)
         }
       }
     }
