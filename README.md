@@ -304,10 +304,11 @@ Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At
 
 To see the components that have been discovered by Zwave2Mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
 
-If you select a device it's configuration will be displayed as a JSON object on the right. In the action column you can trigger two actions, in order:
+If you select a device it's configuration will be displayed as a JSON object on the right. With the selected device you can send some actions:
 
-- `Discover`: Re-discover this device using the `discoveryTopic` and `discovery_payload` of the configuration
-- `Delete`: Delete the device from Hass entities
+- `Update`: Update in-memory hass device configuration
+- `Rediscover`: Re-discover this device using the `discoveryTopic` and `discovery_payload` of the configuration
+- `Delete`: Delete the device from Hass entities of selected node
 
 ![Hass Devices](docs/hass_devices.png)
 
