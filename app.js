@@ -74,10 +74,10 @@ app.startSocket = function (server) {
     socket.on('HASS_API', async function (data) {
       switch (data.apiName) {
         case 'delete':
-          gw.publishDiscovery(data.device, true, data.node_id)
+          gw.publishDiscovery(data.device, data.node_id, true, true)
           break;
         case 'discover':
-          gw.publishDiscovery(data.device, false, data.node_id)
+          gw.publishDiscovery(data.device, data.node_id, false, true)
           break;
         case 'update':
           gw.zwave.updateDevice(data.device, data.node_id)
