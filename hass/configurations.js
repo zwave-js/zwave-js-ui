@@ -275,11 +275,13 @@ module.exports = {
     type: 'light',
     object_id: 'dimmer',
     discovery_payload: {
-      brightness_state_topic: true,
-      brightness_value_template: '{{ value_json.value }}',
-      brightness_command_topic: true,
+      schema: 'template',
+      brightness_template: '{{ value_json.value }}',
       state_topic: true,
-      command_topic: true
+      state_template: '{{ "off" if value_json.value == 0 else "on" }}',
+      command_topic: true,
+      command_on_template: '{{ brightness if brightness is defined else 255 }}',
+      command_off_template: '0'
     }
   },
 
