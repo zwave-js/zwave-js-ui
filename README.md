@@ -39,6 +39,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   - [:robot: Home Assistant integration (BETA)](#robot-Home-Assistant-integration-BETA)
     - [Components management](#Components-management)
     - [Custom Components](#Custom-Components)
+      - [Thermostats](#Thermostats)
+      - [Fans](#Fans)
   - [:gift: MQTT APIs](#gift-MQTT-APIs)
     - [Zwave APIs](#Zwave-APIs)
     - [Set values](#Set-values)
@@ -359,7 +361,9 @@ Once edited the devices will loose all their customizations after a restart. To 
 
 ### Custom Components
 
-At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT neeeds to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device. Example:
+At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT neeeds to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
+
+#### Thermostats
 
 ```js
 { // Heatit Thermostat TF 021 (ThermoFloor AS)
@@ -395,7 +399,43 @@ At the moment auto discovery just creates components like `sensor`, `cover` `bin
   - **mode_state_topic**: `value_id` of mode value
   - **current_temperature_topic**: `value_id` of current temperature value
   - **current_temperature_template/temperature_state_template**: Template used to fetch the value from the MQTT payload
-  - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Hass to hange this values
+  - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Hass to change this values
+
+Thermostats are most complex components to create, in this device example the setpoint topic changes based on the mode selected. Zwave2Mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
+
+#### Fans
+
+```js
+{ // GE 1724 Dimmer
+    type: 'fan',
+    object_id: 'dimmer',
+    values: ['38-1-0'],
+    discovery_payload: {
+      command_topic: "38-1-0",
+      speed_command_topic: "38-1-0",
+      speed_state_topic: "38-1-0",
+      state_topic: "38-1-0",
+      speeds: ["off", "low", "medium", "high"],
+      payload_low_speed: 24,
+      payload_medium_speed: 50,
+      payload_high_speed: 99,
+      payload_off: 0,
+      payload_on: 99,
+      state_value_template: "{% if (value_json.value | int) == 0 %} 0 {% else %} 99 {% endif %}",
+      speed_value_template: "{% if (value_json.value | int) == 25 %}  24  {% elif (value_json.value | int) == 51 %} 50 {% elif (value_json.value | int) == 99 %} 99 {% else %}  0  {% endif %}"
+    }
+}
+```
+
+- **type**: The hass [MQTT component](https://www.home-assistant.io/components/mqtt/) type
+- **object_id**: The unique id of this object (must be unique for the device)
+- **values**: Array of values used by this component
+- **discovery_payload**: The payload sent to hass to discover this device
+  - **command_topic**: The topic to send commands
+  - **state_topic**: The topic to receive state updates
+  - **speed_command_topic**: The topic used to send speed commands
+  - **state_value_template**: The template used to set the value ON/OFF based on the payload received
+  - **speed_value_template**: The template to use to set the speed `["off", "low", "medium", "high"]` based on the payload recieved
 
 ## :gift: MQTT APIs
 
