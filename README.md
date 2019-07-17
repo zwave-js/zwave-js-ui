@@ -17,9 +17,44 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 - **Backend**: NodeJS, Express, socket.io, Mqttjs, openzwave-shared, Webpack
 - **Frontend**: Vue,  socket.io, [Vuetify](https://github.com/vuetifyjs/vuetify)
 
+## 📖 Table of contents
+
+- [Zwave To MQTT](#Zwave-To-MQTT)
+  - [📖 Table of contents](#%F0%9F%93%96-Table-of-contents)
+  - [:electric_plug: Installation](#electricplug-Installation)
+    - [DOCKER way 🎉](#DOCKER-way-%F0%9F%8E%89)
+    - [NodeJS or PKG version](#NodeJS-or-PKG-version)
+  - [:nerd_face: Development](#nerdface-Development)
+  - [:wrench: Usage](#wrench-Usage)
+    - [Zwave](#Zwave)
+    - [MQTT](#MQTT)
+    - [Gateway](#Gateway)
+      - [Special topics](#Special-topics)
+      - [Gateway values table](#Gateway-values-table)
+  - [:file_folder: Nodes Management](#filefolder-Nodes-Management)
+    - [Add a node](#Add-a-node)
+    - [Remove a node](#Remove-a-node)
+    - [Replace failed node](#Replace-failed-node)
+  - [:star: Features](#star-Features)
+  - [:robot: Home Assistant integration (BETA)](#robot-Home-Assistant-integration-BETA)
+    - [Components management](#Components-management)
+    - [Custom Components](#Custom-Components)
+  - [:gift: MQTT APIs](#gift-MQTT-APIs)
+    - [Zwave APIs](#Zwave-APIs)
+    - [Set values](#Set-values)
+    - [Broadcast](#Broadcast)
+  - [:camera: Screenshots](#camera-Screenshots)
+    - [Settings](#Settings)
+    - [Control Panel](#Control-Panel)
+    - [Groups associations](#Groups-associations)
+    - [Scenes](#Scenes)
+    - [Debug](#Debug)
+  - [:pencil: TODOs](#pencil-TODOs)
+  - [:bowtie: Author](#bowtie-Author)
+
 ## :electric_plug: Installation
 
-### :tada: DOCKER way
+### DOCKER way 🎉
 
 Check [docker repo](https://github.com/robertsLando/Zwave2Mqtt-docker#install) for more info
 
@@ -247,11 +282,17 @@ The Gateway values table can be used with all gateway types to customize specifi
 - **Poll**: Enable this to set the value `enablePoll` flag
 - **Verify Changes**: Used to verify changes of this values
 
-## Nodes Management
+## :file_folder: Nodes Management
+
+### Add a node
 
 To add a node using the UI select the controller Action `Add Node (inclusion)`, click send (:airplane:) button to enable the inclusion mode in your controller and enable the inclusion mode in your device to. `Controller status` will be `waiting` when inclusion has been successfully enabled on the controller and `completed` when the node has been successfully added. Wait few seconds and your node will be visible in the table once ready.
 
+### Remove a node
+
 To add a node using the UI select the controller Action `Remove Node (exlusion)`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` will be `waiting` when exclusion has been successfully enabled on the controller and `completed` when the node has been successfully removed. Wait few seconds and your node will be removed from the table.
+
+### Replace failed node
 
 To replace a failed node from the UI you have to use the command `Replace Failed Node`, if everything is ok the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
 
@@ -266,7 +307,7 @@ To replace a failed node from the UI you have to use the command `Replace Failed
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 - Log debug in UI
 
-## :star: Home Assistant integration (BETA)
+## :robot: Home Assistant integration (BETA)
 
 **At least Home Assistant >= 0.84 is required!**
 
