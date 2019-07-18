@@ -38,6 +38,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   - [:star: Features](#star-Features)
   - [:robot: Home Assistant integration (BETA)](#robot-Home-Assistant-integration-BETA)
     - [Components management](#Components-management)
+      - [Edit existing component](#Edit-existing-component)
+      - [Add new component](#Add-new-component)
     - [Custom Components](#Custom-Components)
       - [Thermostats](#Thermostats)
       - [Fans](#Fans)
@@ -349,13 +351,20 @@ Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At
 
 To see the components that have been discovered by Zwave2Mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
 
+**ATTENTION**
+Once edited the devices will loose all their customizations after a restart. To prevent this you can store the node hassDevices by pressing `STORE` button at the top of hass devices table. By pressing it the hassDevices will be stored in `nodes.json` file that can be imported/exported easly from control panel UI at the top of nodes table.
+
+#### Edit existing component
+
 If you select a device it's configuration will be displayed as a JSON object on the right. With the selected device you can edit it and send some actions:
 
 - `Update`: Update in-memory hass device configuration
 - `Rediscover`: Re-discover this device using the `discoveryTopic` and `discovery_payload` of the configuration
 - `Delete`: Delete the device from Hass entities of selected node
 
-Once edited the devices will loose all their customizations after a restart. To prevent this you can store the node hassDevices by pressing `STORE` button at the top of hass devices table. By pressing it the hassDevices will be stored in `nodes.json` file that can be imported/exported easly from control panel UI at the top of nodes table.
+#### Add new component
+
+If no device is selected you can manually insert a device JSON configuration. If the configuration is valid you can press the button `Add` to add it to devices. If the process complete successfully the device will be added to the Hass Devices table and you can now select it from the table and press on `Rediscover` to discover your custom device
 
 ![Hass Devices](docs/hass_devices.png)
 
