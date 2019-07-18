@@ -82,6 +82,9 @@ app.startSocket = function (server) {
         case 'update':
           gw.zwave.updateDevice(data.device, data.node_id)
           break;
+        case 'add':
+          gw.zwave.addDevice(data.device, data.node_id)
+          break;
         case 'store':
           await gw.zwave.storeDevices(data.devices, data.node_id)
           break;
@@ -139,7 +142,7 @@ app.post('/api/importConfig', async function (req, res) {
         } else if (e) {
           await gw.zwave.callApi("setNodeName", i, e.name || "")
           await gw.zwave.callApi("setNodeLocation", i, e.loc || "")
-          if(e.hassDevices)
+          if (e.hassDevices)
             await gw.zwave.storeDevices(e.hassDevices, i)
         }
       }

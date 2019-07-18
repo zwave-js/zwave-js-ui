@@ -231,19 +231,25 @@
                     </v-data-table>
                   </v-flex>
                   <v-flex xs12 md6 pa-1>
-                    <v-btn
+                    <v-btn v-if="!selectedDevice"
+                      color="blue darken-1"
+                      :disabled="errorDevice"
+                      flat
+                      @click.native="addDevice"
+                    >Add</v-btn>
+                    <v-btn v-if="selectedDevice"
                       color="blue darken-1"
                       :disabled="errorDevice"
                       flat
                       @click.native="updateDevice"
                     >Update</v-btn>
-                    <v-btn
+                    <v-btn v-if="selectedDevice"
                       color="green darken-1"
                       :disabled="errorDevice"
                       flat
                       @click.native="rediscoverDevice"
                     >Rediscover</v-btn>
-                    <v-btn
+                    <v-btn v-if="selectedDevice"
                       color="red darken-1"
                       :disabled="errorDevice"
                       flat
@@ -688,7 +694,7 @@ export default {
       this.$emit("showSnackbar", text);
     },
     validJSONdevice() {
-      var valid = true;
+      var valid = true
       try {
         JSON.parse(this.deviceJSON);
       } catch (error) {
@@ -848,6 +854,16 @@ export default {
         this.socket.emit("HASS_API", {
           apiName: "update",
           device: updated,
+          node_id: this.selectedNode.node_id
+        });
+      }
+    },
+    addDevice() {
+      if (!this.errorDevice) {
+        var newDevice = JSON.parse(this.deviceJSON)
+        this.socket.emit("HASS_API", {
+          apiName: "add",
+          device: newDevice,
           node_id: this.selectedNode.node_id
         });
       }
