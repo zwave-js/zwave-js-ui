@@ -61,6 +61,7 @@
     "babel-polyfill": "^6.26.0",
     "bluebird": "^3.5.3",
     "body-parser": "~1.18.2",
+    "connect-history-api-fallback": "^1.6.0",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.4",
     "debug": "^4.1.1",

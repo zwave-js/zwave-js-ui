@@ -14,6 +14,7 @@ var express = require('express'),
   store = reqlib('config/store.js'),
   config = reqlib('config/app.js'),
   debug = reqlib('/lib/debug')('App'),
+  history = require('connect-history-api-fallback'),
   utils = reqlib('/lib/utils.js');
 
 var gw; //the gateway instance
@@ -33,6 +34,8 @@ app.use(cookieParser());
 app.use('/', express.static(utils.joinPath(false, 'dist')));
 
 app.use(cors());
+
+app.use(history());
 
 function startGateway() {
   var settings = jsonStore.get(store.settings);
