@@ -27,8 +27,8 @@ module.exports = {
     type: 'binary_sensor',
     object_id: 'contact',
     discovery_payload: {
-      payload_on: false,
-      payload_off: true,
+      payload_on: true,
+      payload_off: false,
       value_template: '{{ value_json.value }}',
       device_class: 'door'
     }
