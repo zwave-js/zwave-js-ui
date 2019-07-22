@@ -132,6 +132,14 @@ module.exports = {
       value_template: '{{ value_json.value }}'
     }
   },
+  'sensor_alarm': {
+    type: 'sensor',
+    object_id: 'alarm',
+    discovery_payload: {
+      icon: 'mdi:alarm-light',
+      value_template: '{{ value_json.value }}'
+    }
+  },
   'sensor_illuminance': {
     type: 'sensor',
     object_id: 'illuminance',
