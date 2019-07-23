@@ -547,7 +547,7 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 - [x] Better logging
 - [x] Dockerize application
 - [x] Package application with PKG
-- [ ] HASS integration, check [zegbee2mqtt](https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/homeassistant.js)
+- [x] HASS integration, check [zegbee2mqtt](https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/homeassistant.js)
 - [ ] Add unit test
 - [ ] JSON validator for settings and scenes
 - [ ] Better nodes status management using 'testNode'
