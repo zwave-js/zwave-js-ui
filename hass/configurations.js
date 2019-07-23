@@ -132,9 +132,25 @@ module.exports = {
       value_template: '{{ value_json.value }}'
     }
   },
-  'sensor_alarm': {
+  'sensor_alarm_level': {
     type: 'sensor',
-    object_id: 'alarm',
+    object_id: 'alarm_level',
+    discovery_payload: {
+      icon: 'mdi:alarm-light',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_alarm_type': {
+    type: 'sensor',
+    object_id: 'alarm_type',
+    discovery_payload: {
+      icon: 'mdi:alarm-light',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_alarm_burglar': {
+    type: 'sensor',
+    object_id: 'alarm_burglar',
     discovery_payload: {
       icon: 'mdi:alarm-light',
       value_template: '{{ value_json.value }}'
