@@ -53,6 +53,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     - [Groups associations](#Groups-associations)
     - [Scenes](#Scenes)
     - [Debug](#Debug)
+  - [🙏 Thanks](#%F0%9F%99%8F-Thanks)
   - [:pencil: TODOs](#pencil-TODOs)
   - [:bowtie: Author](#bowtie-Author)
 
@@ -541,6 +542,14 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 ### Debug
 
 ![Debug](docs/debug.png)
+
+## 🙏 Thanks
+
+Thanks to this people for help with issues tracking and contributions:
+
+- @mlankamp for mesh graph feature and typescript support
+- @sjorge for testing with different os and Openzwave 1.6
+- @jshridha for testing home assistant integration and contribution
 
 ## :pencil: TODOs
 
