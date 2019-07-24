@@ -115,13 +115,18 @@ app.startSocket = function (server) {
 
 //get settings
 app.get('/api/settings', function (req, res) {
-  SerialPort.list(function (err, ports) {
-    if (err) {
-      debug(err);
-    }
-    var devices = gw.zwave ? gw.zwave.devices : {};
-    res.json({ success: true, settings: jsonStore.get(store.settings), devices: devices, serial_ports: ports ? ports.map(p => p.comName) : [] });
-  })
+  var data = { success: true, settings: jsonStore.get(store.settings), devices: gw.zwave ? gw.zwave.devices : {}, serial_ports: [] }
+  if (process.platform !== 'sunos') {
+    SerialPort.list(function (err, ports) {
+      if (err) {
+        debug(err);
+      }
+      
+      data.serial_ports = ports ? ports.map(p => p.comName) : []
+
+      res.json(data);
+    })
+  } else res.json(data)
 });
 
 //get config
