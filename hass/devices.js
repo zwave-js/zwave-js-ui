@@ -17,7 +17,7 @@ var FAN_DIMMER = {
     payload_off: 0,
     payload_on: 255,
     state_value_template: "{% if (value_json.value | int) == 0 %} 0 {% else %} 255 {% endif %}",
-    speed_value_template: "{% if (value_json.value | int) == 25 %}  24  {% elif (value_json.value | int) == 51 %} 50 {% elif (value_json.value | int) == 99 %} 99 {% else %}  0  {% endif %}"
+    speed_value_template: "{% if (value_json.value | int) == 0 %}  0  {% elif (value_json.value | int) <= 32 %}  24  {% elif (value_json.value | int) <= 66 %} 50 {% elif (value_json.value | int) <= 99 %} 99 {% endif %}"
   }
 }
 
