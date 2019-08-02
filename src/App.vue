@@ -162,7 +162,7 @@ export default {
       statusColor: "",
       drawer: false,
       topbar: [],
-      title: "Control Panel",
+      title: "",
       mini: true,
       snackbar: false,
       snackbarText: ""
@@ -170,17 +170,11 @@ export default {
   },
   watch: {
     $route: function(value) {
-      switch (value.name) {
-        case "Settings":
-          this.title = "Settings";
-          break;
-        case "ControlPanel":
-          this.title = "Control Panel";
-          break;
-        default:
-          this.title = "";
-      }
+      this.title = value.name || "";
     }
+  },
+  beforeMount() {
+    this.title = this.$route.name || ""
   }
 };
 </script>
