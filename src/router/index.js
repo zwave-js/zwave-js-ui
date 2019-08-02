@@ -10,7 +10,7 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'ControlPanel',
+      name: 'Control Panel',
       component: ControlPanel,
       props: true
     },
