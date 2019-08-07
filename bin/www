@@ -105,10 +105,12 @@ jsonStore.init(store)
     var server = http.createServer(app)
 
     /**
-     * Listen on provided port, on all network interfaces.
+     * Listen on provided port, on preferred network interfaces.
      */
 
-    server.listen(port)
+    var host = process.env.HOST || conf.host || "0.0.0.0";
+
+    server.listen(port, host)
     server.on('error', onError)
     server.on('listening', onListening)
 
