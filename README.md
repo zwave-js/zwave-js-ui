@@ -152,9 +152,9 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 Zwave settings:
 
 - **Serial port**: The serial port where your controller is connected
-- **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"0xCA,0xFE,0xBA,0xBE,.... "` whithout spaces (16 bytes total)
+- **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"0xCA,0xFE,0xBA,0xBE,.... "` without spaces (16 bytes total)
 - **Logging**: Enable/Disable Openzwave Library logging
-- **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for peristent node information like node name and location
+- **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for persistent node information like node name and location
 - **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
@@ -193,7 +193,7 @@ Gateway settings:
       - `instance`: the numerical value of value instance
       - `index`: the numerical index of the value
 
-  2. **Named Topics**: *Automatically configured*. **DEPRECATED** After a discussion with Openzwave author lib we discurage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
+  2. **Named Topics**: *Automatically configured*. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
   
       The topic where zwave values are published will be:
 
@@ -202,7 +202,7 @@ Gateway settings:
       - `mqtt_prefix`: the prefix set in Mqtt Settings
       - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
       - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-      - `class_name`: the node class name corrisponding to given class id or `unknownClass_<class_id>` if the class name is not found
+      - `class_name`: the node class name corresponding to given class id or `unknownClass_<class_id>` if the class name is not found
       - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
       - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
 
@@ -282,7 +282,7 @@ The Gateway values table can be used with all gateway types to customize specifi
 - **Device**: The device type. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
 - **Value**: The value you want to customize
 - **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
-- **Topic**: The topic to use for this value. It is the topic added  after topic prefix, node name and location. If gateway type is different than `Manual` this can be leave blank and the value topic will be the one based on the gateway configuration choosed
+- **Topic**: The topic to use for this value. It is the topic added  after topic prefix, node name and location. If gateway type is different than `Manual` this can be leave blank and the value topic will be the one based on the gateway configuration chosen
 - **Post operation**: If you want to convert your value (eg. '/10' '/100' '*10' '*100')
 - **Poll**: Enable this to set the value `enablePoll` flag
 - **Verify Changes**: Used to verify changes of this values
@@ -295,7 +295,7 @@ To add a node using the UI select the controller Action `Add Node (inclusion)`, 
 
 ### Remove a node
 
-To add a node using the UI select the controller Action `Remove Node (exlusion)`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` will be `waiting` when exclusion has been successfully enabled on the controller and `completed` when the node has been successfully removed. Wait few seconds and your node will be removed from the table.
+To add a node using the UI select the controller Action `Remove Node (exclusion)`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` will be `waiting` when exclusion has been successfully enabled on the controller and `completed` when the node has been successfully removed. Wait few seconds and your node will be removed from the table.
 
 ### Replace failed node
 
@@ -306,8 +306,8 @@ To replace a failed node from the UI you have to use the command `Replace Failed
 - Configurable Zwave to Mqtt Gateway
 - Home Assistant integration (**beta**)
 - Zwave Control Panel:
-  - **Nodes management**: check all nodes dicovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
-  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/OpenZWave/Zwave2Mqtt/issues/45)). This change is back compatibile with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
+  - **Nodes management**: check all nodes discovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
+  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/OpenZWave/Zwave2Mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
   - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 - Log debug in UI
@@ -319,7 +319,7 @@ To replace a failed node from the UI you have to use the command `Replace Failed
 The easiest way to integrate Zwave2Mqtt with Home Assistant is by
 using [MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/).
 This allows Zwave2Mqtt to automatically add devices to Home Assistant.
-To enable this feature remember to set the flag **Hass Descovery** in Gateway settings configuration.
+To enable this feature remember to set the flag **Hass Discovery** in Gateway settings configuration.
 
 To achieve the best possible integration (including MQTT discovery):
 
@@ -346,7 +346,7 @@ Zwave2Mqtt is expecting Home Assistant to send it's birth/will
 messages to `hass/status`. Be sure to add this to your `configuration.yaml` if you want
 Zwave2Mqtt to resend the cached values when Home Assistant restarts.
 
-Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered divice doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
+Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
 
 ### Components management
 
@@ -355,7 +355,7 @@ To see the components that have been discovered by Zwave2Mqtt go to Control Pane
 ![Hass Devices](docs/hass_devices.png)
 
 **ATTENTION**
-Once edited the devices will loose all their customizations after a restart. To prevent this you can store the node hassDevices by pressing `STORE` button at the top of hass devices table. By pressing it the hassDevices will be stored in `nodes.json` file that can be imported/exported easly from control panel UI at the top of nodes table.
+Once edited the devices will loose all their customizations after a restart. To prevent this you can store the node hassDevices by pressing `STORE` button at the top of hass devices table. By pressing it the hassDevices will be stored in `nodes.json` file that can be imported/exported easily from control panel UI at the top of nodes table.
 
 #### Edit existing component
 
@@ -371,7 +371,7 @@ If no device is selected you can manually insert a device JSON configuration. If
 
 ### Custom Components
 
-At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT neeeds to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
+At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT needs to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
 
 #### Thermostats
 
@@ -445,11 +445,11 @@ Thermostats are most complex components to create, in this device example the se
   - **state_topic**: The topic to receive state updates
   - **speed_command_topic**: The topic used to send speed commands
   - **state_value_template**: The template used to set the value ON/OFF based on the payload received
-  - **speed_value_template**: The template to use to set the speed `["off", "low", "medium", "high"]` based on the payload recieved
+  - **speed_value_template**: The template to use to set the speed `["off", "low", "medium", "high"]` based on the payload received
 
 ## :gift: MQTT APIs
 
-You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple usign MQTT.
+You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple using MQTT.
 
 ### Zwave APIs
 
@@ -465,7 +465,7 @@ Where `args` is an array with the args used to call the api, the topic is:
 
 `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/<api_name>/set`
 
-The result will be publised on the same topic without `/set`
+The result will be published on the same topic without `/set`
 
 Example: If I publish the previous json object to the topic
 
@@ -556,11 +556,11 @@ Thanks to this people for help with issues tracking and contributions:
 - [x] Better logging
 - [x] Dockerize application
 - [x] Package application with PKG
-- [x] HASS integration, check [zegbee2mqtt](https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/homeassistant.js)
+- [x] HASS integration, check [zigbee2mqtt](https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/homeassistant.js)
 - [ ] Add unit test
 - [ ] JSON validator for settings and scenes
 - [ ] Better nodes status management using 'testNode'
-- [ ] Network graph to show neightborns using [vue-d3-network](https://github.com/emiliorizzo/vue-d3-network)
+- [ ] Network graph to show neighbours using [vue-d3-network](https://github.com/emiliorizzo/vue-d3-network)
 
 ## :bowtie: Author
 
