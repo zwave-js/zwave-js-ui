@@ -108,7 +108,7 @@ jsonStore.init(store)
      * Listen on provided port, on preferred network interfaces.
      */
 
-    var host = process.env.HOST || conf.host || "0.0.0.0";
+    var host = process.env.HOST || conf.host || '0.0.0.0'
 
     server.listen(port, host)
     server.on('error', onError)
