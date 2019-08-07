@@ -912,8 +912,13 @@ export default {
         }
 
         if (this.cnt_action == "addNode") {
-          var secure = confirm("Start inclusion in in security mode?");
+          var secure = confirm("Start inclusion in security mode?");
           args.push(secure);
+        } else if(this.cnt_action == "hardReset") {
+            var ok = confirm("Your controller will be reset to factory and all paired devices will be removed");
+            if(!ok) {
+                return;
+            }
         }
 
         this.apiRequest(this.cnt_action, args);
