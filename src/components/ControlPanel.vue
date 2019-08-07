@@ -361,7 +361,7 @@
                   <v-select
                     label="Scene"
                     v-model="selectedScene"
-                    :items="scenes"
+                    :items="scenesWithId"
                     item-text="label"
                     item-value="sceneid"
                   ></v-select>
@@ -466,6 +466,12 @@ export default {
     DialogSceneValue
   },
   computed: {
+    scenesWithId() {
+      return this.scenes.map(s => {
+        s.label = `[${s.sceneid}] ${s.label}` 
+        return s
+      })
+    },
     dialogTitle() {
       return this.editedIndex === -1 ? "New Value" : "Edit Value";
     },
