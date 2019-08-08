@@ -163,7 +163,7 @@ export default {
       );
     },
     requiredTopic() {
-      return this.gw_type != 2 || !!this.editedValue.topic || "Topic required";
+      return (this.gw_type !== 2 || !!this.editedValue.topic) || "Topic required";
     }
   },
   data() {
