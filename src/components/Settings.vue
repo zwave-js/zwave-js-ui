@@ -516,7 +516,7 @@ export default {
     closeDialog() {
       this.dialogValue = false;
       setTimeout(() => {
-        this.editedValue = Object.assign({}, this.defaultItem);
+        this.editedValue = Object.assign({}, this.defaultValue);
         this.editedIndex = -1;
       }, 300);
     },
