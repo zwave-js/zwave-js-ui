@@ -253,6 +253,8 @@ Gateway settings:
 
   - **Just value**: The payload will contain only the row Numeric/String value
 
+- **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
+- **Ignore location**: Enable this to remove nodes location from topics
 - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#star-Home-Assistant-integration-BETA))

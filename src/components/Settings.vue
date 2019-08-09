@@ -265,6 +265,22 @@
                     </v-flex>
                     <v-flex xs6>
                       <v-switch
+                        label="Ignore location"
+                        hint="Don't add nodes location to values topic"
+                        v-model="gateway.ignoreLoc"
+                        persistent-hint
+                      ></v-switch>
+                    </v-flex>
+                    <v-flex xs6>
+                      <v-switch
+                        label="Ignore status updates"
+                        hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
+                        v-model="gateway.ignoreStatus"
+                        persistent-hint
+                      ></v-switch>
+                    </v-flex>
+                    <v-flex xs6>
+                      <v-switch
                         label="Send 'list' values as integer index"
                         v-model="gateway.integerList"
                       ></v-switch>
