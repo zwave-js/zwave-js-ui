@@ -11,7 +11,7 @@
 
   <div v-else>
     <v-text-field
-      v-if="['int', 'byte', 'short', 'decimal', 'string'].indexOf(value.type) >= 0"
+      v-if="['int', 'byte', 'short', 'decimal', 'bitset', 'string'].indexOf(value.type) >= 0"
       :label="value.label +' ('+value.value_id+')'"
       :type="value.type == 'string' ? 'text' : 'number'"
       :append-outer-icon="!disable_send ? 'send' : null"
