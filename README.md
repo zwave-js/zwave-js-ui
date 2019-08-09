@@ -19,47 +19,48 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 ## 📖 Table of contents
 
-- [Zwave To MQTT](#Zwave-To-MQTT)
-  - [📖 Table of contents](#%F0%9F%93%96-Table-of-contents)
-  - [:electric_plug: Installation](#electricplug-Installation)
-    - [DOCKER way 🎉](#DOCKER-way-%F0%9F%8E%89)
-    - [NodeJS or PKG version](#NodeJS-or-PKG-version)
-  - [:nerd_face: Development](#nerdface-Development)
-  - [:wrench: Usage](#wrench-Usage)
-    - [Zwave](#Zwave)
-    - [MQTT](#MQTT)
-    - [Gateway](#Gateway)
-      - [Special topics](#Special-topics)
-      - [Gateway values table](#Gateway-values-table)
-  - [:file_folder: Nodes Management](#filefolder-Nodes-Management)
-    - [Add a node](#Add-a-node)
-    - [Remove a node](#Remove-a-node)
-    - [Replace failed node](#Replace-failed-node)
-  - [:star: Features](#star-Features)
-  - [:robot: Home Assistant integration (BETA)](#robot-Home-Assistant-integration-BETA)
-    - [Components management](#Components-management)
-      - [Edit existing component](#Edit-existing-component)
-      - [Add new component](#Add-new-component)
-    - [Custom Components](#Custom-Components)
-      - [Thermostats](#Thermostats)
-      - [Fans](#Fans)
-  - [:gift: MQTT APIs](#gift-MQTT-APIs)
-    - [Zwave APIs](#Zwave-APIs)
-    - [Set values](#Set-values)
-    - [Broadcast](#Broadcast)
-  - [:camera: Screenshots](#camera-Screenshots)
-    - [Settings](#Settings)
-    - [Control Panel](#Control-Panel)
-    - [Groups associations](#Groups-associations)
-    - [Scenes](#Scenes)
-    - [Debug](#Debug)
-  - [🙏 Thanks](#%F0%9F%99%8F-Thanks)
-  - [:pencil: TODOs](#pencil-TODOs)
-  - [:bowtie: Author](#bowtie-Author)
+- [Zwave To MQTT](#zwave-to-mqtt)
+  - [📖 Table of contents](#%f0%9f%93%96-table-of-contents)
+  - [:electric_plug: Installation](#electricplug-installation)
+    - [DOCKER :tada: way](#docker-tada-way)
+    - [NodeJS or PKG version](#nodejs-or-pkg-version)
+  - [:nerd_face: Development](#nerdface-development)
+  - [:wrench: Usage](#wrench-usage)
+    - [Zwave](#zwave)
+    - [MQTT](#mqtt)
+    - [Gateway](#gateway)
+      - [Special topics](#special-topics)
+      - [Gateway values table](#gateway-values-table)
+  - [:file_folder: Nodes Management](#filefolder-nodes-management)
+    - [Add a node](#add-a-node)
+    - [Remove a node](#remove-a-node)
+    - [Replace failed node](#replace-failed-node)
+  - [:star: Features](#star-features)
+  - [:robot: Home Assistant integration (BETA)](#robot-home-assistant-integration-beta)
+    - [Components management](#components-management)
+      - [Edit existing component](#edit-existing-component)
+      - [Add new component](#add-new-component)
+    - [Custom Components](#custom-components)
+      - [Thermostats](#thermostats)
+      - [Fans](#fans)
+  - [:gift: MQTT APIs](#gift-mqtt-apis)
+    - [Zwave APIs](#zwave-apis)
+    - [Set values](#set-values)
+    - [Broadcast](#broadcast)
+  - [:camera: Screenshots](#camera-screenshots)
+    - [Settings](#settings)
+    - [Control Panel](#control-panel)
+    - [Groups associations](#groups-associations)
+    - [Scenes](#scenes)
+    - [Debug](#debug)
+  - [:question: FAQ](#question-faq)
+  - [:pray: Thanks](#pray-thanks)
+  - [:pencil: TODOs](#pencil-todos)
+  - [:bowtie: Author](#bowtie-author)
 
 ## :electric_plug: Installation
 
-### DOCKER way 🎉
+### DOCKER :tada: way
 
 Check [docker repo](https://github.com/robertsLando/Zwave2Mqtt-docker#install) for more info
 
@@ -543,7 +544,13 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 ![Debug](docs/debug.png)
 
-## 🙏 Thanks
+## :question: FAQ
+
+> A: Why when I add a value to Gateway values table I don't see all my devices?
+
+**B: When adding values to the gateway values table it shows JUST ONE DEVICE FOR EACH TYPE. This is to make it easier and faster to setup your network as if you have a network with lot devices (light, light dimmers for example) you just need to add the values you want to bridge to mqtt (for a light it will always be just the switch to turn it on/off for exmple without all configuration values) and it will bridge those values for all the devices of that type (without configure the values one by one).**
+
+## :pray: Thanks
 
 Thanks to this people for help with issues tracking and contributions:
 
