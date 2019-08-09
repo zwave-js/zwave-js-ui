@@ -152,7 +152,7 @@ export default {
       if(v.class_id == 0x30) // sensor binary
         return ['battery', 'cold', 'connectivity', 'door', 'garage_door', 'gas', 'heat', 'light', 'lock', 'moisture', 'motion', 'moving', 'occupancy', 'opening', 'plug', 'power', 'presence', 'problem', 'safety', 'smoke', 'sound', 'vibration', 'window']
 
-      if(isSensor(v)) //sensor multilevel and meters
+      if(this.isSensor(v)) //sensor multilevel and meters
         return ['battery', 'humidity', 'illuminance', 'signal_strength', 'temperature', 'power', 'pressure', 'timestamp']
     },
     requiredIntensity() {
