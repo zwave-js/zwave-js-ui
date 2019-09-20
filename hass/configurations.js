@@ -285,10 +285,27 @@ module.exports = {
   },
 
   // Light https://www.home-assistant.io/components/light.mqtt
-  'light_rgb': {
+  'light_rgb_switch': {
     type: 'light',
-    object_id: 'rgb',
+    object_id: 'rgb_switch',
     discovery_payload: {
+      state_topic: true,
+      command_topic: true,
+      rgb_command_template: '{{ \'#%02x%02x%02x00\' | format(blue, green, red)}}',
+      rgb_command_topic: true,
+      rgb_state_topic: true,
+      rgb_value_template: '{{ value_json.value }}'
+    }
+  },
+  'light_rgb_dimmer': {
+    type: 'light',
+    object_id: 'rgb_dimmer',
+    discovery_payload: {
+      state_topic: true,
+      command_topic: true,
+      brightness_state_topic: true,
+      brightness_command_topic: true,
+      state_value_template: '{{ "off" if value_json.value == 0 else "on" }}',
       rgb_command_template: '{{ \'#%02x%02x%02x00\' | format(blue, green, red)}}',
       rgb_command_topic: true,
       rgb_state_topic: true,
