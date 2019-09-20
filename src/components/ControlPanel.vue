@@ -213,7 +213,7 @@
                 <!-- HASS DEVICES -->
                 <v-layout v-if="hassDevices.length > 0" raw wrap>
                   <v-flex xs12 md6 pa-1>
-                    <v-btn color="blue darken-1" flat @click.native="storeDevices">Store</v-btn>
+                    <v-btn color="blue darken-1" flat @click.native="storeDevices(false)">Store</v-btn>
                     <v-btn color="red darken-1" flat @click.native="storeDevices(true)">Remove Store</v-btn>
 
                     <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">

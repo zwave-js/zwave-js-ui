@@ -151,7 +151,7 @@ app.post('/api/importConfig', async function (req, res) {
           await gw.zwave.callApi("setNodeName", i, e.name || "")
           await gw.zwave.callApi("setNodeLocation", i, e.loc || "")
           if (e.hassDevices)
-            await gw.zwave.storeDevices(e.hassDevices, i)
+            await gw.zwave.storeDevices(e.hassDevices, i, false)
         }
       }
     }

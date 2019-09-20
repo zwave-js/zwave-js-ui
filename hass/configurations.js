@@ -305,7 +305,7 @@ module.exports = {
       command_topic: true,
       brightness_state_topic: true,
       brightness_command_topic: true,
-      state_value_template: '{{ "off" if value_json.value == 0 else "on" }}',
+      state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
       rgb_command_template: '{{ \'#%02x%02x%02x00\' | format(blue, green, red)}}',
       rgb_command_topic: true,
       rgb_state_topic: true,
