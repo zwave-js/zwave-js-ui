@@ -89,7 +89,7 @@ app.startSocket = function (server) {
           gw.zwave.addDevice(data.device, data.node_id)
           break;
         case 'store':
-          await gw.zwave.storeDevices(data.devices, data.node_id)
+          await gw.zwave.storeDevices(data.devices, data.node_id, data.remove)
           break;
       }
     })
