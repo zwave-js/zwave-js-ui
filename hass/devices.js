@@ -42,22 +42,21 @@ var SPIRIT_ZWAVE_PLUS =     {
   }
 }
 
-
-var COVER = {
-  type: 'cover',
-  object_id: 'position',
-  values: ['38-1-0'],
-  discovery_payload: {
-    command_topic: "38-1-0",
-    position_topic: "38-1-0",
-    set_position_topic: "38-1-0",
-    value_template: "{{ (value_json.value / 99 * 100) | round(0) }}",
-    position_open: 99,
-    position_closed: 0,
-    payload_open: "99",
-    payload_close: "0"
-  }
-}
+// var COVER = {
+//   type: 'cover',
+//   object_id: 'position',
+//   values: ['38-1-0'],
+//   discovery_payload: {
+//     command_topic: "38-1-0",
+//     position_topic: "38-1-0",
+//     set_position_topic: "38-1-0",
+//     value_template: "{{ (value_json.value / 99 * 100) | round(0) }}",
+//     position_open: 99,
+//     position_closed: 0,
+//     payload_open: "99",
+//     payload_close: "0"
+//   }
+// }
 
 module.exports = {
   '411-1-1': [
@@ -84,5 +83,5 @@ module.exports = {
   '99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '328-1-3': [SPIRIT_ZWAVE_PLUS],
-  '328-3-3': [SPIRIT_ZWAVE_PLUS],
+  '328-3-3': [SPIRIT_ZWAVE_PLUS]
 }
