@@ -300,6 +300,14 @@
                         hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
                       ></v-text-field>
                     </v-flex>
+                    <v-flex xs6 v-if="gateway.hassDiscovery">
+                      <v-switch
+                        label="Retained discovery"
+                        hint="Set retain flag to true in discovery messages"
+                        v-model="gateway.retainedDiscovery"
+                        persistent-hint
+                      ></v-switch>
+                    </v-flex>
                   </v-layout>
 
                   <v-data-table
