@@ -323,7 +323,7 @@ module.exports = {
       state_topic: true,
       state_template: '{{ "off" if value_json.value == 0 else "on" }}',
       command_topic: true,
-      command_on_template: '{{ ((brightness / 255 * 99) | round(0)) if brightness is defined else 255 }}',
+      command_on_template: '{{ ((brightness / 255 * 99) | round(0)) if brightness is defined else 99 }}',
       command_off_template: '0'
     }
   },
