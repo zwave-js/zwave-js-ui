@@ -18,7 +18,6 @@
         <v-list-tile
           v-for="item in pages"
           :key="item.title"
-          @click.stop="mini ? mini = true : mini = false"
           :to="item.path == '#' ? '' : item.path"
         >
           <v-list-tile-action>
