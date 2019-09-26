@@ -5,7 +5,7 @@
         <v-list class="pa-0">
           <v-list-tile avatar>
             <v-list-tile-avatar>
-              <img style="border-radius: 0;" src="/static/logo.png">
+              <img style="border-radius: 0;" src="/static/logo.png" />
             </v-list-tile-avatar>
             <v-list-tile-content>
               <v-list-tile-title>{{"ZWave2MQTT v" + version}}</v-list-tile-title>
@@ -79,14 +79,13 @@ export default {
   name: "app",
   methods: {
     toggleDrawer() {
-      if(['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0) {
-          this.mini = false;
-          this.drawer = !this.drawer;
-        }
-        else {
-          this.mini = !this.mini
-          this.drawer = true;
-        }
+      if (["xs", "sm", "md"].indexOf(this.$vuetify.breakpoint.name) >= 0) {
+        this.mini = false;
+        this.drawer = !this.drawer;
+      } else {
+        this.mini = !this.mini;
+        this.drawer = true;
+      }
     },
     showSnackbar: function(text) {
       this.snackbarText = text;
@@ -162,9 +161,9 @@ export default {
       status: "",
       statusColor: "",
       drawer: false,
+      mini: false,
       topbar: [],
       title: "",
-      mini: false,
       snackbar: false,
       snackbarText: ""
     };
@@ -175,8 +174,11 @@ export default {
     }
   },
   beforeMount() {
-    this.title = this.$route.name || ""
-    this.toggleDrawer()
+    this.title = this.$route.name || "";
+  },
+  mounted() {
+    if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl)
+      this.toggleDrawer();
   }
 };
 </script>
