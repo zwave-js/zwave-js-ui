@@ -454,7 +454,7 @@ Thermostats are most complex components to create, in this device example the se
 
 ## :gift: MQTT APIs
 
-You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simple using MQTT.
+You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simply using MQTT.
 
 ### Zwave APIs
 
