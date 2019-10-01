@@ -11,7 +11,7 @@
 
   <div v-else>
     <v-text-field
-      v-if="['int', 'byte', 'short', 'decimal', 'bitset', 'string'].indexOf(value.type) >= 0"
+      v-if="['int', 'byte', 'short', 'decimal', 'string'].indexOf(value.type) >= 0"
       :label="value.label +' ('+value.value_id+')'"
       :type="value.type == 'string' ? 'text' : 'number'"
       :append-outer-icon="!disable_send ? 'send' : null"
@@ -43,9 +43,27 @@
       @change="updateValue(value)"
     ></v-switch>
 
-    <v-tooltip right>
+    <v-layout row v-if="value.type == 'bitset'">
+      <v-subheader>{{value.value_id}}</v-subheader>
+      <v-switch
+        v-for="(v, bit) in value.bitSetIds"
+        :key="bit"
+        :label="v.label"
+        :hint="v.help || ''"
+        persistent-hint
+        v-model="v.value"
+      ></v-switch>
       <v-btn
-        v-if="value.type == 'button'"
+        color="primary"
+        dark
+        icon
+        @click="updateValue(value)"
+        class="mb-2"
+      ><v-icon>send</v-icon></v-btn>
+    </v-layout>
+
+    <v-tooltip v-if="value.type == 'button'" right>
+      <v-btn
         slot="activator"
         color="primary"
         dark
@@ -66,6 +84,9 @@ export default {
     disable_send: {
       type: Boolean
     }
+  },
+  computed: {
+
   },
   methods: {
     updateValue(v) {

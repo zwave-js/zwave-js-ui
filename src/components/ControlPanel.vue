@@ -995,6 +995,16 @@ export default {
       }
     },
     updateValue(v) {
+      if(v.type === 'bitset') {
+        v.newValue = ['0', '0', '0', '0', '0', '0', '0', '0']
+        for(const bit in v.bitSetIds) 
+          v.newValue[8-parseInt(bit)] = v.bitSetIds[bit].value ? '1' : '0'
+        
+        v.newValue = parseInt(v.newValue.join(''), 2)
+      }
+
+      v.toUpdate = true;
+
       this.apiRequest("setValue", [
         v.node_id,
         v.class_id,
@@ -1002,7 +1012,7 @@ export default {
         v.index,
         v.type == "button" ? true : v.newValue
       ]);
-      v.toUpdate = true;
+     
     },
     jsonToList(obj) {
       var s = "";
