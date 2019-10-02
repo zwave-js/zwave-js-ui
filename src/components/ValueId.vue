@@ -44,7 +44,7 @@
     ></v-switch>
 
     <v-layout row v-if="value.type == 'bitset'">
-      <v-subheader>{{value.value_id}}</v-subheader>
+      <v-subheader>{{value.label + ' (' + value.value_id + ')'}}</v-subheader>
       <v-switch
         v-for="(v, bit) in value.bitSetIds"
         :key="bit"
