@@ -70,6 +70,7 @@
               <td>{{ props.item.ready ? (props.item.product + ' (' + props.item.manufacturer + ')') : '' }}</td>
               <td>{{ props.item.name || '' }}</td>
               <td>{{ props.item.loc || '' }}</td>
+              <td>{{ props.item.secure ? 'Yes' : 'No'}}</td>
               <td>{{ props.item.status}}</td>
             </tr>
           </template>
@@ -682,6 +683,7 @@ export default {
         { text: "Product", value: "product" },
         { text: "Name", value: "name" },
         { text: "Location", value: "loc" },
+        { text: "Secure", value: "secure" },
         { text: "Status", value: "status" }
       ],
       rules: {
