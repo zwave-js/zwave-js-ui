@@ -43,8 +43,16 @@
       @change="updateValue(value)"
     ></v-switch>
 
-    <v-layout row v-if="value.type == 'bitset'">
-      <v-subheader>{{value.label + ' (' + value.value_id + ')'}}</v-subheader>
+    <v-layout column v-if="value.type == 'bitset'">
+      <v-tooltip right>
+        <p
+          slot="activator"
+          style="margin-bottom:0;margin-top:10px;cursor:default"
+          class="font-weight-thin caption"
+        >{{value.label + ' (' + value.value_id + ')'}}</p>
+        <span>{{value.help || ''}}</span>
+      </v-tooltip>
+
       <v-switch
         v-for="(v, bit) in value.bitSetIds"
         :key="bit"
@@ -56,10 +64,10 @@
       <v-btn
         color="primary"
         dark
-        icon
         @click="updateValue(value)"
         class="mb-2"
-      ><v-icon>send</v-icon></v-btn>
+        style="max-width:200px;margin:10px 0"
+      >Update</v-btn>
     </v-layout>
 
     <v-tooltip v-if="value.type == 'button'" right>
@@ -85,9 +93,7 @@ export default {
       type: Boolean
     }
   },
-  computed: {
-
-  },
+  computed: {},
   methods: {
     updateValue(v) {
       this.$emit("updateValue", v);
