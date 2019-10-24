@@ -581,7 +581,11 @@ export default {
           value: "requestNodeNeighborUpdate"
         },
         {
-          text: "Get Node neighbors",
+          text: "Refresh node info",
+          value: "refreshNodeInfo"
+        },
+        {
+          text: "Get node neighbors",
           value: "getNodeNeighbors"
         },
         {
