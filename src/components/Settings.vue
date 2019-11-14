@@ -28,7 +28,7 @@
                       ></v-combobox>
                     </v-flex>
                     <v-flex xs12 sm6>
-                      <v-text-field v-model="zwave.networkKey" label="Network Key"></v-text-field>
+                      <v-text-field v-model="zwave.networkKey" label="Network Key" :rules="[rules.validKey]"></v-text-field>
                     </v-flex>
                     <v-flex xs12 sm6>
                       <v-switch
@@ -482,6 +482,9 @@ export default {
             !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\]/.\s]/g.test(value) ||
             'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
           );
+        },
+        validKey : value => {
+          return !value || /(0x\w{2},\s*){16}/g.test(value + ',') || "Key must contain 16 bytes separated by ','. Ex: '0xAA, 0xAB, ...'"
         }
       }
     };
