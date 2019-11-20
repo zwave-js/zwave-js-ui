@@ -28,7 +28,11 @@
                       ></v-combobox>
                     </v-flex>
                     <v-flex xs12 sm6>
-                      <v-text-field v-model="zwave.networkKey" label="Network Key" :rules="[rules.validKey]"></v-text-field>
+                      <v-text-field
+                        v-model="zwave.networkKey"
+                        label="Network Key"
+                        :rules="[rules.validKey]"
+                      ></v-text-field>
                     </v-flex>
                     <v-flex xs12 sm6>
                       <v-switch
@@ -81,267 +85,283 @@
 
           <v-divider></v-divider>
 
-          <v-expansion-panel class="elevation-0">
-            <v-expansion-panel-content>
-              <div slot="header">Mqtt</div>
-              <v-card>
-                <v-card-text>
-                  <v-layout wrap>
-                    <v-flex xs12 sm6 md4>
-                      <v-text-field
-                        v-model.trim="mqtt.name"
-                        label="Name"
-                        :rules="[rules.required, rules.validName]"
-                        hint="Unique name that identify this gateway"
-                        required
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4>
-                      <v-text-field
-                        v-model.trim="mqtt.host"
-                        label="Host url"
-                        :rules="[rules.required]"
-                        hint="The host url"
-                        required
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4>
-                      <v-text-field
-                        v-model.number="mqtt.port"
-                        label="Port"
-                        :rules="[rules.required]"
-                        hint="Host Port"
-                        required
-                        type="number"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4>
-                      <v-text-field
-                        v-model.number="mqtt.reconnectPeriod"
-                        label="Reconnect period (ms)"
-                        hint="Reconnection period"
-                        :rules="[rules.required]"
-                        required
-                        type="number"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4>
-                      <v-text-field
-                        v-model.trim="mqtt.prefix"
-                        label="Prefix"
-                        :rules="[rules.required, rules.validName]"
-                        hint="The prefix to add to each topic"
-                        required
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4>
-                      <v-select
-                        v-model="mqtt.qos"
-                        label="QoS"
-                        :rules="[rules.required]"
-                        required
-                        :items="[0,1,2]"
-                      ></v-select>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Set retain flag to true for outgoing messages"
-                        persistent-hint
-                        label="Retain"
-                        v-model="mqtt.retain"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"
-                        persistent-hint
-                        label="Clean"
-                        v-model="mqtt.clean"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Enable persistent storage of packets (QoS > 0) while client is offline. If disabled the in memory store will be used."
-                        persistent-hint
-                        label="Store"
-                        v-model="mqtt.store"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6 v-if="secure">
-                      <v-switch
-                        hint="Enable this when using self signed certificates"
-                        persistent-hint
-                        label="Allow self signed certs"
-                        v-model="mqtt.allowSelfsigned"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4 v-if="secure">
-                      <file-input
-                        label="Key.pem"
-                        keyProp="_key"
-                        v-model="mqtt.key"
-                        @onFileSelect="onFileSelect"
-                      ></file-input>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4 v-if="secure">
-                      <file-input
-                        label="Cert.pem"
-                        keyProp="_cert"
-                        v-model="mqtt.cert"
-                        @onFileSelect="onFileSelect"
-                      ></file-input>
-                    </v-flex>
-                    <v-flex xs12 sm6 md4 v-if="secure">
-                      <file-input
-                        label="Ca.pem"
-                        keyProp="_ca"
-                        v-model="mqtt.ca"
-                        @onFileSelect="onFileSelect"
-                      ></file-input>
-                    </v-flex>
-                    <v-flex xs12 sm4>
-                      <v-switch
-                        hint="Does this client require auth?"
-                        persistent-hint
-                        label="Auth"
-                        v-model="mqtt.auth"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex v-if="mqtt.auth" xs12 sm4>
-                      <v-text-field
-                        v-model="mqtt.username"
-                        label="Username"
-                        :rules="[requiredUser]"
-                        required
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex v-if="mqtt.auth" xs12 sm4>
-                      <v-text-field
-                        v-model="mqtt.password"
-                        label="Password"
-                        :rules="[requiredPassword]"
-                        required
-                        :append-icon="e1 ? 'visibility' : 'visibility_off'"
-                        @click:append="() => (e1 = !e1)"
-                        :type="e1 ? 'password' : 'text'"
-                      ></v-text-field>
-                    </v-flex>
-                  </v-layout>
-                </v-card-text>
-              </v-card>
-            </v-expansion-panel-content>
-          </v-expansion-panel>
+          <v-flex xs12 sm6>
+            <v-switch
+              hint="Enable this to use Z2M only as Control Panel"
+              persistent-hint
+              label="Disable Gateway"
+              v-model="mqtt.disabled"
+            ></v-switch>
+          </v-flex>
 
-          <v-divider></v-divider>
+          <div v-if="!mqtt.disabled">
+            <v-expansion-panel class="elevation-0">
+              <v-expansion-panel-content>
+                <div slot="header">Mqtt</div>
+                <v-card>
+                  <v-card-text>
+                    <v-layout wrap>
+                      <v-flex xs12 sm6 md4>
+                        <v-text-field
+                          v-model.trim="mqtt.name"
+                          label="Name"
+                          :rules="[rules.required, rules.validName]"
+                          hint="Unique name that identify this gateway"
+                          required
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4>
+                        <v-text-field
+                          v-model.trim="mqtt.host"
+                          label="Host url"
+                          :rules="[rules.required]"
+                          hint="The host url"
+                          required
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4>
+                        <v-text-field
+                          v-model.number="mqtt.port"
+                          label="Port"
+                          :rules="[rules.required]"
+                          hint="Host Port"
+                          required
+                          type="number"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4>
+                        <v-text-field
+                          v-model.number="mqtt.reconnectPeriod"
+                          label="Reconnect period (ms)"
+                          hint="Reconnection period"
+                          :rules="[rules.required]"
+                          required
+                          type="number"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4>
+                        <v-text-field
+                          v-model.trim="mqtt.prefix"
+                          label="Prefix"
+                          :rules="[rules.required, rules.validName]"
+                          hint="The prefix to add to each topic"
+                          required
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4>
+                        <v-select
+                          v-model="mqtt.qos"
+                          label="QoS"
+                          :rules="[rules.required]"
+                          required
+                          :items="[0,1,2]"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Set retain flag to true for outgoing messages"
+                          persistent-hint
+                          label="Retain"
+                          v-model="mqtt.retain"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"
+                          persistent-hint
+                          label="Clean"
+                          v-model="mqtt.clean"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable persistent storage of packets (QoS > 0) while client is offline. If disabled the in memory store will be used."
+                          persistent-hint
+                          label="Store"
+                          v-model="mqtt.store"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="secure">
+                        <v-switch
+                          hint="Enable this when using self signed certificates"
+                          persistent-hint
+                          label="Allow self signed certs"
+                          v-model="mqtt.allowSelfsigned"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4 v-if="secure">
+                        <file-input
+                          label="Key.pem"
+                          keyProp="_key"
+                          v-model="mqtt.key"
+                          @onFileSelect="onFileSelect"
+                        ></file-input>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4 v-if="secure">
+                        <file-input
+                          label="Cert.pem"
+                          keyProp="_cert"
+                          v-model="mqtt.cert"
+                          @onFileSelect="onFileSelect"
+                        ></file-input>
+                      </v-flex>
+                      <v-flex xs12 sm6 md4 v-if="secure">
+                        <file-input
+                          label="Ca.pem"
+                          keyProp="_ca"
+                          v-model="mqtt.ca"
+                          @onFileSelect="onFileSelect"
+                        ></file-input>
+                      </v-flex>
+                      <v-flex xs12 sm4>
+                        <v-switch
+                          hint="Does this client require auth?"
+                          persistent-hint
+                          label="Auth"
+                          v-model="mqtt.auth"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex v-if="mqtt.auth" xs12 sm4>
+                        <v-text-field
+                          v-model="mqtt.username"
+                          label="Username"
+                          :rules="[requiredUser]"
+                          required
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex v-if="mqtt.auth" xs12 sm4>
+                        <v-text-field
+                          v-model="mqtt.password"
+                          label="Password"
+                          :rules="[requiredPassword]"
+                          required
+                          :append-icon="e1 ? 'visibility' : 'visibility_off'"
+                          @click:append="() => (e1 = !e1)"
+                          :type="e1 ? 'password' : 'text'"
+                        ></v-text-field>
+                      </v-flex>
+                    </v-layout>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
 
-          <v-expansion-panel class="elevation-0">
-            <v-expansion-panel-content>
-              <div slot="header">Gateway</div>
-              <v-card>
-                <v-card-text>
-                  <v-layout wrap>
-                    <v-flex xs12>
-                      <v-select
-                        v-model="gateway.type"
-                        label="Type"
-                        :rules="[rules.required]"
-                        required
-                        :items="gw_types"
-                      ></v-select>
-                    </v-flex>
-                    <v-flex xs12>
-                      <v-select
-                        v-model="gateway.payloadType"
-                        label="Payload type"
-                        required
-                        :items="py_types"
-                      ></v-select>
-                    </v-flex>
-                    <v-flex v-if="gateway.type === 0" xs6>
-                      <v-switch
-                        label="Use nodes name instead of numeric nodeIDs"
-                        v-model="gateway.nodeNames"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs6>
-                      <v-switch
-                        label="Ignore location"
-                        hint="Don't add nodes location to values topic"
-                        v-model="gateway.ignoreLoc"
-                        persistent-hint
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs6>
-                      <v-switch
-                        label="Ignore status updates"
-                        hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
-                        v-model="gateway.ignoreStatus"
-                        persistent-hint
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs6>
-                      <v-switch
-                        label="Send 'list' values as integer index"
-                        v-model="gateway.integerList"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs6>
-                      <v-switch
-                        label="Hass Discovery"
-                        hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
-                        v-model="gateway.hassDiscovery"
-                        persistent-hint
-                      ></v-switch>
-                    </v-flex>
-                     <v-flex xs6 v-if="gateway.hassDiscovery">
-                      <v-text-field
-                        v-model="gateway.discoveryPrefix"
-                        label="Discovery prefix"
-                        hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs6 v-if="gateway.hassDiscovery">
-                      <v-switch
-                        label="Retained discovery"
-                        hint="Set retain flag to true in discovery messages"
-                        v-model="gateway.retainedDiscovery"
-                        persistent-hint
-                      ></v-switch>
-                    </v-flex>
-                  </v-layout>
+            <v-divider></v-divider>
 
-                  <v-data-table
-                    :headers="headers"
-                    :items="gateway.values"
-                    :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
-                    class="elevation-1"
-                  >
-                    <template slot="items" slot-scope="props">
-                      <td>{{ deviceName(props.item.device) }}</td>
-                      <td>{{ props.item.value.label + ' (' + props.item.value.value_id + ')' }}</td>
-                      <td class="text-xs">{{ props.item.topic }}</td>
-                      <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
-                      <td
-                        class="text-xs"
-                      >{{ props.item.enablePoll ? ("Intensity " + props.item.pollIntensity) : 'No' }}</td>
-                      <td
-                        class="text-xs"
-                      >{{ props.item.verifyChanges ? "Verified" : 'Not Verified' }}</td>
-                      <td class="justify-center layout px-0">
-                        <v-icon small class="mr-2" color="green" @click="editItem(props.item)">edit</v-icon>
-                        <v-icon small color="red" @click="deleteItem(props.item)">delete</v-icon>
-                      </td>
-                    </template>
-                  </v-data-table>
-                </v-card-text>
-                <v-card-actions>
-                  <v-btn color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-expansion-panel-content>
-          </v-expansion-panel>
+            <v-expansion-panel class="elevation-0">
+              <v-expansion-panel-content>
+                <div slot="header">Gateway</div>
+                <v-card>
+                  <v-card-text>
+                    <v-layout wrap>
+                      <v-flex xs12>
+                        <v-select
+                          v-model="gateway.type"
+                          label="Type"
+                          :rules="[rules.required]"
+                          required
+                          :items="gw_types"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12>
+                        <v-select
+                          v-model="gateway.payloadType"
+                          label="Payload type"
+                          required
+                          :items="py_types"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex v-if="gateway.type === 0" xs6>
+                        <v-switch
+                          label="Use nodes name instead of numeric nodeIDs"
+                          v-model="gateway.nodeNames"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
+                          label="Ignore location"
+                          hint="Don't add nodes location to values topic"
+                          v-model="gateway.ignoreLoc"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
+                          label="Ignore status updates"
+                          hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
+                          v-model="gateway.ignoreStatus"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
+                          label="Send 'list' values as integer index"
+                          v-model="gateway.integerList"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
+                          label="Hass Discovery"
+                          hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
+                          v-model="gateway.hassDiscovery"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <v-text-field
+                          v-model="gateway.discoveryPrefix"
+                          label="Discovery prefix"
+                          hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <v-switch
+                          label="Retained discovery"
+                          hint="Set retain flag to true in discovery messages"
+                          v-model="gateway.retainedDiscovery"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                    </v-layout>
 
-          <v-divider></v-divider>
+                    <v-data-table
+                      :headers="headers"
+                      :items="gateway.values"
+                      :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
+                      class="elevation-1"
+                    >
+                      <template slot="items" slot-scope="props">
+                        <td>{{ deviceName(props.item.device) }}</td>
+                        <td>{{ props.item.value.label + ' (' + props.item.value.value_id + ')' }}</td>
+                        <td class="text-xs">{{ props.item.topic }}</td>
+                        <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
+                        <td
+                          class="text-xs"
+                        >{{ props.item.enablePoll ? ("Intensity " + props.item.pollIntensity) : 'No' }}</td>
+                        <td
+                          class="text-xs"
+                        >{{ props.item.verifyChanges ? "Verified" : 'Not Verified' }}</td>
+                        <td class="justify-center layout px-0">
+                          <v-icon
+                            small
+                            class="mr-2"
+                            color="green"
+                            @click="editItem(props.item)"
+                          >edit</v-icon>
+                          <v-icon small color="red" @click="deleteItem(props.item)">delete</v-icon>
+                        </td>
+                      </template>
+                    </v-data-table>
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-btn color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
+            <v-divider></v-divider>
+          </div>
 
           <DialogGatewayValue
             @save="saveValue"
@@ -483,8 +503,12 @@ export default {
             'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
           );
         },
-        validKey : value => {
-          return !value || /(0x\w{2},\s*){16}/g.test(value + ',') || "Key must contain 16 bytes separated by ','. Ex: '0xAA, 0xAB, ...'"
+        validKey: value => {
+          return (
+            !value ||
+            /(0x\w{2},\s*){16}/g.test(value + ",") ||
+            "Key must contain 16 bytes separated by ','. Ex: '0xAA, 0xAB, ...'"
+          );
         }
       }
     };
