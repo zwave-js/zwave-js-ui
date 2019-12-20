@@ -157,6 +157,9 @@ Zwave settings:
 - **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"0xCA,0xFE,0xBA,0xBE,.... "` (16 bytes total)
 - **Logging**: Enable/Disable Openzwave Library logging
 - **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for persistent node information like node name and location
+- **Refresh Node Info**: Enable this to automatically call `refreshNodeInfo` api against all nodes to force all nodes refreshing their configuration
+- **Auto Heal Network**: Enable this to schedule automatic network heals to a specfic time
+- **Heal hours**: When auto heal is enabled, specified the hours at which `healNetwork` will be daily triggered (0-23)
 - **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
