@@ -1,19 +1,42 @@
 .node.controller {
-    stroke: purple;
+  stroke: #9C27B0;
+  fill: #E1BEE7;
 }
 
 .node.sleep {
-    stroke: yellow;
+  stroke: #FFEB3B;
+  fill: #FFF9C4;
 }
 
 .node.alive {
-    stroke: green;
+  stroke: #4CAF50;
+  fill: #C8E6C9;
 }
 
-.node.failed .node.removed  {
-    stroke: black;
-} 
+.node.failed .node.removed {
+  stroke: #9E9E9E;
+  fill: #F5F5F5;
+}
 
-.node.dead  {
-    stroke: red;
-} 
+.node.dead {
+  stroke: #f44336;
+  fill: #ffcdd2;
+}
+
+.node.selected {
+  stroke: #1976d2;
+  fill: #03A9F4;
+}
+
+.node-label {
+  fill: #1976d2;
+}
+
+.details {
+  position: absolute;
+  top: 150px;
+  left: 30px;
+  background: #ccccccaa;
+  border: 2px solid black;
+  border-radius: 20px
+}
