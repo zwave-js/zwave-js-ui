@@ -57,6 +57,8 @@
           @export="exportConfiguration"
           @showSnackbar="showSnackbar"
           :socket="socket"
+          :socketEvents="socketEvents"
+          :socketActions="socketActions"
         />
       </v-content>
     </main>
@@ -162,8 +164,24 @@ export default {
       version: process.env.VERSION,
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
-        { icon: 'settings', title: 'Settings', path: '/settings' }
+        { icon: 'settings', title: 'Settings', path: '/settings' },
+        { icon: 'share', title: 'Network graph', path: '/mesh' }
       ],
+      socketEvents: {
+        init: 'INIT',
+        controller: 'CONTROLLER_CMD',
+        driver: 'DRIVER_READY',
+        nodeRemoved: 'NODE_REMOVED',
+        nodeUpdated: 'NODE_UPDATED',
+        valueUpdated: 'VALUE_UPDATED',
+        api: 'API_RETURN',
+        debug: 'DEBUG'
+      },
+      socketActions: {
+        init: 'INITED',
+        hass: 'HASS_API',
+        zwave: 'ZWAVE_API'
+      },
       status: '',
       statusColor: '',
       drawer: false,

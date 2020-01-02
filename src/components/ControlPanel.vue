@@ -457,7 +457,9 @@ const MAX_DEBUG_LINES = 300
 export default {
   name: 'ControlPanel',
   props: {
-    socket: Object
+    socket: Object,
+    socketActions: Object,
+    socketEvents: Object
   },
   components: {
     ValueID,
@@ -545,21 +547,6 @@ export default {
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
-      socketEvents: {
-        init: 'INIT',
-        controller: 'CONTROLLER_CMD',
-        driver: 'DRIVER_READY',
-        nodeRemoved: 'NODE_REMOVED',
-        nodeUpdated: 'NODE_UPDATED',
-        valueUpdated: 'VALUE_UPDATED',
-        api: 'API_RETURN',
-        debug: 'DEBUG'
-      },
-      socketActions: {
-        init: 'INITED',
-        hass: 'HASS_API',
-        zwave: 'ZWAVE_API'
-      },
       newScene: '',
       scene_values: [],
       dialogValue: false,
@@ -773,6 +760,7 @@ export default {
             self.apiRequest('setScenes', [scenes])
           } else {
             self.showSnackbar('Imported file not valid')
+            console.log(err)
           }
         })
       }

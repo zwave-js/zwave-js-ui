@@ -1,0 +1,19 @@
+.node.controller {
+    stroke: purple;
+}
+
+.node.sleep {
+    stroke: yellow;
+}
+
+.node.alive {
+    stroke: green;
+}
+
+.node.failed .node.removed  {
+    stroke: black;
+} 
+
+.node.dead  {
+    stroke: red;
+} 
