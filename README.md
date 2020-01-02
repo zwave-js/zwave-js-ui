@@ -54,6 +54,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     - [Control Panel](#control-panel)
     - [Groups associations](#groups-associations)
     - [Scenes](#scenes)
+    - [Mesh](#mesh)
     - [Debug](#debug)
   - [:question: FAQ](#question-faq)
   - [:pray: Thanks](#pray-thanks)
@@ -318,6 +319,7 @@ To replace a failed node from the UI you have to use the command `Replace Failed
   - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 - Log debug in UI
+- Mesh graph showing devices neightbors
 
 ## :robot: Home Assistant integration (BETA)
 
@@ -547,6 +549,10 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 ### Scenes
 
 ![Scenes](docs/scenes.png)
+
+### Mesh
+
+![Mesh](docs/mesh.png)
 
 ### Debug
 
