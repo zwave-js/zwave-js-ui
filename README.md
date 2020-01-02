@@ -593,7 +593,7 @@ Thanks to this people for help with issues tracking and contributions:
 - [ ] Add unit test
 - [ ] JSON validator for settings and scenes
 - [ ] Better nodes status management using 'testNode'
-- [ ] Network graph to show neighbours using [vue-d3-network](https://github.com/emiliorizzo/vue-d3-network)
+- [x] Network graph to show neighbours using [vue-d3-network](https://github.com/emiliorizzo/vue-d3-network)
 
 ## :bowtie: Author
 

@@ -23,7 +23,7 @@ export default new Router({
     },
     {
       path: '/mesh',
-      name: 'Mesh',
+      name: 'Network Graph',
       component: Mesh,
       props: true
     }
