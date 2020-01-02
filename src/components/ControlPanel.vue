@@ -1,5 +1,3 @@
-/* eslint-disable */
-
 <template>
   <v-container fluid>
     <v-card>
@@ -444,736 +442,733 @@
 </template>
 
 <script>
-import { mapGetters, mapMutations } from "vuex";
-import ConfigApis from "@/apis/ConfigApis";
-import value from "@/apis/ConfigApis";
+import ConfigApis from '@/apis/ConfigApis'
 
-import ValueID from "@/components/ValueId";
+import ValueID from '@/components/ValueId'
 
-import { default as AnsiUp } from "ansi_up";
+import { default as AnsiUp } from 'ansi_up'
 
-const ansi_up = new AnsiUp();
+import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 
-import DialogSceneValue from "@/components/dialogs/DialogSceneValue";
+const ansiUp = new AnsiUp()
 
-//https://github.com/socketio/socket.io-client/blob/master/docs/API.md
-import io from "socket.io-client";
-
-const MAX_DEBUG_LINES = 300;
+const MAX_DEBUG_LINES = 300
 
 export default {
-  name: "ControlPanel",
+  name: 'ControlPanel',
+  props: {
+    socket: Object
+  },
   components: {
     ValueID,
     DialogSceneValue
   },
   computed: {
-    scenesWithId() {
+    scenesWithId () {
       return this.scenes.map(s => {
-        s.label = `[${s.sceneid}] ${s.label}` 
+        s.label = `[${s.sceneid}] ${s.label}`
         return s
       })
     },
-    dialogTitle() {
-      return this.editedIndex === -1 ? "New Value" : "Edit Value";
+    dialogTitle () {
+      return this.editedIndex === -1 ? 'New Value' : 'Edit Value'
     },
-    tableNodes() {
-      return this.showHidden ? this.nodes : this.nodes.filter(n => !n.failed);
+    tableNodes () {
+      return this.showHidden ? this.nodes : this.nodes.filter(n => !n.failed)
     },
-    hassDevices() {
-      var devices = [];
+    hassDevices () {
+      var devices = []
       if (this.selectedNode && this.selectedNode.hassDevices) {
         for (const id in this.selectedNode.hassDevices) {
-          var d = JSON.parse(JSON.stringify(this.selectedNode.hassDevices[id]));
-          d.id = id;
-          devices.push(d);
+          var d = JSON.parse(JSON.stringify(this.selectedNode.hassDevices[id]))
+          d.id = id
+          devices.push(d)
         }
       }
 
-      return devices;
+      return devices
     }
   },
   watch: {
-    dialogValue(val) {
-      val || this.closeDialog();
+    dialogValue (val) {
+      val || this.closeDialog()
     },
-    newName(val) {
+    newName (val) {
       this.nameError = /["+*\s]+/g.test(val)
         ? 'Remove " + * and blank space charaters'
-        : null;
+        : null
     },
-    newLoc(val) {
+    newLoc (val) {
       this.locError = /["+*\s]+/g.test(val)
         ? 'Remove " + * and blank space charaters'
-        : null;
+        : null
     },
-    selectedNode() {
+    selectedNode () {
       if (this.selectedNode) {
-        this.newName = this.selectedNode.name;
-        this.newLoc = this.selectedNode.loc;
-        this.node_action = null;
-        this.selectedDevice = null;
+        this.newName = this.selectedNode.name
+        this.newLoc = this.selectedNode.loc
+        this.node_action = null
+        this.selectedDevice = null
       }
     },
-    selectedDevice() {
+    selectedDevice () {
       this.deviceJSON = this.selectedDevice
         ? JSON.stringify(this.selectedDevice, null, 2)
-        : "";
+        : ''
     },
-    selectedScene() {
-      this.refreshValues();
+    selectedScene () {
+      this.refreshValues()
     },
-    currentTab() {
-      if (this.currentTab == 2) {
-        this.refreshScenes();
+    currentTab () {
+      if (this.currentTab === 2) {
+        this.refreshScenes()
       } else {
-        this.selectedScene = null;
-        this.scene_values = [];
+        this.selectedScene = null
+        this.scene_values = []
       }
 
-      if (this.currentTab == 3) {
-        this.debugActive = true;
+      if (this.currentTab === 3) {
+        this.debugActive = true
       } else {
-        this.debugActive = false;
+        this.debugActive = false
       }
     }
   },
-  data() {
+  data () {
     return {
-      socket: null,
       nodes: [],
       scenes: [],
       debug: [],
-      homeid: "",
-      homeHex: "",
+      homeid: '',
+      homeHex: '',
       showHidden: false,
       debugActive: false,
       selectedScene: null,
-      cnt_status: "Unknown",
-      newScene: "",
+      cnt_status: 'Unknown',
+      socketEvents: {
+        init: 'INIT',
+        controller: 'CONTROLLER_CMD',
+        driver: 'DRIVER_READY',
+        nodeRemoved: 'NODE_REMOVED',
+        nodeUpdated: 'NODE_UPDATED',
+        valueUpdated: 'VALUE_UPDATED',
+        api: 'API_RETURN',
+        debug: 'DEBUG'
+      },
+      socketActions: {
+        init: 'INITED',
+        hass: 'HASS_API',
+        zwave: 'ZWAVE_API'
+      },
+      newScene: '',
       scene_values: [],
       dialogValue: false,
       editedValue: {},
       editedIndex: -1,
       headers_scenes: [
-        { text: "Value ID", value: "value_id" },
-        { text: "Node", value: "node_id" },
-        { text: "Label", value: "label" },
-        { text: "Value", value: "value" },
-        { text: "Timeout", value: "timeout" },
-        { text: "Actions", sortable: false }
+        { text: 'Value ID', value: 'value_id' },
+        { text: 'Node', value: 'node_id' },
+        { text: 'Label', value: 'label' },
+        { text: 'Value', value: 'value' },
+        { text: 'Timeout', value: 'timeout' },
+        { text: 'Actions', sortable: false }
       ],
       headers_hass: [
-        { text: "Id", value: "id" },
-        { text: "Type", value: "type" },
-        { text: "Object id", value: "object_id" },
-        { text: "Persistent", value: "persistent" }
+        { text: 'Id', value: 'id' },
+        { text: 'Type', value: 'type' },
+        { text: 'Object id', value: 'object_id' },
+        { text: 'Persistent', value: 'persistent' }
       ],
       selectedDevice: null,
       errorDevice: false,
-      deviceJSON: "",
+      deviceJSON: '',
       group: {},
       currentTab: 0,
-      node_action: "requestNetworkUpdate",
+      node_action: 'requestNetworkUpdate',
       node_actions: [
         {
-          text: "Update neighbors",
-          value: "requestNodeNeighborUpdate"
+          text: 'Update neighbors',
+          value: 'requestNodeNeighborUpdate'
         },
         {
-          text: "Refresh node info",
-          value: "refreshNodeInfo"
+          text: 'Refresh node info',
+          value: 'refreshNodeInfo'
         },
         {
-          text: "Get node neighbors",
-          value: "getNodeNeighbors"
+          text: 'Get node neighbors',
+          value: 'getNodeNeighbors'
         },
         {
-          text: "Update return route",
-          value: "assignReturnRoute"
+          text: 'Update return route',
+          value: 'assignReturnRoute'
         },
         {
-          text: "Delete return routes",
-          value: "deleteAllReturnRoutes"
+          text: 'Delete return routes',
+          value: 'deleteAllReturnRoutes'
         },
         {
-          text: "Send NIF",
-          value: "sendNodeInformation"
+          text: 'Send NIF',
+          value: 'sendNodeInformation'
         },
         {
-          text: "Request network update",
-          value: "requestNetworkUpdate"
+          text: 'Request network update',
+          value: 'requestNetworkUpdate'
         },
         {
-          text: "Node statistic",
-          value: "getNodeStatistics"
+          text: 'Node statistic',
+          value: 'getNodeStatistics'
         },
         {
-          text: "Has node failed",
-          value: "hasNodeFailed"
+          text: 'Has node failed',
+          value: 'hasNodeFailed'
         },
         {
-          text: "Replace failed node",
-          value: "replaceFailedNode"
+          text: 'Replace failed node',
+          value: 'replaceFailedNode'
         },
         {
-          text: "Heal node",
-          value: "healNetworkNode"
+          text: 'Heal node',
+          value: 'healNetworkNode'
         },
         {
-          text: "Replication send",
-          value: "replicationSend"
+          text: 'Replication send',
+          value: 'replicationSend'
         },
         {
-          text: "Test node",
-          value: "testNetworkNode"
+          text: 'Test node',
+          value: 'testNetworkNode'
         }
       ],
-      cnt_action: "healNetwork",
+      cnt_action: 'healNetwork',
       cnt_actions: [
         {
-          text: "Add Node (inclusion)",
-          value: "addNode"
+          text: 'Add Node (inclusion)',
+          value: 'addNode'
         },
         {
-          text: "Remove Node (exclusion)",
-          value: "removeNode"
+          text: 'Remove Node (exclusion)',
+          value: 'removeNode'
         },
         {
-          text: "Transfer primary role",
-          value: "transferPrimaryRole"
+          text: 'Transfer primary role',
+          value: 'transferPrimaryRole'
         },
         {
-          text: "Create new primary",
-          value: "createNewPrimary"
+          text: 'Create new primary',
+          value: 'createNewPrimary'
         },
         {
-          text: "Receive configuration",
-          value: "receiveConfiguration"
+          text: 'Receive configuration',
+          value: 'receiveConfiguration'
         },
         {
-          text: "Cancel Command",
-          value: "cancelControllerCommand"
+          text: 'Cancel Command',
+          value: 'cancelControllerCommand'
         },
         {
-          text: "Heal Network",
-          value: "healNetwork"
+          text: 'Heal Network',
+          value: 'healNetwork'
         },
         {
-          text: "Driver statistic",
-          value: "getDriverStatistics"
+          text: 'Driver statistic',
+          value: 'getDriverStatistics'
         },
         {
-          text: "Hard reset",
-          value: "hardReset"
+          text: 'Hard reset',
+          value: 'hardReset'
         },
         {
-          text: "Soft reset",
-          value: "softReset"
+          text: 'Soft reset',
+          value: 'softReset'
         },
         {
-          text: "Test network",
-          value: "testNetwork"
+          text: 'Test network',
+          value: 'testNetwork'
         }
       ],
-      newName: "",
+      newName: '',
       nameError: null,
       locError: null,
-      newLoc: "",
+      newLoc: '',
       selectedNode: null,
       headers: [
-        { text: "ID", value: "node_id" },
-        { text: "Type", value: "type" },
-        { text: "Product", value: "product" },
-        { text: "Name", value: "name" },
-        { text: "Location", value: "loc" },
-        { text: "Secure", value: "secure" },
-        { text: "Status", value: "status" }
+        { text: 'ID', value: 'node_id' },
+        { text: 'Type', value: 'type' },
+        { text: 'Product', value: 'product' },
+        { text: 'Name', value: 'name' },
+        { text: 'Location', value: 'loc' },
+        { text: 'Secure', value: 'secure' },
+        { text: 'Status', value: 'status' }
       ],
       rules: {
         required: value => {
-          var valid = false;
+          var valid = false
 
-          if (value instanceof Array) valid = value.length > 0;
-          else valid = !isNaN(value) || !!value; //isNaN is for 0 as valid value
+          if (value instanceof Array) valid = value.length > 0
+          else valid = !isNaN(value) || !!value // isNaN is for 0 as valid value
 
-          return valid || "This field is required.";
+          return valid || 'This field is required.'
         }
       }
-    };
+    }
   },
   methods: {
-    showSnackbar(text) {
-      this.$emit("showSnackbar", text);
+    showSnackbar (text) {
+      this.$emit('showSnackbar', text)
     },
-    validJSONdevice() {
+    validJSONdevice () {
       var valid = true
       try {
-        JSON.parse(this.deviceJSON);
+        JSON.parse(this.deviceJSON)
       } catch (error) {
-        valid = false;
+        valid = false
       }
-      this.errorDevice = !valid;
+      this.errorDevice = !valid
 
-      return valid || "JSON test failed";
+      return valid || 'JSON test failed'
     },
-    importConfiguration() {
-      var self = this;
+    importConfiguration () {
+      var self = this
       if (
         confirm(
-          "Attention: This will override all existing nodes names and location"
+          'Attention: This will override all existing nodes names and location'
         )
       ) {
-        self.$emit("import", "json", function(err, data) {
+        self.$emit('import', 'json', function (err, data) {
           if (!err && data) {
             ConfigApis.importConfig({ data: data })
               .then(data => {
-                self.showSnackbar(data.message);
+                self.showSnackbar(data.message)
               })
               .catch(error => {
-                console.log(error);
-              });
+                console.log(error)
+              })
           }
-        });
+        })
       }
     },
-    exportConfiguration() {
-      var self = this;
+    exportConfiguration () {
+      var self = this
       ConfigApis.exportConfig()
         .then(data => {
-          self.showSnackbar(data.message);
+          self.showSnackbar(data.message)
           if (data.success) {
-            self.$emit("export", data.data, "nodes", "json");
+            self.$emit('export', data.data, 'nodes', 'json')
           }
         })
         .catch(error => {
-          console.log(error);
-        });
+          console.log(error)
+        })
     },
-    importScenes() {
-      var self = this;
+    importScenes () {
+      var self = this
       if (
         confirm(
-          "Attention! This operation will override all current scenes and cannot be undone"
+          'Attention! This operation will override all current scenes and cannot be undone'
         )
       ) {
-        this.$emit("import", "json", function(err, scenes) {
-          //TODO: add checks on file entries
+        this.$emit('import', 'json', function (err, scenes) {
+          // TODO: add checks on file entries
           if (scenes instanceof Array) {
-            self.apiRequest("setScenes", [scenes]);
+            self.apiRequest('setScenes', [scenes])
           } else {
-            self.showSnackbar("Imported file not valid");
+            self.showSnackbar('Imported file not valid')
           }
-        });
+        })
       }
     },
-    exportScenes() {
-      this.$emit("export", this.scenes, "scenes");
+    exportScenes () {
+      this.$emit('export', this.scenes, 'scenes')
     },
-    apiRequest(apiName, args) {
+    apiRequest (apiName, args) {
       if (this.socket.connected) {
         var data = {
           api: apiName,
           args: args
-        };
-        this.socket.emit("ZWAVE_API", data);
+        }
+        this.socket.emit(this.socketActions.zwave, data)
       } else {
-        this.showSnackbar("Socket disconnected");
+        this.showSnackbar('Socket disconnected')
       }
     },
-    refreshValues() {
+    refreshValues () {
       if (this.selectedScene) {
-        this.apiRequest("sceneGetValues", [this.selectedScene]);
+        this.apiRequest('sceneGetValues', [this.selectedScene])
       }
     },
-    refreshScenes() {
-      this.apiRequest("getScenes", []);
+    refreshScenes () {
+      this.apiRequest('getScenes', [])
     },
-    createScene() {
+    createScene () {
       if (this.newScene) {
-        this.apiRequest("createScene", [this.newScene]);
-        this.refreshScenes();
-        this.newScene = "";
+        this.apiRequest('createScene', [this.newScene])
+        this.refreshScenes()
+        this.newScene = ''
       }
     },
-    removeScene() {
+    removeScene () {
       if (this.selectedScene) {
-        this.apiRequest("removeScene", [this.selectedScene]);
-        this.selectedScene = null;
-        this.refreshScenes();
+        this.apiRequest('removeScene', [this.selectedScene])
+        this.selectedScene = null
+        this.refreshScenes()
       }
     },
-    activateScene() {
+    activateScene () {
       if (this.selectedScene) {
-        this.apiRequest("activateScene", [this.selectedScene]);
+        this.apiRequest('activateScene', [this.selectedScene])
       }
     },
-    editItem(item) {
-      this.editedIndex = this.scene_values.indexOf(item);
-      var node = this.nodes[item.node_id];
-      var value = node.values.find(v => v.value_id == item.value_id);
+    editItem (item) {
+      this.editedIndex = this.scene_values.indexOf(item)
+      var node = this.nodes[item.node_id]
+      var value = node.values.find(v => v.value_id === item.value_id)
 
-      value = Object.assign({}, value);
-      value.newValue = item.value;
+      value = Object.assign({}, value)
+      value.newValue = item.value
 
       this.editedValue = {
         node: node,
         value: value,
         timeout: this.scene_values[this.editedIndex].timeout
-      };
-      this.dialogValue = true;
+      }
+      this.dialogValue = true
     },
-    deleteItem(value) {
-      if (confirm("Are you sure you want to delete this item?")) {
-        this.apiRequest("removeSceneValue", [
+    deleteItem (value) {
+      if (confirm('Are you sure you want to delete this item?')) {
+        this.apiRequest('removeSceneValue', [
           this.selectedScene,
           value.node_id,
           value.class_id,
           value.instance,
           value.index
-        ]);
-        this.refreshValues();
+        ])
+        this.refreshValues()
       }
     },
-    deleteDevice() {
-      var device = this.selectedDevice;
-      if (device && confirm("Are you sure you want to delete selected device?"))
-        this.socket.emit("HASS_API", {
-          apiName: "delete",
+    deleteDevice () {
+      var device = this.selectedDevice
+      if (device && confirm('Are you sure you want to delete selected device?')) {
+        this.socket.emit(this.socketActions.hass, {
+          apiName: 'delete',
           device: device,
           node_id: this.selectedNode.node_id
-        });
+        })
+      }
     },
-    rediscoverDevice() {
-      var device = this.selectedDevice;
+    rediscoverDevice () {
+      var device = this.selectedDevice
       if (
         device &&
-        confirm("Are you sure you want to re-discover selected device?")
-      )
-        this.socket.emit("HASS_API", {
-          apiName: "discover",
+        confirm('Are you sure you want to re-discover selected device?')
+      ) {
+        this.socket.emit(this.socketActions.hass, {
+          apiName: 'discover',
           device: device,
           node_id: this.selectedNode.node_id
-        });
+        })
+      }
     },
-    updateDevice() {
+    updateDevice () {
       if (!this.errorDevice) {
-        var updated = JSON.parse(this.deviceJSON);
+        var updated = JSON.parse(this.deviceJSON)
         this.$set(
           this.selectedNode.hassDevices,
           this.selectedDevice.id,
           updated
-        );
-        this.socket.emit("HASS_API", {
-          apiName: "update",
+        )
+        this.socket.emit(this.socketActions.hass, {
+          apiName: 'update',
           device: updated,
           node_id: this.selectedNode.node_id
-        });
+        })
       }
     },
-    addDevice() {
+    addDevice () {
       if (!this.errorDevice) {
         var newDevice = JSON.parse(this.deviceJSON)
-        this.socket.emit("HASS_API", {
-          apiName: "add",
+        this.socket.emit(this.socketActions.hass, {
+          apiName: 'add',
           device: newDevice,
           node_id: this.selectedNode.node_id
-        });
+        })
       }
     },
-    storeDevices(remove) {
-      this.socket.emit("HASS_API", {
-        apiName: "store",
+    storeDevices (remove) {
+      this.socket.emit(this.socketActions.hass, {
+        apiName: 'store',
         devices: this.selectedNode.hassDevices,
         node_id: this.selectedNode.node_id,
-        remove: remove, 
-      });
+        remove: remove
+      })
     },
-    closeDialog() {
-      this.dialogValue = false;
+    closeDialog () {
+      this.dialogValue = false
       setTimeout(() => {
-        this.editedValue = {};
-        this.editedIndex = -1;
-      }, 300);
+        this.editedValue = {}
+        this.editedIndex = -1
+      }, 300)
     },
-    saveValue() {
-      var value = this.editedValue.value;
-      value.value = value.newValue;
+    saveValue () {
+      var value = this.editedValue.value
+      value.value = value.newValue
 
       // if value already exists it will be updated
-      this.apiRequest("addSceneValue", [
+      this.apiRequest('addSceneValue', [
         this.selectedScene,
         value,
         value.value,
         this.editedValue.timeout
-      ]);
-      this.refreshValues();
+      ])
+      this.refreshValues()
 
-      this.closeDialog();
+      this.closeDialog()
     },
-    sendCntAction() {
+    sendCntAction () {
       if (this.cnt_action) {
-        var args = [];
-        var askId = this.node_actions.find(a => a.value == this.cnt_action);
+        var args = []
+        var askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
-          var id = parseInt(prompt("Node ID"));
+          var id = parseInt(prompt('Node ID'))
 
           if (isNaN(id)) {
-            this.showMessage("Node ID must be an integer value");
-            return;
+            this.showMessage('Node ID must be an integer value')
+            return
           }
-          args.push(id);
+          args.push(id)
         }
 
-        if (this.cnt_action == "addNode") {
-          var secure = confirm("Start inclusion in security mode?");
-          args.push(secure);
-        } else if(this.cnt_action == "hardReset") {
-            var ok = confirm("Your controller will be reset to factory and all paired devices will be removed");
-            if(!ok) {
-                return;
-            }
+        if (this.cnt_action === 'addNode') {
+          var secure = confirm('Start inclusion in security mode?')
+          args.push(secure)
+        } else if (this.cnt_action === 'hardReset') {
+          var ok = confirm('Your controller will be reset to factory and all paired devices will be removed')
+          if (!ok) {
+            return
+          }
         }
 
-        this.apiRequest(this.cnt_action, args);
+        this.apiRequest(this.cnt_action, args)
       }
     },
-    sendNodeAction() {
+    sendNodeAction () {
       if (this.selectedNode) {
-        this.apiRequest(this.node_action, [this.selectedNode.node_id]);
+        this.apiRequest(this.node_action, [this.selectedNode.node_id])
       }
     },
-    saveConfiguration() {
-      this.apiRequest("writeConfig", []);
+    saveConfiguration () {
+      this.apiRequest('writeConfig', [])
     },
-    updateName() {
+    updateName () {
       if (this.selectedNode && !this.nameError) {
-        this.apiRequest("setNodeName", [
+        this.apiRequest('setNodeName', [
           this.selectedNode.node_id,
           this.newName
-        ]);
+        ])
       }
     },
-    updateLoc() {
+    updateLoc () {
       if (this.selectedNode && !this.locError) {
-        this.apiRequest("setNodeLocation", [
+        this.apiRequest('setNodeLocation', [
           this.selectedNode.node_id,
           this.newLoc
-        ]);
+        ])
       }
     },
-    resetGroup() {
-      this.$set(this.group, "associations", []);
-      this.$set(this.group, "group", -1);
+    resetGroup () {
+      this.$set(this.group, 'associations', [])
+      this.$set(this.group, 'group', -1)
     },
-    getAssociations() {
-      var g = this.group;
+    getAssociations () {
+      var g = this.group
       if (g && g.node) {
-        this.apiRequest("getAssociations", [g.node.node_id, g.group]);
+        this.apiRequest('getAssociations', [g.node.node_id, g.group])
       }
     },
-    addAssociation() {
-      var g = this.group;
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id;
+    addAssociation () {
+      var g = this.group
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
 
       if (g && g.node && target) {
-        var args = [g.node.node_id, g.group, target];
+        var args = [g.node.node_id, g.group, target]
 
         if (g.multiInstance) {
-          args.push(g.targetInstance || 0);
+          args.push(g.targetInstance || 0)
         }
 
-        this.apiRequest("addAssociation", args);
+        this.apiRequest('addAssociation', args)
 
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
-        setTimeout(this.getAssociations, 500);
+        setTimeout(this.getAssociations, 500)
       }
     },
-    removeAssociation() {
-      var g = this.group;
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id;
+    removeAssociation () {
+      var g = this.group
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
       if (g && g.node && target) {
-        this.apiRequest("removeAssociation", [g.node.node_id, g.group, target]);
+        this.apiRequest('removeAssociation', [g.node.node_id, g.group, target])
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
-        setTimeout(this.getAssociations, 500);
+        setTimeout(this.getAssociations, 500)
       }
     },
-    updateValue(v) {
-      if(v.type === 'bitset') {
+    updateValue (v) {
+      if (v.type === 'bitset') {
         v.newValue = ['0', '0', '0', '0', '0', '0', '0', '0']
-        for(const bit in v.bitSetIds) 
-          v.newValue[8-parseInt(bit)] = v.bitSetIds[bit].value ? '1' : '0'
-        
+        for (const bit in v.bitSetIds) { v.newValue[8 - parseInt(bit)] = v.bitSetIds[bit].value ? '1' : '0' }
+
         v.newValue = parseInt(v.newValue.join(''), 2)
       }
 
-      v.toUpdate = true;
+      v.toUpdate = true
 
-      this.apiRequest("setValue", [
+      this.apiRequest('setValue', [
         v.node_id,
         v.class_id,
         v.instance,
         v.index,
-        v.type == "button" ? true : v.newValue
-      ]);
-     
+        v.type === 'button' ? true : v.newValue
+      ])
     },
-    jsonToList(obj) {
-      var s = "";
-      for (var k in obj) s += k + ": " + obj[k] + "\n";
+    jsonToList (obj) {
+      var s = ''
+      for (var k in obj) s += k + ': ' + obj[k] + '\n'
 
-      return s;
+      return s
     },
-    initNode(n) {
-      var values = [];
+    initNode (n) {
+      var values = []
       for (var k in n.values) {
-        n.values[k].newValue = n.values[k].value;
-        values.push(n.values[k]);
+        n.values[k].newValue = n.values[k].value
+        values.push(n.values[k])
       }
-      n.values = values;
-      this.setName(n);
+      n.values = values
+      this.setName(n)
     },
-    setName(n) {
-      n._name = n.name || "NodeID_" + n.node_id;
+    setName (n) {
+      n._name = n.name || 'NodeID_' + n.node_id
     }
   },
-  mounted() {
-    var self = this;
+  mounted () {
+    var self = this
 
-    this.socket = io(ConfigApis.getSocketIP());
+    this.socket.on(this.socketEvents.controller, data => {
+      self.cnt_status = data.help
+    })
 
-    this.socket.on("connect", () => {
-      console.log("Socket connected");
-      self.$emit("updateStatus", "Connected", "green");
-    });
+    this.socket.on(this.socketEvents.driver, info => {
+      self.homeid = info.homeid
+      self.homeHex = info.name
+    })
 
-    this.socket.on("disconnect", () => {
-      console.log("Socket closed");
-      self.$emit("updateStatus", "Disconnected", "red");
-    });
+    this.socket.on(this.socketEvents.nodeRemoved, node => {
+      self.$set(self.nodes, node.node_id, node)
+    })
 
-    this.socket.on("error", () => {
-      console.log("Socket error");
-    });
-
-    this.socket.on("reconnecting", () => {
-      console.log("Socket reconnecting");
-      self.$emit("updateStatus", "Reconnecting", "yellow");
-    });
-
-    this.socket.on("CONTROLLER_CMD", data => {
-      self.cnt_status = data.help;
-    });
-
-    this.socket.on("DRIVER_READY", info => {
-      self.homeid = info.homeid;
-      self.homeHex = info.name;
-    });
-
-    this.socket.on("NODE_REMOVED", node => {
-      self.$set(self.nodes, node.node_id, node);
-    });
-
-    this.socket.on("DEBUG", data => {
+    this.socket.on(this.socketEvents.debug, data => {
       if (self.debugActive) {
-        data = ansi_up.ansi_to_html(data);
-        data = data.replace(/\n/g, "</br>");
-        //\b[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z\b
-        self.debug.push(data);
+        data = ansiUp.ansi_to_html(data)
+        data = data.replace(/\n/g, '</br>')
+        // \b[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z\b
+        self.debug.push(data)
 
-        if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift();
+        if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift()
 
-        var textarea = document.getElementById("debug_window");
-        textarea.scrollTop = textarea.scrollHeight;
+        var textarea = document.getElementById('debug_window')
+        textarea.scrollTop = textarea.scrollHeight
       }
-    });
+    })
 
-    this.socket.on("INIT", data => {
-      //convert node values in array
-      var nodes = data.nodes;
+    this.socket.on(this.socketEvents.init, data => {
+      // convert node values in array
+      var nodes = data.nodes
       for (var i = 0; i < nodes.length; i++) {
-        self.initNode(nodes[i]);
+        self.initNode(nodes[i])
       }
-      self.nodes = nodes;
-      self.cnt_status = data.error ? data.error : data.cntStatus;
-      self.homeid = data.info.homeid;
-      self.homeHex = data.info.name;
-    });
+      self.nodes = nodes
+      self.cnt_status = data.error ? data.error : data.cntStatus
+      self.homeid = data.info.homeid
+      self.homeHex = data.info.name
+    })
 
-    this.socket.on("NODE_UPDATED", data => {
-      self.initNode(data);
+    this.socket.on(this.socketEvents.nodeUpdated, data => {
+      self.initNode(data)
       if (!self.nodes[data.node_id] || self.nodes[data.node_id].failed) {
-        //add missing nodes
-        while (self.nodes.length < data.node_id)
+        // add missing nodes
+        while (self.nodes.length < data.node_id) {
           self.nodes.push({
             node_id: self.nodes.length,
             failed: true,
-            status: "Removed"
-          });
-      }
-      self.$set(self.nodes, data.node_id, data);
-
-      if (this.selectedNode && this.selectedNode.node_id === data.node_id)
-        this.selectedNode = self.nodes[data.node_id];
-    });
-
-    this.socket.on("VALUE_UPDATED", data => {
-      var node = self.nodes[data.node_id];
-      if (node && node.values) {
-        var index = node.values.findIndex(v => v.value_id == data.value_id);
-        if (index >= 0) {
-          if (self.nodes[data.node_id].values[index].toUpdate) {
-            self.nodes[data.node_id].values[index].toUpdate = false;
-            self.showSnackbar("Value updated");
-          }
-
-          if (!data.newValue) data.newValue = data.value;
-
-          self.$set(self.nodes[data.node_id].values, index, data);
+            status: 'Removed'
+          })
         }
       }
-    });
+      self.$set(self.nodes, data.node_id, data)
 
-    this.socket.on("API_RETURN", data => {
+      if (this.selectedNode && this.selectedNode.node_id === data.node_id) { this.selectedNode = self.nodes[data.node_id] }
+    })
+
+    this.socket.on(this.socketEvents.valueUpdated, data => {
+      var node = self.nodes[data.node_id]
+      if (node && node.values) {
+        var index = node.values.findIndex(v => v.value_id === data.value_id)
+        if (index >= 0) {
+          if (self.nodes[data.node_id].values[index].toUpdate) {
+            self.nodes[data.node_id].values[index].toUpdate = false
+            self.showSnackbar('Value updated')
+          }
+
+          if (!data.newValue) data.newValue = data.value
+
+          self.$set(self.nodes[data.node_id].values, index, data)
+        }
+      }
+    })
+
+    this.socket.on(this.socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
-          case "getAssociations":
-            data.result = data.result.map(a => self.nodes[a]._name || a);
-            self.$set(self.group, "associations", data.result.join("\n"));
-            break;
-          case "getScenes":
-            self.scenes = data.result;
-            break;
-          case "setScenes":
-            self.scenes = data.result;
-            self.showSnackbar("Successfully updated scenes");
-            break;
-          case "sceneGetValues":
-            self.scene_values = data.result;
-            break;
-          case "getNodeNeighbors":
-            confirm("Node neighbors \n" + self.jsonToList(data.result));
-            break;
-          case "getDriverStatistics":
-            confirm("Driver statistics \n" + self.jsonToList(data.result));
-            break;
-          case "getNodeStatistics":
-            confirm("Node statistics \n" + self.jsonToList(data.result));
-            break;
+          case 'getAssociations':
+            data.result = data.result.map(a => self.nodes[a]._name || a)
+            self.$set(self.group, 'associations', data.result.join('\n'))
+            break
+          case 'getScenes':
+            self.scenes = data.result
+            break
+          case 'setScenes':
+            self.scenes = data.result
+            self.showSnackbar('Successfully updated scenes')
+            break
+          case 'sceneGetValues':
+            self.scene_values = data.result
+            break
+          case 'getNodeNeighbors':
+            confirm('Node neighbors \n' + self.jsonToList(data.result))
+            break
+          case 'getDriverStatistics':
+            confirm('Driver statistics \n' + self.jsonToList(data.result))
+            break
+          case 'getNodeStatistics':
+            confirm('Node statistics \n' + self.jsonToList(data.result))
+            break
           default:
-            self.showSnackbar("Successfully call api " + data.api);
+            self.showSnackbar('Successfully call api ' + data.api)
         }
       } else {
         self.showSnackbar(
-          "Error while calling api " + data.api + ": " + data.message
-        );
+          'Error while calling api ' + data.api + ': ' + data.message
+        )
       }
-    });
+    })
+
+    this.socket.emit(this.socketActions.init, true)
   },
-  beforeDestroy() {
-    if (this.socket) this.socket.close();
+  beforeDestroy () {
+    if (this.socket) { // unbind events
+      for (const event in this.socketEvents) {
+        this.socket.off(event)
+      }
+    }
   }
-};
+}
 </script>

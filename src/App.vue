@@ -39,7 +39,7 @@
 
       <v-spacer></v-spacer>
 
-      <v-tooltip v-if="status" bottom>
+      <v-tooltip bottom>
         <v-icon
           dark
           medium
@@ -53,10 +53,10 @@
     <main>
       <v-content>
         <router-view
-          @updateStatus="updateStatus"
           @import="importFile"
           @export="exportConfiguration"
           @showSnackbar="showSnackbar"
+          :socket="socket"
         />
       </v-content>
     </main>
@@ -75,110 +75,140 @@
 </template>
 
 <script>
+
+// https://github.com/socketio/socket.io-client/blob/master/docs/API.md
+import io from 'socket.io-client'
+import ConfigApis from '@/apis/ConfigApis'
+
 export default {
-  name: "app",
+  name: 'app',
   methods: {
-    toggleDrawer() {
-      if (["xs", "sm", "md"].indexOf(this.$vuetify.breakpoint.name) >= 0) {
-        this.mini = false;
-        this.drawer = !this.drawer;
+    toggleDrawer () {
+      if (['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0) {
+        this.mini = false
+        this.drawer = !this.drawer
       } else {
-        this.mini = !this.mini;
-        this.drawer = true;
+        this.mini = !this.mini
+        this.drawer = true
       }
     },
-    showSnackbar: function(text) {
-      this.snackbarText = text;
-      this.snackbar = true;
+    showSnackbar: function (text) {
+      this.snackbarText = text
+      this.snackbar = true
     },
-    updateStatus: function(status, color) {
-      this.status = status;
-      this.statusColor = color;
+    updateStatus: function (status, color) {
+      this.status = status
+      this.statusColor = color
     },
-    importFile: function(ext, callback) {
-      var self = this;
+    importFile: function (ext, callback) {
+      var self = this
       // Check for the various File API support.
       if (window.File && window.FileReader && window.FileList && window.Blob) {
-        var input = document.createElement("input");
-        input.type = "file";
-        input.addEventListener("change", function(event) {
-          var files = event.target.files;
+        var input = document.createElement('input')
+        input.type = 'file'
+        input.addEventListener('change', function (event) {
+          var files = event.target.files
 
           if (files && files.length > 0) {
-            var file = files[0];
-            var reader = new FileReader();
+            var file = files[0]
+            var reader = new FileReader()
 
-            reader.addEventListener("load", function(fileReaderEvent) {
-              var err;
-              var data = fileReaderEvent.target.result;
+            reader.addEventListener('load', function (fileReaderEvent) {
+              var err
+              var data = fileReaderEvent.target.result
 
-              if (ext == "json") {
+              if (ext === 'json') {
                 try {
-                  data = JSON.parse(data);
+                  data = JSON.parse(data)
                 } catch (e) {
                   self.showSnackbar(
-                    "Error while parsing input file, check console for more info"
-                  );
-                  console.log(e);
-                  err = e;
+                    'Error while parsing input file, check console for more info'
+                  )
+                  console.log(e)
+                  err = e
                 }
               }
 
-              callback(err, data);
-            });
+              callback(err, data)
+            })
 
-            reader.readAsText(file);
+            reader.readAsText(file)
           }
-        });
+        })
 
-        input.click();
+        input.click()
       } else {
-        alert("Unable to load a file in this browser.");
+        alert('Unable to load a file in this browser.')
       }
     },
-    exportConfiguration: function(data, fileName, ext) {
-      var contentType = ext == "xml" ? "text/xml" : "application/octet-stream";
-      var a = document.createElement("a");
+    exportConfiguration: function (data, fileName, ext) {
+      var contentType = ext == 'xml' ? 'text/xml' : 'application/octet-stream'
+      var a = document.createElement('a')
 
-      var blob = new Blob([ext == "xml" ? data : JSON.stringify(data)], {
+      var blob = new Blob([ext == 'xml' ? data : JSON.stringify(data)], {
         type: contentType
-      });
+      })
 
-      document.body.appendChild(a);
-      a.href = window.URL.createObjectURL(blob);
-      a.download = fileName + "." + (ext ? ext : "json");
-      a.target = "_self";
-      a.click();
+      document.body.appendChild(a)
+      a.href = window.URL.createObjectURL(blob)
+      a.download = fileName + '.' + (ext || 'json')
+      a.target = '_self'
+      a.click()
     }
   },
-  data() {
+  data () {
     return {
+      socket: null,
       version: process.env.VERSION,
       pages: [
-        { icon: "widgets", title: "Control Panel", path: "/" },
-        { icon: "settings", title: "Settings", path: "/settings" }
+        { icon: 'widgets', title: 'Control Panel', path: '/' },
+        { icon: 'settings', title: 'Settings', path: '/settings' }
       ],
-      status: "",
-      statusColor: "",
+      status: '',
+      statusColor: '',
       drawer: false,
       mini: false,
       topbar: [],
-      title: "",
+      title: '',
       snackbar: false,
-      snackbarText: ""
-    };
-  },
-  watch: {
-    $route: function(value) {
-      this.title = value.name || "";
+      snackbarText: ''
     }
   },
-  beforeMount() {
-    this.title = this.$route.name || "";
+  watch: {
+    $route: function (value) {
+      this.title = value.name || ''
+    }
   },
-  mounted() {
-    if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl)
-      this.toggleDrawer();
+  beforeMount () {
+    this.title = this.$route.name || ''
+
+    var self = this
+
+    this.socket = io(ConfigApis.getSocketIP())
+
+    this.socket.on('connect', () => {
+      self.updateStatus('Connected', 'green')
+    })
+
+    this.socket.on('disconnect', () => {
+      self.updateStatus('Disconnected', 'red')
+    })
+
+    this.socket.on('error', () => {
+      console.log('Socket error')
+    })
+
+    this.socket.on('reconnecting', () => {
+      self.updateStatus('Reconnecting', 'yellow')
+    })
+  },
+  mounted () {
+    if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl) {
+      this.toggleDrawer()
+    }
+  },
+  beforeDestroy () {
+    if (this.socket) this.socket.close()
   }
-};
+}
 </script>
