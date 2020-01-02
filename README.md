@@ -279,9 +279,15 @@ Settings, scenes and Zwave configuration are stored in `JSON/xml` files under pr
 
 `<mqtt_prefix>/<?node_location>/<node_name>/event`
 
-- **Scene events** (value will be the scene event code) will be published in:
+- **Scene events** will be published in:
 
-`<mqtt_prefix>/<?node_location>/<node_name>/scene/event`
+OZW 1.4:
+
+`<mqtt_prefix>/<?node_location>/<node_name>/scene/event` (value will be the scene event code)
+
+OZW 1.6: In OZW 1.6 scenes are treated like a valueID (so the topic depends on gateway configuration). For example if the command class is `91` (`central_scene`) and gateway uses valueid topics
+
+`<mqtt_prefix>/<?node_location>/<node_name>/91/1/1` (value published in payload will depend on gateway payload type)
 
 #### Gateway values table
 
