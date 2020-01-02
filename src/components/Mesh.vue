@@ -251,6 +251,8 @@ export default {
     var mesh = document.getElementById('mesh')
     var isDown = false
     var offset = [0, 0]
+
+    // TODO: Update dimensions on screen resize
     var dimensions = [mesh.clientWidth, mesh.clientHeight]
 
     propertiesDiv.addEventListener('mousedown', function (e) {
@@ -275,6 +277,13 @@ export default {
         if (r > 0 && r < dimensions[1]) { propertiesDiv.style.top = r + offset[1] + 'px' }
       }
     }, true)
+  },
+  beforeDestroy () {
+    if (this.socket) { // unbind events
+      for (const event in this.socketEvents) {
+        this.socket.off(event)
+      }
+    }
   }
 }
 </script>
