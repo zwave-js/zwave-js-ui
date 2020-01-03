@@ -215,12 +215,32 @@ export default {
       }
     })
 
+    this.socket.on(this.socketEvents.nodeRemoved, node => {
+      self.$set(self.nodes, node.node_id, node)
+      self.refresh()
+    })
+
     this.socket.on(this.socketEvents.nodeUpdated, data => {
       var node = self.convertNode(data)
-      if (!self.nodes[data.node_id]) {
-        self.nodes.push(node)
+
+      // node added
+      var refresh = !self.nodes[data.node_id] || self.nodes[data.node_id].failed
+
+      // add missing nodes if new node added
+      while (self.nodes.length < data.node_id) {
+        self.nodes.push({
+          node_id: self.nodes.length,
+          failed: true,
+          status: 'Removed'
+        })
       }
+
       self.$set(self.nodes, data.node_id, node)
+
+      // update links if new node has been added
+      if (refresh) {
+        self.refresh()
+      }
     })
 
     this.socket.on(this.socketEvents.api, data => {
