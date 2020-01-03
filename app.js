@@ -116,18 +116,18 @@ app.startSocket = function (server) {
 // ----- APIs ------
 
 //get settings
-app.get('/api/settings', function (req, res) {
+app.get('/api/settings', async function (req, res) {
   var data = { success: true, settings: jsonStore.get(store.settings), devices: gw.zwave ? gw.zwave.devices : {}, serial_ports: [] }
   if (process.platform !== 'sunos') {
-    SerialPort.list(function (err, ports) {
-      if (err) {
-        debug(err);
-      }
-      
-      data.serial_ports = ports ? ports.map(p => p.comName) : []
+    try {
+      var ports = await SerialPort.list()
+    } catch (error) {
+      debug(error);
+    }
 
-      res.json(data);
-    })
+    data.serial_ports = ports ? ports.map(p => p.path) : []
+    res.json(data);
+
   } else res.json(data)
 });
 
