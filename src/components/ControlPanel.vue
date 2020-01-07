@@ -757,7 +757,7 @@ export default {
         this.$emit('import', 'json', function (err, scenes) {
           // TODO: add checks on file entries
           if (scenes instanceof Array) {
-            self.apiRequest('setScenes', [scenes])
+            self.apiRequest('_setScenes', [scenes])
           } else {
             self.showSnackbar('Imported file not valid')
             console.log(err)
@@ -781,29 +781,29 @@ export default {
     },
     refreshValues () {
       if (this.selectedScene) {
-        this.apiRequest('sceneGetValues', [this.selectedScene])
+        this.apiRequest('_sceneGetValues', [this.selectedScene])
       }
     },
     refreshScenes () {
-      this.apiRequest('getScenes', [])
+      this.apiRequest('_getScenes', [])
     },
     createScene () {
       if (this.newScene) {
-        this.apiRequest('createScene', [this.newScene])
+        this.apiRequest('_createScene', [this.newScene])
         this.refreshScenes()
         this.newScene = ''
       }
     },
     removeScene () {
       if (this.selectedScene) {
-        this.apiRequest('removeScene', [this.selectedScene])
+        this.apiRequest('_removeScene', [this.selectedScene])
         this.selectedScene = null
         this.refreshScenes()
       }
     },
     activateScene () {
       if (this.selectedScene) {
-        this.apiRequest('activateScene', [this.selectedScene])
+        this.apiRequest('_activateScene', [this.selectedScene])
       }
     },
     editItem (item) {
@@ -823,7 +823,7 @@ export default {
     },
     deleteItem (value) {
       if (confirm('Are you sure you want to delete this item?')) {
-        this.apiRequest('removeSceneValue', [
+        this.apiRequest('_removeSceneValue', [
           this.selectedScene,
           value.node_id,
           value.class_id,
@@ -901,7 +901,7 @@ export default {
       value.value = value.newValue
 
       // if value already exists it will be updated
-      this.apiRequest('addSceneValue', [
+      this.apiRequest('_addSceneValue', [
         this.selectedScene,
         value,
         value.value,
@@ -948,7 +948,7 @@ export default {
     },
     updateName () {
       if (this.selectedNode && !this.nameError) {
-        this.apiRequest('setNodeName', [
+        this.apiRequest('_setNodeName', [
           this.selectedNode.node_id,
           this.newName
         ])
@@ -956,7 +956,7 @@ export default {
     },
     updateLoc () {
       if (this.selectedNode && !this.locError) {
-        this.apiRequest('setNodeLocation', [
+        this.apiRequest('_setNodeLocation', [
           this.selectedNode.node_id,
           this.newLoc
         ])
@@ -1120,14 +1120,14 @@ export default {
             data.result = data.result.map(a => self.nodes[a]._name || a)
             self.$set(self.group, 'associations', data.result.join('\n'))
             break
-          case 'getScenes':
+          case '_getScenes':
             self.scenes = data.result
             break
-          case 'setScenes':
+          case '_setScenes':
             self.scenes = data.result
             self.showSnackbar('Successfully updated scenes')
             break
-          case 'sceneGetValues':
+          case '_sceneGetValues':
             self.scene_values = data.result
             break
           case 'getNodeNeighbors':

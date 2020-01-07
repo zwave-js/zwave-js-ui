@@ -150,8 +150,8 @@ app.post('/api/importConfig', async function (req, res) {
         if (e && (!e.hasOwnProperty('name') || !e.hasOwnProperty('loc'))) {
           throw Error("Configuration not valid")
         } else if (e) {
-          await gw.zwave.callApi("setNodeName", i, e.name || "")
-          await gw.zwave.callApi("setNodeLocation", i, e.loc || "")
+          await gw.zwave.callApi("_setNodeName", i, e.name || "")
+          await gw.zwave.callApi("_setNodeLocation", i, e.loc || "")
           if (e.hassDevices)
             await gw.zwave.storeDevices(e.hassDevices, i, false)
         }
