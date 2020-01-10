@@ -497,12 +497,12 @@ export default {
     },
     newName (val) {
       this.nameError = /["+*\s]+/g.test(val)
-        ? 'Remove " + * and blank space charaters'
+        ? 'Remove " + * and blank space characters'
         : null
     },
     newLoc (val) {
       this.locError = /["+*\s]+/g.test(val)
-        ? 'Remove " + * and blank space charaters'
+        ? 'Remove " + * and blank space characters'
         : null
     },
     selectedNode () {
@@ -633,7 +633,7 @@ export default {
           value: 'addNode'
         },
         {
-          text: 'Remove Node (exclusion)',
+          text: 'Remove node (exclusion)',
           value: 'removeNode'
         },
         {
@@ -718,7 +718,7 @@ export default {
       var self = this
       if (
         confirm(
-          'Attention: This will override all existing nodes names and location'
+          'Attention: This will override all existing nodes names and locations'
         )
       ) {
         self.$emit('import', 'json', function (err, data) {
