@@ -581,7 +581,6 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 Thanks to this people for help with issues tracking and contributions:
 
-- @mlankamp for mesh graph feature and typescript support
 - @sjorge for testing with different os and Openzwave 1.6
 - @jshridha for testing home assistant integration and contribution
 
