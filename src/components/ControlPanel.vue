@@ -7,8 +7,11 @@
             <v-flex xs12 sm3 md2 mr-2>
               <v-text-field label="Home ID" disabled v-model="homeid"></v-text-field>
             </v-flex>
-            <v-flex xs12 sm3 md2>
+            <v-flex xs12 sm3 md2 mr-2>
               <v-text-field label="Home Hex" disabled v-model="homeHex"></v-text-field>
+            </v-flex>
+            <v-flex xs12 sm3 md2>
+              <v-text-field label="Openzwave" disabled v-model="ozwVersion"></v-text-field>
             </v-flex>
           </v-layout>
 
@@ -543,6 +546,7 @@ export default {
       debug: [],
       homeid: '',
       homeHex: '',
+      ozwVersion: '',
       showHidden: false,
       debugActive: false,
       selectedScene: null,
@@ -1044,9 +1048,10 @@ export default {
       self.cnt_status = data.help
     })
 
-    this.socket.on(this.socketEvents.driver, info => {
+    this.socket.on(this.socketEvents.connected, info => {
       self.homeid = info.homeid
       self.homeHex = info.name
+      self.ozwVersion = info.version
     })
 
     this.socket.on(this.socketEvents.nodeRemoved, node => {
@@ -1077,6 +1082,7 @@ export default {
       self.cnt_status = data.error ? data.error : data.cntStatus
       self.homeid = data.info.homeid
       self.homeHex = data.info.name
+      self.ozwVersion = data.info.version
     })
 
     this.socket.on(this.socketEvents.nodeUpdated, data => {

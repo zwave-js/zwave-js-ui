@@ -144,10 +144,10 @@ export default {
       }
     },
     exportConfiguration: function (data, fileName, ext) {
-      var contentType = ext == 'xml' ? 'text/xml' : 'application/octet-stream'
+      var contentType = ext === 'xml' ? 'text/xml' : 'application/octet-stream'
       var a = document.createElement('a')
 
-      var blob = new Blob([ext == 'xml' ? data : JSON.stringify(data)], {
+      var blob = new Blob([ext === 'xml' ? data : JSON.stringify(data)], {
         type: contentType
       })
 
@@ -170,7 +170,7 @@ export default {
       socketEvents: {
         init: 'INIT',
         controller: 'CONTROLLER_CMD',
-        driver: 'DRIVER_READY',
+        connected: 'CONNECTED',
         nodeRemoved: 'NODE_REMOVED',
         nodeUpdated: 'NODE_UPDATED',
         valueUpdated: 'VALUE_UPDATED',

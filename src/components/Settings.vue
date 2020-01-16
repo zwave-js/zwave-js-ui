@@ -82,7 +82,7 @@
                         required
                         min="0"
                         max="23"
-                        suffix="hours"
+                        suffix=":00"
                         hint="Select the Hour (0-23) at witch the network should heal"
                         type="number"
                       ></v-text-field>
@@ -423,56 +423,57 @@
 </template>
 
 <script>
-import { mapGetters, mapMutations } from "vuex";
-import ConfigApis from "@/apis/ConfigApis";
-import fileInput from "@/components/custom/file-input.vue";
-import url from "url";
+import { mapGetters } from 'vuex'
+import ConfigApis from '@/apis/ConfigApis'
+import fileInput from '@/components/custom/file-input.vue'
+import url from 'url'
 
-import DialogGatewayValue from "@/components/dialogs/DialogGatewayValue";
+import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
 export default {
-  name: "Settings",
+  name: 'Settings',
   components: {
     DialogGatewayValue,
     fileInput
   },
   computed: {
-    secure() {
-      if (!this.mqtt.host) return false;
-      const parsed = url.parse(this.mqtt.host);
+    secure () {
+      if (!this.mqtt.host) return false
+      const parsed = url.parse(this.mqtt.host)
 
       const secure =
-        ["mqtts:", "wss:", "wxs:", "alis:", "tls:"].indexOf(parsed.protocol) >=
-        0;
+        ['mqtts:', 'wss:', 'wxs:', 'alis:', 'tls:'].indexOf(parsed.protocol) >=
+        0
 
       if (!secure) {
+        // eslint-disable-next-line vue/no-side-effects-in-computed-properties
         this.mqtt.key = this.mqtt._key = this.mqtt.cert = this.mqtt._cert = this.mqtt.ca = this.mqtt._ca =
-          "";
+          ''
       }
 
-      return secure;
+      return secure
     },
-    dialogTitle() {
-      return this.editedIndex === -1 ? "New Item" : "Edit Item";
+    dialogTitle () {
+      return this.editedIndex === -1 ? 'New Item' : 'Edit Item'
     },
-    requiredUser() {
+    requiredUser () {
       return (
-        (this.mqtt.auth && !!this.mqtt.username) || "This field is required."
-      );
+        (this.mqtt.auth && !!this.mqtt.username) || 'This field is required.'
+      )
     },
-    requiredPassword() {
+    requiredPassword () {
       return (
-        (this.mqtt.auth && !!this.mqtt.password) || "This field is required."
-      );
+        (this.mqtt.auth && !!this.mqtt.password) || 'This field is required.'
+      )
     },
-    ...mapGetters(["zwave", "mqtt", "gateway", "devices", "serial_ports"])
+    ...mapGetters(['zwave', 'mqtt', 'gateway', 'devices', 'serial_ports'])
   },
   watch: {
-    dialogValue(val) {
-      val || this.closeDialog();
+    dialogValue (val) {
+      val || this.closeDialog()
     }
   },
-  data() {
+  data () {
     return {
       valid_zwave: true,
       dialogValue: false,
@@ -480,176 +481,176 @@ export default {
       editedIndex: -1,
       defaultValue: {},
       headers: [
-        { text: "Device", value: "device" },
-        { text: "Value", value: "value", sortable: false },
-        { text: "Topic", value: "topic" },
-        { text: "Post Operation", value: "postOperation" },
-        { text: "Poll", value: "enablePoll" },
-        { text: "Changes", value: "verifyChanges" },
-        { text: "Actions", sortable: false }
+        { text: 'Device', value: 'device' },
+        { text: 'Value', value: 'value', sortable: false },
+        { text: 'Topic', value: 'topic' },
+        { text: 'Post Operation', value: 'postOperation' },
+        { text: 'Poll', value: 'enablePoll' },
+        { text: 'Changes', value: 'verifyChanges' },
+        { text: 'Actions', sortable: false }
       ],
       e1: true,
       gw_types: [
         {
-          text: "ValueID topics",
+          text: 'ValueID topics',
           value: 0
         },
         {
-          text: "Named topics (DEPRECATED)",
+          text: 'Named topics (DEPRECATED)',
           value: 1
         },
         {
-          text: "Configured Manually",
+          text: 'Configured Manually',
           value: 2
         }
       ],
       py_types: [
         {
-          text: "JSON Time-Value",
+          text: 'JSON Time-Value',
           value: 0
         },
         {
-          text: "Entire Z-Wave value Object",
+          text: 'Entire Z-Wave value Object',
           value: 1
         },
         {
-          text: "Just value",
+          text: 'Just value',
           value: 2
         }
       ],
       rules: {
         required: value => {
-          var valid = false;
+          var valid = false
 
-          if (value instanceof Array) valid = value.length > 0;
-          else valid = !!value || value === 0;
+          if (value instanceof Array) valid = value.length > 0
+          else valid = !!value || value === 0
 
-          return valid || "This field is required.";
+          return valid || 'This field is required.'
         },
         inRange: value => {
-          return (value >= 0 && value <= 23) || "Insert a value between 0-23";
+          return (value >= 0 && value <= 23) || 'Insert a value between 0-23'
         },
         validName: value => {
           return (
             !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\]/.\s]/g.test(value) ||
             'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
-          );
+          )
         },
         validKey: value => {
           return (
             !value ||
-            /(0x\w{2},\s*){16}/g.test(value + ",") ||
+            /(0x\w{2},\s*){16}/g.test(value + ',') ||
             "Key must contain 16 bytes separated by ','. Ex: '0xAA, 0xAB, ...'"
-          );
+          )
         }
       }
-    };
+    }
   },
   methods: {
-    readFile(file, callback) {
-      const reader = new FileReader();
+    readFile (file, callback) {
+      const reader = new FileReader()
 
-      reader.onload = e => callback(e.target.result);
-      reader.readAsText(file);
+      reader.onload = e => callback(e.target.result)
+      reader.readAsText(file)
     },
-    onFileSelect(data) {
-      var file = data.files[0];
-      var self = this;
+    onFileSelect (data) {
+      var file = data.files[0]
+      var self = this
       if (file) {
-        this.readFile(file, text => (self.mqtt[data.key] = text));
+        this.readFile(file, text => (self.mqtt[data.key] = text))
       } else {
-        self.mqtt[data.key] = "";
+        self.mqtt[data.key] = ''
       }
     },
-    showSnackbar(text) {
-      this.$emit("showSnackbar", text);
+    showSnackbar (text) {
+      this.$emit('showSnackbar', text)
     },
-    importSettings() {
-      var self = this;
-      this.$emit("import", "json", function(err, settings) {
-        if (settings.zwave && settings.mqtt && settings.gateway) {
-          self.$store.dispatch("import", settings);
-          self.showSnackbar("Configuration imported successfully");
+    importSettings () {
+      var self = this
+      this.$emit('import', 'json', function (err, settings) {
+        if (!err && settings.zwave && settings.mqtt && settings.gateway) {
+          self.$store.dispatch('import', settings)
+          self.showSnackbar('Configuration imported successfully')
         } else {
-          self.showSnackbar("Imported settings not valid");
+          self.showSnackbar('Imported settings not valid')
         }
-      });
+      })
     },
-    exportSettings() {
-      var settings = this.getSettingsJSON();
-      this.$emit("export", settings, "settings");
+    exportSettings () {
+      var settings = this.getSettingsJSON()
+      this.$emit('export', settings, 'settings')
     },
-    getSettingsJSON() {
+    getSettingsJSON () {
       return {
         mqtt: this.mqtt,
         gateway: this.gateway,
         zwave: this.zwave
-      };
-    },
-    editItem(item) {
-      this.editedIndex = this.gateway.values.indexOf(item);
-      this.editedValue = Object.assign({}, item);
-      this.dialogValue = true;
-    },
-    deleteItem(item) {
-      const index = this.gateway.values.indexOf(item);
-      confirm("Are you sure you want to delete this item?") &&
-        this.gateway.values.splice(index, 1);
-    },
-    closeDialog() {
-      this.dialogValue = false;
-      setTimeout(() => {
-        this.editedValue = Object.assign({}, this.defaultValue);
-        this.editedIndex = -1;
-      }, 300);
-    },
-    deviceName(deviceID) {
-      var device = this.devices.find(d => d.value == deviceID);
-      return device ? `[${deviceID}] ${device.name}` : deviceID;
-    },
-    saveValue() {
-      if (this.editedIndex > -1) {
-        Object.assign(this.gateway.values[this.editedIndex], this.editedValue);
-      } else {
-        this.gateway.values.push(this.editedValue);
       }
-      this.closeDialog();
     },
-    update() {
+    editItem (item) {
+      this.editedIndex = this.gateway.values.indexOf(item)
+      this.editedValue = Object.assign({}, item)
+      this.dialogValue = true
+    },
+    deleteItem (item) {
+      const index = this.gateway.values.indexOf(item)
+      confirm('Are you sure you want to delete this item?') &&
+        this.gateway.values.splice(index, 1)
+    },
+    closeDialog () {
+      this.dialogValue = false
+      setTimeout(() => {
+        this.editedValue = Object.assign({}, this.defaultValue)
+        this.editedIndex = -1
+      }, 300)
+    },
+    deviceName (deviceID) {
+      var device = this.devices.find(d => d.value === deviceID)
+      return device ? `[${deviceID}] ${device.name}` : deviceID
+    },
+    saveValue () {
+      if (this.editedIndex > -1) {
+        Object.assign(this.gateway.values[this.editedIndex], this.editedValue)
+      } else {
+        this.gateway.values.push(this.editedValue)
+      }
+      this.closeDialog()
+    },
+    update () {
       if (this.$refs.form_settings.validate()) {
-        var self = this;
+        var self = this
         ConfigApis.updateConfig(self.getSettingsJSON())
           .then(data => {
-            self.showSnackbar(data.message);
+            self.showSnackbar(data.message)
           })
           .catch(error => {
-            console.log(error);
-          });
+            console.log(error)
+          })
       } else {
-        this.showSnackbar("Your configuration contains errors, fix it");
+        this.showSnackbar('Your configuration contains errors, fix it')
       }
     }
   },
-  mounted() {
-    //hide socket status indicator from toolbar
-    this.$emit("updateStatus");
+  mounted () {
+    // hide socket status indicator from toolbar
+    this.$emit('updateStatus')
 
-    var self = this;
+    var self = this
     ConfigApis.getConfig()
       .then(data => {
         if (!data.success) {
           self.showSnackbar(
-            "Error while retriving configuration, check console"
-          );
-          console.log(response);
+            'Error while retriving configuration, check console'
+          )
+          console.log(data)
         } else {
-          self.$store.dispatch("init", data);
+          self.$store.dispatch('init', data)
         }
       })
       .catch(e => {
-        self.showSnackbar("Error while retriving configuration, check console");
-        console.log(e);
-      });
+        self.showSnackbar('Error while retriving configuration, check console')
+        console.log(e)
+      })
   }
-};
+}
 </script>
