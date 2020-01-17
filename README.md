@@ -131,6 +131,7 @@ Enjoy :smile:
       | tr -d \" \
       | wget -i -
        unzip zwave2mqtt-v*.zip
+       cd zwave2mqtt
        ./zwave2mqtt
        ```
 
