@@ -124,8 +124,13 @@ Enjoy :smile:
        cd ~
        mkdir Zwave2Mqtt
        cd Zwave2Mqtt
-       wget https://github.com/OpenZWave/Zwave2Mqtt/releases/download/1.0.0/zwave2mqtt-v1.0.0.zip
-       unzip zwave2mqtt-v1.0.0_PKG.zip
+       # download latest version
+       curl -s https://api.github.com/repos/OpenZWave/Zwave2Mqtt/releases/latest  \
+      | grep "browser_download_url.*zip" \
+      | cut -d : -f 2,3 \
+      | tr -d \" \
+      | wget -i -
+       unzip zwave2mqtt-v*.zip
        ./zwave2mqtt
        ```
 
