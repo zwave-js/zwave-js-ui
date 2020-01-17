@@ -101,10 +101,8 @@ Enjoy :smile:
     ```sh
     sudo apt-get install libudev-dev
     cd ~
-    git clone -b 1.4 https://github.com/OpenZWave/open-zwave.git
+    git clone https://github.com/OpenZWave/open-zwave.git
     cd openzwave && make && sudo make install
-    sudo ln -s /usr/local/lib64/libopenzwave.so /usr/local/lib/libopenzwave.so
-    sudo ln -s /usr/local/lib64/libopenzwave.so.1.4 /usr/local/lib/libopenzwave.so.1.4
     sudo ldconfig
     export LD_LIBRARY_PATH=/usr/local/lib64
     sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
