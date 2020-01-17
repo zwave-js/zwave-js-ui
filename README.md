@@ -22,9 +22,14 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 - **Backend**: NodeJS, Express, socket.io, Mqttjs, openzwave-shared, Webpack
 - **Frontend**: Vue,  socket.io, [Vuetify](https://github.com/vuetifyjs/vuetify)
 
+## !! ATTENTION !!
+
+After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Openzwave maintainer all issues related to **OZW 1.4** will be ignored and **automatically closed** as it isn't supported anymore, **please use OZW 1.6+**
+
 ## 📖 Table of contents
 
 - [Zwave To MQTT](#zwave-to-mqtt)
+  - [!! ATTENTION !!](#attention)
   - [📖 Table of contents](#%f0%9f%93%96-table-of-contents)
   - [:electric_plug: Installation](#electricplug-installation)
     - [DOCKER :tada: way](#docker-tada-way)
