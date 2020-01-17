@@ -569,7 +569,7 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 ### Mesh
 
-![Mesh](docs/mesh.png)
+![Mesh](docs/mesh_diagram.png)
 
 ### Debug
 
