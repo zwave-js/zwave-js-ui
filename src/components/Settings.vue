@@ -316,6 +316,14 @@
                       </v-flex>
                       <v-flex xs6>
                         <v-switch
+                          label="Send Zwave events"
+                          hint="Enable this to get all zwave events in MQTT on _EVENTS topic"
+                          v-model="gateway.sendEvents"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
                           label="Ignore status updates"
                           hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
                           v-model="gateway.ignoreStatus"
