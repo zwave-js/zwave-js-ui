@@ -484,7 +484,7 @@ You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave
 
 ### Zwave Events
 
-If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave events are published to MQTT.
+If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave events are published to MQTT. [Here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-events.md) you can find a list with all available events
 
 Topic
 
