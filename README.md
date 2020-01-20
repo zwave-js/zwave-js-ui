@@ -54,6 +54,8 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
       - [Thermostats](#thermostats)
       - [Fans](#fans)
   - [:gift: MQTT APIs](#gift-mqtt-apis)
+    - [Zwave Events](#zwave-events)
+      - [Example](#example)
     - [Zwave APIs](#zwave-apis)
     - [Set values](#set-values)
     - [Broadcast](#broadcast)
@@ -271,6 +273,7 @@ Gateway settings:
 
 - **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
 - **Ignore location**: Enable this to remove nodes location from topics
+- **Send Zwave Events**: Enable this to send all Zwave client events to MQTT. More info [here](#zwave-events)
 - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#star-Home-Assistant-integration-BETA))
@@ -478,6 +481,45 @@ Thermostats are most complex components to create, in this device example the se
 ## :gift: MQTT APIs
 
 You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simply using MQTT.
+
+### Zwave Events
+
+If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave events are published to MQTT.
+
+Topic
+
+`<mqtt_prefix>/_EVENTS_/ZWAVE_GATEWAY-<mqtt_name>/<event name>`
+
+Payload
+
+```json
+{
+  "data": [ "1.4.3319" ] // an array containing all args in order
+}
+```
+
+#### Example
+
+Topic
+
+`zwave2mqtt/_EVENTS/ZWAVE_GATEWAY-z2m/node_ready`
+
+Payload
+
+```json
+{
+  "data": [1, {
+    "manufacturer": "AEON Labs",
+    "manufacturerid": "0x0086",
+    "product": "ZW090 Z-Stick Gen5 EU",
+    "producttype": "0x0001",
+    "productid": "0x005a",
+    "type": "Static PC Controller",
+    "name": "",
+    "loc": ""
+  }]
+}
+```
 
 ### Zwave APIs
 
