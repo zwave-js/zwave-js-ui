@@ -51,6 +51,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
       - [Edit existing component](#edit-existing-component)
       - [Add new component](#add-new-component)
     - [Custom Components](#custom-components)
+      - [Identify the DeviceID](#identify-the-deviceid)
       - [Thermostats](#thermostats)
       - [Fans](#fans)
   - [:gift: MQTT APIs](#gift-mqtt-apis)
@@ -403,6 +404,28 @@ If no device is selected you can manually insert a device JSON configuration. If
 At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT needs to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
 
 **UPDATE**: Starting from version 2.0.7 you can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container
+
+#### Identify the DeviceID
+
+First (and easier) option is to add a random value in gateway values table for the desired device, the device id will be visible in first column of the table (`Devices`) between square brackets  `[<deviceID>] Device Name`
+
+Second option would be to retrieve it from [here](https://github.com/OpenZWave/open-zwave/blob/master/config/manufacturer_specific.xml). Each device has Manufacturerid, product id and a product type in **HEX format** and needs to be converted in decimal:
+
+```xml
+<Manufacturer id="019b" name="ThermoFloor AS">
+    <Product config="thermofloor/heatit021.xml" id="0001" name="Heatit Thermostat TF 021" type="0001"/>
+    <Product config="thermofloor/heatit056.xml" id="0202" name="Heatit Thermostat TF 056" type="0003"/>
+    <Product config="thermofloor/heatit-zdim.xml" id="2200" name="Heatit ZDim" type="0003"/>
+</Manufacturer>
+```
+
+In this example, if we have choose `Heatit Thermostat TF 056`:
+
+- Manufacturer Id: `19b` --> `411`
+- Product Id: `202` --> `514`
+- Product type: `3` --> `3`
+
+So in decimal format will become: `411-514-3`. This is the device id of `Heatit Thermostat TF 056`
 
 #### Thermostats
 
