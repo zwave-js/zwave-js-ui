@@ -457,7 +457,7 @@ So in decimal format will become: `411-514-3`. This is the device id of `Heatit 
 - **mode_map**: Key-Value object where keys are [MQTT Climate](https://www.home-assistant.io/components/climate.mqtt/) modes and values are the matching thermostat modes values
 - **setpoint_topic**: Key-Value object where keys are the modes of the Zwave thermostat and values are the matching setpoint `value_id` (use this if your thermostat has more than one setpoint)
 - **default_setpoint**: The default thermostat setpoint.
-- **discovery_payload**: The payload sent to hass to discover this device
+- **discovery_payload**: The payload sent to hass to discover this device. Check [here](https://www.home-assistant.io/integrations/climate.mqtt/) for a list with all supported options
   - **min_temp/max_temp**: Min/Max temperature of the thermostat
   - **modes**: Array of Hass Climate supported modes. Allowed values are `[“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]`
   - **mode_state_topic**: `value_id` of mode value
@@ -494,7 +494,7 @@ Thermostats are most complex components to create, in this device example the se
 - **type**: The hass [MQTT component](https://www.home-assistant.io/components/mqtt/) type
 - **object_id**: The unique id of this object (must be unique for the device)
 - **values**: Array of values used by this component
-- **discovery_payload**: The payload sent to hass to discover this device
+- **discovery_payload**: The payload sent to hass to discover this device. Check [here](https://www.home-assistant.io/integrations/fan.mqtt/) for a list with all supported options
   - **command_topic**: The topic to send commands
   - **state_topic**: The topic to receive state updates
   - **speed_command_topic**: The topic used to send speed commands
