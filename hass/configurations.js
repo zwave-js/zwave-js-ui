@@ -200,12 +200,29 @@ module.exports = {
       value_template: '{{ value_json.value }}'
     }
   },
+  'sensor_angle': {
+    type: 'sensor',
+    object_id: 'angle',
+    discovery_payload: {
+      icon: 'mdi:angle-acute',
+      value_template: '{{ value_json.value }}'
+    }
+  },
   'sensor_power': {
     type: 'sensor',
     object_id: 'power',
     discovery_payload: {
       unit_of_measurement: 'Watt',
       icon: 'mdi:flash',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_speed': {
+    type: 'sensor',
+    object_id: 'speed',
+    discovery_payload: {
+      unit_of_measurement: 'Km/h',
+      icon: 'mdi:speedometer',
       value_template: '{{ value_json.value }}'
     }
   },
