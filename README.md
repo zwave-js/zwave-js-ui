@@ -54,6 +54,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
       - [Identify the DeviceID](#identify-the-deviceid)
       - [Thermostats](#thermostats)
       - [Fans](#fans)
+      - [Thermostats with Fans](#thermostats-with-fans)
   - [:gift: MQTT APIs](#gift-mqtt-apis)
     - [Zwave Events](#zwave-events)
       - [Example](#example)
@@ -500,6 +501,67 @@ Thermostats are most complex components to create, in this device example the se
   - **speed_command_topic**: The topic used to send speed commands
   - **state_value_template**: The template used to set the value ON/OFF based on the payload received
   - **speed_value_template**: The template to use to set the speed `["off", "low", "medium", "high"]` based on the payload received
+
+#### Thermostats with Fans
+
+The main template is like the thermostat template. The things to add are:
+
+```js
+{ // GoControl GC-TBZ48 (Linear Nortek Security Control LLC)
+        "type": "climate",
+        "object_id": "thermostat",
+        "values": [
+            "64-1-0",
+            "49-1-1",
+            "67-1-1",
+            "67-1-2",
+            "66-1-0", // <-- add fan values
+            "68-1-0", // <-- add fan values
+            "69-1-0"  // <-- add fan values
+        ],
+        "fan_mode_map": { // <-- add fan modes map
+            "on": "On",
+            "auto": "Auto"
+        },
+        "mode_map": {
+            "off": "Off",
+            "heat": "Heat",
+            "cool": "Cool",
+            "auto": "Auto"
+        },
+        "setpoint_topic": {
+            "Heat": "67-1-1",
+            "Cool": "67-1-2"
+        },
+        "default_setpoint": "67-1-1",
+        "discovery_payload": {
+            "min_temp": 60,
+            "max_temp": 85,
+            "modes": [
+                "off",
+                "heat",
+                "cool",
+                "auto"
+            ],
+            "fan_modes": [ // <-- add fan supported modes
+                "on",
+                "auto"
+            ],
+            "action_topic": "66-1-0",
+            "mode_state_topic": "64-1-0",
+            "mode_command_topic": true,
+            "current_temperature_topic": "49-1-1",
+            "current_temperature_template": "{{ value_json.value }}",
+            "temperature_state_template": "{{ value_json.value }}",
+            "temperature_low_command_topic": true,
+            "temperature_low_state_template": "{{ value_json.value }}",
+            "temperature_high_command_topic": true,
+            "temperature_high_state_template": "{{ value_json.value }}",
+            "fan_mode_command_topic": true,
+            "fan_mode_state_topic": "68-1-0" // <-- add fan state topic
+        }
+    }
+```
 
 ## :gift: MQTT APIs
 
