@@ -208,9 +208,9 @@ module.exports = {
       value_template: '{{ value_json.value }}'
     }
   },
-  'sensor_power': {
+  'sensor_electricity': {
     type: 'sensor',
-    object_id: 'power',
+    object_id: 'electricity',
     discovery_payload: {
       unit_of_measurement: 'Watt',
       icon: 'mdi:flash',
@@ -223,6 +223,71 @@ module.exports = {
     discovery_payload: {
       unit_of_measurement: 'Km/h',
       icon: 'mdi:speedometer',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_direction': {
+    type: 'sensor',
+    object_id: 'direction',
+    discovery_payload: {
+      unit_of_measurement: '°',
+      icon: 'mdi:compass',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_sun': {
+    type: 'sensor',
+    object_id: 'sun',
+    discovery_payload: {
+      icon: 'mdi:white-balance-sunny',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_weight': {
+    type: 'sensor',
+    object_id: 'weight',
+    discovery_payload: {
+      icon: 'mdi:weight',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_co2': {
+    type: 'sensor',
+    object_id: 'co2',
+    discovery_payload: {
+      icon: 'mdi:periodic-table-co2',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_air': {
+    type: 'sensor',
+    object_id: 'air',
+    discovery_payload: {
+      icon: 'mdi:air-filter',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_sound': {
+    type: 'sensor',
+    object_id: 'sound',
+    discovery_payload: {
+      icon: 'mdi:volume-high',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_time': {
+    type: 'sensor',
+    object_id: 'time',
+    discovery_payload: {
+      icon: 'mdi:clock-outline',
+      value_template: '{{ value_json.value }}'
+    }
+  },
+  'sensor_heart': {
+    type: 'sensor',
+    object_id: 'heart',
+    discovery_payload: {
+      icon: 'mdi:heart',
       value_template: '{{ value_json.value }}'
     }
   },
