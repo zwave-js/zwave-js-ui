@@ -179,6 +179,7 @@ Zwave settings:
 - **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
+- **Auto Update Config File**: Auto update Zwave devices database
 
 ### MQTT
 
