@@ -50,6 +50,14 @@
                         v-model="zwave.saveConfig"
                       ></v-switch>
                     </v-flex>
+                     <v-flex xs12 sm6>
+                      <v-switch
+                        hint="Automatically update Zwave devices database"
+                        persistent-hint
+                        label="Auto update database"
+                        v-model="zwave.autoUpdateConfig"
+                      ></v-switch>
+                    </v-flex>
                     <v-flex xs12 sm6>
                       <v-switch
                         hint="Assume Devices that support the Wakeup Class are awake when starting up OZW"
