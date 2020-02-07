@@ -42,6 +42,8 @@ echo "App-name: $APP"
 VERSION=$(node -p "require('./package.json').version")
 echo "Version: $VERSION"
 
+NODE_MAJOR=$(node -v | egrep -o '[0-9].' | head -n 1)
+
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
@@ -77,27 +79,27 @@ else
 		case "$REPLY" in
 			1)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER
+				pkg package.json -t node$NODE_MAJOR-linux-x64 --out-path $PKG_FOLDER
 				break
 				;;
 			2)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node8-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
+				pkg package.json -t node$NODE_MAJOR-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
 				break
 				;;
 			3)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node8-linux-armv6 --out-path $PKG_FOLDER --public-packages=*
+				pkg package.json -t node$NODE_MAJOR-linux-armv6 --out-path $PKG_FOLDER --public-packages=*
 				break
 				;;
 			4)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node8-linux-x86 --out-path $PKG_FOLDER
+				pkg package.json -t node$NODE_MAJOR-linux-x86 --out-path $PKG_FOLDER
 				break
 				;;
 			5)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node8-alpine-x64 --out-path $PKG_FOLDER
+				pkg package.json -t node$NODE_MAJOR-alpine-x64 --out-path $PKG_FOLDER
 				break
 				;;
 			*)
