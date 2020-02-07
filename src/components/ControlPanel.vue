@@ -167,6 +167,7 @@
                   <v-expansion-panel-content>
                     <div slot="header">Configuration</div>
                     <v-card>
+                      <v-btn round color="primary" @click="sendNodeAction('requestAllConfigParams')" dark>Refresh values</v-btn>
                       <v-card-text>
                         <v-flex
                           v-for="(v, index) in selectedNode.values.filter(v => v.genre == 'config')"
@@ -602,6 +603,10 @@ export default {
           value: 'sendNodeInformation'
         },
         {
+          text: 'Refresh configuration params',
+          value: 'requestAllConfigParams'
+        },
+        {
           text: 'Request network update',
           value: 'requestNetworkUpdate'
         },
@@ -942,9 +947,9 @@ export default {
         this.apiRequest(this.cnt_action, args)
       }
     },
-    sendNodeAction () {
+    sendNodeAction (action) {
       if (this.selectedNode) {
-        this.apiRequest(this.node_action, [this.selectedNode.node_id])
+        this.apiRequest(action || this.node_action, [this.selectedNode.node_id])
       }
     },
     saveConfiguration () {
@@ -1055,6 +1060,9 @@ export default {
     })
 
     this.socket.on(this.socketEvents.nodeRemoved, node => {
+      if (self.selectedNode.node_id === node.node_id) {
+        self.selectedNode = null
+      }
       self.$set(self.nodes, node.node_id, node)
     })
 
