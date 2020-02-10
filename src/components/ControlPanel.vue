@@ -948,8 +948,9 @@ export default {
       }
     },
     sendNodeAction (action) {
+      action = typeof action === 'string' ? action : this.node_action
       if (this.selectedNode) {
-        this.apiRequest(action || this.node_action, [this.selectedNode.node_id])
+        this.apiRequest(action, [this.selectedNode.node_id])
       }
     },
     saveConfiguration () {
