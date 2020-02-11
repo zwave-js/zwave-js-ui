@@ -473,5 +473,23 @@ module.exports = {
       speed_value_template: '{{ value_json.speed }}',
       speeds: ['off', 'low', 'medium', 'high', 'on', 'auto', 'smart']
     }
+  },
+  'sound_switch': {
+    type: 'fan',
+    object_id: 'sound_switch',
+    discovery_payload: {
+      command_topic: true,
+      speed_command_topic: true,
+      speed_state_topic: true,
+      state_topic: true,
+      speeds: ['off', 'low', 'medium', 'high'],
+      payload_low_speed: 10,
+      payload_medium_speed: 25,
+      payload_high_speed: 50,
+      payload_off: 0,
+      payload_on: 25,
+      state_value_template: '{{ value_json.value | int }}',
+      speed_value_template: '{{ value_json.value | int }}'
+    }
   }
 }
