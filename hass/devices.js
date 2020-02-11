@@ -126,7 +126,6 @@ module.exports = {
   '328-2-3': [SPIRIT_ZWAVE_PLUS],
   '328-3-3': [SPIRIT_ZWAVE_PLUS],
   '2-4-5': [DANFOSS_TRV_ZWAVE],  // DanfossZ
-  '2-4-5': [DANFOSS_TRV_ZWAVE],  // DanfossZ LC-13
   '2-373-5': [DANFOSS_TRV_ZWAVE],  // Danfoss LC-13
   '2-40976-266': [DANFOSS_TRV_ZWAVE] // Popp Radiator Thermostat
 
