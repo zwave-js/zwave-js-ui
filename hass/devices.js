@@ -43,6 +43,24 @@ var SPIRIT_ZWAVE_PLUS = {
   }
 }
 
+var DANFOSS_TRV_ZWAVE = {
+  type: "climate",
+  object_id: "thermostat",
+  values: ["49-1-1", "67-1-1"],
+  setpoint_topic: { "Heat": "67-1-1" },
+  default_setpoint: "67-1-1",
+  discovery_payload: {
+    min_temp: 4,
+    max_temp: 28,
+    mode_command_topic: false,
+    temp_step: 0.5,
+    current_temperature_topic: "49-1-1",
+    current_temperature_template: "{{ value_json.value }}",
+    temperature_state_template: "{{ value_json.value }}",
+    temperature_command_topic: true
+  }
+}
+
 // var COVER = {
 //   type: 'cover',
 //   object_id: 'position',
@@ -105,5 +123,10 @@ module.exports = {
   '99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '328-1-3': [SPIRIT_ZWAVE_PLUS],
-  '328-3-3': [SPIRIT_ZWAVE_PLUS]
+  '328-2-3': [SPIRIT_ZWAVE_PLUS],
+  '328-3-3': [SPIRIT_ZWAVE_PLUS],
+  '2-4-5': [DANFOSS_TRV_ZWAVE],  // DanfossZ
+  '2-373-5': [DANFOSS_TRV_ZWAVE],  // Danfoss LC-13
+  '2-40976-266': [DANFOSS_TRV_ZWAVE] // Popp Radiator Thermostat
+
 }
