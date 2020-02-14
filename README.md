@@ -51,7 +51,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
       - [Edit existing component](#edit-existing-component)
       - [Add new component](#add-new-component)
     - [Custom Components](#custom-components)
-      - [Identify the DeviceID](#identify-the-deviceid)
+      - [Identify the Device id](#identify-the-device-id)
       - [Thermostats](#thermostats)
       - [Fans](#fans)
       - [Thermostats with Fans](#thermostats-with-fans)
@@ -409,7 +409,11 @@ At the moment auto discovery just creates components like `sensor`, `cover` `bin
 
  > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS PLEASE SEND A PR!
 
-#### Identify the DeviceID
+#### Identify the Device id
+
+Starting from version 2.2.0 device id is shown on node tab of control panel before the inputs for update the node name and locations.
+
+Before version 2.2.0 you can get the device id in this ways:
 
 First (and easier) option is to add a random value in gateway values table for the desired device, the device id will be visible in first column of the table (`Devices`) between square brackets  `[<deviceID>] Device Name`
 

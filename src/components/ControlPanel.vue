@@ -106,6 +106,12 @@
 
               <v-layout row>
                 <v-flex xs2>
+                  <v-subheader>Device ID: {{selectedNode.device_id}}</v-subheader>
+                </v-flex>
+              </v-layout>
+
+              <v-layout row>
+                <v-flex xs2>
                   <v-subheader>Name: {{selectedNode.name}}</v-subheader>
                 </v-flex>
                 <v-flex xs4>
