@@ -36,7 +36,7 @@ var SPIRIT_ZWAVE_PLUS = {
     mode_state_topic: '64-1-0',
     mode_command_topic: true,
     current_temperature_topic: '49-1-1',
-    temp_step: 0.5, 
+    temp_step: 0.5,
     current_temperature_template: '{{ value_json.value }}',
     temperature_state_template: '{{ value_json.value }}',
     temperature_command_topic: true
