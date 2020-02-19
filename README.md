@@ -712,9 +712,9 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 ## Healt check endpoints
 
-`/healt`: Returns `200` if both mqtt and zwave client are connected, `500` otherwise
-`/healt/mqtt`: Returns `200` if both mqtt client is connected, `500` otherwise
-`/healt/zwave`: Returns `200` if both zwave client is connected, `500` otherwise
+`/health`: Returns `200` if both mqtt and zwave client are connected, `500` otherwise  
+`/health/mqtt`: Returns `200` if mqtt client is connected, `500` otherwise  
+`/health/zwave`: Returns `200` if zwave client is connected, `500` otherwise  
 
 Remember to add the header: `Accept: text/plain` to your request.
 
