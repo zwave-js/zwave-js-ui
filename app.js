@@ -115,6 +115,35 @@ app.startSocket = function (server) {
 
 // ----- APIs ------
 
+app.get('/health', async function (req, res) {
+
+  var mqtt = false
+  var zwave = false
+
+  if(gw) {
+    mqtt = gw.mqtt ? gw.mqtt.getStatus().status : false
+    zwave = gw.zwave ? gw.zwave.getStatus().status : false
+  }
+
+  var status = mqtt && zwave
+
+  res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
+})
+
+app.get('/health/:client', async function (req, res) {
+  var client = req.params.client
+
+
+  if(client !== 'zwave' && client !== 'mqtt')
+    res.status(500).send('Requested client doesn \'t exist')
+  else {
+    status = gw && gw[client] ? gw[client].getStatus().status : false
+  }
+
+  res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error') 
+})
+
+
 //get settings
 app.get('/api/settings', async function (req, res) {
   var data = { success: true, settings: jsonStore.get(store.settings), devices: gw.zwave ? gw.zwave.devices : {}, serial_ports: [] }
