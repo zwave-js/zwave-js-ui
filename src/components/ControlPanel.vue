@@ -625,6 +625,10 @@ export default {
           value: 'hasNodeFailed'
         },
         {
+          text: 'Remove failed node',
+          value: 'removeFailedNode'
+        },
+        {
           text: 'Replace failed node',
           value: 'replaceFailedNode'
         },
