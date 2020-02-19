@@ -56,7 +56,7 @@
   "dependencies": {
     "ansi_up": "^3.0.0",
     "app-root-path": "^2.1.0",
-    "axios": "^0.17.1",
+    "axios": "^0.19.2",
     "axios-progress-bar": "^1.2.0",
     "babel-polyfill": "^6.26.0",
     "bluebird": "^3.5.3",
@@ -127,7 +127,7 @@
     "vue-template-compiler": "^2.5.2",
     "webpack": "^3.6.0",
     "webpack-bundle-analyzer": "^2.9.0",
-    "webpack-dev-server": "^2.11.3",
+    "webpack-dev-server": "^2.11.5",
     "webpack-merge": "^4.1.0"
   },
   "engines": {
