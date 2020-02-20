@@ -45,6 +45,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
     - [Add a node](#add-a-node)
     - [Remove a node](#remove-a-node)
     - [Replace failed node](#replace-failed-node)
+    - [Remove a failed node](#remove-a-failed-node)
   - [:star: Features](#star-features)
   - [:robot: Home Assistant integration (BETA)](#robot-home-assistant-integration-beta)
     - [Components management](#components-management)
@@ -332,6 +333,15 @@ To add a node using the UI select the controller Action `Remove Node (exclusion)
 ### Replace failed node
 
 To replace a failed node from the UI you have to use the command `Replace Failed Node`, if everything is ok the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
+
+### Remove a failed node
+
+If a node is missing or marked as dead. There is a way to cleanup the controller by executing `Remove Failed Node`. This will forcebly delete the node from the controller.
+It can only succeed if:
+ - Node has ben first marked as failed using `Has node failed`
+ - Marked as Dead by the controller
+
+Alive and Sleeping nodes cannot be deleted.
 
 ## :star: Features
 
