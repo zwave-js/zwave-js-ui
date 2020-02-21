@@ -175,6 +175,21 @@ module.exports = {
       command_off_template: '0'
     }
   },
+  'volume_dimmer': {
+    type: 'light',
+    object_id: 'volume_dimmer',
+    discovery_payload: {
+      command_topic: true,
+      state_topic: false,
+      brightness_command_topic: true,
+      brightness_scale: 100,
+      brightness_state_topic: true,
+      brightness_value_template: '{{ value_json.value }}',
+      on_command_type: 'last',
+      payload_off: 0,
+      payload_on: 25
+    }
+  },
 
   // Switch https://www.home-assistant.io/components/switch.mqtt
   'switch': {
