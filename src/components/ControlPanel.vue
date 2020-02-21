@@ -1054,7 +1054,7 @@ export default {
       this.setName(n)
     },
     setName (n) {
-      n._name = n.name || 'NodeID_' + n.node_id
+      n._name = n.name ? (n.name + (n.loc ? ' (' + n.loc + ')' : '')) : 'NodeID_' + n.node_id
     }
   },
   mounted () {
