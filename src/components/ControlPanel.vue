@@ -1071,7 +1071,7 @@ export default {
     })
 
     this.socket.on(this.socketEvents.nodeRemoved, node => {
-      if (self.selectedNode.node_id === node.node_id) {
+      if (self.selectedNode && self.selectedNode.node_id === node.node_id) {
         self.selectedNode = null
       }
       self.$set(self.nodes, node.node_id, node)
