@@ -132,6 +132,14 @@ module.exports = {
       value_template: '{{ value_json.value }}'
     }
   },
+  'central_scene': {
+    type: 'sensor',
+    object_id: 'scene_state',
+    discovery_payload: {
+      state_topic: true,
+      value_template: '{{ value_json.value}}'
+    }
+  },
   // Light https://www.home-assistant.io/components/light.mqtt
   'light_rgb_switch': {
     type: 'light',
