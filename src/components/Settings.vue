@@ -305,6 +305,7 @@
                           v-model="gateway.payloadType"
                           label="Payload type"
                           required
+                          :rules="[validPayload]"
                           :items="py_types"
                         ></v-select>
                       </v-flex>
@@ -476,6 +477,9 @@ export default {
       return (
         (this.mqtt.auth && !!this.mqtt.username) || 'This field is required.'
       )
+    },
+    validPayload () {
+      return (!this.gateway.hassDiscovery || this.gateway.payloadType !== 2) || 'Hass discovery doesn\'t works with this payload type'
     },
     requiredPassword () {
       return (
