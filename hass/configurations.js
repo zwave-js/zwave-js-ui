@@ -147,7 +147,7 @@ module.exports = {
     discovery_payload: {
       state_topic: true,
       command_topic: true,
-      rgb_command_template: '{{ \'#%02x%02x%02x\' | format(blue, green, red)}}',
+      rgb_command_template: '{{ \'#%02x%02x%02x\' | format(red, green, blue)}}',
       rgb_command_topic: true,
       rgb_state_topic: true,
       rgb_value_template: '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
@@ -162,9 +162,9 @@ module.exports = {
       brightness_state_topic: true,
       brightness_command_topic: true,
       on_command_type: 'first',
-      state_value_template: '{{ "off" if value_json.value == 0 else "on" }}',
+      state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
       brightness_value_template: '{{ (value_json.value / 99 * 255) | round(0) }}',
-      rgb_command_template: '{{ "#%02x%02x%02x" | format(blue, green, red)}}',
+      rgb_command_template: '{{ "#%02x%02x%02x" | format(red, green, blue)}}',
       rgb_command_topic: true,
       rgb_state_topic: true,
       rgb_value_template: '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
@@ -177,7 +177,7 @@ module.exports = {
       schema: 'template',
       brightness_template: '{{ (value_json.value / 99 * 255) | round(0) }}',
       state_topic: true,
-      state_template: '{{ "off" if value_json.value == 0 else "on" }}',
+      state_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
       command_topic: true,
       command_on_template: '{{ ((brightness / 255 * 99) | round(0)) if brightness is defined else 255 }}',
       command_off_template: '0'
