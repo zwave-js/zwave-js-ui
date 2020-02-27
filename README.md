@@ -364,6 +364,8 @@ using [MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/).
 This allows Zwave2Mqtt to automatically add devices to Home Assistant.
 To enable this feature remember to set the flag **Hass Discovery** in Gateway settings configuration.
 
+**ATTENTION**: Hass updates often break Zwave2Mqtt device discovery. For this reason Zwave2Mqtt will try to be always compatible with latest hass version. Check the chengelog before update!
+
 To achieve the best possible integration (including MQTT discovery):
 
 - In your **Zwave2Mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
