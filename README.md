@@ -49,6 +49,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
   - [:star: Features](#star-features)
   - [:robot: Home Assistant integration (BETA)](#robot-home-assistant-integration-beta)
     - [Components management](#components-management)
+      - [Rediscover Node](#rediscover-node)
       - [Edit existing component](#edit-existing-component)
       - [Add new component](#add-new-component)
     - [Custom Components](#custom-components)
@@ -402,6 +403,10 @@ To see the components that have been discovered by Zwave2Mqtt go to Control Pane
 
 **ATTENTION**
 Once edited the devices will loose all their customizations after a restart. To prevent this you can store the node hassDevices by pressing `STORE` button at the top of hass devices table. By pressing it the hassDevices will be stored in `nodes.json` file that can be imported/exported easily from control panel UI at the top of nodes table.
+
+#### Rediscover Node
+
+If you update node name/location you have to also rediscover values of this node as they may have wrong topics. To do this press on `REDISCOVER NODE` green button on top of **Home Assistant - Devices** table (check previous picture)
 
 #### Edit existing component
 
