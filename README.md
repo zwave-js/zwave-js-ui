@@ -59,6 +59,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
   - [:gift: MQTT APIs](#gift-mqtt-apis)
     - [Zwave Events](#zwave-events)
       - [Example](#example)
+    - [Special APIs](#special-apis)
     - [Zwave APIs](#zwave-apis)
     - [Set values](#set-values)
     - [Broadcast](#broadcast)
@@ -625,6 +626,24 @@ Payload
   }]
 }
 ```
+
+### Special APIs
+
+There are some special apis that can be called that are not part of Zwave Client:
+
+- All Zwave Clients scenes management methods if preceeded by a `_` will use the internal scenes management instead of OZW scenes: 
+  - `_createScene`
+  - `_removeScene`
+  - `_setScenes`
+  - `_getScenes`
+  - `_sceneGetValues`
+  - `_addSceneValue`
+  - `_removeSceneValue`
+  - `_activateScene`
+- `_setNodeName` and `_setNodeLocation` will use internal nodes store to save nodes names/locations in a json file
+- `refreshNeighborns`: Returns an Array, the Array index is the nodeId, array value is an Array with all node neighborns
+- `getNodes`: Returns an array with all nodes in the network (and their info/valueids)
+
 
 ### Zwave APIs
 
