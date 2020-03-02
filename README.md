@@ -663,7 +663,7 @@ I will get this response (in the same topic without the suffix `/set`):
 
 There are some custom apis that can be called that are not part of Zwave Client:
 
-- All Zwave Clients scenes management methods if preceeded by a `_` will use the internal scenes management instead of OZW scenes: 
+- All Zwave Clients scenes management methods if preceeded by a `_` will use the internal scenes management instead of OZW scenes:
   - `_createScene`
   - `_removeScene`
   - `_setScenes`
