@@ -603,7 +603,7 @@ Topic
 
 Payload
 
-```json
+```js
 {
   "data": [ "1.4.3319" ] // an array containing all args in order
 }
