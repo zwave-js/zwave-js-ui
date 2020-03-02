@@ -224,6 +224,7 @@
                   <v-flex xs12 md6 pa-1>
                     <v-btn color="blue darken-1" flat @click.native="storeDevices(false)">Store</v-btn>
                     <v-btn color="red darken-1" flat @click.native="storeDevices(true)">Remove Store</v-btn>
+                    <v-btn color="green darken-1" flat @click.native="rediscoverNode">Rediscover Node</v-btn>
 
                     <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
                       <template slot="items" slot-scope="props">
@@ -858,6 +859,18 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'delete',
           device: device,
+          node_id: this.selectedNode.node_id
+        })
+      }
+    },
+    rediscoverNode () {
+      var node = this.selectedNode
+      if (
+        node &&
+        confirm('Are you sure you want to re-discover all node values?')
+      ) {
+        this.socket.emit(this.socketActions.hass, {
+          apiName: 'rediscoverNode',
           node_id: this.selectedNode.node_id
         })
       }
