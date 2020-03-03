@@ -5,6 +5,28 @@
   "description": "Zwave To MQTT Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
   "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OpenZWave/Zwave2Mqtt"
+  },
+  "bugs": {
+    "url": "https://github.com/OpenZWave/Zwave2Mqtt/issues"
+  },
+  "keywords": [
+    "mqtt",
+    "zwave",
+    "openzwave",
+    "open-zwave",
+    "control-panel",
+    "gateway",
+    "hass",
+    "homeassistant",
+    "iot",
+    "nodejs",
+    "vue",
+    "vuetify"
+  ],
   "pkg": {
     "scripts": [
       "lib/**/*.js",
