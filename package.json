@@ -1,6 +1,6 @@
 {
   "name": "zwave2mqtt",
-  "version": "2.2.0",
+  "version": "3.0.0",
   "bin": "bin/www",
   "description": "Zwave To MQTT Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
