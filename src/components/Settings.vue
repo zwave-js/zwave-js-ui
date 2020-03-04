@@ -436,12 +436,16 @@
         </v-btn>
       </v-card-actions>
     </v-card>
+
+    <Confirm ref="confirm"></Confirm>
+
   </v-container>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
+import Confirm from '@/components/Confirm'
 import fileInput from '@/components/custom/file-input.vue'
 import url from 'url'
 
@@ -451,7 +455,8 @@ export default {
   name: 'Settings',
   components: {
     DialogGatewayValue,
-    fileInput
+    fileInput,
+    Confirm
   },
   computed: {
     secure () {
@@ -573,6 +578,18 @@ export default {
       reader.onload = e => callback(e.target.result)
       reader.readAsText(file)
     },
+    async confirm (title, text, level, options) {
+      options = options || {}
+
+      var levelMap = {
+        'warning': 'orange',
+        'alert': 'red'
+      }
+
+      options.color = levelMap[level] || 'primary'
+
+      return this.$refs.confirm.open(title, text, options)
+    },
     onFileSelect (data) {
       var file = data.files[0]
       var self = this
@@ -612,9 +629,9 @@ export default {
       this.editedValue = Object.assign({}, item)
       this.dialogValue = true
     },
-    deleteItem (item) {
+    async deleteItem (item) {
       const index = this.gateway.values.indexOf(item)
-      confirm('Are you sure you want to delete this item?') &&
+      await this.confirm('Attention', 'Are you sure you want to delete this item?', 'alert') &&
         this.gateway.values.splice(index, 1)
     },
     closeDialog () {
