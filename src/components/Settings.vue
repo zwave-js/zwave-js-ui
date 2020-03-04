@@ -643,7 +643,7 @@ export default {
     },
     deviceName (deviceID) {
       var device = this.devices.find(d => d.value === deviceID)
-      return device ? `[${deviceID}] ${device.name}` : deviceID
+      return device ? device.name : deviceID
     },
     saveValue () {
       if (this.editedIndex > -1) {
