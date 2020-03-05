@@ -52,8 +52,8 @@ if [ ! -z "$1" ]; then
 	echo "## Building application..."
 	echo ''
 	npm run build
-	echo "Executing command: pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER"
-	pkg package.json -t node8-linux-x64 --out-path $PKG_FOLDER
+	echo "Executing command: pkg package.json -t node12-linux-x64 --out-path $PKG_FOLDER"
+	pkg package.json -t node12-linux-x64 --out-path $PKG_FOLDER
 else
 
 	if ask "Re-build $APP?"; then
