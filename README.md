@@ -680,6 +680,10 @@ There are some custom apis that can be called that are not part of Zwave Client:
 - `_setNodeName` and `_setNodeLocation` will use internal nodes store to save nodes names/locations in a json file
 - `refreshNeighborns`: Returns an Array, the Array index is the nodeId, array value is an Array with all node neighborns
 - `getNodes`: Returns an array with all nodes in the network (and their info/valueids)
+- `getInfo`: Returns an object with:
+  - `homeid`: homeId
+  - `name`: homeId Hex
+  - `version`: OpenZwave version
 
 ### Set values
 
