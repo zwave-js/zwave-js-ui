@@ -108,12 +108,12 @@
                     </v-flex>
                     <v-flex xs6>
                       <v-text-field
-                        v-model.number="zwave.inclusionTimeout"
+                        v-model.number="zwave.commandsTimeout"
                         label="Inclusion timeout"
                         :rules="[rules.required]"
                         required
                         suffix="seconds"
-                        hint="Seconds to wait before stopping inclusion"
+                        hint="Seconds to wait before stop inclusion/exclusion mode"
                         type="number"
                       ></v-text-field>
                     </v-flex>

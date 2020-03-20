@@ -181,7 +181,7 @@ Zwave settings:
 - **Auto Heal Network**: Enable this to schedule automatic network heals to a specfic time
 - **Heal hours**: When auto heal is enabled, specified the hours at which `healNetwork` will be daily triggered (0-23)
 - **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
-- **Inclusion timeout**: Seconds to wait before automatically stop inclusion
+- **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
 - **Auto Update Config File**: Auto update Zwave devices database
