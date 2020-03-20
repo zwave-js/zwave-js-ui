@@ -72,7 +72,8 @@
               <td>{{ props.item.name || '' }}</td>
               <td>{{ props.item.loc || '' }}</td>
               <td>{{ props.item.secure ? 'Yes' : 'No'}}</td>
-              <td>{{ props.item.status}}</td>
+              <td>{{ props.item.status }}</td>
+              <td>{{ props.item.lastActive ? (new Date(props.item.lastActive)).toLocaleString() : 'Never' }}</td>
             </tr>
           </template>
         </v-data-table>
@@ -710,7 +711,8 @@ export default {
         { text: 'Name', value: 'name' },
         { text: 'Location', value: 'loc' },
         { text: 'Secure', value: 'secure' },
-        { text: 'Status', value: 'status' }
+        { text: 'Status', value: 'status' },
+        { text: 'Last Active', value: 'lastActive' }
       ],
       rules: {
         required: value => {
