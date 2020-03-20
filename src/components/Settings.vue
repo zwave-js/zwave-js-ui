@@ -109,7 +109,7 @@
                     <v-flex xs6>
                       <v-text-field
                         v-model.number="zwave.commandsTimeout"
-                        label="Inclusion timeout"
+                        label="Commands timeout"
                         :rules="[rules.required]"
                         required
                         suffix="seconds"
