@@ -685,6 +685,10 @@ There are some custom apis that can be called that are not part of Zwave Client:
   - `homeid`: homeId
   - `name`: homeId Hex
   - `version`: OpenZwave version
+  - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
+  - `lastUpdate`: Timestamp of latest event received from OZW
+  - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
+  - `cntStatus`: Controller status received from ozw notifications controller command. If inclusion/exclusion is running it wold be `Waiting`
 
 ### Set values
 
