@@ -778,8 +778,9 @@ Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
 
 Thanks to this people for help with issues tracking and contributions:
 
-- @sjorge for testing with different os and Openzwave 1.6
-- @jshridha for testing home assistant integration and contribution
+- [__Jorge Schrauwen__](https://github.com/sjorge)
+- [__Jay__](https://github.com/jshridha)
+- [__Thiago Oliveira__](https://github.com/chilicheech)
 
 ## :pencil: TODOs
 
