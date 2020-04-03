@@ -61,21 +61,21 @@ var DANFOSS_TRV_ZWAVE = {
   }
 }
 
-// var COVER = {
-//   type: 'cover',
-//   object_id: 'position',
-//   values: ['38-1-0'],
-//   discovery_payload: {
-//     command_topic: "38-1-0",
-//     position_topic: "38-1-0",
-//     set_position_topic: "38-1-0",
-//     value_template: "{{ (value_json.value / 99 * 100) | round(0) }}",
-//     position_open: 99,
-//     position_closed: 0,
-//     payload_open: "99",
-//     payload_close: "0"
-//   }
-// }
+var COVER = {
+  type: 'cover',
+  object_id: 'position',
+  values: ['38-1-0'],
+  discovery_payload: {
+    command_topic: "38-1-0",
+    position_topic: "38-1-0",
+    set_position_topic: "38-1-0",
+    value_template: "{{ (value_json.value / 99 * 100) | round(0) }}",
+    position_open: 99,
+    position_closed: 0,
+    payload_open: "99",
+    payload_close: "0"
+  }
+}
 
 module.exports = {
   '411-1-1': [
@@ -127,6 +127,8 @@ module.exports = {
   '328-3-3': [SPIRIT_ZWAVE_PLUS],
   '2-4-5': [DANFOSS_TRV_ZWAVE], // DanfossZ
   '2-373-5': [DANFOSS_TRV_ZWAVE], // Danfoss LC-13
-  '2-40976-266': [DANFOSS_TRV_ZWAVE] // Popp Radiator Thermostat
+  '2-40976-266': [DANFOSS_TRV_ZWAVE], // Popp Radiator Thermostat
+  '345-82-3': [COVER], //Qubin0 flush shutter
+  '271-4096-770': [COVER] //Fibaro FGS222
 
 }
