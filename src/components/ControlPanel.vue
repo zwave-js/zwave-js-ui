@@ -513,13 +513,17 @@ export default {
       val || this.closeDialog()
     },
     newName (val) {
-      this.nameError = /["+*\s]+/g.test(val)
-        ? 'Remove " + * and blank space characters'
+      var match = val.match(/[a-zA-Z0-9_-]+/g)
+
+      this.nameError = match[0] !== val
+        ? 'Only a-zA-Z0-9_- chars are allowed'
         : null
     },
     newLoc (val) {
-      this.locError = /["+*\s]+/g.test(val)
-        ? 'Remove " + * and blank space characters'
+      var match = val.match(/[a-zA-Z0-9_-]+/g)
+
+      this.locError = match[0] !== val
+        ? 'Only a-zA-Z0-9_- chars are allowed'
         : null
     },
     selectedNode () {
