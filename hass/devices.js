@@ -99,6 +99,34 @@ module.exports = {
       }
     }
   ],
+  '89-3-1': [
+    {
+      type: 'climate',
+      object_id: 'HRT4-ZW',
+      values: [
+        '49-1-1',
+        '67-1-1'
+      ],
+      mode_map: {
+        'off': 'Off',
+        'heat': 'Heating'
+      },
+      setpoint_topic: { 'Heat': '67-1-1' },
+      default_setpoint: "67-1-1",
+      discovery_payload: {
+        min_temp: 5,
+        max_temp: 30,
+        modes: [
+          'off',
+          'heat'
+        ],
+        current_temperature_topic: '49-1-1',
+        current_temperature_template: '{{ value_json.value }}',
+        temperature_state_template: '{{ value_json.value }}',
+        temperature_command_topic: true
+      }
+    }
+  ],
   '411-514-3': [ // Heatit Thermostat TF 056 (ThermoFloor AS)
     {
       type: 'climate',
