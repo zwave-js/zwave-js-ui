@@ -356,7 +356,7 @@ Alive and Sleeping nodes cannot be deleted.
   - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 - Log debug in UI
-- Mesh graph showing devices neightbors
+- Mesh graph showing devices neighbors
 
 ## :robot: Home Assistant integration (BETA)
 
