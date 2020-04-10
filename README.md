@@ -221,7 +221,7 @@ Gateway settings:
       - `index`: the numerical index of the value
 
   2. **Named Topics**: *Automatically configured*. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
-  
+
       The topic where zwave values are published will be:
 
       `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
@@ -459,24 +459,24 @@ So in decimal format will become: `411-514-3`. This is the device id of `Heatit 
 
 ```js
 { // Heatit Thermostat TF 021 (ThermoFloor AS)
-    type: 'climate',
-    object_id: 'thermostat',
-    values: ['64-1-0', '49-1-1', '67-1-1', '67-1-2'],
-    mode_map: {'off': 'Off', 'heat': 'Heat (Default)', 'cool': 'Cool'},
-    setpoint_topic: { "Heat (Default)": '67-1-1', "Cool": '67-1-2' },
-    default_setpoint: '67-1-1',
-    discovery_payload: {
-      min_temp: 15,
-      max_temp: 30,
-      modes: ['off', 'heat', 'cool'],
-      mode_state_topic: '64-1-0',
-      mode_command_topic: true,
-      current_temperature_topic: '49-1-1',
-      current_temperature_template: '{{ value_json.value }}',
-      temperature_state_template: '{{ value_json.value }}',
-      temperature_command_topic: true
+    "type": "climate",
+    "object_id": "thermostat",
+    "values": ["64-1-0", "49-1-1", "67-1-1", "67-1-2"],
+    "mode_map": {"off": "Off", "heat": "Heat (Default)", "cool": "Cool"},
+    "setpoint_topic": { "Heat (Default)": "67-1-1", "Cool": "67-1-2" },
+    "default_setpoint": "67-1-1",
+    "discovery_payload": {
+        "min_temp": 15,
+        "max_temp": 30,
+        "modes": ["off", "heat", "cool"],
+        "mode_state_topic": "64-1-0",
+        "mode_command_topic": true,
+        "current_temperature_topic": "49-1-1",
+        "current_temperature_template": "{{ value_json.value }}",
+        "temperature_state_template": "{{ value_json.value }}",
+        "temperature_command_topic": true
     }
-  }
+}
 ```
 
 - **type**: The hass [MQTT component](https://www.home-assistant.io/components/mqtt/) type
@@ -499,22 +499,22 @@ Thermostats are most complex components to create, in this device example the se
 
 ```js
 { // GE 1724 Dimmer
-    type: 'fan',
-    object_id: 'dimmer',
-    values: ['38-1-0'],
-    discovery_payload: {
-      command_topic: "38-1-0",
-      speed_command_topic: "38-1-0",
-      speed_state_topic: "38-1-0",
-      state_topic: "38-1-0",
-      speeds: ["off", "low", "medium", "high"],
-      payload_low_speed: 24,
-      payload_medium_speed: 50,
-      payload_high_speed: 99,
-      payload_off: 0,
-      payload_on: 99,
-      state_value_template: "{% if (value_json.value | int) == 0 %} 0 {% else %} 99 {% endif %}",
-      speed_value_template: "{% if (value_json.value | int) == 25 %}  24  {% elif (value_json.value | int) == 51 %} 50 {% elif (value_json.value | int) == 99 %} 99 {% else %}  0  {% endif %}"
+    "type": "fan",
+    "object_id": "dimmer",
+    "values": ["38-1-0"],
+    "discovery_payload": {
+        "command_topic": "38-1-0",
+        "speed_command_topic": "38-1-0",
+        "speed_state_topic": "38-1-0",
+        "state_topic": "38-1-0",
+        "speeds": ["off", "low", "medium", "high"],
+        "payload_low_speed": 24,
+        "payload_medium_speed": 50,
+        "payload_high_speed": 99,
+        "payload_off": 0,
+        "payload_on": 99,
+        "state_value_template": "{% if (value_json.value | int) == 0 %} 0 {% else %} 99 {% endif %}",
+        "speed_value_template": "{% if (value_json.value | int) == 25 %} 24 {% elif (value_json.value | int) == 51 %} 50 {% elif (value_json.value | int) == 99 %} 99 {% else %} 0 {% endif %}"
     }
 }
 ```
@@ -535,59 +535,58 @@ The main template is like the thermostat template. The things to add are:
 
 ```js
 { // GoControl GC-TBZ48 (Linear Nortek Security Control LLC)
-        "type": "climate",
-        "object_id": "thermostat",
-        "values": [
-            "64-1-0",
-            "49-1-1",
-            "67-1-1",
-            "67-1-2",
-            "66-1-0", // <-- add fan values
-            "68-1-0", // <-- add fan values
-            "69-1-0"  // <-- add fan values
+    "type": "climate",
+    "object_id": "thermostat",
+    "values": [
+        "49-1-1",
+        "64-1-0",
+        "66-1-0", // <-- add fan values
+        "67-1-1",
+        "67-1-2",
+        "68-1-0" // <-- add fan values
+    ],
+    "fan_mode_map": { // <-- add fan modes map
+        "on": "On",
+        "auto": "Auto"
+    },
+    "mode_map": {
+        "off": "Off",
+        "heat": "Heat",
+        "cool": "Cool",
+        "auto": "Auto"
+    },
+    "setpoint_topic": {
+        "Heat": "67-1-1",
+        "Cool": "67-1-2"
+    },
+    "default_setpoint": "67-1-1",
+    "discovery_payload": {
+        "min_temp": 60,
+        "max_temp": 85,
+        "modes": [
+            "off",
+            "heat",
+            "cool",
+            "auto"
         ],
-        "fan_mode_map": { // <-- add fan modes map
-            "on": "On",
-            "auto": "Auto"
-        },
-        "mode_map": {
-            "off": "Off",
-            "heat": "Heat",
-            "cool": "Cool",
-            "auto": "Auto"
-        },
-        "setpoint_topic": {
-            "Heat": "67-1-1",
-            "Cool": "67-1-2"
-        },
-        "default_setpoint": "67-1-1",
-        "discovery_payload": {
-            "min_temp": 60,
-            "max_temp": 85,
-            "modes": [
-                "off",
-                "heat",
-                "cool",
-                "auto"
-            ],
-            "fan_modes": [ // <-- add fan supported modes
-                "on",
-                "auto"
-            ],
-            "action_topic": "66-1-0",
-            "mode_state_topic": "64-1-0",
-            "mode_command_topic": true,
-            "current_temperature_topic": "49-1-1",
-            "current_temperature_template": "{{ value_json.value }}",
-            "temperature_state_template": "{{ value_json.value }}",
-            "temperature_low_command_topic": true,
-            "temperature_low_state_template": "{{ value_json.value }}",
-            "temperature_high_command_topic": true,
-            "temperature_high_state_template": "{{ value_json.value }}",
-            "fan_mode_command_topic": true,
-            "fan_mode_state_topic": "68-1-0" // <-- add fan state topic
-        }
+        "fan_modes": [ // <-- add fan supported modes
+            "on",
+            "auto"
+        ],
+        "action_topic": "66-1-0",
+        "mode_state_topic": "64-1-0",
+        "mode_command_topic": true,
+        "current_temperature_topic": "49-1-1",
+        "current_temperature_template": "{{ value_json.value }}",
+        "temperature_state_template": "{{ value_json.value }}",
+        "temperature_low_command_topic": true,
+        "temperature_low_state_template": "{{ value_json.value }}",
+        "temperature_high_command_topic": true,
+        "temperature_high_state_template": "{{ value_json.value }}",
+        "fan_mode_command_topic": true,
+        "fan_mode_state_topic": "68-1-0" // <-- add fan state topic
     }
+}
 ```
 
 ## :gift: MQTT APIs
@@ -756,9 +755,9 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 ## Healt check endpoints
 
-`/health`: Returns `200` if both mqtt and zwave client are connected, `500` otherwise  
-`/health/mqtt`: Returns `200` if mqtt client is connected, `500` otherwise  
-`/health/zwave`: Returns `200` if zwave client is connected, `500` otherwise  
+`/health`: Returns `200` if both mqtt and zwave client are connected, `500` otherwise
+`/health/mqtt`: Returns `200` if mqtt client is connected, `500` otherwise
+`/health/zwave`: Returns `200` if zwave client is connected, `500` otherwise
 
 Remember to add the header: `Accept: text/plain` to your request.
 
