@@ -185,6 +185,8 @@ Zwave settings:
 - **Configuration Path**: The path to Openzwave devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
 - **Auto Update Config File**: Auto update Zwave devices database
+- **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
+  - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
 
 ### MQTT
 

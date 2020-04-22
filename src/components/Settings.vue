@@ -125,6 +125,7 @@
                         hint="Path to devices library DB. If not set the default path will be used based on your OS"
                       ></v-text-field>
                     </v-flex>
+                    <input type="hidden" :value="zwave.plugin">
                   </v-layout>
                 </v-card-text>
               </v-card>
