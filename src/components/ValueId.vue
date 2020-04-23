@@ -95,9 +95,9 @@ export default {
   },
   computed: {},
   methods: {
-    updateValue(v) {
-      this.$emit("updateValue", v);
+    updateValue (v) {
+      this.$emit('updateValue', v)
     }
   }
-};
+}
 </script>

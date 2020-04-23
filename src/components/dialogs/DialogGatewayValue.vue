@@ -121,7 +121,7 @@
 </template>
 
 <script>
-import ValueID from "@/components/ValueId";
+import ValueID from '@/components/ValueId'
 
 export default {
   components: {
@@ -135,47 +135,50 @@ export default {
     devices: Array
   },
   watch: {
-    value(val) {
-      this.$refs.form.resetValidation();
+    value (val) { // eslint-disable-line no-unused-vars
+      this.$refs.form.resetValidation()
     }
   },
   computed: {
-    deviceValues() {
-      var device = this.devices.find(d => d.value == this.editedValue.device);
-      return device ? device.values : [];
+    deviceValues () {
+      var device = this.devices.find(d => d.value == this.editedValue.device) // eslint-disable-line eqeqeq
+      return device ? device.values : []
     },
-    deviceClasses() {
-      var v = this.editedValue.value;
+    deviceClasses () {
+      var v = this.editedValue.value
 
-      if(!v) return [];
-    
-      if(v.class_id == 0x30) // sensor binary
+      if (!v) return []
+
+      // sensor binary
+      if (v.class_id == 0x30) { // eslint-disable-line eqeqeq
         return ['battery', 'cold', 'connectivity', 'door', 'garage_door', 'gas', 'heat', 'light', 'lock', 'moisture', 'motion', 'moving', 'occupancy', 'opening', 'plug', 'power', 'presence', 'problem', 'safety', 'smoke', 'sound', 'vibration', 'window']
+      }
 
-      if(this.isSensor(v)) //sensor multilevel and meters
+      if (this.isSensor(v)) { // sensor multilevel and meters
         return ['battery', 'humidity', 'illuminance', 'signal_strength', 'temperature', 'power', 'pressure', 'timestamp']
+      }
     },
-    requiredIntensity() {
+    requiredIntensity () {
       return (
         !this.editedValue.enablePoll ||
         (this.editedValue.enablePoll && this.editedValue.pollIntensity > 0) ||
-        "Min value is 1"
-      );
+        'Min value is 1'
+      )
     },
-    requiredTopic() {
-      return (this.gw_type !== 2 || !!this.editedValue.topic) || "Topic required";
+    requiredTopic () {
+      return (this.gw_type !== 2 || !!this.editedValue.topic) || 'Topic required'
     }
   },
-  data() {
+  data () {
     return {
       valid: true,
-      required: v => !!v || "This field is required"
-    };
+      required: v => !!v || 'This field is required'
+    }
   },
   methods: {
-    isSensor(v) {
+    isSensor (v) {
       return v && (v.class_id === 0x31 || v.class_id === 0x32)
     }
   }
-};
+}
 </script>

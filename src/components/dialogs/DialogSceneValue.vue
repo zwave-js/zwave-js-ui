@@ -62,7 +62,7 @@
 </template>
 
 <script>
-import ValueID from "@/components/ValueId";
+import ValueID from '@/components/ValueId'
 
 export default {
   components: {
@@ -75,23 +75,23 @@ export default {
     nodes: Array
   },
   watch: {
-    value(val) {
-      this.$refs.form.resetValidation();
+    value (val) { // eslint-disable-line no-unused-vars
+      this.$refs.form.resetValidation()
     }
   },
-  data() {
+  data () {
     return {
       valid: true,
-      required: v => !!v || "This field is required",
-      positive: v => v >= 0 || "Value must be positive",
+      required: v => !!v || 'This field is required',
+      positive: v => v >= 0 || 'Value must be positive',
       validValue: [
-        v => !!v || "This field is required",
-        v => (v && !v.read_only) || "This value is Read Only",
+        v => !!v || 'This field is required',
+        v => (v && !v.read_only) || 'This value is Read Only',
         v =>
-          (v && ["button", "raw", "schedule"].indexOf(v.type) < 0) ||
-          "Type not allowed"
+          (v && ['button', 'raw', 'schedule'].indexOf(v.type) < 0) ||
+          'Type not allowed'
       ]
-    };
+    }
   }
-};
+}
 </script>

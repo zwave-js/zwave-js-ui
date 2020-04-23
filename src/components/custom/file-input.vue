@@ -40,11 +40,11 @@ export default {
     },
     accept: {
       type: String,
-      default: "*"
+      default: '*'
     },
     label: {
       type: String,
-      default: "choose_file"
+      default: 'choose_file'
     },
     required: {
       type: Boolean,
@@ -59,57 +59,57 @@ export default {
       default: false
     }
   },
-  data() {
+  data () {
     return {
-      filename: ""
-    };
+      filename: ''
+    }
   },
   watch: {
-    value(v) {
-      this.filename = v;
+    value (v) {
+      this.filename = v
     }
   },
-  mounted() {
-    this.filename = this.value;
+  mounted () {
+    this.filename = this.value
   },
   methods: {
-    getFormData(files) {
-      const forms = [];
+    getFormData (files) {
+      const forms = []
       for (const file of files) {
-        const form = new FormData();
-        form.append("data", file, file.name);
-        forms.push(form);
+        const form = new FormData()
+        form.append('data', file, file.name)
+        forms.push(form)
       }
-      return forms;
+      return forms
     },
-    clearInput() {
-      this.filename = null;
-      this.$emit("input", this.filename);
-      this.$emit("onFileSelect", { files: [], key: this.keyProp });
-      this.$emit("formData", null);
+    clearInput () {
+      this.filename = null
+      this.$emit('input', this.filename)
+      this.$emit('onFileSelect', { files: [], key: this.keyProp })
+      this.$emit('formData', null)
     },
-    onFocus() {
+    onFocus () {
       if (!this.disabled) {
-        this.$refs.fileInput.click();
+        this.$refs.fileInput.click()
       }
     },
-    onFileChange($event) {
-      const files = $event.target.files || $event.dataTransfer.files;
-      const form = this.getFormData(files);
+    onFileChange ($event) {
+      const files = $event.target.files || $event.dataTransfer.files
+      const form = this.getFormData(files)
       if (files) {
         if (files.length > 0) {
-          this.filename = [...files].map(file => file.name).join(", ");
+          this.filename = [...files].map(file => file.name).join(', ')
         } else {
-          this.filename = null;
+          this.filename = null
         }
       } else {
-        this.filename = $event.target.value.split("\\").pop();
+        this.filename = $event.target.value.split('\\').pop()
       }
 
-      this.$emit("input", this.filename);
-      this.$emit("onFileSelect", { files: files, key: this.keyProp });
-      this.$emit("formData", form);
+      this.$emit('input', this.filename)
+      this.$emit('onFileSelect', { files: files, key: this.keyProp })
+      this.$emit('formData', form)
     }
   }
-};
+}
 </script>

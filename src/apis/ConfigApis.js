@@ -13,7 +13,7 @@ if (process.env.NODE_ENV === 'development') {
 
 loadProgressBar()
 
-export default{
+export default {
   getSocketIP () { return axios.defaults.socketUrl },
   getConfig () {
     return axios.get('/settings')

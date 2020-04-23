@@ -157,10 +157,10 @@
                           :key="index"
                           xs12
                         >
-                          <ValueID
+                          <!-- eslint-disable vue/valid-v-model --><ValueID
                             @updateValue="updateValue"
                             v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
-                          ></ValueID>
+                          ></ValueID><!-- eslint-enable -->
                         </v-flex>
                       </v-card-text>
                     </v-card>
@@ -181,10 +181,10 @@
                           :key="index"
                           xs12
                         >
-                          <ValueID
+                          <!-- eslint-disable vue/valid-v-model --><ValueID
                             @updateValue="updateValue"
                             v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
-                          ></ValueID>
+                          ></ValueID><!-- eslint-enable -->
                         </v-flex>
                       </v-card-text>
                     </v-card>
@@ -204,10 +204,10 @@
                           :key="index"
                           xs12
                         >
-                          <ValueID
+                          <!-- eslint-disable vue/valid-v-model --><ValueID
                             @updateValue="updateValue"
                             v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
-                          ></ValueID>
+                          ></ValueID><!-- eslint-enable -->
                         </v-flex>
                       </v-card-text>
                     </v-card>
