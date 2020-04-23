@@ -1,0 +1,41 @@
+name: ci
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [8.x, 10.x, 12.x]
+
+    steps:
+    - name: Install Deps
+      run: sudo apt-get install libudev-dev
+    - name: Checkout Openzwave
+      uses: actions/checkout@v2
+      with:
+        repository: OpenZWave/open-zwave
+        path: open-zwave
+    - name: Install Openzwave
+      run: |
+        cd open-zwave
+        sudo make install
+        sudo ldconfig /usr/local/lib /usr/local/lib64
+    - name: Checkout Zwave2Mqtt
+      uses: actions/checkout@v2
+      with:
+        repository: OpenZWave/Zwave2Mqtt
+        path: Zwave2Mqtt
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Install - Build - Lint
+      run: |
+        cd Zwave2Mqtt
+        npm install
+        npm run lint
+        npm run build
