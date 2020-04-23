@@ -779,7 +779,7 @@ Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
 
 Thanks to this people for help with issues tracking and contributions:
 
-- [__Chris Nesbitt-Smith__]([chrisns](https://github.com/chrisns))
+- [__Chris Nesbitt-Smith__](https://github.com/chrisns)
 - [__Jorge Schrauwen__](https://github.com/sjorge)
 - [__Jay__](https://github.com/jshridha)
 - [__Thiago Oliveira__](https://github.com/chilicheech)
