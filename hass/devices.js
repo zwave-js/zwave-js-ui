@@ -136,6 +136,43 @@ module.exports = {
       }
     }
   ],
+  '152-12-25857': [ // Radio Thermostat / 2GIG CT101
+    {
+      type: 'climate',
+      object_id: 'thermostat',
+      values: ['49-1-1', '64-1-0', '66-1-0', '67-1-1', '67-1-2', '68-1-0'],
+      mode_map: {
+        off: 'Off',
+        heat: 'Heat',
+        cool: 'Cool'
+      },
+      fan_mode_map: {
+        auto: 'Auto Low',
+        on: 'On Low'
+      },
+      setpoint_topic: {
+        Heat: '67-1-1',
+        Cool: '67-1-2'
+      },
+      default_setpoint: '67-1-1',
+      discovery_payload: {
+        min_temp: 50,
+        max_temp: 85,
+        modes: ['off', 'heat', 'cool'],
+        fan_modes: ['auto', 'on'],
+        action_topic: '66-1-0',
+        action_template: '{{ value_json.value | lower }}',
+        current_temperature_topic: '49-1-1',
+        current_temperature_template: '{{ value_json.value }}',
+        fan_mode_state_topic: '68-1-0',
+        fan_mode_command_topic: true,
+        mode_state_topic: '64-1-0',
+        mode_command_topic: true,
+        temperature_state_template: '{{ value_json.value }}',
+        temperature_command_topic: true
+      }
+    }
+  ],
   '411-1-1': [ // Heatit Thermostat TF 021 (ThermoFloor AS)
     {
       type: 'climate',
