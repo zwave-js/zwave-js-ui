@@ -126,6 +126,7 @@
                       ></v-text-field>
                     </v-flex>
                     <input type="hidden" :value="zwave.plugin">
+                    <input type="hidden" :value="zwave.options">
                   </v-layout>
                 </v-card-text>
               </v-card>

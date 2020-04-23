@@ -186,6 +186,7 @@ Zwave settings:
 - **Auto Update Config File**: Auto update Zwave devices database
 - **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
   - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
+  - `zwave.options` overrides options passed to the zwave client see `IConstructorParameters` in [the open-zwave docs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/types/openzwave-shared.d.ts). For detail for example `zwave.options.options.EnforceSecureReception=true` to drop insecure messages from devices that should be secure.
 
 ### MQTT
 
