@@ -6,6 +6,8 @@
 ![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/Zwave2Mqtt)
 ![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/Zwave2Mqtt/total)
 
+[![Coverage Status](https://coveralls.io/repos/github/OpenZWave/Zwave2Mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/Zwave2Mqtt?branch=master)
+
 <a href="https://www.buymeacoffee.com/MVg9wc2HE" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
 [![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU "Join channel")
