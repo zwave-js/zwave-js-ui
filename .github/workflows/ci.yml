@@ -3,14 +3,11 @@ name: ci
 on: [push, pull_request]
 
 jobs:
-  build:
-
+  test:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [8.x, 10.x, 12.x]
-
     steps:
     - name: Install Deps
       run: sudo apt-get install libudev-dev
@@ -39,3 +36,13 @@ jobs:
         npm install
         npm run lint
         npm run build
+
+  coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
