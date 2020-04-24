@@ -72,7 +72,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
     - [Scenes](#scenes)
     - [Mesh](#mesh)
     - [Debug](#debug)
-  - [Healt check endpoints](#healt-check-endpoints)
+  - [Health check endpoints](#health-check-endpoints)
   - [:question: FAQ](#question-faq)
   - [:pray: Thanks](#pray-thanks)
   - [:pencil: TODOs](#pencil-todos)
@@ -757,7 +757,7 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 ![Debug](docs/debug.png)
 
-## Healt check endpoints
+## Health check endpoints
 
 `/health`: Returns `200` if both mqtt and zwave client are connected, `500` otherwise
 `/health/mqtt`: Returns `200` if mqtt client is connected, `500` otherwise
