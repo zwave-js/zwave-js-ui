@@ -1,6 +1,10 @@
 name: ci
 
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   test:
@@ -18,36 +22,34 @@ jobs:
         path: open-zwave
     - name: Install Openzwave
       run: |
-        cd open-zwave
+        mv open-zwave /tmp
+        cd /tmp/open-zwave
         sudo make install
         sudo ldconfig /usr/local/lib /usr/local/lib64
+
     - name: Checkout Zwave2Mqtt
       uses: actions/checkout@v2
-      with:
-        repository: OpenZWave/Zwave2Mqtt
-        path: Zwave2Mqtt
+
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Install - Build - Lint
+
+    - name: Install - Build - Lint - Test
       run: |
-        cd Zwave2Mqtt
         npm install
         npm run lint
         npm run build
-    - name: Coveralls Parallel
+        npm run test
+
+    - name: Generate coverage report
+      if: matrix['node-version'] == '12.x'
+      run: |
+        npm run coverage
+        npm run record-coverage
+
+    - name: Coveralls
       uses: coverallsapp/github-action@master
+      if: matrix['node-version'] == '12.x'
       with:
         github-token: ${{ secrets.github_token }}
-        parallel: true
-
-  coverage:
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Coveralls Finished
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          parallel-finished: true
