@@ -36,6 +36,11 @@ jobs:
         npm install
         npm run lint
         npm run build
+    - name: Coveralls Parallel
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.github_token }}
+        parallel: true
 
   coverage:
     needs: test
