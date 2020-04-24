@@ -20,6 +20,43 @@ const FAN_DIMMER = {
   }
 }
 
+// Radio Thermostat / 2GIG CT32 and CT101
+const THERMOSTAT_2GIG = {
+  type: 'climate',
+  object_id: 'thermostat',
+  values: ['49-1-1', '64-1-0', '66-1-0', '67-1-1', '67-1-2', '68-1-0'],
+  mode_map: {
+    off: 'Off',
+    heat: 'Heat',
+    cool: 'Cool'
+  },
+  fan_mode_map: {
+    auto: 'Auto Low',
+    on: 'On Low'
+  },
+  setpoint_topic: {
+    Heat: '67-1-1',
+    Cool: '67-1-2'
+  },
+  default_setpoint: '67-1-1',
+  discovery_payload: {
+    min_temp: 50,
+    max_temp: 85,
+    modes: ['off', 'heat', 'cool'],
+    fan_modes: ['auto', 'on'],
+    action_topic: '66-1-0',
+    action_template: '{{ value_json.value | lower }}',
+    current_temperature_topic: '49-1-1',
+    current_temperature_template: '{{ value_json.value }}',
+    fan_mode_state_topic: '68-1-0',
+    fan_mode_command_topic: true,
+    mode_state_topic: '64-1-0',
+    mode_command_topic: true,
+    temperature_state_template: '{{ value_json.value }}',
+    temperature_command_topic: true
+  }
+}
+
 // Eurotronic Spirit Z-Wave Plus Thermostat
 const SPIRIT_ZWAVE_PLUS = {
   type: 'climate',
@@ -99,80 +136,6 @@ module.exports = {
       }
     }
   ],
-  '152-256-8194': [ // Radio Thermostat / 2GIG CT32
-    {
-      type: 'climate',
-      object_id: 'thermostat',
-      values: ['49-1-1', '64-1-0', '66-1-0', '67-1-1', '67-1-2', '68-1-0'],
-      mode_map: {
-        off: 'Off',
-        heat: 'Heat',
-        cool: 'Cool'
-      },
-      fan_mode_map: {
-        auto: 'Auto Low',
-        on: 'On Low'
-      },
-      setpoint_topic: {
-        Heat: '67-1-1',
-        Cool: '67-1-2'
-      },
-      default_setpoint: '67-1-1',
-      discovery_payload: {
-        min_temp: 50,
-        max_temp: 85,
-        modes: ['off', 'heat', 'cool'],
-        fan_modes: ['auto', 'on'],
-        action_topic: '66-1-0',
-        action_template: '{{ value_json.value | lower }}',
-        current_temperature_topic: '49-1-1',
-        current_temperature_template: '{{ value_json.value }}',
-        fan_mode_state_topic: '68-1-0',
-        fan_mode_command_topic: true,
-        mode_state_topic: '64-1-0',
-        mode_command_topic: true,
-        temperature_state_template: '{{ value_json.value }}',
-        temperature_command_topic: true
-      }
-    }
-  ],
-  '152-12-25857': [ // Radio Thermostat / 2GIG CT101
-    {
-      type: 'climate',
-      object_id: 'thermostat',
-      values: ['49-1-1', '64-1-0', '66-1-0', '67-1-1', '67-1-2', '68-1-0'],
-      mode_map: {
-        off: 'Off',
-        heat: 'Heat',
-        cool: 'Cool'
-      },
-      fan_mode_map: {
-        auto: 'Auto Low',
-        on: 'On Low'
-      },
-      setpoint_topic: {
-        Heat: '67-1-1',
-        Cool: '67-1-2'
-      },
-      default_setpoint: '67-1-1',
-      discovery_payload: {
-        min_temp: 50,
-        max_temp: 85,
-        modes: ['off', 'heat', 'cool'],
-        fan_modes: ['auto', 'on'],
-        action_topic: '66-1-0',
-        action_template: '{{ value_json.value | lower }}',
-        current_temperature_topic: '49-1-1',
-        current_temperature_template: '{{ value_json.value }}',
-        fan_mode_state_topic: '68-1-0',
-        fan_mode_command_topic: true,
-        mode_state_topic: '64-1-0',
-        mode_command_topic: true,
-        temperature_state_template: '{{ value_json.value }}',
-        temperature_command_topic: true
-      }
-    }
-  ],
   '411-1-1': [ // Heatit Thermostat TF 021 (ThermoFloor AS)
     {
       type: 'climate',
@@ -220,6 +183,8 @@ module.exports = {
   '2-40976-266': [DANFOSS_TRV_ZWAVE], // Popp Radiator Thermostat
   '99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer
+  '152-12-25857': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT101
+  '152-256-8194': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT32
   '271-4096-770': [COVER], // Fibaro FGS222
   '328-1-3': [SPIRIT_ZWAVE_PLUS],
   '328-2-3': [SPIRIT_ZWAVE_PLUS],
