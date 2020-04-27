@@ -1109,7 +1109,9 @@ export default {
         if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift()
 
         var textarea = document.getElementById('debug_window')
-        textarea.scrollTop = textarea.scrollHeight
+        if (textarea) { // textarea could be hidden
+          textarea.scrollTop = textarea.scrollHeight
+        }
       }
     })
 

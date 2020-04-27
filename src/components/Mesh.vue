@@ -12,6 +12,9 @@
           <v-flex xs3 md2>
             <v-text-field label="Distance" v-model.number="force" min="100" type="number"></v-text-field>
           </v-flex>
+           <v-flex xs3 md2>
+            <v-switch label="Show location" v-model="showLocation"></v-switch>
+          </v-flex>
           <v-flex xs5 md6>
             <v-btn color="success" @click="downloadSVG">Download SVG</v-btn>
           </v-flex>
@@ -95,6 +98,13 @@ export default {
   components: {
     D3Network
   },
+  watch: {
+    showLocation () {
+      for (const n of this.nodes) {
+        n.name = this.nodeName(n)
+      }
+    }
+  },
   computed: {
     activeNodes () {
       return this.nodes.filter(n => n.node_id !== 0 && n.status !== 'Removed')
@@ -138,7 +148,8 @@ export default {
       links: [],
       fab: false,
       selectedNode: null,
-      showProperties: false
+      showProperties: false,
+      showLocation: false
     }
   },
   methods: {
@@ -156,11 +167,16 @@ export default {
       return {
         id: n.node_id,
         _cssClass: this.nodeClass(n),
-        name: n.name ? n.name : n.product,
+        name: this.nodeName(n),
         node_id: n.node_id,
         status: n.status,
         data: n
       }
+    },
+    nodeName (n) {
+      if (n.data) n = n.data // works both with node object and mesh node object
+      var name = n.name || n.product || 'node ' + n.node_id
+      return name + (this.showLocation && n.loc ? ` (${n.loc})` : '')
     },
     nodeClass (n) {
       if (n.node_id === 1) {
