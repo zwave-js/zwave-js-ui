@@ -127,7 +127,7 @@
     "chai-as-promised": "^7.1.1",
     "chalk": "^2.0.1",
     "copy-webpack-plugin": "^4.0.1",
-    "css-loader": "^3.4.2",
+    "css-loader": "^3.5.3",
     "eslint": "^4.15.0",
     "eslint-config-standard": "^10.2.1",
     "eslint-friendly-formatter": "^3.0.0",
