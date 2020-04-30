@@ -1,6 +1,6 @@
 name: ci
 
-on: 
+on:
   push:
     branches:
       - master
@@ -9,47 +9,83 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         node-version: [8.x, 10.x, 12.x]
+
     steps:
-    - name: Install Deps
-      run: sudo apt-get install libudev-dev
-    - name: Checkout Openzwave
-      uses: actions/checkout@v2
-      with:
-        repository: OpenZWave/open-zwave
-        path: open-zwave
-    - name: Install Openzwave
-      run: |
-        mv open-zwave /tmp
-        cd /tmp/open-zwave
-        sudo make install
-        sudo ldconfig /usr/local/lib /usr/local/lib64
+      - name: Install Deps
+        run: sudo apt-get install libudev-dev
 
-    - name: Checkout Zwave2Mqtt
-      uses: actions/checkout@v2
+      - name: Checkout Openzwave
+        uses: actions/checkout@v2
+        with:
+          repository: OpenZWave/open-zwave
+          path: open-zwave
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
-      with:
-        node-version: ${{ matrix.node-version }}
+      - name: Cache openzwave
+        uses: actions/cache@v1
+        with:
+          path: open-zwave
+          key: ${{ hashFiles('open-zwave/.git/refs/heads/master') }}
 
-    - name: Install - Build - Lint - Test
-      run: |
-        npm install
-        npm run lint
-        npm run build
-        npm run test
+      - name: Install Openzwave
+        run: |
+          mv open-zwave /tmp
+          cd /tmp/open-zwave
+          sudo make install
+          sudo ldconfig /usr/local/lib /usr/local/lib64
 
-    - name: Generate coverage report
-      if: matrix['node-version'] == '12.x'
-      run: |
-        npm run coverage
-        npm run record-coverage
+      - name: Checkout Zwave2Mqtt
+        uses: actions/checkout@v2
 
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      if: matrix['node-version'] == '12.x'
-      with:
-        github-token: ${{ secrets.github_token }}
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v1
+        with:
+          path: node_modules
+          key: ${{ matrix['node-version'] }}-npm-${{ hashFiles('package-lock.json') }}
+
+      - name: NPM Install
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
+        run: npm install
+
+      - name: NPM Lint
+        if: matrix['node-version'] == '12.x'
+        run: npm run lint
+
+      - name: Cache build
+        id: cache-build
+        uses: actions/cache@v1
+        with:
+          path: dist
+          key: ${{ matrix['node-version'] }}-cache-build-${{ hashFiles('build/*') }}-${{ hashFiles('src/*') }}-${{ hashFiles('static/*') }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Build
+        if: steps.cache-build.outputs.cache-hit != 'true'
+        run: npm run build
+
+      - name: Test
+        run: npm run test
+
+      - name: Generate coverage report
+        if: matrix['node-version'] == '12.x'
+        run: |
+          npm run coverage
+          npm run record-coverage
+
+      - name: Coveralls
+        uses: coverallsapp/github-action@master
+        if: matrix['node-version'] == '12.x'
+        with:
+          github-token: ${{ secrets.github_token }}
+
+      - name: move ozw back for caching
+        run: |
+          mv /tmp/open-zwave ./
