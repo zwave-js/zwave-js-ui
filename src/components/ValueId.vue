@@ -45,11 +45,13 @@
 
     <v-layout column v-if="value.type == 'bitset'">
       <v-tooltip right>
+        <template v-slot:activator="{ on }">
         <p
-          slot="activator"
+        v-on="on"
           style="margin-bottom:0;margin-top:10px;cursor:default"
           class="font-weight-thin caption"
         >{{value.label + ' (' + value.value_id + ')'}}</p>
+        </template>
         <span>{{value.help || ''}}</span>
       </v-tooltip>
 
@@ -71,13 +73,15 @@
     </v-layout>
 
     <v-tooltip v-if="value.type == 'button'" right>
+      <template v-slot:activator="{ on }">
       <v-btn
-        slot="activator"
+      v-on="on"
         color="primary"
         dark
         @click="updateValue(value)"
         class="mb-2"
       >{{value.label}}</v-btn>
+      </template>
       <span>{{' ('+value.value_id+')' + (value.help || '')}}</span>
     </v-tooltip>
   </div>

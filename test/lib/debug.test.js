@@ -3,8 +3,8 @@ const rewire = require('rewire')
 chai.should()
 
 describe('#debug', () => {
-  let mod = rewire('../../lib/debug')
-  let fun = mod.__get__('init')
+  const mod = rewire('../../lib/debug')
+  const fun = mod.__get__('init')
 
   it('returns debug extend', () =>
     mod('foo').namespace.should.equal('z2m:foo')

@@ -12,8 +12,8 @@
       <v-card-text v-show="!!message" class="pa-4">{{ message }}</v-card-text>
       <v-card-actions class="pt-0">
         <v-spacer></v-spacer>
-        <v-btn @click.native="agree" flat :color="options.color">Yes</v-btn>
-        <v-btn @click.native="cancel" flat>Cancel</v-btn>
+        <v-btn @click.native="agree" text :color="options.color">Yes</v-btn>
+        <v-btn @click.native="cancel" text>Cancel</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>

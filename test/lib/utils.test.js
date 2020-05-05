@@ -4,11 +4,11 @@ const sinon = require('sinon')
 chai.use(require('sinon-chai'))
 chai.should()
 
-let mod = rewire('../../lib/utils')
+const mod = rewire('../../lib/utils')
 
 describe('#utils', () => {
   describe('#getPath()', () => {
-    mod.__set__('appRoot', {toString: () => 'foo'})
+    mod.__set__('appRoot', { toString: () => 'foo' })
     it('write && process.pkg', () => {
       process.pkg = true
       mod.getPath(true).should.equal(process.cwd())
@@ -29,7 +29,7 @@ describe('#utils', () => {
   describe('#joinPath()', () => {
     let path
     before(() => {
-      path = {join: sinon.stub()}
+      path = { join: sinon.stub() }
       mod.__set__('path', path)
       sinon.stub(mod, 'getPath').returns('foo')
     })

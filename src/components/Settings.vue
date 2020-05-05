@@ -10,10 +10,12 @@
           v-model="valid_zwave"
           ref="form_settings"
         >
-          <v-expansion-panel class="elevation-0">
+
+        <v-expansion-panels accordion multiple>
+          <v-expansion-panel key="zwave">
+            <v-expansion-panel-header>Zwave</v-expansion-panel-header>
             <v-expansion-panel-content>
-              <div slot="header">Zwave</div>
-              <v-card>
+              <v-card flat>
                 <v-card-text>
                   <v-layout wrap>
                     <v-flex xs12 sm6>
@@ -135,20 +137,19 @@
 
           <v-divider></v-divider>
 
-          <v-flex xs12 sm6>
+          <v-container xs12 sm6 ml-1>
             <v-switch
               hint="Enable this to use Z2M only as Control Panel"
               persistent-hint
               label="Disable Gateway"
               v-model="mqtt.disabled"
             ></v-switch>
-          </v-flex>
+          </v-container>
 
-          <div v-if="!mqtt.disabled">
-            <v-expansion-panel class="elevation-0">
+            <v-expansion-panel key="mqtt"  v-if="!mqtt.disabled">
+              <v-expansion-panel-header>Mqtt</v-expansion-panel-header>
               <v-expansion-panel-content>
-                <div slot="header">Mqtt</div>
-                <v-card>
+                <v-card flat>
                   <v-card-text>
                     <v-layout wrap>
                       <v-flex xs12 sm6 md4>
@@ -298,10 +299,10 @@
 
             <v-divider></v-divider>
 
-            <v-expansion-panel class="elevation-0">
+            <v-expansion-panel key="gateway" v-if="!mqtt.disabled">
+              <v-expansion-panel-header>Gateway</v-expansion-panel-header>
               <v-expansion-panel-content>
-                <div slot="header">Gateway</div>
-                <v-card>
+                <v-card flat>
                   <v-card-text>
                     <v-layout wrap>
                       <v-flex xs12>
@@ -386,41 +387,44 @@
                     <v-data-table
                       :headers="headers"
                       :items="gateway.values"
-                      :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
+                      :items-per-page-options="[10, 20, {'text':'All','value':-1}]"
                       class="elevation-1"
                     >
-                      <template slot="items" slot-scope="props">
-                        <td>{{ deviceName(props.item.device) }}</td>
-                        <td>{{ props.item.value.label + ' (' + props.item.value.value_id + ')' }}</td>
-                        <td class="text-xs">{{ props.item.topic }}</td>
-                        <td class="text-xs">{{ props.item.postOperation || 'No operation' }}</td>
-                        <td
-                          class="text-xs"
-                        >{{ props.item.enablePoll ? ("Intensity " + props.item.pollIntensity) : 'No' }}</td>
-                        <td
-                          class="text-xs"
-                        >{{ props.item.verifyChanges ? "Verified" : 'Not Verified' }}</td>
-                        <td class="justify-center layout px-0">
-                          <v-icon
-                            small
-                            class="mr-2"
-                            color="green"
-                            @click="editItem(props.item)"
-                          >edit</v-icon>
-                          <v-icon small color="red" @click="deleteItem(props.item)">delete</v-icon>
-                        </td>
+                      <template v-slot:item="{ item }">
+                        <tr>
+                          <td>{{ deviceName(item.device) }}</td>
+                          <td>{{ item.value.label + ' (' + item.value.value_id + ')' }}</td>
+                          <td class="text-xs">{{ item.topic }}</td>
+                          <td class="text-xs">{{ item.postOperation || 'No operation' }}</td>
+                          <td
+                            class="text-xs"
+                          >{{ item.enablePoll ? ("Intensity " + item.pollIntensity) : 'No' }}</td>
+                          <td
+                            class="text-xs"
+                          >{{ item.verifyChanges ? "Verified" : 'Not Verified' }}</td>
+                          <td class="justify-center layout px-0">
+                            <v-icon
+                              small
+                              class="mr-2"
+                              color="green"
+                              @click="editItem(item)"
+                            >edit</v-icon>
+                            <v-icon small color="red" @click="deleteItem(item)">delete</v-icon>
+                          </td>
+                        </tr>
                       </template>
                     </v-data-table>
                   </v-card-text>
                   <v-card-actions>
-                    <v-btn color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
+                    <v-btn color="blue darken-1" text @click="dialogValue = true">New Value</v-btn>
                   </v-card-actions>
                 </v-card>
               </v-expansion-panel-content>
             </v-expansion-panel>
 
             <v-divider></v-divider>
-          </div>
+
+          </v-expansion-panels>
 
           <DialogGatewayValue
             @save="saveValue"
@@ -435,15 +439,15 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="purple darken-1" flat @click="importSettings">
+        <v-btn color="purple darken-1" text @click="importSettings">
           Import
           <v-icon right dark>file_upload</v-icon>
         </v-btn>
-        <v-btn color="green darken-1" flat @click="exportSettings">
+        <v-btn color="green darken-1" text @click="exportSettings">
           Export
           <v-icon right dark>file_download</v-icon>
         </v-btn>
-        <v-btn color="blue darken-1" flat type="submit" form="form_settings">
+        <v-btn color="blue darken-1" text type="submit" form="form_settings">
           Save
           <v-icon right dark>save</v-icon>
         </v-btn>
@@ -460,7 +464,7 @@ import { mapGetters } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import fileInput from '@/components/custom/file-input.vue'
-import url from 'url'
+import { parse } from 'native-url'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
@@ -474,7 +478,7 @@ export default {
   computed: {
     secure () {
       if (!this.mqtt.host) return false
-      const parsed = url.parse(this.mqtt.host)
+      const parsed = parse(this.mqtt.host)
 
       const secure =
         ['mqtts:', 'wss:', 'wxs:', 'alis:', 'tls:'].indexOf(parsed.protocol) >=
@@ -595,8 +599,8 @@ export default {
       options = options || {}
 
       var levelMap = {
-        'warning': 'orange',
-        'alert': 'red'
+        warning: 'orange',
+        alert: 'red'
       }
 
       options.color = levelMap[level] || 'primary'
@@ -660,7 +664,7 @@ export default {
     },
     saveValue () {
       if (this.editedIndex > -1) {
-        Object.assign(this.gateway.values[this.editedIndex], this.editedValue)
+        this.$set(this.gateway.values, this.editedIndex, this.editedValue)
       } else {
         this.gateway.values.push(this.editedValue)
       }

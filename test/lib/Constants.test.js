@@ -75,13 +75,13 @@ describe('#Constants', () => {
     let map
     before(() => {
       map = mod._sensorMap
-      mod._sensorMap = { foo: {1: 'bar', props: {a: 'b', c: 'd'}}, bar: {2: 'foo'} }
+      mod._sensorMap = { foo: { 1: 'bar', props: { a: 'b', c: 'd' } }, bar: { 2: 'foo' } }
     })
     after(() => { mod._sensorMap = map })
     it('known', () => mod.sensorType(1).should.deep.equal({
       sensor: 'foo',
       objectId: 'bar',
-      props: {a: 'b', c: 'd'}
+      props: { a: 'b', c: 'd' }
     }))
     it('no props', () => mod.sensorType(2).should.deep.equal({
       sensor: 'bar',

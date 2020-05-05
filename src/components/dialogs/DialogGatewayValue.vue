@@ -31,20 +31,17 @@
                   item-value="value_id"
                   :items="deviceValues"
                 >
-                  <template
-                    slot="selection"
-                    slot-scope="data"
-                  >{{ data.item.label + (data.item.instance > 1 ? " - Instance " + data.item.instance : "") }}</template>
-                  <template slot="item" slot-scope="data">
-                    <template>
-                      <v-list-tile-content>
-                        <v-list-tile-title>{{ data.item.label + (data.item.instance > 1 ? " - Instance " + data.item.instance : "") }}</v-list-tile-title>
-                        <v-list-tile-sub-title
+                  <template v-slot:selection="{ item }">
+                  {{ item.label + (item.instance > 1 ? " - Instance " + item.instance : "") }}
+                  </template>
+                  <template v-slot:item="{ item }">
+                      <v-list-item-content>
+                        <v-list-item-title>{{ item.label + (item.instance > 1 ? " - Instance " + item.instance : "") }}</v-list-item-title>
+                        <v-list-item-subtitle
                           style="max-width:500px"
                           class="text-truncate text-no-wrap"
-                        >{{ data.item.help }}</v-list-tile-sub-title>
-                      </v-list-tile-content>
-                    </template>
+                        >{{ item.help }}</v-list-item-subtitle>
+                      </v-list-item-content>
                   </template>
                 </v-select>
               </v-flex>
@@ -113,20 +110,16 @@
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn color="blue darken-1" flat @click="$emit('close')">Cancel</v-btn>
-        <v-btn color="blue darken-1" flat @click="$refs.form.validate() && $emit('save')">Save</v-btn>
+        <v-btn color="blue darken-1" text @click="$emit('close')">Cancel</v-btn>
+        <v-btn color="blue darken-1" text @click="$refs.form.validate() && $emit('save')">Save</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
-import ValueID from '@/components/ValueId'
 
 export default {
-  components: {
-    ValueID
-  },
   props: {
     value: Boolean,
     gw_type: Number,
@@ -136,7 +129,7 @@ export default {
   },
   watch: {
     value (val) { // eslint-disable-line no-unused-vars
-      this.$refs.form.resetValidation()
+      this.$refs.form && this.$refs.form.resetValidation()
     }
   },
   computed: {
@@ -147,15 +140,15 @@ export default {
     deviceClasses () {
       var v = this.editedValue.value
 
-      if (!v) return []
-
       // sensor binary
-      if (v.class_id == 0x30) { // eslint-disable-line eqeqeq
+      if (!v) {
+        return []
+      } else if (v.class_id == 0x30) { // eslint-disable-line eqeqeq
         return ['battery', 'cold', 'connectivity', 'door', 'garage_door', 'gas', 'heat', 'light', 'lock', 'moisture', 'motion', 'moving', 'occupancy', 'opening', 'plug', 'power', 'presence', 'problem', 'safety', 'smoke', 'sound', 'vibration', 'window']
-      }
-
-      if (this.isSensor(v)) { // sensor multilevel and meters
+      } else if (this.isSensor(v)) { // sensor multilevel and meters
         return ['battery', 'humidity', 'illuminance', 'signal_strength', 'temperature', 'power', 'pressure', 'timestamp']
+      } else {
+        return []
       }
     },
     requiredIntensity () {

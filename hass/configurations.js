@@ -3,7 +3,7 @@
 
 module.exports = {
   // Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
-  'binary_sensor_occupancy': {
+  binary_sensor_occupancy: {
     type: 'binary_sensor',
     object_id: 'occupancy',
     discovery_payload: {
@@ -13,7 +13,7 @@ module.exports = {
       device_class: 'motion'
     }
   },
-  'binary_sensor_presence': {
+  binary_sensor_presence: {
     type: 'binary_sensor',
     object_id: 'presence',
     discovery_payload: {
@@ -23,7 +23,7 @@ module.exports = {
       device_class: 'presence'
     }
   },
-  'binary_sensor_contact': {
+  binary_sensor_contact: {
     type: 'binary_sensor',
     object_id: 'contact',
     discovery_payload: {
@@ -33,7 +33,7 @@ module.exports = {
       device_class: 'door'
     }
   },
-  'binary_sensor_lock': {
+  binary_sensor_lock: {
     type: 'binary_sensor',
     object_id: 'lock',
     discovery_payload: {
@@ -43,7 +43,7 @@ module.exports = {
       device_class: 'lock'
     }
   },
-  'binary_sensor_water_leak': {
+  binary_sensor_water_leak: {
     type: 'binary_sensor',
     object_id: 'water_leak',
     discovery_payload: {
@@ -53,7 +53,7 @@ module.exports = {
       device_class: 'moisture'
     }
   },
-  'binary_sensor_smoke': {
+  binary_sensor_smoke: {
     type: 'binary_sensor',
     object_id: 'smoke',
     discovery_payload: {
@@ -63,7 +63,7 @@ module.exports = {
       device_class: 'smoke'
     }
   },
-  'binary_sensor_gas': {
+  binary_sensor_gas: {
     type: 'binary_sensor',
     object_id: 'gas',
     discovery_payload: {
@@ -73,7 +73,7 @@ module.exports = {
       device_class: 'gas'
     }
   },
-  'binary_sensor_carbon_monoxide': {
+  binary_sensor_carbon_monoxide: {
     type: 'binary_sensor',
     object_id: 'carbon_monoxide',
     discovery_payload: {
@@ -83,7 +83,7 @@ module.exports = {
       device_class: 'safety'
     }
   },
-  'binary_sensor_tamper': {
+  binary_sensor_tamper: {
     type: 'binary_sensor',
     object_id: 'tamper',
     discovery_payload: {
@@ -93,7 +93,7 @@ module.exports = {
       device_class: 'safety'
     }
   },
-  'binary_sensor_alarm': {
+  binary_sensor_alarm: {
     type: 'binary_sensor',
     object_id: 'alarm',
     discovery_payload: {
@@ -103,7 +103,7 @@ module.exports = {
       device_class: 'problem'
     }
   },
-  'binary_sensor_router': {
+  binary_sensor_router: {
     type: 'binary_sensor',
     object_id: 'router',
     discovery_payload: {
@@ -113,7 +113,7 @@ module.exports = {
       device_class: 'connectivity'
     }
   },
-  'binary_sensor_battery_low': {
+  binary_sensor_battery_low: {
     type: 'binary_sensor',
     object_id: 'battery_low',
     discovery_payload: {
@@ -125,14 +125,14 @@ module.exports = {
   },
 
   // Sensor https://www.home-assistant.io/components/sensor.mqtt
-  'sensor_generic': {
+  sensor_generic: {
     type: 'sensor',
     object_id: 'generic',
     discovery_payload: {
       value_template: '{{ value_json.value }}'
     }
   },
-  'central_scene': {
+  central_scene: {
     type: 'sensor',
     object_id: 'scene_state',
     discovery_payload: {
@@ -141,7 +141,7 @@ module.exports = {
     }
   },
   // Light https://www.home-assistant.io/components/light.mqtt
-  'light_rgb_switch': {
+  light_rgb_switch: {
     type: 'light',
     object_id: 'rgb_switch',
     discovery_payload: {
@@ -153,7 +153,7 @@ module.exports = {
       rgb_value_template: '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
     }
   },
-  'light_rgb_dimmer': {
+  light_rgb_dimmer: {
     type: 'light',
     object_id: 'rgb_dimmer',
     discovery_payload: {
@@ -170,7 +170,7 @@ module.exports = {
       rgb_value_template: '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
     }
   },
-  'light_dimmer': {
+  light_dimmer: {
     type: 'light',
     object_id: 'dimmer',
     discovery_payload: {
@@ -183,7 +183,7 @@ module.exports = {
       command_off_template: '0'
     }
   },
-  'volume_dimmer': {
+  volume_dimmer: {
     type: 'light',
     object_id: 'volume_dimmer',
     discovery_payload: {
@@ -200,7 +200,7 @@ module.exports = {
   },
 
   // Switch https://www.home-assistant.io/components/switch.mqtt
-  'switch': {
+  switch: {
     type: 'switch',
     object_id: 'switch',
     discovery_payload: {
@@ -212,7 +212,7 @@ module.exports = {
   },
 
   // Cover https://www.home-assistant.io/components/cover.mqtt
-  'cover': {
+  cover: {
     type: 'cover',
     object_id: 'cover',
     discovery_payload: {
@@ -220,7 +220,7 @@ module.exports = {
       optimistic: true
     }
   },
-  'cover_position': {
+  cover_position: {
     type: 'cover',
     object_id: 'cover',
     discovery_payload: {
@@ -234,7 +234,7 @@ module.exports = {
   },
 
   // Lock https://www.home-assistant.io/components/lock.mqtt
-  'lock': {
+  lock: {
     type: 'lock',
     object_id: 'lock',
     discovery_payload: {
@@ -246,7 +246,7 @@ module.exports = {
   },
 
   // Thermostat/HVAC https://www.home-assistant.io/components/climate.mqtt
-  'thermostat': {
+  thermostat: {
     type: 'climate',
     object_id: 'climate',
     discovery_payload: {
@@ -265,7 +265,7 @@ module.exports = {
   },
 
   // Fan https://www.home-assistant.io/components/fan.mqtt/
-  'fan': {
+  fan: {
     type: 'fan',
     object_id: 'fan',
     discovery_payload: {
@@ -279,7 +279,7 @@ module.exports = {
       speeds: ['off', 'low', 'medium', 'high', 'on', 'auto', 'smart']
     }
   },
-  'sound_switch': {
+  sound_switch: {
     type: 'fan',
     object_id: 'sound_switch',
     discovery_payload: {

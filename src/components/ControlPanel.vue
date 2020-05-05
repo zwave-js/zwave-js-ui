@@ -33,13 +33,17 @@
             <v-flex xs12 sm6 md3 align-self-center>
               <v-btn icon @click.native="importConfiguration">
                 <v-tooltip bottom>
-                  <v-icon dark color="primary" slot="activator">file_upload</v-icon>
+                  <template v-slot:activator="{ on }">
+                  <v-icon dark color="primary" v-on="on">file_upload</v-icon>
+                  </template>
                   <span>Import nodes.json Configuration</span>
                 </v-tooltip>
               </v-btn>
               <v-btn icon @click.native="exportConfiguration">
                 <v-tooltip bottom>
-                  <v-icon dark color="primary" slot="activator">file_download</v-icon>
+                  <template v-slot:activator="{ on }">
+                  <v-icon dark color="primary" v-on="on">file_download</v-icon>
+                  </template>
                   <span>Export nodes.json Configuration</span>
                 </v-tooltip>
               </v-btn>
@@ -56,398 +60,407 @@
         <v-data-table
           :headers="headers"
           :items="tableNodes"
-          :rows-per-page-items="[10, 20, {'text':'All','value':-1}]"
+          :items-per-page-options="[10, 20, {'text':'All','value':-1}]"
           item-key="node_id"
           class="elevation-1"
         >
-          <template slot="items" slot-scope="props">
+          <template v-slot:item="{ item }">
             <tr
-              style="cursor:pointer;"
-              :active="selectedNode == props.item"
-              @click="selectedNode == props.item ? selectedNode = null : selectedNode = props.item"
+              :style="{cursor:'pointer', background: selectedNode === item ? '#eee' : 'none'}"
+              @click.stop="selectNode(item)"
             >
-              <td>{{ props.item.node_id }}</td>
-              <td>{{ props.item.type }}</td>
-              <td>{{ props.item.ready ? (props.item.product + ' (' + props.item.manufacturer + ')') : '' }}</td>
-              <td>{{ props.item.name || '' }}</td>
-              <td>{{ props.item.loc || '' }}</td>
-              <td>{{ props.item.secure ? 'Yes' : 'No'}}</td>
-              <td>{{ props.item.status }}</td>
-              <td>{{ props.item.lastActive ? (new Date(props.item.lastActive)).toLocaleString() : 'Never' }}</td>
+              <td>{{ item.node_id }}</td>
+              <td>{{ item.type }}</td>
+              <td>{{ item.ready ? (item.product + ' (' + item.manufacturer + ')') : '' }}</td>
+              <td>{{ item.name || '' }}</td>
+              <td>{{ item.loc || '' }}</td>
+              <td>{{ item.secure ? 'Yes' : 'No'}}</td>
+              <td>{{ item.status }}</td>
+              <td>{{ item.lastActive ? (new Date(item.lastActive)).toLocaleString() : 'Never' }}</td>
             </tr>
           </template>
         </v-data-table>
 
-        <v-toolbar tabs style="margin-top:10px" class="elevation-1">
-          <v-tabs v-model="currentTab" color="transparent" fixed-tabs>
-            <v-tab key="node">Node</v-tab>
-            <v-tab key="groups">Groups</v-tab>
-            <v-tab key="scenes">Scenes</v-tab>
-            <v-tab key="debug">Debug</v-tab>
-          </v-tabs>
-        </v-toolbar>
+        <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
 
-        <!-- TABS -->
+          <v-tab key="node">Node</v-tab>
+          <v-tab key="groups">Groups</v-tab>
+          <v-tab key="scenes">Scenes</v-tab>
+          <v-tab key="debug">Debug</v-tab>
 
-        <v-tabs-items class="elevation-1" v-model="currentTab">
-          <!-- TAB NODE INFO -->
-          <v-tab-item key="node">
-            <v-container v-if="selectedNode" fluid>
-              <v-layout row>
-                <v-flex xs3>
-                  <v-select
-                    label="Node actions"
-                    append-outer-icon="send"
-                    v-model="node_action"
-                    :items="node_actions"
-                    @click:append-outer="sendNodeAction"
-                  ></v-select>
-                </v-flex>
-              </v-layout>
-
-              <v-layout row>
-                <v-flex>
-                  <v-subheader>Device ID: {{selectedNode.device_id}}</v-subheader>
-                </v-flex>
-              </v-layout>
-
-              <v-layout row>
-                <v-flex xs4>
-                  <v-subheader>Name: {{selectedNode.name}}</v-subheader>
-                </v-flex>
-                <v-flex xs8>
-                  <v-text-field
-                    label="New name"
-                    append-outer-icon="send"
-                    :error="!!nameError"
-                    :error-messages="nameError"
-                    v-model.trim="newName"
-                    @click:append-outer="updateName"
-                  ></v-text-field>
-                </v-flex>
-              </v-layout>
-
-              <v-layout row>
-                <v-flex xs4>
-                  <v-subheader>Location: {{selectedNode.loc}}</v-subheader>
-                </v-flex>
-                <v-flex xs8>
-                  <v-text-field
-                    label="New Location"
-                    append-outer-icon="send"
-                    v-model.trim="newLoc"
-                    :error="!!locError"
-                    :error-messages="locError"
-                    @click:append-outer="updateLoc"
-                  ></v-text-field>
-                </v-flex>
-              </v-layout>
-
-              <v-layout v-if="selectedNode.values" column>
-                <v-subheader>Values</v-subheader>
-
-                <!-- USER VALUES -->
-                <v-expansion-panel class="elevation-0">
-                  <v-expansion-panel-content>
-                    <div slot="header">User</div>
-                    <v-card>
-                      <v-card-text>
-                        <v-flex
-                          v-for="(v, index) in selectedNode.values.filter(v => v.genre == 'user')"
-                          :key="index"
-                          xs12
-                        >
-                          <!-- eslint-disable vue/valid-v-model --><ValueID
-                            @updateValue="updateValue"
-                            v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
-                          ></ValueID><!-- eslint-enable -->
-                        </v-flex>
-                      </v-card-text>
-                    </v-card>
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-
-                <v-divider></v-divider>
-
-                <!-- CONFIG VALUES -->
-                <v-expansion-panel class="elevation-0">
-                  <v-expansion-panel-content>
-                    <div slot="header">Configuration</div>
-                    <v-card>
-                      <v-btn round color="primary" @click="sendNodeAction('requestAllConfigParams')" dark>Refresh values</v-btn>
-                      <v-card-text>
-                        <v-flex
-                          v-for="(v, index) in selectedNode.values.filter(v => v.genre == 'config')"
-                          :key="index"
-                          xs12
-                        >
-                          <!-- eslint-disable vue/valid-v-model --><ValueID
-                            @updateValue="updateValue"
-                            v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
-                          ></ValueID><!-- eslint-enable -->
-                        </v-flex>
-                      </v-card-text>
-                    </v-card>
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-
-                <v-divider></v-divider>
-
-                <!-- SYSTEM VALUES -->
-                <v-expansion-panel class="elevation-0">
-                  <v-expansion-panel-content>
-                    <div slot="header">System</div>
-                    <v-card>
-                      <v-card-text>
-                        <v-flex
-                          v-for="(v, index) in selectedNode.values.filter(v => v.genre == 'system')"
-                          :key="index"
-                          xs12
-                        >
-                          <!-- eslint-disable vue/valid-v-model --><ValueID
-                            @updateValue="updateValue"
-                            v-model="selectedNode.values[selectedNode.values.indexOf(v)]"
-                          ></ValueID><!-- eslint-enable -->
-                        </v-flex>
-                      </v-card-text>
-                    </v-card>
-                  </v-expansion-panel-content>
-                </v-expansion-panel>
-
-                <v-divider></v-divider>
-              </v-layout>
-
-              <v-layout v-if="hassDevices.length > 0" column>
-                <v-subheader>Home Assistant - Devices</v-subheader>
-
-                <!-- HASS DEVICES -->
-                <v-layout v-if="hassDevices.length > 0" raw wrap>
-                  <v-flex xs12 md6 pa-1>
-                    <v-btn color="blue darken-1" flat @click.native="storeDevices(false)">Store</v-btn>
-                    <v-btn color="red darken-1" flat @click.native="storeDevices(true)">Remove Store</v-btn>
-                    <v-btn color="green darken-1" flat @click.native="rediscoverNode">Rediscover Node</v-btn>
-
-                    <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
-                      <template slot="items" slot-scope="props">
-                        <tr
-                          style="cursor:pointer;"
-                          :active="selectedDevice == props.item"
-                          @click="selectedDevice == props.item ? selectedDevice = null : selectedDevice = props.item"
-                        >
-                          <td class="text-xs">{{ props.item.id }}</td>
-                          <td class="text-xs">{{ props.item.type }}</td>
-                          <td class="text-xs">{{ props.item.object_id }}</td>
-                          <td class="text-xs">{{ props.item.persistent ? 'Yes' : 'No' }}</td>
-                        </tr>
-                      </template>
-                    </v-data-table>
-                  </v-flex>
-                  <v-flex xs12 md6 pa-1>
-                    <v-btn v-if="!selectedDevice"
-                      color="blue darken-1"
-                      :disabled="errorDevice"
-                      flat
-                      @click.native="addDevice"
-                    >Add</v-btn>
-                    <v-btn v-if="selectedDevice"
-                      color="blue darken-1"
-                      :disabled="errorDevice"
-                      flat
-                      @click.native="updateDevice"
-                    >Update</v-btn>
-                    <v-btn v-if="selectedDevice"
-                      color="green darken-1"
-                      :disabled="errorDevice"
-                      flat
-                      @click.native="rediscoverDevice"
-                    >Rediscover</v-btn>
-                    <v-btn v-if="selectedDevice"
-                      color="red darken-1"
-                      :disabled="errorDevice"
-                      flat
-                      @click.native="deleteDevice"
-                    >Delete</v-btn>
-                    <v-textarea
-                      label="Hass Device JSON"
-                      auto-grow
-                      :rules="[validJSONdevice]"
-                      v-model="deviceJSON"
-                    ></v-textarea>
+          <!-- TABS -->
+          <v-tabs-items v-model="currentTab">
+            <!-- TAB NODE INFO -->
+            <v-tab-item key="node">
+              <v-container v-if="selectedNode" grid-list-md>
+                <v-layout row>
+                  <v-flex xs3>
+                    <v-select
+                      label="Node actions"
+                      append-outer-icon="send"
+                      v-model="node_action"
+                      :items="node_actions"
+                      @click:append-outer="sendNodeAction"
+                    ></v-select>
                   </v-flex>
                 </v-layout>
-              </v-layout>
-            </v-container>
 
-            <v-container v-if="!selectedNode">
-              <v-subheader>Click on a Node in the table</v-subheader>
-            </v-container>
-          </v-tab-item>
+                <v-layout row>
+                  <v-flex>
+                    <v-subheader>Device ID: {{selectedNode.device_id}}</v-subheader>
+                  </v-flex>
+                </v-layout>
 
-          <!-- TAB GROUPS -->
-          <v-tab-item key="groups">
-            <v-container grid-list-md>
-              <v-layout wrap>
-                <v-flex xs12 sm6>
-                  <v-select
-                    label="Node"
-                    v-model="group.node"
-                    :items="nodes.filter(n => !n.failed)"
-                    return-object
-                    @change="resetGroup"
-                    item-text="_name"
-                  ></v-select>
-                </v-flex>
+                <v-layout row>
+                  <v-flex xs2 style="max-width:100px">
+                    <v-subheader>Name: {{selectedNode.name}}</v-subheader>
+                  </v-flex>
+                  <v-flex xs8 style="max-width:300px">
+                    <v-text-field
+                      label="New name"
+                      append-outer-icon="send"
+                      :error="!!nameError"
+                      :error-messages="nameError"
+                      v-model.trim="newName"
+                      @click:append-outer="updateName"
+                    ></v-text-field>
+                  </v-flex>
+                </v-layout>
 
-                <v-flex v-if="group.node" xs12 sm6>
-                  <v-select
-                    label="Group"
-                    v-model="group.group"
-                    @input="getAssociations"
-                    :items="group.node.groups"
-                  ></v-select>
-                </v-flex>
+                <v-layout row>
+                  <v-flex xs2 style="max-width:100px">
+                    <v-subheader>Location: {{selectedNode.loc}}</v-subheader>
+                  </v-flex>
+                  <v-flex xs8 style="max-width:300px">
+                    <v-text-field
+                      label="New Location"
+                      append-outer-icon="send"
+                      v-model.trim="newLoc"
+                      :error="!!locError"
+                      :error-messages="locError"
+                      @click:append-outer="updateLoc"
+                    ></v-text-field>
+                  </v-flex>
+                </v-layout>
 
-                <v-flex v-if="group.group" xs12 sm6>
-                  <v-textarea
-                    label="Current associations"
-                    auto-grow
-                    readonly
-                    :value="group.associations"
-                  ></v-textarea>
-                </v-flex>
+                <v-layout v-if="selectedNode.values" column>
+                  <v-subheader>Values</v-subheader>
 
-                <v-flex v-if="group.node" xs12 sm6>
-                  <v-combobox
-                    label="Target"
-                    v-model="group.target"
-                    :items="nodes.filter(n => !n.failed && n != group.node)"
-                    return-object
-                    hint="Select the node from the list or digit the node ID"
-                    persistent-hint
-                    item-text="_name"
-                  ></v-combobox>
-                </v-flex>
+                  <v-expansion-panels accordion multiple>
 
-                <v-flex xs12 sm6>
-                  <v-switch
-                    label="Multi instance"
-                    presistent-hint
-                    hint="Enable this target node supports multi instance associations"
-                    v-model="group.multiInstance"
-                  ></v-switch>
-                </v-flex>
+                  <!-- USER VALUES -->
+                  <v-expansion-panel>
+                    <v-expansion-panel-header>User</v-expansion-panel-header>
+                    <v-expansion-panel-content>
+                      <v-card flat>
+                        <v-card-text>
+                          <v-flex
+                            v-for="(v, index) in userValues"
+                            :key="index"
+                            xs12
+                          >
+                            <ValueID
+                              @updateValue="updateValue"
+                              v-model="userValues[index]"
+                            ></ValueID>
+                          </v-flex>
+                        </v-card-text>
+                      </v-card>
+                    </v-expansion-panel-content>
+                  </v-expansion-panel>
 
-                <v-flex v-if="group.multiInstance" xs12 sm6>
-                  <v-text-field
-                    v-model.number="group.targetInstance"
-                    label="Instance ID"
-                    hint="Target node instance ID"
-                    type="number"
-                  />
-                </v-flex>
+                  <v-divider></v-divider>
 
-                <v-flex v-if="group.node && group.target && group.group" xs12>
-                  <v-btn color="primary" @click.native="addAssociation" dark class="mb-2">Add</v-btn>
-                  <v-btn color="primary" @click.native="removeAssociation" dark class="mb-2">Remove</v-btn>
-                </v-flex>
-              </v-layout>
-            </v-container>
-          </v-tab-item>
+                  <!-- CONFIG VALUES -->
+                  <v-expansion-panel>
+                    <v-expansion-panel-header v-slot="{ open }">
+                      <v-row no-gutters>
+                        <v-col style="max-width:150px">Configuration</v-col>
+                        <v-col v-if="open">
+                          <v-btn rounded color="primary" @click.stop="sendNodeAction('requestAllConfigParams')" dark>Refresh values</v-btn>
+                        </v-col>
+                      </v-row>
+                    </v-expansion-panel-header>
+                    <v-expansion-panel-content>
+                      <v-card flat>
+                        <v-card-text>
+                          <v-flex
+                            v-for="(v, index) in configValues"
+                            :key="index"
+                            xs12
+                          >
+                            <ValueID
+                              @updateValue="updateValue"
+                              v-model="configValues[index]"
+                            ></ValueID>
+                          </v-flex>
+                        </v-card-text>
+                      </v-card>
+                    </v-expansion-panel-content>
+                  </v-expansion-panel>
 
-          <!-- TAB SCENES -->
-          <v-tab-item key="scenes">
-            <v-container grid-list-md>
-              <v-layout wrap>
-                <v-flex xs12>
-                  <v-btn flat @click.native="importScenes">
-                    Import
-                    <v-icon right dark color="primary">file_upload</v-icon>
-                  </v-btn>
-                  <v-btn flat @click.native="exportScenes">
-                    Export
-                    <v-icon right dark color="primary">file_download</v-icon>
-                  </v-btn>
-                </v-flex>
+                  <v-divider></v-divider>
 
-                <v-flex xs12 sm6>
-                  <v-select
-                    label="Scene"
-                    v-model="selectedScene"
-                    :items="scenesWithId"
-                    item-text="label"
-                    item-value="sceneid"
-                  ></v-select>
-                </v-flex>
+                  <!-- SYSTEM VALUES -->
+                  <v-expansion-panel>
+                    <v-expansion-panel-header>System</v-expansion-panel-header>
+                    <v-expansion-panel-content>
+                      <v-card flat>
+                        <v-card-text>
+                          <v-flex
+                            v-for="(v, index) in systemValues"
+                            :key="index"
+                            xs12
+                          >
+                            <ValueID
+                              @updateValue="updateValue"
+                              v-model="systemValues[index]"
+                            ></ValueID>
+                          </v-flex>
+                        </v-card-text>
+                      </v-card>
+                    </v-expansion-panel-content>
+                  </v-expansion-panel>
+                  <v-divider></v-divider>
+                  </v-expansion-panels>
+                </v-layout>
 
-                <v-flex xs12 sm6>
-                  <v-text-field
-                    label="New Scene"
-                    append-outer-icon="send"
-                    @click:append-outer="createScene"
-                    v-model.trim="newScene"
-                  ></v-text-field>
-                </v-flex>
+                <v-layout v-if="hassDevices.length > 0" column>
+                  <v-subheader>Home Assistant - Devices</v-subheader>
 
-                <v-flex v-if="selectedScene" xs12>
-                  <v-btn color="red darken-1" flat @click="removeScene">Delete</v-btn>
-                  <v-btn color="green darken-1" flat @click="activateScene">Activate</v-btn>
-                  <v-btn color="blue darken-1" flat @click="dialogValue = true">New Value</v-btn>
-                </v-flex>
-              </v-layout>
+                  <!-- HASS DEVICES -->
+                  <v-layout v-if="hassDevices.length > 0" raw wrap>
+                    <v-flex xs12 md6 pa-1>
+                      <v-btn color="blue darken-1" text @click.native="storeDevices(false)">Store</v-btn>
+                      <v-btn color="red darken-1" text @click.native="storeDevices(true)">Remove Store</v-btn>
+                      <v-btn color="green darken-1" text @click.native="rediscoverNode">Rediscover Node</v-btn>
 
-              <DialogSceneValue
-                @save="saveValue"
-                @close="closeDialog"
-                v-model="dialogValue"
-                :title="dialogTitle"
-                :editedValue="editedValue"
-                :nodes="nodes"
-              />
+                      <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
+                        <template v-slot:item="{ item }">
+                          <tr
+                            style="cursor:pointer;"
+                            :active="selectedDevice == item"
+                            @click="selectedDevice == item ? selectedDevice = null : selectedDevice = item"
+                          >
+                            <td class="text-xs">{{ item.id }}</td>
+                            <td class="text-xs">{{ item.type }}</td>
+                            <td class="text-xs">{{ item.object_id }}</td>
+                            <td class="text-xs">{{ item.persistent ? 'Yes' : 'No' }}</td>
+                          </tr>
+                        </template>
+                      </v-data-table>
+                    </v-flex>
+                    <v-flex xs12 md6 pa-1>
+                      <v-btn v-if="!selectedDevice"
+                        color="blue darken-1"
+                        :disabled="errorDevice"
+                        text
+                        @click.native="addDevice"
+                      >Add</v-btn>
+                      <v-btn v-if="selectedDevice"
+                        color="blue darken-1"
+                        :disabled="errorDevice"
+                        text
+                        @click.native="updateDevice"
+                      >Update</v-btn>
+                      <v-btn v-if="selectedDevice"
+                        color="green darken-1"
+                        :disabled="errorDevice"
+                        text
+                        @click.native="rediscoverDevice"
+                      >Rediscover</v-btn>
+                      <v-btn v-if="selectedDevice"
+                        color="red darken-1"
+                        :disabled="errorDevice"
+                        text
+                        @click.native="deleteDevice"
+                      >Delete</v-btn>
+                      <v-textarea
+                        label="Hass Device JSON"
+                        auto-grow
+                        :rules="[validJSONdevice]"
+                        v-model="deviceJSON"
+                      ></v-textarea>
+                    </v-flex>
+                  </v-layout>
+                </v-layout>
+              </v-container>
 
-              <v-data-table
-                v-if="selectedScene"
-                :headers="headers_scenes"
-                :items="scene_values"
-                class="elevation-1"
-              >
-                <template slot="items" slot-scope="props">
-                  <td class="text-xs">{{ props.item.value_id }}</td>
-                  <td class="text-xs">{{ props.item.node_id }}</td>
-                  <td class="text-xs">{{ props.item.label }}</td>
-                  <td class="text-xs">{{ props.item.value }}</td>
-                  <td
-                    class="text-xs"
-                  >{{ props.item.timeout ? 'After ' + props.item.timeout + 's' : 'No' }}</td>
-                  <td>
-                    <v-icon small color="green" class="mr-2" @click="editItem(props.item)">edit</v-icon>
-                    <v-icon small color="red" @click="deleteItem(props.item)">delete</v-icon>
-                  </td>
-                </template>
-              </v-data-table>
-            </v-container>
-          </v-tab-item>
+              <v-container v-if="!selectedNode">
+                <v-subheader>Click on a Node in the table</v-subheader>
+              </v-container>
+            </v-tab-item>
 
-          <!-- TAB Debug -->
-          <v-tab-item key="debug">
-            <v-container grid-list-md>
-              <v-layout wrap>
-                <v-flex xs12>
-                  <v-btn color="green darken-1" flat @click="debugActive = true">Start</v-btn>
-                  <v-btn color="red darken-1" flat @click="debugActive = false">Stop</v-btn>
-                  <v-btn color="blue darken-1" flat @click="debug = []">Clear</v-btn>
-                </v-flex>
-                <v-flex xs12>
-                  <div
-                    id="debug_window"
-                    style="height:400px;width:100%;overflow-y:scroll;"
-                    class="body-1"
-                    v-html="debug.join('')"
-                  ></div>
-                </v-flex>
-              </v-layout>
-            </v-container>
-          </v-tab-item>
-        </v-tabs-items>
+            <!-- TAB GROUPS -->
+            <v-tab-item key="groups">
+              <v-container grid-list-md>
+                <v-layout wrap>
+                  <v-flex xs12 sm6>
+                    <v-select
+                      label="Node"
+                      v-model="group.node"
+                      :items="nodes.filter(n => !n.failed)"
+                      return-object
+                      @change="resetGroup"
+                      item-text="_name"
+                    ></v-select>
+                  </v-flex>
+
+                  <v-flex v-if="group.node" xs12 sm6>
+                    <v-select
+                      label="Group"
+                      v-model="group.group"
+                      @input="getAssociations"
+                      :items="group.node.groups"
+                    ></v-select>
+                  </v-flex>
+
+                  <v-flex v-if="group.group" xs12 sm6>
+                    <v-textarea
+                      label="Current associations"
+                      auto-grow
+                      readonly
+                      :value="group.associations"
+                    ></v-textarea>
+                  </v-flex>
+
+                  <v-flex v-if="group.node" xs12 sm6>
+                    <v-combobox
+                      label="Target"
+                      v-model="group.target"
+                      :items="nodes.filter(n => !n.failed && n != group.node)"
+                      return-object
+                      hint="Select the node from the list or digit the node ID"
+                      persistent-hint
+                      item-text="_name"
+                    ></v-combobox>
+                  </v-flex>
+
+                  <v-flex xs12 sm6>
+                    <v-switch
+                      label="Multi instance"
+                      presistent-hint
+                      hint="Enable this target node supports multi instance associations"
+                      v-model="group.multiInstance"
+                    ></v-switch>
+                  </v-flex>
+
+                  <v-flex v-if="group.multiInstance" xs12 sm6>
+                    <v-text-field
+                      v-model.number="group.targetInstance"
+                      label="Instance ID"
+                      hint="Target node instance ID"
+                      type="number"
+                    />
+                  </v-flex>
+
+                  <v-flex v-if="group.node && group.target && group.group" xs12>
+                    <v-btn rounded color="primary" @click.native="addAssociation" dark class="mb-2">Add</v-btn>
+                    <v-btn rounded color="primary" @click.native="removeAssociation" dark class="mb-2">Remove</v-btn>
+                  </v-flex>
+                </v-layout>
+              </v-container>
+            </v-tab-item>
+
+            <!-- TAB SCENES -->
+            <v-tab-item key="scenes">
+              <v-container grid-list-md>
+                <v-layout wrap>
+                  <v-flex xs12>
+                    <v-btn text @click.native="importScenes">
+                      Import
+                      <v-icon right dark color="primary">file_upload</v-icon>
+                    </v-btn>
+                    <v-btn text @click.native="exportScenes">
+                      Export
+                      <v-icon right dark color="primary">file_download</v-icon>
+                    </v-btn>
+                  </v-flex>
+
+                  <v-flex xs12 sm6>
+                    <v-select
+                      label="Scene"
+                      v-model="selectedScene"
+                      :items="scenesWithId"
+                      item-text="label"
+                      item-value="sceneid"
+                    ></v-select>
+                  </v-flex>
+
+                  <v-flex xs12 sm6>
+                    <v-text-field
+                      label="New Scene"
+                      append-outer-icon="send"
+                      @click:append-outer="createScene"
+                      v-model.trim="newScene"
+                    ></v-text-field>
+                  </v-flex>
+
+                  <v-flex v-if="selectedScene" xs12>
+                    <v-btn color="red darken-1" text @click="removeScene">Delete</v-btn>
+                    <v-btn color="green darken-1" text @click="activateScene">Activate</v-btn>
+                    <v-btn color="blue darken-1" text @click="dialogValue = true">New Value</v-btn>
+                  </v-flex>
+                </v-layout>
+
+                <DialogSceneValue
+                  @save="saveValue"
+                  @close="closeDialog"
+                  v-model="dialogValue"
+                  :title="dialogTitle"
+                  :editedValue="editedValue"
+                  :nodes="nodes"
+                />
+
+                <v-data-table
+                  v-if="selectedScene"
+                  :headers="headers_scenes"
+                  :items="scene_values"
+                  class="elevation-1"
+                >
+                  <template v-slot:item="{ item }">
+                    <tr>
+                      <td class="text-xs">{{ item.value_id }}</td>
+                      <td class="text-xs">{{ item.node_id }}</td>
+                      <td class="text-xs">{{ item.label }}</td>
+                      <td class="text-xs">{{ item.value }}</td>
+                      <td
+                        class="text-xs"
+                      >{{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}</td>
+                      <td>
+                        <v-icon small color="green" class="mr-2" @click="editItem(item)">edit</v-icon>
+                        <v-icon small color="red" @click="deleteItem(item)">delete</v-icon>
+                      </td>
+                    </tr>
+                  </template>
+                </v-data-table>
+              </v-container>
+            </v-tab-item>
+
+            <!-- TAB Debug -->
+            <v-tab-item key="debug">
+              <v-container grid-list-md>
+                <v-layout wrap>
+                  <v-flex xs12>
+                    <v-btn color="green darken-1" text @click="debugActive = true">Start</v-btn>
+                    <v-btn color="red darken-1" text @click="debugActive = false">Stop</v-btn>
+                    <v-btn color="blue darken-1" text @click="debug = []">Clear</v-btn>
+                  </v-flex>
+                  <v-flex xs12>
+                    <div
+                      id="debug_window"
+                      style="height:400px;width:100%;overflow-y:scroll;"
+                      class="body-1"
+                      v-html="debug.join('')"
+                    ></div>
+                  </v-flex>
+                </v-layout>
+              </v-container>
+            </v-tab-item>
+          </v-tabs-items>
+
+        </v-tabs>
+
       </v-card-text>
     </v-card>
 
@@ -462,7 +475,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import ValueID from '@/components/ValueId'
 import Confirm from '@/components/Confirm'
 
-import { default as AnsiUp } from 'ansi_up'
+import AnsiUp from 'ansi_up'
 
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 
@@ -506,6 +519,15 @@ export default {
       }
 
       return devices
+    },
+    userValues () {
+      return this.selectedNode ? this.selectedNode.values.filter(v => v.genre === 'user') : []
+    },
+    systemValues () {
+      return this.selectedNode ? this.selectedNode.values.filter(v => v.genre === 'system') : []
+    },
+    configValues () {
+      return this.selectedNode ? this.selectedNode.values.filter(v => v.genre === 'config') : []
     }
   },
   watch: {
@@ -513,14 +535,14 @@ export default {
       val || this.closeDialog()
     },
     newName (val) {
-      var match = val.match(/[a-zA-Z0-9_-]+/g)
+      var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : []
 
       this.nameError = match[0] !== val
         ? 'Only a-zA-Z0-9_- chars are allowed'
         : null
     },
     newLoc (val) {
-      var match = val.match(/[a-zA-Z0-9_-]+/g)
+      var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : []
 
       this.locError = match[0] !== val
         ? 'Only a-zA-Z0-9_- chars are allowed'
@@ -734,12 +756,30 @@ export default {
     showSnackbar (text) {
       this.$emit('showSnackbar', text)
     },
+    selectNode (item) {
+      if (!item) return
+
+      if (this.selectedNode === item) {
+        this.selectedNode = null
+      } else {
+        this.selectedNode = this.nodes.find(n => n.node_id === item.node_id)
+      }
+    },
+    getValue (v) {
+      var node = this.nodes[v.node_id]
+
+      if (node && node.values) {
+        return node.values.find(i => i.value_id === v.value_id)
+      } else {
+        return null
+      }
+    },
     async confirm (title, text, level, options) {
       options = options || {}
 
       var levelMap = {
-        'warning': 'orange',
-        'alert': 'red'
+        warning: 'orange',
+        alert: 'red'
       }
 
       options.color = levelMap[level] || 'primary'
@@ -970,7 +1010,7 @@ export default {
           var secure = await this.$refs.confirm.open('Node inclusion', 'Start inclusion in security mode?')
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
-          var ok = await this.$refs.confirm.open('Hard Reset', 'Your controller will be reset to factory and all paired devices will be removed', {color: 'red'})
+          var ok = await this.$refs.confirm.open('Hard Reset', 'Your controller will be reset to factory and all paired devices will be removed', { color: 'red' })
           if (!ok) {
             return
           }
@@ -1043,22 +1083,30 @@ export default {
       }
     },
     updateValue (v) {
-      if (v.type === 'bitset') {
-        v.newValue = ['0', '0', '0', '0', '0', '0', '0', '0']
-        for (const bit in v.bitSetIds) { v.newValue[8 - parseInt(bit)] = v.bitSetIds[bit].value ? '1' : '0' }
+      v = this.getValue(v)
 
-        v.newValue = parseInt(v.newValue.join(''), 2)
+      if (v) {
+        if (v.type === 'bitset') {
+          v.newValue = ['0', '0', '0', '0', '0', '0', '0', '0']
+
+          for (const bit in v.bitSetIds) {
+            v.newValue[8 - parseInt(bit)] = v.bitSetIds[bit].value ? '1' : '0'
+          }
+
+          v.newValue = parseInt(v.newValue.join(''), 2)
+        }
+
+        // in this way I can check when the value receives an update
+        v.toUpdate = true
+
+        this.apiRequest('setValue', [
+          v.node_id,
+          v.class_id,
+          v.instance,
+          v.index,
+          v.type === 'button' ? true : v.newValue
+        ])
       }
-
-      v.toUpdate = true
-
-      this.apiRequest('setValue', [
-        v.node_id,
-        v.class_id,
-        v.instance,
-        v.index,
-        v.type === 'button' ? true : v.newValue
-      ])
     },
     jsonToList (obj) {
       var s = ''
@@ -1146,19 +1194,15 @@ export default {
     })
 
     this.socket.on(this.socketEvents.valueUpdated, data => {
-      var node = self.nodes[data.node_id]
-      if (node && node.values) {
-        var index = node.values.findIndex(v => v.value_id === data.value_id)
-        if (index >= 0) {
-          if (self.nodes[data.node_id].values[index].toUpdate) {
-            self.nodes[data.node_id].values[index].toUpdate = false
-            self.showSnackbar('Value updated')
-          }
+      var valueId = self.getValue(data)
 
-          if (!data.newValue) data.newValue = data.value
-
-          self.$set(self.nodes[data.node_id].values, index, data)
+      if (valueId) {
+        // this value is waiting for an update
+        if (valueId.toUpdate) {
+          valueId.toUpdate = false
+          self.showSnackbar('Value updated')
         }
+        valueId.newValue = data.value
       }
     })
 

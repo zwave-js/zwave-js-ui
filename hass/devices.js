@@ -62,8 +62,8 @@ const SPIRIT_ZWAVE_PLUS = {
   type: 'climate',
   object_id: 'thermostat',
   values: ['64-1-0', '49-1-1', '67-1-1', '67-1-11'],
-  mode_map: { 'off': 'Off', 'heat': 'Heat', 'cool': 'Heat Eco' },
-  setpoint_topic: { 'Heat': '67-1-1', 'Heat Eco': '67-1-11' },
+  mode_map: { off: 'Off', heat: 'Heat', cool: 'Heat Eco' },
+  setpoint_topic: { Heat: '67-1-1', 'Heat Eco': '67-1-11' },
   default_setpoint: '67-1-1',
   discovery_payload: {
     min_temp: 8,
@@ -83,7 +83,7 @@ const DANFOSS_TRV_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
   values: ['49-1-1', '67-1-1'],
-  setpoint_topic: { 'Heat': '67-1-1' },
+  setpoint_topic: { Heat: '67-1-1' },
   default_setpoint: '67-1-1',
   discovery_payload: {
     min_temp: 4,
@@ -120,10 +120,10 @@ module.exports = {
       object_id: 'HRT4-ZW',
       values: ['49-1-1', '67-1-1'],
       mode_map: {
-        'off': 'Off',
-        'heat': 'Heating'
+        off: 'Off',
+        heat: 'Heating'
       },
-      setpoint_topic: { 'Heat': '67-1-1' },
+      setpoint_topic: { Heat: '67-1-1' },
       default_setpoint: '67-1-1',
       discovery_payload: {
         min_temp: 5,
@@ -141,8 +141,8 @@ module.exports = {
       type: 'climate',
       object_id: 'thermostat',
       values: ['64-1-0', '49-1-1', '67-1-1', '67-1-2'],
-      mode_map: { 'off': 'Off', 'heat': 'Heat (Default)', 'cool': 'Cool' },
-      setpoint_topic: { 'Heat (Default)': '67-1-1', 'Cool': '67-1-2' },
+      mode_map: { off: 'Off', heat: 'Heat (Default)', cool: 'Cool' },
+      setpoint_topic: { 'Heat (Default)': '67-1-1', Cool: '67-1-2' },
       default_setpoint: '67-1-1',
       discovery_payload: {
         min_temp: 15,
@@ -162,8 +162,8 @@ module.exports = {
       type: 'climate',
       object_id: 'thermostat',
       values: ['64-1-0', '49-1-1', '67-1-1', '67-1-2'],
-      mode_map: { 'off': 'Off', 'heat': 'Heat', 'cool': 'Cool' },
-      setpoint_topic: { 'Heat': '67-1-1', 'Cool': '67-1-2' },
+      mode_map: { off: 'Off', heat: 'Heat', cool: 'Cool' },
+      setpoint_topic: { Heat: '67-1-1', Cool: '67-1-2' },
       default_setpoint: '67-1-1',
       discovery_payload: {
         min_temp: 15,
