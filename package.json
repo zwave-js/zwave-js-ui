@@ -104,7 +104,7 @@
     "socket.io": "^2.3.0",
     "socket.io-client": "^2.3.0",
     "tail": "^2.0.3",
-    "uniqid": "^4.1.1",
+    "uniqid": "^5.0.0",
     "vue": "^2.6.11",
     "vue-d3-network": "^0.1.28",
     "vue-router": "^3.1.6",
