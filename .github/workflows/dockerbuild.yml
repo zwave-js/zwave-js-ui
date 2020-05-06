@@ -12,4 +12,5 @@ jobs:
          uses: peter-evans/repository-dispatch@v1
          with:
            token: ${{ secrets.DOCKER_REPO_TOKEN }}
+           repository: robertsLando/Zwave2Mqtt-docker
            event-type: build
