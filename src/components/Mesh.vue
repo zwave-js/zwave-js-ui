@@ -212,7 +212,7 @@ export default {
             this.links.push({
               sid: source.node_id,
               tid: target,
-              _color: 'black'
+              _color: this.$vuetify.theme.dark ? 'white' : 'black'
             })
           }
         }
