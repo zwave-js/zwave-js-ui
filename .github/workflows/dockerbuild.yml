@@ -11,5 +11,5 @@ jobs:
        - name: Repository Dispatch
          uses: peter-evans/repository-dispatch@v1
          with:
-           token: ${{ secrets.GITHUB_TOKEN }}
+           token: ${{ secrets.DOCKER_REPO_TOKEN }}
            event-type: build
