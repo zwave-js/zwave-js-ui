@@ -110,7 +110,7 @@
     "vue": "^2.6.11",
     "vue-d3-network": "^0.1.28",
     "vue-router": "^3.1.6",
-    "vuetify": "^2.2.26",
+    "vuetify": "^2.2.27",
     "vuex": "^3.3.0"
   },
   "devDependencies": {
