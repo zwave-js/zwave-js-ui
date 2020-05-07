@@ -5,12 +5,16 @@
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
 ![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/Zwave2Mqtt)
 ![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/Zwave2Mqtt/total)
-
 [![Coverage Status](https://coveralls.io/repos/github/OpenZWave/Zwave2Mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/Zwave2Mqtt?branch=master)
-
-<a href="https://www.buymeacoffee.com/MVg9wc2HE" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+[![Known Vulnerabilities](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt?targetFile=package.json)
+[![Dependencies Status](https://david-dm.org/OpenZWave/Zwave2Mqtt/status.svg)](https://david-dm.org/OpenZWave/Zwave2Mqtt)
+[![devDependencies Status](https://david-dm.org/OpenZWave/Zwave2Mqtt/dev-status.svg)](https://david-dm.org/OpenZWave/Zwave2Mqtt?type=dev)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/context:javascript)
 
 [![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU "Join channel")
+
+<a href="https://www.buymeacoffee.com/MVg9wc2HE" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
 [![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
 
@@ -30,19 +34,19 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
 ## 📖 Table of contents
 
 - [Zwave To MQTT](#zwave-to-mqtt)
-  - [!! ATTENTION !!](#-attention-)
-  - [📖 Table of contents](#-table-of-contents)
-  - [:electric_plug: Installation](#electric_plug-installation)
+  - [!! ATTENTION !!](#attention)
+  - [📖 Table of contents](#%f0%9f%93%96-table-of-contents)
+  - [:electric_plug: Installation](#electricplug-installation)
     - [DOCKER :tada: way](#docker-tada-way)
     - [NodeJS or PKG version](#nodejs-or-pkg-version)
-  - [:nerd_face: Development](#nerd_face-development)
+  - [:nerd_face: Development](#nerdface-development)
   - [:wrench: Usage](#wrench-usage)
     - [Zwave](#zwave)
     - [MQTT](#mqtt)
     - [Gateway](#gateway)
       - [Special topics](#special-topics)
       - [Gateway values table](#gateway-values-table)
-  - [:file_folder: Nodes Management](#file_folder-nodes-management)
+  - [:file_folder: Nodes Management](#filefolder-nodes-management)
     - [Add a node](#add-a-node)
     - [Remove a node](#remove-a-node)
     - [Replace failed node](#replace-failed-node)
