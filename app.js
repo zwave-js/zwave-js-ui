@@ -1,26 +1,24 @@
-var express = require('express'),
-  reqlib = require('app-root-path').require,
-  logger = require('morgan'),
-  cookieParser = require('cookie-parser'),
-  bodyParser = require('body-parser'),
-  app = express(),
-  fs = require('fs'),
-  SerialPort = require('serialport'),
-  jsonStore = reqlib('/lib/jsonStore.js'),
-  cors = require('cors'),
-  ZWaveClient = reqlib('/lib/ZwaveClient'),
-  MqttClient = reqlib('/lib/MqttClient'),
-  Gateway = reqlib('/lib/Gateway'),
-  store = reqlib('config/store.js'),
-  config = reqlib('config/app.js'),
-  debug = reqlib('/lib/debug')('App'),
-  history = require('connect-history-api-fallback'),
-  utils = reqlib('/lib/utils.js');
+var express = require('express')
+var reqlib = require('app-root-path').require
+var logger = require('morgan')
+var cookieParser = require('cookie-parser')
+var bodyParser = require('body-parser')
+var app = express()
+var SerialPort = require('serialport')
+var jsonStore = reqlib('/lib/jsonStore.js')
+var cors = require('cors')
+var ZWaveClient = reqlib('/lib/ZwaveClient')
+var MqttClient = reqlib('/lib/MqttClient')
+var Gateway = reqlib('/lib/Gateway')
+var store = reqlib('config/store.js')
+var debug = reqlib('/lib/debug')('App')
+var history = require('connect-history-api-fallback')
+var utils = reqlib('/lib/utils.js')
 
 var gw; //the gateway instance
 let io;
 
-debug("Application path:" + utils.getPath(true));
+debug('Application path:' + utils.getPath(true))
 
 // view engine setup
 app.set('views', utils.joinPath(false, 'views'));
