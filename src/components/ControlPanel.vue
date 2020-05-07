@@ -66,7 +66,7 @@
         >
           <template v-slot:item="{ item }">
             <tr
-              :style="{cursor:'pointer', background: selectedNode === item ? '#eee' : 'none'}"
+              :style="{cursor:'pointer', background: selectedNode === item ? $vuetify.theme.themes.light.accent : 'none'}"
               @click.stop="selectNode(item)"
             >
               <td>{{ item.node_id }}</td>
