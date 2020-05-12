@@ -535,14 +535,14 @@ export default {
       val || this.closeDialog()
     },
     newName (val) {
-      var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : []
+      var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : [val]
 
       this.nameError = match[0] !== val
         ? 'Only a-zA-Z0-9_- chars are allowed'
         : null
     },
     newLoc (val) {
-      var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : []
+      var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : [val]
 
       this.locError = match[0] !== val
         ? 'Only a-zA-Z0-9_- chars are allowed'
