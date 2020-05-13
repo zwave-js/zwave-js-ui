@@ -233,6 +233,24 @@ module.exports = {
     }
   },
 
+  barrier_state: {
+    type: 'cover',
+    object_id: 'barrier_state',
+    discovery_payload: {
+      command_topic: true,
+      state_topic: true,
+      value_template: '{{ value_json.value }}',
+      device_class: 'garage',
+      payload_open: 'Opened',
+      payload_close: 'Closed',
+      payload_stop: 'Stopped',
+      state_open: 'Opened',
+      state_opening: 'Opening',
+      state_closed: 'Closed',
+      state_closing: 'Closing'
+    }
+  },
+
   // Lock https://www.home-assistant.io/components/lock.mqtt
   lock: {
     type: 'lock',
