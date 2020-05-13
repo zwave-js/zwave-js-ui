@@ -92,7 +92,7 @@
           <v-tabs-items v-model="currentTab">
             <!-- TAB NODE INFO -->
             <v-tab-item key="node">
-              <v-container v-if="selectedNode" grid-list-md>
+              <v-container v-if="selectedNode" style="min-width:90%" grid-list-md>
                 <v-layout row>
                   <v-flex xs3>
                     <v-select
@@ -234,6 +234,7 @@
                       <v-btn color="blue darken-1" text @click.native="storeDevices(false)">Store</v-btn>
                       <v-btn color="red darken-1" text @click.native="storeDevices(true)">Remove Store</v-btn>
                       <v-btn color="green darken-1" text @click.native="rediscoverNode">Rediscover Node</v-btn>
+                      <v-btn color="yellow darken-1" text @click.native="disableDiscovery">Disable Discovery</v-btn>
 
                       <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
                         <template v-slot:item="{ item }">
@@ -246,6 +247,7 @@
                             <td class="text-xs">{{ item.type }}</td>
                             <td class="text-xs">{{ item.object_id }}</td>
                             <td class="text-xs">{{ item.persistent ? 'Yes' : 'No' }}</td>
+                            <td class="text-xs">{{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}</td>
                           </tr>
                         </template>
                       </v-data-table>
@@ -608,7 +610,8 @@ export default {
         { text: 'Id', value: 'id' },
         { text: 'Type', value: 'type' },
         { text: 'Object id', value: 'object_id' },
-        { text: 'Persistent', value: 'persistent' }
+        { text: 'Persistent', value: 'persistent' },
+        { text: 'Discovery', value: 'ignoreDiscovery' }
       ],
       selectedDevice: null,
       errorDevice: false,
@@ -923,6 +926,15 @@ export default {
       if (node && await this.confirm('Rediscover node', 'Are you sure you want to re-discover all node values?')) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'rediscoverNode',
+          node_id: this.selectedNode.node_id
+        })
+      }
+    },
+    async disableDiscovery () {
+      var node = this.selectedNode
+      if (node && await this.confirm('Rediscover node', 'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store')) {
+        this.socket.emit(this.socketActions.hass, {
+          apiName: 'disableDiscovery',
           node_id: this.selectedNode.node_id
         })
       }

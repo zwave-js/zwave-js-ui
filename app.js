@@ -85,6 +85,9 @@ app.startSocket = function (server) {
         case 'rediscoverNode':
           gw.rediscoverNode(data.node_id)
           break;
+        case 'disableDiscovery':
+          gw.disableDiscovery(data.node_id)
+          break;
         case 'update':
           gw.zwave.updateDevice(data.device, data.node_id)
           break;
