@@ -5,19 +5,19 @@
         <v-container fluid>
           <v-layout>
             <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field label="Home ID" disabled v-model="homeid"></v-text-field>
+              <v-text-field label="Home ID" readonly v-model="homeid"></v-text-field>
             </v-flex>
             <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field label="Home Hex" disabled v-model="homeHex"></v-text-field>
+              <v-text-field label="Home Hex" readonly v-model="homeHex"></v-text-field>
             </v-flex>
             <v-flex xs12 sm3 md2>
-              <v-text-field label="Openzwave" disabled v-model="ozwVersion"></v-text-field>
+              <v-text-field label="Openzwave" readonly v-model="ozwVersion"></v-text-field>
             </v-flex>
           </v-layout>
 
           <v-layout>
             <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field label="Controller status" disabled v-model="cnt_status"></v-text-field>
+              <v-text-field label="Controller status" readonly v-model="cnt_status"></v-text-field>
             </v-flex>
 
             <v-flex xs12 sm6 md4>

@@ -2,7 +2,7 @@
   <div v-if="value.read_only">
     <v-text-field
       :label="value.label +' ('+value.value_id+')'"
-      disabled
+      readonly
       :suffix="value.units"
       :hint="value.help || ''"
       v-model="value.value"
