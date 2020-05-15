@@ -18,6 +18,7 @@ var utils = reqlib('/lib/utils.js')
 var gw; //the gateway instance
 let io;
 
+debug('Zwave2Mqtt version: ' + require('./package-lock.json').version)
 debug('Application path:' + utils.getPath(true))
 
 // view engine setup
