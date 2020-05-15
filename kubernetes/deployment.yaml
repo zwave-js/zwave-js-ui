@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zwave
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: zwave
+  template:
+    metadata:
+      labels:
+        name: zwave
+    spec:
+      containers:
+        - name: zwave
+          image: openzwave/zwave2mqtt:latest
+          livenessProbe:
+            failureThreshold: 12
+            httpGet:
+              httpHeaders:
+                - name: Accept
+                  value: text/plain
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          ports:
+            - containerPort: 8091
+              name: http
+              protocol: TCP
+          resources:
+            limits:
+              cpu: "1"
+              memory: 512Mi
+            requests:
+              cpu: "1"
+              memory: 400Mi
+          securityContext:
+            allowPrivilegeEscalation: true
+            privileged: true
+          volumeMounts:
+            - mountPath: /dev/ttyUSB1
+              name: zwavestick
+            - mountPath: /usr/src/app/store
+              name: data
+          # - mountPath: /usr/local/etc/openzwave
+          #   name: ozwdatabase
+          # - mountPath: /usr/src/app/store/settings.json <-- if putting your settings.json in a secret
+          #   name: config
+          #   readOnly: true
+          #   subPath: settings.json
+      # nodeSelector:
+      #   kubernetes.io/hostname: stick1 #<--- the name of your cluster node that the zwave usb stick in
+      volumes:
+        # - name: config <-- if putting your settings.json in a secret
+        #   secret:
+        #     defaultMode: 420
+        #     secretName: zwave2mqtt
+        - name: zwavestick
+          hostPath:
+            path: /dev/ttyACM0
+            type: File
+        - name: data
+          hostPath:
+            path: /zwave/data
+        # - name: ozwdatabase
+        #   hostPath:
+        #     path: /zwave/database

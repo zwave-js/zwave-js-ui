@@ -16,7 +16,7 @@
 
 <a href="https://www.buymeacoffee.com/MVg9wc2HE" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
-[![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
+[![dockeri.co](https://dockeri.co/image/openzwave/zwave2mqtt)](https://hub.docker.com/r/openzwave/zwave2mqtt)
 
 ![OpenZWave](docs/OZW_Logo.png)
 **TO**
@@ -38,6 +38,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
   - [📖 Table of contents](#%f0%9f%93%96-table-of-contents)
   - [:electric_plug: Installation](#electricplug-installation)
     - [DOCKER :tada: way](#docker-tada-way)
+    - [Kubernetes way](#kubernetes-way)
     - [NodeJS or PKG version](#nodejs-or-pkg-version)
   - [:nerd_face: Development](#nerdface-development)
   - [:wrench: Usage](#wrench-usage)
@@ -86,24 +87,52 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
 
 ### DOCKER :tada: way
 
-Check [docker repo](https://github.com/robertsLando/Zwave2Mqtt-docker#install) for more info
-
 ```bash
 # Using volumes as persistence
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app/store robertslando/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app/store openzwave/zwave2mqtt:latest
 
 # Using local folder as persistence
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store openzwave/zwave2mqtt:latest
 
 # As a service
-wget https://raw.githubusercontent.com/robertsLando/Zwave2Mqtt-docker/master/compose/docker-compose.yml
+wget https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/docker-compose.yml
 docker-compose up
 ```
 
 > Replace `/dev/ttyACM0` with your serial device
 
 Enjoy :smile:
+
+#### Auto Update OZW device database
+
+If you would like to enable this feature of OZW you need to keep the device database inside a volume or a local folder and map it inside the container. To do this follow this steps:
+
+```sh
+APP=$(docker run --rm -it -d robertslando/zwave2mqtt:latest)
+docker cp $APP:/usr/local/etc/openzwave ./
+docker kill $APP
+```
+
+With this command you should have copied all your container device db in a local folder named `openzwave`. Now you should map this folder inside your container:
+
+By adding an option:
+
+`-v $(pwd)/openzwave:/usr/local/etc/openzwave`
+
+Or in docker-compose file:
+
+```yml
+volumes:
+      - ./openzwave:/usr/local/etc/openzwave
+```
+
+### Kubernetes way
+
+```bash
+kubectl apply -k https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/kustomize.yml
+```
+> You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](./kubernetes) directory of this repo
 
 ### NodeJS or PKG version
 

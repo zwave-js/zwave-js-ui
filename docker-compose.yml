@@ -1,0 +1,22 @@
+version: "3.7"
+services:
+  zwave2mqtt:
+    container_name: zwave2mqtt
+    image: openzwave/zwave2mqtt:latest
+    restart: always
+    tty: true
+    stop_signal: SIGINT
+    networks:
+      - zwave
+    devices:
+      - "/dev/ttyACM0:/dev/ttyACM0"
+    volumes:
+      - ./store:/usr/src/app/store
+    ports:
+      - "8091:8091"
+networks:
+  zwave:
+# volumes:
+#   zwave2mqtt:
+#     name: zwave2mqtt
+

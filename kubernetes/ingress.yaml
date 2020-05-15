@@ -1,0 +1,12 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: zwave
+spec:
+  rules:
+    - host: zwave.example.com
+      http:
+        paths:
+          - backend:
+              serviceName: zwave
+              servicePort: http

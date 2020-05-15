@@ -1,16 +1,50 @@
-name: Trigger Docker Build
+name: Docker Build
 
 on:
   push:
-    branches: 
-      - 'master'
+    branches:
+      - master
+  pull_request:
+  release:
+    types:
+      - created
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-       - name: Repository Dispatch
-         uses: peter-evans/repository-dispatch@v1
-         with:
-           token: ${{ secrets.DOCKER_REPO_TOKEN }}
-           repository: robertsLando/Zwave2Mqtt-docker
-           event-type: build
+      - uses: actions/checkout@v2
+
+      - name: Just build on PR
+        if: ${{ github.event_name == 'pull_request' }}
+        run: docker build .
+
+      - name: Login to dockerhub
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      - uses: crazy-max/ghaction-docker-buildx@v1
+        if: ${{ github.event_name != 'pull_request' }}
+
+      - name: Dev
+        if: ${{ github.ref == 'git/refs/heads/master'}}
+        run: |
+          docker buildx build \
+          --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
+          -t openzwave/zwave2mqtt:latest \
+          --push \
+          .
+
+      - name: Latest & tag
+        if: ${{ github.event_name == 'release' }}
+        run: |
+          docker buildx build \
+          --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
+          -t openzwave/zwave2mqtt:$(echo ${GITHUB_REF} | sed "s/git\/refs\/tags\/v//") \
+          -t openzwave/zwave2mqtt:latest \
+          --push \
+          .

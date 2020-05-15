@@ -1,0 +1,9 @@
+.git
+.github
+*.md
+docs
+.vscode
+.nyc_output
+.coverage
+pkg
+test
