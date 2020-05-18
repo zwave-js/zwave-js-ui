@@ -2,7 +2,7 @@ version: "3.7"
 services:
   zwave2mqtt:
     container_name: zwave2mqtt
-    image: openzwave/zwave2mqtt:latest
+    image: robertslando/zwave2mqtt:latest
     restart: always
     tty: true
     stop_signal: SIGINT

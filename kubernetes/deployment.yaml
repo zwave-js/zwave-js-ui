@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: zwave
-          image: openzwave/zwave2mqtt:latest
+          image: robertslando/zwave2mqtt:latest
           livenessProbe:
             failureThreshold: 12
             httpGet:

@@ -1,9 +1,11 @@
 # Zwave To MQTT
 
+![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/Zwave2Mqtt)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/1897-shield.svg)](https://madewithvuejs.com/p/zwave2mqtt/shield-link)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
-![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/Zwave2Mqtt)
+![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)
+![Docker Build](https://github.com/OpenZWave/Zwave2Mqtt/workflows/Docker%20Build/badge.svg)
 ![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/Zwave2Mqtt/total)
 [![Coverage Status](https://coveralls.io/repos/github/OpenZWave/Zwave2Mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/Zwave2Mqtt?branch=master)
 [![Known Vulnerabilities](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt?targetFile=package.json)
@@ -96,42 +98,20 @@ mkdir store
 docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store openzwave/zwave2mqtt:latest
 
 # As a service
-wget https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/docker-compose.yml
+wget https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/docker/docker-compose.yml
 docker-compose up
 ```
 
 > Replace `/dev/ttyACM0` with your serial device
 
-Enjoy :smile:
-
-#### Auto Update OZW device database
-
-If you would like to enable this feature of OZW you need to keep the device database inside a volume or a local folder and map it inside the container. To do this follow this steps:
-
-```sh
-APP=$(docker run --rm -it -d robertslando/zwave2mqtt:latest)
-docker cp $APP:/usr/local/etc/openzwave ./
-docker kill $APP
-```
-
-With this command you should have copied all your container device db in a local folder named `openzwave`. Now you should map this folder inside your container:
-
-By adding an option:
-
-`-v $(pwd)/openzwave:/usr/local/etc/openzwave`
-
-Or in docker-compose file:
-
-```yml
-volumes:
-      - ./openzwave:/usr/local/etc/openzwave
-```
+For more info about docker check [here](docker/README.md)
 
 ### Kubernetes way
 
 ```bash
 kubectl apply -k https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/kustomize.yml
 ```
+
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](./kubernetes) directory of this repo
 
 ### NodeJS or PKG version
