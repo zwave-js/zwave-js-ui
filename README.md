@@ -18,7 +18,7 @@
 
 <a href="https://www.buymeacoffee.com/MVg9wc2HE" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
-[![dockeri.co](https://dockeri.co/image/openzwave/zwave2mqtt)](https://hub.docker.com/r/openzwave/zwave2mqtt)
+[![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
 
 ![OpenZWave](docs/OZW_Logo.png)
 **TO**
@@ -91,11 +91,11 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
 
 ```bash
 # Using volumes as persistence
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app/store openzwave/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app/store robertslando/zwave2mqtt:latest
 
 # Using local folder as persistence
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store openzwave/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwave2mqtt:latest
 
 # As a service
 wget https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/docker/docker-compose.yml

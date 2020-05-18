@@ -247,13 +247,13 @@ The docker images are the latest stable images of the [zwave2mqtt](https://githu
 ```bash
 git clone https://github.com/OpenZWave/Zwave2Mqtt.git
 cd Zwave2Mqtt/docker
-docker build --build-arg Z2M_GIT_SHA1=master --build-arg OPENZWAVE_GIT_SHA1=master -t robertslando/zwave2mqtt:latest .
+docker build -f docker/Dockerfile --build-arg Z2M_GIT_SHA1=master --build-arg OPENZWAVE_GIT_SHA1=master -t robertslando/zwave2mqtt:latest .
 ```
 
 Build just the `build` container
 
 ```bash
-docker build --target=build -t robertslando/zwave2mqtt_build .
+docker build -f docker/Dockerfile --target=build -t robertslando/zwave2mqtt_build .
 
 ```
 

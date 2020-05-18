@@ -37,7 +37,7 @@ jobs:
           docker buildx build \
           -f docker/Dockerfile \
           --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
-          -t robertslando/zwave2mqtt:latest \
+          -t robertslando/zwave2mqtt:dev \
           --push \
           .
 
