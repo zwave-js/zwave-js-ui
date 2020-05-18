@@ -31,7 +31,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
 
       - name: Dev
-        if: ${{ github.ref == 'git/refs/heads/master'}}
+        if: ${{ github.ref == 'refs/heads/master'}}
         run: |
           docker buildx build \
           --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
