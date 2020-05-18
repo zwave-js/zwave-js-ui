@@ -128,7 +128,7 @@
     "@babel/plugin-transform-runtime": "^7.9.6",
     "@babel/preset-env": "^7.9.6",
     "@mdi/font": "^5.2.45",
-    "autoprefixer": "^9.7.6",
+    "autoprefixer": "^9.8.0",
     "babel-eslint": "^10.1.0",
     "babel-helper-vue-jsx-merge-props": "^2.0.3",
     "babel-loader": "^8.1.0",
