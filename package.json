@@ -114,7 +114,7 @@
     "vuex": "^3.4.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.9.6",
+    "@babel/core": "^7.10.1",
     "@babel/plugin-proposal-class-properties": "^7.10.1",
     "@babel/plugin-proposal-decorators": "^7.0.0",
     "@babel/plugin-proposal-export-namespace-from": "^7.0.0",
