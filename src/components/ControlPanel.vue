@@ -1215,6 +1215,7 @@ export default {
           self.showSnackbar('Value updated')
         }
         valueId.newValue = data.value
+        valueId.value = data.value
       }
     })
 
