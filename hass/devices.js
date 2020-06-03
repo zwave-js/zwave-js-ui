@@ -181,6 +181,7 @@ module.exports = {
   '2-4-5': [DANFOSS_TRV_ZWAVE], // DanfossZ
   '2-373-5': [DANFOSS_TRV_ZWAVE], // Danfoss LC-13
   '2-40976-266': [DANFOSS_TRV_ZWAVE], // Popp Radiator Thermostat
+  '57-12593-18756': [FAN_DIMMER], // Honeywell 39358 In-Wall Fan Control
   '99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '152-12-25857': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT101
