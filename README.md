@@ -4,9 +4,9 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/1897-shield.svg)](https://madewithvuejs.com/p/zwave2mqtt/shield-link)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
-![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)
-![Docker Build](https://github.com/OpenZWave/Zwave2Mqtt/workflows/Docker%20Build/badge.svg)
-![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/Zwave2Mqtt/total)
+[![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)](https://github.com/OpenZWave/Zwave2Mqtt/actions?query=workflow%3Aci+branch%3Amaster)
+[![Docker Build](https://github.com/OpenZWave/Zwave2Mqtt/workflows/Docker%20Build/badge.svg?branch=master)](https://github.com/OpenZWave/Zwave2Mqtt/actions?query=workflow%3A%22Docker+Build%22+branch%3Amaster)
+[![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/Zwave2Mqtt/total)](https://github.com/OpenZWave/Zwave2Mqtt/releases)
 [![Coverage Status](https://coveralls.io/repos/github/OpenZWave/Zwave2Mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/Zwave2Mqtt?branch=master)
 [![Known Vulnerabilities](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt?targetFile=package.json)
 [![Dependencies Status](https://david-dm.org/OpenZWave/Zwave2Mqtt/status.svg)](https://david-dm.org/OpenZWave/Zwave2Mqtt)
@@ -16,7 +16,7 @@
 
 [![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU "Join channel")
 
-<a href="https://www.buymeacoffee.com/MVg9wc2HE" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee")
 
 [![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
 
@@ -26,17 +26,17 @@
 
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
-- **Backend**: NodeJS, Express, socket.io, Mqttjs, openzwave-shared, Webpack
-- **Frontend**: Vue,  socket.io, [Vuetify](https://github.com/vuetifyjs/vuetify)
+- **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [openzwave-shared](https://github.com/OpenZWave/node-openzwave-shared), [Webpack](https://webpack.js.org/)
+- **Frontend**: [Vue](https://vuejs.org/),  [socket.io](https://github.com/socketio/socket.io), [Vuetify](https://github.com/vuetifyjs/vuetify)
 
-## !! ATTENTION !!
+## !! ATTENTION
 
 After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Openzwave maintainer all issues related to **OZW 1.4** will be ignored and **automatically closed** as it isn't supported anymore, **please use OZW 1.6+**
 
 ## 📖 Table of contents
 
 - [Zwave To MQTT](#zwave-to-mqtt)
-  - [!! ATTENTION !!](#attention)
+  - [!! ATTENTION !!](#-attention)
   - [📖 Table of contents](#%f0%9f%93%96-table-of-contents)
   - [:electric_plug: Installation](#electricplug-installation)
     - [DOCKER :tada: way](#docker-tada-way)
@@ -358,8 +358,9 @@ To replace a failed node from the UI you have to use the command `Replace Failed
 
 If a node is missing or marked as dead. There is a way to cleanup the controller by executing `Remove Failed Node`. This will forcebly delete the node from the controller.
 It can only succeed if:
- - Node has ben first marked as failed using `Has node failed`
- - Marked as Dead by the controller
+
+- Node has ben first marked as failed using `Has node failed`
+- Marked as Dead by the controller
 
 Alive and Sleeping nodes cannot be deleted.
 
