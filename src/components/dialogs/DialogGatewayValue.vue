@@ -32,16 +32,27 @@
                   :items="deviceValues"
                 >
                   <template v-slot:selection="{ item }">
-                  {{ item.label + (item.instance > 1 ? " - Instance " + item.instance : "") }}
+                    {{
+                      item.label +
+                        (item.instance > 1
+                          ? ' - Instance ' + item.instance
+                          : '')
+                    }}
                   </template>
                   <template v-slot:item="{ item }">
-                      <v-list-item-content>
-                        <v-list-item-title>{{ item.label + (item.instance > 1 ? " - Instance " + item.instance : "") }}</v-list-item-title>
-                        <v-list-item-subtitle
-                          style="max-width:500px"
-                          class="text-truncate text-no-wrap"
-                        >{{ item.help }}</v-list-item-subtitle>
-                      </v-list-item-content>
+                    <v-list-item-content>
+                      <v-list-item-title>{{
+                        item.label +
+                          (item.instance > 1
+                            ? ' - Instance ' + item.instance
+                            : '')
+                      }}</v-list-item-title>
+                      <v-list-item-subtitle
+                        style="max-width:500px"
+                        class="text-truncate text-no-wrap"
+                        >{{ item.help }}</v-list-item-subtitle
+                      >
+                    </v-list-item-content>
                   </template>
                 </v-select>
               </v-flex>
@@ -111,14 +122,18 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn color="blue darken-1" text @click="$emit('close')">Cancel</v-btn>
-        <v-btn color="blue darken-1" text @click="$refs.form.validate() && $emit('save')">Save</v-btn>
+        <v-btn
+          color="blue darken-1"
+          text
+          @click="$refs.form.validate() && $emit('save')"
+          >Save</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
-
 export default {
   props: {
     value: Boolean,
@@ -128,7 +143,8 @@ export default {
     devices: Array
   },
   watch: {
-    value (val) { // eslint-disable-line no-unused-vars
+    // eslint-disable-next-line no-unused-vars
+    value (val) {
       this.$refs.form && this.$refs.form.resetValidation()
     }
   },
@@ -143,10 +159,45 @@ export default {
       // sensor binary
       if (!v) {
         return []
-      } else if (v.class_id == 0x30) { // eslint-disable-line eqeqeq
-        return ['battery', 'cold', 'connectivity', 'door', 'garage_door', 'gas', 'heat', 'light', 'lock', 'moisture', 'motion', 'moving', 'occupancy', 'opening', 'plug', 'power', 'presence', 'problem', 'safety', 'smoke', 'sound', 'vibration', 'window']
-      } else if (this.isSensor(v)) { // sensor multilevel and meters
-        return ['battery', 'humidity', 'illuminance', 'signal_strength', 'temperature', 'power', 'pressure', 'timestamp']
+      } else if (v.class_id === 0x30) {
+        // eslint-disable-line eqeqeq
+        return [
+          'battery',
+          'cold',
+          'connectivity',
+          'door',
+          'garage_door',
+          'gas',
+          'heat',
+          'light',
+          'lock',
+          'moisture',
+          'motion',
+          'moving',
+          'occupancy',
+          'opening',
+          'plug',
+          'power',
+          'presence',
+          'problem',
+          'safety',
+          'smoke',
+          'sound',
+          'vibration',
+          'window'
+        ]
+      } else if (this.isSensor(v)) {
+        // sensor multilevel and meters
+        return [
+          'battery',
+          'humidity',
+          'illuminance',
+          'signal_strength',
+          'temperature',
+          'power',
+          'pressure',
+          'timestamp'
+        ]
       } else {
         return []
       }
@@ -159,7 +210,7 @@ export default {
       )
     },
     requiredTopic () {
-      return (this.gw_type !== 2 || !!this.editedValue.topic) || 'Topic required'
+      return this.gw_type !== 2 || !!this.editedValue.topic || 'Topic required'
     }
   },
   data () {

@@ -1,8 +1,6 @@
-module.exports = function() {
+module.exports = function () {
   return {
-    files: [
-      'lib/**/*.js', 
-    ],
+    files: ['lib/**/*.js'],
 
     tests: ['test/**/*.test.js'],
 
@@ -13,5 +11,5 @@ module.exports = function() {
     },
 
     workers: { recycle: true }
-  };
-};
+  }
+}

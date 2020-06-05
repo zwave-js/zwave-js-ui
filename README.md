@@ -14,9 +14,9 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/alerts/)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/context:javascript)
 
-[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU "Join channel")
+[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
 
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee")
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
 [![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
 
@@ -27,7 +27,7 @@
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 - **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [openzwave-shared](https://github.com/OpenZWave/node-openzwave-shared), [Webpack](https://webpack.js.org/)
-- **Frontend**: [Vue](https://vuejs.org/),  [socket.io](https://github.com/socketio/socket.io), [Vuetify](https://github.com/vuetifyjs/vuetify)
+- **Frontend**: [Vue](https://vuejs.org/), [socket.io](https://github.com/socketio/socket.io), [Vuetify](https://github.com/vuetifyjs/vuetify)
 
 ## !! ATTENTION
 
@@ -118,53 +118,53 @@ kubectl apply -k https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/k
 
 1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
 
-    If you are using Ubuntu:
+   If you are using Ubuntu:
 
-    ```sh
-    sudo apt-get install libudev-dev
-    cd ~
-    git clone https://github.com/OpenZWave/open-zwave.git
-    cd openzwave && make && sudo make install
-    sudo ldconfig
-    export LD_LIBRARY_PATH=/usr/local/lib64
-    sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
-    ```
+   ```sh
+   sudo apt-get install libudev-dev
+   cd ~
+   git clone https://github.com/OpenZWave/open-zwave.git
+   cd openzwave && make && sudo make install
+   sudo ldconfig
+   export LD_LIBRARY_PATH=/usr/local/lib64
+   sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
+   ```
 
-    For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
+   For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
 
 2. Test the library: go to openzwave directory `cd openzwave-*` and run the command
 
-    `MinOZW /dev/ttyACM0`
+   `MinOZW /dev/ttyACM0`
 
-    > replace `/dev/ttyACM0` with the USB port where your controller is connected
+   > replace `/dev/ttyACM0` with the USB port where your controller is connected
 
 3. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
 
-    - For the packaged version:
+   - For the packaged version:
 
-       ```sh
-       cd ~
-       mkdir Zwave2Mqtt
-       cd Zwave2Mqtt
-       # download latest version
-       curl -s https://api.github.com/repos/OpenZWave/Zwave2Mqtt/releases/latest  \
-      | grep "browser_download_url.*zip" \
-      | cut -d : -f 2,3 \
-      | tr -d \" \
-      | wget -i -
-       unzip zwave2mqtt-v*.zip
-       ./zwave2mqtt
-       ```
+     ```sh
+     cd ~
+     mkdir Zwave2Mqtt
+     cd Zwave2Mqtt
+     # download latest version
+     curl -s https://api.github.com/repos/OpenZWave/Zwave2Mqtt/releases/latest  \
+     | grep "browser_download_url.*zip" \
+     | cut -d : -f 2,3 \
+     | tr -d \" \
+     | wget -i -
+     unzip zwave2mqtt-v*.zip
+     ./zwave2mqtt
+     ```
 
-    - If you want to compile last code from github:
+   - If you want to compile last code from github:
 
-      ```sh
-      git clone https://github.com/OpenZWave/Zwave2Mqtt
-      cd Zwave2Mqtt
-      npm install
-      npm run build
-      npm start
-      ```
+     ```sh
+     git clone https://github.com/OpenZWave/Zwave2Mqtt
+     cd Zwave2Mqtt
+     npm install
+     npm run build
+     npm start
+     ```
 
 4. Open the browser <http://localhost:8091>
 
@@ -208,7 +208,7 @@ Zwave settings:
 Mqtt settings:
 
 - **Name**: A unique name that identify the Gateway.
-- **Host**: The url of the broker. Insert here the protocol if present, example: `tls://localhost`. Mqtt supports these protocols:  `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
+- **Host**: The url of the broker. Insert here the protocol if present, example: `tls://localhost`. Mqtt supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
 - **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
@@ -226,40 +226,41 @@ Gateway settings:
 
 - **Gateway type**: This setting specify the logic used to publish Zwave Nodes Values in MQTT topics. At the moment there are 3 possible configuration, two are automatic (all values are published in a specific topic) and one needs to manually configure which values you want to publish to MQTT and what topic to use. For every gateway type you can set custom topic values, if gateway is not in 'configure manually' mode you can omit the topic of the values (the topic will depends on the gateway type) and use the table to set values you want to `poll` or if you want to scale them using `post operation`
 
-  1. **ValueId Topics**: *Automatically configured*. The topic where zwave values are published will be:
+  1. **ValueId Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
-      `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
+     `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
 
-      - `mqtt_prefix`: the prefix set in Mqtt Settings
-      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-      - `node_id`: the unique numerical id of the node in Zwave network
-      - `class_id`: the numerical class id of the value
-      - `instance`: the numerical value of value instance
-      - `index`: the numerical index of the value
+     - `mqtt_prefix`: the prefix set in Mqtt Settings
+     - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+     - `node_id`: the unique numerical id of the node in Zwave network
+     - `class_id`: the numerical class id of the value
+     - `instance`: the numerical value of value instance
+     - `index`: the numerical index of the value
 
-  2. **Named Topics**: *Automatically configured*. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
+  2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
 
-      The topic where zwave values are published will be:
+     The topic where zwave values are published will be:
 
-      `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
+     `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
 
-      - `mqtt_prefix`: the prefix set in Mqtt Settings
-      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-      - `class_name`: the node class name corresponding to given class id or `unknownClass_<class_id>` if the class name is not found
-      - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
-      - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
+     - `mqtt_prefix`: the prefix set in Mqtt Settings
+     - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+     - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
+     - `class_name`: the node class name corresponding to given class id or `unknownClass_<class_id>` if the class name is not found
+     - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
+     - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
 
-  3. **Configured Manually**: *Needs configuration*. The topic where zwave values are published will be:
+  3. **Configured Manually**: _Needs configuration_. The topic where zwave values are published will be:
 
-      `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
+     `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
 
-      - `mqtt_prefix`: the prefix set in Mqtt Settings
-      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-      - `value_topic`: the topic you want to use for that value (take from gateway values table).
+     - `mqtt_prefix`: the prefix set in Mqtt Settings
+     - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
+     - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
+     - `value_topic`: the topic you want to use for that value (take from gateway values table).
 
 - **Payload type**: The content of the payload when an update is published:
+
   - **JSON Time-Value**: The payload will be a JSON object like:
 
     ```json
@@ -270,29 +271,29 @@ Gateway settings:
     ```
 
   - **Entire Zwave value Object**
-  The payload will contain all info of a value from Zwave network:
+    The payload will contain all info of a value from Zwave network:
 
-      ```json
-      {
-        "value_id": "3-64-1-0",
-        "node_id": 3,
-        "class_id": 64,
-        "type": "list",
-        "genre": "user",
-        "instance": 1,
-        "index": 0,
-        "label": "Mode",
-        "units": "",
-        "help": "",
-        "read_only": false,
-        "write_only": false,
-        "min": 0,
-        "max": 0,
-        "is_polled": false,
-        "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
-        "value": "Off",
-      }
-      ```
+    ```json
+    {
+      "value_id": "3-64-1-0",
+      "node_id": 3,
+      "class_id": 64,
+      "type": "list",
+      "genre": "user",
+      "instance": 1,
+      "index": 0,
+      "label": "Mode",
+      "units": "",
+      "help": "",
+      "read_only": false,
+      "write_only": false,
+      "min": 0,
+      "max": 0,
+      "is_polled": false,
+      "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
+      "value": "Off"
+    }
+    ```
 
   - **Just value**: The payload will contain only the row Numeric/String value
 
@@ -335,7 +336,7 @@ The Gateway values table can be used with all gateway types to customize specifi
 - **Device**: The device type. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
 - **Value**: The value you want to customize
 - **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
-- **Topic**: The topic to use for this value. It is the topic added  after topic prefix, node name and location. If gateway type is different than `Manual` this can be leave blank and the value topic will be the one based on the gateway configuration chosen
+- **Topic**: The topic to use for this value. It is the topic added after topic prefix, node name and location. If gateway type is different than `Manual` this can be leave blank and the value topic will be the one based on the gateway configuration chosen
 - **Post operation**: If you want to convert your value (eg. '/10' '/100' '*10' '*100')
 - **Poll**: Enable this to set the value `enablePoll` flag
 - **Verify Changes**: Used to verify changes of this values
@@ -396,7 +397,7 @@ To achieve the best possible integration (including MQTT discovery):
 mqtt:
   discovery: true
   discovery_prefix: <your_discovery_prefix>
-  broker: [YOUR MQTT BROKER]  # Remove if you want to use builtin-in MQTT broker
+  broker: [YOUR MQTT BROKER] # Remove if you want to use builtin-in MQTT broker
   birth_message:
     topic: 'hass/status'
     payload: 'online'
@@ -445,7 +446,7 @@ At the moment auto discovery just creates components like `sensor`, `cover` `bin
 
 **UPDATE**: Starting from version 2.0.7 you can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format Zwave2Mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
 
- > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS PLEASE SEND A PR!
+> ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS PLEASE SEND A PR!
 
 #### Identify the Device id
 
@@ -453,7 +454,7 @@ Starting from version 2.2.0 device id is shown on node tab of control panel befo
 
 Before version 2.2.0 you can get the device id in this ways:
 
-First (and easier) option is to add a random value in gateway values table for the desired device, the device id will be visible in first column of the table (`Devices`) between square brackets  `[<deviceID>] Device Name`
+First (and easier) option is to add a random value in gateway values table for the desired device, the device id will be visible in first column of the table (`Devices`) between square brackets `[<deviceID>] Device Name`
 
 Second option would be to retrieve it from [here](https://github.com/OpenZWave/open-zwave/blob/master/config/manufacturer_specific.xml). Each device has Manufacturerid, product id and a product type in **HEX format** and needs to be converted in decimal:
 
@@ -637,16 +638,19 @@ Payload
 
 ```json
 {
-  "data": [1, {
-    "manufacturer": "AEON Labs",
-    "manufacturerid": "0x0086",
-    "product": "ZW090 Z-Stick Gen5 EU",
-    "producttype": "0x0001",
-    "productid": "0x005a",
-    "type": "Static PC Controller",
-    "name": "",
-    "loc": ""
-  }]
+  "data": [
+    1,
+    {
+      "manufacturer": "AEON Labs",
+      "manufacturerid": "0x0086",
+      "product": "ZW090 Z-Stick Gen5 EU",
+      "producttype": "0x0001",
+      "productid": "0x005a",
+      "type": "Static PC Controller",
+      "name": "",
+      "loc": ""
+    }
+  ]
 }
 ```
 
@@ -656,7 +660,7 @@ To call a Zwave API you just need to publish a JSON object like:
 
 ```json
 {
-  "args": [2,1]
+  "args": [2, 1]
 }
 ```
 
@@ -674,9 +678,9 @@ I will get this response (in the same topic without the suffix `/set`):
 
 ```json
 {
-  "success":true,
-  "message":"Success zwave api call",
-  "result":[1]
+  "success": true,
+  "message": "Success zwave api call",
+  "result": [1]
 }
 ```
 
@@ -723,7 +727,7 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 ### Broadcast
 
-You can send broadcast values to *all values with a specific suffix* in the network.
+You can send broadcast values to _all values with a specific suffix_ in the network.
 
 Broadcast API is accessible from:
 
@@ -795,10 +799,10 @@ Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
 
 Thanks to this people for help with issues tracking and contributions:
 
-- [__Chris Nesbitt-Smith__](https://github.com/chrisns)
-- [__Jorge Schrauwen__](https://github.com/sjorge)
-- [__Jay__](https://github.com/jshridha)
-- [__Thiago Oliveira__](https://github.com/chilicheech)
+- [**Chris Nesbitt-Smith**](https://github.com/chrisns)
+- [**Jorge Schrauwen**](https://github.com/sjorge)
+- [**Jay**](https://github.com/jshridha)
+- [**Thiago Oliveira**](https://github.com/chilicheech)
 
 ## :pencil: TODOs
 

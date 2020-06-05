@@ -15,8 +15,10 @@ const FAN_DIMMER = {
     payload_high_speed: 99,
     payload_off: 0,
     payload_on: 255,
-    state_value_template: '{% if (value_json.value | int) == 0 %} 0 {% else %} 255 {% endif %}',
-    speed_value_template: '{% if (value_json.value | int) == 0 %} 0 {% elif (value_json.value | int) <= 32 %} 24 {% elif (value_json.value | int) <= 66 %} 50 {% elif (value_json.value | int) <= 99 %} 99 {% endif %}'
+    state_value_template:
+      '{% if (value_json.value | int) == 0 %} 0 {% else %} 255 {% endif %}',
+    speed_value_template:
+      '{% if (value_json.value | int) == 0 %} 0 {% elif (value_json.value | int) <= 32 %} 24 {% elif (value_json.value | int) <= 66 %} 50 {% elif (value_json.value | int) <= 99 %} 99 {% endif %}'
   }
 }
 
@@ -136,7 +138,8 @@ module.exports = {
       }
     }
   ],
-  '411-1-1': [ // Heatit Thermostat TF 021 (ThermoFloor AS)
+  '411-1-1': [
+    // Heatit Thermostat TF 021 (ThermoFloor AS)
     {
       type: 'climate',
       object_id: 'thermostat',
@@ -157,7 +160,8 @@ module.exports = {
       }
     }
   ],
-  '411-514-3': [ // Heatit Thermostat TF 056 (ThermoFloor AS)
+  '411-514-3': [
+    // Heatit Thermostat TF 056 (ThermoFloor AS)
     {
       type: 'climate',
       object_id: 'thermostat',

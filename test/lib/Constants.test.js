@@ -13,16 +13,27 @@ describe('#Constants', () => {
       map = mod._productionMap
       mod._productionMap = { 1: 'foo' }
     })
-    after(() => { mod._productionMap = map })
+    after(() => {
+      mod._productionMap = map
+    })
     it('known', () =>
-      mod.productionType(1).should.deep.equal({ objectId: 'foo', props: { device_class: 'power' }, sensor: 'energy_production' })
-    )
+      mod.productionType(1).should.deep.equal({
+        objectId: 'foo',
+        props: { device_class: 'power' },
+        sensor: 'energy_production'
+      }))
     it('unknown', () =>
-      mod.productionType(2).should.deep.equal({ objectId: 'unknown', props: { device_class: 'power' }, sensor: 'energy_production' })
-    )
+      mod.productionType(2).should.deep.equal({
+        objectId: 'unknown',
+        props: { device_class: 'power' },
+        sensor: 'energy_production'
+      }))
     it('timestamp', () =>
-      mod.productionType(3).should.deep.equal({ objectId: 'unknown', props: { device_class: 'timestamp' }, sensor: 'energy_production' })
-    )
+      mod.productionType(3).should.deep.equal({
+        objectId: 'unknown',
+        props: { device_class: 'timestamp' },
+        sensor: 'energy_production'
+      }))
   })
   describe('#meterType()', () => {
     let sensorType
@@ -35,8 +46,10 @@ describe('#Constants', () => {
       mod._metersMap = map
       sensorType.restore()
     })
-    it('known', () => mod.meterType(1).should.deep.equal({ objectId: 'foo_meter' }))
-    it('unknown', () => mod.meterType(2).should.deep.equal({ objectId: 'unknown_meter' }))
+    it('known', () =>
+      mod.meterType(1).should.deep.equal({ objectId: 'foo_meter' }))
+    it('unknown', () =>
+      mod.meterType(2).should.deep.equal({ objectId: 'unknown_meter' }))
     describe('electricity', () => {
       before(() => {
         sensorType.resetHistory()
@@ -67,7 +80,9 @@ describe('#Constants', () => {
       map = mod._alarmMap
       mod._alarmMap = { 1: 'foo' }
     })
-    after(() => { mod._alarmMap = map })
+    after(() => {
+      mod._alarmMap = map
+    })
     it('known', () => mod.alarmType(1).should.equal('foo'))
     it('unknown', () => mod.alarmType(3).should.equal('unknown_3'))
   })
@@ -75,24 +90,32 @@ describe('#Constants', () => {
     let map
     before(() => {
       map = mod._sensorMap
-      mod._sensorMap = { foo: { 1: 'bar', props: { a: 'b', c: 'd' } }, bar: { 2: 'foo' } }
+      mod._sensorMap = {
+        foo: { 1: 'bar', props: { a: 'b', c: 'd' } },
+        bar: { 2: 'foo' }
+      }
     })
-    after(() => { mod._sensorMap = map })
-    it('known', () => mod.sensorType(1).should.deep.equal({
-      sensor: 'foo',
-      objectId: 'bar',
-      props: { a: 'b', c: 'd' }
-    }))
-    it('no props', () => mod.sensorType(2).should.deep.equal({
-      sensor: 'bar',
-      objectId: 'foo',
-      props: {}
-    }))
-    it('unknown', () => mod.sensorType(3).should.deep.equal({
-      sensor: 'generic',
-      objectId: 'unknown_3',
-      props: {}
-    }))
+    after(() => {
+      mod._sensorMap = map
+    })
+    it('known', () =>
+      mod.sensorType(1).should.deep.equal({
+        sensor: 'foo',
+        objectId: 'bar',
+        props: { a: 'b', c: 'd' }
+      }))
+    it('no props', () =>
+      mod.sensorType(2).should.deep.equal({
+        sensor: 'bar',
+        objectId: 'foo',
+        props: {}
+      }))
+    it('unknown', () =>
+      mod.sensorType(3).should.deep.equal({
+        sensor: 'generic',
+        objectId: 'unknown_3',
+        props: {}
+      }))
   })
   describe('#commandClass()', () => {
     let map
@@ -100,7 +123,9 @@ describe('#Constants', () => {
       map = mod._commandClassMap
       mod._commandClassMap = { 1: 'foo' }
     })
-    after(() => { mod._commandClassMap = map })
+    after(() => {
+      mod._commandClassMap = map
+    })
     it('known', () => mod.commandClass(1).should.equal('foo'))
     it('unknown', () => mod.commandClass(3).should.equal('unknownClass_3'))
   })

@@ -10,143 +10,142 @@
           v-model="valid_zwave"
           ref="form_settings"
         >
+          <v-expansion-panels accordion multiple>
+            <v-expansion-panel key="zwave">
+              <v-expansion-panel-header>Zwave</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-layout wrap>
+                      <v-flex xs12 sm6>
+                        <v-combobox
+                          v-model="zwave.port"
+                          label="Serial Port"
+                          hint="Ex /dev/ttyUSB0"
+                          persistent-hint
+                          :rules="[rules.required]"
+                          required
+                          :items="serial_ports"
+                        ></v-combobox>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-text-field
+                          v-model="zwave.networkKey"
+                          label="Network Key"
+                          :rules="[rules.validKey]"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable zwave library logging"
+                          persistent-hint
+                          label="Logging"
+                          v-model="zwave.logging"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Save configuration files zwcfg and zwscene .xml"
+                          persistent-hint
+                          label="Save configuration"
+                          v-model="zwave.saveConfig"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Automatically update Zwave devices database"
+                          persistent-hint
+                          label="Auto update database"
+                          v-model="zwave.autoUpdateConfig"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Assume Devices that support the Wakeup Class are awake when starting up OZW"
+                          persistent-hint
+                          label="Assume awake"
+                          v-model="zwave.assumeAwake"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Automatically call RefreshNodeInfo on every node after scan is complete"
+                          persistent-hint
+                          label="Refresh node info"
+                          v-model="zwave.refreshNodeInfo"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Automatically heal network at a specific time"
+                          persistent-hint
+                          label="Auto Heal Network"
+                          v-model="zwave.healNetwork"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6 sm6 v-if="zwave.healNetwork">
+                        <v-text-field
+                          v-model.number="zwave.healHour"
+                          label="Heal Time"
+                          :rules="[rules.required, rules.inRange]"
+                          required
+                          min="0"
+                          max="23"
+                          suffix=":00"
+                          hint="Select the Hour (0-23) at witch the network should heal"
+                          type="number"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-text-field
+                          v-model.number="zwave.pollInterval"
+                          label="Poll interval"
+                          :rules="[rules.required]"
+                          required
+                          suffix="millis"
+                          hint="Milliseconds between each pull (should not be less than 1s per device)"
+                          type="number"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-text-field
+                          v-model.number="zwave.commandsTimeout"
+                          label="Commands timeout"
+                          :rules="[rules.required]"
+                          required
+                          suffix="seconds"
+                          hint="Seconds to wait before stop inclusion/exclusion mode"
+                          type="number"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-text-field
+                          v-model.trim="zwave.configPath"
+                          label="Config Path"
+                          required
+                          hint="Path to devices library DB. If not set the default path will be used based on your OS"
+                        ></v-text-field>
+                      </v-flex>
+                      <input type="hidden" :value="zwave.plugin" />
+                      <input type="hidden" :value="zwave.options" />
+                    </v-layout>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
 
-        <v-expansion-panels accordion multiple>
-          <v-expansion-panel key="zwave">
-            <v-expansion-panel-header>Zwave</v-expansion-panel-header>
-            <v-expansion-panel-content>
-              <v-card flat>
-                <v-card-text>
-                  <v-layout wrap>
-                    <v-flex xs12 sm6>
-                      <v-combobox
-                        v-model="zwave.port"
-                        label="Serial Port"
-                        hint="Ex /dev/ttyUSB0"
-                        persistent-hint
-                        :rules="[rules.required]"
-                        required
-                        :items="serial_ports"
-                      ></v-combobox>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-text-field
-                        v-model="zwave.networkKey"
-                        label="Network Key"
-                        :rules="[rules.validKey]"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Enable zwave library logging"
-                        persistent-hint
-                        label="Logging"
-                        v-model="zwave.logging"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Save configuration files zwcfg and zwscene .xml"
-                        persistent-hint
-                        label="Save configuration"
-                        v-model="zwave.saveConfig"
-                      ></v-switch>
-                    </v-flex>
-                     <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Automatically update Zwave devices database"
-                        persistent-hint
-                        label="Auto update database"
-                        v-model="zwave.autoUpdateConfig"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Assume Devices that support the Wakeup Class are awake when starting up OZW"
-                        persistent-hint
-                        label="Assume awake"
-                        v-model="zwave.assumeAwake"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Automatically call RefreshNodeInfo on every node after scan is complete"
-                        persistent-hint
-                        label="Refresh node info"
-                        v-model="zwave.refreshNodeInfo"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs12 sm6>
-                      <v-switch
-                        hint="Automatically heal network at a specific time"
-                        persistent-hint
-                        label="Auto Heal Network"
-                        v-model="zwave.healNetwork"
-                      ></v-switch>
-                    </v-flex>
-                    <v-flex xs6 sm6 v-if="zwave.healNetwork">
-                      <v-text-field
-                        v-model.number="zwave.healHour"
-                        label="Heal Time"
-                        :rules="[rules.required, rules.inRange]"
-                        required
-                        min="0"
-                        max="23"
-                        suffix=":00"
-                        hint="Select the Hour (0-23) at witch the network should heal"
-                        type="number"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs6>
-                      <v-text-field
-                        v-model.number="zwave.pollInterval"
-                        label="Poll interval"
-                        :rules="[rules.required]"
-                        required
-                        suffix="millis"
-                        hint="Milliseconds between each pull (should not be less than 1s per device)"
-                        type="number"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs6>
-                      <v-text-field
-                        v-model.number="zwave.commandsTimeout"
-                        label="Commands timeout"
-                        :rules="[rules.required]"
-                        required
-                        suffix="seconds"
-                        hint="Seconds to wait before stop inclusion/exclusion mode"
-                        type="number"
-                      ></v-text-field>
-                    </v-flex>
-                    <v-flex xs6>
-                      <v-text-field
-                        v-model.trim="zwave.configPath"
-                        label="Config Path"
-                        required
-                        hint="Path to devices library DB. If not set the default path will be used based on your OS"
-                      ></v-text-field>
-                    </v-flex>
-                    <input type="hidden" :value="zwave.plugin">
-                    <input type="hidden" :value="zwave.options">
-                  </v-layout>
-                </v-card-text>
-              </v-card>
-            </v-expansion-panel-content>
-          </v-expansion-panel>
+            <v-divider></v-divider>
 
-          <v-divider></v-divider>
+            <v-container xs12 sm6 ml-1>
+              <v-switch
+                hint="Enable this to use Z2M only as Control Panel"
+                persistent-hint
+                label="Disable Gateway"
+                v-model="mqtt.disabled"
+              ></v-switch>
+            </v-container>
 
-          <v-container xs12 sm6 ml-1>
-            <v-switch
-              hint="Enable this to use Z2M only as Control Panel"
-              persistent-hint
-              label="Disable Gateway"
-              v-model="mqtt.disabled"
-            ></v-switch>
-          </v-container>
-
-            <v-expansion-panel key="mqtt"  v-if="!mqtt.disabled">
+            <v-expansion-panel key="mqtt" v-if="!mqtt.disabled">
               <v-expansion-panel-header>Mqtt</v-expansion-panel-header>
               <v-expansion-panel-content>
                 <v-card flat>
@@ -205,7 +204,7 @@
                           label="QoS"
                           :rules="[rules.required]"
                           required
-                          :items="[0,1,2]"
+                          :items="[0, 1, 2]"
                         ></v-select>
                       </v-flex>
                       <v-flex xs12 sm6>
@@ -387,43 +386,69 @@
                     <v-data-table
                       :headers="headers"
                       :items="gateway.values"
-                      :items-per-page-options="[10, 20, {'text':'All','value':-1}]"
+                      :items-per-page-options="[
+                        10,
+                        20,
+                        { text: 'All', value: -1 }
+                      ]"
                       class="elevation-1"
                     >
                       <template v-slot:item="{ item }">
                         <tr>
                           <td>{{ deviceName(item.device) }}</td>
-                          <td>{{ item.value.label + ' (' + item.value.value_id + ')' }}</td>
+                          <td>
+                            {{
+                              item.value.label +
+                                ' (' +
+                                item.value.value_id +
+                                ')'
+                            }}
+                          </td>
                           <td class="text-xs">{{ item.topic }}</td>
-                          <td class="text-xs">{{ item.postOperation || 'No operation' }}</td>
-                          <td
-                            class="text-xs"
-                          >{{ item.enablePoll ? ("Intensity " + item.pollIntensity) : 'No' }}</td>
-                          <td
-                            class="text-xs"
-                          >{{ item.verifyChanges ? "Verified" : 'Not Verified' }}</td>
+                          <td class="text-xs">
+                            {{ item.postOperation || 'No operation' }}
+                          </td>
+                          <td class="text-xs">
+                            {{
+                              item.enablePoll
+                                ? 'Intensity ' + item.pollIntensity
+                                : 'No'
+                            }}
+                          </td>
+                          <td class="text-xs">
+                            {{
+                              item.verifyChanges ? 'Verified' : 'Not Verified'
+                            }}
+                          </td>
                           <td class="justify-center layout px-0">
                             <v-icon
                               small
                               class="mr-2"
                               color="green"
                               @click="editItem(item)"
-                            >edit</v-icon>
-                            <v-icon small color="red" @click="deleteItem(item)">delete</v-icon>
+                              >edit</v-icon
+                            >
+                            <v-icon small color="red" @click="deleteItem(item)"
+                              >delete</v-icon
+                            >
                           </td>
                         </tr>
                       </template>
                     </v-data-table>
                   </v-card-text>
                   <v-card-actions>
-                    <v-btn color="blue darken-1" text @click="dialogValue = true">New Value</v-btn>
+                    <v-btn
+                      color="blue darken-1"
+                      text
+                      @click="dialogValue = true"
+                      >New Value</v-btn
+                    >
                   </v-card-actions>
                 </v-card>
               </v-expansion-panel-content>
             </v-expansion-panel>
 
             <v-divider></v-divider>
-
           </v-expansion-panels>
 
           <DialogGatewayValue
@@ -455,7 +480,6 @@
     </v-card>
 
     <Confirm ref="confirm"></Confirm>
-
   </v-container>
 </template>
 
@@ -501,7 +525,11 @@ export default {
       )
     },
     validPayload () {
-      return (!this.gateway.hassDiscovery || this.gateway.payloadType !== 2) || 'Hass discovery doesn\'t works with this payload type'
+      return (
+        !this.gateway.hassDiscovery ||
+        this.gateway.payloadType !== 2 ||
+        "Hass discovery doesn't works with this payload type"
+      )
     },
     requiredPassword () {
       return (
@@ -648,8 +676,11 @@ export default {
     },
     async deleteItem (item) {
       const index = this.gateway.values.indexOf(item)
-      await this.confirm('Attention', 'Are you sure you want to delete this item?', 'alert') &&
-        this.gateway.values.splice(index, 1)
+      ;(await this.confirm(
+        'Attention',
+        'Are you sure you want to delete this item?',
+        'alert'
+      )) && this.gateway.values.splice(index, 1)
     },
     closeDialog () {
       this.dialogValue = false

@@ -2,7 +2,7 @@
 
 [![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
 
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee")
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
 Docker container for Zwave2Mqtt Gateway and Control Panel app using pkg
 
@@ -20,7 +20,7 @@ Supported architectures are:
 **Available Tags**:
 
 - `latest`: Always points to the latest stable version published (using OZW 1.6)
-- `dev`:  Always point to latest OZW and Zwave2Mqtt master branches
+- `dev`: Always point to latest OZW and Zwave2Mqtt master branches
 - `3.1.0`: OZW 1.6.1115
 - `3.0.4`: OZW 1.6.1115
 - `3.0.3`: OZW 1.6.1080
@@ -65,7 +65,7 @@ docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/
 To run the app as a service you can use the `docker-compose.yml` file you find [here](./docker-compose.yml). Here is the content:
 
 ```yml
-version: "3.7"
+version: '3.7'
 services:
   zwave2mqtt:
     container_name: zwave2mqtt
@@ -76,11 +76,11 @@ services:
     networks:
       - zwave
     devices:
-      - "/dev/ttyACM0:/dev/ttyACM0"
+      - '/dev/ttyACM0:/dev/ttyACM0'
     volumes:
       - ./store:/usr/src/app/store
     ports:
-      - "8091:8091"
+      - '8091:8091'
 networks:
   zwave:
 # volumes:
@@ -238,12 +238,12 @@ Or in docker-compose file:
 
 ```yml
 volumes:
-      - ./openzwave:/usr/local/etc/openzwave
+  - ./openzwave:/usr/local/etc/openzwave
 ```
 
 ## Custom builds
 
-The docker images are the latest stable images of the [zwave2mqtt](https://github.com/OpenZWave/Zwave2Mqtt) repo. If you want to keep your image updated with the latest changes you can build it on your local machine. Just select a commit sha, a branch name, or a tag name, and pass it to docker build using the *--build-arg* option for the *Z2M_GIT_SHA1* and *OPENZWAVE_GIT_SHA1* arguments. For example:
+The docker images are the latest stable images of the [zwave2mqtt](https://github.com/OpenZWave/Zwave2Mqtt) repo. If you want to keep your image updated with the latest changes you can build it on your local machine. Just select a commit sha, a branch name, or a tag name, and pass it to docker build using the _--build-arg_ option for the _Z2M_GIT_SHA1_ and _OPENZWAVE_GIT_SHA1_ arguments. For example:
 
 ```bash
 git clone https://github.com/OpenZWave/Zwave2Mqtt.git

@@ -22,7 +22,7 @@
       :disabled="disabled"
       ref="fileInput"
       @change="onFileChange"
-    >
+    />
   </v-layout>
 </template>
 

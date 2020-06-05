@@ -147,10 +147,11 @@ module.exports = {
     discovery_payload: {
       state_topic: true,
       command_topic: true,
-      rgb_command_template: '{{ \'#%02x%02x%02x\' | format(red, green, blue)}}',
+      rgb_command_template: "{{ '#%02x%02x%02x' | format(red, green, blue)}}",
       rgb_command_topic: true,
       rgb_state_topic: true,
-      rgb_value_template: '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+      rgb_value_template:
+        '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
     }
   },
   light_rgb_dimmer: {
@@ -163,11 +164,13 @@ module.exports = {
       brightness_command_topic: true,
       on_command_type: 'first',
       state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
-      brightness_value_template: '{{ (value_json.value / 99 * 255) | round(0) }}',
+      brightness_value_template:
+        '{{ (value_json.value / 99 * 255) | round(0) }}',
       rgb_command_template: '{{ "#%02x%02x%02x" | format(red, green, blue)}}',
       rgb_command_topic: true,
       rgb_state_topic: true,
-      rgb_value_template: '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+      rgb_value_template:
+        '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
     }
   },
   light_dimmer: {
@@ -179,7 +182,8 @@ module.exports = {
       state_topic: true,
       state_template: '{{ "off" if value_json.value == 0 else "on" }}',
       command_topic: true,
-      command_on_template: '{{ ((brightness / 255 * 99) | round(0)) if brightness is defined else 255 }}',
+      command_on_template:
+        '{{ ((brightness / 255 * 99) | round(0)) if brightness is defined else 255 }}',
       command_off_template: '0'
     }
   },
@@ -259,7 +263,8 @@ module.exports = {
       command_topic: true,
       state_locked: 'true',
       state_unlocked: 'false',
-      value_template: '{% if value_json.value == false %} false {% elif value_json.value == true %} true {% else %} unknown {% endif %}'
+      value_template:
+        '{% if value_json.value == false %} false {% elif value_json.value == true %} true {% else %} unknown {% endif %}'
     }
   },
 

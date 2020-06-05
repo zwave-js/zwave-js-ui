@@ -1,16 +1,18 @@
 <template>
   <v-app :dark="dark">
     <v-navigation-drawer clipped-left :mini-variant="mini" v-model="drawer" app>
-        <v-list nav class="py-0">
-          <v-list-item :class="mini && 'px-0'">
-            <v-list-item-avatar>
-              <img style="padding:3px;border-radius:0" src="/static/logo.png" />
-            </v-list-item-avatar>
-            <v-list-item-content>
-              <v-list-item-title>{{"ZWave2MQTT v" + version}}</v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
+      <v-list nav class="py-0">
+        <v-list-item :class="mini && 'px-0'">
+          <v-list-item-avatar>
+            <img style="padding:3px;border-radius:0" src="/static/logo.png" />
+          </v-list-item-avatar>
+          <v-list-item-content>
+            <v-list-item-title>{{
+              'ZWave2MQTT v' + version
+            }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
       <v-divider style="margin-top:8px"></v-divider>
       <v-list nav>
         <v-list-item
@@ -26,7 +28,7 @@
           </v-list-item-content>
         </v-list-item>
         <v-list-item v-if="!mini">
-            <v-switch label="Dark theme" hide-details v-model="dark"></v-switch>
+          <v-switch label="Dark theme" hide-details v-model="dark"></v-switch>
         </v-list-item>
       </v-list>
       <v-footer absolute v-if="!mini" class="pa-3">
@@ -36,7 +38,7 @@
 
     <v-app-bar app>
       <v-app-bar-nav-icon @click.stop="toggleDrawer" />
-      <v-toolbar-title>{{title}}</v-toolbar-title>
+      <v-toolbar-title>{{ title }}</v-toolbar-title>
 
       <v-spacer></v-spacer>
 
@@ -48,9 +50,10 @@
             style="cursor:default;"
             :color="statusColor || 'primary'"
             v-on="on"
-          >swap_horizontal_circle</v-icon>
-         </template>
-        <span>{{status}}</span>
+            >swap_horizontal_circle</v-icon
+          >
+        </template>
+        <span>{{ status }}</span>
       </v-tooltip>
     </v-app-bar>
     <main>
@@ -80,7 +83,6 @@
 </template>
 
 <script>
-
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
 import ConfigApis from '@/apis/ConfigApis'

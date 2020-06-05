@@ -55,7 +55,12 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn color="blue darken-1" text @click="$emit('close')">Cancel</v-btn>
-        <v-btn color="blue darken-1" text @click="$refs.form.validate() && $emit('save')">Save</v-btn>
+        <v-btn
+          color="blue darken-1"
+          text
+          @click="$refs.form.validate() && $emit('save')"
+          >Save</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -75,7 +80,8 @@ export default {
     nodes: Array
   },
   watch: {
-    value (val) { // eslint-disable-line no-unused-vars
+    // eslint-disable-next-line no-unused-vars
+    value (val) {
       this.$refs.form && this.$refs.form.resetValidation()
     }
   },

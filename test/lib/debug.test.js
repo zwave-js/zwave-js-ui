@@ -6,9 +6,7 @@ describe('#debug', () => {
   const mod = rewire('../../lib/debug')
   const fun = mod.__get__('init')
 
-  it('returns debug extend', () =>
-    mod('foo').namespace.should.equal('z2m:foo')
-  )
+  it('returns debug extend', () => mod('foo').namespace.should.equal('z2m:foo'))
 
   describe('set process.env.DEBUG', () => {
     before(() => {
@@ -17,8 +15,7 @@ describe('#debug', () => {
       fun()
     })
     it('should disable logging', () =>
-      mod.__get__('log').enabled('z2m:aa').should.be.false
-    )
+      mod.__get__('log').enabled('z2m:aa').should.be.false)
   })
   describe('unset process.env.DEBUG', () => {
     before(() => {

@@ -5,19 +5,35 @@
         <v-container fluid>
           <v-layout>
             <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field label="Home ID" readonly v-model="homeid"></v-text-field>
+              <v-text-field
+                label="Home ID"
+                readonly
+                v-model="homeid"
+              ></v-text-field>
             </v-flex>
             <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field label="Home Hex" readonly v-model="homeHex"></v-text-field>
+              <v-text-field
+                label="Home Hex"
+                readonly
+                v-model="homeHex"
+              ></v-text-field>
             </v-flex>
             <v-flex xs12 sm3 md2>
-              <v-text-field label="Openzwave" readonly v-model="ozwVersion"></v-text-field>
+              <v-text-field
+                label="Openzwave"
+                readonly
+                v-model="ozwVersion"
+              ></v-text-field>
             </v-flex>
           </v-layout>
 
           <v-layout>
             <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field label="Controller status" readonly v-model="cnt_status"></v-text-field>
+              <v-text-field
+                label="Controller status"
+                readonly
+                v-model="cnt_status"
+              ></v-text-field>
             </v-flex>
 
             <v-flex xs12 sm6 md4>
@@ -34,7 +50,7 @@
               <v-btn icon @click.native="importConfiguration">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                  <v-icon dark color="primary" v-on="on">file_upload</v-icon>
+                    <v-icon dark color="primary" v-on="on">file_upload</v-icon>
                   </template>
                   <span>Import nodes.json Configuration</span>
                 </v-tooltip>
@@ -42,7 +58,9 @@
               <v-btn icon @click.native="exportConfiguration">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
-                  <v-icon dark color="primary" v-on="on">file_download</v-icon>
+                    <v-icon dark color="primary" v-on="on"
+                      >file_download</v-icon
+                    >
                   </template>
                   <span>Export nodes.json Configuration</span>
                 </v-tooltip>
@@ -60,29 +78,46 @@
         <v-data-table
           :headers="headers"
           :items="tableNodes"
-          :items-per-page-options="[10, 20, {'text':'All','value':-1}]"
+          :items-per-page-options="[10, 20, { text: 'All', value: -1 }]"
           item-key="node_id"
           class="elevation-1"
         >
           <template v-slot:item="{ item }">
             <tr
-              :style="{cursor:'pointer', background: selectedNode === item ? $vuetify.theme.themes.light.accent : 'none'}"
+              :style="{
+                cursor: 'pointer',
+                background:
+                  selectedNode === item
+                    ? $vuetify.theme.themes.light.accent
+                    : 'none'
+              }"
               @click.stop="selectNode(item)"
             >
               <td>{{ item.node_id }}</td>
               <td>{{ item.type }}</td>
-              <td>{{ item.ready ? (item.product + ' (' + item.manufacturer + ')') : '' }}</td>
+              <td>
+                {{
+                  item.ready
+                    ? item.product + ' (' + item.manufacturer + ')'
+                    : ''
+                }}
+              </td>
               <td>{{ item.name || '' }}</td>
               <td>{{ item.loc || '' }}</td>
-              <td>{{ item.secure ? 'Yes' : 'No'}}</td>
+              <td>{{ item.secure ? 'Yes' : 'No' }}</td>
               <td>{{ item.status }}</td>
-              <td>{{ item.lastActive ? (new Date(item.lastActive)).toLocaleString() : 'Never' }}</td>
+              <td>
+                {{
+                  item.lastActive
+                    ? new Date(item.lastActive).toLocaleString()
+                    : 'Never'
+                }}
+              </td>
             </tr>
           </template>
         </v-data-table>
 
         <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
-
           <v-tab key="node">Node</v-tab>
           <v-tab key="groups">Groups</v-tab>
           <v-tab key="scenes">Scenes</v-tab>
@@ -92,7 +127,11 @@
           <v-tabs-items v-model="currentTab">
             <!-- TAB NODE INFO -->
             <v-tab-item key="node">
-              <v-container v-if="selectedNode" style="min-width:90%" grid-list-md>
+              <v-container
+                v-if="selectedNode"
+                style="min-width:90%"
+                grid-list-md
+              >
                 <v-layout row>
                   <v-flex xs3>
                     <v-select
@@ -107,13 +146,15 @@
 
                 <v-layout row>
                   <v-flex>
-                    <v-subheader>Device ID: {{selectedNode.device_id}}</v-subheader>
+                    <v-subheader
+                      >Device ID: {{ selectedNode.device_id }}</v-subheader
+                    >
                   </v-flex>
                 </v-layout>
 
                 <v-layout row>
                   <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Name: {{selectedNode.name}}</v-subheader>
+                    <v-subheader>Name: {{ selectedNode.name }}</v-subheader>
                   </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
@@ -129,7 +170,7 @@
 
                 <v-layout row>
                   <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Location: {{selectedNode.loc}}</v-subheader>
+                    <v-subheader>Location: {{ selectedNode.loc }}</v-subheader>
                   </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
@@ -147,81 +188,90 @@
                   <v-subheader>Values</v-subheader>
 
                   <v-expansion-panels accordion multiple>
+                    <!-- USER VALUES -->
+                    <v-expansion-panel>
+                      <v-expansion-panel-header>User</v-expansion-panel-header>
+                      <v-expansion-panel-content>
+                        <v-card flat>
+                          <v-card-text>
+                            <v-flex
+                              v-for="(v, index) in userValues"
+                              :key="index"
+                              xs12
+                            >
+                              <ValueID
+                                @updateValue="updateValue"
+                                v-model="userValues[index]"
+                              ></ValueID>
+                            </v-flex>
+                          </v-card-text>
+                        </v-card>
+                      </v-expansion-panel-content>
+                    </v-expansion-panel>
 
-                  <!-- USER VALUES -->
-                  <v-expansion-panel>
-                    <v-expansion-panel-header>User</v-expansion-panel-header>
-                    <v-expansion-panel-content>
-                      <v-card flat>
-                        <v-card-text>
-                          <v-flex
-                            v-for="(v, index) in userValues"
-                            :key="index"
-                            xs12
-                          >
-                            <ValueID
-                              @updateValue="updateValue"
-                              v-model="userValues[index]"
-                            ></ValueID>
-                          </v-flex>
-                        </v-card-text>
-                      </v-card>
-                    </v-expansion-panel-content>
-                  </v-expansion-panel>
+                    <v-divider></v-divider>
 
-                  <v-divider></v-divider>
+                    <!-- CONFIG VALUES -->
+                    <v-expansion-panel>
+                      <v-expansion-panel-header v-slot="{ open }">
+                        <v-row no-gutters>
+                          <v-col style="max-width:150px">Configuration</v-col>
+                          <v-col v-if="open">
+                            <v-btn
+                              rounded
+                              color="primary"
+                              @click.stop="
+                                sendNodeAction('requestAllConfigParams')
+                              "
+                              dark
+                              >Refresh values</v-btn
+                            >
+                          </v-col>
+                        </v-row>
+                      </v-expansion-panel-header>
+                      <v-expansion-panel-content>
+                        <v-card flat>
+                          <v-card-text>
+                            <v-flex
+                              v-for="(v, index) in configValues"
+                              :key="index"
+                              xs12
+                            >
+                              <ValueID
+                                @updateValue="updateValue"
+                                v-model="configValues[index]"
+                              ></ValueID>
+                            </v-flex>
+                          </v-card-text>
+                        </v-card>
+                      </v-expansion-panel-content>
+                    </v-expansion-panel>
 
-                  <!-- CONFIG VALUES -->
-                  <v-expansion-panel>
-                    <v-expansion-panel-header v-slot="{ open }">
-                      <v-row no-gutters>
-                        <v-col style="max-width:150px">Configuration</v-col>
-                        <v-col v-if="open">
-                          <v-btn rounded color="primary" @click.stop="sendNodeAction('requestAllConfigParams')" dark>Refresh values</v-btn>
-                        </v-col>
-                      </v-row>
-                    </v-expansion-panel-header>
-                    <v-expansion-panel-content>
-                      <v-card flat>
-                        <v-card-text>
-                          <v-flex
-                            v-for="(v, index) in configValues"
-                            :key="index"
-                            xs12
-                          >
-                            <ValueID
-                              @updateValue="updateValue"
-                              v-model="configValues[index]"
-                            ></ValueID>
-                          </v-flex>
-                        </v-card-text>
-                      </v-card>
-                    </v-expansion-panel-content>
-                  </v-expansion-panel>
+                    <v-divider></v-divider>
 
-                  <v-divider></v-divider>
-
-                  <!-- SYSTEM VALUES -->
-                  <v-expansion-panel>
-                    <v-expansion-panel-header>System</v-expansion-panel-header>
-                    <v-expansion-panel-content>
-                      <v-card flat>
-                        <v-card-text>
-                          <v-flex
-                            v-for="(v, index) in systemValues"
-                            :key="index"
-                            xs12
-                          >
-                            <ValueID
-                              @updateValue="updateValue"
-                              v-model="systemValues[index]"
-                            ></ValueID>
-                          </v-flex>
-                        </v-card-text>
-                      </v-card>
-                    </v-expansion-panel-content>
-                  </v-expansion-panel>
-                  <v-divider></v-divider>
+                    <!-- SYSTEM VALUES -->
+                    <v-expansion-panel>
+                      <v-expansion-panel-header
+                        >System</v-expansion-panel-header
+                      >
+                      <v-expansion-panel-content>
+                        <v-card flat>
+                          <v-card-text>
+                            <v-flex
+                              v-for="(v, index) in systemValues"
+                              :key="index"
+                              xs12
+                            >
+                              <ValueID
+                                @updateValue="updateValue"
+                                v-model="systemValues[index]"
+                              ></ValueID>
+                            </v-flex>
+                          </v-card-text>
+                        </v-card>
+                      </v-expansion-panel-content>
+                    </v-expansion-panel>
+                    <v-divider></v-divider>
                   </v-expansion-panels>
                 </v-layout>
 
@@ -231,52 +281,94 @@
                   <!-- HASS DEVICES -->
                   <v-layout v-if="hassDevices.length > 0" raw wrap>
                     <v-flex xs12 md6 pa-1>
-                      <v-btn color="blue darken-1" text @click.native="storeDevices(false)">Store</v-btn>
-                      <v-btn color="red darken-1" text @click.native="storeDevices(true)">Remove Store</v-btn>
-                      <v-btn color="green darken-1" text @click.native="rediscoverNode">Rediscover Node</v-btn>
-                      <v-btn color="yellow darken-1" text @click.native="disableDiscovery">Disable Discovery</v-btn>
+                      <v-btn
+                        color="blue darken-1"
+                        text
+                        @click.native="storeDevices(false)"
+                        >Store</v-btn
+                      >
+                      <v-btn
+                        color="red darken-1"
+                        text
+                        @click.native="storeDevices(true)"
+                        >Remove Store</v-btn
+                      >
+                      <v-btn
+                        color="green darken-1"
+                        text
+                        @click.native="rediscoverNode"
+                        >Rediscover Node</v-btn
+                      >
+                      <v-btn
+                        color="yellow darken-1"
+                        text
+                        @click.native="disableDiscovery"
+                        >Disable Discovery</v-btn
+                      >
 
-                      <v-data-table :headers="headers_hass" :items="hassDevices" class="elevation-1">
+                      <v-data-table
+                        :headers="headers_hass"
+                        :items="hassDevices"
+                        class="elevation-1"
+                      >
                         <template v-slot:item="{ item }">
                           <tr
                             style="cursor:pointer;"
                             :active="selectedDevice == item"
-                            @click="selectedDevice == item ? selectedDevice = null : selectedDevice = item"
+                            @click="
+                              selectedDevice == item
+                                ? (selectedDevice = null)
+                                : (selectedDevice = item)
+                            "
                           >
                             <td class="text-xs">{{ item.id }}</td>
                             <td class="text-xs">{{ item.type }}</td>
                             <td class="text-xs">{{ item.object_id }}</td>
-                            <td class="text-xs">{{ item.persistent ? 'Yes' : 'No' }}</td>
-                            <td class="text-xs">{{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}</td>
+                            <td class="text-xs">
+                              {{ item.persistent ? 'Yes' : 'No' }}
+                            </td>
+                            <td class="text-xs">
+                              {{
+                                item.ignoreDiscovery ? 'Disabled' : 'Enabled'
+                              }}
+                            </td>
                           </tr>
                         </template>
                       </v-data-table>
                     </v-flex>
                     <v-flex xs12 md6 pa-1>
-                      <v-btn v-if="!selectedDevice"
+                      <v-btn
+                        v-if="!selectedDevice"
                         color="blue darken-1"
                         :disabled="errorDevice"
                         text
                         @click.native="addDevice"
-                      >Add</v-btn>
-                      <v-btn v-if="selectedDevice"
+                        >Add</v-btn
+                      >
+                      <v-btn
+                        v-if="selectedDevice"
                         color="blue darken-1"
                         :disabled="errorDevice"
                         text
                         @click.native="updateDevice"
-                      >Update</v-btn>
-                      <v-btn v-if="selectedDevice"
+                        >Update</v-btn
+                      >
+                      <v-btn
+                        v-if="selectedDevice"
                         color="green darken-1"
                         :disabled="errorDevice"
                         text
                         @click.native="rediscoverDevice"
-                      >Rediscover</v-btn>
-                      <v-btn v-if="selectedDevice"
+                        >Rediscover</v-btn
+                      >
+                      <v-btn
+                        v-if="selectedDevice"
                         color="red darken-1"
                         :disabled="errorDevice"
                         text
                         @click.native="deleteDevice"
-                      >Delete</v-btn>
+                        >Delete</v-btn
+                      >
                       <v-textarea
                         label="Hass Device JSON"
                         auto-grow
@@ -357,8 +449,22 @@
                   </v-flex>
 
                   <v-flex v-if="group.node && group.target && group.group" xs12>
-                    <v-btn rounded color="primary" @click.native="addAssociation" dark class="mb-2">Add</v-btn>
-                    <v-btn rounded color="primary" @click.native="removeAssociation" dark class="mb-2">Remove</v-btn>
+                    <v-btn
+                      rounded
+                      color="primary"
+                      @click.native="addAssociation"
+                      dark
+                      class="mb-2"
+                      >Add</v-btn
+                    >
+                    <v-btn
+                      rounded
+                      color="primary"
+                      @click.native="removeAssociation"
+                      dark
+                      class="mb-2"
+                      >Remove</v-btn
+                    >
                   </v-flex>
                 </v-layout>
               </v-container>
@@ -399,9 +505,18 @@
                   </v-flex>
 
                   <v-flex v-if="selectedScene" xs12>
-                    <v-btn color="red darken-1" text @click="removeScene">Delete</v-btn>
-                    <v-btn color="green darken-1" text @click="activateScene">Activate</v-btn>
-                    <v-btn color="blue darken-1" text @click="dialogValue = true">New Value</v-btn>
+                    <v-btn color="red darken-1" text @click="removeScene"
+                      >Delete</v-btn
+                    >
+                    <v-btn color="green darken-1" text @click="activateScene"
+                      >Activate</v-btn
+                    >
+                    <v-btn
+                      color="blue darken-1"
+                      text
+                      @click="dialogValue = true"
+                      >New Value</v-btn
+                    >
                   </v-flex>
                 </v-layout>
 
@@ -426,12 +541,22 @@
                       <td class="text-xs">{{ item.node_id }}</td>
                       <td class="text-xs">{{ item.label }}</td>
                       <td class="text-xs">{{ item.value }}</td>
-                      <td
-                        class="text-xs"
-                      >{{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}</td>
+                      <td class="text-xs">
+                        {{
+                          item.timeout ? 'After ' + item.timeout + 's' : 'No'
+                        }}
+                      </td>
                       <td>
-                        <v-icon small color="green" class="mr-2" @click="editItem(item)">edit</v-icon>
-                        <v-icon small color="red" @click="deleteItem(item)">delete</v-icon>
+                        <v-icon
+                          small
+                          color="green"
+                          class="mr-2"
+                          @click="editItem(item)"
+                          >edit</v-icon
+                        >
+                        <v-icon small color="red" @click="deleteItem(item)"
+                          >delete</v-icon
+                        >
                       </td>
                     </tr>
                   </template>
@@ -444,9 +569,21 @@
               <v-container grid-list-md>
                 <v-layout wrap>
                   <v-flex xs12>
-                    <v-btn color="green darken-1" text @click="debugActive = true">Start</v-btn>
-                    <v-btn color="red darken-1" text @click="debugActive = false">Stop</v-btn>
-                    <v-btn color="blue darken-1" text @click="debug = []">Clear</v-btn>
+                    <v-btn
+                      color="green darken-1"
+                      text
+                      @click="debugActive = true"
+                      >Start</v-btn
+                    >
+                    <v-btn
+                      color="red darken-1"
+                      text
+                      @click="debugActive = false"
+                      >Stop</v-btn
+                    >
+                    <v-btn color="blue darken-1" text @click="debug = []"
+                      >Clear</v-btn
+                    >
                   </v-flex>
                   <v-flex xs12>
                     <div
@@ -460,14 +597,11 @@
               </v-container>
             </v-tab-item>
           </v-tabs-items>
-
         </v-tabs>
-
       </v-card-text>
     </v-card>
 
     <Confirm ref="confirm"></Confirm>
-
   </v-container>
 </template>
 
@@ -523,13 +657,19 @@ export default {
       return devices
     },
     userValues () {
-      return this.selectedNode ? this.selectedNode.values.filter(v => v.genre === 'user') : []
+      return this.selectedNode
+        ? this.selectedNode.values.filter(v => v.genre === 'user')
+        : []
     },
     systemValues () {
-      return this.selectedNode ? this.selectedNode.values.filter(v => v.genre === 'system') : []
+      return this.selectedNode
+        ? this.selectedNode.values.filter(v => v.genre === 'system')
+        : []
     },
     configValues () {
-      return this.selectedNode ? this.selectedNode.values.filter(v => v.genre === 'config') : []
+      return this.selectedNode
+        ? this.selectedNode.values.filter(v => v.genre === 'config')
+        : []
     }
   },
   watch: {
@@ -539,16 +679,14 @@ export default {
     newName (val) {
       var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : [val]
 
-      this.nameError = match[0] !== val
-        ? 'Only a-zA-Z0-9_- chars are allowed'
-        : null
+      this.nameError =
+        match[0] !== val ? 'Only a-zA-Z0-9_- chars are allowed' : null
     },
     newLoc (val) {
       var match = val ? val.match(/[a-zA-Z0-9_-]+/g) : [val]
 
-      this.locError = match[0] !== val
-        ? 'Only a-zA-Z0-9_- chars are allowed'
-        : null
+      this.locError =
+        match[0] !== val ? 'Only a-zA-Z0-9_- chars are allowed' : null
     },
     selectedNode () {
       if (this.selectedNode) {
@@ -802,7 +940,13 @@ export default {
     },
     async importConfiguration () {
       var self = this
-      if (await this.confirm('Attention', 'This will override all existing nodes names and locations', 'alert')) {
+      if (
+        await this.confirm(
+          'Attention',
+          'This will override all existing nodes names and locations',
+          'alert'
+        )
+      ) {
         self.$emit('import', 'json', function (err, data) {
           if (!err && data) {
             ConfigApis.importConfig({ data: data })
@@ -831,7 +975,13 @@ export default {
     },
     async importScenes () {
       var self = this
-      if (await this.confirm('Attention', 'This operation will override all current scenes and cannot be undone', 'alert')) {
+      if (
+        await this.confirm(
+          'Attention',
+          'This operation will override all current scenes and cannot be undone',
+          'alert'
+        )
+      ) {
         this.$emit('import', 'json', function (err, scenes) {
           // TODO: add checks on file entries
           if (scenes instanceof Array) {
@@ -873,7 +1023,14 @@ export default {
       }
     },
     async removeScene () {
-      if (this.selectedScene && await this.confirm('Attention', 'Are you sure you want to delete this scene?', 'alert')) {
+      if (
+        this.selectedScene &&
+        (await this.confirm(
+          'Attention',
+          'Are you sure you want to delete this scene?',
+          'alert'
+        ))
+      ) {
         this.apiRequest('_removeScene', [this.selectedScene])
         this.selectedScene = null
         this.refreshScenes()
@@ -900,7 +1057,13 @@ export default {
       this.dialogValue = true
     },
     async deleteItem (value) {
-      if (await this.confirm('Attention', 'Are you sure you want to delete this item?', 'alert')) {
+      if (
+        await this.confirm(
+          'Attention',
+          'Are you sure you want to delete this item?',
+          'alert'
+        )
+      ) {
         this.apiRequest('_removeSceneValue', [
           this.selectedScene,
           value.node_id,
@@ -913,7 +1076,14 @@ export default {
     },
     async deleteDevice () {
       var device = this.selectedDevice
-      if (device && await this.confirm('Attention', 'Are you sure you want to delete selected device?', 'alert')) {
+      if (
+        device &&
+        (await this.confirm(
+          'Attention',
+          'Are you sure you want to delete selected device?',
+          'alert'
+        ))
+      ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'delete',
           device: device,
@@ -923,7 +1093,13 @@ export default {
     },
     async rediscoverNode () {
       var node = this.selectedNode
-      if (node && await this.confirm('Rediscover node', 'Are you sure you want to re-discover all node values?')) {
+      if (
+        node &&
+        (await this.confirm(
+          'Rediscover node',
+          'Are you sure you want to re-discover all node values?'
+        ))
+      ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'rediscoverNode',
           node_id: this.selectedNode.node_id
@@ -932,7 +1108,13 @@ export default {
     },
     async disableDiscovery () {
       var node = this.selectedNode
-      if (node && await this.confirm('Rediscover node', 'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store')) {
+      if (
+        node &&
+        (await this.confirm(
+          'Rediscover node',
+          'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store'
+        ))
+      ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'disableDiscovery',
           node_id: this.selectedNode.node_id
@@ -941,7 +1123,12 @@ export default {
     },
     async rediscoverDevice () {
       var device = this.selectedDevice
-      if (device && await this.confirm('Are you sure you want to re-discover selected device?')) {
+      if (
+        device &&
+        (await this.confirm(
+          'Are you sure you want to re-discover selected device?'
+        ))
+      ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'discover',
           device: device,
@@ -1019,10 +1206,17 @@ export default {
         }
 
         if (this.cnt_action === 'addNode') {
-          var secure = await this.$refs.confirm.open('Node inclusion', 'Start inclusion in security mode?')
+          var secure = await this.$refs.confirm.open(
+            'Node inclusion',
+            'Start inclusion in security mode?'
+          )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
-          var ok = await this.$refs.confirm.open('Hard Reset', 'Your controller will be reset to factory and all paired devices will be removed', { color: 'red' })
+          var ok = await this.$refs.confirm.open(
+            'Hard Reset',
+            'Your controller will be reset to factory and all paired devices will be removed',
+            { color: 'red' }
+          )
           if (!ok) {
             return
           }
@@ -1136,7 +1330,9 @@ export default {
       this.setName(n)
     },
     setName (n) {
-      n._name = n.name ? (n.name + (n.loc ? ' (' + n.loc + ')' : '')) : 'NodeID_' + n.node_id
+      n._name = n.name
+        ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
+        : 'NodeID_' + n.node_id
     }
   },
   mounted () {
@@ -1169,7 +1365,8 @@ export default {
         if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift()
 
         var textarea = document.getElementById('debug_window')
-        if (textarea) { // textarea could be hidden
+        if (textarea) {
+          // textarea could be hidden
           textarea.scrollTop = textarea.scrollHeight
         }
       }
@@ -1202,7 +1399,9 @@ export default {
       }
       self.$set(self.nodes, data.node_id, data)
 
-      if (this.selectedNode && this.selectedNode.node_id === data.node_id) { this.selectedNode = self.nodes[data.node_id] }
+      if (this.selectedNode && this.selectedNode.node_id === data.node_id) {
+        this.selectedNode = self.nodes[data.node_id]
+      }
     })
 
     this.socket.on(this.socketEvents.valueUpdated, data => {
@@ -1237,7 +1436,10 @@ export default {
             self.scene_values = data.result
             break
           case 'getNodeNeighbors':
-            self.confirm('Node neightbors', self.jsonToList(data.result) || 'No Neightbors found')
+            self.confirm(
+              'Node neightbors',
+              self.jsonToList(data.result) || 'No Neightbors found'
+            )
             break
           case 'getDriverStatistics':
             self.confirm('Driver statistics', self.jsonToList(data.result))
@@ -1258,7 +1460,8 @@ export default {
     this.socket.emit(this.socketActions.init, true)
   },
   beforeDestroy () {
-    if (this.socket) { // unbind events
+    if (this.socket) {
+      // unbind events
       for (const event in this.socketEvents) {
         this.socket.off(event)
       }
