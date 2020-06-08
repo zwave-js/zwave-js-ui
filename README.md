@@ -42,6 +42,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
     - [DOCKER :tada: way](#docker-tada-way)
     - [Kubernetes way](#kubernetes-way)
     - [NodeJS or PKG version](#nodejs-or-pkg-version)
+    - [Reverse Proxy Setup](#reverse-proxy-setup)
   - [:nerd_face: Development](#nerdface-development)
   - [:wrench: Usage](#wrench-usage)
     - [Zwave](#zwave)
@@ -168,6 +169,11 @@ kubectl apply -k https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/k
 
 4. Open the browser <http://localhost:8091>
 
+### Reverse Proxy Setup
+
+If you need to setup ZWave To MQTT behind a reverse proxy that needs a _subpath_ to
+work, take a look at [the reverse proxy configuraiton docs](docs/subpath.md).
+
 ## :nerd_face: Development
 
 Developers who wants to debug the application have to open 2 terminals.
@@ -178,6 +184,19 @@ In first terminal run `npm run dev` to start webpack-dev for front-end developin
 In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
 
 To package the application run `npm run pkg` command and follow the steps
+
+### Developing against a different backend
+
+By default running `npm run dev:server` will proxy the reequests to a backend listening on _localhost_ on port _8091_.
+
+If you want to run the development frontend against a different backend you have the following environment variables
+that you can use to redirect to a different backend:
+
+- **SERVER_HOST**: [Default: 'localhost'] the hostname or IP of the backend server you want to use;
+- **SERVER_PORT**: [Default: '8091'] the port of the backend server you want to use;
+- **SERVER_SSL**: [Default: undefined] if set to a value it will use _https_/_wss_ to connect to the backend;
+- **SERVER_URL**: [Default: use the other variables] the full URL for the backend API, IE: `https://zwavetomqtt.home.net:8443/`
+- **SERVER_WS_URL**: [Default: use the other variables] the full URL for the backend Socket, IE: `wss://zwavetomqtt.home.net:8443/`
 
 ## :wrench: Usage
 

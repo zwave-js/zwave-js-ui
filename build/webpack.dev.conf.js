@@ -2,6 +2,7 @@
 const utils = require('./utils')
 const webpack = require('webpack')
 const config = require('../config')
+const appConfig = require('../config/webConfig')
 const merge = require('webpack-merge')
 const path = require('path')
 const baseWebpackConfig = require('./webpack.base.conf')
@@ -27,14 +28,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
   // these devServer options should be customized in /config/index.js
   devServer: {
     clientLogLevel: 'warning',
-    historyApiFallback: {
-      rewrites: [
-        {
-          from: /.*/,
-          to: path.posix.join(config.dev.assetsPublicPath, 'index.html')
-        }
-      ]
-    },
+    historyApiFallback: true,
     hot: true,
     contentBase: false, // since we use CopyWebpackPlugin.
     compress: true,
@@ -61,8 +55,12 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new webpack.NoEmitOnErrorsPlugin(),
     // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
+      title: 'ZWave To MQTT',
       filename: 'index.html',
-      template: 'index.html',
+      template: 'views/index.ejs',
+      templateParameters: {
+        config: appConfig
+      },
       inject: true
     }),
     // copy custom static assets

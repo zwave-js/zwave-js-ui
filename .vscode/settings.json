@@ -5,5 +5,8 @@
   "eslint.format.enable": true,
   "editor.defaultFormatter": "numso.prettier-standard-vscode",
   "eslint.lintTask.enable": true,
-  "wallaby.startAutomatically": true
+  "wallaby.startAutomatically": true,
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  }
 }

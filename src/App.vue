@@ -4,7 +4,10 @@
       <v-list nav class="py-0">
         <v-list-item :class="mini && 'px-0'">
           <v-list-item-avatar>
-            <img style="padding:3px;border-radius:0" src="/static/logo.png" />
+            <img
+              style="padding:3px;border-radius:0"
+              :src="`${baseURI}/static/logo.png`"
+            />
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>{{
@@ -195,7 +198,8 @@ export default {
       title: '',
       snackbar: false,
       snackbarText: '',
-      dark: false
+      dark: false,
+      baseURI: ConfigApis.getBasePath()
     }
   },
   watch: {
@@ -214,7 +218,9 @@ export default {
 
     var self = this
 
-    this.socket = io(ConfigApis.getSocketIP())
+    this.socket = io('/', {
+      path: ConfigApis.getSocketPath()
+    })
 
     this.socket.on('connect', () => {
       self.updateStatus('Connected', 'green')

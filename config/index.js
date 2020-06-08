@@ -4,12 +4,34 @@
 
 const path = require('path')
 
+const proxyScheme = process.env.SERVER_SSL ? 'https' : 'http'
+const proxyWebSocketScheme = process.env.SERVER_SSL ? 'wss' : 'ws'
+const proxyHostname = process.env.SERVER_HOST
+  ? process.env.SERVER_HOST
+  : 'localhost'
+const proxyPort = process.env.SERVER_PORT ? process.env.SERVER_PORT : '8091'
+
+const proxyURL = process.env.SERVER_URL
+  ? process.env.SERVER_URL
+  : `${proxyScheme}://${proxyHostname}:${proxyPort}`
+
+const proxyWSURL = process.env.SERVER_WS_URL
+  ? process.env.SERVER_WS_URL
+  : `${proxyWebSocketScheme}://${proxyHostname}:${proxyPort}`
+
 module.exports = {
   dev: {
     // Paths
     assetsSubDirectory: 'static',
     assetsPublicPath: '/',
-    proxyTable: {},
+    proxyTable: {
+      '/socket.io': {
+        target: proxyWSURL,
+        ws: true
+      },
+      '/health': proxyURL,
+      '/api': proxyURL
+    },
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST
