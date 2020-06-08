@@ -139,7 +139,7 @@ export default {
   },
   computed: {
     activeNodes () {
-      return this.nodes.filter(n => n.node_id !== 0 && n.status !== 'Removed')
+      return this.nodes.filter(n => n.node_id > 0 && n.status !== 'Removed')
     },
     options () {
       return {
