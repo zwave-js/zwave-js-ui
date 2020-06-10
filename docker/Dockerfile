@@ -35,8 +35,7 @@ RUN rm -rf \
     package.sh \
     src \
     static \
-    stylesheets \
-    views 
+    stylesheets
 
 # ----------------
 # STEP 2:
