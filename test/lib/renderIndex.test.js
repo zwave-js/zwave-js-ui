@@ -23,12 +23,19 @@ const mockResponse = {
 describe('#renderIndex', () => {
   describe('Processing configuration', () => {
     let renderIndex
+    let mockedReaddir
 
     beforeEach(() => {
       renderIndex = rewire('../../lib/renderIndex')
       renderIndex.__set__('webConfig', {
         base: '/configured/path'
       })
+      mockedReaddir = sinon.stub(fs, 'readdirSync')
+      mockedReaddir.returns([])
+    })
+
+    afterEach(() => {
+      mockedReaddir.restore()
     })
 
     it('uses the base from the `X-External-Path` header', () => {

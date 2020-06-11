@@ -33,7 +33,7 @@ server {
 ```
 
 This will tell the application to serve the application and relevant elements under
-`/some/deep/map`.
+`/hassio/ingress/`.
 
 In case you are using the [ingress of Home Assistant](https://www.home-assistant.io/blog/2019/04/15/hassio-ingress/) you will want to
 pick up the `X-Ingress-Path;` and map it, something along
