@@ -4,7 +4,7 @@ FROM chrisns/openzwave:alpine as ozw
 
 # ----------------
 # STEP 2:
-FROM node:12.18.0-alpine AS build-z2m
+FROM node:erbium-alpine AS build-z2m
 
 # Install required dependencies
 RUN apk --no-cache add \
@@ -38,7 +38,7 @@ RUN rm -rf \
 
 # ----------------
 # STEP 3:
-FROM node:12.18.0-alpine
+FROM node:erbium-alpine
 
 LABEL maintainer="robertsLando"
 

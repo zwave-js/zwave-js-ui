@@ -14,11 +14,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: crazy-max/ghaction-docker-buildx@v1
 
       - name: Just build on PR
         if: ${{ github.event_name == 'pull_request' }}
         run: |
-          docker build -f docker/Dockerfile .
+          docker buildx build \
+          -f docker/Dockerfile \
+          --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
+          -t robertslando/zwave2mqtt:dev \
+          .
 
       - name: Login to dockerhub
         if: ${{ github.event_name != 'pull_request' }}
@@ -27,9 +32,6 @@ jobs:
         env:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-      - uses: crazy-max/ghaction-docker-buildx@v1
-        if: ${{ github.event_name != 'pull_request' }}
 
       - name: Dev
         if: ${{ github.ref == 'refs/heads/master'}}
