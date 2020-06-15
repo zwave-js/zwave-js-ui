@@ -182,6 +182,36 @@ module.exports = {
       }
     }
   ],
+  '798-1-5': [
+    // Inovelli LZW42 Multi-Color Bulb
+    {
+      type: 'light',
+      object_id: 'rgbw_bulb',
+      values: ['38-1-0', '51-1-0'],
+      discovery_payload: {
+        state_topic: '38-1-0',
+        command_topic: '38-1-0',
+        on_command_type: 'brightness',
+        brightness_state_topic: '38-1-0',
+        brightness_command_topic: '38-1-0',
+        state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
+        brightness_value_template: '{{ (value_json.value) | round(0) }}',
+        brightness_scale: '99',
+        color_temp_state_topic: '51-1-0',
+        color_temp_command_template:
+          "{{ '#%02x%02x%02x%02x%02x' | format(0, 0, 0, (0.7349 * (value - 153)) | round(0), 255 - (0.7349 * (value - 153)) | round(0))}}",
+        color_temp_command_topic: '51-1-0',
+        color_temp_value_template:
+          '{{ (((value_json.value[7:9] | int(0, 16)) / 0.7349 ) | round(0)) + 153 }}',
+        rgb_command_template:
+          "{{'#%02x%02x%02x%02x%02x' | format(red, green, blue,0,0)}}",
+        rgb_command_topic: '51-1-0',
+        rgb_state_topic: '51-1-0',
+        rgb_value_template:
+          '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+      }
+    }
+  ],
   '2-4-5': [DANFOSS_TRV_ZWAVE], // DanfossZ
   '2-373-5': [DANFOSS_TRV_ZWAVE], // Danfoss LC-13
   '2-40976-266': [DANFOSS_TRV_ZWAVE], // Popp Radiator Thermostat
