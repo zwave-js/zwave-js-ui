@@ -67,35 +67,6 @@
                           v-model="zwave.assumeAwake"
                         ></v-switch>
                       </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Automatically call RefreshNodeInfo on every node after scan is complete"
-                          persistent-hint
-                          label="Refresh node info"
-                          v-model="zwave.refreshNodeInfo"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Automatically heal network at a specific time"
-                          persistent-hint
-                          label="Auto Heal Network"
-                          v-model="zwave.healNetwork"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6 sm6 v-if="zwave.healNetwork">
-                        <v-text-field
-                          v-model.number="zwave.healHour"
-                          label="Heal Time"
-                          :rules="[rules.required, rules.inRange]"
-                          required
-                          min="0"
-                          max="23"
-                          suffix=":00"
-                          hint="Select the Hour (0-23) at witch the network should heal"
-                          type="number"
-                        ></v-text-field>
-                      </v-flex>
                       <v-flex xs6>
                         <v-text-field
                           v-model.number="zwave.pollInterval"
@@ -596,9 +567,6 @@ export default {
           else valid = !!value || value === 0
 
           return valid || 'This field is required.'
-        },
-        inRange: value => {
-          return (value >= 0 && value <= 23) || 'Insert a value between 0-23'
         },
         validName: value => {
           return (

@@ -22,12 +22,15 @@
           v-for="item in pages"
           :key="item.title"
           :to="item.path == '#' ? '' : item.path"
+          :color="item.path === $route.path ? 'primary' : ''"
         >
           <v-list-item-action>
             <v-icon>{{ item.icon }}</v-icon>
           </v-list-item-action>
           <v-list-item-content>
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
+            <v-list-item-title class="subtitle-2 font-weight-bold">{{
+              item.title
+            }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
         <v-list-item v-if="!mini">
