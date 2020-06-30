@@ -28,7 +28,7 @@
           </v-layout>
 
           <v-layout>
-            <v-flex xs12 sm3 md2 mr-2>
+            <v-flex xs12 sm6 md3 mr-2>
               <v-text-field
                 label="Controller status"
                 readonly
@@ -36,7 +36,7 @@
               ></v-text-field>
             </v-flex>
 
-            <v-flex xs12 sm6 md4>
+            <v-flex xs12 sm6 md3>
               <v-select
                 label="Actions"
                 append-outer-icon="send"
@@ -1194,15 +1194,23 @@ export default {
     async sendCntAction () {
       if (this.cnt_action) {
         var args = []
+        var broadcast = false
         var askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
-          var id = parseInt(prompt('Node ID'))
+          broadcast = await this.$refs.confirm.open(
+            'Broadcast',
+            'Send this command to all nodes?'
+          )
 
-          if (isNaN(id)) {
-            this.showMessage('Node ID must be an integer value')
-            return
+          if (!broadcast) {
+            var id = parseInt(prompt('Node ID'))
+
+            if (isNaN(id)) {
+              this.showMessage('Node ID must be an integer value')
+              return
+            }
+            args.push(id)
           }
-          args.push(id)
         }
 
         if (this.cnt_action === 'addNode') {
@@ -1222,7 +1230,14 @@ export default {
           }
         }
 
-        this.apiRequest(this.cnt_action, args)
+        if (broadcast) {
+          for (let i = 0; i < this.nodes.length; i++) {
+            const nodeid = this.nodes[i].node_id
+            this.apiRequest(this.cnt_action, [nodeid])
+          }
+        } else {
+          this.apiRequest(this.cnt_action, args)
+        }
       }
     },
     sendNodeAction (action) {
