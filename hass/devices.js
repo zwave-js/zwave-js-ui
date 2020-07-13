@@ -212,6 +212,101 @@ module.exports = {
       }
     }
   ],
+  '5-1619-20549': [
+    // Intermatic PE653 MultiWave Receiver
+    {
+      type: 'climate',
+      object_id: 'pool_thermostat',
+      values: ['49-1-1', '67-1-1'],
+      default_setpoint: '67-1-1',
+      discovery_payload: {
+        min_temp: 40,
+        max_temp: 104,
+        modes: ['heat'],
+        temperature_unit: 'F',
+        current_temperature_topic: '49-1-1',
+        current_temperature_template: '{{ value_json.value }}',
+        temperature_command_topic: true,
+        temperature_state_template: '{{ value_json.value }}'
+      }
+    },
+    {
+      type: 'climate',
+      object_id: 'spa_thermostat',
+      values: ['49-1-1', '67-1-7'],
+      default_setpoint: '67-1-7',
+      discovery_payload: {
+        min_temp: 40,
+        max_temp: 104,
+        modes: ['heat'],
+        temperature_unit: 'F',
+        current_temperature_topic: '49-1-1',
+        current_temperature_template: '{{ value_json.value }}',
+        temperature_command_topic: true,
+        temperature_state_template: '{{ value_json.value }}'
+      }
+    },
+    {
+      type: 'switch',
+      object_id: 'circuit_1',
+      values: ['37-1-0'],
+      discovery_payload: {
+        payload_off: false,
+        payload_on: true,
+        state_topic: '37-1-0',
+        command_topic: '37-1-0',
+        value_template: '{{ value_json.value }}'
+      }
+    },
+    {
+      type: 'switch',
+      object_id: 'circuit_2',
+      values: ['37-2-0'],
+      discovery_payload: {
+        payload_off: false,
+        payload_on: true,
+        state_topic: '37-2-0',
+        command_topic: '37-2-0',
+        value_template: '{{ value_json.value }}'
+      }
+    },
+    {
+      type: 'switch',
+      object_id: 'circuit_3',
+      values: ['37-3-0'],
+      discovery_payload: {
+        payload_off: false,
+        payload_on: true,
+        state_topic: '37-3-0',
+        command_topic: '37-3-0',
+        value_template: '{{ value_json.value }}'
+      }
+    },
+    {
+      type: 'switch',
+      object_id: 'circuit_4',
+      values: ['37-4-0'],
+      discovery_payload: {
+        payload_off: false,
+        payload_on: true,
+        state_topic: '37-4-0',
+        command_topic: '37-4-0',
+        value_template: '{{ value_json.value }}'
+      }
+    },
+    {
+      type: 'switch',
+      object_id: 'circuit_5',
+      values: ['37-5-0'],
+      discovery_payload: {
+        payload_off: false,
+        payload_on: true,
+        state_topic: '37-5-0',
+        command_topic: '37-5-0',
+        value_template: '{{ value_json.value }}'
+      }
+    }
+  ],
   '2-4-5': [DANFOSS_TRV_ZWAVE], // DanfossZ
   '2-373-5': [DANFOSS_TRV_ZWAVE], // Danfoss LC-13
   '2-40976-266': [DANFOSS_TRV_ZWAVE], // Popp Radiator Thermostat
