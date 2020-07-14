@@ -4,7 +4,8 @@ module.exports = {
   root: true,
   env: {
     browser: true,
-    mocha: true
+    mocha: true,
+    node: true
   },
   extends: [
     // https://github.com/vuejs/eslint-plugin-vue#priority-a-essential-error-prevention
