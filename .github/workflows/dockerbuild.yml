@@ -14,15 +14,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: crazy-max/ghaction-docker-buildx@v1
+      - uses: crazy-max/ghaction-docker-buildx@v3
+
+      - name: Prepare
+        id: prepare
+        run: |
+          DOCKER_IMAGE=robertslando/zwave2mqtt
+          DOCKER_PLATFORMS=linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386
+
+          echo ::set-output name=docker_image::${DOCKER_IMAGE}
+          echo ::set-output name=docker_platforms::${DOCKER_PLATFORMS} \
 
       - name: Just build on PR
         if: ${{ github.event_name == 'pull_request' }}
         run: |
           docker buildx build \
           -f docker/Dockerfile \
-          --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
-          -t robertslando/zwave2mqtt:dev \
+          --platform ${{ steps.prepare.outputs.docker_platforms }} \
+          -t ${{ steps.prepare.outputs.docker_image }}:dev \
           .
 
       - name: Login to dockerhub
@@ -38,8 +47,8 @@ jobs:
         run: |
           docker buildx build \
           -f docker/Dockerfile \
-          --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
-          -t robertslando/zwave2mqtt:dev \
+          --platform ${{ steps.prepare.outputs.docker_platforms }} \
+          -t ${{ steps.prepare.outputs.docker_image }}:dev \
           --push \
           .
 
@@ -48,8 +57,8 @@ jobs:
         run: |
           docker buildx build \
           -f docker/Dockerfile \
-          --platform linux/arm64/v8,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386 \
-          -t robertslando/zwave2mqtt:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//") \
-          -t robertslando/zwave2mqtt:latest \
+          --platform ${{ steps.prepare.outputs.docker_platforms }} \
+          -t ${{ steps.prepare.outputs.docker_image }}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//") \
+          -t ${{ steps.prepare.outputs.docker_image }}:latest \
           --push \
           .
