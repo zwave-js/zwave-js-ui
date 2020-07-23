@@ -408,6 +408,9 @@ To enable this feature remember to set the flag **Hass Discovery** in Gateway se
 To achieve the best possible integration (including MQTT discovery):
 
 - In your **Zwave2Mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
+
+**NB:** Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113` th
+
 - In your **Home Assistant** `configuration.yaml`:
 
 ```yaml
@@ -416,10 +419,10 @@ mqtt:
   discovery_prefix: <your_discovery_prefix>
   broker: [YOUR MQTT BROKER] # Remove if you want to use builtin-in MQTT broker
   birth_message:
-    topic: 'hass/status'
+    topic: 'hass/status' # or homeassistant/status if z2m version >= 4.0.0
     payload: 'online'
   will_message:
-    topic: 'hass/status'
+    topic: 'hass/status' # or homeassistant/status if z2m version >= 4.0.0
     payload: 'offline'
 ```
 
@@ -427,7 +430,7 @@ Mind you that if you want to use the embedded broker of Home Assistant you
 have to [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
 
 Zwave2Mqtt is expecting Home Assistant to send it's birth/will
-messages to `hass/status`. Be sure to add this to your `configuration.yaml` if you want
+messages to `hass/status` (or `homeassistant/status` if z2m version >= 4.0.0). Be sure to add this to your `configuration.yaml` if you want
 Zwave2Mqtt to resend the cached values when Home Assistant restarts.
 
 Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
