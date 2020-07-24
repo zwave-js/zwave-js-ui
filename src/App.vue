@@ -63,7 +63,7 @@
       </v-tooltip>
     </v-app-bar>
     <main>
-      <v-content>
+      <v-main>
         <router-view
           @import="importFile"
           @export="exportConfiguration"
@@ -72,7 +72,7 @@
           :socketEvents="socketEvents"
           :socketActions="socketActions"
         />
-      </v-content>
+      </v-main>
     </main>
 
     <v-snackbar

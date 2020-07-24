@@ -1272,7 +1272,7 @@ export default {
     getAssociations () {
       var g = this.group
       if (g && g.node) {
-        this.apiRequest('getAssociations', [g.node.node_id, g.group])
+        this.apiRequest('getAssociationsInstances', [g.node.node_id, g.group])
       }
     },
     addAssociation () {
@@ -1436,8 +1436,13 @@ export default {
     this.socket.on(this.socketEvents.api, async data => {
       if (data.success) {
         switch (data.api) {
-          case 'getAssociations':
-            data.result = data.result.map(a => self.nodes[a]._name || a)
+          case 'getAssociationsInstances':
+            data.result = data.result.map(
+              a =>
+                `- Node: ${self.nodes[a.nodeid]._name || a} Instance: ${
+                  a.instance
+                }`
+            )
             self.$set(self.group, 'associations', data.result.join('\n'))
             break
           case '_getScenes':
