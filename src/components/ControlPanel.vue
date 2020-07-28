@@ -1290,17 +1290,23 @@ export default {
 
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
-        setTimeout(this.getAssociations, 500)
+        setTimeout(this.getAssociations, 1000)
       }
     },
     removeAssociation () {
       var g = this.group
       var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
       if (g && g.node && target) {
-        this.apiRequest('removeAssociation', [g.node.node_id, g.group, target])
+        var args = [g.node.node_id, g.group, target]
+
+        if (g.multiInstance) {
+          args.push(g.targetInstance || 0)
+        }
+
+        this.apiRequest('removeAssociation', args)
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
-        setTimeout(this.getAssociations, 500)
+        setTimeout(this.getAssociations, 1000)
       }
     },
     updateValue (v) {
