@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <title><%= config.title %></title>
-    <base href="<%= config.base %>" />
-    <meta name=mobile-web-app-capable content=yes>
-    <meta name=theme-color content=#fff>
-    <meta name=application-name content="Zwave To MQTT">
-    <meta name=apple-mobile-web-app-capable content=yes>
-    <meta name=apple-mobile-web-app-status-bar-style content=black-translucent>
-    <meta name=apple-mobile-web-app-title content="Zwave To MQTT">
 
-    <link rel="apple-touch-icon" sizes="180x180" href="<%= config.base %>static/favicons/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="<%= config.base %>static/favicons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="<%= config.base %>static/favicons/favicon-16x16.png">
-    <link rel="manifest" href="<%= config.base %>static/favicons/site.webmanifest">
-    <link rel="mask-icon" href="<%= config.base %>static/favicons/safari-pinned-tab.svg" color="#5bbad5">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="theme-color" content="#ffffff">
-    <!-- For serving the index via express -->
-    <% if (typeof cssFiles !== 'undefined') { %>
-      <% for ( let css of cssFiles ){  %>
-        <link rel="stylesheet" href="<%= config.base %><%= css %>">
-      <% } %>
-    <% } %>
-  </head>
-  <body>
-    <div id="app"></div>
-    <!-- For serving the index via express -->
-    <% if (typeof jsFiles !== 'undefined') { %>
-      <% for ( let src of jsFiles ){  %>
-        <script src="<%= config.base %><%= src %>"></script>
-      <% } %>
-    <% } %>
-    <!-- built files will be auto injected -->
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title><%= config.title %></title>
+  <base href="<%= config.base %>" />
+  <meta name=mobile-web-app-capable content=yes>
+  <meta name=application-name content="Zwave To MQTT">
+  <meta name=apple-mobile-web-app-capable content=yes>
+  <meta name=apple-mobile-web-app-status-bar-style content=black-translucent>
+  <meta name=apple-mobile-web-app-title content="Zwave To MQTT">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="<%= config.base %>static/favicons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="<%= config.base %>static/favicons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="<%= config.base %>static/favicons/favicon-16x16.png">
+  <link rel="manifest" href="<%= config.base %>static/favicons/site.webmanifest">
+  <link rel="mask-icon" href="<%= config.base %>static/favicons/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#ffffff">
+  <meta name="theme-color" content="#ffffff">
+  <!-- For serving the index via express -->
+  <% if (typeof cssFiles !== 'undefined') { %>
+  <% for ( let css of cssFiles ){  %>
+  <link rel="stylesheet" href="<%= config.base %><%= css %>">
+  <% } %>
+  <% } %>
+</head>
+
+<body>
+  <div id="app"></div>
+  <!-- For serving the index via express -->
+  <% if (typeof jsFiles !== 'undefined') { %>
+  <% for ( let src of jsFiles ){  %>
+  <script src="<%= config.base %><%= src %>"></script>
+  <% } %>
+  <% } %>
+  <!-- built files will be auto injected -->
+</body>
+
 </html>

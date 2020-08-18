@@ -113,6 +113,15 @@ export default {
       this.status = status
       this.statusColor = color
     },
+    changeThemeColor: function () {
+      var metaThemeColor = document.querySelector('meta[name=theme-color]')
+      var metaThemeColor2 = document.querySelector(
+        'meta[name=msapplication-TileColor]'
+      )
+
+      metaThemeColor.setAttribute('content', this.dark ? '#000' : '#fff')
+      metaThemeColor2.setAttribute('content', this.dark ? '#000' : '#fff')
+    },
     importFile: function (ext, callback) {
       var self = this
       // Check for the various File API support.
@@ -214,6 +223,7 @@ export default {
       else localStorage.removeItem('dark')
 
       this.$vuetify.theme.dark = v
+      this.changeThemeColor()
     }
   },
   beforeMount () {
@@ -247,6 +257,7 @@ export default {
     }
 
     this.dark = !!localStorage.getItem('dark')
+    this.changeThemeColor()
   },
   beforeDestroy () {
     if (this.socket) this.socket.close()
