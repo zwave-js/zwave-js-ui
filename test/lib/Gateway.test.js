@@ -57,4 +57,12 @@ describe('#Gateway', () => {
       })
     })
   })
+
+  afterEach(() => {
+    mod.__get__('watchers').forEach(v => {
+      if (v != null) {
+        v.close()
+      }
+    })
+  })
 })
