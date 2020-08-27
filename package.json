@@ -116,7 +116,7 @@
     "uniqid": "^5.2.0",
     "vue": "^2.6.11",
     "vue-d3-network": "^0.1.28",
-    "vue-router": "^3.3.4",
+    "vue-router": "^3.4.0",
     "vuetify": "^2.3.4",
     "vuex": "^3.5.1"
   },
