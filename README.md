@@ -319,7 +319,7 @@ Gateway settings:
 - **Send Zwave Events**: Enable this to send all Zwave client events to MQTT. More info [here](#zwave-events)
 - **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
-- :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#star-Home-Assistant-integration-BETA))
+- :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#robot-home-assistant-integration-beta))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
