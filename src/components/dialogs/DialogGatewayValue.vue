@@ -114,6 +114,50 @@
                   v-model="editedValue.verifyChanges"
                 ></v-switch>
               </v-flex>
+
+              <v-flex xs6>
+                <v-switch
+                  label="Parse send"
+                  hint="Create a function that parse the value sent via MQTT"
+                  persistent-hint
+                  v-model="editedValue.parseSend"
+                ></v-switch>
+              </v-flex>
+
+              <v-container v-if="editedValue.parseSend">
+                <p>
+                  Write the function here. Args are <code>value</code>. The
+                  function is sync and must return the parsed <code>value</code>
+                </p>
+                <prism-editor
+                  lineNumbers
+                  v-model="editedValue.sendFunction"
+                  language="js"
+                  :highlight="highlighter"
+                ></prism-editor>
+              </v-container>
+
+              <v-flex xs6>
+                <v-switch
+                  label="Parse receive"
+                  hint="Create a function that parse the received value from MQTT"
+                  persistent-hint
+                  v-model="editedValue.parseReceive"
+                ></v-switch>
+              </v-flex>
+
+              <v-container v-if="editedValue.parseReceive">
+                <p>
+                  Write the function here. Args are <code>value</code>. The
+                  function is sync and must return the parsed <code>value</code>
+                </p>
+                <prism-editor
+                  lineNumbers
+                  v-model="editedValue.receiveFunction"
+                  language="js"
+                  :highlight="highlighter"
+                ></prism-editor>
+              </v-container>
             </v-layout>
           </v-form>
         </v-container>
@@ -134,7 +178,20 @@
 </template>
 
 <script>
+// import Prism Editor
+import { PrismEditor } from 'vue-prism-editor'
+import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
+
+// import highlighting library (you can use any library you want just return html string)
+import { highlight, languages } from 'prismjs/components/prism-core'
+import 'prismjs/components/prism-clike'
+import 'prismjs/components/prism-javascript'
+import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
+
 export default {
+  components: {
+    PrismEditor
+  },
   props: {
     value: Boolean,
     gw_type: Number,
@@ -220,9 +277,19 @@ export default {
     }
   },
   methods: {
+    highlighter (code) {
+      return highlight(code, languages.js) // returns html
+    },
     isSensor (v) {
       return v && (v.class_id === 0x31 || v.class_id === 0x32)
     }
   }
 }
 </script>
+
+<style>
+/* optional class for removing the outline */
+.prism-editor__textarea:focus {
+  outline: none;
+}
+</style>

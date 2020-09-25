@@ -108,6 +108,7 @@
     "native-url": "^0.3.4",
     "nedb": "^1.8.0",
     "openzwave-shared": "^1.7.1",
+    "prismjs": "^1.21.0",
     "serialport": "^9.0.1",
     "serve-favicon": "^2.5.0",
     "socket.io": "^2.3.0",
@@ -116,6 +117,7 @@
     "uniqid": "^5.2.0",
     "vue": "^2.6.12",
     "vue-d3-network": "^0.1.28",
+    "vue-prism-editor": "^1.2.2",
     "vue-router": "^3.4.3",
     "vuetify": "^2.3.10",
     "vuex": "^3.5.1"
