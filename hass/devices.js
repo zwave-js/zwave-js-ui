@@ -59,6 +59,29 @@ const THERMOSTAT_2GIG = {
   }
 }
 
+// Eurotronic Stella Z-Wave Thermostat
+//   https://products.z-wavealliance.org/products/826
+const STELLA_ZWAVE = {
+  type: 'climate',
+  object_id: 'thermostat',
+  values: ['64-1-0', '49-1-1', '67-1-1', '67-1-11'],
+  mode_map: { off: 'Off', heat: 'Comfort', cool: 'Energy Saving' },
+  setpoint_topic: { Comfort: '67-1-1', 'Energy Saving': '67-1-11' },
+  default_setpoint: '67-1-1',
+  discovery_payload: {
+    min_temp: 0,
+    max_temp: 50,
+    modes: ['off', 'heat', 'cool'],
+    mode_state_topic: '64-1-0',
+    mode_command_topic: true,
+    current_temperature_topic: '49-1-1',
+    temp_step: 0.5,
+    current_temperature_template: '{{ value_json.value }}',
+    temperature_state_template: '{{ value_json.value }}',
+    temperature_command_topic: true
+  }
+}
+
 // Eurotronic Spirit Z-Wave Plus Thermostat
 const SPIRIT_ZWAVE_PLUS = {
   type: 'climate',
@@ -316,6 +339,7 @@ module.exports = {
   '152-12-25857': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT101
   '152-256-8194': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT32
   '271-4096-770': [COVER], // Fibaro FGS222
+  '328-1-1': [STELLA_ZWAVE],
   '328-1-3': [SPIRIT_ZWAVE_PLUS],
   '328-2-3': [SPIRIT_ZWAVE_PLUS],
   '328-3-3': [SPIRIT_ZWAVE_PLUS],
