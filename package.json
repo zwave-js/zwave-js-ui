@@ -150,7 +150,7 @@
     "copy-webpack-plugin": "^6.1.0",
     "css-loader": "^4.2.2",
     "deepmerge": "^4.2.2",
-    "eslint": "^7.8.1",
+    "eslint": "^7.10.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-loader": "^4.0.2",
