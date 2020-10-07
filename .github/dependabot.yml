@@ -1,0 +1,21 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: daily
+    allow:
+      - dependency-type: 'production'
+    labels:
+      - 'prod-dependencies'
+
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    target-branch: master
+    allow:
+      - dependency-type: 'development'
+    labels:
+      - 'dev-dependencies'
+      - 'automerge'
