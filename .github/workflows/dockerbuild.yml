@@ -37,7 +37,7 @@ jobs:
             echo "${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//")\n" >> ./TAGS
           fi
 
-          echo TAGS=\'$(cat TAGS)\' >> $GITHUB_ENV
+          echo TAGS=\"$(cat TAGS)\" >> $GITHUB_ENV
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
 
       - name: build+push
