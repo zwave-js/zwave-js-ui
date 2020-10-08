@@ -37,8 +37,12 @@ jobs:
             echo "${DOCKER_REPO}:latest" >> ./TAGS
             echo "${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//")\n" >> ./TAGS
           fi
+          TAGS=$(cat TAGS)"
+          TAGS="${TAGS//'%'/'%25'}"
+          TAGS="${TAGS//$'\n'/'%0A'}"
+          TAGS="${TAGS//$'\r'/'%0D'}"
 
-          echo "::set-output name=TAGS::\"$(cat TAGS)\""
+          echo "::set-output name=TAGS::${$TAGS}"
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
 
       - name: build+push
