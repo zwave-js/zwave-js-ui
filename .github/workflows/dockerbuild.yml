@@ -27,17 +27,17 @@ jobs:
       - name: Prepare
         run: |
           DOCKER_REPO=robertslando/zwave2mqtt
+          echo ${DOCKER_REPO}:sha-${GITHUB_SHA} > ./TAGS
+
           if [ "$GITHUB_REF" == "refs/heads/master" ]; then
-            TAGS="${DOCKER_REPO}:dev\n"
+            echo "${DOCKER_REPO}:dev" >> ./TAGS
           fi
           if [ "$GITHUB_EVENT_NAME" == "release" ]; then
-            TAGS="${TAGS}${DOCKER_REPO}:latest\n"
-            TAGS="${TAGS}${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//")\n"
+            echo "${DOCKER_REPO}:latest" >> ./TAGS
+            echo "${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//")\n" >> ./TAGS
           fi
 
-          TAGS="${TAGS}${DOCKER_REPO}:sha-${GITHUB_SHA}"
-
-          echo TAGS="${TAGS}" >> $GITHUB_ENV
+          echo TAGS="$(cat TAGS)" >> $GITHUB_ENV
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
 
       - name: build+push
