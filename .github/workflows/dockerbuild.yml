@@ -28,19 +28,15 @@ jobs:
         id: prepare
         run: |
           DOCKER_REPO=robertslando/zwave2mqtt
-          echo ${DOCKER_REPO}:sha-${GITHUB_SHA} > ./TAGS
+          TAGS=${DOCKER_REPO}:sha-${GITHUB_SHA}
 
           if [ "$GITHUB_REF" == "refs/heads/master" ]; then
-            echo "${DOCKER_REPO}:dev" >> ./TAGS
+            TAGS=$TAGS,${DOCKER_REPO}:dev
           fi
           if [ "$GITHUB_EVENT_NAME" == "release" ]; then
-            echo "${DOCKER_REPO}:latest" >> ./TAGS
-            echo "${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//")\n" >> ./TAGS
+            TAGS=$TAGS,${DOCKER_REPO}:latest
+            TAGS=$TAGS,${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//") >> ./TAGS
           fi
-          TAGS=$(cat TAGS)"
-          TAGS="${TAGS//'%'/'%25'}"
-          TAGS="${TAGS//$'\n'/'%0A'}"
-          TAGS="${TAGS//$'\r'/'%0D'}"
 
           echo "::set-output name=TAGS::${$TAGS}"
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
@@ -52,5 +48,4 @@ jobs:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386
           file: docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ${{ steps.prepare.outputs.TAGS }}
+          tags: ${{ steps.prepare.outputs.TAGS }}
