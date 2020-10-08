@@ -25,6 +25,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Prepare
+        id: prepare
         run: |
           DOCKER_REPO=robertslando/zwave2mqtt
           echo ${DOCKER_REPO}:sha-${GITHUB_SHA} > ./TAGS
@@ -37,7 +38,7 @@ jobs:
             echo "${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//")\n" >> ./TAGS
           fi
 
-          echo TAGS=${$(cat TAGS)//$'\n'/'%0A'} >> $GITHUB_ENV
+          echo "::set-output name=TAGS::\"$(cat TAGS)\""
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
 
       - name: build+push
@@ -47,4 +48,5 @@ jobs:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386
           file: docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ env.TAGS }}
+          tags: |
+            ${{ steps.prepare.outputs.TAGS }}
