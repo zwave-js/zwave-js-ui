@@ -51,7 +51,7 @@ jobs:
       - name: build+push
         uses: docker/build-push-action@v2
         with:
-          cache-from: type=registry,ref=${{ env.DOCKER_REPO }}:sha-${{ env.GITHUB_SHA }}
+          # cache-from: type=registry,ref=${{ env.DOCKER_REPO }}:sha-${{ env.GITHUB_SHA }}
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386
           file: docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
