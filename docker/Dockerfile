@@ -4,7 +4,7 @@ FROM chrisns/openzwave:alpine-1.6.1392 as ozw
 
 # ----------------
 # STEP 2:
-FROM node:erbium-alpine AS build-z2m
+FROM node:dubnium-alpine AS build-z2m
 
 # Install required dependencies
 RUN apk --no-cache add \
