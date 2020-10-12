@@ -22,7 +22,7 @@ const FAN_DIMMER = {
   }
 }
 
-// Radio Thermostat / 2GIG CT32 and CT101
+// Radio Thermostat / 2GIG CT32, CT100 and CT101
 const THERMOSTAT_2GIG = {
   type: 'climate',
   object_id: 'thermostat',
@@ -337,6 +337,7 @@ module.exports = {
   '99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '152-12-25857': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT101
+  '152-263-25601': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT100
   '152-256-8194': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT32
   '271-4096-770': [COVER], // Fibaro FGS222
   '328-1-1': [STELLA_ZWAVE],

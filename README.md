@@ -111,7 +111,7 @@ For more info about docker check [here](docker/README.md)
 ### Kubernetes way
 
 ```bash
-kubectl apply -k https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/kustomize.yml
+kubectl apply -k https://raw.githubusercontent.com/OpenZWave/Zwave2Mqtt/master/kustomization.yaml
 ```
 
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](./kubernetes) directory of this repo
