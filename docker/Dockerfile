@@ -38,7 +38,7 @@ RUN rm -rf \
 
 # ----------------
 # STEP 3:
-FROM node:erbium-alpine
+FROM node:dubmnium-alpine
 
 LABEL maintainer="robertsLando"
 
