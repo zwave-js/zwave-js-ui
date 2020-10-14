@@ -118,12 +118,9 @@ kubectl apply -k https://raw.githubusercontent.com/OpenZWave/Zwave2Mqtt/master/k
 
 ### NodeJS or PKG version
 
-1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
-
-   If you are using Ubuntu:
+1. Firstly you need to install the [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
 
    ```sh
-   sudo apt-get install libudev-dev git
    cd ~
    git clone https://github.com/OpenZWave/open-zwave.git
    cd open-zwave && make && sudo make install
