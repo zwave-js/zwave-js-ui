@@ -82,6 +82,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
     - [Mesh](#mesh)
     - [Debug](#debug)
   - [Health check endpoints](#health-check-endpoints)
+  - [Environment variables](#environment-variables)
   - [:question: FAQ](#-faq)
   - [:pray: Thanks](#-thanks)
   - [:pencil: TODOs](#-todos)
@@ -803,6 +804,17 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 Remember to add the header: `Accept: text/plain` to your request.
 
 Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
+
+## Environment variables
+
+_**Note**: Each one of the following environment variables corresponds to their respective options in the UI settings and options saved in the UI take presence over these environment variables._
+
+- `OZW_NETWORK_KEY`
+- `OZW_SAVE_CONFIG`
+- `OZW_POLL_INTERVAL`
+- `OZW_AUTO_UPDATE_CONFIG`
+- `OZW_CONFIG_PATH`
+- `OZW_ASSUME_AWAKE`
 
 ## :question: FAQ
 
