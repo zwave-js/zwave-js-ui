@@ -78,7 +78,9 @@
         <v-data-table
           :headers="headers"
           :items="tableNodes"
-          :items-per-page-options="[10, 20, { text: 'All', value: -1 }]"
+          :footer-props="{
+            itemsPerPageOptions: [10, 20, { text: 'All', value: -1 }]
+          }"
           item-key="node_id"
           class="elevation-1"
         >
