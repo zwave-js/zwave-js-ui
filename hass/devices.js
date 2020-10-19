@@ -345,5 +345,6 @@ module.exports = {
   '328-2-3': [SPIRIT_ZWAVE_PLUS],
   '328-3-3': [SPIRIT_ZWAVE_PLUS],
   '345-82-3': [COVER], // Qubino flush shutter
-  '622-23089-17235': [COVER] // Graber/Bali/Spring Fashion Covers
+  '622-23089-17235': [COVER], // Graber/Bali/Spring Fashion Covers
+  '881-21-2': [SPIRIT_ZWAVE_PLUS] // Eurotronic Spirit / Aeotec ZWA021
 }
