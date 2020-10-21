@@ -14,51 +14,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: crazy-max/ghaction-docker-buildx@v3
+
+      - uses: docker/setup-buildx-action@v1
+      - uses: docker/setup-qemu-action@v1
+      - name: Login to dockerhub
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Prepare
         id: prepare
         run: |
-          DOCKER_IMAGE=robertslando/zwave2mqtt
-          DOCKER_PLATFORMS=linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7,linux/386
+          DOCKER_REPO=robertslando/zwave2mqtt
+          TAGS=${DOCKER_REPO}:sha-${GITHUB_SHA}
 
-          echo ::set-output name=docker_image::${DOCKER_IMAGE}
-          echo ::set-output name=docker_platforms::${DOCKER_PLATFORMS} \
+          if [ "$GITHUB_REF" == "refs/heads/master" ]; then
+            TAGS=$TAGS,${DOCKER_REPO}:dev
+          fi
+          if [ "$GITHUB_EVENT_NAME" == "release" ]; then
+            TAGS=$TAGS,${DOCKER_REPO}:latest
+            TAGS=$TAGS,${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//") >> ./TAGS
+          fi
 
-      - name: Just build on PR
-        if: ${{ github.event_name == 'pull_request' }}
-        run: |
-          docker buildx build \
-          -f docker/Dockerfile \
-          --platform ${{ steps.prepare.outputs.docker_platforms }} \
-          -t ${{ steps.prepare.outputs.docker_image }}:dev \
-          .
+          echo ::set-output name=TAGS::${TAGS}
+          echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
 
-      - name: Login to dockerhub
-        if: ${{ github.event_name != 'pull_request' }}
-        run: |
-          docker login --username $DOCKER_USERNAME --password $DOCKER_PASSWORD
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Dev
-        if: ${{ github.ref == 'refs/heads/master'}}
-        run: |
-          docker buildx build \
-          -f docker/Dockerfile \
-          --platform ${{ steps.prepare.outputs.docker_platforms }} \
-          -t ${{ steps.prepare.outputs.docker_image }}:dev \
-          --push \
-          .
-
-      - name: Latest & tag
-        if: ${{ github.event_name == 'release' }}
-        run: |
-          docker buildx build \
-          -f docker/Dockerfile \
-          --platform ${{ steps.prepare.outputs.docker_platforms }} \
-          -t ${{ steps.prepare.outputs.docker_image }}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//") \
-          -t ${{ steps.prepare.outputs.docker_image }}:latest \
-          --push \
-          .
+      - name: build+push
+        uses: docker/build-push-action@v2
+        with:
+          cache-from: type=registry,ref=${{ env.DOCKER_REPO }}:sha-${{ env.GITHUB_SHA }}
+          platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
+          file: docker/Dockerfile
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.prepare.outputs.TAGS }}
