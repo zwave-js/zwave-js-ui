@@ -82,6 +82,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
     - [Mesh](#mesh)
     - [Debug](#debug)
   - [Health check endpoints](#health-check-endpoints)
+  - [Environment variables](#environment-variables)
   - [:question: FAQ](#-faq)
   - [:pray: Thanks](#-thanks)
   - [:pencil: TODOs](#-todos)
@@ -111,19 +112,16 @@ For more info about docker check [here](docker/README.md)
 ### Kubernetes way
 
 ```bash
-kubectl apply -k https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/kustomize.yml
+kubectl apply -k https://raw.githubusercontent.com/OpenZWave/Zwave2Mqtt/master/kustomization.yaml
 ```
 
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](./kubernetes) directory of this repo
 
 ### NodeJS or PKG version
 
-1. Firstly you need to install [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
-
-   If you are using Ubuntu:
+1. Firstly you need to install the [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
 
    ```sh
-   sudo apt-get install libudev-dev git
    cd ~
    git clone https://github.com/OpenZWave/open-zwave.git
    cd open-zwave && make && sudo make install
@@ -806,6 +804,17 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 Remember to add the header: `Accept: text/plain` to your request.
 
 Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
+
+## Environment variables
+
+_**Note**: Each one of the following environment variables corresponds to their respective options in the UI settings and options saved in the UI take presence over these environment variables._
+
+- `OZW_NETWORK_KEY`
+- `OZW_SAVE_CONFIG`
+- `OZW_POLL_INTERVAL`
+- `OZW_AUTO_UPDATE_CONFIG`
+- `OZW_CONFIG_PATH`
+- `OZW_ASSUME_AWAKE`
 
 ## :question: FAQ
 
