@@ -47,7 +47,7 @@
             </v-flex>
 
             <v-flex xs12 sm6 md3 align-self-center>
-              <v-btn icon @click.native="importConfiguration">
+              <v-btn icon @click="importConfiguration">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-icon dark color="primary" v-on="on">file_upload</v-icon>
@@ -55,7 +55,7 @@
                   <span>Import nodes.json Configuration</span>
                 </v-tooltip>
               </v-btn>
-              <v-btn icon @click.native="exportConfiguration">
+              <v-btn icon @click="exportConfiguration">
                 <v-tooltip bottom>
                   <template v-slot:activator="{ on }">
                     <v-icon dark color="primary" v-on="on"
@@ -78,7 +78,9 @@
         <v-data-table
           :headers="headers"
           :items="tableNodes"
-          :items-per-page-options="[10, 20, { text: 'All', value: -1 }]"
+          :footer-props="{
+            itemsPerPageOptions: [10, 20, { text: 'All', value: -1 }]
+          }"
           item-key="node_id"
           class="elevation-1"
         >
@@ -284,25 +286,22 @@
                       <v-btn
                         color="blue darken-1"
                         text
-                        @click.native="storeDevices(false)"
+                        @click="storeDevices(false)"
                         >Store</v-btn
                       >
                       <v-btn
                         color="red darken-1"
                         text
-                        @click.native="storeDevices(true)"
+                        @click="storeDevices(true)"
                         >Remove Store</v-btn
                       >
-                      <v-btn
-                        color="green darken-1"
-                        text
-                        @click.native="rediscoverNode"
+                      <v-btn color="green darken-1" text @click="rediscoverNode"
                         >Rediscover Node</v-btn
                       >
                       <v-btn
                         color="yellow darken-1"
                         text
-                        @click.native="disableDiscovery"
+                        @click="disableDiscovery"
                         >Disable Discovery</v-btn
                       >
 
@@ -342,7 +341,7 @@
                         color="blue darken-1"
                         :disabled="errorDevice"
                         text
-                        @click.native="addDevice"
+                        @click="addDevice"
                         >Add</v-btn
                       >
                       <v-btn
@@ -350,7 +349,7 @@
                         color="blue darken-1"
                         :disabled="errorDevice"
                         text
-                        @click.native="updateDevice"
+                        @click="updateDevice"
                         >Update</v-btn
                       >
                       <v-btn
@@ -358,7 +357,7 @@
                         color="green darken-1"
                         :disabled="errorDevice"
                         text
-                        @click.native="rediscoverDevice"
+                        @click="rediscoverDevice"
                         >Rediscover</v-btn
                       >
                       <v-btn
@@ -366,7 +365,7 @@
                         color="red darken-1"
                         :disabled="errorDevice"
                         text
-                        @click.native="deleteDevice"
+                        @click="deleteDevice"
                         >Delete</v-btn
                       >
                       <v-textarea
@@ -452,7 +451,7 @@
                     <v-btn
                       rounded
                       color="primary"
-                      @click.native="addAssociation"
+                      @click="addAssociation"
                       dark
                       class="mb-2"
                       >Add</v-btn
@@ -460,7 +459,7 @@
                     <v-btn
                       rounded
                       color="primary"
-                      @click.native="removeAssociation"
+                      @click="removeAssociation"
                       dark
                       class="mb-2"
                       >Remove</v-btn
@@ -475,11 +474,11 @@
               <v-container grid-list-md>
                 <v-layout wrap>
                   <v-flex xs12>
-                    <v-btn text @click.native="importScenes">
+                    <v-btn text @click="importScenes">
                       Import
                       <v-icon right dark color="primary">file_upload</v-icon>
                     </v-btn>
-                    <v-btn text @click.native="exportScenes">
+                    <v-btn text @click="exportScenes">
                       Export
                       <v-icon right dark color="primary">file_download</v-icon>
                     </v-btn>
@@ -677,20 +676,10 @@ export default {
       val || this.closeDialog()
     },
     newName (val) {
-      var match = val
-        ? val.match(/[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
-        : [val]
-
-      this.nameError =
-        match[0] !== val ? 'Only a-zA-Z0-9_- chars are allowed' : null
+      this.nameError = this.validateTopic(val)
     },
     newLoc (val) {
-      var match = val
-        ? val.match(/[a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
-        : [val]
-
-      this.locError =
-        match[0] !== val ? 'Only a-zA-Z0-9_- chars are allowed' : null
+      this.locError = this.validateTopic(val)
     },
     selectedNode () {
       if (this.selectedNode) {
@@ -900,6 +889,13 @@ export default {
   methods: {
     showSnackbar (text) {
       this.$emit('showSnackbar', text)
+    },
+    validateTopic (name) {
+      var match = name
+        ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
+        : [name]
+
+      return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
     },
     selectNode (item) {
       if (!item) return
