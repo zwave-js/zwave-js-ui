@@ -226,14 +226,17 @@ module.exports = {
   },
   cover_position: {
     type: 'cover',
-    object_id: 'cover',
+    object_id: 'position',
     discovery_payload: {
+      state_topic: true,
       command_topic: true,
       position_topic: true,
       set_position_topic: true,
-      set_position_template: '{ "value": {{ position }} }',
-      value_template: '{{ value_json.value }}',
-      state_topic: false
+      value_template: '{{ value_json.value | round(0) }}',
+      position_open: 99,
+      position_closed: 0,
+      payload_open: '99',
+      payload_close: '0'
     }
   },
 

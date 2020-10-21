@@ -6,7 +6,7 @@
       v-model="filename"
       :label="label.toUpperCase()"
       :required="required"
-      @click.native="onFocus"
+      @click="onFocus"
       :rules="rules"
       :disabled="disabled"
       ref="fileTextField"
