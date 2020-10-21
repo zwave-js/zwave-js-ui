@@ -129,4 +129,40 @@ describe('#Constants', () => {
     it('known', () => mod.commandClass(1).should.equal('foo'))
     it('unknown', () => mod.commandClass(3).should.equal('unknownClass_3'))
   })
+  describe('#genericDeviceClass()', () => {
+    let map
+    before(() => {
+      map = mod._genericDeviceClassMap
+      mod._genericDeviceClassMap = {
+        1: { generic: 'foo', specific: { 1: 'bar', 2: 'baz' } }
+      }
+    })
+    after(() => {
+      mod._genericDeviceClassMap = map
+    })
+    it('known generic type', () =>
+      mod.genericDeviceClass(1).should.equal('foo'))
+    it('unknown generic type', () =>
+      mod.genericDeviceClass(3).should.equal('unknownGenericDeviceType_3'))
+  })
+  describe('#specificDeviceClass()', () => {
+    let map
+    before(() => {
+      map = mod._genericDeviceClassMap
+      mod._genericDeviceClassMap = {
+        1: { generic: 'foo', specific: { 1: 'bar', 2: 'baz' } }
+      }
+    })
+    after(() => {
+      mod._genericDeviceClassMap = map
+    })
+    it('known specific type', () =>
+      mod.specificDeviceClass(1, 1).should.equal('bar'))
+    it('unknown specific type', () =>
+      mod.specificDeviceClass(1, 3).should.equal('unknownSpecificDeviceType_3'))
+    it('unknown generic type 1', () =>
+      mod.specificDeviceClass(2, 1).should.equal('unknownGenericDeviceType_2'))
+    it('unknown generic type 2', () =>
+      mod.specificDeviceClass(2, 3).should.equal('unknownGenericDeviceType_2'))
+  })
 })
