@@ -18,7 +18,7 @@ const renderIndex = reqlib('/lib/renderIndex')
 var gw //the gateway instance
 let io
 
-debug('Zwave2Mqtt version: ' + require('./package.json').version)
+debug('zwavejs2mqtt version: ' + require('./package.json').version)
 debug('Application path:' + utils.getPath(true))
 
 // view engine setup

@@ -18,13 +18,6 @@
                 v-model="homeHex"
               ></v-text-field>
             </v-flex>
-            <v-flex xs12 sm3 md2>
-              <v-text-field
-                label="Openzwave"
-                readonly
-                v-model="ozwVersion"
-              ></v-text-field>
-            </v-flex>
           </v-layout>
 
           <v-layout>

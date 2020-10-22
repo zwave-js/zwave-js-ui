@@ -14,8 +14,7 @@ Build/Run method
 - [ ] PKG
 - [ ] Manually built (git clone - npm install - npm run build ) 
 
-Zwave2Mqtt version: 1.2.3
-Openzwave Version: 1.4.1
+zwavejs2mqtt version: 1.2.3
 
 **Describe the bug**
 A clear and concise description of what the bug is.

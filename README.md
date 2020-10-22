@@ -1,24 +1,24 @@
 # Zwave To MQTT
 
-![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/Zwave2Mqtt)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/zwavejs2mqtt)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/1897-shield.svg)](https://madewithvuejs.com/p/zwave2mqtt/shield-link)
+[![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/1897-shield.svg)](https://madewithvuejs.com/p/zwavejs2mqtt/shield-link)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
-[![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)](https://github.com/OpenZWave/Zwave2Mqtt/actions?query=workflow%3Aci+branch%3Amaster)
-[![Docker Build](https://github.com/OpenZWave/Zwave2Mqtt/workflows/Docker%20Build/badge.svg?branch=master)](https://github.com/OpenZWave/Zwave2Mqtt/actions?query=workflow%3A%22Docker+Build%22+branch%3Amaster)
-[![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/Zwave2Mqtt/total)](https://github.com/OpenZWave/Zwave2Mqtt/releases)
-[![Coverage Status](https://coveralls.io/repos/github/OpenZWave/Zwave2Mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/Zwave2Mqtt?branch=master)
-[![Known Vulnerabilities](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt?targetFile=package.json)
-[![Dependencies Status](https://david-dm.org/OpenZWave/Zwave2Mqtt/status.svg)](https://david-dm.org/OpenZWave/Zwave2Mqtt)
-[![devDependencies Status](https://david-dm.org/OpenZWave/Zwave2Mqtt/dev-status.svg)](https://david-dm.org/OpenZWave/Zwave2Mqtt?type=dev)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/alerts/)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/context:javascript)
+[![ci](https://github.com/OpenZWave/zwavejs2mqtt/workflows/ci/badge.svg?branch=master)](https://github.com/OpenZWave/zwavejs2mqtt/actions?query=workflow%3Aci+branch%3Amaster)
+[![Docker Build](https://github.com/OpenZWave/zwavejs2mqtt/workflows/Docker%20Build/badge.svg?branch=master)](https://github.com/OpenZWave/zwavejs2mqtt/actions?query=workflow%3A%22Docker+Build%22+branch%3Amaster)
+[![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/zwavejs2mqtt/total)](https://github.com/OpenZWave/zwavejs2mqtt/releases)
+[![Coverage Status](https://coveralls.io/repos/github/OpenZWave/zwavejs2mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/zwavejs2mqtt?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/OpenZWave/zwavejs2mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/OpenZWave/zwavejs2mqtt?targetFile=package.json)
+[![Dependencies Status](https://david-dm.org/OpenZWave/zwavejs2mqtt/status.svg)](https://david-dm.org/OpenZWave/zwavejs2mqtt)
+[![devDependencies Status](https://david-dm.org/OpenZWave/zwavejs2mqtt/dev-status.svg)](https://david-dm.org/OpenZWave/zwavejs2mqtt?type=dev)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/OpenZWave/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/zwavejs2mqtt/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OpenZWave/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/zwavejs2mqtt/context:javascript)
 
-[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
+[![Join channel](https://img.shields.io/badge/SLACK-zwavejs2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwavejs2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
-[![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
+[![dockeri.co](https://dockeri.co/image/robertslando/zwavejs2mqtt)](https://hub.docker.com/r/robertslando/zwavejs2mqtt)
 
 ![OpenZWave](docs/OZW_Logo.png)
 **TO**
@@ -31,7 +31,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 ## !! ATTENTION
 
-After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Openzwave maintainer all issues related to **OZW 1.4** will be ignored and **automatically closed** as it isn't supported anymore, **please use OZW 1.6+**
+After a [discussion](https://github.com/OpenZWave/zwavejs2mqtt/issues/201) with Openzwave maintainer all issues related to **OZW 1.4** will be ignored and **automatically closed** as it isn't supported anymore, **please use OZW 1.6+**
 
 ## 📖 Table of contents
 
@@ -94,14 +94,14 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
 
 ```bash
 # Using volumes as persistence
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app/store robertslando/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store robertslando/zwavejs2mqtt:latest
 
 # Using local folder as persistence
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwavejs2mqtt:latest
 
 # As a service
-wget https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/docker/docker-compose.yml
+wget https://raw.githubusercontent.com/openzwave/zwavejs2mqtt/master/docker/docker-compose.yml
 docker-compose up
 ```
 
@@ -112,7 +112,7 @@ For more info about docker check [here](docker/README.md)
 ### Kubernetes way
 
 ```bash
-kubectl apply -k https://raw.githubusercontent.com/OpenZWave/Zwave2Mqtt/master/kustomization.yaml
+kubectl apply -k https://raw.githubusercontent.com/OpenZWave/zwavejs2mqtt/master/kustomization.yaml
 ```
 
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](./kubernetes) directory of this repo
@@ -144,23 +144,23 @@ kubectl apply -k https://raw.githubusercontent.com/OpenZWave/Zwave2Mqtt/master/k
 
      ```sh
      cd ~
-     mkdir Zwave2Mqtt
-     cd Zwave2Mqtt
+     mkdir zwavejs2mqtt
+     cd zwavejs2mqtt
      # download latest version
-     curl -s https://api.github.com/repos/OpenZWave/Zwave2Mqtt/releases/latest  \
+     curl -s https://api.github.com/repos/OpenZWave/zwavejs2mqtt/releases/latest  \
      | grep "browser_download_url.*zip" \
      | cut -d : -f 2,3 \
      | tr -d \" \
      | wget -i -
-     unzip zwave2mqtt-v*.zip
-     ./zwave2mqtt
+     unzip zwavejs2mqtt-v*.zip
+     ./zwavejs2mqtt
      ```
 
    - If you want to compile last code from github:
 
      ```sh
-     git clone https://github.com/OpenZWave/Zwave2Mqtt
-     cd Zwave2Mqtt
+     git clone https://github.com/OpenZWave/zwavejs2mqtt
+     cd zwavejs2mqtt
      npm install
      npm run build
      npm start
@@ -252,7 +252,7 @@ Gateway settings:
      - `instance`: the numerical value of value instance
      - `index`: the numerical index of the value
 
-  2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
+  2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/zwavejs2mqtt/issues/22)
 
      The topic where zwave values are published will be:
 
@@ -388,7 +388,7 @@ Alive and Sleeping nodes cannot be deleted.
 - Home Assistant integration (**beta**)
 - Zwave Control Panel:
   - **Nodes management**: check all nodes discovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
-  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/OpenZWave/Zwave2Mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
+  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/OpenZWave/zwavejs2mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
   - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
   - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
 - Log debug in UI
@@ -398,16 +398,16 @@ Alive and Sleeping nodes cannot be deleted.
 
 **At least Home Assistant >= 0.84 is required!**
 
-The easiest way to integrate Zwave2Mqtt with Home Assistant is by
+The easiest way to integrate zwavejs2mqtt with Home Assistant is by
 using [MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/).
-This allows Zwave2Mqtt to automatically add devices to Home Assistant.
+This allows zwavejs2mqtt to automatically add devices to Home Assistant.
 To enable this feature remember to set the flag **Hass Discovery** in Gateway settings configuration.
 
-**ATTENTION**: Hass updates often break Zwave2Mqtt device discovery. For this reason Zwave2Mqtt will try to be always compatible with latest hass version. Check the changelog before update!
+**ATTENTION**: Hass updates often break zwavejs2mqtt device discovery. For this reason zwavejs2mqtt will try to be always compatible with latest hass version. Check the changelog before update!
 
 To achieve the best possible integration (including MQTT discovery):
 
-- In your **Zwave2Mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
+- In your **zwavejs2mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
 
 **NB:** Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113` th
 
@@ -429,15 +429,15 @@ mqtt:
 Mind you that if you want to use the embedded broker of Home Assistant you
 have to [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
 
-Zwave2Mqtt is expecting Home Assistant to send it's birth/will
+zwavejs2mqtt is expecting Home Assistant to send it's birth/will
 messages to `hass/status` (or `homeassistant/status` if z2m version >= 4.0.0). Be sure to add this to your `configuration.yaml` if you want
-Zwave2Mqtt to resend the cached values when Home Assistant restarts.
+zwavejs2mqtt to resend the cached values when Home Assistant restarts.
 
-Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
+zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
 
 ### Components management
 
-To see the components that have been discovered by Zwave2Mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
+To see the components that have been discovered by zwavejs2mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
 
 ![Hass Devices](docs/hass_devices.png)
 
@@ -464,7 +464,7 @@ If no device is selected you can manually insert a device JSON configuration. If
 
 At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT needs to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
 
-**UPDATE**: Starting from version 2.0.7 you can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format Zwave2Mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
+**UPDATE**: Starting from version 2.0.7 you can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format zwavejs2mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
 
 > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS PLEASE SEND A PR!
 
@@ -532,7 +532,7 @@ So in decimal format will become: `411-514-3`. This is the device id of `Heatit 
   - **current_temperature_template/temperature_state_template**: Template used to fetch the value from the MQTT payload
   - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Hass to change this values
 
-Thermostats are most complex components to create, in this device example the setpoint topic changes based on the mode selected. Zwave2Mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
+Thermostats are most complex components to create, in this device example the setpoint topic changes based on the mode selected. zwavejs2mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
 
 #### Fans
 
@@ -652,7 +652,7 @@ Payload
 
 Topic
 
-`zwave2mqtt/_EVENTS/ZWAVE_GATEWAY-z2m/node_ready`
+`zwavejs2mqtt/_EVENTS/ZWAVE_GATEWAY-z2m/node_ready`
 
 Payload
 

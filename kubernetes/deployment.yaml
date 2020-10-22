@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: zwave
-          image: robertslando/zwave2mqtt:latest
+          image: robertslando/zwavejs2mqtt:latest
           livenessProbe:
             failureThreshold: 12
             httpGet:
@@ -33,10 +33,10 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: '1'
+              cpu: "1"
               memory: 512Mi
             requests:
-              cpu: '1'
+              cpu: "1"
               memory: 400Mi
           securityContext:
             allowPrivilegeEscalation: true
@@ -46,19 +46,11 @@ spec:
               name: zwavestick
             - mountPath: /usr/src/app/store
               name: data
-          # - mountPath: /usr/local/etc/openzwave
-          #   name: ozwdatabase
-          # - mountPath: /usr/src/app/store/settings.json <-- if putting your settings.json in a secret
-          #   name: config
-          #   readOnly: true
-          #   subPath: settings.json
-      # nodeSelector:
-      #   kubernetes.io/hostname: stick1 #<--- the name of your cluster node that the zwave usb stick in
       volumes:
         # - name: config <-- if putting your settings.json in a secret
         #   secret:
         #     defaultMode: 420
-        #     secretName: zwave2mqtt
+        #     secretName: zwavejs2mqtt
         - name: zwavestick
           hostPath:
             path: /dev/ttyACM0
@@ -66,6 +58,3 @@ spec:
         - name: data
           hostPath:
             path: /zwave/data
-        # - name: ozwdatabase
-        #   hostPath:
-        #     path: /zwave/database

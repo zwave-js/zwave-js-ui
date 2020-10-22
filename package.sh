@@ -33,7 +33,7 @@ ask() {
 	done
 }
 
-APP="zwave2mqtt"
+APP="zwavejs2mqtt"
 PKG_FOLDER="pkg"
 
 echo "Destination folder: $PKG_FOLDER"
