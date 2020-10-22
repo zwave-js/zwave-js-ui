@@ -74,7 +74,7 @@
           :footer-props="{
             itemsPerPageOptions: [10, 20, { text: 'All', value: -1 }]
           }"
-          item-key="node_id"
+          item-key="id"
           class="elevation-1"
         >
           <template v-slot:item="{ item }">
@@ -88,7 +88,7 @@
               }"
               @click.stop="selectNode(item)"
             >
-              <td>{{ item.node_id }}</td>
+              <td>{{ item.id }}</td>
               <td>{{ item.type }}</td>
               <td>
                 {{
@@ -142,7 +142,7 @@
                 <v-layout row>
                   <v-flex>
                     <v-subheader
-                      >Device ID: {{ selectedNode.device_id }}</v-subheader
+                      >Device ID: {{ selectedNode.deviceId }}</v-subheader
                     >
                   </v-flex>
                 </v-layout>
@@ -529,8 +529,8 @@
                 >
                   <template v-slot:item="{ item }">
                     <tr>
-                      <td class="text-xs">{{ item.value_id }}</td>
-                      <td class="text-xs">{{ item.node_id }}</td>
+                      <td class="text-xs">{{ item.id }}</td>
+                      <td class="text-xs">{{ item.nodeId }}</td>
                       <td class="text-xs">{{ item.label }}</td>
                       <td class="text-xs">{{ item.value }}</td>
                       <td class="text-xs">
@@ -723,8 +723,8 @@ export default {
       editedValue: {},
       editedIndex: -1,
       headers_scenes: [
-        { text: 'Value ID', value: 'value_id' },
-        { text: 'Node', value: 'node_id' },
+        { text: 'Value ID', value: 'id' },
+        { text: 'Node', value: 'nodeId' },
         { text: 'Label', value: 'label' },
         { text: 'Value', value: 'value' },
         { text: 'Timeout', value: 'timeout' },
@@ -858,7 +858,7 @@ export default {
       newLoc: '',
       selectedNode: null,
       headers: [
-        { text: 'ID', value: 'node_id' },
+        { text: 'ID', value: 'id' },
         { text: 'Type', value: 'type' },
         { text: 'Product', value: 'product' },
         { text: 'Name', value: 'name' },
@@ -896,14 +896,14 @@ export default {
       if (this.selectedNode === item) {
         this.selectedNode = null
       } else {
-        this.selectedNode = this.nodes.find(n => n.node_id === item.node_id)
+        this.selectedNode = this.nodes.find(n => n.id === item.id)
       }
     },
     getValue (v) {
-      var node = this.nodes[v.node_id]
+      var node = this.nodes[v.nodeId]
 
       if (node && node.values) {
-        return node.values.find(i => i.value_id === v.value_id)
+        return node.values.find(i => i.id === v.id)
       } else {
         return null
       }
@@ -1036,8 +1036,8 @@ export default {
     },
     editItem (item) {
       this.editedIndex = this.scene_values.indexOf(item)
-      var node = this.nodes[item.node_id]
-      var value = node.values.find(v => v.value_id === item.value_id)
+      var node = this.nodes[item.nodeId]
+      var value = node.values.find(v => v.id === item.id)
 
       value = Object.assign({}, value)
       value.newValue = item.value
@@ -1059,10 +1059,8 @@ export default {
       ) {
         this.apiRequest('_removeSceneValue', [
           this.selectedScene,
-          value.node_id,
-          value.class_id,
-          value.instance,
-          value.index
+          value.nodeId,
+          value.id
         ])
         this.refreshValues()
       }
@@ -1080,7 +1078,7 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'delete',
           device: device,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1095,7 +1093,7 @@ export default {
       ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'rediscoverNode',
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1110,7 +1108,7 @@ export default {
       ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'disableDiscovery',
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1125,7 +1123,7 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'discover',
           device: device,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1140,7 +1138,7 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'update',
           device: updated,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1150,7 +1148,7 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'add',
           device: newDevice,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1158,7 +1156,7 @@ export default {
       this.socket.emit(this.socketActions.hass, {
         apiName: 'store',
         devices: this.selectedNode.hassDevices,
-        node_id: this.selectedNode.node_id,
+        nodeId: this.selectedNode.id,
         remove: remove
       })
     },
@@ -1225,7 +1223,7 @@ export default {
 
         if (broadcast) {
           for (let i = 0; i < this.nodes.length; i++) {
-            const nodeid = this.nodes[i].node_id
+            const nodeid = this.nodes[i].id
             this.apiRequest(this.cnt_action, [nodeid])
           }
         } else {
@@ -1236,7 +1234,7 @@ export default {
     sendNodeAction (action) {
       action = typeof action === 'string' ? action : this.node_action
       if (this.selectedNode) {
-        this.apiRequest(action, [this.selectedNode.node_id])
+        this.apiRequest(action, [this.selectedNode.id])
       }
     },
     saveConfiguration () {
@@ -1245,7 +1243,7 @@ export default {
     updateName () {
       if (this.selectedNode && !this.nameError) {
         this.apiRequest('_setNodeName', [
-          this.selectedNode.node_id,
+          this.selectedNode.id,
           this.newName
         ])
       }
@@ -1253,7 +1251,7 @@ export default {
     updateLoc () {
       if (this.selectedNode && !this.locError) {
         this.apiRequest('_setNodeLocation', [
-          this.selectedNode.node_id,
+          this.selectedNode.id,
           this.newLoc
         ])
       }
@@ -1265,15 +1263,15 @@ export default {
     getAssociations () {
       var g = this.group
       if (g && g.node) {
-        this.apiRequest('getAssociationsInstances', [g.node.node_id, g.group])
+        this.apiRequest('getAssociationsInstances', [g.node.id, g.group])
       }
     },
     addAssociation () {
       var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
       if (g && g.node && target) {
-        var args = [g.node.node_id, g.group, target]
+        var args = [g.node.id, g.group, target]
 
         if (g.multiInstance) {
           args.push(g.targetInstance || 0)
@@ -1288,9 +1286,9 @@ export default {
     },
     removeAssociation () {
       var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
       if (g && g.node && target) {
-        var args = [g.node.node_id, g.group, target]
+        var args = [g.node.id, g.group, target]
 
         if (g.multiInstance) {
           args.push(g.targetInstance || 0)
@@ -1320,11 +1318,9 @@ export default {
         v.toUpdate = true
 
         this.apiRequest('setValue', [
-          v.node_id,
-          v.class_id,
-          v.instance,
-          v.index,
-          v.type === 'button' ? true : v.newValue
+          v.nodeId,
+          v.id,
+          v.newValue
         ])
       }
     },
@@ -1346,7 +1342,7 @@ export default {
     setName (n) {
       n._name = n.name
         ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
-        : 'NodeID_' + n.node_id
+        : 'NodeID_' + n.id
     }
   },
   mounted () {
@@ -1363,10 +1359,10 @@ export default {
     })
 
     this.socket.on(this.socketEvents.nodeRemoved, node => {
-      if (self.selectedNode && self.selectedNode.node_id === node.node_id) {
+      if (self.selectedNode && self.selectedNode.id === node.id) {
         self.selectedNode = null
       }
-      self.$set(self.nodes, node.node_id, node)
+      self.$set(self.nodes, node.id, node)
     })
 
     this.socket.on(this.socketEvents.debug, data => {
@@ -1401,20 +1397,20 @@ export default {
 
     this.socket.on(this.socketEvents.nodeUpdated, data => {
       self.initNode(data)
-      if (!self.nodes[data.node_id] || self.nodes[data.node_id].failed) {
+      if (!self.nodes[data.id] || self.nodes[data.id].failed) {
         // add missing nodes
-        while (self.nodes.length < data.node_id) {
+        while (self.nodes.length < data.id) {
           self.nodes.push({
-            node_id: self.nodes.length,
+            id: self.nodes.length,
             failed: true,
             status: 'Removed'
           })
         }
       }
-      self.$set(self.nodes, data.node_id, data)
+      self.$set(self.nodes, data.id, data)
 
-      if (this.selectedNode && this.selectedNode.node_id === data.node_id) {
-        this.selectedNode = self.nodes[data.node_id]
+      if (this.selectedNode && this.selectedNode.id === data.id) {
+        this.selectedNode = self.nodes[data.id]
       }
     })
 
@@ -1438,8 +1434,8 @@ export default {
           case 'getAssociationsInstances':
             data.result = data.result.map(
               a =>
-                `- Node: ${self.nodes[a.nodeid]._name || a} Instance: ${
-                  a.instance
+                `- Node: ${self.nodes[a.nodeid]._name || a} Endpoint: ${
+                  a.endpoint
                 }`
             )
             self.$set(self.group, 'associations', data.result.join('\n'))

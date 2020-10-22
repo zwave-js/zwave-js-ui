@@ -45,38 +45,10 @@
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
-                          hint="Save configuration files zwcfg and zwscene .xml"
                           persistent-hint
-                          label="Save configuration"
-                          v-model="zwave.saveConfig"
+                          label="Log to file"
+                          v-model="zwave.logToFile"
                         ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Automatically update Zwave devices database"
-                          persistent-hint
-                          label="Auto update database"
-                          v-model="zwave.autoUpdateConfig"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Assume Devices that support the Wakeup Class are awake when starting up OZW"
-                          persistent-hint
-                          label="Assume awake"
-                          v-model="zwave.assumeAwake"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-text-field
-                          v-model.number="zwave.pollInterval"
-                          label="Poll interval"
-                          :rules="[rules.required]"
-                          required
-                          suffix="millis"
-                          hint="Milliseconds between each pull (should not be less than 1s per device)"
-                          type="number"
-                        ></v-text-field>
                       </v-flex>
                       <v-flex xs6>
                         <v-text-field
@@ -87,14 +59,6 @@
                           suffix="seconds"
                           hint="Seconds to wait before stop inclusion/exclusion mode"
                           type="number"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-text-field
-                          v-model.trim="zwave.configPath"
-                          label="Config Path"
-                          required
-                          hint="Path to devices library DB. If not set the default path will be used based on your OS"
                         ></v-text-field>
                       </v-flex>
                       <input type="hidden" :value="zwave.plugin" />
@@ -577,8 +541,8 @@ export default {
         validKey: value => {
           return (
             !value ||
-            /(0x\w{2},\s*){16}/g.test(value + ',') ||
-            "Key must contain 16 bytes separated by ','. Ex: '0xAA, 0xAB, ...'"
+            value.length === 32 ||
+            'Key must be 32 charaters length'
           )
         }
       }
