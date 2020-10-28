@@ -1317,9 +1317,18 @@ export default {
         // in this way I can check when the value receives an update
         v.toUpdate = true
 
-        this.apiRequest('setValue', [
-          v.nodeId,
-          v.id,
+        if (v.type === 'number') {
+          v.newValue = parseInt(v.newValue)
+        }
+
+        this.apiRequest('writeValue', [
+          {
+            nodeId: v.nodeId,
+            commandClass: v.commandClass,
+            endpoint: v.endpoint,
+            property: v.property,
+            propertyKey: v.propertyKey
+          },
           v.newValue
         ])
       }

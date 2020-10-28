@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!value.writable">
+  <div v-if="!value.writeable">
     <v-text-field
       :label="value.label + ' (' + value.id + ')'"
       readonly
