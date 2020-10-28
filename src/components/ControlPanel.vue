@@ -1349,7 +1349,7 @@ export default {
     var self = this
 
     this.socket.on(this.socketEvents.controller, data => {
-      self.cnt_status = data.help
+      self.cnt_status = data
     })
 
     this.socket.on(this.socketEvents.connected, info => {

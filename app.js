@@ -15,7 +15,7 @@ var debug = reqlib('/lib/debug')('App')
 var history = require('connect-history-api-fallback')
 var utils = reqlib('/lib/utils.js')
 const renderIndex = reqlib('/lib/renderIndex')
-var gw //the gateway instance
+var gw // the gateway instance
 let io
 
 debug('zwavejs2mqtt version: ' + require('./package.json').version)
@@ -69,13 +69,14 @@ app.startSocket = function (server) {
     debug('New connection', socket.id)
 
     socket.on('INITED', function () {
-      if (gw.zwave)
-        socket.emit('INIT', {
+      if (gw.zwave) {
+        socket.emit(gw.zwave.socketEvents.init, {
           nodes: gw.zwave.nodes,
           info: gw.zwave.ozwConfig,
           error: gw.zwave.error,
           cntStatus: gw.zwave.cntStatus
         })
+      }
     })
 
     socket.on('ZWAVE_API', async function (data) {
@@ -83,7 +84,7 @@ app.startSocket = function (server) {
       if (gw.zwave) {
         var result = await gw.zwave.callApi(data.api, ...data.args)
         result.api = data.api
-        socket.emit('API_RETURN', result)
+        socket.emit(gw.zwave.socketEvents.api, result)
       }
     })
 
@@ -147,17 +148,18 @@ app.get('/health', async function (req, res) {
 
 app.get('/health/:client', async function (req, res) {
   var client = req.params.client
+  var status
 
-  if (client !== 'zwave' && client !== 'mqtt')
+  if (client !== 'zwave' && client !== 'mqtt') {
     res.status(500).send("Requested client doesn 't exist")
-  else {
+  } else {
     status = gw && gw[client] ? gw[client].getStatus().status : false
   }
 
   res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 })
 
-//get settings
+// get settings
 app.get('/api/settings', async function (req, res) {
   var data = {
     success: true,
@@ -177,7 +179,7 @@ app.get('/api/settings', async function (req, res) {
   } else res.json(data)
 })
 
-//get config
+// get config
 app.get('/api/exportConfig', function (req, res) {
   return res.json({
     success: true,
@@ -186,7 +188,7 @@ app.get('/api/exportConfig', function (req, res) {
   })
 })
 
-//import config
+// import config
 app.post('/api/importConfig', async function (req, res) {
   var config = req.body.data
   try {
@@ -214,7 +216,7 @@ app.post('/api/importConfig', async function (req, res) {
   }
 })
 
-//update settings
+// update settings
 app.post('/api/settings', function (req, res) {
   jsonStore
     .put(store.settings, req.body)
