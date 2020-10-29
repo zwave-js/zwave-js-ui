@@ -1148,10 +1148,10 @@ export default {
           }
         }
 
-        if (this.cnt_action === 'addNode') {
+        if (this.cnt_action === 'startInclusion') {
           var secure = await this.$listeners.showConfirm(
             'Node inclusion',
-            'Start inclusion in security mode?'
+            'Start inclusion in secure mode?'
           )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
