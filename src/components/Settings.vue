@@ -36,15 +36,15 @@
                         ></v-text-field>
                       </v-flex>
                       <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Enable zwave library logging"
-                          persistent-hint
-                          label="Logging"
-                          v-model="zwave.logging"
-                        ></v-switch>
+                        <v-select
+                          :items="logLevels"
+                          v-model="zwave.logLevel"
+                          label="Log Level"
+                        ></v-select>
                       </v-flex>
-                      <v-flex xs12 sm6>
+                       <v-flex xs12 sm6>
                         <v-switch
+                          hint="Store zwave logs in a file"
                           persistent-hint
                           label="Log to file"
                           v-model="zwave.logToFile"
@@ -476,6 +476,14 @@ export default {
       editedValue: {},
       editedIndex: -1,
       defaultValue: {},
+      logLevels: [
+        { text: 'Error', value: 'error' },
+        { text: 'Warn', value: 'warn' },
+        { text: 'Info', value: 'info' },
+        { text: 'Verbose', value: 'verbose' },
+        { text: 'Debug', value: 'debug' },
+        { text: 'Silly', value: 'silly' }
+      ],
       headers: [
         { text: 'Device', value: 'device' },
         { text: 'Value', value: 'value', sortable: false },
