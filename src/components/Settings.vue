@@ -289,12 +289,6 @@
                       </v-flex>
                       <v-flex xs6>
                         <v-switch
-                          label="Send 'list' values as integer index"
-                          v-model="gateway.integerList"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-switch
                           label="Hass Discovery"
                           hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
                           v-model="gateway.hassDiscovery"
@@ -501,7 +495,7 @@ export default {
           value: 0
         },
         {
-          text: 'Named topics (DEPRECATED)',
+          text: 'Named topics',
           value: 1
         },
         {
