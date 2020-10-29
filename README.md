@@ -1,18 +1,18 @@
 # Zwave To MQTT
 
-![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/zwavejs2mqtt)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/zwave-js/zwavejs2mqtt)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/1897-shield.svg)](https://madewithvuejs.com/p/zwavejs2mqtt/shield-link)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
-[![ci](https://github.com/OpenZWave/zwavejs2mqtt/workflows/ci/badge.svg?branch=master)](https://github.com/OpenZWave/zwavejs2mqtt/actions?query=workflow%3Aci+branch%3Amaster)
-[![Docker Build](https://github.com/OpenZWave/zwavejs2mqtt/workflows/Docker%20Build/badge.svg?branch=master)](https://github.com/OpenZWave/zwavejs2mqtt/actions?query=workflow%3A%22Docker+Build%22+branch%3Amaster)
-[![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/zwavejs2mqtt/total)](https://github.com/OpenZWave/zwavejs2mqtt/releases)
-[![Coverage Status](https://coveralls.io/repos/github/OpenZWave/zwavejs2mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/zwavejs2mqtt?branch=master)
-[![Known Vulnerabilities](https://snyk.io/test/github/OpenZWave/zwavejs2mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/OpenZWave/zwavejs2mqtt?targetFile=package.json)
-[![Dependencies Status](https://david-dm.org/OpenZWave/zwavejs2mqtt/status.svg)](https://david-dm.org/OpenZWave/zwavejs2mqtt)
-[![devDependencies Status](https://david-dm.org/OpenZWave/zwavejs2mqtt/dev-status.svg)](https://david-dm.org/OpenZWave/zwavejs2mqtt?type=dev)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/OpenZWave/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/zwavejs2mqtt/alerts/)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OpenZWave/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/zwavejs2mqtt/context:javascript)
+[![ci](https://github.com/zwave-js/zwavejs2mqtt/workflows/ci/badge.svg?branch=master)](https://github.com/zwave-js/zwavejs2mqtt/actions?query=workflow%3Aci+branch%3Amaster)
+[![Docker Build](https://github.com/zwave-js/zwavejs2mqtt/workflows/Docker%20Build/badge.svg?branch=master)](https://github.com/zwave-js/zwavejs2mqtt/actions?query=workflow%3A%22Docker+Build%22+branch%3Amaster)
+[![GitHub All Releases](https://img.shields.io/github/downloads/zwave-js/zwavejs2mqtt/total)](https://github.com/zwave-js/zwavejs2mqtt/releases)
+[![Coverage Status](https://coveralls.io/repos/github/zwave-js/zwavejs2mqtt/badge.svg?branch=master)](https://coveralls.io/github/zwave-js/zwavejs2mqtt?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/zwave-js/zwavejs2mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/zwave-js/zwavejs2mqtt?targetFile=package.json)
+[![Dependencies Status](https://david-dm.org/zwave-js/zwavejs2mqtt/status.svg)](https://david-dm.org/zwave-js/zwavejs2mqtt)
+[![devDependencies Status](https://david-dm.org/zwave-js/zwavejs2mqtt/dev-status.svg)](https://david-dm.org/zwave-js/zwavejs2mqtt?type=dev)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/context:javascript)
 
 [![Join channel](https://img.shields.io/badge/SLACK-zwavejs2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwavejs2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
 
@@ -20,23 +20,18 @@
 
 [![dockeri.co](https://dockeri.co/image/robertslando/zwavejs2mqtt)](https://hub.docker.com/r/robertslando/zwavejs2mqtt)
 
-![OpenZWave](docs/OZW_Logo.png)
+![ZwaveJs](docs/zwavejs_logo.svg)
 **TO**
 ![MQTT](docs/MQTT-Logo.png)
 
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
-- **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [openzwave-shared](https://github.com/OpenZWave/node-openzwave-shared), [Webpack](https://webpack.js.org/)
+- **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [zwavejs](https://github.com/zwave-js/node-zwave-js), [Webpack](https://webpack.js.org/)
 - **Frontend**: [Vue](https://vuejs.org/), [socket.io](https://github.com/socketio/socket.io), [Vuetify](https://github.com/vuetifyjs/vuetify)
-
-## !! ATTENTION
-
-After a [discussion](https://github.com/OpenZWave/zwavejs2mqtt/issues/201) with Openzwave maintainer all issues related to **OZW 1.4** will be ignored and **automatically closed** as it isn't supported anymore, **please use OZW 1.6+**
 
 ## 📖 Table of contents
 
 - [Zwave To MQTT](#zwave-to-mqtt)
-  - [!! ATTENTION](#-attention)
   - [📖 Table of contents](#-table-of-contents)
   - [:electric_plug: Installation](#-installation)
     - [DOCKER :tada: way](#docker--way)
@@ -101,7 +96,7 @@ mkdir store
 docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwavejs2mqtt:latest
 
 # As a service
-wget https://raw.githubusercontent.com/openzwave/zwavejs2mqtt/master/docker/docker-compose.yml
+wget https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/docker-compose.yml
 docker-compose up
 ```
 
@@ -112,27 +107,27 @@ For more info about docker check [here](docker/README.md)
 ### Kubernetes way
 
 ```bash
-kubectl apply -k https://raw.githubusercontent.com/OpenZWave/zwavejs2mqtt/master/kustomization.yaml
+kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kustomization.yaml
 ```
 
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](./kubernetes) directory of this repo
 
 ### NodeJS or PKG version
 
-1. Firstly you need to install the [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
+1. Firstly you need to install the [Open-Zwave](https://github.com/zwave-js/open-zwave) library on your system.
 
    ```sh
    cd ~
-   git clone https://github.com/OpenZWave/open-zwave.git
+   git clone https://github.com/zwave-js/open-zwave.git
    cd open-zwave && make && sudo make install
    sudo ldconfig
    export LD_LIBRARY_PATH=/usr/local/lib64
    sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
    ```
 
-   For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
+   For Raspberry check [here](https://github.com/zwave-js/node-zwave-js-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
 
-2. Test the library: go to openzwave directory `cd openzwave-*` and run the command
+2. Test the library: go to zwave-js directory `cd zwave-js-*` and run the command
 
    `MinOZW /dev/ttyACM0`
 
@@ -147,7 +142,7 @@ kubectl apply -k https://raw.githubusercontent.com/OpenZWave/zwavejs2mqtt/master
      mkdir zwavejs2mqtt
      cd zwavejs2mqtt
      # download latest version
-     curl -s https://api.github.com/repos/OpenZWave/zwavejs2mqtt/releases/latest  \
+     curl -s https://api.github.com/repos/zwave-js/zwavejs2mqtt/releases/latest  \
      | grep "browser_download_url.*zip" \
      | cut -d : -f 2,3 \
      | tr -d \" \
@@ -159,7 +154,7 @@ kubectl apply -k https://raw.githubusercontent.com/OpenZWave/zwavejs2mqtt/master
    - If you want to compile last code from github:
 
      ```sh
-     git clone https://github.com/OpenZWave/zwavejs2mqtt
+     git clone https://github.com/zwave-js/zwavejs2mqtt
      cd zwavejs2mqtt
      npm install
      npm run build
@@ -207,16 +202,16 @@ Zwave settings:
 
 - **Serial port**: The serial port where your controller is connected
 - **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"0xCA,0xFE,0xBA,0xBE,.... "` (16 bytes total)
-- **Logging**: Enable/Disable Openzwave Library logging
+- **Logging**: Enable/Disable zwave-js Library logging
 - **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for persistent node information like node name and location
 - **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
-- **Configuration Path**: The path to Openzwave devices config db
+- **Configuration Path**: The path to zwave-js devices config db
 - **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
 - **Auto Update Config File**: Auto update Zwave devices database
 - **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
   - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
-  - `zwave.options` overrides options passed to the zwave client see `IConstructorParameters` in [the open-zwave docs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/types/openzwave-shared.d.ts). For detail for example `zwave.options.options.EnforceSecureReception=true` to drop insecure messages from devices that should be secure.
+  - `zwave.options` overrides options passed to the zwave client see `IConstructorParameters` in [the open-zwave docs](https://github.com/zwave-js/node-zwave-js-shared/blob/master/types/zwave-js-shared.d.ts). For detail for example `zwave.options.options.EnforceSecureReception=true` to drop insecure messages from devices that should be secure.
 
 ### MQTT
 
@@ -252,7 +247,7 @@ Gateway settings:
      - `instance`: the numerical value of value instance
      - `index`: the numerical index of the value
 
-  2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/zwavejs2mqtt/issues/22)
+  2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with zwave-js author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/zwave-js/zwavejs2mqtt/issues/22)
 
      The topic where zwave values are published will be:
 
@@ -388,9 +383,9 @@ Alive and Sleeping nodes cannot be deleted.
 - Home Assistant integration (**beta**)
 - Zwave Control Panel:
   - **Nodes management**: check all nodes discovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
-  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/OpenZWave/zwavejs2mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
-  - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
-  - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
+  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/zwave-js/zwavejs2mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
+  - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of zwave-js)
+  - **Custom scenes management**
 - Log debug in UI
 - Mesh graph showing devices neighbors
 
@@ -476,7 +471,7 @@ Before version 2.2.0 you can get the device id in this ways:
 
 First (and easier) option is to add a random value in gateway values table for the desired device, the device id will be visible in first column of the table (`Devices`) between square brackets `[<deviceID>] Device Name`
 
-Second option would be to retrieve it from [here](https://github.com/OpenZWave/open-zwave/blob/master/config/manufacturer_specific.xml). Each device has Manufacturerid, product id and a product type in **HEX format** and needs to be converted in decimal:
+Second option would be to retrieve it from [here](https://github.com/zwave-js/open-zwave/blob/master/config/manufacturer_specific.xml). Each device has Manufacturerid, product id and a product type in **HEX format** and needs to be converted in decimal:
 
 ```xml
 <Manufacturer id="019b" name="ThermoFloor AS">
@@ -630,11 +625,11 @@ The main template is like the thermostat template. The things to add are:
 
 ## :gift: MQTT APIs
 
-You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simply using MQTT.
+You have full access to all [zwavejs APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) by simply using MQTT.
 
 ### Zwave Events
 
-If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave events are published to MQTT. [Here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-events.md) you can find a list with all available events
+If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave events are published to MQTT. [Here](https://github.com/zwave-js/node-zwave-js-shared/blob/master/README-events.md) you can find a list with all available events
 
 Topic
 
@@ -725,7 +720,7 @@ There are some custom apis that can be called that are not part of Zwave Client:
 - `getInfo`: Returns an object with:
   - `homeid`: homeId
   - `name`: homeId Hex
-  - `version`: OpenZwave version
+  - `version`: zwave-js version
   - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
   - `lastUpdate`: Timestamp of latest event received from OZW
   - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
@@ -773,7 +768,7 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 ### Settings
 
-![OpenZWave](docs/settings.png)
+![zwavejs](docs/settings.png)
 
 ### Control Panel
 
@@ -824,7 +819,7 @@ _**Note**: Each one of the following environment variables corresponds to their 
 
 > A: My device is X and has been discovered as Y, why?
 
-**B: Hass Discovery is not easy, zwave have many different devices with different values. To try to understand how to discover a specific value I have used** [this](https://github.com/OpenZWave/open-zwave/blob/master/config/Localization.xml) **file that shows what kind of value is expeted based on value class and index. Unfortunally not all devices respect this specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file** `/hass/devices.js` **where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
+**B: Hass Discovery is not easy, zwave have many different devices with different values. To try to understand how to discover a specific value I have used** [this](https://github.com/zwave-js/open-zwave/blob/master/config/Localization.xml) **file that shows what kind of value is expeted based on value class and index. Unfortunally not all devices respect this specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file** `/hass/devices.js` **where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
 
 ## :pray: Thanks
 
