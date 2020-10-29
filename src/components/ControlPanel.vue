@@ -114,6 +114,7 @@
               <td>{{ item.loc || '' }}</td>
               <td>{{ item.isSecure ? 'Yes' : 'No' }}</td>
               <td>{{ item.isBeaming ? 'Yes' : 'No' }}</td>
+              <td>{{ item.failed ? 'Yes' : 'No' }}</td>
               <td>{{ item.status }}</td>
               <td>{{ item.interviewStage }}</td>
               <td>
@@ -759,6 +760,10 @@ export default {
           value: 'healNode'
         },
         {
+          text: 'Refresh info',
+          value: 'refreshInfo'
+        },
+        {
           text: 'Is Failed Node',
           value: 'isFailedNode'
         },
@@ -820,6 +825,7 @@ export default {
         { text: 'Location', value: 'loc' },
         { text: 'Secure', value: 'isSecure' },
         { text: 'Beaming', value: 'isBeaming' },
+        { text: 'Failed', value: 'failed' },
         { text: 'Status', value: 'status' },
         { text: 'Interview stage', value: 'interviewStage' },
         { text: 'Last Active', value: 'lastActive' }
