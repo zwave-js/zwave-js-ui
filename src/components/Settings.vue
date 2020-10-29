@@ -42,7 +42,7 @@
                           label="Log Level"
                         ></v-select>
                       </v-flex>
-                       <v-flex xs12 sm6>
+                      <v-flex xs12 sm6>
                         <v-switch
                           hint="Store zwave logs in a file"
                           persistent-hint
@@ -407,7 +407,6 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-
   </v-container>
 </template>
 
@@ -539,9 +538,7 @@ export default {
         },
         validKey: value => {
           return (
-            !value ||
-            value.length === 32 ||
-            'Key must be 32 charaters length'
+            !value || value.length === 32 || 'Key must be 32 charaters length'
           )
         }
       }
@@ -575,7 +572,7 @@ export default {
         } else {
           this.showSnackbar('Imported settings not valid')
         }
-      } catch (error) { }
+      } catch (error) {}
     },
     exportSettings () {
       var settings = this.getSettingsJSON()

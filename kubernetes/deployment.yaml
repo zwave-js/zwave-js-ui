@@ -33,10 +33,10 @@ spec:
               protocol: TCP
           resources:
             limits:
-              cpu: "1"
+              cpu: '1'
               memory: 512Mi
             requests:
-              cpu: "1"
+              cpu: '1'
               memory: 400Mi
           securityContext:
             allowPrivilegeEscalation: true

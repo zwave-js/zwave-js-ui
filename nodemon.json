@@ -10,8 +10,6 @@
     "*.log"
   ],
   "verbose": false,
-  "watch": [
-    "*.*"
-  ],
+  "watch": ["*.*"],
   "ext": "js json"
 }

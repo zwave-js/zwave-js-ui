@@ -90,25 +90,13 @@
             >
               <td>{{ item.id }}</td>
               <td>
-                {{
-                  item.ready
-                    ? item.manufacturer
-                    : ''
-                }}
+                {{ item.ready ? item.manufacturer : '' }}
               </td>
               <td>
-                {{
-                  item.ready
-                    ? item.productDescription
-                    : ''
-                }}
+                {{ item.ready ? item.productDescription : '' }}
               </td>
               <td>
-                {{
-                  item.ready
-                    ? item.productLabel
-                    : ''
-                }}
+                {{ item.ready ? item.productLabel : '' }}
               </td>
               <td>{{ item.name || '' }}</td>
               <td>{{ item.loc || '' }}</td>
@@ -209,7 +197,9 @@
                               <v-flex
                                 v-for="(v, index) in userValues"
                                 :key="index"
-                                xs12 sm6 md4
+                                xs12
+                                sm6
+                                md4
                               >
                                 <ValueID
                                   @updateValue="updateValue"
@@ -246,16 +236,18 @@
                         <v-card flat>
                           <v-card-text>
                             <v-layout row wrap>
-                            <v-flex
-                              v-for="(v, index) in configValues"
-                              :key="index"
-                              xs12 sm6 md4
-                            >
-                              <ValueID
-                                @updateValue="updateValue"
-                                v-model="configValues[index]"
-                              ></ValueID>
-                            </v-flex>
+                              <v-flex
+                                v-for="(v, index) in configValues"
+                                :key="index"
+                                xs12
+                                sm6
+                                md4
+                              >
+                                <ValueID
+                                  @updateValue="updateValue"
+                                  v-model="configValues[index]"
+                                ></ValueID>
+                              </v-flex>
                             </v-layout>
                           </v-card-text>
                         </v-card>
@@ -273,16 +265,18 @@
                         <v-card flat>
                           <v-card-text>
                             <v-layout row wrap>
-                            <v-flex
-                              v-for="(v, index) in systemValues"
-                              :key="index"
-                              xs12 sm6 md4
-                            >
-                              <ValueID
-                                @updateValue="updateValue"
-                                v-model="systemValues[index]"
-                              ></ValueID>
-                            </v-flex>
+                              <v-flex
+                                v-for="(v, index) in systemValues"
+                                :key="index"
+                                xs12
+                                sm6
+                                md4
+                              >
+                                <ValueID
+                                  @updateValue="updateValue"
+                                  v-model="systemValues[index]"
+                                ></ValueID>
+                              </v-flex>
                             </v-layout>
                           </v-card-text>
                         </v-card>
@@ -445,7 +439,11 @@
                     ></v-combobox>
                   </v-flex>
 
-                  <v-flex v-if="group.group && group.group.multiChannel" xs12 sm6>
+                  <v-flex
+                    v-if="group.group && group.group.multiChannel"
+                    xs12
+                    sm6
+                  >
                     <v-text-field
                       v-model.number="group.targetInstance"
                       label="Channel ID"
@@ -606,7 +604,6 @@
         </v-tabs>
       </v-card-text>
     </v-card>
-
   </v-container>
 </template>
 
@@ -1204,18 +1201,12 @@ export default {
     },
     updateName () {
       if (this.selectedNode && !this.nameError) {
-        this.apiRequest('_setNodeName', [
-          this.selectedNode.id,
-          this.newName
-        ])
+        this.apiRequest('_setNodeName', [this.selectedNode.id, this.newName])
       }
     },
     updateLoc () {
       if (this.selectedNode && !this.locError) {
-        this.apiRequest('_setNodeLocation', [
-          this.selectedNode.id,
-          this.newLoc
-        ])
+        this.apiRequest('_setNodeLocation', [this.selectedNode.id, this.newLoc])
       }
     },
     resetGroup () {
@@ -1404,9 +1395,8 @@ export default {
           case 'getAssociations':
             data.result = data.result.map(
               a =>
-                `- Node: ${self.nodes[a.nodeId]._name || a} Endpoint: ${
-                  a.endpoint || 0
-                }`
+                `- Node: ${self.nodes[a.nodeId]._name ||
+                  a} Endpoint: ${a.endpoint || 0}`
             )
             self.$set(self.group, 'associations', data.result.join('\n'))
             break
@@ -1421,10 +1411,16 @@ export default {
             self.scene_values = data.result
             break
           case 'getDriverStatistics':
-            self.$listeners.showConfirm('Driver statistics', self.jsonToList(data.result))
+            self.$listeners.showConfirm(
+              'Driver statistics',
+              self.jsonToList(data.result)
+            )
             break
           case 'getNodeStatistics':
-            self.$listeners.showConfirm('Node statistics', self.jsonToList(data.result))
+            self.$listeners.showConfirm(
+              'Node statistics',
+              self.jsonToList(data.result)
+            )
             break
           default:
             self.showSnackbar('Successfully call api ' + data.api)

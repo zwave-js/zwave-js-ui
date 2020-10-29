@@ -146,7 +146,12 @@ export default {
       // Check for the various File API support.
 
       return new Promise(function (resolve, reject) {
-        if (window.File && window.FileReader && window.FileList && window.Blob) {
+        if (
+          window.File &&
+          window.FileReader &&
+          window.FileList &&
+          window.Blob
+        ) {
           var input = document.createElement('input')
           input.type = 'file'
           input.addEventListener('change', function (event) {
