@@ -114,26 +114,7 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
 
 ### NodeJS or PKG version
 
-1. Firstly you need to install the [Open-Zwave](https://github.com/zwave-js/open-zwave) library on your system.
-
-   ```sh
-   cd ~
-   git clone https://github.com/zwave-js/open-zwave.git
-   cd open-zwave && make && sudo make install
-   sudo ldconfig
-   export LD_LIBRARY_PATH=/usr/local/lib64
-   sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
-   ```
-
-   For Raspberry check [here](https://github.com/zwave-js/node-zwave-js-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
-
-2. Test the library: go to zwave-js directory `cd zwave-js-*` and run the command
-
-   `MinOZW /dev/ttyACM0`
-
-   > replace `/dev/ttyACM0` with the USB port where your controller is connected
-
-3. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
+1. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
 
    - For the packaged version:
 
@@ -161,7 +142,7 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
      npm start
      ```
 
-4. Open the browser <http://localhost:8091>
+2. Open the browser <http://localhost:8091>
 
 ### Reverse Proxy Setup
 
@@ -201,14 +182,10 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 Zwave settings:
 
 - **Serial port**: The serial port where your controller is connected
-- **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"0xCA,0xFE,0xBA,0xBE,.... "` (16 bytes total)
-- **Logging**: Enable/Disable zwave-js Library logging
-- **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for persistent node information like node name and location
-- **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
+- **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"CAFEBABE.... "` (32 chars total)
+- **Log level**: Set the zwave-js Library log level
+- **Log to file**: Enable this to store zwave-js logs to a file
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
-- **Configuration Path**: The path to zwave-js devices config db
-- **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
-- **Auto Update Config File**: Auto update Zwave devices database
 - **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
   - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
   - `zwave.options` overrides options passed to the zwave client see `IConstructorParameters` in [the open-zwave docs](https://github.com/zwave-js/node-zwave-js-shared/blob/master/types/zwave-js-shared.d.ts). For detail for example `zwave.options.options.EnforceSecureReception=true` to drop insecure messages from devices that should be secure.
@@ -238,27 +215,29 @@ Gateway settings:
 
   1. **ValueId Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
-     `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
+     `<mqtt_prefix>/<?node_location>/<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey>`
 
      - `mqtt_prefix`: the prefix set in Mqtt Settings
      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-     - `node_id`: the unique numerical id of the node in Zwave network
-     - `class_id`: the numerical class id of the value
-     - `instance`: the numerical value of value instance
-     - `index`: the numerical index of the value
+     - `nodeId`: the unique numerical id of the node in Zwave network
+     - `commandClass`: the command class number of the value
+     - `endpoint`: the endpoint number (if the node has more then one endpoint)
+     - `property`: the value [property](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
+     - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 
   2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with zwave-js author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/zwave-js/zwavejs2mqtt/issues/22)
 
      The topic where zwave values are published will be:
 
-     `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
+     `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?endpoint>/<propertyName>/<propertyKey>`
 
      - `mqtt_prefix`: the prefix set in Mqtt Settings
      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-     - `class_name`: the node class name corresponding to given class id or `unknownClass_<class_id>` if the class name is not found
-     - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
-     - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
+     - `class_name`: the node class name corresponding to given command class number or `unknownClass_<class_id>` if the class name is not found
+     - `?endpoint`: Used just with multi-instance devices. The main enpoint (0) will not have this part in the topic but other instances will have: `endpoint_<instance_index>`
+     - `propertyName`: the value [propertyName](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
+     - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 
   3. **Configured Manually**: _Needs configuration_. The topic where zwave values are published will be:
 
