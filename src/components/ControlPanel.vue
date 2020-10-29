@@ -93,7 +93,7 @@
               <td>
                 {{
                   item.ready
-                    ? item.product + ' (' + item.manufacturer + ')'
+                    ? item.productDescription + ' (' + item.manufacturer + ')'
                     : ''
                 }}
               </td>
@@ -398,6 +398,7 @@
                       v-model="group.group"
                       @input="getAssociations"
                       :items="group.node.groups"
+                      return-object
                     ></v-select>
                   </v-flex>
 
@@ -422,20 +423,11 @@
                     ></v-combobox>
                   </v-flex>
 
-                  <v-flex xs12 sm6>
-                    <v-switch
-                      label="Multi instance"
-                      presistent-hint
-                      hint="Enable this target node supports multi instance associations"
-                      v-model="group.multiInstance"
-                    ></v-switch>
-                  </v-flex>
-
-                  <v-flex v-if="group.multiInstance" xs12 sm6>
+                  <v-flex v-if="group.group && group.group.multiChannel" xs12 sm6>
                     <v-text-field
                       v-model.number="group.targetInstance"
-                      label="Instance ID"
-                      hint="Target node instance ID"
+                      label="Channel ID"
+                      hint="Target node channel ID"
                       type="number"
                     />
                   </v-flex>
@@ -1258,12 +1250,12 @@ export default {
     },
     resetGroup () {
       this.$set(this.group, 'associations', [])
-      this.$set(this.group, 'group', -1)
+      this.$set(this.group, 'group', null)
     },
     getAssociations () {
       var g = this.group
-      if (g && g.node) {
-        this.apiRequest('getAssociationsInstances', [g.node.id, g.group])
+      if (g && g.node && g.group) {
+        this.apiRequest('getAssociations', [g.node.id, g.group.value])
       }
     },
     addAssociation () {
@@ -1271,13 +1263,9 @@ export default {
       var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
       if (g && g.node && target) {
-        var args = [g.node.id, g.group, target]
+        var args = [g.node.id, g.group.value, [{ nodeId: target, endpoint: g.targetInstance || 0 }]]
 
-        if (g.multiInstance) {
-          args.push(g.targetInstance || 0)
-        }
-
-        this.apiRequest('addAssociation', args)
+        this.apiRequest('addAssociations', args)
 
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
@@ -1288,13 +1276,9 @@ export default {
       var g = this.group
       var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
       if (g && g.node && target) {
-        var args = [g.node.id, g.group, target]
+        var args = [g.node.id, g.group.value, [{ nodeId: target, endpoint: g.targetInstance || 0 }]]
 
-        if (g.multiInstance) {
-          args.push(g.targetInstance || 0)
-        }
-
-        this.apiRequest('removeAssociation', args)
+        this.apiRequest('removeAssociations', args)
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
         setTimeout(this.getAssociations, 1000)
@@ -1440,11 +1424,11 @@ export default {
     this.socket.on(this.socketEvents.api, async data => {
       if (data.success) {
         switch (data.api) {
-          case 'getAssociationsInstances':
+          case 'getAssociations':
             data.result = data.result.map(
               a =>
-                `- Node: ${self.nodes[a.nodeid]._name || a} Endpoint: ${
-                  a.endpoint
+                `- Node: ${self.nodes[a.nodeId]._name || a} Endpoint: ${
+                  a.endpoint || 0
                 }`
             )
             self.$set(self.group, 'associations', data.result.join('\n'))
