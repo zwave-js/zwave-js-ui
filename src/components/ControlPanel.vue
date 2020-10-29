@@ -89,18 +89,33 @@
               @click.stop="selectNode(item)"
             >
               <td>{{ item.id }}</td>
-              <td>{{ item.type }}</td>
               <td>
                 {{
                   item.ready
-                    ? item.productDescription + ' (' + item.manufacturer + ')'
+                    ? item.manufacturer
+                    : ''
+                }}
+              </td>
+              <td>
+                {{
+                  item.ready
+                    ? item.productDescription
+                    : ''
+                }}
+              </td>
+              <td>
+                {{
+                  item.ready
+                    ? item.productLabel
                     : ''
                 }}
               </td>
               <td>{{ item.name || '' }}</td>
               <td>{{ item.loc || '' }}</td>
-              <td>{{ item.secure ? 'Yes' : 'No' }}</td>
+              <td>{{ item.isSecure ? 'Yes' : 'No' }}</td>
+              <td>{{ item.isBeaming ? 'Yes' : 'No' }}</td>
               <td>{{ item.status }}</td>
+              <td>{{ item.interviewStage }}</td>
               <td>
                 {{
                   item.lastActive
@@ -851,12 +866,15 @@ export default {
       selectedNode: null,
       headers: [
         { text: 'ID', value: 'id' },
-        { text: 'Type', value: 'type' },
-        { text: 'Product', value: 'product' },
+        { text: 'Manufacturer', value: 'manufacturer' },
+        { text: 'Product', value: 'productDescription' },
+        { text: 'Product code', value: 'product' },
         { text: 'Name', value: 'name' },
         { text: 'Location', value: 'loc' },
-        { text: 'Secure', value: 'secure' },
+        { text: 'Secure', value: 'isSecure' },
+        { text: 'Beaming', value: 'isBeaming' },
         { text: 'Status', value: 'status' },
+        { text: 'Interview stage', value: 'interviewStage' },
         { text: 'Last Active', value: 'lastActive' }
       ],
       rules: {
