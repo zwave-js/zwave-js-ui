@@ -606,7 +606,6 @@
       </v-card-text>
     </v-card>
 
-    <Confirm ref="confirm"></Confirm>
   </v-container>
 </template>
 
@@ -614,7 +613,6 @@
 import ConfigApis from '@/apis/ConfigApis'
 
 import ValueID from '@/components/ValueId'
-import Confirm from '@/components/Confirm'
 
 import AnsiUp from 'ansi_up'
 
@@ -633,8 +631,7 @@ export default {
   },
   components: {
     ValueID,
-    DialogSceneValue,
-    Confirm
+    DialogSceneValue
   },
   computed: {
     scenesWithId () {
@@ -768,6 +765,14 @@ export default {
         {
           text: 'Remove failed node',
           value: 'removeFailedNode'
+        },
+        {
+          text: 'Begin Firmware update',
+          value: 'beginFirmwareUpdate'
+        },
+        {
+          text: 'Abort Firmware update',
+          value: 'abortFirmwareUpdate'
         }
       ],
       cnt_action: 'healNetwork',
@@ -860,18 +865,6 @@ export default {
         return null
       }
     },
-    async confirm (title, text, level, options) {
-      options = options || {}
-
-      var levelMap = {
-        warning: 'orange',
-        alert: 'red'
-      }
-
-      options.color = levelMap[level] || 'primary'
-
-      return this.$refs.confirm.open(title, text, options)
-    },
     validJSONdevice () {
       var valid = true
       try {
@@ -884,25 +877,20 @@ export default {
       return valid || 'JSON test failed'
     },
     async importConfiguration () {
-      var self = this
       if (
-        await this.confirm(
+        await this.$listeners.showConfirm(
           'Attention',
           'This will override all existing nodes names and locations',
           'alert'
         )
       ) {
-        self.$emit('import', 'json', function (err, data) {
-          if (!err && data) {
-            ConfigApis.importConfig({ data: data })
-              .then(data => {
-                self.showSnackbar(data.message)
-              })
-              .catch(error => {
-                console.log(error)
-              })
-          }
-        })
+        try {
+          var data = await this.$listeners.import('json')
+          var response = await ConfigApis.importConfig({ data: data })
+          this.showSnackbar(response.message)
+        } catch (error) {
+          console.log(error)
+        }
       }
     },
     exportConfiguration () {
@@ -911,7 +899,7 @@ export default {
         .then(data => {
           self.showSnackbar(data.message)
           if (data.success) {
-            self.$emit('export', data.data, 'nodes', 'json')
+            self.$listeners.export(data.data, 'nodes', 'json')
           }
         })
         .catch(error => {
@@ -919,27 +907,25 @@ export default {
         })
     },
     async importScenes () {
-      var self = this
       if (
-        await this.confirm(
+        await this.$listeners.showConfirm(
           'Attention',
           'This operation will override all current scenes and cannot be undone',
           'alert'
         )
       ) {
-        this.$emit('import', 'json', function (err, scenes) {
-          // TODO: add checks on file entries
+        try {
+          var scenes = await this.$listeners.import('json')
           if (scenes instanceof Array) {
-            self.apiRequest('_setScenes', [scenes])
+            this.apiRequest('_setScenes', [scenes])
           } else {
-            self.showSnackbar('Imported file not valid')
-            console.log(err)
+            this.showSnackbar('Imported file not valid')
           }
-        })
+        } catch (error) {}
       }
     },
     exportScenes () {
-      this.$emit('export', this.scenes, 'scenes')
+      this.$listeners.export(this.scenes, 'scenes')
     },
     apiRequest (apiName, args) {
       if (this.socket.connected) {
@@ -970,7 +956,7 @@ export default {
     async removeScene () {
       if (
         this.selectedScene &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Attention',
           'Are you sure you want to delete this scene?',
           'alert'
@@ -1003,7 +989,7 @@ export default {
     },
     async deleteItem (value) {
       if (
-        await this.confirm(
+        await this.$listeners.showConfirm(
           'Attention',
           'Are you sure you want to delete this item?',
           'alert'
@@ -1021,7 +1007,7 @@ export default {
       var device = this.selectedDevice
       if (
         device &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Attention',
           'Are you sure you want to delete selected device?',
           'alert'
@@ -1038,7 +1024,7 @@ export default {
       var node = this.selectedNode
       if (
         node &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Rediscover node',
           'Are you sure you want to re-discover all node values?'
         ))
@@ -1053,7 +1039,7 @@ export default {
       var node = this.selectedNode
       if (
         node &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Rediscover node',
           'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store'
         ))
@@ -1068,7 +1054,7 @@ export default {
       var device = this.selectedDevice
       if (
         device &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Are you sure you want to re-discover selected device?'
         ))
       ) {
@@ -1140,7 +1126,7 @@ export default {
         var broadcast = false
         var askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
-          broadcast = await this.$refs.confirm.open(
+          broadcast = await this.$listeners.showConfirm(
             'Broadcast',
             'Send this command to all nodes?'
           )
@@ -1157,18 +1143,25 @@ export default {
         }
 
         if (this.cnt_action === 'addNode') {
-          var secure = await this.$refs.confirm.open(
+          var secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in security mode?'
           )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
-          var ok = await this.$refs.confirm.open(
+          var ok = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
             { color: 'red' }
           )
           if (!ok) {
+            return
+          }
+        } else if (this.cnt_action === 'beginFirmwareUpdate') {
+          try {
+            var dataBuffer = await this.$listeners.import('buffer')
+            args.push(dataBuffer)
+          } catch (error) {
             return
           }
         }
@@ -1183,10 +1176,21 @@ export default {
         }
       }
     },
-    sendNodeAction (action) {
+    async sendNodeAction (action) {
       action = typeof action === 'string' ? action : this.node_action
       if (this.selectedNode) {
-        this.apiRequest(action, [this.selectedNode.id])
+        var args = [this.selectedNode.id]
+
+        if (this.node_action === 'beginFirmwareUpdate') {
+          try {
+            var dataBuffer = await this.$listeners.import('buffer')
+            args.push(dataBuffer)
+          } catch (error) {
+            return
+          }
+        }
+
+        this.apiRequest(action, args)
       }
     },
     saveConfiguration () {
@@ -1222,8 +1226,14 @@ export default {
       var g = this.group
       var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
+      var association = { nodeId: target }
+
+      if (g.group.multiChannel) {
+        association.endpoint = g.targetInstance || 0
+      }
+
       if (g && g.node && target) {
-        var args = [g.node.id, g.group.value, [{ nodeId: target, endpoint: g.targetInstance || 0 }]]
+        var args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('addAssociations', args)
 
@@ -1236,7 +1246,13 @@ export default {
       var g = this.group
       var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
       if (g && g.node && target) {
-        var args = [g.node.id, g.group.value, [{ nodeId: target, endpoint: g.targetInstance || 0 }]]
+        var association = { nodeId: target }
+
+        if (g.group.multiChannel) {
+          association.endpoint = g.targetInstance || 0
+        }
+
+        var args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('removeAssociations', args)
         // wait a moment before refresh to check if the node
@@ -1398,17 +1414,11 @@ export default {
           case '_sceneGetValues':
             self.scene_values = data.result
             break
-          case 'getNodeNeighbors':
-            self.confirm(
-              'Node neightbors',
-              self.jsonToList(data.result) || 'No Neightbors found'
-            )
-            break
           case 'getDriverStatistics':
-            self.confirm('Driver statistics', self.jsonToList(data.result))
+            self.$listeners.showConfirm('Driver statistics', self.jsonToList(data.result))
             break
           case 'getNodeStatistics':
-            self.confirm('Node statistics', self.jsonToList(data.result))
+            self.$listeners.showConfirm('Node statistics', self.jsonToList(data.result))
             break
           default:
             self.showSnackbar('Successfully call api ' + data.api)
