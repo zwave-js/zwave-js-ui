@@ -758,111 +758,47 @@ export default {
       node_action: 'requestNetworkUpdate',
       node_actions: [
         {
-          text: 'Update neighbors',
-          value: 'requestNodeNeighborUpdate'
+          text: 'Heal node',
+          value: 'healNode'
         },
         {
-          text: 'Refresh node info',
-          value: 'refreshNodeInfo'
-        },
-        {
-          text: 'Get node neighbors',
-          value: 'getNodeNeighbors'
-        },
-        {
-          text: 'Update return route',
-          value: 'assignReturnRoute'
-        },
-        {
-          text: 'Delete return routes',
-          value: 'deleteAllReturnRoutes'
-        },
-        {
-          text: 'Send NIF',
-          value: 'sendNodeInformation'
-        },
-        {
-          text: 'Refresh configuration params',
-          value: 'requestAllConfigParams'
-        },
-        {
-          text: 'Request network update',
-          value: 'requestNetworkUpdate'
-        },
-        {
-          text: 'Node statistic',
-          value: 'getNodeStatistics'
-        },
-        {
-          text: 'Has node failed',
-          value: 'hasNodeFailed'
+          text: 'Is Failed Node',
+          value: 'isFailedNode'
         },
         {
           text: 'Remove failed node',
           value: 'removeFailedNode'
-        },
-        {
-          text: 'Replace failed node',
-          value: 'replaceFailedNode'
-        },
-        {
-          text: 'Heal node',
-          value: 'healNetworkNode'
-        },
-        {
-          text: 'Replication send',
-          value: 'replicationSend'
-        },
-        {
-          text: 'Test node',
-          value: 'testNetworkNode'
         }
       ],
       cnt_action: 'healNetwork',
       cnt_actions: [
         {
-          text: 'Add Node (inclusion)',
-          value: 'addNode'
+          text: 'Start inclusion',
+          value: 'startInclusion'
         },
         {
-          text: 'Remove node (exclusion)',
-          value: 'removeNode'
+          text: 'Stop inclusion',
+          value: 'stopInclusion'
         },
         {
-          text: 'Transfer primary role',
-          value: 'transferPrimaryRole'
+          text: 'Start exclusion',
+          value: 'startExclusion'
         },
         {
-          text: 'Create new primary',
-          value: 'createNewPrimary'
-        },
-        {
-          text: 'Receive configuration',
-          value: 'receiveConfiguration'
-        },
-        {
-          text: 'Cancel Command',
-          value: 'cancelControllerCommand'
+          text: 'Stop exclusion',
+          value: 'stopExclusion'
         },
         {
           text: 'Heal Network',
-          value: 'healNetwork'
+          value: 'beginHealingNetwork'
         },
         {
-          text: 'Driver statistic',
-          value: 'getDriverStatistics'
+          text: 'Stop Heal Network',
+          value: 'stopHealingNetwork'
         },
         {
           text: 'Hard reset',
           value: 'hardReset'
-        },
-        {
-          text: 'Soft reset',
-          value: 'softReset'
-        },
-        {
-          text: 'Test network',
-          value: 'testNetwork'
         }
       ],
       newName: '',
