@@ -71,15 +71,15 @@
             }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
-            <v-list-item-content>Type</v-list-item-content>
+            <v-list-item-content>Code</v-list-item-content>
             <v-list-item-content class="align-end">{{
-              selectedNode.data.type
+              selectedNode.data.productLabel
             }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
             <v-list-item-content>Product</v-list-item-content>
             <v-list-item-content class="align-end">{{
-              selectedNode.data.product
+              selectedNode.data.productDescription
             }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
@@ -239,7 +239,7 @@ export default {
         if (source.neighbors) {
           for (const target of source.neighbors) {
             this.links.push({
-              sid: source.node_id,
+              sid: source.id,
               tid: target,
               _color: this.$vuetify.theme.dark ? 'white' : 'black'
             })

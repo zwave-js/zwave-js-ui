@@ -13,7 +13,7 @@
     <v-text-field
       v-if="!value.list && (value.type === 'number' || value.type === 'string')"
       :label="value.label + ' (' + value.id + ')'"
-      :type="value.type == 'string' ? 'text' : 'number'"
+      :type="value.type === 'string' ? 'text' : 'number'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.units"
       :min="value.min != value.max ? value.min : null"
@@ -35,7 +35,7 @@
     ></v-select>
 
     <v-switch
-      v-if="value.type == 'boolean'"
+      v-if="value.type == 'boolean' && value.writeable && value.readable"
       :label="value.label + ' (' + value.id + ')'"
       :hint="value.description || ''"
       persistent-hint
@@ -43,39 +43,7 @@
       @change="updateValue(value)"
     ></v-switch>
 
-    <v-layout column v-if="value.type == 'bitset'">
-      <v-tooltip right>
-        <template v-slot:activator="{ on }">
-          <p
-            v-on="on"
-            style="margin-bottom:0;margin-top:10px;cursor:default"
-            class="font-weight-thin caption"
-          >
-            {{ value.label + ' (' + value.id + ')' }}
-          </p>
-        </template>
-        <span>{{ value.description || '' }}</span>
-      </v-tooltip>
-
-      <v-switch
-        v-for="(v, bit) in value.bitSetIds"
-        :key="bit"
-        :label="v.label"
-        :hint="v.description || ''"
-        persistent-hint
-        v-model="v.value"
-      ></v-switch>
-      <v-btn
-        color="primary"
-        dark
-        @click="updateValue(value)"
-        class="mb-2"
-        style="max-width:200px;margin:10px 0"
-        >Update</v-btn
-      >
-    </v-layout>
-
-    <v-tooltip v-if="value.type == 'button'" right>
+    <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
       <template v-slot:activator="{ on }">
         <v-btn
           v-on="on"

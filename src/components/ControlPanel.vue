@@ -204,16 +204,18 @@
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
-                            <v-flex
-                              v-for="(v, index) in userValues"
-                              :key="index"
-                              xs12
-                            >
-                              <ValueID
-                                @updateValue="updateValue"
-                                v-model="userValues[index]"
-                              ></ValueID>
-                            </v-flex>
+                            <v-layout row wrap>
+                              <v-flex
+                                v-for="(v, index) in userValues"
+                                :key="index"
+                                xs12 sm6 md4
+                              >
+                                <ValueID
+                                  @updateValue="updateValue"
+                                  v-model="userValues[index]"
+                                ></ValueID>
+                              </v-flex>
+                            </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
@@ -242,16 +244,18 @@
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
+                            <v-layout row wrap>
                             <v-flex
                               v-for="(v, index) in configValues"
                               :key="index"
-                              xs12
+                              xs12 sm6 md4
                             >
                               <ValueID
                                 @updateValue="updateValue"
                                 v-model="configValues[index]"
                               ></ValueID>
                             </v-flex>
+                            </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
@@ -267,16 +271,18 @@
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
+                            <v-layout row wrap>
                             <v-flex
                               v-for="(v, index) in systemValues"
                               :key="index"
-                              xs12
+                              xs12 sm6 md4
                             >
                               <ValueID
                                 @updateValue="updateValue"
                                 v-model="systemValues[index]"
                               ></ValueID>
                             </v-flex>
+                            </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
@@ -1306,21 +1312,16 @@ export default {
       v = this.getValue(v)
 
       if (v) {
-        if (v.type === 'bitset') {
-          v.newValue = ['0', '0', '0', '0', '0', '0', '0', '0']
-
-          for (const bit in v.bitSetIds) {
-            v.newValue[8 - parseInt(bit)] = v.bitSetIds[bit].value ? '1' : '0'
-          }
-
-          v.newValue = parseInt(v.newValue.join(''), 2)
-        }
-
         // in this way I can check when the value receives an update
         v.toUpdate = true
 
         if (v.type === 'number') {
           v.newValue = parseInt(v.newValue)
+        }
+
+        // it's a button
+        if (v.type === 'boolean' && !v.readable) {
+          v.newValue = true
         }
 
         this.apiRequest('writeValue', [
