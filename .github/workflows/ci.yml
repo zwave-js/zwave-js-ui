@@ -35,7 +35,7 @@ jobs:
         run: npm install
 
       - name: NPM Lint
-        if: matrix['node-version'] == '12.x'
+        if: matrix['node-version'] == '14.x'
         run: npm run lint
 
       - name: Cache build
@@ -53,13 +53,13 @@ jobs:
         run: npm run test
 
       - name: Generate coverage report
-        if: matrix['node-version'] == '12.x'
+        if: matrix['node-version'] == '14.x'
         run: |
           npm run coverage
           npm run record-coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
-        if: matrix['node-version'] == '12.x'
+        if: matrix['node-version'] == '14.x'
         with:
           github-token: ${{ secrets.github_token }}

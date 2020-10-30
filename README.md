@@ -182,7 +182,7 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 Zwave settings:
 
 - **Serial port**: The serial port where your controller is connected
-- **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"CAFEBABE.... "` (32 chars total)
+- **Network key** (Optional): Zwave network key if security is enabled. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
 - **Log level**: Set the zwave-js Library log level
 - **Log to file**: Enable this to store zwave-js logs to a file
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
@@ -234,8 +234,8 @@ Gateway settings:
      - `mqtt_prefix`: the prefix set in Mqtt Settings
      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-     - `class_name`: the node class name corresponding to given command class number or `unknownClass_<class_id>` if the class name is not found
-     - `?endpoint`: Used just with multi-instance devices. The main enpoint (0) will not have this part in the topic but other instances will have: `endpoint_<instance_index>`
+     - `class_name`: the valueId command class name corresponding to given command class number or `unknownClass_<class_id>` if the class name is not known
+     - `?endpoint`: Used just with multi-instance devices. The main enpoint (0) will not have this part in the topic but other instances will have: `endpoint_<endpoint>`
      - `propertyName`: the value [propertyName](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
      - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 
@@ -246,7 +246,7 @@ Gateway settings:
      - `mqtt_prefix`: the prefix set in Mqtt Settings
      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-     - `value_topic`: the topic you want to use for that value (take from gateway values table).
+     - `value_topic`: the topic you want to use for that value (taken from gateway values table).
 
 - **Payload type**: The content of the payload when an update is published:
 
@@ -296,7 +296,7 @@ Gateway settings:
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
-Settings, scenes and Zwave configuration are stored in `JSON/xml` files under project `store` folder that you can easily **import/export** for backup purposes.
+Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
 
 #### Special topics
 
@@ -327,8 +327,6 @@ The Gateway values table can be used with all gateway types to customize specifi
 - **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
 - **Topic**: The topic to use for this value. It is the topic added after topic prefix, node name and location. If gateway type is different than `Manual` this can be leave blank and the value topic will be the one based on the gateway configuration chosen
 - **Post operation**: If you want to convert your value (eg. '/10' '/100' '*10' '*100')
-- **Poll**: Enable this to set the value `enablePoll` flag
-- **Verify Changes**: Used to verify changes of this values
 - **Parse Send**: Enable this to allow users to specify a custom `function(value)` to parse the value sent to MQTT. The function must be sync
 - **Parse receive**: Enable this to allow users to specify a custom `function(value)` to parse the value received via MQTT. The function must be sync
 
@@ -608,11 +606,11 @@ You have full access to all [zwavejs APIs](https://zwave-js.github.io/node-zwave
 
 ### Zwave Events
 
-If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave events are published to MQTT. [Here](https://github.com/zwave-js/node-zwave-js-shared/blob/master/README-events.md) you can find a list with all available events
+If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave-js events are published to MQTT. There are both [Driver](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=driver-events) and [Node](https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events) and [Controller](https://zwave-js.github.io/node-zwave-js/#/api/node?id=controller-events)
 
 Topic
 
-`<mqtt_prefix>/_EVENTS_/ZWAVE_GATEWAY-<mqtt_name>/<event name>`
+`<mqtt_prefix>/_EVENTS_/ZWAVE_GATEWAY-<mqtt_name>/<driver|node|controller>/<event name>`
 
 Payload
 
@@ -626,7 +624,7 @@ Payload
 
 Topic
 
-`zwavejs2mqtt/_EVENTS/ZWAVE_GATEWAY-z2m/node_ready`
+`zwavejs2mqtt/_EVENTS/ZWAVE_GATEWAY-z2m/node/node_ready`
 
 Payload
 
