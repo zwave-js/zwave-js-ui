@@ -1,6 +1,6 @@
 # zwavejs2mqtt-docker
 
-[![dockeri.co](https://dockeri.co/image/robertslando/zwavejs2mqtt)](https://hub.docker.com/r/robertslando/zwavejs2mqtt)
+[![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
@@ -48,7 +48,7 @@ Here there are 3 different way to start the container and provide data persisten
 ### Run using volumes
 
 ```bash
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store robertslando/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run using local folder
@@ -57,7 +57,7 @@ Here we will store our data in the current path (`$(pwd)`) named `store`. You ca
 
 ```bash
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run as a service
@@ -69,7 +69,7 @@ version: '3.7'
 services:
   zwavejs2mqtt:
     container_name: zwavejs2mqtt
-    image: robertslando/zwavejs2mqtt:latest
+    image: zwavejs/zwavejs2mqtt:latest
     restart: always
     tty: true
     stop_signal: SIGINT
@@ -109,7 +109,7 @@ spec:
     spec:
       containers:
       - name: zwave
-        image: robertslando/zwavejs2mqtt:latest
+        image: zwavejs/zwavejs2mqtt:latest
         livenessProbe:
           failureThreshold: 10
           httpGet:
@@ -193,7 +193,7 @@ Like the other solutions, remember to replace device `/dev/ttyACM0` with the pat
 In 1.0.0 version all application data where stored inside the volume. This could cause many problems expectially when upgrading. To prevent this, starting from version 1.1.0 all persistence data have been moved to application `store` folder. If you have all your data stored inside a volume `zwavejs2mqtt` this is how to backup them:
 
 ```bash
-APP=$(docker run --rm -it -d --mount source=zwavejs2mqtt,target=/usr/src/app robertslando/zwavejs2mqtt:latest)
+APP=$(docker run --rm -it -d --mount source=zwavejs2mqtt,target=/usr/src/app zwavejs/zwavejs2mqtt:latest)
 docker cp $APP:/usr/src/app ./
 docker kill $APP
 ```
@@ -209,7 +209,7 @@ If you get the error `standard_init_linux.go:207: exec user process caused "exec
 Check files inside volume
 
 ```bash
-docker run --rm -it --mount source=zwavejs2mqtt,target=/usr/src/app robertslando/zwavejs2mqtt:latest find /usr/src/app
+docker run --rm -it --mount source=zwavejs2mqtt,target=/usr/src/app zwavejs/zwavejs2mqtt:latest find /usr/src/app
 ```
 
 Delete Volume
@@ -225,22 +225,22 @@ The docker images are the latest stable images of the [zwavejs2mqtt](https://git
 ```bash
 git clone https://github.com/zwave-js/zwavejs2mqtt.git
 cd zwavejs2mqtt/docker
-docker build -f docker/Dockerfile --build-arg Z2M_GIT_SHA1=master -t robertslando/zwavejs2mqtt:latest .
+docker build -f docker/Dockerfile --build-arg Z2M_GIT_SHA1=master -t zwavejs/zwavejs2mqtt:latest .
 ```
 
 Build just the `build` container
 
 ```bash
-docker build -f docker/Dockerfile --target=build -t robertslando/zwavejs2mqtt_build .
+docker build -f docker/Dockerfile --target=build -t zwavejs/zwavejs2mqtt_build .
 
 ```
 
 ## SSH inside container
 
 ```bash
-docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mqtt,target=/usr/src/app robertslando/zwavejs2mqtt:latest sh
+docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mqtt,target=/usr/src/app zwavejs/zwavejs2mqtt:latest sh
 ```
 
 ```bash
-docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mqtt,target=/dist/pkg robertslando/zwavejs2mqtt_build sh
+docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mqtt,target=/dist/pkg zwavejs/zwavejs2mqtt_build sh
 ```

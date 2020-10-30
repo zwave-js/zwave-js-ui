@@ -27,7 +27,7 @@ jobs:
       - name: Prepare
         id: prepare
         run: |
-          DOCKER_REPO=robertslando/zwavejs2mqtt
+          DOCKER_REPO=zwavejs/zwavejs2mqtt
           TAGS=${DOCKER_REPO}:sha-${GITHUB_SHA}
 
           if [ "$GITHUB_REF" == "refs/heads/master" ]; then

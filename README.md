@@ -18,7 +18,7 @@
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
-[![dockeri.co](https://dockeri.co/image/robertslando/zwavejs2mqtt)](https://hub.docker.com/r/robertslando/zwavejs2mqtt)
+[![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
 ![ZwaveJs](docs/zwavejs_logo.svg)
 **TO**
@@ -89,11 +89,11 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 ```bash
 # Using volumes as persistence
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store robertslando/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 
 # Using local folder as persistence
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 
 # As a service
 wget https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/docker-compose.yml
