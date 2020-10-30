@@ -225,9 +225,7 @@ Gateway settings:
      - `property`: the value [property](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
      - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 
-  2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with zwave-js author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/zwave-js/zwavejs2mqtt/issues/22)
-
-     The topic where zwave values are published will be:
+  2. **Named Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
      `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?endpoint>/<propertyName>/<propertyKey>`
 
