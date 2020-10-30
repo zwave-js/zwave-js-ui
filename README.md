@@ -49,7 +49,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   - [:file_folder: Nodes Management](#-nodes-management)
     - [Add a node](#add-a-node)
     - [Remove a node](#remove-a-node)
-    - [Replace failed node](#replace-failed-node)
+    - [Replace failed node (NOT IMPLEMENTED YET)](#replace-failed-node-not-implemented-yet)
     - [Remove a failed node](#remove-a-failed-node)
   - [:star: Features](#️-features)
   - [:robot: Home Assistant integration (BETA)](#-home-assistant-integration-beta)
@@ -257,7 +257,7 @@ Gateway settings:
     }
     ```
 
-  - **Entire Zwave value Object**
+  - **Entire ValueId Object**
     The payload will contain all info of a value from Zwave network:
 
     ```js
@@ -326,12 +326,11 @@ Gateway settings:
     }
     ```
 
-  - **Just value**: The payload will contain only the row Numeric/String value
+  - **Just value**: The payload will contain only the row Numeric/String/Bool value
 
 - **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
 - **Ignore location**: Enable this to remove nodes location from topics
 - **Send Zwave Events**: Enable this to send all Zwave client events to MQTT. More info [here](#zwave-events)
-- **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#robot-home-assistant-integration-beta))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
@@ -345,20 +344,6 @@ Settings, scenes and Zwave configuration are stored in `JSON` files under projec
 - **Node status** (`true` if node is ready `false` otherwise) will be published in:
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
-
-- **Node events** (value will be the event code) will be published in:
-
-`<mqtt_prefix>/<?node_location>/<node_name>/event`
-
-- **Scene events** will be published in:
-
-OZW 1.4:
-
-`<mqtt_prefix>/<?node_location>/<node_name>/scene/event` (value will be the scene event code)
-
-OZW 1.6: In OZW 1.6 scenes are treated like a valueID (so the topic depends on gateway configuration). For example if the command class is `91` (`central_scene`) and gateway uses valueid topics
-
-`<mqtt_prefix>/<?node_location>/<node_name>/91/1/1` (value published in payload will depend on gateway payload type)
 
 #### Gateway values table
 
@@ -376,13 +361,13 @@ The Gateway values table can be used with all gateway types to customize specifi
 
 ### Add a node
 
-To add a node using the UI select the controller Action `Add Node (inclusion)`, click send (:airplane:) button to enable the inclusion mode in your controller and enable the inclusion mode in your device to. `Controller status` will be `waiting` when inclusion has been successfully enabled on the controller and `completed` when the node has been successfully added. Wait few seconds and your node will be visible in the table once ready.
+To add a node using the UI, go to Control Panel and from the actions dropdown menu select `Start inclusion`, click send (:airplane:) button to enable the inclusion mode in your controller, a popup will ask you if you want to start it in `Secure mode`. In the `Controller status` text field you should see `Non-secure/Secure inclusion started` when inclusion has been successfully enabled on the controller. Wait few seconds and once the interview finish your node will be visible in the table.
 
 ### Remove a node
 
-To add a node using the UI select the controller Action `Remove Node (exclusion)`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` will be `waiting` when exclusion has been successfully enabled on the controller and `completed` when the node has been successfully removed. Wait few seconds and your node will be removed from the table.
+To remove a node using the UI, go to Control Panel and from the actions dropdown menu select `Start exclusion`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` should show `Exclusion started` when exclusion has been successfully enabled on the controller. Wait few seconds and your node will be removed from the table.
 
-### Replace failed node
+### Replace failed node (NOT IMPLEMENTED YET)
 
 To replace a failed node from the UI you have to use the command `Replace Failed Node`, if everything is ok the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
 
@@ -403,6 +388,7 @@ Alive and Sleeping nodes cannot be deleted.
 - Zwave Control Panel:
   - **Nodes management**: check all nodes discovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
   - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/zwave-js/zwavejs2mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
+  - **Firmware updates**: You are able to send firmware updates to your devices using the UI, just select the controller action `Begin Firmware Update`
   - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of zwave-js)
   - **Custom scenes management**
 - Log debug in UI
@@ -824,11 +810,6 @@ Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
 _**Note**: Each one of the following environment variables corresponds to their respective options in the UI settings and options saved in the UI take presence over these environment variables._
 
 - `OZW_NETWORK_KEY`
-- `OZW_SAVE_CONFIG`
-- `OZW_POLL_INTERVAL`
-- `OZW_AUTO_UPDATE_CONFIG`
-- `OZW_CONFIG_PATH`
-- `OZW_ASSUME_AWAKE`
 
 ## :question: FAQ
 
