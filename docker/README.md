@@ -6,8 +6,6 @@
 
 Docker container for zwavejs2mqtt Gateway and Control Panel
 
-**ATTENTION: STARTING FROM Z2M 2.1.1 OZW 1.4 SUPPORT HAS ENDED AND `latest` TAG WILL ALWAYS HAVE OZW 1.6**
-
 ## Tags
 
 Supported architectures are:
@@ -16,27 +14,6 @@ Supported architectures are:
 - `armv6`
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
-
-**Available Tags**:
-
-- `latest`: Always points to the latest stable version published (using OZW 1.6)
-- `dev`: Always point to latest OZW and zwavejs2mqtt master branches
-- `3.1.0`: OZW 1.6.1115
-- `3.0.4`: OZW 1.6.1115
-- `3.0.3`: OZW 1.6.1080
-- `3.0.2`: OZW 1.6.1061
-- `3.0.1`: OZW 1.6.1045
-- `3.0.0`: OZW 1.6.1045
-- `2.2.0`: OZW 1.6.1038
-- `2.1.1`: OZW 1.6.1004
-- `2.1.0`: OZW 1.4
-- `2.1.0-dev`: OZW 1.6.1004
-- `2.0.6`: OZW 1.4
-- `2.0.6-dev`: OZW 1.6.962
-
-**DEPRECATED**:
-
-- `latest-dev`: Starting from version 2.1.1 OZW 1.4 is no more supported so `latest` tag will always contain OZW 1.6. Last available `latest-dev` manifest is running z2m 2.1.0 with ozw 1.6
 
 ## Install
 
@@ -187,18 +164,6 @@ spec:
 ```
 
 Like the other solutions, remember to replace device `/dev/ttyACM0` with the path of your USB stick and choose the solution you prefer for data persistence.
-
-### Upgrade from 1.0.0 to 1.1.0
-
-In 1.0.0 version all application data where stored inside the volume. This could cause many problems expectially when upgrading. To prevent this, starting from version 1.1.0 all persistence data have been moved to application `store` folder. If you have all your data stored inside a volume `zwavejs2mqtt` this is how to backup them:
-
-```bash
-APP=$(docker run --rm -it -d --mount source=zwavejs2mqtt,target=/usr/src/app zwavejs/zwavejs2mqtt:latest)
-docker cp $APP:/usr/src/app ./
-docker kill $APP
-```
-
-This will create a directory `app` with all app data inside. Move all files like `OZW_log.txt zwscene.xml zwcfg_<homehex>.xml` in `app/store` folder and use that folder as volume following [this](#run-using-local-folder) section
 
 ### ATTENTION
 

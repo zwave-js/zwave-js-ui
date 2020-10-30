@@ -260,25 +260,69 @@ Gateway settings:
   - **Entire Zwave value Object**
     The payload will contain all info of a value from Zwave network:
 
-    ```json
+    ```js
     {
-      "value_id": "3-64-1-0",
-      "node_id": 3,
-      "class_id": 64,
-      "type": "list",
-      "genre": "user",
-      "instance": 1,
-      "index": 0,
-      "label": "Mode",
-      "units": "",
-      "help": "",
-      "read_only": false,
-      "write_only": false,
-      "min": 0,
-      "max": 0,
-      "is_polled": false,
-      "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
-      "value": "Off"
+      id: "38-0-targetValue",
+      nodeId: 8,
+      commandClass: 38,
+      commandClassName: "Multilevel Switch",
+      endpoint: 0,
+      property: "targetValue",
+      propertyName: "targetValue",
+      propertyKey: undefined,
+      type: "number",
+      readable: true,
+      writeable: true,
+      description: undefined,
+      label: "Target value",
+      default: undefined,
+      genre: "user",
+      min: 0,
+      max: 99,
+      step: undefined,
+      unit: undefined,
+      list: false,
+      value: undefined,
+      lastUpdate: 1604044669393,
+    }
+    ```
+
+    Example of a valueId with `states`:
+
+    ```js
+    {
+      id: "112-0-200",
+      nodeId: 8,
+      commandClass: 112,
+      commandClassName: "Configuration",
+      endpoint: 0,
+      property: 200,
+      propertyName: "Partner ID",
+      propertyKey: undefined,
+      type: "number",
+      readable: true,
+      writeable: true,
+      description: undefined,
+      label: "Partner ID",
+      default: 0,
+      genre: "config",
+      min: 0,
+      max: 1,
+      step: undefined,
+      unit: undefined,
+      list: true,
+      states: [
+        {
+          text: "Aeon Labs Standard Product",
+          value: 0,
+        },
+        {
+          text: "others",
+          value: 1,
+        },
+      ],
+      value: 0,
+      lastUpdate: 1604044675644,
     }
     ```
 
