@@ -329,7 +329,7 @@
                             {{
                               item.value.label +
                                 ' (' +
-                                item.value.value_id +
+                                item.value.id +
                                 ')'
                             }}
                           </td>

@@ -978,6 +978,7 @@ export default {
     editItem (item) {
       this.editedIndex = this.scene_values.indexOf(item)
       var node = this.nodes[item.nodeId]
+
       var value = node.values.find(v => v.id === item.id)
 
       value = Object.assign({}, value)
@@ -1000,8 +1001,7 @@ export default {
       ) {
         this.apiRequest('_removeSceneValue', [
           this.selectedScene,
-          value.nodeId,
-          value.id
+          value
         ])
         this.refreshValues()
       }

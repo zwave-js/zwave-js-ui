@@ -33,7 +33,7 @@
                 >
                   <template v-slot:selection="{ item }">
                     {{
-                      item.label +
+                      (item.label || item.id) +
                         (item.endpoint > 1
                           ? ' - Endpoint ' + item.endpoint
                           : '')
@@ -42,7 +42,7 @@
                   <template v-slot:item="{ item }">
                     <v-list-item-content>
                       <v-list-item-title>{{
-                        item.label +
+                        (item.label || item.id) +
                           (item.endpoint > 0
                             ? ' - Endpoint ' + item.endpoint
                             : '')
