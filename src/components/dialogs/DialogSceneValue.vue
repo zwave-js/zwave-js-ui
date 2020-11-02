@@ -32,7 +32,7 @@
                   item-value="id"
                   :items="editedValue.node.values"
                 >
-                <template v-slot:selection="{ item }">
+                  <template v-slot:selection="{ item }">
                     {{
                       (item.label || item.id) +
                         (item.endpoint > 1

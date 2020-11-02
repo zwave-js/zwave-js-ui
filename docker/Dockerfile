@@ -42,9 +42,6 @@ RUN apk add --no-cache \
 # Copy files from previous build stage
 COPY --from=build-z2m /root/zwavejs2mqtt /usr/src/app
 
-# Set enviroment
-ENV LD_LIBRARY_PATH /lib
-
 WORKDIR /usr/src/app
 
 EXPOSE 8091

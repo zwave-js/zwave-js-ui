@@ -999,10 +999,7 @@ export default {
           'alert'
         )
       ) {
-        this.apiRequest('_removeSceneValue', [
-          this.selectedScene,
-          value
-        ])
+        this.apiRequest('_removeSceneValue', [this.selectedScene, value])
         this.refreshValues()
       }
     },

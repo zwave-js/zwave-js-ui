@@ -326,12 +326,7 @@
                         <tr>
                           <td>{{ deviceName(item.device) }}</td>
                           <td>
-                            {{
-                              item.value.label +
-                                ' (' +
-                                item.value.id +
-                                ')'
-                            }}
+                            {{ item.value.label + ' (' + item.value.id + ')' }}
                           </td>
                           <td class="text-xs">{{ item.topic }}</td>
                           <td class="text-xs">
