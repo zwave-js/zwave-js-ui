@@ -341,9 +341,17 @@ Settings, scenes and Zwave configuration are stored in `JSON` files under projec
 
 #### Special topics
 
-- **Node status** (`true` if node is ready `false` otherwise) will be published in:
+- **Node status**:
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
+
+The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
+
+- **Node notifications**:
+
+`<mqtt_prefix>/<?node_location>/<node_name>/notification/<notificationLabel>`
+
+The payload will be the notification `prameters` (can be null or not based on the notification type)
 
 #### Gateway values table
 
