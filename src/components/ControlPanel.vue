@@ -453,8 +453,9 @@
                     />
                   </v-flex>
 
-                  <v-flex v-if="group.node && group.target && group.group" xs12>
+                  <v-flex xs12>
                     <v-btn
+                      v-if="group.node && group.target && group.group"
                       rounded
                       color="primary"
                       @click="addAssociation"
@@ -463,12 +464,22 @@
                       >Add</v-btn
                     >
                     <v-btn
+                      v-if="group.node && group.target && group.group"
                       rounded
                       color="primary"
                       @click="removeAssociation"
                       dark
                       class="mb-2"
                       >Remove</v-btn
+                    >
+                    <v-btn
+                      v-if="group.node"
+                      rounded
+                      color="primary"
+                      @click="removeAllAssociation"
+                      dark
+                      class="mb-2"
+                      >Remove All</v-btn
                     >
                   </v-flex>
                 </v-layout>
@@ -1254,6 +1265,17 @@ export default {
         var args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('removeAssociations', args)
+        // wait a moment before refresh to check if the node
+        // has been added to the group correctly
+        setTimeout(this.getAssociations, 1000)
+      }
+    },
+    removeAllAssociations () {
+      var g = this.group
+      if (g && g.node) {
+        var args = [g.node.id]
+
+        this.apiRequest('removeAllAssociations', args)
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
         setTimeout(this.getAssociations, 1000)
