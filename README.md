@@ -64,7 +64,6 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
       - [Thermostats with Fans](#thermostats-with-fans)
   - [:gift: MQTT APIs](#-mqtt-apis)
     - [Zwave Events](#zwave-events)
-      - [Example](#example)
     - [Zwave APIs](#zwave-apis)
       - [Custom APIs](#custom-apis)
     - [Set values](#set-values)
@@ -653,32 +652,6 @@ Payload
 ```js
 {
   "data": [ ...eventArgs ] // an array containing all args in order
-}
-```
-
-#### Example
-
-Topic
-
-`zwavejs2mqtt/_EVENTS/ZWAVE_GATEWAY-z2m/node/node_ready`
-
-Payload
-
-```json
-{
-  "data": [
-    1,
-    {
-      "manufacturer": "AEON Labs",
-      "manufacturerid": "0x0086",
-      "product": "ZW090 Z-Stick Gen5 EU",
-      "producttype": "0x0001",
-      "productid": "0x005a",
-      "type": "Static PC Controller",
-      "name": "",
-      "loc": ""
-    }
-  ]
 }
 ```
 
