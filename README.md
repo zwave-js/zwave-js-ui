@@ -20,7 +20,8 @@
 
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
-![ZwaveJs](docs/zwavejs_logo.svg)
+<img src="docs/zwavejs_logo.svg" width="300" alt="zwavejs">
+
 **TO**
 ![MQTT](docs/MQTT-Logo.png)
 
