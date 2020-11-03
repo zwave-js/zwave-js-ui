@@ -14,7 +14,7 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/alerts/)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/context:javascript)
 
-[![Join channel](https://img.shields.io/badge/SLACK-zwavejs2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwavejs2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
+[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
@@ -148,7 +148,7 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
 ### Reverse Proxy Setup
 
 If you need to setup ZWave To MQTT behind a reverse proxy that needs a _subpath_ to
-work, take a look at [the reverse proxy configuraiton docs](docs/subpath.md).
+work, take a look at [the reverse proxy configuration docs](docs/subpath.md).
 
 ## :nerd_face: Development
 
@@ -163,7 +163,7 @@ To package the application run `npm run pkg` command and follow the steps
 
 ### Developing against a different backend
 
-By default running `npm run dev:server` will proxy the reequests to a backend listening on _localhost_ on port _8091_.
+By default running `npm run dev:server` will proxy the requests to a backend listening on _localhost_ on port _8091_.
 
 If you want to run the development frontend against a different backend you have the following environment variables
 that you can use to redirect to a different backend:
@@ -352,7 +352,7 @@ The payload will be `true` if node is ready `false` otherwise. If the payload is
 
 `<mqtt_prefix>/<?node_location>/<node_name>/notification/<notificationLabel>`
 
-The payload will be the notification `prameters` (can be null or not based on the notification type)
+The payload will be the notification `parameters` (can be null or not based on the notification type)
 
 #### Gateway values table
 
@@ -712,7 +712,7 @@ There are some custom apis that can be called that are not part of Zwave Client:
   - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
   - `lastUpdate`: Timestamp of latest event received from OZW
   - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
-  - `cntStatus`: Controller status received from ozw notifications controller command. If inclusion/exclusion is running it wold be `Waiting`
+  - `cntStatus`: Controller status received from ozw notifications controller command. If inclusion/exclusion is running it would be `Waiting`
 
 ### Set values
 
@@ -798,11 +798,11 @@ _**Note**: Each one of the following environment variables corresponds to their 
 
 > A: Why when I add a value to Gateway values table I don't see all my devices?
 
-**B: When adding values to the gateway values table it shows JUST ONE DEVICE FOR EACH TYPE. This is to make it easier and faster to setup your network as if you have a network with lot devices (light, light dimmers for example) you just need to add the values you want to bridge to mqtt (for a light it will always be just the switch to turn it on/off for exmple without all configuration values) and it will bridge those values for all the devices of that type (without configure the values one by one).**
+**B: When adding values to the gateway values table it shows JUST ONE DEVICE FOR EACH TYPE. This is to make it easier and faster to setup your network as if you have a network with lot devices (light, light dimmers for example) you just need to add the values you want to bridge to mqtt (for a light it will always be just the switch to turn it on/off for example without all configuration values) and it will bridge those values for all the devices of that type (without configure the values one by one).**
 
 > A: My device is X and has been discovered as Y, why?
 
-**B: Hass Discovery is not easy, zwave have many different devices with different values. To try to understand how to discover a specific value I have used** [this](https://github.com/zwave-js/open-zwave/blob/master/config/Localization.xml) **file that shows what kind of value is expeted based on value class and index. Unfortunally not all devices respect this specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file** `/hass/devices.js` **where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
+**B: Hass Discovery is not easy, zwave have many different devices with different values. To try to understand how to discover a specific value I have used** [this](https://github.com/zwave-js/open-zwave/blob/master/config/Localization.xml) **file that shows what kind of value is expected based on value class and index. Unfortunately not all devices respect this specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file** `/hass/devices.js` **where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
 
 ## :pray: Thanks
 
