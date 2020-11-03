@@ -20,11 +20,12 @@
 
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
-<center>
+<div>
   <img src="docs/zwavejs_logo.svg" width="300" alt="zwavejs">
   <span style="font-size: 25px">TO</span>
   <img src="docs/MQTT-Logo.png" alt="mqtt">
-</center>
+</div>
+
 
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
