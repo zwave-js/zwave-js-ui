@@ -14,7 +14,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
       - uses: docker/setup-buildx-action@v1
       - uses: docker/setup-qemu-action@v1
       - name: Login to dockerhub
@@ -41,9 +43,6 @@ jobs:
           echo ::set-output name=TAGS::${TAGS}
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
       - name: webpack build
-        uses: actions/setup-node@v1
-        with:
-          node-version: 14.x
         run: |
           npm install --only=dev
           npm run build
