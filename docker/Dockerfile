@@ -2,6 +2,8 @@
 # STEP 1:
 FROM node:erbium-alpine AS build-z2m
 
+ARG skip_build
+
 # Install required dependencies
 RUN apk --no-cache add \
     coreutils \
@@ -15,7 +17,7 @@ WORKDIR /root/zwavejs2mqtt
 COPY . .
 RUN npm config set unsafe-perm true
 RUN npm install
-RUN npm run build
+RUN if [ "$skip_build" = "true" ] ; then echo Build skipped ; else npm run build ; fi
 RUN npm prune --production
 RUN rm -rf \
     build \
