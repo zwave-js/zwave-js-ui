@@ -36,47 +36,19 @@
                         ></v-text-field>
                       </v-flex>
                       <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Enable zwave library logging"
-                          persistent-hint
-                          label="Logging"
-                          v-model="zwave.logging"
-                        ></v-switch>
+                        <v-select
+                          :items="logLevels"
+                          v-model="zwave.logLevel"
+                          label="Log Level"
+                        ></v-select>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
-                          hint="Save configuration files zwcfg and zwscene .xml"
+                          hint="Store zwave logs in a file"
                           persistent-hint
-                          label="Save configuration"
-                          v-model="zwave.saveConfig"
+                          label="Log to file"
+                          v-model="zwave.logToFile"
                         ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Automatically update Zwave devices database"
-                          persistent-hint
-                          label="Auto update database"
-                          v-model="zwave.autoUpdateConfig"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Assume Devices that support the Wakeup Class are awake when starting up OZW"
-                          persistent-hint
-                          label="Assume awake"
-                          v-model="zwave.assumeAwake"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-text-field
-                          v-model.number="zwave.pollInterval"
-                          label="Poll interval"
-                          :rules="[rules.required]"
-                          required
-                          suffix="millis"
-                          hint="Milliseconds between each pull (should not be less than 1s per device)"
-                          type="number"
-                        ></v-text-field>
                       </v-flex>
                       <v-flex xs6>
                         <v-text-field
@@ -87,14 +59,6 @@
                           suffix="seconds"
                           hint="Seconds to wait before stop inclusion/exclusion mode"
                           type="number"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-text-field
-                          v-model.trim="zwave.configPath"
-                          label="Config Path"
-                          required
-                          hint="Path to devices library DB. If not set the default path will be used based on your OS"
                         ></v-text-field>
                       </v-flex>
                       <input type="hidden" :value="zwave.plugin" />
@@ -325,12 +289,6 @@
                       </v-flex>
                       <v-flex xs6>
                         <v-switch
-                          label="Send 'list' values as integer index"
-                          v-model="gateway.integerList"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-switch
                           label="Hass Discovery"
                           hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
                           v-model="gateway.hassDiscovery"
@@ -368,12 +326,7 @@
                         <tr>
                           <td>{{ deviceName(item.device) }}</td>
                           <td>
-                            {{
-                              item.value.label +
-                                ' (' +
-                                item.value.value_id +
-                                ')'
-                            }}
+                            {{ item.value.label + ' (' + item.value.id + ')' }}
                           </td>
                           <td class="text-xs">{{ item.topic }}</td>
                           <td class="text-xs">
@@ -449,15 +402,12 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-
-    <Confirm ref="confirm"></Confirm>
   </v-container>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
-import Confirm from '@/components/Confirm'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
 
@@ -467,8 +417,7 @@ export default {
   name: 'Settings',
   components: {
     DialogGatewayValue,
-    fileInput,
-    Confirm
+    fileInput
   },
   computed: {
     secure () {
@@ -521,6 +470,14 @@ export default {
       editedValue: {},
       editedIndex: -1,
       defaultValue: {},
+      logLevels: [
+        { text: 'Error', value: 'error' },
+        { text: 'Warn', value: 'warn' },
+        { text: 'Info', value: 'info' },
+        { text: 'Verbose', value: 'verbose' },
+        { text: 'Debug', value: 'debug' },
+        { text: 'Silly', value: 'silly' }
+      ],
       headers: [
         { text: 'Device', value: 'device' },
         { text: 'Value', value: 'value', sortable: false },
@@ -537,7 +494,7 @@ export default {
           value: 0
         },
         {
-          text: 'Named topics (DEPRECATED)',
+          text: 'Named topics',
           value: 1
         },
         {
@@ -576,9 +533,7 @@ export default {
         },
         validKey: value => {
           return (
-            !value ||
-            /(0x\w{2},\s*){16}/g.test(value + ',') ||
-            "Key must contain 16 bytes separated by ','. Ex: '0xAA, 0xAB, ...'"
+            !value || value.length === 32 || 'Key must be 32 charaters length'
           )
         }
       }
@@ -590,18 +545,6 @@ export default {
 
       reader.onload = e => callback(e.target.result)
       reader.readAsText(file)
-    },
-    async confirm (title, text, level, options) {
-      options = options || {}
-
-      var levelMap = {
-        warning: 'orange',
-        alert: 'red'
-      }
-
-      options.color = levelMap[level] || 'primary'
-
-      return this.$refs.confirm.open(title, text, options)
     },
     onFileSelect (data) {
       var file = data.files[0]
@@ -615,20 +558,20 @@ export default {
     showSnackbar (text) {
       this.$emit('showSnackbar', text)
     },
-    importSettings () {
-      var self = this
-      this.$emit('import', 'json', function (err, settings) {
-        if (!err && settings.zwave && settings.mqtt && settings.gateway) {
-          self.$store.dispatch('import', settings)
-          self.showSnackbar('Configuration imported successfully')
+    async importSettings () {
+      try {
+        var settings = await this.$listeners.import('json')
+        if (settings.zwave && settings.mqtt && settings.gateway) {
+          this.$store.dispatch('import', settings)
+          this.showSnackbar('Configuration imported successfully')
         } else {
-          self.showSnackbar('Imported settings not valid')
+          this.showSnackbar('Imported settings not valid')
         }
-      })
+      } catch (error) {}
     },
     exportSettings () {
       var settings = this.getSettingsJSON()
-      this.$emit('export', settings, 'settings')
+      this.$listeners.export(settings, 'settings')
     },
     getSettingsJSON () {
       return {
@@ -644,7 +587,7 @@ export default {
     },
     async deleteItem (item) {
       const index = this.gateway.values.indexOf(item)
-      ;(await this.confirm(
+      ;(await this.$listeners.showConfirm(
         'Attention',
         'Are you sure you want to delete this item?',
         'alert'

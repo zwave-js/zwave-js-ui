@@ -2,5 +2,12 @@
   "default": true,
   "MD013": {
     "line_length": -1
+  },
+  "MD033": {
+    "allowed_elements": [
+      "img",
+      "span",
+      "div"
+    ]
   }
 }

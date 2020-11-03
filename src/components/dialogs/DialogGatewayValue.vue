@@ -23,34 +23,34 @@
                 <v-select
                   v-model="editedValue.value"
                   label="Value"
-                  :hint="editedValue.value ? editedValue.value.help : ''"
+                  :hint="editedValue.value ? editedValue.value.description : ''"
                   required
                   return-object
                   :rules="[required]"
                   item-text="label"
-                  item-value="value_id"
+                  item-value="id"
                   :items="deviceValues"
                 >
                   <template v-slot:selection="{ item }">
                     {{
-                      item.label +
-                        (item.instance > 1
-                          ? ' - Instance ' + item.instance
+                      (item.label || item.id) +
+                        (item.endpoint > 1
+                          ? ' - Endpoint ' + item.endpoint
                           : '')
                     }}
                   </template>
                   <template v-slot:item="{ item }">
                     <v-list-item-content>
                       <v-list-item-title>{{
-                        item.label +
-                          (item.instance > 1
-                            ? ' - Instance ' + item.instance
+                        (item.label || item.id) +
+                          (item.endpoint > 0
+                            ? ' - Endpoint ' + item.endpoint
                             : '')
                       }}</v-list-item-title>
                       <v-list-item-subtitle
                         style="max-width:500px"
                         class="text-truncate text-no-wrap"
-                        >{{ item.help }}</v-list-item-subtitle
+                        >{{ item.description }}</v-list-item-subtitle
                       >
                     </v-list-item-content>
                   </template>
@@ -88,7 +88,7 @@
                   required
                 ></v-text-field>
               </v-flex>
-              <v-flex xs6>
+              <!-- <v-flex xs6>
                 <v-switch
                   label="Poll"
                   hint="Enable poll of this value"
@@ -114,6 +114,8 @@
                   v-model="editedValue.verifyChanges"
                 ></v-switch>
               </v-flex>
+
+              -->
 
               <v-flex xs6>
                 <v-switch

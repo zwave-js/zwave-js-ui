@@ -1,42 +1,40 @@
 # Zwave To MQTT
 
-![GitHub package.json version](https://img.shields.io/github/package-json/v/OpenZWave/Zwave2Mqtt)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/zwave-js/zwavejs2mqtt)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/1897-shield.svg)](https://madewithvuejs.com/p/zwave2mqtt/shield-link)
+[![MadeWithVueJs.com shield](https://madewithvuejs.com/storage/repo-shields/1897-shield.svg)](https://madewithvuejs.com/p/zwavejs2mqtt/shield-link)
 [![MIT Licence](https://badges.frapsoft.com/os/mit/mit.png?v=103)](https://opensource.org/licenses/mit-license.php)
-[![ci](https://github.com/OpenZWave/Zwave2Mqtt/workflows/ci/badge.svg?branch=master)](https://github.com/OpenZWave/Zwave2Mqtt/actions?query=workflow%3Aci+branch%3Amaster)
-[![Docker Build](https://github.com/OpenZWave/Zwave2Mqtt/workflows/Docker%20Build/badge.svg?branch=master)](https://github.com/OpenZWave/Zwave2Mqtt/actions?query=workflow%3A%22Docker+Build%22+branch%3Amaster)
-[![GitHub All Releases](https://img.shields.io/github/downloads/OpenZWave/Zwave2Mqtt/total)](https://github.com/OpenZWave/Zwave2Mqtt/releases)
-[![Coverage Status](https://coveralls.io/repos/github/OpenZWave/Zwave2Mqtt/badge.svg?branch=master)](https://coveralls.io/github/OpenZWave/Zwave2Mqtt?branch=master)
-[![Known Vulnerabilities](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/OpenZWave/Zwave2Mqtt?targetFile=package.json)
-[![Dependencies Status](https://david-dm.org/OpenZWave/Zwave2Mqtt/status.svg)](https://david-dm.org/OpenZWave/Zwave2Mqtt)
-[![devDependencies Status](https://david-dm.org/OpenZWave/Zwave2Mqtt/dev-status.svg)](https://david-dm.org/OpenZWave/Zwave2Mqtt?type=dev)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/alerts/)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/OpenZWave/Zwave2Mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/OpenZWave/Zwave2Mqtt/context:javascript)
+[![ci](https://github.com/zwave-js/zwavejs2mqtt/workflows/ci/badge.svg?branch=master)](https://github.com/zwave-js/zwavejs2mqtt/actions?query=workflow%3Aci+branch%3Amaster)
+[![Docker Build](https://github.com/zwave-js/zwavejs2mqtt/workflows/Docker%20Build/badge.svg?branch=master)](https://github.com/zwave-js/zwavejs2mqtt/actions?query=workflow%3A%22Docker+Build%22+branch%3Amaster)
+[![GitHub All Releases](https://img.shields.io/github/downloads/zwave-js/zwavejs2mqtt/total)](https://github.com/zwave-js/zwavejs2mqtt/releases)
+[![Coverage Status](https://coveralls.io/repos/github/zwave-js/zwavejs2mqtt/badge.svg?branch=master)](https://coveralls.io/github/zwave-js/zwavejs2mqtt?branch=master)
+[![Known Vulnerabilities](https://snyk.io/test/github/zwave-js/zwavejs2mqtt/badge.svg?targetFile=package.json)](https://snyk.io/test/github/zwave-js/zwavejs2mqtt?targetFile=package.json)
+[![Dependencies Status](https://david-dm.org/zwave-js/zwavejs2mqtt/status.svg)](https://david-dm.org/zwave-js/zwavejs2mqtt)
+[![devDependencies Status](https://david-dm.org/zwave-js/zwavejs2mqtt/dev-status.svg)](https://david-dm.org/zwave-js/zwavejs2mqtt?type=dev)
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/alerts/)
+[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/context:javascript)
 
-[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
+[![Join channel](https://img.shields.io/badge/SLACK-zwavejs2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwavejs2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
-[![dockeri.co](https://dockeri.co/image/robertslando/zwave2mqtt)](https://hub.docker.com/r/robertslando/zwave2mqtt)
+[![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
-![OpenZWave](docs/OZW_Logo.png)
-**TO**
-![MQTT](docs/MQTT-Logo.png)
+<div>
+  <img src="docs/zwavejs_logo.svg" width="300" alt="zwavejs">
+  <span style="font-size: 25px">TO</span>
+  <img src="docs/MQTT-Logo.png" alt="mqtt">
+</div>
+
 
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
-- **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [openzwave-shared](https://github.com/OpenZWave/node-openzwave-shared), [Webpack](https://webpack.js.org/)
+- **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [zwavejs](https://github.com/zwave-js/node-zwave-js), [Webpack](https://webpack.js.org/)
 - **Frontend**: [Vue](https://vuejs.org/), [socket.io](https://github.com/socketio/socket.io), [Vuetify](https://github.com/vuetifyjs/vuetify)
-
-## !! ATTENTION
-
-After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Openzwave maintainer all issues related to **OZW 1.4** will be ignored and **automatically closed** as it isn't supported anymore, **please use OZW 1.6+**
 
 ## 📖 Table of contents
 
 - [Zwave To MQTT](#zwave-to-mqtt)
-  - [!! ATTENTION](#-attention)
   - [📖 Table of contents](#-table-of-contents)
   - [:electric_plug: Installation](#-installation)
     - [DOCKER :tada: way](#docker--way)
@@ -54,7 +52,7 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
   - [:file_folder: Nodes Management](#-nodes-management)
     - [Add a node](#add-a-node)
     - [Remove a node](#remove-a-node)
-    - [Replace failed node](#replace-failed-node)
+    - [Replace failed node (NOT IMPLEMENTED YET)](#replace-failed-node-not-implemented-yet)
     - [Remove a failed node](#remove-a-failed-node)
   - [:star: Features](#️-features)
   - [:robot: Home Assistant integration (BETA)](#-home-assistant-integration-beta)
@@ -69,7 +67,6 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
       - [Thermostats with Fans](#thermostats-with-fans)
   - [:gift: MQTT APIs](#-mqtt-apis)
     - [Zwave Events](#zwave-events)
-      - [Example](#example)
     - [Zwave APIs](#zwave-apis)
       - [Custom APIs](#custom-apis)
     - [Set values](#set-values)
@@ -94,14 +91,14 @@ After a [discussion](https://github.com/OpenZWave/Zwave2Mqtt/issues/201) with Op
 
 ```bash
 # Using volumes as persistence
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwave2mqtt,target=/usr/src/app/store robertslando/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 
 # Using local folder as persistence
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store robertslando/zwave2mqtt:latest
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 
 # As a service
-wget https://raw.githubusercontent.com/openzwave/zwave2mqtt/master/docker/docker-compose.yml
+wget https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/docker-compose.yml
 docker-compose up
 ```
 
@@ -112,61 +109,42 @@ For more info about docker check [here](docker/README.md)
 ### Kubernetes way
 
 ```bash
-kubectl apply -k https://raw.githubusercontent.com/OpenZWave/Zwave2Mqtt/master/kustomization.yaml
+kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kustomization.yaml
 ```
 
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](./kubernetes) directory of this repo
 
 ### NodeJS or PKG version
 
-1. Firstly you need to install the [Open-Zwave](https://github.com/OpenZWave/open-zwave) library on your system.
-
-   ```sh
-   cd ~
-   git clone https://github.com/OpenZWave/open-zwave.git
-   cd open-zwave && make && sudo make install
-   sudo ldconfig
-   export LD_LIBRARY_PATH=/usr/local/lib64
-   sudo sed -i '$a LD_LIBRARY_PATH=/usr/local/lib64' /etc/environment
-   ```
-
-   For Raspberry check [here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-raspbian.md#2-install-the-open-zwave-library-on-your-raspberry)
-
-2. Test the library: go to openzwave directory `cd openzwave-*` and run the command
-
-   `MinOZW /dev/ttyACM0`
-
-   > replace `/dev/ttyACM0` with the USB port where your controller is connected
-
-3. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
+1. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
 
    - For the packaged version:
 
      ```sh
      cd ~
-     mkdir Zwave2Mqtt
-     cd Zwave2Mqtt
+     mkdir zwavejs2mqtt
+     cd zwavejs2mqtt
      # download latest version
-     curl -s https://api.github.com/repos/OpenZWave/Zwave2Mqtt/releases/latest  \
+     curl -s https://api.github.com/repos/zwave-js/zwavejs2mqtt/releases/latest  \
      | grep "browser_download_url.*zip" \
      | cut -d : -f 2,3 \
      | tr -d \" \
      | wget -i -
-     unzip zwave2mqtt-v*.zip
-     ./zwave2mqtt
+     unzip zwavejs2mqtt-v*.zip
+     ./zwavejs2mqtt
      ```
 
    - If you want to compile last code from github:
 
      ```sh
-     git clone https://github.com/OpenZWave/Zwave2Mqtt
-     cd Zwave2Mqtt
+     git clone https://github.com/zwave-js/zwavejs2mqtt
+     cd zwavejs2mqtt
      npm install
      npm run build
      npm start
      ```
 
-4. Open the browser <http://localhost:8091>
+2. Open the browser <http://localhost:8091>
 
 ### Reverse Proxy Setup
 
@@ -206,17 +184,13 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 Zwave settings:
 
 - **Serial port**: The serial port where your controller is connected
-- **Network key** (Optional): Zwave network key if security is enabled. The correct format is `"0xCA,0xFE,0xBA,0xBE,.... "` (16 bytes total)
-- **Logging**: Enable/Disable Openzwave Library logging
-- **Save configuration**: Store zwave configuration in `zwcfg_<homeHex>.xml` and `zwscene.xml` files this is needed for persistent node information like node name and location
-- **Poll interval**: Interval in milliseconds between polls (should not be less than 1s per device)
+- **Network key** (Optional): Zwave network key if security is enabled. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
+- **Log level**: Set the zwave-js Library log level
+- **Log to file**: Enable this to store zwave-js logs to a file
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
-- **Configuration Path**: The path to Openzwave devices config db
-- **Assume Awake**: Assume Devices that support the Wakeup Class are awake when starting up OZW
-- **Auto Update Config File**: Auto update Zwave devices database
 - **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
   - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
-  - `zwave.options` overrides options passed to the zwave client see `IConstructorParameters` in [the open-zwave docs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/types/openzwave-shared.d.ts). For detail for example `zwave.options.options.EnforceSecureReception=true` to drop insecure messages from devices that should be secure.
+  - `zwave.options` overrides options passed to the zwave js Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
 ### MQTT
 
@@ -243,27 +217,27 @@ Gateway settings:
 
   1. **ValueId Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
-     `<mqtt_prefix>/<?node_location>/<node_id>/<class_id>/<instance>/<index>`
+     `<mqtt_prefix>/<?node_location>/<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey>`
 
      - `mqtt_prefix`: the prefix set in Mqtt Settings
      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
-     - `node_id`: the unique numerical id of the node in Zwave network
-     - `class_id`: the numerical class id of the value
-     - `instance`: the numerical value of value instance
-     - `index`: the numerical index of the value
+     - `nodeId`: the unique numerical id of the node in Zwave network
+     - `commandClass`: the command class number of the value
+     - `endpoint`: the endpoint number (if the node has more then one endpoint)
+     - `property`: the value [property](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
+     - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 
-  2. **Named Topics**: _Automatically configured_. **DEPRECATED** After a discussion with Openzwave author lib we discourage users to use this configuration as we cannot ensure that value labels will be the same, they could change in future versions (and also they depends on localization added in OZW 1.6). You can find more info [HERE](https://github.com/OpenZWave/Zwave2Mqtt/issues/22)
+  2. **Named Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
-     The topic where zwave values are published will be:
-
-     `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?instance>/<value_label>`
+     `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?endpoint>/<propertyName>/<propertyKey>`
 
      - `mqtt_prefix`: the prefix set in Mqtt Settings
      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-     - `class_name`: the node class name corresponding to given class id or `unknownClass_<class_id>` if the class name is not found
-     - `?instance`: Used just with multi-instance devices. The main instance (1) will not have this part in the topic but other instances will have: `instance_<instance_index>`
-     - `value_label`: the zwave value label (lower case and spaces are replaced with `_`)
+     - `class_name`: the valueId command class name corresponding to given command class number or `unknownClass_<class_id>` if the class name is not known
+     - `?endpoint`: Used just with multi-instance devices. The main enpoint (0) will not have this part in the topic but other instances will have: `endpoint_<endpoint>`
+     - `propertyName`: the value [propertyName](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
+     - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 
   3. **Configured Manually**: _Needs configuration_. The topic where zwave values are published will be:
 
@@ -272,7 +246,7 @@ Gateway settings:
      - `mqtt_prefix`: the prefix set in Mqtt Settings
      - `node_location`: location of the Zwave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
-     - `value_topic`: the topic you want to use for that value (take from gateway values table).
+     - `value_topic`: the topic you want to use for that value (taken from gateway values table).
 
 - **Payload type**: The content of the payload when an update is published:
 
@@ -285,64 +259,101 @@ Gateway settings:
     }
     ```
 
-  - **Entire Zwave value Object**
+  - **Entire ValueId Object**
     The payload will contain all info of a value from Zwave network:
 
-    ```json
+    ```js
     {
-      "value_id": "3-64-1-0",
-      "node_id": 3,
-      "class_id": 64,
-      "type": "list",
-      "genre": "user",
-      "instance": 1,
-      "index": 0,
-      "label": "Mode",
-      "units": "",
-      "help": "",
-      "read_only": false,
-      "write_only": false,
-      "min": 0,
-      "max": 0,
-      "is_polled": false,
-      "values": ["Off", "Heat (Default)", "Cool", "Energy Heat"],
-      "value": "Off"
+      id: "38-0-targetValue",
+      nodeId: 8,
+      commandClass: 38,
+      commandClassName: "Multilevel Switch",
+      endpoint: 0,
+      property: "targetValue",
+      propertyName: "targetValue",
+      propertyKey: undefined,
+      type: "number",
+      readable: true,
+      writeable: true,
+      description: undefined,
+      label: "Target value",
+      default: undefined,
+      genre: "user",
+      min: 0,
+      max: 99,
+      step: undefined,
+      unit: undefined,
+      list: false,
+      value: undefined,
+      lastUpdate: 1604044669393,
     }
     ```
 
-  - **Just value**: The payload will contain only the row Numeric/String value
+    Example of a valueId with `states`:
+
+    ```js
+    {
+      id: "112-0-200",
+      nodeId: 8,
+      commandClass: 112,
+      commandClassName: "Configuration",
+      endpoint: 0,
+      property: 200,
+      propertyName: "Partner ID",
+      propertyKey: undefined,
+      type: "number",
+      readable: true,
+      writeable: true,
+      description: undefined,
+      label: "Partner ID",
+      default: 0,
+      genre: "config",
+      min: 0,
+      max: 1,
+      step: undefined,
+      unit: undefined,
+      list: true,
+      states: [
+        {
+          text: "Aeon Labs Standard Product",
+          value: 0,
+        },
+        {
+          text: "others",
+          value: 1,
+        },
+      ],
+      value: 0,
+      lastUpdate: 1604044675644,
+    }
+    ```
+
+  - **Just value**: The payload will contain only the row Numeric/String/Bool value
 
 - **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
 - **Ignore location**: Enable this to remove nodes location from topics
 - **Send Zwave Events**: Enable this to send all Zwave client events to MQTT. More info [here](#zwave-events)
-- **Send 'list' as integer**: Zwave 'list' values are sent as list index instead of string values
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#robot-home-assistant-integration-beta))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
-Settings, scenes and Zwave configuration are stored in `JSON/xml` files under project `store` folder that you can easily **import/export** for backup purposes.
+Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
 
 #### Special topics
 
-- **Node status** (`true` if node is ready `false` otherwise) will be published in:
+- **Node status**:
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
 
-- **Node events** (value will be the event code) will be published in:
+The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
 
-`<mqtt_prefix>/<?node_location>/<node_name>/event`
+- **Node notifications**:
 
-- **Scene events** will be published in:
+`<mqtt_prefix>/<?node_location>/<node_name>/notification/<notificationLabel>`
 
-OZW 1.4:
-
-`<mqtt_prefix>/<?node_location>/<node_name>/scene/event` (value will be the scene event code)
-
-OZW 1.6: In OZW 1.6 scenes are treated like a valueID (so the topic depends on gateway configuration). For example if the command class is `91` (`central_scene`) and gateway uses valueid topics
-
-`<mqtt_prefix>/<?node_location>/<node_name>/91/1/1` (value published in payload will depend on gateway payload type)
+The payload will be the notification `prameters` (can be null or not based on the notification type)
 
 #### Gateway values table
 
@@ -353,8 +364,6 @@ The Gateway values table can be used with all gateway types to customize specifi
 - **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
 - **Topic**: The topic to use for this value. It is the topic added after topic prefix, node name and location. If gateway type is different than `Manual` this can be leave blank and the value topic will be the one based on the gateway configuration chosen
 - **Post operation**: If you want to convert your value (eg. '/10' '/100' '*10' '*100')
-- **Poll**: Enable this to set the value `enablePoll` flag
-- **Verify Changes**: Used to verify changes of this values
 - **Parse Send**: Enable this to allow users to specify a custom `function(value)` to parse the value sent to MQTT. The function must be sync
 - **Parse receive**: Enable this to allow users to specify a custom `function(value)` to parse the value received via MQTT. The function must be sync
 
@@ -362,13 +371,13 @@ The Gateway values table can be used with all gateway types to customize specifi
 
 ### Add a node
 
-To add a node using the UI select the controller Action `Add Node (inclusion)`, click send (:airplane:) button to enable the inclusion mode in your controller and enable the inclusion mode in your device to. `Controller status` will be `waiting` when inclusion has been successfully enabled on the controller and `completed` when the node has been successfully added. Wait few seconds and your node will be visible in the table once ready.
+To add a node using the UI, go to Control Panel and from the actions dropdown menu select `Start inclusion`, click send (:airplane:) button to enable the inclusion mode in your controller, a popup will ask you if you want to start it in `Secure mode`. In the `Controller status` text field you should see `Non-secure/Secure inclusion started` when inclusion has been successfully enabled on the controller. Wait few seconds and once the interview finish your node will be visible in the table.
 
 ### Remove a node
 
-To add a node using the UI select the controller Action `Remove Node (exclusion)`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` will be `waiting` when exclusion has been successfully enabled on the controller and `completed` when the node has been successfully removed. Wait few seconds and your node will be removed from the table.
+To remove a node using the UI, go to Control Panel and from the actions dropdown menu select `Start exclusion`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` should show `Exclusion started` when exclusion has been successfully enabled on the controller. Wait few seconds and your node will be removed from the table.
 
-### Replace failed node
+### Replace failed node (NOT IMPLEMENTED YET)
 
 To replace a failed node from the UI you have to use the command `Replace Failed Node`, if everything is ok the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
 
@@ -388,9 +397,10 @@ Alive and Sleeping nodes cannot be deleted.
 - Home Assistant integration (**beta**)
 - Zwave Control Panel:
   - **Nodes management**: check all nodes discovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
-  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/OpenZWave/Zwave2Mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
-  - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of openzwave-shared)
-  - **Custom scenes management**: (OpenZwave-Shared scenes management has actually some bugs and it's limited so I have made a custom scenes implementation that uses the same APIs but stores values in a JSON file that can be imported/exported and also allows to set a timeout to a value in a scene)
+  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/zwave-js/zwavejs2mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
+  - **Firmware updates**: You are able to send firmware updates to your devices using the UI, just select the controller action `Begin Firmware Update`
+  - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of zwave-js)
+  - **Custom scenes management**
 - Log debug in UI
 - Mesh graph showing devices neighbors
 
@@ -398,16 +408,16 @@ Alive and Sleeping nodes cannot be deleted.
 
 **At least Home Assistant >= 0.84 is required!**
 
-The easiest way to integrate Zwave2Mqtt with Home Assistant is by
+The easiest way to integrate zwavejs2mqtt with Home Assistant is by
 using [MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/).
-This allows Zwave2Mqtt to automatically add devices to Home Assistant.
+This allows zwavejs2mqtt to automatically add devices to Home Assistant.
 To enable this feature remember to set the flag **Hass Discovery** in Gateway settings configuration.
 
-**ATTENTION**: Hass updates often break Zwave2Mqtt device discovery. For this reason Zwave2Mqtt will try to be always compatible with latest hass version. Check the changelog before update!
+**ATTENTION**: Hass updates often break zwavejs2mqtt device discovery. For this reason zwavejs2mqtt will try to be always compatible with latest hass version. Check the changelog before update!
 
 To achieve the best possible integration (including MQTT discovery):
 
-- In your **Zwave2Mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
+- In your **zwavejs2mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
 
 **NB:** Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113` th
 
@@ -429,15 +439,15 @@ mqtt:
 Mind you that if you want to use the embedded broker of Home Assistant you
 have to [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
 
-Zwave2Mqtt is expecting Home Assistant to send it's birth/will
+zwavejs2mqtt is expecting Home Assistant to send it's birth/will
 messages to `hass/status` (or `homeassistant/status` if z2m version >= 4.0.0). Be sure to add this to your `configuration.yaml` if you want
-Zwave2Mqtt to resend the cached values when Home Assistant restarts.
+zwavejs2mqtt to resend the cached values when Home Assistant restarts.
 
-Zwave2Mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
+zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
 
 ### Components management
 
-To see the components that have been discovered by Zwave2Mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
+To see the components that have been discovered by zwavejs2mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
 
 ![Hass Devices](docs/hass_devices.png)
 
@@ -464,7 +474,7 @@ If no device is selected you can manually insert a device JSON configuration. If
 
 At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT needs to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
 
-**UPDATE**: Starting from version 2.0.7 you can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format Zwave2Mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
+**UPDATE**: Starting from version 2.0.7 you can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format zwavejs2mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
 
 > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS PLEASE SEND A PR!
 
@@ -476,7 +486,7 @@ Before version 2.2.0 you can get the device id in this ways:
 
 First (and easier) option is to add a random value in gateway values table for the desired device, the device id will be visible in first column of the table (`Devices`) between square brackets `[<deviceID>] Device Name`
 
-Second option would be to retrieve it from [here](https://github.com/OpenZWave/open-zwave/blob/master/config/manufacturer_specific.xml). Each device has Manufacturerid, product id and a product type in **HEX format** and needs to be converted in decimal:
+Second option would be to retrieve it from [here](https://github.com/zwave-js/open-zwave/blob/master/config/manufacturer_specific.xml). Each device has Manufacturerid, product id and a product type in **HEX format** and needs to be converted in decimal:
 
 ```xml
 <Manufacturer id="019b" name="ThermoFloor AS">
@@ -532,7 +542,7 @@ So in decimal format will become: `411-514-3`. This is the device id of `Heatit 
   - **current_temperature_template/temperature_state_template**: Template used to fetch the value from the MQTT payload
   - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Hass to change this values
 
-Thermostats are most complex components to create, in this device example the setpoint topic changes based on the mode selected. Zwave2Mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
+Thermostats are most complex components to create, in this device example the setpoint topic changes based on the mode selected. zwavejs2mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
 
 #### Fans
 
@@ -630,47 +640,21 @@ The main template is like the thermostat template. The things to add are:
 
 ## :gift: MQTT APIs
 
-You have full access to all [Openzwave-Shared APIs](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-api.md) (and more) by simply using MQTT.
+You have full access to all [zwavejs APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) by simply using MQTT.
 
 ### Zwave Events
 
-If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave events are published to MQTT. [Here](https://github.com/OpenZWave/node-openzwave-shared/blob/master/README-events.md) you can find a list with all available events
+If **Send Zwave Events** flag of Gateway settings is enabled all Zwave-js events are published to MQTT. There are [Driver](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=driver-events), [Node](https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events) and [Controller](https://zwave-js.github.io/node-zwave-js/#/api/node?id=controller-events) events
 
 Topic
 
-`<mqtt_prefix>/_EVENTS_/ZWAVE_GATEWAY-<mqtt_name>/<event name>`
+`<mqtt_prefix>/_EVENTS_/ZWAVE_GATEWAY-<mqtt_name>/<driver|node|controller>/<event_name>`
 
 Payload
 
 ```js
 {
-  "data": [ "1.4.3319" ] // an array containing all args in order
-}
-```
-
-#### Example
-
-Topic
-
-`zwave2mqtt/_EVENTS/ZWAVE_GATEWAY-z2m/node_ready`
-
-Payload
-
-```json
-{
-  "data": [
-    1,
-    {
-      "manufacturer": "AEON Labs",
-      "manufacturerid": "0x0086",
-      "product": "ZW090 Z-Stick Gen5 EU",
-      "producttype": "0x0001",
-      "productid": "0x005a",
-      "type": "Static PC Controller",
-      "name": "",
-      "loc": ""
-    }
-  ]
+  "data": [ ...eventArgs ] // an array containing all args in order
 }
 ```
 
@@ -725,7 +709,7 @@ There are some custom apis that can be called that are not part of Zwave Client:
 - `getInfo`: Returns an object with:
   - `homeid`: homeId
   - `name`: homeId Hex
-  - `version`: OpenZwave version
+  - `version`: zwave-js version
   - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
   - `lastUpdate`: Timestamp of latest event received from OZW
   - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
@@ -773,7 +757,7 @@ All nodes with command class `thermostat_setpoint` and value `heating` will be s
 
 ### Settings
 
-![OpenZWave](docs/settings.png)
+![zwavejs](docs/settings.png)
 
 ### Control Panel
 
@@ -810,11 +794,6 @@ Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
 _**Note**: Each one of the following environment variables corresponds to their respective options in the UI settings and options saved in the UI take presence over these environment variables._
 
 - `OZW_NETWORK_KEY`
-- `OZW_SAVE_CONFIG`
-- `OZW_POLL_INTERVAL`
-- `OZW_AUTO_UPDATE_CONFIG`
-- `OZW_CONFIG_PATH`
-- `OZW_ASSUME_AWAKE`
 
 ## :question: FAQ
 
@@ -824,7 +803,7 @@ _**Note**: Each one of the following environment variables corresponds to their 
 
 > A: My device is X and has been discovered as Y, why?
 
-**B: Hass Discovery is not easy, zwave have many different devices with different values. To try to understand how to discover a specific value I have used** [this](https://github.com/OpenZWave/open-zwave/blob/master/config/Localization.xml) **file that shows what kind of value is expeted based on value class and index. Unfortunally not all devices respect this specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file** `/hass/devices.js` **where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
+**B: Hass Discovery is not easy, zwave have many different devices with different values. To try to understand how to discover a specific value I have used** [this](https://github.com/zwave-js/open-zwave/blob/master/config/Localization.xml) **file that shows what kind of value is expeted based on value class and index. Unfortunally not all devices respect this specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file** `/hass/devices.js` **where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
 
 ## :pray: Thanks
 

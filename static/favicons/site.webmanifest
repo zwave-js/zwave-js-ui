@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
-  "name": "Zwave2Mqtt",
-  "short_name": "Zwave2Mqtt",
+  "name": "zwavejs2mqtt",
+  "short_name": "zwavejs2mqtt",
   "icons": [
     {
       "src": "/android-chrome-192x192.png",

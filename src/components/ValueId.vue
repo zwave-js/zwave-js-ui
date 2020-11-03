@@ -1,10 +1,10 @@
 <template>
-  <div v-if="value.read_only">
+  <div v-if="!value.writeable">
     <v-text-field
-      :label="value.label + ' (' + value.value_id + ')'"
+      :label="value.label + ' (' + value.id + ')'"
       readonly
       :suffix="value.units"
-      :hint="value.help || ''"
+      :hint="value.description || ''"
       v-model="value.value"
     ></v-text-field>
   </div>
@@ -12,72 +12,43 @@
   <div v-else>
     <v-text-field
       v-if="
-        ['int', 'byte', 'short', 'decimal', 'string'].indexOf(value.type) >= 0
+        !value.list &&
+          (value.type === 'number' ||
+            value.type === 'string' ||
+            value.type === 'any')
       "
-      :label="value.label + ' (' + value.value_id + ')'"
-      :type="value.type == 'string' ? 'text' : 'number'"
+      :label="value.label + ' (' + value.id + ')'"
+      :type="value.type === 'string' ? 'text' : 'number'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.units"
       :min="value.min != value.max ? value.min : null"
       :step="value.type == 'decimal' ? 0.1 : 1"
       :max="value.min != value.max ? value.max : null"
-      :hint="value.help || ''"
+      :hint="value.description || ''"
       v-model="value.newValue"
       @click:append-outer="updateValue(value)"
     ></v-text-field>
 
     <v-select
-      v-if="value.type == 'list'"
-      :items="value.values"
-      :label="value.label + ' (' + value.value_id + ')'"
-      :hint="value.help || ''"
+      v-if="value.list"
+      :items="value.states"
+      :label="value.label + ' (' + value.id + ')'"
+      :hint="value.description || ''"
       :append-outer-icon="!disable_send ? 'send' : null"
       v-model="value.newValue"
       @click:append-outer="updateValue(value)"
     ></v-select>
 
     <v-switch
-      v-if="value.type == 'bool'"
-      :label="value.label + ' (' + value.value_id + ')'"
-      :hint="value.help || ''"
+      v-if="value.type == 'boolean' && value.writeable && value.readable"
+      :label="value.label + ' (' + value.id + ')'"
+      :hint="value.description || ''"
       persistent-hint
       v-model="value.newValue"
       @change="updateValue(value)"
     ></v-switch>
 
-    <v-layout column v-if="value.type == 'bitset'">
-      <v-tooltip right>
-        <template v-slot:activator="{ on }">
-          <p
-            v-on="on"
-            style="margin-bottom:0;margin-top:10px;cursor:default"
-            class="font-weight-thin caption"
-          >
-            {{ value.label + ' (' + value.value_id + ')' }}
-          </p>
-        </template>
-        <span>{{ value.help || '' }}</span>
-      </v-tooltip>
-
-      <v-switch
-        v-for="(v, bit) in value.bitSetIds"
-        :key="bit"
-        :label="v.label"
-        :hint="v.help || ''"
-        persistent-hint
-        v-model="v.value"
-      ></v-switch>
-      <v-btn
-        color="primary"
-        dark
-        @click="updateValue(value)"
-        class="mb-2"
-        style="max-width:200px;margin:10px 0"
-        >Update</v-btn
-      >
-    </v-layout>
-
-    <v-tooltip v-if="value.type == 'button'" right>
+    <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
       <template v-slot:activator="{ on }">
         <v-btn
           v-on="on"
@@ -88,7 +59,7 @@
           >{{ value.label }}</v-btn
         >
       </template>
-      <span>{{ ' (' + value.value_id + ')' + (value.help || '') }}</span>
+      <span>{{ ' (' + value.id + ')' + (value.description || '') }}</span>
     </v-tooltip>
   </div>
 </template>

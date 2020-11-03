@@ -1,8 +1,8 @@
 version: '3.7'
 services:
-  zwave2mqtt:
-    container_name: zwave2mqtt
-    image: robertslando/zwave2mqtt:latest
+  zwavejs2mqtt:
+    container_name: zwavejs2mqtt
+    image: zwavejs/zwavejs2mqtt:latest
     restart: always
     tty: true
     stop_signal: SIGINT
@@ -17,6 +17,6 @@ services:
 networks:
   zwave:
 # volumes:
-#   zwave2mqtt:
-#     name: zwave2mqtt
+#   zwavejs2mqtt:
+#     name: zwavejs2mqtt
 

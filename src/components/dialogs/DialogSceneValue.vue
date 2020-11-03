@@ -17,7 +17,7 @@
                   return-object
                   item-text="_name"
                   :rules="[required]"
-                  item-value="node_id"
+                  item-value="id"
                   :items="nodes.filter(n => !!n)"
                 ></v-select>
               </v-flex>
@@ -29,9 +29,33 @@
                   return-object
                   item-text="label"
                   :rules="validValue"
-                  item-value="value_id"
+                  item-value="id"
                   :items="editedValue.node.values"
-                ></v-select>
+                >
+                  <template v-slot:selection="{ item }">
+                    {{
+                      (item.label || item.id) +
+                        (item.endpoint > 1
+                          ? ' - Endpoint ' + item.endpoint
+                          : '')
+                    }}
+                  </template>
+                  <template v-slot:item="{ item }">
+                    <v-list-item-content>
+                      <v-list-item-title>{{
+                        (item.label || item.id) +
+                          (item.endpoint > 0
+                            ? ' - Endpoint ' + item.endpoint
+                            : '')
+                      }}</v-list-item-title>
+                      <v-list-item-subtitle
+                        style="max-width:500px"
+                        class="text-truncate text-no-wrap"
+                        >{{ item.description }}</v-list-item-subtitle
+                      >
+                    </v-list-item-content>
+                  </template>
+                </v-select>
               </v-flex>
               <v-flex v-if="editedValue.value" xs12>
                 <ValueID disable_send v-model="editedValue.value"></ValueID>
@@ -92,10 +116,7 @@ export default {
       positive: v => v >= 0 || 'Value must be positive',
       validValue: [
         v => !!v || 'This field is required',
-        v => (v && !v.read_only) || 'This value is Read Only',
-        v =>
-          (v && ['button', 'raw', 'schedule'].indexOf(v.type) < 0) ||
-          'Type not allowed'
+        v => (v && v.writeable) || 'This value is Read Only'
       ]
     }
   }

@@ -61,7 +61,7 @@
           <v-list-item>
             <v-list-item-content>ID</v-list-item-content>
             <v-list-item-content class="align-end">{{
-              selectedNode.data.node_id
+              selectedNode.data.id
             }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
@@ -71,15 +71,15 @@
             }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
-            <v-list-item-content>Type</v-list-item-content>
+            <v-list-item-content>Code</v-list-item-content>
             <v-list-item-content class="align-end">{{
-              selectedNode.data.type
+              selectedNode.data.productLabel
             }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
             <v-list-item-content>Product</v-list-item-content>
             <v-list-item-content class="align-end">{{
-              selectedNode.data.product
+              selectedNode.data.productDescription
             }}</v-list-item-content>
           </v-list-item>
           <v-list-item>
@@ -139,7 +139,7 @@ export default {
   },
   computed: {
     activeNodes () {
-      return this.nodes.filter(n => n.node_id !== 0 && n.status !== 'Removed')
+      return this.nodes.filter(n => n.id !== 0 && n.status !== 'Removed')
     },
     options () {
       return {
@@ -197,21 +197,20 @@ export default {
     },
     convertNode (n) {
       return {
-        id: n.node_id,
+        id: n.id,
         _cssClass: this.nodeClass(n),
         name: this.nodeName(n),
-        node_id: n.node_id,
         status: n.status,
         data: n
       }
     },
     nodeName (n) {
       if (n.data) n = n.data // works both with node object and mesh node object
-      var name = n.name || n.product || 'node ' + n.node_id
+      var name = n.name || n.product || 'node ' + n.id
       return name + (this.showLocation && n.loc ? ` (${n.loc})` : '')
     },
     nodeClass (n) {
-      if (n.node_id === 1) {
+      if (n.id === 1) {
         return 'controller'
       }
       return n.status.toLowerCase()
@@ -229,7 +228,7 @@ export default {
     },
     refresh () {
       this.socket.emit(this.socketActions.zwave, {
-        api: 'refreshNeighborns',
+        api: 'refreshNeighbors',
         args: []
       })
     },
@@ -240,7 +239,7 @@ export default {
         if (source.neighbors) {
           for (const target of source.neighbors) {
             this.links.push({
-              sid: source.node_id,
+              sid: source.id,
               tid: target,
               _color: this.$vuetify.theme.dark ? 'white' : 'black'
             })
@@ -253,7 +252,7 @@ export default {
     var self = this
 
     this.socket.on(this.socketEvents.nodeRemoved, node => {
-      self.$set(self.nodes, node.node_id, node)
+      self.$set(self.nodes, node.id, node)
     })
 
     this.socket.on(this.socketEvents.init, data => {
@@ -264,7 +263,7 @@ export default {
     })
 
     this.socket.on(this.socketEvents.nodeRemoved, node => {
-      self.$set(self.nodes, node.node_id, node)
+      self.$set(self.nodes, node.id, node)
       self.refresh()
     })
 
@@ -272,18 +271,18 @@ export default {
       var node = self.convertNode(data)
 
       // node added
-      var refresh = !self.nodes[data.node_id] || self.nodes[data.node_id].failed
+      var refresh = !self.nodes[data.id] || self.nodes[data.id].failed
 
       // add missing nodes if new node added
-      while (self.nodes.length < data.node_id) {
+      while (self.nodes.length < data.id) {
         self.nodes.push({
-          node_id: self.nodes.length,
+          id: self.nodes.length,
           failed: true,
           status: 'Removed'
         })
       }
 
-      self.$set(self.nodes, data.node_id, node)
+      self.$set(self.nodes, data.id, node)
 
       // update links if new node has been added
       if (refresh) {
@@ -294,7 +293,7 @@ export default {
     this.socket.on(this.socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
-          case 'refreshNeighborns':
+          case 'refreshNeighbors':
             var neighbors = data.result
             for (var i = 0; i < neighbors.length; i++) {
               if (self.nodes[i]) {

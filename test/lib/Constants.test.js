@@ -37,7 +37,7 @@ describe('#Constants', () => {
   })
   describe('#meterType()', () => {
     let sensorType
-    var map = mod._metersMap
+    const map = mod._metersMap
     before(() => {
       sensorType = sinon.stub(mod, 'sensorType').returns({})
       mod._metersMap = { 1: 'foo' }

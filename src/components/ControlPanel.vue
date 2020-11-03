@@ -18,13 +18,6 @@
                 v-model="homeHex"
               ></v-text-field>
             </v-flex>
-            <v-flex xs12 sm3 md2>
-              <v-text-field
-                label="Openzwave"
-                readonly
-                v-model="ozwVersion"
-              ></v-text-field>
-            </v-flex>
           </v-layout>
 
           <v-layout>
@@ -81,7 +74,8 @@
           :footer-props="{
             itemsPerPageOptions: [10, 20, { text: 'All', value: -1 }]
           }"
-          item-key="node_id"
+          :items-per-page.sync="nodeTableItems"
+          item-key="id"
           class="elevation-1"
         >
           <template v-slot:item="{ item }">
@@ -95,19 +89,23 @@
               }"
               @click.stop="selectNode(item)"
             >
-              <td>{{ item.node_id }}</td>
-              <td>{{ item.type }}</td>
+              <td>{{ item.id }}</td>
               <td>
-                {{
-                  item.ready
-                    ? item.product + ' (' + item.manufacturer + ')'
-                    : ''
-                }}
+                {{ item.ready ? item.manufacturer : '' }}
+              </td>
+              <td>
+                {{ item.ready ? item.productDescription : '' }}
+              </td>
+              <td>
+                {{ item.ready ? item.productLabel : '' }}
               </td>
               <td>{{ item.name || '' }}</td>
               <td>{{ item.loc || '' }}</td>
-              <td>{{ item.secure ? 'Yes' : 'No' }}</td>
+              <td>{{ item.isSecure ? 'Yes' : 'No' }}</td>
+              <td>{{ item.isBeaming ? 'Yes' : 'No' }}</td>
+              <td>{{ item.failed ? 'Yes' : 'No' }}</td>
               <td>{{ item.status }}</td>
+              <td>{{ item.interviewStage }}</td>
               <td>
                 {{
                   item.lastActive
@@ -149,7 +147,7 @@
                 <v-layout row>
                   <v-flex>
                     <v-subheader
-                      >Device ID: {{ selectedNode.device_id }}</v-subheader
+                      >Device ID: {{ selectedNode.deviceId }}</v-subheader
                     >
                   </v-flex>
                 </v-layout>
@@ -196,16 +194,20 @@
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
-                            <v-flex
-                              v-for="(v, index) in userValues"
-                              :key="index"
-                              xs12
-                            >
-                              <ValueID
-                                @updateValue="updateValue"
-                                v-model="userValues[index]"
-                              ></ValueID>
-                            </v-flex>
+                            <v-layout row wrap>
+                              <v-flex
+                                v-for="(v, index) in userValues"
+                                :key="index"
+                                xs12
+                                sm6
+                                md4
+                              >
+                                <ValueID
+                                  @updateValue="updateValue"
+                                  v-model="userValues[index]"
+                                ></ValueID>
+                              </v-flex>
+                            </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
@@ -234,16 +236,20 @@
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
-                            <v-flex
-                              v-for="(v, index) in configValues"
-                              :key="index"
-                              xs12
-                            >
-                              <ValueID
-                                @updateValue="updateValue"
-                                v-model="configValues[index]"
-                              ></ValueID>
-                            </v-flex>
+                            <v-layout row wrap>
+                              <v-flex
+                                v-for="(v, index) in configValues"
+                                :key="index"
+                                xs12
+                                sm6
+                                md4
+                              >
+                                <ValueID
+                                  @updateValue="updateValue"
+                                  v-model="configValues[index]"
+                                ></ValueID>
+                              </v-flex>
+                            </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
@@ -259,16 +265,20 @@
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
-                            <v-flex
-                              v-for="(v, index) in systemValues"
-                              :key="index"
-                              xs12
-                            >
-                              <ValueID
-                                @updateValue="updateValue"
-                                v-model="systemValues[index]"
-                              ></ValueID>
-                            </v-flex>
+                            <v-layout row wrap>
+                              <v-flex
+                                v-for="(v, index) in systemValues"
+                                :key="index"
+                                xs12
+                                sm6
+                                md4
+                              >
+                                <ValueID
+                                  @updateValue="updateValue"
+                                  v-model="systemValues[index]"
+                                ></ValueID>
+                              </v-flex>
+                            </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
@@ -405,6 +415,7 @@
                       v-model="group.group"
                       @input="getAssociations"
                       :items="group.node.groups"
+                      return-object
                     ></v-select>
                   </v-flex>
 
@@ -429,20 +440,15 @@
                     ></v-combobox>
                   </v-flex>
 
-                  <v-flex xs12 sm6>
-                    <v-switch
-                      label="Multi instance"
-                      presistent-hint
-                      hint="Enable this target node supports multi instance associations"
-                      v-model="group.multiInstance"
-                    ></v-switch>
-                  </v-flex>
-
-                  <v-flex v-if="group.multiInstance" xs12 sm6>
+                  <v-flex
+                    v-if="group.group && group.group.multiChannel"
+                    xs12
+                    sm6
+                  >
                     <v-text-field
                       v-model.number="group.targetInstance"
-                      label="Instance ID"
-                      hint="Target node instance ID"
+                      label="Channel ID"
+                      hint="Target node channel ID"
                       type="number"
                     />
                   </v-flex>
@@ -536,8 +542,8 @@
                 >
                   <template v-slot:item="{ item }">
                     <tr>
-                      <td class="text-xs">{{ item.value_id }}</td>
-                      <td class="text-xs">{{ item.node_id }}</td>
+                      <td class="text-xs">{{ item.id }}</td>
+                      <td class="text-xs">{{ item.nodeId }}</td>
                       <td class="text-xs">{{ item.label }}</td>
                       <td class="text-xs">{{ item.value }}</td>
                       <td class="text-xs">
@@ -599,8 +605,6 @@
         </v-tabs>
       </v-card-text>
     </v-card>
-
-    <Confirm ref="confirm"></Confirm>
   </v-container>
 </template>
 
@@ -608,7 +612,6 @@
 import ConfigApis from '@/apis/ConfigApis'
 
 import ValueID from '@/components/ValueId'
-import Confirm from '@/components/Confirm'
 
 import AnsiUp from 'ansi_up'
 
@@ -627,8 +630,7 @@ export default {
   },
   components: {
     ValueID,
-    DialogSceneValue,
-    Confirm
+    DialogSceneValue
   },
   computed: {
     scenesWithId () {
@@ -672,6 +674,9 @@ export default {
     }
   },
   watch: {
+    nodeTableItems (val) {
+      localStorage.setItem('nodes_itemsPerPage', val)
+    },
     dialogValue (val) {
       val || this.closeDialog()
     },
@@ -724,14 +729,15 @@ export default {
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
+      nodeTableItems: 10,
       newScene: '',
       scene_values: [],
       dialogValue: false,
       editedValue: {},
       editedIndex: -1,
       headers_scenes: [
-        { text: 'Value ID', value: 'value_id' },
-        { text: 'Node', value: 'node_id' },
+        { text: 'Value ID', value: 'id' },
+        { text: 'Node', value: 'nodeId' },
         { text: 'Label', value: 'label' },
         { text: 'Value', value: 'value' },
         { text: 'Timeout', value: 'timeout' },
@@ -752,111 +758,59 @@ export default {
       node_action: 'requestNetworkUpdate',
       node_actions: [
         {
-          text: 'Update neighbors',
-          value: 'requestNodeNeighborUpdate'
+          text: 'Heal node',
+          value: 'healNode'
         },
         {
-          text: 'Refresh node info',
-          value: 'refreshNodeInfo'
+          text: 'Refresh info',
+          value: 'refreshInfo'
         },
         {
-          text: 'Get node neighbors',
-          value: 'getNodeNeighbors'
-        },
-        {
-          text: 'Update return route',
-          value: 'assignReturnRoute'
-        },
-        {
-          text: 'Delete return routes',
-          value: 'deleteAllReturnRoutes'
-        },
-        {
-          text: 'Send NIF',
-          value: 'sendNodeInformation'
-        },
-        {
-          text: 'Refresh configuration params',
-          value: 'requestAllConfigParams'
-        },
-        {
-          text: 'Request network update',
-          value: 'requestNetworkUpdate'
-        },
-        {
-          text: 'Node statistic',
-          value: 'getNodeStatistics'
-        },
-        {
-          text: 'Has node failed',
-          value: 'hasNodeFailed'
+          text: 'Is Failed Node',
+          value: 'isFailedNode'
         },
         {
           text: 'Remove failed node',
           value: 'removeFailedNode'
         },
         {
-          text: 'Replace failed node',
-          value: 'replaceFailedNode'
+          text: 'Begin Firmware update',
+          value: 'beginFirmwareUpdate'
         },
         {
-          text: 'Heal node',
-          value: 'healNetworkNode'
-        },
-        {
-          text: 'Replication send',
-          value: 'replicationSend'
-        },
-        {
-          text: 'Test node',
-          value: 'testNetworkNode'
+          text: 'Abort Firmware update',
+          value: 'abortFirmwareUpdate'
         }
       ],
       cnt_action: 'healNetwork',
       cnt_actions: [
         {
-          text: 'Add Node (inclusion)',
-          value: 'addNode'
+          text: 'Start inclusion',
+          value: 'startInclusion'
         },
         {
-          text: 'Remove node (exclusion)',
-          value: 'removeNode'
+          text: 'Stop inclusion',
+          value: 'stopInclusion'
         },
         {
-          text: 'Transfer primary role',
-          value: 'transferPrimaryRole'
+          text: 'Start exclusion',
+          value: 'startExclusion'
         },
         {
-          text: 'Create new primary',
-          value: 'createNewPrimary'
-        },
-        {
-          text: 'Receive configuration',
-          value: 'receiveConfiguration'
-        },
-        {
-          text: 'Cancel Command',
-          value: 'cancelControllerCommand'
+          text: 'Stop exclusion',
+          value: 'stopExclusion'
         },
         {
           text: 'Heal Network',
-          value: 'healNetwork'
+          value: 'beginHealingNetwork'
         },
         {
-          text: 'Driver statistic',
-          value: 'getDriverStatistics'
+          text: 'Stop Heal Network',
+          value: 'stopHealingNetwork'
         },
         {
           text: 'Hard reset',
           value: 'hardReset'
-        },
-        {
-          text: 'Soft reset',
-          value: 'softReset'
-        },
-        {
-          text: 'Test network',
-          value: 'testNetwork'
         }
       ],
       newName: '',
@@ -865,13 +819,17 @@ export default {
       newLoc: '',
       selectedNode: null,
       headers: [
-        { text: 'ID', value: 'node_id' },
-        { text: 'Type', value: 'type' },
-        { text: 'Product', value: 'product' },
+        { text: 'ID', value: 'id' },
+        { text: 'Manufacturer', value: 'manufacturer' },
+        { text: 'Product', value: 'productDescription' },
+        { text: 'Product code', value: 'product' },
         { text: 'Name', value: 'name' },
         { text: 'Location', value: 'loc' },
-        { text: 'Secure', value: 'secure' },
+        { text: 'Secure', value: 'isSecure' },
+        { text: 'Beaming', value: 'isBeaming' },
+        { text: 'Failed', value: 'failed' },
         { text: 'Status', value: 'status' },
+        { text: 'Interview stage', value: 'interviewStage' },
         { text: 'Last Active', value: 'lastActive' }
       ],
       rules: {
@@ -903,29 +861,17 @@ export default {
       if (this.selectedNode === item) {
         this.selectedNode = null
       } else {
-        this.selectedNode = this.nodes.find(n => n.node_id === item.node_id)
+        this.selectedNode = this.nodes.find(n => n.id === item.id)
       }
     },
     getValue (v) {
-      var node = this.nodes[v.node_id]
+      var node = this.nodes[v.nodeId]
 
       if (node && node.values) {
-        return node.values.find(i => i.value_id === v.value_id)
+        return node.values.find(i => i.id === v.id)
       } else {
         return null
       }
-    },
-    async confirm (title, text, level, options) {
-      options = options || {}
-
-      var levelMap = {
-        warning: 'orange',
-        alert: 'red'
-      }
-
-      options.color = levelMap[level] || 'primary'
-
-      return this.$refs.confirm.open(title, text, options)
     },
     validJSONdevice () {
       var valid = true
@@ -939,25 +885,20 @@ export default {
       return valid || 'JSON test failed'
     },
     async importConfiguration () {
-      var self = this
       if (
-        await this.confirm(
+        await this.$listeners.showConfirm(
           'Attention',
           'This will override all existing nodes names and locations',
           'alert'
         )
       ) {
-        self.$emit('import', 'json', function (err, data) {
-          if (!err && data) {
-            ConfigApis.importConfig({ data: data })
-              .then(data => {
-                self.showSnackbar(data.message)
-              })
-              .catch(error => {
-                console.log(error)
-              })
-          }
-        })
+        try {
+          var data = await this.$listeners.import('json')
+          var response = await ConfigApis.importConfig({ data: data })
+          this.showSnackbar(response.message)
+        } catch (error) {
+          console.log(error)
+        }
       }
     },
     exportConfiguration () {
@@ -966,7 +907,7 @@ export default {
         .then(data => {
           self.showSnackbar(data.message)
           if (data.success) {
-            self.$emit('export', data.data, 'nodes', 'json')
+            self.$listeners.export(data.data, 'nodes', 'json')
           }
         })
         .catch(error => {
@@ -974,27 +915,25 @@ export default {
         })
     },
     async importScenes () {
-      var self = this
       if (
-        await this.confirm(
+        await this.$listeners.showConfirm(
           'Attention',
           'This operation will override all current scenes and cannot be undone',
           'alert'
         )
       ) {
-        this.$emit('import', 'json', function (err, scenes) {
-          // TODO: add checks on file entries
+        try {
+          var scenes = await this.$listeners.import('json')
           if (scenes instanceof Array) {
-            self.apiRequest('_setScenes', [scenes])
+            this.apiRequest('_setScenes', [scenes])
           } else {
-            self.showSnackbar('Imported file not valid')
-            console.log(err)
+            this.showSnackbar('Imported file not valid')
           }
-        })
+        } catch (error) {}
       }
     },
     exportScenes () {
-      this.$emit('export', this.scenes, 'scenes')
+      this.$listeners.export(this.scenes, 'scenes')
     },
     apiRequest (apiName, args) {
       if (this.socket.connected) {
@@ -1025,7 +964,7 @@ export default {
     async removeScene () {
       if (
         this.selectedScene &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Attention',
           'Are you sure you want to delete this scene?',
           'alert'
@@ -1043,8 +982,9 @@ export default {
     },
     editItem (item) {
       this.editedIndex = this.scene_values.indexOf(item)
-      var node = this.nodes[item.node_id]
-      var value = node.values.find(v => v.value_id === item.value_id)
+      var node = this.nodes[item.nodeId]
+
+      var value = node.values.find(v => v.id === item.id)
 
       value = Object.assign({}, value)
       value.newValue = item.value
@@ -1058,19 +998,13 @@ export default {
     },
     async deleteItem (value) {
       if (
-        await this.confirm(
+        await this.$listeners.showConfirm(
           'Attention',
           'Are you sure you want to delete this item?',
           'alert'
         )
       ) {
-        this.apiRequest('_removeSceneValue', [
-          this.selectedScene,
-          value.node_id,
-          value.class_id,
-          value.instance,
-          value.index
-        ])
+        this.apiRequest('_removeSceneValue', [this.selectedScene, value])
         this.refreshValues()
       }
     },
@@ -1078,7 +1012,7 @@ export default {
       var device = this.selectedDevice
       if (
         device &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Attention',
           'Are you sure you want to delete selected device?',
           'alert'
@@ -1087,7 +1021,7 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'delete',
           device: device,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1095,14 +1029,14 @@ export default {
       var node = this.selectedNode
       if (
         node &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Rediscover node',
           'Are you sure you want to re-discover all node values?'
         ))
       ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'rediscoverNode',
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1110,14 +1044,14 @@ export default {
       var node = this.selectedNode
       if (
         node &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Rediscover node',
           'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store'
         ))
       ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'disableDiscovery',
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1125,14 +1059,14 @@ export default {
       var device = this.selectedDevice
       if (
         device &&
-        (await this.confirm(
+        (await this.$listeners.showConfirm(
           'Are you sure you want to re-discover selected device?'
         ))
       ) {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'discover',
           device: device,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1147,7 +1081,7 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'update',
           device: updated,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1157,7 +1091,7 @@ export default {
         this.socket.emit(this.socketActions.hass, {
           apiName: 'add',
           device: newDevice,
-          node_id: this.selectedNode.node_id
+          nodeId: this.selectedNode.id
         })
       }
     },
@@ -1165,7 +1099,7 @@ export default {
       this.socket.emit(this.socketActions.hass, {
         apiName: 'store',
         devices: this.selectedNode.hassDevices,
-        node_id: this.selectedNode.node_id,
+        nodeId: this.selectedNode.id,
         remove: remove
       })
     },
@@ -1197,7 +1131,7 @@ export default {
         var broadcast = false
         var askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
-          broadcast = await this.$refs.confirm.open(
+          broadcast = await this.$listeners.showConfirm(
             'Broadcast',
             'Send this command to all nodes?'
           )
@@ -1213,14 +1147,14 @@ export default {
           }
         }
 
-        if (this.cnt_action === 'addNode') {
-          var secure = await this.$refs.confirm.open(
+        if (this.cnt_action === 'startInclusion') {
+          var secure = await this.$listeners.showConfirm(
             'Node inclusion',
-            'Start inclusion in security mode?'
+            'Start inclusion in secure mode?'
           )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
-          var ok = await this.$refs.confirm.open(
+          var ok = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
             { color: 'red' }
@@ -1228,11 +1162,18 @@ export default {
           if (!ok) {
             return
           }
+        } else if (this.cnt_action === 'beginFirmwareUpdate') {
+          try {
+            var dataBuffer = await this.$listeners.import('buffer')
+            args.push(dataBuffer)
+          } catch (error) {
+            return
+          }
         }
 
         if (broadcast) {
           for (let i = 0; i < this.nodes.length; i++) {
-            const nodeid = this.nodes[i].node_id
+            const nodeid = this.nodes[i].id
             this.apiRequest(this.cnt_action, [nodeid])
           }
         } else {
@@ -1240,10 +1181,21 @@ export default {
         }
       }
     },
-    sendNodeAction (action) {
+    async sendNodeAction (action) {
       action = typeof action === 'string' ? action : this.node_action
       if (this.selectedNode) {
-        this.apiRequest(action, [this.selectedNode.node_id])
+        var args = [this.selectedNode.id]
+
+        if (this.node_action === 'beginFirmwareUpdate') {
+          try {
+            var dataBuffer = await this.$listeners.import('buffer')
+            args.push(dataBuffer)
+          } catch (error) {
+            return
+          }
+        }
+
+        this.apiRequest(action, args)
       }
     },
     saveConfiguration () {
@@ -1251,42 +1203,38 @@ export default {
     },
     updateName () {
       if (this.selectedNode && !this.nameError) {
-        this.apiRequest('_setNodeName', [
-          this.selectedNode.node_id,
-          this.newName
-        ])
+        this.apiRequest('_setNodeName', [this.selectedNode.id, this.newName])
       }
     },
     updateLoc () {
       if (this.selectedNode && !this.locError) {
-        this.apiRequest('_setNodeLocation', [
-          this.selectedNode.node_id,
-          this.newLoc
-        ])
+        this.apiRequest('_setNodeLocation', [this.selectedNode.id, this.newLoc])
       }
     },
     resetGroup () {
       this.$set(this.group, 'associations', [])
-      this.$set(this.group, 'group', -1)
+      this.$set(this.group, 'group', null)
     },
     getAssociations () {
       var g = this.group
-      if (g && g.node) {
-        this.apiRequest('getAssociationsInstances', [g.node.node_id, g.group])
+      if (g && g.node && g.group) {
+        this.apiRequest('getAssociations', [g.node.id, g.group.value])
       }
     },
     addAssociation () {
       var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
+
+      var association = { nodeId: target }
+
+      if (g.group.multiChannel) {
+        association.endpoint = g.targetInstance || 0
+      }
 
       if (g && g.node && target) {
-        var args = [g.node.node_id, g.group, target]
+        var args = [g.node.id, g.group.value, [association]]
 
-        if (g.multiInstance) {
-          args.push(g.targetInstance || 0)
-        }
-
-        this.apiRequest('addAssociation', args)
+        this.apiRequest('addAssociations', args)
 
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
@@ -1295,15 +1243,17 @@ export default {
     },
     removeAssociation () {
       var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.node_id
+      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
       if (g && g.node && target) {
-        var args = [g.node.node_id, g.group, target]
+        var association = { nodeId: target }
 
-        if (g.multiInstance) {
-          args.push(g.targetInstance || 0)
+        if (g.group.multiChannel) {
+          association.endpoint = g.targetInstance || 0
         }
 
-        this.apiRequest('removeAssociation', args)
+        var args = [g.node.id, g.group.value, [association]]
+
+        this.apiRequest('removeAssociations', args)
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
         setTimeout(this.getAssociations, 1000)
@@ -1313,25 +1263,27 @@ export default {
       v = this.getValue(v)
 
       if (v) {
-        if (v.type === 'bitset') {
-          v.newValue = ['0', '0', '0', '0', '0', '0', '0', '0']
-
-          for (const bit in v.bitSetIds) {
-            v.newValue[8 - parseInt(bit)] = v.bitSetIds[bit].value ? '1' : '0'
-          }
-
-          v.newValue = parseInt(v.newValue.join(''), 2)
-        }
-
         // in this way I can check when the value receives an update
         v.toUpdate = true
 
-        this.apiRequest('setValue', [
-          v.node_id,
-          v.class_id,
-          v.instance,
-          v.index,
-          v.type === 'button' ? true : v.newValue
+        if (v.type === 'number') {
+          v.newValue = parseInt(v.newValue)
+        }
+
+        // it's a button
+        if (v.type === 'boolean' && !v.readable) {
+          v.newValue = true
+        }
+
+        this.apiRequest('writeValue', [
+          {
+            nodeId: v.nodeId,
+            commandClass: v.commandClass,
+            endpoint: v.endpoint,
+            property: v.property,
+            propertyKey: v.propertyKey
+          },
+          v.newValue
         ])
       }
     },
@@ -1353,14 +1305,18 @@ export default {
     setName (n) {
       n._name = n.name
         ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
-        : 'NodeID_' + n.node_id
+        : 'NodeID_' + n.id
     }
   },
   mounted () {
     var self = this
 
+    const itemsPerPage = parseInt(localStorage.getItem('nodes_itemsPerPage'))
+
+    this.nodeTableItems = !isNaN(itemsPerPage) ? itemsPerPage : 10
+
     this.socket.on(this.socketEvents.controller, data => {
-      self.cnt_status = data.help
+      self.cnt_status = data
     })
 
     this.socket.on(this.socketEvents.connected, info => {
@@ -1370,10 +1326,10 @@ export default {
     })
 
     this.socket.on(this.socketEvents.nodeRemoved, node => {
-      if (self.selectedNode && self.selectedNode.node_id === node.node_id) {
+      if (self.selectedNode && self.selectedNode.id === node.id) {
         self.selectedNode = null
       }
-      self.$set(self.nodes, node.node_id, node)
+      self.$set(self.nodes, node.id, node)
     })
 
     this.socket.on(this.socketEvents.debug, data => {
@@ -1408,20 +1364,20 @@ export default {
 
     this.socket.on(this.socketEvents.nodeUpdated, data => {
       self.initNode(data)
-      if (!self.nodes[data.node_id] || self.nodes[data.node_id].failed) {
+      if (!self.nodes[data.id] || self.nodes[data.id].failed) {
         // add missing nodes
-        while (self.nodes.length < data.node_id) {
+        while (self.nodes.length < data.id) {
           self.nodes.push({
-            node_id: self.nodes.length,
+            id: self.nodes.length,
             failed: true,
             status: 'Removed'
           })
         }
       }
-      self.$set(self.nodes, data.node_id, data)
+      self.$set(self.nodes, data.id, data)
 
-      if (this.selectedNode && this.selectedNode.node_id === data.node_id) {
-        this.selectedNode = self.nodes[data.node_id]
+      if (this.selectedNode && this.selectedNode.id === data.id) {
+        this.selectedNode = self.nodes[data.id]
       }
     })
 
@@ -1442,12 +1398,11 @@ export default {
     this.socket.on(this.socketEvents.api, async data => {
       if (data.success) {
         switch (data.api) {
-          case 'getAssociationsInstances':
+          case 'getAssociations':
             data.result = data.result.map(
               a =>
-                `- Node: ${self.nodes[a.nodeid]._name || a} Instance: ${
-                  a.instance
-                }`
+                `- Node: ${self.nodes[a.nodeId]._name ||
+                  a} Endpoint: ${a.endpoint || 0}`
             )
             self.$set(self.group, 'associations', data.result.join('\n'))
             break
@@ -1461,17 +1416,17 @@ export default {
           case '_sceneGetValues':
             self.scene_values = data.result
             break
-          case 'getNodeNeighbors':
-            self.confirm(
-              'Node neightbors',
-              self.jsonToList(data.result) || 'No Neightbors found'
+          case 'getDriverStatistics':
+            self.$listeners.showConfirm(
+              'Driver statistics',
+              self.jsonToList(data.result)
             )
             break
-          case 'getDriverStatistics':
-            self.confirm('Driver statistics', self.jsonToList(data.result))
-            break
           case 'getNodeStatistics':
-            self.confirm('Node statistics', self.jsonToList(data.result))
+            self.$listeners.showConfirm(
+              'Node statistics',
+              self.jsonToList(data.result)
+            )
             break
           default:
             self.showSnackbar('Successfully call api ' + data.api)

@@ -15,30 +15,7 @@ jobs:
         node-version: [10.x, 12.x, 14.x]
 
     steps:
-      - run: sudo apt-get update
-      - name: Install Deps
-        run: sudo apt-get install libudev-dev
-
-      - name: Checkout Openzwave
-        uses: actions/checkout@v2
-        with:
-          repository: OpenZWave/open-zwave
-          path: open-zwave
-
-      - name: Cache openzwave
-        uses: actions/cache@v2.1.2
-        with:
-          path: open-zwave
-          key: ${{ hashFiles('open-zwave/.git/refs/heads/master') }}
-
-      - name: Install Openzwave
-        run: |
-          mv open-zwave /tmp
-          cd /tmp/open-zwave
-          sudo make install
-          sudo ldconfig /usr/local/lib /usr/local/lib64
-
-      - name: Checkout Zwave2Mqtt
+      - name: Checkout zwavejs2mqtt
         uses: actions/checkout@v2
 
       - name: Use Node.js ${{ matrix.node-version }}
@@ -58,7 +35,7 @@ jobs:
         run: npm install
 
       - name: NPM Lint
-        if: matrix['node-version'] == '12.x'
+        if: matrix['node-version'] == '14.x'
         run: npm run lint
 
       - name: Cache build
@@ -76,17 +53,13 @@ jobs:
         run: npm run test
 
       - name: Generate coverage report
-        if: matrix['node-version'] == '12.x'
+        if: matrix['node-version'] == '14.x'
         run: |
           npm run coverage
           npm run record-coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
-        if: matrix['node-version'] == '12.x'
+        if: matrix['node-version'] == '14.x'
         with:
           github-token: ${{ secrets.github_token }}
-
-      - name: move ozw back for caching
-        run: |
-          mv /tmp/open-zwave ./

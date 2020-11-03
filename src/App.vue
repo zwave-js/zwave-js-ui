@@ -68,12 +68,15 @@
           @import="importFile"
           @export="exportConfiguration"
           @showSnackbar="showSnackbar"
+          @showConfirm="confirm"
           :socket="socket"
           :socketEvents="socketEvents"
           :socketActions="socketActions"
         />
       </v-main>
     </main>
+
+    <Confirm ref="confirm"></Confirm>
 
     <v-snackbar
       :timeout="3000"
@@ -92,8 +95,12 @@
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
 import ConfigApis from '@/apis/ConfigApis'
+import Confirm from '@/components/Confirm'
 
 export default {
+  components: {
+    Confirm
+  },
   name: 'app',
   methods: {
     toggleDrawer () {
@@ -104,6 +111,18 @@ export default {
         this.mini = !this.mini
         this.drawer = true
       }
+    },
+    async confirm (title, text, level, options) {
+      options = options || {}
+
+      var levelMap = {
+        warning: 'orange',
+        alert: 'red'
+      }
+
+      options.color = levelMap[level] || 'primary'
+
+      return this.$refs.confirm.open(title, text, options)
     },
     showSnackbar: function (text) {
       this.snackbarText = text
@@ -122,46 +141,62 @@ export default {
       metaThemeColor.setAttribute('content', this.dark ? '#000' : '#fff')
       metaThemeColor2.setAttribute('content', this.dark ? '#000' : '#fff')
     },
-    importFile: function (ext, callback) {
+    importFile: function (ext) {
       var self = this
       // Check for the various File API support.
-      if (window.File && window.FileReader && window.FileList && window.Blob) {
-        var input = document.createElement('input')
-        input.type = 'file'
-        input.addEventListener('change', function (event) {
-          var files = event.target.files
 
-          if (files && files.length > 0) {
-            var file = files[0]
-            var reader = new FileReader()
+      return new Promise(function (resolve, reject) {
+        if (
+          window.File &&
+          window.FileReader &&
+          window.FileList &&
+          window.Blob
+        ) {
+          var input = document.createElement('input')
+          input.type = 'file'
+          input.addEventListener('change', function (event) {
+            var files = event.target.files
 
-            reader.addEventListener('load', function (fileReaderEvent) {
-              var err
-              var data = fileReaderEvent.target.result
+            if (files && files.length > 0) {
+              var file = files[0]
+              var reader = new FileReader()
 
-              if (ext === 'json') {
-                try {
-                  data = JSON.parse(data)
-                } catch (e) {
-                  self.showSnackbar(
-                    'Error while parsing input file, check console for more info'
-                  )
-                  console.log(e)
-                  err = e
+              reader.addEventListener('load', function (fileReaderEvent) {
+                var err
+                var data = fileReaderEvent.target.result
+
+                if (ext === 'json') {
+                  try {
+                    data = JSON.parse(data)
+                  } catch (e) {
+                    self.showSnackbar(
+                      'Error while parsing input file, check console for more info'
+                    )
+                    console.error(e)
+                    err = e
+                  }
                 }
+
+                if (err) {
+                  reject(err)
+                } else {
+                  resolve(data)
+                }
+              })
+
+              if (ext === 'buffer') {
+                reader.readAsArrayBuffer(file)
+              } else {
+                reader.readAsText(file)
               }
+            }
+          })
 
-              callback(err, data)
-            })
-
-            reader.readAsText(file)
-          }
-        })
-
-        input.click()
-      } else {
-        alert('Unable to load a file in this browser.')
-      }
+          input.click()
+        } else {
+          reject(Error('Unable to load file in this browser'))
+        }
+      })
     },
     exportConfiguration: function (data, fileName, ext) {
       var contentType = ext === 'xml' ? 'text/xml' : 'application/octet-stream'
