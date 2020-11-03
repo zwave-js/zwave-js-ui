@@ -11,7 +11,12 @@
 
   <div v-else>
     <v-text-field
-      v-if="!value.list && (value.type === 'number' || value.type === 'string' || value.type === 'any')"
+      v-if="
+        !value.list &&
+          (value.type === 'number' ||
+            value.type === 'string' ||
+            value.type === 'any')
+      "
       :label="value.label + ' (' + value.id + ')'"
       :type="value.type === 'string' ? 'text' : 'number'"
       :append-outer-icon="!disable_send ? 'send' : null"
