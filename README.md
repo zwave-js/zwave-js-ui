@@ -26,7 +26,6 @@
   <img src="docs/MQTT-Logo.png" alt="mqtt">
 </div>
 
-
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 - **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [zwavejs](https://github.com/zwave-js/node-zwave-js), [Webpack](https://webpack.js.org/)
