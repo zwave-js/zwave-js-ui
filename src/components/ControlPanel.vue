@@ -476,7 +476,7 @@
                       v-if="group.node"
                       rounded
                       color="primary"
-                      @click="removeAllAssociation"
+                      @click="removeAllAssociations"
                       dark
                       class="mb-2"
                       >Remove All</v-btn
