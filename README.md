@@ -642,17 +642,17 @@ You have full access to all [zwavejs APIs](https://zwave-js.github.io/node-zwave
 
 ### Zwave Events
 
-If **Send Zwave Events** flag of Gateway settings section is enabled all Zwave-js events are published to MQTT. There are both [Driver](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=driver-events) and [Node](https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events) and [Controller](https://zwave-js.github.io/node-zwave-js/#/api/node?id=controller-events)
+If **Send Zwave Events** flag of Gateway settings is enabled all Zwave-js events are published to MQTT. There are [Driver](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=driver-events), [Node](https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events) and [Controller](https://zwave-js.github.io/node-zwave-js/#/api/node?id=controller-events) events
 
 Topic
 
-`<mqtt_prefix>/_EVENTS_/ZWAVE_GATEWAY-<mqtt_name>/<driver|node|controller>/<event name>`
+`<mqtt_prefix>/_EVENTS_/ZWAVE_GATEWAY-<mqtt_name>/<driver|node|controller>/<event_name>`
 
 Payload
 
 ```js
 {
-  "data": [ "1.4.3319" ] // an array containing all args in order
+  "data": [ ...eventArgs ] // an array containing all args in order
 }
 ```
 
