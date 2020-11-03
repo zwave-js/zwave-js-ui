@@ -44,16 +44,16 @@ export const mutations = {
     if (devices) {
       // devices is an object where key is the device ID and value contains
       // device informations
-      for (var k in devices) {
-        var d = devices[k]
+      for (const k in devices) {
+        const d = devices[k]
         d.value = k
 
-        var values = []
+        const values = []
 
         // device.values is an object where key is the valueID (cmdClass-instance-index) and value contains
         // value informations
-        for (var id in d.values) {
-          var val = d.values[id]
+        for (const id in d.values) {
+          const val = d.values[id]
           values.push(val)
         }
 
