@@ -41,6 +41,9 @@ jobs:
           echo ::set-output name=TAGS::${TAGS}
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
       - name: webpack build
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
         run: |
           npm install --only=dev
           npm run build
