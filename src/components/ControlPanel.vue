@@ -398,7 +398,7 @@
             <v-tab-item key="groups">
               <v-container grid-list-md>
                 <v-layout wrap>
-                  <v-flex xs12 sm6>
+                  <v-flex xs12 sm6 md4>
                     <v-select
                       label="Node"
                       v-model="group.node"
@@ -409,7 +409,7 @@
                     ></v-select>
                   </v-flex>
 
-                  <v-flex v-if="group.node" xs12 sm6>
+                  <v-flex v-if="group.node" xs12 sm6 md4>
                     <v-select
                       label="Group"
                       v-model="group.group"
@@ -419,32 +419,7 @@
                     ></v-select>
                   </v-flex>
 
-                  <v-flex v-if="group.group && group.group.associations" xs12 sm6>
-                    <v-list subheader>
-                    <v-subheader>Associations</v-subheader>
-                     <v-list-item v-for="(ass, index) in group.associations" :key="index">
-                         <v-list-item-content>
-                          <v-list-item-title>Node: <b>{{ nodes[ass.nodeId]._name || ass.nodeId}}</b></v-list-item-title>
-                          <v-list-item-subtitle
-                          v-if="ass.endpoint >= 0"
-                            class="text--primary"
-                          >Endpoint: <b>{{ ass.endpoint }}</b></v-list-item-subtitle>
-                        </v-list-item-content>
-                        <v-list-item-icon>
-                          <v-icon @click="removeAssociation(ass)" color="red">
-                            delete
-                          </v-icon>
-                        </v-list-item-icon>
-                     </v-list-item>
-                     <v-list-item v-if="group.associations.length === 0">
-                      <v-list-item-content>
-                        No assocaitions
-                      </v-list-item-content>
-                     </v-list-item>
-                   </v-list>
-                  </v-flex>
-
-                  <v-flex v-if="group.node" xs12 sm6>
+                  <v-flex v-if="group.node && group.group" xs12 sm6 md4>
                     <v-combobox
                       label="Target"
                       v-model="group.target"
@@ -460,6 +435,7 @@
                     v-if="group.group && group.group.multiChannel"
                     xs12
                     sm6
+                    md4
                   >
                     <v-text-field
                       v-model.number="group.targetInstance"
@@ -467,6 +443,34 @@
                       hint="Target node channel ID"
                       type="number"
                     />
+                  </v-flex>
+
+                  <v-flex v-if="group.group && group.associations" xs12 sm6 md4>
+                    <v-list subheader>
+                    <v-subheader>Associations</v-subheader>
+                    <v-template v-for="(ass, index) in group.associations" :key="index">
+                     <v-list-item dense>
+                         <v-list-item-content>
+                          <v-list-item-title>Node: <b>{{ nodes[ass.nodeId]._name || ass.nodeId}}</b></v-list-item-title>
+                          <v-list-item-subtitle
+                          v-if="ass.endpoint >= 0"
+                            class="text--primary"
+                          >Endpoint: <b>{{ ass.endpoint }}</b></v-list-item-subtitle>
+                        </v-list-item-content>
+                        <v-list-item-icon>
+                          <v-icon @click="removeAssociation(ass)" color="red">
+                            delete
+                          </v-icon>
+                        </v-list-item-icon>
+                     </v-list-item>
+                     <v-divider></v-divider>
+                   </v-template>
+                    <v-list-item v-if="group.associations.length === 0">
+                      <v-list-item-content>
+                        No assocaitions
+                      </v-list-item-content>
+                     </v-list-item>
+                   </v-list>
                   </v-flex>
 
                   <v-flex xs12>
