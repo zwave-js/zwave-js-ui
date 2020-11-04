@@ -791,6 +791,14 @@ export default {
         {
           text: 'Abort Firmware update',
           value: 'abortFirmwareUpdate'
+        },
+        {
+          text: 'Remove all associations',
+          value: 'removeAllAssociations'
+        },
+        {
+          text: 'Remove node from all associations',
+          value: 'removeNodeFromAllAssociations'
         }
       ],
       cnt_action: 'healNetwork',
@@ -1424,7 +1432,7 @@ export default {
             data.result = data.result.map(
               a =>
                 `- Node: ${self.nodes[a.nodeId]._name ||
-                  a} Endpoint: ${a.endpoint || 0}`
+                  a}${a.endpoint >= 0 ? ' Endpoint: ' + a.endpoint : ''}`
             )
             self.$set(self.group, 'associations', data.result.join('\n'))
             break

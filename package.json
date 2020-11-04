@@ -40,7 +40,7 @@
   },
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
-    "dev:server": "nodemon bin/www",
+    "dev:server": "nodemon --inspect bin/www",
     "start": "node bin/www",
     "lint": "npm-run-all lint:*",
     "lint-fix": "npm-run-all lint-fix:*",
@@ -118,7 +118,7 @@
     "vue-router": "^3.4.3",
     "vuetify": "^2.3.10",
     "vuex": "^3.5.1",
-    "zwave-js": "^5.3.2-alpha.0"
+    "zwave-js": "^5.3.5"
   },
   "devDependencies": {
     "@babel/core": "^7.11.5",
