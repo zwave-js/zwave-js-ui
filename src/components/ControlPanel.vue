@@ -1238,8 +1238,8 @@ export default {
 
       var association = { nodeId: target }
 
-      if (g.group.multiChannel) {
-        association.endpoint = g.targetInstance || 0
+      if (g.group.multiChannel && g.targetInstance >= 0) {
+        association.endpoint = g.targetInstance
       }
 
       if (g && g.node && target) {
@@ -1258,8 +1258,8 @@ export default {
       if (g && g.node && target) {
         var association = { nodeId: target }
 
-        if (g.group.multiChannel) {
-          association.endpoint = g.targetInstance || 0
+        if (g.group.multiChannel && g.targetInstance >= 0) {
+          association.endpoint = g.targetInstance
         }
 
         var args = [g.node.id, g.group.value, [association]]
