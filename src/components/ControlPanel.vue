@@ -419,7 +419,7 @@
                     ></v-select>
                   </v-flex>
 
-                  <v-flex v-if="group.group" xs12 sm6>
+                  <v-flex v-if="group.group && group.group.associations" xs12 sm6>
                     <v-list subheader>
                     <v-subheader>Associations</v-subheader>
                      <v-list-item v-for="(ass, index) in group.associations" :key="index">
