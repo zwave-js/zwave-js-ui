@@ -420,12 +420,28 @@
                   </v-flex>
 
                   <v-flex v-if="group.group" xs12 sm6>
-                    <v-textarea
-                      label="Current associations"
-                      auto-grow
-                      readonly
-                      :value="group.associations"
-                    ></v-textarea>
+                    <v-list subheader>
+                    <v-subheader>Associations</v-subheader>
+                     <v-list-item v-for="(ass, index) in group.associations" :key="index">
+                         <v-list-item-content>
+                          <v-list-item-title>Node: <b>{{ nodes[ass.nodeId]._name || ass.nodeId}}</b></v-list-item-title>
+                          <v-list-item-subtitle
+                          v-if="ass.endpoint >= 0"
+                            class="text--primary"
+                          >Endpoint: <b>{{ ass.endpoint }}</b></v-list-item-subtitle>
+                        </v-list-item-content>
+                        <v-list-item-icon>
+                          <v-icon @click="removeAssociation(ass)" color="red">
+                            delete
+                          </v-icon>
+                        </v-list-item-icon>
+                     </v-list-item>
+                     <v-list-item v-if="group.associations.length === 0">
+                      <v-list-item-content>
+                        No assocaitions
+                      </v-list-item-content>
+                     </v-list-item>
+                   </v-list>
                   </v-flex>
 
                   <v-flex v-if="group.node" xs12 sm6>
@@ -1260,14 +1276,18 @@ export default {
         setTimeout(this.getAssociations, 1000)
       }
     },
-    removeAssociation () {
+    removeAssociation (association) {
       var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
-      if (g && g.node && target) {
-        var association = { nodeId: target }
+      if (g && g.node) {
+        if (!association) {
+          var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
-        if (g.group.multiChannel && g.targetInstance >= 0) {
-          association.endpoint = g.targetInstance
+          if (isNaN(target)) return
+          association = { nodeId: target }
+
+          if (g.group.multiChannel && g.targetInstance >= 0) {
+            association.endpoint = g.targetInstance
+          }
         }
 
         var args = [g.node.id, g.group.value, [association]]
@@ -1429,12 +1449,7 @@ export default {
       if (data.success) {
         switch (data.api) {
           case 'getAssociations':
-            data.result = data.result.map(
-              a =>
-                `- Node: ${self.nodes[a.nodeId]._name ||
-                  a}${a.endpoint >= 0 ? ' Endpoint: ' + a.endpoint : ''}`
-            )
-            self.$set(self.group, 'associations', data.result.join('\n'))
+            self.$set(self.group, 'associations', data.result)
             break
           case '_getScenes':
             self.scenes = data.result
