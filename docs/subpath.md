@@ -1,6 +1,6 @@
 # ZWave To MQTT Behind a Reverse Proxy
 
-There are two ways to enable ZWave To MQTT to sit behing a proxy that uses
+There are two ways to enable ZWave To MQTT to sit behind a proxy that uses
 subpaths to serve the pages and services.
 
 You can use a header to signal where the external path is or you can configure

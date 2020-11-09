@@ -420,12 +420,38 @@
                   </v-flex>
 
                   <v-flex v-if="group.group" xs12 sm6>
-                    <v-textarea
-                      label="Current associations"
-                      auto-grow
-                      readonly
-                      :value="group.associations"
-                    ></v-textarea>
+                    <v-list subheader>
+                      <v-subheader>Associations</v-subheader>
+                      <v-list-item
+                        v-for="(ass, index) in group.associations"
+                        :key="index"
+                      >
+                        <v-list-item-content>
+                          <v-list-item-title
+                            >Node:
+                            <b>{{
+                              nodes[ass.nodeId]._name || ass.nodeId
+                            }}</b></v-list-item-title
+                          >
+                          <v-list-item-subtitle
+                            v-if="ass.endpoint >= 0"
+                            class="text--primary"
+                            >Endpoint:
+                            <b>{{ ass.endpoint }}</b></v-list-item-subtitle
+                          >
+                        </v-list-item-content>
+                        <v-list-item-icon>
+                          <v-icon @click="removeAssociation(ass)" color="red">
+                            delete
+                          </v-icon>
+                        </v-list-item-icon>
+                      </v-list-item>
+                      <v-list-item v-if="group.associations.length === 0">
+                        <v-list-item-content>
+                          No assocaitions
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list>
                   </v-flex>
 
                   <v-flex v-if="group.node" xs12 sm6>
@@ -453,8 +479,9 @@
                     />
                   </v-flex>
 
-                  <v-flex v-if="group.node && group.target && group.group" xs12>
+                  <v-flex xs12>
                     <v-btn
+                      v-if="group.node && group.target && group.group"
                       rounded
                       color="primary"
                       @click="addAssociation"
@@ -463,12 +490,22 @@
                       >Add</v-btn
                     >
                     <v-btn
+                      v-if="group.node && group.target && group.group"
                       rounded
                       color="primary"
                       @click="removeAssociation"
                       dark
                       class="mb-2"
                       >Remove</v-btn
+                    >
+                    <v-btn
+                      v-if="group.node"
+                      rounded
+                      color="primary"
+                      @click="removeAllAssociations"
+                      dark
+                      class="mb-2"
+                      >Remove All</v-btn
                     >
                   </v-flex>
                 </v-layout>
@@ -780,6 +817,14 @@ export default {
         {
           text: 'Abort Firmware update',
           value: 'abortFirmwareUpdate'
+        },
+        {
+          text: 'Remove all associations',
+          value: 'removeAllAssociations'
+        },
+        {
+          text: 'Remove node from all associations',
+          value: 'removeNodeFromAllAssociations'
         }
       ],
       cnt_action: 'healNetwork',
@@ -1227,8 +1272,8 @@ export default {
 
       var association = { nodeId: target }
 
-      if (g.group.multiChannel) {
-        association.endpoint = g.targetInstance || 0
+      if (g.group.multiChannel && g.targetInstance >= 0) {
+        association.endpoint = g.targetInstance
       }
 
       if (g && g.node && target) {
@@ -1241,19 +1286,34 @@ export default {
         setTimeout(this.getAssociations, 1000)
       }
     },
-    removeAssociation () {
+    removeAssociation (association) {
       var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
-      if (g && g.node && target) {
-        var association = { nodeId: target }
+      if (g && g.node) {
+        if (!association) {
+          var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
-        if (g.group.multiChannel) {
-          association.endpoint = g.targetInstance || 0
+          if (isNaN(target)) return
+          association = { nodeId: target }
+
+          if (g.group.multiChannel && g.targetInstance >= 0) {
+            association.endpoint = g.targetInstance
+          }
         }
 
         var args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('removeAssociations', args)
+        // wait a moment before refresh to check if the node
+        // has been added to the group correctly
+        setTimeout(this.getAssociations, 1000)
+      }
+    },
+    removeAllAssociations () {
+      var g = this.group
+      if (g && g.node) {
+        var args = [g.node.id]
+
+        this.apiRequest('removeAllAssociations', args)
         // wait a moment before refresh to check if the node
         // has been added to the group correctly
         setTimeout(this.getAssociations, 1000)
@@ -1399,12 +1459,7 @@ export default {
       if (data.success) {
         switch (data.api) {
           case 'getAssociations':
-            data.result = data.result.map(
-              a =>
-                `- Node: ${self.nodes[a.nodeId]._name ||
-                  a} Endpoint: ${a.endpoint || 0}`
-            )
-            self.$set(self.group, 'associations', data.result.join('\n'))
+            self.$set(self.group, 'associations', data.result)
             break
           case '_getScenes':
             self.scenes = data.result
