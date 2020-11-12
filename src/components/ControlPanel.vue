@@ -420,6 +420,41 @@
                   </v-flex>
 
                   <v-flex v-if="group.node && group.group" xs12 sm6 md4>
+                    <v-list subheader>
+                      <v-subheader>Associations</v-subheader>
+                      <v-list-item
+                        v-for="(ass, index) in group.associations"
+                        :key="index"
+                      >
+                        <v-list-item-content>
+                          <v-list-item-title
+                            >Node:
+                            <b>{{
+                              nodes[ass.nodeId]._name || ass.nodeId
+                            }}</b></v-list-item-title
+                          >
+                          <v-list-item-subtitle
+                            v-if="ass.endpoint >= 0"
+                            class="text--primary"
+                            >Endpoint:
+                            <b>{{ ass.endpoint }}</b></v-list-item-subtitle
+                          >
+                        </v-list-item-content>
+                        <v-list-item-icon>
+                          <v-icon @click="removeAssociation(ass)" color="red">
+                            delete
+                          </v-icon>
+                        </v-list-item-icon>
+                      </v-list-item>
+                      <v-list-item v-if="group.associations.length === 0">
+                        <v-list-item-content>
+                          No assocaitions
+                        </v-list-item-content>
+                      </v-list-item>
+                    </v-list>
+                  </v-flex>
+
+                  <v-flex v-if="group.node" xs12 sm6>
                     <v-combobox
                       label="Target"
                       v-model="group.target"
