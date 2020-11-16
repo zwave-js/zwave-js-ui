@@ -6,7 +6,7 @@ module.exports = {
     2: 'today',
     3: 'time'
   },
-  productionType (index) {
+  productionType (index: any) {
     return {
       sensor: 'energy_production',
       objectId: this._productionMap[index] || 'unknown',
@@ -37,7 +37,7 @@ module.exports = {
     48: 'kwh', // heating (electricity)
     64: 'kwh' // cooling (electricity)
   },
-  meterType (index) {
+  meterType (index: any) {
     let cfg = null
     if (index >= 16 && index < 32) {
       // gas
@@ -79,7 +79,7 @@ module.exports = {
     512: 'type',
     513: 'level'
   },
-  alarmType (index) {
+  alarmType (index: any) {
     return this._alarmMap[index] || 'unknown_' + index
   },
   // https://github.com/OpenZWave/open-zwave/blob/0d94c9427bbd19e47457578bccc60b16c6679b49/config/SensorMultiLevelCCTypes.xml
@@ -256,7 +256,7 @@ module.exports = {
       86: 'particulate_matter'
     }
   },
-  sensorType (index) {
+  sensorType (index: any) {
     const sensorType = {
       sensor: 'generic',
       objectId: 'unknown_' + index,
@@ -368,7 +368,7 @@ module.exports = {
     0xef: 'mark',
     0xf0: 'non_interoperable'
   },
-  commandClass (cmd) {
+  commandClass (cmd: any) {
     return this._commandClassMap[cmd] || 'unknownClass_' + cmd
   },
   _genericDeviceClassMap: {
@@ -597,10 +597,10 @@ module.exports = {
       specific: {}
     }
   },
-  genericDeviceClassAttributes (cls) {
+  genericDeviceClassAttributes (cls: any) {
     return this._genericDeviceClassMap[cls]
   },
-  genericDeviceClass (cls) {
+  genericDeviceClass (cls: any) {
     const clsAttr = this.genericDeviceClassAttributes(cls)
     if (clsAttr) {
       return clsAttr.generic
@@ -608,7 +608,7 @@ module.exports = {
       return 'unknownGenericDeviceType_' + cls
     }
   },
-  specificDeviceClass (genericCls, specificCls) {
+  specificDeviceClass (genericCls: any, specificCls: any) {
     const clsAttr = this.genericDeviceClassAttributes(genericCls)
     if (clsAttr) {
       return (

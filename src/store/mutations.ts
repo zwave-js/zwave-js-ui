@@ -7,38 +7,38 @@ export const state = {
 }
 
 export const getters = {
-  serial_ports: state => state.serial_ports,
-  zwave: state => state.zwave,
-  mqtt: state => state.mqtt,
-  devices: state => state.devices,
-  gateway: state => state.gateway
+  serial_ports: (state: any) => state.serial_ports,
+  zwave: (state: any) => state.zwave,
+  mqtt: (state: any) => state.mqtt,
+  devices: (state: any) => state.devices,
+  gateway: (state: any) => state.gateway
 }
 
 export const actions = {
-  init (store, data) {
+  init (store: any, data: any) {
     if (data) {
       store.commit('initSettings', data.settings)
       store.commit('initPorts', data.serial_ports)
       store.commit('initDevices', data.devices)
     }
   },
-  import (store, settings) {
+  import (store: any, settings: any) {
     store.commit('initSettings', settings)
   }
 }
 
 export const mutations = {
-  initSettings (state, conf) {
+  initSettings (state: any, conf: any) {
     if (conf) {
       state.zwave = conf.zwave || {}
       state.mqtt = conf.mqtt || {}
       state.gateway = conf.gateway || {}
     }
   },
-  initPorts (state, ports) {
+  initPorts (state: any, ports: any) {
     state.serial_ports = ports || []
   },
-  initDevices (state, devices) {
+  initDevices (state: any, devices: any) {
     if (!state.gateway.values) state.gateway.values = []
 
     if (devices) {

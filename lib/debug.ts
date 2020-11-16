@@ -1,4 +1,5 @@
 const log = require('debug')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'debug'.
 let debug
 
 function init () {
@@ -10,6 +11,6 @@ function init () {
   debug.log = console.log.bind(console)
 }
 init()
-module.exports = function (namespace) {
+module.exports = function (namespace: any) {
   return debug.extend(namespace)
 }

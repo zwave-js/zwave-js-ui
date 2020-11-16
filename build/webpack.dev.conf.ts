@@ -1,11 +1,19 @@
 'use strict'
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'utils'.
 const utils = require('./utils')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'webpack'.
 const webpack = require('webpack')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'config'.
 const config = require('../config')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'appConfig'... Remove this comment to see the full error message
 const appConfig = require('../config/webConfig')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'merge'.
 const { merge } = require('webpack-merge')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'path'.
 const path = require('path')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'baseWebpac... Remove this comment to see the full error message
 const baseWebpackConfig = require('./webpack.base.conf')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'CopyWebpac... Remove this comment to see the full error message
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
@@ -80,7 +88,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 
 module.exports = new Promise((resolve, reject) => {
   portfinder.basePort = process.env.PORT || config.dev.port
-  portfinder.getPort((err, port) => {
+  portfinder.getPort((err: any, port: any) => {
     if (err) {
       reject(err)
     } else {

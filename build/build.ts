@@ -5,18 +5,23 @@ process.env.NODE_ENV = 'production'
 
 const ora = require('ora')
 const rm = require('rimraf')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'path'.
 const path = require('path')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'chalk'.
 const chalk = require('chalk')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'webpack'.
 const webpack = require('webpack')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'config'.
 const config = require('../config')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'webpackCon... Remove this comment to see the full error message
 const webpackConfig = require('./webpack.prod.conf')
 
 const spinner = ora('building for production...')
 spinner.start()
 
-rm(path.join(config.build.assetsRoot, config.build.assetsSubDirectory), err => {
+rm(path.join(config.build.assetsRoot, config.build.assetsSubDirectory), (err: any) => {
   if (err) throw err
-  webpack(webpackConfig, (err, stats) => {
+  webpack(webpackConfig, (err: any, stats: any) => {
     spinner.stop()
     if (err) throw err
     process.stdout.write(

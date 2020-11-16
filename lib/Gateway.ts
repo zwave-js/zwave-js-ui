@@ -4,13 +4,20 @@
 /* eslint-disable one-var */
 'use strict'
 
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'fs'.
 const fs = require('fs')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'path'.
 const path = require('path')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'reqlib'.
 const reqlib = require('app-root-path').require
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'utils'.
 const utils = reqlib('/lib/utils.js')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'EventEmitt... Remove this comment to see the full error message
 const EventEmitter = require('events')
 const Constants = reqlib('/lib/Constants.js')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'debug'.
 const debug = reqlib('/lib/debug')('Gateway')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'inherits'.
 const inherits = require('util').inherits
 const hassCfg = reqlib('/hass/configurations.js')
 const hassDevices = reqlib('/hass/devices.js')
@@ -30,11 +37,11 @@ debug.color = 2
 // triggers, cancel it and try to watch the file again. Meanwhile spam `fn()`
 // on any change, trusting that it's idempotent.
 const watchers = new Map()
-const watch = (filename, fn) => {
+const watch = (filename: any, fn: any) => {
   try {
     watchers.set(
       filename,
-      fs.watch(filename, e => {
+      fs.watch(filename, (e: any) => {
         fn()
         if (e === 'rename') {
           watchers.get(filename).close()
@@ -45,7 +52,7 @@ const watch = (filename, fn) => {
   } catch {
     watchers.set(
       filename,
-      fs.watch(path.dirname(filename), (e, f) => {
+      fs.watch(path.dirname(filename), (e: any, f: any) => {
         if (!f || f === 'customDevices.js' || f === 'customDevices.json') {
           watchers.get(filename).close()
           watch(filename, fn)
@@ -59,7 +66,7 @@ const watch = (filename, fn) => {
 const customDevicesJsPath = utils.joinPath(true, CUSTOM_DEVICES) + '.js'
 const customDevicesJsonPath = utils.joinPath(true, CUSTOM_DEVICES) + '.json'
 
-let lastCustomDevicesLoad = null
+let lastCustomDevicesLoad: any = null
 // loadCustomDevices attempts to load a custom devices file, preferring `.js`
 // but falling back to `.json` only if a `.js` file does not exist. It stores
 // a sha of the loaded data, and will skip re-loading any time the data has
@@ -110,51 +117,75 @@ watch(customDevicesJsonPath, loadCustomDevices)
 /**
  * The constructor
  */
-function Gateway (config, zwave, mqtt) {
+// @ts-expect-error ts-migrate(2300) FIXME: Duplicate identifier 'Gateway'.
+function Gateway (config: any, zwave: any, mqtt: any) {
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (!(this instanceof Gateway)) {
     return new Gateway(config)
   }
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   EventEmitter.call(this)
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   init.call(this, config, zwave, mqtt)
 }
 
 inherits(Gateway, EventEmitter)
 
-function init (config, zwave, mqtt) {
+// @ts-expect-error ts-migrate(2393) FIXME: Duplicate function implementation.
+function init (config: any, zwave: any, mqtt: any) {
   // gateway configuration
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.config = config || { type: 1 }
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.config.values = this.config.values || []
 
   // clients
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.mqtt = mqtt
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.zwave = zwave
 
   // Object where keys are topic and values can be both zwave valueId object
   // or a valueConf if the topic is a broadcast topic
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.topicValues = {}
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.discovered = {}
 
   // topic levels for subscribes using wildecards
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.topicLevels = []
 
   if (mqtt) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     mqtt.on('writeRequest', onWriteRequest.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     mqtt.on('broadcastRequest', onBroadRequest.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     mqtt.on('apiCall', onApiRequest.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     mqtt.on('hassStatus', onHassStatus.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     mqtt.on('brokerStatus', onBrokerStatus.bind(this))
   }
 
   if (zwave) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     zwave.on('valueChanged', onValueChanged.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     zwave.on('nodeStatus', onNodeStatus.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     zwave.on('notification', onNotification.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     zwave.on('scanComplete', onScanComplete.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     zwave.on('nodeSceneEvent', onNodeSceneEvent.bind(this))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     zwave.on('nodeRemoved', onNodeRemoved.bind(this))
 
     if (config.sendEvents) {
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       zwave.on('event', onEvent.bind(this))
     }
 
@@ -167,11 +198,15 @@ function init (config, zwave, mqtt) {
 /**
  * Catch all Zwave events
  */
-function onEvent (emitter, eventName, ...args) {
+// @ts-expect-error ts-migrate(7019) FIXME: Rest parameter 'args' implicitly has an 'any[]' ty... Remove this comment to see the full error message
+function onEvent (emitter: any, eventName: any, ...args) {
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   const topic = `${this.mqtt.eventsPrefix}/${
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.mqtt.clientID
   }/${emitter}/${eventName.replace(/\s/g, '_')}`
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.mqtt.publish(topic, { data: args }, { qos: 1, retain: false })
 }
 
@@ -179,17 +214,20 @@ function onEvent (emitter, eventName, ...args) {
  * Zwave event triggered when a scan is completed
  */
 // eslint-disable-next-line no-unused-vars
-function onScanComplete (nodes) {}
+function onScanComplete (nodes: any) {}
 
 /**
  * Zwave event triggered when a node is removed
  */
-function onNodeRemoved (node) {
+// @ts-expect-error ts-migrate(2393) FIXME: Duplicate function implementation.
+function onNodeRemoved (node: any) {
   const prefix = node.id + '-'
 
   // delete discovered values
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   for (const id in this.discovered) {
     if (id.startsWith(prefix)) {
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       delete this.discovered[id]
     }
   }
@@ -198,7 +236,8 @@ function onNodeRemoved (node) {
 /**
  * Zwave event triggered when there is a node or scene event
  */
-function onNodeSceneEvent (event, node, code) {
+function onNodeSceneEvent (event: any, node: any, code: any) {
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   let topic = this.nodeTopic(node)
 
   if (event === 'node') {
@@ -211,23 +250,28 @@ function onNodeSceneEvent (event, node, code) {
 
   let data
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (this.config.payloadType === 2) data = code
   else data = { time: Date.now(), value: code }
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.mqtt.publish(topic, data, { qos: 1, retain: false })
 }
 
 /**
  * Zwave event triggered when a value changes
  */
-function onValueChanged (valueId, node, changed) {
+function onValueChanged (valueId: any, node: any, changed: any) {
   valueId.lastUpdate = Date.now()
 
   // emit event to socket
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (this.zwave) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.zwave.emitEvent(this.zwave.socketEvents.valueUpdated, valueId)
   }
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   const result = this.valueTopic(node, valueId, true)
 
   if (!result) return
@@ -253,7 +297,9 @@ function onValueChanged (valueId, node, changed) {
   }
 
   // Check if I need to update discovery topics of this device
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (changed && valueId.list && this.discovered[valueId.id]) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     const hassDevice = this.discovered[valueId.id]
     const isOff = hassDevice.mode_map
       ? hassDevice.mode_map.off === valueId.value
@@ -264,11 +310,13 @@ function onValueChanged (valueId, node, changed) {
       if (setId && node.values[setId]) {
         // check if the setpoint topic has changed
         const setpoint = node.values[setId]
+        // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
         const setTopic = this.mqtt.getTopic(this.valueTopic(node, setpoint))
         if (setTopic !== hassDevice.discovery_payload.temperature_state_topic) {
           hassDevice.discovery_payload.temperature_state_topic = setTopic
           hassDevice.discovery_payload.temperature_command_topic =
             setTopic + '/set'
+          // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
           this.publishDiscovery(hassDevice, node.id)
         }
       }
@@ -277,6 +325,7 @@ function onValueChanged (valueId, node, changed) {
 
   let data
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   switch (this.config.payloadType) {
     case 1: // entire zwave valueId object
       data = copy(valueId)
@@ -289,11 +338,15 @@ function onValueChanged (valueId, node, changed) {
       data = { time: Date.now(), value: tmpVal }
   }
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (!valueId.read_only && !this.topicValues[topic]) {
     const levels = topic.split('/').length
 
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     if (this.topicLevels.indexOf(levels) < 0) {
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       this.topicLevels.push(levels)
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       this.mqtt.subscribe(
         '+'
           .repeat(levels)
@@ -309,43 +362,54 @@ function onValueChanged (valueId, node, changed) {
       valueId.conf = valueConf
     }
 
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.topicValues[topic] = valueId
   }
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.mqtt.publish(topic, data)
 }
 
-function onNotification (node, notificationLabel, parameters) {
+function onNotification (node: any, notificationLabel: any, parameters: any) {
   const topic =
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.nodeTopic(node) +
     '/notification/' +
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.mqtt.cleanName(notificationLabel)
   let data
 
   parameters = parameters ? parameters.toString() : null
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (this.config.payloadType === 2) {
     data = parameters
   } else {
     data = { time: Date.now(), value: parameters }
   }
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   this.mqtt.publish(topic, data)
 }
 
-function onNodeStatus (node) {
+// @ts-expect-error ts-migrate(2393) FIXME: Duplicate function implementation.
+function onNodeStatus (node: any) {
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (node.ready && this.config.hassDiscovery) {
     for (const id in node.hassDevices) {
       if (node.hassDevices[id].persistent) {
+        // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
         this.publishDiscovery(node.hassDevices[id], node.id)
       }
     }
 
     const nodeDevices = allDevices[node.deviceId] || []
-    nodeDevices.forEach(device => this.discoverDevice(node, device))
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
+    nodeDevices.forEach((device: any) => this.discoverDevice(node, device))
 
     // discover node values (that are not part of a device)
     for (const id in node.values) {
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       this.discoverValue(node, node.values[id])
     }
   }
@@ -381,70 +445,89 @@ function onNodeStatus (node) {
   //   }
   // }
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (this.zwave) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.zwave.emitEvent(this.zwave.socketEvents.nodeUpdated, node)
   }
 
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (!this.config.ignoreStatus) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     const topic = this.nodeTopic(node) + '/status'
     let data
 
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     if (this.config.payloadType === 2) {
       data = node.ready
     } else {
       data = { time: Date.now(), value: node.ready, status: node.status }
     }
 
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.mqtt.publish(topic, data)
   }
 }
 
-function onBrokerStatus (online) {
+function onBrokerStatus (online: any) {
   if (online) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.rediscoverAll()
   }
 }
 
-function onHassStatus (online) {
+function onHassStatus (online: any) {
   debug('Home Assistant is ' + (online ? 'ONLINE' : 'OFFLINE'))
 
   if (online) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.rediscoverAll()
   }
 }
 
-async function onApiRequest (topic, apiName, payload) {
+async function onApiRequest (topic: any, apiName: any, payload: any) {
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   if (this.zwave) {
     const args = payload.args || []
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     const result = await this.zwave.callApi(apiName, ...args)
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.mqtt.publish(topic, result)
   } else {
     debug('Requested Zwave api', apiName, "doesn't exist")
   }
 }
 
-function onBroadRequest (parts, payload) {
+function onBroadRequest (parts: any, payload: any) {
   const topic = parts.join('/')
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   const values = Object.keys(this.topicValues).filter(t => t.endsWith(topic))
 
   if (values.length > 0) {
     // all values are the same type just different node,parse the Payload by using the first one
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     payload = this.parsePayload(
       payload,
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       this.topicValues[values[0]],
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       this.topicValues[values[0]].conf
     )
     for (let i = 0; i < values.length; i++) {
+      // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
       this.zwave.writeValue(this.topicValues[values[i]], payload)
     }
   }
 }
 
-function onWriteRequest (parts, payload) {
+function onWriteRequest (parts: any, payload: any) {
+  // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
   const valueId = this.topicValues[parts.join('/')]
 
   if (valueId) {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     payload = this.parsePayload(payload, valueId, valueId.conf)
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     this.zwave.writeValue(valueId, payload)
   }
 }
@@ -453,8 +536,8 @@ function onWriteRequest (parts, payload) {
  * Checks if an operation is valid, it must exist and must contains
  * only numbers and operators
  */
-function isValidOperation (op) {
-  return op && !/[^0-9.()\-+*/,]/g.test(op)
+function isValidOperation (op: any) {
+  return op && !/[^0-9.()\-+*/,]/g.test(op);
 }
 
 /**
@@ -465,7 +548,7 @@ function isValidOperation (op) {
  * @param {*} value The actual value to parse
  * @returns
  */
-function evalFunction (code, valueId, value) {
+function evalFunction (code: any, valueId: any, value: any) {
   let result = null
 
   try {
@@ -485,7 +568,7 @@ function evalFunction (code, valueId, value) {
  * @param {Number} rgb A decimal value from 0 to 255
  * @returns An hex string of 2 chars
  */
-function rgbToHex (rgb) {
+function rgbToHex (rgb: any) {
   let hex = Number(rgb).toString(16)
   if (hex.length < 2) {
     hex = '0' + hex
@@ -499,7 +582,7 @@ function rgbToHex (rgb) {
  * @param {Object} node The Zwave Node Object
  * @returns A string in the format [<location>-]<name>, if location doesn't exist it will be ignored, if the node name doesn't exists the node id with node prefix string will be used
  */
-function getNodeName (node) {
+function getNodeName (node: any) {
   return (
     (node.loc ? node.loc + '-' : '') +
     (node.name ? node.name : NODE_PREFIX + node.id)
@@ -512,7 +595,8 @@ function getNodeName (node) {
  * @param {*} obj The object to copy
  * @returns The copied object
  */
-function copy (obj) {
+// @ts-expect-error ts-migrate(2393) FIXME: Duplicate function implementation.
+function copy (obj: any) {
   return JSON.parse(JSON.stringify(obj))
 }
 
@@ -522,7 +606,7 @@ function copy (obj) {
  * @param {String} id object id of the hass discovery payload
  * @returns true if the discovery payload object id is a rgb_dimmer
  */
-function isRgbDimmer (id) {
+function isRgbDimmer (id: any) {
   return id.startsWith('rgb_dimmer')
 }
 
@@ -533,8 +617,9 @@ function isRgbDimmer (id) {
  * @param {String} nodeName Node name from getNodeName function
  * @returns The Hass device object
  */
-function deviceInfo (node, nodeName) {
+function deviceInfo (node: any, nodeName: any) {
   return {
+    // @ts-expect-error ts-migrate(2683) FIXME: 'this' implicitly has type 'any' because it does n... Remove this comment to see the full error message
     identifiers: ['zwavejs2mqtt_' + this.zwave.homeHex + '_node' + node.id],
     manufacturer: node.manufacturer,
     model: node.product + ' (' + node.productid + ')',
@@ -550,7 +635,7 @@ function deviceInfo (node, nodeName) {
  * @param {String} nodeName Node name from getNodeName function
  * @returns The topic string for this device discovery
  */
-function getDiscoveryTopic (hassDevice, nodeName) {
+function getDiscoveryTopic (hassDevice: any, nodeName: any) {
   return `${hassDevice.type}/${nodeName}/${hassDevice.object_id}/config`
 }
 
@@ -562,8 +647,9 @@ function getDiscoveryTopic (hassDevice, nodeName) {
  * @param {String} defaultValue The default value for the mode
  * @returns {String} The template to use for the mode
  */
-function getMappedValuesTemplate (modeMap, defaultValue) {
+function getMappedValuesTemplate (modeMap: any, defaultValue: any) {
   const map = {}
+  // @ts-expect-error ts-migrate(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
   for (const key in modeMap) map[modeMap[key]] = key
 
   return `{{ ${JSON.stringify(
@@ -578,7 +664,7 @@ function getMappedValuesTemplate (modeMap, defaultValue) {
  * @param {String} prop property name
  * @param {Object} node node object
  */
-function setDiscoveryValue (payload, prop, node) {
+function setDiscoveryValue (payload: any, prop: any, node: any) {
   if (typeof payload[prop] === 'string') {
     const valueId = node.values[payload[prop]]
     if (valueId && valueId.value != null) {
@@ -591,7 +677,7 @@ function setDiscoveryValue (payload, prop, node) {
  * Parse the value of the payload received from mqtt
  * based on the type of the payload and the gateway config
  */
-Gateway.prototype.parsePayload = function (payload, valueId, valueConf) {
+Gateway.prototype.parsePayload = function (payload: any, valueId: any, valueConf: any) {
   try {
     payload = payload.hasOwnProperty('value') ? payload.value : payload
 
@@ -614,7 +700,7 @@ Gateway.prototype.parsePayload = function (payload, valueId, valueConf) {
       }
 
       // map modes coming from hass
-      if (valueId.list && valueId.states.find(v => v.value === payload)) {
+      if (valueId.list && valueId.states.find((v: any) => v.value === payload)) {
         const hassDevice = this.discovered[valueId.id]
         if (hassDevice) {
           // for thermostat_fan_mode command class use the fan_mode_map
@@ -695,7 +781,7 @@ Gateway.prototype.close = async function () {
   }
 }
 
-Gateway.prototype.nodeTopic = function (node) {
+Gateway.prototype.nodeTopic = function (node: any) {
   const topic = []
 
   if (node.loc && !this.config.ignoreLoc) topic.push(node.loc)
@@ -725,16 +811,16 @@ Gateway.prototype.nodeTopic = function (node) {
   return topic.join('/')
 }
 
-Gateway.prototype.valueTopic = function (node, valueId, returnObject) {
+Gateway.prototype.valueTopic = function (node: any, valueId: any, returnObject: any) {
   const topic = []
   let valueConf
 
   const vID = valueId.id
 
   // check if this value is in configuration values array
-  const values = this.config.values.filter(v => v.device === node.deviceId)
+  const values = this.config.values.filter((v: any) => v.device === node.deviceId)
   if (values && values.length > 0) {
-    valueConf = values.find(v => v.value.id === vID)
+    valueConf = values.find((v: any) => v.value.id === vID)
   }
 
   if (valueConf && valueConf.topic) {
@@ -793,7 +879,7 @@ Gateway.prototype.valueTopic = function (node, valueId, returnObject) {
   }
 }
 
-Gateway.prototype.rediscoverNode = function (nodeID) {
+Gateway.prototype.rediscoverNode = function (nodeID: any) {
   const node = this.zwave.nodes[nodeID]
   if (node) {
     // delete all discovered values
@@ -802,7 +888,7 @@ Gateway.prototype.rediscoverNode = function (nodeID) {
 
     // rediscover all values
     const nodeDevices = allDevices[node.deviceId] || []
-    nodeDevices.forEach(device => this.discoverDevice(node, device))
+    nodeDevices.forEach((device: any) => this.discoverDevice(node, device))
 
     // discover node values (that are not part of a device)
     for (const id in node.values) {
@@ -813,7 +899,7 @@ Gateway.prototype.rediscoverNode = function (nodeID) {
   }
 }
 
-Gateway.prototype.disableDiscovery = function (nodeID) {
+Gateway.prototype.disableDiscovery = function (nodeID: any) {
   const node = this.zwave.nodes[nodeID]
   if (node && node.hassDevices) {
     for (const id in node.hassDevices) {
@@ -825,10 +911,10 @@ Gateway.prototype.disableDiscovery = function (nodeID) {
 }
 
 Gateway.prototype.publishDiscovery = function (
-  hassDevice,
-  nodeId,
-  deleteDevice,
-  update
+  hassDevice: any,
+  nodeId: any,
+  deleteDevice: any,
+  update: any
 ) {
   try {
     if (hassDevice.ignoreDiscovery) {
@@ -889,7 +975,7 @@ Gateway.prototype.rediscoverAll = function () {
   } // end foreach node
 }
 
-Gateway.prototype.discoverDevice = function (node, hassDevice) {
+Gateway.prototype.discoverDevice = function (node: any, hassDevice: any) {
   const hassID = hassDevice
     ? hassDevice.type + '_' + hassDevice.object_id
     : null
@@ -980,6 +1066,7 @@ Gateway.prototype.discoverDevice = function (node, hassDevice) {
         // populate topics object with valueId: valueTopic
         for (let i = 0; i < hassDevice.values.length; i++) {
           const v = hassDevice.values[i] // the value id
+          // @ts-expect-error ts-migrate(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
           topics[v] = node.values[v]
             ? this.mqtt.getTopic(this.valueTopic(node, node.values[v]))
             : null
@@ -987,8 +1074,10 @@ Gateway.prototype.discoverDevice = function (node, hassDevice) {
 
         // set the correct command/state topics
         for (const key in payload) {
+          // @ts-expect-error ts-migrate(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
           if (key.indexOf('topic') >= 0 && topics[payload[key]]) {
             payload[key] =
+              // @ts-expect-error ts-migrate(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
               topics[payload[key]] +
               ((key.indexOf('command') >= 0 || key.indexOf('set_')) >= 0
                 ? '/set'
@@ -1036,7 +1125,7 @@ Gateway.prototype.discoverDevice = function (node, hassDevice) {
   }
 }
 
-Gateway.prototype.discoverValue = function (node, valueId) {
+Gateway.prototype.discoverValue = function (node: any, valueId: any) {
   if (this.discovered[valueId.id] || valueId.genre !== 'user') return
 
   try {
@@ -1186,8 +1275,10 @@ Gateway.prototype.discoverValue = function (node, valueId) {
           5: 'flood'
         }
         cfg = copy(hassCfg.binary_sensor_alarm)
+        // @ts-expect-error ts-migrate(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
         cfg.object_id += alarmMap[valueId.index]
-          ? '_' + alarmMap[valueId.index]
+          ? // @ts-expect-error ts-migrate(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
+            '_' + alarmMap[valueId.index]
           : ''
         break
 
@@ -1252,6 +1343,7 @@ Gateway.prototype.discoverValue = function (node, valueId) {
             F: '°F'
           }
           cfg.discovery_payload.unit_of_measurement =
+            // @ts-expect-error ts-migrate(7053) FIXME: Element implicitly has an 'any' type because expre... Remove this comment to see the full error message
             hassUnitOfMeasurementMap[valueId.units] || valueId.units
         }
 

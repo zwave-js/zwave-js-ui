@@ -1,17 +1,26 @@
 'use strict'
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'path'.
 const path = require('path')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'utils'.
 const utils = require('./utils')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'webpack'.
 const webpack = require('webpack')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'config'.
 const config = require('../config')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'merge'.
 const { merge } = require('webpack-merge')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'baseWebpac... Remove this comment to see the full error message
 const baseWebpackConfig = require('./webpack.base.conf')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'CopyWebpac... Remove this comment to see the full error message
 const CopyWebpackPlugin = require('copy-webpack-plugin')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'MiniCssExt... Remove this comment to see the full error message
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCSSPlugin = require('optimize-css-assets-webpack-plugin')
 const TerserPlugin = require('terser-webpack-plugin')
 
 const env = require('../config/prod.env')
 
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'webpackCon... Remove this comment to see the full error message
 const webpackConfig = merge(baseWebpackConfig, {
   mode: 'production',
   module: {

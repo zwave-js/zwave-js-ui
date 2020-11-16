@@ -1,22 +1,30 @@
 var express = require('express')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'reqlib'.
 var reqlib = require('app-root-path').require
 var logger = require('morgan')
 var cookieParser = require('cookie-parser')
 var bodyParser = require('body-parser')
 var app = express()
 var SerialPort = require('serialport')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'jsonStore'... Remove this comment to see the full error message
 var jsonStore = reqlib('/lib/jsonStore.js')
 var cors = require('cors')
 var ZWaveClient = reqlib('/lib/ZwaveClient')
+// @ts-expect-error ts-migrate(2300) FIXME: Duplicate identifier 'MqttClient'.
 var MqttClient = reqlib('/lib/MqttClient')
+// @ts-expect-error ts-migrate(2300) FIXME: Duplicate identifier 'Gateway'.
 var Gateway = reqlib('/lib/Gateway')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'store'.
 var store = reqlib('config/store.js')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'debug'.
 var debug = reqlib('/lib/debug')('App')
+// @ts-expect-error ts-migrate(2403) FIXME: Subsequent variable declarations must have the sam... Remove this comment to see the full error message
 var history = require('connect-history-api-fallback')
+// @ts-expect-error ts-migrate(2451) FIXME: Cannot redeclare block-scoped variable 'utils'.
 var utils = reqlib('/lib/utils.js')
 const renderIndex = reqlib('/lib/renderIndex')
-var gw // the gateway instance
-let io
+var gw: any // the gateway instance
+let io: any
 
 debug('zwavejs2mqtt version: ' + require('./package.json').version)
 debug('Application path:' + utils.getPath(true))
@@ -42,6 +50,7 @@ app.use('/', express.static(utils.joinPath(false, 'dist')))
 
 app.use(cors())
 
+// @ts-expect-error ts-migrate(2349) FIXME: This expression is not callable.
 app.use(history())
 
 function startGateway () {
@@ -60,12 +69,12 @@ function startGateway () {
   gw = new Gateway(settings.gateway, zwave, mqtt)
 }
 
-app.startSocket = function (server) {
+app.startSocket = function (server: any) {
   io = require('socket.io')(server)
 
   if (gw.zwave) gw.zwave.socket = io
 
-  io.on('connection', function (socket) {
+  io.on('connection', function (socket: any) {
     debug('New connection', socket.id)
 
     socket.on('INITED', function () {
@@ -79,7 +88,7 @@ app.startSocket = function (server) {
       }
     })
 
-    socket.on('ZWAVE_API', async function (data) {
+    socket.on('ZWAVE_API', async function (data: any) {
       debug('Zwave api call:', data.api, data.args)
       if (gw.zwave) {
         var result = await gw.zwave.callApi(data.api, ...data.args)
@@ -88,7 +97,7 @@ app.startSocket = function (server) {
       }
     })
 
-    socket.on('HASS_API', async function (data) {
+    socket.on('HASS_API', async function (data: any) {
       switch (data.apiName) {
         case 'delete':
           gw.publishDiscovery(data.device, data.node_id, true, true)
@@ -119,20 +128,23 @@ app.startSocket = function (server) {
     })
   })
 
-  const interceptor = function (write) {
+  const interceptor = function (write: any) {
+    // @ts-expect-error ts-migrate(7019) FIXME: Rest parameter 'args' implicitly has an 'any[]' ty... Remove this comment to see the full error message
     return function (...args) {
       io.emit('DEBUG', args[0].toString())
       write.apply(process.stdout, args)
     }
   }
 
+  // @ts-expect-error ts-migrate(2322) FIXME: Type '(...args: any[]) => void' is not assignable ... Remove this comment to see the full error message
   process.stdout.write = interceptor(process.stdout.write)
+  // @ts-expect-error ts-migrate(2322) FIXME: Type '(...args: any[]) => void' is not assignable ... Remove this comment to see the full error message
   process.stderr.write = interceptor(process.stderr.write)
 }
 
 // ----- APIs ------
 
-app.get('/health', async function (req, res) {
+app.get('/health', async function (req: any, res: any) {
   var mqtt = false
   var zwave = false
 
@@ -146,7 +158,7 @@ app.get('/health', async function (req, res) {
   res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 })
 
-app.get('/health/:client', async function (req, res) {
+app.get('/health/:client', async function (req: any, res: any) {
   var client = req.params.client
   var status
 
@@ -160,7 +172,7 @@ app.get('/health/:client', async function (req, res) {
 })
 
 // get settings
-app.get('/api/settings', async function (req, res) {
+app.get('/api/settings', async function (req: any, res: any) {
   var data = {
     success: true,
     settings: jsonStore.get(store.settings),
@@ -174,13 +186,13 @@ app.get('/api/settings', async function (req, res) {
       debug(error)
     }
 
-    data.serial_ports = ports ? ports.map(p => p.path) : []
+    data.serial_ports = ports ? ports.map((p: any) => p.path) : []
     res.json(data)
   } else res.json(data)
 })
 
 // get config
-app.get('/api/exportConfig', function (req, res) {
+app.get('/api/exportConfig', function (req: any, res: any) {
   return res.json({
     success: true,
     data: jsonStore.get(store.nodes),
@@ -189,7 +201,7 @@ app.get('/api/exportConfig', function (req, res) {
 })
 
 // import config
-app.post('/api/importConfig', async function (req, res) {
+app.post('/api/importConfig', async function (req: any, res: any) {
   var config = req.body.data
   try {
     if (!gw.zwave) throw Error('Zwave client not inited')
@@ -217,29 +229,30 @@ app.post('/api/importConfig', async function (req, res) {
 })
 
 // update settings
-app.post('/api/settings', function (req, res) {
+app.post('/api/settings', function (req: any, res: any) {
   jsonStore
     .put(store.settings, req.body)
-    .then(data => {
+    .then((data: any) => {
       res.json({ success: true, message: 'Configuration updated successfully' })
       return gw.close()
     })
     .then(() => startGateway())
-    .catch(err => {
+    .catch((err: any) => {
       debug(err)
       res.json({ success: false, message: err.message })
     })
 })
 
 // catch 404 and forward to error handler
-app.use(function (req, res, next) {
+app.use(function (req: any, res: any, next: any) {
   var err = new Error('Not Found')
+  // @ts-expect-error ts-migrate(2339) FIXME: Property 'status' does not exist on type 'Error'.
   err.status = 404
   next(err)
 })
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use(function (err: any, req: any, res: any, next: any) {
   // set locals, only providing error in development
   res.locals.message = err.message
   res.locals.error = req.app.get('env') === 'development' ? err : {}

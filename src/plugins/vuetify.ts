@@ -13,4 +13,5 @@ const opts = {
   }
 }
 
+// @ts-expect-error ts-migrate(2345) FIXME: Argument of type '{ icons: { iconfont: string; }; ... Remove this comment to see the full error message
 export default new Vuetify(opts)

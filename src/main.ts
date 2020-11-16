@@ -3,9 +3,11 @@
 import '@babel/polyfill'
 
 import Vue from 'vue'
+// @ts-expect-error ts-migrate(2307) FIXME: Cannot find module './App' or its corresponding ty... Remove this comment to see the full error message
 import App from './App'
 import router from './router'
 import store from './store'
+// @ts-expect-error ts-migrate(2307) FIXME: Cannot find module '@/plugins/vuetify' or its corr... Remove this comment to see the full error message
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 import 'axios-progress-bar/dist/nprogress.css'
