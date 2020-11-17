@@ -147,7 +147,10 @@
                 <v-layout row>
                   <v-flex>
                     <v-subheader
-                      >Device ID: {{ selectedNode.deviceId }}</v-subheader
+                      >Device ID:
+                      {{
+                        `${selectedNode.deviceId} (${selectedNode.hexId})`
+                      }}</v-subheader
                     >
                   </v-flex>
                 </v-layout>
@@ -850,6 +853,10 @@ export default {
           value: 'removeFailedNode'
         },
         {
+          text: 'Replace failed node',
+          value: 'replaceFailedNode'
+        },
+        {
           text: 'Begin Firmware update',
           value: 'beginFirmwareUpdate'
         },
@@ -1215,10 +1222,13 @@ export default {
         var broadcast = false
         var askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
-          broadcast = await this.$listeners.showConfirm(
-            'Broadcast',
-            'Send this command to all nodes?'
-          )
+          // don't send replaceFailed as broadcast
+          if (this.cnt_action !== 'replaceFailedNode') {
+            broadcast = await this.$listeners.showConfirm(
+              'Broadcast',
+              'Send this command to all nodes?'
+            )
+          }
 
           if (!broadcast) {
             var id = parseInt(prompt('Node ID'))
@@ -1231,7 +1241,10 @@ export default {
           }
         }
 
-        if (this.cnt_action === 'startInclusion') {
+        if (
+          this.cnt_action === 'startInclusion' ||
+          this.cnt_action === 'replaceFailedNode'
+        ) {
           var secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?'
