@@ -147,7 +147,10 @@
                 <v-layout row>
                   <v-flex>
                     <v-subheader
-                      >Device ID: {{ `${selectedNode.deviceId} (${selectedNode.hexId})` }}</v-subheader
+                      >Device ID:
+                      {{
+                        `${selectedNode.deviceId} (${selectedNode.hexId})`
+                      }}</v-subheader
                     >
                   </v-flex>
                 </v-layout>
@@ -1238,7 +1241,10 @@ export default {
           }
         }
 
-        if (this.cnt_action === 'startInclusion' || this.cnt_action === 'replaceFailedNode') {
+        if (
+          this.cnt_action === 'startInclusion' ||
+          this.cnt_action === 'replaceFailedNode'
+        ) {
           var secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?'
