@@ -147,7 +147,7 @@
                 <v-layout row>
                   <v-flex>
                     <v-subheader
-                      >Device ID: {{ selectedNode.deviceId }}</v-subheader
+                      >Device ID: {{ `${selectedNode.deviceId} (${selectedNode.hexId})` }}</v-subheader
                     >
                   </v-flex>
                 </v-layout>
