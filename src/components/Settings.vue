@@ -33,6 +33,8 @@
                           v-model="zwave.networkKey"
                           label="Network Key"
                           :rules="[rules.validKey]"
+                          append-outer-icon="wifi_protected_setup"
+                          @click:append-outer="randomKey"
                         ></v-text-field>
                       </v-flex>
                       <v-flex xs12 sm6>
@@ -540,6 +542,18 @@ export default {
     }
   },
   methods: {
+    randomKey () {
+      var key = ''
+
+      while (key.length < 32) {
+        const x = Math.round(Math.random() * 255)
+          .toString(16)
+          .toUpperCase()
+        key += x.length === 2 ? x : '0' + x
+      }
+
+      this.zwave.networkKey = key
+    },
     readFile (file, callback) {
       const reader = new FileReader()
 
