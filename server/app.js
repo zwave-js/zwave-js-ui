@@ -18,7 +18,7 @@ const renderIndex = reqlib('/lib/renderIndex')
 var gw // the gateway instance
 let io
 
-debug('zwavejs2mqtt version: ' + require('./package.json').version)
+debug('zwavejs2mqtt version: ' + require('../package.json').version)
 debug('Application path:' + utils.getPath(true))
 
 // view engine setup
@@ -203,8 +203,7 @@ app.post('/api/importConfig', async function (req, res) {
         } else if (e) {
           await gw.zwave.callApi('_setNodeName', i, e.name || '')
           await gw.zwave.callApi('_setNodeLocation', i, e.loc || '')
-          if (e.hassDevices)
-            await gw.zwave.storeDevices(e.hassDevices, i, false)
+          if (e.hassDevices) { await gw.zwave.storeDevices(e.hassDevices, i, false) }
         }
       }
     }
