@@ -1290,6 +1290,14 @@ export default {
           } catch (error) {
             return
           }
+        } else if (
+          this.node_action === 'replaceFailedNode'
+        ) {
+          var secure = await this.$listeners.showConfirm(
+            'Node inclusion',
+            'Start inclusion in secure mode?'
+          )
+          args.push(secure)
         }
 
         this.apiRequest(action, args)
