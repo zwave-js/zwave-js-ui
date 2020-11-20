@@ -1151,6 +1151,7 @@ export default {
       if (
         device &&
         (await this.$listeners.showConfirm(
+          'Rediscover Device',
           'Are you sure you want to re-discover selected device?'
         ))
       ) {
