@@ -3,9 +3,9 @@
 
 module.exports = {
   // Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
-  binary_sensor_occupancy: {
+  binary_sensor_motion: {
     type: 'binary_sensor',
-    object_id: 'occupancy',
+    object_id: 'motion',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
@@ -43,9 +43,9 @@ module.exports = {
       device_class: 'lock'
     }
   },
-  binary_sensor_water_leak: {
+  binary_sensor_water: {
     type: 'binary_sensor',
-    object_id: 'water_leak',
+    object_id: 'water',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
@@ -73,9 +73,19 @@ module.exports = {
       device_class: 'gas'
     }
   },
-  binary_sensor_carbon_monoxide: {
+  binary_sensor_co: {
     type: 'binary_sensor',
-    object_id: 'carbon_monoxide',
+    object_id: 'co',
+    discovery_payload: {
+      payload_on: true,
+      payload_off: false,
+      value_template: '{{ value_json.value }}',
+      device_class: 'safety'
+    }
+  },
+  binary_sensor_co2: {
+    type: 'binary_sensor',
+    object_id: 'co2',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
