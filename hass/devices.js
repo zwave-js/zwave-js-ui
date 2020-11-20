@@ -26,7 +26,7 @@ const FAN_DIMMER = {
 const THERMOSTAT_2GIG = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['49-1-1', '64-1-0', '66-1-0', '67-1-1', '67-1-2', '68-1-0'],
+  values: ['49-1-Air temperature', '64-1-mode', '66-1-0', '67-1-Heating', '67-1-Cooling', '68-1-0'],
   mode_map: {
     off: 'Off',
     heat: 'Heat',
@@ -37,10 +37,10 @@ const THERMOSTAT_2GIG = {
     on: 'On Low'
   },
   setpoint_topic: {
-    Heat: '67-1-1',
-    Cool: '67-1-2'
+    Heat: '67-1-Heating',
+    Cool: '67-1-Cooling'
   },
-  default_setpoint: '67-1-1',
+  default_setpoint: '67-1-Heating',
   discovery_payload: {
     min_temp: 50,
     max_temp: 85,
@@ -48,11 +48,11 @@ const THERMOSTAT_2GIG = {
     fan_modes: ['auto', 'on'],
     action_topic: '66-1-0',
     action_template: '{{ value_json.value | lower }}',
-    current_temperature_topic: '49-1-1',
+    current_temperature_topic: '49-1-Air temperature',
     current_temperature_template: '{{ value_json.value }}',
     fan_mode_state_topic: '68-1-0',
     fan_mode_command_topic: true,
-    mode_state_topic: '64-1-0',
+    mode_state_topic: '64-1-mode',
     mode_command_topic: true,
     temperature_state_template: '{{ value_json.value }}',
     temperature_command_topic: true
@@ -64,17 +64,17 @@ const THERMOSTAT_2GIG = {
 const STELLA_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['64-1-0', '49-1-1', '67-1-1', '67-1-11'],
+  values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Energy Save Heating'],
   mode_map: { off: 'Off', heat: 'Comfort', cool: 'Energy Saving' },
-  setpoint_topic: { Comfort: '67-1-1', 'Energy Saving': '67-1-11' },
-  default_setpoint: '67-1-1',
+  setpoint_topic: { Comfort: '67-1-Heating', 'Energy Saving': '67-1-Energy Save Heating' },
+  default_setpoint: '67-1-Heating',
   discovery_payload: {
     min_temp: 0,
     max_temp: 50,
     modes: ['off', 'heat', 'cool'],
-    mode_state_topic: '64-1-0',
+    mode_state_topic: '64-1-mode',
     mode_command_topic: true,
-    current_temperature_topic: '49-1-1',
+    current_temperature_topic: '49-1-Air temperature',
     temp_step: 0.5,
     current_temperature_template: '{{ value_json.value }}',
     temperature_state_template: '{{ value_json.value }}',
@@ -86,17 +86,17 @@ const STELLA_ZWAVE = {
 const SPIRIT_ZWAVE_PLUS = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['64-1-0', '49-1-1', '67-1-1', '67-1-11'],
+  values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Energy Save Heating'],
   mode_map: { off: 'Off', heat: 'Heat', cool: 'Heat Eco' },
-  setpoint_topic: { Heat: '67-1-1', 'Heat Eco': '67-1-11' },
-  default_setpoint: '67-1-1',
+  setpoint_topic: { Heat: '67-1-Heating', 'Heat Eco': '67-1-Energy Save Heating' },
+  default_setpoint: '67-1-Heating',
   discovery_payload: {
     min_temp: 8,
     max_temp: 28,
     modes: ['off', 'heat', 'cool'],
-    mode_state_topic: '64-1-0',
+    mode_state_topic: '64-1-mode',
     mode_command_topic: true,
-    current_temperature_topic: '49-1-1',
+    current_temperature_topic: '49-1-Air temperature',
     temp_step: 0.5,
     current_temperature_template: '{{ value_json.value }}',
     temperature_state_template: '{{ value_json.value }}',
@@ -107,15 +107,15 @@ const SPIRIT_ZWAVE_PLUS = {
 const DANFOSS_TRV_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['49-1-1', '67-1-1'],
-  setpoint_topic: { Heat: '67-1-1' },
-  default_setpoint: '67-1-1',
+  values: ['49-1-Air temperature', '67-1-Heating'],
+  setpoint_topic: { Heat: '67-1-Heating' },
+  default_setpoint: '67-1-Heating',
   discovery_payload: {
     min_temp: 4,
     max_temp: 28,
     mode_command_topic: false,
     temp_step: 0.5,
-    current_temperature_topic: '49-1-1',
+    current_temperature_topic: '49-1-Air temperature',
     current_temperature_template: '{{ value_json.value }}',
     temperature_state_template: '{{ value_json.value }}',
     temperature_command_topic: true
@@ -143,18 +143,18 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'HRT4-ZW',
-      values: ['49-1-1', '67-1-1'],
+      values: ['49-1-Air temperature', '67-1-Heating'],
       mode_map: {
         off: 'Off',
         heat: 'Heating'
       },
-      setpoint_topic: { Heat: '67-1-1' },
-      default_setpoint: '67-1-1',
+      setpoint_topic: { Heat: '67-1-Heating' },
+      default_setpoint: '67-1-Heating',
       discovery_payload: {
         min_temp: 5,
         max_temp: 30,
         modes: ['off', 'heat'],
-        current_temperature_topic: '49-1-1',
+        current_temperature_topic: '49-1-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_state_template: '{{ value_json.value }}',
         temperature_command_topic: true
@@ -166,17 +166,17 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'thermostat',
-      values: ['64-1-0', '49-1-1', '67-1-1', '67-1-2'],
+      values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Cooling'],
       mode_map: { off: 'Off', heat: 'Heat (Default)', cool: 'Cool' },
-      setpoint_topic: { 'Heat (Default)': '67-1-1', Cool: '67-1-2' },
-      default_setpoint: '67-1-1',
+      setpoint_topic: { 'Heat (Default)': '67-1-Heating', Cool: '67-1-Cooling' },
+      default_setpoint: '67-1-Heating',
       discovery_payload: {
         min_temp: 15,
         max_temp: 30,
         modes: ['off', 'heat', 'cool'],
-        mode_state_topic: '64-1-0',
+        mode_state_topic: '64-1-mode',
         mode_command_topic: true,
-        current_temperature_topic: '49-1-1',
+        current_temperature_topic: '49-1-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_state_template: '{{ value_json.value }}',
         temperature_command_topic: true
@@ -188,17 +188,17 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'thermostat',
-      values: ['64-1-0', '49-1-1', '67-1-1', '67-1-2'],
+      values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Cooling'],
       mode_map: { off: 'Off', heat: 'Heat', cool: 'Cool' },
-      setpoint_topic: { Heat: '67-1-1', Cool: '67-1-2' },
-      default_setpoint: '67-1-1',
+      setpoint_topic: { Heat: '67-1-Heating', Cool: '67-1-Cooling' },
+      default_setpoint: '67-1-Heating',
       discovery_payload: {
         min_temp: 15,
         max_temp: 30,
         modes: ['off', 'heat', 'cool'],
-        mode_state_topic: '64-1-0',
+        mode_state_topic: '64-1-mode',
         mode_command_topic: true,
-        current_temperature_topic: '49-1-1',
+        current_temperature_topic: '49-1-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_state_template: '{{ value_json.value }}',
         temperature_command_topic: true
@@ -240,14 +240,14 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'pool_thermostat',
-      values: ['49-1-1', '67-1-1'],
-      default_setpoint: '67-1-1',
+      values: ['49-1-Air temperature', '67-1-Heating'],
+      default_setpoint: '67-1-Heating',
       discovery_payload: {
         min_temp: 40,
         max_temp: 104,
         modes: ['heat'],
         temperature_unit: 'F',
-        current_temperature_topic: '49-1-1',
+        current_temperature_topic: '49-1-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_command_topic: true,
         temperature_state_template: '{{ value_json.value }}'
@@ -256,14 +256,14 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'spa_thermostat',
-      values: ['49-1-1', '67-1-7'],
-      default_setpoint: '67-1-7',
+      values: ['49-1-Air temperature', '67-1-Furnace'],
+      default_setpoint: '67-1-Furnace',
       discovery_payload: {
         min_temp: 40,
         max_temp: 104,
         modes: ['heat'],
         temperature_unit: 'F',
-        current_temperature_topic: '49-1-1',
+        current_temperature_topic: '49-1-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_command_topic: true,
         temperature_state_template: '{{ value_json.value }}'
