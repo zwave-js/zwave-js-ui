@@ -26,7 +26,14 @@ const FAN_DIMMER = {
 const THERMOSTAT_2GIG = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['49-1-Air temperature', '64-1-mode', '66-1-0', '67-1-Heating', '67-1-Cooling', '68-1-0'],
+  values: [
+    '49-1-Air temperature',
+    '64-1-mode',
+    '66-1-0',
+    '67-1-Heating',
+    '67-1-Cooling',
+    '68-1-0'
+  ],
   mode_map: {
     off: 'Off',
     heat: 'Heat',
@@ -64,9 +71,17 @@ const THERMOSTAT_2GIG = {
 const STELLA_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Energy Save Heating'],
+  values: [
+    '64-1-mode',
+    '49-1-Air temperature',
+    '67-1-Heating',
+    '67-1-Energy Save Heating'
+  ],
   mode_map: { off: 'Off', heat: 'Comfort', cool: 'Energy Saving' },
-  setpoint_topic: { Comfort: '67-1-Heating', 'Energy Saving': '67-1-Energy Save Heating' },
+  setpoint_topic: {
+    Comfort: '67-1-Heating',
+    'Energy Saving': '67-1-Energy Save Heating'
+  },
   default_setpoint: '67-1-Heating',
   discovery_payload: {
     min_temp: 0,
@@ -86,9 +101,17 @@ const STELLA_ZWAVE = {
 const SPIRIT_ZWAVE_PLUS = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Energy Save Heating'],
+  values: [
+    '64-1-mode',
+    '49-1-Air temperature',
+    '67-1-Heating',
+    '67-1-Energy Save Heating'
+  ],
   mode_map: { off: 'Off', heat: 'Heat', cool: 'Heat Eco' },
-  setpoint_topic: { Heat: '67-1-Heating', 'Heat Eco': '67-1-Energy Save Heating' },
+  setpoint_topic: {
+    Heat: '67-1-Heating',
+    'Heat Eco': '67-1-Energy Save Heating'
+  },
   default_setpoint: '67-1-Heating',
   discovery_payload: {
     min_temp: 8,
@@ -166,9 +189,17 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'thermostat',
-      values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Cooling'],
+      values: [
+        '64-1-mode',
+        '49-1-Air temperature',
+        '67-1-Heating',
+        '67-1-Cooling'
+      ],
       mode_map: { off: 'Off', heat: 'Heat (Default)', cool: 'Cool' },
-      setpoint_topic: { 'Heat (Default)': '67-1-Heating', Cool: '67-1-Cooling' },
+      setpoint_topic: {
+        'Heat (Default)': '67-1-Heating',
+        Cool: '67-1-Cooling'
+      },
       default_setpoint: '67-1-Heating',
       discovery_payload: {
         min_temp: 15,
@@ -188,7 +219,12 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'thermostat',
-      values: ['64-1-mode', '49-1-Air temperature', '67-1-Heating', '67-1-Cooling'],
+      values: [
+        '64-1-mode',
+        '49-1-Air temperature',
+        '67-1-Heating',
+        '67-1-Cooling'
+      ],
       mode_map: { off: 'Off', heat: 'Heat', cool: 'Cool' },
       setpoint_topic: { Heat: '67-1-Heating', Cool: '67-1-Cooling' },
       default_setpoint: '67-1-Heating',
