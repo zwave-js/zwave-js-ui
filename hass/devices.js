@@ -29,10 +29,10 @@ const THERMOSTAT_2GIG = {
   values: [
     '49-1-Air temperature',
     '64-1-mode',
-    '66-1-0',
+    '66-1-state',
     '67-1-Heating',
     '67-1-Cooling',
-    '68-1-0'
+    '68-1-mode'
   ],
   mode_map: {
     off: 'Off',
@@ -53,11 +53,11 @@ const THERMOSTAT_2GIG = {
     max_temp: 85,
     modes: ['off', 'heat', 'cool'],
     fan_modes: ['auto', 'on'],
-    action_topic: '66-1-0',
+    action_topic: '66-1-state',
     action_template: '{{ value_json.value | lower }}',
     current_temperature_topic: '49-1-Air temperature',
     current_temperature_template: '{{ value_json.value }}',
-    fan_mode_state_topic: '68-1-0',
+    fan_mode_state_topic: '68-1-mode',
     fan_mode_command_topic: true,
     mode_state_topic: '64-1-mode',
     mode_command_topic: true,
@@ -246,7 +246,7 @@ module.exports = {
     {
       type: 'light',
       object_id: 'rgbw_bulb',
-      values: ['38-1-currentValue', '38-1-targetValue', '51-1-0'],
+      values: ['38-1-currentValue', '38-1-targetValue', '51-1-0'], // FIXME: Handle color CC
       discovery_payload: {
         state_topic: '38-1-currentValue',
         command_topic: '38-1-targetValue',
@@ -308,60 +308,60 @@ module.exports = {
     {
       type: 'switch',
       object_id: 'circuit_1',
-      values: ['37-1-0'],
+      values: ['37-1-currentValue', '37-1-targetValue'],
       discovery_payload: {
         payload_off: false,
         payload_on: true,
-        state_topic: '37-1-0',
-        command_topic: '37-1-0',
+        state_topic: '37-1-currentValue',
+        command_topic: '37-1-targetValue',
         value_template: '{{ value_json.value }}'
       }
     },
     {
       type: 'switch',
       object_id: 'circuit_2',
-      values: ['37-2-0'],
+      values: ['37-2-currentValue', '37-2-targetValue'],
       discovery_payload: {
         payload_off: false,
         payload_on: true,
-        state_topic: '37-2-0',
-        command_topic: '37-2-0',
+        state_topic: '37-2-currentValue',
+        command_topic: '37-2-targetValue',
         value_template: '{{ value_json.value }}'
       }
     },
     {
       type: 'switch',
       object_id: 'circuit_3',
-      values: ['37-3-0'],
+      values: ['37-3-currentValue', '37-3-targetValue'],
       discovery_payload: {
         payload_off: false,
         payload_on: true,
-        state_topic: '37-3-0',
-        command_topic: '37-3-0',
+        state_topic: '37-3-currentValue',
+        command_topic: '37-3-targetValue',
         value_template: '{{ value_json.value }}'
       }
     },
     {
       type: 'switch',
       object_id: 'circuit_4',
-      values: ['37-4-0'],
+      values: ['37-4-currentValue', '37-4-targetValue'],
       discovery_payload: {
         payload_off: false,
         payload_on: true,
-        state_topic: '37-4-0',
-        command_topic: '37-4-0',
+        state_topic: '37-1-currentValue',
+        command_topic: '37-4-targetValue',
         value_template: '{{ value_json.value }}'
       }
     },
     {
       type: 'switch',
       object_id: 'circuit_5',
-      values: ['37-5-0'],
+      values: ['37-5-currentValue', '37-5-targetValue'],
       discovery_payload: {
         payload_off: false,
         payload_on: true,
-        state_topic: '37-5-0',
-        command_topic: '37-5-0',
+        state_topic: '37-5-currentValue',
+        command_topic: '37-5-targetValue',
         value_template: '{{ value_json.value }}'
       }
     }
