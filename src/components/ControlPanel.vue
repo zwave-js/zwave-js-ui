@@ -973,7 +973,7 @@ export default {
       }
       this.errorDevice = !valid
 
-      return valid || 'JSON test failed'
+      return this.deviceJSON === '' || valid || 'JSON test failed'
     },
     async importConfiguration () {
       if (
