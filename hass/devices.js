@@ -35,13 +35,13 @@ const THERMOSTAT_2GIG = {
     '68-1-mode'
   ],
   mode_map: {
-    off: 'Off',
-    heat: 'Heat',
-    cool: 'Cool'
+    off: 0,
+    heat: 1,
+    cool: 2
   },
   fan_mode_map: {
-    auto: 'Auto Low',
-    on: 'On Low'
+    auto: 0,
+    on: 1
   },
   setpoint_topic: {
     Heat: '67-1-Heating',
@@ -77,7 +77,7 @@ const STELLA_ZWAVE = {
     '67-1-Heating',
     '67-1-Energy Save Heating'
   ],
-  mode_map: { off: 'Off', heat: 'Comfort', cool: 'Energy Saving' },
+  mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
     Comfort: '67-1-Heating',
     'Energy Saving': '67-1-Energy Save Heating'
@@ -107,7 +107,7 @@ const SPIRIT_ZWAVE_PLUS = {
     '67-1-Heating',
     '67-1-Energy Save Heating'
   ],
-  mode_map: { off: 'Off', heat: 'Heat', cool: 'Heat Eco' },
+  mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
     Heat: '67-1-Heating',
     'Heat Eco': '67-1-Energy Save Heating'
@@ -168,8 +168,8 @@ module.exports = {
       object_id: 'HRT4-ZW',
       values: ['49-1-Air temperature', '67-1-Heating'],
       mode_map: {
-        off: 'Off',
-        heat: 'Heating'
+        off: 0,
+        heat: 1
       },
       setpoint_topic: { Heat: '67-1-Heating' },
       default_setpoint: '67-1-Heating',
@@ -195,7 +195,7 @@ module.exports = {
         '67-1-Heating',
         '67-1-Cooling'
       ],
-      mode_map: { off: 'Off', heat: 'Heat (Default)', cool: 'Cool' },
+      mode_map: { off: 0, heat: 1, cool: 2 },
       setpoint_topic: {
         'Heat (Default)': '67-1-Heating',
         Cool: '67-1-Cooling'
@@ -225,7 +225,7 @@ module.exports = {
         '67-1-Heating',
         '67-1-Cooling'
       ],
-      mode_map: { off: 'Off', heat: 'Heat', cool: 'Cool' },
+      mode_map: { off: 0, heat: 1, cool: 2 },
       setpoint_topic: { Heat: '67-1-Heating', Cool: '67-1-Cooling' },
       default_setpoint: '67-1-Heating',
       discovery_payload: {
