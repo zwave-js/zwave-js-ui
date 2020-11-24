@@ -30,8 +30,8 @@ const THERMOSTAT_2GIG = {
     '49-1-Air temperature',
     '64-1-mode',
     '66-1-state',
-    '67-1-Heating',
-    '67-1-Cooling',
+    '67-1-setpoint-1',
+    '67-1-setpoint-2',
     '68-1-mode'
   ],
   mode_map: {
@@ -44,10 +44,10 @@ const THERMOSTAT_2GIG = {
     on: 1
   },
   setpoint_topic: {
-    Heat: '67-1-Heating',
-    Cool: '67-1-Cooling'
+    Heat: '67-1-setpoint-1',
+    Cool: '67-1-setpoint-2'
   },
-  default_setpoint: '67-1-Heating',
+  default_setpoint: '67-1-setpoint-1',
   discovery_payload: {
     min_temp: 50,
     max_temp: 85,
@@ -74,15 +74,15 @@ const STELLA_ZWAVE = {
   values: [
     '64-1-mode',
     '49-1-Air temperature',
-    '67-1-Heating',
-    '67-1-Energy Save Heating'
+    '67-1-setpoint-1',
+    '67-1-setpoint-11'
   ],
   mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
-    Comfort: '67-1-Heating',
-    'Energy Saving': '67-1-Energy Save Heating'
+    Comfort: '67-1-setpoint-1',
+    'Energy Saving': '67-1-setpoint-11'
   },
-  default_setpoint: '67-1-Heating',
+  default_setpoint: '67-1-setpoint-1',
   discovery_payload: {
     min_temp: 0,
     max_temp: 50,
@@ -104,15 +104,15 @@ const SPIRIT_ZWAVE_PLUS = {
   values: [
     '64-1-mode',
     '49-1-Air temperature',
-    '67-1-Heating',
-    '67-1-Energy Save Heating'
+    '67-1-setpoint-1',
+    '67-1-setpoint-11'
   ],
   mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
-    Heat: '67-1-Heating',
-    'Heat Eco': '67-1-Energy Save Heating'
+    Heat: '67-1-setpoint-1',
+    'Heat Eco': '67-1-setpoint-11'
   },
-  default_setpoint: '67-1-Heating',
+  default_setpoint: '67-1-setpoint-1',
   discovery_payload: {
     min_temp: 8,
     max_temp: 28,
@@ -130,9 +130,9 @@ const SPIRIT_ZWAVE_PLUS = {
 const DANFOSS_TRV_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['49-1-Air temperature', '67-1-Heating'],
-  setpoint_topic: { Heat: '67-1-Heating' },
-  default_setpoint: '67-1-Heating',
+  values: ['49-1-Air temperature', '67-1-setpoint-1'],
+  setpoint_topic: { Heat: '67-1-setpoint-1' },
+  default_setpoint: '67-1-setpoint-1',
   discovery_payload: {
     min_temp: 4,
     max_temp: 28,
@@ -166,13 +166,13 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'HRT4-ZW',
-      values: ['49-1-Air temperature', '67-1-Heating'],
+      values: ['49-1-Air temperature', '67-1-setpoint-1'],
       mode_map: {
         off: 0,
         heat: 1
       },
-      setpoint_topic: { Heat: '67-1-Heating' },
-      default_setpoint: '67-1-Heating',
+      setpoint_topic: { Heat: '67-1-setpoint-1' },
+      default_setpoint: '67-1-setpoint-1',
       discovery_payload: {
         min_temp: 5,
         max_temp: 30,
@@ -192,15 +192,15 @@ module.exports = {
       values: [
         '64-1-mode',
         '49-1-Air temperature',
-        '67-1-Heating',
-        '67-1-Cooling'
+        '67-1-setpoint-1',
+        '67-1-setpoint-2'
       ],
       mode_map: { off: 0, heat: 1, cool: 2 },
       setpoint_topic: {
-        'Heat (Default)': '67-1-Heating',
-        Cool: '67-1-Cooling'
+        'Heat (Default)': '67-1-setpoint-1',
+        Cool: '67-1-setpoint-2'
       },
-      default_setpoint: '67-1-Heating',
+      default_setpoint: '67-1-setpoint-1',
       discovery_payload: {
         min_temp: 15,
         max_temp: 30,
@@ -222,12 +222,12 @@ module.exports = {
       values: [
         '64-1-mode',
         '49-1-Air temperature',
-        '67-1-Heating',
-        '67-1-Cooling'
+        '67-1-setpoint-1',
+        '67-1-setpoint-2'
       ],
       mode_map: { off: 0, heat: 1, cool: 2 },
-      setpoint_topic: { Heat: '67-1-Heating', Cool: '67-1-Cooling' },
-      default_setpoint: '67-1-Heating',
+      setpoint_topic: { Heat: '67-1-setpoint-1', Cool: '67-1-setpoint-2' },
+      default_setpoint: '67-1-setpoint-1',
       discovery_payload: {
         min_temp: 15,
         max_temp: 30,
@@ -276,8 +276,8 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'pool_thermostat',
-      values: ['49-1-Air temperature', '67-1-Heating'],
-      default_setpoint: '67-1-Heating',
+      values: ['49-1-Air temperature', '67-1-setpoint-1'],
+      default_setpoint: '67-1-setpoint-1',
       discovery_payload: {
         min_temp: 40,
         max_temp: 104,
