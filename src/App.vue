@@ -180,7 +180,7 @@ export default {
                 if (err) {
                   reject(err)
                 } else {
-                  resolve(data)
+                  resolve({ data, file })
                 }
               })
 

@@ -574,9 +574,9 @@ export default {
     },
     async importSettings () {
       try {
-        var settings = await this.$listeners.import('json')
-        if (settings.zwave && settings.mqtt && settings.gateway) {
-          this.$store.dispatch('import', settings)
+        var { data } = await this.$listeners.import('json')
+        if (data.zwave && data.mqtt && data.gateway) {
+          this.$store.dispatch('import', data)
           this.showSnackbar('Configuration imported successfully')
         } else {
           this.showSnackbar('Imported settings not valid')
