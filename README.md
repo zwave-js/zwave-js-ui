@@ -731,7 +731,7 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 ### Multicast
 
-You can send Multicast requests to _all values with a specific suffix_  of a _group_ of nodes in the network.
+You can send Multicast requests to _all values with a specific suffix_ of a _group_ of nodes in the network.
 
 Multicast API is accessible from:
 
