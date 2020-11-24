@@ -949,7 +949,7 @@ export default {
         )
       ) {
         try {
-          var data = await this.$listeners.import('json')
+          var { data } = await this.$listeners.import('json')
           var response = await ConfigApis.importConfig({ data: data })
           this.showSnackbar(response.message)
         } catch (error) {
@@ -979,9 +979,9 @@ export default {
         )
       ) {
         try {
-          var scenes = await this.$listeners.import('json')
-          if (scenes instanceof Array) {
-            this.apiRequest('_setScenes', [scenes])
+          var { data } = await this.$listeners.import('json')
+          if (data instanceof Array) {
+            this.apiRequest('_setScenes', [data])
           } else {
             this.showSnackbar('Imported file not valid')
           }
@@ -1226,8 +1226,9 @@ export default {
           }
         } else if (this.cnt_action === 'beginFirmwareUpdate') {
           try {
-            var dataBuffer = await this.$listeners.import('buffer')
-            args.push(dataBuffer)
+            var { data, file } = await this.$listeners.import('buffer')
+            args.push(file.name)
+            args.push(data)
           } catch (error) {
             return
           }
@@ -1250,8 +1251,9 @@ export default {
 
         if (this.node_action === 'beginFirmwareUpdate') {
           try {
-            var dataBuffer = await this.$listeners.import('buffer')
-            args.push(dataBuffer)
+            var { data, file } = await this.$listeners.import('buffer')
+            args.push(file.name)
+            args.push(data)
           } catch (error) {
             return
           }
