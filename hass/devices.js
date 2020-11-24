@@ -3,12 +3,12 @@
 const FAN_DIMMER = {
   type: 'fan',
   object_id: 'dimmer',
-  values: ['38-1-currentValue', '38-1-targetValue'],
+  values: ['38-0-currentValue', '38-0-targetValue'],
   discovery_payload: {
-    command_topic: '38-1-currentValue',
-    speed_command_topic: '38-1-targetValue',
-    speed_state_topic: '38-1-currentValue',
-    state_topic: '38-1-currentValue',
+    command_topic: '38-0-currentValue',
+    speed_command_topic: '38-0-targetValue',
+    speed_state_topic: '38-0-currentValue',
+    state_topic: '38-0-currentValue',
     speeds: ['off', 'low', 'medium', 'high'],
     payload_low_speed: 24,
     payload_medium_speed: 50,
@@ -27,12 +27,12 @@ const THERMOSTAT_2GIG = {
   type: 'climate',
   object_id: 'thermostat',
   values: [
-    '49-1-Air temperature',
-    '64-1-mode',
-    '66-1-state',
-    '67-1-setpoint-1',
-    '67-1-setpoint-2',
-    '68-1-mode'
+    '49-0-Air temperature',
+    '64-0-mode',
+    '66-0-state',
+    '67-0-setpoint-1',
+    '67-0-setpoint-2',
+    '68-0-mode'
   ],
   mode_map: {
     off: 0,
@@ -44,22 +44,22 @@ const THERMOSTAT_2GIG = {
     on: 1
   },
   setpoint_topic: {
-    Heat: '67-1-setpoint-1',
-    Cool: '67-1-setpoint-2'
+    Heat: '67-0-setpoint-1',
+    Cool: '67-0-setpoint-2'
   },
-  default_setpoint: '67-1-setpoint-1',
+  default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
     min_temp: 50,
     max_temp: 85,
     modes: ['off', 'heat', 'cool'],
     fan_modes: ['auto', 'on'],
-    action_topic: '66-1-state',
+    action_topic: '66-0-state',
     action_template: '{{ value_json.value | lower }}',
-    current_temperature_topic: '49-1-Air temperature',
+    current_temperature_topic: '49-0-Air temperature',
     current_temperature_template: '{{ value_json.value }}',
-    fan_mode_state_topic: '68-1-mode',
+    fan_mode_state_topic: '68-0-mode',
     fan_mode_command_topic: true,
-    mode_state_topic: '64-1-mode',
+    mode_state_topic: '64-0-mode',
     mode_command_topic: true,
     temperature_state_template: '{{ value_json.value }}',
     temperature_command_topic: true
@@ -72,24 +72,24 @@ const STELLA_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
   values: [
-    '64-1-mode',
-    '49-1-Air temperature',
-    '67-1-setpoint-1',
-    '67-1-setpoint-11'
+    '64-0-mode',
+    '49-0-Air temperature',
+    '67-0-setpoint-1',
+    '67-0-setpoint-11'
   ],
   mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
-    Comfort: '67-1-setpoint-1',
-    'Energy Saving': '67-1-setpoint-11'
+    Comfort: '67-0-setpoint-1',
+    'Energy Saving': '67-0-setpoint-11'
   },
-  default_setpoint: '67-1-setpoint-1',
+  default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
     min_temp: 0,
     max_temp: 50,
     modes: ['off', 'heat', 'cool'],
-    mode_state_topic: '64-1-mode',
+    mode_state_topic: '64-0-mode',
     mode_command_topic: true,
-    current_temperature_topic: '49-1-Air temperature',
+    current_temperature_topic: '49-0-Air temperature',
     temp_step: 0.5,
     current_temperature_template: '{{ value_json.value }}',
     temperature_state_template: '{{ value_json.value }}',
@@ -102,24 +102,24 @@ const SPIRIT_ZWAVE_PLUS = {
   type: 'climate',
   object_id: 'thermostat',
   values: [
-    '64-1-mode',
-    '49-1-Air temperature',
-    '67-1-setpoint-1',
-    '67-1-setpoint-11'
+    '64-0-mode',
+    '49-0-Air temperature',
+    '67-0-setpoint-1',
+    '67-0-setpoint-11'
   ],
   mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
-    Heat: '67-1-setpoint-1',
-    'Heat Eco': '67-1-setpoint-11'
+    Heat: '67-0-setpoint-1',
+    'Heat Eco': '67-0-setpoint-11'
   },
-  default_setpoint: '67-1-setpoint-1',
+  default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
     min_temp: 8,
     max_temp: 28,
     modes: ['off', 'heat', 'cool'],
-    mode_state_topic: '64-1-mode',
+    mode_state_topic: '64-0-mode',
     mode_command_topic: true,
-    current_temperature_topic: '49-1-Air temperature',
+    current_temperature_topic: '49-0-Air temperature',
     temp_step: 0.5,
     current_temperature_template: '{{ value_json.value }}',
     temperature_state_template: '{{ value_json.value }}',
@@ -130,15 +130,15 @@ const SPIRIT_ZWAVE_PLUS = {
 const DANFOSS_TRV_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
-  values: ['49-1-Air temperature', '67-1-setpoint-1'],
-  setpoint_topic: { Heat: '67-1-setpoint-1' },
-  default_setpoint: '67-1-setpoint-1',
+  values: ['49-0-Air temperature', '67-0-setpoint-1'],
+  setpoint_topic: { Heat: '67-0-setpoint-1' },
+  default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
     min_temp: 4,
     max_temp: 28,
     mode_command_topic: false,
     temp_step: 0.5,
-    current_temperature_topic: '49-1-Air temperature',
+    current_temperature_topic: '49-0-Air temperature',
     current_temperature_template: '{{ value_json.value }}',
     temperature_state_template: '{{ value_json.value }}',
     temperature_command_topic: true
@@ -148,11 +148,11 @@ const DANFOSS_TRV_ZWAVE = {
 const COVER = {
   type: 'cover',
   object_id: 'position',
-  values: ['38-1-currentValue', '38-1-targetValue'],
+  values: ['38-0-currentValue', '38-0-targetValue'],
   discovery_payload: {
-    command_topic: '38-1-targetValue',
-    position_topic: '38-1-currentValue',
-    set_position_topic: '38-1-targetValue',
+    command_topic: '38-0-targetValue',
+    position_topic: '38-0-currentValue',
+    set_position_topic: '38-0-targetValue',
     value_template: '{{ (value_json.value / 99 * 100) | round(0) }}',
     position_open: 99,
     position_closed: 0,
@@ -166,18 +166,18 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'HRT4-ZW',
-      values: ['49-1-Air temperature', '67-1-setpoint-1'],
+      values: ['49-0-Air temperature', '67-0-setpoint-1'],
       mode_map: {
         off: 0,
         heat: 1
       },
-      setpoint_topic: { Heat: '67-1-setpoint-1' },
-      default_setpoint: '67-1-setpoint-1',
+      setpoint_topic: { Heat: '67-0-setpoint-1' },
+      default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
         min_temp: 5,
         max_temp: 30,
         modes: ['off', 'heat'],
-        current_temperature_topic: '49-1-Air temperature',
+        current_temperature_topic: '49-0-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_state_template: '{{ value_json.value }}',
         temperature_command_topic: true
@@ -190,24 +190,24 @@ module.exports = {
       type: 'climate',
       object_id: 'thermostat',
       values: [
-        '64-1-mode',
-        '49-1-Air temperature',
-        '67-1-setpoint-1',
-        '67-1-setpoint-2'
+        '64-0-mode',
+        '49-0-Air temperature',
+        '67-0-setpoint-1',
+        '67-0-setpoint-2'
       ],
       mode_map: { off: 0, heat: 1, cool: 2 },
       setpoint_topic: {
-        'Heat (Default)': '67-1-setpoint-1',
-        Cool: '67-1-setpoint-2'
+        'Heat (Default)': '67-0-setpoint-1',
+        Cool: '67-0-setpoint-2'
       },
-      default_setpoint: '67-1-setpoint-1',
+      default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
         min_temp: 15,
         max_temp: 30,
         modes: ['off', 'heat', 'cool'],
-        mode_state_topic: '64-1-mode',
+        mode_state_topic: '64-0-mode',
         mode_command_topic: true,
-        current_temperature_topic: '49-1-Air temperature',
+        current_temperature_topic: '49-0-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_state_template: '{{ value_json.value }}',
         temperature_command_topic: true
@@ -220,21 +220,21 @@ module.exports = {
       type: 'climate',
       object_id: 'thermostat',
       values: [
-        '64-1-mode',
-        '49-1-Air temperature',
-        '67-1-setpoint-1',
-        '67-1-setpoint-2'
+        '64-0-mode',
+        '49-0-Air temperature',
+        '67-0-setpoint-1',
+        '67-0-setpoint-2'
       ],
       mode_map: { off: 0, heat: 1, cool: 2 },
-      setpoint_topic: { Heat: '67-1-setpoint-1', Cool: '67-1-setpoint-2' },
-      default_setpoint: '67-1-setpoint-1',
+      setpoint_topic: { Heat: '67-0-setpoint-1', Cool: '67-0-setpoint-2' },
+      default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
         min_temp: 15,
         max_temp: 30,
         modes: ['off', 'heat', 'cool'],
-        mode_state_topic: '64-1-mode',
+        mode_state_topic: '64-0-mode',
         mode_command_topic: true,
-        current_temperature_topic: '49-1-Air temperature',
+        current_temperature_topic: '49-0-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_state_template: '{{ value_json.value }}',
         temperature_command_topic: true
@@ -246,13 +246,13 @@ module.exports = {
     {
       type: 'light',
       object_id: 'rgbw_bulb',
-      values: ['38-1-currentValue', '38-1-targetValue', '51-1-0'], // FIXME: Handle color CC
+      values: ['38-0-currentValue', '38-0-targetValue', '51-1-0'], // FIXME: Handle color CC
       discovery_payload: {
-        state_topic: '38-1-currentValue',
-        command_topic: '38-1-targetValue',
+        state_topic: '38-0-currentValue',
+        command_topic: '38-0-targetValue',
         on_command_type: 'brightness',
-        brightness_state_topic: '38-1-currentValue',
-        brightness_command_topic: '38-1-targetValue',
+        brightness_state_topic: '38-0-currentValue',
+        brightness_command_topic: '38-0-targetValue',
         state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
         brightness_value_template: '{{ (value_json.value) | round(0) }}',
         brightness_scale: '99',
@@ -276,14 +276,14 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'pool_thermostat',
-      values: ['49-1-Air temperature', '67-1-setpoint-1'],
-      default_setpoint: '67-1-setpoint-1',
+      values: ['49-0-Air temperature', '67-0-setpoint-1'],
+      default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
         min_temp: 40,
         max_temp: 104,
         modes: ['heat'],
         temperature_unit: 'F',
-        current_temperature_topic: '49-1-Air temperature',
+        current_temperature_topic: '49-0-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_command_topic: true,
         temperature_state_template: '{{ value_json.value }}'
@@ -292,14 +292,14 @@ module.exports = {
     {
       type: 'climate',
       object_id: 'spa_thermostat',
-      values: ['49-1-Air temperature', '67-1-Furnace'],
-      default_setpoint: '67-1-Furnace',
+      values: ['49-0-Air temperature', '67-0-Furnace'],
+      default_setpoint: '67-0-Furnace',
       discovery_payload: {
         min_temp: 40,
         max_temp: 104,
         modes: ['heat'],
         temperature_unit: 'F',
-        current_temperature_topic: '49-1-Air temperature',
+        current_temperature_topic: '49-0-Air temperature',
         current_temperature_template: '{{ value_json.value }}',
         temperature_command_topic: true,
         temperature_state_template: '{{ value_json.value }}'
