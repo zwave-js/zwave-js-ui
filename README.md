@@ -40,6 +40,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     - [Kubernetes way](#kubernetes-way)
     - [NodeJS or PKG version](#nodejs-or-pkg-version)
     - [Reverse Proxy Setup](#reverse-proxy-setup)
+  - [Migrating From Zwave2Mqtt](#migrating-from-zwave2mqtt)
+    - [Why Zwavejs](#why-zwavejs)
   - [:nerd_face: Development](#nerd_face-development)
     - [Developing against a different backend](#developing-against-a-different-backend)
   - [:wrench: Usage](#wrench-usage)
@@ -147,6 +149,25 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
 
 If you need to setup ZWave To MQTT behind a reverse proxy that needs a _subpath_ to
 work, take a look at [the reverse proxy configuration docs](docs/subpath.md).
+
+## Migrating From Zwave2Mqtt
+
+For everyone that is coming from Zwave2Mqtt there will be some breaking changes:
+
+- `settings.json` are almost the same, you can easily export them from Z2M and import them in ZJS2M by using the `Export` and `Import` buttons in Settings tab. After importing them you only will have to edit some Zwave settings and all Gateway Values entries as now the value ids have changed
+- `scenes.json` need to be rewrited for the same reason as valueIds have changed. I suggest to manually recreate them using the UI and trash the old one
+- You cannot use the old OZW cache file but don't worry it will be automatially generated and the nodes names/locations will be restored from `nodes.json` file
+- `nodes.json` can be imported but you will have to manually edit it and delete all nodes `hassDevices` as them will not work in the new implementation (alternatively instead of deleting you can manually convert them, see next steps)
+- Values ids unique strings have changed, in Z2M valueIds were identified by `<nodeId>/<commandClass>/<endpoint>/<index>` now them are `<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey?>` where `property` and `propertyKey` (can be undefined) can be both numbers or strings based on the value. So essentially if you are using Hass or Mqtt functions all topics will change, [here](https://github.com/zwave-js/zwavejs2mqtt/pull/20/files#diff-4a25087ac983e835241cfb02c43c408df47b81f77546ef07c4dcfe9acf019eeeR4) you can see how I have translated some valueids of `devices.js` from the old format to the new one.
+- List values are no longer handled as `strings` but as `numbers` by default. For example to change a Thermostat Mode in Z2M you used to send `Heat` or `Off` now you will need to send `1` (Heat) or `0` (Off). This will make it lot easier to handle list values
+
+### Why Zwavejs
+
+1. Entirely written in JS (Typescript). This is good for many reasons:
+   - We can drop the `node-openzwave-shared` that is maintained by me but would need a complete refactor and it's hard to maintain both projects.
+   - It will not require to compile OZW and we can have more control of updates/versions with zwavejs releases.
+   - JS is my main programming language and it's easier also for me to look at the source code and find/help with bugs
+2. Better support/collaboration: OZW is widely used and the author had many other related projects to maintain/support causing many delays or even no responses at all to some issues. Zwave is a good protocol but there are many devices compatibility issues and most of the issues on z2m were related to them. This is why I needs a strict collaboration with the lower level driver author to give users a better support with their bugs, so I have team up with @AlCalzone
 
 ## :nerd_face: Development
 
