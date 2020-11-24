@@ -1,0 +1,79 @@
+FROM node AS build-zwavejs
+
+# RUN apk --no-cache add \
+#     git
+    # coreutils \
+    # linux-headers \
+    # alpine-sdk \
+    # python \
+    # openssl \
+
+WORKDIR /root/node-zwave-js
+COPY node-zwave-js .
+
+RUN npm install
+RUN npx lerna init
+RUN npx lerna bootstrap
+RUN npx lerna run build
+RUN npx lerna exec -- npm link
+RUN npm prune --production
+
+# ----------------
+# STEP 1:
+FROM node:erbium-alpine AS build-z2m
+
+# Install required dependencies
+RUN apk --no-cache add \
+    coreutils \
+    linux-headers \
+    alpine-sdk \
+    python \
+    openssl
+
+WORKDIR /root/zwavejs2mqtt
+COPY zwavejs2mqtt .
+COPY --from=build-zwavejs /root/node-zwave-js /root/node-zwave-js
+# RUN mkdir node_modules
+# RUN rm node_modules/zwave-js
+
+# RUN chown -R root:root node_modules && chmod a+rwx node_modules
+RUN npm link zwave-js
+RUN rm node_modules/zwave-js
+RUN cp -r /usr/local/lib/node_modules/zwave-js node_modules/
+RUN npm config set unsafe-perm true
+RUN npm install
+RUN npm run build
+RUN npm prune --production
+RUN cp -r /usr/local/lib/node_modules/zwave-js node_modules/
+RUN rm -rf \
+    build \
+    index.html \
+    package-lock.json \
+    package.sh \
+    src \
+    static \
+    stylesheets
+
+# RUN cp -r /root/node-zwave-js/node_modules/* node_modules/
+
+# ----------------
+# STEP 2:
+FROM node:erbium-alpine
+
+LABEL maintainer="robertsLando"
+
+RUN apk add --no-cache \
+    libstdc++  \
+    libgcc \
+    libusb \
+    tzdata \
+    eudev
+
+# Copy files from previous build stage
+COPY --from=build-z2m /root/zwavejs2mqtt /usr/src/app
+
+WORKDIR /usr/src/app
+
+EXPOSE 8091
+
+CMD ["node", "bin/www"]
