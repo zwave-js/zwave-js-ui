@@ -14,9 +14,9 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/alerts/)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/context:javascript)
 
-[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
+[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU "Join channel")
 
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee")
 
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
@@ -35,42 +35,41 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 - [Zwave To MQTT](#zwave-to-mqtt)
   - [📖 Table of contents](#-table-of-contents)
-  - [:electric_plug: Installation](#-installation)
-    - [DOCKER :tada: way](#docker--way)
+  - [:electric_plug: Installation](#electric_plug-installation)
+    - [DOCKER :tada: way](#docker-tada-way)
     - [Kubernetes way](#kubernetes-way)
     - [NodeJS or PKG version](#nodejs-or-pkg-version)
     - [Reverse Proxy Setup](#reverse-proxy-setup)
-  - [:nerd_face: Development](#-development)
+  - [:nerd_face: Development](#nerd_face-development)
     - [Developing against a different backend](#developing-against-a-different-backend)
-  - [:wrench: Usage](#-usage)
+  - [:wrench: Usage](#wrench-usage)
     - [Zwave](#zwave)
     - [MQTT](#mqtt)
     - [Gateway](#gateway)
       - [Special topics](#special-topics)
       - [Gateway values table](#gateway-values-table)
-  - [:file_folder: Nodes Management](#-nodes-management)
+  - [:file_folder: Nodes Management](#file_folder-nodes-management)
     - [Add a node](#add-a-node)
     - [Remove a node](#remove-a-node)
-    - [Replace failed node (NOT IMPLEMENTED YET)](#replace-failed-node-not-implemented-yet)
+    - [Replace failed node](#replace-failed-node)
     - [Remove a failed node](#remove-a-failed-node)
-  - [:star: Features](#️-features)
-  - [:robot: Home Assistant integration (BETA)](#-home-assistant-integration-beta)
+  - [:star: Features](#star-features)
+  - [:robot: Home Assistant integration (BETA)](#robot-home-assistant-integration-beta)
     - [Components management](#components-management)
       - [Rediscover Node](#rediscover-node)
       - [Edit existing component](#edit-existing-component)
       - [Add new component](#add-new-component)
     - [Custom Components](#custom-components)
-      - [Identify the Device id](#identify-the-device-id)
       - [Thermostats](#thermostats)
       - [Fans](#fans)
       - [Thermostats with Fans](#thermostats-with-fans)
-  - [:gift: MQTT APIs](#-mqtt-apis)
+  - [:gift: MQTT APIs](#gift-mqtt-apis)
     - [Zwave Events](#zwave-events)
     - [Zwave APIs](#zwave-apis)
       - [Custom APIs](#custom-apis)
     - [Set values](#set-values)
     - [Broadcast](#broadcast)
-  - [:camera: Screenshots](#-screenshots)
+  - [:camera: Screenshots](#camera-screenshots)
     - [Settings](#settings)
     - [Control Panel](#control-panel)
     - [Groups associations](#groups-associations)
@@ -79,9 +78,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     - [Debug](#debug)
   - [Health check endpoints](#health-check-endpoints)
   - [Environment variables](#environment-variables)
-  - [:question: FAQ](#-faq)
-  - [:pray: Thanks](#-thanks)
-  - [:pencil: TODOs](#-todos)
+  - [:question: FAQ](#question-faq)
+  - [:pray: Thanks](#pray-thanks)
   - [:bowtie: Author](#bowtie-author)
 
 ## :electric_plug: Installation
@@ -376,9 +374,9 @@ To add a node using the UI, go to Control Panel and from the actions dropdown me
 
 To remove a node using the UI, go to Control Panel and from the actions dropdown menu select `Start exclusion`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` should show `Exclusion started` when exclusion has been successfully enabled on the controller. Wait few seconds and your node will be removed from the table.
 
-### Replace failed node (NOT IMPLEMENTED YET)
+### Replace failed node
 
-To replace a failed node from the UI you have to use the command `Replace Failed Node`, if everything is ok the controller will start inclusion mode and status will be `Waiting`, now enable inclusion on your device to add it to the network by replacing the failed one.
+To replace a failed node from the UI you have to use the command `Replace Failed Node`, if everything is ok the controller will start inclusion mode and status will be `Waiting`, a popup will ask you if you want to start it in `Secure mode`. Now enable inclusion on your device to add it to the network by replacing the failed one.
 
 ### Remove a failed node
 
@@ -428,18 +426,18 @@ mqtt:
   discovery_prefix: <your_discovery_prefix>
   broker: [YOUR MQTT BROKER] # Remove if you want to use builtin-in MQTT broker
   birth_message:
-    topic: 'hass/status' # or homeassistant/status if z2m version >= 4.0.0
-    payload: 'online'
+    topic: "homeassistant/status"
+    payload: "online"
   will_message:
-    topic: 'hass/status' # or homeassistant/status if z2m version >= 4.0.0
-    payload: 'offline'
+    topic: "homeassistant/status"
+    payload: "offline"
 ```
 
 Mind you that if you want to use the embedded broker of Home Assistant you
 have to [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
 
 zwavejs2mqtt is expecting Home Assistant to send it's birth/will
-messages to `hass/status` (or `homeassistant/status` if z2m version >= 4.0.0). Be sure to add this to your `configuration.yaml` if you want
+messages to `homeassistant/status`. Be sure to add this to your `configuration.yaml` if you want
 zwavejs2mqtt to resend the cached values when Home Assistant restarts.
 
 zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
@@ -471,59 +469,43 @@ If no device is selected you can manually insert a device JSON configuration. If
 
 ### Custom Components
 
-At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that Zwave2MQTT needs to create for each Zwave device type. The key is the Zwave device unique id (`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
+At the moment auto discovery just creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan` you need to provide a configuration. Components configurations are stored in `hass/devices.js` file. Here are contained all components that zwavejs2mqtt needs to create for each Zwave device type. The key is the Zwave **device id**(`<manufacturerid>-<productid>-<producttype>`) the value is an array with all HASS components to create for that Zwave Device.
 
-**UPDATE**: Starting from version 2.0.7 you can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format zwavejs2mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
+To get the **Device id** of a specific node go to Control Panel, select a node in the table and select the Node tab, it will be displayed under Node Actions dropdown menu.
+
+You can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format zwavejs2mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
 
 > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS PLEASE SEND A PR!
-
-#### Identify the Device id
-
-Starting from version 2.2.0 device id is shown on node tab of control panel before the inputs for update the node name and locations.
-
-Before version 2.2.0 you can get the device id in this ways:
-
-First (and easier) option is to add a random value in gateway values table for the desired device, the device id will be visible in first column of the table (`Devices`) between square brackets `[<deviceID>] Device Name`
-
-Second option would be to retrieve it from [here](https://github.com/zwave-js/open-zwave/blob/master/config/manufacturer_specific.xml). Each device has Manufacturerid, product id and a product type in **HEX format** and needs to be converted in decimal:
-
-```xml
-<Manufacturer id="019b" name="ThermoFloor AS">
-    <Product config="thermofloor/heatit021.xml" id="0001" name="Heatit Thermostat TF 021" type="0001"/>
-    <Product config="thermofloor/heatit056.xml" id="0202" name="Heatit Thermostat TF 056" type="0003"/>
-    <Product config="thermofloor/heatit-zdim.xml" id="2200" name="Heatit ZDim" type="0003"/>
-</Manufacturer>
-```
-
-In this example, if we have choose `Heatit Thermostat TF 056`:
-
-- Manufacturer Id: `19b` --> `411`
-- Product Id: `202` --> `514`
-- Product type: `3` --> `3`
-
-So in decimal format will become: `411-514-3`. This is the device id of `Heatit Thermostat TF 056`
 
 #### Thermostats
 
 ```js
-{ // Heatit Thermostat TF 021 (ThermoFloor AS)
-    "type": "climate",
-    "object_id": "thermostat",
-    "values": ["64-1-0", "49-1-1", "67-1-1", "67-1-2"],
-    "mode_map": {"off": "Off", "heat": "Heat (Default)", "cool": "Cool"},
-    "setpoint_topic": { "Heat (Default)": "67-1-1", "Cool": "67-1-2" },
-    "default_setpoint": "67-1-1",
-    "discovery_payload": {
-        "min_temp": 15,
-        "max_temp": 30,
-        "modes": ["off", "heat", "cool"],
-        "mode_state_topic": "64-1-0",
-        "mode_command_topic": true,
-        "current_temperature_topic": "49-1-1",
-        "current_temperature_template": "{{ value_json.value }}",
-        "temperature_state_template": "{{ value_json.value }}",
-        "temperature_command_topic": true
-    }
+{
+  type: 'climate',
+  object_id: 'thermostat',
+  values: [
+    '64-0-mode',
+    '49-0-Air temperature',
+    '67-0-setpoint-1',
+    '67-0-setpoint-2'
+  ],
+  mode_map: { off: 0, heat: 1, cool: 2 },
+  setpoint_topic: {
+    'Heat (Default)': '67-0-setpoint-1',
+    Cool: '67-0-setpoint-2'
+  },
+  default_setpoint: '67-0-setpoint-1',
+  discovery_payload: {
+    min_temp: 15,
+    max_temp: 30,
+    modes: ['off', 'heat', 'cool'],
+    mode_state_topic: '64-0-mode',
+    mode_command_topic: true,
+    current_temperature_topic: '49-0-Air temperature',
+    current_temperature_template: '{{ value_json.value }}',
+    temperature_state_template: '{{ value_json.value }}',
+    temperature_command_topic: true
+  }
 }
 ```
 
@@ -531,13 +513,13 @@ So in decimal format will become: `411-514-3`. This is the device id of `Heatit 
 - **object_id**: The unique id of this object (must be unique for the device)
 - **values**: Array of values used by this component
 - **mode_map**: Key-Value object where keys are [MQTT Climate](https://www.home-assistant.io/components/climate.mqtt/) modes and values are the matching thermostat modes values
-- **setpoint_topic**: Key-Value object where keys are the modes of the Zwave thermostat and values are the matching setpoint `value_id` (use this if your thermostat has more than one setpoint)
+- **setpoint_topic**: Key-Value object where keys are the modes of the Zwave thermostat and values are the matching setpoint `value id` (use this if your thermostat has more than one setpoint)
 - **default_setpoint**: The default thermostat setpoint.
 - **discovery_payload**: The payload sent to hass to discover this device. Check [here](https://www.home-assistant.io/integrations/climate.mqtt/) for a list with all supported options
   - **min_temp/max_temp**: Min/Max temperature of the thermostat
   - **modes**: Array of Hass Climate supported modes. Allowed values are `[“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]`
-  - **mode_state_topic**: `value_id` of mode value
-  - **current_temperature_topic**: `value_id` of current temperature value
+  - **mode_state_topic**: `value id` of mode value
+  - **current_temperature_topic**: `value id` of current temperature value
   - **current_temperature_template/temperature_state_template**: Template used to fetch the value from the MQTT payload
   - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Hass to change this values
 
@@ -546,24 +528,26 @@ Thermostats are most complex components to create, in this device example the se
 #### Fans
 
 ```js
-{ // GE 1724 Dimmer
-    "type": "fan",
-    "object_id": "dimmer",
-    "values": ["38-1-0"],
-    "discovery_payload": {
-        "command_topic": "38-1-0",
-        "speed_command_topic": "38-1-0",
-        "speed_state_topic": "38-1-0",
-        "state_topic": "38-1-0",
-        "speeds": ["off", "low", "medium", "high"],
-        "payload_low_speed": 24,
-        "payload_medium_speed": 50,
-        "payload_high_speed": 99,
-        "payload_off": 0,
-        "payload_on": 99,
-        "state_value_template": "{% if (value_json.value | int) == 0 %} 0 {% else %} 99 {% endif %}",
-        "speed_value_template": "{% if (value_json.value | int) == 25 %} 24 {% elif (value_json.value | int) == 51 %} 50 {% elif (value_json.value | int) == 99 %} 99 {% else %} 0 {% endif %}"
-    }
+{
+  type: 'fan',
+  object_id: 'dimmer',
+  values: ['38-0-currentValue', '38-0-targetValue'],
+  discovery_payload: {
+    command_topic: '38-0-currentValue',
+    speed_command_topic: '38-0-targetValue',
+    speed_state_topic: '38-0-currentValue',
+    state_topic: '38-0-currentValue',
+    speeds: ['off', 'low', 'medium', 'high'],
+    payload_low_speed: 24,
+    payload_medium_speed: 50,
+    payload_high_speed: 99,
+    payload_off: 0,
+    payload_on: 255,
+    state_value_template:
+      '{% if (value_json.value | int) == 0 %} 0 {% else %} 255 {% endif %}',
+    speed_value_template:
+      '{% if (value_json.value | int) == 0 %} 0 {% elif (value_json.value | int) <= 32 %} 24 {% elif (value_json.value | int) <= 66 %} 50 {% elif (value_json.value | int) <= 99 %} 99 {% endif %}'
+  }
 }
 ```
 
@@ -582,58 +566,47 @@ Thermostats are most complex components to create, in this device example the se
 The main template is like the thermostat template. The things to add are:
 
 ```js
-{ // GoControl GC-TBZ48 (Linear Nortek Security Control LLC)
-    "type": "climate",
-    "object_id": "thermostat",
-    "values": [
-        "49-1-1",
-        "64-1-0",
-        "66-1-0", // <-- add fan values
-        "67-1-1",
-        "67-1-2",
-        "68-1-0" // <-- add fan values
-    ],
-    "fan_mode_map": { // <-- add fan modes map
-        "on": "On",
-        "auto": "Auto"
-    },
-    "mode_map": {
-        "off": "Off",
-        "heat": "Heat",
-        "cool": "Cool",
-        "auto": "Auto"
-    },
-    "setpoint_topic": {
-        "Heat": "67-1-1",
-        "Cool": "67-1-2"
-    },
-    "default_setpoint": "67-1-1",
-    "discovery_payload": {
-        "min_temp": 60,
-        "max_temp": 85,
-        "modes": [
-            "off",
-            "heat",
-            "cool",
-            "auto"
-        ],
-        "fan_modes": [ // <-- add fan supported modes
-            "on",
-            "auto"
-        ],
-        "action_topic": "66-1-0",
-        "mode_state_topic": "64-1-0",
-        "mode_command_topic": true,
-        "current_temperature_topic": "49-1-1",
-        "current_temperature_template": "{{ value_json.value }}",
-        "temperature_state_template": "{{ value_json.value }}",
-        "temperature_low_command_topic": true,
-        "temperature_low_state_template": "{{ value_json.value }}",
-        "temperature_high_command_topic": true,
-        "temperature_high_state_template": "{{ value_json.value }}",
-        "fan_mode_command_topic": true,
-        "fan_mode_state_topic": "68-1-0" // <-- add fan state topic
-    }
+{
+  type: 'climate',
+  object_id: 'thermostat',
+  values: [
+    '49-0-Air temperature',
+    '64-0-mode',
+    '66-0-state', // <-- add fan values
+    '67-0-setpoint-1',
+    '67-0-setpoint-2',
+    '68-0-mode' // <-- add fan values
+  ],
+  mode_map: {
+    off: 0,
+    heat: 1,
+    cool: 2
+  },
+  fan_mode_map: { // <-- add fan mode_map
+    auto: 0,
+    on: 1
+  },
+  setpoint_topic: {
+    Heat: '67-0-setpoint-1',
+    Cool: '67-0-setpoint-2'
+  },
+  default_setpoint: '67-0-setpoint-1',
+  discovery_payload: {
+    min_temp: 50,
+    max_temp: 85,
+    modes: ['off', 'heat', 'cool'],
+    fan_modes: ['auto', 'on'], // <-- add fan supported modes
+    action_topic: '66-0-state',
+    action_template: '{{ value_json.value | lower }}',
+    current_temperature_topic: '49-0-Air temperature',
+    current_temperature_template: '{{ value_json.value }}',
+    fan_mode_state_topic: '68-0-mode', // <-- add fan state topic
+    fan_mode_command_topic: true, // <-- add fan command topic
+    mode_state_topic: '64-0-mode',
+    mode_command_topic: true,
+    temperature_state_template: '{{ value_json.value }}',
+    temperature_command_topic: true
+  }
 }
 ```
 
@@ -802,7 +775,7 @@ _**Note**: Each one of the following environment variables corresponds to their 
 
 > A: My device is X and has been discovered as Y, why?
 
-**B: Hass Discovery is not easy, zwave have many different devices with different values. To try to understand how to discover a specific value I have used** [this](https://github.com/zwave-js/open-zwave/blob/master/config/Localization.xml) **file that shows what kind of value is expected based on value class and index. Unfortunately not all devices respect this specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file** `/hass/devices.js` **where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
+**B: Hass Discovery is not easy, zwave have many different devices with different values. Unfortunately not all devices respect specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and than save it to make it persistent. I have also created a file `/hass/devices.js` where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
 
 ## :pray: Thanks
 
@@ -812,17 +785,6 @@ Thanks to this people for help with issues tracking and contributions:
 - [**Jorge Schrauwen**](https://github.com/sjorge)
 - [**Jay**](https://github.com/jshridha)
 - [**Thiago Oliveira**](https://github.com/chilicheech)
-
-## :pencil: TODOs
-
-- [x] Better logging
-- [x] Dockerize application
-- [x] Package application with PKG
-- [x] HASS integration, check [zigbee2mqtt](https://github.com/Koenkk/zigbee2mqtt/blob/master/lib/extension/homeassistant.js)
-- [ ] Add unit test
-- [ ] JSON validator for settings and scenes
-- [ ] Better nodes status management using 'testNode'
-- [x] Network graph to show neighbours using [vue-d3-network](https://github.com/emiliorizzo/vue-d3-network)
 
 ## :bowtie: Author
 
