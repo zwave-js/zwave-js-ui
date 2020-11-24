@@ -35,26 +35,26 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 
 - [Zwave To MQTT](#zwave-to-mqtt)
   - [📖 Table of contents](#-table-of-contents)
-  - [:electric_plug: Installation](#-installation)
-    - [DOCKER :tada: way](#docker--way)
+  - [:electric_plug: Installation](#electric_plug-installation)
+    - [DOCKER :tada: way](#docker-tada-way)
     - [Kubernetes way](#kubernetes-way)
     - [NodeJS or PKG version](#nodejs-or-pkg-version)
     - [Reverse Proxy Setup](#reverse-proxy-setup)
-  - [:nerd_face: Development](#-development)
+  - [:nerd_face: Development](#nerd_face-development)
     - [Developing against a different backend](#developing-against-a-different-backend)
-  - [:wrench: Usage](#-usage)
+  - [:wrench: Usage](#wrench-usage)
     - [Zwave](#zwave)
     - [MQTT](#mqtt)
     - [Gateway](#gateway)
       - [Special topics](#special-topics)
       - [Gateway values table](#gateway-values-table)
-  - [:file_folder: Nodes Management](#-nodes-management)
+  - [:file_folder: Nodes Management](#file_folder-nodes-management)
     - [Add a node](#add-a-node)
     - [Remove a node](#remove-a-node)
     - [Replace failed node (NOT IMPLEMENTED YET)](#replace-failed-node-not-implemented-yet)
     - [Remove a failed node](#remove-a-failed-node)
-  - [:star: Features](#️-features)
-  - [:robot: Home Assistant integration (BETA)](#-home-assistant-integration-beta)
+  - [:star: Features](#star-features)
+  - [:robot: Home Assistant integration (BETA)](#robot-home-assistant-integration-beta)
     - [Components management](#components-management)
       - [Rediscover Node](#rediscover-node)
       - [Edit existing component](#edit-existing-component)
@@ -64,13 +64,14 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
       - [Thermostats](#thermostats)
       - [Fans](#fans)
       - [Thermostats with Fans](#thermostats-with-fans)
-  - [:gift: MQTT APIs](#-mqtt-apis)
+  - [:gift: MQTT APIs](#gift-mqtt-apis)
     - [Zwave Events](#zwave-events)
     - [Zwave APIs](#zwave-apis)
       - [Custom APIs](#custom-apis)
     - [Set values](#set-values)
+    - [Multicast](#multicast)
     - [Broadcast](#broadcast)
-  - [:camera: Screenshots](#-screenshots)
+  - [:camera: Screenshots](#camera-screenshots)
     - [Settings](#settings)
     - [Control Panel](#control-panel)
     - [Groups associations](#groups-associations)
@@ -79,9 +80,9 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     - [Debug](#debug)
   - [Health check endpoints](#health-check-endpoints)
   - [Environment variables](#environment-variables)
-  - [:question: FAQ](#-faq)
-  - [:pray: Thanks](#-thanks)
-  - [:pencil: TODOs](#-todos)
+  - [:question: FAQ](#question-faq)
+  - [:pray: Thanks](#pray-thanks)
+  - [:pencil: TODOs](#pencil-todos)
   - [:bowtie: Author](#bowtie-author)
 
 ## :electric_plug: Installation
@@ -727,6 +728,30 @@ If I publish the value `25.5` (also a payload with a JSON object with the value 
 I will set the Heating setpoint of the node with id `4` located in the `office` to `25.5`. To check if the value has been successfully write just check when the value changes on the topic:
 
 `zwave/office/nodeID_4/thermostat_setpoint/heating`
+
+### Multicast
+
+You can send Multicast requests to _all values with a specific suffix_  of a _group_ of nodes in the network.
+
+Multicast API is accessible from:
+
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/multicast/<value_topic_suffix>/set`
+
+- `value_topic_suffix`: the suffix of the topic of the value I want to control using multicast.
+
+It works like the set value API without the node name and location properties.
+If the API is correctly called the same payload of the request will be published
+to the topic without `/set` suffix.
+
+Example of multicast command (gateway configured as `named topics`):
+
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/multicast/thermostat_setpoint/heating/set`
+
+Payload: `{nodes: [5, 7, 9], value: 25.5}`
+
+Nodes **5, 7, 9** with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
+
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/multicast/thermostat_setpoint/heating`
 
 ### Broadcast
 
