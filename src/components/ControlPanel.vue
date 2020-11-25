@@ -1188,7 +1188,10 @@ export default {
         var askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
           // don't send replaceFailed as broadcast
-          if (this.cnt_action !== 'replaceFailedNode') {
+          if (
+            this.cnt_action !== 'replaceFailedNode' &&
+            this.cnt_action !== 'beginFirmwareUpdate'
+          ) {
             broadcast = await this.$listeners.showConfirm(
               'Broadcast',
               'Send this command to all nodes?'
