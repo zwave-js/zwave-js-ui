@@ -747,7 +747,7 @@ Example of multicast command (gateway configured as `named topics`):
 
 `zwave/_CLIENTS/ZWAVE_GATEWAY-test/multicast/thermostat_setpoint/heating/set`
 
-Payload: `{nodes: [5, 7, 9], value: 25.5}`
+Payload: `{ "nodes": [5, 7, 9], "value": 25.5}`
 
 Nodes **5, 7, 9** with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
 
