@@ -14,9 +14,9 @@
 [![Total alerts](https://img.shields.io/lgtm/alerts/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/alerts/)
 [![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/zwave-js/zwavejs2mqtt.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwavejs2mqtt/context:javascript)
 
-[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU 'Join channel')
+[![Join channel](https://img.shields.io/badge/SLACK-zwave2mqtt.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave2mqtt/shared_invite/enQtNjc4NjgyNjc3NDI2LTc3OGQzYmJlZDIzZTJhMzUzZWQ3M2Q3NThmMjY5MGY1MTc4NjFiOWZhZWE5YjNmNGE0OWRjZjJiMjliZGQyYmU "Join channel")
 
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee")
 
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
@@ -40,8 +40,8 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
     - [Kubernetes way](#kubernetes-way)
     - [NodeJS or PKG version](#nodejs-or-pkg-version)
     - [Reverse Proxy Setup](#reverse-proxy-setup)
-  - [Migrating From Zwave2Mqtt](#migrating-from-zwave2mqtt)
-    - [Why Zwavejs](#why-zwavejs)
+  - [Why Zwavejs](#why-zwavejs)
+    - [Migrating From Zwave2Mqtt](#migrating-from-zwave2mqtt)
   - [:nerd_face: Development](#nerd_face-development)
     - [Developing against a different backend](#developing-against-a-different-backend)
   - [:wrench: Usage](#wrench-usage)
@@ -150,7 +150,15 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
 If you need to setup ZWave To MQTT behind a reverse proxy that needs a _subpath_ to
 work, take a look at [the reverse proxy configuration docs](docs/subpath.md).
 
-## Migrating From Zwave2Mqtt
+## Why Zwavejs
+
+1. Entirely written in JS (Typescript). This is good for many reasons:
+   - We can drop the `node-openzwave-shared` that is maintained by me but would need a complete refactor and it's hard to maintain both projects.
+   - It will not require to compile OZW and we can have more control of updates/versions with zwavejs releases.
+   - JS it's straightforward to debug all through the stack rather than a black box that is abstracted by another library
+2. Better support/collaboration: OZW is widely used and the author had many other related projects to maintain/support causing many delays or even no responses at all to some issues. Zwave is a good protocol but there are many devices compatibility issues and most of the issues on z2m were related to them. It's become really clear from the time building and maintaining z2m that the community is really important and have found working with @AlCalzone and the growing dev community around zwavejs to be really beneficial for fast paced change and this project is fully embraced by that community too.
+
+### Migrating From Zwave2Mqtt
 
 For everyone that is coming from Zwave2Mqtt there will be some breaking changes:
 
@@ -161,14 +169,6 @@ For everyone that is coming from Zwave2Mqtt there will be some breaking changes:
 - Values ids unique strings have changed, in Z2M valueIds were identified by `<nodeId>/<commandClass>/<endpoint>/<index>` now them are `<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey?>` where `property` and `propertyKey` (can be undefined) can be both numbers or strings based on the value. So essentially if you are using Hass or Mqtt functions all topics will change, [here](https://github.com/zwave-js/zwavejs2mqtt/pull/20/files#diff-4a25087ac983e835241cfb02c43c408df47b81f77546ef07c4dcfe9acf019eeeR4) you can see how I have translated some valueids of `devices.js` from the old format to the new one.
 - List values are no longer handled as `strings` but as `numbers` by default. For example to change a Thermostat Mode in Z2M you used to send `Heat` or `Off` now you will need to send `1` (Heat) or `0` (Off). This will make it lot easier to handle list values
 - All bitmask values are now splitted in separeted values and are booleans. The same for rgb colors, now all colors will be handled separately, there will be a valueId to control Red (0-255), another for Green (0-255) and so on... There is an open issue on zwavejs to also create a valueId with the hex color string. Also now some values are splitted in `targetValue` and `currentValue`, the first one is used to send commands the second one to see the actual state. This could seems tricky at first sight but there are some reasons behind this.
-
-### Why Zwavejs
-
-1. Entirely written in JS (Typescript). This is good for many reasons:
-   - We can drop the `node-openzwave-shared` that is maintained by me but would need a complete refactor and it's hard to maintain both projects.
-   - It will not require to compile OZW and we can have more control of updates/versions with zwavejs releases.
-   - JS is my main programming language and it's easier also for me to look at the source code and find/help with bugs
-2. Better support/collaboration: OZW is widely used and the author had many other related projects to maintain/support causing many delays or even no responses at all to some issues. Zwave is a good protocol but there are many devices compatibility issues and most of the issues on z2m were related to them. This is why I needs a strict collaboration with the lower level driver author to give users a better support with their bugs, so I have team up with @AlCalzone
 
 ## :nerd_face: Development
 
@@ -448,11 +448,11 @@ mqtt:
   discovery_prefix: <your_discovery_prefix>
   broker: [YOUR MQTT BROKER] # Remove if you want to use builtin-in MQTT broker
   birth_message:
-    topic: 'homeassistant/status'
-    payload: 'online'
+    topic: "homeassistant/status"
+    payload: "online"
   will_message:
-    topic: 'homeassistant/status'
-    payload: 'offline'
+    topic: "homeassistant/status"
+    payload: "offline"
 ```
 
 Mind you that if you want to use the embedded broker of Home Assistant you
@@ -804,6 +804,7 @@ _**Note**: Each one of the following environment variables corresponds to their 
 Thanks to this people for help with issues tracking and contributions:
 
 - [**Chris Nesbitt-Smith**](https://github.com/chrisns)
+- [**AlCalzone**](https://github.com/AlCalzone)
 - [**Jorge Schrauwen**](https://github.com/sjorge)
 - [**Jay**](https://github.com/jshridha)
 - [**Thiago Oliveira**](https://github.com/chilicheech)
