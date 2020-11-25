@@ -147,7 +147,10 @@
                 <v-layout row>
                   <v-flex>
                     <v-subheader
-                      >Device ID: {{ selectedNode.deviceId }}</v-subheader
+                      >Device ID:
+                      {{
+                        `${selectedNode.deviceId} (${selectedNode.hexId})`
+                      }}</v-subheader
                     >
                   </v-flex>
                 </v-layout>
@@ -419,67 +422,6 @@
                     ></v-select>
                   </v-flex>
 
-                  <v-flex v-if="group.node && group.group" xs12 sm6 md4>
-                    <v-list subheader>
-                      <v-subheader>Associations</v-subheader>
-                      <v-list-item
-                        v-for="(ass, index) in group.associations"
-                        :key="index"
-                      >
-                        <v-list-item-content>
-                          <v-list-item-title
-                            >Node:
-                            <b>{{
-                              nodes[ass.nodeId]._name || ass.nodeId
-                            }}</b></v-list-item-title
-                          >
-                          <v-list-item-subtitle
-                            v-if="ass.endpoint >= 0"
-                            class="text--primary"
-                            >Endpoint:
-                            <b>{{ ass.endpoint }}</b></v-list-item-subtitle
-                          >
-                        </v-list-item-content>
-                        <v-list-item-icon>
-                          <v-icon @click="removeAssociation(ass)" color="red">
-                            delete
-                          </v-icon>
-                        </v-list-item-icon>
-                      </v-list-item>
-                      <v-list-item v-if="group.associations.length === 0">
-                        <v-list-item-content>
-                          No assocaitions
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list>
-                  </v-flex>
-
-                  <v-flex v-if="group.node" xs12 sm6>
-                    <v-combobox
-                      label="Target"
-                      v-model="group.target"
-                      :items="nodes.filter(n => !n.failed && n != group.node)"
-                      return-object
-                      hint="Select the node from the list or digit the node ID"
-                      persistent-hint
-                      item-text="_name"
-                    ></v-combobox>
-                  </v-flex>
-
-                  <v-flex
-                    v-if="group.group && group.group.multiChannel"
-                    xs12
-                    sm6
-                    md4
-                  >
-                    <v-text-field
-                      v-model.number="group.targetInstance"
-                      label="Channel ID"
-                      hint="Target node channel ID"
-                      type="number"
-                    />
-                  </v-flex>
-
                   <v-flex v-if="group.group && group.associations" xs12 sm6 md4>
                     <v-list subheader>
                       <v-subheader>Associations</v-subheader>
@@ -516,6 +458,32 @@
                         </v-list-item-content>
                       </v-list-item>
                     </v-list>
+                  </v-flex>
+
+                  <v-flex v-if="group.node" xs12 sm6>
+                    <v-combobox
+                      label="Target"
+                      v-model="group.target"
+                      :items="nodes.filter(n => !n.failed && n != group.node)"
+                      return-object
+                      hint="Select the node from the list or digit the node ID"
+                      persistent-hint
+                      item-text="_name"
+                    ></v-combobox>
+                  </v-flex>
+
+                  <v-flex
+                    v-if="group.group && group.group.multiChannel"
+                    xs12
+                    sm6
+                    md4
+                  >
+                    <v-text-field
+                      v-model.number="group.targetInstance"
+                      label="Channel ID"
+                      hint="Target node channel ID"
+                      type="number"
+                    />
                   </v-flex>
 
                   <v-flex xs12>
@@ -850,6 +818,10 @@ export default {
           value: 'removeFailedNode'
         },
         {
+          text: 'Replace failed node',
+          value: 'replaceFailedNode'
+        },
+        {
           text: 'Begin Firmware update',
           value: 'beginFirmwareUpdate'
         },
@@ -977,7 +949,7 @@ export default {
         )
       ) {
         try {
-          var data = await this.$listeners.import('json')
+          var { data } = await this.$listeners.import('json')
           var response = await ConfigApis.importConfig({ data: data })
           this.showSnackbar(response.message)
         } catch (error) {
@@ -1007,9 +979,9 @@ export default {
         )
       ) {
         try {
-          var scenes = await this.$listeners.import('json')
-          if (scenes instanceof Array) {
-            this.apiRequest('_setScenes', [scenes])
+          var { data } = await this.$listeners.import('json')
+          if (data instanceof Array) {
+            this.apiRequest('_setScenes', [data])
           } else {
             this.showSnackbar('Imported file not valid')
           }
@@ -1215,10 +1187,16 @@ export default {
         var broadcast = false
         var askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
-          broadcast = await this.$listeners.showConfirm(
-            'Broadcast',
-            'Send this command to all nodes?'
-          )
+          // don't send replaceFailed as broadcast
+          if (
+            this.cnt_action !== 'replaceFailedNode' &&
+            this.cnt_action !== 'beginFirmwareUpdate'
+          ) {
+            broadcast = await this.$listeners.showConfirm(
+              'Broadcast',
+              'Send this command to all nodes?'
+            )
+          }
 
           if (!broadcast) {
             var id = parseInt(prompt('Node ID'))
@@ -1231,7 +1209,10 @@ export default {
           }
         }
 
-        if (this.cnt_action === 'startInclusion') {
+        if (
+          this.cnt_action === 'startInclusion' ||
+          this.cnt_action === 'replaceFailedNode'
+        ) {
           var secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?'
@@ -1248,8 +1229,9 @@ export default {
           }
         } else if (this.cnt_action === 'beginFirmwareUpdate') {
           try {
-            var dataBuffer = await this.$listeners.import('buffer')
-            args.push(dataBuffer)
+            var { data, file } = await this.$listeners.import('buffer')
+            args.push(file.name)
+            args.push(data)
           } catch (error) {
             return
           }
@@ -1272,11 +1254,18 @@ export default {
 
         if (this.node_action === 'beginFirmwareUpdate') {
           try {
-            var dataBuffer = await this.$listeners.import('buffer')
-            args.push(dataBuffer)
+            var { data, file } = await this.$listeners.import('buffer')
+            args.push(file.name)
+            args.push(data)
           } catch (error) {
             return
           }
+        } else if (this.node_action === 'replaceFailedNode') {
+          var secure = await this.$listeners.showConfirm(
+            'Node inclusion',
+            'Start inclusion in secure mode?'
+          )
+          args.push(secure)
         }
 
         this.apiRequest(action, args)
@@ -1366,7 +1355,7 @@ export default {
         v.toUpdate = true
 
         if (v.type === 'number') {
-          v.newValue = parseInt(v.newValue)
+          v.newValue = Number(v.newValue)
         }
 
         // it's a button
