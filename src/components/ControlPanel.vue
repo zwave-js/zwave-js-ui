@@ -1355,7 +1355,7 @@ export default {
         v.toUpdate = true
 
         if (v.type === 'number') {
-          v.newValue = parseInt(v.newValue)
+          v.newValue = Number(v.newValue)
         }
 
         // it's a button
