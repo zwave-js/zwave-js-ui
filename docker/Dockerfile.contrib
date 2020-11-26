@@ -1,31 +1,25 @@
-FROM node AS build
+FROM node:latest AS build
+USER root
+RUN mkdir -p /usr/local/lib/node_modules && chown node /usr/local/lib/node_modules
+USER node
 
-COPY node-zwave-js /root/node-zwave-js
-COPY zwavejs2mqtt /root/zwavejs2mqtt
+COPY --chown=node node-zwave-js /home/node/node-zwave-js
+COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
-WORKDIR /root/node-zwave-js
+WORKDIR /home/node/node-zwave-js
+RUN npm install
+RUN npm run build
+RUN npm link
+
+WORKDIR /home/node/zwavejs2mqtt
+RUN npm link zwave-js
 RUN npm install
 RUN npm run build
 
-WORKDIR /root/zwavejs2mqtt
-RUN npm config set unsafe-perm true
-RUN npm install
-RUN npm run build
-# RUN npm prune --production
-RUN cp -rL /root/node-zwave-js/packages/zwave-js node_modules/
-RUN rm -rf \
-    build \
-    index.html \
-    package-lock.json \
-    package.sh \
-    src \
-    static \
-    stylesheets
-
-FROM node
+FROM node:latest
 LABEL maintainer="robertsLando"
-# Copy files from build stage
-COPY --from=build /root/zwavejs2mqtt /usr/src/app
+COPY --from=build /home/node/zwavejs2mqtt /usr/src/app
+COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
 WORKDIR /usr/src/app
 EXPOSE 8091
 CMD ["node", "bin/www"]
