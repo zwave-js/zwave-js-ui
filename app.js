@@ -1,22 +1,25 @@
-var express = require('express')
-var reqlib = require('app-root-path').require
-var logger = require('morgan')
-var cookieParser = require('cookie-parser')
-var bodyParser = require('body-parser')
-var app = express()
-var SerialPort = require('serialport')
-var jsonStore = reqlib('/lib/jsonStore.js')
-var cors = require('cors')
-var ZWaveClient = reqlib('/lib/ZwaveClient')
-var MqttClient = reqlib('/lib/MqttClient')
-var Gateway = reqlib('/lib/Gateway')
-var store = reqlib('config/store.js')
-var debug = reqlib('/lib/debug')('App')
-var history = require('connect-history-api-fallback')
-var utils = reqlib('/lib/utils.js')
+const express = require('express')
+const reqlib = require('app-root-path').require
+const logger = require('morgan')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
+const app = express()
+const SerialPort = require('serialport')
+const jsonStore = reqlib('/lib/jsonStore.js')
+const cors = require('cors')
+const ZWaveClient = reqlib('/lib/ZwaveClient')
+const MqttClient = reqlib('/lib/MqttClient')
+const Gateway = reqlib('/lib/Gateway')
+const store = reqlib('config/store.js')
+const debug = reqlib('/lib/debug')('App')
+const history = require('connect-history-api-fallback')
+const utils = reqlib('/lib/utils.js')
 const renderIndex = reqlib('/lib/renderIndex')
-var gw // the gateway instance
+
+let gw // the gateway instance
 let io
+
+let restarting = false
 
 debug('zwavejs2mqtt version: ' + require('./package.json').version)
 debug('Application path:' + utils.getPath(true))
@@ -44,10 +47,15 @@ app.use(cors())
 
 app.use(history())
 
-function startGateway () {
-  var settings = jsonStore.get(store.settings)
+function hasProperty (obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop)
+}
 
-  var mqtt, zwave
+function startGateway () {
+  const settings = jsonStore.get(store.settings)
+
+  let mqtt
+  let zwave
 
   if (settings.mqtt) {
     mqtt = new MqttClient(settings.mqtt)
@@ -58,6 +66,10 @@ function startGateway () {
   }
 
   gw = new Gateway(settings.gateway, zwave, mqtt)
+
+  gw.start()
+
+  restarting = false
 }
 
 app.startSocket = function (server) {
@@ -82,7 +94,7 @@ app.startSocket = function (server) {
     socket.on('ZWAVE_API', async function (data) {
       debug('Zwave api call:', data.api, data.args)
       if (gw.zwave) {
-        var result = await gw.zwave.callApi(data.api, ...data.args)
+        const result = await gw.zwave.callApi(data.api, ...data.args)
         result.api = data.api
         socket.emit(gw.zwave.socketEvents.api, result)
       }
@@ -133,22 +145,22 @@ app.startSocket = function (server) {
 // ----- APIs ------
 
 app.get('/health', async function (req, res) {
-  var mqtt = false
-  var zwave = false
+  let mqtt = false
+  let zwave = false
 
   if (gw) {
     mqtt = gw.mqtt ? gw.mqtt.getStatus().status : false
     zwave = gw.zwave ? gw.zwave.getStatus().status : false
   }
 
-  var status = mqtt && zwave
+  const status = mqtt && zwave
 
   res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 })
 
 app.get('/health/:client', async function (req, res) {
-  var client = req.params.client
-  var status
+  const client = req.params.client
+  let status
 
   if (client !== 'zwave' && client !== 'mqtt') {
     res.status(500).send("Requested client doesn 't exist")
@@ -161,15 +173,17 @@ app.get('/health/:client', async function (req, res) {
 
 // get settings
 app.get('/api/settings', async function (req, res) {
-  var data = {
+  const data = {
     success: true,
     settings: jsonStore.get(store.settings),
     devices: gw.zwave ? gw.zwave.devices : {},
     serial_ports: []
   }
+
+  let ports
   if (process.platform !== 'sunos') {
     try {
-      var ports = await SerialPort.list()
+      ports = await SerialPort.list()
     } catch (error) {
       debug(error)
     }
@@ -190,7 +204,7 @@ app.get('/api/exportConfig', function (req, res) {
 
 // import config
 app.post('/api/importConfig', async function (req, res) {
-  var config = req.body.data
+  const config = req.body.data
   try {
     if (!gw.zwave) throw Error('Zwave client not inited')
 
@@ -198,13 +212,14 @@ app.post('/api/importConfig', async function (req, res) {
     else {
       for (let i = 0; i < config.length; i++) {
         const e = config[i]
-        if (e && (!e.hasOwnProperty('name') || !e.hasOwnProperty('loc'))) {
+        if (e && (!hasProperty(e, 'name') || !hasProperty(e, 'loc'))) {
           throw Error('Configuration not valid')
         } else if (e) {
           await gw.zwave.callApi('_setNodeName', i, e.name || '')
           await gw.zwave.callApi('_setNodeLocation', i, e.loc || '')
-          if (e.hassDevices)
+          if (e.hassDevices) {
             await gw.zwave.storeDevices(e.hassDevices, i, false)
+          }
         }
       }
     }
@@ -217,29 +232,33 @@ app.post('/api/importConfig', async function (req, res) {
 })
 
 // update settings
-app.post('/api/settings', function (req, res) {
-  jsonStore
-    .put(store.settings, req.body)
-    .then(data => {
-      res.json({ success: true, message: 'Configuration updated successfully' })
-      return gw.close()
-    })
-    .then(() => startGateway())
-    .catch(err => {
-      debug(err)
-      res.json({ success: false, message: err.message })
-    })
+app.post('/api/settings', async function (req, res) {
+  try {
+    if (restarting) {
+      throw Error(
+        'Gateway is restarting, wait a moment before doing another request'
+      )
+    }
+    restarting = true
+    await jsonStore.put(store.settings, req.body)
+    await gw.close()
+    startGateway()
+    res.json({ success: true, message: 'Configuration updated successfully' })
+  } catch (error) {
+    debug(error)
+    res.json({ success: false, message: error.message })
+  }
 })
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  var err = new Error('Not Found')
+  const err = new Error('Not Found')
   err.status = 404
   next(err)
 })
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res) {
   // set locals, only providing error in development
   res.locals.message = err.message
   res.locals.error = req.app.get('env') === 'development' ? err : {}
