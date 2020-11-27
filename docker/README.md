@@ -210,11 +210,11 @@ docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mq
 docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mqtt,target=/dist/pkg zwavejs/zwavejs2mqtt_build sh
 ```
 
-# Building a container using Dockerfile.contrib
+## Building a container using Dockerfile.contrib
 
 This is typically used to build zwavejs2mqtt from git with a version of zwave-js also from git, for instance the latest master or a branch.
 
-## Prerequisites
+### Prerequisites
 
 In order to build it you first need the source code from github.
 
@@ -224,6 +224,8 @@ git clone https://github.com/zwave-js/node-zwave-js
 git clone https://github.com/zwave-js/zwavejs2mqtt
 ## Checkout repos to any branch/commit you need to test
 ```
+
+### Build
 
 The run the build from outside the two repo folders.
 
