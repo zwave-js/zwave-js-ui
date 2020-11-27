@@ -229,6 +229,7 @@ export default {
         nodeRemoved: 'NODE_REMOVED',
         nodeUpdated: 'NODE_UPDATED',
         valueUpdated: 'VALUE_UPDATED',
+        valueRemoved: 'VALUE_REMOVED',
         api: 'API_RETURN',
         debug: 'DEBUG'
       },
