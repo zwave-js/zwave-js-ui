@@ -1356,7 +1356,7 @@ export default {
         v.toUpdate = true
 
         if (v.type === 'number') {
-          v.newValue = parseInt(v.newValue)
+          v.newValue = Number(v.newValue)
         }
 
         // it's a button
@@ -1470,8 +1470,21 @@ export default {
       }
     })
 
+    this.socket.on(this.socketEvents.valueRemoved, data => {
+      const valueId = self.getValue(data)
+
+      if (valueId) {
+        const node = self.nodes[data.nodeId]
+        const index = node.values.indexOf(valueId)
+
+        if (index >= 0) {
+          node.values.splice(index, 1)
+        }
+      }
+    })
+
     this.socket.on(this.socketEvents.valueUpdated, data => {
-      var valueId = self.getValue(data)
+      const valueId = self.getValue(data)
 
       if (valueId) {
         // this value is waiting for an update
@@ -1481,6 +1494,13 @@ export default {
         }
         valueId.newValue = data.value
         valueId.value = data.value
+      } else {
+        // means that this value has been added
+        const node = self.nodes[data.nodeId]
+        if (node) {
+          data.newValue = data.value
+          node.values.push(data)
+        }
       }
     })
 

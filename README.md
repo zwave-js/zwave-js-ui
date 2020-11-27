@@ -82,6 +82,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   - [Environment variables](#environment-variables)
   - [:question: FAQ](#question-faq)
   - [:pray: Thanks](#pray-thanks)
+  - [:pencil: TODOs](#pencil-todos)
   - [:bowtie: Author](#bowtie-author)
 
 ## :electric_plug: Installation
