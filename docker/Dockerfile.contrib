@@ -2,21 +2,26 @@ FROM node:erbium-stretch AS build
 USER root
 RUN apt-get update && apt-get install -y jq
 RUN mkdir -p /usr/local/lib/node_modules && chown node /usr/local/lib/node_modules
-USER node
+RUN yarn global add yalc
 
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
+USER node
 WORKDIR /home/node/node-zwave-js
 RUN rm -f package-lock.json
 RUN yarn install
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
-RUN npx lerna exec -- yarn link
+RUN for i in $(ls packages|grep -v testing); do yalc publish packages/$i ; done
 
 WORKDIR /home/node/zwavejs2mqtt
 RUN rm -f package-lock.json
-RUN yarn link zwave-js
+RUN yalc add zwave-js && \
+    yalc add @zwave-js/config && \
+    yalc add @zwave-js/core && \
+    yalc add @zwave-js/shared && \
+    yalc add @zwave-js/serial
 RUN yarn install
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
