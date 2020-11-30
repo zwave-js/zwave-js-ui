@@ -938,7 +938,7 @@ export default {
       }
       this.errorDevice = !valid
 
-      return valid || 'JSON test failed'
+      return this.deviceJSON === '' || valid || 'JSON test failed'
     },
     async importConfiguration () {
       if (
@@ -1116,6 +1116,7 @@ export default {
       if (
         device &&
         (await this.$listeners.showConfirm(
+          'Rediscover Device',
           'Are you sure you want to re-discover selected device?'
         ))
       ) {
@@ -1469,8 +1470,21 @@ export default {
       }
     })
 
+    this.socket.on(this.socketEvents.valueRemoved, data => {
+      const valueId = self.getValue(data)
+
+      if (valueId) {
+        const node = self.nodes[data.nodeId]
+        const index = node.values.indexOf(valueId)
+
+        if (index >= 0) {
+          node.values.splice(index, 1)
+        }
+      }
+    })
+
     this.socket.on(this.socketEvents.valueUpdated, data => {
-      var valueId = self.getValue(data)
+      const valueId = self.getValue(data)
 
       if (valueId) {
         // this value is waiting for an update
@@ -1480,6 +1494,13 @@ export default {
         }
         valueId.newValue = data.value
         valueId.value = data.value
+      } else {
+        // means that this value has been added
+        const node = self.nodes[data.nodeId]
+        if (node) {
+          data.newValue = data.value
+          node.values.push(data)
+        }
       }
     })
 
