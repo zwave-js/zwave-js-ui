@@ -1,5 +1,6 @@
-FROM node:latest AS build
+FROM node:erbium-stretch AS build
 USER root
+RUN apt-get update && apt-get install -y jq
 RUN mkdir -p /usr/local/lib/node_modules && chown node /usr/local/lib/node_modules
 USER node
 
@@ -7,19 +8,26 @@ COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
 WORKDIR /home/node/node-zwave-js
-RUN npm install
-RUN npm run build
-RUN npm link
+RUN rm -f package-lock.json
+RUN yarn install
+RUN yarn run build
+RUN yarn install --production --frozen-lockfile
+RUN npx lerna exec -- yarn link
 
 WORKDIR /home/node/zwavejs2mqtt
-RUN npm link zwave-js
-RUN npm install
-RUN npm run build
+RUN rm -f package-lock.json
+RUN yarn link zwave-js
+RUN yarn install
+RUN yarn run build
+RUN yarn install --production --frozen-lockfile
 
-FROM node:latest
+RUN mkdir my_dist
+RUN cp -Lr app.js package.json bin config dist hass lib public store views node_modules my_dist/
+
+FROM node:erbium-stretch-slim
 LABEL maintainer="robertsLando"
-COPY --from=build /home/node/zwavejs2mqtt /usr/src/app
-COPY --from=build /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
+USER root
 CMD ["node", "bin/www"]
