@@ -103,25 +103,25 @@ app.startSocket = function (server) {
     socket.on('HASS_API', async function (data) {
       switch (data.apiName) {
         case 'delete':
-          gw.publishDiscovery(data.device, data.node_id, true, true)
+          gw.publishDiscovery(data.device, data.nodeId, true, true)
           break
         case 'discover':
-          gw.publishDiscovery(data.device, data.node_id, false, true)
+          gw.publishDiscovery(data.device, data.nodeId, false, true)
           break
         case 'rediscoverNode':
-          gw.rediscoverNode(data.node_id)
+          gw.rediscoverNode(data.nodeId)
           break
         case 'disableDiscovery':
-          gw.disableDiscovery(data.node_id)
+          gw.disableDiscovery(data.nodeId)
           break
         case 'update':
-          gw.zwave.updateDevice(data.device, data.node_id)
+          gw.zwave.updateDevice(data.device, data.nodeId)
           break
         case 'add':
-          gw.zwave.addDevice(data.device, data.node_id)
+          gw.zwave.addDevice(data.device, data.nodeId)
           break
         case 'store':
-          await gw.zwave.storeDevices(data.devices, data.node_id, data.remove)
+          await gw.zwave.storeDevices(data.devices, data.nodeId, data.remove)
           break
       }
     })
