@@ -938,7 +938,7 @@ export default {
       }
       this.errorDevice = !valid
 
-      return valid || 'JSON test failed'
+      return this.deviceJSON === '' || valid || 'JSON test failed'
     },
     async importConfiguration () {
       if (
@@ -1116,6 +1116,7 @@ export default {
       if (
         device &&
         (await this.$listeners.showConfirm(
+          'Rediscover Device',
           'Are you sure you want to re-discover selected device?'
         ))
       ) {
