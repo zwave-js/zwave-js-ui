@@ -39,9 +39,11 @@ app.use(
 )
 app.use(cookieParser())
 
-app.use(history({
-  index: '/'
-}))
+app.use(
+  history({
+    index: '/'
+  })
+)
 
 app.get('/', renderIndex)
 
