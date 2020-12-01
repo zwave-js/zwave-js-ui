@@ -39,13 +39,15 @@ app.use(
 )
 app.use(cookieParser())
 
+app.use(history({
+  index: '/'
+}))
+
 app.get('/', renderIndex)
 
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
 app.use(cors())
-
-app.use(history())
 
 function hasProperty (obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop)
