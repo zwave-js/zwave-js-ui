@@ -1,0 +1,48 @@
+FROM node:erbium-buster AS build
+USER root
+RUN apt-get update && apt-get install -y jq
+RUN mkdir -p /usr/local/lib/node_modules && chown node /usr/local/lib/node_modules
+
+ARG Z2M_BRANCH=master
+ARG ZWJS_BRANCH=master
+
+RUN echo "Cloning node-zwave-js from $ZWJS_BRANCH"
+RUN git clone -b ${ZWJS_BRANCH} https://github.com/zwave-js/node-zwave-js.git /home/node/node-zwave-js
+RUN chown node:node -R /home/node/node-zwave-js
+
+RUN echo "Cloning zwavejs2mqtt from $Z2M_BRANCH"
+RUN git clone -b ${Z2M_BRANCH} https://github.com/zwave-js/zwavejs2mqtt.git /home/node/zwavejs2mqtt
+RUN chown node:node -R /home/node/zwavejs2mqtt
+
+RUN yarn global add yalc
+
+USER node
+WORKDIR /home/node/node-zwave-js
+RUN rm -f package-lock.json
+RUN yarn install
+RUN yarn run build
+RUN yarn install --production --frozen-lockfile
+RUN for i in $(ls packages|grep -v testing); do yalc publish packages/$i ; done
+
+WORKDIR /home/node/zwavejs2mqtt
+RUN rm -f package-lock.json
+RUN yalc add zwave-js && \
+    yalc add @zwave-js/config && \
+    yalc add @zwave-js/core && \
+    yalc add @zwave-js/shared && \
+    yalc add @zwave-js/serial
+RUN yarn install
+RUN yarn run build
+RUN yarn install --production --frozen-lockfile
+
+RUN mkdir my_dist
+RUN cp -Lr app.js package.json bin config dist hass lib public store views node_modules my_dist/
+
+FROM node:erbium-buster-slim
+LABEL maintainer="robertsLando"
+COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
+
+WORKDIR /usr/src/app
+EXPOSE 8091
+USER root
+CMD ["node", "bin/www"]
