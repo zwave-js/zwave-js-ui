@@ -27,12 +27,12 @@ const THERMOSTAT_2GIG = {
   type: 'climate',
   object_id: 'thermostat',
   values: [
-    '49-0-Air temperature',
-    '64-0-mode',
-    '66-0-state',
-    '67-0-setpoint-1',
-    '67-0-setpoint-2',
-    '68-0-mode'
+    '49-1-Air temperature',
+    '64-1-mode',
+    '66-1-state',
+    '67-1-setpoint-1',
+    '67-1-setpoint-2',
+    '68-1-mode'
   ],
   mode_map: {
     off: 0,
@@ -44,22 +44,22 @@ const THERMOSTAT_2GIG = {
     on: 1
   },
   setpoint_topic: {
-    Heat: '67-0-setpoint-1',
-    Cool: '67-0-setpoint-2'
+    1: '67-1-setpoint-1',
+    2: '67-1-setpoint-2'
   },
-  default_setpoint: '67-0-setpoint-1',
+  default_setpoint: '67-1-setpoint-1',
   discovery_payload: {
     min_temp: 50,
     max_temp: 85,
     modes: ['off', 'heat', 'cool'],
     fan_modes: ['auto', 'on'],
-    action_topic: '66-0-state',
+    action_topic: '66-1-state',
     action_template: '{{ value_json.value | lower }}',
-    current_temperature_topic: '49-0-Air temperature',
+    current_temperature_topic: '49-1-Air temperature',
     current_temperature_template: '{{ value_json.value }}',
-    fan_mode_state_topic: '68-0-mode',
+    fan_mode_state_topic: '68-1-mode',
     fan_mode_command_topic: true,
-    mode_state_topic: '64-0-mode',
+    mode_state_topic: '64-1-mode',
     mode_command_topic: true,
     temperature_state_template: '{{ value_json.value }}',
     temperature_command_topic: true
@@ -79,8 +79,8 @@ const STELLA_ZWAVE = {
   ],
   mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
-    Comfort: '67-0-setpoint-1',
-    'Energy Saving': '67-0-setpoint-11'
+    1: '67-0-setpoint-1',
+    11: '67-0-setpoint-11'
   },
   default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
@@ -109,8 +109,8 @@ const SPIRIT_ZWAVE_PLUS = {
   ],
   mode_map: { off: 0, heat: 1, cool: 11 },
   setpoint_topic: {
-    Heat: '67-0-setpoint-1',
-    'Heat Eco': '67-0-setpoint-11'
+    1: '67-0-setpoint-1',
+    11: '67-0-setpoint-11'
   },
   default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
@@ -131,7 +131,7 @@ const DANFOSS_TRV_ZWAVE = {
   type: 'climate',
   object_id: 'thermostat',
   values: ['49-0-Air temperature', '67-0-setpoint-1'],
-  setpoint_topic: { Heat: '67-0-setpoint-1' },
+  setpoint_topic: { 1: '67-0-setpoint-1' },
   default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
     min_temp: 4,
@@ -171,7 +171,7 @@ module.exports = {
         off: 0,
         heat: 1
       },
-      setpoint_topic: { Heat: '67-0-setpoint-1' },
+      setpoint_topic: { 1: '67-0-setpoint-1' },
       default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
         min_temp: 5,
@@ -197,8 +197,8 @@ module.exports = {
       ],
       mode_map: { off: 0, heat: 1, cool: 2 },
       setpoint_topic: {
-        'Heat (Default)': '67-0-setpoint-1',
-        Cool: '67-0-setpoint-2'
+        1: '67-0-setpoint-1',
+        2: '67-0-setpoint-2'
       },
       default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
@@ -226,7 +226,7 @@ module.exports = {
         '67-0-setpoint-2'
       ],
       mode_map: { off: 0, heat: 1, cool: 2 },
-      setpoint_topic: { Heat: '67-0-setpoint-1', Cool: '67-0-setpoint-2' },
+      setpoint_topic: { 1: '67-0-setpoint-1', 2: '67-0-setpoint-2' },
       default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
         min_temp: 15,

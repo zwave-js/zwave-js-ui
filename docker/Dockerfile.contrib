@@ -1,0 +1,38 @@
+FROM node:erbium-stretch AS build
+USER root
+RUN apt-get update && apt-get install -y jq
+RUN mkdir -p /usr/local/lib/node_modules && chown node /usr/local/lib/node_modules
+RUN yarn global add yalc
+
+COPY --chown=node node-zwave-js /home/node/node-zwave-js
+COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
+
+USER node
+WORKDIR /home/node/node-zwave-js
+RUN rm -f package-lock.json
+RUN yarn install
+RUN yarn run build
+RUN yarn install --production --frozen-lockfile
+RUN for i in $(ls packages|grep -v testing); do yalc publish packages/$i ; done
+
+WORKDIR /home/node/zwavejs2mqtt
+RUN rm -f package-lock.json
+RUN yalc add zwave-js && \
+    yalc add @zwave-js/config && \
+    yalc add @zwave-js/core && \
+    yalc add @zwave-js/shared && \
+    yalc add @zwave-js/serial
+RUN yarn install
+RUN yarn run build
+RUN yarn install --production --frozen-lockfile
+
+RUN mkdir my_dist
+RUN cp -Lr app.js package.json bin config dist hass lib public store views node_modules my_dist/
+
+FROM node:erbium-stretch-slim
+LABEL maintainer="robertsLando"
+COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
+WORKDIR /usr/src/app
+EXPOSE 8091
+USER root
+CMD ["node", "bin/www"]
