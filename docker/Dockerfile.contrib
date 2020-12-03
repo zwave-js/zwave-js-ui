@@ -10,7 +10,8 @@ COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 USER node
 WORKDIR /home/node/node-zwave-js
 RUN rm -f package-lock.json
-RUN yarn install
+# adding a ridiculously large timeout to prevent timeout issues
+RUN yarn install --network-timeout 1000000000
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
 RUN for i in $(ls packages|grep -v testing); do yalc publish packages/$i ; done
@@ -22,7 +23,7 @@ RUN yalc add zwave-js && \
     yalc add @zwave-js/core && \
     yalc add @zwave-js/shared && \
     yalc add @zwave-js/serial
-RUN yarn install
+RUN yarn install --network-timeout 1000000000
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
 
