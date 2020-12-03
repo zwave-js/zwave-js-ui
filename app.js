@@ -21,7 +21,25 @@ let io
 
 let restarting = false
 
-debug('zwavejs2mqtt version: ' + require('./package.json').version)
+function printVersion () {
+  let rev
+
+  try {
+    rev = require('child_process')
+      .execSync('git rev-parse --short HEAD')
+      .toString()
+      .trim()
+  } catch (error) {
+    // git not installed
+  }
+  debug(
+    `zwavejs2mqtt version: ${require('./package.json').version}${
+      rev ? '.' + rev : ''
+    }`
+  )
+}
+
+printVersion()
 debug('Application path:' + utils.getPath(true))
 
 // view engine setup
