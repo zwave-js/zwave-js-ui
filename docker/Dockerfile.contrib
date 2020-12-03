@@ -6,9 +6,8 @@ ARG ZWJ_BRANCH=master
 ARG Z2M_BRANCH=master
 USER node
 WORKDIR /home/node
-RUN mkdir -p node-zwave-js zwavejs2mqtt
-RUN curl -sL https://github.com/zwave-js/node-zwave-js/tarball/${ZWJ_BRANCH} |  tar -xz --strip 1 -C node-zwave-js
-RUN curl -sL https://github.com/zwave-js/zwavejs2mqtt/tarball/${Z2M_BRANCH} |  tar -xz --strip 1 -C zwavejs2mqtt
+RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-js
+RUN git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
 
 ##### LOCAL SOURCE #####
 FROM node:erbium-buster AS local-copy-src
@@ -39,10 +38,11 @@ RUN yarn run build
 RUN yarn install --production --frozen-lockfile
 
 RUN mkdir my_dist
-RUN cp -Lr app.js package.json bin config dist hass lib public store views node_modules my_dist/
+RUN cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
 
 FROM node:erbium-buster-slim
 LABEL maintainer="robertsLando"
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
