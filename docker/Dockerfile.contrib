@@ -18,13 +18,24 @@ COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 FROM ${SRC} AS build
 USER root
 RUN yarn global add yalc
+RUN apt-get update && apt-get install -y jq
 USER node
 WORKDIR /home/node/node-zwave-js
 RUN rm -f package-lock.json
 RUN yarn install
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
-RUN for i in $(ls packages|grep -v testing); do yalc publish packages/$i ; done
+RUN for i in config core serial shared; do \
+    cd packages/$i && \
+    yarn version --no-git-tag-version --new-version $(yarn versions --json| \
+        jq -r '[.data."@zwave-js/'${i}'"]'[0])-$(git rev-parse --short HEAD) && \
+    yalc publish && \
+    cd ../..; \
+    done
+RUN cd packages/zwave-js && \
+    yarn version --no-git-tag-version --new-version $(yarn versions --json| \
+        jq -r '[.data.zwave-js]'[0])-$(git rev-parse --short HEAD) && \
+    yalc publish
 
 WORKDIR /home/node/zwavejs2mqtt
 RUN rm -f package-lock.json
@@ -36,6 +47,8 @@ RUN yalc add zwave-js && \
 RUN yarn install
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
+RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
+    jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
 
 RUN mkdir my_dist
 RUN cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
