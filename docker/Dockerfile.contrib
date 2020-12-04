@@ -16,13 +16,14 @@ COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
 ##### BUILD #####
 FROM ${SRC} AS build
+ARG YARN_NETWORK_TIMEOUT=30000
 USER root
 RUN yarn global add yalc
 RUN apt-get update && apt-get install -y jq
 USER node
 WORKDIR /home/node/node-zwave-js
 RUN rm -f package-lock.json
-RUN yarn install
+RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
 RUN for i in config core serial shared; do \
@@ -44,7 +45,7 @@ RUN yalc add zwave-js && \
     yalc add @zwave-js/core && \
     yalc add @zwave-js/shared && \
     yalc add @zwave-js/serial
-RUN yarn install
+RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
 RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
