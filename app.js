@@ -83,11 +83,7 @@ function printVersion () {
   } catch (error) {
     // git not installed
   }
-  debug(
-    `Version: ${require('./package.json').version}${
-      rev ? '.' + rev : ''
-    }`
-  )
+  debug(`Version: ${require('./package.json').version}${rev ? '.' + rev : ''}`)
 }
 
 // ### EXPRESS SETUP
@@ -132,9 +128,7 @@ app.use(cors())
 function setupSocket (server) {
   server.on('listening', function () {
     const addr = server.address()
-    const bind = typeof addr === 'string'
-      ? 'pipe ' + addr
-      : 'port ' + addr.port
+    const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
     debug('Listening on', bind)
   })
 
