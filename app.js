@@ -95,7 +95,7 @@ debug('Application path:' + utils.getPath(true))
 app.set('views', utils.joinPath(false, 'views'))
 app.set('view engine', 'ejs')
 
-app.use(logger('dev'))
+app.use(logger('dev', { stream: { write: msg => debug(msg.trimEnd()) } }))
 app.use(bodyParser.json({ limit: '50mb' }))
 app.use(
   bodyParser.urlencoded({
@@ -118,10 +118,10 @@ app.use('/', express.static(utils.joinPath(false, 'dist')))
 
 app.use(cors())
 
-// ### SOCKET.IO SETUP
+// ### SOCKET SETUP
 
 /**
- * Binds socket.io to `server`
+ * Binds socketManager to `server`
  *
  * @param {HttpServer} server
  */
@@ -155,6 +155,7 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.hass, async function (socket, data) {
+    debug('Hass api call:', data.apiName)
     switch (data.apiName) {
       case 'delete':
         gw.publishDiscovery(data.device, data.nodeId, true, true)
@@ -304,13 +305,7 @@ app.use(function (err, req, res) {
   res.locals.message = err.message
   res.locals.error = req.app.get('env') === 'development' ? err : {}
 
-  console.log(
-    '%s %s %d - Error: %s',
-    req.method,
-    req.url,
-    err.status,
-    err.message
-  )
+  debug(`${req.method} ${req.url} ${err.status} - Error: ${err.message}`)
 
   // render the error page
   res.status(err.status || 500)
