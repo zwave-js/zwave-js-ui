@@ -3,42 +3,36 @@
 /**
  * Module dependencies.
  */
-var reqlib = require('app-root-path').require
-var jsonStore = reqlib('/lib/jsonStore.js')
-var store = reqlib('/config/store.js')
-var debug = reqlib('/lib/debug')('App')
-var conf = reqlib('/config/app.js')
-var utils = reqlib('/lib/utils.js')
-var Promise = require('bluebird')
+const reqlib = require('app-root-path').require
+const jsonStore = reqlib('/lib/jsonStore.js')
+const store = reqlib('/config/store.js')
+const conf = reqlib('/config/app.js')
+
+console.log(`
+ ______                       _     ___                  _   _   
+|___  /                      (_)   |__ \\                | | | |  
+   / /_      ____ ___   _____ _ ___   ) |_ __ ___   __ _| |_| |_ 
+  / /\\ \\ /\\ / / _\` \\ \\ / / _ \\ / __| / /| '_ \` _ \\ / _\` | __| __|
+ / /__\\ V  V / (_| |\\ V /  __/ \\__ \\/ /_| | | | | | (_| | |_| |_ 
+/_____|\\_/\\_/ \\__,_| \\_/ \\___| |___/____|_| |_| |_|\\__, |\\__|\\__|
+                            _/ |                      | |        
+                           |__/                       |_|        
+`)
 
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
 // if jsonstore fails exit the application
 jsonStore.init(store)
   .then(() => {
-    var fs = require('fs')
-    var getFiles = (dir) => new Promise((resolve, reject) => fs.readdir(dir, (err, files) => err ? reject(err) : resolve(files)))
-    return getFiles(utils.getPath(true))
-  })
-  .then((files) => {
-    var path = require('path')
-    var fs = require('fs')
-    var moveIfExists = (path, newPath) => new Promise((resolve, reject) => fs.rename(path, newPath, (err) => (!err || err.code === 'ENOENT') ? resolve() : reject(err)))
-    files = files.filter(f => (path.basename(f) === 'OZW_Log.txt' || path.basename(f).endsWith('.xml')))
-    return Promise.map(files, function (f) {
-      return moveIfExists(f, utils.joinPath(path.dirname(f), 'store', path.basename(f)))
-    })
-  })
-  .then(() => {
-    var app = reqlib('app.js')
-    var http = require('http')
+    const { app, start } = reqlib('app.js')
+    const http = require('http')
 
     /**
      * Normalize a port into a number, string, or false.
      */
 
     function normalizePort (val) {
-      var port = parseInt(val, 10)
+      const port = parseInt(val, 10)
 
       if (isNaN(port)) {
         // named pipe
@@ -62,7 +56,7 @@ jsonStore.init(store)
         throw error
       }
 
-      var bind = typeof port === 'string'
+      const bind = typeof port === 'string'
         ? 'Pipe ' + port
         : 'Port ' + port
 
@@ -80,42 +74,30 @@ jsonStore.init(store)
     }
 
     /**
-     * Event listener for HTTP server "listening" event.
-     */
-
-    function onListening () {
-      var addr = server.address()
-      var bind = typeof addr === 'string'
-        ? 'pipe ' + addr
-        : 'port ' + addr.port
-      debug('Listening on', bind)
-    }
-
-    /**
      * Get port from environment and store in Express.
      */
 
-    var port = normalizePort(process.env.PORT || conf.port)
+    const port = normalizePort(process.env.PORT || conf.port)
     app.set('port', port)
 
     /**
      * Create HTTP server.
      */
 
-    var server = http.createServer(app)
+    const server = http.createServer(app)
 
     /**
      * Listen on provided port, on preferred network interfaces.
      */
 
-    var host = process.env.HOST || conf.host || '0.0.0.0'
+    const host = process.env.HOST || conf.host || '0.0.0.0'
 
     server.listen(port, host)
     server.on('error', onError)
-    server.on('listening', onListening)
 
-    app.startSocket(server)
+    start(server)
   })
   .catch(err => {
     console.error(err)
+    process.exit(1)
   })
