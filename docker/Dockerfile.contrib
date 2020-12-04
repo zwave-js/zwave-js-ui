@@ -35,7 +35,7 @@ RUN for i in config core serial shared; do \
     done
 RUN cd packages/zwave-js && \
     yarn version --no-git-tag-version --new-version $(yarn versions --json| \
-        jq -r '[.data.zwave-js]'[0])-$(git rev-parse --short HEAD) && \
+        jq -r '[.data."zwave-js"]'[0])-$(git rev-parse --short HEAD) && \
     yalc publish
 
 WORKDIR /home/node/zwavejs2mqtt
