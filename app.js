@@ -13,11 +13,14 @@ const Gateway = reqlib('/lib/Gateway')
 const store = reqlib('config/store.js')
 const debug = reqlib('/lib/debug')('App')
 const history = require('connect-history-api-fallback')
+const SocketManager = reqlib('/lib/SocketManager')
+const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const renderIndex = reqlib('/lib/renderIndex')
 
+const socketManager = new SocketManager()
+
 let gw // the gateway instance
-let io // socket io instance
 
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
@@ -29,7 +32,7 @@ function hasProperty (obj, prop) {
 }
 
 function start (server) {
-  bindSocket(server)
+  setupSocket(server)
   setupInterceptor()
   startGateway()
 }
@@ -45,7 +48,7 @@ function startGateway () {
   }
 
   if (settings.zwave) {
-    zwave = new ZWaveClient(settings.zwave, io)
+    zwave = new ZWaveClient(settings.zwave, socketManager.io)
   }
 
   gw = new Gateway(settings.gateway, zwave, mqtt)
@@ -59,7 +62,7 @@ function setupInterceptor () {
   // intercept logs and redirect them to socket
   const interceptor = function (write) {
     return function (...args) {
-      io.emit('DEBUG', args[0].toString())
+      socketManager.io.emit('DEBUG', args[0].toString())
       write.apply(process.stdout, args)
     }
   }
@@ -126,7 +129,7 @@ app.use(cors())
  *
  * @param {HttpServer} server
  */
-function bindSocket (server) {
+function setupSocket (server) {
   server.on('listening', function () {
     const addr = server.address()
     const bind = typeof addr === 'string'
@@ -135,22 +138,11 @@ function bindSocket (server) {
     debug('Listening on', bind)
   })
 
-  io = require('socket.io')(server)
+  socketManager.bindServer(server)
 
-  io.on('connection', onConnection)
-}
-
-/**
- * Handles new socket connections
- *
- * @param {Socket} socket
- */
-function onConnection (socket) {
-  debug('New connection', socket.id)
-
-  socket.on('INITED', function () {
+  socketManager.on(inboundEvents.init, function (socket) {
     if (gw.zwave) {
-      socket.emit(gw.zwave.socketEvents.init, {
+      socket.emit(socketEvents.init, {
         nodes: gw.zwave.nodes,
         info: gw.zwave.ozwConfig,
         error: gw.zwave.error,
@@ -159,16 +151,16 @@ function onConnection (socket) {
     }
   })
 
-  socket.on('ZWAVE_API', async function (data) {
+  socketManager.on(inboundEvents.zwave, async function (socket, data) {
     debug('Zwave api call:', data.api, data.args)
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
-      socket.emit(gw.zwave.socketEvents.api, result)
+      socket.emit(socketEvents.api, result)
     }
   })
 
-  socket.on('HASS_API', async function (data) {
+  socketManager.on(inboundEvents.hass, async function (socket, data) {
     switch (data.apiName) {
       case 'delete':
         gw.publishDiscovery(data.device, data.nodeId, true, true)
@@ -192,10 +184,6 @@ function onConnection (socket) {
         await gw.zwave.storeDevices(data.devices, data.nodeId, data.remove)
         break
     }
-  })
-
-  socket.on('disconnect', function () {
-    debug('User disconnected', socket.id)
   })
 }
 
