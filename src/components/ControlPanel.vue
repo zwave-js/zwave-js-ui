@@ -220,10 +220,12 @@
 
                     <!-- CONFIG VALUES -->
                     <v-expansion-panel>
-                      <v-expansion-panel-header v-slot="{ open }">
+                      <v-expansion-panel-header>
+                        <!-- v-slot="{ open }"> -->
                         <v-row no-gutters>
                           <v-col style="max-width:150px">Configuration</v-col>
-                          <v-col v-if="open">
+                          <!-- Disable refresh button, just keep in case implemented in future
+                            <v-col v-if="open">
                             <v-btn
                               rounded
                               color="primary"
@@ -233,7 +235,7 @@
                               dark
                               >Refresh values</v-btn
                             >
-                          </v-col>
+                          </v-col> -->
                         </v-row>
                       </v-expansion-panel-header>
                       <v-expansion-panel-content>
