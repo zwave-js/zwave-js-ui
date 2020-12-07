@@ -3,9 +3,9 @@
 
 module.exports = {
   // Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
-  binary_sensor_occupancy: {
+  binary_sensor_motion: {
     type: 'binary_sensor',
-    object_id: 'occupancy',
+    object_id: 'motion',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
@@ -43,9 +43,9 @@ module.exports = {
       device_class: 'lock'
     }
   },
-  binary_sensor_water_leak: {
+  binary_sensor_water: {
     type: 'binary_sensor',
-    object_id: 'water_leak',
+    object_id: 'water',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
@@ -73,9 +73,19 @@ module.exports = {
       device_class: 'gas'
     }
   },
-  binary_sensor_carbon_monoxide: {
+  binary_sensor_co: {
     type: 'binary_sensor',
-    object_id: 'carbon_monoxide',
+    object_id: 'co',
+    discovery_payload: {
+      payload_on: true,
+      payload_off: false,
+      value_template: '{{ value_json.value }}',
+      device_class: 'safety'
+    }
+  },
+  binary_sensor_co2: {
+    type: 'binary_sensor',
+    object_id: 'co2',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
@@ -276,11 +286,12 @@ module.exports = {
     type: 'climate',
     object_id: 'climate',
     discovery_payload: {
-      min_temp: 7,
-      max_temp: 30,
-      modes: ['off', 'auto', 'heat'],
+      min_temp: 5,
+      max_temp: 40,
+      temp_step: 0.5,
+      modes: [],
       mode_state_topic: true,
-      mode_state_template: '{{ value_json.mode }}',
+      mode_state_template: '{{ value_json.value }}',
       mode_command_topic: true,
       current_temperature_topic: true,
       current_temperature_template: '{{ value_json.value }}',

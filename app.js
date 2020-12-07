@@ -1,31 +1,101 @@
-var express = require('express')
-var reqlib = require('app-root-path').require
-var logger = require('morgan')
-var cookieParser = require('cookie-parser')
-var bodyParser = require('body-parser')
-var app = express()
-var SerialPort = require('serialport')
-var jsonStore = reqlib('/lib/jsonStore.js')
-var cors = require('cors')
-var ZWaveClient = reqlib('/lib/ZwaveClient')
-var MqttClient = reqlib('/lib/MqttClient')
-var Gateway = reqlib('/lib/Gateway')
-var store = reqlib('config/store.js')
-var debug = reqlib('/lib/debug')('App')
-var history = require('connect-history-api-fallback')
-var utils = reqlib('/lib/utils.js')
+const express = require('express')
+const reqlib = require('app-root-path').require
+const logger = require('morgan')
+const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
+const app = express()
+const SerialPort = require('serialport')
+const jsonStore = reqlib('/lib/jsonStore.js')
+const cors = require('cors')
+const ZWaveClient = reqlib('/lib/ZwaveClient')
+const MqttClient = reqlib('/lib/MqttClient')
+const Gateway = reqlib('/lib/Gateway')
+const store = reqlib('config/store.js')
+const debug = reqlib('/lib/debug')('App')
+const history = require('connect-history-api-fallback')
+const SocketManager = reqlib('/lib/SocketManager')
+const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
+const utils = reqlib('/lib/utils.js')
 const renderIndex = reqlib('/lib/renderIndex')
-var gw // the gateway instance
-let io
 
-debug('zwavejs2mqtt version: ' + require('./package.json').version)
+const socketManager = new SocketManager()
+
+let gw // the gateway instance
+
+// flag used to prevent multiple restarts while one is already in progress
+let restarting = false
+
+// ### UTILS
+
+function hasProperty (obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop)
+}
+
+function start (server) {
+  setupSocket(server)
+  setupInterceptor()
+  startGateway()
+}
+
+function startGateway () {
+  const settings = jsonStore.get(store.settings)
+
+  let mqtt
+  let zwave
+
+  if (settings.mqtt) {
+    mqtt = new MqttClient(settings.mqtt)
+  }
+
+  if (settings.zwave) {
+    zwave = new ZWaveClient(settings.zwave, socketManager.io)
+  }
+
+  gw = new Gateway(settings.gateway, zwave, mqtt)
+
+  gw.start()
+
+  restarting = false
+}
+
+function setupInterceptor () {
+  // intercept logs and redirect them to socket
+  const interceptor = function (write) {
+    return function (...args) {
+      socketManager.io.emit('DEBUG', args[0].toString())
+      write.apply(process.stdout, args)
+    }
+  }
+
+  process.stdout.write = interceptor(process.stdout.write)
+  process.stderr.write = interceptor(process.stderr.write)
+}
+
+// print actual application version (with git short sha is git is installed)
+function printVersion () {
+  let rev
+
+  try {
+    rev = require('child_process')
+      .execSync('git rev-parse --short HEAD')
+      .toString()
+      .trim()
+  } catch (error) {
+    // git not installed
+  }
+  debug(`Version: ${require('./package.json').version}${rev ? '.' + rev : ''}`)
+}
+
+// ### EXPRESS SETUP
+
+printVersion()
 debug('Application path:' + utils.getPath(true))
 
 // view engine setup
 app.set('views', utils.joinPath(false, 'views'))
 app.set('view engine', 'ejs')
 
-app.use(logger('dev'))
+app.use(logger('dev', { stream: { write: msg => debug(msg.trimEnd()) } }))
 app.use(bodyParser.json({ limit: '50mb' }))
 app.use(
   bodyParser.urlencoded({
@@ -36,119 +106,101 @@ app.use(
 )
 app.use(cookieParser())
 
+app.use(
+  history({
+    index: '/'
+  })
+)
+
 app.get('/', renderIndex)
 
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
 app.use(cors())
 
-app.use(history())
+// ### SOCKET SETUP
 
-function startGateway () {
-  var settings = jsonStore.get(store.settings)
-
-  var mqtt, zwave
-
-  if (settings.mqtt) {
-    mqtt = new MqttClient(settings.mqtt)
-  }
-
-  if (settings.zwave) {
-    zwave = new ZWaveClient(settings.zwave, io)
-  }
-
-  gw = new Gateway(settings.gateway, zwave, mqtt)
-}
-
-app.startSocket = function (server) {
-  io = require('socket.io')(server)
-
-  if (gw.zwave) gw.zwave.socket = io
-
-  io.on('connection', function (socket) {
-    debug('New connection', socket.id)
-
-    socket.on('INITED', function () {
-      if (gw.zwave) {
-        socket.emit(gw.zwave.socketEvents.init, {
-          nodes: gw.zwave.nodes,
-          info: gw.zwave.ozwConfig,
-          error: gw.zwave.error,
-          cntStatus: gw.zwave.cntStatus
-        })
-      }
-    })
-
-    socket.on('ZWAVE_API', async function (data) {
-      debug('Zwave api call:', data.api, data.args)
-      if (gw.zwave) {
-        var result = await gw.zwave.callApi(data.api, ...data.args)
-        result.api = data.api
-        socket.emit(gw.zwave.socketEvents.api, result)
-      }
-    })
-
-    socket.on('HASS_API', async function (data) {
-      switch (data.apiName) {
-        case 'delete':
-          gw.publishDiscovery(data.device, data.node_id, true, true)
-          break
-        case 'discover':
-          gw.publishDiscovery(data.device, data.node_id, false, true)
-          break
-        case 'rediscoverNode':
-          gw.rediscoverNode(data.node_id)
-          break
-        case 'disableDiscovery':
-          gw.disableDiscovery(data.node_id)
-          break
-        case 'update':
-          gw.zwave.updateDevice(data.device, data.node_id)
-          break
-        case 'add':
-          gw.zwave.addDevice(data.device, data.node_id)
-          break
-        case 'store':
-          await gw.zwave.storeDevices(data.devices, data.node_id, data.remove)
-          break
-      }
-    })
-
-    socket.on('disconnect', function () {
-      debug('User disconnected', socket.id)
-    })
+/**
+ * Binds socketManager to `server`
+ *
+ * @param {HttpServer} server
+ */
+function setupSocket (server) {
+  server.on('listening', function () {
+    const addr = server.address()
+    const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
+    debug('Listening on', bind)
   })
 
-  const interceptor = function (write) {
-    return function (...args) {
-      io.emit('DEBUG', args[0].toString())
-      write.apply(process.stdout, args)
-    }
-  }
+  socketManager.bindServer(server)
 
-  process.stdout.write = interceptor(process.stdout.write)
-  process.stderr.write = interceptor(process.stderr.write)
+  socketManager.on(inboundEvents.init, function (socket) {
+    if (gw.zwave) {
+      socket.emit(socketEvents.init, {
+        nodes: gw.zwave.nodes,
+        info: gw.zwave.ozwConfig,
+        error: gw.zwave.error,
+        cntStatus: gw.zwave.cntStatus
+      })
+    }
+  })
+
+  socketManager.on(inboundEvents.zwave, async function (socket, data) {
+    debug('Zwave api call:', data.api, data.args)
+    if (gw.zwave) {
+      const result = await gw.zwave.callApi(data.api, ...data.args)
+      result.api = data.api
+      socket.emit(socketEvents.api, result)
+    }
+  })
+
+  socketManager.on(inboundEvents.hass, async function (socket, data) {
+    debug('Hass api call:', data.apiName)
+    switch (data.apiName) {
+      case 'delete':
+        gw.publishDiscovery(data.device, data.nodeId, true, true)
+        break
+      case 'discover':
+        gw.publishDiscovery(data.device, data.nodeId, false, true)
+        break
+      case 'rediscoverNode':
+        gw.rediscoverNode(data.nodeId)
+        break
+      case 'disableDiscovery':
+        gw.disableDiscovery(data.nodeId)
+        break
+      case 'update':
+        gw.zwave.updateDevice(data.device, data.nodeId)
+        break
+      case 'add':
+        gw.zwave.addDevice(data.device, data.nodeId)
+        break
+      case 'store':
+        await gw.zwave.storeDevices(data.devices, data.nodeId, data.remove)
+        break
+    }
+  })
 }
 
-// ----- APIs ------
+// ### APIs
 
 app.get('/health', async function (req, res) {
-  var mqtt = false
-  var zwave = false
+  let mqtt = false
+  let zwave = false
 
   if (gw) {
     mqtt = gw.mqtt ? gw.mqtt.getStatus().status : false
     zwave = gw.zwave ? gw.zwave.getStatus().status : false
   }
 
-  var status = mqtt && zwave
+  const status = mqtt && zwave
 
   res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 })
 
 app.get('/health/:client', async function (req, res) {
-  var client = req.params.client
-  var status
+  const client = req.params.client
+  let status
 
   if (client !== 'zwave' && client !== 'mqtt') {
     res.status(500).send("Requested client doesn 't exist")
@@ -161,15 +213,17 @@ app.get('/health/:client', async function (req, res) {
 
 // get settings
 app.get('/api/settings', async function (req, res) {
-  var data = {
+  const data = {
     success: true,
     settings: jsonStore.get(store.settings),
     devices: gw.zwave ? gw.zwave.devices : {},
     serial_ports: []
   }
+
+  let ports
   if (process.platform !== 'sunos') {
     try {
-      var ports = await SerialPort.list()
+      ports = await SerialPort.list()
     } catch (error) {
       debug(error)
     }
@@ -190,7 +244,7 @@ app.get('/api/exportConfig', function (req, res) {
 
 // import config
 app.post('/api/importConfig', async function (req, res) {
-  var config = req.body.data
+  const config = req.body.data
   try {
     if (!gw.zwave) throw Error('Zwave client not inited')
 
@@ -198,13 +252,14 @@ app.post('/api/importConfig', async function (req, res) {
     else {
       for (let i = 0; i < config.length; i++) {
         const e = config[i]
-        if (e && (!e.hasOwnProperty('name') || !e.hasOwnProperty('loc'))) {
+        if (e && (!hasProperty(e, 'name') || !hasProperty(e, 'loc'))) {
           throw Error('Configuration not valid')
         } else if (e) {
           await gw.zwave.callApi('_setNodeName', i, e.name || '')
           await gw.zwave.callApi('_setNodeLocation', i, e.loc || '')
-          if (e.hassDevices)
+          if (e.hassDevices) {
             await gw.zwave.storeDevices(e.hassDevices, i, false)
+          }
         }
       }
     }
@@ -217,54 +272,57 @@ app.post('/api/importConfig', async function (req, res) {
 })
 
 // update settings
-app.post('/api/settings', function (req, res) {
-  jsonStore
-    .put(store.settings, req.body)
-    .then(data => {
-      res.json({ success: true, message: 'Configuration updated successfully' })
-      return gw.close()
-    })
-    .then(() => startGateway())
-    .catch(err => {
-      debug(err)
-      res.json({ success: false, message: err.message })
-    })
+app.post('/api/settings', async function (req, res) {
+  try {
+    if (restarting) {
+      throw Error(
+        'Gateway is restarting, wait a moment before doing another request'
+      )
+    }
+    restarting = true
+    await jsonStore.put(store.settings, req.body)
+    await gw.close()
+    startGateway()
+    res.json({ success: true, message: 'Configuration updated successfully' })
+  } catch (error) {
+    debug(error)
+    res.json({ success: false, message: error.message })
+  }
 })
+
+// ### ERROR HANDLERS
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  var err = new Error('Not Found')
+  const err = new Error('Not Found')
   err.status = 404
   next(err)
 })
 
 // error handler
-app.use(function (err, req, res, next) {
+app.use(function (err, req, res) {
   // set locals, only providing error in development
   res.locals.message = err.message
   res.locals.error = req.app.get('env') === 'development' ? err : {}
 
-  console.log(
-    '%s %s %d - Error: %s',
-    req.method,
-    req.url,
-    err.status,
-    err.message
-  )
+  debug(`${req.method} ${req.url} ${err.status} - Error: ${err.message}`)
 
   // render the error page
   res.status(err.status || 500)
   res.redirect('/')
 })
 
-startGateway()
-
 process.removeAllListeners('SIGINT')
 
 process.on('SIGINT', function () {
-  debug('Closing...')
+  debug('Closing clients...')
   gw.close()
-  process.exit()
+    .catch(err => {
+      debug('Error while closing clients', err)
+    })
+    .finally(() => {
+      process.exit()
+    })
 })
 
-module.exports = app
+module.exports = { app, start }

@@ -70,8 +70,6 @@
           @showSnackbar="showSnackbar"
           @showConfirm="confirm"
           :socket="socket"
-          :socketEvents="socketEvents"
-          :socketActions="socketActions"
         />
       </v-main>
     </main>
@@ -222,21 +220,6 @@ export default {
         { icon: 'settings', title: 'Settings', path: '/settings' },
         { icon: 'share', title: 'Network graph', path: '/mesh' }
       ],
-      socketEvents: {
-        init: 'INIT',
-        controller: 'CONTROLLER_CMD',
-        connected: 'CONNECTED',
-        nodeRemoved: 'NODE_REMOVED',
-        nodeUpdated: 'NODE_UPDATED',
-        valueUpdated: 'VALUE_UPDATED',
-        api: 'API_RETURN',
-        debug: 'DEBUG'
-      },
-      socketActions: {
-        init: 'INITED',
-        hass: 'HASS_API',
-        zwave: 'ZWAVE_API'
-      },
       status: '',
       statusColor: '',
       drawer: false,

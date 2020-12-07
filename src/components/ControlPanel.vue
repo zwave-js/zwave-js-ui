@@ -660,6 +660,7 @@ import ValueID from '@/components/ValueId'
 import AnsiUp from 'ansi_up'
 
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
+import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
 const ansiUp = new AnsiUp()
 
@@ -668,9 +669,7 @@ const MAX_DEBUG_LINES = 300
 export default {
   name: 'ControlPanel',
   props: {
-    socket: Object,
-    socketActions: Object,
-    socketEvents: Object
+    socket: Object
   },
   components: {
     ValueID,
@@ -938,7 +937,7 @@ export default {
       }
       this.errorDevice = !valid
 
-      return valid || 'JSON test failed'
+      return this.deviceJSON === '' || valid || 'JSON test failed'
     },
     async importConfiguration () {
       if (
@@ -997,7 +996,7 @@ export default {
           api: apiName,
           args: args
         }
-        this.socket.emit(this.socketActions.zwave, data)
+        this.socket.emit(socketActions.zwave, data)
       } else {
         this.showSnackbar('Socket disconnected')
       }
@@ -1074,7 +1073,7 @@ export default {
           'alert'
         ))
       ) {
-        this.socket.emit(this.socketActions.hass, {
+        this.socket.emit(socketActions.hass, {
           apiName: 'delete',
           device: device,
           nodeId: this.selectedNode.id
@@ -1090,7 +1089,7 @@ export default {
           'Are you sure you want to re-discover all node values?'
         ))
       ) {
-        this.socket.emit(this.socketActions.hass, {
+        this.socket.emit(socketActions.hass, {
           apiName: 'rediscoverNode',
           nodeId: this.selectedNode.id
         })
@@ -1105,7 +1104,7 @@ export default {
           'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store'
         ))
       ) {
-        this.socket.emit(this.socketActions.hass, {
+        this.socket.emit(socketActions.hass, {
           apiName: 'disableDiscovery',
           nodeId: this.selectedNode.id
         })
@@ -1116,10 +1115,11 @@ export default {
       if (
         device &&
         (await this.$listeners.showConfirm(
+          'Rediscover Device',
           'Are you sure you want to re-discover selected device?'
         ))
       ) {
-        this.socket.emit(this.socketActions.hass, {
+        this.socket.emit(socketActions.hass, {
           apiName: 'discover',
           device: device,
           nodeId: this.selectedNode.id
@@ -1134,7 +1134,7 @@ export default {
           this.selectedDevice.id,
           updated
         )
-        this.socket.emit(this.socketActions.hass, {
+        this.socket.emit(socketActions.hass, {
           apiName: 'update',
           device: updated,
           nodeId: this.selectedNode.id
@@ -1144,7 +1144,7 @@ export default {
     addDevice () {
       if (!this.errorDevice) {
         var newDevice = JSON.parse(this.deviceJSON)
-        this.socket.emit(this.socketActions.hass, {
+        this.socket.emit(socketActions.hass, {
           apiName: 'add',
           device: newDevice,
           nodeId: this.selectedNode.id
@@ -1152,7 +1152,7 @@ export default {
       }
     },
     storeDevices (remove) {
-      this.socket.emit(this.socketActions.hass, {
+      this.socket.emit(socketActions.hass, {
         apiName: 'store',
         devices: this.selectedNode.hassDevices,
         nodeId: this.selectedNode.id,
@@ -1355,7 +1355,7 @@ export default {
         v.toUpdate = true
 
         if (v.type === 'number') {
-          v.newValue = parseInt(v.newValue)
+          v.newValue = Number(v.newValue)
         }
 
         // it's a button
@@ -1403,24 +1403,24 @@ export default {
 
     this.nodeTableItems = !isNaN(itemsPerPage) ? itemsPerPage : 10
 
-    this.socket.on(this.socketEvents.controller, data => {
+    this.socket.on(socketEvents.controller, data => {
       self.cnt_status = data
     })
 
-    this.socket.on(this.socketEvents.connected, info => {
+    this.socket.on(socketEvents.connected, info => {
       self.homeid = info.homeid
       self.homeHex = info.name
       self.ozwVersion = info.version
     })
 
-    this.socket.on(this.socketEvents.nodeRemoved, node => {
+    this.socket.on(socketEvents.nodeRemoved, node => {
       if (self.selectedNode && self.selectedNode.id === node.id) {
         self.selectedNode = null
       }
       self.$set(self.nodes, node.id, node)
     })
 
-    this.socket.on(this.socketEvents.debug, data => {
+    this.socket.on(socketEvents.debug, data => {
       if (self.debugActive) {
         data = ansiUp.ansi_to_html(data)
         data = data.replace(/\n/g, '</br>')
@@ -1437,7 +1437,7 @@ export default {
       }
     })
 
-    this.socket.on(this.socketEvents.init, data => {
+    this.socket.on(socketEvents.init, data => {
       // convert node values in array
       var nodes = data.nodes
       for (var i = 0; i < nodes.length; i++) {
@@ -1450,7 +1450,7 @@ export default {
       self.ozwVersion = data.info.version
     })
 
-    this.socket.on(this.socketEvents.nodeUpdated, data => {
+    this.socket.on(socketEvents.nodeUpdated, data => {
       self.initNode(data)
       if (!self.nodes[data.id] || self.nodes[data.id].failed) {
         // add missing nodes
@@ -1469,8 +1469,21 @@ export default {
       }
     })
 
-    this.socket.on(this.socketEvents.valueUpdated, data => {
-      var valueId = self.getValue(data)
+    this.socket.on(socketEvents.valueRemoved, data => {
+      const valueId = self.getValue(data)
+
+      if (valueId) {
+        const node = self.nodes[data.nodeId]
+        const index = node.values.indexOf(valueId)
+
+        if (index >= 0) {
+          node.values.splice(index, 1)
+        }
+      }
+    })
+
+    this.socket.on(socketEvents.valueUpdated, data => {
+      const valueId = self.getValue(data)
 
       if (valueId) {
         // this value is waiting for an update
@@ -1480,10 +1493,17 @@ export default {
         }
         valueId.newValue = data.value
         valueId.value = data.value
+      } else {
+        // means that this value has been added
+        const node = self.nodes[data.nodeId]
+        if (node) {
+          data.newValue = data.value
+          node.values.push(data)
+        }
       }
     })
 
-    this.socket.on(this.socketEvents.api, async data => {
+    this.socket.on(socketEvents.api, async data => {
       if (data.success) {
         switch (data.api) {
           case 'getAssociations':
@@ -1521,12 +1541,12 @@ export default {
       }
     })
 
-    this.socket.emit(this.socketActions.init, true)
+    this.socket.emit(socketActions.init, true)
   },
   beforeDestroy () {
     if (this.socket) {
       // unbind events
-      for (const event in this.socketEvents) {
+      for (const event in socketEvents) {
         this.socket.off(event)
       }
     }

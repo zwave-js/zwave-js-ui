@@ -1,3 +1,4 @@
+
 # zwavejs2mqtt-docker
 
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
@@ -209,3 +210,34 @@ docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mq
 ```bash
 docker run --rm -p 8091:8091 --device=/dev/ttyACM0 -it --mount source=zwavejs2mqtt,target=/dist/pkg zwavejs/zwavejs2mqtt_build sh
 ```
+
+## Building a container using Dockerfile.contrib
+
+This is typically used to build zwavejs2mqtt from git with a version of zwave-js also from git, for instance the latest master or a branch.
+
+### Prerequisites
+
+In order to build it you first need the source code from github.
+
+```bash
+mkdir -p testing && cd testing
+git clone https://github.com/zwave-js/node-zwave-js
+git clone https://github.com/zwave-js/zwavejs2mqtt
+## Checkout repos to any branch/commit you need to test
+```
+
+### Build
+
+The run the build from outside the two repo folders.
+
+```bash
+DOCKER_BUILDKIT=1 docker build --build-arg SRC=git-clone-src --build-arg Z2M_BRANCH=feat#startStop --build-arg ZWJ_BRANCH=master --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
+```
+
+or
+
+```bash
+DOCKER_BUILDKIT=1 docker build --build-arg SRC=local-copy-src --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
+```
+
+> :star: **Note**: Only BuildKit enabled builders have the capability to efficiently skip the unused source stage so it never runs.
