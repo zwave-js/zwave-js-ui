@@ -120,12 +120,12 @@
 <script>
 import D3Network from 'vue-d3-network'
 
+import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+
 export default {
   name: 'Mesh',
   props: {
-    socket: Object,
-    socketActions: Object,
-    socketEvents: Object
+    socket: Object
   },
   components: {
     D3Network
@@ -221,13 +221,13 @@ export default {
           api: apiName,
           args: args
         }
-        this.socket.emit(this.socketActions.zwave, data)
+        this.socket.emit(socketActions.zwave, data)
       } else {
         this.showSnackbar('Socket disconnected')
       }
     },
     refresh () {
-      this.socket.emit(this.socketActions.zwave, {
+      this.socket.emit(socketActions.zwave, {
         api: 'refreshNeighbors',
         args: []
       })
@@ -251,23 +251,23 @@ export default {
   mounted () {
     var self = this
 
-    this.socket.on(this.socketEvents.nodeRemoved, node => {
+    this.socket.on(socketEvents.nodeRemoved, node => {
       self.$set(self.nodes, node.id, node)
     })
 
-    this.socket.on(this.socketEvents.init, data => {
+    this.socket.on(socketEvents.init, data => {
       var nodes = data.nodes
       for (var i = 0; i < nodes.length; i++) {
         self.nodes.push(self.convertNode(nodes[i]))
       }
     })
 
-    this.socket.on(this.socketEvents.nodeRemoved, node => {
+    this.socket.on(socketEvents.nodeRemoved, node => {
       self.$set(self.nodes, node.id, node)
       self.refresh()
     })
 
-    this.socket.on(this.socketEvents.nodeUpdated, data => {
+    this.socket.on(socketEvents.nodeUpdated, data => {
       var node = self.convertNode(data)
 
       // node added
@@ -290,7 +290,7 @@ export default {
       }
     })
 
-    this.socket.on(this.socketEvents.api, data => {
+    this.socket.on(socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
           case 'refreshNeighbors':
@@ -310,7 +310,7 @@ export default {
       }
     })
 
-    this.socket.emit(this.socketActions.init, true)
+    this.socket.emit(socketActions.init, true)
     this.refresh()
 
     // make properties window draggable
@@ -364,7 +364,7 @@ export default {
   beforeDestroy () {
     if (this.socket) {
       // unbind events
-      for (const event in this.socketEvents) {
+      for (const event in socketEvents) {
         this.socket.off(event)
       }
     }

@@ -82,7 +82,6 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   - [Environment variables](#environment-variables)
   - [:question: FAQ](#question-faq)
   - [:pray: Thanks](#pray-thanks)
-  - [:pencil: TODOs](#pencil-todos)
   - [:bowtie: Author](#bowtie-author)
 
 ## :electric_plug: Installation
@@ -364,6 +363,18 @@ Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to
 Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
 
 #### Special topics
+
+- **App version**:
+
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/version`
+
+The payload will be in the time-value json format and the value will contain the app string version.
+
+- **Mqtt status**:
+
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/status`
+
+The payload will be in the time-value json format and the value will be `true` when mqtt is connected, `false` otherwise.
 
 - **Node status**:
 
