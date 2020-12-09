@@ -289,7 +289,7 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
-                      <v-flex v-if="gateway.type === 0"  xs6>
+                      <v-flex v-if="gateway.type === 0" xs6>
                         <v-switch
                           label="Include Node info"
                           hint="Include Node's Name and Location on Payload"
