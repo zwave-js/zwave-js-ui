@@ -824,6 +824,7 @@ Thanks to this people for help with issues tracking and contributions:
 - [**Jay**](https://github.com/jshridha)
 - [**Thiago Oliveira**](https://github.com/chilicheech)
 - [**Vassilis Aretakis**](https://github.com/billiaz)
+- [**Andreas Hochsteger**](https://github.com/ahochsteger)
 
 ## :bowtie: Author
 
