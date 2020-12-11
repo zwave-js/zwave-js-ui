@@ -82,7 +82,6 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   - [Environment variables](#environment-variables)
   - [:question: FAQ](#question-faq)
   - [:pray: Thanks](#pray-thanks)
-  - [:pencil: TODOs](#pencil-todos)
   - [:bowtie: Author](#bowtie-author)
 
 ## :electric_plug: Installation
@@ -355,6 +354,7 @@ Gateway settings:
 - **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
 - **Ignore location**: Enable this to remove nodes location from topics
 - **Send Zwave Events**: Enable this to send all Zwave client events to MQTT. More info [here](#zwave-events)
+- **Include Node Info**: Adds in ValueId json payload two extra values with the Name: `nodeName` and Location `nodeLocation` for better graphing capabilities (usefull in tools like InfluxDb,Grafana)
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#robot-home-assistant-integration-beta))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
@@ -364,6 +364,18 @@ Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to
 Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
 
 #### Special topics
+
+- **App version**:
+
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/version`
+
+The payload will be in the time-value json format and the value will contain the app string version.
+
+- **Mqtt status**:
+
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/status`
+
+The payload will be in the time-value json format and the value will be `true` when mqtt is connected, `false` otherwise.
 
 - **Node status**:
 
@@ -811,6 +823,7 @@ Thanks to this people for help with issues tracking and contributions:
 - [**Jorge Schrauwen**](https://github.com/sjorge)
 - [**Jay**](https://github.com/jshridha)
 - [**Thiago Oliveira**](https://github.com/chilicheech)
+- [**Vassilis Aretakis**](https://github.com/billiaz)
 
 ## :bowtie: Author
 
