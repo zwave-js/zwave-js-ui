@@ -740,27 +740,51 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 ### Multicast
 
-You can send Multicast requests to _all values with a specific suffix_ of a _group_ of nodes in the network.
+You can send Multicast requests to _all values_ of a _group_ of nodes in the network.
 
 Multicast API is accessible from:
 
-`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/multicast/<value_topic_suffix>/set`
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/multicast/<optional_id?>/set`
 
-- `value_topic_suffix`: the suffix of the topic of the value I want to control using multicast.
+- `optional_id`: an optional id to identify this specific multicast request.
 
-It works like the set value API without the node name and location properties.
-If the API is correctly called the same payload of the request will be published
+When the request is received the same payload of the request will be published
 to the topic without `/set` suffix.
 
-Example of multicast command (gateway configured as `named topics`):
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/multicast/set`
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/multicast/thermostat_setpoint/heating/set`
+The `payload` must have all the information of a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid):
 
-Payload: `{ "nodes": [5, 7, 9], "value": 25.5}`
+```js
+interface ValueID {
+    commandClass: CommandClasses;
+    endpoint?: number;
+    property: string | number;
+    propertyKey?: string | number;
+}
+```
 
-Nodes **5, 7, 9** with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
+And needs also a `value` and `nodes` property:
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/multicast/thermostat_setpoint/heating`
+- `value`: `number|string|boolean` the value you want to write
+- `nodes`: `number[]` the array of nodes ids that will receive the multicast
+
+__EXAMPLE__:
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-test/multicast/set`
+
+Payload:
+
+```json
+{
+  "commandClass": 37,
+  "property": "targetValue",
+  "value": true,
+  "nodes": [5, 7, 9]
+}
+```
+
+Nodes **5, 7, 9** with command class `37` (Binary Switch) and property `targetValue` will be set to `true`
 
 ### Broadcast
 
@@ -768,23 +792,30 @@ You can send broadcast values to _all values with a specific suffix_ in the netw
 
 Broadcast API is accessible from:
 
-`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic_suffix>/set`
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<optional_id?>/set`
 
-- `value_topic_suffix`: the suffix of the topic of the value I want to control using broadcast.
+- `optional_id`: an optional id to identify this specific broadcast.
 
-It works like the set value API without the node name and location properties.
-If the API is correctly called the same payload of the request will be published
+When the request is received the same payload of the request will be published
 to the topic without `/set` suffix.
 
-Example of broadcast command (gateway configured as `named topics`):
+The `payload` is the same as a multicast request (check previous section) without the `nodes` array.
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating/set`
+__EXAMPLE__:
 
-Payload: `25.5`
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/set`
 
-All nodes with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
+Payload:
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
+```json
+{
+  "commandClass": 38,
+  "property": "targetValue",
+  "value": 50
+}
+```
+
+All nodes with command class `38` (Multilevel Switch) will receive a write request to property `targetValue` with a value of `50`.
 
 ## :camera: Screenshots
 
