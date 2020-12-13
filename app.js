@@ -11,7 +11,8 @@ const ZWaveClient = reqlib('/lib/ZwaveClient')
 const MqttClient = reqlib('/lib/MqttClient')
 const Gateway = reqlib('/lib/Gateway')
 const store = reqlib('config/store.js')
-const logger = reqlib('/lib/logger.js').module('App')
+const loggers = reqlib('/lib/logger.js')
+const logger = loggers.module('App')
 const history = require('connect-history-api-fallback')
 const SocketManager = reqlib('/lib/SocketManager')
 const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
@@ -37,11 +38,20 @@ function start (server) {
   startGateway()
 }
 
+function setupLogging (settings) {
+  loggers.setupAll({
+    level: settings.zwave.logLevel,
+    logToFile: settings.zwave.logToFile
+  })
+}
+
 function startGateway () {
   const settings = jsonStore.get(store.settings)
 
   let mqtt
   let zwave
+
+  setupLogging(settings)
 
   if (settings.mqtt) {
     mqtt = new MqttClient(settings.mqtt)
@@ -283,6 +293,7 @@ app.post('/api/settings', async function (req, res) {
     }
     restarting = true
     await jsonStore.put(store.settings, req.body)
+    setupLogging(req.body)
     await gw.close()
     startGateway()
     res.json({ success: true, message: 'Configuration updated successfully' })
