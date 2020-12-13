@@ -289,6 +289,14 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
+                      <v-flex v-if="gateway.type !== 2" xs6>
+                        <v-switch
+                          label="Include Node info"
+                          hint="Include Node's Name and Location on Payload"
+                          v-model="gateway.includeNodeInfo"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
                       <v-flex xs6>
                         <v-switch
                           label="Hass Discovery"

@@ -1,3 +1,4 @@
+
 # zwavejs2mqtt-docker
 
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
@@ -230,5 +231,13 @@ git clone https://github.com/zwave-js/zwavejs2mqtt
 The run the build from outside the two repo folders.
 
 ```bash
-docker build -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
+DOCKER_BUILDKIT=1 docker build --build-arg SRC=git-clone-src --build-arg Z2M_BRANCH=feat#startStop --build-arg ZWJ_BRANCH=master --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
 ```
+
+or
+
+```bash
+DOCKER_BUILDKIT=1 docker build --build-arg SRC=local-copy-src --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
+```
+
+> :star: **Note**: Only BuildKit enabled builders have the capability to efficiently skip the unused source stage so it never runs.
