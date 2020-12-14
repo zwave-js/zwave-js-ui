@@ -528,8 +528,8 @@ You can specify your custom devices configuration inside `store/customDevices(.j
   ],
   mode_map: { off: 0, heat: 1, cool: 2 },
   setpoint_topic: {
-    'Heat (Default)': '67-0-setpoint-1',
-    Cool: '67-0-setpoint-2'
+    1: '67-0-setpoint-1',
+    2: '67-0-setpoint-2'
   },
   default_setpoint: '67-0-setpoint-1',
   discovery_payload: {
