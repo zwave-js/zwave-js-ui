@@ -37,21 +37,6 @@
                           @click:append-outer="randomKey"
                         ></v-text-field>
                       </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-select
-                          :items="logLevels"
-                          v-model="zwave.logLevel"
-                          label="Log Level"
-                        ></v-select>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Store zwave logs in a file"
-                          persistent-hint
-                          label="Log to file"
-                          v-model="zwave.logToFile"
-                        ></v-switch>
-                      </v-flex>
                       <v-flex xs6>
                         <v-text-field
                           v-model.number="zwave.commandsTimeout"
@@ -319,6 +304,27 @@
                           v-model="gateway.retainedDiscovery"
                           persistent-hint
                         ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable logging"
+                          persistent-hint
+                          label="Log enabled"
+                          v-model="gateway.logEnabled"
+                        ></v-switch>
+                        <v-switch
+                          hint="Store zwave logs in a file"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="gateway.logToFile"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-select
+                          :items="logLevels"
+                          v-model="gateway.logLevel"
+                          label="Log Level"
+                        ></v-select>
                       </v-flex>
                     </v-layout>
 

@@ -40,8 +40,9 @@ function start (server) {
 
 function setupLogging (settings) {
   loggers.setupAll({
-    level: settings.zwave.logLevel,
-    logToFile: settings.zwave.logToFile
+    enabled: settings.gateway.logEnabled,
+    level: settings.gateway.logLevel,
+    logToFile: settings.gateway.logToFile
   })
 }
 
