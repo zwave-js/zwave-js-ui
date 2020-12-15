@@ -142,6 +142,10 @@
                       @click:append-outer="sendNodeAction"
                     ></v-select>
                   </v-flex>
+                  <v-btn color="green darken-1" text @click="exportNode">
+                    Export
+                  <v-icon right dark>file_download</v-icon>
+                  </v-btn>
                 </v-layout>
 
                 <v-layout row>
@@ -970,6 +974,10 @@ export default {
         .catch(error => {
           console.log(error)
         })
+    },
+    exportNode () {
+      var settings = this.getSettingsJSON()
+      this.$listeners.export(settings, 'settings')
     },
     async importScenes () {
       if (
