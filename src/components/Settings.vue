@@ -37,6 +37,21 @@
                           @click:append-outer="randomKey"
                         ></v-text-field>
                       </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-select
+                          :items="logLevels"
+                          v-model="zwave.logLevel"
+                          label="Log Level"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Store zwave logs in a file"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="zwave.logToFile"
+                        ></v-switch>
+                      </v-flex>
                       <v-flex xs6>
                         <v-text-field
                           v-model.number="zwave.commandsTimeout"
