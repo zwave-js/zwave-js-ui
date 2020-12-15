@@ -322,14 +322,14 @@
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
-                          hint="Enable logging"
+                          hint="Enable gateway logging"
                           persistent-hint
                           label="Log enabled"
                           v-model="gateway.logEnabled"
                         ></v-switch>
                         <v-switch
                           v-if="gateway.logEnabled"
-                          hint="Store zwave logs in a file"
+                          hint="Store logs in a file"
                           persistent-hint
                           label="Log to file"
                           v-model="gateway.logToFile"
