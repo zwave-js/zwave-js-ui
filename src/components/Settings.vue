@@ -591,8 +591,9 @@ export default {
         }
       } catch (error) {}
     },
-    exportNode () {
-      this.$listeners.export(this.selectedNode, 'node_'+this.selectedNode.id, 'json')
+    exportSettings () {
+      var settings = this.getSettingsJSON()
+      this.$listeners.export(settings, 'settings')
     },
     getSettingsJSON () {
       return {

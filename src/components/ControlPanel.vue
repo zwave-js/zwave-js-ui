@@ -144,7 +144,7 @@
                   </v-flex>
                   <v-btn color="green darken-1" text @click="exportNode">
                     Export
-                  <v-icon right dark>file_download</v-icon>
+                    <v-icon right dark>file_download</v-icon>
                   </v-btn>
                 </v-layout>
 
@@ -976,8 +976,11 @@ export default {
         })
     },
     exportNode () {
-      var settings = this.getSettingsJSON()
-      this.$listeners.export(settings, 'settings')
+      this.$listeners.export(
+        this.selectedNode,
+        'node_' + this.selectedNode.id,
+        'json'
+      )
     },
     async importScenes () {
       if (
