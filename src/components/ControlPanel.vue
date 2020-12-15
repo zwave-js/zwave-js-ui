@@ -153,6 +153,10 @@
                       }}</v-subheader
                     >
                   </v-flex>
+                  <v-btn text @click="exportNode">
+                    Export
+                    <v-icon right dark color="primary">file_download</v-icon>
+                  </v-btn>
                 </v-layout>
 
                 <v-layout row>
@@ -970,6 +974,13 @@ export default {
         .catch(error => {
           console.log(error)
         })
+    },
+    exportNode () {
+      this.$listeners.export(
+        this.selectedNode,
+        'node_' + this.selectedNode.id,
+        'json'
+      )
     },
     async importScenes () {
       if (
