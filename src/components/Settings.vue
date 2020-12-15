@@ -328,6 +328,7 @@
                           v-model="gateway.logEnabled"
                         ></v-switch>
                         <v-switch
+                          v-if="gateway.logEnabled"
                           hint="Store zwave logs in a file"
                           persistent-hint
                           label="Log to file"
@@ -336,6 +337,7 @@
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-select
+                          v-if="gateway.logEnabled"
                           :items="logLevels"
                           v-model="gateway.logLevel"
                           label="Log Level"
