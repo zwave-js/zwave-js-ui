@@ -142,10 +142,6 @@
                       @click:append-outer="sendNodeAction"
                     ></v-select>
                   </v-flex>
-                  <v-btn color="green darken-1" text @click="exportNode">
-                    Export
-                    <v-icon right dark>file_download</v-icon>
-                  </v-btn>
                 </v-layout>
 
                 <v-layout row>
@@ -157,6 +153,10 @@
                       }}</v-subheader
                     >
                   </v-flex>
+                  <v-btn text @click="exportNode">
+                    Export
+                    <v-icon right dark color="primary">file_download</v-icon>
+                  </v-btn>
                 </v-layout>
 
                 <v-layout row>
