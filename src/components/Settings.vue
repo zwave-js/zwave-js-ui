@@ -327,25 +327,25 @@
                           label="Log enabled"
                           v-model="gateway.logEnabled"
                         ></v-switch>
-                        <v-switch
-                          v-if="gateway.logEnabled"
-                          hint="Store logs in a file"
-                          persistent-hint
-                          label="Log to file"
-                          v-model="gateway.logToFile"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
                         <v-select
                           v-if="gateway.logEnabled"
                           :items="logLevels"
                           v-model="gateway.logLevel"
                           label="Log Level"
                         ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-switch
+                          hint="Store logs in a file"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="gateway.logToFile"
+                        ></v-switch>
                         <v-text-field
+                          v-if="gateway.logToFile"
                           v-model="gateway.logFilename"
                           label="Log filename"
-                          rules="{true}"
+                          :rules="[rules.required]"
                         ></v-text-field>
                       </v-flex>
                     </v-layout>
