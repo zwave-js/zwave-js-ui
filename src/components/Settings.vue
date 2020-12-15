@@ -342,6 +342,11 @@
                           v-model="gateway.logLevel"
                           label="Log Level"
                         ></v-select>
+                        <v-text-field
+                          v-model="gateway.logFilename"
+                          label="Log filename"
+                          rules="{true}"
+                        ></v-text-field>
                       </v-flex>
                     </v-layout>
 

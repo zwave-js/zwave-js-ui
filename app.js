@@ -42,7 +42,8 @@ function setupLogging (settings) {
   loggers.setupAll({
     enabled: settings.gateway.logEnabled,
     level: settings.gateway.logLevel,
-    logToFile: settings.gateway.logToFile
+    logToFile: settings.gateway.logToFile,
+    filename: settings.gateway.logFilename
   })
 }
 
