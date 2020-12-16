@@ -1,6 +1,5 @@
 const { assert } = require('chai')
 const winston = require('winston')
-const reqlib = require('app-root-path').require
 const rewire = require('rewire')
 const logContainer = rewire('../../lib/logger.js')
 
