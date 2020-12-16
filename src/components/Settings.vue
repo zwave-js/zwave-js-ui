@@ -334,8 +334,8 @@
                           v-model="gateway.logLevel"
                           label="Log Level"
                         ></v-select>
-                       </v-flex>
-                       <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
                         <v-switch
                           hint="Store logs in a file"
                           persistent-hint
