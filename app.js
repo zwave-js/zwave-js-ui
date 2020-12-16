@@ -1,6 +1,6 @@
 const express = require('express')
 const reqlib = require('app-root-path').require
-const logger = require('morgan')
+const morgan = require('morgan')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const app = express()
@@ -11,7 +11,8 @@ const ZWaveClient = reqlib('/lib/ZwaveClient')
 const MqttClient = reqlib('/lib/MqttClient')
 const Gateway = reqlib('/lib/Gateway')
 const store = reqlib('config/store.js')
-const debug = reqlib('/lib/debug')('App')
+const loggers = reqlib('/lib/logger.js')
+const logger = loggers.module('App')
 const history = require('connect-history-api-fallback')
 const SocketManager = reqlib('/lib/SocketManager')
 const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
@@ -37,11 +38,22 @@ function start (server) {
   startGateway()
 }
 
+function setupLogging (settings) {
+  loggers.setupAll({
+    enabled: settings.gateway.logEnabled,
+    level: settings.gateway.logLevel,
+    logToFile: settings.gateway.logToFile,
+    filename: settings.gateway.logFilename
+  })
+}
+
 function startGateway () {
   const settings = jsonStore.get(store.settings)
 
   let mqtt
   let zwave
+
+  setupLogging(settings)
 
   if (settings.mqtt) {
     mqtt = new MqttClient(settings.mqtt)
@@ -83,19 +95,21 @@ function printVersion () {
   } catch (error) {
     // git not installed
   }
-  debug(`Version: ${require('./package.json').version}${rev ? '.' + rev : ''}`)
+  logger.info(
+    `Version: ${require('./package.json').version}${rev ? '.' + rev : ''}`
+  )
 }
 
 // ### EXPRESS SETUP
 
 printVersion()
-debug('Application path:' + utils.getPath(true))
+logger.info('Application path:' + utils.getPath(true))
 
 // view engine setup
 app.set('views', utils.joinPath(false, 'views'))
 app.set('view engine', 'ejs')
 
-app.use(logger('dev', { stream: { write: msg => debug(msg.trimEnd()) } }))
+app.use(morgan('dev', { stream: { write: msg => logger.info(msg.trimEnd()) } }))
 app.use(bodyParser.json({ limit: '50mb' }))
 app.use(
   bodyParser.urlencoded({
@@ -129,7 +143,7 @@ function setupSocket (server) {
   server.on('listening', function () {
     const addr = server.address()
     const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
-    debug('Listening on', bind)
+    logger.info(`Listening on ${bind}`)
   })
 
   socketManager.bindServer(server)
@@ -146,7 +160,7 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.zwave, async function (socket, data) {
-    debug('Zwave api call:', data.api, data.args)
+    logger.info(`Zwave api call: ${data.api} ${data.args}`)
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
@@ -155,7 +169,7 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.hass, async function (socket, data) {
-    debug('Hass api call:', data.apiName)
+    logger.info(`Hass api call: ${data.apiName}`)
     switch (data.apiName) {
       case 'delete':
         gw.publishDiscovery(data.device, data.nodeId, true, true)
@@ -225,7 +239,7 @@ app.get('/api/settings', async function (req, res) {
     try {
       ports = await SerialPort.list()
     } catch (error) {
-      debug(error)
+      logger.error(error)
     }
 
     data.serial_ports = ports ? ports.map(p => p.path) : []
@@ -266,7 +280,7 @@ app.post('/api/importConfig', async function (req, res) {
 
     res.json({ success: true, message: 'Configuration imported successfully' })
   } catch (error) {
-    debug(error.message)
+    logger.error(error.message)
     return res.json({ success: false, message: error.message })
   }
 })
@@ -281,11 +295,12 @@ app.post('/api/settings', async function (req, res) {
     }
     restarting = true
     await jsonStore.put(store.settings, req.body)
+    setupLogging(req.body)
     await gw.close()
     startGateway()
     res.json({ success: true, message: 'Configuration updated successfully' })
   } catch (error) {
-    debug(error)
+    logger.error(error)
     res.json({ success: false, message: error.message })
   }
 })
@@ -305,7 +320,7 @@ app.use(function (err, req, res) {
   res.locals.message = err.message
   res.locals.error = req.app.get('env') === 'development' ? err : {}
 
-  debug(`${req.method} ${req.url} ${err.status} - Error: ${err.message}`)
+  logger.error(`${req.method} ${req.url} ${err.status} - Error: ${err.message}`)
 
   // render the error page
   res.status(err.status || 500)
@@ -315,10 +330,10 @@ app.use(function (err, req, res) {
 process.removeAllListeners('SIGINT')
 
 process.on('SIGINT', function () {
-  debug('Closing clients...')
+  logger.info('Closing clients...')
   gw.close()
     .catch(err => {
-      debug('Error while closing clients', err)
+      logger.error('Error while closing clients', err)
     })
     .finally(() => {
       process.exit()

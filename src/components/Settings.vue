@@ -320,6 +320,29 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable gateway logging"
+                          persistent-hint
+                          label="Log enabled"
+                          v-model="gateway.logEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-select
+                          :items="logLevels"
+                          v-model="gateway.logLevel"
+                          label="Log Level"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-switch
+                          hint="Store logs in a file"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="gateway.logToFile"
+                        ></v-switch>
+                      </v-flex>
                     </v-layout>
 
                     <v-data-table
