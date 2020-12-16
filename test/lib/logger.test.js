@@ -2,12 +2,10 @@ const { assert } = require('chai')
 const winston = require('winston')
 const reqlib = require('app-root-path').require
 const rewire = require('rewire')
-
-const logContainer = reqlib('lib/logger.js')
-const logContainerRewired = rewire('../../lib/logger.js')
+const logContainer = rewire('../../lib/logger.js')
 
 function checkConfigDefaults (mod, cfg) {
-  const defaultLogFile = logContainerRewired.__get__('defaultLogFile')
+  const defaultLogFile = logContainer.__get__('defaultLogFile')
   cfg.module.should.equal(mod)
   cfg.enabled.should.equal(true)
   cfg.level.should.equal('info')
@@ -16,8 +14,8 @@ function checkConfigDefaults (mod, cfg) {
 }
 
 describe('logger.js', () => {
-  const sanitizedConfig = logContainerRewired.__get__('sanitizedConfig')
-  const customTransports = logContainerRewired.__get__('customTransports')
+  const sanitizedConfig = logContainer.__get__('sanitizedConfig')
+  const customTransports = logContainer.__get__('customTransports')
   let logger1
   let logger2
 
@@ -40,9 +38,9 @@ describe('logger.js', () => {
   describe('customFormat()', () => {
     it('should uppercase the label', () => {
       // TODO: Why does it fail with 'TypeError: colors[Colorizer.allColors[lookup]] is not a function'?
-      // const customFormat = logContainerRewired.__get__('customFormat')
+      // const customFormat = logContainer.__get__('customFormat')
       // const fmt = customFormat(sanitizedConfig('foo', {}))
-      // fmt.transform({ module: 'foo', level: 'info', message: 'msg' })
+      // fmt.transform({ level: 'info', message: 'msg' })
       //   .label.should.be.equal('FOO')
     })
   })
