@@ -571,7 +571,9 @@ export default {
         },
         validKey: value => {
           return (
-            !value || !/[^A-F0-9]+/gi.test(value) || 'Key not valid. Must contain only hex chars'
+            !value ||
+            !/[^A-F0-9]+/gi.test(value) ||
+            'Key not valid. Must contain only hex chars'
           )
         }
       }
