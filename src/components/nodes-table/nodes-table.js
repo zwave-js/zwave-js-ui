@@ -51,10 +51,6 @@ export default {
     nodeSelected (node) {
       this.selectedNode = node
       this.$emit('node-selected', { node })
-    },
-    productName (node) {
-      const manufacturer = node.manufacturer ? ` (${node.manufacturer})` : ''
-      return node.ready ? `${node.product}${manufacturer}` : ''
     }
   },
   mounted () {
