@@ -14,85 +14,8 @@
         >Reset Filter</v-btn
       >
     </template>
-    <template v-slot:header.id="{ header }">
-      <filter-options v-model="filters.id" :items="values.id"></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.manufacturer="{ header }">
-      <filter-options
-        v-model="filters.manufacturer"
-        :items="values.manufacturer"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.productDescription="{ header }">
-      <filter-options
-        v-model="filters.productDescription"
-        :items="values.productDescription"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.productLabel="{ header }">
-      <filter-options
-        v-model="filters.productLabel"
-        :items="values.productLabel"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.name="{ header }">
-      <filter-options
-        v-model="filters.name"
-        :items="values.name"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.loc="{ header }">
-      <filter-options
-        v-model="filters.loc"
-        :items="values.loc"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.isSecure="{ header }">
-      <filter-options
-        v-model="filters.isSecure"
-        :items="values.isSecure"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.isBeaming="{ header }">
-      <filter-options
-        v-model="filters.isBeaming"
-        :items="values.isBeaming"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.failed="{ header }">
-      <filter-options
-        v-model="filters.failed"
-        :items="values.failed"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.status="{ header }">
-      <filter-options
-        v-model="filters.status"
-        :items="values.status"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.interviewStage="{ header }">
-      <filter-options
-        v-model="filters.interviewStage"
-        :items="values.interviewStage"
-      ></filter-options>
-      {{ header.text }}
-    </template>
-    <template v-slot:header.lastActive="{ header }">
-      <filter-options
-        v-model="filters.lastActive"
-        :items="values.lastActive"
-      ></filter-options>
+    <template v-for="h in headers" v-slot:[`header.${h.value}`]="{ header }">
+      <filter-options v-model="filters[`${h.value}`]" :items="values[`${h.value}`]"></filter-options>
       {{ header.text }}
     </template>
     <template v-slot:item="{ item }">
