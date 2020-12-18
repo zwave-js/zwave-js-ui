@@ -32,7 +32,7 @@
                         <v-text-field
                           v-model="zwave.networkKey"
                           label="Network Key"
-                          :rules="[rules.validKey]"
+                          :rules="[rules.validKey, rules.validLength]"
                           append-outer-icon="wifi_protected_setup"
                           @click:append-outer="randomKey"
                         ></v-text-field>
@@ -564,9 +564,16 @@ export default {
             'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
           )
         },
-        validKey: value => {
+        validLength: value => {
           return (
             !value || value.length === 32 || 'Key must be 32 charaters length'
+          )
+        },
+        validKey: value => {
+          return (
+            !value ||
+            !/[^A-F0-9]+/gi.test(value) ||
+            'Key not valid. Must contain only hex chars'
           )
         }
       }
@@ -583,7 +590,7 @@ export default {
         key += x.length === 2 ? x : '0' + x
       }
 
-      this.zwave.networkKey = key
+      this.$set(this.zwave, 'networkKey', key)
     },
     readFile (file, callback) {
       const reader = new FileReader()
