@@ -32,10 +32,10 @@
       ></filter-options>
       {{ header.text }}
     </template>
-    <template v-slot:header.product="{ header }">
+    <template v-slot:header.productLabel="{ header }">
       <filter-options
-        v-model="filters.product"
-        :items="values.product"
+        v-model="filters.productLabel"
+        :items="values.productLabel"
       ></filter-options>
       {{ header.text }}
     </template>

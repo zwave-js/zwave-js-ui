@@ -17,7 +17,7 @@ export default {
       { text: 'ID', value: 'id' },
       { text: 'Manufacturer', value: 'manufacturer' },
       { text: 'Product', value: 'productDescription' },
-      { text: 'Product code', value: 'product' },
+      { text: 'Product code', value: 'productLabel' },
       { text: 'Name', value: 'name' },
       { text: 'Location', value: 'loc' },
       { text: 'Secure', value: 'isSecure' },
@@ -34,7 +34,7 @@ export default {
         id: { type: 'number' },
         manufacturer: { type: 'string' },
         productDescription: { type: 'string' },
-        product: { type: 'string' },
+        productLabel: { type: 'string' },
         name: { type: 'string' },
         loc: { type: 'string' },
         isSecure: { type: 'boolean' },
@@ -119,13 +119,13 @@ export default {
         )
         .contains(
           ['productLabel'],
-          this.filters.product ? this.filters.product.search : ''
+          this.filters.productLabel ? this.filters.productLabel.search : ''
         )
         .equalsAny(
           'productLabel',
-          this.filters.product
-            ? this.filters.product.selections
-              ? this.filters.product.selections
+          this.filters.productLabel
+            ? this.filters.productLabel.selections
+              ? this.filters.productLabel.selections
               : []
             : []
         )
@@ -215,7 +215,7 @@ export default {
         id: this.relevantNodes.values('id'),
         manufacturer: this.relevantNodes.values('manufacturer'),
         productDescription: this.relevantNodes.values('productDescription'),
-        product: this.relevantNodes.values('productLabel'),
+        productLabel: this.relevantNodes.values('productLabel'),
         name: this.relevantNodes.values('name'),
         loc: this.relevantNodes.values('loc'),
         isSecure: this.relevantNodes.values('isSecure'),
