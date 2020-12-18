@@ -29,7 +29,7 @@ export default {
     ]
   }),
   methods: {
-    initFilters() {
+    initFilters () {
       return {
         id: { type: 'number' },
         manufacturer: { type: 'string' },
@@ -45,38 +45,38 @@ export default {
         lastActive: { type: 'date' }
       }
     },
-    resetFilter() {
+    resetFilter () {
       this.filters = this.initFilters()
     },
-    nodeSelected(node) {
+    nodeSelected (node) {
       this.selectedNode = node
       this.$emit('node-selected', { node })
     },
-    productName(node) {
+    productName (node) {
       const manufacturer = node.manufacturer ? ` (${node.manufacturer})` : ''
       return node.ready ? `${node.product}${manufacturer}` : ''
     }
   },
-  mounted() {
+  mounted () {
     this.filters = this.initFilters()
     const itemsPerPage = parseInt(localStorage.getItem('nodes_itemsPerPage'))
     this.nodeTableItems = !isNaN(itemsPerPage) ? itemsPerPage : 10
   },
   watch: {
-    nodeTableItems(val) {
+    nodeTableItems (val) {
       localStorage.setItem('nodes_itemsPerPage', val)
     }
   },
   computed: {
-    nodeCollection() {
+    nodeCollection () {
       return new NodeCollection(this.nodes)
     },
-    relevantNodes() {
+    relevantNodes () {
       return this.nodeCollection.filter('failed', failed => {
         return this.showHidden ? true : !failed
       })
     },
-    filteredNodes() {
+    filteredNodes () {
       return this.relevantNodes
         .betweenNumber(
           'id',
@@ -217,23 +217,23 @@ export default {
           this.filters.lastActive ? this.filters.lastActive.max : null
         )
     },
-    values() {
+    values () {
       return {
-        'id': this.relevantNodes.values('id'),
-        'manufacturer': this.relevantNodes.values('manufacturer'),
-        'productDescription': this.relevantNodes.values('productDescription'),
-        'product': this.relevantNodes.values('productLabel'),
-        'name': this.relevantNodes.values('name'),
-        'loc': this.relevantNodes.values('loc'),
-        'isSecure': this.relevantNodes.values('isSecure'),
-        'isBeaming': this.relevantNodes.values('isBeaming'),
-        'failed': this.relevantNodes.values('failed'),
-        'status': this.relevantNodes.values('status'),
-        'interviewStage': this.relevantNodes.values('interviewStage'),
-        'lastActive': this.relevantNodes.values('lastActive')
+        id: this.relevantNodes.values('id'),
+        manufacturer: this.relevantNodes.values('manufacturer'),
+        productDescription: this.relevantNodes.values('productDescription'),
+        product: this.relevantNodes.values('productLabel'),
+        name: this.relevantNodes.values('name'),
+        loc: this.relevantNodes.values('loc'),
+        isSecure: this.relevantNodes.values('isSecure'),
+        isBeaming: this.relevantNodes.values('isBeaming'),
+        failed: this.relevantNodes.values('failed'),
+        status: this.relevantNodes.values('status'),
+        interviewStage: this.relevantNodes.values('interviewStage'),
+        lastActive: this.relevantNodes.values('lastActive')
       }
     },
-    tableNodes() {
+    tableNodes () {
       return this.filteredNodes.nodes
     }
   }
