@@ -15,10 +15,7 @@
       >
     </template>
     <template v-slot:header.id="{ header }">
-      <filter-options
-        v-model="filters.id"
-        :items="values.id"
-      ></filter-options>
+      <filter-options v-model="filters.id" :items="values.id"></filter-options>
       {{ header.text }}
     </template>
     <template v-slot:header.manufacturer="{ header }">
@@ -103,9 +100,7 @@
         :style="{
           cursor: 'pointer',
           background:
-            selectedNode === item
-              ? $vuetify.theme.themes.light.accent
-              : 'none'
+            selectedNode === item ? $vuetify.theme.themes.light.accent : 'none'
         }"
         @click.stop="nodeSelected(item)"
       >

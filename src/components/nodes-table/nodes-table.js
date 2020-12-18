@@ -105,7 +105,9 @@ export default {
         )
         .contains(
           ['productDescription'],
-          this.filters.productDescription ? this.filters.productDescription.search : ''
+          this.filters.productDescription
+            ? this.filters.productDescription.search
+            : ''
         )
         .equalsAny(
           'productDescription',
@@ -127,10 +129,7 @@ export default {
               : []
             : []
         )
-        .contains(
-          ['name'],
-          this.filters.name ? this.filters.name.search : ''
-        )
+        .contains(['name'], this.filters.name ? this.filters.name.search : '')
         .equalsAny(
           'name',
           this.filters.name
@@ -139,10 +138,7 @@ export default {
               : []
             : []
         )
-        .contains(
-          ['loc'],
-          this.filters.loc ? this.filters.loc.search : ''
-        )
+        .contains(['loc'], this.filters.loc ? this.filters.loc.search : '')
         .equalsAny(
           'loc',
           this.filters.loc
@@ -175,10 +171,7 @@ export default {
               : []
             : []
         )
-        .equals(
-          'failed',
-          this.filters.failed ? this.filters.failed.bool : null
-        )
+        .equals('failed', this.filters.failed ? this.filters.failed.bool : null)
         .equalsAny(
           'failed',
           this.filters.failed
