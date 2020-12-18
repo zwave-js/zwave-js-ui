@@ -15,8 +15,13 @@
       >
     </template>
     <template v-for="h in headers" v-slot:[`header.${h.value}`]="{ header }">
-      <filter-options v-model="filters[`${h.value}`]" :items="values[`${h.value}`]"></filter-options>
-      {{ header.text }}
+      <span :key="h.value">
+        <filter-options
+          v-model="filters[`${h.value}`]"
+          :items="values[`${h.value}`]"
+        ></filter-options>
+        {{ header.text }}
+      </span>
     </template>
     <template v-slot:item="{ item }">
       <tr
