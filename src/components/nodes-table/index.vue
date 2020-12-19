@@ -5,6 +5,8 @@
     :footer-props="{
       itemsPerPageOptions: [10, 20, 50, 100, -1]
     }"
+    :sort-desc.sync="sorting.desc"
+    :sort-by.sync="sorting.by"
     :items-per-page.sync="nodeTableItems"
     item-key="id"
     class="elevation-1"
@@ -18,7 +20,7 @@
       <span :key="h.value">
         <filter-options
           v-model="filters[`${h.value}`]"
-          :items="values[`${h.value}`]"
+          :items.sync="values[`${h.value}`]"
         ></filter-options>
         {{ header.text }}
       </span>

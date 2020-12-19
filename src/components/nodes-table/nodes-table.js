@@ -1,4 +1,5 @@
 import { NodeCollection } from '@/modules/NodeCollection'
+import { Settings } from '@/modules/Settings'
 import filterOptions from '@/components/nodes-table/filter-options.vue'
 
 export default {
@@ -10,9 +11,11 @@ export default {
     filterOptions
   },
   data: () => ({
-    nodeTableItems: 10,
+    settings: new Settings(localStorage),
+    nodeTableItems: undefined,
     selectedNode: undefined,
     filters: {},
+    sorting: {},
     headers: [
       { text: 'ID', value: 'id' },
       { text: 'Manufacturer', value: 'manufacturer' },
@@ -45,6 +48,18 @@ export default {
         lastActive: { type: 'date' }
       }
     },
+    initSorting () {
+      return {
+        by: ['node_id'],
+        desc: [false]
+      }
+    },
+    loadSetting (key, defaultVal) {
+      return this.settings.load(key, defaultVal)
+    },
+    storeSetting (key, val) {
+      this.settings.store(key, val)
+    },
     resetFilter () {
       this.filters = this.initFilters()
     },
@@ -54,13 +69,25 @@ export default {
     }
   },
   mounted () {
-    this.filters = this.initFilters()
-    const itemsPerPage = parseInt(localStorage.getItem('nodes_itemsPerPage'))
-    this.nodeTableItems = !isNaN(itemsPerPage) ? itemsPerPage : 10
+    this.filters = this.loadSetting('nodes_filters', this.initFilters())
+    this.sorting = this.loadSetting('nodes_sorting', this.initSorting())
+    this.nodeTableItems = this.loadSetting('nodes_itemsPerPage', 10)
   },
   watch: {
     nodeTableItems (val) {
-      localStorage.setItem('nodes_itemsPerPage', val)
+      this.storeSetting('nodes_itemsPerPage', val)
+    },
+    filters: {
+      handler (val) {
+        this.storeSetting('nodes_filters', val)
+      },
+      deep: true
+    },
+    sorting: {
+      handler (val) {
+        this.storeSetting('nodes_sorting', val)
+      },
+      deep: true
     }
   },
   computed: {

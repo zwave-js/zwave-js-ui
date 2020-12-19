@@ -624,6 +624,7 @@ import AnsiUp from 'ansi_up'
 
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 import NodesTable from '@/components/nodes-table'
+import { Settings } from '@/modules/Settings'
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
 const ansiUp = new AnsiUp()
@@ -688,6 +689,9 @@ export default {
     newLoc (val) {
       this.locError = this.validateTopic(val)
     },
+    showHidden () {
+      this.settings.store('nodes_showHidden', this.showHidden)
+    },
     selectedNode () {
       if (this.selectedNode) {
         this.newName = this.selectedNode.name
@@ -721,13 +725,14 @@ export default {
   },
   data () {
     return {
+      settings: new Settings(localStorage),
       nodes: [],
       scenes: [],
       debug: [],
       homeid: '',
       homeHex: '',
       ozwVersion: '',
-      showHidden: false,
+      showHidden: undefined,
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
@@ -1349,6 +1354,8 @@ export default {
   },
   mounted () {
     var self = this
+
+    this.showHidden = this.settings.load('nodes_showHidden', false)
 
     this.socket.on(socketEvents.controller, data => {
       self.cnt_status = data
