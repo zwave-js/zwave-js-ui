@@ -320,6 +320,14 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <v-switch
+                          v-model="gateway.hassFriendlyName"
+                          label="Friendly Discovery Name"
+                          hint="Try to make the name of HASS Discovery friendly looking"
+                          persistent-hint
+                        ></v-text-field>
+                      </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
                           hint="Enable gateway logging"
