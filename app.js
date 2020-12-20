@@ -40,10 +40,10 @@ function start (server) {
 
 function setupLogging (settings) {
   loggers.setupAll({
-    enabled: settings.gateway.logEnabled,
-    level: settings.gateway.logLevel,
-    logToFile: settings.gateway.logToFile,
-    filename: settings.gateway.logFilename
+    enabled: settings ? (settings.gateway ? settings.gateway.logEnabled : true) : true,
+    level: settings ? (settings.gateway ? settings.gateway.logLevel : 'info') : 'info',
+    logToFile: settings ? (settings.gateway ? settings.gateway.logToFile : false) : false,
+    filename: settings ? (settings.gateway ? settings.gateway.logFilename : 'zwavejs2mqtt.log') : 'zwavejs2mqtt.log'
   })
 }
 
