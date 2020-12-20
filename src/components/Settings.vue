@@ -320,13 +320,14 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
-                      <v-flex xs6 v-if="gateway.hassDiscovery">
-                        <v-switch
+                      <v-flex xs12 v-if="gateway.hassDiscovery">
+                        <v-select
                           v-model="gateway.hassFriendlyName"
                           label="Friendly Discovery Name"
-                          hint="Try to make the name of HASS Discovery friendly looking"
+                          :items="hfn_types"
                           persistent-hint
-                        ></v-text-field>
+                          hint="Try to make the name of HASS Discovery friendly looking"
+                        ></v-select>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
@@ -555,6 +556,24 @@ export default {
         {
           text: 'Just value',
           value: 2
+        }
+      ],
+      hfn_types: [
+        {
+          text: '<Location>-<name>_<object_id>',
+          value: 0
+        },
+        {
+          text: '<Location> <name> <object_id(spaces)>',
+          value: 1
+        },
+        {
+          text: '<name> <Location> <object_id(spaces)>',
+          value: 2
+        },
+        {
+          text: '<object_id(spaces)>',
+          value: 3
         }
       ],
       rules: {
