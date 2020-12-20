@@ -161,19 +161,6 @@ const COVER = {
   }
 }
 
-// Fibaro MultiSensor
-const FIBAROMOTION = {
-  type: 'binary_sensor'
-  object_id: 'motion',
-  values: ['113-0-Home Security-Motion sensor status'],
-  discovery_payload: {
-    payload_on: 8,
-    payload_off: 0,
-    value_template: '{{ value_json.value}}',
-    state_topic: '113-0-Home Security-Motion sensor status'
-  }
-}
-
 module.exports = {
   '89-3-1': [
     {
@@ -395,6 +382,5 @@ module.exports = {
   '328-3-3': [SPIRIT_ZWAVE_PLUS],
   '345-82-3': [COVER], // Qubino flush shutter
   '622-23089-17235': [COVER], // Graber/Bali/Spring Fashion Covers
-  '881-21-2': [SPIRIT_ZWAVE_PLUS], // Eurotronic Spirit / Aeotec ZWA021
-  '271-4098-2049': [FIBAROMOTION] // Fibaro motion sensor
+  '881-21-2': [SPIRIT_ZWAVE_PLUS] // Eurotronic Spirit / Aeotec ZWA021
 }
