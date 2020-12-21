@@ -150,13 +150,19 @@
                       >Device ID:
                       {{
                         `${selectedNode.deviceId} (${selectedNode.hexId})`
-                      }}</v-subheader
-                    >
-                  </v-flex>
-                  <v-btn text @click="exportNode">
+                      }}
+                    <v-btn text @click="exportNode">
                     Export
                     <v-icon right dark color="primary">file_download</v-icon>
                   </v-btn>
+                  </v-subheader>
+                  </v-flex>
+                </v-layout>
+
+                <v-layout row>
+                  <v-flex>
+
+                  </v-flex>
                 </v-layout>
 
                 <v-layout row>
@@ -191,19 +197,21 @@
                   </v-flex>
                 </v-layout>
 
+                <!-- NODE VALUES -->
+
                 <v-layout v-if="selectedNode.values" column>
                   <v-subheader>Values</v-subheader>
 
                   <v-expansion-panels accordion multiple>
-                    <!-- USER VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header>User</v-expansion-panel-header>
+                    <v-expansion-panel v-for="(group, className) in commandGroups"
+                                :key="className">
+                      <v-expansion-panel-header>{{className}}</v-expansion-panel-header>
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
                             <v-layout row wrap>
                               <v-flex
-                                v-for="(v, index) in userValues"
+                                v-for="(v, index) in group"
                                 :key="index"
                                 xs12
                                 sm6
@@ -211,88 +219,15 @@
                               >
                                 <ValueID
                                   @updateValue="updateValue"
-                                  v-model="userValues[index]"
+                                  v-model="group[index]"
                                 ></ValueID>
                               </v-flex>
                             </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
+                      <v-divider></v-divider>
                     </v-expansion-panel>
-
-                    <v-divider></v-divider>
-
-                    <!-- CONFIG VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header>
-                        <!-- v-slot="{ open }"> -->
-                        <v-row no-gutters>
-                          <v-col style="max-width:150px">Configuration</v-col>
-                          <!-- Disable refresh button, just keep in case implemented in future
-                            <v-col v-if="open">
-                            <v-btn
-                              rounded
-                              color="primary"
-                              @click.stop="
-                                sendNodeAction('requestAllConfigParams')
-                              "
-                              dark
-                              >Refresh values</v-btn
-                            >
-                          </v-col> -->
-                        </v-row>
-                      </v-expansion-panel-header>
-                      <v-expansion-panel-content>
-                        <v-card flat>
-                          <v-card-text>
-                            <v-layout row wrap>
-                              <v-flex
-                                v-for="(v, index) in configValues"
-                                :key="index"
-                                xs12
-                                sm6
-                                md4
-                              >
-                                <ValueID
-                                  @updateValue="updateValue"
-                                  v-model="configValues[index]"
-                                ></ValueID>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-expansion-panel-content>
-                    </v-expansion-panel>
-
-                    <v-divider></v-divider>
-
-                    <!-- SYSTEM VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header
-                        >System</v-expansion-panel-header
-                      >
-                      <v-expansion-panel-content>
-                        <v-card flat>
-                          <v-card-text>
-                            <v-layout row wrap>
-                              <v-flex
-                                v-for="(v, index) in systemValues"
-                                :key="index"
-                                xs12
-                                sm6
-                                md4
-                              >
-                                <ValueID
-                                  @updateValue="updateValue"
-                                  v-model="systemValues[index]"
-                                ></ValueID>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-expansion-panel-content>
-                    </v-expansion-panel>
-                    <v-divider></v-divider>
                   </v-expansion-panels>
                 </v-layout>
 
@@ -706,20 +641,20 @@ export default {
 
       return devices
     },
-    userValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'user')
-        : []
-    },
-    systemValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'system')
-        : []
-    },
-    configValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'config')
-        : []
+    commandGroups () {
+      if (this.selectedNode) {
+        const groups = {}
+        for (const v of this.selectedNode.values) {
+          const className = v.commandClassName
+          if (!groups[className]) {
+            groups[className] = []
+          }
+          groups[className].push(v)
+        }
+        return groups
+      } else {
+        return {}
+      }
     }
   },
   watch: {
