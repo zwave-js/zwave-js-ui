@@ -562,26 +562,22 @@ export default {
         {
           text: 'Default',
           value: undefined
-        },
+        }
         {
-          text: 'NodeName object_id',
+          text: 'NodeName(noHyphen) object_id(noUnderscores)',
           value: 0
         },
         {
-          text: 'NodeName(noHyphen) object_id(noUnderscores)',
+          text: 'object_id',
           value: 1
         },
         {
-          text: 'object_id',
+          text: 'PropertyKey or PropertyName',
           value: 2
         },
         {
-          text: 'PropertyKey or PropertyName',
-          value: 3
-        },
-        {
           text: 'NodeName (PropertyKey or PropertyName)',
-          value: 4
+          value: 3
         }
       ],
       rules: {
