@@ -560,7 +560,7 @@ export default {
       ],
       hfn_types: [
         {
-          text: '<Location>-<name>_<object_id>',
+          text: '<location>-<name>_<object_id>',
           value: 0
         },
         {
