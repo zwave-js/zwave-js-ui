@@ -568,7 +568,7 @@ export default {
           value: 1
         },
         {
-          text: '<name> <Location> <object_id(spaces)>',
+          text: '<name> <location> <object_id(spaces)>',
           value: 2
         },
         {
