@@ -148,21 +148,19 @@
                   <v-flex>
                     <v-subheader
                       >Device ID:
-                      {{
-                        `${selectedNode.deviceId} (${selectedNode.hexId})`
-                      }}
-                    <v-btn text @click="exportNode">
-                    Export
-                    <v-icon right dark color="primary">file_download</v-icon>
-                  </v-btn>
-                  </v-subheader>
+                      {{ `${selectedNode.deviceId} (${selectedNode.hexId})` }}
+                      <v-btn text @click="exportNode">
+                        Export
+                        <v-icon right dark color="primary"
+                          >file_download</v-icon
+                        >
+                      </v-btn>
+                    </v-subheader>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex>
-
-                  </v-flex>
+                  <v-flex> </v-flex>
                 </v-layout>
 
                 <v-layout row>
@@ -203,9 +201,13 @@
                   <v-subheader>Values</v-subheader>
 
                   <v-expansion-panels accordion multiple>
-                    <v-expansion-panel v-for="(group, className) in commandGroups"
-                                :key="className">
-                      <v-expansion-panel-header>{{className}}</v-expansion-panel-header>
+                    <v-expansion-panel
+                      v-for="(group, className) in commandGroups"
+                      :key="className"
+                    >
+                      <v-expansion-panel-header>{{
+                        className
+                      }}</v-expansion-panel-header>
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
