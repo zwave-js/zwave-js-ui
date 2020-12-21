@@ -564,7 +564,7 @@ export default {
           value: undefined
         }
         {
-          text: 'NodeName(noHyphen) object_id(noUnderscores)',
+          text: 'Remove Hyphens/Underscores',
           value: 0
         },
         {
@@ -578,6 +578,10 @@ export default {
         {
           text: 'NodeName (PropertyKey or PropertyName)',
           value: 3
+        },
+        {
+          text: 'NodeName (PropertyKey or PropertyName) - Remove Hyphens',
+          value: 4
         }
       ],
       rules: {
