@@ -38,29 +38,23 @@ function start (server) {
   startGateway()
 }
 
+// use a function so we don't mess the default settings object
+const defaultSettings = () => {
+  return {
+    gateway: {
+      logEnabled: true,
+      logLevel: 'info',
+      logToFile: false,
+      logFilename: 'zwavejs2mqtt.log'
+    }
+  }
+}
+
 function setupLogging (settings) {
-  loggers.setupAll({
-    enabled: settings
-      ? settings.gateway
-        ? settings.gateway.logEnabled
-        : true
-      : true,
-    level: settings
-      ? settings.gateway
-        ? settings.gateway.logLevel
-        : 'info'
-      : 'info',
-    logToFile: settings
-      ? settings.gateway
-        ? settings.gateway.logToFile
-        : false
-      : false,
-    filename: settings
-      ? settings.gateway
-        ? settings.gateway.logFilename
-        : 'zwavejs2mqtt.log'
-      : 'zwavejs2mqtt.log'
-  })
+  settings = settings
+    ? Object.assign(defaultSettings(), settings)
+    : defaultSettings()
+  loggers.setupAll(settings)
 }
 
 function startGateway () {
