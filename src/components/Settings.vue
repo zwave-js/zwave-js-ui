@@ -562,7 +562,7 @@ export default {
         {
           text: 'Default',
           value: undefined
-        }
+        },
         {
           text: 'Remove Hyphens/Underscores',
           value: 0
