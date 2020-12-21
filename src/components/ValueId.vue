@@ -18,11 +18,11 @@
             value.type === 'any')
       "
       :label="value.label + ' (' + value.id + ')'"
-      :type="value.type === 'string' ? 'text' : 'number'"
+      :type="value.type === 'number' ? 'number' : 'text'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.units"
       :min="value.min != value.max ? value.min : null"
-      :step="value.type == 'decimal' ? 0.1 : 1"
+      :step="1"
       :max="value.min != value.max ? value.max : null"
       :hint="value.description || ''"
       v-model="value.newValue"

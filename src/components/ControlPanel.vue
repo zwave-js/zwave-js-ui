@@ -1396,6 +1396,7 @@ export default {
     },
     initNode (n) {
       var values = []
+      // transform object in array
       for (var k in n.values) {
         n.values[k].newValue = n.values[k].value
         values.push(n.values[k])
