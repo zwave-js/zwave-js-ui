@@ -572,15 +572,15 @@ export default {
           value: 1
         },
         {
-          text: 'PropertyKey or PropertyName',
+          text: 'Label',
           value: 2
         },
         {
-          text: 'NodeName (PropertyKey or PropertyName)',
+          text: 'NodeName Label',
           value: 3
         },
         {
-          text: 'NodeName (PropertyKey or PropertyName) - Remove Hyphens',
+          text: 'NodeName Label - Remove Hyphens',
           value: 4
         }
       ],
