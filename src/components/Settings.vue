@@ -564,20 +564,24 @@ export default {
           value: undefined
         },
         {
-          text: '<location>-<name>_<object_id>',
+          text: 'NodeName object_id',
           value: 0
         },
         {
-          text: '<location> <name> <object_id(spaces)>',
+          text: 'NodeName(noHyphen) object_id(noUnderscores)',
           value: 1
         },
         {
-          text: '<name> <location> <object_id(spaces)>',
+          text: 'object_id',
           value: 2
         },
         {
-          text: '<object_id(spaces)>',
+          text: 'PropertyKey or PropertyName',
           value: 3
+        },
+        {
+          text: 'NodeName (PropertyKey or PropertyName)',
+          value: 4
         }
       ],
       rules: {
