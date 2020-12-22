@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!value.writeable">
+  <div v-if="!value.writeable && !value.list">
     <v-text-field
       :label="value.label + ' (' + value.id + ')'"
       readonly
@@ -34,8 +34,9 @@
       :items="value.states"
       :label="value.label + ' (' + value.id + ')'"
       :hint="value.description || ''"
-      :append-outer-icon="!disable_send ? 'send' : null"
+      :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
       v-model="value.newValue"
+      :readonly="!value.writeable"
       @click:append-outer="updateValue(value)"
     ></v-select>
 
