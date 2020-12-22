@@ -170,7 +170,7 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.zwave, async function (socket, data) {
-    logger.info(`Zwave api call: ${data.api} ${data.args}`)
+    logger.info(`Zwave api call: ${data.api} ${JSON.stringify(data.args)}`)
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
