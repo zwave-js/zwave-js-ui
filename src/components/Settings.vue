@@ -321,13 +321,13 @@
                         ></v-switch>
                       </v-flex>
                       <v-flex xs12 v-if="gateway.hassDiscovery">
-                        <v-select
-                          v-model="gateway.hassFriendlyName"
-                          label="Friendly Discovery Name"
-                          :items="hfn_types"
+                        <v-text-field
+                          v-model="gateway.entityTemplate"
+                          label="Entity name template"
                           persistent-hint
-                          hint="Try to make the name of HASS Discovery friendly looking"
-                        ></v-select>
+                          hint="Template which generates entity names<br>1"
+                          
+                        ></v-text-field>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
@@ -556,32 +556,6 @@ export default {
         {
           text: 'Just value',
           value: 2
-        }
-      ],
-      hfn_types: [
-        {
-          text: 'Default',
-          value: undefined
-        },
-        {
-          text: 'Remove Hyphens/Underscores',
-          value: 0
-        },
-        {
-          text: 'object_id',
-          value: 1
-        },
-        {
-          text: 'Label',
-          value: 2
-        },
-        {
-          text: 'NodeName Label',
-          value: 3
-        },
-        {
-          text: 'NodeName Label - Remove Hyphens',
-          value: 4
         }
       ],
       rules: {
