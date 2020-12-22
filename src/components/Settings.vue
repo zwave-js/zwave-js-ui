@@ -326,7 +326,6 @@
                           label="Entity name template"
                           persistent-hint
                           hint="Template which generates entity names<br>1"
-                          
                         ></v-text-field>
                       </v-flex>
                       <v-flex xs12 sm6>
