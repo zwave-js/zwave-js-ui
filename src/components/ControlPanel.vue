@@ -160,10 +160,6 @@
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex> </v-flex>
-                </v-layout>
-
-                <v-layout row>
                   <v-flex xs2 style="max-width:100px">
                     <v-subheader>Name: {{ selectedNode.name }}</v-subheader>
                   </v-flex>
