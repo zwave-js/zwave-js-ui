@@ -332,13 +332,11 @@
                             ></v-text-field>
                           </template>
                           default pattern: '%loc-%n_%ob'
-                          <br/>%n - Node Name
-                          <br/>%loc - Node Location
-                          <br/>
-                            %pk - Property key (uses Property Name if undefined)
-                          <br/>%pn - Property name
-                          <br/>%ob - Object_id
-                          <br/>%lbl - Label
+                          <br />%n - Node Name <br />%loc - Node Location
+                          <br />
+                          %pk - Property key (uses Property Name if undefined)
+                          <br />%pn - Property name <br />%ob - Object_id
+                          <br />%lbl - Label
                         </v-tooltip>
                       </v-flex>
                       <v-flex xs12 sm6>
