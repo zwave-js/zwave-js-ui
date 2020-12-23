@@ -320,24 +320,25 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
-                      <v-flex xs12 v-if="gateway.hassDiscovery">
-                        <v-tooltip v-model="show" bottom>
-                          <template v-slot:activator="{ on }">
-                            <v-text-field
-                              v-on="on"
-                              v-model="gateway.entityTemplate"
-                              label="Entity name template"
-                              persistent-hint
-                              hint="Template which generates entity names"
-                            ></v-text-field>
-                          </template>
-                          default pattern: '%loc-%n_%ob'
-                          <br />%n - Node Name <br />%loc - Node Location
-                          <br />
-                          %pk - Property key (uses Property Name if undefined)
-                          <br />%pn - Property name <br />%ob - Object_id
-                          <br />%lbl - Label
-                        </v-tooltip>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <v-text-field
+                          v-on="on"
+                          v-model="gateway.entityTemplate"
+                          label="Entity name template"
+                          persistent-hint
+                          hint="Template which generates entity names"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <div>
+                          Default: <code>%loc-%n_%ob</code> <br />-
+                          <code>%n</code>: Node Name <br />- <code>%loc</code>:
+                          Node Location <br />- <code>%pk</code>: valueId
+                          property key (uses property name if undefined) <br />-
+                          <code>%pn</code>: valueId property name <br />-
+                          <code>%ob</code>: HASS object_id <br />-
+                          <code>%lbl</code>: valueId label
+                        </div>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
