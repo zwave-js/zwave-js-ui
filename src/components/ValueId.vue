@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!value.writeable">
+  <div v-if="!value.writeable && !value.list">
     <v-text-field
       :label="value.label + ' (' + value.id + ')'"
       readonly
@@ -18,11 +18,11 @@
             value.type === 'any')
       "
       :label="value.label + ' (' + value.id + ')'"
-      :type="value.type === 'string' ? 'text' : 'number'"
+      :type="value.type === 'number' ? 'number' : 'text'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.units"
       :min="value.min != value.max ? value.min : null"
-      :step="value.type == 'decimal' ? 0.1 : 1"
+      :step="1"
       :max="value.min != value.max ? value.max : null"
       :hint="value.description || ''"
       v-model="value.newValue"
@@ -34,8 +34,9 @@
       :items="value.states"
       :label="value.label + ' (' + value.id + ')'"
       :hint="value.description || ''"
-      :append-outer-icon="!disable_send ? 'send' : null"
+      :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
       v-model="value.newValue"
+      :readonly="!value.writeable"
       @click:append-outer="updateValue(value)"
     ></v-select>
 
