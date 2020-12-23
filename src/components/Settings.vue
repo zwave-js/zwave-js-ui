@@ -321,12 +321,20 @@
                         ></v-switch>
                       </v-flex>
                       <v-flex xs12 v-if="gateway.hassDiscovery">
-                        <v-text-field
-                          v-model="gateway.entityTemplate"
-                          label="Entity name template"
-                          persistent-hint
-                          hint="Template which generates entity names<br>1"
-                        ></v-text-field>
+                          <v-text-field
+                            v-model="gateway.entityTemplate"
+                            label="Entity name template"
+                            persistent-hint
+                            hint="Template which generates entity names"
+                          ></v-text-field>
+                          <v-tooltip bottom>
+                          <span>%n - Node Name</span>
+                          <span>%loc - Node Location</span>
+                          <span>%pk - Property key</span>
+                          <span>%pn - Property name</span>
+                          <span>%ob - Object_id</span>
+                          <span>%lbl - Label</span>
+                        </v-tooltip>
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
