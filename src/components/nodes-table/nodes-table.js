@@ -1,6 +1,7 @@
 import { NodeCollection } from '@/modules/NodeCollection'
 import { Settings } from '@/modules/Settings'
-import filterOptions from '@/components/nodes-table/filter-options.vue'
+import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
+import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 
 export default {
   props: {
@@ -8,7 +9,7 @@ export default {
     showHidden: Boolean
   },
   components: {
-    filterOptions
+    ColumnFilter
   },
   data: () => ({
     settings: new Settings(localStorage),
@@ -17,36 +18,26 @@ export default {
     filters: {},
     sorting: {},
     headers: [
-      { text: 'ID', value: 'id' },
-      { text: 'Manufacturer', value: 'manufacturer' },
-      { text: 'Product', value: 'productDescription' },
-      { text: 'Product code', value: 'productLabel' },
-      { text: 'Name', value: 'name' },
-      { text: 'Location', value: 'loc' },
-      { text: 'Secure', value: 'isSecure' },
-      { text: 'Beaming', value: 'isBeaming' },
-      { text: 'Failed', value: 'failed' },
-      { text: 'Status', value: 'status' },
-      { text: 'Interview stage', value: 'interviewStage' },
-      { text: 'Last Active', value: 'lastActive' }
+      { text: 'ID', type: 'number', value: 'id' },
+      { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
+      { text: 'Product', type: 'string', value: 'productDescription' },
+      { text: 'Product code', type: 'string', value: 'productLabel' },
+      { text: 'Name', type: 'string', value: 'name' },
+      { text: 'Location', type: 'string', value: 'loc' },
+      { text: 'Secure', type: 'boolean', value: 'isSecure' },
+      { text: 'Beaming', type: 'boolean', value: 'isBeaming' },
+      { text: 'Failed', type: 'boolean', value: 'failed' },
+      { text: 'Status', type: 'string', value: 'status' },
+      { text: 'Interview stage', type: 'string', value: 'interviewStage' },
+      { text: 'Last Active', type: 'date', value: 'lastActive' }
     ]
   }),
   methods: {
     initFilters () {
-      return {
-        id: { type: 'number' },
-        manufacturer: { type: 'string' },
-        productDescription: { type: 'string' },
-        productLabel: { type: 'string' },
-        name: { type: 'string' },
-        loc: { type: 'string' },
-        isSecure: { type: 'boolean' },
-        isBeaming: { type: 'boolean' },
-        failed: { type: 'boolean' },
-        status: { type: 'string' },
-        interviewStage: { type: 'string' },
-        lastActive: { type: 'date' }
-      }
+      return this.headers.reduce((values, h) => {
+        values[h.value] = {}
+        return values
+      }, {})
     },
     initSorting () {
       return {
@@ -60,15 +51,21 @@ export default {
     storeSetting (key, val) {
       this.settings.store(key, val)
     },
+    changeFilter (colName, $event) {
+      this.filters = this.filters ? this.filters : {}
+      this.filters[colName] = $event
+      this.storeSetting('nodes_filters', this.filters)
+    },
     resetFilter () {
       this.filters = this.initFilters()
+      this.storeSetting('nodes_filters', this.filters)
     },
     nodeSelected (node) {
       this.selectedNode = node
       this.$emit('node-selected', { node })
     }
   },
-  mounted () {
+  created () {
     this.filters = this.loadSetting('nodes_filters', this.initFilters())
     this.sorting = this.loadSetting('nodes_sorting', this.initSorting())
     this.nodeTableItems = this.loadSetting('nodes_itemsPerPage', 10)
@@ -76,12 +73,6 @@ export default {
   watch: {
     nodeTableItems (val) {
       this.storeSetting('nodes_itemsPerPage', val)
-    },
-    filters: {
-      handler (val) {
-        this.storeSetting('nodes_filters', val)
-      },
-      deep: true
     },
     sorting: {
       handler (val) {
@@ -100,154 +91,13 @@ export default {
       })
     },
     filteredNodes () {
-      return this.relevantNodes
-        .betweenNumber(
-          'id',
-          this.filters.id ? this.filters.id.min : null,
-          this.filters.id ? this.filters.id.max : null
-        )
-        .equalsAny(
-          'id',
-          this.filters.id
-            ? this.filters.id.selections
-              ? this.filters.id.selections
-              : []
-            : []
-        )
-        .contains(
-          ['manufacturer'],
-          this.filters.manufacturer ? this.filters.manufacturer.search : ''
-        )
-        .equalsAny(
-          'manufacturer',
-          this.filters.manufacturer
-            ? this.filters.manufacturer.selections
-              ? this.filters.manufacturer.selections
-              : []
-            : []
-        )
-        .contains(
-          ['productDescription'],
-          this.filters.productDescription
-            ? this.filters.productDescription.search
-            : ''
-        )
-        .equalsAny(
-          'productDescription',
-          this.filters.productDescription
-            ? this.filters.productDescription.selections
-              ? this.filters.productDescription.selections
-              : []
-            : []
-        )
-        .contains(
-          ['productLabel'],
-          this.filters.productLabel ? this.filters.productLabel.search : ''
-        )
-        .equalsAny(
-          'productLabel',
-          this.filters.productLabel
-            ? this.filters.productLabel.selections
-              ? this.filters.productLabel.selections
-              : []
-            : []
-        )
-        .contains(['name'], this.filters.name ? this.filters.name.search : '')
-        .equalsAny(
-          'name',
-          this.filters.name
-            ? this.filters.name.selections
-              ? this.filters.name.selections
-              : []
-            : []
-        )
-        .contains(['loc'], this.filters.loc ? this.filters.loc.search : '')
-        .equalsAny(
-          'loc',
-          this.filters.loc
-            ? this.filters.loc.selections
-              ? this.filters.loc.selections
-              : []
-            : []
-        )
-        .equals(
-          'isSecure',
-          this.filters.isSecure ? this.filters.isSecure.bool : null
-        )
-        .equalsAny(
-          'isSecure',
-          this.filters.isSecure
-            ? this.filters.isSecure.selections
-              ? this.filters.isSecure.selections
-              : []
-            : []
-        )
-        .equals(
-          'isBeaming',
-          this.filters.isBeaming ? this.filters.isBeaming.bool : null
-        )
-        .equalsAny(
-          'isBeaming',
-          this.filters.isBeaming
-            ? this.filters.isBeaming.selections
-              ? this.filters.isBeaming.selections
-              : []
-            : []
-        )
-        .equals('failed', this.filters.failed ? this.filters.failed.bool : null)
-        .equalsAny(
-          'failed',
-          this.filters.failed
-            ? this.filters.failed.selections
-              ? this.filters.failed.selections
-              : []
-            : []
-        )
-        .contains(
-          ['status'],
-          this.filters.status ? this.filters.status.search : ''
-        )
-        .equalsAny(
-          'status',
-          this.filters.status
-            ? this.filters.status.selections
-              ? this.filters.status.selections
-              : []
-            : []
-        )
-        .contains(
-          ['interviewStage'],
-          this.filters.interviewStage ? this.filters.interviewStage.search : ''
-        )
-        .equalsAny(
-          'interviewStage',
-          this.filters.interviewStage
-            ? this.filters.interviewStage.selections
-              ? this.filters.interviewStage.selections
-              : []
-            : []
-        )
-        .betweenDate(
-          'lastActive',
-          this.filters.lastActive ? this.filters.lastActive.min : null,
-          this.filters.lastActive ? this.filters.lastActive.max : null
-        )
+      return ColumnFilterHelper.filterByFilterSpec(this.relevantNodes, this.headers, this.filters)
     },
     values () {
-      return {
-        id: this.relevantNodes.values('id'),
-        manufacturer: this.relevantNodes.values('manufacturer'),
-        productDescription: this.relevantNodes.values('productDescription'),
-        productLabel: this.relevantNodes.values('productLabel'),
-        name: this.relevantNodes.values('name'),
-        loc: this.relevantNodes.values('loc'),
-        isSecure: this.relevantNodes.values('isSecure'),
-        isBeaming: this.relevantNodes.values('isBeaming'),
-        failed: this.relevantNodes.values('failed'),
-        status: this.relevantNodes.values('status'),
-        interviewStage: this.relevantNodes.values('interviewStage'),
-        lastActive: this.relevantNodes.values('lastActive')
-      }
+      return this.headers.reduce((values, h) => {
+        values[h.value] = this.relevantNodes.values(h.value)
+        return values
+      }, {})
     },
     tableNodes () {
       return this.filteredNodes.nodes

@@ -16,12 +16,14 @@
         >Reset Filter</v-btn
       >
     </template>
-    <template v-for="h in headers" v-slot:[`header.${h.value}`]="{ header }">
-      <span :key="h.value">
-        <filter-options
-          v-model="filters[`${h.value}`]"
-          :items.sync="values[`${h.value}`]"
-        ></filter-options>
+    <template v-for="column in headers" v-slot:[`header.${column.value}`]="{ header }">
+      <span :key="column.value">
+        <column-filter
+          :column="column"
+          :value="filters[`${column.value}`] || {}"
+          :items="values[`${column.value}`] || {}"
+          @change="changeFilter(column.value,$event)"
+        ></column-filter>
         {{ header.text }}
       </span>
     </template>
