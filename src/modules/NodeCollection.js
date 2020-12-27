@@ -19,6 +19,14 @@ export class NodeCollection {
     return value => this._strValue(value, caseSensitive).indexOf(strFilter) >= 0
   }
 
+  _createRegexFilter (filterValue, caseSensitive) {
+    if (this._isUndefined(filterValue)) {
+      filterValue = ''
+    }
+    const strFilter = this._strValue(filterValue, caseSensitive)
+    return value => !!this._strValue(value, caseSensitive).match(strFilter)
+  }
+
   _filterByProps (node, properties, filter) {
     const mergedProps = [properties].reduce(
       (merged, prop) => merged.concat(prop),
@@ -41,6 +49,13 @@ export class NodeCollection {
     )
   }
 
+  matches (properties, value, caseSensitive = false) {
+    return this.filter(
+      properties,
+      this._createRegexFilter(value, caseSensitive)
+    )
+  }
+
   equals (properties, value) {
     return this.filter(
       properties,
@@ -57,7 +72,7 @@ export class NodeCollection {
   }
 
   filterStringCol (col, filter) {
-    return this.contains([col], filter ? filter.match : '').equalsAny(
+    return this.matches([col], filter ? filter.match : '').equalsAny(
       col,
       filter ? (filter.values ? filter.values : []) : []
     )

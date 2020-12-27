@@ -3,7 +3,7 @@
     <v-row>
       <v-col>
         <v-text-field
-          label="Match"
+          label="Match Regex"
           v-model="value.match"
           clearable
           @change="$emit('change', value)"
