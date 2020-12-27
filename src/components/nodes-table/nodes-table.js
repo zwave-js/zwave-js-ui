@@ -41,7 +41,7 @@ export default {
     },
     initSorting () {
       return {
-        by: ['node_id'],
+        by: ['id'],
         desc: [false]
       }
     },

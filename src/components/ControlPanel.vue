@@ -792,13 +792,13 @@ export default {
 
       return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
     },
-    selectNode ({ node }) {
-      if (!node) return
+    selectNode (item) {
+      if (!item) return
 
-      if (this.selectedNode === node) {
+      if (this.selectedNode === item) {
         this.selectedNode = null
       } else {
-        this.selectedNode = this.nodes.find(n => n.node_id === node.node_id)
+        this.selectedNode = this.nodes.find(n => n.id === item.id)
       }
     },
     getValue (v) {
