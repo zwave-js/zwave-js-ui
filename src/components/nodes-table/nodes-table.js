@@ -91,7 +91,11 @@ export default {
       })
     },
     filteredNodes () {
-      return ColumnFilterHelper.filterByFilterSpec(this.relevantNodes, this.headers, this.filters)
+      return ColumnFilterHelper.filterByFilterSpec(
+        this.relevantNodes,
+        this.headers,
+        this.filters
+      )
     },
     values () {
       return this.headers.reduce((values, h) => {

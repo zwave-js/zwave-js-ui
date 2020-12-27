@@ -7,14 +7,14 @@
           label="From"
           v-model="value.from"
           clearable
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-text-field>
         <v-text-field
           type="datetime-local"
           label="Until"
           v-model="value.until"
           clearable
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-text-field>
       </v-col>
     </v-row>

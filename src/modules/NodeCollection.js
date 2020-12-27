@@ -53,47 +53,26 @@ export class NodeCollection {
       col,
       filter ? filter.min : null,
       filter ? filter.max : null
-    ).equalsAny(
-      col,
-      filter
-        ? filter.values
-          ? filter.values
-          : []
-        : []
-    )
+    ).equalsAny(col, filter ? (filter.values ? filter.values : []) : [])
   }
 
   filterStringCol (col, filter) {
-    return this
-      .contains(
-        [col],
-        filter ? filter.match : ''
-      )
-      .equalsAny(
-        col,
-        filter
-          ? filter.values
-            ? filter.values
-            : []
-          : []
-      )
+    return this.contains([col], filter ? filter.match : '').equalsAny(
+      col,
+      filter ? (filter.values ? filter.values : []) : []
+    )
   }
 
   filterBoolCol (col, filter) {
-    return this
-      .equals(
-        col,
-        filter ? filter.boolValue : null
-      )
+    return this.equals(col, filter ? filter.boolValue : null)
   }
 
   filterDateCol (col, filter) {
-    return this
-      .betweenDate(
-        col,
-        filter ? filter.from : null,
-        filter ? filter.until : null
-      )
+    return this.betweenDate(
+      col,
+      filter ? filter.from : null,
+      filter ? filter.until : null
+    )
   }
 
   betweenNumber (properties, minValue, maxValue) {

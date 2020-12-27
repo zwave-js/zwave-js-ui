@@ -14,23 +14,23 @@
     <v-card>
       <v-icon small v-on:click="hideOptions" right>close</v-icon>
       <column-filter-boolean
-        v-if="column.type=='boolean'"
+        v-if="column.type == 'boolean'"
         :value="value"
         @change="change"
       ></column-filter-boolean>
       <column-filter-date
-        v-if="column.type=='date'"
+        v-if="column.type == 'date'"
         :value="value"
         @change="change"
       ></column-filter-date>
       <column-filter-number
-        v-if="column.type=='number'"
+        v-if="column.type == 'number'"
         :value="value"
         :items="items"
         @change="change"
       ></column-filter-number>
       <column-filter-string
-        v-if="column.type=='string'"
+        v-if="column.type == 'string'"
         :value="value"
         :items="items"
         @change="change"
@@ -86,8 +86,14 @@ export default {
   },
   methods: {
     hasDeepValue (obj) {
-      return obj !== undefined && obj !== null && Object.keys(obj).some(
-        k => (!!obj[k] && !!Object.keys(obj[k]).length) || (typeof obj[k] === 'boolean')
+      return (
+        obj !== undefined &&
+        obj !== null &&
+        Object.keys(obj).some(
+          k =>
+            (!!obj[k] && !!Object.keys(obj[k]).length) ||
+            typeof obj[k] === 'boolean'
+        )
       )
     },
     showOptions () {
@@ -98,7 +104,10 @@ export default {
     },
     change (value) {
       // Emit minimal storable filter spec (with empty default values removed):
-      this.$emit('change', ColumnFilterHelper.filterSpec(this.column.type, value))
+      this.$emit(
+        'change',
+        ColumnFilterHelper.filterSpec(this.column.type, value)
+      )
     },
     confirm () {
       this.hideOptions()

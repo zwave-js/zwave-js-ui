@@ -6,7 +6,7 @@
           :indeterminate="value.boolValue == null"
           v-model="value.boolValue"
           label="Boolean value"
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-checkbox>
       </v-col>
     </v-row>

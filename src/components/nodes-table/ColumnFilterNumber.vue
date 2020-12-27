@@ -7,7 +7,7 @@
           label="Min"
           v-model="value.min"
           clearable
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-text-field>
       </v-col>
       <v-col>
@@ -16,7 +16,7 @@
           label="Max"
           v-model="value.max"
           clearable
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-text-field>
       </v-col>
     </v-row>
@@ -31,7 +31,7 @@
           deletableChips
           dense
           multiple
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-select>
       </v-col>
     </v-row>

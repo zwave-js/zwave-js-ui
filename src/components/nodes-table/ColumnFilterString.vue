@@ -6,7 +6,7 @@
           label="Match"
           v-model="value.match"
           clearable
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-text-field>
       </v-col>
     </v-row>
@@ -21,7 +21,7 @@
           deletableChips
           dense
           multiple
-          @change="$emit('change',value)"
+          @change="$emit('change', value)"
         ></v-select>
       </v-col>
     </v-row>
