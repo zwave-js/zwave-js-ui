@@ -56,7 +56,7 @@ export default {
       this.filters[colName] = $event
       this.storeSetting('nodes_filters', this.filters)
     },
-    resetFilter () {
+    resetFilters () {
       this.filters = this.initFilters()
       this.storeSetting('nodes_filters', this.filters)
     },

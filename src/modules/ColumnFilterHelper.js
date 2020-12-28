@@ -10,7 +10,7 @@ export class ColumnFilterHelper {
       },
       date: {
         from: null,
-        until: null
+        to: null
       },
       number: {
         min: null,

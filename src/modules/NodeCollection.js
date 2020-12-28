@@ -24,7 +24,13 @@ export class NodeCollection {
       filterValue = ''
     }
     const strFilter = this._strValue(filterValue, caseSensitive)
-    return value => !!this._strValue(value, caseSensitive).match(strFilter)
+    return value => {
+      let res = true
+      try {
+        res = !!this._strValue(value, caseSensitive).match(strFilter)
+      } catch (e) {} // Ignore filter on regexp error
+      return res
+    }
   }
 
   _filterByProps (node, properties, filter) {
@@ -86,7 +92,7 @@ export class NodeCollection {
     return this.betweenDate(
       col,
       filter ? filter.from : null,
-      filter ? filter.until : null
+      filter ? filter.to : null
     )
   }
 

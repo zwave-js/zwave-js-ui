@@ -9,7 +9,7 @@ describe('ColumnFilterHelper', () => {
         .to.eql({ boolValue: null })
       chai
         .expect(ColumnFilterHelper.defaultFilter('date'))
-        .to.eql({ from: null, until: null })
+        .to.eql({ from: null, to: null })
       chai
         .expect(ColumnFilterHelper.defaultFilter('number'))
         .to.eql({ min: null, max: null, values: [] })
@@ -24,9 +24,7 @@ describe('ColumnFilterHelper', () => {
       chai
         .expect(ColumnFilterHelper.filterProps('boolean'))
         .to.eql(['boolValue'])
-      chai
-        .expect(ColumnFilterHelper.filterProps('date'))
-        .to.eql(['from', 'until'])
+      chai.expect(ColumnFilterHelper.filterProps('date')).to.eql(['from', 'to'])
       chai
         .expect(ColumnFilterHelper.filterProps('number'))
         .to.eql(['min', 'max', 'values'])

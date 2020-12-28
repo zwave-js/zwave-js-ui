@@ -12,8 +12,8 @@
     class="elevation-1"
   >
     <template v-slot:top>
-      <v-btn color="blue darken-1" text @click.native="resetFilter()"
-        >Reset Filter</v-btn
+      <v-btn color="blue darken-1" text @click.native="resetFilters()"
+        >Reset Filters</v-btn
       >
     </template>
     <template

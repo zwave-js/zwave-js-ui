@@ -1,15 +1,17 @@
 <template>
   <v-card-text>
-    <v-row>
-      <v-col>
-        <v-checkbox
-          :indeterminate="value.boolValue == null"
-          v-model="value.boolValue"
-          label="Boolean value"
-          @change="$emit('change', value)"
-        ></v-checkbox>
-      </v-col>
-    </v-row>
+    <v-form>
+      <v-row>
+        <v-col>
+          <v-checkbox
+            :indeterminate="value.boolValue == null"
+            v-model="value.boolValue"
+            label="Boolean value"
+            @change="change"
+          ></v-checkbox>
+        </v-col>
+      </v-row>
+    </v-form>
   </v-card-text>
 </template>
 
@@ -21,6 +23,11 @@ export default {
       type: Object,
       default: () => ColumnFilterHelper.defaultFilter('string'),
       required: true
+    }
+  },
+  methods: {
+    change () {
+      this.$emit('change', this.value, true)
     }
   }
 }

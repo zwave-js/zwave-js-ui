@@ -37,7 +37,7 @@
       ></column-filter-string>
       <v-card-actions>
         <v-btn @click="clearFilter">Clear</v-btn>
-        <v-btn color="primary" @click="confirm">Ok</v-btn>
+        <v-btn color="primary" @click="confirm" :disabled="!valid">Ok</v-btn>
       </v-card-actions>
     </v-card>
   </v-menu>
@@ -76,6 +76,7 @@ export default {
   },
   data () {
     return {
+      valid: true,
       show: false
     }
   },
@@ -102,12 +103,15 @@ export default {
     hideOptions () {
       this.show = false
     },
-    change (value) {
-      // Emit minimal storable filter spec (with empty default values removed):
-      this.$emit(
-        'change',
-        ColumnFilterHelper.filterSpec(this.column.type, value)
-      )
+    change (value, valid) {
+      this.valid = valid
+      if (valid === true) {
+        // Emit minimal storable filter spec (with empty default values removed):
+        this.$emit(
+          'change',
+          ColumnFilterHelper.filterSpec(this.column.type, value)
+        )
+      }
     },
     confirm () {
       this.hideOptions()
@@ -128,7 +132,7 @@ export default {
     },
     clearFilter () {
       this.resetToDefaults()
-      this.change(this.value)
+      this.change(this.value, true)
     }
   }
 }
