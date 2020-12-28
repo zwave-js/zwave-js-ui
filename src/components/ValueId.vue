@@ -3,7 +3,7 @@
     <v-text-field
       :label="value.label + ' (' + value.id + ')'"
       readonly
-      :suffix="value.units"
+      :suffix="value.unit"
       :hint="value.description || ''"
       v-model="value.value"
     ></v-text-field>
@@ -20,7 +20,7 @@
       :label="value.label + ' (' + value.id + ')'"
       :type="value.type === 'number' ? 'number' : 'text'"
       :append-outer-icon="!disable_send ? 'send' : null"
-      :suffix="value.units"
+      :suffix="value.unit"
       :min="value.min != value.max ? value.min : null"
       :step="1"
       :max="value.min != value.max ? value.max : null"
