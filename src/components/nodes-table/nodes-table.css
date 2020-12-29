@@ -1,0 +1,26 @@
+.td-large {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-x: hidden;
+  max-width: 20em;
+}
+
+.td-medium {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-x: hidden;
+  max-width: 15em;
+}
+
+.td-small {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-x: hidden;
+  max-width: 10em;
+}
+
+.v-chip {
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow-x: hidden;
+}
