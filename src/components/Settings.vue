@@ -331,13 +331,13 @@
                       </v-flex>
                       <v-flex xs6 v-if="gateway.hassDiscovery">
                         <div>
-                          Default: <code>%loc-%n_%ob</code> <br />-
-                          <code>%n</code>: Node Name <br />- <code>%loc</code>:
-                          Node Location <br />- <code>%pk</code>: valueId
-                          property key (uses property name if undefined) <br />-
-                          <code>%pn</code>: valueId property name <br />-
-                          <code>%ob</code>: HASS object_id <br />-
-                          <code>%lbl</code>: valueId label
+                          Default: <code>%loc-%n_%o</code> <br />-
+                          <code>%nid</code>: Node ID <br />- <code>%n</code>:
+                          Node Name <br />- <code>%loc</code>: Node Location
+                          <br />- <code>%pk</code>: valueId property key (uses
+                          property name if undefined) <br />- <code>%pn</code>:
+                          valueId property name <br />- <code>%o</code>: HASS
+                          object_id <br />- <code>%l</code>: valueId label
                         </div>
                       </v-flex>
                       <v-flex xs12 sm6>
