@@ -25,7 +25,6 @@
 
   - [Introduction](development/intro.md)
 
-- [Features](features.md)
 - [Screenshots](screenshots.md)
 - [Thanks](thanks.md)
 - [Author](author.md)

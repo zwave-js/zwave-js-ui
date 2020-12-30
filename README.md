@@ -21,9 +21,9 @@
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
 <div>
-  <img src="docs/zwavejs_logo.svg" width="300" alt="zwavejs">
+  <img src="/_images/zwavejs_logo.svg" width="300" alt="zwavejs">
   <span style="font-size: 25px">TO</span>
-  <img src="docs/MQTT-Logo.png" alt="mqtt">
+  <img src="/_images/MQTT-Logo.png" alt="mqtt">
 </div>
 
 Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
@@ -31,20 +31,15 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
 - **Backend**: [NodeJS](https://nodejs.org/en/), [Express](https://expressjs.com/), [socket.io](https://github.com/socketio/socket.io), [Mqttjs](https://github.com/mqttjs/MQTT.js), [zwavejs](https://github.com/zwave-js/node-zwave-js), [Webpack](https://webpack.js.org/)
 - **Frontend**: [Vue](https://vuejs.org/), [socket.io](https://github.com/socketio/socket.io), [Vuetify](https://github.com/vuetifyjs/vuetify)
 
-## :pray: Thanks
+## Features
 
-Thanks to this people for help with issues tracking and contributions:
-
-- [**Chris Nesbitt-Smith**](https://github.com/chrisns)
-- [**AlCalzone**](https://github.com/AlCalzone)
-- [**Jorge Schrauwen**](https://github.com/sjorge)
-- [**Jay**](https://github.com/jshridha)
-- [**Thiago Oliveira**](https://github.com/chilicheech)
-- [**Vassilis Aretakis**](https://github.com/billiaz)
-- [**Andreas Hochsteger**](https://github.com/ahochsteger)
-
-## :bowtie: Author
-
-[Daniel Lando](https://github.com/robertsLando)
-
-Support me on [Patreon](https://www.patreon.com/user?u=16906849) :heart:
+- Configurable Zwave to Mqtt Gateway
+- Home Assistant integration (**beta**)
+- Zwave Control Panel:
+  - **Nodes management**: check all nodes discovered in the z-wave network, send/receive nodes values updates directly from the UI and send action to the nodes and controller for diagnostics and network heal
+  - **Custom Node naming and Location**: Starting from v1.3.0 nodes `name` and `location` are stored in a JSON file named `nodes.json`. This because not all nodes have native support for naming and location features ([#45](https://github.com/zwave-js/zwavejs2mqtt/issues/45)). This change is back compatible with older versions of this package: on startup it will get all nodes names and location from the `zwcfg_homeHEX.xml` file (if present) and create the new `nodes.json` file based on that. This file can be imported/exported from the UI control panel with the import/export buttons placed on the top of nodes table, on the right of controller actions select.
+  - **Firmware updates**: You are able to send firmware updates to your devices using the UI, just select the controller action `Begin Firmware Update`
+  - **Groups associations**: create associations between nodes (also supports multi-instance associations, need to use last version of zwave-js)
+  - **Custom scenes management**
+- Log debug in UI
+- Mesh graph showing devices neighbors
