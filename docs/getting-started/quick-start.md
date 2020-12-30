@@ -19,6 +19,7 @@ wget https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/docke
 docker-compose up
 ```
 
+> [!NOTE]
 > Replace `/dev/ttyACM0` with your serial device
 
 For more info about docker check [here](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docker)
@@ -29,6 +30,7 @@ For more info about docker check [here](https://github.com/zwave-js/zwavejs2mqtt
 kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kustomization.yaml
 ```
 
+> [!TIP]
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](https://github.com/zwave-js/zwavejs2mqtt/tree/master/kubernetes) directory of this repo
 
 ## NodeJS or PKG version

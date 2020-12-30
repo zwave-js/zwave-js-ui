@@ -7,7 +7,8 @@ using [MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/).
 This allows zwavejs2mqtt to automatically add devices to Home Assistant.
 To enable this feature remember to set the flag **Hass Discovery** in Gateway settings configuration.
 
-**ATTENTION**: Hass updates often break zwavejs2mqtt device discovery. For this reason zwavejs2mqtt will try to be always compatible with latest hass version. Check the changelog before update!
+> [!WARNING]
+> Hass updates often break zwavejs2mqtt device discovery. For this reason zwavejs2mqtt will try to be always compatible with latest hass version. Check the changelog before update!
 
 To achieve the best possible integration (including MQTT discovery):
 
@@ -72,6 +73,7 @@ To get the **Device id** of a specific node go to Control Panel, select a node i
 
 You can specify your custom devices configuration inside `store/customDevices(.js|.json)` file. This allows users that use Docker to create their custom hass devices configuration without the need to build a new container. If using `.json` format zwavejs2mqtt will watch for file changes and automatically load new components on runtime without need to restart the application.
 
+> [!NOTE]
 > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS PLEASE SEND A PR!
 
 ### Thermostats
