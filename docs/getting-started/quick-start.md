@@ -64,8 +64,3 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
      ```
 
 2. Open the browser <http://localhost:8091>
-
-## Reverse Proxy Setup
-
-If you need to setup ZWave To MQTT behind a reverse proxy that needs a _subpath_ to
-work, take a look at [the reverse proxy configuration docs](docs/subpath.md).
