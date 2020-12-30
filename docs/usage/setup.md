@@ -160,6 +160,13 @@ Gateway settings:
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#robot-home-assistant-integration-beta))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
+- **Entity name template**: Custom Entity name based on placeholders. Default is `%loc-%n_%o`
+- `%n`: Node Name
+- `%loc`: Node Location
+- `%pk`: valueId property key (fallback to device type)
+- `%pn`: valueId property name (fallback to device type)
+- `%o`: HASS object_id
+- `%l`: valueId label (fallback to object_id)
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
