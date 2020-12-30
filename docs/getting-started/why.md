@@ -1,4 +1,4 @@
-## Why Zwavejs
+# Why Zwavejs
 
 1. Entirely written in JS (Typescript). This is good for many reasons:
    - We can drop the `node-openzwave-shared` that is maintained by me but would need a complete refactor and it's hard to maintain both projects.
