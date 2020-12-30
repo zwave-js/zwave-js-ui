@@ -24,11 +24,11 @@ mqtt:
   discovery_prefix: <your_discovery_prefix>
   broker: [YOUR MQTT BROKER] # Remove if you want to use builtin-in MQTT broker
   birth_message:
-    topic: "homeassistant/status"
-    payload: "online"
+    topic: 'homeassistant/status'
+    payload: 'online'
   will_message:
-    topic: "homeassistant/status"
-    payload: "offline"
+    topic: 'homeassistant/status'
+    payload: 'offline'
 ```
 
 Mind you that if you want to use the embedded broker of Home Assistant you
