@@ -24,11 +24,11 @@ mqtt:
   discovery_prefix: <your_discovery_prefix>
   broker: [YOUR MQTT BROKER] # Remove if you want to use builtin-in MQTT broker
   birth_message:
-    topic: 'homeassistant/status'
-    payload: 'online'
+    topic: "homeassistant/status"
+    payload: "online"
   will_message:
-    topic: 'homeassistant/status'
-    payload: 'offline'
+    topic: "homeassistant/status"
+    payload: "offline"
 ```
 
 Mind you that if you want to use the embedded broker of Home Assistant you
@@ -44,7 +44,7 @@ zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. 
 
 To see the components that have been discovered by zwavejs2mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
 
-![Hass Devices](docs/hass_devices.png)
+![Hass Devices](../_images/hass_devices.png)
 
 **ATTENTION**
 Once edited the devices will loose all their customizations after a restart. To prevent this you can store the node hassDevices by pressing `STORE` button at the top of hass devices table. By pressing it the hassDevices will be stored in `nodes.json` file that can be imported/exported easily from control panel UI at the top of nodes table.
