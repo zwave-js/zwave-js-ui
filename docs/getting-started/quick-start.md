@@ -1,0 +1,66 @@
+# Quick start
+
+Actually there are different ways of running Zwavejs2mqtt. Choose the one that best fit your needs
+
+## Docker
+
+The easier one is by using docker:
+
+```bash
+# Using volumes as persistence
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+
+# Using local folder as persistence
+mkdir store
+docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+
+# As a service
+wget https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/docker-compose.yml
+docker-compose up
+```
+
+> [!NOTE]
+> Replace `/dev/ttyACM0` with your serial device
+
+For more info about docker check [here](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docker)
+
+## Kubernetes
+
+```bash
+kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kustomization.yaml
+```
+
+> [!TIP]
+> You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](https://github.com/zwave-js/zwavejs2mqtt/tree/master/kubernetes) directory of this repo
+
+## NodeJS or PKG version
+
+1. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
+
+   - For the packaged version:
+
+     ```sh
+     cd ~
+     mkdir zwavejs2mqtt
+     cd zwavejs2mqtt
+     # download latest version
+     curl -s https://api.github.com/repos/zwave-js/zwavejs2mqtt/releases/latest  \
+     | grep "browser_download_url.*zip" \
+     | cut -d : -f 2,3 \
+     | tr -d \" \
+     | wget -i -
+     unzip zwavejs2mqtt-v*.zip
+     ./zwavejs2mqtt
+     ```
+
+   - If you want to compile last code from github:
+
+     ```sh
+     git clone https://github.com/zwave-js/zwavejs2mqtt
+     cd zwavejs2mqtt
+     npm install
+     npm run build
+     npm start
+     ```
+
+2. Open the browser <http://localhost:8091>
