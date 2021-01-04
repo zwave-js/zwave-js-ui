@@ -26,4 +26,4 @@ Exporting is just a button away, click on export shown on screenshot! this will 
 
 ![Grab file](../_images/troubleshoot_node_json.png)
 
-Simple as that! 
+Simple as that!
