@@ -10,9 +10,7 @@
             />
           </v-list-item-avatar>
           <v-list-item-content>
-            <v-list-item-title>{{
-              'ZWaveJS2MQTT'
-            }}</v-list-item-title>
+            <v-list-item-title>{{ 'ZWaveJS2MQTT' }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>

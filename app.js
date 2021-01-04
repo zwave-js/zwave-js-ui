@@ -95,9 +95,7 @@ function setupInterceptor () {
 
 // ### EXPRESS SETUP
 
-logger.info(
-  `Version: ${utils.getVersion()}`
-)
+logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
 
 // view engine setup
