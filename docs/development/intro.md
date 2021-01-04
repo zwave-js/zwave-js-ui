@@ -3,7 +3,7 @@
 Developers who wants to debug the application have to open 2 terminals.
 
 In first terminal run `npm run dev` to start webpack-dev for front-end developing and hot reloading at <http://localhost:8092>
-(**THE PORT FOR DEVELOPING IS 8092**)
+(**THE PORT FOR DEVELOPING IS 8092**).   You'll need to install `webpack-dev-server` (`npm install -g webpack-dev-server`) to run this.
 
 In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
 
