@@ -68,54 +68,11 @@
           </v-flex>
         </v-layout>
 
-        <v-data-table
-          :headers="headers"
-          :items="tableNodes"
-          :footer-props="{
-            itemsPerPageOptions: [10, 20, { text: 'All', value: -1 }]
-          }"
-          :items-per-page.sync="nodeTableItems"
-          item-key="id"
-          class="elevation-1"
-        >
-          <template v-slot:item="{ item }">
-            <tr
-              :style="{
-                cursor: 'pointer',
-                background:
-                  selectedNode === item
-                    ? $vuetify.theme.themes.light.accent
-                    : 'none'
-              }"
-              @click.stop="selectNode(item)"
-            >
-              <td>{{ item.id }}</td>
-              <td>
-                {{ item.ready ? item.manufacturer : '' }}
-              </td>
-              <td>
-                {{ item.ready ? item.productDescription : '' }}
-              </td>
-              <td>
-                {{ item.ready ? item.productLabel : '' }}
-              </td>
-              <td>{{ item.name || '' }}</td>
-              <td>{{ item.loc || '' }}</td>
-              <td>{{ item.isSecure ? 'Yes' : 'No' }}</td>
-              <td>{{ item.isBeaming ? 'Yes' : 'No' }}</td>
-              <td>{{ item.failed ? 'Yes' : 'No' }}</td>
-              <td>{{ item.status }}</td>
-              <td>{{ item.interviewStage }}</td>
-              <td>
-                {{
-                  item.lastActive
-                    ? new Date(item.lastActive).toLocaleString()
-                    : 'Never'
-                }}
-              </td>
-            </tr>
-          </template>
-        </v-data-table>
+        <nodes-table
+          :nodes="nodes"
+          :showHidden="showHidden"
+          v-on:node-selected="selectNode"
+        />
 
         <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
           <v-tab key="node">Node</v-tab>
@@ -148,15 +105,15 @@
                   <v-flex>
                     <v-subheader
                       >Device ID:
-                      {{
-                        `${selectedNode.deviceId} (${selectedNode.hexId})`
-                      }}</v-subheader
-                    >
+                      {{ `${selectedNode.deviceId} (${selectedNode.hexId})` }}
+                      <v-btn text @click="exportNode">
+                        Export
+                        <v-icon right dark color="primary"
+                          >file_download</v-icon
+                        >
+                      </v-btn>
+                    </v-subheader>
                   </v-flex>
-                  <v-btn text @click="exportNode">
-                    Export
-                    <v-icon right dark color="primary">file_download</v-icon>
-                  </v-btn>
                 </v-layout>
 
                 <v-layout row>
@@ -191,19 +148,25 @@
                   </v-flex>
                 </v-layout>
 
+                <!-- NODE VALUES -->
+
                 <v-layout v-if="selectedNode.values" column>
                   <v-subheader>Values</v-subheader>
 
                   <v-expansion-panels accordion multiple>
-                    <!-- USER VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header>User</v-expansion-panel-header>
+                    <v-expansion-panel
+                      v-for="(group, className) in commandGroups"
+                      :key="className"
+                    >
+                      <v-expansion-panel-header>{{
+                        className
+                      }}</v-expansion-panel-header>
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
                             <v-layout row wrap>
                               <v-flex
-                                v-for="(v, index) in userValues"
+                                v-for="(v, index) in group"
                                 :key="index"
                                 xs12
                                 sm6
@@ -211,88 +174,15 @@
                               >
                                 <ValueID
                                   @updateValue="updateValue"
-                                  v-model="userValues[index]"
+                                  v-model="group[index]"
                                 ></ValueID>
                               </v-flex>
                             </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
+                      <v-divider></v-divider>
                     </v-expansion-panel>
-
-                    <v-divider></v-divider>
-
-                    <!-- CONFIG VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header>
-                        <!-- v-slot="{ open }"> -->
-                        <v-row no-gutters>
-                          <v-col style="max-width:150px">Configuration</v-col>
-                          <!-- Disable refresh button, just keep in case implemented in future
-                            <v-col v-if="open">
-                            <v-btn
-                              rounded
-                              color="primary"
-                              @click.stop="
-                                sendNodeAction('requestAllConfigParams')
-                              "
-                              dark
-                              >Refresh values</v-btn
-                            >
-                          </v-col> -->
-                        </v-row>
-                      </v-expansion-panel-header>
-                      <v-expansion-panel-content>
-                        <v-card flat>
-                          <v-card-text>
-                            <v-layout row wrap>
-                              <v-flex
-                                v-for="(v, index) in configValues"
-                                :key="index"
-                                xs12
-                                sm6
-                                md4
-                              >
-                                <ValueID
-                                  @updateValue="updateValue"
-                                  v-model="configValues[index]"
-                                ></ValueID>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-expansion-panel-content>
-                    </v-expansion-panel>
-
-                    <v-divider></v-divider>
-
-                    <!-- SYSTEM VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header
-                        >System</v-expansion-panel-header
-                      >
-                      <v-expansion-panel-content>
-                        <v-card flat>
-                          <v-card-text>
-                            <v-layout row wrap>
-                              <v-flex
-                                v-for="(v, index) in systemValues"
-                                :key="index"
-                                xs12
-                                sm6
-                                md4
-                              >
-                                <ValueID
-                                  @updateValue="updateValue"
-                                  v-model="systemValues[index]"
-                                ></ValueID>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-expansion-panel-content>
-                    </v-expansion-panel>
-                    <v-divider></v-divider>
                   </v-expansion-panels>
                 </v-layout>
 
@@ -666,6 +556,8 @@ import ValueID from '@/components/ValueId'
 import AnsiUp from 'ansi_up'
 
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
+import NodesTable from '@/components/nodes-table'
+import { Settings } from '@/modules/Settings'
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
 const ansiUp = new AnsiUp()
@@ -679,7 +571,8 @@ export default {
   },
   components: {
     ValueID,
-    DialogSceneValue
+    DialogSceneValue,
+    NodesTable
   },
   computed: {
     scenesWithId () {
@@ -690,9 +583,6 @@ export default {
     },
     dialogTitle () {
       return this.editedIndex === -1 ? 'New Value' : 'Edit Value'
-    },
-    tableNodes () {
-      return this.showHidden ? this.nodes : this.nodes.filter(n => !n.failed)
     },
     hassDevices () {
       var devices = []
@@ -706,26 +596,23 @@ export default {
 
       return devices
     },
-    userValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'user')
-        : []
-    },
-    systemValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'system')
-        : []
-    },
-    configValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'config')
-        : []
+    commandGroups () {
+      if (this.selectedNode) {
+        const groups = {}
+        for (const v of this.selectedNode.values) {
+          const className = v.commandClassName
+          if (!groups[className]) {
+            groups[className] = []
+          }
+          groups[className].push(v)
+        }
+        return groups
+      } else {
+        return {}
+      }
     }
   },
   watch: {
-    nodeTableItems (val) {
-      localStorage.setItem('nodes_itemsPerPage', val)
-    },
     dialogValue (val) {
       val || this.closeDialog()
     },
@@ -734,6 +621,9 @@ export default {
     },
     newLoc (val) {
       this.locError = this.validateTopic(val)
+    },
+    showHidden () {
+      this.settings.store('nodes_showHidden', this.showHidden)
     },
     selectedNode () {
       if (this.selectedNode) {
@@ -768,17 +658,17 @@ export default {
   },
   data () {
     return {
+      settings: new Settings(localStorage),
       nodes: [],
       scenes: [],
       debug: [],
       homeid: '',
       homeHex: '',
       ozwVersion: '',
-      showHidden: false,
+      showHidden: undefined,
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
-      nodeTableItems: 10,
       newScene: '',
       scene_values: [],
       dialogValue: false,
@@ -879,20 +769,6 @@ export default {
       locError: null,
       newLoc: '',
       selectedNode: null,
-      headers: [
-        { text: 'ID', value: 'id' },
-        { text: 'Manufacturer', value: 'manufacturer' },
-        { text: 'Product', value: 'productDescription' },
-        { text: 'Product code', value: 'product' },
-        { text: 'Name', value: 'name' },
-        { text: 'Location', value: 'loc' },
-        { text: 'Secure', value: 'isSecure' },
-        { text: 'Beaming', value: 'isBeaming' },
-        { text: 'Failed', value: 'failed' },
-        { text: 'Status', value: 'status' },
-        { text: 'Interview stage', value: 'interviewStage' },
-        { text: 'Last Active', value: 'lastActive' }
-      ],
       rules: {
         required: value => {
           var valid = false
@@ -916,13 +792,13 @@ export default {
 
       return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
     },
-    selectNode (item) {
-      if (!item) return
+    selectNode ({ node }) {
+      if (!node) return
 
-      if (this.selectedNode === item) {
+      if (this.selectedNode === node) {
         this.selectedNode = null
       } else {
-        this.selectedNode = this.nodes.find(n => n.id === item.id)
+        this.selectedNode = this.nodes.find(n => n.id === node.id)
       }
     },
     getValue (v) {
@@ -1396,6 +1272,7 @@ export default {
     },
     initNode (n) {
       var values = []
+      // transform object in array
       for (var k in n.values) {
         n.values[k].newValue = n.values[k].value
         values.push(n.values[k])
@@ -1412,9 +1289,7 @@ export default {
   mounted () {
     var self = this
 
-    const itemsPerPage = parseInt(localStorage.getItem('nodes_itemsPerPage'))
-
-    this.nodeTableItems = !isNaN(itemsPerPage) ? itemsPerPage : 10
+    this.showHidden = this.settings.load('nodes_showHidden', false)
 
     this.socket.on(socketEvents.controller, data => {
       self.cnt_status = data

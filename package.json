@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.2",
   "bin": {
     "zwavejs2mqtt": "bin/www"
   },
@@ -53,6 +53,7 @@
     "lint:prettier": "prettier-standard --check",
     "lint-fix:prettier": "prettier-standard --format",
     "test": "mocha",
+    "docs": "docsify serve ./docs",
     "coverage": "c8 --clean mocha",
     "record-coverage": "c8 report --reporter=text-lcov --all --exclude=test/* --exclude=.git --exclude=.eslintrc.js --exclude=.postcssrc.js --exclude=wallaby.js > ./coverage/lcov.info",
     "test-watch-cover": "nodemon --exec c8 npm test",
@@ -120,7 +121,7 @@
     "vuetify": "^2.3.10",
     "vuex": "^3.5.1",
     "winston": "^3.3.3",
-    "zwave-js": "^5.6.0"
+    "zwave-js": "^5.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.11.5",

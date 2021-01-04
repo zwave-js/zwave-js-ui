@@ -38,13 +38,23 @@ function start (server) {
   startGateway()
 }
 
+// use a function so we don't mess the default settings object
+const defaultSettings = () => {
+  return {
+    gateway: {
+      logEnabled: true,
+      logLevel: 'info',
+      logToFile: false,
+      logFilename: 'zwavejs2mqtt.log'
+    }
+  }
+}
+
 function setupLogging (settings) {
-  loggers.setupAll({
-    enabled: settings.gateway.logEnabled,
-    level: settings.gateway.logLevel,
-    logToFile: settings.gateway.logToFile,
-    filename: settings.gateway.logFilename
-  })
+  settings = settings
+    ? Object.assign(defaultSettings(), settings)
+    : defaultSettings()
+  loggers.setupAll(settings)
 }
 
 function startGateway () {
@@ -160,7 +170,7 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.zwave, async function (socket, data) {
-    logger.info(`Zwave api call: ${data.api} ${data.args}`)
+    logger.log('info', `Zwave api call: ${data.api} %o`, data.args)
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api

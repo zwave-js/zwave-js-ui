@@ -328,6 +328,27 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <v-text-field
+                          v-on="on"
+                          v-model="gateway.entityTemplate"
+                          label="Entity name template"
+                          persistent-hint
+                          hint="Template which generates entity names"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <div>
+                          Default: <code>%loc-%n_%o</code> <br />-
+                          <code>%nid</code>: Node ID <br />- <code>%n</code>:
+                          Node Name <br />- <code>%loc</code>: Node Location
+                          <br />- <code>%pk</code>: valueId property key
+                          (fallback to device type) <br />- <code>%pn</code>:
+                          valueId property name (fallback to device type)
+                          <br />- <code>%o</code>: HASS object_id <br />-
+                          <code>%l</code>: valueId label (fallback to object_id)
+                        </div>
+                      </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
                           hint="Enable gateway logging"
