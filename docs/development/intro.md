@@ -1,12 +1,13 @@
 # Development
 
+Get started by installing the required npm packages: `npm install`.   Other (more global) requirements: `npm install -g webpack-dev-server nodemon pkg`
+
 Developers who wants to debug the application have to open 2 terminals.
 
 In first terminal run `npm run dev` to start webpack-dev for front-end developing and hot reloading at <http://localhost:8092>
-(**THE PORT FOR DEVELOPING IS 8092**).   You'll need to install `webpack-dev-server` (`npm install -g webpack-dev-server`) to run this.
+(**THE PORT FOR DEVELOPING IS 8092**).
 
-In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `npm install -g nodemon`)
-
+In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features.
 To package the application run `npm run pkg` command and follow the steps
 
 ## Developing against a different backend
