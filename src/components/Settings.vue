@@ -37,7 +37,7 @@
                           @click:append-outer="randomKey"
                         ></v-text-field>
                       </v-flex>
-                       <v-flex xs12 sm6>
+                      <v-flex xs12 sm6>
                         <v-switch
                           hint="Enable zwave-js logging"
                           persistent-hint
