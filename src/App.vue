@@ -11,7 +11,7 @@
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>{{
-              'ZWave2MQTT v' + version
+              'ZWaveJS2MQTT'
             }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
@@ -215,7 +215,6 @@ export default {
   data () {
     return {
       socket: null,
-      version: process.env.VERSION,
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' },

@@ -93,26 +93,11 @@ function setupInterceptor () {
   process.stderr.write = interceptor(process.stderr.write)
 }
 
-// print actual application version (with git short sha is git is installed)
-function printVersion () {
-  let rev
-
-  try {
-    rev = require('child_process')
-      .execSync('git rev-parse --short HEAD')
-      .toString()
-      .trim()
-  } catch (error) {
-    // git not installed
-  }
-  logger.info(
-    `Version: ${require('./package.json').version}${rev ? '.' + rev : ''}`
-  )
-}
-
 // ### EXPRESS SETUP
 
-printVersion()
+logger.info(
+  `Version: ${utils.getVersion()}`
+)
 logger.info('Application path:' + utils.getPath(true))
 
 // view engine setup
@@ -162,7 +147,7 @@ function setupSocket (server) {
     if (gw.zwave) {
       socket.emit(socketEvents.init, {
         nodes: gw.zwave.nodes,
-        info: gw.zwave.ozwConfig,
+        info: gw.zwave.getInfo(),
         error: gw.zwave.error,
         cntStatus: gw.zwave.cntStatus
       })
