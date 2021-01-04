@@ -25,6 +25,9 @@
 
   - [Introduction](development/intro.md)
 
+- Troubleshooting
+  - [Exporting Node Json](troubleshooting/node_export.md)
+
 - [Screenshots](screenshots.md)
 - [Thanks](thanks.md)
 - [Author](author.md)
