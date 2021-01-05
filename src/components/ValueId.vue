@@ -46,18 +46,20 @@
       </v-subheader>
       <div style="display: flex">
         <v-btn
-          rounded
-          :color="value.value ? 'primary' : 'green'"
+          outlined
+          class="on-button"
+          :style="{ background: value.value ? 'green' : '' }"
+          :color="value.value ? 'white' : 'green'"
           dark
-          style="border-radius: 20px 0 0 20px;margin-right: 0;"
           @click="updateValue(value, true)"
         >
           ON
         </v-btn>
         <v-btn
-          rounded
-          :color="!value.value ? 'primary' : 'red'"
-          style="border-radius: 0 20px 20px 0;margin-left: 0;"
+          outlined
+          class="off-button"
+          :style="{ background: !value.value ? 'red' : '' }"
+          :color="!value.value ? 'white' : 'red'"
           @click="updateValue(value, true)"
           dark
         >
@@ -81,6 +83,17 @@
     </v-tooltip>
   </div>
 </template>
+
+<style scoped>
+.on-button {
+  border-radius: 20px 0 0 20px;
+  margin-right: 0;
+}
+.off-button {
+  border-radius: 0 20px 20px 0;
+  margin-right: 0;
+}
+</style>
 
 <script>
 export default {
