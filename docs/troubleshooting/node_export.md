@@ -20,4 +20,3 @@ Each node hass an Export button, this will export all data of this specific node
 3.  Grab the file and attach it on your github Issue
 
     ![Grab file](../_images/troubleshoot_node_json.png)
-
