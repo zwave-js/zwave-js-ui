@@ -1243,7 +1243,7 @@ export default {
         setTimeout(this.getAssociations, 1000)
       }
     },
-    updateValue (v) {
+    updateValue (v, customValue) {
       v = this.getValue(v)
 
       if (v) {
@@ -1257,6 +1257,10 @@ export default {
         // it's a button
         if (v.type === 'boolean' && !v.readable) {
           v.newValue = true
+        }
+
+        if (customValue !== undefined) {
+          v.newValue = customValue
         }
 
         this.apiRequest('writeValue', [
