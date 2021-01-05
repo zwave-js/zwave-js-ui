@@ -24,7 +24,7 @@ USER node
 WORKDIR /home/node/node-zwave-js
 RUN rm -f package-lock.json
 RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
-RUN yarn run build
+RUN yarn run build:full
 RUN yarn install --production --frozen-lockfile
 RUN for i in config core serial shared; do \
     cd packages/$i && \
