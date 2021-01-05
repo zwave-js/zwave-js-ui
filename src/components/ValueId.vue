@@ -47,7 +47,7 @@
       <div style="display: flex">
         <v-btn
           rounded
-          color="green"
+          :color="value.value ? 'primary' : 'green'"
           dark
           style="border-radius: 20px 0 0 20px;margin-right: 0;"
           @click="updateValue(value, true)"
@@ -56,7 +56,7 @@
         </v-btn>
         <v-btn
           rounded
-          color="red"
+          :color="!value.value ? 'primary' : 'red'"
           style="border-radius: 0 20px 20px 0;margin-left: 0;"
           @click="updateValue(value, true)"
           dark
