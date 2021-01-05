@@ -87,6 +87,15 @@
   </v-app>
 </template>
 
+<style>
+/* Fix Vuetify code style after update to 2.4.0 */
+code {
+  color: #c62828 !important;
+  font-weight: 700 !important;
+}
+
+</style>
+
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
