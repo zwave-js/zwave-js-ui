@@ -5,7 +5,8 @@ Get started by installing the required npm packages: `npm install`.   Other (mor
 Developers who wants to debug the application have to open 2 terminals.
 
 In first terminal run `npm run dev` to start webpack-dev for front-end developing and hot reloading at <http://localhost:8092>
-(**THE PORT FOR DEVELOPING IS 8092**).
+> [!NOTE]
+> THE PORT FOR DEVELOPING IS 8092
 
 In the second terminal run `npm run dev:server` to start the backend server with inspect and auto restart features.
 To package the application run `npm run pkg` command and follow the steps
