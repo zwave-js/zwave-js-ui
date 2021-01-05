@@ -48,7 +48,7 @@
         <v-btn
           outlined
           class="on-button"
-          :style="{ background: value.value ? 'green' : '' }"
+          :style="{ background: value.value ? '#4CAF50' : '' }"
           :color="value.value ? 'white' : 'green'"
           dark
           @click="updateValue(value, true)"
@@ -58,7 +58,7 @@
         <v-btn
           outlined
           class="off-button"
-          :style="{ background: !value.value ? 'red' : '' }"
+          :style="{ background: !value.value ? '#f44336' : '' }"
           :color="!value.value ? 'white' : 'red'"
           @click="updateValue(value, true)"
           dark
