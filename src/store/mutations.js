@@ -26,7 +26,7 @@ export const state = {
     payloadType: 0,
     nodeNames: true,
     hassDiscovery: true,
-    discoveryPrefix: 'hass',
+    discoveryPrefix: 'homeassistant',
     logEnabled: true,
     logLevel: 'info',
     logToFile: false
