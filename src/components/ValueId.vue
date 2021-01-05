@@ -1,7 +1,7 @@
 <template>
   <div v-if="!value.writeable && !value.list">
     <v-text-field
-      :label="value.label + ' (' + value.id + ')'"
+      :label="'[' + value.id + '] ' + value.label"
       readonly
       :suffix="value.unit"
       :hint="value.description || ''"
@@ -17,7 +17,7 @@
             value.type === 'string' ||
             value.type === 'any')
       "
-      :label="value.label + ' (' + value.id + ')'"
+      :label="'[' + value.id + '] ' + value.label"
       :type="value.type === 'number' ? 'number' : 'text'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.unit"
@@ -32,7 +32,7 @@
     <v-select
       v-if="value.list"
       :items="value.states"
-      :label="value.label + ' (' + value.id + ')'"
+      :label="'[' + value.id + '] ' + value.label"
       :hint="value.description || ''"
       :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
       v-model="value.newValue"
@@ -40,14 +40,33 @@
       @click:append-outer="updateValue(value)"
     ></v-select>
 
-    <v-switch
-      v-if="value.type == 'boolean' && value.writeable && value.readable"
-      :label="value.label + ' (' + value.id + ')'"
-      :hint="value.description || ''"
-      persistent-hint
-      v-model="value.newValue"
-      @change="updateValue(value)"
-    ></v-switch>
+    <div v-if="value.type == 'boolean' && value.writeable && value.readable">
+      <v-subheader style="padding-left: 0"
+        >{{ '[' + value.id + '] ' + value.label }}
+      </v-subheader>
+      <div style="display: flex">
+        <v-btn
+          outlined
+          class="on-button"
+          :style="{ background: value.value ? '#4CAF50' : '' }"
+          :color="value.value ? 'white' : 'green'"
+          dark
+          @click="updateValue(value, true)"
+        >
+          ON
+        </v-btn>
+        <v-btn
+          outlined
+          class="off-button"
+          :style="{ background: !value.value ? '#f44336' : '' }"
+          :color="!value.value ? 'white' : 'red'"
+          @click="updateValue(value, true)"
+          dark
+        >
+          OFF
+        </v-btn>
+      </div>
+    </div>
 
     <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
       <template v-slot:activator="{ on }">
@@ -60,10 +79,21 @@
           >{{ value.label }}</v-btn
         >
       </template>
-      <span>{{ ' (' + value.id + ')' + (value.description || '') }}</span>
+      <span>{{ '[' + value.id + '] ' + (value.description || '') }}</span>
     </v-tooltip>
   </div>
 </template>
+
+<style scoped>
+.on-button {
+  border-radius: 20px 0 0 20px;
+  margin-right: 0;
+}
+.off-button {
+  border-radius: 0 20px 20px 0;
+  margin-right: 0;
+}
+</style>
 
 <script>
 export default {
@@ -77,8 +107,8 @@ export default {
   },
   computed: {},
   methods: {
-    updateValue (v) {
-      this.$emit('updateValue', v)
+    updateValue (v, customValue) {
+      this.$emit('updateValue', v, customValue)
     }
   }
 }
