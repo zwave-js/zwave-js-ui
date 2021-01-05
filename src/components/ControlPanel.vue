@@ -18,6 +18,13 @@
                 v-model="homeHex"
               ></v-text-field>
             </v-flex>
+            <v-flex xs12 sm3 md2 mr-2>
+              <v-text-field
+                label="App Version"
+                readonly
+                v-model="appVersion"
+              ></v-text-field>
+            </v-flex>
           </v-layout>
 
           <v-layout>
@@ -664,7 +671,7 @@ export default {
       debug: [],
       homeid: '',
       homeHex: '',
-      ozwVersion: '',
+      appVersion: '',
       showHidden: undefined,
       debugActive: false,
       selectedScene: null,
@@ -1298,7 +1305,7 @@ export default {
     this.socket.on(socketEvents.connected, info => {
       self.homeid = info.homeid
       self.homeHex = info.name
-      self.ozwVersion = info.version
+      self.appVersion = info.appVersion
     })
 
     this.socket.on(socketEvents.nodeRemoved, node => {
@@ -1335,7 +1342,7 @@ export default {
       self.cnt_status = data.error ? data.error : data.cntStatus
       self.homeid = data.info.homeid
       self.homeHex = data.info.name
-      self.ozwVersion = data.info.version
+      self.appVersion = data.info.appVersion
     })
 
     this.socket.on(socketEvents.nodeUpdated, data => {
