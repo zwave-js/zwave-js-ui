@@ -1,6 +1,6 @@
 # Development
 
-Get started by installing the required npm packages: `npm install`.   Other (more global) requirements: `npm install -g webpack-dev-server nodemon pkg`
+Get started by installing the required npm packages: `npm install`.   Other (more global) requirements: `npm install -g nodemon pkg`
 
 Developers who wants to debug the application have to open 2 terminals.
 
