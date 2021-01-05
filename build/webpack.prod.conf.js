@@ -28,7 +28,10 @@ const webpackConfig = merge(baseWebpackConfig, {
       })
     ]
   },
-  devtool: config.build.productionSourceMap && config.build.devtool ? 'cheap-module-source-map' : false,
+  devtool:
+    config.build.productionSourceMap && config.build.devtool
+      ? 'cheap-module-source-map'
+      : false,
   output: {
     path: config.build.assetsRoot,
     filename: utils.assetsPath('js/[name].[chunkhash].js'),
