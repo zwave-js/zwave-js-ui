@@ -159,7 +159,7 @@ export default {
       }
     },
     selection () {
-      var s = {
+      const s = {
         nodes: [],
         links: []
       }
@@ -206,7 +206,7 @@ export default {
     },
     nodeName (n) {
       if (n.data) n = n.data // works both with node object and mesh node object
-      var name = n.name || n.product || 'node ' + n.id
+      const name = n.name || n.product || 'node ' + n.id
       return name + (this.showLocation && n.loc ? ` (${n.loc})` : '')
     },
     nodeClass (n) {
@@ -217,7 +217,7 @@ export default {
     },
     apiRequest (apiName, args) {
       if (this.socket.connected) {
-        var data = {
+        const data = {
           api: apiName,
           args: args
         }
@@ -249,15 +249,15 @@ export default {
     }
   },
   mounted () {
-    var self = this
+    const self = this
 
     this.socket.on(socketEvents.nodeRemoved, node => {
       self.$set(self.nodes, node.id, node)
     })
 
     this.socket.on(socketEvents.init, data => {
-      var nodes = data.nodes
-      for (var i = 0; i < nodes.length; i++) {
+      const nodes = data.nodes
+      for (let i = 0; i < nodes.length; i++) {
         self.nodes.push(self.convertNode(nodes[i]))
       }
     })
@@ -268,10 +268,10 @@ export default {
     })
 
     this.socket.on(socketEvents.nodeUpdated, data => {
-      var node = self.convertNode(data)
+      const node = self.convertNode(data)
 
       // node added
-      var refresh = !self.nodes[data.id] || self.nodes[data.id].failed
+      const refresh = !self.nodes[data.id] || self.nodes[data.id].failed
 
       // add missing nodes if new node added
       while (self.nodes.length < data.id) {
@@ -293,15 +293,16 @@ export default {
     this.socket.on(socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
-          case 'refreshNeighbors':
-            var neighbors = data.result
-            for (var i = 0; i < neighbors.length; i++) {
+          case 'refreshNeighbors': {
+            const neighbors = data.result
+            for (let i = 0; i < neighbors.length; i++) {
               if (self.nodes[i]) {
                 self.nodes[i].neighbors = neighbors[i]
               }
             }
             self.updateLinks()
             break
+          }
         }
       } else {
         self.showSnackbar(
@@ -314,13 +315,13 @@ export default {
     this.refresh()
 
     // make properties window draggable
-    var propertiesDiv = document.getElementById('properties')
-    var mesh = document.getElementById('mesh')
-    var isDown = false
-    var offset = [0, 0]
+    const propertiesDiv = document.getElementById('properties')
+    const mesh = document.getElementById('mesh')
+    let isDown = false
+    let offset = [0, 0]
 
     // TODO: Update dimensions on screen resize
-    var dimensions = [mesh.clientWidth, mesh.clientHeight]
+    const dimensions = [mesh.clientWidth, mesh.clientHeight]
 
     propertiesDiv.addEventListener(
       'mousedown',
@@ -347,8 +348,8 @@ export default {
       function (e) {
         event.preventDefault()
         if (isDown) {
-          var l = e.clientX
-          var r = e.clientY
+          const l = e.clientX
+          const r = e.clientY
 
           if (l > 0 && l < dimensions[0]) {
             propertiesDiv.style.left = l + offset[0] + 'px'

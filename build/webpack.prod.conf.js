@@ -29,7 +29,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       })
     ]
   },
-  devtool: config.build.productionSourceMap ? config.build.devtool : false,
+  devtool: config.build.productionSourceMap && config.build.devtool ? 'cheap-module-source-map' : false,
   output: {
     path: config.build.assetsRoot,
     filename: utils.assetsPath('js/[name].[chunkhash].js'),
@@ -52,7 +52,6 @@ const webpackConfig = merge(baseWebpackConfig, {
         : { safe: true }
     }),
     // keep module.id stable when vendor modules does not change
-    new webpack.HashedModuleIdsPlugin(),
     // enable scope hoisting
     new webpack.optimize.ModuleConcatenationPlugin(),
 
