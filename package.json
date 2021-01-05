@@ -109,7 +109,7 @@
     "native-url": "^0.3.4",
     "nedb": "^1.8.0",
     "prismjs": "^1.22.0",
-    "serialport": "^9.0.1",
+    "serialport": "^9.0.4",
     "serve-favicon": "^2.5.0",
     "socket.io": "^3.0.3",
     "socket.io-client": "^3.0.4",
