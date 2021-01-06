@@ -8,23 +8,26 @@ Fit raZberry hat to pi, then plug in power
 Image Raspbian image and boot and logon (if you don't know how to do this, go find a pi and linux tutorial)
 login
 
-	• sudo apt update
-	• sudo apt upgrade
+	sudo apt update
+	sudo apt upgrade
 	
 # Disable Bluetooth on pi4
  only needed if using pihat, see here for detailed why https://di-marco.net/blog/it/2020-06-06-paspberry_pi_3_4_and_0_w_serial_port_usage/
- `sudo nano /boot/config.txt`
+ 
+ 	sudo nano /boot/config.txt
+ 
  add following and save and exit
- `# Disable Bluetooth
- dtoverlay=disable-bt
+ 
+	# Disable Bluetooth
+	dtoverlay=disable-bt
 	
 # Install docker
-	• curl -fsSL https://get.docker.com -o get-docker.sh
-	• sudo sh get-docker.sh
-	• sudo usermod -aG docker pi
-	• sudo apt install python3 
-	• sudo apt install python3.pip
-	• sudo pip3 -v install docker-compose  (is the -v really needed?)
+	curl -fsSL https://get.docker.com -o get-docker.sh
+	sudo sh get-docker.sh
+	sudo usermod -aG docker pi
+	sudo apt install python3 
+	sudo apt install python3.pip
+	sudo pip3 -v install docker-compose  (is the -v really needed?)
 
 Optional (don't do unless you have an issue)
 	• wget -q -O - https://razberry.z-wave.me/install | sudo bash
