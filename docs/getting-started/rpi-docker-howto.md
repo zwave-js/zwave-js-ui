@@ -15,9 +15,6 @@ login
 	sudo apt update
 	sudo apt upgrade
 
-## Give you pi a static IP address
-I recommend using a static IP address either using raspi-config 
-
 ## Give your pi a friendly name
 use raspi-config to set name to something like pi-zwave01
 
@@ -45,11 +42,6 @@ don't forget to save as you backout of the menus
 	sudo apt install python3.pip
 	sudo pip3 -v install docker-compose  (is the -v really needed?)
 
-Optional (don't do unless you have an issue)
-	• wget -q -O - https://razberry.z-wave.me/install | sudo bash
-	• This installed a bunch of stuff like avahai, libssl etc by script, unknown if this is needed as when I uninstalled none of those thigs were wiped out, only install this if a)you get an issue error with docker or b)you might need this to initialize the raZberry zwave module.
-	• Later clarification - I looked at script and uninstalled everything it installed and all seems ok, so this section is not needed.
-
 # Configure zwave2mqtt container
 
 	cd ~
@@ -58,24 +50,27 @@ Optional (don't do unless you have an issue)
 	curl -fsSL https://raw.githubusercontent.com/OpenZwave/Zwave2Mqtt/master/docker/docker-compose.yml -o docker-compose.yml
 	nano docker-compose.yml
 		○ Change serial in devices to correct serial port (e.g. /dev/ttyAMA0)
+    ○ Change port to 80:8091 (optional, but rest of example assumes this change was made)
 		○ Exit nano and save
 	Sudo docker-compose up -d
 	
 # Configure zwavejs2mqtt
-Connect to http://<ip address of pi>:8091
-Configure Zwave
+Connect to http://pi-zwave01
+click the cog 
+click zwave
 
 The following fields need to be filled:
 	• Serial port with your serial port path inside the container - e.g /dev/ttyAMA0
-	• Auto Update database = on (it is off by default)
 	• Poll interval 1000ms (aka 1s)
-	• Command timeout 20 seconds
-	• Optionally fill in your desire network key (make one up)
-	• Don't forget to click save
+	• Commands timeout 20 seconds
+	• click the symbol to the right of network key to generate a secure network key (or enter your own)
+  • click save
 
-If this is done right after a few mins when you return to the main page the HomeID and Home Hex should be populated.
+If this is done right after a few mins when you return to the main page the HomeID and Home Hex should be populated, if they are not refer to troubleshooting guide.
 
-Configure MQTT
+# Configure MQTT
 Assumes you are already running an MQTT container like the one in home assistant supervisor mode or mosquitto from docker
-
 TODO (waiting on seeming issues with raZberry module on reboots……
+
+# Configure Gateway
+TO DO
