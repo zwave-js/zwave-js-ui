@@ -35,17 +35,17 @@ don't forget to save as you backout of the menus
 	
 # Install docker
 	cd ~
-  curl -fsSL https://get.docker.com -o get-docker.sh
-	sudo sh get-docker.sh
-	sudo usermod -aG docker pi
-	sudo apt install python3 
-	sudo apt install python3.pip
-	sudo pip3 -v install docker-compose  (is the -v really needed?)
+ 	curl -fsSL https://get.docker.com -o get-docker.sh
+ 	sudo sh get-docker.sh
+ 	sudo usermod -aG docker pi
+ 	sudo apt install python3 
+ 	sudo apt install python3.pip
+ 	sudo pip3 -v install docker-compose  (is the -v really needed?)
 
 # Configure zwave2mqtt container
 
 	cd ~
-  mkdir zwavejs2mqtt
+ 	mkdir zwavejs2mqtt
 	cd zwavejs2mqtt
 	curl -fsSL https://raw.githubusercontent.com/OpenZwave/Zwave2Mqtt/master/docker/docker-compose.yml -o docker-compose.yml
 	nano docker-compose.yml
