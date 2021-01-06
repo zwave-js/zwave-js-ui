@@ -1,15 +1,17 @@
 In this example I am using a zwave hat on the pi, this will make it use /dev/ttyAMA0
 If you use a USB zwave module your device will be be something like /dev/ttyUSB01, change your method as needed
 
-Prepare Raspberry Pi
+# Prepare Raspberry Pi
 	• Fit raZberry hat to pi, then plug in power
 	• Image Raspbian image and boot and logon (if you don't know how to do this, go find a pi and linux tutorial)
 	• Sudo apt update
 	• Sudo apt upgrade
-	• Disable Bluetooth on pi4 - only needed if using pihat, see here for detailed why https://di-marco.net/blog/it/2020-06-06-paspberry_pi_3_4_and_0_w_serial_port_usage/
-  sudo nano /boot/config.txt
-  # Disable Bluetooth
-  dtoverlay=disable-bt
+	# Disable Bluetooth on pi4
+  only needed if using pihat, see here for detailed why https://di-marco.net/blog/it/2020-06-06-paspberry_pi_3_4_and_0_w_serial_port_usage/
+  `sudo nano /boot/config.txt
+  add following and save and exit
+  `# Disable Bluetooth
+  `dtoverlay=disable-bt
 	
 
 Install docker
