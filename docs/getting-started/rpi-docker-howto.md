@@ -60,6 +60,7 @@ click the cog
 click zwave
 
 The following fields need to be filled:
+
 	• Serial port with your serial port path inside the container - e.g /dev/ttyAMA0
 	• Poll interval 1000ms (aka 1s)
 	• Commands timeout 20 seconds
@@ -70,6 +71,7 @@ If this is done right after a few mins when you return to the main page the Home
 
 # Configure MQTT
 Assumes you are already running an MQTT container like the one in home assistant supervisor mode or mosquitto from docker
+
 TODO (waiting on seeming issues with raZberry module on reboots……
 
 # Configure Gateway
