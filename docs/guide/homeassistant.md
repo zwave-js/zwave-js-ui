@@ -208,3 +208,105 @@ The main template is like the thermostat template. The things to add are:
   }
 }
 ```
+# Adding Devices Manually
+
+Some people prefer to not use discovery and so here are some examples of devices you can use:
+
+Note the settings used here for the Gateway in the UI are:
+Type: ValueID topics
+Payload type: Just Value
+Use node name instead of numeric nodeIDs: true
+Ignore location: true
+
+::: Motion Sensor
+From a multi sensor
+```yaml
+binary_sensor:
+  - platform: mqtt
+    name: "Hall Motion Sensor"
+    state_topic: "zwave/hall/48/0/Motion"
+    payload_on: "true"
+    payload_off: "false"
+    availability_topic: "zwave/hall_motion_sensor/status"
+    payload_available: "true"
+    payload_not_available: "false"
+    qos: 0
+    device_class: motion
+```
+
+:::
+
+::: Light on/off
+Note this is actually a wall switch, but I want it to appear as a light in HA.
+```yaml
+light:
+  - platform: mqtt
+    name: "Office Light"
+    state_topic: "zwave/office_light/37/0/currentValue"
+    command_topic: "zwave/office_light/37/0/targetValue/set"
+    availability_topic: "zwave/office_light/status"
+    payload_available: "true"
+    payload_not_available: "false"
+    payload_on: "true"
+    payload_off: "false"
+    optimistic: false
+    qos: 0
+    retain: true
+```
+
+:::
+
+::: Lock
+Note this is actually a wall switch, but I want it to appear as a light in HA.
+```yaml
+lock:
+  - platform: mqtt
+    name: outside_lock
+    state_topic: "zwave/outside_lock/98/0/boltStatus"
+    command_topic: "zwave/outside_lock/98/0/targetMode/set"
+    availability_topic: "zwave/outside_lock/status"
+    payload_available: "true"
+    payload_not_available: "false"
+    payload_lock: '255'
+    payload_unlock: '0'
+    state_locked: '"locked"'
+    state_unlocked: '"unlocked"'
+    optimistic: false
+    qos: 1
+    retain: true
+```
+
+:::
+::: Switch
+This is an actual wall switch controlling a fan
+```yaml
+switch:
+  - platform: mqtt
+    name: "Fan Switch"
+    state_topic: "zwave/bathroom_fan/37/0/currentValue"
+    command_topic: "zwave/bathroom_fan/37/0/targetValue/set"
+    availability_topic: "zwave/bathroom_fan/status"
+    payload_available: "true"
+    payload_not_available: "false"
+    payload_on: "true"
+    payload_off: "false"
+    state_on: "true"
+    state_off: "false"
+    optimistic: false
+    qos: 0
+    retain: true
+```
+
+:::
+
+::: Sensor
+Temp from a multi-sensor device
+```yaml
+sensor:
+  - platform: mqtt
+    state_topic: "zwave/kitchen_motion_sensor/49/0/Air_temperature"
+    name: "Temperature"
+    unit_of_measurement: "F"
+```
+
+:::
