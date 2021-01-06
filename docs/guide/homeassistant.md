@@ -257,7 +257,7 @@ light:
 :::
 
 ::: Lock
-Note this is actually a wall switch, but I want it to appear as a light in HA.
+This is a lock (BE469ZP and Kwikset914c)
 ```yaml
 lock:
   - platform: mqtt
