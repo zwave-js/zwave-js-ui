@@ -50,7 +50,7 @@ don't forget to save as you backout of the menus
 	curl -fsSL https://raw.githubusercontent.com/OpenZwave/Zwave2Mqtt/master/docker/docker-compose.yml -o docker-compose.yml
 	nano docker-compose.yml
 		○ Change serial in devices to correct serial port (e.g. /dev/ttyAMA0)
-    ○ Change port to 80:8091 (optional, but rest of example assumes this change was made)
+		○ Change port to 80:8091 (optional, but rest of example assumes this change was made)
 		○ Exit nano and save
 	Sudo docker-compose up -d
 	
