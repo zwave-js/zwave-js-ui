@@ -1,17 +1,32 @@
 # Introduction
 This how gives steps to getting docker and zwavejs2mqtt working on a raspbery pi 4.
 
-In this example I am using a zwave hat on the pi, this will make it use /dev/ttyAMA0.  If you use a USB zwave module your device will be be something like /dev/ttyUSB01, change your serial port as appropriate.
+Assumtions in this example:
+1. I am using a RazBerry zwave pi-hat - this will use /dev/ttyAMA0, if using a USB change serial port as needed in files and commands
+2. This is a dedicated z-wave node not running anything else
+3. I want the UI on port 80 so i don't have to put port numbers in my browser (i am lazy)
 
 # Prepare Raspberry Pi
+## Basci setup
 Fit raZberry hat to pi, then plug in power
 Image Raspbian image and boot and logon (if you don't know how to do this, go find a pi and linux tutorial)
 login
 
 	sudo apt update
 	sudo apt upgrade
-	
-# Disable Bluetooth on pi4
+
+## Give you pi a static IP address
+I recommend using a static IP address either using raspi-config 
+
+## Give your pi a friendly name
+use raspi-config to set name to something like pi-zwave01
+
+ 	choose option 1 system options
+ 	choose option S4 Hostname
+don't forget to save as you backout of the menus
+> Note: latest raspbian has avahai loaded by default which has mDNS enabled; meaning you can address your pi as http://pi-zwave01 rather than using IP address if your client is mDNS aware without needing to make a DNS entry in your router/dns server.  
+
+## Disable Bluetooth on pi4
  only needed if using pihat, see here for detailed why https://di-marco.net/blog/it/2020-06-06-paspberry_pi_3_4_and_0_w_serial_port_usage/
  
  	sudo nano /boot/config.txt
@@ -22,7 +37,8 @@ login
 	dtoverlay=disable-bt
 	
 # Install docker
-	curl -fsSL https://get.docker.com -o get-docker.sh
+	cd ~
+  curl -fsSL https://get.docker.com -o get-docker.sh
 	sudo sh get-docker.sh
 	sudo usermod -aG docker pi
 	sudo apt install python3 
@@ -34,23 +50,19 @@ Optional (don't do unless you have an issue)
 	• This installed a bunch of stuff like avahai, libssl etc by script, unknown if this is needed as when I uninstalled none of those thigs were wiped out, only install this if a)you get an issue error with docker or b)you might need this to initialize the raZberry zwave module.
 	• Later clarification - I looked at script and uninstalled everything it installed and all seems ok, so this section is not needed.
 
-Configure docker and zwave2mqtt container
+# Configure zwave2mqtt container
 
-	• mkdir zwavejs2mqtt
-	• cd zwavejs2mqtt
-	• curl -fsSL https://raw.githubusercontent.com/OpenZwave/Zwave2Mqtt/master/docker/docker-compose.yml -o docker-compose.yml
-	• nano docker-compose.yml
-		○ Change serial in devices to correct serial port (e.g. ttyAMA0
-		○ Add folloing to voumes:  - ./openzwave:/usr/local/etc/openzwave
+	cd ~
+  mkdir zwavejs2mqtt
+	cd zwavejs2mqtt
+	curl -fsSL https://raw.githubusercontent.com/OpenZwave/Zwave2Mqtt/master/docker/docker-compose.yml -o docker-compose.yml
+	nano docker-compose.yml
+		○ Change serial in devices to correct serial port (e.g. /dev/ttyAMA0)
 		○ Exit nano and save
-	• Copy open zwave database to enable updates to be be persistent
-		○  APP=$(docker run --rm -it -d robertslando/zwave2mqtt:latest)
-		○ docker cp $APP:/usr/local/etc/openzwave ./
-		○  docker kill $APP
-	• Sudo docker-compose up -d
+	Sudo docker-compose up -d
 	
-
-Configure zwavejs2mqtt
+# Configure zwavejs2mqtt
+Connect to http://<ip address of pi>:8091
 Configure Zwave
 
 The following fields need to be filled:
