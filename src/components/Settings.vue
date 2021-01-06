@@ -299,9 +299,9 @@
                       </v-flex>
                       <v-flex xs6>
                         <v-switch
-                          label="Publish node in mqtt"
-                          hint="Publish node details under a topic, can help automations receive device info"
-                          v-model="gateway.nodeInfoTopic"
+                          label="Publish node details"
+                          hint="Details published under a topic, can help automations receive device info"
+                          v-model="gateway.publishNodeDetails"
                           persistent-hint
                         ></v-switch>
                       </v-flex>
