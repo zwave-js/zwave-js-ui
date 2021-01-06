@@ -42,7 +42,7 @@ don't forget to save as you backout of the menus
  	sudo apt install python3.pip
  	sudo pip3 -v install docker-compose  (is the -v really needed?)
 
-# Configure zwave2mqtt container
+# Configure zwavejs2mqtt container
 
 	cd ~
  	mkdir zwavejs2mqtt
