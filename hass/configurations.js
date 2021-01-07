@@ -278,8 +278,7 @@ module.exports = {
       state_unlocked: 0,
       payload_lock: 255,
       payload_unlock: 0,
-      value_template:
-        '{{ value_json.value }}'
+      value_template: '{{ value_json.value }}'
     }
   },
 
