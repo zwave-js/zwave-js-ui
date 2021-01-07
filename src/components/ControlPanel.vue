@@ -18,6 +18,13 @@
                 v-model="homeHex"
               ></v-text-field>
             </v-flex>
+            <v-flex xs12 sm3 md2 mr-2>
+              <v-text-field
+                label="App Version"
+                readonly
+                v-model="appVersion"
+              ></v-text-field>
+            </v-flex>
           </v-layout>
 
           <v-layout>
@@ -585,10 +592,12 @@ export default {
       return this.editedIndex === -1 ? 'New Value' : 'Edit Value'
     },
     hassDevices () {
-      var devices = []
+      const devices = []
       if (this.selectedNode && this.selectedNode.hassDevices) {
         for (const id in this.selectedNode.hassDevices) {
-          var d = JSON.parse(JSON.stringify(this.selectedNode.hassDevices[id]))
+          const d = JSON.parse(
+            JSON.stringify(this.selectedNode.hassDevices[id])
+          )
           d.id = id
           devices.push(d)
         }
@@ -664,7 +673,7 @@ export default {
       debug: [],
       homeid: '',
       homeHex: '',
-      ozwVersion: '',
+      appVersion: '',
       showHidden: undefined,
       debugActive: false,
       selectedScene: null,
@@ -771,7 +780,7 @@ export default {
       selectedNode: null,
       rules: {
         required: value => {
-          var valid = false
+          let valid = false
 
           if (value instanceof Array) valid = value.length > 0
           else valid = !isNaN(value) || !!value // isNaN is for 0 as valid value
@@ -786,7 +795,7 @@ export default {
       this.$emit('showSnackbar', text)
     },
     validateTopic (name) {
-      var match = name
+      const match = name
         ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
         : [name]
 
@@ -802,7 +811,7 @@ export default {
       }
     },
     getValue (v) {
-      var node = this.nodes[v.nodeId]
+      const node = this.nodes[v.nodeId]
 
       if (node && node.values) {
         return node.values.find(i => i.id === v.id)
@@ -811,7 +820,7 @@ export default {
       }
     },
     validJSONdevice () {
-      var valid = true
+      let valid = true
       try {
         JSON.parse(this.deviceJSON)
       } catch (error) {
@@ -830,8 +839,8 @@ export default {
         )
       ) {
         try {
-          var { data } = await this.$listeners.import('json')
-          var response = await ConfigApis.importConfig({ data: data })
+          const { data } = await this.$listeners.import('json')
+          const response = await ConfigApis.importConfig({ data: data })
           this.showSnackbar(response.message)
         } catch (error) {
           console.log(error)
@@ -839,7 +848,7 @@ export default {
       }
     },
     exportConfiguration () {
-      var self = this
+      const self = this
       ConfigApis.exportConfig()
         .then(data => {
           self.showSnackbar(data.message)
@@ -867,7 +876,7 @@ export default {
         )
       ) {
         try {
-          var { data } = await this.$listeners.import('json')
+          const { data } = await this.$listeners.import('json')
           if (data instanceof Array) {
             this.apiRequest('_setScenes', [data])
           } else {
@@ -881,7 +890,7 @@ export default {
     },
     apiRequest (apiName, args) {
       if (this.socket.connected) {
-        var data = {
+        const data = {
           api: apiName,
           args: args
         }
@@ -926,9 +935,9 @@ export default {
     },
     editItem (item) {
       this.editedIndex = this.scene_values.indexOf(item)
-      var node = this.nodes[item.nodeId]
+      const node = this.nodes[item.nodeId]
 
-      var value = node.values.find(v => v.id === item.id)
+      let value = node.values.find(v => v.id === item.id)
 
       value = Object.assign({}, value)
       value.newValue = item.value
@@ -953,7 +962,7 @@ export default {
       }
     },
     async deleteDevice () {
-      var device = this.selectedDevice
+      const device = this.selectedDevice
       if (
         device &&
         (await this.$listeners.showConfirm(
@@ -970,7 +979,7 @@ export default {
       }
     },
     async rediscoverNode () {
-      var node = this.selectedNode
+      const node = this.selectedNode
       if (
         node &&
         (await this.$listeners.showConfirm(
@@ -985,7 +994,7 @@ export default {
       }
     },
     async disableDiscovery () {
-      var node = this.selectedNode
+      const node = this.selectedNode
       if (
         node &&
         (await this.$listeners.showConfirm(
@@ -1000,7 +1009,7 @@ export default {
       }
     },
     async rediscoverDevice () {
-      var device = this.selectedDevice
+      const device = this.selectedDevice
       if (
         device &&
         (await this.$listeners.showConfirm(
@@ -1017,7 +1026,7 @@ export default {
     },
     updateDevice () {
       if (!this.errorDevice) {
-        var updated = JSON.parse(this.deviceJSON)
+        const updated = JSON.parse(this.deviceJSON)
         this.$set(
           this.selectedNode.hassDevices,
           this.selectedDevice.id,
@@ -1032,7 +1041,7 @@ export default {
     },
     addDevice () {
       if (!this.errorDevice) {
-        var newDevice = JSON.parse(this.deviceJSON)
+        const newDevice = JSON.parse(this.deviceJSON)
         this.socket.emit(socketActions.hass, {
           apiName: 'add',
           device: newDevice,
@@ -1056,7 +1065,7 @@ export default {
       }, 300)
     },
     saveValue () {
-      var value = this.editedValue.value
+      const value = this.editedValue.value
       value.value = value.newValue
 
       // if value already exists it will be updated
@@ -1072,9 +1081,9 @@ export default {
     },
     async sendCntAction () {
       if (this.cnt_action) {
-        var args = []
-        var broadcast = false
-        var askId = this.node_actions.find(a => a.value === this.cnt_action)
+        const args = []
+        let broadcast = false
+        const askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
           // don't send replaceFailed as broadcast
           if (
@@ -1088,7 +1097,7 @@ export default {
           }
 
           if (!broadcast) {
-            var id = parseInt(prompt('Node ID'))
+            const id = parseInt(prompt('Node ID'))
 
             if (isNaN(id)) {
               this.showMessage('Node ID must be an integer value')
@@ -1102,13 +1111,13 @@ export default {
           this.cnt_action === 'startInclusion' ||
           this.cnt_action === 'replaceFailedNode'
         ) {
-          var secure = await this.$listeners.showConfirm(
+          const secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?'
           )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
-          var ok = await this.$listeners.showConfirm(
+          const ok = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
             { color: 'red' }
@@ -1118,7 +1127,7 @@ export default {
           }
         } else if (this.cnt_action === 'beginFirmwareUpdate') {
           try {
-            var { data, file } = await this.$listeners.import('buffer')
+            const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
           } catch (error) {
@@ -1139,18 +1148,18 @@ export default {
     async sendNodeAction (action) {
       action = typeof action === 'string' ? action : this.node_action
       if (this.selectedNode) {
-        var args = [this.selectedNode.id]
+        const args = [this.selectedNode.id]
 
         if (this.node_action === 'beginFirmwareUpdate') {
           try {
-            var { data, file } = await this.$listeners.import('buffer')
+            const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
           } catch (error) {
             return
           }
         } else if (this.node_action === 'replaceFailedNode') {
-          var secure = await this.$listeners.showConfirm(
+          const secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?'
           )
@@ -1178,23 +1187,23 @@ export default {
       this.$set(this.group, 'group', null)
     },
     getAssociations () {
-      var g = this.group
+      const g = this.group
       if (g && g.node && g.group) {
         this.apiRequest('getAssociations', [g.node.id, g.group.value])
       }
     },
     addAssociation () {
-      var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
+      const g = this.group
+      const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
-      var association = { nodeId: target }
+      const association = { nodeId: target }
 
       if (g.group.multiChannel && g.targetInstance >= 0) {
         association.endpoint = g.targetInstance
       }
 
       if (g && g.node && target) {
-        var args = [g.node.id, g.group.value, [association]]
+        const args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('addAssociations', args)
 
@@ -1204,10 +1213,10 @@ export default {
       }
     },
     removeAssociation (association) {
-      var g = this.group
+      const g = this.group
       if (g && g.node) {
         if (!association) {
-          var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
+          const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
           if (isNaN(target)) return
           association = { nodeId: target }
@@ -1217,7 +1226,7 @@ export default {
           }
         }
 
-        var args = [g.node.id, g.group.value, [association]]
+        const args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('removeAssociations', args)
         // wait a moment before refresh to check if the node
@@ -1226,9 +1235,9 @@ export default {
       }
     },
     removeAllAssociations () {
-      var g = this.group
+      const g = this.group
       if (g && g.node) {
-        var args = [g.node.id]
+        const args = [g.node.id]
 
         this.apiRequest('removeAllAssociations', args)
         // wait a moment before refresh to check if the node
@@ -1236,7 +1245,7 @@ export default {
         setTimeout(this.getAssociations, 1000)
       }
     },
-    updateValue (v) {
+    updateValue (v, customValue) {
       v = this.getValue(v)
 
       if (v) {
@@ -1252,6 +1261,10 @@ export default {
           v.newValue = true
         }
 
+        if (customValue !== undefined) {
+          v.newValue = customValue
+        }
+
         this.apiRequest('writeValue', [
           {
             nodeId: v.nodeId,
@@ -1265,15 +1278,15 @@ export default {
       }
     },
     jsonToList (obj) {
-      var s = ''
-      for (var k in obj) s += k + ': ' + obj[k] + '\n'
+      let s = ''
+      for (const k in obj) s += k + ': ' + obj[k] + '\n'
 
       return s
     },
     initNode (n) {
-      var values = []
+      const values = []
       // transform object in array
-      for (var k in n.values) {
+      for (const k in n.values) {
         n.values[k].newValue = n.values[k].value
         values.push(n.values[k])
       }
@@ -1287,7 +1300,7 @@ export default {
     }
   },
   mounted () {
-    var self = this
+    const self = this
 
     this.showHidden = this.settings.load('nodes_showHidden', false)
 
@@ -1298,7 +1311,7 @@ export default {
     this.socket.on(socketEvents.connected, info => {
       self.homeid = info.homeid
       self.homeHex = info.name
-      self.ozwVersion = info.version
+      self.appVersion = info.appVersion
     })
 
     this.socket.on(socketEvents.nodeRemoved, node => {
@@ -1317,7 +1330,7 @@ export default {
 
         if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift()
 
-        var textarea = document.getElementById('debug_window')
+        const textarea = document.getElementById('debug_window')
         if (textarea) {
           // textarea could be hidden
           textarea.scrollTop = textarea.scrollHeight
@@ -1327,15 +1340,15 @@ export default {
 
     this.socket.on(socketEvents.init, data => {
       // convert node values in array
-      var nodes = data.nodes
-      for (var i = 0; i < nodes.length; i++) {
+      const nodes = data.nodes
+      for (let i = 0; i < nodes.length; i++) {
         self.initNode(nodes[i])
       }
       self.nodes = nodes
       self.cnt_status = data.error ? data.error : data.cntStatus
       self.homeid = data.info.homeid
       self.homeHex = data.info.name
-      self.ozwVersion = data.info.version
+      self.appVersion = data.info.appVersion
     })
 
     this.socket.on(socketEvents.nodeUpdated, data => {
