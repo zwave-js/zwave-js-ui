@@ -330,7 +330,6 @@
                       </v-flex>
                       <v-flex xs6 v-if="gateway.hassDiscovery">
                         <v-text-field
-                          v-on="on"
                           v-model="gateway.entityTemplate"
                           label="Entity name template"
                           persistent-hint
