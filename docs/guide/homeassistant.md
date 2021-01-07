@@ -219,7 +219,7 @@ Note the settings used here for the Gateway in the UI are:
 - **Use node name instead of numeric nodeIDs**: true
 - **Ignore location**: true
 
-::: Motion Sensor
+### Motion Sensor
 From a multi sensor
 ```yaml
 binary_sensor:
