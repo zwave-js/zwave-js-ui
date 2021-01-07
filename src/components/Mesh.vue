@@ -235,14 +235,17 @@ export default {
     updateLinks () {
       this.links = []
 
-      for (const source of this.nodes) {
+      for (const source of this.activeNodes) {
         if (source.neighbors) {
           for (const target of source.neighbors) {
-            this.links.push({
-              sid: source.id,
-              tid: target,
-              _color: this.$vuetify.theme.dark ? 'white' : 'black'
-            })
+            // ensure target node exists
+            if (this.nodes[target] && this.nodes[target].status !== 'Removed') {
+              this.links.push({
+                sid: source.id,
+                tid: target,
+                _color: this.$vuetify.theme.dark ? 'white' : 'black'
+              })
+            }
           }
         }
       }
