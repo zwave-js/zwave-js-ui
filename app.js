@@ -290,7 +290,10 @@ app.get('/api/exportLogs', async function (req, res) {
     const logs = {}
 
     for (const file of files) {
-      logs[path.basename(file, '.log')] = await fs.readFile(utils.joinPath(storeDir, file), 'utf-8')
+      logs[path.basename(file, '.log')] = await fs.readFile(
+        utils.joinPath(storeDir, file),
+        'utf-8'
+      )
     }
 
     res.json({ success: true, data: logs })

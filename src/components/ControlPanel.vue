@@ -536,11 +536,9 @@
                     <v-btn color="blue darken-1" text @click="debug = []"
                       >Clear</v-btn
                     >
-                    <v-btn color="blue darken-1" outlined @click="exportLogs"
-                      >
+                    <v-btn color="blue darken-1" outlined @click="exportLogs">
                       Export Logs
-                      </v-btn
-                    >
+                    </v-btn>
                   </v-flex>
                   <v-flex xs12>
                     <div
