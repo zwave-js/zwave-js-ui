@@ -106,4 +106,4 @@ Set as follows:
 	Retained discovery = disabled (somoene told me to set this this way, not sure what best practice is
 Click Save!
 
-Dont forget to make sure you setup MQTT in Hass as per instructions
+Dont forget to make sure you setup MQTT in Hass configuration.yaml as per instructions https://zwave-js.github.io/zwavejs2mqtt/#/guide/homeassistant
