@@ -17,6 +17,9 @@ const history = require('connect-history-api-fallback')
 const SocketManager = reqlib('/lib/SocketManager')
 const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
+const fs = require('fs').promises
+const path = require('path')
+const appConfig = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
 
 const socketManager = new SocketManager()
@@ -272,6 +275,25 @@ app.post('/api/importConfig', async function (req, res) {
     }
 
     res.json({ success: true, message: 'Configuration imported successfully' })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+// get config
+app.get('/api/exportLogs', async function (req, res) {
+  try {
+    const storeDir = utils.joinPath(true, appConfig.storeDir)
+    const files = (await fs.readdir(storeDir)).filter(f => f.endsWith('.log'))
+
+    const logs = {}
+
+    for (const file of files) {
+      logs[path.basename(file, '.log')] = await fs.readFile(utils.joinPath(storeDir, file), 'utf-8')
+    }
+
+    res.json({ success: true, data: logs })
   } catch (error) {
     logger.error(error.message)
     return res.json({ success: false, message: error.message })

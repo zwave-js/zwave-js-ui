@@ -41,5 +41,10 @@ export default {
     return axios.post('/importConfig', data).then(response => {
       return response.data
     })
+  },
+  exportLogs () {
+    return axios.get('/exportLogs').then(response => {
+      return response.data
+    })
   }
 }
