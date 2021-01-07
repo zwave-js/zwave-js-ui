@@ -309,5 +309,3 @@ sensor:
     name: "Temperature"
     unit_of_measurement: "F"
 ```
-
-:::
