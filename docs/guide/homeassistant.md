@@ -213,10 +213,11 @@ The main template is like the thermostat template. The things to add are:
 Some people prefer to not use discovery and so here are some examples of devices you can use:
 
 Note the settings used here for the Gateway in the UI are:
-Type: ValueID topics
-Payload type: Just Value
-Use node name instead of numeric nodeIDs: true
-Ignore location: true
+
+- **Type**: ValueID topics
+- **Payload type**: Just Value
+- **Use node name instead of numeric nodeIDs**: true
+- **Ignore location**: true
 
 ::: Motion Sensor
 From a multi sensor
