@@ -21,6 +21,8 @@ module.exports = {
     // allow async-await
     'generator-star-spacing': 'off',
     'vue/no-deprecated-v-bind-sync': 'off',
+    'vue/no-mutating-props': 'off',
+    'vue/experimental-script-setup-vars': 'off',
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'no-unused-vars': ['error', { vars: 'local' }]
