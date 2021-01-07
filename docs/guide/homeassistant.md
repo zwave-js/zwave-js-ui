@@ -255,9 +255,8 @@ light:
     retain: true
 ```
 
-:::
 
-::: Lock
+### Lock
 This is a lock (BE469ZP and Kwikset914c)
 ```yaml
 lock:
