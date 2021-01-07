@@ -5,6 +5,7 @@ Assumtions in this example:
 1. I am using a RazBerry zwave pi-hat - this will use /dev/ttyAMA0, if using a USB change serial port as needed in files and commands
 2. This is a dedicated z-wave node not running anything else
 3. I want the UI on port 80 so i don't have to put port numbers in my browser (i am lazy)
+4. you want to pass through the devices to a working HASS instance
 
 # Prepare Raspberry Pi
 ## Basci setup
@@ -77,15 +78,32 @@ expand mqtt
 Set as follows:
 
 	Name = anyything you want, this is just an identifier
-  host url = mqt://<ip address of MQTT instance>
-  port = - 1883 (this is default for mosquitto etc, change as needed)
-  reconnect period (ms) = 500
-  prefix = zwavejs2mqtt (this can be anything you want and must not conflict)
-  qos = 1 (i saw somwhere a recommendation it should be 1, not sure if thats true)
-  retain = disbaled (i have no idea why)
-  store = enabled (i have no idea why)
-  clean = disabled (i have no idea why)
-  auth = disabled (only needed if you configured your MQTT to use auth, by default things like mosquitto don't seem to be configured that way)
+	host url = mqt://<ip address of MQTT instance>
+	port = - 1883 (this is default for mosquitto etc, change as needed)
+	reconnect period (ms) = 500
+	prefix = zwavejs2mqtt (this can be anything you want and must not conflict)
+	qos = 1 (i saw somwhere a recommendation it should be 1, not sure if thats true)
+	retain = enabled (as recommended for Hass)
+	store = enabled (i have no idea why)
+	clean = disabled (i have no idea why)
+	auth = disabled (only needed if you configured your MQTT to use auth, by default things like mosquitto don't seem to be configured that way)
+Click Save!
 
-# Configure Gateway
-TO DO
+# Configure Gateway (assumin for Home Assitant)
+Click the cog in the UI
+expand Gateway
+Set as follows:
+
+	Type = ValueID topics
+	Payload type = Entire Z-Wave Value Object
+	Use node names instead of numeric node ID = disabled (i prefer it enabled, but there are issues updating the nodes names, so leave ad disabled unless you reall want this)
+	Send zwave events = disabled (i don't why)
+	Inlcude Node info = enabled
+	discovery prefix = zwavejs2mqtt (no idea why, copied from an article i saw)
+	ignore location = disabled
+	ignore status updated = disabled 
+	Hass discovery = enabled (because this guide assume Hass)
+	Retained discovery = disabled (somoene told me to set this this way, not sure what best practice is
+Click Save!
+
+Dont forget to make sure you setup MQTT in Hass as per instructions
