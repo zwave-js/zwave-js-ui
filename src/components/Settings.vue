@@ -273,6 +273,14 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
+                      <v-flex v-if="!gateway.ignoreLoc" xs6>
+                        <v-switch
+                          label="Default Location name"
+                          hint="Use this as default name on topic (if empty default value is: unset)"
+                          v-model="gateway.defaultLoc"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
                       <v-flex xs6>
                         <v-switch
                           label="Send Zwave events"
