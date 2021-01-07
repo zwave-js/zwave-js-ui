@@ -277,8 +277,7 @@ lock:
     retain: true
 ```
 
-:::
-::: Switch
+### Switch
 This is an actual wall switch controlling a fan
 ```yaml
 switch:
