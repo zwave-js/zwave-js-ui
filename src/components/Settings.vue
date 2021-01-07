@@ -299,6 +299,14 @@
                       </v-flex>
                       <v-flex xs6>
                         <v-switch
+                          label="Publish node details"
+                          hint="Details published under a topic, can help automations receive device info"
+                          v-model="gateway.publishNodeDetails"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
                           label="Hass Discovery"
                           hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
                           v-model="gateway.hassDiscovery"
