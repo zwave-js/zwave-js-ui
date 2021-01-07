@@ -296,9 +296,8 @@ switch:
     retain: true
 ```
 
-:::
 
-::: Sensor
+### Sensor
 Temp from a multi-sensor device
 ```yaml
 sensor:
