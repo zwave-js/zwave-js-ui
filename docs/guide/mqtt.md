@@ -99,42 +99,89 @@ Broadcast API is accessible from:
 
 - `value_topic_suffix`: the suffix of the topic of the value I want to control using broadcast.
 
-It works like the set value API without the node name and location properties.
-If the API is correctly called the same payload of the request will be published
-to the topic without `/set` suffix.
+  It works like the set value API without the node name and location properties.
+  If the API is correctly called the same payload of the request will be published
+  to the topic without `/set` suffix.
 
-Example of broadcast command (gateway configured as `named topics`):
+  Example of broadcast command (gateway configured as `named topics`):
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating/set`
+  `zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating/set`
 
-Payload: `25.5`
+  Payload: `25.5`
 
-All nodes with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
+  All nodes with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
+  `zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
 
 ## Special topics
 
 - **App version**:
 
-`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/version`
+  `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/version`
 
-The payload will be in the time-value json format and the value will contain the app string version.
+  The payload will be in the time-value json format and the value will contain the app string version.
 
 - **Mqtt status**:
 
-`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/status`
+  `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/status`
 
-The payload will be in the time-value json format and the value will be `true` when mqtt is connected, `false` otherwise.
+  The payload will be in the time-value json format and the value will be `true` when mqtt is connected, `false` otherwise.
 
 - **Node status**:
 
-`<mqtt_prefix>/<?node_location>/<node_name>/status`
+  `<mqtt_prefix>/<?node_location>/<node_name>/status`
 
-The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
+  The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
+
+- **Node information**:
+
+  `<mqtt_prefix>/<?node_location>/<node_name>/nodeinfo`
+
+  Payload includes all node details except Discovered devices, values and properties.
+  Updates on every node change.
+
+  A example of payload is:
+
+  ```json
+  {
+    "id": 97,
+    "deviceId": "271-4098-2049",
+    "manufacturer": "Fibargroup",
+    "manufacturerId": 271,
+    "productType": 2049,
+    "productId": 4098,
+    "name": "Sensor",
+    "loc": "Hallway",
+    "neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
+    "ready": true,
+    "available": true,
+    "failed": false,
+    "lastActive": 1610009585743,
+    "interviewCompleted": true,
+    "firmwareVersion": "3.3",
+    "isBeaming": true,
+    "isSecure": false,
+    "keepAwake": false,
+    "maxBaudRate": null,
+    "isRouting": true,
+    "isFrequentListening": false,
+    "isListening": false,
+    "status": "Asleep",
+    "interviewStage": "Complete",
+    "productLabel": "FGMS001",
+    "productDescription": "Motion Sensor",
+    "zwaveVersion": 4,
+    "deviceClass": {
+      "basic": 4,
+      "generic": 7,
+      "specific": 1
+    },
+    "hexId": "0x010f-0x1002-0x0801"
+  }
+  ```
 
 - **Node notifications**:
 
-`<mqtt_prefix>/<?node_location>/<node_name>/notification/<notificationLabel>`
+  `<mqtt_prefix>/<?node_location>/<node_name>/notification/<notificationLabel>`
 
-The payload will be the notification `parameters` (can be null or not based on the notification type)
+  The payload will be the notification `parameters` (can be null or not based on the notification type)
