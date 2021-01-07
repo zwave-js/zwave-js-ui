@@ -72,7 +72,20 @@ If this is done right after a few mins when you return to the main page the Home
 # Configure MQTT
 Assumes you are already running an MQTT container like the one in home assistant supervisor mode or mosquitto from docker
 
-TODO (waiting on seeming issues with raZberry module on reboots……
+Click the cog in the UI
+expand mqtt
+Set as follows:
+
+	Name = anyything you want, this is just an identifier
+  host url = mqt://<ip address of MQTT instance>
+  port = - 1883 (this is default for mosquitto etc, change as needed)
+  reconnect period (ms) = 500
+  prefix = zwavejs2mqtt (this can be anything you want and must not conflict)
+  qos = 1 (i saw somwhere a recommendation it should be 1, not sure if thats true)
+  retain = disbaled (i have no idea why)
+  store = enabled (i have no idea why)
+  clean = disabled (i have no idea why)
+  auth = disabled (only needed if you configured your MQTT to use auth, by default things like mosquitto don't seem to be configured that way)
 
 # Configure Gateway
 TO DO
