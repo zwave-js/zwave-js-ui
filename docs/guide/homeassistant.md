@@ -237,7 +237,7 @@ binary_sensor:
 
 :::
 
-::: Light on/off
+### Light on/off
 Note this is actually a wall switch, but I want it to appear as a light in HA.
 ```yaml
 light:
