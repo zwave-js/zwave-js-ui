@@ -141,7 +141,8 @@ Broadcast API is accessible from:
   Updates on every node change.
 
   A example of payload is:
-  ```
+
+  ```json
   {
     "id": 97,
     "deviceId": "271-4098-2049",
@@ -151,18 +152,7 @@ Broadcast API is accessible from:
     "productId": 4098,
     "name": "Sensor",
     "loc": "Hallway",
-    "neighbors": [
-      29,
-      43,
-      63,
-      64,
-      65,
-      66,
-      67,
-      72,
-      74,
-      86
-    ],
+    "neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
     "ready": true,
     "available": true,
     "failed": false,
