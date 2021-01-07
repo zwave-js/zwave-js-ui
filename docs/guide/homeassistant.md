@@ -208,7 +208,7 @@ The main template is like the thermostat template. The things to add are:
   }
 }
 ```
-# Adding Devices Manually
+## Adding Devices Manually
 
 Some people prefer to not use discovery and so here are some examples of devices you can use:
 
