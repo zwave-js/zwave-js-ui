@@ -209,11 +209,11 @@ export default {
   },
   computed: {
     deviceValues () {
-      var device = this.devices.find(d => d.value == this.editedValue.device) // eslint-disable-line eqeqeq
+      const device = this.devices.find(d => d.value == this.editedValue.device) // eslint-disable-line eqeqeq
       return device ? device.values : []
     },
     deviceClasses () {
-      var v = this.editedValue.value
+      const v = this.editedValue.value
 
       // sensor binary
       if (!v) {
