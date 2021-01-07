@@ -208,6 +208,7 @@ The main template is like the thermostat template. The things to add are:
   }
 }
 ```
+
 ## Adding Devices Manually
 
 Some people prefer to not use discovery and so here are some examples of devices you can use:
@@ -220,6 +221,7 @@ Note the settings used here for the Gateway in the UI are:
 - **Ignore location**: true
 
 ### Motion Sensor
+
 From a multi sensor
 ```yaml
 binary_sensor:
@@ -237,6 +239,7 @@ binary_sensor:
 
 
 ### Light on/off
+
 Note this is actually a wall switch, but I want it to appear as a light in HA.
 ```yaml
 light:
@@ -256,6 +259,7 @@ light:
 
 
 ### Lock
+
 This is a lock (BE469ZP and Kwikset914c)
 ```yaml
 lock:
@@ -276,6 +280,7 @@ lock:
 ```
 
 ### Switch
+
 This is an actual wall switch controlling a fan
 ```yaml
 switch:
@@ -297,6 +302,7 @@ switch:
 
 
 ### Sensor
+
 Temp from a multi-sensor device
 ```yaml
 sensor:
