@@ -133,7 +133,7 @@ Broadcast API is accessible from:
 
   The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
 
-- **Node status**:
+- **Node information**:
 
   `<mqtt_prefix>/<?node_location>/<node_name>/nodeinfo`
 
