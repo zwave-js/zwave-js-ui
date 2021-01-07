@@ -87,6 +87,14 @@
   </v-app>
 </template>
 
+<style>
+/* Fix Vuetify code style after update to 2.4.0 */
+code {
+  color: #c62828 !important;
+  font-weight: 700 !important;
+}
+</style>
+
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
@@ -112,7 +120,7 @@ export default {
     async confirm (title, text, level, options) {
       options = options || {}
 
-      var levelMap = {
+      const levelMap = {
         warning: 'orange',
         alert: 'red'
       }
@@ -130,8 +138,8 @@ export default {
       this.statusColor = color
     },
     changeThemeColor: function () {
-      var metaThemeColor = document.querySelector('meta[name=theme-color]')
-      var metaThemeColor2 = document.querySelector(
+      const metaThemeColor = document.querySelector('meta[name=theme-color]')
+      const metaThemeColor2 = document.querySelector(
         'meta[name=msapplication-TileColor]'
       )
 
@@ -139,7 +147,7 @@ export default {
       metaThemeColor2.setAttribute('content', this.dark ? '#000' : '#fff')
     },
     importFile: function (ext) {
-      var self = this
+      const self = this
       // Check for the various File API support.
 
       return new Promise(function (resolve, reject) {
@@ -149,18 +157,18 @@ export default {
           window.FileList &&
           window.Blob
         ) {
-          var input = document.createElement('input')
+          const input = document.createElement('input')
           input.type = 'file'
           input.addEventListener('change', function (event) {
-            var files = event.target.files
+            const files = event.target.files
 
             if (files && files.length > 0) {
-              var file = files[0]
-              var reader = new FileReader()
+              const file = files[0]
+              const reader = new FileReader()
 
               reader.addEventListener('load', function (fileReaderEvent) {
-                var err
-                var data = fileReaderEvent.target.result
+                let err
+                let data = fileReaderEvent.target.result
 
                 if (ext === 'json') {
                   try {
@@ -196,10 +204,11 @@ export default {
       })
     },
     exportConfiguration: function (data, fileName, ext) {
-      var contentType = ext === 'xml' ? 'text/xml' : 'application/octet-stream'
-      var a = document.createElement('a')
+      const contentType =
+        ext === 'xml' ? 'text/xml' : 'application/octet-stream'
+      const a = document.createElement('a')
 
-      var blob = new Blob([ext === 'xml' ? data : JSON.stringify(data)], {
+      const blob = new Blob([ext === 'xml' ? data : JSON.stringify(data)], {
         type: contentType
       })
 
@@ -245,7 +254,7 @@ export default {
   beforeMount () {
     this.title = this.$route.name || ''
 
-    var self = this
+    const self = this
 
     this.socket = io('/', {
       path: ConfigApis.getSocketPath()

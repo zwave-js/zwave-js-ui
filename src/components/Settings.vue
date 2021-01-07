@@ -572,7 +572,7 @@ export default {
       ],
       rules: {
         required: value => {
-          var valid = false
+          let valid = false
 
           if (value instanceof Array) valid = value.length > 0
           else valid = !!value || value === 0
@@ -602,7 +602,7 @@ export default {
   },
   methods: {
     randomKey () {
-      var key = ''
+      let key = ''
 
       while (key.length < 32) {
         const x = Math.round(Math.random() * 255)
@@ -620,8 +620,8 @@ export default {
       reader.readAsText(file)
     },
     onFileSelect (data) {
-      var file = data.files[0]
-      var self = this
+      const file = data.files[0]
+      const self = this
       if (file) {
         this.readFile(file, text => (self.mqtt[data.key] = text))
       } else {
@@ -633,7 +633,7 @@ export default {
     },
     async importSettings () {
       try {
-        var { data } = await this.$listeners.import('json')
+        const { data } = await this.$listeners.import('json')
         if (data.zwave && data.mqtt && data.gateway) {
           this.$store.dispatch('import', data)
           this.showSnackbar('Configuration imported successfully')
@@ -643,7 +643,7 @@ export default {
       } catch (error) {}
     },
     exportSettings () {
-      var settings = this.getSettingsJSON()
+      const settings = this.getSettingsJSON()
       this.$listeners.export(settings, 'settings')
     },
     getSettingsJSON () {
@@ -674,7 +674,7 @@ export default {
       }, 300)
     },
     deviceName (deviceID) {
-      var device = this.devices.find(d => d.value === deviceID)
+      const device = this.devices.find(d => d.value === deviceID)
       return device ? device.name : deviceID
     },
     saveValue () {
@@ -687,7 +687,7 @@ export default {
     },
     update () {
       if (this.$refs.form_settings.validate()) {
-        var self = this
+        const self = this
         ConfigApis.updateConfig(self.getSettingsJSON())
           .then(data => {
             self.showSnackbar(data.message)
@@ -704,7 +704,7 @@ export default {
     // hide socket status indicator from toolbar
     this.$emit('updateStatus')
 
-    var self = this
+    const self = this
     ConfigApis.getConfig()
       .then(data => {
         if (!data.success) {

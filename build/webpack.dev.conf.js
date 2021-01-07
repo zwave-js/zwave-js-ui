@@ -23,7 +23,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     })
   },
   // cheap-module-eval-source-map is faster for development
-  devtool: config.dev.devtool,
+  devtool: config.dev.devtool ? 'eval-cheap-module-source-map' : false,
 
   // these devServer options should be customized in /config/index.js
   devServer: {
@@ -46,13 +46,14 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       poll: config.dev.poll
     }
   },
+  optimization: {
+    emitOnErrors: true
+  },
   plugins: [
     new webpack.DefinePlugin({
       'process.env': require('../config/dev.env')
     }),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
-    new webpack.NoEmitOnErrorsPlugin(),
     // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
       title: 'ZWave To MQTT',
