@@ -274,10 +274,11 @@ module.exports = {
     object_id: 'lock',
     discovery_payload: {
       command_topic: true,
-      state_locked: 'true',
-      state_unlocked: 'false',
-      value_template:
-        '{% if value_json.value == false %} false {% elif value_json.value == true %} true {% else %} unknown {% endif %}'
+      state_locked: 255,
+      state_unlocked: 0,
+      payload_lock: 255,
+      payload_unlock: 0,
+      value_template: '{{ value_json.value }}'
     }
   },
 
