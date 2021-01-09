@@ -43,7 +43,7 @@ RUN yarn run build
 RUN yarn install --production --frozen-lockfile
 RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
     jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
-RUN yarn link zwave-js
+RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
 RUN mkdir my_dist
 RUN cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
