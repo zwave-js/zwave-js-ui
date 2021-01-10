@@ -121,11 +121,6 @@ export default {
         this.filters
       )
     },
-    groupByColumns () {
-      const groups = this.headers.filter(i => i.groupable !== false)
-      groups.unshift({ text: '(No grouping)', value: null })
-      return groups
-    },
     values () {
       return this.headers.reduce((values, h) => {
         values[h.value] = this.relevantNodes.values(h.value)
