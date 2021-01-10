@@ -38,15 +38,23 @@
                         ></v-text-field>
                       </v-flex>
                       <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable zwave-js logging"
+                          persistent-hint
+                          label="Log Enabled"
+                          v-model="zwave.logEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex v-if="zwave.logEnabled" xs12 sm6>
                         <v-select
                           :items="logLevels"
                           v-model="zwave.logLevel"
                           label="Log Level"
                         ></v-select>
                       </v-flex>
-                      <v-flex xs12 sm6>
+                      <v-flex v-if="zwave.logEnabled" xs12 sm6>
                         <v-switch
-                          hint="Store zwave logs in a file"
+                          hint="Store zwave logs in a file (stored in store folder)"
                           persistent-hint
                           label="Log to file"
                           v-model="zwave.logToFile"
@@ -299,6 +307,14 @@
                       </v-flex>
                       <v-flex xs6>
                         <v-switch
+                          label="Publish node details"
+                          hint="Details published under a topic, can help automations receive device info"
+                          v-model="gateway.publishNodeDetails"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
                           label="Hass Discovery"
                           hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
                           v-model="gateway.hassDiscovery"
@@ -322,7 +338,6 @@
                       </v-flex>
                       <v-flex xs6 v-if="gateway.hassDiscovery">
                         <v-text-field
-                          v-on="on"
                           v-model="gateway.entityTemplate"
                           label="Entity name template"
                           persistent-hint
@@ -572,7 +587,7 @@ export default {
       ],
       rules: {
         required: value => {
-          var valid = false
+          let valid = false
 
           if (value instanceof Array) valid = value.length > 0
           else valid = !!value || value === 0
@@ -602,7 +617,7 @@ export default {
   },
   methods: {
     randomKey () {
-      var key = ''
+      let key = ''
 
       while (key.length < 32) {
         const x = Math.round(Math.random() * 255)
@@ -620,8 +635,8 @@ export default {
       reader.readAsText(file)
     },
     onFileSelect (data) {
-      var file = data.files[0]
-      var self = this
+      const file = data.files[0]
+      const self = this
       if (file) {
         this.readFile(file, text => (self.mqtt[data.key] = text))
       } else {
@@ -633,7 +648,7 @@ export default {
     },
     async importSettings () {
       try {
-        var { data } = await this.$listeners.import('json')
+        const { data } = await this.$listeners.import('json')
         if (data.zwave && data.mqtt && data.gateway) {
           this.$store.dispatch('import', data)
           this.showSnackbar('Configuration imported successfully')
@@ -643,7 +658,7 @@ export default {
       } catch (error) {}
     },
     exportSettings () {
-      var settings = this.getSettingsJSON()
+      const settings = this.getSettingsJSON()
       this.$listeners.export(settings, 'settings')
     },
     getSettingsJSON () {
@@ -674,7 +689,7 @@ export default {
       }, 300)
     },
     deviceName (deviceID) {
-      var device = this.devices.find(d => d.value === deviceID)
+      const device = this.devices.find(d => d.value === deviceID)
       return device ? device.name : deviceID
     },
     saveValue () {
@@ -687,7 +702,7 @@ export default {
     },
     update () {
       if (this.$refs.form_settings.validate()) {
-        var self = this
+        const self = this
         ConfigApis.updateConfig(self.getSettingsJSON())
           .then(data => {
             self.showSnackbar(data.message)
@@ -704,7 +719,7 @@ export default {
     // hide socket status indicator from toolbar
     this.$emit('updateStatus')
 
-    var self = this
+    const self = this
     ConfigApis.getConfig()
       .then(data => {
         if (!data.success) {

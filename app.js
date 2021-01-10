@@ -260,7 +260,7 @@ app.post('/api/importConfig', async function (req, res) {
       for (let i = 0; i < config.length; i++) {
         const e = config[i]
         if (e && (!hasProperty(e, 'name') || !hasProperty(e, 'loc'))) {
-          throw Error('Configuration not valid')
+          continue
         } else if (e) {
           await gw.zwave.callApi('_setNodeName', i, e.name || '')
           await gw.zwave.callApi('_setNodeLocation', i, e.loc || '')
