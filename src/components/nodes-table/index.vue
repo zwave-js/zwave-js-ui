@@ -8,15 +8,15 @@
     :sort-desc.sync="sorting.desc"
     :sort-by.sync="sorting.by"
     :group-by="groupBy"
-    @update:group-by="groupBy=$event"
-    @group="groupBy=$event"
+    @update:group-by="groupBy = $event"
+    @group="groupBy = $event"
     :items-per-page.sync="nodeTableItems"
     item-key="id"
     class="elevation-1"
   >
     <template v-slot:top>
       <v-layout row wrap>
-        <v-flex xs12 sm3 md2 ml-6 >
+        <v-flex xs12 sm3 md2 ml-6>
           <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
         </v-flex>
       </v-layout>
@@ -38,22 +38,20 @@
           :value="filters[`${column.value}`] || {}"
           :items="values[`${column.value}`] || {}"
           @change="changeFilter(column.value, $event)"
-          @update:group-by="groupBy=$event"
+          @update:group-by="groupBy = $event"
         ></column-filter>
         {{ header.text }}
       </span>
     </template>
-    <template v-slot:[`group.header`]="{ group, headers, toggle, remove, isOpen }">
+    <template
+      v-slot:[`group.header`]="{ group, headers, toggle, remove, isOpen }"
+    >
       <td :colspan="headers.length">
         <v-btn @click="toggle" x-small icon :ref="group">
           <v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
         </v-btn>
         <span>{{ groupByTitle(groupBy, group) }}</span>
-        <v-btn
-          x-small
-          icon
-          @click="remove"
-        ><v-icon>close</v-icon></v-btn>
+        <v-btn x-small icon @click="remove"><v-icon>close</v-icon></v-btn>
       </td>
     </template>
     <template v-slot:item="{ item }">
@@ -65,24 +63,26 @@
         }"
         @click.stop="nodeSelected(item)"
       >
-        <td v-if="groupBy!='id'">{{ item.id }}</td>
-        <td v-if="groupBy!='manufacturer'">
+        <td v-if="groupBy != 'id'">{{ item.id }}</td>
+        <td v-if="groupBy != 'manufacturer'">
           {{ item.ready ? item.manufacturer : '' }}
         </td>
-        <td v-if="groupBy!='productDescription'">
+        <td v-if="groupBy != 'productDescription'">
           {{ item.ready ? item.productDescription : '' }}
         </td>
-        <td v-if="groupBy!='productLabel'">
+        <td v-if="groupBy != 'productLabel'">
           {{ item.ready ? item.productLabel : '' }}
         </td>
-        <td v-if="groupBy!='name'">{{ item.name || '' }}</td>
-        <td v-if="groupBy!='loc'">{{ item.loc || '' }}</td>
-        <td v-if="groupBy!='isSecure'">{{ item.isSecure ? 'Yes' : 'No' }}</td>
-        <td v-if="groupBy!='isBeaming'">{{ item.isBeaming ? 'Yes' : 'No' }}</td>
-        <td v-if="groupBy!='failed'">{{ item.failed ? 'Yes' : 'No' }}</td>
-        <td v-if="groupBy!='status'">{{ item.status }}</td>
-        <td v-if="groupBy!='interviewStage'">{{ item.interviewStage }}</td>
-        <td v-if="groupBy!='lastActive'">
+        <td v-if="groupBy != 'name'">{{ item.name || '' }}</td>
+        <td v-if="groupBy != 'loc'">{{ item.loc || '' }}</td>
+        <td v-if="groupBy != 'isSecure'">{{ item.isSecure ? 'Yes' : 'No' }}</td>
+        <td v-if="groupBy != 'isBeaming'">
+          {{ item.isBeaming ? 'Yes' : 'No' }}
+        </td>
+        <td v-if="groupBy != 'failed'">{{ item.failed ? 'Yes' : 'No' }}</td>
+        <td v-if="groupBy != 'status'">{{ item.status }}</td>
+        <td v-if="groupBy != 'interviewStage'">{{ item.interviewStage }}</td>
+        <td v-if="groupBy != 'lastActive'">
           {{
             item.lastActive
               ? new Date(item.lastActive).toLocaleString()

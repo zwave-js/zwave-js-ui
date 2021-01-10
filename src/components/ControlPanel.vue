@@ -69,10 +69,7 @@
           </v-layout>
         </v-container>
 
-        <nodes-table
-          :nodes="nodes"
-          v-on:node-selected="selectNode"
-        />
+        <nodes-table :nodes="nodes" v-on:node-selected="selectNode" />
 
         <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
           <v-tab key="node">Node</v-tab>

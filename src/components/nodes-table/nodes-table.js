@@ -30,7 +30,12 @@ export default {
       { text: 'Failed', type: 'boolean', value: 'failed' },
       { text: 'Status', type: 'string', value: 'status' },
       { text: 'Interview stage', type: 'string', value: 'interviewStage' },
-      { text: 'Last Active', type: 'date', value: 'lastActive', groupable: false }
+      {
+        text: 'Last Active',
+        type: 'date',
+        value: 'lastActive',
+        groupable: false
+      }
     ]
   }),
   methods: {
