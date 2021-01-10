@@ -43,7 +43,7 @@
         {{ header.text }}
       </span>
     </template>
-    <template v-slot:group.header="{ group, headers, toggle, remove, isOpen }">
+    <template v-slot:[`group.header`]="{ group, headers, toggle, remove, isOpen }">
       <td :colspan="headers.length">
         <v-btn @click="toggle" x-small icon :ref="group">
           <v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
