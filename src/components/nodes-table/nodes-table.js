@@ -5,20 +5,21 @@ import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 
 export default {
   props: {
-    nodes: Array,
-    showHidden: Boolean
+    nodes: Array
   },
   components: {
     ColumnFilter
   },
   data: () => ({
     settings: new Settings(localStorage),
-    nodeTableItems: undefined,
+    showHidden: undefined,
+    itemsPerPage: undefined,
+    groupBy: undefined,
     selectedNode: undefined,
     filters: {},
     sorting: {},
     headers: [
-      { text: 'ID', type: 'number', value: 'id' },
+      { text: 'ID', type: 'number', value: 'id', groupable: false },
       { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
       { text: 'Product', type: 'string', value: 'productDescription' },
       { text: 'Product code', type: 'string', value: 'productLabel' },
@@ -29,7 +30,7 @@ export default {
       { text: 'Failed', type: 'boolean', value: 'failed' },
       { text: 'Status', type: 'string', value: 'status' },
       { text: 'Interview stage', type: 'string', value: 'interviewStage' },
-      { text: 'Last Active', type: 'date', value: 'lastActive' }
+      { text: 'Last Active', type: 'date', value: 'lastActive', groupable: false }
     ]
   }),
   methods: {
@@ -56,8 +57,17 @@ export default {
       this.filters[colName] = $event
       this.storeSetting('nodes_filters', this.filters)
     },
+    groupByTitle (groupBy, group) {
+      const h = this.headers.find(h => h.value === groupBy[0]) || {}
+      let title = ''
+      if (h.text) {
+        title = `${h.text}: ${group}`
+      }
+      return title
+    },
     resetFilters () {
       this.filters = this.initFilters()
+      this.groupBy = undefined
       this.storeSetting('nodes_filters', this.filters)
     },
     nodeSelected (node) {
@@ -66,12 +76,21 @@ export default {
     }
   },
   created () {
+    this.showHidden = this.settings.load('nodes_showHidden', false)
     this.filters = this.loadSetting('nodes_filters', this.initFilters())
     this.sorting = this.loadSetting('nodes_sorting', this.initSorting())
-    this.nodeTableItems = this.loadSetting('nodes_itemsPerPage', 10)
+    this.groupBy = this.loadSetting('nodes_groupBy', [])
+    console.log('created(): groupBy=', this.groupBy)
+    this.itemsPerPage = this.loadSetting('nodes_itemsPerPage', 10)
   },
   watch: {
-    nodeTableItems (val) {
+    showHidden (val) {
+      this.settings.store('nodes_showHidden', val)
+    },
+    groupBy (val) {
+      this.settings.store('nodes_groupBy', val)
+    },
+    itemsPerPage (val) {
       this.storeSetting('nodes_itemsPerPage', val)
     },
     sorting: {
@@ -96,6 +115,11 @@ export default {
         this.headers,
         this.filters
       )
+    },
+    groupByColumns () {
+      const groups = this.headers.filter(i => i.groupable !== false)
+      groups.unshift({ text: '(No grouping)', value: null })
+      return groups
     },
     values () {
       return this.headers.reduce((values, h) => {

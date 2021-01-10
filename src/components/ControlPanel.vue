@@ -69,15 +69,8 @@
           </v-layout>
         </v-container>
 
-        <v-layout row wrap>
-          <v-flex xs12 ml-2>
-            <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
-          </v-flex>
-        </v-layout>
-
         <nodes-table
           :nodes="nodes"
-          :showHidden="showHidden"
           v-on:node-selected="selectNode"
         />
 
@@ -629,9 +622,6 @@ export default {
     newLoc (val) {
       this.locError = this.validateTopic(val)
     },
-    showHidden () {
-      this.settings.store('nodes_showHidden', this.showHidden)
-    },
     selectedNode () {
       if (this.selectedNode) {
         this.newName = this.selectedNode.name
@@ -672,7 +662,6 @@ export default {
       homeid: '',
       homeHex: '',
       appVersion: '',
-      showHidden: undefined,
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
@@ -1299,8 +1288,6 @@ export default {
   },
   mounted () {
     var self = this
-
-    this.showHidden = this.settings.load('nodes_showHidden', false)
 
     this.socket.on(socketEvents.controller, data => {
       self.cnt_status = data

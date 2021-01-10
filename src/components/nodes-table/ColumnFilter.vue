@@ -35,6 +35,12 @@
         :items="items"
         @change="change"
       ></column-filter-string>
+      <v-checkbox
+        v-if="column.groupable!=false"
+        label="Group values"
+        class="ml-4"
+        @change="$emit('update:group-by',$event ? [column.value] : [])"
+      ></v-checkbox>
       <v-card-actions>
         <v-btn @click="clearFilter">Clear</v-btn>
         <v-btn color="primary" @click="confirm" :disabled="!valid">Ok</v-btn>
