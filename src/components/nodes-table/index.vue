@@ -10,7 +10,7 @@
     :group-by="groupBy"
     @update:group-by="groupBy = $event"
     @group="groupBy = $event"
-    :items-per-page.sync="nodeTableItems"
+    :items-per-page.sync="itemsPerPage"
     item-key="id"
     class="elevation-1"
   >
