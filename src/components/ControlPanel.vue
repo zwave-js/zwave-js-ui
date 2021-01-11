@@ -69,17 +69,7 @@
           </v-layout>
         </v-container>
 
-        <v-layout row wrap>
-          <v-flex xs12 ml-2>
-            <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
-          </v-flex>
-        </v-layout>
-
-        <nodes-table
-          :nodes="nodes"
-          :showHidden="showHidden"
-          v-on:node-selected="selectNode"
-        />
+        <nodes-table :nodes="nodes" v-on:node-selected="selectNode" />
 
         <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
           <v-tab key="node">Node</v-tab>
@@ -124,32 +114,30 @@
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Name: {{ selectedNode.name }}</v-subheader>
-                  </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
-                      label="New name"
+                      label="Name"
                       append-outer-icon="send"
                       :error="!!nameError"
                       :error-messages="nameError"
                       v-model.trim="newName"
+                      clearable
+                      @click:clear="resetName"
                       @click:append-outer="updateName"
                     ></v-text-field>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Location: {{ selectedNode.loc }}</v-subheader>
-                  </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
-                      label="New Location"
+                      label="Location"
                       append-outer-icon="send"
                       v-model.trim="newLoc"
                       :error="!!locError"
                       :error-messages="locError"
+                      clearable
+                      @click:clear="resetLocation"
                       @click:append-outer="updateLoc"
                     ></v-text-field>
                   </v-flex>
@@ -631,9 +619,6 @@ export default {
     newLoc (val) {
       this.locError = this.validateTopic(val)
     },
-    showHidden () {
-      this.settings.store('nodes_showHidden', this.showHidden)
-    },
     selectedNode () {
       if (this.selectedNode) {
         this.newName = this.selectedNode.name
@@ -674,7 +659,6 @@ export default {
       homeid: '',
       homeHex: '',
       appVersion: '',
-      showHidden: undefined,
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
@@ -809,6 +793,16 @@ export default {
       } else {
         this.selectedNode = this.nodes.find(n => n.id === node.id)
       }
+    },
+    resetName () {
+      setTimeout(() => {
+        this.newName = this.selectedNode.name
+      }, 10)
+    },
+    resetLocation () {
+      setTimeout(() => {
+        this.newLoc = this.selectedNode.loc
+      }, 10)
     },
     getValue (v) {
       const node = this.nodes[v.nodeId]
@@ -1301,8 +1295,6 @@ export default {
   },
   mounted () {
     const self = this
-
-    this.showHidden = this.settings.load('nodes_showHidden', false)
 
     this.socket.on(socketEvents.controller, data => {
       self.cnt_status = data
