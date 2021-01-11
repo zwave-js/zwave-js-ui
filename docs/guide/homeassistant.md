@@ -40,8 +40,6 @@ zwavejs2mqtt to resend the cached values when Home Assistant restarts.
 
 zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
 
-
-
 ## Components management
 
 ### Accessing zwavejs2mqtt From Within Home Assistant
