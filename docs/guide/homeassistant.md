@@ -42,6 +42,17 @@ zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. 
 
 ## Components management
 
+The zwavejs2mqtt Control Panel UI can be accessed from within Home Assistant by adding the following to a Lovelace dashboard using the Raw Configuration Editor, substituting your IP address.
+
+```  
+  - title: zwavejs2mqtt
+    panel: true
+    cards:
+      - type: iframe
+        url: '[PUT IP ADDRESS HERE]:8091/'
+        aspect_ratio: 100%
+```
+
 To see the components that have been discovered by zwavejs2mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
 
 ![Hass Devices](../_images/hass_devices.png)
