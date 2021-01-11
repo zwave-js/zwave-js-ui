@@ -1,0 +1,120 @@
+name: "Z-Wave Bot: React to comments"
+
+on:
+  issue_comment:
+    types: [created] # edited, deleted
+
+jobs:
+  # #########################################################################
+  # Fix lint errors when an authorized person posts "@zwave-js-bot fix lint"
+  fix-lint:
+    if: |
+      contains(github.event.issue.html_url, '/pull/') &&
+      contains(github.event.comment.body, '@zwave-js-bot fix lint') &&
+      (github.event.comment.user.login != 'zwave-js-bot')
+
+    runs-on: [ubuntu-latest]
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - name: Checkout master branch
+        uses: actions/checkout@v2
+
+      - name: Check user's permissions to do this
+        id: check
+        uses: actions/github-script@v3
+        with:
+          github-token: ${{secrets.BOT_TOKEN}}
+          result-encoding: string
+          script: |
+            const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.js`);
+            return await bot.fixLintCheck({github, context});
+
+      - name: Retrieve PR information
+        if: steps.check.outputs.result == 'true'
+        uses: actions/github-script@v3
+        id: get-pr
+        with:
+          script: |
+            const request = {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            }
+            core.info(`Getting PR #${request.pull_number} from ${request.owner}/${request.repo}`)
+            try {
+              const result = await github.pulls.get(request)
+              return result.data
+            } catch (err) {
+              core.setFailed(`Request failed with error ${err}`)
+            }
+
+      - name: Save our CI scripts
+        if: steps.check.outputs.result == 'true'
+        run: |
+          mkdir -p /tmp/.github
+          cp -r .github/* /tmp/.github
+
+      - name: Checkout pull request
+        if: steps.check.outputs.result == 'true'
+        uses: actions/checkout@v2
+        with:
+          token: ${{secrets.BOT_TOKEN}}
+          repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
+          ref: ${{ fromJSON(steps.get-pr.outputs.result).head.ref }}
+
+      - name: Restore our CI scripts
+        if: steps.check.outputs.result == 'true'
+        run: |
+          rm -rf .github
+          cp -r /tmp/.github .
+
+      # These steps only run if the check was successful
+      - name: Use Node.js ${{ matrix.node-version }}
+        if: steps.check.outputs.result == 'true'
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        if: steps.check.outputs.result == 'true'
+        run: npm install
+
+      - name: Do the lint fix
+        if: steps.check.outputs.result == 'true'
+        id: fix
+        run: |
+          # Run all lint commands and remember if one fails
+          LINT_RESULT=0
+          if ! npm run lint-fix --fix ; then LINT_RESULT=1 ; fi
+
+          # Check if something changed
+          if ! git diff --quiet ; then
+            git config user.email "bot@zwave.js"
+            git config user.name "Z-Wave JS Bot"
+            git add -A
+            git reset -- .github
+            git commit -m "style: fix lint"
+            git push
+          else
+            echo "::set-output name=result::unchanged"
+            exit 0
+          fi
+
+          if [[ $LINT_RESULT == 0 ]] ; then
+            echo "::set-output name=result::ok"
+          else
+            echo "::set-output name=result::error"
+          fi
+
+      - name: Give feedback
+        uses: actions/github-script@v3
+        env:
+          FEEDBACK: ${{ steps.fix.outputs.result }}
+        with:
+          github-token: ${{secrets.BOT_TOKEN}}
+          script: |
+            const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.js`);
+            return await bot.fixLintFeedback({github, context});
