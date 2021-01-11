@@ -124,32 +124,30 @@
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Name: {{ selectedNode.name }}</v-subheader>
-                  </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
-                      label="New name"
+                      label="Name"
                       append-outer-icon="send"
                       :error="!!nameError"
                       :error-messages="nameError"
                       v-model.trim="newName"
+                      clearable
+                      @click:clear="resetName"
                       @click:append-outer="updateName"
                     ></v-text-field>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Location: {{ selectedNode.loc }}</v-subheader>
-                  </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
-                      label="New Location"
+                      label="Location"
                       append-outer-icon="send"
                       v-model.trim="newLoc"
                       :error="!!locError"
                       :error-messages="locError"
+                      clearable
+                      @click:clear="resetLocation"
                       @click:append-outer="updateLoc"
                     ></v-text-field>
                   </v-flex>
@@ -809,6 +807,16 @@ export default {
       } else {
         this.selectedNode = this.nodes.find(n => n.id === node.id)
       }
+    },
+    resetName () {
+      setTimeout(() => {
+        this.newName = this.selectedNode.name
+      }, 10)
+    },
+    resetLocation () {
+      setTimeout(() => {
+        this.newLoc = this.selectedNode.loc
+      }, 10)
     },
     getValue (v) {
       const node = this.nodes[v.nodeId]
