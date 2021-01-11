@@ -85,7 +85,6 @@ export default {
     this.filters = this.loadSetting('nodes_filters', this.initFilters())
     this.sorting = this.loadSetting('nodes_sorting', this.initSorting())
     this.groupBy = this.loadSetting('nodes_groupBy', [])
-    console.log('created(): groupBy=', this.groupBy)
     this.itemsPerPage = this.loadSetting('nodes_itemsPerPage', 10)
   },
   watch: {
