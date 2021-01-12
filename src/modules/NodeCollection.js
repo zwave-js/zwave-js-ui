@@ -127,7 +127,7 @@ export class NodeCollection {
   values (property) {
     const uniqueMap = {}
     this.nodes.forEach(node => {
-      if (!!node[property]) {
+      if (node[property]) {
         const strVal = this._strValue(node[property])
         uniqueMap[strVal] = uniqueMap[strVal] || node[property]
       }
