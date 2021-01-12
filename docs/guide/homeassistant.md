@@ -47,7 +47,7 @@ The zwavejs2mqtt Control Panel UI can be accessed from within Home Assistant by 
 First, add a new Lovelace dashboard. In the dashboard:
 
 1. Click on the top right and 'Edit Dashbaord'.
-2. Turn on the "Start with an empty dashbaord switch," then click "Take Control"
+2. Turn on the "Start with an empty dashbaord" switch, then click "Take Control"
 3. Click on the top right, and then select "Raw configuration editor"
 4. Paste the code below and save
 
