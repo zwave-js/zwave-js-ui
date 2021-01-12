@@ -138,7 +138,7 @@
                         <v-text-field
                           v-model.trim="mqtt.prefix"
                           label="Prefix"
-                          :rules="[rules.required, rules.validName]"
+                          :rules="[rules.required, rules.validPrefix]"
                           hint="The prefix to add to each topic"
                           required
                         ></v-text-field>
@@ -598,6 +598,12 @@ export default {
           return (
             !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\]/.\s]/g.test(value) ||
             'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
+          )
+        },
+        validPrefix: value => {
+          return (
+            !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\].\s]/g.test(value) ||
+            'Prefix is not valid, only "a-z" "A-Z" "0-9", "_", "/" chars are allowed'
           )
         },
         validLength: value => {
