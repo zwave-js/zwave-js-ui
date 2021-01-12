@@ -11,7 +11,7 @@ jobs:
     if: |
       contains(github.event.issue.html_url, '/pull/') &&
       contains(github.event.comment.body, '@zwave-js-bot fix lint') &&
-      (github.event.comment.user.login != 'zwave-js-bot')
+      (github.event.comment.user.login != 'zwave-js-bot') && github.event.comment.user.login != 'zwave-js-assistant[bot]'
 
     runs-on: [ubuntu-latest]
     strategy:
