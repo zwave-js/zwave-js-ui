@@ -60,7 +60,7 @@
           class="off-button"
           :style="{ background: !value.value ? '#f44336' : '' }"
           :color="!value.value ? 'white' : 'red'"
-          @click="updateValue(value, true)"
+          @click="updateValue(value, false)"
           dark
         >
           OFF

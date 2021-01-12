@@ -40,6 +40,28 @@ zwavejs2mqtt to resend the cached values when Home Assistant restarts.
 
 zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
 
+## Accessing zwavejs2mqtt From Within Home Assistant
+
+The zwavejs2mqtt Control Panel UI can be accessed from within Home Assistant by adding a panel to a Lovelace dashboard using the Raw Configuration Editor, substituting your IP address.
+
+First, add a new Lovelace dashboard. In the dashboard:
+
+1. Click on the top right and 'Edit Dashbaord'.
+2. Turn on the "Start with an empty dashbaord" switch, then click "Take Control"
+3. Click on the top right, and then select "Raw configuration editor"
+4. Paste the code below and save
+
+```yaml
+- title: zwavejs2mqtt
+  panel: true
+  cards:
+    - type: iframe
+      url: 'http:/127.0.0.1[SUBSTITUTE YOUR IP ADDRESS HERE]:8091/'
+      aspect_ratio: 100%
+```
+
+Alternatively, you can add a new tab to a pre-existing dashboard by inserting the above yaml into the pre-existing dashboard's raw configuration.
+
 ## Components management
 
 To see the components that have been discovered by zwavejs2mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
