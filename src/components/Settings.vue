@@ -11,13 +11,13 @@
           ref="form_settings"
         >
           <v-expansion-panels accordion multiple>
-             <v-expansion-panel key="general">
+            <v-expansion-panel key="general">
               <v-expansion-panel-header>General</v-expansion-panel-header>
               <v-expansion-panel-content>
-                 <v-card flat>
+                <v-card flat>
                   <v-card-text>
                     <v-layout wrap>
-                 <v-flex xs12 sm6>
+                      <v-flex xs12 sm6>
                         <v-switch
                           hint="Enable logging"
                           persistent-hint
@@ -40,11 +40,11 @@
                           v-model="gateway.logToFile"
                         ></v-switch>
                       </v-flex>
-                       </v-layout>
+                    </v-layout>
                   </v-card-text>
-                 </v-card>
+                </v-card>
               </v-expansion-panel-content>
-             </v-expansion-panel>
+            </v-expansion-panel>
 
             <v-expansion-panel key="zwave">
               <v-expansion-panel-header>Zwave</v-expansion-panel-header>
@@ -392,7 +392,7 @@
                         </div>
                       </v-flex>
                     </v-layout>
-                  <v-data-table
+                    <v-data-table
                       :headers="headers"
                       :items="gateway.values"
                       :items-per-page-options="[
