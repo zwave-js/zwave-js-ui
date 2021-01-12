@@ -42,16 +42,25 @@ zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. 
 
 ## Accessing zwavejs2mqtt From Within Home Assistant
 
-The zwavejs2mqtt Control Panel UI can be accessed from within Home Assistant by adding the following to a Lovelace dashboard using the Raw Configuration Editor, substituting your IP address.
+The zwavejs2mqtt Control Panel UI can be accessed from within Home Assistant by adding a panel to a Lovelace dashboard using the Raw Configuration Editor, substituting your IP address.
+
+First, add a new Lovelace dashboard. In the dashboard:
+
+1. Click on the top right and 'Edit Dashbaord'.
+2. Turn on the "Start with an empty dashbaord" switch, then click "Take Control"
+3. Click on the top right, and then select "Raw configuration editor"
+4. Paste the code below and save
 
 ```yaml
 - title: zwavejs2mqtt
   panel: true
   cards:
     - type: iframe
-      url: '[PUT IP ADDRESS HERE]:8091/'
+      url: 'http:/127.0.0.1[SUBSTITUTE YOUR IP ADDRESS HERE]:8091/'
       aspect_ratio: 100%
 ```
+
+Alternatively, you can add a new tab to a pre-existing dashboard by inserting the above yaml into the pre-existing dashboard's raw configuration.
 
 ## Components management
 
