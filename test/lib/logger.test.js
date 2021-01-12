@@ -2,14 +2,16 @@ const { assert } = require('chai')
 const winston = require('winston')
 const rewire = require('rewire')
 const logContainer = rewire('../../lib/logger.js')
+const utils = require('../../lib/utils')
+const { storeDir } = require('../../config/app.js')
 
 function checkConfigDefaults (mod, cfg) {
-  const defaultLogFile = logContainer.__get__('defaultLogFile')
+  const defaultLogFile = utils.joinPath(true, storeDir, logContainer.__get__('defaultLogFile'))
   cfg.module.should.equal(mod)
   cfg.enabled.should.equal(true)
   cfg.level.should.equal('info')
   cfg.logToFile.should.equal(false)
-  cfg.filename.should.equal(defaultLogFile)
+  cfg.filePath.should.equal(defaultLogFile)
 }
 
 describe('logger.js', () => {
@@ -69,8 +71,8 @@ describe('logger.js', () => {
     before(() => {
       logger1 = logContainer.module('bar')
       logger2 = logger1.setup({
-        enabled: false,
-        level: 'warn',
+        logEnabled: false,
+        logLevel: 'warn',
         logToFile: true
       })
     })
@@ -87,7 +89,7 @@ describe('logger.js', () => {
     before(() => {
       logger1 = logContainer
         .module('mod')
-        .setup({ enabled: true, level: 'warn', logToFile: false })
+        .setup({ logEnabled: true, logLevel: 'warn', logToFile: false })
     })
     it('should change the logger configuration', () => {
       // Test pre-conditions:
@@ -95,7 +97,7 @@ describe('logger.js', () => {
       logger1.level.should.equal('warn')
       logger1.transports.length.should.be.equal(1)
       // Change logger configuration:
-      logger1.setup({ enabled: false, level: 'error', logToFile: true })
+      logger1.setup({ logEnabled: false, logLevel: 'error', logToFile: true })
       // Test post-conditions:
       logger1.module.should.equal('mod')
       logger1.level.should.equal('error')
@@ -107,10 +109,10 @@ describe('logger.js', () => {
     it('should change the logger config of all zwavejs2mqtt modules', () => {
       logger1 = logContainer
         .module('mod1')
-        .setup({ enabled: true, level: 'warn', logToFile: false })
+        .setup({ logEnabled: true, logLevel: 'warn', logToFile: false })
       logger2 = logContainer
         .module('mod2')
-        .setup({ enabled: true, level: 'warn', logToFile: false })
+        .setup({ logEnabled: true, logLevel: 'warn', logToFile: false })
       // Test pre-conditions:
       logger1.module.should.equal('mod1')
       logger1.level.should.equal('warn')
@@ -120,8 +122,8 @@ describe('logger.js', () => {
       logger2.transports.length.should.be.equal(1)
       // Change logger configuration:
       logContainer.setupAll({
-        enabled: false,
-        level: 'error',
+        logEnabled: false,
+        logLevel: 'error',
         logToFile: true
       })
       // Test post-conditions:
@@ -135,7 +137,7 @@ describe('logger.js', () => {
     it('should not change the logger config of non-zwavejs2mqtt loggers', () => {
       logger1 = logContainer
         .module('mod1')
-        .setup({ enabled: true, level: 'warn', logToFile: false })
+        .setup({ logEnabled: true, logLevel: 'warn', logToFile: false })
       // Create a different winston logger:
       logger2 = winston.loggers.add('somelogger')
       logger2.level = 'warn'
@@ -143,8 +145,8 @@ describe('logger.js', () => {
       logger1.level.should.equal('warn')
       // Change logger configuration:
       logContainer.setupAll({
-        enabled: false,
-        level: 'error',
+        logEnabled: false,
+        logLevel: 'error',
         logToFile: true
       })
       // Test post-conditions:
