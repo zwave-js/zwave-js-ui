@@ -6,7 +6,11 @@ const utils = require('../../lib/utils')
 const { storeDir } = require('../../config/app.js')
 
 function checkConfigDefaults (mod, cfg) {
-  const defaultLogFile = utils.joinPath(true, storeDir, logContainer.__get__('defaultLogFile'))
+  const defaultLogFile = utils.joinPath(
+    true,
+    storeDir,
+    logContainer.__get__('defaultLogFile')
+  )
   cfg.module.should.equal(mod)
   cfg.enabled.should.equal(true)
   cfg.level.should.equal('info')
