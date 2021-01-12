@@ -11,6 +11,41 @@
           ref="form_settings"
         >
           <v-expansion-panels accordion multiple>
+             <v-expansion-panel key="general">
+              <v-expansion-panel-header>General</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                 <v-card flat>
+                  <v-card-text>
+                    <v-layout wrap>
+                 <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable logging"
+                          persistent-hint
+                          label="Log enabled"
+                          v-model="gateway.logEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-select
+                          :items="logLevels"
+                          v-model="gateway.logLevel"
+                          label="Log Level"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-switch
+                          hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="gateway.logToFile"
+                        ></v-switch>
+                      </v-flex>
+                       </v-layout>
+                  </v-card-text>
+                 </v-card>
+              </v-expansion-panel-content>
+             </v-expansion-panel>
+
             <v-expansion-panel key="zwave">
               <v-expansion-panel-header>Zwave</v-expansion-panel-header>
               <v-expansion-panel-content>
@@ -356,32 +391,8 @@
                           <code>%l</code>: valueId label (fallback to object_id)
                         </div>
                       </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Enable gateway logging"
-                          persistent-hint
-                          label="Log enabled"
-                          v-model="gateway.logEnabled"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
-                        <v-select
-                          :items="logLevels"
-                          v-model="gateway.logLevel"
-                          label="Log Level"
-                        ></v-select>
-                      </v-flex>
-                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
-                        <v-switch
-                          hint="Store logs in a file"
-                          persistent-hint
-                          label="Log to file"
-                          v-model="gateway.logToFile"
-                        ></v-switch>
-                      </v-flex>
                     </v-layout>
-
-                    <v-data-table
+                  <v-data-table
                       :headers="headers"
                       :items="gateway.values"
                       :items-per-page-options="[
