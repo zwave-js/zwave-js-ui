@@ -9,7 +9,7 @@ export class Settings {
 
   /**
    * Load a setting from the local storage.
-   * @param {String} key Key of the setting
+   * @param {string} key Key of the setting
    * @param {*} defaultVal Default value of the setting
    * @return Loaded setting
    */
@@ -44,7 +44,7 @@ export class Settings {
 
   /**
    * Store a setting to the local storage.
-   * @param {String} key Key of the setting
+   * @param {string} key Key of the setting
    * @param {*} val Value of the setting
    */
   store (key, val) {

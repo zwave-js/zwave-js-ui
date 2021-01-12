@@ -11,6 +11,41 @@
           ref="form_settings"
         >
           <v-expansion-panels accordion multiple>
+            <v-expansion-panel key="general">
+              <v-expansion-panel-header>General</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-layout wrap>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable logging"
+                          persistent-hint
+                          label="Log enabled"
+                          v-model="gateway.logEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-select
+                          :items="logLevels"
+                          v-model="gateway.logLevel"
+                          label="Log Level"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-switch
+                          hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="gateway.logToFile"
+                        ></v-switch>
+                      </v-flex>
+                    </v-layout>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
             <v-expansion-panel key="zwave">
               <v-expansion-panel-header>Zwave</v-expansion-panel-header>
               <v-expansion-panel-content>
@@ -138,7 +173,7 @@
                         <v-text-field
                           v-model.trim="mqtt.prefix"
                           label="Prefix"
-                          :rules="[rules.required, rules.validName]"
+                          :rules="[rules.required, rules.validPrefix]"
                           hint="The prefix to add to each topic"
                           required
                         ></v-text-field>
@@ -346,7 +381,9 @@
                       </v-flex>
                       <v-flex xs6 v-if="gateway.hassDiscovery">
                         <div>
-                          Default: <code>%loc-%n_%o</code> <br />-
+                          Default: <code>%ln_%o</code><br />
+                          -<code>%ln</code>: Node location with name
+                          (<code>&lt;location-?&gt;&lt;name&gt;</code>)<br />-
                           <code>%nid</code>: Node ID <br />- <code>%n</code>:
                           Node Name <br />- <code>%loc</code>: Node Location
                           <br />- <code>%pk</code>: valueId property key
@@ -356,31 +393,7 @@
                           <code>%l</code>: valueId label (fallback to object_id)
                         </div>
                       </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Enable gateway logging"
-                          persistent-hint
-                          label="Log enabled"
-                          v-model="gateway.logEnabled"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
-                        <v-select
-                          :items="logLevels"
-                          v-model="gateway.logLevel"
-                          label="Log Level"
-                        ></v-select>
-                      </v-flex>
-                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
-                        <v-switch
-                          hint="Store logs in a file"
-                          persistent-hint
-                          label="Log to file"
-                          v-model="gateway.logToFile"
-                        ></v-switch>
-                      </v-flex>
                     </v-layout>
-
                     <v-data-table
                       :headers="headers"
                       :items="gateway.values"
@@ -598,6 +611,12 @@ export default {
           return (
             !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\]/.\s]/g.test(value) ||
             'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
+          )
+        },
+        validPrefix: value => {
+          return (
+            !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\].\s]/g.test(value) ||
+            'Prefix is not valid, only "a-z" "A-Z" "0-9", "_", "/" chars are allowed'
           )
         },
         validLength: value => {
