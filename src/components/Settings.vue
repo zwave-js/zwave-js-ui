@@ -381,7 +381,9 @@
                       </v-flex>
                       <v-flex xs6 v-if="gateway.hassDiscovery">
                         <div>
-                          Default: <code>%loc-%n_%o</code> <br />-
+                          Default: <code>%ln_%o</code><br />
+                          -<code>%ln</code>: Node location with name
+                          (<code>&lt;location-?&gt;&lt;name&gt;</code>)<br />-
                           <code>%nid</code>: Node ID <br />- <code>%n</code>:
                           Node Name <br />- <code>%loc</code>: Node Location
                           <br />- <code>%pk</code>: valueId property key
