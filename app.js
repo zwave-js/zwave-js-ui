@@ -28,10 +28,6 @@ let restarting = false
 
 // ### UTILS
 
-function hasProperty (obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop)
-}
-
 function start (server) {
   setupSocket(server)
   setupInterceptor()
@@ -244,7 +240,7 @@ app.post('/api/importConfig', async function (req, res) {
     else {
       for (let i = 0; i < config.length; i++) {
         const e = config[i]
-        if (e && (!hasProperty(e, 'name') || !hasProperty(e, 'loc'))) {
+        if (e && (!utils.hasProperty(e, 'name') || !utils.hasProperty(e, 'loc'))) {
           continue
         } else if (e) {
           await gw.zwave.callApi('_setNodeName', i, e.name || '')
