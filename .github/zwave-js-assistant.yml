@@ -1,0 +1,11 @@
+# Offer the fix lint bot command
+offerLintFix:
+  # Which job name to look for
+  jobName: test
+  # Define which linter outputs should be checked for auto-fixability
+  linters:
+    - eslint
+    - prettier
+
+# Check whether the resulting squash-commit will be semantic
+semanticSquash: true
