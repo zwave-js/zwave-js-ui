@@ -29,6 +29,22 @@
       @click:append-outer="updateValue(value)"
     ></v-text-field>
 
+    <v-text-field
+      v-if="
+            value.type === 'duration'
+      "
+      :label="'[' + value.id + '] ' + value.label"
+      :type="value.type === 'number' ? 'number' : 'text'"
+      :append-outer-icon="!disable_send ? 'send' : null"
+      :suffix="value.value ? value.value.unit : value.unit"
+      :min="value.min != value.max ? value.min : null"
+      :step="1"
+      :max="value.min != value.max ? value.max : null"
+      :hint="value.description || ''"
+      v-model.number="value.newValue.value"
+      @click:append-outer="updateValue(value)"
+    ></v-text-field>
+
     <v-select
       v-if="value.list"
       :items="value.states"
