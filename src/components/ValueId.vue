@@ -29,21 +29,28 @@
       @click:append-outer="updateValue(value)"
     ></v-text-field>
 
-    <v-text-field
-      v-if="
+<div style="display:flex" v-if="
             value.type === 'duration'
-      "
+      ">
+    <v-text-field
       :label="'[' + value.id + '] ' + value.label"
       :type="value.type === 'number' ? 'number' : 'text'"
-      :append-outer-icon="!disable_send ? 'send' : null"
-      :suffix="value.value ? value.value.unit : value.unit"
       :min="value.min != value.max ? value.min : null"
       :step="1"
+      :readonly="!value.writeable || disable_send"
       :max="value.min != value.max ? value.max : null"
       :hint="value.description || ''"
       v-model.number="value.newValue.value"
-      @click:append-outer="updateValue(value)"
     ></v-text-field>
+    <v-select
+    style="margin-left:10px;width:20px"
+      :items="durations"
+      v-model="value.newValue.unit"
+      :readonly="!value.writeable || disable_send"
+      :append-outer-icon="!disable_send ? 'send' : null"
+      @click:append-outer="updateValue(value)"
+    ></v-select>
+</div>
 
     <v-select
       v-if="value.list"
@@ -122,6 +129,11 @@ export default {
     }
   },
   computed: {},
+  data () {
+    return {
+      durations: ['seconds', 'minutes']
+    }
+  },
   methods: {
     updateValue (v, customValue) {
       this.$emit('updateValue', v, customValue)
