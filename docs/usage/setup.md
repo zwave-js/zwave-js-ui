@@ -169,6 +169,7 @@ Gateway settings:
   - `%pn`: valueId property name (fallback to device type)
   - `%o`: HASS object_id
   - `%l`: valueId label (fallback to object_id)
+- **Create secondary devices**: Creates secondary non essential devices. More details under Guide/homeassistant document
 
 Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 

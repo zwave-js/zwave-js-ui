@@ -393,6 +393,13 @@
                           <code>%l</code>: valueId label (fallback to object_id)
                         </div>
                       </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <v-text-field
+                          v-model="gateway.secondaryDevices"
+                          label="Create Secondary Devices"
+                          hint="Secondary non essential devices will be created with this switch"
+                        ></v-text-field>
+                      </v-flex>
                     </v-layout>
                     <v-data-table
                       :headers="headers"
