@@ -127,8 +127,10 @@ export class NodeCollection {
   values (property) {
     const uniqueMap = {}
     this.nodes.forEach(node => {
-      const strVal = this._strValue(node[property])
-      uniqueMap[strVal] = uniqueMap[strVal] || node[property]
+      if (node[property]) {
+        const strVal = this._strValue(node[property])
+        uniqueMap[strVal] = uniqueMap[strVal] || node[property]
+      }
     })
     return Object.keys(uniqueMap)
       .sort()
