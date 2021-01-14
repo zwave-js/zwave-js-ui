@@ -161,6 +161,7 @@ export default {
       return {
         backgroundColor: this.color,
         cursor: 'pointer',
+        border: '1px solid ' + (this.$vuetify.theme.dark ? 'white' : 'black'),
         height: '30px',
         width: '30px',
         borderRadius: this.menu ? '50%' : '4px',
