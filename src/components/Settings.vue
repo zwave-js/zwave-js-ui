@@ -396,7 +396,7 @@
                       <v-flex xs6 v-if="gateway.hassDiscovery">
                         <v-text-field
                           v-model="gateway.secondaryDevices"
-                          label="Create Secondary Devices"
+                          label="Create secondary eevices"
                           hint="Secondary non essential devices will be created with this switch"
                         ></v-text-field>
                       </v-flex>
