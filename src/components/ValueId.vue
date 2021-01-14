@@ -30,7 +30,6 @@
     ></v-text-field>
 
     <v-text-field
-      mask="!#XXXXXX"
       style="max-width: 250px;margin: auto;"
       flat
       solo
