@@ -90,6 +90,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
+    "@zwave-js/server": "^1.0.0-alpha.0",
     "ansi_up": "^4.0.4",
     "app-root-path": "^3.0.0",
     "axios": "^0.21.1",
