@@ -698,6 +698,10 @@ export default {
           value: 'refreshInfo'
         },
         {
+          text: 'Refresh values',
+          value: 'refreshValues'        
+        },
+        {
           text: 'Is Failed Node',
           value: 'isFailedNode'
         },
