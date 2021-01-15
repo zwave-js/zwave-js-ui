@@ -74,7 +74,6 @@ There are some custom apis that can be called that are not part of Zwave Client:
   - `lastUpdate`: Timestamp of latest event received from OZW
   - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
   - `cntStatus`: Controller status received from ozw notifications controller command. If inclusion/exclusion is running it would be `Waiting`
-- `refreshValues`: Queries all actuator and sensor values of all node endpoints
 
 ## Set values
 
