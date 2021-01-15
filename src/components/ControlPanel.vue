@@ -699,7 +699,7 @@ export default {
         },
         {
           text: 'Refresh values',
-          value: 'refreshValues'        
+          value: 'refreshValues'
         },
         {
           text: 'Is Failed Node',
