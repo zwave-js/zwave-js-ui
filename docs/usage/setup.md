@@ -165,6 +165,7 @@ Gateway settings:
   - `%ln`: Node location with name `<location-?><name>`
   - `%n`: Node Name
   - `%loc`: Node Location
+  - `%p`: valueId property (fallback to device type)
   - `%pk`: valueId property key (fallback to device type)
   - `%pn`: valueId property name (fallback to device type)
   - `%o`: HASS object_id

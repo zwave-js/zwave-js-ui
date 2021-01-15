@@ -386,7 +386,8 @@
                           (<code>&lt;location-?&gt;&lt;name&gt;</code>)<br />-
                           <code>%nid</code>: Node ID <br />- <code>%n</code>:
                           Node Name <br />- <code>%loc</code>: Node Location
-                          <br />- <code>%pk</code>: valueId property key
+                          <br />- <code>%p</code>: valueId property
+                          (fallback to device type) <br />- <code>%pk</code>: valueId property key
                           (fallback to device type) <br />- <code>%pn</code>:
                           valueId property name (fallback to device type)
                           <br />- <code>%o</code>: HASS object_id <br />-
