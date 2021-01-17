@@ -296,7 +296,15 @@
                     <v-select
                       label="Node"
                       v-model="group.node"
-                      :items="nodes.filter(n => !n.failed)"
+                      :items="
+                        nodes
+                          .filter(n => !n.failed)
+                          .sort((n1, n2) =>
+                            n1._name.toLowerCase() < n2._name.toLowerCase()
+                              ? -1
+                              : 1
+                          )
+                      "
                       return-object
                       @change="resetGroup"
                       item-text="_name"
@@ -355,7 +363,15 @@
                     <v-combobox
                       label="Target"
                       v-model="group.target"
-                      :items="nodes.filter(n => !n.failed && n != group.node)"
+                      :items="
+                        nodes
+                          .filter(n => !n.failed && n != group.node)
+                          .sort((n1, n2) =>
+                            n1._name.toLowerCase() < n2._name.toLowerCase()
+                              ? -1
+                              : 1
+                          )
+                      "
                       return-object
                       hint="Select the node from the list or digit the node ID"
                       persistent-hint
