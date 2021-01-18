@@ -161,7 +161,7 @@ module.exports = {
       rgb_command_topic: true,
       rgb_state_topic: true,
       rgb_value_template:
-        '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
     }
   },
   light_rgb_dimmer: {
@@ -180,7 +180,7 @@ module.exports = {
       rgb_command_topic: true,
       rgb_state_topic: true,
       rgb_value_template:
-        '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
     }
   },
   light_dimmer: {
