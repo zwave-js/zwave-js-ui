@@ -51,6 +51,9 @@ jobs:
             {{raw}}
             v{{major}}.{{minor}}
             {{major}}
+          tag-custom: ${{ github.ref == 'refs/heads/master' && 'dev' || '' }}
+          label-custom: |
+            org.opencontainers.image.vendor="zwave-js"
 
 
       - name: build+push
