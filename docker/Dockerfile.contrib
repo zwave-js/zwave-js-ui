@@ -11,8 +11,8 @@ RUN git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqt
 
 ##### LOCAL SOURCE #####
 FROM node:erbium-buster AS local-copy-src
-COPY --chown=node node-zwave-js /home/node/node-zwave-js
-COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
+COPY --from=git-clone-src --chown=node /home/node/node-zwave-js /home/node/node-zwave-js
+COPY --from=git-clone-src --chown=node /home/node/zwavejs2mqtt /home/node/zwavejs2mqtt
 
 ##### BUILD #####
 FROM ${SRC} AS build
@@ -26,23 +26,23 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
 RUN yarn run build:full
 RUN yarn install --production --frozen-lockfile
 RUN for i in config core serial shared; do \
-    cd packages/$i && \
-    yarn version --no-git-tag-version --new-version $(yarn versions --json| \
-        jq -r '[.data."@zwave-js/'${i}'"]'[0])-$(git rev-parse --short HEAD) && \
-    yarn link && \
-    cd ../..; \
-    done
+  cd packages/$i && \
+  yarn version --no-git-tag-version --new-version $(yarn versions --json| \
+  jq -r '[.data."@zwave-js/'${i}'"]'[0])-$(git rev-parse --short HEAD) && \
+  yarn link && \
+  cd ../..; \
+  done
 RUN cd packages/zwave-js && \
-    yarn version --no-git-tag-version --new-version $(yarn versions --json| \
-        jq -r '[.data."zwave-js"]'[0])-$(git rev-parse --short HEAD) && \
-    yarn link
+  yarn version --no-git-tag-version --new-version $(yarn versions --json| \
+  jq -r '[.data."zwave-js"]'[0])-$(git rev-parse --short HEAD) && \
+  yarn link
 
 WORKDIR /home/node/zwavejs2mqtt
 RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
 RUN yarn run build
 RUN yarn install --production --frozen-lockfile
 RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
-    jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
+  jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
 RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
 RUN mkdir my_dist
