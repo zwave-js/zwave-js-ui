@@ -76,7 +76,7 @@ This are the available apis:
   - `cntStatus`: Controller status received from ozw notifications controller command. If inclusion/exclusion is running it would be `Waiting`
 - `getAssociations(nodeId, groupId)`: get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
 - `addAssociations(nodeId, groupId, associations)`: add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
-- `removeAssociations(nodeId, groupId, associations[]`: the opposite of add associations
+- `removeAssociations(nodeId, groupId, associations[])`: the opposite of add associations
 - `removeAllAssociations(nodeId)`: Remove all associations of a specific node
 - `removeNodeFromAllAssociations(nodeId)`: Remove a node from all associations
 - `refreshValues(nodeId)`: Refresh all node values
