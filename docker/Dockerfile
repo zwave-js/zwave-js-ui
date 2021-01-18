@@ -35,6 +35,10 @@ RUN if [[ ! -z "$updateDevices"  ]]; then git clone $zwavejs; \
 # STEP 2:
 FROM node:erbium-alpine
 
+ARG BUILD_DATE
+ARG VERSION
+ARG VCS_REF
+
 RUN apk add --no-cache \
     libstdc++  \
     libgcc \
@@ -50,17 +54,17 @@ WORKDIR /usr/src/app
 EXPOSE 8091
 
 # Labels.
-LABEL maintainer="robertsLando" 
-LABEL org.opencontainers.image.created="$BUILD_DATE"
-LABEL org.opencontainers.image.url="https://zwave-js.github.io/zwavejs2mqtt/#/"
-LABEL org.opencontainers.image.source="https://github.com/zwave-js/zwavejs2mqtt"
-LABEL org.opencontainers.image.version="$VERSION"
-LABEL org.opencontainers.image.revision="$VCS_REF"
-LABEL org.opencontainers.image.vendor="zwave-js"
-LABEL org.opencontainers.image.title="zwavejs2mqtt"
-LABEL org.opencontainers.image.description="Zwave To MQTT Gateway and control panel"
-LABEL org.opencontainers.image.documentation="https://zwave-js.github.io/zwavejs2mqtt/#/"
-LABEL org.opencontainers.image.authors="Daniel Lando <daniel.sorridi@gmail.com>"
-LABEL org.opencontainers.image.licenses="MIT"
+LABEL maintainer="robertsLando" \
+ org.opencontainers.image.created="$BUILD_DATE" \
+ org.opencontainers.image.url="https://zwave-js.github.io/zwavejs2mqtt/#/" \
+ org.opencontainers.image.source="https://github.com/zwave-js/zwavejs2mqtt" \
+ org.opencontainers.image.version="$VERSION" \
+ org.opencontainers.image.revision="$VCS_REF" \
+ org.opencontainers.image.vendor="zwave-js" \
+ org.opencontainers.image.title="zwavejs2mqtt" \
+ org.opencontainers.image.description="Zwave To MQTT Gateway and control panel" \
+ org.opencontainers.image.documentation="https://zwave-js.github.io/zwavejs2mqtt/#/" \
+ org.opencontainers.image.authors="Daniel Lando <daniel.sorridi@gmail.com>" \
+ org.opencontainers.image.licenses="MIT"
 
 CMD ["node", "bin/www"]
