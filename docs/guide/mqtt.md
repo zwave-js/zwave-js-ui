@@ -50,23 +50,23 @@ I will get this response (in the same topic without the suffix `/set`):
 
 `result` will contain the value returned from the API. In this example I will get an array with all node IDs that are associated to the group 1 (lifeline) of node 2.
 
-### Custom APIs
+### APIs
 
-There are some custom apis that can be called that are not part of Zwave Client:
+This are the available apis:
 
-- All Zwave Clients scenes management methods if preceeded by a `_` will use the internal scenes management instead of OZW scenes:
-  - `_createScene`
-  - `_removeScene`
-  - `_setScenes`
-  - `_getScenes`
-  - `_sceneGetValues`
-  - `_addSceneValue`
-  - `_removeSceneValue`
-  - `_activateScene`
-- `_setNodeName` and `_setNodeLocation` will use internal nodes store to save nodes names/locations in a json file
-- `refreshNeighborns`: Returns an Array, the Array index is the nodeId, array value is an Array with all node neighborns
-- `getNodes`: Returns an array with all nodes in the network (and their info/valueids)
-- `getInfo`: Returns an object with:
+- All Zwave Clients scenes management methods if preceeded by a `_` will use the internal scenes management instead of Zwave-js scenes:
+  - `_createScene(label)`
+  - `_removeScene(sceneId)`
+  - `_setScenes(scenes[])`: Imports scenes Array in `scenes.json`
+  - `_getScenes()`: Get the scenes array
+  - `_sceneGetValues(sceneId)`: Return all values of the scene with given `sceneid`
+  - `_addSceneValue(sceneId, valueId, value, timeout)`: Add a value to a specific scene
+  - `_removeSceneValue(sceneId, valueId)`: remove a valueId from a scene
+  - `_activateScene(sceneId)`: activate a scene
+- `_setNodeName(name)` and `_setNodeLocation(location)` will use internal nodes store to save nodes names/locations in a json file
+- `refreshNeighborns()`: Returns an Array where the Array index is the `nodeId`, array value is an Array with all the ids of the node neighborns
+- `getNodes()`: Returns an array with all nodes in the network (and their info/valueids)
+- `getInfo()`: Returns an object with:
   - `homeid`: homeId
   - `name`: homeId Hex
   - `version`: zwave-js version
@@ -74,6 +74,27 @@ There are some custom apis that can be called that are not part of Zwave Client:
   - `lastUpdate`: Timestamp of latest event received from OZW
   - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
   - `cntStatus`: Controller status received from ozw notifications controller command. If inclusion/exclusion is running it would be `Waiting`
+- `getAssociations(nodeId, groupId)`: get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
+- `addAssociations(nodeId, groupId, associations)`: add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
+- `removeAssociations(nodeId, groupId, associations[]`: the opposite of add associations
+- `removeAllAssociations(nodeId)`: Remove all associations of a specific node
+- `removeNodeFromAllAssociations(nodeId)`: Remove a node from all associations
+- `refreshValues(nodeId)`: Refresh all node values
+- `startInclusion()`: Starts the inclusion
+- `startExclusion()`: Starts the exclusion
+- `stopInclusion()`: Stops the inclusion
+- `stopExclusion()`: Stops the exclusion
+- `replaceFailedNode(nodeId)`: Replace a failed node
+- `hardReset()`: Hard reset the controller
+- `healNode(nodeId)`: Heal a specific node
+- `beginHealingNetwork()`: Starts healing the network
+- `stopHealingNetwork()`: Stops network healing
+- `isFailedNode(nodeId)`: Checks if a node is failed
+- `removeFailedNode(nodeId)`: Remove a failed node
+- `refreshInfo(nodeId)`: Re-interview a node to fetch its info and supported CCs
+- `beginFirmwareUpdate(nodeId, fileName, data)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
+- `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
+- `writeValue(valueId, value)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
 
 ## Set values
 
