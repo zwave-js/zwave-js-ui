@@ -53,8 +53,11 @@ jobs:
             {{major}}
           tag-custom: ${{ github.ref == 'refs/heads/master' && 'dev' || '' }}
           label-custom: |
-            org.opencontainers.image.vendor="zwave-js"
-
+            org.opencontainers.image.vendor=zwave-js
+            org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
+            org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
+            org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
+            maintainer=robertsLando
 
       - name: build+push
         uses: docker/build-push-action@v2
