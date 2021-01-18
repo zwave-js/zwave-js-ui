@@ -29,6 +29,27 @@
       @click:append-outer="updateValue(value)"
     ></v-text-field>
 
+    <div style="display:flex" v-if="value.type === 'duration'">
+      <v-text-field
+        :label="'[' + value.id + '] ' + value.label"
+        :type="value.type === 'number' ? 'number' : 'text'"
+        :min="value.min != value.max ? value.min : null"
+        :step="1"
+        :readonly="!value.writeable || disable_send"
+        :max="value.min != value.max ? value.max : null"
+        :hint="value.description || ''"
+        v-model.number="value.newValue.value"
+      ></v-text-field>
+      <v-select
+        style="margin-left:10px;width:20px"
+        :items="durations"
+        v-model="value.newValue.unit"
+        :readonly="!value.writeable || disable_send"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        @click:append-outer="updateValue(value)"
+      ></v-select>
+    </div>
+
     <v-text-field
       style="max-width: 250px;margin: auto;"
       flat
@@ -138,6 +159,7 @@ export default {
   },
   data () {
     return {
+      durations: ['seconds', 'minutes'],
       menu: false
     }
   },
