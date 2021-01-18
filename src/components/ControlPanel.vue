@@ -296,7 +296,7 @@
                     <v-select
                       label="Node"
                       v-model="group.node"
-                      :items="nodes.filter(n => !n.failed)"
+                      :items="sortedNodes"
                       return-object
                       @change="resetGroup"
                       item-text="_name"
@@ -355,7 +355,7 @@
                     <v-combobox
                       label="Target"
                       v-model="group.target"
-                      :items="nodes.filter(n => !n.failed && n != group.node)"
+                      :items="sortedNodes.filter(n => n != group.node)"
                       return-object
                       hint="Select the node from the list or digit the node ID"
                       persistent-hint
@@ -570,6 +570,13 @@ export default {
     NodesTable
   },
   computed: {
+    sortedNodes () {
+      return this.nodes
+        .filter(n => !n.failed)
+        .sort((n1, n2) =>
+          n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
+        )
+    },
     scenesWithId () {
       return this.scenes.map(s => {
         s.label = `[${s.sceneid}] ${s.label}`
@@ -696,6 +703,10 @@ export default {
         {
           text: 'Refresh info',
           value: 'refreshInfo'
+        },
+        {
+          text: 'Refresh values',
+          value: 'refreshValues'
         },
         {
           text: 'Is Failed Node',
