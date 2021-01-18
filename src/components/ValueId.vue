@@ -53,11 +53,7 @@
           </template>
           <v-card>
             <v-card-text class="pa-0">
-              <v-color-picker
-                hide-mode-switch
-                v-model="color"
-                flat
-              />
+              <v-color-picker hide-mode-switch v-model="color" flat />
             </v-card-text>
           </v-card>
         </v-menu>
