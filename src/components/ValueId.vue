@@ -29,7 +29,6 @@
       @click:append-outer="updateValue(value)"
     ></v-text-field>
 
-
     <div style="display:flex" v-if="value.type === 'duration'">
       <v-text-field
         :label="'[' + value.id + '] ' + value.label"
@@ -162,6 +161,8 @@ export default {
     return {
       durations: ['seconds', 'minutes'],
       menu: false
+    }
+  },
   computed: {
     color: {
       // getter
