@@ -38,15 +38,7 @@ jobs:
             TAGS=$TAGS,${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//") >> ./TAGS
           fi
 
-          VCS_REF=`git rev-parse --short HEAD`
-          BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
-          VERSION=`git describe --abbrev=0`
-
           echo ::set-output name=TAGS::${TAGS}
-          echo ::set-output name=BUILD_DATE::${BUILD_DATE}
-          echo ::set-output name=VCS_REF::${VCS_REF}
-          echo ::set-output name=VERSION::${VERSION}
-
           echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
 
       - id: docker_meta
@@ -65,12 +57,9 @@ jobs:
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
-            org.opencontainers.image.source="https://github.com/zwave-js/zwavejs2mqtt" \
-            org.opencontainers.image.version="${{ steps.prepare.outputs.VERSION }}" \
-            org.opencontainers.image.created="${{ steps.prepare.outputs.BUILD_DATE }}" \
-            org.opencontainers.image.revision="${{ steps.prepare.outputs.VCS_REF }}" \
-            org.opencontainers.image.title="zwavejs2mqtt" \
-            org.opencontainers.image.description="Zwave To MQTT Gateway and control panel" \
+            org.opencontainers.image.source="https://github.com/zwave-js/zwavejs2mqtt"
+            org.opencontainers.image.title="zwavejs2mqtt"
+            org.opencontainers.image.description="Zwave To MQTT Gateway and control panel"
             org.opencontainers.image.licenses="MIT"
             maintainer=robertsLando
       - name: build+push
