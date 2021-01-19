@@ -65,7 +65,6 @@
                 class="custom-font"
                 lineNumbers
                 v-model="fileContent"
-                language="js"
                 :highlight="highlighter"
               ></prism-editor>
             </v-card-text>
