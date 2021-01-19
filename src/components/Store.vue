@@ -16,7 +16,7 @@
           >
             <template v-slot:prepend="{ item, open }">
               <v-icon v-if="!item.ext">
-                {{ open ? "folder_open" : "folder" }}
+                {{ open ? 'folder_open' : 'folder' }}
               </v-icon>
               <v-icon v-else>
                 text_snippet
@@ -61,43 +61,50 @@
           </div>
           <v-card v-else :key="selected.path" class="scroll" flat>
             <v-card-text class="scroll" style="height: calc(100% - 50px)">
-                <prism-editor
+              <prism-editor
                 class="custom-font"
-                  lineNumbers
-                  v-model="fileContent"
-                  language="js"
-                  :highlight="highlighter"
-                ></prism-editor>
+                lineNumbers
+                v-model="fileContent"
+                language="js"
+                :highlight="highlighter"
+              ></prism-editor>
             </v-card-text>
             <v-card-actions>
-                <v-spacer></v-spacer>
-                <v-btn color="purple darken-1" text @click="writeFile">
-          SAVE
-          <v-icon right dark>file_upload</v-icon>
-        </v-btn>
-         <v-btn color="green darken-1" text @click="downloadFile">
-          DOWNLOAD
-          <v-icon right dark>file_download</v-icon>
-        </v-btn>
+              <v-spacer></v-spacer>
+              <v-btn color="purple darken-1" text @click="writeFile">
+                SAVE
+                <v-icon right dark>file_upload</v-icon>
+              </v-btn>
+              <v-btn color="green darken-1" text @click="downloadFile">
+                DOWNLOAD
+                <v-icon right dark>file_download</v-icon>
+              </v-btn>
             </v-card-actions>
           </v-card>
         </v-col>
       </v-row>
     </v-card>
-    <v-speed-dial v-if="selectedFiles.length > 0" bottom fab right fixed v-model="fab">
-        <template v-slot:activator>
-          <v-btn color="blue darken-2" dark fab hover v-model="fab">
-            <v-icon v-if="fab">close</v-icon>
-            <v-icon v-else>settings</v-icon>
-          </v-btn>
-        </template>
-        <v-btn fab dark small color="green" @click="downloadZip">
-          <v-icon>file_download</v-icon>
+    <v-speed-dial
+      v-if="selectedFiles.length > 0"
+      bottom
+      fab
+      right
+      fixed
+      v-model="fab"
+    >
+      <template v-slot:activator>
+        <v-btn color="blue darken-2" dark fab hover v-model="fab">
+          <v-icon v-if="fab">close</v-icon>
+          <v-icon v-else>settings</v-icon>
         </v-btn>
-        <v-btn fab dark small color="red" @click="deleteSelected">
-          <v-icon>delete</v-icon>
-        </v-btn>
-      </v-speed-dial>
+      </template>
+      <v-btn fab dark small color="green" @click="downloadZip">
+        <v-icon>file_download</v-icon>
+      </v-btn>
+      <v-btn fab dark small color="red" @click="deleteSelected">
+        <v-icon>delete</v-icon>
+      </v-btn>
+    </v-speed-dial>
   </v-container>
 </template>
 <style>
@@ -107,7 +114,7 @@
 }
 
 .custom-font {
-    font-family: 'Fira Code', monospace;
+  font-family: 'Fira Code', monospace;
 }
 
 .scroll {
@@ -207,15 +214,31 @@ export default {
       const files = this.selectedFiles.map(f => f.path)
       try {
         const response = await ConfigApis.downloadZip(files)
-        const fileName = response.headers['content-disposition'].split('filename=')[1]
-        if (window.navigator && window.navigator.msSaveOrOpenBlob) { // IE variant
-          window.navigator.msSaveOrOpenBlob(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
-            fileName)
+        const fileName = response.headers['content-disposition'].split(
+          'filename='
+        )[1]
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          // IE variant
+          window.navigator.msSaveOrOpenBlob(
+            new Blob([response.data], {
+              type:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }),
+            fileName
+          )
         } else {
-          const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+          const url = window.URL.createObjectURL(
+            new Blob([response.data], {
+              type:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            })
+          )
           const link = document.createElement('a')
           link.href = url
-          link.setAttribute('download', response.headers['content-disposition'].split('filename=')[1])
+          link.setAttribute(
+            'download',
+            response.headers['content-disposition'].split('filename=')[1]
+          )
           document.body.appendChild(link)
           link.click()
         }
@@ -226,23 +249,23 @@ export default {
     async downloadFile () {
       if (this.selected) {
         const fileName = this.selected.name.split('.')[0]
-        this.$listeners.export(
-          this.fileContent,
-          fileName,
-          this.selected.ext
-        )
+        this.$listeners.export(this.fileContent, fileName, this.selected.ext)
       }
     },
     async writeFile () {
-      if (this.selected &&
-        await this.$listeners.showConfirm(
+      if (
+        this.selected &&
+        (await this.$listeners.showConfirm(
           'Attention',
           `Are you sure you want to overwrite the content of the file ${this.selected.name}?`,
           'alert'
-        )
+        ))
       ) {
         try {
-          const data = await ConfigApis.writeFile(this.selected.path, this.fileContent)
+          const data = await ConfigApis.writeFile(
+            this.selected.path,
+            this.fileContent
+          )
           if (data.success) {
             this.showSnackbar('File writed successfully')
             this.refreshTree()
