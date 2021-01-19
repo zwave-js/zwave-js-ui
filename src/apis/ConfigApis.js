@@ -65,6 +65,11 @@ export default {
     })
   },
   downloadZip (files) {
-    return axios.post('/store-zip', { files }, { responseType: 'blob' })
+    return axios.post('/store-multi', { files }, { responseType: 'blob' })
+  },
+  deleteMultiple (files) {
+    return axios.put('/store-multi', { files }).then(response => {
+      return response.data
+    })
   }
 }

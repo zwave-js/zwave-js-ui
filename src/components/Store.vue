@@ -94,6 +94,9 @@
         <v-btn fab dark small color="green" @click="downloadZip">
           <v-icon>file_download</v-icon>
         </v-btn>
+        <v-btn fab dark small color="red" @click="deleteSelected">
+          <v-icon>delete</v-icon>
+        </v-btn>
       </v-speed-dial>
   </v-container>
 </template>
@@ -169,6 +172,28 @@ export default {
           const data = await ConfigApis.deleteFile(item.path)
           if (data.success) {
             this.showSnackbar('File deleted successfully')
+            this.refreshTree()
+          } else {
+            throw Error(data.message)
+          }
+        } catch (error) {
+          this.showSnackbar(error.message)
+        }
+      }
+    },
+    async deleteSelected () {
+      const files = this.selectedFiles.map(f => f.path)
+      if (
+        await this.$listeners.showConfirm(
+          'Attention',
+          `Are you sure you want to delete ${files.length} files?`,
+          'alert'
+        )
+      ) {
+        try {
+          const data = await ConfigApis.deleteMultiple(files)
+          if (data.success) {
+            this.showSnackbar('Files deleted successfully')
             this.refreshTree()
           } else {
             throw Error(data.message)

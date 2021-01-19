@@ -363,7 +363,20 @@ app.delete('/api/store/:path', async function (req, res) {
   }
 })
 
-app.post('/api/store-zip', function (req, res) {
+app.put('/api/store-multi', async function (req, res) {
+  try {
+    const files = req.body.files || []
+    for (const f of files) {
+      await fs.remove(f)
+    }
+    res.json({ success: true })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.post('/api/store-multi', function (req, res) {
   const files = req.body.files || []
 
   const archive = archiver('zip')
