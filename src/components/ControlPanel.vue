@@ -524,6 +524,9 @@
                     <v-btn color="blue darken-1" text @click="debug = []"
                       >Clear</v-btn
                     >
+                    <v-btn color="blue darken-1" outlined @click="exportLogs">
+                      Export Logs
+                    </v-btn>
                   </v-flex>
                   <v-flex xs12>
                     <div
@@ -863,6 +866,22 @@ export default {
           self.showSnackbar(data.message)
           if (data.success) {
             self.$listeners.export(data.data, 'nodes', 'json')
+          }
+        })
+        .catch(error => {
+          console.log(error)
+        })
+    },
+    exportLogs () {
+      const self = this
+      ConfigApis.exportLogs()
+        .then(data => {
+          if (data.success) {
+            for (const logFile in data.data) {
+              self.$listeners.export(data.data[logFile], logFile, 'log')
+            }
+          } else {
+            self.showSnackbar(data.message)
           }
         })
         .catch(error => {
