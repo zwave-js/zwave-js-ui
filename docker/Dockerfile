@@ -35,8 +35,6 @@ RUN if [[ ! -z "$updateDevices"  ]]; then git clone $zwavejs; \
 # STEP 2:
 FROM node:erbium-alpine
 
-LABEL maintainer="robertsLando"
-
 RUN apk add --no-cache \
     libstdc++  \
     libgcc \
