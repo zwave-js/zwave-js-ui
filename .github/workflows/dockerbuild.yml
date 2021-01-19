@@ -57,7 +57,6 @@ jobs:
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
-            org.opencontainers.image.licenses=MIT
             maintainer=robertsLando
       - name: build+push
         uses: docker/build-push-action@v2
