@@ -1,45 +1,45 @@
 <template>
   <v-container fluid>
-    <v-card>
-        <v-row
-      class="pa-4"
-      justify="space-between"
-    >
-      <v-col cols="5">
-        <v-treeview
-        v-if="!loadingStore"
-        :active.sync="active"
-        :open="initiallyOpen"
-        :items="items"
-        activatable
-        item-key="path"
-        open-on-click
-        return-object
-        >
+    <v-card height="800" style="margin-top:30px;">
+      <v-row class="pa-4" justify="space-between" style="height:100%">
+        <v-col class="scroll" cols="5">
+          <v-treeview
+            v-if="!loadingStore"
+            :active.sync="active"
+            :open="initiallyOpen"
+            :items="items"
+            activatable
+            item-key="path"
+            open-on-click
+            return-object
+          >
             <template v-slot:prepend="{ item, open }">
-            <v-icon v-if="!item.ext">
-                {{ open ? 'folder_open' : 'folder' }}
-            </v-icon>
-            <v-icon v-else>
+              <v-icon v-if="!item.ext">
+                {{ open ? "folder_open" : "folder" }}
+              </v-icon>
+              <v-icon v-else>
                 text_snippet
-            </v-icon>
+              </v-icon>
             </template>
-        </v-treeview>
-        <div v-else>
+            <template v-slot:append="{ item }">
+              <v-layout row justify-end ma-1>
+                <div class="caption grey--text">{{ item.size }}</div>
+                <v-icon @click="deleteFile(item)" color="red">delete</v-icon>
+              </v-layout>
+            </template>
+          </v-treeview>
+          <div v-else>
             <v-progress-circular
-        indeterminate
-        color="primary"
-        style="align-self: center;"
-        ></v-progress-circular>
-        </div>
-      </v-col>
+              indeterminate
+              color="primary"
+              style="align-self: center;"
+            ></v-progress-circular>
+          </div>
+        </v-col>
 
-      <v-divider vertical></v-divider>
+        <v-divider vertical></v-divider>
 
-      <v-col
-        class="text-center"
-      >
-        <v-scroll-y-transition mode="out-in">
+        <v-col class="text-center scroll">
           <div
             v-if="!selected || !selected.ext"
             class="title grey--text text--lighten-1 font-weight-light"
@@ -52,29 +52,36 @@
             class="title grey--text text--lighten-1 font-weight-light"
             style="align-self: center;"
           >
-           <v-progress-circular
-        indeterminate
-        color="primary"
-        style="align-self: center;"
-        ></v-progress-circular>
+            <v-progress-circular
+              indeterminate
+              color="primary"
+              style="align-self: center;"
+            ></v-progress-circular>
           </div>
-          <v-card
-            v-else
-            :key="selected.path"
-            flat
-          >
-            <v-card-text>
+          <v-card v-else :key="selected.path" class="scroll" flat>
+            <v-card-text class="scroll" style="height: calc(100% - 50px)">
                 <prism-editor
+                class="custom-font"
                   lineNumbers
                   v-model="fileContent"
-                  language="txt"
+                  language="js"
                   :highlight="highlighter"
                 ></prism-editor>
             </v-card-text>
+            <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="purple darken-1" text @click="writeFile">
+          SAVE
+          <v-icon right dark>file_upload</v-icon>
+        </v-btn>
+         <v-btn color="green darken-1" text @click="downloadFile">
+          DOWNLOAD
+          <v-icon right dark>file_download</v-icon>
+        </v-btn>
+            </v-card-actions>
           </v-card>
-        </v-scroll-y-transition>
-      </v-col>
-    </v-row>
+        </v-col>
+      </v-row>
     </v-card>
   </v-container>
 </template>
@@ -82,6 +89,15 @@
 /* optional class for removing the outline */
 .prism-editor__textarea:focus {
   outline: none;
+}
+
+.custom-font {
+    font-family: 'Fira Code', monospace;
+}
+
+.scroll {
+  overflow-y: scroll;
+  height: 100%;
 }
 </style>
 <script>
@@ -128,6 +144,58 @@ export default {
     showSnackbar (text) {
       this.$emit('showSnackbar', text)
     },
+    async deleteFile (item) {
+      if (
+        await this.$listeners.showConfirm(
+          'Attention',
+          `Are you sure you want to delete the file ${item.name}?`,
+          'alert'
+        )
+      ) {
+        try {
+          const data = await ConfigApis.deleteFile(item.path)
+          if (data.success) {
+            this.showSnackbar('File deleted successfully')
+            this.refreshTree()
+          } else {
+            throw Error(data.message)
+          }
+        } catch (error) {
+          this.showSnackbar(error.message)
+        }
+      }
+    },
+    async downloadFile () {
+      if (this.selected) {
+        const fileName = this.selected.name.split('.')[0]
+        this.$listeners.export(
+          this.fileContent,
+          fileName,
+          this.selected.ext
+        )
+      }
+    },
+    async writeFile () {
+      if (this.selected &&
+        await this.$listeners.showConfirm(
+          'Attention',
+          `Are you sure you want to overwrite the content of the file ${this.selected.name}?`,
+          'alert'
+        )
+      ) {
+        try {
+          const data = await ConfigApis.writeFile(this.selected.path, this.fileContent)
+          if (data.success) {
+            this.showSnackbar('File writed successfully')
+            this.refreshTree()
+          } else {
+            throw Error(data.message)
+          }
+        } catch (error) {
+          this.showSnackbar(error.message)
+        }
+      }
+    },
     highlighter (code) {
       return highlight(code, languages.js) // returns html
     },
@@ -147,26 +215,28 @@ export default {
 
         this.loadingFile = false
       }
+    },
+    async refreshTree () {
+      try {
+        const data = await ConfigApis.getStore()
+        if (data.success) {
+          this.items = data.data
+        } else {
+          throw Error(data.message)
+        }
+      } catch (error) {
+        this.showSnackbar('Error while fetching store files: ' + error.message)
+        console.log(error)
+      }
+
+      this.loadingStore = false
+      this.loadingFile = false
+      this.active = []
     }
   },
-  mounted () {
-    const self = this
-    ConfigApis.getStore()
-      .then(data => {
-        if (data.success) {
-          self.items = data.data
-        } else {
-          self.showSnackbar(data.message)
-        }
-      })
-      .catch(error => {
-        self.showSnackbar('Error while fetching store files')
-        console.log(error)
-      }).finally(() => {
-        self.loadingStore = false
-      })
+  async mounted () {
+    await this.refreshTree()
   },
-  beforeDestroy () {
-  }
+  beforeDestroy () {}
 }
 </script>

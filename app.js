@@ -17,7 +17,7 @@ const history = require('connect-history-api-fallback')
 const SocketManager = reqlib('/lib/SocketManager')
 const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
-const fs = require('fs').promises
+const fs = require('fs-extra')
 const path = require('path')
 const appConfig = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
@@ -274,13 +274,18 @@ app.get('/api/store', async function (req, res) {
       const toReturn = []
       const files = await fs.readdir(dir)
       for (const file of files) {
-        const entry = { name: path.basename(file), path: utils.joinPath(dir, file) }
+        const entry = {
+          name: path.basename(file),
+          path: utils.joinPath(dir, file)
+        }
         const stats = await fs.lstat(entry.path)
         if (stats.isDirectory()) {
           entry.children = await parseDir(entry.path)
         } else {
           entry.ext = file.split('.').pop()
         }
+
+        entry.size = utils.humanSize(stats.size)
         toReturn.push(entry)
       }
       return toReturn
@@ -313,6 +318,48 @@ app.get('/api/store/:path', async function (req, res) {
     const data = await fs.readFile(reqPath, 'utf8')
 
     res.json({ success: true, data: data })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.put('/api/store/:path', async function (req, res) {
+  try {
+    const reqPath = req.params.path
+    const storeDir = utils.joinPath(true, appConfig.storeDir)
+
+    if (!reqPath.startsWith(storeDir)) {
+      throw Error('Path not allowed')
+    }
+
+    const stat = await fs.lstat(reqPath)
+
+    if (!stat.isFile()) {
+      throw Error('Path is not a file')
+    }
+
+    await fs.writeFile(reqPath, req.body.content, 'utf8')
+
+    res.json({ success: true })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.delete('/api/store/:path', async function (req, res) {
+  try {
+    const reqPath = req.params.path
+    const storeDir = utils.joinPath(true, appConfig.storeDir)
+
+    if (!reqPath.startsWith(storeDir)) {
+      throw Error('Path not allowed')
+    }
+
+    await fs.remove(reqPath)
+
+    res.json({ success: true })
   } catch (error) {
     logger.error(error.message)
     return res.json({ success: false, message: error.message })
