@@ -23,24 +23,6 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Prepare
-        id: prepare
-        run: |
-          DOCKER_REPO=zwavejs/zwavejs2mqtt
-          TAGS=${DOCKER_REPO}:sha-${GITHUB_SHA}
-
-          if [ "$GITHUB_REF" == "refs/heads/master" ]; then
-            TAGS=$TAGS,${DOCKER_REPO}:dev
-          fi
-          if [ "$GITHUB_EVENT_NAME" == "release" ]; then
-            TAGS=$TAGS,${DOCKER_REPO}:latest
-            TAGS=$TAGS,${DOCKER_REPO}:$(echo ${GITHUB_REF} | sed "s/refs\/tags\/v//") >> ./TAGS
-          fi
-
-          echo ::set-output name=TAGS::${TAGS}
-          echo DOCKER_REPO="${DOCKER_REPO}" >> $GITHUB_ENV
-
       - id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
@@ -48,9 +30,7 @@ jobs:
           tag-sha: true
           tag-latest: true
           tag-semver: |
-            {{raw}}
-            v{{major}}.{{minor}}
-            {{major}}
+            {{version}}
           tag-custom: ${{ github.ref == 'refs/heads/master' && 'dev' || '' }}
           label-custom: |
             org.opencontainers.image.vendor=zwave-js
@@ -65,5 +45,5 @@ jobs:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.prepare.outputs.TAGS }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
