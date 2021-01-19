@@ -73,7 +73,7 @@
               <v-spacer></v-spacer>
               <v-btn color="purple darken-1" text @click="writeFile">
                 SAVE
-                <v-icon right dark>file_upload</v-icon>
+                <v-icon right dark>save</v-icon>
               </v-btn>
               <v-btn color="green darken-1" text @click="downloadFile">
                 DOWNLOAD
