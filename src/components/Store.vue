@@ -15,10 +15,10 @@
             return-object
           >
             <template v-slot:prepend="{ item, open }">
-              <v-icon v-if="!item.ext">
+              <v-icon color="#FFC107" v-if="!item.ext">
                 {{ open ? 'folder_open' : 'folder' }}
               </v-icon>
-              <v-icon v-else>
+              <v-icon color="blue" v-else>
                 text_snippet
               </v-icon>
             </template>
@@ -106,7 +106,7 @@
     </v-speed-dial>
   </v-container>
 </template>
-<style>
+<style scoped>
 /* optional class for removing the outline */
 .prism-editor__textarea:focus {
   outline: none;
