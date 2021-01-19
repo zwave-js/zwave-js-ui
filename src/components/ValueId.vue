@@ -54,7 +54,7 @@
       style="max-width: 250px;margin: auto;"
       flat
       solo
-      v-if="value.type == 'color'"
+      v-if="value.type === 'color'"
       v-model="color"
       :label="'[' + value.id + '] ' + value.label"
       :append-outer-icon="!disable_send ? 'send' : null"
