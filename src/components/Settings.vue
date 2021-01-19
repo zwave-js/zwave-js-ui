@@ -74,6 +74,24 @@
                       </v-flex>
                       <v-flex xs12 sm6>
                         <v-switch
+                          hint="Enable zwave-js websocket server"
+                          persistent-hint
+                          label="WS Server"
+                          v-model="zwave.serverEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex v-if="zwave.serverEnabled" xs12 sm6>
+                        <v-text-field
+                          v-model.number="zwave.serverPort"
+                          label="Server Port"
+                          :rules="[rules.required]"
+                          required
+                          hint="The port to bind the Zwave Server. Default: 3000"
+                          type="number"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
                           hint="Enable zwave-js logging"
                           persistent-hint
                           label="Log Enabled"

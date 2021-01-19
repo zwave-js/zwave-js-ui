@@ -716,6 +716,10 @@ export default {
           value: 'isFailedNode'
         },
         {
+          text: 'Mark Node as Failed',
+          value: 'markNodeAsFailed'
+        },
+        {
           text: 'Remove failed node',
           value: 'removeFailedNode'
         },
