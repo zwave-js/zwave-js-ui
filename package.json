@@ -92,6 +92,7 @@
     "@babel/polyfill": "^7.12.1",
     "ansi_up": "^4.0.4",
     "app-root-path": "^3.0.0",
+    "archiver": "^5.2.0",
     "axios": "^0.21.1",
     "axios-progress-bar": "^1.2.0",
     "bluebird": "^3.7.2",

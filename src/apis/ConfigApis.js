@@ -63,5 +63,8 @@ export default {
     return axios.delete('/store/' + encodeURIComponent(path)).then(response => {
       return response.data
     })
+  },
+  downloadZip (files) {
+    return axios.post('/store-zip', { files }, { responseType: 'blob' })
   }
 }

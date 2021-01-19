@@ -6,9 +6,10 @@
           <v-treeview
             v-if="!loadingStore"
             :active.sync="active"
-            :open="initiallyOpen"
+            v-model="selectedFiles"
             :items="items"
             activatable
+            selectable
             item-key="path"
             open-on-click
             return-object
@@ -83,6 +84,17 @@
         </v-col>
       </v-row>
     </v-card>
+    <v-speed-dial v-if="selectedFiles.length > 0" bottom fab right fixed v-model="fab">
+        <template v-slot:activator>
+          <v-btn color="blue darken-2" dark fab hover v-model="fab">
+            <v-icon v-if="fab">close</v-icon>
+            <v-icon v-else>settings</v-icon>
+          </v-btn>
+        </template>
+        <v-btn fab dark small color="green" @click="downloadZip">
+          <v-icon>file_download</v-icon>
+        </v-btn>
+      </v-speed-dial>
   </v-container>
 </template>
 <style>
@@ -132,7 +144,8 @@ export default {
   },
   data () {
     return {
-      initiallyOpen: ['public'],
+      fab: false,
+      selectedFiles: [],
       active: [],
       items: [],
       fileContent: '',
@@ -163,6 +176,26 @@ export default {
         } catch (error) {
           this.showSnackbar(error.message)
         }
+      }
+    },
+    async downloadZip () {
+      const files = this.selectedFiles.map(f => f.path)
+      try {
+        const response = await ConfigApis.downloadZip(files)
+        const fileName = response.headers['content-disposition'].split('filename=')[1]
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) { // IE variant
+          window.navigator.msSaveOrOpenBlob(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+            fileName)
+        } else {
+          const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
+          const link = document.createElement('a')
+          link.href = url
+          link.setAttribute('download', response.headers['content-disposition'].split('filename=')[1])
+          document.body.appendChild(link)
+          link.click()
+        }
+      } catch (error) {
+        this.showSnackbar(error.message)
       }
     },
     async downloadFile () {

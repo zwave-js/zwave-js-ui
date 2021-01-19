@@ -21,6 +21,8 @@ const fs = require('fs-extra')
 const path = require('path')
 const appConfig = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
+const archiver = require('archiver')
+const storeDir = utils.joinPath(true, appConfig.storeDir)
 
 const socketManager = new SocketManager()
 
@@ -268,8 +270,6 @@ app.post('/api/importConfig', async function (req, res) {
 // get config
 app.get('/api/store', async function (req, res) {
   try {
-    const storeDir = utils.joinPath(true, appConfig.storeDir)
-
     async function parseDir (dir) {
       const toReturn = []
       const files = await fs.readdir(dir)
@@ -303,7 +303,6 @@ app.get('/api/store', async function (req, res) {
 app.get('/api/store/:path', async function (req, res) {
   try {
     const reqPath = req.params.path
-    const storeDir = utils.joinPath(true, appConfig.storeDir)
 
     if (!reqPath.startsWith(storeDir)) {
       throw Error('Path not allowed')
@@ -327,7 +326,6 @@ app.get('/api/store/:path', async function (req, res) {
 app.put('/api/store/:path', async function (req, res) {
   try {
     const reqPath = req.params.path
-    const storeDir = utils.joinPath(true, appConfig.storeDir)
 
     if (!reqPath.startsWith(storeDir)) {
       throw Error('Path not allowed')
@@ -351,7 +349,6 @@ app.put('/api/store/:path', async function (req, res) {
 app.delete('/api/store/:path', async function (req, res) {
   try {
     const reqPath = req.params.path
-    const storeDir = utils.joinPath(true, appConfig.storeDir)
 
     if (!reqPath.startsWith(storeDir)) {
       throw Error('Path not allowed')
@@ -364,6 +361,36 @@ app.delete('/api/store/:path', async function (req, res) {
     logger.error(error.message)
     return res.json({ success: false, message: error.message })
   }
+})
+
+app.post('/api/store-zip', function (req, res) {
+  const files = req.body.files || []
+
+  const archive = archiver('zip')
+
+  archive.on('error', function (err) {
+    res.status(500).send({
+      error: err.message
+    })
+  })
+
+  // on stream closed we can end the request
+  archive.on('end', function () {
+    logger.debug('zip archive ready')
+  })
+
+  // set the archive name
+  res.attachment('zwavejs2mqtt-store.zip')
+  res.setHeader('Content-Type', 'application/zip')
+
+  // use res as stream so I don't need to create a temp file
+  archive.pipe(res)
+
+  for (const f of files) {
+    archive.file(f, { name: f.replace(storeDir, '') })
+  }
+
+  archive.finalize()
 })
 
 // update settings
