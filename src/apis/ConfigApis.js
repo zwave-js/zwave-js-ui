@@ -42,8 +42,13 @@ export default {
       return response.data
     })
   },
-  exportLogs () {
-    return axios.get('/exportLogs').then(response => {
+  getStore () {
+    return axios.get('/store').then(response => {
+      return response.data
+    })
+  },
+  getFile (path) {
+    return axios.get('/store/' + encodeURIComponent(path)).then(response => {
       return response.data
     })
   }

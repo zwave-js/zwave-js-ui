@@ -225,6 +225,7 @@ export default {
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' },
+        { icon: 'folder', title: 'Store', path: '/store' },
         { icon: 'share', title: 'Network graph', path: '/mesh' }
       ],
       settings: new Settings(localStorage),

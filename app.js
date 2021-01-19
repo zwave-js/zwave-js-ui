@@ -267,21 +267,53 @@ app.post('/api/importConfig', async function (req, res) {
 })
 
 // get config
-app.get('/api/exportLogs', async function (req, res) {
+app.get('/api/store', async function (req, res) {
   try {
     const storeDir = utils.joinPath(true, appConfig.storeDir)
-    const files = (await fs.readdir(storeDir)).filter(f => f.endsWith('.log'))
 
-    const logs = {}
-
-    for (const file of files) {
-      logs[path.basename(file, '.log')] = await fs.readFile(
-        utils.joinPath(storeDir, file),
-        'utf-8'
-      )
+    async function parseDir (dir) {
+      const toReturn = []
+      const files = await fs.readdir(dir)
+      for (const file of files) {
+        const entry = { name: path.basename(file), path: utils.joinPath(dir, file) }
+        const stats = await fs.lstat(entry.path)
+        if (stats.isDirectory()) {
+          entry.children = await parseDir(entry.path)
+        } else {
+          entry.ext = file.split('.').pop()
+        }
+        toReturn.push(entry)
+      }
+      return toReturn
     }
 
-    res.json({ success: true, data: logs })
+    const data = await parseDir(storeDir)
+
+    res.json({ success: true, data: data })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.get('/api/store/:path', async function (req, res) {
+  try {
+    const reqPath = req.params.path
+    const storeDir = utils.joinPath(true, appConfig.storeDir)
+
+    if (!reqPath.startsWith(storeDir)) {
+      throw Error('Path not allowed')
+    }
+
+    const stat = await fs.lstat(reqPath)
+
+    if (!stat.isFile()) {
+      throw Error('Path is not a file')
+    }
+
+    const data = await fs.readFile(reqPath, 'utf8')
+
+    res.json({ success: true, data: data })
   } catch (error) {
     logger.error(error.message)
     return res.json({ success: false, message: error.message })
