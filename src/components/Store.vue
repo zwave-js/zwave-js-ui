@@ -60,7 +60,7 @@
             ></v-progress-circular>
           </div>
           <v-card v-else :key="selected.path" class="scroll" flat>
-            <v-card-text class="scroll" style="height: calc(100% - 50px)">
+            <v-card-text class="scroll custom-scroll" style="height: calc(100% - 50px)">
               <prism-editor
                 class="custom-font"
                 lineNumbers
@@ -106,10 +106,10 @@
     </v-speed-dial>
   </v-container>
 </template>
-<style scoped>
+<style>
 /* optional class for removing the outline */
-.prism-editor__textarea:focus {
-  outline: none;
+.prism-editor-wrapper .prism-editor__textarea:focus {
+  outline: none !important;
 }
 
 .custom-font {
@@ -119,6 +119,24 @@
 .scroll {
   overflow-y: scroll;
   height: 100%;
+}
+
+.custom-scroll ::-webkit-scrollbar-track{
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  border-radius: 20px;
+  background-color: #F5F5F5;
+}
+
+.custom-scroll ::-webkit-scrollbar{
+  width: 5px;
+  border-radius: 50%;
+  background-color: #ddd;
+}
+
+.custom-scroll ::-webkit-scrollbar-thumb{
+  border-radius: 20px;
+  background: #000;
 }
 </style>
 <script>
@@ -155,6 +173,7 @@ export default {
     return {
       fab: false,
       selectedFiles: [],
+      allowedExt: ['json', 'jsonl', 'txt', 'log', 'js', 'ts'],
       active: [],
       items: [],
       fileContent: '',
@@ -281,8 +300,12 @@ export default {
     },
     async fetchFile () {
       if (this.selected && this.selected.path) {
+        this.fileContent = ''
         this.loadingFile = true
         try {
+          if (!this.allowedExt.includes(this.selected.ext)) {
+            throw Error(`Preview of .${this.selected.ext} files is not supported`)
+          }
           const data = await ConfigApis.getFile(this.selected.path)
           if (data.success) {
             this.fileContent = data.data
