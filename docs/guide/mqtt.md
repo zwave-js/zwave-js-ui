@@ -90,7 +90,6 @@ This are the available apis:
 - `beginHealingNetwork()`: Starts healing the network
 - `stopHealingNetwork()`: Stops network healing
 - `isFailedNode(nodeId)`: Checks if a node is failed
-- `markNodeAsFailed(nodeId)`: Pings a node few times and marks it as failed if it doesn't answer. This is different from the previous api as that only checks the controller failed node list
 - `removeFailedNode(nodeId)`: Remove a failed node
 - `refreshInfo(nodeId)`: Re-interview a node to fetch its info and supported CCs
 - `beginFirmwareUpdate(nodeId, fileName, data)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
