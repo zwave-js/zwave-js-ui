@@ -5,7 +5,7 @@ const FAN_DIMMER = {
   object_id: 'dimmer',
   values: ['38-0-currentValue', '38-0-targetValue'],
   discovery_payload: {
-    command_topic: '38-0-currentValue',
+    command_topic: '38-0-targetValue',
     speed_command_topic: '38-0-targetValue',
     speed_state_topic: '38-0-currentValue',
     state_topic: '38-0-currentValue',
