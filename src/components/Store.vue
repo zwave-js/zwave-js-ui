@@ -235,9 +235,10 @@ export default {
       const files = this.selectedFiles.map(f => f.path)
       try {
         const response = await ConfigApis.downloadZip(files)
-        const fileName = response.headers['content-disposition'].split(
-          'filename='
-        )[1]
+        const regExp = /filename="([^"]+){1}"/g
+        const fileName =
+          regExp.exec(response.headers['content-disposition'])[1] ||
+          'zwavejs2mqtt-store.zip'
         if (window.navigator && window.navigator.msSaveOrOpenBlob) {
           // IE variant
           window.navigator.msSaveOrOpenBlob(
@@ -256,10 +257,7 @@ export default {
           )
           const link = document.createElement('a')
           link.href = url
-          link.setAttribute(
-            'download',
-            response.headers['content-disposition'].split('filename=')[1]
-          )
+          link.setAttribute('download', fileName)
           document.body.appendChild(link)
           link.click()
         }
