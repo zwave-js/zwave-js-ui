@@ -164,7 +164,6 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^5.0.0",
     "eslint-plugin-vue": "^7.4.1",
-    "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "fibers": "^5.0.0",
     "file-loader": "^6.2.0",
     "friendly-errors-webpack-plugin": "^1.7.0",
