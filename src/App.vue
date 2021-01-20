@@ -206,10 +206,13 @@ export default {
     exportConfiguration: function (data, fileName, ext) {
       ext = ext || 'json'
       const textMime = ['json', 'jsonl', 'txt', 'log', 'js', 'ts']
-      const contentType = textMime.includes(ext) ? 'text/plain' : 'application/octet-stream'
+      const contentType = textMime.includes(ext)
+        ? 'text/plain'
+        : 'application/octet-stream'
       const a = document.createElement('a')
 
-      data = ext === 'json' && typeof data === 'object' ? JSON.stringify(data) : data
+      data =
+        ext === 'json' && typeof data === 'object' ? JSON.stringify(data) : data
 
       const blob = new Blob([data], {
         type: contentType
