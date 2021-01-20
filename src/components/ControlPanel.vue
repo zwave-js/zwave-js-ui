@@ -3,40 +3,35 @@
     <v-card>
       <v-card-text>
         <v-container fluid>
-          <v-layout>
-            <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field
-                label="Home ID"
-                readonly
-                v-model="homeid"
-              ></v-text-field>
-            </v-flex>
-            <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field
-                label="Home Hex"
-                readonly
-                v-model="homeHex"
-              ></v-text-field>
-            </v-flex>
-            <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field
-                label="App Version"
-                readonly
-                v-model="appVersion"
-              ></v-text-field>
-            </v-flex>
-          </v-layout>
+          <v-row justify="start">
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Home ID</div>
+              <div class="body-1 font-weight-bold">{{ homeid }}</div>
+            </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Home Hex</div>
+              <div class="body-1 font-weight-bold">{{ homeHex }}</div>
+            </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">App Version</div>
+              <div class="body-1 font-weight-bold">{{ appVersion }}</div>
+            </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Zwavejs Version</div>
+              <div class="body-1 font-weight-bold">{{ zwaveVersion }}</div>
+            </v-col>
+          </v-row>
 
-          <v-layout>
-            <v-flex xs12 sm6 md3 mr-2>
+          <v-row justify="start">
+            <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
                 readonly
                 v-model="cnt_status"
               ></v-text-field>
-            </v-flex>
+            </v-col>
 
-            <v-flex xs12 sm6 md3>
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 label="Actions"
                 append-outer-icon="send"
@@ -44,32 +39,16 @@
                 :items="cnt_actions.concat(node_actions)"
                 @click:append-outer="sendCntAction"
               ></v-select>
-            </v-flex>
-
-            <v-flex xs12 sm6 md3 align-self-center>
-              <v-btn icon @click="importConfiguration">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-icon dark color="primary" v-on="on">file_upload</v-icon>
-                  </template>
-                  <span>Import nodes.json Configuration</span>
-                </v-tooltip>
-              </v-btn>
-              <v-btn icon @click="exportConfiguration">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-icon dark color="primary" v-on="on"
-                      >file_download</v-icon
-                    >
-                  </template>
-                  <span>Export nodes.json Configuration</span>
-                </v-tooltip>
-              </v-btn>
-            </v-flex>
-          </v-layout>
+            </v-col>
+          </v-row>
         </v-container>
 
-        <nodes-table :nodes="nodes" v-on:node-selected="selectNode" />
+        <nodes-table
+          :nodes="nodes"
+          @node-selected="selectNode"
+          @export="exportConfiguration"
+          @import="importConfiguration"
+        />
 
         <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
           <v-tab key="node">Node</v-tab>
@@ -666,6 +645,7 @@ export default {
       homeid: '',
       homeHex: '',
       appVersion: '',
+      zwaveVersion: '',
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
@@ -705,8 +685,16 @@ export default {
           value: 'refreshInfo'
         },
         {
+          text: 'Refresh values',
+          value: 'refreshValues'
+        },
+        {
           text: 'Is Failed Node',
           value: 'isFailedNode'
+        },
+        {
+          text: 'Mark Node as Failed',
+          value: 'markNodeAsFailed'
         },
         {
           text: 'Remove failed node',
@@ -1311,6 +1299,7 @@ export default {
       self.homeid = info.homeid
       self.homeHex = info.name
       self.appVersion = info.appVersion
+      self.zwaveVersion = info.zwaveVersion
     })
 
     this.socket.on(socketEvents.nodeRemoved, node => {
@@ -1348,6 +1337,7 @@ export default {
       self.homeid = data.info.homeid
       self.homeHex = data.info.name
       self.appVersion = data.info.appVersion
+      self.zwaveVersion = data.info.zwaveVersion
     })
 
     this.socket.on(socketEvents.nodeUpdated, data => {

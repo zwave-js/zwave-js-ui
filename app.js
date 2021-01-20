@@ -17,7 +17,12 @@ const history = require('connect-history-api-fallback')
 const SocketManager = reqlib('/lib/SocketManager')
 const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
+const fs = require('fs-extra')
+const path = require('path')
+const appConfig = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
+const archiver = require('archiver')
+const storeDir = utils.joinPath(true, appConfig.storeDir)
 
 const socketManager = new SocketManager()
 
@@ -260,6 +265,145 @@ app.post('/api/importConfig', async function (req, res) {
     logger.error(error.message)
     return res.json({ success: false, message: error.message })
   }
+})
+
+// get config
+app.get('/api/store', async function (req, res) {
+  try {
+    async function parseDir (dir) {
+      const toReturn = []
+      const files = await fs.readdir(dir)
+      for (const file of files) {
+        const entry = {
+          name: path.basename(file),
+          path: utils.joinPath(dir, file)
+        }
+        const stats = await fs.lstat(entry.path)
+        if (stats.isDirectory()) {
+          entry.children = await parseDir(entry.path)
+        } else {
+          entry.ext = file.split('.').pop()
+        }
+
+        entry.size = utils.humanSize(stats.size)
+        toReturn.push(entry)
+      }
+      return toReturn
+    }
+
+    const data = await parseDir(storeDir)
+
+    res.json({ success: true, data: data })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.get('/api/store/:path', async function (req, res) {
+  try {
+    const reqPath = req.params.path
+
+    if (!reqPath.startsWith(storeDir)) {
+      throw Error('Path not allowed')
+    }
+
+    const stat = await fs.lstat(reqPath)
+
+    if (!stat.isFile()) {
+      throw Error('Path is not a file')
+    }
+
+    const data = await fs.readFile(reqPath, 'utf8')
+
+    res.json({ success: true, data: data })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.put('/api/store/:path', async function (req, res) {
+  try {
+    const reqPath = req.params.path
+
+    if (!reqPath.startsWith(storeDir)) {
+      throw Error('Path not allowed')
+    }
+
+    const stat = await fs.lstat(reqPath)
+
+    if (!stat.isFile()) {
+      throw Error('Path is not a file')
+    }
+
+    await fs.writeFile(reqPath, req.body.content, 'utf8')
+
+    res.json({ success: true })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.delete('/api/store/:path', async function (req, res) {
+  try {
+    const reqPath = req.params.path
+
+    if (!reqPath.startsWith(storeDir)) {
+      throw Error('Path not allowed')
+    }
+
+    await fs.remove(reqPath)
+
+    res.json({ success: true })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.put('/api/store-multi', async function (req, res) {
+  try {
+    const files = req.body.files || []
+    for (const f of files) {
+      await fs.remove(f)
+    }
+    res.json({ success: true })
+  } catch (error) {
+    logger.error(error.message)
+    return res.json({ success: false, message: error.message })
+  }
+})
+
+app.post('/api/store-multi', function (req, res) {
+  const files = req.body.files || []
+
+  const archive = archiver('zip')
+
+  archive.on('error', function (err) {
+    res.status(500).send({
+      error: err.message
+    })
+  })
+
+  // on stream closed we can end the request
+  archive.on('end', function () {
+    logger.debug('zip archive ready')
+  })
+
+  // set the archive name
+  res.attachment('zwavejs2mqtt-store.zip')
+  res.setHeader('Content-Type', 'application/zip')
+
+  // use res as stream so I don't need to create a temp file
+  archive.pipe(res)
+
+  for (const f of files) {
+    archive.file(f, { name: f.replace(storeDir, '') })
+  }
+
+  archive.finalize()
 })
 
 // update settings

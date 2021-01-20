@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "1.0.0-beta.0",
+  "version": "1.0.0-rc.0",
   "bin": {
     "zwavejs2mqtt": "bin/www"
   },
@@ -90,8 +90,10 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
+    "@zwave-js/server": "^1.0.0-alpha.1",
     "ansi_up": "^4.0.4",
     "app-root-path": "^3.0.0",
+    "archiver": "^5.2.0",
     "axios": "^0.21.1",
     "axios-progress-bar": "^1.2.0",
     "bluebird": "^3.7.2",
@@ -102,6 +104,7 @@
     "debug": "^4.3.1",
     "ejs": "^3.1.5",
     "express": "^4.17.1",
+    "fs-extra": "^8.1.0",
     "jsonfile": "^6.1.0",
     "morgan": "~1.10.0",
     "mqtt": "^4.2.6",
@@ -121,7 +124,7 @@
     "vuetify": "^2.4.0",
     "vuex": "^3.6.0",
     "winston": "^3.3.3",
-    "zwave-js": "^6.0.0-beta.2"
+    "zwave-js": "^6.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.10",
@@ -161,11 +164,9 @@
     "eslint-plugin-promise": "^4.2.1",
     "eslint-plugin-standard": "^5.0.0",
     "eslint-plugin-vue": "^7.4.1",
-    "extract-text-webpack-plugin": "^4.0.0-beta.0",
     "fibers": "^5.0.0",
     "file-loader": "^6.2.0",
-    "friendly-errors-webpack-plugin": "^1.7.0",
-    "html-webpack-plugin": "^4.5.1",
+    "html-webpack-plugin": "^5.0.0-alpha.6",
     "lodash": "^4.17.20",
     "markdownlint-cli": "^0.26.0",
     "material-design-icons-iconfont": "^6.1.0",

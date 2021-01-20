@@ -5,7 +5,9 @@ export const state = {
     commandsTimeout: 30,
     networkKey: undefined,
     logLevel: 'info',
-    logToFile: false
+    logToFile: false,
+    serverEnabled: false,
+    serverPort: 3000
   },
   mqtt: {
     name: 'zwavejs2mqtt',

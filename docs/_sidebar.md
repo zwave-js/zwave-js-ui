@@ -28,6 +28,7 @@
 - Troubleshooting
 
   - [Exporting Node Json](troubleshooting/node_export.md)
+  - [Exporting Logs](troubleshooting/logs_export.md)
 
 - [Screenshots](screenshots.md)
 - [Thanks](thanks.md)

@@ -289,7 +289,7 @@ export default {
 }
 </script>
 
-<style>
+<style scoped>
 /* optional class for removing the outline */
 .prism-editor__textarea:focus {
   outline: none;

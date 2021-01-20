@@ -41,5 +41,35 @@ export default {
     return axios.post('/importConfig', data).then(response => {
       return response.data
     })
+  },
+  getStore () {
+    return axios.get('/store').then(response => {
+      return response.data
+    })
+  },
+  getFile (path) {
+    return axios.get('/store/' + encodeURIComponent(path)).then(response => {
+      return response.data
+    })
+  },
+  writeFile (path, content) {
+    return axios
+      .put('/store/' + encodeURIComponent(path), { content })
+      .then(response => {
+        return response.data
+      })
+  },
+  deleteFile (path) {
+    return axios.delete('/store/' + encodeURIComponent(path)).then(response => {
+      return response.data
+    })
+  },
+  downloadZip (files) {
+    return axios.post('/store-multi', { files }, { responseType: 'blob' })
+  },
+  deleteMultiple (files) {
+    return axios.put('/store-multi', { files }).then(response => {
+      return response.data
+    })
   }
 }
