@@ -20,11 +20,27 @@
           <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
         </v-flex>
       </v-layout>
-      <v-layout row wrap>
-        <v-flex xs12 sm3 md2 ml-2>
+      <v-layout row ma-2 justify-start>
+        <v-flex xs12>
           <v-btn color="blue darken-1" text @click.native="resetFilters()"
             >Reset Filters</v-btn
           >
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn text color="green" v-on="on" @click="$emit('import')">
+                IMPORT
+              </v-btn>
+            </template>
+            <span>Import nodes.json Configuration</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn text color="purple" v-on="on" @click="$emit('export')">
+                EXPORT
+              </v-btn>
+            </template>
+            <span>Export nodes.json Configuration</span>
+          </v-tooltip>
         </v-flex>
       </v-layout>
     </template>
