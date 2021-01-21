@@ -204,11 +204,17 @@ export default {
       })
     },
     exportConfiguration: function (data, fileName, ext) {
-      const contentType =
-        ext === 'xml' ? 'text/xml' : 'application/octet-stream'
+      ext = ext || 'json'
+      const textMime = ['json', 'jsonl', 'txt', 'log', 'js', 'ts']
+      const contentType = textMime.includes(ext)
+        ? 'text/plain'
+        : 'application/octet-stream'
       const a = document.createElement('a')
 
-      const blob = new Blob([ext === 'xml' ? data : JSON.stringify(data)], {
+      data =
+        ext === 'json' && typeof data === 'object' ? JSON.stringify(data) : data
+
+      const blob = new Blob([data], {
         type: contentType
       })
 
@@ -225,6 +231,7 @@ export default {
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' },
+        { icon: 'folder', title: 'Store', path: '/store' },
         { icon: 'share', title: 'Network graph', path: '/mesh' }
       ],
       settings: new Settings(localStorage),

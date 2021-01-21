@@ -1,3 +1,5 @@
+# NOTE: This Dockerfile only works with BuildKit enabled.
+# Please find instructions on how to run it in README.md.
 ARG SRC=git-clone-src
 
 ##### GIT CLONE #####
