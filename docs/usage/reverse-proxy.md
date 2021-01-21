@@ -54,7 +54,7 @@ would look like:
 ```javascript
 module.exports = {
   title: 'ZWave to MQTT',
-  storeDir: 'store',
+  storeDir: process.env.STORE_DIR || joinPath(true, 'store'),
   base: '/zwave/',
   port: 8091
 }
