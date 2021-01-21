@@ -681,7 +681,7 @@ export default {
           value: 'healNode'
         },
         {
-          text: 'Refresh info',
+          text: 'Re-interview Node',
           value: 'refreshInfo'
         },
         {
