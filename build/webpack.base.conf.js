@@ -25,6 +25,7 @@ module.exports = {
   entry: {
     app: './src/main.js'
   },
+  target: 'web', // Fixes HMR: https://github.com/webpack/webpack-dev-server/issues/2758
   plugins: [new VueLoaderPlugin()],
   output: {
     path: config.build.assetsRoot,
