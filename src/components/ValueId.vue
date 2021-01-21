@@ -29,6 +29,58 @@
       @click:append-outer="updateValue(value)"
     ></v-text-field>
 
+    <div style="display:flex" v-if="value.type === 'duration'">
+      <v-text-field
+        :label="'[' + value.id + '] ' + value.label"
+        :type="value.type === 'number' ? 'number' : 'text'"
+        :min="value.min != value.max ? value.min : null"
+        :step="1"
+        :readonly="!value.writeable || disable_send"
+        :max="value.min != value.max ? value.max : null"
+        :hint="value.description || ''"
+        v-model.number="value.newValue.value"
+      ></v-text-field>
+      <v-select
+        style="margin-left:10px;width:20px"
+        :items="durations"
+        v-model="value.newValue.unit"
+        :readonly="!value.writeable || disable_send"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        @click:append-outer="updateValue(value)"
+      ></v-select>
+    </div>
+
+    <v-text-field
+      style="max-width: 250px;margin: auto;"
+      flat
+      solo
+      v-if="value.type === 'color'"
+      v-model="color"
+      :label="'[' + value.id + '] ' + value.label"
+      :append-outer-icon="!disable_send ? 'send' : null"
+      :hint="value.description || ''"
+      @click:append-outer="updateValue(value)"
+    >
+      <template v-slot:append>
+        <v-menu
+          v-model="menu"
+          top
+          nudge-bottom="105"
+          nudge-left="16"
+          :close-on-content-click="false"
+        >
+          <template v-slot:activator="{ on }">
+            <div :style="pickerStyle" v-on="on" />
+          </template>
+          <v-card>
+            <v-card-text class="pa-0">
+              <v-color-picker hide-mode-switch v-model="color" flat />
+            </v-card-text>
+          </v-card>
+        </v-menu>
+      </template>
+    </v-text-field>
+
     <v-select
       v-if="value.list"
       :items="value.states"
@@ -105,7 +157,36 @@ export default {
       type: Boolean
     }
   },
-  computed: {},
+  data () {
+    return {
+      durations: ['seconds', 'minutes'],
+      menu: false
+    }
+  },
+  computed: {
+    color: {
+      // getter
+      get: function () {
+        return '#' + (this.value.newValue || 'ffffff').toUpperCase()
+      },
+      // setter
+      set: function (v) {
+        this.value.newValue = v ? v.substr(1, 7) : null
+      }
+    },
+    pickerStyle () {
+      if (this.value.type !== 'color') return null
+      return {
+        backgroundColor: this.color,
+        cursor: 'pointer',
+        border: '1px solid ' + (this.$vuetify.theme.dark ? 'white' : 'black'),
+        height: '30px',
+        width: '30px',
+        borderRadius: this.menu ? '50%' : '4px',
+        transition: 'border-radius 200ms ease-in-out'
+      }
+    }
+  },
   methods: {
     updateValue (v, customValue) {
       this.$emit('updateValue', v, customValue)
