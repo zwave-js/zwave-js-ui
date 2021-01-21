@@ -27,8 +27,8 @@
 
 - Troubleshooting
 
-  - [Exporting Node Json](troubleshooting/node_export.md)
-  - [Exporting Logs](troubleshooting/logs_export.md)
+  - [Bug Report](troubleshooting/node_export.md)
+  - [Docker custom builds](troubleshooting/docker_custom_builds.md)
 
 - [Screenshots](screenshots.md)
 - [Thanks](thanks.md)
