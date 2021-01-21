@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: daily
+    allow:
+      - dependency-type: 'production'
+    labels:
+      - 'prod-dependencies'
+
+  - package-ecosystem: 'npm'
+    directory: '/'
+    schedule:
+      interval: 'daily'
+    target-branch: master
+    allow:
+      - dependency-type: 'development'
+    labels:
+      - 'dev-dependencies'
+      - 'automerge'
+
+  - package-ecosystem: 'docker' # See documentation for possible values
+    directory: '/docker'
+    schedule:
+      interval: 'daily'
+    labels:
+      - 'automerge'
+
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'daily'
