@@ -2,11 +2,11 @@
 
 ## Settings
 
-![zwavejs](/_images/settings.png)
+![zwavejs](/_images/settings_dark.png)
 
 ## Control Panel
 
-![Control Panel](/_images/OZW_Panel_Node.png)
+![Control Panel](/_images/control_panel_dark.png)
 
 ## Groups associations
 
@@ -19,6 +19,10 @@
 ## Mesh
 
 ![Mesh](/_images/mesh_diagram.png)
+
+## Store Explorer
+
+![Store](/_images/store_explorer.png)
 
 ## Debug
 
