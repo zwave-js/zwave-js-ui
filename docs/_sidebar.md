@@ -27,7 +27,7 @@
 
 - Troubleshooting
 
-  - [Bug Report](troubleshooting/node_export.md)
+  - [Bug Report](troubleshooting/bug_report.md)
   - [Docker custom builds](troubleshooting/docker_custom_builds.md)
 
 - [Screenshots](screenshots.md)
