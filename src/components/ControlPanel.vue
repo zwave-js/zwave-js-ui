@@ -777,13 +777,7 @@ export default {
       return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
     },
     selectNode ({ node }) {
-      if (!node) return
-
-      if (this.selectedNode === node) {
-        this.selectedNode = null
-      } else {
-        this.selectedNode = this.nodes.find(n => n.id === node.id)
-      }
+      this.selectedNode = node ? this.nodes.find(n => n.id === node.id) : null
     },
     resetName () {
       setTimeout(() => {

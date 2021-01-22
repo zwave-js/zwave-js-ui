@@ -8,11 +8,16 @@
     :sort-desc.sync="sorting.desc"
     :sort-by.sync="sorting.by"
     :group-by="groupBy"
+    :single-select="true"
+    :value="[selectedNode]"
     @update:group-by="groupBy = $event"
     @group="groupBy = $event"
+    @item-selected="nodeSelected($event.item)"
+    @click:row="nodeSelected($event)"
     :items-per-page.sync="itemsPerPage"
     item-key="id"
     class="elevation-1"
+    show-select
   >
     <template v-slot:top>
       <v-layout row wrap>
@@ -70,42 +75,34 @@
         <v-btn x-small icon @click="remove"><v-icon>close</v-icon></v-btn>
       </td>
     </template>
-    <template v-slot:item="{ item }">
-      <tr
-        :style="{
-          cursor: 'pointer',
-          background:
-            selectedNode === item ? $vuetify.theme.themes.light.accent : 'none'
-        }"
-        @click.stop="nodeSelected(item)"
-      >
-        <td v-if="groupBy != 'id'">{{ item.id }}</td>
-        <td v-if="groupBy != 'manufacturer'">
-          {{ item.ready ? item.manufacturer : '' }}
-        </td>
-        <td v-if="groupBy != 'productDescription'">
-          {{ item.ready ? item.productDescription : '' }}
-        </td>
-        <td v-if="groupBy != 'productLabel'">
-          {{ item.ready ? item.productLabel : '' }}
-        </td>
-        <td v-if="groupBy != 'name'">{{ item.name || '' }}</td>
-        <td v-if="groupBy != 'loc'">{{ item.loc || '' }}</td>
-        <td v-if="groupBy != 'isSecure'">{{ item.isSecure ? 'Yes' : 'No' }}</td>
-        <td v-if="groupBy != 'isBeaming'">
-          {{ item.isBeaming ? 'Yes' : 'No' }}
-        </td>
-        <td v-if="groupBy != 'failed'">{{ item.failed ? 'Yes' : 'No' }}</td>
-        <td v-if="groupBy != 'status'">{{ item.status }}</td>
-        <td v-if="groupBy != 'interviewStage'">{{ item.interviewStage }}</td>
-        <td v-if="groupBy != 'lastActive'">
-          {{
-            item.lastActive
-              ? new Date(item.lastActive).toLocaleString()
-              : 'Never'
-          }}
-        </td>
-      </tr>
+    <template v-slot:[`item.manufacturer`]="{ item }">
+      {{ item.ready ? item.manufacturer : '' }}
+    </template>
+    <template v-slot:[`item.productDescription`]="{ item }">
+      {{ item.ready ? item.productDescription : '' }}
+    </template>
+    <template v-slot:[`item.productLabel`]="{ item }">
+      {{ item.ready ? item.productLabel : '' }}
+    </template>
+    <template v-slot:[`item.name`]="{ item }">
+      {{ item.name || '' }}
+    </template>
+    <template v-slot:[`item.loc`]="{ item }">
+      {{ item.loc || '' }}
+    </template>
+    <template v-slot:[`item.isSecure`]="{ item }">
+      {{ item.isSecure ? 'Yes' : 'No' }}
+    </template>
+    <template v-slot:[`item.isBeaming`]="{ item }">
+      {{ item.isBeaming ? 'Yes' : 'No' }}
+    </template>
+    <template v-slot:[`item.failed`]="{ item }">
+      {{ item.failed ? 'Yes' : 'No' }}
+    </template>
+    <template v-slot:[`item.lastActive`]="{ item }">
+      {{
+        item.lastActive ? new Date(item.lastActive).toLocaleString() : 'Never'
+      }}
     </template>
   </v-data-table>
 </template>

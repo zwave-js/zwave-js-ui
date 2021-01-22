@@ -15,7 +15,7 @@ export default {
     showHidden: undefined,
     itemsPerPage: undefined,
     groupBy: undefined,
-    selectedNode: undefined,
+    selectedNode: null,
     filters: {},
     sorting: {},
     headers: [
@@ -76,8 +76,8 @@ export default {
       this.storeSetting('nodes_filters', this.filters)
     },
     nodeSelected (node) {
-      this.selectedNode = node
-      this.$emit('node-selected', { node })
+      this.selectedNode = this.selectedNode === node ? null : node
+      this.$emit('node-selected', { node: this.selectedNode })
     }
   },
   created () {
