@@ -178,7 +178,7 @@
     "ora": "^5.2.0",
     "portfinder": "^1.0.28",
     "postcss-import": "^14.0.0",
-    "postcss-loader": "^4.1.0",
+    "postcss-loader": "^4.2.0",
     "postcss-url": "^10.1.1",
     "prettier-standard": "^16.4.1",
     "proxyquire": "^2.1.3",
