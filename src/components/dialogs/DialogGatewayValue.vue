@@ -129,7 +129,8 @@
               <v-container v-if="editedValue.parseSend">
                 <p>
                   Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>
+                  function is sync and must return the parsed <code>value</code>.
+                  <code>logger</code> can be used for logging.
                 </p>
                 <prism-editor
                   lineNumbers
@@ -151,7 +152,8 @@
               <v-container v-if="editedValue.parseReceive">
                 <p>
                   Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>
+                  function is sync and must return the parsed <code>value</code>.
+                  <code>logger</code> can be used for logging.
                 </p>
                 <prism-editor
                   lineNumbers
@@ -172,7 +174,7 @@
           color="blue darken-1"
           text
           @click="$refs.form.validate() && $emit('save')"
-          >Save</v-btn
+          >Update</v-btn
         >
       </v-card-actions>
     </v-card>
