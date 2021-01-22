@@ -74,7 +74,7 @@ jobs:
       # These steps only run if the check was successful
       - name: Use Node.js ${{ matrix.node-version }}
         if: steps.check.outputs.result == 'true'
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v2.1.4
         with:
           node-version: ${{ matrix.node-version }}
 

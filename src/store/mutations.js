@@ -31,7 +31,8 @@ export const state = {
     discoveryPrefix: 'homeassistant',
     logEnabled: true,
     logLevel: 'info',
-    logToFile: false
+    logToFile: false,
+    values: []
   }
 }
 

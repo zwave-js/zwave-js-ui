@@ -19,10 +19,9 @@ const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const fs = require('fs-extra')
 const path = require('path')
-const appConfig = reqlib('config/app.js')
+const { storeDir } = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
 const archiver = require('archiver')
-const storeDir = utils.joinPath(true, appConfig.storeDir)
 
 const socketManager = new SocketManager()
 
