@@ -128,9 +128,10 @@
 
               <v-container v-if="editedValue.parseSend">
                 <p>
-                  Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>.
-                  <code>logger</code> can be used for logging.
+                  Write the function here. Args are: <code>value</code>,
+                  <code>valueId</code>, <code>node</code>, <code>logger</code>.
+                  The function is sync and must return the parsed
+                  <code>value</code>.
                 </p>
                 <prism-editor
                   lineNumbers
@@ -151,9 +152,10 @@
 
               <v-container v-if="editedValue.parseReceive">
                 <p>
-                  Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>.
-                  <code>logger</code> can be used for logging.
+                  Write the function here. Args are: <code>value</code>,
+                  <code>valueId</code>, <code>node</code>, <code>logger</code>.
+                  The function is sync and must return the parsed
+                  <code>value</code>.
                 </p>
                 <prism-editor
                   lineNumbers
