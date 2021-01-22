@@ -189,6 +189,11 @@ export default {
   },
   methods: {
     updateValue (v, customValue) {
+      // needed for on/off control to update the newValue
+      if (customValue !== undefined) {
+        v.newValue = customValue
+      }
+
       this.$emit('updateValue', v, customValue)
     }
   }
