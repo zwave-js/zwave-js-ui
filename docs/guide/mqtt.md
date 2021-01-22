@@ -71,9 +71,9 @@ This are the available apis:
   - `name`: homeId Hex
   - `version`: zwave-js version
   - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
-  - `lastUpdate`: Timestamp of latest event received from OZW
+  - `lastUpdate`: Timestamp of latest event received
   - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
-  - `cntStatus`: Controller status received from ozw notifications controller command. If inclusion/exclusion is running it would be `Waiting`
+  - `cntStatus`: The controller status
 - `getAssociations(nodeId, groupId)`: get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
 - `addAssociations(nodeId, groupId, associations)`: add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
 - `removeAssociations(nodeId, groupId, associations[])`: the opposite of add associations

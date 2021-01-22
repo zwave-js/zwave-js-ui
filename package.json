@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "1.0.0-rc.0",
+  "version": "1.0.0-rc.1",
   "bin": {
     "zwavejs2mqtt": "bin/www"
   },
@@ -104,7 +104,7 @@
     "debug": "^4.3.1",
     "ejs": "^3.1.5",
     "express": "^4.17.1",
-    "fs-extra": "^8.1.0",
+    "fs-extra": "^9.1.0",
     "jsonfile": "^6.1.0",
     "morgan": "~1.10.0",
     "mqtt": "^4.2.6",
@@ -121,7 +121,7 @@
     "vue-d3-network": "^0.1.28",
     "vue-prism-editor": "^1.2.2",
     "vue-router": "^3.4.9",
-    "vuetify": "^2.4.0",
+    "vuetify": "^2.4.3",
     "vuex": "^3.6.0",
     "winston": "^3.3.3",
     "zwave-js": "^6.0.0"
@@ -178,7 +178,7 @@
     "ora": "^5.2.0",
     "portfinder": "^1.0.28",
     "postcss-import": "^14.0.0",
-    "postcss-loader": "^4.1.0",
+    "postcss-loader": "^4.2.0",
     "postcss-url": "^10.1.1",
     "prettier-standard": "^16.4.1",
     "proxyquire": "^2.1.3",

@@ -1,6 +1,8 @@
 # Environment variables
 
-> [!NOTE]
-> Each one of the following environment variables corresponds to their respective options in the UI settings and options saved in the UI take presence over these environment variables.
+This is the list of the actually supported env vars:
 
-- `OZW_NETWORK_KEY`
+- `NETWORK_KEY`: Zwave Network key
+- `PORT`: The port to listent to for incoming requests. Default is `8091`
+- `HOST`: The host address to bind to. Default is `0.0.0.0`
+- `STORE_DIR`: The absolute path to the directory where all files will be stored. Default is `<path to your z2m dir>/store`

@@ -7,7 +7,6 @@ const { storeDir } = require('../../config/app.js')
 
 function checkConfigDefaults (mod, cfg) {
   const defaultLogFile = utils.joinPath(
-    true,
     storeDir,
     logContainer.__get__('defaultLogFile')
   )
