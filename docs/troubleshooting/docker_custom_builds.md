@@ -1,6 +1,6 @@
 # Docker custom builds
 
-If you are using docker and you need to test a new feature that isn't on master of both zwavejs2mqtt and zwavejs repos you will need to create a custom docker build. To do this you can use the file `docker/Dockerfile.contrib`.
+If you are using docker and you need to test a new feature that isn't on master of both zwavejs2mqtt and zwave-js repos you will need to create a custom docker build. To do this you can use the file `docker/Dockerfile.contrib`.
 
 This is typically used to build zwavejs2mqtt from git with a version of zwave-js also from git, for instance the latest master or a branch.
 
