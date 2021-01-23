@@ -14,7 +14,7 @@ To replace a failed node from the UI you have to use the command `Replace Failed
 
 ## Remove a failed node
 
-If a node is missing or marked as dead. There is a way to cleanup the controller by executing `Remove Failed Node`. This will forcebly delete the node from the controller.
+If a node is missing or marked as dead. There is a way to cleanup the controller by executing `Remove Failed Node`. This will forcibly delete the node from the controller.
 It can only succeed if:
 
 - Node has ben first marked as failed using `Has node failed`

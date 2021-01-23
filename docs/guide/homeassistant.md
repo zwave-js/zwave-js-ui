@@ -14,7 +14,7 @@ To achieve the best possible integration (including MQTT discovery):
 
 - In your **zwavejs2mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
 
-**NB:** Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113` th
+**NB:** Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113`
 
 - In your **Home Assistant** `configuration.yaml`:
 
