@@ -13,12 +13,13 @@
             :node="node"
             :actions="actions"
             :socket="socket"
+            v-on="$listeners"
           ></node-details>
         </v-tab-item>
 
         <!-- TAB HOMEASSISTANT -->
         <v-tab-item key="homeassistant">
-          <home-assistant :node="node" :socket="socket" />
+          <home-assistant :node="node" :socket="socket" v-on="$listeners" />
         </v-tab-item>
 
         <!-- TAB GROUPS -->

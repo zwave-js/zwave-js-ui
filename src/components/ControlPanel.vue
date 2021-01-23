@@ -47,6 +47,7 @@
           :nodes="nodes"
           :node-actions="node_actions"
           :socket="socket"
+          v-on="$listeners"
           @export="exportConfiguration"
           @import="importConfiguration"
         />

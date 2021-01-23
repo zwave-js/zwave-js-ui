@@ -114,6 +114,7 @@
         :node="item"
         :nodes="nodes"
         :socket="socket"
+        v-on="$listeners"
       />
     </template>
   </v-data-table>
