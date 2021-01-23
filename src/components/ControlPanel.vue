@@ -47,7 +47,6 @@
           :nodes="nodes"
           :node-actions="node_actions"
           :socket="socket"
-          @node-selected="selectNode"
           @export="exportConfiguration"
           @import="importConfiguration"
         />
@@ -229,11 +228,6 @@ export default {
     dialogValue (val) {
       val || this.closeDialog()
     },
-    selectedNode () {
-      if (this.selectedNode) {
-        this.selectedDevice = null
-      }
-    },
     selectedScene () {
       this.refreshValues()
     },
@@ -352,7 +346,6 @@ export default {
           value: 'hardReset'
         }
       ],
-      selectedNode: null,
       rules: {
         required: value => {
           let valid = false
@@ -368,9 +361,6 @@ export default {
   methods: {
     showSnackbar (text) {
       this.$emit('showSnackbar', text)
-    },
-    selectNode ({ node }) {
-      this.selectedNode = node ? this.nodes.find(n => n.id === node.id) : null
     },
     getValue (v) {
       const node = this.nodes[v.nodeId]
@@ -633,9 +623,6 @@ export default {
     })
 
     this.socket.on(socketEvents.nodeRemoved, node => {
-      if (self.selectedNode && self.selectedNode.id === node.id) {
-        self.selectedNode = null
-      }
       self.$set(self.nodes, node.id, node)
     })
 
@@ -683,10 +670,6 @@ export default {
         }
       }
       self.$set(self.nodes, data.id, data)
-
-      if (this.selectedNode && this.selectedNode.id === data.id) {
-        this.selectedNode = self.nodes[data.id]
-      }
     })
 
     this.socket.on(socketEvents.valueRemoved, data => {
