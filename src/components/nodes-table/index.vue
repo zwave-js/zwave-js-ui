@@ -9,13 +9,8 @@
     :sort-by.sync="sorting.by"
     :group-by="groupBy"
     :expanded.sync="expanded"
-    :single-expand="false"
-    :single-select="true"
-    :value="[selectedNode]"
     @update:group-by="groupBy = $event"
     @group="groupBy = $event"
-    @item-selected="nodeSelected($event.item)"
-    @click:row="nodeSelected($event)"
     :items-per-page.sync="itemsPerPage"
     item-key="id"
     class="elevation-1"
@@ -108,12 +103,13 @@
       }}
     </template>
     <template v-slot:[`expanded-item`]="{ headers, item }">
-      <node-details
+      <expanded-node
+        :actions="nodeActions"
         :headers="headers"
-        :node-actions="nodeActions"
-        :selected-node="item"
+        :node="item"
+        :nodes="nodes"
         :socket="socket"
-      ></node-details>
+      />
     </template>
   </v-data-table>
 </template>

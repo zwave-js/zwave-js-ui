@@ -53,135 +53,11 @@
         />
 
         <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
-          <v-tab key="node">Node</v-tab>
-          <v-tab key="groups">Groups</v-tab>
           <v-tab key="scenes">Scenes</v-tab>
           <v-tab key="debug">Debug</v-tab>
 
           <!-- TABS -->
           <v-tabs-items v-model="currentTab">
-            <!-- TAB GROUPS -->
-            <v-tab-item key="groups">
-              <v-container grid-list-md>
-                <v-layout wrap>
-                  <v-flex xs12 sm6 md4>
-                    <v-select
-                      label="Node"
-                      v-model="group.node"
-                      :items="sortedNodes"
-                      return-object
-                      @change="resetGroup"
-                      item-text="_name"
-                    ></v-select>
-                  </v-flex>
-
-                  <v-flex v-if="group.node" xs12 sm6 md4>
-                    <v-select
-                      label="Group"
-                      v-model="group.group"
-                      @input="getAssociations"
-                      :items="group.node.groups"
-                      return-object
-                    ></v-select>
-                  </v-flex>
-
-                  <v-flex v-if="group.group && group.associations" xs12 sm6 md4>
-                    <v-list subheader>
-                      <v-subheader>Associations</v-subheader>
-                      <v-template
-                        v-for="(ass, index) in group.associations"
-                        :key="index"
-                      >
-                        <v-list-item dense>
-                          <v-list-item-content>
-                            <v-list-item-title
-                              >Node:
-                              <b>{{
-                                nodes[ass.nodeId]._name || ass.nodeId
-                              }}</b></v-list-item-title
-                            >
-                            <v-list-item-subtitle
-                              v-if="ass.endpoint >= 0"
-                              class="text--primary"
-                              >Endpoint:
-                              <b>{{ ass.endpoint }}</b></v-list-item-subtitle
-                            >
-                          </v-list-item-content>
-                          <v-list-item-icon>
-                            <v-icon @click="removeAssociation(ass)" color="red">
-                              delete
-                            </v-icon>
-                          </v-list-item-icon>
-                        </v-list-item>
-                        <v-divider></v-divider>
-                      </v-template>
-                      <v-list-item v-if="group.associations.length === 0">
-                        <v-list-item-content>
-                          No assocaitions
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list>
-                  </v-flex>
-
-                  <v-flex v-if="group.node" xs12 sm6>
-                    <v-combobox
-                      label="Target"
-                      v-model="group.target"
-                      :items="sortedNodes.filter(n => n != group.node)"
-                      return-object
-                      hint="Select the node from the list or digit the node ID"
-                      persistent-hint
-                      item-text="_name"
-                    ></v-combobox>
-                  </v-flex>
-
-                  <v-flex
-                    v-if="group.group && group.group.multiChannel"
-                    xs12
-                    sm6
-                    md4
-                  >
-                    <v-text-field
-                      v-model.number="group.targetInstance"
-                      label="Channel ID"
-                      hint="Target node channel ID"
-                      type="number"
-                    />
-                  </v-flex>
-
-                  <v-flex xs12>
-                    <v-btn
-                      v-if="group.node && group.target && group.group"
-                      rounded
-                      color="primary"
-                      @click="addAssociation"
-                      dark
-                      class="mb-2"
-                      >Add</v-btn
-                    >
-                    <v-btn
-                      v-if="group.node && group.target && group.group"
-                      rounded
-                      color="primary"
-                      @click="removeAssociation"
-                      dark
-                      class="mb-2"
-                      >Remove</v-btn
-                    >
-                    <v-btn
-                      v-if="group.node"
-                      rounded
-                      color="primary"
-                      @click="removeAllAssociations"
-                      dark
-                      class="mb-2"
-                      >Remove All</v-btn
-                    >
-                  </v-flex>
-                </v-layout>
-              </v-container>
-            </v-tab-item>
-
             <!-- TAB SCENES -->
             <v-tab-item key="scenes">
               <v-container grid-list-md>
@@ -339,13 +215,6 @@ export default {
     NodesTable
   },
   computed: {
-    sortedNodes () {
-      return this.nodes
-        .filter(n => !n.failed)
-        .sort((n1, n2) =>
-          n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
-        )
-    },
     scenesWithId () {
       return this.scenes.map(s => {
         s.label = `[${s.sceneid}] ${s.label}`
@@ -409,7 +278,6 @@ export default {
         { text: 'Timeout', value: 'timeout' },
         { text: 'Actions', sortable: false }
       ],
-      group: {},
       currentTab: 0,
       node_actions: [
         {
@@ -728,69 +596,6 @@ export default {
     saveConfiguration () {
       this.apiRequest('writeConfig', [])
     },
-    resetGroup () {
-      this.$set(this.group, 'associations', [])
-      this.$set(this.group, 'group', null)
-    },
-    getAssociations () {
-      const g = this.group
-      if (g && g.node && g.group) {
-        this.apiRequest('getAssociations', [g.node.id, g.group.value])
-      }
-    },
-    addAssociation () {
-      const g = this.group
-      const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
-
-      const association = { nodeId: target }
-
-      if (g.group.multiChannel && g.targetInstance >= 0) {
-        association.endpoint = g.targetInstance
-      }
-
-      if (g && g.node && target) {
-        const args = [g.node.id, g.group.value, [association]]
-
-        this.apiRequest('addAssociations', args)
-
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
-    },
-    removeAssociation (association) {
-      const g = this.group
-      if (g && g.node) {
-        if (!association) {
-          const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
-
-          if (isNaN(target)) return
-          association = { nodeId: target }
-
-          if (g.group.multiChannel && g.targetInstance >= 0) {
-            association.endpoint = g.targetInstance
-          }
-        }
-
-        const args = [g.node.id, g.group.value, [association]]
-
-        this.apiRequest('removeAssociations', args)
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
-    },
-    removeAllAssociations () {
-      const g = this.group
-      if (g && g.node) {
-        const args = [g.node.id]
-
-        this.apiRequest('removeAllAssociations', args)
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
-    },
     jsonToList (obj) {
       let s = ''
       for (const k in obj) s += k + ': ' + obj[k] + '\n'
@@ -921,9 +726,6 @@ export default {
     this.socket.on(socketEvents.api, async data => {
       if (data.success) {
         switch (data.api) {
-          case 'getAssociations':
-            self.$set(self.group, 'associations', data.result)
-            break
           case '_getScenes':
             self.scenes = data.result
             break

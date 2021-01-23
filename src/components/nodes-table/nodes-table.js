@@ -2,7 +2,7 @@ import { NodeCollection } from '@/modules/NodeCollection'
 import { Settings } from '@/modules/Settings'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
-import NodeDetails from '@/components/nodes-table/NodeDetails.vue'
+import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 
 export default {
   props: {
@@ -12,7 +12,7 @@ export default {
   },
   components: {
     ColumnFilter,
-    NodeDetails
+    ExpandedNode
   },
   data: () => ({
     settings: new Settings(localStorage),
@@ -20,7 +20,6 @@ export default {
     itemsPerPage: undefined,
     groupBy: undefined,
     expanded: [],
-    selectedNode: null,
     filters: {},
     sorting: {},
     headers: [
@@ -80,10 +79,6 @@ export default {
       this.groupBy = undefined
       this.storeSetting('nodes_filters', this.filters)
     },
-    nodeSelected (node) {
-      this.selectedNode = this.selectedNode === node ? null : node
-      this.$emit('node-selected', { node: this.selectedNode })
-    }
   },
   created () {
     this.showHidden = this.settings.load('nodes_showHidden', false)
