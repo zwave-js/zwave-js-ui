@@ -22,6 +22,7 @@ export default {
     expanded: [],
     filters: {},
     sorting: {},
+    selectedNodes: [],
     headers: [
       { text: 'ID', type: 'number', value: 'id', groupable: false },
       { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
@@ -43,6 +44,9 @@ export default {
     ]
   }),
   methods: {
+    filterSelected () {
+      this.filters.id = { values: this.selectedNodes.map(node => node.id) }
+    },
     initFilters () {
       return this.headers.reduce((values, h) => {
         values[h.value] = {}

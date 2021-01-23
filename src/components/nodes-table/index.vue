@@ -11,6 +11,7 @@
     :expanded.sync="expanded"
     @update:group-by="groupBy = $event"
     @group="groupBy = $event"
+    @input="selectedNodes = $event"
     :items-per-page.sync="itemsPerPage"
     item-key="id"
     class="elevation-1"
@@ -25,6 +26,9 @@
       </v-layout>
       <v-layout row ma-2 justify-start>
         <v-flex xs12>
+          <v-btn color="blue darken-1" text @click.native="filterSelected()"
+            >Filter Selected</v-btn
+          >
           <v-btn color="blue darken-1" text @click.native="resetFilters()"
             >Reset Filters</v-btn
           >
