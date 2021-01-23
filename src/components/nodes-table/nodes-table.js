@@ -2,19 +2,24 @@ import { NodeCollection } from '@/modules/NodeCollection'
 import { Settings } from '@/modules/Settings'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
+import NodeDetails from '@/components/nodes-table/NodeDetails.vue'
 
 export default {
   props: {
-    nodes: Array
+    nodeActions: Array,
+    nodes: Array,
+    socket: Object
   },
   components: {
-    ColumnFilter
+    ColumnFilter,
+    NodeDetails
   },
   data: () => ({
     settings: new Settings(localStorage),
     showHidden: undefined,
     itemsPerPage: undefined,
     groupBy: undefined,
+    expanded: [],
     selectedNode: null,
     filters: {},
     sorting: {},
