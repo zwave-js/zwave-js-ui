@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="node" style="min-width:90%" grid-list-md>
+  <v-container style="min-width:90%" grid-list-md>
     <v-layout row>
       <v-flex xs3>
         <v-select

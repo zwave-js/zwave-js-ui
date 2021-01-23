@@ -9,9 +9,10 @@
     :sort-by.sync="sorting.by"
     :group-by="groupBy"
     :expanded.sync="expanded"
+    :value="selected"
     @update:group-by="groupBy = $event"
     @group="groupBy = $event"
-    @input="selectedNodes = $event"
+    @input="selected = $event"
     @click:row="toggleExpanded($event)"
     :items-per-page.sync="itemsPerPage"
     item-key="id"
@@ -27,7 +28,11 @@
       </v-layout>
       <v-layout row ma-2 justify-start>
         <v-flex xs12>
-          <v-btn color="blue darken-1" text @click.native="filterSelected()"
+          <v-btn
+            color="blue darken-1"
+            text
+            @click.native="filterSelected()"
+            :disabled="selected.length === 0"
             >Filter Selected</v-btn
           >
           <v-btn color="blue darken-1" text @click.native="resetFilters()"

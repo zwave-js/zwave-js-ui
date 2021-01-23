@@ -22,7 +22,7 @@ export default {
     expanded: [],
     filters: {},
     sorting: {},
-    selectedNodes: [],
+    selected: [],
     headers: [
       { text: 'ID', type: 'number', value: 'id', groupable: false },
       { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
@@ -45,7 +45,7 @@ export default {
   }),
   methods: {
     filterSelected () {
-      this.filters.id = { values: this.selectedNodes.map(node => node.id) }
+      this.filters.id = { values: this.selected.map(node => node.id) }
     },
     initFilters () {
       return this.headers.reduce((values, h) => {
@@ -80,6 +80,7 @@ export default {
     },
     resetFilters () {
       this.filters = this.initFilters()
+      this.selected = []
       this.groupBy = undefined
       this.storeSetting('nodes_filters', this.filters)
     },

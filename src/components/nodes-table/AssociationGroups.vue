@@ -1,20 +1,7 @@
 <template>
   <v-container grid-list-md>
     <v-layout wrap>
-      <!--
       <v-flex xs12 sm6 md4>
-        <v-select
-          label="Node"
-          v-model="group.node"
-          :items="sortedNodes"
-          return-object
-          @change="resetGroup"
-          item-text="_name"
-        ></v-select>
-      </v-flex>
-      -->
-
-      <v-flex v-if="group.node" xs12 sm6 md4>
         <v-select
           label="Group"
           v-model="group.group"
@@ -59,7 +46,7 @@
         </v-list>
       </v-flex>
 
-      <v-flex v-if="group.node" xs12 sm6>
+      <v-flex xs12 sm6>
         <v-combobox
           label="Target"
           v-model="group.target"
@@ -82,7 +69,7 @@
 
       <v-flex xs12>
         <v-btn
-          v-if="group.node && group.target && group.group"
+          v-if="group.target && group.group"
           rounded
           color="primary"
           @click="addAssociation"
@@ -91,7 +78,7 @@
           >Add</v-btn
         >
         <v-btn
-          v-if="group.node && group.target && group.group"
+          v-if="group.target && group.group"
           rounded
           color="primary"
           @click="removeAssociation"
@@ -100,7 +87,6 @@
           >Remove</v-btn
         >
         <v-btn
-          v-if="group.node"
           rounded
           color="primary"
           @click="removeAllAssociations"
@@ -123,7 +109,7 @@ export default {
   },
   data () {
     return {
-      group: {}
+      group: { node: this.node }
     }
   },
   computed: {
@@ -134,9 +120,6 @@ export default {
           n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
         )
     }
-  },
-  created () {
-    this.group.node = this.node
   },
   mounted () {
     const self = this
