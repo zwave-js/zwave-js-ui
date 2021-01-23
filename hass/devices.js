@@ -5,7 +5,7 @@ const FAN_DIMMER = {
   object_id: 'dimmer',
   values: ['38-0-currentValue', '38-0-targetValue'],
   discovery_payload: {
-    command_topic: '38-0-currentValue',
+    command_topic: '38-0-targetValue',
     speed_command_topic: '38-0-targetValue',
     speed_state_topic: '38-0-currentValue',
     state_topic: '38-0-currentValue',
@@ -200,33 +200,6 @@ module.exports = {
         1: '67-0-setpoint-1',
         2: '67-0-setpoint-2'
       },
-      default_setpoint: '67-0-setpoint-1',
-      discovery_payload: {
-        min_temp: 15,
-        max_temp: 30,
-        modes: ['off', 'heat', 'cool'],
-        mode_state_topic: '64-0-mode',
-        mode_command_topic: true,
-        current_temperature_topic: '49-0-Air temperature',
-        current_temperature_template: '{{ value_json.value }}',
-        temperature_state_template: '{{ value_json.value }}',
-        temperature_command_topic: true
-      }
-    }
-  ],
-  '411-514-3': [
-    // Heatit Thermostat TF 056 (ThermoFloor AS)
-    {
-      type: 'climate',
-      object_id: 'thermostat',
-      values: [
-        '64-0-mode',
-        '49-0-Air temperature',
-        '67-0-setpoint-1',
-        '67-0-setpoint-2'
-      ],
-      mode_map: { off: 0, heat: 1, cool: 2 },
-      setpoint_topic: { 1: '67-0-setpoint-1', 2: '67-0-setpoint-2' },
       default_setpoint: '67-0-setpoint-1',
       discovery_payload: {
         min_temp: 15,

@@ -1,14 +1,16 @@
 # ----------------
 # STEP 1:
 FROM node:erbium-alpine AS build-z2m
-
+ARG updateDevices
+ARG zwavejs=https://github.com/zwave-js/node-zwave-js
 # Install required dependencies
 RUN apk --no-cache add \
     coreutils \
     linux-headers \
     alpine-sdk \
     python \
-    openssl
+    openssl \
+    git rsync
 
 WORKDIR /root/zwavejs2mqtt
 
@@ -25,12 +27,13 @@ RUN rm -rf \
     src \
     static \
     stylesheets
+RUN if [[ ! -z "$updateDevices"  ]]; then git clone $zwavejs; \
+    rsync -av node-zwave-js/packages/config/config/devices/ './node_modules/@zwave-js/config/config/devices'; \
+    rm -rf node-zwave-js; fi
 
 # ----------------
 # STEP 2:
 FROM node:erbium-alpine
-
-LABEL maintainer="robertsLando"
 
 RUN apk add --no-cache \
     libstdc++  \

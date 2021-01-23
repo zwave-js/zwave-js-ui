@@ -3,33 +3,35 @@
     <v-card>
       <v-card-text>
         <v-container fluid>
-          <v-layout>
-            <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field
-                label="Home ID"
-                readonly
-                v-model="homeid"
-              ></v-text-field>
-            </v-flex>
-            <v-flex xs12 sm3 md2 mr-2>
-              <v-text-field
-                label="Home Hex"
-                readonly
-                v-model="homeHex"
-              ></v-text-field>
-            </v-flex>
-          </v-layout>
+          <v-row justify="start">
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Home ID</div>
+              <div class="body-1 font-weight-bold">{{ homeid }}</div>
+            </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Home Hex</div>
+              <div class="body-1 font-weight-bold">{{ homeHex }}</div>
+            </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">App Version</div>
+              <div class="body-1 font-weight-bold">{{ appVersion }}</div>
+            </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Zwavejs Version</div>
+              <div class="body-1 font-weight-bold">{{ zwaveVersion }}</div>
+            </v-col>
+          </v-row>
 
-          <v-layout>
-            <v-flex xs12 sm6 md3 mr-2>
+          <v-row justify="start">
+            <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
                 readonly
                 v-model="cnt_status"
               ></v-text-field>
-            </v-flex>
+            </v-col>
 
-            <v-flex xs12 sm6 md3>
+            <v-col cols="12" sm="6" md="3">
               <v-select
                 label="Actions"
                 append-outer-icon="send"
@@ -37,85 +39,16 @@
                 :items="cnt_actions.concat(node_actions)"
                 @click:append-outer="sendCntAction"
               ></v-select>
-            </v-flex>
-
-            <v-flex xs12 sm6 md3 align-self-center>
-              <v-btn icon @click="importConfiguration">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-icon dark color="primary" v-on="on">file_upload</v-icon>
-                  </template>
-                  <span>Import nodes.json Configuration</span>
-                </v-tooltip>
-              </v-btn>
-              <v-btn icon @click="exportConfiguration">
-                <v-tooltip bottom>
-                  <template v-slot:activator="{ on }">
-                    <v-icon dark color="primary" v-on="on"
-                      >file_download</v-icon
-                    >
-                  </template>
-                  <span>Export nodes.json Configuration</span>
-                </v-tooltip>
-              </v-btn>
-            </v-flex>
-          </v-layout>
+            </v-col>
+          </v-row>
         </v-container>
 
-        <v-layout row wrap>
-          <v-flex xs12 ml-2>
-            <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
-          </v-flex>
-        </v-layout>
-
-        <v-data-table
-          :headers="headers"
-          :items="tableNodes"
-          :footer-props="{
-            itemsPerPageOptions: [10, 20, { text: 'All', value: -1 }]
-          }"
-          :items-per-page.sync="nodeTableItems"
-          item-key="id"
-          class="elevation-1"
-        >
-          <template v-slot:item="{ item }">
-            <tr
-              :style="{
-                cursor: 'pointer',
-                background:
-                  selectedNode === item
-                    ? $vuetify.theme.themes.light.accent
-                    : 'none'
-              }"
-              @click.stop="selectNode(item)"
-            >
-              <td>{{ item.id }}</td>
-              <td>
-                {{ item.ready ? item.manufacturer : '' }}
-              </td>
-              <td>
-                {{ item.ready ? item.productDescription : '' }}
-              </td>
-              <td>
-                {{ item.ready ? item.productLabel : '' }}
-              </td>
-              <td>{{ item.name || '' }}</td>
-              <td>{{ item.loc || '' }}</td>
-              <td>{{ item.isSecure ? 'Yes' : 'No' }}</td>
-              <td>{{ item.isBeaming ? 'Yes' : 'No' }}</td>
-              <td>{{ item.failed ? 'Yes' : 'No' }}</td>
-              <td>{{ item.status }}</td>
-              <td>{{ item.interviewStage }}</td>
-              <td>
-                {{
-                  item.lastActive
-                    ? new Date(item.lastActive).toLocaleString()
-                    : 'Never'
-                }}
-              </td>
-            </tr>
-          </template>
-        </v-data-table>
+        <nodes-table
+          :nodes="nodes"
+          @node-selected="selectNode"
+          @export="exportConfiguration"
+          @import="importConfiguration"
+        />
 
         <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
           <v-tab key="node">Node</v-tab>
@@ -148,58 +81,66 @@
                   <v-flex>
                     <v-subheader
                       >Device ID:
-                      {{
-                        `${selectedNode.deviceId} (${selectedNode.hexId})`
-                      }}</v-subheader
-                    >
+                      {{ `${selectedNode.deviceId} (${selectedNode.hexId})` }}
+                      <v-btn text @click="exportNode">
+                        Export
+                        <v-icon right dark color="primary"
+                          >file_download</v-icon
+                        >
+                      </v-btn>
+                    </v-subheader>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Name: {{ selectedNode.name }}</v-subheader>
-                  </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
-                      label="New name"
+                      label="Name"
                       append-outer-icon="send"
                       :error="!!nameError"
                       :error-messages="nameError"
                       v-model.trim="newName"
+                      clearable
+                      @click:clear="resetName"
                       @click:append-outer="updateName"
                     ></v-text-field>
                   </v-flex>
                 </v-layout>
 
                 <v-layout row>
-                  <v-flex xs2 style="max-width:100px">
-                    <v-subheader>Location: {{ selectedNode.loc }}</v-subheader>
-                  </v-flex>
                   <v-flex xs8 style="max-width:300px">
                     <v-text-field
-                      label="New Location"
+                      label="Location"
                       append-outer-icon="send"
                       v-model.trim="newLoc"
                       :error="!!locError"
                       :error-messages="locError"
+                      clearable
+                      @click:clear="resetLocation"
                       @click:append-outer="updateLoc"
                     ></v-text-field>
                   </v-flex>
                 </v-layout>
 
+                <!-- NODE VALUES -->
+
                 <v-layout v-if="selectedNode.values" column>
                   <v-subheader>Values</v-subheader>
 
                   <v-expansion-panels accordion multiple>
-                    <!-- USER VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header>User</v-expansion-panel-header>
+                    <v-expansion-panel
+                      v-for="(group, className) in commandGroups"
+                      :key="className"
+                    >
+                      <v-expansion-panel-header>{{
+                        className
+                      }}</v-expansion-panel-header>
                       <v-expansion-panel-content>
                         <v-card flat>
                           <v-card-text>
                             <v-layout row wrap>
                               <v-flex
-                                v-for="(v, index) in userValues"
+                                v-for="(v, index) in group"
                                 :key="index"
                                 xs12
                                 sm6
@@ -207,88 +148,15 @@
                               >
                                 <ValueID
                                   @updateValue="updateValue"
-                                  v-model="userValues[index]"
+                                  v-model="group[index]"
                                 ></ValueID>
                               </v-flex>
                             </v-layout>
                           </v-card-text>
                         </v-card>
                       </v-expansion-panel-content>
+                      <v-divider></v-divider>
                     </v-expansion-panel>
-
-                    <v-divider></v-divider>
-
-                    <!-- CONFIG VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header>
-                        <!-- v-slot="{ open }"> -->
-                        <v-row no-gutters>
-                          <v-col style="max-width:150px">Configuration</v-col>
-                          <!-- Disable refresh button, just keep in case implemented in future
-                            <v-col v-if="open">
-                            <v-btn
-                              rounded
-                              color="primary"
-                              @click.stop="
-                                sendNodeAction('requestAllConfigParams')
-                              "
-                              dark
-                              >Refresh values</v-btn
-                            >
-                          </v-col> -->
-                        </v-row>
-                      </v-expansion-panel-header>
-                      <v-expansion-panel-content>
-                        <v-card flat>
-                          <v-card-text>
-                            <v-layout row wrap>
-                              <v-flex
-                                v-for="(v, index) in configValues"
-                                :key="index"
-                                xs12
-                                sm6
-                                md4
-                              >
-                                <ValueID
-                                  @updateValue="updateValue"
-                                  v-model="configValues[index]"
-                                ></ValueID>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-expansion-panel-content>
-                    </v-expansion-panel>
-
-                    <v-divider></v-divider>
-
-                    <!-- SYSTEM VALUES -->
-                    <v-expansion-panel>
-                      <v-expansion-panel-header
-                        >System</v-expansion-panel-header
-                      >
-                      <v-expansion-panel-content>
-                        <v-card flat>
-                          <v-card-text>
-                            <v-layout row wrap>
-                              <v-flex
-                                v-for="(v, index) in systemValues"
-                                :key="index"
-                                xs12
-                                sm6
-                                md4
-                              >
-                                <ValueID
-                                  @updateValue="updateValue"
-                                  v-model="systemValues[index]"
-                                ></ValueID>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-expansion-panel-content>
-                    </v-expansion-panel>
-                    <v-divider></v-divider>
                   </v-expansion-panels>
                 </v-layout>
 
@@ -407,7 +275,7 @@
                     <v-select
                       label="Node"
                       v-model="group.node"
-                      :items="nodes.filter(n => !n.failed)"
+                      :items="sortedNodes"
                       return-object
                       @change="resetGroup"
                       item-text="_name"
@@ -466,7 +334,7 @@
                     <v-combobox
                       label="Target"
                       v-model="group.target"
-                      :items="nodes.filter(n => !n.failed && n != group.node)"
+                      :items="sortedNodes.filter(n => n != group.node)"
                       return-object
                       hint="Select the node from the list or digit the node ID"
                       persistent-hint
@@ -662,6 +530,8 @@ import ValueID from '@/components/ValueId'
 import AnsiUp from 'ansi_up'
 
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
+import NodesTable from '@/components/nodes-table'
+import { Settings } from '@/modules/Settings'
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
 const ansiUp = new AnsiUp()
@@ -675,9 +545,17 @@ export default {
   },
   components: {
     ValueID,
-    DialogSceneValue
+    DialogSceneValue,
+    NodesTable
   },
   computed: {
+    sortedNodes () {
+      return this.nodes
+        .filter(n => !n.failed)
+        .sort((n1, n2) =>
+          n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
+        )
+    },
     scenesWithId () {
       return this.scenes.map(s => {
         s.label = `[${s.sceneid}] ${s.label}`
@@ -687,14 +565,13 @@ export default {
     dialogTitle () {
       return this.editedIndex === -1 ? 'New Value' : 'Edit Value'
     },
-    tableNodes () {
-      return this.showHidden ? this.nodes : this.nodes.filter(n => !n.failed)
-    },
     hassDevices () {
-      var devices = []
+      const devices = []
       if (this.selectedNode && this.selectedNode.hassDevices) {
         for (const id in this.selectedNode.hassDevices) {
-          var d = JSON.parse(JSON.stringify(this.selectedNode.hassDevices[id]))
+          const d = JSON.parse(
+            JSON.stringify(this.selectedNode.hassDevices[id])
+          )
           d.id = id
           devices.push(d)
         }
@@ -702,26 +579,23 @@ export default {
 
       return devices
     },
-    userValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'user')
-        : []
-    },
-    systemValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'system')
-        : []
-    },
-    configValues () {
-      return this.selectedNode
-        ? this.selectedNode.values.filter(v => v.genre === 'config')
-        : []
+    commandGroups () {
+      if (this.selectedNode) {
+        const groups = {}
+        for (const v of this.selectedNode.values) {
+          const className = v.commandClassName
+          if (!groups[className]) {
+            groups[className] = []
+          }
+          groups[className].push(v)
+        }
+        return groups
+      } else {
+        return {}
+      }
     }
   },
   watch: {
-    nodeTableItems (val) {
-      localStorage.setItem('nodes_itemsPerPage', val)
-    },
     dialogValue (val) {
       val || this.closeDialog()
     },
@@ -764,17 +638,17 @@ export default {
   },
   data () {
     return {
+      settings: new Settings(localStorage),
       nodes: [],
       scenes: [],
       debug: [],
       homeid: '',
       homeHex: '',
-      ozwVersion: '',
-      showHidden: false,
+      appVersion: '',
+      zwaveVersion: '',
       debugActive: false,
       selectedScene: null,
       cnt_status: 'Unknown',
-      nodeTableItems: 10,
       newScene: '',
       scene_values: [],
       dialogValue: false,
@@ -807,8 +681,12 @@ export default {
           value: 'healNode'
         },
         {
-          text: 'Refresh info',
+          text: 'Re-interview Node',
           value: 'refreshInfo'
+        },
+        {
+          text: 'Refresh values',
+          value: 'refreshValues'
         },
         {
           text: 'Is Failed Node',
@@ -875,23 +753,9 @@ export default {
       locError: null,
       newLoc: '',
       selectedNode: null,
-      headers: [
-        { text: 'ID', value: 'id' },
-        { text: 'Manufacturer', value: 'manufacturer' },
-        { text: 'Product', value: 'productDescription' },
-        { text: 'Product code', value: 'product' },
-        { text: 'Name', value: 'name' },
-        { text: 'Location', value: 'loc' },
-        { text: 'Secure', value: 'isSecure' },
-        { text: 'Beaming', value: 'isBeaming' },
-        { text: 'Failed', value: 'failed' },
-        { text: 'Status', value: 'status' },
-        { text: 'Interview stage', value: 'interviewStage' },
-        { text: 'Last Active', value: 'lastActive' }
-      ],
       rules: {
         required: value => {
-          var valid = false
+          let valid = false
 
           if (value instanceof Array) valid = value.length > 0
           else valid = !isNaN(value) || !!value // isNaN is for 0 as valid value
@@ -906,23 +770,33 @@ export default {
       this.$emit('showSnackbar', text)
     },
     validateTopic (name) {
-      var match = name
+      const match = name
         ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
         : [name]
 
       return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
     },
-    selectNode (item) {
-      if (!item) return
+    selectNode ({ node }) {
+      if (!node) return
 
-      if (this.selectedNode === item) {
+      if (this.selectedNode === node) {
         this.selectedNode = null
       } else {
-        this.selectedNode = this.nodes.find(n => n.id === item.id)
+        this.selectedNode = this.nodes.find(n => n.id === node.id)
       }
     },
+    resetName () {
+      setTimeout(() => {
+        this.newName = this.selectedNode.name
+      }, 10)
+    },
+    resetLocation () {
+      setTimeout(() => {
+        this.newLoc = this.selectedNode.loc
+      }, 10)
+    },
     getValue (v) {
-      var node = this.nodes[v.nodeId]
+      const node = this.nodes[v.nodeId]
 
       if (node && node.values) {
         return node.values.find(i => i.id === v.id)
@@ -931,7 +805,7 @@ export default {
       }
     },
     validJSONdevice () {
-      var valid = true
+      let valid = true
       try {
         JSON.parse(this.deviceJSON)
       } catch (error) {
@@ -950,8 +824,8 @@ export default {
         )
       ) {
         try {
-          var { data } = await this.$listeners.import('json')
-          var response = await ConfigApis.importConfig({ data: data })
+          const { data } = await this.$listeners.import('json')
+          const response = await ConfigApis.importConfig({ data: data })
           this.showSnackbar(response.message)
         } catch (error) {
           console.log(error)
@@ -959,7 +833,7 @@ export default {
       }
     },
     exportConfiguration () {
-      var self = this
+      const self = this
       ConfigApis.exportConfig()
         .then(data => {
           self.showSnackbar(data.message)
@@ -971,6 +845,13 @@ export default {
           console.log(error)
         })
     },
+    exportNode () {
+      this.$listeners.export(
+        this.selectedNode,
+        'node_' + this.selectedNode.id,
+        'json'
+      )
+    },
     async importScenes () {
       if (
         await this.$listeners.showConfirm(
@@ -980,7 +861,7 @@ export default {
         )
       ) {
         try {
-          var { data } = await this.$listeners.import('json')
+          const { data } = await this.$listeners.import('json')
           if (data instanceof Array) {
             this.apiRequest('_setScenes', [data])
           } else {
@@ -994,7 +875,7 @@ export default {
     },
     apiRequest (apiName, args) {
       if (this.socket.connected) {
-        var data = {
+        const data = {
           api: apiName,
           args: args
         }
@@ -1039,9 +920,9 @@ export default {
     },
     editItem (item) {
       this.editedIndex = this.scene_values.indexOf(item)
-      var node = this.nodes[item.nodeId]
+      const node = this.nodes[item.nodeId]
 
-      var value = node.values.find(v => v.id === item.id)
+      let value = node.values.find(v => v.id === item.id)
 
       value = Object.assign({}, value)
       value.newValue = item.value
@@ -1066,7 +947,7 @@ export default {
       }
     },
     async deleteDevice () {
-      var device = this.selectedDevice
+      const device = this.selectedDevice
       if (
         device &&
         (await this.$listeners.showConfirm(
@@ -1083,7 +964,7 @@ export default {
       }
     },
     async rediscoverNode () {
-      var node = this.selectedNode
+      const node = this.selectedNode
       if (
         node &&
         (await this.$listeners.showConfirm(
@@ -1098,7 +979,7 @@ export default {
       }
     },
     async disableDiscovery () {
-      var node = this.selectedNode
+      const node = this.selectedNode
       if (
         node &&
         (await this.$listeners.showConfirm(
@@ -1113,7 +994,7 @@ export default {
       }
     },
     async rediscoverDevice () {
-      var device = this.selectedDevice
+      const device = this.selectedDevice
       if (
         device &&
         (await this.$listeners.showConfirm(
@@ -1130,7 +1011,7 @@ export default {
     },
     updateDevice () {
       if (!this.errorDevice) {
-        var updated = JSON.parse(this.deviceJSON)
+        const updated = JSON.parse(this.deviceJSON)
         this.$set(
           this.selectedNode.hassDevices,
           this.selectedDevice.id,
@@ -1145,7 +1026,7 @@ export default {
     },
     addDevice () {
       if (!this.errorDevice) {
-        var newDevice = JSON.parse(this.deviceJSON)
+        const newDevice = JSON.parse(this.deviceJSON)
         this.socket.emit(socketActions.hass, {
           apiName: 'add',
           device: newDevice,
@@ -1169,7 +1050,7 @@ export default {
       }, 300)
     },
     saveValue () {
-      var value = this.editedValue.value
+      const value = this.editedValue.value
       value.value = value.newValue
 
       // if value already exists it will be updated
@@ -1185,9 +1066,9 @@ export default {
     },
     async sendCntAction () {
       if (this.cnt_action) {
-        var args = []
-        var broadcast = false
-        var askId = this.node_actions.find(a => a.value === this.cnt_action)
+        const args = []
+        let broadcast = false
+        const askId = this.node_actions.find(a => a.value === this.cnt_action)
         if (askId) {
           // don't send replaceFailed as broadcast
           if (
@@ -1201,7 +1082,7 @@ export default {
           }
 
           if (!broadcast) {
-            var id = parseInt(prompt('Node ID'))
+            const id = parseInt(prompt('Node ID'))
 
             if (isNaN(id)) {
               this.showMessage('Node ID must be an integer value')
@@ -1215,13 +1096,13 @@ export default {
           this.cnt_action === 'startInclusion' ||
           this.cnt_action === 'replaceFailedNode'
         ) {
-          var secure = await this.$listeners.showConfirm(
+          const secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?'
           )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
-          var ok = await this.$listeners.showConfirm(
+          const ok = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
             { color: 'red' }
@@ -1231,7 +1112,7 @@ export default {
           }
         } else if (this.cnt_action === 'beginFirmwareUpdate') {
           try {
-            var { data, file } = await this.$listeners.import('buffer')
+            const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
           } catch (error) {
@@ -1252,18 +1133,18 @@ export default {
     async sendNodeAction (action) {
       action = typeof action === 'string' ? action : this.node_action
       if (this.selectedNode) {
-        var args = [this.selectedNode.id]
+        const args = [this.selectedNode.id]
 
         if (this.node_action === 'beginFirmwareUpdate') {
           try {
-            var { data, file } = await this.$listeners.import('buffer')
+            const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
           } catch (error) {
             return
           }
         } else if (this.node_action === 'replaceFailedNode') {
-          var secure = await this.$listeners.showConfirm(
+          const secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?'
           )
@@ -1291,23 +1172,23 @@ export default {
       this.$set(this.group, 'group', null)
     },
     getAssociations () {
-      var g = this.group
+      const g = this.group
       if (g && g.node && g.group) {
         this.apiRequest('getAssociations', [g.node.id, g.group.value])
       }
     },
     addAssociation () {
-      var g = this.group
-      var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
+      const g = this.group
+      const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
-      var association = { nodeId: target }
+      const association = { nodeId: target }
 
       if (g.group.multiChannel && g.targetInstance >= 0) {
         association.endpoint = g.targetInstance
       }
 
       if (g && g.node && target) {
-        var args = [g.node.id, g.group.value, [association]]
+        const args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('addAssociations', args)
 
@@ -1317,10 +1198,10 @@ export default {
       }
     },
     removeAssociation (association) {
-      var g = this.group
+      const g = this.group
       if (g && g.node) {
         if (!association) {
-          var target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
+          const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
 
           if (isNaN(target)) return
           association = { nodeId: target }
@@ -1330,7 +1211,7 @@ export default {
           }
         }
 
-        var args = [g.node.id, g.group.value, [association]]
+        const args = [g.node.id, g.group.value, [association]]
 
         this.apiRequest('removeAssociations', args)
         // wait a moment before refresh to check if the node
@@ -1339,9 +1220,9 @@ export default {
       }
     },
     removeAllAssociations () {
-      var g = this.group
+      const g = this.group
       if (g && g.node) {
-        var args = [g.node.id]
+        const args = [g.node.id]
 
         this.apiRequest('removeAllAssociations', args)
         // wait a moment before refresh to check if the node
@@ -1349,7 +1230,7 @@ export default {
         setTimeout(this.getAssociations, 1000)
       }
     },
-    updateValue (v) {
+    updateValue (v, customValue) {
       v = this.getValue(v)
 
       if (v) {
@@ -1365,6 +1246,10 @@ export default {
           v.newValue = true
         }
 
+        if (customValue !== undefined) {
+          v.newValue = customValue
+        }
+
         this.apiRequest('writeValue', [
           {
             nodeId: v.nodeId,
@@ -1378,14 +1263,15 @@ export default {
       }
     },
     jsonToList (obj) {
-      var s = ''
-      for (var k in obj) s += k + ': ' + obj[k] + '\n'
+      let s = ''
+      for (const k in obj) s += k + ': ' + obj[k] + '\n'
 
       return s
     },
     initNode (n) {
-      var values = []
-      for (var k in n.values) {
+      const values = []
+      // transform object in array
+      for (const k in n.values) {
         n.values[k].newValue = n.values[k].value
         values.push(n.values[k])
       }
@@ -1399,11 +1285,7 @@ export default {
     }
   },
   mounted () {
-    var self = this
-
-    const itemsPerPage = parseInt(localStorage.getItem('nodes_itemsPerPage'))
-
-    this.nodeTableItems = !isNaN(itemsPerPage) ? itemsPerPage : 10
+    const self = this
 
     this.socket.on(socketEvents.controller, data => {
       self.cnt_status = data
@@ -1412,7 +1294,8 @@ export default {
     this.socket.on(socketEvents.connected, info => {
       self.homeid = info.homeid
       self.homeHex = info.name
-      self.ozwVersion = info.version
+      self.appVersion = info.appVersion
+      self.zwaveVersion = info.zwaveVersion
     })
 
     this.socket.on(socketEvents.nodeRemoved, node => {
@@ -1431,7 +1314,7 @@ export default {
 
         if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift()
 
-        var textarea = document.getElementById('debug_window')
+        const textarea = document.getElementById('debug_window')
         if (textarea) {
           // textarea could be hidden
           textarea.scrollTop = textarea.scrollHeight
@@ -1441,15 +1324,16 @@ export default {
 
     this.socket.on(socketEvents.init, data => {
       // convert node values in array
-      var nodes = data.nodes
-      for (var i = 0; i < nodes.length; i++) {
+      const nodes = data.nodes
+      for (let i = 0; i < nodes.length; i++) {
         self.initNode(nodes[i])
       }
       self.nodes = nodes
       self.cnt_status = data.error ? data.error : data.cntStatus
       self.homeid = data.info.homeid
       self.homeHex = data.info.name
-      self.ozwVersion = data.info.version
+      self.appVersion = data.info.appVersion
+      self.zwaveVersion = data.info.zwaveVersion
     })
 
     this.socket.on(socketEvents.nodeUpdated, data => {

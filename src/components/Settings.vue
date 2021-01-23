@@ -11,6 +11,41 @@
           ref="form_settings"
         >
           <v-expansion-panels accordion multiple>
+            <v-expansion-panel key="general">
+              <v-expansion-panel-header>General</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-layout wrap>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable logging"
+                          persistent-hint
+                          label="Log enabled"
+                          v-model="gateway.logEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-select
+                          :items="logLevels"
+                          v-model="gateway.logLevel"
+                          label="Log Level"
+                        ></v-select>
+                      </v-flex>
+                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                        <v-switch
+                          hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="gateway.logToFile"
+                        ></v-switch>
+                      </v-flex>
+                    </v-layout>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
             <v-expansion-panel key="zwave">
               <v-expansion-panel-header>Zwave</v-expansion-panel-header>
               <v-expansion-panel-content>
@@ -32,21 +67,47 @@
                         <v-text-field
                           v-model="zwave.networkKey"
                           label="Network Key"
-                          :rules="[rules.validKey]"
+                          :rules="[rules.validKey, rules.validLength]"
                           append-outer-icon="wifi_protected_setup"
                           @click:append-outer="randomKey"
                         ></v-text-field>
                       </v-flex>
                       <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable zwave-js websocket server"
+                          persistent-hint
+                          label="WS Server"
+                          v-model="zwave.serverEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex v-if="zwave.serverEnabled" xs12 sm6>
+                        <v-text-field
+                          v-model.number="zwave.serverPort"
+                          label="Server Port"
+                          :rules="[rules.required]"
+                          required
+                          hint="The port to bind the Zwave Server. Default: 3000"
+                          type="number"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs12 sm6>
+                        <v-switch
+                          hint="Enable zwave-js logging"
+                          persistent-hint
+                          label="Log Enabled"
+                          v-model="zwave.logEnabled"
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex v-if="zwave.logEnabled" xs12 sm6>
                         <v-select
                           :items="logLevels"
                           v-model="zwave.logLevel"
                           label="Log Level"
                         ></v-select>
                       </v-flex>
-                      <v-flex xs12 sm6>
+                      <v-flex v-if="zwave.logEnabled" xs12 sm6>
                         <v-switch
-                          hint="Store zwave logs in a file"
+                          hint="Store zwave logs in a file (stored in store folder)"
                           persistent-hint
                           label="Log to file"
                           v-model="zwave.logToFile"
@@ -130,7 +191,7 @@
                         <v-text-field
                           v-model.trim="mqtt.prefix"
                           label="Prefix"
-                          :rules="[rules.required, rules.validName]"
+                          :rules="[rules.required, rules.validPrefix]"
                           hint="The prefix to add to each topic"
                           required
                         ></v-text-field>
@@ -299,6 +360,14 @@
                       </v-flex>
                       <v-flex xs6>
                         <v-switch
+                          label="Publish node details"
+                          hint="Details published under a topic, can help automations receive device info"
+                          v-model="gateway.publishNodeDetails"
+                          persistent-hint
+                        ></v-switch>
+                      </v-flex>
+                      <v-flex xs6>
+                        <v-switch
                           label="Hass Discovery"
                           hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
                           v-model="gateway.hassDiscovery"
@@ -320,8 +389,31 @@
                           persistent-hint
                         ></v-switch>
                       </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <v-text-field
+                          v-model="gateway.entityTemplate"
+                          label="Entity name template"
+                          persistent-hint
+                          hint="Template which generates entity names"
+                        ></v-text-field>
+                      </v-flex>
+                      <v-flex xs6 v-if="gateway.hassDiscovery">
+                        <div>
+                          Default: <code>%ln_%o</code><br />
+                          -<code>%ln</code>: Node location with name
+                          (<code>&lt;location-?&gt;&lt;name&gt;</code>)<br />-
+                          <code>%nid</code>: Node ID <br />- <code>%n</code>:
+                          Node Name <br />- <code>%loc</code>: Node Location
+                          <br />- <code>%p</code>: valueId property (fallback to
+                          device type) <br />- <code>%pk</code>: valueId
+                          property key (fallback to device type) <br />-
+                          <code>%pn</code>: valueId property name (fallback to
+                          device type) <br />- <code>%o</code>: HASS object_id
+                          <br />- <code>%l</code>: valueId label (fallback to
+                          object_id)
+                        </div>
+                      </v-flex>
                     </v-layout>
-
                     <v-data-table
                       :headers="headers"
                       :items="gateway.values"
@@ -354,7 +446,7 @@
                               item.verifyChanges ? 'Verified' : 'Not Verified'
                             }}
                           </td>
-                          <td class="justify-center layout px-0">
+                          <td>
                             <v-icon
                               small
                               class="mr-2"
@@ -528,7 +620,7 @@ export default {
       ],
       rules: {
         required: value => {
-          var valid = false
+          let valid = false
 
           if (value instanceof Array) valid = value.length > 0
           else valid = !!value || value === 0
@@ -541,9 +633,22 @@ export default {
             'Name is not valid, only "a-z" "A-Z" "0-9" chars and "_" are allowed'
           )
         },
-        validKey: value => {
+        validPrefix: value => {
+          return (
+            !/[!@#$%^&*)(+=:,;"'\\|?{}£°§<>[\].\s]/g.test(value) ||
+            'Prefix is not valid, only "a-z" "A-Z" "0-9", "_", "/" chars are allowed'
+          )
+        },
+        validLength: value => {
           return (
             !value || value.length === 32 || 'Key must be 32 charaters length'
+          )
+        },
+        validKey: value => {
+          return (
+            !value ||
+            !/[^A-F0-9]+/gi.test(value) ||
+            'Key not valid. Must contain only hex chars'
           )
         }
       }
@@ -551,7 +656,7 @@ export default {
   },
   methods: {
     randomKey () {
-      var key = ''
+      let key = ''
 
       while (key.length < 32) {
         const x = Math.round(Math.random() * 255)
@@ -560,7 +665,7 @@ export default {
         key += x.length === 2 ? x : '0' + x
       }
 
-      this.zwave.networkKey = key
+      this.$set(this.zwave, 'networkKey', key)
     },
     readFile (file, callback) {
       const reader = new FileReader()
@@ -569,8 +674,8 @@ export default {
       reader.readAsText(file)
     },
     onFileSelect (data) {
-      var file = data.files[0]
-      var self = this
+      const file = data.files[0]
+      const self = this
       if (file) {
         this.readFile(file, text => (self.mqtt[data.key] = text))
       } else {
@@ -582,7 +687,7 @@ export default {
     },
     async importSettings () {
       try {
-        var { data } = await this.$listeners.import('json')
+        const { data } = await this.$listeners.import('json')
         if (data.zwave && data.mqtt && data.gateway) {
           this.$store.dispatch('import', data)
           this.showSnackbar('Configuration imported successfully')
@@ -592,7 +697,7 @@ export default {
       } catch (error) {}
     },
     exportSettings () {
-      var settings = this.getSettingsJSON()
+      const settings = this.getSettingsJSON()
       this.$listeners.export(settings, 'settings')
     },
     getSettingsJSON () {
@@ -623,7 +728,7 @@ export default {
       }, 300)
     },
     deviceName (deviceID) {
-      var device = this.devices.find(d => d.value === deviceID)
+      const device = this.devices.find(d => d.value === deviceID)
       return device ? device.name : deviceID
     },
     saveValue () {
@@ -636,7 +741,7 @@ export default {
     },
     update () {
       if (this.$refs.form_settings.validate()) {
-        var self = this
+        const self = this
         ConfigApis.updateConfig(self.getSettingsJSON())
           .then(data => {
             self.showSnackbar(data.message)
@@ -653,7 +758,7 @@ export default {
     // hide socket status indicator from toolbar
     this.$emit('updateStatus')
 
-    var self = this
+    const self = this
     ConfigApis.getConfig()
       .then(data => {
         if (!data.success) {

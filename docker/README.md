@@ -190,7 +190,7 @@ The docker images are the latest stable images of the [zwavejs2mqtt](https://git
 
 ```bash
 git clone https://github.com/zwave-js/zwavejs2mqtt.git
-cd zwavejs2mqtt/docker
+cd zwavejs2mqtt
 docker build -f docker/Dockerfile --build-arg Z2M_GIT_SHA1=master -t zwavejs/zwavejs2mqtt:latest .
 ```
 
@@ -231,7 +231,7 @@ git clone https://github.com/zwave-js/zwavejs2mqtt
 The run the build from outside the two repo folders.
 
 ```bash
-DOCKER_BUILDKIT=1 docker build --build-arg SRC=git-clone-src --build-arg Z2M_BRANCH=feat#startStop --build-arg ZWJ_BRANCH=master --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
+DOCKER_BUILDKIT=1 docker build --build-arg SRC=git-clone-src --build-arg Z2M_BRANCH=master --build-arg ZWJ_BRANCH=master --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
 ```
 
 or

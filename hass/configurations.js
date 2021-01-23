@@ -129,7 +129,7 @@ module.exports = {
     discovery_payload: {
       payload_on: true,
       payload_off: false,
-      value_template: '{{ value_json.value}}',
+      value_template: '{{ value_json.value }}',
       device_class: 'battery'
     }
   },
@@ -161,7 +161,7 @@ module.exports = {
       rgb_command_topic: true,
       rgb_state_topic: true,
       rgb_value_template:
-        '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
     }
   },
   light_rgb_dimmer: {
@@ -172,29 +172,29 @@ module.exports = {
       command_topic: true,
       brightness_state_topic: true,
       brightness_command_topic: true,
-      on_command_type: 'first',
+      on_command_type: 'brightness',
       state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
-      brightness_value_template:
-        '{{ (value_json.value / 99 * 255) | round(0) }}',
+      brightness_value_template: '{{ value_json.value }}',
+      brightness_scale: 99,
       rgb_command_template: '{{ "#%02x%02x%02x" | format(red, green, blue)}}',
       rgb_command_topic: true,
       rgb_state_topic: true,
       rgb_value_template:
-        '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
     }
   },
   light_dimmer: {
     type: 'light',
     object_id: 'dimmer',
     discovery_payload: {
-      schema: 'template',
-      brightness_template: '{{ (value_json.value / 99 * 255) | round(0) }}',
-      state_topic: true,
-      state_template: '{{ "off" if value_json.value == 0 else "on" }}',
       command_topic: true,
-      command_on_template:
-        '{{ ((brightness / 255 * 99) | round(0)) if brightness is defined else 255 }}',
-      command_off_template: '0'
+      state_topic: true,
+      state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
+      brightness_command_topic: true,
+      brightness_scale: 99,
+      brightness_state_topic: true,
+      brightness_value_template: '{{ value_json.value }}',
+      on_command_type: 'brightness'
     }
   },
   volume_dimmer: {
@@ -274,10 +274,11 @@ module.exports = {
     object_id: 'lock',
     discovery_payload: {
       command_topic: true,
-      state_locked: 'true',
-      state_unlocked: 'false',
-      value_template:
-        '{% if value_json.value == false %} false {% elif value_json.value == true %} true {% else %} unknown {% endif %}'
+      state_locked: 255,
+      state_unlocked: 0,
+      payload_lock: 255,
+      payload_unlock: 0,
+      value_template: '{{ value_json.value }}'
     }
   },
 

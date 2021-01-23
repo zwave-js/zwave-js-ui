@@ -8,7 +8,6 @@ const path = require('path')
 const baseWebpackConfig = require('./webpack.base.conf')
 const CopyWebpackPlugin = require('copy-webpack-plugin')
 const HtmlWebpackPlugin = require('html-webpack-plugin')
-const FriendlyErrorsPlugin = require('friendly-errors-webpack-plugin')
 const portfinder = require('portfinder')
 
 const HOST = process.env.HOST
@@ -23,7 +22,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     })
   },
   // cheap-module-eval-source-map is faster for development
-  devtool: config.dev.devtool,
+  devtool: config.dev.devtool ? 'eval-cheap-module-source-map' : false,
 
   // these devServer options should be customized in /config/index.js
   devServer: {
@@ -41,18 +40,19 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       : false,
     publicPath: config.dev.assetsPublicPath,
     proxy: config.dev.proxyTable,
-    quiet: true, // necessary for FriendlyErrorsPlugin
+    quiet: false,
     watchOptions: {
       poll: config.dev.poll
     }
+  },
+  optimization: {
+    emitOnErrors: true
   },
   plugins: [
     new webpack.DefinePlugin({
       'process.env': require('../config/dev.env')
     }),
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.NamedModulesPlugin(), // HMR shows correct file names in console on update.
-    new webpack.NoEmitOnErrorsPlugin(),
     // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
       title: 'ZWave To MQTT',
@@ -88,20 +88,6 @@ module.exports = new Promise((resolve, reject) => {
       process.env.PORT = port
       // add port to devServer config
       devWebpackConfig.devServer.port = port
-
-      // Add FriendlyErrorsPlugin
-      devWebpackConfig.plugins.push(
-        new FriendlyErrorsPlugin({
-          compilationSuccessInfo: {
-            messages: [
-              `Your application is running here: http://${devWebpackConfig.devServer.host}:${port}`
-            ]
-          },
-          onErrors: config.dev.notifyOnErrors
-            ? utils.createNotifierCallback()
-            : undefined
-        })
-      )
 
       resolve(devWebpackConfig)
     }

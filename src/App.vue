@@ -10,9 +10,7 @@
             />
           </v-list-item-avatar>
           <v-list-item-content>
-            <v-list-item-title>{{
-              'ZWave2MQTT v' + version
-            }}</v-list-item-title>
+            <v-list-item-title>{{ 'ZWaveJS2MQTT' }}</v-list-item-title>
           </v-list-item-content>
         </v-list-item>
       </v-list>
@@ -89,11 +87,20 @@
   </v-app>
 </template>
 
+<style>
+/* Fix Vuetify code style after update to 2.4.0 */
+code {
+  color: #c62828 !important;
+  font-weight: 700 !important;
+}
+</style>
+
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
+import { Settings } from '@/modules/Settings'
 
 export default {
   components: {
@@ -113,7 +120,7 @@ export default {
     async confirm (title, text, level, options) {
       options = options || {}
 
-      var levelMap = {
+      const levelMap = {
         warning: 'orange',
         alert: 'red'
       }
@@ -131,8 +138,8 @@ export default {
       this.statusColor = color
     },
     changeThemeColor: function () {
-      var metaThemeColor = document.querySelector('meta[name=theme-color]')
-      var metaThemeColor2 = document.querySelector(
+      const metaThemeColor = document.querySelector('meta[name=theme-color]')
+      const metaThemeColor2 = document.querySelector(
         'meta[name=msapplication-TileColor]'
       )
 
@@ -140,7 +147,7 @@ export default {
       metaThemeColor2.setAttribute('content', this.dark ? '#000' : '#fff')
     },
     importFile: function (ext) {
-      var self = this
+      const self = this
       // Check for the various File API support.
 
       return new Promise(function (resolve, reject) {
@@ -150,18 +157,18 @@ export default {
           window.FileList &&
           window.Blob
         ) {
-          var input = document.createElement('input')
+          const input = document.createElement('input')
           input.type = 'file'
           input.addEventListener('change', function (event) {
-            var files = event.target.files
+            const files = event.target.files
 
             if (files && files.length > 0) {
-              var file = files[0]
-              var reader = new FileReader()
+              const file = files[0]
+              const reader = new FileReader()
 
               reader.addEventListener('load', function (fileReaderEvent) {
-                var err
-                var data = fileReaderEvent.target.result
+                let err
+                let data = fileReaderEvent.target.result
 
                 if (ext === 'json') {
                   try {
@@ -197,10 +204,17 @@ export default {
       })
     },
     exportConfiguration: function (data, fileName, ext) {
-      var contentType = ext === 'xml' ? 'text/xml' : 'application/octet-stream'
-      var a = document.createElement('a')
+      ext = ext || 'json'
+      const textMime = ['json', 'jsonl', 'txt', 'log', 'js', 'ts']
+      const contentType = textMime.includes(ext)
+        ? 'text/plain'
+        : 'application/octet-stream'
+      const a = document.createElement('a')
 
-      var blob = new Blob([ext === 'xml' ? data : JSON.stringify(data)], {
+      data =
+        ext === 'json' && typeof data === 'object' ? JSON.stringify(data) : data
+
+      const blob = new Blob([data], {
         type: contentType
       })
 
@@ -214,12 +228,13 @@ export default {
   data () {
     return {
       socket: null,
-      version: process.env.VERSION,
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' },
+        { icon: 'folder', title: 'Store', path: '/store' },
         { icon: 'share', title: 'Network graph', path: '/mesh' }
       ],
+      settings: new Settings(localStorage),
       status: '',
       statusColor: '',
       drawer: false,
@@ -228,7 +243,7 @@ export default {
       title: '',
       snackbar: false,
       snackbarText: '',
-      dark: false,
+      dark: undefined,
       baseURI: ConfigApis.getBasePath()
     }
   },
@@ -237,8 +252,7 @@ export default {
       this.title = value.name || ''
     },
     dark (v) {
-      if (v) localStorage.setItem('dark', 'true')
-      else localStorage.removeItem('dark')
+      this.settings.store('dark', this.dark)
 
       this.$vuetify.theme.dark = v
       this.changeThemeColor()
@@ -247,7 +261,7 @@ export default {
   beforeMount () {
     this.title = this.$route.name || ''
 
-    var self = this
+    const self = this
 
     this.socket = io('/', {
       path: ConfigApis.getSocketPath()
@@ -274,7 +288,7 @@ export default {
       this.toggleDrawer()
     }
 
-    this.dark = !!localStorage.getItem('dark')
+    this.dark = this.settings.load('dark', false)
     this.changeThemeColor()
   },
   beforeDestroy () {

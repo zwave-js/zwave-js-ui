@@ -1,9 +1,39 @@
 export const state = {
   serial_ports: [],
-  zwave: {},
-  mqtt: {},
+  zwave: {
+    port: undefined,
+    commandsTimeout: 30,
+    networkKey: undefined,
+    logLevel: 'info',
+    logToFile: false,
+    serverEnabled: false,
+    serverPort: 3000
+  },
+  mqtt: {
+    name: 'zwavejs2mqtt',
+    host: 'localhost',
+    port: 1883,
+    qos: 1,
+    prefix: 'zwave',
+    reconnectPeriod: 3000,
+    retain: true,
+    clean: true,
+    auth: false,
+    username: undefined,
+    password: undefined
+  },
   devices: [],
-  gateway: {}
+  gateway: {
+    type: 0,
+    payloadType: 0,
+    nodeNames: true,
+    hassDiscovery: true,
+    discoveryPrefix: 'homeassistant',
+    logEnabled: true,
+    logLevel: 'info',
+    logToFile: false,
+    values: []
+  }
 }
 
 export const getters = {
@@ -30,9 +60,9 @@ export const actions = {
 export const mutations = {
   initSettings (state, conf) {
     if (conf) {
-      state.zwave = conf.zwave || {}
-      state.mqtt = conf.mqtt || {}
-      state.gateway = conf.gateway || {}
+      Object.assign(state.zwave, conf.zwave || {})
+      Object.assign(state.mqtt, conf.mqtt || {})
+      Object.assign(state.gateway, conf.gateway || {})
     }
   },
   initPorts (state, ports) {
