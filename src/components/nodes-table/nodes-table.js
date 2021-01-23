@@ -82,6 +82,11 @@ export default {
       this.filters = this.initFilters()
       this.groupBy = undefined
       this.storeSetting('nodes_filters', this.filters)
+    },
+    toggleExpanded (item) {
+      this.expanded = this.expanded.includes(item)
+        ? this.expanded.filter(i => i !== item)
+        : [...this.expanded, item]
     }
   },
   created () {
