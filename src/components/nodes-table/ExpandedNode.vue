@@ -18,19 +18,12 @@
 
         <!-- TAB HOMEASSISTANT -->
         <v-tab-item key="homeassistant">
-          <home-assistant
-            :node="node"
-            :socket="socket"
-          />
+          <home-assistant :node="node" :socket="socket" />
         </v-tab-item>
 
         <!-- TAB GROUPS -->
         <v-tab-item key="groups">
-          <association-groups
-            :node="node"
-            :nodes="nodes"
-            :socket="socket"
-          />
+          <association-groups :node="node" :nodes="nodes" :socket="socket" />
         </v-tab-item>
       </v-tabs-items>
     </v-tabs>
@@ -63,6 +56,4 @@ export default {
 }
 </script>
 
-<style>
-
-</style>
+<style></style>

@@ -27,13 +27,8 @@
       <v-flex v-if="group.group && group.associations" xs12 sm6 md4>
         <v-list subheader>
           <v-subheader>Associations</v-subheader>
-          <template
-            v-for="(ass, index) in group.associations"
-          >
-            <v-list-item
-              :key="`item-${index}`"
-              dense
-            >
+          <template v-for="(ass, index) in group.associations">
+            <v-list-item :key="`item-${index}`" dense>
               <v-list-item-content>
                 <v-list-item-title
                   >Node:
@@ -54,9 +49,7 @@
                 </v-icon>
               </v-list-item-icon>
             </v-list-item>
-            <v-divider
-              :key="`divider-${index}`"
-            ></v-divider>
+            <v-divider :key="`divider-${index}`"></v-divider>
           </template>
           <v-list-item v-if="group.associations.length === 0">
             <v-list-item-content>
@@ -78,12 +71,7 @@
         ></v-combobox>
       </v-flex>
 
-      <v-flex
-        v-if="group.group && group.group.multiChannel"
-        xs12
-        sm6
-        md4
-      >
+      <v-flex v-if="group.group && group.group.multiChannel" xs12 sm6 md4>
         <v-text-field
           v-model.number="group.targetInstance"
           label="Channel ID"
@@ -153,7 +141,7 @@ export default {
   mounted () {
     const self = this
     this.socket.on(socketEvents.api, async data => {
-      if (data.success && data.api == 'getAssociations') {
+      if (data.success && data.api === 'getAssociations') {
         self.$set(self.group, 'associations', data.result)
       }
     })
@@ -240,6 +228,4 @@ export default {
 }
 </script>
 
-<style>
-
-</style>
+<style></style>

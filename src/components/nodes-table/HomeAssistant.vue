@@ -97,7 +97,7 @@ export default {
     node: Object,
     socket: Object
   },
-  data() {
+  data () {
     return {
       deviceJSON: '',
       errorDevice: false,
@@ -108,7 +108,7 @@ export default {
         { text: 'Persistent', value: 'persistent' },
         { text: 'Discovery', value: 'ignoreDiscovery' }
       ],
-      selectedDevice: null,
+      selectedDevice: null
     }
   },
   computed: {
@@ -116,16 +116,14 @@ export default {
       const devices = []
       if (this.node && this.node.hassDevices) {
         for (const id in this.node.hassDevices) {
-          const d = JSON.parse(
-            JSON.stringify(this.node.hassDevices[id])
-          )
+          const d = JSON.parse(JSON.stringify(this.node.hassDevices[id]))
           d.id = id
           devices.push(d)
         }
       }
 
       return devices
-    },
+    }
   },
   watch: {
     selectedDevice () {
@@ -217,11 +215,7 @@ export default {
     updateDevice () {
       if (!this.errorDevice) {
         const updated = JSON.parse(this.deviceJSON)
-        this.$set(
-          this.node.hassDevices,
-          this.selectedDevice.id,
-          updated
-        )
+        this.$set(this.node.hassDevices, this.selectedDevice.id, updated)
         this.socket.emit(socketActions.hass, {
           apiName: 'update',
           device: updated,
@@ -244,6 +238,4 @@ export default {
 }
 </script>
 
-<style>
-
-</style>
+<style></style>

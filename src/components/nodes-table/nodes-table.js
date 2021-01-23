@@ -78,7 +78,7 @@ export default {
       this.filters = this.initFilters()
       this.groupBy = undefined
       this.storeSetting('nodes_filters', this.filters)
-    },
+    }
   },
   created () {
     this.showHidden = this.settings.load('nodes_showHidden', false)

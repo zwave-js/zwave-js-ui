@@ -70,13 +70,7 @@
             <v-card flat>
               <v-card-text>
                 <v-layout row wrap>
-                  <v-flex
-                    v-for="(v, index) in group"
-                    :key="index"
-                    xs12
-                    sm6
-                    md4
-                  >
+                  <v-flex v-for="(v, index) in group" :key="index" xs12 sm6 md4>
                     <ValueID
                       @updateValue="updateValue"
                       v-model="group[index]"
@@ -113,7 +107,7 @@ export default {
       nameError: null,
       newName: '',
       newLoc: '',
-      node_action: 'requestNetworkUpdate',
+      node_action: 'requestNetworkUpdate'
     }
   },
   computed: {
@@ -137,7 +131,7 @@ export default {
     }
   },
   watch: {
-    node (val) {
+    node () {
       this.newName = this.node.name
       this.newLoc = this.node.loc
     },
@@ -146,7 +140,7 @@ export default {
     },
     newName (val) {
       this.nameError = this.validateTopic(val)
-    },
+    }
   },
   created () {
     this.node_action = null
@@ -164,11 +158,7 @@ export default {
       }
     },
     exportNode () {
-      this.$listeners.export(
-        this.node,
-        'node_' + this.node.id,
-        'json'
-      )
+      this.$listeners.export(this.node, 'node_' + this.node.id, 'json')
     },
     getValue (v) {
       // const node = this.nodes[v.nodeId]
@@ -264,7 +254,7 @@ export default {
         : [name]
 
       return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
-    },
+    }
   }
 }
 </script>
