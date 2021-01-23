@@ -105,8 +105,8 @@ export default {
     return {
       locError: null,
       nameError: null,
-      newName: '',
-      newLoc: '',
+      newName: this.node.name,
+      newLoc: this.node.loc,
       node_action: 'requestNetworkUpdate'
     }
   },
