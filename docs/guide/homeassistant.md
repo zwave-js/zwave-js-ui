@@ -239,6 +239,6 @@ If needed, it is possible to remove and reset entities added to HASS via MQTT di
 
 To remove an entity in HASS, you simply need to remove the retained message in the HASS discovery topics, by default `homeassistant/..`. 
 
-This can be done with [MQTT Explorer](http://mqtt-explorer.com/) or CLI tools like `mosquitto_pub`. 
+This can be done with [MQTT Explorer](http://mqtt-explorer.com/) or CLI tools like [`mosquitto_pub`](https://mosquitto.org/man/mosquitto_pub-1.html).
 
 Note that in order for a removed entity to appear again, it must be published by **zwavejs2mqtt** again. This happens automatically for new devices, if enabled, alternatively it can be done manually by selecting the node in **zwavejs2mqtt**, and then for each HASS device clicking `Discover`.
