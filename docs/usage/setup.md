@@ -171,7 +171,7 @@ Gateway settings:
   - `%o`: HASS object_id
   - `%l`: valueId label (fallback to object_id)
 
-Once finished press `SAVE` and gateway will start Zwave Network Scan, than go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
+Once finished press `SAVE` and gateway will start Zwave Network Scan, then go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
 Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
 

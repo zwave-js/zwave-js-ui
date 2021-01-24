@@ -14,7 +14,7 @@ To achieve the best possible integration (including MQTT discovery):
 
 - In your **zwavejs2mqtt** gateway settings enable `Homeassistant discovery` flag and enable the MQTT **retain** too. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
 
-**NB:** Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113` th
+**NB:** Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113`
 
 - In your **Home Assistant** `configuration.yaml`:
 
@@ -46,8 +46,8 @@ The zwavejs2mqtt Control Panel UI can be accessed from within Home Assistant by 
 
 First, add a new Lovelace dashboard. In the dashboard:
 
-1. Click on the top right and 'Edit Dashbaord'.
-2. Turn on the "Start with an empty dashbaord" switch, then click "Take Control"
+1. Click on the top right and 'Edit Dashboard'.
+2. Turn on the "Start with an empty dashboard" switch, then click "Take Control"
 3. Click on the top right, and then select "Raw configuration editor"
 4. Paste the code below and save
 
