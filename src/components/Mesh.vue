@@ -119,6 +119,7 @@
 </template>
 <script>
 import D3Network from 'vue-d3-network'
+import { mapMutations } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
@@ -185,9 +186,7 @@ export default {
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
+    ...mapMutations(['showSnackbar']),
     nodeClick (e, node) {
       this.selectedNode = this.selectedNode === node ? null : node
       this.showProperties = !!this.selectedNode

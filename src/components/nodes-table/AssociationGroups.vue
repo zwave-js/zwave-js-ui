@@ -101,6 +101,7 @@
 
 <script>
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+import { mapMutations } from 'vuex'
 export default {
   props: {
     node: Object,
@@ -130,6 +131,7 @@ export default {
     })
   },
   methods: {
+    ...mapMutations(['showSnackbar']),
     apiRequest (apiName, args) {
       if (this.socket.connected) {
         const data = {
@@ -140,9 +142,6 @@ export default {
       } else {
         this.showSnackbar('Socket disconnected')
       }
-    },
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
     },
     resetGroup () {
       this.$set(this.group, 'associations', [])

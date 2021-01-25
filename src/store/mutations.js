@@ -1,5 +1,6 @@
 export const state = {
   serial_ports: [],
+  nodes: [],
   zwave: {
     port: undefined,
     commandsTimeout: 30,
@@ -33,15 +34,34 @@ export const state = {
     logLevel: 'info',
     logToFile: false,
     values: []
+  },
+  appInfo: {
+    homeid: '',
+    homeHex: '',
+    appVersion: '',
+    zwaveVersion: '',
+    controllerStatus: 'Unknown'
+  }
+}
+
+function getValue (v) {
+  const node = state.nodes[v.nodeId]
+
+  if (node && node.values) {
+    return node.values.find(i => i.id === v.id)
+  } else {
+    return null
   }
 }
 
 export const getters = {
+  nodes: state => state.nodes,
   serial_ports: state => state.serial_ports,
   zwave: state => state.zwave,
   mqtt: state => state.mqtt,
   devices: state => state.devices,
-  gateway: state => state.gateway
+  gateway: state => state.gateway,
+  appInfo: state => state.appInfo
 }
 
 export const actions = {
@@ -54,10 +74,106 @@ export const actions = {
   },
   import (store, settings) {
     store.commit('initSettings', settings)
+  },
+  initNodes (store, nodes) {
+    for (let i = 0; i < nodes.length; i++) {
+      store.commit('initNode', nodes[i])
+    }
+  },
+  setAppInfo (store, data) {
+    store.commit('updateAppInfo', data)
+  },
+  setValue (store, data) {
+    store.commit('setValue', data)
+  },
+  updateValue (store, data) {
+    const valueId = getValue(data)
+    if (valueId && valueId.toUpdate) {
+      store.commit('showSnackbar', 'Value updated')
+    }
+    store.commit('updateValue', { data, valueId })
+  },
+  removeValue (store, data) {
+    store.commit('removeValue', data)
   }
 }
 
 export const mutations = {
+  showSnackbar () {
+    // empty mutation, will be catched in App.vue from store subscribe
+  },
+  setControllerStatus (state, data) {
+    state.appInfo.controllerStatus = data
+  },
+  updateAppInfo (state, data) {
+    state.appInfo.homeid = data.homeid
+    state.appInfo.homeHex = data.name
+    state.appInfo.appVersion = data.appVersion
+    state.appInfo.zwaveVersion = data.zwaveVersion
+  },
+  setValue (state, valueId) {
+    const toReplace = getValue(valueId)
+    const node = state.nodes[valueId.nodeId]
+
+    if (node && toReplace) {
+      const index = node.values.indexOf(toReplace)
+      if (index >= 0) {
+        this._vm.$set(node.values, index, valueId)
+      }
+    }
+  },
+  updateValue (state, { data, valueId }) {
+    if (valueId) {
+      valueId.newValue = data.value
+      valueId.value = data.value
+
+      if (valueId.toUpdate) {
+        valueId.toUpdate = false
+      }
+    } else {
+      // means that this value has been added
+      const node = state.nodes[data.nodeId]
+      if (node) {
+        data.newValue = data.value
+        node.values.push(data)
+      }
+    }
+  },
+  removeValue (state, data) {
+    const valueId = getValue(data)
+    if (valueId) {
+      const node = state.nodes[data.nodeId]
+      const index = node.values.indexOf(valueId)
+
+      if (index >= 0) {
+        node.values.splice(index, 1)
+      }
+    }
+  },
+  initNode (state, n) {
+    const values = []
+    // transform object in array
+    for (const k in n.values) {
+      n.values[k].newValue = n.values[k].value
+      values.push(n.values[k])
+    }
+    n.values = values
+    n._name = n.name
+      ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
+      : 'NodeID_' + n.id
+
+    // add empty nodes if any
+    while (state.nodes.length < n.id) {
+      state.nodes.push({
+        id: state.nodes.length,
+        failed: true,
+        status: 'Removed'
+      })
+    }
+
+    // vue set is used to notify changes
+    this._vm.$set(state.nodes, n.id, n)
+  },
   initSettings (state, conf) {
     if (conf) {
       Object.assign(state.zwave, conf.zwave || {})
