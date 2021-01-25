@@ -65,8 +65,8 @@
         <router-view
           @import="importFile"
           @export="exportConfiguration"
-          @showSnackbar="showSnackbar"
           @showConfirm="confirm"
+          @apiRequest="apiRequest"
           :socket="socket"
         />
       </v-main>
@@ -102,12 +102,18 @@ import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import { Settings } from '@/modules/Settings'
 
+import { mapActions, mapMutations } from 'vuex'
+
+import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+
 export default {
   components: {
     Confirm
   },
   name: 'app',
   methods: {
+    ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
+    ...mapMutations(['setControllerStatus', 'initNode']),
     toggleDrawer () {
       if (['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0) {
         this.mini = false
@@ -132,6 +138,17 @@ export default {
     showSnackbar: function (text) {
       this.snackbarText = text
       this.snackbar = true
+    },
+    apiRequest (apiName, args) {
+      if (this.socket.connected) {
+        const data = {
+          api: apiName,
+          args: args
+        }
+        this.socket.emit(socketActions.zwave, data)
+      } else {
+        this.showSnackbar('Socket disconnected')
+      }
     },
     updateStatus: function (status, color) {
       this.status = status
@@ -231,6 +248,8 @@ export default {
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' },
+        { icon: 'playlist_add_check', title: 'Scenes', path: '/scenes' },
+        { icon: 'bug_report', title: 'Debug', path: '/debug' },
         { icon: 'folder', title: 'Store', path: '/store' },
         { icon: 'share', title: 'Network graph', path: '/mesh' }
       ],
@@ -290,6 +309,32 @@ export default {
 
     this.dark = this.settings.load('dark', false)
     this.changeThemeColor()
+
+    const self = this
+
+    this.$store.subscribe(mutation => {
+      if (mutation.type === 'showSnackbar') {
+        self.showSnackbar(mutation.payload)
+      }
+    })
+
+    this.socket.on(socketEvents.init, data => {
+      // convert node values in array
+      self.initNodes(data.nodes)
+      self.setControllerStatus(data.error ? data.error : data.cntStatus)
+      self.setAppInfo(data.info)
+    })
+
+    this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
+    this.socket.on(socketEvents.controller, this.setControllerStatus.bind(this))
+
+    this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
+    this.socket.on(socketEvents.nodeRemoved, this.initNode.bind(this))
+
+    this.socket.on(socketEvents.valueRemoved, this.removeValue.bind(this))
+    this.socket.on(socketEvents.valueUpdated, this.updateValue.bind(this))
+
+    this.socket.emit(socketActions.init, true)
   },
   beforeDestroy () {
     if (this.socket) this.socket.close()

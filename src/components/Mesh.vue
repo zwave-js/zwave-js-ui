@@ -39,7 +39,7 @@
       <d3-network
         id="mesh"
         ref="mesh"
-        :net-nodes="activeNodes"
+        :net-nodes="meshNodes"
         :net-links="links"
         :options="options"
         :selection="selection"
@@ -119,6 +119,7 @@
 </template>
 <script>
 import D3Network from 'vue-d3-network'
+import { mapMutations, mapGetters } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
@@ -135,11 +136,38 @@ export default {
       for (const n of this.nodes) {
         n.name = this.nodeName(n)
       }
+    },
+    meshNodes () {
+      this.debounceRefresh()
     }
   },
   computed: {
+    ...mapGetters(['nodes']),
+    meshNodes () {
+      return this.activeNodes.map(n => this.convertNode(n))
+    },
     activeNodes () {
       return this.nodes.filter(n => n.id !== 0 && n.status !== 'Removed')
+    },
+    links () {
+      const links = []
+
+      for (const source of this.activeNodes) {
+        if (source.neighbors) {
+          for (const target of source.neighbors) {
+            // ensure target node exists
+            if (this.nodes[target] && this.nodes[target].status !== 'Removed') {
+              links.push({
+                sid: source.id,
+                tid: target,
+                _color: this.$vuetify.theme.dark ? 'white' : 'black'
+              })
+            }
+          }
+        }
+      }
+
+      return links
     },
     options () {
       return {
@@ -176,18 +204,15 @@ export default {
       nodeSize: 20,
       fontSize: 10,
       force: 2000,
-      nodes: [],
-      links: [],
       fab: false,
       selectedNode: null,
       showProperties: false,
-      showLocation: false
+      showLocation: false,
+      refreshTimeout: null
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
+    ...mapMutations(['showSnackbar', 'setNeighbors']),
     nodeClick (e, node) {
       this.selectedNode = this.selectedNode === node ? null : node
       this.showProperties = !!this.selectedNode
@@ -215,83 +240,22 @@ export default {
       }
       return n.status.toLowerCase()
     },
-    apiRequest (apiName, args) {
-      if (this.socket.connected) {
-        const data = {
-          api: apiName,
-          args: args
-        }
-        this.socket.emit(socketActions.zwave, data)
-      } else {
-        this.showSnackbar('Socket disconnected')
+    debounceRefresh () {
+      if (this.refreshTimeout) {
+        clearTimeout(this.refreshTimeout)
       }
+
+      this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
     },
     refresh () {
       this.socket.emit(socketActions.zwave, {
         api: 'refreshNeighbors',
         args: []
       })
-    },
-    updateLinks () {
-      this.links = []
-
-      for (const source of this.activeNodes) {
-        if (source.neighbors) {
-          for (const target of source.neighbors) {
-            // ensure target node exists
-            if (this.nodes[target] && this.nodes[target].status !== 'Removed') {
-              this.links.push({
-                sid: source.id,
-                tid: target,
-                _color: this.$vuetify.theme.dark ? 'white' : 'black'
-              })
-            }
-          }
-        }
-      }
     }
   },
   mounted () {
     const self = this
-
-    this.socket.on(socketEvents.nodeRemoved, node => {
-      self.$set(self.nodes, node.id, node)
-    })
-
-    this.socket.on(socketEvents.init, data => {
-      const nodes = data.nodes
-      for (let i = 0; i < nodes.length; i++) {
-        self.nodes.push(self.convertNode(nodes[i]))
-      }
-    })
-
-    this.socket.on(socketEvents.nodeRemoved, node => {
-      self.$set(self.nodes, node.id, node)
-      self.refresh()
-    })
-
-    this.socket.on(socketEvents.nodeUpdated, data => {
-      const node = self.convertNode(data)
-
-      // node added
-      const refresh = !self.nodes[data.id] || self.nodes[data.id].failed
-
-      // add missing nodes if new node added
-      while (self.nodes.length < data.id) {
-        self.nodes.push({
-          id: self.nodes.length,
-          failed: true,
-          status: 'Removed'
-        })
-      }
-
-      self.$set(self.nodes, data.id, node)
-
-      // update links if new node has been added
-      if (refresh) {
-        self.refresh()
-      }
-    })
 
     this.socket.on(socketEvents.api, data => {
       if (data.success) {
@@ -299,11 +263,8 @@ export default {
           case 'refreshNeighbors': {
             const neighbors = data.result
             for (let i = 0; i < neighbors.length; i++) {
-              if (self.nodes[i]) {
-                self.nodes[i].neighbors = neighbors[i]
-              }
+              self.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
             }
-            self.updateLinks()
             break
           }
         }
@@ -313,9 +274,6 @@ export default {
         )
       }
     })
-
-    this.socket.emit(socketActions.init, true)
-    this.refresh()
 
     // make properties window draggable
     const propertiesDiv = document.getElementById('properties')
@@ -349,7 +307,7 @@ export default {
     document.addEventListener(
       'mousemove',
       function (e) {
-        event.preventDefault()
+        e.preventDefault()
         if (isDown) {
           const l = e.clientX
           const r = e.clientY
@@ -366,11 +324,12 @@ export default {
     )
   },
   beforeDestroy () {
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout)
+    }
     if (this.socket) {
       // unbind events
-      for (const event in socketEvents) {
-        this.socket.off(event)
-      }
+      this.socket.off(socketEvents.api)
     }
   }
 }
