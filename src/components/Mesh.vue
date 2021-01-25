@@ -39,7 +39,7 @@
       <d3-network
         id="mesh"
         ref="mesh"
-        :net-nodes="activeNodes"
+        :net-nodes="meshNodes"
         :net-links="links"
         :options="options"
         :selection="selection"
@@ -119,7 +119,7 @@
 </template>
 <script>
 import D3Network from 'vue-d3-network'
-import { mapMutations } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
@@ -136,9 +136,17 @@ export default {
       for (const n of this.nodes) {
         n.name = this.nodeName(n)
       }
+    },
+    meshNodes () {
+      this.debounceRefresh()
     }
   },
   computed: {
+    ...mapGetters(['nodes']),
+    meshNodes () {
+      return this.activeNodes
+        .map(n => this.convertNode(n))
+    },
     activeNodes () {
       return this.nodes.filter(n => n.id !== 0 && n.status !== 'Removed')
     },
@@ -177,12 +185,12 @@ export default {
       nodeSize: 20,
       fontSize: 10,
       force: 2000,
-      nodes: [],
       links: [],
       fab: false,
       selectedNode: null,
       showProperties: false,
-      showLocation: false
+      showLocation: false,
+      refreshTimeout: null
     }
   },
   methods: {
@@ -214,16 +222,12 @@ export default {
       }
       return n.status.toLowerCase()
     },
-    apiRequest (apiName, args) {
-      if (this.socket.connected) {
-        const data = {
-          api: apiName,
-          args: args
-        }
-        this.socket.emit(socketActions.zwave, data)
-      } else {
-        this.showSnackbar('Socket disconnected')
+    debounceRefresh () {
+      if (this.refreshTimeout) {
+        clearTimeout(this.refreshTimeout)
       }
+
+      this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
     },
     refresh () {
       this.socket.emit(socketActions.zwave, {
@@ -253,45 +257,6 @@ export default {
   mounted () {
     const self = this
 
-    this.socket.on(socketEvents.nodeRemoved, node => {
-      self.$set(self.nodes, node.id, node)
-    })
-
-    this.socket.on(socketEvents.init, data => {
-      const nodes = data.nodes
-      for (let i = 0; i < nodes.length; i++) {
-        self.nodes.push(self.convertNode(nodes[i]))
-      }
-    })
-
-    this.socket.on(socketEvents.nodeRemoved, node => {
-      self.$set(self.nodes, node.id, node)
-      self.refresh()
-    })
-
-    this.socket.on(socketEvents.nodeUpdated, data => {
-      const node = self.convertNode(data)
-
-      // node added
-      const refresh = !self.nodes[data.id] || self.nodes[data.id].failed
-
-      // add missing nodes if new node added
-      while (self.nodes.length < data.id) {
-        self.nodes.push({
-          id: self.nodes.length,
-          failed: true,
-          status: 'Removed'
-        })
-      }
-
-      self.$set(self.nodes, data.id, node)
-
-      // update links if new node has been added
-      if (refresh) {
-        self.refresh()
-      }
-    })
-
     this.socket.on(socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
@@ -313,7 +278,6 @@ export default {
       }
     })
 
-    this.socket.emit(socketActions.init, true)
     this.refresh()
 
     // make properties window draggable
@@ -365,11 +329,12 @@ export default {
     )
   },
   beforeDestroy () {
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout)
+    }
     if (this.socket) {
       // unbind events
-      for (const event in socketEvents) {
-        this.socket.off(event)
-      }
+      this.socket.off(socketEvents.api)
     }
   }
 }
