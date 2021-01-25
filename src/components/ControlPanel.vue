@@ -59,7 +59,7 @@
 
 <script>
 import ConfigApis from '@/apis/ConfigApis'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapMutations } from 'vuex'
 
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
@@ -169,9 +169,7 @@ export default {
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
+    ...mapMutations(['showSnackbar']),
     async importConfiguration () {
       if (
         await this.$listeners.showConfirm(

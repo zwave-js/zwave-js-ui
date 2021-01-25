@@ -90,6 +90,7 @@
 <script>
 import ValueID from '@/components/ValueId'
 import { inboundEvents as socketActions } from '@/plugins/socket'
+import { mapMutations } from 'vuex'
 
 export default {
   props: {
@@ -146,6 +147,7 @@ export default {
     this.node_action = null
   },
   methods: {
+    ...mapMutations(['showSnackbar']),
     apiRequest (apiName, args) {
       if (this.socket.connected) {
         const data = {
@@ -203,9 +205,6 @@ export default {
         this.apiRequest(action, args)
       }
     },
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
     updateLoc () {
       if (this.node && !this.locError) {
         this.apiRequest('_setNodeLocation', [this.node.id, this.newLoc])
@@ -217,8 +216,6 @@ export default {
       }
     },
     updateValue (v, customValue) {
-      v = this.getValue(v)
-
       if (v) {
         // in this way I can check when the value receives an update
         v.toUpdate = true
@@ -235,6 +232,9 @@ export default {
         if (customValue !== undefined) {
           v.newValue = customValue
         }
+
+        // update the value in store
+        this.$store.dispatch('setValue', v)
 
         this.apiRequest('writeValue', [
           {

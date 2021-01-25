@@ -102,6 +102,8 @@ import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import { Settings } from '@/modules/Settings'
 
+import { mapActions } from 'vuex'
+
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
 export default {
@@ -110,6 +112,7 @@ export default {
   },
   name: 'app',
   methods: {
+    ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
     toggleDrawer () {
       if (['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0) {
         this.mini = false
@@ -297,31 +300,37 @@ export default {
 
     const self = this
 
+    this.$store.subscribe((mutation) => {
+      if (mutation.type === 'showSnackbar') {
+        self.showSnackbar(mutation.payload)
+      }
+    })
+
     this.socket.on(socketEvents.connected, info => {
-      self.$store.dispatch('setAppInfo', info)
+      self.setAppInfo(info)
     })
 
     this.socket.on(socketEvents.init, data => {
       // convert node values in array
-      self.$store.dispatch('initNodes', data.nodes)
+      self.initNodes(data.nodes)
       self.cnt_status = data.error ? data.error : data.cntStatus
-      self.$store.dispatch('setAppInfo', data.info)
+      self.setAppInfo(data.info)
     })
 
     this.socket.on(socketEvents.nodeUpdated, data => {
-      self.$store.dispatch('initNode', data)
+      self.initNode(data)
     })
 
     this.socket.on(socketEvents.nodeRemoved, node => {
-      self.$store.dispatch('initNode', node)
+      self.initNode(node)
     })
 
     this.socket.on(socketEvents.valueRemoved, data => {
-      self.$store.dispatch('removeValue', data)
+      self.removeValue(data)
     })
 
     this.socket.on(socketEvents.valueUpdated, data => {
-      self.$store.dispatch('updateValue', data)
+      self.updateValue(data)
     })
 
     this.socket.emit(socketActions.init, true)

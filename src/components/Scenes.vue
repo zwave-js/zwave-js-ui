@@ -94,7 +94,7 @@
 
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
-import { mapGetters } from 'vuex'
+import { mapGetters, mapMutations } from 'vuex'
 
 export default {
   name: 'Scenes',
@@ -145,9 +145,7 @@ export default {
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
+    ...mapMutations(['showSnackbar']),
     async importScenes () {
       if (
         await this.$listeners.showConfirm(

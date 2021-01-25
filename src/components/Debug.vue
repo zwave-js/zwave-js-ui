@@ -33,6 +33,7 @@
 <script>
 
 import { socketEvents } from '@/plugins/socket'
+
 import AnsiUp from 'ansi_up'
 
 const ansiUp = new AnsiUp()
@@ -56,9 +57,6 @@ export default {
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    }
   },
   mounted () {
     // init socket events

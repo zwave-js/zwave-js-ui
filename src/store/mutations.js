@@ -82,7 +82,14 @@ export const actions = {
   setAppInfo (store, data) {
     store.commit('updateAppInfo', data)
   },
+  setValue (store, data) {
+    store.commit('setValue', data)
+  },
   updateValue (store, data) {
+    const valueId = getValue(data)
+    if (valueId.toUpdate) {
+      store.commit('showSnackbar', 'Value updated')
+    }
     store.commit('updateValue', data)
   },
   removeValue (store, data) {
@@ -91,23 +98,35 @@ export const actions = {
 }
 
 export const mutations = {
+  showSnackbar () {
+    // empty mutation, will be catched in App.vue from store subscribe
+  },
   updateAppInfo (state, data) {
     state.appInfo.homeid = data.homeid
     state.appInfo.homeHex = data.name
     state.appInfo.appVersion = data.appVersion
     state.appInfo.zwaveVersion = data.zwaveVersion
   },
+  setValue (state, valueId) {
+    const toReplace = getValue(valueId)
+    const node = state.nodes[valueId.nodeId]
+
+    if (node && toReplace) {
+      const index = node.values.indexOf(toReplace)
+      if (index >= 0) {
+        this._vm.$set(node.values, index, valueId)
+      }
+    }
+  },
   updateValue (state, data) {
     const valueId = getValue(data)
     if (valueId) {
-      // this value is waiting for an update
-      if (valueId.toUpdate) {
-        valueId.toUpdate = false
-        // TODO: this should be returned
-        // self.showSnackbar('Value updated')
-      }
       valueId.newValue = data.value
       valueId.value = data.value
+
+      if (valueId.toUpdate) {
+        valueId.toUpdate = false
+      }
     } else {
       // means that this value has been added
       const node = state.nodes[data.nodeId]
@@ -149,7 +168,8 @@ export const mutations = {
       })
     }
 
-    state.nodes[n.id] = n
+    // vue set is used to notify changes
+    this._vm.$set(state.nodes, n.id, n)
   },
   initSettings (state, conf) {
     if (conf) {
