@@ -31,7 +31,7 @@
               <v-text-field
                 label="Controller status"
                 readonly
-                v-model="cnt_status"
+                v-model="appInfo.controllerStatus"
               ></v-text-field>
             </v-col>
 
@@ -83,8 +83,6 @@ export default {
   data () {
     return {
       settings: new Settings(localStorage),
-
-      cnt_status: 'Unknown',
       node_actions: [
         {
           text: 'Heal node',
@@ -269,6 +267,9 @@ export default {
         }
       }
     },
+    apiRequest (apiName, args) {
+      this.$emit('apiRequest', apiName, args)
+    },
     saveConfiguration () {
       this.apiRequest('writeConfig', [])
     },
@@ -281,10 +282,6 @@ export default {
   },
   mounted () {
     const self = this
-
-    this.socket.on(socketEvents.controller, data => {
-      self.cnt_status = data
-    })
 
     this.socket.on(socketEvents.api, async data => {
       if (data.success) {
@@ -314,7 +311,6 @@ export default {
   beforeDestroy () {
     if (this.socket) {
       // unbind events
-      this.socket.off(socketEvents.controller)
       this.socket.off(socketEvents.api)
     }
   }

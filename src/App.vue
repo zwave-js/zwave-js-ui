@@ -65,8 +65,8 @@
         <router-view
           @import="importFile"
           @export="exportConfiguration"
-          @showSnackbar="showSnackbar"
           @showConfirm="confirm"
+          @apiRequest="apiRequest"
           :socket="socket"
         />
       </v-main>
@@ -102,7 +102,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import { Settings } from '@/modules/Settings'
 
-import { mapActions } from 'vuex'
+import { mapActions, mapMutations } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
@@ -113,6 +113,7 @@ export default {
   name: 'app',
   methods: {
     ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
+    ...mapMutations(['setControllerStatus', 'initNode']),
     toggleDrawer () {
       if (['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0) {
         this.mini = false
@@ -137,6 +138,17 @@ export default {
     showSnackbar: function (text) {
       this.snackbarText = text
       this.snackbar = true
+    },
+    apiRequest (apiName, args) {
+      if (this.socket.connected) {
+        const data = {
+          api: apiName,
+          args: args
+        }
+        this.socket.emit(socketActions.zwave, data)
+      } else {
+        this.showSnackbar('Socket disconnected')
+      }
     },
     updateStatus: function (status, color) {
       this.status = status
@@ -310,10 +322,14 @@ export default {
       self.setAppInfo(info)
     })
 
+    this.socket.on(socketEvents.controller, data => {
+      self.setControllerStatus(data)
+    })
+
     this.socket.on(socketEvents.init, data => {
       // convert node values in array
       self.initNodes(data.nodes)
-      self.cnt_status = data.error ? data.error : data.cntStatus
+      self.setControllerStatus(data.error ? data.error : data.cntStatus)
       self.setAppInfo(data.info)
     })
 

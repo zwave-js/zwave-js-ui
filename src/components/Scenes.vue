@@ -79,7 +79,7 @@
 </template>
 <script>
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
-import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+import { socketEvents } from '@/plugins/socket'
 import { mapGetters, mapMutations } from 'vuex'
 
 export default {
@@ -232,15 +232,7 @@ export default {
       this.closeDialog()
     },
     apiRequest (apiName, args) {
-      if (this.socket.connected) {
-        const data = {
-          api: apiName,
-          args: args
-        }
-        this.socket.emit(socketActions.zwave, data)
-      } else {
-        this.showSnackbar('Socket disconnected')
-      }
+      this.$emit('apiRequest', apiName, args)
     },
     refreshValues () {
       if (this.selectedScene) {

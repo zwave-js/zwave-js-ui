@@ -39,7 +39,8 @@ export const state = {
     homeid: '',
     homeHex: '',
     appVersion: '',
-    zwaveVersion: ''
+    zwaveVersion: '',
+    controllerStatus: 'Unknown'
   }
 }
 
@@ -87,10 +88,10 @@ export const actions = {
   },
   updateValue (store, data) {
     const valueId = getValue(data)
-    if (valueId.toUpdate) {
+    if (valueId && valueId.toUpdate) {
       store.commit('showSnackbar', 'Value updated')
     }
-    store.commit('updateValue', data)
+    store.commit('updateValue', { data, valueId })
   },
   removeValue (store, data) {
     store.commit('removeValue', data)
@@ -100,6 +101,9 @@ export const actions = {
 export const mutations = {
   showSnackbar () {
     // empty mutation, will be catched in App.vue from store subscribe
+  },
+  setControllerStatus (state, data) {
+    state.appInfo.controllerStatus = data
   },
   updateAppInfo (state, data) {
     state.appInfo.homeid = data.homeid
@@ -118,8 +122,7 @@ export const mutations = {
       }
     }
   },
-  updateValue (state, data) {
-    const valueId = getValue(data)
+  updateValue (state, { data, valueId }) {
     if (valueId) {
       valueId.newValue = data.value
       valueId.value = data.value
