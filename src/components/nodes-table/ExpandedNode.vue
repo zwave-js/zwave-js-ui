@@ -5,7 +5,10 @@
       <v-tab key="homeassistant">Home Assistant</v-tab>
       <v-tab key="groups">Groups</v-tab>
       <!-- TABS -->
-      <v-tabs-items style="background: transparent; padding-bottom: 10px;" v-model="currentTab">
+      <v-tabs-items
+        style="background: transparent; padding-bottom: 10px;"
+        v-model="currentTab"
+      >
         <!-- TAB NODE -->
         <v-tab-item key="node">
           <node-details
