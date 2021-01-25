@@ -1,37 +1,28 @@
 <template>
   <v-container grid-list-md>
-                <v-layout wrap>
-                  <v-flex xs12>
-                    <v-btn
-                      color="green darken-1"
-                      text
-                      @click="debugActive = true"
-                      >Start</v-btn
-                    >
-                    <v-btn
-                      color="red darken-1"
-                      text
-                      @click="debugActive = false"
-                      >Stop</v-btn
-                    >
-                    <v-btn color="blue darken-1" text @click="debug = []"
-                      >Clear</v-btn
-                    >
-                  </v-flex>
+    <v-layout wrap>
+      <v-flex xs12>
+        <v-btn color="green darken-1" text @click="debugActive = true"
+          >Start</v-btn
+        >
+        <v-btn color="red darken-1" text @click="debugActive = false"
+          >Stop</v-btn
+        >
+        <v-btn color="blue darken-1" text @click="debug = []">Clear</v-btn>
+      </v-flex>
 
-                  <v-flex xs12>
-                    <div
-                      id="debug_window"
-                      style="height:800px;width:100%;overflow-y:scroll;border: 1px solid grey; padding: 10px;"
-                      class="body-1"
-                      v-html="debug.join('')"
-                    ></div>
-                  </v-flex>
-                </v-layout>
-              </v-container>
+      <v-flex xs12>
+        <div
+          id="debug_window"
+          style="height:800px;width:100%;overflow-y:scroll;border: 1px solid grey; padding: 10px;"
+          class="body-1"
+          v-html="debug.join('')"
+        ></div>
+      </v-flex>
+    </v-layout>
+  </v-container>
 </template>
 <script>
-
 import { socketEvents } from '@/plugins/socket'
 
 import AnsiUp from 'ansi_up'
@@ -45,19 +36,15 @@ export default {
   props: {
     socket: Object
   },
-  watch: {
-
-  },
-  computed: {
-  },
+  watch: {},
+  computed: {},
   data () {
     return {
       debug: [],
       debugActive: false
     }
   },
-  methods: {
-  },
+  methods: {},
   mounted () {
     // init socket events
     const self = this

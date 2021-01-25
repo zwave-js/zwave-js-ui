@@ -1,97 +1,83 @@
 <template>
   <v-container grid-list-md>
-                <v-layout wrap>
-                  <v-flex xs12>
-                    <v-btn text @click="importScenes">
-                      Import
-                      <v-icon right dark color="primary">file_upload</v-icon>
-                    </v-btn>
-                    <v-btn text @click="exportScenes">
-                      Export
-                      <v-icon right dark color="primary">file_download</v-icon>
-                    </v-btn>
-                  </v-flex>
+    <v-layout wrap>
+      <v-flex xs12>
+        <v-btn text @click="importScenes">
+          Import
+          <v-icon right dark color="primary">file_upload</v-icon>
+        </v-btn>
+        <v-btn text @click="exportScenes">
+          Export
+          <v-icon right dark color="primary">file_download</v-icon>
+        </v-btn>
+      </v-flex>
 
-                  <v-flex xs12 sm6>
-                    <v-select
-                      label="Scene"
-                      v-model="selectedScene"
-                      :items="scenesWithId"
-                      item-text="label"
-                      item-value="sceneid"
-                    ></v-select>
-                  </v-flex>
+      <v-flex xs12 sm6>
+        <v-select
+          label="Scene"
+          v-model="selectedScene"
+          :items="scenesWithId"
+          item-text="label"
+          item-value="sceneid"
+        ></v-select>
+      </v-flex>
 
-                  <v-flex xs12 sm6>
-                    <v-text-field
-                      label="New Scene"
-                      append-outer-icon="send"
-                      @click:append-outer="createScene"
-                      v-model.trim="newScene"
-                    ></v-text-field>
-                  </v-flex>
+      <v-flex xs12 sm6>
+        <v-text-field
+          label="New Scene"
+          append-outer-icon="send"
+          @click:append-outer="createScene"
+          v-model.trim="newScene"
+        ></v-text-field>
+      </v-flex>
 
-                  <v-flex v-if="selectedScene" xs12>
-                    <v-btn color="red darken-1" text @click="removeScene"
-                      >Delete</v-btn
-                    >
-                    <v-btn color="green darken-1" text @click="activateScene"
-                      >Activate</v-btn
-                    >
-                    <v-btn
-                      color="blue darken-1"
-                      text
-                      @click="dialogValue = true"
-                      >New Value</v-btn
-                    >
-                  </v-flex>
-                </v-layout>
+      <v-flex v-if="selectedScene" xs12>
+        <v-btn color="red darken-1" text @click="removeScene">Delete</v-btn>
+        <v-btn color="green darken-1" text @click="activateScene"
+          >Activate</v-btn
+        >
+        <v-btn color="blue darken-1" text @click="dialogValue = true"
+          >New Value</v-btn
+        >
+      </v-flex>
+    </v-layout>
 
-                <DialogSceneValue
-                  @save="saveValue"
-                  @close="closeDialog"
-                  v-model="dialogValue"
-                  :title="dialogTitle"
-                  :editedValue="editedValue"
-                  :nodes="nodes"
-                />
+    <DialogSceneValue
+      @save="saveValue"
+      @close="closeDialog"
+      v-model="dialogValue"
+      :title="dialogTitle"
+      :editedValue="editedValue"
+      :nodes="nodes"
+    />
 
-                <v-data-table
-                  v-if="selectedScene"
-                  :headers="headers_scenes"
-                  :items="scene_values"
-                  class="elevation-1"
-                >
-                  <template v-slot:item="{ item }">
-                    <tr>
-                      <td class="text-xs">{{ item.id }}</td>
-                      <td class="text-xs">{{ item.nodeId }}</td>
-                      <td class="text-xs">{{ item.label }}</td>
-                      <td class="text-xs">{{ item.value }}</td>
-                      <td class="text-xs">
-                        {{
-                          item.timeout ? 'After ' + item.timeout + 's' : 'No'
-                        }}
-                      </td>
-                      <td>
-                        <v-icon
-                          small
-                          color="green"
-                          class="mr-2"
-                          @click="editItem(item)"
-                          >edit</v-icon
-                        >
-                        <v-icon small color="red" @click="deleteItem(item)"
-                          >delete</v-icon
-                        >
-                      </td>
-                    </tr>
-                  </template>
-                </v-data-table>
-              </v-container>
+    <v-data-table
+      v-if="selectedScene"
+      :headers="headers_scenes"
+      :items="scene_values"
+      class="elevation-1"
+    >
+      <template v-slot:item="{ item }">
+        <tr>
+          <td class="text-xs">{{ item.id }}</td>
+          <td class="text-xs">{{ item.nodeId }}</td>
+          <td class="text-xs">{{ item.label }}</td>
+          <td class="text-xs">{{ item.value }}</td>
+          <td class="text-xs">
+            {{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}
+          </td>
+          <td>
+            <v-icon small color="green" class="mr-2" @click="editItem(item)"
+              >edit</v-icon
+            >
+            <v-icon small color="red" @click="deleteItem(item)">delete</v-icon>
+          </td>
+        </tr>
+      </template>
+    </v-data-table>
+  </v-container>
 </template>
 <script>
-
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 import { mapGetters, mapMutations } from 'vuex'
@@ -111,7 +97,6 @@ export default {
     dialogValue (val) {
       val || this.closeDialog()
     }
-
   },
   computed: {
     ...mapGetters(['nodes']),

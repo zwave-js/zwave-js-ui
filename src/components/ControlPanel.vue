@@ -14,11 +14,15 @@
             </v-col>
             <v-col class="text-center" cols="12" sm="3" md="2">
               <div class="h6">App Version</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.appVersion }}</div>
+              <div class="body-1 font-weight-bold">
+                {{ appInfo.appVersion }}
+              </div>
             </v-col>
             <v-col class="text-center" cols="12" sm="3" md="2">
               <div class="h6">Zwavejs Version</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.zwaveVersion }}</div>
+              <div class="body-1 font-weight-bold">
+                {{ appInfo.zwaveVersion }}
+              </div>
             </v-col>
           </v-row>
 
@@ -51,7 +55,6 @@
           @export="exportConfiguration"
           @import="importConfiguration"
         />
-
       </v-card-text>
     </v-card>
   </v-container>
@@ -76,8 +79,7 @@ export default {
   computed: {
     ...mapGetters(['nodes', 'appInfo'])
   },
-  watch: {
-  },
+  watch: {},
   data () {
     return {
       settings: new Settings(localStorage),

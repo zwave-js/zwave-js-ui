@@ -300,7 +300,7 @@ export default {
 
     const self = this
 
-    this.$store.subscribe((mutation) => {
+    this.$store.subscribe(mutation => {
       if (mutation.type === 'showSnackbar') {
         self.showSnackbar(mutation.payload)
       }
