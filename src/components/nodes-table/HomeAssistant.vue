@@ -1,5 +1,5 @@
 <template>
-  <v-layout v-if="hassDevices.length > 0" column>
+  <v-layout column>
     <v-subheader>Home Assistant - Devices</v-subheader>
 
     <!-- HASS DEVICES -->
@@ -87,6 +87,9 @@
         ></v-textarea>
       </v-flex>
     </v-layout>
+    <div style="margin:20px" class="subtitle-1" v-else>
+      No Hass Devices
+    </div>
   </v-layout>
 </template>
 

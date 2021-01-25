@@ -1,7 +1,7 @@
 <template>
   <v-container grid-list-md>
     <v-layout wrap>
-      <v-flex xs12 sm6 md4>
+      <v-flex xs12 sm6>
         <v-select
           label="Group"
           v-model="group.group"
@@ -11,7 +11,7 @@
         ></v-select>
       </v-flex>
 
-      <v-flex v-if="group.group && group.associations" xs12 sm6 md4>
+      <v-flex v-if="group.group && group.associations" xs12 sm6>
         <v-list subheader>
           <v-subheader>Associations</v-subheader>
           <template v-for="(ass, index) in group.associations">

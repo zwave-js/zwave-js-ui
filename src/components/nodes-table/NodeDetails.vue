@@ -57,7 +57,7 @@
 
     <!-- NODE VALUES -->
 
-    <v-layout v-if="node.values" column>
+    <v-layout v-if="node.values && node.values.length > 0" column>
       <v-subheader>Values</v-subheader>
 
       <v-expansion-panels accordion multiple>
