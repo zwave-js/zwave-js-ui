@@ -144,11 +144,30 @@ export default {
   computed: {
     ...mapGetters(['nodes']),
     meshNodes () {
-      return this.activeNodes
-        .map(n => this.convertNode(n))
+      return this.activeNodes.map(n => this.convertNode(n))
     },
     activeNodes () {
       return this.nodes.filter(n => n.id !== 0 && n.status !== 'Removed')
+    },
+    links () {
+      const links = []
+
+      for (const source of this.activeNodes) {
+        if (source.neighbors) {
+          for (const target of source.neighbors) {
+            // ensure target node exists
+            if (this.nodes[target] && this.nodes[target].status !== 'Removed') {
+              links.push({
+                sid: source.id,
+                tid: target,
+                _color: this.$vuetify.theme.dark ? 'white' : 'black'
+              })
+            }
+          }
+        }
+      }
+
+      return links
     },
     options () {
       return {
@@ -185,7 +204,6 @@ export default {
       nodeSize: 20,
       fontSize: 10,
       force: 2000,
-      links: [],
       fab: false,
       selectedNode: null,
       showProperties: false,
@@ -194,7 +212,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(['showSnackbar']),
+    ...mapMutations(['showSnackbar', 'setNeighbors']),
     nodeClick (e, node) {
       this.selectedNode = this.selectedNode === node ? null : node
       this.showProperties = !!this.selectedNode
@@ -234,24 +252,6 @@ export default {
         api: 'refreshNeighbors',
         args: []
       })
-    },
-    updateLinks () {
-      this.links = []
-
-      for (const source of this.activeNodes) {
-        if (source.neighbors) {
-          for (const target of source.neighbors) {
-            // ensure target node exists
-            if (this.nodes[target] && this.nodes[target].status !== 'Removed') {
-              this.links.push({
-                sid: source.id,
-                tid: target,
-                _color: this.$vuetify.theme.dark ? 'white' : 'black'
-              })
-            }
-          }
-        }
-      }
     }
   },
   mounted () {
@@ -263,11 +263,8 @@ export default {
           case 'refreshNeighbors': {
             const neighbors = data.result
             for (let i = 0; i < neighbors.length; i++) {
-              if (self.nodes[i]) {
-                self.nodes[i].neighbors = neighbors[i]
-              }
+              self.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
             }
-            self.updateLinks()
             break
           }
         }
@@ -277,8 +274,6 @@ export default {
         )
       }
     })
-
-    this.refresh()
 
     // make properties window draggable
     const propertiesDiv = document.getElementById('properties')
@@ -312,7 +307,7 @@ export default {
     document.addEventListener(
       'mousemove',
       function (e) {
-        event.preventDefault()
+        e.preventDefault()
         if (isDown) {
           const l = e.clientX
           const r = e.clientY

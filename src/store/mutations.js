@@ -174,6 +174,11 @@ export const mutations = {
     // vue set is used to notify changes
     this._vm.$set(state.nodes, n.id, n)
   },
+  setNeighbors (state, { nodeId, neighbors }) {
+    if (state.nodes[nodeId]) {
+      this._vm.$set(state.nodes[nodeId], 'neighbors', neighbors)
+    }
+  },
   initSettings (state, conf) {
     if (conf) {
       Object.assign(state.zwave, conf.zwave || {})
