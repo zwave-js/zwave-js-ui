@@ -318,14 +318,6 @@ export default {
       }
     })
 
-    this.socket.on(socketEvents.connected, info => {
-      self.setAppInfo(info)
-    })
-
-    this.socket.on(socketEvents.controller, data => {
-      self.setControllerStatus(data)
-    })
-
     this.socket.on(socketEvents.init, data => {
       // convert node values in array
       self.initNodes(data.nodes)
@@ -333,21 +325,14 @@ export default {
       self.setAppInfo(data.info)
     })
 
-    this.socket.on(socketEvents.nodeUpdated, data => {
-      self.initNode(data)
-    })
+    this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
+    this.socket.on(socketEvents.controller, this.setControllerStatus.bind(this))
 
-    this.socket.on(socketEvents.nodeRemoved, node => {
-      self.initNode(node)
-    })
+    this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
+    this.socket.on(socketEvents.nodeRemoved, this.initNode.bind(this))
 
-    this.socket.on(socketEvents.valueRemoved, data => {
-      self.removeValue(data)
-    })
-
-    this.socket.on(socketEvents.valueUpdated, data => {
-      self.updateValue(data)
-    })
+    this.socket.on(socketEvents.valueRemoved, this.removeValue.bind(this))
+    this.socket.on(socketEvents.valueUpdated, this.updateValue.bind(this))
 
     this.socket.emit(socketActions.init, true)
   },
