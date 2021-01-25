@@ -102,6 +102,8 @@ import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import { Settings } from '@/modules/Settings'
 
+import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+
 export default {
   components: {
     Confirm
@@ -231,6 +233,8 @@ export default {
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' },
+        { icon: 'playlist_add_check', title: 'Scenes', path: '/scenes' },
+        { icon: 'bug_report', title: 'Debug', path: '/debug' },
         { icon: 'folder', title: 'Store', path: '/store' },
         { icon: 'share', title: 'Network graph', path: '/mesh' }
       ],
@@ -290,6 +294,37 @@ export default {
 
     this.dark = this.settings.load('dark', false)
     this.changeThemeColor()
+
+    const self = this
+
+    this.socket.on(socketEvents.connected, info => {
+      self.$store.dispatch('setAppInfo', info)
+    })
+
+    this.socket.on(socketEvents.init, data => {
+      // convert node values in array
+      self.$store.dispatch('initNodes', data.nodes)
+      self.cnt_status = data.error ? data.error : data.cntStatus
+      self.$store.dispatch('setAppInfo', data.info)
+    })
+
+    this.socket.on(socketEvents.nodeUpdated, data => {
+      self.$store.dispatch('initNode', data)
+    })
+
+    this.socket.on(socketEvents.nodeRemoved, node => {
+      self.$store.dispatch('initNode', node)
+    })
+
+    this.socket.on(socketEvents.valueRemoved, data => {
+      self.$store.dispatch('removeValue', data)
+    })
+
+    this.socket.on(socketEvents.valueUpdated, data => {
+      self.$store.dispatch('updateValue', data)
+    })
+
+    this.socket.emit(socketActions.init, true)
   },
   beforeDestroy () {
     if (this.socket) this.socket.close()
