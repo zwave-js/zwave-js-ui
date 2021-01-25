@@ -211,7 +211,6 @@ export default {
       this.$refs.form && this.$refs.form.resetValidation()
       if (val) {
         this.isNew = !this.editedValue.device
-        console.log('Set isNew to ' + this.isNew)
       }
     }
   },
