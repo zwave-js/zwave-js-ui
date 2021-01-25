@@ -128,8 +128,10 @@
 
               <v-container v-if="editedValue.parseSend">
                 <p>
-                  Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>
+                  Write the function here. Args are: <code>value</code>,
+                  <code>valueId</code>, <code>node</code>, <code>logger</code>.
+                  The function is sync and must return the parsed
+                  <code>value</code>.
                 </p>
                 <prism-editor
                   lineNumbers
@@ -150,8 +152,10 @@
 
               <v-container v-if="editedValue.parseReceive">
                 <p>
-                  Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>
+                  Write the function here. Args are: <code>value</code>,
+                  <code>valueId</code>, <code>node</code>, <code>logger</code>.
+                  The function is sync and must return the parsed
+                  <code>value</code>.
                 </p>
                 <prism-editor
                   lineNumbers
@@ -172,7 +176,7 @@
           color="blue darken-1"
           text
           @click="$refs.form.validate() && $emit('save')"
-          >Save</v-btn
+          >{{ isNew ? 'Add' : 'Update' }}</v-btn
         >
       </v-card-actions>
     </v-card>
@@ -205,6 +209,9 @@ export default {
     // eslint-disable-next-line no-unused-vars
     value (val) {
       this.$refs.form && this.$refs.form.resetValidation()
+      if (val) {
+        this.isNew = !this.editedValue.device
+      }
     }
   },
   computed: {
@@ -274,6 +281,7 @@ export default {
   },
   data () {
     return {
+      isNew: null,
       valid: true,
       required: v => !!v || 'This field is required'
     }
