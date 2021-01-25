@@ -176,7 +176,7 @@
           color="blue darken-1"
           text
           @click="$refs.form.validate() && $emit('save')"
-          >Update</v-btn
+          >{{ isNew ? 'Add' : 'Update' }}</v-btn
         >
       </v-card-actions>
     </v-card>
@@ -209,6 +209,10 @@ export default {
     // eslint-disable-next-line no-unused-vars
     value (val) {
       this.$refs.form && this.$refs.form.resetValidation()
+      if (val) {
+        this.isNew = !this.editedValue.device
+        console.log('Set isNew to ' + this.isNew)
+      }
     }
   },
   computed: {
@@ -278,6 +282,7 @@ export default {
   },
   data () {
     return {
+      isNew: null,
       valid: true,
       required: v => !!v || 'This field is required'
     }
