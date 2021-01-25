@@ -2,22 +2,27 @@ import { NodeCollection } from '@/modules/NodeCollection'
 import { Settings } from '@/modules/Settings'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
+import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 
 export default {
   props: {
-    nodes: Array
+    nodeActions: Array,
+    nodes: Array,
+    socket: Object
   },
   components: {
-    ColumnFilter
+    ColumnFilter,
+    ExpandedNode
   },
   data: () => ({
     settings: new Settings(localStorage),
     showHidden: undefined,
     itemsPerPage: undefined,
     groupBy: undefined,
-    selectedNode: undefined,
+    expanded: [],
     filters: {},
     sorting: {},
+    selected: [],
     headers: [
       { text: 'ID', type: 'number', value: 'id', groupable: false },
       { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
@@ -39,6 +44,9 @@ export default {
     ]
   }),
   methods: {
+    filterSelected () {
+      this.filters.id = { values: this.selected.map(node => node.id) }
+    },
     initFilters () {
       return this.headers.reduce((values, h) => {
         values[h.value] = {}
@@ -72,12 +80,14 @@ export default {
     },
     resetFilters () {
       this.filters = this.initFilters()
+      this.selected = []
       this.groupBy = undefined
       this.storeSetting('nodes_filters', this.filters)
     },
-    nodeSelected (node) {
-      this.selectedNode = node
-      this.$emit('node-selected', { node })
+    toggleExpanded (item) {
+      this.expanded = this.expanded.includes(item)
+        ? this.expanded.filter(i => i !== item)
+        : [...this.expanded, item]
     }
   },
   created () {

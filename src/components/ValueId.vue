@@ -100,8 +100,8 @@
         <v-btn
           outlined
           class="on-button"
-          :style="{ background: value.value ? '#4CAF50' : '' }"
-          :color="value.value ? 'white' : 'green'"
+          :style="{ background: value.newValue ? '#4CAF50' : '' }"
+          :color="value.newValue ? 'white' : 'green'"
           dark
           @click="updateValue(value, true)"
         >
@@ -110,8 +110,8 @@
         <v-btn
           outlined
           class="off-button"
-          :style="{ background: !value.value ? '#f44336' : '' }"
-          :color="!value.value ? 'white' : 'red'"
+          :style="{ background: !value.newValue ? '#f44336' : '' }"
+          :color="!value.newValue ? 'white' : 'red'"
           @click="updateValue(value, false)"
           dark
         >
