@@ -30,7 +30,7 @@ jobs:
           result-encoding: string
           script: |
             const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.js`);
-            return await bot.fixLintCheck({github, context});
+            return await bot.checkAuthorized({github, context});
 
       - name: Retrieve PR information
         if: steps.check.outputs.result == 'true'
