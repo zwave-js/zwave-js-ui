@@ -33,7 +33,7 @@ export class ColumnFilterHelper {
     const filter = {}
     ColumnFilterHelper.filterProps(colType).forEach(key => {
       if (value[key] !== undefined && value[key] !== null) {
-        if (Array.isArray(value[key]) && !value[key].length > 0) {
+        if (Array.isArray(value[key]) && value[key].length === 0) {
           // Skip empty arrays
           return
         }
