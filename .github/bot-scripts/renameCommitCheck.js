@@ -12,10 +12,6 @@ async function main(param) {
 		repo: context.repo.repo,
 	};
 
-	const request = {
-		...options,
-		pull_number: context.issue.number,
-	};
 	const { data: commits } = await github.pulls.listCommits({
 		...options,
 		pull_number: context.issue.number,

@@ -22,6 +22,19 @@ const path = require('path')
 const { storeDir } = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
 const archiver = require('archiver')
+const rateLimit = require('express-rate-limit')
+
+const storeLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  handler: function (req, res) {
+    res.json({
+      success: false,
+      message:
+        'Request limit reached. You can make only 100 reqests every 15 minutes'
+    })
+  }
+})
 
 const socketManager = new SocketManager()
 
@@ -36,6 +49,17 @@ function start (server) {
   setupSocket(server)
   setupInterceptor()
   startGateway()
+}
+
+function sanitizePath (path) {
+  // remove every ../
+  path = path.replace(/\.\.\//, '')
+
+  if (!path.startsWith(storeDir)) {
+    throw Error('Path not allowed')
+  }
+
+  return path
 }
 
 function setupLogging (settings) {
@@ -267,7 +291,7 @@ app.post('/api/importConfig', async function (req, res) {
 })
 
 // get config
-app.get('/api/store', async function (req, res) {
+app.get('/api/store', storeLimiter, async function (req, res) {
   try {
     async function parseDir (dir) {
       const toReturn = []
@@ -299,13 +323,9 @@ app.get('/api/store', async function (req, res) {
   }
 })
 
-app.get('/api/store/:path', async function (req, res) {
+app.get('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = req.params.path
-
-    if (!reqPath.startsWith(storeDir)) {
-      throw Error('Path not allowed')
-    }
+    const reqPath = sanitizePath(req.params.path)
 
     const stat = await fs.lstat(reqPath)
 
@@ -322,13 +342,9 @@ app.get('/api/store/:path', async function (req, res) {
   }
 })
 
-app.put('/api/store/:path', async function (req, res) {
+app.put('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = req.params.path
-
-    if (!reqPath.startsWith(storeDir)) {
-      throw Error('Path not allowed')
-    }
+    const reqPath = sanitizePath(req.params.path)
 
     const stat = await fs.lstat(reqPath)
 
@@ -345,13 +361,9 @@ app.put('/api/store/:path', async function (req, res) {
   }
 })
 
-app.delete('/api/store/:path', async function (req, res) {
+app.delete('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = req.params.path
-
-    if (!reqPath.startsWith(storeDir)) {
-      throw Error('Path not allowed')
-    }
+    const reqPath = sanitizePath(req.params.path)
 
     await fs.remove(reqPath)
 
@@ -362,7 +374,7 @@ app.delete('/api/store/:path', async function (req, res) {
   }
 })
 
-app.put('/api/store-multi', async function (req, res) {
+app.put('/api/store-multi', storeLimiter, async function (req, res) {
   try {
     const files = req.body.files || []
     for (const f of files) {
@@ -375,7 +387,7 @@ app.put('/api/store-multi', async function (req, res) {
   }
 })
 
-app.post('/api/store-multi', function (req, res) {
+app.post('/api/store-multi', storeLimiter, function (req, res) {
   const files = req.body.files || []
 
   const archive = archiver('zip')
