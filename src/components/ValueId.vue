@@ -87,7 +87,7 @@
 
     <v-select
       v-if="value.list"
-      :items="value.states"
+      :items="items"
       :label="label"
       :hint="help"
       persistent-hint
@@ -174,13 +174,25 @@ export default {
     }
   },
   computed: {
+    items () {
+      const items = this.value.states || []
+      const defaultValue = this.value.default
+
+      if (defaultValue !== undefined) {
+        const item = items.find(i => i.value === defaultValue)
+        if (item && !item.text.endsWith(' (Default)')) {
+          item.text += ' (Default)'
+        }
+      }
+      return items
+    },
     label () {
       return '[' + this.value.id + '] ' + this.value.label
     },
     help () {
       return (
         (this.value.description ? this.value.description + ' ' : '') +
-        (this.value.default !== undefined
+        (this.value.default !== undefined && !this.value.list
           ? `(Default: ${this.value.default})`
           : '')
       )
