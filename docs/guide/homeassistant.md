@@ -241,4 +241,4 @@ To remove an entity in HASS, you simply need to remove the retained message in t
 
 This can be done with [MQTT Explorer](http://mqtt-explorer.com/) or CLI tools like [`mosquitto_pub`](https://mosquitto.org/man/mosquitto_pub-1.html).
 
-Note that in order for a removed entity to appear again, it must be published by **zwavejs2mqtt** again. This happens automatically for new devices, if enabled, alternatively it can be done manually by selecting the node in **zwavejs2mqtt**, and then for each HASS device clicking `Discover`.
+Note that in order for a removed entity to appear again, it must be published by **zwavejs2mqtt** again. This happens automatically for new devices, if enabled, alternatively it can be done manually by selecting the node in **zwavejs2mqtt**, and then for each HASS device clicking `Rediscover Node`.
