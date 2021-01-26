@@ -225,7 +225,7 @@ export default {
       // sensor binary
       if (!v) {
         return []
-      } else if (v.class_id === 0x30) {
+      } else if (v.commandClass === 0x30) {
         // eslint-disable-line eqeqeq
         return [
           'battery',
@@ -291,7 +291,7 @@ export default {
       return highlight(code, languages.js) // returns html
     },
     isSensor (v) {
-      return v && (v.class_id === 0x31 || v.class_id === 0x32)
+      return v && (v.commandClass === 0x31 || v.commandClass === 0x32)
     }
   }
 }
