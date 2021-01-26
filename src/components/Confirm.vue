@@ -9,47 +9,51 @@
       <v-toolbar :color="options.color" dark dense flat>
         <v-toolbar-title class="white--text">{{ title }}</v-toolbar-title>
       </v-toolbar>
-      <v-card-text v-if="!options.inputs" v-show="!!message" class="pa-4">{{ message }}</v-card-text>
+      <v-card-text v-if="!options.inputs" v-show="!!message" class="pa-4">{{
+        message
+      }}</v-card-text>
       <v-card-text v-else class="pa-4">
-         <v-container grid-list-md>
-            <v-layout wrap>
-              <v-flex v-for="(input, index) in options.inputs" :key="index" xs12>
-                <v-text-field
-                  v-if="input.type === 'text' || input.type === 'number'"
-                  v-model="values[input.key]"
-                  :label="input.label"
-                  :hint="input.hint"
-                  :type="input.type || 'text'"
-                  :required="input.required"
-                  :min="input.min"
-                  :max="input.max"
-                ></v-text-field>
-                <v-switch
-                  v-if="input.type === 'boolean'"
-                  v-model="values[input.key]"
-                  :label="input.label"
-                  :hint="input.hint"
-                  :persistent-hint="!!input.hint"
-                  :required="input.required"
-                ></v-switch>
-                <v-select
-                  v-if="input.type === 'list'"
-                  v-model="values[input.key]"
-                  :item-text="input.itemText || 'text'"
-                  :item-value="input.itemValue || 'value'"
-                  :items="input.items"
-                  :label="input.label"
-                  :hint="input.hint"
-                  :required="input.required"
-                ></v-select>
-              </v-flex>
-            </v-layout>
-         </v-container>
+        <v-container grid-list-md>
+          <v-layout wrap>
+            <v-flex v-for="(input, index) in options.inputs" :key="index" xs12>
+              <v-text-field
+                v-if="input.type === 'text' || input.type === 'number'"
+                v-model="values[input.key]"
+                :label="input.label"
+                :hint="input.hint"
+                :type="input.type || 'text'"
+                :required="input.required"
+                :min="input.min"
+                :max="input.max"
+              ></v-text-field>
+              <v-switch
+                v-if="input.type === 'boolean'"
+                v-model="values[input.key]"
+                :label="input.label"
+                :hint="input.hint"
+                :persistent-hint="!!input.hint"
+                :required="input.required"
+              ></v-switch>
+              <v-select
+                v-if="input.type === 'list'"
+                v-model="values[input.key]"
+                :item-text="input.itemText || 'text'"
+                :item-value="input.itemValue || 'value'"
+                :items="input.items"
+                :label="input.label"
+                :hint="input.hint"
+                :required="input.required"
+              ></v-select>
+            </v-flex>
+          </v-layout>
+        </v-container>
       </v-card-text>
 
       <v-card-actions class="pt-0">
         <v-spacer></v-spacer>
-        <v-btn @click="agree" text :color="options.color">{{ options.confirmText }}</v-btn>
+        <v-btn @click="agree" text :color="options.color">{{
+          options.confirmText
+        }}</v-btn>
         <v-btn @click="cancel" text>{{ options.cancelText }}</v-btn>
       </v-card-actions>
     </v-card>

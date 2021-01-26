@@ -225,16 +225,18 @@ export default {
               'info',
               {
                 confirmText: 'Ok',
-                inputs: [{
-                  type: 'list',
-                  items: this.nodes,
-                  label: 'Node',
-                  hint: 'Select a node',
-                  required: true,
-                  key: 'nodeId',
-                  itemText: '_name',
-                  itemValue: 'id'
-                }]
+                inputs: [
+                  {
+                    type: 'list',
+                    items: this.nodes,
+                    label: 'Node',
+                    hint: 'Select a node',
+                    required: true,
+                    key: 'nodeId',
+                    itemText: '_name',
+                    itemValue: 'id'
+                  }
+                ]
               }
             )
 
@@ -252,7 +254,8 @@ export default {
         ) {
           const secure = await this.$listeners.showConfirm(
             'Node inclusion',
-            'Start inclusion in secure mode?', 'info',
+            'Start inclusion in secure mode?',
+            'info',
             {
               cancelText: 'No'
             }
