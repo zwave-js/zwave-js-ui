@@ -228,6 +228,7 @@ export default {
       } else if (v.commandClass === 0x30) {
         // eslint-disable-line eqeqeq
         return [
+          // sensor binary: https://www.home-assistant.io/integrations/binary_sensor/
           'battery',
           'cold',
           'connectivity',
@@ -253,7 +254,7 @@ export default {
           'window'
         ]
       } else if (this.isSensor(v)) {
-        // sensor multilevel and meters
+        // sensor multilevel and meters: https://www.home-assistant.io/integrations/sensor/
         return [
           'battery',
           'humidity',
@@ -261,8 +262,26 @@ export default {
           'signal_strength',
           'temperature',
           'power',
+          'power_factor',
           'pressure',
-          'timestamp'
+          'timestamp',
+          'current',
+          'energy',
+          'voltage'
+        ]
+      } else if (v.commandClass === 38) {
+        // multilevel switch: home-assistant.io/integrations/cover/
+        return [
+          'awning',
+          'blind',
+          'curtain',
+          'damper',
+          'door',
+          'garage',
+          'gate',
+          'shade',
+          'shutter',
+          'window'
         ]
       } else {
         return []
