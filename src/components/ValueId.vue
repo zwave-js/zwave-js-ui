@@ -98,14 +98,15 @@
     ></v-select>
 
     <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-      <v-subheader style="padding-left: 0"
-        >{{ label }}
-      </v-subheader>
+      <v-subheader style="padding-left: 0">{{ label }} </v-subheader>
       <div style="display: flex">
         <v-btn
           outlined
           class="on-button"
-          :style="{ background: value.newValue ? '#4CAF50' : '', 'border-color': (this.$vuetify.theme.dark ? 'white' : 'grey') }"
+          :style="{
+            background: value.newValue ? '#4CAF50' : '',
+            'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+          }"
           :color="value.newValue ? 'white' : 'green'"
           dark
           @click="updateValue(value, true)"
@@ -115,7 +116,10 @@
         <v-btn
           outlined
           class="off-button"
-          :style="{ background: !value.newValue ? '#f44336' : '', 'border-color': (this.$vuetify.theme.dark ? 'white' : 'grey') }"
+          :style="{
+            background: !value.newValue ? '#f44336' : '',
+            'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+          }"
           :color="!value.newValue ? 'white' : 'red'"
           @click="updateValue(value, false)"
           dark
@@ -137,7 +141,7 @@
           >{{ value.label }}</v-btn
         >
       </template>
-      <span>{{ '[' + value.id + '] ' + (help) }}</span>
+      <span>{{ '[' + value.id + '] ' + help }}</span>
     </v-tooltip>
   </div>
 </template>
@@ -174,7 +178,12 @@ export default {
       return '[' + this.value.id + '] ' + this.value.label
     },
     help () {
-      return (this.value.description ? this.value.description + ' ' : '') + (this.value.default !== undefined ? `(Default: ${this.value.default})` : '')
+      return (
+        (this.value.description ? this.value.description + ' ' : '') +
+        (this.value.default !== undefined
+          ? `(Default: ${this.value.default})`
+          : '')
+      )
     },
     color: {
       // getter
