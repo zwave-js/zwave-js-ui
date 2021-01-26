@@ -248,7 +248,7 @@ export default {
       pages: [
         { icon: 'widgets', title: 'Control Panel', path: '/' },
         { icon: 'settings', title: 'Settings', path: '/settings' },
-        { icon: 'playlist_add_check', title: 'Scenes', path: '/scenes' },
+        { icon: 'movie_filter', title: 'Scenes', path: '/scenes' },
         { icon: 'bug_report', title: 'Debug', path: '/debug' },
         { icon: 'folder', title: 'Store', path: '/store' },
         { icon: 'share', title: 'Network graph', path: '/mesh' }
