@@ -48,7 +48,12 @@
           </v-tooltip>
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
-              <v-btn text color="purple" v-on="on" @click="$emit('exportNodes')">
+              <v-btn
+                text
+                color="purple"
+                v-on="on"
+                @click="$emit('exportNodes')"
+              >
                 EXPORT
               </v-btn>
             </template>
