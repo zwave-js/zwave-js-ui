@@ -25,7 +25,9 @@
             <template v-slot:append="{ item }">
               <v-layout row justify-end ma-1>
                 <div class="caption grey--text">{{ item.size }}</div>
-                <v-icon @click="deleteFile(item)" color="red">delete</v-icon>
+                <v-icon @click.stop="deleteFile(item)" color="red"
+                  >delete</v-icon
+                >
               </v-layout>
             </template>
           </v-treeview>
