@@ -1,4 +1,4 @@
-name: "Z-Wave Bot: React to comments"
+name: 'Z-Wave Bot: React to comments'
 
 on:
   issue_comment:
