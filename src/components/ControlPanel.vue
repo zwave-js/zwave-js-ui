@@ -52,8 +52,8 @@
           :node-actions="node_actions"
           :socket="socket"
           v-on="$listeners"
-          @export="exportConfiguration"
-          @import="importConfiguration"
+          @exportNodes="exportConfiguration"
+          @importNodes="importConfiguration"
         />
       </v-card-text>
     </v-card>

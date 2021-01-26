@@ -40,7 +40,7 @@
           >
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
-              <v-btn text color="green" v-on="on" @click="$emit('import')">
+              <v-btn text color="green" v-on="on" @click="$emit('importNodes')">
                 IMPORT
               </v-btn>
             </template>
@@ -48,7 +48,7 @@
           </v-tooltip>
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
-              <v-btn text color="purple" v-on="on" @click="$emit('export')">
+              <v-btn text color="purple" v-on="on" @click="$emit('exportNodes')">
                 EXPORT
               </v-btn>
             </template>

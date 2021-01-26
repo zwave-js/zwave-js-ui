@@ -166,7 +166,6 @@ export default {
     importFile: function (ext) {
       const self = this
       // Check for the various File API support.
-
       return new Promise(function (resolve, reject) {
         if (
           window.File &&
