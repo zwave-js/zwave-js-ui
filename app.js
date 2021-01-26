@@ -28,7 +28,11 @@ const storeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
   handler: function (req, res) {
-    res.json({ success: false, message: 'Request limit reached. You can make only 100 reqests every 15 minutes' })
+    res.json({
+      success: false,
+      message:
+        'Request limit reached. You can make only 100 reqests every 15 minutes'
+    })
   }
 })
 
