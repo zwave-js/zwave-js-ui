@@ -25,7 +25,9 @@
             <template v-slot:append="{ item }">
               <v-layout row justify-end ma-1>
                 <div class="caption grey--text">{{ item.size }}</div>
-                <v-icon @click="deleteFile(item)" color="red">delete</v-icon>
+                <v-icon @click.stop="deleteFile(item)" color="red"
+                  >delete</v-icon
+                >
               </v-layout>
             </template>
           </v-treeview>
@@ -154,6 +156,7 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
+import { mapMutations } from 'vuex'
 
 export default {
   name: 'Store',
@@ -185,9 +188,7 @@ export default {
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
+    ...mapMutations(['showSnackbar']),
     async deleteFile (item) {
       if (
         await this.$listeners.showConfirm(

@@ -7,4 +7,6 @@ module.exports = {
 	renameCommitCheck: (...args) => require("./renameCommitCheck")(...args),
 	renameCommitFeedback: (...args) =>
 		require("./renameCommitFeedback")(...args),
+	importConfigCreatePR: (...args) =>
+		require("./importConfigCreatePR")(...args),
 };

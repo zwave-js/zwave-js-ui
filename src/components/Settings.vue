@@ -508,7 +508,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapGetters, mapMutations } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
@@ -655,6 +655,7 @@ export default {
     }
   },
   methods: {
+    ...mapMutations(['showSnackbar']),
     randomKey () {
       let key = ''
 
@@ -681,9 +682,6 @@ export default {
       } else {
         self.mqtt[data.key] = ''
       }
-    },
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
     },
     async importSettings () {
       try {

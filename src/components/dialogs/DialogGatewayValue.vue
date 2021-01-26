@@ -128,8 +128,10 @@
 
               <v-container v-if="editedValue.parseSend">
                 <p>
-                  Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>
+                  Write the function here. Args are: <code>value</code>,
+                  <code>valueId</code>, <code>node</code>, <code>logger</code>.
+                  The function is sync and must return the parsed
+                  <code>value</code>.
                 </p>
                 <prism-editor
                   lineNumbers
@@ -150,8 +152,10 @@
 
               <v-container v-if="editedValue.parseReceive">
                 <p>
-                  Write the function here. Args are <code>value</code>. The
-                  function is sync and must return the parsed <code>value</code>
+                  Write the function here. Args are: <code>value</code>,
+                  <code>valueId</code>, <code>node</code>, <code>logger</code>.
+                  The function is sync and must return the parsed
+                  <code>value</code>.
                 </p>
                 <prism-editor
                   lineNumbers
@@ -172,7 +176,7 @@
           color="blue darken-1"
           text
           @click="$refs.form.validate() && $emit('save')"
-          >Save</v-btn
+          >{{ isNew ? 'Add' : 'Update' }}</v-btn
         >
       </v-card-actions>
     </v-card>
@@ -205,6 +209,9 @@ export default {
     // eslint-disable-next-line no-unused-vars
     value (val) {
       this.$refs.form && this.$refs.form.resetValidation()
+      if (val) {
+        this.isNew = !this.editedValue.device
+      }
     }
   },
   computed: {
@@ -218,9 +225,10 @@ export default {
       // sensor binary
       if (!v) {
         return []
-      } else if (v.class_id === 0x30) {
+      } else if (v.commandClass === 0x30) {
         // eslint-disable-line eqeqeq
         return [
+          // sensor binary: https://www.home-assistant.io/integrations/binary_sensor/
           'battery',
           'cold',
           'connectivity',
@@ -246,7 +254,7 @@ export default {
           'window'
         ]
       } else if (this.isSensor(v)) {
-        // sensor multilevel and meters
+        // sensor multilevel and meters: https://www.home-assistant.io/integrations/sensor/
         return [
           'battery',
           'humidity',
@@ -254,8 +262,26 @@ export default {
           'signal_strength',
           'temperature',
           'power',
+          'power_factor',
           'pressure',
-          'timestamp'
+          'timestamp',
+          'current',
+          'energy',
+          'voltage'
+        ]
+      } else if (v.commandClass === 38) {
+        // multilevel switch: home-assistant.io/integrations/cover/
+        return [
+          'awning',
+          'blind',
+          'curtain',
+          'damper',
+          'door',
+          'garage',
+          'gate',
+          'shade',
+          'shutter',
+          'window'
         ]
       } else {
         return []
@@ -274,6 +300,7 @@ export default {
   },
   data () {
     return {
+      isNew: null,
       valid: true,
       required: v => !!v || 'This field is required'
     }
@@ -283,7 +310,7 @@ export default {
       return highlight(code, languages.js) // returns html
     },
     isSensor (v) {
-      return v && (v.class_id === 0x31 || v.class_id === 0x32)
+      return v && (v.commandClass === 0x31 || v.commandClass === 0x32)
     }
   }
 }
