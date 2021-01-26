@@ -52,8 +52,8 @@
           :node-actions="node_actions"
           :socket="socket"
           v-on="$listeners"
-          @export="exportConfiguration"
-          @import="importConfiguration"
+          @exportNodes="exportConfiguration"
+          @importNodes="importConfiguration"
         />
       </v-card-text>
     </v-card>
@@ -219,13 +219,32 @@ export default {
           }
 
           if (!broadcast) {
-            const id = parseInt(prompt('Node ID'))
+            const { nodeId } = await this.$listeners.showConfirm(
+              'Choose a node',
+              '',
+              'info',
+              {
+                confirmText: 'Ok',
+                inputs: [
+                  {
+                    type: 'list',
+                    items: this.nodes,
+                    label: 'Node',
+                    hint: 'Select a node',
+                    required: true,
+                    key: 'nodeId',
+                    itemText: '_name',
+                    itemValue: 'id'
+                  }
+                ]
+              }
+            )
 
-            if (isNaN(id)) {
-              this.showMessage('Node ID must be an integer value')
+            if (isNaN(nodeId)) {
+              this.showSnackbar('Node ID must be an integer value')
               return
             }
-            args.push(id)
+            args.push(nodeId)
           }
         }
 
@@ -235,7 +254,11 @@ export default {
         ) {
           const secure = await this.$listeners.showConfirm(
             'Node inclusion',
-            'Start inclusion in secure mode?'
+            'Start inclusion in secure mode?',
+            'info',
+            {
+              cancelText: 'No'
+            }
           )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
