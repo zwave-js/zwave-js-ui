@@ -186,3 +186,5 @@ The Gateway values table can be used with all gateway types to customize specifi
 - **Post operation**: If you want to convert your value (eg. '/10' '/100' '*10' '*100')
 - **Parse send**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value sent to MQTT. The function must be sync
 - **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
+- **Enable Poll**: Enable poll of this value by using zwave-js [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue). _Warning_: Polling can impose a heavy load on the network and should not be done too frequently.
+- **Poll interval**: Seconds between two poll requests
