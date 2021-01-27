@@ -7,7 +7,6 @@ import {
   InterviewStage,
   NodeStatus,
   ValueType,
-  ZWaveNode,
   ZWaveOptions
 } from 'zwave-js'
 
