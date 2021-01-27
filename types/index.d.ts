@@ -1,4 +1,5 @@
-import { CommandClass, InterviewStage, NodeStatus, ValueType } from 'zwave-js'
+import { type } from 'os'
+import { CommandClass, InterviewStage, NodeStatus, ValueType, ZWaveOptions } from 'zwave-js'
 
 export type Z2MValueIdState = {
   text: string
@@ -96,4 +97,83 @@ export type Z2MNode = {
   maxBaudRate: number
   interviewStage: InterviewStage
   status: NodeStatus
+}
+
+export enum GatewayType {
+    VALUEID,
+    NAMED,
+    MANUAL
+}
+
+export enum PayloadType {
+    JSON_TIME_VALUE,
+    VALUEID,
+    RAW
+}
+
+export type GatewayValue = {
+    device: string,
+    value: Z2MValueId,
+    topic: string,
+    device_class: string,
+    icon: string,
+    postOperation: string,
+    enablePoll: boolean,
+    pollInterval: number,
+    parseSend: boolean,
+    sendFunction: string,
+    parseReceive: boolean,
+    receiveFunction: string
+}
+
+export type LogLevel = 'silly' | 'verbose' | 'debug' | 'info' | 'warn' | 'error'
+
+export type GatewayConfig = {
+    type: GatewayType,
+    payloadType: PayloadType,
+    nodeNames: boolean,
+    ignoreLoc: boolean,
+    sendEvents: boolean,
+    ignoreStatus: boolean,
+    includeNodeInfo: boolean,
+    publishNodeDetails: boolean,
+    retainedDiscovery: boolean,
+    entityTemplate: string,
+    hassDiscovery: boolean,
+    discoveryPrefix: string,
+    logEnabled: boolean,
+    logLevel: LogLevel,
+    logToFile: boolean,
+    values: GatewayValue[]
+}
+
+export type MqttConfig = {
+    name: string,
+    host: string,
+    port: number,
+    reconnectPeriod: number,
+    prefix: string,
+    qos: 0 | 1 | 2,
+    retain: boolean,
+    clean: boolean,
+    store: boolean,
+    allowSelfSigned: boolean,
+    key: string,
+    cert: string,
+    ca: string,
+    auth: boolean,
+    username: string,
+    password: string
+}
+
+export type ZwaveConfig = {
+    port: string,
+    networkKey: string,
+    serverEnabled: boolean,
+    serverPort: number,
+    logEnabled: boolean,
+    logLevel: LogLevel,
+    commandsTimeout: number,
+    plugin: string,
+    options: ZWaveOptions
 }
