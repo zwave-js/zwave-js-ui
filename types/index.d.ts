@@ -1,3 +1,4 @@
+import { EventEmitter } from 'events'
 import { type } from 'os'
 import { CommandClass, InterviewStage, NodeStatus, ValueType, ZWaveOptions } from 'zwave-js'
 
@@ -176,4 +177,12 @@ export type ZwaveConfig = {
     commandsTimeout: number,
     plugin: string,
     options: ZWaveOptions
+}
+
+export interface MqttClient extends EventEmitter {
+    config: MqttConfig
+    on (event: 'writeRequest', listener: (parts: string[], payload: any) => void): this
+    on (event: 'broadcastRequest', listener: (parts: string[], payload: any) => void): this
+    on (event: 'apiCall', listener: (topic: string, apiNema: string, payload: any) => void): this
+    on (event: 'connect', listener: () => void): this
 }
