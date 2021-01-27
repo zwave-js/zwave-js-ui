@@ -2,7 +2,6 @@ import { ZwavejsServer } from '@zwave-js/server'
 import { EventEmitter } from 'events'
 import { MqttClient as Client, IClientPublishOptions } from 'mqtt'
 import { Socket } from 'net'
-import { type } from 'os'
 import {
   Association,
   CommandClass,
