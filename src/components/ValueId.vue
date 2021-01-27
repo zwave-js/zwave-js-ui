@@ -1,10 +1,11 @@
 <template>
   <div v-if="!value.writeable && !value.list">
     <v-text-field
-      :label="'[' + value.id + '] ' + value.label"
+      :label="label"
       readonly
       :suffix="value.unit"
-      :hint="value.description || ''"
+      :hint="help"
+      persistent-hint
       v-model="value.value"
     ></v-text-field>
   </div>
@@ -17,27 +18,29 @@
             value.type === 'string' ||
             value.type === 'any')
       "
-      :label="'[' + value.id + '] ' + value.label"
+      :label="label"
       :type="value.type === 'number' ? 'number' : 'text'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.unit"
       :min="value.min != value.max ? value.min : null"
       :step="1"
+      persistent-hint
       :max="value.min != value.max ? value.max : null"
-      :hint="value.description || ''"
+      :hint="help"
       v-model="value.newValue"
       @click:append-outer="updateValue(value)"
     ></v-text-field>
 
     <div style="display:flex" v-if="value.type === 'duration'">
       <v-text-field
-        :label="'[' + value.id + '] ' + value.label"
+        :label="label"
         :type="value.type === 'number' ? 'number' : 'text'"
         :min="value.min != value.max ? value.min : null"
         :step="1"
+        persistent-hint
         :readonly="!value.writeable || disable_send"
         :max="value.min != value.max ? value.max : null"
-        :hint="value.description || ''"
+        :hint="help"
         v-model.number="value.newValue.value"
       ></v-text-field>
       <v-select
@@ -56,9 +59,10 @@
       solo
       v-if="value.type === 'color'"
       v-model="color"
-      :label="'[' + value.id + '] ' + value.label"
+      :label="label"
+      persistent-hint
       :append-outer-icon="!disable_send ? 'send' : null"
-      :hint="value.description || ''"
+      :hint="help"
       @click:append-outer="updateValue(value)"
     >
       <template v-slot:append>
@@ -83,9 +87,10 @@
 
     <v-select
       v-if="value.list"
-      :items="value.states"
-      :label="'[' + value.id + '] ' + value.label"
-      :hint="value.description || ''"
+      :items="items"
+      :label="label"
+      :hint="help"
+      persistent-hint
       :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
       v-model="value.newValue"
       :readonly="!value.writeable"
@@ -93,14 +98,15 @@
     ></v-select>
 
     <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-      <v-subheader style="padding-left: 0"
-        >{{ '[' + value.id + '] ' + value.label }}
-      </v-subheader>
+      <v-subheader style="padding-left: 0">{{ label }} </v-subheader>
       <div style="display: flex">
         <v-btn
           outlined
           class="on-button"
-          :style="{ background: value.newValue ? '#4CAF50' : '' }"
+          :style="{
+            background: value.newValue ? '#4CAF50' : '',
+            'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+          }"
           :color="value.newValue ? 'white' : 'green'"
           dark
           @click="updateValue(value, true)"
@@ -110,7 +116,10 @@
         <v-btn
           outlined
           class="off-button"
-          :style="{ background: !value.newValue ? '#f44336' : '' }"
+          :style="{
+            background: !value.newValue ? '#f44336' : '',
+            'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+          }"
           :color="!value.newValue ? 'white' : 'red'"
           @click="updateValue(value, false)"
           dark
@@ -118,6 +127,7 @@
           OFF
         </v-btn>
       </div>
+      <div v-if="help" class="caption">{{ help }}</div>
     </div>
 
     <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
@@ -131,7 +141,7 @@
           >{{ value.label }}</v-btn
         >
       </template>
-      <span>{{ '[' + value.id + '] ' + (value.description || '') }}</span>
+      <span>{{ '[' + value.id + '] ' + help }}</span>
     </v-tooltip>
   </div>
 </template>
@@ -164,6 +174,29 @@ export default {
     }
   },
   computed: {
+    items () {
+      const items = this.value.states || []
+      const defaultValue = this.value.default
+
+      if (defaultValue !== undefined) {
+        const item = items.find(i => i.value === defaultValue)
+        if (item && !item.text.endsWith(' (Default)')) {
+          item.text += ' (Default)'
+        }
+      }
+      return items
+    },
+    label () {
+      return '[' + this.value.id + '] ' + this.value.label
+    },
+    help () {
+      return (
+        (this.value.description ? this.value.description + ' ' : '') +
+        (this.value.default !== undefined && !this.value.list
+          ? `(Default: ${this.value.default})`
+          : '')
+      )
+    },
     color: {
       // getter
       get: function () {
