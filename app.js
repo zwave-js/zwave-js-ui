@@ -53,7 +53,7 @@ function start (server) {
 
 function sanitizePath (path) {
   // remove every ../
-  path = path.replace(/\.\.\//, '')
+  path = path.replace(/\.\.\//g, '')
 
   if (!path.startsWith(storeDir)) {
     throw Error('Path not allowed')
