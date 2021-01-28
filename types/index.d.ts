@@ -41,7 +41,7 @@ export type Z2MValueId = {
   unit?: string
   minLenght?: number
   maxLength?: number
-  states?: ZValueIdState[]
+  states?: Z2MValueIdState[]
   list: boolean
   lastUpdate?: number
 }
@@ -375,7 +375,7 @@ export interface ZwaveClient extends EventEmitter {
   ): Promise<void>
   abortFirmwareUpdate(nodeId: number): Promise<void>
   beginHealingNetwork(): Promise<boolean>
-  stopHealingNetwork(): Primise<boolean>
+  stopHealingNetwork(): Promise<boolean>
   hardReset(): Promise<void>
   callApi(
     apiName: string,
