@@ -1,6 +1,6 @@
 # MQTT
 
-You have full access to all [zwavejs APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) by simply using MQTT.
+You have access to almost all [zwavejs APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) via MQTT.
 
 ## Zwave Events
 
@@ -33,22 +33,6 @@ Where `args` is an array with the args used to call the api, the topic is:
 `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/<api_name>/set`
 
 The result will be published on the same topic without `/set`
-
-Example: If I publish the previous json object to the topic
-
-`zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/getAssociations/set`
-
-I will get this response (in the same topic without the suffix `/set`):
-
-```json
-{
-  "success": true,
-  "message": "Success zwave api call",
-  "result": [1]
-}
-```
-
-`result` will contain the value returned from the API. In this example I will get an array with all node IDs that are associated to the group 1 (lifeline) of node 2.
 
 ### APIs
 
@@ -96,6 +80,62 @@ This are the available apis:
 - `beginFirmwareUpdate(nodeId, fileName, data)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
 - `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
 - `writeValue(valueId, value)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
+- `sendCommand(valueId, command, args)`: Send a custom command
+
+### Api call examples
+
+#### Get Associations
+
+Get all the associations of node `23` group `Lifeline` (groupId `1`)
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/getAssociations/set`
+
+Payload:
+
+```js
+{
+  "args": [
+    23, // nodeid
+    1 // lifeline group id
+  ]
+}
+
+```
+
+I will get this response (in the same topic without the suffix `/set`):
+
+```js
+{
+  "success": true,
+  "message": "Success zwave api call",
+  "result": [1] // the controller id
+}
+```
+
+`result` will contain the value returned from the API. In this example I will get an array with all node IDs that are associated to the group 1 (lifeline) of node 23.
+
+#### Send Command
+
+Example calling [startLevelChange](https://github.com/zwave-js/node-zwave-js/blob/c695ee81cb2b1d3cf15e3db1cc14b1e41a911cc0/packages/zwave-js/src/lib/commandclass/MultilevelSwitchCC.ts) command:
+
+Topic: `zwavejs/_CLIENTS/ZWAVE_GATEWAY-<yourName>/api/sendCommand/set`
+
+Payload:
+
+```js
+{ "args": [
+  {
+    "nodeId": 23,
+    "commandClass": 38,
+    "commandClassName": "Multilevel Switch",
+    "endpoint": 0,
+    "property": "targetValue"
+  },
+  "startLevelChange",
+  [{}] // this are the args, in this case it could be omitted
+  ]
+}
+```
 
 ## Set values
 

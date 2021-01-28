@@ -382,6 +382,7 @@ export interface ZwaveClient extends EventEmitter {
     ...args: any
   ): Promise<{ success: boolean; message: string; result: any; args: any[] }>
   writeValue(valueId: Z2MValueId, value: number | string): Promise<void>
+  sendCommand(valueId: Z2MValueId, command: string, args: any[]): Promise<any>
 }
 
 export interface Z2MGateway {
