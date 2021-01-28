@@ -2,6 +2,7 @@
   <v-data-table
     :headers="headers"
     :items="tableNodes"
+    :mobile-breakpoint="0"
     :footer-props="{
       itemsPerPageOptions: [10, 20, 50, 100, -1]
     }"
