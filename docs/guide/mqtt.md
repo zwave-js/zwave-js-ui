@@ -80,6 +80,7 @@ This are the available apis:
 - `removeAllAssociations(nodeId)`: Remove all associations of a specific node
 - `removeNodeFromAllAssociations(nodeId)`: Remove a node from all associations
 - `refreshValues(nodeId)`: Refresh all node values
+- `pollValue(valueId)`: Polls a value from the node
 - `startInclusion()`: Starts the inclusion
 - `startExclusion()`: Starts the exclusion
 - `stopInclusion()`: Stops the inclusion
