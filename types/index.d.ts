@@ -357,6 +357,8 @@ export interface ZwaveClient extends EventEmitter {
   getNodes(): Z2MNode[]
   getInfo(): Map<string, any>
   refreshValues(nodeId: number): Promise<void>
+  setPollInterval(valueId: Z2MValueId, interval: number): void
+  pollValue(valueId: Z2MValueId): Promise<any>
   replaceFailedNode(nodeId: number, secure: any): Promise<boolean>
   startInclusion(secure: boolean): Promise<boolean>
   startExclusion(): Promise<boolean>
