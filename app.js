@@ -51,15 +51,24 @@ function start (server) {
   startGateway()
 }
 
-function sanitizePath (path) {
-  // remove every ../
-  path = path.replace(/\.\.\//, '')
+/**
+ * Get the `path` param from a request. Throws if the path is not safe
+ *
+ * @param {Express.Request} req
+ * @returns {string} The path is it's safe, thorws otherwise
+ */
+function getSafePath (req) {
+  const reqPath = req.params.path
 
-  if (!path.startsWith(storeDir)) {
+  if (/[.]+\//g.test(reqPath)) {
+    throw Error('Path contains invalid chars')
+  }
+
+  if (!reqPath.startsWith(storeDir)) {
     throw Error('Path not allowed')
   }
 
-  return path
+  return reqPath
 }
 
 function setupLogging (settings) {
@@ -162,7 +171,6 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.zwave, async function (socket, data) {
-    logger.log('info', `Zwave api call: ${data.api} %o`, data.args)
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
@@ -325,7 +333,7 @@ app.get('/api/store', storeLimiter, async function (req, res) {
 
 app.get('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = sanitizePath(req.params.path)
+    const reqPath = getSafePath(req)
 
     const stat = await fs.lstat(reqPath)
 
@@ -344,7 +352,7 @@ app.get('/api/store/:path', storeLimiter, async function (req, res) {
 
 app.put('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = sanitizePath(req.params.path)
+    const reqPath = getSafePath(req)
 
     const stat = await fs.lstat(reqPath)
 
@@ -363,7 +371,7 @@ app.put('/api/store/:path', storeLimiter, async function (req, res) {
 
 app.delete('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = sanitizePath(req.params.path)
+    const reqPath = getSafePath(req)
 
     await fs.remove(reqPath)
 

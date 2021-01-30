@@ -437,15 +437,15 @@
                           <td class="text-xs">
                             {{
                               item.enablePoll
-                                ? 'Intensity ' + item.pollIntensity
+                                ? 'Interval: ' + item.pollInterval + 's'
                                 : 'No'
                             }}
                           </td>
-                          <td class="text-xs">
+                          <!-- <td class="text-xs">
                             {{
                               item.verifyChanges ? 'Verified' : 'Not Verified'
                             }}
-                          </td>
+                          </td> -->
                           <td>
                             <v-icon
                               small
@@ -586,7 +586,7 @@ export default {
         { text: 'Topic', value: 'topic' },
         { text: 'Post Operation', value: 'postOperation' },
         { text: 'Poll', value: 'enablePoll' },
-        { text: 'Changes', value: 'verifyChanges' },
+        // { text: 'Changes', value: 'verifyChanges' },
         { text: 'Actions', sortable: false }
       ],
       e1: true,

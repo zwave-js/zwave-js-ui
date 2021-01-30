@@ -88,24 +88,26 @@
                   required
                 ></v-text-field>
               </v-flex>
-              <!-- <v-flex xs6>
+              <v-flex xs6>
                 <v-switch
                   label="Poll"
-                  hint="Enable poll of this value"
+                  hint="Enable poll of this value. ATTENTION: This could create lot traffic in your network and kill the life of battery powered devices. Use at your own risk"
                   persistent-hint
                   v-model="editedValue.enablePoll"
                 ></v-switch>
               </v-flex>
               <v-flex v-if="editedValue.enablePoll" xs6>
                 <v-text-field
-                  v-model.number="editedValue.pollIntensity"
-                  label="Poll intensity"
+                  v-model.number="editedValue.pollInterval"
+                  label="Poll interval"
+                  hint="Seconds between to wait between poll requests. The timer starts when the request ends"
                   :rules="[requiredIntensity]"
+                  suffix="seconds"
                   required
                   type="number"
                 ></v-text-field>
               </v-flex>
-
+              <!--
               <v-flex xs6>
                 <v-switch
                   label="Verify changes"
@@ -290,8 +292,8 @@ export default {
     requiredIntensity () {
       return (
         !this.editedValue.enablePoll ||
-        (this.editedValue.enablePoll && this.editedValue.pollIntensity > 0) ||
-        'Min value is 1'
+        (this.editedValue.enablePoll && this.editedValue.pollInterval >= 10) ||
+        'Minimun interval is 10 seconds'
       )
     },
     requiredTopic () {
