@@ -1,7 +1,11 @@
 <template>
+
+  <v-col>
+
+  <v-subheader class="valueid-label">{{ label }} </v-subheader>
+
   <div v-if="!value.writeable && !value.list">
     <v-text-field
-      :label="label"
       readonly
       :suffix="value.unit"
       :hint="help"
@@ -18,7 +22,6 @@
             value.type === 'string' ||
             value.type === 'any')
       "
-      :label="label"
       :type="value.type === 'number' ? 'number' : 'text'"
       :append-outer-icon="!disable_send ? 'send' : null"
       :suffix="value.unit"
@@ -33,7 +36,6 @@
 
     <div style="display:flex" v-if="value.type === 'duration'">
       <v-text-field
-        :label="label"
         :type="value.type === 'number' ? 'number' : 'text'"
         :min="value.min != value.max ? value.min : null"
         :step="1"
@@ -54,12 +56,11 @@
     </div>
 
     <v-text-field
-      style="max-width: 250px;margin: auto;"
+      style="max-width: 250px;margin-top:10px"
       flat
       solo
       v-if="value.type === 'color'"
       v-model="color"
-      :label="label"
       persistent-hint
       :append-outer-icon="!disable_send ? 'send' : null"
       :hint="help"
@@ -88,7 +89,6 @@
     <v-select
       v-if="value.list"
       :items="items"
-      :label="label"
       :hint="help"
       persistent-hint
       :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
@@ -98,8 +98,7 @@
     ></v-select>
 
     <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-      <v-subheader style="padding-left: 0">{{ label }} </v-subheader>
-      <div style="display: flex">
+      <div style="display: flex;margin-top:20px">
         <v-btn
           outlined
           class="on-button"
@@ -144,6 +143,8 @@
       <span>{{ '[' + value.id + '] ' + help }}</span>
     </v-tooltip>
   </div>
+
+  </v-col>
 </template>
 
 <style scoped>
@@ -154,6 +155,12 @@
 .off-button {
   border-radius: 0 20px 20px 0;
   margin-right: 0;
+}
+.valueid-label {
+  font-weight: bold;
+  color: black;
+  padding-left: 0;
+  height: 0;
 }
 </style>
 
