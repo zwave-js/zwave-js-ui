@@ -87,7 +87,13 @@
       <v-select
         v-if="value.list"
         :items="items"
-        :style="{'max-width': ($vuetify.breakpoint.smAndDown ? '280px' : ($vuetify.breakpoint.smOnly ? '400px' : 'auto'))}"
+        :style="{
+          'max-width': $vuetify.breakpoint.smAndDown
+            ? '280px'
+            : $vuetify.breakpoint.smOnly
+            ? '400px'
+            : 'auto'
+        }"
         :hint="help"
         persistent-hint
         :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
