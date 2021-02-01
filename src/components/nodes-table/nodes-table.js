@@ -36,7 +36,13 @@ export default {
       { text: 'Beaming', type: 'boolean', value: 'isBeaming' },
       { text: 'Failed', type: 'boolean', value: 'failed' },
       { text: 'Status', type: 'string', value: 'status' },
-      { text: 'Interview stage', type: 'string', value: 'interviewStage' }
+      { text: 'Interview stage', type: 'string', value: 'interviewStage' },
+      {
+        text: 'Last Active',
+        type: 'date',
+        value: 'lastActive',
+        groupable: false
+      }
     ]
   }),
   methods: {
