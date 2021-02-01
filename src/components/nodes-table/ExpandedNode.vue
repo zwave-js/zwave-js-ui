@@ -43,6 +43,7 @@ export default {
   props: {
     actions: Array,
     headers: Array,
+    isMobile: Boolean,
     node: Object,
     nodes: Array,
     socket: Object
