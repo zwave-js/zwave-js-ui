@@ -39,11 +39,12 @@
             <v-card>
               <v-card-text>
                 <v-checkbox
-                  v-for="col in selectableHeaders"
+                  v-for="col in headers"
                   :key="col.value"
+                  :value="col.value"
                   hide-details
                   :label="col.text"
-                  v-model="col.active"
+                  v-model="columns"
                 ></v-checkbox>
               </v-card-text>
             </v-card>
