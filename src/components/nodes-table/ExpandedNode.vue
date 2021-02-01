@@ -1,5 +1,5 @@
 <template>
-  <td :colspan="headers.length">
+  <td :colspan="isMobile ? 1 : headers.length">
     <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
       <v-tab key="node">Node</v-tab>
       <v-tab key="homeassistant">Home Assistant</v-tab>
