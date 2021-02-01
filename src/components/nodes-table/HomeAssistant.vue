@@ -22,7 +22,8 @@
           :headers="headers_hass"
           :items="hassDevices"
           single-select
-          @click:row="selectDevice($event)"
+          item-key="id"
+          @click:row="selectDevice"
           class="elevation-1"
         >
           <template v-slot:[`item.id`]="{ item }">
@@ -132,8 +133,9 @@ export default {
     }
   },
   methods: {
-    selectDevice (item) {
-      this.selectedDevice = item
+    selectDevice (item, row) {
+      row.select(!row.isSelected)
+      this.selectedDevice = this.selectedDevice === item ? null : item
     },
     addDevice () {
       if (!this.errorDevice) {

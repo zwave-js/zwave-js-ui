@@ -1,7 +1,7 @@
 <template>
-  <v-container style="min-width:90%" grid-list-md>
+  <v-container grid-list-md>
     <v-layout row>
-      <v-flex xs3>
+      <v-flex xs8 style="max-width:300px">
         <v-select
           label="Node actions"
           append-outer-icon="send"
