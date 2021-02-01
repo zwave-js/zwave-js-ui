@@ -8,6 +8,7 @@
       <v-tabs-items
         style="background: transparent; padding-bottom: 10px;"
         v-model="currentTab"
+        :touchless="true"
       >
         <!-- TAB NODE -->
         <v-tab-item key="node">
