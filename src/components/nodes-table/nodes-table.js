@@ -23,23 +23,93 @@ export default {
     filters: {},
     sorting: {},
     selected: [],
+    headersMenu: false,
     headers: [
-      { text: 'ID', type: 'number', value: 'id', groupable: false },
-      { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
-      { text: 'Product', type: 'string', value: 'productDescription' },
-      { text: 'Product code', type: 'string', value: 'productLabel' },
-      { text: 'Name', type: 'string', value: 'name' },
-      { text: 'Location', type: 'string', value: 'loc' },
-      { text: 'Secure', type: 'boolean', value: 'isSecure' },
-      { text: 'Beaming', type: 'boolean', value: 'isBeaming' },
-      { text: 'Failed', type: 'boolean', value: 'failed' },
-      { text: 'Status', type: 'string', value: 'status' },
-      { text: 'Interview stage', type: 'string', value: 'interviewStage' },
+      {
+        text: 'ID',
+        type: 'number',
+        value: 'id',
+        groupable: false,
+        selectable: false,
+        active: true
+      },
+      {
+        text: 'Manufacturer',
+        type: 'string',
+        value: 'manufacturer',
+        selectable: true,
+        active: true
+      },
+      {
+        text: 'Product',
+        type: 'string',
+        value: 'productDescription',
+        selectable: true,
+        active: true
+      },
+      {
+        text: 'Product code',
+        type: 'string',
+        value: 'productLabel',
+        selectable: true,
+        active: false
+      },
+      {
+        text: 'Name',
+        type: 'string',
+        value: 'name',
+        selectable: true,
+        active: true
+      },
+      {
+        text: 'Location',
+        type: 'string',
+        value: 'loc',
+        selectable: true,
+        active: true
+      },
+      {
+        text: 'Secure',
+        type: 'boolean',
+        value: 'isSecure',
+        selectable: true,
+        active: false
+      },
+      {
+        text: 'Beaming',
+        type: 'boolean',
+        value: 'isBeaming',
+        selectable: true,
+        active: false
+      },
+      {
+        text: 'Failed',
+        type: 'boolean',
+        value: 'failed',
+        selectable: true,
+        active: false
+      },
+      {
+        text: 'Status',
+        type: 'string',
+        value: 'status',
+        selectable: true,
+        active: true
+      },
+      {
+        text: 'Interview stage',
+        type: 'string',
+        value: 'interviewStage',
+        selectable: true,
+        active: true
+      },
       {
         text: 'Last Active',
         type: 'date',
         value: 'lastActive',
-        groupable: false
+        groupable: false,
+        selectable: true,
+        active: true
       }
     ]
   }),
@@ -115,6 +185,12 @@ export default {
     }
   },
   computed: {
+    activeHeaders () {
+      return this.headers.filter(col => col.active)
+    },
+    selectableHeaders () {
+      return this.headers.filter(col => col.selectable)
+    },
     nodeCollection () {
       return new NodeCollection(this.nodes)
     },
