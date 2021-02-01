@@ -231,6 +231,21 @@ The main template is like the thermostat template. The things to add are:
 }
 ```
 
+## Execute API functions
+
+### Execute scene
+
+In this example I will execute the scene with the id `1` via a switch, with following entries in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with you values.
+
+```yaml
+switch:
+  - platform: mqtt
+    name: Doorbell Scene
+    unique_id: zwavedoorbellscene
+    command_topic: "<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_activateScene/set"
+    payload_on: '{ "args": [ 1 ] }'
+```
+
 ## Troubleshooting
 
 ### Removing or resetting HASS entities
