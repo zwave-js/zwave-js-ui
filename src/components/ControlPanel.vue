@@ -27,6 +27,16 @@
           </v-row>
 
           <v-row justify="start">
+            <v-col cols="12" sm="4" md="3" style="text-align:center">
+              <v-btn
+                depressed
+                color="primary"
+                @click="addRemoveShowDialog = true"
+              >
+                Add/Remove Device
+              </v-btn>
+            </v-col>
+
             <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
@@ -46,6 +56,15 @@
             </v-col>
           </v-row>
         </v-container>
+        
+        <DialogAddRemove
+          v-model="addRemoveShowDialog"
+          :working="addRemoveWorking"
+          :succeeded="addRemoveSucceeded"
+          :failed="addRemoveFailed"
+          @close="addRemoveShowDialog = false"
+          @action="onAddRemoveAction"
+        />
 
         <nodes-table
           :nodes="nodes"
@@ -64,6 +83,7 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
+import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
@@ -74,15 +94,53 @@ export default {
     socket: Object
   },
   components: {
-    NodesTable
+    NodesTable,
+    DialogAddRemove
   },
   computed: {
-    ...mapGetters(['nodes', 'appInfo'])
+    ...mapGetters(['nodes', 'appInfo', 'zwave'])
   },
-  watch: {},
+  watch : {
+    addRemoveEndDate : {
+      immediate : true,
+      handler(newVal){
+        if(this.addRemoveTimer){
+          clearInterval(this.addRemoveTimer)
+        }
+        this.timer = setInterval(()=>{
+          this.now = new Date()
+
+          let s = Math.trunc((this.addRemoveEndDate - this.now)/1000)
+          this.addRemoveWorking = s > 0 ? `${this.addRemoveMode} started: ${s}s remaining` : null
+
+          if(this.now > newVal){
+            this.now = newVal
+            clearInterval(this.addRemoveTimer)
+          }
+        }, 100)
+      }
+    },
+    appInfo : {
+      deep : true,
+      handler(newVal){
+        if (newVal.controllerStatus.indexOf('clusion') > 0) {
+          this.onAddRemoveStateChange(newVal.controllerStatus)
+        }
+      }
+    }
+  },
   data () {
     return {
       settings: new Settings(localStorage),
+      now: new Date(),
+      addRemoveShowDialog: false,
+      addRemoveMode: null,
+      addRemoveWorking: null,
+      addRemoveSucceeded: null,
+      addRemoveFailed: null,
+      addRemoveEndDate: new Date(),
+      addRemoveTimer : null,
+      addRemoveStartNodeCount: 0,
       node_actions: [
         {
           text: 'Heal node',
@@ -127,22 +185,6 @@ export default {
       ],
       cnt_action: 'healNetwork',
       cnt_actions: [
-        {
-          text: 'Start inclusion',
-          value: 'startInclusion'
-        },
-        {
-          text: 'Stop inclusion',
-          value: 'stopInclusion'
-        },
-        {
-          text: 'Start exclusion',
-          value: 'startExclusion'
-        },
-        {
-          text: 'Stop exclusion',
-          value: 'stopExclusion'
-        },
         {
           text: 'Heal Network',
           value: 'beginHealingNetwork'
@@ -199,6 +241,58 @@ export default {
         .catch(error => {
           console.log(error)
         })
+    },
+
+    async onAddRemoveAction(data) {
+      this.addRemoveMode = data.mode
+      this.addRemoveSucceeded = null
+      this.addRemoveFailed = null
+      const startStop = this.addRemoveWorking ? "stop" : "start"
+      this.addRemoveWorking = null
+      const cnt_action = data.mode === 'Exclusion' ? `${startStop}Exclusion` : `${startStop}Inclusion`
+      const args = []
+      if (data.mode !== "Exclusion" && startStop === "start") args.push(data.mode.indexOf('Secure') === 0)
+      this.apiRequest(cnt_action, args)
+    },
+
+    onAddRemoveStateChange(controllerStatus) {
+      const nodeCount = this.addRemoveMode === 'Exclusion' ? 
+        this.nodes.filter(x => x.status === 'Removed').length :
+        this.nodes.filter(x => x.status !== 'Removed').length
+      console.debug(`onAddRemoveStateChange:${controllerStatus} ${this.addRemoveStartNodeCount}→${nodeCount}`)
+      if (controllerStatus.indexOf("started") > 0) {
+        this.addRemoveEndDate = new Date(new Date().getTime() + (this.zwave.commandsTimeout * 1000))
+        this.addRemoveStartNodeCount = nodeCount
+      } else if (controllerStatus.indexOf("stopped") > 0) {
+        this.addRemoveEndDate = this.now
+        if (this.addRemoveStartNodeCount === nodeCount) {
+          this.addRemoveSucceeded = `${this.addRemoveMode} finished, discovering...`
+          setTimeout(this.showResults, 5000) // add some discovery time if no changes detected
+        } else {
+          this.showResults()
+        }
+      } else {
+        this.addRemoveEndDate = this.now
+        this.addRemoveFailed = controllerStatus // TODO: better formatting?
+      }
+    },
+
+    showResults() {
+      const nodeCount = this.addRemoveMode === 'Exclusion' ? 
+        this.nodes.filter(x => x.status === 'Removed').length :
+        this.nodes.filter(x => x.status !== 'Removed').length
+      console.debug(`showResults:${this.addRemoveMode} ${this.addRemoveStartNodeCount}→${nodeCount}`)
+      if (this.addRemoveStartNodeCount === nodeCount) {
+        this.addRemoveSucceeded = null
+        this.addRemoveFailed = `${this.addRemoveMode} stopped, none found`
+      } else if (this.addRemoveMode === 'Exclusion') {
+        this.addRemoveSucceeded = `Device found! Exclusion complete`
+        this.addRemoveFailed = null
+      } else if (this.addRemoveStartNodeCount > 0) {
+        const node = this.nodes[this.nodes.length - 1]
+        this.addRemoveSucceeded = `Device found! Node ${node.id} added ${node.isSecure ? 'with' : 'without'} security`
+        this.addRemoveFailed = null
+      }
     },
 
     async sendCntAction () {
@@ -340,6 +434,7 @@ export default {
       // unbind events
       this.socket.off(socketEvents.api)
     }
+    clearInterval(this.addRemoveTimer)
   }
 }
 </script>

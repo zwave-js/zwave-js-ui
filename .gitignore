@@ -73,3 +73,6 @@ typings/
 *.ntvs*
 *.njsproj
 *.sln
+
+# ignore settings
+src/store/settings.json
