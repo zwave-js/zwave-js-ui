@@ -69,14 +69,14 @@
           <v-expansion-panel-content>
             <v-card flat>
               <v-card-text>
-                <v-layout row wrap>
-                  <v-flex v-for="(v, index) in group" :key="index" xs12 sm6 md4>
+                <v-row>
+                  <v-col cols="12" v-for="(v, index) in group" :key="index" sm="6" md="4">
                     <ValueID
                       @updateValue="updateValue"
                       v-model="group[index]"
                     ></ValueID>
-                  </v-flex>
-                </v-layout>
+                  </v-col>
+                </v-row>
               </v-card-text>
             </v-card>
           </v-expansion-panel-content>

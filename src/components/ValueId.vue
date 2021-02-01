@@ -1,5 +1,5 @@
 <template>
-  <v-col cols="12">
+  <div>
     <v-subheader class="valueid-label">{{ label }} </v-subheader>
 
     <div v-if="!value.writeable && !value.list">
@@ -87,7 +87,7 @@
       <v-select
         v-if="value.list"
         :items="items"
-        style="max-width:280px"
+        :style="{'max-width': ($vuetify.breakpoint.smAndDown ? '280px' : ($vuetify.breakpoint.smOnly ? '400px' : 'auto'))}"
         :hint="help"
         persistent-hint
         :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
@@ -142,7 +142,7 @@
         <span>{{ '[' + value.id + '] ' + help }}</span>
       </v-tooltip>
     </div>
-  </v-col>
+  </div>
 </template>
 
 <style scoped>
