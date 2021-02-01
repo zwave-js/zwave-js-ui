@@ -26,68 +26,17 @@ export default {
     selected: [],
     headersMenu: false,
     headers: [
-      {
-        text: 'ID',
-        type: 'number',
-        value: 'id',
-        groupable: false
-      },
-      {
-        text: 'Manufacturer',
-        type: 'string',
-        value: 'manufacturer'
-      },
-      {
-        text: 'Product',
-        type: 'string',
-        value: 'productDescription'
-      },
-      {
-        text: 'Product code',
-        type: 'string',
-        value: 'productLabel'
-      },
-      {
-        text: 'Name',
-        type: 'string',
-        value: 'name'
-      },
-      {
-        text: 'Location',
-        type: 'string',
-        value: 'loc'
-      },
-      {
-        text: 'Secure',
-        type: 'boolean',
-        value: 'isSecure'
-      },
-      {
-        text: 'Beaming',
-        type: 'boolean',
-        value: 'isBeaming'
-      },
-      {
-        text: 'Failed',
-        type: 'boolean',
-        value: 'failed'
-      },
-      {
-        text: 'Status',
-        type: 'string',
-        value: 'status'
-      },
-      {
-        text: 'Interview stage',
-        type: 'string',
-        value: 'interviewStage'
-      },
-      {
-        text: 'Last Active',
-        type: 'date',
-        value: 'lastActive',
-        groupable: false
-      }
+      { text: 'ID', type: 'number', value: 'id', groupable: false },
+      { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
+      { text: 'Product', type: 'string', value: 'productDescription' },
+      { text: 'Product code', type: 'string', value: 'productLabel' },
+      { text: 'Name', type: 'string', value: 'name' },
+      { text: 'Location', type: 'string', value: 'loc' },
+      { text: 'Secure', type: 'boolean', value: 'isSecure' },
+      { text: 'Beaming', type: 'boolean', value: 'isBeaming' },
+      { text: 'Failed', type: 'boolean', value: 'failed' },
+      { text: 'Status', type: 'string', value: 'status' },
+      { text: 'Interview stage', type: 'string', value: 'interviewStage' }
     ]
   }),
   methods: {
