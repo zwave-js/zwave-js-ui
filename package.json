@@ -144,7 +144,7 @@
     "@babel/preset-env": "^7.12.11",
     "@types/node": "^14.14.22",
     "auto-changelog": "^2.2.1",
-    "autoprefixer": "^10.1.0",
+    "autoprefixer": "^10.2.4",
     "babel-eslint": "^10.1.0",
     "babel-helper-vue-jsx-merge-props": "^2.0.3",
     "babel-loader": "^8.2.2",
