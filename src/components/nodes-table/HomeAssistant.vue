@@ -21,28 +21,24 @@
         <v-data-table
           :headers="headers_hass"
           :items="hassDevices"
+          single-select
+          @click:row="selectDevice($event)"
           class="elevation-1"
         >
-          <template v-slot:item="{ item }">
-            <tr
-              style="cursor:pointer;"
-              :active="selectedDevice == item"
-              @click="
-                selectedDevice == item
-                  ? (selectedDevice = null)
-                  : (selectedDevice = item)
-              "
-            >
-              <td class="text-xs">{{ item.id }}</td>
-              <td class="text-xs">{{ item.type }}</td>
-              <td class="text-xs">{{ item.object_id }}</td>
-              <td class="text-xs">
-                {{ item.persistent ? 'Yes' : 'No' }}
-              </td>
-              <td class="text-xs">
-                {{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
-              </td>
-            </tr>
+          <template v-slot:[`item.id`]="{ item }">
+            {{ item.id }}
+          </template>
+          <template v-slot:[`item.type`]="{ item }">
+            {{ item.type }}
+          </template>
+          <template v-slot:[`item.object_id`]="{ item }">
+            {{ item.object_id }}
+          </template>
+          <template v-slot:[`item.persistent`]="{ item }">
+            {{ item.persistent ? 'Yes' : 'No' }}
+          </template>
+          <template v-slot:[`item.ignoreDiscovery`]="{ item }">
+            {{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
           </template>
         </v-data-table>
       </v-flex>
@@ -136,6 +132,9 @@ export default {
     }
   },
   methods: {
+    selectDevice (item) {
+      this.selectedDevice = item
+    },
     addDevice () {
       if (!this.errorDevice) {
         const newDevice = JSON.parse(this.deviceJSON)
