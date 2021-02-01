@@ -1,5 +1,5 @@
 <template>
-  <v-col>
+  <v-col cols="12">
     <v-subheader class="valueid-label">{{ label }} </v-subheader>
 
     <div v-if="!value.writeable && !value.list">
@@ -87,6 +87,7 @@
       <v-select
         v-if="value.list"
         :items="items"
+        style="max-width:280px"
         :hint="help"
         persistent-hint
         :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
