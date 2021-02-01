@@ -214,7 +214,11 @@ export default {
           ) {
             broadcast = await this.$listeners.showConfirm(
               'Broadcast',
-              'Send this command to all nodes?'
+              'Send this command to all nodes?',
+              'info',
+              {
+                cancelText: 'No'
+              }
             )
           }
 
