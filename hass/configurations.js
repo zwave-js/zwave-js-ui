@@ -9,8 +9,7 @@ module.exports = {
     discovery_payload: {
       payload_on: true,
       payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'None'
+      value_template: '{{ value_json.value }}'
     }
   },
 
