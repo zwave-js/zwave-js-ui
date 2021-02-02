@@ -13,7 +13,7 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 - **Serial port**: The serial port where your controller is connected
 - **Network key** (Optional): Zwave network key if security is enabled. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
 - **WS Server**: Enable [zwave-js websocket server](https://github.com/zwave-js/zwave-js-server)
-- **Log enabled**: Enable logging for zwave-js websocket server 
+- **Log enabled**: Enable logging for zwave-js websocket server
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
@@ -22,6 +22,7 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
   - `zwave.options` overrides options passed to the zwave js Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
 ## Disable Gateway
+
 Enable this to use Z2M only as a Control Panel
 
 ## MQTT
