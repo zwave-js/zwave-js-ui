@@ -99,7 +99,6 @@ Payload:
     1 // lifeline group id
   ]
 }
-
 ```
 
 I will get this response (in the same topic without the suffix `/set`):
@@ -113,6 +112,22 @@ I will get this response (in the same topic without the suffix `/set`):
 ```
 
 `result` will contain the value returned from the API. In this example I will get an array with all node IDs that are associated to the group 1 (lifeline) of node 23.
+
+#### Execute Scene
+
+Execute the scene with the id `1` via mqtt.
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/_activateScene/set`
+
+Payload:
+
+```js
+{
+  "args": [
+    1 // id of scene
+  ]
+}
+```
 
 #### Send Command
 
