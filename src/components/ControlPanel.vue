@@ -269,8 +269,9 @@ export default {
         data.method === 'start' ? 'starting…' : 'stopping…'
       }`
       const args = []
-      if (data.secure && data.id < 2 && data.method === 'start')
+      if (data.secure && data.id < 2 && data.method === 'start') {
         args.push(data.secure)
+      }
       this.apiRequest(data.method + data.baseAction, args)
     },
 
