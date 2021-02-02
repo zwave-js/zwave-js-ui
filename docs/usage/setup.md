@@ -2,25 +2,33 @@
 
 Firstly you need to open the browser at the link <http://localhost:8091> and edit the settings for Zwave, MQTT and the Gateway.
 
-## Zwave
+## General
 
-Zwave settings:
+- **Log enabled**: Enable logging for zwavejs2mqtt
+- **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
+- **Log to file**: Enable this to store the logs to a file
+
+## Zwave
 
 - **Serial port**: The serial port where your controller is connected
 - **Network key** (Optional): Zwave network key if security is enabled. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
-- **Log level**: Set the zwave-js Library log level
-- **Log to file**: Enable this to store zwave-js logs to a file
+- **WS Server**: Enable [zwave-js websocket server](https://github.com/zwave-js/zwave-js-server)
+- **Log enabled**: Enable logging for zwave-js websocket server
+- **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
+- **Log to file**: Enable this to store the logs to a file
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
 - **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
   - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
   - `zwave.options` overrides options passed to the zwave js Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
+## Disable Gateway
+
+Enable this to use Z2M only as a Control Panel
+
 ## MQTT
 
-Mqtt settings:
-
 - **Name**: A unique name that identify the Gateway.
-- **Host**: The url of the broker. Insert here the protocol if present, example: `tls://localhost`. Mqtt supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
+- **Host url**: The url of the broker. Insert here the protocol if present, example: `tls://localhost`. Mqtt supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
 - **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
@@ -33,8 +41,6 @@ Mqtt settings:
 - **Auth**: Enable this if broker requires auth. If so you need to enter also a valid **username** and **password**.
 
 ## Gateway
-
-Gateway settings:
 
 - **Gateway type**: This setting specify the logic used to publish Zwave Nodes Values in MQTT topics. At the moment there are 3 possible configuration, two are automatic (all values are published in a specific topic) and one needs to manually configure which values you want to publish to MQTT and what topic to use. For every gateway type you can set custom topic values, if gateway is not in 'configure manually' mode you can omit the topic of the values (the topic will depends on the gateway type) and use the table to set values you want to `poll` or if you want to scale them using `post operation`
 
@@ -153,14 +159,16 @@ Gateway settings:
 
   - **Just value**: The payload will contain only the row Numeric/String/Bool value
 
+- **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
+- **Send Zwave Events**: Enable this to send all Zwave client events to MQTT. More info [here](#zwave-events)
+- **Include Node info**: Adds in ValueId json payload two extra values with the Name: `nodeName` and Location `nodeLocation` for better graphing capabilities (useful in tools like InfluxDb,Grafana)
 - **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
 - **Ignore location**: Enable this to remove nodes location from topics
-- **Send Zwave Events**: Enable this to send all Zwave client events to MQTT. More info [here](#zwave-events)
-- **Include Node info**: Adds in ValueId json payload two extra values with the Name: `nodeName` and Location `nodeLocation` for better graphing capabilities (usefull in tools like InfluxDb,Grafana)
 - **Publish node details**: Creates an `nodeinfo` topic under each node's MQTT tree, with most node details. Helps build up discovery payloads.
-- **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
-- :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT autodiscovery (more about this [here](#robot-home-assistant-integration-beta))
+
+- :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT auto discovery (more about this [here](#robot-home-assistant-integration-beta))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
+- **Retain Discovery**: Set retain flag to true in discovery messages
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
   - `%ln`: Node location with name `<location-?><name>`
   - `%n`: Node Name
@@ -175,7 +183,7 @@ Once finished press `SAVE` and gateway will start Zwave Network Scan, then go to
 
 Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
 
-### Gateway values table
+- **Gateway values table**
 
 The Gateway values table can be used with all gateway types to customize specific values topic for each device type found in the network and do some operations with them. Each value has this properties:
 

@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "bin": {
     "zwavejs2mqtt": "bin/www"
   },
@@ -91,7 +91,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
-    "@zwave-js/server": "^1.0.0-beta.2",
+    "@zwave-js/server": "^1.0.0-beta.3",
     "ansi_up": "^5.0.0",
     "app-root-path": "^3.0.0",
     "archiver": "^5.2.0",
