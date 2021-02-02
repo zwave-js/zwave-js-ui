@@ -21,13 +21,13 @@
     show-select
   >
     <template v-slot:top>
-      <v-layout row wrap>
-        <v-flex xs12 sm3 md2 ml-6>
+      <v-row row wrap>
+        <v-col cols="12" sm="3" md="2" ml-6>
           <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
-        </v-flex>
-      </v-layout>
-      <v-layout row ma-2 justify-start>
-        <v-flex xs12>
+        </v-col>
+      </v-row>
+      <v-row row ma-2 justify-start>
+        <v-col cols="12">
           <v-menu v-model="headersMenu" :close-on-content-click="false">
             <template v-slot:activator="{ on }">
               <v-btn v-on="on">
@@ -94,8 +94,8 @@
             </template>
             <span>Export nodes.json Configuration</span>
           </v-tooltip>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </template>
     <template
       v-for="column in activeHeaders"

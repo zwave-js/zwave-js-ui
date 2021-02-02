@@ -1,10 +1,10 @@
 <template>
-  <v-layout column>
+  <v-row column>
     <v-subheader>Home Assistant - Devices</v-subheader>
 
     <!-- HASS DEVICES -->
-    <v-layout v-if="hassDevices.length > 0" raw wrap>
-      <v-flex xs12 md6 pa-1>
+    <v-row v-if="hassDevices.length > 0" raw wrap>
+      <v-col cols="12" md="6" pa-1>
         <v-btn color="blue darken-1" text @click="storeDevices(false)"
           >Store</v-btn
         >
@@ -42,8 +42,8 @@
             {{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
           </template>
         </v-data-table>
-      </v-flex>
-      <v-flex xs12 md6 pa-1>
+      </v-col>
+      <v-col cols="12" md="6" pa-1>
         <v-btn
           v-if="!selectedDevice"
           color="blue darken-1"
@@ -82,12 +82,12 @@
           :rules="[validJSONdevice]"
           v-model="deviceJSON"
         ></v-textarea>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
     <div style="margin:20px" class="subtitle-1" v-else>
       No Hass Devices
     </div>
-  </v-layout>
+  </v-row>
 </template>
 
 <script>

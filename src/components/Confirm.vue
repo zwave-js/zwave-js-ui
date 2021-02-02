@@ -14,8 +14,8 @@
       }}</v-card-text>
       <v-card-text v-else class="pa-4">
         <v-container grid-list-md>
-          <v-layout wrap>
-            <v-flex v-for="(input, index) in options.inputs" :key="index" xs12>
+          <v-row>
+            <v-col v-for="(input, index) in options.inputs" :key="index" cols="12">
               <v-text-field
                 v-if="input.type === 'text' || input.type === 'number'"
                 v-model="values[input.key]"
@@ -44,8 +44,8 @@
                 :hint="input.hint"
                 :required="input.required"
               ></v-select>
-            </v-flex>
-          </v-layout>
+            </v-col>
+          </v-row>
         </v-container>
       </v-card-text>
 

@@ -1,5 +1,5 @@
 <template>
-  <v-layout row align-center>
+  <v-row row align-center>
     <v-text-field
       prepend-icon="attach_file"
       single-line
@@ -23,7 +23,7 @@
       ref="fileInput"
       @change="onFileChange"
     />
-  </v-layout>
+  </v-row>
 </template>
 
 <script>

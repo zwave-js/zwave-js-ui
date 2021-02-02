@@ -1,7 +1,7 @@
 <template>
   <v-container grid-list-md>
-    <v-layout row>
-      <v-flex xs8 style="max-width:300px">
+    <v-row row>
+      <v-col cols="8" style="max-width:300px">
         <v-select
           label="Node actions"
           append-outer-icon="send"
@@ -9,11 +9,11 @@
           :items="node_actions"
           @click:append-outer="sendNodeAction"
         ></v-select>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
 
-    <v-layout row>
-      <v-flex>
+    <v-row row>
+      <v-col>
         <v-subheader
           >Device ID:
           {{ `${node.deviceId} (${node.hexId})` }}
@@ -22,11 +22,11 @@
             <v-icon right dark color="primary">file_download</v-icon>
           </v-btn>
         </v-subheader>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
 
-    <v-layout row>
-      <v-flex xs8 style="max-width:300px">
+    <v-row row>
+      <v-col cols="8" style="max-width:300px">
         <v-text-field
           label="Name"
           append-outer-icon="send"
@@ -37,11 +37,11 @@
           @click:clear="resetName"
           @click:append-outer="updateName"
         ></v-text-field>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
 
-    <v-layout row>
-      <v-flex xs8 style="max-width:300px">
+    <v-row row>
+      <v-col cols="8" style="max-width:300px">
         <v-text-field
           label="Location"
           append-outer-icon="send"
@@ -52,12 +52,12 @@
           @click:clear="resetLocation"
           @click:append-outer="updateLoc"
         ></v-text-field>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
 
     <!-- NODE VALUES -->
 
-    <v-layout v-if="node.values && node.values.length > 0" column>
+    <v-row v-if="node.values && node.values.length > 0" column>
       <v-subheader>Values</v-subheader>
 
       <v-expansion-panels accordion multiple>
@@ -89,7 +89,7 @@
           <v-divider></v-divider>
         </v-expansion-panel>
       </v-expansion-panels>
-    </v-layout>
+    </v-row>
   </v-container>
 </template>
 

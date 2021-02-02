@@ -1,7 +1,7 @@
 <template>
   <v-container grid-list-md>
-    <v-layout wrap>
-      <v-flex xs12 sm6>
+    <v-row>
+      <v-col cols="12" sm="6">
         <v-select
           label="Group"
           v-model="group.group"
@@ -9,9 +9,9 @@
           :items="group.node.groups"
           return-object
         ></v-select>
-      </v-flex>
+      </v-col>
 
-      <v-flex v-if="group.group && group.associations" xs12 sm6>
+      <v-col v-if="group.group && group.associations" cols="12" sm="6">
         <v-list subheader>
           <v-subheader>Associations</v-subheader>
           <template v-for="(ass, index) in group.associations">
@@ -44,9 +44,9 @@
             </v-list-item-content>
           </v-list-item>
         </v-list>
-      </v-flex>
+      </v-col>
 
-      <v-flex xs12 sm6>
+      <v-col cols="12" sm="6">
         <v-combobox
           label="Target"
           v-model="group.target"
@@ -56,18 +56,18 @@
           persistent-hint
           item-text="_name"
         ></v-combobox>
-      </v-flex>
+      </v-col>
 
-      <v-flex v-if="group.group && group.group.multiChannel" xs12 sm6 md4>
+      <v-col v-if="group.group && group.group.multiChannel" cols="12" sm="6" md="4">
         <v-text-field
           v-model.number="group.targetInstance"
           label="Channel ID"
           hint="Target node channel ID"
           type="number"
         />
-      </v-flex>
+      </v-col>
 
-      <v-flex xs12>
+      <v-col cols="12">
         <v-btn
           v-if="group.target && group.group"
           rounded
@@ -94,8 +94,8 @@
           class="mb-2"
           >Remove All</v-btn
         >
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 
