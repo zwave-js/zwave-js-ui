@@ -231,11 +231,15 @@ The main template is like the thermostat template. The things to add are:
 }
 ```
 
-## Execute API functions
+## Manually create entities
+
+When mqtt auto discovery and custom components aren't enough for your needs you can choose to manually create your entities in hass.
 
 ### Execute scene
 
-In this example I will execute the scene with the id `1` via a switch, with the following entries in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with your values.
+If you need to create a switch that triggers a scene activation (using mqtt apis) you can use this example.
+
+Add the following entriy in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with your values, based on your mqtt settings and `<sceneId>` with the scene you want to activate
 
 ```yaml
 switch:
