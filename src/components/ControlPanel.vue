@@ -269,7 +269,8 @@ export default {
         data.method === 'start' ? 'starting…' : 'stopping…'
       }`
       const args = []
-      if (data.secure && data.id < 2) args.push(data.secure)
+      if (data.secure && data.id < 2 && data.method === 'start')
+        args.push(data.secure)
       this.apiRequest(data.method + data.baseAction, args)
     },
 
@@ -282,10 +283,8 @@ export default {
         this.addRemoveFailed = `${this.addRemoveName} stopped, none found`
       } else if (this.addRemoveName === 'Exclusion') {
         this.addRemoveSucceeded = `Device found! Node ${this.addRemoveNode.id} removed`
-      } else if (this.addRemoveStartNodeCount > 0) {
-        this.addRemoveSucceeded = `Device found! Node ${
-          this.addRemoveNode.id
-        } added ${this.addRemoveNode.isSecure ? 'with' : 'without'} security`
+      } else {
+        this.addRemoveSucceeded = `Device found! Node ${this.addRemoveNode.id} added` // we don't yet know if it was secure, interview underway
       }
 
       this.addRemoveStatus = 'stop'
