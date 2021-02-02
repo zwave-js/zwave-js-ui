@@ -59,15 +59,15 @@ export default {
     value: Boolean, // show or hide
     working: String,
     failed: String,
-    succeeded: String,
+    succeeded: String
   },
   watch: {
   },
   computed: {
   },
   data () {
-    return {      
-        mode: "Inclusion", // most common action should be default
+    return {
+      mode: 'Inclusion' // most common action should be default
     }
   },
   methods: {

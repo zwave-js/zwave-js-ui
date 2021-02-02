@@ -56,7 +56,7 @@
             </v-col>
           </v-row>
         </v-container>
-        
+
         <DialogAddRemove
           v-model="addRemoveShowDialog"
           :working="addRemoveWorking"
@@ -100,29 +100,29 @@ export default {
   computed: {
     ...mapGetters(['nodes', 'appInfo', 'zwave'])
   },
-  watch : {
-    addRemoveEndDate : {
-      immediate : true,
-      handler(newVal){
-        if(this.addRemoveTimer){
+  watch: {
+    addRemoveEndDate: {
+      immediate: true,
+      handler(newVal) {
+        if (this.addRemoveTimer) {
           clearInterval(this.addRemoveTimer)
         }
-        this.timer = setInterval(()=>{
+        this.timer = setInterval(() => {
           this.now = new Date()
 
-          let s = Math.trunc((this.addRemoveEndDate - this.now)/1000)
+          const s = Math.trunc((this.addRemoveEndDate - this.now) / 1000)
           this.addRemoveWorking = s > 0 ? `${this.addRemoveMode} started: ${s}s remaining` : null
 
-          if(this.now > newVal){
+          if (this.now > newVal) {
             this.now = newVal
             clearInterval(this.addRemoveTimer)
           }
         }, 100)
       }
     },
-    appInfo : {
-      deep : true,
-      handler(newVal){
+    appInfo: {
+      deep: true,
+      handler(newVal) {
         if (newVal.controllerStatus.indexOf('clusion') > 0) {
           this.onAddRemoveStateChange(newVal.controllerStatus)
         }
@@ -243,27 +243,27 @@ export default {
         })
     },
 
-    async onAddRemoveAction(data) {
+    async onAddRemoveAction (data) {
       this.addRemoveMode = data.mode
       this.addRemoveSucceeded = null
       this.addRemoveFailed = null
-      const startStop = this.addRemoveWorking ? "stop" : "start"
+      const startStop = this.addRemoveWorking ? 'stop' : 'start'
       this.addRemoveWorking = null
-      const cnt_action = data.mode === 'Exclusion' ? `${startStop}Exclusion` : `${startStop}Inclusion`
+      const action = data.mode === 'Exclusion' ? `${startStop}Exclusion` : `${startStop}Inclusion`
       const args = []
-      if (data.mode !== "Exclusion" && startStop === "start") args.push(data.mode.indexOf('Secure') === 0)
-      this.apiRequest(cnt_action, args)
+      if (data.mode !== 'Exclusion' && startStop === 'start') args.push(data.mode.indexOf('Secure') === 0)
+      this.apiRequest(action, args)
     },
 
-    onAddRemoveStateChange(controllerStatus) {
-      const nodeCount = this.addRemoveMode === 'Exclusion' ? 
-        this.nodes.filter(x => x.status === 'Removed').length :
-        this.nodes.filter(x => x.status !== 'Removed').length
+    onAddRemoveStateChange (controllerStatus) {
+      const nodeCount = this.addRemoveMode === 'Exclusion'
+        ? this.nodes.filter(x => x.status === 'Removed').length
+        : this.nodes.filter(x => x.status !== 'Removed').length
       console.debug(`onAddRemoveStateChange:${controllerStatus} ${this.addRemoveStartNodeCount}→${nodeCount}`)
-      if (controllerStatus.indexOf("started") > 0) {
+      if (controllerStatus.indexOf('started') > 0) {
         this.addRemoveEndDate = new Date(new Date().getTime() + (this.zwave.commandsTimeout * 1000))
         this.addRemoveStartNodeCount = nodeCount
-      } else if (controllerStatus.indexOf("stopped") > 0) {
+      } else if (controllerStatus.indexOf('stopped') > 0) {
         this.addRemoveEndDate = this.now
         if (this.addRemoveStartNodeCount === nodeCount) {
           this.addRemoveSucceeded = `${this.addRemoveMode} finished, discovering...`
@@ -278,15 +278,15 @@ export default {
     },
 
     showResults() {
-      const nodeCount = this.addRemoveMode === 'Exclusion' ? 
-        this.nodes.filter(x => x.status === 'Removed').length :
-        this.nodes.filter(x => x.status !== 'Removed').length
+      const nodeCount = this.addRemoveMode === 'Exclusion'
+        ? this.nodes.filter(x => x.status === 'Removed').length
+        : this.nodes.filter(x => x.status !== 'Removed').length
       console.debug(`showResults:${this.addRemoveMode} ${this.addRemoveStartNodeCount}→${nodeCount}`)
       if (this.addRemoveStartNodeCount === nodeCount) {
         this.addRemoveSucceeded = null
         this.addRemoveFailed = `${this.addRemoveMode} stopped, none found`
       } else if (this.addRemoveMode === 'Exclusion') {
-        this.addRemoveSucceeded = `Device found! Exclusion complete`
+        this.addRemoveSucceeded = 'Device found! Exclusion complete'
         this.addRemoveFailed = null
       } else if (this.addRemoveStartNodeCount > 0) {
         const node = this.nodes[this.nodes.length - 1]
