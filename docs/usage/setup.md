@@ -18,7 +18,7 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 - **Log to file**: Enable this to store the logs to a file
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
 - **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
-   - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
+  - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
   - `zwave.options` overrides options passed to the zwave js Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
 ## Disable Gateway
