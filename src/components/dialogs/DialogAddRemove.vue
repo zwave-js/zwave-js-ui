@@ -43,8 +43,8 @@
 
       <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn v-if="!working" color="red darken-1" text @click="$emit('close')">Close</v-btn>
-        <v-btn color="blue darken-1" text @click="$emit('action', { mode })">{{ working ? 'Stop' : 'Start' }}</v-btn>
+        <v-btn v-if="status === 'stop'" color="red darken-1" text @click="$emit('close')">Close</v-btn>
+        <v-btn v-if="status !== 'wait'" color="blue darken-1" text @click="$emit('action', { mode, status: nextStatus })">{{ nextStatus }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -57,6 +57,7 @@ export default {
   },
   props: {
     value: Boolean, // show or hide
+    status: String,
     working: String,
     failed: String,
     succeeded: String
@@ -64,6 +65,9 @@ export default {
   watch: {
   },
   computed: {
+    nextStatus () { 
+      return this.status === 'stop' ? 'start' : 'stop'
+    }
   },
   data () {
     return {
