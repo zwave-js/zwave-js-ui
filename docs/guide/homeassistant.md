@@ -231,6 +231,25 @@ The main template is like the thermostat template. The things to add are:
 }
 ```
 
+## Manually create entities
+
+When mqtt auto discovery and custom components aren't enough for your needs you can choose to manually create your entities in hass.
+
+### Execute scene
+
+If you need to create a switch that triggers a scene activation (using mqtt apis) you can use this example.
+
+Add the following entriy in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with your values, based on your mqtt settings and `<sceneId>` with the scene you want to activate
+
+```yaml
+switch:
+  - platform: mqtt
+    name: Doorbell Scene
+    unique_id: zwavedoorbellscene
+    command_topic: '<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_activateScene/set'
+    payload_on: '{ "args": [ <sceneId> ] }'
+```
+
 ## Troubleshooting
 
 ### Removing or resetting HASS entities
