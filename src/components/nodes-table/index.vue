@@ -1,6 +1,6 @@
 <template>
   <v-data-table
-    :headers="headers"
+    :headers="activeHeaders"
     :items="tableNodes"
     :mobile-breakpoint="0"
     :footer-props="{
@@ -29,16 +29,51 @@
       </v-layout>
       <v-layout row ma-2 justify-start>
         <v-flex xs12>
-          <v-btn
-            color="blue darken-1"
-            text
-            @click.native="filterSelected()"
-            :disabled="selected.length === 0"
-            >Filter Selected</v-btn
-          >
-          <v-btn color="blue darken-1" text @click.native="resetFilters()"
-            >Reset Filters</v-btn
-          >
+          <v-menu v-model="headersMenu" :close-on-content-click="false">
+            <template v-slot:activator="{ on }">
+              <v-btn v-on="on">
+                <v-icon>menu</v-icon>
+                Columns
+              </v-btn>
+            </template>
+            <v-card>
+              <v-card-text>
+                <v-checkbox
+                  v-for="col in headers"
+                  :key="col.value"
+                  :value="col.value"
+                  hide-details
+                  :label="col.text"
+                  v-model="columns"
+                ></v-checkbox>
+              </v-card-text>
+            </v-card>
+          </v-menu>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                color="blue darken-1"
+                text
+                v-on="on"
+                @click.native="filterSelected()"
+                :disabled="selected.length === 0"
+                >Filter Selected</v-btn
+              >
+            </template>
+            <span>Show only selected nodes</span>
+          </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn
+                color="blue darken-1"
+                text
+                v-on="on"
+                @click.native="resetFilters()"
+                >Reset Filters</v-btn
+              >
+            </template>
+            <span>Reset all column filters</span>
+          </v-tooltip>
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
               <v-btn text color="green" v-on="on" @click="$emit('importNodes')">
@@ -64,7 +99,7 @@
       </v-layout>
     </template>
     <template
-      v-for="column in headers"
+      v-for="column in activeHeaders"
       v-slot:[`header.${column.value}`]="{ header }"
     >
       <span :key="column.value">
