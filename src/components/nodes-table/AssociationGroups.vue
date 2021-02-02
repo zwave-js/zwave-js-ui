@@ -58,7 +58,12 @@
         ></v-combobox>
       </v-col>
 
-      <v-col v-if="group.group && group.group.multiChannel" cols="12" sm="6" md="4">
+      <v-col
+        v-if="group.group && group.group.multiChannel"
+        cols="12"
+        sm="6"
+        md="4"
+      >
         <v-text-field
           v-model.number="group.targetInstance"
           label="Channel ID"

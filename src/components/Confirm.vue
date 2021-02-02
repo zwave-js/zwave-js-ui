@@ -15,7 +15,11 @@
       <v-card-text v-else class="pa-4">
         <v-container grid-list-md>
           <v-row>
-            <v-col v-for="(input, index) in options.inputs" :key="index" cols="12">
+            <v-col
+              v-for="(input, index) in options.inputs"
+              :key="index"
+              cols="12"
+            >
               <v-text-field
                 v-if="input.type === 'text' || input.type === 'number'"
                 v-model="values[input.key]"
