@@ -247,7 +247,7 @@ switch:
     name: Doorbell Scene
     unique_id: zwavedoorbellscene
     command_topic: "<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_activateScene/set"
-    payload_on: '{ "args": [ 1 ] }'
+    payload_on: '{ "args": [ <sceneId> ] }'
 ```
 
 ## Troubleshooting
