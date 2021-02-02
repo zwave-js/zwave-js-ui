@@ -107,7 +107,7 @@ export default {
         if (this.addRemoveTimer) {
           clearInterval(this.addRemoveTimer)
         }
-        this.timer = setInterval(() => {
+        this.addRemoveTimer = setInterval(() => {
           this.now = new Date()
 
           const s = Math.trunc((this.addRemoveEndDate - this.now) / 1000)
