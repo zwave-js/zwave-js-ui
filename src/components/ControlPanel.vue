@@ -103,7 +103,7 @@ export default {
   watch: {
     addRemoveEndDate: {
       immediate: true,
-      handler(newVal) {
+      handler (newVal) {
         if (this.addRemoveTimer) {
           clearInterval(this.addRemoveTimer)
         }
@@ -122,7 +122,7 @@ export default {
     },
     appInfo: {
       deep: true,
-      handler(newVal) {
+      handler (newVal) {
         if (newVal.controllerStatus.indexOf('clusion') > 0) {
           this.onAddRemoveStateChange(newVal.controllerStatus)
         }
@@ -139,7 +139,7 @@ export default {
       addRemoveSucceeded: null,
       addRemoveFailed: null,
       addRemoveEndDate: new Date(),
-      addRemoveTimer : null,
+      addRemoveTimer: null,
       addRemoveStartNodeCount: 0,
       node_actions: [
         {
@@ -277,7 +277,7 @@ export default {
       }
     },
 
-    showResults() {
+    showResults () {
       const nodeCount = this.addRemoveMode === 'Exclusion'
         ? this.nodes.filter(x => x.status === 'Removed').length
         : this.nodes.filter(x => x.status !== 'Removed').length
