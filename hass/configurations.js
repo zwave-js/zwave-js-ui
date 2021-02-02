@@ -3,134 +3,14 @@
 
 module.exports = {
   // Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
-  binary_sensor_motion: {
+  binary_sensor: {
     type: 'binary_sensor',
-    object_id: 'motion',
+    object_id: 'event',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
       value_template: '{{ value_json.value }}',
-      device_class: 'motion'
-    }
-  },
-  binary_sensor_presence: {
-    type: 'binary_sensor',
-    object_id: 'presence',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'presence'
-    }
-  },
-  binary_sensor_contact: {
-    type: 'binary_sensor',
-    object_id: 'contact',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'door'
-    }
-  },
-  binary_sensor_lock: {
-    type: 'binary_sensor',
-    object_id: 'lock',
-    discovery_payload: {
-      payload_on: false,
-      payload_off: true,
-      value_template: '{{ value_json.value }}',
-      device_class: 'lock'
-    }
-  },
-  binary_sensor_water: {
-    type: 'binary_sensor',
-    object_id: 'water',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'moisture'
-    }
-  },
-  binary_sensor_smoke: {
-    type: 'binary_sensor',
-    object_id: 'smoke',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'smoke'
-    }
-  },
-  binary_sensor_gas: {
-    type: 'binary_sensor',
-    object_id: 'gas',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'gas'
-    }
-  },
-  binary_sensor_co: {
-    type: 'binary_sensor',
-    object_id: 'co',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'safety'
-    }
-  },
-  binary_sensor_co2: {
-    type: 'binary_sensor',
-    object_id: 'co2',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'safety'
-    }
-  },
-  binary_sensor_tamper: {
-    type: 'binary_sensor',
-    object_id: 'tamper',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'safety'
-    }
-  },
-  binary_sensor_alarm: {
-    type: 'binary_sensor',
-    object_id: 'alarm',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'problem'
-    }
-  },
-  binary_sensor_router: {
-    type: 'binary_sensor',
-    object_id: 'router',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'connectivity'
-    }
-  },
-  binary_sensor_battery_low: {
-    type: 'binary_sensor',
-    object_id: 'battery_low',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'battery'
+      device_class: 'None'
     }
   },
 
