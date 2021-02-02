@@ -1,9 +1,9 @@
 <template>
-  <v-row column>
+  <v-col>
     <v-subheader>Home Assistant - Devices</v-subheader>
 
     <!-- HASS DEVICES -->
-    <v-row v-if="hassDevices.length > 0" raw wrap>
+    <v-row v-if="hassDevices.length > 0">
       <v-col cols="12" md="6" pa-1>
         <v-btn color="blue darken-1" text @click="storeDevices(false)"
           >Store</v-btn
@@ -87,7 +87,7 @@
     <div style="margin:20px" class="subtitle-1" v-else>
       No Hass Devices
     </div>
-  </v-row>
+  </v-col>
 </template>
 
 <script>

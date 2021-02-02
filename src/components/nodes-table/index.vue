@@ -21,12 +21,12 @@
     show-select
   >
     <template v-slot:top>
-      <v-row row wrap>
-        <v-col cols="12" sm="3" md="2" ml-6>
+      <v-row>
+        <v-col cols="12" sm="3" md="2" class="ml-6">
           <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
         </v-col>
       </v-row>
-      <v-row row ma-2 justify-start>
+      <v-row class="ma-2" justify-start>
         <v-col cols="12">
           <v-menu v-model="headersMenu" :close-on-content-click="false">
             <template v-slot:activator="{ on }">

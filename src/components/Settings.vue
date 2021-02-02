@@ -134,7 +134,7 @@
 
             <v-divider></v-divider>
 
-            <v-container cols="12" sm="6" ml-1>
+            <v-container cols="12" sm="6" class="ml-1">
               <v-switch
                 hint="Enable this to use Z2M only as Control Panel"
                 persistent-hint

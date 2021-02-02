@@ -23,7 +23,7 @@
               </v-icon>
             </template>
             <template v-slot:append="{ item }">
-              <v-row row justify-end ma-1>
+              <v-row justify-end class="ma-1">
                 <div class="caption grey--text">{{ item.size }}</div>
                 <v-icon @click.stop="deleteFile(item)" color="red"
                   >delete</v-icon

@@ -1,5 +1,5 @@
 <template>
-  <v-row row align-center>
+  <v-row align-center>
     <v-text-field
       prepend-icon="attach_file"
       single-line

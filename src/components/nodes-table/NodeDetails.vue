@@ -1,6 +1,6 @@
 <template>
   <v-container grid-list-md>
-    <v-row row>
+    <v-row>
       <v-col cols="8" style="max-width:300px">
         <v-select
           label="Node actions"
@@ -12,7 +12,7 @@
       </v-col>
     </v-row>
 
-    <v-row row>
+    <v-row>
       <v-col>
         <v-subheader
           >Device ID:
@@ -25,7 +25,7 @@
       </v-col>
     </v-row>
 
-    <v-row row>
+    <v-row>
       <v-col cols="8" style="max-width:300px">
         <v-text-field
           label="Name"
@@ -40,7 +40,7 @@
       </v-col>
     </v-row>
 
-    <v-row row>
+    <v-row>
       <v-col cols="8" style="max-width:300px">
         <v-text-field
           label="Location"
@@ -57,7 +57,7 @@
 
     <!-- NODE VALUES -->
 
-    <v-row v-if="node.values && node.values.length > 0" column>
+    <v-row v-if="node.values && node.values.length > 0">
       <v-subheader>Values</v-subheader>
 
       <v-expansion-panels accordion multiple>
