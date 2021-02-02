@@ -235,7 +235,7 @@ The main template is like the thermostat template. The things to add are:
 
 ### Execute scene
 
-In this example I will execute the scene with the id `1` via a switch, with following entries in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with you values.
+In this example I will execute the scene with the id `1` via a switch, with the following entries in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with your values.
 
 ```yaml
 switch:
