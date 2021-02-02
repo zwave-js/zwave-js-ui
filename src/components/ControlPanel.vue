@@ -101,35 +101,46 @@ export default {
   computed: {
     ...mapGetters(['nodes', 'appInfo', 'zwave']),
     timeoutMs () {
-      return (this.zwave.commandsTimeout * 1000) + 800 // add small buffer
+      return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
     },
     controllerStatus () {
       return this.appInfo.controllerStatus
     }
   },
   watch: {
-    addRemoveEndDate: {
-      handler (newVal) {
-        if (this.addRemoveTimer) {
-          clearInterval(this.addRemoveTimer)
-        }
-        this.addRemoveTimer = setInterval(() => {
-          this.now = new Date()
-          const s = Math.trunc((this.addRemoveEndDate - this.now) / 1000)
-          if (this.addRemoveStatus === 'start') {
-            this.addRemoveWorking = `${this.addRemoveMode} started: ${s}s remaining`
-          }
-          if (this.now > newVal) {
-            this.now = newVal
-            clearInterval(this.addRemoveTimer)
-          }
-        }, 100)
+    addRemoveEndDate (newVal) {
+      if (this.addRemoveTimer) {
+        clearInterval(this.addRemoveTimer)
       }
+      this.addRemoveTimer = setInterval(() => {
+        const now = new Date()
+        const s = Math.trunc((this.addRemoveEndDate - now) / 1000)
+        if (this.addRemoveStatus === 'start') {
+          this.addRemoveWorking = `${this.addRemoveName} started: ${s}s remaining`
+        }
+        if (now > newVal) clearInterval(this.addRemoveTimer)
+      }, 100)
     },
-    controllerStatus: {
-      handler (newVal) {
-        if (newVal.indexOf('clusion') > 0) {
-          this.onAddRemoveStateChange(newVal)
+    controllerStatus (newVal) {
+      if (newVal.indexOf('clusion') > 0) {
+        if (this.addRemoveName === null) return // ignore initial status
+
+        if (newVal.indexOf('started') > 0) {
+          this.addRemoveEndDate = new Date(
+            new Date().getTime() + this.timeoutMs
+          )
+          this.addRemoveNode = null
+          this.addRemoveStatus = 'start'
+        } else if (newVal.indexOf('stopped') > 0) {
+          this.addRemoveEndDate = new Date()
+          this.addRemoveWorking = `${this.addRemoveName} stopped, discovering…`
+          this.addRemoveStatus = 'wait'
+          setTimeout(this.showResults, 5000) // add additional discovery time
+        } else {
+          this.addRemoveEndDate = new Date()
+          this.addRemoveWorking = null
+          this.addRemoveFailed = newVal // TODO: better formatting?
+          this.addRemoveStatus = 'stop'
         }
       }
     }
@@ -137,10 +148,9 @@ export default {
   data () {
     return {
       settings: new Settings(localStorage),
-      now: new Date(),
       addRemoveShowDialog: false,
-      addRemoveMode: null,
-      addRemoveStatus: "stop",
+      addRemoveName: null,
+      addRemoveStatus: 'stop',
       addRemoveWorking: null,
       addRemoveSucceeded: null,
       addRemoveFailed: null,
@@ -250,36 +260,17 @@ export default {
     },
 
     async onAddRemoveAction (data) {
-      this.addRemoveStatus = 'wait' // make them wait for actual action to happen
-      this.addRemoveMode = data.mode
-      this.addRemoveEndDate = this.now
+      this.addRemoveStatus = 'wait' // make sure user can't trigger another action too soon
+      this.addRemoveName = data.name
+      this.addRemoveEndDate = new Date()
       this.addRemoveSucceeded = null
       this.addRemoveFailed = null
-      this.addRemoveWorking = `${data.mode} ${data.status === 'start' ? 'starting…' : 'stopping…'}`
-      const action = data.mode === 'Exclusion' ? `${data.status}Exclusion` : `${data.status}Inclusion`
+      this.addRemoveWorking = `${data.name} ${
+        data.method === 'start' ? 'starting…' : 'stopping…'
+      }`
       const args = []
-      if (data.isSecure) args.push(data.mode.indexOf('Secure') === 0)
-      this.apiRequest(action, args)
-    },
-
-    onAddRemoveStateChange (controllerStatus) {
-      if (this.addRemoveMode === null) return // ignore initial status
-
-      if (controllerStatus.indexOf('started') > 0) {
-        this.addRemoveEndDate = new Date(new Date().getTime() + this.timeoutMs)
-        this.addRemoveNode = null
-        this.addRemoveStatus = 'start'
-      } else if (controllerStatus.indexOf('stopped') > 0) {
-        this.addRemoveEndDate = this.now
-        this.addRemoveWorking = `${this.addRemoveMode} stopped, discovering…`
-        this.addRemoveStatus = 'wait'
-        setTimeout(this.showResults, 5000) // add additional discovery time
-      } else {
-        this.addRemoveEndDate = this.now
-        this.addRemoveWorking = null
-        this.addRemoveFailed = controllerStatus // TODO: better formatting?
-        this.addRemoveStatus = 'stop'
-      }
+      if (data.secure && data.id < 2) args.push(data.secure)
+      this.apiRequest(data.method + data.baseAction, args)
     },
 
     showResults () {
@@ -288,11 +279,13 @@ export default {
       this.addRemoveFailed = null
 
       if (this.addRemoveNode == null) {
-        this.addRemoveFailed = `${this.addRemoveMode} stopped, none found`
-      } else if (this.addRemoveMode === 'Exclusion') {
+        this.addRemoveFailed = `${this.addRemoveName} stopped, none found`
+      } else if (this.addRemoveName === 'Exclusion') {
         this.addRemoveSucceeded = `Device found! Node ${this.addRemoveNode.id} removed`
       } else if (this.addRemoveStartNodeCount > 0) {
-        this.addRemoveSucceeded = `Device found! Node ${this.addRemoveNode.id} added ${this.addRemoveNode.isSecure ? 'with' : 'without'} security`
+        this.addRemoveSucceeded = `Device found! Node ${
+          this.addRemoveNode.id
+        } added ${this.addRemoveNode.isSecure ? 'with' : 'without'} security`
       }
 
       this.addRemoveStatus = 'stop'
@@ -438,6 +431,7 @@ export default {
     })
 
     this.socket.on(socketEvents.nodeAdded, async node => {
+      console.log('node added')
       console.debug(node)
       this.addRemoveNode = node
     })
@@ -446,7 +440,6 @@ export default {
     if (this.socket) {
       // unbind events
       this.socket.off(socketEvents.api)
-      this.socket.off(socketEvents.nodeRemoved)
       this.socket.off(socketEvents.nodeAdded)
     }
     clearInterval(this.addRemoveTimer)
