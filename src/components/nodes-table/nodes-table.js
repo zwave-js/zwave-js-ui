@@ -18,11 +18,13 @@ export default {
     settings: new Settings(localStorage),
     showHidden: undefined,
     itemsPerPage: undefined,
+    columns: undefined,
     groupBy: undefined,
     expanded: [],
     filters: {},
     sorting: {},
     selected: [],
+    headersMenu: false,
     headers: [
       { text: 'ID', type: 'number', value: 'id', groupable: false },
       { text: 'Manufacturer', type: 'string', value: 'manufacturer' },
@@ -46,6 +48,13 @@ export default {
   methods: {
     filterSelected () {
       this.filters.id = { values: this.selected.map(node => node.id) }
+    },
+    initColumns () {
+      return this.headers.reduce((values, col) => {
+        values = values || []
+        values.push(col.value)
+        return values
+      }, [])
     },
     initFilters () {
       return this.headers.reduce((values, h) => {
@@ -79,6 +88,7 @@ export default {
       return title
     },
     resetFilters () {
+      this.columns = this.initColumns()
       this.filters = this.initFilters()
       this.selected = []
       this.groupBy = undefined
@@ -92,6 +102,7 @@ export default {
   },
   created () {
     this.showHidden = this.settings.load('nodes_showHidden', false)
+    this.columns = this.loadSetting('nodes_columns', this.initColumns())
     this.filters = this.loadSetting('nodes_filters', this.initFilters())
     this.sorting = this.loadSetting('nodes_sorting', this.initSorting())
     this.groupBy = this.loadSetting('nodes_groupBy', [])
@@ -100,6 +111,9 @@ export default {
   watch: {
     showHidden (val) {
       this.settings.store('nodes_showHidden', val)
+    },
+    columns (val) {
+      this.settings.store('nodes_columns', val)
     },
     groupBy (val) {
       this.settings.store('nodes_groupBy', val)
@@ -115,6 +129,9 @@ export default {
     }
   },
   computed: {
+    activeHeaders () {
+      return this.headers.filter(col => this.columns.includes(col.value))
+    },
     nodeCollection () {
       return new NodeCollection(this.nodes)
     },
