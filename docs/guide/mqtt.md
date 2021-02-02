@@ -127,9 +127,7 @@ Payload:
   {
     "nodeId": 23,
     "commandClass": 38,
-    "commandClassName": "Multilevel Switch",
     "endpoint": 0,
-    "property": "targetValue"
   },
   "startLevelChange",
   [{}] // this are the args, in this case it could be omitted
