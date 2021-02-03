@@ -1,7 +1,7 @@
 <template>
   <v-container grid-list-md>
-    <v-layout wrap>
-      <v-flex xs12>
+    <v-row>
+      <v-col cols="12">
         <v-btn text @click="importScenes">
           Import
           <v-icon right dark color="primary">file_upload</v-icon>
@@ -10,9 +10,9 @@
           Export
           <v-icon right dark color="primary">file_download</v-icon>
         </v-btn>
-      </v-flex>
+      </v-col>
 
-      <v-flex xs12 sm6>
+      <v-col cols="12" sm="6">
         <v-select
           label="Scene"
           v-model="selectedScene"
@@ -20,18 +20,18 @@
           item-text="label"
           item-value="sceneid"
         ></v-select>
-      </v-flex>
+      </v-col>
 
-      <v-flex xs12 sm6>
+      <v-col cols="12" sm="6">
         <v-text-field
           label="New Scene"
           append-outer-icon="send"
           @click:append-outer="createScene"
           v-model.trim="newScene"
         ></v-text-field>
-      </v-flex>
+      </v-col>
 
-      <v-flex v-if="selectedScene" xs12>
+      <v-col v-if="selectedScene" cols="12">
         <v-btn color="red darken-1" text @click="removeScene">Delete</v-btn>
         <v-btn color="green darken-1" text @click="activateScene"
           >Activate</v-btn
@@ -39,8 +39,8 @@
         <v-btn color="blue darken-1" text @click="dialogValue = true"
           >New Value</v-btn
         >
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
 
     <DialogSceneValue
       @save="saveValue"
