@@ -426,13 +426,10 @@ export default {
     })
 
     this.socket.on(socketEvents.nodeRemoved, async node => {
-      console.debug(node)
       this.addRemoveNode = node
     })
 
     this.socket.on(socketEvents.nodeAdded, async node => {
-      console.log('node added')
-      console.debug(node)
       this.addRemoveNode = node
     })
   },
