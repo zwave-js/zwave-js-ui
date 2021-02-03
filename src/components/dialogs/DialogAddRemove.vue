@@ -42,13 +42,9 @@
           </v-radio-group>
         </v-container>
 
-        <v-alert v-if="working" dense text type="warning">{{
-          working
+        <v-alert v-if="alert" dense text :type="alert.type">{{
+          alert.text
         }}</v-alert>
-        <v-alert v-if="succeeded" dense text type="info">{{
-          succeeded
-        }}</v-alert>
-        <v-alert v-if="failed" dense text type="error">{{ failed }}</v-alert>
       </v-card-text>
 
       <v-card-actions>
@@ -78,9 +74,7 @@ export default {
   props: {
     value: Boolean, // show or hide
     status: String,
-    working: String,
-    failed: String,
-    succeeded: String
+    alert: Object
   },
   watch: {},
   computed: {
