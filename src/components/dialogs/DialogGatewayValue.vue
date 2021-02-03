@@ -8,8 +8,8 @@
       <v-card-text>
         <v-container grid-list-md>
           <v-form v-model="valid" ref="form" lazy-validation>
-            <v-layout wrap>
-              <v-flex xs12>
+            <v-row>
+              <v-col cols="12">
                 <v-select
                   v-model="editedValue.device"
                   label="Device"
@@ -18,8 +18,8 @@
                   item-text="name"
                   :items="devices"
                 ></v-select>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col cols="12">
                 <v-select
                   v-model="editedValue.value"
                   label="Value"
@@ -55,8 +55,8 @@
                     </v-list-item-content>
                   </template>
                 </v-select>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col cols="12">
                 <v-select
                   v-model="editedValue.device_class"
                   label="Device Class"
@@ -64,39 +64,39 @@
                   item-text="name"
                   :items="deviceClasses"
                 ></v-select>
-              </v-flex>
-              <v-flex v-if="isSensor(editedValue.value)" xs12>
+              </v-col>
+              <v-col v-if="isSensor(editedValue.value)" cols="12">
                 <v-text-field
                   v-model.number="editedValue.icon"
                   hint="Specify a device icon for Home assistant, format is <prefix>:<icons-alias> (Eg: 'mdi:water'). Check http://materialdesignicons.com/"
                   label="Device Icon"
                 ></v-text-field>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col cols="12">
                 <v-text-field
                   v-model.trim="editedValue.topic"
                   label="Topic"
                   :rules="[requiredTopic]"
                   required
                 ></v-text-field>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col cols="12">
                 <v-text-field
                   v-model="editedValue.postOperation"
                   label="Post operation"
                   hint="Example: '/10' '*100' '+20'"
                   required
                 ></v-text-field>
-              </v-flex>
-              <v-flex xs6>
+              </v-col>
+              <v-col cols="6">
                 <v-switch
                   label="Poll"
                   hint="Enable poll of this value. ATTENTION: This could create lot traffic in your network and kill the life of battery powered devices. Use at your own risk"
                   persistent-hint
                   v-model="editedValue.enablePoll"
                 ></v-switch>
-              </v-flex>
-              <v-flex v-if="editedValue.enablePoll" xs6>
+              </v-col>
+              <v-col v-if="editedValue.enablePoll" cols="6">
                 <v-text-field
                   v-model.number="editedValue.pollInterval"
                   label="Poll interval"
@@ -106,27 +106,27 @@
                   required
                   type="number"
                 ></v-text-field>
-              </v-flex>
+              </v-col>
               <!--
-              <v-flex xs6>
+              <v-col cols="6">
                 <v-switch
                   label="Verify changes"
                   hint="Verify changes of this value"
                   persistent-hint
                   v-model="editedValue.verifyChanges"
                 ></v-switch>
-              </v-flex>
+              </v-col>
 
               -->
 
-              <v-flex xs6>
+              <v-col cols="6">
                 <v-switch
                   label="Parse send"
                   hint="Create a function that parse the value sent via MQTT"
                   persistent-hint
                   v-model="editedValue.parseSend"
                 ></v-switch>
-              </v-flex>
+              </v-col>
 
               <v-container v-if="editedValue.parseSend">
                 <p>
@@ -143,14 +143,14 @@
                 ></prism-editor>
               </v-container>
 
-              <v-flex xs6>
+              <v-col cols="6">
                 <v-switch
                   label="Parse receive"
                   hint="Create a function that parse the received value from MQTT"
                   persistent-hint
                   v-model="editedValue.parseReceive"
                 ></v-switch>
-              </v-flex>
+              </v-col>
 
               <v-container v-if="editedValue.parseReceive">
                 <p>
@@ -166,7 +166,7 @@
                   :highlight="highlighter"
                 ></prism-editor>
               </v-container>
-            </v-layout>
+            </v-row>
           </v-form>
         </v-container>
       </v-card-text>

@@ -1,10 +1,10 @@
 <template>
-  <v-layout column>
+  <v-col>
     <v-subheader>Home Assistant - Devices</v-subheader>
 
     <!-- HASS DEVICES -->
-    <v-layout v-if="hassDevices.length > 0" raw wrap>
-      <v-flex xs12 md6 pa-1>
+    <v-row v-if="hassDevices.length > 0">
+      <v-col cols="12" md="6" pa-1>
         <v-btn color="blue darken-1" text @click="storeDevices(false)"
           >Store</v-btn
         >
@@ -21,32 +21,29 @@
         <v-data-table
           :headers="headers_hass"
           :items="hassDevices"
+          single-select
+          item-key="id"
+          @click:row="selectDevice"
           class="elevation-1"
         >
-          <template v-slot:item="{ item }">
-            <tr
-              style="cursor:pointer;"
-              :active="selectedDevice == item"
-              @click="
-                selectedDevice == item
-                  ? (selectedDevice = null)
-                  : (selectedDevice = item)
-              "
-            >
-              <td class="text-xs">{{ item.id }}</td>
-              <td class="text-xs">{{ item.type }}</td>
-              <td class="text-xs">{{ item.object_id }}</td>
-              <td class="text-xs">
-                {{ item.persistent ? 'Yes' : 'No' }}
-              </td>
-              <td class="text-xs">
-                {{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
-              </td>
-            </tr>
+          <template v-slot:[`item.id`]="{ item }">
+            {{ item.id }}
+          </template>
+          <template v-slot:[`item.type`]="{ item }">
+            {{ item.type }}
+          </template>
+          <template v-slot:[`item.object_id`]="{ item }">
+            {{ item.object_id }}
+          </template>
+          <template v-slot:[`item.persistent`]="{ item }">
+            {{ item.persistent ? 'Yes' : 'No' }}
+          </template>
+          <template v-slot:[`item.ignoreDiscovery`]="{ item }">
+            {{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
           </template>
         </v-data-table>
-      </v-flex>
-      <v-flex xs12 md6 pa-1>
+      </v-col>
+      <v-col cols="12" md="6" pa-1>
         <v-btn
           v-if="!selectedDevice"
           color="blue darken-1"
@@ -85,12 +82,12 @@
           :rules="[validJSONdevice]"
           v-model="deviceJSON"
         ></v-textarea>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
     <div style="margin:20px" class="subtitle-1" v-else>
       No Hass Devices
     </div>
-  </v-layout>
+  </v-col>
 </template>
 
 <script>
@@ -136,6 +133,10 @@ export default {
     }
   },
   methods: {
+    selectDevice (item, row) {
+      row.select(!row.isSelected)
+      this.selectedDevice = this.selectedDevice === item ? null : item
+    },
     addDevice () {
       if (!this.errorDevice) {
         const newDevice = JSON.parse(this.deviceJSON)
