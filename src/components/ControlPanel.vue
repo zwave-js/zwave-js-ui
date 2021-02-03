@@ -36,7 +36,6 @@
                 Add/Remove Device
               </v-btn>
             </v-col>
-
             <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
