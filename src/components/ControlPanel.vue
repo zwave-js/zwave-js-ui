@@ -26,7 +26,16 @@
             </v-col>
           </v-row>
 
-          <v-row>
+          <v-row justify="start">
+            <v-col cols="12" sm="4" md="3" style="text-align:center">
+              <v-btn
+                depressed
+                color="primary"
+                @click="addRemoveShowDialog = true"
+              >
+                Add/Remove Device
+              </v-btn>
+            </v-col>
             <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
@@ -47,6 +56,14 @@
           </v-row>
         </v-container>
 
+        <DialogAddRemove
+          v-model="addRemoveShowDialog"
+          :status="addRemoveStatus"
+          :alert="addRemoveAlert"
+          @close="onAddRemoveClose"
+          @action="onAddRemoveAction"
+        />
+
         <nodes-table
           :nodes="nodes"
           :node-actions="node_actions"
@@ -64,6 +81,7 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
+import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
@@ -74,15 +92,78 @@ export default {
     socket: Object
   },
   components: {
-    NodesTable
+    NodesTable,
+    DialogAddRemove
   },
   computed: {
-    ...mapGetters(['nodes', 'appInfo'])
+    ...mapGetters(['nodes', 'appInfo', 'zwave']),
+    timeoutMs () {
+      return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
+    },
+    controllerStatus () {
+      return this.appInfo.controllerStatus
+    }
   },
-  watch: {},
+  watch: {
+    addRemoveEndDate (newVal) {
+      if (this.addRemoveTimer) {
+        clearInterval(this.addRemoveTimer)
+      }
+      this.addRemoveTimer = setInterval(() => {
+        const now = new Date()
+        const s = Math.trunc((this.addRemoveEndDate - now) / 1000)
+        if (this.addRemoveStatus === 'start') {
+          this.addRemoveAlert = {
+            type: 'info',
+            text: `${this.addRemoveAction} started: ${s}s remaining`
+          }
+        }
+        if (now > newVal) clearInterval(this.addRemoveTimer)
+      }, 100)
+    },
+    controllerStatus (status) {
+      if (status.indexOf('clusion') > 0) {
+        if (this.addRemoveAction === null) return // ignore initial status
+
+        // inclusion/exclusion started, start the countdown timer
+        if (status.indexOf('started') > 0) {
+          this.addRemoveEndDate = new Date(
+            new Date().getTime() + this.timeoutMs
+          )
+          this.addRemoveNode = null
+          this.addRemoveStatus = 'start'
+        } else if (status.indexOf('stopped') > 0) {
+          // inclusion/exclusion stopped, check what happened
+          this.addRemoveEndDate = new Date()
+          this.addRemoveAlert = {
+            type: 'info',
+            text: `${this.addRemoveAction} stopped, checking nodes…`
+          }
+          this.addRemoveStatus = 'wait'
+          setTimeout(this.showResults, 1000) // add additional discovery time
+        } else {
+          // error
+          this.addRemoveEndDate = new Date()
+          this.addRemoveAlert = {
+            type: 'error',
+            text: status // TODO: better formatting?
+          }
+          this.addRemoveStatus = 'stop'
+        }
+      }
+    }
+  },
   data () {
     return {
       settings: new Settings(localStorage),
+      bindedSocketEvents: {}, // keep track of the events-handlers
+      addRemoveShowDialog: false,
+      addRemoveAction: null,
+      addRemoveStatus: 'stop',
+      addRemoveAlert: null,
+      addRemoveEndDate: new Date(),
+      addRemoveTimer: null,
+      addRemoveNode: null,
       node_actions: [
         {
           text: 'Heal node',
@@ -127,22 +208,6 @@ export default {
       ],
       cnt_action: 'healNetwork',
       cnt_actions: [
-        {
-          text: 'Start inclusion',
-          value: 'startInclusion'
-        },
-        {
-          text: 'Stop inclusion',
-          value: 'stopInclusion'
-        },
-        {
-          text: 'Start exclusion',
-          value: 'startExclusion'
-        },
-        {
-          text: 'Stop exclusion',
-          value: 'stopExclusion'
-        },
         {
           text: 'Heal Network',
           value: 'beginHealingNetwork'
@@ -199,6 +264,48 @@ export default {
         .catch(error => {
           console.log(error)
         })
+    },
+    onAddRemoveClose () {
+      this.addRemoveShowDialog = false
+      this.addRemoveAlert = null
+    },
+    async onAddRemoveAction (action) {
+      this.addRemoveStatus = 'wait' // make sure user can't trigger another action too soon
+      this.addRemoveAction = action.name // Inclusion/Secure inclusion/Exclusion
+      this.addRemoveEndDate = new Date()
+      this.addRemoveAlert = {
+        type: 'info',
+        text: `${action.name} ${
+          action.method === 'start' ? 'starting…' : 'stopping…'
+        }`
+      }
+      const args = []
+      if (action.secure && action.id < 2 && action.method === 'start') {
+        args.push(action.secure)
+      }
+      this.apiRequest(action.method + action.baseAction, args)
+    },
+    showResults () {
+      this.addRemoveAlert = null
+
+      if (this.addRemoveNode == null) {
+        this.addRemoveAlert = {
+          type: 'warning',
+          text: `${this.addRemoveAction} stopped, none found`
+        }
+      } else if (this.addRemoveAction === 'Exclusion') {
+        this.addRemoveAlert = {
+          type: 'success',
+          text: `Node ${this.addRemoveNode.id} removed`
+        }
+      } else {
+        this.addRemoveAlert = {
+          type: 'success',
+          text: `Device found! Node ${this.addRemoveNode.id} added` // we don't know yet if it's added securely or not, need to wait interview
+        }
+      }
+
+      this.addRemoveStatus = 'stop'
     },
 
     async sendCntAction () {
@@ -305,40 +412,58 @@ export default {
       for (const k in obj) s += k + ': ' + obj[k] + '\n'
 
       return s
-    }
-  },
-  mounted () {
-    const self = this
-
-    this.socket.on(socketEvents.api, async data => {
+    },
+    onApiResponse (data) {
       if (data.success) {
         switch (data.api) {
           case 'getDriverStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Driver statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           case 'getNodeStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Node statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           default:
-            self.showSnackbar('Successfully call api ' + data.api)
+            this.showSnackbar('Successfully call api ' + data.api)
         }
       } else {
-        self.showSnackbar(
+        this.showSnackbar(
           'Error while calling api ' + data.api + ': ' + data.message
         )
       }
-    })
+    },
+    onNodeAddedRemoved (node) {
+      this.addRemoveNode = node
+    },
+    bindEvent (eventName, handler) {
+      this.socket.on(socketEvents[eventName], handler)
+      this.bindedSocketEvents[eventName] = handler
+    },
+    unbindEvents () {
+      for (const event in this.bindedSocketEvents) {
+        this.socket.off(event, this.bindedSocketEvents[event])
+      }
+    }
+  },
+  mounted () {
+    const onApiResponse = this.onApiResponse.bind(this)
+    const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
+
+    this.bindEvent('api', onApiResponse)
+    this.bindEvent('nodeRemoved', onNodeAddedRemoved)
+    this.bindEvent('nodeAdded', onNodeAddedRemoved)
   },
   beforeDestroy () {
     if (this.socket) {
-      // unbind events
-      this.socket.off(socketEvents.api)
+      this.unbindEvents()
+    }
+    if (this.addRemoveTimer) {
+      clearInterval(this.addRemoveTimer)
     }
   }
 }
