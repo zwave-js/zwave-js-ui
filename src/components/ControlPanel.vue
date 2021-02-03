@@ -60,9 +60,7 @@
         <DialogAddRemove
           v-model="addRemoveShowDialog"
           :status="addRemoveStatus"
-          :working="addRemoveWorking"
-          :succeeded="addRemoveSucceeded"
-          :failed="addRemoveFailed"
+          :alert="addRemoveAlert"
           @close="addRemoveShowDialog = false"
           @action="onAddRemoveAction"
         />
@@ -116,30 +114,41 @@ export default {
         const now = new Date()
         const s = Math.trunc((this.addRemoveEndDate - now) / 1000)
         if (this.addRemoveStatus === 'start') {
-          this.addRemoveWorking = `${this.addRemoveName} started: ${s}s remaining`
+          this.addRemoveAlert = {
+            type: 'info',
+            text: `${this.addRemoveAction} started: ${s}s remaining`
+          }
         }
         if (now > newVal) clearInterval(this.addRemoveTimer)
       }, 100)
     },
-    controllerStatus (newVal) {
-      if (newVal.indexOf('clusion') > 0) {
-        if (this.addRemoveName === null) return // ignore initial status
+    controllerStatus (status) {
+      if (status.indexOf('clusion') > 0) {
+        if (this.addRemoveAction === null) return // ignore initial status
 
-        if (newVal.indexOf('started') > 0) {
+        // inclusion/exclusion started, start the countdown timer
+        if (status.indexOf('started') > 0) {
           this.addRemoveEndDate = new Date(
             new Date().getTime() + this.timeoutMs
           )
           this.addRemoveNode = null
           this.addRemoveStatus = 'start'
-        } else if (newVal.indexOf('stopped') > 0) {
+        } else if (status.indexOf('stopped') > 0) {
+          // inclusion/exclusion stopped, check what happened
           this.addRemoveEndDate = new Date()
-          this.addRemoveWorking = `${this.addRemoveName} stopped, discovering…`
+          this.addRemoveAlert = {
+            type: 'info',
+            text: `${this.addRemoveAction} stopped, checking nodes…`
+          }
           this.addRemoveStatus = 'wait'
-          setTimeout(this.showResults, 5000) // add additional discovery time
+          setTimeout(this.showResults, 1000) // add additional discovery time
         } else {
+          // error
           this.addRemoveEndDate = new Date()
-          this.addRemoveWorking = null
-          this.addRemoveFailed = newVal // TODO: better formatting?
+          this.addRemoveAlert = {
+            type: 'error',
+            text: status // TODO: better formatting?
+          }
           this.addRemoveStatus = 'stop'
         }
       }
@@ -148,12 +157,11 @@ export default {
   data () {
     return {
       settings: new Settings(localStorage),
+      bindedSocketEvents: {}, // keep track of the events-handlers
       addRemoveShowDialog: false,
-      addRemoveName: null,
+      addRemoveAction: null,
       addRemoveStatus: 'stop',
-      addRemoveWorking: null,
-      addRemoveSucceeded: null,
-      addRemoveFailed: null,
+      addRemoveAlert: null,
       addRemoveEndDate: new Date(),
       addRemoveTimer: null,
       addRemoveNode: null,
@@ -258,34 +266,40 @@ export default {
           console.log(error)
         })
     },
-
-    async onAddRemoveAction (data) {
+    async onAddRemoveAction (action) {
       this.addRemoveStatus = 'wait' // make sure user can't trigger another action too soon
-      this.addRemoveName = data.name
+      this.addRemoveAction = action.name // Inclusion/Secure inclusion/Exclusion
       this.addRemoveEndDate = new Date()
-      this.addRemoveSucceeded = null
-      this.addRemoveFailed = null
-      this.addRemoveWorking = `${data.name} ${
-        data.method === 'start' ? 'starting…' : 'stopping…'
-      }`
-      const args = []
-      if (data.secure && data.id < 2 && data.method === 'start') {
-        args.push(data.secure)
+      this.addRemoveAlert = {
+        type: 'info',
+        text: `${action.name} ${
+          action.method === 'start' ? 'starting…' : 'stopping…'
+        }`
       }
-      this.apiRequest(data.method + data.baseAction, args)
+      const args = []
+      if (action.secure && action.id < 2 && action.method === 'start') {
+        args.push(action.secure)
+      }
+      this.apiRequest(action.method + action.baseAction, args)
     },
-
     showResults () {
-      this.addRemoveWorking = null
-      this.addRemoveSucceeded = null
-      this.addRemoveFailed = null
+      this.addRemoveAlert = null
 
       if (this.addRemoveNode == null) {
-        this.addRemoveFailed = `${this.addRemoveName} stopped, none found`
-      } else if (this.addRemoveName === 'Exclusion') {
-        this.addRemoveSucceeded = `Device found! Node ${this.addRemoveNode.id} removed`
+        this.addRemoveAlert = {
+          type: 'warning',
+          text: `${this.addRemoveAction} stopped, none found`
+        }
+      } else if (this.addRemoveAction === 'Exclusion') {
+        this.addRemoveAlert = {
+          type: 'success',
+          text: `Node ${this.addRemoveNode.id} removed`
+        }
       } else {
-        this.addRemoveSucceeded = `Device found! Node ${this.addRemoveNode.id} added` // we don't yet know if it was secure, interview underway
+        this.addRemoveAlert = {
+          type: 'success',
+          text: `Device found! Node ${this.addRemoveNode.id} added` // we don't know yet if it's added securely or not, need to wait interview
+        }
       }
 
       this.addRemoveStatus = 'stop'
@@ -395,51 +409,59 @@ export default {
       for (const k in obj) s += k + ': ' + obj[k] + '\n'
 
       return s
-    }
-  },
-  mounted () {
-    const self = this
-
-    this.socket.on(socketEvents.api, async data => {
+    },
+    onApiResponse (data) {
       if (data.success) {
         switch (data.api) {
           case 'getDriverStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Driver statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           case 'getNodeStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Node statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           default:
-            self.showSnackbar('Successfully call api ' + data.api)
+            this.showSnackbar('Successfully call api ' + data.api)
         }
       } else {
-        self.showSnackbar(
+        this.showSnackbar(
           'Error while calling api ' + data.api + ': ' + data.message
         )
       }
-    })
-
-    this.socket.on(socketEvents.nodeRemoved, async node => {
+    },
+    onNodeAddedRemoved (node) {
       this.addRemoveNode = node
-    })
+    },
+    bindEvent (eventName, handler) {
+      this.socket.on(socketEvents[eventName], handler)
+      this.bindedSocketEvents[eventName] = handler
+    },
+    unbindEvents () {
+      for (const event in this.bindedSocketEvents) {
+        this.socket.off(event, this.bindedSocketEvents[event])
+      }
+    }
+  },
+  mounted () {
+    const onApiResponse = this.onApiResponse.bind(this)
+    const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
 
-    this.socket.on(socketEvents.nodeAdded, async node => {
-      this.addRemoveNode = node
-    })
+    this.bindEvent('api', onApiResponse)
+    this.bindEvent('nodeRemoved', onNodeAddedRemoved)
+    this.bindEvent('nodeAdded', onNodeAddedRemoved)
   },
   beforeDestroy () {
     if (this.socket) {
-      // unbind events
-      this.socket.off(socketEvents.api)
-      this.socket.off(socketEvents.nodeAdded)
+      this.unbindEvents()
     }
-    clearInterval(this.addRemoveTimer)
+    if (this.addRemoveTimer) {
+      clearInterval(this.addRemoveTimer)
+    }
   }
 }
 </script>
