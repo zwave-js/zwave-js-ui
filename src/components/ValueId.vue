@@ -1,148 +1,153 @@
 <template>
-  <div v-if="!value.writeable && !value.list">
-    <v-text-field
-      :label="label"
-      readonly
-      :suffix="value.unit"
-      :hint="help"
-      persistent-hint
-      v-model="value.value"
-    ></v-text-field>
-  </div>
+  <div>
+    <v-subheader class="valueid-label">{{ label }} </v-subheader>
 
-  <div v-else>
-    <v-text-field
-      v-if="
-        !value.list &&
-          (value.type === 'number' ||
-            value.type === 'string' ||
-            value.type === 'any')
-      "
-      :label="label"
-      :type="value.type === 'number' ? 'number' : 'text'"
-      :append-outer-icon="!disable_send ? 'send' : null"
-      :suffix="value.unit"
-      :min="value.min != value.max ? value.min : null"
-      :step="1"
-      persistent-hint
-      :max="value.min != value.max ? value.max : null"
-      :hint="help"
-      v-model="value.newValue"
-      @click:append-outer="updateValue(value)"
-    ></v-text-field>
-
-    <div style="display:flex" v-if="value.type === 'duration'">
+    <div v-if="!value.writeable && !value.list">
       <v-text-field
-        :label="label"
+        readonly
+        :suffix="value.unit"
+        :hint="help"
+        persistent-hint
+        v-model="value.value"
+      ></v-text-field>
+    </div>
+
+    <div v-else>
+      <v-text-field
+        v-if="
+          !value.list &&
+            (value.type === 'number' ||
+              value.type === 'string' ||
+              value.type === 'any')
+        "
         :type="value.type === 'number' ? 'number' : 'text'"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        :suffix="value.unit"
         :min="value.min != value.max ? value.min : null"
         :step="1"
         persistent-hint
-        :readonly="!value.writeable || disable_send"
         :max="value.min != value.max ? value.max : null"
         :hint="help"
-        v-model.number="value.newValue.value"
+        v-model="value.newValue"
+        @click:append-outer="updateValue(value)"
       ></v-text-field>
-      <v-select
-        style="margin-left:10px;width:20px"
-        :items="durations"
-        v-model="value.newValue.unit"
-        :readonly="!value.writeable || disable_send"
+
+      <div style="display:flex" v-if="value.type === 'duration'">
+        <v-text-field
+          :type="value.type === 'number' ? 'number' : 'text'"
+          :min="value.min != value.max ? value.min : null"
+          :step="1"
+          persistent-hint
+          :readonly="!value.writeable || disable_send"
+          :max="value.min != value.max ? value.max : null"
+          :hint="help"
+          v-model.number="value.newValue.value"
+        ></v-text-field>
+        <v-select
+          style="margin-left:10px;width:20px"
+          :items="durations"
+          v-model="value.newValue.unit"
+          :readonly="!value.writeable || disable_send"
+          :append-outer-icon="!disable_send ? 'send' : null"
+          @click:append-outer="updateValue(value)"
+        ></v-select>
+      </div>
+
+      <v-text-field
+        style="max-width: 250px;margin-top:10px"
+        flat
+        solo
+        v-if="value.type === 'color'"
+        v-model="color"
+        persistent-hint
         :append-outer-icon="!disable_send ? 'send' : null"
+        :hint="help"
+        @click:append-outer="updateValue(value)"
+      >
+        <template v-slot:append>
+          <v-menu
+            v-model="menu"
+            top
+            nudge-bottom="105"
+            nudge-left="16"
+            :close-on-content-click="false"
+          >
+            <template v-slot:activator="{ on }">
+              <div :style="pickerStyle" v-on="on" />
+            </template>
+            <v-card>
+              <v-card-text class="pa-0">
+                <v-color-picker hide-mode-switch v-model="color" flat />
+              </v-card-text>
+            </v-card>
+          </v-menu>
+        </template>
+      </v-text-field>
+
+      <v-select
+        v-if="value.list"
+        :items="items"
+        :style="{
+          'max-width': $vuetify.breakpoint.smAndDown
+            ? '280px'
+            : $vuetify.breakpoint.smOnly
+            ? '400px'
+            : 'auto'
+        }"
+        :hint="help"
+        persistent-hint
+        :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
+        v-model="value.newValue"
+        :readonly="!value.writeable"
         @click:append-outer="updateValue(value)"
       ></v-select>
-    </div>
 
-    <v-text-field
-      style="max-width: 250px;margin: auto;"
-      flat
-      solo
-      v-if="value.type === 'color'"
-      v-model="color"
-      :label="label"
-      persistent-hint
-      :append-outer-icon="!disable_send ? 'send' : null"
-      :hint="help"
-      @click:append-outer="updateValue(value)"
-    >
-      <template v-slot:append>
-        <v-menu
-          v-model="menu"
-          top
-          nudge-bottom="105"
-          nudge-left="16"
-          :close-on-content-click="false"
-        >
-          <template v-slot:activator="{ on }">
-            <div :style="pickerStyle" v-on="on" />
-          </template>
-          <v-card>
-            <v-card-text class="pa-0">
-              <v-color-picker hide-mode-switch v-model="color" flat />
-            </v-card-text>
-          </v-card>
-        </v-menu>
-      </template>
-    </v-text-field>
-
-    <v-select
-      v-if="value.list"
-      :items="items"
-      :label="label"
-      :hint="help"
-      persistent-hint
-      :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
-      v-model="value.newValue"
-      :readonly="!value.writeable"
-      @click:append-outer="updateValue(value)"
-    ></v-select>
-
-    <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-      <v-subheader style="padding-left: 0">{{ label }} </v-subheader>
-      <div style="display: flex">
-        <v-btn
-          outlined
-          class="on-button"
-          :style="{
-            background: value.newValue ? '#4CAF50' : '',
-            'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
-          }"
-          :color="value.newValue ? 'white' : 'green'"
-          dark
-          @click="updateValue(value, true)"
-        >
-          ON
-        </v-btn>
-        <v-btn
-          outlined
-          class="off-button"
-          :style="{
-            background: !value.newValue ? '#f44336' : '',
-            'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
-          }"
-          :color="!value.newValue ? 'white' : 'red'"
-          @click="updateValue(value, false)"
-          dark
-        >
-          OFF
-        </v-btn>
+      <div v-if="value.type == 'boolean' && value.writeable && value.readable">
+        <div style="display: flex;margin-top:20px">
+          <v-btn
+            outlined
+            class="on-button"
+            :style="{
+              background: value.newValue ? '#4CAF50' : '',
+              'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+            }"
+            :color="value.newValue ? 'white' : 'green'"
+            dark
+            @click="updateValue(value, true)"
+          >
+            ON
+          </v-btn>
+          <v-btn
+            outlined
+            class="off-button"
+            :style="{
+              background: !value.newValue ? '#f44336' : '',
+              'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+            }"
+            :color="!value.newValue ? 'white' : 'red'"
+            @click="updateValue(value, false)"
+            dark
+          >
+            OFF
+          </v-btn>
+        </div>
+        <div v-if="help" class="caption">{{ help }}</div>
       </div>
-      <div v-if="help" class="caption">{{ help }}</div>
-    </div>
 
-    <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
-      <template v-slot:activator="{ on }">
-        <v-btn
-          v-on="on"
-          color="primary"
-          dark
-          @click="updateValue(value)"
-          class="mb-2"
-          >{{ value.label }}</v-btn
-        >
-      </template>
-      <span>{{ '[' + value.id + '] ' + help }}</span>
-    </v-tooltip>
+      <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-on="on"
+            color="primary"
+            dark
+            @click="updateValue(value)"
+            class="mb-2"
+            >{{ value.label }}</v-btn
+          >
+        </template>
+        <span>{{ '[' + value.id + '] ' + help }}</span>
+      </v-tooltip>
+    </div>
   </div>
 </template>
 
@@ -154,6 +159,12 @@
 .off-button {
   border-radius: 0 20px 20px 0;
   margin-right: 0;
+}
+.valueid-label {
+  font-weight: bold;
+  color: black;
+  padding-left: 0;
+  height: 0;
 }
 </style>
 
