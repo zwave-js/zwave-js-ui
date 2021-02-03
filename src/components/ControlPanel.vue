@@ -61,7 +61,7 @@
           v-model="addRemoveShowDialog"
           :status="addRemoveStatus"
           :alert="addRemoveAlert"
-          @close="addRemoveShowDialog = false"
+          @close="onAddRemoveClose"
           @action="onAddRemoveAction"
         />
 
@@ -265,6 +265,10 @@ export default {
         .catch(error => {
           console.log(error)
         })
+    },
+    onAddRemoveClose () {
+      this.addRemoveShowDialog = false
+      this.addRemoveAlert = null
     },
     async onAddRemoveAction (action) {
       this.addRemoveStatus = 'wait' // make sure user can't trigger another action too soon
