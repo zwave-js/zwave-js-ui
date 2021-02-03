@@ -2,7 +2,6 @@
   <v-data-table
     :headers="activeHeaders"
     :items="tableNodes"
-    :mobile-breakpoint="0"
     :footer-props="{
       itemsPerPageOptions: [10, 20, 50, 100, -1]
     }"
@@ -22,13 +21,13 @@
     show-select
   >
     <template v-slot:top>
-      <v-layout row wrap>
-        <v-flex xs12 sm3 md2 ml-6>
+      <v-row>
+        <v-col cols="12" sm="3" md="2" class="ml-6">
           <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
-        </v-flex>
-      </v-layout>
-      <v-layout row ma-2 justify-start>
-        <v-flex xs12>
+        </v-col>
+      </v-row>
+      <v-row class="ma-2" justify-start>
+        <v-col cols="12">
           <v-menu v-model="headersMenu" :close-on-content-click="false">
             <template v-slot:activator="{ on }">
               <v-btn v-on="on">
@@ -95,8 +94,8 @@
             </template>
             <span>Export nodes.json Configuration</span>
           </v-tooltip>
-        </v-flex>
-      </v-layout>
+        </v-col>
+      </v-row>
     </template>
     <template
       v-for="column in activeHeaders"
@@ -153,10 +152,11 @@
         item.lastActive ? new Date(item.lastActive).toLocaleString() : 'Never'
       }}
     </template>
-    <template v-slot:[`expanded-item`]="{ headers, item }">
+    <template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
       <expanded-node
         :actions="nodeActions"
         :headers="headers"
+        :isMobile="isMobile"
         :node="item"
         :nodes="nodes"
         :socket="socket"
