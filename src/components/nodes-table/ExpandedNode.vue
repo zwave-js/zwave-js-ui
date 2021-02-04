@@ -31,8 +31,18 @@
         <v-tab-item key="groups">
           <association-groups :node="node" :nodes="nodes" :socket="socket" />
         </v-tab-item>
+
+        <!-- TAB DEBUG INFO -->
         <v-tab-item key="debug">
-          <pre>{{ nodeJson }}</pre>
+          <v-textarea
+            class="mx-2"
+            rows="10"
+            append-icon="mdi-content-copy"
+            v-model="nodeJson"
+            readonly
+            ref="nodeJsonContent"
+            @click:append="copyText"
+          ></v-textarea>
         </v-tab-item>
       </v-tabs-items>
     </v-tabs>
@@ -77,6 +87,15 @@ export default {
   data () {
     return {
       currentTab: 0
+    }
+  },
+  methods: {
+    copyText () {
+      const textToCopy = this.$refs.nodeJsonContent.$el.querySelector(
+        'textarea'
+      )
+      textToCopy.select()
+      document.execCommand('copy')
     }
   }
 }
