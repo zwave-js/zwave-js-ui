@@ -364,7 +364,7 @@
                       <v-col cols="12">
                         <v-select
                           v-model="gateway.type"
-                          label="Type"
+                          label="Topic type"
                           :rules="[rules.required]"
                           required
                           :items="gw_types"
@@ -425,6 +425,22 @@
                           persistent-hint
                         ></v-switch>
                       </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
+            <v-divider></v-divider>
+
+            <v-expansion-panel key="Hass" v-if="!mqtt.disabled">
+              <v-expansion-panel-header
+                >Home Assistant</v-expansion-panel-header
+              >
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-row>
                       <v-col cols="6">
                         <v-switch
                           label="Hass Discovery"
@@ -440,7 +456,7 @@
                           hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                      <v-col cols="12" v-if="gateway.hassDiscovery">
                         <v-switch
                           label="Retained discovery"
                           hint="Set retain flag to true in discovery messages"
@@ -477,8 +493,6 @@
                 </v-card>
               </v-expansion-panel-content>
             </v-expansion-panel>
-
-            <v-divider></v-divider>
           </v-expansion-panels>
 
           <DialogGatewayValue
