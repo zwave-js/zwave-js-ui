@@ -8,6 +8,28 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
 
+### Device values configuration
+
+The Device values configuration table can be found under [General](#general) section and can be used to create valueIds specific configurations for each device. This means that if you create an entry here this configuration will be applyed to all device of the same type in your Network.
+
+![Gateway values](../_images/gateway_values_table.png)
+
+> [!NOTE]
+> In order to appear in the dropdown list a device must have completed its interview so if you don't find it there please wait for this.
+> If it is a Battery powered device try to manually wake up it
+
+Properties of a **valueId configuration**:
+
+- **Device**: The device type. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
+- **Value**: The valueId you want to configure
+- **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
+- **Topic**: The topic to use for this value. It is the topic added after topic prefix, node name and location. If gateway type is different than `Manual` this will be ignored
+- **Post operation**: If you want to convert your value (valid examples: '/10' '/100' '*10' '*100')
+- **Parse send**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value sent to MQTT. The function must be sync
+- **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
+- **Enable Poll**: Enable poll of this value by using zwave-js [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue)
+- **Poll interval**: Seconds between two poll requests
+
 ## Zwave
 
 - **Serial port**: The serial port where your controller is connected
@@ -42,7 +64,7 @@ Enable this to use Z2M only as a Control Panel
 
 ## Gateway
 
-- **Topic type**: This setting specify the logic used to publish Zwave Nodes Values in MQTT topics. At the moment there are 3 possible configuration, two are automatic (all values are published in a specific topic) and one needs to manually configure which values you want to publish to MQTT and what topic to use. For every gateway type you can set custom topic values, if gateway is not in 'configure manually' mode you can omit the topic of the values (the topic will depends on the gateway type) and use the table to set values you want to `poll` or if you want to scale them using `post operation`
+- **Type**: This setting specify the logic used to publish Zwave Nodes Values in MQTT topics. At the moment there are 3 possible configuration, two are automatic (all values are published in a specific topic) and one needs to manually configure which values you want to publish to MQTT and what topic to use. For every gateway type you can set custom topic values, if gateway is not in 'configure manually' mode you can omit the topic of the values (the topic will depends on the gateway type) and use the table to set values you want to `poll` or if you want to scale them using `post operation`
 
   1. **ValueId Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
@@ -166,6 +188,8 @@ Enable this to use Z2M only as a Control Panel
 - **Ignore location**: Enable this to remove nodes location from topics
 - **Publish node details**: Creates an `nodeinfo` topic under each node's MQTT tree, with most node details. Helps build up discovery payloads.
 
+## Home Assistant
+
 - :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT auto discovery (more about this [here](../guide/homeassistant?id=home-assistant-integration-beta))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
 - **Retain Discovery**: Set retain flag to true in discovery messages
@@ -179,40 +203,23 @@ Enable this to use Z2M only as a Control Panel
   - `%o`: HASS object_id
   - `%l`: valueId label (fallback to object_id)
 
+## Save settings
+
 Once finished press `SAVE` and gateway will start Zwave Network Scan, then go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
 Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
 
-### Gateway values table
-
-The Gateway values table can be used with all gateway types to create valueIds specific configurations for each device. This means that if you create an entry here this configuration will be applyed to each valueId of each device in your Network.
-
-> [!NOTE]
-> In order to appear in the dropdown list a device must have completed its interview so if you don't find it there please wait for this.
-> If it is a Battery powered device try to manually wake up it
-
-Properties of a **Gateway valueId configuration**:
-
-- **Device**: The device type. Once scan is complete, the gateway creates an array with all devices types found in the network. A device has a `device_id` that is unique, it is composed by this node properties: `<manufacturerid>-<productid>-<producttype>`.
-- **Value**: The valueId you want to configure
-- **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
-- **Topic**: The topic to use for this value. It is the topic added after topic prefix, node name and location. If gateway type is different than `Manual` this will be ignored
-- **Post operation**: If you want to convert your value (valid examples: '/10' '/100' '*10' '*100')
-- **Parse send**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value sent to MQTT. The function must be sync
-- **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
-- **Enable Poll**: Enable poll of this value by using zwave-js [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue)
-- **Poll interval**: Seconds between two poll requests
-
-### Poll values
+## Poll values
 
 Some legacy devices don't report all their values automatically and require polling to get updated values. In contrast to OZW, zwave-js does not automatically poll devices on a regular basis without user interaction. Polling can quickly lead to network congestion and should be used very sparingly and only where necessary.
 
 zwavejs2mqtt allows you to configure scheduled polling on a per-value basis, which you can use to keep certain values updated.
 It also allows you to poll individual values on-demand from your automations, which should be preferred over blindly polling all the time if possible.
 
-In order to enable Polling of specific values you need to go to Settings page, expand Gateway section and add a new value to the [Gateway Values table](#gateway-values-table)
+> [!NOTE]
+> Many values can only be polled together. For example `targetValue`, `currentValue` and `duration` for most of the switch-type CCs. Before enabling polling for all values of a node, users should check whether polling a single value already updates the desired other values too.
 
-![Gateway values](../_images/gateway_values_table.png)
+In order to enable Polling of specific values you need to go to Settings page, expand General section and add a new value to the [Gateway Values table](#gateway-values-table)
 
 Now press on `NEW VALUE` to add a new value or on the `Pen Icon` in actions column of the table to open the dialog to Add/Edit a value. Select the device, the valueId, enable the `Enable Poll` flag and set a `Poll interval` in seconds:
 
