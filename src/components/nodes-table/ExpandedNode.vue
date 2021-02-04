@@ -39,6 +39,8 @@ import AssociationGroups from '@/components/nodes-table/AssociationGroups'
 import HomeAssistant from '@/components/nodes-table/HomeAssistant'
 import NodeDetails from '@/components/nodes-table/NodeDetails'
 
+import { mapGetters } from 'vuex'
+
 export default {
   props: {
     actions: Array,
@@ -54,8 +56,14 @@ export default {
     NodeDetails
   },
   computed: {
+    ...mapGetters(['gateway']),
     showHass () {
-      return this.node.hassDevices && Object.keys(this.node.hassDevices).length > 0
+      console.log(Object.keys(this.node.hassDevices))
+      return (
+        this.gateway.hassDiscovery &&
+        this.node.hassDevices &&
+        Object.keys(this.node.hassDevices).length > 0
+      )
     }
   },
   data () {
