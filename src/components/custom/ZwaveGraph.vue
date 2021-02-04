@@ -206,8 +206,7 @@ export default {
       type: [Array]
     }
   },
-  computed: {
-  },
+  computed: {},
   data () {
     return {
       edgesShow: 'all',
@@ -690,7 +689,11 @@ export default {
 
         neighbors[id] = node.neighbors
 
-        let batlev = node.values ? node.values.find(v => v.commandClass === 128 && v.property === 'level') : null
+        let batlev = node.values
+          ? node.values.find(
+              v => v.commandClass === 128 && v.property === 'level'
+            )
+          : null
 
         batlev = batlev ? batlev.value : null
 
@@ -708,29 +711,27 @@ export default {
           location: node.location,
           failed: node.failed,
           title:
-          '<b>' +
-          node._name +
-          '</b>' +
-          '\n Node: ' +
-          id +
-          '\n Product Name: ' +
-          node.productLabel +
-          '\n Power source: ' +
-          (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
-          '\n Neighbors: ' +
-          node.neighbors,
-          forwards:
-          node.ready &&
-          !node.failed
+            '<b>' +
+            node._name +
+            '</b>' +
+            '\n Node: ' +
+            id +
+            '\n Product Name: ' +
+            node.productLabel +
+            '\n Power source: ' +
+            (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
+            '\n Neighbors: ' +
+            node.neighbors,
+          forwards: node.ready && !node.failed
           // && node.isListening
         }
 
         entity.shape =
-        id === hubNode
-          ? 'house'
-          : (entity.forwards || batlev === undefined
-              ? 'rect'
-              : 'battery')
+          id === hubNode
+            ? 'house'
+            : entity.forwards || batlev === undefined
+            ? 'rect'
+            : 'battery'
 
         if (node.failed) {
           entity.label = 'FAILED: ' + entity.label
@@ -763,7 +764,7 @@ export default {
           layers[layer] = layerMembers
 
           for (const target in previousRow) {
-          // assign node to layer
+            // assign node to layer
             result.nodes
               .filter(n => {
                 return n.id === previousRow[target] && (n.group = 'unset')
@@ -797,29 +798,29 @@ export default {
                       to: previousRow[target],
                       style: '',
                       class:
-                      'layer-' +
-                      (layer + 1) +
-                      ' node-' +
-                      row[node] +
-                      ' node-' +
-                      previousRow[target],
+                        'layer-' +
+                        (layer + 1) +
+                        ' node-' +
+                        row[node] +
+                        ' node-' +
+                        previousRow[target],
                       layer: layer
                     })
                     nextRow.push(row[node])
                   } else {
-                  // uncomment to show edges regardless of rows - mess!
+                    // uncomment to show edges regardless of rows - mess!
                     if (this.edgeVisibility === 'all') {
                       result.edges.push({
                         from: row[node],
                         to: previousRow[target],
                         style: 'stroke-dasharray: 5, 5; fill:transparent; ', // "stroke: #ddd; stroke-width: 1px; fill:transparent; stroke-dasharray: 5, 5;",
                         class:
-                        'layer-' +
-                        (layer + 1) +
-                        ' node-' +
-                        row[node] +
-                        ' node-' +
-                        previousRow[target]
+                          'layer-' +
+                          (layer + 1) +
+                          ' node-' +
+                          row[node] +
+                          ' node-' +
+                          previousRow[target]
                       })
                     }
                   }
@@ -942,7 +943,7 @@ export default {
       return shapeSvg
     },
     handleMouseOver (d, i, nodeList) {
-    // Add interactivity
+      // Add interactivity
       let svg
       for (const nodeNum in nodeList) {
         const node = nodeList[nodeNum]
@@ -970,7 +971,7 @@ export default {
     },
 
     handleMouseOut (d, i, nodeList) {
-    // Add interactivity
+      // Add interactivity
       let svg
       for (const nodeNum in nodeList) {
         const node = nodeList[nodeNum]
