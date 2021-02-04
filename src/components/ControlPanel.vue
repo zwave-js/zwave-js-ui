@@ -475,6 +475,10 @@ export default {
     if (this.addRemoveTimer) {
       clearInterval(this.addRemoveTimer)
     }
+
+    if (this.waitTimeout) {
+      clearTimeout(this.waitTimeout)
+    }
   }
 }
 </script>
