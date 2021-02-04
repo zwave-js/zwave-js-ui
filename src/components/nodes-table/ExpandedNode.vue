@@ -2,7 +2,7 @@
   <td :colspan="isMobile ? 1 : headers.length">
     <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
       <v-tab key="node">Node</v-tab>
-      <v-tab key="homeassistant">Home Assistant</v-tab>
+      <v-tab v-if="showHass" key="homeassistant">Home Assistant</v-tab>
       <v-tab key="groups">Groups</v-tab>
       <!-- TABS -->
       <v-tabs-items
@@ -21,7 +21,7 @@
         </v-tab-item>
 
         <!-- TAB HOMEASSISTANT -->
-        <v-tab-item key="homeassistant">
+        <v-tab-item v-if="showHass" key="homeassistant">
           <home-assistant :node="node" :socket="socket" v-on="$listeners" />
         </v-tab-item>
 
@@ -39,6 +39,8 @@ import AssociationGroups from '@/components/nodes-table/AssociationGroups'
 import HomeAssistant from '@/components/nodes-table/HomeAssistant'
 import NodeDetails from '@/components/nodes-table/NodeDetails'
 
+import { mapGetters } from 'vuex'
+
 export default {
   props: {
     actions: Array,
@@ -52,6 +54,17 @@ export default {
     AssociationGroups,
     HomeAssistant,
     NodeDetails
+  },
+  computed: {
+    ...mapGetters(['gateway']),
+    showHass () {
+      console.log(Object.keys(this.node.hassDevices))
+      return (
+        this.gateway.hassDiscovery &&
+        this.node.hassDevices &&
+        Object.keys(this.node.hassDevices).length > 0
+      )
+    }
   },
   data () {
     return {

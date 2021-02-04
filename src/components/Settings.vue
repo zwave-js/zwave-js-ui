@@ -16,8 +16,8 @@
               <v-expansion-panel-content>
                 <v-card flat>
                   <v-card-text>
-                    <v-row>
-                      <v-col cols="12" sm="6">
+                    <v-row class="mb-5">
+                      <v-col cols="12" sm="6" md="4">
                         <v-switch
                           hint="Enable logging"
                           persistent-hint
@@ -25,14 +25,14 @@
                           v-model="gateway.logEnabled"
                         ></v-switch>
                       </v-col>
-                      <v-col cols="12" sm="6" v-if="gateway.logEnabled">
+                      <v-col cols="12" sm="6" md="4" v-if="gateway.logEnabled">
                         <v-select
                           :items="logLevels"
                           v-model="gateway.logLevel"
                           label="Log Level"
                         ></v-select>
                       </v-col>
-                      <v-col cols="12" sm="6" v-if="gateway.logEnabled">
+                      <v-col cols="12" sm="6" md="4" v-if="gateway.logEnabled">
                         <v-switch
                           hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
                           persistent-hint
@@ -41,7 +41,66 @@
                         ></v-switch>
                       </v-col>
                     </v-row>
+                    <v-subheader class="font-weight-bold"
+                      >Devices values configuration</v-subheader
+                    >
+                    <div class="mb-5 caption">
+                      Add here valueIds specific configurations for each device.
+                      This means that if you create an entry here this
+                      configuration will be applyed to each valueId of each
+                      device of the same type in your Network.
+                    </div>
+                    <v-data-table
+                      :headers="visibleHeaders"
+                      :items="gateway.values"
+                      :items-per-page-options="[
+                        10,
+                        20,
+                        { text: 'All', value: -1 }
+                      ]"
+                      class="elevation-1"
+                    >
+                      <template v-slot:[`item.device`]="{ item }">
+                        {{ deviceName(item.device) }}
+                      </template>
+                      <template v-slot:[`item.value`]="{ item }">
+                        {{ item.value.label + ' (' + item.value.id + ')' }}
+                      </template>
+                      <template v-slot:[`item.topic`]="{ item }">
+                        {{ item.topic }}
+                      </template>
+                      <template v-slot:[`item.postOperation`]="{ item }">
+                        {{ item.postOperation || 'No operation' }}
+                      </template>
+                      <template v-slot:[`item.enablePoll`]="{ item }">
+                        {{
+                          item.enablePoll
+                            ? 'Interval: ' + item.pollInterval + 's'
+                            : 'No'
+                        }}
+                      </template>
+                      <template v-slot:[`item.actions`]="{ item }">
+                        <v-icon
+                          small
+                          class="mr-2"
+                          color="green"
+                          @click="editItem(item)"
+                          >edit</v-icon
+                        >
+                        <v-icon small color="red" @click="deleteItem(item)"
+                          >delete</v-icon
+                        >
+                      </template>
+                    </v-data-table>
                   </v-card-text>
+                  <v-card-actions>
+                    <v-btn
+                      color="blue darken-1"
+                      text
+                      @click="dialogValue = true"
+                      >New Value</v-btn
+                    >
+                  </v-card-actions>
                 </v-card>
               </v-expansion-panel-content>
             </v-expansion-panel>
@@ -305,7 +364,7 @@
                       <v-col cols="12">
                         <v-select
                           v-model="gateway.type"
-                          label="Type"
+                          label="Topic type"
                           :rules="[rules.required]"
                           required
                           :items="gw_types"
@@ -366,6 +425,22 @@
                           persistent-hint
                         ></v-switch>
                       </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
+            <v-divider></v-divider>
+
+            <v-expansion-panel key="Hass" v-if="!mqtt.disabled">
+              <v-expansion-panel-header
+                >Home Assistant</v-expansion-panel-header
+              >
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-row>
                       <v-col cols="6">
                         <v-switch
                           label="Hass Discovery"
@@ -381,7 +456,7 @@
                           hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                      <v-col cols="12" v-if="gateway.hassDiscovery">
                         <v-switch
                           label="Retained discovery"
                           hint="Set retain flag to true in discovery messages"
@@ -414,67 +489,10 @@
                         </div>
                       </v-col>
                     </v-row>
-                    <v-data-table
-                      :headers="headers"
-                      :items="gateway.values"
-                      :items-per-page-options="[
-                        10,
-                        20,
-                        { text: 'All', value: -1 }
-                      ]"
-                      class="elevation-1"
-                    >
-                      <template v-slot:item="{ item }">
-                        <tr>
-                          <td>{{ deviceName(item.device) }}</td>
-                          <td>
-                            {{ item.value.label + ' (' + item.value.id + ')' }}
-                          </td>
-                          <td class="text-xs">{{ item.topic }}</td>
-                          <td class="text-xs">
-                            {{ item.postOperation || 'No operation' }}
-                          </td>
-                          <td class="text-xs">
-                            {{
-                              item.enablePoll
-                                ? 'Interval: ' + item.pollInterval + 's'
-                                : 'No'
-                            }}
-                          </td>
-                          <!-- <td class="text-xs">
-                            {{
-                              item.verifyChanges ? 'Verified' : 'Not Verified'
-                            }}
-                          </td> -->
-                          <td>
-                            <v-icon
-                              small
-                              class="mr-2"
-                              color="green"
-                              @click="editItem(item)"
-                              >edit</v-icon
-                            >
-                            <v-icon small color="red" @click="deleteItem(item)"
-                              >delete</v-icon
-                            >
-                          </td>
-                        </tr>
-                      </template>
-                    </v-data-table>
                   </v-card-text>
-                  <v-card-actions>
-                    <v-btn
-                      color="blue darken-1"
-                      text
-                      @click="dialogValue = true"
-                      >New Value</v-btn
-                    >
-                  </v-card-actions>
                 </v-card>
               </v-expansion-panel-content>
             </v-expansion-panel>
-
-            <v-divider></v-divider>
           </v-expansion-panels>
 
           <DialogGatewayValue
@@ -522,6 +540,15 @@ export default {
     fileInput
   },
   computed: {
+    visibleHeaders () {
+      if (!this.mqtt.disabled) return this.headers
+      else {
+        const headersCopy = [...this.headers]
+
+        headersCopy.splice(2, 1) // remove topic header
+        return headersCopy
+      }
+    },
     secure () {
       if (!this.mqtt.host) return false
       const parsed = parse(this.mqtt.host)
@@ -587,7 +614,7 @@ export default {
         { text: 'Post Operation', value: 'postOperation' },
         { text: 'Poll', value: 'enablePoll' },
         // { text: 'Changes', value: 'verifyChanges' },
-        { text: 'Actions', sortable: false }
+        { text: 'Actions', value: 'actions', sortable: false }
       ],
       e1: true,
       gw_types: [

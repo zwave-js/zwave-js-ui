@@ -56,7 +56,10 @@
                   </template>
                 </v-select>
               </v-col>
-              <v-col cols="12">
+              <v-col
+                v-if="!this.mqtt.disabled && this.gateway.hassDiscovery"
+                cols="12"
+              >
                 <v-select
                   v-model="editedValue.device_class"
                   label="Device Class"
@@ -72,7 +75,7 @@
                   label="Device Icon"
                 ></v-text-field>
               </v-col>
-              <v-col cols="12">
+              <v-col v-if="!this.mqtt.disabled" cols="12">
                 <v-text-field
                   v-model.trim="editedValue.topic"
                   label="Topic"
@@ -196,6 +199,8 @@ import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
 
+import { mapGetters } from 'vuex'
+
 export default {
   components: {
     PrismEditor
@@ -217,6 +222,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['gateway', 'mqtt']),
     deviceValues () {
       const device = this.devices.find(d => d.value == this.editedValue.device) // eslint-disable-line eqeqeq
       return device ? device.values : []
