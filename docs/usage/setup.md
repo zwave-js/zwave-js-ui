@@ -190,7 +190,7 @@ Enable this to use Z2M only as a Control Panel
 
 ## Home Assistant
 
-- :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT auto discovery (more about this [here](../guide/homeassistant?id=home-assistant-integration-beta))
+- :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT auto discovery (more about this [here](https://zwave-js.github.io/zwavejs2mqtt/#/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
 - **Retain Discovery**: Set retain flag to true in discovery messages
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
