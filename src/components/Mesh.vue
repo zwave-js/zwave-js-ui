@@ -132,11 +132,6 @@ export default {
     D3Network
   },
   watch: {
-    showLocation () {
-      for (const n of this.nodes) {
-        n.name = this.nodeName(n)
-      }
-    },
     meshNodes () {
       this.debounceRefresh()
     }
@@ -255,21 +250,19 @@ export default {
     }
   },
   mounted () {
-    const self = this
-
     this.socket.on(socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
           case 'refreshNeighbors': {
             const neighbors = data.result
             for (let i = 0; i < neighbors.length; i++) {
-              self.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
+              this.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
             }
             break
           }
         }
       } else {
-        self.showSnackbar(
+        this.showSnackbar(
           'Error while calling api ' + data.api + ': ' + data.message
         )
       }
