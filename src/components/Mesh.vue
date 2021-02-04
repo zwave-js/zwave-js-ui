@@ -35,7 +35,7 @@
 
       <zwave-graph
         id="mesh"
-        :nodes="nodes"
+        :nodes="nodes.filter(n => !n.failed)"
         @node-click="nodeClick"
       />
 
