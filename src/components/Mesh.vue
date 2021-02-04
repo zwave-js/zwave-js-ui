@@ -30,19 +30,12 @@
           <v-col cols="3" md="2">
             <v-switch label="Show location" v-model="showLocation"></v-switch>
           </v-col>
-          <v-col cols="5" md="6">
-            <v-btn color="success" @click="downloadSVG">Download SVG</v-btn>
-          </v-col>
         </v-row>
       </v-container>
 
-      <d3-network
+      <zwave-graph
         id="mesh"
-        ref="mesh"
-        :net-nodes="meshNodes"
-        :net-links="links"
-        :options="options"
-        :selection="selection"
+        :nodes="nodes"
         @node-click="nodeClick"
       />
 
@@ -118,7 +111,7 @@
   </v-container>
 </template>
 <script>
-import D3Network from 'vue-d3-network'
+import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapMutations, mapGetters } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
@@ -129,70 +122,15 @@ export default {
     socket: Object
   },
   components: {
-    D3Network
+    ZwaveGraph
   },
   watch: {
-    meshNodes () {
+    nodes () {
       this.debounceRefresh()
     }
   },
   computed: {
-    ...mapGetters(['nodes']),
-    meshNodes () {
-      return this.activeNodes.map(n => this.convertNode(n))
-    },
-    activeNodes () {
-      return this.nodes.filter(n => n.id !== 0 && n.status !== 'Removed')
-    },
-    links () {
-      const links = []
-
-      for (const source of this.activeNodes) {
-        if (source.neighbors) {
-          for (const target of source.neighbors) {
-            // ensure target node exists
-            if (this.nodes[target] && this.nodes[target].status !== 'Removed') {
-              links.push({
-                sid: source.id,
-                tid: target,
-                _color: this.$vuetify.theme.dark ? 'white' : 'black'
-              })
-            }
-          }
-        }
-      }
-
-      return links
-    },
-    options () {
-      return {
-        canvas: false,
-        force: this.force,
-        offset: {
-          x: 0,
-          y: 0
-        },
-        nodeSize: this.nodeSize,
-        fontSize: this.fontSize,
-        linkWidth: 1,
-        nodeLabels: true,
-        linkLabels: false,
-        strLinks: true,
-        resizeListener: true
-      }
-    },
-    selection () {
-      const s = {
-        nodes: [],
-        links: []
-      }
-
-      if (this.selectedNode) {
-        s.nodes[this.selectedNode.id] = this.selectedNode
-      }
-
-      return s
-    }
+    ...mapGetters(['nodes'])
   },
   data () {
     return {
@@ -211,29 +149,6 @@ export default {
     nodeClick (e, node) {
       this.selectedNode = this.selectedNode === node ? null : node
       this.showProperties = !!this.selectedNode
-    },
-    downloadSVG () {
-      this.$refs.mesh.screenShot('myNetwork.svg', true, true)
-    },
-    convertNode (n) {
-      return {
-        id: n.id,
-        _cssClass: this.nodeClass(n),
-        name: this.nodeName(n),
-        status: n.status,
-        data: n
-      }
-    },
-    nodeName (n) {
-      if (n.data) n = n.data // works both with node object and mesh node object
-      const name = n.name || n.product || 'node ' + n.id
-      return name + (this.showLocation && n.loc ? ` (${n.loc})` : '')
-    },
-    nodeClass (n) {
-      if (n.id === 1) {
-        return 'controller'
-      }
-      return n.status.toLowerCase()
     },
     debounceRefresh () {
       if (this.refreshTimeout) {

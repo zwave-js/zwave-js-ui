@@ -23,7 +23,7 @@
   </div>
 </template>
 
-<style scoped>
+<style>
 .thumb {
   border: 1px solid #ddd;
   position: absolute;
@@ -44,13 +44,8 @@
 }
 
 .content {
-  overflow: hidden;
-  position: absolute;
-  left: 0px;
-  top: 64px;
-  bottom: 0px;
-  right: 0px;
   padding: 8px;
+  height: 800px;
 }
 
 svg > .output {
@@ -414,7 +409,11 @@ export default {
       }
     }
   },
-  watch: {},
+  watch: {
+    nodes () {
+      this.paintGraph()
+    }
+  },
   mounted () {},
   methods: {
     paintGraph () {
@@ -672,44 +671,43 @@ export default {
       scopeContainer.addEventListener('mousemove', function (evt) {
         updateMainViewPan(evt)
       })
-    }
-  },
-  listNodes () {
-    const result = {
-      edges: [],
-      nodes: []
-    }
-
-    let hubNode = 0
-    const neighbors = {}
-
-    for (const node in this.nodes) {
-      const id = node.id
-      // TODO: check if node is primary controller
-      if (id === 1) {
-        hubNode = id
+    },
+    listNodes () {
+      const result = {
+        edges: [],
+        nodes: []
       }
 
-      neighbors[id] = node.neighbors
+      let hubNode = 0
+      const neighbors = {}
 
-      let batlev = node.values.find(v => v.commandClass === 128 && v.property === 'level')
+      for (const node of this.nodes) {
+        const id = node.id
+        // TODO: check if node is primary controller
+        if (id === 1) {
+          hubNode = id
+        }
 
-      batlev = batlev ? batlev.value : null
+        neighbors[id] = node.neighbors
 
-      // create node
-      const entity = {
-        id: id,
-        label: node._name,
-        class: 'unset layer-7',
-        layer: 7,
-        rx: '6',
-        ry: '6',
-        neighbors: neighbors[id],
-        battery_level: batlev,
-        mains: batlev,
-        location: node.location,
-        failed: node.failed,
-        title:
+        let batlev = node.values ? node.values.find(v => v.commandClass === 128 && v.property === 'level') : null
+
+        batlev = batlev ? batlev.value : null
+
+        // create node
+        const entity = {
+          id: id,
+          label: node._name,
+          class: 'unset layer-7',
+          layer: 7,
+          rx: '6',
+          ry: '6',
+          neighbors: neighbors[id],
+          battery_level: batlev,
+          mains: batlev,
+          location: node.location,
+          failed: node.failed,
+          title:
           '<b>' +
           node._name +
           '</b>' +
@@ -721,272 +719,273 @@ export default {
           (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
           '\n Neighbors: ' +
           node.neighbors,
-        forwards:
+          forwards:
           node.ready &&
           !node.failed
           // && node.isListening
-      }
+        }
 
-      entity.shape =
+        entity.shape =
         id === hubNode
           ? 'house'
           : (entity.forwards || batlev === undefined
               ? 'rect'
               : 'battery')
 
-      if (node.failed) {
-        entity.label = 'FAILED: ' + entity.label
-        entity['font.multi'] = true
-        entity.title = '<b>FAILED: </b>' + entity.title
-        entity.group = 'Failed'
-        entity.failed = true
-        entity.class = 'Error'
+        if (node.failed) {
+          entity.label = 'FAILED: ' + entity.label
+          entity['font.multi'] = true
+          entity.title = '<b>FAILED: </b>' + entity.title
+          entity.group = 'Failed'
+          entity.failed = true
+          entity.class = 'Error'
+        }
+
+        if (hubNode === id) {
+          entity.label = 'ZWave Hub'
+          entity.borderWidth = 2
+          entity.fixed = true
+        }
+
+        result.nodes.push(entity)
       }
 
-      if (hubNode === id) {
-        entity.label = 'ZWave Hub'
-        entity.borderWidth = 2
-        entity.fixed = true
-      }
+      if (hubNode > 0) {
+        let layer = 0
+        let previousRow = [hubNode]
+        const mappedNodes = [hubNode]
+        const layers = []
 
-      result.nodes.push(entity)
-    }
+        while (previousRow.length > 0) {
+          layer = layer + 1
+          const nextRow = []
+          const layerMembers = []
+          layers[layer] = layerMembers
 
-    if (hubNode > 0) {
-      let layer = 0
-      let previousRow = [hubNode]
-      const mappedNodes = [hubNode]
-      const layers = []
-
-      while (previousRow.length > 0) {
-        layer = layer + 1
-        const nextRow = []
-        const layerMembers = []
-        layers[layer] = layerMembers
-
-        for (const target in previousRow) {
+          for (const target in previousRow) {
           // assign node to layer
-          result.nodes
-            .filter(n => {
-              return n.id === previousRow[target] && (n.group = 'unset')
-            })
-            .forEach(d => {
-              d.class = 'layer-' + layer
-              d.layer = layer
-              if (d.failed) {
-                d.class = d.class + ' Error'
-              }
+            result.nodes
+              .filter(n => {
+                return n.id === previousRow[target] && (n.group = 'unset')
+              })
+              .forEach(d => {
+                d.class = 'layer-' + layer
+                d.layer = layer
+                if (d.failed) {
+                  d.class = d.class + ' Error'
+                }
 
-              if (d.neighbors !== undefined) {
-                d.neighbors.forEach(n => {
-                  d.class = d.class + ' neighbor-' + n
-                })
-              }
-            })
+                if (d.neighbors !== undefined) {
+                  d.neighbors.forEach(n => {
+                    d.class = d.class + ' neighbor-' + n
+                  })
+                }
+              })
 
-          if (
-            result.nodes.filter(n => {
-              return n.id === previousRow[target] && n.forwards
-            }).length > 0
-          ) {
-            const row = neighbors[previousRow[target]]
-            for (const node in row) {
-              if (neighbors[row[node]] !== undefined) {
-                if (!mappedNodes.includes(row[node])) {
-                  layerMembers.push(row[node])
-                  result.edges.push({
-                    from: row[node],
-                    to: previousRow[target],
-                    style: '',
-                    class:
+            if (
+              result.nodes.filter(n => {
+                return n.id === previousRow[target] && n.forwards
+              }).length > 0
+            ) {
+              const row = neighbors[previousRow[target]]
+              for (const node in row) {
+                if (neighbors[row[node]] !== undefined) {
+                  if (!mappedNodes.includes(row[node])) {
+                    layerMembers.push(row[node])
+                    result.edges.push({
+                      from: row[node],
+                      to: previousRow[target],
+                      style: '',
+                      class:
                       'layer-' +
                       (layer + 1) +
                       ' node-' +
                       row[node] +
                       ' node-' +
                       previousRow[target],
-                    layer: layer
-                  })
-                  nextRow.push(row[node])
-                } else {
+                      layer: layer
+                    })
+                    nextRow.push(row[node])
+                  } else {
                   // uncomment to show edges regardless of rows - mess!
-                  if (this.edgeVisibility === 'all') {
-                    result.edges.push({
-                      from: row[node],
-                      to: previousRow[target],
-                      style: 'stroke-dasharray: 5, 5; fill:transparent; ', // "stroke: #ddd; stroke-width: 1px; fill:transparent; stroke-dasharray: 5, 5;",
-                      class:
+                    if (this.edgeVisibility === 'all') {
+                      result.edges.push({
+                        from: row[node],
+                        to: previousRow[target],
+                        style: 'stroke-dasharray: 5, 5; fill:transparent; ', // "stroke: #ddd; stroke-width: 1px; fill:transparent; stroke-dasharray: 5, 5;",
+                        class:
                         'layer-' +
                         (layer + 1) +
                         ' node-' +
                         row[node] +
                         ' node-' +
                         previousRow[target]
-                    })
+                      })
+                    }
                   }
                 }
               }
             }
           }
+
+          for (const idx in nextRow) {
+            mappedNodes.push(nextRow[idx])
+          }
+          previousRow = nextRow
         }
+      }
+      return result
+    },
 
-        for (const idx in nextRow) {
-          mappedNodes.push(nextRow[idx])
+    // Add our custom shape (a house)
+    renderHouse (parent, bbox, node) {
+      const w = bbox.width
+      const h = bbox.height
+      const points = [
+        {
+          x: 0,
+          y: 0
+        },
+        {
+          x: w,
+          y: 0
+        },
+        {
+          x: w,
+          y: -h
+        },
+        {
+          x: w / 2,
+          y: (-h * 3) / 2
+        },
+        {
+          x: 0,
+          y: -h
         }
-        previousRow = nextRow
+      ]
+      const shapeSvg = parent
+        .insert('polygon', ':first-child')
+        .attr(
+          'points',
+          points
+            .map(function (d) {
+              return d.x + ',' + d.y
+            })
+            .join(' ')
+        )
+        .attr('transform', 'translate(' + -w / 2 + ',' + (h * 3) / 4 + ')')
+
+      node.intersect = function (point) {
+        return dagreD3.intersect.polygon(node, points, point)
       }
-    }
-    return result
-  },
 
-  // Add our custom shape (a house)
-  renderHouse (parent, bbox, node) {
-    const w = bbox.width
-    const h = bbox.height
-    const points = [
-      {
-        x: 0,
-        y: 0
-      },
-      {
-        x: w,
-        y: 0
-      },
-      {
-        x: w,
-        y: -h
-      },
-      {
-        x: w / 2,
-        y: (-h * 3) / 2
-      },
-      {
-        x: 0,
-        y: -h
+      return shapeSvg
+    },
+    renderBattery (parent, bbox, node) {
+      const w = bbox.width
+      const h = bbox.height
+      const points = [
+        {
+          x: 0,
+          y: 0
+        }, // bottom left
+        {
+          x: w,
+          y: 0
+        }, // bottom line
+        {
+          x: w,
+          y: -h
+        }, // right line
+        {
+          x: (w * 7) / 10,
+          y: -h
+        }, // top right
+        {
+          x: (w * 7) / 10,
+          y: (-h * 20) / 17
+        }, // battery tip - right
+        {
+          x: (w * 3) / 10,
+          y: (-h * 20) / 17
+        }, // battery tip
+        {
+          x: (w * 3) / 10,
+          y: -h
+        }, // battery tip - left
+        {
+          x: 0,
+          y: -h
+        }, // top left
+        {
+          x: 0,
+          y: -h
+        } // left line
+      ]
+
+      const shapeSvg = parent
+        .insert('polygon', ':first-child')
+        .attr(
+          'points',
+          points
+            .map(function (d) {
+              return d.x + ',' + d.y
+            })
+            .join(' ')
+        )
+        .attr('transform', 'translate(' + -w / 2 + ',' + (h * 2) / 4 + ')')
+
+      node.intersect = function (point) {
+        return dagreD3.intersect.polygon(node, points, point)
       }
-    ]
-    const shapeSvg = parent
-      .insert('polygon', ':first-child')
-      .attr(
-        'points',
-        points
-          .map(function (d) {
-            return d.x + ',' + d.y
-          })
-          .join(' ')
-      )
-      .attr('transform', 'translate(' + -w / 2 + ',' + (h * 3) / 4 + ')')
 
-    node.intersect = function (point) {
-      return dagreD3.intersect.polygon(node, points, point)
-    }
-
-    return shapeSvg
-  },
-  renderBattery (parent, bbox, node) {
-    const w = bbox.width
-    const h = bbox.height
-    const points = [
-      {
-        x: 0,
-        y: 0
-      }, // bottom left
-      {
-        x: w,
-        y: 0
-      }, // bottom line
-      {
-        x: w,
-        y: -h
-      }, // right line
-      {
-        x: (w * 7) / 10,
-        y: -h
-      }, // top right
-      {
-        x: (w * 7) / 10,
-        y: (-h * 20) / 17
-      }, // battery tip - right
-      {
-        x: (w * 3) / 10,
-        y: (-h * 20) / 17
-      }, // battery tip
-      {
-        x: (w * 3) / 10,
-        y: -h
-      }, // battery tip - left
-      {
-        x: 0,
-        y: -h
-      }, // top left
-      {
-        x: 0,
-        y: -h
-      } // left line
-    ]
-
-    const shapeSvg = parent
-      .insert('polygon', ':first-child')
-      .attr(
-        'points',
-        points
-          .map(function (d) {
-            return d.x + ',' + d.y
-          })
-          .join(' ')
-      )
-      .attr('transform', 'translate(' + -w / 2 + ',' + (h * 2) / 4 + ')')
-
-    node.intersect = function (point) {
-      return dagreD3.intersect.polygon(node, points, point)
-    }
-
-    return shapeSvg
-  },
-  handleMouseOver (d, i, nodeList) {
+      return shapeSvg
+    },
+    handleMouseOver (d, i, nodeList) {
     // Add interactivity
-    let svg
-    for (const nodeNum in nodeList) {
-      const node = nodeList[nodeNum]
-      if (node.style !== undefined && node.id !== d) {
-        node.style.opacity = 0.1
-        svg = node.ownerSVGElement
+      let svg
+      for (const nodeNum in nodeList) {
+        const node = nodeList[nodeNum]
+        if (node.style !== undefined && node.id !== d) {
+          node.style.opacity = 0.1
+          svg = node.ownerSVGElement
+        }
       }
-    }
 
-    // Use D3 to select element, change color and size
-    svg.querySelectorAll('.edgePath').forEach(function (node) {
-      node.style.opacity = '0.3'
-    })
+      // Use D3 to select element, change color and size
+      svg.querySelectorAll('.edgePath').forEach(function (node) {
+        node.style.opacity = '0.3'
+      })
 
-    const edges = svg.querySelectorAll('.edgePath.node-' + d)
-    for (let i = 0; i < edges.length; i++) {
-      edges[i].style.opacity = '1'
-      edges[i].style['stroke-width'] = '2'
-    }
+      const edges = svg.querySelectorAll('.edgePath.node-' + d)
+      for (let i = 0; i < edges.length; i++) {
+        edges[i].style.opacity = '1'
+        edges[i].style['stroke-width'] = '2'
+      }
 
-    const neighbors = svg.querySelectorAll('.node.neighbor-' + d)
-    for (let i = 0; i < neighbors.length; i++) {
-      neighbors[i].style.opacity = '0.7'
-    }
-  },
+      const neighbors = svg.querySelectorAll('.node.neighbor-' + d)
+      for (let i = 0; i < neighbors.length; i++) {
+        neighbors[i].style.opacity = '0.7'
+      }
+    },
 
-  handleMouseOut (d, i, nodeList) {
+    handleMouseOut (d, i, nodeList) {
     // Add interactivity
-    let svg
-    for (const nodeNum in nodeList) {
-      const node = nodeList[nodeNum]
-      if (node.style !== undefined && node.id !== d) {
-        node.style.opacity = 1
-        svg = node.ownerSVGElement
+      let svg
+      for (const nodeNum in nodeList) {
+        const node = nodeList[nodeNum]
+        if (node.style !== undefined && node.id !== d) {
+          node.style.opacity = 1
+          svg = node.ownerSVGElement
+        }
       }
-    }
 
-    // Use D3 to select element, change color and size
-    svg.querySelectorAll('.edgePath').forEach(function (node) {
-      node.style.opacity = '1'
-      node.style['stroke-width'] = '1'
-    })
+      // Use D3 to select element, change color and size
+      svg.querySelectorAll('.edgePath').forEach(function (node) {
+        node.style.opacity = '1'
+        node.style['stroke-width'] = '1'
+      })
+    }
   }
 }
 </script>

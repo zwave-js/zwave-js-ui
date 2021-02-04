@@ -9,8 +9,6 @@ import store from './store'
 import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 import 'axios-progress-bar/dist/nprogress.css'
-import 'vue-d3-network/dist/vue-d3-network.css'
-
 // Custom assets CSS JS
 require('./assets/css/my-progress.css')
 require('./assets/css/my-mesh.css')

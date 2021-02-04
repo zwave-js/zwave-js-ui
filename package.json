@@ -124,7 +124,6 @@
     "svg-pan-zoom": "^3.6.1",
     "uniqid": "^5.2.0",
     "vue": "^2.6.12",
-    "vue-d3-network": "^0.1.28",
     "vue-prism-editor": "^1.2.2",
     "vue-router": "^3.5.1",
     "vuetify": "^2.4.3",
