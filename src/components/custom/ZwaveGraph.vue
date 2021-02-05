@@ -200,6 +200,8 @@ import * as dagreD3 from 'dagre-d3'
 import * as svgPanZoom from 'svg-pan-zoom'
 import * as Hammer from 'hammerjs'
 
+import testNodes from '@/assets/testNodes.json'
+
 export default {
   props: {
     nodes: {
@@ -211,6 +213,7 @@ export default {
     return {
       edgesShow: 'all',
       ranker: 'network-simplex',
+      hammer: null,
       legends: [
         {
           shape: 'rect',
@@ -401,9 +404,6 @@ export default {
           options.svgElement.addEventListener('touchmove', function (e) {
             e.preventDefault()
           })
-        },
-        destroy: function () {
-          this.hammer.destroy()
         }
       }
     }
@@ -414,6 +414,9 @@ export default {
     }
   },
   mounted () {},
+  beforeDestroy () {
+    this.hammer.destroy()
+  },
   methods: {
     paintGraph () {
       this.$refs.svg.innerHTML = ''
@@ -543,11 +546,10 @@ export default {
         .on('mouseout', this.handleMouseOut.bind(this, nodeList))
         .on('click tap', this.handleClick.bind(this, nodeList))
 
-      this.$refs.miniSvg.innerHTML = this.$refs.svg.innerHTML
-
-      this.bindThumbnail()
+      setTimeout(this.bindThumbnail.bind(this), 500)
     },
     bindThumbnail () {
+      this.$refs.miniSvg.innerHTML = this.$refs.svg.innerHTML
       const main = svgPanZoom(this.$refs.svg, {
         zoomEnabled: true,
         controlIconsEnabled: true,
@@ -671,7 +673,7 @@ export default {
       let hubNode = 0
       const neighbors = {}
 
-      for (const node of this.nodes) {
+      for (const node of testNodes) {
         const id = node.id
         // TODO: check if node is primary controller
         if (id === 1) {
@@ -936,7 +938,7 @@ export default {
     handleClick (nodeList, event, index) {
       // Add interactivity
       // const nodeId = nodeList[index].id
-      // const node = this.nodes.find(n => n.id === nodeId)
+      // const node = testNodes.find(n => n.id === nodeId)
     },
     handleMouseOver (nodeList, event, index) {
       // Add interactivity
