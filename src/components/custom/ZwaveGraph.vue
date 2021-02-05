@@ -54,7 +54,7 @@
         </v-radio-group>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row style="height:600px">
       <v-col ref="content" cols="12">
     </v-col>
     </v-row>
