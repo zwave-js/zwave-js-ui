@@ -457,8 +457,7 @@ export default {
           g.setNode(node.location, {
             label: node.location,
             clusterLabelPos: 'bottom',
-            class: 'group',
-            entityId: node.entity_id
+            class: 'group'
           })
           g.setParent(node.id, node.location)
         }
@@ -533,24 +532,16 @@ export default {
         return g.edges(d).layer
       })
 
-      const that = this
-      const handleClick = function (d, i, nodeList) {
-        // Add interactivity
-        const nodeId = nodeList[i].id
-        const node = nodes.find(function (element) {
-          return element.id === nodeId
-        })
-        that.fire('hass-more-info', {
-          entityId: node.entity_id
-        })
-      }
+      const selection = svg
+        .selectAll('.node')
+
+      const nodeList = selection.nodes()
 
       // append handlers
-      svg
-        .selectAll('.node')
-        .on('mouseover', this.handleMouseOver)
-        .on('mouseout', this.handleMouseOut)
-        .on('click tap', handleClick)
+      selection
+        .on('mouseover', this.handleMouseOver.bind(this, nodeList))
+        .on('mouseout', this.handleMouseOut.bind(this, nodeList))
+        .on('click tap', this.handleClick.bind(this, nodeList))
 
       this.$refs.miniSvg.innerHTML = this.$refs.svg.innerHTML
 
@@ -691,8 +682,8 @@ export default {
 
         let batlev = node.values
           ? node.values.find(
-              v => v.commandClass === 128 && v.property === 'level'
-            )
+            v => v.commandClass === 128 && v.property === 'level'
+          )
           : null
 
         batlev = batlev ? batlev.value : null
@@ -730,8 +721,8 @@ export default {
           id === hubNode
             ? 'house'
             : entity.forwards || batlev === undefined
-            ? 'rect'
-            : 'battery'
+              ? 'rect'
+              : 'battery'
 
         if (node.failed) {
           entity.label = 'FAILED: ' + entity.label
@@ -942,12 +933,17 @@ export default {
 
       return shapeSvg
     },
-    handleMouseOver (d, i, nodeList) {
+    handleClick (nodeList, event, index) {
+      // Add interactivity
+      // const nodeId = nodeList[index].id
+      // const node = this.nodes.find(n => n.id === nodeId)
+    },
+    handleMouseOver (nodeList, event, index) {
       // Add interactivity
       let svg
       for (const nodeNum in nodeList) {
         const node = nodeList[nodeNum]
-        if (node.style !== undefined && node.id !== d) {
+        if (node.style !== undefined && node.id !== index) {
           node.style.opacity = 0.1
           svg = node.ownerSVGElement
         }
@@ -958,24 +954,24 @@ export default {
         node.style.opacity = '0.3'
       })
 
-      const edges = svg.querySelectorAll('.edgePath.node-' + d)
+      const edges = svg.querySelectorAll('.edgePath.node-' + index)
       for (let i = 0; i < edges.length; i++) {
         edges[i].style.opacity = '1'
         edges[i].style['stroke-width'] = '2'
       }
 
-      const neighbors = svg.querySelectorAll('.node.neighbor-' + d)
+      const neighbors = svg.querySelectorAll('.node.neighbor-' + index)
       for (let i = 0; i < neighbors.length; i++) {
         neighbors[i].style.opacity = '0.7'
       }
     },
 
-    handleMouseOut (d, i, nodeList) {
+    handleMouseOut (nodeList, event, index) {
       // Add interactivity
       let svg
       for (const nodeNum in nodeList) {
         const node = nodeList[nodeNum]
-        if (node.style !== undefined && node.id !== d) {
+        if (node.style !== undefined && node.id !== index) {
           node.style.opacity = 1
           svg = node.ownerSVGElement
         }
