@@ -2,99 +2,68 @@
   <v-container fluid>
     <v-card>
       <v-container grid-list-md>
-        <v-row>
-          <v-col cols="3" md="2">
-            <v-text-field
-              label="Nodes size"
-              v-model.number="nodeSize"
-              min="10"
-              type="number"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="3" md="2">
-            <v-text-field
-              label="Font size"
-              v-model.number="fontSize"
-              min="10"
-              type="number"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="3" md="2">
-            <v-text-field
-              label="Distance"
-              v-model.number="force"
-              min="100"
-              type="number"
-            ></v-text-field>
-          </v-col>
-          <v-col cols="3" md="2">
-            <v-switch label="Show location" v-model="showLocation"></v-switch>
-          </v-col>
-        </v-row>
+        <zwave-graph
+          id="mesh"
+          :nodes="nodes.filter(n => !n.failed)"
+          @node-click="nodeClick"
+        />
 
-      <zwave-graph
-        id="mesh"
-        :nodes="nodes.filter(n => !n.failed)"
-        @node-click="nodeClick"
-      />
-
-      <div id="properties" draggable v-show="showProperties" class="details">
-        <v-icon
-          @click="showProperties = false"
-          style="cursor:pointer;position:absolute;right:10px;top:10px"
-          >clear</v-icon
-        >
-        <v-subheader>Node properties</v-subheader>
-        <v-list
-          v-if="selectedNode"
-          dense
-          style="min-width:300px;background:transparent"
-        >
-          <v-list-item>
-            <v-list-item-content>ID</v-list-item-content>
-            <v-list-item-content class="align-end">{{
-              selectedNode.data.id
-            }}</v-list-item-content>
-          </v-list-item>
-          <v-list-item>
-            <v-list-item-content>Status</v-list-item-content>
-            <v-list-item-content class="align-end">{{
-              selectedNode.data.status
-            }}</v-list-item-content>
-          </v-list-item>
-          <v-list-item>
-            <v-list-item-content>Code</v-list-item-content>
-            <v-list-item-content class="align-end">{{
-              selectedNode.data.productLabel
-            }}</v-list-item-content>
-          </v-list-item>
-          <v-list-item>
-            <v-list-item-content>Product</v-list-item-content>
-            <v-list-item-content class="align-end">{{
-              selectedNode.data.productDescription
-            }}</v-list-item-content>
-          </v-list-item>
-          <v-list-item>
-            <v-list-item-content>Manufacturer</v-list-item-content>
-            <v-list-item-content class="align-end">{{
-              selectedNode.data.manufacturer
-            }}</v-list-item-content>
-          </v-list-item>
-          <v-list-item>
-            <v-list-item-content>Name</v-list-item-content>
-            <v-list-item-content class="align-end">{{
-              selectedNode.data.name
-            }}</v-list-item-content>
-          </v-list-item>
-          <v-list-item>
-            <v-list-item-content>Location</v-list-item-content>
-            <v-list-item-content class="align-end">{{
-              selectedNode.data.loc
-            }}</v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </div>
-
+        <div id="properties" draggable v-show="showProperties" class="details">
+          <v-icon
+            @click="showProperties = false"
+            style="cursor:pointer;position:absolute;right:10px;top:10px"
+            >clear</v-icon
+          >
+          <v-subheader>Node properties</v-subheader>
+          <v-list
+            v-if="selectedNode"
+            dense
+            style="min-width:300px;background:transparent"
+          >
+            <v-list-item>
+              <v-list-item-content>ID</v-list-item-content>
+              <v-list-item-content class="align-end">{{
+                selectedNode.data.id
+              }}</v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content>Status</v-list-item-content>
+              <v-list-item-content class="align-end">{{
+                selectedNode.data.status
+              }}</v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content>Code</v-list-item-content>
+              <v-list-item-content class="align-end">{{
+                selectedNode.data.productLabel
+              }}</v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content>Product</v-list-item-content>
+              <v-list-item-content class="align-end">{{
+                selectedNode.data.productDescription
+              }}</v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content>Manufacturer</v-list-item-content>
+              <v-list-item-content class="align-end">{{
+                selectedNode.data.manufacturer
+              }}</v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content>Name</v-list-item-content>
+              <v-list-item-content class="align-end">{{
+                selectedNode.data.name
+              }}</v-list-item-content>
+            </v-list-item>
+            <v-list-item>
+              <v-list-item-content>Location</v-list-item-content>
+              <v-list-item-content class="align-end">{{
+                selectedNode.data.loc
+              }}</v-list-item-content>
+            </v-list-item>
+          </v-list>
+        </div>
       </v-container>
 
       <!-- <v-speed-dial bottom fab right fixed v-model="fab">

@@ -13,54 +13,54 @@
       <v-col>
         <v-subheader>Legend</v-subheader>
         <v-list dense>
-          <v-list-item
-          v-for="(item, i) in legends"
-          :key="i"
-        >
-          <v-list-item-icon>
-            <v-icon :color="item.color">turned_in</v-icon>
-          </v-list-item-icon>
-          <v-list-item-content>
-            <v-list-item-title :style="{'color': item.textColor}" v-text="item.text"></v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
+          <v-list-item v-for="(item, i) in legends" :key="i">
+            <v-list-item-icon>
+              <v-icon :color="item.color">turned_in</v-icon>
+            </v-list-item-icon>
+            <v-list-item-content>
+              <v-list-item-title
+                :style="{ color: item.textColor }"
+                v-text="item.text"
+              ></v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
         </v-list>
       </v-col>
       <v-col>
-      <v-subheader>Layout</v-subheader>
+        <v-subheader>Layout</v-subheader>
 
         <v-radio-group v-model="ranker">
-      <v-radio
-        v-for="(item, i) in layouts"
-          :key="i"
-        :label="item.text"
-        :value="item.value"
-      ></v-radio>
-    </v-radio-group>
+          <v-radio
+            v-for="(item, i) in layouts"
+            :key="i"
+            :label="item.text"
+            :value="item.value"
+          ></v-radio>
+        </v-radio-group>
       </v-col>
-       <v-col>
-      <v-subheader>Edges</v-subheader>
+      <v-col>
+        <v-subheader>Edges</v-subheader>
 
         <v-radio-group v-model="edgesVisibility">
-      <v-radio
-        v-for="(item, i) in edgesLegend"
-          :key="i"
-        :label="item.text"
-        :value="item.value"
-      ></v-radio>
-    </v-radio-group>
+          <v-radio
+            v-for="(item, i) in edgesLegend"
+            :key="i"
+            :label="item.text"
+            :value="item.value"
+          ></v-radio>
+        </v-radio-group>
       </v-col>
-       <v-col>
-      <v-subheader>Grouping</v-subheader>
+      <v-col>
+        <v-subheader>Grouping</v-subheader>
 
         <v-radio-group v-model="grouping">
-      <v-radio
-        v-for="(item, i) in groupingLegend"
-          :key="i"
-        :label="item.text"
-        :value="item.value"
-      ></v-radio>
-    </v-radio-group>
+          <v-radio
+            v-for="(item, i) in groupingLegend"
+            :key="i"
+            :label="item.text"
+            :value="item.value"
+          ></v-radio>
+        </v-radio-group>
       </v-col>
     </v-row>
     <svg ref="svg" width="100%" height="100%"></svg>
@@ -258,7 +258,6 @@ svg > .output {
 </style>
 
 <script>
-
 // Code ported from https://github.com/AdamNaj/ZWaveGraphHA/blob/master/zwavegraph3.js
 
 import * as d3 from 'd3'
@@ -363,8 +362,7 @@ export default {
     }
   },
   mounted () {},
-  beforeDestroy () {
-  },
+  beforeDestroy () {},
   methods: {
     paintGraph () {
       this.loading = true
@@ -484,8 +482,7 @@ export default {
         return g.edges(d).layer
       })
 
-      const selection = svg
-        .selectAll('.node')
+      const selection = svg.selectAll('.node')
 
       const nodeList = selection.nodes()
 
@@ -539,7 +536,7 @@ export default {
 
             // Handle pan
             this.hammer.on('panstart panmove', function (ev) {
-            // On pan start reset panned variables
+              // On pan start reset panned variables
               if (ev.type === 'panstart') {
                 pannedX = 0
                 pannedY = 0
@@ -556,7 +553,7 @@ export default {
 
             // Handle pinch
             this.hammer.on('pinchstart pinchmove', function (ev) {
-            // On pinch start remember initial zoom
+              // On pinch start remember initial zoom
               if (ev.type === 'pinchstart') {
                 initialScale = instance.getZoom()
                 instance.zoomAtPoint(initialScale * ev.scale, {
@@ -710,8 +707,8 @@ export default {
 
         let batlev = node.values
           ? node.values.find(
-            v => v.commandClass === 128 && v.property === 'level'
-          )
+              v => v.commandClass === 128 && v.property === 'level'
+            )
           : null
 
         batlev = batlev ? batlev.value : null
@@ -748,9 +745,9 @@ export default {
         entity.shape =
           id === hubNode
             ? 'house'
-            : (entity.forwards || batlev === undefined
-                ? 'rect'
-                : 'battery')
+            : entity.forwards || batlev === undefined
+            ? 'rect'
+            : 'battery'
 
         if (node.failed) {
           entity.label = 'FAILED: ' + entity.label
