@@ -26,6 +26,42 @@
         </v-list-item>
         </v-list>
       </v-col>
+      <v-col>
+      <v-subheader>Layout</v-subheader>
+
+        <v-radio-group v-model="ranker">
+      <v-radio
+        v-for="(item, i) in layouts"
+          :key="i"
+        :label="item.text"
+        :value="item.value"
+      ></v-radio>
+    </v-radio-group>
+      </v-col>
+       <v-col>
+      <v-subheader>Edges</v-subheader>
+
+        <v-radio-group v-model="edgesVisibility">
+      <v-radio
+        v-for="(item, i) in edgesLegend"
+          :key="i"
+        :label="item.text"
+        :value="item.value"
+      ></v-radio>
+    </v-radio-group>
+      </v-col>
+       <v-col>
+      <v-subheader>Grouping</v-subheader>
+
+        <v-radio-group v-model="grouping">
+      <v-radio
+        v-for="(item, i) in groupingLegend"
+          :key="i"
+        :label="item.text"
+        :value="item.value"
+      ></v-radio>
+    </v-radio-group>
+      </v-col>
     </v-row>
     <svg ref="svg" width="100%" height="100%"></svg>
     <svg id="scopeContainer" ref="scopeContainer" class="thumb">
@@ -241,7 +277,8 @@ export default {
   computed: {},
   data () {
     return {
-      edgesShow: 'all',
+      edgesVisibility: 'all',
+      grouping: 'z-wave',
       ranker: 'network-simplex',
       loading: false,
       legends: [
@@ -281,79 +318,47 @@ export default {
           text: 'Unconnected'
         }
       ],
-      layout: [
+      layouts: [
         {
-          shape: 'rect',
-          color: 'primary',
-          stroke: '#2470A2',
-          textColor: 'primary',
           text: 'Network Simplex',
-          ranker: 'network-simplex',
-          cursor: 'pointer'
+          value: 'network-simplex'
         },
         {
-          shape: 'rect',
-          color: 'primary',
-          stroke: '#2470A2',
-          textColor: 'primary',
           text: 'Tight Tree',
-          ranker: 'tight-tree',
-          cursor: 'pointer'
+          value: 'tight-tree'
         },
         {
-          shape: 'rect',
-          color: 'primary',
-          stroke: '#2470A2',
-          textColor: 'primary',
           text: 'Longest Path',
-          ranker: 'longest-path',
-          cursor: 'pointer'
+          value: 'longest-path'
         }
       ],
       edgesLegend: [
         {
-          shape: 'rect',
-          color: 'primary',
-          stroke: '#2470A2',
-          textColor: 'primary',
           text: 'Relevant Neighbors',
-          edges: 'relevant',
-          cursor: 'pointer'
+          value: 'relevant'
         },
         {
-          shape: 'rect',
-          color: 'primary',
-          stroke: '#2470A2',
-          textColor: 'primary',
           text: 'All Neighbors',
-          edges: 'all',
-          cursor: 'pointer'
+          value: 'all'
         }
       ],
       groupingLegend: [
         {
-          shape: 'rect',
-          color: 'primary',
-          stroke: '#2470A2',
-          textColor: 'primary',
           text: 'Z-Wave Locations',
-          grouping: 'z-wave',
-          cursor: 'pointer'
+          value: 'z-wave'
         },
         {
-          shape: 'rect',
-          color: 'primary',
-          stroke: '#2470A2',
-          textColor: 'primary',
           text: 'Ungrouped',
-          grouping: 'ungrouped',
-          cursor: 'pointer'
+          value: 'ungrouped'
         }
       ]
     }
   },
   watch: {
     nodes () {
+      this.paintGraph()
+    },
+    ranker () {
       this.paintGraph()
     }
   },
@@ -823,7 +828,7 @@ export default {
                     nextRow.push(row[node])
                   } else {
                     // uncomment to show edges regardless of rows - mess!
-                    if (this.edgeVisibility === 'all') {
+                    if (this.edgesVisibility === 'all') {
                       result.edges.push({
                         from: row[node],
                         to: previousRow[target],
@@ -956,6 +961,7 @@ export default {
 
       return shapeSvg
     },
+    // eslint-disable-next-line no-unused-vars
     handleClick (nodeList, event, index) {
       // Add interactivity
       // const nodeId = nodeList[index].id
