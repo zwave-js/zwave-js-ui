@@ -1,14 +1,5 @@
 <template>
-  <div ref="content" class="content">
-    <!-- <v-row align="center" justify="center" v-show="loading">
-    <v-col cols="12">
-      <v-progress-circular
-      :size="50"
-      color="primary"
-      indeterminate
-    ></v-progress-circular>
-    </v-col>
-</v-row> -->
+<div>
     <v-row>
       <v-col>
         <v-subheader>Legend</v-subheader>
@@ -64,27 +55,7 @@
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12">
-    <svg ref="svg" width="100%" height="100%"></svg>
-    <svg id="scopeContainer" ref="scopeContainer" class="thumb">
-      <g>
-        <rect
-          ref="scope"
-          fill="red"
-          fill-opacity="0.03"
-          stroke="red"
-          stroke-width="1px"
-          stroke-opacity="0.3"
-          x="0"
-          y="0"
-          width="0"
-          height="0"
-        />
-        <!-- <line ref="line1" stroke="red" stroke-width="1px" x1="0" y1="0" x2="0" y2="0" />
-              <line ref="line2" stroke="red" stroke-width="1px" x1="0" y1="0" x2="0" y2="0" /> -->
-      </g>
-    </svg>
-    <svg id="miniSvg" ref="miniSvg" class="thumb"></svg>
+      <v-col ref="content" cols="12">
     </v-col>
     </v-row>
   </div>
@@ -108,11 +79,6 @@
 
 #scopeContainer {
   z-index: 120;
-}
-
-.content {
-  padding: 8px;
-  height: 800px;
 }
 
 svg > .output {
@@ -277,13 +243,39 @@ export default {
       type: [Array]
     }
   },
-  computed: {},
+  computed: {
+    content () {
+      return this.$refs.content
+    }
+  },
   data () {
     return {
       edgesVisibility: 'relevant',
       grouping: 'z-wave',
       ranker: 'network-simplex',
       loading: false,
+      htmlTemplate: `
+      <svg id="svg" width="100%" height="100%"></svg>
+    <svg id="scopeContainer" class="thumb">
+      <g>
+        <rect
+          id="scope"
+          fill="red"
+          fill-opacity="0.03"
+          stroke="red"
+          stroke-width="1px"
+          stroke-opacity="0.3"
+          x="0"
+          y="0"
+          width="0"
+          height="0"
+        />
+        <!-- <line ref="line1" stroke="red" stroke-width="1px" x1="0" y1="0" x2="0" y2="0" />
+              <line ref="line2" stroke="red" stroke-width="1px" x1="0" y1="0" x2="0" y2="0" /> -->
+      </g>
+    </svg>
+    <svg id="miniSvg" class="thumb"></svg>
+      `,
       legends: [
         {
           color: '#3598DB',
@@ -374,13 +366,14 @@ export default {
   mounted () {},
   beforeDestroy () {},
   methods: {
-    destroyGraph () {
-      d3.selectAll('*').remove()
+    get (selector) {
+      return this.content.querySelector(selector)
     },
     paintGraph () {
       this.loading = true
-      this.$refs.svg.innerHTML = ''
-      this.$refs.miniSvg.innerHTML = ''
+      this.content.innerHTML = this.htmlTemplate
+      this.get('#svg').innerHTML = ''
+      this.get('#miniSvg').innerHTML = ''
 
       // https://github.com/dagrejs/dagre/wiki#using-dagre
       const g = new dagreD3.graphlib.Graph({
@@ -394,7 +387,7 @@ export default {
       // eslint-disable-next-line new-cap
       const render = new dagreD3.render()
 
-      const svg = d3.select(this.$refs.svg)
+      const svg = d3.select('#svg')
       const inner = svg
         .append('g')
         .attr('transform', 'translate(20,200)scale(1)')
@@ -508,9 +501,9 @@ export default {
       setTimeout(this.bindThumbnail.bind(this), 500)
     },
     bindThumbnail () {
-      this.$refs.miniSvg.innerHTML = this.$refs.svg.innerHTML
+      this.get('#miniSvg').innerHTML = this.get('#svg').innerHTML
       // https://github.com/ariutta/svg-pan-zoom
-      const main = svgPanZoom(this.$refs.svg, {
+      const main = svgPanZoom('#svg', {
         zoomEnabled: true,
         controlIconsEnabled: true,
         fit: true,
@@ -592,7 +585,7 @@ export default {
         }
       })
 
-      const thumb = svgPanZoom(this.$refs.miniSvg, {
+      const thumb = svgPanZoom('#miniSvg', {
         zoomEnabled: false,
         panEnabled: false,
         controlIconsEnabled: false,
@@ -623,7 +616,7 @@ export default {
       const self = this
 
       thumb.updateThumbScope = function () {
-        const scope = self.$refs.scope
+        const scope = self.get('#scope')
         const mainPanX = main.getPan().x
         const mainPanY = main.getPan().y
         const mainWidth = main.getSizes().width
@@ -689,7 +682,7 @@ export default {
         )
       }
 
-      const scopeContainer = this.$refs.scopeContainer
+      const scopeContainer = this.get('#scopeContainer')
       scopeContainer.addEventListener('click', function (evt) {
         updateMainViewPan(evt)
       })
