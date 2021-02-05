@@ -55,7 +55,14 @@
       </v-col>
     </v-row>
     <v-row style="height:600px">
-      <v-col ref="content" cols="12"> </v-col>
+      <v-col align-self="center" class="text-center" v-show="loading" cols="12">
+        <v-progress-circular
+          :size="50"
+          color="primary"
+          indeterminate
+        ></v-progress-circular>
+      </v-col>
+      <v-col :style="{ visible: !loading }" ref="content" cols="12"> </v-col>
     </v-row>
   </div>
 </template>
@@ -234,6 +241,7 @@ import * as dagreD3 from 'dagre-d3'
 import * as svgPanZoom from 'svg-pan-zoom'
 import * as Hammer from 'hammerjs'
 
+// when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
 // import testNodes from '@/assets/testNodes.json'
 
 export default {
