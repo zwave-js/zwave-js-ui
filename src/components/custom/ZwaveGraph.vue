@@ -259,6 +259,7 @@ export default {
     return {
       edgesVisibility: 'relevant',
       grouping: 'z-wave',
+      refreshTimeout: null,
       ranker: 'network-simplex',
       loading: false,
       htmlTemplate: `
@@ -358,27 +359,40 @@ export default {
   },
   watch: {
     nodes () {
-      this.paintGraph()
+      this.debounceRefresh()
     },
     ranker () {
-      this.paintGraph()
+      this.debounceRefresh()
     },
     edgesVisibility () {
-      this.paintGraph()
+      this.debounceRefresh()
     },
     grouping () {
-      this.paintGraph()
+      this.debounceRefresh()
     }
   },
   mounted () {},
-  beforeDestroy () {},
+  beforeDestroy () {
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout)
+    }
+  },
   methods: {
+    debounceRefresh () {
+      if (this.refreshTimeout) {
+        clearTimeout(this.refreshTimeout)
+      }
+
+      this.loading = true
+
+      this.content.innerHTML = this.htmlTemplate
+
+      this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
+    },
     get (selector) {
       return this.content.querySelector(selector)
     },
     paintGraph () {
-      this.loading = true
-      this.content.innerHTML = this.htmlTemplate
       this.get('#svg').innerHTML = ''
       this.get('#miniSvg').innerHTML = ''
 
@@ -440,7 +454,6 @@ export default {
 
       // Run the renderer. This is what draws the final graph.
       render(inner, g)
-
       // create battery state gradients
       for (let layer = 0; layer < this.legends.length; layer++) {
         for (let percent = 0; percent <= 100; percent += 10) {
