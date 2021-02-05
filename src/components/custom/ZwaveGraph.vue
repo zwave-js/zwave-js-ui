@@ -734,7 +734,7 @@ export default {
           failed: node.failed,
           title:
             '<b>' +
-            node.name +
+            (node.name || 'NodeID ' + node.id) +
             '</b>' +
             '\n Node: ' +
             id +
@@ -744,7 +744,7 @@ export default {
             (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
             '\n Neighbors: ' +
             node.neighbors,
-          forwards: node.ready && !node.failed && node.isListening
+          forwards: node.ready && !node.failed && (node.isListening || node.isFrequentListening)
         }
 
         entity.shape =
