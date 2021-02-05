@@ -715,14 +715,14 @@ export default {
           ? node.values.find(
             v => v.commandClass === 128 && v.property === 'level'
           )
-          : null
+          : undefined
 
-        batlev = batlev ? batlev.value : null
+        batlev = batlev ? batlev.value : undefined
 
         // create node
         const entity = {
           id: id,
-          label: node._name,
+          label: node.name,
           class: 'unset layer-7',
           layer: 7,
           rx: '6',
@@ -734,7 +734,7 @@ export default {
           failed: node.failed,
           title:
             '<b>' +
-            node._name +
+            node.name +
             '</b>' +
             '\n Node: ' +
             id +
@@ -744,8 +744,7 @@ export default {
             (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
             '\n Neighbors: ' +
             node.neighbors,
-          forwards: node.ready && !node.failed
-          // && node.isListening
+          forwards: node.ready && !node.failed && node.isListening
         }
 
         entity.shape =
