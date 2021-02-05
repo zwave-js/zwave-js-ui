@@ -92,34 +92,34 @@ svg > .output {
 
 .node.layer-1 > rect,
 .edgePath.layer-1 > path {
-  fill: #3598db;
-  stroke: #2470a2;
+  fill: #3F51B5;
+  stroke: #1A237E;
 }
 
 .node.layer-1 > polygon,
 .node.layer-1 > rect,
 .edgePath.layer-1 > path {
-  fill: #3598db;
-  stroke: #2470a2;
+  fill: #3F51B5;
+  stroke: #1A237E;
 }
 
 .node.layer-1 text {
-  fill: #1e5b84;
+  fill: #ffffff;
 }
 
 .node.layer-2 > polygon,
 .node.layer-2 > rect,
 .edgePath.layer-2 > path {
-  stroke: #1d8548;
+  stroke: #009688;
 }
 
 .node.layer-2 > rect,
 .edgePath.layer-2 > path {
-  fill: #1bbc9b;
+  fill: #00BCD4;
 }
 
 .node.layer-2 text {
-  fill: #11512c;
+  fill: #006064;
 }
 
 .node.layer-3 > polygon,
@@ -278,13 +278,13 @@ export default {
       `,
       legends: [
         {
-          color: '#3598DB',
+          color: '#3F51B5',
           textColor: '#2470A2',
-          text: 'Hub'
+          text: 'Controller'
         },
         {
-          color: '#1BBC9B',
-          textColor: '#11512C',
+          color: '#00BCD4',
+          textColor: '#006064',
           text: '1 hop'
         },
         {
@@ -764,7 +764,7 @@ export default {
         }
 
         if (hubNode === id) {
-          entity.label = 'ZWave Hub'
+          entity.label = 'Controller'
           entity.borderWidth = 2
           entity.fixed = true
         }
