@@ -63,6 +63,8 @@
         </v-radio-group>
       </v-col>
     </v-row>
+    <v-row>
+      <v-col cols="12">
     <svg ref="svg" width="100%" height="100%"></svg>
     <svg id="scopeContainer" ref="scopeContainer" class="thumb">
       <g>
@@ -83,6 +85,8 @@
       </g>
     </svg>
     <svg id="miniSvg" ref="miniSvg" class="thumb"></svg>
+    </v-col>
+    </v-row>
   </div>
 </template>
 
@@ -276,7 +280,7 @@ export default {
   computed: {},
   data () {
     return {
-      edgesVisibility: 'all',
+      edgesVisibility: 'relevant',
       grouping: 'z-wave',
       ranker: 'network-simplex',
       loading: false,
@@ -359,11 +363,20 @@ export default {
     },
     ranker () {
       this.paintGraph()
+    },
+    edgesVisibility () {
+      this.paintGraph()
+    },
+    grouping () {
+      this.paintGraph()
     }
   },
   mounted () {},
   beforeDestroy () {},
   methods: {
+    destroyGraph () {
+      d3.selectAll('*').remove()
+    },
     paintGraph () {
       this.loading = true
       this.$refs.svg.innerHTML = ''
@@ -707,8 +720,8 @@ export default {
 
         let batlev = node.values
           ? node.values.find(
-              v => v.commandClass === 128 && v.property === 'level'
-            )
+            v => v.commandClass === 128 && v.property === 'level'
+          )
           : null
 
         batlev = batlev ? batlev.value : null
@@ -746,8 +759,8 @@ export default {
           id === hubNode
             ? 'house'
             : entity.forwards || batlev === undefined
-            ? 'rect'
-            : 'battery'
+              ? 'rect'
+              : 'battery'
 
         if (node.failed) {
           entity.label = 'FAILED: ' + entity.label
@@ -853,7 +866,6 @@ export default {
       }
       return result
     },
-
     // Add our custom shape (a house)
     renderHouse (parent, bbox, node) {
       const w = bbox.width
