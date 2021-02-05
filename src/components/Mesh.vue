@@ -31,7 +31,6 @@
             <v-switch label="Show location" v-model="showLocation"></v-switch>
           </v-col>
         </v-row>
-      </v-container>
 
       <zwave-graph
         id="mesh"
@@ -96,6 +95,8 @@
         </v-list>
       </div>
 
+      </v-container>
+
       <!-- <v-speed-dial bottom fab right fixed v-model="fab">
         <template v-slot:activator>
           <v-btn color="blue darken-2" dark fab hover v-model="fab">
@@ -110,6 +111,18 @@
     </v-card>
   </v-container>
 </template>
+
+<style scoped>
+.details {
+  position: absolute;
+  top: 150px;
+  left: 30px;
+  background: #ccccccaa;
+  border: 2px solid black;
+  border-radius: 20px;
+}
+</style>
+
 <script>
 import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapMutations, mapGetters } from 'vuex'

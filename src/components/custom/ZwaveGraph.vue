@@ -1,5 +1,32 @@
 <template>
   <div ref="content" class="content">
+    <!-- <v-row align="center" justify="center" v-show="loading">
+    <v-col cols="12">
+      <v-progress-circular
+      :size="50"
+      color="primary"
+      indeterminate
+    ></v-progress-circular>
+    </v-col>
+</v-row> -->
+    <v-row>
+      <v-col>
+        <v-subheader>Legend</v-subheader>
+        <v-list dense>
+          <v-list-item
+          v-for="(item, i) in legends"
+          :key="i"
+        >
+          <v-list-item-icon>
+            <v-icon :color="item.color">turned_in</v-icon>
+          </v-list-item-icon>
+          <v-list-item-content>
+            <v-list-item-title :style="{'color': item.textColor}" v-text="item.text"></v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        </v-list>
+      </v-col>
+    </v-row>
     <svg ref="svg" width="100%" height="100%"></svg>
     <svg id="scopeContainer" ref="scopeContainer" class="thumb">
       <g>
@@ -138,11 +165,11 @@ svg > .output {
 .node.Error > polygon,
 .node.Error > rect {
   fill: #ff7676;
-  stroke: darkred;
+  stroke: #8b0000;
 }
 
 .node.Error text {
-  fill: darkred;
+  fill: #8b0000;
 }
 
 .node.unset > rect {
@@ -195,6 +222,9 @@ svg > .output {
 </style>
 
 <script>
+
+// Code ported from https://github.com/AdamNaj/ZWaveGraphHA/blob/master/zwavegraph3.js
+
 import * as d3 from 'd3'
 import * as dagreD3 from 'dagre-d3'
 import * as svgPanZoom from 'svg-pan-zoom'
@@ -213,54 +243,41 @@ export default {
     return {
       edgesShow: 'all',
       ranker: 'network-simplex',
+      loading: false,
       legends: [
         {
-          shape: 'rect',
           color: '#3598DB',
-          stroke: '#2470A2',
-          textcolor: '#2470A2',
+          textColor: '#2470A2',
           text: 'Hub'
         },
         {
-          shape: 'rect',
           color: '#1BBC9B',
-          stroke: '#1D8548',
-          textcolor: '#11512C',
+          textColor: '#11512C',
           text: '1 hop'
         },
         {
-          shape: 'rect',
           color: '#2DCC70',
-          stroke: '#1D8548',
-          textcolor: '#1D8548',
+          textColor: '#1D8548',
           text: '2 hops'
         },
         {
-          shape: 'rect',
           color: '#F1C40F',
-          stroke: '#D25400',
-          textcolor: '#D25400',
+          textColor: '#D25400',
           text: '3 hops'
         },
         {
-          shape: 'rect',
-          color: 'E77E23',
-          stroke: '#D25400',
-          textcolor: '#D25400',
+          color: '#E77E23',
+          textColor: '#D25400',
           text: '4 hops'
         },
         {
-          shape: 'rect',
-          color: 'crimson',
-          stroke: 'darkred',
-          textcolor: 'darkred',
+          color: '#8b0000',
+          textColor: '#8b0000',
           text: 'Failed Node'
         },
         {
-          shape: 'rect',
-          color: 'lightgray',
-          stroke: '#666666',
-          textcolor: '#666666',
+          color: '#666666',
+          textColor: '#666666',
           text: 'Unconnected'
         }
       ],
@@ -269,7 +286,7 @@ export default {
           shape: 'rect',
           color: 'primary',
           stroke: '#2470A2',
-          textcolor: 'primary',
+          textColor: 'primary',
           text: 'Network Simplex',
           ranker: 'network-simplex',
           cursor: 'pointer'
@@ -278,7 +295,7 @@ export default {
           shape: 'rect',
           color: 'primary',
           stroke: '#2470A2',
-          textcolor: 'primary',
+          textColor: 'primary',
           text: 'Tight Tree',
           ranker: 'tight-tree',
           cursor: 'pointer'
@@ -287,7 +304,7 @@ export default {
           shape: 'rect',
           color: 'primary',
           stroke: '#2470A2',
-          textcolor: 'primary',
+          textColor: 'primary',
           text: 'Longest Path',
           ranker: 'longest-path',
           cursor: 'pointer'
@@ -298,7 +315,7 @@ export default {
           shape: 'rect',
           color: 'primary',
           stroke: '#2470A2',
-          textcolor: 'primary',
+          textColor: 'primary',
           text: 'Relevant Neighbors',
           edges: 'relevant',
           cursor: 'pointer'
@@ -307,7 +324,7 @@ export default {
           shape: 'rect',
           color: 'primary',
           stroke: '#2470A2',
-          textcolor: 'primary',
+          textColor: 'primary',
           text: 'All Neighbors',
           edges: 'all',
           cursor: 'pointer'
@@ -318,7 +335,7 @@ export default {
           shape: 'rect',
           color: 'primary',
           stroke: '#2470A2',
-          textcolor: 'primary',
+          textColor: 'primary',
           text: 'Z-Wave Locations',
           grouping: 'z-wave',
           cursor: 'pointer'
@@ -327,7 +344,7 @@ export default {
           shape: 'rect',
           color: 'primary',
           stroke: '#2470A2',
-          textcolor: 'primary',
+          textColor: 'primary',
           text: 'Ungrouped',
           grouping: 'ungrouped',
           cursor: 'pointer'
@@ -345,6 +362,7 @@ export default {
   },
   methods: {
     paintGraph () {
+      this.loading = true
       this.$refs.svg.innerHTML = ''
       this.$refs.miniSvg.innerHTML = ''
 
@@ -367,7 +385,7 @@ export default {
 
       g.graph().minlen = 0
 
-      // Add our custom shape (a house)
+      // Add our custom shape (a house): https://dagrejs.github.io/project/dagre-d3/latest/demo/user-defined.html
       render.shapes().house = this.renderHouse
       render.shapes().battery = this.renderBattery
 
@@ -664,6 +682,8 @@ export default {
       scopeContainer.addEventListener('mousemove', function (evt) {
         updateMainViewPan(evt)
       })
+
+      this.loading = false
     },
     listNodes () {
       const result = {
@@ -723,9 +743,9 @@ export default {
         entity.shape =
           id === hubNode
             ? 'house'
-            : entity.forwards || batlev === undefined
-              ? 'rect'
-              : 'battery'
+            : (entity.forwards || batlev === undefined
+                ? 'rect'
+                : 'battery')
 
         if (node.failed) {
           entity.label = 'FAILED: ' + entity.label
