@@ -407,15 +407,15 @@ export default {
         g.setNode(node.id, node)
         if (
           this.grouping !== 'ungrouped' &&
-          node.location !== '' &&
-          node.location !== undefined
+          node.loc !== '' &&
+          node.loc !== undefined
         ) {
-          g.setNode(node.location, {
-            label: node.location,
+          g.setNode(node.loc, {
+            label: node.loc,
             clusterLabelPos: 'bottom',
             class: 'group'
           })
-          g.setParent(node.id, node.location)
+          g.setParent(node.id, node.loc)
         }
       }
 
@@ -730,7 +730,7 @@ export default {
           neighbors: neighbors[id],
           battery_level: batlev,
           mains: batlev,
-          location: node.location,
+          loc: node.loc,
           failed: node.failed,
           title:
             '<b>' +
