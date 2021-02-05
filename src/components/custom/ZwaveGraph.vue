@@ -1,60 +1,69 @@
 <template>
   <div>
-    <v-row>
-      <v-col>
-        <v-subheader>Legend</v-subheader>
-        <v-list dense>
-          <v-list-item v-for="(item, i) in legends" :key="i">
-            <v-list-item-icon>
-              <v-icon :color="item.color">turned_in</v-icon>
-            </v-list-item-icon>
-            <v-list-item-content>
-              <v-list-item-title
-                :style="{ color: item.textColor }"
-                v-text="item.text"
-              ></v-list-item-title>
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-col>
-      <v-col>
-        <v-subheader>Layout</v-subheader>
+    <v-expansion-panels>
+      <v-expansion-panel>
+        <v-expansion-panel-header>
+          Configure ...
+        </v-expansion-panel-header>
+        <v-expansion-panel-content>
+          <v-row>
+            <v-col>
+              <v-subheader>Legend</v-subheader>
+              <v-list dense>
+                <v-list-item v-for="(item, i) in legends" :key="i">
+                  <v-list-item-icon>
+                    <v-icon :color="item.color">turned_in</v-icon>
+                  </v-list-item-icon>
+                  <v-list-item-content>
+                    <v-list-item-title
+                      :style="{ color: item.textColor }"
+                      v-text="item.text"
+                    ></v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-list>
+            </v-col>
+            <v-col>
+              <v-subheader>Layout</v-subheader>
 
-        <v-radio-group v-model="ranker">
-          <v-radio
-            v-for="(item, i) in layouts"
-            :key="i"
-            :label="item.text"
-            :value="item.value"
-          ></v-radio>
-        </v-radio-group>
-      </v-col>
-      <v-col>
-        <v-subheader>Edges</v-subheader>
+              <v-radio-group v-model="ranker">
+                <v-radio
+                  v-for="(item, i) in layouts"
+                  :key="i"
+                  :label="item.text"
+                  :value="item.value"
+                ></v-radio>
+              </v-radio-group>
+            </v-col>
+            <v-col>
+              <v-subheader>Edges</v-subheader>
 
-        <v-radio-group v-model="edgesVisibility">
-          <v-radio
-            v-for="(item, i) in edgesLegend"
-            :key="i"
-            :label="item.text"
-            :value="item.value"
-          ></v-radio>
-        </v-radio-group>
-      </v-col>
-      <v-col>
-        <v-subheader>Grouping</v-subheader>
+              <v-radio-group v-model="edgesVisibility">
+                <v-radio
+                  v-for="(item, i) in edgesLegend"
+                  :key="i"
+                  :label="item.text"
+                  :value="item.value"
+                ></v-radio>
+              </v-radio-group>
+            </v-col>
+            <v-col>
+              <v-subheader>Grouping</v-subheader>
 
-        <v-radio-group v-model="grouping">
-          <v-radio
-            v-for="(item, i) in groupingLegend"
-            :key="i"
-            :label="item.text"
-            :value="item.value"
-          ></v-radio>
-        </v-radio-group>
-      </v-col>
-    </v-row>
-    <v-row style="height:600px">
+              <v-radio-group v-model="grouping">
+                <v-radio
+                  v-for="(item, i) in groupingLegend"
+                  :key="i"
+                  :label="item.text"
+                  :value="item.value"
+                ></v-radio>
+              </v-radio-group>
+            </v-col>
+          </v-row>
+        </v-expansion-panel-content>
+      </v-expansion-panel>
+    </v-expansion-panels>
+    <v-row style="height:776px">
       <v-col align-self="center" class="text-center" v-show="loading" cols="12">
         <v-progress-circular
           :size="50"
