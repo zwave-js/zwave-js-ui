@@ -37,7 +37,7 @@
           <v-textarea
             class="mx-2"
             rows="10"
-            append-icon="mdi-content-copy"
+            append-icon="content_copy"
             v-model="nodeJson"
             readonly
             ref="nodeJsonContent"
