@@ -1,5 +1,5 @@
 <template>
-<div>
+  <div>
     <v-row>
       <v-col>
         <v-subheader>Legend</v-subheader>
@@ -55,8 +55,7 @@
       </v-col>
     </v-row>
     <v-row style="height:600px">
-      <v-col ref="content" cols="12">
-    </v-col>
+      <v-col ref="content" cols="12"> </v-col>
     </v-row>
   </div>
 </template>
@@ -92,15 +91,15 @@ svg > .output {
 
 .node.layer-1 > rect,
 .edgePath.layer-1 > path {
-  fill: #3F51B5;
-  stroke: #1A237E;
+  fill: #3f51b5;
+  stroke: #1a237e;
 }
 
 .node.layer-1 > polygon,
 .node.layer-1 > rect,
 .edgePath.layer-1 > path {
-  fill: #3F51B5;
-  stroke: #1A237E;
+  fill: #3f51b5;
+  stroke: #1a237e;
 }
 
 .node.layer-1 text {
@@ -115,7 +114,7 @@ svg > .output {
 
 .node.layer-2 > rect,
 .edgePath.layer-2 > path {
-  fill: #00BCD4;
+  fill: #00bcd4;
 }
 
 .node.layer-2 text {
@@ -711,11 +710,13 @@ export default {
 
         neighbors[id] = node.neighbors
 
-        let batlev = node.values
-          ? node.values.find(
+        let batlev
+
+        if (node.values) {
+          batlev = node.values.find(
             v => v.commandClass === 128 && v.property === 'level'
           )
-          : undefined
+        }
 
         batlev = batlev ? batlev.value : undefined
 
@@ -746,15 +747,18 @@ export default {
             (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
             '\n Neighbors: ' +
             node.neighbors,
-          forwards: node.ready && !node.failed && (node.isListening || node.isFrequentListening)
+          forwards:
+            node.ready &&
+            !node.failed &&
+            (node.isListening || node.isFrequentListening)
         }
 
-        entity.shape =
-          id === hubNode
-            ? 'house'
-            : entity.forwards || batlev === undefined
-              ? 'rect'
-              : 'battery'
+        if (id === hubNode) {
+          entity.shape = 'house'
+        } else {
+          entity.shape =
+            entity.forwards || batlev === undefined ? 'rect' : 'battery'
+        }
 
         if (node.failed) {
           entity.label = 'FAILED: ' + entity.label
