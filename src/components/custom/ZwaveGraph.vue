@@ -235,7 +235,7 @@ import * as dagreD3 from 'dagre-d3'
 import * as svgPanZoom from 'svg-pan-zoom'
 import * as Hammer from 'hammerjs'
 
-import testNodes from '@/assets/testNodes.json'
+// import testNodes from '@/assets/testNodes.json'
 
 export default {
   props: {
@@ -702,7 +702,7 @@ export default {
       let hubNode = 0
       const neighbors = {}
 
-      for (const node of testNodes) {
+      for (const node of this.nodes) {
         const id = node.id
         // TODO: check if node is primary controller
         if (id === 1) {
@@ -719,10 +719,12 @@ export default {
 
         batlev = batlev ? batlev.value : undefined
 
+        const nodeName = node.name || 'NodeID ' + node.id
+
         // create node
         const entity = {
           id: id,
-          label: node.name,
+          label: nodeName,
           class: 'unset layer-7',
           layer: 7,
           rx: '6',
@@ -734,7 +736,7 @@ export default {
           failed: node.failed,
           title:
             '<b>' +
-            (node.name || 'NodeID ' + node.id) +
+            nodeName +
             '</b>' +
             '\n Node: ' +
             id +
@@ -966,7 +968,7 @@ export default {
     handleClick (nodeList, event, index) {
       // Add interactivity
       // const nodeId = nodeList[index].id
-      // const node = testNodes.find(n => n.id === nodeId)
+      // const node = this.nodes.find(n => n.id === nodeId)
     },
     handleMouseOver (nodeList, event, index) {
       // Add interactivity
