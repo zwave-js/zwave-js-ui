@@ -553,8 +553,8 @@ export default {
       const main = svgPanZoom(this.$refs.svg, {
         zoomEnabled: true,
         controlIconsEnabled: true,
-        fit: 1,
-        center: 1,
+        fit: true,
+        center: true,
         customEventsHandler: this.mainEventsHandler
       })
 
