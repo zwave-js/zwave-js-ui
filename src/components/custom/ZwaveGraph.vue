@@ -747,10 +747,7 @@ export default {
             (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
             '\n Neighbors: ' +
             node.neighbors,
-          forwards:
-            node.ready &&
-            !node.failed &&
-            (node.isListening || node.isFrequentListening)
+          forwards: node.ready && !node.failed && node.isListening
         }
 
         if (id === hubNode) {
