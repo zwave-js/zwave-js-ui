@@ -58,10 +58,9 @@
 
         <DialogAddRemove
           v-model="addRemoveShowDialog"
-          :status="addRemoveStatus"
-          :alert="addRemoveAlert"
+          :lastNodeFound="addRemoveNode"
           @close="onAddRemoveClose"
-          @action="onAddRemoveAction"
+          @apiRequest="apiRequest"
         />
 
         <nodes-table
@@ -104,66 +103,12 @@ export default {
       return this.appInfo.controllerStatus
     }
   },
-  watch: {
-    addRemoveEndDate (newVal) {
-      if (this.addRemoveTimer) {
-        clearInterval(this.addRemoveTimer)
-      }
-      this.addRemoveTimer = setInterval(() => {
-        const now = new Date()
-        const s = Math.trunc((this.addRemoveEndDate - now) / 1000)
-        if (this.addRemoveStatus === 'start') {
-          this.addRemoveAlert = {
-            type: 'info',
-            text: `${this.addRemoveAction} started: ${s}s remaining`
-          }
-        }
-        if (now > newVal) clearInterval(this.addRemoveTimer)
-      }, 100)
-    },
-    controllerStatus (status) {
-      if (status.indexOf('clusion') > 0) {
-        if (this.addRemoveAction === null) return // ignore initial status
-
-        // inclusion/exclusion started, start the countdown timer
-        if (status.indexOf('started') > 0) {
-          this.addRemoveEndDate = new Date(
-            new Date().getTime() + this.timeoutMs
-          )
-          this.addRemoveNode = null
-          this.addRemoveStatus = 'start'
-        } else if (status.indexOf('stopped') > 0) {
-          // inclusion/exclusion stopped, check what happened
-          this.addRemoveEndDate = new Date()
-          this.addRemoveAlert = {
-            type: 'info',
-            text: `${this.addRemoveAction} stopped, checking nodes…`
-          }
-          this.addRemoveStatus = 'wait'
-          this.waitTimeout = setTimeout(this.showResults, 5000) // add additional discovery time
-        } else {
-          // error
-          this.addRemoveEndDate = new Date()
-          this.addRemoveAlert = {
-            type: 'error',
-            text: status // TODO: better formatting?
-          }
-          this.addRemoveStatus = 'stop'
-        }
-      }
-    }
-  },
+  watch: {},
   data () {
     return {
       settings: new Settings(localStorage),
       bindedSocketEvents: {}, // keep track of the events-handlers
       addRemoveShowDialog: false,
-      addRemoveAction: null,
-      addRemoveStatus: 'stop',
-      waitTimeout: null,
-      addRemoveAlert: null,
-      addRemoveEndDate: new Date(),
-      addRemoveTimer: null,
       addRemoveNode: null,
       node_actions: [
         {
@@ -268,52 +213,8 @@ export default {
     },
     onAddRemoveClose () {
       this.addRemoveShowDialog = false
-      this.addRemoveAlert = null
+      this.addRemoveNode = null
     },
-    async onAddRemoveAction (action) {
-      this.addRemoveStatus = 'wait' // make sure user can't trigger another action too soon
-      this.addRemoveAction = action.name // Inclusion/Secure inclusion/Exclusion
-      this.addRemoveEndDate = new Date()
-      this.addRemoveAlert = {
-        type: 'info',
-        text: `${action.name} ${
-          action.method === 'start' ? 'starting…' : 'stopping…'
-        }`
-      }
-      const args = []
-      if (action.secure && action.id < 2 && action.method === 'start') {
-        args.push(action.secure)
-      }
-      this.apiRequest(action.method + action.baseAction, args)
-    },
-    showResults () {
-      if (this.waitTimeout) {
-        clearTimeout(this.waitTimeout)
-        this.waitTimeout = null
-      }
-
-      this.addRemoveAlert = null
-
-      if (this.addRemoveNode == null) {
-        this.addRemoveAlert = {
-          type: 'warning',
-          text: `${this.addRemoveAction} stopped, none found`
-        }
-      } else if (this.addRemoveAction === 'Exclusion') {
-        this.addRemoveAlert = {
-          type: 'success',
-          text: `Node ${this.addRemoveNode.id} removed`
-        }
-      } else {
-        this.addRemoveAlert = {
-          type: 'success',
-          text: `Device found! Node ${this.addRemoveNode.id} added` // we don't know yet if it's added securely or not, need to wait interview
-        }
-      }
-
-      this.addRemoveStatus = 'stop'
-    },
-
     async sendCntAction () {
       if (this.cnt_action) {
         const args = []
@@ -445,10 +346,6 @@ export default {
     },
     onNodeAddedRemoved (node) {
       this.addRemoveNode = node
-      // the add/remove dialog is waiting for a feedback
-      if (this.waitTimeout) {
-        this.showResults()
-      }
     },
     bindEvent (eventName, handler) {
       this.socket.on(socketEvents[eventName], handler)
@@ -471,13 +368,6 @@ export default {
   beforeDestroy () {
     if (this.socket) {
       this.unbindEvents()
-    }
-    if (this.addRemoveTimer) {
-      clearInterval(this.addRemoveTimer)
-    }
-
-    if (this.waitTimeout) {
-      clearTimeout(this.waitTimeout)
     }
   }
 }
