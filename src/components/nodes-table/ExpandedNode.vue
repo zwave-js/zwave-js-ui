@@ -4,6 +4,8 @@
       <v-tab key="node">Node</v-tab>
       <v-tab v-if="showHass" key="homeassistant">Home Assistant</v-tab>
       <v-tab key="groups">Groups</v-tab>
+      <v-tab key="debug">Debug Info</v-tab>
+
       <!-- TABS -->
       <v-tabs-items
         style="background: transparent; padding-bottom: 10px;"
@@ -28,6 +30,19 @@
         <!-- TAB GROUPS -->
         <v-tab-item key="groups">
           <association-groups :node="node" :nodes="nodes" :socket="socket" />
+        </v-tab-item>
+
+        <!-- TAB DEBUG INFO -->
+        <v-tab-item key="debug">
+          <v-textarea
+            class="mx-2"
+            rows="10"
+            append-icon="content_copy"
+            v-model="nodeJson"
+            readonly
+            ref="nodeJsonContent"
+            @click:append="copyText"
+          ></v-textarea>
         </v-tab-item>
       </v-tabs-items>
     </v-tabs>
@@ -57,6 +72,9 @@ export default {
   },
   computed: {
     ...mapGetters(['gateway']),
+    nodeJson () {
+      return JSON.stringify(this.node, null, 2)
+    },
     showHass () {
       console.log(Object.keys(this.node.hassDevices))
       return (
@@ -69,6 +87,15 @@ export default {
   data () {
     return {
       currentTab: 0
+    }
+  },
+  methods: {
+    copyText () {
+      const textToCopy = this.$refs.nodeJsonContent.$el.querySelector(
+        'textarea'
+      )
+      textToCopy.select()
+      document.execCommand('copy')
     }
   }
 }
