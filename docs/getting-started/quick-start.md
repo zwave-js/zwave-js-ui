@@ -22,7 +22,6 @@ docker-compose up
 > [!NOTE]
 > Replace `/dev/ttyACM0` with your serial device
 
-
 For more info about docker check [here](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docker)
 
 ## Kubernetes
