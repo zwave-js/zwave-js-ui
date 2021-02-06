@@ -36,7 +36,6 @@
                 Add/Remove Device
               </v-btn>
             </v-col>
-
             <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
@@ -141,7 +140,7 @@ export default {
             text: `${this.addRemoveAction} stopped, checking nodes…`
           }
           this.addRemoveStatus = 'wait'
-          setTimeout(this.showResults, 1000) // add additional discovery time
+          this.waitTimeout = setTimeout(this.showResults, 5000) // add additional discovery time
         } else {
           // error
           this.addRemoveEndDate = new Date()
@@ -161,6 +160,7 @@ export default {
       addRemoveShowDialog: false,
       addRemoveAction: null,
       addRemoveStatus: 'stop',
+      waitTimeout: null,
       addRemoveAlert: null,
       addRemoveEndDate: new Date(),
       addRemoveTimer: null,
@@ -287,6 +287,11 @@ export default {
       this.apiRequest(action.method + action.baseAction, args)
     },
     showResults () {
+      if (this.waitTimeout) {
+        clearTimeout(this.waitTimeout)
+        this.waitTimeout = null
+      }
+
       this.addRemoveAlert = null
 
       if (this.addRemoveNode == null) {
@@ -440,6 +445,10 @@ export default {
     },
     onNodeAddedRemoved (node) {
       this.addRemoveNode = node
+      // the add/remove dialog is waiting for a feedback
+      if (this.waitTimeout) {
+        this.showResults()
+      }
     },
     bindEvent (eventName, handler) {
       this.socket.on(socketEvents[eventName], handler)
@@ -465,6 +474,10 @@ export default {
     }
     if (this.addRemoveTimer) {
       clearInterval(this.addRemoveTimer)
+    }
+
+    if (this.waitTimeout) {
+      clearTimeout(this.waitTimeout)
     }
   }
 }

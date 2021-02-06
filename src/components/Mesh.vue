@@ -2,38 +2,38 @@
   <v-container fluid>
     <v-card>
       <v-container grid-list-md>
-        <v-layout row wrap>
-          <v-flex xs2 md2>
+        <v-row>
+          <v-col cols="3" md="2">
             <v-text-field
               label="Nodes size"
               v-model.number="nodeSize"
               min="10"
               type="number"
             ></v-text-field>
-          </v-flex>
-          <v-flex xs2 md2>
+          </v-col>
+          <v-col cols="3" md="2">
             <v-text-field
               label="Font size"
               v-model.number="fontSize"
               min="10"
               type="number"
             ></v-text-field>
-          </v-flex>
-          <v-flex xs3 md2>
+          </v-col>
+          <v-col cols="3" md="2">
             <v-text-field
               label="Distance"
               v-model.number="force"
               min="100"
               type="number"
             ></v-text-field>
-          </v-flex>
-          <v-flex xs3 md2>
+          </v-col>
+          <v-col cols="3" md="2">
             <v-switch label="Show location" v-model="showLocation"></v-switch>
-          </v-flex>
-          <v-flex xs5 md6>
+          </v-col>
+          <v-col cols="5" md="6">
             <v-btn color="success" @click="downloadSVG">Download SVG</v-btn>
-          </v-flex>
-        </v-layout>
+          </v-col>
+        </v-row>
       </v-container>
 
       <d3-network
@@ -132,11 +132,6 @@ export default {
     D3Network
   },
   watch: {
-    showLocation () {
-      for (const n of this.nodes) {
-        n.name = this.nodeName(n)
-      }
-    },
     meshNodes () {
       this.debounceRefresh()
     }
@@ -255,21 +250,19 @@ export default {
     }
   },
   mounted () {
-    const self = this
-
     this.socket.on(socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
           case 'refreshNeighbors': {
             const neighbors = data.result
             for (let i = 0; i < neighbors.length; i++) {
-              self.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
+              this.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
             }
             break
           }
         }
       } else {
-        self.showSnackbar(
+        this.showSnackbar(
           'Error while calling api ' + data.api + ': ' + data.message
         )
       }
