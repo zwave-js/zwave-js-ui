@@ -58,7 +58,7 @@
 
         <DialogAddRemove
           v-model="addRemoveShowDialog"
-          :lastNodeFound="addRemoveNode"
+          :nodeAddedOrRemoved="addRemoveNode"
           @close="onAddRemoveClose"
           @apiRequest="apiRequest"
         />

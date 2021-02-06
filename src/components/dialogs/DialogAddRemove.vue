@@ -74,7 +74,7 @@ import { mapGetters } from 'vuex'
 export default {
   props: {
     value: Boolean, // show or hide
-    lastNodeFound: Object
+    nodeAddedOrRemoved: Object
   },
   data () {
     return {
@@ -121,7 +121,7 @@ export default {
     }
   },
   watch: {
-    lastNodeFound (node) {
+    nodeAddedOrRemoved (node) {
       this.nodeFound = node
 
       // the add/remove dialog is waiting for a feedback
@@ -202,10 +202,10 @@ export default {
         this.waitTimeout = null
       }
 
-      if (this.nodeFound == null) {
+      if (this.nodeFound === null) {
         this.alert = {
           type: 'warning',
-          text: `${this.modeName} stopped, none found`
+          text: `${this.modeName} stopped, no changes detected`
         }
       } else if (this.mode === 2) {
         this.alert = {
