@@ -4,29 +4,6 @@
       <v-card-text>
         <v-container fluid>
           <v-row justify="start">
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Home ID</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.homeid }}</div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Home Hex</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.homeHex }}</div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">App Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.appVersion }}
-              </div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Zwavejs Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.zwaveVersion }}
-              </div>
-            </v-col>
-          </v-row>
-
-          <v-row justify="start">
             <v-col cols="12" sm="4" md="3" style="text-align:center">
               <v-btn
                 depressed
