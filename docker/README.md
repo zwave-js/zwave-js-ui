@@ -36,7 +36,7 @@ Here we will store our data in the current path (`$(pwd)`) named `store`. You ca
 
 ```bash
 mkdir store
-docker run --rm -it -p 8091:8091 p3000:3000 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run as a service
