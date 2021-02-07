@@ -47,7 +47,7 @@
                     <div class="mb-5 caption">
                       Add here valueIds specific configurations for each device.
                       This means that if you create an entry here this
-                      configuration will be applyed to each valueId of each
+                      configuration will be applied to each valueId of each
                       device of the same type in your Network.
                     </div>
                     <v-data-table
