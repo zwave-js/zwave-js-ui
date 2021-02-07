@@ -23,7 +23,7 @@ docker-compose up
 > Replace `/dev/ttyACM0` with your serial device
 
 > [!NOTE]
-> Replace `p 3000:3000` with your Server Port setting for zwave-js websocket server
+> Replace `-p 3000:3000` with your Server Port setting for zwave-js websocket server
 
 For more info about docker check [here](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docker)
 
