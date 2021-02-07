@@ -27,7 +27,7 @@ Here there are 3 different way to start the container and provide data persisten
 ### Run using volumes
 
 ```bash
-docker run --rm -it -p 8091:8091 -p3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run using local folder
