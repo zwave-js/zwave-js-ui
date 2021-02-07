@@ -1,20 +1,16 @@
 <template>
   <v-data-table
-    :headers="activeHeaders"
-    :items="tableNodes"
+    :headers="managedNodes.getTableHeaders()"
+    :items="managedNodes.getFilteredItems()"
     :footer-props="{
       itemsPerPageOptions: [10, 20, 50, 100, -1]
     }"
-    :sort-desc.sync="sorting.desc"
-    :sort-by.sync="sorting.by"
-    :group-by="groupBy"
     :expanded.sync="expanded"
-    :value="selected"
-    @update:group-by="groupBy = $event"
-    @group="groupBy = $event"
-    @input="selected = $event"
+    :value="managedNodes.getSelected()"
+    :options="managedNodes.getTableOptions()"
+    @update:options="managedNodes.setTableOptions($event)"
+    @input="managedNodes.setSelected($event)"
     @click:row="toggleExpanded($event)"
-    :items-per-page.sync="itemsPerPage"
     item-key="id"
     class="elevation-1"
     show-expand
@@ -38,12 +34,13 @@
             <v-card>
               <v-card-text>
                 <v-checkbox
-                  v-for="col in headers"
+                  v-for="col in managedNodes.getAllTableHeaders()"
                   :key="col.value"
                   :value="col.value"
                   hide-details
                   :label="col.text"
-                  v-model="columns"
+                  :input-value="managedNodes.getColumns()"
+                  @change="managedNodes.setColumns($event)"
                 ></v-checkbox>
               </v-card-text>
             </v-card>
@@ -54,8 +51,8 @@
                 color="blue darken-1"
                 text
                 v-on="on"
-                @click.native="filterSelected()"
-                :disabled="selected.length === 0"
+                @click.native="managedNodes.filterSelected()"
+                :disabled="managedNodes.getSelected().length === 0"
                 >Filter Selected</v-btn
               >
             </template>
@@ -67,7 +64,7 @@
                 color="blue darken-1"
                 text
                 v-on="on"
-                @click.native="resetFilters()"
+                @click.native="managedNodes.reset()"
                 >Reset Filters</v-btn
               >
             </template>
@@ -98,16 +95,17 @@
       </v-row>
     </template>
     <template
-      v-for="column in activeHeaders"
+      v-for="column in managedNodes.getTableHeaders()"
       v-slot:[`header.${column.value}`]="{ header }"
     >
       <span :key="column.value">
         <column-filter
           :column="column"
-          :value="filters[`${column.value}`] || {}"
-          :items="values[`${column.value}`] || {}"
-          @change="changeFilter(column.value, $event)"
-          @update:group-by="groupBy = $event"
+          :value="managedNodes.getPropFilter(column.value) || {}"
+          :items="managedNodes.getPropValues(column.value) || []"
+          :group-by="managedNodes.isGroupBy(column.value)"
+          @change="managedNodes.setPropFilter(column.value, $event)"
+          @update:group-by="managedNodes.setGroupBy($event)"
         ></column-filter>
         {{ header.text }}
       </span>
@@ -119,7 +117,7 @@
         <v-btn @click="toggle" x-small icon :ref="group">
           <v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
         </v-btn>
-        <span>{{ groupByTitle(groupBy, group) }}</span>
+        <span>{{ managedNodes.getGroupByTitle(group) }}</span>
         <v-btn x-small icon @click="remove"><v-icon>close</v-icon></v-btn>
       </td>
     </template>
