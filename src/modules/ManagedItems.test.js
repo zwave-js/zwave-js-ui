@@ -37,7 +37,7 @@ describe('ManagedItems', () => {
         'test_'
       )
       chai
-        .expect(managedItems.getAllTableHeaders())
+        .expect(managedItems.allTableHeaders)
         .to.be.eql([
           { text: 'id', type: 'string', value: 'id', groupable: true }
         ])
@@ -50,7 +50,7 @@ describe('ManagedItems', () => {
         'test_'
       )
       chai
-        .expect(managedItems.getAllTableHeaders())
+        .expect(managedItems.allTableHeaders)
         .to.be.eql([
           { text: 'ID', type: 'number', value: 'id', groupable: false }
         ])
@@ -65,12 +65,12 @@ describe('ManagedItems', () => {
         new LocalStorageMock(),
         'test_'
       )
-      chai.expect(managedItems.getSelected()).to.be.eql([])
-      chai.expect(managedItems.getFilteredItems().length).to.be.eql(2)
-      managedItems.setSelected([{ id: 2 }])
-      chai.expect(managedItems.getSelected()).to.be.eql([{ id: 2 }])
+      chai.expect(managedItems.selected).to.be.eql([])
+      chai.expect(managedItems.filteredItems.length).to.be.eql(2)
+      managedItems.selected = [{ id: 2 }]
+      chai.expect(managedItems.selected).to.be.eql([{ id: 2 }])
       managedItems.filterSelected()
-      chai.expect(managedItems.getFilteredItems().length).to.be.eql(1)
+      chai.expect(managedItems.filteredItems.length).to.be.eql(1)
     })
   })
   describe('#getPropValues', () => {

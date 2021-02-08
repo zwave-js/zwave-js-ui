@@ -61,7 +61,7 @@ export default {
       this.settings.store('nodes_showHidden', val)
     },
     relevantNodes (val) {
-      this.managedNodes.setItems(val)
+      this.managedNodes.items = val
     }
   },
   computed: {

@@ -1,15 +1,15 @@
 <template>
   <v-data-table
-    :headers="managedNodes.getTableHeaders()"
-    :items="managedNodes.getFilteredItems()"
+    :headers="managedNodes.tableHeaders"
+    :items="managedNodes.filteredItems"
     :footer-props="{
       itemsPerPageOptions: [10, 20, 50, 100, -1]
     }"
     :expanded.sync="expanded"
-    :value="managedNodes.getSelected()"
-    :options="managedNodes.getTableOptions()"
-    @update:options="managedNodes.setTableOptions($event)"
-    @input="managedNodes.setSelected($event)"
+    :value="managedNodes.selected"
+    :options="managedNodes.tableOptions"
+    @update:options="managedNodes.tableOptions = $event"
+    @input="managedNodes.selected = $event"
     @click:row="toggleExpanded($event)"
     item-key="id"
     class="elevation-1"
@@ -34,13 +34,13 @@
             <v-card>
               <v-card-text>
                 <v-checkbox
-                  v-for="col in managedNodes.getAllTableHeaders()"
+                  v-for="col in managedNodes.allTableHeaders"
                   :key="col.value"
                   :value="col.value"
                   hide-details
                   :label="col.text"
-                  :input-value="managedNodes.getColumns()"
-                  @change="managedNodes.setColumns($event)"
+                  :input-value="managedNodes.columns"
+                  @change="managedNodes.columns = $event"
                 ></v-checkbox>
               </v-card-text>
             </v-card>
@@ -52,7 +52,7 @@
                 text
                 v-on="on"
                 @click.native="managedNodes.filterSelected()"
-                :disabled="managedNodes.getSelected().length === 0"
+                :disabled="managedNodes.selected.length === 0"
                 >Filter Selected</v-btn
               >
             </template>
@@ -95,7 +95,7 @@
       </v-row>
     </template>
     <template
-      v-for="column in managedNodes.getTableHeaders()"
+      v-for="column in managedNodes.tableHeaders"
       v-slot:[`header.${column.value}`]="{ header }"
     >
       <span :key="column.value">
@@ -105,7 +105,7 @@
           :items="managedNodes.getPropValues(column.value) || []"
           :group-by="managedNodes.isGroupBy(column.value)"
           @change="managedNodes.setPropFilter(column.value, $event)"
-          @update:group-by="managedNodes.setGroupBy($event)"
+          @update:group-by="managedNodes.groupBy = $event"
         ></column-filter>
         {{ header.text }}
       </span>
