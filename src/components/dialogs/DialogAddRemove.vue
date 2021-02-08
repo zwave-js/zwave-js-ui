@@ -7,8 +7,8 @@
 
       <v-card-text style="padding-bottom:0">
         <v-container fluid style="margin-top:-2rem">
-          <v-radio-group v-model="mode" mandatory>
-            <v-radio value="0">
+          <v-radio-group v-model="selectedMode" mandatory>
+            <v-radio :value="0">
               <template v-slot:label>
                 <div class="option">
                   <v-icon color="green accent-4" small>add_circle</v-icon>
@@ -19,7 +19,7 @@
                 </div>
               </template>
             </v-radio>
-            <v-radio value="1">
+            <v-radio :value="1">
               <template v-slot:label>
                 <div class="option">
                   <v-icon color="amber accent-4" small
@@ -30,7 +30,7 @@
                 </div>
               </template>
             </v-radio>
-            <v-radio value="2">
+            <v-radio :value="2">
               <template v-slot:label>
                 <div class="option">
                   <v-icon color="red accent-4" small>remove_circle</v-icon>
@@ -50,17 +50,17 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn
-          v-if="status === 'stop'"
+          v-if="state === 'stop' || state === 'new'"
           color="red darken-1"
           text
           @click="$emit('close')"
           >Close</v-btn
         >
         <v-btn
-          v-if="status !== 'wait'"
+          v-if="state !== 'wait'"
           color="blue darken-1"
           text
-          @click="$emit('action', action)"
+          @click="onAction"
           >{{ method }}</v-btn
         >
       </v-card-actions>
@@ -69,51 +69,168 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
-  components: {},
   props: {
     value: Boolean, // show or hide
-    status: String,
-    alert: Object
-  },
-  watch: {},
-  computed: {
-    method () {
-      return this.status === 'stop' ? 'start' : 'stop'
-    },
-    action () {
-      return {
-        ...this.modes[this.mode],
-        method: this.method
-      }
-    }
+    nodeAddedOrRemoved: Object
   },
   data () {
     return {
+      selectedMode: 0,
       mode: 0, // most common action should be default
       modes: [
         {
-          id: 0,
           baseAction: 'Inclusion',
           name: 'Inclusion',
           secure: false
         },
         {
-          id: 1,
           baseAction: 'Inclusion',
           name: 'Secure inclusion',
           secure: true
         },
         {
-          id: 2,
           baseAction: 'Exclusion',
           name: 'Exclusion',
           secure: false
         }
-      ]
+      ],
+      state: 'new', // new -> wait -> start -> wait -> stop
+      commandEndDate: new Date(),
+      commandTimer: null,
+      waitTimeout: null,
+      alert: null,
+      nodeFound: null
     }
   },
-  methods: {}
+  computed: {
+    ...mapGetters(['appInfo', 'zwave']),
+    method () {
+      return this.state === 'new' || this.state === 'stop' ? 'start' : 'stop'
+    },
+    timeoutMs () {
+      return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
+    },
+    controllerStatus () {
+      return this.appInfo.controllerStatus
+    },
+    modeName () {
+      return this.modes[this.mode].name
+    }
+  },
+  watch: {
+    nodeAddedOrRemoved (node) {
+      this.nodeFound = node
+
+      // the add/remove dialog is waiting for a feedback
+      if (this.waitTimeout) {
+        this.showResults()
+      }
+    },
+    commandEndDate (newVal) {
+      if (this.commandTimer) {
+        clearInterval(this.commandTimer)
+      }
+      this.commandTimer = setInterval(() => {
+        const now = new Date()
+        const s = Math.trunc((this.commandEndDate - now) / 1000)
+        if (this.state === 'start') {
+          this.alert = {
+            type: 'info',
+            text: `${this.modeName} started: ${s}s remaining`
+          }
+        }
+        if (now > newVal) clearInterval(this.commandTimer)
+      }, 100)
+    },
+    controllerStatus (status) {
+      if (status.indexOf('clusion') > 0) {
+        if (this.state === 'new') return // ignore initial status
+
+        // inclusion/exclusion started, start the countdown timer
+        if (status.indexOf('started') > 0) {
+          this.commandEndDate = new Date(new Date().getTime() + this.timeoutMs)
+          this.nodeFound = null
+          this.state = 'start'
+        } else if (status.indexOf('stopped') > 0) {
+          // inclusion/exclusion stopped, check what happened
+          this.commandEndDate = new Date()
+          this.alert = {
+            type: 'info',
+            text: `${this.modeName} stopped, checking nodes…`
+          }
+          this.state = 'wait'
+          this.waitTimeout = setTimeout(this.showResults, 5000) // add additional discovery time
+        } else {
+          // error
+          this.commandEndDate = new Date()
+          this.alert = {
+            type: 'error',
+            text: status // TODO: better formatting?
+          }
+          this.state = 'stop'
+        }
+      }
+    }
+  },
+  methods: {
+    onAction () {
+      this.mode = this.selectedMode
+      this.commandEndDate = new Date()
+      this.alert = {
+        type: 'info',
+        text: `${this.modeName} ${
+          this.method === 'start' ? 'starting…' : 'stopping…'
+        }`
+      }
+      const args = []
+      if (this.mode < 2 && this.method === 'start') {
+        args.push(this.modes[this.mode].secure)
+      }
+      this.$emit(
+        'apiRequest',
+        this.method + this.modes[this.mode].baseAction,
+        args
+      )
+      this.state = 'wait' // make sure user can't trigger another action too soon
+    },
+    showResults () {
+      if (this.waitTimeout) {
+        clearTimeout(this.waitTimeout)
+        this.waitTimeout = null
+      }
+
+      if (this.nodeFound === null) {
+        this.alert = {
+          type: 'warning',
+          text: `${this.modeName} stopped, no changes detected`
+        }
+      } else if (this.mode === 2) {
+        this.alert = {
+          type: 'success',
+          text: `Node ${this.nodeFound.id} removed`
+        }
+      } else {
+        this.alert = {
+          type: 'success',
+          text: `Device found! Node ${this.nodeFound.id} added` // we don't know yet if it's added securely or not, need to wait interview
+        }
+      }
+
+      this.state = 'stop'
+    }
+  },
+  beforeDestroy () {
+    if (this.commandTimer) {
+      clearInterval(this.commandTimer)
+    }
+
+    if (this.waitTimeout) {
+      clearTimeout(this.waitTimeout)
+    }
+  }
 }
 </script>
 
