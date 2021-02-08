@@ -47,7 +47,7 @@
                     <div class="mb-5 caption">
                       Add here valueIds specific configurations for each device.
                       This means that if you create an entry here this
-                      configuration will be applyed to each valueId of each
+                      configuration will be applied to each valueId of each
                       device of the same type in your Network.
                     </div>
                     <v-data-table
@@ -195,9 +195,9 @@
 
             <v-container cols="12" sm="6" class="ml-1">
               <v-switch
-                hint="Enable this to use Z2M only as Control Panel"
+                hint="Enable this to use zwavejs2mqtt only as Control Panel"
                 persistent-hint
-                label="Disable Gateway"
+                label="Disable MQTT Gateway"
                 v-model="mqtt.disabled"
               ></v-switch>
             </v-container>
