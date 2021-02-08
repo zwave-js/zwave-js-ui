@@ -133,24 +133,6 @@
                       </v-col>
                       <v-col cols="12" sm="6">
                         <v-switch
-                          hint="Enable zwave-js websocket server"
-                          persistent-hint
-                          label="WS Server"
-                          v-model="zwave.serverEnabled"
-                        ></v-switch>
-                      </v-col>
-                      <v-col v-if="zwave.serverEnabled" cols="12" sm="6">
-                        <v-text-field
-                          v-model.number="zwave.serverPort"
-                          label="Server Port"
-                          :rules="[rules.required]"
-                          required
-                          hint="The port to bind the Zwave Server. Default: 3000"
-                          type="number"
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6">
-                        <v-switch
                           hint="Enable zwave-js logging"
                           persistent-hint
                           label="Log Enabled"
@@ -433,7 +415,7 @@
 
             <v-divider></v-divider>
 
-            <v-expansion-panel key="Hass" v-if="!mqtt.disabled">
+            <v-expansion-panel key="Hass">
               <v-expansion-panel-header
                 >Home Assistant</v-expansion-panel-header
               >
@@ -441,10 +423,30 @@
                 <v-card flat>
                   <v-card-text>
                     <v-row>
+                      <v-col cols="12" sm="6">
+                        <v-switch
+                          hint="Enable zwave-js websocket server. This can be used with HASS Zwave-js integration to discover entities"
+                          persistent-hint
+                          label="WS Server"
+                          v-model="zwave.serverEnabled"
+                        ></v-switch>
+                      </v-col>
+                      <v-col v-if="zwave.serverEnabled" cols="12" sm="6">
+                        <v-text-field
+                          v-model.number="zwave.serverPort"
+                          label="Server Port"
+                          :rules="[rules.required]"
+                          required
+                          hint="The port to bind the Zwave Server. Default: 3000"
+                          type="number"
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                    <v-row v-if="!mqtt.disabled">
                       <v-col cols="6">
                         <v-switch
-                          label="Hass Discovery"
-                          hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
+                          label="MQTT Discovery"
+                          hint="Create devices in Hass using MQTT discovery. This is an alternative to Hass Zwave-js integration"
                           v-model="gateway.hassDiscovery"
                           persistent-hint
                         ></v-switch>
