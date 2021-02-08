@@ -193,10 +193,31 @@ export default {
         const args = [this.node.id]
 
         if (this.node_action === 'beginFirmwareUpdate') {
+          const { target } = await this.$listeners.showConfirm(
+            'Choose target',
+            '',
+            'info',
+            {
+              confirmText: 'Ok',
+              inputs: [
+                {
+                  type: 'number',
+                  label: 'Target',
+                  default: 0,
+                  rules: [v => v >= 0 || 'Invalid target'],
+                  hint:
+                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+                  required: true,
+                  key: 'target'
+                }
+              ]
+            }
+          )
           try {
             const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
+            args.push(target)
           } catch (error) {
             return
           }

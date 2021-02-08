@@ -77,7 +77,7 @@ This are the available apis:
 - `isFailedNode(nodeId)`: Checks if a node is failed
 - `removeFailedNode(nodeId)`: Remove a failed node
 - `refreshInfo(nodeId)`: Re-interview a node to fetch its info and supported CCs
-- `beginFirmwareUpdate(nodeId, fileName, data)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
+- `beginFirmwareUpdate(nodeId, fileName, data, target)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
 - `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
 - `writeValue(valueId, value)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
 - `sendCommand(valueId, command, args)`: Send a custom command
