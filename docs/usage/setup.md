@@ -10,7 +10,7 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 
 ### Device values configuration
 
-The Device values configuration table can be found under [General](#general) section and can be used to create valueIds specific configurations for each device. This means that if you create an entry here this configuration will be applyed to all device of the same type in your Network.
+The Device values configuration table can be found under [General](#general) section and can be used to create valueIds specific configurations for each device. This means that if you create an entry here this configuration will be applied to all device of the same type in your Network.
 
 ![Gateway values](../_images/gateway_values_table.png)
 
