@@ -195,9 +195,9 @@
 
             <v-container cols="12" sm="6" class="ml-1">
               <v-switch
-                hint="Enable this to use Z2M only as Control Panel"
+                hint="Enable this to use zwavejs2mqtt only as Control Panel"
                 persistent-hint
-                label="Disable Gateway"
+                label="Disable MQTT Gateway"
                 v-model="mqtt.disabled"
               ></v-switch>
             </v-container>
