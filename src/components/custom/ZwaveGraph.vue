@@ -3,7 +3,7 @@
     <v-expansion-panels>
       <v-expansion-panel>
         <v-expansion-panel-header>
-          Configure ...
+          Options
         </v-expansion-panel-header>
         <v-expansion-panel-content>
           <v-row>
@@ -63,7 +63,7 @@
         </v-expansion-panel-content>
       </v-expansion-panel>
     </v-expansion-panels>
-    <v-row style="height:776px">
+    <v-row class="mt-5" style="height:776px">
       <v-col align-self="center" class="text-center" v-show="loading" cols="12">
         <v-progress-circular
           :size="50"
@@ -267,7 +267,7 @@ export default {
   data () {
     return {
       edgesVisibility: 'relevant',
-      grouping: 'z-wave',
+      grouping: 'ungrouped',
       refreshTimeout: null,
       ranker: 'network-simplex',
       loading: false,
@@ -380,7 +380,9 @@ export default {
       this.debounceRefresh()
     }
   },
-  mounted () {},
+  mounted () {
+    this.debounceRefresh()
+  },
   beforeDestroy () {
     if (this.refreshTimeout) {
       clearTimeout(this.refreshTimeout)
