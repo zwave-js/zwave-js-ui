@@ -35,11 +35,11 @@ mqtt:
   discovery_prefix: <your_discovery_prefix>
   broker: [YOUR MQTT BROKER] # Remove if you want to use builtin-in MQTT broker
   birth_message:
-    topic: "homeassistant/status"
-    payload: "online"
+    topic: 'homeassistant/status'
+    payload: 'online'
   will_message:
-    topic: "homeassistant/status"
-    payload: "offline"
+    topic: 'homeassistant/status'
+    payload: 'offline'
 ```
 
 Mind you that if you want to use the embedded broker of Home Assistant you
@@ -236,7 +236,7 @@ First, add a new Lovelace dashboard. In the dashboard:
   panel: true
   cards:
     - type: iframe
-      url: "http:/127.0.0.1[SUBSTITUTE YOUR IP ADDRESS HERE]:8091/"
+      url: 'http:/127.0.0.1[SUBSTITUTE YOUR IP ADDRESS HERE]:8091/'
       aspect_ratio: 100%
 ```
 
@@ -260,13 +260,13 @@ Motion from a multi sensor:
 ```yaml
 binary_sensor:
   - platform: mqtt
-    name: "Hall Motion Sensor"
-    state_topic: "zwave/hall/48/0/Motion"
-    payload_on: "true"
-    payload_off: "false"
-    availability_topic: "zwave/hall_motion_sensor/status"
-    payload_available: "true"
-    payload_not_available: "false"
+    name: 'Hall Motion Sensor'
+    state_topic: 'zwave/hall/48/0/Motion'
+    payload_on: 'true'
+    payload_off: 'false'
+    availability_topic: 'zwave/hall_motion_sensor/status'
+    payload_available: 'true'
+    payload_not_available: 'false'
     qos: 0
     device_class: motion
 ```
@@ -278,14 +278,14 @@ Wall switch as a light:
 ```yaml
 light:
   - platform: mqtt
-    name: "Office Light"
-    state_topic: "zwave/office_light/37/0/currentValue"
-    command_topic: "zwave/office_light/37/0/targetValue/set"
-    availability_topic: "zwave/office_light/status"
-    payload_available: "true"
-    payload_not_available: "false"
-    payload_on: "true"
-    payload_off: "false"
+    name: 'Office Light'
+    state_topic: 'zwave/office_light/37/0/currentValue'
+    command_topic: 'zwave/office_light/37/0/targetValue/set'
+    availability_topic: 'zwave/office_light/status'
+    payload_available: 'true'
+    payload_not_available: 'false'
+    payload_on: 'true'
+    payload_off: 'false'
     optimistic: false
     qos: 0
     retain: true
@@ -299,13 +299,13 @@ Lock (BE469ZP and Kwikset914c)
 lock:
   - platform: mqtt
     name: outside_lock
-    state_topic: "zwave/outside_lock/98/0/boltStatus"
-    command_topic: "zwave/outside_lock/98/0/targetMode/set"
-    availability_topic: "zwave/outside_lock/status"
-    payload_available: "true"
-    payload_not_available: "false"
-    payload_lock: "255"
-    payload_unlock: "0"
+    state_topic: 'zwave/outside_lock/98/0/boltStatus'
+    command_topic: 'zwave/outside_lock/98/0/targetMode/set'
+    availability_topic: 'zwave/outside_lock/status'
+    payload_available: 'true'
+    payload_not_available: 'false'
+    payload_lock: '255'
+    payload_unlock: '0'
     state_locked: '"locked"'
     state_unlocked: '"unlocked"'
     optimistic: false
@@ -320,16 +320,16 @@ Wall switch controlling a fan
 ```yaml
 switch:
   - platform: mqtt
-    name: "Fan Switch"
-    state_topic: "zwave/bathroom_fan/37/0/currentValue"
-    command_topic: "zwave/bathroom_fan/37/0/targetValue/set"
-    availability_topic: "zwave/bathroom_fan/status"
-    payload_available: "true"
-    payload_not_available: "false"
-    payload_on: "true"
-    payload_off: "false"
-    state_on: "true"
-    state_off: "false"
+    name: 'Fan Switch'
+    state_topic: 'zwave/bathroom_fan/37/0/currentValue'
+    command_topic: 'zwave/bathroom_fan/37/0/targetValue/set'
+    availability_topic: 'zwave/bathroom_fan/status'
+    payload_available: 'true'
+    payload_not_available: 'false'
+    payload_on: 'true'
+    payload_off: 'false'
+    state_on: 'true'
+    state_off: 'false'
     optimistic: false
     qos: 0
     retain: true
@@ -342,9 +342,9 @@ Temp from a multi-sensor device
 ```yaml
 sensor:
   - platform: mqtt
-    state_topic: "zwave/kitchen_motion_sensor/49/0/Air_temperature"
-    name: "Temperature"
-    unit_of_measurement: "F"
+    state_topic: 'zwave/kitchen_motion_sensor/49/0/Air_temperature'
+    name: 'Temperature'
+    unit_of_measurement: 'F'
 ```
 
 ### Execute scene
@@ -358,7 +358,7 @@ switch:
   - platform: mqtt
     name: Doorbell Scene
     unique_id: zwavedoorbellscene
-    command_topic: "<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_activateScene/set"
+    command_topic: '<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_activateScene/set'
     payload_on: '{ "args": [ <sceneId> ] }'
 ```
 
