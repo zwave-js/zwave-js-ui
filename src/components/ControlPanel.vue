@@ -1,6 +1,6 @@
 <template>
   <v-container fluid>
-    <v-card>
+    <!-- <v-card>
       <v-card-text>
         <v-container fluid>
           <v-row justify="start">
@@ -33,23 +33,86 @@
           </v-row>
         </v-container>
 
-        <DialogAddRemove
-          v-model="addRemoveShowDialog"
-          :lastNodeFound="addRemoveNode"
-          @close="onAddRemoveClose"
-          @apiRequest="apiRequest"
-        />
 
-        <nodes-table
-          :nodes="nodes"
-          :node-actions="node_actions"
-          :socket="socket"
-          v-on="$listeners"
-          @exportNodes="exportConfiguration"
-          @importNodes="importConfiguration"
-        />
       </v-card-text>
-    </v-card>
+    </v-card> -->
+      
+    <v-toolbar v-if="!$vuetify.breakpoint.mobile" flat dense>
+      <v-btn color="blue" text @click="addRemoveShowDialog = true">
+        <v-icon style="margin-right:0.3rem">add_circle_outline</v-icon>Add/Remove Device
+      </v-btn>
+
+      <v-btn text>
+        <v-icon style="margin-right:0.3rem">remove_red_eye</v-icon>
+        Hidden: <small style="opacity:0.8">hide</small>
+      </v-btn>
+
+      <v-btn text>
+        <v-icon style="margin-right:0.3rem">view_week</v-icon>
+        Columns: <small style="opacity:0.8">all</small>
+      </v-btn>
+
+      <v-btn text>
+        <v-icon style="margin-right:0.2rem">filter_alt</v-icon>
+        Filter: <small style="opacity:0.8">none</small>
+      </v-btn>
+      
+      <v-btn text>
+        <v-icon style="margin-right:0.3rem">input</v-icon>
+        Import / Export
+      </v-btn>
+
+      <v-spacer></v-spacer>
+
+      <v-btn color="purple" text>
+        Advanced
+        <v-icon style="margin-left:0.3rem">more_vert</v-icon>
+      </v-btn>
+
+    </v-toolbar>
+    <v-toolbar v-if="$vuetify.breakpoint.mobile"  flat dense>
+
+      <v-btn color="blue" icon @click="addRemoveShowDialog = true">
+        <v-icon>add_circle_outline</v-icon>
+      </v-btn>
+
+      <v-btn icon>
+        <v-icon>remove_red_eye</v-icon>
+      </v-btn>
+
+      <v-btn icon>
+        <v-icon>view_week</v-icon>
+      </v-btn>
+
+      <v-btn icon>
+        <v-icon>filter_alt</v-icon>
+      </v-btn>
+      
+      <v-btn icon>
+        <v-icon>input</v-icon>
+      </v-btn>
+      
+      <v-spacer></v-spacer>
+
+      <v-btn color="purple" icon>
+        <v-icon>more_vert</v-icon>
+      </v-btn>
+
+    </v-toolbar>
+    <DialogAddRemove
+      v-model="addRemoveShowDialog"
+      :lastNodeFound="addRemoveNode"
+      @close="onAddRemoveClose"
+      @apiRequest="apiRequest"
+    />
+    <nodes-table
+      :nodes="nodes"
+      :node-actions="node_actions"
+      :socket="socket"
+      v-on="$listeners"
+      @exportNodes="exportConfiguration"
+      @importNodes="importConfiguration"
+    />
   </v-container>
 </template>
 

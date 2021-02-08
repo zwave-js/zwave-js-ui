@@ -1,0 +1,393 @@
+<template>
+  <v-container fluid>
+
+    <v-toolbar v-if="$vuetify.breakpoint.mobile" flat dense>
+      <v-btn color="blue" text @click="addRemoveShowDialog = true">
+        <v-icon style="margin-right:0.3rem">add_circle_outline</v-icon>Add/Remove Device
+      </v-btn>
+      
+      <v-menu v-model="groupMenu" :close-on-content-click="true">
+        <template v-slot:activator="{ on }"> 
+          <v-btn v-on="on" text>
+            <v-icon style="margin-right:0.3rem">source</v-icon>
+            Group: <small style="opacity:0.8">{{ groups[group].name }}</small>
+          </v-btn>
+        </template>
+        <v-card style="min-width:170px">
+          <v-card-title>Group by</v-card-title>
+          <v-card-text style="padding-bottom:0">
+            <v-radio-group v-model="group" style="margin-top:0">
+              <v-radio v-for="(g, i) in groups" :key="i" :value="i" :label="g.name" />
+            </v-radio-group>
+          </v-card-text>
+          <v-card-actions style="text-align:right">
+            <v-btn text color="blue" @click="group = 0">Reset</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-menu>
+
+
+      <v-menu v-model="filterMenu" :close-on-content-click="false">
+        <template v-slot:activator="{ on }"> 
+          <v-btn v-on="on" text>
+            <v-icon style="margin-right:0.2rem">filter_alt</v-icon>
+            Filter: <small style="opacity:0.8">{{ filterText ? filterText : filter === null || filter.length === 0 ? 'none' : filter.length === 1 ? filter[0] : 'mulitple' }}</small>
+          </v-btn>
+        </template>
+        <v-card style="min-width:330px">
+          <v-card-title>Filter</v-card-title>
+          <v-card-text>
+            <v-text-field v-model="filterText" label="Name, manufacturer, or product" />
+            <div style="display:flex">
+              <div style="padding-top:1.3rem">Hide: </div>
+              <v-checkbox style="margin-left:1rem" v-model="filter" hide-details label="Removed" value="removed" />
+              <v-checkbox style="margin-left:2rem" v-model="filter" hide-details label="Dead" value="dead" />
+            </div>
+          </v-card-text>
+          <v-card-actions style="text-align:right">
+            <v-btn text color="blue" @click="onFilterReset">Reset</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-menu>
+
+      <v-spacer></v-spacer>
+
+      <v-btn color="purple" text @click="advancedShowDialog = true">
+        <v-icon style="margin-right:0.2rem">label_important</v-icon>
+        Advanced
+      </v-btn>
+
+    </v-toolbar>
+    <!-- <v-toolbar v-if="$vuetify.breakpoint.mobile"  flat dense>
+
+      <v-btn color="blue" icon @click="addRemoveShowDialog = true">
+        <v-icon>add_circle_outline</v-icon>
+      </v-btn>
+
+      <v-btn icon>
+        <v-icon>remove_red_eye</v-icon>
+      </v-btn>
+
+      <v-btn icon>
+        <v-icon>view_week</v-icon>
+      </v-btn>
+
+      <v-btn icon>
+        <v-icon>filter_alt</v-icon>
+      </v-btn>
+      
+      <v-btn icon>
+        <v-icon>input</v-icon>
+      </v-btn>
+      
+      <v-spacer></v-spacer>
+
+      <v-btn color="purple" icon>
+        <v-icon>more_vert</v-icon>
+      </v-btn>
+
+    </v-toolbar> -->
+    <DialogAddRemove
+      v-model="addRemoveShowDialog"
+      :lastNodeFound="addRemoveNode"
+      @close="onAddRemoveClose"
+      @apiRequest="apiRequest"
+    />
+
+    <DialogAdvanced
+      v-model="advancedShowDialog"
+      @close="advancedShowDialog = false"
+      @apiRequest="apiRequest"
+    />
+
+    <div class="node-group" v-for="(groupOfNodes, key, i) in groupedNodes" :key="i">
+      <v-banner style="background-image:linear-gradient(to bottom, #ffffff22, #cccccc44" v-if="key !== 'none'" single-line>{{ key }}</v-banner>
+      <div :class="[ 'node-grid', $vuetify.breakpoint.name ]">
+        <div v-for="node in groupOfNodes" :key="node.id">
+          <div style="min-width:30px;text-align:center;background-color:#dfdfdf;margin-right:0.4rem">
+            <div :class="(node.color + '--text')" style="font-size:larger;padding-top:0.3rem">{{ node.id }}</div>
+            <v-icon style="margin-top:-0.7rem" :color="node.color">{{ node.icon }}</v-icon>
+          </div>
+          <div style="flex:1">
+            <div style="color:#888;font-size:0.7rem;line-height:0.7rem;padding-top:0.4rem">{{ node.manu }}</div>
+            <div style="margin:2px 0 4px 0;line-height:1rem">{{ node.desc }}</div>
+            <div style="font-size:0.9rem;margin-top:-0.3rem">{{ node.prod }}</div>
+          </div>
+          <div style="text-align:right;padding-right:0.4rem">
+            <div style="opacity:0.8;height:24px">
+              <v-icon v-if="node.sec" small>lock</v-icon>
+              <v-icon v-if="node.beam" small style="margin-left:0.5rem">contactless</v-icon>
+              <!-- <v-icon v-if="node.isFailed" small>battery_full</v-icon><small v-if="node.isFailed">98%</small> -->
+            </div>
+            <div style="line-height:0.95rem">{{ node.status }}</div>
+            <div style="color:#777;font-size:0.7rem;margin-top:-0.1rem">{{ node.ago }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </v-container>
+</template>
+
+<script>
+import { mapGetters, mapMutations } from 'vuex'
+
+import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
+
+import { Settings } from '@/modules/Settings'
+import { socketEvents } from '@/plugins/socket'
+
+export default {
+  name: 'ControlPanel',
+  props: {
+    socket: Object
+  },
+  components: {
+    DialogAddRemove,
+    DialogAdvanced
+  },
+  data () {
+    return {
+      settings: new Settings(localStorage),
+      filterMenu: false,
+      filter: [ 'removed' ],
+      filterText: null,
+      groupMenu: false,
+      group: 0,
+
+      groups: [{
+          name: "None",
+          value: "none"
+        }, {
+          name: "Manufacturer",
+          value: "manu"
+        }, {
+          name: "Product",
+          value: "desc"
+        }, {
+          name: "Model",
+          value: "prod"
+        }, {
+          name: "Location",
+          value: "loc"
+        }, {
+          name: "Status",
+          value: "status"
+        }
+      ],
+      bindedSocketEvents: {}, // keep track of the events-handlers
+      addRemoveShowDialog: false,
+      addRemoveNode: null,
+      advancedShowDialog: false,
+    }
+  },
+  computed: {
+    ...mapGetters(['nodes']),
+    viewNodes () {
+      var nodes = [...this.nodes];
+      var filter = this.filter || [];
+      if (filter.includes('removed'))
+        nodes = nodes.filter(x => x.status !== 'Removed')
+      if (filter.includes('dead'))
+        nodes = nodes.filter(x => x.status !== 'Dead')
+      if (filter.includes('asleep'))
+        nodes = nodes.filter(x => x.Status !== 'Asleep')
+
+      if (this.filterText)
+        nodes = nodes.filter(x => (x.name + x.manufacturer + x.productDescription + x.productLabel).toLowerCase().includes(this.filterText.toLowerCase()))
+
+      return nodes
+        .map(x => ({
+          id: x.id,
+          name: x.name,
+          loc: x.location,
+          color: this.getNodeColor(x),
+          icon: this.getNodeIcon(x),
+          manu: x.status === 'Removed' || x.status === 'Dead' ? '-' : x.manufacturer,
+          desc: x.status === 'Removed' || x.status === 'Dead' ? 'Node' : x.productDescription,
+          prod: x.productLabel,
+          sec: x.isSecure,
+          beam: x.isBeaming,
+          // TODO: battery / sleeping
+          status: x.status,
+          ago: x.lastActive ? this.timeago(new Date() - x.lastActive) : ' '
+      }))
+    },
+    groupedNodes () {
+      if (this.group === 0) {
+        return { none: this.viewNodes }
+      }
+
+      return this.groupBy(this.viewNodes, this.groups[this.group].value)
+    }
+  },
+  watch: {},
+  methods: {
+    ...mapMutations(['showSnackbar']),
+    timeago(ms) { // TODO: move into util library
+      var ago = Math.floor(ms / 1000);
+      var part = 0;
+
+      if (ago < 5) { return "just now"; }
+      if (ago < 60) { return ago + "s ago"; }
+
+      if (ago < 120) { return "1m ago"; }
+      if (ago < 3600) {
+        while (ago >= 60) { ago -= 60; part += 1; }
+        return part + "m ago";
+      }
+
+      if (ago < 7200) { return "1h ago"; }
+      if (ago < 86400) {
+        while (ago >= 3600) { ago -= 3600; part += 1; }
+        return part + "h ago";
+      }
+
+      if (ago < 172800) { return "1d ago"; }
+      if (ago < 604800) {
+        while (ago >= 172800) { ago -= 172800; part += 1; }
+        return part + "d ago";
+      }
+
+      if (ago < 1419120000) { // 45 years, approximately the epoch
+        return "long ago";
+      }
+
+      // TODO pass in Date.now() and ms to check for 0 as never
+      return "never";
+    },
+    groupBy (arr, criteria) { // TODO: move into util library
+      return arr.reduce(function (obj, item) {
+
+        // Check if the criteria is a function to run on the item or a property of it
+        const key = typeof criteria === 'function' ? criteria(item) : item[criteria]
+
+        // If the key doesn't exist yet, create it
+        if (!obj.hasOwnProperty(key)) {
+          obj[key] = []
+        }
+
+        // Push the value to the object
+        obj[key].push(item)
+
+        // Return the object to the next item in the loop
+        return obj
+
+      }, {});
+    },
+    getNodeColor(node) { 
+      switch(node.status) {
+        case 'Awake':
+        case 'Alive': 
+          return node.interviewStage === 'RestartFromCache' ? 'orange' : 'green'
+        case 'Dead': 
+          return 'red'
+        case 'Asleep':
+          return node.interviewStage === 'RestartFromCache' ? 'orange' : 'blue'
+        default:
+          return 'gray'
+      }
+    },
+    getNodeIcon(node) {
+      switch(node.interviewStage) {
+        case 'None': 
+          return 'remove_circle_outline'
+        case 'RestartFromCache': 
+          return node.status === 'Dead' ? 'dangerous' : 'history'
+        case 'Complete': 
+          return node.status === 'Asleep' ? 'nightlight_round' : 'check_circle_outline'
+        case 'ProtocolInfo':
+        case 'NodeInfo':
+        case 'CommandClasses':
+        case 'Neighbors':
+          return 'arrow_circle_down'
+        default:
+          return node.status === 'Unknown' ? 'help_outline' : 'error_outline'
+      }
+    },
+    onFilterReset() {
+      this.filterText = null
+      this.filter = [ 'removed' ]
+    },
+    onAddRemoveClose () {
+      this.addRemoveShowDialog = false
+      this.addRemoveNode = null
+    },
+    apiRequest (apiName, args) {
+      this.$emit('apiRequest', apiName, args)
+    },
+    saveConfiguration () {
+      this.apiRequest('writeConfig', [])
+    },
+    onApiResponse (data) {
+      if (data.success) {
+        switch (data.api) {
+          case 'getDriverStatistics':
+            this.$listeners.showConfirm(
+              'Driver statistics',
+              this.jsonToList(data.result)
+            )
+            break
+          case 'getNodeStatistics':
+            this.$listeners.showConfirm(
+              'Node statistics',
+              this.jsonToList(data.result)
+            )
+            break
+          default:
+            this.showSnackbar('Successfully call api ' + data.api)
+        }
+      } else {
+        this.showSnackbar(
+          'Error while calling api ' + data.api + ': ' + data.message
+        )
+      }
+    },
+    onNodeAddedRemoved (node) {
+      this.addRemoveNode = node
+    },
+    bindEvent (eventName, handler) {
+      this.socket.on(socketEvents[eventName], handler)
+      this.bindedSocketEvents[eventName] = handler
+    },
+    unbindEvents () {
+      for (const event in this.bindedSocketEvents) {
+        this.socket.off(event, this.bindedSocketEvents[event])
+      }
+    }
+  },
+  mounted () {
+    const onApiResponse = this.onApiResponse.bind(this)
+    const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
+
+    this.bindEvent('api', onApiResponse)
+    this.bindEvent('nodeRemoved', onNodeAddedRemoved)
+    this.bindEvent('nodeAdded', onNodeAddedRemoved)
+  },
+  beforeDestroy () {
+    if (this.socket) {
+      this.unbindEvents()
+    }
+  }
+}
+</script>
+
+<style scoped>
+.node-grid {
+display:grid;grid-template-columns: repeat(3, 1fr); justify-items:stretch
+}
+.node-grid.xs {
+  grid-template-columns: repeat(1, 1fr);  
+}
+.node-grid.sm {
+  grid-template-columns: repeat(2, 1fr);  
+}
+.node-grid.lg, .node-grid.xl {
+  grid-template-columns: repeat(4, 1fr);  
+}
+.node-grid>div{
+flex:1;min-width:300px;border-radius:5px;display:flex;margin:0.3rem;border-width:1px;border-color:#dfdfdf;border-style:solid
+}
+</style>
