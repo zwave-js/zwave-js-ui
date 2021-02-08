@@ -36,12 +36,7 @@ export default {
         'nodes_'
       ),
       showHidden: undefined,
-      itemsPerPage: undefined,
-      columns: undefined,
-      groupBy: undefined,
       expanded: [],
-      filters: {},
-      sorting: {},
       selected: [],
       headersMenu: false
     }
