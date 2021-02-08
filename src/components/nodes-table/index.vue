@@ -65,10 +65,10 @@
                 text
                 v-on="on"
                 @click.native="managedNodes.reset()"
-                >Reset Filters</v-btn
+                >Reset Table</v-btn
               >
             </template>
-            <span>Reset all column filters</span>
+            <span>Reset all table settings</span>
           </v-tooltip>
           <v-tooltip bottom>
             <template v-slot:activator="{ on }">
