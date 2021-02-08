@@ -37,33 +37,10 @@ export default {
       ),
       showHidden: undefined,
       expanded: [],
-      selected: [],
       headersMenu: false
     }
   },
   methods: {
-    filterSelected () {
-      this.managedNodes.filterSelected()
-    },
-    initColumns () {
-      return this.headers.reduce((values, col) => {
-        values = values || []
-        values.push(col.value)
-        return values
-      }, [])
-    },
-    initFilters () {
-      return this.headers.reduce((values, h) => {
-        values[h.value] = {}
-        return values
-      }, {})
-    },
-    initSorting () {
-      return {
-        by: ['id'],
-        desc: [false]
-      }
-    },
     loadSetting (key, defaultVal) {
       return this.settings.load(key, defaultVal)
     },
@@ -88,9 +65,6 @@ export default {
     }
   },
   computed: {
-    headers () {
-      return this.managedNodes.getAllTableHeaders()
-    },
     relevantNodes () {
       return this.nodes.filter(node => (this.showHidden ? true : !node.failed))
     }
