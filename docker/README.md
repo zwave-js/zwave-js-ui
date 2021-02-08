@@ -22,7 +22,7 @@ Here there are 3 different way to start the container and provide data persisten
 
 1. Replace `/dev/ttyACM0` with your serial device
 2. Add `-e TZ=Europe/Stockholm` to the `docker run` command to set the correct timezone in container
-3. Replace `3000:3000` with the Server Port of  the websocket
+3. If you are using zwave-js WS server, replace `3000:3000` with the port choosen in settings
 
 ### Run using volumes
 
