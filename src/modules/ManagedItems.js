@@ -13,11 +13,11 @@ export class ManagedItems {
    * @param {String} storePrefix Use local storage to store the settings of managed properties with the given prefix
    */
   constructor (items, propDefs, store, storePrefix = 'items_') {
-    this._items = items
-    this.propDefs = propDefs
     this.settings = new Settings(store)
     this.doStore = !!storePrefix
     this.storePrefix = storePrefix || ''
+    this.propDefs = propDefs
+    this.items = items
     this.initialize()
   }
 
@@ -25,21 +25,33 @@ export class ManagedItems {
    * Load values from settings store or set to initial values
    */
   initialize () {
-    this.tableOptions =
+    this._tableOptions =
       this.tableOptions === undefined
         ? this.loadSetting('tableOptions', this.initialTableOptions)
         : this.tableOptions
-    this.columns =
+    this._columns =
       this.columns === undefined
         ? this.loadSetting('columns', this.initialColumns)
         : this.columns
-    this.filters =
+    this._filters =
       this.filters === undefined
         ? this.loadSetting('filters', this.initialFilters)
         : this.filters
-    this.selected =
+    const loadedSelectionIds = this.loadSetting(
+      'selected',
+      this.initialSelected
+    )
+    this._selected =
       this.selected === undefined
-        ? this.loadSetting('selected', this.initialSelected)
+        ? loadedSelectionIds.reduce((selectedItems, id) => {
+            const selectedItem = this.items.find(item => {
+              return item !== undefined && item.id === id
+            })
+            if (selectedItem !== undefined) {
+              selectedItems.push(selectedItem)
+            }
+            return selectedItems
+          }, [])
         : this.selected
   }
 
@@ -191,7 +203,7 @@ export class ManagedItems {
   /**
    * Filter to selected items
    */
-  setFilterToSelected() {
+  setFilterToSelected () {
     this.setPropFilter('id', {
       values: this.selected.map(item => item.id)
     })
@@ -298,6 +310,13 @@ export class ManagedItems {
    */
   set selected (selected) {
     this._selected = selected
+    this.storeSetting(
+      'selected',
+      selected.reduce((values, item) => {
+        values.push(item.id)
+        return values
+      }, [])
+    )
   }
 
   // Table options handling
