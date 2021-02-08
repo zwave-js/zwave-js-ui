@@ -101,9 +101,9 @@
       <span :key="column.value">
         <column-filter
           :column="column"
-          :value="managedNodes.getPropFilter(column.value) || {}"
-          :items="managedNodes.getPropValues(column.value) || []"
-          :group-by="managedNodes.isGroupBy(column.value)"
+          :value="managedNodes.filters[column.value]"
+          :items="managedNodes.propValues[column.value]"
+          :group-by="managedNodes.groupBy === [column.value]"
           @change="managedNodes.setPropFilter(column.value, $event)"
           @update:group-by="managedNodes.groupBy = $event"
         ></column-filter>
@@ -117,7 +117,7 @@
         <v-btn @click="toggle" x-small icon :ref="group">
           <v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
         </v-btn>
-        <span>{{ managedNodes.getGroupByTitle(group) }}</span>
+        <span>{{ managedNodes.groupByTitle }}: {{ group }}</span>
         <v-btn x-small icon @click="remove"><v-icon>close</v-icon></v-btn>
       </td>
     </template>
