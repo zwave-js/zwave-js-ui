@@ -1,16 +1,17 @@
 <template>
   <v-container fluid>
 
-    <v-toolbar v-if="$vuetify.breakpoint.mobile" flat dense>
-      <v-btn color="blue" text @click="addRemoveShowDialog = true">
-        <v-icon style="margin-right:0.3rem">add_circle_outline</v-icon>Add/Remove Device
+    <v-toolbar flat dense>
+      <v-btn color="blue" :text="$vuetify.breakpoint.mdAndUp" :icon="$vuetify.breakpoint.smAndDown" @click="addRemoveShowDialog = true">
+        <v-icon style="margin-right:0.3rem">add_circle_outline</v-icon>
+        <span v-if="$vuetify.breakpoint.mdAndUp">Add/Remove Device</span>
       </v-btn>
       
       <v-menu v-model="groupMenu" :close-on-content-click="true">
         <template v-slot:activator="{ on }"> 
           <v-btn v-on="on" text>
-            <v-icon style="margin-right:0.3rem">source</v-icon>
-            Group: <small style="opacity:0.8">{{ groups[group].name }}</small>
+            <v-icon style="margin-right:0.3rem">source</v-icon>            
+            <span v-if="$vuetify.breakpoint.mdAndUp">Group: </span><small style="opacity:0.8">{{ groups[group].name }}</small>
           </v-btn>
         </template>
         <v-card style="min-width:170px">
@@ -31,7 +32,8 @@
         <template v-slot:activator="{ on }"> 
           <v-btn v-on="on" text>
             <v-icon style="margin-right:0.2rem">filter_alt</v-icon>
-            Filter: <small style="opacity:0.8">{{ filterText ? filterText : filter === null || filter.length === 0 ? 'none' : filter.length === 1 ? filter[0] : 'mulitple' }}</small>
+            <span v-if="$vuetify.breakpoint.mdAndUp">Filter: </span>
+            <small style="opacity:0.8">{{ filterText ? filterText : filter === null || filter.length === 0 ? 'none' : filter.length === 1 ? filter[0] : 'mulitple' }}</small>
           </v-btn>
         </template>
         <v-card style="min-width:330px">
@@ -52,9 +54,9 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn color="purple" text @click="advancedShowDialog = true">
+      <v-btn color="purple" :text="$vuetify.breakpoint.mdAndUp" :icon="$vuetify.breakpoint.smAndDown" @click="advancedShowDialog = true">
         <v-icon style="margin-right:0.2rem">label_important</v-icon>
-        Advanced
+        <span v-if="$vuetify.breakpoint.mdAndUp">Advanced</span>
       </v-btn>
 
     </v-toolbar>
@@ -100,31 +102,11 @@
       @apiRequest="apiRequest"
     />
 
-    <div class="node-group" v-for="(groupOfNodes, key, i) in groupedNodes" :key="i">
-      <v-banner style="background-image:linear-gradient(to bottom, #ffffff22, #cccccc44" v-if="key !== 'none'" single-line>{{ key }}</v-banner>
+    <div v-for="(groupOfNodes, key, i) in groupedNodes" :key="i">
+      <v-banner class="node-group-head" v-if="key !== 'none'" single-line>{{ key }}</v-banner>
       <div :class="[ 'node-grid', $vuetify.breakpoint.name ]">
-        <div v-for="node in groupOfNodes" :key="node.id">
-          <div style="min-width:30px;text-align:center;background-color:#dfdfdf;margin-right:0.4rem">
-            <div :class="(node.color + '--text')" style="font-size:larger;padding-top:0.3rem">{{ node.id }}</div>
-            <v-icon style="margin-top:-0.7rem" :color="node.color">{{ node.icon }}</v-icon>
-          </div>
-          <div style="flex:1">
-            <div style="color:#888;font-size:0.7rem;line-height:0.7rem;padding-top:0.4rem">{{ node.manu }}</div>
-            <div style="margin:2px 0 4px 0;line-height:1rem">{{ node.desc }}</div>
-            <div style="font-size:0.9rem;margin-top:-0.3rem">{{ node.prod }}</div>
-          </div>
-          <div style="text-align:right;padding-right:0.4rem">
-            <div style="opacity:0.8;height:24px">
-              <v-icon v-if="node.sec" small>lock</v-icon>
-              <v-icon v-if="node.beam" small style="margin-left:0.5rem">contactless</v-icon>
-              <!-- <v-icon v-if="node.isFailed" small>battery_full</v-icon><small v-if="node.isFailed">98%</small> -->
-            </div>
-            <div style="line-height:0.95rem">{{ node.status }}</div>
-            <div style="color:#777;font-size:0.7rem;margin-top:-0.1rem">{{ node.ago }}</div>
-          </div>
-        </div>
+        <NodeItem v-for="node in groupOfNodes" :key="node.id" :node="node" />
       </div>
-
     </div>
 
   </v-container>
@@ -133,6 +115,7 @@
 <script>
 import { mapGetters, mapMutations } from 'vuex'
 
+import NodeItem from '@/components/NodeItem'
 import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 
@@ -145,6 +128,7 @@ export default {
     socket: Object
   },
   components: {
+    NodeItem,
     DialogAddRemove,
     DialogAdvanced
   },
@@ -375,6 +359,9 @@ export default {
 </script>
 
 <style scoped>
+.node-group-head {
+  background-image:linear-gradient(to bottom, #ffffff22, #cccccc44)
+}
 .node-grid {
 display:grid;grid-template-columns: repeat(3, 1fr); justify-items:stretch
 }
@@ -386,8 +373,5 @@ display:grid;grid-template-columns: repeat(3, 1fr); justify-items:stretch
 }
 .node-grid.lg, .node-grid.xl {
   grid-template-columns: repeat(4, 1fr);  
-}
-.node-grid>div{
-flex:1;min-width:300px;border-radius:5px;display:flex;margin:0.3rem;border-width:1px;border-color:#dfdfdf;border-style:solid
 }
 </style>
