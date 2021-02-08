@@ -102,7 +102,7 @@
               <v-col v-if="!this.mqtt.disabled" cols="6">
                 <v-select
                   v-model="editedValue.retain"
-                  label="retain"
+                  label="Retain"
                   persistent-hint
                   hint="If specified, overrides the default retain in MQTT settings"
                   :items="[
