@@ -83,6 +83,37 @@
                   required
                 ></v-text-field>
               </v-col>
+              <v-col v-if="!this.mqtt.disabled" cols="6">
+                <v-select
+                  v-model="editedValue.qos"
+                  label="QoS"
+                  hint="If specified, overrides the default QoS in MQTT settings"
+                  :items="[
+                    { text: '', value: undefined },
+                    { text: '0: At most once', value: 0 },
+                    { text: '1: At least once', value: 1 },
+                    { text: '2: Exactly once', value: 2 }
+                  ]"
+                  persistent-hint
+                  required
+                  type="number"
+                ></v-select>
+              </v-col>
+              <v-col v-if="!this.mqtt.disabled" cols="6">
+                <v-select
+                  v-model="editedValue.retain"
+                  label="retain"
+                  persistent-hint
+                  hint="If specified, overrides the default retain in MQTT settings"
+                  :items="[
+                    { text: '', value: undefined },
+                    { text: 'True', value: true },
+                    { text: 'False', value: false }
+                  ]"
+                  required
+                  type="number"
+                ></v-select>
+              </v-col>
               <v-col cols="12">
                 <v-text-field
                   v-model="editedValue.postOperation"
