@@ -37,22 +37,7 @@ export class ManagedItems {
       this.filters === undefined
         ? this.loadSetting('filters', this.initialFilters)
         : this.filters
-    const loadedSelectionIds = this.loadSetting(
-      'selected',
-      this.initialSelected
-    )
-    this._selected =
-      this.selected === undefined
-        ? loadedSelectionIds.reduce((selectedItems, id) => {
-            const selectedItem = this.items.find(item => {
-              return item !== undefined && item.id === id
-            })
-            if (selectedItem !== undefined) {
-              selectedItems.push(selectedItem)
-            }
-            return selectedItems
-          }, [])
-        : this.selected
+    this._selected = this.initialSelected
   }
 
   /**
@@ -310,13 +295,6 @@ export class ManagedItems {
    */
   set selected (selected) {
     this._selected = selected
-    this.storeSetting(
-      'selected',
-      selected.reduce((values, item) => {
-        values.push(item.id)
-        return values
-      }, [])
-    )
   }
 
   // Table options handling
