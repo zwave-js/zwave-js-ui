@@ -24,6 +24,8 @@ Properties of a **valueId configuration**:
 - **Value**: The valueId you want to configure
 - **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
 - **Topic**: The topic to use for this value. It is the topic added after topic prefix, node name and location. If gateway type is different than `Manual` this will be ignored
+- **QoS**: If specified, overrides MQTT settings QoS level
+- **Retain**: If specified, overrides MQTT settings retain flag
 - **Post operation**: If you want to convert your value (valid examples: '/10' '/100' '*10' '*100')
 - **Parse send**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value sent to MQTT. The function must be sync
 - **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
