@@ -56,7 +56,7 @@ describe('ManagedItems', () => {
         ])
     })
   })
-  describe('#filterSelected', () => {
+  describe('#setFilterToSelected', () => {
     it('filters by selected items (filter was empty)', () => {
       // TODO: Continue here ...
       const managedItems = new ManagedItems(
@@ -69,7 +69,7 @@ describe('ManagedItems', () => {
       chai.expect(managedItems.filteredItems.length).to.be.eql(2)
       managedItems.selected = [{ id: 2 }]
       chai.expect(managedItems.selected).to.be.eql([{ id: 2 }])
-      managedItems.filterSelected()
+      managedItems.setFilterToSelected()
       chai.expect(managedItems.filteredItems.length).to.be.eql(1)
     })
   })

@@ -51,7 +51,7 @@
                 color="blue darken-1"
                 text
                 v-on="on"
-                @click.native="managedNodes.filterSelected()"
+                @click.native="managedNodes.setFilterToSelected()"
                 :disabled="managedNodes.selected.length === 0"
                 >Filter Selected</v-btn
               >

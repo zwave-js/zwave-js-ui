@@ -191,7 +191,7 @@ export class ManagedItems {
   /**
    * Filter to selected items
    */
-  filterSelected () {
+  setFilterToSelected() {
     this.setPropFilter('id', {
       values: this.selected.map(item => item.id)
     })
