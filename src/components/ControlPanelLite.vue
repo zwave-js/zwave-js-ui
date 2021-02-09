@@ -108,6 +108,7 @@
       v-model="advancedShowDialog"
       @close="advancedShowDialog = false"
       @apiRequest="apiRequest"
+      v-on="$listeners"
     />
 
     <div v-for="(groupOfNodes, key, i) in groupedNodes" :key="i">
