@@ -7,6 +7,7 @@ pull_request_rules:
     actions:
       merge:
         method: squash
+        strict: true
 
   - name: approve dependabot
     conditions:
