@@ -202,7 +202,6 @@ export default {
         this.waitTimeout = null
       }
 
-
       if (this.nodeFound === null) {
         this.alert = {
           type: 'warning',

@@ -118,8 +118,8 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
-import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
-import NodesTable from '@/components/nodes-table'
+// import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
+// import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
 
@@ -129,8 +129,8 @@ export default {
     socket: Object
   },
   components: {
-    NodesTable,
-    DialogAddRemove
+    // NodesTable,
+    // DialogAddRemove
   },
   computed: {
     ...mapGetters(['nodes', 'appInfo', 'zwave']),

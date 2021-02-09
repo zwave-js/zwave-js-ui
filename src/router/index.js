@@ -1,7 +1,7 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 // import ControlPanel from '@/components/ControlPanel'
-import ControlPanel2 from '@/components/ControlPanel2'
+import ControlPanelLite from '@/components/ControlPanelLite'
 import Settings from '@/components/Settings'
 import Mesh from '@/components/Mesh'
 import Store from '@/components/Store'
@@ -16,7 +16,7 @@ export default new Router({
     {
       path: '/',
       name: 'Control Panel',
-      component: ControlPanel2,
+      component: ControlPanelLite,
       props: true
     },
     {
