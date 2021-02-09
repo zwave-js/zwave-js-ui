@@ -95,18 +95,11 @@ export class ManagedItems {
   }
 
   /**
-   * Get item collection for filtering
-   */
-  get itemCollection () {
-    return new NodeCollection(this.items)
-  }
-
-  /**
    * Get filtered items
    */
   get filteredItems () {
     return ColumnFilterHelper.filterByFilterSpec(
-      this.itemCollection,
+      new NodeCollection(this.items),
       this.allTableHeaders,
       this.filters
     ).nodes // TODO: nodes should be items
@@ -262,7 +255,9 @@ export class ManagedItems {
    */
   get groupByTitle () {
     const propDef = this.propDefs[this.groupBy[0]]
-    return propDef.label ? propDef.label : this.groupBy[0]
+    return propDef !== undefined && propDef.label
+      ? propDef.label
+      : this.groupBy[0]
   }
 
   /**
