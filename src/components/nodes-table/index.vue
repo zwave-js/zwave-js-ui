@@ -137,7 +137,13 @@
       {{ item.loc || '' }}
     </template>
     <template v-slot:[`item.isSecure`]="{ item }">
-      {{ item.isSecure ? 'Yes' : 'No' }}
+      {{
+        item.isSecure === true
+          ? 'Yes'
+          : item.isSecure === false
+          ? 'No'
+          : 'Unknown'
+      }}
     </template>
     <template v-slot:[`item.isBeaming`]="{ item }">
       {{ item.isBeaming ? 'Yes' : 'No' }}
