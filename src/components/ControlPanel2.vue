@@ -1,24 +1,34 @@
 <template>
   <v-container fluid>
-
     <v-toolbar flat dense>
-      <v-btn color="blue" :text="$vuetify.breakpoint.mdAndUp" :icon="$vuetify.breakpoint.smAndDown" @click="addRemoveShowDialog = true">
+      <v-btn
+        color="blue"
+        :text="$vuetify.breakpoint.mdAndUp"
+        :icon="$vuetify.breakpoint.smAndDown"
+        @click="addRemoveShowDialog = true"
+      >
         <v-icon style="margin-right:0.3rem">add_circle_outline</v-icon>
         <span v-if="$vuetify.breakpoint.mdAndUp">Add/Remove Device</span>
       </v-btn>
-      
+
       <v-menu v-model="groupMenu" :close-on-content-click="true">
-        <template v-slot:activator="{ on }"> 
+        <template v-slot:activator="{ on }">
           <v-btn v-on="on" text>
-            <v-icon style="margin-right:0.3rem">source</v-icon>            
-            <span v-if="$vuetify.breakpoint.mdAndUp">Group: </span><small style="opacity:0.8">{{ groups[group].name }}</small>
+            <v-icon style="margin-right:0.3rem">source</v-icon>
+            <span v-if="$vuetify.breakpoint.mdAndUp">Group: </span
+            ><small style="opacity:0.8">{{ groups[group].name }}</small>
           </v-btn>
         </template>
         <v-card style="min-width:170px">
           <v-card-title>Group by</v-card-title>
           <v-card-text style="padding-bottom:0">
             <v-radio-group v-model="group" style="margin-top:0">
-              <v-radio v-for="(g, i) in groups" :key="i" :value="i" :label="g.name" />
+              <v-radio
+                v-for="(g, i) in groups"
+                :key="i"
+                :value="i"
+                :label="g.name"
+              />
             </v-radio-group>
           </v-card-text>
           <v-card-actions style="text-align:right">
@@ -27,23 +37,45 @@
         </v-card>
       </v-menu>
 
-
       <v-menu v-model="filterMenu" :close-on-content-click="false">
-        <template v-slot:activator="{ on }"> 
+        <template v-slot:activator="{ on }">
           <v-btn v-on="on" text>
             <v-icon style="margin-right:0.2rem">filter_alt</v-icon>
             <span v-if="$vuetify.breakpoint.mdAndUp">Filter: </span>
-            <small style="opacity:0.8">{{ filterText ? filterText : filter === null || filter.length === 0 ? 'none' : filter.length === 1 ? filter[0] : 'mulitple' }}</small>
+            <small style="opacity:0.8">{{
+              filterText
+                ? filterText
+                : filter === null || filter.length === 0
+                ? 'none'
+                : filter.length === 1
+                ? filter[0]
+                : 'hidden'
+            }}</small>
           </v-btn>
         </template>
         <v-card style="min-width:330px">
           <v-card-title>Filter</v-card-title>
           <v-card-text>
-            <v-text-field v-model="filterText" label="Name, manufacturer, or product" />
+            <v-text-field
+              v-model="filterText"
+              label="Name, manufacturer, or product"
+            />
             <div style="display:flex">
-              <div style="padding-top:1.3rem">Hide: </div>
-              <v-checkbox style="margin-left:1rem" v-model="filter" hide-details label="Removed" value="removed" />
-              <v-checkbox style="margin-left:2rem" v-model="filter" hide-details label="Dead" value="dead" />
+              <div style="padding-top:1.3rem">Hide:</div>
+              <v-checkbox
+                style="margin-left:1rem"
+                v-model="filter"
+                hide-details
+                label="Removed"
+                value="removed"
+              />
+              <v-checkbox
+                style="margin-left:2rem"
+                v-model="filter"
+                hide-details
+                label="Dead"
+                value="dead"
+              />
             </div>
           </v-card-text>
           <v-card-actions style="text-align:right">
@@ -54,41 +86,17 @@
 
       <v-spacer></v-spacer>
 
-      <v-btn color="purple" :text="$vuetify.breakpoint.mdAndUp" :icon="$vuetify.breakpoint.smAndDown" @click="advancedShowDialog = true">
+      <v-btn
+        color="purple"
+        :text="$vuetify.breakpoint.mdAndUp"
+        :icon="$vuetify.breakpoint.smAndDown"
+        @click="advancedShowDialog = true"
+      >
         <v-icon style="margin-right:0.2rem">label_important</v-icon>
         <span v-if="$vuetify.breakpoint.mdAndUp">Advanced</span>
       </v-btn>
-
     </v-toolbar>
-    <!-- <v-toolbar v-if="$vuetify.breakpoint.mobile"  flat dense>
 
-      <v-btn color="blue" icon @click="addRemoveShowDialog = true">
-        <v-icon>add_circle_outline</v-icon>
-      </v-btn>
-
-      <v-btn icon>
-        <v-icon>remove_red_eye</v-icon>
-      </v-btn>
-
-      <v-btn icon>
-        <v-icon>view_week</v-icon>
-      </v-btn>
-
-      <v-btn icon>
-        <v-icon>filter_alt</v-icon>
-      </v-btn>
-      
-      <v-btn icon>
-        <v-icon>input</v-icon>
-      </v-btn>
-      
-      <v-spacer></v-spacer>
-
-      <v-btn color="purple" icon>
-        <v-icon>more_vert</v-icon>
-      </v-btn>
-
-    </v-toolbar> -->
     <DialogAddRemove
       v-model="addRemoveShowDialog"
       :lastNodeFound="addRemoveNode"
@@ -103,12 +111,13 @@
     />
 
     <div v-for="(groupOfNodes, key, i) in groupedNodes" :key="i">
-      <v-banner class="node-group-head" v-if="key !== 'none'" single-line>{{ key }}</v-banner>
-      <div :class="[ 'node-grid', $vuetify.breakpoint.name ]">
+      <v-banner class="node-group-head" v-if="key !== 'none'" single-line>{{
+        key
+      }}</v-banner>
+      <div :class="['node-grid', $vuetify.breakpoint.name]">
         <NodeItem v-for="node in groupOfNodes" :key="node.id" :node="node" />
       </div>
     </div>
-
   </v-container>
 </template>
 
@@ -119,7 +128,6 @@ import NodeItem from '@/components/NodeItem'
 import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 
-import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
 
 export default {
@@ -134,69 +142,84 @@ export default {
   },
   data () {
     return {
-      settings: new Settings(localStorage),
-      filterMenu: false,
-      filter: [ 'removed' ],
-      filterText: null,
-      groupMenu: false,
-      group: 0,
-
-      groups: [{
-          name: "None",
-          value: "none"
-        }, {
-          name: "Manufacturer",
-          value: "manu"
-        }, {
-          name: "Product",
-          value: "desc"
-        }, {
-          name: "Model",
-          value: "prod"
-        }, {
-          name: "Location",
-          value: "loc"
-        }, {
-          name: "Status",
-          value: "status"
-        }
-      ],
       bindedSocketEvents: {}, // keep track of the events-handlers
+
       addRemoveShowDialog: false,
       addRemoveNode: null,
-      advancedShowDialog: false,
+
+      filterMenu: false,
+      filter: ['removed'],
+      filterText: null,
+
+      groupMenu: false,
+      group: 0,
+      groups: [
+        {
+          name: 'None',
+          value: 'none'
+        },
+        {
+          name: 'Manufacturer',
+          value: 'manu'
+        },
+        {
+          name: 'Product',
+          value: 'desc'
+        },
+        {
+          name: 'Model',
+          value: 'prod'
+        },
+        {
+          name: 'Location',
+          value: 'loc'
+        },
+        {
+          name: 'Status',
+          value: 'status'
+        }
+      ],
+
+      advancedShowDialog: false
     }
   },
   computed: {
     ...mapGetters(['nodes']),
     viewNodes () {
-      var nodes = [...this.nodes];
-      var filter = this.filter || [];
-      if (filter.includes('removed'))
+      let nodes = [...this.nodes]
+      const filter = this.filter || []
+      if (filter.includes('removed')) {
         nodes = nodes.filter(x => x.status !== 'Removed')
-      if (filter.includes('dead'))
+      }
+      if (filter.includes('dead')) {
         nodes = nodes.filter(x => x.status !== 'Dead')
-      if (filter.includes('asleep'))
-        nodes = nodes.filter(x => x.Status !== 'Asleep')
+      }
+      if (this.filterText) {
+        nodes = nodes.filter(x =>
+          (x.name + x.manufacturer + x.productDescription + x.productLabel)
+            .toLowerCase()
+            .includes(this.filterText.toLowerCase())
+        )
+      }
 
-      if (this.filterText)
-        nodes = nodes.filter(x => (x.name + x.manufacturer + x.productDescription + x.productLabel).toLowerCase().includes(this.filterText.toLowerCase()))
-
-      return nodes
-        .map(x => ({
-          id: x.id,
-          name: x.name,
-          loc: x.location,
-          color: this.getNodeColor(x),
-          icon: this.getNodeIcon(x),
-          manu: x.status === 'Removed' || x.status === 'Dead' ? '-' : x.manufacturer,
-          desc: x.status === 'Removed' || x.status === 'Dead' ? 'Node' : x.productDescription,
-          prod: x.productLabel,
-          sec: x.isSecure,
-          beam: x.isBeaming,
-          // TODO: battery / sleeping
-          status: x.status,
-          ago: x.lastActive ? this.timeago(new Date() - x.lastActive) : ' '
+      return nodes.map(x => ({
+        id: x.id,
+        name: x.name,
+        loc: x.location,
+        color: this.getNodeColor(x),
+        icon: this.getNodeIcon(x),
+        manu:
+          x.status === 'Removed' || x.status === 'Dead' ? '-' : x.manufacturer,
+        desc:
+          x.status === 'Removed' || x.status === 'Dead'
+            ? 'Node'
+            : x.productDescription,
+        prod: x.productLabel,
+        sec: x.isSecure,
+        beam: x.isBeaming,
+        // TODO: battery / sleeping
+        status: x.status,
+        ago: x.lastActive ? this.timeago(new Date() - x.lastActive) : ' '
       }))
     },
     groupedNodes () {
@@ -207,66 +230,60 @@ export default {
       return this.groupBy(this.viewNodes, this.groups[this.group].value)
     }
   },
-  watch: {},
   methods: {
     ...mapMutations(['showSnackbar']),
-    timeago(ms) { // TODO: move into util library
-      var ago = Math.floor(ms / 1000);
-      var part = 0;
+    timeago (ms) {
+      // TODO: move into util library
+      let ago = Math.floor(ms / 1000)
+      let part = 0
 
-      if (ago < 5) { return "just now"; }
-      if (ago < 60) { return ago + "s ago"; }
+      if (ago < 5) return 'just now'
+      if (ago < 60) return ago + 's ago'
 
-      if (ago < 120) { return "1m ago"; }
       if (ago < 3600) {
-        while (ago >= 60) { ago -= 60; part += 1; }
-        return part + "m ago";
+        while (ago >= 60) {
+          ago -= 60
+          part += 1
+        }
+        return part + 'm ago'
       }
 
-      if (ago < 7200) { return "1h ago"; }
       if (ago < 86400) {
-        while (ago >= 3600) { ago -= 3600; part += 1; }
-        return part + "h ago";
+        while (ago >= 3600) {
+          ago -= 3600
+          part += 1
+        }
+        return part + 'h ago'
       }
 
-      if (ago < 172800) { return "1d ago"; }
       if (ago < 604800) {
-        while (ago >= 172800) { ago -= 172800; part += 1; }
-        return part + "d ago";
+        while (ago >= 172800) {
+          ago -= 172800
+          part += 1
+        }
+        return part + 'd ago'
       }
 
-      if (ago < 1419120000) { // 45 years, approximately the epoch
-        return "long ago";
-      }
-
-      // TODO pass in Date.now() and ms to check for 0 as never
-      return "never";
+      return 'long ago'
     },
-    groupBy (arr, criteria) { // TODO: move into util library
+    groupBy (arr, criteria) {
+      // TODO: move into util library
       return arr.reduce(function (obj, item) {
-
-        // Check if the criteria is a function to run on the item or a property of it
-        const key = typeof criteria === 'function' ? criteria(item) : item[criteria]
-
-        // If the key doesn't exist yet, create it
-        if (!obj.hasOwnProperty(key)) {
+        const key =
+          typeof criteria === 'function' ? criteria(item) : item[criteria]
+        if (!Object.prototype.hasOwnProperty.call(obj, key)) {
           obj[key] = []
         }
-
-        // Push the value to the object
         obj[key].push(item)
-
-        // Return the object to the next item in the loop
         return obj
-
-      }, {});
+      }, {})
     },
-    getNodeColor(node) { 
-      switch(node.status) {
+    getNodeColor (node) {
+      switch (node.status) {
         case 'Awake':
-        case 'Alive': 
+        case 'Alive':
           return node.interviewStage === 'RestartFromCache' ? 'orange' : 'green'
-        case 'Dead': 
+        case 'Dead':
           return 'red'
         case 'Asleep':
           return node.interviewStage === 'RestartFromCache' ? 'orange' : 'blue'
@@ -274,14 +291,16 @@ export default {
           return 'gray'
       }
     },
-    getNodeIcon(node) {
-      switch(node.interviewStage) {
-        case 'None': 
+    getNodeIcon (node) {
+      switch (node.interviewStage) {
+        case 'None':
           return 'remove_circle_outline'
-        case 'RestartFromCache': 
+        case 'RestartFromCache':
           return node.status === 'Dead' ? 'dangerous' : 'history'
-        case 'Complete': 
-          return node.status === 'Asleep' ? 'nightlight_round' : 'check_circle_outline'
+        case 'Complete':
+          return node.status === 'Asleep'
+            ? 'nightlight_round'
+            : 'check_circle_outline'
         case 'ProtocolInfo':
         case 'NodeInfo':
         case 'CommandClasses':
@@ -291,9 +310,9 @@ export default {
           return node.status === 'Unknown' ? 'help_outline' : 'error_outline'
       }
     },
-    onFilterReset() {
+    onFilterReset () {
       this.filterText = null
-      this.filter = [ 'removed' ]
+      this.filter = ['removed']
     },
     onAddRemoveClose () {
       this.addRemoveShowDialog = false
@@ -301,9 +320,6 @@ export default {
     },
     apiRequest (apiName, args) {
       this.$emit('apiRequest', apiName, args)
-    },
-    saveConfiguration () {
-      this.apiRequest('writeConfig', [])
     },
     onApiResponse (data) {
       if (data.success) {
@@ -360,18 +376,21 @@ export default {
 
 <style scoped>
 .node-group-head {
-  background-image:linear-gradient(to bottom, #ffffff22, #cccccc44)
+  background-image: linear-gradient(to bottom, #ffffff22, #cccccc44);
 }
 .node-grid {
-display:grid;grid-template-columns: repeat(3, 1fr); justify-items:stretch
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  justify-items: stretch;
 }
 .node-grid.xs {
-  grid-template-columns: repeat(1, 1fr);  
+  grid-template-columns: repeat(1, 1fr);
 }
 .node-grid.sm {
-  grid-template-columns: repeat(2, 1fr);  
+  grid-template-columns: repeat(2, 1fr);
 }
-.node-grid.lg, .node-grid.xl {
-  grid-template-columns: repeat(4, 1fr);  
+.node-grid.lg,
+.node-grid.xl {
+  grid-template-columns: repeat(4, 1fr);
 }
 </style>

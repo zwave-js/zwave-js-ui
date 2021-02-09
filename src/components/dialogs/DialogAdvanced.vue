@@ -1,24 +1,40 @@
 <template>
-  <v-dialog v-model="value" max-width="430px" persistent>
+  <v-dialog v-model="value" persistent max-width="800">
     <v-card>
       <v-card-title>
         <span class="headline">Advanced</span>
-      </v-card-title>
-      <v-card-actions>
         <v-spacer></v-spacer>
-        <v-btn
-          color="red darken-1"
-          text
-          @click="$emit('close')"
-          >Close</v-btn
-        >
-      </v-card-actions>
+        <v-btn icon @click="$emit('close')"><v-icon>close</v-icon></v-btn>
+      </v-card-title>
+
+      <v-card-text>
+        <div :class="['action-grid', $vuetify.breakpoint.name]">
+          <div v-for="(a, i) in actions" :key="i" style="text-align:center">
+            <v-icon :color="a.color || 'purple'" x-large>{{ a.icon }}</v-icon>
+            <div style="font-size:1.1rem">{{ a.text }}</div>
+            <div
+              style="font-size:0.7rem;color:#999;line-height:0.9rem;margin-top:-0.2rem"
+            >
+              {{ a.desc }}
+            </div>
+            <v-btn
+              v-for="(o, i) in a.options"
+              :key="i"
+              @click="onAction(o.action, o.broadcast)"
+              text
+              :color="a.color || 'purple'"
+              >{{ o.name }}</v-btn
+            >
+          </div>
+        </div>
+      </v-card-text>
     </v-card>
   </v-dialog>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import ConfigApis from '@/apis/ConfigApis'
+import { mapGetters, mapMutations } from 'vuex'
 
 export default {
   props: {
@@ -27,140 +43,90 @@ export default {
   },
   data () {
     return {
-      node_actions: [
+      actions: [
         {
-          text: 'Heal node',
-          value: 'healNode'
+          text: 'Backup',
+          options: [
+            { name: 'Import', action: 'import' },
+            { name: 'Export', action: 'export' }
+          ],
+          icon: 'save',
+          desc: 'Save or load `nodes.json` file with names and locations'
         },
-        {
-          text: 'Re-interview Node',
-          value: 'refreshInfo'
-        },
-        {
-          text: 'Refresh values',
-          value: 'refreshValues'
-        },
-        {
-          text: 'Is Failed Node',
-          value: 'isFailedNode'
-        },
-        {
-          text: 'Remove failed node',
-          value: 'removeFailedNode'
-        },
-        {
-          text: 'Replace failed node',
-          value: 'replaceFailedNode'
-        },
-        {
-          text: 'Begin Firmware update',
-          value: 'beginFirmwareUpdate'
-        },
-        {
-          text: 'Abort Firmware update',
-          value: 'abortFirmwareUpdate'
-        },
-        {
-          text: 'Remove all associations',
-          value: 'removeAllAssociations'
-        },
-        {
-          text: 'Remove node from all associations',
-          value: 'removeNodeFromAllAssociations'
-        }
-      ],
-      cnt_action: 'healNetwork',
-      cnt_actions: [
         {
           text: 'Heal Network',
-          value: 'beginHealingNetwork'
+          options: [
+            { name: 'Begin', action: 'beginHealingNetwork' },
+            { name: 'Stop', action: 'stopHealingNetwork' }
+          ],
+          icon: 'healing',
+          desc: 'Force nodes to establish better connections to the controller'
         },
         {
-          text: 'Stop Heal Network',
-          value: 'stopHealingNetwork'
+          text: 'Refresh Values',
+          options: [
+            { name: 'Start', action: 'refreshValues', broadcast: true }
+          ],
+          icon: 'cached',
+          desc: 'Read the values from each node so it has proper state'
         },
         {
-          text: 'Hard reset',
-          value: 'hardReset'
+          text: 'Re-interview Nodes',
+          options: [{ name: 'Start', action: 'refreshInfo', broadcast: true }],
+          icon: 'history',
+          desc: 'Update the metadata and command class info for each node'
+        },
+        {
+          text: 'Failed Nodes',
+          options: [
+            { name: 'Check', action: 'isFailedNode', broadcast: true },
+            { name: 'Remove', action: 'removeFailedNode', broadcast: true }
+          ],
+          icon: 'dangerous',
+          desc:
+            'Manage nodes that are dead and/or marked as failed with the controller'
+        },
+        {
+          text: 'Remove Associations',
+          options: [
+            { name: 'Start', action: 'removeAllAssociations', broadcast: true }
+          ],
+          icon: 'link_off',
+          desc: 'Clear associations for all paired devices'
+        },
+        {
+          text: 'Hard Reset',
+          options: [{ name: 'Factory Reset', action: 'hardReset' }],
+          icon: 'warning',
+          color: 'red',
+          desc:
+            'Reset controller to factory defaults (all paired devices will be removed)'
         }
-      ],
-      rules: {
-        required: value => {
-          let valid = false
-
-          if (value instanceof Array) valid = value.length > 0
-          else valid = !isNaN(value) || !!value // isNaN is for 0 as valid value
-
-          return valid || 'This field is required.'
-        }
-      }
+      ]
     }
   },
   computed: {
-    ...mapGetters(['appInfo', 'zwave']),
-    timeoutMs () {
-      return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
-    },
-    controllerStatus () {
-      return this.appInfo.controllerStatus
-    }
-  },
-  watch: {
-    lastNodeFound (node) {
-      this.nodeFound = node
-
-      // the add/remove dialog is waiting for a feedback
-      if (this.waitTimeout) {
-        this.showResults()
-      }
-    },
-    commandEndDate (newVal) {
-      if (this.commandTimer) {
-        clearInterval(this.commandTimer)
-      }
-      this.commandTimer = setInterval(() => {
-        const now = new Date()
-        const s = Math.trunc((this.commandEndDate - now) / 1000)
-        if (this.state === 'start') {
-          this.alert = {
-            type: 'info',
-            text: `${this.modeName} started: ${s}s remaining`
-          }
-        }
-        if (now > newVal) clearInterval(this.commandTimer)
-      }, 100)
-    },
-    controllerStatus (status) {
-      if (status.indexOf('clusion') > 0) {
-        if (this.state === 'new') return // ignore initial status
-
-        // inclusion/exclusion started, start the countdown timer
-        if (status.indexOf('started') > 0) {
-          this.commandEndDate = new Date(new Date().getTime() + this.timeoutMs)
-          this.nodeFound = null
-          this.state = 'start'
-        } else if (status.indexOf('stopped') > 0) {
-          // inclusion/exclusion stopped, check what happened
-          this.commandEndDate = new Date()
-          this.alert = {
-            type: 'info',
-            text: `${this.modeName} stopped, checking nodes…`
-          }
-          this.state = 'wait'
-          this.waitTimeout = setTimeout(this.showResults, 5000) // add additional discovery time
-        } else {
-          // error
-          this.commandEndDate = new Date()
-          this.alert = {
-            type: 'error',
-            text: status // TODO: better formatting?
-          }
-          this.state = 'stop'
-        }
-      }
-    }
+    ...mapGetters(['nodes'])
   },
   methods: {
+    ...mapMutations(['showSnackbar']),
+    async onAction (action, broadcast) {
+      if (action === 'import') {
+        this.importConfiguration()
+      } else if (action === 'export') {
+        this.exportConfiguration()
+      } else {
+        if (broadcast) {
+          for (let i = 0; i < this.nodes.length; i++) {
+            const nodeid = this.nodes[i].id
+            this.$emit('apiRequest', action, [nodeid])
+          }
+        } else {
+          this.$emit('apiRequest', action, [])
+        }
+      }
+      this.$emit('close')
+    },
     async importConfiguration () {
       if (
         await this.$listeners.showConfirm(
@@ -190,120 +156,24 @@ export default {
         .catch(error => {
           console.log(error)
         })
-    },
-    async sendCntAction () {
-      if (this.cnt_action) {
-        const args = []
-        let broadcast = false
-        const askId = this.node_actions.find(a => a.value === this.cnt_action)
-        if (askId) {
-          // don't send replaceFailed as broadcast
-          if (
-            this.cnt_action !== 'replaceFailedNode' &&
-            this.cnt_action !== 'beginFirmwareUpdate'
-          ) {
-            broadcast = await this.$listeners.showConfirm(
-              'Broadcast',
-              'Send this command to all nodes?',
-              'info',
-              {
-                cancelText: 'No'
-              }
-            )
-          }
-
-          if (!broadcast) {
-            const { nodeId } = await this.$listeners.showConfirm(
-              'Choose a node',
-              '',
-              'info',
-              {
-                confirmText: 'Ok',
-                inputs: [
-                  {
-                    type: 'list',
-                    items: this.nodes,
-                    label: 'Node',
-                    hint: 'Select a node',
-                    required: true,
-                    key: 'nodeId',
-                    itemText: '_name',
-                    itemValue: 'id'
-                  }
-                ]
-              }
-            )
-
-            if (isNaN(nodeId)) {
-              this.showSnackbar('Node ID must be an integer value')
-              return
-            }
-            args.push(nodeId)
-          }
-        }
-
-        if (
-          this.cnt_action === 'startInclusion' ||
-          this.cnt_action === 'replaceFailedNode'
-        ) {
-          const secure = await this.$listeners.showConfirm(
-            'Node inclusion',
-            'Start inclusion in secure mode?',
-            'info',
-            {
-              cancelText: 'No'
-            }
-          )
-          args.push(secure)
-        } else if (this.cnt_action === 'hardReset') {
-          const ok = await this.$listeners.showConfirm(
-            'Hard Reset',
-            'Your controller will be reset to factory and all paired devices will be removed',
-            { color: 'red' }
-          )
-          if (!ok) {
-            return
-          }
-        } else if (this.cnt_action === 'beginFirmwareUpdate') {
-          try {
-            const { data, file } = await this.$listeners.import('buffer')
-            args.push(file.name)
-            args.push(data)
-          } catch (error) {
-            return
-          }
-        }
-
-        if (broadcast) {
-          for (let i = 0; i < this.nodes.length; i++) {
-            const nodeid = this.nodes[i].id
-            this.apiRequest(this.cnt_action, [nodeid])
-          }
-        } else {
-          this.apiRequest(this.cnt_action, args)
-        }
-      }
-    },
-    jsonToList (obj) {
-      let s = ''
-      for (const k in obj) s += k + ': ' + obj[k] + '\n'
-
-      return s
-    }
-  },
-  beforeDestroy () {
-    if (this.commandTimer) {
-      clearInterval(this.commandTimer)
-    }
-
-    if (this.waitTimeout) {
-      clearTimeout(this.waitTimeout)
     }
   }
 }
 </script>
 
 <style scoped>
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 1rem;
+  row-gap: 1rem;
+}
+.action-grid.xs {
+  grid-template-columns: repeat(1, 1fr);
+}
+.action-grid.sm {
+  grid-template-columns: repeat(2, 1fr);
+}
 .option {
   margin-top: 1rem;
 }
