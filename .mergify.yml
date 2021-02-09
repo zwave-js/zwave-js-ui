@@ -1,0 +1,16 @@
+pull_request_rules:
+  - name: automatic merge dependabot
+    conditions:
+      - base=master
+      - author=dependabot[bot]
+      - label=automerge
+    actions:
+      merge:
+        method: squash
+
+  - name: approve dependabot
+    conditions:
+      - author=dependabot[bot]
+    actions:
+      review:
+        message: 'Thanks Dependabot! :rocket:'

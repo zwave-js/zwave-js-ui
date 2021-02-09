@@ -371,7 +371,8 @@ export interface ZwaveClient extends EventEmitter {
   beginFirmwareUpdate(
     nodeId: number,
     fileName: string,
-    data: Buffer
+    data: Buffer,
+    target: number | undefined
   ): Promise<void>
   abortFirmwareUpdate(nodeId: number): Promise<void>
   beginHealingNetwork(): Promise<boolean>
