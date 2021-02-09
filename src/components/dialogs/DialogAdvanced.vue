@@ -9,14 +9,10 @@
 
       <v-card-text>
         <div :class="['action-grid', $vuetify.breakpoint.name]">
-          <div v-for="(a, i) in actions" :key="i" style="text-align:center">
+          <div v-for="(a, i) in actions" :key="i">
             <v-icon :color="a.color || 'purple'" x-large>{{ a.icon }}</v-icon>
             <div style="font-size:1.1rem">{{ a.text }}</div>
-            <div
-              style="font-size:0.7rem;color:#999;line-height:0.9rem;margin-top:-0.2rem"
-            >
-              {{ a.desc }}
-            </div>
+            <div class="action-desc">{{ a.desc }}</div>
             <v-btn
               v-for="(o, i) in a.options"
               :key="i"
@@ -65,14 +61,16 @@ export default {
         {
           text: 'Refresh Values',
           options: [
-            { name: 'Start', action: 'refreshValues', broadcast: true }
+            { name: 'Broadcast', action: 'refreshValues', broadcast: true }
           ],
           icon: 'cached',
           desc: 'Read the values from each node so it has proper state'
         },
         {
           text: 'Re-interview Nodes',
-          options: [{ name: 'Start', action: 'refreshInfo', broadcast: true }],
+          options: [
+            { name: 'Broadcast', action: 'refreshInfo', broadcast: true }
+          ],
           icon: 'history',
           desc: 'Update the metadata and command class info for each node'
         },
@@ -89,7 +87,11 @@ export default {
         {
           text: 'Remove Associations',
           options: [
-            { name: 'Start', action: 'removeAllAssociations', broadcast: true }
+            {
+              name: 'Broadcast',
+              action: 'removeAllAssociations',
+              broadcast: true
+            }
           ],
           icon: 'link_off',
           desc: 'Clear associations for all paired devices'
@@ -165,21 +167,25 @@ export default {
 .action-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  column-gap: 1rem;
-  row-gap: 1rem;
+  column-gap: 1.4rem;
+  row-gap: 1.2rem;
+  justify-items: center;
 }
 .action-grid.xs {
   grid-template-columns: repeat(1, 1fr);
 }
 .action-grid.sm {
   grid-template-columns: repeat(2, 1fr);
+  column-gap: 1rem;
 }
-.option {
-  margin-top: 1rem;
+.action-grid > div {
+  text-align: center;
+  max-width: 215px;
 }
-.option > small {
-  color: #888;
-  display: block;
-  margin: -0.2rem 0 0 1.4rem;
+.action-desc {
+  font-size: 0.7rem;
+  color: #999;
+  line-height: 0.9rem;
+  margin-top: -0.2rem;
 }
 </style>

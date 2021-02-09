@@ -33,13 +33,13 @@
           </v-row>
         </v-container>
 
-
       </v-card-text>
     </v-card> -->
-      
+
     <v-toolbar v-if="!$vuetify.breakpoint.mobile" flat dense>
       <v-btn color="blue" text @click="addRemoveShowDialog = true">
-        <v-icon style="margin-right:0.3rem">add_circle_outline</v-icon>Add/Remove Device
+        <v-icon style="margin-right:0.3rem">add_circle_outline</v-icon
+        >Add/Remove Device
       </v-btn>
 
       <v-btn text>
@@ -56,7 +56,7 @@
         <v-icon style="margin-right:0.2rem">filter_alt</v-icon>
         Filter: <small style="opacity:0.8">none</small>
       </v-btn>
-      
+
       <v-btn text>
         <v-icon style="margin-right:0.3rem">input</v-icon>
         Import / Export
@@ -68,10 +68,8 @@
         Advanced
         <v-icon style="margin-left:0.3rem">more_vert</v-icon>
       </v-btn>
-
     </v-toolbar>
-    <v-toolbar v-if="$vuetify.breakpoint.mobile"  flat dense>
-
+    <v-toolbar v-if="$vuetify.breakpoint.mobile" flat dense>
       <v-btn color="blue" icon @click="addRemoveShowDialog = true">
         <v-icon>add_circle_outline</v-icon>
       </v-btn>
@@ -87,17 +85,16 @@
       <v-btn icon>
         <v-icon>filter_alt</v-icon>
       </v-btn>
-      
+
       <v-btn icon>
         <v-icon>input</v-icon>
       </v-btn>
-      
+
       <v-spacer></v-spacer>
 
       <v-btn color="purple" icon>
         <v-icon>more_vert</v-icon>
       </v-btn>
-
     </v-toolbar>
     <DialogAddRemove
       v-model="addRemoveShowDialog"

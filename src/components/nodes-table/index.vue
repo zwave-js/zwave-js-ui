@@ -20,8 +20,8 @@
     show-expand
     show-select
   >
- <!--      <template v-slot:top>
-  
+    <!--      <template v-slot:top>
+
       <v-row>
         <v-col cols="12" sm="3" md="2" class="ml-6">
           <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
