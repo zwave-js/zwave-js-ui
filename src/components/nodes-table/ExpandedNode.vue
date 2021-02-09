@@ -76,7 +76,6 @@ export default {
       return JSON.stringify(this.node, null, 2)
     },
     showHass () {
-      console.log(Object.keys(this.node.hassDevices))
       return (
         this.gateway.hassDiscovery &&
         this.node.hassDevices &&
