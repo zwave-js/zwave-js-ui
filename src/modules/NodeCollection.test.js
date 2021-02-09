@@ -279,17 +279,4 @@ describe('NodeCollection', () => {
         .to.eql([{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) }])
     })
   })
-  describe('#values', () => {
-    it('returns a sorted list of unique values for a property - case ignored', () => {
-      const collection = new NodeCollection([
-        { name: 'Giacomo' },
-        { name: 'GiaCOMO' },
-        { name: 'Birretta' },
-        { name: 10 },
-        { name: 'giacomo' },
-        { name: 10 }
-      ])
-      chai.expect(collection.values('name')).to.eql([10, 'Birretta', 'Giacomo'])
-    })
-  })
 })
