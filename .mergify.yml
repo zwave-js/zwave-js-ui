@@ -6,12 +6,11 @@ pull_request_rules:
       - label=automerge
     actions:
       merge:
-        method: rebase
-        rebase_fallback: squash
+        method: squash
 
   - name: approve dependabot
     conditions:
       - author=dependabot[bot]
     actions:
       review:
-        message: auto approve dependabot
+        message: 'Thanks Dependabot! :rocket:'
