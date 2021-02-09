@@ -213,8 +213,13 @@ app.get('/health', async function (req, res) {
   let zwave = false
 
   if (gw) {
-    mqtt = gw.mqtt ? gw.mqtt.getStatus().status : false
+    mqtt = gw.mqtt ? gw.mqtt.getStatus() : false
     zwave = gw.zwave ? gw.zwave.getStatus().status : false
+  }
+
+  // if mqtt is disabled, return true. Fixes #469
+  if (mqtt) {
+    mqtt = mqtt.status || mqtt.config.disabled
   }
 
   const status = mqtt && zwave

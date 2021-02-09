@@ -33,6 +33,21 @@
           </v-row>
         </v-container>
 
+        <DialogAddRemove
+          v-model="addRemoveShowDialog"
+          :nodeAddedOrRemoved="addRemoveNode"
+          @close="onAddRemoveClose"
+          @apiRequest="apiRequest"
+        />
+
+        <nodes-table
+          :nodes="nodes"
+          :node-actions="node_actions"
+          :socket="socket"
+          v-on="$listeners"
+          @exportNodes="exportConfiguration"
+          @importNodes="importConfiguration"
+        />
       </v-card-text>
     </v-card> -->
 
@@ -96,20 +111,6 @@
         <v-icon>more_vert</v-icon>
       </v-btn>
     </v-toolbar>
-    <DialogAddRemove
-      v-model="addRemoveShowDialog"
-      :lastNodeFound="addRemoveNode"
-      @close="onAddRemoveClose"
-      @apiRequest="apiRequest"
-    />
-    <nodes-table
-      :nodes="nodes"
-      :node-actions="node_actions"
-      :socket="socket"
-      v-on="$listeners"
-      @exportNodes="exportConfiguration"
-      @importNodes="importConfiguration"
-    />
   </v-container>
 </template>
 
@@ -326,10 +327,32 @@ export default {
             return
           }
         } else if (this.cnt_action === 'beginFirmwareUpdate') {
+          const { target } = await this.$listeners.showConfirm(
+            'Choose target',
+            '',
+            'info',
+            {
+              confirmText: 'Ok',
+              inputs: [
+                {
+                  type: 'number',
+                  label: 'Target',
+                  default: 0,
+                  rules: [v => v >= 0 || 'Invalid target'],
+                  hint:
+                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+                  required: true,
+                  key: 'target'
+                }
+              ]
+            }
+          )
+
           try {
             const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
+            args.push(target)
           } catch (error) {
             return
           }

@@ -7,7 +7,7 @@
   "eslint.lintTask.enable": true,
   "wallaby.startAutomatically": true,
   "[vue]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    "editor.defaultFormatter": "numso.prettier-standard-vscode"
   },
   "[markdown]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

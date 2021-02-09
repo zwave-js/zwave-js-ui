@@ -39,6 +39,7 @@
         v-if="column.groupable != false"
         label="Group values"
         class="ml-4"
+        :value="groupBy"
         @change="$emit('update:group-by', $event ? [column.value] : [])"
       ></v-checkbox>
       <v-card-actions>
@@ -78,6 +79,11 @@ export default {
       type: Array,
       default: () => [],
       required: true
+    },
+    groupBy: {
+      type: Boolean,
+      default: () => false,
+      required: false
     }
   },
   data () {

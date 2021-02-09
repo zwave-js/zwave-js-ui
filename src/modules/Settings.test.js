@@ -82,9 +82,7 @@ describe('Settings', () => {
   describe('#load(stored object)', () => {
     it('should load a stored object', () => {
       const settings = new Settings(new LocalStorageMock())
-      console.log(settings)
       settings.storage.items.key = '{"objkey":"value"}'
-      console.log(settings)
       chai
         .expect(settings.load('key', { objkey: 'value' }))
         .to.eql({ objkey: 'value' })

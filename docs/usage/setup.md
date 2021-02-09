@@ -10,7 +10,7 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 
 ### Device values configuration
 
-The Device values configuration table can be found under [General](#general) section and can be used to create valueIds specific configurations for each device. This means that if you create an entry here this configuration will be applyed to all device of the same type in your Network.
+The Device values configuration table can be found under [General](#general) section and can be used to create valueIds specific configurations for each device. This means that if you create an entry here this configuration will be applied to all device of the same type in your Network.
 
 ![Gateway values](../_images/gateway_values_table.png)
 
@@ -24,6 +24,8 @@ Properties of a **valueId configuration**:
 - **Value**: The valueId you want to configure
 - **Device Class**: If the value is a multilevel sensor, a binary sensor or a meter you can set a custom `device_class` to use with home assistant discovery. Check [sensor](https://www.home-assistant.io/components/sensor/#device-class) and [binary sensor](https://www.home-assistant.io/components/binary_sensor/#device-class)
 - **Topic**: The topic to use for this value. It is the topic added after topic prefix, node name and location. If gateway type is different than `Manual` this will be ignored
+- **QoS**: If specified, overrides MQTT settings QoS level
+- **Retain**: If specified, overrides MQTT settings retain flag
 - **Post operation**: If you want to convert your value (valid examples: '/10' '/100' '*10' '*100')
 - **Parse send**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value sent to MQTT. The function must be sync
 - **Parse receive**: Enable this to allow users to specify a custom `function(value,valueId,node,logger)` to parse the value received via MQTT. The function must be sync
@@ -34,7 +36,6 @@ Properties of a **valueId configuration**:
 
 - **Serial port**: The serial port where your controller is connected
 - **Network key** (Optional): Zwave network key if security is enabled. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
-- **WS Server**: Enable [zwave-js websocket server](https://github.com/zwave-js/zwave-js-server)
 - **Log enabled**: Enable logging for zwave-js websocket server
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
@@ -190,7 +191,8 @@ Enable this to use Z2M only as a Control Panel
 
 ## Home Assistant
 
-- :star:**Hass discovery**:star:: Enable this to automatically create entities on Hass using MQTT auto discovery (more about this [here](/guide/homeassistant))
+- **WS Server**: Enable [zwave-js websocket server](https://github.com/zwave-js/zwave-js-server). This can be used by HASS [zwave-js integration](https://www.home-assistant.io/integrations/zwave_js) to automatically create entities
+- **MQTT discovery**: Enable this to use MQTT discovery. This is an alternative to Hass Zwave-js integration. (more about this [here](/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
 - **Retain Discovery**: Set retain flag to true in discovery messages
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
