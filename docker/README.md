@@ -22,11 +22,12 @@ Here there are 3 different way to start the container and provide data persisten
 
 1. Replace `/dev/ttyACM0` with your serial device
 2. Add `-e TZ=Europe/Stockholm` to the `docker run` command to set the correct timezone in container
+3. If you are using zwave-js WS server, replace `3000:3000` with the port choosen in settings
 
 ### Run using volumes
 
 ```bash
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run using local folder
@@ -35,7 +36,7 @@ Here we will store our data in the current path (`$(pwd)`) named `store`. You ca
 
 ```bash
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run as a service
@@ -59,6 +60,7 @@ services:
       - ./store:/usr/src/app/store
     ports:
       - '8091:8091'
+      - '3000:3000'
 networks:
   zwave:
 # volumes:
