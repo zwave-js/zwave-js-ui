@@ -1,10 +1,10 @@
 # Home Assistant
 
-To integrate your Zwave components you can use both official HASS [Zwave-js integration](https://www.home-assistant.io/integrations/zwave_js) and/or MQTT discovery.
+To integrate your Zwave components you can use both official Home Assistant [Zwave-js integration](https://www.home-assistant.io/integrations/zwave_js) and/or MQTT discovery.
 
 ## Zwave-js server
 
-Zwave-js server is the official way to integrate your Zwave devices with Home Hassistant. In order to use it go to Settings, [Home hassistant](/usage/setup?id=home-assistant) section and enable the flag **WS Server**.
+Zwave-js server is the official way to integrate your Zwave devices with Home Assistant. In order to use it go to Settings, [Home Assistant](/usage/setup?id=home-assistant) section and enable the flag **WS Server**.
 
 If you don't need MQTT features you can [Disable MQTT Gateway](/usage/setup?id=disable-gateway) and use Zwavejs2mqtt as only Control Panel.
 
@@ -13,7 +13,7 @@ The zwave-js server will use the official [Zwave-js integration](https://www.hom
 ## MQTT Discovery
 
 This allows zwavejs2mqtt to automatically add devices to Home Assistant using MQTT discovery.
-To enable this feature remember to set the flag **MQTT Discovery** in Home Hassistant section.
+To enable this feature remember to set the flag **MQTT Discovery** in Home Assistant section.
 
 > [!WARNING]
 > At least Home Assistant >= 0.84 is required!
@@ -22,7 +22,7 @@ To enable this feature remember to set the flag **MQTT Discovery** in Home Hassi
 
 Configuration steps:
 
-- In your **zwavejs2mqtt** settings, [Home hassistant](/usage/setup?id=home-assistant) section enable `MQTT discovery` flag and enable the **retain** flag in [MQTT](/usage/setup?id=mqtt) section. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
+- In your **zwavejs2mqtt** settings, [Home Assistant](/usage/setup?id=home-assistant) section enable `MQTT discovery` flag and enable the **retain** flag in [MQTT](/usage/setup?id=mqtt) section. The retain flag for MQTT is suggested to be sure that, once discovered, each device get the last value published (otherwise you have to wait for a value change)
 
 > [!NOTE]
 > Starting from version `4.0.0` the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Hass `0.113`
@@ -45,15 +45,15 @@ mqtt:
 Mind you that if you want to use the embedded broker of Home Assistant you
 have to [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
 
-zwavejs2mqtt is expecting Home Assistant to send it's birth/will
+zwavejs2mqtt is expecting Home Assistant to send its birth/will
 messages to `homeassistant/status`. Be sure to add this to your `configuration.yaml` if you want
 zwavejs2mqtt to resend the cached values when Home Assistant restarts.
 
-zwavejs2mqtt try to do its best to guess how to map devices from Zwave to HASS. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
+zwavejs2mqtt try to do its best to guess how to map devices from Zwave to Home Assistant. At the moment it try to guess the device to generate based on zwave values command classes, index and units of the value. When the discovered device doesn't fit your needs you can you can set custom a `device_class` to values using Gateway value table.
 
 ### Components management
 
-To see the components that have been discovered by zwavejs2mqtt go to Control Panel UI, select a Node from the Nodes table then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
+To see the components that have been discovered by zwavejs2mqtt go to Control Panel UI, select a Node from the Nodes table, then select the Node tab from tabs menu at the bottom of Nodes table. Now at the Bottom of the page, after Node values section you can find a new section called `Home Assistant - Devices`. Here you will see a table with all devices created for the selected node.
 
 ![Hass Devices](../_images/hass_devices.png)
 
@@ -66,7 +66,7 @@ If you update node name/location you have to also rediscover values of this node
 
 #### Edit existing component
 
-If you select a device it's configuration will be displayed as a JSON object on the right. With the selected device you can edit it and send some actions:
+If you select a device its configuration will be displayed as a JSON object on the right. With the selected device you can edit it and send some actions:
 
 - `Update`: Update in-memory hass device configuration
 - `Rediscover`: Re-discover this device using the `discoveryTopic` and `discovery_payload` of the configuration

@@ -1,3 +1,4 @@
+import draggable from 'vuedraggable'
 import { ManagedItems } from '@/modules/ManagedItems'
 import { Settings } from '@/modules/Settings'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
@@ -10,6 +11,7 @@ export default {
     socket: Object
   },
   components: {
+    draggable,
     ColumnFilter,
     ExpandedNode
   },

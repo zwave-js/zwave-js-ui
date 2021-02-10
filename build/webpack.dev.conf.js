@@ -29,6 +29,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     clientLogLevel: 'warning',
     historyApiFallback: true,
     hot: true,
+    https: config.dev.https,
     contentBase: false, // since we use CopyWebpackPlugin.
     compress: true,
     disableHostCheck: true,
