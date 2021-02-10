@@ -46,7 +46,6 @@
                     hide-details
                     :label="managedNodes.propDefs[col.name].label"
                     :input-value="col.visible"
-                    false-value="false"
                     @change="col.visible = !!$event"
                     prepend-icon="drag_indicator"
                   ></v-checkbox>

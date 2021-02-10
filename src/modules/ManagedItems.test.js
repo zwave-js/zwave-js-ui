@@ -169,7 +169,11 @@ describe('ManagedItems', () => {
   describe('#tableHeaders', () => {
     it('returns the active table headers', () => {
       const managedItems = getNewManagedTestItems()
-      managedItems.tableColumns = ['id', 'value']
+      managedItems.tableColumns = [
+        { name: 'id', visible: true },
+        { name: 'value', visible: true },
+        { name: 'info', visible: false }
+      ]
       chai.expect(managedItems.tableHeaders).to.eql([
         { value: 'id', text: 'ID', type: 'number', groupable: false },
         { value: 'value', text: 'Value', type: 'string', groupable: true }
