@@ -57,9 +57,13 @@ async function startServer (host, port) {
 
   if (process.env.HTTPS) {
     const { cert, key } = await loadCertKey()
-    server = require('https').createServer({
-      key, cert
-    }, app)
+    server = require('https').createServer(
+      {
+        key,
+        cert
+      },
+      app
+    )
   } else {
     server = require('http').createServer(app)
   }
@@ -75,9 +79,7 @@ async function startServer (host, port) {
       throw error
     }
 
-    const bind = typeof port === 'string'
-      ? 'Pipe ' + port
-      : 'Port ' + port
+    const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
 
     // handle specific listen errors with friendly messages
     switch (error.code) {
