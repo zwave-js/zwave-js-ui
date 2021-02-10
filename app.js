@@ -60,7 +60,8 @@ async function startServer (host, port) {
     server = require('https').createServer(
       {
         key,
-        cert
+        cert,
+        rejectUnauthorized: false
       },
       app
     )
