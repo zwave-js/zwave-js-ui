@@ -268,7 +268,11 @@ export default {
     },
     async downloadFile () {
       if (this.selected) {
-        const fileName = this.selected.name.split('.')[0]
+        // get the file name without the extension
+        const fileName = this.selected.name
+          .split('.')
+          .slice(0, -1)
+          .join('.')
         this.$listeners.export(this.fileContent, fileName, this.selected.ext)
       }
     },
