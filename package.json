@@ -118,6 +118,7 @@
     "mqtt-nedb-store": "^0.1.1",
     "native-url": "^0.3.4",
     "nedb": "^1.8.0",
+    "pem": "^1.14.4",
     "prismjs": "^1.23.0",
     "serialport": "^9.0.6",
     "serve-favicon": "^2.5.0",
