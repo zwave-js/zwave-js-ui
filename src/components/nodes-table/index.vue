@@ -24,7 +24,11 @@
       </v-row>
       <v-row class="ma-2" justify-start>
         <v-col cols="12">
-          <v-menu v-model="headersMenu" :close-on-content-click="false">
+          <v-menu
+            v-model="headersMenu"
+            :close-on-content-click="false"
+            @input="managedNodes.tableColumns = managedNodes.tableColumns"
+          >
             <template v-slot:activator="{ on }">
               <v-btn v-on="on">
                 <v-icon>menu</v-icon>
@@ -33,16 +37,28 @@
             </template>
             <v-card>
               <v-card-text>
-                <v-checkbox
-                  v-for="col in managedNodes.allTableHeaders"
-                  :key="col.value"
-                  :value="col.value"
-                  hide-details
-                  :label="col.text"
-                  :input-value="managedNodes.columns"
-                  @change="managedNodes.columns = $event"
-                ></v-checkbox>
+                <draggable v-model="managedNodes.tableColumns">
+                  <v-checkbox
+                    v-for="col in managedNodes.tableColumns"
+                    :key="col.name"
+                    v-model="col.visible"
+                    :value="col.visible"
+                    hide-details
+                    :label="managedNodes.propDefs[col.name].label"
+                    :input-value="col.visible"
+                    @change="col.visible = !!$event"
+                    prepend-icon="drag_indicator"
+                  ></v-checkbox>
+                </draggable>
               </v-card-text>
+              <v-card-actions>
+                <v-btn
+                  @click.native="
+                    managedNodes.tableColumns = managedNodes.initialTableColumns
+                  "
+                  >Reset</v-btn
+                >
+              </v-card-actions>
             </v-card>
           </v-menu>
           <v-tooltip bottom>
