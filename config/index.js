@@ -29,11 +29,19 @@ module.exports = {
       '/socket.io': {
         target: proxyURL,
         ws: true,
+        secure: false, // allow self signed certificates
+        changeOrigin: true
+      },
+      '/health': {
+        target: proxyURL,
         secure: false,
         changeOrigin: true
       },
-      '/health': proxyURL,
-      '/api': proxyURL
+      '/api': {
+        target: proxyURL,
+        secure: false,
+        changeOrigin: true
+      }
     },
     https: !!process.env.SERVER_SSL,
 
