@@ -34,6 +34,12 @@ const THERMOSTAT_2GIG = {
     '67-1-setpoint-2',
     '68-1-mode'
   ],
+  action_map: {
+    idle: 0,
+    heating: 1,
+    cooling: 2,
+    fan: 3
+  },
   mode_map: {
     off: 0,
     heat: 1,
@@ -54,7 +60,6 @@ const THERMOSTAT_2GIG = {
     modes: ['off', 'heat', 'cool'],
     fan_modes: ['auto', 'on'],
     action_topic: '66-1-state',
-    action_template: '{{ value_json.value | lower }}',
     current_temperature_topic: '49-1-Air temperature',
     current_temperature_template: '{{ value_json.value }}',
     fan_mode_state_topic: '68-1-mode',
