@@ -6,6 +6,12 @@ ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
 
 WORKDIR /usr/src/app
 
+RUN apk --no-cache add \
+    coreutils \	
+    linux-headers \
+    alpine-sdk \	
+    python
+
 COPY package.json package-lock.json ./ 
 
 RUN npm config set unsafe-perm true
