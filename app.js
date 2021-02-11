@@ -19,8 +19,10 @@ const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const fs = require('fs-extra')
 const path = require('path')
-const { storeDir } = reqlib('config/app.js')
+const { storeDir, defaultUser } = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
+const session = require('express-session')
+const credentialsStore = reqlib('/lib/credentialsStore.js')
 const archiver = require('archiver')
 const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
@@ -36,6 +38,23 @@ const storeLimiter = rateLimit({
     })
   }
 })
+
+const loginLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
+  max: 5, // start blocking after 5 requests
+  handler: function (req, res) {
+    res.json({ success: false, message: 'Max requests limit reached' })
+  }
+})
+
+// apis response codes
+const RESPONSE_CODES = {
+  0: 'OK',
+  1: 'General Error',
+  2: 'Invalid data',
+  3: 'Authentication failed',
+  4: 'Insufficient permissions'
+}
 
 const socketManager = new SocketManager()
 
@@ -226,7 +245,20 @@ app.get('/', renderIndex)
 
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
-app.use(cors())
+app.use(cors({ credentials: true, origin: true }))
+
+// enable sessions management
+app.use(session({
+  name: 'zwavejs2mqtt-session',
+  secret: credentialsStore.getKey(),
+  resave: true,
+  saveUninitialized: true,
+  cookie: {
+    secure: !!process.env.HTTPS,
+    httpOnly: true, // prevents cookie to be sent by client javascript
+    maxAge: 24 * 60 * 60 * 1000 // one day
+  }
+}))
 
 // ### SOCKET SETUP
 
@@ -287,6 +319,78 @@ function setupSocket (server) {
 
 // ### APIs
 
+// middleware to check if user is authenticated
+function isAuthenticated (req, res, next) {
+  // if user is authenticated in the session, carry on
+  if (req.session.user) { return next() }
+
+  // if they aren't redirect them to the home page
+  res.json({ success: false, code: 3, message: RESPONSE_CODES['3'] })
+}
+
+// api to authenticate user
+app.post('/api/authenticate', loginLimiter, async function (req, res) {
+  if (req.session.user) {
+    return res.json({ success: true, user: req.session.user, code: 0, message: 'User already logged' })
+  }
+
+  const users = credentialsStore.get(defaultUser) || []
+
+  const username = req.body.username
+  const password = req.body.password
+
+  const user = users.find(u => u.username === username && u.password === password)
+
+  const result = {
+    success: !!user
+  }
+
+  if (result.success) {
+    req.session.user = user
+    result.user = user
+    result.deviceId = process.env.DEVICE_ID
+    loginLimiter.resetKey(req.ip)
+  } else {
+    result.code = 3
+    result.message = RESPONSE_CODES['3']
+  }
+
+  res.json(result)
+})
+
+// logout the user
+app.get('/api/logout', isAuthenticated, async function (req, res) {
+  req.session.destroy()
+  res.json({ success: true, message: 'User logged out' })
+})
+
+// update user password
+app.put('/api/password', isAuthenticated, async function (req, res) {
+  try {
+    const users = credentialsStore.get(defaultUser) || []
+
+    const user = req.session.user
+    const oldUser = users.find(u => u._id === user._id)
+
+    if (!oldUser) return res.json({ success: false, message: 'User not found' })
+
+    if (oldUser.password !== req.body.current) return res.json({ success: false, message: 'Actual password is wrong' })
+
+    if (req.body.new !== req.body.confirmNew) return res.json({ success: false, message: "Passwords doesn't match" })
+
+    oldUser.password = req.body.new
+
+    req.session.user = oldUser
+
+    await credentialsStore.update()
+
+    res.json({ success: true, message: 'Password updated', user: oldUser })
+  } catch (error) {
+    res.json({ success: false, message: 'Error while updating passwords', error: error.message })
+    logger.error('Error while updating password', error)
+  }
+})
+
 app.get('/health', async function (req, res) {
   let mqtt = false
   let zwave = false
@@ -320,7 +424,7 @@ app.get('/health/:client', async function (req, res) {
 })
 
 // get settings
-app.get('/api/settings', async function (req, res) {
+app.get('/api/settings', isAuthenticated, async function (req, res) {
   const data = {
     success: true,
     settings: jsonStore.get(store.settings),
@@ -342,7 +446,7 @@ app.get('/api/settings', async function (req, res) {
 })
 
 // get config
-app.get('/api/exportConfig', function (req, res) {
+app.get('/api/exportConfig', isAuthenticated, function (req, res) {
   return res.json({
     success: true,
     data: jsonStore.get(store.nodes),
@@ -351,7 +455,7 @@ app.get('/api/exportConfig', function (req, res) {
 })
 
 // import config
-app.post('/api/importConfig', async function (req, res) {
+app.post('/api/importConfig', isAuthenticated, async function (req, res) {
   const config = req.body.data
   try {
     if (!gw.zwave) throw Error('Zwave client not inited')
@@ -383,7 +487,7 @@ app.post('/api/importConfig', async function (req, res) {
 })
 
 // get config
-app.get('/api/store', storeLimiter, async function (req, res) {
+app.get('/api/store', isAuthenticated, storeLimiter, async function (req, res) {
   try {
     async function parseDir (dir) {
       const toReturn = []
@@ -415,7 +519,7 @@ app.get('/api/store', storeLimiter, async function (req, res) {
   }
 })
 
-app.get('/api/store/:path', storeLimiter, async function (req, res) {
+app.get('/api/store/:path', isAuthenticated, storeLimiter, async function (req, res) {
   try {
     const reqPath = getSafePath(req)
 
@@ -434,7 +538,7 @@ app.get('/api/store/:path', storeLimiter, async function (req, res) {
   }
 })
 
-app.put('/api/store/:path', storeLimiter, async function (req, res) {
+app.put('/api/store/:path', isAuthenticated, storeLimiter, async function (req, res) {
   try {
     const reqPath = getSafePath(req)
 
@@ -453,7 +557,7 @@ app.put('/api/store/:path', storeLimiter, async function (req, res) {
   }
 })
 
-app.delete('/api/store/:path', storeLimiter, async function (req, res) {
+app.delete('/api/store/:path', isAuthenticated, storeLimiter, async function (req, res) {
   try {
     const reqPath = getSafePath(req)
 
@@ -466,7 +570,7 @@ app.delete('/api/store/:path', storeLimiter, async function (req, res) {
   }
 })
 
-app.put('/api/store-multi', storeLimiter, async function (req, res) {
+app.put('/api/store-multi', isAuthenticated, storeLimiter, async function (req, res) {
   try {
     const files = req.body.files || []
     for (const f of files) {
@@ -479,7 +583,7 @@ app.put('/api/store-multi', storeLimiter, async function (req, res) {
   }
 })
 
-app.post('/api/store-multi', storeLimiter, function (req, res) {
+app.post('/api/store-multi', isAuthenticated, storeLimiter, function (req, res) {
   const files = req.body.files || []
 
   const archive = archiver('zip')
@@ -510,7 +614,7 @@ app.post('/api/store-multi', storeLimiter, function (req, res) {
 })
 
 // update settings
-app.post('/api/settings', async function (req, res) {
+app.post('/api/settings', isAuthenticated, async function (req, res) {
   try {
     if (restarting) {
       throw Error(
