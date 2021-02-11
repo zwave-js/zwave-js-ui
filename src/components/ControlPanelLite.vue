@@ -122,9 +122,12 @@
 
     
     <DialogNode
+      v-if="selectedNode !== null"
       v-model="nodeShowDialog"
       :node="selectedNode"
       @close="nodeShowDialog = false"
+      @next="onNext"
+      @prev="onPrev"
       @apiRequest="apiRequest"
       v-on="$listeners"
     />
@@ -245,6 +248,14 @@ export default {
       console.debug(node)
       this.selectedNode = node
       this.nodeShowDialog = true
+    },
+    onNext() {
+      const i = this.viewNodes.indexOf(this.selectedNode)
+      this.selectedNode = this.viewNodes[i == this.viewNodes.length - 1 ? 0 : i + 1]
+    },
+    onPrev() {
+      const i = this.viewNodes.indexOf(this.selectedNode)
+      this.selectedNode = this.viewNodes[i == 0 ? this.viewNodes.length - 1 : i - 1]
     },
     timeago (ms) {
       // TODO: move into util library

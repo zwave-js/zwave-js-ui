@@ -5,9 +5,12 @@
       <v-icon :color="node.color">{{ node.icon }}</v-icon>
     </div>
     <div class="node-col2">
-      <div>{{ node.manu }}</div>
+      <div>{{ node.manu }} {{ node.productLabel }}</div>
       <div>{{ node.desc }}</div>
-      <div>{{ node.productLabel }}</div>
+      <div>        
+        <v-chip label x-small v-if="node.name && node.name.length > 0">{{ node.name }}</v-chip>
+        <v-chip label x-small v-if="node.loc && node.loc.length > 0">{{ node.loc }}</v-chip>
+      </div>
     </div>
     <div class="node-col3">
       <div>
