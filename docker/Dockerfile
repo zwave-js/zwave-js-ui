@@ -1,51 +1,22 @@
-# ----------------
-# STEP 1:
-FROM node:erbium-alpine AS build-z2m
-ARG updateDevices
-ARG zwavejs=https://github.com/zwave-js/node-zwave-js
-# Install required dependencies
-RUN apk --no-cache add \
-    coreutils \
-    linux-headers \
-    alpine-sdk \
-    python \
-    openssl \
-    git rsync
-
-WORKDIR /root/zwavejs2mqtt
-
-COPY . .
-RUN npm config set unsafe-perm true
-RUN npm install
-RUN npm run build
-RUN npm prune --production
-RUN rm -rf \
-    build \
-    index.html \
-    package-lock.json \
-    package.sh \
-    src \
-    static \
-    stylesheets
-RUN if [[ ! -z "$updateDevices"  ]]; then git clone $zwavejs; \
-    rsync -av node-zwave-js/packages/config/config/devices/ './node_modules/@zwave-js/config/config/devices'; \
-    rm -rf node-zwave-js; fi
-
-# ----------------
-# STEP 2:
-FROM node:erbium-alpine
-
-RUN apk add --no-cache \
-    libstdc++  \
-    libgcc \
-    libusb \
-    tzdata \
-    eudev
-
-# Copy files from previous build stage
-COPY --from=build-z2m /root/zwavejs2mqtt /usr/src/app
+FROM node:12.20.1-buster
+# removing the dependency on fibers would mean we could go for an image without the compilers+python, also allow us to get beyond node 14
+ARG updateDevices=1
+ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
 
 WORKDIR /usr/src/app
+
+COPY package.json ./ 
+    # should really copy the package-lock.json but that is currently causing serialport to recompile
+RUN npm config set unsafe-perm true
+RUN npm install --no-optional
+RUN if [[ ! -z "$updateDevices"  ]]; \
+    then curl -sL $zwavejs | \
+        tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
+        node-zwave-js-master/packages/config/config/devices/ ;\
+    fi
+COPY . .
+RUN npm run build && \
+    npm prune --production
 
 EXPOSE 8091
 
