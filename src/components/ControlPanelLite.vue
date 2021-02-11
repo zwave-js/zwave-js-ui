@@ -116,9 +116,19 @@
         key
       }}</v-banner>
       <div :class="['node-grid', $vuetify.breakpoint.name]">
-        <NodeItem v-for="node in groupOfNodes" :key="node.id" :node="node" />
+        <NodeItem v-for="node in groupOfNodes" :key="node.id" :node="node" @click="onNodeClick(node)" />
       </div>
     </div>
+
+    
+    <DialogNode
+      v-model="nodeShowDialog"
+      :node="selectedNode"
+      @close="nodeShowDialog = false"
+      @apiRequest="apiRequest"
+      v-on="$listeners"
+    />
+
   </v-container>
 </template>
 
@@ -128,6 +138,7 @@ import { mapGetters, mapMutations } from 'vuex'
 import NodeItem from '@/components/NodeItem'
 import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
+import DialogNode from '@/components/dialogs/DialogNode'
 
 import { socketEvents } from '@/plugins/socket'
 
@@ -139,7 +150,8 @@ export default {
   components: {
     NodeItem,
     DialogAddRemove,
-    DialogAdvanced
+    DialogAdvanced,
+    DialogNode
   },
   data () {
     return {
@@ -181,7 +193,10 @@ export default {
         }
       ],
 
-      advancedShowDialog: false
+      advancedShowDialog: false,
+
+      nodeShowDialog: false,
+      selectedNode: null
     }
   },
   computed: {
@@ -233,6 +248,11 @@ export default {
   },
   methods: {
     ...mapMutations(['showSnackbar']),
+    onNodeClick (node) {
+      console.debug(node)
+      this.selectedNode = node
+      this.nodeShowDialog = true
+    },
     timeago (ms) {
       // TODO: move into util library
       let ago = Math.floor(ms / 1000)
