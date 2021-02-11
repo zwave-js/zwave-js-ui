@@ -1,8 +1,5 @@
 # STEP: 1
-FROM node:erbium-alpine AS build-z2m
-
-ARG updateDevices
-ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
+FROM node:12.20.1-alpine AS build-z2m
 
 WORKDIR /usr/src/app
 
@@ -16,6 +13,11 @@ COPY package.json package-lock.json ./
 
 RUN npm config set unsafe-perm true
 RUN npm install --no-optional
+
+# when update devices arg is set update config files from zwavejs repo
+ARG updateDevices
+ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
+
 RUN if [ ! -z "$updateDevices"  ]; \
     then curl -sL ${zwavejs} | \
         tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
@@ -24,12 +26,19 @@ RUN if [ ! -z "$updateDevices"  ]; \
 
 COPY . .
 
-RUN npm run build
+RUN npm run build && \
+    npm prune --production && \
+    rm -rf \
+        build \
+        index.html \
+        package-lock.json \
+        package.sh \
+        src \
+        static \
+        stylesheets
 
-RUN npm prune --production
-
-# STEP: 2
-FROM node:erbium-alpine	
+# STEP: 2 (runtime)
+FROM node:12.20.1-alpine
 
 RUN apk add --no-cache \	
     libstdc++  \	
