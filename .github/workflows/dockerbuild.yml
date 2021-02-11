@@ -45,6 +45,8 @@ jobs:
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile
+          cache-from: type=registry,ref=zwavejs/zwavejs2mqtt:dev
+          cache-to: type=inline
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
