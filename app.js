@@ -73,7 +73,11 @@ async function startServer (host, port) {
   server.listen(port, host, function () {
     const addr = server.address()
     const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
-    logger.info(`Listening on ${bind} host ${host} protocol ${process.env.HTTPS ? 'HTTPS' : 'HTTP'}`)
+    logger.info(
+      `Listening on ${bind} host ${host} protocol ${
+        process.env.HTTPS ? 'HTTPS' : 'HTTP'
+      }`
+    )
   })
 
   server.on('error', function (error) {
