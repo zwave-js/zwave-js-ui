@@ -1,12 +1,13 @@
+# STEP: 1
 FROM node:erbium-alpine AS build-z2m
-# removing the dependency on fibers would mean we could go for an image without the compilers+python, also allow us to get beyond node 14
+
 ARG updateDevices
 ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
 
 WORKDIR /usr/src/app
 
-COPY package.json ./ 
-    # should really copy the package-lock.json but that is currently causing serialport to recompile
+COPY package.json package-lock.json ./ 
+
 RUN npm config set unsafe-perm true
 RUN npm install --no-optional
 RUN if [ ! -z "$updateDevices"  ]; \
@@ -14,10 +15,14 @@ RUN if [ ! -z "$updateDevices"  ]; \
         tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
         node-zwave-js-master/packages/config/config/devices/ ;\
     fi
-COPY . .
-RUN npm run build && \
-    npm prune --production
 
+COPY . .
+
+RUN npm run build
+
+RUN npm prune --production
+
+# STEP: 2
 FROM node:erbium-alpine	
 
 RUN apk add --no-cache \	
