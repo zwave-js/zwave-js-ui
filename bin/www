@@ -5,7 +5,6 @@
  */
 const reqlib = require('app-root-path').require
 const jsonStore = reqlib('/lib/jsonStore.js')
-const credentialsStore = reqlib('/lib/credentialsStore.js')
 const store = reqlib('/config/store.js')
 const conf = reqlib('/config/app.js')
 
@@ -20,11 +19,10 @@ console.log(`
                            |__/                       |_|        
 `)
 
-// jsonstore and credentials store are singleton instances that handle the credentials and json configuration files
+// jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
 // if jsonstore fails exit the application
-credentialsStore.init()
-  .then(() => jsonStore.init(store))
+jsonStore.init(store)
   .then(() => {
     const { app, startServer } = reqlib('app.js')
 

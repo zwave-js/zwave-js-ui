@@ -19,7 +19,7 @@ const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const fs = require('fs-extra')
 const path = require('path')
-const { storeDir, defaultUser } = reqlib('config/app.js')
+const { storeDir, defaultUser, sessionSecret } = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
 const session = require('express-session')
 const credentialsStore = reqlib('/lib/credentialsStore.js')
@@ -74,6 +74,11 @@ let restarting = false
 async function startServer (host, port) {
   let server
 
+  const settings = jsonStore.get(store.settings)
+
+  // as the really first thing setup loggers so all logs will go to file if specified in settings
+  setupLogging(settings)
+
   if (process.env.HTTPS) {
     logger.info('HTTPS is enabled. Loading cert and keys from store...')
     const { cert, key } = await loadCertKey()
@@ -119,9 +124,12 @@ async function startServer (host, port) {
     }
   })
 
+  // decrypt credentials
+  await credentialsStore.init()
+
   setupSocket(server)
   setupInterceptor()
-  startGateway()
+  startGateway(settings)
 }
 
 /**
@@ -179,13 +187,9 @@ function setupLogging (settings) {
   loggers.setupAll(settings ? settings.gateway : null)
 }
 
-function startGateway () {
-  const settings = jsonStore.get(store.settings)
-
+function startGateway (settings) {
   let mqtt
   let zwave
-
-  setupLogging(settings)
 
   if (settings.mqtt) {
     mqtt = new MqttClient(settings.mqtt)
@@ -250,7 +254,7 @@ app.use(cors({ credentials: true, origin: true }))
 // enable sessions management
 app.use(session({
   name: 'zwavejs2mqtt-session',
-  secret: credentialsStore.getKey(),
+  secret: sessionSecret,
   resave: true,
   saveUninitialized: true,
   cookie: {
@@ -621,11 +625,15 @@ app.post('/api/settings', isAuthenticated, async function (req, res) {
         'Gateway is restarting, wait a moment before doing another request'
       )
     }
+    // TODO: validate settings using ajv
+    const settings = req.body
     restarting = true
-    await jsonStore.put(store.settings, req.body)
-    setupLogging(req.body)
+    await jsonStore.put(store.settings, settings)
     await gw.close()
-    startGateway()
+    // reload loggers settings
+    setupLogging(settings)
+    // restart clients and gateway
+    startGateway(settings)
     res.json({ success: true, message: 'Configuration updated successfully' })
   } catch (error) {
     logger.error(error)

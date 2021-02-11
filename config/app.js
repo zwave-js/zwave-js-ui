@@ -6,6 +6,7 @@ module.exports = {
   credentialsFile: 'credentials.json',
   credentialsKey: 'credentials.key',
   defaultUser: 'admin',
+  sessionSecret: 'G1FoTIfjhsPO80MpJSUx9oaDDHueTkW1',
   base: '/',
   port: 8091
 }
