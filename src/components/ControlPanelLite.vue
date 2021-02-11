@@ -181,11 +181,11 @@ export default {
         },
         {
           name: 'Model',
-          value: 'prod'
+          value: 'productLabel'
         },
         {
           name: 'Location',
-          value: 'loc'
+          value: 'location'
         },
         {
           name: 'Status',
@@ -219,9 +219,7 @@ export default {
       }
 
       return nodes.map(x => ({
-        id: x.id,
-        name: x.name,
-        loc: x.location,
+        ...x,
         color: this.getNodeColor(x),
         icon: this.getNodeIcon(x),
         manu:
@@ -230,11 +228,6 @@ export default {
           x.status === 'Removed' || x.status === 'Dead'
             ? 'Node'
             : x.productDescription,
-        prod: x.productLabel,
-        sec: x.isSecure,
-        beam: x.isBeaming,
-        // TODO: battery / sleeping
-        status: x.status,
         ago: x.lastActive ? this.timeago(new Date() - x.lastActive) : ' '
       }))
     },

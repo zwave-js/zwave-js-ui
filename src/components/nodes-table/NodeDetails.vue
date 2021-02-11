@@ -101,7 +101,6 @@ import { mapMutations } from 'vuex'
 export default {
   props: {
     headers: Array,
-    actions: Array,
     node: Object,
     socket: Object
   },
@@ -114,7 +113,49 @@ export default {
       nameError: null,
       newName: this.node.name,
       newLoc: this.node.loc,
-      node_action: 'requestNetworkUpdate'
+      node_action: 'requestNetworkUpdate',
+      actions: [
+        {
+          text: 'Heal node',
+          value: 'healNode'
+        },
+        {
+          text: 'Re-interview Node',
+          value: 'refreshInfo'
+        },
+        {
+          text: 'Refresh values',
+          value: 'refreshValues'
+        },
+        {
+          text: 'Is Failed Node',
+          value: 'isFailedNode'
+        },
+        {
+          text: 'Remove failed node',
+          value: 'removeFailedNode'
+        },
+        {
+          text: 'Replace failed node',
+          value: 'replaceFailedNode'
+        },
+        {
+          text: 'Begin Firmware update',
+          value: 'beginFirmwareUpdate'
+        },
+        {
+          text: 'Abort Firmware update',
+          value: 'abortFirmwareUpdate'
+        },
+        {
+          text: 'Remove all associations',
+          value: 'removeAllAssociations'
+        },
+        {
+          text: 'Remove node from all associations',
+          value: 'removeNodeFromAllAssociations'
+        }
+      ],
     }
   },
   computed: {

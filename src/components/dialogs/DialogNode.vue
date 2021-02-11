@@ -2,7 +2,17 @@
   <v-dialog v-model="value" persistent max-width="800">
     <v-card>
       <v-card-title>
-        <span class="headline">Node</span>
+        <v-chip :large="$vuetify.breakpoint.mdAndUp" color="#dfdfdf" style="margin-right:1rem">
+          <v-icon :large="$vuetify.breakpoint.mdAndUp" :color="node.color">{{ node.icon }}</v-icon>
+          <div :class="`${node.color}--text`" style="margin-left:0.2rem; font-size:1.4rem">{{node.id}}</div>
+        </v-chip>
+        <div class="headline">
+          <small>{{node.manu}}</small>
+          <div style="margin-top:-0.5rem">
+            <strong>{{ node.desc }}</strong>
+            <small v-if="$vuetify.breakpoint.smAndUp">{{node.productLabel}}</small>
+          </div>
+        </div>
         <v-spacer></v-spacer>
         <v-btn icon @click="$emit('close')"><v-icon>close</v-icon></v-btn>
       </v-card-title>
@@ -22,7 +32,6 @@
                 <v-tab-item key="node">
                   <node-details
                     :node="node"
-                    :actions="actions"
                     :socket="socket"
                     v-on="$listeners"
                   ></node-details>
@@ -67,7 +76,6 @@ import { mapGetters } from 'vuex'
 export default {
   props: {
     value: Boolean, // show or hide
-    actions: Array,
     node: Object,
     socket: Object
   },

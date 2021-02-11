@@ -7,12 +7,12 @@
     <div class="node-col2">
       <div>{{ node.manu }}</div>
       <div>{{ node.desc }}</div>
-      <div>{{ node.prod }}</div>
+      <div>{{ node.productLabel }}</div>
     </div>
     <div class="node-col3">
       <div>
-        <v-icon v-if="node.sec" small>lock</v-icon>
-        <v-icon v-if="node.beam" small>contactless</v-icon>
+        <v-icon v-if="node.isSecure" small>lock</v-icon>
+        <v-icon v-if="node.isBeaming" small>contactless</v-icon>
       </div>
       <div>{{ node.status }}</div>
       <div>{{ node.ago }}</div>
