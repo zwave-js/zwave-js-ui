@@ -30,9 +30,9 @@ export class ManagedItems {
         ? this.loadSetting('tableOptions', this.initialTableOptions)
         : this.tableOptions
     this._columns =
-      this.columns === undefined
-        ? this.loadSetting('columns', this.initialColumns)
-        : this.columns
+      this.tableColumns === undefined
+        ? this.loadSetting('tableColumns', this.initialTableColumns)
+        : this.tableColumns
     this._filters =
       this.filters === undefined
         ? this.loadSetting('filters', this.initialFilters)
@@ -45,7 +45,7 @@ export class ManagedItems {
    */
   reset () {
     this.tableOptions = this.initialTableOptions
-    this.columns = this.initialColumns
+    this.tableColumns = this.initialTableColumns
     this.filters = this.initialFilters
     this.selected = this.initialSelected
   }
@@ -130,50 +130,67 @@ export class ManagedItems {
   // Table columns handling
 
   /**
+   * Internal function to get a table header definition for a specific column name
+   */
+  _getTableHeaderForColumn (colName) {
+    const propDef = this.propDefs[colName]
+    return {
+      value: colName,
+      text: propDef.label === undefined ? colName : propDef.label,
+      type: propDef.type === undefined ? 'string' : propDef.type,
+      groupable: propDef.groupable === undefined ? true : !!propDef.groupable
+    }
+  }
+
+  /**
    * Get all table column headers
    */
   get allTableHeaders () {
-    const headers = []
-    Object.keys(this.propDefs).forEach(key => {
-      const propDef = this.propDefs[key]
-      headers.push({
-        value: key,
-        text: propDef.label === undefined ? key : propDef.label,
-        type: propDef.type === undefined ? 'string' : propDef.type,
-        groupable: propDef.groupable === undefined ? true : !!propDef.groupable
-      })
-    })
-    return headers
+    return Object.keys(this.propDefs).reduce((headers, colName) => {
+      headers.push(this._getTableHeaderForColumn(colName))
+      return headers
+    }, [])
   }
 
   /**
    * Get visible table column headers
    */
   get tableHeaders () {
-    return this.allTableHeaders.filter(col => this.columns.includes(col.value))
+    return this.tableColumns.reduce((tableHeaders, column) => {
+      if (column.visible) {
+        tableHeaders.push(this._getTableHeaderForColumn(column.name))
+      }
+      return tableHeaders
+    }, [])
   }
 
   /**
    * Get initial table column list
    */
-  get initialColumns () {
-    return Object.keys(this.propDefs)
+  get initialTableColumns () {
+    return Object.keys(this.propDefs).reduce((tableColumns, propName) => {
+      tableColumns.push({
+        name: propName,
+        visible: true
+      })
+      return tableColumns
+    }, [])
   }
 
   /**
    * Get the active table colum list
    */
-  get columns () {
+  get tableColumns () {
     return this._columns
   }
 
   /**
-   * Set the list of active table columns
-   * @param {Array} columns List of columns to be set
+   * Set the list of table columns with visibility status
+   * @param {Array} tableColumns List of table columns to be set
    */
-  set columns (columns) {
-    this._columns = columns
-    this.storeSetting('columns', columns)
+  set tableColumns (tableColumns) {
+    this._columns = tableColumns
+    this.storeSetting('tableColumns', tableColumns)
   }
 
   // Filters handling

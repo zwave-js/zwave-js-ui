@@ -71,7 +71,7 @@ describe('ManagedItems', () => {
     })
     it('resets the table columns', () => {
       const managedItems = getNewManagedTestItems()
-      managedItems.columns = ['id', 'value']
+      managedItems.tableColumns = ['id', 'value']
       managedItems.reset()
       chai.expect(managedItems.tableHeaders).to.eql(testItemHeaders)
     })
@@ -169,7 +169,11 @@ describe('ManagedItems', () => {
   describe('#tableHeaders', () => {
     it('returns the active table headers', () => {
       const managedItems = getNewManagedTestItems()
-      managedItems.columns = ['id', 'value']
+      managedItems.tableColumns = [
+        { name: 'id', visible: true },
+        { name: 'value', visible: true },
+        { name: 'info', visible: false }
+      ]
       chai.expect(managedItems.tableHeaders).to.eql([
         { value: 'id', text: 'ID', type: 'number', groupable: false },
         { value: 'value', text: 'Value', type: 'string', groupable: true }
