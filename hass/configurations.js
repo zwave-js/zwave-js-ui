@@ -128,7 +128,7 @@ module.exports = {
       payload_close: '0'
     }
   },
-
+  // Barrier operator support for zwave-js (numeric commands/states)
   barrier_state: {
     type: 'cover',
     object_id: 'barrier_state',
