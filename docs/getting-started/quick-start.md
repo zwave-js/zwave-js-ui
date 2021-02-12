@@ -37,7 +37,7 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
 
 ## Snap package
 
-Make sure you have a [Snapd installed](https://snapcraft.io/docs/installing-snapd). It's shipped with most Ubuntu Flavors and some other distributions. 
+Make sure you have a [Snapd installed](https://snapcraft.io/docs/installing-snapd). It's shipped with most Ubuntu Flavors and some other distributions.
 
 ```bash
 sudo snap install zwavejs2mqtt
