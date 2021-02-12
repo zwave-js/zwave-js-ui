@@ -45,7 +45,7 @@ sudo snap install zwavejs2mqtt
 
 And give the package access to use USB-devices and observe hardware. The last one is needed for the program to list available devices in the UI.
 
-```
+```bash
 sudo snap conncet zwavejs2mqtt:raw-usb
 sudo snap connect zwavejs2mqtt:hardware-observe
 ```
