@@ -1,36 +1,25 @@
 <template>
   <v-dialog v-model="value" persistent fullscreen>
-    <v-card>
-      <v-card-title style="padding-left:0">
-        <div style="background-color:#dfdfdf;border-radius:0 8px 8px 0;min-width:119px;display:flex;justify-content:space-between;padding:0.6rem 0;margin-right:1.5rem">
-          <v-btn @click="$emit('prev')" icon><v-icon color="#666" large>keyboard_arrow_left</v-icon></v-btn>          
-          <div style="color:#666;font-size:1.6rem;padding-top:0.1rem">{{node.id}}</div>
-          <v-btn @click="$emit('next')" icon><v-icon color="#666" large>keyboard_arrow_right</v-icon></v-btn>
-        </div>
-        <!-- <v-chip label  :large="$vuetify.breakpoint.mdAndUp" color="#dfdfdf">
-        
-        </v-chip> -->
-        <div class="headline">
+    <v-card :class="[ 'node-card', $vuetify.breakpoint.name]">
+      <header>
+        <nav>
+          <v-btn @click="$emit('prev')" icon><v-icon color="#666" :large="$vuetify.breakpoint.smAndUp">keyboard_arrow_left</v-icon></v-btn>          
+          <strong>{{node.id}}</strong>
+          <v-btn @click="$emit('next')" icon><v-icon color="#666" :large="$vuetify.breakpoint.smAndUp">keyboard_arrow_right</v-icon></v-btn>
+        </nav>
+        <div class="node-title">
           <small>{{node.manu}}</small>
-          <div style="margin-top:-0.5rem">
-            <strong>{{ node.desc }}</strong>
-            <!-- <small v-if="$vuetify.breakpoint.smAndUp">{{node.productLabel}}</small> -->
-          </div>
+          <strong>{{ node.desc }}</strong>
+          <div style="opacity:0.7" v-if="$vuetify.breakpoint.xs && hasLocName">{{ (node.loc || '') }} {{ (node.name || '') }}</div>
         </div>
-        <v-spacer></v-spacer>
-        <!-- <div style="text-align:right">
-          <div v-if="node.name && node.name.length > 0" style="font-size:0.9rem;font-weight:bold">{{ node.loc }}</div>
-          <div v-if="node.name && node.name.length > 0" style="font-size:1.3rem;font-weight:bold">{{ node.name }}</div>
-        </div> -->
-        <div class="headline" style="margin-right:2rem;text-align:right">
+        <div v-if="$vuetify.breakpoint.smAndUp" class="node-title" style="margin-right:2rem;text-align:right;flex:0">
           <small>{{ (node.loc || '&#160;' ) }}</small>
-          <div style="margin-top:-0.5rem">
-            <strong>{{ (node.name || '&#160;' ) }}</strong>
-          </div>
+          <strong>{{ (node.name || '&#160;' ) }}</strong>
         </div>
-        <v-btn icon @click="$emit('close')"><v-icon>close</v-icon></v-btn>
-      </v-card-title>
-      <v-tabs style="border-radius:0 8px 8px 0;" background-color="#dfdfdf" :vertical="$vuetify.breakpoint.mdAndUp" :grow="$vuetify.breakpoint.smAndDown" :icons-and-text="$vuetify.breakpoint.smAndUp">
+        <v-btn style="margin:1rem" icon @click="$emit('close')"><v-icon>close</v-icon></v-btn>
+      </header>
+      <section class="tab-wrapper">
+      <v-tabs background-color="#dfdfdf" :vertical="$vuetify.breakpoint.smAndUp" :grow="$vuetify.breakpoint.smAndDown" :icons-and-text="$vuetify.breakpoint.smAndUp">
         <v-tab><div v-if="$vuetify.breakpoint.smAndUp">Info</div><v-icon>info</v-icon></v-tab>
         <v-tab><div v-if="$vuetify.breakpoint.smAndUp">Config</div><v-icon>build</v-icon></v-tab>
         <v-tab><div v-if="$vuetify.breakpoint.smAndUp">Groups</div><v-icon>dashboard_customize</v-icon></v-tab>
@@ -48,14 +37,6 @@
               <v-chip color="blue-grey lighten-4" text-color="blue-grey lighten-1" v-if="!node.isBeaming" icon><v-icon>battery_charging</v-icon> Battery</v-chip>
             </div>
             <div style="display:grid;grid-template-columns: repeat(2, 1fr);">
-              <!-- <div class="info-item">
-                <div>Location <a style="float:right" href="#">edit</a></div>
-                <div>{{ (node.loc || '(none)') }}</div>
-              </div>
-              <div class="info-item">
-                <div>Name <a style="float:right" href="#">edit</a></div>
-                <div>{{ (node.name || '(none)') }}</div>
-              </div> -->
               <div class="info-item">
                 <div>Model</div>
                 <div style="font-weight:bold">{{ node.productLabel }}</div>
@@ -154,6 +135,7 @@
         </v-card>
       </v-tab-item>
     </v-tabs>
+      </section>
     </v-card>
   </v-dialog>
 </template>
@@ -183,16 +165,8 @@ export default {
   },
   computed: {
     ...mapGetters(['gateway', 'nodes']),
-    nodeJson () {
-      return JSON.stringify(this.node, null, 2)
-    },
-    showHass () {
-      return (
-        false
-        // this.gateway.hassDiscovery &&
-        // this.node.hassDevices &&
-        // Object.keys(this.node.hassDevices).length > 0
-      )
+    hasLocName () {
+      return (this.node.name && this.node.name.length > 0) || (this.node.loc && this.node.loc.length > 0)
     }
   },
   methods: {
@@ -208,11 +182,59 @@ export default {
 </script>
 
 <style scoped>
+header { 
+  display:flex;
+  max-width:980px;
+  padding-top:1rem;
+  margin-bottom:1rem;
+}
+nav {
+  background-color:#dfdfdf;
+  border-radius:0 8px 8px 0;
+  min-width:119px;
+  display:flex;
+  justify-content:space-between;
+  margin-right:1.5rem;
+  align-items: center;
+}
+.node-card.xs nav{
+  min-width:96px;
+  margin-right:0.8rem
+}
+nav>strong{
+  color:#666;
+  font-size:1.4rem;
+}
+.node-card.xs nav>strong{
+  font-size:1.2rem;
+}
+
+.node-title {
+  flex:1;
+  display:flex;
+  flex-direction: column;
+  font-size: 1.4rem;
+  margin: 0.6rem 0;
+}
+.node-title>strong {margin-top:-0.5rem}
+.node-card.xs .node-title{
+  font-size:1.1rem;
+  line-height:1.2rem;
+}
+.node-card.xs .node-title>strong {margin-top:0}
+
+.v-tabs {
+  border-radius:0 8px 8px 0;
+}
+.node-card.xs .v-tabs {
+  border-radius:0;
+}
+
 .item-chips{
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 .item-chips>span{
-  margin-right:1rem;
+  margin:0 1rem 0.5rem 0;
 }
 .item-chips>span i{
   margin-right:0.4rem;
@@ -229,5 +251,25 @@ export default {
   font-size:1.1rem;
   font-weight:500;
   margin-top:-0.4rem;
+}
+
+.tab-wrapper {
+  height:80vh; /* Set to desired height of entire tabbed section, or use flex, or ... */
+  display:flex; 
+  flex-direction: column;
+}
+
+.tab-wrapper .v-window{
+  flex: 1;
+}
+
+.tab-wrapper .v-window__container,
+.tab-wrapper .v-window-item  {
+  height: 100%;
+}
+
+/* customise the dimensions of the card content here */
+.tab-wrapper .v-card {
+  height: 100%;
 }
 </style>
