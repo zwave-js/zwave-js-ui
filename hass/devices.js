@@ -35,10 +35,10 @@ const THERMOSTAT_2GIG = {
     '68-1-mode'
   ],
   action_map: {
-    idle: 0,
-    heating: 1,
-    cooling: 2,
-    fan: 3
+    0: 'idle',
+    1: 'heating',
+    2: 'cooling',
+    3: 'fan'
   },
   mode_map: {
     off: 0,
