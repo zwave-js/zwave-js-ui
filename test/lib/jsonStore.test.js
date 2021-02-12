@@ -22,9 +22,7 @@ describe('#jsonStore', () => {
     })
 
     it('uncaught error', () => {
-      mod
-        .__get__('jsonfile')
-        .readFile.rejects(new Error('FOO'))
+      mod.__get__('jsonfile').readFile.rejects(new Error('FOO'))
       return fun(config).should.eventually.be.rejectedWith(Error, 'FOO')
     })
 
