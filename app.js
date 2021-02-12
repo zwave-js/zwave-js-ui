@@ -56,6 +56,7 @@ async function startServer (host, port) {
   let server
 
   if (process.env.HTTPS) {
+    logger.info('HTTPS is enabled. Loading cert and keys from store...')
     const { cert, key } = await loadCertKey()
     server = require('https').createServer(
       {
@@ -72,7 +73,11 @@ async function startServer (host, port) {
   server.listen(port, host, function () {
     const addr = server.address()
     const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
-    logger.info(`Listening on ${bind}`)
+    logger.info(
+      `Listening on ${bind} host ${host} protocol ${
+        process.env.HTTPS ? 'HTTPS' : 'HTTP'
+      }`
+    )
   })
 
   server.on('error', function (error) {
@@ -133,7 +138,7 @@ async function loadCertKey () {
   } catch (error) {}
 
   if (!cert || !key) {
-    logger.info('Generating certificates...')
+    logger.info('Cert and key not found in store, generating fresh new ones...')
 
     const result = await createCertificate({
       days: 99999,
