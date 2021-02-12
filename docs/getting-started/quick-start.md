@@ -42,9 +42,16 @@ Make sure you have a [Snapd installed](https://snapcraft.io/docs/installing-snap
 ```bash
 sudo snap install zwavejs2mqtt
 ```
+
 And give the package access to use USB-devices and observe hardware. The last one is needed for the program to list available devices in the UI.
 
-See `zwavejs2mqtt.help` for usage and environment settings.
+```
+sudo snap conncet zwavejs2mqtt:raw-usb
+sudo snap connect zwavejs2mqtt:hardware-observe
+```
+
+> [!NOTE]
+> See `zwavejs2mqtt.help` for usage and environment settings.
 
 ## NodeJS or PKG version
 
