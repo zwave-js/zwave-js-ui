@@ -1,0 +1,14 @@
+# Purpose: Creating the final zwavejs2mqtt runtime image by just copying the build results
+ARG BUILD_IMAGE_TAG=latest
+ARG RUNTIME_BASE_IMAGE_TAG=latest
+FROM zwavejs/zwavejs2mqtt-build:${BUILD_IMAGE_TAG} AS zjs2m-build
+FROM zwavejs/zwavejs2mqtt-runtime-base:${RUNTIME_BASE_IMAGE_TAG} AS zjs2m-runtime
+
+# Copy files from previous build stage
+COPY --from=zjs2m-build /usr/src/app /usr/src/app
+
+WORKDIR /usr/src/app
+
+EXPOSE 8091
+
+CMD ["node", "bin/www"]

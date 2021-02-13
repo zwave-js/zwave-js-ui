@@ -1,0 +1,27 @@
+# Purpose: Provide a base image for running zwavejs2mqtt
+ARG NODE_IMAGE_TAG=12.20.1-alpine
+ARG BUILD_IMAGE_TAG=latest
+FROM node:${NODE_IMAGE_TAG} AS zjs2m-runtime-base
+
+WORKDIR /usr/src/app
+
+RUN apk add --no-cache \
+  libstdc++  \
+  libgcc \
+  libusb \
+  tzdata \
+  eudev
+
+# TODO: Is this really required here?
+RUN npm config set unsafe-perm true
+RUN npm install --no-optional --only=production
+
+# TODO: Verify if all entries are really required here:
+RUN rm -rf \
+  build \
+  index.html \
+  package-lock.json \
+  package.sh \
+  src \
+  static \
+  stylesheets

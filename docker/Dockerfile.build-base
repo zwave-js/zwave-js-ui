@@ -1,0 +1,16 @@
+# Purpose: Provide a base image for building zwavejs2mqtt
+ARG NODE_IMAGE_TAG=12.20.1-alpine
+FROM node:${NODE_IMAGE_TAG} AS zjs2m-build-base
+
+WORKDIR /usr/src/app
+
+RUN apk --no-cache add \
+  coreutils \
+  linux-headers \
+  alpine-sdk \
+  python
+
+COPY package.json package-lock.json ./
+
+RUN npm config set unsafe-perm true
+RUN npm install --no-optional
