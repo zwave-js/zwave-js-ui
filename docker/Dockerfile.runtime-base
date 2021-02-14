@@ -12,6 +12,8 @@ RUN apk add --no-cache \
   eudev
 
 # TODO: Is this really required here?
+COPY package.json package-lock.json ./
+
 RUN npm config set unsafe-perm true
 RUN npm install --no-optional --only=production
 
