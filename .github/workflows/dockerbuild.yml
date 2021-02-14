@@ -50,13 +50,32 @@ jobs:
       #       buildx-${{ github.ref }}-${{ github.sha }}
       #       buildx-${{ github.ref }}
       #       buildx-
-      - id: detect_dep_changes
-        name: Detect Dependency Changes
-        run: git diff --name-only ${GITHUB_SHA} | grep -q -E '^package(-lock)?\.json$' && echo "z2m_deps_changed=true" >> $GITHUB_ENV || true
+      - id: prepare_env
+        name: Prepare environment
+        run: |
+          # Get branch name:
+          z2m_tagname="${GITHUB_REF##*/}"
+          echo "z2m_tagname=${z2m_tagname}" >> $GITHUB_ENV
+          # Check, if dependencies have changed:
+          if git diff --name-only ${GITHUB_SHA} | grep -q -E '^package(-lock)?\.json$'; then
+            z2m_deps_changed=true
+            echo "z2m_deps_changed=${z2m_deps_changed}" >> $GITHUB_ENV
+          fi
+          # Check, if base images exist:
+          if ! docker images -q zwavejs/zwavejs2mqtt-builder-base:${z2m_tagname} | grep -E -q '.+'; then
+            echo "z2m_build_builder_base=true" >> $GITHUB_ENV || true
+          elif [ "${z2m_deps_changed}" ]; then
+            echo "z2m_build_builder_base=true" >> $GITHUB_ENV || true
+          fi
+          if ! docker images -q zwavejs/zwavejs2mqtt-runtime-base:${z2m_tagname} | grep -E -q '.+'; then
+            echo "z2m_build_runtime_base=true" >> $GITHUB_ENV || true
+          elif [ "${z2m_deps_changed}" ]; then
+            echo "z2m_build_runtime_base=true" >> $GITHUB_ENV || true
+          fi
       - id: docker_builder_base_image
         name: Build docker builder base image
         uses: docker/build-push-action@v2
-        # if: ${{ env.z2m_deps_changed }}
+        if: ${{ env.z2m_build_builder_base }}
         with:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
@@ -65,10 +84,11 @@ jobs:
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
+          tags: zwavejs/zwavejs2mqtt-builder-base:${{ env.z2m_tagname }}
       - id: docker_runtime_base_image
         name: Build docker runtime base image
         uses: docker/build-push-action@v2
-        # if: ${{ env.z2m_deps_changed }}
+        if: ${{ env.z2m_build_runtime_base }}
         with:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
@@ -77,6 +97,7 @@ jobs:
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
+          tags: zwavejs/zwavejs2mqtt-runtime-base:${{ env.z2m_tagname }}
       - id: docker_builder_image
         name: Build docker builder image
         uses: docker/build-push-action@v2
@@ -89,6 +110,7 @@ jobs:
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_BASE_IMAGE_TAG=latest
             NODE_IMAGE_TAG=12.20.1-alpine
+          tags: zwavejs/zwavejs2mqtt-builder:${{ env.z2m_tagname }}
       - id: docker_runtime_image
         name: Build docker runtime image
         uses: docker/build-push-action@v2
@@ -103,5 +125,5 @@ jobs:
             RUNTIME_BASE_IMAGE_TAG=latest
           push: false # TODO: Remove again - just temporary for testing
           # push: ${{ github.event_name != 'pull_request' }}
-          # tags: ${{ steps.docker_meta.outputs.tags }}
-          # labels: ${{ steps.docker_meta.outputs.labels }}
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
