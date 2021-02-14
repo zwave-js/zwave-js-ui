@@ -53,6 +53,10 @@ jobs:
       - id: prepare_env
         name: Prepare environment
         run: |
+          # Show important env variables:
+          echo "GITHUB_REF=${GITHUB_REF}"
+          echo "GITHUB_HEAD_REF=${GITHUB_HEAD_REF}"
+          echo "GITHUB_BASE_REF=${GITHUB_BASE_REF}"
           # Get branch name:
           z2m_tagname="${GITHUB_REF##*/}"
           echo "z2m_tagname=${z2m_tagname}" >> $GITHUB_ENV
@@ -84,6 +88,7 @@ jobs:
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
+          push: true # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-builder-base:${{ env.z2m_tagname }}
       - id: docker_runtime_base_image
         name: Build docker runtime base image
@@ -97,6 +102,7 @@ jobs:
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
+          push: true # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-runtime-base:${{ env.z2m_tagname }}
       - id: docker_builder_image
         name: Build docker builder image
@@ -110,6 +116,7 @@ jobs:
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_BASE_IMAGE_TAG=latest
             NODE_IMAGE_TAG=12.20.1-alpine
+          push: true # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-builder:${{ env.z2m_tagname }}
       - id: docker_runtime_image
         name: Build docker runtime image
@@ -123,7 +130,7 @@ jobs:
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_IMAGE_TAG=latest
             RUNTIME_BASE_IMAGE_TAG=latest
-          push: false # TODO: Remove again - just temporary for testing
+          push: true # TODO: Remove again - just temporary for testing
           # push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
