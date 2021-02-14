@@ -40,9 +40,13 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
             maintainer=robertsLando
+      - id: detect_dep_changes
+        name: Detect Dependency Changes
+        # run: git diff --name-only HEAD~1 HEAD | grep -q -E '^package(-lock)?\.json$' && echo "z2m_deps_changed=true" >> $GITHUB_ENV
+        run: git diff --name-only ${GITHUB_SHA} | grep -q -E '^package(-lock)?\.json$' && echo "z2m_deps_changed=true" >> $GITHUB_ENV
       - id: build_base_images
         name: Build docker base images
-        if: ${{ true }} # TODO: Check, if package.json + package-lock.json has changed
+        if: ${{ env.z2m_deps_changed }}
         run: docker-compose -f docker/docker-compose.build.yml build zwavejs2mqtt-build-base zwavejs2mqtt-runtime-base
       - id: build_final_image
         name: Build final docker image
