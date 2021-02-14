@@ -40,6 +40,10 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
             maintainer=robertsLando
+      - id: build_base_images
+        name: Build docker base images
+        if: ${{ true }} # TODO: Check, if package.json + package-lock.json has changed
+        run: docker-compose -f docker/docker-compose.build.yml build zwavejs2mqtt-build-base zwavejs2mqtt-runtime-base
       - id: build_final_image
         name: Build final docker image
         run: docker-compose -f docker/docker-compose.build.yml build zwavejs2mqtt-build zwavejs2mqtt-runtime
