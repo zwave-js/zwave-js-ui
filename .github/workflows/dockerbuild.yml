@@ -59,7 +59,7 @@ jobs:
         with:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
-          file: docker/Dockerfile.build-base
+          file: docker/Dockerfile.builder-base
           cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
@@ -82,7 +82,7 @@ jobs:
         with:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
-          file: docker/Dockerfile.build
+          file: docker/Dockerfile.builder
           cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
