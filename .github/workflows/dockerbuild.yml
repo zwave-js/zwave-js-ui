@@ -72,12 +72,13 @@ jobs:
             z2m_deps_changed=true
             echo "z2m_deps_changed=${z2m_deps_changed}" | tee -a $GITHUB_ENV
           fi
-          # Check, if base images exist:
+          # Check, if builder base image exists:
           if ! docker images -q zwavejs/zwavejs2mqtt-builder-base:${z2m_tagname} | grep -E -q '.+'; then
             echo "z2m_build_builder_base=true" | tee -a $GITHUB_ENV || true
           elif [ "${z2m_deps_changed}" ]; then
             echo "z2m_build_builder_base=true" | tee -a $GITHUB_ENV || true
           fi
+          # Check, if runtime base image exists:
           if ! docker images -q zwavejs/zwavejs2mqtt-runtime-base:${z2m_tagname} | grep -E -q '.+'; then
             echo "z2m_build_runtime_base=true" | tee -a $GITHUB_ENV || true
           elif [ "${z2m_deps_changed}" ]; then
@@ -93,8 +94,7 @@ jobs:
           file: docker/Dockerfile.builder-base
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args:
-            | # TODO: Adjust tags to allow different for PRs + branches
+          build-args: |
             NODE_IMAGE_TAG=12.20.1-alpine
           push: true # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-builder-base:${{ env.z2m_tagname }}
@@ -108,8 +108,7 @@ jobs:
           file: docker/Dockerfile.runtime-base
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args:
-            | # TODO: Adjust tags to allow different for PRs + branches
+          build-args: |
             NODE_IMAGE_TAG=12.20.1-alpine
           push: true # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-runtime-base:${{ env.z2m_tagname }}
@@ -122,8 +121,7 @@ jobs:
           file: docker/Dockerfile.builder
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args:
-            | # TODO: Adjust tags to allow different for PRs + branches
+          build-args: |
             BUILDER_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
             NODE_IMAGE_TAG=12.20.1-alpine
           push: true # TODO: Remove again - just temporary for testing
@@ -137,8 +135,7 @@ jobs:
           file: docker/Dockerfile.runtime
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args:
-            | # TODO: Adjust tags to allow different for PRs + branches
+          build-args: |
             BUILDER_IMAGE_TAG=${{ env.z2m_tagname }}
             RUNTIME_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
           push: ${{ github.event_name != 'pull_request' }}
