@@ -58,27 +58,30 @@ jobs:
           echo "GITHUB_HEAD_REF=${GITHUB_HEAD_REF}"
           echo "GITHUB_BASE_REF=${GITHUB_BASE_REF}"
           # Get branch name:
-          if [ "${GITHUB_BASE_REF}" ]; then
-            z2m_tagname="${GITHUB_BASE_REF}"
-          else
-            z2m_tagname="${GITHUB_REF##*/}"
-          fi
-          echo "z2m_tagname=${z2m_tagname}" >> $GITHUB_ENV
+          case "${GITHUB_REF}" in
+            refs/pull/*/merge)
+              z2m_tagname="${GITHUB_HEAD_REF}"
+            ;;
+            refs/heads/*)
+              z2m_tagname="${GITHUB_REF##*/}"
+            ;;
+          esac
+          echo "z2m_tagname=${z2m_tagname}" | tee -a $GITHUB_ENV
           # Check, if dependencies have changed:
           if git diff --name-only ${GITHUB_SHA} | grep -q -E '^package(-lock)?\.json$'; then
             z2m_deps_changed=true
-            echo "z2m_deps_changed=${z2m_deps_changed}" >> $GITHUB_ENV
+            echo "z2m_deps_changed=${z2m_deps_changed}" | tee -a $GITHUB_ENV
           fi
           # Check, if base images exist:
           if ! docker images -q zwavejs/zwavejs2mqtt-builder-base:${z2m_tagname} | grep -E -q '.+'; then
-            echo "z2m_build_builder_base=true" >> $GITHUB_ENV || true
+            echo "z2m_build_builder_base=true" | tee -a $GITHUB_ENV || true
           elif [ "${z2m_deps_changed}" ]; then
-            echo "z2m_build_builder_base=true" >> $GITHUB_ENV || true
+            echo "z2m_build_builder_base=true" | tee -a $GITHUB_ENV || true
           fi
           if ! docker images -q zwavejs/zwavejs2mqtt-runtime-base:${z2m_tagname} | grep -E -q '.+'; then
-            echo "z2m_build_runtime_base=true" >> $GITHUB_ENV || true
+            echo "z2m_build_runtime_base=true" | tee -a $GITHUB_ENV || true
           elif [ "${z2m_deps_changed}" ]; then
-            echo "z2m_build_runtime_base=true" >> $GITHUB_ENV || true
+            echo "z2m_build_runtime_base=true" | tee -a $GITHUB_ENV || true
           fi
       - id: docker_builder_base_image
         name: Build docker builder base image
