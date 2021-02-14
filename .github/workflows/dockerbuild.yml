@@ -42,8 +42,8 @@ jobs:
             maintainer=robertsLando
       - id: detect_dep_changes
         name: Detect Dependency Changes
-        # run: git diff --name-only HEAD~1 HEAD | grep -q -E '^package(-lock)?\.json$' && echo "z2m_deps_changed=true" >> $GITHUB_ENV
-        run: git diff --name-only ${GITHUB_SHA} | grep -q -E '^package(-lock)?\.json$' && echo "z2m_deps_changed=true" >> $GITHUB_ENV
+        # run: git diff --name-only HEAD~1 HEAD | grep -q -E '^package(-lock)?\.json$' && echo "z2m_deps_changed=true" >> $GITHUB_ENV || true
+        run: git diff --name-only ${GITHUB_SHA} | grep -q -E '^package(-lock)?\.json$' && echo "z2m_deps_changed=true" >> $GITHUB_ENV || true
       - id: build_base_images
         name: Build docker base images
         if: ${{ env.z2m_deps_changed }}
