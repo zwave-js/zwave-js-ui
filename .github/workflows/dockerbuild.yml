@@ -93,7 +93,8 @@ jobs:
           file: docker/Dockerfile.builder-base
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args: | # TODO: Adjust tags to allow different for PRs + branches
+          build-args:
+            | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
           push: true # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-builder-base:${{ env.z2m_tagname }}
@@ -107,7 +108,8 @@ jobs:
           file: docker/Dockerfile.runtime-base
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args: | # TODO: Adjust tags to allow different for PRs + branches
+          build-args:
+            | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
           push: true # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-runtime-base:${{ env.z2m_tagname }}
@@ -120,7 +122,8 @@ jobs:
           file: docker/Dockerfile.builder
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args: | # TODO: Adjust tags to allow different for PRs + branches
+          build-args:
+            | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
             NODE_IMAGE_TAG=12.20.1-alpine
           push: true # TODO: Remove again - just temporary for testing
@@ -134,7 +137,8 @@ jobs:
           file: docker/Dockerfile.runtime
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
-          build-args: | # TODO: Adjust tags to allow different for PRs + branches
+          build-args:
+            | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_IMAGE_TAG=${{ env.z2m_tagname }}
             RUNTIME_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
           push: ${{ github.event_name != 'pull_request' }}

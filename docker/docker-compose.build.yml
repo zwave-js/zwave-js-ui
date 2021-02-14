@@ -6,14 +6,14 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.builder-base
       args:
-        - "NODE_IMAGE_TAG=${NODE_IMAGE_TAG:-12.20.1-alpine}"
+        - 'NODE_IMAGE_TAG=${NODE_IMAGE_TAG:-12.20.1-alpine}'
   zwavejs2mqtt-builder:
     image: zwavejs/zwavejs2mqtt-builder:${BUILDER_IMAGE_TAG:-latest}
     build:
       context: ..
       dockerfile: docker/Dockerfile.builder
       args:
-        - "BUILDER_BASE_IMAGE_TAG=${BUILDER_BASE_IMAGE_TAG:-latest}"
+        - 'BUILDER_BASE_IMAGE_TAG=${BUILDER_BASE_IMAGE_TAG:-latest}'
     depends_on:
       - zwavejs2mqtt-builder-base
   zwavejs2mqtt-runtime-base:
@@ -22,15 +22,15 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.runtime-base
       args:
-        - "NODE_IMAGE_TAG=${NODE_IMAGE_TAG:-12.20.1-alpine}"
+        - 'NODE_IMAGE_TAG=${NODE_IMAGE_TAG:-12.20.1-alpine}'
   zwavejs2mqtt-runtime:
     image: zwavejs/zwavejs2mqtt-runtime:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile.runtime
       args:
-        - "BUILDER_IMAGE_TAG=${BUILDER_IMAGE_TAG:-latest}"
-        - "RUNTIME_BASE_IMAGE_TAG=${RUNTIME_BASE_IMAGE_TAG:-latest}"
+        - 'BUILDER_IMAGE_TAG=${BUILDER_IMAGE_TAG:-latest}'
+        - 'RUNTIME_BASE_IMAGE_TAG=${RUNTIME_BASE_IMAGE_TAG:-latest}'
     depends_on:
       - zwavejs2mqtt-builder
       - zwavejs2mqtt-runtime-base
