@@ -55,7 +55,7 @@ jobs:
       - id: docker_builder_base_image
         name: Build docker builder base image
         uses: docker/build-push-action@v2
-        if: ${{ env.z2m_deps_changed }}
+        # if: ${{ env.z2m_deps_changed }}
         with:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
@@ -67,7 +67,7 @@ jobs:
       - id: docker_runtime_base_image
         name: Build docker runtime base image
         uses: docker/build-push-action@v2
-        if: ${{ env.z2m_deps_changed }}
+        # if: ${{ env.z2m_deps_changed }}
         with:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
