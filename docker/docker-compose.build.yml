@@ -1,21 +1,21 @@
 version: '3.7'
 services:
-  zwavejs2mqtt-build-base:
-    image: zwavejs/zwavejs2mqtt-build-base:${BUILD_BASE_IMAGE_TAG:-latest}
+  zwavejs2mqtt-builder-base:
+    image: zwavejs/zwavejs2mqtt-builder-base:${BUILDER_BASE_IMAGE_TAG:-latest}
     build:
       context: ..
-      dockerfile: docker/Dockerfile.build-base
+      dockerfile: docker/Dockerfile.builder-base
       args:
         - "NODE_IMAGE_TAG=${NODE_IMAGE_TAG:-12.20.1-alpine}"
-  zwavejs2mqtt-build:
-    image: zwavejs/zwavejs2mqtt-build:${BUILD_IMAGE_TAG:-latest}
+  zwavejs2mqtt-builder:
+    image: zwavejs/zwavejs2mqtt-builder:${BUILDER_IMAGE_TAG:-latest}
     build:
       context: ..
-      dockerfile: docker/Dockerfile.build
+      dockerfile: docker/Dockerfile.builder
       args:
-        - "BUILD_BASE_IMAGE_TAG=${BUILD_BASE_IMAGE_TAG:-latest}"
+        - "BUILDER_BASE_IMAGE_TAG=${BUILDER_BASE_IMAGE_TAG:-latest}"
     depends_on:
-      - zwavejs2mqtt-build-base
+      - zwavejs2mqtt-builder-base
   zwavejs2mqtt-runtime-base:
     image: zwavejs/zwavejs2mqtt-runtime-base:latest
     build:
@@ -29,8 +29,8 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.runtime
       args:
-        - "BUILD_IMAGE_TAG=${BUILD_IMAGE_TAG:-latest}"
+        - "BUILDER_IMAGE_TAG=${BUILDER_IMAGE_TAG:-latest}"
         - "RUNTIME_BASE_IMAGE_TAG=${RUNTIME_BASE_IMAGE_TAG:-latest}"
     depends_on:
-      - zwavejs2mqtt-build
+      - zwavejs2mqtt-builder
       - zwavejs2mqtt-runtime-base

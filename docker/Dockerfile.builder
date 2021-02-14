@@ -1,6 +1,6 @@
 # Purpose: Building zwavejs2mqtt using the prepared base image that already includes all dependencies
-ARG BUILD_BASE_IMAGE_TAG=latest
-FROM zwavejs/zwavejs2mqtt-build-base:${BUILD_BASE_IMAGE_TAG} AS zjs2m-build
+ARG BUILDER_BASE_IMAGE_TAG=latest
+FROM zwavejs/zwavejs2mqtt-builder-base:${BUILDER_BASE_IMAGE_TAG}
 
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices

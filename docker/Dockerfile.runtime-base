@@ -1,7 +1,6 @@
 # Purpose: Provide a base image for running zwavejs2mqtt
 ARG NODE_IMAGE_TAG=12.20.1-alpine
-ARG BUILD_IMAGE_TAG=latest
-FROM node:${NODE_IMAGE_TAG} AS zjs2m-runtime-base
+FROM node:${NODE_IMAGE_TAG}
 
 WORKDIR /usr/src/app
 
