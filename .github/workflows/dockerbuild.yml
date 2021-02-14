@@ -134,7 +134,6 @@ jobs:
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_IMAGE_TAG=${{ env.z2m_tagname }}
             RUNTIME_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
-          push: true # TODO: Remove again - just temporary for testing
-          # push: ${{ github.event_name != 'pull_request' }}
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
