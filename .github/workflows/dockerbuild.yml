@@ -40,16 +40,16 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
             maintainer=robertsLando
-      # - id: cache_docker_layers
-      #   name: Cache Docker layers
-      #   uses: actions/cache@v2
-      #   with:
-      #     path: /tmp/.buildx-cache
-      #     key: buildx-${{ github.ref }}-${{ github.sha }}
-      #     restore-keys: |
-      #       buildx-${{ github.ref }}-${{ github.sha }}
-      #       buildx-${{ github.ref }}
-      #       buildx-
+      - id: cache_docker_layers
+        name: Cache Docker layers
+        uses: actions/cache@v2
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-${{ github.ref }}-${{ github.sha }}
+          restore-keys: |
+            buildx-${{ github.ref }}-${{ github.sha }}
+            buildx-${{ github.ref }}
+            buildx-
       - id: prepare_env
         name: Prepare environment
         run: |
@@ -91,8 +91,8 @@ jobs:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
           file: docker/Dockerfile.builder-base
-          # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
-          # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
+          cache-from: type=local,mode=max,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
           push: false # TODO: Remove again - just temporary for testing
@@ -105,8 +105,8 @@ jobs:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
           file: docker/Dockerfile.runtime-base
-          # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
-          # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
+          cache-from: type=local,mode=max,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
           push: false # TODO: Remove again - just temporary for testing
@@ -118,8 +118,8 @@ jobs:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
           file: docker/Dockerfile.builder
-          # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
-          # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
+          cache-from: type=local,mode=max,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
             NODE_IMAGE_TAG=12.20.1-alpine
@@ -132,8 +132,8 @@ jobs:
           # platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           platforms: linux/amd64
           file: docker/Dockerfile.runtime
-          # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
-          # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
+          cache-from: type=local,mode=max,src=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             BUILDER_IMAGE_TAG=${{ env.z2m_tagname }}
             RUNTIME_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
