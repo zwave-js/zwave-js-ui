@@ -58,7 +58,11 @@ jobs:
           echo "GITHUB_HEAD_REF=${GITHUB_HEAD_REF}"
           echo "GITHUB_BASE_REF=${GITHUB_BASE_REF}"
           # Get branch name:
-          z2m_tagname="${GITHUB_REF##*/}"
+          if [ "${GITHUB_BASE_REF}" ]; then
+            z2m_tagname="${GITHUB_BASE_REF}"
+          else
+            z2m_tagname="${GITHUB_REF##*/}"
+          fi
           echo "z2m_tagname=${z2m_tagname}" >> $GITHUB_ENV
           # Check, if dependencies have changed:
           if git diff --name-only ${GITHUB_SHA} | grep -q -E '^package(-lock)?\.json$'; then
@@ -88,7 +92,7 @@ jobs:
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
-          push: true # TODO: Remove again - just temporary for testing
+          push: false # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-builder-base:${{ env.z2m_tagname }}
       - id: docker_runtime_base_image
         name: Build docker runtime base image
@@ -102,7 +106,7 @@ jobs:
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
             NODE_IMAGE_TAG=12.20.1-alpine
-          push: true # TODO: Remove again - just temporary for testing
+          push: false # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-runtime-base:${{ env.z2m_tagname }}
       - id: docker_builder_image
         name: Build docker builder image
@@ -114,9 +118,9 @@ jobs:
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
-            BUILDER_BASE_IMAGE_TAG=latest
+            BUILDER_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
             NODE_IMAGE_TAG=12.20.1-alpine
-          push: true # TODO: Remove again - just temporary for testing
+          push: false # TODO: Remove again - just temporary for testing
           tags: zwavejs/zwavejs2mqtt-builder:${{ env.z2m_tagname }}
       - id: docker_runtime_image
         name: Build docker runtime image
@@ -128,8 +132,8 @@ jobs:
           # cache-from: type=local,mode=max,src=/tmp/.buildx-cache
           # cache-to: type=local,mode=max,dest=/tmp/.buildx-cache
           build-args: | # TODO: Adjust tags to allow different for PRs + branches
-            BUILDER_IMAGE_TAG=latest
-            RUNTIME_BASE_IMAGE_TAG=latest
+            BUILDER_IMAGE_TAG=${{ env.z2m_tagname }}
+            RUNTIME_BASE_IMAGE_TAG=${{ env.z2m_tagname }}
           push: true # TODO: Remove again - just temporary for testing
           # push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
