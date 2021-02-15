@@ -444,11 +444,13 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
 
     if (!oldUser) return res.json({ success: false, message: 'User not found' })
 
-    if (oldUser.password !== req.body.current)
+    if (oldUser.password !== req.body.current) {
       return res.json({ success: false, message: 'Actual password is wrong' })
+    }
 
-    if (req.body.new !== req.body.confirmNew)
+    if (req.body.new !== req.body.confirmNew) {
       return res.json({ success: false, message: "Passwords doesn't match" })
+    }
 
     oldUser.password = req.body.new
 

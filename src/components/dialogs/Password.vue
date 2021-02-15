@@ -46,7 +46,9 @@
       <v-card-actions>
         <v-spacer></v-spacer>
         <v-btn color="primary" text @click="closeDialog()">Close</v-btn>
-        <v-btn color="primary" :disabled="!valid" text @click="updatePassword()">Save</v-btn>
+        <v-btn color="primary" :disabled="!valid" text @click="updatePassword()"
+          >Save</v-btn
+        >
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -69,12 +71,17 @@ export default {
   data () {
     return {
       valid: true,
-      required (v) { return !!v || 'This is required' }
+      required (v) {
+        return !!v || 'This is required'
+      }
     }
   },
   computed: {
     passwordMatch () {
-      return this.password.new === this.password.confirmNew || "Password doesn't match"
+      return (
+        this.password.new === this.password.confirmNew ||
+        "Password doesn't match"
+      )
     }
   },
   methods: {
