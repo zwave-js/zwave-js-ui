@@ -785,8 +785,7 @@ export default {
         if (id === hubNode) {
           entity.shape = 'house'
         } else {
-          entity.shape =
-            entity.forwards || batlev === undefined ? 'rect' : 'battery'
+          entity.shape = batlev === undefined ? 'rect' : 'battery'
         }
 
         if (node.failed) {
