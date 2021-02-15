@@ -49,6 +49,12 @@ export default {
   logout () {
     return request.get('/logout')
   },
+  // ---- USER ------
+  async updatePassword (data) {
+    const response = await request.put('/password', data)
+    return response.data
+  },
+  // ---- CONFIG -----
   getBasePath () {
     return getBasePath()
   },

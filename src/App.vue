@@ -122,6 +122,13 @@
       </v-main>
     </main>
 
+    <PasswordDialog
+      @updatePassword="updatePassword()"
+      @close="closePasswordDialog()"
+      :show="dialog_password"
+      :password="password"
+    />
+
     <Confirm ref="confirm"></Confirm>
 
     <v-snackbar
@@ -150,6 +157,7 @@ code {
 import io from 'socket.io-client'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
+import PasswordDialog from '@/components/dialogs/Password'
 import { Settings } from '@/modules/Settings'
 import { Routes } from '@/router'
 
@@ -159,15 +167,88 @@ import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
 export default {
   components: {
+    PasswordDialog,
     Confirm
   },
   name: 'app',
   computed: {
     ...mapGetters(['user'])
   },
+  watch: {
+    $route: function (value) {
+      this.title = value.name || ''
+      this.startSocket()
+    },
+    dark (v) {
+      this.settings.store('dark', this.dark)
+
+      this.$vuetify.theme.dark = v
+      this.changeThemeColor()
+    }
+  },
+  data () {
+    return {
+      socket: null,
+      dialog_password: false,
+      password: {},
+      menu: [
+        {
+          icon: 'logout',
+          func: this.logout,
+          tooltip: 'Logout'
+        },
+        {
+          icon: 'lock',
+          func: this.showPasswordDialog,
+          tooltip: 'Password'
+        }
+      ],
+      pages: [
+        { icon: 'widgets', title: 'Control Panel', path: Routes.controlPanel },
+        { icon: 'settings', title: 'Settings', path: Routes.settings },
+        { icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
+        { icon: 'bug_report', title: 'Debug', path: Routes.debug },
+        { icon: 'folder', title: 'Store', path: Routes.store },
+        { icon: 'share', title: 'Network graph', path: Routes.mesh }
+      ],
+      settings: new Settings(localStorage),
+      status: '',
+      statusColor: '',
+      drawer: false,
+      mini: false,
+      topbar: [],
+      title: '',
+      snackbar: false,
+      snackbarText: '',
+      dark: undefined,
+      baseURI: ConfigApis.getBasePath()
+    }
+  },
   methods: {
     ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
     ...mapMutations(['setControllerStatus', 'initNode']),
+    async updatePassword () {
+      try {
+        const response = await ConfigApis.updatePassword(this.password)
+        this.showSnackbar(response.message)
+        if (response.success) {
+          this.closePasswordDialog()
+          this.$store.dispatch('setUser', response.user)
+        }
+      } catch (error) {
+        this.showSnackbar(
+          'Error while updating password, check console for more info'
+        )
+        console.log(error)
+      }
+    },
+    closePasswordDialog () {
+      this.dialog_password = false
+    },
+    showPasswordDialog () {
+      this.password = {}
+      this.dialog_password = true
+    },
     toggleDrawer () {
       if (['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0) {
         this.mini = false
@@ -356,49 +437,6 @@ export default {
 
       this.$router.push('/')
       this.showSnackbar('Logged out')
-    }
-  },
-  data () {
-    return {
-      socket: null,
-      menu: [
-        {
-          icon: 'logout',
-          func: this.logout,
-          tooltip: 'Logout'
-        }
-      ],
-      pages: [
-        { icon: 'widgets', title: 'Control Panel', path: Routes.controlPanel },
-        { icon: 'settings', title: 'Settings', path: Routes.settings },
-        { icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
-        { icon: 'bug_report', title: 'Debug', path: Routes.debug },
-        { icon: 'folder', title: 'Store', path: Routes.store },
-        { icon: 'share', title: 'Network graph', path: Routes.mesh }
-      ],
-      settings: new Settings(localStorage),
-      status: '',
-      statusColor: '',
-      drawer: false,
-      mini: false,
-      topbar: [],
-      title: '',
-      snackbar: false,
-      snackbarText: '',
-      dark: undefined,
-      baseURI: ConfigApis.getBasePath()
-    }
-  },
-  watch: {
-    $route: function (value) {
-      this.title = value.name || ''
-      this.startSocket()
-    },
-    dark (v) {
-      this.settings.store('dark', this.dark)
-
-      this.$vuetify.theme.dark = v
-      this.changeThemeColor()
     }
   },
   beforeMount () {
