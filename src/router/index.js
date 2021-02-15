@@ -111,14 +111,20 @@ router.beforeEach(async (to, from, next) => {
   }
 
   let user = store.state.user
-  const logged = !!localStorage.getItem('logged')
+  let logged = !!localStorage.getItem('logged')
 
   if (!user || Object.keys(user).length === 0) {
     // check if there is a valid user in localstorage
     try {
       user = JSON.parse(localStorage.getItem('user'))
-      if (user) {
-        store.commit('setUser', user)
+      if (user && logged) { // used found in local storage, login
+        const response = await ConfigApis.login()
+        if (!response.success) {
+          logged = false
+          localStorage.removeItem('logged')
+        } else {
+          store.commit('setUser', user)
+        }
       } else user = {}
     } catch (error) {
       user = {}
