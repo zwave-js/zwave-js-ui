@@ -7,7 +7,9 @@
             <v-btn icon @click="$router.go(-2)">
               <v-icon>arrow_back</v-icon>
             </v-btn>
-            <v-toolbar-title>{{query.code + ' - ' + query.message}}</v-toolbar-title>
+            <v-toolbar-title>{{
+              query.code + ' - ' + query.message
+            }}</v-toolbar-title>
             <v-spacer></v-spacer>
             <v-btn icon @click="$router.push('/')">
               <v-icon>home</v-icon>
@@ -15,14 +17,14 @@
           </v-toolbar>
           <v-card-text>
             <v-container fill-height text-xs-center>
-            <v-row justify="center">
-              <v-col>
-                <strong class="headline font-weight-bold">
-                  Error while requesting resource at
-                  <code>{{query.path}}</code>
-                </strong>
-              </v-col>
-            </v-row>
+              <v-row justify="center">
+                <v-col>
+                  <strong class="headline font-weight-bold">
+                    Error while requesting resource at
+                    <code>{{ query.path }}</code>
+                  </strong>
+                </v-col>
+              </v-row>
             </v-container>
           </v-card-text>
         </v-card>
@@ -30,7 +32,11 @@
     </v-row>
     <v-footer absolute class="pa-3">
       <v-spacer></v-spacer>
-      <div><strong> Innovation System &copy; {{ new Date().getFullYear() }} </strong></div>
+      <div>
+        <strong>
+          Innovation System &copy; {{ new Date().getFullYear() }}
+        </strong>
+      </div>
       <v-spacer></v-spacer>
     </v-footer>
   </v-container>
@@ -46,9 +52,7 @@ export default {
   methods: {},
   beforeMount () {
     this.query =
-      Object.keys(this.$route.query).length > 0
-        ? this.$route.query
-        : this.query
+      Object.keys(this.$route.query).length > 0 ? this.$route.query : this.query
   }
 }
 </script>

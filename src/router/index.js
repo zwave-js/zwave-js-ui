@@ -117,7 +117,8 @@ router.beforeEach(async (to, from, next) => {
     // check if there is a valid user in localstorage
     try {
       user = JSON.parse(localStorage.getItem('user'))
-      if (user && logged) { // used found in local storage, login
+      if (user && logged) {
+        // used found in local storage, login
         const response = await ConfigApis.login()
         if (!response.success) {
           logged = false
@@ -135,17 +136,21 @@ router.beforeEach(async (to, from, next) => {
   user.notLogged = Object.keys(user).length === 0 || !logged
 
   if (route.auth) {
-    if (user.notLogged) { // user not logged redirect to login page
+    if (user.notLogged) {
+      // user not logged redirect to login page
       next({
         path: Routes.login,
         params: { nextUrl: to.fullPath }
       })
-    } else { // user logged, let it go
+    } else {
+      // user logged, let it go
       next()
     }
-  } else if (user.notLogged) { // doesn't require auth and user is not logged
+  } else if (user.notLogged) {
+    // doesn't require auth and user is not logged
     next()
-  } else { // user is logged
+  } else {
+    // user is logged
     next({
       path: Routes.settings,
       params: { nextUrl: to.fullPath }
