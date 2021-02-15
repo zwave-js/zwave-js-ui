@@ -256,17 +256,19 @@ app.use('/', express.static(utils.joinPath(false, 'dist')))
 app.use(cors({ credentials: true, origin: true }))
 
 // enable sessions management
-app.use(session({
-  name: 'zwavejs2mqtt-session',
-  secret: sessionSecret,
-  resave: true,
-  saveUninitialized: true,
-  cookie: {
-    secure: !!process.env.HTTPS,
-    httpOnly: true, // prevents cookie to be sent by client javascript
-    maxAge: 24 * 60 * 60 * 1000 // one day
-  }
-}))
+app.use(
+  session({
+    name: 'zwavejs2mqtt-session',
+    secret: sessionSecret,
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+      secure: !!process.env.HTTPS,
+      httpOnly: true, // prevents cookie to be sent by client javascript
+      maxAge: 24 * 60 * 60 * 1000 // one day
+    }
+  })
+)
 
 // ### SOCKET SETUP
 
@@ -345,7 +347,9 @@ async function parseJWT (req) {
   // is the same of the current session
   const users = credentialsStore.get(credentialsStore.keys.USERS) || []
 
-  const user = users.find(u => u.username === decoded.username && u._id === decoded._id)
+  const user = users.find(
+    u => u.username === decoded.username && u._id === decoded._id
+  )
 
   if (user) {
     return user
@@ -357,7 +361,9 @@ async function parseJWT (req) {
 // middleware to check if user is authenticated
 async function isAuthenticated (req, res, next) {
   // if user is authenticated in the session, carry on
-  if (req.session.user) { return next() }
+  if (req.session.user) {
+    return next()
+  }
 
   let err = null
 
@@ -370,13 +376,22 @@ async function isAuthenticated (req, res, next) {
     err = error
   }
 
-  res.json({ success: false, message: err.message || RESPONSE_CODES['3'], code: 3 })
+  res.json({
+    success: false,
+    message: err.message || RESPONSE_CODES['3'],
+    code: 3
+  })
 }
 
 // api to authenticate user
 app.post('/api/authenticate', loginLimiter, async function (req, res) {
   if (req.session.user) {
-    return res.json({ success: true, user: req.session.user, code: 0, message: 'User already logged' })
+    return res.json({
+      success: true,
+      user: req.session.user,
+      code: 0,
+      message: 'User already logged'
+    })
   }
 
   const users = credentialsStore.get(credentialsStore.keys.USERS) || []
@@ -384,7 +399,9 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
   const username = req.body.username
   const password = req.body.password
 
-  const user = users.find(u => u.username === username && u.password === password)
+  const user = users.find(
+    u => u.username === username && u.password === password
+  )
 
   const result = {
     success: !!user
@@ -427,9 +444,11 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
 
     if (!oldUser) return res.json({ success: false, message: 'User not found' })
 
-    if (oldUser.password !== req.body.current) return res.json({ success: false, message: 'Actual password is wrong' })
+    if (oldUser.password !== req.body.current)
+      return res.json({ success: false, message: 'Actual password is wrong' })
 
-    if (req.body.new !== req.body.confirmNew) return res.json({ success: false, message: "Passwords doesn't match" })
+    if (req.body.new !== req.body.confirmNew)
+      return res.json({ success: false, message: "Passwords doesn't match" })
 
     oldUser.password = req.body.new
 
@@ -439,7 +458,11 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
 
     res.json({ success: true, message: 'Password updated', user: oldUser })
   } catch (error) {
-    res.json({ success: false, message: 'Error while updating passwords', error: error.message })
+    res.json({
+      success: false,
+      message: 'Error while updating passwords',
+      error: error.message
+    })
     logger.error('Error while updating password', error)
   }
 })
@@ -572,7 +595,10 @@ app.get('/api/store', isAuthenticated, storeLimiter, async function (req, res) {
   }
 })
 
-app.get('/api/store/:path', isAuthenticated, storeLimiter, async function (req, res) {
+app.get('/api/store/:path', isAuthenticated, storeLimiter, async function (
+  req,
+  res
+) {
   try {
     const reqPath = getSafePath(req)
 
@@ -591,7 +617,10 @@ app.get('/api/store/:path', isAuthenticated, storeLimiter, async function (req, 
   }
 })
 
-app.put('/api/store/:path', isAuthenticated, storeLimiter, async function (req, res) {
+app.put('/api/store/:path', isAuthenticated, storeLimiter, async function (
+  req,
+  res
+) {
   try {
     const reqPath = getSafePath(req)
 
@@ -610,7 +639,10 @@ app.put('/api/store/:path', isAuthenticated, storeLimiter, async function (req, 
   }
 })
 
-app.delete('/api/store/:path', isAuthenticated, storeLimiter, async function (req, res) {
+app.delete('/api/store/:path', isAuthenticated, storeLimiter, async function (
+  req,
+  res
+) {
   try {
     const reqPath = getSafePath(req)
 
@@ -623,7 +655,10 @@ app.delete('/api/store/:path', isAuthenticated, storeLimiter, async function (re
   }
 })
 
-app.put('/api/store-multi', isAuthenticated, storeLimiter, async function (req, res) {
+app.put('/api/store-multi', isAuthenticated, storeLimiter, async function (
+  req,
+  res
+) {
   try {
     const files = req.body.files || []
     for (const f of files) {
@@ -636,7 +671,10 @@ app.put('/api/store-multi', isAuthenticated, storeLimiter, async function (req, 
   }
 })
 
-app.post('/api/store-multi', isAuthenticated, storeLimiter, function (req, res) {
+app.post('/api/store-multi', isAuthenticated, storeLimiter, function (
+  req,
+  res
+) {
   const files = req.body.files || []
 
   const archive = archiver('zip')

@@ -85,8 +85,9 @@ export default {
     return response.data
   },
   async writeFile (path, content) {
-    const response = await request
-      .put('/store/' + encodeURIComponent(path), { content })
+    const response = await request.put('/store/' + encodeURIComponent(path), {
+      content
+    })
     return response.data
   },
   async deleteFile (path) {
