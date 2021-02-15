@@ -19,7 +19,7 @@ const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const fs = require('fs-extra')
 const path = require('path')
-const { storeDir, defaultUser, sessionSecret } = reqlib('config/app.js')
+const { storeDir, sessionSecret } = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
 const session = require('express-session')
 const credentialsStore = reqlib('/lib/credentialsStore.js')
@@ -338,7 +338,7 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
     return res.json({ success: true, user: req.session.user, code: 0, message: 'User already logged' })
   }
 
-  const users = credentialsStore.get(defaultUser) || []
+  const users = credentialsStore.get(credentialsStore.keys.USERS) || []
 
   const username = req.body.username
   const password = req.body.password
@@ -371,7 +371,7 @@ app.get('/api/logout', isAuthenticated, async function (req, res) {
 // update user password
 app.put('/api/password', isAuthenticated, async function (req, res) {
   try {
-    const users = credentialsStore.get(defaultUser) || []
+    const users = credentialsStore.get(credentialsStore.keys.USERS) || []
 
     const user = req.session.user
     const oldUser = users.find(u => u._id === user._id)

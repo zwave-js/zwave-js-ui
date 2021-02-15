@@ -42,8 +42,9 @@ loadProgressBar()
 
 export default {
   // ---- LOGIN/LOGOUT ------
-  login (data) {
-    return request.put('/authenticate', data)
+  async login (data) {
+    const response = await request.post('/authenticate', data)
+    return response.data
   },
   logout () {
     return request.get('/logout')

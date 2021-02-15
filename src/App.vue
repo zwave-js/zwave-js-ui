@@ -1,6 +1,12 @@
 <template>
   <v-app :dark="dark">
-    <v-navigation-drawer clipped-left :mini-variant="mini" v-model="drawer" app>
+    <v-navigation-drawer
+      v-if="$route.meta.requiresAuth"
+      clipped-left
+      :mini-variant="mini"
+      v-model="drawer"
+      app
+    >
       <v-list nav class="py-0">
         <v-list-item :class="mini && 'px-0'">
           <v-list-item-avatar>
@@ -40,7 +46,7 @@
       </v-footer>
     </v-navigation-drawer>
 
-    <v-app-bar app>
+    <v-app-bar v-if="$route.meta.requiresAuth" app>
       <v-app-bar-nav-icon @click.stop="toggleDrawer" />
       <v-toolbar-title>{{ title }}</v-toolbar-title>
 
@@ -60,8 +66,8 @@
         <span>{{ status }}</span>
       </v-tooltip>
     </v-app-bar>
-    <main>
-      <v-main>
+    <main style="height:100%">
+      <v-main style="height:100%">
         <router-view
           @import="importFile"
           @export="exportConfiguration"

@@ -4,7 +4,7 @@
       <v-col cols="12" sm="8" md="4">
         <v-card class="elevation-12">
           <v-toolbar dark color="primary">
-            <v-avatar size="40px" color="#eee">
+            <v-avatar size="40px">
               <img src="/static/logo.png" alt="Logo" style="padding:5px" />
             </v-avatar>
             <v-toolbar-title style="margin-left:10px"
@@ -78,6 +78,7 @@
 
 <script>
 import ConfigApis from '@/apis/ConfigApis'
+import { Routes } from '@/router'
 
 export default {
   data () {
@@ -173,7 +174,7 @@ export default {
             if (this.$route.params.nextUrl != null) {
               this.$router.push(this.$route.params.nextUrl)
             } else {
-              this.$router.push('tags')
+              this.$router.push(Routes.settings)
             }
           }
         } catch (error) {

@@ -1,6 +1,7 @@
 export const state = {
   serial_ports: [],
   nodes: [],
+  user: {},
   zwave: {
     port: undefined,
     commandsTimeout: 30,
@@ -56,6 +57,7 @@ function getValue (v) {
 
 export const getters = {
   nodes: state => state.nodes,
+  user: state => state.user,
   serial_ports: state => state.serial_ports,
   zwave: state => state.zwave,
   mqtt: state => state.mqtt,
@@ -71,6 +73,9 @@ export const actions = {
       store.commit('initPorts', data.serial_ports)
       store.commit('initDevices', data.devices)
     }
+  },
+  setUser (store, data) {
+    store.commit('setUser', data)
   },
   import (store, settings) {
     store.commit('initSettings', settings)
@@ -101,6 +106,10 @@ export const actions = {
 export const mutations = {
   showSnackbar () {
     // empty mutation, will be catched in App.vue from store subscribe
+  },
+  setUser (state, data) {
+    state.user = data
+    state.deviceId = data.deviceId
   },
   setControllerStatus (state, data) {
     state.appInfo.controllerStatus = data
