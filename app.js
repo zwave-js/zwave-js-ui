@@ -274,7 +274,7 @@ app.use(
 
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.
-app.use(csrf({ cookie: true }))
+// app.use(csrf({ cookie: true }))
 
 // ### SOCKET SETUP
 
