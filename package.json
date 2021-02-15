@@ -169,7 +169,7 @@
     "copy-webpack-plugin": "^7.0.0",
     "css-loader": "^5.0.2",
     "deepmerge": "^4.2.2",
-    "eslint": "^7.19.0",
+    "eslint": "^7.20.0",
     "eslint-config-standard": "^16.0.2",
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-loader": "^4.0.2",
