@@ -10,7 +10,7 @@ axios.defaults.socketUrl = getBasePath()
 axios.defaults.baseURL = `${axios.defaults.socketUrl}/api`
 
 function responseHandler (response) {
-  if (response.code === 3) {
+  if (response.data && response.data.code === 3) {
     localStorage.removeItem('logged')
     Router.push('/')
     throw Error(response.message || 'Authentication failed')

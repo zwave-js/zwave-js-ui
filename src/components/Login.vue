@@ -166,7 +166,6 @@ export default {
           } else {
             user = response.user
             user.rememberMe = this.rememberMe
-            user.deviceId = response.deviceId
             localStorage.setItem('user', JSON.stringify(user))
             localStorage.setItem('logged', 'true')
             this.$store.dispatch('setUser', user)

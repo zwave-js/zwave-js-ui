@@ -26,6 +26,10 @@ const credentialsStore = reqlib('/lib/credentialsStore.js')
 const archiver = require('archiver')
 const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
+const jwt = require('jsonwebtoken')
+const { promisify } = require('util')
+
+const verifyJWT = promisify(jwt.verify.bind(jwt))
 
 const storeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -323,13 +327,50 @@ function setupSocket (server) {
 
 // ### APIs
 
+async function parseJWT (req) {
+  // if not authenticated check if he has a valid token
+  let token = req.headers['x-access-token'] || req.headers.authorization // Express headers are auto converted to lowercase
+  if (token && token.startsWith('Bearer ')) {
+    // Remove Bearer from string
+    token = token.slice(7, token.length)
+  }
+
+  // third-party cookies must be allowed in order to work
+  if (!token) {
+    throw Error('Invalid token header')
+  }
+  const decoded = await verifyJWT(token, sessionSecret)
+
+  // Successfully authenticated, token is valid and the user _id of its content
+  // is the same of the current session
+  const users = credentialsStore.get(credentialsStore.keys.USERS) || []
+
+  const user = users.find(u => u.username === decoded.username && u._id === decoded._id)
+
+  if (user) {
+    return user
+  } else {
+    throw Error('User not found')
+  }
+}
+
 // middleware to check if user is authenticated
-function isAuthenticated (req, res, next) {
+async function isAuthenticated (req, res, next) {
   // if user is authenticated in the session, carry on
   if (req.session.user) { return next() }
 
-  // if they aren't redirect them to the home page
-  res.json({ success: false, code: 3, message: RESPONSE_CODES['3'] })
+  let err = null
+
+  // third-party cookies must be allowed in order to work
+  try {
+    const user = await parseJWT(req)
+    req.user = user
+    next()
+  } catch (error) {
+    err = error
+  }
+
+  res.json({ success: false, message: err.message || RESPONSE_CODES['3'], code: 3 })
 }
 
 // api to authenticate user
@@ -350,6 +391,14 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
   }
 
   if (result.success) {
+    // don't edit the original user object, remove the password from jwt payload
+    const jwtPayload = Object.assign({}, user)
+    delete jwtPayload.password
+
+    const token = jwt.sign(jwtPayload, sessionSecret, {
+      expiresIn: '1d'
+    })
+    user.token = token
     req.session.user = user
     result.user = user
     result.deviceId = process.env.DEVICE_ID

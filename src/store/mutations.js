@@ -109,7 +109,6 @@ export const mutations = {
   },
   setUser (state, data) {
     state.user = data
-    state.deviceId = data.deviceId
   },
   setControllerStatus (state, data) {
     state.appInfo.controllerStatus = data

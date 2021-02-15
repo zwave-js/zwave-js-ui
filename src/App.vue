@@ -65,6 +65,50 @@
         </template>
         <span>{{ status }}</span>
       </v-tooltip>
+
+      <v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
+        <template v-slot:activator="{ on }">
+          <v-btn v-on="on" icon>
+            <v-icon>more_vert</v-icon>
+          </v-btn>
+        </template>
+
+        <v-list>
+          <v-list-item v-for="(item, i) in menu" :key="i" @click="item.func">
+            <v-list-item-action>
+              <v-icon>{{ item.icon }}</v-icon>
+            </v-list-item-action>
+            <v-list-item-title>{{ item.tooltip }}</v-list-item-title>
+          </v-list-item>
+        </v-list>
+      </v-menu>
+
+      <div v-else>
+        <v-menu v-for="item in menu" :key="item.text" bottom left>
+          <template v-slot:activator="{ on }">
+            <v-btn v-on="on" icon @click="item.func">
+              <v-tooltip bottom>
+                <template v-slot:activator="{ on }">
+                  <v-icon dark color="primary" v-on="on">{{
+                    item.icon
+                  }}</v-icon>
+                </template>
+                <span>{{ item.tooltip }}</span>
+              </v-tooltip>
+            </v-btn>
+          </template>
+
+          <v-list v-if="item.menu">
+            <v-list-item
+              v-for="(menu, i) in item.menu"
+              :key="i"
+              @click="menu.func"
+            >
+              <v-list-item-title>{{ menu.title }}</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </div>
     </v-app-bar>
     <main style="height:100%">
       <v-main style="height:100%">
@@ -107,8 +151,9 @@ import io from 'socket.io-client'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import { Settings } from '@/modules/Settings'
+import { Routes } from '@/router'
 
-import { mapActions, mapMutations } from 'vuex'
+import { mapActions, mapMutations, mapGetters } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 
@@ -117,6 +162,9 @@ export default {
     Confirm
   },
   name: 'app',
+  computed: {
+    ...mapGetters(['user'])
+  },
   methods: {
     ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
     ...mapMutations(['setControllerStatus', 'initNode']),
@@ -245,18 +293,88 @@ export default {
       a.download = fileName + '.' + (ext || 'json')
       a.target = '_self'
       a.click()
+    },
+    async startSocket () {
+      if (this.socket || !this.$route.meta || !this.$route.meta.requiresAuth) {
+        return
+      }
+
+      if (!this.user || !this.user.token) {
+        await this.logout()
+      }
+
+      this.socket = io('/', {
+        path: ConfigApis.getSocketPath(),
+        query: { token: this.user.token }
+      })
+
+      this.socket.on('connect', () => {
+        this.updateStatus('Connected', 'green')
+      })
+
+      this.socket.on('disconnect', () => {
+        this.updateStatus('Disconnected', 'red')
+      })
+
+      this.socket.on('error', () => {
+        console.log('Socket error')
+      })
+
+      this.socket.on('reconnecting', () => {
+        this.updateStatus('Reconnecting', 'yellow')
+      })
+
+      this.socket.on(socketEvents.init, data => {
+        // convert node values in array
+        this.initNodes(data.nodes)
+        this.setControllerStatus(data.error ? data.error : data.cntStatus)
+        this.setAppInfo(data.info)
+      })
+
+      this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
+      this.socket.on(
+        socketEvents.controller,
+        this.setControllerStatus.bind(this)
+      )
+
+      this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
+      this.socket.on(socketEvents.nodeRemoved, this.initNode.bind(this))
+
+      this.socket.on(socketEvents.valueRemoved, this.removeValue.bind(this))
+      this.socket.on(socketEvents.valueUpdated, this.updateValue.bind(this))
+
+      this.socket.emit(socketActions.init, true)
+    },
+    async logout () {
+      const user = Object.assign({}, this.user)
+      localStorage.setItem('user', JSON.stringify(user))
+      localStorage.removeItem('logged')
+
+      try {
+        await ConfigApis.logout()
+      } catch (error) {}
+
+      this.$router.push('/')
+      this.showSnackbar('Logged out')
     }
   },
   data () {
     return {
       socket: null,
+      menu: [
+        {
+          icon: 'logout',
+          func: this.logout,
+          tooltip: 'Logout'
+        }
+      ],
       pages: [
-        { icon: 'widgets', title: 'Control Panel', path: '/' },
-        { icon: 'settings', title: 'Settings', path: '/settings' },
-        { icon: 'movie_filter', title: 'Scenes', path: '/scenes' },
-        { icon: 'bug_report', title: 'Debug', path: '/debug' },
-        { icon: 'folder', title: 'Store', path: '/store' },
-        { icon: 'share', title: 'Network graph', path: '/mesh' }
+        { icon: 'widgets', title: 'Control Panel', path: Routes.controlPanel },
+        { icon: 'settings', title: 'Settings', path: Routes.settings },
+        { icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
+        { icon: 'bug_report', title: 'Debug', path: Routes.debug },
+        { icon: 'folder', title: 'Store', path: Routes.store },
+        { icon: 'share', title: 'Network graph', path: Routes.mesh }
       ],
       settings: new Settings(localStorage),
       status: '',
@@ -274,6 +392,7 @@ export default {
   watch: {
     $route: function (value) {
       this.title = value.name || ''
+      this.startSocket()
     },
     dark (v) {
       this.settings.store('dark', this.dark)
@@ -284,28 +403,7 @@ export default {
   },
   beforeMount () {
     this.title = this.$route.name || ''
-
-    const self = this
-
-    this.socket = io('/', {
-      path: ConfigApis.getSocketPath()
-    })
-
-    this.socket.on('connect', () => {
-      self.updateStatus('Connected', 'green')
-    })
-
-    this.socket.on('disconnect', () => {
-      self.updateStatus('Disconnected', 'red')
-    })
-
-    this.socket.on('error', () => {
-      console.log('Socket error')
-    })
-
-    this.socket.on('reconnecting', () => {
-      self.updateStatus('Reconnecting', 'yellow')
-    })
+    this.startSocket()
   },
   mounted () {
     if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl) {
@@ -315,31 +413,11 @@ export default {
     this.dark = this.settings.load('dark', false)
     this.changeThemeColor()
 
-    const self = this
-
     this.$store.subscribe(mutation => {
       if (mutation.type === 'showSnackbar') {
-        self.showSnackbar(mutation.payload)
+        this.showSnackbar(mutation.payload)
       }
     })
-
-    this.socket.on(socketEvents.init, data => {
-      // convert node values in array
-      self.initNodes(data.nodes)
-      self.setControllerStatus(data.error ? data.error : data.cntStatus)
-      self.setAppInfo(data.info)
-    })
-
-    this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
-    this.socket.on(socketEvents.controller, this.setControllerStatus.bind(this))
-
-    this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
-    this.socket.on(socketEvents.nodeRemoved, this.initNode.bind(this))
-
-    this.socket.on(socketEvents.valueRemoved, this.removeValue.bind(this))
-    this.socket.on(socketEvents.valueUpdated, this.updateValue.bind(this))
-
-    this.socket.emit(socketActions.init, true)
   },
   beforeDestroy () {
     if (this.socket) this.socket.close()

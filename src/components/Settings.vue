@@ -798,7 +798,7 @@ export default {
         }
       })
       .catch(e => {
-        self.showSnackbar('Error while retriving configuration, check console')
+        self.showSnackbar(e.message)
         console.log(e)
       })
   }

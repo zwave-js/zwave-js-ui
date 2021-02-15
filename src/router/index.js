@@ -10,6 +10,7 @@ import Login from '@/components/Login'
 import ErrorPage from '@/components/ErrorPage'
 
 import store from '@/store'
+import ConfigApis from '../apis/ConfigApis'
 
 Vue.use(Router)
 
@@ -140,7 +141,7 @@ router.beforeEach(async (to, from, next) => {
     next()
   } else { // user is logged
     next({
-      path: Routes.controlPanel,
+      path: Routes.settings,
       params: { nextUrl: to.fullPath }
     })
   }

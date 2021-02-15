@@ -6,8 +6,8 @@ module.exports = {
   credentialsFile: 'credentials.json',
   credentialsKey: 'credentials.key',
   defaultUser: 'admin',
-  defaultPsw: 'zwaveRocks',
-  sessionSecret: 'G1FoTIfjhsPO80MpJSUx9oaDDHueTkW1',
+  defaultPsw: 'zwave',
+  sessionSecret: process.env.SESSION_SECRET || 'G1FoTIfjhsPO80MpJSUx9oaDDHueTkW1',
   base: '/',
   port: 8091
 }
