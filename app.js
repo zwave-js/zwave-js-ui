@@ -483,7 +483,7 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
     if (!oldUser) return res.json({ success: false, message: 'User not found' })
 
     if (!(await utils.verifyPsw(req.body.current, oldUser.password))) {
-      return res.json({ success: false, message: 'Actual password is wrong' })
+      return res.json({ success: false, message: 'Current password is wrong' })
     }
 
     if (req.body.new !== req.body.confirmNew) {
