@@ -25,6 +25,8 @@ export const Routes = {
   mesh: '/mesh'
 }
 
+Routes.main = Routes.settings
+
 const router = new Router({
   mode: 'history',
   routes: [
@@ -105,6 +107,17 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
+  if (!store.state.auth) {
+    if (to.path === Routes.login) {
+      next({
+        path: Routes.main
+      })
+    } else {
+      next()
+    }
+    return
+  }
+
   // permissions required by the requested route
   const route = {
     auth: to.matched.some(record => record.meta.requiresAuth)
@@ -152,7 +165,7 @@ router.beforeEach(async (to, from, next) => {
   } else {
     // user is logged
     next({
-      path: Routes.settings,
+      path: Routes.main,
       params: { nextUrl: to.fullPath }
     })
   }

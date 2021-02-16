@@ -1,124 +1,135 @@
 <template>
   <v-app :dark="dark">
-    <v-navigation-drawer
-      v-if="$route.meta.requiresAuth"
-      clipped-left
-      :mini-variant="mini"
-      v-model="drawer"
-      app
-    >
-      <v-list nav class="py-0">
-        <v-list-item :class="mini && 'px-0'">
-          <v-list-item-avatar>
-            <img
-              style="padding:3px;border-radius:0"
-              :src="`${baseURI}/static/logo.png`"
-            />
-          </v-list-item-avatar>
-          <v-list-item-content>
-            <v-list-item-title>{{ 'ZWaveJS2MQTT' }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-      <v-divider style="margin-top:8px"></v-divider>
-      <v-list nav>
-        <v-list-item
-          v-for="item in pages"
-          :key="item.title"
-          :to="item.path == '#' ? '' : item.path"
-          :color="item.path === $route.path ? 'primary' : ''"
-        >
-          <v-list-item-action>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title class="subtitle-2 font-weight-bold">{{
-              item.title
-            }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item v-if="!mini">
-          <v-switch label="Dark theme" hide-details v-model="dark"></v-switch>
-        </v-list-item>
-      </v-list>
-      <v-footer absolute v-if="!mini" class="pa-3">
-        <div>Innovation System &copy; {{ new Date().getFullYear() }}</div>
-      </v-footer>
-    </v-navigation-drawer>
-
-    <v-app-bar v-if="$route.meta.requiresAuth" app>
-      <v-app-bar-nav-icon @click.stop="toggleDrawer" />
-      <v-toolbar-title>{{ title }}</v-toolbar-title>
-
-      <v-spacer></v-spacer>
-
-      <v-tooltip bottom>
-        <template v-slot:activator="{ on }">
-          <v-icon
-            dark
-            medium
-            style="cursor:default;"
-            :color="statusColor || 'primary'"
-            v-on="on"
-            >swap_horizontal_circle</v-icon
+    <div v-if="$route.meta.requiresAuth && auth !== undefined">
+      <v-navigation-drawer
+        clipped-left
+        :mini-variant="mini"
+        v-model="drawer"
+        app
+      >
+        <v-list nav class="py-0">
+          <v-list-item :class="mini && 'px-0'">
+            <v-list-item-avatar>
+              <img
+                style="padding:3px;border-radius:0"
+                :src="`${baseURI}/static/logo.png`"
+              />
+            </v-list-item-avatar>
+            <v-list-item-content>
+              <v-list-item-title>{{ 'ZWaveJS2MQTT' }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+        </v-list>
+        <v-divider style="margin-top:8px"></v-divider>
+        <v-list nav>
+          <v-list-item
+            v-for="item in pages"
+            :key="item.title"
+            :to="item.path == '#' ? '' : item.path"
+            :color="item.path === $route.path ? 'primary' : ''"
           >
-        </template>
-        <span>{{ status }}</span>
-      </v-tooltip>
-
-      <v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
-        <template v-slot:activator="{ on }">
-          <v-btn v-on="on" icon>
-            <v-icon>more_vert</v-icon>
-          </v-btn>
-        </template>
-
-        <v-list>
-          <v-list-item v-for="(item, i) in menu" :key="i" @click="item.func">
             <v-list-item-action>
               <v-icon>{{ item.icon }}</v-icon>
             </v-list-item-action>
-            <v-list-item-title>{{ item.tooltip }}</v-list-item-title>
+            <v-list-item-content>
+              <v-list-item-title class="subtitle-2 font-weight-bold">{{
+                item.title
+              }}</v-list-item-title>
+            </v-list-item-content>
+          </v-list-item>
+          <v-list-item v-if="!mini">
+            <v-switch label="Dark theme" hide-details v-model="dark"></v-switch>
           </v-list-item>
         </v-list>
-      </v-menu>
+        <v-footer absolute v-if="!mini" class="pa-3">
+          <div>Innovation System &copy; {{ new Date().getFullYear() }}</div>
+        </v-footer>
+      </v-navigation-drawer>
 
-      <div v-else>
-        <v-menu v-for="item in menu" :key="item.text" bottom left>
+      <v-app-bar app>
+        <v-app-bar-nav-icon @click.stop="toggleDrawer" />
+        <v-toolbar-title>{{ title }}</v-toolbar-title>
+
+        <v-spacer></v-spacer>
+
+        <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <v-btn v-on="on" icon @click="item.func">
-              <v-tooltip bottom>
-                <template v-slot:activator="{ on }">
-                  <v-icon dark color="primary" v-on="on">{{
-                    item.icon
-                  }}</v-icon>
-                </template>
-                <span>{{ item.tooltip }}</span>
-              </v-tooltip>
-            </v-btn>
-          </template>
-
-          <v-list v-if="item.menu">
-            <v-list-item
-              v-for="(menu, i) in item.menu"
-              :key="i"
-              @click="menu.func"
+            <v-icon
+              dark
+              medium
+              style="cursor:default;"
+              :color="statusColor || 'primary'"
+              v-on="on"
+              >swap_horizontal_circle</v-icon
             >
-              <v-list-item-title>{{ menu.title }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-        </v-menu>
-      </div>
-    </v-app-bar>
+          </template>
+          <span>{{ status }}</span>
+        </v-tooltip>
+
+        <div v-if="auth">
+          <v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
+            <template v-slot:activator="{ on }">
+              <v-btn v-on="on" icon>
+                <v-icon>more_vert</v-icon>
+              </v-btn>
+            </template>
+
+            <v-list>
+              <v-list-item
+                v-for="(item, i) in menu"
+                :key="i"
+                @click="item.func"
+              >
+                <v-list-item-action>
+                  <v-icon>{{ item.icon }}</v-icon>
+                </v-list-item-action>
+                <v-list-item-title>{{ item.tooltip }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+
+          <div v-else>
+            <v-menu v-for="item in menu" :key="item.text" bottom left>
+              <template v-slot:activator="{ on }">
+                <v-btn v-on="on" icon @click="item.func">
+                  <v-tooltip bottom>
+                    <template v-slot:activator="{ on }">
+                      <v-icon dark color="primary" v-on="on">{{
+                        item.icon
+                      }}</v-icon>
+                    </template>
+                    <span>{{ item.tooltip }}</span>
+                  </v-tooltip>
+                </v-btn>
+              </template>
+
+              <v-list v-if="item.menu">
+                <v-list-item
+                  v-for="(menu, i) in item.menu"
+                  :key="i"
+                  @click="menu.func"
+                >
+                  <v-list-item-title>{{ menu.title }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </div>
+        </div>
+      </v-app-bar>
+    </div>
     <main style="height:100%">
       <v-main style="height:100%">
         <router-view
+          v-if="auth !== undefined"
           @import="importFile"
           @export="exportConfiguration"
           @showConfirm="confirm"
           @apiRequest="apiRequest"
           :socket="socket"
         />
+        <v-row style="height:100%" align="center" justify="center" v-else>
+          <v-progress-circular size="200" indeterminate></v-progress-circular>
+        </v-row>
       </v-main>
     </main>
 
@@ -172,7 +183,7 @@ export default {
   },
   name: 'app',
   computed: {
-    ...mapGetters(['user'])
+    ...mapGetters(['user', 'auth'])
   },
   watch: {
     $route: function (value) {
@@ -376,17 +387,24 @@ export default {
       a.click()
     },
     async startSocket () {
-      if (this.socket || !this.$route.meta || !this.$route.meta.requiresAuth) {
+      if (
+        this.auth === undefined ||
+        this.socket ||
+        !this.$route.meta ||
+        !this.$route.meta.requiresAuth
+      ) {
         return
       }
 
-      if (!this.user || !this.user.token) {
+      if (this.auth && (!this.user || !this.user.token)) {
         await this.logout()
       }
 
+      const query = this.auth ? { token: this.user.token } : undefined
+
       this.socket = io('/', {
         path: ConfigApis.getSocketPath(),
-        query: { token: this.user.token }
+        query: query
       })
 
       this.socket.on('connect', () => {
@@ -431,6 +449,11 @@ export default {
       localStorage.setItem('user', JSON.stringify(user))
       localStorage.removeItem('logged')
 
+      if (this.socket) {
+        this.socket.close()
+        this.socket = null
+      }
+
       try {
         await ConfigApis.logout()
         this.showSnackbar('Logged out')
@@ -439,11 +462,26 @@ export default {
       }
 
       this.$router.push('/')
+    },
+    // get config, used to check if gateway is used with auth or not
+    async checkAuth () {
+      try {
+        const data = await ConfigApis.isAuthEnabled()
+        if (!data.success) {
+          this.showSnackbar('Error while retriving informations')
+        } else {
+          this.$store.dispatch('setAuth', data.data)
+          this.startSocket()
+        }
+      } catch (error) {
+        this.showSnackbar(error.message)
+        console.log(error)
+      }
     }
   },
   beforeMount () {
     this.title = this.$route.name || ''
-    this.startSocket()
+    this.checkAuth()
   },
   mounted () {
     if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl) {
@@ -454,8 +492,11 @@ export default {
     this.changeThemeColor()
 
     this.$store.subscribe(mutation => {
+      console.log(mutation.type)
       if (mutation.type === 'showSnackbar') {
         this.showSnackbar(mutation.payload)
+      } else if (mutation.type === 'initSettings') {
+        this.checkAuth()
       }
     })
   },

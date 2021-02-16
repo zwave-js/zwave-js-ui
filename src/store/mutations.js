@@ -1,4 +1,5 @@
 export const state = {
+  auth: undefined,
   serial_ports: [],
   nodes: [],
   user: {},
@@ -56,6 +57,7 @@ function getValue (v) {
 }
 
 export const getters = {
+  auth: state => state.auth,
   nodes: state => state.nodes,
   user: state => state.user,
   serial_ports: state => state.serial_ports,
@@ -67,6 +69,9 @@ export const getters = {
 }
 
 export const actions = {
+  setAuth (store, data) {
+    store.commit('setAuth', data)
+  },
   init (store, data) {
     if (data) {
       store.commit('initSettings', data.settings)
@@ -106,6 +111,9 @@ export const actions = {
 export const mutations = {
   showSnackbar () {
     // empty mutation, will be catched in App.vue from store subscribe
+  },
+  setAuth (store, enabled) {
+    state.auth = enabled
   },
   setUser (state, data) {
     Object.assign(state.user, data)

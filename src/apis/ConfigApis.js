@@ -49,6 +49,10 @@ export default {
   logout () {
     return request.get('/logout')
   },
+  async isAuthEnabled () {
+    const response = await request.get('/auth-enabled')
+    return response.data
+  },
   // ---- USER ------
   async updatePassword (data) {
     const response = await request.put('/password', data)

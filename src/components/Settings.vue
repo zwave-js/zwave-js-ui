@@ -19,6 +19,14 @@
                     <v-row class="mb-5">
                       <v-col cols="12" sm="6" md="4">
                         <v-switch
+                          hint="Enable this to password protect your application. Default username is `admin`, password is `zwave`"
+                          persistent-hint
+                          label="Auth"
+                          v-model="gateway.authEnabled"
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4">
+                        <v-switch
                           hint="Enable logging"
                           persistent-hint
                           label="Log enabled"
@@ -772,6 +780,8 @@ export default {
         ConfigApis.updateConfig(self.getSettingsJSON())
           .then(data => {
             self.showSnackbar(data.message)
+            // this is needed so settings are reloaded on store
+            self.$store.dispatch('init', data.data)
           })
           .catch(error => {
             console.log(error)

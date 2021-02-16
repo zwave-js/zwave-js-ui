@@ -6,7 +6,7 @@ module.exports = {
   defaultUser: 'admin',
   defaultPsw: 'zwave',
   sessionSecret:
-    process.env.SESSION_SECRET || 'G1FoTIfjhsPO80MpJSUx9oaDDHueTkW1',
+    process.env.SESSION_SECRET || 'DEFAULT_SESSION_SECRET_CHANGE_ME',
   base: '/',
   port: 8091
 }

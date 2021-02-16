@@ -63,6 +63,23 @@ const RESPONSE_CODES = {
 
 const socketManager = new SocketManager()
 
+socketManager.authMiddleware = function (socket, next) {
+  if (!isAuthEnabled()) {
+    next()
+  } else if (socket.handshake.query && socket.handshake.query.token) {
+    jwt.verify(socket.handshake.query.token, sessionSecret, function (
+      err,
+      decoded
+    ) {
+      if (err) return next(new Error('Authentication error'))
+      socket.user = decoded
+      next()
+    })
+  } else {
+    next(new Error('Authentication error'))
+  }
+}
+
 let gw // the gateway instance
 
 // flag used to prevent multiple restarts while one is already in progress
@@ -343,6 +360,11 @@ function setupSocket (server) {
 
 // ### APIs
 
+function isAuthEnabled () {
+  const settings = jsonStore.get(store.settings)
+  return settings.gateway && settings.gateway.authEnabled
+}
+
 async function parseJWT (req) {
   // if not authenticated check if he has a valid token
   let token = req.headers['x-access-token'] || req.headers.authorization // Express headers are auto converted to lowercase
@@ -375,7 +397,7 @@ async function parseJWT (req) {
 // middleware to check if user is authenticated
 async function isAuthenticated (req, res, next) {
   // if user is authenticated in the session, carry on
-  if (req.session.user) {
+  if (req.session.user || !isAuthEnabled()) {
     return next()
   }
 
@@ -403,6 +425,11 @@ async function isAuthenticated (req, res, next) {
 
 //   res.json({ success: true, message: req.session.csrfSecret })
 // })
+
+// logout the user
+app.get('/api/auth-enabled', async function (req, res) {
+  res.json({ success: true, data: isAuthEnabled() })
+})
 
 // api to authenticate user
 app.post('/api/authenticate', loginLimiter, async function (req, res) {
@@ -763,7 +790,7 @@ app.post('/api/settings', isAuthenticated, async function (req, res) {
     setupLogging(settings)
     // restart clients and gateway
     startGateway(settings)
-    res.json({ success: true, message: 'Configuration updated successfully' })
+    res.json({ success: true, message: 'Configuration updated successfully', data: settings })
   } catch (error) {
     logger.error(error)
     res.json({ success: false, message: error.message })
