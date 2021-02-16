@@ -517,8 +517,9 @@ app.put(
       const user = req.session.user
       const oldUser = users.find(u => u._id === user._id)
 
-      if (!oldUser)
+      if (!oldUser) {
         return res.json({ success: false, message: 'User not found' })
+      }
 
       if (!(await utils.verifyPsw(req.body.current, oldUser.passwordHash))) {
         return res.json({
