@@ -20,15 +20,15 @@ const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const fs = require('fs-extra')
 const path = require('path')
-const { storeDir, sessionSecret } = reqlib('config/app.js')
+const { storeDir, sessionSecret, defaultUser, defaultPsw } = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
 const session = require('express-session')
-const credentialsStore = reqlib('/lib/credentialsStore.js')
 const archiver = require('archiver')
 const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
 const jwt = require('jsonwebtoken')
 const { promisify } = require('util')
+const { randomBytes } = require('crypto')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -129,8 +129,14 @@ async function startServer (host, port) {
     }
   })
 
-  // decrypt credentials
-  await credentialsStore.init()
+  const users = jsonStore.get(store.users)
+
+  if (users.length === 0) {
+    users.push({
+      username: defaultUser,
+      password: await utils.hashPsw(defaultPsw)
+    })
+  }
 
   setupSocket(server)
   setupInterceptor()
@@ -274,7 +280,7 @@ app.use(
 
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.
-// app.use(csrf({ cookie: true }))
+const csrfProtection = csrf({ cookie: true })
 
 // ### SOCKET SETUP
 
@@ -351,10 +357,10 @@ async function parseJWT (req) {
 
   // Successfully authenticated, token is valid and the user _id of its content
   // is the same of the current session
-  const users = credentialsStore.get(credentialsStore.keys.USERS) || []
+  const users = jsonStore.get(store.users)
 
   const user = users.find(
-    u => u.username === decoded.username && u._id === decoded._id
+    u => u.username === decoded.username
   )
 
   if (user) {
@@ -389,6 +395,15 @@ async function isAuthenticated (req, res, next) {
   })
 }
 
+// get the csrf token
+app.get('/api/csrf', isAuthenticated, async function (req, res) {
+  if (req.session.csrf === undefined) {
+    req.session.csrf = randomBytes(100).toString('base64')
+  }
+
+  res.json({ success: true, message: req.session.csrf })
+})
+
 // api to authenticate user
 app.post('/api/authenticate', loginLimiter, async function (req, res) {
   if (req.session.user) {
@@ -400,14 +415,34 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
     })
   }
 
-  const users = credentialsStore.get(credentialsStore.keys.USERS) || []
+  const token = req.body.token
+  let user
 
-  const username = req.body.username
-  const password = req.body.password
+  // token auth
+  if (token) {
+    const decoded = await verifyJWT(token, sessionSecret)
 
-  const user = users.find(
-    u => u.username === username && u.password === password
-  )
+    // Successfully authenticated, token is valid and the user _id of its content
+    // is the same of the current session
+    const users = jsonStore.get(store.users)
+
+    user = users.find(
+      u => u.username === decoded.username
+    )
+  } else { // credentials auth
+    const users = jsonStore.get(store.users)
+
+    const username = req.body.username
+    const password = req.body.password
+
+    user = users.find(
+      u => u.username === username
+    )
+
+    if (!await utils.verifyPsw(password, user.password)) {
+      user = null
+    }
+  }
 
   const result = {
     success: !!user
@@ -424,7 +459,6 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
     user.token = token
     req.session.user = user
     result.user = user
-    result.deviceId = process.env.DEVICE_ID
     loginLimiter.resetKey(req.ip)
   } else {
     result.code = 3
@@ -443,14 +477,14 @@ app.get('/api/logout', isAuthenticated, async function (req, res) {
 // update user password
 app.put('/api/password', isAuthenticated, async function (req, res) {
   try {
-    const users = credentialsStore.get(credentialsStore.keys.USERS) || []
+    const users = jsonStore.get(store.users)
 
     const user = req.session.user
     const oldUser = users.find(u => u._id === user._id)
 
     if (!oldUser) return res.json({ success: false, message: 'User not found' })
 
-    if (oldUser.password !== req.body.current) {
+    if (!(await utils.verifyPsw(req.body.current, oldUser.password))) {
       return res.json({ success: false, message: 'Actual password is wrong' })
     }
 
@@ -458,11 +492,11 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
       return res.json({ success: false, message: "Passwords doesn't match" })
     }
 
-    oldUser.password = req.body.new
+    oldUser.password = await utils.hashPsw(req.body.new)
 
     req.session.user = oldUser
 
-    await credentialsStore.update()
+    await jsonStore.write(store.users, users)
 
     res.json({ success: true, message: 'Password updated', user: oldUser })
   } catch (error) {

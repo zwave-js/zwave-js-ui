@@ -4,7 +4,6 @@ This is the list of the actually supported env vars:
 
 - `NETWORK_KEY`: Zwave Network key
 - `HTTPS`: Enable https
-- `CREDENTIALS_KEY`: key used to encrypt credentials file. If not provided a key is auto-generated and stored in `store` folder
 - `SESSION_SECRET`: Used as secret for session. If not provided the default one is used
 - `PORT`: The port to listen to for incoming requests. Default is `8091`
 - `HOST`: The host address to bind to. Default is `0.0.0.0`
