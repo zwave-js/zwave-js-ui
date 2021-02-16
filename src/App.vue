@@ -433,10 +433,12 @@ export default {
 
       try {
         await ConfigApis.logout()
-      } catch (error) {}
+        this.showSnackbar('Logged out')
+      } catch (error) {
+        this.showSnackbar('Logout failed')
+      }
 
       this.$router.push('/')
-      this.showSnackbar('Logged out')
     }
   },
   beforeMount () {
