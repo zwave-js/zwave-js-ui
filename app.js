@@ -466,7 +466,7 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
       u => u.username === username
     )
 
-    if (!await utils.verifyPsw(password, user.passwordHash)) {
+    if (user && !await utils.verifyPsw(password, user.passwordHash)) {
       user = null
     }
   }

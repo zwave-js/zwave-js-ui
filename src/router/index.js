@@ -107,7 +107,7 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  if (!store.state.auth) {
+  if (store.state.auth === false) {
     if (to.path === Routes.login) {
       next({
         path: Routes.main

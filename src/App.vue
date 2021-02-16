@@ -454,14 +454,18 @@ export default {
         this.socket = null
       }
 
-      try {
-        await ConfigApis.logout()
-        this.showSnackbar('Logged out')
-      } catch (error) {
-        this.showSnackbar('Logout failed')
-      }
+      if (this.auth) {
+        try {
+          await ConfigApis.logout()
+          this.showSnackbar('Logged out')
+        } catch (error) {
+          this.showSnackbar('Logout failed')
+        }
 
-      this.$router.push('/')
+        if (this.$route.path !== Routes.login) {
+          this.$router.push(Routes.login)
+        }
+      }
     },
     // get config, used to check if gateway is used with auth or not
     async checkAuth () {
@@ -470,7 +474,18 @@ export default {
         if (!data.success) {
           this.showSnackbar('Error while retriving informations')
         } else {
-          this.$store.dispatch('setAuth', data.data)
+          const newAuth = data.data
+          const oldAuth = this.auth
+
+          this.$store.dispatch('setAuth', newAuth)
+
+          if (oldAuth !== undefined && oldAuth !== newAuth) {
+            await this.logout()
+          }
+
+          if (!newAuth && this.$route.path === Routes.login) {
+            this.$router.push(Routes.main)
+          }
           this.startSocket()
         }
       } catch (error) {
@@ -492,10 +507,10 @@ export default {
     this.changeThemeColor()
 
     this.$store.subscribe(mutation => {
-      console.log(mutation.type)
       if (mutation.type === 'showSnackbar') {
         this.showSnackbar(mutation.payload)
       } else if (mutation.type === 'initSettings') {
+        // check if auth is changed in settings
         this.checkAuth()
       }
     })
