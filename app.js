@@ -455,7 +455,7 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
 
       user = users.find(u => u.username === decoded.username)
     } else {
-    // credentials auth
+      // credentials auth
       const users = jsonStore.get(store.users)
 
       const username = req.body.username
@@ -473,7 +473,7 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
     }
 
     if (result.success) {
-    // don't edit the original user object, remove the password from jwt payload
+      // don't edit the original user object, remove the password from jwt payload
       const userData = Object.assign({}, user)
       delete userData.passwordHash
 
