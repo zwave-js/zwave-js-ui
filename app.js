@@ -221,6 +221,10 @@ function startGateway (settings) {
   let mqtt
   let zwave
 
+  if (isAuthEnabled() && sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME') {
+    logger.error('Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var')
+  }
+
   if (settings.mqtt) {
     mqtt = new MqttClient(settings.mqtt)
   }
