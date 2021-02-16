@@ -19,7 +19,9 @@ const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const fs = require('fs-extra')
 const path = require('path')
-const { storeDir, sessionSecret, defaultUser, defaultPsw } = reqlib('config/app.js')
+const { storeDir, sessionSecret, defaultUser, defaultPsw } = reqlib(
+  'config/app.js'
+)
 const renderIndex = reqlib('/lib/renderIndex')
 const session = require('express-session')
 const archiver = require('archiver')
@@ -220,7 +222,9 @@ function startGateway (settings) {
   let zwave
 
   if (isAuthEnabled() && sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME') {
-    logger.error('Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var')
+    logger.error(
+      'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var'
+    )
   }
 
   if (settings.mqtt) {
@@ -300,7 +304,7 @@ app.use(
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.
 const csrfProtection = csrf({
-  value: (req) => req.csrfToken()
+  value: req => req.csrfToken()
 })
 
 // ### SOCKET SETUP
@@ -385,9 +389,7 @@ async function parseJWT (req) {
   // is the same of the current session
   const users = jsonStore.get(store.users)
 
-  const user = users.find(
-    u => u.username === decoded.username
-  )
+  const user = users.find(u => u.username === decoded.username)
 
   if (user) {
     return user
@@ -425,7 +427,10 @@ app.get('/api/auth-enabled', async function (req, res) {
 })
 
 // api to authenticate user
-app.post('/api/authenticate', csrfProtection, loginLimiter, async function (req, res) {
+app.post('/api/authenticate', csrfProtection, loginLimiter, async function (
+  req,
+  res
+) {
   if (req.session.user) {
     return res.json({
       success: true,
@@ -446,20 +451,17 @@ app.post('/api/authenticate', csrfProtection, loginLimiter, async function (req,
     // is the same of the current session
     const users = jsonStore.get(store.users)
 
-    user = users.find(
-      u => u.username === decoded.username
-    )
-  } else { // credentials auth
+    user = users.find(u => u.username === decoded.username)
+  } else {
+    // credentials auth
     const users = jsonStore.get(store.users)
 
     const username = req.body.username
     const password = req.body.password
 
-    user = users.find(
-      u => u.username === username
-    )
+    user = users.find(u => u.username === username)
 
-    if (user && !await utils.verifyPsw(password, user.passwordHash)) {
+    if (user && !(await utils.verifyPsw(password, user.passwordHash))) {
       user = null
     }
   }
@@ -495,7 +497,10 @@ app.get('/api/logout', isAuthenticated, async function (req, res) {
 })
 
 // update user password
-app.put('/api/password', csrfProtection, isAuthenticated, async function (req, res) {
+app.put('/api/password', csrfProtection, isAuthenticated, async function (
+  req,
+  res
+) {
   try {
     const users = jsonStore.get(store.users)
 
@@ -783,7 +788,11 @@ app.post('/api/settings', isAuthenticated, async function (req, res) {
     setupLogging(settings)
     // restart clients and gateway
     startGateway(settings)
-    res.json({ success: true, message: 'Configuration updated successfully', data: settings })
+    res.json({
+      success: true,
+      message: 'Configuration updated successfully',
+      data: settings
+    })
   } catch (error) {
     logger.error(error)
     res.json({ success: false, message: error.message })
