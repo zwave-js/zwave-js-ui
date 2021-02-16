@@ -523,7 +523,7 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
 
     req.session.user = oldUser
 
-    await jsonStore.write(store.users, users)
+    await jsonStore.put(store.users, users)
 
     res.json({ success: true, message: 'Password updated', user: oldUser })
   } catch (error) {
