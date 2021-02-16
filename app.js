@@ -377,20 +377,18 @@ async function isAuthenticated (req, res, next) {
     return next()
   }
 
-  let err = null
-
   // third-party cookies must be allowed in order to work
   try {
     const user = await parseJWT(req)
     req.user = user
     next()
   } catch (error) {
-    err = error
+    logger.debug('Authentication failed', error)
   }
 
   res.json({
     success: false,
-    message: err.message || RESPONSE_CODES['3'],
+    message: RESPONSE_CODES['3'],
     code: 3
   })
 }
