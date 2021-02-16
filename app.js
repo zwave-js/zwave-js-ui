@@ -796,7 +796,10 @@ app.post('/api/store-multi', storeLimiter, isAuthenticated, function (
 })
 
 // update settings
-app.post('/api/settings', apisLimiter, isAuthenticated, async function (req, res) {
+app.post('/api/settings', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   try {
     if (restarting) {
       throw Error(
