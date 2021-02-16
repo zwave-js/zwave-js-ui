@@ -177,11 +177,13 @@ async function startServer (host, port) {
  * @returns {string} The path is it's safe, thorws otherwise
  */
 function getSafePath (req) {
-  const reqPath = req.params.path
+  let reqPath = req.params.path
 
-  if (/[.]+\//g.test(reqPath)) {
-    throw Error('Path contains invalid chars')
+  if (typeof path !== 'string') {
+    throw Error('Invalid path')
   }
+
+  reqPath = path.normalize(reqPath)
 
   if (!reqPath.startsWith(storeDir)) {
     throw Error('Path not allowed')
