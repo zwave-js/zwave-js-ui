@@ -164,7 +164,7 @@ export default {
             this.error_type = 'error'
             this.error_text = response.message
           } else {
-            user = response.user
+            user = Object.assign(user, response.user)
             user.rememberMe = this.rememberMe
             localStorage.setItem('user', JSON.stringify(user))
             localStorage.setItem('logged', 'true')

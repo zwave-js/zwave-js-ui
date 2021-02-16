@@ -108,7 +108,7 @@ export const mutations = {
     // empty mutation, will be catched in App.vue from store subscribe
   },
   setUser (state, data) {
-    state.user = data
+    Object.assign(state.user, data)
   },
   setControllerStatus (state, data) {
     state.appInfo.controllerStatus = data

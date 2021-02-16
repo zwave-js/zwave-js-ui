@@ -280,7 +280,7 @@ app.use(
 
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.
-const csrfProtection = csrf({ cookie: true })
+const csrfProtection = csrf()
 
 // ### SOCKET SETUP
 
@@ -395,14 +395,14 @@ async function isAuthenticated (req, res, next) {
   })
 }
 
-// get the csrf token
-app.get('/api/csrf', isAuthenticated, async function (req, res) {
-  if (req.session.csrf === undefined) {
-    req.session.csrf = randomBytes(100).toString('base64')
-  }
+// // get the csrf token
+// app.get('/api/csrf', async function (req, res) {
+//   if (req.session.csrfSecret === undefined) {
+//     req.session.csrfSecret = randomBytes(100).toString('base64')
+//   }
 
-  res.json({ success: true, message: req.session.csrf })
-})
+//   res.json({ success: true, message: req.session.csrfSecret })
+// })
 
 // api to authenticate user
 app.post('/api/authenticate', loginLimiter, async function (req, res) {
@@ -418,7 +418,7 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
   const token = req.body.token
   let user
 
-  // token auth
+  // token auth, mostly used to restore sessions when user refresh the page
   if (token) {
     const decoded = await verifyJWT(token, sessionSecret)
 
@@ -450,15 +450,15 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
 
   if (result.success) {
     // don't edit the original user object, remove the password from jwt payload
-    const jwtPayload = Object.assign({}, user)
-    delete jwtPayload.password
+    const userData = Object.assign({}, user)
+    delete userData.password
 
-    const token = jwt.sign(jwtPayload, sessionSecret, {
+    const token = jwt.sign(userData, sessionSecret, {
       expiresIn: '1d'
     })
-    user.token = token
-    req.session.user = user
-    result.user = user
+    userData.token = token
+    req.session.user = userData
+    result.user = userData
     loginLimiter.resetKey(req.ip)
   } else {
     result.code = 3
