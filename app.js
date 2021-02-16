@@ -134,8 +134,10 @@ async function startServer (host, port) {
   if (users.length === 0) {
     users.push({
       username: defaultUser,
-      password: await utils.hashPsw(defaultPsw)
+      passwordHash: await utils.hashPsw(defaultPsw)
     })
+
+    await jsonStore.put(store.users, users)
   }
 
   setupSocket(server)
@@ -437,7 +439,7 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
       u => u.username === username
     )
 
-    if (!await utils.verifyPsw(password, user.password)) {
+    if (!await utils.verifyPsw(password, user.passwordHash)) {
       user = null
     }
   }
@@ -449,7 +451,7 @@ app.post('/api/authenticate', loginLimiter, async function (req, res) {
   if (result.success) {
     // don't edit the original user object, remove the password from jwt payload
     const userData = Object.assign({}, user)
-    delete userData.password
+    delete userData.passwordHash
 
     const token = jwt.sign(userData, sessionSecret, {
       expiresIn: '1d'
@@ -482,7 +484,7 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
 
     if (!oldUser) return res.json({ success: false, message: 'User not found' })
 
-    if (!(await utils.verifyPsw(req.body.current, oldUser.password))) {
+    if (!(await utils.verifyPsw(req.body.current, oldUser.passwordHash))) {
       return res.json({ success: false, message: 'Current password is wrong' })
     }
 
@@ -490,7 +492,7 @@ app.put('/api/password', isAuthenticated, async function (req, res) {
       return res.json({ success: false, message: "Passwords doesn't match" })
     }
 
-    oldUser.password = await utils.hashPsw(req.body.new)
+    oldUser.passwordHash = await utils.hashPsw(req.body.new)
 
     req.session.user = oldUser
 
