@@ -441,63 +441,58 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
   req,
   res
 ) {
-  if (req.session.user) {
-    return res.json({
-      success: true,
-      user: req.session.user,
-      code: 0,
-      message: 'User already logged'
-    })
-  }
-
   const token = req.body.token
   let user
 
-  // token auth, mostly used to restore sessions when user refresh the page
-  if (token) {
-    const decoded = await verifyJWT(token, sessionSecret)
+  try {
+    // token auth, mostly used to restore sessions when user refresh the page
+    if (token) {
+      const decoded = await verifyJWT(token, sessionSecret)
 
-    // Successfully authenticated, token is valid and the user _id of its content
-    // is the same of the current session
-    const users = jsonStore.get(store.users)
+      // Successfully authenticated, token is valid and the user _id of its content
+      // is the same of the current session
+      const users = jsonStore.get(store.users)
 
-    user = users.find(u => u.username === decoded.username)
-  } else {
+      user = users.find(u => u.username === decoded.username)
+    } else {
     // credentials auth
-    const users = jsonStore.get(store.users)
+      const users = jsonStore.get(store.users)
 
-    const username = req.body.username
-    const password = req.body.password
+      const username = req.body.username
+      const password = req.body.password
 
-    user = users.find(u => u.username === username)
+      user = users.find(u => u.username === username)
 
-    if (user && !(await utils.verifyPsw(password, user.passwordHash))) {
-      user = null
+      if (user && !(await utils.verifyPsw(password, user.passwordHash))) {
+        user = null
+      }
     }
-  }
 
-  const result = {
-    success: !!user
-  }
+    const result = {
+      success: !!user
+    }
 
-  if (result.success) {
+    if (result.success) {
     // don't edit the original user object, remove the password from jwt payload
-    const userData = Object.assign({}, user)
-    delete userData.passwordHash
+      const userData = Object.assign({}, user)
+      delete userData.passwordHash
 
-    const token = jwt.sign(userData, sessionSecret, {
-      expiresIn: '1d'
-    })
-    userData.token = token
-    req.session.user = userData
-    result.user = userData
-    loginLimiter.resetKey(req.ip)
-  } else {
-    result.code = 3
-    result.message = RESPONSE_CODES['3']
+      const token = jwt.sign(userData, sessionSecret, {
+        expiresIn: '1d'
+      })
+      userData.token = token
+      req.session.user = userData
+      result.user = userData
+      loginLimiter.resetKey(req.ip)
+    } else {
+      result.code = 3
+      result.message = RESPONSE_CODES['3']
+    }
+
+    res.json(result)
+  } catch (error) {
+    res.json({ success: false, message: 'Authentication failed', code: 3 })
   }
-
-  res.json(result)
 })
 
 // logout the user

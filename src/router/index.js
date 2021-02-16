@@ -132,7 +132,7 @@ router.beforeEach(async (to, from, next) => {
       user = JSON.parse(localStorage.getItem('user'))
       if (user && logged) {
         // used found in local storage, login
-        const response = await ConfigApis.login()
+        const response = await ConfigApis.login(user)
         if (!response.success) {
           logged = false
           localStorage.removeItem('logged')
