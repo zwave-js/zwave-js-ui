@@ -179,7 +179,7 @@ async function startServer (host, port) {
 function getSafePath (req) {
   let reqPath = req.params.path
 
-  if (typeof path !== 'string') {
+  if (typeof reqPath !== 'string') {
     throw Error('Invalid path')
   }
 
