@@ -52,6 +52,14 @@ const loginLimiter = rateLimit({
   }
 })
 
+const apisLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
+  max: 500, // start blocking after 500 requests
+  handler: function (req, res) {
+    res.json({ success: false, message: 'Max requests limit reached' })
+  }
+})
+
 // apis response codes
 const RESPONSE_CODES = {
   0: 'OK',
@@ -280,7 +288,7 @@ app.use(
   })
 )
 
-app.get('/', renderIndex)
+app.get('/', apisLimiter, renderIndex)
 
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
@@ -422,12 +430,12 @@ async function isAuthenticated (req, res, next) {
 }
 
 // logout the user
-app.get('/api/auth-enabled', async function (req, res) {
+app.get('/api/auth-enabled', apisLimiter, async function (req, res) {
   res.json({ success: true, data: isAuthEnabled() })
 })
 
 // api to authenticate user
-app.post('/api/authenticate', csrfProtection, loginLimiter, async function (
+app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
   req,
   res
 ) {
@@ -491,50 +499,57 @@ app.post('/api/authenticate', csrfProtection, loginLimiter, async function (
 })
 
 // logout the user
-app.get('/api/logout', isAuthenticated, async function (req, res) {
+app.get('/api/logout', apisLimiter, isAuthenticated, async function (req, res) {
   req.session.destroy()
   res.json({ success: true, message: 'User logged out' })
 })
 
 // update user password
-app.put('/api/password', csrfProtection, isAuthenticated, async function (
-  req,
-  res
-) {
-  try {
-    const users = jsonStore.get(store.users)
+app.put(
+  '/api/password',
+  apisLimiter,
+  csrfProtection,
+  isAuthenticated,
+  async function (req, res) {
+    try {
+      const users = jsonStore.get(store.users)
 
-    const user = req.session.user
-    const oldUser = users.find(u => u._id === user._id)
+      const user = req.session.user
+      const oldUser = users.find(u => u._id === user._id)
 
-    if (!oldUser) return res.json({ success: false, message: 'User not found' })
+      if (!oldUser)
+        return res.json({ success: false, message: 'User not found' })
 
-    if (!(await utils.verifyPsw(req.body.current, oldUser.passwordHash))) {
-      return res.json({ success: false, message: 'Current password is wrong' })
+      if (!(await utils.verifyPsw(req.body.current, oldUser.passwordHash))) {
+        return res.json({
+          success: false,
+          message: 'Current password is wrong'
+        })
+      }
+
+      if (req.body.new !== req.body.confirmNew) {
+        return res.json({ success: false, message: "Passwords doesn't match" })
+      }
+
+      oldUser.passwordHash = await utils.hashPsw(req.body.new)
+
+      req.session.user = oldUser
+
+      await jsonStore.put(store.users, users)
+
+      res.json({ success: true, message: 'Password updated', user: oldUser })
+    } catch (error) {
+      res.json({
+        success: false,
+        message: 'Error while updating passwords',
+        error: error.message
+      })
+      logger.error('Error while updating password', error)
     }
-
-    if (req.body.new !== req.body.confirmNew) {
-      return res.json({ success: false, message: "Passwords doesn't match" })
-    }
-
-    oldUser.passwordHash = await utils.hashPsw(req.body.new)
-
-    req.session.user = oldUser
-
-    await jsonStore.put(store.users, users)
-
-    res.json({ success: true, message: 'Password updated', user: oldUser })
-  } catch (error) {
-    res.json({
-      success: false,
-      message: 'Error while updating passwords',
-      error: error.message
-    })
-    logger.error('Error while updating password', error)
   }
-})
+)
 
-app.get('/health', async function (req, res) {
+app.get('/health', apisLimiter, async function (req, res) {
   let mqtt = false
   let zwave = false
 
@@ -553,7 +568,7 @@ app.get('/health', async function (req, res) {
   res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 })
 
-app.get('/health/:client', async function (req, res) {
+app.get('/health/:client', apisLimiter, async function (req, res) {
   const client = req.params.client
   let status
 
@@ -567,7 +582,10 @@ app.get('/health/:client', async function (req, res) {
 })
 
 // get settings
-app.get('/api/settings', isAuthenticated, async function (req, res) {
+app.get('/api/settings', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   const data = {
     success: true,
     settings: jsonStore.get(store.settings),
@@ -589,7 +607,7 @@ app.get('/api/settings', isAuthenticated, async function (req, res) {
 })
 
 // get config
-app.get('/api/exportConfig', isAuthenticated, function (req, res) {
+app.get('/api/exportConfig', apisLimiter, isAuthenticated, function (req, res) {
   return res.json({
     success: true,
     data: jsonStore.get(store.nodes),
@@ -598,7 +616,10 @@ app.get('/api/exportConfig', isAuthenticated, function (req, res) {
 })
 
 // import config
-app.post('/api/importConfig', isAuthenticated, async function (req, res) {
+app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   const config = req.body.data
   try {
     if (!gw.zwave) throw Error('Zwave client not inited')
@@ -630,7 +651,7 @@ app.post('/api/importConfig', isAuthenticated, async function (req, res) {
 })
 
 // get config
-app.get('/api/store', isAuthenticated, storeLimiter, async function (req, res) {
+app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
     async function parseDir (dir) {
       const toReturn = []
@@ -662,7 +683,7 @@ app.get('/api/store', isAuthenticated, storeLimiter, async function (req, res) {
   }
 })
 
-app.get('/api/store/:path', isAuthenticated, storeLimiter, async function (
+app.get('/api/store/:path', storeLimiter, isAuthenticated, async function (
   req,
   res
 ) {
@@ -684,7 +705,7 @@ app.get('/api/store/:path', isAuthenticated, storeLimiter, async function (
   }
 })
 
-app.put('/api/store/:path', isAuthenticated, storeLimiter, async function (
+app.put('/api/store/:path', storeLimiter, isAuthenticated, async function (
   req,
   res
 ) {
@@ -706,7 +727,7 @@ app.put('/api/store/:path', isAuthenticated, storeLimiter, async function (
   }
 })
 
-app.delete('/api/store/:path', isAuthenticated, storeLimiter, async function (
+app.delete('/api/store/:path', storeLimiter, isAuthenticated, async function (
   req,
   res
 ) {
@@ -722,7 +743,7 @@ app.delete('/api/store/:path', isAuthenticated, storeLimiter, async function (
   }
 })
 
-app.put('/api/store-multi', isAuthenticated, storeLimiter, async function (
+app.put('/api/store-multi', storeLimiter, isAuthenticated, async function (
   req,
   res
 ) {
@@ -738,7 +759,7 @@ app.put('/api/store-multi', isAuthenticated, storeLimiter, async function (
   }
 })
 
-app.post('/api/store-multi', isAuthenticated, storeLimiter, function (
+app.post('/api/store-multi', storeLimiter, isAuthenticated, function (
   req,
   res
 ) {
