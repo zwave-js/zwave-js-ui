@@ -294,7 +294,7 @@ app.use(
     resave: true,
     saveUninitialized: true,
     cookie: {
-      secure: !!process.env.HTTPS,
+      secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
       httpOnly: true, // prevents cookie to be sent by client javascript
       maxAge: 24 * 60 * 60 * 1000 // one day
     }
