@@ -15,6 +15,8 @@
                   v-model="password.current"
                   label="Current Password"
                   type="password"
+                  name="current-password"
+                  autocomplete
                   hint="Insert here the current password"
                   required
                 ></v-text-field>
@@ -25,6 +27,7 @@
                   v-model="password.new"
                   label="New Password"
                   type="password"
+                  name="new-password"
                   hint="Insert here the new password"
                   required
                 ></v-text-field>
@@ -34,6 +37,7 @@
                   :rules="[required, passwordMatch]"
                   v-model="password.confirmNew"
                   type="password"
+                  name="new-password-confirm"
                   label="Confirm new password"
                   hint="Confirm the new password"
                   required
@@ -65,7 +69,7 @@ export default {
   },
   watch: {
     show () {
-      this.$refs.form.reset()
+      this.$refs.form && this.$refs.form.reset()
     }
   },
   data () {

@@ -24,6 +24,7 @@
                 required
                 :rules="[rules.required]"
                 v-model.trim="username"
+                autocomplete
                 prepend-icon="person"
                 name="username"
                 label="Username"
@@ -34,8 +35,9 @@
                 :rules="[rules.required]"
                 v-model="password"
                 prepend-icon="lock"
-                name="password"
+                name="current-password"
                 label="Password"
+                autocomplete
                 type="password"
               ></v-text-field>
               <v-checkbox

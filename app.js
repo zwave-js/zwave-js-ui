@@ -1,7 +1,6 @@
 const express = require('express')
 const reqlib = require('app-root-path').require
 const morgan = require('morgan')
-const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const csrf = require('csurf')
 const app = express()
@@ -28,7 +27,6 @@ const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
 const jwt = require('jsonwebtoken')
 const { promisify } = require('util')
-const { randomBytes } = require('crypto')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -272,8 +270,6 @@ app.use(
   })
 )
 
-app.use(cookieParser())
-
 app.use(
   history({
     index: '/'
@@ -303,7 +299,9 @@ app.use(
 
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.
-const csrfProtection = csrf()
+const csrfProtection = csrf({
+  value: (req) => req.csrfToken()
+})
 
 // ### SOCKET SETUP
 
@@ -421,22 +419,13 @@ async function isAuthenticated (req, res, next) {
   })
 }
 
-// // get the csrf token
-// app.get('/api/csrf', async function (req, res) {
-//   if (req.session.csrfSecret === undefined) {
-//     req.session.csrfSecret = randomBytes(100).toString('base64')
-//   }
-
-//   res.json({ success: true, message: req.session.csrfSecret })
-// })
-
 // logout the user
 app.get('/api/auth-enabled', async function (req, res) {
   res.json({ success: true, data: isAuthEnabled() })
 })
 
 // api to authenticate user
-app.post('/api/authenticate', loginLimiter, async function (req, res) {
+app.post('/api/authenticate', csrfProtection, loginLimiter, async function (req, res) {
   if (req.session.user) {
     return res.json({
       success: true,
@@ -506,7 +495,7 @@ app.get('/api/logout', isAuthenticated, async function (req, res) {
 })
 
 // update user password
-app.put('/api/password', isAuthenticated, async function (req, res) {
+app.put('/api/password', csrfProtection, isAuthenticated, async function (req, res) {
   try {
     const users = jsonStore.get(store.users)
 
