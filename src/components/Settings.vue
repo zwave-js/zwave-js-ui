@@ -22,7 +22,7 @@
                           hint="Enable this to password protect your application. Default username is `admin`, password is `zwave`"
                           persistent-hint
                           label="Auth"
-                          v-model="gateway.authEnabled"
+                          v-model="newGateway.authEnabled"
                         ></v-switch>
                       </v-col>
                       <v-col cols="12" sm="6" md="4">
@@ -30,22 +30,32 @@
                           hint="Enable logging"
                           persistent-hint
                           label="Log enabled"
-                          v-model="gateway.logEnabled"
+                          v-model="newGateway.logEnabled"
                         ></v-switch>
                       </v-col>
-                      <v-col cols="12" sm="6" md="4" v-if="gateway.logEnabled">
+                      <v-col
+                        cols="12"
+                        sm="6"
+                        md="4"
+                        v-if="newGateway.logEnabled"
+                      >
                         <v-select
                           :items="logLevels"
-                          v-model="gateway.logLevel"
+                          v-model="newGateway.logLevel"
                           label="Log Level"
                         ></v-select>
                       </v-col>
-                      <v-col cols="12" sm="6" md="4" v-if="gateway.logEnabled">
+                      <v-col
+                        cols="12"
+                        sm="6"
+                        md="4"
+                        v-if="newGateway.logEnabled"
+                      >
                         <v-switch
-                          hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
+                          hint="Store logs in a file. Default: store/zwavejs2newMqtt.log"
                           persistent-hint
                           label="Log to file"
-                          v-model="gateway.logToFile"
+                          v-model="newGateway.logToFile"
                         ></v-switch>
                       </v-col>
                     </v-row>
@@ -60,7 +70,7 @@
                     </div>
                     <v-data-table
                       :headers="visibleHeaders"
-                      :items="gateway.values"
+                      :items="newGateway.values"
                       :items-per-page-options="[
                         10,
                         20,
@@ -121,7 +131,7 @@
                     <v-row>
                       <v-col cols="12" sm="6">
                         <v-combobox
-                          v-model="zwave.port"
+                          v-model="newZwave.port"
                           label="Serial Port"
                           hint="Ex /dev/ttyUSB0"
                           persistent-hint
@@ -132,7 +142,7 @@
                       </v-col>
                       <v-col cols="12" sm="6">
                         <v-text-field
-                          v-model="zwave.networkKey"
+                          v-model="newZwave.networkKey"
                           label="Network Key"
                           :rules="[rules.validKey, rules.validLength]"
                           append-outer-icon="wifi_protected_setup"
@@ -144,27 +154,27 @@
                           hint="Enable zwave-js logging"
                           persistent-hint
                           label="Log Enabled"
-                          v-model="zwave.logEnabled"
+                          v-model="newZwave.logEnabled"
                         ></v-switch>
                       </v-col>
-                      <v-col v-if="zwave.logEnabled" cols="12" sm="6">
+                      <v-col v-if="newZwave.logEnabled" cols="12" sm="6">
                         <v-select
                           :items="logLevels"
-                          v-model="zwave.logLevel"
+                          v-model="newZwave.logLevel"
                           label="Log Level"
                         ></v-select>
                       </v-col>
-                      <v-col v-if="zwave.logEnabled" cols="12" sm="6">
+                      <v-col v-if="newZwave.logEnabled" cols="12" sm="6">
                         <v-switch
                           hint="Store zwave logs in a file (stored in store folder)"
                           persistent-hint
                           label="Log to file"
-                          v-model="zwave.logToFile"
+                          v-model="newZwave.logToFile"
                         ></v-switch>
                       </v-col>
                       <v-col cols="6">
                         <v-text-field
-                          v-model.number="zwave.commandsTimeout"
+                          v-model.number="newZwave.commandsTimeout"
                           label="Commands timeout"
                           :rules="[rules.required]"
                           required
@@ -173,8 +183,8 @@
                           type="number"
                         ></v-text-field>
                       </v-col>
-                      <input type="hidden" :value="zwave.plugin" />
-                      <input type="hidden" :value="zwave.options" />
+                      <input type="hidden" :value="newZwave.plugin" />
+                      <input type="hidden" :value="newZwave.options" />
                     </v-row>
                   </v-card-text>
                 </v-card>
@@ -188,11 +198,11 @@
                 hint="Enable this to use zwavejs2mqtt only as Control Panel"
                 persistent-hint
                 label="Disable MQTT Gateway"
-                v-model="mqtt.disabled"
+                v-model="newMqtt.disabled"
               ></v-switch>
             </v-container>
 
-            <v-expansion-panel key="mqtt" v-if="!mqtt.disabled">
+            <v-expansion-panel key="mqtt" v-if="!newMqtt.disabled">
               <v-expansion-panel-header>Mqtt</v-expansion-panel-header>
               <v-expansion-panel-content>
                 <v-card flat>
@@ -200,7 +210,7 @@
                     <v-row>
                       <v-col cols="12" sm="6" md="4">
                         <v-text-field
-                          v-model.trim="mqtt.name"
+                          v-model.trim="newMqtt.name"
                           label="Name"
                           :rules="[rules.required, rules.validName]"
                           hint="Unique name that identify this gateway"
@@ -209,7 +219,7 @@
                       </v-col>
                       <v-col cols="12" sm="6" md="4">
                         <v-text-field
-                          v-model.trim="mqtt.host"
+                          v-model.trim="newMqtt.host"
                           label="Host url"
                           :rules="[rules.required]"
                           hint="The host url"
@@ -218,7 +228,7 @@
                       </v-col>
                       <v-col cols="12" sm="6" md="4">
                         <v-text-field
-                          v-model.number="mqtt.port"
+                          v-model.number="newMqtt.port"
                           label="Port"
                           :rules="[rules.required]"
                           hint="Host Port"
@@ -228,7 +238,7 @@
                       </v-col>
                       <v-col cols="12" sm="6" md="4">
                         <v-text-field
-                          v-model.number="mqtt.reconnectPeriod"
+                          v-model.number="newMqtt.reconnectPeriod"
                           label="Reconnect period (ms)"
                           hint="Reconnection period"
                           :rules="[rules.required]"
@@ -238,7 +248,7 @@
                       </v-col>
                       <v-col cols="12" sm="6" md="4">
                         <v-text-field
-                          v-model.trim="mqtt.prefix"
+                          v-model.trim="newMqtt.prefix"
                           label="Prefix"
                           :rules="[rules.required, rules.validPrefix]"
                           hint="The prefix to add to each topic"
@@ -247,7 +257,7 @@
                       </v-col>
                       <v-col cols="12" sm="6" md="4">
                         <v-select
-                          v-model="mqtt.qos"
+                          v-model="newMqtt.qos"
                           label="QoS"
                           :rules="[rules.required]"
                           required
@@ -259,7 +269,7 @@
                           hint="Set retain flag to true for outgoing messages"
                           persistent-hint
                           label="Retain"
-                          v-model="mqtt.retain"
+                          v-model="newMqtt.retain"
                         ></v-switch>
                       </v-col>
                       <v-col cols="12" sm="6">
@@ -267,7 +277,7 @@
                           hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"
                           persistent-hint
                           label="Clean"
-                          v-model="mqtt.clean"
+                          v-model="newMqtt.clean"
                         ></v-switch>
                       </v-col>
                       <v-col cols="12" sm="6">
@@ -275,7 +285,7 @@
                           hint="Enable persistent storage of packets (QoS > 0) while client is offline. If disabled the in memory store will be used."
                           persistent-hint
                           label="Store"
-                          v-model="mqtt.store"
+                          v-model="newMqtt.store"
                         ></v-switch>
                       </v-col>
                       <v-col cols="12" sm="6" v-if="secure">
@@ -283,14 +293,14 @@
                           hint="Enable this when using self signed certificates"
                           persistent-hint
                           label="Allow self signed certs"
-                          v-model="mqtt.allowSelfsigned"
+                          v-model="newMqtt.allowSelfsigned"
                         ></v-switch>
                       </v-col>
                       <v-col cols="12" sm="6" md="4" v-if="secure">
                         <file-input
                           label="Key.pem"
                           keyProp="_key"
-                          v-model="mqtt.key"
+                          v-model="newMqtt.key"
                           @onFileSelect="onFileSelect"
                         ></file-input>
                       </v-col>
@@ -298,7 +308,7 @@
                         <file-input
                           label="Cert.pem"
                           keyProp="_cert"
-                          v-model="mqtt.cert"
+                          v-model="newMqtt.cert"
                           @onFileSelect="onFileSelect"
                         ></file-input>
                       </v-col>
@@ -306,7 +316,7 @@
                         <file-input
                           label="Ca.pem"
                           keyProp="_ca"
-                          v-model="mqtt.ca"
+                          v-model="newMqtt.ca"
                           @onFileSelect="onFileSelect"
                         ></file-input>
                       </v-col>
@@ -315,20 +325,20 @@
                           hint="Does this client require auth?"
                           persistent-hint
                           label="Auth"
-                          v-model="mqtt.auth"
+                          v-model="newMqtt.auth"
                         ></v-switch>
                       </v-col>
-                      <v-col v-if="mqtt.auth" cols="12" sm="4">
+                      <v-col v-if="newMqtt.auth" cols="12" sm="4">
                         <v-text-field
-                          v-model="mqtt.username"
+                          v-model="newMqtt.username"
                           label="Username"
                           :rules="[requiredUser]"
                           required
                         ></v-text-field>
                       </v-col>
-                      <v-col v-if="mqtt.auth" cols="12" sm="4">
+                      <v-col v-if="newMqtt.auth" cols="12" sm="4">
                         <v-text-field
-                          v-model="mqtt.password"
+                          v-model="newMqtt.password"
                           label="Password"
                           :rules="[requiredPassword]"
                           required
@@ -345,7 +355,7 @@
 
             <v-divider></v-divider>
 
-            <v-expansion-panel key="gateway" v-if="!mqtt.disabled">
+            <v-expansion-panel key="gateway" v-if="!newMqtt.disabled">
               <v-expansion-panel-header>Gateway</v-expansion-panel-header>
               <v-expansion-panel-content>
                 <v-card flat>
@@ -353,7 +363,7 @@
                     <v-row>
                       <v-col cols="12">
                         <v-select
-                          v-model="gateway.type"
+                          v-model="newGateway.type"
                           label="Topic type"
                           :rules="[rules.required]"
                           required
@@ -362,24 +372,24 @@
                       </v-col>
                       <v-col cols="12">
                         <v-select
-                          v-model="gateway.payloadType"
+                          v-model="newGateway.payloadType"
                           label="Payload type"
                           required
                           :rules="[validPayload]"
                           :items="py_types"
                         ></v-select>
                       </v-col>
-                      <v-col v-if="gateway.type === 0" cols="6">
+                      <v-col v-if="newGateway.type === 0" cols="6">
                         <v-switch
                           label="Use nodes name instead of numeric nodeIDs"
-                          v-model="gateway.nodeNames"
+                          v-model="newGateway.nodeNames"
                         ></v-switch>
                       </v-col>
                       <v-col cols="6">
                         <v-switch
                           label="Ignore location"
                           hint="Don't add nodes location to values topic"
-                          v-model="gateway.ignoreLoc"
+                          v-model="newGateway.ignoreLoc"
                           persistent-hint
                         ></v-switch>
                       </v-col>
@@ -387,7 +397,7 @@
                         <v-switch
                           label="Send Zwave events"
                           hint="Enable this to get all zwave events in MQTT on _EVENTS topic"
-                          v-model="gateway.sendEvents"
+                          v-model="newGateway.sendEvents"
                           persistent-hint
                         ></v-switch>
                       </v-col>
@@ -395,15 +405,15 @@
                         <v-switch
                           label="Ignore status updates"
                           hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
-                          v-model="gateway.ignoreStatus"
+                          v-model="newGateway.ignoreStatus"
                           persistent-hint
                         ></v-switch>
                       </v-col>
-                      <v-col v-if="gateway.type !== 2" cols="6">
+                      <v-col v-if="newGateway.type !== 2" cols="6">
                         <v-switch
                           label="Include Node info"
                           hint="Include Node's Name and Location on Payload"
-                          v-model="gateway.includeNodeInfo"
+                          v-model="newGateway.includeNodeInfo"
                           persistent-hint
                         ></v-switch>
                       </v-col>
@@ -411,7 +421,7 @@
                         <v-switch
                           label="Publish node details"
                           hint="Details published under a topic, can help automations receive device info"
-                          v-model="gateway.publishNodeDetails"
+                          v-model="newGateway.publishNodeDetails"
                           persistent-hint
                         ></v-switch>
                       </v-col>
@@ -436,12 +446,12 @@
                           hint="Enable zwave-js websocket server. This can be used with HASS Zwave-js integration to discover entities"
                           persistent-hint
                           label="WS Server"
-                          v-model="zwave.serverEnabled"
+                          v-model="newZwave.serverEnabled"
                         ></v-switch>
                       </v-col>
-                      <v-col v-if="zwave.serverEnabled" cols="12" sm="6">
+                      <v-col v-if="newZwave.serverEnabled" cols="12" sm="6">
                         <v-text-field
-                          v-model.number="zwave.serverPort"
+                          v-model.number="newZwave.serverPort"
                           label="Server Port"
                           :rules="[rules.required]"
                           required
@@ -450,39 +460,39 @@
                         ></v-text-field>
                       </v-col>
                     </v-row>
-                    <v-row v-if="!mqtt.disabled">
+                    <v-row v-if="!newMqtt.disabled">
                       <v-col cols="6">
                         <v-switch
                           label="MQTT Discovery"
                           hint="Create devices in Hass using MQTT discovery. This is an alternative to Hass Zwave-js integration"
-                          v-model="gateway.hassDiscovery"
+                          v-model="newGateway.hassDiscovery"
                           persistent-hint
                         ></v-switch>
                       </v-col>
-                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                      <v-col cols="6" v-if="newGateway.hassDiscovery">
                         <v-text-field
-                          v-model="gateway.discoveryPrefix"
+                          v-model="newGateway.discoveryPrefix"
                           label="Discovery prefix"
                           hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12" v-if="gateway.hassDiscovery">
+                      <v-col cols="12" v-if="newGateway.hassDiscovery">
                         <v-switch
                           label="Retained discovery"
                           hint="Set retain flag to true in discovery messages"
-                          v-model="gateway.retainedDiscovery"
+                          v-model="newGateway.retainedDiscovery"
                           persistent-hint
                         ></v-switch>
                       </v-col>
-                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                      <v-col cols="6" v-if="newGateway.hassDiscovery">
                         <v-text-field
-                          v-model="gateway.entityTemplate"
+                          v-model="newGateway.entityTemplate"
                           label="Entity name template"
                           persistent-hint
                           hint="Template which generates entity names"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                      <v-col cols="6" v-if="newGateway.hassDiscovery">
                         <div>
                           Default: <code>%ln_%o</code><br />
                           -<code>%ln</code>: Node location with name
@@ -509,7 +519,7 @@
             @save="saveValue"
             @close="closeDialog"
             v-model="dialogValue"
-            :gw_type="gateway.type"
+            :gw_type="newGateway.type"
             :title="dialogTitle"
             :editedValue="editedValue"
             :devices="devices"
@@ -518,6 +528,10 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer></v-spacer>
+        <v-btn color="red darken-1" text @click="resetConfig">
+          Reset
+          <v-icon right dark>clear</v-icon>
+        </v-btn>
         <v-btn color="purple darken-1" text @click="importSettings">
           Import
           <v-icon right dark>file_upload</v-icon>
@@ -543,6 +557,10 @@ import { parse } from 'native-url'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
+function copy (o) {
+  return JSON.parse(JSON.stringify(o))
+}
+
 export default {
   name: 'Settings',
   components: {
@@ -551,7 +569,7 @@ export default {
   },
   computed: {
     visibleHeaders () {
-      if (!this.mqtt.disabled) return this.headers
+      if (!this.newMqtt.disabled) return this.headers
       else {
         const headersCopy = [...this.headers]
 
@@ -560,16 +578,14 @@ export default {
       }
     },
     secure () {
-      if (!this.mqtt.host) return false
-      const parsed = parse(this.mqtt.host)
+      if (!this.newMqtt.host) return false
+      const parsed = parse(this.newMqtt.host)
 
-      const secure =
-        ['mqtts:', 'wss:', 'wxs:', 'alis:', 'tls:'].indexOf(parsed.protocol) >=
-        0
+      const secure = ['mqtts:', 'tls:'].indexOf(parsed.protocol) >= 0
 
       if (!secure) {
         // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-        this.mqtt.key = this.mqtt._key = this.mqtt.cert = this.mqtt._cert = this.mqtt.ca = this.mqtt._ca =
+        this.newMqtt.key = this.newMqtt._key = this.newMqtt.cert = this.newMqtt._cert = this.newMqtt.ca = this.newMqtt._ca =
           ''
       }
 
@@ -580,19 +596,21 @@ export default {
     },
     requiredUser () {
       return (
-        (this.mqtt.auth && !!this.mqtt.username) || 'This field is required.'
+        (this.newMqtt.auth && !!this.newMqtt.username) ||
+        'This field is required.'
       )
     },
     validPayload () {
       return (
-        !this.gateway.hassDiscovery ||
-        this.gateway.payloadType !== 2 ||
+        !this.newGateway.hassDiscovery ||
+        this.newGateway.payloadType !== 2 ||
         "Hass discovery doesn't works with this payload type"
       )
     },
     requiredPassword () {
       return (
-        (this.mqtt.auth && !!this.mqtt.password) || 'This field is required.'
+        (this.newMqtt.auth && !!this.newMqtt.password) ||
+        'This field is required.'
       )
     },
     ...mapGetters(['zwave', 'mqtt', 'gateway', 'devices', 'serial_ports'])
@@ -606,6 +624,9 @@ export default {
     return {
       valid_zwave: true,
       dialogValue: false,
+      newGateway: {},
+      newMqtt: {},
+      newZwave: {},
       editedValue: {},
       editedIndex: -1,
       defaultValue: {},
@@ -703,7 +724,7 @@ export default {
         key += x.length === 2 ? x : '0' + x
       }
 
-      this.$set(this.zwave, 'networkKey', key)
+      this.$set(this.newZwave, 'networkKey', key)
     },
     readFile (file, callback) {
       const reader = new FileReader()
@@ -713,11 +734,10 @@ export default {
     },
     onFileSelect (data) {
       const file = data.files[0]
-      const self = this
       if (file) {
-        this.readFile(file, text => (self.mqtt[data.key] = text))
+        this.readFile(file, text => (this.newMqtt[data.key] = text))
       } else {
-        self.mqtt[data.key] = ''
+        this.newMqtt[data.key] = ''
       }
     },
     async importSettings () {
@@ -737,23 +757,23 @@ export default {
     },
     getSettingsJSON () {
       return {
-        mqtt: this.mqtt,
-        gateway: this.gateway,
-        zwave: this.zwave
+        mqtt: this.newMqtt,
+        gateway: this.newGateway,
+        zwave: this.newZwave
       }
     },
     editItem (item) {
-      this.editedIndex = this.gateway.values.indexOf(item)
+      this.editedIndex = this.newGateway.values.indexOf(item)
       this.editedValue = Object.assign({}, item)
       this.dialogValue = true
     },
     async deleteItem (item) {
-      const index = this.gateway.values.indexOf(item)
+      const index = this.newGateway.values.indexOf(item)
       ;(await this.$listeners.showConfirm(
         'Attention',
         'Are you sure you want to delete this item?',
         'alert'
-      )) && this.gateway.values.splice(index, 1)
+      )) && this.newGateway.values.splice(index, 1)
     },
     closeDialog () {
       this.dialogValue = false
@@ -768,49 +788,52 @@ export default {
     },
     saveValue () {
       if (this.editedIndex > -1) {
-        this.$set(this.gateway.values, this.editedIndex, this.editedValue)
+        this.$set(this.newGateway.values, this.editedIndex, this.editedValue)
       } else {
-        this.gateway.values.push(this.editedValue)
+        this.newGateway.values.push(this.editedValue)
       }
       this.closeDialog()
     },
-    update () {
+    async update () {
       if (this.$refs.form_settings.validate()) {
-        const self = this
-        ConfigApis.updateConfig(self.getSettingsJSON())
-          .then(data => {
-            self.showSnackbar(data.message)
-            // this is needed so settings are reloaded on store
-            self.$store.dispatch('init', data.data)
-          })
-          .catch(error => {
-            console.log(error)
-          })
+        try {
+          const data = await ConfigApis.updateConfig(this.getSettingsJSON())
+          this.showSnackbar(data.message)
+          this.$store.dispatch('init', data.data)
+        } catch (error) {
+          console.log(error)
+        }
       } else {
         this.showSnackbar('Your configuration contains errors, fix it')
+      }
+    },
+    resetConfig () {
+      this.newGateway = copy(this.gateway)
+      this.newZwave = copy(this.zwave)
+      this.newMqtt = copy(this.mqtt)
+    },
+    async getConfig () {
+      try {
+        const data = await ConfigApis.getConfig()
+        if (!data.success) {
+          this.showSnackbar(
+            'Error while retriving configuration, check console'
+          )
+          console.log(data)
+        } else {
+          this.$store.dispatch('init', data)
+          this.resetConfig()
+        }
+      } catch (error) {
+        this.showSnackbar(error.message)
+        console.log(error)
       }
     }
   },
   mounted () {
     // hide socket status indicator from toolbar
     this.$emit('updateStatus')
-
-    const self = this
-    ConfigApis.getConfig()
-      .then(data => {
-        if (!data.success) {
-          self.showSnackbar(
-            'Error while retriving configuration, check console'
-          )
-          console.log(data)
-        } else {
-          self.$store.dispatch('init', data)
-        }
-      })
-      .catch(e => {
-        self.showSnackbar(e.message)
-        console.log(e)
-      })
+    this.getConfig()
   }
 }
 </script>
