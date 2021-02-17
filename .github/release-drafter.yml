@@ -20,8 +20,8 @@ categories:
       - "bug"
 autolabeler:
   - label: "docs"
-    files:
-      - "*.md"
+    title:
+      - "/^docs/"
   - label: "bug"
     title:
       - "/^fix/"
