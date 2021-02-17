@@ -126,6 +126,7 @@ export const mutations = {
     state.appInfo.homeHex = data.name
     state.appInfo.appVersion = data.appVersion
     state.appInfo.zwaveVersion = data.zwaveVersion
+    state.appInfo.serverVersion = data.serverVersion
   },
   setValue (state, valueId) {
     const toReplace = getValue(valueId)
