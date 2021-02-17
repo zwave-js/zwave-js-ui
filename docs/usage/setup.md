@@ -4,6 +4,9 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 
 ## General
 
+- **Auth**: Enable this to password protect your application. Default credentials are:
+  - Username:`admin`
+  - Password: `zwave`
 - **Log enabled**: Enable logging for zwavejs2mqtt
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
