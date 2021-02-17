@@ -24,6 +24,12 @@
                 {{ appInfo.zwaveVersion }}
               </div>
             </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Zwavejs-server Version</div>
+              <div class="body-1 font-weight-bold">
+                {{ appInfo.serverVersion }}
+              </div>
+            </v-col>
           </v-row>
 
           <v-row justify="start">

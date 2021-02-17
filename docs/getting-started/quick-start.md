@@ -35,6 +35,24 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
 > [!TIP]
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](https://github.com/zwave-js/zwavejs2mqtt/tree/master/kubernetes) directory of this repo
 
+## Snap package
+
+Make sure you have a [Snapd installed](https://snapcraft.io/docs/installing-snapd). It's shipped with most Ubuntu Flavors and some other distributions.
+
+```bash
+sudo snap install zwavejs2mqtt
+```
+
+And give the package access to use USB-devices and observe hardware. The last one is needed for the program to list available devices in the UI.
+
+```bash
+sudo snap connect zwavejs2mqtt:raw-usb
+sudo snap connect zwavejs2mqtt:hardware-observe
+```
+
+> [!NOTE]
+> See `zwavejs2mqtt.help` for usage and environment settings.
+
 ## NodeJS or PKG version
 
 1. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
