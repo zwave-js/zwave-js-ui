@@ -38,7 +38,9 @@
                 name="current-password"
                 label="Password"
                 autocomplete
-                type="password"
+                :type="showPsw ? 'text' : 'password'"
+                :append-icon="showPsw ? 'visibility' : 'visibility_off'"
+                @click:append="showPsw = !showPsw"
               ></v-text-field>
               <v-checkbox
                 v-model="rememberMe"
@@ -90,6 +92,7 @@ export default {
       rememberMe: false,
       error_text: '',
       error_type: 'error',
+      showPsw: false,
       error: false,
       valid_login: true,
       rules: {

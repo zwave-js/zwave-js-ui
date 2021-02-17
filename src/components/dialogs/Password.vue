@@ -14,7 +14,9 @@
                   :rules="[required]"
                   v-model="password.current"
                   label="Current Password"
-                  type="password"
+                  :type="showPsw ? 'text' : 'password'"
+                  :append-icon="showPsw ? 'visibility' : 'visibility_off'"
+                  @click:append="showPsw = !showPsw"
                   name="current-password"
                   autocomplete
                   hint="Insert here the current password"
@@ -26,7 +28,9 @@
                   :rules="[required]"
                   v-model="password.new"
                   label="New Password"
-                  type="password"
+                  :type="showPsw1 ? 'text' : 'password'"
+                  :append-icon="showPsw1 ? 'visibility' : 'visibility_off'"
+                  @click:append="showPsw1 = !showPsw1"
                   name="new-password"
                   hint="Insert here the new password"
                   required
@@ -36,7 +40,9 @@
                 <v-text-field
                   :rules="[required, passwordMatch]"
                   v-model="password.confirmNew"
-                  type="password"
+                  :type="showPsw2 ? 'text' : 'password'"
+                  :append-icon="showPsw2 ? 'visibility' : 'visibility_off'"
+                  @click:append="showPsw2 = !showPsw2"
                   name="new-password-confirm"
                   label="Confirm new password"
                   hint="Confirm the new password"
@@ -75,6 +81,9 @@ export default {
   data () {
     return {
       valid: true,
+      showPsw: false,
+      showPsw1: false,
+      showPsw2: false,
       required (v) {
         return !!v || 'This is required'
       }
