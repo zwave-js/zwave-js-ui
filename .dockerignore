@@ -8,3 +8,8 @@ docs
 pkg
 test
 node_modules
+kubernetes
+wallaby.js
+docker
+nodemon.json
+package.sh

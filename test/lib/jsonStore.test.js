@@ -22,22 +22,21 @@ describe('#jsonStore', () => {
     })
 
     it('uncaught error', () => {
-      mod
-        .__get__('jsonfile')
-        .readFile.callsArgWith(1, new Error('FOO'), 'mybar')
+      mod.__get__('jsonfile').readFile.rejects(new Error('FOO'))
       return fun(config).should.eventually.be.rejectedWith(Error, 'FOO')
     })
 
     it('data returned', () => {
-      mod.__get__('jsonfile').readFile.callsArgWith(1, false, 'mybar')
-      return fun(config).should.eventually.deep.equal({
+      const toReturn = {
         file: 'foo',
         data: 'mybar'
-      })
+      }
+      mod.__get__('jsonfile').readFile.resolves(toReturn.data)
+      return fun(config).should.eventually.deep.equal(toReturn)
     })
 
     it('no data, return default', () => {
-      mod.__get__('jsonfile').readFile.callsArgWith(1, false, null)
+      mod.__get__('jsonfile').readFile.resolves(null)
       return fun(config).should.eventually.deep.equal({
         file: 'foo',
         data: 'defaultbar'
@@ -45,7 +44,7 @@ describe('#jsonStore', () => {
     })
 
     it('file not found, return default', () => {
-      mod.__get__('jsonfile').readFile.callsArgWith(1, { code: 'ENOENT' }, null)
+      mod.__get__('jsonfile').readFile.rejects({ code: 'ENOENT' })
       return fun(config).should.eventually.deep.equal({
         file: 'foo',
         data: 'defaultbar'
@@ -105,13 +104,13 @@ describe('#jsonStore', () => {
         mod.__get__('jsonfile').writeFile.restore()
       })
       it('ok', () => {
-        mod.__get__('jsonfile').writeFile.callsArgWith(2, null)
+        mod.__get__('jsonfile').writeFile.resolves()
         return mod
           .put({ file: 'foo' }, 'bardata')
           .should.eventually.equal('bardata')
       })
       it('error', () => {
-        mod.__get__('jsonfile').writeFile.callsArgWith(2, new Error('bar'))
+        mod.__get__('jsonfile').writeFile.rejects(new Error('bar'))
         mod.put({ file: 'foo' }).should.be.rejectedWith('bar')
       })
     })
