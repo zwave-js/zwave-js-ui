@@ -8,8 +8,8 @@
       <v-card-text>
         <v-container grid-list-md>
           <v-form v-model="valid" ref="form" lazy-validation>
-            <v-layout wrap>
-              <v-flex xs12>
+            <v-row>
+              <v-col cols="12">
                 <v-select
                   v-model="editedValue.device"
                   label="Device"
@@ -18,8 +18,8 @@
                   item-text="name"
                   :items="devices"
                 ></v-select>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col cols="12">
                 <v-select
                   v-model="editedValue.value"
                   label="Value"
@@ -55,8 +55,11 @@
                     </v-list-item-content>
                   </template>
                 </v-select>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col
+                v-if="!this.mqtt.disabled && this.gateway.hassDiscovery"
+                cols="12"
+              >
                 <v-select
                   v-model="editedValue.device_class"
                   label="Device Class"
@@ -64,67 +67,100 @@
                   item-text="name"
                   :items="deviceClasses"
                 ></v-select>
-              </v-flex>
-              <v-flex v-if="isSensor(editedValue.value)" xs12>
+              </v-col>
+              <v-col v-if="isSensor(editedValue.value)" cols="12">
                 <v-text-field
                   v-model.number="editedValue.icon"
                   hint="Specify a device icon for Home assistant, format is <prefix>:<icons-alias> (Eg: 'mdi:water'). Check http://materialdesignicons.com/"
                   label="Device Icon"
                 ></v-text-field>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col v-if="!this.mqtt.disabled" cols="12">
                 <v-text-field
                   v-model.trim="editedValue.topic"
                   label="Topic"
                   :rules="[requiredTopic]"
                   required
                 ></v-text-field>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col v-if="!this.mqtt.disabled" cols="6">
+                <v-select
+                  v-model="editedValue.qos"
+                  label="QoS"
+                  hint="If specified, overrides the default QoS in MQTT settings"
+                  :items="[
+                    { text: '', value: undefined },
+                    { text: '0: At most once', value: 0 },
+                    { text: '1: At least once', value: 1 },
+                    { text: '2: Exactly once', value: 2 }
+                  ]"
+                  persistent-hint
+                  required
+                  type="number"
+                ></v-select>
+              </v-col>
+              <v-col v-if="!this.mqtt.disabled" cols="6">
+                <v-select
+                  v-model="editedValue.retain"
+                  label="Retain"
+                  persistent-hint
+                  hint="If specified, overrides the default retain in MQTT settings"
+                  :items="[
+                    { text: '', value: undefined },
+                    { text: 'True', value: true },
+                    { text: 'False', value: false }
+                  ]"
+                  required
+                  type="number"
+                ></v-select>
+              </v-col>
+              <v-col cols="12">
                 <v-text-field
                   v-model="editedValue.postOperation"
                   label="Post operation"
                   hint="Example: '/10' '*100' '+20'"
                   required
                 ></v-text-field>
-              </v-flex>
-              <!-- <v-flex xs6>
+              </v-col>
+              <v-col cols="6">
                 <v-switch
                   label="Poll"
-                  hint="Enable poll of this value"
+                  hint="Enable poll of this value. ATTENTION: This could create lot traffic in your network and kill the life of battery powered devices. Use at your own risk"
                   persistent-hint
                   v-model="editedValue.enablePoll"
                 ></v-switch>
-              </v-flex>
-              <v-flex v-if="editedValue.enablePoll" xs6>
+              </v-col>
+              <v-col v-if="editedValue.enablePoll" cols="6">
                 <v-text-field
-                  v-model.number="editedValue.pollIntensity"
-                  label="Poll intensity"
+                  v-model.number="editedValue.pollInterval"
+                  label="Poll interval"
+                  hint="Seconds between to wait between poll requests. The timer starts when the request ends"
                   :rules="[requiredIntensity]"
+                  suffix="seconds"
                   required
                   type="number"
                 ></v-text-field>
-              </v-flex>
-
-              <v-flex xs6>
+              </v-col>
+              <!--
+              <v-col cols="6">
                 <v-switch
                   label="Verify changes"
                   hint="Verify changes of this value"
                   persistent-hint
                   v-model="editedValue.verifyChanges"
                 ></v-switch>
-              </v-flex>
+              </v-col>
 
               -->
 
-              <v-flex xs6>
+              <v-col cols="6">
                 <v-switch
                   label="Parse send"
                   hint="Create a function that parse the value sent via MQTT"
                   persistent-hint
                   v-model="editedValue.parseSend"
                 ></v-switch>
-              </v-flex>
+              </v-col>
 
               <v-container v-if="editedValue.parseSend">
                 <p>
@@ -141,14 +177,14 @@
                 ></prism-editor>
               </v-container>
 
-              <v-flex xs6>
+              <v-col cols="6">
                 <v-switch
                   label="Parse receive"
                   hint="Create a function that parse the received value from MQTT"
                   persistent-hint
                   v-model="editedValue.parseReceive"
                 ></v-switch>
-              </v-flex>
+              </v-col>
 
               <v-container v-if="editedValue.parseReceive">
                 <p>
@@ -164,7 +200,7 @@
                   :highlight="highlighter"
                 ></prism-editor>
               </v-container>
-            </v-layout>
+            </v-row>
           </v-form>
         </v-container>
       </v-card-text>
@@ -194,6 +230,8 @@ import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
 
+import { mapGetters } from 'vuex'
+
 export default {
   components: {
     PrismEditor
@@ -215,6 +253,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['gateway', 'mqtt']),
     deviceValues () {
       const device = this.devices.find(d => d.value == this.editedValue.device) // eslint-disable-line eqeqeq
       return device ? device.values : []
@@ -290,8 +329,8 @@ export default {
     requiredIntensity () {
       return (
         !this.editedValue.enablePoll ||
-        (this.editedValue.enablePoll && this.editedValue.pollIntensity > 0) ||
-        'Min value is 1'
+        (this.editedValue.enablePoll && this.editedValue.pollInterval >= 10) ||
+        'Minimun interval is 10 seconds'
       )
     },
     requiredTopic () {

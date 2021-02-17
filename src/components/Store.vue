@@ -23,12 +23,12 @@
               </v-icon>
             </template>
             <template v-slot:append="{ item }">
-              <v-layout row justify-end ma-1>
+              <v-row justify-end class="ma-1">
                 <div class="caption grey--text">{{ item.size }}</div>
                 <v-icon @click.stop="deleteFile(item)" color="red"
                   >delete</v-icon
                 >
-              </v-layout>
+              </v-row>
             </template>
           </v-treeview>
           <div v-else>
@@ -268,7 +268,11 @@ export default {
     },
     async downloadFile () {
       if (this.selected) {
-        const fileName = this.selected.name.split('.')[0]
+        // get the file name without the extension
+        const fileName = this.selected.name
+          .split('.')
+          .slice(0, -1)
+          .join('.')
         this.$listeners.export(this.fileContent, fileName, this.selected.ext)
       }
     },

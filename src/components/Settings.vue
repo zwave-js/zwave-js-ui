@@ -16,406 +16,42 @@
               <v-expansion-panel-content>
                 <v-card flat>
                   <v-card-text>
-                    <v-layout wrap>
-                      <v-flex xs12 sm6>
+                    <v-row class="mb-5">
+                      <v-col cols="12" sm="6" md="4">
                         <v-switch
                           hint="Enable logging"
                           persistent-hint
                           label="Log enabled"
                           v-model="gateway.logEnabled"
                         ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4" v-if="gateway.logEnabled">
                         <v-select
                           :items="logLevels"
                           v-model="gateway.logLevel"
                           label="Log Level"
                         ></v-select>
-                      </v-flex>
-                      <v-flex xs12 sm6 v-if="gateway.logEnabled">
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4" v-if="gateway.logEnabled">
                         <v-switch
                           hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
                           persistent-hint
                           label="Log to file"
                           v-model="gateway.logToFile"
                         ></v-switch>
-                      </v-flex>
-                    </v-layout>
-                  </v-card-text>
-                </v-card>
-              </v-expansion-panel-content>
-            </v-expansion-panel>
-
-            <v-expansion-panel key="zwave">
-              <v-expansion-panel-header>Zwave</v-expansion-panel-header>
-              <v-expansion-panel-content>
-                <v-card flat>
-                  <v-card-text>
-                    <v-layout wrap>
-                      <v-flex xs12 sm6>
-                        <v-combobox
-                          v-model="zwave.port"
-                          label="Serial Port"
-                          hint="Ex /dev/ttyUSB0"
-                          persistent-hint
-                          :rules="[rules.required]"
-                          required
-                          :items="serial_ports"
-                        ></v-combobox>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-text-field
-                          v-model="zwave.networkKey"
-                          label="Network Key"
-                          :rules="[rules.validKey, rules.validLength]"
-                          append-outer-icon="wifi_protected_setup"
-                          @click:append-outer="randomKey"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Enable zwave-js websocket server"
-                          persistent-hint
-                          label="WS Server"
-                          v-model="zwave.serverEnabled"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex v-if="zwave.serverEnabled" xs12 sm6>
-                        <v-text-field
-                          v-model.number="zwave.serverPort"
-                          label="Server Port"
-                          :rules="[rules.required]"
-                          required
-                          hint="The port to bind the Zwave Server. Default: 3000"
-                          type="number"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Enable zwave-js logging"
-                          persistent-hint
-                          label="Log Enabled"
-                          v-model="zwave.logEnabled"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex v-if="zwave.logEnabled" xs12 sm6>
-                        <v-select
-                          :items="logLevels"
-                          v-model="zwave.logLevel"
-                          label="Log Level"
-                        ></v-select>
-                      </v-flex>
-                      <v-flex v-if="zwave.logEnabled" xs12 sm6>
-                        <v-switch
-                          hint="Store zwave logs in a file (stored in store folder)"
-                          persistent-hint
-                          label="Log to file"
-                          v-model="zwave.logToFile"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-text-field
-                          v-model.number="zwave.commandsTimeout"
-                          label="Commands timeout"
-                          :rules="[rules.required]"
-                          required
-                          suffix="seconds"
-                          hint="Seconds to wait before stop inclusion/exclusion mode"
-                          type="number"
-                        ></v-text-field>
-                      </v-flex>
-                      <input type="hidden" :value="zwave.plugin" />
-                      <input type="hidden" :value="zwave.options" />
-                    </v-layout>
-                  </v-card-text>
-                </v-card>
-              </v-expansion-panel-content>
-            </v-expansion-panel>
-
-            <v-divider></v-divider>
-
-            <v-container xs12 sm6 ml-1>
-              <v-switch
-                hint="Enable this to use Z2M only as Control Panel"
-                persistent-hint
-                label="Disable Gateway"
-                v-model="mqtt.disabled"
-              ></v-switch>
-            </v-container>
-
-            <v-expansion-panel key="mqtt" v-if="!mqtt.disabled">
-              <v-expansion-panel-header>Mqtt</v-expansion-panel-header>
-              <v-expansion-panel-content>
-                <v-card flat>
-                  <v-card-text>
-                    <v-layout wrap>
-                      <v-flex xs12 sm6 md4>
-                        <v-text-field
-                          v-model.trim="mqtt.name"
-                          label="Name"
-                          :rules="[rules.required, rules.validName]"
-                          hint="Unique name that identify this gateway"
-                          required
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4>
-                        <v-text-field
-                          v-model.trim="mqtt.host"
-                          label="Host url"
-                          :rules="[rules.required]"
-                          hint="The host url"
-                          required
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4>
-                        <v-text-field
-                          v-model.number="mqtt.port"
-                          label="Port"
-                          :rules="[rules.required]"
-                          hint="Host Port"
-                          required
-                          type="number"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4>
-                        <v-text-field
-                          v-model.number="mqtt.reconnectPeriod"
-                          label="Reconnect period (ms)"
-                          hint="Reconnection period"
-                          :rules="[rules.required]"
-                          required
-                          type="number"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4>
-                        <v-text-field
-                          v-model.trim="mqtt.prefix"
-                          label="Prefix"
-                          :rules="[rules.required, rules.validPrefix]"
-                          hint="The prefix to add to each topic"
-                          required
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4>
-                        <v-select
-                          v-model="mqtt.qos"
-                          label="QoS"
-                          :rules="[rules.required]"
-                          required
-                          :items="[0, 1, 2]"
-                        ></v-select>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Set retain flag to true for outgoing messages"
-                          persistent-hint
-                          label="Retain"
-                          v-model="mqtt.retain"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"
-                          persistent-hint
-                          label="Clean"
-                          v-model="mqtt.clean"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6>
-                        <v-switch
-                          hint="Enable persistent storage of packets (QoS > 0) while client is offline. If disabled the in memory store will be used."
-                          persistent-hint
-                          label="Store"
-                          v-model="mqtt.store"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6 v-if="secure">
-                        <v-switch
-                          hint="Enable this when using self signed certificates"
-                          persistent-hint
-                          label="Allow self signed certs"
-                          v-model="mqtt.allowSelfsigned"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4 v-if="secure">
-                        <file-input
-                          label="Key.pem"
-                          keyProp="_key"
-                          v-model="mqtt.key"
-                          @onFileSelect="onFileSelect"
-                        ></file-input>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4 v-if="secure">
-                        <file-input
-                          label="Cert.pem"
-                          keyProp="_cert"
-                          v-model="mqtt.cert"
-                          @onFileSelect="onFileSelect"
-                        ></file-input>
-                      </v-flex>
-                      <v-flex xs12 sm6 md4 v-if="secure">
-                        <file-input
-                          label="Ca.pem"
-                          keyProp="_ca"
-                          v-model="mqtt.ca"
-                          @onFileSelect="onFileSelect"
-                        ></file-input>
-                      </v-flex>
-                      <v-flex xs12 sm4>
-                        <v-switch
-                          hint="Does this client require auth?"
-                          persistent-hint
-                          label="Auth"
-                          v-model="mqtt.auth"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex v-if="mqtt.auth" xs12 sm4>
-                        <v-text-field
-                          v-model="mqtt.username"
-                          label="Username"
-                          :rules="[requiredUser]"
-                          required
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex v-if="mqtt.auth" xs12 sm4>
-                        <v-text-field
-                          v-model="mqtt.password"
-                          label="Password"
-                          :rules="[requiredPassword]"
-                          required
-                          :append-icon="e1 ? 'visibility' : 'visibility_off'"
-                          @click:append="() => (e1 = !e1)"
-                          :type="e1 ? 'password' : 'text'"
-                        ></v-text-field>
-                      </v-flex>
-                    </v-layout>
-                  </v-card-text>
-                </v-card>
-              </v-expansion-panel-content>
-            </v-expansion-panel>
-
-            <v-divider></v-divider>
-
-            <v-expansion-panel key="gateway" v-if="!mqtt.disabled">
-              <v-expansion-panel-header>Gateway</v-expansion-panel-header>
-              <v-expansion-panel-content>
-                <v-card flat>
-                  <v-card-text>
-                    <v-layout wrap>
-                      <v-flex xs12>
-                        <v-select
-                          v-model="gateway.type"
-                          label="Type"
-                          :rules="[rules.required]"
-                          required
-                          :items="gw_types"
-                        ></v-select>
-                      </v-flex>
-                      <v-flex xs12>
-                        <v-select
-                          v-model="gateway.payloadType"
-                          label="Payload type"
-                          required
-                          :rules="[validPayload]"
-                          :items="py_types"
-                        ></v-select>
-                      </v-flex>
-                      <v-flex v-if="gateway.type === 0" xs6>
-                        <v-switch
-                          label="Use nodes name instead of numeric nodeIDs"
-                          v-model="gateway.nodeNames"
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-switch
-                          label="Ignore location"
-                          hint="Don't add nodes location to values topic"
-                          v-model="gateway.ignoreLoc"
-                          persistent-hint
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-switch
-                          label="Send Zwave events"
-                          hint="Enable this to get all zwave events in MQTT on _EVENTS topic"
-                          v-model="gateway.sendEvents"
-                          persistent-hint
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-switch
-                          label="Ignore status updates"
-                          hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
-                          v-model="gateway.ignoreStatus"
-                          persistent-hint
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex v-if="gateway.type !== 2" xs6>
-                        <v-switch
-                          label="Include Node info"
-                          hint="Include Node's Name and Location on Payload"
-                          v-model="gateway.includeNodeInfo"
-                          persistent-hint
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-switch
-                          label="Publish node details"
-                          hint="Details published under a topic, can help automations receive device info"
-                          v-model="gateway.publishNodeDetails"
-                          persistent-hint
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6>
-                        <v-switch
-                          label="Hass Discovery"
-                          hint="BETA: Automatically create devices in Hass using MQTT auto-discovery"
-                          v-model="gateway.hassDiscovery"
-                          persistent-hint
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6 v-if="gateway.hassDiscovery">
-                        <v-text-field
-                          v-model="gateway.discoveryPrefix"
-                          label="Discovery prefix"
-                          hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs6 v-if="gateway.hassDiscovery">
-                        <v-switch
-                          label="Retained discovery"
-                          hint="Set retain flag to true in discovery messages"
-                          v-model="gateway.retainedDiscovery"
-                          persistent-hint
-                        ></v-switch>
-                      </v-flex>
-                      <v-flex xs6 v-if="gateway.hassDiscovery">
-                        <v-text-field
-                          v-model="gateway.entityTemplate"
-                          label="Entity name template"
-                          persistent-hint
-                          hint="Template which generates entity names"
-                        ></v-text-field>
-                      </v-flex>
-                      <v-flex xs6 v-if="gateway.hassDiscovery">
-                        <div>
-                          Default: <code>%ln_%o</code><br />
-                          -<code>%ln</code>: Node location with name
-                          (<code>&lt;location-?&gt;&lt;name&gt;</code>)<br />-
-                          <code>%nid</code>: Node ID <br />- <code>%n</code>:
-                          Node Name <br />- <code>%loc</code>: Node Location
-                          <br />- <code>%p</code>: valueId property (fallback to
-                          device type) <br />- <code>%pk</code>: valueId
-                          property key (fallback to device type) <br />-
-                          <code>%pn</code>: valueId property name (fallback to
-                          device type) <br />- <code>%o</code>: HASS object_id
-                          <br />- <code>%l</code>: valueId label (fallback to
-                          object_id)
-                        </div>
-                      </v-flex>
-                    </v-layout>
+                      </v-col>
+                    </v-row>
+                    <v-subheader class="font-weight-bold"
+                      >Devices values configuration</v-subheader
+                    >
+                    <div class="mb-5 caption">
+                      Add here valueIds specific configurations for each device.
+                      This means that if you create an entry here this
+                      configuration will be applied to each valueId of each
+                      device of the same type in your Network.
+                    </div>
                     <v-data-table
-                      :headers="headers"
+                      :headers="visibleHeaders"
                       :items="gateway.values"
                       :items-per-page-options="[
                         10,
@@ -424,41 +60,36 @@
                       ]"
                       class="elevation-1"
                     >
-                      <template v-slot:item="{ item }">
-                        <tr>
-                          <td>{{ deviceName(item.device) }}</td>
-                          <td>
-                            {{ item.value.label + ' (' + item.value.id + ')' }}
-                          </td>
-                          <td class="text-xs">{{ item.topic }}</td>
-                          <td class="text-xs">
-                            {{ item.postOperation || 'No operation' }}
-                          </td>
-                          <td class="text-xs">
-                            {{
-                              item.enablePoll
-                                ? 'Intensity ' + item.pollIntensity
-                                : 'No'
-                            }}
-                          </td>
-                          <td class="text-xs">
-                            {{
-                              item.verifyChanges ? 'Verified' : 'Not Verified'
-                            }}
-                          </td>
-                          <td>
-                            <v-icon
-                              small
-                              class="mr-2"
-                              color="green"
-                              @click="editItem(item)"
-                              >edit</v-icon
-                            >
-                            <v-icon small color="red" @click="deleteItem(item)"
-                              >delete</v-icon
-                            >
-                          </td>
-                        </tr>
+                      <template v-slot:[`item.device`]="{ item }">
+                        {{ deviceName(item.device) }}
+                      </template>
+                      <template v-slot:[`item.value`]="{ item }">
+                        {{ item.value.label + ' (' + item.value.id + ')' }}
+                      </template>
+                      <template v-slot:[`item.topic`]="{ item }">
+                        {{ item.topic }}
+                      </template>
+                      <template v-slot:[`item.postOperation`]="{ item }">
+                        {{ item.postOperation || 'No operation' }}
+                      </template>
+                      <template v-slot:[`item.enablePoll`]="{ item }">
+                        {{
+                          item.enablePoll
+                            ? 'Interval: ' + item.pollInterval + 's'
+                            : 'No'
+                        }}
+                      </template>
+                      <template v-slot:[`item.actions`]="{ item }">
+                        <v-icon
+                          small
+                          class="mr-2"
+                          color="green"
+                          @click="editItem(item)"
+                          >edit</v-icon
+                        >
+                        <v-icon small color="red" @click="deleteItem(item)"
+                          >delete</v-icon
+                        >
                       </template>
                     </v-data-table>
                   </v-card-text>
@@ -474,7 +105,396 @@
               </v-expansion-panel-content>
             </v-expansion-panel>
 
+            <v-expansion-panel key="zwave">
+              <v-expansion-panel-header>Zwave</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" sm="6">
+                        <v-combobox
+                          v-model="zwave.port"
+                          label="Serial Port"
+                          hint="Ex /dev/ttyUSB0"
+                          persistent-hint
+                          :rules="[rules.required]"
+                          required
+                          :items="serial_ports"
+                        ></v-combobox>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-text-field
+                          v-model="zwave.networkKey"
+                          label="Network Key"
+                          :rules="[rules.validKey, rules.validLength]"
+                          append-outer-icon="wifi_protected_setup"
+                          @click:append-outer="randomKey"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-switch
+                          hint="Enable zwave-js logging"
+                          persistent-hint
+                          label="Log Enabled"
+                          v-model="zwave.logEnabled"
+                        ></v-switch>
+                      </v-col>
+                      <v-col v-if="zwave.logEnabled" cols="12" sm="6">
+                        <v-select
+                          :items="logLevels"
+                          v-model="zwave.logLevel"
+                          label="Log Level"
+                        ></v-select>
+                      </v-col>
+                      <v-col v-if="zwave.logEnabled" cols="12" sm="6">
+                        <v-switch
+                          hint="Store zwave logs in a file (stored in store folder)"
+                          persistent-hint
+                          label="Log to file"
+                          v-model="zwave.logToFile"
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-text-field
+                          v-model.number="zwave.commandsTimeout"
+                          label="Commands timeout"
+                          :rules="[rules.required]"
+                          required
+                          suffix="seconds"
+                          hint="Seconds to wait before stop inclusion/exclusion mode"
+                          type="number"
+                        ></v-text-field>
+                      </v-col>
+                      <input type="hidden" :value="zwave.plugin" />
+                      <input type="hidden" :value="zwave.options" />
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
             <v-divider></v-divider>
+
+            <v-container cols="12" sm="6" class="ml-1">
+              <v-switch
+                hint="Enable this to use zwavejs2mqtt only as Control Panel"
+                persistent-hint
+                label="Disable MQTT Gateway"
+                v-model="mqtt.disabled"
+              ></v-switch>
+            </v-container>
+
+            <v-expansion-panel key="mqtt" v-if="!mqtt.disabled">
+              <v-expansion-panel-header>Mqtt</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" sm="6" md="4">
+                        <v-text-field
+                          v-model.trim="mqtt.name"
+                          label="Name"
+                          :rules="[rules.required, rules.validName]"
+                          hint="Unique name that identify this gateway"
+                          required
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4">
+                        <v-text-field
+                          v-model.trim="mqtt.host"
+                          label="Host url"
+                          :rules="[rules.required]"
+                          hint="The host url"
+                          required
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4">
+                        <v-text-field
+                          v-model.number="mqtt.port"
+                          label="Port"
+                          :rules="[rules.required]"
+                          hint="Host Port"
+                          required
+                          type="number"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4">
+                        <v-text-field
+                          v-model.number="mqtt.reconnectPeriod"
+                          label="Reconnect period (ms)"
+                          hint="Reconnection period"
+                          :rules="[rules.required]"
+                          required
+                          type="number"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4">
+                        <v-text-field
+                          v-model.trim="mqtt.prefix"
+                          label="Prefix"
+                          :rules="[rules.required, rules.validPrefix]"
+                          hint="The prefix to add to each topic"
+                          required
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4">
+                        <v-select
+                          v-model="mqtt.qos"
+                          label="QoS"
+                          :rules="[rules.required]"
+                          required
+                          :items="[0, 1, 2]"
+                        ></v-select>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-switch
+                          hint="Set retain flag to true for outgoing messages"
+                          persistent-hint
+                          label="Retain"
+                          v-model="mqtt.retain"
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-switch
+                          hint="If true the client does not have a persistent session and all information are lost when the client disconnects for any reason"
+                          persistent-hint
+                          label="Clean"
+                          v-model="mqtt.clean"
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-switch
+                          hint="Enable persistent storage of packets (QoS > 0) while client is offline. If disabled the in memory store will be used."
+                          persistent-hint
+                          label="Store"
+                          v-model="mqtt.store"
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="12" sm="6" v-if="secure">
+                        <v-switch
+                          hint="Enable this when using self signed certificates"
+                          persistent-hint
+                          label="Allow self signed certs"
+                          v-model="mqtt.allowSelfsigned"
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4" v-if="secure">
+                        <file-input
+                          label="Key.pem"
+                          keyProp="_key"
+                          v-model="mqtt.key"
+                          @onFileSelect="onFileSelect"
+                        ></file-input>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4" v-if="secure">
+                        <file-input
+                          label="Cert.pem"
+                          keyProp="_cert"
+                          v-model="mqtt.cert"
+                          @onFileSelect="onFileSelect"
+                        ></file-input>
+                      </v-col>
+                      <v-col cols="12" sm="6" md="4" v-if="secure">
+                        <file-input
+                          label="Ca.pem"
+                          keyProp="_ca"
+                          v-model="mqtt.ca"
+                          @onFileSelect="onFileSelect"
+                        ></file-input>
+                      </v-col>
+                      <v-col cols="12" sm="4">
+                        <v-switch
+                          hint="Does this client require auth?"
+                          persistent-hint
+                          label="Auth"
+                          v-model="mqtt.auth"
+                        ></v-switch>
+                      </v-col>
+                      <v-col v-if="mqtt.auth" cols="12" sm="4">
+                        <v-text-field
+                          v-model="mqtt.username"
+                          label="Username"
+                          :rules="[requiredUser]"
+                          required
+                        ></v-text-field>
+                      </v-col>
+                      <v-col v-if="mqtt.auth" cols="12" sm="4">
+                        <v-text-field
+                          v-model="mqtt.password"
+                          label="Password"
+                          :rules="[requiredPassword]"
+                          required
+                          :append-icon="e1 ? 'visibility' : 'visibility_off'"
+                          @click:append="() => (e1 = !e1)"
+                          :type="e1 ? 'password' : 'text'"
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
+            <v-divider></v-divider>
+
+            <v-expansion-panel key="gateway" v-if="!mqtt.disabled">
+              <v-expansion-panel-header>Gateway</v-expansion-panel-header>
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12">
+                        <v-select
+                          v-model="gateway.type"
+                          label="Topic type"
+                          :rules="[rules.required]"
+                          required
+                          :items="gw_types"
+                        ></v-select>
+                      </v-col>
+                      <v-col cols="12">
+                        <v-select
+                          v-model="gateway.payloadType"
+                          label="Payload type"
+                          required
+                          :rules="[validPayload]"
+                          :items="py_types"
+                        ></v-select>
+                      </v-col>
+                      <v-col v-if="gateway.type === 0" cols="6">
+                        <v-switch
+                          label="Use nodes name instead of numeric nodeIDs"
+                          v-model="gateway.nodeNames"
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-switch
+                          label="Ignore location"
+                          hint="Don't add nodes location to values topic"
+                          v-model="gateway.ignoreLoc"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-switch
+                          label="Send Zwave events"
+                          hint="Enable this to get all zwave events in MQTT on _EVENTS topic"
+                          v-model="gateway.sendEvents"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-switch
+                          label="Ignore status updates"
+                          hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
+                          v-model="gateway.ignoreStatus"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col v-if="gateway.type !== 2" cols="6">
+                        <v-switch
+                          label="Include Node info"
+                          hint="Include Node's Name and Location on Payload"
+                          v-model="gateway.includeNodeInfo"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6">
+                        <v-switch
+                          label="Publish node details"
+                          hint="Details published under a topic, can help automations receive device info"
+                          v-model="gateway.publishNodeDetails"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
+
+            <v-divider></v-divider>
+
+            <v-expansion-panel key="Hass">
+              <v-expansion-panel-header
+                >Home Assistant</v-expansion-panel-header
+              >
+              <v-expansion-panel-content>
+                <v-card flat>
+                  <v-card-text>
+                    <v-row>
+                      <v-col cols="12" sm="6">
+                        <v-switch
+                          hint="Enable zwave-js websocket server. This can be used with HASS Zwave-js integration to discover entities"
+                          persistent-hint
+                          label="WS Server"
+                          v-model="zwave.serverEnabled"
+                        ></v-switch>
+                      </v-col>
+                      <v-col v-if="zwave.serverEnabled" cols="12" sm="6">
+                        <v-text-field
+                          v-model.number="zwave.serverPort"
+                          label="Server Port"
+                          :rules="[rules.required]"
+                          required
+                          hint="The port to bind the Zwave Server. Default: 3000"
+                          type="number"
+                        ></v-text-field>
+                      </v-col>
+                    </v-row>
+                    <v-row v-if="!mqtt.disabled">
+                      <v-col cols="6">
+                        <v-switch
+                          label="MQTT Discovery"
+                          hint="Create devices in Hass using MQTT discovery. This is an alternative to Hass Zwave-js integration"
+                          v-model="gateway.hassDiscovery"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                        <v-text-field
+                          v-model="gateway.discoveryPrefix"
+                          label="Discovery prefix"
+                          hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" v-if="gateway.hassDiscovery">
+                        <v-switch
+                          label="Retained discovery"
+                          hint="Set retain flag to true in discovery messages"
+                          v-model="gateway.retainedDiscovery"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                        <v-text-field
+                          v-model="gateway.entityTemplate"
+                          label="Entity name template"
+                          persistent-hint
+                          hint="Template which generates entity names"
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="6" v-if="gateway.hassDiscovery">
+                        <div>
+                          Default: <code>%ln_%o</code><br />
+                          -<code>%ln</code>: Node location with name
+                          (<code>&lt;location-?&gt;&lt;name&gt;</code>)<br />-
+                          <code>%nid</code>: Node ID <br />- <code>%n</code>:
+                          Node Name <br />- <code>%loc</code>: Node Location
+                          <br />- <code>%p</code>: valueId property (fallback to
+                          device type) <br />- <code>%pk</code>: valueId
+                          property key (fallback to device type) <br />-
+                          <code>%pn</code>: valueId property name (fallback to
+                          device type) <br />- <code>%o</code>: HASS object_id
+                          <br />- <code>%l</code>: valueId label (fallback to
+                          object_id)
+                        </div>
+                      </v-col>
+                    </v-row>
+                  </v-card-text>
+                </v-card>
+              </v-expansion-panel-content>
+            </v-expansion-panel>
           </v-expansion-panels>
 
           <DialogGatewayValue
@@ -522,6 +542,15 @@ export default {
     fileInput
   },
   computed: {
+    visibleHeaders () {
+      if (!this.mqtt.disabled) return this.headers
+      else {
+        const headersCopy = [...this.headers]
+
+        headersCopy.splice(2, 1) // remove topic header
+        return headersCopy
+      }
+    },
     secure () {
       if (!this.mqtt.host) return false
       const parsed = parse(this.mqtt.host)
@@ -586,8 +615,8 @@ export default {
         { text: 'Topic', value: 'topic' },
         { text: 'Post Operation', value: 'postOperation' },
         { text: 'Poll', value: 'enablePoll' },
-        { text: 'Changes', value: 'verifyChanges' },
-        { text: 'Actions', sortable: false }
+        // { text: 'Changes', value: 'verifyChanges' },
+        { text: 'Actions', value: 'actions', sortable: false }
       ],
       e1: true,
       gw_types: [

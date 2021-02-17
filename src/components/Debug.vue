@@ -1,7 +1,7 @@
 <template>
   <v-container grid-list-md>
-    <v-layout wrap>
-      <v-flex xs12>
+    <v-row>
+      <v-col cols="12">
         <v-btn color="green darken-1" text @click="debugActive = true"
           >Start</v-btn
         >
@@ -9,17 +9,17 @@
           >Stop</v-btn
         >
         <v-btn color="blue darken-1" text @click="debug = []">Clear</v-btn>
-      </v-flex>
+      </v-col>
 
-      <v-flex xs12>
+      <v-col cols="12">
         <div
           id="debug_window"
           style="height:800px;width:100%;overflow-y:scroll;border: 1px solid grey; padding: 10px;"
           class="body-1"
           v-html="debug.join('')"
         ></div>
-      </v-flex>
-    </v-layout>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script>

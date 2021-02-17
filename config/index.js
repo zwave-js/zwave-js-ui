@@ -19,6 +19,7 @@ const proxyWSURL = process.env.SERVER_WS_URL
   ? process.env.SERVER_WS_URL
   : `${proxyWebSocketScheme}://${proxyHostname}:${proxyPort}`
 
+// this props are used on build/ files as general settings for webpack
 module.exports = {
   dev: {
     // Paths
@@ -26,12 +27,23 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/socket.io': {
-        target: proxyWSURL,
-        ws: true
+        target: proxyURL,
+        ws: true,
+        secure: false, // allow self signed certificates
+        changeOrigin: true
       },
-      '/health': proxyURL,
-      '/api': proxyURL
+      '/health': {
+        target: proxyURL,
+        secure: false,
+        changeOrigin: true
+      },
+      '/api': {
+        target: proxyURL,
+        secure: false,
+        changeOrigin: true
+      }
     },
+    https: !!process.env.SERVER_SSL,
 
     // Various Dev Server settings
     host: 'localhost', // can be overwritten by process.env.HOST

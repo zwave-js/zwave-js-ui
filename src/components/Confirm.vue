@@ -14,38 +14,57 @@
       }}</v-card-text>
       <v-card-text v-else class="pa-4">
         <v-container grid-list-md>
-          <v-layout wrap>
-            <v-flex v-for="(input, index) in options.inputs" :key="index" xs12>
-              <v-text-field
-                v-if="input.type === 'text' || input.type === 'number'"
-                v-model="values[input.key]"
-                :label="input.label"
-                :hint="input.hint"
-                :type="input.type || 'text'"
-                :required="input.required"
-                :min="input.min"
-                :max="input.max"
-              ></v-text-field>
-              <v-switch
-                v-if="input.type === 'boolean'"
-                v-model="values[input.key]"
-                :label="input.label"
-                :hint="input.hint"
-                :persistent-hint="!!input.hint"
-                :required="input.required"
-              ></v-switch>
-              <v-select
-                v-if="input.type === 'list'"
-                v-model="values[input.key]"
-                :item-text="input.itemText || 'text'"
-                :item-value="input.itemValue || 'value'"
-                :items="input.items"
-                :label="input.label"
-                :hint="input.hint"
-                :required="input.required"
-              ></v-select>
-            </v-flex>
-          </v-layout>
+          <v-form v-model="valid" ref="form" lazy-validation>
+            <v-row>
+              <v-col
+                v-for="(input, index) in options.inputs"
+                :key="index"
+                cols="12"
+              >
+                <v-text-field
+                  v-if="input.type === 'text'"
+                  v-model.trim="values[input.key]"
+                  :label="input.label"
+                  :hint="input.hint"
+                  :rules="input.rules || []"
+                  :required="input.required"
+                  :min="input.min"
+                  :max="input.max"
+                ></v-text-field>
+                <v-text-field
+                  v-if="input.type === 'number'"
+                  v-model.number="values[input.key]"
+                  :label="input.label"
+                  :hint="input.hint"
+                  :rules="input.rules || []"
+                  type="number"
+                  :required="input.required"
+                  :min="input.min"
+                  :max="input.max"
+                ></v-text-field>
+                <v-switch
+                  v-if="input.type === 'boolean'"
+                  v-model="values[input.key]"
+                  :rules="input.rules || []"
+                  :label="input.label"
+                  :hint="input.hint"
+                  :persistent-hint="!!input.hint"
+                  :required="input.required"
+                ></v-switch>
+                <v-select
+                  v-if="input.type === 'list'"
+                  v-model="values[input.key]"
+                  :item-text="input.itemText || 'text'"
+                  :item-value="input.itemValue || 'value'"
+                  :items="input.items"
+                  :rules="input.rules || []"
+                  :label="input.label"
+                  :hint="input.hint"
+                  :required="input.required"
+                ></v-select>
+              </v-col>
+            </v-row>
+          </v-form>
         </v-container>
       </v-card-text>
 
@@ -94,6 +113,7 @@ export default {
     dialog: false,
     resolve: null,
     reject: null,
+    valid: true,
     message: null,
     values: {},
     title: null,
@@ -136,13 +156,21 @@ export default {
       })
     },
     agree () {
-      this.dialog = false
-      this.resolve(this.options.inputs ? this.values : true)
-      this.reset()
+      if (this.options.inputs) {
+        if (this.$refs.form.validate()) {
+          this.dialog = false
+          this.resolve(this.values)
+          this.reset()
+        }
+      } else {
+        this.dialog = false
+        this.resolve(true)
+        this.reset()
+      }
     },
     cancel () {
       this.dialog = false
-      this.resolve(false)
+      this.resolve(this.options.inputs ? {} : false)
       this.reset()
     },
     reset () {

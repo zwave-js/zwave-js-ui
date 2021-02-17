@@ -27,6 +27,15 @@
           </v-row>
 
           <v-row justify="start">
+            <v-col cols="12" sm="4" md="3" style="text-align:center">
+              <v-btn
+                depressed
+                color="primary"
+                @click="addRemoveShowDialog = true"
+              >
+                Add/Remove Device
+              </v-btn>
+            </v-col>
             <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
@@ -47,6 +56,13 @@
           </v-row>
         </v-container>
 
+        <DialogAddRemove
+          v-model="addRemoveShowDialog"
+          :nodeAddedOrRemoved="addRemoveNode"
+          @close="onAddRemoveClose"
+          @apiRequest="apiRequest"
+        />
+
         <nodes-table
           :nodes="nodes"
           :node-actions="node_actions"
@@ -64,6 +80,7 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
+import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
@@ -74,15 +91,25 @@ export default {
     socket: Object
   },
   components: {
-    NodesTable
+    NodesTable,
+    DialogAddRemove
   },
   computed: {
-    ...mapGetters(['nodes', 'appInfo'])
+    ...mapGetters(['nodes', 'appInfo', 'zwave']),
+    timeoutMs () {
+      return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
+    },
+    controllerStatus () {
+      return this.appInfo.controllerStatus
+    }
   },
   watch: {},
   data () {
     return {
       settings: new Settings(localStorage),
+      bindedSocketEvents: {}, // keep track of the events-handlers
+      addRemoveShowDialog: false,
+      addRemoveNode: null,
       node_actions: [
         {
           text: 'Heal node',
@@ -127,22 +154,6 @@ export default {
       ],
       cnt_action: 'healNetwork',
       cnt_actions: [
-        {
-          text: 'Start inclusion',
-          value: 'startInclusion'
-        },
-        {
-          text: 'Stop inclusion',
-          value: 'stopInclusion'
-        },
-        {
-          text: 'Start exclusion',
-          value: 'startExclusion'
-        },
-        {
-          text: 'Stop exclusion',
-          value: 'stopExclusion'
-        },
         {
           text: 'Heal Network',
           value: 'beginHealingNetwork'
@@ -200,7 +211,10 @@ export default {
           console.log(error)
         })
     },
-
+    onAddRemoveClose () {
+      this.addRemoveShowDialog = false
+      this.addRemoveNode = null
+    },
     async sendCntAction () {
       if (this.cnt_action) {
         const args = []
@@ -214,7 +228,11 @@ export default {
           ) {
             broadcast = await this.$listeners.showConfirm(
               'Broadcast',
-              'Send this command to all nodes?'
+              'Send this command to all nodes?',
+              'info',
+              {
+                cancelText: 'No'
+              }
             )
           }
 
@@ -271,10 +289,32 @@ export default {
             return
           }
         } else if (this.cnt_action === 'beginFirmwareUpdate') {
+          const { target } = await this.$listeners.showConfirm(
+            'Choose target',
+            '',
+            'info',
+            {
+              confirmText: 'Ok',
+              inputs: [
+                {
+                  type: 'number',
+                  label: 'Target',
+                  default: 0,
+                  rules: [v => v >= 0 || 'Invalid target'],
+                  hint:
+                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+                  required: true,
+                  key: 'target'
+                }
+              ]
+            }
+          )
+
           try {
             const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
+            args.push(target)
           } catch (error) {
             return
           }
@@ -301,40 +341,55 @@ export default {
       for (const k in obj) s += k + ': ' + obj[k] + '\n'
 
       return s
-    }
-  },
-  mounted () {
-    const self = this
-
-    this.socket.on(socketEvents.api, async data => {
+    },
+    onApiResponse (data) {
       if (data.success) {
         switch (data.api) {
           case 'getDriverStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Driver statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           case 'getNodeStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Node statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           default:
-            self.showSnackbar('Successfully call api ' + data.api)
+            this.showSnackbar('Successfully call api ' + data.api)
         }
       } else {
-        self.showSnackbar(
+        this.showSnackbar(
           'Error while calling api ' + data.api + ': ' + data.message
         )
       }
-    })
+    },
+    onNodeAddedRemoved (node) {
+      this.addRemoveNode = node
+    },
+    bindEvent (eventName, handler) {
+      this.socket.on(socketEvents[eventName], handler)
+      this.bindedSocketEvents[eventName] = handler
+    },
+    unbindEvents () {
+      for (const event in this.bindedSocketEvents) {
+        this.socket.off(event, this.bindedSocketEvents[event])
+      }
+    }
+  },
+  mounted () {
+    const onApiResponse = this.onApiResponse.bind(this)
+    const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
+
+    this.bindEvent('api', onApiResponse)
+    this.bindEvent('nodeRemoved', onNodeAddedRemoved)
+    this.bindEvent('nodeAdded', onNodeAddedRemoved)
   },
   beforeDestroy () {
     if (this.socket) {
-      // unbind events
-      this.socket.off(socketEvents.api)
+      this.unbindEvents()
     }
   }
 }

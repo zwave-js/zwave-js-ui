@@ -1,48 +1,9 @@
 <template>
   <v-container fluid>
-    <v-card>
-      <v-container grid-list-md>
-        <v-layout row wrap>
-          <v-flex xs2 md2>
-            <v-text-field
-              label="Nodes size"
-              v-model.number="nodeSize"
-              min="10"
-              type="number"
-            ></v-text-field>
-          </v-flex>
-          <v-flex xs2 md2>
-            <v-text-field
-              label="Font size"
-              v-model.number="fontSize"
-              min="10"
-              type="number"
-            ></v-text-field>
-          </v-flex>
-          <v-flex xs3 md2>
-            <v-text-field
-              label="Distance"
-              v-model.number="force"
-              min="100"
-              type="number"
-            ></v-text-field>
-          </v-flex>
-          <v-flex xs3 md2>
-            <v-switch label="Show location" v-model="showLocation"></v-switch>
-          </v-flex>
-          <v-flex xs5 md6>
-            <v-btn color="success" @click="downloadSVG">Download SVG</v-btn>
-          </v-flex>
-        </v-layout>
-      </v-container>
-
-      <d3-network
+    <v-card class="pa-5">
+      <zwave-graph
         id="mesh"
-        ref="mesh"
-        :net-nodes="meshNodes"
-        :net-links="links"
-        :options="options"
-        :selection="selection"
+        :nodes="nodes.filter(n => !n.failed)"
         @node-click="nodeClick"
       />
 
@@ -103,7 +64,7 @@
         </v-list>
       </div>
 
-      <v-speed-dial bottom fab right fixed v-model="fab">
+      <!-- <v-speed-dial bottom fab right fixed v-model="fab">
         <template v-slot:activator>
           <v-btn color="blue darken-2" dark fab hover v-model="fab">
             <v-icon v-if="fab">close</v-icon>
@@ -113,12 +74,24 @@
         <v-btn fab dark small color="green" @click="refresh">
           <v-icon>refresh</v-icon>
         </v-btn>
-      </v-speed-dial>
+      </v-speed-dial> -->
     </v-card>
   </v-container>
 </template>
+
+<style scoped>
+.details {
+  position: absolute;
+  top: 150px;
+  left: 30px;
+  background: #ccccccaa;
+  border: 2px solid black;
+  border-radius: 20px;
+}
+</style>
+
 <script>
-import D3Network from 'vue-d3-network'
+import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapMutations, mapGetters } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
@@ -129,75 +102,15 @@ export default {
     socket: Object
   },
   components: {
-    D3Network
+    ZwaveGraph
   },
   watch: {
-    showLocation () {
-      for (const n of this.nodes) {
-        n.name = this.nodeName(n)
-      }
-    },
-    meshNodes () {
+    nodes () {
       this.debounceRefresh()
     }
   },
   computed: {
-    ...mapGetters(['nodes']),
-    meshNodes () {
-      return this.activeNodes.map(n => this.convertNode(n))
-    },
-    activeNodes () {
-      return this.nodes.filter(n => n.id !== 0 && n.status !== 'Removed')
-    },
-    links () {
-      const links = []
-
-      for (const source of this.activeNodes) {
-        if (source.neighbors) {
-          for (const target of source.neighbors) {
-            // ensure target node exists
-            if (this.nodes[target] && this.nodes[target].status !== 'Removed') {
-              links.push({
-                sid: source.id,
-                tid: target,
-                _color: this.$vuetify.theme.dark ? 'white' : 'black'
-              })
-            }
-          }
-        }
-      }
-
-      return links
-    },
-    options () {
-      return {
-        canvas: false,
-        force: this.force,
-        offset: {
-          x: 0,
-          y: 0
-        },
-        nodeSize: this.nodeSize,
-        fontSize: this.fontSize,
-        linkWidth: 1,
-        nodeLabels: true,
-        linkLabels: false,
-        strLinks: true,
-        resizeListener: true
-      }
-    },
-    selection () {
-      const s = {
-        nodes: [],
-        links: []
-      }
-
-      if (this.selectedNode) {
-        s.nodes[this.selectedNode.id] = this.selectedNode
-      }
-
-      return s
-    }
+    ...mapGetters(['nodes'])
   },
   data () {
     return {
@@ -217,29 +130,6 @@ export default {
       this.selectedNode = this.selectedNode === node ? null : node
       this.showProperties = !!this.selectedNode
     },
-    downloadSVG () {
-      this.$refs.mesh.screenShot('myNetwork.svg', true, true)
-    },
-    convertNode (n) {
-      return {
-        id: n.id,
-        _cssClass: this.nodeClass(n),
-        name: this.nodeName(n),
-        status: n.status,
-        data: n
-      }
-    },
-    nodeName (n) {
-      if (n.data) n = n.data // works both with node object and mesh node object
-      const name = n.name || n.product || 'node ' + n.id
-      return name + (this.showLocation && n.loc ? ` (${n.loc})` : '')
-    },
-    nodeClass (n) {
-      if (n.id === 1) {
-        return 'controller'
-      }
-      return n.status.toLowerCase()
-    },
     debounceRefresh () {
       if (this.refreshTimeout) {
         clearTimeout(this.refreshTimeout)
@@ -255,21 +145,19 @@ export default {
     }
   },
   mounted () {
-    const self = this
-
     this.socket.on(socketEvents.api, data => {
       if (data.success) {
         switch (data.api) {
           case 'refreshNeighbors': {
             const neighbors = data.result
             for (let i = 0; i < neighbors.length; i++) {
-              self.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
+              this.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
             }
             break
           }
         }
       } else {
-        self.showSnackbar(
+        this.showSnackbar(
           'Error while calling api ' + data.api + ': ' + data.message
         )
       }

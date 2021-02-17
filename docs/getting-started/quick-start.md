@@ -8,11 +8,11 @@ The easier one is by using docker:
 
 ```bash
 # Using volumes as persistence
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 
 # Using local folder as persistence
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 
 # As a service
 wget https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/docker-compose.yml
@@ -21,6 +21,8 @@ docker-compose up
 
 > [!NOTE]
 > Replace `/dev/ttyACM0` with your serial device
+>
+> If you are using zwave-js WS server, replace `3000:3000` with the port choosen in settings
 
 For more info about docker check [here](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docker)
 
@@ -32,6 +34,24 @@ kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/
 
 > [!TIP]
 > You will almost certainly need to instead use this as a base, and then layer on top patches or resource customizations to your needs or just copy all the resources from the [kubernetes resources](https://github.com/zwave-js/zwavejs2mqtt/tree/master/kubernetes) directory of this repo
+
+## Snap package
+
+Make sure you have a [Snapd installed](https://snapcraft.io/docs/installing-snapd). It's shipped with most Ubuntu Flavors and some other distributions.
+
+```bash
+sudo snap install zwavejs2mqtt
+```
+
+And give the package access to use USB-devices and observe hardware. The last one is needed for the program to list available devices in the UI.
+
+```bash
+sudo snap connect zwavejs2mqtt:raw-usb
+sudo snap connect zwavejs2mqtt:hardware-observe
+```
+
+> [!NOTE]
+> See `zwavejs2mqtt.help` for usage and environment settings.
 
 ## NodeJS or PKG version
 

@@ -22,6 +22,7 @@ const path = require('path')
 const { storeDir } = reqlib('config/app.js')
 const renderIndex = reqlib('/lib/renderIndex')
 const archiver = require('archiver')
+const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
 
 const storeLimiter = rateLimit({
@@ -45,21 +46,114 @@ let restarting = false
 
 // ### UTILS
 
-function start (server) {
+/**
+ * Start http/https server and all the manager
+ *
+ * @param {string} host
+ * @param {number} port
+ */
+async function startServer (host, port) {
+  let server
+
+  if (process.env.HTTPS) {
+    logger.info('HTTPS is enabled. Loading cert and keys from store...')
+    const { cert, key } = await loadCertKey()
+    server = require('https').createServer(
+      {
+        key,
+        cert,
+        rejectUnauthorized: false
+      },
+      app
+    )
+  } else {
+    server = require('http').createServer(app)
+  }
+
+  server.listen(port, host, function () {
+    const addr = server.address()
+    const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
+    logger.info(
+      `Listening on ${bind} host ${host} protocol ${
+        process.env.HTTPS ? 'HTTPS' : 'HTTP'
+      }`
+    )
+  })
+
+  server.on('error', function (error) {
+    if (error.syscall !== 'listen') {
+      throw error
+    }
+
+    const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
+
+    // handle specific listen errors with friendly messages
+    switch (error.code) {
+      case 'EACCES':
+        logger.error(bind + ' requires elevated privileges')
+        process.exit(1)
+      case 'EADDRINUSE':
+        logger.error(bind + ' is already in use')
+        process.exit(1)
+      default:
+        throw error
+    }
+  })
+
   setupSocket(server)
   setupInterceptor()
   startGateway()
 }
 
-function sanitizePath (path) {
-  // remove every ../
-  path = path.replace(/\.\.\//, '')
+/**
+ * Get the `path` param from a request. Throws if the path is not safe
+ *
+ * @param {Express.Request} req
+ * @returns {string} The path is it's safe, thorws otherwise
+ */
+function getSafePath (req) {
+  const reqPath = req.params.path
 
-  if (!path.startsWith(storeDir)) {
+  if (/[.]+\//g.test(reqPath)) {
+    throw Error('Path contains invalid chars')
+  }
+
+  if (!reqPath.startsWith(storeDir)) {
     throw Error('Path not allowed')
   }
 
-  return path
+  return reqPath
+}
+
+async function loadCertKey () {
+  const certFile = utils.joinPath(storeDir, 'cert.pem')
+  const keyFile = utils.joinPath(storeDir, 'key.pem')
+
+  let key
+  let cert
+
+  try {
+    cert = await fs.readFile(certFile)
+    key = await fs.readFile(keyFile)
+  } catch (error) {}
+
+  if (!cert || !key) {
+    logger.info('Cert and key not found in store, generating fresh new ones...')
+
+    const result = await createCertificate({
+      days: 99999,
+      selfSigned: true
+    })
+
+    key = result.serviceKey
+    cert = result.certificate
+
+    await fs.writeFile(keyFile, result.serviceKey)
+    await fs.writeFile(certFile, result.certificate)
+    logger.info('New cert and key created')
+  }
+
+  return { cert, key }
 }
 
 function setupLogging (settings) {
@@ -142,12 +236,6 @@ app.use(cors())
  * @param {HttpServer} server
  */
 function setupSocket (server) {
-  server.on('listening', function () {
-    const addr = server.address()
-    const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
-    logger.info(`Listening on ${bind}`)
-  })
-
   socketManager.bindServer(server)
 
   socketManager.on(inboundEvents.init, function (socket) {
@@ -162,7 +250,6 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.zwave, async function (socket, data) {
-    logger.log('info', `Zwave api call: ${data.api} %o`, data.args)
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
@@ -205,8 +292,13 @@ app.get('/health', async function (req, res) {
   let zwave = false
 
   if (gw) {
-    mqtt = gw.mqtt ? gw.mqtt.getStatus().status : false
+    mqtt = gw.mqtt ? gw.mqtt.getStatus() : false
     zwave = gw.zwave ? gw.zwave.getStatus().status : false
+  }
+
+  // if mqtt is disabled, return true. Fixes #469
+  if (mqtt) {
+    mqtt = mqtt.status || mqtt.config.disabled
   }
 
   const status = mqtt && zwave
@@ -325,7 +417,7 @@ app.get('/api/store', storeLimiter, async function (req, res) {
 
 app.get('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = sanitizePath(req.params.path)
+    const reqPath = getSafePath(req)
 
     const stat = await fs.lstat(reqPath)
 
@@ -344,7 +436,7 @@ app.get('/api/store/:path', storeLimiter, async function (req, res) {
 
 app.put('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = sanitizePath(req.params.path)
+    const reqPath = getSafePath(req)
 
     const stat = await fs.lstat(reqPath)
 
@@ -363,7 +455,7 @@ app.put('/api/store/:path', storeLimiter, async function (req, res) {
 
 app.delete('/api/store/:path', storeLimiter, async function (req, res) {
   try {
-    const reqPath = sanitizePath(req.params.path)
+    const reqPath = getSafePath(req)
 
     await fs.remove(reqPath)
 
@@ -472,4 +564,4 @@ process.on('SIGINT', function () {
     })
 })
 
-module.exports = { app, start }
+module.exports = { app, startServer }
