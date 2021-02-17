@@ -128,7 +128,17 @@
           :socket="socket"
         />
         <v-row style="height:100%" align="center" justify="center" v-else>
-          <v-progress-circular size="200" indeterminate></v-progress-circular>
+          <v-col align="center">
+            <div class="text-h2 ma-5">{{ error ? error : 'Loading...' }}</div>
+            <v-progress-circular
+              v-if="!error"
+              size="200"
+              indeterminate
+            ></v-progress-circular>
+            <v-btn text @click="checkAuth" v-else
+              >Retry <v-icon right dark>refresh</v-icon></v-btn
+            >
+          </v-col>
         </v-row>
       </v-main>
     </main>
@@ -200,6 +210,7 @@ export default {
   data () {
     return {
       socket: null,
+      error: false,
       dialog_password: false,
       password: {},
       menu: [
@@ -469,10 +480,11 @@ export default {
     },
     // get config, used to check if gateway is used with auth or not
     async checkAuth () {
+      this.error = false
       try {
         const data = await ConfigApis.isAuthEnabled()
         if (!data.success) {
-          this.showSnackbar('Error while retriving informations')
+          throw Error(data.message || 'Error while checking authorizations')
         } else {
           const newAuth = data.data
           const oldAuth = this.auth
@@ -489,7 +501,7 @@ export default {
           this.startSocket()
         }
       } catch (error) {
-        this.showSnackbar(error.message)
+        setTimeout(() => (this.error = error.message), 1000)
         console.log(error)
       }
     }
