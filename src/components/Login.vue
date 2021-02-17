@@ -4,10 +4,10 @@
       <v-col cols="12" sm="8" md="4">
         <v-card class="elevation-12">
           <v-toolbar dark color="primary">
-            <v-avatar size="40px">
-              <img src="/static/logo.png" alt="Logo" style="padding:5px" />
+            <v-avatar style="border-radius:0" size="40px">
+              <img src="/static/logo.png" alt="Logo" />
             </v-avatar>
-            <v-toolbar-title style="margin-left:10px"
+            <v-toolbar-title style="margin-left:20px"
               >Zwavejs2Mqtt</v-toolbar-title
             >
             <v-spacer></v-spacer>
