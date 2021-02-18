@@ -12,7 +12,7 @@ on:
         default: 'patch'
 jobs:
   release-it:
-    if: contains(["robertsLando","chrisns"], github.actor)
+    if: github.actor == 'robertsLando' || github.actor === 'chrisns'
     runs-on: [ubuntu-latest]
     matrix:
       node-version: [14.x]
