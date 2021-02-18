@@ -37,4 +37,5 @@ jobs:
         run: |
           git config user.email "daniel.sorridi@gmail.com"
           git config user.name "robertsLando"
+          git config user.password "${{secrets.GITHUB_TOKEN}}"
           npx release-it ${{github.event.inputs.type}} --ci
