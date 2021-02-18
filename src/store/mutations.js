@@ -1,6 +1,8 @@
 export const state = {
+  auth: undefined,
   serial_ports: [],
   nodes: [],
+  user: {},
   zwave: {
     port: undefined,
     commandsTimeout: 30,
@@ -55,7 +57,9 @@ function getValue (v) {
 }
 
 export const getters = {
+  auth: state => state.auth,
   nodes: state => state.nodes,
+  user: state => state.user,
   serial_ports: state => state.serial_ports,
   zwave: state => state.zwave,
   mqtt: state => state.mqtt,
@@ -65,12 +69,18 @@ export const getters = {
 }
 
 export const actions = {
+  setAuth (store, data) {
+    store.commit('setAuth', data)
+  },
   init (store, data) {
     if (data) {
       store.commit('initSettings', data.settings)
       store.commit('initPorts', data.serial_ports)
       store.commit('initDevices', data.devices)
     }
+  },
+  setUser (store, data) {
+    store.commit('setUser', data)
   },
   import (store, settings) {
     store.commit('initSettings', settings)
@@ -101,6 +111,12 @@ export const actions = {
 export const mutations = {
   showSnackbar () {
     // empty mutation, will be catched in App.vue from store subscribe
+  },
+  setAuth (store, enabled) {
+    state.auth = enabled
+  },
+  setUser (state, data) {
+    Object.assign(state.user, data)
   },
   setControllerStatus (state, data) {
     state.appInfo.controllerStatus = data
