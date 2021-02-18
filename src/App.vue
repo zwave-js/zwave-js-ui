@@ -486,7 +486,7 @@ export default {
         if (!data.success) {
           throw Error(data.message || 'Error while checking authorizations')
         } else {
-          const newAuth = data.data
+          const newAuth = data.data === true
           const oldAuth = this.auth
 
           this.$store.dispatch('setAuth', newAuth)
