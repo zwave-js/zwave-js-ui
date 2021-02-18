@@ -1,70 +1,10 @@
-name: 'Z-Wave Bot: React to comments'
+name: "Z-Wave Bot: React to comments"
 
 on:
   issue_comment:
     types: [created] # edited, deleted
 
 jobs:
-  # #########################################################################
-  # Create a new release when an authorized person posts "@zwave-js-bot release <patch|minor|major>"
-  release-it:
-    if: |
-      contains(github.event.issue.html_url, '/issues/') &&
-      contains(github.event.comment.body, '@zwave-js-bot release') &&
-      (github.event.comment.user.login == 'robertsLando')
-    runs-on: [ubuntu-latest]
-    matrix:
-      node-version: [14.x]
-    steps:
-      - uses: actions/github-script@v3
-        id: parse-body
-        with:
-          github-token: ${{secrets.BOT_TOKEN}}
-          script: |
-            const options = {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number
-            };
-
-            const body = context.payload.comment.body;
-            const match = /@zwave-js-bot release (?<type>\w+)/.exec(body);
-            if (!match) {
-              await github.issues.createComment({
-              ...options,
-              body: `😥 Seems like your action is not valid, allowed release types are \`patch\` \`minor\` \`major\`. Try again.`,
-              });
-              process.exit(1);
-            }
-
-            await github.issues.createComment({
-              ...options,
-              body: `👋 Hey @${context.payload.comment.user.login}!
-                     I've started building ⛏️ a new ${match.groups.type} release.
-                     You can monitor the progress [here](${context.payload.repository.html_url}/actions/runs/${context.runId}).`
-            })
-
-            return match.groups.type
-      - name: Checkout master
-        uses: actions/checkout@v2
-        with:
-          token: ${{secrets.BOT_TOKEN}}
-          ref: 'master'
-
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v1
-        with:
-          node-version: ${{ matrix.node-version }}
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Make the release
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npx release-it ${{steps.parse-body.outputs.result}} --ci
-
   # #########################################################################
   # Fix lint errors when an authorized person posts "@zwave-js-bot fix lint"
   fix-lint:

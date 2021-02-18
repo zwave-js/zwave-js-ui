@@ -1,0 +1,36 @@
+name: "Release-it: Create a new release on demand"
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: "Type. Can be `patch` `minor` or `major`"
+        required: true
+        default: "patch"
+
+jobs:
+  # #########################################################################
+  # Create a new release when an authorized person posts "@zwave-js-bot release <patch|minor|major>"
+  release-it:
+    runs-on: [ubuntu-latest]
+    matrix:
+      node-version: [14.x]
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          ref: "master"
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Make the release
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx release-it ${{steps.parse-body.outputs.result}} --ci
