@@ -33,4 +33,4 @@ jobs:
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx release-it ${{steps.parse-body.outputs.result}} --ci
+          npx release-it ${{github.event.inputs.type}} --ci
