@@ -137,7 +137,7 @@
     "dagre-d3": "^0.6.4",
     "ejs": "^3.1.6",
     "express": "^4.17.1",
-    "express-rate-limit": "^5.2.5",
+    "express-rate-limit": "^5.2.6",
     "fs-extra": "^9.1.0",
     "hammerjs": "^2.0.8",
     "jsonfile": "^6.1.0",
