@@ -1,0 +1,37 @@
+# #########################################################################
+# Creates a new release using `workflow_dispatch` event trigger with `type`
+# as input to describe the type of release to create
+name: 'Release-it: Create a new release on demand'
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Type. Can be `patch` `minor` or `major`'
+        required: true
+        default: 'patch'
+jobs:
+  release-it:
+    if: github.actor == 'robertsLando' || github.actor === 'chrisns'
+    runs-on: [ubuntu-latest]
+    matrix:
+      node-version: [14.x]
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          ref: 'master'
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Make the release
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npx release-it ${{github.event.inputs.type}} --ci
