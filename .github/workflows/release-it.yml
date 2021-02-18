@@ -31,6 +31,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Setup Github user
+        uses: oleksiyrudenko/gha-git-credentials@v2-latest
+        with:
+          token: '${{ secrets.GITHUB_TOKEN }}'
+          email: 'daniel.sorridi@gmail.com'
+          name: 'robertsLando'
+
       - name: Make the release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
