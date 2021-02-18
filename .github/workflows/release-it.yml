@@ -14,8 +14,9 @@ jobs:
   release-it:
     if: github.actor == 'robertsLando' || github.actor === 'chrisns'
     runs-on: [ubuntu-latest]
-    matrix:
-      node-version: [14.x]
+    strategy:
+      matrix:
+        node-version: [14.x]
     steps:
       - name: Checkout master
         uses: actions/checkout@v2
@@ -31,7 +32,7 @@ jobs:
         run: npm install
 
       - name: Make the release
-        with:
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npx release-it ${{github.event.inputs.type}} --ci
