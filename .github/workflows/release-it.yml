@@ -1,3 +1,6 @@
+# #########################################################################
+# Creates a new release using `workflow_dispatch` event trigger with `type`
+# as input to describe the type of release to create
 name: 'Release-it: Create a new release on demand'
 
 on:
@@ -7,10 +10,7 @@ on:
         description: 'Type. Can be `patch` `minor` or `major`'
         required: true
         default: 'patch'
-
 jobs:
-  # #########################################################################
-  # Create a new release when an authorized person posts "@zwave-js-bot release <patch|minor|major>"
   release-it:
     runs-on: [ubuntu-latest]
     matrix:
