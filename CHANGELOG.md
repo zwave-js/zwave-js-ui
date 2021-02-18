@@ -1,3 +1,19 @@
+## 1.2.1 (2021-02-18)
+
+
+### Bug Fixes
+
+* broken startup ui ([#623](https://github.com/zwave-js/zwavejs2mqtt/issues/623)) ([afbb346](https://github.com/zwave-js/zwavejs2mqtt/commit/afbb3462df44b6d4ef6ac8ea314734b6ac1d4c2e))
+
+## 1.2.1 (2021-02-18)
+
+
+### Bug Fixes
+
+* broken startup ui ([#623](https://github.com/zwave-js/zwavejs2mqtt/issues/623)) ([afbb346](https://github.com/zwave-js/zwavejs2mqtt/commit/afbb3462df44b6d4ef6ac8ea314734b6ac1d4c2e))
+
+
+
 # [1.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.1.1...v1.2.0) (2021-02-18)
 
 
