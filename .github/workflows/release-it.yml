@@ -33,10 +33,10 @@ jobs:
 
       - name: Make the release
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
         run: |
-          git config user.email "daniel.sorridi@gmail.com"
-          git config user.name "robertsLando"
-          git config user.password "${{secrets.RELEASE_TOKEN}}"
-          echo "GIT_USER=${{github.actor}}:${{secrets.RELEASE_TOKEN}}" >> $GITHUB_ENV
+          git config user.email "bot@zwave-js.io"
+          git config user.name "Z-Wave JS Bot"
+          git config user.password "${{secrets.BOT_TOKEN}}"
+          echo "GIT_USER=${{github.actor}}:${{secrets.BOT_TOKEN}}" >> $GITHUB_ENV
           npx release-it ${{github.event.inputs.type}} --ci
