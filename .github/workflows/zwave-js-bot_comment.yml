@@ -1,4 +1,4 @@
-name: "Z-Wave Bot: React to comments"
+name: 'Z-Wave Bot: React to comments'
 
 on:
   issue_comment:
@@ -47,7 +47,7 @@ jobs:
         uses: actions/checkout@v2
         with:
           token: ${{secrets.BOT_TOKEN}}
-          ref: "master"
+          ref: 'master'
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
