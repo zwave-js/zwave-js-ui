@@ -1,12 +1,12 @@
-name: "Release-it: Create a new release on demand"
+name: 'Release-it: Create a new release on demand'
 
 on:
   workflow_dispatch:
     inputs:
       type:
-        description: "Type. Can be `patch` `minor` or `major`"
+        description: 'Type. Can be `patch` `minor` or `major`'
         required: true
-        default: "patch"
+        default: 'patch'
 
 jobs:
   # #########################################################################
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout master
         uses: actions/checkout@v2
         with:
-          ref: "master"
+          ref: 'master'
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
