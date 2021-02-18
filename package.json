@@ -114,6 +114,7 @@
     "node-notifier": "^9.0.0",
     "nodemon": "^2.0.7",
     "npm-run-all": "^4.1.5",
+    "pkg": "^4.4.9",
     "portfinder": "^1.0.28",
     "prettier-standard": "^16.4.1",
     "proxyquire": "^2.1.3",
