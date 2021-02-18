@@ -1,6 +1,18 @@
-# 1.2.0 (2021-02-18)
+# [1.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.1.1...v1.2.0) (2021-02-18)
 
-# 1.2.0 (2021-02-18)
+
+### Bug Fixes
+
+* firmware target not set correctly ([#601](https://github.com/zwave-js/zwavejs2mqtt/issues/601)) ([9d8b5d5](https://github.com/zwave-js/zwavejs2mqtt/commit/9d8b5d5a37184fa68c13cb3c320d05d32c72c257))
+* generate the action template when an action map is given ([#547](https://github.com/zwave-js/zwavejs2mqtt/issues/547)) ([254121e](https://github.com/zwave-js/zwavejs2mqtt/commit/254121ee391ba7ec40bcf64de3d3f15920fb5fca))
+* start zwavejs server when driver is ready ([#605](https://github.com/zwave-js/zwavejs2mqtt/issues/605)) ([aebd890](https://github.com/zwave-js/zwavejs2mqtt/commit/aebd8903d5c99ab51f5ee5f30e26258c375ae795)), closes [#602](https://github.com/zwave-js/zwavejs2mqtt/issues/602)
+* **ui:** battery powered devices shown as main ([#590](https://github.com/zwave-js/zwavejs2mqtt/issues/590)) ([0235011](https://github.com/zwave-js/zwavejs2mqtt/commit/02350114292cd7ba163653076b6f54e6ec8c9662)), closes [#546](https://github.com/zwave-js/zwavejs2mqtt/issues/546)
+
+
+### Features
+
+* **ui:** authentication ([#591](https://github.com/zwave-js/zwavejs2mqtt/issues/591)) ([7eef6c5](https://github.com/zwave-js/zwavejs2mqtt/commit/7eef6c5aa75c93d4c26caf6c99ab6f5090b013b0))
+* bump zwavejs server beta 7 and show version on ui ([#609](https://github.com/zwave-js/zwavejs2mqtt/issues/609)) ([bb255db](https://github.com/zwave-js/zwavejs2mqtt/commit/bb255dba6b318c6aa04d39f5a7ead10352968a28))
 
 
 
