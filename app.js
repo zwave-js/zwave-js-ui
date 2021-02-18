@@ -378,7 +378,7 @@ function setupSocket (server) {
 
 function isAuthEnabled () {
   const settings = jsonStore.get(store.settings)
-  return settings.gateway && settings.gateway.authEnabled
+  return settings.gateway && settings.gateway.authEnabled === true
 }
 
 async function parseJWT (req) {
