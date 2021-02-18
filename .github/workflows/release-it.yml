@@ -12,7 +12,7 @@ on:
         default: 'patch'
 jobs:
   release-it:
-    if: github.actor == 'robertsLando' || github.actor === 'chrisns'
+    if: github.actor == 'robertsLando' || github.actor == 'chrisns'
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
