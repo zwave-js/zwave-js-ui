@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y jq
 USER node
 WORKDIR /home/node/node-zwave-js
 RUN rm -f package-lock.json
+RUN rm -f packages/config/config/devices/index.json
 RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
 RUN yarn run build:full
 RUN yarn install --production --frozen-lockfile
@@ -50,7 +51,7 @@ RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-j
 RUN mkdir my_dist
 RUN cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
 
-FROM node:erbium-buster
+FROM node:erbium-buster-slim
 LABEL maintainer="robertsLando"
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
