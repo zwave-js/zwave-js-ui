@@ -1,16 +1,25 @@
 # Plugins
 
-Plugins are now supported in the application.
+Plugins are now supported in the application. The plugin packages are not included when npm is installing packages
 
-In order to support these, we need:
+## Installing Plugin
 
-1. Build docker with the plugin
-2. Configure our settings.json (manually)
+### NPM Method
 
-Building the container is straight forward. an example of build command installing two plugins `@varet/zj2m-prom-exporter`
+you can install a plugin using `npm i` (install) command. It is advised to run this command after building.
+
+example installing `@user/plugin-name`
 
 ```bash
-TAG="v1.1.1-test"; docker build -f docker/Dockerfile --build-arg plugins="@varet/zj2m-prom-exporter" -t localdocker.dc.rb11.eu/zwavejs2mqtt:${TAG} .
+npm i @user/plugin-name
+```
+
+### Building it using docker file
+
+Building the container is straight forward. an example of build command installing two plugins `@user/plugin-name`
+
+```bash
+docker build -f docker/Dockerfile --build-arg plugins='@user/plugin-name' -t <docker image name>:<tag> .
 ```
 
 Once container is built we need to configure our `store/settings.json`
@@ -27,6 +36,7 @@ An example of valid config is:
   },
   "zwave": {
     ...
-    "plugin": "@varet/zj2m-prom-exporter"
+    "plugin": "@user/plugin-name"
   }
 }
+```
