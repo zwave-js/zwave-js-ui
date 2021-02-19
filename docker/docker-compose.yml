@@ -6,6 +6,8 @@ services:
     restart: always
     tty: true
     stop_signal: SIGINT
+    environment:
+      - SESSION_SECRET=mysupersecretkey
     networks:
       - zwave
     devices:
