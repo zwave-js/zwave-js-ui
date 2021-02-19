@@ -18,7 +18,7 @@ COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
 ##### BUILD #####
 FROM ${SRC} AS build
-ARG YARN_NETWORK_TIMEOUT=30000
+ARG YARN_NETWORK_TIMEOUT=300000
 USER root
 RUN apt-get update && apt-get install -y jq
 USER node
