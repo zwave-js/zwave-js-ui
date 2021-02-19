@@ -40,7 +40,7 @@ RUN npm run build && \
         stylesheets
 
 RUN if [ ! -z "$plugins" ]; \
-    then echo ${plugins}; npm i ${plugins} ; fi
+    then echo "Installing plugins ${plugins}"; npm i ${plugins} ; fi
 
 # STEP: 2 (runtime)
 FROM node:15.9.0-alpine
