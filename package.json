@@ -66,6 +66,7 @@
     "build": "node build/build.js",
     "pkg": "sudo chmod +x package.sh && ./package.sh",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
+    "changelog-init": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it"
   },
   "release-it": {
@@ -80,7 +81,6 @@
       "requireCleanWorkingDir": false
     },
     "hooks": {
-      "after:bump": "npm run changelog",
       "before:release": "./package.sh --release"
     },
     "npm": {
