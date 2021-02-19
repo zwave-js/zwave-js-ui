@@ -14,9 +14,14 @@ COPY package.json package-lock.json ./
 RUN npm config set unsafe-perm true
 RUN npm install --no-optional
 
+# add plugin support, space separated
+ARG plugins
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices
 ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
+
+RUN if [ ! -z "$plugins" ]; \
+    then npm i $plugins ; fi
 
 RUN if [ ! -z "$updateDevices"  ]; \
     then curl -sL ${zwavejs} | \
