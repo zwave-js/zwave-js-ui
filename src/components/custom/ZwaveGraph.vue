@@ -752,7 +752,9 @@ export default {
 
         batlev = batlev ? batlev.value : undefined
 
-        const nodeName = node.name || 'NodeID ' + node.id
+        const nodeName =
+          (node.name || 'NodeID ' + node.id) +
+          (node.loc ? '\n(' + node.loc + ')' : '')
 
         // create node
         const entity = {
@@ -769,10 +771,11 @@ export default {
           failed: node.failed,
           title:
             '<b>' +
-            nodeName +
+            node._name +
             '</b>' +
-            '\n Node: ' +
+            '\n Node ID: ' +
             id +
+            (node.loc ? '\n Location: ' + node.loc : '') +
             '\n Product Name: ' +
             node.productLabel +
             '\n Power source: ' +
