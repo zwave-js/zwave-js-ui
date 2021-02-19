@@ -25,7 +25,7 @@ export const Routes = {
   mesh: '/mesh'
 }
 
-Routes.main = Routes.settings
+Routes.main = Routes.controlPanel
 
 const router = new Router({
   mode: 'history',
