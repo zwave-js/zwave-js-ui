@@ -20,19 +20,13 @@ An example of valid config is:
 ```json
 {
   "mqtt": {
-    "name": "home",
     ...
-    "store": false
   },
   "gateway": {
-    "type": 0,
     ...
-    "sendEvents": false
   },
   "zwave": {
-    "port": "/dev/tty.usbserial",
     ...
     "plugin": "@varet/zj2m-prom-exporter"
   }
 }
-```
