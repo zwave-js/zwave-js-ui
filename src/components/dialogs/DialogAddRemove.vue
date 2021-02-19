@@ -146,7 +146,7 @@ export default {
       }, 100)
     },
     controllerStatus (status) {
-      if (status.indexOf('clusion') > 0) {
+      if (status && status.indexOf('clusion') > 0) {
         if (this.state === 'new') return // ignore initial status
 
         // inclusion/exclusion started, start the countdown timer
