@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "bin": {
     "zwavejs2mqtt": "bin/www"
   },
@@ -66,6 +66,7 @@
     "build": "node build/build.js",
     "pkg": "sudo chmod +x package.sh && ./package.sh",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
+    "changelog-init": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it"
   },
   "release-it": {
@@ -80,7 +81,6 @@
       "requireCleanWorkingDir": false
     },
     "hooks": {
-      "after:bump": "npm run changelog",
       "before:release": "./package.sh --release"
     },
     "npm": {
@@ -170,7 +170,7 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.12.17",
-    "@babel/core": "^7.12.13",
+    "@babel/core": "^7.12.17",
     "@babel/node": "^7.12.17",
     "@babel/plugin-proposal-class-properties": "^7.12.13",
     "@babel/plugin-proposal-decorators": "^7.12.13",
@@ -183,7 +183,7 @@
     "@babel/plugin-syntax-import-meta": "^7.10.4",
     "@babel/plugin-syntax-jsx": "^7.12.13",
     "@babel/plugin-transform-runtime": "^7.12.17",
-    "@babel/preset-env": "^7.12.13",
+    "@babel/preset-env": "^7.12.17",
     "@babel/register": "^7.12.13",
     "autoprefixer": "^10.2.4",
     "babel-eslint": "^10.1.0",
