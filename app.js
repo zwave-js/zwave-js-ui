@@ -845,15 +845,19 @@ app.use(function (err, req, res) {
 
 process.removeAllListeners('SIGINT')
 
-process.on('SIGINT', function () {
-  logger.info('Closing clients...')
-  gw.close()
-    .catch(err => {
-      logger.error('Error while closing clients', err)
-    })
-    .finally(() => {
-      process.exit()
-    })
-})
+async function gracefuShutdown () {
+  logger.warn('Shutdown detected: closing clients...')
+  try {
+    await gw.close()
+  } catch (error) {
+    logger.error('Error while closing clients', error)
+  }
+
+  return process.exit()
+}
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.once(signal, gracefuShutdown)
+}
 
 module.exports = { app, startServer }
