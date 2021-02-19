@@ -95,7 +95,7 @@
   },
   "optionalDependencies": {
     "@release-it/conventional-changelog": "^2.0.0",
-    "@types/node": "^14.14.25",
+    "@types/node": "^14.14.30",
     "c8": "^7.6.0",
     "chai": "^4.3.0",
     "chai-as-promised": "^7.1.1",
@@ -169,7 +169,7 @@
     "zwave-js": "^6.4.0"
   },
   "devDependencies": {
-    "@babel/cli": "^7.12.13",
+    "@babel/cli": "^7.12.17",
     "@babel/core": "^7.12.13",
     "@babel/node": "^7.12.17",
     "@babel/plugin-proposal-class-properties": "^7.12.13",
@@ -206,7 +206,7 @@
     "postcss-loader": "^5.0.0",
     "postcss-url": "^10.1.1",
     "rimraf": "^3.0.2",
-    "sass": "^1.32.7",
+    "sass": "^1.32.8",
     "sass-loader": "^11.0.1",
     "semver": "^7.3.4",
     "shelljs": "^0.8.4",
@@ -216,7 +216,7 @@
     "vue-loader": "^15.9.6",
     "vue-style-loader": "^4.1.2",
     "vue-template-compiler": "^2.6.12",
-    "webpack": "^5.21.2",
+    "webpack": "^5.23.0",
     "webpack-bundle-analyzer": "^4.4.0",
     "webpack-cli": "^4.5.0",
     "webpack-dev-server": "^3.11.2",
