@@ -1,5 +1,5 @@
 # STEP: 1
-FROM node:15.9.0-alpine AS build-z2m
+FROM node:erbium-buster-slim AS build-z2m
 
 WORKDIR /usr/src/app
 
@@ -38,7 +38,7 @@ RUN npm run build && \
         stylesheets
 
 # STEP: 2 (runtime)
-FROM node:15.9.0-alpine
+FROM node:erbium-buster-slim
 
 RUN apk add --no-cache \	
     libstdc++  \	
