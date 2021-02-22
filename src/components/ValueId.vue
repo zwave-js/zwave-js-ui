@@ -103,13 +103,12 @@
       ></v-select>
 
       <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-        <div style="display: flex;margin-top:20px">
+        <v-btn-toggle v-model="value.newValue" rounded class="mt-5">
           <v-btn
             outlined
-            class="on-button"
+            :value="true"
             :style="{
-              background: value.newValue ? '#4CAF50' : '',
-              'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+              background: value.newValue ? '#4CAF50' : ''
             }"
             :color="value.newValue ? 'white' : 'green'"
             dark
@@ -119,10 +118,9 @@
           </v-btn>
           <v-btn
             outlined
-            class="off-button"
+            :value="false"
             :style="{
-              background: !value.newValue ? '#f44336' : '',
-              'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+              background: !value.newValue ? '#f44336' : ''
             }"
             :color="!value.newValue ? 'white' : 'red'"
             @click="updateValue(value, false)"
@@ -130,8 +128,8 @@
           >
             OFF
           </v-btn>
-        </div>
-        <div v-if="help" class="caption">{{ help }}</div>
+        </v-btn-toggle>
+        <div v-if="help" class="caption mt-2">{{ help }}</div>
       </div>
 
       <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
@@ -152,14 +150,6 @@
 </template>
 
 <style scoped>
-.on-button {
-  border-radius: 20px 0 0 20px;
-  margin-right: 0;
-}
-.off-button {
-  border-radius: 0 20px 20px 0;
-  margin-right: 0;
-}
 .valueid-label {
   font-weight: bold;
   color: black;
