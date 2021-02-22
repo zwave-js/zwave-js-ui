@@ -20,7 +20,7 @@ npm i @user/plugin-name
 
 ### Building it using docker file
 
-Building the container is straight forward. an example of build command installing two plugins `@user/plugin-name`
+Building the container is straight forward. Here an example of build command installing plugin `path/to/plugin1`
 
 ```bash
 docker build -f docker/Dockerfile --build-arg plugins='path/to/plugin1' -t <docker image name>:<tag> .
