@@ -232,8 +232,8 @@ module.exports = {
         on_command_type: 'brightness',
         brightness_state_topic: '38-0-currentValue',
         brightness_command_topic: '38-0-targetValue',
-        state_value_template: '{{ "on" if value_json.value > 0 else "0" }}',
-        brightness_value_template: '{{ (value_json.value) | round(0) }}',
+        state_value_template: '{{ "on" if value_json.value|int > 0 else "0" }}',
+        brightness_value_template: '{{ (value_json.value|int) | round(0) }}',
         brightness_scale: '99',
         color_temp_state_topic: '51-0-currentColor',
         color_temp_command_template:
