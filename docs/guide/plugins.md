@@ -18,7 +18,7 @@ example installing `@user/plugin-name`
 npm i @user/plugin-name
 ```
 
-### Building it using docker file
+### Plugins with docker
 
 Building the container is straight forward. Here an example of build command installing plugin `path/to/plugin1`
 
