@@ -4,7 +4,7 @@ Plugins are nodejs packages that can be initegrated in zwavejsmqtt in order to a
 
 ## Installing Plugin
 
-### NPM Method
+### Installation
 
 you can install a plugin using `npm i` (install) command. It is advised to run this command after building.
 
