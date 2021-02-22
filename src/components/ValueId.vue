@@ -44,10 +44,11 @@
           v-model.number="value.newValue.value"
         ></v-text-field>
         <v-select
-          style="margin-left:10px;width:20px"
+          style="margin-left:10px;min-width:100px;width:135px"
           :items="durations"
           v-model="value.newValue.unit"
           :readonly="!value.writeable || disable_send"
+          persistent-hint
           :append-outer-icon="!disable_send ? 'send' : null"
           @click:append-outer="updateValue(value)"
         ></v-select>
