@@ -1,6 +1,6 @@
 # Plugins
 
-Plugins are now supported in the application. The plugin packages are not included when npm is installing packages
+Plugins are nodejs packages that can be initegrated in zwavejsmqtt in order to add new features. They are have access to all the clients (zwave and mqtt) and express instance.
 
 ## Installing Plugin
 
