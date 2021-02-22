@@ -40,7 +40,7 @@ An example of valid config is:
   },
   "zwave": {
     ...
-    "plugin": "@user/plugin-name"
+    "plugin": "path/to/plugin1"
   }
 }
 ```
