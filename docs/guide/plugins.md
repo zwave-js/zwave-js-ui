@@ -23,7 +23,7 @@ npm i @user/plugin-name
 Building the container is straight forward. an example of build command installing two plugins `@user/plugin-name`
 
 ```bash
-docker build -f docker/Dockerfile --build-arg plugins='@user/plugin-name' -t <docker image name>:<tag> .
+docker build -f docker/Dockerfile --build-arg plugins='path/to/plugin1' -t <docker image name>:<tag> .
 ```
 
 Once container is built we need to configure our `store/settings.json`
