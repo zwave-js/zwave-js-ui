@@ -28,6 +28,8 @@ export const state = {
   devices: [],
   gateway: {
     type: 0,
+    plugins: [],
+    authEnabled: false,
     payloadType: 0,
     nodeNames: true,
     hassDiscovery: true,

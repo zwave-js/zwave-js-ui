@@ -89,6 +89,7 @@ socketManager.authMiddleware = function (socket, next) {
 }
 
 let gw // the gateway instance
+const plugins = []
 
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
@@ -249,7 +250,39 @@ function startGateway (settings) {
 
   gw.start()
 
+  const pluginsConfig = settings.gateway ? settings.gateway.plugins : null
+
+  // load custom plugins
+  if (pluginsConfig && Array.isArray(pluginsConfig)) {
+    for (const plugin of pluginsConfig) {
+      try {
+        const pluginName = path.basename(plugin)
+        const instance = require(plugin)({
+          zwave,
+          mqtt,
+          app,
+          logger: loggers.module(pluginName)
+        })
+        instance.name = pluginName
+        plugins.push(instance)
+        logger.info(`Successfully loaded plugin ${instance.name}`)
+      } catch (error) {
+        logger.error(`Error while loading ${plugin} plugin`, error)
+      }
+    }
+  }
+
   restarting = false
+}
+
+async function destroyPlugins () {
+  while (plugins.length > 0) {
+    const instance = plugins.pop()
+    if (instance && typeof instance.destroy === 'function') {
+      logger.info('Closing plugin ' + instance.name)
+      await instance.destroy()
+    }
+  }
 }
 
 function setupInterceptor () {
@@ -806,6 +839,7 @@ app.post('/api/settings', apisLimiter, isAuthenticated, async function (
     restarting = true
     await jsonStore.put(store.settings, settings)
     await gw.close()
+    await destroyPlugins()
     // reload loggers settings
     setupLogging(settings)
     // restart clients and gateway
@@ -849,6 +883,7 @@ async function gracefuShutdown () {
   logger.warn('Shutdown detected: closing clients...')
   try {
     await gw.close()
+    await destroyPlugins()
   } catch (error) {
     logger.error('Error while closing clients', error)
   }
