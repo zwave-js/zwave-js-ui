@@ -6,7 +6,11 @@ Plugins are nodejs packages that can be initegrated in zwavejsmqtt in order to a
 
 ### Installation
 
-you can install a plugin using `npm i` (install) command. It is advised to run this command after building.
+The plugin is imported in zwavejs1mqtt using `require(pluginName)(zwave, mqtt, app)` 
+
+- `zwave`: Zwave client
+- `mqtt`: Mqtt client
+- `app`: Express instance
 
 example installing `@user/plugin-name`
 
