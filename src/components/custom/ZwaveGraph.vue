@@ -771,7 +771,7 @@ export default {
           failed: node.failed,
           title:
             '<b>' +
-            node._name +
+            nodeName +
             '</b>' +
             '\n Node ID: ' +
             id +
