@@ -232,7 +232,7 @@ module.exports = {
         on_command_type: 'brightness',
         brightness_state_topic: '38-0-currentValue',
         brightness_command_topic: '38-0-targetValue',
-        state_value_template: '{{ "on" if value_json.value|int > 0 else "0" }}',
+        state_value_template: '{{ "on" if value_json.value > 0 else "0" }}',
         brightness_value_template: '{{ (value_json.value) | round(0) }}',
         brightness_scale: '99',
         color_temp_state_topic: '51-0-currentColor',
@@ -240,7 +240,7 @@ module.exports = {
           "{{ {'warmWhite': ((0.7349 * (value - 153))|round(0)), 'coldWhite': (255 - (0.7349 * (value - 153))|round(0)), 'red': 255, 'green': 255, 'blue': 255}|to_json }}",
         color_temp_command_topic: '51-0-targetColor',
         color_temp_value_template:
-          "{{ '%03d%03d' | format((value_json.value.warmWhite|int), (value_json.value.coldWhite|int)) }}",
+          "{{ '%03d%03d' | format((value_json.value.warmWhite), (value_json.value.coldWhite)) }}",
         rgb_command_template:
           "{{ {'warmWhite': 0, 'coldWhite': 0, 'red': red, 'green': green, 'blue': blue}|to_json }}",
         rgb_command_topic: '51-0-targetColor',
