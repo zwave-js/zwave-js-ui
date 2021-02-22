@@ -2,7 +2,7 @@
 
 Plugins are nodejs packages that can be initegrated in zwavejsmqtt in order to add new features. They are have access to all the clients (zwave and mqtt) and express instance.
 
-## Installing Plugin
+## Usage
 
 ### Installation
 
