@@ -32,11 +32,11 @@ In order to implement a plugin you need to create a class with a constructor tha
 Here is a minimal example of a custom plugin:
 
 ```js
-function MyPlugin(ctx) {
-  this.zwave = ctx.zwave;
-  this.mqtt = ctx.mqtt;
-  this.logger = ctx.logger;
-  this.express = ctx.app;
+function MyPlugin (ctx) {
+  this.zwave = ctx.zwave
+  this.mqtt = ctx.mqtt
+  this.logger = ctx.logger
+  this.express = ctx.app
 
   // this.express.get('/my-route', function(req, res) {...})
   // this.mqtt.publish(...)
@@ -44,9 +44,9 @@ function MyPlugin(ctx) {
   // ... add all the stuff you need here
 }
 
-MyPlugin.prototype.destroy = async function() {
+MyPlugin.prototype.destroy = async function () {
   // clean up the state
-};
+}
 
-module.export = MyPlugin;
+module.export = MyPlugin
 ```
