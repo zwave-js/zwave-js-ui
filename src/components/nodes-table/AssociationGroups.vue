@@ -65,9 +65,9 @@
         md="4"
       >
         <v-text-field
-          v-model.number="group.targetInstance"
-          label="Channel ID"
-          hint="Target node channel ID"
+          v-model.number="group.endpoint"
+          label="Endpoint"
+          hint="Target node endpoint"
           type="number"
         />
       </v-col>
@@ -164,8 +164,8 @@ export default {
 
       const association = { nodeId: target }
 
-      if (g.group.multiChannel && g.targetInstance >= 0) {
-        association.endpoint = g.targetInstance
+      if (g.group.multiChannel && g.endpoint >= 0) {
+        association.endpoint = g.endpoint
       }
 
       if (g && g.node && target) {
@@ -187,8 +187,8 @@ export default {
           if (isNaN(target)) return
           association = { nodeId: target }
 
-          if (g.group.multiChannel && g.targetInstance >= 0) {
-            association.endpoint = g.targetInstance
+          if (g.group.multiChannel && g.endpoint >= 0) {
+            association.endpoint = g.endpoint
           }
         }
 
