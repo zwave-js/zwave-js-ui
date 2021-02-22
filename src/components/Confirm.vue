@@ -29,6 +29,7 @@
                   :rules="input.rules || []"
                   :required="input.required"
                   :min="input.min"
+                  :persistent-hint="!!input.hint"
                   :max="input.max"
                 ></v-text-field>
                 <v-text-field
@@ -38,6 +39,7 @@
                   :hint="input.hint"
                   :rules="input.rules || []"
                   type="number"
+                  :persistent-hint="!!input.hint"
                   :required="input.required"
                   :min="input.min"
                   :max="input.max"
@@ -59,6 +61,7 @@
                   :items="input.items"
                   :rules="input.rules || []"
                   :label="input.label"
+                  :persistent-hint="!!input.hint"
                   :hint="input.hint"
                   :required="input.required"
                 ></v-select>

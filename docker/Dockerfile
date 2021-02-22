@@ -41,7 +41,8 @@ RUN npm run build && \
 FROM node:15.9.0-alpine
 
 RUN apk add --no-cache \	
-    libstdc++  \	
+    libstdc++  \
+    openssl \
     libgcc \	
     libusb \	
     tzdata \	

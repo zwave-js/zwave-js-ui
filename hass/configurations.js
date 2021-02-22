@@ -128,7 +128,7 @@ module.exports = {
       payload_close: '0'
     }
   },
-
+  // Barrier operator support for zwave-js (numeric commands/states)
   barrier_state: {
     type: 'cover',
     object_id: 'barrier_state',
@@ -137,13 +137,13 @@ module.exports = {
       state_topic: true,
       value_template: '{{ value_json.value }}',
       device_class: 'garage',
-      payload_open: 'Opened',
-      payload_close: 'Closed',
-      payload_stop: 'Stopped',
-      state_open: 'Opened',
-      state_opening: 'Opening',
-      state_closed: 'Closed',
-      state_closing: 'Closing'
+      payload_open: 255,
+      payload_close: 0,
+      payload_stop: 253,
+      state_open: 255,
+      state_opening: 254,
+      state_closed: 0,
+      state_closing: 252
     }
   },
 
