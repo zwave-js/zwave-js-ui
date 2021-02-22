@@ -1,3 +1,10 @@
+## 1.2.3 (2021-02-22)
+
+
+### Bug Fixes
+
+* **ui:** duration dropdown ([#687](https://github.com/zwave-js/zwavejs2mqtt/issues/687)) ([27245ec](https://github.com/zwave-js/zwavejs2mqtt/commit/27245ec79a7c7ac6134c6403b82482d4deb82c25))
+
 ## [1.2.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.2.1...v1.2.2) (2021-02-19)
 
 
