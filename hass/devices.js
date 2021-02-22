@@ -246,11 +246,11 @@ module.exports = {
         rgb_command_topic: '51-0-targetColor',
         rgb_state_topic: '51-0-currentColor',
         rgb_value_template:
-          "{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}",
+          '{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}',
         min_mireds: 153,
         max_mireds: 500,
-        payload_on: "on",
-        payload_off: "0"
+        payload_on: 'on',
+        payload_off: '0'
       }
     }
   ],
