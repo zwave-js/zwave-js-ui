@@ -330,7 +330,7 @@ function setupSocket (server) {
   socketManager.on(inboundEvents.init, function (socket) {
     if (gw.zwave) {
       socket.emit(socketEvents.init, {
-        nodes: gw.zwave.nodes,
+        nodes: gw.zwave.getNodes(),
         info: gw.zwave.getInfo(),
         error: gw.zwave.error,
         cntStatus: gw.zwave.cntStatus
