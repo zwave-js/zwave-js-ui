@@ -104,9 +104,10 @@
       ></v-select>
 
       <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-        <v-btn-toggle v-model="value.newValue" rounded class="mt-5">
+        <v-btn-toggle v-model="value.newValue" rounded>
           <v-btn
             outlined
+            height="40px"
             :value="true"
             :style="{
               background: value.newValue ? '#4CAF50' : ''
@@ -119,6 +120,7 @@
           </v-btn>
           <v-btn
             outlined
+            height="40px"
             :value="false"
             :style="{
               background: !value.newValue ? '#f44336' : ''
@@ -155,7 +157,7 @@
   font-weight: bold;
   color: black;
   padding-left: 0;
-  height: 0;
+  margin-bottom: -10px;
 }
 </style>
 
