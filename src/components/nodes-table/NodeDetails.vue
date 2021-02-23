@@ -1,5 +1,12 @@
 <template>
   <v-container grid-list-md>
+    <v-row class="mt-5" align="center">
+      <v-subheader class="title">Device ID </v-subheader>
+      <span class="subtitle font-weight-bold">{{
+        `${node.deviceId} (${node.hexId})`
+      }}</span>
+    </v-row>
+
     <v-row>
       <v-col cols="8" style="max-width:300px">
         <v-select
@@ -14,14 +21,36 @@
 
     <v-row>
       <v-col>
-        <v-subheader
-          >Device ID:
-          {{ `${node.deviceId} (${node.hexId})` }}
-          <v-btn text @click="exportNode">
-            Export
-            <v-icon right dark color="primary">file_download</v-icon>
-          </v-btn>
-        </v-subheader>
+        <v-btn text @click="exportNode">
+          Export
+          <v-icon right dark color="primary">file_download</v-icon>
+        </v-btn>
+        <v-btn
+          v-if="!mqtt.disabled"
+          text
+          @click="
+            sendMqttAction(
+              'removeNodeRetained',
+              'With this action all retained messages of this node will be removed from broker'
+            )
+          "
+        >
+          Clear retained
+          <v-icon right dark color="red">clear</v-icon>
+        </v-btn>
+        <v-btn
+          v-if="!mqtt.disabled"
+          text
+          @click="
+            sendMqttAction(
+              'updateNodeTopics',
+              'With this action all node topics will be updated'
+            )
+          "
+        >
+          Update topics
+          <v-icon right dark color="green">refresh</v-icon>
+        </v-btn>
       </v-col>
     </v-row>
 
@@ -96,7 +125,7 @@
 <script>
 import ValueID from '@/components/ValueId'
 import { inboundEvents as socketActions } from '@/plugins/socket'
-import { mapMutations } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
 
 export default {
   props: {
@@ -118,6 +147,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['mqtt']),
     commandGroups () {
       if (this.node) {
         const groups = {}
@@ -230,6 +260,32 @@ export default {
         }
 
         this.apiRequest(action, args)
+      }
+    },
+    async sendMqttAction (action, confirmMessage) {
+      if (this.node) {
+        let ok = true
+
+        if (confirmMessage) {
+          ok = await this.$listeners.showConfirm(
+            'Info',
+            confirmMessage,
+            'info',
+            {
+              confirmText: 'Ok'
+            }
+          )
+        }
+
+        if (ok) {
+          const args = [this.node.id]
+
+          const data = {
+            api: action,
+            args: args
+          }
+          this.socket.emit(socketActions.mqtt, data)
+        }
       }
     },
     updateLoc () {
