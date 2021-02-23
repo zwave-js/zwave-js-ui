@@ -44,7 +44,7 @@
           v-model.number="value.newValue.value"
         ></v-text-field>
         <v-select
-          style="margin-left:10px;min-width:100px;width:135px"
+          style="margin-left:10px;min-width:105px;width:135px"
           :items="durations"
           v-model="value.newValue.unit"
           :readonly="!value.writeable || disable_send"
@@ -104,7 +104,7 @@
       ></v-select>
 
       <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-        <v-btn-toggle v-model="value.newValue" rounded>
+        <v-btn-toggle class="mt-4" v-model="value.newValue" rounded>
           <v-btn
             outlined
             height="40px"

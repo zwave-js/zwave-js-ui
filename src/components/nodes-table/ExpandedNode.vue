@@ -10,7 +10,7 @@
       <v-tab key="node">Node</v-tab>
       <v-tab v-if="showHass" key="homeassistant">Home Assistant</v-tab>
       <v-tab key="groups">Groups</v-tab>
-      <v-tab key="debug">Debug Info</v-tab>
+      <v-tab v-if="$vuetify.mdAndUp" key="debug">Debug Info</v-tab>
 
       <!-- TABS -->
       <v-tabs-items
