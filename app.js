@@ -379,31 +379,82 @@ function setupSocket (server) {
     }
   })
 
+  socketManager.on(inboundEvents.mqtt, async function (socket, data) {
+    logger.info(`Mqtt api call: ${data.apiName}`)
+
+    let res, err
+
+    try {
+      switch (data.api) {
+        case 'updateNodeTopics':
+          res = gw.updateNodeTopics(data.args[0])
+          break
+        case 'removeNodeRetained':
+          res = gw.removeNodeRetained(data.args[0])
+          break
+        default:
+          err = `Unknown MQTT api ${data.apiName}`
+      }
+    } catch (error) {
+      logger.error('Error while calling MQTT api', error)
+      err = error.message
+    }
+
+    const result = {
+      success: !err,
+      message: err || 'Success MQTT api call',
+      result: res
+    }
+    result.api = data.api
+
+    socket.emit(socketEvents.api, result)
+  })
+
   socketManager.on(inboundEvents.hass, async function (socket, data) {
     logger.info(`Hass api call: ${data.apiName}`)
-    switch (data.apiName) {
-      case 'delete':
-        gw.publishDiscovery(data.device, data.nodeId, true, true)
-        break
-      case 'discover':
-        gw.publishDiscovery(data.device, data.nodeId, false, true)
-        break
-      case 'rediscoverNode':
-        gw.rediscoverNode(data.nodeId)
-        break
-      case 'disableDiscovery':
-        gw.disableDiscovery(data.nodeId)
-        break
-      case 'update':
-        gw.zwave.updateDevice(data.device, data.nodeId)
-        break
-      case 'add':
-        gw.zwave.addDevice(data.device, data.nodeId)
-        break
-      case 'store':
-        await gw.zwave.storeDevices(data.devices, data.nodeId, data.remove)
-        break
+
+    let res, err
+    try {
+      switch (data.apiName) {
+        case 'delete':
+          res = gw.publishDiscovery(data.device, data.nodeId, true, true)
+          break
+        case 'discover':
+          res = gw.publishDiscovery(data.device, data.nodeId, false, true)
+          break
+        case 'rediscoverNode':
+          res = gw.rediscoverNode(data.nodeId)
+          break
+        case 'disableDiscovery':
+          res = gw.disableDiscovery(data.nodeId)
+          break
+        case 'update':
+          res = gw.zwave.updateDevice(data.device, data.nodeId)
+          break
+        case 'add':
+          res = gw.zwave.addDevice(data.device, data.nodeId)
+          break
+        case 'store':
+          res = await gw.zwave.storeDevices(
+            data.devices,
+            data.nodeId,
+            data.remove
+          )
+          break
+      }
+    } catch (error) {
+      logger.error('Error while calling HASS api', error)
+      err = error.message
     }
+
+    const result = {
+      success: !err,
+      message: err || 'Success HASS api call',
+      result: res
+    }
+    result.api = data.apiName
+
+    socket.emit(socketEvents.api, result)
   })
 }
 
