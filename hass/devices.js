@@ -132,24 +132,6 @@ const SPIRIT_ZWAVE_PLUS = {
   }
 }
 
-const DANFOSS_TRV_ZWAVE = {
-  type: 'climate',
-  object_id: 'thermostat',
-  values: ['49-0-Air temperature', '67-0-setpoint-1'],
-  setpoint_topic: { 1: '67-0-setpoint-1' },
-  default_setpoint: '67-0-setpoint-1',
-  discovery_payload: {
-    min_temp: 4,
-    max_temp: 28,
-    mode_command_topic: false,
-    temp_step: 0.5,
-    current_temperature_topic: '49-0-Air temperature',
-    current_temperature_template: '{{ value_json.value }}',
-    temperature_state_template: '{{ value_json.value }}',
-    temperature_command_topic: true
-  }
-}
-
 const COVER = {
   type: 'cover',
   object_id: 'position',
@@ -344,9 +326,6 @@ module.exports = {
       }
     }
   ],
-  '2-4-5': [DANFOSS_TRV_ZWAVE], // DanfossZ
-  '2-373-5': [DANFOSS_TRV_ZWAVE], // Danfoss LC-13
-  '2-40976-266': [DANFOSS_TRV_ZWAVE], // Popp Radiator Thermostat
   '57-12593-18756': [FAN_DIMMER], // Honeywell 39358 In-Wall Fan Control
   '99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer
