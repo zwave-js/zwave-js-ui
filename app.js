@@ -367,7 +367,11 @@ function setupSocket (server) {
       err = error.message
     }
 
-    const result = { success: !err, message: err || 'Success MQTT api call', result: res }
+    const result = {
+      success: !err,
+      message: err || 'Success MQTT api call',
+      result: res
+    }
     result.api = data.api
 
     socket.emit(socketEvents.api, result)
@@ -398,7 +402,11 @@ function setupSocket (server) {
           res = gw.zwave.addDevice(data.device, data.nodeId)
           break
         case 'store':
-          res = await gw.zwave.storeDevices(data.devices, data.nodeId, data.remove)
+          res = await gw.zwave.storeDevices(
+            data.devices,
+            data.nodeId,
+            data.remove
+          )
           break
       }
     } catch (error) {
@@ -406,7 +414,11 @@ function setupSocket (server) {
       err = error.message
     }
 
-    const result = { success: !err, message: err || 'Success HASS api call', result: res }
+    const result = {
+      success: !err,
+      message: err || 'Success HASS api call',
+      result: res
+    }
     result.api = data.apiName
 
     socket.emit(socketEvents.api, result)
