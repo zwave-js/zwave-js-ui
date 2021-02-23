@@ -4,7 +4,8 @@
 export const inboundEvents = {
   init: 'INITED', // get all nodes
   zwave: 'ZWAVE_API', // call a zwave api
-  hass: 'HASS_API' // call an hass api
+  hass: 'HASS_API', // call an hass api
+  mqtt: 'MQTT_API' // call an mqtt api
 }
 
 // events from server ---> client
