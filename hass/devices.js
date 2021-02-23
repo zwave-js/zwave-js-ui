@@ -220,12 +220,16 @@ module.exports = {
     }
   ],
   '798-1-5': [
-
     // Inovelli LZW42 Multi-Color Bulb
     {
       type: 'light',
       object_id: 'rgbw_bulb',
-      values: ['38-0-currentValue', '38-0-targetValue', '51-0-currentColor', '51-0-targetColor'],
+      values: [
+        '38-0-currentValue',
+        '38-0-targetValue',
+        '51-0-currentColor',
+        '51-0-targetColor'
+      ],
       discovery_payload: {
         state_topic: '38-0-currentValue',
         command_topic: '38-0-targetValue',
