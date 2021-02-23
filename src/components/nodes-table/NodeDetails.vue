@@ -5,6 +5,7 @@
       <span class="subtitle font-weight-bold">{{
         `${node.deviceId} (${node.hexId})`
       }}</span>
+      <v-icon @click="openLink(node.dbLink)" class="ml-2">ios_share</v-icon>
     </v-row>
 
     <v-row>
@@ -184,6 +185,9 @@ export default {
   },
   methods: {
     ...mapMutations(['showSnackbar']),
+    openLink (link) {
+      window.open(link, '_blank')
+    },
     apiRequest (apiName, args) {
       if (this.socket.connected) {
         const data = {

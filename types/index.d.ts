@@ -115,6 +115,7 @@ export type Z2MNode = {
   ready: boolean
   failed: boolean
   lastActive: number
+  dbLink: string
   interviewCompleted: boolean
   maxBaudRate: number
   interviewStage: InterviewStage
