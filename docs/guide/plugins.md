@@ -4,7 +4,7 @@ Plugins are nodejs packages that can be integrated in zwavejsmqtt in order to ad
 
 ## Usage
 
-A plugin is imported in zwavejs1mqtt using `require(pluginName)(contex)` where context provides access to these elements:
+A plugin is imported in zwavejs1mqtt using `require(pluginName)(context)` where context provides access to these elements:
 
 - `zwave`: Zwave client
 - `mqtt`: Mqtt client
