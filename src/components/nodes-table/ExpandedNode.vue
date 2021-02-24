@@ -1,10 +1,16 @@
 <template>
   <td :colspan="isMobile ? 1 : headers.length">
-    <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
+    <v-tabs
+      style="margin-top:10px"
+      v-model="currentTab"
+      center-active
+      fixed-tabs
+      show-arrows
+    >
       <v-tab key="node">Node</v-tab>
       <v-tab v-if="showHass" key="homeassistant">Home Assistant</v-tab>
       <v-tab key="groups">Groups</v-tab>
-      <v-tab key="debug">Debug Info</v-tab>
+      <v-tab v-if="$vuetify.mdAndUp" key="debug">Debug Info</v-tab>
 
       <!-- TABS -->
       <v-tabs-items

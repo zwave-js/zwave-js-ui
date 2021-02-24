@@ -52,6 +52,9 @@ services:
     restart: always
     tty: true
     stop_signal: SIGINT
+    environment:
+      - SESSION_SECRET=mysupersecretkey
+    # - TZ=America/Los_Angeles  # uncomment and edit to match you timezone if you want logs time and dates to match your timezone instead of UTC.
     networks:
       - zwave
     devices:
@@ -59,8 +62,8 @@ services:
     volumes:
       - ./store:/usr/src/app/store
     ports:
-      - '8091:8091'
-      - '3000:3000'
+      - '8091:8091' # port for web interface
+      - '3000:3000' # port for zwave-js websocket server
 networks:
   zwave:
 # volumes:

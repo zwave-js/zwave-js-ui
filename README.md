@@ -43,3 +43,7 @@ Fully configurable Zwave to MQTT **Gateway** and **Control Panel**.
   - **Custom scenes management**
 - Log debug in UI
 - Mesh graph showing devices neighbors
+
+## Documentation
+
+[Project documentation](https://zwave-js.github.io/zwavejs2mqtt/#/)

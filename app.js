@@ -1,8 +1,8 @@
 const express = require('express')
 const reqlib = require('app-root-path').require
 const morgan = require('morgan')
-const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
+const csrf = require('csurf')
 const app = express()
 const SerialPort = require('serialport')
 const jsonStore = reqlib('/lib/jsonStore.js')
@@ -19,11 +19,18 @@ const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
 const utils = reqlib('/lib/utils.js')
 const fs = require('fs-extra')
 const path = require('path')
-const { storeDir } = reqlib('config/app.js')
+const { storeDir, sessionSecret, defaultUser, defaultPsw } = reqlib(
+  'config/app.js'
+)
 const renderIndex = reqlib('/lib/renderIndex')
+const session = require('express-session')
 const archiver = require('archiver')
 const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
+const jwt = require('jsonwebtoken')
+const { promisify } = require('util')
+
+const verifyJWT = promisify(jwt.verify.bind(jwt))
 
 const storeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -37,7 +44,49 @@ const storeLimiter = rateLimit({
   }
 })
 
+const loginLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
+  max: 5, // start blocking after 5 requests
+  handler: function (req, res) {
+    res.json({ success: false, message: 'Max requests limit reached' })
+  }
+})
+
+const apisLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
+  max: 500, // start blocking after 500 requests
+  handler: function (req, res) {
+    res.json({ success: false, message: 'Max requests limit reached' })
+  }
+})
+
+// apis response codes
+const RESPONSE_CODES = {
+  0: 'OK',
+  1: 'General Error',
+  2: 'Invalid data',
+  3: 'Authentication failed',
+  4: 'Insufficient permissions'
+}
+
 const socketManager = new SocketManager()
+
+socketManager.authMiddleware = function (socket, next) {
+  if (!isAuthEnabled()) {
+    next()
+  } else if (socket.handshake.query && socket.handshake.query.token) {
+    jwt.verify(socket.handshake.query.token, sessionSecret, function (
+      err,
+      decoded
+    ) {
+      if (err) return next(new Error('Authentication error'))
+      socket.user = decoded
+      next()
+    })
+  } else {
+    next(new Error('Authentication error'))
+  }
+}
 
 let gw // the gateway instance
 
@@ -54,6 +103,11 @@ let restarting = false
  */
 async function startServer (host, port) {
   let server
+
+  const settings = jsonStore.get(store.settings)
+
+  // as the really first thing setup loggers so all logs will go to file if specified in settings
+  setupLogging(settings)
 
   if (process.env.HTTPS) {
     logger.info('HTTPS is enabled. Loading cert and keys from store...')
@@ -100,9 +154,20 @@ async function startServer (host, port) {
     }
   })
 
+  const users = jsonStore.get(store.users)
+
+  if (users.length === 0) {
+    users.push({
+      username: defaultUser,
+      passwordHash: await utils.hashPsw(defaultPsw)
+    })
+
+    await jsonStore.put(store.users, users)
+  }
+
   setupSocket(server)
   setupInterceptor()
-  startGateway()
+  startGateway(settings)
 }
 
 /**
@@ -112,11 +177,13 @@ async function startServer (host, port) {
  * @returns {string} The path is it's safe, thorws otherwise
  */
 function getSafePath (req) {
-  const reqPath = req.params.path
+  let reqPath = req.params.path
 
-  if (/[.]+\//g.test(reqPath)) {
-    throw Error('Path contains invalid chars')
+  if (typeof reqPath !== 'string') {
+    throw Error('Invalid path')
   }
+
+  reqPath = path.normalize(reqPath)
 
   if (!reqPath.startsWith(storeDir)) {
     throw Error('Path not allowed')
@@ -160,13 +227,15 @@ function setupLogging (settings) {
   loggers.setupAll(settings ? settings.gateway : null)
 }
 
-function startGateway () {
-  const settings = jsonStore.get(store.settings)
-
+function startGateway (settings) {
   let mqtt
   let zwave
 
-  setupLogging(settings)
+  if (isAuthEnabled() && sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME') {
+    logger.error(
+      'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var'
+    )
+  }
 
   if (settings.mqtt) {
     mqtt = new MqttClient(settings.mqtt)
@@ -214,7 +283,6 @@ app.use(
     parameterLimit: 50000
   })
 )
-app.use(cookieParser())
 
 app.use(
   history({
@@ -222,11 +290,32 @@ app.use(
   })
 )
 
-app.get('/', renderIndex)
+app.get('/', apisLimiter, renderIndex)
 
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
-app.use(cors())
+app.use(cors({ credentials: true, origin: true }))
+
+// enable sessions management
+app.use(
+  session({
+    name: 'zwavejs2mqtt-session',
+    secret: sessionSecret,
+    resave: true,
+    saveUninitialized: true,
+    cookie: {
+      secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
+      httpOnly: true, // prevents cookie to be sent by client javascript
+      maxAge: 24 * 60 * 60 * 1000 // one day
+    }
+  })
+)
+
+// Node.js CSRF protection middleware.
+// Requires either a session middleware or cookie-parser to be initialized first.
+const csrfProtection = csrf({
+  value: req => req.csrfToken()
+})
 
 // ### SOCKET SETUP
 
@@ -257,37 +346,259 @@ function setupSocket (server) {
     }
   })
 
+  socketManager.on(inboundEvents.mqtt, async function (socket, data) {
+    logger.info(`Mqtt api call: ${data.apiName}`)
+
+    let res, err
+
+    try {
+      switch (data.api) {
+        case 'updateNodeTopics':
+          res = gw.updateNodeTopics(data.args[0])
+          break
+        case 'removeNodeRetained':
+          res = gw.removeNodeRetained(data.args[0])
+          break
+        default:
+          err = `Unknown MQTT api ${data.apiName}`
+      }
+    } catch (error) {
+      logger.error('Error while calling MQTT api', error)
+      err = error.message
+    }
+
+    const result = {
+      success: !err,
+      message: err || 'Success MQTT api call',
+      result: res
+    }
+    result.api = data.api
+
+    socket.emit(socketEvents.api, result)
+  })
+
   socketManager.on(inboundEvents.hass, async function (socket, data) {
     logger.info(`Hass api call: ${data.apiName}`)
-    switch (data.apiName) {
-      case 'delete':
-        gw.publishDiscovery(data.device, data.nodeId, true, true)
-        break
-      case 'discover':
-        gw.publishDiscovery(data.device, data.nodeId, false, true)
-        break
-      case 'rediscoverNode':
-        gw.rediscoverNode(data.nodeId)
-        break
-      case 'disableDiscovery':
-        gw.disableDiscovery(data.nodeId)
-        break
-      case 'update':
-        gw.zwave.updateDevice(data.device, data.nodeId)
-        break
-      case 'add':
-        gw.zwave.addDevice(data.device, data.nodeId)
-        break
-      case 'store':
-        await gw.zwave.storeDevices(data.devices, data.nodeId, data.remove)
-        break
+
+    let res, err
+    try {
+      switch (data.apiName) {
+        case 'delete':
+          res = gw.publishDiscovery(data.device, data.nodeId, true, true)
+          break
+        case 'discover':
+          res = gw.publishDiscovery(data.device, data.nodeId, false, true)
+          break
+        case 'rediscoverNode':
+          res = gw.rediscoverNode(data.nodeId)
+          break
+        case 'disableDiscovery':
+          res = gw.disableDiscovery(data.nodeId)
+          break
+        case 'update':
+          res = gw.zwave.updateDevice(data.device, data.nodeId)
+          break
+        case 'add':
+          res = gw.zwave.addDevice(data.device, data.nodeId)
+          break
+        case 'store':
+          res = await gw.zwave.storeDevices(
+            data.devices,
+            data.nodeId,
+            data.remove
+          )
+          break
+      }
+    } catch (error) {
+      logger.error('Error while calling HASS api', error)
+      err = error.message
     }
+
+    const result = {
+      success: !err,
+      message: err || 'Success HASS api call',
+      result: res
+    }
+    result.api = data.apiName
+
+    socket.emit(socketEvents.api, result)
   })
 }
 
 // ### APIs
 
-app.get('/health', async function (req, res) {
+function isAuthEnabled () {
+  const settings = jsonStore.get(store.settings)
+  return settings.gateway && settings.gateway.authEnabled === true
+}
+
+async function parseJWT (req) {
+  // if not authenticated check if he has a valid token
+  let token = req.headers['x-access-token'] || req.headers.authorization // Express headers are auto converted to lowercase
+  if (token && token.startsWith('Bearer ')) {
+    // Remove Bearer from string
+    token = token.slice(7, token.length)
+  }
+
+  // third-party cookies must be allowed in order to work
+  if (!token) {
+    throw Error('Invalid token header')
+  }
+  const decoded = await verifyJWT(token, sessionSecret)
+
+  // Successfully authenticated, token is valid and the user _id of its content
+  // is the same of the current session
+  const users = jsonStore.get(store.users)
+
+  const user = users.find(u => u.username === decoded.username)
+
+  if (user) {
+    return user
+  } else {
+    throw Error('User not found')
+  }
+}
+
+// middleware to check if user is authenticated
+async function isAuthenticated (req, res, next) {
+  // if user is authenticated in the session, carry on
+  if (req.session.user || !isAuthEnabled()) {
+    return next()
+  }
+
+  // third-party cookies must be allowed in order to work
+  try {
+    const user = await parseJWT(req)
+    req.user = user
+    next()
+  } catch (error) {
+    logger.debug('Authentication failed', error)
+  }
+
+  res.json({
+    success: false,
+    message: RESPONSE_CODES['3'],
+    code: 3
+  })
+}
+
+// logout the user
+app.get('/api/auth-enabled', apisLimiter, async function (req, res) {
+  res.json({ success: true, data: isAuthEnabled() })
+})
+
+// api to authenticate user
+app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
+  req,
+  res
+) {
+  const token = req.body.token
+  let user
+
+  try {
+    // token auth, mostly used to restore sessions when user refresh the page
+    if (token) {
+      const decoded = await verifyJWT(token, sessionSecret)
+
+      // Successfully authenticated, token is valid and the user _id of its content
+      // is the same of the current session
+      const users = jsonStore.get(store.users)
+
+      user = users.find(u => u.username === decoded.username)
+    } else {
+      // credentials auth
+      const users = jsonStore.get(store.users)
+
+      const username = req.body.username
+      const password = req.body.password
+
+      user = users.find(u => u.username === username)
+
+      if (user && !(await utils.verifyPsw(password, user.passwordHash))) {
+        user = null
+      }
+    }
+
+    const result = {
+      success: !!user
+    }
+
+    if (result.success) {
+      // don't edit the original user object, remove the password from jwt payload
+      const userData = Object.assign({}, user)
+      delete userData.passwordHash
+
+      const token = jwt.sign(userData, sessionSecret, {
+        expiresIn: '1d'
+      })
+      userData.token = token
+      req.session.user = userData
+      result.user = userData
+      loginLimiter.resetKey(req.ip)
+    } else {
+      result.code = 3
+      result.message = RESPONSE_CODES['3']
+    }
+
+    res.json(result)
+  } catch (error) {
+    res.json({ success: false, message: 'Authentication failed', code: 3 })
+  }
+})
+
+// logout the user
+app.get('/api/logout', apisLimiter, isAuthenticated, async function (req, res) {
+  req.session.destroy()
+  res.json({ success: true, message: 'User logged out' })
+})
+
+// update user password
+app.put(
+  '/api/password',
+  apisLimiter,
+  csrfProtection,
+  isAuthenticated,
+  async function (req, res) {
+    try {
+      const users = jsonStore.get(store.users)
+
+      const user = req.session.user
+      const oldUser = users.find(u => u._id === user._id)
+
+      if (!oldUser) {
+        return res.json({ success: false, message: 'User not found' })
+      }
+
+      if (!(await utils.verifyPsw(req.body.current, oldUser.passwordHash))) {
+        return res.json({
+          success: false,
+          message: 'Current password is wrong'
+        })
+      }
+
+      if (req.body.new !== req.body.confirmNew) {
+        return res.json({ success: false, message: "Passwords doesn't match" })
+      }
+
+      oldUser.passwordHash = await utils.hashPsw(req.body.new)
+
+      req.session.user = oldUser
+
+      await jsonStore.put(store.users, users)
+
+      res.json({ success: true, message: 'Password updated', user: oldUser })
+    } catch (error) {
+      res.json({
+        success: false,
+        message: 'Error while updating passwords',
+        error: error.message
+      })
+      logger.error('Error while updating password', error)
+    }
+  }
+)
+
+app.get('/health', apisLimiter, async function (req, res) {
   let mqtt = false
   let zwave = false
 
@@ -306,7 +617,7 @@ app.get('/health', async function (req, res) {
   res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 })
 
-app.get('/health/:client', async function (req, res) {
+app.get('/health/:client', apisLimiter, async function (req, res) {
   const client = req.params.client
   let status
 
@@ -320,7 +631,10 @@ app.get('/health/:client', async function (req, res) {
 })
 
 // get settings
-app.get('/api/settings', async function (req, res) {
+app.get('/api/settings', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   const data = {
     success: true,
     settings: jsonStore.get(store.settings),
@@ -342,7 +656,7 @@ app.get('/api/settings', async function (req, res) {
 })
 
 // get config
-app.get('/api/exportConfig', function (req, res) {
+app.get('/api/exportConfig', apisLimiter, isAuthenticated, function (req, res) {
   return res.json({
     success: true,
     data: jsonStore.get(store.nodes),
@@ -351,7 +665,10 @@ app.get('/api/exportConfig', function (req, res) {
 })
 
 // import config
-app.post('/api/importConfig', async function (req, res) {
+app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   const config = req.body.data
   try {
     if (!gw.zwave) throw Error('Zwave client not inited')
@@ -383,7 +700,7 @@ app.post('/api/importConfig', async function (req, res) {
 })
 
 // get config
-app.get('/api/store', storeLimiter, async function (req, res) {
+app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
     async function parseDir (dir) {
       const toReturn = []
@@ -415,7 +732,10 @@ app.get('/api/store', storeLimiter, async function (req, res) {
   }
 })
 
-app.get('/api/store/:path', storeLimiter, async function (req, res) {
+app.get('/api/store/:path', storeLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   try {
     const reqPath = getSafePath(req)
 
@@ -434,7 +754,10 @@ app.get('/api/store/:path', storeLimiter, async function (req, res) {
   }
 })
 
-app.put('/api/store/:path', storeLimiter, async function (req, res) {
+app.put('/api/store/:path', storeLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   try {
     const reqPath = getSafePath(req)
 
@@ -453,7 +776,10 @@ app.put('/api/store/:path', storeLimiter, async function (req, res) {
   }
 })
 
-app.delete('/api/store/:path', storeLimiter, async function (req, res) {
+app.delete('/api/store/:path', storeLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   try {
     const reqPath = getSafePath(req)
 
@@ -466,7 +792,10 @@ app.delete('/api/store/:path', storeLimiter, async function (req, res) {
   }
 })
 
-app.put('/api/store-multi', storeLimiter, async function (req, res) {
+app.put('/api/store-multi', storeLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   try {
     const files = req.body.files || []
     for (const f of files) {
@@ -479,7 +808,10 @@ app.put('/api/store-multi', storeLimiter, async function (req, res) {
   }
 })
 
-app.post('/api/store-multi', storeLimiter, function (req, res) {
+app.post('/api/store-multi', storeLimiter, isAuthenticated, function (
+  req,
+  res
+) {
   const files = req.body.files || []
 
   const archive = archiver('zip')
@@ -510,19 +842,30 @@ app.post('/api/store-multi', storeLimiter, function (req, res) {
 })
 
 // update settings
-app.post('/api/settings', async function (req, res) {
+app.post('/api/settings', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
   try {
     if (restarting) {
       throw Error(
         'Gateway is restarting, wait a moment before doing another request'
       )
     }
+    // TODO: validate settings using ajv
+    const settings = req.body
     restarting = true
-    await jsonStore.put(store.settings, req.body)
-    setupLogging(req.body)
+    await jsonStore.put(store.settings, settings)
     await gw.close()
-    startGateway()
-    res.json({ success: true, message: 'Configuration updated successfully' })
+    // reload loggers settings
+    setupLogging(settings)
+    // restart clients and gateway
+    startGateway(settings)
+    res.json({
+      success: true,
+      message: 'Configuration updated successfully',
+      data: settings
+    })
   } catch (error) {
     logger.error(error)
     res.json({ success: false, message: error.message })
@@ -553,15 +896,19 @@ app.use(function (err, req, res) {
 
 process.removeAllListeners('SIGINT')
 
-process.on('SIGINT', function () {
-  logger.info('Closing clients...')
-  gw.close()
-    .catch(err => {
-      logger.error('Error while closing clients', err)
-    })
-    .finally(() => {
-      process.exit()
-    })
-})
+async function gracefuShutdown () {
+  logger.warn('Shutdown detected: closing clients...')
+  try {
+    await gw.close()
+  } catch (error) {
+    logger.error('Error while closing clients', error)
+  }
+
+  return process.exit()
+}
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.once(signal, gracefuShutdown)
+}
 
 module.exports = { app, startServer }

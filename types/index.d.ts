@@ -115,6 +115,7 @@ export type Z2MNode = {
   ready: boolean
   failed: boolean
   lastActive: number
+  dbLink: string
   interviewCompleted: boolean
   maxBaudRate: number
   interviewStage: InterviewStage
@@ -391,7 +392,7 @@ export interface Z2MGateway {
   mqtt: MqttClient
   zwave: ZwaveClient
 
-  topicValues: Map<string, string>
+  topicValues: Map<string, Z2MValueId>
   discovered: Map<string, HassDevice>
   topicLevels: number[]
 
@@ -425,4 +426,6 @@ export interface Z2MGateway {
   discoverDevice(node: Z2MNode, hassDevice: HassDevice): void
   discoverClimates(node: Z2MNode): void
   discoverValue(node: Z2MNode, vId: string): void
+  updateNodeTopics(nodeId: number): void
+  removeNodeRetained(nodeId: number): void
 }
