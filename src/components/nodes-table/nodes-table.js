@@ -54,6 +54,6 @@ export default {
         : [...this.expanded, item]
     }
   },
-  watch: { },
-  computed: { }
+  watch: {},
+  computed: {}
 }
