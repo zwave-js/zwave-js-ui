@@ -347,7 +347,7 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.mqtt, async function (socket, data) {
-    logger.info(`Mqtt api call: ${data.apiName}`)
+    logger.info(`Mqtt api call: ${data.api}`)
 
     let res, err
 

@@ -186,7 +186,7 @@ export const mutations = {
       ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
       : 'NodeID_' + n.id
 
-    let index = state.nodes.findIndex(i => i.id === n.id)
+    let index = nodesMap.get(n.id)
 
     index = index >= 0 ? index : state.nodes.length
 
@@ -200,7 +200,7 @@ export const mutations = {
     nodesMap.set(n.id, index)
   },
   removeNode (state, n) {
-    const index = state.nodes.findIndex(i => i.id === n.id)
+    const index = nodesMap.get(n.id)
 
     if (index >= 0) {
       nodesMap.delete(n.id)
