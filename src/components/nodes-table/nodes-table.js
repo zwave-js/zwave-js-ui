@@ -37,7 +37,6 @@ export default {
         localStorage,
         'nodes_'
       ),
-      showHidden: undefined,
       expanded: [],
       headersMenu: false
     }
@@ -55,20 +54,6 @@ export default {
         : [...this.expanded, item]
     }
   },
-  created () {
-    this.showHidden = this.settings.load('nodes_showHidden', false)
-  },
-  watch: {
-    showHidden (val) {
-      this.settings.store('nodes_showHidden', val)
-    },
-    relevantNodes (val) {
-      this.managedNodes.items = val
-    }
-  },
-  computed: {
-    relevantNodes () {
-      return this.nodes.filter(node => (this.showHidden ? true : !node.failed))
-    }
-  }
+  watch: { },
+  computed: { }
 }

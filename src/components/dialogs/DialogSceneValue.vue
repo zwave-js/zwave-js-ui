@@ -18,7 +18,7 @@
                   item-text="_name"
                   :rules="[required]"
                   item-value="id"
-                  :items="sortedNodes"
+                  :items="nodes"
                 ></v-select>
               </v-col>
               <v-col v-if="editedValue.node" cols="12">
@@ -102,15 +102,6 @@ export default {
     title: String,
     editedValue: Object,
     nodes: Array
-  },
-  computed: {
-    sortedNodes () {
-      return this.nodes
-        .filter(n => !n.failed)
-        .sort((n1, n2) =>
-          n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
-        )
-    }
   },
   watch: {
     // eslint-disable-next-line no-unused-vars
