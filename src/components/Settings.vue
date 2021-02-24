@@ -172,6 +172,19 @@
                           v-model="newZwave.logToFile"
                         ></v-switch>
                       </v-col>
+                      <v-col v-if="newZwave.logEnabled" cols="12" sm="6">
+                        <v-combobox
+                          hint="Choose which nodes to log. Leave this empty to log all nodes"
+                          persistent-hint
+                          label="Log nodes"
+                          :items="newZwave.nodeFilter || []"
+                          multiple
+                          :rules="[rules.validNodeLog]"
+                          chips
+                          deletable-chips
+                          v-model="newZwave.nodeFilter"
+                        ></v-combobox>
+                      </v-col>
                       <v-col cols="6">
                         <v-text-field
                           v-model.number="newZwave.commandsTimeout"
@@ -684,6 +697,13 @@ export default {
           else valid = !!value || value === 0
 
           return valid || 'This field is required.'
+        },
+        validNodeLog: values => {
+          return (
+            !values ||
+            values.every(v => v > 0 && v < 233) ||
+            'Nodes must be between 1-232'
+          )
         },
         validName: value => {
           return (

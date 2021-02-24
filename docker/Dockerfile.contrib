@@ -13,7 +13,7 @@ RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-
 RUN git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
 
 ##### LOCAL SOURCE #####
-FROM node:erbium-buster-slim AS local-copy-src
+FROM node:erbium-buster AS local-copy-src
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
@@ -52,7 +52,7 @@ RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-j
 RUN mkdir my_dist
 RUN cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
 
-FROM node:erbium-buster-slim
+FROM node:erbium-buster
 LABEL maintainer="robertsLando"
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
