@@ -1,5 +1,5 @@
 # STEP: 1
-FROM node:15.9.0-alpine AS build-z2m
+FROM node:15.10.0-alpine AS build-z2m
 
 WORKDIR /usr/src/app
 
@@ -43,7 +43,7 @@ RUN if [ ! -z "$plugins" ]; \
     then echo "Installing plugins ${plugins}"; npm i ${plugins} ; fi
 
 # STEP: 2 (runtime)
-FROM node:15.9.0-alpine
+FROM node:15.10.0-alpine
 
 RUN apk add --no-cache \	
     libstdc++ \
