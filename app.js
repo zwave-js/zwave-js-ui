@@ -683,8 +683,8 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
         ) {
           continue
         } else if (e) {
-          await gw.zwave.callApi('_setNodeName', i, e.name || '')
-          await gw.zwave.callApi('_setNodeLocation', i, e.loc || '')
+          await gw.zwave.callApi('setNodeName', i, e.name || '')
+          await gw.zwave.callApi('setNodeLocation', i, e.loc || '')
           if (e.hassDevices) {
             await gw.zwave.storeDevices(e.hassDevices, i, false)
           }
