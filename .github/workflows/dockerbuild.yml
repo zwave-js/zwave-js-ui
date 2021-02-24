@@ -44,7 +44,7 @@ jobs:
         id: ref-sanitized
         with:
           script: |
-            const ref = context.github.ref
+            const ref = context.ref
             return ref.replace(/^refs\/heads\/|-/, '')
 
       - name: Cache Docker layers
