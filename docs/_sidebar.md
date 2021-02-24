@@ -20,6 +20,7 @@
   - [Z2M Migration](guide/migrating.md)
   - [Env Vars](guide/env-vars.md)
   - [FAQ](guide/faq.md)
+  - [Plugins](guide/plugins.md)
 
 - Development
 

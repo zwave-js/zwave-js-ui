@@ -335,12 +335,12 @@ export default {
     },
     updateLoc () {
       if (this.node && !this.locError) {
-        this.apiRequest('_setNodeLocation', [this.node.id, this.newLoc])
+        this.apiRequest('setNodeLocation', [this.node.id, this.newLoc])
       }
     },
     updateName () {
       if (this.node && !this.nameError) {
-        this.apiRequest('_setNodeName', [this.node.id, this.newName])
+        this.apiRequest('setNodeName', [this.node.id, this.newName])
       }
     },
     updateValue (v, customValue) {

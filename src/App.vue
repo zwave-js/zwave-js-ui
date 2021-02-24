@@ -297,7 +297,7 @@ export default {
   },
   methods: {
     ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
-    ...mapMutations(['setControllerStatus', 'initNode']),
+    ...mapMutations(['setControllerStatus', 'initNode', 'removeNode']),
     async updatePassword () {
       try {
         const response = await ConfigApis.updatePassword(this.password)
@@ -497,7 +497,7 @@ export default {
       )
 
       this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
-      this.socket.on(socketEvents.nodeRemoved, this.initNode.bind(this))
+      this.socket.on(socketEvents.nodeRemoved, this.removeNode.bind(this))
 
       this.socket.on(socketEvents.valueRemoved, this.removeValue.bind(this))
       this.socket.on(socketEvents.valueUpdated, this.updateValue.bind(this))

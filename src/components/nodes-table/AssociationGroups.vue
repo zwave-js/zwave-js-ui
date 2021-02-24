@@ -50,7 +50,7 @@
         <v-combobox
           label="Target"
           v-model="group.target"
-          :items="sortedNodes.filter(n => n != group.node)"
+          :items="nodes"
           return-object
           hint="Select the node from the list or digit the node ID"
           persistent-hint
@@ -118,15 +118,7 @@ export default {
       group: { node: this.node }
     }
   },
-  computed: {
-    sortedNodes () {
-      return this.nodes
-        .filter(n => !n.failed)
-        .sort((n1, n2) =>
-          n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
-        )
-    }
-  },
+  computed: {},
   mounted () {
     const self = this
     this.socket.on(socketEvents.api, async data => {
