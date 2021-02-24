@@ -47,7 +47,7 @@ This are the available apis:
   - `_addSceneValue(sceneId, valueId, value, timeout)`: Add a value to a specific scene
   - `_removeSceneValue(sceneId, valueId)`: remove a valueId from a scene
   - `_activateScene(sceneId)`: activate a scene
-- `_setNodeName(name)` and `_setNodeLocation(location)` will use internal nodes store to save nodes names/locations in a json file
+- `setNodeName(name)` and `setNodeLocation(location)` will use internal nodes store to save nodes names/locations in a json file and will also try to store this info on the controller
 - `refreshNeighborns()`: Returns an Array where the Array index is the `nodeId`, array value is an Array with all the ids of the node neighborns
 - `getNodes()`: Returns an array with all nodes in the network (and their info/valueids)
 - `getInfo()`: Returns an object with:

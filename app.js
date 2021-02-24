@@ -363,7 +363,7 @@ function setupSocket (server) {
   socketManager.on(inboundEvents.init, function (socket) {
     if (gw.zwave) {
       socket.emit(socketEvents.init, {
-        nodes: gw.zwave.nodes,
+        nodes: gw.zwave.getNodes(),
         info: gw.zwave.getInfo(),
         error: gw.zwave.error,
         cntStatus: gw.zwave.cntStatus
@@ -380,7 +380,7 @@ function setupSocket (server) {
   })
 
   socketManager.on(inboundEvents.mqtt, async function (socket, data) {
-    logger.info(`Mqtt api call: ${data.apiName}`)
+    logger.info(`Mqtt api call: ${data.api}`)
 
     let res, err
 
@@ -702,26 +702,37 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
   req,
   res
 ) {
-  const config = req.body.data
+  let config = req.body.data
   try {
     if (!gw.zwave) throw Error('Zwave client not inited')
 
-    if (!Array.isArray(config)) throw Error('Configuration not valid')
-    else {
+    // try convert to node object
+    if (Array.isArray(config)) {
+      const parsed = {}
+
       for (let i = 0; i < config.length; i++) {
-        const e = config[i]
-        if (
-          e &&
-          (!utils.hasProperty(e, 'name') || !utils.hasProperty(e, 'loc'))
-        ) {
-          continue
-        } else if (e) {
-          await gw.zwave.callApi('_setNodeName', i, e.name || '')
-          await gw.zwave.callApi('_setNodeLocation', i, e.loc || '')
-          if (e.hassDevices) {
-            await gw.zwave.storeDevices(e.hassDevices, i, false)
-          }
+        if (config[i]) {
+          parsed[i] = config[i]
         }
+      }
+
+      config = parsed
+    }
+
+    for (const nodeId in config) {
+      const node = config[nodeId]
+      if (!node || typeof node !== 'object') continue
+
+      if (utils.hasProperty(node, 'name')) {
+        await gw.zwave.callApi('setNodeName', nodeId, node.name || '')
+      }
+
+      if (utils.hasProperty(node, 'loc')) {
+        await gw.zwave.callApi('setNodeLocation', nodeId, node.loc || '')
+      }
+
+      if (node.hassDevices) {
+        await gw.zwave.storeDevices(node.hassDevices, nodeId, false)
       }
     }
 

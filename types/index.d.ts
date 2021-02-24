@@ -340,8 +340,8 @@ export interface ZwaveClient extends EventEmitter {
   refreshNeighbors(): void
   connect(): Promise<void>
   sendToSocket(evtName: string, data: any): void
-  _setNodeName(nodeid: number, name: string): Promise<boolean>
-  _setNodeLocation(nodeid: number, loc: string): Promise<boolean>
+  setNodeName(nodeid: number, name: string): Promise<boolean>
+  setNodeLocation(nodeid: number, loc: string): Promise<boolean>
   _createScene(label: string): Promise<boolean>
   _removeScene(sceneid: number): Promise<boolean>
   _setScenes(scenes: Z2MScene[]): Promise<Z2MScene[]>

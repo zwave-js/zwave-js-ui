@@ -17,11 +17,6 @@
     show-select
   >
     <template v-slot:top>
-      <v-row>
-        <v-col cols="12" sm="3" md="2" class="ml-6">
-          <v-switch label="Show hidden nodes" v-model="showHidden"></v-switch>
-        </v-col>
-      </v-row>
       <v-row class="ma-2" justify-start>
         <v-col cols="12">
           <v-menu

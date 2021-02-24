@@ -1,11 +1,7 @@
 <template>
   <v-container fluid>
     <v-card class="pa-5">
-      <zwave-graph
-        id="mesh"
-        :nodes="nodes.filter(n => !n.failed)"
-        @node-click="nodeClick"
-      />
+      <zwave-graph id="mesh" :nodes="nodes" @node-click="nodeClick" />
 
       <div id="properties" draggable v-show="showProperties" class="details">
         <v-icon
@@ -150,8 +146,11 @@ export default {
         switch (data.api) {
           case 'refreshNeighbors': {
             const neighbors = data.result
-            for (let i = 0; i < neighbors.length; i++) {
-              this.setNeighbors({ nodeId: i, neighbors: neighbors[i] })
+            for (const nodeId in neighbors) {
+              this.setNeighbors({
+                nodeId: nodeId,
+                neighbors: neighbors[nodeId]
+              })
             }
             break
           }
