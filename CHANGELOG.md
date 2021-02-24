@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.3.0...v1.4.0) (2021-02-24)
+
+
+### Bug Fixes
+
+* **hass:** inovelli lzw42 multi color bulb discovery update ([#690](https://github.com/zwave-js/zwavejs2mqtt/issues/690)) ([9669cce](https://github.com/zwave-js/zwavejs2mqtt/commit/9669cce977e1412023c7bc9b53c9981ded1f225f))
+
+
+### Features
+
+* zwavejs@6.5.0 and nodeFilter setting support ([#728](https://github.com/zwave-js/zwavejs2mqtt/issues/728)) ([3f12c2a](https://github.com/zwave-js/zwavejs2mqtt/commit/3f12c2ab9a65f701458334b3f5db1183ae742f3c))
+
 # [1.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.2.3...v1.3.0) (2021-02-23)
 
 
