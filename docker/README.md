@@ -54,6 +54,7 @@ services:
     stop_signal: SIGINT
     environment:
       - SESSION_SECRET=mysupersecretkey
+    # - TZ=America/Los_Angeles  # uncomment and edit to match you timezone if you want logs time and dates to match your timezone instead of UTC.
     networks:
       - zwave
     devices:

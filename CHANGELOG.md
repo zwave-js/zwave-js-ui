@@ -1,3 +1,33 @@
+# [1.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.2.3...v1.3.0) (2021-02-23)
+
+
+### Bug Fixes
+
+* **hass:** improved climates discovery ([#692](https://github.com/zwave-js/zwavejs2mqtt/issues/692)) ([1c60355](https://github.com/zwave-js/zwavejs2mqtt/commit/1c603554e62903884840dcad2a429a88ca5ab441))
+* **ui:** node details in mobile devices ([9fcc8e0](https://github.com/zwave-js/zwavejs2mqtt/commit/9fcc8e03cb93355266f0c5402f3b2848e30c4b9a))
+* **ui:** overflow of tabs in mobile devices ([6806907](https://github.com/zwave-js/zwavejs2mqtt/commit/6806907bac52f60386545cb81733517107241ea1))
+
+
+### Features
+
+* **ui:** add link to zwavejs devices db ([#708](https://github.com/zwave-js/zwavejs2mqtt/issues/708)) ([ebb5036](https://github.com/zwave-js/zwavejs2mqtt/commit/ebb50364e9c8660b39bf2d2f8ec29f2859de4a9f))
+* **ui:** update topics and clear retained functions ([246c078](https://github.com/zwave-js/zwavejs2mqtt/commit/246c0784196e29a98ea47ab22fad5e1306eab616))
+
+## 1.2.3 (2021-02-22)
+
+
+### Bug Fixes
+
+* **discovery:** prioritized CCs discovery order  ([#625](https://github.com/zwave-js/zwavejs2mqtt/issues/625)) ([e238ae1](https://github.com/zwave-js/zwavejs2mqtt/commit/e238ae14cb38ee91e94291355c89935b8393b8c3))
+* **hass:** barrier operator hass replace barrier states with integers ([#556](https://github.com/zwave-js/zwavejs2mqtt/issues/556)) ([11e1bde](https://github.com/zwave-js/zwavejs2mqtt/commit/11e1bde5259d8d710fec11efacf8a5851ddcaded))
+* **ui:** duration dropdown ([#687](https://github.com/zwave-js/zwavejs2mqtt/issues/687)) ([27245ec](https://github.com/zwave-js/zwavejs2mqtt/commit/27245ec79a7c7ac6134c6403b82482d4deb82c25))
+* **ui:** persistent hint in confirm dialog ([#685](https://github.com/zwave-js/zwavejs2mqtt/issues/685)) ([7b7529c](https://github.com/zwave-js/zwavejs2mqtt/commit/7b7529c84694da106540ed989194cab5a71045d6))
+* **ui:** use button toggle for on/off value ids ([#686](https://github.com/zwave-js/zwavejs2mqtt/issues/686)) ([bba6335](https://github.com/zwave-js/zwavejs2mqtt/commit/bba633513d80a4d5d585863b01bdeca11fa71848))
+* propertyKey may be zero ([#674](https://github.com/zwave-js/zwavejs2mqtt/issues/674)) ([c60a640](https://github.com/zwave-js/zwavejs2mqtt/commit/c60a6404732e24f4cc166e058ac71d7c43b23d86))
+* **ui:** typo groups associations ([#650](https://github.com/zwave-js/zwavejs2mqtt/issues/650)) ([80163d1](https://github.com/zwave-js/zwavejs2mqtt/commit/80163d1b0de11f83007acc99f6a4f5c8366a8f5b))
+
+
+
 ## [1.2.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.2.1...v1.2.2) (2021-02-19)
 
 

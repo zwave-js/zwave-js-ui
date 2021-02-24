@@ -132,24 +132,6 @@ const SPIRIT_ZWAVE_PLUS = {
   }
 }
 
-const DANFOSS_TRV_ZWAVE = {
-  type: 'climate',
-  object_id: 'thermostat',
-  values: ['49-0-Air temperature', '67-0-setpoint-1'],
-  setpoint_topic: { 1: '67-0-setpoint-1' },
-  default_setpoint: '67-0-setpoint-1',
-  discovery_payload: {
-    min_temp: 4,
-    max_temp: 28,
-    mode_command_topic: false,
-    temp_step: 0.5,
-    current_temperature_topic: '49-0-Air temperature',
-    current_temperature_template: '{{ value_json.value }}',
-    temperature_state_template: '{{ value_json.value }}',
-    temperature_command_topic: true
-  }
-}
-
 const COVER = {
   type: 'cover',
   object_id: 'position',
@@ -224,28 +206,37 @@ module.exports = {
     {
       type: 'light',
       object_id: 'rgbw_bulb',
-      values: ['38-0-currentValue', '38-0-targetValue', '51-1-0'], // FIXME: Handle color CC
+      values: [
+        '38-0-currentValue',
+        '38-0-targetValue',
+        '51-0-currentColor',
+        '51-0-targetColor'
+      ],
       discovery_payload: {
         state_topic: '38-0-currentValue',
         command_topic: '38-0-targetValue',
         on_command_type: 'brightness',
         brightness_state_topic: '38-0-currentValue',
         brightness_command_topic: '38-0-targetValue',
-        state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
-        brightness_value_template: '{{ (value_json.value) | round(0) }}',
+        state_value_template: '{{ "on" if value_json.value|int > 0 else "0" }}',
+        brightness_value_template: '{{ (value_json.value|int) | round(0) }}',
         brightness_scale: '99',
-        color_temp_state_topic: '51-1-0',
+        color_temp_state_topic: '51-0-currentColor',
         color_temp_command_template:
-          "{{ '#%02x%02x%02x%02x%02x' | format(0, 0, 0, (0.7349 * (value - 153)) | round(0), 255 - (0.7349 * (value - 153)) | round(0))}}",
-        color_temp_command_topic: '51-1-0',
+          "{{ {'warmWhite': ((0.7349 * (value - 153))|round(0)), 'coldWhite': (255 - (0.7349 * (value - 153))|round(0)), 'red': 255, 'green': 255, 'blue': 255}|to_json }}",
+        color_temp_command_topic: '51-0-targetColor',
         color_temp_value_template:
-          '{{ (((value_json.value[7:9] | int(0, 16)) / 0.7349 ) | round(0)) + 153 }}',
+          "{{ '%03d%03d' | format((value_json.value.warmWhite), (value_json.value.coldWhite)) }}",
         rgb_command_template:
-          "{{'#%02x%02x%02x%02x%02x' | format(red, green, blue,0,0)}}",
-        rgb_command_topic: '51-1-0',
-        rgb_state_topic: '51-1-0',
+          "{{ {'warmWhite': 0, 'coldWhite': 0, 'red': red, 'green': green, 'blue': blue}|to_json }}",
+        rgb_command_topic: '51-0-targetColor',
+        rgb_state_topic: '51-0-currentColor',
         rgb_value_template:
-          '{{ value_json.value[1:3] | int(0, 16) }},{{ value_json.value[3:5] | int(0, 16) }},{{ value_json.value[5:7] | int(0, 16) }}'
+          '{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}',
+        min_mireds: 153,
+        max_mireds: 500,
+        payload_on: 'on',
+        payload_off: '0'
       }
     }
   ],
@@ -344,9 +335,6 @@ module.exports = {
       }
     }
   ],
-  '2-4-5': [DANFOSS_TRV_ZWAVE], // DanfossZ
-  '2-373-5': [DANFOSS_TRV_ZWAVE], // Danfoss LC-13
-  '2-40976-266': [DANFOSS_TRV_ZWAVE], // Popp Radiator Thermostat
   '57-12593-18756': [FAN_DIMMER], // Honeywell 39358 In-Wall Fan Control
   '99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
   '99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer

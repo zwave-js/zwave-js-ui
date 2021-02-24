@@ -44,10 +44,11 @@
           v-model.number="value.newValue.value"
         ></v-text-field>
         <v-select
-          style="margin-left:10px;width:20px"
+          style="margin-left:10px;min-width:105px;width:135px"
           :items="durations"
           v-model="value.newValue.unit"
           :readonly="!value.writeable || disable_send"
+          persistent-hint
           :append-outer-icon="!disable_send ? 'send' : null"
           @click:append-outer="updateValue(value)"
         ></v-select>
@@ -103,13 +104,13 @@
       ></v-select>
 
       <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-        <div style="display: flex;margin-top:20px">
+        <v-btn-toggle class="mt-4" v-model="value.newValue" rounded>
           <v-btn
             outlined
-            class="on-button"
+            height="40px"
+            :value="true"
             :style="{
-              background: value.newValue ? '#4CAF50' : '',
-              'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+              background: value.newValue ? '#4CAF50' : ''
             }"
             :color="value.newValue ? 'white' : 'green'"
             dark
@@ -119,10 +120,10 @@
           </v-btn>
           <v-btn
             outlined
-            class="off-button"
+            height="40px"
+            :value="false"
             :style="{
-              background: !value.newValue ? '#f44336' : '',
-              'border-color': this.$vuetify.theme.dark ? 'white' : 'grey'
+              background: !value.newValue ? '#f44336' : ''
             }"
             :color="!value.newValue ? 'white' : 'red'"
             @click="updateValue(value, false)"
@@ -130,8 +131,8 @@
           >
             OFF
           </v-btn>
-        </div>
-        <div v-if="help" class="caption">{{ help }}</div>
+        </v-btn-toggle>
+        <div v-if="help" class="caption mt-2">{{ help }}</div>
       </div>
 
       <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
@@ -152,19 +153,11 @@
 </template>
 
 <style scoped>
-.on-button {
-  border-radius: 20px 0 0 20px;
-  margin-right: 0;
-}
-.off-button {
-  border-radius: 0 20px 20px 0;
-  margin-right: 0;
-}
 .valueid-label {
   font-weight: bold;
   color: black;
   padding-left: 0;
-  height: 0;
+  margin-bottom: -10px;
 }
 </style>
 
