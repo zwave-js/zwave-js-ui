@@ -3,7 +3,7 @@
 ARG SRC=git-clone-src
 
 ##### GIT CLONE #####
-FROM node:erbium-buster AS git-clone-src
+FROM node:erbium-buster-slim AS git-clone-src
 ARG ZWJ_BRANCH=master
 ARG Z2M_BRANCH=master
 USER node
@@ -20,13 +20,15 @@ COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 FROM ${SRC} AS build
 ARG YARN_NETWORK_TIMEOUT=300000
 USER root
-RUN apt-get update && apt-get install -y jq
+RUN apt-get update && apt-get install -y jq python3
 USER node
 WORKDIR /home/node/node-zwave-js
-RUN rm -f package-lock.json
-RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
-RUN yarn run build:full
-RUN yarn install --production --frozen-lockfile
+
+RUN rm -f package-lock.json \
+    && yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
+    && yarn run build:full \
+    && yarn install --production --frozen-lockfile
+
 RUN for i in config core serial shared; do \
     cd packages/$i && \
     yarn version --no-git-tag-version --new-version $(yarn versions --json| \
@@ -34,21 +36,22 @@ RUN for i in config core serial shared; do \
     yarn link && \
     cd ../..; \
     done
+
 RUN cd packages/zwave-js && \
     yarn version --no-git-tag-version --new-version $(yarn versions --json| \
         jq -r '[.data."zwave-js"]'[0])-$(git rev-parse --short HEAD) && \
     yarn link
 
 WORKDIR /home/node/zwavejs2mqtt
-RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
-RUN yarn run build
-RUN yarn install --production --frozen-lockfile
-RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
-    jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
-RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
-RUN mkdir my_dist
-RUN cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
+RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
+    && yarn run build \
+    && yarn install --production --frozen-lockfile \
+    && yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
+    jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD) \
+    && yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared \
+    && mkdir my_dist \
+    && cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
 
 FROM node:erbium-buster-slim
 LABEL maintainer="robertsLando"
