@@ -185,7 +185,7 @@ export default {
           text: 'Remove node from all associations',
           value: 'removeNodeFromAllAssociations'
         }
-      ],
+      ]
     }
   },
   computed: {

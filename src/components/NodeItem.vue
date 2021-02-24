@@ -8,8 +8,20 @@
       <div>{{ node.manu }} {{ node.productLabel }}</div>
       <div>{{ node.desc }}</div>
       <div>
-        <v-chip color="#f0f0f0" label x-small v-if="node.loc && node.loc.length > 0">{{ node.loc }}</v-chip>
-        <v-chip color="#f0f0f0" label x-small v-if="node.name && node.name.length > 0">{{ node.name }}</v-chip>
+        <v-chip
+          color="#f0f0f0"
+          label
+          x-small
+          v-if="node.loc && node.loc.length > 0"
+          >{{ node.loc }}</v-chip
+        >
+        <v-chip
+          color="#f0f0f0"
+          label
+          x-small
+          v-if="node.name && node.name.length > 0"
+          >{{ node.name }}</v-chip
+        >
       </div>
     </div>
     <div class="node-col3">
@@ -32,9 +44,7 @@ export default {
   },
   components: {},
   data () {
-    return {
-      
-    }
+    return {}
   }
 }
 </script>
@@ -48,10 +58,10 @@ export default {
   border-width: 1px;
   border-color: #dfdfdf;
   border-style: solid;
-  cursor:pointer;
+  cursor: pointer;
 }
 .node-item.selected {
-  border-color:#2196f3
+  border-color: #2196f3;
 }
 .theme--dark .node-item {
   border-color: #333;
@@ -67,36 +77,45 @@ export default {
   background-color: #333;
 }
 
-.node-col1>:first-child{
-  font-size:larger;padding-top:0.3rem;
+.node-col1 > :first-child {
+  font-size: larger;
+  padding-top: 0.3rem;
 }
-.node-col1>:nth-child(2) {
-  margin-top:-0.7rem
+.node-col1 > :nth-child(2) {
+  margin-top: -0.7rem;
 }
 
 .node-col2 {
   flex: 1;
 }
-.node-col2>:first-child {
-  color:#888;font-size:0.7rem;line-height:0.7rem;padding-top:0.4rem
+.node-col2 > :first-child {
+  color: #888;
+  font-size: 0.7rem;
+  line-height: 0.7rem;
+  padding-top: 0.4rem;
 }
-.node-col2>:nth-child(2) {
-  margin:2px 0 4px 0;line-height:1rem
+.node-col2 > :nth-child(2) {
+  margin: 2px 0 4px 0;
+  line-height: 1rem;
 }
-.node-col2>:last-child {
-  font-size:0.9rem;margin-top:-0.3rem
+.node-col2 > :last-child {
+  font-size: 0.9rem;
+  margin-top: -0.3rem;
 }
 .node-col3 {
   text-align: right;
   padding-right: 0.4rem;
 }
-.node-col3>:first-child {
-  opacity:0.8;height:24px
+.node-col3 > :first-child {
+  opacity: 0.8;
+  height: 24px;
 }
-.node-col3>:nth-child(2) {
-  line-height:0.95rem
+.node-col3 > :nth-child(2) {
+  line-height: 0.95rem;
 }
-.node-col3>:last-child {
-  color:#777;font-size:0.7rem;margin-top:-0.1rem
+.node-col3 > :last-child {
+  color: #777;
+  font-size: 0.7rem;
+  margin-top: -0.1rem;
 }
 </style>

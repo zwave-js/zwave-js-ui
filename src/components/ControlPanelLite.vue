@@ -116,11 +116,15 @@
         key
       }}</v-banner>
       <div :class="['node-grid', $vuetify.breakpoint.name]">
-        <NodeItem v-for="node in groupOfNodes" :key="node.id" :node="node" @click="onNodeClick(node)" />
+        <NodeItem
+          v-for="node in groupOfNodes"
+          :key="node.id"
+          :node="node"
+          @click="onNodeClick(node)"
+        />
       </div>
     </div>
 
-    
     <DialogNode
       v-if="selectedNode !== null"
       v-model="nodeShowDialog"
@@ -131,7 +135,6 @@
       @apiRequest="apiRequest"
       v-on="$listeners"
     />
-
   </v-container>
 </template>
 
@@ -249,13 +252,17 @@ export default {
       this.selectedNode = node
       this.nodeShowDialog = true
     },
-    onNext() {
+    onNext () {
       const i = this.viewNodes.indexOf(this.selectedNode)
-      this.selectedNode = this.viewNodes[i == this.viewNodes.length - 1 ? 0 : i + 1]
+      this.selectedNode = this.viewNodes[
+        i === this.viewNodes.length - 1 ? 0 : i + 1
+      ]
     },
-    onPrev() {
+    onPrev () {
       const i = this.viewNodes.indexOf(this.selectedNode)
-      this.selectedNode = this.viewNodes[i == 0 ? this.viewNodes.length - 1 : i - 1]
+      this.selectedNode = this.viewNodes[
+        i === 0 ? this.viewNodes.length - 1 : i - 1
+      ]
     },
     timeago (ms) {
       // TODO: move into util library
