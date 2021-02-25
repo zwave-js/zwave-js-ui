@@ -3,12 +3,14 @@ name: Docker Test
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 
 jobs:
-  docker-armv6:
-    name: linux/arm/v6
+  docker-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        platforms: [linux/amd64, linux/arm64, linux/arm/v6, linux/arm/v7]
     steps:
       - uses: actions/checkout@v2
 
@@ -48,7 +50,7 @@ jobs:
       - name: Buildx build
         uses: docker/build-push-action@v2
         with:
-          platforms: linux/arm/v6
+          platforms: ${{ matrix.platform }}
           file: docker/Dockerfile
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
