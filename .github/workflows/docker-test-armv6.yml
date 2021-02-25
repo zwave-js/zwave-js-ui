@@ -6,7 +6,7 @@ on:
       - 'docs/**'
 
 jobs:
-  build:
+  docker-armv6:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
