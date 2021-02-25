@@ -3,7 +3,7 @@ name: Docker Test linux/arm64
 on:
   pull_request:
     paths-ignore:
-      - "docs/**"
+      - 'docs/**'
 
 jobs:
   docker-arm64:
