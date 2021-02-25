@@ -1,4 +1,0 @@
-recursive: true
-watch-files:
-  - 'lib/**/*.js'
-  - 'test/**/*.js'
