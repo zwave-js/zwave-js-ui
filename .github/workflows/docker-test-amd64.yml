@@ -27,7 +27,7 @@ jobs:
           images: zwavejs/zwavejs2mqtt
           tag-sha: false
           tag-latest: false
-          tag-custom: "branch-${{ steps.ref-sanitized.outputs.result }}"
+          tag-custom: ${{ 'branch-' + steps.ref-sanitized.outputs.result }}
           label-custom: |
             org.opencontainers.image.vendor=zwave-js
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
