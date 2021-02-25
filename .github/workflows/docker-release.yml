@@ -1,4 +1,4 @@
-name: Docker
+name: Docker Release
 
 on:
   push:
@@ -9,8 +9,7 @@ on:
       - created
 
 jobs:
-  release:
-    name: Release
+  build-push:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
