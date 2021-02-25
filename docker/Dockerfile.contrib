@@ -3,7 +3,7 @@
 ARG SRC=git-clone-src
 
 ##### GIT CLONE #####
-FROM node:12.21.0-erbium-buster-slim AS git-clone-src
+FROM node:12.21.0-buster-slim AS git-clone-src
 ARG ZWJ_BRANCH=master
 ARG Z2M_BRANCH=master
 RUN apt-get update && apt-get install -y jq python3 git build-essential 
@@ -13,7 +13,7 @@ RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-
     && git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
 
 ##### LOCAL SOURCE #####
-FROM node:12.21.0-erbium-buster-slim AS local-copy-src
+FROM node:12.21.0-buster-slim AS local-copy-src
 RUN apt-get update && apt-get install -y jq python3 git build-essential
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
