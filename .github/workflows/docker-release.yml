@@ -29,7 +29,6 @@ jobs:
           tag-latest: true
           tag-semver: |
             {{version}}
-          tag-custom: 'dev'
           label-custom: |
             org.opencontainers.image.vendor=zwave-js
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
