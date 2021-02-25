@@ -3,10 +3,10 @@ name: Docker Test
 on:
   pull_request:
     paths-ignore:
-      - "docs/**"
+      - 'docs/**'
 
 jobs:
-  docker-test:
+  build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
