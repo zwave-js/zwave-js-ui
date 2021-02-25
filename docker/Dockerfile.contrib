@@ -55,11 +55,9 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
     && cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
 
 # FROM node:
-FROM node:erbium-alpine3.12
+FROM node:erbium-buster-slim
 LABEL maintainer="robertsLando"
-# RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-RUN apk update \
-   && apk add git 
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
