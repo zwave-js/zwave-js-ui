@@ -9,8 +9,8 @@ ARG Z2M_BRANCH=master
 RUN apt-get update && apt-get install -y jq python3 git build-essential
 USER node
 WORKDIR /home/node
-RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-js
-RUN git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
+RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-js \
+    && git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
 
 ##### LOCAL SOURCE #####
 FROM node:erbium-buster-slim AS local-copy-src
@@ -56,7 +56,7 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
 
 FROM node:erbium-buster-slim
 LABEL maintainer="robertsLando"
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+# RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
