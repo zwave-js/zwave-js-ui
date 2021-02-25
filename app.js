@@ -44,6 +44,8 @@ const storeLimiter = rateLimit({
   }
 })
 
+console.log('Useless')
+
 const loginLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
   max: 5, // start blocking after 5 requests
