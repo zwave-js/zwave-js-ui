@@ -32,6 +32,10 @@ const { promisify } = require('util')
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
+const useless = `I'm useless, I know`
+
+logger.debug(useless)
+
 const storeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
