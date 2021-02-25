@@ -3,10 +3,11 @@ name: Docker Test linux/arm/v6
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 
 jobs:
   docker-armv6:
+    name: Docker Test linux/arm/v6
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
