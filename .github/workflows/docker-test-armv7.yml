@@ -1,4 +1,4 @@
-name: Docker Test linux/amd64
+name: Docker Test linux/arm/v7
 
 on:
   pull_request:
@@ -47,7 +47,7 @@ jobs:
       - name: Buildx build
         uses: docker/build-push-action@v2
         with:
-          platforms: linux/amd64
+          platforms: linux/arm/v7
           file: docker/Dockerfile
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
