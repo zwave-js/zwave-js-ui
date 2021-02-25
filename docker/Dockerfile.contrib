@@ -3,7 +3,7 @@
 ARG SRC=git-clone-src
 
 ##### GIT CLONE #####
-FROM node:erbium-buster-slim AS git-clone-src
+FROM node:12.21.0-erbium-buster-slim AS git-clone-src
 ARG ZWJ_BRANCH=master
 ARG Z2M_BRANCH=master
 RUN apt-get update && apt-get install -y jq python3 git build-essential 
@@ -13,7 +13,7 @@ RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-
     && git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
 
 ##### LOCAL SOURCE #####
-FROM node:erbium-buster-slim AS local-copy-src
+FROM node:12.21.0-erbium-buster-slim AS local-copy-src
 RUN apt-get update && apt-get install -y jq python3 git build-essential
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
@@ -58,6 +58,8 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
 FROM node:erbium-alpine3.12
 LABEL maintainer="robertsLando"
 # RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN apk update \
+   && apk add git 
 COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
