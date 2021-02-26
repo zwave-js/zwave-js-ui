@@ -41,9 +41,7 @@ module.exports = {
       brightness_value_template: '{{ value_json.value }}',
       brightness_scale: 99,
       rgb_command_template:
-        "{{ {'warmWhite': 0, 'coldWhite': 0, 'red': red, 'green': green, 'blue': blue}|to_json }}",
-      rgb_command_topic: '51-0-targetColor',
-      rgb_state_topic: '51-0-currentColor',
+        "{{ {'red': red, 'green': green, 'blue': blue}|to_json }}",
       rgb_value_template:
         '{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}'
     }
