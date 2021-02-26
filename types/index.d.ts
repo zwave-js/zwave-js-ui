@@ -10,7 +10,8 @@ import {
   ValueID,
   ValueType,
   ZWaveNode,
-  ZWaveOptions
+  ZWaveOptions,
+  ZWavePlusNodeType
 } from 'zwave-js'
 
 export type Z2MValueIdState = {
@@ -97,6 +98,10 @@ export type Z2MNode = {
   manufacturer: string
   firmwareVersion: string
   zwaveVersion: string
+  zwavePlusVersion: number | undefined
+  nodeType: ZWavePlusNodeType | undefined
+  roleType: ZWavePlusRoleType | undefined
+  endpointsCount: number
   isSecure: boolean
   isBeaming: boolean
   isListening: boolean
