@@ -49,8 +49,6 @@ module.exports = {
     discovery_payload: {
       state_topic: true,
       command_topic: true,
-      brightness_state_topic: true,
-      brightness_command_topic: true,
       on_command_type: 'brightness',
       state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
       brightness_value_template: '{{ value_json.value }}',
