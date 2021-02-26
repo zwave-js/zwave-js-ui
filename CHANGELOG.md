@@ -1,3 +1,25 @@
+# [2.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.4.0...v2.0.0) (2021-02-26)
+
+
+### Code Refactoring
+
+* make nodes a map instead of an array ([#710](https://github.com/zwave-js/zwavejs2mqtt/issues/710)) ([5a43abd](https://github.com/zwave-js/zwavejs2mqtt/commit/5a43abd94373d74095dc9afd596a66b7e27b608b))
+
+
+### Features
+
+* correctly parse `currentColor` value and improve rgb discovery ([#568](https://github.com/zwave-js/zwavejs2mqtt/issues/568)) ([7bedd3b](https://github.com/zwave-js/zwavejs2mqtt/commit/7bedd3b36403ff470a5e7317db68555b9edc4616))
+* plugins improved support ([#688](https://github.com/zwave-js/zwavejs2mqtt/issues/688)) ([a213b25](https://github.com/zwave-js/zwavejs2mqtt/commit/a213b25cc340a9bd8c69dcf7a027662e3811081d))
+
+
+### BREAKING CHANGES
+
+* `plugins` are now stored in an array of `strings` on settings `gateway` prop instead of `zwave`
+* `getNodes` function of ZwaveClient returns an array of available nodes but the index doesn't match the nodeId
+`refreshNeighbours` returns a map nodeId -> neighbours[]
+node removed socket event now returns the node removed
+renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as now them also store the value to controller
+
 # [1.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.3.0...v1.4.0) (2021-02-24)
 
 
