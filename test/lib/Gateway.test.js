@@ -28,25 +28,25 @@ describe('#Gateway', () => {
     })
 
     describe('payload prop not string', () => {
-      it('should not change payload', () => {
+      test('should not change payload', () => {
         func(payload, 'a', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('no valueId', () => {
-      it('should not change payload', () => {
+      test('should not change payload', () => {
         func(payload, 'd', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('no valueId.value', () => {
-      it('should not change payload', () => {
+      test('should not change payload', () => {
         func(payload, 'c', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('happy path', () => {
-      it('should not change payload', () => {
+      test('should not change payload', () => {
         func(payload, 'b', node)
         payload.should.deep.equal({
           a: 1,

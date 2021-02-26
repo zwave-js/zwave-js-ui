@@ -10,10 +10,10 @@ describe('#webConfig', () => {
   })
 
   describe('Uses defaults if nothing specified', () => {
-    it('uses "/" as the default base', () => {
+    test('uses "/" as the default base', () => {
       webConfig.base.should.equal('/')
     })
-    it('uses "ZWave To MQTT" as the default title', () => {
+    test('uses "ZWave To MQTT" as the default title', () => {
       webConfig.title.should.equal('ZWave To MQTT')
     })
   })
@@ -25,11 +25,11 @@ describe('#webConfig', () => {
       }
     })
 
-    it('uses "/sub/path/" as the custom base', () => {
+    test('uses "/sub/path/" as the custom base', () => {
       webConfig.base.should.equal('/sub/path/')
     })
 
-    it('uses "Custom Title" as the custom title', () => {
+    test('uses "Custom Title" as the custom title', () => {
       webConfig.title.should.equal('Custom Title')
     })
   })
@@ -40,7 +40,7 @@ describe('#webConfig', () => {
         base: '/sub/path'
       }
     })
-    it('Ensures base paths ends with a slash', () => {
+    test('Ensures base paths ends with a slash', () => {
       webConfig.base.should.equal('/sub/path/')
     })
   })

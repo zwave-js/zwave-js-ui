@@ -1,10 +1,5 @@
-const chai = require('chai')
 const sinon = require('sinon')
 const rewire = require('rewire')
-
-chai.use(require('chai-as-promised'))
-chai.use(require('sinon-chai'))
-const should = chai.should()
 
 const mod = rewire('../../lib/jsonStore')
 
@@ -20,32 +15,31 @@ describe('#jsonStore', () => {
       mod.__get__('utils').joinPath.restore()
       mod.__get__('jsonfile').readFile.restore()
     })
-
-    it('uncaught error', () => {
-      mod.__get__('jsonfile').readFile.rejects(new Error('FOO'))
-      return fun(config).should.eventually.be.rejectedWith(Error, 'FOO')
+    test('uncaught error', () => {
+      mod.__get__('jsonfile').readFile.rejects(Error('FOO'))
+      return expect(fun(config)).rejects.toThrowError('FOO')
     })
 
-    it('data returned', () => {
+    test('data returned', () => {
       const toReturn = {
         file: 'foo',
         data: 'mybar'
       }
       mod.__get__('jsonfile').readFile.resolves(toReturn.data)
-      return fun(config).should.eventually.deep.equal(toReturn)
+      return expect(fun(config)).resolves.toEqual(toReturn)
     })
 
-    it('no data, return default', () => {
+    test('no data, return default', () => {
       mod.__get__('jsonfile').readFile.resolves(null)
-      return fun(config).should.eventually.deep.equal({
+      return expect(fun(config)).resolves.toEqual({
         file: 'foo',
         data: 'defaultbar'
       })
     })
 
-    it('file not found, return default', () => {
+    test('file not found, return default', () => {
       mod.__get__('jsonfile').readFile.rejects({ code: 'ENOENT' })
-      return fun(config).should.eventually.deep.equal({
+      return expect(fun(config)).resolves.toEqual({
         file: 'foo',
         data: 'defaultbar'
       })
@@ -54,9 +48,9 @@ describe('#jsonStore', () => {
 
   describe('#StorageHelper', () => {
     const StorageHelper = mod.__get__('StorageHelper')
-    it('class test', () => {
+    test('class test', () => {
       const ins = new StorageHelper()
-      ins.store.should.deep.equal({})
+      expect(ins.store).toEqual({})
     })
 
     describe('#init()', () => {
@@ -66,21 +60,21 @@ describe('#jsonStore', () => {
         getFile = mod.__get__('getFile')
         mod.__set__(
           'getFile',
-          sinon.stub().resolves({ file: 'foo', data: 'bar' })
+          jest.fn().mockResolvedValue({ file: 'foo', data: 'bar' })
         )
       })
       afterEach(() => {
         mod.__set__('getFile', getFile)
       })
-      it('ok', () =>
-        mod.init({ file: 'foobar' }).should.eventually.deep.equal({
+      test('ok', () =>
+        expect(mod.init({ file: 'foobar' })).resolves.toEqual({
           known: 'no',
           foobar: 'foo',
           foo: 'bar'
         }))
-      it('error', () => {
-        mod.__set__('getFile', sinon.stub().rejects('fo'))
-        return mod.init({ file: 'foobar' }).should.eventually.be.rejected
+      test('error', () => {
+        mod.__set__('getFile', jest.fn().mockRejectedValue(Error('foo')))
+        return expect(mod.init({ file: 'foobar' })).rejects.toThrowError('foo')
       })
     })
 
@@ -88,12 +82,8 @@ describe('#jsonStore', () => {
       beforeEach(() => {
         mod.store = { known: 'foo' }
       })
-      it('known', () => mod.get({ file: 'known' }).should.equal('foo'))
-      it('unknown', () =>
-        should.Throw(
-          () => mod.get({ file: 'unknown' }),
-          'Requested file not present in store: unknown'
-        ))
+      test('known', () => expect(mod.get({ file: 'known' })).toBe('foo'))
+      test('unknown', () => expect(() => mod.get({ file: 'unknown' })).toThrowError('Requested file not present in store: unknown'))
     })
 
     describe('#put()', () => {
@@ -103,15 +93,14 @@ describe('#jsonStore', () => {
       afterEach(() => {
         mod.__get__('jsonfile').writeFile.restore()
       })
-      it('ok', () => {
+      test('ok', () => {
         mod.__get__('jsonfile').writeFile.resolves()
-        return mod
-          .put({ file: 'foo' }, 'bardata')
-          .should.eventually.equal('bardata')
+        return expect(mod
+          .put({ file: 'foo' }, 'bardata')).resolves.toBe('bardata')
       })
-      it('error', () => {
-        mod.__get__('jsonfile').writeFile.rejects(new Error('bar'))
-        mod.put({ file: 'foo' }).should.be.rejectedWith('bar')
+      test('error', () => {
+        mod.__get__('jsonfile').writeFile.rejects(Error('bar'))
+        expect(mod.put({ file: 'foo' })).rejects.toThrowError('bar')
       })
     })
   })

@@ -18,69 +18,69 @@ class LocalStorageMock {
 
 describe('Settings', () => {
   describe('#constructor', () => {
-    it('uses the storage passed in as settings store', () => {
+    test('uses the storage passed in as settings store', () => {
       const settings = new Settings(new LocalStorageMock())
       chai.expect(settings.storage.isMocked).to.eql(true)
     })
   })
   describe('#store(non-object)', () => {
-    it('should store a non-object', () => {
+    test('should store a non-object', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.store('key', 10)
       chai.expect(settings.storage.items.key).to.eql('10')
     })
   })
   describe('#store(object)', () => {
-    it('should store an object', () => {
+    test('should store an object', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.store('key', { objkey: 'objval' })
       chai.expect(settings.storage.items.key).to.eql('{"objkey":"objval"}')
     })
   })
   describe('#load(stored boolean)', () => {
-    it('should load a stored boolean', () => {
+    test('should load a stored boolean', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = 'false'
       chai.expect(settings.load('key', true)).to.eql(false)
     })
   })
   describe('#load(default boolean)', () => {
-    it('should load a boolean default value', () => {
+    test('should load a boolean default value', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = undefined
       chai.expect(settings.load('key', true)).to.eql(true)
     })
   })
   describe('#load(stored number)', () => {
-    it('should load a stored number', () => {
+    test('should load a stored number', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = '20'
       chai.expect(settings.load('key', 10)).to.eql(20)
     })
   })
   describe('#load(default number)', () => {
-    it('should load a number default value', () => {
+    test('should load a number default value', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = undefined
       chai.expect(settings.load('key', 10)).to.eql(10)
     })
   })
   describe('#load(stored string)', () => {
-    it('should load a stored string', () => {
+    test('should load a stored string', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = 'value'
       chai.expect(settings.load('key', 'default')).to.eql('value')
     })
   })
   describe('#load(default string)', () => {
-    it('should load a string default value', () => {
+    test('should load a string default value', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = undefined
       chai.expect(settings.load('key', 'default')).to.eql('default')
     })
   })
   describe('#load(stored object)', () => {
-    it('should load a stored object', () => {
+    test('should load a stored object', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = '{"objkey":"value"}'
       chai
@@ -89,7 +89,7 @@ describe('Settings', () => {
     })
   })
   describe('#load(default object)', () => {
-    it('should load a object default value', () => {
+    test('should load a object default value', () => {
       const settings = new Settings(new LocalStorageMock())
       settings.storage.items.key = undefined
       chai

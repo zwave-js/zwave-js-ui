@@ -45,49 +45,49 @@ function getNewManagedTestItems () {
 
 describe('ManagedItems', () => {
   describe('#constructor', () => {
-    it('returns an initialized object', () => {
+    test('returns an initialized object', () => {
       const managedItems = getNewManagedTestItems()
       chai.expect(Object.keys(managedItems).length).to.be.at.least(1)
     })
   })
   describe('#reset', () => {
-    it('resets the filters', () => {
+    test('resets the filters', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.filters = { name: { matches: 'b' } }
       managedItems.reset()
       chai.expect(managedItems.filteredItems.length).to.eql(testItems.length)
     })
-    it('resets the grouping', () => {
+    test('resets the grouping', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.groupBy = ['value']
       managedItems.reset()
       chai.expect(managedItems.groupBy).to.eql([])
     })
-    it('resets the selections', () => {
+    test('resets the selections', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.selected = [testItems[0], testItems[2]]
       managedItems.reset()
       chai.expect(managedItems.selected).to.eql([])
     })
-    it('resets the table columns', () => {
+    test('resets the table columns', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableColumns = ['id', 'value']
       managedItems.reset()
       chai.expect(managedItems.tableHeaders).to.eql(testItemHeaders)
     })
-    it('resets the table items per page', () => {
+    test('resets the table items per page', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableOptions.itemsPerPage = 100
       managedItems.reset()
       chai.expect(managedItems.tableOptions.itemsPerPage).to.eql(10)
     })
-    it('resets the table page', () => {
+    test('resets the table page', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableOptions.itemsPerPage = 100
       managedItems.reset()
       chai.expect(managedItems.tableOptions.itemsPerPage).to.eql(10)
     })
-    it('resets the table sorting', () => {
+    test('resets the table sorting', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableOptions.sortBy = ['value']
       managedItems.tableOptions.sortDesc = [true]
@@ -97,7 +97,7 @@ describe('ManagedItems', () => {
     })
   })
   describe('#setFilterToSelected', () => {
-    it('filters by selected items (filter was empty)', () => {
+    test('filters by selected items (filter was empty)', () => {
       const managedItems = getNewManagedTestItems()
       // Ensure pre-conditions:
       chai.expect(managedItems.selected).to.be.eql([])
@@ -122,13 +122,13 @@ describe('ManagedItems', () => {
     })
   })
   describe('#getPropValues', () => {
-    it('returns a sorted list of unique values for a property', () => {
+    test('returns a sorted list of unique values for a property', () => {
       const managedItems = getNewManagedTestItems()
       chai.expect(managedItems.getPropValues('name')).to.eql(['a', 'b', 'c'])
     })
   })
   describe('#propValues', () => {
-    it('returns a sorted list of unique values for each property', () => {
+    test('returns a sorted list of unique values for each property', () => {
       const managedItems = getNewManagedTestItems()
       chai.expect(managedItems.propValues).to.eql({
         id: [1, 2, 3, 4, 5, 6],
@@ -138,7 +138,7 @@ describe('ManagedItems', () => {
     })
   })
   describe('#filteredItems', () => {
-    it('returns the filtered items', () => {
+    test('returns the filtered items', () => {
       const managedItems = getNewManagedTestItems()
       chai.expect(managedItems.filteredItems.length).to.eql(testItems.length)
       managedItems.filters = { name: { match: 'b' } }
@@ -148,7 +148,7 @@ describe('ManagedItems', () => {
     })
   })
   describe('#allTableHeaders', () => {
-    it('returns table headers using defaults', () => {
+    test('returns table headers using defaults', () => {
       const managedItems = new ManagedItems(
         testItems,
         { id: {} },
@@ -161,13 +161,13 @@ describe('ManagedItems', () => {
           { text: 'id', type: 'string', value: 'id', groupable: true }
         ])
     })
-    it('returns table headers using given values', () => {
+    test('returns table headers using given values', () => {
       const managedItems = getNewManagedTestItems()
       chai.expect(managedItems.allTableHeaders).to.eql(testItemHeaders)
     })
   })
   describe('#tableHeaders', () => {
-    it('returns the active table headers', () => {
+    test('returns the active table headers', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableColumns = [
         { name: 'id', visible: true },
@@ -181,7 +181,7 @@ describe('ManagedItems', () => {
     })
   })
   describe('#groupByTitle', () => {
-    it('returns the group by title from the propDef name by default', () => {
+    test('returns the group by title from the propDef name by default', () => {
       const managedItems = new ManagedItems(
         testItems,
         { id: {} },
@@ -191,7 +191,7 @@ describe('ManagedItems', () => {
       managedItems.groupBy = ['value']
       chai.expect(managedItems.groupByTitle).to.eql('value')
     })
-    it('returns the group by title from a given propDef label', () => {
+    test('returns the group by title from a given propDef label', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.groupBy = ['value']
       chai.expect(managedItems.groupByTitle).to.eql('Value')

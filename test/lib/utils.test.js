@@ -1,53 +1,38 @@
-const chai = require('chai')
-const rewire = require('rewire')
-const sinon = require('sinon')
-chai.use(require('sinon-chai'))
-chai.should()
+jest.mock('app-root-path', () => 'foo')
 
-const mod = rewire('../../lib/utils')
+const mod = require('../../lib/utils')
 
 describe('#utils', () => {
   describe('#getPath()', () => {
-    mod.__set__('appRoot', { toString: () => 'foo' })
-    it('write && process.pkg', () => {
+    test('write && process.pkg', () => {
       process.pkg = true
-      mod.getPath(true).should.equal(process.cwd())
+      return expect(mod.getPath(true)).toBe(process.cwd())
     })
-    it('write && !process.pkg', () => {
+    test('write && !process.pkg', () => {
       process.pkg = false
-      mod.getPath(true).should.equal('foo')
+      return expect(mod.getPath(true)).toMatchSnapshot()
     })
-    it('!write && process.pkg', () => {
+    test('!write && process.pkg', () => {
       process.pkg = true
-      mod.getPath(false).should.equal('foo')
+      return expect(mod.getPath(false)).toMatchSnapshot()
     })
-    it('!write && !process.pkg', () => {
+    test('!write && !process.pkg', () => {
       process.pkg = false
-      mod.getPath(false).should.equal('foo')
+      return expect(mod.getPath(false)).toMatchSnapshot()
     })
   })
   describe('#joinPath()', () => {
-    let path
-    before(() => {
-      path = { join: sinon.stub() }
-      mod.__set__('path', path)
-      sinon.stub(mod, 'getPath').returns('foo')
-    })
-    after(() => {
-      mod.getPath.restore()
-    })
-
-    it('zero length', () => {
-      mod.joinPath()
-      return path.join.should.have.been.calledWith()
-    })
-    it('1 length', () => {
-      mod.joinPath('foo')
-      return path.join.should.have.been.calledWith('foo')
-    })
-    it('first arg bool gets new path 0', () => {
-      mod.joinPath(true, 'bar')
-      return path.join.should.have.been.calledWithExactly('foo', 'bar')
-    })
+    test('bool true', () =>
+      expect(mod.joinPath(true)).toMatchSnapshot()
+    )
+    test('bool false', () =>
+      expect(mod.joinPath(true)).toMatchSnapshot()
+    )
+    test('1 length', () =>
+      expect(mod.joinPath('foobar')).toMatchSnapshot()
+    )
+    test('first arg bool gets new path 0', () =>
+      expect(mod.joinPath(true, 'bar')).toMatchSnapshot()
+    )
   })
 })

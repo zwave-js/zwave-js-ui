@@ -4,12 +4,10 @@ module.exports = function () {
 
     tests: ['test/**/*.test.js'],
 
-    testFramework: 'mocha',
-
     env: {
       type: 'node'
     },
-
+    testFramework: 'jest',
     workers: { recycle: true }
   }
 }

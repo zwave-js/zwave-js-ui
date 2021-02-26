@@ -3,7 +3,7 @@ import { ColumnFilterHelper } from './ColumnFilterHelper'
 
 describe('ColumnFilterHelper', () => {
   describe('#defaultFilter', () => {
-    it('returns the default filter for the given column type', () => {
+    test('returns the default filter for the given column type', () => {
       chai
         .expect(ColumnFilterHelper.defaultFilter('boolean'))
         .to.eql({ boolValue: null })
@@ -20,7 +20,7 @@ describe('ColumnFilterHelper', () => {
   })
 
   describe('#filterProps', () => {
-    it('returns the list of filter props for the given column type', () => {
+    test('returns the list of filter props for the given column type', () => {
       chai
         .expect(ColumnFilterHelper.filterProps('boolean'))
         .to.eql(['boolValue'])
