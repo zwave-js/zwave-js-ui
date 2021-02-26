@@ -13,7 +13,7 @@ RUN apk update && apk add --no-cache jq python3 alpine-sdk build-base linux-head
 
 ##### LOCAL SOURCE #####
 FROM node:alpine3.12 AS local-copy-src
-RUN apt-get update && apt-get install -y jq python3 alpine-sdk build-base linux-headers 
+RUN apk update && apl add --no-cache jq python3 alpine-sdk build-base linux-headers 
 COPY node-zwave-js /home/node/node-zwave-js
 COPY zwavejs2mqtt /home/node/zwavejs2mqtt
 
@@ -55,7 +55,7 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
 FROM node:alpine3.12
 LABEL maintainer="robertsLando"
 RUN apk update \
-   && apk add git 
+   && apk add --no-cache git 
 COPY --from=build --chown=node /home/node/zwavejs2mqtt/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
