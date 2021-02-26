@@ -8,7 +8,7 @@ FROM node:alpine3.12 AS git-clone-src
 ARG ZWJ_BRANCH=master
 ARG Z2M_BRANCH=master
 # RUN apt-get update && apt-get install -y jq python3 git build-essential 
-RUN apk update && apk add --no-cache jq python3-dev alpine-sdk build-base
+RUN apk update && apk add --no-cache jq python3-dev alpine-sdk build-base linux-headers 
 USER node
 WORKDIR /home/node
 RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-js \
