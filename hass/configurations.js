@@ -30,36 +30,20 @@ module.exports = {
     }
   },
   // Light https://www.home-assistant.io/components/light.mqtt
-  light_rgb_switch: {
-    type: 'light',
-    object_id: 'rgb_switch',
-    discovery_payload: {
-      state_topic: true,
-      command_topic: true,
-      rgb_command_template: "{{ '#%02x%02x%02x' | format(red, green, blue)}}",
-      rgb_command_topic: true,
-      rgb_state_topic: true,
-      rgb_value_template:
-        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
-    }
-  },
   light_rgb_dimmer: {
     type: 'light',
     object_id: 'rgb_dimmer',
     discovery_payload: {
       state_topic: true,
       command_topic: true,
-      brightness_state_topic: true,
-      brightness_command_topic: true,
       on_command_type: 'brightness',
       state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
       brightness_value_template: '{{ value_json.value }}',
       brightness_scale: 99,
-      rgb_command_template: '{{ "#%02x%02x%02x" | format(red, green, blue)}}',
-      rgb_command_topic: true,
-      rgb_state_topic: true,
+      rgb_command_template:
+        "{{ {'red': red, 'green': green, 'blue': blue}|to_json }}",
       rgb_value_template:
-        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
+        '{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}'
     }
   },
   light_dimmer: {

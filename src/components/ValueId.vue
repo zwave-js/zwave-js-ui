@@ -14,13 +14,18 @@
 
     <div v-else>
       <v-text-field
-        v-if="
-          !value.list &&
-            (value.type === 'number' ||
-              value.type === 'string' ||
-              value.type === 'any')
-        "
-        :type="value.type === 'number' ? 'number' : 'text'"
+        v-if="!value.list && value.type === 'string'"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        :suffix="value.unit"
+        persistent-hint
+        :hint="help"
+        v-model="value.newValue"
+        @click:append-outer="updateValue(value)"
+      ></v-text-field>
+
+      <v-text-field
+        v-if="!value.list && value.type === 'number'"
+        type="number"
         :append-outer-icon="!disable_send ? 'send' : null"
         :suffix="value.unit"
         :min="value.min != value.max ? value.min : null"
@@ -28,7 +33,19 @@
         persistent-hint
         :max="value.min != value.max ? value.max : null"
         :hint="help"
-        v-model="value.newValue"
+        v-model.number="value.newValue"
+        @click:append-outer="updateValue(value)"
+      ></v-text-field>
+
+      <v-text-field
+        v-if="!value.list && value.type === 'any'"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        :suffix="value.unit"
+        persistent-hint
+        :error="!!error"
+        :error-messages="error"
+        :hint="help"
+        v-model="parsedAny"
         @click:append-outer="updateValue(value)"
       ></v-text-field>
 
@@ -174,7 +191,8 @@ export default {
   data () {
     return {
       durations: ['seconds', 'minutes'],
-      menu: false
+      menu: false,
+      error: false
     }
   },
   computed: {
@@ -202,13 +220,35 @@ export default {
       )
     },
     color: {
-      // getter
       get: function () {
         return '#' + (this.value.newValue || 'ffffff').toUpperCase()
       },
-      // setter
       set: function (v) {
         this.value.newValue = v ? v.substr(1, 7) : null
+      }
+    },
+    parsedAny: {
+      get: function () {
+        if (this.value.type === 'any') {
+          if (typeof this.value.newValue === 'object') {
+            return JSON.stringify(this.value.newValue)
+          }
+        }
+        return this.value.newValue
+      },
+      set: function (v) {
+        if (this.value.type === 'any') {
+          if (typeof this.value.value === 'object') {
+            try {
+              this.value.newValue = JSON.parse(v)
+              this.error = false
+            } catch (error) {
+              this.error = 'Value not valid'
+            }
+          }
+        } else {
+          this.value.newValue = v
+        }
       }
     },
     pickerStyle () {
