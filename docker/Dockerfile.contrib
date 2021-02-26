@@ -54,7 +54,6 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
 # FROM node:
 FROM node:alpine3.12
 LABEL maintainer="robertsLando"
-# RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 RUN apk update \
    && apk add git 
 COPY --from=build --chown=node /home/node/zwavejs2mqtt/my_dist /usr/src/app
