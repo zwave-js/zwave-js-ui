@@ -28,6 +28,8 @@ export const state = {
   devices: [],
   gateway: {
     type: 0,
+    plugins: [],
+    authEnabled: false,
     payloadType: 0,
     nodeNames: true,
     hassDiscovery: true,
@@ -47,13 +49,20 @@ export const state = {
 }
 
 function getValue (v) {
-  const node = state.nodes[v.nodeId]
+  const node = getNode(v.nodeId)
 
   if (node && node.values) {
     return node.values.find(i => i.id === v.id)
   } else {
     return null
   }
+}
+
+// makes node search faster
+const nodesMap = new Map() // nodeId -> index
+
+function getNode (id) {
+  return state.nodes[nodesMap.get(id)]
 }
 
 export const getters = {
@@ -130,7 +139,7 @@ export const mutations = {
   },
   setValue (state, valueId) {
     const toReplace = getValue(valueId)
-    const node = state.nodes[valueId.nodeId]
+    const node = getNode(valueId.nodeId)
 
     if (node && toReplace) {
       const index = node.values.indexOf(toReplace)
@@ -149,7 +158,7 @@ export const mutations = {
       }
     } else {
       // means that this value has been added
-      const node = state.nodes[data.nodeId]
+      const node = getNode(data.nodeId)
       if (node) {
         data.newValue = data.value
         node.values.push(data)
@@ -159,7 +168,7 @@ export const mutations = {
   removeValue (state, data) {
     const valueId = getValue(data)
     if (valueId) {
-      const node = state.nodes[data.nodeId]
+      const node = getNode(data.nodeId)
       const index = node.values.indexOf(valueId)
 
       if (index >= 0) {
@@ -179,21 +188,31 @@ export const mutations = {
       ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
       : 'NodeID_' + n.id
 
-    // add empty nodes if any
-    while (state.nodes.length < n.id) {
-      state.nodes.push({
-        id: state.nodes.length,
-        failed: true,
-        status: 'Removed'
-      })
+    let index = nodesMap.get(n.id)
+
+    index = index >= 0 ? index : state.nodes.length
+
+    if (index === state.nodes.length) {
+      state.nodes.push(n)
+    } else {
+    // vue set is used to notify changes
+      this._vm.$set(state.nodes, index, n)
     }
 
-    // vue set is used to notify changes
-    this._vm.$set(state.nodes, n.id, n)
+    nodesMap.set(n.id, index)
+  },
+  removeNode (state, n) {
+    const index = nodesMap.get(n.id)
+
+    if (index >= 0) {
+      nodesMap.delete(n.id)
+      state.nodes.splice(index, 1)
+    }
   },
   setNeighbors (state, { nodeId, neighbors }) {
-    if (state.nodes[nodeId]) {
-      this._vm.$set(state.nodes[nodeId], 'neighbors', neighbors)
+    const node = getNode(nodeId)
+    if (node) {
+      this._vm.$set(node, 'neighbors', neighbors)
     }
   },
   initSettings (state, conf) {

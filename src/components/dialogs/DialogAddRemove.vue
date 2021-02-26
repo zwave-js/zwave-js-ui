@@ -230,6 +230,8 @@ export default {
     if (this.waitTimeout) {
       clearTimeout(this.waitTimeout)
     }
+
+    this.alert = null
   }
 }
 </script>
