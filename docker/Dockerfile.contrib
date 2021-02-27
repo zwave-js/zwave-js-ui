@@ -25,7 +25,8 @@ WORKDIR /home/node/node-zwave-js
 RUN rm -f package-lock.json \
     && yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
     && yarn run build:full \
-    && yarn install --production --frozen-lockfile
+    && yarn install --production --frozen-lockfile \
+    && npm prune --production 
 
 RUN for i in config core serial shared; do \
     cd packages/$i && \
@@ -48,7 +49,7 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
     && yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
     jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD) \
     && yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared \
-    && npm prune --production
+    && npm prune --production \
     && mkdir my_dist \
     && cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
     
