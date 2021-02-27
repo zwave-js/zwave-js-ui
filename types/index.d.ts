@@ -118,6 +118,7 @@ export type Z2MNode = {
   values: Map<string, Z2MValueId>
   groups: Z2MNodeGroups[]
   ready: boolean
+  available: boolean
   failed: boolean
   lastActive: number
   dbLink: string
