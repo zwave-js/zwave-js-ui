@@ -13,7 +13,7 @@ RUN apk update && apk add --no-cache jq python3 alpine-sdk build-base linux-head
 
 ##### LOCAL SOURCE #####
 FROM node:erbium-alpine3.12 AS local-copy-src
-RUN apk update && apl add --no-cache jq python3 alpine-sdk build-base linux-headers 
+RUN apk update && apk add --no-cache jq python3 alpine-sdk build-base linux-headers 
 COPY node-zwave-js /home/node/node-zwave-js
 COPY zwavejs2mqtt /home/node/zwavejs2mqtt
 
