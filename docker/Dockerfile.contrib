@@ -48,7 +48,6 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
     && yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
     jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD) \
     && yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared \
-    && npm prune --production --force \
     && mkdir my_dist \
     && cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
     
