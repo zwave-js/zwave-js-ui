@@ -54,6 +54,7 @@ RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT} \
 # FROM node:
 FROM node:erbium-alpine3.12
 LABEL maintainer="robertsLando"
+ENV NODE_ENV production
 RUN apk update \
    && apk add --no-cache git 
 COPY --from=build --chown=node /home/node/zwavejs2mqtt/my_dist /usr/src/app
