@@ -20,7 +20,8 @@
                 <v-list-item-title
                   >Node:
                   <strong>{{
-                    nodes[ass.nodeId]._name || ass.nodeId
+                    nodes.find(node => node.id == ass.nodeId)._name ||
+                      ass.nodeId
                   }}</strong></v-list-item-title
                 >
                 <v-list-item-subtitle
@@ -40,7 +41,7 @@
           </template>
           <v-list-item v-if="group.associations.length === 0">
             <v-list-item-content>
-              No assocaitions
+              No associations
             </v-list-item-content>
           </v-list-item>
         </v-list>
