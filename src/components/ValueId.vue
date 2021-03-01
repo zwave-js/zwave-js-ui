@@ -103,7 +103,7 @@
       </v-text-field>
 
       <v-select
-        v-if="value.list"
+        v-if="value.list && !value.allowManualEntry"
         :items="items"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
@@ -119,6 +119,35 @@
         :readonly="!value.writeable"
         @click:append-outer="updateValue(value)"
       ></v-select>
+
+      <v-combobox
+        v-if="value.list && value.allowManualEntry"
+        :items="items"
+        :style="{
+          'max-width': $vuetify.breakpoint.smAndDown
+            ? '280px'
+            : $vuetify.breakpoint.smOnly
+            ? '400px'
+            : 'auto'
+        }"
+        :hint="help"
+        persistent-hint
+        chips
+        item-text="text"
+        item-value="value"
+        :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
+        v-model="value.newValue"
+        :readonly="!value.writeable"
+        @click:append-outer="updateValue(value)"
+      >
+        <template v-slot:selection="{ attrs, item, selected }">
+          <v-chip v-bind="attrs" :input-value="selected">
+            <span>
+              {{ selectedItem ? selectedItem.text : 'Custom: ' + item }}
+            </span>
+          </v-chip>
+        </template>
+      </v-combobox>
 
       <div v-if="value.type == 'boolean' && value.writeable && value.readable">
         <v-btn-toggle class="mt-4" v-model="value.newValue" rounded>
@@ -196,6 +225,10 @@ export default {
     }
   },
   computed: {
+    selectedItem () {
+      if (!this.items) return null
+      else return this.items.find(v => v.value === this.value.newValue)
+    },
     items () {
       const items = this.value.states || []
       const defaultValue = this.value.default
