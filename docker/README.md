@@ -140,8 +140,8 @@ spec:
           path: /dev/ttyACM0
           type: File
       - name: data
-          hostPath:
-            path: /zwave/data
+        hostPath:
+          path: /zwave/data
 ---
 apiVersion: v1
 kind: Service
