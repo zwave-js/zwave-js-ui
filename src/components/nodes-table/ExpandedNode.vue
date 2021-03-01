@@ -35,11 +35,11 @@
 
         <!-- TAB GROUPS -->
         <v-tab-item key="groups">
-          <association-groups :node="node" :nodes="nodes" :socket="socket" />
+          <association-groups :node="node" :socket="socket" />
         </v-tab-item>
 
         <!-- TAB DEBUG INFO -->
-        <v-tab-item key="debug">
+        <v-tab-item v-if="$vuetify.mdAndUp" key="debug">
           <v-textarea
             class="mx-2"
             rows="10"
@@ -68,7 +68,6 @@ export default {
     headers: Array,
     isMobile: Boolean,
     node: Object,
-    nodes: Array,
     socket: Object
   },
   components: {

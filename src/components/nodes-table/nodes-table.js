@@ -1,13 +1,12 @@
 import draggable from 'vuedraggable'
 import { ManagedItems } from '@/modules/ManagedItems'
-import { Settings } from '@/modules/Settings'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
+import { mapGetters } from 'vuex'
 
 export default {
   props: {
     nodeActions: Array,
-    nodes: Array,
     socket: Object
   },
   components: {
@@ -15,45 +14,44 @@ export default {
     ColumnFilter,
     ExpandedNode
   },
+  watch: {},
+  computed: {
+    ...mapGetters(['nodes'])
+  },
   data: function () {
     return {
-      settings: new Settings(localStorage),
-      managedNodes: new ManagedItems(
-        this.nodes || [],
-        {
-          id: { type: 'number', label: 'ID', groupable: false },
-          manufacturer: { type: 'string', label: 'Manufacturer' },
-          productDescription: { type: 'string', label: 'Product' },
-          productLabel: { type: 'string', label: 'Product code' },
-          name: { type: 'string', label: 'Name' },
-          loc: { type: 'string', label: 'Location' },
-          isSecure: { type: 'boolean', label: 'Secure' },
-          isBeaming: { type: 'boolean', label: 'Beaming' },
-          failed: { type: 'boolean', label: 'Failed' },
-          status: { type: 'string', label: 'Status' },
-          interviewStage: { type: 'string', label: 'Interview stage' },
-          lastActive: { type: 'date', label: 'Last Active', groupable: false }
-        },
-        localStorage,
-        'nodes_'
-      ),
+      managedNodes: null,
+      nodesProps: {
+        id: { type: 'number', label: 'ID', groupable: false },
+        manufacturer: { type: 'string', label: 'Manufacturer' },
+        productDescription: { type: 'string', label: 'Product' },
+        productLabel: { type: 'string', label: 'Product code' },
+        name: { type: 'string', label: 'Name' },
+        loc: { type: 'string', label: 'Location' },
+        isSecure: { type: 'boolean', label: 'Secure' },
+        isBeaming: { type: 'boolean', label: 'Beaming' },
+        failed: { type: 'boolean', label: 'Failed' },
+        status: { type: 'string', label: 'Status' },
+        interviewStage: { type: 'string', label: 'Interview stage' },
+        lastActive: { type: 'date', label: 'Last Active', groupable: false }
+      },
       expanded: [],
       headersMenu: false
     }
   },
   methods: {
-    loadSetting (key, defaultVal) {
-      return this.settings.load(key, defaultVal)
-    },
-    storeSetting (key, val) {
-      this.settings.store(key, val)
-    },
     toggleExpanded (item) {
       this.expanded = this.expanded.includes(item)
         ? this.expanded.filter(i => i !== item)
         : [...this.expanded, item]
     }
   },
-  watch: {},
-  computed: {}
+  mounted () {
+    this.managedNodes = new ManagedItems(
+      this.nodes,
+      this.nodesProps,
+      localStorage,
+      'nodes_'
+    )
+  }
 }
