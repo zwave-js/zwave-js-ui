@@ -83,22 +83,25 @@ describe('#renderIndex', () => {
       expect(lastOptions.jsFiles).toEqual([])
     })
 
-    test('When dist files present will only return the ones with the correct extensions', () => {
-      mockedReaddir
-        .withArgs(cssFolder)
-        .returns(['valid-css.css', 'invalid-css.scss'])
-      mockedReaddir
-        .withArgs(jsFolder)
-        .returns(['valid-js.js', 'invalid-js.map'])
-      renderIndex(
-        {
-          headers: {}
-        },
-        mockResponse
-      )
-      expect(lastTpl).toBe('index.ejs')
-      expect(lastOptions.cssFiles).toEqual(['static/css/valid-css.css'])
-      expect(lastOptions.jsFiles).toEqual(['static/js/valid-js.js'])
-    })
+    test(
+      'When dist files present will only return the ones with the correct extensions',
+      () => {
+        mockedReaddir
+          .withArgs(cssFolder)
+          .returns(['valid-css.css', 'invalid-css.scss'])
+        mockedReaddir
+          .withArgs(jsFolder)
+          .returns(['valid-js.js', 'invalid-js.map'])
+        renderIndex(
+          {
+            headers: {}
+          },
+          mockResponse
+        )
+        expect(lastTpl).toBe('index.ejs')
+        expect(lastOptions.cssFiles).toEqual(['static/css/valid-css.css'])
+        expect(lastOptions.jsFiles).toEqual(['static/js/valid-js.js'])
+      }
+    )
   })
 })

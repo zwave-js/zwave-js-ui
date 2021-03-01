@@ -62,7 +62,10 @@ describe('logger.js', () => {
       logger1 = logContainer.module('foo')
     })
     test.only('should set the module name', () => expect(logger1.module).toEqual('foo'))
-    test.only('should have a cfg function', () => expect(typeof logger1.setup).toBe('function'))
+    test.only(
+      'should have a cfg function',
+      () => expect(typeof logger1.setup).toBe('function')
+    )
     test.only('should have logging enabled by default', () =>
       expect(logger1.silent).toBe(false))
     test.only('should have the default log level', () =>

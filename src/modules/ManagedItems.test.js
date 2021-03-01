@@ -1,4 +1,3 @@
-import chai from 'chai'
 import { ManagedItems } from '../modules/ManagedItems.js'
 
 class LocalStorageMock {
@@ -47,7 +46,7 @@ describe('ManagedItems', () => {
   describe('#constructor', () => {
     test('returns an initialized object', () => {
       const managedItems = getNewManagedTestItems()
-      chai.expect(Object.keys(managedItems).length).to.be.at.least(1)
+      expect(Object.keys(managedItems).length).toBeGreaterThanOrEqual(1)
     })
   })
   describe('#reset', () => {
@@ -55,82 +54,78 @@ describe('ManagedItems', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.filters = { name: { matches: 'b' } }
       managedItems.reset()
-      chai.expect(managedItems.filteredItems.length).to.eql(testItems.length)
+      expect(managedItems.filteredItems.length).toEqual(testItems.length)
     })
     test('resets the grouping', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.groupBy = ['value']
       managedItems.reset()
-      chai.expect(managedItems.groupBy).to.eql([])
+      expect(managedItems.groupBy).toEqual([])
     })
     test('resets the selections', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.selected = [testItems[0], testItems[2]]
       managedItems.reset()
-      chai.expect(managedItems.selected).to.eql([])
+      expect(managedItems.selected).toEqual([])
     })
     test('resets the table columns', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableColumns = ['id', 'value']
       managedItems.reset()
-      chai.expect(managedItems.tableHeaders).to.eql(testItemHeaders)
+      expect(managedItems.tableHeaders).toEqual(testItemHeaders)
     })
     test('resets the table items per page', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableOptions.itemsPerPage = 100
       managedItems.reset()
-      chai.expect(managedItems.tableOptions.itemsPerPage).to.eql(10)
+      expect(managedItems.tableOptions.itemsPerPage).toEqual(10)
     })
     test('resets the table page', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableOptions.itemsPerPage = 100
       managedItems.reset()
-      chai.expect(managedItems.tableOptions.itemsPerPage).to.eql(10)
+      expect(managedItems.tableOptions.itemsPerPage).toEqual(10)
     })
     test('resets the table sorting', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.tableOptions.sortBy = ['value']
       managedItems.tableOptions.sortDesc = [true]
       managedItems.reset()
-      chai.expect(managedItems.tableOptions.sortBy).to.eql(['id'])
-      chai.expect(managedItems.tableOptions.sortDesc).to.eql([false])
+      expect(managedItems.tableOptions.sortBy).toEqual(['id'])
+      expect(managedItems.tableOptions.sortDesc).toEqual([false])
     })
   })
   describe('#setFilterToSelected', () => {
     test('filters by selected items (filter was empty)', () => {
       const managedItems = getNewManagedTestItems()
       // Ensure pre-conditions:
-      chai.expect(managedItems.selected).to.be.eql([])
-      chai
-        .expect(managedItems.filteredItems.length)
-        .to.be.eql(managedItems.items.length)
+      expect(managedItems.selected).toEqual([])
+      expect(managedItems.filteredItems.length)
+        .toEqual(managedItems.items.length)
       const itemsToBeSelected = [{ id: 1 }, { id: 3 }]
       managedItems.selected = itemsToBeSelected
-      chai.expect(managedItems.selected).to.eql(itemsToBeSelected)
+      expect(managedItems.selected).toEqual(itemsToBeSelected)
       // Execute function to be tested:
       managedItems.setFilterToSelected()
       // Ensure post-conditions:
-      chai
-        .expect(managedItems.filteredItems.length)
-        .to.eql(itemsToBeSelected.length)
-      chai
-        .expect(managedItems.filteredItems[0].id)
-        .to.eql(itemsToBeSelected[0].id)
-      chai
-        .expect(managedItems.filteredItems[1].id)
-        .to.eql(itemsToBeSelected[1].id)
+      expect(managedItems.filteredItems.length)
+        .toEqual(itemsToBeSelected.length)
+      expect(managedItems.filteredItems[0].id)
+        .toEqual(itemsToBeSelected[0].id)
+      expect(managedItems.filteredItems[1].id)
+        .toEqual(itemsToBeSelected[1].id)
     })
   })
   describe('#getPropValues', () => {
     test('returns a sorted list of unique values for a property', () => {
       const managedItems = getNewManagedTestItems()
-      chai.expect(managedItems.getPropValues('name')).to.eql(['a', 'b', 'c'])
+      expect(managedItems.getPropValues('name')).toEqual(['a', 'b', 'c'])
     })
   })
   describe('#propValues', () => {
     test('returns a sorted list of unique values for each property', () => {
       const managedItems = getNewManagedTestItems()
-      chai.expect(managedItems.propValues).to.eql({
+      expect(managedItems.propValues).toEqual({
         id: [1, 2, 3, 4, 5, 6],
         name: ['a', 'b', 'c'],
         value: ['Abc', 'Xyz']
@@ -140,11 +135,11 @@ describe('ManagedItems', () => {
   describe('#filteredItems', () => {
     test('returns the filtered items', () => {
       const managedItems = getNewManagedTestItems()
-      chai.expect(managedItems.filteredItems.length).to.eql(testItems.length)
+      expect(managedItems.filteredItems.length).toEqual(testItems.length)
       managedItems.filters = { name: { match: 'b' } }
-      chai.expect(managedItems.filteredItems.length).to.eql(2)
-      chai.expect(managedItems.filteredItems[0].id).to.eql(2)
-      chai.expect(managedItems.filteredItems[1].id).to.eql(5)
+      expect(managedItems.filteredItems.length).toEqual(2)
+      expect(managedItems.filteredItems[0].id).toEqual(2)
+      expect(managedItems.filteredItems[1].id).toEqual(5)
     })
   })
   describe('#allTableHeaders', () => {
@@ -155,15 +150,14 @@ describe('ManagedItems', () => {
         new LocalStorageMock(),
         'test_'
       )
-      chai
-        .expect(managedItems.allTableHeaders)
-        .to.be.eql([
+      expect(managedItems.allTableHeaders)
+        .toEqual([
           { text: 'id', type: 'string', value: 'id', groupable: true }
         ])
     })
     test('returns table headers using given values', () => {
       const managedItems = getNewManagedTestItems()
-      chai.expect(managedItems.allTableHeaders).to.eql(testItemHeaders)
+      expect(managedItems.allTableHeaders).toEqual(testItemHeaders)
     })
   })
   describe('#tableHeaders', () => {
@@ -174,7 +168,7 @@ describe('ManagedItems', () => {
         { name: 'value', visible: true },
         { name: 'info', visible: false }
       ]
-      chai.expect(managedItems.tableHeaders).to.eql([
+      expect(managedItems.tableHeaders).toEqual([
         { value: 'id', text: 'ID', type: 'number', groupable: false },
         { value: 'value', text: 'Value', type: 'string', groupable: true }
       ])
@@ -189,12 +183,12 @@ describe('ManagedItems', () => {
         'test_'
       )
       managedItems.groupBy = ['value']
-      chai.expect(managedItems.groupByTitle).to.eql('value')
+      expect(managedItems.groupByTitle).toEqual('value')
     })
     test('returns the group by title from a given propDef label', () => {
       const managedItems = getNewManagedTestItems()
       managedItems.groupBy = ['value']
-      chai.expect(managedItems.groupByTitle).to.eql('Value')
+      expect(managedItems.groupByTitle).toEqual('Value')
     })
   })
 })

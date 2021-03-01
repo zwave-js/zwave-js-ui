@@ -23,16 +23,12 @@ describe('#utils', () => {
   })
   describe('#joinPath()', () => {
     test('bool true', () =>
-      expect(mod.joinPath(true)).toMatchSnapshot()
-    )
+      expect(mod.joinPath(true)).toMatchSnapshot())
     test('bool false', () =>
-      expect(mod.joinPath(true)).toMatchSnapshot()
-    )
+      expect(mod.joinPath(true)).toMatchSnapshot())
     test('1 length', () =>
-      expect(mod.joinPath('foobar')).toMatchSnapshot()
-    )
+      expect(mod.joinPath('foobar')).toMatchSnapshot())
     test('first arg bool gets new path 0', () =>
-      expect(mod.joinPath(true, 'bar')).toMatchSnapshot()
-    )
+      expect(mod.joinPath(true, 'bar')).toMatchSnapshot())
   })
 })

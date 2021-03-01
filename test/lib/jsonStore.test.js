@@ -83,7 +83,10 @@ describe('#jsonStore', () => {
         mod.store = { known: 'foo' }
       })
       test('known', () => expect(mod.get({ file: 'known' })).toBe('foo'))
-      test('unknown', () => expect(() => mod.get({ file: 'unknown' })).toThrowError('Requested file not present in store: unknown'))
+      test(
+        'unknown',
+        () => expect(() => mod.get({ file: 'unknown' })).toThrowError('Requested file not present in store: unknown')
+      )
     })
 
     describe('#put()', () => {

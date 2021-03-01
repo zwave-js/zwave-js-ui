@@ -1,36 +1,28 @@
-import chai from 'chai'
 import { ColumnFilterHelper } from './ColumnFilterHelper'
 
 describe('ColumnFilterHelper', () => {
   describe('#defaultFilter', () => {
     test('returns the default filter for the given column type', () => {
-      chai
-        .expect(ColumnFilterHelper.defaultFilter('boolean'))
-        .to.eql({ boolValue: null })
-      chai
-        .expect(ColumnFilterHelper.defaultFilter('date'))
-        .to.eql({ from: null, to: null })
-      chai
-        .expect(ColumnFilterHelper.defaultFilter('number'))
-        .to.eql({ min: null, max: null, values: [] })
-      chai
-        .expect(ColumnFilterHelper.defaultFilter('string'))
-        .to.eql({ match: '', values: [] })
+      expect(ColumnFilterHelper.defaultFilter('boolean'))
+        .toEqual({ boolValue: null })
+      expect(ColumnFilterHelper.defaultFilter('date'))
+        .toEqual({ from: null, to: null })
+      expect(ColumnFilterHelper.defaultFilter('number'))
+        .toEqual({ min: null, max: null, values: [] })
+      expect(ColumnFilterHelper.defaultFilter('string'))
+        .toEqual({ match: '', values: [] })
     })
   })
 
   describe('#filterProps', () => {
     test('returns the list of filter props for the given column type', () => {
-      chai
-        .expect(ColumnFilterHelper.filterProps('boolean'))
-        .to.eql(['boolValue'])
-      chai.expect(ColumnFilterHelper.filterProps('date')).to.eql(['from', 'to'])
-      chai
-        .expect(ColumnFilterHelper.filterProps('number'))
-        .to.eql(['min', 'max', 'values'])
-      chai
-        .expect(ColumnFilterHelper.filterProps('string'))
-        .to.eql(['match', 'values'])
+      expect(ColumnFilterHelper.filterProps('boolean'))
+        .toEqual(['boolValue'])
+      expect(ColumnFilterHelper.filterProps('date')).toEqual(['from', 'to'])
+      expect(ColumnFilterHelper.filterProps('number'))
+        .toEqual(['min', 'max', 'values'])
+      expect(ColumnFilterHelper.filterProps('string'))
+        .toEqual(['match', 'values'])
     })
   })
 })

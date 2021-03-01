@@ -1,11 +1,16 @@
-const proxyquire = require('proxyquire')
-
 describe('#webConfig', () => {
-  const webConfig = proxyquire('../../config/webConfig', {
-    './app': {}
-  })
+  let webConfig
 
   describe('Uses defaults if nothing specified', () => {
+    beforeAll(() => {
+      jest.mock('./app', () => ({}))
+      webConfig = require('../../config/webConfig')
+    })
+
+    afterAll(() => {
+      jest.restoreAllMocks()
+    })
+
     test('uses "/" as the default base', () => {
       expect(webConfig.base).toBe('/')
     })
@@ -14,11 +19,16 @@ describe('#webConfig', () => {
     })
   })
   describe('Uses config values when pecified', () => {
-    const webConfig = proxyquire('../../config/webConfig', {
-      './app': {
+    beforeAll(() => {
+      jest.mock('./app', () => ({
         base: '/sub/path/',
         title: 'Custom Title'
-      }
+      }))
+      webConfig = require('../../config/webConfig')
+    })
+
+    afterAll(() => {
+      jest.restoreAllMocks()
     })
 
     test('uses "/sub/path/" as the custom base', () => {
@@ -31,11 +41,17 @@ describe('#webConfig', () => {
   })
 
   describe('Path normalization', () => {
-    const webConfig = proxyquire('../../config/webConfig', {
-      './app': {
+    beforeAll(() => {
+      jest.mock('./app', () => ({
         base: '/sub/path'
-      }
+      }))
+      webConfig = require('../../config/webConfig')
     })
+
+    afterAll(() => {
+      jest.restoreAllMocks()
+    })
+
     test('Ensures base paths ends with a slash', () => {
       expect(webConfig.base).toBe('/sub/path/')
     })
