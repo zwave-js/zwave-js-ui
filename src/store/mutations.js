@@ -2,6 +2,7 @@ export const state = {
   auth: undefined,
   serial_ports: [],
   nodes: [],
+  nodesMap: new Map(),
   user: {},
   zwave: {
     port: undefined,
@@ -58,16 +59,14 @@ function getValue (v) {
   }
 }
 
-// makes node search faster
-const nodesMap = new Map() // nodeId -> index
-
 function getNode (id) {
-  return state.nodes[nodesMap.get(id)]
+  return state.nodes[state.nodesMap.get(id)]
 }
 
 export const getters = {
   auth: state => state.auth,
   nodes: state => state.nodes,
+  nodesMap: state => state.nodesMap,
   user: state => state.user,
   serial_ports: state => state.serial_ports,
   zwave: state => state.zwave,
@@ -188,7 +187,7 @@ export const mutations = {
       ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
       : 'NodeID_' + n.id
 
-    let index = nodesMap.get(n.id)
+    let index = state.nodesMap.get(n.id)
 
     index = index >= 0 ? index : state.nodes.length
 
@@ -199,13 +198,13 @@ export const mutations = {
       this._vm.$set(state.nodes, index, n)
     }
 
-    nodesMap.set(n.id, index)
+    state.nodesMap.set(n.id, index)
   },
   removeNode (state, n) {
-    const index = nodesMap.get(n.id)
+    const index = state.nodesMap.get(n.id)
 
     if (index >= 0) {
-      nodesMap.delete(n.id)
+      state.nodesMap.delete(n.id)
       state.nodes.splice(index, 1)
     }
   },
