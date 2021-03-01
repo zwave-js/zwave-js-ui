@@ -723,16 +723,18 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
       const node = config[nodeId]
       if (!node || typeof node !== 'object') continue
 
+      // All API calls expect nodeId to be a number, so convert it here.
+      const nodeIdNumber = Number(nodeId)
       if (utils.hasProperty(node, 'name')) {
-        await gw.zwave.callApi('setNodeName', nodeId, node.name || '')
+        await gw.zwave.callApi('setNodeName', nodeIdNumber, node.name || '')
       }
 
       if (utils.hasProperty(node, 'loc')) {
-        await gw.zwave.callApi('setNodeLocation', nodeId, node.loc || '')
+        await gw.zwave.callApi('setNodeLocation', nodeIdNumber, node.loc || '')
       }
 
       if (node.hassDevices) {
-        await gw.zwave.storeDevices(node.hassDevices, nodeId, false)
+        await gw.zwave.storeDevices(node.hassDevices, nodeIdNumber, false)
       }
     }
 
