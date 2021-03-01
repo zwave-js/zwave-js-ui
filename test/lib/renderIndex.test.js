@@ -23,15 +23,17 @@ describe('#renderIndex', () => {
 
     beforeEach(() => {
       renderIndex = rewire('../../lib/renderIndex')
-      renderIndex.__set__('webConfig', {
+
+      jest.mock('../../config/webConfig', () => ({
         base: '/configured/path'
-      })
+      }))
       mockedReaddir = sinon.stub(fs, 'readdirSync')
       mockedReaddir.returns([])
     })
 
     afterEach(() => {
       mockedReaddir.restore()
+      jest.restoreAllMocks()
     })
 
     test('uses the base from the `X-External-Path` header', () => {
@@ -53,7 +55,7 @@ describe('#renderIndex', () => {
         },
         mockResponse
       )
-      expect(lastOptions.config.base).toBe('/configured/path/')
+      expect(lastOptions.config.base).toEqual('/configured/path/')
     })
   })
 
