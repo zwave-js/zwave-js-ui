@@ -1,3 +1,12 @@
+## [2.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.0.0...v2.0.1) (2021-03-01)
+
+
+### Bug Fixes
+
+* **ui:** nodes table display issues ([#780](https://github.com/zwave-js/zwavejs2mqtt/issues/780)) ([f02d8b6](https://github.com/zwave-js/zwavejs2mqtt/commit/f02d8b64ec835fa2b1f7f29350fc905a9d7dae94)), closes [#766](https://github.com/zwave-js/zwavejs2mqtt/issues/766)
+* bug when importing nodes.json ([#768](https://github.com/zwave-js/zwavejs2mqtt/issues/768)) ([84550f2](https://github.com/zwave-js/zwavejs2mqtt/commit/84550f27da2d31ba5299cfb054c6f48aea1d527a))
+* use node `available` in node status ([#762](https://github.com/zwave-js/zwavejs2mqtt/issues/762)) ([d4972e8](https://github.com/zwave-js/zwavejs2mqtt/commit/d4972e88a0170823ae9adc7755936e07bdce24c9))
+
 # [2.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.4.0...v2.0.0) (2021-02-26)
 
 
