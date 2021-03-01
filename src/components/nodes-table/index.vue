@@ -1,5 +1,6 @@
 <template>
   <v-data-table
+    v-if="managedNodes"
     :headers="managedNodes.tableHeaders"
     :items="managedNodes.filteredItems"
     :footer-props="{
@@ -173,7 +174,6 @@
         :headers="headers"
         :isMobile="isMobile"
         :node="item"
-        :nodes="nodes"
         :socket="socket"
         v-on="$listeners"
       />
