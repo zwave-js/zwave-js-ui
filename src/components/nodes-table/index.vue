@@ -103,6 +103,14 @@
             </template>
             <span>Export nodes.json Configuration</span>
           </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn text color="yellow" v-on="on" @click="exportDump">
+                DUMP
+              </v-btn>
+            </template>
+            <span>Export Nodes Dump (for debugging)</span>
+          </v-tooltip>
         </v-col>
       </v-row>
     </template>
