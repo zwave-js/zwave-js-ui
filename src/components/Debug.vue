@@ -2,10 +2,10 @@
   <v-container grid-list-md>
     <v-row>
       <v-col cols="12">
-        <v-btn color="green darken-1" text @click="debugActive = true"
+        <v-btn color="green darken-1" text @click="toggleDebug(true)"
           >Start</v-btn
         >
-        <v-btn color="red darken-1" text @click="debugActive = false"
+        <v-btn color="red darken-1" text @click="toggleDebug(false)"
           >Stop</v-btn
         >
         <v-btn color="blue darken-1" text @click="debug = []">Clear</v-btn>
@@ -26,6 +26,7 @@
 import { socketEvents } from '@/plugins/socket'
 
 import AnsiUp from 'ansi_up'
+import { mapMutations } from 'vuex'
 
 const ansiUp = new AnsiUp()
 
@@ -44,7 +45,13 @@ export default {
       debugActive: false
     }
   },
-  methods: {},
+  methods: {
+    ...mapMutations(['showSnackbar']),
+    toggleDebug (v) {
+      this.debugActive = v
+      this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))
+    }
+  },
   mounted () {
     // init socket events
     const self = this
