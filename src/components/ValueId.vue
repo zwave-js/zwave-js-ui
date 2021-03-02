@@ -8,7 +8,7 @@
         :suffix="value.unit"
         :hint="help"
         persistent-hint
-        v-model="value.value"
+        v-model="parsedValue"
       ></v-text-field>
     </div>
 
@@ -38,14 +38,14 @@
       ></v-text-field>
 
       <v-text-field
-        v-if="!value.list && value.type === 'any'"
+        v-if="!value.list && (value.type === 'any' || value.type === 'buffer')"
         :append-outer-icon="!disable_send ? 'send' : null"
         :suffix="value.unit"
         persistent-hint
         :error="!!error"
         :error-messages="error"
         :hint="help"
-        v-model="parsedAny"
+        v-model="parsedValue"
         @click:append-outer="updateValue(value)"
       ></v-text-field>
 
@@ -221,7 +221,7 @@ export default {
     return {
       durations: ['seconds', 'minutes'],
       menu: false,
-      error: false
+      error: null
     }
   },
   computed: {
@@ -260,27 +260,28 @@ export default {
         this.value.newValue = v ? v.substr(1, 7) : null
       }
     },
-    parsedAny: {
+    parsedValue: {
       get: function () {
         if (this.value.type === 'any') {
-          if (typeof this.value.newValue === 'object') {
-            return JSON.stringify(this.value.newValue)
-          }
+          return JSON.stringify(this.value.newValue)
+        } else if (this.value.type === 'buffer') {
+          return this.value.newValue && this.value.newValue.toString('hex')
         }
         return this.value.newValue
       },
       set: function (v) {
-        if (this.value.type === 'any') {
-          if (typeof this.value.value === 'object') {
-            try {
-              this.value.newValue = JSON.parse(v)
-              this.error = false
-            } catch (error) {
-              this.error = 'Value not valid'
-            }
+        try {
+          if (this.value.type === 'any') {
+            this.value.newValue = JSON.parse(v)
+          } else if (this.value.type === 'buffer') {
+            this.value.newValue = Buffer.from(v, 'hex')
+          } else {
+            this.value.newValue = v
           }
-        } else {
-          this.value.newValue = v
+
+          this.error = null
+        } catch (error) {
+          this.error = 'Value not valid'
         }
       }
     },
