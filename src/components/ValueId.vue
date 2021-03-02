@@ -38,7 +38,7 @@
       ></v-text-field>
 
       <v-text-field
-        v-if="!value.list && (value.type === 'any' || value.type === 'buffer')"
+        v-if="!value.list && value.type === 'any'"
         :append-outer-icon="!disable_send ? 'send' : null"
         :suffix="value.unit"
         persistent-hint
@@ -264,8 +264,6 @@ export default {
       get: function () {
         if (this.value.type === 'any') {
           return JSON.stringify(this.value.newValue)
-        } else if (this.value.type === 'buffer') {
-          return this.value.newValue && this.value.newValue.toString('hex')
         }
         return this.value.newValue
       },
@@ -273,8 +271,6 @@ export default {
         try {
           if (this.value.type === 'any') {
             this.value.newValue = JSON.parse(v)
-          } else if (this.value.type === 'buffer') {
-            this.value.newValue = Buffer.from(v, 'hex')
           } else {
             this.value.newValue = v
           }
