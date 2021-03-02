@@ -14,7 +14,9 @@
 
     <div v-else>
       <v-text-field
-        v-if="!value.list && value.type === 'string'"
+        v-if="
+          !value.list && (value.type === 'string' || value.type === 'buffer')
+        "
         :append-outer-icon="!disable_send ? 'send' : null"
         :suffix="value.unit"
         persistent-hint
