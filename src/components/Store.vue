@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
-    <v-card height="800" style="margin-top:30px;">
-      <v-row class="pa-4" justify="space-between" style="height:100%">
+    <v-card height="800" style="margin-top:30px; overflow:hidden">
+      <v-row class="pa-4 full-height" justify="space-between">
         <v-col class="scroll" cols="5">
           <v-treeview
             v-if="!loadingStore"
@@ -42,7 +42,7 @@
 
         <v-divider vertical></v-divider>
 
-        <v-col class="text-center scroll">
+        <v-col class="text-center no-scroll full-height">
           <div
             v-if="!selected || !selected.ext"
             class="title grey--text text--lighten-1 font-weight-light"
@@ -61,11 +61,13 @@
               style="align-self: center;"
             ></v-progress-circular>
           </div>
-          <v-card v-else :key="selected.path" class="scroll" flat>
-            <v-card-text
-              class="scroll custom-scroll"
-              style="height: calc(100% - 50px)"
-            >
+          <v-card
+            class="no-scroll full-height"
+            v-else
+            :key="selected.path"
+            flat
+          >
+            <v-card-text class="no-scroll" style="height: calc(100% - 50px)">
               <prism-editor
                 class="custom-font"
                 lineNumbers
@@ -126,22 +128,12 @@
   height: 100%;
 }
 
-.custom-scroll ::-webkit-scrollbar-track {
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  border-radius: 20px;
-  background-color: #f5f5f5;
+.no-scroll {
+  overflow: hidden;
 }
 
-.custom-scroll ::-webkit-scrollbar {
-  width: 5px;
-  border-radius: 50%;
-  background-color: #ddd;
-}
-
-.custom-scroll ::-webkit-scrollbar-thumb {
-  border-radius: 20px;
-  background: #000;
+.full-height {
+  height: 100%;
 }
 </style>
 <script>
