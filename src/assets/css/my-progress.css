@@ -5,18 +5,14 @@
 ::-webkit-scrollbar {
   height: 5px;
   width: 4px;
-  background: transparent;
+  background: rgba(0, 0, 0, 0.233);
   padding-right: 10;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.05);
+  background: black;
   border-radius: 1ex;
   -webkit-border-radius: 1ex;
-}
-
-::-webkit-scrollbar-corner {
-  background: transparent;
 }
 
 /* Hacky hack. Remove scrollbars for 320 width screens */
