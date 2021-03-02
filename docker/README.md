@@ -16,13 +16,19 @@ Supported architectures are:
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
 
+Supported tags are:
+- `latest` for the newest official release.
+- `master` most recent fixes and merged PRs.
+
+Note: `dev` have been deprecated.
+
 ## Install
 
 Here there are 3 different way to start the container and provide data persistence. In all of this solutions **remember to**:
 
 1. Replace `/dev/ttyACM0` with your serial device
 2. Add `-e TZ=Europe/Stockholm` to the `docker run` command to set the correct timezone in container
-3. If you are using zwave-js WS server, replace `3000:3000` with the port choosen in settings
+3. If you are using zwave-js WS server, replace `3000:3000` with the port chosen in settings
 
 ### Run using volumes
 
