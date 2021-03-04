@@ -7,7 +7,7 @@
 
 Docker container for zwavejs2mqtt Gateway and Control Panel
 
-## Tags
+## Architectures
 
 Supported architectures are:
 
@@ -16,11 +16,16 @@ Supported architectures are:
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
 
-Supported tags are:
-- `latest` for the newest official release.
-- `master` most recent fixes and merged PRs.
+## Tags
 
-Note: `dev` have been deprecated.
+Supported tags are:
+
+- `latest` for the latest official release.
+- `master` newest version, image gets built after every new commit to the master branch in the [zwavejs2mqtt](https://github.com/zwave-js/zwavejs2mqtt/commits/master) repository. (not recommended for the average user)
+- `sha-<commit-sha>` (example: `sha-92d502a`)
+- `<version>` (example: `2.1.0`)
+
+Note: `dev` tag have been deprecated.
 
 ## Install
 
