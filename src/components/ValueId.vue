@@ -2,7 +2,7 @@
   <div>
     <v-subheader class="valueid-label">{{ label }} </v-subheader>
 
-    <div v-if="!value.writeable && !value.list">
+    <div v-if="!value.writeable">
       <v-text-field
         readonly
         :suffix="value.unit"
@@ -57,7 +57,7 @@
           :min="value.min != value.max ? value.min : null"
           :step="1"
           persistent-hint
-          :readonly="!value.writeable || disable_send"
+          :readonly="disable_send"
           :max="value.min != value.max ? value.max : null"
           :hint="help"
           v-model.number="value.newValue.value"
@@ -66,7 +66,7 @@
           style="margin-left:10px;min-width:105px;width:135px"
           :items="durations"
           v-model="value.newValue.unit"
-          :readonly="!value.writeable || disable_send"
+          :readonly="disable_send"
           persistent-hint
           :append-outer-icon="!disable_send ? 'send' : null"
           @click:append-outer="updateValue(value)"
@@ -116,9 +116,9 @@
         }"
         :hint="help"
         persistent-hint
-        :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
+        :return-object="false"
+        :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
-        :readonly="!value.writeable"
         @click:append-outer="updateValue(value)"
       ></v-select>
 
@@ -137,9 +137,9 @@
         chips
         item-text="text"
         item-value="value"
-        :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
+        :return-object="false"
+        :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
-        :readonly="!value.writeable"
         @click:append-outer="updateValue(value)"
       >
         <template v-slot:selection="{ attrs, item, selected }">
@@ -264,8 +264,12 @@ export default {
     },
     parsedValue: {
       get: function () {
-        if (this.value.type === 'any') {
+        if (typeof this.value.newValue === 'object') {
           return JSON.stringify(this.value.newValue)
+        } else if (this.value.states && this.value.newValue !== undefined) {
+          return this.selectedItem
+            ? this.selectedItem.text
+            : 'Custom: ' + this.value.newValue
         }
         return this.value.newValue
       },
