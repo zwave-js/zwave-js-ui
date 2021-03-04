@@ -80,7 +80,10 @@ This are the available apis:
 - `beginFirmwareUpdate(nodeId, fileName, data, target)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
 - `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
 - `writeValue(valueId, value)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
-- `sendCommand(valueId, command, args)`: Send a custom command
+- `sendCommand(ctx, command, args)`: Send a custom command.
+  - `ctx`:context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
+  - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
+  - `args`: array of arguments to pass to the command
 
 ### Api call examples
 
