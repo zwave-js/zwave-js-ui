@@ -46,7 +46,7 @@ Build/Run method
 - [ ] Manually built (git clone - npm install - npm run build )
 
 zwavejs2mqtt version: <version here, you can find it on control panel>
-zwavejs version: <version here, you can find it on control panel>
+zwave-js version: <version here, you can find it on control panel>
 
 ### Describe the bug
 
