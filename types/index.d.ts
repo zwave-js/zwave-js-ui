@@ -126,6 +126,7 @@ export type Z2MNode = {
   maxBaudRate: number
   interviewStage: InterviewStage
   status: NodeStatus
+  inited: boolean
 }
 
 export enum GatewayType {
