@@ -109,7 +109,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.3.1",
     "eslint-plugin-standard": "^5.0.0",
-    "eslint-plugin-vue": "^7.5.0",
+    "eslint-plugin-vue": "^7.7.0",
     "mocha": "^8.2.1",
     "node-notifier": "^9.0.0",
     "nodemon": "^2.0.7",
