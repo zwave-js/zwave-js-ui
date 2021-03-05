@@ -29,8 +29,7 @@ const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
 const jwt = require('jsonwebtoken')
 const { promisify } = require('util')
-const FileStore = require('session-file-store')(session);
-
+const FileStore = require('session-file-store')(session)
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
