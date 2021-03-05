@@ -155,6 +155,7 @@
     "prismjs": "^1.23.0",
     "serialport": "^9.0.7",
     "serve-favicon": "^2.5.0",
+    "session-file-store": "^1.5.0",
     "socket.io": "^3.1.2",
     "socket.io-client": "^3.1.2",
     "svg-pan-zoom": "^3.6.1",

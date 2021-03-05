@@ -29,6 +29,8 @@ const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
 const jwt = require('jsonwebtoken')
 const { promisify } = require('util')
+const FileStore = require('session-file-store')(session);
+
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -336,6 +338,9 @@ app.use(
     secret: sessionSecret,
     resave: true,
     saveUninitialized: true,
+    store: new FileStore({
+      path: storeDir
+    }),
     cookie: {
       secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
       httpOnly: true, // prevents cookie to be sent by client javascript
