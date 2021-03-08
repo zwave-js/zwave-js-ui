@@ -105,7 +105,7 @@
       </v-text-field>
 
       <v-select
-        v-if="value.list && !value.allowManualEntry"
+        v-if="value.list && value.allowManualEntry"
         :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
@@ -125,7 +125,7 @@
       ></v-select>
 
       <v-combobox
-        v-if="value.list && value.allowManualEntry"
+        v-if="value.list && !value.allowManualEntry"
         :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
@@ -143,6 +143,7 @@
         :return-object="false"
         :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
+        ref="myCombo"
         @click:append-outer="updateValue(value)"
       >
         <template v-slot:selection="{ attrs, item, selected }">
@@ -305,6 +306,12 @@ export default {
     },
     updateValue (v, customValue) {
       // needed for on/off control to update the newValue
+
+      if (this.$refs.myCombo) {
+        // trick used to send the value in combobox without the need to press enter
+        this.value.newValue = this.$refs.myCombo.$refs.input._value
+      }
+
       if (customValue !== undefined) {
         v.newValue = customValue
       }
