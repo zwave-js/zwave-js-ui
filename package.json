@@ -196,7 +196,7 @@
     "css-loader": "^5.1.1",
     "deepmerge": "^4.2.2",
     "file-loader": "^6.2.0",
-    "html-webpack-plugin": "^5.2.0",
+    "html-webpack-plugin": "^5.3.0",
     "lodash": "^4.17.21",
     "markdownlint-cli": "^0.27.1",
     "material-design-icons-iconfont": "^6.1.0",
