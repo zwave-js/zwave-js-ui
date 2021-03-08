@@ -106,7 +106,7 @@
 
       <v-select
         v-if="value.list && !value.allowManualEntry"
-        :items="items"
+        :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -117,6 +117,8 @@
         :hint="help"
         persistent-hint
         :return-object="false"
+        :item-text="itemText"
+        item-value="value"
         :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
         @click:append-outer="updateValue(value)"
@@ -124,7 +126,7 @@
 
       <v-combobox
         v-if="value.list && value.allowManualEntry"
-        :items="items"
+        :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -135,17 +137,19 @@
         :hint="help"
         persistent-hint
         chips
-        item-text="text"
+        :item-text="itemText"
         item-value="value"
+        :type="value.type === 'number' ? 'number' : 'text'"
         :return-object="false"
         :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
+        ref="myCombo"
         @click:append-outer="updateValue(value)"
       >
         <template v-slot:selection="{ attrs, item, selected }">
           <v-chip v-bind="attrs" :input-value="selected">
             <span>
-              {{ selectedItem ? selectedItem.text : 'Custom: ' + item }}
+              {{ itemText(selectedItem || item) }}
             </span>
           </v-chip>
         </template>
@@ -228,20 +232,12 @@ export default {
   },
   computed: {
     selectedItem () {
-      if (!this.items) return null
-      else return this.items.find(v => v.value === this.value.newValue)
-    },
-    items () {
-      const items = this.value.states || []
-      const defaultValue = this.value.default
-
-      if (defaultValue !== undefined) {
-        const item = items.find(i => i.value === defaultValue)
-        if (item && !item.text.endsWith(' (Default)')) {
-          item.text += ' (Default)'
-        }
-      }
-      return items
+      const value =
+        this.value.type === 'number'
+          ? Number(this.value.newValue)
+          : this.value.newValue
+      if (!this.value.states) return null
+      else return this.value.states.find(s => s.value === value)
     },
     label () {
       return '[' + this.value.id + '] ' + this.value.label
@@ -267,9 +263,7 @@ export default {
         if (typeof this.value.newValue === 'object') {
           return JSON.stringify(this.value.newValue)
         } else if (this.value.states && this.value.newValue !== undefined) {
-          return this.selectedItem
-            ? this.selectedItem.text
-            : 'Custom: ' + this.value.newValue
+          return this.itemText(this.selectedItem || this.value.newValue)
         }
         return this.value.newValue
       },
@@ -277,8 +271,8 @@ export default {
         try {
           if (this.value.type === 'any') {
             this.value.newValue = JSON.parse(v)
-          } else {
-            this.value.newValue = v
+          } else if (typeof v === 'string' && this.value.type === 'number') {
+            this.value.newValue = Number(v)
           }
 
           this.error = null
@@ -301,8 +295,23 @@ export default {
     }
   },
   methods: {
+    itemText (item) {
+      if (typeof item === 'object') {
+        return `[${item.value}] ${item.text}${
+          this.value.default === item.value ? ' (Default)' : ''
+        }`
+      } else {
+        return `[${item}] Custom`
+      }
+    },
     updateValue (v, customValue) {
       // needed for on/off control to update the newValue
+
+      if (this.$refs.myCombo) {
+        // trick used to send the value in combobox without the need to press enter
+        this.value.newValue = this.$refs.myCombo.$refs.input._value
+      }
+
       if (customValue !== undefined) {
         v.newValue = customValue
       }
