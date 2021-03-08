@@ -105,7 +105,7 @@
       </v-text-field>
 
       <v-select
-        v-if="value.list && value.allowManualEntry"
+        v-if="value.list && !value.allowManualEntry"
         :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
@@ -125,7 +125,7 @@
       ></v-select>
 
       <v-combobox
-        v-if="value.list && !value.allowManualEntry"
+        v-if="value.list && value.allowManualEntry"
         :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
