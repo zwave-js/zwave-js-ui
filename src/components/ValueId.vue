@@ -106,7 +106,7 @@
 
       <v-select
         v-if="value.list && !value.allowManualEntry"
-        :items="items"
+        :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -117,6 +117,8 @@
         :hint="help"
         persistent-hint
         :return-object="false"
+        :item-text="itemText"
+        item-value="value"
         :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
         @click:append-outer="updateValue(value)"
@@ -124,7 +126,7 @@
 
       <v-combobox
         v-if="value.list && value.allowManualEntry"
-        :items="items"
+        :items="value.states"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -135,7 +137,7 @@
         :hint="help"
         persistent-hint
         chips
-        item-text="text"
+        :item-text="itemText"
         item-value="value"
         :return-object="false"
         :append-outer-icon="!disable_send ? 'send' : null"
@@ -228,20 +230,12 @@ export default {
   },
   computed: {
     selectedItem () {
-      if (!this.items) return null
-      else return this.items.find(v => v.value === this.value.newValue)
-    },
-    items () {
-      const items = this.value.states || []
-      const defaultValue = this.value.default
-
-      if (defaultValue !== undefined) {
-        const item = items.find(i => i.value === defaultValue)
-        if (item && !item.text.endsWith(' (Default)')) {
-          item.text += ' (Default)'
-        }
-      }
-      return items
+      const value =
+        this.value.type === 'number'
+          ? Number(this.value.newValue)
+          : this.value.newValue
+      if (!this.value.states) return null
+      else return this.value.states.find(s => s.value === value)
     },
     label () {
       return '[' + this.value.id + '] ' + this.value.label
@@ -301,6 +295,15 @@ export default {
     }
   },
   methods: {
+    itemText (item) {
+      if (typeof item === 'object') {
+        return `[${item.value}] ${item.text}${
+          this.value.default === item.value ? ' (Default)' : ''
+        }`
+      } else {
+        return item
+      }
+    },
     updateValue (v, customValue) {
       // needed for on/off control to update the newValue
       if (customValue !== undefined) {
