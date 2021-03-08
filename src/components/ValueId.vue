@@ -139,6 +139,7 @@
         chips
         :item-text="itemText"
         item-value="value"
+        :type="value.type === 'number' ? 'number' : 'text'"
         :return-object="false"
         :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
@@ -147,7 +148,7 @@
         <template v-slot:selection="{ attrs, item, selected }">
           <v-chip v-bind="attrs" :input-value="selected">
             <span>
-              {{ selectedItem ? selectedItem.text : 'Custom: ' + item }}
+              {{ itemText(selectedItem || item) }}
             </span>
           </v-chip>
         </template>
@@ -261,9 +262,7 @@ export default {
         if (typeof this.value.newValue === 'object') {
           return JSON.stringify(this.value.newValue)
         } else if (this.value.states && this.value.newValue !== undefined) {
-          return this.selectedItem
-            ? this.selectedItem.text
-            : 'Custom: ' + this.value.newValue
+          return this.itemText(this.selectedItem || this.value.newValue)
         }
         return this.value.newValue
       },
@@ -271,8 +270,8 @@ export default {
         try {
           if (this.value.type === 'any') {
             this.value.newValue = JSON.parse(v)
-          } else {
-            this.value.newValue = v
+          } else if (typeof v === 'string' && this.value.type === 'number') {
+            this.value.newValue = Number(v)
           }
 
           this.error = null
@@ -301,7 +300,7 @@ export default {
           this.value.default === item.value ? ' (Default)' : ''
         }`
       } else {
-        return item
+        return `[${item}] Custom`
       }
     },
     updateValue (v, customValue) {
