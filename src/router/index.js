@@ -107,9 +107,8 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
-  if (store.state.auth === undefined) {
-    next({ params: { nextUrl: to.fullPath } })
-    return
+  if (store.state.auth === undefined && to.path !== Routes.login) {
+    localStorage.setItem('nextUrl', to.path)
   }
 
   if (store.state.auth === false) {
