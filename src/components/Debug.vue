@@ -64,7 +64,7 @@ export default {
       const newwindow = window.open(
         window.location.href + '#no-topbar',
         'DEBUG',
-        'height=800,width=600,status=no,toolbar:no,scrolllbars:no'
+        'height=800,width=600,status=no,toolbar:no,scrollbars:no'
       )
       if (window.focus) {
         newwindow.focus()
