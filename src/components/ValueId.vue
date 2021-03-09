@@ -217,9 +217,7 @@
   padding-left: 0;
   margin-bottom: -10px;
 }
-</style>
 
-<style>
 .readonly {
   font-size: x-large;
   font-weight: bold;
