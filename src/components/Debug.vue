@@ -9,6 +9,14 @@
           >Stop</v-btn
         >
         <v-btn color="blue darken-1" text @click="debug = []">Clear</v-btn>
+
+        <v-btn
+          v-if="!hideTopbar"
+          color="yellow darken-1"
+          text
+          @click="newWindow"
+          >Open in window</v-btn
+        >
       </v-col>
 
       <v-col cols="12">
@@ -42,7 +50,8 @@ export default {
   data () {
     return {
       debug: [],
-      debugActive: false
+      debugActive: true,
+      hideTopbar: false
     }
   },
   methods: {
@@ -50,11 +59,28 @@ export default {
     toggleDebug (v) {
       this.debugActive = v
       this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))
+    },
+    newWindow () {
+      const newwindow = window.open(
+        window.location.href + '#no-topbar',
+        'DEBUG',
+        'height=800,width=600,status=no,toolbar:no,scrollbars:no,menubar:no' // check https://www.w3schools.com/jsref/met_win_open.asp for all available specs
+      )
+      if (window.focus) {
+        newwindow.focus()
+      }
     }
   },
   mounted () {
     // init socket events
     const self = this
+
+    const hash = window.location.hash.substr(1)
+
+    if (hash === 'no-topbar') {
+      this.hideTopbar = true
+    }
+
     this.socket.on(socketEvents.debug, data => {
       if (self.debugActive) {
         data = ansiUp.ansi_to_html(data)
