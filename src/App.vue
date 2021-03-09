@@ -1,6 +1,6 @@
 <template>
   <v-app :dark="dark">
-    <div v-if="$route.meta.requiresAuth && auth !== undefined">
+    <div v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar">
       <v-navigation-drawer
         clipped-left
         :mini-variant="mini"
@@ -239,6 +239,7 @@ export default {
       drawer: false,
       mini: false,
       topbar: [],
+      hideTopbar: false,
       title: '',
       snackbar: false,
       snackbarText: '',
@@ -513,6 +514,12 @@ export default {
   mounted () {
     if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl) {
       this.toggleDrawer()
+    }
+
+    const hash = window.location.hash.substr(1)
+
+    if (hash === 'no-topbar') {
+      this.hideTopbar = true
     }
 
     this.dark = this.settings.load('dark', false)
