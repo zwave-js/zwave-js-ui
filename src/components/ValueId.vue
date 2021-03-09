@@ -3,14 +3,13 @@
     <v-subheader class="valueid-label">{{ label }} </v-subheader>
 
     <div v-if="!value.writeable">
-      <v-text-field
-        readonly
-        class="no-border"
-        :suffix="value.unit"
-        :hint="help"
-        persistent-hint
-        v-model="parsedValue"
-      ></v-text-field>
+      <div class="readonly mt-5">
+        {{ parsedValue + (value.unit ? ' ' + value.unit : '') }}
+      </div>
+
+      <div v-if="help" class="caption mt-1">
+        {{ help }}
+      </div>
     </div>
 
     <div v-else>
@@ -221,8 +220,9 @@
 </style>
 
 <style>
-.no-border > .v-input__control > .v-input__slot:before {
-  content: none;
+.readonly {
+  font-size: x-large;
+  font-weight: bold;
 }
 </style>
 
