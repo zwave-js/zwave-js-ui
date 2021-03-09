@@ -501,11 +501,19 @@
                           hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12" v-if="newGateway.hassDiscovery">
+                      <v-col cols="6" v-if="newGateway.hassDiscovery">
                         <v-switch
                           label="Retained discovery"
                           hint="Set retain flag to true in discovery messages"
                           v-model="newGateway.retainedDiscovery"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6" v-if="newGateway.hassDiscovery">
+                        <v-switch
+                          label="Manual discovery"
+                          hint="Don't automatically send the discovery payloads when a device is discovered"
+                          v-model="newGateway.manualDiscovery"
                           persistent-hint
                         ></v-switch>
                       </v-col>
