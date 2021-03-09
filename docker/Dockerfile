@@ -1,49 +1,60 @@
-# ----------------
-# STEP 1:
-FROM node:erbium-alpine AS build-z2m
-ARG updateDevices
-ARG zwavejs=https://github.com/zwave-js/node-zwave-js
-# Install required dependencies
-RUN apk --no-cache add \
-    coreutils \
-    linux-headers \
-    alpine-sdk \
-    python \
-    openssl \
-    git rsync
+# STEP: 1
+FROM node:15.11.0-alpine AS build-z2m
 
-WORKDIR /root/zwavejs2mqtt
+WORKDIR /usr/src/app
+
+RUN apk --no-cache add \
+    coreutils \	
+    linux-headers \
+    alpine-sdk \	
+    python
+
+COPY package.json package-lock.json ./ 
+
+RUN npm config set unsafe-perm true
+RUN npm install --no-optional
+
+# add plugin support, space separated
+ARG plugins
+# when update devices arg is set update config files from zwavejs repo
+ARG updateDevices
+ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
+
+RUN if [ ! -z "$updateDevices"  ]; \
+    then curl -sL ${zwavejs} | \
+        tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
+        node-zwave-js-master/packages/config/config/devices/ ;\
+    fi
 
 COPY . .
-RUN npm config set unsafe-perm true
-RUN npm install
-RUN npm run build
-RUN npm prune --production
-RUN rm -rf \
-    build \
-    index.html \
-    package-lock.json \
-    package.sh \
-    src \
-    static \
-    stylesheets
-RUN if [[ ! -z "$updateDevices"  ]]; then git clone $zwavejs; \
-    rsync -av node-zwave-js/packages/config/config/devices/ './node_modules/@zwave-js/config/config/devices'; \
-    rm -rf node-zwave-js; fi
 
-# ----------------
-# STEP 2:
-FROM node:erbium-alpine
+RUN npm run build && \
+    npm prune --production && \
+    rm -rf \
+        build \
+        index.html \
+        package-lock.json \
+        package.sh \
+        src \
+        static \
+        stylesheets
 
-RUN apk add --no-cache \
-    libstdc++  \
-    libgcc \
-    libusb \
-    tzdata \
-    eudev
+RUN if [ ! -z "$plugins" ]; \
+    then echo "Installing plugins ${plugins}"; npm i ${plugins} ; fi
 
-# Copy files from previous build stage
-COPY --from=build-z2m /root/zwavejs2mqtt /usr/src/app
+# STEP: 2 (runtime)
+FROM node:15.11.0-alpine
+
+RUN apk add --no-cache \	
+    libstdc++ \
+    openssl \
+    libgcc \	
+    libusb \	
+    tzdata \	
+    eudev	
+
+# Copy files from previous build stage	
+COPY --from=build-z2m /usr/src/app /usr/src/app	
 
 WORKDIR /usr/src/app
 

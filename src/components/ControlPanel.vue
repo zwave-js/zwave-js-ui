@@ -6,28 +6,47 @@
           <v-row justify="start">
             <v-col class="text-center" cols="12" sm="3" md="2">
               <div class="h6">Home ID</div>
-              <div class="body-1 font-weight-bold">{{ homeid }}</div>
+              <div class="body-1 font-weight-bold">{{ appInfo.homeid }}</div>
             </v-col>
             <v-col class="text-center" cols="12" sm="3" md="2">
               <div class="h6">Home Hex</div>
-              <div class="body-1 font-weight-bold">{{ homeHex }}</div>
+              <div class="body-1 font-weight-bold">{{ appInfo.homeHex }}</div>
             </v-col>
             <v-col class="text-center" cols="12" sm="3" md="2">
               <div class="h6">App Version</div>
-              <div class="body-1 font-weight-bold">{{ appVersion }}</div>
+              <div class="body-1 font-weight-bold">
+                {{ appInfo.appVersion }}
+              </div>
             </v-col>
             <v-col class="text-center" cols="12" sm="3" md="2">
               <div class="h6">Zwavejs Version</div>
-              <div class="body-1 font-weight-bold">{{ zwaveVersion }}</div>
+              <div class="body-1 font-weight-bold">
+                {{ appInfo.zwaveVersion }}
+              </div>
+            </v-col>
+            <v-col class="text-center" cols="12" sm="3" md="2">
+              <div class="h6">Zwavejs-server Version</div>
+              <div class="body-1 font-weight-bold">
+                {{ appInfo.serverVersion }}
+              </div>
             </v-col>
           </v-row>
 
           <v-row justify="start">
+            <v-col cols="12" sm="4" md="3" style="text-align:center">
+              <v-btn
+                depressed
+                color="primary"
+                @click="addRemoveShowDialog = true"
+              >
+                Add/Remove Device
+              </v-btn>
+            </v-col>
             <v-col cols="12" sm="6" md="3">
               <v-text-field
                 label="Controller status"
                 readonly
-                v-model="cnt_status"
+                v-model="appInfo.controllerStatus"
               ></v-text-field>
             </v-col>
 
@@ -43,480 +62,20 @@
           </v-row>
         </v-container>
 
-        <nodes-table
-          :nodes="nodes"
-          @node-selected="selectNode"
-          @export="exportConfiguration"
-          @import="importConfiguration"
+        <DialogAddRemove
+          v-model="addRemoveShowDialog"
+          :nodeAddedOrRemoved="addRemoveNode"
+          @close="onAddRemoveClose"
+          @apiRequest="apiRequest"
         />
 
-        <v-tabs style="margin-top:10px" v-model="currentTab" fixed-tabs>
-          <v-tab key="node">Node</v-tab>
-          <v-tab key="groups">Groups</v-tab>
-          <v-tab key="scenes">Scenes</v-tab>
-          <v-tab key="debug">Debug</v-tab>
-
-          <!-- TABS -->
-          <v-tabs-items v-model="currentTab">
-            <!-- TAB NODE INFO -->
-            <v-tab-item key="node">
-              <v-container
-                v-if="selectedNode"
-                style="min-width:90%"
-                grid-list-md
-              >
-                <v-layout row>
-                  <v-flex xs3>
-                    <v-select
-                      label="Node actions"
-                      append-outer-icon="send"
-                      v-model="node_action"
-                      :items="node_actions"
-                      @click:append-outer="sendNodeAction"
-                    ></v-select>
-                  </v-flex>
-                </v-layout>
-
-                <v-layout row>
-                  <v-flex>
-                    <v-subheader
-                      >Device ID:
-                      {{ `${selectedNode.deviceId} (${selectedNode.hexId})` }}
-                      <v-btn text @click="exportNode">
-                        Export
-                        <v-icon right dark color="primary"
-                          >file_download</v-icon
-                        >
-                      </v-btn>
-                    </v-subheader>
-                  </v-flex>
-                </v-layout>
-
-                <v-layout row>
-                  <v-flex xs8 style="max-width:300px">
-                    <v-text-field
-                      label="Name"
-                      append-outer-icon="send"
-                      :error="!!nameError"
-                      :error-messages="nameError"
-                      v-model.trim="newName"
-                      clearable
-                      @click:clear="resetName"
-                      @click:append-outer="updateName"
-                    ></v-text-field>
-                  </v-flex>
-                </v-layout>
-
-                <v-layout row>
-                  <v-flex xs8 style="max-width:300px">
-                    <v-text-field
-                      label="Location"
-                      append-outer-icon="send"
-                      v-model.trim="newLoc"
-                      :error="!!locError"
-                      :error-messages="locError"
-                      clearable
-                      @click:clear="resetLocation"
-                      @click:append-outer="updateLoc"
-                    ></v-text-field>
-                  </v-flex>
-                </v-layout>
-
-                <!-- NODE VALUES -->
-
-                <v-layout v-if="selectedNode.values" column>
-                  <v-subheader>Values</v-subheader>
-
-                  <v-expansion-panels accordion multiple>
-                    <v-expansion-panel
-                      v-for="(group, className) in commandGroups"
-                      :key="className"
-                    >
-                      <v-expansion-panel-header>{{
-                        className
-                      }}</v-expansion-panel-header>
-                      <v-expansion-panel-content>
-                        <v-card flat>
-                          <v-card-text>
-                            <v-layout row wrap>
-                              <v-flex
-                                v-for="(v, index) in group"
-                                :key="index"
-                                xs12
-                                sm6
-                                md4
-                              >
-                                <ValueID
-                                  @updateValue="updateValue"
-                                  v-model="group[index]"
-                                ></ValueID>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-expansion-panel-content>
-                      <v-divider></v-divider>
-                    </v-expansion-panel>
-                  </v-expansion-panels>
-                </v-layout>
-
-                <v-layout v-if="hassDevices.length > 0" column>
-                  <v-subheader>Home Assistant - Devices</v-subheader>
-
-                  <!-- HASS DEVICES -->
-                  <v-layout v-if="hassDevices.length > 0" raw wrap>
-                    <v-flex xs12 md6 pa-1>
-                      <v-btn
-                        color="blue darken-1"
-                        text
-                        @click="storeDevices(false)"
-                        >Store</v-btn
-                      >
-                      <v-btn
-                        color="red darken-1"
-                        text
-                        @click="storeDevices(true)"
-                        >Remove Store</v-btn
-                      >
-                      <v-btn color="green darken-1" text @click="rediscoverNode"
-                        >Rediscover Node</v-btn
-                      >
-                      <v-btn
-                        color="yellow darken-1"
-                        text
-                        @click="disableDiscovery"
-                        >Disable Discovery</v-btn
-                      >
-
-                      <v-data-table
-                        :headers="headers_hass"
-                        :items="hassDevices"
-                        class="elevation-1"
-                      >
-                        <template v-slot:item="{ item }">
-                          <tr
-                            style="cursor:pointer;"
-                            :active="selectedDevice == item"
-                            @click="
-                              selectedDevice == item
-                                ? (selectedDevice = null)
-                                : (selectedDevice = item)
-                            "
-                          >
-                            <td class="text-xs">{{ item.id }}</td>
-                            <td class="text-xs">{{ item.type }}</td>
-                            <td class="text-xs">{{ item.object_id }}</td>
-                            <td class="text-xs">
-                              {{ item.persistent ? 'Yes' : 'No' }}
-                            </td>
-                            <td class="text-xs">
-                              {{
-                                item.ignoreDiscovery ? 'Disabled' : 'Enabled'
-                              }}
-                            </td>
-                          </tr>
-                        </template>
-                      </v-data-table>
-                    </v-flex>
-                    <v-flex xs12 md6 pa-1>
-                      <v-btn
-                        v-if="!selectedDevice"
-                        color="blue darken-1"
-                        :disabled="errorDevice"
-                        text
-                        @click="addDevice"
-                        >Add</v-btn
-                      >
-                      <v-btn
-                        v-if="selectedDevice"
-                        color="blue darken-1"
-                        :disabled="errorDevice"
-                        text
-                        @click="updateDevice"
-                        >Update</v-btn
-                      >
-                      <v-btn
-                        v-if="selectedDevice"
-                        color="green darken-1"
-                        :disabled="errorDevice"
-                        text
-                        @click="rediscoverDevice"
-                        >Rediscover</v-btn
-                      >
-                      <v-btn
-                        v-if="selectedDevice"
-                        color="red darken-1"
-                        :disabled="errorDevice"
-                        text
-                        @click="deleteDevice"
-                        >Delete</v-btn
-                      >
-                      <v-textarea
-                        label="Hass Device JSON"
-                        auto-grow
-                        :rules="[validJSONdevice]"
-                        v-model="deviceJSON"
-                      ></v-textarea>
-                    </v-flex>
-                  </v-layout>
-                </v-layout>
-              </v-container>
-
-              <v-container v-if="!selectedNode">
-                <v-subheader>Click on a Node in the table</v-subheader>
-              </v-container>
-            </v-tab-item>
-
-            <!-- TAB GROUPS -->
-            <v-tab-item key="groups">
-              <v-container grid-list-md>
-                <v-layout wrap>
-                  <v-flex xs12 sm6 md4>
-                    <v-select
-                      label="Node"
-                      v-model="group.node"
-                      :items="sortedNodes"
-                      return-object
-                      @change="resetGroup"
-                      item-text="_name"
-                    ></v-select>
-                  </v-flex>
-
-                  <v-flex v-if="group.node" xs12 sm6 md4>
-                    <v-select
-                      label="Group"
-                      v-model="group.group"
-                      @input="getAssociations"
-                      :items="group.node.groups"
-                      return-object
-                    ></v-select>
-                  </v-flex>
-
-                  <v-flex v-if="group.group && group.associations" xs12 sm6 md4>
-                    <v-list subheader>
-                      <v-subheader>Associations</v-subheader>
-                      <v-template
-                        v-for="(ass, index) in group.associations"
-                        :key="index"
-                      >
-                        <v-list-item dense>
-                          <v-list-item-content>
-                            <v-list-item-title
-                              >Node:
-                              <b>{{
-                                nodes[ass.nodeId]._name || ass.nodeId
-                              }}</b></v-list-item-title
-                            >
-                            <v-list-item-subtitle
-                              v-if="ass.endpoint >= 0"
-                              class="text--primary"
-                              >Endpoint:
-                              <b>{{ ass.endpoint }}</b></v-list-item-subtitle
-                            >
-                          </v-list-item-content>
-                          <v-list-item-icon>
-                            <v-icon @click="removeAssociation(ass)" color="red">
-                              delete
-                            </v-icon>
-                          </v-list-item-icon>
-                        </v-list-item>
-                        <v-divider></v-divider>
-                      </v-template>
-                      <v-list-item v-if="group.associations.length === 0">
-                        <v-list-item-content>
-                          No assocaitions
-                        </v-list-item-content>
-                      </v-list-item>
-                    </v-list>
-                  </v-flex>
-
-                  <v-flex v-if="group.node" xs12 sm6>
-                    <v-combobox
-                      label="Target"
-                      v-model="group.target"
-                      :items="sortedNodes.filter(n => n != group.node)"
-                      return-object
-                      hint="Select the node from the list or digit the node ID"
-                      persistent-hint
-                      item-text="_name"
-                    ></v-combobox>
-                  </v-flex>
-
-                  <v-flex
-                    v-if="group.group && group.group.multiChannel"
-                    xs12
-                    sm6
-                    md4
-                  >
-                    <v-text-field
-                      v-model.number="group.targetInstance"
-                      label="Channel ID"
-                      hint="Target node channel ID"
-                      type="number"
-                    />
-                  </v-flex>
-
-                  <v-flex xs12>
-                    <v-btn
-                      v-if="group.node && group.target && group.group"
-                      rounded
-                      color="primary"
-                      @click="addAssociation"
-                      dark
-                      class="mb-2"
-                      >Add</v-btn
-                    >
-                    <v-btn
-                      v-if="group.node && group.target && group.group"
-                      rounded
-                      color="primary"
-                      @click="removeAssociation"
-                      dark
-                      class="mb-2"
-                      >Remove</v-btn
-                    >
-                    <v-btn
-                      v-if="group.node"
-                      rounded
-                      color="primary"
-                      @click="removeAllAssociations"
-                      dark
-                      class="mb-2"
-                      >Remove All</v-btn
-                    >
-                  </v-flex>
-                </v-layout>
-              </v-container>
-            </v-tab-item>
-
-            <!-- TAB SCENES -->
-            <v-tab-item key="scenes">
-              <v-container grid-list-md>
-                <v-layout wrap>
-                  <v-flex xs12>
-                    <v-btn text @click="importScenes">
-                      Import
-                      <v-icon right dark color="primary">file_upload</v-icon>
-                    </v-btn>
-                    <v-btn text @click="exportScenes">
-                      Export
-                      <v-icon right dark color="primary">file_download</v-icon>
-                    </v-btn>
-                  </v-flex>
-
-                  <v-flex xs12 sm6>
-                    <v-select
-                      label="Scene"
-                      v-model="selectedScene"
-                      :items="scenesWithId"
-                      item-text="label"
-                      item-value="sceneid"
-                    ></v-select>
-                  </v-flex>
-
-                  <v-flex xs12 sm6>
-                    <v-text-field
-                      label="New Scene"
-                      append-outer-icon="send"
-                      @click:append-outer="createScene"
-                      v-model.trim="newScene"
-                    ></v-text-field>
-                  </v-flex>
-
-                  <v-flex v-if="selectedScene" xs12>
-                    <v-btn color="red darken-1" text @click="removeScene"
-                      >Delete</v-btn
-                    >
-                    <v-btn color="green darken-1" text @click="activateScene"
-                      >Activate</v-btn
-                    >
-                    <v-btn
-                      color="blue darken-1"
-                      text
-                      @click="dialogValue = true"
-                      >New Value</v-btn
-                    >
-                  </v-flex>
-                </v-layout>
-
-                <DialogSceneValue
-                  @save="saveValue"
-                  @close="closeDialog"
-                  v-model="dialogValue"
-                  :title="dialogTitle"
-                  :editedValue="editedValue"
-                  :nodes="nodes"
-                />
-
-                <v-data-table
-                  v-if="selectedScene"
-                  :headers="headers_scenes"
-                  :items="scene_values"
-                  class="elevation-1"
-                >
-                  <template v-slot:item="{ item }">
-                    <tr>
-                      <td class="text-xs">{{ item.id }}</td>
-                      <td class="text-xs">{{ item.nodeId }}</td>
-                      <td class="text-xs">{{ item.label }}</td>
-                      <td class="text-xs">{{ item.value }}</td>
-                      <td class="text-xs">
-                        {{
-                          item.timeout ? 'After ' + item.timeout + 's' : 'No'
-                        }}
-                      </td>
-                      <td>
-                        <v-icon
-                          small
-                          color="green"
-                          class="mr-2"
-                          @click="editItem(item)"
-                          >edit</v-icon
-                        >
-                        <v-icon small color="red" @click="deleteItem(item)"
-                          >delete</v-icon
-                        >
-                      </td>
-                    </tr>
-                  </template>
-                </v-data-table>
-              </v-container>
-            </v-tab-item>
-
-            <!-- TAB Debug -->
-            <v-tab-item key="debug">
-              <v-container grid-list-md>
-                <v-layout wrap>
-                  <v-flex xs12>
-                    <v-btn
-                      color="green darken-1"
-                      text
-                      @click="debugActive = true"
-                      >Start</v-btn
-                    >
-                    <v-btn
-                      color="red darken-1"
-                      text
-                      @click="debugActive = false"
-                      >Stop</v-btn
-                    >
-                    <v-btn color="blue darken-1" text @click="debug = []"
-                      >Clear</v-btn
-                    >
-                  </v-flex>
-                  <v-flex xs12>
-                    <div
-                      id="debug_window"
-                      style="height:400px;width:100%;overflow-y:scroll;"
-                      class="body-1"
-                      v-html="debug.join('')"
-                    ></div>
-                  </v-flex>
-                </v-layout>
-              </v-container>
-            </v-tab-item>
-          </v-tabs-items>
-        </v-tabs>
+        <nodes-table
+          :node-actions="node_actions"
+          :socket="socket"
+          v-on="$listeners"
+          @exportNodes="exportConfiguration"
+          @importNodes="importConfiguration"
+        />
       </v-card-text>
     </v-card>
   </v-container>
@@ -524,19 +83,12 @@
 
 <script>
 import ConfigApis from '@/apis/ConfigApis'
+import { mapGetters, mapMutations } from 'vuex'
 
-import ValueID from '@/components/ValueId'
-
-import AnsiUp from 'ansi_up'
-
-import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
+import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
-import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
-
-const ansiUp = new AnsiUp()
-
-const MAX_DEBUG_LINES = 300
+import { socketEvents } from '@/plugins/socket'
 
 export default {
   name: 'ControlPanel',
@@ -544,137 +96,25 @@ export default {
     socket: Object
   },
   components: {
-    ValueID,
-    DialogSceneValue,
-    NodesTable
+    NodesTable,
+    DialogAddRemove
   },
   computed: {
-    sortedNodes () {
-      return this.nodes
-        .filter(n => !n.failed)
-        .sort((n1, n2) =>
-          n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
-        )
+    ...mapGetters(['nodes', 'appInfo', 'zwave']),
+    timeoutMs () {
+      return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
     },
-    scenesWithId () {
-      return this.scenes.map(s => {
-        s.label = `[${s.sceneid}] ${s.label}`
-        return s
-      })
-    },
-    dialogTitle () {
-      return this.editedIndex === -1 ? 'New Value' : 'Edit Value'
-    },
-    hassDevices () {
-      const devices = []
-      if (this.selectedNode && this.selectedNode.hassDevices) {
-        for (const id in this.selectedNode.hassDevices) {
-          const d = JSON.parse(
-            JSON.stringify(this.selectedNode.hassDevices[id])
-          )
-          d.id = id
-          devices.push(d)
-        }
-      }
-
-      return devices
-    },
-    commandGroups () {
-      if (this.selectedNode) {
-        const groups = {}
-        for (const v of this.selectedNode.values) {
-          const className = v.commandClassName
-          if (!groups[className]) {
-            groups[className] = []
-          }
-          groups[className].push(v)
-        }
-        return groups
-      } else {
-        return {}
-      }
+    controllerStatus () {
+      return this.appInfo.controllerStatus
     }
   },
-  watch: {
-    dialogValue (val) {
-      val || this.closeDialog()
-    },
-    newName (val) {
-      this.nameError = this.validateTopic(val)
-    },
-    newLoc (val) {
-      this.locError = this.validateTopic(val)
-    },
-    selectedNode () {
-      if (this.selectedNode) {
-        this.newName = this.selectedNode.name
-        this.newLoc = this.selectedNode.loc
-        this.node_action = null
-        this.selectedDevice = null
-      }
-    },
-    selectedDevice () {
-      this.deviceJSON = this.selectedDevice
-        ? JSON.stringify(this.selectedDevice, null, 2)
-        : ''
-    },
-    selectedScene () {
-      this.refreshValues()
-    },
-    currentTab () {
-      if (this.currentTab === 2) {
-        this.refreshScenes()
-      } else {
-        this.selectedScene = null
-        this.scene_values = []
-      }
-
-      if (this.currentTab === 3) {
-        this.debugActive = true
-      } else {
-        this.debugActive = false
-      }
-    }
-  },
+  watch: {},
   data () {
     return {
       settings: new Settings(localStorage),
-      nodes: [],
-      scenes: [],
-      debug: [],
-      homeid: '',
-      homeHex: '',
-      appVersion: '',
-      zwaveVersion: '',
-      debugActive: false,
-      selectedScene: null,
-      cnt_status: 'Unknown',
-      newScene: '',
-      scene_values: [],
-      dialogValue: false,
-      editedValue: {},
-      editedIndex: -1,
-      headers_scenes: [
-        { text: 'Value ID', value: 'id' },
-        { text: 'Node', value: 'nodeId' },
-        { text: 'Label', value: 'label' },
-        { text: 'Value', value: 'value' },
-        { text: 'Timeout', value: 'timeout' },
-        { text: 'Actions', sortable: false }
-      ],
-      headers_hass: [
-        { text: 'Id', value: 'id' },
-        { text: 'Type', value: 'type' },
-        { text: 'Object id', value: 'object_id' },
-        { text: 'Persistent', value: 'persistent' },
-        { text: 'Discovery', value: 'ignoreDiscovery' }
-      ],
-      selectedDevice: null,
-      errorDevice: false,
-      deviceJSON: '',
-      group: {},
-      currentTab: 0,
-      node_action: 'requestNetworkUpdate',
+      bindedSocketEvents: {}, // keep track of the events-handlers
+      addRemoveShowDialog: false,
+      addRemoveNode: null,
       node_actions: [
         {
           text: 'Heal node',
@@ -720,22 +160,6 @@ export default {
       cnt_action: 'healNetwork',
       cnt_actions: [
         {
-          text: 'Start inclusion',
-          value: 'startInclusion'
-        },
-        {
-          text: 'Stop inclusion',
-          value: 'stopInclusion'
-        },
-        {
-          text: 'Start exclusion',
-          value: 'startExclusion'
-        },
-        {
-          text: 'Stop exclusion',
-          value: 'stopExclusion'
-        },
-        {
           text: 'Heal Network',
           value: 'beginHealingNetwork'
         },
@@ -748,11 +172,6 @@ export default {
           value: 'hardReset'
         }
       ],
-      newName: '',
-      nameError: null,
-      locError: null,
-      newLoc: '',
-      selectedNode: null,
       rules: {
         required: value => {
           let valid = false
@@ -766,55 +185,7 @@ export default {
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
-    validateTopic (name) {
-      const match = name
-        ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
-        : [name]
-
-      return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
-    },
-    selectNode ({ node }) {
-      if (!node) return
-
-      if (this.selectedNode === node) {
-        this.selectedNode = null
-      } else {
-        this.selectedNode = this.nodes.find(n => n.id === node.id)
-      }
-    },
-    resetName () {
-      setTimeout(() => {
-        this.newName = this.selectedNode.name
-      }, 10)
-    },
-    resetLocation () {
-      setTimeout(() => {
-        this.newLoc = this.selectedNode.loc
-      }, 10)
-    },
-    getValue (v) {
-      const node = this.nodes[v.nodeId]
-
-      if (node && node.values) {
-        return node.values.find(i => i.id === v.id)
-      } else {
-        return null
-      }
-    },
-    validJSONdevice () {
-      let valid = true
-      try {
-        JSON.parse(this.deviceJSON)
-      } catch (error) {
-        valid = false
-      }
-      this.errorDevice = !valid
-
-      return this.deviceJSON === '' || valid || 'JSON test failed'
-    },
+    ...mapMutations(['showSnackbar']),
     async importConfiguration () {
       if (
         await this.$listeners.showConfirm(
@@ -845,224 +216,9 @@ export default {
           console.log(error)
         })
     },
-    exportNode () {
-      this.$listeners.export(
-        this.selectedNode,
-        'node_' + this.selectedNode.id,
-        'json'
-      )
-    },
-    async importScenes () {
-      if (
-        await this.$listeners.showConfirm(
-          'Attention',
-          'This operation will override all current scenes and cannot be undone',
-          'alert'
-        )
-      ) {
-        try {
-          const { data } = await this.$listeners.import('json')
-          if (data instanceof Array) {
-            this.apiRequest('_setScenes', [data])
-          } else {
-            this.showSnackbar('Imported file not valid')
-          }
-        } catch (error) {}
-      }
-    },
-    exportScenes () {
-      this.$listeners.export(this.scenes, 'scenes')
-    },
-    apiRequest (apiName, args) {
-      if (this.socket.connected) {
-        const data = {
-          api: apiName,
-          args: args
-        }
-        this.socket.emit(socketActions.zwave, data)
-      } else {
-        this.showSnackbar('Socket disconnected')
-      }
-    },
-    refreshValues () {
-      if (this.selectedScene) {
-        this.apiRequest('_sceneGetValues', [this.selectedScene])
-      }
-    },
-    refreshScenes () {
-      this.apiRequest('_getScenes', [])
-    },
-    createScene () {
-      if (this.newScene) {
-        this.apiRequest('_createScene', [this.newScene])
-        this.refreshScenes()
-        this.newScene = ''
-      }
-    },
-    async removeScene () {
-      if (
-        this.selectedScene &&
-        (await this.$listeners.showConfirm(
-          'Attention',
-          'Are you sure you want to delete this scene?',
-          'alert'
-        ))
-      ) {
-        this.apiRequest('_removeScene', [this.selectedScene])
-        this.selectedScene = null
-        this.refreshScenes()
-      }
-    },
-    activateScene () {
-      if (this.selectedScene) {
-        this.apiRequest('_activateScene', [this.selectedScene])
-      }
-    },
-    editItem (item) {
-      this.editedIndex = this.scene_values.indexOf(item)
-      const node = this.nodes[item.nodeId]
-
-      let value = node.values.find(v => v.id === item.id)
-
-      value = Object.assign({}, value)
-      value.newValue = item.value
-
-      this.editedValue = {
-        node: node,
-        value: value,
-        timeout: this.scene_values[this.editedIndex].timeout
-      }
-      this.dialogValue = true
-    },
-    async deleteItem (value) {
-      if (
-        await this.$listeners.showConfirm(
-          'Attention',
-          'Are you sure you want to delete this item?',
-          'alert'
-        )
-      ) {
-        this.apiRequest('_removeSceneValue', [this.selectedScene, value])
-        this.refreshValues()
-      }
-    },
-    async deleteDevice () {
-      const device = this.selectedDevice
-      if (
-        device &&
-        (await this.$listeners.showConfirm(
-          'Attention',
-          'Are you sure you want to delete selected device?',
-          'alert'
-        ))
-      ) {
-        this.socket.emit(socketActions.hass, {
-          apiName: 'delete',
-          device: device,
-          nodeId: this.selectedNode.id
-        })
-      }
-    },
-    async rediscoverNode () {
-      const node = this.selectedNode
-      if (
-        node &&
-        (await this.$listeners.showConfirm(
-          'Rediscover node',
-          'Are you sure you want to re-discover all node values?'
-        ))
-      ) {
-        this.socket.emit(socketActions.hass, {
-          apiName: 'rediscoverNode',
-          nodeId: this.selectedNode.id
-        })
-      }
-    },
-    async disableDiscovery () {
-      const node = this.selectedNode
-      if (
-        node &&
-        (await this.$listeners.showConfirm(
-          'Rediscover node',
-          'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store'
-        ))
-      ) {
-        this.socket.emit(socketActions.hass, {
-          apiName: 'disableDiscovery',
-          nodeId: this.selectedNode.id
-        })
-      }
-    },
-    async rediscoverDevice () {
-      const device = this.selectedDevice
-      if (
-        device &&
-        (await this.$listeners.showConfirm(
-          'Rediscover Device',
-          'Are you sure you want to re-discover selected device?'
-        ))
-      ) {
-        this.socket.emit(socketActions.hass, {
-          apiName: 'discover',
-          device: device,
-          nodeId: this.selectedNode.id
-        })
-      }
-    },
-    updateDevice () {
-      if (!this.errorDevice) {
-        const updated = JSON.parse(this.deviceJSON)
-        this.$set(
-          this.selectedNode.hassDevices,
-          this.selectedDevice.id,
-          updated
-        )
-        this.socket.emit(socketActions.hass, {
-          apiName: 'update',
-          device: updated,
-          nodeId: this.selectedNode.id
-        })
-      }
-    },
-    addDevice () {
-      if (!this.errorDevice) {
-        const newDevice = JSON.parse(this.deviceJSON)
-        this.socket.emit(socketActions.hass, {
-          apiName: 'add',
-          device: newDevice,
-          nodeId: this.selectedNode.id
-        })
-      }
-    },
-    storeDevices (remove) {
-      this.socket.emit(socketActions.hass, {
-        apiName: 'store',
-        devices: this.selectedNode.hassDevices,
-        nodeId: this.selectedNode.id,
-        remove: remove
-      })
-    },
-    closeDialog () {
-      this.dialogValue = false
-      setTimeout(() => {
-        this.editedValue = {}
-        this.editedIndex = -1
-      }, 300)
-    },
-    saveValue () {
-      const value = this.editedValue.value
-      value.value = value.newValue
-
-      // if value already exists it will be updated
-      this.apiRequest('_addSceneValue', [
-        this.selectedScene,
-        value,
-        value.value,
-        this.editedValue.timeout
-      ])
-      this.refreshValues()
-
-      this.closeDialog()
+    onAddRemoveClose () {
+      this.addRemoveShowDialog = false
+      this.addRemoveNode = null
     },
     async sendCntAction () {
       if (this.cnt_action) {
@@ -1077,18 +233,41 @@ export default {
           ) {
             broadcast = await this.$listeners.showConfirm(
               'Broadcast',
-              'Send this command to all nodes?'
+              'Send this command to all nodes?',
+              'info',
+              {
+                cancelText: 'No'
+              }
             )
           }
 
           if (!broadcast) {
-            const id = parseInt(prompt('Node ID'))
+            const { nodeId } = await this.$listeners.showConfirm(
+              'Choose a node',
+              '',
+              'info',
+              {
+                confirmText: 'Ok',
+                inputs: [
+                  {
+                    type: 'list',
+                    items: this.nodes,
+                    label: 'Node',
+                    hint: 'Select a node',
+                    required: true,
+                    key: 'nodeId',
+                    itemText: '_name',
+                    itemValue: 'id'
+                  }
+                ]
+              }
+            )
 
-            if (isNaN(id)) {
-              this.showMessage('Node ID must be an integer value')
+            if (isNaN(nodeId)) {
+              this.showSnackbar('Node ID must be an integer value')
               return
             }
-            args.push(id)
+            args.push(nodeId)
           }
         }
 
@@ -1098,7 +277,11 @@ export default {
         ) {
           const secure = await this.$listeners.showConfirm(
             'Node inclusion',
-            'Start inclusion in secure mode?'
+            'Start inclusion in secure mode?',
+            'info',
+            {
+              cancelText: 'No'
+            }
           )
           args.push(secure)
         } else if (this.cnt_action === 'hardReset') {
@@ -1111,10 +294,32 @@ export default {
             return
           }
         } else if (this.cnt_action === 'beginFirmwareUpdate') {
+          const { target } = await this.$listeners.showConfirm(
+            'Choose target',
+            '',
+            'info',
+            {
+              confirmText: 'Ok',
+              inputs: [
+                {
+                  type: 'number',
+                  label: 'Target',
+                  default: 0,
+                  rules: [v => v >= 0 || 'Invalid target'],
+                  hint:
+                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+                  required: true,
+                  key: 'target'
+                }
+              ]
+            }
+          )
+
           try {
             const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
+            args.push(target)
           } catch (error) {
             return
           }
@@ -1130,137 +335,11 @@ export default {
         }
       }
     },
-    async sendNodeAction (action) {
-      action = typeof action === 'string' ? action : this.node_action
-      if (this.selectedNode) {
-        const args = [this.selectedNode.id]
-
-        if (this.node_action === 'beginFirmwareUpdate') {
-          try {
-            const { data, file } = await this.$listeners.import('buffer')
-            args.push(file.name)
-            args.push(data)
-          } catch (error) {
-            return
-          }
-        } else if (this.node_action === 'replaceFailedNode') {
-          const secure = await this.$listeners.showConfirm(
-            'Node inclusion',
-            'Start inclusion in secure mode?'
-          )
-          args.push(secure)
-        }
-
-        this.apiRequest(action, args)
-      }
+    apiRequest (apiName, args) {
+      this.$emit('apiRequest', apiName, args)
     },
     saveConfiguration () {
       this.apiRequest('writeConfig', [])
-    },
-    updateName () {
-      if (this.selectedNode && !this.nameError) {
-        this.apiRequest('_setNodeName', [this.selectedNode.id, this.newName])
-      }
-    },
-    updateLoc () {
-      if (this.selectedNode && !this.locError) {
-        this.apiRequest('_setNodeLocation', [this.selectedNode.id, this.newLoc])
-      }
-    },
-    resetGroup () {
-      this.$set(this.group, 'associations', [])
-      this.$set(this.group, 'group', null)
-    },
-    getAssociations () {
-      const g = this.group
-      if (g && g.node && g.group) {
-        this.apiRequest('getAssociations', [g.node.id, g.group.value])
-      }
-    },
-    addAssociation () {
-      const g = this.group
-      const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
-
-      const association = { nodeId: target }
-
-      if (g.group.multiChannel && g.targetInstance >= 0) {
-        association.endpoint = g.targetInstance
-      }
-
-      if (g && g.node && target) {
-        const args = [g.node.id, g.group.value, [association]]
-
-        this.apiRequest('addAssociations', args)
-
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
-    },
-    removeAssociation (association) {
-      const g = this.group
-      if (g && g.node) {
-        if (!association) {
-          const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
-
-          if (isNaN(target)) return
-          association = { nodeId: target }
-
-          if (g.group.multiChannel && g.targetInstance >= 0) {
-            association.endpoint = g.targetInstance
-          }
-        }
-
-        const args = [g.node.id, g.group.value, [association]]
-
-        this.apiRequest('removeAssociations', args)
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
-    },
-    removeAllAssociations () {
-      const g = this.group
-      if (g && g.node) {
-        const args = [g.node.id]
-
-        this.apiRequest('removeAllAssociations', args)
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
-    },
-    updateValue (v, customValue) {
-      v = this.getValue(v)
-
-      if (v) {
-        // in this way I can check when the value receives an update
-        v.toUpdate = true
-
-        if (v.type === 'number') {
-          v.newValue = Number(v.newValue)
-        }
-
-        // it's a button
-        if (v.type === 'boolean' && !v.readable) {
-          v.newValue = true
-        }
-
-        if (customValue !== undefined) {
-          v.newValue = customValue
-        }
-
-        this.apiRequest('writeValue', [
-          {
-            nodeId: v.nodeId,
-            commandClass: v.commandClass,
-            endpoint: v.endpoint,
-            property: v.property,
-            propertyKey: v.propertyKey
-          },
-          v.newValue
-        ])
-      }
     },
     jsonToList (obj) {
       let s = ''
@@ -1268,173 +347,54 @@ export default {
 
       return s
     },
-    initNode (n) {
-      const values = []
-      // transform object in array
-      for (const k in n.values) {
-        n.values[k].newValue = n.values[k].value
-        values.push(n.values[k])
-      }
-      n.values = values
-      this.setName(n)
-    },
-    setName (n) {
-      n._name = n.name
-        ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
-        : 'NodeID_' + n.id
-    }
-  },
-  mounted () {
-    const self = this
-
-    this.socket.on(socketEvents.controller, data => {
-      self.cnt_status = data
-    })
-
-    this.socket.on(socketEvents.connected, info => {
-      self.homeid = info.homeid
-      self.homeHex = info.name
-      self.appVersion = info.appVersion
-      self.zwaveVersion = info.zwaveVersion
-    })
-
-    this.socket.on(socketEvents.nodeRemoved, node => {
-      if (self.selectedNode && self.selectedNode.id === node.id) {
-        self.selectedNode = null
-      }
-      self.$set(self.nodes, node.id, node)
-    })
-
-    this.socket.on(socketEvents.debug, data => {
-      if (self.debugActive) {
-        data = ansiUp.ansi_to_html(data)
-        data = data.replace(/\n/g, '</br>')
-        // \b[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z\b
-        self.debug.push(data)
-
-        if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift()
-
-        const textarea = document.getElementById('debug_window')
-        if (textarea) {
-          // textarea could be hidden
-          textarea.scrollTop = textarea.scrollHeight
-        }
-      }
-    })
-
-    this.socket.on(socketEvents.init, data => {
-      // convert node values in array
-      const nodes = data.nodes
-      for (let i = 0; i < nodes.length; i++) {
-        self.initNode(nodes[i])
-      }
-      self.nodes = nodes
-      self.cnt_status = data.error ? data.error : data.cntStatus
-      self.homeid = data.info.homeid
-      self.homeHex = data.info.name
-      self.appVersion = data.info.appVersion
-      self.zwaveVersion = data.info.zwaveVersion
-    })
-
-    this.socket.on(socketEvents.nodeUpdated, data => {
-      self.initNode(data)
-      if (!self.nodes[data.id] || self.nodes[data.id].failed) {
-        // add missing nodes
-        while (self.nodes.length < data.id) {
-          self.nodes.push({
-            id: self.nodes.length,
-            failed: true,
-            status: 'Removed'
-          })
-        }
-      }
-      self.$set(self.nodes, data.id, data)
-
-      if (this.selectedNode && this.selectedNode.id === data.id) {
-        this.selectedNode = self.nodes[data.id]
-      }
-    })
-
-    this.socket.on(socketEvents.valueRemoved, data => {
-      const valueId = self.getValue(data)
-
-      if (valueId) {
-        const node = self.nodes[data.nodeId]
-        const index = node.values.indexOf(valueId)
-
-        if (index >= 0) {
-          node.values.splice(index, 1)
-        }
-      }
-    })
-
-    this.socket.on(socketEvents.valueUpdated, data => {
-      const valueId = self.getValue(data)
-
-      if (valueId) {
-        // this value is waiting for an update
-        if (valueId.toUpdate) {
-          valueId.toUpdate = false
-          self.showSnackbar('Value updated')
-        }
-        valueId.newValue = data.value
-        valueId.value = data.value
-      } else {
-        // means that this value has been added
-        const node = self.nodes[data.nodeId]
-        if (node) {
-          data.newValue = data.value
-          node.values.push(data)
-        }
-      }
-    })
-
-    this.socket.on(socketEvents.api, async data => {
+    onApiResponse (data) {
       if (data.success) {
         switch (data.api) {
-          case 'getAssociations':
-            self.$set(self.group, 'associations', data.result)
-            break
-          case '_getScenes':
-            self.scenes = data.result
-            break
-          case '_setScenes':
-            self.scenes = data.result
-            self.showSnackbar('Successfully updated scenes')
-            break
-          case '_sceneGetValues':
-            self.scene_values = data.result
-            break
           case 'getDriverStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Driver statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           case 'getNodeStatistics':
-            self.$listeners.showConfirm(
+            this.$listeners.showConfirm(
               'Node statistics',
-              self.jsonToList(data.result)
+              this.jsonToList(data.result)
             )
             break
           default:
-            self.showSnackbar('Successfully call api ' + data.api)
+            this.showSnackbar('Successfully call api ' + data.api)
         }
       } else {
-        self.showSnackbar(
+        this.showSnackbar(
           'Error while calling api ' + data.api + ': ' + data.message
         )
       }
-    })
+    },
+    onNodeAddedRemoved (node) {
+      this.addRemoveNode = node
+    },
+    bindEvent (eventName, handler) {
+      this.socket.on(socketEvents[eventName], handler)
+      this.bindedSocketEvents[eventName] = handler
+    },
+    unbindEvents () {
+      for (const event in this.bindedSocketEvents) {
+        this.socket.off(event, this.bindedSocketEvents[event])
+      }
+    }
+  },
+  mounted () {
+    const onApiResponse = this.onApiResponse.bind(this)
+    const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
 
-    this.socket.emit(socketActions.init, true)
+    this.bindEvent('api', onApiResponse)
+    this.bindEvent('nodeRemoved', onNodeAddedRemoved)
+    this.bindEvent('nodeAdded', onNodeAddedRemoved)
   },
   beforeDestroy () {
     if (this.socket) {
-      // unbind events
-      for (const event in socketEvents) {
-        this.socket.off(event)
-      }
+      this.unbindEvents()
     }
   }
 }

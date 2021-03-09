@@ -1,149 +1,226 @@
 <template>
-  <div v-if="!value.writeable && !value.list">
-    <v-text-field
-      :label="'[' + value.id + '] ' + value.label"
-      readonly
-      :suffix="value.unit"
-      :hint="value.description || ''"
-      v-model="value.value"
-    ></v-text-field>
-  </div>
+  <div>
+    <v-subheader class="valueid-label">{{ label }} </v-subheader>
 
-  <div v-else>
-    <v-text-field
-      v-if="
-        !value.list &&
-          (value.type === 'number' ||
-            value.type === 'string' ||
-            value.type === 'any')
-      "
-      :label="'[' + value.id + '] ' + value.label"
-      :type="value.type === 'number' ? 'number' : 'text'"
-      :append-outer-icon="!disable_send ? 'send' : null"
-      :suffix="value.unit"
-      :min="value.min != value.max ? value.min : null"
-      :step="1"
-      :max="value.min != value.max ? value.max : null"
-      :hint="value.description || ''"
-      v-model="value.newValue"
-      @click:append-outer="updateValue(value)"
-    ></v-text-field>
+    <div v-if="!value.writeable">
+      <div class="readonly mt-5">
+        {{ parsedValue + (value.unit ? ' ' + value.unit : '') }}
+      </div>
 
-    <div style="display:flex" v-if="value.type === 'duration'">
-      <v-text-field
-        :label="'[' + value.id + '] ' + value.label"
-        :type="value.type === 'number' ? 'number' : 'text'"
-        :min="value.min != value.max ? value.min : null"
-        :step="1"
-        :readonly="!value.writeable || disable_send"
-        :max="value.min != value.max ? value.max : null"
-        :hint="value.description || ''"
-        v-model.number="value.newValue.value"
-      ></v-text-field>
-      <v-select
-        style="margin-left:10px;width:20px"
-        :items="durations"
-        v-model="value.newValue.unit"
-        :readonly="!value.writeable || disable_send"
-        :append-outer-icon="!disable_send ? 'send' : null"
-        @click:append-outer="updateValue(value)"
-      ></v-select>
-    </div>
-
-    <v-text-field
-      style="max-width: 250px;margin: auto;"
-      flat
-      solo
-      v-if="value.type === 'color'"
-      v-model="color"
-      :label="'[' + value.id + '] ' + value.label"
-      :append-outer-icon="!disable_send ? 'send' : null"
-      :hint="value.description || ''"
-      @click:append-outer="updateValue(value)"
-    >
-      <template v-slot:append>
-        <v-menu
-          v-model="menu"
-          top
-          nudge-bottom="105"
-          nudge-left="16"
-          :close-on-content-click="false"
-        >
-          <template v-slot:activator="{ on }">
-            <div :style="pickerStyle" v-on="on" />
-          </template>
-          <v-card>
-            <v-card-text class="pa-0">
-              <v-color-picker hide-mode-switch v-model="color" flat />
-            </v-card-text>
-          </v-card>
-        </v-menu>
-      </template>
-    </v-text-field>
-
-    <v-select
-      v-if="value.list"
-      :items="value.states"
-      :label="'[' + value.id + '] ' + value.label"
-      :hint="value.description || ''"
-      :append-outer-icon="!disable_send || value.writeable ? 'send' : null"
-      v-model="value.newValue"
-      :readonly="!value.writeable"
-      @click:append-outer="updateValue(value)"
-    ></v-select>
-
-    <div v-if="value.type == 'boolean' && value.writeable && value.readable">
-      <v-subheader style="padding-left: 0"
-        >{{ '[' + value.id + '] ' + value.label }}
-      </v-subheader>
-      <div style="display: flex">
-        <v-btn
-          outlined
-          class="on-button"
-          :style="{ background: value.value ? '#4CAF50' : '' }"
-          :color="value.value ? 'white' : 'green'"
-          dark
-          @click="updateValue(value, true)"
-        >
-          ON
-        </v-btn>
-        <v-btn
-          outlined
-          class="off-button"
-          :style="{ background: !value.value ? '#f44336' : '' }"
-          :color="!value.value ? 'white' : 'red'"
-          @click="updateValue(value, false)"
-          dark
-        >
-          OFF
-        </v-btn>
+      <div v-if="help" class="caption mt-1">
+        {{ help }}
       </div>
     </div>
 
-    <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
-      <template v-slot:activator="{ on }">
-        <v-btn
-          v-on="on"
-          color="primary"
-          dark
-          @click="updateValue(value)"
-          class="mb-2"
-          >{{ value.label }}</v-btn
-        >
-      </template>
-      <span>{{ '[' + value.id + '] ' + (value.description || '') }}</span>
-    </v-tooltip>
+    <div v-else>
+      <v-text-field
+        v-if="
+          !value.list && (value.type === 'string' || value.type === 'buffer')
+        "
+        :append-outer-icon="!disable_send ? 'send' : null"
+        :suffix="value.unit"
+        persistent-hint
+        :hint="help"
+        v-model="value.newValue"
+        @click:append-outer="updateValue(value)"
+      ></v-text-field>
+
+      <v-text-field
+        v-if="!value.list && value.type === 'number'"
+        type="number"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        :suffix="value.unit"
+        :min="value.min != value.max ? value.min : null"
+        :step="1"
+        persistent-hint
+        :max="value.min != value.max ? value.max : null"
+        :hint="help"
+        v-model.number="value.newValue"
+        @click:append-outer="updateValue(value)"
+      ></v-text-field>
+
+      <v-text-field
+        v-if="!value.list && value.type === 'any'"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        :suffix="value.unit"
+        persistent-hint
+        :error="!!error"
+        :error-messages="error"
+        :hint="help"
+        v-model="parsedValue"
+        @click:append-outer="updateValue(value)"
+      ></v-text-field>
+
+      <div style="display:flex" v-if="value.type === 'duration'">
+        <v-text-field
+          :type="value.type === 'number' ? 'number' : 'text'"
+          :min="value.min != value.max ? value.min : null"
+          :step="1"
+          persistent-hint
+          :readonly="disable_send"
+          :max="value.min != value.max ? value.max : null"
+          :hint="help"
+          v-model.number="value.newValue.value"
+        ></v-text-field>
+        <v-select
+          style="margin-left:10px;min-width:105px;width:135px"
+          :items="durations"
+          v-model="value.newValue.unit"
+          :readonly="disable_send"
+          persistent-hint
+          :append-outer-icon="!disable_send ? 'send' : null"
+          @click:append-outer="updateValue(value)"
+        ></v-select>
+      </div>
+
+      <v-text-field
+        style="max-width: 250px;margin-top:10px"
+        flat
+        solo
+        v-if="value.type === 'color'"
+        v-model="color"
+        persistent-hint
+        :append-outer-icon="!disable_send ? 'send' : null"
+        :hint="help"
+        @click:append-outer="updateValue(value)"
+      >
+        <template v-slot:append>
+          <v-menu
+            v-model="menu"
+            top
+            nudge-bottom="105"
+            nudge-left="16"
+            :close-on-content-click="false"
+          >
+            <template v-slot:activator="{ on }">
+              <div :style="pickerStyle" v-on="on" />
+            </template>
+            <v-card>
+              <v-card-text class="pa-0">
+                <v-color-picker hide-mode-switch v-model="color" flat />
+              </v-card-text>
+            </v-card>
+          </v-menu>
+        </template>
+      </v-text-field>
+
+      <v-select
+        v-if="value.list && !value.allowManualEntry"
+        :items="items"
+        :style="{
+          'max-width': $vuetify.breakpoint.smAndDown
+            ? '280px'
+            : $vuetify.breakpoint.smOnly
+            ? '400px'
+            : 'auto'
+        }"
+        :hint="help"
+        persistent-hint
+        :return-object="false"
+        :item-text="itemText"
+        item-value="value"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        v-model="value.newValue"
+        @click:append-outer="updateValue(value)"
+      >
+        <template v-slot:selection="{ item }">
+          <span>
+            {{ itemText(selectedItem || item) }}
+          </span>
+        </template>
+      </v-select>
+
+      <v-combobox
+        v-if="value.list && value.allowManualEntry"
+        :items="items"
+        :style="{
+          'max-width': $vuetify.breakpoint.smAndDown
+            ? '280px'
+            : $vuetify.breakpoint.smOnly
+            ? '400px'
+            : 'auto'
+        }"
+        :hint="help"
+        persistent-hint
+        chips
+        :item-text="itemText"
+        item-value="value"
+        :type="value.type === 'number' ? 'number' : 'text'"
+        :return-object="false"
+        :append-outer-icon="!disable_send ? 'send' : null"
+        v-model="value.newValue"
+        ref="myCombo"
+        @click:append-outer="updateValue(value)"
+      >
+        <template v-slot:selection="{ attrs, item, selected }">
+          <v-chip v-bind="attrs" :input-value="selected">
+            <span>
+              {{ itemText(selectedItem || item) }}
+            </span>
+          </v-chip>
+        </template>
+      </v-combobox>
+
+      <div v-if="value.type == 'boolean' && value.writeable && value.readable">
+        <v-btn-toggle class="mt-4" v-model="value.newValue" rounded>
+          <v-btn
+            outlined
+            height="40px"
+            :value="true"
+            :style="{
+              background: value.newValue ? '#4CAF50' : ''
+            }"
+            :color="value.newValue ? 'white' : 'green'"
+            dark
+            @click="updateValue(value, true)"
+          >
+            ON
+          </v-btn>
+          <v-btn
+            outlined
+            height="40px"
+            :value="false"
+            :style="{
+              background: !value.newValue ? '#f44336' : ''
+            }"
+            :color="!value.newValue ? 'white' : 'red'"
+            @click="updateValue(value, false)"
+            dark
+          >
+            OFF
+          </v-btn>
+        </v-btn-toggle>
+        <div v-if="help" class="caption mt-2">{{ help }}</div>
+      </div>
+
+      <v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
+        <template v-slot:activator="{ on }">
+          <v-btn
+            v-on="on"
+            color="primary"
+            dark
+            @click="updateValue(value)"
+            class="mb-2"
+            >{{ value.label }}</v-btn
+          >
+        </template>
+        <span>{{ '[' + value.id + '] ' + help }}</span>
+      </v-tooltip>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.on-button {
-  border-radius: 20px 0 0 20px;
-  margin-right: 0;
+.valueid-label {
+  font-weight: bold;
+  color: black;
+  padding-left: 0;
+  margin-bottom: -10px;
 }
-.off-button {
-  border-radius: 0 20px 20px 0;
-  margin-right: 0;
+
+.readonly {
+  font-size: x-large;
+  font-weight: bold;
 }
 </style>
 
@@ -160,18 +237,69 @@ export default {
   data () {
     return {
       durations: ['seconds', 'minutes'],
-      menu: false
+      menu: false,
+      error: null
     }
   },
   computed: {
+    selectedItem () {
+      const value =
+        this.value.type === 'number'
+          ? Number(this.value.newValue)
+          : this.value.newValue
+      if (!this.value.states) return null
+      else return this.value.states.find(s => s.value === value)
+    },
+    items () {
+      if (this.selectedItem) {
+        return this.value.states
+      } else {
+        return [
+          { value: this.value.newValue, text: 'Custom' },
+          ...this.value.states
+        ]
+      }
+    },
+    label () {
+      return '[' + this.value.id + '] ' + this.value.label
+    },
+    help () {
+      return (
+        (this.value.description ? this.value.description + ' ' : '') +
+        (this.value.default !== undefined && !this.value.list
+          ? `(Default: ${this.value.default})`
+          : '')
+      )
+    },
     color: {
-      // getter
       get: function () {
         return '#' + (this.value.newValue || 'ffffff').toUpperCase()
       },
-      // setter
       set: function (v) {
         this.value.newValue = v ? v.substr(1, 7) : null
+      }
+    },
+    parsedValue: {
+      get: function () {
+        if (typeof this.value.newValue === 'object') {
+          return JSON.stringify(this.value.newValue)
+        } else if (this.value.states && this.value.newValue !== undefined) {
+          return this.itemText(this.selectedItem || this.value.newValue)
+        }
+        return this.value.newValue
+      },
+      set: function (v) {
+        try {
+          if (this.value.type === 'any') {
+            this.value.newValue = JSON.parse(v)
+          } else if (typeof v === 'string' && this.value.type === 'number') {
+            this.value.newValue = Number(v)
+          }
+
+          this.error = null
+        } catch (error) {
+          this.error = 'Value not valid'
+        }
       }
     },
     pickerStyle () {
@@ -188,8 +316,23 @@ export default {
     }
   },
   methods: {
+    itemText (item) {
+      if (typeof item === 'object') {
+        return `[${item.value}] ${item.text}${
+          this.value.default === item.value ? ' (Default)' : ''
+        }`
+      } else {
+        return `[${item}] Custom`
+      }
+    },
     updateValue (v, customValue) {
       // needed for on/off control to update the newValue
+
+      if (this.$refs.myCombo) {
+        // trick used to send the value in combobox without the need to press enter
+        this.value.newValue = this.$refs.myCombo.$refs.input._value
+      }
+
       if (customValue !== undefined) {
         v.newValue = customValue
       }

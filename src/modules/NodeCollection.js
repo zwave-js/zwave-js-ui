@@ -123,19 +123,6 @@ export class NodeCollection {
       nodeValue => values.length === 0 || values.indexOf(nodeValue) >= 0
     )
   }
-
-  values (property) {
-    const uniqueMap = {}
-    this.nodes.forEach(node => {
-      if (node[property]) {
-        const strVal = this._strValue(node[property])
-        uniqueMap[strVal] = uniqueMap[strVal] || node[property]
-      }
-    })
-    return Object.keys(uniqueMap)
-      .sort()
-      .map(key => uniqueMap[key])
-  }
 }
 
 export default NodeCollection

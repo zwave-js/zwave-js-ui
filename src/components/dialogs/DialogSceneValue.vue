@@ -8,8 +8,8 @@
       <v-card-text>
         <v-container grid-list-md>
           <v-form v-model="valid" ref="form" lazy-validation>
-            <v-layout wrap>
-              <v-flex xs12>
+            <v-row>
+              <v-col cols="12">
                 <v-select
                   v-model="editedValue.node"
                   label="Node"
@@ -18,10 +18,10 @@
                   item-text="_name"
                   :rules="[required]"
                   item-value="id"
-                  :items="sortedNodes"
+                  :items="nodes"
                 ></v-select>
-              </v-flex>
-              <v-flex v-if="editedValue.node" xs12>
+              </v-col>
+              <v-col v-if="editedValue.node" cols="12">
                 <v-select
                   v-model="editedValue.value"
                   label="Value"
@@ -56,11 +56,11 @@
                     </v-list-item-content>
                   </template>
                 </v-select>
-              </v-flex>
-              <v-flex v-if="editedValue.value" xs12>
+              </v-col>
+              <v-col v-if="editedValue.value" cols="12">
                 <ValueID disable_send v-model="editedValue.value"></ValueID>
-              </v-flex>
-              <v-flex xs12>
+              </v-col>
+              <v-col cols="12">
                 <v-text-field
                   v-model.number="editedValue.timeout"
                   label="Timeout"
@@ -70,8 +70,8 @@
                   required
                   type="number"
                 ></v-text-field>
-              </v-flex>
-            </v-layout>
+              </v-col>
+            </v-row>
           </v-form>
         </v-container>
       </v-card-text>
@@ -102,15 +102,6 @@ export default {
     title: String,
     editedValue: Object,
     nodes: Array
-  },
-  computed: {
-    sortedNodes () {
-      return this.nodes
-        .filter(n => !n.failed)
-        .sort((n1, n2) =>
-          n1._name.toLowerCase() < n2._name.toLowerCase() ? -1 : 1
-        )
-    }
   },
   watch: {
     // eslint-disable-next-line no-unused-vars

@@ -1,0 +1,44 @@
+# #########################################################################
+# Creates a new release using `workflow_dispatch` event trigger with `type`
+# as input to describe the type of release to create
+name: 'Release-it: Create a new release on demand'
+
+on:
+  workflow_dispatch:
+    inputs:
+      type:
+        description: 'Type. Can be `patch` `minor` or `major`'
+        required: true
+        default: 'patch'
+jobs:
+  release-it:
+    if: github.actor == 'robertsLando' || github.actor == 'chrisns'
+    runs-on: [ubuntu-latest]
+    strategy:
+      matrix:
+        node-version: [14.x]
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v2
+        with:
+          ref: 'master'
+          fetch-depth: 0 # fetch all commits history to create the changelog
+          token: ${{ secrets.BOT_TOKEN }}
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2.1.5
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Make the release
+        env:
+          GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+        run: |
+          git config user.email "bot@zwave-js.io"
+          git config user.name "Z-Wave JS Bot"
+          git config user.password "${{secrets.BOT_TOKEN}}"
+          echo "GIT_USER=${{github.actor}}:${{secrets.BOT_TOKEN}}" >> $GITHUB_ENV
+          npx release-it ${{github.event.inputs.type}} --ci

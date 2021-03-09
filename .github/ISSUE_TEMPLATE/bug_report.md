@@ -7,9 +7,37 @@ assignees: robertsLando
 
 ---
 
-Before submitting a bug please read: <https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report>
+<!--
+  🚨🚨🚨 STOP! STOP! STOP! 🚨🚨🚨
+  Before opening an issue, please read and follow these steps:
+
+  1. Are you using HomeAssistant?
+  If yes, please open your issue at https://github.com/home-assistant/core/issues
+  UNLESS a developer told you to come here.
+
+  2. Check the troubleshooting section if your problem is described there:
+  https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
+
+  3. Check the changelog if your problem was already fixed recently.
+  https://github.com/zwave-js/zwavejs2mqtt/blob/master/CHANGELOG.md
+  We cannot provide support if you are not using the latest version.
+
+  4. Make sure to provide the necessary information, as described here:
+  https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
+  
+  If you are using HomeAssistant, this is how you do it:
+  Home Assistant -> settings -> Integrations -> Z-Wave JS -> Configure -> Create dump -> zip the json file and post it here.
+
+  🙏🏻🙏🏻🙏🏻 Thanks, now onto your issue:
+-->
 
 ### Version
+
+**Checklist:**
+
+- [ ] I am **not** using HomeAssistant. **Or:** a developer has told me to come here.
+- [ ] I have checked the troubleshooting section and my problem is **not** described there.
+- [ ] I have read the changelog problem was **not** mentioned there.
 
 Build/Run method
 
@@ -17,8 +45,8 @@ Build/Run method
 - [ ] PKG
 - [ ] Manually built (git clone - npm install - npm run build )
 
-zwavejs2mqtt version: 1.0.0
-zwavejs version: 6.0.0
+zwavejs2mqtt version: <version here, you can find it on control panel>
+zwave-js version: <version here, you can find it on control panel>
 
 ### Describe the bug
 

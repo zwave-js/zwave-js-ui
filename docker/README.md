@@ -7,7 +7,7 @@
 
 Docker container for zwavejs2mqtt Gateway and Control Panel
 
-## Tags
+## Architectures
 
 Supported architectures are:
 
@@ -16,17 +16,29 @@ Supported architectures are:
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
 
+## Tags
+
+Supported tags are:
+
+- `latest` for the latest official release.
+- `master` newest version, image gets built after every new commit to the master branch in the [zwavejs2mqtt](https://github.com/zwave-js/zwavejs2mqtt/commits/master) repository. (not recommended for the average user)
+- `sha-<commit-sha>` (example: `sha-92d502a`)
+- `<version>` (example: `2.1.0`)
+
+Note: `dev` tag have been deprecated.
+
 ## Install
 
 Here there are 3 different way to start the container and provide data persistence. In all of this solutions **remember to**:
 
 1. Replace `/dev/ttyACM0` with your serial device
 2. Add `-e TZ=Europe/Stockholm` to the `docker run` command to set the correct timezone in container
+3. If you are using zwave-js WS server, replace `3000:3000` with the port chosen in settings
 
 ### Run using volumes
 
 ```bash
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run using local folder
@@ -35,7 +47,7 @@ Here we will store our data in the current path (`$(pwd)`) named `store`. You ca
 
 ```bash
 mkdir store
-docker run --rm -it -p 8091:8091 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 -v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
 ### Run as a service
@@ -51,6 +63,9 @@ services:
     restart: always
     tty: true
     stop_signal: SIGINT
+    environment:
+      - SESSION_SECRET=mysupersecretkey
+    # - TZ=America/Los_Angeles  # uncomment and edit to match you timezone if you want logs time and dates to match your timezone instead of UTC.
     networks:
       - zwave
     devices:
@@ -58,7 +73,8 @@ services:
     volumes:
       - ./store:/usr/src/app/store
     ports:
-      - '8091:8091'
+      - '8091:8091' # port for web interface
+      - '3000:3000' # port for zwave-js websocket server
 networks:
   zwave:
 # volumes:
@@ -135,8 +151,8 @@ spec:
           path: /dev/ttyACM0
           type: File
       - name: data
-          hostPath:
-            path: /zwave/data
+        hostPath:
+          path: /zwave/data
 ---
 apiVersion: v1
 kind: Service

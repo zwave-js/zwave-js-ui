@@ -3,134 +3,13 @@
 
 module.exports = {
   // Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
-  binary_sensor_motion: {
+  binary_sensor: {
     type: 'binary_sensor',
-    object_id: 'motion',
+    object_id: 'event',
     discovery_payload: {
       payload_on: true,
       payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'motion'
-    }
-  },
-  binary_sensor_presence: {
-    type: 'binary_sensor',
-    object_id: 'presence',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'presence'
-    }
-  },
-  binary_sensor_contact: {
-    type: 'binary_sensor',
-    object_id: 'contact',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'door'
-    }
-  },
-  binary_sensor_lock: {
-    type: 'binary_sensor',
-    object_id: 'lock',
-    discovery_payload: {
-      payload_on: false,
-      payload_off: true,
-      value_template: '{{ value_json.value }}',
-      device_class: 'lock'
-    }
-  },
-  binary_sensor_water: {
-    type: 'binary_sensor',
-    object_id: 'water',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'moisture'
-    }
-  },
-  binary_sensor_smoke: {
-    type: 'binary_sensor',
-    object_id: 'smoke',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'smoke'
-    }
-  },
-  binary_sensor_gas: {
-    type: 'binary_sensor',
-    object_id: 'gas',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'gas'
-    }
-  },
-  binary_sensor_co: {
-    type: 'binary_sensor',
-    object_id: 'co',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'safety'
-    }
-  },
-  binary_sensor_co2: {
-    type: 'binary_sensor',
-    object_id: 'co2',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'safety'
-    }
-  },
-  binary_sensor_tamper: {
-    type: 'binary_sensor',
-    object_id: 'tamper',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'safety'
-    }
-  },
-  binary_sensor_alarm: {
-    type: 'binary_sensor',
-    object_id: 'alarm',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'problem'
-    }
-  },
-  binary_sensor_router: {
-    type: 'binary_sensor',
-    object_id: 'router',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'connectivity'
-    }
-  },
-  binary_sensor_battery_low: {
-    type: 'binary_sensor',
-    object_id: 'battery_low',
-    discovery_payload: {
-      payload_on: true,
-      payload_off: false,
-      value_template: '{{ value_json.value }}',
-      device_class: 'battery'
+      value_template: '{{ value_json.value }}'
     }
   },
 
@@ -151,36 +30,20 @@ module.exports = {
     }
   },
   // Light https://www.home-assistant.io/components/light.mqtt
-  light_rgb_switch: {
-    type: 'light',
-    object_id: 'rgb_switch',
-    discovery_payload: {
-      state_topic: true,
-      command_topic: true,
-      rgb_command_template: "{{ '#%02x%02x%02x' | format(red, green, blue)}}",
-      rgb_command_topic: true,
-      rgb_state_topic: true,
-      rgb_value_template:
-        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
-    }
-  },
   light_rgb_dimmer: {
     type: 'light',
     object_id: 'rgb_dimmer',
     discovery_payload: {
       state_topic: true,
       command_topic: true,
-      brightness_state_topic: true,
-      brightness_command_topic: true,
       on_command_type: 'brightness',
       state_value_template: '{{ "OFF" if value_json.value == 0 else "ON" }}',
       brightness_value_template: '{{ value_json.value }}',
       brightness_scale: 99,
-      rgb_command_template: '{{ "#%02x%02x%02x" | format(red, green, blue)}}',
-      rgb_command_topic: true,
-      rgb_state_topic: true,
+      rgb_command_template:
+        "{{ {'red': red, 'green': green, 'blue': blue}|to_json }}",
       rgb_value_template:
-        '{{ value_json.value[0:2] | int(0, 16) }},{{ value_json.value[2:4] | int(0, 16) }},{{ value_json.value[4:6] | int(0, 16) }}'
+        '{{ value_json.value.red }},{{ value_json.value.green }},{{ value_json.value.blue }}'
     }
   },
   light_dimmer: {
@@ -249,7 +112,7 @@ module.exports = {
       payload_close: '0'
     }
   },
-
+  // Barrier operator support for zwave-js (numeric commands/states)
   barrier_state: {
     type: 'cover',
     object_id: 'barrier_state',
@@ -258,13 +121,13 @@ module.exports = {
       state_topic: true,
       value_template: '{{ value_json.value }}',
       device_class: 'garage',
-      payload_open: 'Opened',
-      payload_close: 'Closed',
-      payload_stop: 'Stopped',
-      state_open: 'Opened',
-      state_opening: 'Opening',
-      state_closed: 'Closed',
-      state_closing: 'Closing'
+      payload_open: 255,
+      payload_close: 0,
+      payload_stop: 253,
+      state_open: 255,
+      state_opening: 254,
+      state_closed: 0,
+      state_closing: 252
     }
   },
 
@@ -291,9 +154,7 @@ module.exports = {
       max_temp: 40,
       temp_step: 0.5,
       modes: [],
-      mode_state_topic: true,
       mode_state_template: '{{ value_json.value }}',
-      mode_command_topic: true,
       current_temperature_topic: true,
       current_temperature_template: '{{ value_json.value }}',
       temperature_state_topic: true,

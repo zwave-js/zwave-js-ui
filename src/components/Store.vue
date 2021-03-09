@@ -1,7 +1,7 @@
 <template>
   <v-container fluid>
-    <v-card height="800" style="margin-top:30px;">
-      <v-row class="pa-4" justify="space-between" style="height:100%">
+    <v-card height="800" style="margin-top:30px; overflow:hidden">
+      <v-row class="pa-4 full-height" justify="space-between">
         <v-col class="scroll" cols="5">
           <v-treeview
             v-if="!loadingStore"
@@ -23,10 +23,12 @@
               </v-icon>
             </template>
             <template v-slot:append="{ item }">
-              <v-layout row justify-end ma-1>
+              <v-row justify-end class="ma-1">
                 <div class="caption grey--text">{{ item.size }}</div>
-                <v-icon @click="deleteFile(item)" color="red">delete</v-icon>
-              </v-layout>
+                <v-icon @click.stop="deleteFile(item)" color="red"
+                  >delete</v-icon
+                >
+              </v-row>
             </template>
           </v-treeview>
           <div v-else>
@@ -40,7 +42,7 @@
 
         <v-divider vertical></v-divider>
 
-        <v-col class="text-center scroll">
+        <v-col class="text-center no-scroll full-height">
           <div
             v-if="!selected || !selected.ext"
             class="title grey--text text--lighten-1 font-weight-light"
@@ -59,11 +61,13 @@
               style="align-self: center;"
             ></v-progress-circular>
           </div>
-          <v-card v-else :key="selected.path" class="scroll" flat>
-            <v-card-text
-              class="scroll custom-scroll"
-              style="height: calc(100% - 50px)"
-            >
+          <v-card
+            class="no-scroll full-height"
+            v-else
+            :key="selected.path"
+            flat
+          >
+            <v-card-text class="no-scroll" style="height: calc(100% - 50px)">
               <prism-editor
                 class="custom-font"
                 lineNumbers
@@ -124,22 +128,12 @@
   height: 100%;
 }
 
-.custom-scroll ::-webkit-scrollbar-track {
-  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
-  border-radius: 20px;
-  background-color: #f5f5f5;
+.no-scroll {
+  overflow: hidden;
 }
 
-.custom-scroll ::-webkit-scrollbar {
-  width: 5px;
-  border-radius: 50%;
-  background-color: #ddd;
-}
-
-.custom-scroll ::-webkit-scrollbar-thumb {
-  border-radius: 20px;
-  background: #000;
+.full-height {
+  height: 100%;
 }
 </style>
 <script>
@@ -154,6 +148,7 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
+import { mapMutations } from 'vuex'
 
 export default {
   name: 'Store',
@@ -185,9 +180,7 @@ export default {
     }
   },
   methods: {
-    showSnackbar (text) {
-      this.$emit('showSnackbar', text)
-    },
+    ...mapMutations(['showSnackbar']),
     async deleteFile (item) {
       if (
         await this.$listeners.showConfirm(
@@ -267,7 +260,11 @@ export default {
     },
     async downloadFile () {
       if (this.selected) {
-        const fileName = this.selected.name.split('.')[0]
+        // get the file name without the extension
+        const fileName = this.selected.name
+          .split('.')
+          .slice(0, -1)
+          .join('.')
         this.$listeners.export(this.fileContent, fileName, this.selected.ext)
       }
     },
