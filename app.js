@@ -421,10 +421,16 @@ function setupSocket (server) {
     try {
       switch (data.apiName) {
         case 'delete':
-          res = gw.publishDiscovery(data.device, data.nodeId, true, true)
+          res = gw.publishDiscovery(data.device, data.nodeId, {
+            deleteDevice: true,
+            forceUpdate: true
+          })
           break
         case 'discover':
-          res = gw.publishDiscovery(data.device, data.nodeId, false, true)
+          res = gw.publishDiscovery(data.device, data.nodeId, {
+            deleteDevice: false,
+            forceUpdate: true
+          })
           break
         case 'rediscoverNode':
           res = gw.rediscoverNode(data.nodeId)

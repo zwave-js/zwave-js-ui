@@ -425,8 +425,7 @@ export interface Z2MGateway {
   publishDiscovery(
     hassDevice: HassDevice,
     nodeId: number,
-    deleteDevice: boolean,
-    update: boolean
+    { deleteDevice: boolean, forceUpdate: boolean }
   ): void
   setDiscovery(
     nodeId: number,

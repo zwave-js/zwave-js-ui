@@ -3,13 +3,13 @@
     <v-subheader class="valueid-label">{{ label }} </v-subheader>
 
     <div v-if="!value.writeable">
-      <v-text-field
-        readonly
-        :suffix="value.unit"
-        :hint="help"
-        persistent-hint
-        v-model="parsedValue"
-      ></v-text-field>
+      <div class="readonly mt-5">
+        {{ parsedValue + (value.unit ? ' ' + value.unit : '') }}
+      </div>
+
+      <div v-if="help" class="caption mt-1">
+        {{ help }}
+      </div>
     </div>
 
     <div v-else>
@@ -106,7 +106,7 @@
 
       <v-select
         v-if="value.list && !value.allowManualEntry"
-        :items="value.states"
+        :items="items"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -122,11 +122,17 @@
         :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
         @click:append-outer="updateValue(value)"
-      ></v-select>
+      >
+        <template v-slot:selection="{ item }">
+          <span>
+            {{ itemText(selectedItem || item) }}
+          </span>
+        </template>
+      </v-select>
 
       <v-combobox
         v-if="value.list && value.allowManualEntry"
-        :items="value.states"
+        :items="items"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -211,6 +217,11 @@
   padding-left: 0;
   margin-bottom: -10px;
 }
+
+.readonly {
+  font-size: x-large;
+  font-weight: bold;
+}
 </style>
 
 <script>
@@ -238,6 +249,16 @@ export default {
           : this.value.newValue
       if (!this.value.states) return null
       else return this.value.states.find(s => s.value === value)
+    },
+    items () {
+      if (this.selectedItem) {
+        return this.value.states
+      } else {
+        return [
+          { value: this.value.newValue, text: 'Custom' },
+          ...this.value.states
+        ]
+      }
     },
     label () {
       return '[' + this.value.id + '] ' + this.value.label
