@@ -5,6 +5,7 @@
     <div v-if="!value.writeable">
       <v-text-field
         readonly
+        class="no-border"
         :suffix="value.unit"
         :hint="help"
         persistent-hint
@@ -106,7 +107,7 @@
 
       <v-select
         v-if="value.list && !value.allowManualEntry"
-        :items="value.states"
+        :items="items"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -122,11 +123,17 @@
         :append-outer-icon="!disable_send ? 'send' : null"
         v-model="value.newValue"
         @click:append-outer="updateValue(value)"
-      ></v-select>
+      >
+        <template v-slot:selection="{ item }">
+          <span>
+            {{ itemText(selectedItem || item) }}
+          </span>
+        </template>
+      </v-select>
 
       <v-combobox
         v-if="value.list && value.allowManualEntry"
-        :items="value.states"
+        :items="items"
         :style="{
           'max-width': $vuetify.breakpoint.smAndDown
             ? '280px'
@@ -213,6 +220,12 @@
 }
 </style>
 
+<style>
+.no-border > .v-input__control > .v-input__slot:before {
+  content: none;
+}
+</style>
+
 <script>
 export default {
   props: {
@@ -238,6 +251,16 @@ export default {
           : this.value.newValue
       if (!this.value.states) return null
       else return this.value.states.find(s => s.value === value)
+    },
+    items () {
+      if (this.selectedItem) {
+        return this.value.states
+      } else {
+        return [
+          { value: this.value.newValue, text: 'Custom' },
+          ...this.value.states
+        ]
+      }
     },
     label () {
       return '[' + this.value.id + '] ' + this.value.label
