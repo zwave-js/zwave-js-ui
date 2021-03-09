@@ -107,6 +107,11 @@ router.beforeEach(async (to, from, next) => {
     return
   }
 
+  if (store.state.auth === undefined) {
+    next({ params: { nextUrl: to.fullPath } })
+    return
+  }
+
   if (store.state.auth === false) {
     if (to.path === Routes.login) {
       next({

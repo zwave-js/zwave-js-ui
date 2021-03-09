@@ -497,7 +497,7 @@ export default {
           }
 
           if (!newAuth && this.$route.path === Routes.login) {
-            this.$router.push(Routes.main)
+            this.$router.push(this.$route.params.nextUrl || Routes.main)
           }
           this.startSocket()
         }
