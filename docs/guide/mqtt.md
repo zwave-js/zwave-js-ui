@@ -80,6 +80,8 @@ This are the available apis:
 - `beginFirmwareUpdate(nodeId, fileName, data, target)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
 - `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
 - `writeValue(valueId, value)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
+- `writeBroadcast(valueId, value)`: Send a broadcast request to all nodes that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
+- `writeMulticast(nodes, valueId, value)`: Send a multicast request to all `nodes` provided that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
 - `sendCommand(ctx, command, args)`: Send a custom command.
   - `ctx`:context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
   - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
@@ -169,27 +171,58 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 ## Broadcast
 
-You can send broadcast values to _all values with a specific suffix_ in the network.
+You can send 2 kind of broadcast requests:
 
-Broadcast API is accessible from:
+1. Send it to values to _all values with a specific suffix_ in the network.
 
-`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic_suffix>/set`
+Topic: `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic_suffix>/set`
 
 - `value_topic_suffix`: the suffix of the topic of the value I want to control using broadcast.
 
-  It works like the set value API without the node name and location properties.
-  If the API is correctly called the same payload of the request will be published
-  to the topic without `/set` suffix.
+It works like the set value API without the node name and location properties.
+If the API is correctly called the same payload of the request will be published
+to the topic without `/set` suffix.
 
-  Example of broadcast command (gateway configured as `named topics`):
+Example of broadcast command (gateway configured as `named topics`):
 
-  `zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating/set`
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating/set`
 
-  Payload: `25.5`
+Payload: `25.5`
 
-  All nodes with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
+All nodes with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
 
-  `zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
+
+1. Send a real zwave [broadcast](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=getbroadcastnode) request
+
+Topic: `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/set`
+Payload:
+
+```js
+{
+  "commandClass": 38,
+  "endpoint": 0,
+  "property": "targetValue",
+  "value": 80
+}
+```
+
+## Multicast
+
+Send a [multicast](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=getmulticastgroup) request to all nodes specified in the array in the payload. If this fails because it's not supported a fallback will try to send multiple single requests:
+
+Topic: `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/multicast/set`
+Payload:
+
+```js
+{
+  "nodes": [2, 3, 4, 6]
+  "commandClass": 38,
+  "endpoint": 0,
+  "property": "targetValue",
+  "value": 80
+}
+```
 
 ## Special topics
 
