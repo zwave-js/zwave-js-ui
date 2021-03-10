@@ -104,8 +104,8 @@ export type Z2MNode = {
   endpointsCount: number
   isSecure: boolean
   isBeaming: boolean
-  isListening: boolean,
-  isControllerNode: boolean,
+  isListening: boolean
+  isControllerNode: boolean
   isFrequentListening: boolean
   isRouting: boolean
   keepAwake: boolean
