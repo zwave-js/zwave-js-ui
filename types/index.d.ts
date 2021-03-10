@@ -11,8 +11,8 @@ import {
   ValueType,
   ZWaveNode,
   ZWaveOptions,
-  ZWavePlusNodeType
-  FLirs,
+  ZWavePlusNodeType,
+  FLiRS,
   ProtocolVersion,
   DataRate
 } from 'zwave-js'
@@ -110,7 +110,7 @@ export type Z2MNode = {
   supportsSecurity: boolean
   isListening: boolean
   isControllerNode: boolean
-  isFrequentListening: FLirs
+  isFrequentListening: FLiRS
   isRouting: boolean
   keepAwake: boolean
   deviceClass: Z2MDeviceClass
