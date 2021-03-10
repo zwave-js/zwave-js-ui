@@ -227,10 +227,7 @@ export interface MqttClient extends EventEmitter {
     event: 'broadcastRequest',
     listener: (parts: string[], payload: any) => void
   ): this
-  on(
-    event: 'multicastRequest',
-    listener: (payload: any) => void
-  ): this
+  on(event: 'multicastRequest', listener: (payload: any) => void): this
   on(
     event: 'apiCall',
     listener: (topic: string, apiNema: string, payload: any) => void
