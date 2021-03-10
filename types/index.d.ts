@@ -12,6 +12,9 @@ import {
   ZWaveNode,
   ZWaveOptions,
   ZWavePlusNodeType
+  FLirs,
+  ProtocolVersion,
+  DataRate
 } from 'zwave-js'
 
 export type Z2MValueIdState = {
@@ -97,16 +100,17 @@ export type Z2MNode = {
   productType: number
   manufacturer: string
   firmwareVersion: string
-  zwaveVersion: string
+  protocolVersion: ProtocolVersion
   zwavePlusVersion: number | undefined
   nodeType: ZWavePlusNodeType | undefined
   roleType: ZWavePlusRoleType | undefined
   endpointsCount: number
   isSecure: boolean
-  isBeaming: boolean
+  supportsBeaming: boolean
+  supportsSecurity: boolean
   isListening: boolean
   isControllerNode: boolean
-  isFrequentListening: boolean
+  isFrequentListening: FLirs
   isRouting: boolean
   keepAwake: boolean
   deviceClass: Z2MDeviceClass
@@ -123,8 +127,7 @@ export type Z2MNode = {
   failed: boolean
   lastActive: number
   dbLink: string
-  interviewCompleted: boolean
-  maxBaudRate: number
+  maxDataRate: DataRate
   interviewStage: InterviewStage
   status: NodeStatus
   inited: boolean

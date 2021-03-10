@@ -165,8 +165,8 @@
           : 'Unknown'
       }}
     </template>
-    <template v-slot:[`item.isBeaming`]="{ item }">
-      {{ item.isBeaming ? 'Yes' : 'No' }}
+    <template v-slot:[`item.supportsBeaming`]="{ item }">
+      {{ item.supportsBeaming ? 'Yes' : 'No' }}
     </template>
     <template v-slot:[`item.failed`]="{ item }">
       {{ item.failed ? 'Yes' : 'No' }}

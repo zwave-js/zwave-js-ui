@@ -29,7 +29,7 @@ export default {
         name: { type: 'string', label: 'Name' },
         loc: { type: 'string', label: 'Location' },
         isSecure: { type: 'boolean', label: 'Secure' },
-        isBeaming: { type: 'boolean', label: 'Beaming' },
+        supportsBeaming: { type: 'boolean', label: 'Beaming' },
         failed: { type: 'boolean', label: 'Failed' },
         status: { type: 'string', label: 'Status' },
         interviewStage: { type: 'string', label: 'Interview stage' },
