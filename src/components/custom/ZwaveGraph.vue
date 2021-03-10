@@ -730,15 +730,13 @@ export default {
         nodes: []
       }
 
-      let hubNode = 0
+      let hubNode = this.nodes.find(n => n.isControllerNode)
+      hubNode = hubNode ? hubNode.id : 1
+
       const neighbors = {}
 
       for (const node of this.nodes) {
         const id = node.id
-        // TODO: check if node is primary controller
-        if (id === 1) {
-          hubNode = id
-        }
 
         neighbors[id] = node.neighbors
 
@@ -779,7 +777,10 @@ export default {
             (batlev !== undefined ? 'battery (' + batlev + '%)' : 'mains') +
             '\n Neighbors: ' +
             node.neighbors,
-          forwards: node.ready && !node.failed && node.isListening
+          forwards:
+            node.ready &&
+            !node.failed &&
+            (node.isListening || node.isControllerNode) // leave the isController check here
         }
 
         if (id === hubNode) {

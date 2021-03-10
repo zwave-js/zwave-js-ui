@@ -105,6 +105,7 @@ export type Z2MNode = {
   isSecure: boolean
   isBeaming: boolean
   isListening: boolean
+  isControllerNode: boolean
   isFrequentListening: boolean
   isRouting: boolean
   keepAwake: boolean
