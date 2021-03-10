@@ -304,11 +304,7 @@ export interface ZwaveClient extends EventEmitter {
   on(event: 'scanComplete', listener: () => void): this
   on(
     event: 'notification',
-    listener: (
-      node: Z2MNode,
-      valueId: Z2MValueId,
-      data: any
-    ) => void
+    listener: (node: Z2MNode, valueId: Z2MValueId, data: any) => void
   ): this
   on(event: 'nodeRemoved', listener: (node: Z2MNode) => void): this
   on(
