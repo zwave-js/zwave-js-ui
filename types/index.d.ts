@@ -306,8 +306,8 @@ export interface ZwaveClient extends EventEmitter {
     event: 'notification',
     listener: (
       node: Z2MNode,
-      label: string,
-      parameters: string | number | Buffer
+      valueId: Z2MValueId,
+      data: any
     ) => void
   ): this
   on(event: 'nodeRemoved', listener: (node: Z2MNode) => void): this
