@@ -171,9 +171,12 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 ## Broadcast
 
-You can send 2 kind of broadcast requests:
+You can send two kind of broadcast requests:
 
 1. Send it to values to _all values with a specific suffix_ in the network.
+
+> [!NOTE]
+> This creates a LOT of traffic and can have a significant performance impact.
 
 Topic: `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic_suffix>/set`
 
@@ -185,13 +188,13 @@ to the topic without `/set` suffix.
 
 Example of broadcast command (gateway configured as `named topics`):
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating/set`
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/38/0/targetValue/set`
 
 Payload: `25.5`
 
-All nodes with command class `thermostat_setpoint` and value `heating` will be set to `25.5` and I will get the same value on the topic:
+All nodes with a valueId **Command class** `38` (Multilevel Switch), **Endpoint** `0` will receive a write request of value `25.5` to **property** `targetValue` and will get the same value (as feedback) on the topic:
 
-`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/thermostat_setpoint/heating`
+`zwave/_CLIENTS/ZWAVE_GATEWAY-test/broadcast/38/0/targetValue`
 
 1. Send a real zwave [broadcast](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=getbroadcastnode) request
 
@@ -209,7 +212,10 @@ Payload:
 
 ## Multicast
 
-Send a [multicast](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=getmulticastgroup) request to all nodes specified in the array in the payload. If this fails because it's not supported a fallback will try to send multiple single requests:
+Send a [multicast](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=getmulticastgroup) request to all nodes specified in the array in the payload. If this fails because it's not supported a fallback will try to send multiple single requests
+
+> [!NOTE]
+> Multicast requests have no delay between individual nodes reactions
 
 Topic: `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/multicast/set`
 Payload:
