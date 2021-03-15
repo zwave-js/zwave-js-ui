@@ -268,7 +268,7 @@ export default {
               this.showSnackbar('Node ID must be an integer value')
               return
             }
-            args.push(nodeId)
+            args.push(parseInt(nodeId))
           }
         }
 
