@@ -251,6 +251,7 @@ export default {
                 inputs: [
                   {
                     type: 'list',
+                    allowManualEntry: true,
                     items: this.nodes,
                     label: 'Node',
                     hint: 'Select a node',
