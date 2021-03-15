@@ -15,6 +15,7 @@
       <!-- TABS -->
       <v-tabs-items
         style="background: transparent; padding-bottom: 10px;"
+        touchless
         v-model="currentTab"
       >
         <!-- TAB NODE -->
