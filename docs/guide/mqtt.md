@@ -173,7 +173,7 @@ I will set the Heating setpoint of the node with id `4` located in the `office` 
 
 You can send two kind of broadcast requests:
 
-1. Send it to values to _all values with a specific suffix_ in the network.
+1. Send it to _all values with a specific suffix_ in the network.
 
 > [!NOTE]
 > This creates a LOT of traffic and can have a significant performance impact.
