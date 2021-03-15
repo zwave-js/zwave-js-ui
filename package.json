@@ -95,7 +95,7 @@
   },
   "optionalDependencies": {
     "@release-it/conventional-changelog": "^2.0.1",
-    "@types/node": "^14.14.32",
+    "@types/node": "^14.14.34",
     "c8": "^7.6.0",
     "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
@@ -156,17 +156,17 @@
     "serialport": "^9.0.7",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.5.0",
-    "socket.io": "^3.1.2",
-    "socket.io-client": "^3.1.2",
+    "socket.io": "^4.0.0",
+    "socket.io-client": "^4.0.0",
     "svg-pan-zoom": "^3.6.1",
     "vue": "^2.6.12",
     "vue-prism-editor": "^1.2.2",
     "vue-router": "^3.5.1",
     "vuedraggable": "^2.24.3",
-    "vuetify": "^2.4.5",
+    "vuetify": "^2.4.6",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
-    "zwave-js": "^6.6.1"
+    "zwave-js": "^6.6.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.13.10",
