@@ -231,6 +231,7 @@ export interface MqttClient extends EventEmitter {
     event: 'broadcastRequest',
     listener: (parts: string[], payload: any) => void
   ): this
+  on(event: 'multicastRequest', listener: (payload: any) => void): this
   on(
     event: 'apiCall',
     listener: (topic: string, apiNema: string, payload: any) => void
@@ -390,7 +391,13 @@ export interface ZwaveClient extends EventEmitter {
     apiName: string,
     ...args: any
   ): Promise<{ success: boolean; message: string; result: any; args: any[] }>
-  writeValue(valueId: Z2MValueId, value: number | string): Promise<void>
+  writeBroadcast(valueId: Z2MValueId, value: unknown): Promise<void>
+  writeMulticast(
+    nodes: number[],
+    valueId: Z2MValueId,
+    value: unknown
+  ): Promise<void>
+  writeValue(valueId: Z2MValueId, value: unknown): Promise<void>
   sendCommand(
     ctx: { nodeId: number; endpoint: number; commandClass: number },
     command: string,

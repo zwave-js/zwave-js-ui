@@ -10,11 +10,12 @@
       <v-tab key="node">Node</v-tab>
       <v-tab v-if="showHass" key="homeassistant">Home Assistant</v-tab>
       <v-tab key="groups">Groups</v-tab>
-      <v-tab v-if="$vuetify.mdAndUp" key="debug">Debug Info</v-tab>
+      <v-tab v-if="$vuetify.breakpoint.mdAndUp" key="debug">Debug Info</v-tab>
 
       <!-- TABS -->
       <v-tabs-items
         style="background: transparent; padding-bottom: 10px;"
+        touchless
         v-model="currentTab"
       >
         <!-- TAB NODE -->
@@ -39,7 +40,7 @@
         </v-tab-item>
 
         <!-- TAB DEBUG INFO -->
-        <v-tab-item v-if="$vuetify.mdAndUp" key="debug">
+        <v-tab-item v-if="$vuetify.breakpoint.mdAndUp" key="debug">
           <v-textarea
             class="mx-2"
             rows="10"
