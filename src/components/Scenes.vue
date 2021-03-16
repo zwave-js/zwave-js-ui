@@ -183,18 +183,24 @@ export default {
     },
     editItem (item) {
       this.editedIndex = this.scene_values.indexOf(item)
-      const node = this.nodes[item.nodeId]
+      const node = this.nodes.find(n => n.id === item.nodeId) || {
+        id: item.nodeId,
+        name: '',
+        loc: '',
+        values: []
+      }
 
       let value = node.values.find(v => v.id === item.id)
 
-      value = Object.assign({}, value)
+      value = value ? Object.assign({}, value) : Object.assign({}, item)
       value.newValue = item.value
 
       this.editedValue = {
         node: node,
         value: value,
-        timeout: this.scene_values[this.editedIndex].timeout
+        timeout: item.timeout
       }
+
       this.dialogValue = true
     },
     async deleteItem (value) {
