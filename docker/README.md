@@ -7,7 +7,7 @@
 
 Docker container for zwavejs2mqtt Gateway and Control Panel
 
-## Tags
+## Architectures
 
 Supported architectures are:
 
@@ -16,13 +16,24 @@ Supported architectures are:
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
 
+## Tags
+
+Supported tags are:
+
+- `latest` for the latest official release.
+- `master` newest version, image gets built after every new commit to the master branch in the [zwavejs2mqtt](https://github.com/zwave-js/zwavejs2mqtt/commits/master) repository. (not recommended for the average user)
+- `sha-<commit-sha>` (example: `sha-92d502a`)
+- `<version>` (example: `2.1.0`)
+
+Note: `dev` tag have been deprecated.
+
 ## Install
 
 Here there are 3 different way to start the container and provide data persistence. In all of this solutions **remember to**:
 
 1. Replace `/dev/ttyACM0` with your serial device
 2. Add `-e TZ=Europe/Stockholm` to the `docker run` command to set the correct timezone in container
-3. If you are using zwave-js WS server, replace `3000:3000` with the port choosen in settings
+3. If you are using zwave-js WS server, replace `3000:3000` with the port chosen in settings
 
 ### Run using volumes
 
@@ -140,8 +151,8 @@ spec:
           path: /dev/ttyACM0
           type: File
       - name: data
-          hostPath:
-            path: /zwave/data
+        hostPath:
+          path: /zwave/data
 ---
 apiVersion: v1
 kind: Service

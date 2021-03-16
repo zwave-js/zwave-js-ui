@@ -1,3 +1,101 @@
+# [2.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.2.0...v2.3.0) (2021-03-15)
+
+
+### Bug Fixes
+
+* **hass:** remove `state_topic` on covers for HA 2020.3.2 ([#881](https://github.com/zwave-js/zwavejs2mqtt/issues/881)) ([2ab3d97](https://github.com/zwave-js/zwavejs2mqtt/commit/2ab3d979f4bc3f875a04ba3922ddbc0a6338d3ef))
+* **ui:** allow manual entry of nodeid ([#885](https://github.com/zwave-js/zwavejs2mqtt/issues/885)) ([cd5691a](https://github.com/zwave-js/zwavejs2mqtt/commit/cd5691a5d99b89cd3c44dab032ce974de2b4ab18)), closes [#865](https://github.com/zwave-js/zwavejs2mqtt/issues/865)
+* **ui:** disable swipe on node tabs ([#878](https://github.com/zwave-js/zwavejs2mqtt/issues/878)) ([eeb90d1](https://github.com/zwave-js/zwavejs2mqtt/commit/eeb90d120cfb1217598d74b1b802f02a30ea138c))
+* **ui:** restore node debug info tab ([#886](https://github.com/zwave-js/zwavejs2mqtt/issues/886)) ([3bf1710](https://github.com/zwave-js/zwavejs2mqtt/commit/3bf17107b5956a7e7e74a172b851b5503e1f0955))
+* **ui:** zwave graph when controller id != 1 ([#863](https://github.com/zwave-js/zwavejs2mqtt/issues/863)) ([74fb920](https://github.com/zwave-js/zwavejs2mqtt/commit/74fb920c0dd1421895b5f0f5fbdf2deb0adefd15)), closes [#862](https://github.com/zwave-js/zwavejs2mqtt/issues/862)
+* better payload parsing ([#861](https://github.com/zwave-js/zwavejs2mqtt/issues/861)) ([199c558](https://github.com/zwave-js/zwavejs2mqtt/commit/199c5587e07f0ba31546daa7f9aa533be465c852))
+
+
+### Features
+
+* multicast/broadcast apis ([#25](https://github.com/zwave-js/zwavejs2mqtt/issues/25)) ([98e145d](https://github.com/zwave-js/zwavejs2mqtt/commit/98e145db9dcead56839147c9fc20bbbcac1e8f5d))
+
+# [2.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.1.2...v2.2.0) (2021-03-09)
+
+
+### Bug Fixes
+
+* **ui:** redirects to main when auth is disabled ([#854](https://github.com/zwave-js/zwavejs2mqtt/issues/854)) ([8f4f181](https://github.com/zwave-js/zwavejs2mqtt/commit/8f4f181246b0269211568690afe888297b86c0e4))
+* **ui:** show custom values and better read-only style ([#853](https://github.com/zwave-js/zwavejs2mqtt/issues/853)) ([bcd4554](https://github.com/zwave-js/zwavejs2mqtt/commit/bcd4554b3c9d02ca302ad83e4ad2bf1bb7c7d697)), closes [#844](https://github.com/zwave-js/zwavejs2mqtt/issues/844)
+* **ui:** user friendlier list values management ([#843](https://github.com/zwave-js/zwavejs2mqtt/issues/843)) ([fb202db](https://github.com/zwave-js/zwavejs2mqtt/commit/fb202db128dd0c919b959efc622c908002f73b3b))
+
+
+### Features
+
+* **hass:** added `manual discovery` setting ([#851](https://github.com/zwave-js/zwavejs2mqtt/issues/851)) ([255e9b3](https://github.com/zwave-js/zwavejs2mqtt/commit/255e9b3327d4c350adc61ad63adc944c95e011dc)), closes [#819](https://github.com/zwave-js/zwavejs2mqtt/issues/819)
+* **ui:** debug window ([#852](https://github.com/zwave-js/zwavejs2mqtt/issues/852)) ([42b2826](https://github.com/zwave-js/zwavejs2mqtt/commit/42b28269b54ed1de63c7c72ddd38849fdcf3e253))
+
+## [2.1.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.1.1...v2.1.2) (2021-03-08)
+
+
+### Bug Fixes
+
+* checks on `sendCommand` api ([#816](https://github.com/zwave-js/zwavejs2mqtt/issues/816)) ([92d502a](https://github.com/zwave-js/zwavejs2mqtt/commit/92d502a0ab9aef4efd713e1c9a6286aafd6ee449))
+* prevent reset poll timers on node status updates ([#827](https://github.com/zwave-js/zwavejs2mqtt/issues/827)) ([c5c96bd](https://github.com/zwave-js/zwavejs2mqtt/commit/c5c96bdc039bb5385dd69bd5bae0f781792f9d68)), closes [#826](https://github.com/zwave-js/zwavejs2mqtt/issues/826)
+* show hex number along with the `unknown` strings ([#801](https://github.com/zwave-js/zwavejs2mqtt/issues/801)) ([056bc80](https://github.com/zwave-js/zwavejs2mqtt/commit/056bc8065722f2847a41dde2b0356994f8d53a94))
+
+## [2.1.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.1.0...v2.1.1) (2021-03-04)
+
+
+### Bug Fixes
+
+* **ui:** better visualization of read-only values ([#805](https://github.com/zwave-js/zwavejs2mqtt/issues/805)) ([82a9179](https://github.com/zwave-js/zwavejs2mqtt/commit/82a917967c00929b5053b8e578ee01e948d8008f))
+* use isControllerNode instead of isController ([6858a08](https://github.com/zwave-js/zwavejs2mqtt/commit/6858a08e9f69d929d40c06dbd325b398e27ced25))
+* **ui:** add missing type buffer ([13dbfef](https://github.com/zwave-js/zwavejs2mqtt/commit/13dbfef3023dbacb0c3124ea072d149830725117))
+* assume controller always as listening ([#796](https://github.com/zwave-js/zwavejs2mqtt/issues/796)) ([d4f7780](https://github.com/zwave-js/zwavejs2mqtt/commit/d4f7780ac351b0dde2f8367beb7c203e3203985a)), closes [#739](https://github.com/zwave-js/zwavejs2mqtt/issues/739)
+* read/parse buffers as hex strings ([#797](https://github.com/zwave-js/zwavejs2mqtt/issues/797)) ([521d2d2](https://github.com/zwave-js/zwavejs2mqtt/commit/521d2d2dd115f4c25b3f8f58db6328617f17d006))
+
+# [2.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.0.1...v2.1.0) (2021-03-02)
+
+
+### Bug Fixes
+
+* **ui:** allow manual entry on config values with states ([#781](https://github.com/zwave-js/zwavejs2mqtt/issues/781)) ([a45f763](https://github.com/zwave-js/zwavejs2mqtt/commit/a45f763fad59ef2bbbe438a657b0e4ee34e1935a))
+* **ui:** correctly get/set buffer values ([#795](https://github.com/zwave-js/zwavejs2mqtt/issues/795)) ([4f5a91f](https://github.com/zwave-js/zwavejs2mqtt/commit/4f5a91f607f4277d9b222341e73cb26a45c5d3a4))
+* **ui:** show debug feedback ([714702c](https://github.com/zwave-js/zwavejs2mqtt/commit/714702c60e8df12f18456da68ba9bbf5f43908a2))
+* **ui:** show scrollbars ([#792](https://github.com/zwave-js/zwavejs2mqtt/issues/792)) ([e974db2](https://github.com/zwave-js/zwavejs2mqtt/commit/e974db24f622aa78f475bfb5324e51abc6036518)), closes [#784](https://github.com/zwave-js/zwavejs2mqtt/issues/784)
+
+
+### Features
+
+* **ui:** allow to export nodes dump ([8a4a958](https://github.com/zwave-js/zwavejs2mqtt/commit/8a4a958795eb2cc317fcc99a6edab36a0cd07a65))
+
+## [2.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.0.0...v2.0.1) (2021-03-01)
+
+
+### Bug Fixes
+
+* **ui:** nodes table display issues ([#780](https://github.com/zwave-js/zwavejs2mqtt/issues/780)) ([f02d8b6](https://github.com/zwave-js/zwavejs2mqtt/commit/f02d8b64ec835fa2b1f7f29350fc905a9d7dae94)), closes [#766](https://github.com/zwave-js/zwavejs2mqtt/issues/766)
+* bug when importing nodes.json ([#768](https://github.com/zwave-js/zwavejs2mqtt/issues/768)) ([84550f2](https://github.com/zwave-js/zwavejs2mqtt/commit/84550f27da2d31ba5299cfb054c6f48aea1d527a))
+* use node `available` in node status ([#762](https://github.com/zwave-js/zwavejs2mqtt/issues/762)) ([d4972e8](https://github.com/zwave-js/zwavejs2mqtt/commit/d4972e88a0170823ae9adc7755936e07bdce24c9))
+
+# [2.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.4.0...v2.0.0) (2021-02-26)
+
+
+### Code Refactoring
+
+* make nodes a map instead of an array ([#710](https://github.com/zwave-js/zwavejs2mqtt/issues/710)) ([5a43abd](https://github.com/zwave-js/zwavejs2mqtt/commit/5a43abd94373d74095dc9afd596a66b7e27b608b))
+
+
+### Features
+
+* correctly parse `currentColor` value and improve rgb discovery ([#568](https://github.com/zwave-js/zwavejs2mqtt/issues/568)) ([7bedd3b](https://github.com/zwave-js/zwavejs2mqtt/commit/7bedd3b36403ff470a5e7317db68555b9edc4616))
+* plugins improved support ([#688](https://github.com/zwave-js/zwavejs2mqtt/issues/688)) ([a213b25](https://github.com/zwave-js/zwavejs2mqtt/commit/a213b25cc340a9bd8c69dcf7a027662e3811081d))
+
+
+### BREAKING CHANGES
+
+* `plugins` are now stored in an array of `strings` on settings `gateway` prop instead of `zwave`
+* `getNodes` function of ZwaveClient returns an array of available nodes but the index doesn't match the nodeId
+`refreshNeighbours` returns a map nodeId -> neighbours[]
+node removed socket event now returns the node removed
+renamed `setNodeName` and `setNodeLocation` apis (removed the leading `_`) as now them also store the value to controller
+
 # [1.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v1.3.0...v1.4.0) (2021-02-24)
 
 

@@ -29,6 +29,7 @@ const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
 const jwt = require('jsonwebtoken')
 const { promisify } = require('util')
+const FileStore = require('session-file-store')(session)
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -336,6 +337,9 @@ app.use(
     secret: sessionSecret,
     resave: true,
     saveUninitialized: true,
+    store: new FileStore({
+      path: storeDir
+    }),
     cookie: {
       secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
       httpOnly: true, // prevents cookie to be sent by client javascript
@@ -417,10 +421,16 @@ function setupSocket (server) {
     try {
       switch (data.apiName) {
         case 'delete':
-          res = gw.publishDiscovery(data.device, data.nodeId, true, true)
+          res = gw.publishDiscovery(data.device, data.nodeId, {
+            deleteDevice: true,
+            forceUpdate: true
+          })
           break
         case 'discover':
-          res = gw.publishDiscovery(data.device, data.nodeId, false, true)
+          res = gw.publishDiscovery(data.device, data.nodeId, {
+            deleteDevice: false,
+            forceUpdate: true
+          })
           break
         case 'rediscoverNode':
           res = gw.rediscoverNode(data.nodeId)
@@ -723,16 +733,18 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
       const node = config[nodeId]
       if (!node || typeof node !== 'object') continue
 
+      // All API calls expect nodeId to be a number, so convert it here.
+      const nodeIdNumber = Number(nodeId)
       if (utils.hasProperty(node, 'name')) {
-        await gw.zwave.callApi('setNodeName', nodeId, node.name || '')
+        await gw.zwave.callApi('setNodeName', nodeIdNumber, node.name || '')
       }
 
       if (utils.hasProperty(node, 'loc')) {
-        await gw.zwave.callApi('setNodeLocation', nodeId, node.loc || '')
+        await gw.zwave.callApi('setNodeLocation', nodeIdNumber, node.loc || '')
       }
 
       if (node.hassDevices) {
-        await gw.zwave.storeDevices(node.hassDevices, nodeId, false)
+        await gw.zwave.storeDevices(node.hassDevices, nodeIdNumber, false)
       }
     }
 

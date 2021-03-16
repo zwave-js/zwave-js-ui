@@ -10,7 +10,8 @@ import {
   ValueID,
   ValueType,
   ZWaveNode,
-  ZWaveOptions
+  ZWaveOptions,
+  ZWavePlusNodeType
 } from 'zwave-js'
 
 export type Z2MValueIdState = {
@@ -97,9 +98,14 @@ export type Z2MNode = {
   manufacturer: string
   firmwareVersion: string
   zwaveVersion: string
+  zwavePlusVersion: number | undefined
+  nodeType: ZWavePlusNodeType | undefined
+  roleType: ZWavePlusRoleType | undefined
+  endpointsCount: number
   isSecure: boolean
   isBeaming: boolean
   isListening: boolean
+  isControllerNode: boolean
   isFrequentListening: boolean
   isRouting: boolean
   keepAwake: boolean
@@ -113,6 +119,7 @@ export type Z2MNode = {
   values: Map<string, Z2MValueId>
   groups: Z2MNodeGroups[]
   ready: boolean
+  available: boolean
   failed: boolean
   lastActive: number
   dbLink: string
@@ -120,6 +127,7 @@ export type Z2MNode = {
   maxBaudRate: number
   interviewStage: InterviewStage
   status: NodeStatus
+  inited: boolean
 }
 
 export enum GatewayType {
@@ -220,6 +228,7 @@ export interface MqttClient extends EventEmitter {
     event: 'broadcastRequest',
     listener: (parts: string[], payload: any) => void
   ): this
+  on(event: 'multicastRequest', listener: (payload: any) => void): this
   on(
     event: 'apiCall',
     listener: (topic: string, apiNema: string, payload: any) => void
@@ -383,8 +392,18 @@ export interface ZwaveClient extends EventEmitter {
     apiName: string,
     ...args: any
   ): Promise<{ success: boolean; message: string; result: any; args: any[] }>
-  writeValue(valueId: Z2MValueId, value: number | string): Promise<void>
-  sendCommand(valueId: Z2MValueId, command: string, args: any[]): Promise<any>
+  writeBroadcast(valueId: Z2MValueId, value: unknown): Promise<void>
+  writeMulticast(
+    nodes: number[],
+    valueId: Z2MValueId,
+    value: unknown
+  ): Promise<void>
+  writeValue(valueId: Z2MValueId, value: unknown): Promise<void>
+  sendCommand(
+    ctx: { nodeId: number; endpoint: number; commandClass: number },
+    command: string,
+    args: any[]
+  ): Promise<any>
 }
 
 export interface Z2MGateway {
@@ -414,8 +433,7 @@ export interface Z2MGateway {
   publishDiscovery(
     hassDevice: HassDevice,
     nodeId: number,
-    deleteDevice: boolean,
-    update: boolean
+    { deleteDevice: boolean, forceUpdate: boolean }
   ): void
   setDiscovery(
     nodeId: number,

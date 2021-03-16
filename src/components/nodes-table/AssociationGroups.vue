@@ -20,7 +20,7 @@
                 <v-list-item-title
                   >Node:
                   <strong>{{
-                    nodes[ass.nodeId]._name || ass.nodeId
+                    nodes[nodesMap.get(ass.nodeId)]._name || ass.nodeId
                   }}</strong></v-list-item-title
                 >
                 <v-list-item-subtitle
@@ -106,11 +106,10 @@
 
 <script>
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
-import { mapMutations } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
 export default {
   props: {
     node: Object,
-    nodes: Array,
     socket: Object
   },
   data () {
@@ -118,7 +117,9 @@ export default {
       group: { node: this.node }
     }
   },
-  computed: {},
+  computed: {
+    ...mapGetters(['nodes', 'nodesMap'])
+  },
   mounted () {
     const self = this
     this.socket.on(socketEvents.api, async data => {

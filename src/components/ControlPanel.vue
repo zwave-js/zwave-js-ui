@@ -70,7 +70,6 @@
         />
 
         <nodes-table
-          :nodes="nodes"
           :node-actions="node_actions"
           :socket="socket"
           v-on="$listeners"
@@ -313,6 +312,7 @@ export default {
                 inputs: [
                   {
                     type: 'list',
+                    allowManualEntry: true,
                     items: this.nodes,
                     label: 'Node',
                     hint: 'Select a node',
@@ -329,7 +329,7 @@ export default {
               this.showSnackbar('Node ID must be an integer value')
               return
             }
-            args.push(nodeId)
+            args.push(parseInt(nodeId))
           }
         }
 

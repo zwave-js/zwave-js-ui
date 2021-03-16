@@ -54,7 +54,7 @@
                   :required="input.required"
                 ></v-switch>
                 <v-select
-                  v-if="input.type === 'list'"
+                  v-if="input.type === 'list' && !input.allowManualEntry"
                   v-model="values[input.key]"
                   :item-text="input.itemText || 'text'"
                   :item-value="input.itemValue || 'value'"
@@ -62,9 +62,26 @@
                   :rules="input.rules || []"
                   :label="input.label"
                   :persistent-hint="!!input.hint"
+                  :multiple="!!input.multiple"
                   :hint="input.hint"
                   :required="input.required"
                 ></v-select>
+                <v-combobox
+                  v-if="input.type === 'list' && input.allowManualEntry"
+                  v-model="values[input.key]"
+                  :item-text="input.itemText || 'text'"
+                  :item-value="input.itemValue || 'value'"
+                  chips
+                  :items="input.items"
+                  :rules="input.rules || []"
+                  :label="input.label"
+                  :multiple="!!input.multiple"
+                  :persistent-hint="!!input.hint"
+                  :hint="input.hint"
+                  :return-object="false"
+                  :required="input.required"
+                >
+                </v-combobox>
               </v-col>
             </v-row>
           </v-form>

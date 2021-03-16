@@ -1,5 +1,6 @@
 <template>
   <v-data-table
+    v-if="managedNodes"
     :headers="managedNodes.tableHeaders"
     :items="managedNodes.filteredItems"
     :footer-props="{
@@ -102,6 +103,14 @@
             </template>
             <span>Export nodes.json Configuration</span>
           </v-tooltip>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on }">
+              <v-btn text color="yellow" v-on="on" @click="exportDump">
+                DUMP
+              </v-btn>
+            </template>
+            <span>Export Nodes Dump (for debugging)</span>
+          </v-tooltip>
         </v-col>
       </v-row>
     </template>
@@ -174,7 +183,6 @@
         :headers="headers"
         :isMobile="isMobile"
         :node="item"
-        :nodes="nodes"
         :socket="socket"
         v-on="$listeners"
       />
