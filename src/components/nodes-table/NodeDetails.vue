@@ -335,7 +335,7 @@ export default {
     },
     validateTopic (name) {
       const match = name
-        ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
+        ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9 _-]+/g)
         : [name]
 
       return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null
