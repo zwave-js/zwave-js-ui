@@ -4,35 +4,6 @@
       <v-card-text>
         <v-container fluid>
           <v-row justify="start">
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Home ID</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.homeid }}</div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Home Hex</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.homeHex }}</div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">App Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.appVersion }}
-              </div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Zwavejs Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.zwaveVersion }}
-              </div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Zwavejs-server Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.serverVersion }}
-              </div>
-            </v-col>
-          </v-row>
-
-          <v-row justify="start">
             <v-col cols="12" sm="4" md="3" style="text-align:center">
               <v-btn
                 depressed
@@ -42,23 +13,16 @@
                 Add/Remove Device
               </v-btn>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
-              <v-text-field
-                label="Controller status"
-                readonly
-                v-model="appInfo.controllerStatus"
-              ></v-text-field>
-            </v-col>
 
-            <v-col cols="12" sm="6" md="3">
-              <v-select
-                label="Actions"
-                append-outer-icon="send"
-                v-model="cnt_action"
-                :items="cnt_actions.concat(node_actions)"
-                @click:append-outer="sendCntAction"
-              ></v-select>
-            </v-col>
+            <v-btn
+              color="purple"
+              :text="$vuetify.breakpoint.mdAndUp"
+              :icon="$vuetify.breakpoint.smAndDown"
+              @click="advancedShowDialog = true"
+            >
+              <v-icon style="margin-right:0.2rem">label_important</v-icon>
+              <span v-if="$vuetify.breakpoint.mdAndUp">Advanced</span>
+            </v-btn>
           </v-row>
         </v-container>
 
@@ -69,12 +33,19 @@
           @apiRequest="apiRequest"
         />
 
+        <DialogAdvanced
+          v-model="advancedShowDialog"
+          @close="advancedShowDialog = false"
+          @apiRequest="apiRequest"
+          v-on="$listeners"
+          :actions="actions"
+          @action="onAction"
+        />
+
         <nodes-table
           :node-actions="node_actions"
           :socket="socket"
           v-on="$listeners"
-          @exportNodes="exportConfiguration"
-          @importNodes="importConfiguration"
         />
       </v-card-text>
     </v-card>
@@ -86,6 +57,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
 import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
@@ -97,15 +69,13 @@ export default {
   },
   components: {
     NodesTable,
-    DialogAddRemove
+    DialogAddRemove,
+    DialogAdvanced
   },
   computed: {
-    ...mapGetters(['nodes', 'appInfo', 'zwave']),
+    ...mapGetters(['nodes', 'zwave']),
     timeoutMs () {
       return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
-    },
-    controllerStatus () {
-      return this.appInfo.controllerStatus
     }
   },
   watch: {},
@@ -115,6 +85,79 @@ export default {
       bindedSocketEvents: {}, // keep track of the events-handlers
       addRemoveShowDialog: false,
       addRemoveNode: null,
+      advancedShowDialog: false,
+      actions: [
+        {
+          text: 'Backup',
+          options: [
+            { name: 'Import', action: 'import' },
+            { name: 'Export', action: 'export' }
+          ],
+          icon: 'save',
+          desc: 'Save or load `nodes.json` file with names and locations'
+        },
+        {
+          text: 'Dump',
+          options: [{ name: 'Export', action: 'exportDump' }],
+          icon: 'bug_report',
+          desc: 'Export all nodes in a json file. Useful for debugging purposes'
+        },
+        {
+          text: 'Heal Network',
+          options: [
+            { name: 'Begin', action: 'beginHealingNetwork' },
+            { name: 'Stop', action: 'stopHealingNetwork' }
+          ],
+          icon: 'healing',
+          desc: 'Force nodes to establish better connections to the controller'
+        },
+        {
+          text: 'Refresh Values',
+          options: [
+            { name: 'Broadcast', action: 'refreshValues', broadcast: true }
+          ],
+          icon: 'cached',
+          desc: 'Read the values from each node so it has proper state'
+        },
+        {
+          text: 'Re-interview Nodes',
+          options: [
+            { name: 'Broadcast', action: 'refreshInfo', broadcast: true }
+          ],
+          icon: 'history',
+          desc: 'Update the metadata and command class info for each node'
+        },
+        {
+          text: 'Failed Nodes',
+          options: [
+            { name: 'Check', action: 'isFailedNode', broadcast: true },
+            { name: 'Remove', action: 'removeFailedNode', broadcast: true }
+          ],
+          icon: 'dangerous',
+          desc:
+            'Manage nodes that are dead and/or marked as failed with the controller'
+        },
+        {
+          text: 'Remove Associations',
+          options: [
+            {
+              name: 'Broadcast',
+              action: 'removeAllAssociations',
+              broadcast: true
+            }
+          ],
+          icon: 'link_off',
+          desc: 'Clear associations for all paired devices'
+        },
+        {
+          text: 'Hard Reset',
+          options: [{ name: 'Factory Reset', action: 'hardReset' }],
+          icon: 'warning',
+          color: 'red',
+          desc:
+            'Reset controller to factory defaults (all paired devices will be removed)'
+        }
+      ],
       node_actions: [
         {
           text: 'Heal node',
@@ -186,6 +229,29 @@ export default {
   },
   methods: {
     ...mapMutations(['showSnackbar']),
+    onAddRemoveClose () {
+      this.addRemoveShowDialog = false
+      this.addRemoveNode = null
+    },
+    async onAction (action, broadcast) {
+      if (action === 'import') {
+        this.importConfiguration()
+      } else if (action === 'export') {
+        this.exportConfiguration()
+      } else if (action === 'exportDump') {
+        this.exportDump()
+      } else {
+        if (broadcast) {
+          for (let i = 0; i < this.nodes.length; i++) {
+            const nodeid = this.nodes[i].id
+            this.$emit('apiRequest', action, [nodeid])
+          }
+        } else {
+          this.$emit('apiRequest', action, [])
+        }
+      }
+      this.advancedShowDialog = false
+    },
     async importConfiguration () {
       if (
         await this.$listeners.showConfirm(
@@ -216,9 +282,8 @@ export default {
           console.log(error)
         })
     },
-    onAddRemoveClose () {
-      this.addRemoveShowDialog = false
-      this.addRemoveNode = null
+    exportDump () {
+      this.$listeners.export(this.nodes, 'nodes_dump', 'json')
     },
     async sendCntAction () {
       if (this.cnt_action) {
