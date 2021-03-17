@@ -110,7 +110,7 @@ export default {
           options: [
             {
               name: 'Factory Reset',
-              action: 'hardRese'
+              action: 'hardReset'
             }
           ],
           icon: 'warning',
@@ -240,7 +240,7 @@ export default {
             }
           )
           args.push(secure)
-        } else if (action === 'hardRese') {
+        } else if (action === 'hardReset') {
           const { confirm } = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
