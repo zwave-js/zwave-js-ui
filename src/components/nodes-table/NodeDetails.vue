@@ -233,7 +233,7 @@ export default {
           ],
           icon: 'link_off',
           desc:
-            'Clear all node associations associations / Remove node from all associations'
+            'Clear all node associations / Remove node from all associations'
         }
       ]
     }
