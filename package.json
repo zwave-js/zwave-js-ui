@@ -156,8 +156,6 @@
     "serialport": "^9.0.7",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.5.0",
-    "sinon": "^9.2.4",
-    "sinon-chai": "^3.5.0",
     "socket.io": "^4.0.0",
     "socket.io-client": "^4.0.0",
     "svg-pan-zoom": "^3.6.1",
