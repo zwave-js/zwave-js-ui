@@ -49,6 +49,7 @@ export default {
   column-gap: 1.4rem;
   row-gap: 1.2rem;
   justify-items: center;
+  align-items: center;
 }
 .action-grid.xs {
   grid-template-columns: repeat(1, 1fr);

@@ -172,13 +172,15 @@ export default {
           text: 'Refresh Values',
           options: [{ name: 'Refresh', action: 'refreshValues' }],
           icon: 'cached',
-          desc: 'Update all CC values and metadata'
+          desc:
+            'Update all CC values and metadata. Use when many values seems stale'
         },
         {
           text: 'Re-interview Node',
           options: [{ name: 'Interview', action: 'refreshInfo' }],
           icon: 'history',
-          desc: 'Clear all info about this node and make a new full interview'
+          desc:
+            'Clear all info about this node and make a new full interview. Use when the node has wrong/missing some capabilities'
         },
         {
           text: 'Failed Nodes',

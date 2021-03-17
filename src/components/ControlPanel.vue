@@ -107,43 +107,16 @@ export default {
         },
         {
           text: 'Hard Reset',
-          options: [{ name: 'Factory Reset', action: 'hardReset' }],
+          options: [
+            {
+              name: 'Factory Reset',
+              action: 'hardRese'
+            }
+          ],
           icon: 'warning',
           color: 'red',
           desc:
             'Reset controller to factory defaults (all paired devices will be removed)'
-        },
-        {
-          text: 'Refresh Values',
-          options: [
-            {
-              name: 'Broadcast',
-              action: 'refreshValues',
-              args: {
-                broadcast: true,
-                confirm:
-                  'This action will refresh values of all nodes in your network'
-              }
-            }
-          ],
-          icon: 'cached',
-          desc: 'Update all CC values and metadata'
-        },
-        {
-          text: 'Re-interview Node',
-          options: [
-            {
-              name: 'Broadcast',
-              action: 'refreshInfo',
-              args: {
-                broadcast: true,
-                confirm:
-                  'This action will re-interview all nodes in your network'
-              }
-            }
-          ],
-          icon: 'history',
-          desc: 'Clear all info about this node and make a new full interview'
         },
         {
           text: 'Failed Nodes',
@@ -267,14 +240,26 @@ export default {
             }
           )
           args.push(secure)
-        } else if (action === 'hardReset') {
-          const ok = await this.$listeners.showConfirm(
+        } else if (action === 'hardRese') {
+          const { confirm } = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
             'alert',
-            { confirmText: 'Ok' }
+            {
+              confirmText: 'Ok',
+              inputs: [
+                {
+                  type: 'text',
+                  label: 'Confirm',
+                  required: true,
+                  key: 'confirm',
+                  hint: 'Type "yes" and press OK to confirm'
+                }
+              ]
+            }
           )
-          if (!ok) {
+          console.log(confirm)
+          if (!confirm || confirm !== 'yes') {
             return
           }
         } else if (action === 'beginFirmwareUpdate') {
