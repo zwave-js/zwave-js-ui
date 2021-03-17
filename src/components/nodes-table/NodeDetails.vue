@@ -164,7 +164,16 @@ export default {
         },
         {
           text: 'Heal Node',
-          options: [{ name: 'Heal', action: 'healNode' }],
+          options: [
+            {
+              name: 'Heal',
+              action: 'healNode',
+              args: {
+                confirm:
+                  'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on'
+              }
+            }
+          ],
           icon: 'healing',
           desc: 'Force nodes to establish better connections to the controller'
         },
@@ -182,7 +191,7 @@ export default {
           ],
           icon: 'cached',
           desc:
-            'Update all CC values and metadata. Use when many values seems stale'
+            'Update all CC values and metadata. Use only when many values seems stale'
         },
         {
           text: 'Re-interview Node',
@@ -192,13 +201,13 @@ export default {
               action: 'refreshInfo',
               args: {
                 confirm:
-                  "Are you sure you want to re-interview this node? Battery powered nodes need to be woken up, interaction with the node won't be reliable until the interview is done"
+                  "Are you sure you want to re-interview this node? All known information about this node is discarded. Battery powered nodes need to be woken up, interaction with the node won't be reliable until the interview is done."
               }
             }
           ],
           icon: 'history',
           desc:
-            'Clear all info about this node and make a new full interview. Use when the node has wrong/missing some capabilities'
+            'Clear all info about this node and make a new full interview. Use when the node has wrong or missing capabilities'
         },
         {
           text: 'Failed Nodes',
