@@ -196,11 +196,18 @@ export default {
           options: [
             {
               name: 'Clear',
-              action: 'removeAllAssociations'
+              action: 'removeAllAssociations',
+              args: {
+                confirm: 'This action will remove all associations of this node'
+              }
             },
             {
               name: 'Remove',
-              action: 'removeNodeFromAllAssociations'
+              action: 'removeNodeFromAllAssociations',
+              args: {
+                confirm:
+                  'This action will remove this node from all associations with others'
+              }
             }
           ],
           icon: 'link_off',
@@ -248,7 +255,7 @@ export default {
       } else if (args.mqtt) {
         this.sendMqttAction(action, args.confirm)
       } else {
-        this.$emit('action', action, { nodeId: this.node.id })
+        this.$emit('action', action, { ...args, nodeId: this.node.id })
       }
     },
     openLink (link) {

@@ -48,7 +48,9 @@
 
       <v-app-bar app>
         <v-app-bar-nav-icon @click.stop="toggleDrawer" />
-        <v-toolbar-title>{{ title }}</v-toolbar-title>
+        <v-toolbar-title v-if="$vuetify.breakpoint.smAndUp">{{
+          title
+        }}</v-toolbar-title>
 
         <v-spacer></v-spacer>
 

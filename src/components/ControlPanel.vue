@@ -119,7 +119,11 @@ export default {
             {
               name: 'Broadcast',
               action: 'refreshValues',
-              args: { broadcast: true }
+              args: {
+                broadcast: true,
+                confirm:
+                  'This action will refresh values of all nodes in your network'
+              }
             }
           ],
           icon: 'cached',
@@ -131,7 +135,11 @@ export default {
             {
               name: 'Broadcast',
               action: 'refreshInfo',
-              args: { broadcast: true }
+              args: {
+                broadcast: true,
+                confirm:
+                  'This action will re-interview all nodes in your network'
+              }
             }
           ],
           icon: 'history',
@@ -148,7 +156,10 @@ export default {
             {
               name: 'Remove all',
               action: 'removeFailedNode',
-              args: { broadcast: true }
+              args: {
+                broadcast: true,
+                confirm: 'This action will remove all failed nodes'
+              }
             }
           ],
           icon: 'dangerous',
@@ -218,8 +229,23 @@ export default {
     exportDump () {
       this.$listeners.export(this.nodes, 'nodes_dump', 'json')
     },
-    async sendAction (action, { nodeId, broadcast }) {
+    async sendAction (action, { nodeId, broadcast, confirm }) {
       if (action) {
+        if (confirm) {
+          const ok = await this.$listeners.showConfirm(
+            'Info',
+            confirm,
+            'info',
+            {
+              cancelText: 'cancel',
+              confirmText: 'ok'
+            }
+          )
+
+          if (!ok) {
+            return
+          }
+        }
         const args = []
         if (nodeId !== undefined) {
           if (!broadcast) {
