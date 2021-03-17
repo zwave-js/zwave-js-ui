@@ -228,7 +228,7 @@ export default {
               action: 'removeAllAssociations',
               args: {
                 confirm:
-                  "This action will remove all associations of this node. Does clearing a node's associations include the lifeline? If so, the node won't report until that is set up again"
+                  "This action will remove all associations of this node. This will also clear lifeline association with controller node, the node won't report state changes until that is set up again"
               }
             },
             {
@@ -236,7 +236,7 @@ export default {
               action: 'removeNodeFromAllAssociations',
               args: {
                 confirm:
-                  'This action will remove this node from all associations with others'
+                  'All direct associations to this node will be removed. Battery-powered nodes need to be woken up to edit their associations.'
               }
             }
           ],
