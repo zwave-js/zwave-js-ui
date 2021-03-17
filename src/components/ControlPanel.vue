@@ -13,16 +13,16 @@
                 Add/Remove Device
               </v-btn>
             </v-col>
-
-            <v-btn
-              color="purple"
-              :text="$vuetify.breakpoint.mdAndUp"
-              :icon="$vuetify.breakpoint.smAndDown"
-              @click="advancedShowDialog = true"
-            >
-              <v-icon style="margin-right:0.2rem">label_important</v-icon>
-              <span v-if="$vuetify.breakpoint.mdAndUp">Advanced</span>
-            </v-btn>
+            <v-col cols="12" sm="4" md="3" style="text-align:center">
+              <v-btn
+                dark
+                color="green"
+                depressed
+                @click="advancedShowDialog = true"
+              >
+                Advanced
+              </v-btn>
+            </v-col>
           </v-row>
         </v-container>
 
@@ -36,17 +36,11 @@
         <DialogAdvanced
           v-model="advancedShowDialog"
           @close="advancedShowDialog = false"
-          @apiRequest="apiRequest"
-          v-on="$listeners"
           :actions="actions"
           @action="onAction"
         />
 
-        <nodes-table
-          :node-actions="node_actions"
-          :socket="socket"
-          v-on="$listeners"
-        />
+        <nodes-table :socket="socket" v-on="$listeners" @action="sendAction" />
       </v-card-text>
     </v-card>
   </v-container>
@@ -112,107 +106,54 @@ export default {
           desc: 'Force nodes to establish better connections to the controller'
         },
         {
-          text: 'Refresh Values',
-          options: [
-            { name: 'Broadcast', action: 'refreshValues', broadcast: true }
-          ],
-          icon: 'cached',
-          desc: 'Read the values from each node so it has proper state'
-        },
-        {
-          text: 'Re-interview Nodes',
-          options: [
-            { name: 'Broadcast', action: 'refreshInfo', broadcast: true }
-          ],
-          icon: 'history',
-          desc: 'Update the metadata and command class info for each node'
-        },
-        {
-          text: 'Failed Nodes',
-          options: [
-            { name: 'Check', action: 'isFailedNode', broadcast: true },
-            { name: 'Remove', action: 'removeFailedNode', broadcast: true }
-          ],
-          icon: 'dangerous',
-          desc:
-            'Manage nodes that are dead and/or marked as failed with the controller'
-        },
-        {
-          text: 'Remove Associations',
-          options: [
-            {
-              name: 'Broadcast',
-              action: 'removeAllAssociations',
-              broadcast: true
-            }
-          ],
-          icon: 'link_off',
-          desc: 'Clear associations for all paired devices'
-        },
-        {
           text: 'Hard Reset',
           options: [{ name: 'Factory Reset', action: 'hardReset' }],
           icon: 'warning',
           color: 'red',
           desc:
             'Reset controller to factory defaults (all paired devices will be removed)'
-        }
-      ],
-      node_actions: [
+        },
         {
-          text: 'Heal node',
-          value: 'healNode'
+          text: 'Refresh Values',
+          options: [
+            {
+              name: 'Broadcast',
+              action: 'refreshValues',
+              args: { broadcast: true }
+            }
+          ],
+          icon: 'cached',
+          desc: 'Update all CC values and metadata'
         },
         {
           text: 'Re-interview Node',
-          value: 'refreshInfo'
+          options: [
+            {
+              name: 'Broadcast',
+              action: 'refreshInfo',
+              args: { broadcast: true }
+            }
+          ],
+          icon: 'history',
+          desc: 'Clear all info about this node and make a new full interview'
         },
         {
-          text: 'Refresh values',
-          value: 'refreshValues'
-        },
-        {
-          text: 'Is Failed Node',
-          value: 'isFailedNode'
-        },
-        {
-          text: 'Remove failed node',
-          value: 'removeFailedNode'
-        },
-        {
-          text: 'Replace failed node',
-          value: 'replaceFailedNode'
-        },
-        {
-          text: 'Begin Firmware update',
-          value: 'beginFirmwareUpdate'
-        },
-        {
-          text: 'Abort Firmware update',
-          value: 'abortFirmwareUpdate'
-        },
-        {
-          text: 'Remove all associations',
-          value: 'removeAllAssociations'
-        },
-        {
-          text: 'Remove node from all associations',
-          value: 'removeNodeFromAllAssociations'
-        }
-      ],
-      cnt_action: 'healNetwork',
-      cnt_actions: [
-        {
-          text: 'Heal Network',
-          value: 'beginHealingNetwork'
-        },
-        {
-          text: 'Stop Heal Network',
-          value: 'stopHealingNetwork'
-        },
-        {
-          text: 'Hard reset',
-          value: 'hardReset'
+          text: 'Failed Nodes',
+          options: [
+            {
+              name: 'Check all',
+              action: 'isFailedNode',
+              args: { broadcast: true }
+            },
+            {
+              name: 'Remove all',
+              action: 'removeFailedNode',
+              args: { broadcast: true }
+            }
+          ],
+          icon: 'dangerous',
+          desc:
+            'Manage nodes that are dead and/or marked as failed with the controller'
         }
       ],
       rules: {
@@ -233,7 +174,7 @@ export default {
       this.addRemoveShowDialog = false
       this.addRemoveNode = null
     },
-    async onAction (action, broadcast) {
+    async onAction (action, args = {}) {
       if (action === 'import') {
         this.importConfiguration()
       } else if (action === 'export') {
@@ -241,16 +182,8 @@ export default {
       } else if (action === 'exportDump') {
         this.exportDump()
       } else {
-        if (broadcast) {
-          for (let i = 0; i < this.nodes.length; i++) {
-            const nodeid = this.nodes[i].id
-            this.$emit('apiRequest', action, [nodeid])
-          }
-        } else {
-          this.$emit('apiRequest', action, [])
-        }
+        this.sendAction(action, args)
       }
-      this.advancedShowDialog = false
     },
     async importConfiguration () {
       if (
@@ -285,50 +218,11 @@ export default {
     exportDump () {
       this.$listeners.export(this.nodes, 'nodes_dump', 'json')
     },
-    async sendCntAction () {
-      if (this.cnt_action) {
+    async sendAction (action, { nodeId, broadcast }) {
+      if (action) {
         const args = []
-        let broadcast = false
-        const askId = this.node_actions.find(a => a.value === this.cnt_action)
-        if (askId) {
-          // don't send replaceFailed as broadcast
-          if (
-            this.cnt_action !== 'replaceFailedNode' &&
-            this.cnt_action !== 'beginFirmwareUpdate'
-          ) {
-            broadcast = await this.$listeners.showConfirm(
-              'Broadcast',
-              'Send this command to all nodes?',
-              'info',
-              {
-                cancelText: 'No'
-              }
-            )
-          }
-
+        if (nodeId !== undefined) {
           if (!broadcast) {
-            const { nodeId } = await this.$listeners.showConfirm(
-              'Choose a node',
-              '',
-              'info',
-              {
-                confirmText: 'Ok',
-                inputs: [
-                  {
-                    type: 'list',
-                    allowManualEntry: true,
-                    items: this.nodes,
-                    label: 'Node',
-                    hint: 'Select a node',
-                    required: true,
-                    key: 'nodeId',
-                    itemText: '_name',
-                    itemValue: 'id'
-                  }
-                ]
-              }
-            )
-
             if (isNaN(nodeId)) {
               this.showSnackbar('Node ID must be an integer value')
               return
@@ -337,10 +231,7 @@ export default {
           }
         }
 
-        if (
-          this.cnt_action === 'startInclusion' ||
-          this.cnt_action === 'replaceFailedNode'
-        ) {
+        if (action === 'startInclusion' || action === 'replaceFailedNode') {
           const secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?',
@@ -350,38 +241,41 @@ export default {
             }
           )
           args.push(secure)
-        } else if (this.cnt_action === 'hardReset') {
+        } else if (action === 'hardReset') {
           const ok = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
-            { color: 'red' }
+            'alert',
+            { confirmText: 'Ok' }
           )
           if (!ok) {
             return
           }
-        } else if (this.cnt_action === 'beginFirmwareUpdate') {
-          const { target } = await this.$listeners.showConfirm(
-            'Choose target',
-            '',
-            'info',
-            {
-              confirmText: 'Ok',
-              inputs: [
-                {
-                  type: 'number',
-                  label: 'Target',
-                  default: 0,
-                  rules: [v => v >= 0 || 'Invalid target'],
-                  hint:
-                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
-                  required: true,
-                  key: 'target'
-                }
-              ]
-            }
-          )
-
+        } else if (action === 'beginFirmwareUpdate') {
           try {
+            const { target } = await this.$listeners.showConfirm(
+              'Choose target',
+              '',
+              'info',
+              {
+                confirmText: 'Ok',
+                inputs: [
+                  {
+                    type: 'number',
+                    label: 'Target',
+                    default: 0,
+                    rules: [v => v >= 0 || 'Invalid target'],
+                    hint:
+                      'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+                    required: true,
+                    key: 'target'
+                  }
+                ]
+              }
+            )
+
+            if (target === undefined) throw Error('Must specify a target')
+
             const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
@@ -394,10 +288,10 @@ export default {
         if (broadcast) {
           for (let i = 0; i < this.nodes.length; i++) {
             const nodeid = this.nodes[i].id
-            this.apiRequest(this.cnt_action, [nodeid])
+            this.apiRequest(action, [nodeid])
           }
         } else {
-          this.apiRequest(this.cnt_action, args)
+          this.apiRequest(action, args)
         }
       }
     },

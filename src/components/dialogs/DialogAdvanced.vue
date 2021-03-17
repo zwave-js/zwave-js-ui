@@ -16,7 +16,7 @@
             <v-btn
               v-for="(o, i) in a.options"
               :key="i"
-              @click="$emit('action', o.action, o.broadcast)"
+              @click="$emit('action', o.action, o.args)"
               text
               :color="a.color || 'purple'"
               >{{ o.name }}</v-btn

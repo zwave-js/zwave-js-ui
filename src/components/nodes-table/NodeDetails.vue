@@ -10,47 +10,8 @@
 
     <v-row>
       <v-col cols="8" style="max-width:300px">
-        <v-select
-          label="Node actions"
-          append-outer-icon="send"
-          v-model="node_action"
-          :items="node_actions"
-          @click:append-outer="sendNodeAction"
-        ></v-select>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col>
-        <v-btn text @click="exportNode">
-          Export
-          <v-icon right dark color="primary">file_download</v-icon>
-        </v-btn>
-        <v-btn
-          v-if="!mqtt.disabled"
-          text
-          @click="
-            sendMqttAction(
-              'removeNodeRetained',
-              'With this action all retained messages of this node will be removed from broker'
-            )
-          "
-        >
-          Clear retained
-          <v-icon right dark color="red">clear</v-icon>
-        </v-btn>
-        <v-btn
-          v-if="!mqtt.disabled"
-          text
-          @click="
-            sendMqttAction(
-              'updateNodeTopics',
-              'With this action all node topics will be updated'
-            )
-          "
-        >
-          Update topics
-          <v-icon right dark color="green">refresh</v-icon>
+        <v-btn dark color="green" depressed @click="advancedShowDialog = true">
+          Advanced
         </v-btn>
       </v-col>
     </v-row>
@@ -120,23 +81,32 @@
         </v-expansion-panel>
       </v-expansion-panels>
     </v-row>
+
+    <DialogAdvanced
+      v-model="advancedShowDialog"
+      @close="advancedShowDialog = false"
+      :actions="actions"
+      @action="nodeAction"
+    />
   </v-container>
 </template>
 
 <script>
 import ValueID from '@/components/ValueId'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
+
 import { inboundEvents as socketActions } from '@/plugins/socket'
 import { mapMutations, mapGetters } from 'vuex'
 
 export default {
   props: {
     headers: Array,
-    actions: Array,
     node: Object,
     socket: Object
   },
   components: {
-    ValueID
+    ValueID,
+    DialogAdvanced
   },
   data () {
     return {
@@ -144,7 +114,100 @@ export default {
       nameError: null,
       newName: this.node.name,
       newLoc: this.node.loc,
-      node_action: 'requestNetworkUpdate'
+      advancedShowDialog: false,
+      actions: [
+        {
+          text: 'Export json',
+          options: [{ name: 'Export', action: 'exportNode' }],
+          icon: 'get_app',
+          desc: 'Export this node in a json file'
+        },
+        {
+          text: 'Clear Retained',
+          options: [
+            {
+              name: 'Clear',
+              action: 'removeNodeRetained',
+              args: {
+                mqtt: true,
+                confirm:
+                  'Are you sure you want to remove all retained messages?'
+              }
+            }
+          ],
+          icon: 'clear',
+          desc: 'All retained messages of this node will be removed from broker'
+        },
+        {
+          text: 'Update topics',
+          options: [
+            {
+              name: 'Update',
+              action: 'updateNodeTopics',
+              args: {
+                mqtt: true,
+                confirm: 'Are you sure you want to update all topics?'
+              }
+            }
+          ],
+          icon: 'update',
+          desc: 'Update all node topics. Useful when name/location has changed'
+        },
+        {
+          text: 'Firmware update',
+          options: [
+            { name: 'Begin', action: 'beginFirmwareUpdate' },
+            { name: 'Abort', action: 'abortFirmwareUpdate' }
+          ],
+          icon: 'update',
+          desc: 'Start/Stop a firmware update'
+        },
+        {
+          text: 'Heal Node',
+          options: [{ name: 'Heal', action: 'healNode' }],
+          icon: 'healing',
+          desc: 'Force nodes to establish better connections to the controller'
+        },
+        {
+          text: 'Refresh Values',
+          options: [{ name: 'Refresh', action: 'refreshValues' }],
+          icon: 'cached',
+          desc: 'Update all CC values and metadata'
+        },
+        {
+          text: 'Re-interview Node',
+          options: [{ name: 'Interview', action: 'refreshInfo' }],
+          icon: 'history',
+          desc: 'Clear all info about this node and make a new full interview'
+        },
+        {
+          text: 'Failed Nodes',
+          options: [
+            { name: 'Check', action: 'isFailedNode' },
+            { name: 'Remove', action: 'removeFailedNode' },
+            { name: 'Replace', action: 'replaceFailedNode' }
+          ],
+          icon: 'dangerous',
+          desc:
+            'Manage nodes that are dead and/or marked as failed with the controller'
+        },
+        {
+          text: 'Associations',
+          options: [
+            {
+              name: 'Clear',
+              action: 'removeAllAssociations'
+            },
+            {
+              name: 'Remove',
+              action: 'removeNodeFromAllAssociations'
+            }
+          ],
+          icon: 'link_off',
+          desc:
+            'Clear all node associations associations / Remove node from all associations'
+        }
+      ]
     }
   },
   computed: {
@@ -163,9 +226,6 @@ export default {
       } else {
         return {}
       }
-    },
-    node_actions () {
-      return this.actions
     }
   },
   watch: {
@@ -180,11 +240,17 @@ export default {
       this.nameError = this.validateTopic(val)
     }
   },
-  created () {
-    this.node_action = null
-  },
   methods: {
     ...mapMutations(['showSnackbar']),
+    nodeAction (action, args = {}) {
+      if (action === 'exportNode') {
+        this.exportNode()
+      } else if (args.mqtt) {
+        this.sendMqttAction(action, args.confirm)
+      } else {
+        this.$emit('action', action, { nodeId: this.node.id })
+      }
+    },
     openLink (link) {
       window.open(link, '_blank')
     },
@@ -218,51 +284,6 @@ export default {
       setTimeout(() => {
         this.newName = this.node.name
       }, 10)
-    },
-    async sendNodeAction (action) {
-      action = typeof action === 'string' ? action : this.node_action
-      if (this.node) {
-        const args = [this.node.id]
-
-        if (this.node_action === 'beginFirmwareUpdate') {
-          const { target } = await this.$listeners.showConfirm(
-            'Choose target',
-            '',
-            'info',
-            {
-              confirmText: 'Ok',
-              inputs: [
-                {
-                  type: 'number',
-                  label: 'Target',
-                  default: 0,
-                  rules: [v => v >= 0 || 'Invalid target'],
-                  hint:
-                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
-                  required: true,
-                  key: 'target'
-                }
-              ]
-            }
-          )
-          try {
-            const { data, file } = await this.$listeners.import('buffer')
-            args.push(file.name)
-            args.push(data)
-            args.push(target)
-          } catch (error) {
-            return
-          }
-        } else if (this.node_action === 'replaceFailedNode') {
-          const secure = await this.$listeners.showConfirm(
-            'Node inclusion',
-            'Start inclusion in secure mode?'
-          )
-          args.push(secure)
-        }
-
-        this.apiRequest(action, args)
-      }
     },
     async sendMqttAction (action, confirmMessage) {
       if (this.node) {

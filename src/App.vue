@@ -52,7 +52,7 @@
 
         <v-spacer></v-spacer>
 
-         <div class="controller-status">{{ appInfo.controllerStatus }}</div>
+        <div class="controller-status">{{ appInfo.controllerStatus }}</div>
 
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
@@ -338,7 +338,7 @@ export default {
         alert: 'red'
       }
 
-      options.color = levelMap[level] || 'primary'
+      options.color = options.color || levelMap[level] || 'primary'
 
       return this.$refs.confirm.open(title, text, options)
     },
