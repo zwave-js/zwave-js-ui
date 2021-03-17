@@ -40,13 +40,13 @@ export default {
     }
   },
   methods: {
-    toggleExpanded(item) {
+    toggleExpanded (item) {
       this.expanded = this.expanded.includes(item)
         ? this.expanded.filter(i => i !== item)
         : [...this.expanded, item]
     }
   },
-  mounted() {
+  mounted () {
     this.managedNodes = new ManagedItems(
       this.nodes,
       this.nodesProps,
