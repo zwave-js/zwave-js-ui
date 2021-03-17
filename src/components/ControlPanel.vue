@@ -99,7 +99,14 @@ export default {
         {
           text: 'Heal Network',
           options: [
-            { name: 'Begin', action: 'beginHealingNetwork' },
+            {
+              name: 'Begin',
+              action: 'beginHealingNetwork',
+              args: {
+                confirm:
+                  'Healing network causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on'
+              }
+            },
             { name: 'Stop', action: 'stopHealingNetwork' }
           ],
           icon: 'healing',

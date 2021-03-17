@@ -170,14 +170,32 @@ export default {
         },
         {
           text: 'Refresh Values',
-          options: [{ name: 'Refresh', action: 'refreshValues' }],
+          options: [
+            {
+              name: 'Refresh',
+              action: 'refreshValues',
+              args: {
+                confirm:
+                  'Are you sure you want to refresh values of this node? This action increases network traffic'
+              }
+            }
+          ],
           icon: 'cached',
           desc:
             'Update all CC values and metadata. Use when many values seems stale'
         },
         {
           text: 'Re-interview Node',
-          options: [{ name: 'Interview', action: 'refreshInfo' }],
+          options: [
+            {
+              name: 'Interview',
+              action: 'refreshInfo',
+              args: {
+                confirm:
+                  "Are you sure you want to re-interview this node? Battery powered nodes need to be woken up, interaction with the node won't be reliable until the interview is done"
+              }
+            }
+          ],
           icon: 'history',
           desc:
             'Clear all info about this node and make a new full interview. Use when the node has wrong/missing some capabilities'
@@ -200,7 +218,8 @@ export default {
               name: 'Clear',
               action: 'removeAllAssociations',
               args: {
-                confirm: 'This action will remove all associations of this node'
+                confirm:
+                  "This action will remove all associations of this node. Does clearing a node's associations include the lifeline? If so, the node won't report until that is set up again"
               }
             },
             {
