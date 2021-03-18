@@ -48,9 +48,44 @@
 
       <v-app-bar app>
         <v-app-bar-nav-icon @click.stop="toggleDrawer" />
-        <v-toolbar-title>{{ title }}</v-toolbar-title>
+        <v-toolbar-title v-if="$vuetify.breakpoint.smAndUp">{{
+          title
+        }}</v-toolbar-title>
 
         <v-spacer></v-spacer>
+
+        <div class="controller-status">{{ appInfo.controllerStatus }}</div>
+
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-icon
+              dark
+              medium
+              style="cursor:default;margin:0 1rem"
+              color="primary"
+              v-on="on"
+              >info</v-icon
+            >
+          </template>
+          <div class="info-box">
+            <div>
+              <small>zwavejs2mqtt</small>
+              <strong>{{ appInfo.appVersion }}</strong>
+            </div>
+            <div>
+              <small>zwave-js</small>
+              <strong>{{ appInfo.zwaveVersion }}</strong>
+            </div>
+            <div>
+              <small>Home ID</small>
+              <strong>{{ appInfo.homeid }}</strong>
+            </div>
+            <div>
+              <small>Home Hex</small>
+              <strong>{{ appInfo.homeHex }}</strong>
+            </div>
+          </div>
+        </v-tooltip>
 
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
@@ -58,7 +93,7 @@
               dark
               medium
               style="cursor:default;"
-              :color="statusColor || 'primary'"
+              :color="statusColor || 'orange'"
               v-on="on"
               >swap_horizontal_circle</v-icon
             >
@@ -166,6 +201,22 @@
 </template>
 
 <style>
+.controller-status {
+  color: #555;
+  background: #e0e0e0;
+  border-radius: 4px;
+  padding: 0.3rem 0;
+  font-size: 0.8rem;
+  min-width: 220px;
+  text-align: center;
+}
+.info-box > div {
+  display: flex;
+  justify-content: space-between;
+}
+.info-box > div > strong {
+  padding-left: 1.2rem;
+}
 /* Fix Vuetify code style after update to 2.4.0 */
 code {
   color: #c62828 !important;
@@ -193,7 +244,7 @@ export default {
   },
   name: 'app',
   computed: {
-    ...mapGetters(['user', 'auth'])
+    ...mapGetters(['user', 'auth', 'appInfo'])
   },
   watch: {
     $route: function (value) {
@@ -289,7 +340,7 @@ export default {
         alert: 'red'
       }
 
-      options.color = levelMap[level] || 'primary'
+      options.color = options.color || levelMap[level] || 'primary'
 
       return this.$refs.confirm.open(title, text, options)
     },

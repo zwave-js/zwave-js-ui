@@ -43,6 +43,7 @@ Build/Run method
 
 - [ ] Docker
 - [ ] PKG
+- [ ] Snap package
 - [ ] Manually built (git clone - npm install - npm run build )
 
 zwavejs2mqtt version: <version here, you can find it on control panel>

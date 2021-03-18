@@ -40,9 +40,6 @@ export default {
     }
   },
   methods: {
-    exportDump () {
-      this.$listeners.export(this.nodes, 'nodes_dump', 'json')
-    },
     toggleExpanded (item) {
       this.expanded = this.expanded.includes(item)
         ? this.expanded.filter(i => i !== item)

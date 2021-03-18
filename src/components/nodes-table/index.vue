@@ -82,35 +82,6 @@
             </template>
             <span>Reset all table settings</span>
           </v-tooltip>
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-btn text color="green" v-on="on" @click="$emit('importNodes')">
-                IMPORT
-              </v-btn>
-            </template>
-            <span>Import nodes.json Configuration</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-btn
-                text
-                color="purple"
-                v-on="on"
-                @click="$emit('exportNodes')"
-              >
-                EXPORT
-              </v-btn>
-            </template>
-            <span>Export nodes.json Configuration</span>
-          </v-tooltip>
-          <v-tooltip bottom>
-            <template v-slot:activator="{ on }">
-              <v-btn text color="yellow" v-on="on" @click="exportDump">
-                DUMP
-              </v-btn>
-            </template>
-            <span>Export Nodes Dump (for debugging)</span>
-          </v-tooltip>
         </v-col>
       </v-row>
     </template>
