@@ -1,3 +1,16 @@
+# [2.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.3.0...v2.4.0) (2021-03-18)
+
+
+### Bug Fixes
+
+* **ui:** broken edit of scene values ([#898](https://github.com/zwave-js/zwavejs2mqtt/issues/898)) ([ed2d639](https://github.com/zwave-js/zwavejs2mqtt/commit/ed2d6390d1db4c1fd89880526cc93d8e617636b7))
+* allow spaces in name and location ([#897](https://github.com/zwave-js/zwavejs2mqtt/issues/897)) ([18d6023](https://github.com/zwave-js/zwavejs2mqtt/commit/18d602341664229a9f78c2c44660d7b74d7df751)), closes [#877](https://github.com/zwave-js/zwavejs2mqtt/issues/877)
+
+
+### Features
+
+* **ui:** improved control panel ([#900](https://github.com/zwave-js/zwavejs2mqtt/issues/900)) ([3b3785e](https://github.com/zwave-js/zwavejs2mqtt/commit/3b3785eabe6a911710d1cefa371d3afd429eb196))
+
 # [2.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.2.0...v2.3.0) (2021-03-15)
 
 
