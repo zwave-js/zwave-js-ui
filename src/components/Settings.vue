@@ -434,7 +434,7 @@
                           persistent-hint
                         ></v-switch>
                       </v-col>
-                      <v-col v-if="newGateway.type !== 2" cols="6">
+                      <v-col v-if="newGateway.payloadType !== 2" cols="6">
                         <v-switch
                           label="Include Node info"
                           hint="Include Node's Name and Location on Payload"
