@@ -56,7 +56,7 @@
 
         <div class="controller-status">{{ appInfo.controllerStatus }}</div>
 
-        <v-tooltip bottom>
+        <v-tooltip bottom open-on-click>
           <template v-slot:activator="{ on }">
             <v-icon
               dark
@@ -64,6 +64,7 @@
               style="cursor:default;margin:0 1rem"
               color="primary"
               v-on="on"
+              @click="copyVersion"
               >info</v-icon
             >
           </template>
@@ -301,6 +302,18 @@ export default {
   methods: {
     ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
     ...mapMutations(['setControllerStatus', 'initNode', 'removeNode']),
+    copyVersion () {
+      const el = document.createElement('textarea')
+      el.value = `zwavejs2mqtt: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\n home hex:${this.appInfo.homeHex}`
+      el.setAttribute('readonly', '')
+      el.style.position = 'absolute'
+      el.style.left = '-9999px'
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      this.showSnackbar('Copied to clipboard')
+    },
     async updatePassword () {
       try {
         const response = await ConfigApis.updatePassword(this.password)
