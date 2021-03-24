@@ -11,7 +11,11 @@ import {
   ValueType,
   ZWaveNode,
   ZWaveOptions,
-  ZWavePlusNodeType
+  ZWavePlusNodeType,
+  FLiRS,
+  ProtocolVersion,
+  DataRate,
+  NodeType
 } from 'zwave-js'
 
 export type Z2MValueIdState = {
@@ -97,16 +101,18 @@ export type Z2MNode = {
   productType: number
   manufacturer: string
   firmwareVersion: string
-  zwaveVersion: string
+  protocolVersion: ProtocolVersion
   zwavePlusVersion: number | undefined
-  nodeType: ZWavePlusNodeType | undefined
-  roleType: ZWavePlusRoleType | undefined
+  zwavePlusNodeType: ZWavePlusNodeType | undefined
+  zwavePlusRoleType: ZWavePlusRoleType | undefined
+  nodeType: NodeType
   endpointsCount: number
   isSecure: boolean
-  isBeaming: boolean
+  supportsBeaming: boolean
+  supportsSecurity: boolean
   isListening: boolean
   isControllerNode: boolean
-  isFrequentListening: boolean
+  isFrequentListening: FLiRS
   isRouting: boolean
   keepAwake: boolean
   deviceClass: Z2MDeviceClass
@@ -123,8 +129,7 @@ export type Z2MNode = {
   failed: boolean
   lastActive: number
   dbLink: string
-  interviewCompleted: boolean
-  maxBaudRate: number
+  maxDataRate: DataRate
   interviewStage: InterviewStage
   status: NodeStatus
   inited: boolean
@@ -302,11 +307,7 @@ export interface ZwaveClient extends EventEmitter {
   on(event: 'scanComplete', listener: () => void): this
   on(
     event: 'notification',
-    listener: (
-      node: Z2MNode,
-      label: string,
-      parameters: string | number | Buffer
-    ) => void
+    listener: (node: Z2MNode, valueId: Z2MValueId, data: any) => void
   ): this
   on(event: 'nodeRemoved', listener: (node: Z2MNode) => void): this
   on(
