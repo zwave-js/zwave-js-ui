@@ -1,3 +1,19 @@
+# [3.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.4.1...v3.0.0) (2021-03-24)
+
+
+### Features
+
+* move to zwavejs 7 ([#864](https://github.com/zwave-js/zwavejs2mqtt/issues/864)) ([0bff7a7](https://github.com/zwave-js/zwavejs2mqtt/commit/0bff7a7798e877f86ed158c60b0938a1f960800e))
+
+
+### BREAKING CHANGES
+
+* Most changes are already documented [here](https://zwave-js.github.io/node-zwave-js/#/getting-started/migrating-to-v7):
+- Corrected parsing of Node Information Frames (NIF), reworked node properties
+- No automatic query of all node values when restarting from cache, `interview completed` event is no longer emitted on startup
+- Reworked "notification" event, node notifications are mapped to mqtt using a different topic/payload
+- This version is incompatible with HA versions before 2021.4.x
+
 ## [2.4.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v2.4.0...v2.4.1) (2021-03-22)
 
 
