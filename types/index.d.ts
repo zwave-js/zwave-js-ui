@@ -14,7 +14,8 @@ import {
   ZWavePlusNodeType,
   FLiRS,
   ProtocolVersion,
-  DataRate
+  DataRate,
+  NodeType
 } from 'zwave-js'
 
 export type Z2MValueIdState = {
@@ -102,8 +103,9 @@ export type Z2MNode = {
   firmwareVersion: string
   protocolVersion: ProtocolVersion
   zwavePlusVersion: number | undefined
-  nodeType: ZWavePlusNodeType | undefined
-  roleType: ZWavePlusRoleType | undefined
+  zwavePlusNodeType: ZWavePlusNodeType | undefined
+  zwavePlusRoleType: ZWavePlusRoleType | undefined
+  nodeType: NodeType
   endpointsCount: number
   isSecure: boolean
   supportsBeaming: boolean
