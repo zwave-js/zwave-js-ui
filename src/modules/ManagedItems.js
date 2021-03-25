@@ -12,7 +12,7 @@ export class ManagedItems {
    * @param {Object} propDefs Definition of item properties to be available for management
    * @param {String} storePrefix Use local storage to store the settings of managed properties with the given prefix
    */
-  constructor (items, propDefs, store, storePrefix = 'items_') {
+  constructor(items, propDefs, store, storePrefix = 'items_') {
     this.settings = new Settings(store)
     this.doStore = !!storePrefix
     this.storePrefix = storePrefix || ''
@@ -24,7 +24,7 @@ export class ManagedItems {
   /**
    * Load values from settings store or set to initial values
    */
-  initialize () {
+  initialize() {
     this._tableOptions =
       this.tableOptions === undefined
         ? this.loadSetting('tableOptions', this.initialTableOptions)
@@ -38,12 +38,21 @@ export class ManagedItems {
         ? this.loadSetting('filters', this.initialFilters)
         : this.filters
     this._selected = this.initialSelected
+
+    // fix possible inconsistance from localstorage
+    for (const p in this.filters) {
+      if (!this.propDefs[p]) {
+        delete this.filters[p]
+      }
+    }
+
+    this.tableColumns = this.tableColumns.filter(t => !!this.propDefs[t.name])
   }
 
   /**
    * Reset all settings
    */
-  reset () {
+  reset() {
     this.tableOptions = this.initialTableOptions
     this.tableColumns = this.initialTableColumns
     this.filters = this.initialFilters
@@ -55,7 +64,7 @@ export class ManagedItems {
   /**
    * Get all managed items
    */
-  get items () {
+  get items() {
     return this._items
   }
 
@@ -63,14 +72,14 @@ export class ManagedItems {
    * Set managed items
    * @param {Array} items Items to be managed
    */
-  set items (items) {
+  set items(items) {
     this._items = items
   }
 
   /**
    * Get all property values from items
    */
-  getPropValues (propName) {
+  getPropValues(propName) {
     const uniqueMap = {}
     this.items.forEach(item => {
       const value = item[propName]
@@ -86,7 +95,7 @@ export class ManagedItems {
   /**
    * Get values of all item properties
    */
-  get propValues () {
+  get propValues() {
     const values = {}
     Object.keys(this.propDefs).forEach(propName => {
       values[propName] = this.getPropValues(propName)
@@ -97,7 +106,7 @@ export class ManagedItems {
   /**
    * Get filtered items
    */
-  get filteredItems () {
+  get filteredItems() {
     return ColumnFilterHelper.filterByFilterSpec(
       new NodeCollection(this.items),
       this.allTableHeaders,
@@ -112,7 +121,7 @@ export class ManagedItems {
    * @param {String} key Key to be loaded from the settings store
    * @param {Any} defaultVal Default value if key is not in settings store
    */
-  loadSetting (key, defaultVal) {
+  loadSetting(key, defaultVal) {
     return this.settings.load(this.storePrefix + key, defaultVal)
   }
 
@@ -121,7 +130,7 @@ export class ManagedItems {
    * @param {String} key Key to be stored
    * @param {Any} val Value to be stored
    */
-  storeSetting (key, val) {
+  storeSetting(key, val) {
     if (this.doStore) {
       this.settings.store(this.storePrefix + key, val)
     }
@@ -132,7 +141,7 @@ export class ManagedItems {
   /**
    * Internal function to get a table header definition for a specific column name
    */
-  _getTableHeaderForColumn (colName) {
+  _getTableHeaderForColumn(colName) {
     const propDef = this.propDefs[colName]
     return {
       value: colName,
@@ -145,7 +154,7 @@ export class ManagedItems {
   /**
    * Get all table column headers
    */
-  get allTableHeaders () {
+  get allTableHeaders() {
     return Object.keys(this.propDefs).reduce((headers, colName) => {
       headers.push(this._getTableHeaderForColumn(colName))
       return headers
@@ -155,7 +164,7 @@ export class ManagedItems {
   /**
    * Get visible table column headers
    */
-  get tableHeaders () {
+  get tableHeaders() {
     return this.tableColumns.reduce((tableHeaders, column) => {
       if (column.visible) {
         tableHeaders.push(this._getTableHeaderForColumn(column.name))
@@ -167,7 +176,7 @@ export class ManagedItems {
   /**
    * Get initial table column list
    */
-  get initialTableColumns () {
+  get initialTableColumns() {
     return Object.keys(this.propDefs).reduce((tableColumns, propName) => {
       tableColumns.push({
         name: propName,
@@ -180,7 +189,7 @@ export class ManagedItems {
   /**
    * Get the active table colum list
    */
-  get tableColumns () {
+  get tableColumns() {
     return this._columns
   }
 
@@ -188,7 +197,7 @@ export class ManagedItems {
    * Set the list of table columns with visibility status
    * @param {Array} tableColumns List of table columns to be set
    */
-  set tableColumns (tableColumns) {
+  set tableColumns(tableColumns) {
     this._columns = tableColumns
     this.storeSetting('tableColumns', tableColumns)
   }
@@ -198,7 +207,7 @@ export class ManagedItems {
   /**
    * Filter to selected items
    */
-  setFilterToSelected () {
+  setFilterToSelected() {
     this.setPropFilter('id', {
       values: this.selected.map(item => item.id)
     })
@@ -207,7 +216,7 @@ export class ManagedItems {
   /**
    * Get initial filters
    */
-  get initialFilters () {
+  get initialFilters() {
     return this.allTableHeaders.reduce((values, h) => {
       values[h.value] = {}
       return values
@@ -217,7 +226,7 @@ export class ManagedItems {
   /**
    * Get all filters
    */
-  get filters () {
+  get filters() {
     return this._filters
   }
 
@@ -225,7 +234,7 @@ export class ManagedItems {
    * Set all filters
    * @param {Object} filters Filters to be set
    */
-  set filters (filters) {
+  set filters(filters) {
     this._filters = filters
     this.storeSetting('filters', filters)
   }
@@ -234,7 +243,7 @@ export class ManagedItems {
    * Get filter for property
    * @param {String} propName Property name
    */
-  getPropFilter (propName) {
+  getPropFilter(propName) {
     return this.filters[propName]
   }
 
@@ -243,7 +252,7 @@ export class ManagedItems {
    * @param {String} propName Property name
    * @param {Object} filterDef Filter definition
    */
-  setPropFilter (propName, filterDef) {
+  setPropFilter(propName, filterDef) {
     this.filters = this.filters ? this.filters : {}
     this.filters[propName] = filterDef
     this.storeSetting('filters', this.filters)
@@ -254,7 +263,7 @@ export class ManagedItems {
   /**
    * Get table group by value
    */
-  get groupBy () {
+  get groupBy() {
     return this.tableOptions.groupBy
   }
 
@@ -262,7 +271,7 @@ export class ManagedItems {
    * Set the table group by value
    * @param {Array} groupBy Group by value
    */
-  set groupBy (groupBy) {
+  set groupBy(groupBy) {
     this.tableOptions = Object.assign(this.tableOptions, { groupBy: groupBy })
   }
 
@@ -270,7 +279,7 @@ export class ManagedItems {
    * Get title for property group
    * @param {String} groupValue Property group value
    */
-  get groupByTitle () {
+  get groupByTitle() {
     const propDef = this.propDefs[this.groupBy[0]]
     return propDef !== undefined && propDef.label
       ? propDef.label
@@ -281,7 +290,7 @@ export class ManagedItems {
    * Is the table grouped by given property?
    * @param {String} propName Property name
    */
-  isGroupBy (propName) {
+  isGroupBy(propName) {
     return this.groupBy.includes(propName)
   }
 
@@ -290,14 +299,14 @@ export class ManagedItems {
   /**
    * Get initial selected items
    */
-  get initialSelected () {
+  get initialSelected() {
     return []
   }
 
   /**
    * Get selected items
    */
-  get selected () {
+  get selected() {
     return this._selected
   }
 
@@ -305,7 +314,7 @@ export class ManagedItems {
    * Set selected items
    * @param {Array} selected List of selected items
    */
-  set selected (selected) {
+  set selected(selected) {
     this._selected = selected
   }
 
@@ -314,7 +323,7 @@ export class ManagedItems {
   /**
    * Get initial table options
    */
-  get initialTableOptions () {
+  get initialTableOptions() {
     return {
       page: 1,
       itemsPerPage: 10,
@@ -330,7 +339,7 @@ export class ManagedItems {
   /**
    * Get table options
    */
-  get tableOptions () {
+  get tableOptions() {
     return this._tableOptions
   }
 
@@ -338,7 +347,7 @@ export class ManagedItems {
    * Set table options
    * @param {Object} options Table options
    */
-  set tableOptions (tableOptions) {
+  set tableOptions(tableOptions) {
     this._tableOptions = tableOptions
     this.storeSetting('tableOptions', tableOptions)
   }
