@@ -232,73 +232,98 @@ Payload:
 
 ## Special topics
 
-- **App version**:
+### App version
 
-  `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/version`
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/version`
 
-  The payload will be in the time-value json format and the value will contain the app string version.
+The payload will be in the time-value json format and the value will contain the app string version.
 
-- **Mqtt status**:
+### Mqtt status
 
-  `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/status`
+`<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/status`
 
-  The payload will be in the time-value json format and the value will be `true` when mqtt is connected, `false` otherwise.
+The payload will be in the time-value json format and the value will be `true` when mqtt is connected, `false` otherwise.
 
-- **Node status**:
+### Node status
 
-  `<mqtt_prefix>/<?node_location>/<node_name>/status`
+`<mqtt_prefix>/<?node_location>/<node_name>/status`
 
-  The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
+The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
 
-- **Node information**:
+### Node information
 
-  `<mqtt_prefix>/<?node_location>/<node_name>/nodeinfo`
+`<mqtt_prefix>/<?node_location>/<node_name>/nodeinfo`
 
-  Payload includes all node details except Discovered devices, values and properties.
-  Updates on every node change.
+Payload includes all node details except Discovered devices, values and properties.
+Updates on every node change.
 
-  A example of payload is:
+A example of payload is:
 
-  ```json
-  {
-    "id": 97,
-    "deviceId": "271-4098-2049",
-    "manufacturer": "Fibargroup",
-    "manufacturerId": 271,
-    "productType": 2049,
-    "productId": 4098,
-    "name": "Sensor",
-    "loc": "Hallway",
-    "neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
-    "ready": true,
-    "available": true,
-    "failed": false,
-    "lastActive": 1610009585743,
-    "interviewCompleted": true,
-    "firmwareVersion": "3.3",
-    "isBeaming": true,
-    "isSecure": false,
-    "keepAwake": false,
-    "maxBaudRate": null,
-    "isRouting": true,
-    "isFrequentListening": false,
-    "isListening": false,
-    "status": "Asleep",
-    "interviewStage": "Complete",
-    "productLabel": "FGMS001",
-    "productDescription": "Motion Sensor",
-    "zwaveVersion": 4,
-    "deviceClass": {
-      "basic": 4,
-      "generic": 7,
-      "specific": 1
-    },
-    "hexId": "0x010f-0x1002-0x0801"
+```json
+{
+  "id": 97,
+  "deviceId": "271-4098-2049",
+  "manufacturer": "Fibargroup",
+  "manufacturerId": 271,
+  "productType": 2049,
+  "productId": 4098,
+  "name": "Sensor",
+  "loc": "Hallway",
+  "neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
+  "ready": true,
+  "available": true,
+  "failed": false,
+  "lastActive": 1610009585743,
+  "firmwareVersion": "3.3",
+  "supportsBeaming": true,
+  "isSecure": false,
+  "keepAwake": false,
+  "maxBaudRate": null,
+  "isRouting": true,
+  "isFrequentListening": false,
+  "isListening": false,
+  "status": "Asleep",
+  "interviewStage": "Complete",
+  "productLabel": "FGMS001",
+  "productDescription": "Motion Sensor",
+  "zwaveVersion": 4,
+  "deviceClass": {
+    "basic": 4,
+    "generic": 7,
+    "specific": 1
+  },
+  "hexId": "0x010f-0x1002-0x0801"
+}
+```
+
+### Node notifications
+
+Node notifications are translated to valueIds based on the CC that is triggerig the notification and the notification args. Topic and payload depends on your gateway settings
+
+#### Entry CC
+
+ValueId:
+
+```js
+ {
+    ...
+    property: args.eventType
+    propertyKey: args.dataType
   }
-  ```
+```
 
-- **Node notifications**:
+Data: `args.eventData`
 
-  `<mqtt_prefix>/<?node_location>/<node_name>/notification/<notificationLabel>`
+#### Notification CC
 
-  The payload will be the notification `parameters` (can be null or not based on the notification type)
+ValueId:
+
+```js
+ {
+    ...
+    property: args.label
+    propertyKey: args.eventLabel
+  }
+```
+
+Data: `args.parameters`
