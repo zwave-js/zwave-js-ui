@@ -1,3 +1,11 @@
+## [3.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.1...v3.0.2) (2021-03-26)
+
+
+### Bug Fixes
+
+* revert PR [#920](https://github.com/zwave-js/zwavejs2mqtt/issues/920) "use prefixed node.id in mqtt discovery topic" ([#951](https://github.com/zwave-js/zwavejs2mqtt/issues/951)) ([2595701](https://github.com/zwave-js/zwavejs2mqtt/commit/2595701ca933c16247b0057d500805b209651344))
+* undefined propertyName in notifications ([#950](https://github.com/zwave-js/zwavejs2mqtt/issues/950)) ([da63912](https://github.com/zwave-js/zwavejs2mqtt/commit/da63912fdb68d83fe5946eeef5cb752a3b7e06ef)), closes [#948](https://github.com/zwave-js/zwavejs2mqtt/issues/948)
+
 ## [3.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.0...v3.0.1) (2021-03-25)
 
 
