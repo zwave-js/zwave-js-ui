@@ -138,7 +138,8 @@ export default {
               action: 'removeFailedNode',
               args: {
                 broadcast: true,
-                confirm: 'This action will remove all failed nodes'
+                confirm:
+                  'This action will remove all failed nodes. ATTENTION: this will skip sleeping nodes to prevent unwanted behaviours'
               }
             }
           ],
@@ -304,8 +305,15 @@ export default {
         }
 
         if (broadcast) {
-          for (let i = 0; i < this.nodes.length; i++) {
-            const nodeid = this.nodes[i].id
+          let nodes = this.nodes
+
+          // ignore sleeping nodes in broadcast request. Fixes #983
+          if (action === 'removeFailedNode') {
+            nodes = nodes.filter(n => n.status !== 'Asleep')
+          }
+
+          for (let i = 0; i < nodes.length; i++) {
+            const nodeid = nodes[i].id
             this.apiRequest(action, [nodeid])
           }
         } else {
