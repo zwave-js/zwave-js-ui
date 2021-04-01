@@ -11,6 +11,7 @@ export const state = {
     logLevel: 'info',
     logToFile: false,
     serverEnabled: false,
+    disableMetrics: false,
     serverPort: 3000
   },
   mqtt: {
@@ -49,7 +50,7 @@ export const state = {
   }
 }
 
-function getValue (v) {
+function getValue(v) {
   const node = getNode(v.nodeId)
 
   if (node && node.values) {
@@ -59,7 +60,7 @@ function getValue (v) {
   }
 }
 
-function getNode (id) {
+function getNode(id) {
   return state.nodes[state.nodesMap.get(id)]
 }
 
@@ -77,66 +78,66 @@ export const getters = {
 }
 
 export const actions = {
-  setAuth (store, data) {
+  setAuth(store, data) {
     store.commit('setAuth', data)
   },
-  init (store, data) {
+  init(store, data) {
     if (data) {
       store.commit('initSettings', data.settings)
       store.commit('initPorts', data.serial_ports)
       store.commit('initDevices', data.devices)
     }
   },
-  setUser (store, data) {
+  setUser(store, data) {
     store.commit('setUser', data)
   },
-  import (store, settings) {
+  import(store, settings) {
     store.commit('initSettings', settings)
   },
-  initNodes (store, nodes) {
+  initNodes(store, nodes) {
     for (let i = 0; i < nodes.length; i++) {
       store.commit('initNode', nodes[i])
     }
   },
-  setAppInfo (store, data) {
+  setAppInfo(store, data) {
     store.commit('updateAppInfo', data)
   },
-  setValue (store, data) {
+  setValue(store, data) {
     store.commit('setValue', data)
   },
-  updateValue (store, data) {
+  updateValue(store, data) {
     const valueId = getValue(data)
     if (valueId && valueId.toUpdate) {
       store.commit('showSnackbar', 'Value updated')
     }
     store.commit('updateValue', { data, valueId })
   },
-  removeValue (store, data) {
+  removeValue(store, data) {
     store.commit('removeValue', data)
   }
 }
 
 export const mutations = {
-  showSnackbar () {
+  showSnackbar() {
     // empty mutation, will be catched in App.vue from store subscribe
   },
-  setAuth (store, enabled) {
+  setAuth(store, enabled) {
     state.auth = enabled
   },
-  setUser (state, data) {
+  setUser(state, data) {
     Object.assign(state.user, data)
   },
-  setControllerStatus (state, data) {
+  setControllerStatus(state, data) {
     state.appInfo.controllerStatus = data
   },
-  updateAppInfo (state, data) {
+  updateAppInfo(state, data) {
     state.appInfo.homeid = data.homeid
     state.appInfo.homeHex = data.name
     state.appInfo.appVersion = data.appVersion
     state.appInfo.zwaveVersion = data.zwaveVersion
     state.appInfo.serverVersion = data.serverVersion
   },
-  setValue (state, valueId) {
+  setValue(state, valueId) {
     const toReplace = getValue(valueId)
     const node = getNode(valueId.nodeId)
 
@@ -147,7 +148,7 @@ export const mutations = {
       }
     }
   },
-  updateValue (state, { data, valueId }) {
+  updateValue(state, { data, valueId }) {
     if (valueId) {
       valueId.newValue = data.value
       valueId.value = data.value
@@ -164,7 +165,7 @@ export const mutations = {
       }
     }
   },
-  removeValue (state, data) {
+  removeValue(state, data) {
     const valueId = getValue(data)
     if (valueId) {
       const node = getNode(data.nodeId)
@@ -175,7 +176,7 @@ export const mutations = {
       }
     }
   },
-  initNode (state, n) {
+  initNode(state, n) {
     const values = []
     // transform object in array
     for (const k in n.values) {
@@ -194,13 +195,13 @@ export const mutations = {
     if (index === state.nodes.length) {
       state.nodes.push(n)
     } else {
-    // vue set is used to notify changes
+      // vue set is used to notify changes
       this._vm.$set(state.nodes, index, n)
     }
 
     state.nodesMap.set(n.id, index)
   },
-  removeNode (state, n) {
+  removeNode(state, n) {
     const index = state.nodesMap.get(n.id)
 
     if (index >= 0) {
@@ -208,23 +209,23 @@ export const mutations = {
       state.nodes.splice(index, 1)
     }
   },
-  setNeighbors (state, { nodeId, neighbors }) {
+  setNeighbors(state, { nodeId, neighbors }) {
     const node = getNode(nodeId)
     if (node) {
       this._vm.$set(node, 'neighbors', neighbors)
     }
   },
-  initSettings (state, conf) {
+  initSettings(state, conf) {
     if (conf) {
       Object.assign(state.zwave, conf.zwave || {})
       Object.assign(state.mqtt, conf.mqtt || {})
       Object.assign(state.gateway, conf.gateway || {})
     }
   },
-  initPorts (state, ports) {
+  initPorts(state, ports) {
     state.serial_ports = ports || []
   },
-  initDevices (state, devices) {
+  initDevices(state, devices) {
     if (!state.gateway.values) state.gateway.values = []
 
     if (devices) {

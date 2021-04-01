@@ -209,7 +209,8 @@ export type ZwaveConfig = {
   serverPort: number
   logEnabled: boolean
   logLevel: LogLevel
-  commandsTimeout: number
+  commandsTimeout: number,
+  disableMetrics: boolean
   plugin: string
   options: ZWaveOptions
 }
