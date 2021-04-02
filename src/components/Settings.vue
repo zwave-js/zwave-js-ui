@@ -163,10 +163,10 @@
                       </v-col>
                       <v-col cols="12" sm="6">
                         <v-switch
-                          hint="Metrics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/getting-started/telemetry.md#usage-statistics"
+                          hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/getting-started/telemetry.md#usage-statistics"
                           persistent-hint
-                          label="Disable metrics"
-                          v-model="newZwave.disableMetrics"
+                          label="Disable statistics"
+                          v-model="newZwave.disableStatistics"
                         ></v-switch>
                       </v-col>
                       <v-col cols="12" sm="6">

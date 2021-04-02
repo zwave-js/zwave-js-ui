@@ -1,5 +1,5 @@
 {
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
   "javascript-test-runner.additionalArgs": "node_modules/.bin/mocha",
   "javascript-test-runner.envVars": {},
   "eslint.format.enable": true,
