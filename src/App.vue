@@ -522,7 +522,8 @@ Collecting this information is critical to the user experience provided by zwave
         return
       }
 
-      await this.getConfig()
+      // don't await this, will cause a loop of calls
+      this.getConfig()
 
       const query = this.auth ? { token: this.user.token } : undefined
 
