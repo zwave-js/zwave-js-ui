@@ -142,6 +142,18 @@
     <template v-slot:[`item.failed`]="{ item }">
       {{ item.failed ? 'Yes' : 'No' }}
     </template>
+    <template v-slot:[`item.interviewStage`]="{ item }">
+      <v-row>
+        <div>{{ item.interviewStage }}</div>
+        <v-progress-circular
+          class="ml-3"
+          v-if="item.interviewStage !== 'Complete'"
+          indeterminate
+          size="20"
+          color="primary"
+        ></v-progress-circular>
+      </v-row>
+    </template>
     <template v-slot:[`item.lastActive`]="{ item }">
       {{
         item.lastActive ? new Date(item.lastActive).toLocaleString() : 'Never'
