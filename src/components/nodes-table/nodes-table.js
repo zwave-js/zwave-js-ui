@@ -32,7 +32,7 @@ export default {
         supportsBeaming: { type: 'boolean', label: 'Beaming' },
         failed: { type: 'boolean', label: 'Failed' },
         status: { type: 'string', label: 'Status' },
-        interviewStage: { type: 'string', label: 'Interview stage' },
+        interviewStage: { type: 'string', label: 'Interview' },
         lastActive: { type: 'date', label: 'Last Active', groupable: false }
       },
       expanded: [],
