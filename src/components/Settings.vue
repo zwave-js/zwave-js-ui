@@ -842,8 +842,8 @@ export default {
       }
       this.closeDialog()
     },
-    async update (event, skipValidation) {
-      if (skipValidation || this.$refs.form_settings.validate()) {
+    async update () {
+      if (this.$refs.form_settings.validate()) {
         try {
           const data = await ConfigApis.updateConfig(this.getSettingsJSON())
           this.showSnackbar(data.message)
