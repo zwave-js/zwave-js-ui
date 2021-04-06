@@ -698,6 +698,80 @@ app.get('/api/settings', apisLimiter, isAuthenticated, async function (
   } else res.json(data)
 })
 
+// update settings
+app.post('/api/settings', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
+  try {
+    if (restarting) {
+      throw Error(
+        'Gateway is restarting, wait a moment before doing another request'
+      )
+    }
+    // TODO: validate settings using ajv
+    const settings = req.body
+    restarting = true
+    await jsonStore.put(store.settings, settings)
+    await gw.close()
+    await destroyPlugins()
+    // reload loggers settings
+    setupLogging(settings)
+    // restart clients and gateway
+    startGateway(settings)
+    res.json({
+      success: true,
+      message: 'Configuration updated successfully',
+      data: settings
+    })
+  } catch (error) {
+    logger.error(error)
+    res.json({ success: false, message: error.message })
+  }
+})
+
+// update settings
+app.post('/api/statistics', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
+  try {
+    if (restarting) {
+      throw Error(
+        'Gateway is restarting, wait a moment before doing another request'
+      )
+    }
+    const { enableStatistics } = req.body
+
+    const settings = jsonStore.get(store.settings) || {}
+
+    if (!settings.zwave) {
+      settings.zwave = {}
+    }
+
+    settings.zwave.enableStatistics = enableStatistics
+
+    await jsonStore.put(store.settings, settings)
+
+    if (gw && gw.zwave) {
+      if (enableStatistics) {
+        gw.zwave.enableStatistics()
+      } else {
+        gw.zwave.disableStatistics()
+      }
+    }
+
+    res.json({
+      success: true,
+      enabled: enableStatistics,
+      message: 'Statistics configuration updated successfully'
+    })
+  } catch (error) {
+    logger.error(error)
+    res.json({ success: false, message: error.message })
+  }
+})
+
 // get config
 app.get('/api/exportConfig', apisLimiter, isAuthenticated, function (req, res) {
   return res.json({
@@ -895,38 +969,6 @@ app.post('/api/store-multi', storeLimiter, isAuthenticated, function (
   }
 
   archive.finalize()
-})
-
-// update settings
-app.post('/api/settings', apisLimiter, isAuthenticated, async function (
-  req,
-  res
-) {
-  try {
-    if (restarting) {
-      throw Error(
-        'Gateway is restarting, wait a moment before doing another request'
-      )
-    }
-    // TODO: validate settings using ajv
-    const settings = req.body
-    restarting = true
-    await jsonStore.put(store.settings, settings)
-    await gw.close()
-    await destroyPlugins()
-    // reload loggers settings
-    setupLogging(settings)
-    // restart clients and gateway
-    startGateway(settings)
-    res.json({
-      success: true,
-      message: 'Configuration updated successfully',
-      data: settings
-    })
-  } catch (error) {
-    logger.error(error)
-    res.json({ success: false, message: error.message })
-  }
 })
 
 // ### ERROR HANDLERS

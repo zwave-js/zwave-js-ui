@@ -462,6 +462,51 @@ export default {
       a.target = '_self'
       a.click()
     },
+    async getConfig () {
+      try {
+        const data = await ConfigApis.getConfig()
+        if (!data.success) {
+          this.showSnackbar(
+            'Error while retriving configuration, check console'
+          )
+          console.log(data)
+        } else {
+          this.$store.dispatch('init', data)
+
+          if (
+            !data.settings ||
+            !data.settings.zwave ||
+            data.settings.zwave.enableStatistics === undefined
+          ) {
+            const result = await this.confirm(
+              'Usage statistics',
+              `Please allow the Z-Wave JS project to collect some anonymized data regarding the devices you own so that we can generate statistics that allow us to better focus our development efforts. This information is not tracked to any identifiable user or IP address. Specifically, we'd like to collect: (1) a hash of your network ID to prevent duplicate records (this hash cannot be undone to reveal your network ID); (2) name and version of the application you are running; (3) information about which version of 'node-zwave-js' you are running; and (4) the manufacturer ID, product type, product ID, and firmware version of each device that is part of your Z-Wave network.
+Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found at: https://zwave-js.github.io/node-zwave-js`,
+              'info',
+              {
+                width: 1000,
+                cancelText: 'No 😢',
+                confirmText: 'Ok 😍',
+                persistent: true
+              }
+            )
+
+            const data = await ConfigApis.updateStats(result)
+
+            if (data.success) {
+              this.showSnackbar(
+                `Statistics are ${data.enabled ? 'enabled' : 'disabled'}`
+              )
+            } else {
+              throw Error(data.message)
+            }
+          }
+        }
+      } catch (error) {
+        this.showSnackbar(error.message)
+        console.log(error)
+      }
+    },
     async startSocket () {
       if (
         this.auth === undefined ||
@@ -474,7 +519,10 @@ export default {
 
       if (this.auth && (!this.user || !this.user.token)) {
         await this.logout()
+        return
       }
+
+      await this.getConfig()
 
       const query = this.auth ? { token: this.user.token } : undefined
 
