@@ -66,6 +66,5 @@ export default {
   font-size: 0.7rem;
   color: #999;
   line-height: 0.9rem;
-  margin-top: -0.2rem;
 }
 </style>
