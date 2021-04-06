@@ -1,3 +1,17 @@
+# [3.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.3...v3.1.0) (2021-04-06)
+
+
+### Bug Fixes
+
+* **ui:** check if node is routing ([#999](https://github.com/zwave-js/zwavejs2mqtt/issues/999)) ([4cd4b7f](https://github.com/zwave-js/zwavejs2mqtt/commit/4cd4b7f0160bf47e7f5bc7846917752e80d9173a))
+* statistics and new node interview events ([#997](https://github.com/zwave-js/zwavejs2mqtt/issues/997)) ([707230e](https://github.com/zwave-js/zwavejs2mqtt/commit/707230e4df8d7a146993db090c4faf18cd064461))
+* **ui:** prevent sending removeFailed to sleeping nodes in broadcast ([#988](https://github.com/zwave-js/zwavejs2mqtt/issues/988)) ([7750cca](https://github.com/zwave-js/zwavejs2mqtt/commit/7750cca9ad0f3f1bbacd12d3af4c62b775760c33)), closes [#983](https://github.com/zwave-js/zwavejs2mqtt/issues/983)
+
+
+### Features
+
+* usage statistics ([#989](https://github.com/zwave-js/zwavejs2mqtt/issues/989)) ([22b0379](https://github.com/zwave-js/zwavejs2mqtt/commit/22b03799b67c7f8101ea9723d127ba87b3e8c0d0))
+
 ## [3.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.2...v3.0.3) (2021-04-01)
 
 
