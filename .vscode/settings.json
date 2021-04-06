@@ -3,10 +3,12 @@
   "javascript-test-runner.additionalArgs": "node_modules/.bin/mocha",
   "javascript-test-runner.envVars": {},
   "eslint.format.enable": true,
-  "editor.defaultFormatter": "numso.prettier-standard-vscode",
   "eslint.lintTask.enable": true,
   "wallaby.startAutomatically": true,
   "[vue]": {
+    "editor.defaultFormatter": "numso.prettier-standard-vscode"
+  },
+  "[javascript]": {
     "editor.defaultFormatter": "numso.prettier-standard-vscode"
   },
   "[markdown]": {

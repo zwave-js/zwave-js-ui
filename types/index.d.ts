@@ -210,6 +210,7 @@ export type ZwaveConfig = {
   logEnabled: boolean
   logLevel: LogLevel
   commandsTimeout: number
+  disableMetrics: boolean
   plugin: string
   options: ZWaveOptions
 }

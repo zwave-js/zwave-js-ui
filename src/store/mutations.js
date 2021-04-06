@@ -11,6 +11,7 @@ export const state = {
     logLevel: 'info',
     logToFile: false,
     serverEnabled: false,
+    disableMetrics: false,
     serverPort: 3000
   },
   mqtt: {
@@ -194,7 +195,7 @@ export const mutations = {
     if (index === state.nodes.length) {
       state.nodes.push(n)
     } else {
-    // vue set is used to notify changes
+      // vue set is used to notify changes
       this._vm.$set(state.nodes, index, n)
     }
 
