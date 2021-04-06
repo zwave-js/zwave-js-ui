@@ -165,8 +165,8 @@
                         <v-switch
                           hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/getting-started/telemetry.md#usage-statistics"
                           persistent-hint
-                          label="Disable statistics"
-                          v-model="newZwave.disableStatistics"
+                          label="Enable statistics"
+                          v-model="newZwave.enableStatistics"
                         ></v-switch>
                       </v-col>
                       <v-col cols="12" sm="6">
@@ -842,8 +842,8 @@ export default {
       }
       this.closeDialog()
     },
-    async update () {
-      if (this.$refs.form_settings.validate()) {
+    async update (event, skipValidation) {
+      if (skipValidation || this.$refs.form_settings.validate()) {
         try {
           const data = await ConfigApis.updateConfig(this.getSettingsJSON())
           this.showSnackbar(data.message)
@@ -871,6 +871,25 @@ export default {
         } else {
           this.$store.dispatch('init', data)
           this.resetConfig()
+
+          if (this.zwave.enableStatistics === undefined) {
+            const result = await this.$listeners.showConfirm(
+              'Usage statistics',
+              `Please allow the Z-Wave JS project to collect some anonymized data regarding the devices you own so that we can generate statistics that allow us to better focus our development efforts. This information is not tracked to any identifiable user or IP address. Specifically, we'd like to collect: (1) a hash of your network ID to prevent duplicate records (this hash cannot be undone to reveal your network ID); (2) name and version of the application you are running; (3) information about which version of 'node-zwave-js' you are running; and (4) the manufacturer ID, product type, product ID, and firmware version of each device that is part of your Z-Wave network.
+Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found at: https://zwave-js.github.io/node-zwave-js`,
+              'info',
+              {
+                width: 1000,
+                cancelText: 'No 😢',
+                confirmText: 'Ok 😍',
+                persistent: true
+              }
+            )
+
+            this.newZwave.enableStatistics = result
+
+            await this.update(null, true)
+          }
         }
       } catch (error) {
         this.showSnackbar(error.message)

@@ -4,15 +4,14 @@
     :max-width="options.width"
     :style="{ zIndex: options.zIndex }"
     @keydown.esc="cancel"
+    :persistent="options.persistent"
   >
     <v-card>
       <v-toolbar :color="options.color" dark dense flat>
         <v-toolbar-title class="white--text">{{ title }}</v-toolbar-title>
       </v-toolbar>
-      <v-card-text v-if="!options.inputs" v-show="!!message" class="pa-4">{{
-        message
-      }}</v-card-text>
-      <v-card-text v-else class="pa-4">
+      <v-card-text v-show="!!message" class="pa-4">{{ message }}</v-card-text>
+      <v-card-text v-if="options.inputs" class="pa-4">
         <v-container grid-list-md>
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-row>
@@ -93,7 +92,9 @@
         <v-btn @click="agree" text :color="options.color">{{
           options.confirmText
         }}</v-btn>
-        <v-btn @click="cancel" text>{{ options.cancelText }}</v-btn>
+        <v-btn v-if="options.cancelText" @click="cancel" text>{{
+          options.cancelText
+        }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
@@ -143,7 +144,8 @@ export default {
       width: 290,
       zIndex: 200,
       confirmText: 'Yes',
-      cancelText: 'Cancel'
+      cancelText: 'Cancel',
+      persistent: false
     }
   }),
   computed: {
