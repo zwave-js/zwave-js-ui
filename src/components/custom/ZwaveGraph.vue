@@ -780,7 +780,7 @@ export default {
           forwards:
             node.ready &&
             !node.failed &&
-            (node.isListening || node.isControllerNode) // leave the isController check here
+            (node.isListening || node.isRouting || node.isControllerNode) // leave the isController check here
         }
 
         if (id === hubNode) {
