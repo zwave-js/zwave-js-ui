@@ -750,6 +750,7 @@ app.post('/api/statistics', apisLimiter, isAuthenticated, async function (
     }
 
     settings.zwave.enableStatistics = enableStatistics
+    settings.zwave.disclaimerVersion = 1
 
     await jsonStore.put(store.settings, settings)
 

@@ -181,6 +181,7 @@ export type GatewayConfig = {
   logLevel: LogLevel
   logToFile: boolean
   values: GatewayValue[]
+  plugins: string[]
 }
 
 export type MqttConfig = {
@@ -210,8 +211,8 @@ export type ZwaveConfig = {
   logEnabled: boolean
   logLevel: LogLevel
   commandsTimeout: number
-  disableMetrics: boolean
-  plugin: string
+  enableStatistics: boolean
+  disclaimerVersion: number
   options: ZWaveOptions
 }
 
