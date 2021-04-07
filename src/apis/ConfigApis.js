@@ -78,6 +78,10 @@ export default {
     const response = await request.post('/settings', data)
     return response.data
   },
+  async updateStats (enableStatistics) {
+    const response = await request.post('/statistics', { enableStatistics })
+    return response.data
+  },
   async exportConfig () {
     const response = await request.get('/exportConfig')
     return response.data

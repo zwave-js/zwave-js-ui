@@ -11,7 +11,7 @@ export const state = {
     logLevel: 'info',
     logToFile: false,
     serverEnabled: false,
-    disableMetrics: false,
+    enableStatistics: undefined, // keep it undefined so the user dialog will show up
     serverPort: 3000
   },
   mqtt: {

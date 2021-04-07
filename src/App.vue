@@ -462,6 +462,60 @@ export default {
       a.target = '_self'
       a.click()
     },
+    async getConfig () {
+      try {
+        const data = await ConfigApis.getConfig()
+        if (!data.success) {
+          this.showSnackbar(
+            'Error while retriving configuration, check console'
+          )
+          console.log(data)
+        } else {
+          this.$store.dispatch('init', data)
+
+          if (
+            !data.settings ||
+            !data.settings.zwave ||
+            data.settings.zwave.enableStatistics === undefined
+          ) {
+            const result = await this.confirm(
+              'Usage statistics',
+              `<p>Please allow the <b>Z-Wave JS</b> project to collect some anonymized data regarding the devices
+              you own so that we can generate statistics that allow us to better focus our development efforts.
+              <b>This information is not tracked to any identifiable user or IP address and cannot be used to identify you</b>. Specifically, we'd like to collect:</p>
+
+              • A <b>hash</b> of your network ID salted with a 32 byte randomly generated number, which is used to prevent duplicate records (this salted hash <b>cannot be undone</b> to reveal your network ID or identify you);</br>
+              • <b>Name</b> and <b>version</b> of the application you are running;</br>
+              • Information about which version of <code>node-zwave-js</code> you are running;</br>
+              • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
+
+              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by Z-Wave JS. 
+              More information about the data that is collected and how it is used, including an example of the data collected, can be found <a target="_blank" href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
+              'info</p>',
+              {
+                width: 1000,
+                cancelText: 'No 😢',
+                confirmText: 'Ok 😍',
+                persistent: true
+              }
+            )
+
+            const data = await ConfigApis.updateStats(result)
+
+            if (data.success) {
+              this.showSnackbar(
+                `Statistics are ${data.enabled ? 'enabled' : 'disabled'}`
+              )
+            } else {
+              throw Error(data.message)
+            }
+          }
+        }
+      } catch (error) {
+        this.showSnackbar(error.message)
+        console.log(error)
+      }
+    },
     async startSocket () {
       if (
         this.auth === undefined ||
@@ -474,6 +528,7 @@ export default {
 
       if (this.auth && (!this.user || !this.user.token)) {
         await this.logout()
+        return
       }
 
       const query = this.auth ? { token: this.user.token } : undefined
@@ -519,6 +574,9 @@ export default {
       this.socket.on(socketEvents.valueUpdated, this.updateValue.bind(this))
 
       this.socket.emit(socketActions.init, true)
+
+      // don't await this, will cause a loop of calls
+      this.getConfig()
     },
     async logout () {
       const user = Object.assign({}, this.user)
