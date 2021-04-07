@@ -480,20 +480,17 @@ export default {
           ) {
             const result = await this.confirm(
               'Usage statistics',
-              `<p>In order to gain insight into how <code>Z-Wave JS</code> is used, which manufacturers and devices are most prevalent
-               and where to best focus our efforts in order to improve <code>Z-Wave JS</code> the most, we collect statistics about the devices used in our ecosystem.
-               Since some users may have concerns about this data being collected, even though the data cannot be tied to a specific user, 
-               we have built our own <a target="_blank" href="https://github.com/zwave-js/statistics-server">statistics stack</a> which is self-hosted
-               next to the Sentry instances. 
-               
-               </br></br><b>We do not collect your IP address</b>, nor is the IP address or any other identifying information stored and tied to a record. 
-               The reports include the following data:</p>
+              `<p>Please allow the <b>Z-Wave JS</b> project to collect some anonymized data regarding the devices
+              you own so that we can generate statistics that allow us to better focus our development efforts.
+              <b>This information is not tracked to any identifiable user or IP address and cannot be used to identify you</b>. Specifically, we'd like to collect:</p>
+
               • A <b>hash</b> of your network ID salted with a 32 byte randomly generated number, which is used to prevent duplicate records (this salted hash <b>cannot be undone</b> to reveal your network ID or identify you);</br>
               • <b>Name</b> and <b>version</b> of the application you are running;</br>
               • Information about which version of <code>node-zwave-js</code> you are running;</br>
               • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
 
-              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found <a target="_blank" href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
+              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by Z-Wave JS. 
+              More information about the data that is collected and how it is used, including an example of the data collected, can be found <a target="_blank" href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
               'info</p>',
               {
                 width: 1000,
