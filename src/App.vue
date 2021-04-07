@@ -488,12 +488,12 @@ export default {
                
                </br></br><b>We do not collect your IP address</b>, nor is the IP address or any other identifying information stored and tied to a record. 
                The reports include the following data:</p>
-              • A <b>hash</b> of your network's home ID salted with a 32 byte randomly generated number. This is used to distinguish the individual records to ensure that duplicate entries aren't made. The hash cannot be reversed to reconstruct the home ID without knowing the salt which is not collected;</br>
+              • A <b>hash</b> of your network ID salted with a 32 byte randomly generated number, which is used to prevent duplicate records (this salted hash <b>cannot be undone</b> to reveal your network ID or identify you);</br>
               • <b>Name</b> and <b>version</b> of the application you are running;</br>
               • Information about which version of <code>zwave-js</code> you are running;</br>
               • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
 
-              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found <a href="https://zwave-js.github.io/node-zwave-js/#/getting-started/telemetry?id=usage-statistics">here</a>`,
+              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found <a href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
               'info</p>',
               {
                 width: 1000,
