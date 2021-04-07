@@ -1,3 +1,17 @@
+# [3.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.1.0...v3.2.0) (2021-04-07)
+
+
+### Bug Fixes
+
+* **ui:** use transparent background on zwave graph groups ([#1009](https://github.com/zwave-js/zwavejs2mqtt/issues/1009)) ([d4b6445](https://github.com/zwave-js/zwavejs2mqtt/commit/d4b6445ad9861692c93ccd8c01416e572f39ee95))
+* allow accent chars in topics ([#1007](https://github.com/zwave-js/zwavejs2mqtt/issues/1007)) ([79cf699](https://github.com/zwave-js/zwavejs2mqtt/commit/79cf69910e9a40ee8e00f5b2ecc3cd1ae6f57ba8)), closes [#1003](https://github.com/zwave-js/zwavejs2mqtt/issues/1003)
+* applicationName used in statistics ([ada8abb](https://github.com/zwave-js/zwavejs2mqtt/commit/ada8abb24ce7edf6c61d87901e1908a4f628cbe8))
+
+
+### Features
+
+* make usage statistics opt-in ([#1002](https://github.com/zwave-js/zwavejs2mqtt/issues/1002)) ([9b75833](https://github.com/zwave-js/zwavejs2mqtt/commit/9b758336b1a060e01147833ef5c59f8d61f20cce))
+
 # [3.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.0.3...v3.1.0) (2021-04-06)
 
 
