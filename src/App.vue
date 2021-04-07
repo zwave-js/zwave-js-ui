@@ -482,7 +482,6 @@ export default {
               'Usage statistics',
               `<p>In order to gain insight into how <code>zwave-js</code> is used, which manufacturers and devices are most prevalent
                and where to best focus our efforts in order to improve <code>zwave-js</code> the most, we collect statistics about the devices used in our ecosystem.
-               This information is only collected <b>if the application developer has opted in</b> into this functionality.
                Since some users may have concerns about this data being collected, even though the data cannot be tied to a specific user, 
                we have built our own <a href="https://github.com/zwave-js/statistics-server">statistics stack</a> which is self-hosted
                next to the Sentry instances. 
