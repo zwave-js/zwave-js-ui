@@ -483,7 +483,7 @@ export default {
               `<p>In order to gain insight into how <code>zwave-js</code> is used, which manufacturers and devices are most prevalent
                and where to best focus our efforts in order to improve <code>zwave-js</code> the most, we collect statistics about the devices used in our ecosystem.
                Since some users may have concerns about this data being collected, even though the data cannot be tied to a specific user, 
-               we have built our own <a href="https://github.com/zwave-js/statistics-server">statistics stack</a> which is self-hosted
+               we have built our own <a target="_blank" href="https://github.com/zwave-js/statistics-server">statistics stack</a> which is self-hosted
                next to the Sentry instances. 
                
                </br></br><b>We do not collect your IP address</b>, nor is the IP address or any other identifying information stored and tied to a record. 
@@ -493,7 +493,7 @@ export default {
               • Information about which version of <code>zwave-js</code> you are running;</br>
               • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
 
-              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found <a href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
+              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found <a target="_blank" href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
               'info</p>',
               {
                 width: 1000,
