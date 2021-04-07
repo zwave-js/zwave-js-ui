@@ -205,7 +205,7 @@ svg > .output {
 
 .cluster > rect {
   stroke: lightgray;
-  fill: #f8f8f8;
+  fill: transparent;
   stroke-width: 1px;
   stroke-linecap: round;
 }
