@@ -54,10 +54,10 @@ RUN apk add --no-cache \
     eudev	
 
 # Copy files from previous build stage	
-COPY --from=build-z2m /usr/src/app /usr/src/app	
-
-WORKDIR /usr/src/app
+COPY --chown=node:node --from=build-z2m /usr/src/app /usr/src/app
 
 EXPOSE 8091
 
+USER node
+WORKDIR /usr/src/app
 CMD ["node", "bin/www"]
