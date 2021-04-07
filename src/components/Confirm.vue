@@ -10,7 +10,11 @@
       <v-toolbar :color="options.color" dark dense flat>
         <v-toolbar-title class="white--text">{{ title }}</v-toolbar-title>
       </v-toolbar>
-      <v-card-text v-show="!!message" class="pa-4">{{ message }}</v-card-text>
+      <v-card-text
+        v-show="!!message"
+        v-html="message"
+        class="pa-4"
+      ></v-card-text>
       <v-card-text v-if="options.inputs" class="pa-4">
         <v-container grid-list-md>
           <v-form v-model="valid" ref="form" lazy-validation>

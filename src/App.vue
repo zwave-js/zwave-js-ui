@@ -480,9 +480,22 @@ export default {
           ) {
             const result = await this.confirm(
               'Usage statistics',
-              `Please allow the Z-Wave JS project to collect some anonymized data regarding the devices you own so that we can generate statistics that allow us to better focus our development efforts. This information is not tracked to any identifiable user or IP address. Specifically, we'd like to collect: (1) a hash of your network ID to prevent duplicate records (this hash cannot be undone to reveal your network ID); (2) name and version of the application you are running; (3) information about which version of 'node-zwave-js' you are running; and (4) the manufacturer ID, product type, product ID, and firmware version of each device that is part of your Z-Wave network.
-Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found at: https://zwave-js.github.io/node-zwave-js`,
-              'info',
+              `<p>In order to gain insight into how <code>zwave-js</code> is used, which manufacturers and devices are most prevalent
+               and where to best focus our efforts in order to improve <code>zwave-js</code> the most, we collect statistics about the devices used in our ecosystem.
+               This information is only collected <b>if the application developer has opted in</b> into this functionality.
+               Since some users may have concerns about this data being collected, even though the data cannot be tied to a specific user, 
+               we have built our own <a href="https://github.com/zwave-js/statistics-server">statistics stack</a> which is self-hosted
+               next to the Sentry instances. 
+               
+               </br></br><b>We do not collect your IP address</b>, nor is the IP address or any other identifying information stored and tied to a record. 
+               The reports include the following data:</p>
+              • A <b>hash</b> of your network's home ID salted with a 32 byte randomly generated number. This is used to distinguish the individual records to ensure that duplicate entries aren't made. The hash cannot be reversed to reconstruct the home ID without knowing the salt which is not collected;</br>
+              • <b>Name</b> and <b>version</b> of the application you are running;</br>
+              • Information about which version of <code>zwave-js</code> you are running;</br>
+              • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
+
+              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by zwave-js. More information about the data that is collected and how it is used, including an example of the data collected, can be found <a href="https://zwave-js.github.io/node-zwave-js/#/getting-started/telemetry?id=usage-statistics">here</a>`,
+              'info</p>',
               {
                 width: 1000,
                 cancelText: 'No 😢',
