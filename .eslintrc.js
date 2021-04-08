@@ -19,11 +19,6 @@ module.exports = {
   // add your custom rules here
   rules: {
     // allow async-await
-    'vue/no-v-for-template-key-on-child': 'off',
-    'vue/no-v-for-template-key': 'off',
-    'vue/no-template-key': 'off',
-    'vue/valid-v-for': 'off',
-    'vue/require-v-for-key': 'off',
     'generator-star-spacing': 'off',
     'vue/no-deprecated-v-bind-sync': 'off',
     'vue/no-mutating-props': 'off',
