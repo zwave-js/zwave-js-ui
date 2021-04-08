@@ -10,7 +10,7 @@ import vuetify from '@/plugins/vuetify' // path to vuetify export
 
 import 'axios-progress-bar/dist/nprogress.css'
 // Custom assets CSS JS
-require('./assets/css/my-progress.css')
+import './assets/css/my-progress.css'
 
 const app = createApp(App)
 app.use(vuetify)

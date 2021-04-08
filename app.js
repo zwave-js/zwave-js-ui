@@ -324,7 +324,7 @@ app.use(
   })
 )
 
-app.get('/', apisLimiter, renderIndex)
+// app.get('/', apisLimiter, renderIndex)
 
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
