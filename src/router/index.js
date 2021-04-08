@@ -8,7 +8,7 @@ import Debug from '@/components/Debug.vue'
 import Login from '@/components/Login.vue'
 import ErrorPage from '@/components/ErrorPage.vue'
 
-import store from '@/store'
+import { store } from '@/store'
 import ConfigApis from '../apis/ConfigApis'
 
 export const Routes = {
