@@ -73,7 +73,7 @@
     "vue-prism-editor": "^2.0.0-alpha.1",
     "vue-router": "^4.0.0-0",
     "vuedraggable": "^2.24.3",
-    "vuetify": "^3.0.0-alpha.0",
+    "vuetify": "^3.0.0-alpha.2",
     "vuex": "^4.0.0-alpha.1",
     "winston": "^3.3.3",
     "zwave-js": "^7.1.1"
