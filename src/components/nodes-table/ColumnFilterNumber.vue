@@ -43,7 +43,7 @@
 </template>
 
 <script>
-import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
+import ColumnFilterHelper from '@/modules/ColumnFilterHelper.js'
 export default {
   props: {
     value: {

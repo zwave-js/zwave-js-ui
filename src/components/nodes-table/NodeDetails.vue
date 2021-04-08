@@ -92,8 +92,8 @@
 </template>
 
 <script>
-import ValueID from '@/components/ValueId'
-import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
+import ValueID from '@/components/ValueId.vue'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced.vue'
 
 import { inboundEvents as socketActions } from '@/plugins/socket'
 import { mapMutations, mapGetters } from 'vuex'

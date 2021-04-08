@@ -31,7 +31,7 @@
   </v-container>
 </template>
 <script>
-import { socketEvents } from '@/plugins/socket'
+import { socketEvents } from '@/plugins/socket.js'
 
 import AnsiUp from 'ansi_up'
 import { mapMutations } from 'vuex'

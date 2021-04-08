@@ -50,11 +50,11 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
-import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
-import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
-import NodesTable from '@/components/nodes-table'
+import DialogAddRemove from '@/components/dialogs/DialogAddRemove.vue'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced.vue'
+import NodesTable from '@/components/nodes-table/index.vue'
 import { Settings } from '@/modules/Settings'
-import { socketEvents } from '@/plugins/socket'
+import { socketEvents } from '@/plugins/socket.js'
 
 export default {
   name: 'ControlPanel',

@@ -229,8 +229,8 @@ code {
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
 import ConfigApis from '@/apis/ConfigApis'
-import Confirm from '@/components/Confirm'
-import PasswordDialog from '@/components/dialogs/Password'
+import Confirm from '@/components/Confirm.vue'
+import PasswordDialog from '@/components/dialogs/Password.vue'
 import { Settings } from '@/modules/Settings'
 import { Routes } from '@/router'
 

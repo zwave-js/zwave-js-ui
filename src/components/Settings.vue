@@ -599,7 +599,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
 
-import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
+import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue.vue'
 
 function copy (o) {
   return JSON.parse(JSON.stringify(o))

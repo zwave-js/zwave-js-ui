@@ -1,5 +1,5 @@
 import draggable from 'vuedraggable'
-import { ManagedItems } from '@/modules/ManagedItems'
+import { ManagedItems } from '@/modules/ManagedItems.js'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import { mapGetters } from 'vuex'

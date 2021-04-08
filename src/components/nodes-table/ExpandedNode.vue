@@ -57,9 +57,9 @@
 </template>
 
 <script>
-import AssociationGroups from '@/components/nodes-table/AssociationGroups'
-import HomeAssistant from '@/components/nodes-table/HomeAssistant'
-import NodeDetails from '@/components/nodes-table/NodeDetails'
+import AssociationGroups from '@/components/nodes-table/AssociationGroups.vue'
+import HomeAssistant from '@/components/nodes-table/HomeAssistant.vue'
+import NodeDetails from '@/components/nodes-table/NodeDetails.vue'
 
 import { mapGetters } from 'vuex'
 

@@ -78,7 +78,7 @@
   </v-container>
 </template>
 <script>
-import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
+import DialogSceneValue from '@/components/dialogs/DialogSceneValue.vue'
 import { socketEvents } from '@/plugins/socket'
 import { mapGetters, mapMutations } from 'vuex'
 
