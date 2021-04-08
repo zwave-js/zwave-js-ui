@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite'
+import copy from 'rollup-plugin-copy'
 import vue from '@vitejs/plugin-vue'
 import html from 'vite-plugin-html'
 import path from 'path'
@@ -14,6 +15,10 @@ export default defineConfig({
   },
   plugins: [
     vue(),
+    copy({
+      targets: [{ src: 'static/**', dest: 'dist/static' }],
+      hook: 'writeBundle'
+    }),
     html({
       inject: {
         injectData: {
