@@ -14,8 +14,11 @@
       <v-col v-if="group.group && group.associations" cols="12" sm="6">
         <v-list subheader>
           <v-subheader>Associations</v-subheader>
-          <template v-for="(ass, index) in group.associations">
-            <v-list-item :key="`item-${index}`" dense>
+          <template
+            v-for="(ass, index) in group.associations"
+            :key="`item-${index}`"
+          >
+            <v-list-item dense>
               <v-list-item-content>
                 <v-list-item-title
                   >Node:
@@ -36,7 +39,7 @@
                 </v-icon>
               </v-list-item-icon>
             </v-list-item>
-            <v-divider :key="`divider-${index}`"></v-divider>
+            <v-divider></v-divider>
           </template>
           <v-list-item v-if="group.associations.length === 0">
             <v-list-item-content>

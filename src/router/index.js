@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import { createWebHistory, createRouter } from 'vue-router'
 import ControlPanel from '@/components/ControlPanel.vue'
 import Settings from '@/components/Settings.vue'
 import Mesh from '@/components/Mesh.vue'
@@ -11,8 +10,6 @@ import ErrorPage from '@/components/ErrorPage.vue'
 
 import store from '@/store'
 import ConfigApis from '../apis/ConfigApis'
-
-Vue.use(Router)
 
 export const Routes = {
   login: '/',
@@ -27,8 +24,8 @@ export const Routes = {
 
 Routes.main = Routes.controlPanel
 
-const router = new Router({
-  mode: 'history',
+const router = createRouter({
+  history: createWebHistory(),
   routes: [
     {
       path: Routes.login,
