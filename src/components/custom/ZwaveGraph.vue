@@ -778,9 +778,8 @@ export default {
             '\n Neighbors: ' +
             node.neighbors,
           forwards:
-            node.ready &&
-            !node.failed &&
-            (node.isListening || node.isRouting || node.isControllerNode) // leave the isController check here
+            node.isControllerNode ||
+            (node.ready && !node.failed && (node.isListening || node.isRouting))
         }
 
         if (id === hubNode) {
