@@ -1,3 +1,10 @@
+## [3.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.2.0...v3.2.1) (2021-04-11)
+
+
+### Bug Fixes
+
+* this.stopExclusion is undefined ([#1036](https://github.com/zwave-js/zwavejs2mqtt/issues/1036)) ([58f4368](https://github.com/zwave-js/zwavejs2mqtt/commit/58f4368fa83751eb06056c783acaff973fa66770)), closes [#1031](https://github.com/zwave-js/zwavejs2mqtt/issues/1031)
+
 # [3.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.1.0...v3.2.0) (2021-04-07)
 
 
