@@ -56,7 +56,23 @@
           v-for="(group, className) in commandGroups"
           :key="className"
         >
-          <v-expansion-panel-header>{{ className }}</v-expansion-panel-header>
+          <v-expansion-panel-header>
+            <v-row>
+              <span style="margin: auto 0">{{ className }}</span>
+              <v-btn
+                @click.stop="
+                  apiRequest('refreshCCValues', [
+                    node.id,
+                    group[0].commandClass
+                  ])
+                "
+                class="ml-5"
+                x-small
+              >
+                Refresh
+              </v-btn>
+            </v-row></v-expansion-panel-header
+          >
           <v-expansion-panel-content>
             <v-card flat>
               <v-card-text>
