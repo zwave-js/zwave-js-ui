@@ -7,6 +7,9 @@ You can use a header to signal where the external path is or you can configure
 the base path. In both cases these are dynamic configurations, so you can deploy
 without having to build again the frontend.
 
+When mapping to a subdirectory you have to ensure, url decoding is disabled in `nginx`.
+This can be done with using rewrite rules. For further details see example below.
+
 ## Using an HTTP header
 
 You can pass the external path by setting the `X-External-Path` header, for example
@@ -23,11 +26,13 @@ server {
     listen [::]:9000 default_server;
 
     location /hassio/ingress/ {
-        proxy_pass http://localhost:8091/;
         proxy_set_header X-External-Path /hassio/ingress;
+        rewrite ^ $request_uri;
+        rewrite '^/hassio/ingress(/.*)$' $1 break;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection $connection_upgrade;
+        proxy_pass http://localhost:8091$uri;
     }
 }
 ```
