@@ -1,3 +1,18 @@
+# [3.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.2.1...v3.3.0) (2021-04-13)
+
+
+### Bug Fixes
+
+* manually add missing values on updates ([#1056](https://github.com/zwave-js/zwavejs2mqtt/issues/1056)) ([c2600df](https://github.com/zwave-js/zwavejs2mqtt/commit/c2600df5dbb7a8b84d902d4648b271a3304b1a40))
+* notification event not publiished to mqtt ([#1055](https://github.com/zwave-js/zwavejs2mqtt/issues/1055)) ([bf8db55](https://github.com/zwave-js/zwavejs2mqtt/commit/bf8db559b2feb9f2c607e6080f368e2413f1054f)), closes [#1044](https://github.com/zwave-js/zwavejs2mqtt/issues/1044)
+* **ui:** assume controller always forwards in mesh graph ([#1038](https://github.com/zwave-js/zwavejs2mqtt/issues/1038)) ([aca4af3](https://github.com/zwave-js/zwavejs2mqtt/commit/aca4af3f897f5244e7b0380870055e11761d82e0)), closes [#1034](https://github.com/zwave-js/zwavejs2mqtt/issues/1034) [#739](https://github.com/zwave-js/zwavejs2mqtt/issues/739)
+* **ui-mesh:** better labels color based on current theme ([#1050](https://github.com/zwave-js/zwavejs2mqtt/issues/1050)) ([2bf47d8](https://github.com/zwave-js/zwavejs2mqtt/commit/2bf47d8ca741462b05c63f6721dc85535348e489)), closes [#1010](https://github.com/zwave-js/zwavejs2mqtt/issues/1010)
+
+
+### Features
+
+* **ui:** refresh CC values ([#1051](https://github.com/zwave-js/zwavejs2mqtt/issues/1051)) ([b3ad1a3](https://github.com/zwave-js/zwavejs2mqtt/commit/b3ad1a3625b35f3cad963a0aa3ca50f1a342ffe6))
+
 ## [3.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.2.0...v3.2.1) (2021-04-11)
 
 
