@@ -338,7 +338,61 @@ export default {
           }
 
           args.push(code)
+        } else if (action === 'setConfigParameter') {
+          const {
+            parameter,
+            value,
+            valueSize
+          } = await this.$listeners.showConfirm(
+            'Set configuration',
+            '',
+            'info',
+            {
+              width: 500,
+              confirmText: 'Send',
+              inputs: [
+                {
+                  type: 'number',
+                  label: 'Parameter',
+                  default: 1,
+                  rules: [v => v >= 0 || 'Invalid parameter'],
+                  required: true,
+                  key: 'parameter'
+                },
+                {
+                  type: 'number',
+                  label: 'Value',
+                  default: 0,
+                  rules: [v => v !== undefined || 'Invalid value'],
+                  required: true,
+                  key: 'value'
+                },
+                {
+                  type: 'list',
+                  label: 'Size',
+                  items: [1, 2, 4],
+                  default: 1,
+                  rules: [v => v !== undefined || 'Invalid size'],
+                  required: true,
+                  key: 'valueSize'
+                }
+              ]
+            }
+          )
+
+          console.log(parameter, valueSize, value)
+
+          if (
+            parameter === undefined ||
+            value === undefined ||
+            valueSize === undefined
+          ) {
+            return
+          }
+
+          args.push(parameter, value, valueSize)
         }
+
         if (broadcast) {
           let nodes = this.nodes
 
