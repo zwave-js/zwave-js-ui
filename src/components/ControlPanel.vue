@@ -348,7 +348,6 @@ export default {
             '',
             'info',
             {
-              width: 500,
               confirmText: 'Send',
               inputs: [
                 {
