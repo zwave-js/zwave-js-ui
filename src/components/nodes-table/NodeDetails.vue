@@ -237,10 +237,10 @@ export default {
             'Manage nodes that are dead and/or marked as failed with the controller'
         },
         {
-          text: 'Set ConfigCC',
-          options: [{ name: 'Send', action: 'setConfigParameter' }],
+          text: 'Configuration CC',
+          options: [{ name: 'set', action: 'setConfigParameter' }],
           icon: 'settings',
-          desc: 'Manually send a Configuration CC set command'
+          desc: 'Manually send Configuration CC command'
         },
         {
           text: 'Associations',

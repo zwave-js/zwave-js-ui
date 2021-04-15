@@ -344,7 +344,7 @@ export default {
             value,
             valueSize
           } = await this.$listeners.showConfirm(
-            'Set configuration',
+            'Set Configuration CC',
             '',
             'info',
             {
