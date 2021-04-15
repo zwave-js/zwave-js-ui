@@ -88,6 +88,7 @@
                 <v-container v-if="input.type === 'code'">
                   <p v-html="input.hint"></p>
                   <prism-editor
+                    class="js-editor"
                     :line-numbers="true"
                     v-model="values[input.key]"
                     language="js"
@@ -113,6 +114,14 @@
   </v-dialog>
 </template>
 
+<style scoped>
+.js-editor {
+  font-family: Fira Code, Consolas, 'Andale Mono WT', 'Andale Mono',
+    'Lucida Console', 'Lucida Sans Typewriter', 'DejaVu Sans Mono',
+    'Bitstream Vera Sans Mono', 'Liberation Mono', 'Nimbus Mono L', Monaco,
+    'Courier New', Courier, monospace;
+}
+</style>
 <script>
 /**
  * Vuetify Confirm Dialog component
