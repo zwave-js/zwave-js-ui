@@ -146,6 +146,17 @@ export default {
           icon: 'dangerous',
           desc:
             'Manage nodes that are dead and/or marked as failed with the controller'
+        },
+        {
+          text: 'Driver function',
+          options: [
+            {
+              name: 'Write',
+              action: 'driverFunction'
+            }
+          ],
+          icon: 'code',
+          desc: 'Write a custom JS function using the ZwaveJS Driver'
         }
       ],
       rules: {
@@ -266,7 +277,6 @@ export default {
               ]
             }
           )
-          console.log(confirm)
           if (!confirm || confirm !== 'yes') {
             return
           }
@@ -302,8 +312,33 @@ export default {
           } catch (error) {
             return
           }
-        }
+        } else if (action === 'driverFunction') {
+          const { code } = await this.$listeners.showConfirm(
+            'Driver function',
+            '',
+            'info',
+            {
+              width: 900,
+              confirmText: 'Send',
+              inputs: [
+                {
+                  type: 'code',
+                  key: 'code',
+                  default:
+                    '// Example:\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();',
+                  hint: `Write the function here. The only arg is:
+                    <code>driver</code>. The function is <code>async</code>.`
+                }
+              ]
+            }
+          )
 
+          if (!code) {
+            return
+          }
+
+          args.push(code)
+        }
         if (broadcast) {
           let nodes = this.nodes
 

@@ -85,6 +85,15 @@
                   :required="input.required"
                 >
                 </v-combobox>
+                <v-container v-if="input.type === 'code'">
+                  <p v-html="input.hint"></p>
+                  <prism-editor
+                    :line-numbers="true"
+                    v-model="values[input.key]"
+                    language="js"
+                    :highlight="highlighter"
+                  ></prism-editor>
+                </v-container>
               </v-col>
             </v-row>
           </v-form>
@@ -133,7 +142,21 @@
  *   this.$root.$confirm = this.$refs.confirm.open
  * }
  */
+
+// import Prism Editor
+import { PrismEditor } from 'vue-prism-editor'
+import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
+
+// import highlighting library (you can use any library you want just return html string)
+import { highlight, languages } from 'prismjs/components/prism-core'
+import 'prismjs/components/prism-clike'
+import 'prismjs/components/prism-javascript'
+import 'prismjs/themes/prism-tomorrow.css'
+
 export default {
+  components: {
+    PrismEditor
+  },
   data: () => ({
     dialog: false,
     resolve: null,
@@ -166,16 +189,25 @@ export default {
     }
   },
   methods: {
+    highlighter (code) {
+      return highlight(code, languages.js) // returns html
+    },
     open (title, message, options) {
       this.dialog = true
       this.title = title
       this.message = message
-      this.options = Object.assign(this.options, options)
+
+      this.options = Object.assign(this.defaultOptions, options)
+
       if (options.inputs) {
         for (const input of options.inputs) {
-          this.values[input.key] = input.default
+          if (input.default !== undefined) {
+            // without this code block is bugged, don't simply assign
+            this.$set(this.values, input.key, input.default)
+          }
         }
       }
+
       return new Promise((resolve, reject) => {
         this.resolve = resolve
         this.reject = reject
@@ -201,6 +233,7 @@ export default {
     },
     reset () {
       this.options = Object.assign({}, this.defaultOptions)
+      this.values = {}
     }
   },
   created () {
