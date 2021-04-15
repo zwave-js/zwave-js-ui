@@ -95,17 +95,21 @@ export default {
     return response.data
   },
   async getFile (path) {
-    const response = await request.get('/store/' + encodeURIComponent(path))
+    const response = await request.get('/store', { params: { path } })
     return response.data
   },
   async writeFile (path, content) {
-    const response = await request.put('/store/' + encodeURIComponent(path), {
-      content
-    })
+    const response = await request.put(
+      '/store',
+      {
+        content
+      },
+      { params: { path } }
+    )
     return response.data
   },
   async deleteFile (path) {
-    const response = await request.delete('/store/' + encodeURIComponent(path))
+    const response = await request.delete('/store', { params: { path } })
     return response.data
   },
   downloadZip (files) {

@@ -179,7 +179,7 @@ async function startServer (host, port) {
  * @returns {string} The path is it's safe, thorws otherwise
  */
 function getSafePath (req) {
-  let reqPath = req.params.path
+  let reqPath = req.query.path
 
   if (typeof reqPath !== 'string') {
     throw Error('Invalid path')
@@ -830,31 +830,44 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
   }
 })
 
-// get config
+// if no path provided return all store dir files/folders, otherwise return the file content
 app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
-    async function parseDir (dir) {
-      const toReturn = []
-      const files = await fs.readdir(dir)
-      for (const file of files) {
-        const entry = {
-          name: path.basename(file),
-          path: utils.joinPath(dir, file)
-        }
-        const stats = await fs.lstat(entry.path)
-        if (stats.isDirectory()) {
-          entry.children = await parseDir(entry.path)
-        } else {
-          entry.ext = file.split('.').pop()
-        }
+    let data
+    if (req.query.path) {
+      const reqPath = getSafePath(req)
 
-        entry.size = utils.humanSize(stats.size)
-        toReturn.push(entry)
+      const stat = await fs.lstat(reqPath)
+
+      if (!stat.isFile()) {
+        throw Error('Path is not a file')
       }
-      return toReturn
-    }
 
-    const data = await parseDir(storeDir)
+      data = await fs.readFile(reqPath, 'utf8')
+    } else {
+      async function parseDir (dir) {
+        const toReturn = []
+        const files = await fs.readdir(dir)
+        for (const file of files) {
+          const entry = {
+            name: path.basename(file),
+            path: utils.joinPath(dir, file)
+          }
+          const stats = await fs.lstat(entry.path)
+          if (stats.isDirectory()) {
+            entry.children = await parseDir(entry.path)
+          } else {
+            entry.ext = file.split('.').pop()
+          }
+
+          entry.size = utils.humanSize(stats.size)
+          toReturn.push(entry)
+        }
+        return toReturn
+      }
+
+      data = await parseDir(storeDir)
+    }
 
     res.json({ success: true, data: data })
   } catch (error) {
@@ -863,32 +876,7 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   }
 })
 
-app.get('/api/store/:path', storeLimiter, isAuthenticated, async function (
-  req,
-  res
-) {
-  try {
-    const reqPath = getSafePath(req)
-
-    const stat = await fs.lstat(reqPath)
-
-    if (!stat.isFile()) {
-      throw Error('Path is not a file')
-    }
-
-    const data = await fs.readFile(reqPath, 'utf8')
-
-    res.json({ success: true, data: data })
-  } catch (error) {
-    logger.error(error.message)
-    return res.json({ success: false, message: error.message })
-  }
-})
-
-app.put('/api/store/:path', storeLimiter, isAuthenticated, async function (
-  req,
-  res
-) {
+app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
     const reqPath = getSafePath(req)
 
@@ -907,7 +895,7 @@ app.put('/api/store/:path', storeLimiter, isAuthenticated, async function (
   }
 })
 
-app.delete('/api/store/:path', storeLimiter, isAuthenticated, async function (
+app.delete('/api/store', storeLimiter, isAuthenticated, async function (
   req,
   res
 ) {
