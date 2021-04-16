@@ -338,7 +338,13 @@ app.use(
     resave: true,
     saveUninitialized: true,
     store: new FileStore({
-      path: storeDir
+      path: path.join(storeDir, 'sessions'),
+      logFn: (...args) => {
+        // skip ENOENT errors
+        if (args && args.filter(a => a.indexOf('ENOENT') >= 0).length === 0) {
+          logger.debug(...args)
+        }
+      }
     }),
     cookie: {
       secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
