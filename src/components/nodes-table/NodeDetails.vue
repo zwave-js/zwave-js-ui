@@ -60,6 +60,7 @@
             <v-row>
               <span style="margin: auto 0">{{ className }}</span>
               <v-btn
+                v-if="group[0]"
                 @click.stop="
                   apiRequest('refreshCCValues', [
                     node.id,
@@ -90,6 +91,80 @@
                     ></ValueID>
                   </v-col>
                 </v-row>
+                <v-col
+                  v-if="group[0] && group[0].commandClass === 112"
+                  cols="12"
+                  sm="6"
+                  md="4"
+                  style="padding-left:0"
+                >
+                  <v-subheader class="valueid-label"
+                    >Custom Configuration
+                  </v-subheader>
+                  <v-row>
+                    <v-col cols="3">
+                      <v-text-field
+                        label="Value"
+                        v-model.number="configCC.value"
+                      />
+                    </v-col>
+                    <v-col cols="3">
+                      <v-text-field
+                        label="Parameter"
+                        v-model.number="configCC.parameter"
+                      />
+                    </v-col>
+                    <v-col cols="3">
+                      <v-select
+                        label="Size"
+                        :items="[1, 2, 3, 4]"
+                        v-model.number="configCC.valueSize"
+                      />
+                    </v-col>
+                    <v-col cols="3">
+                      <v-btn
+                        width="60px"
+                        v-if="group[0]"
+                        @click.stop="
+                          apiRequest('sendCommand', [
+                            {
+                              nodeId: node.id,
+                              commandClass: 112
+                            },
+                            'get',
+                            [configCC.parameter]
+                          ])
+                        "
+                        color="green"
+                        x-small
+                      >
+                        GET
+                      </v-btn>
+                      <v-btn
+                        v-if="group[0]"
+                        width="60px"
+                        @click.stop="
+                          apiRequest('sendCommand', [
+                            {
+                              nodeId: node.id,
+                              commandClass: 112
+                            },
+                            'set',
+                            [
+                              configCC.parameter,
+                              configCC.value,
+                              configCC.valueSize
+                            ]
+                          ])
+                        "
+                        color="primary"
+                        x-small
+                      >
+                        SET
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                </v-col>
               </v-card-text>
             </v-card>
           </v-expansion-panel-content>
@@ -131,6 +206,11 @@ export default {
       newName: this.node.name,
       newLoc: this.node.loc,
       advancedShowDialog: false,
+      configCC: {
+        value: 0,
+        valueSize: 1,
+        parameter: 1
+      },
       actions: [
         {
           text: 'Export json',
@@ -235,12 +315,6 @@ export default {
           icon: 'dangerous',
           desc:
             'Manage nodes that are dead and/or marked as failed with the controller'
-        },
-        {
-          text: 'Configuration CC',
-          options: [{ name: 'set', action: 'setConfigParameter' }],
-          icon: 'settings',
-          desc: 'Manually send Configuration CC command'
         },
         {
           text: 'Associations',
