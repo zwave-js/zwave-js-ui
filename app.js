@@ -335,8 +335,8 @@ app.use(
   session({
     name: 'zwavejs2mqtt-session',
     secret: sessionSecret,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     store: new FileStore({
       path: path.join(storeDir, 'sessions'),
       logFn: (...args) => {
