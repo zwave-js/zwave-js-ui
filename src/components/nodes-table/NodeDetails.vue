@@ -104,12 +104,6 @@
                   <v-row>
                     <v-col cols="3">
                       <v-text-field
-                        label="Value"
-                        v-model.number="configCC.value"
-                      />
-                    </v-col>
-                    <v-col cols="3">
-                      <v-text-field
                         label="Parameter"
                         v-model.number="configCC.parameter"
                       />
@@ -119,6 +113,12 @@
                         label="Size"
                         :items="[1, 2, 3, 4]"
                         v-model.number="configCC.valueSize"
+                      />
+                    </v-col>
+                    <v-col cols="3">
+                      <v-text-field
+                        label="Value"
+                        v-model.number="configCC.value"
                       />
                     </v-col>
                     <v-col cols="3">
