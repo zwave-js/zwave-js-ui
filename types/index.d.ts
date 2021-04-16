@@ -350,6 +350,7 @@ export interface ZwaveClient extends EventEmitter {
   removeAllAssociations(nodeId: number): Promise<void>
   removeNodeFromAllAssociations(nodeId: number): Promise<void>
   refreshNeighbors(): void
+  driverFunction(code: string): Promise<void>
   connect(): Promise<void>
   sendToSocket(evtName: string, data: any): void
   setNodeName(nodeid: number, name: string): Promise<boolean>
@@ -401,6 +402,12 @@ export interface ZwaveClient extends EventEmitter {
     valueId: Z2MValueId,
     value: unknown
   ): Promise<void>
+  setConfigParameter(
+    nodeId: number,
+    parameter: number,
+    value: number,
+    valueSize: 1 | 2 | 4
+  )
   writeValue(valueId: Z2MValueId, value: unknown): Promise<void>
   sendCommand(
     ctx: { nodeId: number; endpoint: number; commandClass: number },
