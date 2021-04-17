@@ -1,3 +1,18 @@
+# [3.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.3.0...v3.4.0) (2021-04-17)
+
+
+### Bug Fixes
+
+* disable `saveUninitialized` in express session ([#1068](https://github.com/zwave-js/zwavejs2mqtt/issues/1068)) ([7d8814e](https://github.com/zwave-js/zwavejs2mqtt/commit/7d8814e835d8aab6a00828426eb49e565136ddce))
+* prevent 404 errors in store when using nginx ([#1060](https://github.com/zwave-js/zwavejs2mqtt/issues/1060)) ([b8dd575](https://github.com/zwave-js/zwavejs2mqtt/commit/b8dd57519b98c7f09405791ed20e88b6b367ee9f))
+* store sessions in a dedicated folder in store ([#1067](https://github.com/zwave-js/zwavejs2mqtt/issues/1067)) ([2f2c947](https://github.com/zwave-js/zwavejs2mqtt/commit/2f2c9470914d2d934768d328f747bf8e165f7a41))
+
+
+### Features
+
+* allow to send a custom function to driver ([#1063](https://github.com/zwave-js/zwavejs2mqtt/issues/1063)) ([79e50fd](https://github.com/zwave-js/zwavejs2mqtt/commit/79e50fd3c28ff47a30548b62f01f2234c1342795))
+* allow to send custom Config CC get/set commands ([#1064](https://github.com/zwave-js/zwavejs2mqtt/issues/1064)) ([96e0662](https://github.com/zwave-js/zwavejs2mqtt/commit/96e06620dcf826a4724c0249471d0b24f738c48a))
+
 # [3.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.2.1...v3.3.0) (2021-04-13)
 
 
