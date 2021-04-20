@@ -206,7 +206,7 @@ export default {
       this.title = title
       this.message = message
 
-      this.options = Object.assign(this.defaultOptions, options)
+      Object.assign(this.options, options)
 
       if (options.inputs) {
         for (const input of options.inputs) {
