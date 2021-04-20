@@ -98,13 +98,13 @@ export default {
     const response = await request.get('/store', { params: { path } })
     return response.data
   },
-  async writeFile (path, content) {
+  async writeFile (content, query) {
     const response = await request.put(
       '/store',
       {
         content
       },
-      { params: { path } }
+      { params: query }
     )
     return response.data
   },
