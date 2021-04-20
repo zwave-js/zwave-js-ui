@@ -9,6 +9,7 @@
             v-model="selectedFiles"
             :items="items"
             activatable
+            open-all
             selectable
             item-key="path"
             open-on-click
@@ -22,10 +23,30 @@
                 text_snippet
               </v-icon>
             </template>
+            <template v-slot:label="{ item }">
+              <span>{{ item.name }} </span>
+              <div class="caption grey--text">
+                {{ item.size !== 'n/a' ? item.size : '' }}
+              </div>
+            </template>
             <template v-slot:append="{ item }">
               <v-row justify-end class="ma-1">
-                <div class="caption grey--text">{{ item.size }}</div>
-                <v-icon @click.stop="deleteFile(item)" color="red"
+                <v-icon
+                  v-if="item.children"
+                  @click.stop="writeFile(item.path, true)"
+                  color="yellow"
+                  >create_new_folder</v-icon
+                >
+                <v-icon
+                  v-if="item.children"
+                  @click.stop="writeFile(item.path, false)"
+                  color="primary"
+                  >post_add</v-icon
+                >
+                <v-icon
+                  v-if="!item.isRoot"
+                  @click.stop="deleteFile(item)"
+                  color="red"
                   >delete</v-icon
                 >
               </v-row>
@@ -193,7 +214,7 @@ export default {
           const data = await ConfigApis.deleteFile(item.path)
           if (data.success) {
             this.showSnackbar('File deleted successfully')
-            this.refreshTree()
+            this.refreshTree(true)
           } else {
             throw Error(data.message)
           }
@@ -215,7 +236,7 @@ export default {
           const data = await ConfigApis.deleteMultiple(files)
           if (data.success) {
             this.showSnackbar('Files deleted successfully')
-            this.refreshTree()
+            this.refreshTree(true)
           } else {
             throw Error(data.message)
           }
@@ -268,9 +289,45 @@ export default {
         this.$listeners.export(this.fileContent, fileName, this.selected.ext)
       }
     },
-    async writeFile () {
+    async writeFile (path, isDirectory = false) {
+      const isNew = path && typeof path === 'string'
+      const content = this.fileContent || ''
+
+      // create a new file
+      if (isNew) {
+        const text = isDirectory ? 'Directory' : 'File'
+        const { name } = await this.$listeners.showConfirm(
+          'New ' + text,
+          '',
+          'info',
+          {
+            confirmText: 'Create',
+            inputs: [
+              {
+                type: 'text',
+                label: text + ' name',
+                required: true,
+                key: 'name',
+                hint: `Insert the ${text} name`
+              }
+            ]
+          }
+        )
+
+        if (!name) {
+          return
+        }
+
+        path = path + '/' + name
+      } else if (this.selected) {
+        path = this.selected.path
+      } else {
+        this.showSnackbar('No file selected')
+        return
+      }
+
       if (
-        this.selected &&
+        isNew ||
         (await this.$listeners.showConfirm(
           'Attention',
           `Are you sure you want to overwrite the content of the file ${this.selected.name}?`,
@@ -278,12 +335,17 @@ export default {
         ))
       ) {
         try {
-          const data = await ConfigApis.writeFile(
-            this.selected.path,
-            this.fileContent
-          )
+          const data = await ConfigApis.writeFile(content, {
+            path,
+            isNew,
+            isDirectory
+          })
           if (data.success) {
-            this.showSnackbar('File writed successfully')
+            this.showSnackbar(
+              `${isDirectory ? 'Directory' : 'File'} ${
+                isNew ? 'created' : 'updated'
+              } successfully`
+            )
             this.refreshTree()
           } else {
             throw Error(data.message)
@@ -297,7 +359,7 @@ export default {
       return highlight(code, languages.js) // returns html
     },
     async fetchFile () {
-      if (this.selected && this.selected.path) {
+      if (this.selected && this.selected.path && !this.selected.children) {
         this.fileContent = ''
         this.loadingFile = true
         try {
@@ -319,7 +381,7 @@ export default {
         this.loadingFile = false
       }
     },
-    async refreshTree () {
+    async refreshTree (reset) {
       try {
         const data = await ConfigApis.getStore()
         if (data.success) {
@@ -334,7 +396,9 @@ export default {
 
       this.loadingStore = false
       this.loadingFile = false
-      this.active = []
+      if (reset) {
+        this.active = []
+      }
     }
   },
   async mounted () {

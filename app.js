@@ -187,7 +187,7 @@ function getSafePath (req) {
 
   reqPath = path.normalize(reqPath)
 
-  if (!reqPath.startsWith(storeDir)) {
+  if (!reqPath.startsWith(storeDir) || path === storeDir) {
     throw Error('Path not allowed')
   }
 
@@ -872,7 +872,14 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
         return toReturn
       }
 
-      data = await parseDir(storeDir)
+      data = [
+        {
+          name: 'store',
+          path: storeDir,
+          isRoot: true,
+          children: await parseDir(storeDir)
+        }
+      ]
     }
 
     res.json({ success: true, data: data })
@@ -886,13 +893,22 @@ app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
     const reqPath = getSafePath(req)
 
-    const stat = await fs.lstat(reqPath)
+    const isNew = req.query.isNew === 'true'
+    const isDirectory = req.query.isDirectory === 'true'
 
-    if (!stat.isFile()) {
-      throw Error('Path is not a file')
+    if (!isNew) {
+      const stat = await fs.lstat(reqPath)
+
+      if (!stat.isFile()) {
+        throw Error('Path is not a file')
+      }
     }
 
-    await fs.writeFile(reqPath, req.body.content, 'utf8')
+    if (!isDirectory) {
+      await fs.writeFile(reqPath, req.body.content, 'utf8')
+    } else {
+      await fs.mkdir(reqPath)
+    }
 
     res.json({ success: true })
   } catch (error) {
