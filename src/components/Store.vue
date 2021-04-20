@@ -214,7 +214,7 @@ export default {
           const data = await ConfigApis.deleteFile(item.path)
           if (data.success) {
             this.showSnackbar('File deleted successfully')
-            this.refreshTree(true)
+            await this.refreshTree(true)
           } else {
             throw Error(data.message)
           }
@@ -236,7 +236,7 @@ export default {
           const data = await ConfigApis.deleteMultiple(files)
           if (data.success) {
             this.showSnackbar('Files deleted successfully')
-            this.refreshTree(true)
+            await this.refreshTree(true)
           } else {
             throw Error(data.message)
           }
@@ -346,7 +346,7 @@ export default {
                 isNew ? 'created' : 'updated'
               } successfully`
             )
-            this.refreshTree()
+            await this.refreshTree()
           } else {
             throw Error(data.message)
           }
