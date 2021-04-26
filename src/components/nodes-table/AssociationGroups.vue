@@ -129,7 +129,7 @@ export default {
     ...mapGetters(['nodes', 'nodesMap']),
     endpoints () {
       const toReturn = [
-        { text: 'All', value: undefined },
+        { text: 'All', value: null },
         { text: 'Root', value: 0 }
       ]
 
@@ -145,7 +145,7 @@ export default {
         groups = this.group.node.groups
         const endpoint = this.group.nodeEndpoint
 
-        if (endpoint >= 0) {
+        if (endpoint !== null && endpoint >= 0) {
           groups = groups.filter(g => g.endpoint === endpoint)
         }
       } catch (error) {}
@@ -179,10 +179,19 @@ export default {
       this.$delete(this.group, 'group')
       this.$delete(this.group, 'nodeEndpoint')
     },
+    getSourceAddress () {
+      return {
+        nodeId: this.group.node.id,
+        endpoint: this.group.nodeEndpoint || 0
+      }
+    },
     getAssociations () {
       const g = this.group
       if (g && g.node && g.group) {
-        this.apiRequest('getAssociations', [g.node.id, g.group.value])
+        this.apiRequest('getAssociations', [
+          this.getSourceAddress(),
+          g.group.value
+        ])
       }
     },
     addAssociation () {
@@ -196,11 +205,7 @@ export default {
       }
 
       if (g && g.node && target) {
-        const args = [
-          { nodeId: g.node.id, endpoint: g.nodeEndpoint },
-          g.group.value,
-          [association]
-        ]
+        const args = [this.getSourceAddress(), g.group.value, [association]]
 
         this.apiRequest('addAssociations', args)
 
@@ -223,11 +228,7 @@ export default {
           }
         }
 
-        const args = [
-          { nodeId: g.node.id, endpoint: g.nodeEndpoint },
-          g.group.value,
-          [association]
-        ]
+        const args = [this.getSourceAddress(), g.group.value, [association]]
 
         this.apiRequest('removeAssociations', args)
         // wait a moment before refresh to check if the node
