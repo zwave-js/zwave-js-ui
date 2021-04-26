@@ -135,7 +135,7 @@ export default {
     endpoints () {
       const toReturn = [
         { text: 'All', value: null },
-        { text: 'Root', value: 0 }
+        { text: 'Root (0)', value: 0 }
       ]
 
       for (let i = 1; i <= this.node.endpointsCount; i++) {
@@ -146,7 +146,7 @@ export default {
     },
     targetEndpoints () {
       const targetNode = this.group.target
-      const endpoints = [{ text: 'Root', value: 0 }]
+      const endpoints = [{ text: 'Root (0)', value: 0 }]
 
       for (let i = 1; i <= targetNode.endpointsCount; i++) {
         endpoints.push({ text: i, value: i })
