@@ -4,7 +4,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           label="Node Endpoint"
-          hint="When adding associations with 'All' selected Root endpoint will be used"
+          hint="Used to filter available groups"
           v-model="group.nodeEndpoint"
           persistent-hint
           :items="endpoints"
@@ -14,7 +14,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           label="Group"
-          hint="Node/Endpoint Group association to add/remove"
+          hint="Node/Endpoint Group association to Add/Remove"
           persistent-hint
           v-model="group.group"
           @input="getAssociations"
