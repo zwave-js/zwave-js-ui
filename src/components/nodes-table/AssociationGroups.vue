@@ -3,10 +3,18 @@
     <v-row>
       <v-col cols="12" sm="6">
         <v-select
+          label="Endpoint"
+          v-model="group.nodeEndpoint"
+          :items="endpoints"
+        ></v-select>
+      </v-col>
+
+      <v-col cols="12" sm="6">
+        <v-select
           label="Group"
           v-model="group.group"
           @input="getAssociations"
-          :items="group.node.groups"
+          :items="endpointGroups"
           return-object
         ></v-select>
       </v-col>
@@ -118,7 +126,32 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(['nodes', 'nodesMap'])
+    ...mapGetters(['nodes', 'nodesMap']),
+    endpoints () {
+      const toReturn = [
+        { text: 'All', value: undefined },
+        { text: 'Root', value: 0 }
+      ]
+
+      for (let i = 1; i <= this.node.endpointsCount.length; i++) {
+        toReturn.push({ text: i, value: i })
+      }
+
+      return toReturn
+    },
+    endpointGroups () {
+      let groups = []
+      try {
+        groups = this.group.node.groups
+        const endpoint = this.group.nodeEndpoint
+
+        if (endpoint >= 0) {
+          groups = groups.filter(g => g.endpoint === endpoint)
+        }
+      } catch (error) {}
+
+      return groups
+    }
   },
   mounted () {
     const self = this
@@ -143,7 +176,8 @@ export default {
     },
     resetGroup () {
       this.$set(this.group, 'associations', [])
-      this.$set(this.group, 'group', null)
+      this.$delete(this.group, 'group')
+      this.$delete(this.group, 'nodeEndpoint')
     },
     getAssociations () {
       const g = this.group
@@ -162,7 +196,11 @@ export default {
       }
 
       if (g && g.node && target) {
-        const args = [g.node.id, g.group.value, [association]]
+        const args = [
+          { nodeId: g.node.id, endpoint: g.nodeEndpoint },
+          g.group.value,
+          [association]
+        ]
 
         this.apiRequest('addAssociations', args)
 
@@ -185,7 +223,11 @@ export default {
           }
         }
 
-        const args = [g.node.id, g.group.value, [association]]
+        const args = [
+          { nodeId: g.node.id, endpoint: g.nodeEndpoint },
+          g.group.value,
+          [association]
+        ]
 
         this.apiRequest('removeAssociations', args)
         // wait a moment before refresh to check if the node
