@@ -20,7 +20,21 @@
           @input="getAssociations"
           :items="endpointGroups"
           return-object
-        ></v-select>
+        >
+          <template v-slot:selection="{ item }">
+            {{ item.text }}
+          </template>
+          <template v-slot:item="{ item, attrs, on }">
+            <v-list-item v-on="on" v-bind="attrs" two-line>
+              <v-list-item-content>
+                <v-list-item-title>{{ item.text }}</v-list-item-title>
+                <v-list-item-subtitle
+                  >Endpoint {{ item.endpoint }}</v-list-item-subtitle
+                >
+              </v-list-item-content>
+            </v-list-item>
+          </template>
+        </v-select>
       </v-col>
 
       <v-col cols="12" sm="6" md="4">
@@ -197,7 +211,7 @@ export default {
     getSourceAddress () {
       return {
         nodeId: this.group.node.id,
-        endpoint: this.group.nodeEndpoint || 0
+        endpoint: this.group.group.endpoint || 0
       }
     },
     getAssociations () {
