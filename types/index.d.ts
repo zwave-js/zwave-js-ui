@@ -337,7 +337,10 @@ export interface ZwaveClient extends EventEmitter {
   getStatus(): { driverReady: boolean; status: boolean; config: GatewayConfig }
   addEmptyNodes(): void
   getGroups(nodeId: number, ignoreUpdate: boolean): Promise<void>
-  getAssociations(source: AssociationAddress, groupId: number): Promise<AssociationAddress[]>
+  getAssociations(
+    source: AssociationAddress,
+    groupId: number
+  ): Promise<AssociationAddress[]>
   addAssociations(
     source: AssociationAddress,
     groupId: number,
