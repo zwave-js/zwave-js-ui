@@ -215,7 +215,6 @@
 <style>
 .valueid-label {
   font-weight: bold !important;
-  color: black !important;
   padding-left: 0 !important;
   margin-bottom: -10px !important;
 }
