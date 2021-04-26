@@ -1,21 +1,52 @@
 <template>
   <v-container grid-list-md>
     <v-row>
-      <v-col cols="12" sm="6">
+      <v-col cols="12" sm="6" md="4">
         <v-select
-          label="Endpoint"
+          label="Node Endpoint"
+          hint="When adding associations with 'All' selected Root endpoint will be used"
           v-model="group.nodeEndpoint"
+          persistent-hint
           :items="endpoints"
         ></v-select>
       </v-col>
 
-      <v-col cols="12" sm="6">
+      <v-col cols="12" sm="6" md="4">
         <v-select
           label="Group"
+          hint="Node/Endpoint Group association to add/remove"
+          persistent-hint
           v-model="group.group"
           @input="getAssociations"
           :items="endpointGroups"
           return-object
+        ></v-select>
+      </v-col>
+
+      <v-col cols="12" sm="6" md="4">
+        <v-combobox
+          label="Target Node"
+          v-model="group.target"
+          :items="nodes"
+          return-object
+          hint="Node to add to the association group"
+          persistent-hint
+          item-text="_name"
+        ></v-combobox>
+      </v-col>
+
+      <v-col
+        v-if="group.group && group.group.multiChannel"
+        cols="12"
+        sm="6"
+        md="4"
+      >
+        <v-select
+          v-model.number="group.endpoint"
+          persistent-hint
+          label="Target Endpoint"
+          hint="Target node endpoint"
+          :items="targetEndpoints"
         ></v-select>
       </v-col>
 
@@ -52,32 +83,6 @@
             </v-list-item-content>
           </v-list-item>
         </v-list>
-      </v-col>
-
-      <v-col cols="12" sm="6">
-        <v-combobox
-          label="Target"
-          v-model="group.target"
-          :items="nodes"
-          return-object
-          hint="Select the node from the list or digit the node ID"
-          persistent-hint
-          item-text="_name"
-        ></v-combobox>
-      </v-col>
-
-      <v-col
-        v-if="group.group && group.group.multiChannel"
-        cols="12"
-        sm="6"
-        md="4"
-      >
-        <v-text-field
-          v-model.number="group.endpoint"
-          label="Endpoint"
-          hint="Target node endpoint"
-          type="number"
-        />
       </v-col>
 
       <v-col cols="12">
@@ -133,11 +138,21 @@ export default {
         { text: 'Root', value: 0 }
       ]
 
-      for (let i = 1; i <= this.node.endpointsCount.length; i++) {
+      for (let i = 1; i <= this.node.endpointsCount; i++) {
         toReturn.push({ text: i, value: i })
       }
 
       return toReturn
+    },
+    targetEndpoints () {
+      const targetNode = this.group.target
+      const endpoints = [{ text: 'Root', value: 0 }]
+
+      for (let i = 1; i <= targetNode.endpointsCount; i++) {
+        endpoints.push({ text: i, value: i })
+      }
+
+      return endpoints
     },
     endpointGroups () {
       let groups = []
