@@ -4,7 +4,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           label="Node Endpoint"
-          hint="Used to filter available groups. No Endpoint and endpoint 0 are different, when endpoint is specified Multi Instance Association CC will be used instead of Association CC"
+          hint="Used to filter available groups. No Endpoint and endpoint 0 are different, when endpoint is specified Multi Channel Association CC will be used instead of Association CC"
           v-model="group.nodeEndpoint"
           persistent-hint
           :items="endpoints"
@@ -148,7 +148,7 @@ export default {
     ...mapGetters(['nodes', 'nodesMap']),
     endpoints () {
       const toReturn = [
-        { text: 'No Endpoint', value: undefined },
+        { text: 'No Endpoint', value: null }, // cannot use undefined here or it will return the value
         { text: 'Endpoint 0', value: 0 }
       ]
 
@@ -161,7 +161,7 @@ export default {
     targetEndpoints () {
       const targetNode = this.group.target
       const endpoints = [
-        { text: 'No endpoint', value: undefined },
+        { text: 'No endpoint', value: null }, // cannot use undefined here or it will return the value
         { text: 'Endpoint 0', value: 0 }
       ]
 
@@ -179,7 +179,7 @@ export default {
         groups = groups.filter(
           g =>
             g.endpoint === endpoint ||
-            (endpoint === undefined && g.endpoint === 0 && !g.multiChannel)
+            (endpoint === null && g.endpoint === 0 && !g.multiChannel)
         )
       } catch (error) {}
 
@@ -215,7 +215,10 @@ export default {
     getSourceAddress () {
       return {
         nodeId: this.group.node.id,
-        endpoint: this.group.group.endpoint
+        endpoint:
+          this.group.group.endpoint === null
+            ? undefined
+            : this.group.group.endpoint
       }
     },
     getAssociations () {
