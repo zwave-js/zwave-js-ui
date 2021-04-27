@@ -147,29 +147,10 @@ export default {
   computed: {
     ...mapGetters(['nodes', 'nodesMap']),
     endpoints () {
-      const toReturn = [
-        { text: 'No Endpoint', value: null }, // cannot use undefined here or it will return the value
-        { text: 'Endpoint 0', value: 0 }
-      ]
-
-      for (let i = 1; i <= this.node.endpointsCount; i++) {
-        toReturn.push({ text: i, value: i })
-      }
-
-      return toReturn
+      return this.getEndpointItems(this.node)
     },
     targetEndpoints () {
-      const targetNode = this.group.target
-      const endpoints = [
-        { text: 'No endpoint', value: null }, // cannot use undefined here or it will return the value
-        { text: 'Endpoint 0', value: 0 }
-      ]
-
-      for (let i = 1; i <= targetNode.endpointsCount; i++) {
-        endpoints.push({ text: i, value: i })
-      }
-
-      return endpoints
+      return this.getEndpointItems(this.group.target)
     },
     endpointGroups () {
       let groups = []
@@ -206,6 +187,18 @@ export default {
       } else {
         this.showSnackbar('Socket disconnected')
       }
+    },
+    getEndpointItems (node) {
+      const endpoints = [
+        { text: 'No endpoint', value: null }, // cannot use undefined here or it will return the value
+        { text: 'Endpoint 0', value: 0 }
+      ]
+
+      for (const i of node.endpointIndizes) {
+        endpoints.push({ text: 'Endpoint ' + i, value: i })
+      }
+
+      return endpoints
     },
     resetGroup () {
       this.$set(this.group, 'associations', [])

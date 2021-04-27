@@ -108,6 +108,7 @@ export type Z2MNode = {
   zwavePlusRoleType: ZWavePlusRoleType | undefined
   nodeType: NodeType
   endpointsCount: number
+  endpointIndizes: number[]
   isSecure: boolean
   supportsBeaming: boolean
   supportsSecurity: boolean
