@@ -2,7 +2,7 @@
   <v-dialog v-model="value" max-width="500px" persistent>
     <v-card>
       <v-card-title>
-        <span class="headline">{{ title }}</span>
+        <span class="headline">Add association</span>
       </v-card-title>
 
       <v-card-text>

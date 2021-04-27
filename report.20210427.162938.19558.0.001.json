@@ -1,0 +1,448 @@
+
+{
+  "header": {
+    "reportVersion": 1,
+    "event": "Allocation failed - JavaScript heap out of memory",
+    "trigger": "FatalError",
+    "filename": "report.20210427.162938.19558.0.001.json",
+    "dumpEventTime": "2021-04-27T16:29:38Z",
+    "dumpEventTimeStamp": "1619533778319",
+    "processId": 19558,
+    "cwd": "/media/daniel/DATA/Git-Projects/zwavejs2mqtt",
+    "commandLine": [
+      "node",
+      "--inspect",
+      "bin/www"
+    ],
+    "nodejsVersion": "v12.14.1",
+    "glibcVersionRuntime": "2.27",
+    "glibcVersionCompiler": "2.17",
+    "wordSize": 64,
+    "arch": "x64",
+    "platform": "linux",
+    "componentVersions": {
+      "node": "12.14.1",
+      "v8": "7.7.299.13-node.16",
+      "uv": "1.33.1",
+      "zlib": "1.2.11",
+      "brotli": "1.0.7",
+      "ares": "1.15.0",
+      "modules": "72",
+      "nghttp2": "1.40.0",
+      "napi": "5",
+      "llhttp": "2.0.1",
+      "http_parser": "2.8.0",
+      "openssl": "1.1.1d",
+      "cldr": "35.1",
+      "icu": "64.2",
+      "tz": "2019c",
+      "unicode": "12.1"
+    },
+    "release": {
+      "name": "node",
+      "lts": "Erbium",
+      "headersUrl": "https://nodejs.org/download/release/v12.14.1/node-v12.14.1-headers.tar.gz",
+      "sourceUrl": "https://nodejs.org/download/release/v12.14.1/node-v12.14.1.tar.gz"
+    },
+    "osName": "Linux",
+    "osRelease": "5.4.0-72-generic",
+    "osVersion": "#80~18.04.1-Ubuntu SMP Mon Apr 12 23:26:25 UTC 2021",
+    "osMachine": "x86_64",
+    "cpus": [
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2700,
+        "user": 25655500,
+        "nice": 21800,
+        "sys": 5714000,
+        "idle": 268678100,
+        "irq": 0
+      },
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2700,
+        "user": 26795400,
+        "nice": 29800,
+        "sys": 5842300,
+        "idle": 267626600,
+        "irq": 0
+      },
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2699,
+        "user": 26332200,
+        "nice": 59100,
+        "sys": 5895500,
+        "idle": 268137800,
+        "irq": 0
+      },
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2675,
+        "user": 27140100,
+        "nice": 43400,
+        "sys": 6043600,
+        "idle": 265004300,
+        "irq": 0
+      },
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2699,
+        "user": 24750300,
+        "nice": 800,
+        "sys": 8320800,
+        "idle": 266435100,
+        "irq": 0
+      },
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2699,
+        "user": 23843400,
+        "nice": 48300,
+        "sys": 10819000,
+        "idle": 261161600,
+        "irq": 0
+      },
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2618,
+        "user": 24845100,
+        "nice": 800,
+        "sys": 5611100,
+        "idle": 269783200,
+        "irq": 0
+      },
+      {
+        "model": "Intel(R) Core(TM) i7-6700HQ CPU @ 2.60GHz",
+        "speed": 2700,
+        "user": 24750000,
+        "nice": 30800,
+        "sys": 5771000,
+        "idle": 269722200,
+        "irq": 0
+      }
+    ],
+    "networkInterfaces": [
+      {
+        "name": "lo",
+        "internal": true,
+        "mac": "00:00:00:00:00:00",
+        "address": "127.0.0.1",
+        "netmask": "255.0.0.0",
+        "family": "IPv4"
+      },
+      {
+        "name": "wlp2s0",
+        "internal": false,
+        "mac": "7c:b0:c2:14:63:c4",
+        "address": "192.168.1.193",
+        "netmask": "255.255.255.0",
+        "family": "IPv4"
+      },
+      {
+        "name": "tun0",
+        "internal": false,
+        "mac": "00:00:00:00:00:00",
+        "address": "10.9.1.213",
+        "netmask": "255.255.255.255",
+        "family": "IPv4"
+      },
+      {
+        "name": "lo",
+        "internal": true,
+        "mac": "00:00:00:00:00:00",
+        "address": "::1",
+        "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+        "family": "IPv6",
+        "scopeid": 0
+      },
+      {
+        "name": "wlp2s0",
+        "internal": false,
+        "mac": "7c:b0:c2:14:63:c4",
+        "address": "fe80::6ec2:66aa:1055:abb4",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 3
+      },
+      {
+        "name": "tun0",
+        "internal": false,
+        "mac": "00:00:00:00:00:00",
+        "address": "fe80::71ec:c88b:886c:c8f7",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 8
+      }
+    ],
+    "host": "daniel-innovation"
+  },
+  "javascriptStack": {
+    "message": "No stack.",
+    "stack": [
+      "Unavailable."
+    ]
+  },
+  "nativeStack": [
+    {
+      "pc": "0x0000000000b05ba5",
+      "symbol": "report::TriggerNodeReport(v8::Isolate*, node::Environment*, char const*, char const*, std::string const&, v8::Local<v8::String>) [node]"
+    },
+    {
+      "pc": "0x00000000009dbd93",
+      "symbol": "node::OnFatalError(char const*, char const*) [node]"
+    },
+    {
+      "pc": "0x0000000000b3b18e",
+      "symbol": "v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, bool) [node]"
+    },
+    {
+      "pc": "0x0000000000b3b509",
+      "symbol": "v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, bool) [node]"
+    },
+    {
+      "pc": "0x0000000000ce68a5",
+      "symbol": " [node]"
+    },
+    {
+      "pc": "0x0000000000cbdcd0",
+      "symbol": "v8::internal::Factory::NewUninitializedFixedArray(int, v8::internal::AllocationType) [node]"
+    },
+    {
+      "pc": "0x0000000000e281a1",
+      "symbol": " [node]"
+    },
+    {
+      "pc": "0x0000000000e28450",
+      "symbol": " [node]"
+    },
+    {
+      "pc": "0x0000000000fca26b",
+      "symbol": "v8::internal::Runtime_GrowArrayElements(int, unsigned long*, v8::internal::Isolate*) [node]"
+    },
+    {
+      "pc": "0x0000000001376259",
+      "symbol": " [node]"
+    }
+  ],
+  "javascriptHeap": {
+    "totalMemory": 7546216448,
+    "totalCommittedMemory": 7545130480,
+    "usedMemory": 7506574584,
+    "availableMemory": 32139712,
+    "memoryLimit": 8640266240,
+    "heapSpaces": {
+      "read_only_space": {
+        "memorySize": 262144,
+        "committedMemory": 32568,
+        "capacity": 261872,
+        "used": 32296,
+        "available": 229576
+      },
+      "new_space": {
+        "memorySize": 33554432,
+        "committedMemory": 33550936,
+        "capacity": 16759808,
+        "used": 3348664,
+        "available": 13411144
+      },
+      "old_space": {
+        "memorySize": 6574419968,
+        "committedMemory": 6574076720,
+        "capacity": 6567079576,
+        "used": 6566195688,
+        "available": 883888
+      },
+      "code_space": {
+        "memorySize": 950272,
+        "committedMemory": 565312,
+        "capacity": 901120,
+        "used": 520032,
+        "available": 381088
+      },
+      "map_space": {
+        "memorySize": 1839104,
+        "committedMemory": 1714416,
+        "capacity": 1836928,
+        "used": 1362720,
+        "available": 474208
+      },
+      "large_object_space": {
+        "memorySize": 935141376,
+        "committedMemory": 935141376,
+        "capacity": 935111632,
+        "used": 935111632,
+        "available": 0
+      },
+      "code_large_object_space": {
+        "memorySize": 49152,
+        "committedMemory": 49152,
+        "capacity": 3552,
+        "used": 3552,
+        "available": 0
+      },
+      "new_large_object_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 16759808,
+        "used": 0,
+        "available": 16759808
+      }
+    }
+  },
+  "resourceUsage": {
+    "userCpuSeconds": 96.533,
+    "kernelCpuSeconds": 6.63551,
+    "cpuConsumptionPercent": 166.401,
+    "maxRss": 8142237696,
+    "pageFaults": {
+      "IORequired": 79,
+      "IONotRequired": 2546644
+    },
+    "fsActivity": {
+      "reads": 12136,
+      "writes": 0
+    }
+  },
+  "uvthreadResourceUsage": {
+    "userCpuSeconds": 30.5243,
+    "kernelCpuSeconds": 4.59912,
+    "cpuConsumptionPercent": 56.6507,
+    "fsActivity": {
+      "reads": 8712,
+      "writes": 0
+    }
+  },
+  "libuv": [
+  ],
+  "environmentVariables": {
+    "GJS_DEBUG_TOPICS": "JS ERROR;JS LOG",
+    "LESSOPEN": "| /usr/bin/lesspipe %s",
+    "USER": "daniel",
+    "TEXTDOMAIN": "im-config",
+    "XDG_SEAT": "seat0",
+    "SSH_AGENT_PID": "6316",
+    "XDG_SESSION_TYPE": "x11",
+    "GIT_SUBREPO_ROOT": "/media/daniel/DATA/Git-Projects/git-subrepo",
+    "GIT_ASKPASS": "/usr/share/code/resources/app/extensions/git/dist/askpass.sh",
+    "SHLVL": "2",
+    "CHROME_DESKTOP": "code-url-handler.desktop",
+    "QT4_IM_MODULE": "xim",
+    "HOME": "/home/daniel",
+    "DESKTOP_SESSION": "ubuntu",
+    "TERM_PROGRAM_VERSION": "1.55.2",
+    "NVM_BIN": "/home/daniel/.nvm/versions/node/v12.14.1/bin",
+    "GIO_LAUNCHED_DESKTOP_FILE": "/usr/share/applications/code.desktop",
+    "NODE_OPTIONS": "--require /home/daniel/.config/Code/User/workspaceStorage/7fc4e125677fc3243cfcb7119178caad/ms-vscode.js-debug/bootloader.js ",
+    "GNOME_SHELL_SESSION_MODE": "ubuntu",
+    "GTK_MODULES": "gail:atk-bridge",
+    "VSCODE_GIT_ASKPASS_MAIN": "/usr/share/code/resources/app/extensions/git/dist/askpass-main.js",
+    "VSCODE_GIT_ASKPASS_NODE": "/usr/share/code/code",
+    "DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus",
+    "COLORTERM": "truecolor",
+    "GIO_LAUNCHED_DESKTOP_FILE_PID": "9892",
+    "NVM_DIR": "/home/daniel/.nvm",
+    "MANDATORY_PATH": "/usr/share/gconf/ubuntu.mandatory.path",
+    "IM_CONFIG_PHASE": "2",
+    "LOGNAME": "daniel",
+    "GTK_IM_MODULE": "ibus",
+    "_": "/usr/bin/nodemon",
+    "DEFAULTS_PATH": "/usr/share/gconf/ubuntu.default.path",
+    "USERNAME": "daniel",
+    "XDG_SESSION_ID": "2",
+    "TERM": "xterm-256color",
+    "GNOME_DESKTOP_SESSION_ID": "this-is-deprecated",
+    "GTK2_MODULES": "overlay-scrollbar",
+    "WINDOWPATH": "2",
+    "PATH": "/media/daniel/DATA/Git-Projects/zwavejs2mqtt/node_modules/.bin:/media/daniel/DATA/Git-Projects/git-subrepo/lib:/media/daniel/DATA/flutter/bin:/home/daniel/bin:/home/daniel/.local/bin:/media/daniel/DATA/Git-Projects/git-subrepo/lib:/media/daniel/DATA/flutter/bin:/home/daniel/.nvm/versions/node/v12.14.1/bin:/home/daniel/bin:/home/daniel/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin",
+    "SESSION_MANAGER": "local/daniel-innovation:@/tmp/.ICE-unix/6211,unix/daniel-innovation:/tmp/.ICE-unix/6211",
+    "XDG_MENU_PREFIX": "gnome-",
+    "S_COLORS": "auto",
+    "XDG_RUNTIME_DIR": "/run/user/1000",
+    "DISPLAY": ":0",
+    "LANG": "it_IT.UTF-8",
+    "XDG_CURRENT_DESKTOP": "Unity",
+    "LS_COLORS": "rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.Z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:",
+    "TERM_PROGRAM": "vscode",
+    "XDG_SESSION_DESKTOP": "ubuntu",
+    "XMODIFIERS": "@im=ibus",
+    "VSCODE_GIT_IPC_HANDLE": "/run/user/1000/vscode-git-50fa3ee8ec.sock",
+    "XAUTHORITY": "/run/user/1000/gdm/Xauthority",
+    "ORIGINAL_XDG_CURRENT_DESKTOP": "ubuntu:GNOME",
+    "SSH_AUTH_SOCK": "/run/user/1000/keyring/ssh",
+    "SHELL": "/bin/bash",
+    "QT_ACCESSIBILITY": "1",
+    "GDMSESSION": "ubuntu",
+    "LESSCLOSE": "/usr/bin/lesspipe %s %s",
+    "TEXTDOMAINDIR": "/usr/share/locale/",
+    "GJS_DEBUG_OUTPUT": "stderr",
+    "GPG_AGENT_INFO": "/run/user/1000/gnupg/S.gpg-agent:0:1",
+    "XDG_VTNR": "2",
+    "QT_IM_MODULE": "ibus",
+    "VSCODE_INSPECTOR_OPTIONS": "{\"inspectorIpc\":\"/tmp/node-cdp.23242-1.sock.deferred\",\"deferredMode\":true,\"waitForDebugger\":\"\",\"execPath\":\"/home/daniel/.nvm/versions/node/v12.14.1/bin/node\",\"onlyEntrypoint\":false,\"autoAttachMode\":\"onlyWithFlag\",\"openerId\":\"19f6677564caa688ead6345e\"}",
+    "PWD": "/media/daniel/DATA/Git-Projects/zwavejs2mqtt",
+    "CLUTTER_IM_MODULE": "xim",
+    "NVM_CD_FLAGS": "",
+    "XDG_DATA_DIRS": "/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop:/var/lib/snapd/desktop",
+    "XDG_CONFIG_DIRS": "/etc/xdg/xdg-ubuntu:/etc/xdg",
+    "MANPATH": "/media/daniel/DATA/Git-Projects/git-subrepo/man:/home/daniel/.nvm/versions/node/v12.14.1/share/man:/media/daniel/DATA/Git-Projects/git-subrepo/man:"
+  },
+  "userLimits": {
+    "core_file_size_blocks": {
+      "soft": 0,
+      "hard": "unlimited"
+    },
+    "data_seg_size_kbytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "file_size_blocks": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "max_locked_memory_bytes": {
+      "soft": 67108864,
+      "hard": 67108864
+    },
+    "max_memory_size_kbytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "open_files": {
+      "soft": 1048576,
+      "hard": 1048576
+    },
+    "stack_size_bytes": {
+      "soft": 8388608,
+      "hard": "unlimited"
+    },
+    "cpu_time_seconds": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "max_user_processes": {
+      "soft": 63431,
+      "hard": 63431
+    },
+    "virtual_memory_kbytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    }
+  },
+  "sharedObjects": [
+    "linux-vdso.so.1",
+    "/lib/x86_64-linux-gnu/libdl.so.2",
+    "/usr/lib/x86_64-linux-gnu/libstdc++.so.6",
+    "/lib/x86_64-linux-gnu/libm.so.6",
+    "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+    "/lib/x86_64-linux-gnu/libpthread.so.0",
+    "/lib/x86_64-linux-gnu/libc.so.6",
+    "/lib64/ld-linux-x86-64.so.2",
+    "/media/daniel/DATA/Git-Projects/zwavejs2mqtt/node_modules/@serialport/bindings/build/Release/bindings.node",
+    "/media/daniel/DATA/Git-Projects/node-zwave-js/node_modules/@serialport/bindings/build/Release/bindings.node",
+    "/lib/x86_64-linux-gnu/libnss_files.so.2",
+    "/lib/x86_64-linux-gnu/libnss_mdns4_minimal.so.2",
+    "/lib/x86_64-linux-gnu/libnss_dns.so.2",
+    "/lib/x86_64-linux-gnu/libresolv.so.2"
+  ]
+}
