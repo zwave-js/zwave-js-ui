@@ -211,7 +211,7 @@ export default {
     getSourceAddress () {
       return {
         nodeId: this.group.node.id,
-        endpoint: this.group.group.endpoint || 0
+        endpoint: this.group.group.endpoint
       }
     },
     getAssociations () {
