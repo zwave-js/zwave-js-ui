@@ -4,7 +4,7 @@
       <v-col cols="12" sm="6" md="4">
         <v-select
           label="Node Endpoint"
-          hint="Used to filter available groups"
+          hint="Used to filter available groups. No Endpoint and endpoint 0 are different, when endpoint is specified Multi Instance Association CC will be used instead of Association CC"
           v-model="group.nodeEndpoint"
           persistent-hint
           :items="endpoints"
@@ -28,9 +28,9 @@
             <v-list-item v-on="on" v-bind="attrs" two-line>
               <v-list-item-content>
                 <v-list-item-title>{{ item.text }}</v-list-item-title>
-                <v-list-item-subtitle
-                  >Endpoint {{ item.endpoint }}</v-list-item-subtitle
-                >
+                <v-list-item-subtitle>{{
+                  item.endpoint >= 0 ? 'Endpoint ' + item.endpoint : ''
+                }}</v-list-item-subtitle>
               </v-list-item-content>
             </v-list-item>
           </template>
@@ -77,7 +77,7 @@
                   }}</strong></v-list-item-title
                 >
                 <v-list-item-subtitle
-                  v-if="ass.endpoint >= 0"
+                  v-if="ass.endpoint !== undefined"
                   class="text--primary"
                   >Endpoint:
                   <strong>{{ ass.endpoint }}</strong>
@@ -141,15 +141,16 @@ export default {
   },
   data () {
     return {
-      group: { node: this.node }
+      group: { node: this.node, nodeEndpoint: -1 }
     }
   },
   computed: {
     ...mapGetters(['nodes', 'nodesMap']),
     endpoints () {
       const toReturn = [
-        { text: 'All', value: null },
-        { text: 'Root (0)', value: 0 }
+        { text: 'All', value: -1 },
+        { text: 'No Endpoint', value: undefined },
+        { text: 'Endpoint 0', value: 0 }
       ]
 
       for (let i = 1; i <= this.node.endpointsCount; i++) {
@@ -160,7 +161,10 @@ export default {
     },
     targetEndpoints () {
       const targetNode = this.group.target
-      const endpoints = [{ text: 'Root (0)', value: 0 }]
+      const endpoints = [
+        { text: 'No endpoint', value: undefined },
+        { text: 'Endpoint 0', value: 0 }
+      ]
 
       for (let i = 1; i <= targetNode.endpointsCount; i++) {
         endpoints.push({ text: i, value: i })
@@ -174,7 +178,7 @@ export default {
         groups = this.group.node.groups
         const endpoint = this.group.nodeEndpoint
 
-        if (endpoint !== null && endpoint >= 0) {
+        if (endpoint !== -1) {
           groups = groups.filter(g => g.endpoint === endpoint)
         }
       } catch (error) {}
@@ -206,7 +210,7 @@ export default {
     resetGroup () {
       this.$set(this.group, 'associations', [])
       this.$delete(this.group, 'group')
-      this.$delete(this.group, 'nodeEndpoint')
+      this.$set(this.group, 'nodeEndpoint', -1)
     },
     getSourceAddress () {
       return {
