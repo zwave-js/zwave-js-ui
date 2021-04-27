@@ -148,7 +148,6 @@ export default {
     ...mapGetters(['nodes', 'nodesMap']),
     endpoints () {
       const toReturn = [
-        { text: 'All', value: -1 },
         { text: 'No Endpoint', value: undefined },
         { text: 'Endpoint 0', value: 0 }
       ]
@@ -177,10 +176,11 @@ export default {
       try {
         groups = this.group.node.groups
         const endpoint = this.group.nodeEndpoint
-
-        if (endpoint !== -1) {
-          groups = groups.filter(g => g.endpoint === endpoint)
-        }
+        groups = groups.filter(
+          g =>
+            g.endpoint === endpoint ||
+            (endpoint === undefined && g.endpoint === 0 && !g.multiChannel)
+        )
       } catch (error) {}
 
       return groups
@@ -210,7 +210,7 @@ export default {
     resetGroup () {
       this.$set(this.group, 'associations', [])
       this.$delete(this.group, 'group')
-      this.$set(this.group, 'nodeEndpoint', -1)
+      this.$delete(this.group, 'nodeEndpoint')
     },
     getSourceAddress () {
       return {
