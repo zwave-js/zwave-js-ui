@@ -142,7 +142,7 @@ export default {
         { text: 'Endpoint 0', value: 0 }
       ]
 
-      if (node.endpointIndizes && node.endpointIndizes.length > 0) {
+      if (node && node.endpointIndizes) {
         for (const i of node.endpointIndizes) {
           endpoints.push({ text: 'Endpoint ' + i, value: i })
         }
