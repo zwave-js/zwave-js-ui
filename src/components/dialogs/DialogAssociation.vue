@@ -49,7 +49,7 @@
                 <v-combobox
                   label="Target Node"
                   v-model="group.target"
-                  :items="nodes"
+                  :items="filteredNodes"
                   return-object
                   :rules="[required]"
                   hint="Node to add to the association group"
@@ -100,6 +100,9 @@ export default {
     }
   },
   computed: {
+    filteredNodes () {
+      return this.nodes.filter(n => n.id !== this.node.id)
+    },
     endpoints () {
       return this.getEndpointItems(this.node)
     },

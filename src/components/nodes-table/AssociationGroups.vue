@@ -29,7 +29,11 @@
           >
         </template>
         <template v-slot:[`item.groupId`]="{ item }">
-          {{ node.groups.find(g => g.value === item.groupId).text }}
+          {{
+            node.groups.find(
+              g => g.value === item.groupId && g.endpoint === item.endpoint
+            ).text
+          }}
         </template>
         <template v-slot:[`item.nodeId`]="{ item }">
           {{ getNodeName(item.nodeId) }}
@@ -75,9 +79,9 @@ export default {
       associations: [],
       dialogAssociation: false,
       headers: [
+        { text: 'Endpoint', value: 'endpoint' },
         { text: 'Group', value: 'groupId' },
         { text: 'Node', value: 'nodeId' },
-        { text: 'Endpoint', value: 'endpoint' },
         { text: 'Target Endpoint', value: 'targetEndpoint' },
         { text: 'Actions', value: 'actions', sortable: false }
       ]
