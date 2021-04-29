@@ -263,7 +263,7 @@ export interface MqttClient extends EventEmitter {
 export type Z2MDriverInfo = {
   homeId: string
   name: string
-  controllerId: string,
+  controllerId: string
   newConfigVersion: string | undefined
 }
 
