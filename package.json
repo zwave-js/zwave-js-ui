@@ -200,7 +200,7 @@
     "lodash": "^4.17.21",
     "markdownlint-cli": "^0.27.1",
     "material-design-icons-iconfont": "^6.1.0",
-    "mini-css-extract-plugin": "^1.5.0",
+    "mini-css-extract-plugin": "^1.5.1",
     "ora": "^5.4.0",
     "postcss": "^8.2.13",
     "postcss-import": "^14.0.1",
