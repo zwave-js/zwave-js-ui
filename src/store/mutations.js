@@ -46,7 +46,8 @@ export const state = {
     homeHex: '',
     appVersion: '',
     zwaveVersion: '',
-    controllerStatus: 'Unknown'
+    controllerStatus: 'Unknown',
+    newConfigVersion: undefined
   }
 }
 
@@ -136,6 +137,7 @@ export const mutations = {
     state.appInfo.appVersion = data.appVersion
     state.appInfo.zwaveVersion = data.zwaveVersion
     state.appInfo.serverVersion = data.serverVersion
+    state.appInfo.newConfigVersion = data.newConfigVersion
   },
   setValue (state, valueId) {
     const toReplace = getValue(valueId)

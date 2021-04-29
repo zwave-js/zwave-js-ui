@@ -56,12 +56,28 @@
 
         <div class="controller-status">{{ appInfo.controllerStatus }}</div>
 
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-icon
+              class="mr-3 ml-3"
+              dark
+              medium
+              style="cursor:default;"
+              :color="statusColor || 'orange'"
+              v-on="on"
+              >swap_horizontal_circle</v-icon
+            >
+          </template>
+          <span>{{ status }}</span>
+        </v-tooltip>
+
         <v-tooltip bottom open-on-click>
           <template v-slot:activator="{ on }">
             <v-icon
               dark
               medium
-              style="cursor:default;margin:0 1rem"
+              class="mr-3"
+              style="cursor:default;"
               color="primary"
               v-on="on"
               @click="copyVersion"
@@ -90,22 +106,25 @@
 
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
-            <v-icon
-              dark
-              medium
-              style="cursor:default;"
-              :color="statusColor || 'orange'"
+            <v-badge
               v-on="on"
-              >swap_horizontal_circle</v-icon
+              class="mr-3"
+              :content="updateAvailable"
+              :value="updateAvailable"
+              color="red"
+              overlap
             >
+              <v-btn small icon @click="showUpdateDialog">
+                <v-icon dark medium color="primary">history</v-icon>
+              </v-btn>
+            </v-badge>
           </template>
-          <span>{{ status }}</span>
         </v-tooltip>
 
         <div v-if="auth">
           <v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
             <template v-slot:activator="{ on }">
-              <v-btn v-on="on" icon>
+              <v-btn small v-on="on" icon>
                 <v-icon>more_vert</v-icon>
               </v-btn>
             </template>
@@ -127,7 +146,7 @@
           <div v-else>
             <v-menu v-for="item in menu" :key="item.text" bottom left>
               <template v-slot:activator="{ on }">
-                <v-btn v-on="on" icon @click="item.func">
+                <v-btn small class="mr-2" v-on="on" icon @click="item.func">
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
                       <v-icon dark color="primary" v-on="on">{{
@@ -245,7 +264,10 @@ export default {
   },
   name: 'app',
   computed: {
-    ...mapGetters(['user', 'auth', 'appInfo'])
+    ...mapGetters(['user', 'auth', 'appInfo']),
+    updateAvailable () {
+      return this.appInfo.newConfigVersion ? 1 : 0
+    }
   },
   watch: {
     $route: function (value) {
@@ -267,14 +289,14 @@ export default {
       password: {},
       menu: [
         {
-          icon: 'logout',
-          func: this.logout,
-          tooltip: 'Logout'
-        },
-        {
           icon: 'lock',
           func: this.showPasswordDialog,
           tooltip: 'Password'
+        },
+        {
+          icon: 'logout',
+          func: this.logout,
+          tooltip: 'Logout'
         }
       ],
       pages: [
@@ -375,6 +397,29 @@ export default {
     updateStatus: function (status, color) {
       this.status = status
       this.statusColor = color
+    },
+    async showUpdateDialog () {
+      const newVersion = this.appInfo.newConfigVersion
+
+      const result = await this.confirm(
+        'Config updates',
+        newVersion
+          ? `New zwave-js config version AVAILABLE: <code>${newVersion}</code>.`
+          : 'No updates available yet. Press on <b>CHECK</b> to trigger a new check',
+        'info',
+        {
+          width: 500,
+          cancelText: 'Close',
+          confirmText: newVersion ? 'Install' : 'Check'
+        }
+      )
+
+      if (result) {
+        this.apiRequest(
+          newVersion ? 'installConfigUpdate' : 'checkForConfigUpdates',
+          []
+        )
+      }
     },
     changeThemeColor: function () {
       const metaThemeColor = document.querySelector('meta[name=theme-color]')
@@ -489,7 +534,7 @@ export default {
               • Information about which version of <code>node-zwave-js</code> you are running;</br>
               • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
 
-              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by Z-Wave JS. 
+              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by Z-Wave JS.
               More information about the data that is collected and how it is used, including an example of the data collected, can be found <a target="_blank" href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
               'info</p>',
               {
@@ -559,6 +604,10 @@ export default {
         this.initNodes(data.nodes)
         this.setControllerStatus(data.error ? data.error : data.cntStatus)
         this.setAppInfo(data.info)
+      })
+
+      this.socket.on(socketEvents.info, data => {
+        this.setAppInfo(data)
       })
 
       this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
