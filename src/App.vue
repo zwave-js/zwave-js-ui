@@ -404,8 +404,8 @@ export default {
       const result = await this.confirm(
         'Config updates',
         newVersion
-          ? `New <b>zwave-js</b> config version available: <code>${newVersion}</code>.`
-          : 'No updates available yet. Press on <b>CHECK</b> to trigger a new check',
+          ? `<p>New <b>zwave-js</b> config version available: <code>${newVersion}</code>.</p><p>Mind that some changes may require a <b>re-interview</b> of affected devices</p>`
+          : 'No updates available yet. Press on <b>CHECK</b> to trigger a new check. By default checks are automatically done daily at midnight',
         'info',
         {
           width: 500,
