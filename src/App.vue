@@ -404,8 +404,8 @@ export default {
       const result = await this.confirm(
         'Config updates',
         newVersion
-          ? `<p>New <b>zwave-js</b> config version available: <code>${newVersion}</code>.</p><p>Mind that some changes may require a <b>re-interview</b> of affected devices</p>`
-          : 'No updates available yet. Press on <b>CHECK</b> to trigger a new check. By default checks are automatically done daily at midnight',
+          ? `<div style="text-align:center"><p>New <b>zwave-js</b> config version available: <code>${newVersion}</code>.</p><p>Mind that some changes may require a <b>re-interview</b> of affected devices</p></div>`
+          : '<div style="text-align:center"><p>No updates available yet. Press on <b>CHECK</b> to trigger a new check.</p><p>By default checks are automatically done daily at midnight</p></div>',
         'info',
         {
           width: 500,
@@ -418,6 +418,10 @@ export default {
         this.apiRequest(
           newVersion ? 'installConfigUpdate' : 'checkForConfigUpdates',
           []
+        )
+
+        this.showSnackbar(
+          newVersion ? 'Installation started' : 'Check requested'
         )
       }
     },
