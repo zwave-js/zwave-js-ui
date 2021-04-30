@@ -77,12 +77,13 @@ export default {
     NodeDetails
   },
   computed: {
-    ...mapGetters(['gateway']),
+    ...mapGetters(['gateway', 'mqtt']),
     nodeJson () {
       return JSON.stringify(this.node, null, 2)
     },
     showHass () {
       return (
+        !this.mqtt.disabled &&
         this.gateway.hassDiscovery &&
         this.node.hassDevices &&
         Object.keys(this.node.hassDevices).length > 0
