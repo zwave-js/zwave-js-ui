@@ -3,7 +3,7 @@ import { EventEmitter } from 'events'
 import { MqttClient as Client, IClientPublishOptions } from 'mqtt'
 import { Socket } from 'net'
 import {
-  Association,
+  AssociationAddress,
   CommandClass,
   InterviewStage,
   NodeStatus,
@@ -70,6 +70,7 @@ export type Z2MDeviceClass = {
 export type Z2MNodeGroups = {
   text: string
   value: number
+  endpoint: number
   maxNodes: number
   isLifeline: boolean
   multiChannel: boolean
@@ -107,6 +108,7 @@ export type Z2MNode = {
   zwavePlusRoleType: ZWavePlusRoleType | undefined
   nodeType: NodeType
   endpointsCount: number
+  endpointIndizes: number[]
   isSecure: boolean
   supportsBeaming: boolean
   supportsSecurity: boolean
@@ -336,16 +338,19 @@ export interface ZwaveClient extends EventEmitter {
   getStatus(): { driverReady: boolean; status: boolean; config: GatewayConfig }
   addEmptyNodes(): void
   getGroups(nodeId: number, ignoreUpdate: boolean): Promise<void>
-  getAssociations(nodeId: number, groupId: number): Promise<Association[]>
+  getAssociations(
+    source: AssociationAddress,
+    groupId: number
+  ): Promise<AssociationAddress[]>
   addAssociations(
-    nodeId: number,
+    source: AssociationAddress,
     groupId: number,
-    associations: Association[]
+    associations: AssociationAddress[]
   ): Promise<void>
   removeAssociations(
-    nodeId: number,
+    source: AssociationAddress,
     groupId: number,
-    associations: Association[]
+    associations: AssociationAddress[]
   ): Promise<void>
   removeAllAssociations(nodeId: number): Promise<void>
   removeNodeFromAllAssociations(nodeId: number): Promise<void>
