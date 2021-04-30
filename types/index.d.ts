@@ -12,6 +12,7 @@ import {
   ZWaveNode,
   ZWaveOptions,
   ZWavePlusNodeType,
+  ZWavePlusRoleType,
   FLiRS,
   ProtocolVersion,
   DataRate,
@@ -190,6 +191,7 @@ export type MqttConfig = {
   name: string
   host: string
   port: number
+  disabled: boolean
   reconnectPeriod: number
   prefix: string
   qos: 0 | 1 | 2
@@ -303,6 +305,7 @@ export interface ZwaveClient extends EventEmitter {
   commandsTimeout: NodeJS.Timeout
   reconnectTimeout: NodeJS.Timeout
   healTimeout: NodeJS.Timeout
+  updatesCheckTimeout: NodeJS.Timeout
 
   on(event: 'nodeStatus', listener: (node: Z2MNode) => void): this
   on(
