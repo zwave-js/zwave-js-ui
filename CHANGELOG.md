@@ -1,3 +1,23 @@
+# [4.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.5.0...v4.0.0) (2021-04-30)
+
+
+### Bug Fixes
+
+* **ui:** hide hass tab when gw is disabled ([#1117](https://github.com/zwave-js/zwavejs2mqtt/issues/1117)) ([7116911](https://github.com/zwave-js/zwavejs2mqtt/commit/711691191dcc7447a9283717fd3239b381e58bbc)), closes [#1102](https://github.com/zwave-js/zwavejs2mqtt/issues/1102)
+* **ui:** valueid label color ([#1097](https://github.com/zwave-js/zwavejs2mqtt/issues/1097)) ([9acbcad](https://github.com/zwave-js/zwavejs2mqtt/commit/9acbcad3c531429a3770299c22dd4124afae2aaa)), closes [#1094](https://github.com/zwave-js/zwavejs2mqtt/issues/1094)
+
+
+### Features
+
+* allow loading custom device configs from `store/config` ([#1096](https://github.com/zwave-js/zwavejs2mqtt/issues/1096)) ([3988049](https://github.com/zwave-js/zwavejs2mqtt/commit/39880499c162e23e89cd434337ceccc0250a3bdd))
+* support managing associations on endpoints ([#1095](https://github.com/zwave-js/zwavejs2mqtt/issues/1095)) ([4230b64](https://github.com/zwave-js/zwavejs2mqtt/commit/4230b641eff5242859bf9468d334690b68bf8080))
+* zwave-js config updates ([#1115](https://github.com/zwave-js/zwavejs2mqtt/issues/1115)) ([0a65549](https://github.com/zwave-js/zwavejs2mqtt/commit/0a65549d395f3c1cc6d5c58738a8367864db7cbc))
+
+
+### BREAKING CHANGES
+
+* Signature of methods `getAssociations`, `addAssociations` and `removeAssociations` have changed. This will have no effect on normal users but for the ones that are using those apis via MQTT remember to check the changes in signature, now you also have to specify source endpoint instead of just the nodeId to refer to an association
+
 # [3.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.4.0...v3.5.0) (2021-04-20)
 
 
