@@ -41,6 +41,12 @@ Here there are 3 different way to start the container and provide data persisten
 docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
+If you want to support devices config updates you also need to setup a volume on `/usr/src/app/node_modules/@zwave-js/config`:
+
+```bash
+docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwave-config,target=/usr/src/app/node_modules/@zwave-js/config zwavejs/zwavejs2mqtt:latest
+```
+
 ### Run using local folder
 
 Here we will store our data in the current path (`$(pwd)`) named `store`. You can choose the path and the directory name you prefer, a valid alternative (with linux) could be `/var/lib/zwavejs2mqtt`
@@ -55,7 +61,7 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 -v $(pwd)/st
 To run the app as a service you can use the `docker-compose.yml` file you find [here](./docker-compose.yml). Here is the content:
 
 ```yml
-version: '3.7'
+version: "3.7"
 services:
   zwavejs2mqtt:
     container_name: zwavejs2mqtt
@@ -69,17 +75,18 @@ services:
     networks:
       - zwave
     devices:
-      - '/dev/ttyACM0:/dev/ttyACM0'
+      - "/dev/ttyACM0:/dev/ttyACM0"
     volumes:
       - ./store:/usr/src/app/store
+      - zwave-config:/usr/src/app/node_modules/@zwave-js/config
     ports:
-      - '8091:8091' # port for web interface
-      - '3000:3000' # port for zwave-js websocket server
+      - "8091:8091" # port for web interface
+      - "3000:3000" # port for zwave-js websocket server
 networks:
   zwave:
-# volumes:
-#   zwavejs2mqtt:
-#     name: zwavejs2mqtt
+volumes:
+  zwave-config:
+    name: zwave-config
 ```
 
 Like the other solutions, remember to replace device `/dev/ttyACM0` with the path of your USB stick and choose the solution you prefer for data persistence.
