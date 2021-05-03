@@ -22,8 +22,8 @@ ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
 
 RUN if [ ! -z "$updateDevices"  ]; \
     then curl -sL ${zwavejs} | \
-        tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
-        node-zwave-js-master/packages/config/config/devices/ ;\
+    tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
+    node-zwave-js-master/packages/config/config/devices/ ;\
     fi
 
 COPY . .
@@ -31,13 +31,12 @@ COPY . .
 RUN npm run build && \
     npm prune --production && \
     rm -rf \
-        build \
-        index.html \
-        package-lock.json \
-        package.sh \
-        src \
-        static \
-        stylesheets
+    build \
+    index.html \
+    package.sh \
+    src \
+    static \
+    stylesheets
 
 RUN if [ ! -z "$plugins" ]; \
     then echo "Installing plugins ${plugins}"; npm i ${plugins} ; fi
