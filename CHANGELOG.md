@@ -1,3 +1,11 @@
+## [4.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.0.0...v4.0.1) (2021-05-03)
+
+
+### Bug Fixes
+
+* **docker:** config update not working ([#1128](https://github.com/zwave-js/zwavejs2mqtt/issues/1128)) ([6fccb01](https://github.com/zwave-js/zwavejs2mqtt/commit/6fccb0183a63f1b7c5fa83346022e70051f73e37)), closes [#1122](https://github.com/zwave-js/zwavejs2mqtt/issues/1122)
+* **ui:** pretty json exports ([#1129](https://github.com/zwave-js/zwavejs2mqtt/issues/1129)) ([94e9f9c](https://github.com/zwave-js/zwavejs2mqtt/commit/94e9f9c6fa1c1cd00d1f239a83fbc39abf55b5fb)), closes [#1119](https://github.com/zwave-js/zwavejs2mqtt/issues/1119)
+
 # [4.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v3.5.0...v4.0.0) (2021-04-30)
 
 
