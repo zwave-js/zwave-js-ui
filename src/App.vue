@@ -499,7 +499,9 @@ export default {
       const a = document.createElement('a')
 
       data =
-        ext === 'json' && typeof data === 'object' ? JSON.stringify(data) : data
+        ext === 'json' && typeof data === 'object'
+          ? JSON.stringify(data, null, 2) // pretty print
+          : data
 
       const blob = new Blob([data], {
         type: contentType
