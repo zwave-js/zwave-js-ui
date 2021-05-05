@@ -1,15 +1,15 @@
 # #########################################################################
 # Creates a new release using `workflow_dispatch` event trigger with `type`
 # as input to describe the type of release to create
-name: "Release-it: Create a new release on demand"
+name: 'Release-it: Create a new release on demand'
 
 on:
   workflow_dispatch:
     inputs:
       type:
-        description: "Type. Can be `patch` `minor` or `major`"
+        description: 'Type. Can be `patch` `minor` or `major`'
         required: true
-        default: "patch"
+        default: 'patch'
 jobs:
   release-it:
     if: github.actor == 'robertsLando' || github.actor == 'chrisns'
@@ -21,7 +21,7 @@ jobs:
       - name: Checkout master
         uses: actions/checkout@v2
         with:
-          ref: "master"
+          ref: 'master'
           fetch-depth: 0 # fetch all commits history to create the changelog
           token: ${{ secrets.BOT_TOKEN }}
 
