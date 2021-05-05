@@ -28,15 +28,15 @@ jobs:
         uses: actions/cache@v2.1.4
         with:
           path: node_modules
-          key: ${{ matrix['node-version'] }}-npm-${{ hashFiles('package-lock.json') }}
+          key: ${{ matrix['node-version'] }}-yarn-${{ hashFiles('package-lock.json') }}
 
-      - name: NPM Install
+      - name: Install node modules
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm install
+        run: yarn install
 
-      - name: NPM Lint
+      - name: Lint
         if: matrix['node-version'] == '14.x'
-        run: npm run lint
+        run: yarn run lint
 
       - name: Cache build
         id: cache-build
@@ -47,16 +47,16 @@ jobs:
 
       - name: Build
         if: steps.cache-build.outputs.cache-hit != 'true'
-        run: npm run build
+        run: yarn run build
 
       - name: Test
-        run: npm run test
+        run: yarn run test
 
       - name: Generate coverage report
         if: matrix['node-version'] == '14.x'
         run: |
-          npm run coverage
-          npm run record-coverage
+          yarn run coverage
+          yarn run record-coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

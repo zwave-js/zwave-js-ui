@@ -55,7 +55,7 @@ sudo snap connect zwavejs2mqtt:hardware-observe
 
 ## NodeJS or PKG version
 
-1. Now you can use the packaged version (you don't need NodeJS/npm installed) or clone this repo and build the project:
+1. Now you can use the packaged version (you don't need NodeJS/yarn installed) or clone this repo and build the project:
 
    - For the packaged version:
 
@@ -78,9 +78,9 @@ sudo snap connect zwavejs2mqtt:hardware-observe
      ```sh
      git clone https://github.com/zwave-js/zwavejs2mqtt
      cd zwavejs2mqtt
-     npm install
-     npm run build
-     npm start
+     yarn install
+     yarn run build
+     yarn start
      ```
 
 2. Open the browser <http://localhost:8091>

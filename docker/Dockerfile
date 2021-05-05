@@ -5,14 +5,15 @@ WORKDIR /usr/src/app
 
 RUN apk --no-cache add \
     coreutils \	
+    jq \
     linux-headers \
     alpine-sdk \	
     python
 
 COPY package.json package-lock.json ./ 
 
-RUN npm config set unsafe-perm true
-RUN npm install --no-optional
+RUN yarn config set unsafe-perm true
+RUN yarn install --ignore-optional
 
 # add plugin support, space separated
 ARG plugins
@@ -28,8 +29,8 @@ RUN if [ ! -z "$updateDevices"  ]; \
 
 COPY . .
 
-RUN npm run build && \
-    npm prune --production && \
+RUN yarn run build && \
+    yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
     rm -rf \
     build \
     index.html \
@@ -39,7 +40,7 @@ RUN npm run build && \
     stylesheets
 
 RUN if [ ! -z "$plugins" ]; \
-    then echo "Installing plugins ${plugins}"; npm i ${plugins} ; fi
+    then echo "Installing plugins ${plugins}"; yarn install ${plugins} ; fi
 
 # STEP: 2 (runtime)
 FROM node:15.11.0-alpine
