@@ -326,7 +326,7 @@ export default {
     ...mapMutations(['setControllerStatus', 'initNode', 'removeNode']),
     copyVersion () {
       const el = document.createElement('textarea')
-      el.value = `zwavejs2mqtt: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\n home hex:${this.appInfo.homeHex}`
+      el.value = `zwavejs2mqtt: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\nhome hex: ${this.appInfo.homeHex}`
       el.setAttribute('readonly', '')
       el.style.position = 'absolute'
       el.style.left = '-9999px'
