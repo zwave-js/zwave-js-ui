@@ -25,7 +25,7 @@ jobs:
 
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2.1.5
         with:
           path: node_modules
           key: ${{ matrix['node-version'] }}-npm-${{ hashFiles('package-lock.json') }}
@@ -40,7 +40,7 @@ jobs:
 
       - name: Cache build
         id: cache-build
-        uses: actions/cache@v2.1.4
+        uses: actions/cache@v2.1.5
         with:
           path: dist
           key: ${{ matrix['node-version'] }}-cache-build-${{ hashFiles('build/*') }}-${{ hashFiles('src/*') }}-${{ hashFiles('static/*') }}-${{ hashFiles('package-lock.json') }}
