@@ -861,6 +861,10 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
           }
           const stats = await fs.lstat(entry.path)
           if (stats.isDirectory()) {
+            if (entry.name === '.config-db') {
+              // hide config-db
+              continue
+            }
             entry.children = await parseDir(entry.path)
           } else {
             entry.ext = file.split('.').pop()

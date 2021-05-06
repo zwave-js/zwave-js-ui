@@ -55,7 +55,7 @@ RUN cp -Lr .git app.js package.json bin config dist hass lib public store views 
 FROM node:erbium-buster
 LABEL maintainer="robertsLando"
 
-ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store
+ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
