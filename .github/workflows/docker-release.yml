@@ -43,8 +43,8 @@ jobs:
         uses: crazy-max/ghaction-docker-meta@v1
         with:
           images: |
-            zwavejs/zwavejs2mqtt
-          #        docker.pkg.github.com/zwavejs/zwavejs2mqtt/zwavejs2mqtt
+            docker.pkg.github.com/zwavejs/zwavejs2mqtt/zwavejs2mqtt
+# zwavejs/zwavejs2mqtt
           tag-sha: true
           tag-latest: true
           tag-semver: |
