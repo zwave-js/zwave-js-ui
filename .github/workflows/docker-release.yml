@@ -10,14 +10,18 @@ on:
 
 jobs:
   build-push:
-    permissions:
-      packages: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
 
       - uses: docker/setup-buildx-action@v1
       - uses: docker/setup-qemu-action@v1
+      - uses: actions/github-script@v3
+        id: ref-sanitized
+        with:
+          script: |
+            const ref = context.ref
+            return ref.replace(/^refs\/heads\/|-/, '')
 
       - name: Login to dockerhub
         uses: docker/login-action@v1
@@ -29,7 +33,7 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v1
         with:
-          registry: ghcr.io
+          registry: docker.pkg.github.com
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
@@ -38,7 +42,7 @@ jobs:
         with:
           images: |
             zwavejs/zwavejs2mqtt
-            ghcr.io/zwavejs/zwavejs2mqtt
+            docker.pkg.github.com/zwavejs/zwavejs2mqtt/zwavejs2mqtt
           tag-sha: true
           tag-latest: true
           tag-semver: |
@@ -54,19 +58,26 @@ jobs:
         uses: actions/cache@v2
         with:
           path: /tmp/.buildx-cache
-          key: buildx-${{ github.ref }}-${{ github.sha }}
+          key: buildx-${{ steps.ref-sanitized.outputs.result }}-${{ github.sha }}
           restore-keys: |
-            buildx-${{ github.ref }}-${{ github.sha }}
-            buildx-${{ github.ref }}
+            buildx-${{ steps.ref-sanitized.outputs.result }}-${{ github.sha }}
+            buildx-${{ steps.ref-sanitized.outputs.result }}
             buildx-
 
       - name: build+push
+        permissions:
+          packages: write
         uses: docker/build-push-action@v2
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
