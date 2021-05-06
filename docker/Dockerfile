@@ -10,7 +10,7 @@ RUN apk --no-cache add \
     alpine-sdk \	
     python
 
-COPY package.json package-lock.json ./ 
+COPY package.json yarn.lock ./ 
 
 RUN yarn config set unsafe-perm true
 RUN yarn install --ignore-optional

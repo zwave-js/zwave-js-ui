@@ -28,7 +28,7 @@ jobs:
         uses: actions/cache@v2.1.4
         with:
           path: node_modules
-          key: ${{ matrix['node-version'] }}-yarn-${{ hashFiles('package-lock.json') }}
+          key: ${{ matrix['node-version'] }}-yarn-${{ hashFiles('yarn.lock') }}
 
       - name: Install node modules
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v2.1.4
         with:
           path: dist
-          key: ${{ matrix['node-version'] }}-cache-build-${{ hashFiles('build/*') }}-${{ hashFiles('src/*') }}-${{ hashFiles('static/*') }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ matrix['node-version'] }}-cache-build-${{ hashFiles('build/*') }}-${{ hashFiles('src/*') }}-${{ hashFiles('static/*') }}-${{ hashFiles('yarn.lock') }}
 
       - name: Build
         if: steps.cache-build.outputs.cache-hit != 'true'
