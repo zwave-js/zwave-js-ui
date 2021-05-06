@@ -38,7 +38,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: crazy-max/ghaction-docker-meta@v2.4.0
         with:
           images: |
             zwavejs/zwavejs2mqtt
