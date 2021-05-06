@@ -97,7 +97,7 @@
     "@release-it/conventional-changelog": "^2.0.1",
     "@types/node": "^14.14.34",
     "c8": "^7.6.0",
-    "chai": "^4.3.3",
+    "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "conventional-changelog-cli": "^2.1.1",
     "eslint": "^7.21.0",
