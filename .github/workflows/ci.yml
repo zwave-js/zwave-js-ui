@@ -23,40 +23,45 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Cache node modules
-        id: cache-node-modules
-        uses: actions/cache@v2.1.4
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
+
+      - name: Use Yarn cache
+        uses: actions/cache@v2
+        id: yarn-cache
         with:
-          path: node_modules
-          key: ${{ matrix['node-version'] }}-npm-${{ hashFiles('package-lock.json') }}
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ matrix.node-version }}-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
 
-      - name: NPM Install
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm install
+      - name: Install dependencies
+        run: yarn install --prefer-offline --frozen-lockfile
 
-      - name: NPM Lint
+      - name: Lint
         if: matrix['node-version'] == '14.x'
-        run: npm run lint
+        run: yarn run lint
 
       - name: Cache build
         id: cache-build
         uses: actions/cache@v2.1.4
         with:
           path: dist
-          key: ${{ matrix['node-version'] }}-cache-build-${{ hashFiles('build/*') }}-${{ hashFiles('src/*') }}-${{ hashFiles('static/*') }}-${{ hashFiles('package-lock.json') }}
+          key: ${{ matrix['node-version'] }}-cache-build-${{ hashFiles('build/*') }}-${{ hashFiles('src/*') }}-${{ hashFiles('static/*') }}-${{ hashFiles('yarn.lock') }}
 
       - name: Build
         if: steps.cache-build.outputs.cache-hit != 'true'
-        run: npm run build
+        run: yarn run build
 
       - name: Test
-        run: npm run test
+        run: yarn run test
 
       - name: Generate coverage report
         if: matrix['node-version'] == '14.x'
         run: |
-          npm run coverage
-          npm run record-coverage
+          yarn run coverage
+          yarn run record-coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

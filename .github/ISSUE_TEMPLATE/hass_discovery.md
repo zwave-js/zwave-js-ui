@@ -18,7 +18,7 @@ Home Assistant --> settings --> Integrations --> Z-Wave JS --> Configure --> Cre
 Build/Run method
 
 Docker
-Git Clone + npm run install + npm run build + npm start
+Git Clone + yarn install + yarn run build + yarn start
 Pkg
 
 zwavejs2mqtt version: 1.0.0

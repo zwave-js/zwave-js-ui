@@ -51,14 +51,14 @@ rm -rf $PKG_FOLDER/*
 if [ ! -z "$1" ]; then
 	echo "## Building application..."
 	echo ''
-	npm run build
+	yarn run build
 	echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64 --out-path $PKG_FOLDER"
 	pkg package.json -t node$NODE_MAJOR-linux-x64 --out-path $PKG_FOLDER
 else
 
 	if ask "Re-build $APP?"; then
 		echo "## Building application"
-		npm run build
+		yarn run build
 	fi
 
 	echo '###################################################'
