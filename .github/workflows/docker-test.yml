@@ -3,7 +3,7 @@ name: Docker Test
 on:
   pull_request:
     paths-ignore:
-      - 'docs/**'
+      - "docs/**"
 
 jobs:
   build:
@@ -53,6 +53,11 @@ jobs:
           platforms: ${{ matrix.platform }}
           file: docker/Dockerfile
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache
+          cache-to: type=local,mode=max,dest=/tmp/.buildx-cache-new
           push: false
           tags: ${{ steps.docker_meta.outputs.tags }}
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
