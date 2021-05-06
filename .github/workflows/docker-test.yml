@@ -16,7 +16,7 @@ jobs:
 
       - uses: docker/setup-buildx-action@v1
       - uses: docker/setup-qemu-action@v1
-      - uses: actions/github-script@v3
+      - uses: actions/github-script@v4.0.2
         id: ref-sanitized
         with:
           script: |
