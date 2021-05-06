@@ -12,7 +12,7 @@ RUN apk --no-cache add \
 
 COPY package.json yarn.lock ./ 
 
-RUN yarn config set unsafe-perm true
+RUN yarn config set unsafe-perm true && yarn install --network-timeout=300000
 RUN yarn install --ignore-optional
 
 # add plugin support, space separated
