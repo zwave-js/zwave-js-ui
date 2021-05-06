@@ -15,18 +15,6 @@ COPY package.json yarn.lock ./
 RUN yarn config set unsafe-perm true && yarn install --network-timeout=300000
 RUN yarn install --ignore-optional
 
-# add plugin support, space separated
-ARG plugins
-# when update devices arg is set update config files from zwavejs repo
-ARG updateDevices
-ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
-
-RUN if [ ! -z "$updateDevices"  ]; \
-    then curl -sL ${zwavejs} | \
-    tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
-    node-zwave-js-master/packages/config/config/devices/ ;\
-    fi
-
 COPY . .
 
 RUN yarn run build && \
@@ -39,8 +27,20 @@ RUN yarn run build && \
     static \
     stylesheets
 
+# add plugin support, space separated
+ARG plugins
 RUN if [ ! -z "$plugins" ]; \
     then echo "Installing plugins ${plugins}"; yarn install ${plugins} ; fi
+
+# when update devices arg is set update config files from zwavejs repo
+ARG updateDevices
+ARG zwavejs=https://github.com/zwave-js/node-zwave-js/archive/master.tar.gz
+
+RUN if [ ! -z "$updateDevices"  ]; \
+    then curl -sL ${zwavejs} | \
+    tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
+    node-zwave-js-master/packages/config/config/devices/ ;\
+    fi
 
 # STEP: 2 (runtime)
 FROM node:15.11.0-alpine
