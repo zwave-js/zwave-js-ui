@@ -2,8 +2,8 @@ name: Docker Release
 
 on:
   push:
-    # branches:
-    #   - master
+  # branches:
+  #   - master
   release:
     types:
       - created
@@ -33,16 +33,16 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         uses: docker/login-action@v1
         with:
-          registry: docker.pkg.github.com
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: ghcr.io
+          username: zwave-js-bot
+          password: ${{ secrets.BOT_TOKEN }}
 
       - id: docker_meta
         uses: crazy-max/ghaction-docker-meta@v1
         with:
           images: |
-            docker.pkg.github.com/zwave-js/zwavejs2mqtt/zwavejs2mqtt
-# zwavejs/zwavejs2mqtt
+            ghcr.io/zwave-js/zwavejs2mqtt
+          # zwavejs/zwavejs2mqtt
           tag-sha: true
           tag-latest: true
           tag-semver: |
