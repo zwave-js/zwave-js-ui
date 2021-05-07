@@ -2,8 +2,8 @@ name: Docker Release
 
 on:
   push:
-  # branches:
-  #   - master
+  branches:
+    - master
   release:
     types:
       - created
@@ -44,7 +44,7 @@ jobs:
         with:
           images: |
             ghcr.io/zwave-js/zwavejs2mqtt
-          # zwavejs/zwavejs2mqtt
+            zwavejs/zwavejs2mqtt
           tag-sha: true
           tag-latest: true
           tag-semver: |
