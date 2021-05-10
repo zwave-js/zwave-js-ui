@@ -4,11 +4,12 @@ chai.use(require('sinon-chai'))
 chai.should()
 
 const mod = rewire('../../lib/Gateway')
+const Gateway = mod.__get__('Gateway')
 
 describe('#Gateway', () => {
+  const gw = new Gateway()
   describe('#setDiscoveryValue()', () => {
     let untouchedPayload
-    const func = mod.__get__('setDiscoveryValue')
     let payload
     const node = {
       values: {
@@ -29,25 +30,25 @@ describe('#Gateway', () => {
 
     describe('payload prop not string', () => {
       it('should not change payload', () => {
-        func(payload, 'a', node)
+        gw._setDiscoveryValue(payload, 'a', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('no valueId', () => {
       it('should not change payload', () => {
-        func(payload, 'd', node)
+        gw._setDiscoveryValue(payload, 'd', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('no valueId.value', () => {
       it('should not change payload', () => {
-        func(payload, 'c', node)
+        gw._setDiscoveryValue(payload, 'c', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('happy path', () => {
       it('should not change payload', () => {
-        func(payload, 'b', node)
+        gw._setDiscoveryValue(payload, 'b', node)
         payload.should.deep.equal({
           a: 1,
           b: 'a',
