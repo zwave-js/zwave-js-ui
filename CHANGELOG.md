@@ -1,3 +1,18 @@
+# [4.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.0.1...v4.2.0) (2021-05-11)
+
+
+### Bug Fixes
+
+* lint issues ([6417175](https://github.com/zwave-js/zwavejs2mqtt/commit/6417175023a87b0a03295bed92a9ecfbd978fed2))
+* use `getNeighbors` method ([#1146](https://github.com/zwave-js/zwavejs2mqtt/issues/1146)) ([fa50cf1](https://github.com/zwave-js/zwavejs2mqtt/commit/fa50cf157de7cc5f0cc80db0c47de1682434d79f))
+* **hass:** sending `true` to MultilevelSwitchCC doesn't restore old level ([#1134](https://github.com/zwave-js/zwavejs2mqtt/issues/1134)) ([13afb0a](https://github.com/zwave-js/zwavejs2mqtt/commit/13afb0a40b845c3afbae21708e24d06f5e6cc498))
+* **ui:** typo in copy-able versions info ([#1135](https://github.com/zwave-js/zwavejs2mqtt/issues/1135)) ([8e2ccc0](https://github.com/zwave-js/zwavejs2mqtt/commit/8e2ccc0d88d826bb5155879d155c8c656c546594))
+
+
+### Features
+
+* **docker:** push image to ghcr ([#1136](https://github.com/zwave-js/zwavejs2mqtt/issues/1136)) ([ae3af3c](https://github.com/zwave-js/zwavejs2mqtt/commit/ae3af3c2b2e60054be094e2627832f042f7a0644))
+
 # [4.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.0.1...v4.1.0) (2021-05-11)
 
 
