@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "4.0.1",
+  "version": "4.1.0",
   "bin": {
     "zwavejs2mqtt": "bin/www"
   },
