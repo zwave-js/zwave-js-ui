@@ -358,7 +358,8 @@ export interface ZwaveClient extends EventEmitter {
   ): Promise<void>
   removeAllAssociations(nodeId: number): Promise<void>
   removeNodeFromAllAssociations(nodeId: number): Promise<void>
-  refreshNeighbors(): void
+  refreshNeighbors(): Promise<Map<number, number[]>>
+  getNodeNeighbors(): Promise<number[]>
   driverFunction(code: string): Promise<void>
   connect(): Promise<void>
   sendToSocket(evtName: string, data: any): void
