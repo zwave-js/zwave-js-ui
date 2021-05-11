@@ -4729,10 +4729,10 @@ engine.io-parser@~4.0.0, engine.io-parser@~4.0.1:
   dependencies:
     base64-arraybuffer "0.1.4"
 
-engine.io@~5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/engine.io/-/engine.io-5.0.0.tgz#470dc94a8a4907fa4d2cd1fa6611426afcee61bf"
-  integrity sha512-BATIdDV3H1SrE9/u2BAotvsmjJg0t1P4+vGedImSs1lkFAtQdvk4Ev1y4LDiPF7BPWgXWEG+NDY+nLvW3UrMWw==
+engine.io@~5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/engine.io/-/engine.io-5.1.0.tgz#d1d1520d6e99fe61618a4e65a97f57b1d232d711"
+  integrity sha512-A2i4kVvOA3qezQLlMz+FayGFdqOo0LP3fYrb0VqXMDXKoXcbgM0KxcEYnsdVzOMJQErIAb1GIStRj7UWFoiqlQ==
   dependencies:
     accepts "~1.3.4"
     base64id "2.0.0"
@@ -10885,10 +10885,10 @@ snapdragon@^0.8.1:
     source-map-resolve "^0.5.0"
     use "^3.1.0"
 
-socket.io-adapter@~2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/socket.io-adapter/-/socket.io-adapter-2.2.0.tgz#43af9157c4609e74b8addc6867873ac7eb48fda2"
-  integrity sha512-rG49L+FwaVEwuAdeBRq49M97YI3ElVabJPzvHT9S6a2CWhDKnjSFasvwAwSYPRhQzfn4NtDIbCaGYgOCOU/rlg==
+socket.io-adapter@~2.3.0:
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/socket.io-adapter/-/socket.io-adapter-2.3.0.tgz#63090df6dd6d289b0806acff4a0b2f1952ffe37e"
+  integrity sha512-jdIbSFRWOkaZpo5mXy8T7rXEN6qo3bOFuq4nVeX1ZS7AtFlkbk39y153xTXEIW7W94vZfhVOux1wTU88YxcM1w==
 
 socket.io-client@^4.0.0:
   version "4.0.1"
@@ -10912,10 +10912,10 @@ socket.io-parser@~4.0.3, socket.io-parser@~4.0.4:
     component-emitter "~1.3.0"
     debug "~4.3.1"
 
-socket.io@^4.0.0:
-  version "4.0.1"
-  resolved "https://registry.yarnpkg.com/socket.io/-/socket.io-4.0.1.tgz#d2e01cf3780d810b66182b3fbef08a04a4ccf924"
-  integrity sha512-g8eZB9lV0f4X4gndG0k7YZAywOg1VxYgCUspS4V+sDqsgI/duqd0AW84pKkbGj/wQwxrqrEq+VZrspRfTbHTAQ==
+socket.io@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/socket.io/-/socket.io-4.1.0.tgz#ad0067eb90a69fb7c5926188fcf3b62a375a8601"
+  integrity sha512-f6+1m0Y32ThoUOMa8ZUojq3vEkCXl33GXFnye6OXjFG3QtOl59AAp5IhDr0SR3bMedKkfqo6IdxAXCmgiYB4Ug==
   dependencies:
     "@types/cookie" "^0.4.0"
     "@types/cors" "^2.8.8"
@@ -10923,8 +10923,8 @@ socket.io@^4.0.0:
     accepts "~1.3.4"
     base64id "~2.0.0"
     debug "~4.3.1"
-    engine.io "~5.0.0"
-    socket.io-adapter "~2.2.0"
+    engine.io "~5.1.0"
+    socket.io-adapter "~2.3.0"
     socket.io-parser "~4.0.3"
 
 sockjs-client@^1.5.0:
