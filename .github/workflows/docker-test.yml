@@ -38,7 +38,7 @@ jobs:
             maintainer=robertsLando
 
       - name: Cache Docker layers
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.5
         with:
           path: /tmp/.buildx-cache
           key: buildx-${{ steps.ref-sanitized.outputs.result }}-${{ github.sha }}
