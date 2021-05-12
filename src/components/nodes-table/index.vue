@@ -113,13 +113,13 @@
       </td>
     </template>
     <template v-slot:[`item.manufacturer`]="{ item }">
-      {{ item.ready ? item.manufacturer : '' }}
+      {{ item.manufacturer }}
     </template>
     <template v-slot:[`item.productDescription`]="{ item }">
-      {{ item.ready ? item.productDescription : '' }}
+      {{ item.productDescription }}
     </template>
     <template v-slot:[`item.productLabel`]="{ item }">
-      {{ item.ready ? item.productLabel : '' }}
+      {{ item.productLabel }}
     </template>
     <template v-slot:[`item.name`]="{ item }">
       {{ item.name || '' }}
