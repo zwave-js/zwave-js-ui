@@ -54,7 +54,9 @@ RUN apk add --no-cache \
     eudev	
 
 # Copy files from previous build stage	
-COPY --from=build-z2m /usr/src/app /usr/src/app	
+COPY --from=build-z2m /usr/src/app /usr/src/app
+
+ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 
 WORKDIR /usr/src/app
 
