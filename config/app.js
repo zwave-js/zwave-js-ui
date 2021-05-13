@@ -1,5 +1,5 @@
 const { joinPath } = require('../lib/utils')
-require('dotenv').config({path: './.env.app'})
+require('dotenv').config({ path: './.env.app' })
 
 // config/app.js
 module.exports = {
