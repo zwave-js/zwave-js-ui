@@ -20,7 +20,7 @@ if (process.env.HEALTH_CLIENT) {
 const options = {
   port: require('./config/app.js').port,
   timeout: 2000,
-  path: '/health' + clientCheck
+  path: `/health${clientCheck}`
 }
 
 const request = http.request(options, res => {
