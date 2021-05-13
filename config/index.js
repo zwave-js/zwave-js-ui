@@ -47,8 +47,8 @@ module.exports = {
     https: !!process.env.SERVER_SSL,
 
     // Various Dev Server settings
-    host: 'localhost', // can be overwritten by process.env.HOST
-    port: 8092, // can be overwritten by process.env.PORT, if port is in use, a free one will be determined
+    host: process.env.HOST ? process.env.HOST : 'localhost',
+    port: process.env.PORT ? process.env.PORT : 8092, // if port is in use, a free one will be determined
     autoOpenBrowser: false,
     errorOverlay: true,
     notifyOnErrors: true,
