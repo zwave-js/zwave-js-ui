@@ -50,12 +50,10 @@ jsonStore.init(store)
      * Get port from environment and store in Express.
      */
 
-    const port = normalizePort(process.env.PORT || conf.port)
+    const port = normalizePort(conf.port)
     app.set('port', port)
 
-    const host = process.env.HOST || conf.host || '0.0.0.0'
-
-    return startServer(host, port)
+    return startServer(conf.host, port)
   })
   .catch(err => {
     console.error(err)

@@ -3,7 +3,7 @@
 // see http://vuejs-templates.github.io/webpack for documentation.
 
 const path = require('path')
-require('dotenv').config()
+require('dotenv').config({path: './.env.webpack'})
 
 const proxyScheme = process.env.SERVER_SSL ? 'https' : 'http'
 const proxyWebSocketScheme = process.env.SERVER_SSL ? 'wss' : 'ws'
