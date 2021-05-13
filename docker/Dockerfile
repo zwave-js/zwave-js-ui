@@ -64,7 +64,7 @@ ENV HEALTH_CLIENT=zwave
 WORKDIR /usr/src/app
 
 HEALTHCHECK --interval=12s --timeout=12s --start-period=30s \  
-    CMD node /healthcheck.js
+    CMD node healthcheck.js
 
 EXPOSE 8091
 

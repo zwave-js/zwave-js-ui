@@ -12,6 +12,7 @@ if (process.env.HEALTH_CLIENT) {
   for (const c in availableClients) {
     if (c === process.env.HEALTH_CLIENT) {
       clientCheck = availableClients[c]
+      break
     }
   }
 }
