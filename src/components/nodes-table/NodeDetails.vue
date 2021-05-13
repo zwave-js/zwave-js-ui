@@ -57,23 +57,26 @@
           :key="className"
         >
           <v-expansion-panel-header>
-            <v-row>
-              <span style="margin: auto 0">{{ className }}</span>
-              <v-btn
-                v-if="group[0]"
-                @click.stop="
-                  apiRequest('refreshCCValues', [
-                    node.id,
-                    group[0].commandClass
-                  ])
-                "
-                class="ml-5"
-                x-small
-              >
-                Refresh
-              </v-btn>
-            </v-row></v-expansion-panel-header
-          >
+            <v-row no-gutters>
+              <v-col align-self="center">
+                {{ className }}
+              </v-col>
+              <v-col class="text-right pr-5">
+                <v-btn
+                  v-if="group[0]"
+                  @click.stop="
+                    apiRequest('refreshCCValues', [
+                      node.id,
+                      group[0].commandClass
+                    ])
+                  "
+                  x-small
+                >
+                  Refresh
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-expansion-panel-header>
           <v-expansion-panel-content>
             <v-card flat>
               <v-card-text>
