@@ -211,7 +211,7 @@
     "sass-loader": "^11.1.0",
     "semver": "^7.3.5",
     "shelljs": "^0.8.4",
-    "terser-webpack-plugin": "^5.1.1",
+    "terser-webpack-plugin": "^5.1.2",
     "typescript": "^4.2.4",
     "url-loader": "^4.1.1",
     "vue-loader": "^15.9.7",
