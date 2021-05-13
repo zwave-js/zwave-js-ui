@@ -58,13 +58,7 @@ COPY --from=build-z2m /usr/src/app /usr/src/app
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 
-# Check only zwave client health. Use 'all' for testing both mqtt and zwave clients or 'mqtt' for only mqtt client
-ENV HEALTH_CLIENT=zwave
-
 WORKDIR /usr/src/app
-
-HEALTHCHECK --interval=12s --timeout=12s --start-period=30s \  
-    CMD node healthcheck.js
 
 EXPOSE 8091
 
