@@ -57,11 +57,11 @@
           :key="className"
         >
           <v-expansion-panel-header>
-            <v-row no-gutters >
+            <v-row no-gutters>
               <v-col align-self="center">
                 {{ className }}
               </v-col>
-              <v-col class="text-right pr-5" >
+              <v-col class="text-right pr-5">
                 <v-btn
                   v-if="group[0]"
                   @click.stop="
