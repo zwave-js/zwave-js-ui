@@ -416,7 +416,7 @@ export interface ZwaveClient extends EventEmitter {
   ): Promise<void>
   writeValue(valueId: Z2MValueId, value: unknown): Promise<void>
   sendCommand(
-    ctx: { nodeId: number; endpoint: number; commandClass: number },
+    ctx: { nodeId: number; endpoint: number; commandClass: number | string },
     command: string,
     args: any[]
   ): Promise<any>
