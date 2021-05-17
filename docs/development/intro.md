@@ -21,3 +21,11 @@ that you can use to redirect to a different backend:
 - **SERVER_SSL**: [Default: undefined] if set to a value it will use _https_/_wss_ to connect to the backend;
 - **SERVER_URL**: [Default: use the other variables] the full URL for the backend API, IE: `https://zwavetomqtt.home.net:8443/`
 - **SERVER_WS_URL**: [Default: use the other variables] the full URL for the backend Socket, IE: `wss://zwavetomqtt.home.net:8443/`
+
+## Testing custom devices config
+
+Zwave-js has an iternal DB where it stores device configuration files. When you need to test custom config devices you can place your files inside a folder in **store directory** named `config` (By default it is: `<app-root-folder>/store/config`).
+
+According to zwave-js [docs](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions):
+
+> `deviceConfigPriorityDir`: Allows you to specify a directory where device configuration files can be loaded from with higher priority than the included ones. This directory does not get indexed and should be used sparingly, e.g. for testing.
