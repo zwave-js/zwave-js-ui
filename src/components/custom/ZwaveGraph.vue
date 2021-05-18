@@ -265,6 +265,13 @@ export default {
     },
     isDark () {
       return this.$vuetify.theme.dark
+    },
+    neighborsArray () {
+      const neighbors = []
+      for (const n of this.nodes) {
+        neighbors.push(...n.neighbors)
+      }
+      return neighbors
     }
   },
   data () {
@@ -370,7 +377,7 @@ export default {
     }
   },
   watch: {
-    nodes () {
+    neighborsArray () {
       this.debounceRefresh()
     },
     ranker () {
