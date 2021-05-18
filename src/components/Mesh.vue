@@ -1,7 +1,12 @@
 <template>
   <v-container fluid>
     <v-card class="pa-5">
-      <zwave-graph id="mesh" :nodes="nodes" @node-click="nodeClick" />
+      <zwave-graph
+        ref="mesh"
+        id="mesh"
+        :nodes="nodes"
+        @node-click="nodeClick"
+      />
 
       <div id="properties" draggable v-show="showProperties" class="details">
         <v-icon
@@ -152,6 +157,8 @@ export default {
                 neighbors: neighbors[nodeId]
               })
             }
+
+            this.$nextTick(this.$refs.mesh.debounceRefresh)
             break
           }
         }
