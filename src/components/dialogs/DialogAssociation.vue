@@ -35,7 +35,9 @@
                   <template v-slot:item="{ item, attrs, on }">
                     <v-list-item v-on="on" v-bind="attrs" two-line>
                       <v-list-item-content>
-                        <v-list-item-title>{{ item.text }}</v-list-item-title>
+                        <v-list-item-title>{{
+                          `[${item.value}] ${item.text}`
+                        }}</v-list-item-title>
                         <v-list-item-subtitle>{{
                           item.endpoint >= 0 ? 'Endpoint ' + item.endpoint : ''
                         }}</v-list-item-subtitle>
