@@ -16,9 +16,9 @@ import {
   FLiRS,
   ProtocolVersion,
   DataRate,
-  NodeType,
+  NodeType
 } from 'zwave-js'
-import { CommandClasses } from '@zwave-js/core' 
+import { CommandClasses } from '@zwave-js/core'
 
 export type Z2MValueIdState = {
   text: string
@@ -417,7 +417,11 @@ export interface ZwaveClient extends EventEmitter {
   ): Promise<void>
   writeValue(valueId: Z2MValueId, value: unknown): Promise<void>
   sendCommand(
-    ctx: { nodeId: number; endpoint: number; commandClass: CommandClasses | keyof typeof CommandClasses },
+    ctx: {
+      nodeId: number
+      endpoint: number
+      commandClass: CommandClasses | keyof typeof CommandClasses
+    },
     command: string,
     args: any[]
   ): Promise<any>
