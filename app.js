@@ -385,6 +385,7 @@ function setupSocket (server) {
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
+      result.originalArgs = data.args
       socket.emit(socketEvents.api, result)
     }
   })
