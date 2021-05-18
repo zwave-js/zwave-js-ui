@@ -91,10 +91,13 @@ export default {
     ...mapGetters(['nodes', 'nodesMap'])
   },
   mounted () {
-    const self = this
-    this.socket.on(socketEvents.api, async data => {
-      if (data.success && data.api === 'getAssociations') {
-        self.associations = data.result
+    this.socket.on(socketEvents.api, data => {
+      if (
+        data.success &&
+        data.api === 'getAssociations' &&
+        data.originalArgs[0] === this.node.id
+      ) {
+        this.associations = data.result
       }
     })
 
