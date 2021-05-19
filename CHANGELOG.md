@@ -1,3 +1,20 @@
+# [4.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.2.1...v4.3.0) (2021-05-19)
+
+
+### Bug Fixes
+
+* **ui:** group editors showing associations of last expanded node ([#1236](https://github.com/zwave-js/zwavejs2mqtt/issues/1236)) ([989bb87](https://github.com/zwave-js/zwavejs2mqtt/commit/989bb87d0c3c7b2a104680b2a4f3f313b72a3a75)), closes [#1231](https://github.com/zwave-js/zwavejs2mqtt/issues/1231)
+* **ui:** moved Value Refresh button to right on NodeDetails ([#1213](https://github.com/zwave-js/zwavejs2mqtt/issues/1213)) ([332f811](https://github.com/zwave-js/zwavejs2mqtt/commit/332f81159935459985123e09b6855e84b186a05c))
+* **ui:** show group id in dialog dropdown ([#1239](https://github.com/zwave-js/zwavejs2mqtt/issues/1239)) ([a41c8b3](https://github.com/zwave-js/zwavejs2mqtt/commit/a41c8b36d67d4424907afe3a4abbde22381f7f54)), closes [#1232](https://github.com/zwave-js/zwavejs2mqtt/issues/1232)
+* **ui:** zwave graph better detection of neighbors changes ([#1243](https://github.com/zwave-js/zwavejs2mqtt/issues/1243)) ([c330559](https://github.com/zwave-js/zwavejs2mqtt/commit/c3305594bc9e4608aad6ef2ca51eab0158f087c3))
+* allow `sendCommand` to accept string command classes ([#1230](https://github.com/zwave-js/zwavejs2mqtt/issues/1230)) ([a2e704c](https://github.com/zwave-js/zwavejs2mqtt/commit/a2e704c10465ad2a0064854d738e7d66abd2a1ec)), closes [#1219](https://github.com/zwave-js/zwavejs2mqtt/issues/1219)
+* better types and checks for sendCommand CC ([#1234](https://github.com/zwave-js/zwavejs2mqtt/issues/1234)) ([6df119c](https://github.com/zwave-js/zwavejs2mqtt/commit/6df119cc9537992bfe3881e4b7d19c96ea43b312))
+
+
+### Features
+
+* **zwave-js:** bump zwave-js@7.5.0 ([#1237](https://github.com/zwave-js/zwavejs2mqtt/issues/1237)) ([7f2d7ea](https://github.com/zwave-js/zwavejs2mqtt/commit/7f2d7ea2554c630c778187e423d5a305002276ec))
+
 ## [4.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.2.0...v4.2.1) (2021-05-12)
 
 
