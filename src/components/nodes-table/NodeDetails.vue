@@ -10,6 +10,14 @@
 
     <v-row>
       <v-col cols="8" style="max-width:300px">
+        <v-btn
+          dark
+          color="primary"
+          @click.stop="apiRequest('pingNode', [node.id])"
+          depressed
+        >
+          Ping
+        </v-btn>
         <v-btn dark color="green" depressed @click="advancedShowDialog = true">
           Advanced
         </v-btn>
