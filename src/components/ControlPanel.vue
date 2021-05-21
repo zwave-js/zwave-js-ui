@@ -3,7 +3,7 @@
     <v-card>
       <v-card-text>
         <v-container fluid>
-          <v-row justify="start">
+          <v-row style="max-width:800px" justify="start">
             <v-col cols="12" sm="4" md="3" style="text-align:center">
               <v-btn
                 depressed

@@ -382,6 +382,7 @@ export interface ZwaveClient extends EventEmitter {
   getNodes(): Z2MNode[]
   getInfo(): Map<string, any>
   refreshValues(nodeId: number): Promise<void>
+  pingNode(nodeId: number): Promise<boolean>
   setPollInterval(valueId: Z2MValueId, interval: number): void
   checkForConfigUpdates(): Promise<string | undefined>
   installConfigUpdate(): Promise<boolean>
