@@ -95,7 +95,7 @@
   },
   "optionalDependencies": {
     "@release-it/conventional-changelog": "^2.0.1",
-    "@types/node": "^14.14.34",
+    "@types/node": "^15.3.1",
     "c8": "^7.6.0",
     "chai": "^4.3.3",
     "chai-as-promised": "^7.1.1",
