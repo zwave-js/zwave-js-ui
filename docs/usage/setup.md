@@ -249,4 +249,4 @@ Just press on `INSTALL` and wait until you receive a feedback, if the update fai
 
 ### Inside docker containers
 
-By default config updates work by checking the installed version of the module `@zwave-js/config`. Doing such updates inside docker containers would requires volumes in order to keep them consistent, for this reason, by default, when running on docker zwave-js will copy config db inside `store/.config-db` folder ( that is not visible/editable from store ui). The folder path can be customized using `ZWAVEJS_EXTERNAL_CONFIG` env var, check related [docs](/guide/env-vars) for more info.
+By default config updates work by checking the installed version of the module `@zwave-js/config`. Doing such updates inside docker containers requires volumes in order to keep them consistent. Therefore, when running on docker zwave-js will copy the embedded config DB into the `store/.config-db` folder. This folder is not visible/editable from the store ui and should not be touched. The folder path can be customized using the `ZWAVEJS_EXTERNAL_CONFIG` env var, check related [docs](/guide/env-vars) for more info.
