@@ -237,11 +237,11 @@ Press now on `SAVE` to upload your new settings to the server and it will automa
 
 Since version 4.0.0 it's possible to update internal zwave-js devices config database on the fly directly from zwavejs2mqtt UI.
 
-Updates are checked everyday at midnight but you can also check for new updates manually from the UI by clicking on the icon in top right corner, when an update is available a badge will be visible next to the icon:
+Updates are checked everyday at midnight but you can also check for new updates manually from the UI by clicking on the icon in top right corner, when an update is available a badge will show up next to the icon:
 
 ![Config update icon](../_images/config_updates_icon.png)
 
-When you click on the icon, if there is an update available, a dialog like this one is shown:
+When you click on the icon, if there is an update available, a dialog like this is shown:
 
 ![Config update dialog](../_images/config_updates_dialog.png)
 
@@ -249,4 +249,4 @@ Just press on install and wait until you receive a feedback, check logs to see a
 
 ### Inside docker containers
 
-By default config updates work by checking the installed version of the module `@zwave-js/config`. Doing such updates inside docker containers requires volumes in order to keep them consistent, for this reason, by default, when running on docker zwave-js will copy config db inside `store` folder in a folder that is not visible in the ui named `.config-db`. This can be customized using `ZWAVEJS_EXTERNAL_CONFIG` env var, check related [docs](/guide/env-vars) for more info.
+By default config updates work by checking the installed version of the module `@zwave-js/config`. Doing such updates inside docker containers would requires volumes in order to keep them consistent, for this reason, by default, when running on docker zwave-js will copy config db inside `store/.config-db` folder ( that is not visible/editable from store ui). The folder path can be customized using `ZWAVEJS_EXTERNAL_CONFIG` env var, check related [docs](/guide/env-vars) for more info.
