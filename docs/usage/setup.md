@@ -245,7 +245,7 @@ When you click on the icon, if there is an update available, a dialog like this 
 
 ![Config update dialog](../_images/config_updates_dialog.png)
 
-Just press on install and wait until you receive a feedback, check logs to see any kind of errors. If there is no update available you will see a `CHECK` button and by pressing it you will trigger a manual check.
+Just press on `INSTALL` and wait until you receive a feedback, if the update fails check logs to see more details about errors. If there is no update available you will see a `CHECK` button instead of `INSTALL` and by pressing it you will trigger a manual check.
 
 ### Inside docker containers
 
