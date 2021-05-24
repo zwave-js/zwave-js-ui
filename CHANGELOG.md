@@ -1,3 +1,18 @@
+## [4.3.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.3.0...v4.3.1) (2021-05-24)
+
+
+### Bug Fixes
+
+* add `zwaveClient` and `require` to `driverFunction` context ([#1256](https://github.com/zwave-js/zwavejs2mqtt/issues/1256)) ([592e5aa](https://github.com/zwave-js/zwavejs2mqtt/commit/592e5aab7cad040050aacfc78536e3834ec9e5e9))
+* better restarts ([#1266](https://github.com/zwave-js/zwavejs2mqtt/issues/1266)) ([70c018b](https://github.com/zwave-js/zwavejs2mqtt/commit/70c018be4024255430bf1a1ed490672dc555a043)), closes [#1246](https://github.com/zwave-js/zwavejs2mqtt/issues/1246)
+* detect driver failed and restart ([#1259](https://github.com/zwave-js/zwavejs2mqtt/issues/1259)) ([2ae945e](https://github.com/zwave-js/zwavejs2mqtt/commit/2ae945e18f3b41828082279ce071746cc15ab9cd)), closes [#1246](https://github.com/zwave-js/zwavejs2mqtt/issues/1246)
+
+
+### Features
+
+* bump zwave-js@7.5.1 ([5bfad71](https://github.com/zwave-js/zwavejs2mqtt/commit/5bfad714e0892936420a02cdc8dc43be1b96064a))
+* ping node ([#1255](https://github.com/zwave-js/zwavejs2mqtt/issues/1255)) ([2fc61ef](https://github.com/zwave-js/zwavejs2mqtt/commit/2fc61efc87834ef37d1d1311b4b0be8bf797a15c)), closes [#1253](https://github.com/zwave-js/zwavejs2mqtt/issues/1253)
+
 # [4.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.2.1...v4.3.0) (2021-05-19)
 
 
