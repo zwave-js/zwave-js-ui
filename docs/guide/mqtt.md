@@ -87,6 +87,7 @@ This are the available apis:
   - `ctx`:context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
   - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
   - `args`: array of arguments to pass to the command
+- `restart()`: restart client
 
 ### Api call examples
 

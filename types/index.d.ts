@@ -324,6 +324,8 @@ export interface ZwaveClient extends EventEmitter {
     listener: (valueId: Z2MValueId, node: Z2MNode) => void
   ): this
 
+  init(): void
+  restart(): Promise<void>
   scheduleHeal(): void
   getNode(nodeId: number): ZWaveNode
   getZwaveValue(idString: any): ValueID
