@@ -26,7 +26,7 @@ jobs:
 
       - name: Check user's permissions to do this
         id: check-permissions
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         with:
           github-token: ${{secrets.BOT_TOKEN}}
           result-encoding: string
@@ -38,7 +38,7 @@ jobs:
       - name: Retrieve PR information
         if: steps.check-permissions.outputs.result == 'true'
         id: pr-info
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         with:
           script: |
             const bot = require(`${process.env.GITHUB_WORKSPACE}/trusted/.github/bot-scripts/index.js`);
@@ -99,7 +99,7 @@ jobs:
 
       - name: Give feedback
         if: steps.check-permissions.outputs.result == 'true'
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         env:
           FEEDBACK: ${{ steps.fix.outputs.result }}
           PENDING: ${{ fromJSON(steps.pr-info.outputs.result).pending }}
@@ -128,7 +128,7 @@ jobs:
 
       - name: Check user's permissions to do this
         id: check-permissions
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         with:
           github-token: ${{secrets.BOT_TOKEN}}
           result-encoding: string
@@ -139,7 +139,7 @@ jobs:
       # These steps only run if the check was successful
       - name: Retrieve PR information
         if: steps.check-permissions.outputs.result == 'true'
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         id: get-pr
         with:
           script: |
@@ -196,7 +196,7 @@ jobs:
 
       - name: Give feedback
         if: steps.check-permissions.outputs.result == 'true'
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         env:
           FEEDBACK: ${{ steps.fix.outputs.result }}
         with:
@@ -224,7 +224,7 @@ jobs:
 
       - name: Check permissions and necessity
         id: check-permissions
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         with:
           github-token: ${{secrets.BOT_TOKEN}}
           result-encoding: string
@@ -238,7 +238,7 @@ jobs:
       # These steps only run if the check was successful
       - name: Retrieve PR information
         if: steps.check-permissions.outputs.result == 'true'
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         id: get-pr
         with:
           script: |
@@ -286,7 +286,7 @@ jobs:
 
       - name: Give feedback
         if: steps.check-permissions.outputs.result == 'true'
-        uses: actions/github-script@v3
+        uses: actions/github-script@v4.0.2
         env:
           FEEDBACK: ${{ steps.fix.outputs.result }}
         with:
