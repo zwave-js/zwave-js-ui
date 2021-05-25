@@ -1791,10 +1791,10 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zwave-js/config@7.5.1":
-  version "7.5.1"
-  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-7.5.1.tgz#53fb4700d304e7ee53a5274761e45aa96524eaa0"
-  integrity sha512-b1OTE/UZGanypjv39PCbu0xN+n5D34ptSS7/qrrTcWbDmq9unFvJ1QqkVkSAB36zvab3KCLq3uy6sqlPg3qjLA==
+"@zwave-js/config@7.5.2":
+  version "7.5.2"
+  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-7.5.2.tgz#7ee451fd29acf52cfec6b07d49d3f8ac95b6c72d"
+  integrity sha512-Th68S7akzIinWXEsb+4husWlBlHSiDZIg8tv0IjBnYsXu7eGfWCNZeaiXkzNIp04PyPjGufPpb/QnRYfxbVH5A==
   dependencies:
     "@zwave-js/core" "7.5.0"
     "@zwave-js/shared" "7.4.0"
@@ -1831,10 +1831,10 @@
     serialport "^9.0.7"
     winston "^3.3.3"
 
-"@zwave-js/server@^1.5.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.5.0.tgz#1708768e3b5f8eda89d1447900a83f677b59ddc9"
-  integrity sha512-gwAQanHfMiTBWME2PwxAyicj9V2MytMaMjVvk2lvf1/nrS7mAFik9AbygtLowgEqWDeWiYk9RLdweOP9EgW5OQ==
+"@zwave-js/server@^1.6.0":
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.6.0.tgz#72d92ffa0cc9dc5728ebdcbce8540e5bbb4afa24"
+  integrity sha512-RDO8QAXk8hfUmtBybFCLIRKb8FcotP1p3uHEU11POw9sVYmlTkdwpLUEulDhPNlCanzxFqLVdlb1C+C6V4Rg7Q==
   dependencies:
     minimist "^1.2.5"
     ws "^7.4.2"
@@ -12746,16 +12746,16 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
 
-zwave-js@^7.5.1:
-  version "7.5.1"
-  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-7.5.1.tgz#63699b5f32e57d088cb30e1d22e5416cbf7aa481"
-  integrity sha512-gQ5lvHg/727FXW54dPc1JJEkEXZBSobHLTwzG/2bSuRBFfHas21Z3XZO/HtaMeCXVzbus+Aepdc/QoLb9ZIUTA==
+zwave-js@^7.5.2:
+  version "7.5.2"
+  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-7.5.2.tgz#4d9e5284a4f38e9c8b08c065f64d9eea681f27e1"
+  integrity sha512-cIRuTQjUMUeoDsRFQPVSFz7qOmiDBTumfvy/NLFxPT6oQiE+eICrSewqRNmlBbXm4GvfUDDMl+2yxnnn/oAC2w==
   dependencies:
     "@alcalzone/jsonl-db" "^1.2.4"
     "@alcalzone/pak" "^0.6.0"
     "@sentry/integrations" "^6.3.0"
     "@sentry/node" "^6.3.0"
-    "@zwave-js/config" "7.5.1"
+    "@zwave-js/config" "7.5.2"
     "@zwave-js/core" "7.5.0"
     "@zwave-js/serial" "7.5.0"
     "@zwave-js/shared" "7.4.0"
