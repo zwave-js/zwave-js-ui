@@ -217,6 +217,14 @@ export const mutations = {
       this._vm.$set(node, 'neighbors', neighbors)
     }
   },
+  setHealProgress (state, nodesProgress) {
+    for (const [nodeId, progress] of nodesProgress) {
+      const node = getNode(nodeId)
+      if (node) {
+        this._vm.$set(node, 'healProgress', progress)
+      }
+    }
+  },
   initSettings (state, conf) {
     if (conf) {
       Object.assign(state.zwave, conf.zwave || {})
