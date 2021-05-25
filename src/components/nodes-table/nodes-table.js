@@ -32,6 +32,7 @@ export default {
         supportsBeaming: { type: 'boolean', label: 'Beaming' },
         failed: { type: 'boolean', label: 'Failed' },
         status: { type: 'string', label: 'Status' },
+        healProgress: { type: 'string', label: 'Heal' },
         interviewStage: { type: 'string', label: 'Interview' },
         lastActive: { type: 'date', label: 'Last Active', groupable: false }
       },
@@ -44,6 +45,18 @@ export default {
       this.expanded = this.expanded.includes(item)
         ? this.expanded.filter(i => i !== item)
         : [...this.expanded, item]
+    },
+    getHealIcon (status) {
+      switch (status) {
+        case 'done':
+          return { icon: 'done', color: 'green' }
+        case 'failed':
+          return { icon: 'error', color: 'red' }
+        case 'skipped':
+          return { icon: 'next_plan', color: 'blue' }
+      }
+
+      return undefined
     }
   },
   mounted () {
