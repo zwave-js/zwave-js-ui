@@ -1,3 +1,16 @@
+# [4.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.3.1...v4.4.0) (2021-05-25)
+
+
+### Bug Fixes
+
+* change default zwavejs log file name ([#1267](https://github.com/zwave-js/zwavejs2mqtt/issues/1267)) ([1a13e60](https://github.com/zwave-js/zwavejs2mqtt/commit/1a13e601a8b1b8188c583367e43177c85e6b46ea))
+
+
+### Features
+
+* **ui:** show nodes heal progress ([#1272](https://github.com/zwave-js/zwavejs2mqtt/issues/1272)) ([4356fc0](https://github.com/zwave-js/zwavejs2mqtt/commit/4356fc0b9ed8ec3814590d5dde0ba7a93abdfdc9)), closes [#993](https://github.com/zwave-js/zwavejs2mqtt/issues/993)
+* zwave-js 7.5.2 and @zwave-js/server 1.6.0 ([882bd33](https://github.com/zwave-js/zwavejs2mqtt/commit/882bd33a3ed6c717aff9ca105694a4d10d2a5393))
+
 ## [4.3.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.3.0...v4.3.1) (2021-05-24)
 
 
