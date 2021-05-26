@@ -289,7 +289,7 @@ export enum EventSource {
 
 export interface ZwaveClient extends EventEmitter {
   cfg: ZwaveConfig
-  soclet: Socket
+  socket: Socket
   closed: boolean
   driverReady: boolean
   scenes: Z2MScene[]
@@ -323,6 +323,11 @@ export interface ZwaveClient extends EventEmitter {
   on(
     event: 'valueChanged',
     listener: (valueId: Z2MValueId, node: Z2MNode) => void
+  ): this
+  
+  on(
+    event: 'valueWritten',
+    listener: (valueId: Z2MValueId, value: any) => void
   ): this
 
   init(): void
