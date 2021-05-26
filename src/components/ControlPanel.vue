@@ -172,7 +172,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(['showSnackbar']),
+    ...mapMutations(['showSnackbar', 'setHealProgress']),
     onAddRemoveClose () {
       this.addRemoveShowDialog = false
       this.addRemoveNode = null
@@ -409,10 +409,12 @@ export default {
   mounted () {
     const onApiResponse = this.onApiResponse.bind(this)
     const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
+    const onHealProgress = this.setHealProgress.bind(this)
 
     this.bindEvent('api', onApiResponse)
     this.bindEvent('nodeRemoved', onNodeAddedRemoved)
     this.bindEvent('nodeAdded', onNodeAddedRemoved)
+    this.bindEvent('healProgress', onHealProgress)
   },
   beforeDestroy () {
     if (this.socket) {

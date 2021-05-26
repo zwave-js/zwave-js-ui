@@ -62,6 +62,10 @@ function getValue (v) {
 }
 
 function getNode (id) {
+  if (typeof id === 'string') {
+    id = parseInt(id)
+  }
+
   return state.nodes[state.nodesMap.get(id)]
 }
 
@@ -211,10 +215,20 @@ export const mutations = {
       state.nodes.splice(index, 1)
     }
   },
-  setNeighbors (state, { nodeId, neighbors }) {
-    const node = getNode(nodeId)
-    if (node) {
-      this._vm.$set(node, 'neighbors', neighbors)
+  setNeighbors (state, neighbors) {
+    for (const nodeId in neighbors) {
+      const node = getNode(nodeId)
+      if (node) {
+        this._vm.$set(node, 'neighbors', neighbors[nodeId])
+      }
+    }
+  },
+  setHealProgress (state, nodesProgress) {
+    for (const [nodeId, progress] of nodesProgress) {
+      const node = getNode(nodeId)
+      if (node) {
+        this._vm.$set(node, 'healProgress', progress)
+      }
     }
   },
   initSettings (state, conf) {
