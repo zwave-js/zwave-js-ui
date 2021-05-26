@@ -137,6 +137,7 @@ export type Z2MNode = {
   interviewStage: InterviewStage
   status: NodeStatus
   inited: boolean
+  healProgress: string | undefined
 }
 
 export enum GatewayType {
