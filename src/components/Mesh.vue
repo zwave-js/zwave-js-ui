@@ -150,15 +150,9 @@ export default {
         switch (data.api) {
           case 'refreshNeighbors': {
             this.showSnackbar('Nodes Neighbors updated')
-            const neighbors = data.result
-            for (const nodeId in neighbors) {
-              this.setNeighbors({
-                nodeId: nodeId,
-                neighbors: neighbors[nodeId]
-              })
-            }
-
-            this.$nextTick(this.$refs.mesh.debounceRefresh)
+            this.setNeighbors(data.result)
+            // refresh graph
+            this.$refs.mesh.debounceRefresh()
             break
           }
         }
