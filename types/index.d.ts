@@ -324,7 +324,6 @@ export interface ZwaveClient extends EventEmitter {
     event: 'valueChanged',
     listener: (valueId: Z2MValueId, node: Z2MNode) => void
   ): this
-  
   on(
     event: 'valueWritten',
     listener: (valueId: Z2MValueId, value: any) => void
