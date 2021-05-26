@@ -18,7 +18,6 @@ export const socketEvents = {
   nodeUpdated: 'NODE_UPDATED',
   valueUpdated: 'VALUE_UPDATED',
   valueRemoved: 'VALUE_REMOVED',
-  valueWritten: 'VALUE_WRITTEN',
   healProgress: 'HEAL_PROGRESS',
   info: 'INFO',
   api: 'API_RETURN', // api results
