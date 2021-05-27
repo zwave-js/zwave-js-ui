@@ -64,7 +64,7 @@
                         v-if="newGateway.logEnabled"
                       >
                         <v-switch
-                          hint="Store logs in a file. Default: store/zwavejs2newMqtt.log"
+                          hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
                           persistent-hint
                           label="Log to file"
                           v-model="newGateway.logToFile"
