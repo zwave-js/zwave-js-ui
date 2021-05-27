@@ -1,3 +1,19 @@
+# [4.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.4.0...v4.5.0) (2021-05-27)
+
+
+### Bug Fixes
+
+* don't query neighbors on node ready event ([#1279](https://github.com/zwave-js/zwavejs2mqtt/issues/1279)) ([9a1ab96](https://github.com/zwave-js/zwavejs2mqtt/commit/9a1ab96e86adef551bb8227ca7435024aa8c8b58))
+* stop RF when requesting neighbors ([#1283](https://github.com/zwave-js/zwavejs2mqtt/issues/1283)) ([1a35379](https://github.com/zwave-js/zwavejs2mqtt/commit/1a35379bb733abfa1132a9dd894bc70d11b3afdd))
+
+
+### Features
+
+* add `valueWritten` event to ZwaveClient ([#1268](https://github.com/zwave-js/zwavejs2mqtt/issues/1268)) ([1bb2acf](https://github.com/zwave-js/zwavejs2mqtt/commit/1bb2acf65ee74aad05aa275c01843b8016a71eb6))
+* bump zwave-js@7.6.0 and zwave-js/server@1.7.0 ([#1278](https://github.com/zwave-js/zwavejs2mqtt/issues/1278)) ([34a8f57](https://github.com/zwave-js/zwavejs2mqtt/commit/34a8f5701d424b58ff18d10ba32d89e3c8a7839d))
+* bump zwave-js@7.7.0 ([5238242](https://github.com/zwave-js/zwavejs2mqtt/commit/5238242de80197a865e5a9646d5d2aa2f7107e0e))
+* **ui:** show nodes heal progress ([#1277](https://github.com/zwave-js/zwavejs2mqtt/issues/1277)) ([140136c](https://github.com/zwave-js/zwavejs2mqtt/commit/140136c64e386fba89e8ddf5be362beb59e5ba60)), closes [#993](https://github.com/zwave-js/zwavejs2mqtt/issues/993) [#1274](https://github.com/zwave-js/zwavejs2mqtt/issues/1274)
+
 # [4.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.3.1...v4.4.0) (2021-05-25)
 
 
