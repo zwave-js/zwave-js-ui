@@ -29,3 +29,13 @@ Zwave-js has an iternal DB where it stores device configuration files. When you 
 According to zwave-js [docs](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions):
 
 > `deviceConfigPriorityDir`: Allows you to specify a directory where device configuration files can be loaded from with higher priority than the included ones. This directory does not get indexed and should be used sparingly, e.g. for testing.
+
+When a custom device configuration is loaded successfully you should see this in zwave-js logs:
+
+```js
+10:32:09.322 CNTRLR   [Node 001] Embedded device config loaded
+10:32:09.329 CNTRLR   [Node 007] Embedded device config loaded
+10:32:09.331 CNTRLR   [Node 015] Embedded device config loaded
+10:32:09.351 CNTRLR   [Node 017] Embedded device config loaded
+10:32:09.374 CNTRLR   [Node 025] Embedded device config loaded
+```
