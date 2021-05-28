@@ -12,19 +12,23 @@ Both loggers options are configurable from the UI in `Settings` page.
 
 Zwavejs2mqtt logger can be configured in `General` section, enable `Log enabled` switch and `Log To File` and set `Log Level` to `silly`
 
+> Log file name: `zwavejs2mqtt.log`
+
 ![Enable logging](../_images/log_z2m.gif)
 
 ### Driver logs
 
 Driver logger can be configured in `Zwave` section, enable `Log enabled` switch and `Log To File` and set `Log Level` to `silly`
 
+> Log file name: `zwavejs_<date>.log`
+
 ![Enable logging](../_images/log_zjs.gif)
 
 ### Download Zip
 
-Your logs will be stored in separated files inside `store` folder. The zwavejs2mqtt log output file will be named `zwavejs2mqtt.log` and the driver one `zwavejs_<processid>.log`
+Your logs will be stored in separated files inside `store` folder.
 
-You can easily download a zip with this logs files from the `Explorer` view on the UI. Just select the files you want to export, press on the fab button on the bottom right corner and press the download icon. Remember to attach the zip to your issue.
+You can easily download a zip with this logs files from the `Explorer` view on the UI. Just select the files you want to export (like we said above them will be `zwavejs2mqtt.log` and `zwavejs_<date>.log`), press on the fab button on the bottom right corner and press the download icon. Remember to attach the zip to your issue.
 
 ![Enable logging](../_images/download_zip.gif)
 
