@@ -3,26 +3,19 @@
 
 // eslint-disable-next-line one-var
 const reqlib = require('app-root-path').require
-const {
-  Driver,
-  NodeStatus,
-  InterviewStage,
-  extractFirmware,
-  guessFirmwareFileFormat,
-  libVersion
-} = require('zwave-js')
-const { CommandClasses, Duration, ZWaveErrorCodes } = require('@zwave-js/core')
+import { Driver, NodeStatus, InterviewStage, extractFirmware, guessFirmwareFileFormat, libVersion } from 'zwave-js'
+import { CommandClasses, Duration, ZWaveErrorCodes } from '@zwave-js/core'
 const utils = reqlib('/lib/utils.js')
-const EventEmitter = require('events')
+import EventEmitter = require('events')
 const jsonStore = reqlib('/lib/jsonStore.js')
 const { socketEvents } = reqlib('/lib/SocketManager.js')
 const store = reqlib('config/store.js')
 const { storeDir } = reqlib('config/app.js')
-const LogManager = require('./logger.js')
+import LogManager = require('./logger.js')
 const logger = LogManager.module('Zwave')
 const loglevels = require('triple-beam').configs.npm.levels
-const { ZwavejsServer, serverVersion } = require('@zwave-js/server')
-const pkgjson = require('../package.json')
+import { ZwavejsServer, serverVersion } from '@zwave-js/server'
+import pkgjson = require('../package.json')
 
 const ZWAVE_STATUS = {
   connected: 'connected',

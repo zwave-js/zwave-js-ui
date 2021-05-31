@@ -1,10 +1,12 @@
-const fs = require('fs')
-const path = require('path')
-const reqlib = require('app-root-path').require
+import * as fs from 'fs'
+import * as path from 'path'
+import { Request, Response } from "express";
+import { IncomingHttpHeaders } from 'http';
+
 
 const webConfig = reqlib('/config/webConfig')
 
-function findFiles (folder, ext) {
+function findFiles (folder: string, ext: string) {
   const folderPath = path.join(__dirname, '..', 'dist', folder)
   const folderFiles = fs.readdirSync(folderPath)
   return folderFiles
@@ -16,14 +18,14 @@ function findFiles (folder, ext) {
     })
 }
 
-let cssFiles
-let jsFiles
+let cssFiles: string[]
+let jsFiles: string[]
 
-function basePath (config, headers) {
+function basePath (config: { base: any }, headers: IncomingHttpHeaders) {
   return (headers['x-external-path'] || config.base).replace(/\/?$/, '/')
 }
 
-module.exports = function (req, res) {
+module.exports = function (req: Request, res: Response) {
   cssFiles = cssFiles || findFiles(path.join('static', 'css'), 'css')
   jsFiles = jsFiles || findFiles(path.join('static', 'js'), 'js')
   res.render('index.ejs', {

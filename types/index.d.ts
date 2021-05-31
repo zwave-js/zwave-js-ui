@@ -186,7 +186,8 @@ export type GatewayConfig = {
   logLevel: LogLevel
   logToFile: boolean
   values: GatewayValue[]
-  plugins: string[]
+  plugins: string[],
+  logFileName: string
 }
 
 export type MqttConfig = {

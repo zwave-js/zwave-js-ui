@@ -1,4 +1,6 @@
-module.exports = {
+import { ConfigManager } from '@zwave-js/config'
+
+export default {
   // https://github.com/OpenZWave/open-zwave/blob/0d94c9427bbd19e47457578bccc60b16c6679b49/config/Localization.xml#L606
   _productionMap: {
     0: 'instant',
@@ -59,7 +61,7 @@ module.exports = {
       WINDOW: 'window'
     }
   },
-  productionType (index) {
+  productionType (index: number): any {
     return {
       sensor: 'energy_production',
       objectId: this._productionMap[index] || 'unknown',
@@ -68,7 +70,7 @@ module.exports = {
       }
     }
   },
-  meterType (ccSpecific, configManager) {
+  meterType (ccSpecific: { meterType: any; scale: number }, configManager: ConfigManager): any {
     const meter = configManager.lookupMeter(ccSpecific.meterType)
     const scale = configManager.lookupMeterScale(
       ccSpecific.meterType,
@@ -138,7 +140,7 @@ module.exports = {
     512: 'type',
     513: 'level'
   },
-  alarmType (index) {
+  alarmType (index: string) : string {
     return this._alarmMap[index] || 'unknown_' + index
   },
   // https://github.com/OpenZWave/open-zwave/blob/0d94c9427bbd19e47457578bccc60b16c6679b49/config/SensorMultiLevelCCTypes.xml
@@ -315,7 +317,7 @@ module.exports = {
       86: 'particulate_matter'
     }
   },
-  sensorType (index) {
+  sensorType (index: string): any {
     const sensorType = {
       sensor: 'generic',
       objectId: 'unknown_' + index,
@@ -427,7 +429,7 @@ module.exports = {
     0xef: 'mark',
     0xf0: 'non_interoperable'
   },
-  commandClass (cmd) {
+  commandClass (cmd: string | number): string {
     return this._commandClassMap[cmd] || 'unknownClass_' + cmd
   },
   _genericDeviceClassMap: {
@@ -656,10 +658,10 @@ module.exports = {
       specific: {}
     }
   },
-  genericDeviceClassAttributes (cls) {
+  genericDeviceClassAttributes (cls: string | number): string {
     return this._genericDeviceClassMap[cls]
   },
-  genericDeviceClass (cls) {
+  genericDeviceClass (cls: string): string {
     const clsAttr = this.genericDeviceClassAttributes(cls)
     if (clsAttr) {
       return clsAttr.generic
@@ -667,7 +669,7 @@ module.exports = {
       return 'unknownGenericDeviceType_' + cls
     }
   },
-  specificDeviceClass (genericCls, specificCls) {
+  specificDeviceClass (genericCls: string, specificCls: string) : string {
     const clsAttr = this.genericDeviceClassAttributes(genericCls)
     if (clsAttr) {
       return (

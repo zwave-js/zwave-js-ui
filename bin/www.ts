@@ -3,10 +3,11 @@
 /**
  * Module dependencies.
  */
-const reqlib = require('app-root-path').require
-const jsonStore = reqlib('/lib/jsonStore.js')
-const store = reqlib('/config/store.js')
-const conf = reqlib('/config/app.js')
+import * as jsonStore from '../lib/jsonStore'
+import * as store from '../config/store.js'
+import * as conf from '../config/app.js'
+
+import { app, startServer } from '../app.js'
 
 console.log(`
  ______                       _     ___                  _   _   
@@ -24,13 +25,13 @@ console.log(`
 // if jsonstore fails exit the application
 jsonStore.init(store)
   .then(() => {
-    const { app, startServer } = reqlib('app.js')
+    
 
     /**
      * Normalize a port into a number, string, or false.
      */
 
-    function normalizePort (val) {
+    function normalizePort (val: string) {
       const port = parseInt(val, 10)
 
       if (isNaN(port)) {
@@ -55,7 +56,7 @@ jsonStore.init(store)
 
     return startServer(conf.host, port)
   })
-  .catch(err => {
+  .catch((err: any) => {
     console.error(err)
     process.exit(1)
   })

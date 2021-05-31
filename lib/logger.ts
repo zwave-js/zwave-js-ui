@@ -1,11 +1,26 @@
-const winston = require('winston')
+import winston = require('winston')
+import { joinPath, DeepPartial } from './utils'
+import { storeDir } from '../config/app'
+import { GatewayConfig } from '../types/index'
+
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
-const { joinPath } = require('./utils')
-const { storeDir } = require('../config/app.js')
 
 const colorizer = colorize()
 const defaultLogFile = 'zwavejs2mqtt.log'
+
+interface ModuleLogger extends winston.Logger {
+  module: string
+  setup(cfg: any): winston.Logger
+}
+
+interface LoggerConfig {
+  module: string,
+  enabled: boolean,
+  level: string,
+  logToFile: boolean,
+  filePath: string
+}
 
 /**
  * Generate logger configuration starting from settings.gateway
@@ -14,8 +29,8 @@ const defaultLogFile = 'zwavejs2mqtt.log'
  * @param {any} config settings.gateway configuration
  * @returns
  */
-const sanitizedConfig = (module, config) => {
-  config = config || {}
+const sanitizedConfig = (module: string, config: DeepPartial<GatewayConfig>) : LoggerConfig => {
+  config = config || {} as LoggerConfig
   const filePath = joinPath(storeDir, config.logFileName || defaultLogFile)
 
   return {
@@ -39,7 +54,7 @@ addColors({
  * @param {any} config logger configuration configuration
  * @returns {winston.Logform.Format}
  */
-const customFormat = config =>
+const customFormat = (config: any): winston.Logform.Format =>
   combine(
     splat(), // used for formats like: logger.log('info', Message %s', strinVal)
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
@@ -63,8 +78,8 @@ const customFormat = config =>
  * @param {any} config logger configuration
  * @returns {winston.transport[]}
  */
-const customTransports = config => {
-  const transportsList = [
+const customTransports = (config: any): winston.transport[] => {
+  const transportsList : winston.transport[] = [
     new transports.Console({
       format: customFormat(config),
       level: config.level,
@@ -72,28 +87,24 @@ const customTransports = config => {
     })
   ]
   if (config.logToFile) {
-    transportsList.push(
-      new transports.File({
-        format: combine(customFormat(config), format.uncolorize()),
-        filename: config.filePath,
-        level: config.level
-      })
-    )
+    const fileTransport = new transports.File({
+      format: combine(customFormat(config), format.uncolorize()),
+      filename: config.filePath,
+      level: config.level
+    })
+
+    transportsList.push(fileTransport)
   }
   return transportsList
 }
 
 /**
  * Setup a logger
- *
- * @param {winston.Container} container winston container
- * @param {string} module module name
- * @param {any} config settings.gateway configuration
- * @returns {winston.Logger}
  */
-const setupLogger = (container, module, config) => {
+const setupLogger = (container: winston.Container, module: string, config?: any): ModuleLogger => {
   config = sanitizedConfig(module, config)
-  const logger = container.add(module) // Winston automatically reuses an existing module logger
+  // Winston automatically reuses an existing module logger
+  const logger = container.add(module) as ModuleLogger
   logger.configure({
     silent: !config.enabled,
     level: config.level,
@@ -108,23 +119,18 @@ const logContainer = new winston.Container()
 
 /**
  * Create a new logger for a specific module
- *
- * @param {string} module module name
- * @returns {winston.Logger}
  */
-logContainer.loggers.module = module => {
+export function module (module: string): winston.Logger {
   return setupLogger(logContainer, module)
 }
 
 /**
  * Setup all loggers starting from config
- *
- * @param {any} config settings.gateway configuration
  */
-logContainer.loggers.setupAll = config => {
-  logContainer.loggers.forEach(logger => {
+export function setupAll (config: DeepPartial<GatewayConfig>) : any {
+  logContainer.loggers.forEach((logger: ModuleLogger) => {
     logger.setup(config)
   })
 }
 
-module.exports = logContainer.loggers
+export default logContainer.loggers

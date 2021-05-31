@@ -1,12 +1,15 @@
 'use strict'
 
-const reqlib = require('app-root-path').require
-const EventEmitter = require('events')
-const logger = reqlib('/lib/logger.js').module('Socket')
+import { EventEmitter } from 'events'
+import { Server as HttpServer } from 'http'
+import { module } from './logger'
+import { Server as SocketServer, Socket } from "socket.io";
+
+module('Socket')
 
 // FIXME: this constants are duplicated on /src/plugins/socket.js. When converting this to ES6 module that can be removed
 // events from server ---> client
-const socketEvents = {
+export const socketEvents = {
   init: 'INIT', // automatically sent when a new client connects to the socket
   controller: 'CONTROLLER_CMD', // controller status updates
   connected: 'CONNECTED', // socket status
@@ -22,7 +25,7 @@ const socketEvents = {
 }
 
 // events from client ---> server
-const inboundEvents = {
+export const inboundEvents = {
   init: 'INITED', // get all nodes
   zwave: 'ZWAVE_API', // call a zwave api
   hass: 'HASS_API', // call an hass api
@@ -33,24 +36,29 @@ const inboundEvents = {
  * The constructor
  */
 class SocketManager extends EventEmitter {
+
+  server: HttpServer
+  io: SocketServer
+  authMiddleware: (socket: Socket, next: () => void) => void | undefined
+
   /**
    * Binds socket.io to `server`
    *
    * @param {HttpServer} server
    */
-  bindServer (server) {
+  bindServer (server: HttpServer) {
     this.server = server
 
-    this.io = require('socket.io')(server)
+    this.io = new SocketServer(server)
 
     this.io
       .use(this._authMiddleware())
       .on('connection', this._onConnection.bind(this))
   }
 
-  _authMiddleware () {
-    return (socket, next) => {
-      if (this.authMiddleware) {
+  _authMiddleware (): (socket: Socket, next: () => void) => void {
+    return (socket: Socket, next: () => void) => {
+      if (this.authMiddleware !== undefined) {
         this.authMiddleware(socket, next)
       } else {
         next()
@@ -63,7 +71,7 @@ class SocketManager extends EventEmitter {
    *
    * @param {Socket} socket
    */
-  _onConnection (socket) {
+  _onConnection (socket: { id: any; on: (arg0: string, arg1: () => void) => void; }) {
     logger.debug(`New connection ${socket.id}`)
 
     // register inbound events from this socket
@@ -85,12 +93,10 @@ class SocketManager extends EventEmitter {
    * @param {Socket} socket
    * @param {any} args
    */
-  _emitEvent (eventName, socket, ...args) {
+  _emitEvent (eventName: string, socket: { id: any; }, ...args: any[]) {
     logger.debug(`Event ${eventName} emitted to ${socket.id}`)
     this.emit(eventName, socket, ...args)
   }
 }
 
-module.exports = SocketManager
-module.exports.socketEvents = socketEvents
-module.exports.inboundEvents = inboundEvents
+export default SocketManager

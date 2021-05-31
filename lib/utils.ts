@@ -1,32 +1,34 @@
 // eslint-disable-next-line one-var
-const appRoot = require('app-root-path')
-const path = require('path')
-const { version } = require('../package.json')
-const crypto = require('crypto')
+import * as appRoot from 'app-root-path'
+import path = require('path')
+import { version } from '../package.json'
+import crypto = require('crypto')
+import { ValueID } from 'zwave-js'
 
-let VERSION
+let VERSION: string
+
+export type DeepPartial<T> = {
+  [P in keyof T]?: T[P] extends Array<infer U>
+    ? Array<DeepPartial<U>>
+    : T[P] extends ReadonlyArray<infer U>
+    ? ReadonlyArray<DeepPartial<U>>
+    : DeepPartial<T[P]>
+};
 
 /**
  *  Get the base root path to application directory. When we are in a `pkg` environment
  *  the path of the snapshot is not writable
- *
- * @param {boolean} write
- * @returns {string}
  */
-function getPath (write) {
-  if (write && process.pkg) return process.cwd()
+export function getPath (write: boolean): string {
+  if (write && hasProperty(process, 'pkg')) return process.cwd()
   else return appRoot.toString()
 }
 
 /**
  * path.join wrapper, the first option can be a boolean and it will automatically fetch the root path
  * passing the boolean to getPath
- *
- * @param {boolean | string} write
- * @param {string[]} paths
- * @returns {string} the result of path join
  */
-function joinPath (write, ...paths) {
+export function joinPath (write: boolean | string, ...paths: string[]): string {
   if (typeof write === 'boolean') {
     write = getPath(write)
   }
@@ -35,11 +37,8 @@ function joinPath (write, ...paths) {
 
 /**
  * Join props with a `_` and skips undefined props
- *
- * @param {string[]} props the array of props to join
- * @returns {string} The result string with joined props
  */
-function joinProps (...props) {
+export function joinProps (...props: string[]): string {
   props = props || []
   let ret = props[0] || ''
   for (let i = 1; i < props.length; i++) {
@@ -53,11 +52,8 @@ function joinProps (...props) {
 
 /**
  * Checks if an object is a valueId, returns error otherwise
- *
- * @param {import('zwave-js').ValueID} v the object
- * @returns {boolean|string} Returns true if it's a valid valueId, an error string otherwise
  */
-function isValueId (v) {
+export function isValueId (v: ValueID): boolean | string {
   if (typeof v.commandClass !== 'number' || v.commandClass < 0) {
     return 'invalid `commandClass`'
   }
@@ -82,33 +78,25 @@ function isValueId (v) {
 
 /**
  * Deep copy of an object
- *
- * @param {*} obj The object to copy
- * @returns The copied object
  */
-function copy (obj) {
+export function copy (obj: any) : any {
   return JSON.parse(JSON.stringify(obj))
 }
 
 /**
  * Converts a decimal to an hex number of 4 digits and `0x` as prefix
- *
- * @param {number} num the number to convert
- * @returns {string} the hex number string with `0x` prefix
  */
-function num2hex (num) {
+export function num2hex (num: number): string {
   const hex = num >= 0 ? num.toString(16) : 'XXXX'
   return '0x' + '0'.repeat(4 - hex.length) + hex
 }
 
 /**
  * Gets the actual package.json version with also the git revision number at the end of it
- *
- * @returns {string} The version
  */
-function getVersion () {
+export function getVersion (): string {
   if (!VERSION) {
-    let revision
+    let revision: string
     try {
       revision = require('child_process')
         .execSync('git rev-parse --short HEAD')
@@ -126,12 +114,9 @@ function getVersion () {
 /**
  * Sanitize chars of a string to use in a topic
  *
- * @param {string} str The string to sanitize
- * @param {boolean} sanitizeSlash Set it to true to remove `/` chars from the string
- * @returns {string} the sanitized string
  */
-function sanitizeTopic (str, sanitizeSlash) {
-  if (!isNaN(str) || !str) return str
+export function sanitizeTopic (str: string, sanitizeSlash: boolean): string {
+  if (!isNaN(parseInt(str)) || !str) return str
 
   if (sanitizeSlash) {
     str = removeSlash(str)
@@ -145,39 +130,29 @@ function sanitizeTopic (str, sanitizeSlash) {
 
 /**
  * Removes `/` chars from strings
- *
- * @param {string} str The string
- * @returns {string} the string without `/` chars
  */
-function removeSlash (str) {
-  return !isNaN(str) ? str : str.replace(/\//g, '-')
+export function removeSlash (str: string): string {
+  return !isNaN(parseInt(str)) ? str : str.replace(/\//g, '-')
 }
 
 /**
  * Check if an object has a property
- *
- * @param {*} obj the object
- * @param {string} prop the property
- * @returns {boolean} true if the property exists, false otherwise
  */
-function hasProperty (obj, prop) {
+export function hasProperty (obj: any, prop: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 
 /**
  * Gets the size in a human readable form starting from bytes
- *
- * @param {number} bytes total bytes
- * @returns {string} the human readable size
  */
-function humanSize (bytes) {
+export function humanSize (bytes: number): string {
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
 
   if (bytes === 0) {
     return 'n/a'
   }
 
-  const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
 
   if (i === 0) {
     return bytes + ' ' + sizes[i]
@@ -186,7 +161,7 @@ function humanSize (bytes) {
   return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
 }
 
-async function hashPsw (password) {
+export async function hashPsw (password: crypto.BinaryLike): Promise<string> {
   return new Promise((resolve, reject) => {
     const salt = crypto.randomBytes(8).toString('hex')
 
@@ -197,7 +172,7 @@ async function hashPsw (password) {
   })
 }
 
-async function verifyPsw (password, hash) {
+export async function verifyPsw (password: crypto.BinaryLike, hash: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const [salt, key] = hash.split(':')
     crypto.scrypt(password, salt, 64, (err, derivedKey) => {
@@ -209,50 +184,22 @@ async function verifyPsw (password, hash) {
 
 /**
  * Checks if a string is a hex buffer
- *
- * @param {string} str
- * @returns {boolean}
  */
-function isBufferAsHex (str) {
+export function isBufferAsHex (str: string): boolean {
   return /^0x([a-fA-F0-9]{2})+$/.test(str)
 }
 
 /**
  * Parses a buffer from a string has the form 0x[a-f0-9]+
- *
- * @param {string} hex
- * @returns {Buffer} the parsed Buffer
  */
-function bufferFromHex (hex) {
+ export function bufferFromHex (hex: string): Buffer {
   return Buffer.from(hex.substr(2), 'hex')
 }
 
 /**
  * Converts a buffer to an hex string
- *
- * @param {Buffer} buffer
- * @returns {string}
  */
-function buffer2hex (buffer) {
+export function buffer2hex (buffer: Buffer): string {
   if (buffer.length === 0) return ''
   return `0x${buffer.toString('hex')}`
-}
-
-module.exports = {
-  getPath,
-  joinPath,
-  joinProps,
-  isValueId,
-  copy,
-  num2hex,
-  getVersion,
-  sanitizeTopic,
-  removeSlash,
-  hasProperty,
-  humanSize,
-  hashPsw,
-  verifyPsw,
-  isBufferAsHex,
-  bufferFromHex,
-  buffer2hex
 }
