@@ -1,14 +1,14 @@
 import { ConfigManager } from '@zwave-js/config'
 
-export default {
+
   // https://github.com/OpenZWave/open-zwave/blob/0d94c9427bbd19e47457578bccc60b16c6679b49/config/Localization.xml#L606
-  _productionMap: {
+ const _productionMap = {
     0: 'instant',
     1: 'total',
     2: 'today',
     3: 'time'
-  },
-  deviceClass: {
+  }
+export const deviceClass = {
     sensor_binary: {
       BATTERY: 'battery',
       COLD: 'cold',
@@ -34,7 +34,7 @@ export default {
       VIBRATION: 'vibration',
       WINDOW: 'window'
     },
-    sensor: {
+   sensor: {
       BATTERY: 'battery',
       HUMIDITY: 'humidity',
       ILLUMINANCE: 'illuminance',
@@ -60,17 +60,17 @@ export default {
       SHUTTER: 'shutter',
       WINDOW: 'window'
     }
-  },
-  productionType (index: number): any {
+  }
+ export function productionType (index: number): any {
     return {
       sensor: 'energy_production',
-      objectId: this._productionMap[index] || 'unknown',
+      objectId: _productionMap[index] || 'unknown',
       props: {
         device_class: index === 3 ? 'timestamp' : 'power'
       }
     }
-  },
-  meterType (ccSpecific: { meterType: any; scale: number }, configManager: ConfigManager): any {
+  }
+  export function meterType (ccSpecific: { meterType: any; scale: number }, configManager: ConfigManager): any {
     const meter = configManager.lookupMeter(ccSpecific.meterType)
     const scale = configManager.lookupMeterScale(
       ccSpecific.meterType,
@@ -113,10 +113,10 @@ export default {
     }
 
     return cfg
-  },
+  }
   // https://github.com/OpenZWave/open-zwave/blob/4478eea26b0e1a29184df0515a8034757258ff88/cpp/src/ValueIDIndexesDefines.def#L1068
   // https://github.com/OpenZWave/open-zwave/blob/05a096f75dddd27e3f8dc6af2afdb3cad3b4ebaa/config/Localization.xml#L7
-  _alarmMap: {
+  const _alarmMap = {
     1: 'smoke',
     2: 'carbon_monoxide',
     3: 'carbon_dioxide',
@@ -139,12 +139,12 @@ export default {
     257: 'alert_location',
     512: 'type',
     513: 'level'
-  },
-  alarmType (index: string) : string {
-    return this._alarmMap[index] || 'unknown_' + index
-  },
+  }
+  export function alarmType (index: string) : string {
+    return _alarmMap[index] || 'unknown_' + index
+  }
   // https://github.com/OpenZWave/open-zwave/blob/0d94c9427bbd19e47457578bccc60b16c6679b49/config/SensorMultiLevelCCTypes.xml
-  _sensorMap: {
+  const _sensorMap = {
     temperature: {
       1: 'air',
       11: 'dew_point',
@@ -316,27 +316,27 @@ export default {
       85: 'lead',
       86: 'particulate_matter'
     }
-  },
-  sensorType (index: string): any {
+  }
+  export function sensorType (index: string): any {
     const sensorType = {
       sensor: 'generic',
       objectId: 'unknown_' + index,
       props: {}
     }
 
-    for (const sensor in this._sensorMap) {
-      const objectId = this._sensorMap[sensor][index]
+    for (const sensor in _sensorMap) {
+      const objectId = _sensorMap[sensor][index]
       if (objectId !== undefined) {
         sensorType.sensor = sensor
         sensorType.objectId = objectId
-        sensorType.props = this._sensorMap[sensor].props || {}
+        sensorType.props = _sensorMap[sensor].props || {}
         break
       }
     }
 
     return sensorType
-  },
-  _commandClassMap: {
+  }
+  const _commandClassMap = {
     0x00: 'no_operation',
     0x20: 'basic',
     0x21: 'controller_replication',
@@ -428,11 +428,11 @@ export default {
     0x9e: 'sensor_configuration',
     0xef: 'mark',
     0xf0: 'non_interoperable'
-  },
-  commandClass (cmd: string | number): string {
-    return this._commandClassMap[cmd] || 'unknownClass_' + cmd
-  },
-  _genericDeviceClassMap: {
+  }
+  export function commandClass (cmd: string | number): string {
+    return _commandClassMap[cmd] || 'unknownClass_' + cmd
+  }
+const  _genericDeviceClassMap = {
     // https://github.com/OpenZWave/open-zwave/blob/master/config/device_classes.xml
     // https://github.com/home-assistant/core/blob/dev/homeassistant/components/zwave/const.py#L196
     // 0x00: specific_type_not_used // Available in all Generic types
@@ -657,20 +657,20 @@ export default {
       generic: 'generic_type_non_interoperable',
       specific: {}
     }
-  },
-  genericDeviceClassAttributes (cls: string | number): string {
-    return this._genericDeviceClassMap[cls]
-  },
-  genericDeviceClass (cls: string): string {
-    const clsAttr = this.genericDeviceClassAttributes(cls)
+  }
+  export function genericDeviceClassAttributes (cls: string | number): { generic: any, specific: any} {
+    return _genericDeviceClassMap[cls]
+  }
+  export function genericDeviceClass (cls: string): string {
+    const clsAttr = genericDeviceClassAttributes(cls)
     if (clsAttr) {
       return clsAttr.generic
     } else {
       return 'unknownGenericDeviceType_' + cls
     }
-  },
-  specificDeviceClass (genericCls: string, specificCls: string) : string {
-    const clsAttr = this.genericDeviceClassAttributes(genericCls)
+  }
+  export function specificDeviceClass (genericCls: string, specificCls: string) : string {
+    const clsAttr = genericDeviceClassAttributes(genericCls)
     if (clsAttr) {
       return (
         clsAttr.specific[specificCls] ||
@@ -680,4 +680,4 @@ export default {
       return 'unknownGenericDeviceType_' + genericCls
     }
   }
-}
+

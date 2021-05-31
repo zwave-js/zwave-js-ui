@@ -28,10 +28,11 @@ export type Z2MValueIdState = {
 export type Z2MValueId = {
   id: string
   nodeId: number
-  commandClass: CommandClass
+  commandClass: number
   commandClassName: string
   endpoint?: number
   property: string | number
+  propertyName: string | number
   propertyKey?: string | number
   propertyKeyName?: string
   type: ValueType
@@ -50,7 +51,9 @@ export type Z2MValueId = {
   maxLength?: number
   states?: Z2MValueIdState[]
   list: boolean
-  lastUpdate?: number
+  lastUpdate?: number,
+  value?: any,
+  targetValue?: string,
 }
 
 export type Z2MValueIdScene = Z2MValueId & {
@@ -93,6 +96,8 @@ export type HassDevice = {
   values: string[]
   persistent: boolean
   ignoreDiscovery: boolean
+  fan_mode_map?: {[key: string]: number}
+  mode_map?: {[key: string]: number}
 }
 
 export type Z2MNode = {
@@ -123,10 +128,10 @@ export type Z2MNode = {
   neighbors: number[]
   loc: string
   name: string
-  hassDevices: Map<string, HassDevice>
+  hassDevices: {[key: string]: HassDevice}
   deviceId: string
   hexId: string
-  values: Map<string, Z2MValueId>
+  values: { [key: string]: Z2MValueId }
   groups: Z2MNodeGroups[]
   ready: boolean
   available: boolean
@@ -171,23 +176,24 @@ export type LogLevel = 'silly' | 'verbose' | 'debug' | 'info' | 'warn' | 'error'
 
 export type GatewayConfig = {
   type: GatewayType
-  payloadType: PayloadType
-  nodeNames: boolean
-  ignoreLoc: boolean
-  sendEvents: boolean
-  ignoreStatus: boolean
-  includeNodeInfo: boolean
-  publishNodeDetails: boolean
-  retainedDiscovery: boolean
-  entityTemplate: string
-  hassDiscovery: boolean
-  discoveryPrefix: string
-  logEnabled: boolean
-  logLevel: LogLevel
-  logToFile: boolean
-  values: GatewayValue[]
-  plugins: string[],
-  logFileName: string
+  payloadType?: PayloadType
+  nodeNames?: boolean
+  ignoreLoc?: boolean
+  sendEvents?: boolean
+  ignoreStatus?: boolean
+  includeNodeInfo?: boolean
+  publishNodeDetails?: boolean
+  retainedDiscovery?: boolean
+  entityTemplate?: string
+  hassDiscovery?: boolean
+  discoveryPrefix?: string
+  logEnabled?: boolean
+  logLevel?: LogLevel
+  logToFile?: boolean
+  values?: GatewayValue[]
+  plugins?: string[],
+  logFileName?: string,
+  manualDiscovery?: boolean
 }
 
 export type MqttConfig = {
@@ -294,8 +300,8 @@ export interface ZwaveClient extends EventEmitter {
   closed: boolean
   driverReady: boolean
   scenes: Z2MScene[]
-  nodes: Z2MNode[]
-  storeNodes: Z2MNode[]
+  nodes: Map<number, Z2MNode>
+  storeNodes: Map<number, Z2MNode>
   devices: Map<string, Z2MNode>
   driverInfo: Z2MDriverInfo
   status: ZwaveClientStatus

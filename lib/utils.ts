@@ -115,7 +115,7 @@ export function getVersion (): string {
  * Sanitize chars of a string to use in a topic
  *
  */
-export function sanitizeTopic (str: string, sanitizeSlash: boolean): string {
+export function sanitizeTopic (str: string, sanitizeSlash: boolean = false): string {
   if (!isNaN(parseInt(str)) || !str) return str
 
   if (sanitizeSlash) {
@@ -131,8 +131,8 @@ export function sanitizeTopic (str: string, sanitizeSlash: boolean): string {
 /**
  * Removes `/` chars from strings
  */
-export function removeSlash (str: string): string {
-  return !isNaN(parseInt(str)) ? str : str.replace(/\//g, '-')
+export function removeSlash (str: string | number): string | number {
+  return typeof str === 'number' ? str : str.replace(/\//g, '-')
 }
 
 /**

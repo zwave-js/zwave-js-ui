@@ -4,19 +4,20 @@
 /* eslint-disable one-var */
 'use strict'
 
-const fs = require('fs')
-const path = require('path')
-const reqlib = require('app-root-path').require
-const utils = reqlib('/lib/utils.js')
-const { AlarmSensorType } = require('zwave-js')
-const { CommandClasses } = require('@zwave-js/core')
-const { socketEvents } = reqlib('/lib/SocketManager.js')
-const Constants = require('./Constants.js')
-const logger = reqlib('/lib/logger.js').module('Gateway')
-const hassCfg = reqlib('/hass/configurations.js')
-const hassDevices = reqlib('/hass/devices.js')
-const version = reqlib('package.json').version
-const { storeDir } = reqlib('config/app.js')
+import * as fs from 'fs'
+import * as path from 'path'
+import * as utils from '../lib/utils.js'
+import { AlarmSensorType } from 'zwave-js'
+import { CommandClasses, ValueID } from '@zwave-js/core'
+import { socketEvents } from '../lib/SocketManager.js'
+import * as Constants from './Constants.js'
+import { module } from '../lib/logger.js'
+import * as hassCfg from '../hass/configurations.js'
+import * as hassDevices from '/hass/devices.js'
+import { storeDir } from '../config/app.js'
+import { GatewayConfig, GatewayValue, HassDevice, MqttClient, Z2MNode, Z2MValueId, ZwaveClient } from '../types/index.js'
+
+module('Gateway')
 
 const NODE_PREFIX = 'nodeID_'
 
@@ -40,11 +41,11 @@ let allDevices = hassDevices // will contain customDevices + hassDevices
 // triggers, cancel it and try to watch the file again. Meanwhile spam `fn()`
 // on any change, trusting that it's idempotent.
 const watchers = new Map()
-const watch = (filename, fn) => {
+const watch = (filename: string, fn: () => void) => {
   try {
     watchers.set(
       filename,
-      fs.watch(filename, e => {
+      fs.watch(filename, (e: string) => {
         fn()
         if (e === 'rename') {
           watchers.get(filename).close()
@@ -84,7 +85,7 @@ const loadCustomDevices = () => {
       devices = reqlib(CUSTOM_DEVICES)
     } else if (fs.existsSync(customDevicesJsonPath)) {
       loaded = customDevicesJsonPath
-      devices = JSON.parse(fs.readFileSync(loaded))
+      devices = JSON.parse(fs.readFileSync(loaded).toString())
     } else {
       return
     }
@@ -115,16 +116,17 @@ loadCustomDevices()
 watch(customDevicesJsPath, loadCustomDevices)
 watch(customDevicesJsonPath, loadCustomDevices)
 
-class Gateway {
-  /**
-   * The constructor
-   *
-   * @param {import('../types').GatewayConfig} config
-   * @param {ZwaveClient} zwave
-   * @param {import('../types').MqttClient} mqtt
-   * @returns {import('../types').Z2MGateway}
-   */
-  constructor (config, zwave, mqtt) {
+export class Gateway {
+
+  config: GatewayConfig
+  mqtt: MqttClient
+  zwave: ZwaveClient
+  topicValues: {[key: string]: Z2MValueId | GatewayValue}
+  discovered: {[key: string]: HassDevice}
+  topicLevels: number[]
+  closed: boolean
+ 
+  constructor (config: { type: number }, zwave: any, mqtt: any) {
     this.config = config || { type: 1 }
     // clients
     this.mqtt = mqtt
@@ -140,6 +142,8 @@ class Gateway {
     this.topicValues = {}
 
     this.discovered = {}
+
+    this.closed = false
 
     // topic levels for subscribes using wildecards
     this.topicLevels = []
@@ -173,21 +177,16 @@ class Gateway {
   /**
    * Parse the value of the payload received from mqtt
    * based on the type of the payload and the gateway config
-   *
-   * @param {any} payload
-   * @param {import('../types').Z2MValueId} valueId
-   * @param {any} valueConf
-   * @returns
    */
-  parsePayload (payload, valueId, valueConf) {
+  parsePayload (payload: any, valueId: Z2MValueId, valueConf: GatewayValue) {
     try {
       payload =
-        typeof payload === 'object' && payload.hasOwnProperty('value')
+        typeof payload === 'object' && utils.hasProperty(payload, 'value')
           ? payload.value
           : payload
 
       // try to parse string to bools
-      if (typeof payload === 'string' && isNaN(payload)) {
+      if (typeof payload === 'string' && isNaN(parseInt(payload))) {
         if (/\btrue\b|\bon\b|\block\b/gi.test(payload)) payload = true
         else if (/\bfalse\b|\boff\b|\bunlock\b/gi.test(payload)) {
           payload = false
@@ -283,11 +282,8 @@ class Gateway {
 
   /**
    * Calculates the node topic based on gateway settings
-   *
-   * @param {import('../types').Z2MNode} node internal node object
-   * @returns The node topic
    */
-  nodeTopic (node) {
+  nodeTopic (node: Z2MNode) {
     const topic = []
 
     if (node.loc && !this.config.ignoreLoc) topic.push(node.loc)
@@ -325,15 +321,15 @@ class Gateway {
    * @param {boolean} returnObject Set this to true to also return the targetTopic and the valueConf
    * @returns The value topic string or an object
    */
-  valueTopic (node, valueId, returnObject = false) {
+  valueTopic (node: Z2MNode, valueId: Z2MValueId, returnObject: boolean = false) {
     const topic = []
-    let valueConf
+    let valueConf: GatewayValue = undefined
 
     // check if this value is in configuration values array
-    const values = this.config.values.filter(v => v.device === node.deviceId)
+    const values = this.config.values.filter((v: GatewayValue) => v.device === node.deviceId)
     if (values && values.length > 0) {
       const vID = this._getIdWithoutNode(valueId)
-      valueConf = values.find(v => v.value.id === vID)
+      valueConf = values.find((v: GatewayValue) => v.value.id === vID)
     }
 
     if (valueConf && valueConf.topic) {
@@ -341,7 +337,7 @@ class Gateway {
       topic.push(valueConf.topic)
     }
 
-    let targetTopic
+    let targetTopic: string | { topic: string; valueConf: any; targetTopic: any }
 
     if (returnObject && valueId.targetValue) {
       const targetValue = node.values[valueId.targetValue]
@@ -405,10 +401,8 @@ class Gateway {
 
   /**
    * Rediscover all hass devices of this node
-   *
-   * @param {number} nodeID
    */
-  rediscoverNode (nodeID) {
+  rediscoverNode (nodeID: number) {
     const node = this.zwave.nodes.get(nodeID)
     if (node) {
       // delete all discovered values
@@ -417,7 +411,7 @@ class Gateway {
 
       // rediscover all values
       const nodeDevices = allDevices[node.deviceId] || []
-      nodeDevices.forEach(device => this.discoverDevice(node, device))
+      nodeDevices.forEach((device: any) => this.discoverDevice(node, device))
 
       // discover node values (that are not part of a device)
       // iterate prioritized first, then the remaining
@@ -434,7 +428,7 @@ class Gateway {
    *
    * @param {number} nodeID
    */
-  disableDiscovery (nodeID) {
+  disableDiscovery (nodeID: any) {
     const node = this.zwave.nodes.get(nodeID)
     if (node && node.hassDevices) {
       for (const id in node.hassDevices) {
@@ -452,7 +446,7 @@ class Gateway {
    * @param {number} nodeId The node id
    * @param {{deleteDevice: boolean, forceUpdate: boolean}} options options
    */
-  publishDiscovery (hassDevice, nodeId, options = {}) {
+  publishDiscovery (hassDevice: HassDevice, nodeId: any, options: { deleteDevice?: boolean; forceUpdate?: boolean } = {}) {
     try {
       logger.log(
         'debug',
@@ -509,7 +503,7 @@ class Gateway {
    * @param {HassDevice} hassDevice Hass device configuration
    * @param {boolean} deleteDevice Remove the device from the map
    */
-  setDiscovery (nodeId, hassDevice, deleteDevice = false) {
+  setDiscovery (nodeId: string, hassDevice: HassDevice, deleteDevice: boolean = false) {
     for (let k = 0; k < hassDevice.values.length; k++) {
       const vId = nodeId + '-' + hassDevice.values[k]
       if (deleteDevice && this.discovered[vId]) {
@@ -542,11 +536,8 @@ class Gateway {
 
   /**
    * Discover an hass device (from customDevices.js|json)
-   *
-   * @param {import('../types').Z2MNode} node node object
-   * @param {HassDevice} hassDevice hass device
    */
-  discoverDevice (node, hassDevice) {
+  discoverDevice (node: Z2MNode, hassDevice: HassDevice) {
     const hassID = hassDevice
       ? hassDevice.type + '_' + hassDevice.object_id
       : null
@@ -554,7 +545,7 @@ class Gateway {
     try {
       if (hassID && !node.hassDevices[hassID]) {
         // discover the device
-        let payload
+        let payload: { [x: string]: string | number; mode_state_topic: string; mode_state_template: string; mode_command_topic: string; temperature_state_topic: string; temperature_command_topic: string; action_topic: string | number; action_template: string; fan_mode_state_topic: string; fan_mode_command_topic: string; fan_mode_state_template: string; current_temperature_topic: string | number; temperature_unit: string; precision: number; device: { identifiers: string[]; manufacturer: any; model: string; name: any; sw_version: any }; name: any; unique_id: string }
 
         // copy the configuration without edit the original object
         hassDevice = JSON.parse(JSON.stringify(hassDevice))
@@ -563,7 +554,7 @@ class Gateway {
           payload = hassDevice.discovery_payload
 
           const mode = node.values[payload.mode_state_topic]
-          let setId
+          let setId: string | number
 
           if (mode !== undefined) {
             setId =
@@ -713,9 +704,8 @@ class Gateway {
   /**
    * Discover climate devices
    *
-   * @param {import('../types').Z2MNode} node Internal node object
    */
-  discoverClimates (node) {
+  discoverClimates (node: Z2MNode) {
     // https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/deviceClasses.json#L177
     // check if device it's a thermostat
     if (!node.deviceClass || node.deviceClass.generic !== 0x08) {
@@ -728,7 +718,7 @@ class Gateway {
       // skip if there is already a climate device
       if (
         nodeDevices.length > 0 &&
-        nodeDevices.find(d => d.type === 'climate')
+        nodeDevices.find((d: { type: string }) => d.type === 'climate')
       ) {
         return
       }
@@ -800,7 +790,7 @@ class Gateway {
         config.discovery_payload.mode_command_topic = modeId + '/set'
 
         // [0, 1, 2 ... ] (['off', 'heat', 'cold', ...])
-        const availableModes = mode.states.map(s => s.value)
+        const availableModes = mode.states.map((s: { value: any }) => s.value)
 
         // Hass accepted modes as per: https://www.home-assistant.io/integrations/climate.mqtt/#modes
         const allowedModes = ['off', 'heat', 'cool', 'auto', 'dry', 'fan_only']
@@ -873,7 +863,7 @@ class Gateway {
 
         const action = node.values[actionId]
         // [0, 1, 2 ... ] list of value fields from objects in states list
-        const availableActions = action.states.map(state => state.value)
+        const availableActions = action.states.map((state: { value: any }) => state.value)
         // Hass accepted actions as per https://www.home-assistant.io/integrations/climate.mqtt/#action_topic:
         // ['off', 'heating', 'cooling', 'drying', 'idle', 'fan']
         // Zwave actions/states: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatOperatingStateCC.ts#L43
@@ -915,11 +905,8 @@ class Gateway {
 
   /**
    * Try to guess the best way to discover this valueId in Hass
-   *
-   * @param {import('../types').Z2MNode} node Internal node object
-   * @param {string} vId value id without the node prefix
    */
-  discoverValue (node, vId) {
+  discoverValue (node: Z2MNode, vId: string | number) {
     const valueId = node.values[vId]
 
     // if the node is not ready means we don't have all values added yet so we are not sure to discover this value properly
@@ -939,7 +926,7 @@ class Gateway {
 
       const nodeName = this._getNodeName(node, this.config.ignoreLoc)
 
-      let cfg
+      let cfg: { discovery_payload: { command_topic: string; position_topic: any; set_position_topic: any; position_template: string; position_open: number; position_closed: number; payload_open: number; payload_close: number; brightness_state_topic: any; brightness_command_topic: any; device_class: any; icon: string; value_template: string; unit_of_measurement: any }; object_id: string; type: string; discoveryTopic: string; values: any[]; persistent: boolean; ignoreDiscovery: boolean }
 
       const cmdClass = valueId.commandClass
 
@@ -1430,7 +1417,7 @@ class Gateway {
    *
    * @param {number} nodeId
    */
-  updateNodeTopics (nodeId) {
+  updateNodeTopics (nodeId: any) {
     const node = this.zwave.nodes.get(nodeId)
     if (node) {
       const topics = Object.keys(this.topicValues).filter(
@@ -1451,7 +1438,7 @@ class Gateway {
    *
    * @param {number} nodeId
    */
-  removeNodeRetained (nodeId) {
+  removeNodeRetained (nodeId: any) {
     const node = this.zwave.nodes.get(nodeId)
     if (node) {
       const topics = Object.keys(node.values).map(v =>
@@ -1467,7 +1454,7 @@ class Gateway {
   /**
    * Catch all Zwave events
    */
-  _onEvent (emitter, eventName, ...args) {
+  _onEvent (emitter: any, eventName: string, ...args: any[]) {
     const topic = `${this.mqtt.eventsPrefix}/${
       this.mqtt.clientID
     }/${emitter}/${eventName.replace(/\s/g, '_')}`
@@ -1477,10 +1464,8 @@ class Gateway {
 
   /**
    * Zwave event triggered when a node is removed
-   *
-   * @param {import('../types').Z2MNode} node
    */
-  _onNodeRemoved (node) {
+  _onNodeRemoved (node: Z2MNode) {
     const prefix = node.id + '-'
 
     // delete discovered values
@@ -1493,12 +1478,8 @@ class Gateway {
 
   /**
    * Triggered when a value change is detected in Zwave Network
-   *
-   * @param {import('../types').Z2MValueId} valueId
-   * @param {import('../types').Z2MNode} node
-   * @param {bool} changed
    */
-  _onValueChanged (valueId, node, changed) {
+  _onValueChanged (valueId: Z2MValueId, node: Z2MNode, changed: any) {
     valueId.lastUpdate = Date.now()
 
     // emit event to socket
@@ -1584,7 +1565,7 @@ class Gateway {
       }
     }
 
-    let data
+    let data: { value: any; nodeName?: any; nodeLocation?: any; time?: number }
 
     switch (this.config.payloadType) {
       case PAYLOAD_TYPE.VALUEID:
@@ -1646,12 +1627,8 @@ class Gateway {
 
   /**
    * Triggered when a notification is received from a node in Zwave Client
-   *
-   * @param {import('../types').Z2MNode} node
-   * @param {import('../types/index.js').Z2MValueId} valueId
-   * @param {any} data
    */
-  _onNotification (node, valueId, data) {
+  _onNotification (node: Z2MNode, valueId: Z2MValueId, data: any) {
     const topic = this.valueTopic(node, valueId)
 
     if (this.config.payloadType !== PAYLOAD_TYPE.RAW) {
@@ -1664,9 +1641,8 @@ class Gateway {
   /**
    * When there is a node status update
    *
-   * @param {import('../types').Z2MNode} node
    */
-  _onNodeStatus (node) {
+  _onNodeStatus (node: Z2MNode) {
     if (node.ready && this.config.hassDiscovery) {
       for (const id in node.hassDevices) {
         if (node.hassDevices[id].persistent) {
@@ -1678,7 +1654,7 @@ class Gateway {
       this.discoverClimates(node)
 
       const nodeDevices = allDevices[node.deviceId] || []
-      nodeDevices.forEach(device => this.discoverDevice(node, device))
+      nodeDevices.forEach((device: any) => this.discoverDevice(node, device))
 
       // discover node values (that are not part of a device)
       // iterate prioritized first, then the remaining
@@ -1691,7 +1667,7 @@ class Gateway {
       node.inited = true
       // enable poll if required
       const values = this.config.values.filter(
-        v => v.enablePoll && v.device === node.deviceId
+        (        v: { enablePoll: any; device: any }) => v.enablePoll && v.device === node.deviceId
       )
       for (let i = 0; i < values.length; i++) {
         // don't edit the original object, copy it
@@ -1714,7 +1690,7 @@ class Gateway {
     const nodeTopic = this.nodeTopic(node)
 
     if (!this.config.ignoreStatus) {
-      let data
+      let data: { time: number; value: any; status: any; nodeId: any }
 
       if (this.config.payloadType === PAYLOAD_TYPE.RAW) {
         data = node.available
@@ -1747,7 +1723,7 @@ class Gateway {
    *
    * @param {boolean} online
    */
-  _onBrokerStatus (online) {
+  _onBrokerStatus (online: any) {
     if (online) {
       this.rediscoverAll()
     }
@@ -1758,7 +1734,7 @@ class Gateway {
    *
    * @param {boolean} online
    */
-  _onHassStatus (online) {
+  _onHassStatus (online: any) {
     logger.info(`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`)
 
     if (online) {
@@ -1773,11 +1749,11 @@ class Gateway {
    * @param {string} apiName
    * @param {any} payload
    */
-  async _onApiRequest (topic, apiName, payload) {
+  async _onApiRequest (topic: any, apiName: any, payload: { args: any[] }) {
     if (this.zwave) {
       const args = payload.args || []
 
-      let result
+      let result: { success: boolean; message: string; origin: any }
 
       if (Array.isArray(args)) {
         result = await this.zwave.callApi(apiName, ...args)
@@ -1800,7 +1776,7 @@ class Gateway {
    * @param {string[]} parts
    * @param {any} payload
    */
-  async _onBroadRequest (parts, payload) {
+  async _onBroadRequest (parts: any[], payload: ValueID) {
     if (parts.length > 0) {
       // multiple writes (back compatibility mode)
       const topic = parts.join('/')
@@ -1841,7 +1817,7 @@ class Gateway {
    * @param {string[]} parts
    * @param {any} payload
    */
-  async _onWriteRequest (parts, payload) {
+  async _onWriteRequest (parts: any[], payload: any) {
     const valueId = this.topicValues[parts.join('/')]
 
     if (valueId) {
@@ -1850,7 +1826,7 @@ class Gateway {
     }
   }
 
-  async _onMulticastRequest (payload) {
+  async _onMulticastRequest (payload: { nodes: any; value: any }) {
     const nodes = payload.nodes
     const valueId = payload
     const value = payload.value
@@ -1879,7 +1855,7 @@ class Gateway {
    * Checks if an operation is valid, it must exist and must contains
    * only numbers and operators
    */
-  _isValidOperation (op) {
+  _isValidOperation (op: string) {
     return op && !/[^0-9.()\-+*/,]/g.test(op)
   }
 
@@ -1891,7 +1867,7 @@ class Gateway {
    * @param {*} value The actual value to parse
    * @returns
    */
-  _evalFunction (code, valueId, value, node) {
+  _evalFunction (code: string, valueId: { id: any }, value: any, node: any) {
     let result = null
 
     try {
@@ -1909,11 +1885,8 @@ class Gateway {
 
   /**
    * Get node name from node object
-   *
-   * @param {import('../types').Z2MNode} node The Zwave Node Object
-   * @returns A string in the format [<location>-]<name>, if location doesn't exist it will be ignored, if the node name doesn't exists the node id with node prefix string will be used
    */
-  _getNodeName (node, ignoreLoc) {
+  _getNodeName (node: Z2MNode, ignoreLoc: boolean) : string {
     return (
       (!ignoreLoc && node.loc ? node.loc + '-' : '') +
       (node.name ? node.name : NODE_PREFIX + node.id)
@@ -1922,12 +1895,9 @@ class Gateway {
 
   /**
    *  Return re-arranged based on critical CCs
-   *
-   * @param {Map<string, import('../types').Z2MValueId>} node values map
-   * @returns {string[]} Array of values Ids sorteb by CC discovery priority
    */
 
-  _getPriorityCCFirst (values) {
+  _getPriorityCCFirst (values: { [key: string]: Z2MValueId }): string[] {
     const priorityCC = [CommandClasses['Color Switch']]
     const prioritizedValueIds = []
 
@@ -1943,39 +1913,28 @@ class Gateway {
 
   /**
    * Returns the value id without the node prefix
-   *
-   * @param {import('../types').Z2MValueId} valueId
-   * @returns {string} The valueId string
    */
-  _getIdWithoutNode (valueId) {
+  _getIdWithoutNode (valueId: Z2MValueId): string {
     return valueId.id.replace(valueId.nodeId + '-', '')
   }
 
   /**
    * Get the device Object to send in discovery payload
-   *
-   * @param {import('../types').Z2MNode} node A Zwave Node Object
-   * @param {string} nodeName Node name from getNodeName function
-   * @returns The Hass device object
    */
-  _deviceInfo (node, nodeName) {
+  _deviceInfo (node: Z2MNode, nodeName: string) {
     return {
       identifiers: ['zwavejs2mqtt_' + this.zwave.homeHex + '_node' + node.id],
       manufacturer: node.manufacturer,
       model: node.productDescription + ' (' + node.productLabel + ')',
       name: nodeName,
-      sw_version: node.firmwareVersion || version
+      sw_version: node.firmwareVersion || utils.getVersion()
     }
   }
 
   /**
    * Get the Hass discovery topic for the specific node and hassDevice
-   *
-   * @param {import('../types').HassDevice} hassDevice The Hass device object configuration
-   * @param {string} nodeName Node name from getNodeName function
-   * @returns The topic string for this device discovery
    */
-  _getDiscoveryTopic (hassDevice, nodeName) {
+  _getDiscoveryTopic (hassDevice: HassDevice, nodeName: string) {
     return `${hassDevice.type}/${utils.sanitizeTopic(nodeName, true)}/${
       hassDevice.object_id
     }/config`
@@ -1984,12 +1943,8 @@ class Gateway {
   /**
    * Generate the template string to use for value templates.
    * Note that the keys need to be numeric.
-   *
-   * @param {any} valueMap The Object with value mapping key : value
-   * @param {string} defaultValue The default value for the value
-   * @returns {string} The template to use for the value
    */
-  _getMappedValuesTemplate (valueMap, defaultValue) {
+  _getMappedValuesTemplate (valueMap: { [x: string]: any }, defaultValue: string): string {
     const map = []
     // JSON.stringify converts props to strings and this breaks the template
     // Error: "0": "off", Working: 0: "off"
@@ -2005,12 +1960,8 @@ class Gateway {
   /**
    * Generate the template string to use for value templates
    * by inverting the value map
-   *
-   * @param {any} valueMap The Object with value mapping key : value
-   * @param {string} defaultValue The default value for the value
-   * @returns {string} The template to use for the value
    */
-  _getMappedValuesInverseTemplate (valueMap, defaultValue) {
+  _getMappedValuesInverseTemplate (valueMap: { [x: string]: string }, defaultValue: string): string {
     const map = []
     // JSON.stringify converts props to strings and this breaks the template
     // Error: "0": "off" Working: 0: "off"
@@ -2032,12 +1983,8 @@ class Gateway {
   /**
    * Calculate the correct template string to use for templates with state
    * list based on gateway settings and mapped mode values
-   *
-   * @param {any} state The object list which is translated to map
-   * @param {string} defaultValueKey The key to use for default value
-   * @returns {string} The template to use for the template
    */
-  _getMappedStateTemplate (state, defaultValueKey) {
+  _getMappedStateTemplate (state: { [x: string]: { text: any, value: any } }, defaultValueKey: any): string {
     const map = []
     let defaultValue = 'value_json.value'
     for (const listKey in state) {
@@ -2060,13 +2007,9 @@ class Gateway {
 
   /**
    * Generates payload for Binary use from a state object
-   *
-   * @param {import('../types').HassDevice} cfg Hass discovery Configuration
-   * @param {import('../types').Z2MValueId} valueId The device ValueID
-   * @param {number} offStateValue The value number to consider off state
    */
-  _setBinaryPayloadFromSensor (cfg, valueId, offStateValue = 0) {
-    const stateKeys = valueId.states.map(s => s.value)
+  _setBinaryPayloadFromSensor (cfg:HassDevice, valueId: Z2MValueId, offStateValue: number = 0) {
+    const stateKeys = valueId.states.map((s: { value: any }) => s.value)
     // Set on/off state from keys
     if (stateKeys[0] === offStateValue) {
       cfg.discovery_payload.payload_off = stateKeys[0]
@@ -2080,12 +2023,8 @@ class Gateway {
 
   /**
    * Create a binary sensor configuration with a specific device class
-   *
-   * @param {string} devClass Choosen device class
-   * @param {boolean} reversePayload reverse payload order
-   * @returns {import('../types').HassDevice} cfg Hass discovery Configuration for the binary sensor
    */
-  _getBinarySensorConfig (devClass, reversePayload = false) {
+  _getBinarySensorConfig (devClass: string, reversePayload: boolean = false): HassDevice {
     const cfg = utils.copy(hassCfg.binary_sensor)
     cfg.discovery_payload.device_class = devClass
     if (reversePayload) {
@@ -2097,12 +2036,8 @@ class Gateway {
 
   /**
    * Retrives the value of a property from the node valueId
-   *
-   * @param {any} payload discovery payload
-   * @param {string} prop property name
-   * @param {import('../types').Z2MNode} node node object
    */
-  _setDiscoveryValue (payload, prop, node) {
+  _setDiscoveryValue (payload: any, prop: string, node: Z2MNode) {
     if (typeof payload[prop] === 'string') {
       const valueId = node.values[payload[prop]]
       if (valueId && valueId.value != null) {
@@ -2113,12 +2048,8 @@ class Gateway {
 
   /**
    * Check if this node supports rgb and if so add it to discovery configuration
-   *
-   * @param {import('../types').Z2MNode} node the node
-   * @param {import('../types').Z2MValueId} currentColorValue the valueId of the `currentColor` Color CC
-   * @returns {any} a configuration if the rgb dimmer is added
    */
-  _addRgbColorSwitch (node, currentColorValue) {
+  _addRgbColorSwitch (node: Z2MNode, currentColorValue: Z2MValueId): any {
     const cfg = utils.copy(hassCfg.light_rgb_dimmer)
 
     const currentColorTopics = this.valueTopic(node, currentColorValue, true)
@@ -2152,8 +2083,8 @@ class Gateway {
      If multilevel is not there use binary
      Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
   */
-    let discoveredStateTopic
-    let discoveredCommandTopic
+    let discoveredStateTopic: any
+    let discoveredCommandTopic: any
 
     if (brightnessValue || switchValue) {
       const vID = brightnessValue || switchValue
@@ -2198,14 +2129,7 @@ class Gateway {
     return cfg
   }
 
-  /**
-   *
-   * @param {import('../types').Z2MNode} node node object
-   * @param {import('../types').Z2MValueId} valueId valueId object
-   * @param {any} cfg configuration object
-   * @param {string} entityTemplate the entity template from configuration
-   */
-  _getEntityName (node, valueId, cfg, entityTemplate, ignoreLoc) {
+  _getEntityName (node: Z2MNode, valueId: Z2MValueId, cfg: HassDevice, entityTemplate: string, ignoreLoc: boolean) {
     entityTemplate = entityTemplate || '%ln_%o'
     // when getting the entity name of a device use node props
     let propertyKey = cfg.type
@@ -2232,5 +2156,3 @@ class Gateway {
       .replace(/%l/g, label)
   }
 }
-
-module.exports = Gateway
