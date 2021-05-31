@@ -33,9 +33,9 @@ According to zwave-js [docs](https://zwave-js.github.io/node-zwave-js/#/api/driv
 When a custom device configuration is loaded successfully you should see this in zwave-js logs:
 
 ```js
-10:32:09.322 CNTRLR   [Node 001] Embedded device config loaded
-10:32:09.329 CNTRLR   [Node 007] Embedded device config loaded
-10:32:09.331 CNTRLR   [Node 015] Embedded device config loaded
-10:32:09.351 CNTRLR   [Node 017] Embedded device config loaded
-10:32:09.374 CNTRLR   [Node 025] Embedded device config loaded
+10:32:09.322 CNTRLR   [Node 001] User-provided device config loaded
+10:32:09.329 CNTRLR   [Node 007] User-provided device config loaded
+10:32:09.331 CNTRLR   [Node 015] User-provided device config loaded
+10:32:09.351 CNTRLR   [Node 017] User-provided device config loaded
+10:32:09.374 CNTRLR   [Node 025] User-provided device config loaded
 ```
