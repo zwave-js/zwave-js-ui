@@ -1,3 +1,15 @@
+## [4.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.0...v4.5.1) (2021-05-31)
+
+
+### Bug Fixes
+
+* put deviceConfigPriorityDir where it belongs ([#1294](https://github.com/zwave-js/zwavejs2mqtt/issues/1294)) ([e60f7f4](https://github.com/zwave-js/zwavejs2mqtt/commit/e60f7f48c98db3a2544fed7036655d85aaea0537))
+
+
+### Features
+
+* bump zwave-js@7.7.1 ([a4a043b](https://github.com/zwave-js/zwavejs2mqtt/commit/a4a043b5046a9cf98c742d545c149cc323943cf9))
+
 # [4.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.4.0...v4.5.0) (2021-05-27)
 
 
