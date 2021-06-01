@@ -6,10 +6,10 @@ module.exports = {
     browser: true,
     mocha: true,
     node: true,
-    es6: true
+    es2021: true
   },
   parserOptions: {
-    ecmaVersion: 2018,
+    ecmaVersion: 12,
     parser: '@typescript-eslint/parser',
     sourceType: 'module'
   },
