@@ -4,7 +4,7 @@
 import mqtt, { Client } from 'mqtt'
 import { joinPath, sanitizeTopic } from './utils'
 import NeDBStore from 'mqtt-nedb-store'
-import {EventEmitter} from 'events'
+import { EventEmitter } from 'events'
 import { storeDir } from '../config/app'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
@@ -186,7 +186,7 @@ class MqttClient extends EventEmitter {
   /**
    * Method used to publish an update
    */
-  publish (topic: string, data: any, options?: mqtt.IClientPublishOptions, prefix?: string ) {
+  publish (topic: string, data: any, options?: mqtt.IClientPublishOptions, prefix?: string) {
     if (this.client) {
       const settingOptions = {
         qos: this.config.qos,
@@ -385,7 +385,7 @@ class MqttClient extends EventEmitter {
     logger.log('info', `Message received on ${topic}, %o`, payload)
 
     if (topic === MqttClient.HASS_WILL) {
-      if(typeof parsed === 'string') {
+      if (typeof parsed === 'string') {
         this.emit('hassStatus', parsed.toLowerCase() === 'online')
       } else {
         logger.error('Invalid payload sent to Hass Will topic')

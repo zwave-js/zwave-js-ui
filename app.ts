@@ -1,5 +1,5 @@
-import express from 'express'
-import {Request, Response} from 'express'
+import express, { Request, Response } from 'express'
+
 import morgan from 'morgan'
 import csrf from 'csurf'
 import SerialPort from 'serialport'
@@ -11,9 +11,9 @@ import Gateway, { GatewayConfig } from './lib/Gateway'
 import store, { User } from './config/store'
 import * as loggers from './lib/logger'
 import history from 'connect-history-api-fallback'
-import SocketManager from './lib/SocketManager'
-import { inboundEvents, socketEvents } from './lib/SocketManager'
-import * as utils from  './lib/utils'
+import SocketManager, { inboundEvents, socketEvents } from './lib/SocketManager'
+
+import * as utils from './lib/utils'
 import fs from 'fs-extra'
 import path from 'path'
 import { storeDir, sessionSecret, defaultUser, defaultPsw } from './config/app'
@@ -27,7 +27,6 @@ import sessionStore from 'session-file-store'
 import { Socket } from 'socket.io'
 import { Server } from 'http'
 
-
 declare module 'express' {
   interface Request {
      user?: User;
@@ -39,7 +38,6 @@ const { createCertificate } = require('pem').promisified
 const FileStore = sessionStore(session)
 const app = express()
 const logger = loggers.module('App')
-
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -390,7 +388,7 @@ function setupSocket (server: Server) {
 
   socketManager.on(inboundEvents.zwave, async function (socket: Socket, data) {
     if (gw.zwave) {
-      let result : ICallApiResult & {api?: string, originalArgs?: any[]} = await gw.zwave.callApi(data.api, ...data.args)
+      const result : ICallApiResult & {api?: string, originalArgs?: any[]} = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
       result.originalArgs = data.args
       socket.emit(socketEvents.api, result)
@@ -610,12 +608,10 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
 // logout the user
 app.get('/api/logout', apisLimiter, isAuthenticated, async function (req, res) {
   req.session.destroy((err) => {
-    if(err) {
-  res.json({ success: false, message: err.message })
-
+    if (err) {
+      res.json({ success: false, message: err.message })
     } else {
-  res.json({ success: true, message: 'User logged out' })
-
+      res.json({ success: true, message: 'User logged out' })
     }
   })
 })

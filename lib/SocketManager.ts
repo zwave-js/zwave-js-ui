@@ -3,7 +3,7 @@
 import { EventEmitter } from 'events'
 import { Server as HttpServer } from 'http'
 import { module } from './logger'
-import { Server as SocketServer, Socket } from "socket.io";
+import { Server as SocketServer, Socket } from 'socket.io'
 
 const logger = module('Socket')
 
@@ -36,7 +36,6 @@ export const inboundEvents = {
  * The constructor
  */
 export default class SocketManager extends EventEmitter {
-
   server: HttpServer
   io: SocketServer
   authMiddleware: (socket: Socket, next: () => void) => void | undefined

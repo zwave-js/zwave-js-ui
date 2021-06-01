@@ -7,19 +7,18 @@ import { CommandClasses, Duration, ValueMetadataNumeric, ValueMetadataString, Co
 import * as utils from './utils'
 import { EventEmitter } from 'events'
 import jsonStore from './jsonStore'
-import { socketEvents }from './SocketManager'
+import { socketEvents } from './SocketManager'
 import store from '../config/store'
 import { storeDir } from '../config/app'
 import * as LogManager from './logger'
 
 import { ZwavejsServer, serverVersion } from '@zwave-js/server'
 import * as pkgjson from '../package.json'
-import { Server as SocketServer } from "socket.io";
+import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 
 const logger = LogManager.module('Zwave')
 const loglevels = require('triple-beam').configs.npm.levels
-
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
@@ -79,7 +78,7 @@ export type Z2MValueIdState = {
   value: number
 }
 
-export type Z2MValueId  = {
+export type Z2MValueId = {
   id: string
   nodeId: number
   type: ValueType
@@ -245,13 +244,12 @@ export enum EventSource {
   NODE = 'node'
 }
 
-export interface ICallApiResult { 
-  message: any; 
-  args?: any; 
-  success?: boolean; 
-  result?: any 
+export interface ICallApiResult {
+  message: any;
+  args?: any;
+  success?: boolean;
+  result?: any
 }
-
 
 declare interface ZwaveClient {
   on(event: 'nodeStatus', listener: (node: Z2MNode) => void): this
@@ -276,7 +274,6 @@ declare interface ZwaveClient {
 }
 
 class ZwaveClient extends EventEmitter {
-
   cfg: ZwaveConfig
   socket: SocketServer
   closed: boolean
@@ -304,7 +301,6 @@ class ZwaveClient extends EventEmitter {
   pollIntervals: Record<string, NodeJS.Timeout>
 
   private _lockNeighborsRefresh: boolean
-
 
   constructor (config: ZwaveConfig, socket: SocketServer) {
     super()
@@ -598,7 +594,7 @@ class ZwaveClient extends EventEmitter {
     const status: {driverReady: boolean, status: boolean, config: ZwaveConfig} = {
       driverReady: this.driverReady,
       status: this.driverReady && !this.closed,
-      config: this.cfg 
+      config: this.cfg
     }
 
     return status
@@ -1848,7 +1844,7 @@ class ZwaveClient extends EventEmitter {
 
     // driver ready
     this.status = ZwaveClientStatus.DRIVER_READY
-  
+
     this.driverReady = true
 
     logger.info('Zwave driver is ready')
@@ -2424,7 +2420,7 @@ class ZwaveClient extends EventEmitter {
    * @param {Record<string, unknown>} args
    */
   _onNodeNotification (zwaveNode: ZWaveNode, ccId: CommandClasses, args: Record<string, unknown>) {
-    const valueId: Partial<Z2MValueId>= {
+    const valueId: Partial<Z2MValueId> = {
       id: null,
       nodeId: zwaveNode.id,
       commandClass: ccId,
@@ -2593,7 +2589,7 @@ class ZwaveClient extends EventEmitter {
   _addNode (zwaveNode: ZWaveNode): Z2MNode {
     const nodeId = zwaveNode.id
 
-    let existingNode = this.nodes.get(nodeId)
+    const existingNode = this.nodes.get(nodeId)
 
     // this shouldn't happen
     if (existingNode && existingNode.ready) {
@@ -2670,7 +2666,7 @@ class ZwaveClient extends EventEmitter {
     node.nodeType = zwaveNode.nodeType
     node.endpointsCount = zwaveNode.getEndpointCount()
     node.endpointIndizes = zwaveNode.getEndpointIndizes()
-    node.isSecure = zwaveNode.isSecure 
+    node.isSecure = zwaveNode.isSecure
     node.supportsSecurity = zwaveNode.supportsSecurity
     node.supportsBeaming = zwaveNode.supportsBeaming
     node.isControllerNode = zwaveNode.isControllerNode()
@@ -2851,7 +2847,7 @@ class ZwaveClient extends EventEmitter {
    * @param {ZWaveNode} zwaveNode
    * @param {ZWaveNodeValueUpdatedArgs} args
    */
-  _updateValue (zwaveNode: ZWaveNode, args: TranslatedValueID & {[x:string]: any} ) {
+  _updateValue (zwaveNode: ZWaveNode, args: TranslatedValueID & {[x:string]: any}) {
     const node = this.nodes.get(zwaveNode.id)
 
     if (!node) {
@@ -2979,7 +2975,7 @@ class ZwaveClient extends EventEmitter {
   /**
    * Get a valueId from a valueId object
    */
-  _getValueID (v: Partial<Z2MValueId> & {[x: string]: any} , withNode: boolean = false) {
+  _getValueID (v: Partial<Z2MValueId> & {[x: string]: any}, withNode: boolean = false) {
     return `${withNode ? v.nodeId + '-' : ''}${v.commandClass}-${v.endpoint ||
       0}-${v.property}${v.propertyKey !== undefined ? '-' + v.propertyKey : ''}`
   }

@@ -6,8 +6,7 @@
 import jsonStore from '../lib/jsonStore'
 import store from '../config/store'
 import * as conf from '../config/app'
-import app from '../app'
-import { startServer } from '../app'
+import app, { startServer } from '../app'
 
 console.log(`
  ______                       _     ___                  _   _   
@@ -25,8 +24,6 @@ console.log(`
 // if jsonstore fails exit the application
 jsonStore.init(store)
   .then(() => {
-    
-
     /**
      * Normalize a port into a number, string, or false.
      */

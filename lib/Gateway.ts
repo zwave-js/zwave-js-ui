@@ -19,7 +19,6 @@ import { IClientPublishOptions } from 'mqtt'
 import MqttClient from './MqttClient'
 import ZwaveClient, { HassDevice, Z2MNode, Z2MValueId, Z2MValueIdState } from './ZwaveClient'
 
-
 const logger = module('Gateway')
 
 const NODE_PREFIX = 'nodeID_'
@@ -169,7 +168,6 @@ export type GatewayConfig = {
 }
 
 export default class Gateway {
-
   config: GatewayConfig
   mqtt: MqttClient
   zwave: ZwaveClient
@@ -177,7 +175,7 @@ export default class Gateway {
   discovered: {[key: string]: HassDevice}
   topicLevels: number[]
   closed: boolean
- 
+
   constructor (config: GatewayConfig, zwave: ZwaveClient, mqtt: MqttClient) {
     this.config = config || { type: 1 }
     // clients
@@ -371,7 +369,7 @@ export default class Gateway {
   */
   valueTopic (node: Z2MNode, valueId: Z2MValueId, returnObject: boolean = false) {
     const topic = []
-    let valueConf: GatewayValue = undefined
+    let valueConf: GatewayValue
 
     // check if this value is in configuration values array
     const values = this.config.values.filter((v: GatewayValue) => v.device === node.deviceId)
@@ -1705,7 +1703,7 @@ export default class Gateway {
       node.inited = true
       // enable poll if required
       const values = this.config.values.filter(
-        (        v: { enablePoll: any; device: any }) => v.enablePoll && v.device === node.deviceId
+        (v: { enablePoll: any; device: any }) => v.enablePoll && v.device === node.deviceId
       )
       for (let i = 0; i < values.length; i++) {
         // don't edit the original object, copy it
@@ -1806,7 +1804,7 @@ export default class Gateway {
   /**
    * Handle broadcast request reeived from Mqtt client
    */
-  async _onBroadRequest (parts: any[], payload: ValueID  & { value: any }) {
+  async _onBroadRequest (parts: any[], payload: ValueID & { value: any }) {
     if (parts.length > 0) {
       // multiple writes (back compatibility mode)
       const topic = parts.join('/')
@@ -1860,7 +1858,7 @@ export default class Gateway {
       commandClass: payload.commandClass,
       property: payload.property,
       propertyKey: payload.propertyKey,
-      endpoint: payload.endpoint     
+      endpoint: payload.endpoint
     }
     const value = payload.value
 

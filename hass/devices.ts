@@ -1,6 +1,6 @@
 // Place here repeated patterns
 
-import { HassDevice } from "../lib/ZwaveClient"
+import { HassDevice } from '../lib/ZwaveClient'
 
 const FAN_DIMMER : HassDevice = {
   type: 'fan',
@@ -352,6 +352,5 @@ const devices: { [deviceId: string]: HassDevice[] } = {
   '622-23089-17235': [COVER], // Graber/Bali/Spring Fashion Covers
   '881-21-2': [SPIRIT_ZWAVE_PLUS] // Eurotronic Spirit / Aeotec ZWA021
 }
-
 
 export default devices

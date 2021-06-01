@@ -1,8 +1,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import { Request, Response } from "express";
-import { IncomingHttpHeaders } from 'http';
-
+import { Request, Response } from 'express'
+import { IncomingHttpHeaders } from 'http'
 
 import * as webConfig from '../config/webConfig'
 

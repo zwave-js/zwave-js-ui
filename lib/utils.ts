@@ -1,9 +1,9 @@
 // eslint-disable-next-line one-var
 import * as appRoot from 'app-root-path'
-import path = require('path')
 import { version } from '../package.json'
-import crypto = require('crypto')
 import { ValueID } from 'zwave-js'
+import path = require('path')
+import crypto = require('crypto')
 
 let VERSION: string
 
@@ -192,7 +192,7 @@ export function isBufferAsHex (str: string): boolean {
 /**
  * Parses a buffer from a string has the form 0x[a-f0-9]+
  */
- export function bufferFromHex (hex: string): Buffer {
+export function bufferFromHex (hex: string): Buffer {
   return Buffer.from(hex.substr(2), 'hex')
 }
 
