@@ -1,6 +1,9 @@
 // Place here repeated patterns
 
-const FAN_DIMMER = {
+import { HassDevice } from "../types"
+
+
+const FAN_DIMMER : HassDevice = {
   type: 'fan',
   object_id: 'dimmer',
   values: ['38-0-currentValue', '38-0-targetValue'],
@@ -23,7 +26,7 @@ const FAN_DIMMER = {
 }
 
 // Radio Thermostat / 2GIG CT32, CT100 and CT101
-const THERMOSTAT_2GIG = {
+const THERMOSTAT_2GIG: HassDevice = {
   type: 'climate',
   object_id: 'thermostat',
   values: [
@@ -73,7 +76,7 @@ const THERMOSTAT_2GIG = {
 
 // Eurotronic Stella Z-Wave Thermostat
 //   https://products.z-wavealliance.org/products/826
-const STELLA_ZWAVE = {
+const STELLA_ZWAVE: HassDevice = {
   type: 'climate',
   object_id: 'thermostat',
   values: [
@@ -103,7 +106,7 @@ const STELLA_ZWAVE = {
 }
 
 // Eurotronic Spirit Z-Wave Plus Thermostat
-const SPIRIT_ZWAVE_PLUS = {
+const SPIRIT_ZWAVE_PLUS: HassDevice = {
   type: 'climate',
   object_id: 'thermostat',
   values: [
@@ -132,7 +135,7 @@ const SPIRIT_ZWAVE_PLUS = {
   }
 }
 
-const COVER = {
+const COVER: HassDevice = {
   type: 'cover',
   object_id: 'position',
   values: ['38-0-currentValue', '38-0-targetValue'],
@@ -148,7 +151,7 @@ const COVER = {
   }
 }
 
-module.exports = {
+const devices: { [deviceId: string]: HassDevice[] } = {
   '89-3-1': [
     {
       type: 'climate',
@@ -350,3 +353,6 @@ module.exports = {
   '622-23089-17235': [COVER], // Graber/Bali/Spring Fashion Covers
   '881-21-2': [SPIRIT_ZWAVE_PLUS] // Eurotronic Spirit / Aeotec ZWA021
 }
+
+
+export default devices

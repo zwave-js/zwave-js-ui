@@ -32,7 +32,7 @@ export type Z2MValueId = {
   commandClassName: string
   endpoint?: number
   property: string | number
-  propertyName: string | number
+  propertyName: string
   propertyKey?: string | number
   propertyKeyName?: string
   type: ValueType
@@ -47,13 +47,16 @@ export type Z2MValueId = {
   max?: number
   step?: number
   unit?: string
-  minLenght?: number
+  minLength?: number
   maxLength?: number
   states?: Z2MValueIdState[]
-  list: boolean
+  list?: boolean
   lastUpdate?: number,
   value?: any,
   targetValue?: string,
+  isCurrentValue?: boolean
+  conf?: GatewayValue,
+  allowManualEntry?: boolean
 }
 
 export type Z2MValueIdScene = Z2MValueId & {
@@ -61,15 +64,15 @@ export type Z2MValueIdScene = Z2MValueId & {
 }
 
 export type Z2MScene = {
-  sceneId: number
+  sceneid: number
   label: string
   values: Z2MValueIdScene[]
 }
 
 export type Z2MDeviceClass = {
-  basic: string
-  generic: string
-  specific: string
+  basic: number
+  generic: number
+  specific: number
 }
 
 export type Z2MNodeGroups = {
@@ -90,59 +93,64 @@ export type HassDevice = {
     | 'climate'
     | 'lock'
     | 'switch'
+    | 'fan'
   object_id: string
-  discovery_payload: Map<string, any>
-  discoveryTopic: string
-  values: string[]
-  persistent: boolean
-  ignoreDiscovery: boolean
+  discovery_payload: {[key: string]: any}
+  discoveryTopic?: string
+  values?: string[]
+  action_map?: {[key: number]: string}
+  setpoint_topic?: {[key: number]: string}
+  default_setpoint?: string
+  persistent?: boolean
+  ignoreDiscovery?: boolean
   fan_mode_map?: {[key: string]: number}
   mode_map?: {[key: string]: number}
+  id?: string
 }
 
 export type Z2MNode = {
   id: number
-  manufacturerId: number
-  productId: number
-  productLabel: string
-  productDescription: string
-  productType: number
-  manufacturer: string
-  firmwareVersion: string
-  protocolVersion: ProtocolVersion
-  zwavePlusVersion: number | undefined
-  zwavePlusNodeType: ZWavePlusNodeType | undefined
-  zwavePlusRoleType: ZWavePlusRoleType | undefined
-  nodeType: NodeType
-  endpointsCount: number
-  endpointIndizes: number[]
-  isSecure: boolean
-  supportsBeaming: boolean
-  supportsSecurity: boolean
-  isListening: boolean
-  isControllerNode: boolean
-  isFrequentListening: FLiRS
-  isRouting: boolean
-  keepAwake: boolean
-  deviceClass: Z2MDeviceClass
-  neighbors: number[]
-  loc: string
-  name: string
-  hassDevices: {[key: string]: HassDevice}
-  deviceId: string
-  hexId: string
-  values: { [key: string]: Z2MValueId }
-  groups: Z2MNodeGroups[]
+  manufacturerId?: number
+  productId?: number
+  productLabel?: string
+  productDescription?: string
+  productType?: number
+  manufacturer?: string
+  firmwareVersion?: string
+  protocolVersion?: ProtocolVersion
+  zwavePlusVersion?: number | undefined
+  zwavePlusNodeType?: ZWavePlusNodeType | undefined
+  zwavePlusRoleType?: ZWavePlusRoleType | undefined
+  nodeType?: NodeType
+  endpointsCount?: number
+  endpointIndizes?: number[]
+  isSecure?: boolean | 'unknown'
+  supportsBeaming?: boolean
+  supportsSecurity?: boolean
+  isListening?: boolean
+  isControllerNode?: boolean
+  isFrequentListening?: FLiRS
+  isRouting?: boolean
+  keepAwake?: boolean
+  deviceClass?: Z2MDeviceClass
+  neighbors?: number[]
+  loc?: string
+  name?: string
+  hassDevices?: {[key: string]: HassDevice}
+  deviceId?: string
+  hexId?: string
+  values?: { [key: string]: Z2MValueId }
+  groups?: Z2MNodeGroups[]
   ready: boolean
   available: boolean
   failed: boolean
-  lastActive: number
-  dbLink: string
-  maxDataRate: DataRate
-  interviewStage: InterviewStage
-  status: NodeStatus
+  lastActive?: number
+  dbLink?: string
+  maxDataRate?: DataRate
+  interviewStage?: keyof typeof InterviewStage
+  status?: keyof typeof NodeStatus
   inited: boolean
-  healProgress: string | undefined
+  healProgress?: string | undefined
 }
 
 export enum GatewayType {
@@ -227,6 +235,10 @@ export type ZwaveConfig = {
   enableStatistics: boolean
   disclaimerVersion: number
   options: ZWaveOptions
+  healNetwork: boolean
+  healHour: number
+  logToFile: boolean
+  nodeFilter: (string)[]
 }
 
 export interface MqttClient extends EventEmitter {
@@ -267,17 +279,24 @@ export interface MqttClient extends EventEmitter {
   publish(
     topic: string,
     data: any,
-    options: IClientPublishOptions,
-    prefix: string
+    options?: IClientPublishOptions,
+    prefix?: string
   ): void
-  getTopic(topic: any, set: any): string
+  getTopic(topic: any, set?: any): string
 }
 
 export type Z2MDriverInfo = {
-  homeId: string
-  name: string
-  controllerId: string
-  newConfigVersion: string | undefined
+  uptime: number
+  lastUpdate: number
+  status: ZwaveClientStatus,
+  cntStatus: string
+  appVersion: string
+  zwaveVersion: string
+  serverVersion: string
+  homeid?: number
+  name?: string
+  controllerId?: number
+  newConfigVersion?: string | undefined
 }
 
 export enum ZwaveClientStatus {
@@ -424,10 +443,10 @@ export interface ZwaveClient extends EventEmitter {
     apiName: string,
     ...args: any
   ): Promise<{ success: boolean; message: string; result: any; args: any[] }>
-  writeBroadcast(valueId: Z2MValueId, value: unknown): Promise<void>
+  writeBroadcast(valueId: ValueID, value: unknown): Promise<void>
   writeMulticast(
     nodes: number[],
-    valueId: Z2MValueId,
+    valueId: ValueID,
     value: unknown
   ): Promise<void>
   writeValue(valueId: Z2MValueId, value: unknown): Promise<void>

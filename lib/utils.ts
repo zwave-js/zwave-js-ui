@@ -38,13 +38,13 @@ export function joinPath (write: boolean | string, ...paths: string[]): string {
 /**
  * Join props with a `_` and skips undefined props
  */
-export function joinProps (...props: string[]): string {
+export function joinProps (...props: (string| number)[]): string {
   props = props || []
-  let ret = props[0] || ''
+  let ret = props[0].toString() || ''
   for (let i = 1; i < props.length; i++) {
     const p = props[i]
     if (p !== null && p !== undefined && p !== '') {
-      ret += '_' + p
+      ret += '_' + (typeof p === 'number' ? p.toString() : p)
     }
   }
   return ret
@@ -115,8 +115,8 @@ export function getVersion (): string {
  * Sanitize chars of a string to use in a topic
  *
  */
-export function sanitizeTopic (str: string, sanitizeSlash: boolean = false): string {
-  if (!isNaN(parseInt(str)) || !str) return str
+export function sanitizeTopic (str: string | number, sanitizeSlash: boolean = false): string {
+  if (typeof str === 'number' || !str) return str.toString()
 
   if (sanitizeSlash) {
     str = removeSlash(str)
@@ -131,8 +131,8 @@ export function sanitizeTopic (str: string, sanitizeSlash: boolean = false): str
 /**
  * Removes `/` chars from strings
  */
-export function removeSlash (str: string | number): string | number {
-  return typeof str === 'number' ? str : str.replace(/\//g, '-')
+export function removeSlash (str: string | number): string {
+  return typeof str === 'number' ? str.toString() : str.replace(/\//g, '-')
 }
 
 /**

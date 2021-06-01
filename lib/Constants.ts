@@ -70,7 +70,7 @@ export const deviceClass = {
       }
     }
   }
-  export function meterType (ccSpecific: { meterType: any; scale: number }, configManager: ConfigManager): any {
+  export function meterType (ccSpecific: Record<string, any>, configManager: ConfigManager): any {
     const meter = configManager.lookupMeter(ccSpecific.meterType)
     const scale = configManager.lookupMeterScale(
       ccSpecific.meterType,
@@ -669,7 +669,7 @@ const  _genericDeviceClassMap = {
       return 'unknownGenericDeviceType_' + cls
     }
   }
-  export function specificDeviceClass (genericCls: string, specificCls: string) : string {
+  export function specificDeviceClass (genericCls: number, specificCls: number) : string {
     const clsAttr = genericDeviceClassAttributes(genericCls)
     if (clsAttr) {
       return (

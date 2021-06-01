@@ -12,10 +12,12 @@ import { CommandClasses, ValueID } from '@zwave-js/core'
 import { socketEvents } from '../lib/SocketManager.js'
 import * as Constants from './Constants.js'
 import { module } from '../lib/logger.js'
-import * as hassCfg from '../hass/configurations.js'
-import * as hassDevices from '/hass/devices.js'
+import hassCfg from '../hass/configurations.js'
+import hassDevices from '../hass/devices.js'
 import { storeDir } from '../config/app.js'
-import { GatewayConfig, GatewayValue, HassDevice, MqttClient, Z2MNode, Z2MValueId, ZwaveClient } from '../types/index.js'
+import { GatewayConfig, GatewayValue, HassDevice, MqttClient, Z2MNode, Z2MValueId, Z2MValueIdState, ZwaveClient } from '../types/index.js'
+import { DeepPartial } from '../lib/utils.js'
+import { IClientPublishOptions } from 'mqtt'
 
 module('Gateway')
 
@@ -121,7 +123,7 @@ export class Gateway {
   config: GatewayConfig
   mqtt: MqttClient
   zwave: ZwaveClient
-  topicValues: {[key: string]: Z2MValueId | GatewayValue}
+  topicValues: {[key: string]: Z2MValueId}
   discovered: {[key: string]: HassDevice}
   topicLevels: number[]
   closed: boolean
@@ -316,11 +318,7 @@ export class Gateway {
   /**
    * Calculates the valueId topic based on gateway settings
    *
-   * @param {import('../types').Z2MNode} node Internal node object
-   * @param {import('../types').Z2MValueId} valueId Internal ValueId object
-   * @param {boolean} returnObject Set this to true to also return the targetTopic and the valueConf
-   * @returns The value topic string or an object
-   */
+  */
   valueTopic (node: Z2MNode, valueId: Z2MValueId, returnObject: boolean = false) {
     const topic = []
     let valueConf: GatewayValue = undefined
@@ -426,7 +424,6 @@ export class Gateway {
   /**
    * Disable the discovery of all devices of this node
    *
-   * @param {number} nodeID
    */
   disableDiscovery (nodeID: any) {
     const node = this.zwave.nodes.get(nodeID)
@@ -442,9 +439,6 @@ export class Gateway {
   /**
    * Publish a discovery payload to discover a device in hass using mqtt auto discovery
    *
-   * @param {HassDevice} hassDevice The hass device configuration to use for the discovery
-   * @param {number} nodeId The node id
-   * @param {{deleteDevice: boolean, forceUpdate: boolean}} options options
    */
   publishDiscovery (hassDevice: HassDevice, nodeId: any, options: { deleteDevice?: boolean; forceUpdate?: boolean } = {}) {
     try {
@@ -499,9 +493,6 @@ export class Gateway {
   /**
    * Set internal discovery reference of a valueId
    *
-   * @param {number} nodeId The node id
-   * @param {HassDevice} hassDevice Hass device configuration
-   * @param {boolean} deleteDevice Remove the device from the map
    */
   setDiscovery (nodeId: string, hassDevice: HassDevice, deleteDevice: boolean = false) {
     for (let k = 0; k < hassDevice.values.length; k++) {
@@ -545,10 +536,10 @@ export class Gateway {
     try {
       if (hassID && !node.hassDevices[hassID]) {
         // discover the device
-        let payload: { [x: string]: string | number; mode_state_topic: string; mode_state_template: string; mode_command_topic: string; temperature_state_topic: string; temperature_command_topic: string; action_topic: string | number; action_template: string; fan_mode_state_topic: string; fan_mode_command_topic: string; fan_mode_state_template: string; current_temperature_topic: string | number; temperature_unit: string; precision: number; device: { identifiers: string[]; manufacturer: any; model: string; name: any; sw_version: any }; name: any; unique_id: string }
+        let payload: {[key: string]: any}
 
         // copy the configuration without edit the original object
-        hassDevice = JSON.parse(JSON.stringify(hassDevice))
+        hassDevice = utils.copy(hassDevice)
 
         if (hassDevice.type === 'climate') {
           payload = hassDevice.discovery_payload
@@ -906,7 +897,7 @@ export class Gateway {
   /**
    * Try to guess the best way to discover this valueId in Hass
    */
-  discoverValue (node: Z2MNode, vId: string | number) {
+  discoverValue (node: Z2MNode, vId: string) {
     const valueId = node.values[vId]
 
     // if the node is not ready means we don't have all values added yet so we are not sure to discover this value properly
@@ -926,7 +917,7 @@ export class Gateway {
 
       const nodeName = this._getNodeName(node, this.config.ignoreLoc)
 
-      let cfg: { discovery_payload: { command_topic: string; position_topic: any; set_position_topic: any; position_template: string; position_open: number; position_closed: number; payload_open: number; payload_close: number; brightness_state_topic: any; brightness_command_topic: any; device_class: any; icon: string; value_template: string; unit_of_measurement: any }; object_id: string; type: string; discoveryTopic: string; values: any[]; persistent: boolean; ignoreDiscovery: boolean }
+      let cfg: HassDevice
 
       const cmdClass = valueId.commandClass
 
@@ -1022,7 +1013,7 @@ export class Gateway {
           // change the sensorTypeName to use directly valueId.property, as the old way was returning a number
           // add a comment which shows the old way of achieving this value. This change fixes the Binary Sensor
           // discovery
-          let sensorTypeName = valueId.property
+          let sensorTypeName = valueId.property.toString()
 
           if (sensorTypeName) {
             sensorTypeName = utils.sanitizeTopic(
@@ -1188,7 +1179,7 @@ export class Gateway {
             // correct payload from true/false to numeric values
             this._setBinaryPayloadFromSensor(cfg, valueId, off)
             // finally update object_id
-            cfg.object_id = discoveredObjectId
+            cfg.object_id = discoveredObjectId.toString()
           } else {
             // https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/NotificationCC.ts
             // https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/notifications.json
@@ -1415,7 +1406,6 @@ export class Gateway {
   /**
    * Update all in memory node topics
    *
-   * @param {number} nodeId
    */
   updateNodeTopics (nodeId: any) {
     const node = this.zwave.nodes.get(nodeId)
@@ -1435,8 +1425,6 @@ export class Gateway {
 
   /**
    * Removes all retained messages of the specified node
-   *
-   * @param {number} nodeId
    */
   removeNodeRetained (nodeId: any) {
     const node = this.zwave.nodes.get(nodeId)
@@ -1565,7 +1553,7 @@ export class Gateway {
       }
     }
 
-    let data: { value: any; nodeName?: any; nodeLocation?: any; time?: number }
+    let data: Record<string, any>
 
     switch (this.config.payloadType) {
       case PAYLOAD_TYPE.VALUEID:
@@ -1608,7 +1596,7 @@ export class Gateway {
       this.topicValues[topic] = valueId
     }
 
-    let mqttOptions = valueId.stateless ? { retain: false } : null
+    let mqttOptions: IClientPublishOptions = valueId.stateless ? { retain: false } : null
 
     if (valueConf) {
       mqttOptions = mqttOptions || {}
@@ -1690,7 +1678,7 @@ export class Gateway {
     const nodeTopic = this.nodeTopic(node)
 
     if (!this.config.ignoreStatus) {
-      let data: { time: number; value: any; status: any; nodeId: any }
+      let data : any
 
       if (this.config.payloadType === PAYLOAD_TYPE.RAW) {
         data = node.available
@@ -1721,7 +1709,6 @@ export class Gateway {
   /**
    * When mqtt client goes online/offline
    *
-   * @param {boolean} online
    */
   _onBrokerStatus (online: any) {
     if (online) {
@@ -1732,7 +1719,6 @@ export class Gateway {
   /**
    * Hass will/birth
    *
-   * @param {boolean} online
    */
   _onHassStatus (online: any) {
     logger.info(`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`)
@@ -1745,15 +1731,12 @@ export class Gateway {
   /**
    * Handle api requests reeceived from MQTT client
    *
-   * @param {string} topic
-   * @param {string} apiName
-   * @param {any} payload
-   */
+         */
   async _onApiRequest (topic: any, apiName: any, payload: { args: any[] }) {
     if (this.zwave) {
       const args = payload.args || []
 
-      let result: { success: boolean; message: string; origin: any }
+      let result: any
 
       if (Array.isArray(args)) {
         result = await this.zwave.callApi(apiName, ...args)
@@ -1772,11 +1755,8 @@ export class Gateway {
 
   /**
    * Handle broadcast request reeived from Mqtt client
-   *
-   * @param {string[]} parts
-   * @param {any} payload
    */
-  async _onBroadRequest (parts: any[], payload: ValueID) {
+  async _onBroadRequest (parts: any[], payload: ValueID  & { value: any }) {
     if (parts.length > 0) {
       // multiple writes (back compatibility mode)
       const topic = parts.join('/')
@@ -1814,9 +1794,7 @@ export class Gateway {
   /**
    * Handle write request received from Mqtt Client
    *
-   * @param {string[]} parts
-   * @param {any} payload
-   */
+         */
   async _onWriteRequest (parts: any[], payload: any) {
     const valueId = this.topicValues[parts.join('/')]
 
@@ -1826,9 +1804,14 @@ export class Gateway {
     }
   }
 
-  async _onMulticastRequest (payload: { nodes: any; value: any }) {
+  async _onMulticastRequest (payload: ValueID & { nodes: any; value: any }) {
     const nodes = payload.nodes
-    const valueId = payload
+    const valueId: ValueID = {
+      commandClass: payload.commandClass,
+      property: payload.property,
+      propertyKey: payload.propertyKey,
+      endpoint: payload.endpoint     
+    }
     const value = payload.value
 
     if (!nodes || nodes.length === 0) {
@@ -1862,12 +1845,8 @@ export class Gateway {
   /**
    * Evaluate the return value of a custom parse Function
    *
-   * @param {string} code The function code
-   * @param {import('../types').Z2MValueId} valueId The valueId object
-   * @param {*} value The actual value to parse
-   * @returns
    */
-  _evalFunction (code: string, valueId: { id: any }, value: any, node: any) {
+  _evalFunction (code: string, valueId: Z2MValueId, value: any, node: Z2MNode) {
     let result = null
 
     try {
@@ -1961,7 +1940,7 @@ export class Gateway {
    * Generate the template string to use for value templates
    * by inverting the value map
    */
-  _getMappedValuesInverseTemplate (valueMap: { [x: string]: string }, defaultValue: string): string {
+  _getMappedValuesInverseTemplate (valueMap: { [x: string]: number }, defaultValue: string): string {
     const map = []
     // JSON.stringify converts props to strings and this breaks the template
     // Error: "0": "off" Working: 0: "off"
@@ -1984,19 +1963,19 @@ export class Gateway {
    * Calculate the correct template string to use for templates with state
    * list based on gateway settings and mapped mode values
    */
-  _getMappedStateTemplate (state: { [x: string]: { text: any, value: any } }, defaultValueKey: any): string {
+  _getMappedStateTemplate (states: Z2MValueIdState[], defaultValueKey: any): string {
     const map = []
     let defaultValue = 'value_json.value'
-    for (const listKey in state) {
+    for (const s of states) {
       map.push(
         `${
-          typeof state[listKey].value === 'number'
-            ? state[listKey].value
-            : '"' + state[listKey].value + '"'
-        }: "${state[listKey].text}"`
+          typeof s.value === 'number'
+            ? s.value
+            : '"' + s.value + '"'
+        }: "${s.text}"`
       )
-      if (state[listKey].value === defaultValueKey) {
-        defaultValue = `'${state[listKey].text}'`
+      if (s.value === defaultValueKey) {
+        defaultValue = `'${s.text}'`
       }
     }
 
@@ -2068,8 +2047,8 @@ export class Gateway {
     )
 
     // The following part of code, checks if ML or Binary works. If one exists the other
-    let brightnessValue = false
-    let switchValue = false
+    let brightnessValue: string
+    let switchValue: string
     if (node.values[`38-${endpoint}-currentValue`]) {
       brightnessValue = `38-${endpoint}-currentValue`
       // Next if is about Fibaro like RGBW which use the endpoint 1 as multilevel
@@ -2132,15 +2111,15 @@ export class Gateway {
   _getEntityName (node: Z2MNode, valueId: Z2MValueId, cfg: HassDevice, entityTemplate: string, ignoreLoc: boolean) {
     entityTemplate = entityTemplate || '%ln_%o'
     // when getting the entity name of a device use node props
-    let propertyKey = cfg.type
-    let propertyName = cfg.type
-    let property = cfg.type
-    let label = cfg.object_id
+    let propertyKey: string = cfg.type
+    let propertyName: string = cfg.type
+    let property: string = cfg.type
+    let label: string = cfg.object_id
 
     if (valueId) {
-      property = valueId.property
-      propertyKey = valueId.propertyKey
-      propertyName = valueId.propertyName
+      property = valueId.property.toString()
+      propertyKey = valueId.propertyKey.toString()
+      propertyName = valueId.propertyName.toString()
       label = valueId.label
     }
 

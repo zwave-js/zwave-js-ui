@@ -1,7 +1,8 @@
 // List of Home-Assistant configuration for MQTT Discovery
 // https://www.home-assistant.io/docs/mqtt/discovery/
+import { HassDevice } from '../types/index.js'
 
-module.exports = {
+const configurations: {[key: string]: HassDevice } = {
   // Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
   binary_sensor: {
     type: 'binary_sensor',
@@ -197,3 +198,5 @@ module.exports = {
     }
   }
 }
+
+export default configurations
