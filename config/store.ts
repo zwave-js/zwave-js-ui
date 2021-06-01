@@ -5,6 +5,12 @@ export interface StoreFile {
   default: any
 }
 
+export interface User {
+  username: string,
+  passwordHash: string,
+  token?: string
+}
+
 const store: { [key: string]: StoreFile } = {
   settings : { file: 'settings.json', default: {} },
   scenes : { file: 'scenes.json', default: [] },

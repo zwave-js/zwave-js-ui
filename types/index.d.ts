@@ -4,7 +4,6 @@ import { MqttClient as Client, IClientPublishOptions } from 'mqtt'
 import { Socket } from 'net'
 import {
   AssociationAddress,
-  CommandClass,
   InterviewStage,
   NodeStatus,
   ValueID,
@@ -16,25 +15,26 @@ import {
   FLiRS,
   ProtocolVersion,
   DataRate,
-  NodeType
+  NodeType,
+  TranslatedValueID
 } from 'zwave-js'
 import { CommandClasses } from '@zwave-js/core'
+import { User } from '../config/store'
+
+declare module 'express' {
+ interface Request {
+    user?: User;
+  }
+}
 
 export type Z2MValueIdState = {
   text: string
   value: number
 }
 
-export type Z2MValueId = {
+export type Z2MValueId  = {
   id: string
   nodeId: number
-  commandClass: number
-  commandClassName: string
-  endpoint?: number
-  property: string | number
-  propertyName: string
-  propertyKey?: string | number
-  propertyKeyName?: string
   type: ValueType
   readable: boolean
   writeable: boolean
@@ -57,7 +57,7 @@ export type Z2MValueId = {
   isCurrentValue?: boolean
   conf?: GatewayValue,
   allowManualEntry?: boolean
-}
+} & TranslatedValueID
 
 export type Z2MValueIdScene = Z2MValueId & {
   timeout: number
@@ -215,13 +215,16 @@ export type MqttConfig = {
   retain: boolean
   clean: boolean
   store: boolean
-  allowSelfSigned: boolean
+  allowSelfsigned: boolean
   key: string
   cert: string
   ca: string
   auth: boolean
   username: string
   password: string
+  _ca: string
+  _key: string
+  _cert: string
 }
 
 export type ZwaveConfig = {
@@ -250,7 +253,6 @@ export interface MqttClient extends EventEmitter {
   closed: boolean
   connected: boolean
   broadcastPrefix: string
-  eventsPrefix: string
 
   on(
     event: 'writeRequest',
@@ -286,13 +288,13 @@ export interface MqttClient extends EventEmitter {
 }
 
 export type Z2MDriverInfo = {
-  uptime: number
-  lastUpdate: number
-  status: ZwaveClientStatus,
-  cntStatus: string
-  appVersion: string
-  zwaveVersion: string
-  serverVersion: string
+  uptime?: number
+  lastUpdate?: number
+  status?: ZwaveClientStatus,
+  cntStatus?: string
+  appVersion?: string
+  zwaveVersion?: string
+  serverVersion?: string
   homeid?: number
   name?: string
   controllerId?: number
@@ -488,7 +490,7 @@ export interface Z2MGateway {
   publishDiscovery(
     hassDevice: HassDevice,
     nodeId: number,
-    { deleteDevice: boolean, forceUpdate: boolean }
+    options: { deleteDevice: boolean, forceUpdate: boolean }
   ): void
   setDiscovery(
     nodeId: number,
@@ -501,4 +503,12 @@ export interface Z2MGateway {
   discoverValue(node: Z2MNode, vId: string): void
   updateNodeTopics(nodeId: number): void
   removeNodeRetained(nodeId: number): void
+}
+
+
+export interface ICallApiResult { 
+  message: any; 
+  args?: any; 
+  success?: boolean; 
+  result?: any 
 }

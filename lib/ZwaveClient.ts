@@ -3,7 +3,7 @@
 
 // eslint-disable-next-line one-var
 import { Driver, NodeStatus, InterviewStage, extractFirmware, guessFirmwareFileFormat, libVersion, ZWaveNode, ValueID, AssociationGroup, AssociationAddress, CommandClass, FirmwareUpdateStatus, TranslatedValueID, ZWaveOptions, HealNodeStatus, NodeInterviewFailedEventArgs, ValueMetadata, ZWaveNodeMetadataUpdatedArgs, ZWaveNodeValueAddedArgs, ZWaveNodeValueNotificationArgs, ZWaveNodeValueRemovedArgs, ZWaveNodeValueUpdatedArgs } from 'zwave-js'
-import { CommandClasses, Duration, ValueMetadataNumeric, ValueMetadataString, ZWaveErrorCodes } from '@zwave-js/core'
+import { CommandClasses, Duration, ValueMetadataNumeric, ValueMetadataString, ConfigurationMetadata, ZWaveErrorCodes } from '@zwave-js/core'
 import * as utils from './utils.js'
 import { EventEmitter } from 'events'
 import jsonStore from './jsonStore.js'
@@ -14,8 +14,8 @@ import * as LogManager from './logger.js'
 
 import { ZwavejsServer, serverVersion } from '@zwave-js/server'
 import * as pkgjson from '../package.json'
-import { Socket } from 'dgram'
-import {EventSource, ZwaveConfig, Z2MScene, Z2MNode, Z2MDriverInfo, ZwaveClientStatus, HassDevice, Z2MValueIdScene, Z2MValueId } from '../types/index.js'
+import { Server as SocketServer, Socket } from "socket.io";
+import {EventSource, ZwaveConfig, Z2MScene, Z2MNode, Z2MDriverInfo, ZwaveClientStatus, HassDevice, Z2MValueIdScene, Z2MValueId, ICallApiResult } from '../types/index.js'
 
 const logger = LogManager.module('Zwave')
 const loglevels = require('triple-beam').configs.npm.levels
@@ -74,17 +74,10 @@ const allowedApis = [
 
 const ZWAVEJS_LOG_FILE = utils.joinPath(storeDir, 'zwavejs_%DATE%.log')
 
-/**
- * The constructor
- *
- * @param {ZwaveConfig} config
- * @param {Socket} socket
- * @returns {ZwaveClient}
- */
-class ZwaveClient extends EventEmitter {
+export default class ZwaveClient extends EventEmitter {
 
   cfg: ZwaveConfig
-  socket: Socket
+  socket: SocketServer
   closed: boolean
   driverReady: boolean
   scenes: Z2MScene[]
@@ -112,7 +105,7 @@ class ZwaveClient extends EventEmitter {
   private _lockNeighborsRefresh: boolean
 
 
-  constructor (config, socket) {
+  constructor (config: ZwaveConfig, socket: SocketServer) {
     super()
 
     this.cfg = config
@@ -278,7 +271,7 @@ class ZwaveClient extends EventEmitter {
    * Used to Update an hass device of a specific node
    *
    */
-  updateDevice (hassDevice: HassDevice, nodeId: number, deleteDevice: boolean) {
+  updateDevice (hassDevice: HassDevice, nodeId: number, deleteDevice: boolean = false) {
     const node = this.nodes.get(nodeId)
 
     // check for existing node and node hassdevice with given id
@@ -346,7 +339,7 @@ class ZwaveClient extends EventEmitter {
    * @param {boolean} keepListeners Prevents to remove all ZwaveCLient listeners (used when restarting)
    * @memberof ZwaveClient
    */
-  async close (keepListeners: boolean) {
+  async close (keepListeners: boolean = false) {
     this.status = ZwaveClientStatus.CLOSED
     this.closed = true
 
@@ -1481,7 +1474,7 @@ class ZwaveClient extends EventEmitter {
    * @returns An object `{success: <success>, message: <message>, args: <args>, result: <the response>}`,  if success is false the message contains the error
    */
   async callApi (apiName: string, ...args: any[]) {
-    let err: string, result: { message: any; args?: any; success?: boolean; result?: any }
+    let err: string, result: ICallApiResult
 
     logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
@@ -1619,9 +1612,8 @@ class ZwaveClient extends EventEmitter {
               'Multilevel Switch'
             ].stopLevelChange()
           } else if (/start/i.test(value)) {
-            await zwaveNode.commandClasses[
-              'Multilevel Switch'
-            ].startLevelChange()
+            // @ts-ignore
+            await zwaveNode.commandClasses['Multilevel Switch'].startLevelChange()
           } else {
             throw Error('Command not valid for Multilevel Switch')
           }
@@ -2560,8 +2552,7 @@ class ZwaveClient extends EventEmitter {
 
     if (utils.hasProperty(zwaveValueMeta, 'states')) {
       valueId.list = true
-      // @ts-ignore TODO: Missing type in zwave-js
-      valueId.allowManualEntry = zwaveValueMeta.allowManualEntry
+      valueId.allowManualEntry = (zwaveValueMeta as ConfigurationMetadata).allowManualEntry
       valueId.states = []
       for (const k in (zwaveValueMeta as ValueMetadataNumeric).states) {
         valueId.states.push({
@@ -2848,5 +2839,3 @@ class ZwaveClient extends EventEmitter {
     this.setPollInterval(valueId, interval)
   }
 }
-
-module.exports = ZwaveClient

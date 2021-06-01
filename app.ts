@@ -1,42 +1,47 @@
-const express = require('express')
-const reqlib = require('app-root-path').require
-const morgan = require('morgan')
-const bodyParser = require('body-parser')
-const csrf = require('csurf')
-const app = express()
-const SerialPort = require('serialport')
-const jsonStore = reqlib('/lib/jsonStore.js')
-const cors = require('cors')
-const ZWaveClient = reqlib('/lib/ZwaveClient')
-const MqttClient = reqlib('/lib/MqttClient')
-const Gateway = reqlib('/lib/Gateway')
-const store = reqlib('config/store.js')
-const loggers = reqlib('/lib/logger.js')
-const logger = loggers.module('App')
-const history = require('connect-history-api-fallback')
-const SocketManager = reqlib('/lib/SocketManager')
-const { inboundEvents, socketEvents } = reqlib('/lib/SocketManager.js')
-const utils = reqlib('/lib/utils.js')
-const fs = require('fs-extra')
-const path = require('path')
-const { storeDir, sessionSecret, defaultUser, defaultPsw } = reqlib(
-  'config/app.js'
-)
-const renderIndex = reqlib('/lib/renderIndex')
-const session = require('express-session')
-const archiver = require('archiver')
+import express from 'express'
+import {Request, Response} from 'express'
+import morgan from 'morgan'
+import csrf from 'csurf'
+import SerialPort from 'serialport'
+import jsonStore from './lib/jsonStore.js'
+import cors from 'cors'
+import ZWaveClient from './lib/ZwaveClient'
+import MqttClient from './lib/MqttClient'
+import Gateway from './lib/Gateway.js'
+import store, { User } from './config/store.js'
+import * as loggers from './lib/logger.js'
+import history from 'connect-history-api-fallback'
+import SocketManager from './lib/SocketManager'
+import { inboundEvents, socketEvents } from './lib/SocketManager.js'
+import * as utils from  './lib/utils.js'
+import fs from 'fs-extra'
+import path from 'path'
+import { storeDir, sessionSecret, defaultUser, defaultPsw } from './config/app.js'
+import renderIndex from './lib/renderIndex'
+import session from 'express-session'
+import archiver from 'archiver'
+import rateLimit from 'express-rate-limit'
+import jwt from 'jsonwebtoken'
+import { promisify } from 'util'
+import sessionStore from 'session-file-store'
+import { Socket } from 'socket.io'
+import { GatewayConfig, ICallApiResult, ZwaveConfig } from './types/index.js'
+import { MqttConfig } from './types/index.js'
+import { Server } from 'http'
+
 const { createCertificate } = require('pem').promisified
-const rateLimit = require('express-rate-limit')
-const jwt = require('jsonwebtoken')
-const { promisify } = require('util')
-const FileStore = require('session-file-store')(session)
+
+const FileStore = sessionStore(session)
+const app = express()
+const logger = loggers.module('App')
+
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
 const storeLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
-  handler: function (req, res) {
+  handler: function (req: any, res: { json: (arg0: { success: boolean; message: string }) => void }) {
     res.json({
       success: false,
       message:
@@ -48,7 +53,7 @@ const storeLimiter = rateLimit({
 const loginLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
   max: 5, // start blocking after 5 requests
-  handler: function (req, res) {
+  handler: function (req: any, res: { json: (arg0: { success: boolean; message: string }) => void }) {
     res.json({ success: false, message: 'Max requests limit reached' })
   }
 })
@@ -56,7 +61,7 @@ const loginLimiter = rateLimit({
 const apisLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
   max: 500, // start blocking after 500 requests
-  handler: function (req, res) {
+  handler: function (req: any, res: { json: (arg0: { success: boolean; message: string }) => void }) {
     res.json({ success: false, message: 'Max requests limit reached' })
   }
 })
@@ -72,13 +77,13 @@ const RESPONSE_CODES = {
 
 const socketManager = new SocketManager()
 
-socketManager.authMiddleware = function (socket, next) {
+socketManager.authMiddleware = function (socket: Socket & {user?: Record<string, any>}, next: (err?: unknown) => void) {
   if (!isAuthEnabled()) {
     next()
   } else if (socket.handshake.query && socket.handshake.query.token) {
     jwt.verify(socket.handshake.query.token, sessionSecret, function (
-      err,
-      decoded
+      err: unknown,
+      decoded: Record<string, any>
     ) {
       if (err) return next(new Error('Authentication error'))
       socket.user = decoded
@@ -89,7 +94,7 @@ socketManager.authMiddleware = function (socket, next) {
   }
 }
 
-let gw // the gateway instance
+let gw: Gateway // the gateway instance
 const plugins = []
 
 // flag used to prevent multiple restarts while one is already in progress
@@ -103,8 +108,8 @@ let restarting = false
  * @param {string} host
  * @param {number} port
  */
-async function startServer (host, port) {
-  let server
+async function startServer (host: any, port: string) {
+  let server: Server
 
   const settings = jsonStore.get(store.settings)
 
@@ -136,7 +141,7 @@ async function startServer (host, port) {
     )
   })
 
-  server.on('error', function (error) {
+  server.on('error', function (error: any) {
     if (error.syscall !== 'listen') {
       throw error
     }
@@ -174,11 +179,8 @@ async function startServer (host, port) {
 
 /**
  * Get the `path` param from a request. Throws if the path is not safe
- *
- * @param {Express.Request} req
- * @returns {string} The path is it's safe, thorws otherwise
  */
-function getSafePath (req) {
+function getSafePath (req: Request): string {
   let reqPath = req.query.path
 
   if (typeof reqPath !== 'string') {
@@ -187,7 +189,7 @@ function getSafePath (req) {
 
   reqPath = path.normalize(reqPath)
 
-  if (!reqPath.startsWith(storeDir) || path === storeDir) {
+  if (!reqPath.startsWith(storeDir) || reqPath === storeDir) {
     throw Error('Path not allowed')
   }
 
@@ -198,8 +200,8 @@ async function loadCertKey () {
   const certFile = utils.joinPath(storeDir, 'cert.pem')
   const keyFile = utils.joinPath(storeDir, 'key.pem')
 
-  let key
-  let cert
+  let key: any
+  let cert: any
 
   try {
     cert = await fs.readFile(certFile)
@@ -225,13 +227,13 @@ async function loadCertKey () {
   return { cert, key }
 }
 
-function setupLogging (settings) {
+function setupLogging (settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
   loggers.setupAll(settings ? settings.gateway : null)
 }
 
-function startGateway (settings) {
-  let mqtt
-  let zwave
+function startGateway (settings: { mqtt: MqttConfig; zwave: any; gateway: { plugins?: any; type?: number } }) {
+  let mqtt: MqttClient
+  let zwave: ZWaveClient
 
   if (isAuthEnabled() && sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME') {
     logger.error(
@@ -240,14 +242,14 @@ function startGateway (settings) {
   }
 
   if (settings.mqtt) {
-    mqtt = new MqttClient(settings.mqtt)
+    mqtt = new MqttClient(settings.mqtt as MqttConfig)
   }
 
   if (settings.zwave) {
-    zwave = new ZWaveClient(settings.zwave, socketManager.io)
+    zwave = new ZWaveClient(settings.zwave as ZwaveConfig, socketManager.io)
   }
 
-  gw = new Gateway(settings.gateway, zwave, mqtt)
+  gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt)
 
   gw.start()
 
@@ -288,10 +290,10 @@ async function destroyPlugins () {
 
 function setupInterceptor () {
   // intercept logs and redirect them to socket
-  const interceptor = function (write) {
-    return function (...args) {
+  const interceptor = function (write: (buffer: string | Uint8Array, cb?: (err?: Error) => void) => void) {
+    return function (...args: any[]) : boolean {
       socketManager.io.emit('DEBUG', args[0].toString())
-      write.apply(process.stdout, args)
+      return write.apply(process.stdout, args)
     }
   }
 
@@ -308,10 +310,10 @@ logger.info('Application path:' + utils.getPath(true))
 app.set('views', utils.joinPath(false, 'views'))
 app.set('view engine', 'ejs')
 
-app.use(morgan('dev', { stream: { write: msg => logger.info(msg.trimEnd()) } }))
-app.use(bodyParser.json({ limit: '50mb' }))
+app.use(morgan('dev', { stream: { write: (msg: string) => logger.info(msg.trimEnd()) } }))
+app.use(express.json({ limit: '50mb' }))
 app.use(
-  bodyParser.urlencoded({
+  express.urlencoded({
     limit: '50mb',
     extended: true,
     parameterLimit: 50000
@@ -339,10 +341,10 @@ app.use(
     saveUninitialized: false,
     store: new FileStore({
       path: path.join(storeDir, 'sessions'),
-      logFn: (...args) => {
+      logFn: (...args: any[]) => {
         // skip ENOENT errors
         if (args && args.filter(a => a.indexOf('ENOENT') >= 0).length === 0) {
-          logger.debug(...args)
+          logger.debug(args[0])
         }
       }
     }),
@@ -367,10 +369,10 @@ const csrfProtection = csrf({
  *
  * @param {HttpServer} server
  */
-function setupSocket (server) {
+function setupSocket (server: Server) {
   socketManager.bindServer(server)
 
-  socketManager.on(inboundEvents.init, function (socket) {
+  socketManager.on(inboundEvents.init, function (socket: Socket) {
     if (gw.zwave) {
       socket.emit(socketEvents.init, {
         nodes: gw.zwave.getNodes(),
@@ -381,9 +383,9 @@ function setupSocket (server) {
     }
   })
 
-  socketManager.on(inboundEvents.zwave, async function (socket, data) {
+  socketManager.on(inboundEvents.zwave, async function (socket: Socket, data) {
     if (gw.zwave) {
-      const result = await gw.zwave.callApi(data.api, ...data.args)
+      let result : ICallApiResult & {api?: string, originalArgs?: any[]} = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
       result.originalArgs = data.args
       socket.emit(socketEvents.api, result)
@@ -393,7 +395,7 @@ function setupSocket (server) {
   socketManager.on(inboundEvents.mqtt, async function (socket, data) {
     logger.info(`Mqtt api call: ${data.api}`)
 
-    let res, err
+    let res: any, err: string
 
     try {
       switch (data.api) {
@@ -414,9 +416,9 @@ function setupSocket (server) {
     const result = {
       success: !err,
       message: err || 'Success MQTT api call',
-      result: res
+      result: res,
+      api: data.api
     }
-    result.api = data.api
 
     socket.emit(socketEvents.api, result)
   })
@@ -424,7 +426,7 @@ function setupSocket (server) {
   socketManager.on(inboundEvents.hass, async function (socket, data) {
     logger.info(`Hass api call: ${data.apiName}`)
 
-    let res, err
+    let res: any, err: any
     try {
       switch (data.apiName) {
         case 'delete':
@@ -467,9 +469,9 @@ function setupSocket (server) {
     const result = {
       success: !err,
       message: err || 'Success HASS api call',
-      result: res
+      result: res,
+      api: data.apiName
     }
-    result.api = data.apiName
 
     socket.emit(socketEvents.api, result)
   })
@@ -482,9 +484,10 @@ function isAuthEnabled () {
   return settings.gateway && settings.gateway.authEnabled === true
 }
 
-async function parseJWT (req) {
+async function parseJWT (req: Request) {
   // if not authenticated check if he has a valid token
   let token = req.headers['x-access-token'] || req.headers.authorization // Express headers are auto converted to lowercase
+  token = Array.isArray(token) ? token[0] : token
   if (token && token.startsWith('Bearer ')) {
     // Remove Bearer from string
     token = token.slice(7, token.length)
@@ -500,7 +503,7 @@ async function parseJWT (req) {
   // is the same of the current session
   const users = jsonStore.get(store.users)
 
-  const user = users.find(u => u.username === decoded.username)
+  const user = users.find((u: { username: any }) => u.username === decoded.username)
 
   if (user) {
     return user
@@ -510,7 +513,7 @@ async function parseJWT (req) {
 }
 
 // middleware to check if user is authenticated
-async function isAuthenticated (req, res, next) {
+async function isAuthenticated (req: Request, res: Response, next: () => void) {
   // if user is authenticated in the session, carry on
   if (req.session.user || !isAuthEnabled()) {
     return next()
@@ -543,7 +546,7 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
   res
 ) {
   const token = req.body.token
-  let user
+  let user: User
 
   try {
     // token auth, mostly used to restore sessions when user refresh the page
@@ -554,7 +557,7 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
       // is the same of the current session
       const users = jsonStore.get(store.users)
 
-      user = users.find(u => u.username === decoded.username)
+      user = users.find((u: User) => u.username === decoded.username)
     } else {
       // credentials auth
       const users = jsonStore.get(store.users)
@@ -562,7 +565,7 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
       const username = req.body.username
       const password = req.body.password
 
-      user = users.find(u => u.username === username)
+      user = users.find((u: User) => u.username === username)
 
       if (user && !(await utils.verifyPsw(password, user.passwordHash))) {
         user = null
@@ -570,12 +573,15 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
     }
 
     const result = {
-      success: !!user
+      success: !!user,
+      code: undefined,
+      message: '',
+      user: undefined
     }
 
     if (result.success) {
       // don't edit the original user object, remove the password from jwt payload
-      const userData = Object.assign({}, user)
+      const userData : User = Object.assign({}, user)
       delete userData.passwordHash
 
       const token = jwt.sign(userData, sessionSecret, {
@@ -598,8 +604,15 @@ app.post('/api/authenticate', loginLimiter, csrfProtection, async function (
 
 // logout the user
 app.get('/api/logout', apisLimiter, isAuthenticated, async function (req, res) {
-  req.session.destroy()
+  req.session.destroy((err) => {
+    if(err) {
+  res.json({ success: false, message: err.message })
+
+    } else {
   res.json({ success: true, message: 'User logged out' })
+
+    }
+  })
 })
 
 // update user password
@@ -613,7 +626,7 @@ app.put(
       const users = jsonStore.get(store.users)
 
       const user = req.session.user
-      const oldUser = users.find(u => u._id === user._id)
+      const oldUser = users.find((u: { _id: any }) => u._id === user._id)
 
       if (!oldUser) {
         return res.json({ success: false, message: 'User not found' })
@@ -649,8 +662,8 @@ app.put(
 )
 
 app.get('/health', apisLimiter, async function (req, res) {
-  let mqtt = false
-  let zwave = false
+  let mqtt : Record<string, any> | boolean
+  let zwave: boolean
 
   if (gw) {
     mqtt = gw.mqtt ? gw.mqtt.getStatus() : false
@@ -658,7 +671,7 @@ app.get('/health', apisLimiter, async function (req, res) {
   }
 
   // if mqtt is disabled, return true. Fixes #469
-  if (mqtt) {
+  if (mqtt && typeof mqtt !== 'boolean') {
     mqtt = mqtt.status || mqtt.config.disabled
   }
 
@@ -669,7 +682,7 @@ app.get('/health', apisLimiter, async function (req, res) {
 
 app.get('/health/:client', apisLimiter, async function (req, res) {
   const client = req.params.client
-  let status
+  let status: any
 
   if (client !== 'zwave' && client !== 'mqtt') {
     res.status(500).send("Requested client doesn 't exist")
@@ -692,7 +705,7 @@ app.get('/api/settings', apisLimiter, isAuthenticated, async function (
     serial_ports: []
   }
 
-  let ports
+  let ports: any[]
   if (process.platform !== 'sunos') {
     try {
       ports = await SerialPort.list()
@@ -700,7 +713,7 @@ app.get('/api/settings', apisLimiter, isAuthenticated, async function (
       logger.error(error)
     }
 
-    data.serial_ports = ports ? ports.map(p => p.path) : []
+    data.serial_ports = ports ? ports.map((p: { path: any }) => p.path) : []
     res.json(data)
   } else res.json(data)
 })
@@ -837,10 +850,18 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
   }
 })
 
+interface StoreFileEntry {
+  children?: StoreFileEntry[],
+  name: string,
+  path: string,
+  ext?: string,
+  size?: string
+}
+
 // if no path provided return all store dir files/folders, otherwise return the file content
 app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
-    let data
+    let data: { name: string; path: string; isRoot: boolean; children: any[] }[]
     if (req.query.path) {
       const reqPath = getSafePath(req)
 
@@ -852,11 +873,11 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
       data = await fs.readFile(reqPath, 'utf8')
     } else {
-      async function parseDir (dir) {
+      async function parseDir (dir: string | boolean): Promise<StoreFileEntry[]> {
         const toReturn = []
         const files = await fs.readdir(dir)
         for (const file of files) {
-          const entry = {
+          const entry: StoreFileEntry = {
             name: path.basename(file),
             path: utils.joinPath(dir, file)
           }
@@ -962,7 +983,7 @@ app.post('/api/store-multi', storeLimiter, isAuthenticated, function (
 
   const archive = archiver('zip')
 
-  archive.on('error', function (err) {
+  archive.on('error', function (err: { message: any }) {
     res.status(500).send({
       error: err.message
     })
@@ -991,13 +1012,13 @@ app.post('/api/store-multi', storeLimiter, isAuthenticated, function (
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  const err = new Error('Not Found')
+  const err: Error & { status?: number } = new Error('Not Found')
   err.status = 404
   next(err)
 })
 
 // error handler
-app.use(function (err, req, res) {
+app.use(function (err: any, req: Request, res: Response) {
   // set locals, only providing error in development
   res.locals.message = err.message
   res.locals.error = req.app.get('env') === 'development' ? err : {}
@@ -1024,7 +1045,7 @@ async function gracefuShutdown () {
 }
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
-  process.once(signal, gracefuShutdown)
+  process.once(signal as NodeJS.Signals, gracefuShutdown)
 }
 
 module.exports = { app, startServer }

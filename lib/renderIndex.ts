@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { IncomingHttpHeaders } from 'http';
 
 
-const webConfig = reqlib('/config/webConfig')
+import * as webConfig from '../config/webConfig'
 
 function findFiles (folder: string, ext: string) {
   const folderPath = path.join(__dirname, '..', 'dist', folder)
@@ -21,11 +21,11 @@ function findFiles (folder: string, ext: string) {
 let cssFiles: string[]
 let jsFiles: string[]
 
-function basePath (config: { base: any }, headers: IncomingHttpHeaders) {
+function basePath (config: Record<string, any>, headers: IncomingHttpHeaders) {
   return (headers['x-external-path'] || config.base).replace(/\/?$/, '/')
 }
 
-module.exports = function (req: Request, res: Response) {
+export default function (req: Request, res: Response) {
   cssFiles = cssFiles || findFiles(path.join('static', 'css'), 'css')
   jsFiles = jsFiles || findFiles(path.join('static', 'js'), 'js')
   res.render('index.ejs', {

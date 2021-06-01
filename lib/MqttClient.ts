@@ -1,49 +1,44 @@
 'use strict'
 
 // eslint-disable-next-line one-var
-const reqlib = require('app-root-path').require
-const mqtt = require('mqtt')
-const { joinPath, sanitizeTopic } = reqlib('/lib/utils.js')
-const NeDBStore = require('mqtt-nedb-store')
-const EventEmitter = require('events')
-const { storeDir } = reqlib('config/app.js')
-const logger = reqlib('/lib/logger.js').module('Mqtt')
+import mqtt, { Client } from 'mqtt'
+import { joinPath, sanitizeTopic } from './utils.js'
+import NeDBStore from 'mqtt-nedb-store'
+import {EventEmitter} from 'events'
+import { storeDir } from '../config/app.js'
+import { module } from './logger.js'
+import { version as appVersion } from '../package.json'
+import { MqttConfig } from '../types/index.js'
+
 const url = require('native-url')
 
-const appVersion = reqlib('package.json').version
+const logger = module('Mqtt')
 
-const CLIENTS_PREFIX = '_CLIENTS'
-const EVENTS_PREFIX = '_EVENTS'
+export default class MqttClient extends EventEmitter {
+  config: MqttConfig
+  toSubscribe: string[]
+  clientID: string
+  client: Client
+  error?: string
+  closed: boolean
 
-const BROADCAST_PREFIX = '_BROADCAST'
+  static CLIENTS_PREFIX : string = '_CLIENTS'
+  public static EVENTS_PREFIX : string = '_EVENTS'
+  static BROADCAST_PREFIX: string = '_BROADCAST'
+  static NAME_PREFIX: string = 'ZWAVE_GATEWAY-'
 
-const NAME_PREFIX = 'ZWAVE_GATEWAY-'
+  static ACTIONS: string[] = ['broadcast', 'api', 'multicast']
 
-const ACTIONS = ['broadcast', 'api', 'multicast']
+  static HASS_WILL: string = 'homeassistant/status'
 
-const HASS_WILL = 'homeassistant/status'
-
-const STATUS_TOPIC = 'status'
-const VERSION_TOPIC = 'version'
-
-class MqttClient extends EventEmitter {
+  static STATUS_TOPIC: string = 'status'
+  static VERSION_TOPIC: string = 'version'
   /**
    * The constructor
-   *
-   * @param {import('../types').MqttConfig} config
-   * @returns {import('../types').MqttClient}
    */
-  constructor (config) {
+  constructor (config: MqttConfig) {
     super()
     this._init(config)
-  }
-
-  get broadcastPrefix () {
-    return BROADCAST_PREFIX
-  }
-
-  get eventsPrefix () {
-    return EVENTS_PREFIX
   }
 
   get connected () {
@@ -54,14 +49,14 @@ class MqttClient extends EventEmitter {
    * Returns the topic used to send client and devices status updateStates
    * if name is null the client is the gateway itself
    */
-  getClientTopic (suffix) {
-    return `${this.config.prefix}/${CLIENTS_PREFIX}/${this.clientID}/${suffix}`
+  getClientTopic (suffix: string) {
+    return `${this.config.prefix}/${MqttClient.CLIENTS_PREFIX}/${this.clientID}/${suffix}`
   }
 
   /**
    * Method used to close clients connection, use this before destroy
    */
-  close () {
+  close (): Promise<void> {
     const self = this
     return new Promise(resolve => {
       if (self.closed) {
@@ -87,7 +82,7 @@ class MqttClient extends EventEmitter {
    * Method used to get status
    */
   getStatus () {
-    const status = {}
+    const status: Record<string, any> = {}
 
     status.status = this.client && this.client.connected
     status.error = this.error || 'Offline'
@@ -99,10 +94,10 @@ class MqttClient extends EventEmitter {
   /**
    * Method used to update client connection status
    */
-  updateClientStatus (connected) {
+  updateClientStatus (connected: boolean) {
     if (this.client) {
       this.client.publish(
-        this.getClientTopic(STATUS_TOPIC),
+        this.getClientTopic(MqttClient.STATUS_TOPIC),
         JSON.stringify({ value: connected, time: Date.now() }),
         { retain: this.config.retain, qos: this.config.qos }
       )
@@ -115,7 +110,7 @@ class MqttClient extends EventEmitter {
   publishVersion () {
     if (this.client) {
       this.client.publish(
-        this.getClientTopic(VERSION_TOPIC),
+        this.getClientTopic(MqttClient.VERSION_TOPIC),
         JSON.stringify({ value: appVersion, time: Date.now() }),
         { retain: this.config.retain, qos: this.config.qos }
       )
@@ -125,7 +120,7 @@ class MqttClient extends EventEmitter {
   /**
    * Method used to update client
    */
-  update (config) {
+  update (config: MqttConfig) {
     this.close()
 
     logger.info('Restarting Mqtt Client after update...')
@@ -136,7 +131,7 @@ class MqttClient extends EventEmitter {
   /**
    * Method used to subscribe tags for write requests
    */
-  subscribe (topic) {
+  subscribe (topic: string) {
     if (this.client && this.client.connected) {
       topic = this.config.prefix + '/' + topic + '/set'
       logger.info(`Subscribing to ${topic}`)
@@ -149,7 +144,7 @@ class MqttClient extends EventEmitter {
   /**
    * Method used to publish an update
    */
-  publish (topic, data, options, prefix) {
+  publish (topic: string, data: any, options?: mqtt.IClientPublishOptions, prefix?: string ) {
     if (this.client) {
       const settingOptions = {
         qos: this.config.qos,
@@ -180,16 +175,16 @@ class MqttClient extends EventEmitter {
   /**
    * Method used to get the topic with prefix/suffix
    */
-  getTopic (topic, set) {
+  getTopic (topic: string, set: boolean = false) {
     return this.config.prefix + '/' + topic + (set ? '/set' : '')
   }
 
   /**
    * Initialize client
    *
-   * @param {import('../types').MqttConfig} config
+   * @param {MqttConfig} config
    */
-  _init (config) {
+  _init (config: MqttConfig) {
     this.config = config
     this.toSubscribe = []
 
@@ -198,20 +193,20 @@ class MqttClient extends EventEmitter {
       return
     }
 
-    this.clientID = sanitizeTopic(NAME_PREFIX + config.name)
+    this.clientID = sanitizeTopic(MqttClient.NAME_PREFIX + config.name)
 
     const parsed = url.parse(config.host || '')
     let protocol = 'mqtt'
 
     if (parsed.protocol) protocol = parsed.protocol.replace(/:$/, '')
 
-    const options = {
+    const options: mqtt.IClientOptions = {
       clientId: this.clientID,
       reconnectPeriod: config.reconnectPeriod,
       clean: config.clean,
       rejectUnauthorized: !config.allowSelfsigned,
       will: {
-        topic: this.getClientTopic(STATUS_TOPIC),
+        topic: this.getClientTopic(MqttClient.STATUS_TOPIC),
         payload: JSON.stringify({ value: false }),
         qos: this.config.qos,
         retain: this.config.retain
@@ -281,17 +276,17 @@ class MqttClient extends EventEmitter {
       }
     }
 
-    this.client.subscribe(HASS_WILL)
+    this.client.subscribe(MqttClient.HASS_WILL)
 
     // subscribe to actions
     // eslint-disable-next-line no-redeclare
-    for (let i = 0; i < ACTIONS.length; i++) {
+    for (let i = 0; i < MqttClient.ACTIONS.length; i++) {
       this.client.subscribe(
         [
           this.config.prefix,
-          CLIENTS_PREFIX,
+          MqttClient.CLIENTS_PREFIX,
           this.clientID,
-          ACTIONS[i],
+          MqttClient.ACTIONS[i],
           '#'
         ].join('/')
       )
@@ -317,7 +312,7 @@ class MqttClient extends EventEmitter {
   /**
    * Function called when MQTT client reconnects
    */
-  _onError (error) {
+  _onError (error: Error) {
     logger.info(error.message)
     this.error = error.message
   }
@@ -340,15 +335,19 @@ class MqttClient extends EventEmitter {
   /**
    * Function called when an MQTT message is received
    */
-  _onMessageReceived (topic, payload) {
+  _onMessageReceived (topic: string, payload: Buffer) {
     if (this.closed) return
 
-    payload = payload ? payload.toString() : payload
+    let parsed : any = payload ? payload.toString() : payload
 
     logger.log('info', `Message received on ${topic}, %o`, payload)
 
-    if (topic === HASS_WILL) {
-      this.emit('hassStatus', payload.toLowerCase() === 'online')
+    if (topic === MqttClient.HASS_WILL) {
+      if(typeof parsed === 'string') {
+        this.emit('hassStatus', parsed.toLowerCase() === 'online')
+      } else {
+        logger.error('Invalid payload sent to Hass Will topic')
+      }
       return
     }
 
@@ -360,42 +359,43 @@ class MqttClient extends EventEmitter {
     // It's not a write request
     if (parts.pop() !== 'set') return
 
-    if (isNaN(payload)) {
+    if (isNaN(parseInt(parsed))) {
       try {
-        payload = JSON.parse(payload)
-      } catch (e) {} // it' ok fallback to string
-    } else payload = Number(payload)
+        parsed = JSON.parse(parsed)
+      } catch (e: unknown) {} // it' ok fallback to string
+    } else {
+      parsed = Number(parsed)
+    }
 
     // It's an action
-    if (parts[0] === CLIENTS_PREFIX) {
+    if (parts[0] === MqttClient.CLIENTS_PREFIX) {
       if (parts.length < 3) return
 
-      const action = ACTIONS.indexOf(parts[2])
+      const action = MqttClient.ACTIONS.indexOf(parts[2])
 
       switch (action) {
         case 0: // broadcast
-          this.emit('broadcastRequest', parts.slice(3), payload)
+          this.emit('broadcastRequest', parts.slice(3), parsed)
           // publish back to give a feedback the action has been received
           // same topic without /set suffix
-          this.publish(parts.join('/'), payload)
+          this.publish(parts.join('/'), parsed)
           break
         case 1: // api
-          this.emit('apiCall', parts.join('/'), parts[3], payload)
+          this.emit('apiCall', parts.join('/'), parts[3], parsed)
           break
         case 2: // multicast
-          this.emit('multicastRequest', payload)
+          this.emit('multicastRequest', parsed)
           // publish back to give a feedback the action has been received
           // same topic without /set suffix
-          this.publish(parts.join('/'), payload)
+          this.publish(parts.join('/'), parsed)
           break
         default:
           logger.warn(`Unknown action received ${action} ${topic}`)
       }
     } else {
       // It's a write request on zwave network
-      this.emit('writeRequest', parts, payload)
+      this.emit('writeRequest', parts, parsed)
     }
   } // end onMessageReceived
 }
 
-module.exports = MqttClient

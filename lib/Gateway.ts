@@ -15,11 +15,13 @@ import { module } from '../lib/logger.js'
 import hassCfg from '../hass/configurations.js'
 import hassDevices from '../hass/devices.js'
 import { storeDir } from '../config/app.js'
-import { GatewayConfig, GatewayValue, HassDevice, MqttClient, Z2MNode, Z2MValueId, Z2MValueIdState, ZwaveClient } from '../types/index.js'
-import { DeepPartial } from '../lib/utils.js'
+import { GatewayConfig, GatewayValue, HassDevice, Z2MNode, Z2MValueId, Z2MValueIdState } from '../types/index.js'
 import { IClientPublishOptions } from 'mqtt'
+import MqttClient from './MqttClient'
+import ZwaveClient from './ZwaveClient'
 
-module('Gateway')
+
+const logger = module('Gateway')
 
 const NODE_PREFIX = 'nodeID_'
 
@@ -84,7 +86,7 @@ const loadCustomDevices = () => {
   try {
     if (fs.existsSync(customDevicesJsPath)) {
       loaded = customDevicesJsPath
-      devices = reqlib(CUSTOM_DEVICES)
+      devices = require(CUSTOM_DEVICES)
     } else if (fs.existsSync(customDevicesJsonPath)) {
       loaded = customDevicesJsonPath
       devices = JSON.parse(fs.readFileSync(loaded).toString())
@@ -118,7 +120,7 @@ loadCustomDevices()
 watch(customDevicesJsPath, loadCustomDevices)
 watch(customDevicesJsonPath, loadCustomDevices)
 
-export class Gateway {
+export default class Gateway {
 
   config: GatewayConfig
   mqtt: MqttClient
@@ -128,7 +130,7 @@ export class Gateway {
   topicLevels: number[]
   closed: boolean
  
-  constructor (config: { type: number }, zwave: any, mqtt: any) {
+  constructor (config: GatewayConfig, zwave: ZwaveClient, mqtt: MqttClient) {
     this.config = config || { type: 1 }
     // clients
     this.mqtt = mqtt
@@ -1443,7 +1445,7 @@ export class Gateway {
    * Catch all Zwave events
    */
   _onEvent (emitter: any, eventName: string, ...args: any[]) {
-    const topic = `${this.mqtt.eventsPrefix}/${
+    const topic = `${MqttClient.EVENTS_PREFIX}/${
       this.mqtt.clientID
     }/${emitter}/${eventName.replace(/\s/g, '_')}`
 
@@ -1804,7 +1806,7 @@ export class Gateway {
     }
   }
 
-  async _onMulticastRequest (payload: ValueID & { nodes: any; value: any }) {
+  async _onMulticastRequest (payload: Z2MValueId & { nodes: number[]; value: any }) {
     const nodes = payload.nodes
     const valueId: ValueID = {
       commandClass: payload.commandClass,
@@ -1831,7 +1833,7 @@ export class Gateway {
       return
     }
 
-    await this.zwave.writeMulticast(nodes, valueId, value)
+    await this.zwave.writeMulticast(nodes, valueId as Z2MValueId, value)
   }
 
   /**

@@ -6,7 +6,7 @@ import { storeDir } from '../config/app'
 import { module } from './logger'
 import * as utils from './utils'
 
-module('Store')
+const logger = module('Store')
 
 /**
 Constructor

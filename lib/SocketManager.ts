@@ -5,7 +5,7 @@ import { Server as HttpServer } from 'http'
 import { module } from './logger'
 import { Server as SocketServer, Socket } from "socket.io";
 
-module('Socket')
+const logger = module('Socket')
 
 // FIXME: this constants are duplicated on /src/plugins/socket.js. When converting this to ES6 module that can be removed
 // events from server ---> client
@@ -35,7 +35,7 @@ export const inboundEvents = {
 /**
  * The constructor
  */
-class SocketManager extends EventEmitter {
+export default class SocketManager extends EventEmitter {
 
   server: HttpServer
   io: SocketServer
@@ -98,5 +98,3 @@ class SocketManager extends EventEmitter {
     this.emit(eventName, socket, ...args)
   }
 }
-
-export default SocketManager
