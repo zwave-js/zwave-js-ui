@@ -1,7 +1,7 @@
 import winston = require('winston')
 import { joinPath, DeepPartial } from './utils'
 import { storeDir } from '../config/app'
-import { GatewayConfig } from '../types/index'
+import { GatewayConfig } from './Gateway'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
@@ -14,10 +14,14 @@ interface ModuleLogger extends winston.Logger {
   setup(cfg: any): winston.Logger
 }
 
+
+export type LogLevel = 'silly' | 'verbose' | 'debug' | 'info' | 'warn' | 'error'
+
+
 interface LoggerConfig {
   module: string,
   enabled: boolean,
-  level: string,
+  level: LogLevel,
   logToFile: boolean,
   filePath: string
 }

@@ -11,14 +11,13 @@ import { AlarmSensorType } from 'zwave-js'
 import { CommandClasses, ValueID } from '@zwave-js/core'
 import { socketEvents } from '../lib/SocketManager'
 import * as Constants from './Constants'
-import { module } from '../lib/logger'
+import { LogLevel, module } from '../lib/logger'
 import hassCfg from '../hass/configurations'
 import hassDevices from '../hass/devices'
 import { storeDir } from '../config/app'
-import { GatewayConfig, GatewayValue, HassDevice, Z2MNode, Z2MValueId, Z2MValueIdState } from '../types/index'
 import { IClientPublishOptions } from 'mqtt'
 import MqttClient from './MqttClient'
-import ZwaveClient from './ZwaveClient'
+import ZwaveClient, { HassDevice, Z2MNode, Z2MValueId, Z2MValueIdState } from './ZwaveClient'
 
 
 const logger = module('Gateway')
@@ -119,6 +118,55 @@ const loadCustomDevices = () => {
 loadCustomDevices()
 watch(customDevicesJsPath, loadCustomDevices)
 watch(customDevicesJsonPath, loadCustomDevices)
+
+export enum GatewayType {
+  VALUEID,
+  NAMED,
+  MANUAL
+}
+
+export enum PayloadType {
+  JSON_TIME_VALUE,
+  VALUEID,
+  RAW
+}
+
+export type GatewayValue = {
+  device: string
+  value: Z2MValueId
+  topic: string
+  device_class: string
+  icon: string
+  postOperation: string
+  enablePoll: boolean
+  pollInterval: number
+  parseSend: boolean
+  sendFunction: string
+  parseReceive: boolean
+  receiveFunction: string
+}
+
+export type GatewayConfig = {
+  type: GatewayType
+  payloadType?: PayloadType
+  nodeNames?: boolean
+  ignoreLoc?: boolean
+  sendEvents?: boolean
+  ignoreStatus?: boolean
+  includeNodeInfo?: boolean
+  publishNodeDetails?: boolean
+  retainedDiscovery?: boolean
+  entityTemplate?: string
+  hassDiscovery?: boolean
+  discoveryPrefix?: string
+  logEnabled?: boolean
+  logLevel?: LogLevel
+  logToFile?: boolean
+  values?: GatewayValue[]
+  plugins?: string[],
+  logFileName?: string,
+  manualDiscovery?: boolean
+}
 
 export default class Gateway {
 

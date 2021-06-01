@@ -8,13 +8,55 @@ import {EventEmitter} from 'events'
 import { storeDir } from '../config/app'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
-import { MqttConfig } from '../types/index'
 
 const url = require('native-url')
 
 const logger = module('Mqtt')
 
-export default class MqttClient extends EventEmitter {
+export type MqttConfig = {
+  name: string
+  host: string
+  port: number
+  disabled: boolean
+  reconnectPeriod: number
+  prefix: string
+  qos: 0 | 1 | 2
+  retain: boolean
+  clean: boolean
+  store: boolean
+  allowSelfsigned: boolean
+  key: string
+  cert: string
+  ca: string
+  auth: boolean
+  username: string
+  password: string
+  _ca: string
+  _key: string
+  _cert: string
+}
+
+declare interface MqttClient {
+  on(
+    event: 'writeRequest',
+    listener: (parts: string[], payload: any) => void
+  ): this
+  on(
+    event: 'broadcastRequest',
+    listener: (parts: string[], payload: any) => void
+  ): this
+  on(event: 'multicastRequest', listener: (payload: any) => void): this
+  on(
+    event: 'apiCall',
+    listener: (topic: string, apiNema: string, payload: any) => void
+  ): this
+  on(event: 'connect', listener: () => void): this
+  on(event: 'brokerStatus', listener: (online: boolean) => void): this
+  on(event: 'hassStatus', listener: (online: boolean) => void): this
+
+}
+
+class MqttClient extends EventEmitter {
   config: MqttConfig
   toSubscribe: string[]
   clientID: string
@@ -399,3 +441,4 @@ export default class MqttClient extends EventEmitter {
   } // end onMessageReceived
 }
 
+export default MqttClient

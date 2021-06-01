@@ -2,7 +2,7 @@
 'use strict'
 
 // eslint-disable-next-line one-var
-import { Driver, NodeStatus, InterviewStage, extractFirmware, guessFirmwareFileFormat, libVersion, ZWaveNode, ValueID, AssociationGroup, AssociationAddress, CommandClass, FirmwareUpdateStatus, TranslatedValueID, ZWaveOptions, HealNodeStatus, NodeInterviewFailedEventArgs, ValueMetadata, ZWaveNodeMetadataUpdatedArgs, ZWaveNodeValueAddedArgs, ZWaveNodeValueNotificationArgs, ZWaveNodeValueRemovedArgs, ZWaveNodeValueUpdatedArgs } from 'zwave-js'
+import { Driver, NodeStatus, InterviewStage, extractFirmware, guessFirmwareFileFormat, libVersion, ZWaveNode, ValueID, AssociationGroup, AssociationAddress, CommandClass, FirmwareUpdateStatus, TranslatedValueID, ZWaveOptions, HealNodeStatus, NodeInterviewFailedEventArgs, ValueMetadata, ZWaveNodeMetadataUpdatedArgs, ZWaveNodeValueAddedArgs, ZWaveNodeValueNotificationArgs, ZWaveNodeValueRemovedArgs, ZWaveNodeValueUpdatedArgs, DataRate, FLiRS, NodeType, ProtocolVersion, ValueType, ZWavePlusNodeType, ZWavePlusRoleType } from 'zwave-js'
 import { CommandClasses, Duration, ValueMetadataNumeric, ValueMetadataString, ConfigurationMetadata, ZWaveErrorCodes } from '@zwave-js/core'
 import * as utils from './utils'
 import { EventEmitter } from 'events'
@@ -14,8 +14,8 @@ import * as LogManager from './logger'
 
 import { ZwavejsServer, serverVersion } from '@zwave-js/server'
 import * as pkgjson from '../package.json'
-import { Server as SocketServer, Socket } from "socket.io";
-import {EventSource, ZwaveConfig, Z2MScene, Z2MNode, Z2MDriverInfo, ZwaveClientStatus, HassDevice, Z2MValueIdScene, Z2MValueId, ICallApiResult } from '../types/index'
+import { Server as SocketServer } from "socket.io";
+import { GatewayValue } from './Gateway'
 
 const logger = LogManager.module('Zwave')
 const loglevels = require('triple-beam').configs.npm.levels
@@ -74,7 +74,208 @@ const allowedApis = [
 
 const ZWAVEJS_LOG_FILE = utils.joinPath(storeDir, 'zwavejs_%DATE%.log')
 
-export default class ZwaveClient extends EventEmitter {
+export type Z2MValueIdState = {
+  text: string
+  value: number
+}
+
+export type Z2MValueId  = {
+  id: string
+  nodeId: number
+  type: ValueType
+  readable: boolean
+  writeable: boolean
+  description?: string
+  label?: string
+  default: any
+  stateless: boolean
+  ccSpecific: Record<string, any>
+  min?: number
+  max?: number
+  step?: number
+  unit?: string
+  minLength?: number
+  maxLength?: number
+  states?: Z2MValueIdState[]
+  list?: boolean
+  lastUpdate?: number,
+  value?: any,
+  targetValue?: string,
+  isCurrentValue?: boolean
+  conf?: GatewayValue,
+  allowManualEntry?: boolean
+} & TranslatedValueID
+
+export type Z2MValueIdScene = Z2MValueId & {
+  timeout: number
+}
+
+export type Z2MScene = {
+  sceneid: number
+  label: string
+  values: Z2MValueIdScene[]
+}
+
+export type Z2MDeviceClass = {
+  basic: number
+  generic: number
+  specific: number
+}
+
+export type Z2MNodeGroups = {
+  text: string
+  value: number
+  endpoint: number
+  maxNodes: number
+  isLifeline: boolean
+  multiChannel: boolean
+}
+
+export type HassDevice = {
+  type:
+    | 'sensor'
+    | 'light'
+    | 'binary_sensor'
+    | 'cover'
+    | 'climate'
+    | 'lock'
+    | 'switch'
+    | 'fan'
+  object_id: string
+  discovery_payload: {[key: string]: any}
+  discoveryTopic?: string
+  values?: string[]
+  action_map?: {[key: number]: string}
+  setpoint_topic?: {[key: number]: string}
+  default_setpoint?: string
+  persistent?: boolean
+  ignoreDiscovery?: boolean
+  fan_mode_map?: {[key: string]: number}
+  mode_map?: {[key: string]: number}
+  id?: string
+}
+
+export type Z2MNode = {
+  id: number
+  manufacturerId?: number
+  productId?: number
+  productLabel?: string
+  productDescription?: string
+  productType?: number
+  manufacturer?: string
+  firmwareVersion?: string
+  protocolVersion?: ProtocolVersion
+  zwavePlusVersion?: number | undefined
+  zwavePlusNodeType?: ZWavePlusNodeType | undefined
+  zwavePlusRoleType?: ZWavePlusRoleType | undefined
+  nodeType?: NodeType
+  endpointsCount?: number
+  endpointIndizes?: number[]
+  isSecure?: boolean | 'unknown'
+  supportsBeaming?: boolean
+  supportsSecurity?: boolean
+  isListening?: boolean
+  isControllerNode?: boolean
+  isFrequentListening?: FLiRS
+  isRouting?: boolean
+  keepAwake?: boolean
+  deviceClass?: Z2MDeviceClass
+  neighbors?: number[]
+  loc?: string
+  name?: string
+  hassDevices?: {[key: string]: HassDevice}
+  deviceId?: string
+  hexId?: string
+  values?: { [key: string]: Z2MValueId }
+  groups?: Z2MNodeGroups[]
+  ready: boolean
+  available: boolean
+  failed: boolean
+  lastActive?: number
+  dbLink?: string
+  maxDataRate?: DataRate
+  interviewStage?: keyof typeof InterviewStage
+  status?: keyof typeof NodeStatus
+  inited: boolean
+  healProgress?: string | undefined
+}
+
+export type ZwaveConfig = {
+  port: string
+  networkKey: string
+  serverEnabled: boolean
+  serverPort: number
+  logEnabled: boolean
+  logLevel: LogManager.LogLevel
+  commandsTimeout: number
+  enableStatistics: boolean
+  disclaimerVersion: number
+  options: ZWaveOptions
+  healNetwork: boolean
+  healHour: number
+  logToFile: boolean
+  nodeFilter: (string)[]
+}
+
+export type Z2MDriverInfo = {
+  uptime?: number
+  lastUpdate?: number
+  status?: ZwaveClientStatus,
+  cntStatus?: string
+  appVersion?: string
+  zwaveVersion?: string
+  serverVersion?: string
+  homeid?: number
+  name?: string
+  controllerId?: number
+  newConfigVersion?: string | undefined
+}
+
+export enum ZwaveClientStatus {
+  CONNECTED = 'connected',
+  DRIVER_READY = 'driver ready',
+  SCAN_DONE = 'scan done',
+  DRIVER_FAILED = 'driver failed',
+  CLOSED = 'closed'
+}
+
+export enum EventSource {
+  DRIVER = 'driver',
+  CONTROLLER = 'controller',
+  NODE = 'node'
+}
+
+export interface ICallApiResult { 
+  message: any; 
+  args?: any; 
+  success?: boolean; 
+  result?: any 
+}
+
+
+declare interface ZwaveClient {
+  on(event: 'nodeStatus', listener: (node: Z2MNode) => void): this
+  on(
+    event: 'event',
+    listener: (source: EventSource, eventName: string, ...args: any) => void
+  ): this
+  on(event: 'scanComplete', listener: () => void): this
+  on(
+    event: 'notification',
+    listener: (node: Z2MNode, valueId: Z2MValueId, data: any) => void
+  ): this
+  on(event: 'nodeRemoved', listener: (node: Z2MNode) => void): this
+  on(
+    event: 'valueChanged',
+    listener: (valueId: Z2MValueId, node: Z2MNode) => void
+  ): this
+  on(
+    event: 'valueWritten',
+    listener: (valueId: Z2MValueId, value: any) => void
+  ): this
+}
+
+class ZwaveClient extends EventEmitter {
 
   cfg: ZwaveConfig
   socket: SocketServer
@@ -2839,3 +3040,5 @@ export default class ZwaveClient extends EventEmitter {
     this.setPollInterval(valueId, interval)
   }
 }
+
+export default ZwaveClient

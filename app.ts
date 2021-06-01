@@ -25,9 +25,14 @@ import jwt from 'jsonwebtoken'
 import { promisify } from 'util'
 import sessionStore from 'session-file-store'
 import { Socket } from 'socket.io'
-import { GatewayConfig, ICallApiResult, ZwaveConfig } from './types/index'
-import { MqttConfig } from './types/index'
 import { Server } from 'http'
+
+
+declare module 'express' {
+  interface Request {
+     user?: User;
+   }
+ }
 
 const { createCertificate } = require('pem').promisified
 
