@@ -3,11 +3,11 @@
 /**
  * Module dependencies.
  */
-import * as jsonStore from '../lib/jsonStore'
-import * as store from '../config/store.js'
-import * as conf from '../config/app.js'
-
-import { app, startServer } from '../app.js'
+import jsonStore from '../lib/jsonStore'
+import store from '../config/store'
+import * as conf from '../config/app'
+import app from '../app'
+import { startServer } from '../app'
 
 console.log(`
  ______                       _     ___                  _   _   
@@ -31,8 +31,8 @@ jsonStore.init(store)
      * Normalize a port into a number, string, or false.
      */
 
-    function normalizePort (val: string) {
-      const port = parseInt(val, 10)
+    function normalizePort (val: string | number) {
+      const port = typeof val === 'string' ? parseInt(val, 10) : val
 
       if (isNaN(port)) {
         // named pipe
@@ -44,7 +44,7 @@ jsonStore.init(store)
         return port
       }
 
-      return false
+      throw Error(`Port ${port} is not valid`)
     }
 
     /**

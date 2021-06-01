@@ -3,20 +3,20 @@ import {Request, Response} from 'express'
 import morgan from 'morgan'
 import csrf from 'csurf'
 import SerialPort from 'serialport'
-import jsonStore from './lib/jsonStore.js'
+import jsonStore from './lib/jsonStore'
 import cors from 'cors'
 import ZWaveClient from './lib/ZwaveClient'
 import MqttClient from './lib/MqttClient'
-import Gateway from './lib/Gateway.js'
-import store, { User } from './config/store.js'
-import * as loggers from './lib/logger.js'
+import Gateway from './lib/Gateway'
+import store, { User } from './config/store'
+import * as loggers from './lib/logger'
 import history from 'connect-history-api-fallback'
 import SocketManager from './lib/SocketManager'
-import { inboundEvents, socketEvents } from './lib/SocketManager.js'
-import * as utils from  './lib/utils.js'
+import { inboundEvents, socketEvents } from './lib/SocketManager'
+import * as utils from  './lib/utils'
 import fs from 'fs-extra'
 import path from 'path'
-import { storeDir, sessionSecret, defaultUser, defaultPsw } from './config/app.js'
+import { storeDir, sessionSecret, defaultUser, defaultPsw } from './config/app'
 import renderIndex from './lib/renderIndex'
 import session from 'express-session'
 import archiver from 'archiver'
@@ -25,8 +25,8 @@ import jwt from 'jsonwebtoken'
 import { promisify } from 'util'
 import sessionStore from 'session-file-store'
 import { Socket } from 'socket.io'
-import { GatewayConfig, ICallApiResult, ZwaveConfig } from './types/index.js'
-import { MqttConfig } from './types/index.js'
+import { GatewayConfig, ICallApiResult, ZwaveConfig } from './types/index'
+import { MqttConfig } from './types/index'
 import { Server } from 'http'
 
 const { createCertificate } = require('pem').promisified
@@ -108,7 +108,7 @@ let restarting = false
  * @param {string} host
  * @param {number} port
  */
-async function startServer (host: any, port: string) {
+export async function startServer (host: any, port: number | string) {
   let server: Server
 
   const settings = jsonStore.get(store.settings)
@@ -1048,4 +1048,4 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal as NodeJS.Signals, gracefuShutdown)
 }
 
-module.exports = { app, startServer }
+export default app

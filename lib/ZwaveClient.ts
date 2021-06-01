@@ -4,18 +4,18 @@
 // eslint-disable-next-line one-var
 import { Driver, NodeStatus, InterviewStage, extractFirmware, guessFirmwareFileFormat, libVersion, ZWaveNode, ValueID, AssociationGroup, AssociationAddress, CommandClass, FirmwareUpdateStatus, TranslatedValueID, ZWaveOptions, HealNodeStatus, NodeInterviewFailedEventArgs, ValueMetadata, ZWaveNodeMetadataUpdatedArgs, ZWaveNodeValueAddedArgs, ZWaveNodeValueNotificationArgs, ZWaveNodeValueRemovedArgs, ZWaveNodeValueUpdatedArgs } from 'zwave-js'
 import { CommandClasses, Duration, ValueMetadataNumeric, ValueMetadataString, ConfigurationMetadata, ZWaveErrorCodes } from '@zwave-js/core'
-import * as utils from './utils.js'
+import * as utils from './utils'
 import { EventEmitter } from 'events'
-import jsonStore from './jsonStore.js'
-import { socketEvents }from './SocketManager.js'
-import store from '../config/store.js'
-import { storeDir } from '../config/app.js'
-import * as LogManager from './logger.js'
+import jsonStore from './jsonStore'
+import { socketEvents }from './SocketManager'
+import store from '../config/store'
+import { storeDir } from '../config/app'
+import * as LogManager from './logger'
 
 import { ZwavejsServer, serverVersion } from '@zwave-js/server'
 import * as pkgjson from '../package.json'
 import { Server as SocketServer, Socket } from "socket.io";
-import {EventSource, ZwaveConfig, Z2MScene, Z2MNode, Z2MDriverInfo, ZwaveClientStatus, HassDevice, Z2MValueIdScene, Z2MValueId, ICallApiResult } from '../types/index.js'
+import {EventSource, ZwaveConfig, Z2MScene, Z2MNode, Z2MDriverInfo, ZwaveClientStatus, HassDevice, Z2MValueIdScene, Z2MValueId, ICallApiResult } from '../types/index'
 
 const logger = LogManager.module('Zwave')
 const loglevels = require('triple-beam').configs.npm.levels

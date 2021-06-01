@@ -2,13 +2,13 @@
 
 // eslint-disable-next-line one-var
 import mqtt, { Client } from 'mqtt'
-import { joinPath, sanitizeTopic } from './utils.js'
+import { joinPath, sanitizeTopic } from './utils'
 import NeDBStore from 'mqtt-nedb-store'
 import {EventEmitter} from 'events'
-import { storeDir } from '../config/app.js'
-import { module } from './logger.js'
+import { storeDir } from '../config/app'
+import { module } from './logger'
 import { version as appVersion } from '../package.json'
-import { MqttConfig } from '../types/index.js'
+import { MqttConfig } from '../types/index'
 
 const url = require('native-url')
 
