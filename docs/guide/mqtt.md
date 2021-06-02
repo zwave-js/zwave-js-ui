@@ -64,6 +64,7 @@ This are the available apis:
 - `removeAllAssociations(nodeId)`: Remove all associations of a specific node
 - `removeNodeFromAllAssociations(nodeId)`: Remove a node from all associations
 - `refreshValues(nodeId)`: Refresh all node values
+- `pingNode(nodeId)`: Ping a node
 - `pollValue(valueId)`: Polls a value from the node
 - `startInclusion()`: Starts the inclusion
 - `startExclusion()`: Starts the exclusion
@@ -86,6 +87,7 @@ This are the available apis:
   - `ctx`:context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
   - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
   - `args`: array of arguments to pass to the command
+- `restart()`: restart client
 
 ### Api call examples
 

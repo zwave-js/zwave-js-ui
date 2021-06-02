@@ -55,7 +55,7 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 -v $(pwd)/st
 To run the app as a service you can use the `docker-compose.yml` file you find [here](./docker-compose.yml). Here is the content:
 
 ```yml
-version: '3.7'
+version: "3.7"
 services:
   zwavejs2mqtt:
     container_name: zwavejs2mqtt
@@ -69,17 +69,17 @@ services:
     networks:
       - zwave
     devices:
-      - '/dev/ttyACM0:/dev/ttyACM0'
+      - "/dev/ttyACM0:/dev/ttyACM0"
     volumes:
       - ./store:/usr/src/app/store
     ports:
-      - '8091:8091' # port for web interface
-      - '3000:3000' # port for zwave-js websocket server
+      - "8091:8091" # port for web interface
+      - "3000:3000" # port for zwave-js websocket server
 networks:
   zwave:
-# volumes:
-#   zwavejs2mqtt:
-#     name: zwavejs2mqtt
+volumes:
+  zwave-config:
+    name: zwave-config
 ```
 
 Like the other solutions, remember to replace device `/dev/ttyACM0` with the path of your USB stick and choose the solution you prefer for data persistence.

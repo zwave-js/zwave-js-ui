@@ -3,7 +3,7 @@ import { EventEmitter } from 'events'
 import { MqttClient as Client, IClientPublishOptions } from 'mqtt'
 import { Socket } from 'net'
 import {
-  Association,
+  AssociationAddress,
   CommandClass,
   InterviewStage,
   NodeStatus,
@@ -12,11 +12,13 @@ import {
   ZWaveNode,
   ZWaveOptions,
   ZWavePlusNodeType,
+  ZWavePlusRoleType,
   FLiRS,
   ProtocolVersion,
   DataRate,
   NodeType
 } from 'zwave-js'
+import { CommandClasses } from '@zwave-js/core'
 
 export type Z2MValueIdState = {
   text: string
@@ -70,6 +72,7 @@ export type Z2MDeviceClass = {
 export type Z2MNodeGroups = {
   text: string
   value: number
+  endpoint: number
   maxNodes: number
   isLifeline: boolean
   multiChannel: boolean
@@ -107,6 +110,7 @@ export type Z2MNode = {
   zwavePlusRoleType: ZWavePlusRoleType | undefined
   nodeType: NodeType
   endpointsCount: number
+  endpointIndizes: number[]
   isSecure: boolean
   supportsBeaming: boolean
   supportsSecurity: boolean
@@ -133,6 +137,7 @@ export type Z2MNode = {
   interviewStage: InterviewStage
   status: NodeStatus
   inited: boolean
+  healProgress: string | undefined
 }
 
 export enum GatewayType {
@@ -188,6 +193,7 @@ export type MqttConfig = {
   name: string
   host: string
   port: number
+  disabled: boolean
   reconnectPeriod: number
   prefix: string
   qos: 0 | 1 | 2
@@ -264,6 +270,7 @@ export type Z2MDriverInfo = {
   homeId: string
   name: string
   controllerId: string
+  newConfigVersion: string | undefined
 }
 
 export enum ZwaveClientStatus {
@@ -282,7 +289,7 @@ export enum EventSource {
 
 export interface ZwaveClient extends EventEmitter {
   cfg: ZwaveConfig
-  soclet: Socket
+  socket: Socket
   closed: boolean
   driverReady: boolean
   scenes: Z2MScene[]
@@ -300,6 +307,7 @@ export interface ZwaveClient extends EventEmitter {
   commandsTimeout: NodeJS.Timeout
   reconnectTimeout: NodeJS.Timeout
   healTimeout: NodeJS.Timeout
+  updatesCheckTimeout: NodeJS.Timeout
 
   on(event: 'nodeStatus', listener: (node: Z2MNode) => void): this
   on(
@@ -316,7 +324,13 @@ export interface ZwaveClient extends EventEmitter {
     event: 'valueChanged',
     listener: (valueId: Z2MValueId, node: Z2MNode) => void
   ): this
+  on(
+    event: 'valueWritten',
+    listener: (valueId: Z2MValueId, value: any) => void
+  ): this
 
+  init(): void
+  restart(): Promise<void>
   scheduleHeal(): void
   getNode(nodeId: number): ZWaveNode
   getZwaveValue(idString: any): ValueID
@@ -336,20 +350,25 @@ export interface ZwaveClient extends EventEmitter {
   getStatus(): { driverReady: boolean; status: boolean; config: GatewayConfig }
   addEmptyNodes(): void
   getGroups(nodeId: number, ignoreUpdate: boolean): Promise<void>
-  getAssociations(nodeId: number, groupId: number): Promise<Association[]>
+  getAssociations(
+    source: AssociationAddress,
+    groupId: number
+  ): Promise<AssociationAddress[]>
   addAssociations(
-    nodeId: number,
+    source: AssociationAddress,
     groupId: number,
-    associations: Association[]
+    associations: AssociationAddress[]
   ): Promise<void>
   removeAssociations(
-    nodeId: number,
+    source: AssociationAddress,
     groupId: number,
-    associations: Association[]
+    associations: AssociationAddress[]
   ): Promise<void>
   removeAllAssociations(nodeId: number): Promise<void>
   removeNodeFromAllAssociations(nodeId: number): Promise<void>
-  refreshNeighbors(): void
+  refreshNeighbors(): Promise<Map<number, number[]>>
+  getNodeNeighbors(): Promise<number[]>
+  driverFunction(code: string): Promise<void>
   connect(): Promise<void>
   sendToSocket(evtName: string, data: any): void
   setNodeName(nodeid: number, name: string): Promise<boolean>
@@ -370,7 +389,10 @@ export interface ZwaveClient extends EventEmitter {
   getNodes(): Z2MNode[]
   getInfo(): Map<string, any>
   refreshValues(nodeId: number): Promise<void>
+  pingNode(nodeId: number): Promise<boolean>
   setPollInterval(valueId: Z2MValueId, interval: number): void
+  checkForConfigUpdates(): Promise<string | undefined>
+  installConfigUpdate(): Promise<boolean>
   pollValue(valueId: Z2MValueId): Promise<any>
   replaceFailedNode(nodeId: number, secure: any): Promise<boolean>
   startInclusion(secure: boolean): Promise<boolean>
@@ -403,7 +425,11 @@ export interface ZwaveClient extends EventEmitter {
   ): Promise<void>
   writeValue(valueId: Z2MValueId, value: unknown): Promise<void>
   sendCommand(
-    ctx: { nodeId: number; endpoint: number; commandClass: number },
+    ctx: {
+      nodeId: number
+      endpoint: number
+      commandClass: CommandClasses | keyof typeof CommandClasses
+    },
     command: string,
     args: any[]
   ): Promise<any>

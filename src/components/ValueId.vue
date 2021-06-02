@@ -212,17 +212,16 @@
   </div>
 </template>
 
-<style scoped>
+<style>
 .valueid-label {
-  font-weight: bold;
-  color: black;
-  padding-left: 0;
-  margin-bottom: -10px;
+  font-weight: bold !important;
+  padding-left: 0 !important;
+  margin-bottom: -10px !important;
 }
 
 .readonly {
-  font-size: x-large;
-  font-weight: bold;
+  font-size: x-large !important;
+  font-weight: bold !important;
 }
 </style>
 

@@ -113,13 +113,13 @@
       </td>
     </template>
     <template v-slot:[`item.manufacturer`]="{ item }">
-      {{ item.ready ? item.manufacturer : '' }}
+      {{ item.manufacturer }}
     </template>
     <template v-slot:[`item.productDescription`]="{ item }">
-      {{ item.ready ? item.productDescription : '' }}
+      {{ item.productDescription }}
     </template>
     <template v-slot:[`item.productLabel`]="{ item }">
-      {{ item.ready ? item.productLabel : '' }}
+      {{ item.productLabel }}
     </template>
     <template v-slot:[`item.name`]="{ item }">
       {{ item.name || '' }}
@@ -141,6 +141,31 @@
     </template>
     <template v-slot:[`item.failed`]="{ item }">
       {{ item.failed ? 'Yes' : 'No' }}
+    </template>
+    <template v-slot:[`item.healProgress`]="{ item }">
+      <v-progress-circular
+        class="ml-3"
+        v-if="item.healProgress === 'pending'"
+        indeterminate
+        size="20"
+        color="primary"
+      ></v-progress-circular>
+
+      <v-tooltip
+        v-else-if="getHealIcon(item.healProgress) !== undefined"
+        bottom
+      >
+        <template v-slot:activator="{ on }">
+          <v-icon
+            v-on="on"
+            class="ml-3"
+            v-text="getHealIcon(item.healProgress).icon"
+            :color="getHealIcon(item.healProgress).color"
+          ></v-icon>
+        </template>
+        <span>{{ item.healProgress.toUpperCase() }}</span>
+      </v-tooltip>
+      <div v-else>{{ item.healProgress }}</div>
     </template>
     <template v-slot:[`item.interviewStage`]="{ item }">
       <v-row>

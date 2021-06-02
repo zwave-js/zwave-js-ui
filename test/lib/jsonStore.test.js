@@ -8,9 +8,10 @@ const should = chai.should()
 
 const mod = rewire('../../lib/jsonStore')
 
+const jsonStore = require('../../lib/jsonStore')
+
 describe('#jsonStore', () => {
   describe('#getFile()', () => {
-    const fun = mod.__get__('getFile')
     const config = { file: 'foo', default: 'defaultbar' }
     beforeEach(() => {
       sinon.stub(mod.__get__('utils'), 'joinPath')
@@ -23,7 +24,9 @@ describe('#jsonStore', () => {
 
     it('uncaught error', () => {
       mod.__get__('jsonfile').readFile.rejects(new Error('FOO'))
-      return fun(config).should.eventually.be.rejectedWith(Error, 'FOO')
+      return jsonStore
+        ._getFile(config)
+        .should.eventually.be.rejectedWith(Error, 'FOO')
     })
 
     it('data returned', () => {
@@ -32,12 +35,12 @@ describe('#jsonStore', () => {
         data: 'mybar'
       }
       mod.__get__('jsonfile').readFile.resolves(toReturn.data)
-      return fun(config).should.eventually.deep.equal(toReturn)
+      return jsonStore._getFile(config).should.eventually.deep.equal(toReturn)
     })
 
     it('no data, return default', () => {
       mod.__get__('jsonfile').readFile.resolves(null)
-      return fun(config).should.eventually.deep.equal({
+      return jsonStore._getFile(config).should.eventually.deep.equal({
         file: 'foo',
         data: 'defaultbar'
       })
@@ -45,7 +48,7 @@ describe('#jsonStore', () => {
 
     it('file not found, return default', () => {
       mod.__get__('jsonfile').readFile.rejects({ code: 'ENOENT' })
-      return fun(config).should.eventually.deep.equal({
+      return jsonStore._getFile(config).should.eventually.deep.equal({
         file: 'foo',
         data: 'defaultbar'
       })
@@ -53,45 +56,39 @@ describe('#jsonStore', () => {
   })
 
   describe('#StorageHelper', () => {
-    const StorageHelper = mod.__get__('StorageHelper')
+    jsonStore.store = {}
     it('class test', () => {
-      const ins = new StorageHelper()
-      ins.store.should.deep.equal({})
+      jsonStore.store.should.deep.equal({})
     })
 
     describe('#init()', () => {
-      let getFile
       beforeEach(() => {
-        mod.store = { known: 'no', foobar: 'foo' }
-        getFile = mod.__get__('getFile')
-        mod.__set__(
-          'getFile',
-          sinon.stub().resolves({ file: 'foo', data: 'bar' })
-        )
+        jsonStore.store = { known: 'no', foobar: 'foo' }
+        sinon.stub(jsonStore, '_getFile').resolves({ file: 'foo', data: 'bar' })
       })
       afterEach(() => {
-        mod.__set__('getFile', getFile)
+        jsonStore._getFile.restore()
       })
       it('ok', () =>
-        mod.init({ file: 'foobar' }).should.eventually.deep.equal({
+        jsonStore.init({ file: 'foobar' }).should.eventually.deep.equal({
           known: 'no',
           foobar: 'foo',
           foo: 'bar'
         }))
       it('error', () => {
-        mod.__set__('getFile', sinon.stub().rejects('fo'))
-        return mod.init({ file: 'foobar' }).should.eventually.be.rejected
+        jsonStore._getFile.rejects('fo')
+        return jsonStore.init({ file: 'foobar' }).should.eventually.be.rejected
       })
     })
 
     describe('#get()', () => {
       beforeEach(() => {
-        mod.store = { known: 'foo' }
+        jsonStore.store = { known: 'foo' }
       })
-      it('known', () => mod.get({ file: 'known' }).should.equal('foo'))
+      it('known', () => jsonStore.get({ file: 'known' }).should.equal('foo'))
       it('unknown', () =>
         should.Throw(
-          () => mod.get({ file: 'unknown' }),
+          () => jsonStore.get({ file: 'unknown' }),
           'Requested file not present in store: unknown'
         ))
     })

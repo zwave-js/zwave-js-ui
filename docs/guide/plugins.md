@@ -14,7 +14,7 @@ A plugin is imported in zwavejs1mqtt using `require(pluginName)(context)` where 
 In order to add a plugin you have to specify the absolute/relative path to it or, if it is available as an npm package, you can install it using the command:
 
 ```bash
-npm i my-awesome-plugin
+yarn i my-awesome-plugin
 ```
 
 ## Plugins with docker

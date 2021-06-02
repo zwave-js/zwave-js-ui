@@ -3,7 +3,7 @@
     <v-card>
       <v-card-text>
         <v-container fluid>
-          <v-row justify="start">
+          <v-row style="max-width:800px" justify="start">
             <v-col cols="12" sm="4" md="3" style="text-align:center">
               <v-btn
                 depressed
@@ -146,6 +146,17 @@ export default {
           icon: 'dangerous',
           desc:
             'Manage nodes that are dead and/or marked as failed with the controller'
+        },
+        {
+          text: 'Driver function',
+          options: [
+            {
+              name: 'Write',
+              action: 'driverFunction'
+            }
+          ],
+          icon: 'code',
+          desc: 'Write a custom JS function using the ZwaveJS Driver'
         }
       ],
       rules: {
@@ -161,7 +172,7 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(['showSnackbar']),
+    ...mapMutations(['showSnackbar', 'setHealProgress']),
     onAddRemoveClose () {
       this.addRemoveShowDialog = false
       this.addRemoveNode = null
@@ -266,7 +277,6 @@ export default {
               ]
             }
           )
-          console.log(confirm)
           if (!confirm || confirm !== 'yes') {
             return
           }
@@ -302,6 +312,32 @@ export default {
           } catch (error) {
             return
           }
+        } else if (action === 'driverFunction') {
+          const { code } = await this.$listeners.showConfirm(
+            'Driver function',
+            '',
+            'info',
+            {
+              width: 900,
+              confirmText: 'Send',
+              inputs: [
+                {
+                  type: 'code',
+                  key: 'code',
+                  default:
+                    '// Example:\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();',
+                  hint: `Write the function here. The only arg is:
+                    <code>driver</code>. The function is <code>async</code>.`
+                }
+              ]
+            }
+          )
+
+          if (!code) {
+            return
+          }
+
+          args.push(code)
         }
 
         if (broadcast) {
@@ -373,10 +409,12 @@ export default {
   mounted () {
     const onApiResponse = this.onApiResponse.bind(this)
     const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
+    const onHealProgress = this.setHealProgress.bind(this)
 
     this.bindEvent('api', onApiResponse)
     this.bindEvent('nodeRemoved', onNodeAddedRemoved)
     this.bindEvent('nodeAdded', onNodeAddedRemoved)
+    this.bindEvent('healProgress', onHealProgress)
   },
   beforeDestroy () {
     if (this.socket) {

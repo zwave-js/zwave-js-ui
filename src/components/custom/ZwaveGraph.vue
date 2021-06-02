@@ -262,6 +262,9 @@ export default {
   computed: {
     content () {
       return this.$refs.content
+    },
+    isDark () {
+      return this.$vuetify.theme.dark
     }
   },
   data () {
@@ -378,6 +381,9 @@ export default {
     },
     grouping () {
       this.debounceRefresh()
+    },
+    isDark () {
+      this.updateLabelsColor()
     }
   },
   mounted () {
@@ -389,6 +395,11 @@ export default {
     }
   },
   methods: {
+    updateLabelsColor () {
+      d3.select('#svg')
+        .selectAll('g.cluster text')
+        .style('fill', this.isDark ? 'lightgrey' : 'black')
+    },
     debounceRefresh () {
       if (this.refreshTimeout) {
         clearTimeout(this.refreshTimeout)
@@ -465,6 +476,9 @@ export default {
 
       // Run the renderer. This is what draws the final graph.
       render(inner, g)
+
+      this.updateLabelsColor()
+
       // create battery state gradients
       for (let layer = 0; layer < this.legends.length; layer++) {
         for (let percent = 0; percent <= 100; percent += 10) {
@@ -778,9 +792,8 @@ export default {
             '\n Neighbors: ' +
             node.neighbors,
           forwards:
-            node.ready &&
-            !node.failed &&
-            (node.isListening || node.isRouting || node.isControllerNode) // leave the isController check here
+            node.isControllerNode ||
+            (node.ready && !node.failed && (node.isListening || node.isRouting))
         }
 
         if (id === hubNode) {

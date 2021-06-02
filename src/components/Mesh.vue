@@ -1,7 +1,12 @@
 <template>
   <v-container fluid>
     <v-card class="pa-5">
-      <zwave-graph id="mesh" :nodes="nodes" @node-click="nodeClick" />
+      <zwave-graph
+        ref="mesh"
+        id="mesh"
+        :nodes="nodes"
+        @node-click="nodeClick"
+      />
 
       <div id="properties" draggable v-show="showProperties" class="details">
         <v-icon
@@ -59,19 +64,18 @@
           </v-list-item>
         </v-list>
       </div>
-
-      <!-- <v-speed-dial bottom fab right fixed v-model="fab">
-        <template v-slot:activator>
-          <v-btn color="blue darken-2" dark fab hover v-model="fab">
-            <v-icon v-if="fab">close</v-icon>
-            <v-icon v-else>add</v-icon>
-          </v-btn>
-        </template>
-        <v-btn fab dark small color="green" @click="refresh">
-          <v-icon>refresh</v-icon>
-        </v-btn>
-      </v-speed-dial> -->
     </v-card>
+    <v-speed-dial style="left:100px" bottom fab left fixed v-model="fab">
+      <template v-slot:activator>
+        <v-btn color="blue darken-2" dark fab hover v-model="fab">
+          <v-icon v-if="fab">close</v-icon>
+          <v-icon v-else>add</v-icon>
+        </v-btn>
+      </template>
+      <v-btn fab dark small color="green" @click="debounceRefresh">
+        <v-icon>refresh</v-icon>
+      </v-btn>
+    </v-speed-dial>
   </v-container>
 </template>
 
@@ -145,13 +149,10 @@ export default {
       if (data.success) {
         switch (data.api) {
           case 'refreshNeighbors': {
-            const neighbors = data.result
-            for (const nodeId in neighbors) {
-              this.setNeighbors({
-                nodeId: nodeId,
-                neighbors: neighbors[nodeId]
-              })
-            }
+            this.showSnackbar('Nodes Neighbors updated')
+            this.setNeighbors(data.result)
+            // refresh graph
+            this.$refs.mesh.debounceRefresh()
             break
           }
         }
@@ -209,6 +210,8 @@ export default {
       },
       true
     )
+
+    this.debounceRefresh()
   },
   beforeDestroy () {
     if (this.refreshTimeout) {
