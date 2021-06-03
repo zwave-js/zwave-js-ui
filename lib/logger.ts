@@ -31,7 +31,7 @@ interface LoggerConfig {
  * @param {any} config settings.gateway configuration
  * @returns
  */
-const sanitizedConfig = (module: string, config: DeepPartial<GatewayConfig>) : LoggerConfig => {
+const sanitizedConfig = (module: string, config: DeepPartial<GatewayConfig>): LoggerConfig => {
   config = config || {} as LoggerConfig
   const filePath = joinPath(storeDir, config.logFileName || defaultLogFile)
 
@@ -69,9 +69,8 @@ const customFormat = (config: any): winston.Logform.Format =>
     printf(info => {
       info.timestamp = colorizer.colorize('time', info.timestamp)
       info.label = colorizer.colorize('module', info.label || '-')
-      return `${info.timestamp} ${info.level} ${info.label}: ${info.message}${
-        info.stack ? '\n' + info.stack : ''
-      }`
+      return `${info.timestamp} ${info.level} ${info.label}: ${info.message}${info.stack ? '\n' + info.stack : ''
+        }`
     })
   )
 /**
@@ -81,7 +80,7 @@ const customFormat = (config: any): winston.Logform.Format =>
  * @returns {winston.transport[]}
  */
 const customTransports = (config: any): winston.transport[] => {
-  const transportsList : winston.transport[] = [
+  const transportsList: winston.transport[] = [
     new transports.Console({
       format: customFormat(config),
       level: config.level,
@@ -122,14 +121,14 @@ const logContainer = new winston.Container()
 /**
  * Create a new logger for a specific module
  */
-export function module (module: string): winston.Logger {
+export function module(module: string): winston.Logger {
   return setupLogger(logContainer, module)
 }
 
 /**
  * Setup all loggers starting from config
  */
-export function setupAll (config: DeepPartial<GatewayConfig>) : any {
+export function setupAll(config: DeepPartial<GatewayConfig>): any {
   logContainer.loggers.forEach((logger: ModuleLogger) => {
     logger.setup(config)
   })

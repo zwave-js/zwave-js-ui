@@ -11,18 +11,17 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 12,
     parser: '@typescript-eslint/parser',
-    sourceType: 'module'
-  },
-  globals: {
-    Atomics: 'readonly',
-    SharedArrayBuffer: 'readonly'
+    sourceType: 'module',
+    project: './tsconfig.eslint.json'
   },
   extends: [
     // https://github.com/vuejs/eslint-plugin-vue#priority-a-essential-error-prevention
     // consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
     'plugin:vue/essential',
-    // https://github.com/standard/standard/blob/master/docs/RULES-en.md
-    'standard'
+    'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
+    // Enables eslint-plugin-prettier and displays prettier errors as ESLint errors. Make sure this is always the last configuration in the extends array.
+    'plugin:prettier/recommended'
   ],
   // required to lint *.vue files
   plugins: ['vue', 'babel', '@typescript-eslint'],
