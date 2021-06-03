@@ -32,8 +32,18 @@ module.exports = {
     'vue/no-deprecated-v-bind-sync': 'off',
     'vue/no-mutating-props': 'off',
     'vue/experimental-script-setup-vars': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unsafe-return': 'off',
+    '@typescript-eslint/no-unsafe-assignment': 'off',
+    '@typescript-eslint/no-unsafe-member-access': 'off',
+    '@typescript-eslint/no-unsafe-call': 'off',
+    '@typescript-eslint/restrict-template-expressions': 'off',
+    '@typescript-eslint/restrict-plus-operands': 'off',
     // allow debugger during development
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
-    'no-unused-vars': ['error', { vars: 'local' }]
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-implied-eval': 'off',
+    '@typescript-eslint/no-misused-promises': 'off'
+    // 'no-unused-vars': ['error', { vars: 'local' }]
   }
 }
