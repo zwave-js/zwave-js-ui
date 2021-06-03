@@ -29,8 +29,7 @@ import { promisify } from "util";
 import sessionStore from "session-file-store";
 import { Socket } from "socket.io";
 import { Server as HttpServer, createServer as createHttpServer } from "http";
-import { Server as HttpsServer, createServer as createHttpsServer } from "https";
-
+import { createServer as createHttpsServer } from "https";
 
 declare module "express" {
   interface Request {
@@ -197,7 +196,7 @@ export async function startServer(host: any, port: number | string) {
 
   setupSocket(server);
   setupInterceptor();
-  startGateway(settings);
+  await startGateway(settings);
 }
 
 /**
@@ -256,10 +255,10 @@ function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
   loggers.setupAll(settings ? settings.gateway : null);
 }
 
-function startGateway(settings: {
+async function startGateway(settings: {
   mqtt: MqttConfig;
-  zwave: any;
-  gateway: { plugins?: any; type?: number };
+  zwave: ZwaveConfig;
+  gateway: GatewayConfig;
 }) {
   let mqtt: MqttClient;
   let zwave: ZWaveClient;
@@ -275,12 +274,12 @@ function startGateway(settings: {
   }
 
   if (settings.zwave) {
-    zwave = new ZWaveClient(settings.zwave as ZwaveConfig, socketManager.io);
+    zwave = new ZWaveClient(settings.zwave, socketManager.io);
   }
 
-  gw = new Gateway(settings.gateway as GatewayConfig, zwave, mqtt);
+  gw = new Gateway(settings.gateway, zwave, mqtt);
 
-  gw.start();
+  await gw.start();
 
   const pluginsConfig = settings.gateway ? settings.gateway.plugins : null;
 
@@ -329,7 +328,9 @@ function setupInterceptor() {
     };
   };
 
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   process.stdout.write = interceptor(process.stdout.write);
+  // eslint-disable-next-line @typescript-eslint/unbound-method
   process.stderr.write = interceptor(process.stderr.write);
 }
 
@@ -405,7 +406,7 @@ const csrfProtection = csrf({
  *
  * @param {HttpServer} server
  */
-function setupSocket(server: Server) {
+function setupSocket(server: HttpServer) {
   socketManager.bindServer(server);
 
   socketManager.on(inboundEvents.init, function (socket: Socket) {
@@ -419,6 +420,7 @@ function setupSocket(server: Server) {
     }
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   socketManager.on(inboundEvents.zwave, async function (socket: Socket, data) {
     if (gw.zwave) {
       const result: ICallApiResult & { api?: string; originalArgs?: any[] } =
@@ -429,7 +431,8 @@ function setupSocket(server: Server) {
     }
   });
 
-  socketManager.on(inboundEvents.mqtt, async function (socket, data) {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+  socketManager.on(inboundEvents.mqtt, function (socket, data) {
     logger.info(`Mqtt api call: ${data.api}`);
 
     let res: any, err: string;
@@ -460,6 +463,7 @@ function setupSocket(server: Server) {
     socket.emit(socketEvents.api, result);
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   socketManager.on(inboundEvents.hass, async function (socket, data) {
     logger.info(`Hass api call: ${data.apiName}`);
 
@@ -575,7 +579,7 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 }
 
 // logout the user
-app.get("/api/auth-enabled", apisLimiter, async function (req, res) {
+app.get("/api/auth-enabled", apisLimiter, function (req, res) {
   res.json({ success: true, data: isAuthEnabled() });
 });
 
@@ -644,7 +648,7 @@ app.post(
 );
 
 // logout the user
-app.get("/api/logout", apisLimiter, isAuthenticated, async function (req, res) {
+app.get("/api/logout", apisLimiter, isAuthenticated, function (req, res) {
   req.session.destroy((err) => {
     if (err) {
       res.json({ success: false, message: err.message });
@@ -700,7 +704,7 @@ app.put(
   }
 );
 
-app.get("/health", apisLimiter, async function (req, res) {
+app.get("/health", apisLimiter, function (req, res) {
   let mqtt: Record<string, any> | boolean;
   let zwave: boolean;
 
@@ -719,7 +723,7 @@ app.get("/health", apisLimiter, async function (req, res) {
   res.status(status ? 200 : 500).send(status ? "Ok" : "Error");
 });
 
-app.get("/health/:client", apisLimiter, async function (req, res) {
+app.get("/health/:client", apisLimiter, function (req, res) {
   const client = req.params.client;
   let status: any;
 
@@ -780,7 +784,7 @@ app.post(
       // reload loggers settings
       setupLogging(settings);
       // restart clients and gateway
-      startGateway(settings);
+      await startGateway(settings);
       res.json({
         success: true,
         message: "Configuration updated successfully",
@@ -1114,6 +1118,7 @@ async function gracefuShutdown() {
 }
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   process.once(signal as NodeJS.Signals, gracefuShutdown);
 }
 
