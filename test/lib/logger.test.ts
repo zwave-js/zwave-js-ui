@@ -4,7 +4,7 @@ import rewire from 'rewire'
 import * as utils from '../../lib/utils'
 import { storeDir } from '../../config/app'
 
-const logContainer = rewire('../../lib/logger.js')
+const logContainer = rewire('../../lib/logger')
 
 function checkConfigDefaults(mod, cfg) {
 	const defaultLogFile = utils.joinPath(

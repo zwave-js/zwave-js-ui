@@ -2371,9 +2371,9 @@ export default class Gateway {
 		let label: string = cfg.object_id
 
 		if (valueId) {
-			property = valueId.property.toString()
-			propertyKey = valueId.propertyKey.toString()
-			propertyName = valueId.propertyName.toString()
+			property = valueId.property?.toString()
+			propertyKey = valueId.propertyKey?.toString()
+			propertyName = valueId.propertyName?.toString()
 			label = valueId.label
 		}
 
