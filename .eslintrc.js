@@ -50,8 +50,6 @@ module.exports = {
 			plugins: ['@typescript-eslint'],
 			// add your custom rules here
 			rules: {
-				// allow async-await
-				'generator-star-spacing': 'off',
 				'@typescript-eslint/no-explicit-any': 'off',
 				'@typescript-eslint/no-unsafe-return': 'off',
 				'@typescript-eslint/no-unsafe-assignment': 'off',
@@ -59,10 +57,8 @@ module.exports = {
 				'@typescript-eslint/no-unsafe-call': 'off',
 				'@typescript-eslint/restrict-template-expressions': 'off',
 				'@typescript-eslint/restrict-plus-operands': 'off',
-				// allow debugger during development
 				'@typescript-eslint/explicit-module-boundary-types': 'off',
 				'@typescript-eslint/no-implied-eval': 'off',
-				// 'no-unused-vars': ['error', { vars: 'local' }]
 			},
 		},
 	],
