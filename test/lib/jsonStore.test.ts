@@ -1,14 +1,16 @@
-const chai = require('chai')
-const sinon = require('sinon')
-const rewire = require('rewire')
+import chai from 'chai'
+import rewire from 'rewire'
+import jsonStore from '../../lib/jsonStore'
+import { SinonStub } from 'sinon'
+import sinon from 'sinon'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('chai-as-promised'))
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
-const should = chai.should()
+chai.should()
 
 const mod = rewire('../../lib/jsonStore')
-
-const jsonStore = require('../../lib/jsonStore')
 
 describe('#jsonStore', () => {
 	describe('#getFile()', () => {
@@ -71,7 +73,7 @@ describe('#jsonStore', () => {
 					.resolves({ file: 'foo', data: 'bar' })
 			})
 			afterEach(() => {
-				jsonStore._getFile.restore()
+				;(jsonStore._getFile as SinonStub).restore()
 			})
 			it('ok', () =>
 				jsonStore
@@ -82,7 +84,7 @@ describe('#jsonStore', () => {
 						foo: 'bar',
 					}))
 			it('error', () => {
-				jsonStore._getFile.rejects('fo')
+				;(jsonStore._getFile as SinonStub).rejects('fo')
 				return jsonStore.init({ file: 'foobar' }).should.eventually.be
 					.rejected
 			})
@@ -95,12 +97,12 @@ describe('#jsonStore', () => {
 			it('known', () =>
 				jsonStore.get({ file: 'known' }).should.equal('foo'))
 			it('unknown', () =>
-				should.Throw(
-					() => jsonStore.get({ file: 'unknown' }),
-					'Requested file not present in store: unknown'
-				))
+				jsonStore
+					.get({ file: 'unknown' })
+					.should.throw(
+						Error('Requested file not present in store: unknown')
+					))
 		})
-
 		describe('#put()', () => {
 			beforeEach(() => {
 				sinon.stub(mod.__get__('jsonfile'), 'writeFile')

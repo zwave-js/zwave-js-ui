@@ -1,36 +1,29 @@
-const chai = require('chai')
+import chai from 'chai'
 // const sinon = require('sinon')
 // const _ = require('lodash')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 chai.should()
 
-const mod = require('../../lib/Constants')
+import * as mod from '../../lib/Constants'
 
 describe('#Constants', () => {
 	describe('#productionType()', () => {
-		let map
-		before(() => {
-			map = mod._productionMap
-			mod._productionMap = { 1: 'foo' }
-		})
-		after(() => {
-			mod._productionMap = map
-		})
 		it('known', () =>
 			mod.productionType(1).should.deep.equal({
-				objectId: 'foo',
+				objectId: 'total',
 				props: { device_class: 'power' },
 				sensor: 'energy_production',
 			}))
 		it('unknown', () =>
-			mod.productionType(2).should.deep.equal({
+			mod.productionType(4).should.deep.equal({
 				objectId: 'unknown',
 				props: { device_class: 'power' },
 				sensor: 'energy_production',
 			}))
 		it('timestamp', () =>
 			mod.productionType(3).should.deep.equal({
-				objectId: 'unknown',
+				objectId: 'time',
 				props: { device_class: 'timestamp' },
 				sensor: 'energy_production',
 			}))
@@ -75,90 +68,51 @@ describe('#Constants', () => {
 	//   })
 	// })
 	describe('#sensorType()', () => {
-		let map
-		before(() => {
-			map = mod._sensorMap
-			mod._sensorMap = {
-				foo: { 1: 'bar', props: { a: 'b', c: 'd' } },
-				bar: { 2: 'foo' },
-			}
-		})
-		after(() => {
-			mod._sensorMap = map
-		})
 		it('known', () =>
 			mod.sensorType(1).should.deep.equal({
-				sensor: 'foo',
-				objectId: 'bar',
-				props: { a: 'b', c: 'd' },
+				sensor: 'temperature',
+				objectId: 'air',
+				props: { device_class: 'temperature' },
 			}))
 		it('no props', () =>
 			mod.sensorType(2).should.deep.equal({
-				sensor: 'bar',
-				objectId: 'foo',
+				sensor: 'generic',
+				objectId: 'general_purpose',
 				props: {},
 			}))
 		it('unknown', () =>
-			mod.sensorType(3).should.deep.equal({
+			mod.sensorType(90).should.deep.equal({
 				sensor: 'generic',
-				objectId: 'unknown_3',
+				objectId: 'unknown_90',
 				props: {},
 			}))
 	})
 	describe('#commandClass()', () => {
-		let map
-		before(() => {
-			map = mod._commandClassMap
-			mod._commandClassMap = { 1: 'foo' }
-		})
-		after(() => {
-			mod._commandClassMap = map
-		})
-		it('known', () => mod.commandClass(1).should.equal('foo'))
-		it('unknown', () => mod.commandClass(3).should.equal('unknownClass_3'))
+		it('known', () => mod.commandClass(0).should.equal('no_operation'))
+		it('unknown', () => mod.commandClass(-1).should.equal('unknownClass_3'))
 	})
 	describe('#genericDeviceClass()', () => {
-		let map
-		before(() => {
-			map = mod._genericDeviceClassMap
-			mod._genericDeviceClassMap = {
-				1: { generic: 'foo', specific: { 1: 'bar', 2: 'baz' } },
-			}
-		})
-		after(() => {
-			mod._genericDeviceClassMap = map
-		})
 		it('known generic type', () =>
-			mod.genericDeviceClass(1).should.equal('foo'))
+			mod
+				.genericDeviceClass(1)
+				.should.equal('generic_type_generic_controller'))
 		it('unknown generic type', () =>
 			mod
-				.genericDeviceClass(3)
-				.should.equal('unknownGenericDeviceType_3'))
+				.genericDeviceClass(-1)
+				.should.equal('unknownGenericDeviceType_-1'))
 	})
 	describe('#specificDeviceClass()', () => {
-		let map
-		before(() => {
-			map = mod._genericDeviceClassMap
-			mod._genericDeviceClassMap = {
-				1: { generic: 'foo', specific: { 1: 'bar', 2: 'baz' } },
-			}
-		})
-		after(() => {
-			mod._genericDeviceClassMap = map
-		})
 		it('known specific type', () =>
-			mod.specificDeviceClass(1, 1).should.equal('bar'))
+			mod
+				.specificDeviceClass(1, 1)
+				.should.equal('specific_type_portable_controller'))
 		it('unknown specific type', () =>
 			mod
-				.specificDeviceClass(1, 3)
-				.should.equal('unknownSpecificDeviceType_3'))
-		it('unknown generic type 1', () =>
+				.specificDeviceClass(1, 8)
+				.should.equal('unknownSpecificDeviceType_8'))
+		it('unknown generic type 260', () =>
 			mod
-				.specificDeviceClass(2, 1)
-				.should.equal('unknownGenericDeviceType_2'))
-		it('unknown generic type 2', () =>
-			mod
-				.specificDeviceClass(2, 3)
-				.should.equal('unknownGenericDeviceType_2'))
+				.specificDeviceClass(260, 1)
+				.should.equal('unknownGenericDeviceType_260'))
 	})
 })

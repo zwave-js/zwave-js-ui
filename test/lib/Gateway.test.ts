@@ -1,5 +1,6 @@
-const chai = require('chai')
-const rewire = require('rewire')
+import chai from 'chai'
+import rewire from 'rewire'
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 chai.should()
 
@@ -9,8 +10,8 @@ const Gateway = mod.__get__('Gateway')
 describe('#Gateway', () => {
 	const gw = new Gateway()
 	describe('#setDiscoveryValue()', () => {
-		let untouchedPayload
-		let payload
+		let untouchedPayload: Record<string | number, any>
+		let payload: Record<string | number, any>
 		const node = {
 			values: {
 				c: { value: 'a' },

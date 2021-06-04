@@ -1,12 +1,12 @@
-const chai = require('chai')
-const sinon = require('sinon')
-const rewire = require('rewire')
-const fs = require('fs')
-const path = require('path')
+import chai from 'chai'
+import sinon from 'sinon'
+import rewire from 'rewire'
+import fs from 'fs'
+import path from 'path'
 
 const cssFolder = path.join(__dirname, '..', '..', 'dist', 'static', 'css')
 const jsFolder = path.join(__dirname, '..', '..', 'dist', 'static', 'js')
-
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 chai.should()
 

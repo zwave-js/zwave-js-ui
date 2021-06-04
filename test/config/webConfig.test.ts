@@ -1,6 +1,7 @@
-const chai = require('chai')
-const proxyquire = require('proxyquire')
+import chai from 'chai'
+import proxyquire from 'proxyquire'
 
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 chai.should()
 

@@ -1,8 +1,14 @@
-const chai = require('chai')
-const rewire = require('rewire')
-const sinon = require('sinon')
+import chai from 'chai'
+import rewire from 'rewire'
+import sinon from 'sinon'
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 chai.should()
+
+declare let process: NodeJS.Process & {
+	pkg: boolean
+}
 
 const mod = rewire('../../lib/utils')
 

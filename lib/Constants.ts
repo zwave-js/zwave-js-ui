@@ -27,7 +27,7 @@ interface IDeviceClassProps {
 }
 
 interface IDeviceClass {
-	[genericClass: string]: IDeviceClassProps
+	[genericClass: number]: IDeviceClassProps
 }
 
 export interface IMeterCCSpecific {
@@ -152,7 +152,7 @@ export function meterType(
 
 	return cfg
 }
-const _sensorMap: ISensorMap = {
+export const _sensorMap: ISensorMap = {
 	temperature: {
 		1: 'air',
 		11: 'dew_point',
@@ -325,7 +325,7 @@ const _sensorMap: ISensorMap = {
 		86: 'particulate_matter',
 	},
 }
-export function sensorType(index: string): any {
+export function sensorType(index: number): any {
 	const sensorType = {
 		sensor: 'generic',
 		objectId: 'unknown_' + index,
@@ -666,12 +666,10 @@ const _genericDeviceClassMap: IDeviceClass = {
 		specific: {},
 	},
 }
-export function genericDeviceClassAttributes(
-	cls: string | number
-): IDeviceClassProps {
+export function genericDeviceClassAttributes(cls: number): IDeviceClassProps {
 	return _genericDeviceClassMap[cls]
 }
-export function genericDeviceClass(cls: string): string {
+export function genericDeviceClass(cls: number): string {
 	const clsAttr = genericDeviceClassAttributes(cls)
 	if (clsAttr) {
 		return clsAttr.generic

@@ -1,9 +1,10 @@
-const { assert } = require('chai')
-const winston = require('winston')
-const rewire = require('rewire')
+import { assert } from 'chai'
+import winston from 'winston'
+import rewire from 'rewire'
+import * as utils from '../../lib/utils'
+import { storeDir } from '../../config/app'
+
 const logContainer = rewire('../../lib/logger.js')
-const utils = require('../../lib/utils')
-const { storeDir } = require('../../config/app.js')
 
 function checkConfigDefaults(mod, cfg) {
 	const defaultLogFile = utils.joinPath(
