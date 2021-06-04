@@ -107,7 +107,7 @@ class MqttClient extends EventEmitter {
 			this.closed = true
 
 			if (this.client) {
-				this.client.end(true, {}, function () {
+				this.client.end(true, {}, () => {
 					this.removeAllListeners()
 					logger.info('Client closed')
 					resolve()
