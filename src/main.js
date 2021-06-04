@@ -17,9 +17,9 @@ Vue.config.devtools = true
 
 /* eslint-disable no-new */
 new Vue({
-  vuetify,
-  router,
-  store,
-  components: { App },
-  template: '<App/>'
+	vuetify,
+	router,
+	store,
+	components: { App },
+	template: '<App/>',
 }).$mount('#app')

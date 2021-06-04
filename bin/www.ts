@@ -3,10 +3,10 @@
 /**
  * Module dependencies.
  */
-import jsonStore from "../lib/jsonStore";
-import store from "../config/store";
-import * as conf from "../config/app";
-import app, { startServer } from "../app";
+import jsonStore from '../lib/jsonStore'
+import store from '../config/store'
+import * as conf from '../config/app'
+import app, { startServer } from '../app'
 
 console.log(`
  ______                       _     ___                  _   _   
@@ -17,44 +17,44 @@ console.log(`
 /_____|\\_/\\_/ \\__,_| \\_/ \\___| |___/____|_| |_| |_|\\__, |\\__|\\__|
                             _/ |                      | |        
                            |__/                       |_|        
-`);
+`)
 
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
 // if jsonstore fails exit the application
 jsonStore
-  .init(store)
-  .then(() => {
-    /**
-     * Normalize a port into a number, string, or false.
-     */
+	.init(store)
+	.then(() => {
+		/**
+		 * Normalize a port into a number, string, or false.
+		 */
 
-    function normalizePort(val: string | number) {
-      const port = typeof val === "string" ? parseInt(val, 10) : val;
+		function normalizePort(val: string | number) {
+			const port = typeof val === 'string' ? parseInt(val, 10) : val
 
-      if (isNaN(port)) {
-        // named pipe
-        return val;
-      }
+			if (isNaN(port)) {
+				// named pipe
+				return val
+			}
 
-      if (port >= 0) {
-        // port number
-        return port;
-      }
+			if (port >= 0) {
+				// port number
+				return port
+			}
 
-      throw Error(`Port ${port} is not valid`);
-    }
+			throw Error(`Port ${port} is not valid`)
+		}
 
-    /**
-     * Get port from environment and store in Express.
-     */
+		/**
+		 * Get port from environment and store in Express.
+		 */
 
-    const port = normalizePort(conf.port);
-    app.set("port", port);
+		const port = normalizePort(conf.port)
+		app.set('port', port)
 
-    return startServer(conf.host, port);
-  })
-  .catch((err: unknown) => {
-    console.error(err);
-    process.exit(1);
-  });
+		return startServer(conf.host, port)
+	})
+	.catch((err: unknown) => {
+		console.error(err)
+		process.exit(1)
+	})
