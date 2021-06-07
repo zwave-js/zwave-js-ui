@@ -4,11 +4,12 @@ chai.use(require('sinon-chai'))
 chai.should()
 
 const mod = rewire('../../lib/Gateway')
+const Gateway = mod.__get__('Gateway')
 
 describe('#Gateway', () => {
+  const gw = new Gateway()
   describe('#setDiscoveryValue()', () => {
     let untouchedPayload
-    const func = mod.__get__('setDiscoveryValue')
     let payload
     const node = {
       values: {

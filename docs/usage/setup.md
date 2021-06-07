@@ -198,6 +198,7 @@ Enable this to use Z2M only as a Control Panel
 - **MQTT discovery**: Enable this to use MQTT discovery. This is an alternative to Hass Zwave-js integration. (more about this [here](/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to HASS
 - **Retain Discovery**: Set retain flag to true in discovery messages
+- **Manual Discovery**: Don't automatically send the discovery payloads when a device is discovered
 - **Entity name template**: Custom Entity name based on placeholders. Default is `%ln_%o`
   - `%ln`: Node location with name `<location-?><name>`
   - `%n`: Node Name
@@ -231,3 +232,21 @@ Now press on `NEW VALUE` to add a new value or on the `Pen Icon` in actions colu
 ![Edit value](../_images/edit_gateway_value.png)
 
 Press now on `SAVE` to upload your new settings to the server and it will automatically handle the polling based on your settings.
+
+## Config DB Updates
+
+Since version 4.0.0 it's possible to update internal zwave-js devices config database on the fly directly from zwavejs2mqtt UI.
+
+Updates are checked everyday at midnight but you can also check for new updates manually from the UI by clicking on the icon in top right corner, when an update is available a badge will show up next to the icon:
+
+![Config update icon](../_images/config_updates_icon.png)
+
+When you click on the icon, if there is an update available, a dialog like this is shown:
+
+![Config update dialog](../_images/config_updates_dialog.png)
+
+Just press on `INSTALL` and wait until you receive a feedback, if the update fails check logs to see more details about errors. If there is no update available you will see a `CHECK` button instead of `INSTALL` and by pressing it you will trigger a manual check.
+
+### Inside docker containers
+
+By default config updates work by checking the installed version of the module `@zwave-js/config`. Doing such updates inside docker containers requires volumes in order to keep them consistent. Therefore, when running on docker zwave-js will copy the embedded config DB into the `store/.config-db` folder. This folder is not visible/editable from the store ui and should not be touched. The folder path can be customized using the `ZWAVEJS_EXTERNAL_CONFIG` env var, check related [docs](/guide/env-vars) for more info.

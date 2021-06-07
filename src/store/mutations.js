@@ -2,6 +2,7 @@ export const state = {
   auth: undefined,
   serial_ports: [],
   nodes: [],
+  nodesMap: new Map(),
   user: {},
   zwave: {
     port: undefined,
@@ -10,6 +11,7 @@ export const state = {
     logLevel: 'info',
     logToFile: false,
     serverEnabled: false,
+    enableStatistics: undefined, // keep it undefined so the user dialog will show up
     serverPort: 3000
   },
   mqtt: {
@@ -44,7 +46,8 @@ export const state = {
     homeHex: '',
     appVersion: '',
     zwaveVersion: '',
-    controllerStatus: 'Unknown'
+    controllerStatus: 'Unknown',
+    newConfigVersion: undefined
   }
 }
 
@@ -58,16 +61,18 @@ function getValue (v) {
   }
 }
 
-// makes node search faster
-const nodesMap = new Map() // nodeId -> index
-
 function getNode (id) {
-  return state.nodes[nodesMap.get(id)]
+  if (typeof id === 'string') {
+    id = parseInt(id)
+  }
+
+  return state.nodes[state.nodesMap.get(id)]
 }
 
 export const getters = {
   auth: state => state.auth,
   nodes: state => state.nodes,
+  nodesMap: state => state.nodesMap,
   user: state => state.user,
   serial_ports: state => state.serial_ports,
   zwave: state => state.zwave,
@@ -136,6 +141,7 @@ export const mutations = {
     state.appInfo.appVersion = data.appVersion
     state.appInfo.zwaveVersion = data.zwaveVersion
     state.appInfo.serverVersion = data.serverVersion
+    state.appInfo.newConfigVersion = data.newConfigVersion
   },
   setValue (state, valueId) {
     const toReplace = getValue(valueId)
@@ -188,31 +194,41 @@ export const mutations = {
       ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
       : 'NodeID_' + n.id
 
-    let index = nodesMap.get(n.id)
+    let index = state.nodesMap.get(n.id)
 
     index = index >= 0 ? index : state.nodes.length
 
     if (index === state.nodes.length) {
       state.nodes.push(n)
     } else {
-    // vue set is used to notify changes
+      // vue set is used to notify changes
       this._vm.$set(state.nodes, index, n)
     }
 
-    nodesMap.set(n.id, index)
+    state.nodesMap.set(n.id, index)
   },
   removeNode (state, n) {
-    const index = nodesMap.get(n.id)
+    const index = state.nodesMap.get(n.id)
 
     if (index >= 0) {
-      nodesMap.delete(n.id)
+      state.nodesMap.delete(n.id)
       state.nodes.splice(index, 1)
     }
   },
-  setNeighbors (state, { nodeId, neighbors }) {
-    const node = getNode(nodeId)
-    if (node) {
-      this._vm.$set(node, 'neighbors', neighbors)
+  setNeighbors (state, neighbors) {
+    for (const nodeId in neighbors) {
+      const node = getNode(nodeId)
+      if (node) {
+        this._vm.$set(node, 'neighbors', neighbors[nodeId])
+      }
+    }
+  },
+  setHealProgress (state, nodesProgress) {
+    for (const [nodeId, progress] of nodesProgress) {
+      const node = getNode(nodeId)
+      if (node) {
+        this._vm.$set(node, 'healProgress', progress)
+      }
     }
   },
   initSettings (state, conf) {

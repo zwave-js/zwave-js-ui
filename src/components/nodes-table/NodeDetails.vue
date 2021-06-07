@@ -10,47 +10,16 @@
 
     <v-row>
       <v-col cols="8" style="max-width:300px">
-        <v-select
-          label="Node actions"
-          append-outer-icon="send"
-          v-model="node_action"
-          :items="node_actions"
-          @click:append-outer="sendNodeAction"
-        ></v-select>
-      </v-col>
-    </v-row>
-
-    <v-row>
-      <v-col>
-        <v-btn text @click="exportNode">
-          Export
-          <v-icon right dark color="primary">file_download</v-icon>
-        </v-btn>
         <v-btn
-          v-if="!mqtt.disabled"
-          text
-          @click="
-            sendMqttAction(
-              'removeNodeRetained',
-              'With this action all retained messages of this node will be removed from broker'
-            )
-          "
+          dark
+          color="primary"
+          @click.stop="apiRequest('pingNode', [node.id])"
+          depressed
         >
-          Clear retained
-          <v-icon right dark color="red">clear</v-icon>
+          Ping
         </v-btn>
-        <v-btn
-          v-if="!mqtt.disabled"
-          text
-          @click="
-            sendMqttAction(
-              'updateNodeTopics',
-              'With this action all node topics will be updated'
-            )
-          "
-        >
-          Update topics
-          <v-icon right dark color="green">refresh</v-icon>
+        <v-btn dark color="green" depressed @click="advancedShowDialog = true">
+          Advanced
         </v-btn>
       </v-col>
     </v-row>
@@ -95,7 +64,27 @@
           v-for="(group, className) in commandGroups"
           :key="className"
         >
-          <v-expansion-panel-header>{{ className }}</v-expansion-panel-header>
+          <v-expansion-panel-header>
+            <v-row no-gutters>
+              <v-col align-self="center">
+                {{ className }}
+              </v-col>
+              <v-col class="text-right pr-5">
+                <v-btn
+                  v-if="group[0]"
+                  @click.stop="
+                    apiRequest('refreshCCValues', [
+                      node.id,
+                      group[0].commandClass
+                    ])
+                  "
+                  x-small
+                >
+                  Refresh
+                </v-btn>
+              </v-col>
+            </v-row>
+          </v-expansion-panel-header>
           <v-expansion-panel-content>
             <v-card flat>
               <v-card-text>
@@ -113,6 +102,80 @@
                     ></ValueID>
                   </v-col>
                 </v-row>
+                <v-col
+                  v-if="group[0] && group[0].commandClass === 112"
+                  cols="12"
+                  sm="6"
+                  md="4"
+                  style="padding-left:0"
+                >
+                  <v-subheader class="valueid-label"
+                    >Custom Configuration
+                  </v-subheader>
+                  <v-row>
+                    <v-col cols="3">
+                      <v-text-field
+                        label="Parameter"
+                        v-model.number="configCC.parameter"
+                      />
+                    </v-col>
+                    <v-col cols="3">
+                      <v-select
+                        label="Size"
+                        :items="[1, 2, 3, 4]"
+                        v-model.number="configCC.valueSize"
+                      />
+                    </v-col>
+                    <v-col cols="3">
+                      <v-text-field
+                        label="Value"
+                        v-model.number="configCC.value"
+                      />
+                    </v-col>
+                    <v-col cols="3">
+                      <v-btn
+                        width="60px"
+                        v-if="group[0]"
+                        @click.stop="
+                          apiRequest('sendCommand', [
+                            {
+                              nodeId: node.id,
+                              commandClass: 112
+                            },
+                            'get',
+                            [configCC.parameter]
+                          ])
+                        "
+                        color="green"
+                        x-small
+                      >
+                        GET
+                      </v-btn>
+                      <v-btn
+                        v-if="group[0]"
+                        width="60px"
+                        @click.stop="
+                          apiRequest('sendCommand', [
+                            {
+                              nodeId: node.id,
+                              commandClass: 112
+                            },
+                            'set',
+                            [
+                              configCC.parameter,
+                              configCC.value,
+                              configCC.valueSize
+                            ]
+                          ])
+                        "
+                        color="primary"
+                        x-small
+                      >
+                        SET
+                      </v-btn>
+                    </v-col>
+                  </v-row>
+                </v-col>
               </v-card-text>
             </v-card>
           </v-expansion-panel-content>
@@ -120,23 +183,32 @@
         </v-expansion-panel>
       </v-expansion-panels>
     </v-row>
+
+    <DialogAdvanced
+      v-model="advancedShowDialog"
+      @close="advancedShowDialog = false"
+      :actions="actions"
+      @action="nodeAction"
+    />
   </v-container>
 </template>
 
 <script>
 import ValueID from '@/components/ValueId'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
+
 import { inboundEvents as socketActions } from '@/plugins/socket'
 import { mapMutations, mapGetters } from 'vuex'
 
 export default {
   props: {
     headers: Array,
-    actions: Array,
     node: Object,
     socket: Object
   },
   components: {
-    ValueID
+    ValueID,
+    DialogAdvanced
   },
   data () {
     return {
@@ -144,7 +216,142 @@ export default {
       nameError: null,
       newName: this.node.name,
       newLoc: this.node.loc,
-      node_action: 'requestNetworkUpdate'
+      advancedShowDialog: false,
+      configCC: {
+        value: 0,
+        valueSize: 1,
+        parameter: 1
+      },
+      actions: [
+        {
+          text: 'Export json',
+          options: [{ name: 'Export', action: 'exportNode' }],
+          icon: 'get_app',
+          desc: 'Export this node in a json file'
+        },
+        {
+          text: 'Clear Retained',
+          options: [
+            {
+              name: 'Clear',
+              action: 'removeNodeRetained',
+              args: {
+                mqtt: true,
+                confirm:
+                  'Are you sure you want to remove all retained messages?'
+              }
+            }
+          ],
+          icon: 'clear',
+          desc: 'All retained messages of this node will be removed from broker'
+        },
+        {
+          text: 'Update topics',
+          options: [
+            {
+              name: 'Update',
+              action: 'updateNodeTopics',
+              args: {
+                mqtt: true,
+                confirm: 'Are you sure you want to update all topics?'
+              }
+            }
+          ],
+          icon: 'update',
+          desc: 'Update all node topics. Useful when name/location has changed'
+        },
+        {
+          text: 'Firmware update',
+          options: [
+            { name: 'Begin', action: 'beginFirmwareUpdate' },
+            { name: 'Abort', action: 'abortFirmwareUpdate' }
+          ],
+          icon: 'update',
+          desc: 'Start/Stop a firmware update'
+        },
+        {
+          text: 'Heal Node',
+          options: [
+            {
+              name: 'Heal',
+              action: 'healNode',
+              args: {
+                confirm:
+                  'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on'
+              }
+            }
+          ],
+          icon: 'healing',
+          desc: 'Force nodes to establish better connections to the controller'
+        },
+        {
+          text: 'Refresh Values',
+          options: [
+            {
+              name: 'Refresh',
+              action: 'refreshValues',
+              args: {
+                confirm:
+                  'Are you sure you want to refresh values of this node? This action increases network traffic'
+              }
+            }
+          ],
+          icon: 'cached',
+          desc:
+            'Update all CC values and metadata. Use only when many values seems stale'
+        },
+        {
+          text: 'Re-interview Node',
+          options: [
+            {
+              name: 'Interview',
+              action: 'refreshInfo',
+              args: {
+                confirm:
+                  "Are you sure you want to re-interview this node? All known information about this node is discarded. Battery powered nodes need to be woken up, interaction with the node won't be reliable until the interview is done."
+              }
+            }
+          ],
+          icon: 'history',
+          desc:
+            'Clear all info about this node and make a new full interview. Use when the node has wrong or missing capabilities'
+        },
+        {
+          text: 'Failed Nodes',
+          options: [
+            { name: 'Check', action: 'isFailedNode' },
+            { name: 'Remove', action: 'removeFailedNode' },
+            { name: 'Replace', action: 'replaceFailedNode' }
+          ],
+          icon: 'dangerous',
+          desc:
+            'Manage nodes that are dead and/or marked as failed with the controller'
+        },
+        {
+          text: 'Associations',
+          options: [
+            {
+              name: 'Clear',
+              action: 'removeAllAssociations',
+              args: {
+                confirm:
+                  "This action will remove all associations of this node. This will also clear lifeline association with controller node, the node won't report state changes until that is set up again"
+              }
+            },
+            {
+              name: 'Remove',
+              action: 'removeNodeFromAllAssociations',
+              args: {
+                confirm:
+                  'All direct associations to this node will be removed. Battery-powered nodes need to be woken up to edit their associations.'
+              }
+            }
+          ],
+          icon: 'link_off',
+          desc:
+            'Clear all node associations / Remove node from all associations'
+        }
+      ]
     }
   },
   computed: {
@@ -163,9 +370,6 @@ export default {
       } else {
         return {}
       }
-    },
-    node_actions () {
-      return this.actions
     }
   },
   watch: {
@@ -180,11 +384,17 @@ export default {
       this.nameError = this.validateTopic(val)
     }
   },
-  created () {
-    this.node_action = null
-  },
   methods: {
     ...mapMutations(['showSnackbar']),
+    nodeAction (action, args = {}) {
+      if (action === 'exportNode') {
+        this.exportNode()
+      } else if (args.mqtt) {
+        this.sendMqttAction(action, args.confirm)
+      } else {
+        this.$emit('action', action, { ...args, nodeId: this.node.id })
+      }
+    },
     openLink (link) {
       window.open(link, '_blank')
     },
@@ -203,8 +413,6 @@ export default {
       this.$listeners.export(this.node, 'node_' + this.node.id, 'json')
     },
     getValue (v) {
-      // const node = this.nodes[v.nodeId]
-
       if (this.node && this.node.values) {
         return this.node.values.find(i => i.id === v.id)
       } else {
@@ -220,51 +428,6 @@ export default {
       setTimeout(() => {
         this.newName = this.node.name
       }, 10)
-    },
-    async sendNodeAction (action) {
-      action = typeof action === 'string' ? action : this.node_action
-      if (this.node) {
-        const args = [this.node.id]
-
-        if (this.node_action === 'beginFirmwareUpdate') {
-          const { target } = await this.$listeners.showConfirm(
-            'Choose target',
-            '',
-            'info',
-            {
-              confirmText: 'Ok',
-              inputs: [
-                {
-                  type: 'number',
-                  label: 'Target',
-                  default: 0,
-                  rules: [v => v >= 0 || 'Invalid target'],
-                  hint:
-                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
-                  required: true,
-                  key: 'target'
-                }
-              ]
-            }
-          )
-          try {
-            const { data, file } = await this.$listeners.import('buffer')
-            args.push(file.name)
-            args.push(data)
-            args.push(target)
-          } catch (error) {
-            return
-          }
-        } else if (this.node_action === 'replaceFailedNode') {
-          const secure = await this.$listeners.showConfirm(
-            'Node inclusion',
-            'Start inclusion in secure mode?'
-          )
-          args.push(secure)
-        }
-
-        this.apiRequest(action, args)
-      }
     },
     async sendMqttAction (action, confirmMessage) {
       if (this.node) {
@@ -337,7 +500,7 @@ export default {
     },
     validateTopic (name) {
       const match = name
-        ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9_-]+/g)
+        ? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9 _-]+/g)
         : [name]
 
       return match[0] !== name ? 'Only a-zA-Z0-9_- chars are allowed' : null

@@ -31,6 +31,7 @@
   - [Bug Report](troubleshooting/bug_report.md)
   - [Docker custom builds](troubleshooting/docker_custom_builds.md)
 
+- [Usage Statistics](usage_stats.md)
 - [Screenshots](screenshots.md)
 - [Thanks](thanks.md)
 - [Author](author.md)

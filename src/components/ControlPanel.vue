@@ -3,36 +3,7 @@
     <v-card>
       <v-card-text>
         <v-container fluid>
-          <v-row justify="start">
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Home ID</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.homeid }}</div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Home Hex</div>
-              <div class="body-1 font-weight-bold">{{ appInfo.homeHex }}</div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">App Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.appVersion }}
-              </div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Zwavejs Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.zwaveVersion }}
-              </div>
-            </v-col>
-            <v-col class="text-center" cols="12" sm="3" md="2">
-              <div class="h6">Zwavejs-server Version</div>
-              <div class="body-1 font-weight-bold">
-                {{ appInfo.serverVersion }}
-              </div>
-            </v-col>
-          </v-row>
-
-          <v-row justify="start">
+          <v-row style="max-width:800px" justify="start">
             <v-col cols="12" sm="4" md="3" style="text-align:center">
               <v-btn
                 depressed
@@ -42,22 +13,15 @@
                 Add/Remove Device
               </v-btn>
             </v-col>
-            <v-col cols="12" sm="6" md="3">
-              <v-text-field
-                label="Controller status"
-                readonly
-                v-model="appInfo.controllerStatus"
-              ></v-text-field>
-            </v-col>
-
-            <v-col cols="12" sm="6" md="3">
-              <v-select
-                label="Actions"
-                append-outer-icon="send"
-                v-model="cnt_action"
-                :items="cnt_actions.concat(node_actions)"
-                @click:append-outer="sendCntAction"
-              ></v-select>
+            <v-col cols="12" sm="4" md="3" style="text-align:center">
+              <v-btn
+                dark
+                color="green"
+                depressed
+                @click="advancedShowDialog = true"
+              >
+                Advanced
+              </v-btn>
             </v-col>
           </v-row>
         </v-container>
@@ -69,14 +33,14 @@
           @apiRequest="apiRequest"
         />
 
-        <nodes-table
-          :nodes="nodes"
-          :node-actions="node_actions"
-          :socket="socket"
-          v-on="$listeners"
-          @exportNodes="exportConfiguration"
-          @importNodes="importConfiguration"
+        <DialogAdvanced
+          v-model="advancedShowDialog"
+          @close="advancedShowDialog = false"
+          :actions="actions"
+          @action="onAction"
         />
+
+        <nodes-table :socket="socket" v-on="$listeners" @action="sendAction" />
       </v-card-text>
     </v-card>
   </v-container>
@@ -87,6 +51,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
 import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
@@ -98,15 +63,13 @@ export default {
   },
   components: {
     NodesTable,
-    DialogAddRemove
+    DialogAddRemove,
+    DialogAdvanced
   },
   computed: {
-    ...mapGetters(['nodes', 'appInfo', 'zwave']),
+    ...mapGetters(['nodes', 'zwave']),
     timeoutMs () {
       return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
-    },
-    controllerStatus () {
-      return this.appInfo.controllerStatus
     }
   },
   watch: {},
@@ -116,61 +79,84 @@ export default {
       bindedSocketEvents: {}, // keep track of the events-handlers
       addRemoveShowDialog: false,
       addRemoveNode: null,
-      node_actions: [
+      advancedShowDialog: false,
+      actions: [
         {
-          text: 'Heal node',
-          value: 'healNode'
+          text: 'Backup',
+          options: [
+            { name: 'Import', action: 'import' },
+            { name: 'Export', action: 'export' }
+          ],
+          icon: 'save',
+          desc: 'Save or load `nodes.json` file with names and locations'
         },
         {
-          text: 'Re-interview Node',
-          value: 'refreshInfo'
+          text: 'Dump',
+          options: [{ name: 'Export', action: 'exportDump' }],
+          icon: 'bug_report',
+          desc: 'Export all nodes in a json file. Useful for debugging purposes'
         },
-        {
-          text: 'Refresh values',
-          value: 'refreshValues'
-        },
-        {
-          text: 'Is Failed Node',
-          value: 'isFailedNode'
-        },
-        {
-          text: 'Remove failed node',
-          value: 'removeFailedNode'
-        },
-        {
-          text: 'Replace failed node',
-          value: 'replaceFailedNode'
-        },
-        {
-          text: 'Begin Firmware update',
-          value: 'beginFirmwareUpdate'
-        },
-        {
-          text: 'Abort Firmware update',
-          value: 'abortFirmwareUpdate'
-        },
-        {
-          text: 'Remove all associations',
-          value: 'removeAllAssociations'
-        },
-        {
-          text: 'Remove node from all associations',
-          value: 'removeNodeFromAllAssociations'
-        }
-      ],
-      cnt_action: 'healNetwork',
-      cnt_actions: [
         {
           text: 'Heal Network',
-          value: 'beginHealingNetwork'
+          options: [
+            {
+              name: 'Begin',
+              action: 'beginHealingNetwork',
+              args: {
+                confirm:
+                  'Healing network causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on'
+              }
+            },
+            { name: 'Stop', action: 'stopHealingNetwork' }
+          ],
+          icon: 'healing',
+          desc: 'Force nodes to establish better connections to the controller'
         },
         {
-          text: 'Stop Heal Network',
-          value: 'stopHealingNetwork'
+          text: 'Hard Reset',
+          options: [
+            {
+              name: 'Factory Reset',
+              action: 'hardReset'
+            }
+          ],
+          icon: 'warning',
+          color: 'red',
+          desc:
+            'Reset controller to factory defaults (all paired devices will be removed)'
         },
         {
-          text: 'Hard reset',
-          value: 'hardReset'
+          text: 'Failed Nodes',
+          options: [
+            {
+              name: 'Check all',
+              action: 'isFailedNode',
+              args: { broadcast: true }
+            },
+            {
+              name: 'Remove all',
+              action: 'removeFailedNode',
+              args: {
+                broadcast: true,
+                confirm:
+                  'This action will remove all failed nodes. ATTENTION: this will skip sleeping nodes to prevent unwanted behaviours'
+              }
+            }
+          ],
+          icon: 'dangerous',
+          desc:
+            'Manage nodes that are dead and/or marked as failed with the controller'
+        },
+        {
+          text: 'Driver function',
+          options: [
+            {
+              name: 'Write',
+              action: 'driverFunction'
+            }
+          ],
+          icon: 'code',
+          desc: 'Write a custom JS function using the ZwaveJS Driver'
         }
       ],
       rules: {
@@ -186,7 +172,22 @@ export default {
     }
   },
   methods: {
-    ...mapMutations(['showSnackbar']),
+    ...mapMutations(['showSnackbar', 'setHealProgress']),
+    onAddRemoveClose () {
+      this.addRemoveShowDialog = false
+      this.addRemoveNode = null
+    },
+    async onAction (action, args = {}) {
+      if (action === 'import') {
+        this.importConfiguration()
+      } else if (action === 'export') {
+        this.exportConfiguration()
+      } else if (action === 'exportDump') {
+        this.exportDump()
+      } else {
+        this.sendAction(action, args)
+      }
+    },
     async importConfiguration () {
       if (
         await this.$listeners.showConfirm(
@@ -217,65 +218,38 @@ export default {
           console.log(error)
         })
     },
-    onAddRemoveClose () {
-      this.addRemoveShowDialog = false
-      this.addRemoveNode = null
+    exportDump () {
+      this.$listeners.export(this.nodes, 'nodes_dump', 'json')
     },
-    async sendCntAction () {
-      if (this.cnt_action) {
-        const args = []
-        let broadcast = false
-        const askId = this.node_actions.find(a => a.value === this.cnt_action)
-        if (askId) {
-          // don't send replaceFailed as broadcast
-          if (
-            this.cnt_action !== 'replaceFailedNode' &&
-            this.cnt_action !== 'beginFirmwareUpdate'
-          ) {
-            broadcast = await this.$listeners.showConfirm(
-              'Broadcast',
-              'Send this command to all nodes?',
-              'info',
-              {
-                cancelText: 'No'
-              }
-            )
+    async sendAction (action, { nodeId, broadcast, confirm }) {
+      if (action) {
+        if (confirm) {
+          const ok = await this.$listeners.showConfirm(
+            'Info',
+            confirm,
+            'info',
+            {
+              cancelText: 'cancel',
+              confirmText: 'ok'
+            }
+          )
+
+          if (!ok) {
+            return
           }
-
+        }
+        const args = []
+        if (nodeId !== undefined) {
           if (!broadcast) {
-            const { nodeId } = await this.$listeners.showConfirm(
-              'Choose a node',
-              '',
-              'info',
-              {
-                confirmText: 'Ok',
-                inputs: [
-                  {
-                    type: 'list',
-                    items: this.nodes,
-                    label: 'Node',
-                    hint: 'Select a node',
-                    required: true,
-                    key: 'nodeId',
-                    itemText: '_name',
-                    itemValue: 'id'
-                  }
-                ]
-              }
-            )
-
             if (isNaN(nodeId)) {
               this.showSnackbar('Node ID must be an integer value')
               return
             }
-            args.push(nodeId)
+            args.push(parseInt(nodeId))
           }
         }
 
-        if (
-          this.cnt_action === 'startInclusion' ||
-          this.cnt_action === 'replaceFailedNode'
-        ) {
+        if (action === 'startInclusion' || action === 'replaceFailedNode') {
           const secure = await this.$listeners.showConfirm(
             'Node inclusion',
             'Start inclusion in secure mode?',
@@ -285,38 +259,52 @@ export default {
             }
           )
           args.push(secure)
-        } else if (this.cnt_action === 'hardReset') {
-          const ok = await this.$listeners.showConfirm(
+        } else if (action === 'hardReset') {
+          const { confirm } = await this.$listeners.showConfirm(
             'Hard Reset',
             'Your controller will be reset to factory and all paired devices will be removed',
-            { color: 'red' }
-          )
-          if (!ok) {
-            return
-          }
-        } else if (this.cnt_action === 'beginFirmwareUpdate') {
-          const { target } = await this.$listeners.showConfirm(
-            'Choose target',
-            '',
-            'info',
+            'alert',
             {
               confirmText: 'Ok',
               inputs: [
                 {
-                  type: 'number',
-                  label: 'Target',
-                  default: 0,
-                  rules: [v => v >= 0 || 'Invalid target'],
-                  hint:
-                    'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+                  type: 'text',
+                  label: 'Confirm',
                   required: true,
-                  key: 'target'
+                  key: 'confirm',
+                  hint: 'Type "yes" and press OK to confirm'
                 }
               ]
             }
           )
-
+          if (!confirm || confirm !== 'yes') {
+            return
+          }
+        } else if (action === 'beginFirmwareUpdate') {
           try {
+            const { target } = await this.$listeners.showConfirm(
+              'Choose target',
+              '',
+              'info',
+              {
+                confirmText: 'Ok',
+                inputs: [
+                  {
+                    type: 'number',
+                    label: 'Target',
+                    default: 0,
+                    rules: [v => v >= 0 || 'Invalid target'],
+                    hint:
+                      'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+                    required: true,
+                    key: 'target'
+                  }
+                ]
+              }
+            )
+
+            if (target === undefined) throw Error('Must specify a target')
+
             const { data, file } = await this.$listeners.import('buffer')
             args.push(file.name)
             args.push(data)
@@ -324,15 +312,48 @@ export default {
           } catch (error) {
             return
           }
+        } else if (action === 'driverFunction') {
+          const { code } = await this.$listeners.showConfirm(
+            'Driver function',
+            '',
+            'info',
+            {
+              width: 900,
+              confirmText: 'Send',
+              inputs: [
+                {
+                  type: 'code',
+                  key: 'code',
+                  default:
+                    '// Example:\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();',
+                  hint: `Write the function here. The only arg is:
+                    <code>driver</code>. The function is <code>async</code>.`
+                }
+              ]
+            }
+          )
+
+          if (!code) {
+            return
+          }
+
+          args.push(code)
         }
 
         if (broadcast) {
-          for (let i = 0; i < this.nodes.length; i++) {
-            const nodeid = this.nodes[i].id
-            this.apiRequest(this.cnt_action, [nodeid])
+          let nodes = this.nodes
+
+          // ignore sleeping nodes in broadcast request. Fixes #983
+          if (action === 'removeFailedNode') {
+            nodes = nodes.filter(n => n.status !== 'Asleep')
+          }
+
+          for (let i = 0; i < nodes.length; i++) {
+            const nodeid = nodes[i].id
+            this.apiRequest(action, [nodeid])
           }
         } else {
-          this.apiRequest(this.cnt_action, args)
+          this.apiRequest(action, args)
         }
       }
     },
@@ -388,10 +409,12 @@ export default {
   mounted () {
     const onApiResponse = this.onApiResponse.bind(this)
     const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
+    const onHealProgress = this.setHealProgress.bind(this)
 
     this.bindEvent('api', onApiResponse)
     this.bindEvent('nodeRemoved', onNodeAddedRemoved)
     this.bindEvent('nodeAdded', onNodeAddedRemoved)
+    this.bindEvent('healProgress', onHealProgress)
   },
   beforeDestroy () {
     if (this.socket) {

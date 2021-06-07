@@ -20,7 +20,6 @@ services:
       - '3000:3000' # port for zwave-js websocket server
 networks:
   zwave:
-# volumes:
-#   zwavejs2mqtt:
-#     name: zwavejs2mqtt
-
+volumes:
+  zwave-config:
+    name: zwave-config

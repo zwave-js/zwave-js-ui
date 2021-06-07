@@ -1,4 +1,6 @@
 const { joinPath } = require('../lib/utils')
+require('dotenv').config({ path: './.env.app' })
+
 // config/app.js
 module.exports = {
   title: 'ZWave To MQTT',
@@ -8,5 +10,6 @@ module.exports = {
   sessionSecret:
     process.env.SESSION_SECRET || 'DEFAULT_SESSION_SECRET_CHANGE_ME',
   base: '/',
-  port: 8091
+  port: process.env.PORT || 8091,
+  host: process.env.HOST || '0.0.0.0'
 }

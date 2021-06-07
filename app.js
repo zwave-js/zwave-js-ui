@@ -29,6 +29,7 @@ const { createCertificate } = require('pem').promisified
 const rateLimit = require('express-rate-limit')
 const jwt = require('jsonwebtoken')
 const { promisify } = require('util')
+const FileStore = require('session-file-store')(session)
 
 const verifyJWT = promisify(jwt.verify.bind(jwt))
 
@@ -178,7 +179,7 @@ async function startServer (host, port) {
  * @returns {string} The path is it's safe, thorws otherwise
  */
 function getSafePath (req) {
-  let reqPath = req.params.path
+  let reqPath = req.query.path
 
   if (typeof reqPath !== 'string') {
     throw Error('Invalid path')
@@ -186,7 +187,7 @@ function getSafePath (req) {
 
   reqPath = path.normalize(reqPath)
 
-  if (!reqPath.startsWith(storeDir)) {
+  if (!reqPath.startsWith(storeDir) || path === storeDir) {
     throw Error('Path not allowed')
   }
 
@@ -334,8 +335,17 @@ app.use(
   session({
     name: 'zwavejs2mqtt-session',
     secret: sessionSecret,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
+    store: new FileStore({
+      path: path.join(storeDir, 'sessions'),
+      logFn: (...args) => {
+        // skip ENOENT errors
+        if (args && args.filter(a => a.indexOf('ENOENT') >= 0).length === 0) {
+          logger.debug(...args)
+        }
+      }
+    }),
     cookie: {
       secure: !!process.env.HTTPS || !!process.env.USE_SECURE_COOKIE,
       httpOnly: true, // prevents cookie to be sent by client javascript
@@ -375,6 +385,7 @@ function setupSocket (server) {
     if (gw.zwave) {
       const result = await gw.zwave.callApi(data.api, ...data.args)
       result.api = data.api
+      result.originalArgs = data.args
       socket.emit(socketEvents.api, result)
     }
   })
@@ -417,10 +428,16 @@ function setupSocket (server) {
     try {
       switch (data.apiName) {
         case 'delete':
-          res = gw.publishDiscovery(data.device, data.nodeId, true, true)
+          res = gw.publishDiscovery(data.device, data.nodeId, {
+            deleteDevice: true,
+            forceUpdate: true
+          })
           break
         case 'discover':
-          res = gw.publishDiscovery(data.device, data.nodeId, false, true)
+          res = gw.publishDiscovery(data.device, data.nodeId, {
+            deleteDevice: false,
+            forceUpdate: true
+          })
           break
         case 'rediscoverNode':
           res = gw.rediscoverNode(data.nodeId)
@@ -688,6 +705,81 @@ app.get('/api/settings', apisLimiter, isAuthenticated, async function (
   } else res.json(data)
 })
 
+// update settings
+app.post('/api/settings', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
+  try {
+    if (restarting) {
+      throw Error(
+        'Gateway is restarting, wait a moment before doing another request'
+      )
+    }
+    // TODO: validate settings using ajv
+    const settings = req.body
+    restarting = true
+    await jsonStore.put(store.settings, settings)
+    await gw.close()
+    await destroyPlugins()
+    // reload loggers settings
+    setupLogging(settings)
+    // restart clients and gateway
+    startGateway(settings)
+    res.json({
+      success: true,
+      message: 'Configuration updated successfully',
+      data: settings
+    })
+  } catch (error) {
+    logger.error(error)
+    res.json({ success: false, message: error.message })
+  }
+})
+
+// update settings
+app.post('/api/statistics', apisLimiter, isAuthenticated, async function (
+  req,
+  res
+) {
+  try {
+    if (restarting) {
+      throw Error(
+        'Gateway is restarting, wait a moment before doing another request'
+      )
+    }
+    const { enableStatistics } = req.body
+
+    const settings = jsonStore.get(store.settings) || {}
+
+    if (!settings.zwave) {
+      settings.zwave = {}
+    }
+
+    settings.zwave.enableStatistics = enableStatistics
+    settings.zwave.disclaimerVersion = 1
+
+    await jsonStore.put(store.settings, settings)
+
+    if (gw && gw.zwave) {
+      if (enableStatistics) {
+        gw.zwave.enableStatistics()
+      } else {
+        gw.zwave.disableStatistics()
+      }
+    }
+
+    res.json({
+      success: true,
+      enabled: enableStatistics,
+      message: 'Statistics configuration updated successfully'
+    })
+  } catch (error) {
+    logger.error(error)
+    res.json({ success: false, message: error.message })
+  }
+})
+
 // get config
 app.get('/api/exportConfig', apisLimiter, isAuthenticated, function (req, res) {
   return res.json({
@@ -723,16 +815,18 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
       const node = config[nodeId]
       if (!node || typeof node !== 'object') continue
 
+      // All API calls expect nodeId to be a number, so convert it here.
+      const nodeIdNumber = Number(nodeId)
       if (utils.hasProperty(node, 'name')) {
-        await gw.zwave.callApi('setNodeName', nodeId, node.name || '')
+        await gw.zwave.callApi('setNodeName', nodeIdNumber, node.name || '')
       }
 
       if (utils.hasProperty(node, 'loc')) {
-        await gw.zwave.callApi('setNodeLocation', nodeId, node.loc || '')
+        await gw.zwave.callApi('setNodeLocation', nodeIdNumber, node.loc || '')
       }
 
       if (node.hassDevices) {
-        await gw.zwave.storeDevices(node.hassDevices, nodeId, false)
+        await gw.zwave.storeDevices(node.hassDevices, nodeIdNumber, false)
       }
     }
 
@@ -743,31 +837,55 @@ app.post('/api/importConfig', apisLimiter, isAuthenticated, async function (
   }
 })
 
-// get config
+// if no path provided return all store dir files/folders, otherwise return the file content
 app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
-    async function parseDir (dir) {
-      const toReturn = []
-      const files = await fs.readdir(dir)
-      for (const file of files) {
-        const entry = {
-          name: path.basename(file),
-          path: utils.joinPath(dir, file)
-        }
-        const stats = await fs.lstat(entry.path)
-        if (stats.isDirectory()) {
-          entry.children = await parseDir(entry.path)
-        } else {
-          entry.ext = file.split('.').pop()
-        }
+    let data
+    if (req.query.path) {
+      const reqPath = getSafePath(req)
 
-        entry.size = utils.humanSize(stats.size)
-        toReturn.push(entry)
+      const stat = await fs.lstat(reqPath)
+
+      if (!stat.isFile()) {
+        throw Error('Path is not a file')
       }
-      return toReturn
-    }
 
-    const data = await parseDir(storeDir)
+      data = await fs.readFile(reqPath, 'utf8')
+    } else {
+      async function parseDir (dir) {
+        const toReturn = []
+        const files = await fs.readdir(dir)
+        for (const file of files) {
+          const entry = {
+            name: path.basename(file),
+            path: utils.joinPath(dir, file)
+          }
+          const stats = await fs.lstat(entry.path)
+          if (stats.isDirectory()) {
+            if (entry.name === '.config-db') {
+              // hide config-db
+              continue
+            }
+            entry.children = await parseDir(entry.path)
+          } else {
+            entry.ext = file.split('.').pop()
+          }
+
+          entry.size = utils.humanSize(stats.size)
+          toReturn.push(entry)
+        }
+        return toReturn
+      }
+
+      data = [
+        {
+          name: 'store',
+          path: storeDir,
+          isRoot: true,
+          children: await parseDir(storeDir)
+        }
+      ]
+    }
 
     res.json({ success: true, data: data })
   } catch (error) {
@@ -776,42 +894,26 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   }
 })
 
-app.get('/api/store/:path', storeLimiter, isAuthenticated, async function (
-  req,
-  res
-) {
+app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
   try {
     const reqPath = getSafePath(req)
 
-    const stat = await fs.lstat(reqPath)
+    const isNew = req.query.isNew === 'true'
+    const isDirectory = req.query.isDirectory === 'true'
 
-    if (!stat.isFile()) {
-      throw Error('Path is not a file')
+    if (!isNew) {
+      const stat = await fs.lstat(reqPath)
+
+      if (!stat.isFile()) {
+        throw Error('Path is not a file')
+      }
     }
 
-    const data = await fs.readFile(reqPath, 'utf8')
-
-    res.json({ success: true, data: data })
-  } catch (error) {
-    logger.error(error.message)
-    return res.json({ success: false, message: error.message })
-  }
-})
-
-app.put('/api/store/:path', storeLimiter, isAuthenticated, async function (
-  req,
-  res
-) {
-  try {
-    const reqPath = getSafePath(req)
-
-    const stat = await fs.lstat(reqPath)
-
-    if (!stat.isFile()) {
-      throw Error('Path is not a file')
+    if (!isDirectory) {
+      await fs.writeFile(reqPath, req.body.content, 'utf8')
+    } else {
+      await fs.mkdir(reqPath)
     }
-
-    await fs.writeFile(reqPath, req.body.content, 'utf8')
 
     res.json({ success: true })
   } catch (error) {
@@ -820,7 +922,7 @@ app.put('/api/store/:path', storeLimiter, isAuthenticated, async function (
   }
 })
 
-app.delete('/api/store/:path', storeLimiter, isAuthenticated, async function (
+app.delete('/api/store', storeLimiter, isAuthenticated, async function (
   req,
   res
 ) {
@@ -883,38 +985,6 @@ app.post('/api/store-multi', storeLimiter, isAuthenticated, function (
   }
 
   archive.finalize()
-})
-
-// update settings
-app.post('/api/settings', apisLimiter, isAuthenticated, async function (
-  req,
-  res
-) {
-  try {
-    if (restarting) {
-      throw Error(
-        'Gateway is restarting, wait a moment before doing another request'
-      )
-    }
-    // TODO: validate settings using ajv
-    const settings = req.body
-    restarting = true
-    await jsonStore.put(store.settings, settings)
-    await gw.close()
-    await destroyPlugins()
-    // reload loggers settings
-    setupLogging(settings)
-    // restart clients and gateway
-    startGateway(settings)
-    res.json({
-      success: true,
-      message: 'Configuration updated successfully',
-      data: settings
-    })
-  } catch (error) {
-    logger.error(error)
-    res.json({ success: false, message: error.message })
-  }
 })
 
 // ### ERROR HANDLERS

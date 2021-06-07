@@ -38,6 +38,15 @@ export class ManagedItems {
         ? this.loadSetting('filters', this.initialFilters)
         : this.filters
     this._selected = this.initialSelected
+
+    // fix possible inconsistance from localstorage
+    for (const p in this.filters) {
+      if (!this.propDefs[p]) {
+        delete this.filters[p]
+      }
+    }
+
+    this.tableColumns = this.tableColumns.filter(t => !!this.propDefs[t.name])
   }
 
   /**

@@ -3,9 +3,10 @@ const rewire = require('rewire')
 
 const mod = rewire('../../lib/jsonStore')
 
+const jsonStore = require('../../lib/jsonStore')
+
 describe('#jsonStore', () => {
   describe('#getFile()', () => {
-    const fun = mod.__get__('getFile')
     const config = { file: 'foo', default: 'defaultbar' }
     beforeEach(() => {
       sinon.stub(mod.__get__('utils'), 'joinPath')
@@ -54,7 +55,6 @@ describe('#jsonStore', () => {
     })
 
     describe('#init()', () => {
-      let getFile
       beforeEach(() => {
         mod.store = { known: 'no', foobar: 'foo' }
         getFile = mod.__get__('getFile')
@@ -64,7 +64,7 @@ describe('#jsonStore', () => {
         )
       })
       afterEach(() => {
-        mod.__set__('getFile', getFile)
+        jsonStore._getFile.restore()
       })
       test('ok', () =>
         expect(mod.init({ file: 'foobar' })).resolves.toEqual({
@@ -80,13 +80,13 @@ describe('#jsonStore', () => {
 
     describe('#get()', () => {
       beforeEach(() => {
-        mod.store = { known: 'foo' }
+        jsonStore.store = { known: 'foo' }
       })
       test('known', () => expect(mod.get({ file: 'known' })).toBe('foo'))
-      test(
-        'unknown',
-        () => expect(() => mod.get({ file: 'unknown' })).toThrowError('Requested file not present in store: unknown')
-      )
+      test('unknown', () =>
+        expect(() => mod.get({ file: 'unknown' })).toThrowError(
+          'Requested file not present in store: unknown'
+        ))
     })
 
     describe('#put()', () => {
@@ -98,8 +98,9 @@ describe('#jsonStore', () => {
       })
       test('ok', () => {
         mod.__get__('jsonfile').writeFile.resolves()
-        return expect(mod
-          .put({ file: 'foo' }, 'bardata')).resolves.toBe('bardata')
+        return expect(mod.put({ file: 'foo' }, 'bardata')).resolves.toBe(
+          'bardata'
+        )
       })
       test('error', () => {
         mod.__get__('jsonfile').writeFile.rejects(Error('bar'))

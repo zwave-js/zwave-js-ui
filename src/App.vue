@@ -1,6 +1,6 @@
 <template>
   <v-app :dark="dark">
-    <div v-if="$route.meta.requiresAuth && auth !== undefined">
+    <div v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar">
       <v-navigation-drawer
         clipped-left
         :mini-variant="mini"
@@ -48,17 +48,22 @@
 
       <v-app-bar app>
         <v-app-bar-nav-icon @click.stop="toggleDrawer" />
-        <v-toolbar-title>{{ title }}</v-toolbar-title>
+        <v-toolbar-title v-if="$vuetify.breakpoint.smAndUp">{{
+          title
+        }}</v-toolbar-title>
 
         <v-spacer></v-spacer>
+
+        <div class="controller-status">{{ appInfo.controllerStatus }}</div>
 
         <v-tooltip bottom>
           <template v-slot:activator="{ on }">
             <v-icon
+              class="mr-3 ml-3"
               dark
               medium
               style="cursor:default;"
-              :color="statusColor || 'primary'"
+              :color="statusColor || 'orange'"
               v-on="on"
               >swap_horizontal_circle</v-icon
             >
@@ -66,10 +71,60 @@
           <span>{{ status }}</span>
         </v-tooltip>
 
+        <v-tooltip bottom open-on-click>
+          <template v-slot:activator="{ on }">
+            <v-icon
+              dark
+              medium
+              class="mr-3"
+              style="cursor:default;"
+              color="primary"
+              v-on="on"
+              @click="copyVersion"
+              >info</v-icon
+            >
+          </template>
+          <div class="info-box">
+            <div>
+              <small>zwavejs2mqtt</small>
+              <strong>{{ appInfo.appVersion }}</strong>
+            </div>
+            <div>
+              <small>zwave-js</small>
+              <strong>{{ appInfo.zwaveVersion }}</strong>
+            </div>
+            <div>
+              <small>Home ID</small>
+              <strong>{{ appInfo.homeid }}</strong>
+            </div>
+            <div>
+              <small>Home Hex</small>
+              <strong>{{ appInfo.homeHex }}</strong>
+            </div>
+          </div>
+        </v-tooltip>
+
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-badge
+              v-on="on"
+              class="mr-3"
+              :content="updateAvailable"
+              :value="updateAvailable"
+              color="red"
+              overlap
+            >
+              <v-btn small icon @click="showUpdateDialog">
+                <v-icon dark medium color="primary">history</v-icon>
+              </v-btn>
+            </v-badge>
+          </template>
+        </v-tooltip>
+
         <div v-if="auth">
           <v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
             <template v-slot:activator="{ on }">
-              <v-btn v-on="on" icon>
+              <v-btn small v-on="on" icon>
                 <v-icon>more_vert</v-icon>
               </v-btn>
             </template>
@@ -91,7 +146,7 @@
           <div v-else>
             <v-menu v-for="item in menu" :key="item.text" bottom left>
               <template v-slot:activator="{ on }">
-                <v-btn v-on="on" icon @click="item.func">
+                <v-btn small class="mr-2" v-on="on" icon @click="item.func">
                   <v-tooltip bottom>
                     <template v-slot:activator="{ on }">
                       <v-icon dark color="primary" v-on="on">{{
@@ -166,6 +221,22 @@
 </template>
 
 <style>
+.controller-status {
+  color: #555;
+  background: #e0e0e0;
+  border-radius: 4px;
+  padding: 0.3rem 0;
+  font-size: 0.8rem;
+  min-width: 220px;
+  text-align: center;
+}
+.info-box > div {
+  display: flex;
+  justify-content: space-between;
+}
+.info-box > div > strong {
+  padding-left: 1.2rem;
+}
 /* Fix Vuetify code style after update to 2.4.0 */
 code {
   color: #c62828 !important;
@@ -193,7 +264,10 @@ export default {
   },
   name: 'app',
   computed: {
-    ...mapGetters(['user', 'auth'])
+    ...mapGetters(['user', 'auth', 'appInfo']),
+    updateAvailable () {
+      return this.appInfo.newConfigVersion ? 1 : 0
+    }
   },
   watch: {
     $route: function (value) {
@@ -215,14 +289,14 @@ export default {
       password: {},
       menu: [
         {
-          icon: 'logout',
-          func: this.logout,
-          tooltip: 'Logout'
-        },
-        {
           icon: 'lock',
           func: this.showPasswordDialog,
           tooltip: 'Password'
+        },
+        {
+          icon: 'logout',
+          func: this.logout,
+          tooltip: 'Logout'
         }
       ],
       pages: [
@@ -239,6 +313,7 @@ export default {
       drawer: false,
       mini: false,
       topbar: [],
+      hideTopbar: false,
       title: '',
       snackbar: false,
       snackbarText: '',
@@ -249,6 +324,18 @@ export default {
   methods: {
     ...mapActions(['initNodes', 'setAppInfo', 'updateValue', 'removeValue']),
     ...mapMutations(['setControllerStatus', 'initNode', 'removeNode']),
+    copyVersion () {
+      const el = document.createElement('textarea')
+      el.value = `zwavejs2mqtt: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\nhome hex: ${this.appInfo.homeHex}`
+      el.setAttribute('readonly', '')
+      el.style.position = 'absolute'
+      el.style.left = '-9999px'
+      document.body.appendChild(el)
+      el.select()
+      document.execCommand('copy')
+      document.body.removeChild(el)
+      this.showSnackbar('Copied to clipboard')
+    },
     async updatePassword () {
       try {
         const response = await ConfigApis.updatePassword(this.password)
@@ -288,7 +375,7 @@ export default {
         alert: 'red'
       }
 
-      options.color = levelMap[level] || 'primary'
+      options.color = options.color || levelMap[level] || 'primary'
 
       return this.$refs.confirm.open(title, text, options)
     },
@@ -310,6 +397,33 @@ export default {
     updateStatus: function (status, color) {
       this.status = status
       this.statusColor = color
+    },
+    async showUpdateDialog () {
+      const newVersion = this.appInfo.newConfigVersion
+
+      const result = await this.confirm(
+        'Config updates',
+        newVersion
+          ? `<div style="text-align:center"><p>New <b>zwave-js</b> config version available: <code>${newVersion}</code>.</p><p>Mind that some changes may require a <b>re-interview</b> of affected devices</p></div>`
+          : '<div style="text-align:center"><p>No updates available yet. Press on <b>CHECK</b> to trigger a new check.</p><p>By default checks are automatically done daily at midnight</p></div>',
+        'info',
+        {
+          width: 500,
+          cancelText: 'Close',
+          confirmText: newVersion ? 'Install' : 'Check'
+        }
+      )
+
+      if (result) {
+        this.apiRequest(
+          newVersion ? 'installConfigUpdate' : 'checkForConfigUpdates',
+          []
+        )
+
+        this.showSnackbar(
+          newVersion ? 'Installation started' : 'Check requested'
+        )
+      }
     },
     changeThemeColor: function () {
       const metaThemeColor = document.querySelector('meta[name=theme-color]')
@@ -385,7 +499,9 @@ export default {
       const a = document.createElement('a')
 
       data =
-        ext === 'json' && typeof data === 'object' ? JSON.stringify(data) : data
+        ext === 'json' && typeof data === 'object'
+          ? JSON.stringify(data, null, 2) // pretty print
+          : data
 
       const blob = new Blob([data], {
         type: contentType
@@ -396,6 +512,60 @@ export default {
       a.download = fileName + '.' + (ext || 'json')
       a.target = '_self'
       a.click()
+    },
+    async getConfig () {
+      try {
+        const data = await ConfigApis.getConfig()
+        if (!data.success) {
+          this.showSnackbar(
+            'Error while retriving configuration, check console'
+          )
+          console.log(data)
+        } else {
+          this.$store.dispatch('init', data)
+
+          if (
+            !data.settings ||
+            !data.settings.zwave ||
+            data.settings.zwave.enableStatistics === undefined
+          ) {
+            const result = await this.confirm(
+              'Usage statistics',
+              `<p>Please allow the <b>Z-Wave JS</b> project to collect some anonymized data regarding the devices
+              you own so that we can generate statistics that allow us to better focus our development efforts.
+              <b>This information is not tracked to any identifiable user or IP address and cannot be used to identify you</b>. Specifically, we'd like to collect:</p>
+
+              • A <b>hash</b> of your network ID salted with a 32 byte randomly generated number, which is used to prevent duplicate records (this salted hash <b>cannot be undone</b> to reveal your network ID or identify you);</br>
+              • <b>Name</b> and <b>version</b> of the application you are running;</br>
+              • Information about which version of <code>node-zwave-js</code> you are running;</br>
+              • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
+
+              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by Z-Wave JS.
+              More information about the data that is collected and how it is used, including an example of the data collected, can be found <a target="_blank" href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
+              'info</p>',
+              {
+                width: 1000,
+                cancelText: 'No 😢',
+                confirmText: 'Ok 😍',
+                persistent: true
+              }
+            )
+
+            const data = await ConfigApis.updateStats(result)
+
+            if (data.success) {
+              this.showSnackbar(
+                `Statistics are ${data.enabled ? 'enabled' : 'disabled'}`
+              )
+            } else {
+              throw Error(data.message)
+            }
+          }
+        }
+      } catch (error) {
+        this.showSnackbar(error.message)
+        console.log(error)
+      }
     },
     async startSocket () {
       if (
@@ -409,6 +579,7 @@ export default {
 
       if (this.auth && (!this.user || !this.user.token)) {
         await this.logout()
+        return
       }
 
       const query = this.auth ? { token: this.user.token } : undefined
@@ -441,6 +612,10 @@ export default {
         this.setAppInfo(data.info)
       })
 
+      this.socket.on(socketEvents.info, data => {
+        this.setAppInfo(data)
+      })
+
       this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
       this.socket.on(
         socketEvents.controller,
@@ -454,6 +629,9 @@ export default {
       this.socket.on(socketEvents.valueUpdated, this.updateValue.bind(this))
 
       this.socket.emit(socketActions.init, true)
+
+      // don't await this, will cause a loop of calls
+      this.getConfig()
     },
     async logout () {
       const user = Object.assign({}, this.user)
@@ -496,7 +674,8 @@ export default {
           }
 
           if (!newAuth && this.$route.path === Routes.login) {
-            this.$router.push(Routes.main)
+            this.$router.push(localStorage.getItem('nextUrl') || Routes.main)
+            localStorage.removeItem('nextUrl')
           }
           this.startSocket()
         }
@@ -513,6 +692,12 @@ export default {
   mounted () {
     if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl) {
       this.toggleDrawer()
+    }
+
+    const hash = window.location.hash.substr(1)
+
+    if (hash === 'no-topbar') {
+      this.hideTopbar = true
     }
 
     this.dark = this.settings.load('dark', false)

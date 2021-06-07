@@ -5,18 +5,62 @@
     <!-- HASS DEVICES -->
     <v-row v-if="hassDevices.length > 0">
       <v-col cols="12" md="6" pa-1>
-        <v-btn color="blue darken-1" text @click="storeDevices(false)"
-          >Store</v-btn
-        >
-        <v-btn color="red darken-1" text @click="storeDevices(true)"
-          >Remove Store</v-btn
-        >
-        <v-btn color="green darken-1" text @click="rediscoverNode"
-          >Rediscover Node</v-btn
-        >
-        <v-btn color="yellow darken-1" text @click="disableDiscovery"
-          >Disable Discovery</v-btn
-        >
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              color="blue darken-1"
+              text
+              @click="storeDevices(false)"
+              >Store</v-btn
+            >
+          </template>
+          <span
+            >Store all discovered devices in nodes.json in store directory.
+            Prevents re-discovery on startup</span
+          >
+        </v-tooltip>
+
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              color="red darken-1"
+              text
+              @click="storeDevices(true)"
+              >Remove Store</v-btn
+            >
+          </template>
+          <span>Remove devices from nodes.json in store directory</span>
+        </v-tooltip>
+
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn v-on="on" color="green darken-1" text @click="rediscoverNode"
+              >Rediscover Node</v-btn
+            >
+          </template>
+          <span
+            >Rediscover all node entities. Useful when changing node
+            name/location and need to recalculate topics</span
+          >
+        </v-tooltip>
+
+        <v-tooltip bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              color="yellow darken-1"
+              text
+              @click="disableDiscovery"
+              >Disable Discovery</v-btn
+            >
+          </template>
+          <span
+            >Set the ignoreDiscovery flag to true on all entities of this node
+            to skip the discovery of them</span
+          >
+        </v-tooltip>
 
         <v-data-table
           :headers="headers_hass"
@@ -44,38 +88,65 @@
         </v-data-table>
       </v-col>
       <v-col cols="12" md="6" pa-1>
-        <v-btn
-          v-if="!selectedDevice"
-          color="blue darken-1"
-          :disabled="errorDevice"
-          text
-          @click="addDevice"
-          >Add</v-btn
-        >
-        <v-btn
-          v-if="selectedDevice"
-          color="blue darken-1"
-          :disabled="errorDevice"
-          text
-          @click="updateDevice"
-          >Update</v-btn
-        >
-        <v-btn
-          v-if="selectedDevice"
-          color="green darken-1"
-          :disabled="errorDevice"
-          text
-          @click="rediscoverDevice"
-          >Rediscover</v-btn
-        >
-        <v-btn
-          v-if="selectedDevice"
-          color="red darken-1"
-          :disabled="errorDevice"
-          text
-          @click="deleteDevice"
-          >Delete</v-btn
-        >
+        <v-tooltip v-if="!selectedDevice" bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              color="blue darken-1"
+              :disabled="errorDevice"
+              text
+              @click="addDevice"
+              >Add</v-btn
+            >
+          </template>
+          <span>Add this device to discovered entities</span>
+        </v-tooltip>
+
+        <v-tooltip v-if="selectedDevice" bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              color="blue darken-1"
+              :disabled="errorDevice"
+              text
+              @click="updateDevice"
+              >Update</v-btn
+            >
+          </template>
+          <span
+            >Update the in-memory discover template. You have to press
+            Rediscover in order to send this to HA</span
+          >
+        </v-tooltip>
+
+        <v-tooltip v-if="selectedDevice" bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              color="green darken-1"
+              :disabled="errorDevice"
+              text
+              @click="rediscoverDevice"
+              >Rediscover</v-btn
+            >
+          </template>
+          <span>Send this payload to HA</span>
+        </v-tooltip>
+
+        <v-tooltip v-if="selectedDevice" bottom>
+          <template v-slot:activator="{ on }">
+            <v-btn
+              v-on="on"
+              color="red darken-1"
+              :disabled="errorDevice"
+              text
+              @click="deleteDevice"
+              >Delete</v-btn
+            >
+          </template>
+          <span>Delete this entity</span>
+        </v-tooltip>
+
         <v-textarea
           label="Hass Device JSON"
           auto-grow

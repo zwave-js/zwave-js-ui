@@ -64,7 +64,7 @@
                         v-if="newGateway.logEnabled"
                       >
                         <v-switch
-                          hint="Store logs in a file. Default: store/zwavejs2newMqtt.log"
+                          hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
                           persistent-hint
                           label="Log to file"
                           v-model="newGateway.logToFile"
@@ -163,6 +163,18 @@
                       </v-col>
                       <v-col cols="12" sm="6">
                         <v-switch
+                          hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/getting-started/telemetry.md#usage-statistics"
+                          persistent-hint
+                          label="Enable statistics"
+                          v-model="newZwave.enableStatistics"
+                        ></v-switch>
+                      </v-col>
+                      <input
+                        type="hidden"
+                        :value="newZwave.disclaimerVersion"
+                      />
+                      <v-col cols="12" sm="6">
+                        <v-switch
                           hint="Enable zwave-js logging"
                           persistent-hint
                           label="Log Enabled"
@@ -208,7 +220,6 @@
                           type="number"
                         ></v-text-field>
                       </v-col>
-                      <input type="hidden" :value="newZwave.plugin" />
                       <input type="hidden" :value="newZwave.options" />
                     </v-row>
                   </v-card-text>
@@ -434,7 +445,7 @@
                           persistent-hint
                         ></v-switch>
                       </v-col>
-                      <v-col v-if="newGateway.type !== 2" cols="6">
+                      <v-col v-if="newGateway.payloadType !== 2" cols="6">
                         <v-switch
                           label="Include Node info"
                           hint="Include Node's Name and Location on Payload"
@@ -501,11 +512,19 @@
                           hint="The prefix to use for Hass MQTT discovery. Leave empty to use the mqtt prefix"
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12" v-if="newGateway.hassDiscovery">
+                      <v-col cols="6" v-if="newGateway.hassDiscovery">
                         <v-switch
                           label="Retained discovery"
                           hint="Set retain flag to true in discovery messages"
                           v-model="newGateway.retainedDiscovery"
+                          persistent-hint
+                        ></v-switch>
+                      </v-col>
+                      <v-col cols="6" v-if="newGateway.hassDiscovery">
+                        <v-switch
+                          label="Manual discovery"
+                          hint="Don't automatically send the discovery payloads when a device is discovered"
+                          v-model="newGateway.manualDiscovery"
                           persistent-hint
                         ></v-switch>
                       </v-col>

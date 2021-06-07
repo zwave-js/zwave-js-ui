@@ -1,134 +1,120 @@
 <template>
   <v-container grid-list-md>
-    <v-row>
-      <v-col cols="12" sm="6">
-        <v-select
-          label="Group"
-          v-model="group.group"
-          @input="getAssociations"
-          :items="group.node.groups"
-          return-object
-        ></v-select>
-      </v-col>
-
-      <v-col v-if="group.group && group.associations" cols="12" sm="6">
-        <v-list subheader>
-          <v-subheader>Associations</v-subheader>
-          <template v-for="(ass, index) in group.associations">
-            <v-list-item :key="`item-${index}`" dense>
-              <v-list-item-content>
-                <v-list-item-title
-                  >Node:
-                  <strong>{{
-                    nodes[ass.nodeId]._name || ass.nodeId
-                  }}</strong></v-list-item-title
-                >
-                <v-list-item-subtitle
-                  v-if="ass.endpoint >= 0"
-                  class="text--primary"
-                  >Endpoint:
-                  <strong>{{ ass.endpoint }}</strong>
-                </v-list-item-subtitle>
-              </v-list-item-content>
-              <v-list-item-icon>
-                <v-icon @click="removeAssociation(ass)" color="red">
-                  delete
-                </v-icon>
-              </v-list-item-icon>
-            </v-list-item>
-            <v-divider :key="`divider-${index}`"></v-divider>
-          </template>
-          <v-list-item v-if="group.associations.length === 0">
-            <v-list-item-content>
-              No assocaitions
-            </v-list-item-content>
-          </v-list-item>
-        </v-list>
-      </v-col>
-
-      <v-col cols="12" sm="6">
-        <v-combobox
-          label="Target"
-          v-model="group.target"
-          :items="nodes"
-          return-object
-          hint="Select the node from the list or digit the node ID"
-          persistent-hint
-          item-text="_name"
-        ></v-combobox>
-      </v-col>
-
-      <v-col
-        v-if="group.group && group.group.multiChannel"
-        cols="12"
-        sm="6"
-        md="4"
+    <v-row class="pa-5" align-content="center" justify="center">
+      <v-data-table
+        :headers="headers"
+        :items="associations"
+        item-key="id"
+        class="elevation-1"
       >
-        <v-text-field
-          v-model.number="group.endpoint"
-          label="Endpoint"
-          hint="Target node endpoint"
-          type="number"
-        />
-      </v-col>
-
-      <v-col cols="12">
-        <v-btn
-          v-if="group.target && group.group"
-          rounded
-          color="primary"
-          @click="addAssociation"
-          dark
-          class="mb-2"
-          >Add</v-btn
-        >
-        <v-btn
-          v-if="group.target && group.group"
-          rounded
-          color="primary"
-          @click="removeAssociation"
-          dark
-          class="mb-2"
-          >Remove</v-btn
-        >
-        <v-btn
-          rounded
-          color="primary"
-          @click="removeAllAssociations"
-          dark
-          class="mb-2"
-          >Remove All</v-btn
-        >
-      </v-col>
+        <template v-slot:top>
+          <v-btn
+            text
+            color="green"
+            @click="dialogAssociation = true"
+            dark
+            class="mb-2"
+            >Add</v-btn
+          >
+          <v-btn
+            text
+            color="red"
+            @click="removeAllAssociations"
+            dark
+            class="mb-2"
+            >Remove All</v-btn
+          >
+          <v-btn text color="primary" @click="getAssociations" dark class="mb-2"
+            >Refresh</v-btn
+          >
+        </template>
+        <template v-slot:[`item.groupId`]="{ item }">
+          {{
+            node.groups.find(
+              g => g.value === item.groupId && g.endpoint === item.endpoint
+            ).text
+          }}
+        </template>
+        <template v-slot:[`item.nodeId`]="{ item }">
+          {{ getNodeName(item.nodeId) }}
+        </template>
+        <template v-slot:[`item.endpoint`]="{ item }">
+          {{ item.endpoint >= 0 ? item.endpoint : 'None' }}
+        </template>
+        <template v-slot:[`item.targetEndpoint`]="{ item }">
+          {{ item.targetEndpoint >= 0 ? item.targetEndpoint : 'None' }}
+        </template>
+        <template v-slot:[`item.actions`]="{ item }">
+          <v-icon small color="red" @click="removeAssociation(item)"
+            >delete</v-icon
+          >
+        </template>
+      </v-data-table>
     </v-row>
+
+    <DialogAssociation
+      @add="addAssociation"
+      @close="dialogAssociation = false"
+      v-model="dialogAssociation"
+      :nodes="nodes"
+      :node="node"
+    />
   </v-container>
 </template>
 
 <script>
+import DialogAssociation from '@/components/dialogs/DialogAssociation'
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
-import { mapMutations } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
 export default {
+  components: {
+    DialogAssociation
+  },
   props: {
     node: Object,
-    nodes: Array,
     socket: Object
   },
   data () {
     return {
-      group: { node: this.node }
+      associations: [],
+      dialogAssociation: false,
+      headers: [
+        { text: 'Endpoint', value: 'endpoint' },
+        { text: 'Group', value: 'groupId' },
+        { text: 'Node', value: 'nodeId' },
+        { text: 'Target Endpoint', value: 'targetEndpoint' },
+        { text: 'Actions', value: 'actions', sortable: false }
+      ]
     }
   },
-  computed: {},
+  computed: {
+    ...mapGetters(['nodes', 'nodesMap'])
+  },
   mounted () {
-    const self = this
-    this.socket.on(socketEvents.api, async data => {
-      if (data.success && data.api === 'getAssociations') {
-        self.$set(self.group, 'associations', data.result)
+    this.socket.on(socketEvents.api, data => {
+      if (
+        data.success &&
+        data.api === 'getAssociations' &&
+        data.originalArgs[0] === this.node.id
+      ) {
+        this.associations = data.result
       }
     })
+
+    this.getAssociations()
   },
   methods: {
     ...mapMutations(['showSnackbar']),
+    getAssociationAddress (ass) {
+      return {
+        nodeId: ass.nodeId,
+        endpoint: ass.endpoint === null ? undefined : ass.endpoint
+      }
+    },
+    getNodeName (nodeId) {
+      const node = this.nodes[this.nodesMap.get(nodeId)]
+      return node ? node._name : 'NodeID_' + nodeId
+    },
     apiRequest (apiName, args) {
       if (this.socket.connected) {
         const data = {
@@ -140,68 +126,62 @@ export default {
         this.showSnackbar('Socket disconnected')
       }
     },
-    resetGroup () {
-      this.$set(this.group, 'associations', [])
-      this.$set(this.group, 'group', null)
-    },
     getAssociations () {
-      const g = this.group
-      if (g && g.node && g.group) {
-        this.apiRequest('getAssociations', [g.node.id, g.group.value])
-      }
+      this.apiRequest('getAssociations', [this.node.id])
     },
-    addAssociation () {
-      const g = this.group
-      const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
+    addAssociation (association) {
+      debugger
+      const target = !isNaN(association.target)
+        ? parseInt(association.target)
+        : association.target.id
 
-      const association = { nodeId: target }
+      const group = association.group
 
-      if (g.group.multiChannel && g.endpoint >= 0) {
-        association.endpoint = g.endpoint
+      const toAdd = { nodeId: target }
+
+      if (group.multiChannel && association.targetEndpoint >= 0) {
+        toAdd.endpoint = association.targetEndpoint
       }
 
-      if (g && g.node && target) {
-        const args = [g.node.id, g.group.value, [association]]
+      const args = [
+        this.getAssociationAddress({
+          nodeId: this.node.id,
+          endpoint: association.endpoint
+        }),
+        group.value,
+        [toAdd]
+      ]
 
-        this.apiRequest('addAssociations', args)
+      this.apiRequest('addAssociations', args)
 
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
+      // wait a moment before refresh to check if the node
+      // has been added to the group correctly
+      setTimeout(this.getAssociations, 1000)
+
+      this.dialogAssociation = false
     },
     removeAssociation (association) {
-      const g = this.group
-      if (g && g.node) {
-        if (!association) {
-          const target = !isNaN(g.target) ? parseInt(g.target) : g.target.id
+      const args = [
+        this.getAssociationAddress({
+          nodeId: this.node.id,
+          endpoint: association.endpoint
+        }),
+        association.groupId,
+        [{ nodeId: association.nodeId, endpoint: association.targetEndpoint }]
+      ]
 
-          if (isNaN(target)) return
-          association = { nodeId: target }
-
-          if (g.group.multiChannel && g.endpoint >= 0) {
-            association.endpoint = g.endpoint
-          }
-        }
-
-        const args = [g.node.id, g.group.value, [association]]
-
-        this.apiRequest('removeAssociations', args)
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
+      this.apiRequest('removeAssociations', args)
+      // wait a moment before refresh to check if the node
+      // has been added to the group correctly
+      setTimeout(this.getAssociations, 1000)
     },
     removeAllAssociations () {
-      const g = this.group
-      if (g && g.node) {
-        const args = [g.node.id]
+      const args = [this.node.id]
 
-        this.apiRequest('removeAllAssociations', args)
-        // wait a moment before refresh to check if the node
-        // has been added to the group correctly
-        setTimeout(this.getAssociations, 1000)
-      }
+      this.apiRequest('removeAllAssociations', args)
+      // wait a moment before refresh to check if the node
+      // has been added to the group correctly
+      setTimeout(this.getAssociations, 1000)
     }
   }
 }
