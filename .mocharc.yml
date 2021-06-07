@@ -1,4 +1,0 @@
-recursive: true
-watch-files:
-  - 'lib/**/*.ts'
-  - 'test/**/*.ts'

@@ -1,0 +1,15 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`#utils #getPath() !write && !process.pkg 1`] = `"foo"`;
+
+exports[`#utils #getPath() !write && process.pkg 1`] = `"foo"`;
+
+exports[`#utils #getPath() write && !process.pkg 1`] = `"foo"`;
+
+exports[`#utils #joinPath() 1 length 1`] = `"foobar"`;
+
+exports[`#utils #joinPath() bool false 1`] = `"foo"`;
+
+exports[`#utils #joinPath() bool true 1`] = `"foo"`;
+
+exports[`#utils #joinPath() first arg bool gets new path 0 1`] = `"foo/bar"`;
