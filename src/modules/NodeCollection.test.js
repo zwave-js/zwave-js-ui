@@ -1,15 +1,16 @@
+import chai from 'chai'
 import { NodeCollection } from './NodeCollection'
 
 describe('NodeCollection', () => {
 	describe('#constructor', () => {
-		test('uses the nodes passed in as the collection nodes', () => {
+		it('uses the nodes passed in as the collection nodes', () => {
 			const collection = new NodeCollection([{ id: 1 }])
-			expect(collection.nodes).toEqual([{ id: 1 }])
+			chai.expect(collection.nodes).to.eql([{ id: 1 }])
 		})
 	})
 	describe('#filter', () => {
 		const isOdd = (num) => num % 2
-		test('returns nodes with the property matching the filter', () => {
+		it('returns nodes with the property matching the filter', () => {
 			const collection = new NodeCollection([
 				{ id: 1 },
 				{ id: 2 },
@@ -17,9 +18,9 @@ describe('NodeCollection', () => {
 				{ id: 4 },
 			])
 			const filtered = collection.filter('id', isOdd)
-			expect(filtered.nodes).toEqual([{ id: 1 }, { id: 3 }])
+			chai.expect(filtered.nodes).to.eql([{ id: 1 }, { id: 3 }])
 		})
-		test('returns nodes with any of the properties matching the filter', () => {
+		it('returns nodes with any of the properties matching the filter', () => {
 			const collection = new NodeCollection([
 				{ id: 1, value: 2 },
 				{ id: 2, value: 1 },
@@ -27,7 +28,7 @@ describe('NodeCollection', () => {
 				{ id: 4, value: 2 },
 			])
 			const filtered = collection.filter(['id', 'value'], isOdd)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 1, value: 2 },
 				{ id: 2, value: 1 },
 				{ id: 3, value: 2 },
@@ -42,7 +43,7 @@ describe('NodeCollection', () => {
 			{ id: 'Ames' },
 		])
 
-		test('returns nodes with the properties containing the value', () => {
+		it('returns nodes with the properties containing the value', () => {
 			const collection = new NodeCollection([
 				{ id: 100 },
 				{ id: '210' },
@@ -50,9 +51,9 @@ describe('NodeCollection', () => {
 				{ id: '300' },
 			])
 			const filtered = collection.contains('id', '10')
-			expect(filtered.nodes).toEqual([{ id: 100 }, { id: '210' }])
+			chai.expect(filtered.nodes).to.eql([{ id: 100 }, { id: '210' }])
 		})
-		test('matches values over multiple properties', () => {
+		it('matches values over multiple properties', () => {
 			const collection = new NodeCollection([
 				{ id: 100, name: 'sample' },
 				{ id: '210', name: 'trinity' },
@@ -60,23 +61,26 @@ describe('NodeCollection', () => {
 				{ id: '300', name: 'fazuoli' },
 			])
 			const filtered = collection.contains(['id', 'name'], '10')
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 100, name: 'sample' },
 				{ id: '210', name: 'trinity' },
 				{ id: 20, name: '10 packs' },
 			])
 		})
-		test('is case insensitive by default', () => {
+		it('is case insensitive by default', () => {
 			const filtered = stringCollection.contains('id', 'piPPo')
-			expect(filtered.nodes).toEqual([{ id: 'pippo' }, { id: 'PipPo' }])
+			chai.expect(filtered.nodes).to.eql([
+				{ id: 'pippo' },
+				{ id: 'PipPo' },
+			])
 		})
-		test('accepts a case sensitive flag', () => {
+		it('accepts a case sensitive flag', () => {
 			const filtered = stringCollection.contains('id', 'PipPo', true)
-			expect(filtered.nodes).toEqual([{ id: 'PipPo' }])
+			chai.expect(filtered.nodes).to.eql([{ id: 'PipPo' }])
 		})
 	})
 	describe('#equals', () => {
-		test('returns nodes with the properties with equal value', () => {
+		it('returns nodes with the properties with equal value', () => {
 			const collection = new NodeCollection([
 				{ id: 10 },
 				{ id: '10' },
@@ -84,9 +88,9 @@ describe('NodeCollection', () => {
 				{ id: '20' },
 			])
 			const filtered = collection.equals('id', 10)
-			expect(filtered.nodes).toEqual([{ id: 10 }])
+			chai.expect(filtered.nodes).to.eql([{ id: 10 }])
 		})
-		test('works over multiple properties', () => {
+		it('works over multiple properties', () => {
 			const collection = new NodeCollection([
 				{ id: 10, sample: '20' },
 				{ id: '10', sample: 30 },
@@ -94,14 +98,14 @@ describe('NodeCollection', () => {
 				{ id: '20', sample: 10 },
 			])
 			const filtered = collection.equals(['id', 'sample'], 10)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, sample: '20' },
 				{ id: '20', sample: 10 },
 			])
 		})
 	})
 	describe('#equalsAny', () => {
-		test('returns all nodes when values has no elements', () => {
+		it('returns all nodes when values has no elements', () => {
 			const collection = new NodeCollection([
 				{ id: 10 },
 				{ id: '10' },
@@ -109,14 +113,14 @@ describe('NodeCollection', () => {
 				{ id: '20' },
 			])
 			const filtered = collection.equalsAny('id', [])
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10 },
 				{ id: '10' },
 				{ id: 20 },
 				{ id: '20' },
 			])
 		})
-		test('returns nodes with the properties equal to any of the values', () => {
+		it('returns nodes with the properties equal to any of the values', () => {
 			const collection = new NodeCollection([
 				{ id: 10 },
 				{ id: '10' },
@@ -124,9 +128,9 @@ describe('NodeCollection', () => {
 				{ id: '20' },
 			])
 			const filtered = collection.equalsAny('id', [10, '20'])
-			expect(filtered.nodes).toEqual([{ id: 10 }, { id: '20' }])
+			chai.expect(filtered.nodes).to.eql([{ id: 10 }, { id: '20' }])
 		})
-		test('works over multiple properties', () => {
+		it('works over multiple properties', () => {
 			const collection = new NodeCollection([
 				{ id: 10, sample: 20 },
 				{ id: '10', sample: '20' },
@@ -134,7 +138,7 @@ describe('NodeCollection', () => {
 				{ id: '20', sample: 'zdub' },
 			])
 			const filtered = collection.equalsAny(['id', 'sample'], [10, '20'])
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, sample: 20 },
 				{ id: '10', sample: '20' },
 				{ id: '20', sample: 'zdub' },
@@ -142,7 +146,7 @@ describe('NodeCollection', () => {
 		})
 	})
 	describe('#betweenNumber', () => {
-		test('returns all values if min/max are undefined', () => {
+		it('returns all values if min/max are undefined', () => {
 			const collection = new NodeCollection([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
@@ -153,61 +157,61 @@ describe('NodeCollection', () => {
 				undefined,
 				undefined
 			)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
 				{ id: 30, sample: 30 },
 			])
 		})
-		test('returns all values if min/max are null', () => {
+		it('returns all values if min/max are null', () => {
 			const collection = new NodeCollection([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
 				{ id: 30, sample: 30 },
 			])
 			const filtered = collection.betweenNumber('id', null, null)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
 				{ id: 30, sample: 30 },
 			])
 		})
-		test('returns all values that are greater or equal a min value', () => {
+		it('returns all values that are greater or equal a min value', () => {
 			const collection = new NodeCollection([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
 				{ id: 30, sample: 30 },
 			])
 			const filtered = collection.betweenNumber('id', 20, null)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 20, sample: 20 },
 				{ id: 30, sample: 30 },
 			])
 		})
-		test('returns all values that are less than or equal a max value', () => {
+		it('returns all values that are less than or equal a max value', () => {
 			const collection = new NodeCollection([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
 				{ id: 30, sample: 30 },
 			])
 			const filtered = collection.betweenNumber('id', null, 20)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
 			])
 		})
-		test('returns all values that between or equal a min and a max value', () => {
+		it('returns all values that between or equal a min and a max value', () => {
 			const collection = new NodeCollection([
 				{ id: 10, sample: 10 },
 				{ id: 20, sample: 20 },
 				{ id: 30, sample: 30 },
 			])
 			const filtered = collection.betweenNumber('id', 15, 25)
-			expect(filtered.nodes).toEqual([{ id: 20, sample: 20 }])
+			chai.expect(filtered.nodes).to.eql([{ id: 20, sample: 20 }])
 		})
 	})
 	describe('#betweenDate', () => {
-		test('returns all date values if min/max are undefined', () => {
+		it('returns all date values if min/max are undefined', () => {
 			const collection = new NodeCollection([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
@@ -218,26 +222,26 @@ describe('NodeCollection', () => {
 				undefined,
 				undefined
 			)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
 				{ id: 30, lastActive: new Date(2020, 11, 11, 0, 0) },
 			])
 		})
-		test('returns all date values if min/max are null', () => {
+		it('returns all date values if min/max are null', () => {
 			const collection = new NodeCollection([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
 				{ id: 30, lastActive: new Date(2020, 11, 11, 0, 0) },
 			])
 			const filtered = collection.betweenDate('lastActive', null, null)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
 				{ id: 30, lastActive: new Date(2020, 11, 11, 0, 0) },
 			])
 		})
-		test('returns all date values that are greater or equal a min date value', () => {
+		it('returns all date values that are greater or equal a min date value', () => {
 			const collection = new NodeCollection([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
@@ -248,12 +252,12 @@ describe('NodeCollection', () => {
 				new Date(2020, 11, 10, 0, 0),
 				null
 			)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
 				{ id: 30, lastActive: new Date(2020, 11, 11, 0, 0) },
 			])
 		})
-		test('returns all date values that are less than or equal a max date value', () => {
+		it('returns all date values that are less than or equal a max date value', () => {
 			const collection = new NodeCollection([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
@@ -264,12 +268,12 @@ describe('NodeCollection', () => {
 				null,
 				new Date(2020, 11, 10, 0, 0)
 			)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
 			])
 		})
-		test('returns all date values that between or equal a min and a max date value', () => {
+		it('returns all date values that between or equal a min and a max date value', () => {
 			const collection = new NodeCollection([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
@@ -280,7 +284,7 @@ describe('NodeCollection', () => {
 				new Date(2020, 11, 9, 12, 0),
 				new Date(2020, 11, 10, 12, 0)
 			)
-			expect(filtered.nodes).toEqual([
+			chai.expect(filtered.nodes).to.eql([
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
 			])
 		})

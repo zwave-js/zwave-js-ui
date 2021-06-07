@@ -4,7 +4,7 @@ module.exports = {
 	root: true,
 	env: {
 		browser: true,
-		jest: true,
+		mocha: true,
 		node: true,
 		es2021: true,
 	},

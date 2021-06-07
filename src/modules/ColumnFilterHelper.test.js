@@ -1,21 +1,22 @@
+import chai from 'chai'
 import { ColumnFilterHelper } from './ColumnFilterHelper'
 
 describe('ColumnFilterHelper', () => {
 	describe('#defaultFilter', () => {
-		test('returns the default filter for the given column type', () => {
-			expect(ColumnFilterHelper.defaultFilter('boolean')).toEqual({
+		it('returns the default filter for the given column type', () => {
+			chai.expect(ColumnFilterHelper.defaultFilter('boolean')).to.eql({
 				boolValue: null,
 			})
-			expect(ColumnFilterHelper.defaultFilter('date')).toEqual({
+			chai.expect(ColumnFilterHelper.defaultFilter('date')).to.eql({
 				from: null,
 				to: null,
 			})
-			expect(ColumnFilterHelper.defaultFilter('number')).toEqual({
+			chai.expect(ColumnFilterHelper.defaultFilter('number')).to.eql({
 				min: null,
 				max: null,
 				values: [],
 			})
-			expect(ColumnFilterHelper.defaultFilter('string')).toEqual({
+			chai.expect(ColumnFilterHelper.defaultFilter('string')).to.eql({
 				match: '',
 				values: [],
 			})
@@ -23,20 +24,20 @@ describe('ColumnFilterHelper', () => {
 	})
 
 	describe('#filterProps', () => {
-		test('returns the list of filter props for the given column type', () => {
-			expect(ColumnFilterHelper.filterProps('boolean')).toEqual([
+		it('returns the list of filter props for the given column type', () => {
+			chai.expect(ColumnFilterHelper.filterProps('boolean')).to.eql([
 				'boolValue',
 			])
-			expect(ColumnFilterHelper.filterProps('date')).toEqual([
+			chai.expect(ColumnFilterHelper.filterProps('date')).to.eql([
 				'from',
 				'to',
 			])
-			expect(ColumnFilterHelper.filterProps('number')).toEqual([
+			chai.expect(ColumnFilterHelper.filterProps('number')).to.eql([
 				'min',
 				'max',
 				'values',
 			])
-			expect(ColumnFilterHelper.filterProps('string')).toEqual([
+			chai.expect(ColumnFilterHelper.filterProps('string')).to.eql([
 				'match',
 				'values',
 			])
