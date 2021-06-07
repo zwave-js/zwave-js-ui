@@ -89,7 +89,8 @@ describe('#Constants', () => {
 	})
 	describe('#commandClass()', () => {
 		it('known', () => mod.commandClass(0).should.equal('no_operation'))
-		it('unknown', () => mod.commandClass(-1).should.equal('unknownClass_3'))
+		it('unknown', () =>
+			mod.commandClass(-1).should.equal('unknownClass_-1'))
 	})
 	describe('#genericDeviceClass()', () => {
 		it('known generic type', () =>

@@ -438,7 +438,7 @@ const _commandClassMap = {
 	0xf0: 'non_interoperable',
 }
 export function commandClass(cmd: number): string {
-	return _commandClassMap[cmd] || `unknownClass_ ${cmd}`
+	return _commandClassMap[cmd] || `unknownClass_${cmd}`
 }
 const _genericDeviceClassMap: IDeviceClass = {
 	// https://github.com/OpenZWave/open-zwave/blob/master/config/device_classes.xml
