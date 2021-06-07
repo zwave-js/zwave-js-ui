@@ -18,7 +18,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import { storeDir, sessionSecret, defaultUser, defaultPsw } from './config/app'
 import renderIndex from './lib/renderIndex'
-import session from 'express-session'
+import session, { SessionOptions } from 'express-session'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import jwt from 'jsonwebtoken'
@@ -37,6 +37,7 @@ declare module 'express' {
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { createCertificate } = require('pem').promisified
 
+// eslint-disable-next-line
 const FileStore = sessionStore(session)
 const app = express()
 const logger = loggers.module('App')
@@ -46,10 +47,7 @@ const verifyJWT = promisify(jwt.verify.bind(jwt))
 const storeLimiter = rateLimit({
 	windowMs: 15 * 60 * 1000, // 15 minutes
 	max: 100,
-	handler: function (
-		req: any,
-		res: { json: (arg0: { success: boolean; message: string }) => void }
-	) {
+	handler: function (req, res) {
 		res.json({
 			success: false,
 			message:
@@ -61,10 +59,7 @@ const storeLimiter = rateLimit({
 const loginLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 5, // start blocking after 5 requests
-	handler: function (
-		req: any,
-		res: { json: (arg0: { success: boolean; message: string }) => void }
-	) {
+	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
 })
@@ -72,10 +67,7 @@ const loginLimiter = rateLimit({
 const apisLimiter = rateLimit({
 	windowMs: 60 * 60 * 1000, // keep in memory for 1 hour
 	max: 500, // start blocking after 500 requests
-	handler: function (
-		req: any,
-		res: { json: (arg0: { success: boolean; message: string }) => void }
-	) {
+	handler: function (req, res) {
 		res.json({ success: false, message: 'Max requests limit reached' })
 	},
 })
@@ -99,7 +91,7 @@ socketManager.authMiddleware = function (
 		next()
 	} else if (socket.handshake.query && socket.handshake.query.token) {
 		jwt.verify(
-			socket.handshake.query.token,
+			socket.handshake.query.token as string,
 			sessionSecret,
 			function (err: unknown, decoded: Record<string, any>) {
 				if (err) return next(new Error('Authentication error'))
@@ -337,7 +329,7 @@ function setupInterceptor() {
 	process.stderr.write = interceptor(process.stderr.write)
 }
 
-async function parseDir(dir: string | boolean): Promise<StoreFileEntry[]> {
+async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 	const toReturn = []
 	const files = await fs.readdir(dir)
 	for (const file of files) {
@@ -976,17 +968,13 @@ interface StoreFileEntry {
 	path: string
 	ext?: string
 	size?: string
+	isRoot?: boolean
 }
 
 // if no path provided return all store dir files/folders, otherwise return the file content
 app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 	try {
-		let data: {
-			name: string
-			path: string
-			isRoot: boolean
-			children: any[]
-		}[]
+		let data: StoreFileEntry[] | string
 		if (req.query.path) {
 			const reqPath = getSafePath(req)
 
