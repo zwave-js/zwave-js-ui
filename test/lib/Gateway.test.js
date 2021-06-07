@@ -1,5 +1,6 @@
 const chai = require('chai')
 const rewire = require('rewire')
+const { copy } = require('../../lib/utils')
 chai.use(require('sinon-chai'))
 chai.should()
 
@@ -8,7 +9,7 @@ const Gateway = mod.__get__('Gateway')
 
 describe('#Gateway', () => {
   const gw = new Gateway()
-  describe('#setDiscoveryValue()', () => {
+  describe('#_setDiscoveryValue()', () => {
     let untouchedPayload
     let payload
     const node = {
@@ -25,30 +26,30 @@ describe('#Gateway', () => {
         c: 'd',
         d: 'e'
       }
-      untouchedPayload = JSON.parse(JSON.stringify(payload))
+      untouchedPayload = copy(payload)
     })
 
     describe('payload prop not string', () => {
       test('should not change payload', () => {
-        func(payload, 'a', node)
+        gw._setDiscoveryValue(payload, 'a', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('no valueId', () => {
       test('should not change payload', () => {
-        func(payload, 'd', node)
+        gw._setDiscoveryValue(payload, 'd', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('no valueId.value', () => {
       test('should not change payload', () => {
-        func(payload, 'c', node)
+        gw._setDiscoveryValue(payload, 'c', node)
         payload.should.deep.equal(untouchedPayload)
       })
     })
     describe('happy path', () => {
       test('should not change payload', () => {
-        func(payload, 'b', node)
+        gw._setDiscoveryValue(payload, 'b', node)
         payload.should.deep.equal({
           a: 1,
           b: 'a',
