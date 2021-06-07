@@ -1,3 +1,15 @@
+## [4.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.1...v4.5.2) (2021-06-07)
+
+
+### Bug Fixes
+
+* bump socket.io client and server ([a9d577c](https://github.com/zwave-js/zwavejs2mqtt/commit/a9d577c0459f3be2df25749b9cd8269f8f5d1909)), closes [#1300](https://github.com/zwave-js/zwavejs2mqtt/issues/1300)
+
+
+### Features
+
+* bump zwave-js@7.7.2 ([3b9d3df](https://github.com/zwave-js/zwavejs2mqtt/commit/3b9d3dfa74de7c352b84108e098bac336308caa8))
+
 ## [4.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.0...v4.5.1) (2021-05-31)
 
 

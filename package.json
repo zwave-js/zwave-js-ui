@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "4.5.1",
+  "version": "4.5.2",
   "bin": {
     "zwavejs2mqtt": "bin/www.js"
   },
@@ -158,8 +158,8 @@
     "serialport": "^9.0.7",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.5.0",
-    "socket.io": "^4.1.1",
-    "socket.io-client": "^4.0.0",
+    "socket.io": "^4.1.2",
+    "socket.io-client": "^4.1.2",
     "svg-pan-zoom": "^3.6.1",
     "vue": "^2.6.12",
     "vue-prism-editor": "^1.2.2",
@@ -168,7 +168,7 @@
     "vuetify": "^2.4.8",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
-    "zwave-js": "^7.7.1"
+    "zwave-js": "^7.7.2"
   },
   "devDependencies": {
     "@babel/cli": "^7.14.3",
