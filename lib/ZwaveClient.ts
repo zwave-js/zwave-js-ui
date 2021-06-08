@@ -175,15 +175,17 @@ export type Z2MNodeGroups = {
 	multiChannel: boolean
 }
 
-export type CallAPIResult<T> =
+export type CallAPIResult<T extends MethodNamesOf<ZwaveClient, 'callApi'>> =
 	| {
 			success: true
 			message: string
 			result: T
+			args?: Parameters<ZwaveClient[T]>
 	  }
 	| {
 			success: false
 			message: string
+			args?: Parameters<ZwaveClient[T]>
 	  }
 
 export type HassDevice = {
@@ -1758,9 +1760,8 @@ class ZwaveClient extends EventEmitter {
 	async callApi<T extends MethodNamesOf<ZwaveClient, 'callApi'>>(
 		apiName: T,
 		...args: Parameters<ZwaveClient[T]>
-	): Promise<CallAPIResult<ReturnType<ZwaveClient[T]>>> {
-		let err: string,
-			result: Promise<CallAPIResult<ReturnType<ZwaveClient[T]>>>
+	) {
+		let err: string, result: ReturnType<ZwaveClient[T]>
 
 		logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
@@ -1783,23 +1784,25 @@ class ZwaveClient extends EventEmitter {
 			err = 'Zwave client not connected'
 		}
 
+		let toReturn: CallAPIResult<T>
+
 		if (err) {
-			result = {
+			toReturn = {
 				success: false,
 				message: err,
 			}
 		} else {
-			result = {
+			toReturn = {
 				success: true,
 				message: 'Success zwave api call',
-				result: result,
+				result,
 			}
 		}
-		logger.log('info', `${result.message} ${apiName} %o`, result)
+		logger.log('info', `${toReturn.message} ${apiName} %o`, result)
 
-		result.args = args
+		toReturn.args = args
 
-		return result
+		return toReturn
 	}
 
 	/**
