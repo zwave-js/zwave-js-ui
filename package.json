@@ -2,7 +2,7 @@
   "name": "zwavejs2mqtt",
   "version": "4.5.2",
   "bin": {
-    "zwavejs2mqtt": "bin/www.js"
+    "zwavejs2mqtt": "server/bin/www.js"
   },
   "description": "Zwave To MQTT Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
@@ -29,10 +29,7 @@
   ],
   "pkg": {
     "scripts": [
-      "lib/**/*.js",
-      "config/**/*.js",
-      "hass/**/*.js",
-      "app.js"
+      "server/**/*"
     ],
     "assets": [
       "views/**/*",
