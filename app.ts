@@ -5,7 +5,11 @@ import csrf from 'csurf'
 import SerialPort from 'serialport'
 import jsonStore from './lib/jsonStore'
 import cors from 'cors'
-import ZWaveClient, { ICallApiResult, ZwaveConfig } from './lib/ZwaveClient'
+import ZWaveClient, {
+	AllowedApis,
+	CallAPIResult,
+	ZwaveConfig,
+} from './lib/ZwaveClient'
 import MqttClient, { MqttConfig } from './lib/MqttClient'
 import Gateway, { GatewayConfig } from './lib/Gateway'
 import store, { User } from './config/store'
@@ -448,7 +452,7 @@ function setupSocket(server: HttpServer) {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (socket, data) => {
 			if (gw.zwave) {
-				const result: ICallApiResult & {
+				const result: CallAPIResult<any> & {
 					api?: string
 					originalArgs?: any[]
 				} = await gw.zwave.callApi(data.api, ...data.args)
