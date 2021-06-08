@@ -3,7 +3,23 @@
 
 import { HassDevice } from '../lib/ZwaveClient'
 
-const configurations: { [key: string]: HassDevice } = {
+type HassDeviceKey =
+	| 'binary_sensor'
+	| 'sensor_generic'
+	| 'central_scene'
+	| 'light_rgb_dimmer'
+	| 'light_dimmer'
+	| 'volume_dimmer'
+	| 'switch'
+	| 'cover'
+	| 'cover_position'
+	| 'barrier_state'
+	| 'lock'
+	| 'thermostat'
+	| 'fan'
+	| 'sound_switch'
+
+const configurations: Record<HassDeviceKey, HassDevice> = {
 	// Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
 	binary_sensor: {
 		type: 'binary_sensor',

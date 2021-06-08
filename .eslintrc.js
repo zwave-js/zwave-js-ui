@@ -46,8 +46,6 @@ module.exports = {
 				// Enables eslint-plugin-prettier and displays prettier errors as ESLint errors. Make sure this is always the last configuration in the extends array.
 				'plugin:prettier/recommended',
 			],
-			// required to lint *.vue files
-			plugins: ['@typescript-eslint'],
 			// add your custom rules here
 			rules: {
 				'@typescript-eslint/no-explicit-any': 'off',

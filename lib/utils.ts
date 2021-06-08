@@ -16,6 +16,14 @@ export type DeepPartial<T> = {
 		: DeepPartial<T[P]>
 }
 
+export interface ErrnoException extends Error {
+	errno?: number
+	code?: string
+	path?: string
+	syscall?: string
+	stack?: string
+}
+
 /**
  *  Get the base root path to application directory. When we are in a `pkg` environment
  *  the path of the snapshot is not writable

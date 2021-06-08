@@ -18,7 +18,7 @@ import fs from 'fs-extra'
 import path from 'path'
 import { storeDir, sessionSecret, defaultUser, defaultPsw } from './config/app'
 import renderIndex from './lib/renderIndex'
-import session, { SessionOptions } from 'express-session'
+import session from 'express-session'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import jwt from 'jsonwebtoken'
@@ -73,19 +73,19 @@ const apisLimiter = rateLimit({
 })
 
 // apis response codes
-const RESPONSE_CODES = {
-	0: 'OK',
-	1: 'General Error',
-	2: 'Invalid data',
-	3: 'Authentication failed',
-	4: 'Insufficient permissions',
+enum RESPONSE_CODES {
+	OK = 'OK',
+	GENERAL_ERROR = 'General Error',
+	INVALID = 'Invalid data',
+	AUTH_FAILED = 'Authentication failed',
+	PERMISSION_ERROR = 'Insufficient permissions',
 }
 
 const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
 	socket: Socket & { user?: Record<string, any> },
-	next: (err?: unknown) => void
+	next: (err?: utils.ErrnoException) => void
 ) {
 	if (!isAuthEnabled()) {
 		next()
@@ -93,7 +93,7 @@ socketManager.authMiddleware = function (
 		jwt.verify(
 			socket.handshake.query.token as string,
 			sessionSecret,
-			function (err: unknown, decoded: Record<string, any>) {
+			function (err: utils.ErrnoException, decoded: Record<string, any>) {
 				if (err) return next(new Error('Authentication error'))
 				socket.user = decoded
 				next()
@@ -114,11 +114,8 @@ let restarting = false
 
 /**
  * Start http/https server and all the manager
- *
- * @param {string} host
- * @param {number} port
  */
-export async function startServer(host: any, port: number | string) {
+export async function startServer(host: string, port: number | string) {
 	let server: HttpServer
 
 	const settings = jsonStore.get(store.settings)
@@ -141,7 +138,7 @@ export async function startServer(host: any, port: number | string) {
 		server = createHttpServer(app)
 	}
 
-	server.listen(port, host, function () {
+	server.listen(port as number, host, function () {
 		const addr = server.address()
 		const bind =
 			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
@@ -152,7 +149,7 @@ export async function startServer(host: any, port: number | string) {
 		)
 	})
 
-	server.on('error', function (error: any) {
+	server.on('error', function (error: utils.ErrnoException) {
 		if (error.syscall !== 'listen') {
 			throw error
 		}
@@ -209,12 +206,15 @@ function getSafePath(req: Request): string {
 	return reqPath
 }
 
-async function loadCertKey() {
+async function loadCertKey(): Promise<{
+	cert: Buffer
+	key: Buffer
+}> {
 	const certFile = utils.joinPath(storeDir, 'cert.pem')
 	const keyFile = utils.joinPath(storeDir, 'key.pem')
 
-	let key: any
-	let cert: any
+	let key: Buffer
+	let cert: Buffer
 
 	try {
 		cert = await fs.readFile(certFile)
@@ -314,19 +314,21 @@ async function destroyPlugins() {
 
 function setupInterceptor() {
 	// intercept logs and redirect them to socket
-	const interceptor = function (
+	const interceptor = (
 		write: (buffer: string | Uint8Array, cb?: (err?: Error) => void) => void
-	) {
+	) => {
 		return function (...args: any[]): boolean {
 			socketManager.io.emit('DEBUG', args[0]?.toString())
 			return write.apply(process.stdout, args)
 		}
 	}
 
-	// eslint-disable-next-line @typescript-eslint/unbound-method
-	process.stdout.write = interceptor(process.stdout.write)
-	// eslint-disable-next-line @typescript-eslint/unbound-method
-	process.stderr.write = interceptor(process.stderr.write)
+	process.stdout.write = interceptor(
+		process.stdout.write.bind(process.stdout)
+	)
+	process.stderr.write = interceptor(
+		process.stderr.write.bind(process.stderr)
+	)
 }
 
 async function parseDir(dir: string): Promise<StoreFileEntry[]> {
@@ -426,13 +428,11 @@ const csrfProtection = csrf({
 
 /**
  * Binds socketManager to `server`
- *
- * @param {HttpServer} server
  */
 function setupSocket(server: HttpServer) {
 	socketManager.bindServer(server)
 
-	socketManager.on(inboundEvents.init, function (socket: Socket) {
+	socketManager.on(inboundEvents.init, (socket) => {
 		if (gw.zwave) {
 			socket.emit(socketEvents.init, {
 				nodes: gw.zwave.getNodes(),
@@ -446,7 +446,7 @@ function setupSocket(server: HttpServer) {
 	socketManager.on(
 		inboundEvents.zwave,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async function (socket: Socket, data) {
+		async (socket, data) => {
 			if (gw.zwave) {
 				const result: ICallApiResult & {
 					api?: string
@@ -460,10 +460,10 @@ function setupSocket(server: HttpServer) {
 	)
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	socketManager.on(inboundEvents.mqtt, function (socket, data) {
+	socketManager.on(inboundEvents.mqtt, (socket, data) => {
 		logger.info(`Mqtt api call: ${data.api}`)
 
-		let res: any, err: string
+		let res: void, err: string
 
 		try {
 			switch (data.api) {
@@ -492,10 +492,10 @@ function setupSocket(server: HttpServer) {
 	})
 
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	socketManager.on(inboundEvents.hass, async function (socket, data) {
+	socketManager.on(inboundEvents.hass, async (socket, data) => {
 		logger.info(`Hass api call: ${data.apiName}`)
 
-		let res: any, err: any
+		let res: any, err: string
 		try {
 			switch (data.apiName) {
 				case 'delete':
@@ -601,7 +601,7 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 
 	res.json({
 		success: false,
-		message: RESPONSE_CODES['3'],
+		message: RESPONSE_CODES.GENERAL_ERROR,
 		code: 3,
 	})
 }
@@ -627,17 +627,17 @@ app.post(
 
 				// Successfully authenticated, token is valid and the user _id of its content
 				// is the same of the current session
-				const users = jsonStore.get(store.users)
+				const users = jsonStore.get(store.users) as User[]
 
-				user = users.find((u: User) => u.username === decoded.username)
+				user = users.find((u) => u.username === decoded.username)
 			} else {
 				// credentials auth
-				const users = jsonStore.get(store.users)
+				const users = jsonStore.get(store.users) as User[]
 
 				const username = req.body.username
 				const password = req.body.password
 
-				user = users.find((u: User) => u.username === username)
+				user = users.find((u) => u.username === username)
 
 				if (
 					user &&
@@ -668,7 +668,7 @@ app.post(
 				loginLimiter.resetKey(req.ip)
 			} else {
 				result.code = 3
-				result.message = RESPONSE_CODES['3']
+				result.message = RESPONSE_CODES.GENERAL_ERROR
 			}
 
 			res.json(result)
@@ -753,8 +753,8 @@ app.get('/health', apisLimiter, function (req, res) {
 	let zwave: boolean
 
 	if (gw) {
-		mqtt = gw.mqtt ? gw.mqtt.getStatus() : false
-		zwave = gw.zwave ? gw.zwave.getStatus().status : false
+		mqtt = gw.mqtt?.getStatus() ?? false
+		zwave = gw.zwave?.getStatus().status ?? false
 	}
 
 	// if mqtt is disabled, return true. Fixes #469
@@ -1071,12 +1071,12 @@ app.post(
 	'/api/store-multi',
 	storeLimiter,
 	isAuthenticated,
-	function (req, res) {
+	async function (req, res) {
 		const files = req.body.files || []
 
 		const archive = archiver('zip')
 
-		archive.on('error', function (err: { message: any }) {
+		archive.on('error', function (err: utils.ErrnoException) {
 			res.status(500).send({
 				error: err.message,
 			})
@@ -1098,21 +1098,25 @@ app.post(
 			archive.file(f, { name: f.replace(storeDir, '') })
 		}
 
-		archive.finalize()
+		await archive.finalize()
 	}
 )
 
 // ### ERROR HANDLERS
 
+interface HttpError extends utils.ErrnoException {
+	status?: number
+}
+
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-	const err: Error & { status?: number } = new Error('Not Found')
+	const err: HttpError = new Error('Not Found')
 	err.status = 404
 	next(err)
 })
 
 // error handler
-app.use(function (err: any, req: Request, res: Response) {
+app.use(function (err: HttpError, req: Request, res: Response) {
 	// set locals, only providing error in development
 	res.locals.message = err.message
 	res.locals.error = req.app.get('env') === 'development' ? err : {}

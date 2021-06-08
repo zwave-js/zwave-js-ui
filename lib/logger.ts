@@ -26,10 +26,6 @@ interface LoggerConfig {
 
 /**
  * Generate logger configuration starting from settings.gateway
- *
- * @param {string} module Module name
- * @param {any} config settings.gateway configuration
- * @returns
  */
 const sanitizedConfig = (
 	module: string,
@@ -55,11 +51,8 @@ addColors({
 
 /**
  * Return a custom logger format
- *
- * @param {any} config logger configuration configuration
- * @returns {winston.Logform.Format}
  */
-const customFormat = (config: any): winston.Logform.Format =>
+const customFormat = (config: LoggerConfig): winston.Logform.Format =>
 	combine(
 		splat(), // used for formats like: logger.log('info', Message %s', strinVal)
 		timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
@@ -79,11 +72,8 @@ const customFormat = (config: any): winston.Logform.Format =>
 	)
 /**
  * Create the base transports based on settings provided
- *
- * @param {any} config logger configuration
- * @returns {winston.transport[]}
  */
-const customTransports = (config: any): winston.transport[] => {
+const customTransports = (config: LoggerConfig): winston.transport[] => {
 	const transportsList: winston.transport[] = [
 		new transports.Console({
 			format: customFormat(config),

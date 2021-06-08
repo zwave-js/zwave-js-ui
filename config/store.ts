@@ -1,5 +1,7 @@
 // config/store.js
 
+export type StoreKeys = "settings" | "scenes" | "nodes" | "users";
+
 export interface StoreFile {
   file: string; 
   default: any
@@ -11,7 +13,7 @@ export interface User {
   token?: string
 }
 
-const store: { [key: string]: StoreFile } = {
+const store: Record<StoreKeys, StoreFile> = {
   settings : { file: 'settings.json', default: {} },
   scenes : { file: 'scenes.json', default: [] },
   nodes : { file: 'nodes.json', default: [] },

@@ -175,6 +175,17 @@ export type Z2MNodeGroups = {
 	multiChannel: boolean
 }
 
+export type CallAPIResult<T> =
+	| {
+			success: true
+			message: string
+			result: T
+	  }
+	| {
+			success: false
+			message: string
+	  }
+
 export type HassDevice = {
 	type:
 		| 'sensor'
@@ -289,13 +300,6 @@ export enum EventSource {
 	NODE = 'node',
 }
 
-export interface ICallApiResult {
-	message: any
-	args?: any
-	success?: boolean
-	result?: any
-}
-
 declare interface ZwaveClient {
 	on(event: 'nodeStatus', listener: (node: Z2MNode) => void): this
 	on(
@@ -405,7 +409,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Restart client connection
 	 *
-	 * @returns {Promise<void>}
 	 */
 	async restart(): Promise<void> {
 		await this.close(true)
@@ -534,9 +537,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Used to Add a new hass device to a specific node
-	 *
-	 * @param {HassDevice} hassDevice The Hass device
-	 * @param {number} nodeId The nodeid
 	 */
 	addDevice(hassDevice: HassDevice, nodeId: number) {
 		const node = this.nodes.get(nodeId)
@@ -583,9 +583,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Method used to close client connection, use this before destroy
-	 *
-	 * @param {boolean} keepListeners Prevents to remove all ZwaveCLient listeners (used when restarting)
-	 * @memberof ZwaveClient
 	 */
 	async close(keepListeners = false) {
 		this.status = ZwaveClientStatus.CLOSED
@@ -657,8 +654,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Popolate node `groups`
-	 *
-	 * @param {number} nodeId Zwave node id
 	 */
 	getGroups(nodeId: number, ignoreUpdate = false) {
 		const zwaveNode = this.getNode(nodeId)
@@ -831,8 +826,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Remove all associations
-	 *
-	 * @param {number} nodeId Zwave node id
 	 */
 	async removeAllAssociations(nodeId: number) {
 		const zwaveNode = this.getNode(nodeId)
@@ -880,8 +873,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Remove node from all associations
-	 *
-	 * @param {number} nodeId Zwave node id
 	 */
 	async removeNodeFromAllAssociations(nodeId: number) {
 		const zwaveNode = this.getNode(nodeId)
@@ -945,13 +936,12 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Get neighbors of a specific node
 	 */
-	async getNodeNeighbors(
+	getNodeNeighbors(
 		nodeId: number,
 		dontThrow: boolean
-	): Promise<Readonly<number[]>> {
-		let neighbors: Readonly<number[]>
+	): Promise<readonly number[]> {
 		try {
-			neighbors = await this.driver.controller.getNodeNeighbors(nodeId)
+			return this.driver.controller.getNodeNeighbors(nodeId)
 		} catch (error) {
 			logger.error(
 				`Node ${nodeId} error while updating Neighbors: ${error.message}`
@@ -960,15 +950,10 @@ class ZwaveClient extends EventEmitter {
 				throw error
 			}
 		}
-
-		return neighbors
 	}
 
 	/**
 	 * Execute a custom function with the driver
-	 *
-	 * @param {string} code The function body
-	 * @returns { Promise<any> }
 	 */
 	driverFunction(code: string): Promise<any> {
 		if (!this.driverReady) {
@@ -1093,8 +1078,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Send an event to socket with `data`
 	 *
-	 * @param {string} evtName Socket event name
-	 * @param {any} data Event data object
 	 */
 	sendToSocket(evtName: string, data: any) {
 		if (this.socket) {
@@ -1105,11 +1088,6 @@ class ZwaveClient extends EventEmitter {
 	// ------------NODES MANAGEMENT-----------------------------------
 	/**
 	 * Updates node `name` property and stores updated config in `nodes.json`
-	 *
-	 * @param {number} nodeid Zwave node id
-	 * @param {string} name The node name
-	 * @returns True if the node name is updated correctly
-	 * @throws Invalid node id if the node id provided doesn't exists
 	 */
 	async setNodeName(nodeid: number, name: string) {
 		if (!this.storeNodes[nodeid]) {
@@ -1137,11 +1115,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Updates node `loc` property and stores updated config in `nodes.json`
-	 *
-	 * @param {number} nodeid Zwave node id
-	 * @param {string} loc The node name
-	 * @returns True if the node location is updated correctly
-	 * @throws Invalid node id if the node id provided doesn't exists
 	 */
 	async setNodeLocation(nodeid: number, loc: string) {
 		if (!this.storeNodes[nodeid]) {
@@ -1170,9 +1143,6 @@ class ZwaveClient extends EventEmitter {
 	// ------------SCENES MANAGEMENT-----------------------------------
 	/**
 	 * Creates a new scene with a specific `label` and stores it in `scenes.json`
-	 *
-	 * @param {string} label Scene label
-	 * @returns True if the scene is created without error
 	 */
 	async _createScene(label: string) {
 		const id =
@@ -1192,9 +1162,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Delete a scene with a specific `sceneid` and updates `scenes.json`
-	 *
-	 * @param {number} sceneid Scene id
-	 * @returns True if the scene is deleted without error
 	 */
 	async _removeScene(sceneid: number) {
 		const index = this.scenes.findIndex((s) => s.sceneid === sceneid)
@@ -1224,9 +1191,8 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Get all scenes
 	 *
-	 * @returns The scenes Array
 	 */
-	_getScenes() {
+	_getScenes(): Z2MScene[] {
 		return this.scenes
 	}
 
@@ -1283,10 +1249,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Remove a value from scene
-	 *
-	 * @param {number} sceneid The scene id
-	 * @param {Z2MValueIdScene} valueId The valueId to remove
-	 * @throws Error if args valueid isn't valid
 	 */
 	async _removeSceneValue(sceneid: number, valueId: Z2MValueIdScene) {
 		const scene = this.scenes.find((s) => s.sceneid === sceneid)
@@ -1309,9 +1271,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Activate a scene with given scene id
-	 *
-	 * @param {number} sceneId The scene Id
-	 * @returns {boolean} True if activation is successfull
 	 */
 	_activateScene(sceneId: number): boolean {
 		const values = this._sceneGetValues(sceneId) || []
@@ -1331,8 +1290,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Get the nodes array
-	 *
-	 * @returns {Z2MNode[]}
 	 */
 	getNodes(): Z2MNode[] {
 		const toReturn = []
@@ -1384,9 +1341,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Refresh all node values
-	 *
-	 * @param {number} nodeId
-	 * @returns {Promise<void>}
 	 */
 	async refreshValues(nodeId: number): Promise<void> {
 		if (this.driver && !this.closed) {
@@ -1400,9 +1354,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Ping a node
-	 *
-	 * @param {number} nodeId
-	 * @returns {Promise<boolean>}
 	 */
 	async pingNode(nodeId: number): Promise<boolean> {
 		if (this.driver && !this.closed) {
@@ -1499,9 +1450,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Replace failed node
-	 *
-	 * @param {number} nodeId
-	 * @returns {Promise<boolean>}
 	 */
 	async replaceFailedNode(nodeId: number, secure = false): Promise<boolean> {
 		if (this.driver && !this.closed) {
@@ -1798,13 +1746,13 @@ class ZwaveClient extends EventEmitter {
 	 * Calls a specific `client` or `ZwaveClient` method based on `apiName`
 	 * ZwaveClients methods used are the ones that overrides default Zwave methods
 	 * like nodes name and location and scenes management.
-	 *
-	 * @param {string} apiName The api name
-	 * @param {any[]} args Array of arguments to use for the api call
-	 * @returns An object `{success: <success>, message: <message>, args: <args>, result: <the response>}`,  if success is false the message contains the error
 	 */
-	async callApi(apiName: string, ...args: any[]) {
-		let err: string, result: ICallApiResult
+	async callApi<T extends Exclude<keyof ZwaveClient, 'callApi'>>(
+		apiName: T,
+		...args: Parameters<ZwaveClient[T]>
+	): Promise<CallAPIResult<ReturnType<ZwaveClient[T]>>> {
+		let err: string,
+			result: Promise<CallAPIResult<ReturnType<ZwaveClient[T]>>>
 
 		logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
@@ -1814,13 +1762,8 @@ class ZwaveClient extends EventEmitter {
 					typeof this[apiName] === 'function' &&
 					allowedApis.indexOf(apiName) >= 0
 
-				// Send raw data expects a buffer as the fifth argument, which JSON does not support, so we convert an array of bytes into a buffer.
-				if (apiName === 'sendRawData') {
-					args[4] = Buffer.from(args[4])
-				}
-
 				if (allowed) {
-					result = await this[apiName](...args)
+					result = await (this as any)[apiName](...args)
 					// custom scenes and node/location management
 				} else {
 					err = 'Unknown API'
@@ -2109,8 +2052,6 @@ class ZwaveClient extends EventEmitter {
 
 	/**
 	 * Triggered when a node is added
-	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_onNodeAdded(zwaveNode: ZWaveNode) {
 		logger.info(`Node ${zwaveNode.id}: added`)
@@ -2132,7 +2073,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when node is removed
 	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_onNodeRemoved(zwaveNode: ZWaveNode) {
 		logger.info(`Node ${zwaveNode.id}: removed`)
@@ -2181,7 +2121,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Update current node status and interviewState
 	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_onNodeStatus(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
@@ -2208,7 +2147,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node is ready. All values are added and all node info are received
 	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_onNodeReady(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
@@ -2282,7 +2220,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node interview starts for the first time or when the node is manually re-interviewed
 	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_onNodeInterviewStarted(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
@@ -2295,8 +2232,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when an interview stage complete
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {string} stageName completed stage name
 	 */
 	_onNodeInterviewStageCompleted(zwaveNode: ZWaveNode, stageName: string) {
 		const node = this.nodes.get(zwaveNode.id)
@@ -2321,7 +2256,6 @@ class ZwaveClient extends EventEmitter {
 	 * Triggered when a node finish its interview. When this event is triggered all node values and metadata are updated
 	 * Starting from zwave-js v7 this event is only triggered when the node is added the first time or manually re-interviewed
 	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_onNodeInterviewCompleted(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
@@ -2347,8 +2281,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node interview fails.
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {NodeInterviewFailedEventArgs} args
 	 */
 	_onNodeInterviewFailed(
 		zwaveNode: ZWaveNode,
@@ -2371,8 +2303,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node wake ups
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {NodeStatus} oldStatus
 	 */
 	_onNodeWakeUp(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		logger.info(
@@ -2393,8 +2323,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node is sleeping
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {NodeStatus} oldStatus
 	 */
 	_onNodeSleep(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		logger.info(
@@ -2414,8 +2342,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node is alive
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {NodeStatus} oldStatus
 	 */
 	_onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		this._onNodeStatus(zwaveNode)
@@ -2436,8 +2362,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node is dead
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {NodeStatus} oldStatus
 	 */
 	_onNodeDead(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		this._onNodeStatus(zwaveNode)
@@ -2458,8 +2382,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node value is added
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {ZWaveNodeValueAddedArgs} args
 	 */
 	_onNodeValueAdded(zwaveNode: ZWaveNode, args: ZWaveNodeValueAddedArgs) {
 		logger.info(
@@ -2485,8 +2407,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Emitted when we receive a `value notification` event
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {ZWaveNodeValueNotificationArgs} args
 	 */
 	_onNodeValueNotification(
 		zwaveNode: ZWaveNode,
@@ -2506,9 +2426,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Emitted when we receive a `value updated` event
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {ZWaveNodeValueUpdatedArgs} args
-	 * @param {boolean} isNotification
 	 */
 	_onNodeValueUpdated(
 		zwaveNode: ZWaveNode,
@@ -2541,8 +2458,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Emitted when we receive a `value removed` event
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {ZWaveNodeValueRemovedArgs} args
 	 */
 	_onNodeValueRemoved(zwaveNode: ZWaveNode, args: ZWaveNodeValueRemovedArgs) {
 		this._removeValue(zwaveNode, args)
@@ -2561,8 +2476,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Emitted when we receive a `metadata updated` event
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {ZWaveNodeMetadataUpdatedArgs} args
 	 */
 	_onNodeMetadataUpdated(
 		zwaveNode: ZWaveNode,
@@ -2586,9 +2499,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Emitted when we receive a node `notification` event
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {CommandClasses} ccId
-	 * @param {Record<string, unknown>} args
 	 */
 	_onNodeNotification(
 		zwaveNode: ZWaveNode,
@@ -2657,9 +2567,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Emitted when we receive a node `firmware update progress` event
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {number} sentFragments
-	 * @param {number} totalFragments
 	 */
 	_onNodeFirmwareUpdateProgress(
 		zwaveNode: ZWaveNode,
@@ -2682,9 +2589,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered we receive a node `firmware update finished` event
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {FirmwareUpdateStatus} status
-	 * @param {number} waitTime
 	 */
 	_onNodeFirmwareUpdateFinished(
 		zwaveNode: ZWaveNode,
@@ -2710,7 +2614,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Bind to ZwaveNode events
 	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_bindNodeEvents(zwaveNode: ZWaveNode) {
 		logger.debug(`Binding to node ${zwaveNode.id} events`)
@@ -2751,7 +2654,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Remove a node from internal nodes array
 	 *
-	 * @param {number} nodeid
 	 */
 	_removeNode(nodeid: number) {
 		logger.info(`Node removed ${nodeid}`)
@@ -2769,8 +2671,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Add a new node to our nodes array. No informations are available yet, the node needs to be ready
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @returns {Z2MNode}
 	 */
 	_addNode(zwaveNode: ZWaveNode): Z2MNode {
 		const nodeId = zwaveNode.id
@@ -2813,7 +2713,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Initialize a node with all its info
 	 *
-	 * @param {ZWaveNode} zwaveNode
 	 */
 	_dumpNode(zwaveNode: ZWaveNode) {
 		const nodeId = zwaveNode.id
@@ -2894,10 +2793,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Set value metadata to the internal valueId
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {TranslatedValueID} zwaveValue
-	 * @param {ValueMetadata} zwaveValueMeta
-	 * @returns The internal valueId
 	 */
 	_updateValueMetadata(
 		zwaveNode: ZWaveNode,
@@ -3006,8 +2901,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Parse a zwave value into a valueID
 	 *
-	 * @param { ZWaveNode } zwaveNode
-	 * @param { TranslatedValueID } zwaveValue
 	 */
 	_parseValue(
 		zwaveNode: ZWaveNode,
@@ -3059,8 +2952,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Triggered when a node is ready and a value changes
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {ZWaveNodeValueUpdatedArgs} args
 	 */
 	_updateValue(
 		zwaveNode: ZWaveNode,
@@ -3137,8 +3028,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Remove a value from internal node values
 	 *
-	 * @param {ZWaveNode} zwaveNode
-	 * @param {ZWaveNodeValueRemovedArgs} args
 	 */
 	_removeValue(zwaveNode: ZWaveNode, args: ZWaveNodeValueRemovedArgs) {
 		const node = this.nodes.get(zwaveNode.id)
@@ -3169,10 +3058,8 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Get the device id of a specific node
 	 *
-	 * @param {Z2MNode} node Internal node object
-	 * @returns A string in the format `<manufacturerId>-<productId>-<producttype>` that unique identifhy a zwave device
 	 */
-	_getDeviceID(node: Z2MNode) {
+	_getDeviceID(node: Z2MNode): string {
 		if (!node) return ''
 
 		return `${node.manufacturerId}-${node.productId}-${node.productType}`
@@ -3254,8 +3141,6 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Try to poll a value, don't throw. Used in the setTimeout
 	 *
-	 * @param {Z2MValueId} valueId
-	 * @param {number} interval seconds
 	 */
 	async _tryPoll(valueId: Z2MValueId, interval: number) {
 		try {

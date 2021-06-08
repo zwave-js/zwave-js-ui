@@ -3,6 +3,7 @@
 // eslint-disable-next-line one-var
 import { readFile, writeFile } from 'jsonfile'
 import { storeDir } from '../config/app'
+import { StoreFile, StoreKeys } from '../config/store'
 import { module } from './logger'
 import * as utils from './utils'
 
@@ -12,14 +13,14 @@ const logger = module('Store')
 Constructor
 **/
 class StorageHelper {
-	public store: any
-	public config: any
+	public store: Record<StoreKeys, any>
+	public config: Record<StoreKeys, StoreFile>
 
 	constructor() {
-		this.store = {}
+		this.store = {} as Record<StoreKeys, any>
 	}
 
-	async init(config: any) {
+	async init(config: Record<StoreKeys, StoreFile>) {
 		this.config = config
 
 		for (const model in config) {
@@ -30,7 +31,7 @@ class StorageHelper {
 		return this.store
 	}
 
-	async _getFile(config: { file: string; default: any }) {
+	async _getFile(config: StoreFile) {
 		let err: { code: string }
 		let data: any
 		try {
@@ -55,7 +56,7 @@ class StorageHelper {
 		return { file: config.file, data: data }
 	}
 
-	get(model: { file: string }) {
+	get(model: StoreFile) {
 		if (this.store[model.file]) {
 			return this.store[model.file]
 		} else {
@@ -63,7 +64,7 @@ class StorageHelper {
 		}
 	}
 
-	async put(model: { file: string }, data: any) {
+	async put(model: StoreFile, data: any) {
 		await writeFile(utils.joinPath(storeDir, model.file), data)
 		this.store[model.file] = data
 		return data

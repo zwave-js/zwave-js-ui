@@ -234,8 +234,6 @@ class MqttClient extends EventEmitter {
 
 	/**
 	 * Initialize client
-	 *
-	 * @param {MqttConfig} config
 	 */
 	_init(config: MqttConfig) {
 		this.config = config
