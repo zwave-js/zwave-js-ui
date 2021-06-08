@@ -53,7 +53,7 @@
     "lint:markdownlint": "markdownlint '**/*.md'",
     "lint-fix:markdownlint": "markdownlint --fix '**/*.md'",
     "test": "npm-run-all test:*",
-    "test:server": "mocha -r ts-node/register",
+    "test:server": "mocha -r ts-node/register test",
     "test:ui": "mocha -r @babel/register src/modules",
     "docs": "docsify serve ./docs",
     "coverage": "c8 --clean mocha",

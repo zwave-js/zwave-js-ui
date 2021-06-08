@@ -5,7 +5,6 @@ import { ValueID } from 'zwave-js'
 import path = require('path')
 import crypto = require('crypto')
 import { execSync } from 'child_process'
-import { Z2MValueId } from './ZwaveClient'
 
 let VERSION: string
 

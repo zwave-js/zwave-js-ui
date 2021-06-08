@@ -389,7 +389,7 @@ class MqttClient extends EventEmitter {
 	_onMessageReceived(topic: string, payload: Buffer) {
 		if (this.closed) return
 
-		let parsed = payload ? payload.toString() : payload
+		let parsed: string | number | Record<string, any> = payload?.toString()
 
 		logger.log('info', `Message received on ${topic}, %o`, payload)
 

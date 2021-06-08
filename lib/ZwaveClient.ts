@@ -133,7 +133,7 @@ export type Z2MValueId = {
 	writeable: boolean
 	description?: string
 	label?: string
-	default: unknown
+	default: any
 	stateless: boolean
 	ccSpecific: Record<string, any>
 	min?: number
@@ -145,7 +145,7 @@ export type Z2MValueId = {
 	states?: Z2MValueIdState[]
 	list?: boolean
 	lastUpdate?: number
-	value?: unknown
+	value?: any
 	targetValue?: string
 	isCurrentValue?: boolean
 	conf?: GatewayValue
