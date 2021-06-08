@@ -2,7 +2,7 @@
 const utils = require('./utils')
 const webpack = require('webpack')
 const config = require('../config')
-const appConfig = require('../server/config/webConfig')
+const { webConfig } = require('../server/config/webConfig')
 const { merge } = require('webpack-merge')
 const path = require('path')
 const baseWebpackConfig = require('./webpack.base.conf')
@@ -57,7 +57,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
       filename: 'index.html',
       template: 'views/index.ejs',
       templateParameters: {
-        config: appConfig
+        config: webConfig
       },
       inject: true
     }),

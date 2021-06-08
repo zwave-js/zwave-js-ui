@@ -7,10 +7,8 @@ const defaultConfig = {
   title: 'ZWave To MQTT'
 }
 
-const webConfig = {
+export const webConfig = {
   ...defaultConfig,
   ...appConfig,
   base
 }
-
-export default webConfig
