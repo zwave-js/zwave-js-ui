@@ -37,17 +37,17 @@ declare interface SocketManager {
 
 	on(
 		event: inboundEvents.zwave,
-		listener: (socket: Socket, data: any) => void
+		listener: (socket: Socket, data) => void
 	): this
 
 	on(
 		event: inboundEvents.hass,
-		listener: (socket: Socket, data: any) => void
+		listener: (socket: Socket, data) => void
 	): this
 
 	on(
 		event: inboundEvents.mqtt,
-		listener: (socket: Socket, data: any) => void
+		listener: (socket: Socket, data) => void
 	): this
 }
 

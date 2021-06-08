@@ -5,11 +5,7 @@ import csrf from 'csurf'
 import SerialPort from 'serialport'
 import jsonStore from './lib/jsonStore'
 import cors from 'cors'
-import ZWaveClient, {
-	AllowedApis,
-	CallAPIResult,
-	ZwaveConfig,
-} from './lib/ZwaveClient'
+import ZWaveClient, { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient'
 import MqttClient, { MqttConfig } from './lib/MqttClient'
 import Gateway, { GatewayConfig } from './lib/Gateway'
 import store, { User } from './config/store'
@@ -88,7 +84,7 @@ enum RESPONSE_CODES {
 const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
-	socket: Socket & { user?: Record<string, any> },
+	socket: Socket & { user?: User },
 	next: (err?: utils.ErrnoException) => void
 ) {
 	if (!isAuthEnabled()) {
@@ -97,7 +93,7 @@ socketManager.authMiddleware = function (
 		jwt.verify(
 			socket.handshake.query.token as string,
 			sessionSecret,
-			function (err: utils.ErrnoException, decoded: Record<string, any>) {
+			function (err: utils.ErrnoException, decoded: User) {
 				if (err) return next(new Error('Authentication error'))
 				socket.user = decoded
 				next()
@@ -574,11 +570,9 @@ async function parseJWT(req: Request) {
 
 	// Successfully authenticated, token is valid and the user _id of its content
 	// is the same of the current session
-	const users = jsonStore.get(store.users)
+	const users = jsonStore.get(store.users) as User[]
 
-	const user = users.find(
-		(u: { username: any }) => u.username === decoded.username
-	)
+	const user = users.find((u) => u.username === decoded.username)
 
 	if (user) {
 		return user
@@ -705,10 +699,10 @@ app.put(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const users = jsonStore.get(store.users)
+			const users = jsonStore.get(store.users) as User[]
 
 			const user = req.session.user
-			const oldUser = users.find((u: { _id: any }) => u._id === user._id)
+			const oldUser = users.find((u) => u._id === user._id)
 
 			if (!oldUser) {
 				return res.json({ success: false, message: 'User not found' })
@@ -773,12 +767,12 @@ app.get('/health', apisLimiter, function (req, res) {
 
 app.get('/health/:client', apisLimiter, function (req, res) {
 	const client = req.params.client
-	let status: any
+	let status: boolean
 
 	if (client !== 'zwave' && client !== 'mqtt') {
 		res.status(500).send("Requested client doesn 't exist")
 	} else {
-		status = gw && gw[client] ? gw[client].getStatus().status : false
+		status = gw?.[client]?.getStatus().status ?? false
 	}
 
 	res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
@@ -793,11 +787,11 @@ app.get(
 		const data = {
 			success: true,
 			settings: jsonStore.get(store.settings),
-			devices: gw.zwave ? gw.zwave.devices : {},
+			devices: gw?.zwave?.devices ?? {},
 			serial_ports: [],
 		}
 
-		let ports: any[]
+		let ports: SerialPort.PortInfo[]
 		if (process.platform !== 'sunos') {
 			try {
 				ports = await SerialPort.list()
@@ -805,9 +799,7 @@ app.get(
 				logger.error(error)
 			}
 
-			data.serial_ports = ports
-				? ports.map((p: { path: any }) => p.path)
-				: []
+			data.serial_ports = ports?.map((p) => p.path) ?? []
 			res.json(data)
 		} else res.json(data)
 	}

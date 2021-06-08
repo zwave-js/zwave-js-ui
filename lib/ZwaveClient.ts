@@ -133,7 +133,7 @@ export type Z2MValueId = {
 	writeable: boolean
 	description?: string
 	label?: string
-	default: any
+	default: unknown
 	stateless: boolean
 	ccSpecific: Record<string, any>
 	min?: number
@@ -145,7 +145,7 @@ export type Z2MValueId = {
 	states?: Z2MValueIdState[]
 	list?: boolean
 	lastUpdate?: number
-	value?: any
+	value?: unknown
 	targetValue?: string
 	isCurrentValue?: boolean
 	conf?: GatewayValue
@@ -322,7 +322,7 @@ declare interface ZwaveClient {
 	): this
 	on(
 		event: 'valueWritten',
-		listener: (valueId: Z2MValueId, value: any) => void
+		listener: (valueId: Z2MValueId, value: unknown) => void
 	): this
 }
 
@@ -1279,14 +1279,15 @@ class ZwaveClient extends EventEmitter {
 	_activateScene(sceneId: number): boolean {
 		const values = this._sceneGetValues(sceneId) || []
 
-		// eslint-disable-next-line no-unmodified-loop-condition
 		for (let i = 0; i < values.length; i++) {
-			// eslint-disable-next-line @typescript-eslint/unbound-method
-			const fun = this._wrapFunction(this.writeValue, this, [
-				values[i],
-				values[i].value,
-			])
-			setTimeout(fun, values[i].timeout ? values[i].timeout * 1000 : 0)
+			setTimeout(
+				() => {
+					this.writeValue(values[i], values[i].value).catch(
+						logger.error
+					)
+				},
+				values[i].timeout ? values[i].timeout * 1000 : 0
+			)
 		}
 
 		return true
@@ -1440,7 +1441,7 @@ class ZwaveClient extends EventEmitter {
 	 * Request an update of this value
 	 *
 	 */
-	async pollValue(valueId: Z2MValueId): Promise<any> {
+	async pollValue(valueId: Z2MValueId): Promise<unknown> {
 		if (this.driver && !this.closed) {
 			const zwaveNode = this.getNode(valueId.nodeId)
 
@@ -3096,27 +3097,12 @@ class ZwaveClient extends EventEmitter {
 	/**
 	 * Get a valueId from a valueId object
 	 */
-	_getValueID(
-		v: Partial<Z2MValueId> & { [x: string]: any },
-		withNode = false
-	) {
+	_getValueID(v: Partial<Z2MValueId>, withNode = false) {
 		return `${withNode ? v.nodeId + '-' : ''}${v.commandClass}-${
 			v.endpoint || 0
 		}-${v.property}${
 			v.propertyKey !== undefined ? '-' + v.propertyKey : ''
 		}`
-	}
-
-	/**
-	 * Function wrapping code used for writing queue.
-	 * fn - reference to function.
-	 * context - what you want "this" to be.
-	 * params - array of parameters to pass to function.
-	 */
-	_wrapFunction(fn: (...args: any) => any, context: any, params: any[]) {
-		return function () {
-			fn.apply(context, params)
-		}
 	}
 
 	/**

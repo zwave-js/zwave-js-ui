@@ -5,6 +5,7 @@ import { ValueID } from 'zwave-js'
 import path = require('path')
 import crypto = require('crypto')
 import { execSync } from 'child_process'
+import { Z2MValueId } from './ZwaveClient'
 
 let VERSION: string
 
@@ -88,7 +89,7 @@ export function isValueId(v: ValueID): boolean | string {
 /**
  * Deep copy of an object
  */
-export function copy(obj: any): any {
+export function copy<T>(obj: T): T {
 	return JSON.parse(JSON.stringify(obj))
 }
 
@@ -147,7 +148,7 @@ export function removeSlash(str: string | number): string {
 /**
  * Check if an object has a property
  */
-export function hasProperty(obj: any, prop: string): boolean {
+export function hasProperty(obj, prop: string): boolean {
 	return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 

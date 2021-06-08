@@ -325,7 +325,7 @@ export const _sensorMap: ISensorMap = {
 		86: 'particulate_matter',
 	},
 }
-export function sensorType(index: number): any {
+export function sensorType(index: number) {
 	const sensorType = {
 		sensor: 'generic',
 		objectId: 'unknown_' + index,

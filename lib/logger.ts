@@ -11,7 +11,7 @@ const defaultLogFile = 'zwavejs2mqtt.log'
 
 interface ModuleLogger extends winston.Logger {
 	module: string
-	setup(cfg: any): winston.Logger
+	setup(cfg: DeepPartial<GatewayConfig>): winston.Logger
 }
 
 export type LogLevel = 'silly' | 'verbose' | 'debug' | 'info' | 'warn' | 'error'
@@ -99,15 +99,15 @@ const customTransports = (config: LoggerConfig): winston.transport[] => {
 const setupLogger = (
 	container: winston.Container,
 	module: string,
-	config?: any
+	config?: DeepPartial<GatewayConfig>
 ): ModuleLogger => {
-	config = sanitizedConfig(module, config)
+	const sanitized = sanitizedConfig(module, config)
 	// Winston automatically reuses an existing module logger
 	const logger = container.add(module) as ModuleLogger
 	logger.configure({
-		silent: !config.enabled,
-		level: config.level,
-		transports: customTransports(config),
+		silent: !sanitized.enabled,
+		level: sanitized.level,
+		transports: customTransports(sanitized),
 	})
 	logger.module = module
 	logger.setup = (cfg) => setupLogger(container, module, cfg)
@@ -126,7 +126,7 @@ export function module(module: string): winston.Logger {
 /**
  * Setup all loggers starting from config
  */
-export function setupAll(config: DeepPartial<GatewayConfig>): any {
+export function setupAll(config: DeepPartial<GatewayConfig>) {
 	logContainer.loggers.forEach((logger: ModuleLogger) => {
 		logger.setup(config)
 	})

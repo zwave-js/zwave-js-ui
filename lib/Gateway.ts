@@ -18,6 +18,8 @@ import { storeDir } from '../config/app'
 import { IClientPublishOptions } from 'mqtt'
 import MqttClient from './MqttClient'
 import ZwaveClient, {
+	AllowedApis,
+	CallAPIResult,
 	HassDevice,
 	Z2MNode,
 	Z2MValueId,
@@ -261,11 +263,7 @@ export default class Gateway {
 	 * Parse the value of the payload received from mqtt
 	 * based on the type of the payload and the gateway config
 	 */
-	parsePayload(
-		payload: any,
-		valueId: Z2MValueId,
-		valueConf: GatewayValue
-	): any {
+	parsePayload(payload: any, valueId: Z2MValueId, valueConf: GatewayValue) {
 		try {
 			payload =
 				typeof payload === 'object' &&
@@ -515,9 +513,7 @@ export default class Gateway {
 
 			// rediscover all values
 			const nodeDevices = allDevices[node.deviceId] || []
-			nodeDevices.forEach((device: any) =>
-				this.discoverDevice(node, device)
-			)
+			nodeDevices.forEach((device) => this.discoverDevice(node, device))
 
 			// discover node values (that are not part of a device)
 			// iterate prioritized first, then the remaining
@@ -659,7 +655,7 @@ export default class Gateway {
 		try {
 			if (hassID && !node.hassDevices[hassID]) {
 				// discover the device
-				let payload: { [key: string]: any }
+				let payload
 
 				// copy the configuration without edit the original object
 				hassDevice = utils.copy(hassDevice)
@@ -928,9 +924,7 @@ export default class Gateway {
 				config.discovery_payload.mode_command_topic = modeId + '/set'
 
 				// [0, 1, 2 ... ] (['off', 'heat', 'cold', ...])
-				const availableModes = mode.states.map(
-					(s: { value: any }) => s.value
-				)
+				const availableModes = mode.states.map((s) => s.value)
 
 				// Hass accepted modes as per: https://www.home-assistant.io/integrations/climate.mqtt/#modes
 				const allowedModes = [
@@ -1011,7 +1005,7 @@ export default class Gateway {
 				const action = node.values[actionId]
 				// [0, 1, 2 ... ] list of value fields from objects in states list
 				const availableActions = action.states.map(
-					(state: { value: any }) => state.value
+					(state) => state.value
 				)
 				// Hass accepted actions as per https://www.home-assistant.io/integrations/climate.mqtt/#action_topic:
 				// ['off', 'heating', 'cooling', 'drying', 'idle', 'fan']
@@ -1833,9 +1827,7 @@ export default class Gateway {
 			this.discoverClimates(node)
 
 			const nodeDevices = allDevices[node.deviceId] || []
-			nodeDevices.forEach((device: any) =>
-				this.discoverDevice(node, device)
-			)
+			nodeDevices.forEach((device) => this.discoverDevice(node, device))
 
 			// discover node values (that are not part of a device)
 			// iterate prioritized first, then the remaining
@@ -1929,13 +1921,13 @@ export default class Gateway {
 	 */
 	async _onApiRequest(
 		topic: string,
-		apiName: string,
-		payload: { args: any[] }
+		apiName: AllowedApis,
+		payload: { args: Parameters<ZwaveClient[AllowedApis]> }
 	): Promise<void> {
 		if (this.zwave) {
 			const args = payload.args || []
 
-			let result: any
+			let result: CallAPIResult<AllowedApis> & { origin?: any }
 
 			if (Array.isArray(args)) {
 				result = await this.zwave.callApi(apiName, ...args)
@@ -1957,7 +1949,7 @@ export default class Gateway {
 	 */
 	async _onBroadRequest(
 		parts: string[],
-		payload: ValueID & { value: any }
+		payload: ValueID & { value: unknown }
 	): Promise<void> {
 		if (parts.length > 0) {
 			// multiple writes (back compatibility mode)
@@ -2056,9 +2048,9 @@ export default class Gateway {
 	_evalFunction(
 		code: string,
 		valueId: Z2MValueId,
-		value: any,
+		value: unknown,
 		node: Z2MNode
-	): any {
+	) {
 		let result = null
 
 		try {
@@ -2220,7 +2212,7 @@ export default class Gateway {
 		valueId: Z2MValueId,
 		offStateValue = 0
 	): HassDevice {
-		const stateKeys = valueId.states.map((s: { value: any }) => s.value)
+		const stateKeys = valueId.states.map((s) => s.value)
 		// Set on/off state from keys
 		if (stateKeys[0] === offStateValue) {
 			cfg.discovery_payload.payload_off = stateKeys[0]
@@ -2263,7 +2255,10 @@ export default class Gateway {
 	/**
 	 * Check if this node supports rgb and if so add it to discovery configuration
 	 */
-	_addRgbColorSwitch(node: Z2MNode, currentColorValue: Z2MValueId): any {
+	_addRgbColorSwitch(
+		node: Z2MNode,
+		currentColorValue: Z2MValueId
+	): HassDevice {
 		const cfg = utils.copy(hassCfg.light_rgb_dimmer)
 
 		const currentColorTopics = this.valueTopic(
@@ -2301,8 +2296,8 @@ export default class Gateway {
      If multilevel is not there use binary
      Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
   */
-		let discoveredStateTopic: any
-		let discoveredCommandTopic: any
+		let discoveredStateTopic: string
+		let discoveredCommandTopic: string
 
 		if (brightnessValue || switchValue) {
 			const vID = brightnessValue || switchValue
