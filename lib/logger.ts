@@ -1,7 +1,7 @@
 import { joinPath, DeepPartial } from './utils'
 import { storeDir } from '../config/app'
 import { GatewayConfig } from './Gateway'
-import winston = require('winston')
+import winston from 'winston'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format

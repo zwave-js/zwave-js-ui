@@ -2,8 +2,8 @@
 import * as appRoot from 'app-root-path'
 import { version } from '../package.json'
 import { ValueID } from 'zwave-js'
-import path = require('path')
-import crypto = require('crypto')
+import path from 'path'
+import crypto from 'crypto'
 import { execSync } from 'child_process'
 
 let VERSION: string

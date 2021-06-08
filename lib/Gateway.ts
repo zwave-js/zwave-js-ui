@@ -26,7 +26,7 @@ import ZwaveClient, {
 	Z2MValueIdState,
 } from './ZwaveClient'
 
-import * as crypto from 'crypto'
+import crypto from 'crypto'
 import { IMeterCCSpecific } from './Constants'
 
 const logger = module('Gateway')
