@@ -7,6 +7,7 @@ const defaultConfig = {
   title: 'ZWave To MQTT'
 }
 
+// don't use export default as it has an unexpected behaviour when used in js files require
 export const webConfig = {
   ...defaultConfig,
   ...appConfig,
