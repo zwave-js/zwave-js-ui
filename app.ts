@@ -5,10 +5,10 @@ import csrf from 'csurf'
 import SerialPort from 'serialport'
 import jsonStore from './lib/jsonStore'
 import cors from 'cors'
-import ZWaveClient, { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient'
-import MqttClient, { MqttConfig } from './lib/MqttClient'
+import ZWaveClient, { CallAPIResult } from './lib/ZwaveClient'
+import MqttClient from './lib/MqttClient'
 import Gateway, { GatewayConfig } from './lib/Gateway'
-import store, { User } from './config/store'
+import store, { User, Settings } from './config/store'
 import * as loggers from './lib/logger'
 import history from 'connect-history-api-fallback'
 import SocketManager, { inboundEvents, socketEvents } from './lib/SocketManager'
@@ -171,7 +171,7 @@ export async function startServer(host: string, port: number | string) {
 		}
 	})
 
-	const users = jsonStore.get(store.users)
+	const users = jsonStore.get(store.users) as User[]
 
 	if (users.length === 0) {
 		users.push({
@@ -247,11 +247,7 @@ function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
 	loggers.setupAll(settings ? settings.gateway : null)
 }
 
-async function startGateway(settings: {
-	mqtt: MqttConfig
-	zwave: ZwaveConfig
-	gateway: GatewayConfig
-}) {
+async function startGateway(settings: Settings) {
 	let mqtt: MqttClient
 	let zwave: ZWaveClient
 
@@ -549,8 +545,8 @@ function setupSocket(server: HttpServer) {
 // ### APIs
 
 function isAuthEnabled() {
-	const settings = jsonStore.get(store.settings)
-	return settings.gateway && settings.gateway.authEnabled === true
+	const settings = jsonStore.get(store.settings) as Settings
+	return settings.gateway?.authEnabled === true
 }
 
 async function parseJWT(req: Request) {
@@ -702,7 +698,7 @@ app.put(
 			const users = jsonStore.get(store.users) as User[]
 
 			const user = req.session.user
-			const oldUser = users.find((u) => u._id === user._id)
+			const oldUser = users.find((u) => u.username === user.username)
 
 			if (!oldUser) {
 				return res.json({ success: false, message: 'User not found' })
@@ -853,7 +849,8 @@ app.post(
 			}
 			const { enableStatistics } = req.body
 
-			const settings = jsonStore.get(store.settings) || {}
+			const settings: Settings =
+				jsonStore.get(store.settings) || ({} as Settings)
 
 			if (!settings.zwave) {
 				settings.zwave = {}

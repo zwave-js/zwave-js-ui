@@ -183,6 +183,7 @@ export type GatewayConfig = {
 	plugins?: string[]
 	logFileName?: string
 	manualDiscovery?: boolean
+	authEnabled?: boolean
 }
 
 interface ValueIdTopic {

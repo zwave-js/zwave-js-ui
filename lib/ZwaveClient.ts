@@ -260,20 +260,20 @@ export type Z2MNode = {
 }
 
 export type ZwaveConfig = {
-	port: string
-	networkKey: string
-	serverEnabled: boolean
-	serverPort: number
-	logEnabled: boolean
-	logLevel: LogManager.LogLevel
-	commandsTimeout: number
-	enableStatistics: boolean
-	disclaimerVersion: number
-	options: ZWaveOptions
-	healNetwork: boolean
-	healHour: number
-	logToFile: boolean
-	nodeFilter: string[]
+	port?: string
+	networkKey?: string
+	serverEnabled?: boolean
+	serverPort?: number
+	logEnabled?: boolean
+	logLevel?: LogManager.LogLevel
+	commandsTimeout?: number
+	enableStatistics?: boolean
+	disclaimerVersion?: number
+	options?: ZWaveOptions
+	healNetwork?: boolean
+	healHour?: number
+	logToFile?: boolean
+	nodeFilter?: string[]
 }
 
 export type Z2MDriverInfo = {
