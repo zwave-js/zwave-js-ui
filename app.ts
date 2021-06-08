@@ -272,7 +272,7 @@ async function startGateway(settings: Settings) {
 
 	await gw.start()
 
-	const pluginsConfig = settings.gateway ? settings.gateway.plugins : null
+	const pluginsConfig = settings.gateway?.plugins ?? null
 
 	// load custom plugins
 	if (pluginsConfig && Array.isArray(pluginsConfig)) {
