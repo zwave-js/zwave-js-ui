@@ -3,7 +3,7 @@ import * as path from 'path'
 import { Request, Response } from 'express'
 import { IncomingHttpHeaders } from 'http'
 
-import * as webConfig from '../config/webConfig'
+import webConfig from '../config/webConfig'
 
 function findFiles(folder: string, ext: string) {
 	const folderPath = path.join(__dirname, '..', 'dist', folder)
