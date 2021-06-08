@@ -300,6 +300,14 @@ export enum EventSource {
 	NODE = 'node',
 }
 
+type MethodNamesOf<T, Except extends keyof T = never> = {
+	[K in keyof T]: K extends Except // loop through all properties from T
+		? never // check if the current one is part of Except, if so don't return it
+		: T[K] extends (...args: any[]) => any
+		? K // otherwise check if the current one is a function, then return the property name
+		: never // ignore all others
+}[keyof T] // turn the object type { "key1": "key1", "key2": "key2"} into the union type "key1" | "key2"
+
 declare interface ZwaveClient {
 	on(event: 'nodeStatus', listener: (node: Z2MNode) => void): this
 	on(
@@ -1747,7 +1755,7 @@ class ZwaveClient extends EventEmitter {
 	 * ZwaveClients methods used are the ones that overrides default Zwave methods
 	 * like nodes name and location and scenes management.
 	 */
-	async callApi<T extends Exclude<keyof ZwaveClient, 'callApi'>>(
+	async callApi<T extends MethodNamesOf<ZwaveClient, 'callApi'>>(
 		apiName: T,
 		...args: Parameters<ZwaveClient[T]>
 	): Promise<CallAPIResult<ReturnType<ZwaveClient[T]>>> {
