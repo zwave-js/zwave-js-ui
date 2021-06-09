@@ -51,4 +51,4 @@ MyPlugin.prototype.destroy = async function () {
 module.export = MyPlugin
 ```
 
-Types and interfaces are available [here]
+Types and interfaces are available [here](https://github.com/zwave-js/zwavejs2mqtt/blob/master/lib/CustomPlugin.ts)
