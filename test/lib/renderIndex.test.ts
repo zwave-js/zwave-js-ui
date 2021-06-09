@@ -27,7 +27,7 @@ describe('#renderIndex', () => {
 					base: '/configured/path',
 				},
 			},
-		}).default
+		})
 		let mockedReaddir: SinonStub
 
 		beforeEach(() => {
@@ -37,10 +37,11 @@ describe('#renderIndex', () => {
 
 		afterEach(() => {
 			mockedReaddir.restore()
+			renderIndex.resetFiles()
 		})
 
 		it('uses the base from the `X-External-Path` header', () => {
-			renderIndex(
+			renderIndex.default(
 				{
 					headers: {
 						'x-external-path': '/test/base',
@@ -52,7 +53,7 @@ describe('#renderIndex', () => {
 		})
 
 		it('uses configured value if no header is present', () => {
-			renderIndex(
+			renderIndex.default(
 				{
 					headers: {},
 				},
@@ -69,7 +70,7 @@ describe('#renderIndex', () => {
 					base: '/configured/path',
 				},
 			},
-		}).default
+		})
 
 		let mockedReaddir: SinonStub
 
@@ -79,11 +80,12 @@ describe('#renderIndex', () => {
 
 		afterEach(() => {
 			mockedReaddir.restore()
+			renderIndex.resetFiles()
 		})
 
 		it('When no dist files present it will have empty css and js files', () => {
 			mockedReaddir.returns([])
-			renderIndex(
+			renderIndex.default(
 				{
 					headers: {},
 				},
@@ -101,7 +103,7 @@ describe('#renderIndex', () => {
 			mockedReaddir
 				.withArgs(jsFolder)
 				.returns(['valid-js.js', 'invalid-js.map'])
-			renderIndex(
+			renderIndex.default(
 				{
 					headers: {},
 				},

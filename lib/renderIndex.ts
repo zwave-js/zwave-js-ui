@@ -24,15 +24,15 @@ function basePath(config: Record<string, any>, headers: IncomingHttpHeaders) {
 	return (headers['x-external-path'] || config.base).replace(/\/?$/, '/')
 }
 
-export default function (req: Request, res: Response, forceFind = false) {
-	cssFiles =
-		!cssFiles || forceFind
-			? findFiles(path.join('static', 'css'), 'css')
-			: cssFiles
-	jsFiles =
-		!jsFiles || forceFind
-			? findFiles(path.join('static', 'js'), 'js')
-			: jsFiles
+export function resetFiles() {
+	cssFiles = undefined
+	jsFiles = undefined
+}
+
+export default function (req: Request, res: Response) {
+	cssFiles = cssFiles || findFiles(path.join('static', 'css'), 'css')
+
+	jsFiles = jsFiles || findFiles(path.join('static', 'js'), 'js')
 	res.render('index.ejs', {
 		config: {
 			...webConfig,
