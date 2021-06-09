@@ -27,6 +27,7 @@ import sessionStore from 'session-file-store'
 import { Socket } from 'socket.io'
 import { Server as HttpServer, createServer as createHttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
+import { CustomPlugin } from './lib/CustomPlugin'
 
 declare module 'express' {
 	interface Request {
@@ -105,7 +106,10 @@ socketManager.authMiddleware = function (
 }
 
 let gw: Gateway // the gateway instance
-const plugins = []
+const plugins = [] as CustomPlugin[]
+const pluginsRouter = express.Router()
+
+app.use(pluginsRouter)
 
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
@@ -280,10 +284,12 @@ async function startGateway(settings: Settings) {
 			try {
 				const pluginName = path.basename(plugin)
 				// eslint-disable-next-line @typescript-eslint/no-var-requires
-				const instance = require(plugin)({
+				const Plugin = require(plugin) as CustomPlugin
+
+				const instance = new Plugin({
 					zwave,
 					mqtt,
-					app,
+					app: pluginsRouter,
 					logger: loggers.module(pluginName),
 				})
 				instance.name = pluginName

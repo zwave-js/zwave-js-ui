@@ -15,8 +15,10 @@ export interface CustomPlugin {
 	mqtt: MqttClient
 	app: Router
 	logger: ModuleLogger
+	name: string
 
-	new (context: PluginContext)
+	// eslint-disable-next-line @typescript-eslint/no-misused-new
+	new (context: PluginContext): CustomPlugin
 
 	destroy(): Promise<void>
 }
