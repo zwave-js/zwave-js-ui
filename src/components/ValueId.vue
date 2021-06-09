@@ -179,9 +179,10 @@
 						height="40px"
 						:value="true"
 						:style="{
-							background: value.newValue ? '#4CAF50' : '',
+							background:
+								value.newValue === true ? '#4CAF50' : '',
 						}"
-						:color="value.newValue ? 'white' : 'green'"
+						:color="value.newValue === true ? 'white' : 'green'"
 						dark
 						@click="updateValue(value, true)"
 					>
@@ -192,9 +193,10 @@
 						height="40px"
 						:value="false"
 						:style="{
-							background: !value.newValue ? '#f44336' : '',
+							background:
+								value.newValue === false ? '#f44336' : '',
 						}"
-						:color="!value.newValue ? 'white' : 'red'"
+						:color="value.newValue === false ? 'white' : 'red'"
 						@click="updateValue(value, false)"
 						dark
 					>
