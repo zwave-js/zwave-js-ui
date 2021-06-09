@@ -53,7 +53,7 @@
     "test:server": "mocha -r ts-node/register ./test/**/*.test.ts",
     "test:ui": "mocha -r @babel/register src/modules",
     "docs": "docsify serve ./docs",
-    "coverage": "c8 --clean mocha",
+    "coverage": "c8 --clean npm run test",
     "record-coverage": "c8 report --reporter=text-lcov --all --exclude=test/* --exclude=.git --exclude=.eslintrc.js --exclude=.postcssrc.js --exclude=wallaby.js > ./coverage/lcov.info",
     "test-watch-cover": "nodemon --exec c8 yarn test",
     "test-watch": "nodemon --exec yarn test",
