@@ -50,3 +50,5 @@ MyPlugin.prototype.destroy = async function () {
 
 module.export = MyPlugin
 ```
+
+Types and interfaces are available [here]

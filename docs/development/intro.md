@@ -5,7 +5,7 @@ Developers who wants to debug the application have to open 2 terminals.
 In first terminal run `yarn run dev` to start webpack-dev for front-end developing and hot reloading at <http://localhost:8092>
 (**THE PORT FOR DEVELOPING IS 8092**)
 
-In the second terminal run `yarn run dev:server` to start the backend server with inspect and auto restart features (if you don't have nodemon installed: `yarn install -g nodemon`)
+In the second terminal run `yarn run dev:server` to start the backend server with inspect and auto restart features
 
 To package the application run `yarn run pkg` command and follow the steps
 
