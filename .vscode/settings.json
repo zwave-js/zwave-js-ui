@@ -1,18 +1,19 @@
 {
-  "editor.formatOnSave": true,
+  // "editor.formatOnSave": true,
   "javascript-test-runner.additionalArgs": "node_modules/.bin/mocha",
   "javascript-test-runner.envVars": {},
   "eslint.format.enable": true,
   "eslint.lintTask.enable": true,
   "wallaby.startAutomatically": true,
-  "[vue]": {
-    "editor.defaultFormatter": "numso.prettier-standard-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
   },
-  "[javascript]": {
-    "editor.defaultFormatter": "numso.prettier-standard-vscode"
-  },
-  "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
+  // "[vue]": {
+  //   "editor.defaultFormatter": "numso.prettier-standard-vscode"
+  // },
+  // "[javascript]": {
+  //   "editor.defaultFormatter": "numso.prettier-standard-vscode"
+  // },
   "standard.enable": false
 }

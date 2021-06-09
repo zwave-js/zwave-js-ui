@@ -1,15 +1,15 @@
 module.exports = function () {
-  return {
-    files: ['lib/**/*.js'],
+	return {
+		files: ['lib/**/*.js'],
 
-    tests: ['test/**/*.test.js'],
+		tests: ['test/**/*.test.js'],
 
-    testFramework: 'mocha',
+		testFramework: 'mocha',
 
-    env: {
-      type: 'node'
-    },
+		env: {
+			type: 'node',
+		},
 
-    workers: { recycle: true }
-  }
+		workers: { recycle: true },
+	}
 }

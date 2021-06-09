@@ -2,5 +2,6 @@ CHANGELOG.md
 README.md
 .github/ISSUE_TEMPLATE
 dist
+server
 store
 /.github/bot-scripts/
