@@ -107,9 +107,11 @@ socketManager.authMiddleware = function (
 
 let gw: Gateway // the gateway instance
 const plugins = [] as CustomPlugin[]
-const pluginsRouter = express.Router()
+let pluginsRouter
 
-app.use(pluginsRouter)
+app.use(function (req, res, next) {
+	pluginsRouter(req, res, next)
+})
 
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
@@ -277,6 +279,7 @@ async function startGateway(settings: Settings) {
 	await gw.start()
 
 	const pluginsConfig = settings.gateway?.plugins ?? null
+	pluginsRouter = express.Router()
 
 	// load custom plugins
 	if (pluginsConfig && Array.isArray(pluginsConfig)) {
