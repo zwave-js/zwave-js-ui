@@ -62,4 +62,4 @@ WORKDIR /usr/src/app
 
 EXPOSE 8091
 
-CMD ["node", "bin/www"]
+CMD ["node", "server/bin/www"]

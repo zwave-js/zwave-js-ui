@@ -1,19 +1,19 @@
 import * as fs from 'fs'
-import * as path from 'path'
+import { joinPath } from './utils'
 import { Request, Response } from 'express'
 import { IncomingHttpHeaders } from 'http'
-
 import { webConfig } from '../config/webConfig'
+import { extname } from 'path'
 
 function findFiles(folder: string, ext: string) {
-	const folderPath = path.join(__dirname, '..', 'dist', folder)
+	const folderPath = joinPath(false, 'dist', folder)
 	const folderFiles = fs.readdirSync(folderPath)
 	return folderFiles
 		.filter(function (file) {
-			return path.extname(file).toLowerCase() === `.${ext.toLowerCase()}`
+			return extname(file).toLowerCase() === `.${ext.toLowerCase()}`
 		})
 		.map(function (file) {
-			return path.join(folder, file)
+			return joinPath(folder, file)
 		})
 }
 
@@ -30,9 +30,9 @@ export function resetFiles() {
 }
 
 export default function (req: Request, res: Response) {
-	cssFiles = cssFiles || findFiles(path.join('static', 'css'), 'css')
+	cssFiles = cssFiles || findFiles('static/css', 'css')
 
-	jsFiles = jsFiles || findFiles(path.join('static', 'js'), 'js')
+	jsFiles = jsFiles || findFiles('static/js', 'js')
 	res.render('index.ejs', {
 		config: {
 			...webConfig,
