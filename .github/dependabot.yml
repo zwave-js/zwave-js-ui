@@ -3,7 +3,7 @@ updates:
   - package-ecosystem: npm
     directory: '/'
     schedule:
-      interval: daily
+      interval: weekly
     allow:
       - dependency-type: 'production'
     labels:
@@ -12,7 +12,7 @@ updates:
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
-      interval: 'daily'
+      interval: 'weekly'
     target-branch: master
     allow:
       - dependency-type: 'development'
@@ -23,11 +23,11 @@ updates:
   - package-ecosystem: 'docker' # See documentation for possible values
     directory: '/docker'
     schedule:
-      interval: 'daily'
+      interval: 'weekly'
     labels:
       - 'docker'
 
   - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
-      interval: 'daily'
+      interval: 'weekly'
