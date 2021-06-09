@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express'
+import express, { Request, Response, RequestHandler } from 'express'
 
 import morgan from 'morgan'
 import csrf from 'csurf'
@@ -370,15 +370,15 @@ app.set('view engine', 'ejs')
 app.use(
 	morgan('dev', {
 		stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
-	})
+	}) as RequestHandler
 )
-app.use(express.json({ limit: '50mb' }))
+app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
 	express.urlencoded({
 		limit: '50mb',
 		extended: true,
 		parameterLimit: 50000,
-	})
+	}) as RequestHandler
 )
 
 app.use(

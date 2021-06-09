@@ -9,6 +9,7 @@
     "allowJs": false, /* Allow javascript files to be compiled. */
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "skipLibCheck": true,
     "outDir": "server",
     // "typeRoots": [
     //   "./src/types",
