@@ -12,7 +12,7 @@ const logger = module('Store')
 /**
 Constructor
 **/
-class StorageHelper {
+export class StorageHelper {
 	public store: Record<StoreKeys, any>
 	public config: Record<StoreKeys, StoreFile>
 

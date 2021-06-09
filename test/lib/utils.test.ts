@@ -1,59 +1,69 @@
-import chai from 'chai'
-import rewire from 'rewire'
-import sinon from 'sinon'
+import chai, { expect } from 'chai'
+import proxyquire from 'proxyquire'
+import sinon, { SinonStub } from 'sinon'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
-chai.should()
 
 declare let process: NodeJS.Process & {
 	pkg: boolean
 }
-
-const mod = rewire('../../lib/utils')
+const snapshotPath = '/snapshot/z2m'
 
 describe('#utils', () => {
 	describe('#getPath()', () => {
-		mod.__set__('appRoot', { toString: () => 'foo' })
+		const utils = proxyquire('../../lib/utils', {
+			'app-root-path': {
+				toString: () => snapshotPath,
+			},
+		})
+
 		it('write && process.pkg', () => {
 			process.pkg = true
-			mod.getPath(true).should.equal(process.cwd())
+			expect(utils.getPath(true)).to.equal(process.cwd())
 		})
 		it('write && !process.pkg', () => {
-			process.pkg = false
-			mod.getPath(true).should.equal('foo')
+			delete process.pkg
+			expect(utils.getPath(true)).to.equal(snapshotPath)
 		})
 		it('!write && process.pkg', () => {
 			process.pkg = true
-			mod.getPath(false).should.equal('foo')
+			expect(utils.getPath(false)).to.equal(snapshotPath)
 		})
 		it('!write && !process.pkg', () => {
-			process.pkg = false
-			mod.getPath(false).should.equal('foo')
+			delete process.pkg
+			expect(utils.getPath(false)).to.equal(snapshotPath)
 		})
 	})
+
 	describe('#joinPath()', () => {
-		let path
+		let path: { join: SinonStub }
+		let utils
+
 		before(() => {
 			path = { join: sinon.stub() }
-			mod.__set__('path', path)
-			sinon.stub(mod, 'getPath').returns('foo')
-		})
-		after(() => {
-			mod.getPath.restore()
+			utils = proxyquire('../../lib/utils', {
+				'app-root-path': {
+					toString: () => snapshotPath,
+				},
+				path: path,
+			})
 		})
 
 		it('zero length', () => {
-			mod.joinPath()
-			return path.join.should.have.been.calledWith()
+			utils.joinPath()
+			return expect(path.join.callCount).to.equal(1)
 		})
 		it('1 length', () => {
-			mod.joinPath('foo')
-			return path.join.should.have.been.calledWith('foo')
+			utils.joinPath('foo')
+			return expect(path.join).to.have.been.calledWith('foo')
 		})
 		it('first arg bool gets new path 0', () => {
-			mod.joinPath(true, 'bar')
-			return path.join.should.have.been.calledWithExactly('foo', 'bar')
+			utils.joinPath(true, 'bar')
+			return expect(path.join).to.have.been.calledWithExactly(
+				snapshotPath,
+				'bar'
+			)
 		})
 	})
 })

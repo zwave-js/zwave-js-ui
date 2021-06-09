@@ -1,25 +1,22 @@
-import chai from 'chai'
+import chai, { expect } from 'chai'
 import proxyquire from 'proxyquire'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
-chai.should()
 
 describe('#webConfig', () => {
-	const webConfig = proxyquire('../../config/webConfig', {
+	const { webConfig } = proxyquire('../../config/webConfig', {
 		'./app': {},
 	})
 
 	describe('Uses defaults if nothing specified', () => {
-		it('uses "/" as the default base', () => {
-			webConfig.base.should.equal('/')
-		})
-		it('uses "ZWave To MQTT" as the default title', () => {
-			webConfig.title.should.equal('ZWave To MQTT')
-		})
+		it('uses "/" as the default base', () =>
+			expect(webConfig.base).to.equal('/'))
+		it('uses "ZWave To MQTT" as the default title', () =>
+			expect(webConfig.title).to.equal('ZWave To MQTT'))
 	})
 	describe('Uses config values when pecified', () => {
-		const webConfig = proxyquire('../../config/webConfig', {
+		const { webConfig } = proxyquire('../../config/webConfig', {
 			'./app': {
 				base: '/sub/path/',
 				title: 'Custom Title',
@@ -27,22 +24,22 @@ describe('#webConfig', () => {
 		})
 
 		it('uses "/sub/path/" as the custom base', () => {
-			webConfig.base.should.equal('/sub/path/')
+			expect(webConfig.base).to.equal('/sub/path/')
 		})
 
 		it('uses "Custom Title" as the custom title', () => {
-			webConfig.title.should.equal('Custom Title')
+			expect(webConfig.title).to.equal('Custom Title')
 		})
 	})
 
 	describe('Path normalization', () => {
-		const webConfig = proxyquire('../../config/webConfig', {
+		const { webConfig } = proxyquire('../../config/webConfig', {
 			'./app': {
 				base: '/sub/path',
 			},
 		})
 		it('Ensures base paths ends with a slash', () => {
-			webConfig.base.should.equal('/sub/path/')
+			expect(webConfig.base).to.equal('/sub/path/')
 		})
 	})
 })

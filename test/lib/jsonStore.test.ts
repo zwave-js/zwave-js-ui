@@ -1,34 +1,26 @@
-import chai from 'chai'
-import rewire from 'rewire'
-import jsonStore from '../../lib/jsonStore'
-import { SinonStub } from 'sinon'
+/* eslint-disable @typescript-eslint/no-floating-promises */
+import chai, { expect } from 'chai'
+import proxyquire from 'proxyquire'
+import { StorageHelper } from '../../lib/jsonStore'
 import sinon from 'sinon'
+import { StoreFile, StoreKeys } from '../../config/store'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('chai-as-promised'))
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
-chai.should()
-
-const mod = rewire('../../lib/jsonStore')
 
 describe('#jsonStore', () => {
 	describe('#getFile()', () => {
 		const config = { file: 'foo', default: 'defaultbar' }
-		beforeEach(() => {
-			sinon.stub(mod.__get__('utils'), 'joinPath')
-			sinon.stub(mod.__get__('jsonfile'), 'readFile')
-		})
-		afterEach(() => {
-			mod.__get__('utils').joinPath.restore()
-			mod.__get__('jsonfile').readFile.restore()
-		})
 
 		it('uncaught error', () => {
-			mod.__get__('jsonfile').readFile.rejects(new Error('FOO'))
-			return jsonStore
-				._getFile(config)
-				.should.eventually.be.rejectedWith(Error, 'FOO')
+			const mod: StorageHelper = proxyquire('../../lib/jsonStore.ts', {
+				jsonfile: {
+					readFile: sinon.stub().rejects(Error('FOO')),
+				},
+			}).default
+			return expect(mod._getFile(config)).to.be.rejectedWith(Error, 'FOO')
 		})
 
 		it('data returned', () => {
@@ -36,23 +28,36 @@ describe('#jsonStore', () => {
 				file: 'foo',
 				data: 'mybar',
 			}
-			mod.__get__('jsonfile').readFile.resolves(toReturn.data)
-			return jsonStore
-				._getFile(config)
-				.should.eventually.deep.equal(toReturn)
+			const mod: StorageHelper = proxyquire('../../lib/jsonStore.ts', {
+				jsonfile: {
+					readFile: sinon.stub().resolves(toReturn.data),
+				},
+			}).default
+
+			return expect(mod._getFile(config)).to.eventually.deep.equal(
+				toReturn
+			)
 		})
 
 		it('no data, return default', () => {
-			mod.__get__('jsonfile').readFile.resolves(null)
-			return jsonStore._getFile(config).should.eventually.deep.equal({
+			const mod: StorageHelper = proxyquire('../../lib/jsonStore.ts', {
+				jsonfile: {
+					readFile: sinon.stub().resolves(null),
+				},
+			}).default
+			return expect(mod._getFile(config)).to.eventually.deep.equal({
 				file: 'foo',
 				data: 'defaultbar',
 			})
 		})
 
 		it('file not found, return default', () => {
-			mod.__get__('jsonfile').readFile.rejects({ code: 'ENOENT' })
-			return jsonStore._getFile(config).should.eventually.deep.equal({
+			const mod: StorageHelper = proxyquire('../../lib/jsonStore.ts', {
+				jsonfile: {
+					readFile: sinon.stub().rejects({ code: 'ENOENT' }),
+				},
+			}).default
+			return expect(mod._getFile(config)).to.eventually.deep.equal({
 				file: 'foo',
 				data: 'defaultbar',
 			})
@@ -60,65 +65,96 @@ describe('#jsonStore', () => {
 	})
 
 	describe('#StorageHelper', () => {
-		jsonStore.store = {}
+		const fakeStore = {
+			foo: { file: 'foo', default: {} },
+		} as unknown as Record<StoreKeys, StoreFile>
 		it('class test', () => {
-			jsonStore.store.should.deep.equal({})
+			const jsonStore = new StorageHelper()
+			return expect(jsonStore.store).to.deep.equal({})
 		})
 
 		describe('#init()', () => {
-			beforeEach(() => {
-				jsonStore.store = { known: 'no', foobar: 'foo' }
-				sinon
-					.stub(jsonStore, '_getFile')
-					.resolves({ file: 'foo', data: 'bar' })
+			it('ok', async () => {
+				const mod: StorageHelper = proxyquire(
+					'../../lib/jsonStore.ts',
+					{
+						jsonfile: {
+							readFile: sinon.stub().resolves('bar'),
+						},
+					}
+				).default
+
+				await mod.init(fakeStore)
+
+				return expect(mod.store).to.deep.equal({
+					foo: 'bar',
+				})
 			})
-			afterEach(() => {
-				;(jsonStore._getFile as SinonStub).restore()
-			})
-			it('ok', () =>
-				jsonStore
-					.init({ file: 'foobar' })
-					.should.eventually.deep.equal({
-						known: 'no',
-						foobar: 'foo',
-						foo: 'bar',
-					}))
+
 			it('error', () => {
-				;(jsonStore._getFile as SinonStub).rejects('fo')
-				return jsonStore.init({ file: 'foobar' }).should.eventually.be
-					.rejected
+				const mod: StorageHelper = proxyquire(
+					'../../lib/jsonStore.ts',
+					{
+						jsonfile: {
+							readFile: sinon.stub().rejects(Error('foo')),
+						},
+					}
+				).default
+
+				return expect(mod.init(fakeStore)).to.be.rejectedWith('foo')
 			})
 		})
 
 		describe('#get()', () => {
-			beforeEach(() => {
-				jsonStore.store = { known: 'foo' }
-			})
+			const mod: StorageHelper = proxyquire('../../lib/jsonStore.ts', {
+				jsonfile: {
+					readFile: sinon.stub().resolves('bar'),
+				},
+			}).default
+
+			beforeEach(async () => await mod.init(fakeStore))
+
 			it('known', () =>
-				jsonStore.get({ file: 'known' }).should.equal('foo'))
-			it('unknown', () =>
-				jsonStore
-					.get({ file: 'unknown' })
-					.should.throw(
-						Error('Requested file not present in store: unknown')
-					))
+				expect(mod.get({ file: 'foo' } as StoreFile)).to.equal('bar'))
+			it('unknown', () => {
+				try {
+					mod.get({ file: 'unknown' } as StoreFile)
+				} catch (error) {
+					return expect(error.message).to.equal(
+						'Requested file not present in store: unknown'
+					)
+				}
+			})
 		})
+
 		describe('#put()', () => {
-			beforeEach(() => {
-				sinon.stub(mod.__get__('jsonfile'), 'writeFile')
-			})
-			afterEach(() => {
-				mod.__get__('jsonfile').writeFile.restore()
-			})
 			it('ok', () => {
-				mod.__get__('jsonfile').writeFile.resolves()
-				return mod
-					.put({ file: 'foo' }, 'bardata')
-					.should.eventually.equal('bardata')
+				const mod: StorageHelper = proxyquire(
+					'../../lib/jsonStore.ts',
+					{
+						jsonfile: {
+							writeFile: sinon.stub().resolves('bar'),
+						},
+					}
+				).default
+
+				return expect(
+					mod.put({ file: 'foo' } as StoreFile, 'bardata')
+				).to.eventually.equal('bardata')
 			})
 			it('error', () => {
-				mod.__get__('jsonfile').writeFile.rejects(new Error('bar'))
-				mod.put({ file: 'foo' }).should.be.rejectedWith('bar')
+				const mod: StorageHelper = proxyquire(
+					'../../lib/jsonStore.ts',
+					{
+						jsonfile: {
+							writeFile: sinon.stub().rejects(Error('foo')),
+						},
+					}
+				).default
+
+				return expect(
+					mod.put({ file: 'foo' } as StoreFile, '')
+				).to.be.rejectedWith('foo')
 			})
 		})
 	})

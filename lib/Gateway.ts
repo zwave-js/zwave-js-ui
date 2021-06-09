@@ -134,6 +134,12 @@ loadCustomDevices()
 watch(customDevicesJsPath, loadCustomDevices)
 watch(customDevicesJsonPath, loadCustomDevices)
 
+export function closeWatchers() {
+	for (const [, watcher] of watchers) {
+		watcher.close()
+	}
+}
+
 export enum GatewayType {
 	VALUEID,
 	NAMED,

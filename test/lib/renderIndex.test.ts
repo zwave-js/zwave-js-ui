@@ -1,14 +1,13 @@
-import chai from 'chai'
-import sinon from 'sinon'
-import rewire from 'rewire'
+import chai, { expect } from 'chai'
+import sinon, { SinonStub } from 'sinon'
 import fs from 'fs'
 import path from 'path'
+import proxyquire from 'proxyquire'
 
 const cssFolder = path.join(__dirname, '..', '..', 'dist', 'static', 'css')
 const jsFolder = path.join(__dirname, '..', '..', 'dist', 'static', 'js')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
-chai.should()
 
 let lastTpl
 let lastOptions
@@ -22,14 +21,16 @@ const mockResponse = {
 
 describe('#renderIndex', () => {
 	describe('Processing configuration', () => {
-		let renderIndex
-		let mockedReaddir
+		const renderIndex = proxyquire('../../lib/renderIndex.ts', {
+			'../config/webConfig': {
+				webConfig: {
+					base: '/configured/path',
+				},
+			},
+		}).default
+		let mockedReaddir: SinonStub
 
 		beforeEach(() => {
-			renderIndex = rewire('../../lib/renderIndex')
-			renderIndex.__set__('webConfig', {
-				base: '/configured/path',
-			})
 			mockedReaddir = sinon.stub(fs, 'readdirSync')
 			mockedReaddir.returns([])
 		})
@@ -47,7 +48,7 @@ describe('#renderIndex', () => {
 				},
 				mockResponse
 			)
-			return lastOptions.config.base.should.equal('/test/base/')
+			return expect(lastOptions.config.base).to.equal('/test/base/')
 		})
 
 		it('uses configured value if no header is present', () => {
@@ -57,16 +58,22 @@ describe('#renderIndex', () => {
 				},
 				mockResponse
 			)
-			lastOptions.config.base.should.equal('/configured/path/')
+			expect(lastOptions.config.base).to.equal('/configured/path/')
 		})
 	})
 
 	describe('Processing static files', () => {
-		let mockedReaddir
-		let renderIndex
+		const renderIndex = proxyquire('../../lib/renderIndex.ts', {
+			'../config/webConfig': {
+				webConfig: {
+					base: '/configured/path',
+				},
+			},
+		}).default
+
+		let mockedReaddir: SinonStub
 
 		beforeEach(() => {
-			renderIndex = rewire('../../lib/renderIndex')
 			mockedReaddir = sinon.stub(fs, 'readdirSync')
 		})
 
@@ -82,9 +89,9 @@ describe('#renderIndex', () => {
 				},
 				mockResponse
 			)
-			lastTpl.should.equal('index.ejs')
-			lastOptions.cssFiles.should.eql([])
-			lastOptions.jsFiles.should.eql([])
+			expect(lastTpl).to.equal('index.ejs')
+			expect(lastOptions.cssFiles).to.eql([])
+			return expect(lastOptions.jsFiles).to.eql([])
 		})
 
 		it('When dist files present will only return the ones with the correct extensions', () => {
@@ -98,11 +105,12 @@ describe('#renderIndex', () => {
 				{
 					headers: {},
 				},
-				mockResponse
+				mockResponse,
+				true
 			)
-			lastTpl.should.equal('index.ejs')
-			lastOptions.cssFiles.should.eql(['static/css/valid-css.css'])
-			lastOptions.jsFiles.should.eql(['static/js/valid-js.js'])
+			expect(lastTpl).to.equal('index.ejs')
+			expect(lastOptions.cssFiles).to.eql(['static/css/valid-css.css'])
+			return expect(lastOptions.jsFiles).to.eql(['static/js/valid-js.js'])
 		})
 	})
 })

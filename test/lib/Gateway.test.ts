@@ -1,14 +1,12 @@
-import chai from 'chai'
-import rewire from 'rewire'
+import chai, { expect } from 'chai'
+import Gateway, { closeWatchers } from '../../lib/Gateway'
+import { Z2MNode } from '../../lib/ZwaveClient'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
-chai.should()
-
-const mod = rewire('../../lib/Gateway')
-const Gateway = mod.__get__('Gateway')
 
 describe('#Gateway', () => {
-	const gw = new Gateway()
+	const gw = new Gateway({ type: 0 }, null, null)
+	closeWatchers()
 	describe('#setDiscoveryValue()', () => {
 		let untouchedPayload: Record<string | number, any>
 		let payload: Record<string | number, any>
@@ -31,40 +29,32 @@ describe('#Gateway', () => {
 
 		describe('payload prop not string', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'a', node)
-				payload.should.deep.equal(untouchedPayload)
+				gw._setDiscoveryValue(payload, 'a', node as unknown as Z2MNode)
+				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('no valueId', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'd', node)
-				payload.should.deep.equal(untouchedPayload)
+				gw._setDiscoveryValue(payload, 'd', node as unknown as Z2MNode)
+				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('no valueId.value', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'c', node)
-				payload.should.deep.equal(untouchedPayload)
+				gw._setDiscoveryValue(payload, 'c', node as unknown as Z2MNode)
+				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('happy path', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'b', node)
-				payload.should.deep.equal({
+				gw._setDiscoveryValue(payload, 'b', node as unknown as Z2MNode)
+				return expect(payload).to.deep.equal({
 					a: 1,
 					b: 'a',
 					c: 'd',
 					d: 'e',
 				})
 			})
-		})
-	})
-
-	afterEach(() => {
-		mod.__get__('watchers').forEach((v) => {
-			if (v != null) {
-				v.close()
-			}
 		})
 	})
 })

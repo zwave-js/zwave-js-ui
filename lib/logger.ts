@@ -6,12 +6,19 @@ import winston from 'winston'
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
 
-const colorizer = colorize()
-const defaultLogFile = 'zwavejs2mqtt.log'
+export const defaultLogFile = 'zwavejs2mqtt.log'
 
-interface ModuleLogger extends winston.Logger {
+// custom colors for timestamp and module
+addColors({
+	time: 'grey',
+	module: 'bold',
+})
+
+const colorizer = colorize()
+
+export interface ModuleLogger extends winston.Logger {
 	module: string
-	setup(cfg: DeepPartial<GatewayConfig>): winston.Logger
+	setup(cfg: DeepPartial<GatewayConfig>): ModuleLogger
 }
 
 export type LogLevel = 'silly' | 'verbose' | 'debug' | 'info' | 'warn' | 'error'
@@ -27,10 +34,10 @@ interface LoggerConfig {
 /**
  * Generate logger configuration starting from settings.gateway
  */
-const sanitizedConfig = (
+export function sanitizedConfig(
 	module: string,
 	config: DeepPartial<GatewayConfig>
-): LoggerConfig => {
+): LoggerConfig {
 	config = config || ({} as LoggerConfig)
 	const filePath = joinPath(storeDir, config.logFileName || defaultLogFile)
 
@@ -43,17 +50,11 @@ const sanitizedConfig = (
 	}
 }
 
-// custom colors for timestamp and module
-addColors({
-	time: 'grey',
-	module: 'bold',
-})
-
 /**
  * Return a custom logger format
  */
-const customFormat = (config: LoggerConfig): winston.Logform.Format =>
-	combine(
+export function customFormat(config: LoggerConfig): winston.Logform.Format {
+	return combine(
 		splat(), // used for formats like: logger.log('info', Message %s', strinVal)
 		timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
 		format((info) => {
@@ -70,10 +71,11 @@ const customFormat = (config: LoggerConfig): winston.Logform.Format =>
 			}${info.stack ? '\n' + info.stack : ''}`
 		})
 	)
+}
 /**
  * Create the base transports based on settings provided
  */
-const customTransports = (config: LoggerConfig): winston.transport[] => {
+export function customTransports(config: LoggerConfig): winston.transport[] {
 	const transportsList: winston.transport[] = [
 		new transports.Console({
 			format: customFormat(config),
@@ -96,11 +98,11 @@ const customTransports = (config: LoggerConfig): winston.transport[] => {
 /**
  * Setup a logger
  */
-const setupLogger = (
+export function setupLogger(
 	container: winston.Container,
 	module: string,
 	config?: DeepPartial<GatewayConfig>
-): ModuleLogger => {
+): ModuleLogger {
 	const sanitized = sanitizedConfig(module, config)
 	// Winston automatically reuses an existing module logger
 	const logger = container.add(module) as ModuleLogger
@@ -119,7 +121,7 @@ const logContainer = new winston.Container()
 /**
  * Create a new logger for a specific module
  */
-export function module(module: string): winston.Logger {
+export function module(module: string): ModuleLogger {
 	return setupLogger(logContainer, module)
 }
 
