@@ -107,9 +107,7 @@ socketManager.authMiddleware = function (
 
 let gw: Gateway // the gateway instance
 const plugins = [] as CustomPlugin[]
-const pluginsRouter = express.Router()
-
-app.use(pluginsRouter)
+let pluginsRouter
 
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
@@ -277,6 +275,7 @@ async function startGateway(settings: Settings) {
 	await gw.start()
 
 	const pluginsConfig = settings.gateway?.plugins ?? null
+	pluginsRouter = express.Router()
 
 	// load custom plugins
 	if (pluginsConfig && Array.isArray(pluginsConfig)) {
@@ -419,6 +418,10 @@ app.use(
 		},
 	})
 )
+
+app.use(function (req, res, next) {
+	pluginsRouter(req, res, next)
+})
 
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.
