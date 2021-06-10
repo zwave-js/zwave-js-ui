@@ -49,7 +49,7 @@ declare interface MqttClient {
 	on(event: 'multicastRequest', listener: (payload: any) => void): this
 	on(
 		event: 'apiCall',
-		listener: (topic: string, apiNema: string, payload: any) => void
+		listener: (topic: string, apiName: string, payload: any) => void
 	): this
 	on(event: 'connect', listener: () => void): this
 	on(event: 'brokerStatus', listener: (online: boolean) => void): this
@@ -389,7 +389,8 @@ class MqttClient extends EventEmitter {
 	_onMessageReceived(topic: string, payload: Buffer) {
 		if (this.closed) return
 
-		let parsed: string | number | Record<string, any> = payload?.toString()
+		let parsed: string | number | Record<string, any> | undefined =
+			payload?.toString()
 
 		logger.log('info', `Message received on ${topic}, %o`, payload)
 

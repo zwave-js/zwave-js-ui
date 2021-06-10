@@ -10,6 +10,12 @@ interface IHassClass {
 	}
 }
 
+interface ISensorType {
+	sensor: string
+	objectId: string
+	props: ISensorProps
+}
+
 interface ISensorProps {
 	device_class?: string
 	icon?: string
@@ -325,7 +331,7 @@ export const _sensorMap: ISensorMap = {
 		86: 'particulate_matter',
 	},
 }
-export function sensorType(index: number) {
+export function sensorType(index: number): ISensorType {
 	const sensorType = {
 		sensor: 'generic',
 		objectId: 'unknown_' + index,
