@@ -1,9 +1,9 @@
 'use strict'
 
-import { EventEmitter } from 'events'
 import { Server as HttpServer } from 'http'
 import { module } from './logger'
 import { Server as SocketServer, Socket } from 'socket.io'
+import { TypedEventEmitter } from './EventEmitter'
 
 const logger = module('Socket')
 
@@ -32,29 +32,22 @@ export enum inboundEvents {
 	mqtt = 'MQTT_API', // call an mqtt api
 }
 
-declare interface SocketManager {
-	on(event: inboundEvents.init, listener: (socket: Socket) => void): this
-
-	on(
-		event: inboundEvents.zwave,
-		listener: (socket: Socket, data) => void
-	): this
-
-	on(
-		event: inboundEvents.hass,
-		listener: (socket: Socket, data) => void
-	): this
-
-	on(
-		event: inboundEvents.mqtt,
-		listener: (socket: Socket, data) => void
-	): this
+export interface SocketManagerEventCallbacks {
+	[inboundEvents.init]: (socket: Socket) => void
+	[inboundEvents.zwave]: (socket: Socket, data: any) => void
+	[inboundEvents.hass]: (socket: Socket, data: any) => void
+	[inboundEvents.mqtt]: (socket: Socket, data: any) => void
 }
+
+export type SocketManagerEvents = Extract<
+	keyof SocketManagerEventCallbacks,
+	string
+>
 
 /**
  * The constructor
  */
-class SocketManager extends EventEmitter {
+class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	server: HttpServer
 	io: SocketServer
 	authMiddleware: (socket: Socket, next: () => void) => void | undefined
@@ -106,9 +99,9 @@ class SocketManager extends EventEmitter {
 	 * Logs and emits the `eventName` with `socket` and `args` as parameters
 	 *
 	 */
-	_emitEvent(eventName: string, socket: Socket, ...args: any[]) {
+	_emitEvent(eventName: inboundEvents, socket: Socket, data: any) {
 		logger.debug(`Event ${eventName} emitted to ${socket.id}`)
-		this.emit(eventName, socket, ...args)
+		this.emit(eventName, socket, data)
 	}
 }
 

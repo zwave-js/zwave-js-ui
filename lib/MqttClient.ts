@@ -4,10 +4,10 @@
 import mqtt, { Client } from 'mqtt'
 import { joinPath, sanitizeTopic } from './utils'
 import NeDBStore from 'mqtt-nedb-store'
-import { EventEmitter } from 'events'
 import { storeDir } from '../config/app'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
+import { TypedEventEmitter } from './EventEmitter'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const url = require('native-url')
@@ -37,26 +37,19 @@ export type MqttConfig = {
 	_cert: string
 }
 
-declare interface MqttClient {
-	on(
-		event: 'writeRequest',
-		listener: (parts: string[], payload: any) => void
-	): this
-	on(
-		event: 'broadcastRequest',
-		listener: (parts: string[], payload: any) => void
-	): this
-	on(event: 'multicastRequest', listener: (payload: any) => void): this
-	on(
-		event: 'apiCall',
-		listener: (topic: string, apiName: string, payload: any) => void
-	): this
-	on(event: 'connect', listener: () => void): this
-	on(event: 'brokerStatus', listener: (online: boolean) => void): this
-	on(event: 'hassStatus', listener: (online: boolean) => void): this
+export interface MqttClientEventCallbacks {
+	writeRequest: (parts: string[], payload: any) => void
+	broadcastRequest: (parts: string[], payload: any) => void
+	multicastRequest: (payload: any) => void
+	apiCall: (topic: string, apiName: string, payload: any) => void
+	connect: () => void
+	brokerStatus: (online: boolean) => void
+	hassStatus: (online: boolean) => void
 }
 
-class MqttClient extends EventEmitter {
+export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
+
+class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	config: MqttConfig
 	toSubscribe: string[]
 	clientID: string

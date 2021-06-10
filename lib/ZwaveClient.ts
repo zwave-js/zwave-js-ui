@@ -42,7 +42,6 @@ import {
 	ZWaveErrorCodes,
 } from '@zwave-js/core'
 import * as utils from './utils'
-import { EventEmitter } from 'events'
 import jsonStore from './jsonStore'
 import { socketEvents } from './SocketManager'
 import store from '../config/store'
@@ -53,6 +52,7 @@ import { ZwavejsServer, serverVersion } from '@zwave-js/server'
 import * as pkgjson from '../package.json'
 import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
+import { TypedEventEmitter } from './EventEmitter'
 
 const logger = LogManager.module('Zwave')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -304,29 +304,23 @@ export enum EventSource {
 	NODE = 'node',
 }
 
-declare interface ZwaveClient {
-	on(event: 'nodeStatus', listener: (node: Z2MNode) => void): this
-	on(
-		event: 'event',
-		listener: (source: EventSource, eventName: string, ...args: any) => void
-	): this
-	on(event: 'scanComplete', listener: () => void): this
-	on(
-		event: 'notification',
-		listener: (node: Z2MNode, valueId: Z2MValueId, data: any) => void
-	): this
-	on(event: 'nodeRemoved', listener: (node: Z2MNode) => void): this
-	on(
-		event: 'valueChanged',
-		listener: (valueId: Z2MValueId, node: Z2MNode) => void
-	): this
-	on(
-		event: 'valueWritten',
-		listener: (valueId: Z2MValueId, value: unknown) => void
-	): this
+export interface ZwaveClientEventCallbacks {
+	nodeStatus: (node: Z2MNode) => void
+	event: (source: EventSource, eventName: string, ...args: any) => void
+	scanComplete: () => void
+	notification: (node: Z2MNode, valueId: Z2MValueId, data: any) => void
+	nodeRemoved: (node: Z2MNode) => void
+	valueChanged: (
+		valueId: Z2MValueId,
+		node: Z2MNode,
+		changed?: boolean
+	) => void
+	valueWritten: (valueId: Z2MValueId, value: unknown) => void
 }
 
-class ZwaveClient extends EventEmitter {
+export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
+
+class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	cfg: ZwaveConfig
 	socket: SocketServer
 	closed: boolean
@@ -2558,7 +2552,7 @@ class ZwaveClient extends EventEmitter {
 
 		const node = this.nodes.get(zwaveNode.id)
 
-		this.emit('notification', node, valueId, data)
+		this.emit('notification', node, valueId as Z2MValueId, data)
 
 		this.emit(
 			'event',
