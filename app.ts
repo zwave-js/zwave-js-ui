@@ -442,12 +442,12 @@ function setupSocket(server: HttpServer) {
 	socketManager.bindServer(server)
 
 	socketManager.on(inboundEvents.init, (socket) => {
-		if (gw.zwave) {
+		if (gw._zwave) {
 			socket.emit(socketEvents.init, {
-				nodes: gw.zwave.getNodes(),
-				info: gw.zwave.getInfo(),
-				error: gw.zwave.error,
-				cntStatus: gw.zwave.cntStatus,
+				nodes: gw._zwave.getNodes(),
+				info: gw._zwave.getInfo(),
+				error: gw._zwave.error,
+				cntStatus: gw._zwave.cntStatus,
 			})
 		}
 	})
@@ -456,11 +456,11 @@ function setupSocket(server: HttpServer) {
 		inboundEvents.zwave,
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (socket, data) => {
-			if (gw.zwave) {
+			if (gw._zwave) {
 				const result: CallAPIResult<any> & {
 					api?: string
 					originalArgs?: any[]
-				} = await gw.zwave.callApi(data.api, ...data.args)
+				} = await gw._zwave.callApi(data.api, ...data.args)
 				result.api = data.api
 				result.originalArgs = data.args
 				socket.emit(socketEvents.api, result)
@@ -526,13 +526,13 @@ function setupSocket(server: HttpServer) {
 					res = gw.disableDiscovery(data.nodeId)
 					break
 				case 'update':
-					res = gw.zwave.updateDevice(data.device, data.nodeId)
+					res = gw._zwave.updateDevice(data.device, data.nodeId)
 					break
 				case 'add':
-					res = gw.zwave.addDevice(data.device, data.nodeId)
+					res = gw._zwave.addDevice(data.device, data.nodeId)
 					break
 				case 'store':
-					res = await gw.zwave.storeDevices(
+					res = await gw._zwave.storeDevices(
 						data.devices,
 						data.nodeId,
 						data.remove
@@ -760,8 +760,8 @@ app.get('/health', apisLimiter, function (req, res) {
 	let zwave: boolean
 
 	if (gw) {
-		mqtt = gw.mqtt?.getStatus() ?? false
-		zwave = gw.zwave?.getStatus().status ?? false
+		mqtt = gw._mqtt?.getStatus() ?? false
+		zwave = gw._zwave?.getStatus().status ?? false
 	}
 
 	// if mqtt is disabled, return true. Fixes #469
@@ -796,7 +796,7 @@ app.get(
 		const data = {
 			success: true,
 			settings: jsonStore.get(store.settings),
-			devices: gw?.zwave?.devices ?? {},
+			devices: gw?._zwave?.devices ?? {},
 			serial_ports: [],
 		}
 
@@ -874,11 +874,11 @@ app.post(
 
 			await jsonStore.put(store.settings, settings)
 
-			if (gw && gw.zwave) {
+			if (gw && gw._zwave) {
 				if (enableStatistics) {
-					gw.zwave.enableStatistics()
+					gw._zwave.enableStatistics()
 				} else {
-					gw.zwave.disableStatistics()
+					gw._zwave.disableStatistics()
 				}
 			}
 
@@ -911,7 +911,7 @@ app.post(
 	async function (req, res) {
 		let config = req.body.data
 		try {
-			if (!gw.zwave) throw Error('Zwave client not inited')
+			if (!gw._zwave) throw Error('Zwave client not inited')
 
 			// try convert to node object
 			if (Array.isArray(config)) {
@@ -933,7 +933,7 @@ app.post(
 				// All API calls expect nodeId to be a number, so convert it here.
 				const nodeIdNumber = Number(nodeId)
 				if (utils.hasProperty(node, 'name')) {
-					await gw.zwave.callApi(
+					await gw._zwave.callApi(
 						'setNodeName',
 						nodeIdNumber,
 						node.name || ''
@@ -941,7 +941,7 @@ app.post(
 				}
 
 				if (utils.hasProperty(node, 'loc')) {
-					await gw.zwave.callApi(
+					await gw._zwave.callApi(
 						'setNodeLocation',
 						nodeIdNumber,
 						node.loc || ''
@@ -949,7 +949,7 @@ app.post(
 				}
 
 				if (node.hassDevices) {
-					await gw.zwave.storeDevices(
+					await gw._zwave.storeDevices(
 						node.hassDevices,
 						nodeIdNumber,
 						false

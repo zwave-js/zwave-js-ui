@@ -207,19 +207,31 @@ interface DeviceInfo {
 }
 
 export default class Gateway {
-	config: GatewayConfig
-	mqtt: MqttClient
-	zwave: ZwaveClient
-	topicValues: { [key: string]: Z2MValueId }
-	discovered: { [key: string]: HassDevice }
-	topicLevels: number[]
-	closed: boolean
+	private config: GatewayConfig
+	private _mqtt: MqttClient
+	private _zwave: ZwaveClient
+	private topicValues: { [key: string]: Z2MValueId }
+	private discovered: { [key: string]: HassDevice }
+	private topicLevels: number[]
+	private _closed: boolean
+
+	public get mqtt() {
+		return this._mqtt
+	}
+
+	public get zwave() {
+		return this._zwave
+	}
+
+	public get closed() {
+		return this._closed
+	}
 
 	constructor(config: GatewayConfig, zwave: ZwaveClient, mqtt: MqttClient) {
 		this.config = config || { type: 1 }
 		// clients
-		this.mqtt = mqtt
-		this.zwave = zwave
+		this._mqtt = mqtt
+		this._zwave = zwave
 	}
 
 	async start(): Promise<void> {
@@ -232,35 +244,35 @@ export default class Gateway {
 
 		this.discovered = {}
 
-		this.closed = false
+		this._closed = false
 
 		// topic levels for subscribes using wildecards
 		this.topicLevels = []
 
-		if (this.mqtt) {
-			this.mqtt.on('writeRequest', this._onWriteRequest.bind(this))
-			this.mqtt.on('broadcastRequest', this._onBroadRequest.bind(this))
-			this.mqtt.on(
+		if (this._mqtt) {
+			this._mqtt.on('writeRequest', this._onWriteRequest.bind(this))
+			this._mqtt.on('broadcastRequest', this._onBroadRequest.bind(this))
+			this._mqtt.on(
 				'multicastRequest',
 				this._onMulticastRequest.bind(this)
 			)
-			this.mqtt.on('apiCall', this._onApiRequest.bind(this))
-			this.mqtt.on('hassStatus', this._onHassStatus.bind(this))
-			this.mqtt.on('brokerStatus', this._onBrokerStatus.bind(this))
+			this._mqtt.on('apiCall', this._onApiRequest.bind(this))
+			this._mqtt.on('hassStatus', this._onHassStatus.bind(this))
+			this._mqtt.on('brokerStatus', this._onBrokerStatus.bind(this))
 		}
 
-		if (this.zwave) {
-			this.zwave.on('valueChanged', this._onValueChanged.bind(this))
-			this.zwave.on('nodeStatus', this._onNodeStatus.bind(this))
-			this.zwave.on('notification', this._onNotification.bind(this))
-			this.zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
+		if (this._zwave) {
+			this._zwave.on('valueChanged', this._onValueChanged.bind(this))
+			this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
+			this._zwave.on('notification', this._onNotification.bind(this))
+			this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
 
 			if (this.config.sendEvents) {
-				this.zwave.on('event', this._onEvent.bind(this))
+				this._zwave.on('event', this._onEvent.bind(this))
 			}
 
 			// this is async but doesn't need to be awaited
-			await this.zwave.connect()
+			await this._zwave.connect()
 		} else {
 			logger.error('Zwave settings are not valid')
 		}
@@ -341,7 +353,7 @@ export default class Gateway {
 				}
 
 				if (valueConf.parseReceive) {
-					const node = this.zwave.nodes.get(valueId.nodeId)
+					const node = this._zwave.nodes.get(valueId.nodeId)
 					const parsedVal = this._evalFunction(
 						valueConf.receiveFunction,
 						valueId,
@@ -366,16 +378,16 @@ export default class Gateway {
 	 * Method used to close clients connection, use this before destroy
 	 */
 	async close(): Promise<void> {
-		this.closed = true
+		this._closed = true
 
 		logger.info('Closing Gateway...')
 
-		if (this.mqtt) {
-			await this.mqtt.close()
+		if (this._mqtt) {
+			await this._mqtt.close()
 		}
 
-		if (this.zwave) {
-			await this.zwave.close()
+		if (this._zwave) {
+			await this._zwave.close()
 		}
 	}
 
@@ -512,7 +524,7 @@ export default class Gateway {
 	 * Rediscover all hass devices of this node
 	 */
 	rediscoverNode(nodeID: number): void {
-		const node = this.zwave.nodes.get(nodeID)
+		const node = this._zwave.nodes.get(nodeID)
 		if (node) {
 			// delete all discovered values
 			this._onNodeRemoved(node)
@@ -528,7 +540,7 @@ export default class Gateway {
 				this.discoverValue(node, id)
 			}
 
-			this.zwave.sendToSocket(socketEvents.nodeUpdated, node)
+			this._zwave.sendToSocket(socketEvents.nodeUpdated, node)
 		}
 	}
 
@@ -537,13 +549,13 @@ export default class Gateway {
 	 *
 	 */
 	disableDiscovery(nodeId: number): void {
-		const node = this.zwave.nodes.get(nodeId)
+		const node = this._zwave.nodes.get(nodeId)
 		if (node && node.hassDevices) {
 			for (const id in node.hassDevices) {
 				node.hassDevices[id].ignoreDiscovery = true
 			}
 
-			this.zwave.sendToSocket(socketEvents.nodeUpdated, node)
+			this._zwave.sendToSocket(socketEvents.nodeUpdated, node)
 		}
 	}
 
@@ -588,7 +600,7 @@ export default class Gateway {
 				(this.config.manualDiscovery && !options.forceUpdate)
 
 			if (!skipDiscovery) {
-				this.mqtt.publish(
+				this._mqtt.publish(
 					hassDevice.discoveryTopic,
 					options.deleteDevice ? '' : hassDevice.discovery_payload,
 					{ qos: 0, retain: this.config.retainedDiscovery || false },
@@ -597,7 +609,7 @@ export default class Gateway {
 			}
 
 			if (options.forceUpdate) {
-				this.zwave.updateDevice(
+				this._zwave.updateDevice(
 					hassDevice,
 					nodeId,
 					options.deleteDevice
@@ -639,7 +651,7 @@ export default class Gateway {
 		// skip discovery if discovery not enabled
 		if (!this.config.hassDiscovery) return
 
-		const nodes = this.zwave ? this.zwave.nodes : []
+		const nodes = this._zwave ? this._zwave.nodes : []
 		for (const [nodeId, node] of nodes) {
 			const devices = node.hassDevices || {}
 			for (const id in devices) {
@@ -685,7 +697,7 @@ export default class Gateway {
 								hassDevice.mode_map,
 								'off'
 							)
-						payload.mode_state_topic = this.mqtt.getTopic(
+						payload.mode_state_topic = this._mqtt.getTopic(
 							this.valueTopic(node, mode) as string
 						)
 						payload.mode_command_topic =
@@ -699,7 +711,7 @@ export default class Gateway {
 					this._setDiscoveryValue(payload, 'min_temp', node)
 
 					const setpoint = node.values[setId]
-					payload.temperature_state_topic = this.mqtt.getTopic(
+					payload.temperature_state_topic = this._mqtt.getTopic(
 						this.valueTopic(node, setpoint) as string
 					)
 					payload.temperature_command_topic =
@@ -707,7 +719,7 @@ export default class Gateway {
 
 					const action = node.values[payload.action_topic]
 					if (action) {
-						payload.action_topic = this.mqtt.getTopic(
+						payload.action_topic = this._mqtt.getTopic(
 							this.valueTopic(node, action) as string
 						)
 						if (hassDevice.action_map) {
@@ -721,7 +733,7 @@ export default class Gateway {
 
 					const fan = node.values[payload.fan_mode_state_topic]
 					if (fan !== undefined) {
-						payload.fan_mode_state_topic = this.mqtt.getTopic(
+						payload.fan_mode_state_topic = this._mqtt.getTopic(
 							this.valueTopic(node, fan) as string
 						)
 						payload.fan_mode_command_topic =
@@ -739,7 +751,7 @@ export default class Gateway {
 					const currTemp =
 						node.values[payload.current_temperature_topic]
 					if (currTemp !== undefined) {
-						payload.current_temperature_topic = this.mqtt.getTopic(
+						payload.current_temperature_topic = this._mqtt.getTopic(
 							this.valueTopic(node, currTemp) as string
 						)
 
@@ -763,7 +775,7 @@ export default class Gateway {
 					for (let i = 0; i < hassDevice.values.length; i++) {
 						const v = hassDevice.values[i] // the value id
 						topics[v] = node.values[v]
-							? this.mqtt.getTopic(
+							? this._mqtt.getTopic(
 									this.valueTopic(
 										node,
 										node.values[v]
@@ -810,7 +822,7 @@ export default class Gateway {
 					// set a unique id for the component
 					payload.unique_id =
 						'zwavejs2mqtt_' +
-						this.zwave.homeHex +
+						this._zwave.homeHex +
 						'_Node' +
 						node.id +
 						'_' +
@@ -1069,9 +1081,9 @@ export default class Gateway {
 
 			const valueConf = result.valueConf
 
-			const getTopic = this.mqtt.getTopic(result.topic)
+			const getTopic = this._mqtt.getTopic(result.topic)
 			const setTopic = result.targetTopic
-				? this.mqtt.getTopic(result.targetTopic, true)
+				? this._mqtt.getTopic(result.targetTopic, true)
 				: null
 
 			const nodeName = this._getNodeName(node, this.config.ignoreLoc)
@@ -1402,7 +1414,7 @@ export default class Gateway {
 						if (valueId.ccSpecific) {
 							sensor = Constants.meterType(
 								valueId.ccSpecific as IMeterCCSpecific,
-								this.zwave.driver.configManager
+								this._zwave.driver.configManager
 							)
 
 							sensor.objectId += '_' + valueId.property
@@ -1552,7 +1564,7 @@ export default class Gateway {
 			// Set a unique id for the component
 			payload.unique_id =
 				'zwavejs2mqtt_' +
-				this.zwave.homeHex +
+				this._zwave.homeHex +
 				'_' +
 				utils.sanitizeTopic(valueId.id, true)
 
@@ -1591,7 +1603,7 @@ export default class Gateway {
 	 *
 	 */
 	updateNodeTopics(nodeId: number): void {
-		const node = this.zwave.nodes.get(nodeId)
+		const node = this._zwave.nodes.get(nodeId)
 		if (node) {
 			const topics = Object.keys(this.topicValues).filter(
 				(k) => this.topicValues[k].nodeId === node.id
@@ -1610,14 +1622,14 @@ export default class Gateway {
 	 * Removes all retained messages of the specified node
 	 */
 	removeNodeRetained(nodeId: number): void {
-		const node = this.zwave.nodes.get(nodeId)
+		const node = this._zwave.nodes.get(nodeId)
 		if (node) {
 			const topics = Object.keys(node.values).map(
 				(v) => this.valueTopic(node, node.values[v]) as string
 			)
 
 			for (const t of topics) {
-				this.mqtt.publish(t, '', { retain: true })
+				this._mqtt.publish(t, '', { retain: true })
 			}
 		}
 	}
@@ -1627,10 +1639,10 @@ export default class Gateway {
 	 */
 	_onEvent(emitter: EventSource, eventName: string, ...args: any[]): void {
 		const topic = `${MqttClient.EVENTS_PREFIX}/${
-			this.mqtt.clientID
+			this._mqtt._clientID
 		}/${emitter}/${eventName.replace(/\s/g, '_')}`
 
-		this.mqtt.publish(topic, { data: args }, { qos: 1, retain: false })
+		this._mqtt.publish(topic, { data: args }, { qos: 1, retain: false })
 	}
 
 	/**
@@ -1658,8 +1670,8 @@ export default class Gateway {
 		valueId.lastUpdate = Date.now()
 
 		// emit event to socket
-		if (this.zwave) {
-			this.zwave.sendToSocket(socketEvents.valueUpdated, valueId)
+		if (this._zwave) {
+			this._zwave.sendToSocket(socketEvents.valueUpdated, valueId)
 		}
 
 		const isDiscovered = this.discovered[valueId.id]
@@ -1727,7 +1739,7 @@ export default class Gateway {
 				if (setId && node.values[setId]) {
 					// check if the setpoint topic has changed
 					const setpoint = node.values[setId]
-					const setTopic = this.mqtt.getTopic(
+					const setTopic = this._mqtt.getTopic(
 						this.valueTopic(node, setpoint) as string
 					)
 					if (
@@ -1769,7 +1781,7 @@ export default class Gateway {
 
 			if (this.topicLevels.indexOf(levels) < 0) {
 				this.topicLevels.push(levels)
-				this.mqtt.subscribe('+'.repeat(levels).split('').join('/'))
+				this._mqtt.subscribe('+'.repeat(levels).split('').join('/'))
 			}
 
 			// I need to add the conf to the valueId but I don't want to edit
@@ -1798,7 +1810,7 @@ export default class Gateway {
 			}
 		}
 
-		this.mqtt.publish(topic, data, mqttOptions)
+		this._mqtt.publish(topic, data, mqttOptions)
 	}
 
 	/**
@@ -1815,7 +1827,7 @@ export default class Gateway {
 			data = { time: Date.now(), value: data }
 		}
 
-		this.mqtt.publish(topic, data, { retain: false })
+		this._mqtt.publish(topic, data, { retain: false })
 	}
 
 	/**
@@ -1856,7 +1868,7 @@ export default class Gateway {
 				valueId.id = node.id + '-' + valueId.id
 
 				try {
-					this.zwave.setPollInterval(valueId, values[i].pollInterval)
+					this._zwave.setPollInterval(valueId, values[i].pollInterval)
 				} catch (error) {
 					logger.error(
 						`Error while enabling poll interval: ${error.message}`
@@ -1865,8 +1877,8 @@ export default class Gateway {
 			}
 		}
 
-		if (this.zwave) {
-			this.zwave.sendToSocket(socketEvents.nodeUpdated, node)
+		if (this._zwave) {
+			this._zwave.sendToSocket(socketEvents.nodeUpdated, node)
 		}
 
 		const nodeTopic = this.nodeTopic(node)
@@ -1885,7 +1897,7 @@ export default class Gateway {
 				}
 			}
 
-			this.mqtt.publish(nodeTopic + '/status', data)
+			this._mqtt.publish(nodeTopic + '/status', data)
 		}
 
 		// Publish Node Info on separate topic
@@ -1896,7 +1908,7 @@ export default class Gateway {
 			delete nodeData.hassDevices
 			delete nodeData.values
 
-			this.mqtt.publish(nodeTopic + '/nodeinfo', nodeData)
+			this._mqtt.publish(nodeTopic + '/nodeinfo', nodeData)
 		}
 	}
 
@@ -1931,13 +1943,13 @@ export default class Gateway {
 		apiName: AllowedApis,
 		payload: { args: Parameters<ZwaveClient[AllowedApis]> }
 	): Promise<void> {
-		if (this.zwave) {
+		if (this._zwave) {
 			const args = payload.args || []
 
 			let result: CallAPIResult<AllowedApis> & { origin?: any }
 
 			if (Array.isArray(args)) {
-				result = await this.zwave.callApi(apiName, ...args)
+				result = await this._zwave.callApi(apiName, ...args)
 			} else {
 				result = {
 					success: false,
@@ -1945,7 +1957,7 @@ export default class Gateway {
 					origin: payload,
 				}
 			}
-			this.mqtt.publish(topic, result, { retain: false })
+			this._mqtt.publish(topic, result, { retain: false })
 		} else {
 			logger.error(`Requested Zwave api ${apiName} doesn't exist`)
 		}
@@ -1972,7 +1984,7 @@ export default class Gateway {
 					this.topicValues[values[0]].conf
 				)
 				for (let i = 0; i < values.length; i++) {
-					await this.zwave.writeValue(
+					await this._zwave.writeValue(
 						this.topicValues[values[i]],
 						payload
 					)
@@ -1991,7 +2003,7 @@ export default class Gateway {
 				logger.error('Invalid valueId: ' + error)
 				return
 			}
-			await this.zwave.writeBroadcast(payload, payload.value)
+			await this._zwave.writeBroadcast(payload, payload.value)
 		}
 	}
 
@@ -2004,7 +2016,7 @@ export default class Gateway {
 
 		if (valueId) {
 			payload = this.parsePayload(payload, valueId, valueId.conf)
-			await this.zwave.writeValue(valueId, payload)
+			await this._zwave.writeValue(valueId, payload)
 		}
 	}
 
@@ -2037,7 +2049,7 @@ export default class Gateway {
 			return
 		}
 
-		await this.zwave.writeMulticast(nodes, valueId as Z2MValueId, value)
+		await this._zwave.writeMulticast(nodes, valueId as Z2MValueId, value)
 	}
 
 	/**
@@ -2121,7 +2133,7 @@ export default class Gateway {
 	_deviceInfo(node: Z2MNode, nodeName: string): DeviceInfo {
 		return {
 			identifiers: [
-				'zwavejs2mqtt_' + this.zwave.homeHex + '_node' + node.id,
+				'zwavejs2mqtt_' + this._zwave.homeHex + '_node' + node.id,
 			],
 			manufacturer: node.manufacturer,
 			model: node.productDescription + ' (' + node.productLabel + ')',
@@ -2279,10 +2291,10 @@ export default class Gateway {
 		// current color values are automatically added later in discoverValue function
 		cfg.values = []
 
-		cfg.discovery_payload.rgb_state_topic = this.mqtt.getTopic(
+		cfg.discovery_payload.rgb_state_topic = this._mqtt.getTopic(
 			currentColorTopics.topic
 		)
-		cfg.discovery_payload.rgb_command_topic = this.mqtt.getTopic(
+		cfg.discovery_payload.rgb_command_topic = this._mqtt.getTopic(
 			currentColorTopics.targetTopic,
 			true
 		)
@@ -2318,8 +2330,8 @@ export default class Gateway {
 
 			cfg.values.push(vID, valueIdState.targetValue)
 
-			discoveredStateTopic = this.mqtt.getTopic(topics.topic)
-			discoveredCommandTopic = this.mqtt.getTopic(
+			discoveredStateTopic = this._mqtt.getTopic(topics.topic)
+			discoveredCommandTopic = this._mqtt.getTopic(
 				topics.targetTopic,
 				true
 			)
