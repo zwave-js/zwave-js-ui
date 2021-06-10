@@ -327,7 +327,7 @@ function setupInterceptor() {
 		write: (buffer: string | Uint8Array, cb?: (err?: Error) => void) => void
 	) => {
 		return function (...args: any[]): boolean {
-			socketManager.io.emit('DEBUG', args[0]?.toString())
+			socketManager.io.emit(socketEvents.debug, args[0]?.toString())
 			return write.apply(process.stdout, args)
 		}
 	}

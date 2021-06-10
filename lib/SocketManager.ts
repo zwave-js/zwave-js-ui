@@ -41,7 +41,7 @@ export interface SocketManagerEventCallbacks {
 
 export type SocketManagerEvents = Extract<
 	keyof SocketManagerEventCallbacks,
-	string
+	inboundEvents
 >
 
 /**
