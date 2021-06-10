@@ -109,10 +109,6 @@ let gw: Gateway // the gateway instance
 const plugins = [] as CustomPlugin[]
 let pluginsRouter
 
-app.use(function (req, res, next) {
-	pluginsRouter(req, res, next)
-})
-
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
 
@@ -422,6 +418,10 @@ app.use(
 		},
 	})
 )
+
+app.use(function (req, res, next) {
+	pluginsRouter(req, res, next)
+})
 
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.
