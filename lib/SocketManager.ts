@@ -1,9 +1,9 @@
 'use strict'
 
-import { EventEmitter } from 'events'
 import { Server as HttpServer } from 'http'
 import { module } from './logger'
 import { Server as SocketServer, Socket } from 'socket.io'
+import { TypedEventEmitter } from './EventEmitter'
 
 const logger = module('Socket')
 
@@ -32,31 +32,24 @@ export enum inboundEvents {
 	mqtt = 'MQTT_API', // call an mqtt api
 }
 
-declare interface SocketManager {
-	on(event: inboundEvents.init, listener: (socket: Socket) => void): this
-
-	on(
-		event: inboundEvents.zwave,
-		listener: (socket: Socket, data) => void
-	): this
-
-	on(
-		event: inboundEvents.hass,
-		listener: (socket: Socket, data) => void
-	): this
-
-	on(
-		event: inboundEvents.mqtt,
-		listener: (socket: Socket, data) => void
-	): this
+export interface SocketManagerEventCallbacks {
+	[inboundEvents.init]: (socket: Socket) => void
+	[inboundEvents.zwave]: (socket: Socket, data: any) => void
+	[inboundEvents.hass]: (socket: Socket, data: any) => void
+	[inboundEvents.mqtt]: (socket: Socket, data: any) => void
 }
+
+export type SocketManagerEvents = Extract<
+	keyof SocketManagerEventCallbacks,
+	inboundEvents
+>
 
 /**
  * The constructor
  */
-class SocketManager extends EventEmitter {
-	server: HttpServer
-	io: SocketServer
+class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
+	public io: SocketServer
+
 	authMiddleware: (socket: Socket, next: () => void) => void | undefined
 
 	/**
@@ -64,8 +57,6 @@ class SocketManager extends EventEmitter {
 	 *
 	 */
 	bindServer(server: HttpServer) {
-		this.server = server
-
 		this.io = new SocketServer(server)
 
 		this.io
@@ -73,7 +64,7 @@ class SocketManager extends EventEmitter {
 			.on('connection', this._onConnection.bind(this))
 	}
 
-	_authMiddleware(): (socket: Socket, next: () => void) => void {
+	private _authMiddleware(): (socket: Socket, next: () => void) => void {
 		return (socket: Socket, next: () => void) => {
 			if (this.authMiddleware !== undefined) {
 				this.authMiddleware(socket, next)
@@ -87,7 +78,7 @@ class SocketManager extends EventEmitter {
 	 * Handles new socket connections
 	 *
 	 */
-	_onConnection(socket: Socket) {
+	private _onConnection(socket: Socket) {
 		logger.debug(`New connection ${socket.id}`)
 
 		// register inbound events from this socket
@@ -106,9 +97,9 @@ class SocketManager extends EventEmitter {
 	 * Logs and emits the `eventName` with `socket` and `args` as parameters
 	 *
 	 */
-	_emitEvent(eventName: string, socket: Socket, ...args: any[]) {
+	private _emitEvent(eventName: inboundEvents, socket: Socket, data: any) {
 		logger.debug(`Event ${eventName} emitted to ${socket.id}`)
-		this.emit(eventName, socket, ...args)
+		this.emit(eventName, socket, data)
 	}
 }
 

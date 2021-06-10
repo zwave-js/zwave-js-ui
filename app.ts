@@ -1,4 +1,4 @@
-import express, { Request, Response, RequestHandler } from 'express'
+import express, { Request, Response, RequestHandler, Router } from 'express'
 
 import morgan from 'morgan'
 import csrf from 'csurf'
@@ -27,7 +27,11 @@ import sessionStore from 'session-file-store'
 import { Socket } from 'socket.io'
 import { Server as HttpServer, createServer as createHttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
-import { CustomPlugin } from './lib/CustomPlugin'
+import {
+	createPlugin,
+	CustomPlugin,
+	PluginConstructor,
+} from './lib/CustomPlugin'
 
 declare module 'express' {
 	interface Request {
@@ -107,7 +111,7 @@ socketManager.authMiddleware = function (
 
 let gw: Gateway // the gateway instance
 const plugins = [] as CustomPlugin[]
-let pluginsRouter
+let pluginsRouter: Router
 
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
@@ -282,16 +286,19 @@ async function startGateway(settings: Settings) {
 		for (const plugin of pluginsConfig) {
 			try {
 				const pluginName = path.basename(plugin)
-				// eslint-disable-next-line @typescript-eslint/no-var-requires
-				const Plugin = require(plugin) as CustomPlugin
-
-				const instance = new Plugin({
+				const pluginsContext = {
 					zwave,
 					mqtt,
 					app: pluginsRouter,
 					logger: loggers.module(pluginName),
-				})
-				instance.name = pluginName
+				}
+				const instance = createPlugin(
+					// eslint-disable-next-line @typescript-eslint/no-var-requires
+					require(plugin) as PluginConstructor,
+					pluginsContext,
+					pluginName
+				)
+
 				plugins.push(instance)
 				logger.info(`Successfully loaded plugin ${instance.name}`)
 			} catch (error) {
@@ -319,7 +326,7 @@ function setupInterceptor() {
 		write: (buffer: string | Uint8Array, cb?: (err?: Error) => void) => void
 	) => {
 		return function (...args: any[]): boolean {
-			socketManager.io.emit('DEBUG', args[0]?.toString())
+			socketManager.io.emit(socketEvents.debug, args[0]?.toString())
 			return write.apply(process.stdout, args)
 		}
 	}
@@ -420,7 +427,11 @@ app.use(
 )
 
 app.use(function (req, res, next) {
-	pluginsRouter(req, res, next)
+	if (pluginsRouter !== undefined) {
+		pluginsRouter(req, res, next)
+	} else {
+		next()
+	}
 })
 
 // Node.js CSRF protection middleware.

@@ -147,7 +147,8 @@ export function removeSlash(str: string | number): string {
 /**
  * Check if an object has a property
  */
-export function hasProperty(obj, prop: string): boolean {
+// eslint-disable-next-line @typescript-eslint/ban-types
+export function hasProperty(obj: {}, prop: string): boolean {
 	return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 

@@ -29,25 +29,41 @@ describe('#Gateway', () => {
 
 		describe('payload prop not string', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'a', node as unknown as Z2MNode)
+				gw['_setDiscoveryValue'](
+					payload,
+					'a',
+					node as unknown as Z2MNode
+				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('no valueId', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'd', node as unknown as Z2MNode)
+				gw['_setDiscoveryValue'](
+					payload,
+					'd',
+					node as unknown as Z2MNode
+				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('no valueId.value', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'c', node as unknown as Z2MNode)
+				gw['_setDiscoveryValue'](
+					payload,
+					'c',
+					node as unknown as Z2MNode
+				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
 		})
 		describe('happy path', () => {
 			it('should not change payload', () => {
-				gw._setDiscoveryValue(payload, 'b', node as unknown as Z2MNode)
+				gw['_setDiscoveryValue'](
+					payload,
+					'b',
+					node as unknown as Z2MNode
+				)
 				return expect(payload).to.deep.equal({
 					a: 1,
 					b: 'a',

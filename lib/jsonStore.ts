@@ -13,11 +13,15 @@ const logger = module('Store')
 Constructor
 **/
 export class StorageHelper {
-	public store: Record<StoreKeys, any>
-	public config: Record<StoreKeys, StoreFile>
+	private _store: Record<StoreKeys, any>
+	private config: Record<StoreKeys, StoreFile>
+
+	public get store() {
+		return this._store
+	}
 
 	constructor() {
-		this.store = {} as Record<StoreKeys, any>
+		this._store = {} as Record<StoreKeys, any>
 	}
 
 	async init(config: Record<StoreKeys, StoreFile>) {
@@ -25,13 +29,13 @@ export class StorageHelper {
 
 		for (const model in config) {
 			const res = await this._getFile(config[model])
-			this.store[res.file] = res.data
+			this._store[res.file] = res.data
 		}
 
-		return this.store
+		return this._store
 	}
 
-	async _getFile(config: StoreFile) {
+	private async _getFile(config: StoreFile) {
 		let err: { code: string }
 		let data: any
 		try {
@@ -57,8 +61,8 @@ export class StorageHelper {
 	}
 
 	get(model: StoreFile) {
-		if (this.store[model.file]) {
-			return this.store[model.file]
+		if (this._store[model.file]) {
+			return this._store[model.file]
 		} else {
 			throw Error('Requested file not present in store: ' + model.file)
 		}
@@ -66,7 +70,7 @@ export class StorageHelper {
 
 	async put(model: StoreFile, data: any) {
 		await writeFile(utils.joinPath(storeDir, model.file), data)
-		this.store[model.file] = data
+		this._store[model.file] = data
 		return data
 	}
 }

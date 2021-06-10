@@ -4,10 +4,10 @@
 import mqtt, { Client } from 'mqtt'
 import { joinPath, sanitizeTopic } from './utils'
 import NeDBStore from 'mqtt-nedb-store'
-import { EventEmitter } from 'events'
 import { storeDir } from '../config/app'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
+import { TypedEventEmitter } from './EventEmitter'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const url = require('native-url')
@@ -37,44 +37,45 @@ export type MqttConfig = {
 	_cert: string
 }
 
-declare interface MqttClient {
-	on(
-		event: 'writeRequest',
-		listener: (parts: string[], payload: any) => void
-	): this
-	on(
-		event: 'broadcastRequest',
-		listener: (parts: string[], payload: any) => void
-	): this
-	on(event: 'multicastRequest', listener: (payload: any) => void): this
-	on(
-		event: 'apiCall',
-		listener: (topic: string, apiNema: string, payload: any) => void
-	): this
-	on(event: 'connect', listener: () => void): this
-	on(event: 'brokerStatus', listener: (online: boolean) => void): this
-	on(event: 'hassStatus', listener: (online: boolean) => void): this
+export interface MqttClientEventCallbacks {
+	writeRequest: (parts: string[], payload: any) => void
+	broadcastRequest: (parts: string[], payload: any) => void
+	multicastRequest: (payload: any) => void
+	apiCall: (topic: string, apiName: string, payload: any) => void
+	connect: () => void
+	brokerStatus: (online: boolean) => void
+	hassStatus: (online: boolean) => void
 }
 
-class MqttClient extends EventEmitter {
-	config: MqttConfig
-	toSubscribe: string[]
-	clientID: string
-	client: Client
-	error?: string
-	closed: boolean
+export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
+
+class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
+	private config: MqttConfig
+	private toSubscribe: string[]
+	private _clientID: string
+	private client: Client
+	private error?: string
+	private closed: boolean
 
 	static CLIENTS_PREFIX = '_CLIENTS'
-	public static EVENTS_PREFIX = '_EVENTS'
-	static BROADCAST_PREFIX = '_BROADCAST'
-	static NAME_PREFIX = 'ZWAVE_GATEWAY-'
 
-	static ACTIONS: string[] = ['broadcast', 'api', 'multicast']
+	public static get EVENTS_PREFIX() {
+		return '_EVENTS'
+	}
 
-	static HASS_WILL = 'homeassistant/status'
+	private static NAME_PREFIX = 'ZWAVE_GATEWAY-'
 
-	static STATUS_TOPIC = 'status'
-	static VERSION_TOPIC = 'version'
+	private static ACTIONS: string[] = ['broadcast', 'api', 'multicast']
+
+	private static HASS_WILL = 'homeassistant/status'
+
+	private static STATUS_TOPIC = 'status'
+	private static VERSION_TOPIC = 'version'
+
+	public get clientID() {
+		return this._clientID
+	}
+
 	/**
 	 * The constructor
 	 */
@@ -92,7 +93,7 @@ class MqttClient extends EventEmitter {
 	 * if name is null the client is the gateway itself
 	 */
 	getClientTopic(suffix: string) {
-		return `${this.config.prefix}/${MqttClient.CLIENTS_PREFIX}/${this.clientID}/${suffix}`
+		return `${this.config.prefix}/${MqttClient.CLIENTS_PREFIX}/${this._clientID}/${suffix}`
 	}
 
 	/**
@@ -235,7 +236,7 @@ class MqttClient extends EventEmitter {
 	/**
 	 * Initialize client
 	 */
-	_init(config: MqttConfig) {
+	private _init(config: MqttConfig) {
 		this.config = config
 		this.toSubscribe = []
 
@@ -244,7 +245,7 @@ class MqttClient extends EventEmitter {
 			return
 		}
 
-		this.clientID = sanitizeTopic(MqttClient.NAME_PREFIX + config.name)
+		this._clientID = sanitizeTopic(MqttClient.NAME_PREFIX + config.name)
 
 		const parsed = url.parse(config.host || '')
 		let protocol = 'mqtt'
@@ -252,7 +253,7 @@ class MqttClient extends EventEmitter {
 		if (parsed.protocol) protocol = parsed.protocol.replace(/:$/, '')
 
 		const options: mqtt.IClientOptions = {
-			clientId: this.clientID,
+			clientId: this._clientID,
 			reconnectPeriod: config.reconnectPeriod,
 			clean: config.clean,
 			rejectUnauthorized: !config.allowSelfsigned,
@@ -315,7 +316,7 @@ class MqttClient extends EventEmitter {
 	/**
 	 * Function called when MQTT client connects
 	 */
-	_onConnect() {
+	private _onConnect() {
 		logger.info('MQTT client connected')
 		this.emit('connect')
 
@@ -336,7 +337,7 @@ class MqttClient extends EventEmitter {
 				[
 					this.config.prefix,
 					MqttClient.CLIENTS_PREFIX,
-					this.clientID,
+					this._clientID,
 					MqttClient.ACTIONS[i],
 					'#',
 				].join('/')
@@ -356,14 +357,14 @@ class MqttClient extends EventEmitter {
 	/**
 	 * Function called when MQTT client reconnects
 	 */
-	_onReconnect() {
+	private _onReconnect() {
 		logger.info('MQTT client reconnecting')
 	}
 
 	/**
 	 * Function called when MQTT client reconnects
 	 */
-	_onError(error: Error) {
+	private _onError(error: Error) {
 		logger.info(error.message)
 		this.error = error.message
 	}
@@ -371,7 +372,7 @@ class MqttClient extends EventEmitter {
 	/**
 	 * Function called when MQTT client go offline
 	 */
-	_onOffline() {
+	private _onOffline() {
 		logger.info('MQTT client offline')
 		this.emit('brokerStatus', false)
 	}
@@ -379,17 +380,18 @@ class MqttClient extends EventEmitter {
 	/**
 	 * Function called when MQTT client is closed
 	 */
-	_onClose() {
+	private _onClose() {
 		logger.info('MQTT client closed')
 	}
 
 	/**
 	 * Function called when an MQTT message is received
 	 */
-	_onMessageReceived(topic: string, payload: Buffer) {
+	private _onMessageReceived(topic: string, payload: Buffer) {
 		if (this.closed) return
 
-		let parsed: string | number | Record<string, any> = payload?.toString()
+		let parsed: string | number | Record<string, any> | undefined =
+			payload?.toString()
 
 		logger.log('info', `Message received on ${topic}, %o`, payload)
 
