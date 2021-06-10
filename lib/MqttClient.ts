@@ -50,24 +50,32 @@ export interface MqttClientEventCallbacks {
 export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
 
 class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
-	config: MqttConfig
-	toSubscribe: string[]
-	clientID: string
-	client: Client
-	error?: string
-	closed: boolean
+	private config: MqttConfig
+	private toSubscribe: string[]
+	public _clientID: string
+	private client: Client
+	private error?: string
+	private closed: boolean
 
 	static CLIENTS_PREFIX = '_CLIENTS'
-	public static EVENTS_PREFIX = '_EVENTS'
-	static BROADCAST_PREFIX = '_BROADCAST'
-	static NAME_PREFIX = 'ZWAVE_GATEWAY-'
 
-	static ACTIONS: string[] = ['broadcast', 'api', 'multicast']
+	public static get EVENTS_PREFIX() {
+		return '_EVENTS'
+	}
 
-	static HASS_WILL = 'homeassistant/status'
+	private static NAME_PREFIX = 'ZWAVE_GATEWAY-'
 
-	static STATUS_TOPIC = 'status'
-	static VERSION_TOPIC = 'version'
+	private static ACTIONS: string[] = ['broadcast', 'api', 'multicast']
+
+	private static HASS_WILL = 'homeassistant/status'
+
+	private static STATUS_TOPIC = 'status'
+	private static VERSION_TOPIC = 'version'
+
+	public get clientID() {
+		return this._clientID
+	}
+
 	/**
 	 * The constructor
 	 */
@@ -85,7 +93,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	 * if name is null the client is the gateway itself
 	 */
 	getClientTopic(suffix: string) {
-		return `${this.config.prefix}/${MqttClient.CLIENTS_PREFIX}/${this.clientID}/${suffix}`
+		return `${this.config.prefix}/${MqttClient.CLIENTS_PREFIX}/${this._clientID}/${suffix}`
 	}
 
 	/**
@@ -237,7 +245,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			return
 		}
 
-		this.clientID = sanitizeTopic(MqttClient.NAME_PREFIX + config.name)
+		this._clientID = sanitizeTopic(MqttClient.NAME_PREFIX + config.name)
 
 		const parsed = url.parse(config.host || '')
 		let protocol = 'mqtt'
@@ -245,7 +253,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		if (parsed.protocol) protocol = parsed.protocol.replace(/:$/, '')
 
 		const options: mqtt.IClientOptions = {
-			clientId: this.clientID,
+			clientId: this._clientID,
 			reconnectPeriod: config.reconnectPeriod,
 			clean: config.clean,
 			rejectUnauthorized: !config.allowSelfsigned,
@@ -329,7 +337,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				[
 					this.config.prefix,
 					MqttClient.CLIENTS_PREFIX,
-					this.clientID,
+					this._clientID,
 					MqttClient.ACTIONS[i],
 					'#',
 				].join('/')

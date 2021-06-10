@@ -321,31 +321,31 @@ export interface ZwaveClientEventCallbacks {
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
 
 class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
-	cfg: ZwaveConfig
-	socket: SocketServer
-	closed: boolean
-	driverReady: boolean
-	scenes: Z2MScene[]
-	nodes: Map<number, Z2MNode>
-	storeNodes: Record<number, Partial<Z2MNode>>
-	devices: Record<string, Partial<Z2MNode>>
-	driverInfo: Z2MDriverInfo
-	status: ZwaveClientStatus
-	error: boolean | string
-	scanComplete: boolean
-	cntStatus: string
-	connected: boolean
-	lastUpdate: number
+	private cfg: ZwaveConfig
+	private socket: SocketServer
+	private closed: boolean
+	private driverReady: boolean
+	private scenes: Z2MScene[]
+	public nodes: Map<number, Z2MNode>
+	private storeNodes: Record<number, Partial<Z2MNode>>
+	public devices: Record<string, Partial<Z2MNode>>
+	private driverInfo: Z2MDriverInfo
+	private status: ZwaveClientStatus
+	public error: boolean | string
+	public scanComplete: boolean
+	public cntStatus: string
+	public connected: boolean
+	private lastUpdate: number
 
-	driver: Driver
+	public driver: Driver
 
-	server: ZwavejsServer
-	statelessTimeouts: Record<string, NodeJS.Timeout>
-	commandsTimeout: NodeJS.Timeout
-	reconnectTimeout: NodeJS.Timeout
-	healTimeout: NodeJS.Timeout
-	updatesCheckTimeout: NodeJS.Timeout
-	pollIntervals: Record<string, NodeJS.Timeout>
+	private server: ZwavejsServer
+	private statelessTimeouts: Record<string, NodeJS.Timeout>
+	private commandsTimeout: NodeJS.Timeout
+	private reconnectTimeout: NodeJS.Timeout
+	private healTimeout: NodeJS.Timeout
+	private updatesCheckTimeout: NodeJS.Timeout
+	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
 

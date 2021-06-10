@@ -48,8 +48,8 @@ export type SocketManagerEvents = Extract<
  * The constructor
  */
 class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
-	server: HttpServer
-	io: SocketServer
+	public io: SocketServer
+
 	authMiddleware: (socket: Socket, next: () => void) => void | undefined
 
 	/**
@@ -57,8 +57,6 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	 *
 	 */
 	bindServer(server: HttpServer) {
-		this.server = server
-
 		this.io = new SocketServer(server)
 
 		this.io
