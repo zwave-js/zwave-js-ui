@@ -1,3 +1,17 @@
+# [5.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.2...v5.0.0) (2021-06-10)
+
+
+### Bug Fixes
+
+* driver ready error and ts improvments ([#1323](https://github.com/zwave-js/zwavejs2mqtt/issues/1323)) ([f5832b9](https://github.com/zwave-js/zwavejs2mqtt/commit/f5832b9a90c9629fad0b9c941d2a7817ef816a6c)), closes [#1309](https://github.com/zwave-js/zwavejs2mqtt/issues/1309)
+* plugins router must be recreated on restart ([#1321](https://github.com/zwave-js/zwavejs2mqtt/issues/1321)) ([6d40bdd](https://github.com/zwave-js/zwavejs2mqtt/commit/6d40bddbd2ad4af41423cd3098141189897cec20))
+* **ui:** use strict check in toggle button ([#1320](https://github.com/zwave-js/zwavejs2mqtt/issues/1320)) ([130bbd7](https://github.com/zwave-js/zwavejs2mqtt/commit/130bbd770c44512887700aa765f176c7c8a1c4b6)), closes [#1065](https://github.com/zwave-js/zwavejs2mqtt/issues/1065)
+
+
+### Features
+
+* bump zwave-js@7.7.3 ([4997c2d](https://github.com/zwave-js/zwavejs2mqtt/commit/4997c2d453f3e50cc3a3dfb2e68b9fb7d32bb6fa))
+
 ## [4.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.1...v4.5.2) (2021-06-07)
 
 
