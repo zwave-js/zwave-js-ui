@@ -1,4 +1,4 @@
-import express, { Request, Response, RequestHandler } from 'express'
+import express, { Request, Response, RequestHandler, Router } from 'express'
 
 import morgan from 'morgan'
 import csrf from 'csurf'
@@ -111,7 +111,7 @@ socketManager.authMiddleware = function (
 
 let gw: Gateway // the gateway instance
 const plugins = [] as CustomPlugin[]
-let pluginsRouter
+let pluginsRouter: Router
 
 // flag used to prevent multiple restarts while one is already in progress
 let restarting = false
@@ -427,7 +427,11 @@ app.use(
 )
 
 app.use(function (req, res, next) {
-	pluginsRouter(req, res, next)
+	if (pluginsRouter !== undefined) {
+		pluginsRouter(req, res, next)
+	} else {
+		next()
+	}
 })
 
 // Node.js CSRF protection middleware.
