@@ -1970,17 +1970,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._updateControllerStatus('Driver ready')
 
-		this._driver.controller
-			.on('inclusion started', this._onInclusionStarted.bind(this))
-			.on('exclusion started', this._onExclusionStarted.bind(this))
-			.on('inclusion stopped', this._onInclusionStopped.bind(this))
-			.on('exclusion stopped', this._onExclusionStopped.bind(this))
-			.on('inclusion failed', this._onInclusionFailed.bind(this))
-			.on('exclusion failed', this._onExclusionFailed.bind(this))
-			.on('node added', this._onNodeAdded.bind(this))
-			.on('node removed', this._onNodeRemoved.bind(this))
-			.on('heal network progress', this._onHealNetworkProgress.bind(this))
-			.on('heal network done', this._onHealNetworkDone.bind(this))
+		try {
+			this._driver.controller
+				.on('inclusion started', this._onInclusionStarted.bind(this))
+				.on('exclusion started', this._onExclusionStarted.bind(this))
+				.on('inclusion stopped', this._onInclusionStopped.bind(this))
+				.on('exclusion stopped', this._onExclusionStopped.bind(this))
+				.on('inclusion failed', this._onInclusionFailed.bind(this))
+				.on('exclusion failed', this._onExclusionFailed.bind(this))
+				.on('node added', this._onNodeAdded.bind(this))
+				.on('node removed', this._onNodeRemoved.bind(this))
+				.on(
+					'heal network progress',
+					this._onHealNetworkProgress.bind(this)
+				)
+				.on('heal network done', this._onHealNetworkDone.bind(this))
+		} catch (error) {
+			// Fixes freak error in "driver ready" handler #1309
+			logger.error(error.message)
+			this.restart().catch((err) => {
+				logger.error(err)
+			})
+			return
+		}
 
 		for (const [, node] of this._driver.controller.nodes) {
 			// node added will not be triggered if the node is in cache
