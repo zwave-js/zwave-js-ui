@@ -20,7 +20,10 @@ describe('#jsonStore', () => {
 					readFile: sinon.stub().rejects(Error('FOO')),
 				},
 			}).default
-			return expect(mod._getFile(config)).to.be.rejectedWith(Error, 'FOO')
+			return expect(mod['_getFile'](config)).to.be.rejectedWith(
+				Error,
+				'FOO'
+			)
 		})
 
 		it('data returned', () => {
@@ -34,7 +37,7 @@ describe('#jsonStore', () => {
 				},
 			}).default
 
-			return expect(mod._getFile(config)).to.eventually.deep.equal(
+			return expect(mod['_getFile'](config)).to.eventually.deep.equal(
 				toReturn
 			)
 		})
@@ -45,7 +48,7 @@ describe('#jsonStore', () => {
 					readFile: sinon.stub().resolves(null),
 				},
 			}).default
-			return expect(mod._getFile(config)).to.eventually.deep.equal({
+			return expect(mod['_getFile'](config)).to.eventually.deep.equal({
 				file: 'foo',
 				data: 'defaultbar',
 			})
@@ -57,7 +60,7 @@ describe('#jsonStore', () => {
 					readFile: sinon.stub().rejects({ code: 'ENOENT' }),
 				},
 			}).default
-			return expect(mod._getFile(config)).to.eventually.deep.equal({
+			return expect(mod['_getFile'](config)).to.eventually.deep.equal({
 				file: 'foo',
 				data: 'defaultbar',
 			})

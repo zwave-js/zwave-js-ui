@@ -236,7 +236,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Initialize client
 	 */
-	_init(config: MqttConfig) {
+	private _init(config: MqttConfig) {
 		this.config = config
 		this.toSubscribe = []
 
@@ -316,7 +316,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Function called when MQTT client connects
 	 */
-	_onConnect() {
+	private _onConnect() {
 		logger.info('MQTT client connected')
 		this.emit('connect')
 
@@ -357,14 +357,14 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Function called when MQTT client reconnects
 	 */
-	_onReconnect() {
+	private _onReconnect() {
 		logger.info('MQTT client reconnecting')
 	}
 
 	/**
 	 * Function called when MQTT client reconnects
 	 */
-	_onError(error: Error) {
+	private _onError(error: Error) {
 		logger.info(error.message)
 		this.error = error.message
 	}
@@ -372,7 +372,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Function called when MQTT client go offline
 	 */
-	_onOffline() {
+	private _onOffline() {
 		logger.info('MQTT client offline')
 		this.emit('brokerStatus', false)
 	}
@@ -380,14 +380,14 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Function called when MQTT client is closed
 	 */
-	_onClose() {
+	private _onClose() {
 		logger.info('MQTT client closed')
 	}
 
 	/**
 	 * Function called when an MQTT message is received
 	 */
-	_onMessageReceived(topic: string, payload: Buffer) {
+	private _onMessageReceived(topic: string, payload: Buffer) {
 		if (this.closed) return
 
 		let parsed: string | number | Record<string, any> | undefined =

@@ -1142,7 +1142,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Creates a new scene with a specific `label` and stores it in `scenes.json`
 	 */
-	async _createScene(label: string) {
+	private async _createScene(label: string) {
 		const id =
 			this.scenes.length > 0
 				? this.scenes[this.scenes.length - 1].sceneid + 1
@@ -1161,7 +1161,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Delete a scene with a specific `sceneid` and updates `scenes.json`
 	 */
-	async _removeScene(sceneid: number) {
+	private async _removeScene(sceneid: number) {
 		const index = this.scenes.findIndex((s) => s.sceneid === sceneid)
 
 		if (index < 0) {
@@ -1178,7 +1178,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Imports scenes Array in `scenes.json`
 	 */
-	async _setScenes(scenes: Z2MScene[]) {
+	private async _setScenes(scenes: Z2MScene[]) {
 		// TODO: add scenes validation
 		this.scenes = scenes
 		await jsonStore.put(store.scenes, this.scenes)
@@ -1190,14 +1190,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get all scenes
 	 *
 	 */
-	_getScenes(): Z2MScene[] {
+	private _getScenes(): Z2MScene[] {
 		return this.scenes
 	}
 
 	/**
 	 * Return all values of the scene with given `sceneid`
 	 */
-	_sceneGetValues(sceneid: number) {
+	private _sceneGetValues(sceneid: number) {
 		const scene = this.scenes.find((s) => s.sceneid === sceneid)
 		if (!scene) {
 			throw Error('No scene found with given sceneid')
@@ -1209,7 +1209,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Add a value to a scene
 	 *
 	 */
-	async _addSceneValue(
+	private async _addSceneValue(
 		sceneid: number,
 		valueId: Z2MValueIdScene,
 		value: any,
@@ -1248,7 +1248,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Remove a value from scene
 	 */
-	async _removeSceneValue(sceneid: number, valueId: Z2MValueIdScene) {
+	private async _removeSceneValue(sceneid: number, valueId: Z2MValueIdScene) {
 		const scene = this.scenes.find((s) => s.sceneid === sceneid)
 
 		if (!scene) {
@@ -1270,7 +1270,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Activate a scene with given scene id
 	 */
-	_activateScene(sceneId: number): boolean {
+	private _activateScene(sceneId: number): boolean {
 		const values = this._sceneGetValues(sceneId) || []
 
 		for (let i = 0; i < values.length; i++) {
@@ -1920,7 +1920,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ---------- DRIVER EVENTS -------------------------------------
 
-	_onDriverReady() {
+	private _onDriverReady() {
 		/*
     Now the controller interview is complete. This means we know which nodes
     are included in the network, but they might not be ready yet.
@@ -1975,7 +1975,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 	}
 
-	async _onDriverError(error: ZWaveError): Promise<void> {
+	private async _onDriverError(error: ZWaveError): Promise<void> {
 		this.error = 'Driver: ' + error.message
 		this.status = ZwaveClientStatus.DRIVER_FAILED
 		this._updateControllerStatus(this.error)
@@ -1991,7 +1991,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	_onScanComplete() {
+	private _onScanComplete() {
 		this.scanComplete = true
 
 		this._updateControllerStatus('Scan completed')
@@ -2008,43 +2008,43 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ---------- CONTROLLER EVENTS -------------------------------
 
-	_updateControllerStatus(status) {
+	private _updateControllerStatus(status) {
 		logger.info(`Controller status: ${status}`)
 		this.cntStatus = status
 		this.sendToSocket(socketEvents.controller, status)
 	}
 
-	_onInclusionStarted(secure) {
+	private _onInclusionStarted(secure) {
 		const message = `${secure ? 'Secure' : 'Non-secure'} inclusion started`
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion started', secure)
 	}
 
-	_onExclusionStarted() {
+	private _onExclusionStarted() {
 		const message = 'Exclusion started'
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'exclusion started')
 	}
 
-	_onInclusionStopped() {
+	private _onInclusionStopped() {
 		const message = 'Inclusion stopped'
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion stopped')
 	}
 
-	_onExclusionStopped() {
+	private _onExclusionStopped() {
 		const message = 'Exclusion stopped'
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'exclusion stopped')
 	}
 
-	_onInclusionFailed() {
+	private _onInclusionFailed() {
 		const message = 'Inclusion failed'
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion failed')
 	}
 
-	_onExclusionFailed() {
+	private _onExclusionFailed() {
 		const message = 'Exclusion failed'
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'exclusion failed')
@@ -2053,7 +2053,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Triggered when a node is added
 	 */
-	_onNodeAdded(zwaveNode: ZWaveNode) {
+	private _onNodeAdded(zwaveNode: ZWaveNode) {
 		logger.info(`Node ${zwaveNode.id}: added`)
 
 		// the driver is ready so this node has been added on fly
@@ -2074,7 +2074,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when node is removed
 	 *
 	 */
-	_onNodeRemoved(zwaveNode: ZWaveNode) {
+	private _onNodeRemoved(zwaveNode: ZWaveNode) {
 		logger.info(`Node ${zwaveNode.id}: removed`)
 		zwaveNode.removeAllListeners()
 
@@ -2091,7 +2091,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Triggered on each progress of healing process
 	 */
-	_onHealNetworkProgress(progress: ReadonlyMap<number, HealNodeStatus>) {
+	private _onHealNetworkProgress(
+		progress: ReadonlyMap<number, HealNodeStatus>
+	) {
 		const toHeal = [...progress.values()]
 		const healedNodes = toHeal.filter((v) => v !== 'pending')
 		const message = `Healing process IN PROGRESS. Healed ${healedNodes.length} nodes`
@@ -2111,7 +2113,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
-	_onHealNetworkDone(result) {
+	private _onHealNetworkDone(result) {
 		const message = `Healing process COMPLETED. Healed ${result.size} nodes`
 		this._updateControllerStatus(message)
 	}
@@ -2122,7 +2124,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Update current node status and interviewState
 	 *
 	 */
-	_onNodeStatus(zwaveNode: ZWaveNode) {
+	private _onNodeStatus(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
@@ -2148,7 +2150,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node is ready. All values are added and all node info are received
 	 *
 	 */
-	_onNodeReady(zwaveNode: ZWaveNode) {
+	private _onNodeReady(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (!node) {
@@ -2221,7 +2223,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node interview starts for the first time or when the node is manually re-interviewed
 	 *
 	 */
-	_onNodeInterviewStarted(zwaveNode: ZWaveNode) {
+	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
 
 		logger.info(`Node ${zwaveNode.id}: interview started`)
@@ -2233,7 +2235,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when an interview stage complete
 	 *
 	 */
-	_onNodeInterviewStageCompleted(zwaveNode: ZWaveNode, stageName: string) {
+	private _onNodeInterviewStageCompleted(
+		zwaveNode: ZWaveNode,
+		stageName: string
+	) {
 		const node = this.nodes.get(zwaveNode.id)
 
 		logger.info(
@@ -2257,7 +2262,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Starting from zwave-js v7 this event is only triggered when the node is added the first time or manually re-interviewed
 	 *
 	 */
-	_onNodeInterviewCompleted(zwaveNode: ZWaveNode) {
+	private _onNodeInterviewCompleted(zwaveNode: ZWaveNode) {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node.manufacturerId === undefined) {
@@ -2282,7 +2287,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node interview fails.
 	 *
 	 */
-	_onNodeInterviewFailed(
+	private _onNodeInterviewFailed(
 		zwaveNode: ZWaveNode,
 		args: NodeInterviewFailedEventArgs
 	) {
@@ -2304,7 +2309,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node wake ups
 	 *
 	 */
-	_onNodeWakeUp(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
+	private _onNodeWakeUp(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		logger.info(
 			`Node ${zwaveNode.id} is ${
 				oldStatus === NodeStatus.Unknown ? '' : 'now '
@@ -2324,7 +2329,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node is sleeping
 	 *
 	 */
-	_onNodeSleep(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
+	private _onNodeSleep(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		logger.info(
 			`Node ${zwaveNode.id} is ${
 				oldStatus === NodeStatus.Unknown ? '' : 'now '
@@ -2343,7 +2348,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node is alive
 	 *
 	 */
-	_onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
+	private _onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		this._onNodeStatus(zwaveNode)
 		if (oldStatus === NodeStatus.Dead) {
 			logger.info(`Node ${zwaveNode.id}: has returned from the dead`)
@@ -2363,7 +2368,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node is dead
 	 *
 	 */
-	_onNodeDead(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
+	private _onNodeDead(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		this._onNodeStatus(zwaveNode)
 		logger.info(
 			`Node ${zwaveNode.id} is ${
@@ -2383,7 +2388,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node value is added
 	 *
 	 */
-	_onNodeValueAdded(zwaveNode: ZWaveNode, args: ZWaveNodeValueAddedArgs) {
+	private _onNodeValueAdded(
+		zwaveNode: ZWaveNode,
+		args: ZWaveNodeValueAddedArgs
+	) {
 		logger.info(
 			`Node ${zwaveNode.id}: value added: ${this._getValueID(
 				args as unknown as Z2MValueId
@@ -2408,7 +2416,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a `value notification` event
 	 *
 	 */
-	_onNodeValueNotification(
+	private _onNodeValueNotification(
 		zwaveNode: ZWaveNode,
 		args: ZWaveNodeValueNotificationArgs & {
 			newValue?: any
@@ -2427,7 +2435,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a `value updated` event
 	 *
 	 */
-	_onNodeValueUpdated(
+	private _onNodeValueUpdated(
 		zwaveNode: ZWaveNode,
 		args: (ZWaveNodeValueUpdatedArgs | ZWaveNodeValueNotificationArgs) & {
 			prevValue?: any
@@ -2459,7 +2467,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a `value removed` event
 	 *
 	 */
-	_onNodeValueRemoved(zwaveNode: ZWaveNode, args: ZWaveNodeValueRemovedArgs) {
+	private _onNodeValueRemoved(
+		zwaveNode: ZWaveNode,
+		args: ZWaveNodeValueRemovedArgs
+	) {
 		this._removeValue(zwaveNode, args)
 		logger.info(
 			`Node ${zwaveNode.id}: value removed: ${this._getValueID(args)}`
@@ -2477,7 +2488,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a `metadata updated` event
 	 *
 	 */
-	_onNodeMetadataUpdated(
+	private _onNodeMetadataUpdated(
 		zwaveNode: ZWaveNode,
 		args: ZWaveNodeMetadataUpdatedArgs
 	) {
@@ -2500,7 +2511,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a node `notification` event
 	 *
 	 */
-	_onNodeNotification(
+	private _onNodeNotification(
 		zwaveNode: ZWaveNode,
 		ccId: CommandClasses,
 		args: Record<string, unknown>
@@ -2568,7 +2579,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a node `firmware update progress` event
 	 *
 	 */
-	_onNodeFirmwareUpdateProgress(
+	private _onNodeFirmwareUpdateProgress(
 		zwaveNode: ZWaveNode,
 		sentFragments: number,
 		totalFragments: number
@@ -2590,7 +2601,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered we receive a node `firmware update finished` event
 	 *
 	 */
-	_onNodeFirmwareUpdateFinished(
+	private _onNodeFirmwareUpdateFinished(
 		zwaveNode: ZWaveNode,
 		status: FirmwareUpdateStatus,
 		waitTime: number
@@ -2615,7 +2626,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Bind to ZwaveNode events
 	 *
 	 */
-	_bindNodeEvents(zwaveNode: ZWaveNode) {
+	private _bindNodeEvents(zwaveNode: ZWaveNode) {
 		logger.debug(`Binding to node ${zwaveNode.id} events`)
 
 		// https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events
@@ -2655,7 +2666,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Remove a node from internal nodes array
 	 *
 	 */
-	_removeNode(nodeid: number) {
+	private _removeNode(nodeid: number) {
 		logger.info(`Node removed ${nodeid}`)
 
 		// don't use splice here, nodeid equals to the index in the array
@@ -2672,7 +2683,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Add a new node to our nodes array. No informations are available yet, the node needs to be ready
 	 *
 	 */
-	_addNode(zwaveNode: ZWaveNode): Z2MNode {
+	private _addNode(zwaveNode: ZWaveNode): Z2MNode {
 		const nodeId = zwaveNode.id
 
 		const existingNode = this.nodes.get(nodeId)
@@ -2714,7 +2725,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Initialize a node with all its info
 	 *
 	 */
-	_dumpNode(zwaveNode: ZWaveNode) {
+	private _dumpNode(zwaveNode: ZWaveNode) {
 		const nodeId = zwaveNode.id
 
 		const node = this.nodes.get(nodeId)
@@ -2794,7 +2805,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Set value metadata to the internal valueId
 	 *
 	 */
-	_updateValueMetadata(
+	private _updateValueMetadata(
 		zwaveNode: ZWaveNode,
 		zwaveValue: TranslatedValueID & { [x: string]: any },
 		zwaveValueMeta: ValueMetadata
@@ -2860,7 +2871,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Add a node value to our node values
 	 *
 	 */
-	_addValue(
+	private _addValue(
 		zwaveNode: ZWaveNode,
 		zwaveValue: TranslatedValueID,
 		oldValues?: {
@@ -2902,7 +2913,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Parse a zwave value into a valueID
 	 *
 	 */
-	_parseValue(
+	private _parseValue(
 		zwaveNode: ZWaveNode,
 		zwaveValue: TranslatedValueID & { [x: string]: any },
 		zwaveValueMeta: ValueMetadata
@@ -2953,7 +2964,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node is ready and a value changes
 	 *
 	 */
-	_updateValue(
+	private _updateValue(
 		zwaveNode: ZWaveNode,
 		args: TranslatedValueID & { [x: string]: any }
 	) {
@@ -3029,7 +3040,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Remove a value from internal node values
 	 *
 	 */
-	_removeValue(zwaveNode: ZWaveNode, args: ZWaveNodeValueRemovedArgs) {
+	private _removeValue(
+		zwaveNode: ZWaveNode,
+		args: ZWaveNodeValueRemovedArgs
+	) {
 		const node = this.nodes.get(zwaveNode.id)
 		const vID = this._getValueID(args)
 		const toRemove = node ? node.values[vID] : null
@@ -3045,7 +3059,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ------- Utils ------------------------
 
-	_parseNotification(parameters) {
+	private _parseNotification(parameters) {
 		if (Buffer.isBuffer(parameters)) {
 			return parameters.toString('hex')
 		} else if (parameters instanceof Duration) {
@@ -3059,7 +3073,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get the device id of a specific node
 	 *
 	 */
-	_getDeviceID(node: Z2MNode): string {
+	private _getDeviceID(node: Z2MNode): string {
 		if (!node) return ''
 
 		return `${node.manufacturerId}-${node.productId}-${node.productType}`
@@ -3068,14 +3082,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Check if a valueID is a current value
 	 */
-	_isCurrentValue(valueId: TranslatedValueID | Z2MValueId) {
+	private _isCurrentValue(valueId: TranslatedValueID | Z2MValueId) {
 		return valueId.propertyName && /current/i.test(valueId.propertyName)
 	}
 
 	/**
 	 * Find the target valueId of a current valueId
 	 */
-	_findTargetValue(
+	private _findTargetValue(
 		zwaveValue: TranslatedValueID,
 		definedValueIds: TranslatedValueID[]
 	) {
@@ -3091,7 +3105,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get a valueId from a valueId object
 	 */
-	_getValueID(v: Partial<Z2MValueId>, withNode = false) {
+	private _getValueID(v: Partial<Z2MValueId>, withNode = false) {
 		return `${withNode ? v.nodeId + '-' : ''}${v.commandClass}-${
 			v.endpoint || 0
 		}-${v.property}${
@@ -3103,7 +3117,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Internal function to check for config updates automatically once a day
 	 *
 	 */
-	async _scheduledConfigCheck() {
+	private async _scheduledConfigCheck() {
 		try {
 			await this.checkForConfigUpdates()
 		} catch (error) {
@@ -3127,7 +3141,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Try to poll a value, don't throw. Used in the setTimeout
 	 *
 	 */
-	async _tryPoll(valueId: Z2MValueId, interval: number) {
+	private async _tryPoll(valueId: Z2MValueId, interval: number) {
 		try {
 			await this.pollValue(valueId)
 		} catch (error) {

@@ -1637,7 +1637,11 @@ export default class Gateway {
 	/**
 	 * Catch all Zwave events
 	 */
-	_onEvent(emitter: EventSource, eventName: string, ...args: any[]): void {
+	private _onEvent(
+		emitter: EventSource,
+		eventName: string,
+		...args: any[]
+	): void {
 		const topic = `${MqttClient.EVENTS_PREFIX}/${
 			this._mqtt._clientID
 		}/${emitter}/${eventName.replace(/\s/g, '_')}`
@@ -1648,7 +1652,7 @@ export default class Gateway {
 	/**
 	 * Zwave event triggered when a node is removed
 	 */
-	_onNodeRemoved(node: Z2MNode): void {
+	private _onNodeRemoved(node: Z2MNode): void {
 		const prefix = node.id + '-'
 
 		// delete discovered values
@@ -1662,7 +1666,7 @@ export default class Gateway {
 	/**
 	 * Triggered when a value change is detected in Zwave Network
 	 */
-	_onValueChanged(
+	private _onValueChanged(
 		valueId: Z2MValueId,
 		node: Z2MNode,
 		changed: boolean
@@ -1816,7 +1820,7 @@ export default class Gateway {
 	/**
 	 * Triggered when a notification is received from a node in Zwave Client
 	 */
-	_onNotification(
+	private _onNotification(
 		node: Z2MNode,
 		valueId: Z2MValueId,
 		data: Record<string, any>
@@ -1834,7 +1838,7 @@ export default class Gateway {
 	 * When there is a node status update
 	 *
 	 */
-	_onNodeStatus(node: Z2MNode): void {
+	private _onNodeStatus(node: Z2MNode): void {
 		if (node.ready && this.config.hassDiscovery) {
 			for (const id in node.hassDevices) {
 				if (node.hassDevices[id].persistent) {
@@ -1916,7 +1920,7 @@ export default class Gateway {
 	 * When mqtt client goes online/offline
 	 *
 	 */
-	_onBrokerStatus(online: boolean): void {
+	private _onBrokerStatus(online: boolean): void {
 		if (online) {
 			this.rediscoverAll()
 		}
@@ -1926,7 +1930,7 @@ export default class Gateway {
 	 * Hass will/birth
 	 *
 	 */
-	_onHassStatus(online: boolean): void {
+	private _onHassStatus(online: boolean): void {
 		logger.info(`Home Assistant is ${online ? 'ONLINE' : 'OFFLINE'}`)
 
 		if (online) {
@@ -1938,7 +1942,7 @@ export default class Gateway {
 	 * Handle api requests reeceived from MQTT client
 	 *
 	 */
-	async _onApiRequest(
+	private async _onApiRequest(
 		topic: string,
 		apiName: AllowedApis,
 		payload: { args: Parameters<ZwaveClient[AllowedApis]> }
@@ -1966,7 +1970,7 @@ export default class Gateway {
 	/**
 	 * Handle broadcast request reeived from Mqtt client
 	 */
-	async _onBroadRequest(
+	private async _onBroadRequest(
 		parts: string[],
 		payload: ValueID & { value: unknown }
 	): Promise<void> {
@@ -2011,7 +2015,10 @@ export default class Gateway {
 	 * Handle write request received from Mqtt Client
 	 *
 	 */
-	async _onWriteRequest(parts: string[], payload: any): Promise<void> {
+	private async _onWriteRequest(
+		parts: string[],
+		payload: any
+	): Promise<void> {
 		const valueId = this.topicValues[parts.join('/')]
 
 		if (valueId) {
@@ -2020,7 +2027,7 @@ export default class Gateway {
 		}
 	}
 
-	async _onMulticastRequest(
+	private async _onMulticastRequest(
 		payload: Z2MValueId & { nodes: number[]; value: any }
 	): Promise<void> {
 		const nodes = payload.nodes
@@ -2056,7 +2063,7 @@ export default class Gateway {
 	 * Checks if an operation is valid, it must exist and must contains
 	 * only numbers and operators
 	 */
-	_isValidOperation(op: string): boolean {
+	private _isValidOperation(op: string): boolean {
 		return op && !/[^0-9.()\-+*/,]/g.test(op)
 	}
 
@@ -2064,7 +2071,7 @@ export default class Gateway {
 	 * Evaluate the return value of a custom parse Function
 	 *
 	 */
-	_evalFunction(
+	private _evalFunction(
 		code: string,
 		valueId: Z2MValueId,
 		value: unknown,
@@ -2095,7 +2102,7 @@ export default class Gateway {
 	/**
 	 * Get node name from node object
 	 */
-	_getNodeName(node: Z2MNode, ignoreLoc: boolean): string {
+	private _getNodeName(node: Z2MNode, ignoreLoc: boolean): string {
 		return (
 			(!ignoreLoc && node.loc ? node.loc + '-' : '') +
 			(node.name ? node.name : NODE_PREFIX + node.id)
@@ -2106,7 +2113,9 @@ export default class Gateway {
 	 *  Return re-arranged based on critical CCs
 	 */
 
-	_getPriorityCCFirst(values: { [key: string]: Z2MValueId }): string[] {
+	private _getPriorityCCFirst(values: {
+		[key: string]: Z2MValueId
+	}): string[] {
 		const priorityCC = [CommandClasses['Color Switch']]
 		const prioritizedValueIds = []
 
@@ -2123,14 +2132,14 @@ export default class Gateway {
 	/**
 	 * Returns the value id without the node prefix
 	 */
-	_getIdWithoutNode(valueId: Z2MValueId): string {
+	private _getIdWithoutNode(valueId: Z2MValueId): string {
 		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 
 	/**
 	 * Get the device Object to send in discovery payload
 	 */
-	_deviceInfo(node: Z2MNode, nodeName: string): DeviceInfo {
+	private _deviceInfo(node: Z2MNode, nodeName: string): DeviceInfo {
 		return {
 			identifiers: [
 				'zwavejs2mqtt_' + this._zwave.homeHex + '_node' + node.id,
@@ -2145,7 +2154,10 @@ export default class Gateway {
 	/**
 	 * Get the Hass discovery topic for the specific node and hassDevice
 	 */
-	_getDiscoveryTopic(hassDevice: HassDevice, nodeName: string): string {
+	private _getDiscoveryTopic(
+		hassDevice: HassDevice,
+		nodeName: string
+	): string {
 		return `${hassDevice.type}/${utils.sanitizeTopic(nodeName, true)}/${
 			hassDevice.object_id
 		}/config`
@@ -2155,7 +2167,7 @@ export default class Gateway {
 	 * Generate the template string to use for value templates.
 	 * Note that the keys need to be numeric.
 	 */
-	_getMappedValuesTemplate(
+	private _getMappedValuesTemplate(
 		valueMap: { [x: string]: any },
 		defaultValue: string
 	): string {
@@ -2175,7 +2187,7 @@ export default class Gateway {
 	 * Generate the template string to use for value templates
 	 * by inverting the value map
 	 */
-	_getMappedValuesInverseTemplate(
+	private _getMappedValuesInverseTemplate(
 		valueMap: { [x: string]: number },
 		defaultValue: string
 	): string {
@@ -2201,7 +2213,7 @@ export default class Gateway {
 	 * Calculate the correct template string to use for templates with state
 	 * list based on gateway settings and mapped mode values
 	 */
-	_getMappedStateTemplate(
+	private _getMappedStateTemplate(
 		states: Z2MValueIdState[],
 		defaultValueKey: string | number
 	): string {
@@ -2226,7 +2238,7 @@ export default class Gateway {
 	/**
 	 * Generates payload for Binary use from a state object
 	 */
-	_setBinaryPayloadFromSensor(
+	private _setBinaryPayloadFromSensor(
 		cfg: HassDevice,
 		valueId: Z2MValueId,
 		offStateValue = 0
@@ -2246,7 +2258,7 @@ export default class Gateway {
 	/**
 	 * Create a binary sensor configuration with a specific device class
 	 */
-	_getBinarySensorConfig(
+	private _getBinarySensorConfig(
 		devClass: string,
 		reversePayload = false
 	): HassDevice {
@@ -2262,7 +2274,11 @@ export default class Gateway {
 	/**
 	 * Retrives the value of a property from the node valueId
 	 */
-	_setDiscoveryValue(payload: any, prop: string, node: Z2MNode): void {
+	private _setDiscoveryValue(
+		payload: any,
+		prop: string,
+		node: Z2MNode
+	): void {
 		if (typeof payload[prop] === 'string') {
 			const valueId = node.values[payload[prop]]
 			if (valueId && valueId.value != null) {
@@ -2274,7 +2290,7 @@ export default class Gateway {
 	/**
 	 * Check if this node supports rgb and if so add it to discovery configuration
 	 */
-	_addRgbColorSwitch(
+	private _addRgbColorSwitch(
 		node: Z2MNode,
 		currentColorValue: Z2MValueId
 	): HassDevice {
@@ -2370,7 +2386,7 @@ export default class Gateway {
 		return cfg
 	}
 
-	_getEntityName(
+	private _getEntityName(
 		node: Z2MNode,
 		valueId: Z2MValueId,
 		cfg: HassDevice,

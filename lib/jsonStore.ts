@@ -35,7 +35,7 @@ export class StorageHelper {
 		return this._store
 	}
 
-	async _getFile(config: StoreFile) {
+	private async _getFile(config: StoreFile) {
 		let err: { code: string }
 		let data: any
 		try {

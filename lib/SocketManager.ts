@@ -64,7 +64,7 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 			.on('connection', this._onConnection.bind(this))
 	}
 
-	_authMiddleware(): (socket: Socket, next: () => void) => void {
+	private _authMiddleware(): (socket: Socket, next: () => void) => void {
 		return (socket: Socket, next: () => void) => {
 			if (this.authMiddleware !== undefined) {
 				this.authMiddleware(socket, next)
@@ -78,7 +78,7 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	 * Handles new socket connections
 	 *
 	 */
-	_onConnection(socket: Socket) {
+	private _onConnection(socket: Socket) {
 		logger.debug(`New connection ${socket.id}`)
 
 		// register inbound events from this socket
@@ -97,7 +97,7 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	 * Logs and emits the `eventName` with `socket` and `args` as parameters
 	 *
 	 */
-	_emitEvent(eventName: inboundEvents, socket: Socket, data: any) {
+	private _emitEvent(eventName: inboundEvents, socket: Socket, data: any) {
 		logger.debug(`Event ${eventName} emitted to ${socket.id}`)
 		this.emit(eventName, socket, data)
 	}
