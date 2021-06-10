@@ -651,7 +651,7 @@ export default class Gateway {
 		// skip discovery if discovery not enabled
 		if (!this.config.hassDiscovery) return
 
-		const nodes = this._zwave ? this._zwave.nodes : []
+		const nodes = this._zwave.nodes ?? []
 		for (const [nodeId, node] of nodes) {
 			const devices = node.hassDevices || {}
 			for (const id in devices) {
