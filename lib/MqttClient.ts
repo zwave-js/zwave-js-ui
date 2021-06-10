@@ -52,7 +52,7 @@ export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
 class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private config: MqttConfig
 	private toSubscribe: string[]
-	public _clientID: string
+	private _clientID: string
 	private client: Client
 	private error?: string
 	private closed: boolean

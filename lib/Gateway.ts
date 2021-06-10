@@ -1643,7 +1643,7 @@ export default class Gateway {
 		...args: any[]
 	): void {
 		const topic = `${MqttClient.EVENTS_PREFIX}/${
-			this._mqtt._clientID
+			this._mqtt.clientID
 		}/${emitter}/${eventName.replace(/\s/g, '_')}`
 
 		this._mqtt.publish(topic, { data: args }, { qos: 1, retain: false })
