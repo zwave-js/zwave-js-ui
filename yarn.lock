@@ -351,15 +351,15 @@
     regenerator-runtime "^0.13.4"
     v8flags "^3.1.1"
 
-"@babel/parser@7.13.12":
-  version "7.13.12"
-  resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.13.12.tgz#ba320059420774394d3b0c0233ba40e4250b81d1"
-  integrity sha512-4T7Pb244rxH24yR116LAuJ+adxXXnHhZaLJjegJVKSdoNCe4x1eDBaud5YIcQFcqzsaD5BHvJw5BQ0AZapdCRw==
-
 "@babel/parser@^7.12.13", "@babel/parser@^7.14.2", "@babel/parser@^7.14.3", "@babel/parser@^7.7.0":
   version "7.14.3"
   resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.14.3.tgz#9b530eecb071fd0c93519df25c5ff9f14759f298"
   integrity sha512-7MpZDIfI7sUC5zWo2+foJ50CSI5lcqDehZ0lVgIhSi4bFEk94fLAKlF3Q0nzSQQ+ca0lm+O6G9ztKVBeu8PMRQ==
+
+"@babel/parser@^7.9.4":
+  version "7.14.5"
+  resolved "https://registry.yarnpkg.com/@babel/parser/-/parser-7.14.5.tgz#4cd2f346261061b2518873ffecdf1612cb032829"
+  integrity sha512-TM8C+xtH/9n1qzX+JNHi7AN2zHMTiPUtspO0ZdHflW8KaskkALhMmuMHb4bCmNdv9VAPzJX3/bXqkVLnAvsPfg==
 
 "@babel/plugin-bugfix-v8-spread-parameters-in-optional-chaining@^7.13.12":
   version "7.13.12"
@@ -1034,13 +1034,6 @@
     make-dir "^2.1.0"
     pirates "^4.0.0"
     source-map-support "^0.5.16"
-
-"@babel/runtime@7.13.10":
-  version "7.13.10"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.13.10.tgz#47d42a57b6095f4468da440388fdbad8bebf0d7d"
-  integrity sha512-4QPkjJq6Ns3V/RgpEahRk+AGfL0eO6RHHtTWoNNr5mO49G6B5+X6d6THgWEAvTrznU5xYpbAlVKRYcsCgh/Akw==
-  dependencies:
-    regenerator-runtime "^0.13.4"
 
 "@babel/runtime@^7.8.4", "@babel/runtime@^7.9.2":
   version "7.14.0"
@@ -8190,7 +8183,7 @@ no-case@^3.0.4:
     lower-case "^2.0.2"
     tslib "^2.0.3"
 
-node-abi@^2.21.0, node-abi@^2.7.0:
+node-abi@^2.21.0:
   version "2.26.0"
   resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-2.26.0.tgz#355d5d4bc603e856f74197adbf3f5117a396ba40"
   integrity sha512-ag/Vos/mXXpWLLAYWsAoQdgS+gW7IwvgMLOgqopm/DbzAjazLltzgzpVMsFlgmo9TzG5hGXeaBZx2AI731RIsQ==
@@ -8929,10 +8922,10 @@ pkg-dir@^4.1.0, pkg-dir@^4.2.0:
   dependencies:
     find-up "^4.0.0"
 
-pkg-fetch@2.6.9:
-  version "2.6.9"
-  resolved "https://registry.yarnpkg.com/pkg-fetch/-/pkg-fetch-2.6.9.tgz#c18c5fa9604c57a3df3d9630afb64e176bc8732d"
-  integrity sha512-EnVR8LRILXBvaNP+wJOSY02c3+qDDfyEyR+aqAHLhcc9PBnbxFT9UZ1+If49goPQzQPn26TzF//fc6KXZ0aXEg==
+pkg-fetch@^2.6.9:
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/pkg-fetch/-/pkg-fetch-2.7.0.tgz#5bfec1d477dc0a01c3e577c3631022edff64185c"
+  integrity sha512-0def00dVQwQ4F2sn2E1Mw0/vNXkujEf+X6I1h5NbbBYKOoJ5esy7LKJyxmzChQy6kwOPfTMH2E+2iTqWUhRHVA==
   dependencies:
     "@babel/runtime" "^7.9.2"
     byline "^5.0.0"
@@ -8953,13 +8946,13 @@ pkg-up@^2.0.0:
   dependencies:
     find-up "^2.1.0"
 
-pkg@^4.5.1:
-  version "4.5.1"
-  resolved "https://registry.yarnpkg.com/pkg/-/pkg-4.5.1.tgz#0f915110d726b17a7e66a76e5406ff9d393bccc8"
-  integrity sha512-UXKL88jGQ+FD4//PyrFeRcqurVQ3BVIfUNaEU9cXY24EJz08JyBj85qrGh0CFGvyzNb1jpwHOnns5Sw0M5H92Q==
+pkg@4.4.9:
+  version "4.4.9"
+  resolved "https://registry.yarnpkg.com/pkg/-/pkg-4.4.9.tgz#be04f8d03795772b7c4394724ae7252d7c2a4519"
+  integrity sha512-FK4GqHtcCY2PPPVaKViU0NyRzpo6gCS7tPKN5b7AkElqjAOCH1bsRKgohEnxThr6DWfTGByGqba2YHGR/BqbmA==
   dependencies:
-    "@babel/parser" "7.13.12"
-    "@babel/runtime" "7.13.10"
+    "@babel/parser" "^7.9.4"
+    "@babel/runtime" "^7.9.2"
     chalk "^3.0.0"
     escodegen "^1.14.1"
     fs-extra "^8.1.0"
@@ -8967,8 +8960,7 @@ pkg@^4.5.1:
     into-stream "^5.1.1"
     minimist "^1.2.5"
     multistream "^2.1.1"
-    pkg-fetch "2.6.9"
-    prebuild-install "6.0.1"
+    pkg-fetch "^2.6.9"
     progress "^2.0.3"
     resolve "^1.15.1"
     stream-meter "^1.0.4"
@@ -9073,27 +9065,6 @@ postcss@^8.2.15, postcss@^8.3.0:
     colorette "^1.2.2"
     nanoid "^3.1.23"
     source-map-js "^0.6.2"
-
-prebuild-install@6.0.1:
-  version "6.0.1"
-  resolved "https://registry.yarnpkg.com/prebuild-install/-/prebuild-install-6.0.1.tgz#5902172f7a40eb67305b96c2a695db32636ee26d"
-  integrity sha512-7GOJrLuow8yeiyv75rmvZyeMGzl8mdEX5gY69d6a6bHWmiPevwqFw+tQavhK0EYMaSg3/KD24cWqeQv1EWsqDQ==
-  dependencies:
-    detect-libc "^1.0.3"
-    expand-template "^2.0.3"
-    github-from-package "0.0.0"
-    minimist "^1.2.3"
-    mkdirp-classic "^0.5.3"
-    napi-build-utils "^1.0.1"
-    node-abi "^2.7.0"
-    noop-logger "^0.1.1"
-    npmlog "^4.0.1"
-    pump "^3.0.0"
-    rc "^1.2.7"
-    simple-get "^3.0.3"
-    tar-fs "^2.0.0"
-    tunnel-agent "^0.6.0"
-    which-pm-runs "^1.0.0"
 
 prebuild-install@^6.0.1:
   version "6.1.2"
@@ -11689,11 +11660,6 @@ which-module@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/which-module/-/which-module-2.0.0.tgz#d9ef07dce77b9902b8a3a8fa4b31c3e3f7e6e87a"
   integrity sha1-2e8H3Od7mQK4o6j6SzHD4/fm6Ho=
-
-which-pm-runs@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/which-pm-runs/-/which-pm-runs-1.0.0.tgz#670b3afbc552e0b55df6b7780ca74615f23ad1cb"
-  integrity sha1-Zws6+8VS4LVd9rd4DKdGFfI60cs=
 
 which@2.0.2, which@^2.0.1, which@^2.0.2:
   version "2.0.2"
