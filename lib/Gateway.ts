@@ -1286,7 +1286,7 @@ export default class Gateway {
 					}
 
 					// Try to define Binary sensor
-					if (valueId.list && valueId.states.length === 2) {
+					if (valueId.states?.length === 2) {
 						let off = 0 // set default off to 0.
 						let discoveredObjectId = valueId.propertyKey
 						switch (valueId.propertyKeyName) {
@@ -1360,7 +1360,7 @@ export default class Gateway {
 						this._setBinaryPayloadFromSensor(cfg, valueId, off)
 						// finally update object_id
 						cfg.object_id = discoveredObjectId.toString()
-					} else {
+					} else if (valueId.states?.length > 2) {
 						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/NotificationCC.ts
 						// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/notifications.json
 						cfg = utils.copy(hassCfg.sensor_generic)
@@ -1382,6 +1382,8 @@ export default class Gateway {
 								valueId.states,
 								valueId.default
 							)
+					} else {
+						return
 					}
 					break
 				case CommandClasses['Multilevel Sensor']:
