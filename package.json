@@ -88,6 +88,10 @@
       }
     }
   },
+  "resolutions": {
+    "serialport": "~9.0.7",
+    "@serialport/bindings": "~9.0.8"
+  },
   "optionalDependencies": {
     "@release-it/conventional-changelog": "^2.0.1",
     "@types/node": "^15.12.2",
