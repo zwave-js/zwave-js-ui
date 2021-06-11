@@ -1379,7 +1379,7 @@
     "@serialport/binding-abstract" "^9.0.7"
     debug "^4.3.1"
 
-"@serialport/bindings@^9.1.0":
+"@serialport/bindings@^9.0.7", "@serialport/bindings@^9.1.0":
   version "9.1.0"
   resolved "https://registry.yarnpkg.com/@serialport/bindings/-/bindings-9.1.0.tgz#bb4c2778118a4404fd38749b64c0fe533d72003a"
   integrity sha512-X0GM5iZgrBkR1HwoSDsJ/AJ+M61end5Ttg5mqcaUkwGCKpgJSDW3STX6pvFNr9xNzvqS56yuhAcU/eNJ2xuDaA==
@@ -9992,6 +9992,23 @@ serialize-javascript@5.0.1, serialize-javascript@^5.0.1:
   integrity sha512-SaaNal9imEO737H2c05Og0/8LUXG7EnsZyMa8MzkmuHoELfT6txuj0cMqRj6zfPKnmQ1yasR4PCJc8x+M4JSPA==
   dependencies:
     randombytes "^2.1.0"
+
+serialport@9.0.7:
+  version "9.0.7"
+  resolved "https://registry.yarnpkg.com/serialport/-/serialport-9.0.7.tgz#bd116a70bd7acbfd587491acd3ee03e02a0df71c"
+  integrity sha512-NeDfVks3JAJ7s8cXDopx1iUUgC/7TaltE7iQGiSewIWMZaK7oStiz3VJzcuKgor7F+U/y6zbAnj4i6eHq0on+g==
+  dependencies:
+    "@serialport/binding-mock" "^9.0.7"
+    "@serialport/bindings" "^9.0.7"
+    "@serialport/parser-byte-length" "^9.0.7"
+    "@serialport/parser-cctalk" "^9.0.7"
+    "@serialport/parser-delimiter" "^9.0.7"
+    "@serialport/parser-inter-byte-timeout" "^9.0.7"
+    "@serialport/parser-readline" "^9.0.7"
+    "@serialport/parser-ready" "^9.0.7"
+    "@serialport/parser-regex" "^9.0.7"
+    "@serialport/stream" "^9.0.7"
+    debug "^4.3.1"
 
 serialport@^9.1.0:
   version "9.1.0"
