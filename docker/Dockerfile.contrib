@@ -50,7 +50,7 @@ RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
 RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
 RUN mkdir my_dist
-RUN cp -Lr .git app.js package.json bin config dist hass lib public store views node_modules my_dist/
+RUN cp -Lr .git package.json bin config server dist hass lib public store views node_modules my_dist/
 
 FROM node:erbium-buster
 LABEL maintainer="robertsLando"
@@ -62,4 +62,4 @@ COPY --from=build /home/node/zwavejs2mqtt/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
 USER root
-CMD ["node", "bin/www"]
+CMD ["node", "server/bin/www"]
