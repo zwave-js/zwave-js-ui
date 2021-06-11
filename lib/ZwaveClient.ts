@@ -60,8 +60,14 @@ const loglevels = require('triple-beam').configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
+function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
+	methods: T
+): T {
+	return methods
+}
+
 // ZwaveClient Apis that can be called with MQTT apis
-const allowedApis = [
+const allowedApis = validateMethods([
 	'setNodeName',
 	'setNodeLocation',
 	'_createScene',
@@ -107,7 +113,7 @@ const allowedApis = [
 	'installConfigUpdate',
 	'pingNode',
 	'restart',
-] as const
+] as const)
 
 export type AllowedApis = typeof allowedApis[number]
 
