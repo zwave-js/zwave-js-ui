@@ -1,3 +1,13 @@
+## [5.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.0...v5.0.1) (2021-06-11)
+
+
+### Bug Fixes
+
+* downgrade pkg@4.4.9 ([#1334](https://github.com/zwave-js/zwavejs2mqtt/issues/1334)) ([07568fc](https://github.com/zwave-js/zwavejs2mqtt/commit/07568fcb302431da3ab2030c9f2fd0b2b7258c48)), closes [#1326](https://github.com/zwave-js/zwavejs2mqtt/issues/1326)
+* **discovery:** skip discovery of notifications without states ([#1333](https://github.com/zwave-js/zwavejs2mqtt/issues/1333)) ([218256e](https://github.com/zwave-js/zwavejs2mqtt/commit/218256e3306e5d308b8982d2c3cbe6be72699d5b)), closes [#1332](https://github.com/zwave-js/zwavejs2mqtt/issues/1332)
+* downngrade to serialport@9.0.7 ([#1329](https://github.com/zwave-js/zwavejs2mqtt/issues/1329)) ([1c863d9](https://github.com/zwave-js/zwavejs2mqtt/commit/1c863d9c6c2dfe36a7c263c7960d5343d289c9a7)), closes [#1324](https://github.com/zwave-js/zwavejs2mqtt/issues/1324)
+* **hass:** broken cover discovery ([#1331](https://github.com/zwave-js/zwavejs2mqtt/issues/1331)) ([b9d8ede](https://github.com/zwave-js/zwavejs2mqtt/commit/b9d8ede40767f5e6d0f170a139457c3690a02938)), closes [#1327](https://github.com/zwave-js/zwavejs2mqtt/issues/1327)
+
 # [5.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v4.5.2...v5.0.0) (2021-06-10)
 
 
