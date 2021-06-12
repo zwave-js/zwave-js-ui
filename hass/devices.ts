@@ -142,7 +142,7 @@ const COVER: HassDevice = {
 		command_topic: '38-0-targetValue',
 		position_topic: '38-0-currentValue',
 		set_position_topic: '38-0-targetValue',
-		value_template: '{{ (value_json.value / 99 * 100) | round(0) }}',
+		position_template: '{{ (value_json.value / 99 * 100) | round(0) }}',
 		position_open: 99,
 		position_closed: 0,
 		payload_open: '99',
