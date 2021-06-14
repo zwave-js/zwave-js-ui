@@ -24,6 +24,17 @@ export interface ErrnoException extends Error {
 	stack?: string
 }
 
+export function applyMixin(derivedCtor: any, constructor: any) {
+	Object.getOwnPropertyNames(constructor.prototype).forEach((name) => {
+		Object.defineProperty(
+			derivedCtor.prototype,
+			name,
+			Object.getOwnPropertyDescriptor(constructor.prototype, name) ||
+				Object.create(null)
+		)
+	})
+}
+
 /**
  *  Get the base root path to application directory. When we are in a `pkg` environment
  *  the path of the snapshot is not writable
