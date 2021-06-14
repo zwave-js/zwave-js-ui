@@ -60,8 +60,14 @@ const loglevels = require('triple-beam').configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
+function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
+	methods: T
+): T {
+	return methods
+}
+
 // ZwaveClient Apis that can be called with MQTT apis
-const allowedApis = [
+const allowedApis = validateMethods([
 	'setNodeName',
 	'setNodeLocation',
 	'_createScene',
@@ -107,7 +113,7 @@ const allowedApis = [
 	'installConfigUpdate',
 	'pingNode',
 	'restart',
-] as const
+] as const)
 
 export type AllowedApis = typeof allowedApis[number]
 
@@ -1176,7 +1182,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Creates a new scene with a specific `label` and stores it in `scenes.json`
 	 */
-	private async _createScene(label: string) {
+	async _createScene(label: string) {
 		const id =
 			this.scenes.length > 0
 				? this.scenes[this.scenes.length - 1].sceneid + 1
@@ -1195,7 +1201,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Delete a scene with a specific `sceneid` and updates `scenes.json`
 	 */
-	private async _removeScene(sceneid: number) {
+	async _removeScene(sceneid: number) {
 		const index = this.scenes.findIndex((s) => s.sceneid === sceneid)
 
 		if (index < 0) {
@@ -1212,7 +1218,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Imports scenes Array in `scenes.json`
 	 */
-	private async _setScenes(scenes: Z2MScene[]) {
+	async _setScenes(scenes: Z2MScene[]) {
 		// TODO: add scenes validation
 		this.scenes = scenes
 		await jsonStore.put(store.scenes, this.scenes)
@@ -1224,14 +1230,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get all scenes
 	 *
 	 */
-	private _getScenes(): Z2MScene[] {
+	_getScenes(): Z2MScene[] {
 		return this.scenes
 	}
 
 	/**
 	 * Return all values of the scene with given `sceneid`
 	 */
-	private _sceneGetValues(sceneid: number) {
+	_sceneGetValues(sceneid: number) {
 		const scene = this.scenes.find((s) => s.sceneid === sceneid)
 		if (!scene) {
 			throw Error('No scene found with given sceneid')
@@ -1243,7 +1249,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Add a value to a scene
 	 *
 	 */
-	private async _addSceneValue(
+	async _addSceneValue(
 		sceneid: number,
 		valueId: Z2MValueIdScene,
 		value: any,
@@ -1282,7 +1288,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Remove a value from scene
 	 */
-	private async _removeSceneValue(sceneid: number, valueId: Z2MValueIdScene) {
+	async _removeSceneValue(sceneid: number, valueId: Z2MValueIdScene) {
 		const scene = this.scenes.find((s) => s.sceneid === sceneid)
 
 		if (!scene) {
@@ -1304,7 +1310,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Activate a scene with given scene id
 	 */
-	private _activateScene(sceneId: number): boolean {
+	_activateScene(sceneId: number): boolean {
 		const values = this._sceneGetValues(sceneId) || []
 
 		for (let i = 0; i < values.length; i++) {
