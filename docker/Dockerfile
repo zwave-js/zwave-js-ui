@@ -1,5 +1,5 @@
 # STEP: 1
-FROM node:15.11.0-alpine AS build-z2m
+FROM node:16.3.0-alpine AS build-z2m
 
 WORKDIR /usr/src/app
 
@@ -43,7 +43,7 @@ RUN if [ ! -z "$updateDevices"  ]; \
     fi
 
 # STEP: 2 (runtime)
-FROM node:15.11.0-alpine
+FROM node:16.3.0-alpine
 
 RUN apk add --no-cache \	
     libstdc++ \
