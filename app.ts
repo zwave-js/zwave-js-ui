@@ -387,6 +387,15 @@ app.use(
 	}) as RequestHandler
 )
 
+// must be placed before history middleware
+app.use(function (req, res, next) {
+	if (pluginsRouter !== undefined) {
+		pluginsRouter(req, res, next)
+	} else {
+		next()
+	}
+})
+
 app.use(
 	history({
 		index: '/',
@@ -425,14 +434,6 @@ app.use(
 		},
 	})
 )
-
-app.use(function (req, res, next) {
-	if (pluginsRouter !== undefined) {
-		pluginsRouter(req, res, next)
-	} else {
-		next()
-	}
-})
 
 // Node.js CSRF protection middleware.
 // Requires either a session middleware or cookie-parser to be initialized first.

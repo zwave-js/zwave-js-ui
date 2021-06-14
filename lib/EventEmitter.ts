@@ -1,4 +1,5 @@
 import EventEmitter from 'events'
+import { applyMixin } from './utils'
 
 /**
  * A type-safe EventEmitter interface to use in place of Node.js's EventEmitter.
@@ -66,4 +67,7 @@ export interface TypedEventEmitter<
 
 export class TypedEventEmitter<
 	TEvents extends Record<keyof TEvents, EventHandler>
-> extends (EventEmitter as any) {}
+> {}
+
+// Make TypedEventEmitter inherit from EventEmitter without actually extending
+applyMixin(TypedEventEmitter, EventEmitter)
