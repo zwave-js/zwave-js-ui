@@ -1,3 +1,17 @@
+## [5.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.1...v5.0.2) (2021-06-14)
+
+
+### Bug Fixes
+
+* entry in hass/devices.ts for cover discovery ([#1336](https://github.com/zwave-js/zwavejs2mqtt/issues/1336)) ([a5b444a](https://github.com/zwave-js/zwavejs2mqtt/commit/a5b444a06afff5077c5434dbd15705d0b60fdb12))
+* force allowed apis to be a valid method of ZwaveClient ([#1328](https://github.com/zwave-js/zwavejs2mqtt/issues/1328)) ([16eb768](https://github.com/zwave-js/zwavejs2mqtt/commit/16eb768987bf09dd256d6d70a446556ed0771f37))
+* place plugins route before history middleware ([#1339](https://github.com/zwave-js/zwavejs2mqtt/issues/1339)) ([c223331](https://github.com/zwave-js/zwavejs2mqtt/commit/c22333129db66a78fb7152e45b2ebd911a8f0d93))
+
+
+### Features
+
+* bump zwave-js@7.7.4 ([51cb50c](https://github.com/zwave-js/zwavejs2mqtt/commit/51cb50c201bd26c764c90aa8f1cf5a6d427ec4b4))
+
 ## [5.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.0...v5.0.1) (2021-06-11)
 
 
