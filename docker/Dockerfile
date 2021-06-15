@@ -8,7 +8,7 @@ RUN apk --no-cache add \
     jq \
     linux-headers \
     alpine-sdk \	
-    python
+    python3
 
 COPY package.json yarn.lock ./ 
 
