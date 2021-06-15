@@ -111,24 +111,6 @@ else
 	done
 fi
 
-echo "## Check for .node files to include in executable folder"
-mapfile -t TO_INCLUDE < <(find ./node_modules/ -type f -name "*.node" | grep -v obj.target)
-
-TOTAL_INCLUDE=${#TO_INCLUDE[@]}
-
-echo "## Found $TOTAL_INCLUDE files to include"
-
-i=0
-
-while [ "$i" -lt "$TOTAL_INCLUDE" ]
-do
-  IFS='/' path=(${TO_INCLUDE[$i]})
-  file=${path[-1]}
-  echo "## Copying $file to $PKG_FOLDER folder"
-  cp "${TO_INCLUDE[$i]}" "./$PKG_FOLDER"
-  let "i = $i + 1"
-done
-
 echo "## Create folders needed"
 cd $PKG_FOLDER
 mkdir store -p
