@@ -21,11 +21,10 @@ RUN yarn run build && \
     yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
     rm -rf \
     build \
-    index.html \
     package.sh \
     src \
     static \
-    stylesheets
+    docs
 
 # add plugin support, space separated
 ARG plugins

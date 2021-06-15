@@ -5,7 +5,6 @@
     ".git",
     "node_modules/**/node_modules",
     "docs",
-    "public/**",
     "store/*",
     "*.log"
   ],
