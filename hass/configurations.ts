@@ -121,7 +121,7 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 		type: 'cover',
 		object_id: 'position',
 		discovery_payload: {
-			state_topic: true,
+			state_topic: false,
 			command_topic: true,
 			position_topic: true,
 			set_position_topic: true,
