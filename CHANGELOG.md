@@ -1,3 +1,5 @@
+## [5.0.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.3...v5.0.4) (2021-06-17)
+
 ## [5.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.2...v5.0.3) (2021-06-17)
 
 
