@@ -1,3 +1,15 @@
+## [5.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.2...v5.0.3) (2021-06-17)
+
+
+### Bug Fixes
+
+* **hass:** remove state_topic from covers ([#1348](https://github.com/zwave-js/zwavejs2mqtt/issues/1348)) ([d1159c3](https://github.com/zwave-js/zwavejs2mqtt/commit/d1159c3fc5fc72542af69c6cc65dc301fa3deee1)), closes [#1343](https://github.com/zwave-js/zwavejs2mqtt/issues/1343)
+
+
+### Features
+
+* bump zwave-js@7.7.5 ([fd394d4](https://github.com/zwave-js/zwavejs2mqtt/commit/fd394d481087595d09f59d80f836c978df319cfe))
+
 ## [5.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.1...v5.0.2) (2021-06-14)
 
 
