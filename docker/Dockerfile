@@ -29,7 +29,7 @@ RUN yarn run build && \
 # add plugin support, space separated
 ARG plugins
 RUN if [ ! -z "$plugins" ]; \
-    then echo "Installing plugins ${plugins}"; yarn install ${plugins} ; fi
+    then echo "Installing plugins ${plugins}"; yarn add ${plugins} ; fi
 
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices
