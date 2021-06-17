@@ -52,6 +52,7 @@ RUN apk add --no-cache \
     tzdata \	
     eudev	
 
+
 # Copy files from previous build stage	
 COPY --from=build-z2m /usr/src/app /usr/src/app
 
