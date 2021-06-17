@@ -29,7 +29,7 @@ RUN yarn run build && \
 # add plugin support, space separated
 ARG plugins
 RUN if [ ! -z "$plugins" ]; \
-    then echo "Installing plugins ${plugins}"; yarn install ${plugins} ; fi
+    then echo "Installing plugins ${plugins}"; yarn add ${plugins} ; fi
 
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices
@@ -51,6 +51,7 @@ RUN apk add --no-cache \
     libusb \	
     tzdata \	
     eudev	
+
 
 # Copy files from previous build stage	
 COPY --from=build-z2m /usr/src/app /usr/src/app
