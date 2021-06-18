@@ -124,6 +124,12 @@ export type Z2MValueIdState = {
 	value: number
 }
 
+export type Z2MClientStatus = {
+	driverReady: boolean
+	status: boolean
+	config: ZwaveConfig
+}
+
 export type Z2MGroupAssociation = {
 	groupId: number
 	nodeId: number
@@ -673,11 +679,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	getStatus() {
-		const status: {
-			driverReady: boolean
-			status: boolean
-			config: ZwaveConfig
-		} = {
+		const status: Z2MClientStatus = {
 			driverReady: this.driverReady,
 			status: this.driverReady && !this.closed,
 			config: this.cfg,
