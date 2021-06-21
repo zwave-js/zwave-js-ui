@@ -2064,10 +2064,10 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zwave-js/config@7.7.5":
-  version "7.7.5"
-  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-7.7.5.tgz#9f91d0aed207ef6ac34cea7c76ffcdc1c2a72593"
-  integrity sha512-RHbDZwZnz8MpU/BBZ8vApObuqSlNks7iCXLE4Hy5T1n3mZoXpzm+V98XStBrtc4UNTDCDgH5l+SVgXWuPVr9Ug==
+"@zwave-js/config@7.8.0":
+  version "7.8.0"
+  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-7.8.0.tgz#9c0d72e26ce866dcf0c3c38eb194b24f7d32f19c"
+  integrity sha512-0/UiFUuK9gzuQyjIsCZ6ojO/OrPYGFqQHIKtT9LLSMXqSB6m1hebs21pmwCMsTuXFqkGjWL8gvUyFxxuC4w+HA==
   dependencies:
     "@zwave-js/core" "7.7.5"
     "@zwave-js/shared" "7.7.3"
@@ -2093,10 +2093,10 @@
     winston "^3.3.3"
     winston-daily-rotate-file "^4.5.5"
 
-"@zwave-js/serial@7.7.5":
-  version "7.7.5"
-  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-7.7.5.tgz#8f6f6edf423ff63222c27a7c602cced71e54264f"
-  integrity sha512-ZHypeZPelwCzTspumVQ2lWdL5EKrPx7PwV4req5MQRsjcgPzcY5ovLTXttiL0lzWAPP6XzKLhCLTi/YwKfS49g==
+"@zwave-js/serial@7.8.0":
+  version "7.8.0"
+  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-7.8.0.tgz#f1148db38c72809a64724e99a40fc4c50a7631a1"
+  integrity sha512-rXoV8f2N8p/mkiSdh+x35zfgfjCkWqEUpuG30FkT6LPXj6gkWLiLNPsCVU5hcoCg19zStuBhjwL5Rx9PL5ZmMA==
   dependencies:
     "@zwave-js/core" "7.7.5"
     alcalzone-shared "^3.0.4"
@@ -11960,18 +11960,18 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
 
-zwave-js@^7.7.5:
-  version "7.7.5"
-  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-7.7.5.tgz#ecc9a52c1f1a4bc65e6ae605eef5ff815f0a69fd"
-  integrity sha512-rm9jLNDooFYEYK9Cgi6axLA5vufDK5+hh+EeUpA+OWOfh79aRIy1HLmfz7HfHkl8FKQFE6905Z3u2oScWhhSfA==
+zwave-js@^7.8.0:
+  version "7.8.0"
+  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-7.8.0.tgz#bbcf73be130eeb031c18dffa8e79cbd85f797dfc"
+  integrity sha512-cwifF9wkLpMolc+y2M6HYX4Tqro1k8OVkWv2g9r3xidZ3G/xdS7DVk+o5jrVf83yqAZ56CV1Ji+DmytPMFGKHw==
   dependencies:
     "@alcalzone/jsonl-db" "^1.2.5"
     "@alcalzone/pak" "^0.6.0"
     "@sentry/integrations" "^6.5.1"
     "@sentry/node" "^6.5.1"
-    "@zwave-js/config" "7.7.5"
+    "@zwave-js/config" "7.8.0"
     "@zwave-js/core" "7.7.5"
-    "@zwave-js/serial" "7.7.5"
+    "@zwave-js/serial" "7.8.0"
     "@zwave-js/shared" "7.7.3"
     alcalzone-shared "^3.0.4"
     ansi-colors "^4.1.1"
