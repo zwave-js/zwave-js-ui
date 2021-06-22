@@ -54,9 +54,10 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 		discovery_payload: {
 			state_topic: true,
 			command_topic: true,
-			on_command_type: 'brightness',
-			state_value_template:
-				'{{ "OFF" if value_json.value == 0 else "ON" }}',
+			on_command_type: 'last',
+			payload_on: 255,
+			payload_off: 0,
+			state_value_template: '{{ 0 if value_json.value == 0 else 255 }}',
 			brightness_value_template: '{{ value_json.value }}',
 			brightness_scale: 99,
 			rgb_command_template:
@@ -71,13 +72,14 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 		discovery_payload: {
 			command_topic: true,
 			state_topic: true,
-			state_value_template:
-				'{{ "OFF" if value_json.value == 0 else "ON" }}',
+			state_value_template: '{{ 0 if value_json.value == 0 else 255 }}',
 			brightness_command_topic: true,
 			brightness_scale: 99,
 			brightness_state_topic: true,
 			brightness_value_template: '{{ value_json.value }}',
-			on_command_type: 'brightness',
+			on_command_type: 'last',
+			payload_on: 255,
+			payload_off: 0,
 		},
 	},
 	volume_dimmer: {
