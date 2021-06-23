@@ -826,7 +826,6 @@ import { mapGetters, mapMutations } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
-import scales from '@/assets/scales.json'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
@@ -890,7 +889,14 @@ export default {
 				'This field is required.'
 			)
 		},
-		...mapGetters(['zwave', 'mqtt', 'gateway', 'devices', 'serial_ports']),
+		...mapGetters([
+			'zwave',
+			'mqtt',
+			'gateway',
+			'devices',
+			'serial_ports',
+			'scales',
+		]),
 	},
 	watch: {
 		dialogValue(val) {
@@ -904,7 +910,6 @@ export default {
 			newGateway: {},
 			newMqtt: {},
 			newZwave: {},
-			scales: scales,
 			editedValue: {},
 			editedIndex: -1,
 			defaultValue: {},
@@ -1004,7 +1009,7 @@ export default {
 		scaleName(item) {
 			if (typeof item === 'object' && item) {
 				return `${!item.group ? `[${item.type}] ` : ''}${item.label}: ${
-					item.scale
+					item.unit
 				}`
 			} else {
 				return item

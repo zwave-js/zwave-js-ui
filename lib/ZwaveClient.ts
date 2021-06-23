@@ -54,6 +54,19 @@ import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
 
+import { ConfigManager } from '@zwave-js/config'
+
+const priorityDir = storeDir + '/config'
+
+export const configManager = new ConfigManager({
+	deviceConfigPriorityDir: priorityDir,
+})
+
+export async function loadManager() {
+	await configManager.loadNamedScales()
+	await configManager.loadSensorTypes()
+}
+
 const logger = LogManager.module('Zwave')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const loglevels = require('triple-beam').configs.npm.levels
@@ -114,6 +127,14 @@ const allowedApis = validateMethods([
 	'pingNode',
 	'restart',
 ] as const)
+
+export type SensorTypeScale = {
+	type: string | number
+	label: string
+	unit: string
+	description?: string
+	group?: boolean
+}
 
 export type AllowedApis = typeof allowedApis[number]
 
@@ -1026,7 +1047,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				{
 					storage: {
 						cacheDir: storeDir,
-						deviceConfigPriorityDir: storeDir + '/config',
+						deviceConfigPriorityDir: priorityDir,
 					},
 					networkKey: this.cfg.networkKey,
 					logConfig: {
