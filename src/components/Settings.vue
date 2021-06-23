@@ -234,18 +234,51 @@
 												"
 											/>
 											<v-col cols="12" sm="6" md="4">
-												<v-combobox
+												<v-select
 													hint="Select sensors scales. Format is `<group or sensor type number>: <scale>` For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
 													persistent-hint
 													label="Scales"
 													:items="scales"
 													multiple
 													:item-text="scaleName"
+													:rules="[
+														rules.uniqueSensorType,
+													]"
 													chips
 													return-object
 													deletable-chips
 													v-model="newZwave.scales"
-												></v-combobox>
+												>
+													<template
+														v-slot:item="{
+															item,
+															attrs,
+															on,
+														}"
+													>
+														<v-list-item
+															v-on="on"
+															v-bind="attrs"
+															two-line
+														>
+															<v-list-item-content>
+																<v-list-item-title
+																	>{{
+																		scaleName(
+																			item
+																		)
+																	}}</v-list-item-title
+																>
+																<v-list-item-subtitle
+																	>{{
+																		item.description ||
+																		''
+																	}}</v-list-item-subtitle
+																>
+															</v-list-item-content>
+														</v-list-item>
+													</template>
+												</v-select>
 											</v-col>
 											<v-col cols="12" sm="6">
 												<v-switch
@@ -967,6 +1000,21 @@ export default {
 					else valid = !!value || value === 0
 
 					return valid || 'This field is required.'
+				},
+				uniqueSensorType(values) {
+					if (!values || values.length < 2) {
+						return true
+					} else {
+						return (
+							!values.some(
+								(a, index) =>
+									values.findIndex(
+										(b, index2) =>
+											index2 > index && a.type === b.type
+									) >= 0
+							) || 'Duplicated sensor type scale'
+						)
+					}
 				},
 				validNodeLog: (values) => {
 					return (
