@@ -37,8 +37,6 @@ import {
 	CustomPlugin,
 	PluginConstructor,
 } from './lib/CustomPlugin'
-import { config } from 'dotenv'
-import { SensorType } from 'zwave-js'
 
 declare module 'express' {
 	interface Request {
