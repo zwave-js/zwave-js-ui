@@ -233,6 +233,20 @@
 													newZwave.disclaimerVersion
 												"
 											/>
+											<v-col cols="12" sm="6" md="4">
+												<v-combobox
+													hint="Select sensors scales. Format is `<group or sensor type number>: <scale>` For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
+													persistent-hint
+													label="Scales"
+													:items="scales"
+													multiple
+													:item-text="scaleName"
+													chips
+													return-object
+													deletable-chips
+													v-model="newZwave.scales"
+												></v-combobox>
+											</v-col>
 											<v-col cols="12" sm="6">
 												<v-switch
 													hint="Enable zwave-js logging"
@@ -812,6 +826,7 @@ import { mapGetters, mapMutations } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
+import scales from '@/assets/scales.json'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
@@ -889,6 +904,7 @@ export default {
 			newGateway: {},
 			newMqtt: {},
 			newZwave: {},
+			scales: scales,
 			editedValue: {},
 			editedIndex: -1,
 			defaultValue: {},
@@ -985,6 +1001,15 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		scaleName(item) {
+			if (typeof item === 'object' && item) {
+				return `${!item.group ? `[${item.type}] ` : ''}${item.label}: ${
+					item.scale
+				}`
+			} else {
+				return item
+			}
+		},
 		randomKey() {
 			let key = ''
 

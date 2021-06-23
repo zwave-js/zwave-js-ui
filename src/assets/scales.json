@@ -1,0 +1,504 @@
+[
+    {
+        "type": "temperature",
+        "label": "Temperature",
+        "scale": "°C",
+        "group": true
+    },
+    {
+        "type": "temperature",
+        "label": "Temperature",
+        "scale": "°F",
+        "group": true
+    },
+    {
+        "type": "0x02",
+        "label": "General purpose",
+        "scale": "%"
+    },
+    {
+        "type": "0x03",
+        "label": "Illuminance",
+        "scale": "%"
+    },
+    {
+        "type": "0x03",
+        "label": "Illuminance",
+        "scale": "Lux"
+    },
+    {
+        "type": "0x04",
+        "label": "Power",
+        "scale": "W"
+    },
+    {
+        "type": "0x04",
+        "label": "Power",
+        "scale": "Btu/h"
+    },
+    {
+        "type": "0x05",
+        "label": "Humidity",
+        "scale": "%"
+    },
+    {
+        "type": "0x05",
+        "label": "Humidity",
+        "scale": "g/m³"
+    },
+    {
+        "type": "0x06",
+        "label": "Velocity",
+        "scale": "m/s"
+    },
+    {
+        "type": "0x06",
+        "label": "Velocity",
+        "scale": "Mph"
+    },
+    {
+        "type": "0x07",
+        "label": "Direction",
+        "scale": "°"
+    },
+    {
+        "type": "0x08",
+        "label": "Atmospheric pressure",
+        "scale": "kPa"
+    },
+    {
+        "type": "0x08",
+        "label": "Atmospheric pressure",
+        "scale": "inHg"
+    },
+    {
+        "type": "0x09",
+        "label": "Barometric pressure",
+        "scale": "kPa"
+    },
+    {
+        "type": "0x09",
+        "label": "Barometric pressure",
+        "scale": "inHg"
+    },
+    {
+        "type": "0x0a",
+        "label": "Solar radiation",
+        "scale": "W/m²"
+    },
+    {
+        "type": "0x0c",
+        "label": "Rain rate",
+        "scale": "mm/h"
+    },
+    {
+        "type": "0x0c",
+        "label": "Rain rate",
+        "scale": "in/h"
+    },
+    {
+        "type": "0x0d",
+        "label": "Tide level",
+        "scale": "m"
+    },
+    {
+        "type": "0x0d",
+        "label": "Tide level",
+        "scale": "ft"
+    },
+    {
+        "type": "0x0e",
+        "label": "Weight",
+        "scale": "kg"
+    },
+    {
+        "type": "0x0e",
+        "label": "Weight",
+        "scale": "lb"
+    },
+    {
+        "type": "0x0f",
+        "label": "Voltage",
+        "scale": "V"
+    },
+    {
+        "type": "0x0f",
+        "label": "Voltage",
+        "scale": "mV"
+    },
+    {
+        "type": "0x10",
+        "label": "Current",
+        "scale": "A"
+    },
+    {
+        "type": "0x10",
+        "label": "Current",
+        "scale": "mA"
+    },
+    {
+        "type": "0x11",
+        "label": "Carbon dioxide (CO₂) level",
+        "scale": "ppm"
+    },
+    {
+        "type": "0x12",
+        "label": "Air flow",
+        "scale": "m³/h"
+    },
+    {
+        "type": "0x12",
+        "label": "Air flow",
+        "scale": "cfm"
+    },
+    {
+        "type": "0x13",
+        "label": "Tank capacity",
+        "scale": "l"
+    },
+    {
+        "type": "0x13",
+        "label": "Tank capacity",
+        "scale": "m³"
+    },
+    {
+        "type": "0x13",
+        "label": "Tank capacity",
+        "scale": "gallon"
+    },
+    {
+        "type": "0x14",
+        "label": "Distance",
+        "scale": "m"
+    },
+    {
+        "type": "0x14",
+        "label": "Distance",
+        "scale": "cm"
+    },
+    {
+        "type": "0x14",
+        "label": "Distance",
+        "scale": "ft"
+    },
+    {
+        "type": "0x15",
+        "label": "Angle position",
+        "scale": "%"
+    },
+    {
+        "type": "0x15",
+        "label": "Angle position",
+        "scale": "°N"
+    },
+    {
+        "type": "0x15",
+        "label": "Angle position",
+        "scale": "°S"
+    },
+    {
+        "type": "0x16",
+        "label": "Rotation",
+        "scale": "rpm"
+    },
+    {
+        "type": "0x16",
+        "label": "Rotation",
+        "scale": "Hz"
+    },
+    {
+        "type": "0x1c",
+        "label": "Electrical resistivity",
+        "scale": "Ωm"
+    },
+    {
+        "type": "0x1d",
+        "label": "Electrical conductivity",
+        "scale": "S/m"
+    },
+    {
+        "type": "0x1e",
+        "label": "Loudness",
+        "scale": "dB"
+    },
+    {
+        "type": "0x1e",
+        "label": "Loudness",
+        "scale": "dBA"
+    },
+    {
+        "type": "0x1f",
+        "label": "Moisture",
+        "scale": "%"
+    },
+    {
+        "type": "0x1f",
+        "label": "Moisture",
+        "scale": "m³/m³"
+    },
+    {
+        "type": "0x1f",
+        "label": "Moisture",
+        "scale": "kΩ"
+    },
+    {
+        "type": "0x1f",
+        "label": "Moisture",
+        "scale": "aw"
+    },
+    {
+        "type": "0x20",
+        "label": "Frequency",
+        "scale": "Hz"
+    },
+    {
+        "type": "0x20",
+        "label": "Frequency",
+        "scale": "kHz"
+    },
+    {
+        "type": "0x21",
+        "label": "Time",
+        "scale": "s"
+    },
+    {
+        "type": "0x23",
+        "label": "Particulate Matter 2.5",
+        "scale": "mol/m³"
+    },
+    {
+        "type": "0x23",
+        "label": "Particulate Matter 2.5",
+        "scale": "µg/m³"
+    },
+    {
+        "type": "0x24",
+        "label": "Formaldehyde (CH₂O) level",
+        "scale": "mol/m³"
+    },
+    {
+        "type": "0x25",
+        "label": "Radon concentration",
+        "scale": "bq/m³"
+    },
+    {
+        "type": "0x25",
+        "label": "Radon concentration",
+        "scale": "pCi/l"
+    },
+    {
+        "type": "0x26",
+        "label": "Methane (CH₄) density",
+        "scale": "mol/m³"
+    },
+    {
+        "type": "0x27",
+        "label": "Volatile Organic Compound level",
+        "scale": "mol/m³"
+    },
+    {
+        "type": "0x27",
+        "label": "Volatile Organic Compound level",
+        "scale": "ppm"
+    },
+    {
+        "type": "0x28",
+        "label": "Carbon monoxide (CO) level",
+        "scale": "mol/m³"
+    },
+    {
+        "type": "0x28",
+        "label": "Carbon monoxide (CO) level",
+        "scale": "ppm"
+    },
+    {
+        "type": "0x29",
+        "label": "Soil humidity",
+        "scale": "%"
+    },
+    {
+        "type": "0x2a",
+        "label": "Soil reactivity",
+        "scale": "pH"
+    },
+    {
+        "type": "0x2b",
+        "label": "Soil salinity",
+        "scale": "mol/m³"
+    },
+    {
+        "type": "0x2c",
+        "label": "Heart rate",
+        "scale": "bpm"
+    },
+    {
+        "type": "0x2d",
+        "label": "Blood pressure",
+        "scale": "mmHg"
+    },
+    {
+        "type": "0x2d",
+        "label": "Blood pressure",
+        "scale": "mmHg"
+    },
+    {
+        "type": "0x2e",
+        "label": "Muscle mass",
+        "scale": "kg"
+    },
+    {
+        "type": "0x2f",
+        "label": "Fat mass",
+        "scale": "kg"
+    },
+    {
+        "type": "0x30",
+        "label": "Bone mass",
+        "scale": "kg"
+    },
+    {
+        "type": "0x31",
+        "label": "Total body water (TBW)",
+        "scale": "kg"
+    },
+    {
+        "type": "0x32",
+        "label": "Basis metabolic rate (BMR)",
+        "scale": "J"
+    },
+    {
+        "type": "0x34",
+        "label": "Acceleration X-axis",
+        "scale": "m/s2"
+    },
+    {
+        "type": "0x35",
+        "label": "Acceleration Y-axis",
+        "scale": "m/s2"
+    },
+    {
+        "type": "0x36",
+        "label": "Acceleration Z-axis",
+        "scale": "m/s2"
+    },
+    {
+        "type": "0x37",
+        "label": "Smoke density",
+        "scale": "%"
+    },
+    {
+        "type": "0x38",
+        "label": "Water flow",
+        "scale": "l/h"
+    },
+    {
+        "type": "0x39",
+        "label": "Water pressure",
+        "scale": "kPa"
+    },
+    {
+        "type": "0x3a",
+        "label": "RF signal strength",
+        "scale": "%"
+    },
+    {
+        "type": "0x3a",
+        "label": "RF signal strength",
+        "scale": "dBm"
+    },
+    {
+        "type": "0x3b",
+        "label": "Particulate Matter 10",
+        "scale": "mol/m³"
+    },
+    {
+        "type": "0x3b",
+        "label": "Particulate Matter 10",
+        "scale": "µg/m³"
+    },
+    {
+        "type": "0x3c",
+        "label": "Respiratory rate",
+        "scale": "bpm"
+    },
+    {
+        "type": "0x3d",
+        "label": "Relative Modulation level",
+        "scale": "%"
+    },
+    {
+        "type": "0x42",
+        "label": "Water Chlorine level",
+        "scale": "mg/l"
+    },
+    {
+        "type": "0x43",
+        "label": "Water acidity",
+        "scale": "pH"
+    },
+    {
+        "type": "0x44",
+        "label": "Water Oxidation reduction potential",
+        "scale": "mV"
+    },
+    {
+        "type": "0x46",
+        "label": "Motion Direction",
+        "scale": "°"
+    },
+    {
+        "type": "0x47",
+        "label": "Applied force on the sensor",
+        "scale": "N"
+    },
+    {
+        "type": "0x4e",
+        "label": "Suction Pressure",
+        "scale": "kPa"
+    },
+    {
+        "type": "0x4e",
+        "label": "Suction Pressure",
+        "scale": "psi"
+    },
+    {
+        "type": "0x4f",
+        "label": "Discharge Pressure",
+        "scale": "kPa"
+    },
+    {
+        "type": "0x4f",
+        "label": "Discharge Pressure",
+        "scale": "psi"
+    },
+    {
+        "type": "0x51",
+        "label": "Ozone",
+        "scale": "µg/m³"
+    },
+    {
+        "type": "0x52",
+        "label": "Sulfur dioxide",
+        "scale": "µg/m³"
+    },
+    {
+        "type": "0x53",
+        "label": "Nitrogen dioxide",
+        "scale": "µg/m³"
+    },
+    {
+        "type": "0x54",
+        "label": "Ammonia",
+        "scale": "µg/m³"
+    },
+    {
+        "type": "0x55",
+        "label": "Lead",
+        "scale": "µg/m³"
+    },
+    {
+        "type": "0x56",
+        "label": "Particulate Matter 1",
+        "scale": "µg/m³"
+    }
+]
