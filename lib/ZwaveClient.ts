@@ -307,6 +307,7 @@ export type ZwaveConfig = {
 	healHour?: number
 	logToFile?: boolean
 	nodeFilter?: string[]
+	scales?: SensorTypeScale[]
 }
 
 export type Z2MDriverInfo = {
@@ -1043,41 +1044,44 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			// extend options with hidden `options`
-			const zwaveOptions: ZWaveOptions = Object.assign(
-				{
-					storage: {
-						cacheDir: storeDir,
-						deviceConfigPriorityDir: priorityDir,
-					},
-					networkKey: this.cfg.networkKey,
-					logConfig: {
-						// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-						enabled: this.cfg.logEnabled,
-						level: loglevels[this.cfg.logLevel],
-						logToFile: this.cfg.logToFile,
-						filename: ZWAVEJS_LOG_FILE,
-						forceConsole: true,
-						nodeFilter:
-							this.cfg.nodeFilter &&
-							this.cfg.nodeFilter.length > 0
-								? this.cfg.nodeFilter.map((n) => parseInt(n))
-								: undefined,
-					},
+			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
+				storage: {
+					cacheDir: storeDir,
+					deviceConfigPriorityDir: priorityDir,
 				},
-				this.cfg.options
-			)
+				logConfig: {
+					// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
+					enabled: this.cfg.logEnabled,
+					level: loglevels[this.cfg.logLevel],
+					logToFile: this.cfg.logToFile,
+					filename: ZWAVEJS_LOG_FILE,
+					forceConsole: true,
+					nodeFilter:
+						this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
+							? this.cfg.nodeFilter.map((n) => parseInt(n))
+							: undefined,
+				},
+			}
+
+			if (this.cfg.scales) {
+				const scales: Record<string | number, string | number> = {}
+				for (const s of this.cfg.scales) {
+					scales[s.type] = s.unit
+				}
+
+				zwaveOptions.preferences = {
+					scales,
+				}
+			}
+
+			Object.assign(zwaveOptions, this.cfg.options)
 
 			// transform network key to buffer
-			if (
-				zwaveOptions.networkKey &&
-				zwaveOptions.networkKey.length === 32
-			) {
+			if (this.cfg.networkKey?.length === 32) {
 				zwaveOptions.networkKey = Buffer.from(
-					zwaveOptions.networkKey as unknown as string,
+					this.cfg.networkKey as unknown as string,
 					'hex'
 				)
-			} else {
-				delete zwaveOptions.networkKey
 			}
 
 			try {
