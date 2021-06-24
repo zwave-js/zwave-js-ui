@@ -32,6 +32,7 @@ import {
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
 	ZWaveError,
+	SetValueAPIOptions,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -1915,7 +1916,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Set a value of a specific zwave valueId
 	 */
-	async writeValue(valueId: Z2MValueId, value: any) {
+	async writeValue(
+		valueId: Z2MValueId,
+		value: any,
+		options?: SetValueAPIOptions
+	) {
 		if (this.driverReady) {
 			const vID = this._getValueID(valueId, true)
 			logger.log('info', `Writing %o to ${vID}`, value)
@@ -1967,7 +1972,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				} else {
 					result = await this.getNode(valueId.nodeId).setValue(
 						valueId,
-						value
+						value,
+						options
 					)
 					this.emit('valueWritten', valueId, value)
 				}
