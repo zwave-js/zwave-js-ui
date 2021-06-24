@@ -1068,8 +1068,12 @@ export default {
 		...mapMutations(['showSnackbar']),
 		scaleName(item) {
 			if (typeof item === 'object' && item) {
-				return `${!item.group ? `[${item.key}] ` : ''}${item.sensor} ${
-					item.unit ? `(${item.unit})` : ''
+				return `${item.sensor}: ${
+					item.label ? ' ' + item.label + ' ' : ''
+				}${
+					item.unit && item.unit !== item.label
+						? `(${item.unit})`
+						: ''
 				}`
 			} else {
 				return item
