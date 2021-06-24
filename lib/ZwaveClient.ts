@@ -134,7 +134,6 @@ export type SensorTypeScale = {
 	label: string
 	unit?: string
 	description?: string
-	group?: boolean
 }
 
 export type AllowedApis = typeof allowedApis[number]
