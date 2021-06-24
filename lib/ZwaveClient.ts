@@ -129,9 +129,10 @@ const allowedApis = validateMethods([
 ] as const)
 
 export type SensorTypeScale = {
-	type: string | number
+	key: string | number
+	sensor: string
 	label: string
-	unit: string
+	unit?: string
 	description?: string
 	group?: boolean
 }
@@ -1066,7 +1067,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (this.cfg.scales) {
 				const scales: Record<string | number, string | number> = {}
 				for (const s of this.cfg.scales) {
-					scales[s.type] = s.unit
+					scales[s.key] = s.label
 				}
 
 				zwaveOptions.preferences = {

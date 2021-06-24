@@ -234,11 +234,11 @@
 												"
 											/>
 											<v-col cols="12" sm="6" md="4">
-												<v-select
-													hint="Select sensors scales. Format is `<group or sensor type number>: <scale>` For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
+												<v-autocomplete
+													hint="Select preferred sensors scales. You can select a scale For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
 													persistent-hint
-													label="Scales"
-													:items="scales"
+													label="Preferred scales"
+													:items="filteredScales"
 													multiple
 													:item-text="scaleName"
 													:rules="[
@@ -278,7 +278,7 @@
 															</v-list-item-content>
 														</v-list-item>
 													</template>
-												</v-select>
+												</v-autocomplete>
 											</v-col>
 											<v-col cols="12" sm="6">
 												<v-switch
@@ -873,6 +873,18 @@ export default {
 		fileInput,
 	},
 	computed: {
+		filteredScales() {
+			if (this.newZwave.scales && this.newZwave.scales.length > 0) {
+				return this.scales.filter(
+					(a) =>
+						!this.newZwave.scales.find(
+							(b) => b.key === a.key && a.label !== b.label
+						)
+				)
+			} else {
+				return this.scales
+			}
+		},
 		visibleHeaders() {
 			if (!this.newMqtt.disabled) return this.headers
 			else {
@@ -1010,7 +1022,7 @@ export default {
 								(a, index) =>
 									values.findIndex(
 										(b, index2) =>
-											index2 > index && a.type === b.type
+											index2 > index && a.key === b.key
 									) >= 0
 							) || 'Duplicated sensor type scale'
 						)
@@ -1056,8 +1068,8 @@ export default {
 		...mapMutations(['showSnackbar']),
 		scaleName(item) {
 			if (typeof item === 'object' && item) {
-				return `${!item.group ? `[${item.type}] ` : ''}${item.label}: ${
-					item.unit
+				return `${!item.group ? `[${item.key}] ` : ''}${item.sensor} ${
+					item.unit ? `(${item.unit})` : ''
 				}`
 			} else {
 				return item

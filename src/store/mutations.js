@@ -1,6 +1,7 @@
 export const state = {
   auth: undefined,
   serial_ports: [],
+  scales: [],
   nodes: [],
   nodesMap: new Map(),
   user: {},
@@ -241,10 +242,14 @@ export const mutations = {
     }
   },
   initPorts (state, ports) {
+    if(ports) {
     state.serial_ports = ports || []
+    }
   },
   initScales (state, scales) {
+    if(scales) {
     state.scales = scales || []
+    }
   },
   initDevices (state, devices) {
     if (!state.gateway.values) state.gateway.values = []
