@@ -1,6 +1,7 @@
 export const state = {
   auth: undefined,
   serial_ports: [],
+  scales: [],
   nodes: [],
   nodesMap: new Map(),
   user: {},
@@ -79,7 +80,8 @@ export const getters = {
   mqtt: state => state.mqtt,
   devices: state => state.devices,
   gateway: state => state.gateway,
-  appInfo: state => state.appInfo
+  appInfo: state => state.appInfo,
+  scales: state => state.scales
 }
 
 export const actions = {
@@ -90,6 +92,7 @@ export const actions = {
     if (data) {
       store.commit('initSettings', data.settings)
       store.commit('initPorts', data.serial_ports)
+      store.commit('initScales', data.scales)
       store.commit('initDevices', data.devices)
     }
   },
@@ -239,7 +242,14 @@ export const mutations = {
     }
   },
   initPorts (state, ports) {
+    if(ports) {
     state.serial_ports = ports || []
+    }
+  },
+  initScales (state, scales) {
+    if(scales) {
+    state.scales = scales || []
+    }
   },
   initDevices (state, devices) {
     if (!state.gateway.values) state.gateway.values = []

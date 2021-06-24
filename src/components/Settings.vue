@@ -233,6 +233,53 @@
 													newZwave.disclaimerVersion
 												"
 											/>
+											<v-col cols="12" sm="6" md="4">
+												<v-autocomplete
+													hint="Select preferred sensors scales. You can select a scale For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
+													persistent-hint
+													label="Preferred scales"
+													:items="filteredScales"
+													multiple
+													:item-text="scaleName"
+													:rules="[
+														rules.uniqueSensorType,
+													]"
+													chips
+													return-object
+													deletable-chips
+													v-model="newZwave.scales"
+												>
+													<template
+														v-slot:item="{
+															item,
+															attrs,
+															on,
+														}"
+													>
+														<v-list-item
+															v-on="on"
+															v-bind="attrs"
+															two-line
+														>
+															<v-list-item-content>
+																<v-list-item-title
+																	>{{
+																		scaleName(
+																			item
+																		)
+																	}}</v-list-item-title
+																>
+																<v-list-item-subtitle
+																	>{{
+																		item.description ||
+																		''
+																	}}</v-list-item-subtitle
+																>
+															</v-list-item-content>
+														</v-list-item>
+													</template>
+												</v-autocomplete>
+											</v-col>
 											<v-col cols="12" sm="6">
 												<v-switch
 													hint="Enable zwave-js logging"
@@ -826,6 +873,18 @@ export default {
 		fileInput,
 	},
 	computed: {
+		filteredScales() {
+			if (this.newZwave.scales && this.newZwave.scales.length > 0) {
+				return this.scales.filter(
+					(a) =>
+						!this.newZwave.scales.find(
+							(b) => b.key === a.key && a.label !== b.label
+						)
+				)
+			} else {
+				return this.scales
+			}
+		},
 		visibleHeaders() {
 			if (!this.newMqtt.disabled) return this.headers
 			else {
@@ -875,7 +934,14 @@ export default {
 				'This field is required.'
 			)
 		},
-		...mapGetters(['zwave', 'mqtt', 'gateway', 'devices', 'serial_ports']),
+		...mapGetters([
+			'zwave',
+			'mqtt',
+			'gateway',
+			'devices',
+			'serial_ports',
+			'scales',
+		]),
 	},
 	watch: {
 		dialogValue(val) {
@@ -947,6 +1013,21 @@ export default {
 
 					return valid || 'This field is required.'
 				},
+				uniqueSensorType(values) {
+					if (!values || values.length < 2) {
+						return true
+					} else {
+						return (
+							!values.some(
+								(a, index) =>
+									values.findIndex(
+										(b, index2) =>
+											index2 > index && a.key === b.key
+									) >= 0
+							) || 'Duplicated sensor type scale'
+						)
+					}
+				},
 				validNodeLog: (values) => {
 					return (
 						!values ||
@@ -985,6 +1066,19 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		scaleName(item) {
+			if (typeof item === 'object' && item) {
+				return `${item.sensor}: ${
+					item.label ? ' ' + item.label + ' ' : ''
+				}${
+					item.unit && item.unit !== item.label
+						? `(${item.unit})`
+						: ''
+				}`
+			} else {
+				return item
+			}
+		},
 		randomKey() {
 			let key = ''
 
