@@ -817,7 +817,7 @@ app.get(
 			for (const [, scale] of group) {
 				scales.push({
 					key: key,
-					sensor: group.name,
+					sensor: group.name || key,
 					unit: scale.unit,
 					label: scale.label,
 					description: scale.description,
