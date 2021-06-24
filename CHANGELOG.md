@@ -1,3 +1,21 @@
+# [5.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.4...v5.1.0) (2021-06-24)
+
+
+### Bug Fixes
+
+* **hass:** make dimmers turn on to previous brightness ([#1360](https://github.com/zwave-js/zwavejs2mqtt/issues/1360)) ([d7a3845](https://github.com/zwave-js/zwavejs2mqtt/commit/d7a3845c799e2c3d59d6159afff7376baf5fe803))
+* add Z2MClientStatus type ([#1357](https://github.com/zwave-js/zwavejs2mqtt/issues/1357)) ([ee4343f](https://github.com/zwave-js/zwavejs2mqtt/commit/ee4343f17dca3f7b01ceee77ae46f9879ba2e10e))
+
+
+### Features
+
+* **ui:** allow to specify `setValue` options ([#1373](https://github.com/zwave-js/zwavejs2mqtt/issues/1373)) ([ff875e3](https://github.com/zwave-js/zwavejs2mqtt/commit/ff875e3926ee82c1607390519ad6630cb97e8f21))
+* add option to writeValue api ([#1370](https://github.com/zwave-js/zwavejs2mqtt/issues/1370)) ([7f2d7c2](https://github.com/zwave-js/zwavejs2mqtt/commit/7f2d7c28ca061fc382ccb7a126735bf012a0da85)), closes [#1367](https://github.com/zwave-js/zwavejs2mqtt/issues/1367)
+* bump zwave-js@7.8.0 ([e5efe5e](https://github.com/zwave-js/zwavejs2mqtt/commit/e5efe5ea5b29c067b99fa2682b6c04a348070a6a))
+* bump zwave-js@7.9.0 ([239f76d](https://github.com/zwave-js/zwavejs2mqtt/commit/239f76d065e83f2eda8bdd6f8bff502ce51c52f4))
+* preferred sensor scales ([#1369](https://github.com/zwave-js/zwavejs2mqtt/issues/1369)) ([60918d9](https://github.com/zwave-js/zwavejs2mqtt/commit/60918d975017643753838b9cc498f62cbaccdbca))
+* **ui:** zwave plus column ([#1368](https://github.com/zwave-js/zwavejs2mqtt/issues/1368)) ([5ade568](https://github.com/zwave-js/zwavejs2mqtt/commit/5ade56879b235b630a68a3d77b0734acf693ac7e)), closes [#1358](https://github.com/zwave-js/zwavejs2mqtt/issues/1358)
+
 ## [5.0.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.3...v5.0.4) (2021-06-17)
 
 ## [5.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.2...v5.0.3) (2021-06-17)
