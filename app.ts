@@ -37,7 +37,6 @@ import {
 	CustomPlugin,
 	PluginConstructor,
 } from './lib/CustomPlugin'
-import { Scale } from 'zwave-js'
 
 declare module 'express' {
 	interface Request {
@@ -809,11 +808,11 @@ app.get(
 	isAuthenticated,
 	async function (req, res) {
 		const sensorTypes = configManager.sensorTypes
-		const sensorGroups = configManager.namedScales
+		const sensorScalesGroups = configManager.namedScales
 
 		const scales: SensorTypeScale[] = []
 
-		for (const [key, group] of sensorGroups) {
+		for (const [key, group] of sensorScalesGroups) {
 			for (const [, scale] of group) {
 				scales.push({
 					key: key,
