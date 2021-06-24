@@ -5,7 +5,12 @@ import csrf from 'csurf'
 import SerialPort from 'serialport'
 import jsonStore from './lib/jsonStore'
 import cors from 'cors'
-import ZWaveClient, { CallAPIResult } from './lib/ZwaveClient'
+import ZWaveClient, {
+	CallAPIResult,
+	configManager,
+	loadManager,
+	SensorTypeScale,
+} from './lib/ZwaveClient'
 import MqttClient from './lib/MqttClient'
 import Gateway, { GatewayConfig } from './lib/Gateway'
 import store, { User, Settings } from './config/store'
@@ -190,6 +195,7 @@ export async function startServer(host: string, port: number | string) {
 
 	setupSocket(server)
 	setupInterceptor()
+	await loadManager()
 	await startGateway(settings)
 }
 
@@ -801,11 +807,41 @@ app.get(
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
+		const sensorTypes = configManager.sensorTypes
+		const sensorScalesGroups = configManager.namedScales
+
+		const scales: SensorTypeScale[] = []
+
+		for (const [key, group] of sensorScalesGroups) {
+			for (const [, scale] of group) {
+				scales.push({
+					key: key,
+					sensor: group.name,
+					unit: scale.unit,
+					label: scale.label,
+					description: scale.description,
+				})
+			}
+		}
+
+		for (const [, sensor] of sensorTypes) {
+			for (const [, scale] of sensor.scales) {
+				scales.push({
+					key: sensor.key,
+					sensor: sensor.label,
+					label: scale.label,
+					unit: scale.unit,
+					description: scale.description,
+				})
+			}
+		}
+
 		const data = {
 			success: true,
 			settings: jsonStore.get(store.settings),
 			devices: gw?.zwave?.devices ?? {},
 			serial_ports: [],
+			scales: scales,
 		}
 
 		let ports: SerialPort.PortInfo[]
