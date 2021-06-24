@@ -32,7 +32,7 @@
 		</v-row>
 
 		<v-row>
-			<v-col cols="8" style="max-width: 300px">
+			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
 					label="Name"
 					append-outer-icon="send"
@@ -44,10 +44,8 @@
 					@click:append-outer="updateName"
 				></v-text-field>
 			</v-col>
-		</v-row>
 
-		<v-row>
-			<v-col cols="8" style="max-width: 300px">
+			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
 					label="Location"
 					append-outer-icon="send"
@@ -61,10 +59,22 @@
 			</v-col>
 		</v-row>
 
+		<v-subheader class="title" style="padding: 0">Send Options</v-subheader>
+		<v-row class="mt-0">
+			<v-col cols="12" sm="6" style="max-width: 300px; padding-top: 0">
+				<v-text-field
+					label="Transition duration"
+					hint="Ex: '10s' (10 seconds)"
+					persistent-hint
+					v-model.trim="options.transitionDuration"
+				></v-text-field>
+			</v-col>
+		</v-row>
+
 		<!-- NODE VALUES -->
 
 		<v-row v-if="node.values && node.values.length > 0">
-			<v-subheader>Values</v-subheader>
+			<v-subheader class="title">Values</v-subheader>
 
 			<v-expansion-panels accordion multiple>
 				<v-expansion-panel
@@ -228,6 +238,7 @@ export default {
 		return {
 			locError: null,
 			nameError: null,
+			options: {},
 			newName: this.node.name,
 			newLoc: this.node.loc,
 			advancedShowDialog: false,
@@ -506,6 +517,7 @@ export default {
 						propertyKey: v.propertyKey,
 					},
 					v.newValue,
+					this.options,
 				])
 			}
 		},
