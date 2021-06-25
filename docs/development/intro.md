@@ -30,7 +30,7 @@ According to zwave-js [docs](https://zwave-js.github.io/node-zwave-js/#/api/driv
 
 > `deviceConfigPriorityDir`: Allows you to specify a directory where device configuration files can be loaded from with higher priority than the included ones. This directory does not get indexed and should be used sparingly, e.g. for testing.
 
-When a custom device configuration is loaded successfully you should see this in zwave-js logs:
+This directory does not expect any special structure. Just organize it as you like. When a custom device configuration is loaded successfully you should see this in zwave-js logs:
 
 ```js
 10:32:09.322 CNTRLR   [Node 001] User-provided device config loaded
@@ -39,3 +39,5 @@ When a custom device configuration is loaded successfully you should see this in
 10:32:09.351 CNTRLR   [Node 017] User-provided device config loaded
 10:32:09.374 CNTRLR   [Node 025] User-provided device config loaded
 ```
+
+[!NOTE] You will need to re-interview the device for certain changes to have an effect, for example changed configuration parameters, certain compat flags, etc.
