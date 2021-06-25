@@ -44,7 +44,7 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 		object_id: 'scene_state',
 		discovery_payload: {
 			state_topic: true,
-			value_template: '{{ value_json.value}}',
+			value_template: "{{ value_json.value | default('', true) }}",
 		},
 	},
 	// Light https://www.home-assistant.io/components/light.mqtt
