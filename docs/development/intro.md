@@ -40,4 +40,4 @@ This directory does not expect any special structure. Just organize it as you li
 10:32:09.374 CNTRLR   [Node 025] User-provided device config loaded
 ```
 
-[!NOTE] You will need to re-interview the device for certain changes to have an effect, for example changed configuration parameters, certain compat flags, etc.
+> [!NOTE] You will need to re-interview the device for certain changes to have an effect, for example changed configuration parameters, certain compat flags, etc.

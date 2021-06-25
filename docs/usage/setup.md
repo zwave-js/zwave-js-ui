@@ -7,6 +7,7 @@ Firstly you need to open the browser at the link <http://localhost:8091> and edi
 - **Auth**: Enable this to password protect your application. Default credentials are:
   - Username:`admin`
   - Password: `zwave`
+- **Plugins**: List of plugins to use. If the plugin you want to use is not listed just write the name or the path to it and press enter. More about plugins [here](/guide/plugins)
 - **Log enabled**: Enable logging for zwavejs2mqtt
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
@@ -39,12 +40,14 @@ Properties of a **valueId configuration**:
 
 - **Serial port**: The serial port where your controller is connected
 - **Network key** (Optional): Zwave network key if security is enabled. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
+- **Enable statistics**: Enable/Disable usage statistics. More info [here](/usage_stats)
+- **Preferred scales**: Choose preferred sensor scales
 - **Log enabled**: Enable logging for zwave-js websocket server
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
+- **Log nodes**: Filter zwave-js logs to log just this nodes
 - **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
-- **Hidden settings**: advanced settings not visible to the user interface, you can edit these by setting in the settings.json
-  - `zwave.plugin` defines a js script that will be included with the `this` context of the zwave client, for example you could set this to `hack` and include a `hack.js` in the root of the app with `module.exports = zw => {zw.client.on("scan complete", () => console.log("scan complete")}`
+- **Hidden settings**: Advanced settings not visible to the user interface, you can edit these by setting in the `settings.json` file you fins in store directory
   - `zwave.options` overrides options passed to the zwave js Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
 ## Disable Gateway
