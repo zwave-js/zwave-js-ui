@@ -99,6 +99,8 @@
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "conventional-changelog-cli": "^2.1.1",
+    "docsify": "^4.12.1",
+    "docsify-cli": "^4.4.3",
     "eslint": "^7.28.0",
     "eslint-friendly-formatter": "^4.0.1",
     "eslint-loader": "^4.0.2",

@@ -80,11 +80,11 @@ This are the available apis:
 - `refreshInfo(nodeId)`: Re-interview a node to fetch its info and supported CCs
 - `beginFirmwareUpdate(nodeId, fileName, data, target)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
 - `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
-- `writeValue(valueId, value)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
+- `writeValue(valueId, value, options)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid) with optional options (ex: `{"transitionDuration": "10s"}`)
 - `writeBroadcast(valueId, value)`: Send a broadcast request to all nodes that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
 - `writeMulticast(nodes, valueId, value)`: Send a multicast request to all `nodes` provided that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
 - `sendCommand(ctx, command, args)`: Send a custom command.
-  - `ctx`:context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
+  - `ctx`: context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
   - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
   - `args`: array of arguments to pass to the command
 - `restart()`: restart client
