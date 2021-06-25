@@ -1610,7 +1610,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async healNode(nodeId: number): Promise<boolean> {
 		if (this._driver && !this.closed) {
-			return this._driver.controller.healNode(nodeId)
+			let status: HealNodeStatus = 'pending'
+			this.sendToSocket(socketEvents.healProgress, [[nodeId, status]])
+			const result = await this._driver.controller.healNode(nodeId)
+			status = result ? 'done' : 'failed'
+			this.sendToSocket(socketEvents.healProgress, [[nodeId, status]])
+			return result
 		}
 
 		throw Error('Driver is closed')
