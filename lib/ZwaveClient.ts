@@ -1932,22 +1932,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			let result = false
 
-			// coerce string to numbers when value type is number and received a string
-			if (valueId.type === 'number' && typeof value === 'string') {
-				value = Number(value)
-			} else if (
-				valueId.property === 'hexColor' &&
-				typeof value === 'string' &&
-				value.startsWith('#')
-			) {
-				// remove the leading `#` if present
-				value = value.substr(1)
-			}
-
-			if (typeof value === 'string' && utils.isBufferAsHex(value)) {
-				value = utils.bufferFromHex(value)
-			}
-
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
 
@@ -1975,6 +1959,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 					result = true
 				} else {
+					// coerce string to numbers when value type is number and received a string
+					if (
+						valueId.type === 'number' &&
+						typeof value === 'string'
+					) {
+						value = Number(value)
+					} else if (
+						valueId.property === 'hexColor' &&
+						typeof value === 'string' &&
+						value.startsWith('#')
+					) {
+						// remove the leading `#` if present
+						value = value.substr(1)
+					}
+
+					if (
+						typeof value === 'string' &&
+						utils.isBufferAsHex(value)
+					) {
+						value = utils.bufferFromHex(value)
+					}
+
 					result = await this.getNode(valueId.nodeId).setValue(
 						valueId,
 						value,
