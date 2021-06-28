@@ -731,6 +731,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						error.message
 				)
 			}
+			node.groups = []
 			for (const [endpoint, groups] of endpointGroups) {
 				for (const [groupIndex, group] of groups) {
 					// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=associationgroup-interface
