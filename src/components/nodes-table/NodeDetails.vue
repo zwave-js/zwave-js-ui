@@ -31,6 +31,10 @@
 			</v-col>
 		</v-row>
 
+		<v-row justify="start">
+			<statistics-card title="Statistics" :node="node" />
+		</v-row>
+
 		<v-row>
 			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
@@ -223,6 +227,7 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 
 import { inboundEvents as socketActions } from '@/plugins/socket'
 import { mapMutations, mapGetters } from 'vuex'
+import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 
 export default {
 	props: {
@@ -233,6 +238,7 @@ export default {
 	components: {
 		ValueID,
 		DialogAdvanced,
+		StatisticsCard,
 	},
 	data() {
 		return {

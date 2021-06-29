@@ -5,56 +5,59 @@
 				<v-container fluid>
 					<v-row justify="center">
 						<v-col cols="12" sm="6">
-							<v-card class="ma-3" style="max-width: 600px">
-								<v-card-title>
-									<v-btn
-										@click="showActions = !showActions"
-										icon
-										class="mr-1"
-										><v-icon>{{
-											showActions
-												? 'expand_less'
-												: 'expand_more'
-										}}</v-icon></v-btn
-									>
-									Actions</v-card-title
+							<v-expansion-panels style="justify-content: start">
+								<v-expansion-panel
+									class="ma-3"
+									style="max-width: 600px"
 								>
-								<v-card-text v-if="showActions">
-									<v-row>
-										<v-col
-											cols="12"
-											md="6"
-											style="text-align: center"
-										>
-											<v-btn
-												depressed
-												color="primary"
-												@click="
-													addRemoveShowDialog = true
-												"
-											>
-												Add/Remove Device
-											</v-btn>
-										</v-col>
-										<v-col
-											cols="12"
-											md="6"
-											style="text-align: center"
-										>
-											<v-btn
-												dark
-												color="green"
-												depressed
-												@click="
-													advancedShowDialog = true
-												"
-											>
-												Advanced
-											</v-btn>
-										</v-col>
-									</v-row>
-								</v-card-text>
-							</v-card>
+									<v-expansion-panel-header
+										>Actions</v-expansion-panel-header
+									>
+									<v-expansion-panel-content>
+										<v-card flat>
+											<v-card-text>
+												<v-row>
+													<v-col
+														cols="12"
+														md="6"
+														style="
+															text-align: center;
+														"
+													>
+														<v-btn
+															depressed
+															color="primary"
+															@click="
+																addRemoveShowDialog = true
+															"
+														>
+															Add/Remove Device
+														</v-btn>
+													</v-col>
+													<v-col
+														cols="12"
+														md="6"
+														style="
+															text-align: center;
+														"
+													>
+														<v-btn
+															dark
+															color="green"
+															depressed
+															@click="
+																advancedShowDialog = true
+															"
+														>
+															Advanced
+														</v-btn>
+													</v-col>
+												</v-row>
+											</v-card-text>
+										</v-card>
+									</v-expansion-panel-content>
+								</v-expansion-panel>
+							</v-expansion-panels>
 						</v-col>
 
 						<v-col
@@ -63,46 +66,10 @@
 							sm="6"
 							style="text-align: center"
 						>
-							<v-card class="ma-3" style="max-width: 600px">
-								<v-card-title>
-									<v-btn
-										@click="showStats = !showStats"
-										icon
-										class="mr-1"
-										><v-icon>{{
-											showStats
-												? 'expand_less'
-												: 'expand_more'
-										}}</v-icon></v-btn
-									>
-									Controller statistics</v-card-title
-								>
-
-								<v-card-text v-if="showStats">
-									<v-row>
-										<v-col
-											v-for="prop in Object.keys(
-												controllerNode.statistics
-											)"
-											:key="prop"
-											cols="4"
-										>
-											<div
-												class="caption font-weight-bold"
-											>
-												{{ prop }}
-											</div>
-											<div class="caption">
-												{{
-													controllerNode.statistics[
-														prop
-													]
-												}}
-											</div>
-										</v-col>
-									</v-row>
-								</v-card-text>
-							</v-card>
+							<StatisticsCard
+								title="Controller Statistics"
+								:node="this.controllerNode"
+							/>
 						</v-col>
 					</v-row>
 				</v-container>
@@ -140,6 +107,7 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
+import StatisticsCard from '@/components/custom/StatisticsCard'
 
 export default {
 	name: 'ControlPanel',
@@ -150,6 +118,7 @@ export default {
 		NodesTable,
 		DialogAddRemove,
 		DialogAdvanced,
+		StatisticsCard,
 	},
 	computed: {
 		...mapGetters(['nodes', 'zwave']),
@@ -163,8 +132,6 @@ export default {
 	watch: {},
 	data() {
 		return {
-			showActions: false,
-			showStats: false,
 			settings: new Settings(localStorage),
 			bindedSocketEvents: {}, // keep track of the events-handlers
 			addRemoveShowDialog: false,
