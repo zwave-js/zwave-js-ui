@@ -1,3 +1,21 @@
+# [5.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.1.0...v5.2.0) (2021-06-29)
+
+
+### Bug Fixes
+
+* clear node groups ([#1391](https://github.com/zwave-js/zwavejs2mqtt/issues/1391)) ([cce8e81](https://github.com/zwave-js/zwavejs2mqtt/commit/cce8e8179ac59d61f08772eedae1ab51e9a0d2cf))
+* **hass:** add default to central_scene ([#1383](https://github.com/zwave-js/zwavejs2mqtt/issues/1383)) ([a660e22](https://github.com/zwave-js/zwavejs2mqtt/commit/a660e229adf21e7b336eb7dd9432746bbee18a3b)), closes [#1020](https://github.com/zwave-js/zwavejs2mqtt/issues/1020)
+* **hass:** remove second arg in default ([71f2285](https://github.com/zwave-js/zwavejs2mqtt/commit/71f228530bf153fedb616197c085fa40a0c91255))
+* send heal node status when healing single node ([#1377](https://github.com/zwave-js/zwavejs2mqtt/issues/1377)) ([23daffa](https://github.com/zwave-js/zwavejs2mqtt/commit/23daffae2940a22f097339697f63e27187fcb90e)), closes [#1375](https://github.com/zwave-js/zwavejs2mqtt/issues/1375)
+* sending 'start' or 'stop' MultilevelSwitchCC not working ([#1379](https://github.com/zwave-js/zwavejs2mqtt/issues/1379)) ([5c5dbdc](https://github.com/zwave-js/zwavejs2mqtt/commit/5c5dbdccab5e6517a3b936a5844d544c0b358194)), closes [#1372](https://github.com/zwave-js/zwavejs2mqtt/issues/1372)
+
+
+### Features
+
+* controller statistics ([#1393](https://github.com/zwave-js/zwavejs2mqtt/issues/1393)) ([f5bf037](https://github.com/zwave-js/zwavejs2mqtt/commit/f5bf037dcb3b4d69c103456f8d94852eba995351)), closes [#1376](https://github.com/zwave-js/zwavejs2mqtt/issues/1376)
+* **ui:** broadcast refresh node info ([#1392](https://github.com/zwave-js/zwavejs2mqtt/issues/1392)) ([21a50a2](https://github.com/zwave-js/zwavejs2mqtt/commit/21a50a284dcb2b0c6d42fe58ab29fcd668ceb165))
+* bump zwave-js 7.10.0 and zwave-js/server 1.8.0 ([cfb0760](https://github.com/zwave-js/zwavejs2mqtt/commit/cfb0760752f6d9b26cdeaa367e88ba47c29507fd))
+
 # [5.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.4...v5.1.0) (2021-06-24)
 
 
