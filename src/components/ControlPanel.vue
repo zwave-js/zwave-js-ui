@@ -3,35 +3,83 @@
 		<v-card>
 			<v-card-text>
 				<v-container fluid>
-					<v-row style="max-width: 800px" justify="start">
-						<v-col
-							cols="12"
-							sm="4"
-							md="3"
-							style="text-align: center"
-						>
-							<v-btn
-								depressed
-								color="primary"
-								@click="addRemoveShowDialog = true"
-							>
-								Add/Remove Device
-							</v-btn>
+					<v-row justify="center">
+						<v-col cols="12" sm="6">
+							<v-card class="ma-3" style="max-width: 600px">
+								<v-card-title> Actions</v-card-title>
+								<v-card-text>
+									<v-row>
+										<v-col
+											cols="12"
+											md="6"
+											style="text-align: center"
+										>
+											<v-btn
+												depressed
+												color="primary"
+												@click="
+													addRemoveShowDialog = true
+												"
+											>
+												Add/Remove Device
+											</v-btn>
+										</v-col>
+										<v-col
+											cols="12"
+											md="6"
+											style="text-align: center"
+										>
+											<v-btn
+												dark
+												color="green"
+												depressed
+												@click="
+													advancedShowDialog = true
+												"
+											>
+												Advanced
+											</v-btn>
+										</v-col>
+									</v-row>
+								</v-card-text>
+							</v-card>
 						</v-col>
+
 						<v-col
+							v-if="controllerNode"
 							cols="12"
-							sm="4"
-							md="3"
+							sm="6"
 							style="text-align: center"
 						>
-							<v-btn
-								dark
-								color="green"
-								depressed
-								@click="advancedShowDialog = true"
-							>
-								Advanced
-							</v-btn>
+							<v-card class="ma-3" style="max-width: 600px">
+								<v-card-title>
+									Controller statistics</v-card-title
+								>
+								<v-card-text>
+									<v-row>
+										<v-col
+											v-for="prop in Object.keys(
+												controllerNode.statistics
+											)"
+											:key="prop"
+											cols="4"
+										>
+											<div
+												class="caption font-weight-bold"
+											>
+												{{ prop }}
+											</div>
+											<div class="caption">
+												{{
+													controllerNode.statistics[
+														prop
+													]
+												}}
+											</div>
+										</v-col>
+									</v-row>
+								</v-card-text>
+							</v-card>
 						</v-col>
 					</v-row>
 				</v-container>
@@ -84,6 +132,9 @@ export default {
 		...mapGetters(['nodes', 'zwave']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
+		},
+		controllerNode() {
+			return this.nodes.find((n) => n.isControllerNode)
 		},
 	},
 	watch: {},

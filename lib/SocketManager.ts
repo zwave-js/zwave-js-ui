@@ -22,6 +22,7 @@ export enum socketEvents {
 	info = 'INFO',
 	api = 'API_RETURN', // api results
 	debug = 'DEBUG',
+	statistics = 'STATISTICS',
 }
 
 // events from client ---> server

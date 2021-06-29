@@ -33,6 +33,8 @@ import {
 	ZWavePlusRoleType,
 	ZWaveError,
 	SetValueAPIOptions,
+	ControllerStatistics,
+	NodeStatistics,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -254,6 +256,7 @@ export type Z2MNode = {
 	productId?: number
 	productLabel?: string
 	productDescription?: string
+	statistics?: ControllerStatistics | NodeStatistics
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -2022,7 +2025,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
-			this._driver.controller
+			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
 				.on('exclusion started', this._onExclusionStarted.bind(this))
 				.on('inclusion stopped', this._onInclusionStopped.bind(this))
@@ -2036,6 +2039,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this._onHealNetworkProgress.bind(this)
 				)
 				.on('heal network done', this._onHealNetworkDone.bind(this))
+				.on(
+					'statistics updated',
+					this._onControllerStatisticsUpdated.bind(this)
+				)
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -2086,6 +2093,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.error(`Error while restarting driver: ${error.message}`)
 			}
 		}
+	}
+
+	private _onControllerStatisticsUpdated(stats: ControllerStatistics) {
+		const controllerNode = this.nodes.get(this.driver.controller.ownNodeId)
+
+		if (controllerNode) {
+			controllerNode.statistics = stats
+		}
+
+		this.sendToSocket(socketEvents.statistics, {
+			nodeId: controllerNode.id,
+			statistics: stats,
+		})
+
+		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
 	}
 
 	private _onScanComplete() {
@@ -2672,6 +2694,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	private _onNodeStatisticsUpdated(nodeId: number, stats: NodeStatistics) {
+		const node = this.nodes.get(nodeId)
+
+		if (node) {
+			node.statistics = stats
+		}
+
+		this.sendToSocket(socketEvents.statistics, {
+			nodeId,
+			statistics: stats,
+		})
+
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'statistics updated',
+			nodeId,
+			stats
+		)
+	}
+
 	/**
 	 * Emitted when we receive a node `firmware update progress` event
 	 *
@@ -2756,6 +2799,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			.on(
 				'firmware update finished',
 				this._onNodeFirmwareUpdateFinished.bind(this)
+			)
+			.on(
+				'statistics updated',
+				this._onNodeStatisticsUpdated.bind(this, zwaveNode.id)
 			)
 	}
 

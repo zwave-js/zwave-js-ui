@@ -372,7 +372,12 @@ export default {
 			'updateValue',
 			'removeValue',
 		]),
-		...mapMutations(['setControllerStatus', 'initNode', 'removeNode']),
+		...mapMutations([
+			'setControllerStatus',
+			'setStatistics',
+			'initNode',
+			'removeNode',
+		]),
 		copyVersion() {
 			const el = document.createElement('textarea')
 			el.value = `zwavejs2mqtt: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\nhome hex: ${this.appInfo.homeHex}`
@@ -694,6 +699,11 @@ export default {
 			this.socket.on(
 				socketEvents.valueUpdated,
 				this.updateValue.bind(this)
+			)
+
+			this.socket.on(
+				socketEvents.statistics,
+				this.setStatistics.bind(this)
 			)
 
 			this.socket.emit(socketActions.init, true)
