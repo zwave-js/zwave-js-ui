@@ -127,6 +127,22 @@ export default {
 					desc: 'Force nodes to establish better connections to the controller',
 				},
 				{
+					text: 'Re-interview Nodes',
+					options: [
+						{
+							name: 'Start',
+							action: 'refreshInfo',
+							args: {
+								broadcast: true,
+								confirm:
+									"Are you sure you want to re-interview all nodes? All known information about your nodes will be discarded. Battery powered nodes need to be woken up, interaction with the nodes won't be reliable until the interview is done.",
+							},
+						},
+					],
+					icon: 'history',
+					desc: 'Clear all info about all nodes and make a new full interview. Use when nodes has wrong or missing capabilities',
+				},
+				{
 					text: 'Hard Reset',
 					options: [
 						{
