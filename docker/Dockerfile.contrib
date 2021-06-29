@@ -50,7 +50,7 @@ RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
 RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
 RUN mkdir my_dist
-RUN cp -Lr .git package.json bin config server dist hass lib public store views node_modules my_dist/
+RUN cp -Lr .git package.json bin config server dist hass lib store views node_modules my_dist/
 
 FROM node:16.3.0-buster
 LABEL maintainer="robertsLando"
