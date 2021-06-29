@@ -6,8 +6,20 @@
 					<v-row justify="center">
 						<v-col cols="12" sm="6">
 							<v-card class="ma-3" style="max-width: 600px">
-								<v-card-title> Actions</v-card-title>
-								<v-card-text>
+								<v-card-title>
+									<v-btn
+										@click="showActions = !showActions"
+										icon
+										class="mr-1"
+										><v-icon>{{
+											showActions
+												? 'expand_less'
+												: 'expand_more'
+										}}</v-icon></v-btn
+									>
+									Actions</v-card-title
+								>
+								<v-card-text v-if="showActions">
 									<v-row>
 										<v-col
 											cols="12"
@@ -53,9 +65,20 @@
 						>
 							<v-card class="ma-3" style="max-width: 600px">
 								<v-card-title>
+									<v-btn
+										@click="showStats = !showStats"
+										icon
+										class="mr-1"
+										><v-icon>{{
+											showStats
+												? 'expand_less'
+												: 'expand_more'
+										}}</v-icon></v-btn
+									>
 									Controller statistics</v-card-title
 								>
-								<v-card-text>
+
+								<v-card-text v-if="showStats">
 									<v-row>
 										<v-col
 											v-for="prop in Object.keys(
@@ -140,6 +163,8 @@ export default {
 	watch: {},
 	data() {
 		return {
+			showActions: false,
+			showStats: false,
 			settings: new Settings(localStorage),
 			bindedSocketEvents: {}, // keep track of the events-handlers
 			addRemoveShowDialog: false,
