@@ -3,35 +3,73 @@
 		<v-card>
 			<v-card-text>
 				<v-container fluid>
-					<v-row style="max-width: 800px" justify="start">
-						<v-col
-							cols="12"
-							sm="4"
-							md="3"
-							style="text-align: center"
-						>
-							<v-btn
-								depressed
-								color="primary"
-								@click="addRemoveShowDialog = true"
-							>
-								Add/Remove Device
-							</v-btn>
+					<v-row justify="center">
+						<v-col cols="12" sm="6">
+							<v-expansion-panels style="justify-content: start">
+								<v-expansion-panel
+									class="ma-3"
+									style="max-width: 600px"
+								>
+									<v-expansion-panel-header
+										>Actions</v-expansion-panel-header
+									>
+									<v-expansion-panel-content>
+										<v-card flat>
+											<v-card-text>
+												<v-row>
+													<v-col
+														cols="12"
+														md="6"
+														style="
+															text-align: center;
+														"
+													>
+														<v-btn
+															depressed
+															color="primary"
+															@click="
+																addRemoveShowDialog = true
+															"
+														>
+															Add/Remove Device
+														</v-btn>
+													</v-col>
+													<v-col
+														cols="12"
+														md="6"
+														style="
+															text-align: center;
+														"
+													>
+														<v-btn
+															dark
+															color="green"
+															depressed
+															@click="
+																advancedShowDialog = true
+															"
+														>
+															Advanced
+														</v-btn>
+													</v-col>
+												</v-row>
+											</v-card-text>
+										</v-card>
+									</v-expansion-panel-content>
+								</v-expansion-panel>
+							</v-expansion-panels>
 						</v-col>
+
 						<v-col
+							v-if="controllerNode"
 							cols="12"
-							sm="4"
-							md="3"
+							sm="6"
 							style="text-align: center"
 						>
-							<v-btn
-								dark
-								color="green"
-								depressed
-								@click="advancedShowDialog = true"
-							>
-								Advanced
-							</v-btn>
+							<StatisticsCard
+								title="Controller Statistics"
+								:node="this.controllerNode"
+							/>
 						</v-col>
 					</v-row>
 				</v-container>
@@ -69,6 +107,7 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { socketEvents } from '@/plugins/socket'
+import StatisticsCard from '@/components/custom/StatisticsCard'
 
 export default {
 	name: 'ControlPanel',
@@ -79,11 +118,15 @@ export default {
 		NodesTable,
 		DialogAddRemove,
 		DialogAdvanced,
+		StatisticsCard,
 	},
 	computed: {
 		...mapGetters(['nodes', 'zwave']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
+		},
+		controllerNode() {
+			return this.nodes.find((n) => n.isControllerNode)
 		},
 	},
 	watch: {},
