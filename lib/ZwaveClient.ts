@@ -1119,8 +1119,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.enableStatistics()
 				}
 
-				await this._scheduledConfigCheck()
-
 				this.status = ZwaveClientStatus.CONNECTED
 				this._connected = true
 			} catch (error) {
@@ -2008,7 +2006,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ---------- DRIVER EVENTS -------------------------------------
 
-	private _onDriverReady() {
+	private async _onDriverReady() {
 		/*
     Now the controller interview is complete. This means we know which nodes
     are included in the network, but they might not be ready yet.
@@ -2025,6 +2023,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
+			// this must be done only after driver is ready
+			await this._scheduledConfigCheck()
+
 			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
 				.on('exclusion started', this._onExclusionStarted.bind(this))
