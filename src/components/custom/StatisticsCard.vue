@@ -66,9 +66,7 @@ export default {
 				NAK: {
 					color: 'red',
 				},
-				CAN: {
-					color: 'red',
-				},
+				CAN: {},
 				timeoutACK: {
 					title: 'Timeout ACK',
 					color: 'red',
