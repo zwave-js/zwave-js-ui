@@ -1,3 +1,16 @@
+## [5.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.0...v5.2.1) (2021-06-30)
+
+
+### Bug Fixes
+
+* **ui:** change CAN color ([#1395](https://github.com/zwave-js/zwavejs2mqtt/issues/1395)) ([7e30131](https://github.com/zwave-js/zwavejs2mqtt/commit/7e30131fad5d25cfb2376f9a3108895b1b217d1d))
+* check updates after driver is ready ([#1394](https://github.com/zwave-js/zwavejs2mqtt/issues/1394)) ([374d004](https://github.com/zwave-js/zwavejs2mqtt/commit/374d0041c2a5dd3ebba72496c06cee8c7bd1a7da))
+
+
+### Features
+
+* zwave-js@7.10.1 ([f0e53e4](https://github.com/zwave-js/zwavejs2mqtt/commit/f0e53e4d1d12040a446074767b1c890c0be1d7fe))
+
 # [5.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.1.0...v5.2.0) (2021-06-29)
 
 
