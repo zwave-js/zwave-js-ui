@@ -1119,8 +1119,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.enableStatistics()
 				}
 
-				await this._scheduledConfigCheck()
-
 				this.status = ZwaveClientStatus.CONNECTED
 				this._connected = true
 			} catch (error) {
@@ -2025,6 +2023,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
+			// this must be done only after driver is ready
+			this._scheduledConfigCheck().catch(() => {
+				/* ignore */
+			})
+
 			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
 				.on('exclusion started', this._onExclusionStarted.bind(this))
