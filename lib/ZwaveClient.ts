@@ -2024,7 +2024,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		try {
 			// this must be done only after driver is ready
-			await this._scheduledConfigCheck()
+			this._scheduledConfigCheck().catch(() => {
+				/* ignore */
+			})
 
 			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
