@@ -41,4 +41,4 @@ jobs:
           git config user.name "Z-Wave JS Bot"
           git config user.password "${{secrets.BOT_TOKEN}}"
           echo "GIT_USER=${{github.actor}}:${{secrets.BOT_TOKEN}}" >> $GITHUB_ENV
-          npx release-it ${{github.event.inputs.type}} --ci
+          npx release-it ${{github.event.inputs.type}} --ci --verbose
