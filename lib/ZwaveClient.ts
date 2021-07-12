@@ -32,6 +32,9 @@ import {
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
 	ZWaveError,
+	SetValueAPIOptions,
+	ControllerStatistics,
+	NodeStatistics,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -53,6 +56,19 @@ import * as pkgjson from '../package.json'
 import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
+
+import { ConfigManager } from '@zwave-js/config'
+
+const priorityDir = storeDir + '/config'
+
+export const configManager = new ConfigManager({
+	deviceConfigPriorityDir: priorityDir,
+})
+
+export async function loadManager() {
+	await configManager.loadNamedScales()
+	await configManager.loadSensorTypes()
+}
 
 const logger = LogManager.module('Zwave')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -115,6 +131,14 @@ const allowedApis = validateMethods([
 	'restart',
 ] as const)
 
+export type SensorTypeScale = {
+	key: string | number
+	sensor: string
+	label: string
+	unit?: string
+	description?: string
+}
+
 export type AllowedApis = typeof allowedApis[number]
 
 const ZWAVEJS_LOG_FILE = utils.joinPath(storeDir, 'zwavejs_%DATE%.log')
@@ -122,6 +146,12 @@ const ZWAVEJS_LOG_FILE = utils.joinPath(storeDir, 'zwavejs_%DATE%.log')
 export type Z2MValueIdState = {
 	text: string
 	value: number
+}
+
+export type Z2MClientStatus = {
+	driverReady: boolean
+	status: boolean
+	config: ZwaveConfig
 }
 
 export type Z2MGroupAssociation = {
@@ -226,6 +256,7 @@ export type Z2MNode = {
 	productId?: number
 	productLabel?: string
 	productDescription?: string
+	statistics?: ControllerStatistics | NodeStatistics
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -280,6 +311,7 @@ export type ZwaveConfig = {
 	healHour?: number
 	logToFile?: boolean
 	nodeFilter?: string[]
+	scales?: SensorTypeScale[]
 }
 
 export type Z2MDriverInfo = {
@@ -673,11 +705,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	getStatus() {
-		const status: {
-			driverReady: boolean
-			status: boolean
-			config: ZwaveConfig
-		} = {
+		const status: Z2MClientStatus = {
 			driverReady: this.driverReady,
 			status: this.driverReady && !this.closed,
 			config: this.cfg,
@@ -706,6 +734,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						error.message
 				)
 			}
+			node.groups = []
 			for (const [endpoint, groups] of endpointGroups) {
 				for (const [groupIndex, group] of groups) {
 					// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=associationgroup-interface
@@ -1020,41 +1049,44 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			// extend options with hidden `options`
-			const zwaveOptions: ZWaveOptions = Object.assign(
-				{
-					storage: {
-						cacheDir: storeDir,
-						deviceConfigPriorityDir: storeDir + '/config',
-					},
-					networkKey: this.cfg.networkKey,
-					logConfig: {
-						// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-						enabled: this.cfg.logEnabled,
-						level: loglevels[this.cfg.logLevel],
-						logToFile: this.cfg.logToFile,
-						filename: ZWAVEJS_LOG_FILE,
-						forceConsole: true,
-						nodeFilter:
-							this.cfg.nodeFilter &&
-							this.cfg.nodeFilter.length > 0
-								? this.cfg.nodeFilter.map((n) => parseInt(n))
-								: undefined,
-					},
+			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
+				storage: {
+					cacheDir: storeDir,
+					deviceConfigPriorityDir: priorityDir,
 				},
-				this.cfg.options
-			)
+				logConfig: {
+					// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
+					enabled: this.cfg.logEnabled,
+					level: loglevels[this.cfg.logLevel],
+					logToFile: this.cfg.logToFile,
+					filename: ZWAVEJS_LOG_FILE,
+					forceConsole: true,
+					nodeFilter:
+						this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
+							? this.cfg.nodeFilter.map((n) => parseInt(n))
+							: undefined,
+				},
+			}
+
+			if (this.cfg.scales) {
+				const scales: Record<string | number, string | number> = {}
+				for (const s of this.cfg.scales) {
+					scales[s.key] = s.label
+				}
+
+				zwaveOptions.preferences = {
+					scales,
+				}
+			}
+
+			Object.assign(zwaveOptions, this.cfg.options)
 
 			// transform network key to buffer
-			if (
-				zwaveOptions.networkKey &&
-				zwaveOptions.networkKey.length === 32
-			) {
+			if (this.cfg.networkKey?.length === 32) {
 				zwaveOptions.networkKey = Buffer.from(
-					zwaveOptions.networkKey as unknown as string,
+					this.cfg.networkKey as unknown as string,
 					'hex'
 				)
-			} else {
-				delete zwaveOptions.networkKey
 			}
 
 			try {
@@ -1086,8 +1118,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (this.cfg.enableStatistics) {
 					this.enableStatistics()
 				}
-
-				await this._scheduledConfigCheck()
 
 				this.status = ZwaveClientStatus.CONNECTED
 				this._connected = true
@@ -1582,7 +1612,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async healNode(nodeId: number): Promise<boolean> {
 		if (this._driver && !this.closed) {
-			return this._driver.controller.healNode(nodeId)
+			let status: HealNodeStatus = 'pending'
+			this.sendToSocket(socketEvents.healProgress, [[nodeId, status]])
+			const result = await this._driver.controller.healNode(nodeId)
+			status = result ? 'done' : 'failed'
+			this.sendToSocket(socketEvents.healProgress, [[nodeId, status]])
+			return result
 		}
 
 		throw Error('Driver is closed')
@@ -1888,28 +1923,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Set a value of a specific zwave valueId
 	 */
-	async writeValue(valueId: Z2MValueId, value: any) {
+	async writeValue(
+		valueId: Z2MValueId,
+		value: any,
+		options?: SetValueAPIOptions
+	) {
 		if (this.driverReady) {
 			const vID = this._getValueID(valueId, true)
 			logger.log('info', `Writing %o to ${vID}`, value)
 
 			let result = false
-
-			// coerce string to numbers when value type is number and received a string
-			if (valueId.type === 'number' && typeof value === 'string') {
-				value = Number(value)
-			} else if (
-				valueId.property === 'hexColor' &&
-				typeof value === 'string' &&
-				value.startsWith('#')
-			) {
-				// remove the leading `#` if present
-				value = value.substr(1)
-			}
-
-			if (typeof value === 'string' && utils.isBufferAsHex(value)) {
-				value = utils.bufferFromHex(value)
-			}
 
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
@@ -1938,9 +1961,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 					result = true
 				} else {
+					// coerce string to numbers when value type is number and received a string
+					if (
+						valueId.type === 'number' &&
+						typeof value === 'string'
+					) {
+						value = Number(value)
+					} else if (
+						valueId.property === 'hexColor' &&
+						typeof value === 'string' &&
+						value.startsWith('#')
+					) {
+						// remove the leading `#` if present
+						value = value.substr(1)
+					}
+
+					if (
+						typeof value === 'string' &&
+						utils.isBufferAsHex(value)
+					) {
+						value = utils.bufferFromHex(value)
+					}
+
 					result = await this.getNode(valueId.nodeId).setValue(
 						valueId,
-						value
+						value,
+						options
 					)
 					this.emit('valueWritten', valueId, value)
 				}
@@ -1977,7 +2023,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus('Driver ready')
 
 		try {
-			this._driver.controller
+			// this must be done only after driver is ready
+			this._scheduledConfigCheck().catch(() => {
+				/* ignore */
+			})
+
+			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
 				.on('exclusion started', this._onExclusionStarted.bind(this))
 				.on('inclusion stopped', this._onInclusionStopped.bind(this))
@@ -1991,6 +2042,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this._onHealNetworkProgress.bind(this)
 				)
 				.on('heal network done', this._onHealNetworkDone.bind(this))
+				.on(
+					'statistics updated',
+					this._onControllerStatisticsUpdated.bind(this)
+				)
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -2041,6 +2096,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.error(`Error while restarting driver: ${error.message}`)
 			}
 		}
+	}
+
+	private _onControllerStatisticsUpdated(stats: ControllerStatistics) {
+		const controllerNode = this.nodes.get(this.driver.controller.ownNodeId)
+
+		if (controllerNode) {
+			controllerNode.statistics = stats
+		}
+
+		this.sendToSocket(socketEvents.statistics, {
+			nodeId: controllerNode.id,
+			statistics: stats,
+		})
+
+		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
 	}
 
 	private _onScanComplete() {
@@ -2627,6 +2697,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	private _onNodeStatisticsUpdated(nodeId: number, stats: NodeStatistics) {
+		const node = this.nodes.get(nodeId)
+
+		if (node) {
+			node.statistics = stats
+		}
+
+		this.sendToSocket(socketEvents.statistics, {
+			nodeId,
+			statistics: stats,
+		})
+
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'statistics updated',
+			nodeId,
+			stats
+		)
+	}
+
 	/**
 	 * Emitted when we receive a node `firmware update progress` event
 	 *
@@ -2711,6 +2802,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			.on(
 				'firmware update finished',
 				this._onNodeFirmwareUpdateFinished.bind(this)
+			)
+			.on(
+				'statistics updated',
+				this._onNodeStatisticsUpdated.bind(this, zwaveNode.id)
 			)
 	}
 

@@ -30,6 +30,10 @@ export default {
 				loc: { type: 'string', label: 'Location' },
 				isSecure: { type: 'boolean', label: 'Secure' },
 				supportsBeaming: { type: 'boolean', label: 'Beaming' },
+				zwavePlusVersion: {
+					type: 'string',
+					label: 'Z-Wave Plus',
+				},
 				failed: { type: 'boolean', label: 'Failed' },
 				status: { type: 'string', label: 'Status' },
 				healProgress: { type: 'string', label: 'Heal' },

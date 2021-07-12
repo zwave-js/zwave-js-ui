@@ -1,5 +1,5 @@
-# STEP: 1
-FROM node:16.3.0-alpine AS build-z2m
+# STEP: 1 doens't work with alpine 3.13+
+FROM node:16.3.0-alpine3.12 AS build-z2m
 
 WORKDIR /usr/src/app
 
@@ -29,7 +29,7 @@ RUN yarn run build && \
 # add plugin support, space separated
 ARG plugins
 RUN if [ ! -z "$plugins" ]; \
-    then echo "Installing plugins ${plugins}"; yarn install ${plugins} ; fi
+    then echo "Installing plugins ${plugins}"; yarn add ${plugins} ; fi
 
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices
@@ -41,8 +41,8 @@ RUN if [ ! -z "$updateDevices"  ]; \
     node-zwave-js-master/packages/config/config/devices/ ;\
     fi
 
-# STEP: 2 (runtime)
-FROM node:16.3.0-alpine
+# STEP: 2 (runtime) doens't work with alpine 3.13+
+FROM node:16.3.0-alpine3.12
 
 RUN apk add --no-cache \	
     libstdc++ \
@@ -51,6 +51,7 @@ RUN apk add --no-cache \
     libusb \	
     tzdata \	
     eudev	
+
 
 # Copy files from previous build stage	
 COPY --from=build-z2m /usr/src/app /usr/src/app

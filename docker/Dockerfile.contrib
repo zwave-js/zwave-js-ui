@@ -32,13 +32,13 @@ RUN yarn install --production --frozen-lockfile
 RUN for i in config core serial shared; do \
     cd packages/$i && \
     yarn version --no-git-tag-version --new-version $(yarn versions --json| \
-    jq -r '[.data."@zwave-js/'${i}'"]'[0])-$(git rev-parse --short HEAD) && \
+    jq -r '[.data."@zwave-js/'${i}'"]'[0])+$(git rev-parse --short HEAD) && \
     yarn link && \
     cd ../..; \
     done
 RUN cd packages/zwave-js && \
     yarn version --no-git-tag-version --new-version $(yarn versions --json| \
-    jq -r '[.data."zwave-js"]'[0])-$(git rev-parse --short HEAD) && \
+    jq -r '[.data."zwave-js"]'[0])+$(git rev-parse --short HEAD) && \
     yarn link
 
 WORKDIR /home/node/zwavejs2mqtt
@@ -50,7 +50,7 @@ RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
 RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
 RUN mkdir my_dist
-RUN cp -Lr .git package.json bin config server dist hass lib public store views node_modules my_dist/
+RUN cp -Lr .git package.json yarn.lock bin config server dist hass lib store views node_modules my_dist/
 
 FROM node:16.3.0-buster
 LABEL maintainer="robertsLando"

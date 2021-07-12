@@ -7,7 +7,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as utils from '../lib/utils'
-import { AlarmSensorType } from 'zwave-js'
+import { AlarmSensorType, SetValueAPIOptions } from 'zwave-js'
 import { CommandClasses, ValueID } from '@zwave-js/core'
 import { socketEvents } from '../lib/SocketManager'
 import * as Constants from './Constants'
@@ -1974,7 +1974,7 @@ export default class Gateway {
 	 */
 	private async _onBroadRequest(
 		parts: string[],
-		payload: ValueID & { value: unknown }
+		payload: ValueID & { value: unknown; options?: SetValueAPIOptions }
 	): Promise<void> {
 		if (parts.length > 0) {
 			// multiple writes (back compatibility mode)
@@ -1992,7 +1992,8 @@ export default class Gateway {
 				for (let i = 0; i < values.length; i++) {
 					await this._zwave.writeValue(
 						this.topicValues[values[i]],
-						payload
+						payload,
+						payload?.options
 					)
 				}
 			}
@@ -2025,7 +2026,7 @@ export default class Gateway {
 
 		if (valueId) {
 			payload = this.parsePayload(payload, valueId, valueId.conf)
-			await this._zwave.writeValue(valueId, payload)
+			await this._zwave.writeValue(valueId, payload, payload?.options)
 		}
 	}
 

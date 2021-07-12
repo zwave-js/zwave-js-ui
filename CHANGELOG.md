@@ -1,3 +1,66 @@
+## [5.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.0...v5.2.1) (2021-06-30)
+
+
+### Bug Fixes
+
+* **ui:** change CAN color ([#1395](https://github.com/zwave-js/zwavejs2mqtt/issues/1395)) ([7e30131](https://github.com/zwave-js/zwavejs2mqtt/commit/7e30131fad5d25cfb2376f9a3108895b1b217d1d))
+* check updates after driver is ready ([#1394](https://github.com/zwave-js/zwavejs2mqtt/issues/1394)) ([374d004](https://github.com/zwave-js/zwavejs2mqtt/commit/374d0041c2a5dd3ebba72496c06cee8c7bd1a7da))
+
+
+### Features
+
+* zwave-js@7.10.1 ([f0e53e4](https://github.com/zwave-js/zwavejs2mqtt/commit/f0e53e4d1d12040a446074767b1c890c0be1d7fe))
+
+# [5.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.1.0...v5.2.0) (2021-06-29)
+
+
+### Bug Fixes
+
+* clear node groups ([#1391](https://github.com/zwave-js/zwavejs2mqtt/issues/1391)) ([cce8e81](https://github.com/zwave-js/zwavejs2mqtt/commit/cce8e8179ac59d61f08772eedae1ab51e9a0d2cf))
+* **hass:** add default to central_scene ([#1383](https://github.com/zwave-js/zwavejs2mqtt/issues/1383)) ([a660e22](https://github.com/zwave-js/zwavejs2mqtt/commit/a660e229adf21e7b336eb7dd9432746bbee18a3b)), closes [#1020](https://github.com/zwave-js/zwavejs2mqtt/issues/1020)
+* **hass:** remove second arg in default ([71f2285](https://github.com/zwave-js/zwavejs2mqtt/commit/71f228530bf153fedb616197c085fa40a0c91255))
+* send heal node status when healing single node ([#1377](https://github.com/zwave-js/zwavejs2mqtt/issues/1377)) ([23daffa](https://github.com/zwave-js/zwavejs2mqtt/commit/23daffae2940a22f097339697f63e27187fcb90e)), closes [#1375](https://github.com/zwave-js/zwavejs2mqtt/issues/1375)
+* sending 'start' or 'stop' MultilevelSwitchCC not working ([#1379](https://github.com/zwave-js/zwavejs2mqtt/issues/1379)) ([5c5dbdc](https://github.com/zwave-js/zwavejs2mqtt/commit/5c5dbdccab5e6517a3b936a5844d544c0b358194)), closes [#1372](https://github.com/zwave-js/zwavejs2mqtt/issues/1372)
+
+
+### Features
+
+* controller statistics ([#1393](https://github.com/zwave-js/zwavejs2mqtt/issues/1393)) ([f5bf037](https://github.com/zwave-js/zwavejs2mqtt/commit/f5bf037dcb3b4d69c103456f8d94852eba995351)), closes [#1376](https://github.com/zwave-js/zwavejs2mqtt/issues/1376)
+* **ui:** broadcast refresh node info ([#1392](https://github.com/zwave-js/zwavejs2mqtt/issues/1392)) ([21a50a2](https://github.com/zwave-js/zwavejs2mqtt/commit/21a50a284dcb2b0c6d42fe58ab29fcd668ceb165))
+* bump zwave-js 7.10.0 and zwave-js/server 1.8.0 ([cfb0760](https://github.com/zwave-js/zwavejs2mqtt/commit/cfb0760752f6d9b26cdeaa367e88ba47c29507fd))
+
+# [5.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.4...v5.1.0) (2021-06-24)
+
+
+### Bug Fixes
+
+* **hass:** make dimmers turn on to previous brightness ([#1360](https://github.com/zwave-js/zwavejs2mqtt/issues/1360)) ([d7a3845](https://github.com/zwave-js/zwavejs2mqtt/commit/d7a3845c799e2c3d59d6159afff7376baf5fe803))
+* add Z2MClientStatus type ([#1357](https://github.com/zwave-js/zwavejs2mqtt/issues/1357)) ([ee4343f](https://github.com/zwave-js/zwavejs2mqtt/commit/ee4343f17dca3f7b01ceee77ae46f9879ba2e10e))
+
+
+### Features
+
+* **ui:** allow to specify `setValue` options ([#1373](https://github.com/zwave-js/zwavejs2mqtt/issues/1373)) ([ff875e3](https://github.com/zwave-js/zwavejs2mqtt/commit/ff875e3926ee82c1607390519ad6630cb97e8f21))
+* add option to writeValue api ([#1370](https://github.com/zwave-js/zwavejs2mqtt/issues/1370)) ([7f2d7c2](https://github.com/zwave-js/zwavejs2mqtt/commit/7f2d7c28ca061fc382ccb7a126735bf012a0da85)), closes [#1367](https://github.com/zwave-js/zwavejs2mqtt/issues/1367)
+* bump zwave-js@7.8.0 ([e5efe5e](https://github.com/zwave-js/zwavejs2mqtt/commit/e5efe5ea5b29c067b99fa2682b6c04a348070a6a))
+* bump zwave-js@7.9.0 ([239f76d](https://github.com/zwave-js/zwavejs2mqtt/commit/239f76d065e83f2eda8bdd6f8bff502ce51c52f4))
+* preferred sensor scales ([#1369](https://github.com/zwave-js/zwavejs2mqtt/issues/1369)) ([60918d9](https://github.com/zwave-js/zwavejs2mqtt/commit/60918d975017643753838b9cc498f62cbaccdbca))
+* **ui:** zwave plus column ([#1368](https://github.com/zwave-js/zwavejs2mqtt/issues/1368)) ([5ade568](https://github.com/zwave-js/zwavejs2mqtt/commit/5ade56879b235b630a68a3d77b0734acf693ac7e)), closes [#1358](https://github.com/zwave-js/zwavejs2mqtt/issues/1358)
+
+## [5.0.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.3...v5.0.4) (2021-06-17)
+
+## [5.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.2...v5.0.3) (2021-06-17)
+
+
+### Bug Fixes
+
+* **hass:** remove state_topic from covers ([#1348](https://github.com/zwave-js/zwavejs2mqtt/issues/1348)) ([d1159c3](https://github.com/zwave-js/zwavejs2mqtt/commit/d1159c3fc5fc72542af69c6cc65dc301fa3deee1)), closes [#1343](https://github.com/zwave-js/zwavejs2mqtt/issues/1343)
+
+
+### Features
+
+* bump zwave-js@7.7.5 ([fd394d4](https://github.com/zwave-js/zwavejs2mqtt/commit/fd394d481087595d09f59d80f836c978df319cfe))
+
 ## [5.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.0.1...v5.0.2) (2021-06-14)
 
 
