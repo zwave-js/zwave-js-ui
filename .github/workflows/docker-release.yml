@@ -26,14 +26,14 @@ jobs:
             return ref.replace(/^refs\/heads\/|-/, '')
 
       - name: Login to dockerhub
-        uses: docker/login-action@v1.9.0
+        uses: docker/login-action@v1.10.0
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Login to Github Packages
         if: ${{ github.event_name != 'pull_request' }}
-        uses: docker/login-action@v1.9.0
+        uses: docker/login-action@v1.10.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
