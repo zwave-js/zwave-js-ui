@@ -1738,12 +1738,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/node@*", "@types/node@>=10.0.0":
-  version "15.0.2"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-15.0.2.tgz#51e9c0920d1b45936ea04341aa3e2e58d339fb67"
-  integrity sha512-p68+a+KoxpoB47015IeYZYRrdqMUcpbK8re/zpFB8Ld46LHC1lPEbp3EXgkEhAYEcPvjJF6ZO+869SQ0aH1dcA==
-
-"@types/node@^15.12.2":
+"@types/node@*", "@types/node@>=10.0.0", "@types/node@^15.12.2":
   version "15.12.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-15.12.2.tgz#1f2b42c4be7156ff4a6f914b2fb03d05fa84e38d"
   integrity sha512-zjQ69G564OCIWIOHSXyQEEDpdpGl+G348RAKY0XXy9Z5kU9Vzv1GMNnkar/ZJ8dzXB3COzD9Mo9NtRZ4xfgUww==
@@ -1758,10 +1753,10 @@
   resolved "https://registry.yarnpkg.com/@types/parse-json/-/parse-json-4.0.0.tgz#2f8bb441434d163b35fb8ffdccd7138927ffb8c0"
   integrity sha512-//oorEZjL6sbPcKUaCdIGlIUeH26mgzimjBB77G6XRgnDl/L5wOnpyBGRe/Mmf5CVW3PwEBE1NjiMZ/ssFh4wA==
 
-"@types/pem@^1.9.5":
-  version "1.9.5"
-  resolved "https://registry.yarnpkg.com/@types/pem/-/pem-1.9.5.tgz#cd5548b5e0acb4b41a9e21067e9fcd8c57089c99"
-  integrity sha512-C0txxEw8B7DCoD85Ko7SEvzUogNd5VDJ5/YBG8XUcacsOGqxr5Oo4g3OUAfdEDUbhXanwUoVh/ZkMFw77FGPQQ==
+"@types/pem@^1.9.6":
+  version "1.9.6"
+  resolved "https://registry.yarnpkg.com/@types/pem/-/pem-1.9.6.tgz#c3686832e935947fdd9d848dec3b8fe830068de7"
+  integrity sha512-IC67SxacM9fxEi/w7hf98dTun83OwUMeLMo1NS2gE0wdM9MHeg73iH/Pp9nB02OUCQ7Zb2UuKE/IpFCmQw9jxw==
   dependencies:
     "@types/node" "*"
 
