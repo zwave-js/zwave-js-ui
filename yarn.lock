@@ -1588,10 +1588,10 @@
   resolved "https://registry.yarnpkg.com/@types/cors/-/cors-2.8.10.tgz#61cc8469849e5bcdd0c7044122265c39cec10cf4"
   integrity sha512-C7srjHiVG3Ey1nR6d511dtDkCEjxuN9W1HWAEjGq8kpcwmNM6JJkpC0xvabM7BXTG2wDq8Eu33iH9aQKa7IvLQ==
 
-"@types/csurf@^1.11.1":
-  version "1.11.1"
-  resolved "https://registry.yarnpkg.com/@types/csurf/-/csurf-1.11.1.tgz#ebdf5fa09a6cfe0258957e0826d3831e464d2697"
-  integrity sha512-GIdkIfC6/2k+NJdyALSSJ3ek01SPosqMmSdDvWkYY2x7ZR4dgN3G8Xcn+W36l+wiTNM+VHdwdyigXpbetiMC0A==
+"@types/csurf@^1.11.2":
+  version "1.11.2"
+  resolved "https://registry.yarnpkg.com/@types/csurf/-/csurf-1.11.2.tgz#c1cba70f7af653c508b28db047e6c1be72411345"
+  integrity sha512-9bc98EnwmC1S0aSJiA8rWwXtgXtXHHOQOsGHptImxFgqm6CeH+mIOunHRg6+/eg2tlmDMX3tY7XrWxo2M/nUNQ==
   dependencies:
     "@types/express-serve-static-core" "*"
 
