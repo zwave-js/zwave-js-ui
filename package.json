@@ -191,7 +191,7 @@
     "@types/express": "^4.17.13",
     "@types/express-rate-limit": "^5.1.2",
     "@types/express-session": "1.17.0",
-    "@types/fs-extra": "^9.0.11",
+    "@types/fs-extra": "^9.0.12",
     "@types/jsonfile": "^6.0.0",
     "@types/jsonwebtoken": "^8.5.1",
     "@types/mocha": "^8.2.2",
