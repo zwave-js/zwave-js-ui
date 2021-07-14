@@ -73,6 +73,14 @@
 					v-model.trim="options.transitionDuration"
 				></v-text-field>
 			</v-col>
+			<v-col cols="12" sm="6" style="max-width: 300px; padding-top: 0">
+				<v-text-field
+					label="Volume"
+					hint="The volume (for the Sound Switch CC)"
+					persistent-hint
+					v-model.trim="options.volume"
+				></v-text-field>
+			</v-col>
 		</v-row>
 
 		<!-- NODE VALUES -->
