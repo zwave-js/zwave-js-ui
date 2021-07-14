@@ -1588,10 +1588,10 @@
   resolved "https://registry.yarnpkg.com/@types/cors/-/cors-2.8.10.tgz#61cc8469849e5bcdd0c7044122265c39cec10cf4"
   integrity sha512-C7srjHiVG3Ey1nR6d511dtDkCEjxuN9W1HWAEjGq8kpcwmNM6JJkpC0xvabM7BXTG2wDq8Eu33iH9aQKa7IvLQ==
 
-"@types/csurf@^1.11.1":
-  version "1.11.1"
-  resolved "https://registry.yarnpkg.com/@types/csurf/-/csurf-1.11.1.tgz#ebdf5fa09a6cfe0258957e0826d3831e464d2697"
-  integrity sha512-GIdkIfC6/2k+NJdyALSSJ3ek01SPosqMmSdDvWkYY2x7ZR4dgN3G8Xcn+W36l+wiTNM+VHdwdyigXpbetiMC0A==
+"@types/csurf@^1.11.2":
+  version "1.11.2"
+  resolved "https://registry.yarnpkg.com/@types/csurf/-/csurf-1.11.2.tgz#c1cba70f7af653c508b28db047e6c1be72411345"
+  integrity sha512-9bc98EnwmC1S0aSJiA8rWwXtgXtXHHOQOsGHptImxFgqm6CeH+mIOunHRg6+/eg2tlmDMX3tY7XrWxo2M/nUNQ==
   dependencies:
     "@types/express-serve-static-core" "*"
 
@@ -1782,10 +1782,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/serialport@^8.0.1":
-  version "8.0.1"
-  resolved "https://registry.yarnpkg.com/@types/serialport/-/serialport-8.0.1.tgz#61dddbe74038149458edd62f9e4a323c52970f91"
-  integrity sha512-IcKHq6b/ynKSF/x4al/Ce8+a0hpbYIEaIcK9Z3l4koLvQqAPSODZ37/hgemQx8dTu7fPZDMHN4bKmu89B3UaGA==
+"@types/serialport@^8.0.2":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@types/serialport/-/serialport-8.0.2.tgz#32149f107f66450d4d9760c429923739c97e4a53"
+  integrity sha512-z4b1I8/vdZE3upgCcAL9VAWlVVFUVn5uo3faAHavkVfK/Hb1LUxKwp9YCtA5AZqEUCWoSWl20SRTOvAI/5fQWQ==
   dependencies:
     "@types/node" "*"
 
