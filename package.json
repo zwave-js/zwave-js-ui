@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "5.2.1",
+  "version": "5.2.2",
   "bin": {
     "zwavejs2mqtt": "server/bin/www.js"
   },
@@ -181,7 +181,7 @@
     "@babel/plugin-syntax-jsx": "^7.12.13",
     "@babel/plugin-transform-runtime": "^7.14.3",
     "@babel/preset-env": "^7.14.4",
-    "@babel/register": "^7.13.16",
+    "@babel/register": "^7.14.5",
     "@types/app-root-path": "^1.2.4",
     "@types/archiver": "^5.1.0",
     "@types/chai": "^4.2.18",
