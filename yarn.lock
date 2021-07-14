@@ -1782,10 +1782,10 @@
   dependencies:
     "@types/node" "*"
 
-"@types/serialport@^8.0.1":
-  version "8.0.1"
-  resolved "https://registry.yarnpkg.com/@types/serialport/-/serialport-8.0.1.tgz#61dddbe74038149458edd62f9e4a323c52970f91"
-  integrity sha512-IcKHq6b/ynKSF/x4al/Ce8+a0hpbYIEaIcK9Z3l4koLvQqAPSODZ37/hgemQx8dTu7fPZDMHN4bKmu89B3UaGA==
+"@types/serialport@^8.0.2":
+  version "8.0.2"
+  resolved "https://registry.yarnpkg.com/@types/serialport/-/serialport-8.0.2.tgz#32149f107f66450d4d9760c429923739c97e4a53"
+  integrity sha512-z4b1I8/vdZE3upgCcAL9VAWlVVFUVn5uo3faAHavkVfK/Hb1LUxKwp9YCtA5AZqEUCWoSWl20SRTOvAI/5fQWQ==
   dependencies:
     "@types/node" "*"
 
