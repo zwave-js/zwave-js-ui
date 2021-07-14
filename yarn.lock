@@ -1616,10 +1616,10 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.50.tgz#1e0caa9364d3fccd2931c3ed96fdbeaa5d4cca83"
   integrity sha512-C6N5s2ZFtuZRj54k2/zyRhNDjJwwcViAM3Nbm8zjBpbqAdZ00mr0CFxvSKeO8Y/e03WVFLpQMdHYVfUd6SB+Hw==
 
-"@types/express-rate-limit@^5.1.2":
-  version "5.1.2"
-  resolved "https://registry.yarnpkg.com/@types/express-rate-limit/-/express-rate-limit-5.1.2.tgz#51f030ce722fe298269f85378b49a34837a1d2ca"
-  integrity sha512-loN1dcr0WEKsbVtXNQKDef4Fmh25prfy+gESrwTDofIhAt17ngTxrsDiEZxLemmfHH279x206CdUB9XHXS9E6Q==
+"@types/express-rate-limit@^5.1.3":
+  version "5.1.3"
+  resolved "https://registry.yarnpkg.com/@types/express-rate-limit/-/express-rate-limit-5.1.3.tgz#79f2ca40d90455a5798da6f8e06d8a3d35f4a1d6"
+  integrity sha512-H+TYy3K53uPU2TqPGFYaiWc2xJV6+bIFkDd/Ma2/h67Pa6ARk9kWE0p/K9OH1Okm0et9Sfm66fmXoAxsH2PHXg==
   dependencies:
     "@types/express" "*"
 
@@ -1650,10 +1650,10 @@
     "@types/qs" "*"
     "@types/serve-static" "*"
 
-"@types/fs-extra@^9.0.11":
-  version "9.0.11"
-  resolved "https://registry.yarnpkg.com/@types/fs-extra/-/fs-extra-9.0.11.tgz#8cc99e103499eab9f347dbc6ca4e99fb8d2c2b87"
-  integrity sha512-mZsifGG4QeQ7hlkhO56u7zt/ycBgGxSVsFI/6lGTU34VtwkiqrrSDgw0+ygs8kFGWcXnFQWMrzF2h7TtDFNixA==
+"@types/fs-extra@^9.0.12":
+  version "9.0.12"
+  resolved "https://registry.yarnpkg.com/@types/fs-extra/-/fs-extra-9.0.12.tgz#9b8f27973df8a7a3920e8461517ebf8a7d4fdfaf"
+  integrity sha512-I+bsBr67CurCGnSenZZ7v94gd3tc3+Aj2taxMT4yu4ABLuOgOjeFxX3dokG24ztSRg5tnT00sL8BszO7gSMoIw==
   dependencies:
     "@types/node" "*"
 
@@ -11222,10 +11222,10 @@ typedarray@^0.0.6:
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
 
-typescript@^4.3.2:
-  version "4.3.2"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.2.tgz#399ab18aac45802d6f2498de5054fcbbe716a805"
-  integrity sha512-zZ4hShnmnoVnAHpVHWpTcxdv7dWP60S2FsydQLV8V5PbS3FifjWFFRiHSWpDJahly88PRyV5teTSLoq4eG7mKw==
+typescript@^4.3.5:
+  version "4.3.5"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.3.5.tgz#4d1c37cc16e893973c45a06886b7113234f119f4"
+  integrity sha512-DqQgihaQ9cUrskJo9kIyW/+g0Vxsk8cDtZ52a3NGh0YNTfpUSArXSohyUGnvbPazEPLu398C0UxmKSOrPumUzA==
 
 uc.micro@^1.0.1, uc.micro@^1.0.5:
   version "1.0.6"
