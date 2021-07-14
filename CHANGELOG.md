@@ -1,3 +1,16 @@
+## [5.2.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.1...v5.2.2) (2021-07-14)
+
+
+### Bug Fixes
+
+* **hass:** revert [#1360](https://github.com/zwave-js/zwavejs2mqtt/issues/1360) "make dimmers turn on to previous brightness" ([#1399](https://github.com/zwave-js/zwavejs2mqtt/issues/1399)) ([1487e1f](https://github.com/zwave-js/zwavejs2mqtt/commit/1487e1f676df8eacd9b018e2940707e2d1a4fa93))
+
+
+### Features
+
+* **ui:** allow to add volume to setValue options ([#1422](https://github.com/zwave-js/zwavejs2mqtt/issues/1422)) ([1e29034](https://github.com/zwave-js/zwavejs2mqtt/commit/1e29034c996c9ae8d9f7dbea05fdfb887b3ea3c8))
+* bump zwave-js@7.12.0 ([a17bae9](https://github.com/zwave-js/zwavejs2mqtt/commit/a17bae9dfed2d951a6a4187808c93116d0cb162a))
+
 ## [5.2.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.0...v5.2.1) (2021-06-30)
 
 
