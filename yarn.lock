@@ -12092,10 +12092,10 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
 
-zwave-js@^8.0.0:
-  version "8.0.0"
-  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.0.0.tgz#21792af036cf83043d6868002e55815761e52c59"
-  integrity sha512-jKjx+9DNJoAakmcvV6eipRwAMKCrNGZRy2PJSxpISDqe95s4vBj2/Plg/6tmrbDJcSPJ7KSSNY6BE5DKbbt62Q==
+zwave-js@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.0.1.tgz#a9e61678b993611e859274eb65fe99acf1a83784"
+  integrity sha512-0ugeoJ+FwAJSRDEUhzD/JLlxIBB/i7LKQK0d06mHmSO8nzFfnNInhBy/wGYSxJ1DbvG1h/cRKf6f6ULK+o0HPA==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@alcalzone/pak" "^0.6.0"
