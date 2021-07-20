@@ -2708,11 +2708,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.sendToSocket(socketEvents.statistics, {
-			node,
+			nodeId: node.id,
 			statistics: stats,
 		})
 
-		this.emit('event', EventSource.NODE, 'statistics updated', node, stats)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'statistics updated',
+			node.id,
+			stats
+		)
 	}
 
 	/**
