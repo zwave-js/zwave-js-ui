@@ -1,3 +1,15 @@
+# [5.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.2...v5.3.0) (2021-07-20)
+
+
+### Bug Fixes
+
+* **ui:** removed missing debugger ([698958e](https://github.com/zwave-js/zwavejs2mqtt/commit/698958e55413af49f00ad93ec41b9612f7d20743))
+
+
+### Features
+
+* bump zwave-js@8.0.1 ([#1462](https://github.com/zwave-js/zwavejs2mqtt/issues/1462)) ([8b44175](https://github.com/zwave-js/zwavejs2mqtt/commit/8b44175a7ee61767bbd381c1b4dcd0a0b29bd537))
+
 ## [5.2.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.1...v5.2.2) (2021-07-14)
 
 
