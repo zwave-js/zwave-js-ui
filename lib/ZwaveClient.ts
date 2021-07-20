@@ -2697,25 +2697,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
-	private _onNodeStatisticsUpdated(nodeId: number, stats: NodeStatistics) {
-		const node = this.nodes.get(nodeId)
+	private _onNodeStatisticsUpdated(
+		zwaveNode: ZWaveNode,
+		stats: NodeStatistics
+	) {
+		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
 			node.statistics = stats
 		}
 
 		this.sendToSocket(socketEvents.statistics, {
-			nodeId,
+			node,
 			statistics: stats,
 		})
 
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'statistics updated',
-			nodeId,
-			stats
-		)
+		this.emit('event', EventSource.NODE, 'statistics updated', node, stats)
 	}
 
 	/**
@@ -2803,10 +2800,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'firmware update finished',
 				this._onNodeFirmwareUpdateFinished.bind(this)
 			)
-			.on(
-				'statistics updated',
-				this._onNodeStatisticsUpdated.bind(this, zwaveNode.id)
-			)
+			.on('statistics updated', this._onNodeStatisticsUpdated.bind(this))
 	}
 
 	/**
