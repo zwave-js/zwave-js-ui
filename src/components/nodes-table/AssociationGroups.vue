@@ -139,7 +139,6 @@ export default {
 			this.apiRequest('getAssociations', [this.node.id])
 		},
 		addAssociation(association) {
-			debugger
 			const target = !isNaN(association.target)
 				? parseInt(association.target)
 				: association.target.id
