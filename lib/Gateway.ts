@@ -1682,16 +1682,6 @@ export default class Gateway {
 
 		const isDiscovered = this.discovered[valueId.id]
 
-		const isFromCache = !node.ready
-
-		// prevent to send cached values if them are stateless
-		if (isFromCache && valueId.stateless) {
-			logger.debug(
-				`Skipping send of stateless value ${valueId.id}: it's from cache`
-			)
-			return
-		}
-
 		// check if this value isn't discovered yet (values added after node is ready)
 		if (this.config.hassDiscovery && !isDiscovered) {
 			this.discoverValue(node, this._getIdWithoutNode(valueId))
@@ -1785,6 +1775,8 @@ export default class Gateway {
 		if (valueId.writeable && !this.topicValues[topic]) {
 			const levels = topic.split('/').length
 
+			logger.debug(`Subscribing to updates of ${valueId.id}`)
+
 			if (this.topicLevels.indexOf(levels) < 0) {
 				this.topicLevels.push(levels)
 				this._mqtt.subscribe('+'.repeat(levels).split('').join('/'))
@@ -1816,7 +1808,16 @@ export default class Gateway {
 			}
 		}
 
-		this._mqtt.publish(topic, data, mqttOptions)
+		const isFromCache = !node.ready
+
+		// prevent to send cached values if them are stateless
+		if (isFromCache && valueId.stateless) {
+			logger.debug(
+				`Skipping send of stateless value ${valueId.id}: it's from cache`
+			)
+		} else {
+			this._mqtt.publish(topic, data, mqttOptions)
+		}
 	}
 
 	/**
@@ -2346,6 +2347,10 @@ export default class Gateway {
 				valueIdState,
 				true
 			) as ValueIdTopic
+
+			if (!topics) {
+				throw Error(`Can't find topics for ${vID}`)
+			}
 
 			cfg.values.push(vID, valueIdState.targetValue)
 
