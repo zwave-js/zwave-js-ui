@@ -1,3 +1,15 @@
+# [5.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.3.0...v5.4.0) (2021-07-21)
+
+
+### Bug Fixes
+
+* ensure subscribe to topics ([#1466](https://github.com/zwave-js/zwavejs2mqtt/issues/1466)) ([3cb8130](https://github.com/zwave-js/zwavejs2mqtt/commit/3cb8130207a29d1d2af3aac5f44e23aa99b75727)), closes [#1464](https://github.com/zwave-js/zwavejs2mqtt/issues/1464) [#1322](https://github.com/zwave-js/zwavejs2mqtt/issues/1322)
+
+
+### Features
+
+* zwave-js@8.0.3 zwave-js-server@1.9.1 ([#1465](https://github.com/zwave-js/zwavejs2mqtt/issues/1465)) ([fd5c40e](https://github.com/zwave-js/zwavejs2mqtt/commit/fd5c40e858d24bb8e69be56da05d1dafac2888c5))
+
 # [5.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.2.2...v5.3.0) (2021-07-20)
 
 
