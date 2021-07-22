@@ -1,3 +1,10 @@
+## [5.4.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.0...v5.4.1) (2021-07-22)
+
+
+### Features
+
+* zwave-js@8.0.4 ([8c179b9](https://github.com/zwave-js/zwavejs2mqtt/commit/8c179b9efbbba555a0b0392587b922ccecae8158))
+
 # [5.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.3.0...v5.4.0) (2021-07-21)
 
 
