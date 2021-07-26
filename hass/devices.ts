@@ -342,6 +342,8 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 	'57-12593-18756': [FAN_DIMMER], // Honeywell 39358 In-Wall Fan Control
 	'99-12340-18756': [FAN_DIMMER], // GE 1724 Dimmer
 	'99-12593-18756': [FAN_DIMMER], // GE 1724 Dimmer
+	'99-12600-18756': [FAN_DIMMER], // GE 14314 Dimmer (Older variant)
+	'99-12850-18756': [FAN_DIMMER], // GE 14314 Dimmer (Newer variant coming with FW 5.22)
 	'152-12-25857': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT101
 	'152-263-25601': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT100
 	'152-256-8194': [THERMOSTAT_2GIG], // Radio Thermostat / 2GIG CT32
