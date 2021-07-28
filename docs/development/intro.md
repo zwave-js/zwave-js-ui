@@ -40,4 +40,4 @@ This directory does not expect any special structure. Just organize it as you li
 10:32:09.374 CNTRLR   [Node 025] User-provided device config loaded
 ```
 
-> [!NOTE] You will need to re-interview the device for certain changes to have an effect, for example changed configuration parameters, certain compat flags, etc.
+> [!NOTE] Z2M needs to be restarted in order to pick up user-provided device configs. This can be done from settings by hitting `SAVE` or by completely restart the application. Also, you will need to re-interview the device for certain changes to have an effect, for example changed configuration parameters, certain compat flags, etc.
