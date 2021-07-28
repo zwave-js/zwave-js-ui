@@ -57,7 +57,7 @@ import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
 
-import { ConfigManager } from '@zwave-js/config'
+import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
 const priorityDir = storeDir + '/config'
 
@@ -252,6 +252,7 @@ export type HassDevice = {
 
 export type Z2MNode = {
 	id: number
+	deviceConfig?: DeviceConfig
 	manufacturerId?: number
 	productId?: number
 	productLabel?: string
@@ -2897,6 +2898,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.manufacturerId = zwaveNode.manufacturerId
 		node.productId = zwaveNode.productId
 		node.productType = zwaveNode.productType
+		node.deviceConfig = zwaveNode.deviceConfig
 
 		node.productLabel = deviceConfig.label
 		node.productDescription = deviceConfig.description
