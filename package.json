@@ -195,7 +195,7 @@
     "@types/jsonfile": "^6.0.1",
     "@types/jsonwebtoken": "^8.5.4",
     "@types/mocha": "^9.0.0",
-    "@types/morgan": "^1.9.2",
+    "@types/morgan": "^1.9.3",
     "@types/pem": "^1.9.6",
     "@types/proxyquire": "^1.3.28",
     "@types/serialport": "^8.0.2",
