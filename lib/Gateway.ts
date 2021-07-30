@@ -1103,6 +1103,7 @@ export default class Gateway {
 				case CommandClasses['Barrier Operator']:
 					if (valueId.isCurrentValue) {
 						cfg = utils.copy(hassCfg.barrier_state)
+						cfg.discovery_payload.position_topic = getTopic
 					} else return
 					break
 				case CommandClasses['Multilevel Switch']:
