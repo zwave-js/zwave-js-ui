@@ -23,7 +23,7 @@ async function main(param) {
 	});
 	// Find the correct check
 	const lintCheck = checks.check_runs.find(
-		(r) => r.conclusion === "failure" && r.name.startsWith("lint"),
+		(r) => r.conclusion === "failure" && r.name.startsWith("test"),
 	);
 	if (!lintCheck) return undefined;
 
