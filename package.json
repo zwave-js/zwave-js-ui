@@ -158,7 +158,7 @@
     "svg-pan-zoom": "^3.6.1",
     "vue": "^2.6.14",
     "vue-prism-editor": "^1.2.2",
-    "vue-router": "^3.5.1",
+    "vue-router": "^3.5.2",
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.5.3",
     "vuex": "^3.6.2",
