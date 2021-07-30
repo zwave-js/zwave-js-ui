@@ -245,7 +245,9 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			return
 		}
 
-		this._clientID = sanitizeTopic(MqttClient.NAME_PREFIX + (process.env.MQTT_NAME || config.name))
+		this._clientID = sanitizeTopic(
+			MqttClient.NAME_PREFIX + (process.env.MQTT_NAME || config.name)
+		)
 
 		const parsed = url.parse(config.host || '')
 		let protocol = 'mqtt'
