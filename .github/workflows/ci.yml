@@ -51,8 +51,7 @@ jobs:
         id: lint
         run: |
           # Run all lint commands and abort if one has unfixable errors
-          yarn run lint:ts --fix
-          yarn run lint:configjson -w
+          yarn run lint-fix
           git diff --name-only || true
           if ! git diff --quiet ; then
             echo "has changes"
