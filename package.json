@@ -209,7 +209,7 @@
     "babel-plugin-syntax-jsx": "^6.18.0",
     "babel-plugin-transform-vue-jsx": "^3.7.0",
     "chalk": "^4.1.1",
-    "copy-webpack-plugin": "^8.1.1",
+    "copy-webpack-plugin": "^9.0.1",
     "css-loader": "^5.2.6",
     "deepmerge": "^4.2.2",
     "eslint-config-prettier": "^8.3.0",
