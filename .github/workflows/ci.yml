@@ -43,16 +43,34 @@ jobs:
         if: matrix['node-version'] == '14.x'
         run: yarn run lint
 
-      - name: Cache build
-        id: cache-build
-        uses: actions/cache@v2.1.4
+      - name: Prepare lint auto-fix patch
+        if: |
+          matrix['node-version'] == '14.x' &&
+          failure() &&
+          github.event_name == 'pull_request'
+        id: lint
+        run: |
+          # Run all lint commands and abort if one has unfixable errors
+          yarn run lint-fix
+          git diff --name-only || true
+          if ! git diff --quiet ; then
+            echo "has changes"
+            git diff > fix.patch
+            echo "::set-output name=changed::true"
+          else
+            echo "unchanged"
+            echo "::set-output name=changed::false"
+          fi
+      - name: Upload Patch
+        if: |
+          matrix['node-version'] == '14.x' &&
+          failure() &&
+          github.event_name == 'pull_request' &&
+          steps.lint.outputs.changed == 'true'
+        uses: actions/upload-artifact@v2
         with:
-          path: dist
-          key: ${{ matrix['node-version'] }}-cache-build-${{ hashFiles('build/*') }}-${{ hashFiles('src/*') }}-${{ hashFiles('static/*') }}-${{ hashFiles('yarn.lock') }}
-
-      - name: Build
-        if: steps.cache-build.outputs.cache-hit != 'true'
-        run: yarn run build
+          name: lint-fix
+          path: fix.patch
 
       - name: Test
         run: yarn run test
