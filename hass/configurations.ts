@@ -137,7 +137,7 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 		type: 'cover',
 		object_id: 'barrier_state',
 		discovery_payload: {
-			command_topic: true,
+			position_topic: true,
 			state_topic: true,
 			position_template: '{{ value_json.value }}',
 			device_class: 'garage',

@@ -1,3 +1,19 @@
+## [5.4.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.2...v5.4.3) (2021-07-30)
+
+
+### Bug Fixes
+
+* **hass:** barrier operator CC MQTT discovery ([#1485](https://github.com/zwave-js/zwavejs2mqtt/issues/1485)) ([45e07a6](https://github.com/zwave-js/zwavejs2mqtt/commit/45e07a620b39532e01d4fbbd9dd771b71f4faf17)), closes [#1363](https://github.com/zwave-js/zwavejs2mqtt/issues/1363)
+* **ui:** typo in settings view ([#1483](https://github.com/zwave-js/zwavejs2mqtt/issues/1483)) ([ada0f65](https://github.com/zwave-js/zwavejs2mqtt/commit/ada0f65325966ea3f494513724e1252eaf505d23))
+* change the GE/Jasco 14314 to use the fan dimmer hass discovery ([#1476](https://github.com/zwave-js/zwavejs2mqtt/issues/1476)) ([44ba47f](https://github.com/zwave-js/zwavejs2mqtt/commit/44ba47fdb2eaf6b88d7b91513cb7cebfee7be211))
+
+
+### Features
+
+* add `deviceConfig` to node ([#1482](https://github.com/zwave-js/zwavejs2mqtt/issues/1482)) ([1e6acb3](https://github.com/zwave-js/zwavejs2mqtt/commit/1e6acb3b0058dd77acda55d6e4c64b2610d14674))
+* add `MQTT_NAME` env var ([#1481](https://github.com/zwave-js/zwavejs2mqtt/issues/1481)) ([5097a26](https://github.com/zwave-js/zwavejs2mqtt/commit/5097a26284788d8b0e3c8e717a1dc2029a838c9c))
+* zwave-js@8.0.6 and zwavejs-server@1.9.2 ([8735cea](https://github.com/zwave-js/zwavejs2mqtt/commit/8735cea14c33069eca01f033ffcaa40793611499))
+
 ## [5.4.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.1...v5.4.2) (2021-07-22)
 
 
