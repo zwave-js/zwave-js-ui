@@ -2095,12 +2095,12 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zwave-js/config@8.0.5":
-  version "8.0.5"
-  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.0.5.tgz#3e6230f92ce10e98a37f11b92c41a912f96b7f22"
-  integrity sha512-hf0WyGofyE01XMu+WNqAa208mnNJ4oUdgCGIVqL3jXdewjP5vz2qRBXXsxWKQiwQ2bj8fckhhZB117fwl5ORAg==
+"@zwave-js/config@8.0.6":
+  version "8.0.6"
+  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.0.6.tgz#6989a221715ab47ccd5789d1c4e5eec7c946b8ac"
+  integrity sha512-RniYaFlKYicFsRfoQFFsKwe4mSsj9szf+ka/BGl/qfVaIL1ZhmTQg441qR0a6cr1Oy9HPu4dk7xeEh/UOxkfmA==
   dependencies:
-    "@zwave-js/core" "8.0.3"
+    "@zwave-js/core" "8.0.6"
     "@zwave-js/shared" "8.0.3"
     alcalzone-shared "^4.0.0"
     ansi-colors "^4.1.1"
@@ -2110,10 +2110,10 @@
     semver "^7.3.5"
     winston "^3.3.3"
 
-"@zwave-js/core@8.0.3":
-  version "8.0.3"
-  resolved "https://registry.yarnpkg.com/@zwave-js/core/-/core-8.0.3.tgz#5ddf20d6eca6bbd70fa9b4743f7ffd6e623fb93f"
-  integrity sha512-McqqA6qFQMC4i8en1bVwGCeZGfrr4OxXPXR2Mcs107Sm13omcmrvzQ91C10xEtKTNruLuR3nsBEpcHrI1rBpjg==
+"@zwave-js/core@8.0.6":
+  version "8.0.6"
+  resolved "https://registry.yarnpkg.com/@zwave-js/core/-/core-8.0.6.tgz#f4b44aa4abe420d68d2c972a35e764aa3e1300d0"
+  integrity sha512-vnmJe+EiwYovSUJV15RC5Ebf4EBc3e60hzWnIkJNdH7gVRFYkvkEc4jKn1kPgwAwmIrUY77YdPfhj8YT0qYn8w==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@zwave-js/shared" "8.0.3"
@@ -2134,22 +2134,22 @@
   dependencies:
     moment "^2.11.2"
 
-"@zwave-js/serial@8.0.3":
-  version "8.0.3"
-  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-8.0.3.tgz#4c0815f11e18f4df2a4fb1926b38850298403ca8"
-  integrity sha512-iYR4XRTw2YeQcYa8IuCs6Db3RD9bwKpYnBFGPKaqqfoMLG7qcW7NcD7/D2L2OYMYsidFHNBWjgEdmBP3VMFiJA==
+"@zwave-js/serial@8.0.6":
+  version "8.0.6"
+  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-8.0.6.tgz#9d643109d03d3fe748af11e9e5bb835cc1c10a5c"
+  integrity sha512-IXtIHSBDkhzwF04gxbxgxuNfzAplkPGvUSO3IAiJt3P8WqgJkHtl9I9GGNxYCGup5Z+xYqtjwkzwwP+JsxXqHg==
   dependencies:
     "@sentry/node" "^6.9.0"
-    "@zwave-js/core" "8.0.3"
+    "@zwave-js/core" "8.0.6"
     "@zwave-js/shared" "8.0.3"
     alcalzone-shared "^4.0.0"
     serialport "^9.2.0"
     winston "^3.3.3"
 
-"@zwave-js/server@^1.9.1":
-  version "1.9.1"
-  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.9.1.tgz#78845d2269dc90bc5ff02846dc7d743b31cdcb8f"
-  integrity sha512-zQp3WB00vYgD+Dko5C6SLJqtLCmfOAAp9Guem1CCdH4MTFLS2VvXTAQ6JzI4TtHnJDIIWV2csF2/5r4x4Ws0YQ==
+"@zwave-js/server@^1.9.2":
+  version "1.9.2"
+  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.9.2.tgz#aeb8db6dc2ffc48e05afd71cb8b95d9446501397"
+  integrity sha512-1MmyKeUDc97B3o+yvUWNmInQY5ATlioS/EhXNW52u5/weqFx3OWokhEbN5AQvk9ID8wBbODM+3vyeOjsu6MnpQ==
   dependencies:
     minimist "^1.2.5"
     ws "^7.4.2"
@@ -12092,18 +12092,18 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
 
-zwave-js@^8.0.5:
-  version "8.0.5"
-  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.0.5.tgz#568e1ec66bd749a33cf8a686f76fa88675976028"
-  integrity sha512-JIZSHHyaD8eU2DYdlrmlOMl4oCHIfhG8Of559fNAeq70RC+FqWJMAOhVb3Jr/WU3vz1R5GoRXJB3JYeKLCQjiw==
+zwave-js@^8.0.6:
+  version "8.0.6"
+  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.0.6.tgz#924a30d765bfd6146491b7f1e0578660a596b8f9"
+  integrity sha512-sE6Z1VZQp5kvoSpyKJBCfQ40Tedp04SMtDD6n3TLNTXT8Z3ZKyns1CQBLkiTgp/Of1Ms97niLEyXr1xkHqNLaA==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@alcalzone/pak" "^0.6.0"
     "@sentry/integrations" "^6.9.0"
     "@sentry/node" "^6.9.0"
-    "@zwave-js/config" "8.0.5"
-    "@zwave-js/core" "8.0.3"
-    "@zwave-js/serial" "8.0.3"
+    "@zwave-js/config" "8.0.6"
+    "@zwave-js/core" "8.0.6"
+    "@zwave-js/serial" "8.0.6"
     "@zwave-js/shared" "8.0.3"
     alcalzone-shared "^4.0.0"
     ansi-colors "^4.1.1"
