@@ -925,7 +925,7 @@ export default {
 			return (
 				!this.newGateway.hassDiscovery ||
 				this.newGateway.payloadType !== 2 ||
-				"Hass discovery doesn't works with this payload type"
+				"Hass discovery doesn't work with this payload type"
 			)
 		},
 		requiredPassword() {
