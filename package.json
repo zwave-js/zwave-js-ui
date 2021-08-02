@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "5.4.3",
+  "version": "5.4.4",
   "bin": {
     "zwavejs2mqtt": "server/bin/www.js"
   },
@@ -217,7 +217,7 @@
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.3.2",
     "lodash": "^4.17.21",
-    "markdownlint-cli": "^0.27.1",
+    "markdownlint-cli": "^0.28.1",
     "material-design-icons-iconfont": "^6.1.0",
     "mini-css-extract-plugin": "^2.1.0",
     "ora": "^5.4.1",
