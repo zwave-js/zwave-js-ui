@@ -2100,7 +2100,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onControllerStatisticsUpdated(stats: ControllerStatistics) {
-		const controllerNode = this.nodes.get(this.driver.controller.ownNodeId)
+		let controllerNode: Z2MNode
+		try {
+			controllerNode = this.nodes.get(this.driver.controller.ownNodeId)
+		} catch (e) {
+			// This should not happen, but it does. Don't crash!
+			return
+		}
 
 		if (controllerNode) {
 			controllerNode.statistics = stats
