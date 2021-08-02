@@ -1,3 +1,15 @@
+## [5.4.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.3...v5.4.4) (2021-08-02)
+
+
+### Bug Fixes
+
+* catch "controller not ready" error in statistics event handler ([#1523](https://github.com/zwave-js/zwavejs2mqtt/issues/1523)) ([d3125c1](https://github.com/zwave-js/zwavejs2mqtt/commit/d3125c1824a0aaa1a8698b1f60f266d42d492b47))
+
+
+### Features
+
+* zwave-js@8.0.7 ([e0ec7e4](https://github.com/zwave-js/zwavejs2mqtt/commit/e0ec7e4d5cc0474ee75475699ca53ca94a8aaec3))
+
 ## [5.4.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.2...v5.4.3) (2021-07-30)
 
 
