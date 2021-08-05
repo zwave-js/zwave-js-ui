@@ -1,3 +1,15 @@
+## [5.4.5](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.4...v5.4.5) (2021-08-05)
+
+
+### Bug Fixes
+
+* **hass:** discovery of Barrier State CC ([#1538](https://github.com/zwave-js/zwavejs2mqtt/issues/1538)) ([15c870a](https://github.com/zwave-js/zwavejs2mqtt/commit/15c870a6ea082106397be5e15e3fd19147976f1e)), closes [#1363](https://github.com/zwave-js/zwavejs2mqtt/issues/1363)
+
+
+### Features
+
+* bump zwave-js@8.0.8 ([74a3656](https://github.com/zwave-js/zwavejs2mqtt/commit/74a36566e1d244f8d91da92177a897ff492ce115))
+
 ## [5.4.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.3...v5.4.4) (2021-08-02)
 
 
