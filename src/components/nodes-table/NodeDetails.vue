@@ -44,6 +44,7 @@
 					:error-messages="nameError"
 					v-model.trim="newName"
 					clearable
+					clear-icon="refresh"
 					@click:clear="resetName"
 					@click:append-outer="updateName"
 				></v-text-field>
@@ -57,6 +58,7 @@
 					:error="!!locError"
 					:error-messages="locError"
 					clearable
+					clear-icon="refresh"
 					@click:clear="resetLocation"
 					@click:append-outer="updateLoc"
 				></v-text-field>
