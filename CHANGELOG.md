@@ -1,3 +1,10 @@
+## [5.4.6](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.5...v5.4.6) (2021-08-17)
+
+
+### Bug Fixes
+
+* use different icon for node name/location reset ([0b8e165](https://github.com/zwave-js/zwavejs2mqtt/commit/0b8e165f2e5853a4d5db832594ace696a86ca801)), closes [#1542](https://github.com/zwave-js/zwavejs2mqtt/issues/1542)
+
 ## [5.4.5](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.4...v5.4.5) (2021-08-05)
 
 
