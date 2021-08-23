@@ -25,4 +25,5 @@ export const socketEvents = {
 	statistics: 'STATISTICS',
 	grantSecurityClasses: 'GRANT_SECURITY_CLASSES',
 	validateDSK: 'VALIDATE_DSK',
+	inclusionAborted: 'INCLUSION_ABORTED',
 }

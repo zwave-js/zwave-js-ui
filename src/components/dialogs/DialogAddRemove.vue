@@ -375,6 +375,7 @@ export default {
 			this.onGrantSecurityCC.bind(this)
 		)
 		this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
+		this.bindEvent('inclusionAborted', this.init.bind(this))
 	},
 	watch: {
 		value() {
@@ -445,7 +446,6 @@ export default {
 		},
 		abortInclusion() {
 			this.$emit('apiRequest', 'abortInclusion', [])
-			this.init()
 		},
 		onGrantSecurityCC(requested) {
 			const grantStep = this.availableSteps.s2Classes

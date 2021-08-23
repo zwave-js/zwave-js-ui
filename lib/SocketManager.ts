@@ -25,6 +25,7 @@ export enum socketEvents {
 	statistics = 'STATISTICS',
 	grantSecurityClasses = 'GRANT_SECURITY_CLASSES',
 	validateDSK = 'VALIDATE_DSK',
+	inclusionAborted = 'INCLUSION_ABORTED',
 }
 
 // events from client ---> server

@@ -2373,6 +2373,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onAbortInclusion() {
 		this._dskResolve = null
 		this._grantResolve = null
+		this.sendToSocket(socketEvents.inclusionAborted, true)
+
 		logger.warn('Inclusion aborted')
 	}
 
