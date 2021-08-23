@@ -1098,7 +1098,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
 				this.cfg.securityKeys.S0_Legacy = s0Key
-				await jsonStore.put(store.settings, this.cfg)
+				const settings = jsonStore.get(store.settings)
+				settings.zwave = this.cfg
+				await jsonStore.put(store.settings, settings)
 			} else if (process.env.NETWORK_KEY) {
 				this.cfg.securityKeys.S0_Legacy = process.env.NETWORK_KEY
 			}
