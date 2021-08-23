@@ -489,7 +489,7 @@ export default {
 				}
 			} else if (s.key === 'inclusionMode') {
 				const mode = s.values.inclusionMode
-				this.sendAction('startExclusion', [mode])
+				this.sendAction('startInclusion', [mode])
 			} else if (s.key === 's2Classes') {
 				const values = s.values
 
@@ -529,6 +529,7 @@ export default {
 			this.steps = []
 			this.pushStep('action')
 			this.currentAction = null
+			this.loading = false
 		},
 		async pushStep(step) {
 			const s =
