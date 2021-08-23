@@ -325,10 +325,7 @@ export default {
 					}
 				}
 
-				if (
-					action === 'startInclusion' ||
-					action === 'replaceFailedNode'
-				) {
+				if (action === 'startInclusion') {
 					const secure = await this.$listeners.showConfirm(
 						'Node inclusion',
 						'Start inclusion in secure mode?',
