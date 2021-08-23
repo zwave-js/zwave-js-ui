@@ -1,80 +1,105 @@
 <template>
-	<v-dialog v-model="value" max-width="430px" persistent>
+	<v-dialog v-model="value" @click:outside="$emit('close')" max-width="800px">
 		<v-card>
 			<v-card-title>
-				<span class="headline">Add/Remove Device</span>
+				<span class="headline">Inclusion Manager</span>
 			</v-card-title>
 
-			<v-card-text style="padding-bottom: 0">
-				<v-container fluid style="margin-top: -2rem">
-					<v-radio-group v-model="selectedMode" mandatory>
-						<v-radio :value="0">
-							<template v-slot:label>
-								<div class="option">
-									<v-icon color="green accent-4" small
-										>add_circle</v-icon
-									>
-									<strong>Inclusion</strong>
-									<small
-										>Add using non-secure mode (best for
-										most devices)</small
-									>
-								</div>
-							</template>
-						</v-radio>
-						<v-radio :value="1">
-							<template v-slot:label>
-								<div class="option">
-									<v-icon color="amber accent-4" small
-										>enhanced_encryption</v-icon
-									>
-									<strong>Secure Inclusion</strong>
-									<small
-										>Add with security (best for
-										locks/doors)</small
-									>
-								</div>
-							</template>
-						</v-radio>
-						<v-radio :value="2">
-							<template v-slot:label>
-								<div class="option">
-									<v-icon color="red accent-4" small
-										>remove_circle</v-icon
-									>
-									<strong>Exclusion</strong>
-									<small
-										>Remove device attached to existing
-										network</small
-									>
-								</div>
-							</template>
-						</v-radio>
-					</v-radio-group>
-				</v-container>
+			<v-card-text>
+				<v-stepper v-model="currentStep">
+					<v-stepper-header>
+						<template v-for="s in steps">
+							<v-stepper-step
+								:key="`${s.key}-step`"
+								:complete="currentStep > s.index"
+								:step="s.index"
+								editable
+							>
+								{{ s.title }}
+							</v-stepper-step>
+
+							<v-divider
+								v-if="s.index !== steps.length"
+								:key="s.index"
+							></v-divider>
+						</template>
+					</v-stepper-header>
+
+					<v-stepper-items>
+						<v-stepper-content
+							v-for="s in steps"
+							:key="`${s.key}-content`"
+							:step="s.index"
+						>
+							<div v-if="s.key == 'action'">
+								<v-radio-group
+									v-model="s.values.action"
+									mandatory
+								>
+									<v-radio :value="0">
+										<template v-slot:label>
+											<div class="option">
+												<v-icon
+													color="green accent-4"
+													small
+													>add_circle</v-icon
+												>
+												<strong>Inclusion</strong>
+												<small
+													>Add a new device to the
+													network</small
+												>
+											</div>
+										</template>
+									</v-radio>
+									<v-radio :value="1">
+										<template v-slot:label>
+											<div class="option">
+												<v-icon
+													color="amber accent-4"
+													small
+													>autorenew</v-icon
+												>
+												<strong>Replace</strong>
+												<small
+													>Replace a failed
+													device</small
+												>
+											</div>
+										</template>
+									</v-radio>
+									<v-radio :value="2">
+										<template v-slot:label>
+											<div class="option">
+												<v-icon
+													color="red accent-4"
+													small
+													>remove_circle</v-icon
+												>
+												<strong>Exclusion</strong>
+												<small
+													>Remove device from
+													network</small
+												>
+											</div>
+										</template>
+									</v-radio>
+								</v-radio-group>
+							</div>
+
+							<v-btn color="primary" @click="nextStep(s)">
+								Continue
+							</v-btn>
+
+							<v-btn text> Cancel </v-btn>
+						</v-stepper-content>
+					</v-stepper-items>
+				</v-stepper>
 
 				<v-alert v-if="alert" dense text :type="alert.type">{{
 					alert.text
 				}}</v-alert>
 			</v-card-text>
-
-			<v-card-actions>
-				<v-spacer></v-spacer>
-				<v-btn
-					v-if="state === 'stop' || state === 'new'"
-					color="red darken-1"
-					text
-					@click="$emit('close')"
-					>Close</v-btn
-				>
-				<v-btn
-					v-if="state !== 'wait'"
-					color="blue darken-1"
-					text
-					@click="onAction"
-					>{{ method }}</v-btn
-				>
-			</v-card-actions>
 		</v-card>
 	</v-dialog>
 </template>
@@ -89,6 +114,54 @@ export default {
 	},
 	data() {
 		return {
+			currentStep: 0,
+			availableSteps: {
+				action: {
+					index: 0,
+					key: 'action',
+					title: 'Action',
+					values: {
+						action: 0, //inclusion
+					},
+				},
+				inclusionMode: {
+					index: 1,
+					key: 'inclusionMode',
+					title: 'Inclusion Mode',
+					values: {
+						inclusionMode: 0, //default, smartstart no encryption
+					},
+				},
+				s2Classes: {
+					index: 2,
+					key: 's2Classes',
+					title: 'Security Classes',
+					values: {
+						accessControl: true,
+						auth: true,
+						unAuth: false,
+						legacy: true,
+						clientAuth: false,
+					},
+				},
+				s2Pin: {
+					index: 3,
+					key: 's2Pin',
+					title: 'DSK validation',
+					values: {
+						pin: '00000',
+					},
+				},
+				replaceFailed: {
+					index: 1,
+					key: 'replaceFailed',
+					title: 'Replace Failed',
+					values: {
+						replaceId: 0, //default
+					},
+				},
+			},
+			steps: [],
 			selectedMode: 0,
 			mode: 0, // most common action should be default
 			modes: [
@@ -133,7 +206,13 @@ export default {
 			return this.modes[this.mode].name
 		},
 	},
+	mounted() {
+		this.init()
+	},
 	watch: {
+		value() {
+			this.init()
+		},
 		nodeAddedOrRemoved(node) {
 			this.nodeFound = node
 
@@ -191,6 +270,14 @@ export default {
 		},
 	},
 	methods: {
+		copy(o) {
+			return JSON.parse(JSON.stringify(o))
+		},
+		nextStep(s) {},
+		init() {
+			this.steps = [this.copy(this.availableSteps.action)]
+			this.currentStep = 0
+		},
 		onAction() {
 			this.mode = this.selectedMode
 			this.commandEndDate = new Date()

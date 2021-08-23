@@ -8,8 +8,13 @@ export const state = {
   zwave: {
     port: undefined,
     commandsTimeout: 30,
-    networkKey: undefined,
     logLevel: 'info',
+    keys: {
+      S2_Unauthenticated: undefined,
+      S2_Authenticated: undefined,
+      S2_AccessControl: undefined,
+      S0_Legacy: undefined,
+    },
     logToFile: false,
     serverEnabled: false,
     enableStatistics: undefined, // keep it undefined so the user dialog will show up
