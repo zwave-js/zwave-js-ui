@@ -37,6 +37,7 @@ import {
 	NodeStatistics,
 	InclusionStrategy,
 	InclusionGrant,
+	InclusionResult,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -131,6 +132,9 @@ const allowedApis = validateMethods([
 	'installConfigUpdate',
 	'pingNode',
 	'restart',
+	'grantSecurityClasses',
+	'validateDSK',
+	'abortInclusion',
 ] as const)
 
 export type SensorTypeScale = {
@@ -2248,8 +2252,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Triggered when a node is added
 	 */
-	private _onNodeAdded(zwaveNode: ZWaveNode) {
-		logger.info(`Node ${zwaveNode.id}: added`)
+	private _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
+		logger.info(
+			`Node ${zwaveNode.id}: added with security ${
+				result.lowSecurity ? 'LOW' : ''
+			}`
+		)
 
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
@@ -2350,8 +2358,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	abortInclusion() {
+		if (this._dskResolve) {
+			this._dskResolve(false)
+			this._dskResolve = null
+		}
+
+		if (this._grantResolve) {
+			this._grantResolve(false)
+			this._grantResolve = null
+		}
+	}
+
 	private _onAbortInclusion() {
-		logger.info('Inclusion aborted')
+		this._dskResolve = null
+		this._grantResolve = null
+		logger.warn('Inclusion aborted')
 	}
 
 	// ---------- NODE EVENTS -------------------------------------

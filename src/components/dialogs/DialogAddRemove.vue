@@ -1,6 +1,6 @@
 <template>
 	<v-dialog v-model="value" @click:outside="$emit('close')" max-width="800px">
-		<v-card>
+		<v-card :loading="loading">
 			<v-card-title>
 				<span class="headline">Inclusion Manager</span>
 			</v-card-title>
@@ -86,13 +86,38 @@
 											</template>
 										</v-radio>
 									</v-radio-group>
+
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+
+										<v-btn
+											v-if="state === 'wait'"
+											text
+											@click="stopAction"
+										>
+											Stop
+										</v-btn>
+									</v-card-actions>
 								</v-card-text>
 								<v-card-text v-if="s.key == 'replaceFailed'">
 									<v-text-field
 										label="Node ID"
-										v-model="s.values.replaceId"
+										v-model.number="s.values.replaceId"
 									>
 									</v-text-field>
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+									</v-card-actions>
 								</v-card-text>
 
 								<v-card-text v-if="s.key == 'inclusionMode'">
@@ -158,20 +183,98 @@
 											</template>
 										</v-radio>
 									</v-radio-group>
+
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+										<v-btn
+											v-if="state === 'wait'"
+											text
+											@click="stopAction"
+										>
+											Stop
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
+								<v-card-text v-if="s.key == 's2Classes'">
+									<v-checkbox
+										v-model="s.values.accessControl"
+										label="S2 Access Control"
+										hint="Example: Door Locks, garage doors"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										v-model="s.values.auth"
+										label="S2 Authenticated"
+										hint="Example: Lightning, Sensors, Security Systems"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										v-model="s.values.unAuth"
+										label="S2 Unauthenticated"
+										hint="Like S2 Authenticated but without verificationt that the correct device is included"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										v-model="s.values.legacy"
+										label="S0 legacy"
+										hint="Example: Legacy door locks without S2 support"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										v-model="s.values.clientAuth"
+										label="Client-side authentication"
+										hint="Authentication of the inclusion happens on the device instead of on the controller (for devices without DSK)"
+										persistent-hint
+									></v-checkbox>
+
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+
+										<v-btn
+											color="error"
+											@click="abortInclusion"
+										>
+											Abort
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+								<v-card-text v-if="s.key == 's2Pin'">
+									<v-text-field
+										label="DSK Pin"
+										hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
+										v-model.number="s.values.pin"
+										:suffix="s.suffix"
+									>
+									</v-text-field>
+
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+
+										<v-btn
+											color="error"
+											@click="abortInclusion"
+										>
+											Abort
+										</v-btn>
+									</v-card-actions>
 								</v-card-text>
 							</v-card>
-
-							<v-btn color="primary" @click="nextStep">
-								Next
-							</v-btn>
-
-							<v-btn
-								v-if="state === 'wait'"
-								text
-								@click="stopAction"
-							>
-								Stop
-							</v-btn>
 						</v-stepper-content>
 					</v-stepper-items>
 				</v-stepper>
@@ -191,15 +294,18 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { socketEvents } from '@/plugins/socket'
 
 export default {
 	props: {
 		value: Boolean, // show or hide
 		nodeAddedOrRemoved: Object,
+		socket: Object,
 	},
 	data() {
 		return {
 			currentStep: 1,
+			loading: false,
 			availableSteps: {
 				action: {
 					key: 'action',
@@ -229,6 +335,7 @@ export default {
 				s2Pin: {
 					key: 's2Pin',
 					title: 'DSK validation',
+					suffix: '',
 					values: {
 						pin: '00000',
 					},
@@ -249,6 +356,7 @@ export default {
 			alert: null,
 			nodeFound: null,
 			currentAction: null,
+			bindedSocketEvents: {},
 		}
 	},
 	computed: {
@@ -262,6 +370,11 @@ export default {
 	},
 	mounted() {
 		this.init()
+		this.bindEvent(
+			'grantSecurityClasses',
+			this.onGrantSecurityCC.bind(this)
+		)
+		this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
 	},
 	watch: {
 		value() {
@@ -330,6 +443,32 @@ export default {
 		changeStep(index) {
 			this.steps = this.steps.slice(0, index)
 		},
+		abortInclusion() {
+			this.$emit('apiRequest', 'abortInclusion', [])
+			this.init()
+		},
+		onGrantSecurityCC(requested) {
+			const grantStep = this.availableSteps.s2Classes
+			const classes = requested.securityClasses
+			const values = grantStep.values
+			values.accessControl = classes.includes(2)
+			values.auth = classes.includes(1)
+			values.unAuth = classes.includes(0)
+			values.legacy = classes.includes(7)
+
+			values.clientAuth = requested.clientSideAuth
+
+			this.loading = false
+
+			this.pushStep(grantStep)
+		},
+		onValidateDSK(dsk) {
+			const dskStep = this.availableSteps.s2Pin
+			dskStep.suffix = dsk
+
+			this.loading = false
+			this.pushStep(dskStep)
+		},
 		nextStep() {
 			const s = this.steps[this.currentStep - 1]
 			if (s.key === 'action') {
@@ -348,7 +487,42 @@ export default {
 					this.currentAction = 'Exclusion'
 					this.sendAction('startExclusion', [])
 				}
-			} else if (s.key === 'replaceFailed' || s.key === 'inclusionMode') {
+			} else if (s.key === 'inclusionMode') {
+				const mode = s.values.inclusionMode
+				this.sendAction('startExclusion', [mode])
+			} else if (s.key === 's2Classes') {
+				const values = s.values
+
+				const securityClasses = []
+
+				if (values.accessControl) {
+					securityClasses.push(2)
+				}
+
+				if (values.auth) {
+					securityClasses.push(1)
+				}
+
+				if (values.unAuth) {
+					securityClasses.push(0)
+				}
+
+				if (values.legacy) {
+					securityClasses.push(7)
+				}
+
+				this.$emit('apiRequest', 'grantSecurityClasses', [
+					{
+						securityClasses,
+						clientSideAuth: values.clientAuth,
+					},
+				])
+
+				this.loading = true
+			} else if (s.key === 's2Pin') {
+				const mode = s.values.pin
+				this.$emit('apiRequest', 'validateDSK', [mode])
+				this.loading = true
 			}
 		},
 		init() {
@@ -356,8 +530,9 @@ export default {
 			this.pushStep('action')
 			this.currentAction = null
 		},
-		async pushStep(stepKey) {
-			const s = this.availableSteps[stepKey]
+		async pushStep(step) {
+			const s =
+				typeof step === 'string' ? this.availableSteps[step] : step
 			s.index = this.steps.length + 1
 			this.steps.push(this.copy(s))
 			await this.$nextTick()
@@ -378,6 +553,15 @@ export default {
 			this.$emit('apiRequest', api, args)
 			this.state = 'wait' // make sure user can't trigger another action too soon
 		},
+		bindEvent(eventName, handler) {
+			this.socket.on(socketEvents[eventName], handler)
+			this.bindedSocketEvents[eventName] = handler
+		},
+		unbindEvents() {
+			for (const event in this.bindedSocketEvents) {
+				this.socket.off(event, this.bindedSocketEvents[event])
+			}
+		},
 		showResults() {
 			if (this.waitTimeout) {
 				clearTimeout(this.waitTimeout)
@@ -389,7 +573,7 @@ export default {
 					type: 'warning',
 					text: `${this.currentAction} stopped, no changes detected`,
 				}
-			} else if (this.mode === 2) {
+			} else if (this.currentAction === 'Exclusion') {
 				this.alert = {
 					type: 'success',
 					text: `Node ${this.nodeFound.id} removed`,
@@ -412,6 +596,8 @@ export default {
 		if (this.waitTimeout) {
 			clearTimeout(this.waitTimeout)
 		}
+
+		this.unbindEvents()
 
 		this.alert = null
 	},

@@ -77,6 +77,7 @@
 				<DialogAddRemove
 					v-model="addRemoveShowDialog"
 					:nodeAddedOrRemoved="addRemoveNode"
+					:socket="socket"
 					@close="onAddRemoveClose"
 					@apiRequest="apiRequest"
 				/>
