@@ -2185,13 +2185,13 @@
     serialport "^9.2.0"
     winston "^3.3.3"
 
-"@zwave-js/server@^1.9.2":
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.9.2.tgz#aeb8db6dc2ffc48e05afd71cb8b95d9446501397"
-  integrity sha512-1MmyKeUDc97B3o+yvUWNmInQY5ATlioS/EhXNW52u5/weqFx3OWokhEbN5AQvk9ID8wBbODM+3vyeOjsu6MnpQ==
+"@zwave-js/server@^1.10.0":
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.0.tgz#2f3c5ea57efc585c58086c484ec221329ca75e33"
+  integrity sha512-nbVJK7UJnRG9ep6Pe8A6sx9QXoqmRw/YAkm+9R+DhIsMeFlLuY8ThmdKfl5yd8VBR+667Y5WjkYDGvUhXzI+JQ==
   dependencies:
     minimist "^1.2.5"
-    ws "^7.4.2"
+    ws "^8.0.0"
 
 "@zwave-js/shared@8.1.0":
   version "8.1.0"
@@ -11985,7 +11985,7 @@ ws@^6.2.1:
   dependencies:
     async-limiter "~1.0.0"
 
-ws@^7.3.1, ws@^7.4.2, ws@~7.4.2:
+ws@^7.3.1, ws@~7.4.2:
   version "7.4.5"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.4.5.tgz#a484dd851e9beb6fdb420027e3885e8ce48986c1"
   integrity sha512-xzyu3hFvomRfXKH8vOFMU3OguG6oOvhXMo3xsGy3xWExqaM2dxBbVxuD99O7m3ZUFMvvscsZDqxfgMaRr/Nr1g==
@@ -11994,6 +11994,11 @@ ws@^7.4.3:
   version "7.5.0"
   resolved "https://registry.yarnpkg.com/ws/-/ws-7.5.0.tgz#0033bafea031fb9df041b2026fc72a571ca44691"
   integrity sha512-6ezXvzOZupqKj4jUqbQ9tXuJNo+BR2gU8fFRk3XCP3e0G6WT414u5ELe6Y0vtp7kmSJ3F7YWObSNr1ESsgi4vw==
+
+ws@^8.0.0:
+  version "8.2.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-8.2.0.tgz#0b738cd484bfc9303421914b11bb4011e07615bb"
+  integrity sha512-uYhVJ/m9oXwEI04iIVmgLmugh2qrZihkywG9y5FfZV2ATeLIzHf93qs+tUNqlttbQK957/VX3mtwAS+UfIwA4g==
 
 xdg-basedir@^4.0.0:
   version "4.0.0"
