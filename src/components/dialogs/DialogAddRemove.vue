@@ -6,7 +6,7 @@
 			</v-card-title>
 
 			<v-card-text>
-				<v-stepper v-model="currentStep">
+				<v-stepper v-model="currentStep" @change="changeStep">
 					<v-stepper-header>
 						<template v-for="s in steps">
 							<v-stepper-step
@@ -31,74 +31,159 @@
 							:key="`${s.key}-content`"
 							:step="s.index"
 						>
-							<div v-if="s.key == 'action'">
-								<v-radio-group
-									v-model="s.values.action"
-									mandatory
-								>
-									<v-radio :value="0">
-										<template v-slot:label>
-											<div class="option">
-												<v-icon
-													color="green accent-4"
-													small
-													>add_circle</v-icon
-												>
-												<strong>Inclusion</strong>
-												<small
-													>Add a new device to the
-													network</small
-												>
-											</div>
-										</template>
-									</v-radio>
-									<v-radio :value="1">
-										<template v-slot:label>
-											<div class="option">
-												<v-icon
-													color="amber accent-4"
-													small
-													>autorenew</v-icon
-												>
-												<strong>Replace</strong>
-												<small
-													>Replace a failed
-													device</small
-												>
-											</div>
-										</template>
-									</v-radio>
-									<v-radio :value="2">
-										<template v-slot:label>
-											<div class="option">
-												<v-icon
-													color="red accent-4"
-													small
-													>remove_circle</v-icon
-												>
-												<strong>Exclusion</strong>
-												<small
-													>Remove device from
-													network</small
-												>
-											</div>
-										</template>
-									</v-radio>
-								</v-radio-group>
-							</div>
+							<v-card elevation="0">
+								<v-card-text v-if="s.key == 'action'">
+									<v-radio-group
+										v-model="s.values.action"
+										mandatory
+									>
+										<v-radio :value="0">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="green accent-4"
+														small
+														>add_circle</v-icon
+													>
+													<strong>Inclusion</strong>
+													<small
+														>Add a new device to the
+														network</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="1">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="amber accent-4"
+														small
+														>autorenew</v-icon
+													>
+													<strong>Replace</strong>
+													<small
+														>Replace a failed
+														device</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="2">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="red accent-4"
+														small
+														>remove_circle</v-icon
+													>
+													<strong>Exclusion</strong>
+													<small
+														>Remove device from
+														network</small
+													>
+												</div>
+											</template>
+										</v-radio>
+									</v-radio-group>
+								</v-card-text>
+								<v-card-text v-if="s.key == 'replaceFailed'">
+									<v-text-field
+										label="Node ID"
+										v-model="s.values.replaceId"
+									>
+									</v-text-field>
+								</v-card-text>
 
-							<v-btn color="primary" @click="nextStep(s)">
-								Continue
+								<v-card-text v-if="s.key == 'inclusionMode'">
+									<v-radio-group
+										v-model="s.values.inclusionMode"
+										mandatory
+									>
+										<v-radio :value="0">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="green accent-4"
+														small
+														>add_circle</v-icon
+													>
+													<strong>Default</strong>
+													<small
+														>S2 when supported, S0
+														only when necessary, no
+														encryption otherwise.
+														Requires user
+														interaction</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="1">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="primary"
+														small
+														>smart_button</v-icon
+													>
+													<strong>Smart start</strong>
+													<small
+														>S2 only. Allows
+														pre-configuring the
+														device inclusion
+														settings, which will
+														then happen without user
+														interaction</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="2">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="amber accent-4"
+														small
+														>no_encryption</v-icon
+													>
+													<strong
+														>No encryption</strong
+													>
+													<small
+														>Do not use
+														encryption</small
+													>
+												</div>
+											</template>
+										</v-radio>
+									</v-radio-group>
+								</v-card-text>
+							</v-card>
+
+							<v-btn color="primary" @click="nextStep">
+								Next
 							</v-btn>
 
-							<v-btn text> Cancel </v-btn>
+							<v-btn
+								v-if="state === 'wait'"
+								text
+								@click="stopAction"
+							>
+								Stop
+							</v-btn>
 						</v-stepper-content>
 					</v-stepper-items>
 				</v-stepper>
 
-				<v-alert v-if="alert" dense text :type="alert.type">{{
-					alert.text
-				}}</v-alert>
+				<v-alert
+					class="mt-3"
+					v-if="alert"
+					dense
+					text
+					:type="alert.type"
+					>{{ alert.text }}</v-alert
+				>
 			</v-card-text>
 		</v-card>
 	</v-dialog>
@@ -114,10 +199,9 @@ export default {
 	},
 	data() {
 		return {
-			currentStep: 0,
+			currentStep: 1,
 			availableSteps: {
 				action: {
-					index: 0,
 					key: 'action',
 					title: 'Action',
 					values: {
@@ -125,7 +209,6 @@ export default {
 					},
 				},
 				inclusionMode: {
-					index: 1,
 					key: 'inclusionMode',
 					title: 'Inclusion Mode',
 					values: {
@@ -133,7 +216,6 @@ export default {
 					},
 				},
 				s2Classes: {
-					index: 2,
 					key: 's2Classes',
 					title: 'Security Classes',
 					values: {
@@ -145,7 +227,6 @@ export default {
 					},
 				},
 				s2Pin: {
-					index: 3,
 					key: 's2Pin',
 					title: 'DSK validation',
 					values: {
@@ -153,57 +234,30 @@ export default {
 					},
 				},
 				replaceFailed: {
-					index: 1,
 					key: 'replaceFailed',
-					title: 'Replace Failed',
+					title: 'Node Id',
 					values: {
-						replaceId: 0, //default
+						replaceId: null, //default
 					},
 				},
 			},
 			steps: [],
-			selectedMode: 0,
-			mode: 0, // most common action should be default
-			modes: [
-				{
-					baseAction: 'Inclusion',
-					name: 'Inclusion',
-					secure: false,
-				},
-				{
-					baseAction: 'Inclusion',
-					name: 'Secure inclusion',
-					secure: true,
-				},
-				{
-					baseAction: 'Exclusion',
-					name: 'Exclusion',
-					secure: false,
-				},
-			],
-			state: 'new', // new -> wait -> start -> wait -> stop
+			state: 'new',
 			commandEndDate: new Date(),
 			commandTimer: null,
 			waitTimeout: null,
 			alert: null,
 			nodeFound: null,
+			currentAction: null,
 		}
 	},
 	computed: {
 		...mapGetters(['appInfo', 'zwave']),
-		method() {
-			return this.state === 'new' || this.state === 'stop'
-				? 'start'
-				: 'stop'
-		},
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
 		controllerStatus() {
 			return this.appInfo.controllerStatus
-		},
-		modeName() {
-			return this.modes[this.mode].name
 		},
 	},
 	mounted() {
@@ -231,7 +285,7 @@ export default {
 				if (this.state === 'start') {
 					this.alert = {
 						type: 'info',
-						text: `${this.modeName} started: ${s}s remaining`,
+						text: `${this.currentAction} started: ${s}s remaining`,
 					}
 				}
 				if (now > newVal) clearInterval(this.commandTimer)
@@ -253,7 +307,7 @@ export default {
 					this.commandEndDate = new Date()
 					this.alert = {
 						type: 'info',
-						text: `${this.modeName} stopped, checking nodes…`,
+						text: `${this.currentAction} stopped, checking nodes…`,
 					}
 					this.state = 'wait'
 					this.waitTimeout = setTimeout(this.showResults, 5000) // add additional discovery time
@@ -273,29 +327,55 @@ export default {
 		copy(o) {
 			return JSON.parse(JSON.stringify(o))
 		},
-		nextStep(s) {},
-		init() {
-			this.steps = [this.copy(this.availableSteps.action)]
-			this.currentStep = 0
+		changeStep(index) {
+			this.steps = this.steps.slice(0, index)
 		},
-		onAction() {
-			this.mode = this.selectedMode
+		nextStep() {
+			const s = this.steps[this.currentStep - 1]
+			if (s.key === 'action') {
+				const mode = s.values.action
+
+				if (mode === 0) {
+					// inclusion
+					this.currentAction = 'Inclusion'
+					this.pushStep('inclusionMode')
+				} else if (mode === 1) {
+					// replace
+					this.currentAction = 'Inclusion'
+					this.pushStep('replaceFailed')
+				} else if (mode === 2) {
+					// exclusion
+					this.currentAction = 'Exclusion'
+					this.sendAction('startExclusion', [])
+				}
+			} else if (s.key === 'replaceFailed' || s.key === 'inclusionMode') {
+			}
+		},
+		init() {
+			this.steps = []
+			this.pushStep('action')
+			this.currentAction = null
+		},
+		async pushStep(stepKey) {
+			const s = this.availableSteps[stepKey]
+			s.index = this.steps.length + 1
+			this.steps.push(this.copy(s))
+			await this.$nextTick()
+			this.currentStep = s.index
+		},
+		stopAction() {
+			this.sendAction('stop' + this.currentAction)
+		},
+		sendAction(api, args) {
 			this.commandEndDate = new Date()
 			this.alert = {
 				type: 'info',
-				text: `${this.modeName} ${
+				text: `${this.currentAction} ${
 					this.method === 'start' ? 'starting…' : 'stopping…'
 				}`,
 			}
-			const args = []
-			if (this.mode < 2 && this.method === 'start') {
-				args.push(this.modes[this.mode].secure)
-			}
-			this.$emit(
-				'apiRequest',
-				this.method + this.modes[this.mode].baseAction,
-				args
-			)
+
+			this.$emit('apiRequest', api, args)
 			this.state = 'wait' // make sure user can't trigger another action too soon
 		},
 		showResults() {
@@ -307,7 +387,7 @@ export default {
 			if (this.nodeFound === null) {
 				this.alert = {
 					type: 'warning',
-					text: `${this.modeName} stopped, no changes detected`,
+					text: `${this.currentAction} stopped, no changes detected`,
 				}
 			} else if (this.mode === 2) {
 				this.alert = {

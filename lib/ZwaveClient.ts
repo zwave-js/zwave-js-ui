@@ -35,6 +35,8 @@ import {
 	SetValueAPIOptions,
 	ControllerStatistics,
 	NodeStatistics,
+	InclusionStrategy,
+	InclusionGrant,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -395,6 +397,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
+
+	private _grantResolve: (grant: InclusionGrant | false) => void | null
+	private _dskResolve: (dsk: string | false) => void | null
 
 	public get connected() {
 		return this._connected
@@ -1576,7 +1581,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Start inclusion
 	 */
-	async startInclusion(secure: boolean): Promise<boolean> {
+	async startInclusion(
+		strategy: InclusionStrategy = InclusionStrategy.Default
+	): Promise<boolean> {
 		if (this._driver && !this.closed) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -1586,8 +1593,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.commandsTimeout = setTimeout(() => {
 				this.stopInclusion().catch(logger.error)
 			}, this.cfg.commandsTimeout * 1000 || 30000)
+
+			if (
+				strategy === InclusionStrategy.Insecure ||
+				strategy === InclusionStrategy.Security_S0
+			) {
+				return this._driver.controller.beginInclusion({
+					strategy,
+				})
+			} else if (strategy === InclusionStrategy.SmartStart) {
+				return this._driver.controller.beginInclusion({
+					strategy,
+					provisioningList: null,
+				})
+			} else {
+				return this._driver.controller.beginInclusion({
+					strategy,
+					userCallbacks: {
+						grantSecurityClasses:
+							this._onGrantSecurityClasses.bind(this),
+						validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+						abort: this._onAbortInclusion.bind(this),
+					},
+				})
+			}
+
 			// by default beginInclusion is secured, pass true to make it not secured
-			return this._driver.controller.beginInclusion(!secure)
 		}
 
 		throw Error('Driver is closed')
@@ -2280,6 +2311,47 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onHealNetworkDone(result) {
 		const message = `Healing process COMPLETED. Healed ${result.size} nodes`
 		this._updateControllerStatus(message)
+	}
+
+	private _onGrantSecurityClasses(
+		requested: InclusionGrant
+	): Promise<InclusionGrant | false> {
+		logger.log('info', `Grant security classes: %o`, requested)
+		this.sendToSocket(socketEvents.grantSecurityClasses, requested)
+		return new Promise((resolve) => {
+			this._grantResolve = resolve
+		})
+	}
+
+	grantSecurityClasses(requested: InclusionGrant) {
+		if (this._grantResolve) {
+			this._grantResolve(requested)
+			this._grantResolve = null
+		} else {
+			logger.error('No inclusion process started')
+		}
+	}
+
+	private _onValidateDSK(dsk: string): Promise<string | false> {
+		logger.info(`DSK received ${dsk}`)
+		this.sendToSocket(socketEvents.validateDSK, dsk)
+
+		return new Promise((resolve) => {
+			this._dskResolve = resolve
+		})
+	}
+
+	validateDSK(dsk: string) {
+		if (this._dskResolve) {
+			this._dskResolve(dsk)
+			this._dskResolve = null
+		} else {
+			logger.error('No inclusion process started')
+		}
+	}
+
+	private _onAbortInclusion() {
+		logger.info('Inclusion aborted')
 	}
 
 	// ---------- NODE EVENTS -------------------------------------

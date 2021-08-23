@@ -23,6 +23,8 @@ export enum socketEvents {
 	api = 'API_RETURN', // api results
 	debug = 'DEBUG',
 	statistics = 'STATISTICS',
+	grantSecurityClasses = 'GRANT_SECURITY_CLASSES',
+	validateDSK = 'VALIDATE_DSK',
 }
 
 // events from client ---> server
