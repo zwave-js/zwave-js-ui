@@ -9,7 +9,7 @@ export const state = {
     port: undefined,
     commandsTimeout: 30,
     logLevel: 'info',
-    keys: {
+    securityKeys: {
       S2_Unauthenticated: undefined,
       S2_Authenticated: undefined,
       S2_AccessControl: undefined,

@@ -201,11 +201,12 @@
 													:items="serial_ports"
 												></v-combobox>
 											</v-col>
-											<v-row v-if="newZwave.keys">
+											<v-row v-if="newZwave.securityKeys">
 												<v-col cols="12" sm="6">
 													<v-text-field
 														v-model="
-															newZwave.keys
+															newZwave
+																.securityKeys
 																.S2_Unauthenticated
 														"
 														label="S2 Unauthenticated"
@@ -226,7 +227,8 @@
 												<v-col cols="12" sm="6">
 													<v-text-field
 														v-model="
-															newZwave.keys
+															newZwave
+																.securityKeys
 																.S2_Authenticated
 														"
 														prepend-icon="vpn_key"
@@ -247,7 +249,8 @@
 												<v-col cols="12" sm="6">
 													<v-text-field
 														v-model="
-															newZwave.keys
+															newZwave
+																.securityKeys
 																.S2_AccessControl
 														"
 														prepend-icon="vpn_key"
@@ -267,7 +270,8 @@
 												<v-col cols="12" sm="6">
 													<v-text-field
 														v-model="
-															newZwave.keys
+															newZwave
+																.securityKeys
 																.S0_Legacy
 														"
 														prepend-icon="vpn_key"
@@ -1157,7 +1161,7 @@ export default {
 				key += x.length === 2 ? x : '0' + x
 			}
 
-			this.$set(this.newZwave.keys, k, key)
+			this.$set(this.newZwave.securityKeys, k, key)
 		},
 		readFile(file, callback) {
 			const reader = new FileReader()

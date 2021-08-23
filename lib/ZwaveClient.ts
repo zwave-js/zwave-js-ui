@@ -300,7 +300,7 @@ export type Z2MNode = {
 export type ZwaveConfig = {
 	port?: string
 	networkKey?: string
-	keys?: utils.DeepPartial<{
+	securityKeys?: utils.DeepPartial<{
 		S2_Unauthenticated: string
 		S2_Authenticated: string
 		S2_AccessControl: string
@@ -1094,18 +1094,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				delete this.cfg.networkKey
 			}
 
-			if (s0Key && !this.cfg.keys.S0_Legacy) {
-				this.cfg.keys.S0_Legacy = s0Key
+			this.cfg.securityKeys = this.cfg.securityKeys || {}
+
+			if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
+				this.cfg.securityKeys.S0_Legacy = s0Key
 				await jsonStore.put(store.settings, this.cfg)
 			} else if (process.env.NETWORK_KEY) {
-				this.cfg.keys.S0_Legacy = process.env.NETWORK_KEY
+				this.cfg.securityKeys.S0_Legacy = process.env.NETWORK_KEY
 			}
 
-			this.cfg.keys = this.cfg.keys || {}
 			zwaveOptions.securityKeys = {}
 
 			// convert security keys to buffer
-			for (const key in this.cfg.keys) {
+			for (const key in this.cfg.securityKeys) {
 				if (
 					[
 						'S2_Unauthenticated',
@@ -1113,10 +1114,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						'S2_AccessControl',
 						'S0_Legacy',
 					].includes(key) &&
-					this.cfg.keys[key].length === 32
+					this.cfg.securityKeys[key].length === 32
 				) {
 					zwaveOptions.securityKeys[key] = Buffer.from(
-						this.cfg.keys[key],
+						this.cfg.securityKeys[key],
 						'hex'
 					)
 				}
