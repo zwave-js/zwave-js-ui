@@ -144,7 +144,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="1">
+										<v-radio disabled :value="1">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -152,7 +152,10 @@
 														small
 														>smart_button</v-icon
 													>
-													<strong>Smart start</strong>
+													<strong
+														>Smart start (COMING
+														SOON)</strong
+													>
 													<small
 														>S2 only. Allows
 														pre-configuring the
@@ -489,7 +492,17 @@ export default {
 				}
 			} else if (s.key === 'inclusionMode') {
 				const mode = s.values.inclusionMode
-				this.sendAction('startInclusion', [mode])
+				const replaceStep = this.steps.find(
+					(s) => s.key === 'replaceFailed'
+				)
+				if (replaceStep) {
+					this.sendAction('replaceFailedNode', [
+						replaceStep.values.replaceId,
+						mode,
+					])
+				} else {
+					this.sendAction('startInclusion', [mode])
+				}
 			} else if (s.key === 's2Classes') {
 				const values = s.values
 
@@ -523,6 +536,9 @@ export default {
 				const mode = s.values.pin
 				this.$emit('apiRequest', 'validateDSK', [mode])
 				this.loading = true
+			} else if (s.key === 'replaceFailed') {
+				this.currentAction = 'Inclusion'
+				this.pushStep('inclusionMode')
 			}
 		},
 		init() {
@@ -530,6 +546,7 @@ export default {
 			this.pushStep('action')
 			this.currentAction = null
 			this.loading = false
+			this.alert = null
 		},
 		async pushStep(step) {
 			const s =

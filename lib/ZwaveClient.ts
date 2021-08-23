@@ -1565,7 +1565,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Replace failed node
 	 */
-	async replaceFailedNode(nodeId: number, secure = false): Promise<boolean> {
+	async replaceFailedNode(
+		nodeId: number,
+		strategy: InclusionStrategy = InclusionStrategy.Security_S2
+	): Promise<boolean> {
 		if (this._driver && !this.closed) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -1576,7 +1579,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.stopInclusion().catch(logger.error)
 			}, this.cfg.commandsTimeout * 1000 || 30000)
 			// by default replaceFailedNode is secured, pass true to make it not secured
-			return this._driver.controller.replaceFailedNode(nodeId, !secure)
+			if (strategy === InclusionStrategy.Security_S2) {
+				return this._driver.controller.replaceFailedNode(nodeId, {
+					strategy,
+					userCallbacks: {
+						grantSecurityClasses:
+							this._onGrantSecurityClasses.bind(this),
+						validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+						abort: this._onAbortInclusion.bind(this),
+					},
+				})
+			} else if (
+				strategy === InclusionStrategy.Insecure ||
+				strategy === InclusionStrategy.Security_S0
+			) {
+				return this._driver.controller.replaceFailedNode(nodeId, {
+					strategy,
+				})
+			} else {
+				throw Error(
+					`Inclusion strategy not supported with replace failed node api`
+				)
+			}
 		}
 
 		throw Error('Driver is closed')
