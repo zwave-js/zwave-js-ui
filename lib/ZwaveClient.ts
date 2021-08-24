@@ -35,6 +35,9 @@ import {
 	SetValueAPIOptions,
 	ControllerStatistics,
 	NodeStatistics,
+	InclusionStrategy,
+	InclusionGrant,
+	InclusionResult,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -43,6 +46,7 @@ import {
 	ValueMetadataString,
 	ConfigurationMetadata,
 	ZWaveErrorCodes,
+	SecurityClass,
 } from '@zwave-js/core'
 import * as utils from './utils'
 import jsonStore from './jsonStore'
@@ -129,6 +133,9 @@ const allowedApis = validateMethods([
 	'installConfigUpdate',
 	'pingNode',
 	'restart',
+	'grantSecurityClasses',
+	'validateDSK',
+	'abortInclusion',
 ] as const)
 
 export type SensorTypeScale = {
@@ -269,6 +276,7 @@ export type Z2MNode = {
 	endpointsCount?: number
 	endpointIndizes?: number[]
 	isSecure?: boolean | 'unknown'
+	security?: string | undefined
 	supportsBeaming?: boolean
 	supportsSecurity?: boolean
 	isListening?: boolean
@@ -300,6 +308,12 @@ export type Z2MNode = {
 export type ZwaveConfig = {
 	port?: string
 	networkKey?: string
+	securityKeys?: utils.DeepPartial<{
+		S2_Unauthenticated: string
+		S2_Authenticated: string
+		S2_AccessControl: string
+		S0_Legacy: string
+	}>
 	serverEnabled?: boolean
 	serverPort?: number
 	logEnabled?: boolean
@@ -390,6 +404,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _lockNeighborsRefresh: boolean
 
+	private _grantResolve: (grant: InclusionGrant | false) => void | null
+	private _dskResolve: (dsk: string | false) => void | null
+
 	public get connected() {
 		return this._connected
 	}
@@ -423,8 +440,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.cfg = config
 		this.socket = socket
-
-		config.networkKey = config.networkKey || process.env.NETWORK_KEY
 
 		this.init()
 	}
@@ -1082,12 +1097,43 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			Object.assign(zwaveOptions, this.cfg.options)
 
-			// transform network key to buffer
-			if (this.cfg.networkKey?.length === 32) {
-				zwaveOptions.networkKey = Buffer.from(
-					this.cfg.networkKey as unknown as string,
-					'hex'
-				)
+			let s0Key: string
+
+			// back compatibility
+			if (this.cfg.networkKey) {
+				s0Key = this.cfg.networkKey
+				delete this.cfg.networkKey
+			}
+
+			this.cfg.securityKeys = this.cfg.securityKeys || {}
+
+			if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
+				this.cfg.securityKeys.S0_Legacy = s0Key
+				const settings = jsonStore.get(store.settings)
+				settings.zwave = this.cfg
+				await jsonStore.put(store.settings, settings)
+			} else if (process.env.NETWORK_KEY) {
+				this.cfg.securityKeys.S0_Legacy = process.env.NETWORK_KEY
+			}
+
+			zwaveOptions.securityKeys = {}
+
+			// convert security keys to buffer
+			for (const key in this.cfg.securityKeys) {
+				if (
+					[
+						'S2_Unauthenticated',
+						'S2_Authenticated',
+						'S2_AccessControl',
+						'S0_Legacy',
+					].includes(key) &&
+					this.cfg.securityKeys[key].length === 32
+				) {
+					zwaveOptions.securityKeys[key] = Buffer.from(
+						this.cfg.securityKeys[key],
+						'hex'
+					)
+				}
 			}
 
 			try {
@@ -1521,7 +1567,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Replace failed node
 	 */
-	async replaceFailedNode(nodeId: number, secure = false): Promise<boolean> {
+	async replaceFailedNode(
+		nodeId: number,
+		strategy: InclusionStrategy = InclusionStrategy.Security_S2
+	): Promise<boolean> {
 		if (this._driver && !this.closed) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -1532,7 +1581,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.stopInclusion().catch(logger.error)
 			}, this.cfg.commandsTimeout * 1000 || 30000)
 			// by default replaceFailedNode is secured, pass true to make it not secured
-			return this._driver.controller.replaceFailedNode(nodeId, !secure)
+			if (strategy === InclusionStrategy.Security_S2) {
+				return this._driver.controller.replaceFailedNode(nodeId, {
+					strategy,
+					userCallbacks: {
+						grantSecurityClasses:
+							this._onGrantSecurityClasses.bind(this),
+						validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+						abort: this._onAbortInclusion.bind(this),
+					},
+				})
+			} else if (
+				strategy === InclusionStrategy.Insecure ||
+				strategy === InclusionStrategy.Security_S0
+			) {
+				return this._driver.controller.replaceFailedNode(nodeId, {
+					strategy,
+				})
+			} else {
+				throw Error(
+					`Inclusion strategy not supported with replace failed node api`
+				)
+			}
 		}
 
 		throw Error('Driver is closed')
@@ -1541,7 +1611,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Start inclusion
 	 */
-	async startInclusion(secure: boolean): Promise<boolean> {
+	async startInclusion(
+		strategy: InclusionStrategy = InclusionStrategy.Default
+	): Promise<boolean> {
 		if (this._driver && !this.closed) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -1551,8 +1623,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.commandsTimeout = setTimeout(() => {
 				this.stopInclusion().catch(logger.error)
 			}, this.cfg.commandsTimeout * 1000 || 30000)
+
+			if (
+				strategy === InclusionStrategy.Insecure ||
+				strategy === InclusionStrategy.Security_S0
+			) {
+				return this._driver.controller.beginInclusion({
+					strategy,
+				})
+			} else if (strategy === InclusionStrategy.SmartStart) {
+				return this._driver.controller.beginInclusion({
+					strategy,
+					provisioningList: null,
+				})
+			} else {
+				return this._driver.controller.beginInclusion({
+					strategy,
+					userCallbacks: {
+						grantSecurityClasses:
+							this._onGrantSecurityClasses.bind(this),
+						validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+						abort: this._onAbortInclusion.bind(this),
+					},
+				})
+			}
+
 			// by default beginInclusion is secured, pass true to make it not secured
-			return this._driver.controller.beginInclusion(!secure)
 		}
 
 		throw Error('Driver is closed')
@@ -2182,14 +2278,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Triggered when a node is added
 	 */
-	private _onNodeAdded(zwaveNode: ZWaveNode) {
-		logger.info(`Node ${zwaveNode.id}: added`)
-
+	private _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
+		let node
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
-			const node = this._addNode(zwaveNode)
-			this.sendToSocket(socketEvents.nodeAdded, node)
+			node = this._addNode(zwaveNode)
+			this.sendToSocket(socketEvents.nodeAdded, { node, result })
 		}
+
+		const security =
+			node?.security ||
+			(result.lowSecurity ? 'LOW SECURITY' : 'HIGH SECURITY')
+
+		logger.info(`Node ${zwaveNode.id}: added with security ${security}`)
 
 		this.emit(
 			'event',
@@ -2245,6 +2346,63 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onHealNetworkDone(result) {
 		const message = `Healing process COMPLETED. Healed ${result.size} nodes`
 		this._updateControllerStatus(message)
+	}
+
+	private _onGrantSecurityClasses(
+		requested: InclusionGrant
+	): Promise<InclusionGrant | false> {
+		logger.log('info', `Grant security classes: %o`, requested)
+		this.sendToSocket(socketEvents.grantSecurityClasses, requested)
+		return new Promise((resolve) => {
+			this._grantResolve = resolve
+		})
+	}
+
+	grantSecurityClasses(requested: InclusionGrant) {
+		if (this._grantResolve) {
+			this._grantResolve(requested)
+			this._grantResolve = null
+		} else {
+			logger.error('No inclusion process started')
+		}
+	}
+
+	private _onValidateDSK(dsk: string): Promise<string | false> {
+		logger.info(`DSK received ${dsk}`)
+		this.sendToSocket(socketEvents.validateDSK, dsk)
+
+		return new Promise((resolve) => {
+			this._dskResolve = resolve
+		})
+	}
+
+	validateDSK(dsk: string) {
+		if (this._dskResolve) {
+			this._dskResolve(dsk)
+			this._dskResolve = null
+		} else {
+			logger.error('No inclusion process started')
+		}
+	}
+
+	abortInclusion() {
+		if (this._dskResolve) {
+			this._dskResolve(false)
+			this._dskResolve = null
+		}
+
+		if (this._grantResolve) {
+			this._grantResolve(false)
+			this._grantResolve = null
+		}
+	}
+
+	private _onAbortInclusion() {
+		this._dskResolve = null
+		this._grantResolve = null
+		this.sendToSocket(socketEvents.inclusionAborted, true)
+
+		logger.warn('Inclusion aborted')
 	}
 
 	// ---------- NODE EVENTS -------------------------------------
@@ -2918,6 +3076,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.endpointsCount = zwaveNode.getEndpointCount()
 		node.endpointIndizes = zwaveNode.getEndpointIndizes()
 		node.isSecure = zwaveNode.isSecure
+		node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
 		node.supportsSecurity = zwaveNode.supportsSecurity
 		node.supportsBeaming = zwaveNode.supportsBeaming
 		node.isControllerNode = zwaveNode.isControllerNode()
