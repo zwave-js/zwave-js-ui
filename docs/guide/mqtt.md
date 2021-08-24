@@ -72,6 +72,7 @@ This are the available apis:
 - `stopExclusion()`: Stops the exclusion
 - `grantSecurityClasses(requested)`: Used to resolve the S2 userCallback promise
 - `validateDSK(dsk)`: Used to resolve the S2 userCallback promise
+- `abortInclusion()`: aborts any active S2 inclusion process
 - `replaceFailedNode(nodeId, inclusionStrategy)`: Replace a failed node
 - `hardReset()`: Hard reset the controller
 - `healNode(nodeId)`: Heal a specific node
