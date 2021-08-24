@@ -572,12 +572,8 @@ export default {
 				} else if (status.indexOf('stopped') > 0) {
 					// inclusion/exclusion stopped, check what happened
 					this.commandEndDate = new Date()
-					this.alert = {
-						type: 'info',
-						text: `${this.currentAction} stopped, waiting for changes…`,
-					}
 					this.state = 'wait'
-					let timeout = this.currentAction === 'Exclusion' ? 2000 : 0
+					let timeout = this.currentAction === 'Exclusion' ? 1000 : 0
 					if (this.stopped) {
 						timeout = 1000
 						this.stopped = false
