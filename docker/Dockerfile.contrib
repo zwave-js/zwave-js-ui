@@ -24,11 +24,10 @@ USER root
 RUN apt-get update && apt-get install -y jq
 USER node
 WORKDIR /home/node/node-zwave-js
-RUN rm -f yarn.lock
-RUN rm -f packages/config/config/devices/index.json
-RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
-RUN yarn run build:full
-RUN yarn install --production --frozen-lockfile
+RUN YARN_HTTP_TIMEOUT=${YARN_NETWORK_TIMEOUT} yarn install
+RUN yarn run build
+RUN yarn install --production --immutable
+RUN yarn import plugin version
 RUN for i in config core serial shared; do \
     cd packages/$i && \
     yarn version --no-git-tag-version --new-version $(yarn versions --json| \
@@ -42,9 +41,9 @@ RUN cd packages/zwave-js && \
     yarn link
 
 WORKDIR /home/node/zwavejs2mqtt
-RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
+RUN YARN_HTTP_TIMEOUT=${YARN_NETWORK_TIMEOUT} yarn install
 RUN yarn run build
-RUN yarn install --production --frozen-lockfile
+RUN yarn install --production --immutable
 RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
     jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
 RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
