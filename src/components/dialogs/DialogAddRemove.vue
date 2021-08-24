@@ -538,19 +538,9 @@ export default {
 			return this.appInfo.controllerStatus
 		},
 	},
-	mounted() {
-		this.init()
-		this.bindEvent(
-			'grantSecurityClasses',
-			this.onGrantSecurityCC.bind(this)
-		)
-		this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
-		this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
-		this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
-	},
 	watch: {
-		value() {
-			this.init()
+		value(v) {
+			this.init(v)
 		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {
@@ -615,11 +605,7 @@ export default {
 		},
 		onNodeAdded({ node, result }) {
 			this.nodeFound = node
-
-			// the add/remove dialog is waiting for a feedback
-			if (this.waitTimeout) {
-				this.showResults(result)
-			}
+			this.showResults(result)
 		},
 		onNodeRemoved(node) {
 			this.nodeFound = node
@@ -636,8 +622,6 @@ export default {
 			this.aborted = true
 			this.loading = true
 			this.$emit('apiRequest', 'abortInclusion', [])
-
-			this.waitTimeout = setTimeout(this.showResults, 1000)
 		},
 		onGrantSecurityCC(requested) {
 			const grantStep = this.availableSteps.s2Classes
@@ -738,7 +722,7 @@ export default {
 				this.pushStep('replaceInclusionMode')
 			}
 		},
-		init() {
+		init(bind) {
 			this.steps = []
 			this.pushStep('action')
 
@@ -752,6 +736,23 @@ export default {
 			if (this.waitTimeout) {
 				clearTimeout(this.waitTimeout)
 				this.waitTimeout = null
+			}
+
+			if (this.commandTimer) {
+				clearInterval(this.commandTimer)
+				this.commandTimer = null
+			}
+
+			if (bind) {
+				this.bindEvent(
+					'grantSecurityClasses',
+					this.onGrantSecurityCC.bind(this)
+				)
+				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
+				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
+				this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
+			} else {
+				this.unbindEvents()
 			}
 		},
 		async pushStep(step) {
@@ -820,17 +821,7 @@ export default {
 		},
 	},
 	beforeDestroy() {
-		if (this.commandTimer) {
-			clearInterval(this.commandTimer)
-		}
-
-		if (this.waitTimeout) {
-			clearTimeout(this.waitTimeout)
-		}
-
-		this.unbindEvents()
-
-		this.alert = null
+		this.init(false)
 	},
 }
 </script>
