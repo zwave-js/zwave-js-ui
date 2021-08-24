@@ -636,6 +636,8 @@ export default {
 			this.aborted = true
 			this.loading = true
 			this.$emit('apiRequest', 'abortInclusion', [])
+
+			this.waitTimeout = setTimeout(this.showResults, 1000)
 		},
 		onGrantSecurityCC(requested) {
 			const grantStep = this.availableSteps.s2Classes
