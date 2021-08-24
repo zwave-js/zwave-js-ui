@@ -206,24 +206,34 @@
 
 								<v-card-text v-if="s.key == 's2Classes'">
 									<v-checkbox
+										:disabled="
+											s.values.accessControl === undefined
+										"
 										v-model="s.values.accessControl"
 										label="S2 Access Control"
 										hint="Example: Door Locks, garage doors"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
+										:disabled="s.values.auth === undefined"
 										v-model="s.values.auth"
 										label="S2 Authenticated"
 										hint="Example: Lightning, Sensors, Security Systems"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
+										:disabled="
+											s.values.unAuth === undefined
+										"
 										v-model="s.values.unAuth"
 										label="S2 Unauthenticated"
 										hint="Like S2 Authenticated but without verificationt that the correct device is included"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
+										:disabled="
+											s.values.legacy === undefined
+										"
 										v-model="s.values.legacy"
 										label="S0 legacy"
 										hint="Example: Legacy door locks without S2 support"
@@ -282,8 +292,18 @@
 									<v-col
 										class="d-flex flex-column align-center"
 									>
-										<v-icon size="60" color="success"
-											>check_circle</v-icon
+										<v-icon
+											size="60"
+											:color="
+												s.success
+													? 'success'
+													: 'warning'
+											"
+											>{{
+												s.success
+													? 'check_circle'
+													: 'warning'
+											}}</v-icon
 										>
 										<p class="mt-3 headline">
 											{{ s.text }}
@@ -340,10 +360,10 @@ export default {
 					key: 's2Classes',
 					title: 'Security Classes',
 					values: {
-						accessControl: true,
-						auth: true,
+						accessControl: false,
+						auth: false,
 						unAuth: false,
-						legacy: true,
+						legacy: false,
 						clientAuth: false,
 					},
 				},
@@ -364,6 +384,7 @@ export default {
 				},
 				done: {
 					key: 'done',
+					success: false,
 					title: 'Done',
 					text: 'Test',
 				},
@@ -396,7 +417,6 @@ export default {
 			this.onGrantSecurityCC.bind(this)
 		)
 		this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
-		this.bindEvent('inclusionAborted', this.init.bind(this))
 		this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
 		this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
 	},
@@ -462,12 +482,12 @@ export default {
 		copy(o) {
 			return JSON.parse(JSON.stringify(o))
 		},
-		onNodeAdded({ node }) {
+		onNodeAdded({ node, result }) {
 			this.nodeFound = node
 
 			// the add/remove dialog is waiting for a feedback
 			if (this.waitTimeout) {
-				this.showResults()
+				this.showResults(result)
 			}
 		},
 		onNodeRemoved(node) {
@@ -488,10 +508,10 @@ export default {
 			const grantStep = this.availableSteps.s2Classes
 			const classes = requested.securityClasses
 			const values = grantStep.values
-			values.accessControl = classes.includes(2)
-			values.auth = classes.includes(1)
-			values.unAuth = classes.includes(0)
-			values.legacy = classes.includes(7)
+			values.accessControl = classes.includes(2) || undefined
+			values.auth = classes.includes(1) || undefined
+			values.unAuth = classes.includes(0) || undefined
+			values.legacy = classes.includes(7) || undefined
 
 			values.clientAuth = requested.clientSideAuth
 
@@ -623,7 +643,7 @@ export default {
 				this.socket.off(event, this.bindedSocketEvents[event])
 			}
 		},
-		showResults() {
+		showResults(result) {
 			if (this.waitTimeout) {
 				clearTimeout(this.waitTimeout)
 				this.waitTimeout = null
@@ -638,12 +658,13 @@ export default {
 				this.alert = null
 				const doneStep = this.copy(this.availableSteps.done)
 				doneStep.text = `Node ${this.nodeFound.id} removed`
+				doneStep.success = true
 				this.pushStep(doneStep)
 			} else {
 				this.alert = null
 				const doneStep = this.copy(this.availableSteps.done)
 				doneStep.text = `Device found! Node ${this.nodeFound.id} added with security "${this.nodeFound.security}"`
-
+				doneStep.success = !(result && result.lowSecurity)
 				this.pushStep(doneStep)
 			}
 
