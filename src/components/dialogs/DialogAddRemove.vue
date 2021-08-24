@@ -618,8 +618,19 @@ export default {
 				this.showResults()
 			}
 		},
+		onApiResponse(data) {
+			if (!data.success) {
+				if (data.api === 'replaceFailedNode') {
+					this.init()
+				}
+			}
+		},
 		changeStep(index) {
-			this.steps = this.steps.slice(0, index)
+			if (index <= 1) {
+				this.init() // calling it without the bind parameter will not touch events
+			} else {
+				this.steps = this.steps.slice(0, index)
+			}
 		},
 		abortInclusion() {
 			this.aborted = true
@@ -732,11 +743,17 @@ export default {
 			this.steps = []
 			this.pushStep('action')
 
-			this.currentAction = null
+			// stop any running inclusion/exclusion
+			if (this.state === 'start') {
+				this.stopAction()
+			} else {
+				this.stopped = false
+				this.currentAction = null
+			}
+
 			this.loading = false
 			this.alert = null
 			this.nodeFound = null
-			this.stopped = false
 			this.aborted = false
 
 			if (this.waitTimeout) {
@@ -757,7 +774,8 @@ export default {
 				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
 				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
 				this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
-			} else {
+				this.bindEvent('api', this.onApiResponse.bind(this))
+			} else if (bind === false) {
 				this.unbindEvents()
 			}
 		},
