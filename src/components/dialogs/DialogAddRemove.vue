@@ -251,7 +251,7 @@
 										persistent-hint
 									></v-checkbox>
 
-									<v-card-actions>
+									<v-card-actions v-if="!loading">
 										<v-btn
 											v-if="!aborted"
 											color="primary"
@@ -277,7 +277,7 @@
 									>
 									</v-text-field>
 
-									<v-card-actions>
+									<v-card-actions v-if="!loading">
 										<v-btn
 											v-if="!aborted"
 											color="primary"
