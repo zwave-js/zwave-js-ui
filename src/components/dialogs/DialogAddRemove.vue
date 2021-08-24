@@ -96,7 +96,7 @@
 										</v-btn>
 
 										<v-btn
-											v-if="state === 'wait'"
+											v-if="state !== 'wait'"
 											text
 											@click="stopAction"
 										>
@@ -195,7 +195,7 @@
 											Next
 										</v-btn>
 										<v-btn
-											v-if="state === 'wait'"
+											v-if="state !== 'wait'"
 											text
 											@click="stopAction"
 										>
@@ -277,6 +277,19 @@
 										</v-btn>
 									</v-card-actions>
 								</v-card-text>
+
+								<v-card-text v-if="s.key == 'done'">
+									<v-col
+										class="d-flex flex-column align-center"
+									>
+										<v-icon size="60" color="success"
+											>check_circle</v-icon
+										>
+										<p class="mt-3 headline">
+											{{ s.text }}
+										</p>
+									</v-col>
+								</v-card-text>
 							</v-card>
 						</v-stepper-content>
 					</v-stepper-items>
@@ -302,7 +315,6 @@ import { socketEvents } from '@/plugins/socket'
 export default {
 	props: {
 		value: Boolean, // show or hide
-		nodeAddedOrRemoved: Object,
 		socket: Object,
 	},
 	data() {
@@ -350,6 +362,11 @@ export default {
 						replaceId: null, //default
 					},
 				},
+				done: {
+					key: 'done',
+					title: 'Done',
+					text: 'Test',
+				},
 			},
 			steps: [],
 			state: 'new',
@@ -360,6 +377,7 @@ export default {
 			nodeFound: null,
 			currentAction: null,
 			bindedSocketEvents: {},
+			stopped: false,
 		}
 	},
 	computed: {
@@ -379,18 +397,12 @@ export default {
 		)
 		this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
 		this.bindEvent('inclusionAborted', this.init.bind(this))
+		this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
+		this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
 	},
 	watch: {
 		value() {
 			this.init()
-		},
-		nodeAddedOrRemoved(node) {
-			this.nodeFound = node
-
-			// the add/remove dialog is waiting for a feedback
-			if (this.waitTimeout) {
-				this.showResults()
-			}
 		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {
@@ -424,10 +436,16 @@ export default {
 					this.commandEndDate = new Date()
 					this.alert = {
 						type: 'info',
-						text: `${this.currentAction} stopped, checking nodes…`,
+						text: `${this.currentAction} stopped, waiting for changes…`,
 					}
 					this.state = 'wait'
-					this.waitTimeout = setTimeout(this.showResults, 5000) // add additional discovery time
+					const timeout =
+						this.currentAction === 'Exclusion' ? 5000 : 120000
+					this.stopped = false
+					this.waitTimeout = setTimeout(
+						this.showResults,
+						this.stopped ? 1000 : timeout
+					) // add additional discovery time
 				} else {
 					// error
 					this.commandEndDate = new Date()
@@ -443,6 +461,22 @@ export default {
 	methods: {
 		copy(o) {
 			return JSON.parse(JSON.stringify(o))
+		},
+		onNodeAdded({ node }) {
+			this.nodeFound = node
+
+			// the add/remove dialog is waiting for a feedback
+			if (this.waitTimeout) {
+				this.showResults()
+			}
+		},
+		onNodeRemoved(node) {
+			this.nodeFound = node
+
+			// the add/remove dialog is waiting for a feedback
+			if (this.waitTimeout) {
+				this.showResults()
+			}
 		},
 		changeStep(index) {
 			this.steps = this.steps.slice(0, index)
@@ -544,9 +578,17 @@ export default {
 		init() {
 			this.steps = []
 			this.pushStep('action')
+
 			this.currentAction = null
 			this.loading = false
 			this.alert = null
+			this.nodeFound = null
+			this.stopped = false
+
+			if (this.waitTimeout) {
+				clearTimeout(this.waitTimeout)
+				this.waitTimeout = null
+			}
 		},
 		async pushStep(step) {
 			const s =
@@ -557,6 +599,7 @@ export default {
 			this.currentStep = s.index
 		},
 		stopAction() {
+			this.stopped = true
 			this.sendAction('stop' + this.currentAction)
 		},
 		sendAction(api, args) {
@@ -592,16 +635,19 @@ export default {
 					text: `${this.currentAction} stopped, no changes detected`,
 				}
 			} else if (this.currentAction === 'Exclusion') {
-				this.alert = {
-					type: 'success',
-					text: `Node ${this.nodeFound.id} removed`,
-				}
+				this.alert = null
+				const doneStep = this.copy(this.availableSteps.done)
+				doneStep.text = `Node ${this.nodeFound.id} removed`
+				this.pushStep(doneStep)
 			} else {
-				this.alert = {
-					type: 'success',
-					text: `Device found! Node ${this.nodeFound.id} added`, // we don't know yet if it's added securely or not, need to wait interview
-				}
+				this.alert = null
+				const doneStep = this.copy(this.availableSteps.done)
+				doneStep.text = `Device found! Node ${this.nodeFound.id} added with security "${this.nodeFound.security}"`
+
+				this.pushStep(doneStep)
 			}
+
+			this.loading = false
 
 			this.state = 'stop'
 		},

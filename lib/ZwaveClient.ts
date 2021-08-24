@@ -46,6 +46,7 @@ import {
 	ValueMetadataString,
 	ConfigurationMetadata,
 	ZWaveErrorCodes,
+	SecurityClass,
 } from '@zwave-js/core'
 import * as utils from './utils'
 import jsonStore from './jsonStore'
@@ -275,6 +276,7 @@ export type Z2MNode = {
 	endpointsCount?: number
 	endpointIndizes?: number[]
 	isSecure?: boolean | 'unknown'
+	security?: string | undefined
 	supportsBeaming?: boolean
 	supportsSecurity?: boolean
 	isListening?: boolean
@@ -2277,17 +2279,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node is added
 	 */
 	private _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
-		logger.info(
-			`Node ${zwaveNode.id}: added with security ${
-				result.lowSecurity ? 'LOW' : ''
-			}`
-		)
-
+		let node
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
-			const node = this._addNode(zwaveNode)
-			this.sendToSocket(socketEvents.nodeAdded, node)
+			node = this._addNode(zwaveNode)
+			this.sendToSocket(socketEvents.nodeAdded, { node, result })
 		}
+
+		const security =
+			node?.security ||
+			(result.lowSecurity ? 'LOW SECURITY' : 'HIGH SECURITY')
+
+		logger.info(`Node ${zwaveNode.id}: added with security ${security}`)
 
 		this.emit(
 			'event',
@@ -3073,6 +3076,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.endpointsCount = zwaveNode.getEndpointCount()
 		node.endpointIndizes = zwaveNode.getEndpointIndizes()
 		node.isSecure = zwaveNode.isSecure
+		node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
 		node.supportsSecurity = zwaveNode.supportsSecurity
 		node.supportsBeaming = zwaveNode.supportsBeaming
 		node.isControllerNode = zwaveNode.isControllerNode()
