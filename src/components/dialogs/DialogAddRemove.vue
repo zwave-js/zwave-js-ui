@@ -1,5 +1,10 @@
 <template>
-	<v-dialog v-model="value" @click:outside="$emit('close')" max-width="800px">
+	<v-dialog
+		v-model="value"
+		@click:outside="$emit('close')"
+		@keydown.esc="$emit('close')"
+		max-width="800px"
+	>
 		<v-card :loading="loading">
 			<v-card-title>
 				<span class="headline">Nodes Manager</span>
@@ -786,8 +791,13 @@ export default {
 		},
 		unbindEvents() {
 			for (const event in this.bindedSocketEvents) {
-				this.socket.off(event, this.bindedSocketEvents[event])
+				this.socket.off(
+					socketEvents[event],
+					this.bindedSocketEvents[event]
+				)
 			}
+
+			this.bindedSocketEvents = {}
 		},
 		showResults(result) {
 			if (this.waitTimeout) {

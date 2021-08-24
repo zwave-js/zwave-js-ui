@@ -476,7 +476,10 @@ export default {
 		},
 		unbindEvents() {
 			for (const event in this.bindedSocketEvents) {
-				this.socket.off(event, this.bindedSocketEvents[event])
+				this.socket.off(
+					socketEvents[event],
+					this.bindedSocketEvents[event]
+				)
 			}
 		},
 	},
