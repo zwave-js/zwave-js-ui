@@ -2,7 +2,7 @@
 	<v-dialog v-model="value" @click:outside="$emit('close')" max-width="800px">
 		<v-card :loading="loading">
 			<v-card-title>
-				<span class="headline">Inclusion Manager</span>
+				<span class="headline">Nodes Manager</span>
 			</v-card-title>
 
 			<v-card-text>

@@ -31,7 +31,7 @@
 																addRemoveShowDialog = true
 															"
 														>
-															Add/Remove Device
+															Manage nodes
 														</v-btn>
 													</v-col>
 													<v-col
