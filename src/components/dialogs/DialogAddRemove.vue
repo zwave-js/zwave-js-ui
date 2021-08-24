@@ -633,6 +633,7 @@ export default {
 			values.clientAuth = requested.clientSideAuth || undefined
 
 			this.loading = false
+			this.alert = false
 
 			this.pushStep(grantStep)
 		},
@@ -641,6 +642,8 @@ export default {
 			dskStep.suffix = dsk
 
 			this.loading = false
+			this.alert = false
+
 			this.pushStep(dskStep)
 		},
 		nextStep() {
