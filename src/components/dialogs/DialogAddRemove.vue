@@ -13,7 +13,9 @@
 								:key="`${s.key}-step`"
 								:complete="currentStep > s.index"
 								:step="s.index"
-								editable
+								:editable="
+									!['s2Classes', 's2Pin'].includes(s.key)
+								"
 							>
 								{{ s.title }}
 							</v-stepper-step>
