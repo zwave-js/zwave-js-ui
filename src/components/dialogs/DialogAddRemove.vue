@@ -107,11 +107,16 @@
 									</v-card-actions>
 								</v-card-text>
 								<v-card-text v-if="s.key == 'replaceFailed'">
-									<v-text-field
-										label="Node ID"
-										v-model.number="s.values.replaceId"
-									>
-									</v-text-field>
+									<v-combobox
+										label="Node"
+										v-model="s.values.replaceId"
+										:items="nodes"
+										return-object
+										chips
+										hint="Failed node to remove. Write the node Id and press enter if not present"
+										persistent-hint
+										item-text="_name"
+									></v-combobox>
 									<v-card-actions>
 										<v-btn
 											color="primary"
@@ -411,7 +416,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['appInfo', 'zwave']),
+		...mapGetters(['appInfo', 'zwave', 'nodes']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -564,10 +569,13 @@ export default {
 					(s) => s.key === 'replaceFailed'
 				)
 				if (replaceStep) {
-					this.sendAction('replaceFailedNode', [
-						replaceStep.values.replaceId,
-						mode,
-					])
+					let replaceId = replaceStep.values.replaceId
+					if (typeof replaceId === 'object') {
+						replaceId = replaceId.id
+					} else {
+						replaceId = parseInt(replaceId, 10)
+					}
+					this.sendAction('replaceFailedNode', [replaceId, mode])
 				} else {
 					this.sendAction('startInclusion', [mode])
 				}
