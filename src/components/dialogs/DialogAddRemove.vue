@@ -768,7 +768,7 @@ export default {
 				this.alert = null
 				this.aborted = false
 				const doneStep = this.copy(this.availableSteps.done)
-				doneStep.text = `Device found! Node ${this.nodeFound.id} added with security "${this.nodeFound.security}"`
+				doneStep.text = `Node ${this.nodeFound.id} added with security "${this.nodeFound.security}"`
 				doneStep.success = !(result && result.lowSecurity)
 				this.pushStep(doneStep)
 			}
