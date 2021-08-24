@@ -98,7 +98,7 @@
 										</v-btn>
 
 										<v-btn
-											v-if="state !== 'wait'"
+											v-if="state === 'start'"
 											text
 											@click="stopAction"
 										>
@@ -202,7 +202,77 @@
 											Next
 										</v-btn>
 										<v-btn
-											v-if="state !== 'wait'"
+											v-if="state === 'start'"
+											text
+											@click="stopAction"
+										>
+											Stop
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
+								<v-card-text
+									v-if="s.key == 'replaceInclusionMode'"
+								>
+									<v-radio-group
+										v-model="s.values.inclusionMode"
+										mandatory
+									>
+										<v-radio :value="4">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="green accent-4"
+														small
+														>enhanced_encryption</v-icon
+													>
+													<strong>S2</strong>
+													<small>S2 security</small>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="3">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="primary"
+														small
+														>lock</v-icon
+													>
+													<strong>S0</strong>
+													<small>S0 security</small>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="2">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="amber accent-4"
+														small
+														>no_encryption</v-icon
+													>
+													<strong
+														>No encryption</strong
+													>
+													<small
+														>Do not use
+														encryption</small
+													>
+												</div>
+											</template>
+										</v-radio>
+									</v-radio-group>
+
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+										<v-btn
+											v-if="state === 'start'"
 											text
 											@click="stopAction"
 										>
@@ -364,6 +434,13 @@ export default {
 				},
 				inclusionMode: {
 					key: 'inclusionMode',
+					title: 'Inclusion Mode',
+					values: {
+						inclusionMode: 0, //default, smartstart no encryption
+					},
+				},
+				replaceInclusionMode: {
+					key: 'replaceInclusionMode',
 					title: 'Inclusion Mode',
 					values: {
 						inclusionMode: 0, //default, smartstart no encryption
@@ -562,7 +639,10 @@ export default {
 					this.currentAction = 'Exclusion'
 					this.sendAction('startExclusion', [])
 				}
-			} else if (s.key === 'inclusionMode') {
+			} else if (
+				s.key === 'inclusionMode' ||
+				s.key === 'replaceInclusionMode'
+			) {
 				const mode = s.values.inclusionMode
 				this.aborted = false
 				const replaceStep = this.steps.find(
@@ -614,7 +694,7 @@ export default {
 				this.loading = true
 			} else if (s.key === 'replaceFailed') {
 				this.currentAction = 'Inclusion'
-				this.pushStep('inclusionMode')
+				this.pushStep('replaceInclusionMode')
 			}
 		},
 		init() {
