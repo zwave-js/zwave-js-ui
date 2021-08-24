@@ -37,6 +37,14 @@ export class ManagedItems {
 			this.filters === undefined
 				? this.loadSetting('filters', this.initialFilters)
 				: this.filters
+
+		// sometimes columns are updated in new releases, this allows us to show them
+		if (!this.loadSetting('cleared', false)) {
+			this._filters = this.initialFilters
+			this._columns = this.initialTableColumns
+			this.storeSetting('cleared', true)
+		}
+
 		this._selected = this.initialSelected
 
 		// fix possible inconsistance from localstorage
