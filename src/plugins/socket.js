@@ -23,4 +23,7 @@ export const socketEvents = {
 	api: 'API_RETURN', // api results
 	debug: 'DEBUG',
 	statistics: 'STATISTICS',
+	grantSecurityClasses: 'GRANT_SECURITY_CLASSES',
+	validateDSK: 'VALIDATE_DSK',
+	inclusionAborted: 'INCLUSION_ABORTED',
 }
