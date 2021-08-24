@@ -272,7 +272,7 @@
 									<v-text-field
 										label="DSK Pin"
 										hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
-										v-model.number="s.values.pin"
+										v-model.trim="s.values.pin"
 										:suffix="s.suffix"
 									>
 									</v-text-field>
@@ -379,7 +379,7 @@ export default {
 					title: 'DSK validation',
 					suffix: '',
 					values: {
-						pin: '00000',
+						pin: '',
 					},
 				},
 				replaceFailed: {
