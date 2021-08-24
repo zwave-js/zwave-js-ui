@@ -91,6 +91,7 @@
 
 									<v-card-actions>
 										<v-btn
+											v-if="state !== 'start'"
 											color="primary"
 											@click="nextStep"
 										>
@@ -98,8 +99,8 @@
 										</v-btn>
 
 										<v-btn
-											v-if="state === 'start'"
-											text
+											v-else
+											color="error"
 											@click="stopAction"
 										>
 											Stop
@@ -129,6 +130,7 @@
 
 								<v-card-text v-if="s.key == 'inclusionMode'">
 									<v-radio-group
+										v-if="!loading"
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
@@ -194,8 +196,25 @@
 										</v-radio>
 									</v-radio-group>
 
+									<v-col
+										v-else
+										class="d-flex flex-column align-center"
+									>
+										<v-icon
+											size="60"
+											color="
+												primary"
+											>all_inclusive</v-icon
+										>
+										<p class="mt-3 headline text-center">
+											Inclusion is started. Please put
+											your device in INCLUSION MODE
+										</p>
+									</v-col>
+
 									<v-card-actions>
 										<v-btn
+											v-if="!loading"
 											color="primary"
 											@click="nextStep"
 										>
@@ -203,7 +222,7 @@
 										</v-btn>
 										<v-btn
 											v-if="state === 'start'"
-											text
+											color="error"
 											@click="stopAction"
 										>
 											Stop
@@ -215,6 +234,7 @@
 									v-if="s.key == 'replaceInclusionMode'"
 								>
 									<v-radio-group
+										v-if="!loading"
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
@@ -264,8 +284,25 @@
 										</v-radio>
 									</v-radio-group>
 
+									<v-col
+										v-else
+										class="d-flex flex-column align-center"
+									>
+										<v-icon
+											size="60"
+											color="
+												primary"
+											>all_inclusive</v-icon
+										>
+										<p class="mt-3 headline text-center">
+											Inclusion is started. Please put
+											your device in INCLUSION MODE
+										</p>
+									</v-col>
+
 									<v-card-actions>
 										<v-btn
+											v-if="!loading"
 											color="primary"
 											@click="nextStep"
 										>
@@ -273,7 +310,7 @@
 										</v-btn>
 										<v-btn
 											v-if="state === 'start'"
-											text
+											color="error"
 											@click="stopAction"
 										>
 											Stop
@@ -597,6 +634,7 @@ export default {
 		},
 		abortInclusion() {
 			this.aborted = true
+			this.loading = true
 			this.$emit('apiRequest', 'abortInclusion', [])
 		},
 		onGrantSecurityCC(requested) {
@@ -645,6 +683,7 @@ export default {
 			) {
 				const mode = s.values.inclusionMode
 				this.aborted = false
+				this.loading = true
 				const replaceStep = this.steps.find(
 					(s) => s.key === 'replaceFailed'
 				)
