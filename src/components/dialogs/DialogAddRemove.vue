@@ -242,6 +242,9 @@
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
+										:disabled="
+											s.values.clientAuth === undefined
+										"
 										v-model="s.values.clientAuth"
 										label="Client-side authentication"
 										hint="Authentication of the inclusion happens on the device instead of on the controller (for devices without DSK)"
@@ -250,6 +253,7 @@
 
 									<v-card-actions>
 										<v-btn
+											v-if="!aborted"
 											color="primary"
 											@click="nextStep"
 										>
@@ -275,6 +279,7 @@
 
 									<v-card-actions>
 										<v-btn
+											v-if="!aborted"
 											color="primary"
 											@click="nextStep"
 										>
@@ -401,6 +406,7 @@ export default {
 			currentAction: null,
 			bindedSocketEvents: {},
 			stopped: false,
+			aborted: false,
 		}
 	},
 	computed: {
@@ -461,13 +467,16 @@ export default {
 						text: `${this.currentAction} stopped, waiting for changes…`,
 					}
 					this.state = 'wait'
-					const timeout =
-						this.currentAction === 'Exclusion' ? 5000 : 120000
-					this.stopped = false
-					this.waitTimeout = setTimeout(
-						this.showResults,
-						this.stopped ? 1000 : timeout
-					) // add additional discovery time
+					let timeout = this.currentAction === 'Exclusion' ? 2000 : 0
+					if (this.stopped) {
+						timeout = 1000
+						this.stopped = false
+					}
+
+					if (timeout > 0) {
+						// don't use a timeout for inclusion
+						this.waitTimeout = setTimeout(this.showResults, timeout) // add additional discovery time
+					}
 				} else {
 					// error
 					this.commandEndDate = new Date()
@@ -504,6 +513,7 @@ export default {
 			this.steps = this.steps.slice(0, index)
 		},
 		abortInclusion() {
+			this.aborted = true
 			this.$emit('apiRequest', 'abortInclusion', [])
 		},
 		onGrantSecurityCC(requested) {
@@ -515,7 +525,7 @@ export default {
 			values.unAuth = classes.includes(0) || undefined
 			values.legacy = classes.includes(7) || undefined
 
-			values.clientAuth = requested.clientSideAuth
+			values.clientAuth = requested.clientSideAuth || undefined
 
 			this.loading = false
 
@@ -548,6 +558,7 @@ export default {
 				}
 			} else if (s.key === 'inclusionMode') {
 				const mode = s.values.inclusionMode
+				this.aborted = false
 				const replaceStep = this.steps.find(
 					(s) => s.key === 'replaceFailed'
 				)
@@ -583,7 +594,7 @@ export default {
 				this.$emit('apiRequest', 'grantSecurityClasses', [
 					{
 						securityClasses,
-						clientSideAuth: values.clientAuth,
+						clientSideAuth: !!values.clientAuth,
 					},
 				])
 
@@ -606,6 +617,7 @@ export default {
 			this.alert = null
 			this.nodeFound = null
 			this.stopped = false
+			this.aborted = false
 
 			if (this.waitTimeout) {
 				clearTimeout(this.waitTimeout)
@@ -658,12 +670,14 @@ export default {
 				}
 			} else if (this.currentAction === 'Exclusion') {
 				this.alert = null
+				this.aborted = false
 				const doneStep = this.copy(this.availableSteps.done)
 				doneStep.text = `Node ${this.nodeFound.id} removed`
 				doneStep.success = true
 				this.pushStep(doneStep)
 			} else {
 				this.alert = null
+				this.aborted = false
 				const doneStep = this.copy(this.availableSteps.done)
 				doneStep.text = `Device found! Node ${this.nodeFound.id} added with security "${this.nodeFound.security}"`
 				doneStep.success = !(result && result.lowSecurity)
