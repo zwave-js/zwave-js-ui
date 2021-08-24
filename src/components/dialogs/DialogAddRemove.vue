@@ -425,7 +425,7 @@
 													: 'warning'
 											}}</v-icon
 										>
-										<p class="mt-3 headline">
+										<p class="mt-3 headline text-center">
 											{{ s.text }}
 										</p>
 									</v-col>
@@ -601,7 +601,9 @@ export default {
 		},
 		onNodeAdded({ node, result }) {
 			this.nodeFound = node
-			this.showResults(result)
+			if (this.loading) {
+				this.showResults(result)
+			}
 		},
 		onNodeRemoved(node) {
 			this.nodeFound = node
