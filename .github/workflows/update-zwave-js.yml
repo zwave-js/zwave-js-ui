@@ -49,7 +49,7 @@ jobs:
             echo "::set-output name=changed::false"
           fi
       - name: Open PR
-        if: ${{ steps.check.outupts.changed }}
+        if: ${{ steps.check.outupts.changed == 'true' }}
         uses: vsoch/pull-request-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
