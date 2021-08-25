@@ -158,6 +158,13 @@
 												</div>
 											</template>
 										</v-radio>
+										<v-checkbox
+											class="mt-0 ml-4"
+											v-model="s.values.forceSecurity"
+											label="Force Security"
+											hint="Prefer S0 over no encryption"
+											persistent-hint
+										></v-checkbox>
 										<v-radio disabled :value="1">
 											<template v-slot:label>
 												<div class="option">
@@ -479,6 +486,7 @@ export default {
 					title: 'Inclusion Mode',
 					values: {
 						inclusionMode: 0, //default, smartstart no encryption
+						forceSecurity: false,
 					},
 				},
 				replaceInclusionMode: {
@@ -699,7 +707,10 @@ export default {
 					}
 					this.sendAction('replaceFailedNode', [replaceId, mode])
 				} else {
-					this.sendAction('startInclusion', [mode])
+					this.sendAction('startInclusion', [
+						mode,
+						{ forceSecurity: s.values.forceSecurity },
+					])
 				}
 			} else if (s.key === 's2Classes') {
 				const values = s.values
