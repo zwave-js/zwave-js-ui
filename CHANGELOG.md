@@ -1,3 +1,21 @@
+# [5.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.6...v5.5.0) (2021-08-25)
+
+
+### Bug Fixes
+
+* move lookup to manufacturer prop ([94b5101](https://github.com/zwave-js/zwavejs2mqtt/commit/94b510164deb7e816a9be03896a6c63fa5742fba))
+* **ui:** handle replaceFailedNode errors ([22a5f1d](https://github.com/zwave-js/zwavejs2mqtt/commit/22a5f1d32ee55a7b937f3ea02bfae9758164c6cc))
+* lookup manufacturer when unknown ([b436c4c](https://github.com/zwave-js/zwavejs2mqtt/commit/b436c4c4b1f60a360392bdd2f58416b757db57b0)), closes [#1571](https://github.com/zwave-js/zwavejs2mqtt/issues/1571)
+* **hass:** mode_state_template quotes ([1e47d90](https://github.com/zwave-js/zwavejs2mqtt/commit/1e47d9058ec23faf0f05c421874c5f5879acfc45)), closes [#1578](https://github.com/zwave-js/zwavejs2mqtt/issues/1578)
+
+
+### Features
+
+* add `forceSecurity` falg support to Default inclusion strategy ([#1588](https://github.com/zwave-js/zwavejs2mqtt/issues/1588)) ([3c78d43](https://github.com/zwave-js/zwavejs2mqtt/commit/3c78d43000c1b06ecf5e7cd2110427c6259ad448))
+* bump zwave-js/server@1.10.0 ([24b7d8d](https://github.com/zwave-js/zwavejs2mqtt/commit/24b7d8d674ce7d0b2c4c973d005f140748913ec9))
+* support for S2 inclusion ([#1585](https://github.com/zwave-js/zwavejs2mqtt/issues/1585)) ([f507246](https://github.com/zwave-js/zwavejs2mqtt/commit/f5072469af70876219e3344d1d257af4576611f3))
+* zwave-js@8.2.0 and @zwave-js/server@1.10.1 ([d9eed6e](https://github.com/zwave-js/zwavejs2mqtt/commit/d9eed6e0d469211d1ceecbf412067fd2631eb256))
+
 ## [5.4.6](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.5...v5.4.6) (2021-08-17)
 
 
