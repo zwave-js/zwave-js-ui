@@ -3053,12 +3053,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}:${hexIds[1]}:${node.firmwareVersion || '0.0'}`
 
 		const deviceConfig = zwaveNode.deviceConfig || {
-			label:
+			label: `Unknown product ${hexIds[1]}`,
+			description: hexIds[2],
+			manufacturer:
 				this.driver.configManager.lookupManufacturer(
 					zwaveNode.manufacturerId
-				) || `Unknown product ${hexIds[1]}`,
-			description: hexIds[2],
-			manufacturer: `Unknown manufacturer ${hexIds[0]}`,
+				) || `Unknown manufacturer ${hexIds[0]}`,
 		}
 
 		// https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-properties
