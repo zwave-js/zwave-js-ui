@@ -48,11 +48,29 @@ jobs:
             echo "unchanged"
             echo "::set-output name=changed::false"
           fi
-      - name: Open PR
+      - name: Create Pull Request
         if: ${{ steps.check.outputs.changed == 'true' }}
-        uses: vsoch/pull-request-action@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PULL_REQUEST_BRANCH: "master"
-          PULL_REQUEST_FROM_BRANCH: "zwave-js@${{ steps.check.outputs.version }}"
-          PULL_REQUEST_TITLE: "feat: bump zwave-js@${{ steps.check.outputs.version }}"
+        id: cpr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+          commit-message: "feat: bump zwave-js@${{ steps.check.outputs.version }}"
+          committer: Z-Wave JS Bot <bot@zwave-js.io>
+          author: Z-Wave JS Bot <bot@zwave-js.io>
+          signoff: false
+          branch: "zwave-js@${{ steps.check.outputs.version }}"
+          delete-branch: true
+          title: "feat: bump zwave-js@${{ steps.check.outputs.version }}"
+          body: |
+            Update zwave-js to version {{ steps.check.outputs.version }}
+          labels: |
+            zwave-js
+            deps
+          base: master
+          draft: false
+
+      - name: Check outputs
+        if: ${{ steps.check.outputs.changed == 'true' }}
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"
