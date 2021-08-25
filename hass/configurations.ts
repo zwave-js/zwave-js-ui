@@ -139,6 +139,7 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 		discovery_payload: {
 			position_topic: true,
 			state_topic: true,
+			command_topic: true,
 			position_template: '{{ value_json.value }}',
 			device_class: 'garage',
 			payload_open: 255,

@@ -201,22 +201,94 @@
 													:items="serial_ports"
 												></v-combobox>
 											</v-col>
-											<v-col cols="12" sm="6">
-												<v-text-field
-													v-model="
-														newZwave.networkKey
-													"
-													label="Network Key"
-													:rules="[
-														rules.validKey,
-														rules.validLength,
-													]"
-													append-outer-icon="wifi_protected_setup"
-													@click:append-outer="
-														randomKey
-													"
-												></v-text-field>
-											</v-col>
+											<v-row v-if="newZwave.securityKeys">
+												<v-col cols="12" sm="6">
+													<v-text-field
+														v-model="
+															newZwave
+																.securityKeys
+																.S2_Unauthenticated
+														"
+														label="S2 Unauthenticated"
+														prepend-icon="vpn_key"
+														:rules="[
+															rules.validKey,
+															rules.validLength,
+														]"
+														persistent-hint
+														append-outer-icon="wifi_protected_setup"
+														@click:append-outer="
+															randomKey(
+																'S2_Unauthenticated'
+															)
+														"
+													></v-text-field>
+												</v-col>
+												<v-col cols="12" sm="6">
+													<v-text-field
+														v-model="
+															newZwave
+																.securityKeys
+																.S2_Authenticated
+														"
+														prepend-icon="vpn_key"
+														label="S2 Authenticated"
+														persistent-hint
+														:rules="[
+															rules.validKey,
+															rules.validLength,
+														]"
+														append-outer-icon="wifi_protected_setup"
+														@click:append-outer="
+															randomKey(
+																'S2_Authenticated'
+															)
+														"
+													></v-text-field>
+												</v-col>
+												<v-col cols="12" sm="6">
+													<v-text-field
+														v-model="
+															newZwave
+																.securityKeys
+																.S2_AccessControl
+														"
+														prepend-icon="vpn_key"
+														label="S2 Access Control"
+														:rules="[
+															rules.validKey,
+															rules.validLength,
+														]"
+														append-outer-icon="wifi_protected_setup"
+														@click:append-outer="
+															randomKey(
+																'S2_AccessControl'
+															)
+														"
+													></v-text-field>
+												</v-col>
+												<v-col cols="12" sm="6">
+													<v-text-field
+														v-model="
+															newZwave
+																.securityKeys
+																.S0_Legacy
+														"
+														prepend-icon="vpn_key"
+														label="S0 Legacy"
+														:rules="[
+															rules.validKey,
+															rules.validLength,
+														]"
+														append-outer-icon="wifi_protected_setup"
+														@click:append-outer="
+															randomKey(
+																'S0_Legacy'
+															)
+														"
+													></v-text-field>
+												</v-col>
+											</v-row>
 											<v-col cols="12" sm="6">
 												<v-switch
 													hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/getting-started/telemetry.md#usage-statistics"
@@ -1079,7 +1151,7 @@ export default {
 				return item
 			}
 		},
-		randomKey() {
+		randomKey(k) {
 			let key = ''
 
 			while (key.length < 32) {
@@ -1089,7 +1161,7 @@ export default {
 				key += x.length === 2 ? x : '0' + x
 			}
 
-			this.$set(this.newZwave, 'networkKey', key)
+			this.$set(this.newZwave.securityKeys, k, key)
 		},
 		readFile(file, callback) {
 			const reader = new FileReader()

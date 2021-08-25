@@ -1,3 +1,75 @@
+## [5.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.0...v5.5.1) (2021-08-25)
+
+
+### Features
+
+* zwave-js@8.2.1 ([6e6a74e](https://github.com/zwave-js/zwavejs2mqtt/commit/6e6a74ec7986b126218be547e3fa088ebc0b8e3a))
+
+# [5.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.6...v5.5.0) (2021-08-25)
+
+
+### Bug Fixes
+
+* move lookup to manufacturer prop ([94b5101](https://github.com/zwave-js/zwavejs2mqtt/commit/94b510164deb7e816a9be03896a6c63fa5742fba))
+* **ui:** handle replaceFailedNode errors ([22a5f1d](https://github.com/zwave-js/zwavejs2mqtt/commit/22a5f1d32ee55a7b937f3ea02bfae9758164c6cc))
+* lookup manufacturer when unknown ([b436c4c](https://github.com/zwave-js/zwavejs2mqtt/commit/b436c4c4b1f60a360392bdd2f58416b757db57b0)), closes [#1571](https://github.com/zwave-js/zwavejs2mqtt/issues/1571)
+* **hass:** mode_state_template quotes ([1e47d90](https://github.com/zwave-js/zwavejs2mqtt/commit/1e47d9058ec23faf0f05c421874c5f5879acfc45)), closes [#1578](https://github.com/zwave-js/zwavejs2mqtt/issues/1578)
+
+
+### Features
+
+* add `forceSecurity` falg support to Default inclusion strategy ([#1588](https://github.com/zwave-js/zwavejs2mqtt/issues/1588)) ([3c78d43](https://github.com/zwave-js/zwavejs2mqtt/commit/3c78d43000c1b06ecf5e7cd2110427c6259ad448))
+* bump zwave-js/server@1.10.0 ([24b7d8d](https://github.com/zwave-js/zwavejs2mqtt/commit/24b7d8d674ce7d0b2c4c973d005f140748913ec9))
+* support for S2 inclusion ([#1585](https://github.com/zwave-js/zwavejs2mqtt/issues/1585)) ([f507246](https://github.com/zwave-js/zwavejs2mqtt/commit/f5072469af70876219e3344d1d257af4576611f3))
+* zwave-js@8.2.0 and @zwave-js/server@1.10.1 ([d9eed6e](https://github.com/zwave-js/zwavejs2mqtt/commit/d9eed6e0d469211d1ceecbf412067fd2631eb256))
+
+## [5.4.6](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.5...v5.4.6) (2021-08-17)
+
+
+### Bug Fixes
+
+* use different icon for node name/location reset ([0b8e165](https://github.com/zwave-js/zwavejs2mqtt/commit/0b8e165f2e5853a4d5db832594ace696a86ca801)), closes [#1542](https://github.com/zwave-js/zwavejs2mqtt/issues/1542)
+
+## [5.4.5](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.4...v5.4.5) (2021-08-05)
+
+
+### Bug Fixes
+
+* **hass:** discovery of Barrier State CC ([#1538](https://github.com/zwave-js/zwavejs2mqtt/issues/1538)) ([15c870a](https://github.com/zwave-js/zwavejs2mqtt/commit/15c870a6ea082106397be5e15e3fd19147976f1e)), closes [#1363](https://github.com/zwave-js/zwavejs2mqtt/issues/1363)
+
+
+### Features
+
+* bump zwave-js@8.0.8 ([74a3656](https://github.com/zwave-js/zwavejs2mqtt/commit/74a36566e1d244f8d91da92177a897ff492ce115))
+
+## [5.4.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.3...v5.4.4) (2021-08-02)
+
+
+### Bug Fixes
+
+* catch "controller not ready" error in statistics event handler ([#1523](https://github.com/zwave-js/zwavejs2mqtt/issues/1523)) ([d3125c1](https://github.com/zwave-js/zwavejs2mqtt/commit/d3125c1824a0aaa1a8698b1f60f266d42d492b47))
+
+
+### Features
+
+* zwave-js@8.0.7 ([e0ec7e4](https://github.com/zwave-js/zwavejs2mqtt/commit/e0ec7e4d5cc0474ee75475699ca53ca94a8aaec3))
+
+## [5.4.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.2...v5.4.3) (2021-07-30)
+
+
+### Bug Fixes
+
+* **hass:** barrier operator CC MQTT discovery ([#1485](https://github.com/zwave-js/zwavejs2mqtt/issues/1485)) ([45e07a6](https://github.com/zwave-js/zwavejs2mqtt/commit/45e07a620b39532e01d4fbbd9dd771b71f4faf17)), closes [#1363](https://github.com/zwave-js/zwavejs2mqtt/issues/1363)
+* **ui:** typo in settings view ([#1483](https://github.com/zwave-js/zwavejs2mqtt/issues/1483)) ([ada0f65](https://github.com/zwave-js/zwavejs2mqtt/commit/ada0f65325966ea3f494513724e1252eaf505d23))
+* change the GE/Jasco 14314 to use the fan dimmer hass discovery ([#1476](https://github.com/zwave-js/zwavejs2mqtt/issues/1476)) ([44ba47f](https://github.com/zwave-js/zwavejs2mqtt/commit/44ba47fdb2eaf6b88d7b91513cb7cebfee7be211))
+
+
+### Features
+
+* add `deviceConfig` to node ([#1482](https://github.com/zwave-js/zwavejs2mqtt/issues/1482)) ([1e6acb3](https://github.com/zwave-js/zwavejs2mqtt/commit/1e6acb3b0058dd77acda55d6e4c64b2610d14674))
+* add `MQTT_NAME` env var ([#1481](https://github.com/zwave-js/zwavejs2mqtt/issues/1481)) ([5097a26](https://github.com/zwave-js/zwavejs2mqtt/commit/5097a26284788d8b0e3c8e717a1dc2029a838c9c))
+* zwave-js@8.0.6 and zwavejs-server@1.9.2 ([8735cea](https://github.com/zwave-js/zwavejs2mqtt/commit/8735cea14c33069eca01f033ffcaa40793611499))
+
 ## [5.4.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.4.1...v5.4.2) (2021-07-22)
 
 
