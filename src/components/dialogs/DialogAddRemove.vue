@@ -159,7 +159,7 @@
 											</template>
 										</v-radio>
 										<v-checkbox
-											class="mt-0 ml-4"
+											class="mt-0 ml-5"
 											v-model="s.values.forceSecurity"
 											label="Force Security"
 											hint="Prefer S0 over no encryption"
