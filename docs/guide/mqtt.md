@@ -66,7 +66,7 @@ This are the available apis:
 - `refreshValues(nodeId)`: Refresh all node values
 - `pingNode(nodeId)`: Ping a node
 - `pollValue(valueId)`: Polls a value from the node
-- `startInclusion(inclusionStrategy)`: Starts the inclusion
+- `startInclusion(inclusionStrategy, options)`: Starts the inclusion
 - `startExclusion()`: Starts the exclusion
 - `stopInclusion()`: Stops the inclusion
 - `stopExclusion()`: Stops the exclusion

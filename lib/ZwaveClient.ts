@@ -38,6 +38,8 @@ import {
 	InclusionStrategy,
 	InclusionGrant,
 	InclusionResult,
+	InclusionOptions,
+	InclusionUserCallbacks,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -1612,7 +1614,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Start inclusion
 	 */
 	async startInclusion(
-		strategy: InclusionStrategy = InclusionStrategy.Default
+		strategy: InclusionStrategy = InclusionStrategy.Default,
+		options?: { forceSecurity?: boolean; provisioningList?: unknown }
 	): Promise<boolean> {
 		if (this._driver && !this.closed) {
 			if (this.commandsTimeout) {
@@ -1624,31 +1627,39 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.stopInclusion().catch(logger.error)
 			}, this.cfg.commandsTimeout * 1000 || 30000)
 
-			if (
-				strategy === InclusionStrategy.Insecure ||
-				strategy === InclusionStrategy.Security_S0
-			) {
-				return this._driver.controller.beginInclusion({
-					strategy,
-				})
-			} else if (strategy === InclusionStrategy.SmartStart) {
-				return this._driver.controller.beginInclusion({
-					strategy,
-					provisioningList: null,
-				})
-			} else {
-				return this._driver.controller.beginInclusion({
-					strategy,
-					userCallbacks: {
-						grantSecurityClasses:
-							this._onGrantSecurityClasses.bind(this),
-						validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-						abort: this._onAbortInclusion.bind(this),
-					},
-				})
+			let inclusionOptions: InclusionOptions
+			const userCallbacks: InclusionUserCallbacks = {
+				grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
+				validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+				abort: this._onAbortInclusion.bind(this),
 			}
 
-			// by default beginInclusion is secured, pass true to make it not secured
+			switch (strategy) {
+				case InclusionStrategy.Insecure:
+				case InclusionStrategy.Security_S0:
+					inclusionOptions = { strategy }
+					break
+				case InclusionStrategy.SmartStart:
+					inclusionOptions = {
+						strategy,
+						provisioningList: options?.provisioningList,
+					}
+					break
+				case InclusionStrategy.Default:
+					inclusionOptions = {
+						strategy,
+						userCallbacks,
+						forceSecurity: options?.forceSecurity,
+					}
+					break
+				case InclusionStrategy.Security_S2:
+					inclusionOptions = { strategy, userCallbacks }
+					break
+				default:
+					inclusionOptions = { strategy }
+			}
+
+			return this._driver.controller.beginInclusion(inclusionOptions)
 		}
 
 		throw Error('Driver is closed')
