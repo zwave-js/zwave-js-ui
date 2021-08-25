@@ -49,10 +49,10 @@ jobs:
             echo "::set-output name=changed::false"
           fi
       - name: Open PR
-        if: ${{ steps.check.outupts.changed == 'true' }}
+        if: ${{ steps.check.outputs.changed == 'true' }}
         uses: vsoch/pull-request-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST_BRANCH: "master"
-          PULL_REQUEST_FROM_BRANCH: "zwave-js@${{ steps.check.outupts.version }}"
-          PULL_REQUEST_TITLE: "feat: bump zwave-js@${{ steps.check.outupts.version }}"
+          PULL_REQUEST_FROM_BRANCH: "zwave-js@${{ steps.check.outputs.version }}"
+          PULL_REQUEST_TITLE: "feat: bump zwave-js@${{ steps.check.outputs.version }}"
