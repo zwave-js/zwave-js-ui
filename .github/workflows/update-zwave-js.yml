@@ -62,10 +62,10 @@ jobs:
           delete-branch: true
           title: "feat: bump zwave-js@${{ steps.check.outputs.version }}"
           body: |
-            Update zwave-js to version {{ steps.check.outputs.version }}
+            Update zwave-js to version ${{ steps.check.outputs.version }}
           labels: |
+            dependencies
             zwave-js
-            deps
           base: master
           draft: false
 
