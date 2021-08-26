@@ -36,7 +36,6 @@ jobs:
           git diff --name-only || true
           if ! git diff --quiet ; then
             echo "Has changes"
-            git diff > fix.patch
             echo "::set-output name=changed::true"
             VERSION=$(yarn info --silent ${{github.event.inputs.dep}} version)
             echo "::set-output name=version::$VERSION"
