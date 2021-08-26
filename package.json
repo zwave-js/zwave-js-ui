@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "5.5.0",
+  "version": "5.5.1",
   "bin": {
     "zwavejs2mqtt": "server/bin/www.js"
   },
@@ -122,7 +122,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
-    "@zwave-js/server": "^1.10.1",
+    "@zwave-js/server": "^1.10.2",
     "ansi_up": "^5.0.1",
     "app-root-path": "^3.0.0",
     "archiver": "^5.3.0",
@@ -242,7 +242,7 @@
     "webpack": "^5.44.0",
     "webpack-bundle-analyzer": "^4.4.2",
     "webpack-cli": "^4.7.2",
-    "webpack-dev-server": "^3.11.2",
+    "webpack-dev-server": "^4.0.0",
     "webpack-merge": "^5.8.0"
   },
   "engines": {
