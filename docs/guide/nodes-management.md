@@ -4,6 +4,9 @@ Nodes can be managed from Control Pannel page by clicking on `MANAGE NODES` butt
 
 ![Nodes Manager](../_images/nodes_manager.png)
 
+> [!NOTE]
+> In order to include secure devices ensure you have setted up all **SECURITY KEYS** in Zwave settings.
+
 ## Add a node
 
 1. Select `Inclusion` and press `NEXT`
