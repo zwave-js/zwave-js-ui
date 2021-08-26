@@ -32,7 +32,11 @@ export default {
 				supportsBeaming: { type: 'boolean', label: 'Beaming' },
 				zwavePlusVersion: {
 					type: 'string',
-					label: 'Z-Wave Plus',
+					label: 'Z-Wave+',
+				},
+				firmwareVersion: {
+					type: 'string',
+					label: 'FW',
 				},
 				failed: { type: 'boolean', label: 'Failed' },
 				status: { type: 'string', label: 'Status' },
