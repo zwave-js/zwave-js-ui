@@ -2185,10 +2185,10 @@
     serialport "^9.2.0"
     winston "^3.3.3"
 
-"@zwave-js/server@^1.10.1":
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.1.tgz#593e7d741b53740ff273bc79d214fcd195f66722"
-  integrity sha512-3IS/xjvD5RCkuLzKs4ViEvkZXfIS+r2budXSxkgMb7/Nx7o8ZDXuaDikmkOuc1Lo7WZ0PUhxG+FnRSINBj98jA==
+"@zwave-js/server@^1.10.2":
+  version "1.10.2"
+  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.2.tgz#a675cef5d10e5074f804447c11d646b6aeb242f8"
+  integrity sha512-r1QEdWRVIDRP1Gtiqh9itOT8Z3RcSfrCGavnEbSWfLbYzj419zFWwIrju68A0ATkC6M26ksuICjuK0mWza/mBQ==
   dependencies:
     minimist "^1.2.5"
     ws "^8.0.0"
@@ -11179,10 +11179,10 @@ ts-node-dev@^1.1.8:
     ts-node "^9.0.0"
     tsconfig "^7.0.0"
 
-ts-node@^10.2.0:
-  version "10.2.0"
-  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-10.2.0.tgz#f1e88249a00e26aa95e9a93c50f70241a8a1c4bb"
-  integrity sha512-FstYHtQz6isj8rBtYMN4bZdnXN1vq4HCbqn9vdNQcInRqtB86PePJQIxE6es0PhxKWhj2PHuwbG40H+bxkZPmg==
+ts-node@^10.2.1:
+  version "10.2.1"
+  resolved "https://registry.yarnpkg.com/ts-node/-/ts-node-10.2.1.tgz#4cc93bea0a7aba2179497e65bb08ddfc198b3ab5"
+  integrity sha512-hCnyOyuGmD5wHleOQX6NIjJtYVIO8bPP8F2acWkB4W06wdlkgyvJtubO/I9NkI88hCFECbsEgoLc0VNkYmcSfw==
   dependencies:
     "@cspotcode/source-map-support" "0.6.1"
     "@tsconfig/node10" "^1.0.7"
