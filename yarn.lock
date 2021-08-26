@@ -1039,10 +1039,10 @@
     "@babel/types" "^7.4.4"
     esutils "^2.0.2"
 
-"@babel/register@^7.14.5":
-  version "7.14.5"
-  resolved "https://registry.yarnpkg.com/@babel/register/-/register-7.14.5.tgz#d0eac615065d9c2f1995842f85d6e56c345f3233"
-  integrity sha512-TjJpGz/aDjFGWsItRBQMOFTrmTI9tr79CHOK+KIvLeCkbxuOAk2M5QHjvruIMGoo9OuccMh5euplPzc5FjAKGg==
+"@babel/register@^7.14.5", "@babel/register@^7.15.3":
+  version "7.15.3"
+  resolved "https://registry.yarnpkg.com/@babel/register/-/register-7.15.3.tgz#6b40a549e06ec06c885b2ec42c3dd711f55fe752"
+  integrity sha512-mj4IY1ZJkorClxKTImccn4T81+UKTo4Ux0+OFSV9hME1ooqS9UV+pJ6BjD0qXPK4T3XW/KNa79XByjeEMZz+fw==
   dependencies:
     clone-deep "^4.0.1"
     find-cache-dir "^2.0.0"
@@ -2185,10 +2185,10 @@
     serialport "^9.2.0"
     winston "^3.3.3"
 
-"@zwave-js/server@^1.10.1":
-  version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.1.tgz#593e7d741b53740ff273bc79d214fcd195f66722"
-  integrity sha512-3IS/xjvD5RCkuLzKs4ViEvkZXfIS+r2budXSxkgMb7/Nx7o8ZDXuaDikmkOuc1Lo7WZ0PUhxG+FnRSINBj98jA==
+"@zwave-js/server@^1.10.2":
+  version "1.10.2"
+  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.2.tgz#a675cef5d10e5074f804447c11d646b6aeb242f8"
+  integrity sha512-r1QEdWRVIDRP1Gtiqh9itOT8Z3RcSfrCGavnEbSWfLbYzj419zFWwIrju68A0ATkC6M26ksuICjuK0mWza/mBQ==
   dependencies:
     minimist "^1.2.5"
     ws "^8.0.0"
