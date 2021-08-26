@@ -193,7 +193,7 @@
     "@types/express-session": "1.17.0",
     "@types/fs-extra": "^9.0.12",
     "@types/jsonfile": "^6.0.1",
-    "@types/jsonwebtoken": "^8.5.4",
+    "@types/jsonwebtoken": "^8.5.5",
     "@types/mocha": "^9.0.0",
     "@types/morgan": "^1.9.3",
     "@types/pem": "^1.9.6",
