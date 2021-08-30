@@ -395,12 +395,24 @@
 								<v-card-text v-if="s.key == 's2Pin'">
 									<v-text-field
 										label="DSK Pin"
+										class="mb-2"
 										persistent-hint
 										hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
 										v-model.trim="s.values.pin"
-										:suffix="s.suffix"
+										:suffix="
+											$vuetify.breakpoint.xsOnly
+												? ''
+												: s.suffix
+										"
 									>
 									</v-text-field>
+
+									<code
+										class="code font-weight-bold"
+										v-if="$vuetify.breakpoint.xsOnly"
+									>
+										{{ s.suffix }}
+									</code>
 
 									<v-card-actions v-if="!loading">
 										<v-btn
@@ -510,7 +522,7 @@ export default {
 				s2Pin: {
 					key: 's2Pin',
 					title: 'DSK validation',
-					suffix: '',
+					suffix: '', // Ex: '-12345-12345-12345-12345-12345-12345-12345',
 					values: {
 						pin: '',
 					},
