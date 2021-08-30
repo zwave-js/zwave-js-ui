@@ -122,7 +122,7 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
-    "@zwave-js/server": "^1.10.2",
+    "@zwave-js/server": "^1.10.3",
     "ansi_up": "^5.0.1",
     "app-root-path": "^3.0.0",
     "archiver": "^5.3.0",
