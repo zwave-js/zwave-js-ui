@@ -1,3 +1,17 @@
+## [5.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.1...v5.5.2) (2021-08-30)
+
+
+### Bug Fixes
+
+* **ui:** dsk pin display error on small screens ([1398394](https://github.com/zwave-js/zwavejs2mqtt/commit/139839413403f304f0dd9637fc716713fe6476a6)), closes [#1417](https://github.com/zwave-js/zwavejs2mqtt/issues/1417)
+
+
+### Features
+
+* bump @zwave-js/server@1.10.3 ([#1631](https://github.com/zwave-js/zwavejs2mqtt/issues/1631)) ([d3e25b1](https://github.com/zwave-js/zwavejs2mqtt/commit/d3e25b141c21dbb7c085028357341c5204e69f08))
+* **ui:** add `firmwareVersion` to nodes table ([b45c396](https://github.com/zwave-js/zwavejs2mqtt/commit/b45c396172df688d5da6d7a230c084334a4d8b14))
+* bump @zwave-js/server@1.10.2 ([#1598](https://github.com/zwave-js/zwavejs2mqtt/issues/1598)) ([9a3a914](https://github.com/zwave-js/zwavejs2mqtt/commit/9a3a9145e846e5a1bf708abda6190d39f62763dc))
+
 ## [5.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.0...v5.5.1) (2021-08-25)
 
 
