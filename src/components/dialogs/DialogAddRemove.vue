@@ -188,12 +188,28 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="2">
+										<v-radio :value="3">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
 														color="amber accent-4"
 														small
+														>lock</v-icon
+													>
+													<strong
+														>S0 encryption</strong
+													>
+													<small
+														>Use S0
+														encryption</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="2">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon color="error" small
 														>no_encryption</v-icon
 													>
 													<strong
