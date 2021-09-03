@@ -1,3 +1,11 @@
+## [5.5.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.2...v5.5.3) (2021-09-03)
+
+
+### Features
+
+* **ui:** support for S0 only inclusion ([48deb0b](https://github.com/zwave-js/zwavejs2mqtt/commit/48deb0b3e7014d1522cc09fbcefc85f68ee11826)), closes [#1645](https://github.com/zwave-js/zwavejs2mqtt/issues/1645)
+* bump zwave-js@8.2.2 ([#1644](https://github.com/zwave-js/zwavejs2mqtt/issues/1644)) ([16eb6fe](https://github.com/zwave-js/zwavejs2mqtt/commit/16eb6fe497b2880c0fa8a6978cb91ef4be38f007))
+
 ## [5.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.1...v5.5.2) (2021-08-30)
 
 
