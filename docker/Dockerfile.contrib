@@ -2,7 +2,11 @@
 # Please find instructions on how to run it in README.md.
 ARG SRC=git-clone-src
 
-##### GIT CLONE #####
+#####################
+# Setup the source  #
+#####################
+
+# Option 1 (default): Clone from git
 FROM node:16.3.0-buster AS git-clone-src
 ARG ZWJ_BRANCH=master
 ARG Z2M_BRANCH=master
@@ -12,51 +16,62 @@ WORKDIR /home/node
 RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-js
 RUN git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
 
-##### LOCAL SOURCE #####
+# Option 2: Copy from local sources
 FROM node:16.3.0-buster AS local-copy-src
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
-##### BUILD #####
+#####################
+# Build Environment #
+#####################
 FROM ${SRC} AS build
-ARG YARN_NETWORK_TIMEOUT=300000
+
+# Setup the container
 USER root
 RUN apt-get update && apt-get install -y jq
+
+### Build node-zwave-js ###
 USER node
 WORKDIR /home/node/node-zwave-js
-#RUN YARN_HTTP_TIMEOUT=${YARN_NETWORK_TIMEOUT} yarn install
-RUN YARN_HTTP_TIMEOUT=300000 yarn install
-RUN yarn run build
-RUN yarn workspaces focus --all
+ENV YARN_HTTP_TIMEOUT=300000
 
-# Note: We must import the version plugin from sources because of the possibity of 404 errors due to version mismatches
-RUN yarn plugin import from sources version
+RUN yarn
+RUN yarn build
 
-RUN for i in config core serial shared; do \
-    cd packages/$i && \
-    yarn version --no-git-tag-version --new-version $(yarn cache list --json| \
-    jq -r '[.data."@zwave-js/'${i}'"]'[0])+$(git rev-parse --short HEAD) && \
-    yarn link && \
-    cd ../..; \
-    done
-RUN cd packages/zwave-js && \
-    yarn version --no-git-tag-version --new-version $(yarn cache list --json| \
-    jq -r '[.data."zwave-js"]'[0])+$(git rev-parse --short HEAD) && \
-    yarn link
+# Prune devDependencies - we need to disable the postinstall command for that to succeed
+RUN sed -i 's|"postinstall"|"//postinstall"|g' package.json
+RUN yarn workspaces focus --all --production
 
+### Build zwavejs2mqtt ###
 WORKDIR /home/node/zwavejs2mqtt
-#RUN YARN_HTTP_TIMEOUT=${YARN_NETWORK_TIMEOUT} yarn install
-RUN YARN_HTTP_TIMEOUT=300000 yarn install
-RUN yarn run build
-RUN yarn workspaces focus --all
-#RUN yarn install --production --immutable
-RUN yarn version -s --no-git-tag-version --new-version $(yarn cache list --json| \
-    jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
-RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
+# Force zwavejs2mqtt to yarn v3
+# TODO: We need the github version for now
+RUN yarn set version berry && yarn set version latest
+RUN yarn set version from sources
+RUN yarn config set nodeLinker node-modules
+
+RUN yarn
+RUN yarn up fs-extra
+RUN yarn add @zwave-js/config@* @zwave-js/core@*
+
+RUN yarn link ../node-zwave-js --all
+
+# Use yarn executable to run scripts
+RUN sed -i 's|: "node|: "yarn node|g' package.json
+RUN yarn build:server && yarn build:ui
+
+# Prune devDependencies
+RUN yarn plugin import from sources workspace-tools
+RUN yarn workspaces focus --all --production
+
+# Copy to distribution folder
 RUN mkdir my_dist
 RUN cp -Lr .git package.json yarn.lock bin config server dist hass lib store views node_modules my_dist/
 
+#####################
+# Setup Final Image #
+#####################
 FROM node:16.3.0-buster
 LABEL maintainer="robertsLando"
 
