@@ -50,7 +50,7 @@ RUN cat package.json \
       | jq '.resolutions += { "@zwave-js/shared": "file:../node-zwave-js/packages/shared/package.tgz" }' \
       | jq '.resolutions += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
       | jq '.dependencies += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
-      &> package2.json && rm package.json && mv package2.json package.json
+      > package2.json && rm package.json && mv package2.json package.json
 
 RUN yarn
 RUN yarn build
