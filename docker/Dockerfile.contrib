@@ -37,6 +37,11 @@ ENV YARN_HTTP_TIMEOUT=300000
 
 RUN yarn
 RUN yarn build
+
+# Update the version info to match the branch built
+ARG ZWAVEJS_VERSION="$(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")').dev-$(git rev-parse --short HEAD)"
+RUN yarn lerna version --no-git-tag-version --no-push --ignore-scripts --yes "${ZWAVEJS_VERSION}"
+
 RUN yarn workspaces foreach pack
 
 ### Build zwavejs2mqtt ###
