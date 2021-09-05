@@ -37,33 +37,26 @@ ENV YARN_HTTP_TIMEOUT=300000
 
 RUN yarn
 RUN yarn build
-
-# Prune devDependencies - we need to disable the postinstall command for that to succeed
-RUN sed -i 's|"postinstall"|"//postinstall"|g' package.json
-RUN yarn workspaces focus --all --production
+RUN yarn workspaces foreach pack
 
 ### Build zwavejs2mqtt ###
 WORKDIR /home/node/zwavejs2mqtt
 
-# Force zwavejs2mqtt to yarn v3
-# TODO: We need the github version for now
-RUN yarn set version berry && yarn set version latest
-RUN yarn set version from sources
-RUN yarn config set nodeLinker node-modules
+# Change resolutions to point to local packs
+RUN cat package.json \
+      | jq '.resolutions += { "@zwave-js/config": "file:../node-zwave-js/packages/config/package.tgz" }' \
+      | jq '.resolutions += { "@zwave-js/core": "file:../node-zwave-js/packages/core/package.tgz" }' \
+      | jq '.resolutions += { "@zwave-js/serial": "file:../node-zwave-js/packages/serial/package.tgz" }' \
+      | jq '.resolutions += { "@zwave-js/shared": "file:../node-zwave-js/packages/shared/package.tgz" }' \
+      | jq '.resolutions += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
+      | jq '.dependencies += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
+      &> package2.json && rm package.json && mv package2.json package.json
 
 RUN yarn
-RUN yarn up fs-extra
-RUN yarn add @zwave-js/config@* @zwave-js/core@*
-
-RUN yarn link ../node-zwave-js --all
-
-# Use yarn executable to run scripts
-RUN sed -i 's|: "node|: "yarn node|g' package.json
-RUN yarn build:server && yarn build:ui
+RUN yarn build
 
 # Prune devDependencies
-RUN yarn plugin import from sources workspace-tools
-RUN yarn workspaces focus --all --production
+RUN yarn install --production
 
 # Copy to distribution folder
 RUN mkdir my_dist
