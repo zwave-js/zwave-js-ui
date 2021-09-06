@@ -37,6 +37,8 @@
 
 - Troubleshooting
 
+  - [Adding Device Support](https://zwave-js.github.io/node-zwave-js/#/config-files/contributing-files)
+  - [Requesting Device Support](https://github.com/zwave-js/node-zwave-js/issues/new?assignees=&labels=config+%E2%9A%99&template=device_config.yml&title=Missing+device+configuration%3A+%3Center+manufacturer+and+device+name%3E)
   - [Bug Report](troubleshooting/bug_report.md)
 
 - [Usage Statistics](usage_stats.md)
