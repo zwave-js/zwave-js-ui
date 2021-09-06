@@ -472,6 +472,7 @@ function setupSocket(server: HttpServer) {
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (socket, data) => {
 			if (gw.zwave) {
+				if (!data.args) data.args = []
 				const result: CallAPIResult<any> & {
 					api?: string
 					originalArgs?: any[]
