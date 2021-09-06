@@ -9,12 +9,9 @@ This is typically used to build zwavejs2mqtt while mixing branches from zwave-js
 To build a custom docker image, simply run the following series of commands, indicating the name of the branches you wish to build for node-zwave-js and zwavejs2mqtt and the resulting docker image name:
 
 ```bash
-zwavejs_branch=master \
-zwavejs2mqtt_branch=master \
-image_name=zwavejs2mqtt \
 curl -s https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/Dockerfile.contrib | \
-DOCKER_BUILDKIT=1 docker build - --build-arg SRC=git-clone-src --build-arg Z2M_BRANCH=$zwavejs2mqtt_branch \
---build-arg ZWJ_BRANCH=$zwavejs_branch --no-cache -t $image_name
+DOCKER_BUILDKIT=1 docker build - --build-arg SRC=git-clone-src --no-cache \
+--build-arg Z2M_BRANCH=master --build-arg ZWJ_BRANCH=master -t zwavejs2mqtt
 ```
 
 Alternatively, you can clone the branches locally, make any changes you like, and build a docker image from the local sources:
@@ -38,5 +35,7 @@ DOCKER_BUILDKIT=1 docker build --build-arg SRC=local-copy-src --no-cache -f zwav
 ```
 
 > [!NOTE]
-> You may optionally specify alternative repositories (such as your own) by appending `--build-arg ZWJ_REPOSITORY=https://github.com/FakeUser/node-zwave-js` or `--build-arg Z2M_REPOSITORY=https://github.com/FakeUser/zwavejs2mqtt`
+> You may optionally specify alternative repositories (such as your own) by appending
+> `--build-arg ZWJ_REPOSITORY=https://github.com/FakeUser/node-zwave-js` or
+> `--build-arg Z2M_REPOSITORY=https://github.com/FakeUser/zwavejs2mqtt`
 > Only BuildKit enabled builders have the capability to efficiently skip the unused source stage so it never runs.
