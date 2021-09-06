@@ -12,7 +12,7 @@ When you click on the icon, if there is an update available, a dialog like this 
 
 Press on `INSTALL` and wait until you receive feedback. If the update fails, check logs to see more detail about the error(s). If there are no updates available you will see a `CHECK` button instead of `INSTALL`.
 
-### Inside docker containers
+## Inside docker containers
 
 By default config updates work by checking the installed version of the module `@zwave-js/config`. Doing such updates inside docker containers requires volumes in order to keep them consistent. Therefore, when running on docker zwave-js will copy the embedded config DB into the `store/.config-db` folder. This folder is not visible/editable from the store ui and should not be altered. If needed, the folder path can be customized using the `ZWAVEJS_EXTERNAL_CONFIG` env var, check related [docs](/guide/env-vars) for more info.
 

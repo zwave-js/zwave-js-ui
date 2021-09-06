@@ -17,5 +17,4 @@ This directory does not expect any special structure. It can be organized as you
 ```
 
 > [!NOTE] Z2M needs to be restarted in order to pick up a user-provided device configs. This can be done from settings by hitting `SAVE` or by completely restarting the application.
-
 > [!NOTE] You must re-interview a device for many types of changes in the device file to have an effect. E.g. changed configuration parameters, certain compat flags, etc.

@@ -38,7 +38,7 @@ zwavejs2mqtt to resend the cached values when Home Assistant restarts.
 
 zwavejs2mqtt will try to guess how to map devices from Zwave to Home Assistant. At the moment, it tries to generate entities based on zwave values command classes, index, and units of the value. If the discovered device doesn't fit your needs, you can set a custom `device_class` using the Gateway value table.
 
-### Components management
+## Components management
 
 To see the components that have been discovered by zwavejs2mqtt, go to Control Panel UI, select a Node from the Nodes table, then select the Node tab from tabs menu at the bottom of Nodes table. At the Bottom of the page, after the Node values section, there will be a section called `Home Assistant - Devices`. There you will find a table with all of the devices created for the selected node.
 
@@ -47,11 +47,11 @@ To see the components that have been discovered by zwavejs2mqtt, go to Control P
 **ATTENTION**
 Once edited, the devices will loose all of their customizations after a restart **unless** you store the node hassDevices by pressing `STORE` button at the top of hass devices table. That will cause the hassDevices to be stored in the `nodes.json` file. That file can also be imported/exported easily from the control panel UI at the top of nodes table.
 
-#### Rediscover Node
+### Rediscover Node
 
 If you update the node name/location, you must also rediscover the values of this node to ensure they have the correct topics. To do this, press `REDISCOVER NODE` at the top of the **Home Assistant - Devices** table (check previous picture)
 
-#### Edit existing component
+### Edit existing component
 
 If you select a device, its configuration will be displayed as a JSON object on the right side. You can edit it and send some actions:
 
@@ -59,11 +59,11 @@ If you select a device, its configuration will be displayed as a JSON object on 
 - `Rediscover`: Re-discover this device using the `discoveryTopic` and `discovery_payload` of the configuration
 - `Delete`: Delete the device from Hass entities of selected node
 
-#### Add new component
+### Add new component
 
 If no device is selected you can manually insert a device JSON configuration. If the configuration is valid you can press the `Add` button to add it to devices. If the process completes successfully, the device will be added to the Hass Devices table and you can then select it from the table and press `Rediscover` to discover your custom device.
 
-### Custom Components
+## Custom Components
 
 At the moment, MQTT discovery creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan`, you will need to create your own configuration. Components configurations are stored in the `hass/devices.js` file. There, all components are stored that zwavejs2mqtt needs to create for each Zwave device type. The key is the Zwave **device id**(`<manufacturerid>-<productid>-<producttype>`). The value is an array with all HASS components to be created for that Zwave Device.
 
@@ -74,7 +74,7 @@ You can specify custom devices configuration inside the `store/customDevices(.js
 > [!NOTE]
 > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS, PLEASE SEND A PR!
 
-#### Thermostats
+### Thermostats
 
 ```js
 {
@@ -122,7 +122,7 @@ You can specify custom devices configuration inside the `store/customDevices(.js
 
 Thermostats are the most complex components to create. In this device example, the setpoint topic changes based on the mode selected. zwavejs2mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
 
-#### Fans
+### Fans
 
 ```js
 {
@@ -158,7 +158,7 @@ Thermostats are the most complex components to create. In this device example, t
   - **state_value_template**: The template used to set the value ON/OFF based on the payload received
   - **speed_value_template**: The template to use to set the speed `["off", "low", "medium", "high"]` based on the payload received
 
-#### Thermostats with Fans
+### Thermostats with Fans
 
 The main template is like the thermostat template. The things to add are:
 
