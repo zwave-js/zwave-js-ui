@@ -258,4 +258,4 @@ DOCKER_BUILDKIT=1 docker build --build-arg SRC=local-copy-src --no-cache -f zwav
 
 `--build-arg Z2M_REPOSITORY=https://github.com/FakeUser/zwavejs2mqtt`
 
-[!NOTE] Only BuildKit enabled builders have the capability to efficiently skip the unused source stage so it never runs.
+> [!NOTE] Only BuildKit enabled builders have the capability to efficiently skip the unused source stage so it never runs.
