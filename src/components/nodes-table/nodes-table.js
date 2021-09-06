@@ -28,11 +28,15 @@ export default {
 				productLabel: { type: 'string', label: 'Product code' },
 				name: { type: 'string', label: 'Name' },
 				loc: { type: 'string', label: 'Location' },
-				isSecure: { type: 'boolean', label: 'Secure' },
+				security: { type: 'string', label: 'Security' },
 				supportsBeaming: { type: 'boolean', label: 'Beaming' },
 				zwavePlusVersion: {
 					type: 'string',
-					label: 'Z-Wave Plus',
+					label: 'Z-Wave+',
+				},
+				firmwareVersion: {
+					type: 'string',
+					label: 'FW',
 				},
 				failed: { type: 'boolean', label: 'Failed' },
 				status: { type: 'string', label: 'Status' },

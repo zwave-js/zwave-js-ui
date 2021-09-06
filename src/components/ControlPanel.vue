@@ -31,7 +31,7 @@
 																addRemoveShowDialog = true
 															"
 														>
-															Add/Remove Device
+															Manage nodes
 														</v-btn>
 													</v-col>
 													<v-col
@@ -76,7 +76,7 @@
 
 				<DialogAddRemove
 					v-model="addRemoveShowDialog"
-					:nodeAddedOrRemoved="addRemoveNode"
+					:socket="socket"
 					@close="onAddRemoveClose"
 					@apiRequest="apiRequest"
 				/>
@@ -135,7 +135,6 @@ export default {
 			settings: new Settings(localStorage),
 			bindedSocketEvents: {}, // keep track of the events-handlers
 			addRemoveShowDialog: false,
-			addRemoveNode: null,
 			advancedShowDialog: false,
 			actions: [
 				{
@@ -246,7 +245,6 @@ export default {
 		...mapMutations(['showSnackbar', 'setHealProgress']),
 		onAddRemoveClose() {
 			this.addRemoveShowDialog = false
-			this.addRemoveNode = null
 		},
 		async onAction(action, args = {}) {
 			if (action === 'import') {
@@ -324,10 +322,7 @@ export default {
 					}
 				}
 
-				if (
-					action === 'startInclusion' ||
-					action === 'replaceFailedNode'
-				) {
+				if (action === 'startInclusion') {
 					const secure = await this.$listeners.showConfirm(
 						'Node inclusion',
 						'Start inclusion in secure mode?',
@@ -475,27 +470,24 @@ export default {
 				)
 			}
 		},
-		onNodeAddedRemoved(node) {
-			this.addRemoveNode = node
-		},
 		bindEvent(eventName, handler) {
 			this.socket.on(socketEvents[eventName], handler)
 			this.bindedSocketEvents[eventName] = handler
 		},
 		unbindEvents() {
 			for (const event in this.bindedSocketEvents) {
-				this.socket.off(event, this.bindedSocketEvents[event])
+				this.socket.off(
+					socketEvents[event],
+					this.bindedSocketEvents[event]
+				)
 			}
 		},
 	},
 	mounted() {
 		const onApiResponse = this.onApiResponse.bind(this)
-		const onNodeAddedRemoved = this.onNodeAddedRemoved.bind(this)
 		const onHealProgress = this.setHealProgress.bind(this)
 
 		this.bindEvent('api', onApiResponse)
-		this.bindEvent('nodeRemoved', onNodeAddedRemoved)
-		this.bindEvent('nodeAdded', onNodeAddedRemoved)
 		this.bindEvent('healProgress', onHealProgress)
 	},
 	beforeDestroy() {
