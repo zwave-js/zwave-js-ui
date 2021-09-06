@@ -34,7 +34,7 @@ Note: The `dev` tag has been deprecated.
 There are three different way to start the container and provide data persistence. For all of the methods **remember to**:
 
 1. Replace `/dev/ttyACM0` with your serial device
-2. Add `-e TZ=Europe/Stockholm` `-e TZ=America/New_York` (or your timezone) to the `docker run` command to set the correct timezone in the container. Time zone codes can be found at: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+2. Add `-e TZ=Europe/Stockholm` `-e TZ=America/New_York` (or your timezone) to the `docker run` command to set the correct timezone in the container. Time zone codes can be found at: <https://en.wikipedia.org/wiki/List_of_tz_database_time_zones>.
 3. If you are using the Z-Wave JS web socket server (for the official Home Assistant integration) and you change the default port, replace `3000:3000` with the port chosen in settings
 
 ### Run using volumes

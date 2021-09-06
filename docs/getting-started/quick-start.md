@@ -65,7 +65,7 @@ sudo snap connect zwavejs2mqtt:hardware-observe
 
 The most complex way to run ZWavejs2mqtt is on bare metal. To do so, you can use the packaged version (you don't need NodeJS/yarn installed) or clone this repository and build the project:
 
-  - For the packaged version:
+- For the packaged version:
 
     ```bash
     cd ~
@@ -81,7 +81,7 @@ The most complex way to run ZWavejs2mqtt is on bare metal. To do so, you can use
     ./zwavejs2mqtt
     ```
 
-  - If you want to compile last code from github:
+- If you want to compile last code from github:
 
     ```bash
     git clone https://github.com/zwave-js/zwavejs2mqtt

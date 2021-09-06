@@ -5,12 +5,13 @@ To configure ZWavejs2Mqtt, you must access it via your web browser at <http://lo
 ## Quick Start
 
 At the most basic, you must confiugre Z-Wave -> Serial Port and you should:
- - Add Network Security Keys - Z-Wave -> Security Keys (S0 Legacy, S2  Unauthenticated, S2 Authenticated, and S2 Access Control)
- - Enable Z-Wave JS Logging - Z-Wave -> Log Enabled (elect a Log Level)
- - Enable ZWavejs2Mqtt Logging (if using MQTT) - General -> Log Enabled (elect a Log Level)
- - Disable MQTT Gateway (if not using MQTT) - On the Settings Page
- - Configure Home Assistant (if using Home Assistant) - Home Assistant -> WS Server
- - Enable Statistics (please!) - Z-Wave -> Enable Statistics
+
+- Add Network Security Keys - Z-Wave -> Security Keys (S0 Legacy, S2  Unauthenticated, S2 Authenticated, and S2 Access Control)
+- Enable Z-Wave JS Logging - Z-Wave -> Log Enabled (elect a Log Level)
+- Enable ZWavejs2Mqtt Logging (if using MQTT) - General -> Log Enabled (elect a Log Level)
+- Disable MQTT Gateway (if not using MQTT) - On the Settings Page
+- Configure Home Assistant (if using Home Assistant) - Home Assistant -> WS Server
+- Enable Statistics (please!) - Z-Wave -> Enable Statistics
 
 ## General
 
