@@ -2,56 +2,76 @@
 # Please find instructions on how to run it in README.md.
 ARG SRC=git-clone-src
 
-##### GIT CLONE #####
+#####################
+# Setup the source  #
+#####################
+
+# Option 1 (default): Clone from git
 FROM node:16.3.0-buster AS git-clone-src
 ARG ZWJ_BRANCH=master
+ARG ZWJ_REPOSITORY=https://github.com/zwave-js/node-zwave-js
 ARG Z2M_BRANCH=master
+ARG Z2M_REPOSITORY=https://github.com/zwave-js/zwavejs2mqtt
 USER node
 WORKDIR /home/node
 
-RUN git clone -b ${ZWJ_BRANCH} --depth 1 https://github.com/zwave-js/node-zwave-js
-RUN git clone -b ${Z2M_BRANCH} --depth 1 https://github.com/zwave-js/zwavejs2mqtt
+RUN git clone -b ${ZWJ_BRANCH} --depth 1 ${ZWJ_REPOSITORY}
+RUN git clone -b ${Z2M_BRANCH} --depth 1 ${Z2M_REPOSITORY}
 
-##### LOCAL SOURCE #####
+# Option 2: Copy from local sources
 FROM node:16.3.0-buster AS local-copy-src
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
-##### BUILD #####
+#####################
+# Build Environment #
+#####################
 FROM ${SRC} AS build
-ARG YARN_NETWORK_TIMEOUT=300000
+
+# Setup the container
 USER root
 RUN apt-get update && apt-get install -y jq
+
+### Build node-zwave-js ###
 USER node
 WORKDIR /home/node/node-zwave-js
-RUN rm -f yarn.lock
-RUN rm -f packages/config/config/devices/index.json
-RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
-RUN yarn run build:full
-RUN yarn install --production --frozen-lockfile
-RUN for i in config core serial shared; do \
-    cd packages/$i && \
-    yarn version --no-git-tag-version --new-version $(yarn versions --json| \
-    jq -r '[.data."@zwave-js/'${i}'"]'[0])+$(git rev-parse --short HEAD) && \
-    yarn link && \
-    cd ../..; \
-    done
-RUN cd packages/zwave-js && \
-    yarn version --no-git-tag-version --new-version $(yarn versions --json| \
-    jq -r '[.data."zwave-js"]'[0])+$(git rev-parse --short HEAD) && \
-    yarn link
+ENV YARN_HTTP_TIMEOUT=300000
 
+RUN yarn
+RUN yarn build
+
+# Update the version info to match the branch built
+RUN yarn lerna version --allow-branch "*" --no-git-tag-version --no-push --ignore-scripts --yes \
+    $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD))
+
+RUN yarn workspaces foreach pack
+
+### Build zwavejs2mqtt ###
 WORKDIR /home/node/zwavejs2mqtt
-RUN yarn install --network-timeout=${YARN_NETWORK_TIMEOUT}
-RUN yarn run build
-RUN yarn install --production --frozen-lockfile
-RUN yarn version -s --no-git-tag-version --new-version $(yarn versions --json| \
-    jq -r .data.zwavejs2mqtt)+$(git rev-parse --short HEAD)
-RUN yarn link zwave-js @zwave-js/core @zwave-js/config @zwave-js/serial @zwave-js/shared
 
+# Change resolutions to point to local packs
+RUN cat package.json \
+      | jq '.resolutions += { "@zwave-js/config": "file:../node-zwave-js/packages/config/package.tgz" }' \
+      | jq '.resolutions += { "@zwave-js/core": "file:../node-zwave-js/packages/core/package.tgz" }' \
+      | jq '.resolutions += { "@zwave-js/serial": "file:../node-zwave-js/packages/serial/package.tgz" }' \
+      | jq '.resolutions += { "@zwave-js/shared": "file:../node-zwave-js/packages/shared/package.tgz" }' \
+      | jq '.resolutions += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
+      | jq '.dependencies += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
+      > package2.json && rm package.json && mv package2.json package.json
+
+RUN yarn
+RUN yarn build
+
+# Prune devDependencies
+RUN yarn install --production
+
+# Copy to distribution folder
 RUN mkdir my_dist
 RUN cp -Lr .git package.json yarn.lock bin config server dist hass lib store views node_modules my_dist/
 
+#####################
+# Setup Final Image #
+#####################
 FROM node:16.3.0-buster
 LABEL maintainer="robertsLando"
 
