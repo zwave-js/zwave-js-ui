@@ -221,39 +221,3 @@ Enable this to use Z2M only as a Control Panel
 Once finished press `SAVE` and gateway will start Zwave Network Scan, then go to 'Control Panel' section and wait until the scan is completed to check discovered devices and manage them.
 
 Settings, scenes and Zwave configuration are stored in `JSON` files under project `store` folder that you can easily **import/export** for backup purposes.
-
-## Poll values
-
-Some legacy devices don't report all their values automatically and require polling to get updated values. In contrast to OZW, zwave-js does not automatically poll devices on a regular basis without user interaction. Polling can quickly lead to network congestion and should be used very sparingly and only where necessary.
-
-zwavejs2mqtt allows you to configure scheduled polling on a per-value basis, which you can use to keep certain values updated.
-It also allows you to poll individual values on-demand from your automations, which should be preferred over blindly polling all the time if possible.
-
-> [!NOTE]
-> Many values can only be polled together. For example `targetValue`, `currentValue` and `duration` for most of the switch-type CCs. Before enabling polling for all values of a node, users should check whether polling a single value already updates the desired other values too.
-
-In order to enable Polling of specific values you need to go to Settings page, expand General section and add a new value to the [Gateway Values table](#gateway-values-table)
-
-Now press on `NEW VALUE` to add a new value or on the `Pen Icon` in actions column of the table to open the dialog to Add/Edit a value. Select the device, the valueId, enable the `Enable Poll` flag and set a `Poll interval` in seconds:
-
-![Edit value](../_images/edit_gateway_value.png)
-
-Press now on `SAVE` to upload your new settings to the server and it will automatically handle the polling based on your settings.
-
-## Config DB Updates
-
-Since version 4.0.0 it's possible to update internal zwave-js devices config database on the fly directly from zwavejs2mqtt UI.
-
-Updates are checked everyday at midnight but you can also check for new updates manually from the UI by clicking on the icon in top right corner, when an update is available a badge will show up next to the icon:
-
-![Config update icon](../_images/config_updates_icon.png)
-
-When you click on the icon, if there is an update available, a dialog like this is shown:
-
-![Config update dialog](../_images/config_updates_dialog.png)
-
-Just press on `INSTALL` and wait until you receive a feedback, if the update fails check logs to see more details about errors. If there is no update available you will see a `CHECK` button instead of `INSTALL` and by pressing it you will trigger a manual check.
-
-### Inside docker containers
-
-By default config updates work by checking the installed version of the module `@zwave-js/config`. Doing such updates inside docker containers requires volumes in order to keep them consistent. Therefore, when running on docker zwave-js will copy the embedded config DB into the `store/.config-db` folder. This folder is not visible/editable from the store ui and should not be touched. The folder path can be customized using the `ZWAVEJS_EXTERNAL_CONFIG` env var, check related [docs](/guide/env-vars) for more info.
