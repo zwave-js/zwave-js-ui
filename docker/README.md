@@ -203,6 +203,7 @@ docker volume rm zwavejs2mqtt
 # Custom builds
 
 There are two methods to build a custom docker container, using either the project's Dockerfile or Dockerfile.contrib. While the Dockerfile method offers a faster build process, the alternative Dockerfile.contrib method allows you to specify the specific branches for node-zwave-js and zwavejs2mqtt, and even the ability to specify alternative repositories (such as your own).
+
 ## Building a container using Dockerfile
 
 The docker images are the latest stable images of the [zwavejs2mqtt](https://github.com/zwave-js/zwavejs2mqtt) repo. If you want to keep your image updated with the latest changes you can build it on your local machine. For example:
@@ -220,6 +221,7 @@ Build just the `build` container
 docker build -f docker/Dockerfile --target=build -t zwavejs/zwavejs2mqtt_build .
 
 ```
+
 ## Building a container using Dockerfile.contrib
 
 You can also build a custom docker image using any mix of branches or repositories (such as your own), simply run the following series of commands, indicating the name of the branches you wish to build for node-zwave-js (ZWJ_BRANCH) and zwavejs2mqtt (Z2M_BRANCH) and the resulting docker image name (e.g. zwavejs2mqtt):
