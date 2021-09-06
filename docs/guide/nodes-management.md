@@ -1,23 +1,38 @@
 # Nodes Management
 
+Nodes can be managed from Control Pannel page by clicking on `MANAGE NODES` button under `Actions` section. This will open the **Nodes Manager** dialog
+
+![Nodes Manager](../_images/nodes_manager.png)
+
+> [!NOTE]
+> In order to include secure devices ensure you have setted up all **SECURITY KEYS** in Zwave settings.
+
 ## Add a node
 
-To add a node using the UI, go to Control Panel and from the actions dropdown menu select `Start inclusion`, click send (:airplane:) button to enable the inclusion mode in your controller, a popup will ask you if you want to start it in `Secure mode`. In the `Controller status` text field you should see `Non-secure/Secure inclusion started` when inclusion has been successfully enabled on the controller. Wait few seconds and once the interview finish your node will be visible in the table.
+1. Select `Inclusion` and press `NEXT`
+2. Select the inclusion Mode (we suggest to use `Default` or `Smart start`) and press `NEXT`
+3. Put your device in `Inclusion mode` (check your device manual)
+4. If the selected mode is `Default` next steps depends on the device you are including, if it supports S0/S2 security you will be asked to select the security classes to grant and, if the device requires it, the DSK pin code. If all the process completes without errors you will see a message saying the node has been added and the security class used.
 
 ## Remove a node
 
-To remove a node using the UI, go to Control Panel and from the actions dropdown menu select `Start exclusion`, click send (:airplane:) button to enable the exclusion mode in your controller and enable the exclusion mode in your device to. `Controller status` should show `Exclusion started` when exclusion has been successfully enabled on the controller. Wait few seconds and your node will be removed from the table.
-
-## Remove a failed node
-
-If a node is missing or marked as dead, you can forcibly remove the node from the controller by executing `Remove Failed Node`. This can only succeed if the node:
-
-- is marked as **Dead** or **Asleep**
-- does not respond to a ping
+1. Select `Exclusion` and press `NEXT`
+2. Put your device in `Exclusion mode` (check your device manual)
+3. If the process completes without errors you will see a message saying the node has been removed successfully
 
 ## Replace failed node
 
-If you want to reuse the Node ID of a failed node for a new one, you can use the command `Replace Failed Node`. After removing the failed node, the controller will start inclusion mode and status will be `Waiting`, a popup will ask you if you want to start it in `Secure mode`. Now enable inclusion on your device to add it to the network by replacing the failed one. Like `Remove Failed Node`, this can only succeed if the node to replace:
+Like `Remove Failed Node`, this can only succeed if the node to replace:
 
 - is marked as **Dead** or **Asleep**
 - does not respond to a ping
+
+1. Select `Replace Failed Node` and press `NEXT`
+2. Select the node you want to replace in the dropdown menu, if the node is not listed you can manually write the node id there. Once done press `NEXT`
+3. Select the inclusion mode. If your device supports it prefer S2 security, if not use no encryption. Use S0 security only if really needed (for example for old lock devices)
+4. Put your device in `Inclusion mode` (check your device manual)
+5. If the selected mode is `S2` in the next steps you will be asked to select the security classes to grant and the DSK pin code. If all the process completes without errors you will see a message saying the node has been added and the security class used.
+
+## Example
+
+![Nodes Manager Example](../_images/nodes_manager_example.mp4 ':include :type=video controls width=100% height=400px')

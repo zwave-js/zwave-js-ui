@@ -66,11 +66,14 @@ This are the available apis:
 - `refreshValues(nodeId)`: Refresh all node values
 - `pingNode(nodeId)`: Ping a node
 - `pollValue(valueId)`: Polls a value from the node
-- `startInclusion()`: Starts the inclusion
+- `startInclusion(inclusionStrategy, options)`: Starts the inclusion
 - `startExclusion()`: Starts the exclusion
 - `stopInclusion()`: Stops the inclusion
 - `stopExclusion()`: Stops the exclusion
-- `replaceFailedNode(nodeId)`: Replace a failed node
+- `grantSecurityClasses(requested)`: Used to resolve the S2 userCallback promise
+- `validateDSK(dsk)`: Used to resolve the S2 userCallback promise
+- `abortInclusion()`: aborts any active S2 inclusion process
+- `replaceFailedNode(nodeId, inclusionStrategy)`: Replace a failed node
 - `hardReset()`: Hard reset the controller
 - `healNode(nodeId)`: Heal a specific node
 - `beginHealingNetwork()`: Starts healing the network
