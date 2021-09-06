@@ -2,37 +2,40 @@
 
 If you are using docker and you need to test a new feature that isn't on master of both zwavejs2mqtt and zwave-js repos you will need to create a custom docker build. To do this you can use the file `docker/Dockerfile.contrib`.
 
-This is typically used to build zwavejs2mqtt from git with a version of zwave-js also from git, for instance the latest master or a branch.
+This is typically used to build zwavejs2mqtt while mixing branches from zwave-js and zwavejs2mqtt.
 
-## Prerequisites
+## Building a custom docker image
 
-In order to build it you first need the source code from github.
+To build a custom docker image, simply run the following series of commands, indicating the name of the branches you wish to build for node-zwave-js and zwavejs2mqtt and the resulting docker image name:
+
+```bash
+zwavejs_branch=**master** \
+zwavejs2mqtt_branch=**master** \
+image_name=**zwavejs2mqtt** \
+curl -s https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/Dockerfile.contrib | \
+DOCKER_BUILDKIT=1 docker build - --build-arg SRC=git-clone-src --build-arg Z2M_BRANCH=$zwavejs2mqtt_branch --build-arg ZWJ_BRANCH=$zwavejs_branch --no-cache -t $image_name
+```
+
+Alternatively, you can clone the branches locally, make any changes you like, and build a docker image from the local sources:
 
 ```bash
 mkdir -p testing && cd testing
 git clone https://github.com/zwave-js/node-zwave-js
 git clone https://github.com/zwave-js/zwavejs2mqtt
 ## Checkout repos to any branch/commit you need to test
-cd zwavejs2mqtt
-git checkout <branch, sha or tag>
 cd ../node-zwave-js
+git checkout <branch, sha or tag>
+cd zwavejs2mqtt
 git checkout <branch, sha or tag>
 cd ..
 ```
 
-## Build
-
-Run the build from outside the two repo folders:
-
-```bash
-DOCKER_BUILDKIT=1 docker build --build-arg SRC=git-clone-src --build-arg Z2M_BRANCH=master --build-arg ZWJ_BRANCH=master --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
-```
-
-or
+Then when you're ready to build run the following from the directory *above* the zwavejs2mqtt folder (the "testing" folder from above):
 
 ```bash
 DOCKER_BUILDKIT=1 docker build --build-arg SRC=local-copy-src --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .
 ```
 
 > [!NOTE]
+> You may optionally specify alternative repositories (such as your own) by appending `--build-arg ZWJ_REPOSITORY=https://github.com/FakeUser/node-zwave-js` or `--build-arg Z2M_REPOSITORY=https://github.com/FakeUser/zwavejs2mqtt`
 > Only BuildKit enabled builders have the capability to efficiently skip the unused source stage so it never runs.
