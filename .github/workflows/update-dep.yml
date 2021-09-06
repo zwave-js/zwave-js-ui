@@ -1,0 +1,71 @@
+# Update a dependency On-Demand
+
+name: Update dependency On-Demand
+
+on:
+  workflow_dispatch:
+    inputs:
+      dep:
+        description: 'Dependency'
+        required: true
+        default: 'zwave-js'
+      version:
+        description: 'Version'
+        required: true
+        default: 'latest'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Use Node.js 14
+        uses: actions/setup-node@v2.1.5
+        with:
+          node-version: 14.x
+          cache: 'yarn'
+
+      - name: Update dependency
+        run: |
+          yarn add ${{github.event.inputs.dep}}@${{github.event.inputs.version}}
+      - name: Check for changes
+        id: check
+        run: |
+          git diff --name-only || true
+          if ! git diff --quiet ; then
+            echo "Has changes"
+            echo "::set-output name=changed::true"
+            VERSION=$(yarn info --silent ${{github.event.inputs.dep}} version)
+            echo "::set-output name=version::$VERSION"
+          else
+            echo "No changes detected. Dependency already up to date"
+            echo "::set-output name=changed::false"
+          fi
+      - name: Create Pull Request
+        if: ${{ steps.check.outputs.changed == 'true' }}
+        id: cpr
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.BOT_TOKEN }}
+          commit-message: "feat: bump ${{github.event.inputs.dep}}@${{ steps.check.outputs.version }}"
+          committer: Z-Wave JS Bot <bot@zwave-js.io>
+          author: Z-Wave JS Bot <bot@zwave-js.io>
+          signoff: false
+          branch: "${{github.event.inputs.dep}}@${{ steps.check.outputs.version }}"
+          delete-branch: true
+          title: "feat: bump ${{github.event.inputs.dep}}@${{ steps.check.outputs.version }}"
+          body: |
+            Update ${{github.event.inputs.dep}} to version ${{ steps.check.outputs.version }}
+          labels: |
+            dependencies
+            workflow-bump
+          base: master
+          draft: false
+
+      - name: Check outputs
+        if: ${{ steps.check.outputs.changed == 'true' }}
+        run: |
+          echo "Pull Request Number - ${{ steps.cpr.outputs.pull-request-number }}"
+          echo "Pull Request URL - ${{ steps.cpr.outputs.pull-request-url }}"

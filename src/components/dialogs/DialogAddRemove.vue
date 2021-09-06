@@ -1,146 +1,587 @@
 <template>
-	<v-dialog v-model="value" max-width="430px" persistent>
-		<v-card>
+	<v-dialog
+		v-model="value"
+		@click:outside="$emit('close')"
+		@keydown.esc="$emit('close')"
+		max-width="800px"
+	>
+		<v-card :loading="loading">
 			<v-card-title>
-				<span class="headline">Add/Remove Device</span>
+				<span class="headline">Nodes Manager</span>
 			</v-card-title>
 
-			<v-card-text style="padding-bottom: 0">
-				<v-container fluid style="margin-top: -2rem">
-					<v-radio-group v-model="selectedMode" mandatory>
-						<v-radio :value="0">
-							<template v-slot:label>
-								<div class="option">
-									<v-icon color="green accent-4" small
-										>add_circle</v-icon
-									>
-									<strong>Inclusion</strong>
-									<small
-										>Add using non-secure mode (best for
-										most devices)</small
-									>
-								</div>
-							</template>
-						</v-radio>
-						<v-radio :value="1">
-							<template v-slot:label>
-								<div class="option">
-									<v-icon color="amber accent-4" small
-										>enhanced_encryption</v-icon
-									>
-									<strong>Secure Inclusion</strong>
-									<small
-										>Add with security (best for
-										locks/doors)</small
-									>
-								</div>
-							</template>
-						</v-radio>
-						<v-radio :value="2">
-							<template v-slot:label>
-								<div class="option">
-									<v-icon color="red accent-4" small
-										>remove_circle</v-icon
-									>
-									<strong>Exclusion</strong>
-									<small
-										>Remove device attached to existing
-										network</small
-									>
-								</div>
-							</template>
-						</v-radio>
-					</v-radio-group>
-				</v-container>
+			<v-card-text>
+				<v-stepper v-model="currentStep" @change="changeStep">
+					<v-stepper-header>
+						<template v-for="s in steps">
+							<v-stepper-step
+								:key="`${s.key}-step`"
+								:complete="currentStep > s.index"
+								:step="s.index"
+								:editable="
+									!['s2Classes', 's2Pin'].includes(s.key)
+								"
+							>
+								{{ s.title }}
+							</v-stepper-step>
 
-				<v-alert v-if="alert" dense text :type="alert.type">{{
-					alert.text
-				}}</v-alert>
+							<v-divider
+								v-if="s.index !== steps.length"
+								:key="s.index"
+							></v-divider>
+						</template>
+					</v-stepper-header>
+
+					<v-stepper-items>
+						<v-stepper-content
+							v-for="s in steps"
+							:key="`${s.key}-content`"
+							:step="s.index"
+						>
+							<v-card elevation="0">
+								<v-card-text v-if="s.key == 'action'">
+									<v-radio-group
+										v-model="s.values.action"
+										mandatory
+									>
+										<v-radio :value="0">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="green accent-4"
+														small
+														>add_circle</v-icon
+													>
+													<strong>Inclusion</strong>
+													<small
+														>Add a new device to the
+														network</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="1">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="amber accent-4"
+														small
+														>autorenew</v-icon
+													>
+													<strong>Replace</strong>
+													<small
+														>Replace a failed
+														device</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="2">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="red accent-4"
+														small
+														>remove_circle</v-icon
+													>
+													<strong>Exclusion</strong>
+													<small
+														>Remove device from
+														network</small
+													>
+												</div>
+											</template>
+										</v-radio>
+									</v-radio-group>
+
+									<v-card-actions>
+										<v-btn
+											v-if="state !== 'start'"
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+
+										<v-btn
+											v-else
+											color="error"
+											@click="stopAction"
+										>
+											Stop
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+								<v-card-text v-if="s.key == 'replaceFailed'">
+									<v-combobox
+										label="Node"
+										v-model="s.values.replaceId"
+										:items="nodes"
+										return-object
+										chips
+										hint="Failed node to remove. Write the node Id and press enter if not present"
+										persistent-hint
+										item-text="_name"
+									></v-combobox>
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
+								<v-card-text v-if="s.key == 'inclusionMode'">
+									<v-radio-group
+										v-if="!loading"
+										v-model="s.values.inclusionMode"
+										mandatory
+									>
+										<v-radio :value="0">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="green accent-4"
+														small
+														>add_circle</v-icon
+													>
+													<strong>Default</strong>
+													<small
+														>S2 when supported, S0
+														only when necessary, no
+														encryption otherwise.
+														Requires user
+														interaction</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-checkbox
+											class="mt-0 ml-5"
+											v-model="s.values.forceSecurity"
+											label="Force Security"
+											hint="Prefer S0 over no encryption"
+											persistent-hint
+										></v-checkbox>
+										<v-radio disabled :value="1">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="primary"
+														small
+														>smart_button</v-icon
+													>
+													<strong
+														>Smart start (COMING
+														SOON)</strong
+													>
+													<small
+														>S2 only. Allows
+														pre-configuring the
+														device inclusion
+														settings, which will
+														then happen without user
+														interaction</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="3">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="amber accent-4"
+														small
+														>lock</v-icon
+													>
+													<strong
+														>S0 encryption</strong
+													>
+													<small
+														>Use S0
+														encryption</small
+													>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="2">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon color="error" small
+														>no_encryption</v-icon
+													>
+													<strong
+														>No encryption</strong
+													>
+													<small
+														>Do not use
+														encryption</small
+													>
+												</div>
+											</template>
+										</v-radio>
+									</v-radio-group>
+
+									<v-col
+										v-else
+										class="d-flex flex-column align-center"
+									>
+										<v-icon
+											size="60"
+											color="
+												primary"
+											>all_inclusive</v-icon
+										>
+										<p class="mt-3 headline text-center">
+											Inclusion is started. Please put
+											your device in INCLUSION MODE
+										</p>
+									</v-col>
+
+									<v-card-actions>
+										<v-btn
+											v-if="!loading"
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+										<v-btn
+											v-if="state === 'start'"
+											color="error"
+											@click="stopAction"
+										>
+											Stop
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
+								<v-card-text
+									v-if="s.key == 'replaceInclusionMode'"
+								>
+									<v-radio-group
+										v-if="!loading"
+										v-model="s.values.inclusionMode"
+										mandatory
+									>
+										<v-radio :value="4">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="green accent-4"
+														small
+														>enhanced_encryption</v-icon
+													>
+													<strong>S2</strong>
+													<small>S2 security</small>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="3">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="primary"
+														small
+														>lock</v-icon
+													>
+													<strong>S0</strong>
+													<small>S0 security</small>
+												</div>
+											</template>
+										</v-radio>
+										<v-radio :value="2">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="amber accent-4"
+														small
+														>no_encryption</v-icon
+													>
+													<strong
+														>No encryption</strong
+													>
+													<small
+														>Do not use
+														encryption</small
+													>
+												</div>
+											</template>
+										</v-radio>
+									</v-radio-group>
+
+									<v-col
+										v-else
+										class="d-flex flex-column align-center"
+									>
+										<v-icon
+											size="60"
+											color="
+												primary"
+											>all_inclusive</v-icon
+										>
+										<p class="mt-3 headline text-center">
+											Inclusion is started. Please put
+											your device in INCLUSION MODE
+										</p>
+									</v-col>
+
+									<v-card-actions>
+										<v-btn
+											v-if="!loading"
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+										<v-btn
+											v-if="state === 'start'"
+											color="error"
+											@click="stopAction"
+										>
+											Stop
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
+								<v-card-text v-if="s.key == 's2Classes'">
+									<v-checkbox
+										:disabled="
+											s.values.accessControl === undefined
+										"
+										v-model="s.values.accessControl"
+										label="S2 Access Control"
+										hint="Example: Door Locks, garage doors"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										:disabled="s.values.auth === undefined"
+										v-model="s.values.auth"
+										label="S2 Authenticated"
+										hint="Example: Lightning, Sensors, Security Systems"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										:disabled="
+											s.values.unAuth === undefined
+										"
+										v-model="s.values.unAuth"
+										label="S2 Unauthenticated"
+										hint="Like S2 Authenticated but without verificationt that the correct device is included"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										:disabled="
+											s.values.legacy === undefined
+										"
+										v-model="s.values.legacy"
+										label="S0 legacy"
+										hint="Example: Legacy door locks without S2 support"
+										persistent-hint
+									></v-checkbox>
+									<v-checkbox
+										:disabled="
+											s.values.clientAuth === undefined
+										"
+										v-model="s.values.clientAuth"
+										label="Client-side authentication"
+										hint="Authentication of the inclusion happens on the device instead of on the controller (for devices without DSK)"
+										persistent-hint
+									></v-checkbox>
+
+									<v-card-actions v-if="!loading">
+										<v-btn
+											v-if="!aborted"
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+
+										<v-btn
+											color="error"
+											@click="abortInclusion"
+										>
+											Abort
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+								<v-card-text v-if="s.key == 's2Pin'">
+									<v-text-field
+										label="DSK Pin"
+										class="mb-2"
+										persistent-hint
+										hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
+										v-model.trim="s.values.pin"
+										:suffix="
+											$vuetify.breakpoint.xsOnly
+												? ''
+												: s.suffix
+										"
+									>
+									</v-text-field>
+
+									<code
+										class="code font-weight-bold"
+										v-if="$vuetify.breakpoint.xsOnly"
+									>
+										{{ s.suffix }}
+									</code>
+
+									<v-card-actions v-if="!loading">
+										<v-btn
+											v-if="!aborted"
+											color="primary"
+											@click="nextStep"
+										>
+											Next
+										</v-btn>
+
+										<v-btn
+											color="error"
+											@click="abortInclusion"
+										>
+											Abort
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
+								<v-card-text v-if="s.key == 'done'">
+									<v-col
+										class="d-flex flex-column align-center"
+									>
+										<v-icon
+											size="60"
+											:color="
+												s.success
+													? 'success'
+													: 'warning'
+											"
+											>{{
+												s.success
+													? 'check_circle'
+													: 'warning'
+											}}</v-icon
+										>
+										<p class="mt-3 headline text-center">
+											{{ s.text }}
+										</p>
+									</v-col>
+								</v-card-text>
+							</v-card>
+						</v-stepper-content>
+					</v-stepper-items>
+				</v-stepper>
+
+				<v-alert
+					class="mt-3"
+					v-if="alert"
+					dense
+					text
+					:type="alert.type"
+					>{{ alert.text }}</v-alert
+				>
 			</v-card-text>
-
-			<v-card-actions>
-				<v-spacer></v-spacer>
-				<v-btn
-					v-if="state === 'stop' || state === 'new'"
-					color="red darken-1"
-					text
-					@click="$emit('close')"
-					>Close</v-btn
-				>
-				<v-btn
-					v-if="state !== 'wait'"
-					color="blue darken-1"
-					text
-					@click="onAction"
-					>{{ method }}</v-btn
-				>
-			</v-card-actions>
 		</v-card>
 	</v-dialog>
 </template>
 
 <script>
 import { mapGetters } from 'vuex'
+import { socketEvents } from '@/plugins/socket'
 
 export default {
 	props: {
 		value: Boolean, // show or hide
-		nodeAddedOrRemoved: Object,
+		socket: Object,
 	},
 	data() {
 		return {
-			selectedMode: 0,
-			mode: 0, // most common action should be default
-			modes: [
-				{
-					baseAction: 'Inclusion',
-					name: 'Inclusion',
-					secure: false,
+			currentStep: 1,
+			loading: false,
+			availableSteps: {
+				action: {
+					key: 'action',
+					title: 'Action',
+					values: {
+						action: 0, //inclusion
+					},
 				},
-				{
-					baseAction: 'Inclusion',
-					name: 'Secure inclusion',
-					secure: true,
+				inclusionMode: {
+					key: 'inclusionMode',
+					title: 'Inclusion Mode',
+					values: {
+						inclusionMode: 0, //default, smartstart no encryption
+						forceSecurity: false,
+					},
 				},
-				{
-					baseAction: 'Exclusion',
-					name: 'Exclusion',
-					secure: false,
+				replaceInclusionMode: {
+					key: 'replaceInclusionMode',
+					title: 'Inclusion Mode',
+					values: {
+						inclusionMode: 0, //default, smartstart no encryption
+					},
 				},
-			],
-			state: 'new', // new -> wait -> start -> wait -> stop
+				s2Classes: {
+					key: 's2Classes',
+					title: 'Security Classes',
+					values: {
+						accessControl: false,
+						auth: false,
+						unAuth: false,
+						legacy: false,
+						clientAuth: false,
+					},
+				},
+				s2Pin: {
+					key: 's2Pin',
+					title: 'DSK validation',
+					suffix: '', // Ex: '-12345-12345-12345-12345-12345-12345-12345',
+					values: {
+						pin: '',
+					},
+				},
+				replaceFailed: {
+					key: 'replaceFailed',
+					title: 'Node Id',
+					values: {
+						replaceId: null, //default
+					},
+				},
+				done: {
+					key: 'done',
+					success: false,
+					title: 'Done',
+					text: 'Test',
+				},
+			},
+			steps: [],
+			state: 'new',
 			commandEndDate: new Date(),
 			commandTimer: null,
 			waitTimeout: null,
 			alert: null,
 			nodeFound: null,
+			currentAction: null,
+			bindedSocketEvents: {},
+			stopped: false,
+			aborted: false,
 		}
 	},
 	computed: {
-		...mapGetters(['appInfo', 'zwave']),
-		method() {
-			return this.state === 'new' || this.state === 'stop'
-				? 'start'
-				: 'stop'
-		},
+		...mapGetters(['appInfo', 'zwave', 'nodes']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
 		controllerStatus() {
 			return this.appInfo.controllerStatus
 		},
-		modeName() {
-			return this.modes[this.mode].name
-		},
 	},
 	watch: {
-		nodeAddedOrRemoved(node) {
-			this.nodeFound = node
-
-			// the add/remove dialog is waiting for a feedback
-			if (this.waitTimeout) {
-				this.showResults()
-			}
+		value(v) {
+			this.init(v)
 		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {
@@ -152,7 +593,7 @@ export default {
 				if (this.state === 'start') {
 					this.alert = {
 						type: 'info',
-						text: `${this.modeName} started: ${s}s remaining`,
+						text: `${this.currentAction} started: ${s}s remaining`,
 					}
 				}
 				if (now > newVal) clearInterval(this.commandTimer)
@@ -172,12 +613,17 @@ export default {
 				} else if (status.indexOf('stopped') > 0) {
 					// inclusion/exclusion stopped, check what happened
 					this.commandEndDate = new Date()
-					this.alert = {
-						type: 'info',
-						text: `${this.modeName} stopped, checking nodes…`,
-					}
 					this.state = 'wait'
-					this.waitTimeout = setTimeout(this.showResults, 5000) // add additional discovery time
+					let timeout = this.currentAction === 'Exclusion' ? 1000 : 0
+					if (this.stopped) {
+						timeout = 1000
+						this.stopped = false
+					}
+
+					if (timeout > 0) {
+						// don't use a timeout for inclusion
+						this.waitTimeout = setTimeout(this.showResults, timeout) // add additional discovery time
+					}
 				} else {
 					// error
 					this.commandEndDate = new Date()
@@ -191,27 +637,226 @@ export default {
 		},
 	},
 	methods: {
-		onAction() {
-			this.mode = this.selectedMode
+		copy(o) {
+			return JSON.parse(JSON.stringify(o))
+		},
+		onNodeAdded({ node, result }) {
+			this.nodeFound = node
+			if (this.loading) {
+				this.showResults(result)
+			}
+		},
+		onNodeRemoved(node) {
+			this.nodeFound = node
+
+			// the add/remove dialog is waiting for a feedback
+			if (this.waitTimeout) {
+				this.showResults()
+			}
+		},
+		onApiResponse(data) {
+			if (!data.success) {
+				if (data.api === 'replaceFailedNode') {
+					this.init()
+				}
+			}
+		},
+		changeStep(index) {
+			if (index <= 1) {
+				this.init() // calling it without the bind parameter will not touch events
+			} else {
+				this.steps = this.steps.slice(0, index)
+			}
+		},
+		abortInclusion() {
+			this.aborted = true
+			this.loading = true
+			this.$emit('apiRequest', 'abortInclusion', [])
+		},
+		onGrantSecurityCC(requested) {
+			const grantStep = this.availableSteps.s2Classes
+			const classes = requested.securityClasses
+			const values = grantStep.values
+			values.accessControl = classes.includes(2) || undefined
+			values.auth = classes.includes(1) || undefined
+			values.unAuth = classes.includes(0) || undefined
+			values.legacy = classes.includes(7) || undefined
+
+			values.clientAuth = requested.clientSideAuth || undefined
+
+			this.loading = false
+			this.alert = false
+
+			this.pushStep(grantStep)
+		},
+		onValidateDSK(dsk) {
+			const dskStep = this.availableSteps.s2Pin
+			dskStep.suffix = dsk
+
+			this.loading = false
+			this.alert = false
+
+			this.pushStep(dskStep)
+		},
+		nextStep() {
+			const s = this.steps[this.currentStep - 1]
+			if (s.key === 'action') {
+				const mode = s.values.action
+
+				if (mode === 0) {
+					// inclusion
+					this.currentAction = 'Inclusion'
+					this.pushStep('inclusionMode')
+				} else if (mode === 1) {
+					// replace
+					this.currentAction = 'Inclusion'
+					this.pushStep('replaceFailed')
+				} else if (mode === 2) {
+					// exclusion
+					this.currentAction = 'Exclusion'
+					this.sendAction('startExclusion', [])
+				}
+			} else if (
+				s.key === 'inclusionMode' ||
+				s.key === 'replaceInclusionMode'
+			) {
+				const mode = s.values.inclusionMode
+				this.aborted = false
+				this.loading = true
+				const replaceStep = this.steps.find(
+					(s) => s.key === 'replaceFailed'
+				)
+				if (replaceStep) {
+					let replaceId = replaceStep.values.replaceId
+					if (typeof replaceId === 'object') {
+						replaceId = replaceId.id
+					} else {
+						replaceId = parseInt(replaceId, 10)
+					}
+					this.sendAction('replaceFailedNode', [replaceId, mode])
+				} else {
+					this.sendAction('startInclusion', [
+						mode,
+						{ forceSecurity: s.values.forceSecurity },
+					])
+				}
+			} else if (s.key === 's2Classes') {
+				const values = s.values
+
+				const securityClasses = []
+
+				if (values.accessControl) {
+					securityClasses.push(2)
+				}
+
+				if (values.auth) {
+					securityClasses.push(1)
+				}
+
+				if (values.unAuth) {
+					securityClasses.push(0)
+				}
+
+				if (values.legacy) {
+					securityClasses.push(7)
+				}
+
+				this.$emit('apiRequest', 'grantSecurityClasses', [
+					{
+						securityClasses,
+						clientSideAuth: !!values.clientAuth,
+					},
+				])
+
+				this.loading = true
+			} else if (s.key === 's2Pin') {
+				const mode = s.values.pin
+				this.$emit('apiRequest', 'validateDSK', [mode])
+				this.loading = true
+			} else if (s.key === 'replaceFailed') {
+				this.currentAction = 'Inclusion'
+				this.pushStep('replaceInclusionMode')
+			}
+		},
+		init(bind) {
+			this.steps = []
+			this.pushStep('action')
+
+			// stop any running inclusion/exclusion
+			if (this.state === 'start') {
+				this.stopAction()
+			} else {
+				this.stopped = false
+				this.currentAction = null
+			}
+
+			this.loading = false
+			this.alert = null
+			this.nodeFound = null
+			this.aborted = false
+
+			if (this.waitTimeout) {
+				clearTimeout(this.waitTimeout)
+				this.waitTimeout = null
+			}
+
+			if (this.commandTimer) {
+				clearInterval(this.commandTimer)
+				this.commandTimer = null
+			}
+
+			if (bind) {
+				this.bindEvent(
+					'grantSecurityClasses',
+					this.onGrantSecurityCC.bind(this)
+				)
+				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
+				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
+				this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
+				this.bindEvent('api', this.onApiResponse.bind(this))
+			} else if (bind === false) {
+				this.unbindEvents()
+			}
+		},
+		async pushStep(step) {
+			const s =
+				typeof step === 'string' ? this.availableSteps[step] : step
+			s.index = this.steps.length + 1
+			this.steps.push(this.copy(s))
+			await this.$nextTick()
+			this.currentStep = s.index
+		},
+		stopAction() {
+			this.stopped = true
+			this.sendAction('stop' + this.currentAction)
+		},
+		sendAction(api, args) {
 			this.commandEndDate = new Date()
 			this.alert = {
 				type: 'info',
-				text: `${this.modeName} ${
+				text: `${this.currentAction} ${
 					this.method === 'start' ? 'starting…' : 'stopping…'
 				}`,
 			}
-			const args = []
-			if (this.mode < 2 && this.method === 'start') {
-				args.push(this.modes[this.mode].secure)
-			}
-			this.$emit(
-				'apiRequest',
-				this.method + this.modes[this.mode].baseAction,
-				args
-			)
+
+			this.$emit('apiRequest', api, args)
 			this.state = 'wait' // make sure user can't trigger another action too soon
 		},
-		showResults() {
+		bindEvent(eventName, handler) {
+			this.socket.on(socketEvents[eventName], handler)
+			this.bindedSocketEvents[eventName] = handler
+		},
+		unbindEvents() {
+			for (const event in this.bindedSocketEvents) {
+				this.socket.off(
+					socketEvents[event],
+					this.bindedSocketEvents[event]
+				)
+			}
+
+			this.bindedSocketEvents = {}
+		},
+		showResults(result) {
 			if (this.waitTimeout) {
 				clearTimeout(this.waitTimeout)
 				this.waitTimeout = null
@@ -220,33 +865,33 @@ export default {
 			if (this.nodeFound === null) {
 				this.alert = {
 					type: 'warning',
-					text: `${this.modeName} stopped, no changes detected`,
+					text: `${this.currentAction} stopped, no changes detected`,
 				}
-			} else if (this.mode === 2) {
-				this.alert = {
-					type: 'success',
-					text: `Node ${this.nodeFound.id} removed`,
-				}
+			} else if (this.currentAction === 'Exclusion') {
+				this.alert = null
+				this.aborted = false
+				const doneStep = this.copy(this.availableSteps.done)
+				doneStep.text = `Node ${this.nodeFound.id} removed`
+				doneStep.success = true
+				this.pushStep(doneStep)
 			} else {
-				this.alert = {
-					type: 'success',
-					text: `Device found! Node ${this.nodeFound.id} added`, // we don't know yet if it's added securely or not, need to wait interview
-				}
+				this.alert = null
+				this.aborted = false
+				const doneStep = this.copy(this.availableSteps.done)
+				doneStep.text = `Node ${
+					this.nodeFound.id
+				} added with security "${this.nodeFound.security || 'None'}"`
+				doneStep.success = !(result && result.lowSecurity)
+				this.pushStep(doneStep)
 			}
+
+			this.loading = false
 
 			this.state = 'stop'
 		},
 	},
 	beforeDestroy() {
-		if (this.commandTimer) {
-			clearInterval(this.commandTimer)
-		}
-
-		if (this.waitTimeout) {
-			clearTimeout(this.waitTimeout)
-		}
-
-		this.alert = null
+		this.init(false)
 	},
 }
 </script>
