@@ -4,18 +4,20 @@
 
   - [Introduction](README.md)
   - [Quick Start](getting-started/quick-start.md)
-  - [Why ZwaveJS](getting-started/why.md)
 
 - Usage
 
   - [Setup](usage/setup.md)
+  - [Using Custom Device Files](usage/custom-device-files.md)
+  - [Device Polling for Legacy Devices](usage/polling.md)
   - [Behind a Proxy](usage/reverse-proxy.md)
 
 - Guide
 
+  - [Managing Nodes](guide/nodes-management.md)
   - [Mqtt](guide/mqtt.md)
-  - [Nodes Management](guide/nodes-management.md)
-  - [Homeassistant](guide/homeassistant.md)
+  - [Homeassistant: Official Integration](guide/homeassistant-official.md)
+  - [Homeassistant: MQTT Discovery](guide/homeassistant-mqtt.md)
   - [Healthcheck](guide/healthcheck.md)
   - [Z2M Migration](guide/migrating.md)
   - [Env Vars](guide/env-vars.md)

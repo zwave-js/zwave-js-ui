@@ -4,7 +4,7 @@ Actually there are different ways of running Zwavejs2mqtt. Choose the one that b
 
 ## Docker
 
-The easier one is by using docker:
+The easiest way to run zwavejs2mqtt is by using docker:
 
 ```bash
 # Using volumes as persistence

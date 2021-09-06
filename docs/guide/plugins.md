@@ -17,17 +17,9 @@ In order to add a plugin you have to specify the absolute/relative path to it or
 yarn i my-awesome-plugin
 ```
 
-## Plugins with docker
-
-Building the container is straight forward. Here an example of build command installing plugin `my-awesome-plugin`
-
-```bash
-docker build -f docker/Dockerfile --build-arg plugins='my-awesome-plugin' -t <docker image name>:<tag> .
-```
-
 ## Developing custom Plugins
 
-In order to implement a plugin you need to create a class with a constructor that accepts a single parameter that is the context we spoke in [usage](#usage) section and a `destroy` function that will be called when application is closed or settings updated.
+In order to implement a plugin, you need to create a class with a constructor that accepts a single parameter that is the context we spoke in [usage](#usage) section and a `destroy` function that will be called when application is closed or settings updated.
 
 Here is a minimal example of a custom plugin:
 
