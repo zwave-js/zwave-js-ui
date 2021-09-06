@@ -34,7 +34,7 @@ Then when you're ready to build run the following from the directory *above* the
 DOCKER_BUILDKIT=1 docker build --build-arg SRC=local-copy-src --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs/custom_zwavejs2mqtt .
 ```
 
-[!NOTE] You may optionally specify alternative repositories (such as your own) by appending
+> [!NOTE] You may optionally specify alternative repositories (such as your own) by appending
 
 `--build-arg ZWJ_REPOSITORY=https://github.com/FakeUser/node-zwave-js` or
 
