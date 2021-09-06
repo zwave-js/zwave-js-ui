@@ -2929,7 +2929,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		waitTime: number
 	) {
 		this._updateControllerStatus(
-			`Node ${zwaveNode.id} firmware update FINISHED: Status ${status}, Time: ${waitTime}`
+			`Node ${zwaveNode.id} firmware update FINISHED: Status ${
+				FirmwareUpdateStatus[status]
+			}, Time: ${waitTime || 0}`
 		)
 
 		this.emit(
