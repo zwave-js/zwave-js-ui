@@ -1,12 +1,12 @@
 # Plugins
 
-Plugins are nodejs packages that can be integrated in zwavejsmqtt in order to add new awesome features. They have access to all the clients (zwave and mqtt) and express instance.
+Plugins are NodeJS packages that can be integrated into ZWavejs2Mqtt in order to add new awesome features. They have access to all the clients (zwave and mqtt) and express instance.
 
 ## Usage
 
-A plugin is imported in zwavejs1mqtt using `require(pluginName)(context)` where context provides access to these elements:
+A plugin is imported in ZWavejs2Mqtt using `require(pluginName)(context)` where the context provides access to these elements:
 
-- `zwave`: Zwave client
+- `zwave`: Z-Wave client
 - `mqtt`: Mqtt client
 - `app`: Express instance
 - `logger`: A logger instance to log things in console/file based on logger general settings

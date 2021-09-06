@@ -1,13 +1,13 @@
 
-# zwavejs2mqtt-docker
+# Using Docker
 
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwavejs2mqtt)](https://hub.docker.com/r/zwavejs/zwavejs2mqtt)
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE 'Buy Me A Coffee')
 
-Docker container for zwavejs2mqtt Gateway and Control Panel
+Docker containers for the Zwavejs2Mqtt Gateway and Control Panel
 
-## Architectures
+## Supported Archs
 
 Supported architectures are:
 
@@ -16,24 +16,26 @@ Supported architectures are:
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
 
-## Tags
+> [!NOTE] If you get the error `standard_init_linux.go:207: exec user process caused "exec format error"`, you most likely installed the wrong package intended for a [different architecture](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docs/troubleshooting/improper-arch.md).
 
-Supported tags are:
+## Available Tags
+
+Available tags are:
 
 - `latest` for the latest official release.
 - `master` newest version, image gets built after every new commit to the master branch in the [zwavejs2mqtt](https://github.com/zwave-js/zwavejs2mqtt/commits/master) repository. (not recommended for the average user)
 - `sha-<commit-sha>` (example: `sha-92d502a`)
 - `<version>` (example: `2.1.0`)
 
-Note: `dev` tag have been deprecated.
+Note: The `dev` tag has been deprecated.
 
-## Install
+## Installation
 
 There are three different way to start the container and provide data persistence. For all of the methods **remember to**:
 
 1. Replace `/dev/ttyACM0` with your serial device
-2. Add `-e TZ=Europe/Stockholm` (or your timezone) to the `docker run` command to set the correct timezone in container
-3. If you are using zwave-js WS server and you chance the default WS port, replace `3000:3000` with the port chosen in settings
+2. Add `-e TZ=Europe/Stockholm` `-e TZ=America/New_York` (or your timezone) to the `docker run` command to set the correct timezone in the container. Time zone codes can be found at: https://en.wikipedia.org/wiki/List_of_tz_database_time_zones.
+3. If you are using the Z-Wave JS web socket server (for the official Home Assistant integration) and you change the default port, replace `3000:3000` with the port chosen in settings
 
 ### Run using volumes
 
@@ -41,9 +43,9 @@ There are three different way to start the container and provide data persistenc
 docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 --mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
 ```
 
-### Run using local folder
+### Run using a local folder
 
-Here we will store our data in the current path (`$(pwd)`) named `store`. You can choose the path and the directory name you prefer, a valid alternative (with linux) could be `/var/lib/zwavejs2mqtt`
+In this example we will store our data in the current path (`$(pwd)`) named `store`. You can choose the path and the directory name you prefer on the docker host.
 
 ```bash
 mkdir store
@@ -52,7 +54,7 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/ttyACM0 -v $(pwd)/st
 
 ### Run as a service
 
-To run the app as a service you can use the `docker-compose.yml` file you find [here](./docker-compose.yml). Here is the content:
+To run ZWavejs2Mqtt as a service you can use the `docker-compose.yml` found [here](./docker-compose.yml):
 
 ```yml
 version: "3.7"
@@ -65,7 +67,9 @@ services:
     stop_signal: SIGINT
     environment:
       - SESSION_SECRET=mysupersecretkey
-    # - TZ=America/Los_Angeles  # uncomment and edit to match you timezone if you want logs time and dates to match your timezone instead of UTC.
+      # Uncomment if you want logs time and dates to match your timezone instead of UTC
+      # Available at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+      #- TZ=America/New_York
     networks:
       - zwave
     devices:
@@ -74,7 +78,7 @@ services:
       - ./store:/usr/src/app/store
     ports:
       - "8091:8091" # port for web interface
-      - "3000:3000" # port for zwave-js websocket server
+      - "3000:3000" # port for Z-Wave JS websocket server
 networks:
   zwave:
 volumes:
@@ -182,31 +186,13 @@ spec:
 
 Like the other solutions, remember to replace device `/dev/ttyACM0` with the path of your USB stick and choose the solution you prefer for data persistence.
 
-### ATTENTION
+# Custom Docker Builds
 
-If you get the error `standard_init_linux.go:207: exec user process caused "exec format error"` probably it's because you previously installed a wrong architecture version of the package so in that case you must delete the existing volume that contains the old executable:
-
-`docker volume rm zwavejs2mqtt`
-
-Check files inside volume
-
-```bash
-docker run --rm -it --mount source=zwavejs2mqtt,target=/usr/src/app zwavejs/zwavejs2mqtt:latest find /usr/src/app
-```
-
-Delete Volume
-
-```bash
-docker volume rm zwavejs2mqtt
-```
-
-# Custom builds
-
-There are two methods to build a custom docker container, using either the project's Dockerfile or Dockerfile.contrib. While the Dockerfile method offers a faster build process, the alternative Dockerfile.contrib method allows you to specify the specific branches for node-zwave-js and zwavejs2mqtt, and even the ability to specify alternative repositories (such as your own).
+There are two methods to build a custom docker container, using either the project's Dockerfile or Dockerfile.contrib. While the Dockerfile method offers a faster build process, the alternative Dockerfile.contrib method allows you to specify the specific branches for node-zwave-js and Zwavejs2Mqtt, and even the ability to specify alternative repositories (such as your own).
 
 ## Building a container using Dockerfile
 
-The docker images are the latest stable images of the [zwavejs2mqtt](https://github.com/zwave-js/zwavejs2mqtt) repo. If you want to keep your image updated with the latest changes you can build it on your local machine. For example:
+The docker images are the latest stable images of the [ZWavejs2Mqtt](https://github.com/zwave-js/zwavejs2mqtt) repo. If you want to keep your image updated with the latest changes you can build it on your local machine. For example:
 
 ```bash
 git clone https://github.com/zwave-js/zwavejs2mqtt.git
@@ -224,7 +210,7 @@ docker build -f docker/Dockerfile --target=build -t zwavejs/zwavejs2mqtt_build .
 
 ## Building a container using Dockerfile.contrib
 
-You can also build a custom docker image using any mix of branches or repositories (such as your own), simply run the following series of commands, indicating the name of the branches you wish to build for node-zwave-js (ZWJ_BRANCH) and zwavejs2mqtt (Z2M_BRANCH) and the resulting docker image name (e.g. zwavejs2mqtt):
+You can also build a custom docker image using any mix of branches or repositories (such as your own), simply run the following series of commands, indicating the name of the branches you wish to build for node-zwave-js (ZWJ_BRANCH) and Zwavejs2Mqtt (Z2M_BRANCH) and the resulting docker image name (e.g. zwavejs2mqtt):
 
 ```bash
 curl -s https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/docker/Dockerfile.contrib | \
@@ -246,7 +232,7 @@ git checkout <branch, sha or tag>
 cd ..
 ```
 
-Then when you're ready to build run the following from the directory *above* the zwavejs2mqtt folder (the "testing" folder from above):
+Then when you're ready to build run the following from the directory **above** the Zwavejs2Mqtt folder (the "testing" folder from above):
 
 ```bash
 DOCKER_BUILDKIT=1 docker build --build-arg SRC=local-copy-src --no-cache -f zwavejs2mqtt/docker/Dockerfile.contrib -t zwavejs2mqtt .

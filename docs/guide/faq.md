@@ -6,4 +6,4 @@
 
 > A: My device is X and has been discovered as Y, why?
 
-**B: Hass Discovery is not easy, zwave have many different devices with different values. Unfortunately not all devices respect specifications so for those cases I have created Hass Devices table where you can manually fix the discovery payload and then save it to make it persistent. I have also created a file `/hass/devices.js` where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**
+**B: Home Assistant Discovery is not easy, zwave have many different devices with different values. Unfortunately not all devices respect specifications so for those cases I have created Home Assistant Devices table where you can manually fix the discovery payload and then save it to make it persistent. I have also created a file `/hass/devices.js` where I place all devices specific values configuration, your contribution is needed there, so submit a PR with your files specification to help it grow.**

@@ -1,6 +1,6 @@
 # Development
 
-Developers who wants to debug the application have to open 2 terminals.
+Developers who wants to debug the application have to open two terminals.
 
 In first terminal run `yarn run dev` to start webpack-dev for front-end developing and hot reloading at <http://localhost:8092>
 (**THE PORT FOR DEVELOPING IS 8092**)

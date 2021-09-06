@@ -2,7 +2,7 @@
 
 ## Settings
 
-![zwavejs](/_images/settings_dark.png)
+![Z-Wave JS](/_images/settings_dark.png)
 
 ## Control Panel
 

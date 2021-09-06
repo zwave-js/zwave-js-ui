@@ -1,23 +1,30 @@
 <!-- markdownlint-disable MD041 -->
 
 - Getting started
-
   - [Introduction](README.md)
   - [Quick Start](getting-started/quick-start.md)
+  - [Additional Docker Options](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docker/README.md)
 
 - Usage
 
   - [Setup](usage/setup.md)
+  - [Managing Nodes](usage/nodes-management.md)
   - [Using Custom Device Files](usage/custom-device-files.md)
   - [Device Polling for Legacy Devices](usage/polling.md)
-  - [Behind a Proxy](usage/reverse-proxy.md)
+  - [Accessing Behind a Proxy](usage/reverse-proxy.md)
 
-- Guide
+- Home Assistant
 
-  - [Managing Nodes](guide/nodes-management.md)
-  - [Mqtt](guide/mqtt.md)
-  - [Homeassistant: Official Integration](guide/homeassistant-official.md)
-  - [Homeassistant: MQTT Discovery](guide/homeassistant-mqtt.md)
+  - [Using the Official Integration](homeassistant/homeassistant-official.md)
+  - [Using MQTT Discovery](homeassistant/homeassistant-mqtt.md)
+  - [Accessing from Home Assistant](homeassistant/accessing-lovelace.md)
+
+- MQTT
+
+  - [Using MQTT](guide/mqtt.md)
+
+- Miscellaneous
+
   - [Healthcheck](guide/healthcheck.md)
   - [Z2M Migration](guide/migrating.md)
   - [Env Vars](guide/env-vars.md)
@@ -31,7 +38,6 @@
 - Troubleshooting
 
   - [Bug Report](troubleshooting/bug_report.md)
-  - [Docker custom builds](troubleshooting/docker_custom_builds.md)
 
 - [Usage Statistics](usage_stats.md)
 - [Screenshots](screenshots.md)

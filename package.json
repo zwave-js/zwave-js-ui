@@ -4,7 +4,7 @@
   "bin": {
     "zwavejs2mqtt": "server/bin/www.js"
   },
-  "description": "Zwave To MQTT Gateway",
+  "description": "Zwavejs2Mqtt Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
   "private": false,
   "license": "MIT",

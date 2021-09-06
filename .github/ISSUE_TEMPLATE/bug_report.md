@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: Bug Report
 about: Create a report to help to improve the project
 title: "[bug]"
 labels: bug
@@ -24,20 +24,20 @@ assignees: robertsLando
 
   4. Make sure to provide the necessary information, as described here:
   https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
-  
+
   If you are using HomeAssistant, this is how you do it:
   Home Assistant -> settings -> Integrations -> Z-Wave JS -> Configure -> Create dump -> zip the json file and post it here.
 
-  🙏🏻🙏🏻🙏🏻 Thanks, now onto your issue:
+  🙏🏻🙏🏻🙏🏻 Thanks, now on to your issue:
 -->
 
 ### Version
 
 **Checklist:**
 
-- [ ] I am **not** using HomeAssistant. **Or:** a developer has told me to come here.
+- [ ] I am **not** using Home Assistant. **Or:** a developer has told me to come here.
 - [ ] I have checked the troubleshooting section and my problem is **not** described there.
-- [ ] I have read the changelog problem was **not** mentioned there.
+- [ ] I have read the changelog and my problem is **not** mentioned there.
 
 Build/Run method
 
@@ -46,8 +46,8 @@ Build/Run method
 - [ ] Snap package
 - [ ] Manually built (git clone - yarn install - yarn run build )
 
-zwavejs2mqtt version: <version here, you can find it on control panel>
-zwave-js version: <version here, you can find it on control panel>
+Zwavejs2Mqtt version: <version here, you can find it on control panel>
+Z-Wave JS version: <version here, you can find it on control panel>
 
 ### Describe the bug
 

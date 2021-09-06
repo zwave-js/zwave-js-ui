@@ -1,11 +1,11 @@
-# ZWave To MQTT Behind a Reverse Proxy
+# ZWavejs2Mqtt Behind a Reverse Proxy
 
-There are two ways to enable ZWave To MQTT to sit behind a proxy that uses
+There are two ways to enable access to ZWavejs2Mqtt from behind a proxy that uses
 subpaths to serve the pages and services.
 
 You can use a header to signal where the external path is or you can configure
-the base path. In both cases these are dynamic configurations, so you can deploy
-without having to build again the frontend.
+the base path. In both cases these are dynamic configurations, so you can deploy them
+without having to rebuild the frontend.
 
 ## Using an HTTP header
 
@@ -55,7 +55,7 @@ would look like:
 
 ```javascript
 module.exports = {
-  title: 'ZWave to MQTT',
+  title: 'ZWavejs2Mqtt',
   storeDir: process.env.STORE_DIR || joinPath(true, 'store'),
   base: '/zwave/',
   port: 8091
