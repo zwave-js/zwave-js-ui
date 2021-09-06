@@ -185,7 +185,7 @@ You can send two kind of broadcast requests:
 
 Topic: `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic_suffix>/set`
 
-- `value_topic_suffix`: the suffix of the topic of the value I want to control using broadcast.
+- `value_topic_suffix`: the suffix of the topic of the value you want to control using broadcast.
 
 It works like the set value API without the node name and location properties.
 If the API is correctly called the same payload of the request will be published
