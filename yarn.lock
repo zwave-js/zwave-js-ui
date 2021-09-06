@@ -2173,12 +2173,12 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zwave-js/config@8.2.2":
-  version "8.2.2"
-  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.2.2.tgz#848bbad99d16f22dbd5e218cc7bbf12e4f3d4b72"
-  integrity sha512-JrVhCUded1TJ52G2p+oKd8nxfmk9ZthMcMWjsAg6HNKZUF7KYKxKcJuD3v8eVZYEwWu39R0itFkpKs9757lppQ==
+"@zwave-js/config@8.2.3":
+  version "8.2.3"
+  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.2.3.tgz#0117680ef4e2fa628bedd7cc1e278de9c548c452"
+  integrity sha512-Bbf581ypjLTCM3hGpEUbSUYA/KF3Pj5JyZ963gtLGG6VuDjdYPR1er/4TmEvIdr0V/NfhJHSW7JbIrraG1xxKw==
   dependencies:
-    "@zwave-js/core" "8.2.2"
+    "@zwave-js/core" "8.2.3"
     "@zwave-js/shared" "8.2.2"
     alcalzone-shared "^4.0.0"
     ansi-colors "^4.1.1"
@@ -2188,10 +2188,10 @@
     semver "^7.3.5"
     winston "^3.3.3"
 
-"@zwave-js/core@8.2.2":
-  version "8.2.2"
-  resolved "https://registry.yarnpkg.com/@zwave-js/core/-/core-8.2.2.tgz#6b3837c8f72a557264d2263b581a83d8a5862958"
-  integrity sha512-FDNqid+aczJNajC+m4QPBqnV5KuPb1ILGkA3CPFI9Z/1Vo8t8Hax3Iqse91fAyrjtDhvsapN2chSXT7i7YfXDA==
+"@zwave-js/core@8.2.3":
+  version "8.2.3"
+  resolved "https://registry.yarnpkg.com/@zwave-js/core/-/core-8.2.3.tgz#35f2dfb9709145f7570d7a25fc2da38ea272049e"
+  integrity sha512-hLdt6xOVkPsrwWEVG/7BrKQty08bx3Z8HP6VZI/W6OfALfYR/CTAv27SeeAF6S1ephkDfjiptcntnTgqlst7Qg==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@zwave-js/shared" "8.2.2"
@@ -2212,16 +2212,16 @@
   dependencies:
     moment "^2.11.2"
 
-"@zwave-js/serial@8.2.2":
-  version "8.2.2"
-  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-8.2.2.tgz#bd62801ec48ed92be7dfd68e0d7ba1e471e7dedd"
-  integrity sha512-IVomeQ8ohRmBP1sMUetccsSazh3WoIyiKX2bL3d54y5sUHe5n7XD14JnoFyBvxnpt+/jLtxhImRX/wlxSinUkA==
+"@zwave-js/serial@8.2.3":
+  version "8.2.3"
+  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-8.2.3.tgz#9c3cfeb997367bb291f40ad943aa1978a10c462c"
+  integrity sha512-A8VYiigWfyayHK1T/veW9y5fYVCjTjQqM0pUPNXBamGGWukqF2uZ+db+2UgI96q+LvnNUsd/llP3j9mj1Z3s+Q==
   dependencies:
     "@sentry/node" "^6.12.0"
-    "@zwave-js/core" "8.2.2"
+    "@zwave-js/core" "8.2.3"
     "@zwave-js/shared" "8.2.2"
     alcalzone-shared "^4.0.0"
-    serialport "^9.2.0"
+    serialport "^9.2.1"
     winston "^3.3.3"
 
 "@zwave-js/server@^1.10.3":
@@ -2670,6 +2670,13 @@ axios@^0.21.1:
   integrity sha512-dKQiRHxGD9PPRIUNIWvZhPTPpl1rf/OxTYKsqKUDjBwYylTvV7SjSHJb9ratfyzM6wCdLCOYLzs73qpg5c4iGA==
   dependencies:
     follow-redirects "^1.10.0"
+
+axios@^0.21.3:
+  version "0.21.3"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-0.21.3.tgz#f85d9b747f9b66d59ca463605cedf1844872b82e"
+  integrity sha512-JtoZ3Ndke/+Iwt5n+BgSli/3idTvpt5OjKyoCmz4LX5+lPiY5l7C1colYezhlxThjNa/NhngCUWZSZFypIFuaA==
+  dependencies:
+    follow-redirects "^1.14.0"
 
 babel-eslint@^10.1.0:
   version "10.1.0"
@@ -5815,6 +5822,11 @@ follow-redirects@^1.0.0, follow-redirects@^1.10.0:
   version "1.14.0"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.0.tgz#f5d260f95c5f8c105894491feee5dc8993b402fe"
   integrity sha512-0vRwd7RKQBTt+mgu87mtYeofLFZpTas2S9zY+jIeuLJMNvudIgF52nr19q40HOwH5RrhWIPuj9puybzSJiRrVg==
+
+follow-redirects@^1.14.0:
+  version "1.14.3"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.14.3.tgz#6ada78118d8d24caee595595accdc0ac6abd022e"
+  integrity sha512-3MkHxknWMUtb23apkgz/83fDoe+y+qr0TdgacGIA7bew+QLBo3vdgEN2xEsuXNivpFy4CyDhBBZnNZOtalmenw==
 
 for-in@^1.0.2:
   version "1.0.2"
@@ -10171,7 +10183,7 @@ serialport@9.0.7:
     "@serialport/stream" "^9.0.7"
     debug "^4.3.1"
 
-serialport@^9.2.0, serialport@~9.0.7:
+serialport@^9.2.1, serialport@~9.0.7:
   version "9.0.8"
   resolved "https://registry.yarnpkg.com/serialport/-/serialport-9.0.8.tgz#de6b56d37089a7bb736fac1964316a535723c734"
   integrity sha512-+G/Mp0sBoxC6iKSUmClOFKVMK0Nirdz6ui7zRWyK9CEXy3t3dCDhWKvzDDtfKxILYtHYPR3G1xP5H/ISDKrzcg==
@@ -11916,10 +11928,10 @@ xdg-basedir@^4.0.0:
   resolved "https://registry.yarnpkg.com/xdg-basedir/-/xdg-basedir-4.0.0.tgz#4bc8d9984403696225ef83a1573cbbcb4e79db13"
   integrity sha512-PSNhEJDejZYV7h50BohL09Er9VaIefr2LMAf3OEmpCkjOi34eYyQYAXUTjEQtZJTKcF0E2UKTh+osDLsgNim9Q==
 
-xstate@^4.23.3:
-  version "4.23.3"
-  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.23.3.tgz#affadf52857b7c39ab6ad2ccd891dbd5f1c56ab0"
-  integrity sha512-Djw9CJ5gpivFe6wGNsSFs8Ya5awG2hxbDHxBjqQrysl3LiOr+uULExs11eqTi8IIw9WWE2lbiJMbWRONCvj1Yg==
+xstate@^4.23.4:
+  version "4.23.4"
+  resolved "https://registry.yarnpkg.com/xstate/-/xstate-4.23.4.tgz#b894205ac46bb3acc09755907d3e57c81c86e80e"
+  integrity sha512-lWaUvyrd0HGhosyKnf8i9wBlszVaS+/uIs0EfnuPYNsZIh1BW9ed4bZ64P57wVYk2uln7v3u+Mv98FC+r8xrxQ==
 
 xtend@^4.0.0, xtend@^4.0.2, xtend@~4.0.0, xtend@~4.0.1:
   version "4.0.2"
@@ -12054,28 +12066,28 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
 
-zwave-js@^8.2.2:
-  version "8.2.2"
-  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.2.2.tgz#57150d0aef6083da9095e064e0a35e3905577feb"
-  integrity sha512-7v0AcfGaNopYmPuWGooVw2OoKL6a5k8uTo9tY7pje/X2z/iC9c16yYWtN1q1EP/C9sPOno6vtCNSRBrXEt+T2A==
+zwave-js@^8.2.3:
+  version "8.2.3"
+  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.2.3.tgz#ffb7a021406a1dac378da9904fb3bae08c97513d"
+  integrity sha512-llkhjC5TRtJF3zfWoQyWQD9ZjjVA7wfrCnFm3p4vXJH2Yn2xPG/WIkEEoWSSHDJmKQXVL+Opn8ywwzOQx4Rrig==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@alcalzone/pak" "^0.6.0"
     "@sentry/integrations" "^6.12.0"
     "@sentry/node" "^6.12.0"
-    "@zwave-js/config" "8.2.2"
-    "@zwave-js/core" "8.2.2"
-    "@zwave-js/serial" "8.2.2"
+    "@zwave-js/config" "8.2.3"
+    "@zwave-js/core" "8.2.3"
+    "@zwave-js/serial" "8.2.3"
     "@zwave-js/shared" "8.2.2"
     alcalzone-shared "^4.0.0"
     ansi-colors "^4.1.1"
-    axios "^0.21.1"
+    axios "^0.21.3"
     execa "^5.1.1"
     fs-extra "^10.0.0"
     proper-lockfile "^4.1.2"
     reflect-metadata "^0.1.13"
     semver "^7.3.5"
-    serialport "^9.2.0"
+    serialport "^9.2.1"
     source-map-support "^0.5.19"
     winston "^3.3.3"
-    xstate "^4.23.3"
+    xstate "^4.23.4"
