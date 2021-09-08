@@ -23,24 +23,29 @@ const devWebpackConfig = merge(baseWebpackConfig, {
 
   // these devServer options should be customized in /config/index.js
   devServer: {
-    clientLogLevel: 'warning',
     historyApiFallback: true,
     hot: true,
     https: config.dev.https,
-    contentBase: false, // since we use CopyWebpackPlugin.
     compress: true,
-    disableHostCheck: true,
+    // disableHostCheck: true,
     host: config.dev.host,
     port: config.dev.port,
     open: config.dev.autoOpenBrowser,
-    overlay: config.dev.errorOverlay
-      ? { warnings: false, errors: true }
-      : false,
-    publicPath: config.dev.assetsPublicPath,
+    client: {
+      logging: 'warn',
+      overlay: config.dev.errorOverlay
+        ? { warnings: false, errors: true }
+        : false,
+    },
     proxy: config.dev.proxyTable,
-    quiet: false,
-    watchOptions: {
-      poll: config.dev.poll
+    static: {
+      publicPath: config.dev.assetsPublicPath
+    },
+    watchFiles: {
+      options:
+      {
+        usePolling: config.dev.poll
+      }
     }
   },
   optimization: {
