@@ -10,9 +10,19 @@
 				>
 					<v-expansion-panels accordion multiple>
 						<v-expansion-panel key="general">
-							<v-expansion-panel-header
-								>General</v-expansion-panel-header
-							>
+							<v-expansion-panel-header>
+								<v-row no-gutters>
+									<v-col align-self="center"> General </v-col>
+									<v-col class="text-right pr-5">
+										<v-btn
+											@click.stop="openDocs('general')"
+											x-small
+										>
+											Docs
+										</v-btn>
+									</v-col>
+								</v-row>
+							</v-expansion-panel-header>
 							<v-expansion-panel-content>
 								<v-card flat>
 									<v-card-text>
@@ -183,9 +193,19 @@
 						</v-expansion-panel>
 
 						<v-expansion-panel key="zwave">
-							<v-expansion-panel-header
-								>Zwave</v-expansion-panel-header
-							>
+							<v-expansion-panel-header>
+								<v-row no-gutters>
+									<v-col align-self="center"> Zwave </v-col>
+									<v-col class="text-right pr-5">
+										<v-btn
+											@click.stop="openDocs('zwave')"
+											x-small
+										>
+											Docs
+										</v-btn>
+									</v-col>
+								</v-row>
+							</v-expansion-panel-header>
 							<v-expansion-panel-content>
 								<v-card flat>
 									<v-card-text>
@@ -444,9 +464,19 @@
 						</v-container>
 
 						<v-expansion-panel key="mqtt" v-if="!newMqtt.disabled">
-							<v-expansion-panel-header
-								>Mqtt</v-expansion-panel-header
-							>
+							<v-expansion-panel-header>
+								<v-row no-gutters>
+									<v-col align-self="center"> Mqtt </v-col>
+									<v-col class="text-right pr-5">
+										<v-btn
+											@click.stop="openDocs('mqtt')"
+											x-small
+										>
+											Docs
+										</v-btn>
+									</v-col>
+								</v-row>
+							</v-expansion-panel-header>
 							<v-expansion-panel-content>
 								<v-card flat>
 									<v-card-text>
@@ -651,9 +681,19 @@
 							key="gateway"
 							v-if="!newMqtt.disabled"
 						>
-							<v-expansion-panel-header
-								>Gateway</v-expansion-panel-header
-							>
+							<v-expansion-panel-header>
+								<v-row no-gutters>
+									<v-col align-self="center"> Gateway </v-col>
+									<v-col class="text-right pr-5">
+										<v-btn
+											@click.stop="openDocs('gateway')"
+											x-small
+										>
+											Docs
+										</v-btn>
+									</v-col>
+								</v-row>
+							</v-expansion-panel-header>
 							<v-expansion-panel-content>
 								<v-card flat>
 									<v-card-text>
@@ -753,9 +793,23 @@
 						<v-divider></v-divider>
 
 						<v-expansion-panel key="Hass">
-							<v-expansion-panel-header
-								>Home Assistant</v-expansion-panel-header
-							>
+							<v-expansion-panel-header>
+								<v-row no-gutters>
+									<v-col align-self="center">
+										Home Assistant
+									</v-col>
+									<v-col class="text-right pr-5">
+										<v-btn
+											@click.stop="
+												openDocs('home-assistant')
+											"
+											x-small
+										>
+											Docs
+										</v-btn>
+									</v-col>
+								</v-row>
+							</v-expansion-panel-header>
 							<v-expansion-panel-content>
 								<v-card flat>
 									<v-card-text>
@@ -1138,6 +1192,12 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		openDocs(id) {
+			window.open(
+				`https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=${id}`,
+				'_blank'
+			)
+		},
 		scaleName(item) {
 			if (typeof item === 'object' && item) {
 				return `${item.sensor}: ${
