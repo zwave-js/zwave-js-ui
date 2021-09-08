@@ -39,7 +39,7 @@
     ]
   },
   "scripts": {
-    "dev": "webpack serve --inline --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
+    "dev": "webpack serve --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
     "dev-https": "SERVER_SSL='true' yarn run dev",
     "dev:server": "ts-node-dev --inspect -- bin/www.ts",
     "dev-https:server": "HTTPS='true' ts-node-dev --inspect -- bin/www.ts",
