@@ -2,7 +2,7 @@
 
 // eslint-disable-next-line one-var
 import mqtt, { Client } from 'mqtt'
-import { joinPath, sanitizeTopic } from './utils'
+import { allSettled, joinPath, sanitizeTopic } from './utils'
 import NeDBStore from 'mqtt-nedb-store'
 import { storeDir } from '../config/app'
 import { module } from './logger'
@@ -51,11 +51,15 @@ export type MqttClientEvents = Extract<keyof MqttClientEventCallbacks, string>
 
 class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private config: MqttConfig
-	private toSubscribe: string[]
+	private toSubscribe: Map<
+		string,
+		mqtt.IClientSubscribeOptions & { addPrefix: boolean }
+	>
 	private _clientID: string
 	private client: Client
 	private error?: string
 	private closed: boolean
+	private retrySubTimeout: NodeJS.Timeout | null
 
 	static CLIENTS_PREFIX = '_CLIENTS'
 
@@ -106,6 +110,11 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				return
 			}
 			this.closed = true
+
+			if (this.retrySubTimeout) {
+				clearTimeout(this.retrySubTimeout)
+				this.retrySubTimeout = null
+			}
 
 			if (this.client) {
 				this.client.end(true, {}, () => {
@@ -173,14 +182,57 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Method used to subscribe tags for write requests
 	 */
-	subscribe(topic: string) {
-		if (this.client && this.client.connected) {
-			topic = this.config.prefix + '/' + topic + '/set'
-			logger.info(`Subscribing to ${topic}`)
-			this.client.subscribe(topic)
-		} else {
-			this.toSubscribe.push(topic)
+	subscribe(
+		topic: string,
+		options: mqtt.IClientSubscribeOptions & { addPrefix: boolean } = {
+			qos: 1,
+			addPrefix: true,
 		}
+	): Promise<void> {
+		return new Promise((resolve, reject) => {
+			const subOptions: mqtt.IClientSubscribeOptions = {
+				qos: options.qos,
+			}
+
+			topic = options.addPrefix
+				? this.config.prefix + '/' + topic + '/set'
+				: topic
+
+			options.addPrefix = false // in case of retry, don't add again the prefix
+
+			if (this.client && this.client.connected) {
+				logger.log(
+					'debug',
+					`Subscribing to ${topic} with options %o`,
+					subOptions
+				)
+				this.client.subscribe(topic, subOptions, (err, granted) => {
+					if (err) {
+						logger.error(`Error subscribing to ${topic}`, err)
+						this.toSubscribe.set(topic, options)
+						reject(err)
+					} else {
+						for (const res of granted) {
+							if (res.qos === 128) {
+								logger.error(
+									`Error subscribing to ${topic}, client doesn't have permmission to subscribe to it`
+								)
+							} else {
+								logger.info(`Subscribed to ${topic}`)
+							}
+							this.toSubscribe.delete(topic)
+						}
+						resolve()
+					}
+				})
+			} else {
+				logger.debug(
+					`Client not connected yet, subscribing to ${topic} later...`
+				)
+				this.toSubscribe.set(topic, options)
+				reject(Error('Client not connected'))
+			}
+		})
 	}
 
 	/**
@@ -238,7 +290,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	 */
 	private _init(config: MqttConfig) {
 		this.config = config
-		this.toSubscribe = []
+		this.toSubscribe = new Map()
 
 		if (!config || config.disabled) {
 			logger.info('MQTT is disabled')
@@ -318,33 +370,36 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Function called when MQTT client connects
 	 */
-	private _onConnect() {
+	private async _onConnect() {
 		logger.info('MQTT client connected')
 		this.emit('connect')
 
-		if (this.toSubscribe) {
-			// don't use toSubscribe here to prevent infinite loops when subscribe fails
-			const topics = [...this.toSubscribe]
-			for (const t of topics) {
-				this.subscribe(t)
-			}
-		}
+		const subscribePromises = []
 
-		this.client.subscribe(MqttClient.HASS_WILL)
+		subscribePromises.push(
+			this.subscribe(MqttClient.HASS_WILL, { addPrefix: false, qos: 1 })
+		)
 
 		// subscribe to actions
 		// eslint-disable-next-line no-redeclare
 		for (let i = 0; i < MqttClient.ACTIONS.length; i++) {
-			this.client.subscribe(
-				[
-					this.config.prefix,
-					MqttClient.CLIENTS_PREFIX,
-					this._clientID,
-					MqttClient.ACTIONS[i],
-					'#',
-				].join('/')
+			subscribePromises.push(
+				this.subscribe(
+					[
+						this.config.prefix,
+						MqttClient.CLIENTS_PREFIX,
+						this._clientID,
+						MqttClient.ACTIONS[i],
+						'#',
+					].join('/'),
+					{ addPrefix: false, qos: 1 }
+				)
 			)
 		}
+
+		await allSettled(subscribePromises)
+
+		await this._retrySubscribe()
 
 		this.emit('brokerStatus', true)
 
@@ -352,8 +407,6 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		// Update client status
 		this.updateClientStatus(true)
-
-		this.toSubscribe = []
 	}
 
 	/**
@@ -375,6 +428,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	 * Function called when MQTT client go offline
 	 */
 	private _onOffline() {
+		if (this.retrySubTimeout) {
+			clearTimeout(this.retrySubTimeout)
+			this.retrySubTimeout = null
+		}
 		logger.info('MQTT client offline')
 		this.emit('brokerStatus', false)
 	}
@@ -395,7 +452,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		let parsed: string | number | Record<string, any> | undefined =
 			payload?.toString()
 
-		logger.log('info', `Message received on ${topic}, %o`, payload)
+		logger.log('info', `Message received on ${topic}: %o`, parsed)
 
 		if (topic === MqttClient.HASS_WILL) {
 			if (typeof parsed === 'string') {
@@ -453,6 +510,37 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			this.emit('writeRequest', parts, parsed)
 		}
 	} // end onMessageReceived
+
+	private async _retrySubscribe() {
+		if (this.retrySubTimeout) {
+			clearTimeout(this.retrySubTimeout)
+			this.retrySubTimeout = null
+		}
+
+		if (this.toSubscribe.size === 0) {
+			return
+		}
+
+		logger.debug('Retry to subscribe to topics...')
+		const subscribePromises = []
+
+		const topics = this.toSubscribe.keys()
+
+		for (const t of topics) {
+			subscribePromises.push(this.subscribe(t, this.toSubscribe.get(t)))
+		}
+
+		this.toSubscribe == new Map()
+
+		await allSettled(subscribePromises)
+
+		if (this.toSubscribe.size > 0) {
+			this.retrySubTimeout = setTimeout(
+				this._retrySubscribe.bind(this),
+				5000
+			)
+		}
+	}
 }
 
 export default MqttClient
