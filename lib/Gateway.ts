@@ -2035,7 +2035,7 @@ export default class Gateway {
 			payload = this.parsePayload(payload, valueId, valueId.conf)
 			await this._zwave.writeValue(valueId, payload, payload?.options)
 		} else {
-			logger.debug(`No writable valueId found for ${valueTopic}`)
+			logger.debug(`No writeable valueId found for ${valueTopic}`)
 		}
 	}
 
