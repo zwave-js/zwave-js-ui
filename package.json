@@ -51,7 +51,7 @@
     "lint:markdownlint": "markdownlint '**/*.md'",
     "lint-fix:markdownlint": "markdownlint --fix '**/*.md'",
     "test": "npm-run-all test:*",
-    "test:server": "mocha -r ts-node/register ./test/**/*.test.ts",
+    "test:server": "node --harmony node_modules/mocha/bin/_mocha -r ts-node/register ./test/**/*.test.ts",
     "test:ui": "mocha -r @babel/register src/modules",
     "docs": "docsify serve ./docs",
     "coverage": "c8 --clean npm run test",

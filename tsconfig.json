@@ -35,12 +35,6 @@
     /* Module Resolution Options */
     "moduleResolution": "node", /* Specify module resolution strategy: 'node' (Node.js) or 'classic' (TypeScript pre-1.6). */
   },
-  "ts-node": {
-    // these overrides are used by ts-node
-    "compilerOptions": {
-      "target": "ES2020"
-    }
-  },
   "include": [
     "app.ts",
     "bin/www.ts",
