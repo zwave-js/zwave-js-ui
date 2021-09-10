@@ -2,7 +2,7 @@
 
 // eslint-disable-next-line one-var
 import mqtt, { Client } from 'mqtt'
-import { joinPath, sanitizeTopic } from './utils'
+import { allSettled, joinPath, sanitizeTopic } from './utils'
 import NeDBStore from 'mqtt-nedb-store'
 import { storeDir } from '../config/app'
 import { module } from './logger'
@@ -397,7 +397,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			)
 		}
 
-		await Promise.allSettled(subscribePromises)
+		await allSettled(subscribePromises)
 
 		await this._retrySubscribe()
 
@@ -532,7 +532,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		this.toSubscribe == new Map()
 
-		await Promise.allSettled(subscribePromises)
+		await allSettled(subscribePromises)
 
 		if (this.toSubscribe.size > 0) {
 			this.retrySubTimeout = setTimeout(
