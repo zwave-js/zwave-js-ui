@@ -75,20 +75,20 @@ export default {
 
 			return undefined
 		},
-    getBatteryLevel(node) {
-      // TODO: This has been taken from ZwaveGraph.vue method listNodes() and should be made reusable.
-      let batlev
+		getBatteryLevel(node) {
+			// TODO: This has been taken from ZwaveGraph.vue method listNodes() and should be made reusable.
+			let batlev
 
-      if (node.values) {
-        batlev = node.values.find(
-          (v) => v.commandClass === 128 && v.property === 'level'
-        )
-      }
+			if (node.values) {
+				batlev = node.values.find(
+					(v) => v.commandClass === 128 && v.property === 'level'
+				)
+			}
 
-      batlev = batlev ? batlev.value : undefined
-      return batlev
-    },
-  },
+			batlev = batlev ? batlev.value : undefined
+			return batlev
+		},
+	},
 	mounted() {
 		this.managedNodes = new ManagedItems(
 			this.nodes,
