@@ -45,6 +45,7 @@
 - Development
 
   - [Introduction](development/intro.md)
+  - [Building Custom Docker Images](development/custom-docker.md)
 
 - [Usage Statistics](usage_stats.md)
 - [Screenshots](screenshots.md)
