@@ -1,18 +1,6 @@
 # Setup
 
 To configure ZWavejs2Mqtt, you must access it via your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
-
-## Quick Start
-
-At the most basic, you must confiugre Z-Wave -> Serial Port and you should:
-
-- Add Network Security Keys - Z-Wave -> Security Keys (S0 Legacy, S2  Unauthenticated, S2 Authenticated, and S2 Access Control)
-- Enable Z-Wave JS Logging - Z-Wave -> Log Enabled (elect a Log Level)
-- Enable ZWavejs2Mqtt Logging (if using MQTT) - General -> Log Enabled (elect a Log Level)
-- Disable MQTT Gateway (if not using MQTT) - On the Settings Page
-- Configure Home Assistant (if using Home Assistant) - Home Assistant -> WS Server
-- Enable Statistics (please!) - Z-Wave -> Enable Statistics
-
 ## General
 
 - **Auth**: Enable this to password protect your application. Default credentials are:
@@ -50,12 +38,20 @@ Properties of a **valueId configuration**:
 ## Z-Wave
 
 - **Serial port**: The serial port where your controller is connected
-- **Security Keys** : Z-Wave network keys for secure inclusion S0/S2. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
+- **Security Keys** : Z-Wave network keys for secure inclusion S0/S2.
+  - **S0 Legacy** (lowest): The previous **networkKey** setting, used for S0 security
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
   - **S2 Authenticated**: Security systems, sensors, lighting, etc.
   - **S2 AccessControl** (highest): Used for Door locks, garage doors, etc.
-  - **S0 Legacy** (lowest): The previous **networkKey** setting, used for S0 security
-- **Enable statistics**: Enable/Disable usage statistics. More info [here](/usage_stats)
+
+> [!NOTE]
+> - These keys are used to connect securely to compatible devices. **You should define both S0 and S2 keys, even if you are not yet using S2.**
+> - The network key consists of 32 hexadecimal characters, for example 2232666D100F795E5BB17F0A1BB7A146 (do not use this one, pick a random one).
+> - The correct format is like the OZW key but without 0x , and spaces. So (OZW) `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` becomes `5C14897467C42598518AF155DE6CCEA8`
+> - You can generate a random key by clicking the double arrows at the end of the key box.
+> - **Backup these keys!**
+
+- **Enable statistics**: Please enable usage statistics! More info [here](/usage_stats)
 - **Preferred scales**: Choose preferred sensor scales
 - **Log enabled**: Enable logging for Z-Wave JS websocket server
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)

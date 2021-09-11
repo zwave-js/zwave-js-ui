@@ -1,6 +1,6 @@
-# Nodes Management
+# Managing Nodes
 
-Nodes can be managed from the Control Pannel page by clicking on `MANAGE NODES` button under `Actions` section. This will open the **Node Manager** dialog
+Nodes can be managed from the Control Panel page by clicking on `MANAGE NODES` button under `Actions` section. This will open the **Node Manager** dialog
 
 ![Nodes Manager](../_images/nodes_manager.png)
 
@@ -22,9 +22,9 @@ Nodes can be managed from the Control Pannel page by clicking on `MANAGE NODES` 
 
 ## Replace failed node
 
-Like `Remove Failed Node`, this can only succeed if the node to replace:
+Like `Remove Failed Node`, this can only succeed if the node to be replaced:
 
-- is marked as **Dead** or **Asleep**
+- has a status of **Dead**, **Asleep**, or **Unknown**
 - does not respond to a ping
 
 1. Select `Replace Failed Node` and press `NEXT`

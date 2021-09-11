@@ -1,4 +1,4 @@
-# MQTT
+# Using MQTT
 
 You have access to almost all of the [Z-Wave JS APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) via MQTT.
 
@@ -303,7 +303,7 @@ A example of payload is:
 
 ### Node notifications
 
-Node notifications are translated to valueIds based on the CC that is triggerig the notification and the notification args. Topic and payload depends on your gateway settings.
+Node notifications are translated to valueIds based on the CC that is triggering the notification and the notification args. Topic and payload depends on your gateway settings.
 
 #### Entry CC
 

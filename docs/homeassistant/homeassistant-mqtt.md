@@ -1,17 +1,17 @@
 # Home Assistant Using MQTT Discovery
 
-The preferred method of integrating your Z-Wave components with Home Assistant is through the official Home Assistant [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js). If you elect to use MQTT discovery, the following settings will allow Zwavejs2Mqtt to automatically add devices to Home Assistant. In addition to Zwavejs2Mqtt, you must run an MQTT broker to act as the server.
+The preferred method of integrating your Z-Wave components with Home Assistant is through the official Home Assistant [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js). If you elect to use MQTT discovery, the following settings will allow ZWavejs2Mqtt to automatically add devices to Home Assistant. In addition to ZWavejs2Mqtt, you must run an MQTT broker to act as the server.
 
 To enable this method, you must set the flag **MQTT Discovery** in the Home Assistant tab.
 
 > [!WARNING]
 > At least Home Assistant >= 0.84 is required!
 >
-> When using MQTT discovery, Home Assistant updates often break Zwavejs2Mqtt device discovery. Zwavejs2Mqtt will always try to be compatible with the latest Home Assistant version. Check the changelog before updating!
+> When using MQTT discovery, Home Assistant updates often break ZWavejs2Mqtt device discovery. ZWavejs2Mqtt will always try to be compatible with the latest Home Assistant version. Check the changelog before updating!
 
 Configuration steps:
 
-- In your **Zwavejs2Mqtt** settings, [Home Assistant](/usage/setup?id=home-assistant) section, enable the `MQTT discovery` flag and enable the **retain** flag in the [MQTT](/usage/setup?id=mqtt) section. That flag is suggested to ensure that, once discovered, each device has the last published value available on startup (otherwise you have to wait for a value change).
+- In your **ZWavejs2Mqtt** settings, [Home Assistant](/usage/setup?id=home-assistant) section, enable the `MQTT discovery` flag and enable the **retain** flag in the [MQTT](/usage/setup?id=mqtt) section. That flag is suggested to ensure that, once discovered, each device has the last published value available on startup (otherwise you have to wait for a value change).
 
 > [!NOTE]
 > Beginning with version `4.0.0`, the default birth/will topic is `homeassistant/status` in order to reflect the default birth/will of Home Assistant, which changed in version `0.113`.
@@ -33,14 +33,14 @@ mqtt:
 
 If you want to use the embedded broker in Home Assistant you must [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
 
-Zwavejs2Mqtt is expecting Home Assistant to send its birth/will messages to `homeassistant/status`. Be sure to add this to your `configuration.yaml` if you want
-Zwavejs2Mqtt to resend the cached values when Home Assistant restarts.
+ZWavejs2Mqtt is expecting Home Assistant to send its birth/will messages to `homeassistant/status`. Be sure to add this to your `configuration.yaml` if you want
+ZWavejs2Mqtt to resend the cached values when Home Assistant restarts.
 
-Zwavejs2Mqtt will try to guess how to map devices from Z-Wave to Home Assistant. At the moment, it tries to generate entities based on zwave values command classes, index, and units of the value. If the discovered device doesn't fit your needs, you can set a custom `device_class` using the Gateway value table.
+ZWavejs2Mqtt will try to guess how to map devices from Z-Wave to Home Assistant. At the moment, it tries to generate entities based on zwave values command classes, index, and units of the value. If the discovered device doesn't fit your needs, you can set a custom `device_class` using the Gateway value table.
 
 ## Components management
 
-To see the components that have been discovered by Zwavejs2Mqtt, go to Control Panel UI, select a node from the nodes table, then select the Node tab from tabs menu at the bottom of nodes table. At the bottom of the page, after the node values section, there will be a section called `Home Assistant - Devices`. There you will find a table with all of the devices created for the selected node.
+To see the components that have been discovered by ZWavejs2Mqtt, go to Control Panel UI, select a node from the nodes table, then select the Node tab from tabs menu at the bottom of nodes table. At the bottom of the page, after the node values section, there will be a section called `Home Assistant - Devices`. There you will find a table with all of the devices created for the selected node.
 
 ![Home Assistant Devices](../_images/Home Assistant_devices.png)
 
@@ -120,7 +120,7 @@ You can specify (custom device configurations([usage/custom-device-files.md]) if
   - **current_temperature_template/temperature_state_template**: Template used to fetch the value from the MQTT payload
   - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Home Assistant to change this values
 
-Thermostats are the most complex components to create. In this device example, the setpoint topic changes based on the mode selected. Zwavejs2Mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
+Thermostats are the most complex components to create. In this device example, the setpoint topic changes based on the mode selected. ZWavejs2Mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
 
 ### Fans
 
@@ -331,10 +331,10 @@ switch:
 
 ### Removing or resetting Home Assistant entities
 
-If needed, it is possible to remove and reset entities added to Home Assistant via MQTT discovery. These entries are pushed via MQTT with the `Retained` flag set, so even if an entity disappears from **Zwavejs2Mqtt**, it will remain in Home Assistant.
+If needed, it is possible to remove and reset entities added to Home Assistant via MQTT discovery. These entries are pushed via MQTT with the `Retained` flag set, so even if an entity disappears from **ZWavejs2Mqtt**, it will remain in Home Assistant.
 
 To remove an entity in Home Assistant, you must remove the retained message in the Home Assistant discovery topics, by default `homeassistant/..`.
 
 This can be done with [MQTT Explorer](http://mqtt-explorer.com/) or CLI tools like [`mosquitto_pub`](https://mosquitto.org/man/mosquitto_pub-1.html).
 
-Note that in order for a removed entity to appear again, it must be published by **Zwavejs2Mqtt** again. This happens automatically for new devices, if enabled. Alternatively, this can be done manually by selecting the node in **Zwavejs2Mqtt**, and then for each Home Assistant device clicking `Rediscover Node`.
+Note that in order for a removed entity to appear again, it must be published by **ZWavejs2Mqtt** again. This happens automatically for new devices, if enabled. Alternatively, this can be done manually by selecting the node in **ZWavejs2Mqtt**, and then for each Home Assistant device clicking `Rediscover Node`.

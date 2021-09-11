@@ -1,6 +1,6 @@
 # Config DB Updates
 
-Since version 4.0.0 it is possible to update the internal Z-Wave JS device config database on the fly directly from the Zwavejs2Mqtt UI, without updating the entire docker container.
+Since version 4.0.0 it is possible to update the internal Z-Wave JS device config database on the fly directly from the ZWavejs2Mqtt UI, without updating the entire docker container.
 
 Updates are checked everyday at midnight, but you can also check for new updates manually from the UI by clicking on the icon in the top right corner. When an update is available a badge will show up next to the icon:
 
