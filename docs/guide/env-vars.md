@@ -2,7 +2,7 @@
 
 This is the list of the supported environment variables:
 
-- `NETWORK_KEY`: Z-Wave Network key
+- `NETWORK_KEY`: Z-Wave S0 Network key
 - `HTTPS`: Enable https
 - `SESSION_SECRET`: Used as secret for session. If not provided the default one is used
 - `USE_SECURE_COOKIE`: Set the cookie [secure](https://github.com/expressjs/session#cookiesecure) option.
