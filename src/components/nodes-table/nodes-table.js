@@ -23,7 +23,11 @@ export default {
 			managedNodes: null,
 			nodesProps: {
 				id: { type: 'number', label: 'ID', groupable: false },
-				power: { type: 'number', label: 'Power', valueFn: node => this.getBatteryLevel(node) },
+				power: {
+					type: 'number',
+					label: 'Power',
+					valueFn: (node) => this.getBatteryLevel(node),
+				},
 				manufacturer: { type: 'string', label: 'Manufacturer' },
 				productDescription: { type: 'string', label: 'Product' },
 				productLabel: { type: 'string', label: 'Product code' },

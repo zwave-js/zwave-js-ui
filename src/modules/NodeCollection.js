@@ -1,7 +1,7 @@
 export class NodeCollection {
-	constructor(nodes,propDefs) {
+	constructor(nodes, propDefs) {
 		this.nodes = nodes
-    this.propDefs = propDefs
+		this.propDefs = propDefs
 	}
 
 	_isUndefined(value) {
@@ -41,9 +41,13 @@ export class NodeCollection {
 			(merged, prop) => merged.concat(prop),
 			[]
 		)
-		return mergedProps.find((prop) => filter(
-      (this.propDefs && this.propDefs[prop].valueFn) ? this.propDefs[prop].valueFn(node) : node[prop]
-    ))
+		return mergedProps.find((prop) =>
+			filter(
+				this.propDefs && this.propDefs[prop].valueFn
+					? this.propDefs[prop].valueFn(node)
+					: node[prop]
+			)
+		)
 	}
 
 	filter(properties, filter) {
