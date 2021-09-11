@@ -89,10 +89,10 @@ export class ManagedItems {
 	/**
 	 * Get all property values from items
 	 */
-	getPropValues(propName) {
+	getPropValues(propName, valueFn) {
 		const uniqueMap = {}
 		this.items.forEach((item) => {
-			const value = item[propName]
+			const value = valueFn ? valueFn(item) : item[propName]
 			if (value) {
 				uniqueMap[value] = uniqueMap[value] || value
 			}
@@ -108,7 +108,8 @@ export class ManagedItems {
 	get propValues() {
 		const values = {}
 		Object.keys(this.propDefs).forEach((propName) => {
-			values[propName] = this.getPropValues(propName)
+      let valueFn = this.propDefs[propName].valueFn ? this.propDefs[propName].valueFn : node => node[propName]
+			values[propName] = this.getPropValues(propName, valueFn)
 		})
 		return values
 	}
@@ -118,7 +119,7 @@ export class ManagedItems {
 	 */
 	get filteredItems() {
 		return ColumnFilterHelper.filterByFilterSpec(
-			new NodeCollection(this.items),
+			new NodeCollection(this.items, this.propDefs),
 			this.allTableHeaders,
 			this.filters
 		).nodes // TODO: nodes should be items

@@ -23,6 +23,7 @@ export default {
 			managedNodes: null,
 			nodesProps: {
 				id: { type: 'number', label: 'ID', groupable: false },
+				power: { type: 'number', label: 'Power', valueFn: node => this.getBatteryLevel(node) },
 				manufacturer: { type: 'string', label: 'Manufacturer' },
 				productDescription: { type: 'string', label: 'Product' },
 				productLabel: { type: 'string', label: 'Product code' },
@@ -70,7 +71,20 @@ export default {
 
 			return undefined
 		},
-	},
+    getBatteryLevel(node) {
+      // TODO: This has been taken from ZwaveGraph.vue method listNodes() and should be made reusable.
+      let batlev
+
+      if (node.values) {
+        batlev = node.values.find(
+          (v) => v.commandClass === 128 && v.property === 'level'
+        )
+      }
+
+      batlev = batlev ? batlev.value : undefined
+      return batlev
+    },
+  },
 	mounted() {
 		this.managedNodes = new ManagedItems(
 			this.nodes,

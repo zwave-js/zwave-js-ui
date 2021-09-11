@@ -123,6 +123,10 @@
 				>
 			</td>
 		</template>
+		<template v-slot:[`item.power`]="{ item }">
+      <v-icon>{{ getBatteryLevel(item) !== undefined ? 'battery_full' : 'power' }}</v-icon>
+      {{ getBatteryLevel(item) !== undefined ? getBatteryLevel(item) + '%' : '' }}
+		</template>
 		<template v-slot:[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}
 		</template>
