@@ -3,6 +3,15 @@ import { ManagedItems } from '@/modules/ManagedItems'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import { mapGetters } from 'vuex'
+import SvgIcon from '@jamescoyle/vue-icon'
+import {
+	mdiBatteryAlertVariantOutline,
+	mdiBattery20,
+	mdiBattery50,
+	mdiBattery80,
+	mdiBattery,
+	mdiPowerPlug,
+} from '@mdi/js'
 
 export default {
 	props: {
@@ -13,6 +22,7 @@ export default {
 		draggable,
 		ColumnFilter,
 		ExpandedNode,
+		SvgIcon,
 	},
 	watch: {},
 	computed: {
@@ -87,6 +97,37 @@ export default {
 
 			batlev = batlev ? batlev.value : undefined
 			return batlev
+		},
+		getPowerInfo(node) {
+			let level = this.getBatteryLevel(node)
+			let style = 'color: green'
+			let icon
+			let label = level + '%'
+			let tooltip = 'Battery level: ' + level + '%'
+			if (level === undefined) {
+				icon = mdiPowerPlug
+				label = ''
+				tooltip = 'mains-powered'
+			} else if (level <= 10) {
+				icon = mdiBatteryAlertVariantOutline
+				style = 'color: red'
+			} else if (level <= 30) {
+				icon = mdiBattery20
+				style = 'color: orange'
+			} else if (level <= 70) {
+				icon = mdiBattery50
+			} else if (level <= 90) {
+				icon = mdiBattery80
+			} else {
+				icon = mdiBattery
+			}
+			return {
+				icon: icon,
+				level: level,
+				style: style,
+				label: label,
+				tooltip: tooltip,
+			}
 		},
 	},
 	mounted() {

@@ -124,14 +124,17 @@
 			</td>
 		</template>
 		<template v-slot:[`item.power`]="{ item }">
-			<v-icon>{{
-				getBatteryLevel(item) !== undefined ? 'battery_full' : 'power'
-			}}</v-icon>
-			{{
-				getBatteryLevel(item) !== undefined
-					? getBatteryLevel(item) + '%'
-					: ''
-			}}
+			<v-layout justify-center>
+				<svg-icon
+					type="mdi"
+					:path="getPowerInfo(item).icon"
+					:style="getPowerInfo(item).style"
+					:title="getPowerInfo(item).tooltip"
+				></svg-icon>
+				<span style="padding-top: 4px">{{
+					getPowerInfo(item).label
+				}}</span>
+			</v-layout>
 		</template>
 		<template v-slot:[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}

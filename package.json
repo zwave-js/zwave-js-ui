@@ -122,6 +122,8 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
+    "@jamescoyle/vue-icon": "^0.1.2",
+    "@mdi/js": "^6.1.95",
     "@zwave-js/server": "^1.10.3",
     "ansi_up": "^5.0.1",
     "app-root-path": "^3.0.0",
