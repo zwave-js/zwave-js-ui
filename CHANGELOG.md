@@ -1,3 +1,17 @@
+## [5.5.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.3...v5.5.4) (2021-09-10)
+
+
+### Bug Fixes
+
+* better topic subscribe handling ([#1671](https://github.com/zwave-js/zwavejs2mqtt/issues/1671)) ([c27611e](https://github.com/zwave-js/zwavejs2mqtt/commit/c27611e4a76372a5e5369be9222711c79cfd87f9))
+* user friendly firmware update errors ([c461f62](https://github.com/zwave-js/zwavejs2mqtt/commit/c461f62ee844a429b0225e18a33be4a7de10007a))
+
+
+### Features
+
+* **ui:** add links to docs in settings ([7fdfff4](https://github.com/zwave-js/zwavejs2mqtt/commit/7fdfff46f25511c1647e2616a193be3ed240f842))
+* bump zwave-js@8.2.3 ([#1666](https://github.com/zwave-js/zwavejs2mqtt/issues/1666)) ([2341ea3](https://github.com/zwave-js/zwavejs2mqtt/commit/2341ea36ac6d2253d57367d47f0ead85ee6a32a7))
+
 ## [5.5.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.2...v5.5.3) (2021-09-03)
 
 

@@ -1780,7 +1780,11 @@ export default class Gateway {
 
 			if (this.topicLevels.indexOf(levels) < 0) {
 				this.topicLevels.push(levels)
-				this._mqtt.subscribe('+'.repeat(levels).split('').join('/'))
+				this._mqtt
+					.subscribe('+'.repeat(levels).split('').join('/'))
+					.catch(() => {
+						// ignore, handled by mqtt client
+					})
 			}
 
 			// I need to add the conf to the valueId but I don't want to edit
@@ -2024,11 +2028,14 @@ export default class Gateway {
 		parts: string[],
 		payload: any
 	): Promise<void> {
-		const valueId = this.topicValues[parts.join('/')]
+		const valueTopic = parts.join('/')
+		const valueId = this.topicValues[valueTopic]
 
 		if (valueId) {
 			payload = this.parsePayload(payload, valueId, valueId.conf)
 			await this._zwave.writeValue(valueId, payload, payload?.options)
+		} else {
+			logger.debug(`No writeable valueId found for ${valueTopic}`)
 		}
 	}
 
