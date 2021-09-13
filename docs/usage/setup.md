@@ -39,7 +39,7 @@ Properties of a **valueId configuration**:
 ## Zwave
 
 - **Serial port**: The serial port where your controller is connected
-- **Security Keys** : Zwave network keys for secure inclusion S0/S2. The correct format is like the OZW key but without `0x` `,` and spaces: OZW: `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` Zwavejs: `5C14897467C42598518AF155DE6CCEA8`
+- **Security Keys** : Zwave network keys for secure inclusion S0/S2. You can generate the using random generator or by pasting your OZW keys in the input, they will be auto-converted in the correct format. Example of valid key is: `5C14897467C42598518AF155DE6CCEA8`
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
   - **S2 Authenticated**: Security systems, sensors, lighting, etc.
   - **S2 AccessControl** (highest): Used for Door locks, garage doors, etc.

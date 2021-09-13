@@ -1216,11 +1216,10 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
-		async fixKey(event, key) {
+		fixKey(event, key) {
 			let data = event.clipboardData?.getData('Text')
 
 			if (data) {
-				await this.$nextTick()
 				data = data.replace(/0x|,|\s/gi, '')
 				this.$set(this.newZwave.securityKeys, key, data)
 				event.preventDefault()
