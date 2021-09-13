@@ -108,10 +108,7 @@ export class ManagedItems {
 	get propValues() {
 		const values = {}
 		Object.keys(this.propDefs).forEach((propName) => {
-			let valueFn = this.propDefs[propName].valueFn
-				? this.propDefs[propName].valueFn
-				: (node) => node[propName]
-			values[propName] = this.getPropValues(propName, valueFn)
+			values[propName] = this.getPropValues(propName, this.propDefs[propName].valueFn)
 		})
 		return values
 	}
