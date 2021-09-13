@@ -124,17 +124,18 @@
 			</td>
 		</template>
 		<template v-slot:[`item.power`]="{ item }">
-			<v-layout justify-center>
-				<svg-icon
-					type="mdi"
-					:path="getPowerInfo(item).icon"
-					:style="getPowerInfo(item).style"
-					:title="getPowerInfo(item).tooltip"
-				></svg-icon>
-				<span style="padding-top: 4px">{{
-					getPowerInfo(item).label
-				}}</span>
-			</v-layout>
+			<div :title="getPowerInfo(item).tooltip">
+				<v-layout justify-center :label="getPowerInfo(item).tooltip">
+					<svg-icon
+						type="mdi"
+						:path="getPowerInfo(item).icon"
+						:style="getPowerInfo(item).style"
+					></svg-icon>
+					<span style="padding-top: 4px">{{
+						getPowerInfo(item).label
+					}}</span>
+				</v-layout>
+			</div>
 		</template>
 		<template v-slot:[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}
