@@ -64,6 +64,7 @@ This are the available apis:
 - `removeAllAssociations(nodeId)`: Remove all associations of a specific node
 - `removeNodeFromAllAssociations(nodeId)`: Remove a node from all associations
 - `refreshValues(nodeId)`: Refresh all node values
+- `refreshCCValues(nodeId, cc)`: Refresh all node values of a specific CC
 - `pingNode(nodeId)`: Ping a node
 - `pollValue(valueId)`: Polls a value from the node
 - `startInclusion(inclusionStrategy, options)`: Starts the inclusion
