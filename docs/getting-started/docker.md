@@ -34,6 +34,7 @@ There are three different way to start the container and provide data persistenc
 3. If you are using the Z-Wave JS web socket server (for the official Home Assistant integration) **and you change the default port**, replace `3000:3000` with the port chosen in settings
 
 > [!WARNING]
+>
 > - Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
 > - Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
 

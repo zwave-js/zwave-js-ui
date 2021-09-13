@@ -1,6 +1,7 @@
 # Setup
 
 To configure ZWavejs2Mqtt, you must access it via your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
+
 ## General
 
 - **Auth**: Enable this to password protect your application. Default credentials are:
@@ -45,6 +46,7 @@ Properties of a **valueId configuration**:
   - **S2 AccessControl** (highest): Used for Door locks, garage doors, etc.
 
 > [!NOTE]
+>
 > - These keys are used to connect securely to compatible devices. **You should define both S0 and S2 keys, even if you are not yet using S2.**
 > - The network key consists of 32 hexadecimal characters, for example 2232666D100F795E5BB17F0A1BB7A146 (do not use this one, pick a random one).
 > - The correct format is like the OZW key but without 0x , and spaces. So (OZW) `0x5C, 0x14, 0x89, 0x74, 0x67, 0xC4, 0x25, 0x98, 0x51, 0x8A, 0xF1, 0x55, 0xDE, 0x6C, 0xCE, 0xA8` becomes `5C14897467C42598518AF155DE6CCEA8`

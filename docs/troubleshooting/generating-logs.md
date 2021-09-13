@@ -5,6 +5,7 @@ The are two main loggers, one for ZWavejs2Mqtt and one for the Z-Wave JS module.
 Both logger options are configured from the `Settings` page.
 
 ## Application logs
+
 > [!NOTE]
 > Application logs are of limited utility and are only useful for diagnosing **errors in the UI itself**, versus lower-level Z-Wave network operations that are reflected in the driver logs.
 

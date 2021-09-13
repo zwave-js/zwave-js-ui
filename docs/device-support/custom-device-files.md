@@ -8,7 +8,6 @@ For information about the content of device files, see the Z-Wave JS [device fil
 
 > [!NOTE] ZWavejs2Mqtt needs to be restarted in order to pick up a user-provided device configs. This can be done from settings by hitting `SAVE` or by completely restarting the application.
 
-
 > [!NOTE] You must re-interview a device for many types of changes in the device file to have an effect. E.g. changed configuration parameters, certain compat flags, etc.
 
 ## Logging

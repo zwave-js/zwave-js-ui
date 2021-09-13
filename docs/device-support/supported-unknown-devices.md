@@ -1,6 +1,7 @@
 # Device Support
 
 ## Supported Devices
+
 A database of currently supported devices is [available](https://devices.zwave-js.io/). This database is updated automatically with each release.
 
 ## "Unknown" Devices

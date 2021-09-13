@@ -31,6 +31,7 @@ docker-compose up
 > Replace `/dev/serial/by-id/insert_stick_reference_here` (only the first half of the X:Y mapping!) with the serial device for your Z-Wave stick.
 
 > [!WARNING]
+>
 > - Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
 > - Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
 
@@ -43,7 +44,9 @@ A [complete](usage/setup.md) guide to the settings is available. At minimum, you
 1. **Configure the serial port** [Settings -> Z-Wave -> Serial Port] (The template [Docker Compose file](https://github.com/zwave-js/zwavejs2mqtt/blob/master/docker/docker-compose.yml) maps the Z-Wave stick to /dev/zwave.)
 
 2. **Add Network Security Keys** [Settings -> Z-Wave -> Security Keys (S0 Legacy, S2 Unauthenticated, S2 Authenticated, and S2 Access Control))
+
 > [!NOTE]
+>
 > - These keys are used to connect securely to compatible devices. **You should define both S0 and S2 keys, even if you are not yet using S2.**
 > - The network key consists of 32 hexadecimal characters, for example 2232666D100F795E5BB17F0A1BB7A146 (do not use this one, pick a random one).
 > - You can generate a random key by clicking the double arrows at the end of the key box.
