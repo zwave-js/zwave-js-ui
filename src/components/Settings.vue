@@ -231,6 +231,12 @@
 														"
 														label="S2 Unauthenticated"
 														prepend-icon="vpn_key"
+														@paste="
+															fixKey(
+																$event,
+																'S2_Unauthenticated'
+															)
+														"
 														:rules="[
 															rules.validKey,
 															rules.validLength,
@@ -250,6 +256,12 @@
 															newZwave
 																.securityKeys
 																.S2_Authenticated
+														"
+														@paste="
+															fixKey(
+																$event,
+																'S2_Authenticated'
+															)
 														"
 														prepend-icon="vpn_key"
 														label="S2 Authenticated"
@@ -273,6 +285,12 @@
 																.securityKeys
 																.S2_AccessControl
 														"
+														@paste="
+															fixKey(
+																$event,
+																'S2_AccessControl'
+															)
+														"
 														prepend-icon="vpn_key"
 														label="S2 Access Control"
 														:rules="[
@@ -293,6 +311,12 @@
 															newZwave
 																.securityKeys
 																.S0_Legacy
+														"
+														@paste="
+															fixKey(
+																$event,
+																'S0_Legacy'
+															)
 														"
 														prepend-icon="vpn_key"
 														label="S0 Legacy"
@@ -1192,6 +1216,15 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		fixKey(event, key) {
+			let data = event.clipboardData?.getData('Text')
+
+			if (data) {
+				data = data.replace(/0x|,|\s/gi, '')
+				this.$set(this.newZwave.securityKeys, key, data)
+				event.preventDefault()
+			}
+		},
 		openDocs(id) {
 			window.open(
 				`https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=${id}`,
