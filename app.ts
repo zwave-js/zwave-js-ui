@@ -10,6 +10,7 @@ import ZWaveClient, {
 	configManager,
 	loadManager,
 	SensorTypeScale,
+	deviceConfigPriorityDir,
 } from './lib/ZwaveClient'
 import MqttClient from './lib/MqttClient'
 import Gateway, { GatewayConfig } from './lib/Gateway'
@@ -838,9 +839,19 @@ app.get(
 			}
 		}
 
+		const settings = jsonStore.get(store.settings)
+
+		const defaults = {
+			zwave: {
+				deviceConfigPriorityDir,
+			},
+		}
+
+		const settingsWithDefaults = Object.assign({}, defaults, settings)
+
 		const data = {
 			success: true,
-			settings: jsonStore.get(store.settings),
+			settings: settingsWithDefaults,
 			devices: gw?.zwave?.devices ?? {},
 			serial_ports: [],
 			scales: scales,
