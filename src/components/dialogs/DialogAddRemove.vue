@@ -1,13 +1,17 @@
 <template>
 	<v-dialog
 		v-model="value"
-		@click:outside="$emit('close')"
 		@keydown.esc="$emit('close')"
 		max-width="800px"
+		persistent
 	>
 		<v-card :loading="loading">
 			<v-card-title>
 				<span class="headline">Nodes Manager</span>
+				<v-spacer></v-spacer>
+				<v-btn icon @click="$emit('close')"
+					><v-icon>clear</v-icon></v-btn
+				>
 			</v-card-title>
 
 			<v-card-text>
@@ -139,6 +143,18 @@
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
+										<v-alert
+											dense
+											border="left"
+											type="warning"
+											v-if="missingKeys.length > 0"
+										>
+											Some security keys are missing:
+											<strong>{{
+												missingKeys.join(', ')
+											}}</strong
+											>. Please check your zwave settings.
+										</v-alert>
 										<v-radio :value="0">
 											<template v-slot:label>
 												<div class="option">
@@ -577,6 +593,23 @@ export default {
 		},
 		controllerStatus() {
 			return this.appInfo.controllerStatus
+		},
+		missingKeys() {
+			const keys = this.zwave.securityKeys || {}
+
+			const requiredKeys = [
+				'S2_Unauthenticated',
+				'S2_Authenticated',
+				'S2_Authenticated',
+				'S0_Legacy',
+			]
+			const missing = []
+			for (const key of requiredKeys) {
+				if (!keys[key] || keys[key].length !== 32) {
+					missing.push(key)
+				}
+			}
+			return missing
 		},
 	},
 	watch: {
