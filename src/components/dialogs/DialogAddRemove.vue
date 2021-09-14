@@ -1,13 +1,17 @@
 <template>
 	<v-dialog
 		v-model="value"
-		@click:outside="$emit('close')"
 		@keydown.esc="$emit('close')"
 		max-width="800px"
+		persistent
 	>
 		<v-card :loading="loading">
 			<v-card-title>
 				<span class="headline">Nodes Manager</span>
+				<v-spacer></v-spacer>
+				<v-btn icon @click="$emit('close')"
+					><v-icon>clear</v-icon></v-btn
+				>
 			</v-card-title>
 
 			<v-card-text>

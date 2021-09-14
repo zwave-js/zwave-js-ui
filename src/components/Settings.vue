@@ -434,11 +434,11 @@
 													v-model.number="
 														newZwave.commandsTimeout
 													"
-													label="Commands timeout"
+													label="Inclusion/Exclusion timeout"
 													:rules="[rules.required]"
 													required
 													suffix="seconds"
-													hint="Seconds to wait before stop inclusion/exclusion mode"
+													hint="Seconds to wait before to stop inclusion/exclusion mode"
 													type="number"
 												></v-text-field>
 											</v-col>

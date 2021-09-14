@@ -50,7 +50,7 @@ Properties of a **valueId configuration**:
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
 - **Log nodes**: Filter zwave-js logs to log just this nodes
-- **Commands timeout**: Seconds to wait before automatically stop inclusion/exclusion
+- **Inclusion/Exclusion timeout**: Seconds to wait before automatically stop inclusion/exclusion
 - **Hidden settings**: Advanced settings not visible to the user interface, you can edit these by setting in the `settings.json` file you fins in store directory
   - `zwave.options` overrides options passed to the zwave js Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
