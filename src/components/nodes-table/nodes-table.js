@@ -85,7 +85,31 @@ export default {
 
 			return undefined
 		},
-		getBatteryLevel(node) {
+		customSort(items, sortBy, sortDesc) {
+			// See https://stackoverflow.com/a/54612408
+			if (!sortBy[0]) {
+				return items
+			}
+			items.sort((a, b) => {
+				let prop = sortBy[0]
+				if (prop === 'power') {
+					// Special sort for power column
+					// Use 100% as fallback (for mains-powered devices)
+					let levelA = this.getBatteryLevel(a, 100)
+					let levelB = this.getBatteryLevel(b, 100)
+					let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
+					res = sortDesc[0] ? -res : res
+					return res
+				} else {
+					// Standard sort for every other column
+					let res = a[prop] < b[prop] ? -1 : a[prop] > b[prop] ? 1 : 0
+					res = sortDesc[0] ? -res : res
+					return res
+				}
+			})
+			return items
+		},
+		getBatteryLevel(node, fallback) {
 			// TODO: This has been taken from ZwaveGraph.vue method listNodes() and should be made reusable.
 			let batlev
 
@@ -96,7 +120,7 @@ export default {
 			}
 
 			batlev = batlev ? batlev.value : undefined
-			return batlev
+			return batlev !== undefined ? batlev : fallback
 		},
 		getPowerInfo(node) {
 			let level = this.getBatteryLevel(node)

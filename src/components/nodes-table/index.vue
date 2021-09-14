@@ -9,6 +9,7 @@
 		:expanded.sync="expanded"
 		:value="managedNodes.selected"
 		:options="managedNodes.tableOptions"
+		:custom-sort="customSort"
 		@update:options="managedNodes.tableOptions = $event"
 		@input="managedNodes.selected = $event"
 		@click:row="toggleExpanded($event)"
