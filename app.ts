@@ -38,6 +38,7 @@ import {
 	CustomPlugin,
 	PluginConstructor,
 } from './lib/CustomPlugin'
+import merge from 'merge'
 
 declare module 'express' {
 	interface Request {
@@ -847,7 +848,7 @@ app.get(
 			},
 		}
 
-		const settingsWithDefaults = Object.assign({}, defaults, settings)
+		const settingsWithDefaults = merge.recursive(defaults, settings)
 
 		const data = {
 			success: true,

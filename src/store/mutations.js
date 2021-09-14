@@ -15,6 +15,7 @@ export const state = {
       S2_AccessControl: undefined,
       S0_Legacy: undefined,
     },
+    deviceConfigPriorityDir: '',
     logToFile: false,
     serverEnabled: false,
     enableStatistics: undefined, // keep it undefined so the user dialog will show up
