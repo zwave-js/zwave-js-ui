@@ -1,3 +1,24 @@
+# [5.6.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.4...v5.6.0) (2021-09-15)
+
+
+### Bug Fixes
+
+* **ui:** make manage nodes dialog persistent and timoeut label ([#1688](https://github.com/zwave-js/zwavejs2mqtt/issues/1688)) ([75728a8](https://github.com/zwave-js/zwavejs2mqtt/commit/75728a8e9e22a72174013a2ca96194cd8f3e95b8))
+
+
+### Features
+
+* add `deviceConfigPriorityDir` zwave setting ([#1694](https://github.com/zwave-js/zwavejs2mqtt/issues/1694)) ([0d2c8bc](https://github.com/zwave-js/zwavejs2mqtt/commit/0d2c8bc7a47cb39f2fbc0fcd2713fa3d662575ca)), closes [#1686](https://github.com/zwave-js/zwavejs2mqtt/issues/1686)
+* bump zwave-js@8.3.0 ([#1695](https://github.com/zwave-js/zwavejs2mqtt/issues/1695)) ([0a6a814](https://github.com/zwave-js/zwavejs2mqtt/commit/0a6a814699f3ea648c20d8d1679ab9c932d4d18c))
+* bump zwave-js@8.3.1 ([#1696](https://github.com/zwave-js/zwavejs2mqtt/issues/1696)) ([d8eb97f](https://github.com/zwave-js/zwavejs2mqtt/commit/d8eb97f25533d3197499db82c7eb5e5c7de19fc0))
+* **ui:** auto-format OZW keys when pasted into security keys ([#1685](https://github.com/zwave-js/zwavejs2mqtt/issues/1685)) ([8dea0da](https://github.com/zwave-js/zwavejs2mqtt/commit/8dea0da3ab08a076d8403ef1fb63919fe1e190ee))
+* **ui:** show warning when security keys are missing ([39c40c8](https://github.com/zwave-js/zwavejs2mqtt/commit/39c40c8eab684cb20f3903eb4713438f3be5c8cf)), closes [#1687](https://github.com/zwave-js/zwavejs2mqtt/issues/1687)
+
+
+### Reverts
+
+* Revert "Release 5.6.0" ([21294f2](https://github.com/zwave-js/zwavejs2mqtt/commit/21294f27386346a7d82ac0320ee5de1cb38f9312))
+
 ## [5.5.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.3...v5.5.4) (2021-09-10)
 
 
