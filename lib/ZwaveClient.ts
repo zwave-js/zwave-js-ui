@@ -65,10 +65,10 @@ import { TypedEventEmitter } from './EventEmitter'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
-const priorityDir = storeDir + '/config'
+export const deviceConfigPriorityDir = storeDir + '/config'
 
 export const configManager = new ConfigManager({
-	deviceConfigPriorityDir: priorityDir,
+	deviceConfigPriorityDir,
 })
 
 export async function loadManager() {
@@ -317,6 +317,7 @@ export type ZwaveConfig = {
 		S0_Legacy: string
 	}>
 	serverEnabled?: boolean
+	deviceConfigPriorityDir?: string
 	serverPort?: number
 	logEnabled?: boolean
 	logLevel?: LogManager.LogLevel
@@ -1070,7 +1071,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
 				storage: {
 					cacheDir: storeDir,
-					deviceConfigPriorityDir: priorityDir,
+					deviceConfigPriorityDir:
+						this.cfg.deviceConfigPriorityDir ||
+						deviceConfigPriorityDir,
 				},
 				logConfig: {
 					// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
