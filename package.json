@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "5.6.0",
+  "version": "5.5.4",
   "bin": {
     "zwavejs2mqtt": "server/bin/www.js"
   },
