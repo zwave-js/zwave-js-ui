@@ -2239,12 +2239,12 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zwave-js/config@8.2.3":
-  version "8.2.3"
-  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.2.3.tgz#0117680ef4e2fa628bedd7cc1e278de9c548c452"
-  integrity sha512-Bbf581ypjLTCM3hGpEUbSUYA/KF3Pj5JyZ963gtLGG6VuDjdYPR1er/4TmEvIdr0V/NfhJHSW7JbIrraG1xxKw==
+"@zwave-js/config@8.3.1":
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.3.1.tgz#e4751bc9bbb46e6e4aa30f174c38e058dfd39652"
+  integrity sha512-6Y4h3lbH08TIlKcgoCAuibYdMoP6sqHmCDuBquPCGPf/Wuz+w1OZudQmKpu84j7/xV9fNff2zkifIs7lh7tu/Q==
   dependencies:
-    "@zwave-js/core" "8.2.3"
+    "@zwave-js/core" "8.3.1"
     "@zwave-js/shared" "8.2.2"
     alcalzone-shared "^4.0.0"
     ansi-colors "^4.1.1"
@@ -2254,10 +2254,10 @@
     semver "^7.3.5"
     winston "^3.3.3"
 
-"@zwave-js/core@8.2.3":
-  version "8.2.3"
-  resolved "https://registry.yarnpkg.com/@zwave-js/core/-/core-8.2.3.tgz#35f2dfb9709145f7570d7a25fc2da38ea272049e"
-  integrity sha512-hLdt6xOVkPsrwWEVG/7BrKQty08bx3Z8HP6VZI/W6OfALfYR/CTAv27SeeAF6S1ephkDfjiptcntnTgqlst7Qg==
+"@zwave-js/core@8.3.1":
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/@zwave-js/core/-/core-8.3.1.tgz#88304c552498c458d7d22de0df34e9d2475762f7"
+  integrity sha512-8Dm+bduWM1+rn4xfF15dRjJ28tD9gINFIXuFETaeX3gOIRaJhUpjmiUBDwwb1vbr6/7nS2NDOoLBjYgBN6jO0g==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@zwave-js/shared" "8.2.2"
@@ -2278,13 +2278,13 @@
   dependencies:
     moment "^2.11.2"
 
-"@zwave-js/serial@8.2.3":
-  version "8.2.3"
-  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-8.2.3.tgz#9c3cfeb997367bb291f40ad943aa1978a10c462c"
-  integrity sha512-A8VYiigWfyayHK1T/veW9y5fYVCjTjQqM0pUPNXBamGGWukqF2uZ+db+2UgI96q+LvnNUsd/llP3j9mj1Z3s+Q==
+"@zwave-js/serial@8.3.1":
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/@zwave-js/serial/-/serial-8.3.1.tgz#46bb162c83a6c38b95c4c9f009a1a097c77fdb51"
+  integrity sha512-RiWkLxYrD59EQs1fvkAc3zYlIiV91G6jQKsplKeCzVVdje5WpIzePixPDefMTA1jfPiJlx6V+U0QI7U2Os2SXg==
   dependencies:
     "@sentry/node" "^6.12.0"
-    "@zwave-js/core" "8.2.3"
+    "@zwave-js/core" "8.3.1"
     "@zwave-js/shared" "8.2.2"
     alcalzone-shared "^4.0.0"
     serialport "^9.2.1"
@@ -12111,18 +12111,18 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
 
-zwave-js@^8.2.3:
-  version "8.2.3"
-  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.2.3.tgz#ffb7a021406a1dac378da9904fb3bae08c97513d"
-  integrity sha512-llkhjC5TRtJF3zfWoQyWQD9ZjjVA7wfrCnFm3p4vXJH2Yn2xPG/WIkEEoWSSHDJmKQXVL+Opn8ywwzOQx4Rrig==
+zwave-js@^8.3.1:
+  version "8.3.1"
+  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.3.1.tgz#9b4034af61dbc09eda86a14e3cfb0f8af5a71ef7"
+  integrity sha512-YX6bXLuKcoBmT4gvfDGBsjFLIm0xZgAb2EV9T2OBLoO1rzwIx6nmhpDNHOAsuxtnRK1ZKX5VWVoM6vUhD9iWhQ==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@alcalzone/pak" "^0.6.0"
     "@sentry/integrations" "^6.12.0"
     "@sentry/node" "^6.12.0"
-    "@zwave-js/config" "8.2.3"
-    "@zwave-js/core" "8.2.3"
-    "@zwave-js/serial" "8.2.3"
+    "@zwave-js/config" "8.3.1"
+    "@zwave-js/core" "8.3.1"
+    "@zwave-js/serial" "8.3.1"
     "@zwave-js/shared" "8.2.2"
     alcalzone-shared "^4.0.0"
     ansi-colors "^4.1.1"
