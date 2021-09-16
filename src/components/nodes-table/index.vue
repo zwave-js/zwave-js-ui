@@ -126,7 +126,7 @@
 		</template>
 		<template v-slot:[`item.batteryLevel`]="{ item }">
 			<div :title="getPowerInfo(item).tooltip">
-				<v-layout justify-center :label="getPowerInfo(item).tooltip">
+				<v-layout :label="getPowerInfo(item).tooltip">
 					<svg-icon
 						type="mdi"
 						:path="getPowerInfo(item).icon"
