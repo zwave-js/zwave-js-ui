@@ -764,15 +764,7 @@ export default {
 
 				neighbors[id] = node.neighbors
 
-				let batlev
-
-				if (node.values) {
-					batlev = node.values.find(
-						(v) => v.commandClass === 128 && v.property === 'level'
-					)
-				}
-
-				batlev = batlev ? batlev.value : undefined
+				let batlev = node.batteryLevel
 
 				const nodeName = node.name || 'NodeID ' + node.id
 
