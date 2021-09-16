@@ -162,6 +162,10 @@ export class ManagedItems {
 			type: propDef.type === undefined ? 'string' : propDef.type,
 			groupable:
 				propDef.groupable === undefined ? true : !!propDef.groupable,
+			// NOTE: These extend the VDataTable headers:
+			valueFn: propDef.valueFn,
+			formatFn: propDef.formatFn,
+			sortFn: propDef.sortFn,
 		}
 	}
 

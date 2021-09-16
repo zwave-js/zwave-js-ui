@@ -32,11 +32,29 @@ export default {
 		return {
 			managedNodes: null,
 			nodesProps: {
+				/* The node property definition map entries can have the following attributes:
+           - type (string): The type of the property
+           - label (string): The label of the property to be displayed as table column
+           - groupable (boolean): If the column values can be grouped
+           - valueFn (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
+             NOTE: Currently does not work with value grouping due to a limitation of VDataTable
+           - formatFn (function): Function to format the value for displaying
+        */
 				id: { type: 'number', label: 'ID', groupable: false },
-				power: {
+				batteryLevel: {
 					type: 'number',
 					label: 'Power',
 					valueFn: (node) => this.getBatteryLevel(node),
+					formatFn: (value) => (value ? value + '%' : ''),
+					sortFn: (items, sortBy, sortDesc, nodeA, nodeB) => {
+						// Special sort for power column
+						// Use 100% as fallback (for mains-powered devices)
+						let levelA = this.getBatteryLevel(nodeA, 100)
+						let levelB = this.getBatteryLevel(nodeB, 100)
+						let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
+						res = sortDesc[0] ? -res : res
+						return res
+					},
 				},
 				manufacturer: { type: 'string', label: 'Manufacturer' },
 				productDescription: { type: 'string', label: 'Product' },
@@ -85,6 +103,23 @@ export default {
 
 			return undefined
 		},
+		getGroupByLabel(group) {
+			let formattedGroup = group
+			if (
+				this.managedNodes &&
+				this.managedNodes.groupBy &&
+				this.managedNodes.groupBy[0] &&
+				this.nodesProps[this.managedNodes.groupBy[0]] &&
+				typeof this.nodesProps[this.managedNodes.groupBy[0]]
+					.formatFn === 'function'
+			) {
+				formattedGroup =
+					this.nodesProps[this.managedNodes.groupBy[0]].formatFn(
+						group
+					)
+			}
+			return this.managedNodes.groupByTitle + ': ' + formattedGroup
+		},
 		customSort(items, sortBy, sortDesc) {
 			// See https://stackoverflow.com/a/54612408
 			if (!sortBy[0]) {
@@ -92,14 +127,18 @@ export default {
 			}
 			items.sort((a, b) => {
 				let prop = sortBy[0]
-				if (prop === 'power') {
-					// Special sort for power column
-					// Use 100% as fallback (for mains-powered devices)
-					let levelA = this.getBatteryLevel(a, 100)
-					let levelB = this.getBatteryLevel(b, 100)
-					let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
-					res = sortDesc[0] ? -res : res
-					return res
+				if (
+					this.nodesProps[sortBy[0]] &&
+					typeof this.nodesProps[sortBy[0]].sortFn === 'function'
+				) {
+					// Use special sort function if one is defined for the sortBy column
+					return this.nodesProps[sortBy[0]].sortFn(
+						items,
+						sortBy,
+						sortDesc,
+						a,
+						b
+					)
 				} else {
 					// Standard sort for every other column
 					let res = a[prop] < b[prop] ? -1 : a[prop] > b[prop] ? 1 : 0
@@ -110,17 +149,9 @@ export default {
 			return items
 		},
 		getBatteryLevel(node, fallback) {
-			// TODO: This has been taken from ZwaveGraph.vue method listNodes() and should be made reusable.
-			let batlev
-
-			if (node.values) {
-				batlev = node.values.find(
-					(v) => v.commandClass === 128 && v.property === 'level'
-				)
-			}
-
-			batlev = batlev ? batlev.value : undefined
-			return batlev !== undefined ? batlev : fallback
+			return node.batteryLevel !== undefined
+				? node.batteryLevel
+				: fallback
 		},
 		getPowerInfo(node) {
 			let level = this.getBatteryLevel(node)

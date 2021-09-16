@@ -118,13 +118,13 @@
 				<v-btn @click="toggle" x-small icon :ref="group">
 					<v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
 				</v-btn>
-				<span>{{ managedNodes.groupByTitle }}: {{ group }}</span>
+				<span>{{ getGroupByLabel(group) }}</span>
 				<v-btn x-small icon @click="remove"
 					><v-icon>close</v-icon></v-btn
 				>
 			</td>
 		</template>
-		<template v-slot:[`item.power`]="{ item }">
+		<template v-slot:[`item.batteryLevel`]="{ item }">
 			<div :title="getPowerInfo(item).tooltip">
 				<v-layout justify-center :label="getPowerInfo(item).tooltip">
 					<svg-icon

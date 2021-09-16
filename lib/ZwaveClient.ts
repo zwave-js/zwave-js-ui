@@ -140,6 +140,19 @@ const allowedApis = validateMethods([
 	'abortInclusion',
 ] as const)
 
+// Define mapping of node properties to ValueIDs
+const mappedNodeProps: Record<string, ValueID> = {
+	batteryLevel: {
+		commandClass: CommandClasses.Battery,
+		property: 'level',
+	},
+}
+// Extract mapped command classes for better mapping performance
+const mappedCommandClasses: Set<number> = new Set()
+for (const k in mappedNodeProps) {
+	mappedCommandClasses.add(mappedNodeProps[k].commandClass)
+}
+
 export type SensorTypeScale = {
 	key: string | number
 	sensor: string
@@ -305,6 +318,7 @@ export type Z2MNode = {
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	healProgress?: string | undefined
+	batteryLevel?: number
 }
 
 export type ZwaveConfig = {
@@ -2504,6 +2518,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
+		this._mapNodeValuesToProps(node)
+
 		this._onNodeStatus(zwaveNode)
 
 		this.emit(
@@ -3294,6 +3310,50 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Triggered on node ready or node value changes to map certain values (e.g. batteryLevel) to direct node properties.
+	 * @param node The affected node
+	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
+	 */
+	private _mapNodeValuesToProps(
+		node: Z2MNode,
+		valueId?: TranslatedValueID & { [x: string]: any }
+	) {
+		if (valueId) {
+			if (!mappedCommandClasses.has(valueId.commandClass)) return // Return quickly if command class is not synced to node props
+			for (const k in mappedNodeProps) {
+				const syncedValueId: ValueID = mappedNodeProps[k]
+				if (
+					valueId.commandClass === syncedValueId.commandClass &&
+					valueId.property === syncedValueId.property
+				) {
+					logger.info(
+						'Mapping property "' +
+							valueId.property +
+							'" of command class "' +
+							CommandClasses[valueId.commandClass] +
+							'" to property "' +
+							k +
+							'" of node ID ' +
+							node.id
+					)
+					node[k] = valueId.value
+				}
+			}
+		} else {
+			logger.info(
+				'Syncing all mapped node properties for node ID ' +
+					node.id +
+					' ...'
+			)
+			if (node.values) {
+				for (const k in node.values) {
+					this._mapNodeValuesToProps(node, node.values[k])
+				}
+			}
+		}
+	}
+
+	/**
 	 * Triggered when a node is ready and a value changes
 	 *
 	 */
@@ -3334,6 +3394,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				valueId.value = newValue
 				valueId.stateless = !!args.stateless
+
+				// Map defined values (e.g. battery level) to top level node properties:
+				this._mapNodeValuesToProps(node, valueId)
 
 				// ensure duration is never undefined
 				if (
