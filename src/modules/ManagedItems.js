@@ -156,17 +156,18 @@ export class ManagedItems {
 	 */
 	_getTableHeaderForColumn(colName) {
 		const propDef = this.propDefs[colName]
-		return {
+		const header = {
 			value: colName,
 			text: propDef.label === undefined ? colName : propDef.label,
 			type: propDef.type === undefined ? 'string' : propDef.type,
 			groupable:
 				propDef.groupable === undefined ? true : !!propDef.groupable,
-			// NOTE: These extend the VDataTable headers:
-			valueFn: propDef.valueFn,
-			formatFn: propDef.formatFn,
-			sortFn: propDef.sortFn,
 		}
+		// NOTE: These extend the VDataTable headers:
+		if (propDef.valueFn) header.valueFn = propDef.valueFn
+		if (propDef.formatFn) header.formatFn = propDef.formatFn
+		if (propDef.sortFn) header.sortFn = propDef.sortFn
+		return header
 	}
 
 	/**

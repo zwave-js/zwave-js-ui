@@ -24,17 +24,6 @@ const testItems = [
 	{ id: 5, name: 'b', value: 'Abc', nested: { value: 'nestedValue5' } },
 	{ id: 6, name: 'a', value: 'Xyz', nested: { value: 'nestedValue6' } },
 ]
-const testItemHeaders = [
-	{ value: 'id', text: 'ID', type: 'number', groupable: false },
-	{ value: 'name', text: 'Name', type: 'string', groupable: true },
-	{ value: 'value', text: 'Value', type: 'string', groupable: true },
-	{
-		value: 'nestedValue',
-		text: 'Nested value',
-		type: 'string',
-		groupable: true,
-	},
-]
 const testPropDefs = {
 	id: { type: 'number', label: 'ID', groupable: false },
 	name: { type: 'string', label: 'Name' },
@@ -45,6 +34,18 @@ const testPropDefs = {
 		valueFn: (item) => item.nested.value,
 	},
 }
+const testItemHeaders = [
+	{ value: 'id', text: 'ID', type: 'number', groupable: false },
+	{ value: 'name', text: 'Name', type: 'string', groupable: true },
+	{ value: 'value', text: 'Value', type: 'string', groupable: true },
+	{
+		value: 'nestedValue',
+		text: 'Nested value',
+		type: 'string',
+		groupable: true,
+		valueFn: testPropDefs.nestedValue.valueFn,
+	},
+]
 function getNewManagedTestItems() {
 	return new ManagedItems(
 		testItems,
