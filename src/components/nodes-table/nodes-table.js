@@ -49,8 +49,8 @@ export default {
 					sortFn: (items, sortBy, sortDesc, nodeA, nodeB) => {
 						// Special sort for power column
 						// Use 100% as fallback (for mains-powered devices)
-						let levelA = this.getBatteryLevel(nodeA, 100)
-						let levelB = this.getBatteryLevel(nodeB, 100)
+						let levelA = this.getBatteryLevel(nodeA, 101)
+						let levelB = this.getBatteryLevel(nodeB, 101)
 						let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
 						res = sortDesc[0] ? -res : res
 						return res
