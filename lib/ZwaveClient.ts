@@ -3327,28 +3327,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					valueId.property === syncedValueId.property
 				) {
 					logger.info(
-						'Mapping property "' +
-							valueId.property +
-							'" of command class "' +
-							CommandClasses[valueId.commandClass] +
-							'" to property "' +
+						'Node ' +
+							node.id +
+							": mapping property '" +
 							k +
-							'" of node ID ' +
-							node.id
+							"' => commandClass=" +
+							valueId.commandClass +
+							' (' +
+							CommandClasses[valueId.commandClass] +
+							"), property='" +
+							valueId.property +
+							"'"
 					)
 					node[k] = valueId.value
 				}
 			}
-		} else {
-			logger.info(
-				'Syncing all mapped node properties for node ID ' +
-					node.id +
-					' ...'
-			)
-			if (node.values) {
-				for (const k in node.values) {
-					this._mapNodeValuesToProps(node, node.values[k])
-				}
+		} else if (node.values) {
+			for (const k in node.values) {
+				this._mapNodeValuesToProps(node, node.values[k])
 			}
 		}
 	}
