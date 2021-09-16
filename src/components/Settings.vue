@@ -221,6 +221,17 @@
 													:items="serial_ports"
 												></v-combobox>
 											</v-col>
+											<v-col cols="12" sm="6">
+												<v-text-field
+													v-model.trim="
+														newZwave.deviceConfigPriorityDir
+													"
+													label="Config priority directory"
+													:rules="[rules.required]"
+													hint="Directory from where device configuration files can be loaded with higher priority than the included ones. This directory does not get indexed and should be used sparingly, e.g. when custom files are absolutely necessary or for testing"
+													required
+												></v-text-field>
+											</v-col>
 											<v-row v-if="newZwave.securityKeys">
 												<v-col cols="12" sm="6">
 													<v-text-field

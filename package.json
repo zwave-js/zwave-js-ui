@@ -145,6 +145,7 @@
     "hammerjs": "^2.0.8",
     "jsonfile": "^6.1.0",
     "jsonwebtoken": "^8.5.1",
+    "merge": "^2.1.1",
     "morgan": "~1.10.0",
     "mqtt": "^4.2.6",
     "mqtt-nedb-store": "^0.1.1",
@@ -165,7 +166,7 @@
     "vuetify": "^2.5.3",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
-    "zwave-js": "^8.3.0"
+    "zwave-js": "^8.3.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.15.4",
