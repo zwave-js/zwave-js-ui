@@ -38,6 +38,7 @@ export default {
            - groupable (boolean): If the column values can be grouped
            - valueFn (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
              NOTE: Currently does not work with value grouping due to a limitation of VDataTable
+           - infoFn (function): Function to provide more detailed information for displaying as a tooltip
            - formatFn (function): Function to format the value for displaying
         */
 				id: { type: 'number', label: 'ID', groupable: false },
