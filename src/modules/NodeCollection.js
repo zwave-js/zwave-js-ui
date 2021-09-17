@@ -1,6 +1,7 @@
 export class NodeCollection {
-	constructor(nodes) {
+	constructor(nodes, propDefs) {
 		this.nodes = nodes
+		this.propDefs = propDefs
 	}
 
 	_isUndefined(value) {
@@ -40,14 +41,21 @@ export class NodeCollection {
 			(merged, prop) => merged.concat(prop),
 			[]
 		)
-		return mergedProps.find((prop) => filter(node[prop]))
+		return mergedProps.find((prop) =>
+			filter(
+				this.propDefs &&
+					typeof this.propDefs[prop].customValue === 'function'
+					? this.propDefs[prop].customValue(node)
+					: node[prop]
+			)
+		)
 	}
 
 	filter(properties, filter) {
 		const filtered = this.nodes.filter((node) =>
 			this._filterByProps(node, properties, filter)
 		)
-		return new NodeCollection(filtered)
+		return new NodeCollection(filtered, this.propDefs)
 	}
 
 	contains(properties, value, caseSensitive = false) {

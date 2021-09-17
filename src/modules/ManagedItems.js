@@ -89,10 +89,13 @@ export class ManagedItems {
 	/**
 	 * Get all property values from items
 	 */
-	getPropValues(propName) {
+	getPropValues(propName, customValue) {
 		const uniqueMap = {}
 		this.items.forEach((item) => {
-			const value = item[propName]
+			const value =
+				typeof customValue === 'function'
+					? customValue(item)
+					: item[propName]
 			if (value) {
 				uniqueMap[value] = uniqueMap[value] || value
 			}
@@ -108,7 +111,10 @@ export class ManagedItems {
 	get propValues() {
 		const values = {}
 		Object.keys(this.propDefs).forEach((propName) => {
-			values[propName] = this.getPropValues(propName)
+			values[propName] = this.getPropValues(
+				propName,
+				this.propDefs[propName].customValue
+			)
 		})
 		return values
 	}
@@ -118,7 +124,7 @@ export class ManagedItems {
 	 */
 	get filteredItems() {
 		return ColumnFilterHelper.filterByFilterSpec(
-			new NodeCollection(this.items),
+			new NodeCollection(this.items, this.propDefs),
 			this.allTableHeaders,
 			this.filters
 		).nodes // TODO: nodes should be items
@@ -153,13 +159,19 @@ export class ManagedItems {
 	 */
 	_getTableHeaderForColumn(colName) {
 		const propDef = this.propDefs[colName]
-		return {
+		const header = {
 			value: colName,
 			text: propDef.label === undefined ? colName : propDef.label,
 			type: propDef.type === undefined ? 'string' : propDef.type,
 			groupable:
 				propDef.groupable === undefined ? true : !!propDef.groupable,
 		}
+		// NOTE: These extend the VDataTable headers:
+		if (propDef.customValue) header.customValue = propDef.customValue
+		if (propDef.customFormat) header.customFormat = propDef.customFormat
+		if (propDef.customInfo) header.customInfo = propDef.customInfo
+		if (propDef.customSort) header.customSort = propDef.customSort
+		return header
 	}
 
 	/**

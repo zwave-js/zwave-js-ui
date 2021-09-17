@@ -17,23 +17,35 @@ class LocalStorageMock {
 }
 
 const testItems = [
-	{ id: 1, name: 'a', value: 'Abc' },
-	{ id: 2, name: 'b', value: 'Xyz' },
-	{ id: 3, name: 'a', value: 'Abc' },
-	{ id: 4, name: 'c', value: 'Xyz' },
-	{ id: 5, name: 'b', value: 'Abc' },
-	{ id: 6, name: 'a', value: 'Xyz' },
-]
-const testItemHeaders = [
-	{ value: 'id', text: 'ID', type: 'number', groupable: false },
-	{ value: 'name', text: 'Name', type: 'string', groupable: true },
-	{ value: 'value', text: 'Value', type: 'string', groupable: true },
+	{ id: 1, name: 'a', value: 'Abc', nested: { value: 'nestedValue1' } },
+	{ id: 2, name: 'b', value: 'Xyz', nested: { value: 'nestedValue2' } },
+	{ id: 3, name: 'a', value: 'Abc', nested: { value: 'nestedValue3' } },
+	{ id: 4, name: 'c', value: 'Xyz', nested: { value: 'nestedValue4' } },
+	{ id: 5, name: 'b', value: 'Abc', nested: { value: 'nestedValue5' } },
+	{ id: 6, name: 'a', value: 'Xyz', nested: { value: 'nestedValue6' } },
 ]
 const testPropDefs = {
 	id: { type: 'number', label: 'ID', groupable: false },
 	name: { type: 'string', label: 'Name' },
 	value: { type: 'string', label: 'Value' },
+	nestedValue: {
+		type: 'string',
+		label: 'Nested value',
+		customValue: (item) => item.nested.value,
+	},
 }
+const testItemHeaders = [
+	{ value: 'id', text: 'ID', type: 'number', groupable: false },
+	{ value: 'name', text: 'Name', type: 'string', groupable: true },
+	{ value: 'value', text: 'Value', type: 'string', groupable: true },
+	{
+		value: 'nestedValue',
+		text: 'Nested value',
+		type: 'string',
+		groupable: true,
+		customValue: testPropDefs.nestedValue.customValue,
+	},
+]
 function getNewManagedTestItems() {
 	return new ManagedItems(
 		testItems,
@@ -134,6 +146,14 @@ describe('ManagedItems', () => {
 				id: [1, 2, 3, 4, 5, 6],
 				name: ['a', 'b', 'c'],
 				value: ['Abc', 'Xyz'],
+				nestedValue: [
+					'nestedValue1',
+					'nestedValue2',
+					'nestedValue3',
+					'nestedValue4',
+					'nestedValue5',
+					'nestedValue6',
+				],
 			})
 		})
 	})
