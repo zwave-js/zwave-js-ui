@@ -43,8 +43,9 @@ export class NodeCollection {
 		)
 		return mergedProps.find((prop) =>
 			filter(
-				this.propDefs && this.propDefs[prop].valueFn
-					? this.propDefs[prop].valueFn(node)
+				this.propDefs &&
+					typeof this.propDefs[prop].customValue === 'function'
+					? this.propDefs[prop].customValue(node)
 					: node[prop]
 			)
 		)

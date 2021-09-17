@@ -36,22 +36,22 @@ export default {
            - type (string): The type of the property
            - label (string): The label of the property to be displayed as table column
            - groupable (boolean): If the column values can be grouped
-           - valueFn (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
+           - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
              NOTE: Currently does not work with value grouping due to a limitation of VDataTable
-           - infoFn (function): Function to provide more detailed information for displaying as a tooltip
-           - formatFn (function): Function to format the value for displaying
+           - customInfo (function): Function to provide more detailed information for displaying as a tooltip
+           - customFormat (function): Function to format the value for displaying
         */
 				id: { type: 'number', label: 'ID', groupable: false },
 				batteryLevel: {
 					type: 'number',
 					label: 'Power',
-					valueFn: (node) => this.getBatteryLevel(node),
-					formatFn: (value) => (value ? value + '%' : 'mains'),
-					infoFn: (node) =>
+					customValue: (node) => this.getBatteryLevel(node),
+					customFormat: (value) => (value ? value + '%' : 'mains'),
+					customInfo: (node) =>
 						node.batteryLevel
 							? 'Battery level: ' + node.batteryLevel + '%'
 							: 'mains-powered',
-					sortFn: (items, sortBy, sortDesc, nodeA, nodeB) => {
+					customSort: (items, sortBy, sortDesc, nodeA, nodeB) => {
 						// Special sort for power column
 						// Use 100% as fallback (for mains-powered devices)
 						let levelA = this.getBatteryLevel(nodeA, 101)
@@ -116,10 +116,10 @@ export default {
 				this.managedNodes.groupBy[0] &&
 				this.nodesProps[this.managedNodes.groupBy[0]] &&
 				typeof this.nodesProps[this.managedNodes.groupBy[0]]
-					.formatFn === 'function'
+					.customFormat === 'function'
 			) {
 				formattedGroup =
-					this.nodesProps[this.managedNodes.groupBy[0]].formatFn(
+					this.nodesProps[this.managedNodes.groupBy[0]].customFormat(
 						group
 					)
 			}
@@ -134,10 +134,10 @@ export default {
 				let prop = sortBy[0]
 				if (
 					this.nodesProps[sortBy[0]] &&
-					typeof this.nodesProps[sortBy[0]].sortFn === 'function'
+					typeof this.nodesProps[sortBy[0]].customSort === 'function'
 				) {
 					// Use special sort function if one is defined for the sortBy column
-					return this.nodesProps[sortBy[0]].sortFn(
+					return this.nodesProps[sortBy[0]].customSort(
 						items,
 						sortBy,
 						sortDesc,
@@ -162,8 +162,14 @@ export default {
 			let level = node.batteryLevel
 			let style = 'color: green'
 			let icon
-			let label = this.nodesProps.batteryLevel.formatFn(level)
-			let tooltip = this.nodesProps.batteryLevel.infoFn(node)
+			let label =
+				typeof this.nodesProps.batteryLevel.customFormat === 'function'
+					? this.nodesProps.batteryLevel.customFormat(level)
+					: level
+			let tooltip =
+				typeof this.nodesProps.batteryLevel.customInfo === 'function'
+					? this.nodesProps.batteryLevel.customInfo(node)
+					: ''
 			if (level === undefined) {
 				icon = mdiPowerPlug
 				tooltip = 'mains-powered'

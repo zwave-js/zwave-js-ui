@@ -31,7 +31,7 @@ const testPropDefs = {
 	nestedValue: {
 		type: 'string',
 		label: 'Nested value',
-		valueFn: (item) => item.nested.value,
+		customValue: (item) => item.nested.value,
 	},
 }
 const testItemHeaders = [
@@ -43,7 +43,7 @@ const testItemHeaders = [
 		text: 'Nested value',
 		type: 'string',
 		groupable: true,
-		valueFn: testPropDefs.nestedValue.valueFn,
+		customValue: testPropDefs.nestedValue.customValue,
 	},
 ]
 function getNewManagedTestItems() {

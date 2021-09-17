@@ -89,10 +89,13 @@ export class ManagedItems {
 	/**
 	 * Get all property values from items
 	 */
-	getPropValues(propName, valueFn) {
+	getPropValues(propName, customValue) {
 		const uniqueMap = {}
 		this.items.forEach((item) => {
-			const value = valueFn ? valueFn(item) : item[propName]
+			const value =
+				typeof customValue === 'function'
+					? customValue(item)
+					: item[propName]
 			if (value) {
 				uniqueMap[value] = uniqueMap[value] || value
 			}
@@ -110,7 +113,7 @@ export class ManagedItems {
 		Object.keys(this.propDefs).forEach((propName) => {
 			values[propName] = this.getPropValues(
 				propName,
-				this.propDefs[propName].valueFn
+				this.propDefs[propName].customValue
 			)
 		})
 		return values
@@ -164,9 +167,10 @@ export class ManagedItems {
 				propDef.groupable === undefined ? true : !!propDef.groupable,
 		}
 		// NOTE: These extend the VDataTable headers:
-		if (propDef.valueFn) header.valueFn = propDef.valueFn
-		if (propDef.formatFn) header.formatFn = propDef.formatFn
-		if (propDef.sortFn) header.sortFn = propDef.sortFn
+		if (propDef.customValue) header.customValue = propDef.customValue
+		if (propDef.customFormat) header.customFormat = propDef.customFormat
+		if (propDef.customInfo) header.customInfo = propDef.customInfo
+		if (propDef.customSort) header.customSort = propDef.customSort
 		return header
 	}
 
