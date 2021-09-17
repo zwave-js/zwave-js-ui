@@ -3326,18 +3326,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					valueId.commandClass === syncedValueId.commandClass &&
 					valueId.property === syncedValueId.property
 				) {
-					logger.info(
-						'Node ' +
-							node.id +
-							": mapping property '" +
-							k +
-							"' => commandClass=" +
-							valueId.commandClass +
-							' (' +
-							CommandClasses[valueId.commandClass] +
-							"), property='" +
-							valueId.property +
-							"'"
+					logger.debug(
+						`Node ${
+							node.id
+						}: mapping property '${k}' => commandClass=${
+							valueId.commandClass
+						} (${
+							CommandClasses[valueId.commandClass]
+						}), property='${valueId.property}'`
 					)
 					node[k] = valueId.value
 				}
