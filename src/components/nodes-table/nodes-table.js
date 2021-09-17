@@ -46,6 +46,10 @@ export default {
 					label: 'Power',
 					valueFn: (node) => this.getBatteryLevel(node),
 					formatFn: (value) => (value ? value + '%' : 'mains'),
+					infoFn: (node) =>
+						node.batteryLevel
+							? 'Battery level: ' + node.batteryLevel + '%'
+							: 'mains-powered',
 					sortFn: (items, sortBy, sortDesc, nodeA, nodeB) => {
 						// Special sort for power column
 						// Use 100% as fallback (for mains-powered devices)
@@ -154,11 +158,11 @@ export default {
 				: fallback
 		},
 		getPowerInfo(node) {
-			let level = this.getBatteryLevel(node)
+			let level = node.batteryLevel
 			let style = 'color: green'
 			let icon
 			let label = this.nodesProps.batteryLevel.formatFn(level)
-			let tooltip = 'Battery level: ' + level + '%'
+			let tooltip = this.nodesProps.batteryLevel.infoFn(node)
 			if (level === undefined) {
 				icon = mdiPowerPlug
 				tooltip = 'mains-powered'
