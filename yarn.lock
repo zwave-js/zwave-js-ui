@@ -2300,10 +2300,10 @@
     serialport "^9.2.1"
     winston "^3.3.3"
 
-"@zwave-js/server@^1.10.3":
-  version "1.10.3"
-  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.3.tgz#c9888ab22a176b28f3abd086890fdc9298e3afe6"
-  integrity sha512-EgHQLKd3MQJjcZk7TaXLW8QAG4iabvwjOdvzwHmi10n3JIbI2GPLZVitMKfc24a5Gvr0HjzVDbq8r1c6rItmtA==
+"@zwave-js/server@^1.10.4":
+  version "1.10.4"
+  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.4.tgz#2e0945f317ab41aa4f3e80ddb0bdb3a733baf17a"
+  integrity sha512-kGmY5drJQGBkyPHuY+KyegHRxst9kW4mTpsM04g3l2bVbj2/w+Vw1lRaysu+v/3E+xvGJzhrEdn7pmJG45C6bw==
   dependencies:
     minimist "^1.2.5"
     ws "^8.0.0"
