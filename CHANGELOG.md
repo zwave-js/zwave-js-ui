@@ -1,3 +1,18 @@
+## [5.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.0...v5.6.1) (2021-09-24)
+
+
+### Bug Fixes
+
+* another try to workaround pkg bug ([#1727](https://github.com/zwave-js/zwavejs2mqtt/issues/1727)) ([81a0a7f](https://github.com/zwave-js/zwavejs2mqtt/commit/81a0a7f2af01baf36396229e90b8488cc765002f))
+* workaround for pkg bug ([#1726](https://github.com/zwave-js/zwavejs2mqtt/issues/1726)) ([7d0bd6c](https://github.com/zwave-js/zwavejs2mqtt/commit/7d0bd6c23c46a46300d97d894e27d20f2acdf64d))
+* **ui:** better check for forwarding nodes in mesh graph ([e5cf151](https://github.com/zwave-js/zwavejs2mqtt/commit/e5cf1515903adf3d4c6374e86efebe5509d0bf26))
+
+
+### Features
+
+* bump @zwave-js/server@1.10.4 ([#1714](https://github.com/zwave-js/zwavejs2mqtt/issues/1714)) ([176017d](https://github.com/zwave-js/zwavejs2mqtt/commit/176017df232ac21c6f43aa6e8e99ae147f1f796b))
+* **ui:** show power source + battery level in nodes table ([#1675](https://github.com/zwave-js/zwavejs2mqtt/issues/1675)) ([713815d](https://github.com/zwave-js/zwavejs2mqtt/commit/713815da3711179e218171922f7adc84df9b77c0))
+
 # [5.6.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.4...v5.6.0) (2021-09-15)
 
 
