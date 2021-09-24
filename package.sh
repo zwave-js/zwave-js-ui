@@ -48,7 +48,7 @@ echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
 # Workaround for pkg bug (part 1):
-mv node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue.bak
+mv node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue svg-icon.vue.bak
 
 if [ ! -z "$1" ]; then
 	echo "## Building application..."
@@ -114,7 +114,7 @@ else
 fi
 
 # Workaround for pkg bug (part 2):
-mv node_modules/@jamescoyle/vue-icon/lib/svg-icon node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue
+mv svg-icon.vue.bak node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue
 
 echo "## Create folders needed"
 cd $PKG_FOLDER
