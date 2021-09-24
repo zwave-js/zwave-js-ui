@@ -47,6 +47,8 @@ NODE_MAJOR=$(node -v | egrep -o '[0-9].' | head -n 1)
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
+# Workaround for pkg bug (part 1):
+mv node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue svg-icon.vue.bak
 
 if [ ! -z "$1" ]; then
 	echo "## Building application..."
@@ -110,6 +112,9 @@ else
 		esac
 	done
 fi
+
+# Workaround for pkg bug (part 2):
+mv svg-icon.vue.bak node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue
 
 echo "## Create folders needed"
 cd $PKG_FOLDER
