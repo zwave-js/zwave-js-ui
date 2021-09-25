@@ -1,3 +1,10 @@
+## [5.6.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.1...v5.6.2) (2021-09-25)
+
+
+### Bug Fixes
+
+* icons are no longer displayed after css-loader major upgrade ([#1729](https://github.com/zwave-js/zwavejs2mqtt/issues/1729)) ([b38caa2](https://github.com/zwave-js/zwavejs2mqtt/commit/b38caa2437ed6402a0f62f831aa02e51be868b6b))
+
 ## [5.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.0...v5.6.1) (2021-09-24)
 
 
