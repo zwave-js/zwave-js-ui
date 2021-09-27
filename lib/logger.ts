@@ -7,7 +7,7 @@ import DailyRotateFile from '@zwave-js/winston-daily-rotate-file'
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
 
-export const defaultLogFile = 'zwavejs2mqtt.log'
+export const defaultLogFile = 'zwavejs2mqtt_%DATE%.log'
 
 // custom colors for timestamp and module
 addColors({
@@ -90,7 +90,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 			datePattern: 'YYYY-MM-DD',
 			zippedArchive: true,
 			maxFiles: '7d',
-			maxSize: '100m',
+			maxSize: '1m',
 			level: config.level,
 			format: combine(customFormat(config), format.uncolorize()),
 		})
