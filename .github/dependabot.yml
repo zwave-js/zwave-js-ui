@@ -14,8 +14,6 @@ updates:
     schedule:
       interval: 'weekly'
     target-branch: master
-    ignore:
-      update-types: ["version-update:semver-major"]
     allow:
       - dependency-type: 'development'
     labels:
