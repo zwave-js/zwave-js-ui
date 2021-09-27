@@ -85,15 +85,24 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		}),
 	]
 	if (config.logToFile) {
-		const fileTransport = new DailyRotateFile({
-			filename: config.filePath,
-			datePattern: 'YYYY-MM-DD',
-			zippedArchive: true,
-			maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
-			maxSize: process.env.Z2M_LOG_MAXSIZE || '50m',
-			level: config.level,
-			format: combine(customFormat(config), format.uncolorize()),
-		})
+		let fileTransport
+		if (process.env.DISABLE_LOG_ROTATION === 'true') {
+			fileTransport = new transports.File({
+				format: combine(customFormat(config), format.uncolorize()),
+				filename: config.filePath,
+				level: config.level,
+			})
+		} else {
+			fileTransport = new DailyRotateFile({
+				filename: config.filePath,
+				datePattern: 'YYYY-MM-DD',
+				zippedArchive: true,
+				maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
+				maxSize: process.env.Z2M_LOG_MAXSIZE || '50m',
+				level: config.level,
+				format: combine(customFormat(config), format.uncolorize()),
+			})
+		}
 
 		transportsList.push(fileTransport)
 	}
