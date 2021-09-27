@@ -195,7 +195,7 @@
 						<v-expansion-panel key="zwave">
 							<v-expansion-panel-header>
 								<v-row no-gutters>
-									<v-col align-self="center"> Zwave </v-col>
+									<v-col align-self="center"> Z-Wave </v-col>
 									<v-col class="text-right pr-5">
 										<v-btn
 											@click.stop="openDocs('zwave')"
@@ -851,7 +851,7 @@
 										<v-row>
 											<v-col cols="12" sm="6">
 												<v-switch
-													hint="Enable zwave-js websocket server. This can be used with HASS Zwave-js integration to discover entities"
+													hint="Enable Z-Wave JS websocket server. This can be used with Home Assistant Z-Wave JS integration to discover entities"
 													persistent-hint
 													label="WS Server"
 													v-model="
@@ -880,7 +880,7 @@
 											<v-col cols="6">
 												<v-switch
 													label="MQTT Discovery"
-													hint="Create devices in Hass using MQTT discovery. This is an alternative to Hass Zwave-js integration"
+													hint="Create devices in Home Assistant using MQTT discovery. This is an alternative to Home Assistant Z-Wave JS integration"
 													v-model="
 														newGateway.hassDiscovery
 													"

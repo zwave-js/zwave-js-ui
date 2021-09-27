@@ -8,16 +8,20 @@ services:
     stop_signal: SIGINT
     environment:
       - SESSION_SECRET=mysupersecretkey
-    # - TZ=America/Los_Angeles  # uncomment and edit to match you timezone if you want logs time and dates to match your timezone instead of UTC.
+      # Uncomment if you want logs time and dates to match your timezone instead of UTC
+      # Available at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+      #- TZ=America/New_York
     networks:
       - zwave
     devices:
-      - '/dev/ttyACM0:/dev/ttyACM0'
+      # Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
+      # Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
+      - '/dev/serial/by-id/insert_stick_reference_here:/dev/zwave'
     volumes:
       - ./store:/usr/src/app/store
     ports:
       - '8091:8091' # port for web interface
-      - '3000:3000' # port for zwave-js websocket server
+      - '3000:3000' # port for Z-Wave JS websocket server
 networks:
   zwave:
 volumes:

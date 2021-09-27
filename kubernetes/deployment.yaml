@@ -13,48 +13,56 @@ spec:
         name: zwave
     spec:
       containers:
-        - name: zwave
-          image: zwavejs/zwavejs2mqtt:latest
-          livenessProbe:
-            failureThreshold: 12
-            httpGet:
-              httpHeaders:
-                - name: Accept
-                  value: text/plain
-              path: /health
-              port: http
-            initialDelaySeconds: 30
-            periodSeconds: 10
-            successThreshold: 1
-            timeoutSeconds: 2
-          ports:
-            - containerPort: 8091
-              name: http
-              protocol: TCP
-          resources:
-            limits:
-              cpu: '1'
-              memory: 512Mi
-            requests:
-              cpu: '1'
-              memory: 400Mi
-          securityContext:
-            allowPrivilegeEscalation: true
-            privileged: true
-          volumeMounts:
-            - mountPath: /dev/ttyUSB1
-              name: zwavestick
-            - mountPath: /usr/src/app/store
-              name: data
+      - name: zwave
+        image: zwavejs/zwavejs2mqtt:latest
+        livenessProbe:
+          failureThreshold: 10
+          httpGet:
+            httpHeaders:
+            - name: Accept
+              value: text/plain
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 3
+          successThreshold: 1
+          timeoutSeconds: 1
+        ports:
+        - containerPort: 8091
+          name: http
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 512Mi
+          requests:
+            cpu: "1"
+            memory: 400Mi
+        securityContext:
+          allowPrivilegeEscalation: true
+          privileged: true
+        volumeMounts:
+        - mountPath: /dev/zwave
+          name: zwavestick
+        - mountPath: /usr/src/app/store
+          name: data
+        # - mountPath: /usr/src/app/store/settings.json <-- if putting your settings.json in a secret
+        #   name: config
+        #   readOnly: true
+        #   subPath: settings.json
+      nodeSelector:
+        kubernetes.io/hostname: stick1 #<--- the name of your cluster node that the zwave usb stick in
       volumes:
-        # - name: config <-- if putting your settings.json in a secret
-        #   secret:
-        #     defaultMode: 420
-        #     secretName: zwavejs2mqtt
-        - name: zwavestick
-          hostPath:
-            path: /dev/ttyACM0
-            type: File
-        - name: data
-          hostPath:
-            path: /zwave/data
+      # - name: config <-- if putting your settings.json in a secret
+      #   secret:
+      #     defaultMode: 420
+      #     secretName: zwavejs2mqtt
+      - name: zwavestick
+        hostPath:
+          # Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
+          # Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
+          path: /dev/serial/by-id/insert_stick_reference_here
+          type: File
+      - name: data
+        hostPath:
+          path: /zwave/data
