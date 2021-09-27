@@ -1,3 +1,10 @@
+## [5.7.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.0...v5.7.1) (2021-09-27)
+
+
+### Features
+
+* add `DISABLE_LOG_ROTATION` env var to disable log rotation ([#1755](https://github.com/zwave-js/zwavejs2mqtt/issues/1755)) ([29f8f29](https://github.com/zwave-js/zwavejs2mqtt/commit/29f8f29f84ae546ca08dfa1b373bbddfb4186802))
+
 # [5.7.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.2...v5.7.0) (2021-09-27)
 
 
