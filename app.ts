@@ -39,6 +39,8 @@ import {
 	PluginConstructor,
 } from './lib/CustomPlugin'
 import merge from 'merge'
+import { libVersion } from 'zwave-js'
+import { serverVersion } from '@zwave-js/server'
 
 declare module 'express' {
 	interface Request {
@@ -803,6 +805,14 @@ app.get('/health/:client', apisLimiter, function (req, res) {
 	}
 
 	res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
+})
+
+app.get('/version', apisLimiter, function (req, res) {
+	res.json({
+		z2m: utils.getVersion(),
+		zwavejs: libVersion,
+		zwavejsServer: serverVersion,
+	})
 })
 
 // get settings
