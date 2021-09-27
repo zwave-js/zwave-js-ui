@@ -1,4 +1,4 @@
-# Zwave To MQTT
+# Zwavejs2Mqtt
 
 ![GitHub package.json version](https://img.shields.io/github/package-json/v/zwave-js/zwavejs2mqtt)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)

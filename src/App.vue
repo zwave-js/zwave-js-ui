@@ -99,11 +99,11 @@
 					</template>
 					<div class="info-box">
 						<div>
-							<small>zwavejs2mqtt</small>
+							<small>Zwavejs2Mqtt</small>
 							<strong>{{ appInfo.appVersion }}</strong>
 						</div>
 						<div>
-							<small>zwave-js</small>
+							<small>Z-Wave JS</small>
 							<strong>{{ appInfo.zwaveVersion }}</strong>
 						</div>
 						<div>

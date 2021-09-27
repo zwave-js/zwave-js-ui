@@ -6,7 +6,7 @@ export const state = {
   nodesMap: new Map(),
   user: {},
   zwave: {
-    port: undefined,
+    port: '/dev/zwave',
     commandsTimeout: 30,
     logLevel: 'silly',
     securityKeys: {
@@ -22,7 +22,7 @@ export const state = {
     serverPort: 3000
   },
   mqtt: {
-    name: 'zwavejs2mqtt',
+    name: 'Zwavejs2Mqtt',
     host: 'localhost',
     port: 1883,
     qos: 1,

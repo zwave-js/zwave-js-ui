@@ -1,10 +1,10 @@
-# MQTT
+# Using MQTT
 
-You have access to almost all [zwavejs APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) via MQTT.
+You have access to almost all of the [Z-Wave JS APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) via MQTT.
 
-## Zwave Events
+## Z-Wave Events
 
-If **Send Zwave Events** flag of Gateway settings is enabled all Zwave-js events are published to MQTT. There are [Driver](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=driver-events), [Node](https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events) and [Controller](https://zwave-js.github.io/node-zwave-js/#/api/node?id=controller-events) events
+If the **Send Z-Wave Events** flag of Gateway settings is enabled all Z-Wave JS events are published to MQTT. There are [Driver](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=driver-events), [Node](https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events) and [Controller](https://zwave-js.github.io/node-zwave-js/#/api/node?id=controller-events) events
 
 Topic
 
@@ -18,9 +18,9 @@ Payload
 }
 ```
 
-## Zwave APIs
+## Z-Wave APIs
 
-To call a Zwave API you just need to publish a JSON object like:
+To call a Z-Wave API you just need to publish a JSON object like:
 
 ```json
 {
@@ -36,9 +36,9 @@ The result will be published on the same topic without `/set`
 
 ### APIs
 
-This are the available apis:
+This are the available APIs:
 
-- All Zwave Clients scenes management methods if preceeded by a `_` will use the internal scenes management instead of Zwave-js scenes:
+- All Z-Wave Clients scene management methods preceeded by a `_` will use the internal scenes management instead of Z-Wave JS scenes:
   - `_createScene(label)`
   - `_removeScene(sceneId)`
   - `_setScenes(scenes[])`: Imports scenes Array in `scenes.json`
@@ -47,18 +47,18 @@ This are the available apis:
   - `_addSceneValue(sceneId, valueId, value, timeout)`: Add a value to a specific scene
   - `_removeSceneValue(sceneId, valueId)`: remove a valueId from a scene
   - `_activateScene(sceneId)`: activate a scene
-- `setNodeName(name)` and `setNodeLocation(location)` will use internal nodes store to save nodes names/locations in a json file and will also try to store this info on the controller
+- `setNodeName(name)` and `setNodeLocation(location)` will use the internal nodes store to save node names/locations in a json file, and it will also try to store this info on the controller
 - `refreshNeighborns()`: Returns an Array where the Array index is the `nodeId`, array value is an Array with all the ids of the node neighborns
 - `getNodes()`: Returns an array with all nodes in the network (and their info/valueids)
 - `getInfo()`: Returns an object with:
   - `homeid`: homeId
   - `name`: homeId Hex
-  - `version`: zwave-js version
+  - `version`: Z-Wave JS version
   - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
   - `lastUpdate`: Timestamp of latest event received
   - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
   - `cntStatus`: The controller status
-- `getAssociations(nodeId, groupId)`: get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
+- `getAssociations(nodeId, groupId)`: Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
 - `addAssociations(nodeId, groupId, associations)`: add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
 - `removeAssociations(nodeId, groupId, associations[])`: the opposite of add associations
 - `removeAllAssociations(nodeId)`: Remove all associations of a specific node
@@ -73,7 +73,7 @@ This are the available apis:
 - `stopExclusion()`: Stops the exclusion
 - `grantSecurityClasses(requested)`: Used to resolve the S2 userCallback promise
 - `validateDSK(dsk)`: Used to resolve the S2 userCallback promise
-- `abortInclusion()`: aborts any active S2 inclusion process
+- `abortInclusion()`: Aborts any active S2 inclusion process
 - `replaceFailedNode(nodeId, inclusionStrategy)`: Replace a failed node
 - `hardReset()`: Hard reset the controller
 - `healNode(nodeId)`: Heal a specific node
@@ -97,7 +97,7 @@ This are the available apis:
 
 #### Get Associations
 
-Get all the associations of node `23` group `Lifeline` (groupId `1`)
+Get all of the associations of node `23` and the group `Lifeline` (groupId `1`)
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/getAssociations/set`
 
@@ -112,7 +112,7 @@ Payload:
 }
 ```
 
-I will get this response (in the same topic without the suffix `/set`):
+You will get this response (in the same topic without the suffix `/set`):
 
 ```js
 {
@@ -122,7 +122,7 @@ I will get this response (in the same topic without the suffix `/set`):
 }
 ```
 
-`result` will contain the value returned from the API. In this example I will get an array with all node IDs that are associated to the group 1 (lifeline) of node 23.
+`result` will contain the value returned from the API. In this example you will get an array with all node IDs that are associated to the group 1 (lifeline) of node 23.
 
 #### Execute Scene
 
@@ -163,15 +163,15 @@ Payload:
 
 ## Set values
 
-To write a value using MQTT you just need to send the value to set in the same topic where the value updates are published by adding the suffix `/set` to the topic (**READONLY VALUES CANNOT BE WRITE**).
+To write a value using MQTT you need to send the value to the /set API in the same topic where the value updates are published, by adding the suffix `/set` to the topic (**READONLY VALUES CANNOT BE WRITE**).
 
 Example with gateway configured with `named topics`:
 
-If I publish the value `25.5` (also a payload with a JSON object with the value in `value` property is accepted) to the topic
+To set the Heating setpoint of the node with id `4` located in the `office` to `25.5`.
 
 `zwave/office/nodeID_4/thermostat_setpoint/heating/set`
 
-I will set the Heating setpoint of the node with id `4` located in the `office` to `25.5`. To check if the value has been successfully write just check when the value changes on the topic:
+ To check if the value has been successfully write just check when the value changes on the topic:
 
 `zwave/office/nodeID_4/thermostat_setpoint/heating`
 
@@ -186,7 +186,7 @@ You can send two kind of broadcast requests:
 
 Topic: `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/broadcast/<value_topic_suffix>/set`
 
-- `value_topic_suffix`: the suffix of the topic of the value I want to control using broadcast.
+- `value_topic_suffix`: the suffix of the topic of the value you want to control using broadcast.
 
 It works like the set value API without the node name and location properties.
 If the API is correctly called the same payload of the request will be published
@@ -218,7 +218,7 @@ Payload:
 
 ## Multicast
 
-Send a [multicast](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=getmulticastgroup) request to all nodes specified in the array in the payload. If this fails because it's not supported a fallback will try to send multiple single requests
+Send a [multicast](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=getmulticastgroup) request to all nodes specified in the array in the payload. If this fails because it's not supported a fallback will try to send multiple single requests.
 
 > [!NOTE]
 > Multicast requests have no delay between individual nodes reactions
@@ -254,7 +254,7 @@ The payload will be in the time-value json format and the value will be `true` w
 
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
 
-The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`)
+The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`).
 
 ### Node information
 
@@ -304,7 +304,7 @@ A example of payload is:
 
 ### Node notifications
 
-Node notifications are translated to valueIds based on the CC that is triggerig the notification and the notification args. Topic and payload depends on your gateway settings
+Node notifications are translated to valueIds based on the CC that is triggering the notification and the notification args. Topic and payload depends on your gateway settings.
 
 #### Entry CC
 

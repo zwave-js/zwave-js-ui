@@ -1,20 +1,20 @@
 # Home Assistant Using MQTT Discovery
 
-The preferred method of integration your Zwave components with Home Assistant is through the official Home Assistant [Zwave-js integration](https://www.home-assistant.io/integrations/zwave_js). If you elect to use MQTT discovery, the following settings will allow zwavejs2mqtt to automatically add devices to Home Assistant. In addition to zwavejs2mqtt, you must run an MQTT broker to act as the server.
-.
+The preferred method of integrating your Z-Wave components with Home Assistant is through the official Home Assistant [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js). If you elect to use MQTT discovery, the following settings will allow ZWavejs2Mqtt to automatically add devices to Home Assistant. In addition to ZWavejs2Mqtt, you must run an MQTT broker to act as the server.
+
 To enable this method, you must set the flag **MQTT Discovery** in the Home Assistant tab.
 
 > [!WARNING]
 > At least Home Assistant >= 0.84 is required!
 >
-> When using MQTT discovery, Home Assistant updates often break zwavejs2mqtt device discovery. Zwavejs2mqtt will try to always be compatible with latest Home Assistant version. Check the changelog before updating!
+> When using MQTT discovery, Home Assistant updates often break ZWavejs2Mqtt device discovery. ZWavejs2Mqtt will always try to be compatible with the latest Home Assistant version. Check the changelog before updating!
 
 Configuration steps:
 
-- In your **zwavejs2mqtt** settings, [Home Assistant](/usage/setup?id=home-assistant) section, enable `MQTT discovery` flag and enable the **retain** flag in the [MQTT](/usage/setup?id=mqtt) section. That flag is suggested to ensure that, once discovered, each device has available the last value published value on startup (otherwise you have to wait for a value change).
+- In your **ZWavejs2Mqtt** settings, [Home Assistant](/usage/setup?id=home-assistant) section, enable the `MQTT discovery` flag and enable the **retain** flag in the [MQTT](/usage/setup?id=mqtt) section. That flag is suggested to ensure that, once discovered, each device has the last published value available on startup (otherwise you have to wait for a value change).
 
 > [!NOTE]
-> Beginning with version `4.0.0`, the default Birth/Will topic is `homeassistant/status` in order to reflect defaults birth/will of Home Assistant `0.113`
+> Beginning with version `4.0.0`, the default birth/will topic is `homeassistant/status` in order to reflect the default birth/will of Home Assistant, which changed in version `0.113`.
 
 - In your **Home Assistant** `configuration.yaml`:
 
@@ -31,21 +31,21 @@ mqtt:
     payload: 'offline'
 ```
 
-If you want to use the embedded broker of Home Assistant you must [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
+If you want to use the embedded broker in Home Assistant you must [follow this guide](https://www.home-assistant.io/docs/mqtt/broker#embedded-broker).
 
-zwavejs2mqtt is expecting Home Assistant to send its birth/will messages to `homeassistant/status`. Be sure to add this to your `configuration.yaml` if you want
-zwavejs2mqtt to resend the cached values when Home Assistant restarts.
+ZWavejs2Mqtt is expecting Home Assistant to send its birth/will messages to `homeassistant/status`. Be sure to add this to your `configuration.yaml` if you want
+ZWavejs2Mqtt to resend the cached values when Home Assistant restarts.
 
-zwavejs2mqtt will try to guess how to map devices from Zwave to Home Assistant. At the moment, it tries to generate entities based on zwave values command classes, index, and units of the value. If the discovered device doesn't fit your needs, you can set a custom `device_class` using the Gateway value table.
+ZWavejs2Mqtt will try to guess how to map devices from Z-Wave to Home Assistant. At the moment, it tries to generate entities based on zwave values command classes, index, and units of the value. If the discovered device doesn't fit your needs, you can set a custom `device_class` using the Gateway value table.
 
 ## Components management
 
-To see the components that have been discovered by zwavejs2mqtt, go to Control Panel UI, select a Node from the Nodes table, then select the Node tab from tabs menu at the bottom of Nodes table. At the Bottom of the page, after the Node values section, there will be a section called `Home Assistant - Devices`. There you will find a table with all of the devices created for the selected node.
+To see the components that have been discovered by ZWavejs2Mqtt, go to Control Panel UI, select a node from the nodes table, then select the Node tab from tabs menu at the bottom of nodes table. At the bottom of the page, after the node values section, there will be a section called `Home Assistant - Devices`. There you will find a table with all of the devices created for the selected node.
 
-![Hass Devices](../_images/hass_devices.png)
+![Home Assistant Devices](../_images/Home Assistant_devices.png)
 
 **ATTENTION**
-Once edited, the devices will loose all of their customizations after a restart **unless** you store the node hassDevices by pressing `STORE` button at the top of hass devices table. That will cause the hassDevices to be stored in the `nodes.json` file. That file can also be imported/exported easily from the control panel UI at the top of nodes table.
+The devices will loose all of customizations after a restart **unless** you store the changes by pressing the `STORE` button at the top of Home Assistant devices table. That will cause the Home Assistant settings to be stored in the `nodes.json` file. That file can also be imported/exported easily from the Control Panel UI at the top of nodes table.
 
 ### Rediscover Node
 
@@ -55,21 +55,21 @@ If you update the node name/location, you must also rediscover the values of thi
 
 If you select a device, its configuration will be displayed as a JSON object on the right side. You can edit it and send some actions:
 
-- `Update`: Update in-memory hass device configuration
+- `Update`: Update in-memory Home Assistant device configuration
 - `Rediscover`: Re-discover this device using the `discoveryTopic` and `discovery_payload` of the configuration
-- `Delete`: Delete the device from Hass entities of selected node
+- `Delete`: Delete the device from Home Assistant entities of selected node
 
 ### Add new component
 
-If no device is selected you can manually insert a device JSON configuration. If the configuration is valid you can press the `Add` button to add it to devices. If the process completes successfully, the device will be added to the Hass Devices table and you can then select it from the table and press `Rediscover` to discover your custom device.
+If no device is selected, you can manually insert a device JSON configuration. If the configuration is valid you can press the `Add` button to add it to devices. If the process completes successfully, the device will be added to the Home Assistant devices table and you can then select it from the table and press `Rediscover` to discover your custom device.
 
 ## Custom Components
 
-At the moment, MQTT discovery creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan`, you will need to create your own configuration. Components configurations are stored in the `hass/devices.js` file. There, all components are stored that zwavejs2mqtt needs to create for each Zwave device type. The key is the Zwave **device id**(`<manufacturerid>-<productid>-<producttype>`). The value is an array with all HASS components to be created for that Zwave Device.
+At the moment, MQTT discovery creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan`, you will need to create your own configuration. Components configurations are stored in the `hass/devices.js` file. There, all components are stored that ZWavejs2Mqtt needs to create for each Z-Wave device type. The key is the Z-Wave **device id**(`<manufacturerid>-<productid>-<producttype>`). The value is an array with all Home Assistant components to be created for that Z-Wave device.
 
 To get the **Device id** of a specific node, go to Control Panel, select a node in the table, and select the Node tab. It will then be displayed under the Node Actions dropdown menu.
 
-You can specify custom devices configuration inside the `store/customDevices(.js|.json)` file. This allows users that use Docker to create their own custom hass devices configuration without the need to build a new container. If using `.json` format, zwavejs2mqtt will watch for file changes and automatically load new components without the need to restart the application.
+You can specify (custom device configurations([usage/custom-device-files.md]) if needed.
 
 > [!NOTE]
 > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS, PLEASE SEND A PR!
@@ -106,21 +106,21 @@ You can specify custom devices configuration inside the `store/customDevices(.js
 }
 ```
 
-- **type**: The hass [MQTT component](https://www.home-assistant.io/components/mqtt/) type
+- **type**: The Home Assistant [MQTT component](https://www.home-assistant.io/components/mqtt/) type
 - **object_id**: The unique id of this object (must be unique for the device)
 - **values**: Array of values used by this component
 - **mode_map**: Key-Value object where keys are [MQTT Climate](https://www.home-assistant.io/components/climate.mqtt/) modes and values are the matching thermostat modes values
-- **setpoint_topic**: Key-Value object where keys are the modes of the Zwave thermostat and values are the matching setpoint `value id` (use this if your thermostat has more than one setpoint)
+- **setpoint_topic**: Key-Value object where keys are the modes of the Z-Wave thermostat and values are the matching setpoint `value id` (use this if your thermostat has more than one setpoint)
 - **default_setpoint**: The default thermostat setpoint.
-- **discovery_payload**: The payload sent to hass to discover this device. Check [here](https://www.home-assistant.io/integrations/climate.mqtt/) for a list with all supported options
+- **discovery_payload**: The payload sent to Home Assistant to discover this device. Check [here](https://www.home-assistant.io/integrations/climate.mqtt/) for a list of all supported options
   - **min_temp/max_temp**: Min/Max temperature of the thermostat
-  - **modes**: Array of Hass Climate supported modes. Allowed values are `[“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]`
+  - **modes**: Array of Home Assistant Climate supported modes. Allowed values are `[“auto”, “off”, “cool”, “heat”, “dry”, “fan_only”]`
   - **mode_state_topic**: `value id` of mode value
   - **current_temperature_topic**: `value id` of current temperature value
   - **current_temperature_template/temperature_state_template**: Template used to fetch the value from the MQTT payload
-  - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Hass to change this values
+  - **temperature_command_topic/mode_command_topic**: If true this values are subscribed to this topics to send commands from Home Assistant to change this values
 
-Thermostats are the most complex components to create. In this device example, the setpoint topic changes based on the mode selected. zwavejs2mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
+Thermostats are the most complex components to create. In this device example, the setpoint topic changes based on the mode selected. ZWavejs2Mqtt handles the mode changes by updating the device discovery payload to match the correct setpoint based on the mode selected.
 
 ### Fans
 
@@ -148,10 +148,10 @@ Thermostats are the most complex components to create. In this device example, t
 }
 ```
 
-- **type**: The hass [MQTT component](https://www.home-assistant.io/components/mqtt/) type
+- **type**: The Home Assistant [MQTT component](https://www.home-assistant.io/components/mqtt/) type
 - **object_id**: The unique id of this object (must be unique for the device)
 - **values**: Array of values used by this component
-- **discovery_payload**: The payload sent to hass to discover this device. Check [here](https://www.home-assistant.io/integrations/fan.mqtt/) for a list with all supported options
+- **discovery_payload**: The payload sent to Home Assistant to discover this device. Check [here](https://www.home-assistant.io/integrations/fan.mqtt/) for a list of all supported options
   - **command_topic**: The topic to send commands
   - **state_topic**: The topic to receive state updates
   - **speed_command_topic**: The topic used to send speed commands
@@ -207,33 +207,11 @@ The main template is like the thermostat template. The things to add are:
 }
 ```
 
-## Access Web UI from HASS
-
-The zwavejs2mqtt Control Panel UI can be accessed from within Home Assistant by using the official [addon](https://github.com/hassio-addons/addon-zwavejs2mqtt) if running Hass OS or Home Assistant Supervised, or by adding a panel to a Lovelace dashboard using the Raw Configuration Editor and substituting your IP address into the below.
-
-First, add a new Lovelace dashboard. In the dashboard:
-
-1. Click on the top right and 'Edit Dashboard'.
-2. Turn on the "Start with an empty dashboard" switch, then click "Take Control"
-3. Click on the top right, and then select "Raw configuration editor"
-4. Paste the code below and save
-
-```yaml
-- title: zwavejs2mqtt
-  panel: true
-  cards:
-    - type: iframe
-      url: 'http:/127.0.0.1[SUBSTITUTE YOUR IP ADDRESS HERE]:8091/'
-      aspect_ratio: 100%
-```
-
-Alternatively, you can add a new tab to a pre-existing dashboard by inserting the above yaml into the pre-existing dashboard's raw configuration.
-
 ## Manually create entities
 
-When MQTT discovery, zwave-js server, and custom components aren't enough for your needs, you can manually create entities in Home Assistant.
+If MQTT discovery, the Z-Wave JS server, and custom components aren't enough for your needs, you can manually create entities in Home Assistant.
 
-Note the settings used here for the Gateway in the UI are:
+Note the settings used here are for the Gateway section of the Settings page:
 
 - **Type**: ValueID topics
 - **Payload type**: Just Value
@@ -336,7 +314,7 @@ sensor:
 
 ### Execute scene
 
-If you need to create a switch that triggers a scene activation (using mqtt apis) you can use this example.
+If you need to create a switch that triggers a scene activation (using MQTT APIs) you can use this example.
 
 Add the following entriy in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with your values, based on your mqtt settings and `<sceneId>` with the scene you want to activate
 
@@ -351,12 +329,12 @@ switch:
 
 ## Troubleshooting
 
-### Removing or resetting HASS entities
+### Removing or resetting Home Assistant entities
 
-If needed, it is possible to remove and reset entities added to HASS via MQTT discovery. These entries are pushed via MQTT with the `Retained` flag set, so even if an entity disappears from **zwavejs2mqtt**, it still remains in HASS.
+If needed, it is possible to remove and reset entities added to Home Assistant via MQTT discovery. These entries are pushed via MQTT with the `Retained` flag set, so even if an entity disappears from **ZWavejs2Mqtt**, it will remain in Home Assistant.
 
-To remove an entity in HASS, you must remove the retained message in the HASS discovery topics, by default `homeassistant/..`.
+To remove an entity in Home Assistant, you must remove the retained message in the Home Assistant discovery topics, by default `homeassistant/..`.
 
 This can be done with [MQTT Explorer](http://mqtt-explorer.com/) or CLI tools like [`mosquitto_pub`](https://mosquitto.org/man/mosquitto_pub-1.html).
 
-Note that in order for a removed entity to appear again, it must be published by **zwavejs2mqtt** again. This happens automatically for new devices, if enabled. Alternatively, this can be done manually by selecting the node in **zwavejs2mqtt**, and then for each HASS device clicking `Rediscover Node`.
+Note that in order for a removed entity to appear again, it must be published by **ZWavejs2Mqtt** again. This happens automatically for new devices, if enabled. Alternatively, this can be done manually by selecting the node in **ZWavejs2Mqtt**, and then for each Home Assistant device clicking `Rediscover Node`.
