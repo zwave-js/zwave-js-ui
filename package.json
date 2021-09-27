@@ -125,6 +125,7 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@mdi/js": "^6.1.95",
     "@zwave-js/server": "^1.10.5",
+    "@zwave-js/winston-daily-rotate-file": "^4.5.6-0",
     "ansi_up": "^5.0.1",
     "app-root-path": "^3.0.0",
     "archiver": "^5.3.0",
