@@ -1,3 +1,19 @@
+# [5.7.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.2...v5.7.0) (2021-09-27)
+
+
+### Bug Fixes
+
+* **ui:** hide download/save button when file is not supported ([6b7d63e](https://github.com/zwave-js/zwavejs2mqtt/commit/6b7d63ebdf4013e10d9135d7610422616a71b5e8))
+
+
+### Features
+
+* add `/version` api ([#1747](https://github.com/zwave-js/zwavejs2mqtt/issues/1747)) ([532ba69](https://github.com/zwave-js/zwavejs2mqtt/commit/532ba6956fdcd06445ff4b5b2d4c3710f2be6982))
+* bump @zwave-js/server@1.10.5 ([#1744](https://github.com/zwave-js/zwavejs2mqtt/issues/1744)) ([15ca748](https://github.com/zwave-js/zwavejs2mqtt/commit/15ca748d866da379f38e129684be8131083529e3))
+* bump zwave-js@8.4.0 ([#1743](https://github.com/zwave-js/zwavejs2mqtt/issues/1743)) ([b8829ed](https://github.com/zwave-js/zwavejs2mqtt/commit/b8829ed6f08a79bd1219b3e7c9c8f69082eead5f))
+* improve docs and references ([#1667](https://github.com/zwave-js/zwavejs2mqtt/issues/1667)) ([fd04689](https://github.com/zwave-js/zwavejs2mqtt/commit/fd046898b972c724127fd1aab867f8d477f874a6))
+* log rotate ([#1746](https://github.com/zwave-js/zwavejs2mqtt/issues/1746)) ([b8f7f52](https://github.com/zwave-js/zwavejs2mqtt/commit/b8f7f52c78a95069244a9ee559c6673422416d6a))
+
 ## [5.6.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.1...v5.6.2) (2021-09-25)
 
 
