@@ -11,6 +11,8 @@ This is the list of the actually supported env vars:
 - `STORE_DIR`: The absolute path to the directory where all files will be stored. Default is `<path to your z2m dir>/store`
 - `ZWAVEJS_EXTERNAL_CONFIG`: Mostly needed for docker users, it's the path to the folder used by zwave-js to [store config database](https://zwave-js.github.io/node-zwave-js/#/usage/external-config?id=specifying-an-external-config-db-location), by default on docker image it is `/usr/src/app/store/.config-db`. For users that are using a custom `STORE_DIR` this must be changed too
 - `MQTT_NAME`: The name used as client name when connecting to the mqtt server. Overrides `mqtt.name` in `settings.json`
+- `Z2M_LOG_MAXFILES`: The maximum number of files to keep in the log directory, if you add `d` suffix this will set the number of days to keep logs. Default is `7d`
+- `Z2M_LOG_MAXSIZE`: The maximum size of a single log file. Default is `50m` (50MB)
 
 This env vars can be used when running webpack dev server with HMR (most users will not need them):
 

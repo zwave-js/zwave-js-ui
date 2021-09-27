@@ -89,8 +89,8 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 			filename: config.filePath,
 			datePattern: 'YYYY-MM-DD',
 			zippedArchive: true,
-			maxFiles: '7d',
-			maxSize: '1m',
+			maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
+			maxSize: process.env.Z2M_LOG_MAXSIZE || '50m',
 			level: config.level,
 			format: combine(customFormat(config), format.uncolorize()),
 		})
