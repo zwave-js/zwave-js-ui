@@ -8,14 +8,15 @@ export const state = {
   zwave: {
     port: '/dev/zwave',
     commandsTimeout: 30,
-    logLevel: 'info',
+    logLevel: 'silly',
     securityKeys: {
       S2_Unauthenticated: undefined,
       S2_Authenticated: undefined,
       S2_AccessControl: undefined,
       S0_Legacy: undefined,
     },
-    logToFile: false,
+    deviceConfigPriorityDir: '',
+    logToFile: true,
     serverEnabled: false,
     enableStatistics: undefined, // keep it undefined so the user dialog will show up
     serverPort: 3000
@@ -43,7 +44,7 @@ export const state = {
     hassDiscovery: true,
     discoveryPrefix: 'homeassistant',
     logEnabled: true,
-    logLevel: 'info',
+    logLevel: 'silly',
     logToFile: false,
     values: []
   },

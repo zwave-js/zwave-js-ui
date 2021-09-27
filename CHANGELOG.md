@@ -1,3 +1,46 @@
+## [5.6.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.1...v5.6.2) (2021-09-25)
+
+
+### Bug Fixes
+
+* icons are no longer displayed after css-loader major upgrade ([#1729](https://github.com/zwave-js/zwavejs2mqtt/issues/1729)) ([b38caa2](https://github.com/zwave-js/zwavejs2mqtt/commit/b38caa2437ed6402a0f62f831aa02e51be868b6b))
+
+## [5.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.6.0...v5.6.1) (2021-09-24)
+
+
+### Bug Fixes
+
+* another try to workaround pkg bug ([#1727](https://github.com/zwave-js/zwavejs2mqtt/issues/1727)) ([81a0a7f](https://github.com/zwave-js/zwavejs2mqtt/commit/81a0a7f2af01baf36396229e90b8488cc765002f))
+* workaround for pkg bug ([#1726](https://github.com/zwave-js/zwavejs2mqtt/issues/1726)) ([7d0bd6c](https://github.com/zwave-js/zwavejs2mqtt/commit/7d0bd6c23c46a46300d97d894e27d20f2acdf64d))
+* **ui:** better check for forwarding nodes in mesh graph ([e5cf151](https://github.com/zwave-js/zwavejs2mqtt/commit/e5cf1515903adf3d4c6374e86efebe5509d0bf26))
+
+
+### Features
+
+* bump @zwave-js/server@1.10.4 ([#1714](https://github.com/zwave-js/zwavejs2mqtt/issues/1714)) ([176017d](https://github.com/zwave-js/zwavejs2mqtt/commit/176017df232ac21c6f43aa6e8e99ae147f1f796b))
+* **ui:** show power source + battery level in nodes table ([#1675](https://github.com/zwave-js/zwavejs2mqtt/issues/1675)) ([713815d](https://github.com/zwave-js/zwavejs2mqtt/commit/713815da3711179e218171922f7adc84df9b77c0))
+
+# [5.6.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.4...v5.6.0) (2021-09-15)
+
+
+### Bug Fixes
+
+* **ui:** make manage nodes dialog persistent and timoeut label ([#1688](https://github.com/zwave-js/zwavejs2mqtt/issues/1688)) ([75728a8](https://github.com/zwave-js/zwavejs2mqtt/commit/75728a8e9e22a72174013a2ca96194cd8f3e95b8))
+
+
+### Features
+
+* add `deviceConfigPriorityDir` zwave setting ([#1694](https://github.com/zwave-js/zwavejs2mqtt/issues/1694)) ([0d2c8bc](https://github.com/zwave-js/zwavejs2mqtt/commit/0d2c8bc7a47cb39f2fbc0fcd2713fa3d662575ca)), closes [#1686](https://github.com/zwave-js/zwavejs2mqtt/issues/1686)
+* bump zwave-js@8.3.0 ([#1695](https://github.com/zwave-js/zwavejs2mqtt/issues/1695)) ([0a6a814](https://github.com/zwave-js/zwavejs2mqtt/commit/0a6a814699f3ea648c20d8d1679ab9c932d4d18c))
+* bump zwave-js@8.3.1 ([#1696](https://github.com/zwave-js/zwavejs2mqtt/issues/1696)) ([d8eb97f](https://github.com/zwave-js/zwavejs2mqtt/commit/d8eb97f25533d3197499db82c7eb5e5c7de19fc0))
+* **ui:** auto-format OZW keys when pasted into security keys ([#1685](https://github.com/zwave-js/zwavejs2mqtt/issues/1685)) ([8dea0da](https://github.com/zwave-js/zwavejs2mqtt/commit/8dea0da3ab08a076d8403ef1fb63919fe1e190ee))
+* **ui:** show warning when security keys are missing ([39c40c8](https://github.com/zwave-js/zwavejs2mqtt/commit/39c40c8eab684cb20f3903eb4713438f3be5c8cf)), closes [#1687](https://github.com/zwave-js/zwavejs2mqtt/issues/1687)
+
+
+### Reverts
+
+* Revert "Release 5.6.0" ([21294f2](https://github.com/zwave-js/zwavejs2mqtt/commit/21294f27386346a7d82ac0320ee5de1cb38f9312))
+
 ## [5.5.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.5.3...v5.5.4) (2021-09-10)
 
 

@@ -39,8 +39,7 @@ Properties of a **valueId configuration**:
 ## Z-Wave
 
 - **Serial port**: The serial port where your controller is connected
-- **Security Keys** : Z-Wave network keys for secure inclusion S0/S2.
-  - **S0 Legacy** (lowest): The previous **networkKey** setting, used for S0 security
+- **Security Keys** : Zwave network keys for secure inclusion S0/S2. You can manually input them or auto-generate them by using random generator button or by pasting your OZW keys in the input, they will be auto-converted in the correct format. Example of a valid key is: `5C14897467C42598518AF155DE6CCEA8` (length is 32).
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
   - **S2 Authenticated**: Security systems, sensors, lighting, etc.
   - **S2 AccessControl** (highest): Used for Door locks, garage doors, etc.
@@ -59,7 +58,7 @@ Properties of a **valueId configuration**:
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
 - **Log nodes**: Filter Z-Wave JS logs to log just this nodes
-- **Commands timeout**: Seconds to wait before automatically stopping inclusion/exclusion
+- **Inclusion/Exclusion timeout**: Seconds to wait before automatically stopping inclusion/exclusion
 - **Hidden settings**: Advanced settings not visible to the user interface, you can edit these by setting in the `settings.json` file you fins in store directory
   - `zwave.options` overrides options passed to the Z-Wave JS Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 

@@ -101,13 +101,14 @@
 							style="height: calc(100% - 50px)"
 						>
 							<prism-editor
+								v-if="!notSupported"
 								class="custom-font"
 								lineNumbers
 								v-model="fileContent"
 								:highlight="highlighter"
 							></prism-editor>
 						</v-card-text>
-						<v-card-actions>
+						<v-card-actions v-if="!notSupported">
 							<v-spacer></v-spacer>
 							<v-btn
 								color="purple darken-1"
@@ -215,6 +216,7 @@ export default {
 			active: [],
 			items: [],
 			fileContent: '',
+			notSupported: false,
 			loadingStore: true,
 			loadingFile: false,
 		}
@@ -386,6 +388,7 @@ export default {
 				!this.selected.children
 			) {
 				this.fileContent = ''
+				this.notSupported = false
 				this.loadingFile = true
 				try {
 					if (!this.allowedExt.includes(this.selected.ext)) {
@@ -400,6 +403,7 @@ export default {
 						throw Error(data.message)
 					}
 				} catch (error) {
+					this.notSupported = true
 					this.showSnackbar(error.message)
 				}
 

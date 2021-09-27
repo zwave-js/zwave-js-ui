@@ -47,11 +47,14 @@ NODE_MAJOR=$(node -v | egrep -o '[0-9].' | head -n 1)
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
-
 if [ ! -z "$1" ]; then
 	echo "## Building application..."
 	echo ''
 	yarn run build
+
+  # Workaround for pkg bug (part 1a):
+  mv node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue svg-icon.vue.bak
+
 	echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64 --out-path $PKG_FOLDER"
 	pkg package.json -t node$NODE_MAJOR-linux-x64 --out-path $PKG_FOLDER
 else
@@ -60,6 +63,9 @@ else
 		echo "## Building application"
 		yarn run build
 	fi
+
+  # Workaround for pkg bug (part 1b):
+  mv node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue svg-icon.vue.bak
 
 	echo '###################################################'
 	echo '## Choose architecture to build'
@@ -110,6 +116,9 @@ else
 		esac
 	done
 fi
+
+# Workaround for pkg bug (part 2):
+mv svg-icon.vue.bak node_modules/@jamescoyle/vue-icon/lib/svg-icon.vue
 
 echo "## Create folders needed"
 cd $PKG_FOLDER

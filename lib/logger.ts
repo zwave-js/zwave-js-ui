@@ -2,11 +2,12 @@ import { joinPath, DeepPartial } from './utils'
 import { storeDir } from '../config/app'
 import { GatewayConfig } from './Gateway'
 import winston from 'winston'
+import DailyRotateFile from '@zwave-js/winston-daily-rotate-file'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
 
-export const defaultLogFile = 'zwavejs2mqtt.log'
+export const defaultLogFile = 'zwavejs2mqtt_%DATE%.log'
 
 // custom colors for timestamp and module
 addColors({
@@ -84,10 +85,14 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		}),
 	]
 	if (config.logToFile) {
-		const fileTransport = new transports.File({
-			format: combine(customFormat(config), format.uncolorize()),
+		const fileTransport = new DailyRotateFile({
 			filename: config.filePath,
+			datePattern: 'YYYY-MM-DD',
+			zippedArchive: true,
+			maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
+			maxSize: process.env.Z2M_LOG_MAXSIZE || '50m',
 			level: config.level,
+			format: combine(customFormat(config), format.uncolorize()),
 		})
 
 		transportsList.push(fileTransport)

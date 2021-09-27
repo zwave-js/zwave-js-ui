@@ -10,6 +10,7 @@ import ZWaveClient, {
 	configManager,
 	loadManager,
 	SensorTypeScale,
+	deviceConfigPriorityDir,
 } from './lib/ZwaveClient'
 import MqttClient from './lib/MqttClient'
 import Gateway, { GatewayConfig } from './lib/Gateway'
@@ -37,6 +38,9 @@ import {
 	CustomPlugin,
 	PluginConstructor,
 } from './lib/CustomPlugin'
+import merge from 'merge'
+import { libVersion } from 'zwave-js'
+import { serverVersion } from '@zwave-js/server'
 
 declare module 'express' {
 	interface Request {
@@ -803,6 +807,14 @@ app.get('/health/:client', apisLimiter, function (req, res) {
 	res.status(status ? 200 : 500).send(status ? 'Ok' : 'Error')
 })
 
+app.get('/version', apisLimiter, function (req, res) {
+	res.json({
+		z2m: utils.getVersion(),
+		zwavejs: libVersion,
+		zwavejsServer: serverVersion,
+	})
+})
+
 // get settings
 app.get(
 	'/api/settings',
@@ -838,9 +850,19 @@ app.get(
 			}
 		}
 
+		const settings = jsonStore.get(store.settings)
+
+		const defaults = {
+			zwave: {
+				deviceConfigPriorityDir,
+			},
+		}
+
+		const settingsWithDefaults = merge.recursive(defaults, settings)
+
 		const data = {
 			success: true,
-			settings: jsonStore.get(store.settings),
+			settings: settingsWithDefaults,
 			devices: gw?.zwave?.devices ?? {},
 			serial_ports: [],
 			scales: scales,

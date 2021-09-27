@@ -82,7 +82,7 @@
 												v-if="newGateway.logEnabled"
 											>
 												<v-switch
-													hint="Store logs in a file. Default: store/zwavejs2mqtt.log"
+													hint="Store logs in a file. Default: store/zwavejs2mqtt_%DATE%.log"
 													persistent-hint
 													label="Log to file"
 													v-model="
@@ -221,6 +221,17 @@
 													:items="serial_ports"
 												></v-combobox>
 											</v-col>
+											<v-col cols="12" sm="6">
+												<v-text-field
+													v-model.trim="
+														newZwave.deviceConfigPriorityDir
+													"
+													label="Config priority directory"
+													:rules="[rules.required]"
+													hint="Directory from where device configuration files can be loaded with higher priority than the included ones. This directory does not get indexed and should be used sparingly, e.g. when custom files are absolutely necessary or for testing"
+													required
+												></v-text-field>
+											</v-col>
 											<v-row v-if="newZwave.securityKeys">
 												<v-col cols="12" sm="6">
 													<v-text-field
@@ -231,6 +242,12 @@
 														"
 														label="S2 Unauthenticated"
 														prepend-icon="vpn_key"
+														@paste="
+															fixKey(
+																$event,
+																'S2_Unauthenticated'
+															)
+														"
 														:rules="[
 															rules.validKey,
 															rules.validLength,
@@ -250,6 +267,12 @@
 															newZwave
 																.securityKeys
 																.S2_Authenticated
+														"
+														@paste="
+															fixKey(
+																$event,
+																'S2_Authenticated'
+															)
 														"
 														prepend-icon="vpn_key"
 														label="S2 Authenticated"
@@ -273,6 +296,12 @@
 																.securityKeys
 																.S2_AccessControl
 														"
+														@paste="
+															fixKey(
+																$event,
+																'S2_AccessControl'
+															)
+														"
 														prepend-icon="vpn_key"
 														label="S2 Access Control"
 														:rules="[
@@ -293,6 +322,12 @@
 															newZwave
 																.securityKeys
 																.S0_Legacy
+														"
+														@paste="
+															fixKey(
+																$event,
+																'S0_Legacy'
+															)
 														"
 														prepend-icon="vpn_key"
 														label="S0 Legacy"
@@ -434,11 +469,11 @@
 													v-model.number="
 														newZwave.commandsTimeout
 													"
-													label="Commands timeout"
+													label="Inclusion/Exclusion timeout"
 													:rules="[rules.required]"
 													required
 													suffix="seconds"
-													hint="Seconds to wait before stop inclusion/exclusion mode"
+													hint="Seconds to wait before to stop inclusion/exclusion mode"
 													type="number"
 												></v-text-field>
 											</v-col>
@@ -1192,6 +1227,15 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		fixKey(event, key) {
+			let data = event.clipboardData?.getData('Text')
+
+			if (data) {
+				data = data.replace(/0x|,|\s/gi, '')
+				this.$set(this.newZwave.securityKeys, key, data)
+				event.preventDefault()
+			}
+		},
 		openDocs(id) {
 			window.open(
 				`https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=${id}`,

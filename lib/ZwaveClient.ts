@@ -65,10 +65,10 @@ import { TypedEventEmitter } from './EventEmitter'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
-const priorityDir = storeDir + '/config'
+export const deviceConfigPriorityDir = storeDir + '/config'
 
 export const configManager = new ConfigManager({
-	deviceConfigPriorityDir: priorityDir,
+	deviceConfigPriorityDir,
 })
 
 export async function loadManager() {
@@ -139,6 +139,19 @@ const allowedApis = validateMethods([
 	'validateDSK',
 	'abortInclusion',
 ] as const)
+
+// Define mapping of node properties to ValueIDs
+const mappedNodeProps: Record<string, ValueID> = {
+	batteryLevel: {
+		commandClass: CommandClasses.Battery,
+		property: 'level',
+	},
+}
+// Extract mapped command classes for better mapping performance
+const mappedCommandClasses: Set<number> = new Set()
+for (const k in mappedNodeProps) {
+	mappedCommandClasses.add(mappedNodeProps[k].commandClass)
+}
 
 export type SensorTypeScale = {
 	key: string | number
@@ -305,6 +318,7 @@ export type Z2MNode = {
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	healProgress?: string | undefined
+	batteryLevel?: number
 }
 
 export type ZwaveConfig = {
@@ -317,6 +331,7 @@ export type ZwaveConfig = {
 		S0_Legacy: string
 	}>
 	serverEnabled?: boolean
+	deviceConfigPriorityDir?: string
 	serverPort?: number
 	logEnabled?: boolean
 	logLevel?: LogManager.LogLevel
@@ -1070,7 +1085,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
 				storage: {
 					cacheDir: storeDir,
-					deviceConfigPriorityDir: priorityDir,
+					deviceConfigPriorityDir:
+						this.cfg.deviceConfigPriorityDir ||
+						deviceConfigPriorityDir,
 				},
 				logConfig: {
 					// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
@@ -2501,6 +2518,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
+		this._mapNodeValuesToProps(node)
+
 		this._onNodeStatus(zwaveNode)
 
 		this.emit(
@@ -3291,6 +3310,42 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Triggered on node ready or node value changes to map certain values (e.g. batteryLevel) to direct node properties.
+	 * @param node The affected node
+	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
+	 */
+	private _mapNodeValuesToProps(
+		node: Z2MNode,
+		valueId?: TranslatedValueID & { [x: string]: any }
+	) {
+		if (valueId) {
+			if (!mappedCommandClasses.has(valueId.commandClass)) return // Return quickly if command class is not synced to node props
+			for (const k in mappedNodeProps) {
+				const syncedValueId: ValueID = mappedNodeProps[k]
+				if (
+					valueId.commandClass === syncedValueId.commandClass &&
+					valueId.property === syncedValueId.property
+				) {
+					logger.debug(
+						`Node ${
+							node.id
+						}: mapping property '${k}' => commandClass=${
+							valueId.commandClass
+						} (${
+							CommandClasses[valueId.commandClass]
+						}), property='${valueId.property}'`
+					)
+					node[k] = valueId.value
+				}
+			}
+		} else if (node.values) {
+			for (const k in node.values) {
+				this._mapNodeValuesToProps(node, node.values[k])
+			}
+		}
+	}
+
+	/**
 	 * Triggered when a node is ready and a value changes
 	 *
 	 */
@@ -3331,6 +3386,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				valueId.value = newValue
 				valueId.stateless = !!args.stateless
+
+				// Map defined values (e.g. battery level) to top level node properties:
+				this._mapNodeValuesToProps(node, valueId)
 
 				// ensure duration is never undefined
 				if (
