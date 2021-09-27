@@ -224,7 +224,7 @@
     "markdownlint-cli": "^0.28.1",
     "material-design-icons-iconfont": "^6.1.0",
     "mini-css-extract-plugin": "^2.3.0",
-    "ora": "^5.4.1",
+    "ora": "^6.0.1",
     "postcss": "^8.3.8",
     "postcss-import": "^14.0.2",
     "postcss-loader": "^5.3.0",
