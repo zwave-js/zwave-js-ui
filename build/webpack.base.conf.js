@@ -87,7 +87,7 @@ module.exports = {
         test: /\.(woff2?|eot|ttf|otf)(\?.*)?$/,
         type: 'asset/resource',
         generator: {
-          filename: utils.assetsPath('../../fonts/[name].[hash:7].[ext]'),
+          filename: utils.assetsPath('fonts/[name].[hash:7].[ext]'),
         }
       },
       {
