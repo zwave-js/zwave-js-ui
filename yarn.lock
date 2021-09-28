@@ -2203,10 +2203,10 @@
   resolved "https://registry.yarnpkg.com/@xtuc/long/-/long-4.2.2.tgz#d291c6a4e97989b5c61d9acf396ae4fe133a718d"
   integrity sha512-NuHqBY1PB/D8xU6s/thBgOAiAP7HOYDQ32+BFZILJ8ivkUkAHQnWfn6WhL79Owj1qmUnoN/YPhktdIoucipkAQ==
 
-"@zwave-js/config@8.4.0":
-  version "8.4.0"
-  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.4.0.tgz#953c8728be6c7255d4593b4b23ab2926322ae25e"
-  integrity sha512-6RQVgJHKsVtu7PrPcmtnc1S3P11rPHLMHSrhek5S0HP0j44pI/FoRhrlvfJTnwHUpZJer1vqiNdMxI+JarsP1A==
+"@zwave-js/config@8.4.1":
+  version "8.4.1"
+  resolved "https://registry.yarnpkg.com/@zwave-js/config/-/config-8.4.1.tgz#9e541fed972c919507dae6d2847ca536426323a5"
+  integrity sha512-yO1ZgH0aIPw7oadb7XDCe0uHY/pAmaS/miAweOnAvZhOfXWQxMBGffDXKBtRBWKAok67QKhgXxsKSM9hBGLOMw==
   dependencies:
     "@zwave-js/core" "8.3.1"
     "@zwave-js/shared" "8.2.2"
@@ -11486,16 +11486,16 @@ zip-stream@^4.1.0:
     compress-commons "^4.1.0"
     readable-stream "^3.6.0"
 
-zwave-js@^8.4.0:
-  version "8.4.0"
-  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.4.0.tgz#4bbd6de2f6e5b8e5a8d47441b3c19ed70e7adfca"
-  integrity sha512-Ij39c+lkanyo0CHiByxKbAGamsxZqEywWmIFUjW7GuQ3aThIKT1MNqbIlGNMlS5U+CmbMie7GMlCYNDngdTBFw==
+zwave-js@^8.4.1:
+  version "8.4.1"
+  resolved "https://registry.yarnpkg.com/zwave-js/-/zwave-js-8.4.1.tgz#ef601ae308e75f7465e4ea408377948cc1bdf9b4"
+  integrity sha512-DodnSnKEFfJPUUHjkY0BaaEeOCtM8cRuKpK26kP8gUFhdj+aYA5q1o/0FSwIQo3Ym/tHwgDCbQnNQj9Xn46sUg==
   dependencies:
     "@alcalzone/jsonl-db" "^1.3.0"
     "@alcalzone/pak" "^0.7.0"
     "@sentry/integrations" "^6.12.0"
     "@sentry/node" "^6.12.0"
-    "@zwave-js/config" "8.4.0"
+    "@zwave-js/config" "8.4.1"
     "@zwave-js/core" "8.3.1"
     "@zwave-js/serial" "8.3.1"
     "@zwave-js/shared" "8.2.2"
