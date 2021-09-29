@@ -3197,7 +3197,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			).maxLength
 		}
 
-		if (utils.hasProperty(zwaveValueMeta, 'states')) {
+		if (
+			(zwaveValueMeta as ValueMetadataNumeric).states &&
+			Object.keys((zwaveValueMeta as ValueMetadataNumeric).states)
+				.length > 0
+		) {
 			valueId.list = true
 			valueId.allowManualEntry = (
 				zwaveValueMeta as ConfigurationMetadata
