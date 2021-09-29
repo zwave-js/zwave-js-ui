@@ -1,3 +1,15 @@
+## [5.7.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.1...v5.7.2) (2021-09-29)
+
+
+### Bug Fixes
+
+* correctly parse valueMetadata `states` when not defined ([4e8f61b](https://github.com/zwave-js/zwavejs2mqtt/commit/4e8f61b8fab58f6e42fe3f896783196d89a99502)), closes [#1758](https://github.com/zwave-js/zwavejs2mqtt/issues/1758)
+
+
+### Features
+
+* bump zwave-js@8.4.1 ([#1759](https://github.com/zwave-js/zwavejs2mqtt/issues/1759)) ([831dc93](https://github.com/zwave-js/zwavejs2mqtt/commit/831dc93b2f81d52d3f09ba15ed902f3e4129e890))
+
 ## [5.7.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.0...v5.7.1) (2021-09-27)
 
 
