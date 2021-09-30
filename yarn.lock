@@ -2254,10 +2254,10 @@
     serialport "^9.2.1"
     winston "^3.3.3"
 
-"@zwave-js/server@^1.10.5":
-  version "1.10.5"
-  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.5.tgz#fead57922d7e7a70c35aebd5986688a0b5160f76"
-  integrity sha512-/ap5bs77z9/Re2NxVaXkTxVvz+RkrMEwC+FMgXU0UuM3yqymmQtskmtiMGrbofHQa30Nk1Us4DoPJRDHfuHjMg==
+"@zwave-js/server@^1.10.6":
+  version "1.10.6"
+  resolved "https://registry.yarnpkg.com/@zwave-js/server/-/server-1.10.6.tgz#06b7d8d33698ef164f5c310b6245be8661434e49"
+  integrity sha512-1FbOVoQXxq2lalRNuq/1G0osm4QxBzV6NOPJxoCyCz/uDSP5WfLZAKoMf9UBFXWLEIlutRk8P/dq2OqfWP1gCQ==
   dependencies:
     minimist "^1.2.5"
     ws "^8.0.0"
