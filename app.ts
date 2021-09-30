@@ -359,7 +359,7 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 		}
 		const stats = await fs.lstat(entry.path)
 		if (stats.isDirectory()) {
-			if (entry.name === '.config-db') {
+			if (entry.path === process.env.ZWAVEJS_EXTERNAL_CONFIG) {
 				// hide config-db
 				continue
 			}
