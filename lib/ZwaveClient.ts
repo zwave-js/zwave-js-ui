@@ -140,17 +140,61 @@ const allowedApis = validateMethods([
 	'abortInclusion',
 ] as const)
 
+export type CmdClsExistsMapping = {
+	commandClass: CommandClasses
+	existsValue: any
+	absentValue: any
+}
+
+export enum NodePropMappingAggFn {
+	ALL = 'all',
+	MIN = 'min',
+	MAX = 'max',
+	FIRST = 'first',
+	LAST = 'last',
+}
+
+export type NodePropMapping = {
+	hasCommandClass?: CmdClsExistsMapping
+	valueId?: ValueID
+	aggregationType?: NodePropMappingAggFn
+}
+
 // Define mapping of node properties to ValueIDs
-const mappedNodeProps: Record<string, ValueID> = {
-	batteryLevel: {
-		commandClass: CommandClasses.Battery,
-		property: 'level',
+const mappedNodeProps: Record<string, NodePropMapping> = {
+	batteryLevelMin: {
+		valueId: {
+			commandClass: CommandClasses.Battery,
+			property: 'level',
+		},
+		aggregationType: NodePropMappingAggFn.MIN,
+	},
+	batteryLevels: {
+		valueId: {
+			commandClass: CommandClasses.Battery,
+			property: 'level',
+		},
+		aggregationType: NodePropMappingAggFn.ALL,
+	},
+	powerSource: {
+		hasCommandClass: {
+			commandClass: CommandClasses.Battery,
+			existsValue: 'battery',
+			absentValue: 'mains',
+		},
 	},
 }
 // Extract mapped command classes for better mapping performance
-const mappedCommandClasses: Set<number> = new Set()
+const mappedValueIdCommandClasses: Set<number> = new Set()
+const mappedExistingCommandClasses: Set<number> = new Set()
 for (const k in mappedNodeProps) {
-	mappedCommandClasses.add(mappedNodeProps[k].commandClass)
+	if (mappedNodeProps[k].valueId) {
+		mappedValueIdCommandClasses.add(mappedNodeProps[k].valueId.commandClass)
+	} else if (mappedNodeProps[k].hasCommandClass) {
+		mappedExistingCommandClasses.add(
+			mappedNodeProps[k].hasCommandClass.commandClass
+		)
+	}
 }
 
 export type SensorTypeScale = {
@@ -318,7 +362,9 @@ export type Z2MNode = {
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	healProgress?: string | undefined
-	batteryLevel?: number
+	batteryLevelMin?: number
+	batteryLevels?: { [key: string]: number }
+	powerSource?: string
 }
 
 export type ZwaveConfig = {
@@ -2518,6 +2564,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
+		this._mapHasCommandClassToProps(node)
 		this._mapNodeValuesToProps(node)
 
 		this._onNodeStatus(zwaveNode)
@@ -3313,6 +3360,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return valueId
 	}
 
+	private _mapHasCommandClassToProps(node: Z2MNode) {
+		for (const propName in mappedNodeProps) {
+			if (mappedNodeProps[propName].hasCommandClass) {
+				let found = false
+				const mapping = mappedNodeProps[propName].hasCommandClass
+				for (const vid in node.values) {
+					if (
+						node.values[vid].commandClass === mapping.commandClass
+					) {
+						found = true
+						break
+					}
+				}
+				node[propName] = found
+					? mapping.existsValue
+					: mapping.absentValue
+			}
+		}
+	}
+
 	/**
 	 * Triggered on node ready or node value changes to map certain values (e.g. batteryLevel) to direct node properties.
 	 * @param node The affected node
@@ -3323,23 +3390,58 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		valueId?: TranslatedValueID & { [x: string]: any }
 	) {
 		if (valueId) {
-			if (!mappedCommandClasses.has(valueId.commandClass)) return // Return quickly if command class is not synced to node props
+			if (!mappedValueIdCommandClasses.has(valueId.commandClass)) return // Return quickly if command class is not synced to node props
 			for (const k in mappedNodeProps) {
-				const syncedValueId: ValueID = mappedNodeProps[k]
-				if (
-					valueId.commandClass === syncedValueId.commandClass &&
-					valueId.property === syncedValueId.property
-				) {
-					logger.debug(
-						`Node ${
-							node.id
-						}: mapping property '${k}' => commandClass=${
-							valueId.commandClass
-						} (${
-							CommandClasses[valueId.commandClass]
-						}), property='${valueId.property}'`
-					)
-					node[k] = valueId.value
+				if (mappedNodeProps[k].valueId) {
+					const mappedValueId: ValueID = mappedNodeProps[k].valueId
+					if (
+						valueId.commandClass === mappedValueId.commandClass &&
+						valueId.property === mappedValueId.property
+					) {
+						logger.debug(
+							`Node ${
+								node.id
+							}: mapping property '${k}' => commandClass=${
+								valueId.commandClass
+							} (${
+								CommandClasses[valueId.commandClass]
+							}), property='${valueId.property}'`
+						)
+						switch (mappedNodeProps[k].aggregationType) {
+							case NodePropMappingAggFn.ALL:
+								if (typeof node[k] === 'undefined') {
+									node[k] = {
+										[valueId.endpoint]: valueId.value,
+									}
+								} else {
+									node[k][valueId.endpoint] = valueId.value
+								}
+								break
+							case NodePropMappingAggFn.FIRST:
+								node[k] =
+									typeof node[k] === 'undefined'
+										? valueId.value
+										: node[k]
+								break
+							case NodePropMappingAggFn.LAST:
+								node[k] = valueId.value
+								break
+							case NodePropMappingAggFn.MAX:
+								node[k] =
+									typeof node[k] === 'undefined' ||
+									node[k] < valueId.value
+										? valueId.value
+										: node[k]
+								break
+							case NodePropMappingAggFn.MIN:
+								node[k] =
+									typeof node[k] === 'undefined' ||
+									node[k] > valueId.value
+										? valueId.value
+										: node[k]
+								break
+						}
+					}
 				}
 			}
 		} else if (node.values) {

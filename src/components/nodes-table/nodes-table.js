@@ -3,13 +3,14 @@ import { ManagedItems } from '@/modules/ManagedItems'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import { mapGetters } from 'vuex'
-import SvgIcon from '@jamescoyle/vue-icon'
+import TableValue from '@/components/nodes-table/TableValue.vue'
 import {
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
 	mdiBattery50,
 	mdiBattery80,
 	mdiBattery,
+	mdiBatteryUnknown,
 	mdiPowerPlug,
 } from '@mdi/js'
 
@@ -22,7 +23,7 @@ export default {
 		draggable,
 		ColumnFilter,
 		ExpandedNode,
-		SvgIcon,
+		TableValue,
 	},
 	watch: {},
 	computed: {
@@ -47,10 +48,17 @@ export default {
 					label: 'Power',
 					customValue: (node) => this.getBatteryLevel(node),
 					customFormat: (value) => (value ? value + '%' : 'mains'),
-					customInfo: (node) =>
-						node.batteryLevel
-							? 'Battery level: ' + node.batteryLevel + '%'
-							: 'mains-powered',
+					customInfo: (node) => {
+						if (node.powerSource === 'mains') return 'mains-powered'
+						let levelInfo = ''
+						for (const ep in node.batteryLevels) {
+							if (levelInfo !== '') {
+								levelInfo += '/'
+							}
+							levelInfo += `${node.batteryLevels[ep]}%`
+						}
+						return `Battery level(s): ${levelInfo}`
+					},
 					customSort: (items, sortBy, sortDesc, nodeA, nodeB) => {
 						// Special sort for power column
 						// Use 100% as fallback (for mains-powered devices)
@@ -159,39 +167,45 @@ export default {
 				: fallback
 		},
 		getPowerInfo(node) {
-			let level = node.batteryLevel
-			let style = 'color: green'
+			let level = node.batteryLevelMin
+			let iconStyle = 'color: green'
 			let icon
 			let label =
 				typeof this.nodesProps.batteryLevel.customFormat === 'function'
 					? this.nodesProps.batteryLevel.customFormat(level)
 					: level
-			let tooltip =
+			let description =
 				typeof this.nodesProps.batteryLevel.customInfo === 'function'
 					? this.nodesProps.batteryLevel.customInfo(node)
 					: ''
-			if (level === undefined) {
+			if (node.powerSource === 'mains') {
 				icon = mdiPowerPlug
-				tooltip = 'mains-powered'
+				description = 'mains-powered'
 			} else if (level <= 10) {
 				icon = mdiBatteryAlertVariantOutline
-				style = 'color: red'
+				iconStyle = 'color: red'
 			} else if (level <= 30) {
 				icon = mdiBattery20
-				style = 'color: orange'
+				iconStyle = 'color: orange'
 			} else if (level <= 70) {
 				icon = mdiBattery50
 			} else if (level <= 90) {
 				icon = mdiBattery80
-			} else {
+			} else if (level > 90) {
 				icon = mdiBattery
+			} else {
+				icon = mdiBatteryUnknown
+				description = 'Battery level: unknown'
+				iconStyle = 'color: grey'
 			}
 			return {
+				align: 'left',
 				icon: icon,
-				level: level,
-				style: style,
-				label: label,
-				tooltip: tooltip,
+				iconStyle: iconStyle,
+				displayValue: label,
+				displayStyle: '',
+				description: description,
+				rawValue: level,
 			}
 		},
 	},

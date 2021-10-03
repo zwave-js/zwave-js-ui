@@ -125,18 +125,7 @@
 			</td>
 		</template>
 		<template v-slot:[`item.batteryLevel`]="{ item }">
-			<div :title="getPowerInfo(item).tooltip">
-				<v-layout :label="getPowerInfo(item).tooltip">
-					<svg-icon
-						type="mdi"
-						:path="getPowerInfo(item).icon"
-						:style="getPowerInfo(item).style"
-					></svg-icon>
-					<span style="padding-top: 4px">{{
-						getPowerInfo(item).label
-					}}</span>
-				</v-layout>
-			</div>
+			<table-value :value="getPowerInfo(item)" />
 		</template>
 		<template v-slot:[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}
