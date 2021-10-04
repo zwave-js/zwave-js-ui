@@ -1,3 +1,15 @@
+## [5.7.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.2...v5.7.3) (2021-10-04)
+
+
+### Bug Fixes
+
+* ignore ZWAVEJS_EXTERNAL_CONFIG folder ([#1766](https://github.com/zwave-js/zwavejs2mqtt/issues/1766)) ([1b881e0](https://github.com/zwave-js/zwavejs2mqtt/commit/1b881e0a503c7b76ecd8764b6ab086c966c677de)), closes [#1762](https://github.com/zwave-js/zwavejs2mqtt/issues/1762)
+
+
+### Features
+
+* bump @zwave-js/server@1.10.6 ([#1767](https://github.com/zwave-js/zwavejs2mqtt/issues/1767)) ([18977cc](https://github.com/zwave-js/zwavejs2mqtt/commit/18977cc2c17f9fdad4a7d8c24bc8bed236c3648b))
+
 ## [5.7.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.1...v5.7.2) (2021-09-29)
 
 
