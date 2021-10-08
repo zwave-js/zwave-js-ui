@@ -47,7 +47,12 @@ export default {
 					type: 'number',
 					label: 'Power',
 					customValue: (node) => this.getBatteryLevel(node),
-					customFormat: (value) => (value ? value + '%' : 'mains'),
+					customFormat: (value, node) =>
+						node.powerSource === 'battery'
+							? value !== undefined
+								? value + '%'
+								: '-'
+							: '',
 					customInfo: (node) => {
 						if (node.powerSource === 'mains') return 'mains-powered'
 						let levelInfo = ''
@@ -172,7 +177,7 @@ export default {
 			let icon
 			let label =
 				typeof this.nodesProps.batteryLevel.customFormat === 'function'
-					? this.nodesProps.batteryLevel.customFormat(level)
+					? this.nodesProps.batteryLevel.customFormat(level, node)
 					: level
 			let description =
 				typeof this.nodesProps.batteryLevel.customInfo === 'function'
