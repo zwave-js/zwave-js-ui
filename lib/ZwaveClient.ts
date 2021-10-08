@@ -2465,11 +2465,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const fileName = `NVM_${new Date().toISOString().split('T')[0]}`
 
-		await writeFile(
-			utils.joinPath(storeDir, fileName + '.bin'),
-			data,
-			'binary'
-		)
+		await writeFile(utils.joinPath(storeDir, fileName + '.bin'), data)
 
 		return { data, fileName }
 	}
