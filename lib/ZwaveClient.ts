@@ -1138,17 +1138,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.cfg.securityKeys.S0_Legacy = process.env.NETWORK_KEY
 			}
 
+			const availableKeys = [
+				'S2_Unauthenticated',
+				'S2_Authenticated',
+				'S2_AccessControl',
+				'S0_Legacy',
+			]
+
+			const envKeys = Object.keys(process.env)
+				.filter((k) => k.startsWith('KEY_'))
+				.map((k) => k.substring(4))
+
+			// load security keys from env
+			for (const k of envKeys) {
+				if (availableKeys.includes(k)) {
+					this.cfg.securityKeys[k] = process.env[`KEY_${k}`]
+				}
+			}
+
 			zwaveOptions.securityKeys = {}
 
 			// convert security keys to buffer
 			for (const key in this.cfg.securityKeys) {
 				if (
-					[
-						'S2_Unauthenticated',
-						'S2_Authenticated',
-						'S2_AccessControl',
-						'S0_Legacy',
-					].includes(key) &&
+					availableKeys.includes(key) &&
 					this.cfg.securityKeys[key].length === 32
 				) {
 					zwaveOptions.securityKeys[key] = Buffer.from(
