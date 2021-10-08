@@ -1,3 +1,11 @@
+# [5.8.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.3...v5.8.0) (2021-10-08)
+
+
+### Features
+
+* backup/restore NVM ([#1795](https://github.com/zwave-js/zwavejs2mqtt/issues/1795)) ([ac84133](https://github.com/zwave-js/zwavejs2mqtt/commit/ac84133cb3245559da5536e46176f89e449bac02))
+* directly download NVM backup file ([e8373a9](https://github.com/zwave-js/zwavejs2mqtt/commit/e8373a91e7af2edd77a80b1468e83ca70467b074))
+
 ## [5.7.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.2...v5.7.3) (2021-10-04)
 
 
