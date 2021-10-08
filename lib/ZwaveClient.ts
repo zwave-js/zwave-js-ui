@@ -2450,14 +2450,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._onBackupNVMProgress.bind(this)
 		)
 
+		const fileName = `NVM_${new Date().toISOString().split('T')[0]}`
+
 		await writeFile(
-			utils.joinPath(
-				storeDir,
-				`NVM_${new Date().toISOString().split('T')[0]}.bin`
-			),
+			utils.joinPath(storeDir, fileName + '.bin'),
 			data,
 			'binary'
 		)
+
+		return { data, fileName }
 	}
 
 	private _onBackupNVMProgress(bytesRead: number, totalBytes: number) {

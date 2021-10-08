@@ -502,9 +502,17 @@ export default {
 						)
 						break
 					case 'backupNVMRaw':
-						this.showSnackbar(
-							'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory'
-						)
+						{
+							this.showSnackbar(
+								'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory'
+							)
+							const { result } = data
+							this.$listeners.export(
+								result.data,
+								result.fileName,
+								'bin'
+							)
+						}
 						break
 					case 'restoreNVMRaw':
 						this.showSnackbar('NVM restore DONE')
