@@ -62,6 +62,7 @@ import * as pkgjson from '../package.json'
 import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
+import { writeFile } from 'fs-extra'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
@@ -138,6 +139,8 @@ const allowedApis = validateMethods([
 	'grantSecurityClasses',
 	'validateDSK',
 	'abortInclusion',
+	'backupNVMRaw',
+	'restoreNVMRaw',
 ] as const)
 
 function _getValueIdRegexFromNodePropsMap() {
@@ -1177,17 +1180,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.cfg.securityKeys.S0_Legacy = process.env.NETWORK_KEY
 			}
 
+			const availableKeys = [
+				'S2_Unauthenticated',
+				'S2_Authenticated',
+				'S2_AccessControl',
+				'S0_Legacy',
+			]
+
+			const envKeys = Object.keys(process.env)
+				.filter((k) => k.startsWith('KEY_'))
+				.map((k) => k.substring(4))
+
+			// load security keys from env
+			for (const k of envKeys) {
+				if (availableKeys.includes(k)) {
+					this.cfg.securityKeys[k] = process.env[`KEY_${k}`]
+				}
+			}
+
 			zwaveOptions.securityKeys = {}
 
 			// convert security keys to buffer
 			for (const key in this.cfg.securityKeys) {
 				if (
-					[
-						'S2_Unauthenticated',
-						'S2_Authenticated',
-						'S2_AccessControl',
-						'S0_Legacy',
-					].includes(key) &&
+					availableKeys.includes(key) &&
 					this.cfg.securityKeys[key].length === 32
 				) {
 					zwaveOptions.securityKeys[key] = Buffer.from(
@@ -2304,9 +2320,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// ---------- CONTROLLER EVENTS -------------------------------
 
 	private _updateControllerStatus(status) {
-		logger.info(`Controller status: ${status}`)
-		this._cntStatus = status
-		this.sendToSocket(socketEvents.controller, status)
+		if (this._cntStatus !== status) {
+			logger.info(`Controller status: ${status}`)
+			this._cntStatus = status
+			this.sendToSocket(socketEvents.controller, status)
+		}
 	}
 
 	private _onInclusionStarted(secure) {
@@ -2473,6 +2491,50 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.sendToSocket(socketEvents.inclusionAborted, true)
 
 		logger.warn('Inclusion aborted')
+	}
+
+	async backupNVMRaw() {
+		if (!this.driver || !this.driverReady) {
+			throw Error('Driver is not ready')
+		}
+
+		if (this.closed) {
+			throw Error('Client is closed')
+		}
+		const data = await this.driver.controller.backupNVMRaw(
+			this._onBackupNVMProgress.bind(this)
+		)
+
+		const fileName = `NVM_${new Date().toISOString().split('T')[0]}`
+
+		await writeFile(utils.joinPath(storeDir, fileName + '.bin'), data)
+
+		return { data, fileName }
+	}
+
+	private _onBackupNVMProgress(bytesRead: number, totalBytes: number) {
+		const progress = Math.round((bytesRead / totalBytes) * 100)
+		this._updateControllerStatus(`Backup NVM progress: ${progress}%`)
+	}
+
+	async restoreNVMRaw(data: Buffer) {
+		if (!this.driver || !this.driverReady) {
+			throw Error('Driver is not ready')
+		}
+
+		if (this.closed) {
+			throw Error('Client is closed')
+		}
+		await this.driver.controller.restoreNVMRaw(
+			data,
+			this._onRestoreNVMProgress.bind(this)
+		)
+	}
+
+	private _onRestoreNVMProgress(bytesRead: number, totalBytes: number) {
+		const progress = Math.round((bytesRead / totalBytes) * 100)
+
+		this._updateControllerStatus(`Restore NVM progress: ${progress}%`)
 	}
 
 	// ---------- NODE EVENTS -------------------------------------

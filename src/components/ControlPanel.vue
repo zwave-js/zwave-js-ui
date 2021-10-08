@@ -228,6 +228,15 @@ export default {
 					icon: 'code',
 					desc: 'Write a custom JS function using the ZwaveJS Driver',
 				},
+				{
+					text: 'NVM Management',
+					options: [
+						{ name: 'Backup', action: 'backupNVMRaw' },
+						{ name: 'Restore', action: 'restoreNVMRaw' },
+					],
+					icon: 'update',
+					desc: "Backup/Restore controller's NVM (Non Volatile Memory)",
+				},
 			],
 			rules: {
 				required: (value) => {
@@ -415,6 +424,37 @@ export default {
 					}
 
 					args.push(code)
+				} else if (action === 'backupNVMRaw') {
+					const confirm = await this.$listeners.showConfirm(
+						'NVM Backup',
+						'While doing the backup the Z-Wave radio will be turned on/off',
+						'alert',
+						{
+							confirmText: 'Ok',
+						}
+					)
+					if (!confirm) {
+						return
+					}
+				} else if (action === 'restoreNVMRaw') {
+					const confirm = await this.$listeners.showConfirm(
+						'NVM Restore',
+						'While doing the restore the Z-Wave radio will be turned on/off.\n<strong>A failure during this process may brick your controller. Use at your own risk!</strong>',
+						'alert',
+						{
+							confirmText: 'Ok',
+						}
+					)
+					if (!confirm) {
+						return
+					}
+
+					try {
+						const { data } = await this.$listeners.import('buffer')
+						args.push(data)
+					} catch (error) {
+						return
+					}
 				}
 
 				if (broadcast) {
@@ -460,6 +500,22 @@ export default {
 							'Node statistics',
 							this.jsonToList(data.result)
 						)
+						break
+					case 'backupNVMRaw':
+						{
+							this.showSnackbar(
+								'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory'
+							)
+							const { result } = data
+							this.$listeners.export(
+								result.data,
+								result.fileName,
+								'bin'
+							)
+						}
+						break
+					case 'restoreNVMRaw':
+						this.showSnackbar('NVM restore DONE')
 						break
 					default:
 						this.showSnackbar('Successfully call api ' + data.api)
