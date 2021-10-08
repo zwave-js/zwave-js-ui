@@ -62,6 +62,7 @@ import * as pkgjson from '../package.json'
 import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
+import { writeFile } from 'fs-extra'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
@@ -138,6 +139,8 @@ const allowedApis = validateMethods([
 	'grantSecurityClasses',
 	'validateDSK',
 	'abortInclusion',
+	'backupNVMRaw',
+	'restoreNVMRaw',
 ] as const)
 
 // Define mapping of node properties to ValueIDs
@@ -2262,9 +2265,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// ---------- CONTROLLER EVENTS -------------------------------
 
 	private _updateControllerStatus(status) {
-		logger.info(`Controller status: ${status}`)
-		this._cntStatus = status
-		this.sendToSocket(socketEvents.controller, status)
+		if (this._cntStatus !== status) {
+			logger.info(`Controller status: ${status}`)
+			this._cntStatus = status
+			this.sendToSocket(socketEvents.controller, status)
+		}
 	}
 
 	private _onInclusionStarted(secure) {
@@ -2431,6 +2436,53 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.sendToSocket(socketEvents.inclusionAborted, true)
 
 		logger.warn('Inclusion aborted')
+	}
+
+	async backupNVMRaw() {
+		if (!this.driver || !this.driverReady) {
+			throw Error('Driver is not ready')
+		}
+
+		if (this.closed) {
+			throw Error('Client is closed')
+		}
+		const data = await this.driver.controller.backupNVMRaw(
+			this._onBackupNVMProgress.bind(this)
+		)
+
+		await writeFile(
+			utils.joinPath(
+				storeDir,
+				`NVM_${new Date().toISOString().split('T')[0]}.bin`
+			),
+			data,
+			'binary'
+		)
+	}
+
+	private _onBackupNVMProgress(bytesRead: number, totalBytes: number) {
+		const progress = Math.round((bytesRead / totalBytes) * 100)
+		this._updateControllerStatus(`Backup NVM progress: ${progress}%`)
+	}
+
+	async restoreNVMRaw(data: Buffer) {
+		if (!this.driver || !this.driverReady) {
+			throw Error('Driver is not ready')
+		}
+
+		if (this.closed) {
+			throw Error('Client is closed')
+		}
+		await this.driver.controller.restoreNVMRaw(
+			data,
+			this._onRestoreNVMProgress.bind(this)
+		)
+	}
+
+	private _onRestoreNVMProgress(bytesRead: number, totalBytes: number) {
+		const progress = Math.round((bytesRead / totalBytes) * 100)
+
+		this._updateControllerStatus(`Restore NVM progress: ${progress}%`)
 	}
 
 	// ---------- NODE EVENTS -------------------------------------
