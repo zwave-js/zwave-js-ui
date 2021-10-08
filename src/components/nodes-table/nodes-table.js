@@ -1,9 +1,9 @@
 import draggable from 'vuedraggable'
 import { ManagedItems } from '@/modules/ManagedItems'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
+import CustomDisplay from '@/components/nodes-table/CustomDisplay.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import { mapGetters } from 'vuex'
-import TableValue from '@/components/nodes-table/TableValue.vue'
 import {
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
@@ -22,8 +22,8 @@ export default {
 	components: {
 		draggable,
 		ColumnFilter,
+		CustomDisplay,
 		ExpandedNode,
-		TableValue,
 	},
 	watch: {},
 	computed: {

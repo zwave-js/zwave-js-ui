@@ -125,7 +125,7 @@
 			</td>
 		</template>
 		<template v-slot:[`item.batteryLevel`]="{ item }">
-			<table-value :value="getPowerInfo(item)" />
+			<custom-display :value="getPowerInfo(item)" />
 		</template>
 		<template v-slot:[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}
