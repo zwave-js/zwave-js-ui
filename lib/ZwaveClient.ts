@@ -140,62 +140,58 @@ const allowedApis = validateMethods([
 	'abortInclusion',
 ] as const)
 
-export type CmdClsExistsMapping = {
-	commandClass: CommandClasses
-	existsValue: any
-	absentValue: any
-}
-
-export enum NodePropMappingAggFn {
-	ALL = 'all',
-	MIN = 'min',
-	MAX = 'max',
-	FIRST = 'first',
-	LAST = 'last',
-}
-
-export type NodePropMapping = {
-	hasCommandClass?: CmdClsExistsMapping
-	valueId?: ValueID
-	aggregationType?: NodePropMappingAggFn
-}
-
-// Define mapping of node properties to ValueIDs
-const mappedNodeProps: Record<string, NodePropMapping> = {
-	batteryLevelMin: {
-		valueId: {
-			commandClass: CommandClasses.Battery,
-			property: 'level',
-		},
-		aggregationType: NodePropMappingAggFn.MIN,
-	},
-	batteryLevels: {
-		valueId: {
-			commandClass: CommandClasses.Battery,
-			property: 'level',
-		},
-		aggregationType: NodePropMappingAggFn.ALL,
-	},
-	powerSource: {
-		hasCommandClass: {
-			commandClass: CommandClasses.Battery,
-			existsValue: 'battery',
-			absentValue: 'mains',
-		},
-	},
-}
-// Extract mapped command classes for better mapping performance
-const mappedValueIdCommandClasses: Set<number> = new Set()
-const mappedExistingCommandClasses: Set<number> = new Set()
-for (const k in mappedNodeProps) {
-	if (mappedNodeProps[k].valueId) {
-		mappedValueIdCommandClasses.add(mappedNodeProps[k].valueId.commandClass)
-	} else if (mappedNodeProps[k].hasCommandClass) {
-		mappedExistingCommandClasses.add(
-			mappedNodeProps[k].hasCommandClass.commandClass
-		)
+function _getValueIdRegexFromNodePropsMap() {
+	const allCCs: string[] = []
+	for (const cc in nodePropsMap) {
+		const ccVidSet: Set<string> = new Set<string>()
+		const vMaps = nodePropsMap[cc].values
+		for (const i in vMaps) {
+			ccVidSet.add(`${cc}-[0-9]+-${vMaps[i].valueProp}`)
+		}
+		if (ccVidSet.size > 0) {
+			allCCs.push(`(${[...ccVidSet].join('|')})`)
+		}
 	}
+	let regex = ''
+	if (allCCs.length > 0) {
+		regex = `^([0-9]+-)?${allCCs.join('|')}$`
+	}
+	return regex !== '' ? RegExp(regex) : undefined
 }
+
+// Define mapping of CCs and node values to node properties:
+const nodePropsMap = {
+	[CommandClasses.Battery]: {
+		ccExists: {
+			nodeProp: 'powerSource',
+			fn: (node: Z2MNode, hasCC: boolean) =>
+				hasCC ? 'battery' : 'mains',
+		},
+		values: [
+			{
+				nodeProp: 'batteryLevelMin',
+				valueProp: 'level',
+				fn: (node: Z2MNode, values: Z2MValueId[]) =>
+					values.reduce(
+						(acc, curr) =>
+							acc !== undefined
+								? acc < curr.value
+									? acc
+									: curr.value
+								: curr.value,
+						undefined
+					),
+			},
+			{
+				nodeProp: 'batteryLevels',
+				valueProp: 'level',
+				fn: (node: Z2MNode, values: Z2MValueId[]) =>
+					values.map((v) => v.value),
+			},
+		],
+	},
+}
+const valueIdRegex = _getValueIdRegexFromNodePropsMap()
 
 export type SensorTypeScale = {
 	key: string | number
@@ -2564,8 +2560,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._mapHasCommandClassToProps(node)
-		this._mapNodeValuesToProps(node)
+		this._mapCCExistsToProps(node)
+		this._mapValuesToNodeProps(node)
 
 		this._onNodeStatus(zwaveNode)
 
@@ -3360,22 +3356,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return valueId
 	}
 
-	private _mapHasCommandClassToProps(node: Z2MNode) {
-		for (const propName in mappedNodeProps) {
-			if (mappedNodeProps[propName].hasCommandClass) {
+	private _mapCCExistsToProps(node: Z2MNode) {
+		for (const cc in nodePropsMap) {
+			if (!nodePropsMap[cc].ccExists) continue
+			const ccMap = nodePropsMap[cc].ccExists
+			if (ccMap.fn) {
 				let found = false
-				const mapping = mappedNodeProps[propName].hasCommandClass
 				for (const vid in node.values) {
-					if (
-						node.values[vid].commandClass === mapping.commandClass
-					) {
+					if (node.values[vid].commandClass.toString() === cc) {
 						found = true
 						break
 					}
 				}
-				node[propName] = found
-					? mapping.existsValue
-					: mapping.absentValue
+				const result = ccMap.fn(node, found)
+				node[ccMap.nodeProp] = result
+				logger.debug(
+					`Node ${node.id}: mapping ${
+						found ? 'existence' : 'absence'
+					} of CC ${cc} (${CommandClasses[cc]}) to node property '${
+						ccMap.nodeProp
+					}' => ${JSON.stringify(result)}`
+				)
 			}
 		}
 	}
@@ -3385,68 +3386,45 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
-	private _mapNodeValuesToProps(
-		node: Z2MNode,
-		valueId?: TranslatedValueID & { [x: string]: any }
-	) {
-		if (valueId) {
-			if (!mappedValueIdCommandClasses.has(valueId.commandClass)) return // Return quickly if command class is not synced to node props
-			for (const k in mappedNodeProps) {
-				if (mappedNodeProps[k].valueId) {
-					const mappedValueId: ValueID = mappedNodeProps[k].valueId
-					if (
-						valueId.commandClass === mappedValueId.commandClass &&
-						valueId.property === mappedValueId.property
-					) {
-						logger.debug(
-							`Node ${
-								node.id
-							}: mapping property '${k}' => commandClass=${
-								valueId.commandClass
-							} (${
-								CommandClasses[valueId.commandClass]
-							}), property='${valueId.property}'`
-						)
-						switch (mappedNodeProps[k].aggregationType) {
-							case NodePropMappingAggFn.ALL:
-								if (typeof node[k] === 'undefined') {
-									node[k] = {
-										[valueId.endpoint]: valueId.value,
-									}
-								} else {
-									node[k][valueId.endpoint] = valueId.value
-								}
-								break
-							case NodePropMappingAggFn.FIRST:
-								node[k] =
-									typeof node[k] === 'undefined'
-										? valueId.value
-										: node[k]
-								break
-							case NodePropMappingAggFn.LAST:
-								node[k] = valueId.value
-								break
-							case NodePropMappingAggFn.MAX:
-								node[k] =
-									typeof node[k] === 'undefined' ||
-									node[k] < valueId.value
-										? valueId.value
-										: node[k]
-								break
-							case NodePropMappingAggFn.MIN:
-								node[k] =
-									typeof node[k] === 'undefined' ||
-									node[k] > valueId.value
-										? valueId.value
-										: node[k]
-								break
-						}
+	private _mapValuesToNodeProps(node: Z2MNode, valueId?: Z2MValueId) {
+		if (!valueId && node.values) {
+			for (const vid in node.values) {
+				if (!valueIdRegex || !valueIdRegex.test(vid)) continue
+				this._mapValuesToNodeProps(node, node.values[vid])
+			}
+		} else if (valueId && valueId.commandClass) {
+			if (
+				!valueIdRegex ||
+				!valueIdRegex.test(valueId.id) ||
+				!nodePropsMap[valueId.commandClass] ||
+				!nodePropsMap[valueId.commandClass].values
+			) {
+				return
+			}
+
+			const vMaps = nodePropsMap[valueId.commandClass].values
+			for (const i in vMaps) {
+				const values: Z2MValueId[] = []
+				for (const vid in node.values) {
+					if (!valueIdRegex || !valueIdRegex.test(vid)) continue
+					if (node.values[vid].property === vMaps[i].valueProp) {
+						values.push(node.values[vid])
 					}
 				}
-			}
-		} else if (node.values) {
-			for (const k in node.values) {
-				this._mapNodeValuesToProps(node, node.values[k])
+				if (values.length === 0) continue
+				const result = vMaps[i].fn(node, values)
+				node[vMaps[i].nodeProp] = result
+				logger.debug(
+					`Node ${node.id}: mapping value(s) of property '${
+						valueId.property
+					}', propertyName '${valueId.propertyName}' from CC ${
+						valueId.commandClass
+					} (${
+						CommandClasses[valueId.commandClass]
+					}) to node property '${
+						vMaps[i].nodeProp
+					}' => ${JSON.stringify(result)}`
+				)
 			}
 		}
 	}
@@ -3493,8 +3471,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				valueId.value = newValue
 				valueId.stateless = !!args.stateless
 
-				// Map defined values (e.g. battery level) to top level node properties:
-				this._mapNodeValuesToProps(node, valueId)
+				// Map values (e.g. battery level) to node properties:
+				this._mapValuesToNodeProps(node, valueId)
 
 				// ensure duration is never undefined
 				if (
