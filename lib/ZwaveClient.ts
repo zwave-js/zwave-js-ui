@@ -2621,7 +2621,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._mapCCExistsToProps(node)
+		this._mapCCExistsToNodeProps(node)
 		this._mapValuesToNodeProps(node)
 
 		this._onNodeStatus(zwaveNode)
@@ -3417,7 +3417,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return valueId
 	}
 
-	private _mapCCExistsToProps(node: Z2MNode) {
+	private _mapCCExistsToNodeProps(node: Z2MNode) {
 		for (const cc in nodePropsMap) {
 			if (!nodePropsMap[cc].ccExists) continue
 			const ccMap = nodePropsMap[cc].ccExists
