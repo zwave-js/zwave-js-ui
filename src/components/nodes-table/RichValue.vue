@@ -17,9 +17,11 @@
 				:path="value.icon"
 				:style="value.iconStyle"
 			></svg-icon>
-			<span :style="'padding-top: 4px; ' + value.displayStyle">{{
-				value.displayValue
-			}}</span>
+			<span
+				v-if="value !== undefined && !!value.displayValue"
+				:style="'padding-top: 4px; ' + value.displayStyle"
+				>{{ value.displayValue }}</span
+			>
 		</v-layout>
 	</div>
 </template>
