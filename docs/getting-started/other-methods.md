@@ -2,10 +2,10 @@
 
 ## Kubernetes
 
-To run ZWavejs2Mqtt as a Kubernetes deployment, download the `kustomization.yaml` file found [here](https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kuberenets/kustomization.yaml):
+To run ZWavejs2Mqtt as a Kubernetes deployment, download the `kustomization.yaml` file found [here](https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kustomization.yaml):
 
 ```bash
-kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kuberenets/kustomization.yaml
+kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwavejs2mqtt/master/kustomization.yaml
 ```
 
 > [!NOTE]
