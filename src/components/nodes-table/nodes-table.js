@@ -117,7 +117,7 @@ export default {
 			let icon = ''
 			let label = ''
 			let description = ''
-			if (node.powerSource === 'mains') {
+			if (node.isBatteryPowered !== undefined && !node.isBatteryPowered) {
 				icon = mdiPowerPlug
 				description = 'mains-powered'
 			} else {
@@ -156,10 +156,16 @@ export default {
 		},
 		powerSort(items, sortBy, sortDesc, nodeA, nodeB) {
 			// Special sort for power column
-			let levelA =
-				nodeA.powerSource === 'battery' ? nodeA.minBatteryLevel : 101
-			let levelB =
-				nodeB.powerSource === 'battery' ? nodeB.minBatteryLevel : 101
+			let levelA = nodeA.isBatteryPowered
+				? nodeA.minBatteryLevel
+				: nodeA.isBatteryPowered !== undefined
+				? 101
+				: undefined
+			let levelB = nodeB.isBatteryPowered
+				? nodeB.minBatteryLevel
+				: nodeB.isBatteryPowered !== undefined
+				? 101
+				: undefined
 			let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
 			res = sortDesc[0] ? -res : res
 			return res

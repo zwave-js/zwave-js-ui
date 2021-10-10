@@ -166,9 +166,8 @@ function _getValueIdRegexFromNodePropsMap() {
 const nodePropsMap = {
 	[CommandClasses.Battery]: {
 		ccExists: {
-			nodeProp: 'powerSource',
-			fn: (node: Z2MNode, hasCC: boolean) =>
-				hasCC ? 'battery' : 'mains',
+			nodeProp: 'isBatteryPowered',
+			fn: (node: Z2MNode, hasCC: boolean) => hasCC,
 		},
 		values: [
 			{
@@ -363,7 +362,7 @@ export type Z2MNode = {
 	healProgress?: string | undefined
 	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
-	powerSource?: string
+	isBatteryPowered?: boolean
 }
 
 export type ZwaveConfig = {
