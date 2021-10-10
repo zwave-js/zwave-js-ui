@@ -152,10 +152,10 @@
 			}}
 		</template>
 		<template v-slot:[`item.supportsBeaming`]="{ item }">
-			{{ item.supportsBeaming ? 'Yes' : 'No' }}
+			<rich-value :value="richValue(item, 'supportsBeaming')" />
 		</template>
 		<template v-slot:[`item.failed`]="{ item }">
-			{{ item.failed ? 'Yes' : 'No' }}
+			<rich-value :value="richValue(item, 'failed')" />
 		</template>
 		<template v-slot:[`item.healProgress`]="{ item }">
 			<v-progress-circular

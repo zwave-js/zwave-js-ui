@@ -5,12 +5,16 @@ import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import RichValue from '@/components/nodes-table/RichValue.vue'
 import { mapGetters } from 'vuex'
 import {
+	mdiAlertCircle,
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
 	mdiBattery50,
 	mdiBattery80,
 	mdiBattery,
 	mdiBatteryUnknown,
+	mdiCheckCircle,
+	mdiHelpCircle,
+	mdiMinusCircle,
 	mdiPowerPlug,
 } from '@mdi/js'
 
@@ -61,7 +65,28 @@ export default {
 				name: { type: 'string', label: 'Name' },
 				loc: { type: 'string', label: 'Location' },
 				security: { type: 'string', label: 'Security' },
-				supportsBeaming: { type: 'boolean', label: 'Beaming' },
+				supportsBeaming: {
+					type: 'boolean',
+					label: 'Beaming',
+					richValue: (node) =>
+						this.booleanRichValue(node.supportsBeaming, {
+							default: {
+								icon: mdiHelpCircle,
+								iconStyle: 'color: grey',
+								description: 'Unknown beaming support',
+							},
+							true: {
+								icon: mdiCheckCircle,
+								iconStyle: 'color: green',
+								description: 'Beaming is supported',
+							},
+							false: {
+								icon: mdiMinusCircle,
+								iconStyle: 'color: red',
+								description: 'Beaming is unsupported',
+							},
+						}),
+				},
 				zwavePlusVersion: {
 					type: 'string',
 					label: 'Z-Wave+',
@@ -70,7 +95,28 @@ export default {
 					type: 'string',
 					label: 'FW',
 				},
-				failed: { type: 'boolean', label: 'Failed' },
+				failed: {
+					type: 'boolean',
+					label: 'Failed',
+					richValue: (node) =>
+						this.booleanRichValue(node.failed, {
+							default: {
+								icon: mdiHelpCircle,
+								iconStyle: 'color: grey',
+								description: 'Failure status unknown',
+							},
+							true: {
+								icon: mdiAlertCircle,
+								iconStyle: 'color: red',
+								description: 'Node is failed!',
+							},
+							false: {
+								icon: mdiCheckCircle,
+								iconStyle: 'color: green',
+								description: 'Node is not failed.',
+							},
+						}),
+				},
 				status: { type: 'string', label: 'Status' },
 				healProgress: { type: 'string', label: 'Heal' },
 				interviewStage: { type: 'string', label: 'Interview' },
@@ -110,6 +156,20 @@ export default {
 		},
 		sort(items, sortBy, sortDesc) {
 			return this.managedNodes.sort(items, sortBy, sortDesc)
+		},
+		booleanRichValue(value, valueMap) {
+			let map =
+				value === undefined
+					? valueMap.default
+					: value
+					? valueMap.true
+					: valueMap.false
+			return {
+				align: 'center',
+				icon: map.icon,
+				iconStyle: map.iconStyle,
+				description: map.description,
+			}
 		},
 		powerRichValue(node) {
 			let level = node.minBatteryLevel
