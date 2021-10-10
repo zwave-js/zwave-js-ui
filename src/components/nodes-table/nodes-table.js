@@ -1,8 +1,8 @@
 import draggable from 'vuedraggable'
 import { ManagedItems } from '@/modules/ManagedItems'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
-import CustomDisplay from '@/components/nodes-table/CustomDisplay.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
+import RichValue from '@/components/nodes-table/RichValue.vue'
 import { mapGetters } from 'vuex'
 import {
 	mdiBatteryAlertVariantOutline,
@@ -22,8 +22,8 @@ export default {
 	components: {
 		draggable,
 		ColumnFilter,
-		CustomDisplay,
 		ExpandedNode,
+		RichValue,
 	},
 	watch: {},
 	computed: {
@@ -37,42 +37,23 @@ export default {
            - type (string): The type of the property
            - label (string): The label of the property to be displayed as table column
            - groupable (boolean): If the column values can be grouped
+           - customGroupValue (function): Function to format a value for displaying as group value
+           - customSort (function): Custom sort function for a certain column.
            - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
-             NOTE: Currently does not work with value grouping due to a limitation of VDataTable
-           - customInfo (function): Function to provide more detailed information for displaying as a tooltip
-           - customFormat (function): Function to format the value for displaying
+           - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
         */
 				id: { type: 'number', label: 'ID', groupable: false },
-				batteryLevel: {
+				minBatteryLevel: {
 					type: 'number',
 					label: 'Power',
-					customValue: (node) => this.getBatteryLevel(node),
-					customFormat: (value, node) =>
-						node.powerSource === 'battery'
-							? value !== undefined
-								? value + '%'
-								: '-'
-							: '',
-					customInfo: (node) => {
-						if (node.powerSource === 'mains') return 'mains-powered'
-						let levelInfo = ''
-						for (const ep in node.batteryLevels) {
-							if (levelInfo !== '') {
-								levelInfo += '/'
-							}
-							levelInfo += `${node.batteryLevels[ep]}%`
-						}
-						return `Battery level(s): ${levelInfo}`
-					},
-					customSort: (items, sortBy, sortDesc, nodeA, nodeB) => {
-						// Special sort for power column
-						// Use 100% as fallback (for mains-powered devices)
-						let levelA = this.getBatteryLevel(nodeA, 101)
-						let levelB = this.getBatteryLevel(nodeB, 101)
-						let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
-						res = sortDesc[0] ? -res : res
-						return res
-					},
+					customGroupValue: (group) =>
+						group
+							? `Battery level: ${group}%`
+							: 'Mains-powered or battery level unknown',
+					customSort: (items, sortBy, sortDesc, nodeA, nodeB) =>
+						this.powerSort(items, sortBy, sortDesc, nodeA, nodeB),
+					customValue: (node) => node.minBatteryLevel, // Note: Not required here but kept as demo for use of customValue()
+					richValue: (node) => this.powerRichValue(node),
 				},
 				manufacturer: { type: 'string', label: 'Manufacturer' },
 				productDescription: { type: 'string', label: 'Product' },
@@ -121,87 +102,47 @@ export default {
 
 			return undefined
 		},
-		getGroupByLabel(group) {
-			let formattedGroup = group
-			if (
-				this.managedNodes &&
-				this.managedNodes.groupBy &&
-				this.managedNodes.groupBy[0] &&
-				this.nodesProps[this.managedNodes.groupBy[0]] &&
-				typeof this.nodesProps[this.managedNodes.groupBy[0]]
-					.customFormat === 'function'
-			) {
-				formattedGroup =
-					this.nodesProps[this.managedNodes.groupBy[0]].customFormat(
-						group
-					)
-			}
-			return this.managedNodes.groupByTitle + ': ' + formattedGroup
+		groupValue(group) {
+			return this.managedNodes.groupValue(group)
 		},
-		customSort(items, sortBy, sortDesc) {
-			// See https://stackoverflow.com/a/54612408
-			if (!sortBy[0]) {
-				return items
-			}
-			items.sort((a, b) => {
-				let prop = sortBy[0]
-				if (
-					this.nodesProps[sortBy[0]] &&
-					typeof this.nodesProps[sortBy[0]].customSort === 'function'
-				) {
-					// Use special sort function if one is defined for the sortBy column
-					return this.nodesProps[sortBy[0]].customSort(
-						items,
-						sortBy,
-						sortDesc,
-						a,
-						b
-					)
-				} else {
-					// Standard sort for every other column
-					let res = a[prop] < b[prop] ? -1 : a[prop] > b[prop] ? 1 : 0
-					res = sortDesc[0] ? -res : res
-					return res
-				}
-			})
-			return items
+		richValue(item, propName) {
+			return this.managedNodes.richValue(item, propName)
 		},
-		getBatteryLevel(node, fallback) {
-			return node.batteryLevel !== undefined
-				? node.batteryLevel
-				: fallback
+		sort(items, sortBy, sortDesc) {
+			return this.managedNodes.sort(items, sortBy, sortDesc)
 		},
-		getPowerInfo(node) {
-			let level = node.batteryLevelMin
+		powerRichValue(node) {
+			let level = node.minBatteryLevel
 			let iconStyle = 'color: green'
-			let icon
-			let label =
-				typeof this.nodesProps.batteryLevel.customFormat === 'function'
-					? this.nodesProps.batteryLevel.customFormat(level, node)
-					: level
-			let description =
-				typeof this.nodesProps.batteryLevel.customInfo === 'function'
-					? this.nodesProps.batteryLevel.customInfo(node)
-					: ''
+			let icon = ''
+			let label = ''
+			let description = ''
 			if (node.powerSource === 'mains') {
 				icon = mdiPowerPlug
 				description = 'mains-powered'
-			} else if (level <= 10) {
-				icon = mdiBatteryAlertVariantOutline
-				iconStyle = 'color: red'
-			} else if (level <= 30) {
-				icon = mdiBattery20
-				iconStyle = 'color: orange'
-			} else if (level <= 70) {
-				icon = mdiBattery50
-			} else if (level <= 90) {
-				icon = mdiBattery80
-			} else if (level > 90) {
-				icon = mdiBattery
 			} else {
-				icon = mdiBatteryUnknown
-				description = 'Battery level: unknown'
-				iconStyle = 'color: grey'
+				label = `${level}%`
+				description =
+					'All battery levels: ' +
+					node.batteryLevels.map((v) => `${v}%`).join(',')
+				if (level <= 10) {
+					icon = mdiBatteryAlertVariantOutline
+					iconStyle = 'color: red'
+				} else if (level <= 30) {
+					icon = mdiBattery20
+					iconStyle = 'color: orange'
+				} else if (level <= 70) {
+					icon = mdiBattery50
+				} else if (level <= 90) {
+					icon = mdiBattery80
+				} else if (level > 90) {
+					icon = mdiBattery
+				} else {
+					icon = mdiBatteryUnknown
+					description = 'Battery level: unknown'
+					iconStyle = 'color: grey'
+					label = '-'
+				}
 			}
 			return {
 				align: 'left',
@@ -212,6 +153,16 @@ export default {
 				description: description,
 				rawValue: level,
 			}
+		},
+		powerSort(items, sortBy, sortDesc, nodeA, nodeB) {
+			// Special sort for power column
+			let levelA =
+				nodeA.powerSource === 'battery' ? nodeA.minBatteryLevel : 101
+			let levelB =
+				nodeB.powerSource === 'battery' ? nodeB.minBatteryLevel : 101
+			let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
+			res = sortDesc[0] ? -res : res
+			return res
 		},
 	},
 	mounted() {

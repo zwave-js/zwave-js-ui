@@ -9,7 +9,7 @@
 		:expanded.sync="expanded"
 		:value="managedNodes.selected"
 		:options="managedNodes.tableOptions"
-		:custom-sort="customSort"
+		:custom-sort="sort"
 		@update:options="managedNodes.tableOptions = $event"
 		@input="managedNodes.selected = $event"
 		@click:row="toggleExpanded($event)"
@@ -118,14 +118,14 @@
 				<v-btn @click="toggle" x-small icon :ref="group">
 					<v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
 				</v-btn>
-				<span>{{ getGroupByLabel(group) }}</span>
+				<span>{{ groupValue(group) }}</span>
 				<v-btn x-small icon @click="remove"
 					><v-icon>close</v-icon></v-btn
 				>
 			</td>
 		</template>
-		<template v-slot:[`item.batteryLevel`]="{ item }">
-			<custom-display :value="getPowerInfo(item)" />
+		<template v-slot:[`item.minBatteryLevel`]="{ item }">
+			<rich-value :value="richValue(item, 'minBatteryLevel')" />
 		</template>
 		<template v-slot:[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}

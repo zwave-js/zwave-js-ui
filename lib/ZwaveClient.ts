@@ -172,7 +172,7 @@ const nodePropsMap = {
 		},
 		values: [
 			{
-				nodeProp: 'batteryLevelMin',
+				nodeProp: 'minBatteryLevel',
 				valueProp: 'level',
 				fn: (node: Z2MNode, values: Z2MValueId[]) =>
 					values.reduce(
@@ -361,7 +361,7 @@ export type Z2MNode = {
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	healProgress?: string | undefined
-	batteryLevelMin?: number
+	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
 	powerSource?: string
 }
