@@ -1,12 +1,9 @@
 {
   "name": "zwavejs2mqtt",
   "version": "5.8.0",
-  "bin": {
-    "zwavejs2mqtt": "server/bin/www.js"
-  },
+  "bin": "server/bin/www.js",
   "description": "Zwavejs2Mqtt Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
-  "private": false,
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -261,5 +258,6 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 8"
-  ]
+  ],
+  "packageManager": "yarn@3.0.2"
 }
