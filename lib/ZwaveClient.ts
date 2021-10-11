@@ -143,25 +143,6 @@ const allowedApis = validateMethods([
 	'restoreNVMRaw',
 ] as const)
 
-function _getValueIdRegexFromNodePropsMap() {
-	const allCCs: string[] = []
-	for (const cc in nodePropsMap) {
-		const ccVidSet: Set<string> = new Set<string>()
-		const vMaps = nodePropsMap[cc].values
-		for (const i in vMaps) {
-			ccVidSet.add(`${cc}-[0-9]+-${vMaps[i].valueProp}`)
-		}
-		if (ccVidSet.size > 0) {
-			allCCs.push(`(${[...ccVidSet].join('|')})`)
-		}
-	}
-	let regex = ''
-	if (allCCs.length > 0) {
-		regex = `^([0-9]+-)?${allCCs.join('|')}$`
-	}
-	return regex !== '' ? RegExp(regex) : undefined
-}
-
 // Define mapping of CCs and node values to node properties:
 const nodePropsMap = {
 	[CommandClasses.Battery]: {
@@ -193,7 +174,6 @@ const nodePropsMap = {
 		],
 	},
 }
-const valueIdRegex = _getValueIdRegexFromNodePropsMap()
 
 export type SensorTypeScale = {
 	key: string | number
@@ -3450,13 +3430,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _mapValuesToNodeProps(node: Z2MNode, valueId?: Z2MValueId) {
 		if (!valueId && node.values) {
 			for (const vid in node.values) {
-				if (!valueIdRegex || !valueIdRegex.test(vid)) continue
 				this._mapValuesToNodeProps(node, node.values[vid])
 			}
 		} else if (valueId && valueId.commandClass) {
 			if (
-				!valueIdRegex ||
-				!valueIdRegex.test(valueId.id) ||
 				!nodePropsMap[valueId.commandClass] ||
 				!nodePropsMap[valueId.commandClass].values
 			) {
@@ -3467,7 +3444,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			for (const i in vMaps) {
 				const values: Z2MValueId[] = []
 				for (const vid in node.values) {
-					if (!valueIdRegex || !valueIdRegex.test(vid)) continue
+					if (valueId.property !== vMaps[i].valueProp) continue
 					if (node.values[vid].property === vMaps[i].valueProp) {
 						values.push(node.values[vid])
 					}
