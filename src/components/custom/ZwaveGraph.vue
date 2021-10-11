@@ -797,7 +797,7 @@ export default {
 						node.neighbors,
 					forwards:
 						node.isControllerNode ||
-						(node.ready && !node.failed && node.isRouting),
+						(node.ready && !node.failed && node.isListening),
 				}
 
 				if (id === hubNode) {
