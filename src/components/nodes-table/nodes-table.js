@@ -15,6 +15,9 @@ import {
 	mdiCheckCircle,
 	mdiHelpCircle,
 	mdiMinusCircle,
+	mdiNumeric1Circle,
+	mdiNumeric2Circle,
+	mdiPlusCircle,
 	mdiPowerPlug,
 } from '@mdi/js'
 
@@ -90,6 +93,25 @@ export default {
 				zwavePlusVersion: {
 					type: 'string',
 					label: 'Z-Wave+',
+					richValue: (node) => {
+						let v = {
+							icon: mdiHelpCircle,
+							iconStyle: 'color: grey',
+							description: 'Unknown ZWave+ version',
+						}
+						if (node.zwavePlusVersion === undefined) return v
+						v.description = `ZWave+ version: ${node.zwavePlusVersion}`
+						v.iconStyle = 'color: green'
+						if (node.zwavePlusVersion === 1) {
+							v.icon = mdiNumeric1Circle
+						} else if (node.zwavePlusVersion === 2) {
+							v.icon = mdiNumeric2Circle
+						} else {
+							v.icon = mdiPlusCircle
+							v.displayValue = `${node.zwavePlusVersion}`
+						}
+						return v
+					},
 				},
 				firmwareVersion: {
 					type: 'string',

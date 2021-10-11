@@ -154,6 +154,9 @@
 		<template v-slot:[`item.supportsBeaming`]="{ item }">
 			<rich-value :value="richValue(item, 'supportsBeaming')" />
 		</template>
+		<template v-slot:[`item.zwavePlusVersion`]="{ item }">
+			<rich-value :value="richValue(item, 'zwavePlusVersion')" />
+		</template>
 		<template v-slot:[`item.failed`]="{ item }">
 			<rich-value :value="richValue(item, 'failed')" />
 		</template>
