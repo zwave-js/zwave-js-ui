@@ -142,14 +142,8 @@
 		<template v-slot:[`item.loc`]="{ item }">
 			{{ item.loc || '' }}
 		</template>
-		<template v-slot:[`item.isSecure`]="{ item }">
-			{{
-				item.isSecure === true
-					? 'Yes'
-					: item.isSecure === false
-					? 'No'
-					: 'Unknown'
-			}}
+		<template v-slot:[`item.security`]="{ item }">
+			<rich-value :value="richValue(item, 'security')" />
 		</template>
 		<template v-slot:[`item.supportsBeaming`]="{ item }">
 			<rich-value :value="richValue(item, 'supportsBeaming')" />

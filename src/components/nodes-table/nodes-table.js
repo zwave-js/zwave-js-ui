@@ -67,7 +67,30 @@ export default {
 				productLabel: { type: 'string', label: 'Product code' },
 				name: { type: 'string', label: 'Name' },
 				loc: { type: 'string', label: 'Location' },
-				security: { type: 'string', label: 'Security' },
+				security: {
+					type: 'string',
+					label: 'Security',
+					richValue: (node) => {
+						let v = {
+							align: 'center',
+							icon: mdiHelpCircle,
+							iconStyle: 'color: grey',
+							description: 'Unknown security status',
+						}
+						if (node.isSecure === true) {
+							v.icon = mdiCheckCircle
+							v.iconStyle =
+								node.security === 'LOW SECURITY'
+									? 'color: yellow'
+									: 'color: green'
+						} else if (node.isSecure === false) {
+							v.icon = mdiMinusCircle
+							v.iconStyle = 'color: red'
+							v.description = 'No security'
+						}
+						return v
+					},
+				},
 				supportsBeaming: {
 					type: 'boolean',
 					label: 'Beaming',
@@ -95,6 +118,7 @@ export default {
 					label: 'Z-Wave+',
 					richValue: (node) => {
 						let v = {
+							align: 'center',
 							icon: mdiHelpCircle,
 							iconStyle: 'color: grey',
 							description: 'Unknown ZWave+ version',
