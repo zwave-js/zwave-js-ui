@@ -172,7 +172,7 @@
   "devDependencies": {
     "@babel/cli": "^7.15.7",
     "@babel/core": "^7.14.8",
-    "@babel/node": "^7.15.4",
+    "@babel/node": "^7.15.8",
     "@babel/plugin-proposal-class-properties": "^7.14.5",
     "@babel/plugin-proposal-decorators": "^7.15.8",
     "@babel/plugin-proposal-export-namespace-from": "^7.14.5",
