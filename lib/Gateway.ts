@@ -2207,7 +2207,7 @@ export default class Gateway {
 		// JSON.stringify converts props to strings and this breaks the template
 		// Error: "0": "off" Working: 0: "off"
 		for (const key in valueMap) {
-			map.push(`"${valueMap[key]}": "${key}"`)
+			map.push(`${valueMap[key]}: "${key}"`)
 		}
 
 		return `{{ {${map.join(

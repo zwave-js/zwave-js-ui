@@ -1234,7 +1234,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						)
 					})
 				}
-				await this._onDriverError(error)
+				await this._onDriverError(error, true)
 				logger.warn('Retry connection in 3 seconds...')
 				this.reconnectTimeout = setTimeout(
 					this.connect.bind(this),
@@ -2244,13 +2244,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 	}
 
-	private async _onDriverError(error: ZWaveError): Promise<void> {
+	private async _onDriverError(
+		error: ZWaveError,
+		skipRestart = false
+	): Promise<void> {
 		this._error = 'Driver: ' + error.message
 		this.status = ZwaveClientStatus.DRIVER_FAILED
 		this._updateControllerStatus(this._error)
 		this.emit('event', EventSource.DRIVER, 'driver error', error)
 
-		if (error.code === ZWaveErrorCodes.Driver_Failed) {
+		if (!skipRestart && error.code === ZWaveErrorCodes.Driver_Failed) {
 			// this cannot be recovered by zwave-js, requires a manual restart
 			try {
 				await this.restart()

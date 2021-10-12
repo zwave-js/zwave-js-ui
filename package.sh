@@ -79,6 +79,7 @@ else
 		"armv6"
 		"x86"
 		"alpine"
+		"arm64"
 	)
 	echo ''
 	select option in "${options[@]}"; do
@@ -106,6 +107,11 @@ else
 			5)
 				echo "## Creating application package in $PKG_FOLDER folder"
 				pkg package.json -t node$NODE_MAJOR-alpine-x64 --out-path $PKG_FOLDER
+				break
+				;;
+			6)
+				echo "## Creating application package in $PKG_FOLDER folder"
+				pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER --public-packages=*
 				break
 				;;
 			*)

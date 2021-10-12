@@ -214,7 +214,7 @@
 												<v-combobox
 													v-model="newZwave.port"
 													label="Serial Port"
-													hint="Ex /dev/ttyUSB0"
+													hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
 													persistent-hint
 													:rules="[rules.required]"
 													required
@@ -1020,12 +1020,9 @@ import { mapGetters, mapMutations } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
+import { wait, copy } from '../lib/utils'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
-
-function copy(o) {
-	return JSON.parse(JSON.stringify(o))
-}
 
 export default {
 	name: 'Settings',
@@ -1341,6 +1338,8 @@ export default {
 			this.closeDialog()
 		},
 		async update() {
+			// let inputs to unfocus and trigger any change event, nextTick is not working here
+			await wait(200)
 			if (this.$refs.form_settings.validate()) {
 				try {
 					const data = await ConfigApis.updateConfig(
