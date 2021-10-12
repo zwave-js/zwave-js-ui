@@ -79,7 +79,7 @@
 					indeterminate
 				></v-progress-circular>
 			</v-col>
-			<v-col :style="{ visible: !loading }" ref="content" cols="12">
+			<v-col class="fill-height" :style="{ visible: !loading }" ref="content" cols="12">
 			</v-col>
 		</v-row>
 	</div>
