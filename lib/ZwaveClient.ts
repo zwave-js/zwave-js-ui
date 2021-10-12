@@ -230,6 +230,7 @@ export type Z2MValueId = {
 	isCurrentValue?: boolean
 	conf?: GatewayValue
 	allowManualEntry?: boolean
+	_onUpdate?: () => void
 } & TranslatedValueID
 
 export type Z2MValueIdScene = Z2MValueId & {
@@ -2602,9 +2603,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.getGroups(zwaveNode.id, true)
 
 		this._mapCCExistsToNodeProps(node)
-		this._mapValuesToNodeProps(node)
 
 		this._onNodeStatus(zwaveNode)
+
+		this._mapValuesToNodeProps(node)
 
 		this.emit(
 			'event',
@@ -3423,16 +3425,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Triggered on node ready or node value changes to map certain values (e.g. batteryLevel) to direct node properties.
+	 * Used when node is ready to map certain values (e.g. batteryLevel) to direct node properties.
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
-	private _mapValuesToNodeProps(node: Z2MNode, valueId?: Z2MValueId) {
-		if (!valueId && node.values) {
-			for (const vid in node.values) {
-				this._mapValuesToNodeProps(node, node.values[vid])
-			}
-		} else if (valueId && valueId.commandClass) {
+	private _mapValuesToNodeProps(node: Z2MNode) {
+		for (const vID in node.values) {
+			const valueId = node.values[vID]
 			if (
 				!nodePropsMap[valueId.commandClass] ||
 				!nodePropsMap[valueId.commandClass].values
@@ -3450,8 +3449,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 				}
 				if (values.length === 0) continue
-				const result = vMaps[i].fn(node, values)
-				node[vMaps[i].nodeProp] = result
+
+				for (const valueId of values) {
+					valueId._onUpdate = () => {
+						const result = vMaps[i].fn(node, values)
+						node[vMaps[i].nodeProp] = result
+					}
+
+					valueId._onUpdate()
+				}
+
 				logger.debug(
 					`Node ${node.id}: mapping value(s) of property '${
 						valueId.property
@@ -3459,9 +3466,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						valueId.commandClass
 					} (${
 						CommandClasses[valueId.commandClass]
-					}) to node property '${
-						vMaps[i].nodeProp
-					}' => ${JSON.stringify(result)}`
+					}) to node property '${vMaps[i].nodeProp}`
 				)
 			}
 		}
@@ -3509,8 +3514,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				valueId.value = newValue
 				valueId.stateless = !!args.stateless
 
-				// Map values (e.g. battery level) to node properties:
-				this._mapValuesToNodeProps(node, valueId)
+				if (typeof valueId._onUpdate === 'function') {
+					valueId._onUpdate()
+				}
 
 				// ensure duration is never undefined
 				if (
