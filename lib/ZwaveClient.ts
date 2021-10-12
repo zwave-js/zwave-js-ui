@@ -148,7 +148,6 @@ const nodePropsMap = {
 	[CommandClasses.Battery]: {
 		ccExists: {
 			nodeProp: 'isBatteryPowered',
-			fn: (node: Z2MNode, hasCC: boolean) => hasCC,
 		},
 		values: [
 			{
@@ -3403,24 +3402,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		for (const cc in nodePropsMap) {
 			if (!nodePropsMap[cc].ccExists) continue
 			const ccMap = nodePropsMap[cc].ccExists
-			if (ccMap.fn) {
-				let found = false
-				for (const vid in node.values) {
-					if (node.values[vid].commandClass.toString() === cc) {
-						found = true
-						break
-					}
-				}
-				const result = ccMap.fn(node, found)
-				node[ccMap.nodeProp] = result
-				logger.debug(
-					`Node ${node.id}: mapping ${
-						found ? 'existence' : 'absence'
-					} of CC ${cc} (${CommandClasses[cc]}) to node property '${
-						ccMap.nodeProp
-					}' => ${JSON.stringify(result)}`
-				)
-			}
+
+			const found = Object.keys(node.values).find((vID) =>
+				vID.startsWith(cc + '-')
+			)
+
+			node[ccMap.nodeProp] = !!found
+
+			logger.debug(
+				`Node ${node.id}: mapping ${
+					found ? 'existence' : 'absence'
+				} of CC ${cc} (${CommandClasses[cc]}) to node property '${
+					ccMap.nodeProp
+				}`
+			)
 		}
 	}
 
