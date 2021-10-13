@@ -44,3 +44,12 @@ module.export = MyPlugin
 ```
 
 Types and interfaces are available [here](https://github.com/zwave-js/zwavejs2mqtt/blob/master/lib/CustomPlugin.ts)
+
+## Available plugins
+
+Here is a list of currently available plugins:
+
+* [Prometheus metrics plugin](https://github.com/kvaster/zwavejs-prom)
+* [Simple alert plugin](https://github.com/kvaster/zwavejs-alert)
+* [Prometheus exporter](https://github.com/billiaz/zj2m-prom-exporter)
+
