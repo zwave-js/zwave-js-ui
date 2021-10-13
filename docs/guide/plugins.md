@@ -44,3 +44,23 @@ module.export = MyPlugin
 ```
 
 Types and interfaces are available [here](https://github.com/zwave-js/zwavejs2mqtt/blob/master/lib/CustomPlugin.ts)
+
+## Available plugins
+
+Here is a list of currently available plugins:
+
+- [Prometheus metrics plugin](https://github.com/kvaster/zwavejs-prom)
+- [Telegram alert plugin](https://github.com/kvaster/zwavejs-alert)
+- [Prometheus exporter](https://github.com/billiaz/zj2m-prom-exporter)
+
+## Example usage
+
+For plugins that are not available on npm you could create a `plugins` directory on application `store` and inside this directory you can install the plugin:
+
+```bash
+git clone https://github.com/kvaster/zwavejs-prom.git
+cd zwavejs-prom
+npm install
+```
+
+Now go to UI, Settings tab, General section and under plugins write the path to that folder (better if using a absolute path, for example `/usr/app/store/plugins/zwavejs-prom`). Press on `SAVE` to store the new settings and your plugin is ready.
