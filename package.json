@@ -37,7 +37,10 @@
       "dist/**/*",
       "/node_modules/@serialport/bindings/**",
       "/node_modules/leveldown/**"
-    ]
+    ],
+    "patches": {
+      "node_modules/leveldown/binding.js": []
+    }
   },
   "scripts": {
     "dev": "webpack serve --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
