@@ -10,10 +10,12 @@ RUN apk --no-cache add \
     alpine-sdk \	
     python3
 
-COPY package.json yarn.lock ./ 
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY .yarn/releases .yarn/releases
 
-RUN yarn config set unsafe-perm true && yarn install --network-timeout=300000
-RUN yarn install --ignore-optional
+ENV YARN_HTTP_TIMEOUT=300000
+
+RUN yarn install --immutable
 
 COPY . .
 
@@ -24,7 +26,8 @@ RUN yarn run build && \
     package.sh \
     src \
     static \
-    docs
+    docs \
+    .yarn
 
 # add plugin support, space separated
 ARG plugins

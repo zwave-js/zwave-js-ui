@@ -1,12 +1,9 @@
 {
   "name": "zwavejs2mqtt",
   "version": "5.8.0",
-  "bin": {
-    "zwavejs2mqtt": "server/bin/www.js"
-  },
+  "bin": "server/bin/www.js",
   "description": "Zwavejs2Mqtt Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
-  "private": false,
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -48,19 +45,19 @@
     "dev:server": "ts-node-dev --inspect -- bin/www.ts",
     "dev-https:server": "HTTPS='true' ts-node-dev --inspect -- bin/www.ts",
     "start": "node server/bin/www.js",
-    "lint": "npm-run-all lint:*",
-    "lint-fix": "npm-run-all lint-fix:*",
+    "lint": "npm-run-all 'lint:*'",
+    "lint-fix": "npm-run-all 'lint-fix:*'",
     "lint:eslint": "eslint --ext .js,.ts,.vue .",
     "lint-fix:eslint": "eslint --fix --ext .js,.ts,.vue .",
     "lint:markdownlint": "markdownlint '**/*.md'",
     "lint-fix:markdownlint": "markdownlint --fix '**/*.md'",
-    "test": "npm-run-all test:*",
-    "test:server": "mocha -r ts-node/register ./test/**/*.test.ts",
+    "test": "npm-run-all 'test:*'",
+    "test:server": "mocha -r ts-node/register './test/**/*.test.ts'",
     "test:ui": "mocha -r @babel/register src/modules",
     "docs": "docsify serve ./docs",
     "coverage": "c8 --clean npm run test",
-    "record-coverage": "c8 report --reporter=text-lcov --all --exclude=test/* --exclude=.git --exclude=.eslintrc.js --exclude=.postcssrc.js --exclude=wallaby.js > ./coverage/lcov.info",
-    "build": "npm-run-all build:*",
+    "record-coverage": "c8 report --reporter=text-lcov --all --exclude='test/*' --exclude=.git --exclude=.eslintrc.js --exclude=.postcssrc.js --exclude=wallaby.js > ./coverage/lcov.info",
+    "build": "npm-run-all 'build:*'",
     "build:server": "tsc",
     "build:ui": "node build/build.js",
     "clean": "tsc --build --clean",
@@ -261,5 +258,6 @@
     "> 1%",
     "last 2 versions",
     "not ie <= 8"
-  ]
+  ],
+  "packageManager": "yarn@3.1.0-rc.8"
 }
