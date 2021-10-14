@@ -3,11 +3,11 @@
 // eslint-disable-next-line one-var
 import mqtt, { Client } from 'mqtt'
 import { allSettled, joinPath, sanitizeTopic } from './utils'
-import NeDBStore from 'mqtt-nedb-store'
 import { storeDir } from '../config/app'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
 import { TypedEventEmitter } from './EventEmitter'
+import LevelStore from 'mqtt-level-store'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const url = require('native-url')
@@ -331,11 +331,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		}
 
 		if (config.store) {
-			const COMPACT = { autocompactionInterval: 30000 }
-			const manager = NeDBStore(joinPath(storeDir, 'mqtt'), {
-				incoming: COMPACT,
-				outgoing: COMPACT,
-			})
+			const manager = LevelStore(joinPath(storeDir, 'mqtt-store'))
 			options.incomingStore = manager.incoming
 			options.outgoingStore = manager.outgoing
 		}
