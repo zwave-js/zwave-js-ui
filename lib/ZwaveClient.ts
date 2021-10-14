@@ -228,7 +228,6 @@ export type Z2MValueId = {
 	isCurrentValue?: boolean
 	conf?: GatewayValue
 	allowManualEntry?: boolean
-	_onUpdate?: () => void
 } & TranslatedValueID
 
 export type Z2MValueIdScene = Z2MValueId & {
@@ -2606,7 +2605,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// handle mapped node properties:
 		this._updateValuesMapForNode(node)
 		this._mapCCExistsToNodeProps(node)
-		this._mapAllValuesToNodeProps(node)
+		this._mapValuesToNodeProps(node)
 
 		this.emit(
 			'event',
@@ -3399,6 +3398,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		return valueId
 	}
 
+	/**
+	 * Used to map existance of CCs to node properties
+	 */
 	private _mapCCExistsToNodeProps(node: Z2MNode) {
 		for (const cc in nodePropsMap) {
 			if (!nodePropsMap[cc] || !nodePropsMap[cc].existsProp) continue
@@ -3418,6 +3420,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	/**
+	 * Used to update the value map for all configured properties
+	 */
 	private _updateValuesMapForNode(node: Z2MNode) {
 		Object.values(node.values).forEach((value) => {
 			if (
@@ -3430,6 +3435,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
+	/**
+	 * Used to update a single value in the value map
+	 */
 	private _updateValuesMap(node: Z2MNode, value: Z2MValueId) {
 		if (
 			!nodePropsMap[value.commandClass] ||
@@ -3459,7 +3467,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
-	private _mapAllValuesToNodeProps(node: Z2MNode) {
+	private _mapValuesToNodeProps(node: Z2MNode) {
 		for (const cc in nodePropsMap) {
 			if (!nodePropsMap[cc].valueProps) continue
 			for (const valueProp in nodePropsMap[cc].valueProps) {
