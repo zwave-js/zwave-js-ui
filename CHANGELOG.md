@@ -1,3 +1,23 @@
+# [5.9.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.8.0...v5.9.0) (2021-10-14)
+
+
+### Bug Fixes
+
+* mqtt store ([#1833](https://github.com/zwave-js/zwavejs2mqtt/issues/1833)) ([fb1fb32](https://github.com/zwave-js/zwavejs2mqtt/commit/fb1fb3212d0080d7b4946822ae4b1af89cf8226a))
+* **ui:** remove useless functions from utils ([3d9099d](https://github.com/zwave-js/zwavejs2mqtt/commit/3d9099d0e840f7d08b17eb44034e616732bcdaa9))
+* prevent multiple restarts when driver fails to initialize ([a89ef13](https://github.com/zwave-js/zwavejs2mqtt/commit/a89ef1359d268fe315444507d3b598e9a752a56a))
+* **ui:** combobox settings not saved correctly when pasting ([17f518a](https://github.com/zwave-js/zwavejs2mqtt/commit/17f518a02b873a9dedf27baeb160321d81a9849c)), closes [#1800](https://github.com/zwave-js/zwavejs2mqtt/issues/1800)
+* mode_state_template ([#1826](https://github.com/zwave-js/zwavejs2mqtt/issues/1826)) ([2a57da2](https://github.com/zwave-js/zwavejs2mqtt/commit/2a57da253b50be10d227556133205e0c1585b6d2)), closes [#1803](https://github.com/zwave-js/zwavejs2mqtt/issues/1803)
+* **ui:** mesh forward check ([33137ac](https://github.com/zwave-js/zwavejs2mqtt/commit/33137ac94986cce240adc0a23ee9293b791a26aa))
+* remove `binary` encoding when creating NVM backup ([f999ecb](https://github.com/zwave-js/zwavejs2mqtt/commit/f999ecbe5f89db0742dd6601e2475dd23a2a3ece))
+
+
+### Features
+
+* allow to load security keys from env ([#1797](https://github.com/zwave-js/zwavejs2mqtt/issues/1797)) ([fc00320](https://github.com/zwave-js/zwavejs2mqtt/commit/fc00320669a8e1efda83349170d5fdaf3282a447)), closes [#1757](https://github.com/zwave-js/zwavejs2mqtt/issues/1757)
+* bump zwave-js@8.5.0 ([#1829](https://github.com/zwave-js/zwavejs2mqtt/issues/1829)) ([7722664](https://github.com/zwave-js/zwavejs2mqtt/commit/77226643e84c67f64e187f086b437109612bd588))
+* emit driver ready status to mqtt ([#1838](https://github.com/zwave-js/zwavejs2mqtt/issues/1838)) ([c087212](https://github.com/zwave-js/zwavejs2mqtt/commit/c08721278dfbb783365984e46fbdfdb40b6e9130))
+
 # [5.8.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.7.3...v5.8.0) (2021-10-08)
 
 
