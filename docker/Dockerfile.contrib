@@ -1,5 +1,6 @@
 # NOTE: This Dockerfile only works with BuildKit enabled.
-# Please find instructions on how to run it in README.md.
+# Please find instructions on how to run it at
+# https://zwave-js.github.io/zwavejs2mqtt/#/development/custom-docker?id=building-a-container-using-dockerfilecontrib
 ARG SRC=git-clone-src
 
 #####################
@@ -20,8 +21,8 @@ RUN git clone -b ${Z2M_BRANCH} --depth 1 ${Z2M_REPOSITORY}
 
 # Option 2: Copy from local sources
 FROM node:16.3.0-buster AS local-copy-src
-COPY --chown=node --from=git-clone-src /home/node/node-zwave-js /home/node/node-zwave-js
-COPY --chown=node --from=git-clone-src /home/node/zwavejs2mqtt /home/node/zwavejs2mqtt
+COPY --chown=node node-zwave-js /home/node/node-zwave-js
+COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
 #####################
 # Build Environment #
