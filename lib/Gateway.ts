@@ -271,6 +271,8 @@ export default class Gateway {
 				this._zwave.on('event', this._onEvent.bind(this))
 			}
 
+			this._zwave.on('driverStatus', this._onDriverStatus.bind(this))
+
 			// this is async but doesn't need to be awaited
 			await this._zwave.connect()
 		} else {
@@ -382,12 +384,13 @@ export default class Gateway {
 
 		logger.info('Closing Gateway...')
 
-		if (this._mqtt) {
-			await this._mqtt.close()
-		}
-
 		if (this._zwave) {
 			await this._zwave.close()
+		}
+
+		// close mqtt client after zwave connection is closed
+		if (this._mqtt) {
+			await this._mqtt.close()
 		}
 	}
 
@@ -1922,6 +1925,16 @@ export default class Gateway {
 
 			this._mqtt.publish(nodeTopic + '/nodeinfo', nodeData)
 		}
+	}
+
+	/**
+	 * Driver status updates
+	 *
+	 */
+	private _onDriverStatus(ready: boolean): void {
+		logger.info(`Driver is ${ready ? 'READY' : 'CLOSED'}`)
+
+		this._mqtt.publish('driver/status', ready)
 	}
 
 	/**
