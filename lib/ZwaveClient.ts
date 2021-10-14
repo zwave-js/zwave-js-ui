@@ -146,33 +146,32 @@ const allowedApis = validateMethods([
 // Define mapping of CCs and node values to node properties:
 const nodePropsMap = {
 	[CommandClasses.Battery]: {
-		ccExists: {
-			nodeProp: 'isBatteryPowered',
+		existsProp: 'isBatteryPowered',
+		valueProps: {
+			level: [
+				{
+					nodeProp: 'minBatteryLevel',
+					fn: (node: Z2MNode, values: Z2MValueId[]) =>
+						values.reduce(
+							(acc, curr) =>
+								acc !== undefined
+									? acc.value < curr.value
+										? acc
+										: curr
+									: curr,
+							undefined
+						).value,
+				},
+				{
+					nodeProp: 'batteryLevels',
+					fn: (node: Z2MNode, values: Z2MValueId[]) =>
+						values.map((v) => v.value),
+				},
+			],
 		},
-		values: [
-			{
-				nodeProp: 'minBatteryLevel',
-				valueProp: 'level',
-				fn: (node: Z2MNode, values: Z2MValueId[]) =>
-					values.reduce(
-						(acc, curr) =>
-							acc !== undefined
-								? acc < curr.value
-									? acc
-									: curr.value
-								: curr.value,
-						undefined
-					),
-			},
-			{
-				nodeProp: 'batteryLevels',
-				valueProp: 'level',
-				fn: (node: Z2MNode, values: Z2MValueId[]) =>
-					values.map((v) => v.value),
-			},
-		],
 	},
 }
+const nodeValuesMap = {}
 
 export type SensorTypeScale = {
 	key: string | number
@@ -2602,11 +2601,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._mapCCExistsToNodeProps(node)
-
 		this._onNodeStatus(zwaveNode)
 
-		this._mapValuesToNodeProps(node)
+		// handle mapped node properties:
+		this._updateValuesMapForNode(node)
+		this._mapCCExistsToNodeProps(node)
+		this._mapAllValuesToNodeProps(node)
 
 		this.emit(
 			'event',
@@ -3401,22 +3401,79 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _mapCCExistsToNodeProps(node: Z2MNode) {
 		for (const cc in nodePropsMap) {
-			if (!nodePropsMap[cc].ccExists) continue
-			const ccMap = nodePropsMap[cc].ccExists
+			if (!nodePropsMap[cc] || !nodePropsMap[cc].existsProp) continue
+			const nodeProp = nodePropsMap[cc].existsProp
+			node[nodeProp] =
+				!!nodeValuesMap[node.id] && !!nodeValuesMap[node.id][cc]
 
-			const found = Object.keys(node.values).find((vID) =>
-				vID.startsWith(cc + '-')
+			if (logger.isDebugEnabled) {
+				logger.debug(
+					`Node ${node.id}: mapping ${
+						node[nodeProp] ? 'existence' : 'absence'
+					} of CC ${cc} (${
+						CommandClasses[cc]
+					}) to node property '${nodeProp}`
+				)
+			}
+		}
+	}
+
+	private _updateValuesMapForNode(node: Z2MNode) {
+		Object.values(node.values).forEach((value) => {
+			if (
+				!nodePropsMap[value.commandClass] ||
+				!nodePropsMap[value.commandClass].valueProps ||
+				!nodePropsMap[value.commandClass].valueProps[value.property]
 			)
+				return
+			this._updateValuesMap(node, value)
+		})
+	}
 
-			node[ccMap.nodeProp] = !!found
+	private _updateValuesMap(node: Z2MNode, value: Z2MValueId) {
+		if (
+			!nodePropsMap[value.commandClass] ||
+			!nodePropsMap[value.commandClass].valueProps ||
+			!nodePropsMap[value.commandClass].valueProps[value.property]
+		)
+			return
+		nodeValuesMap[node.id] = nodeValuesMap[node.id]
+			? nodeValuesMap[node.id]
+			: {}
+		nodeValuesMap[node.id][value.commandClass] = nodeValuesMap[node.id][
+			value.commandClass
+		]
+			? nodeValuesMap[node.id][value.commandClass]
+			: {}
+		nodeValuesMap[node.id][value.commandClass][value.property] =
+			nodeValuesMap[node.id][value.commandClass][value.property]
+				? nodeValuesMap[node.id][value.commandClass][value.property]
+				: {}
+		nodeValuesMap[node.id][value.commandClass][value.property][
+			value.endpoint
+		] = value
+	}
 
-			logger.debug(
-				`Node ${node.id}: mapping ${
-					found ? 'existence' : 'absence'
-				} of CC ${cc} (${CommandClasses[cc]}) to node property '${
-					ccMap.nodeProp
-				}`
-			)
+	/**
+	 * Used when node is ready to map certain values (e.g. batteryLevel) to direct node properties.
+	 * @param node The affected node
+	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
+	 */
+	private _mapAllValuesToNodeProps(node: Z2MNode) {
+		for (const cc in nodePropsMap) {
+			if (!nodePropsMap[cc].valueProps) continue
+			for (const valueProp in nodePropsMap[cc].valueProps) {
+				if (
+					!nodeValuesMap[node.id] ||
+					!nodeValuesMap[node.id][cc] ||
+					!nodeValuesMap[node.id][cc][valueProp]
+				)
+					continue
+				Object.values(nodeValuesMap[node.id][cc][valueProp]).forEach(
+					(value: Z2MValueId) =>
+						this._mapValueToNodeProps(node, value)
+				)
+			}
 		}
 	}
 
@@ -3425,47 +3482,41 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
-	private _mapValuesToNodeProps(node: Z2MNode) {
-		for (const vID in node.values) {
-			const valueId = node.values[vID]
-			if (
-				!nodePropsMap[valueId.commandClass] ||
-				!nodePropsMap[valueId.commandClass].values
-			) {
-				return
-			}
-
-			const vMaps = nodePropsMap[valueId.commandClass].values
-			for (const i in vMaps) {
-				const values: Z2MValueId[] = []
-				for (const vid in node.values) {
-					if (valueId.property !== vMaps[i].valueProp) continue
-					if (node.values[vid].property === vMaps[i].valueProp) {
-						values.push(node.values[vid])
-					}
-				}
-				if (values.length === 0) continue
-
-				for (const valueId of values) {
-					valueId._onUpdate = () => {
-						const result = vMaps[i].fn(node, values)
-						node[vMaps[i].nodeProp] = result
-					}
-
-					valueId._onUpdate()
-				}
-
-				logger.debug(
-					`Node ${node.id}: mapping value(s) of property '${
+	private _mapValueToNodeProps(node: Z2MNode, valueId?: Z2MValueId) {
+		if (
+			!valueId ||
+			!valueId.commandClass ||
+			!valueId.property ||
+			!nodeValuesMap[node.id] ||
+			!nodeValuesMap[node.id][valueId.commandClass] ||
+			!nodeValuesMap[node.id][valueId.commandClass][valueId.property] ||
+			!nodePropsMap[valueId.commandClass] ||
+			!nodePropsMap[valueId.commandClass].valueProps ||
+			!nodePropsMap[valueId.commandClass].valueProps[valueId.property]
+		)
+			return
+		nodePropsMap[valueId.commandClass].valueProps[valueId.property].forEach(
+			(vMap) => {
+				const vIds =
+					nodeValuesMap[node.id][valueId.commandClass][
 						valueId.property
-					}', propertyName '${valueId.propertyName}' from CC ${
-						valueId.commandClass
-					} (${
-						CommandClasses[valueId.commandClass]
-					}) to node property '${vMaps[i].nodeProp}`
-				)
+					]
+				const values = Object.values(vIds)
+				const result = vMap.fn(node, values)
+				node[vMap.nodeProp] = result
+				if (logger.isDebugEnabled) {
+					logger.debug(
+						`Node ${node.id}: mapping value(s) of property '${
+							valueId.property
+						}' (${valueId.propertyName}) from CC ${
+							valueId.commandClass
+						} (${
+							CommandClasses[valueId.commandClass]
+						}) to node property '${vMap.nodeProp}`
+					)
+				}
 			}
-		}
+		)
 	}
 
 	/**
@@ -3510,9 +3561,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				valueId.value = newValue
 				valueId.stateless = !!args.stateless
 
-				if (typeof valueId._onUpdate === 'function') {
-					valueId._onUpdate()
-				}
+				this._updateValuesMap(node, valueId)
 
 				// ensure duration is never undefined
 				if (
