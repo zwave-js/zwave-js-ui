@@ -3486,7 +3486,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Used when node is ready to map certain values (e.g. batteryLevel) to direct node properties.
+	 * Used when a value should be mapped to node properties.
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
