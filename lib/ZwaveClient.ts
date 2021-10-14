@@ -694,6 +694,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async close(keepListeners = false) {
 		this.status = ZwaveClientStatus.CLOSED
 		this.closed = true
+		this.driverReady = false
 
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
@@ -734,7 +735,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this._driver) {
-			this.driverReady = false
 			await this._driver.destroy()
 		}
 

@@ -384,12 +384,13 @@ export default class Gateway {
 
 		logger.info('Closing Gateway...')
 
-		if (this._mqtt) {
-			await this._mqtt.close()
-		}
-
 		if (this._zwave) {
 			await this._zwave.close()
+		}
+
+		// close mqtt client after zwave connection is closed
+		if (this._mqtt) {
+			await this._mqtt.close()
 		}
 	}
 
