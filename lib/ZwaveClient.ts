@@ -381,6 +381,7 @@ export interface ZwaveClientEventCallbacks {
 	nodeStatus: (node: Z2MNode) => void
 	event: (source: EventSource, eventName: string, ...args: any) => void
 	scanComplete: () => void
+	driverStatus: (status: boolean) => void
 	notification: (node: Z2MNode, valueId: Z2MValueId, data: any) => void
 	nodeRemoved: (node: Z2MNode) => void
 	valueChanged: (
@@ -397,7 +398,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
 	private socket: SocketServer
 	private closed: boolean
-	private driverReady: boolean
+	private _driverReady: boolean
 	private scenes: Z2MScene[]
 	private _nodes: Map<number, Z2MNode>
 	private storeNodes: Record<number, Partial<Z2MNode>>
@@ -408,7 +409,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _error: boolean | string
 	private _scanComplete: boolean
 	private _cntStatus: string
-	private _connected: boolean
 
 	private lastUpdate: number
 
@@ -427,8 +427,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
 
-	public get connected() {
-		return this._connected
+	public get driverReady() {
+		return this.driver && this._driverReady && !this.closed
+	}
+
+	public set driverReady(ready) {
+		this._driverReady = ready
+		this.emit('driverStatus', ready)
 	}
 
 	public get cntStatus() {
@@ -689,6 +694,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async close(keepListeners = false) {
 		this.status = ZwaveClientStatus.CLOSED
 		this.closed = true
+		this.driverReady = false
 
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
@@ -729,7 +735,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this._driver) {
-			this.driverReady = false
 			await this._driver.destroy()
 		}
 
@@ -1202,7 +1207,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 
 				this.status = ZwaveClientStatus.CONNECTED
-				this._connected = true
 			} catch (error) {
 				// destroy diver instance when it fails
 				if (this._driver) {
@@ -2455,13 +2459,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	async backupNVMRaw() {
-		if (!this.driver || !this.driverReady) {
+		if (!this.driverReady) {
 			throw Error('Driver is not ready')
 		}
 
-		if (this.closed) {
-			throw Error('Client is closed')
-		}
 		const data = await this.driver.controller.backupNVMRaw(
 			this._onBackupNVMProgress.bind(this)
 		)
@@ -2479,13 +2480,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	async restoreNVMRaw(data: Buffer) {
-		if (!this.driver || !this.driverReady) {
+		if (!this.driverReady) {
 			throw Error('Driver is not ready')
 		}
 
-		if (this.closed) {
-			throw Error('Client is closed')
-		}
 		await this.driver.controller.restoreNVMRaw(
 			data,
 			this._onRestoreNVMProgress.bind(this)
