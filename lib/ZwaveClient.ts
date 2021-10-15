@@ -63,6 +63,7 @@ import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
 import { writeFile } from 'fs-extra'
+import set from 'set-value'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
@@ -2615,7 +2616,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// handle mapped node properties:
 		this._updateValuesMapForNode(node)
 		this._mapCCExistsToNodeProps(node)
-		this._mapValuesToNodeProps(node)
 
 		this.emit(
 			'event',
@@ -3443,6 +3443,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			this._updateValuesMap(node, value)
 		})
+		this._mapValuesToNodeProps(node)
 	}
 
 	/**
@@ -3451,7 +3452,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _updateValuesMap(node: Z2MNode, value: Z2MValueId) {
 		if (!nodePropsMap?.[value.commandClass]?.valueProps?.[value.property])
 			return
-		utils.setProp(
+		set(
 			nodeValuesMap,
 			[node.id, value.commandClass, value.property, value.endpoint].join(
 				'.'

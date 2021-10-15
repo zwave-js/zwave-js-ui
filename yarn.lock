@@ -2604,6 +2604,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/set-value@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "@types/set-value@npm:4.0.1"
+  checksum: 97734c04b2aadb0cbe525124b5b424a86a7c3b6063c3e1d1b90e7147dc2a3faf041ac8f5b7f5e72dd66fa4ce4943484a408a8b5495fbd99eb7dd6d024ac1de52
+  languageName: node
+  linkType: hard
+
 "@types/sinon-chai@npm:^3.2.5":
   version: 3.2.5
   resolution: "@types/sinon-chai@npm:3.2.5"
@@ -9165,6 +9172,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"is-primitive@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "is-primitive@npm:3.0.1"
+  checksum: c4da6a6e6d487f31d85b9259b67695fffcc75dca6c9612b0a002e3050c734227b9911be09b877539ec6309710229c19f4edd0f9e26ed2a67924ee0916baf0bed
+  languageName: node
+  linkType: hard
+
 "is-regex@npm:^1.0.4, is-regex@npm:^1.1.2":
   version: 1.1.2
   resolution: "is-regex@npm:1.1.2"
@@ -13486,6 +13500,16 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"set-value@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "set-value@npm:4.1.0"
+  dependencies:
+    is-plain-object: ^2.0.4
+    is-primitive: ^3.0.1
+  checksum: 2b4f0f222538ae4c1f4171a5014c113649631c86ed81d1ac0c2df406d0a974d8006412ce1d7844c531268f1c66eb912f7eae7245ab3114e34357f1ff9d6dc697
+  languageName: node
+  linkType: hard
+
 "setprototypeof@npm:1.1.0":
   version: 1.1.0
   resolution: "setprototypeof@npm:1.1.0"
@@ -15975,6 +15999,7 @@ typescript@^4.4.3:
     "@types/pem": ^1.9.6
     "@types/proxyquire": ^1.3.28
     "@types/serialport": ^8.0.2
+    "@types/set-value": ^4.0.1
     "@types/sinon-chai": ^3.2.5
     "@typescript-eslint/eslint-plugin": ^4.33.0
     "@typescript-eslint/parser": ^4.33.0
@@ -16059,6 +16084,7 @@ typescript@^4.4.3:
     serialport: 9.2.4
     serve-favicon: ^2.5.0
     session-file-store: ^1.5.0
+    set-value: ^4.1.0
     shelljs: ^0.8.4
     sinon: ^11.1.2
     sinon-chai: ^3.7.0
