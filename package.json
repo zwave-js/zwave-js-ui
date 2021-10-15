@@ -155,7 +155,7 @@
     "native-url": "^0.3.4",
     "pem": "^1.14.4",
     "prismjs": "^1.25.0",
-    "serialport": "9.2.4",
+    "serialport": "^9.2.4",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.5.0",
     "set-value": "^4.1.0",
@@ -169,7 +169,7 @@
     "vuetify": "^2.5.9",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
-    "zwave-js": "^8.5.0"
+    "zwave-js": "8.5.1-beta.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.15.7",
