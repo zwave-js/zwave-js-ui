@@ -171,7 +171,7 @@ const nodePropsMap = {
 		},
 	},
 }
-const nodeValuesMap = {}
+// This map contains values from nodePropsMap in an data structure optimized for speed
 
 export type SensorTypeScale = {
 	key: string | number
@@ -3403,7 +3403,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _mapCCExistsToNodeProps(node: Z2MNode) {
 		for (const cc in nodePropsMap) {
-			if (!nodePropsMap[cc] || !nodePropsMap[cc].existsProp) continue
+			if (!nodePropsMap?.[cc]?.existsProp) continue
 			const nodeProp = nodePropsMap[cc].existsProp
 			node[nodeProp] =
 				!!nodeValuesMap[node.id] && !!nodeValuesMap[node.id][cc]
@@ -3426,9 +3426,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _updateValuesMapForNode(node: Z2MNode) {
 		Object.values(node.values).forEach((value) => {
 			if (
-				!nodePropsMap[value.commandClass] ||
-				!nodePropsMap[value.commandClass].valueProps ||
-				!nodePropsMap[value.commandClass].valueProps[value.property]
+				!nodePropsMap?.[value.commandClass]?.valueProps?.[
+					value.property
+				]
 			)
 				return
 			this._updateValuesMap(node, value)
@@ -3439,15 +3439,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Used to update a single value in the value map
 	 */
 	private _updateValuesMap(node: Z2MNode, value: Z2MValueId) {
-		if (
-			!nodePropsMap[value.commandClass] ||
-			!nodePropsMap[value.commandClass].valueProps ||
-			!nodePropsMap[value.commandClass].valueProps[value.property]
-		)
+		if (!nodePropsMap?.[value.commandClass]?.valueProps?.[value.property])
 			return
-		nodeValuesMap[node.id] = nodeValuesMap[node.id]
-			? nodeValuesMap[node.id]
-			: {}
+		nodeValuesMap[node.id] = nodeValuesMap[node.id] || {}
 		nodeValuesMap[node.id][value.commandClass] = nodeValuesMap[node.id][
 			value.commandClass
 		]
@@ -3471,12 +3465,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		for (const cc in nodePropsMap) {
 			if (!nodePropsMap[cc].valueProps) continue
 			for (const valueProp in nodePropsMap[cc].valueProps) {
-				if (
-					!nodeValuesMap[node.id] ||
-					!nodeValuesMap[node.id][cc] ||
-					!nodeValuesMap[node.id][cc][valueProp]
-				)
-					continue
+				if (!nodeValuesMap?.[node.id]?.[cc]?.[valueProp]) continue
 				Object.values(nodeValuesMap[node.id][cc][valueProp]).forEach(
 					(value: Z2MValueId) =>
 						this._mapValueToNodeProps(node, value)
@@ -3492,15 +3481,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _mapValueToNodeProps(node: Z2MNode, valueId?: Z2MValueId) {
 		if (
-			!valueId ||
-			!valueId.commandClass ||
-			!valueId.property ||
-			!nodeValuesMap[node.id] ||
-			!nodeValuesMap[node.id][valueId.commandClass] ||
-			!nodeValuesMap[node.id][valueId.commandClass][valueId.property] ||
-			!nodePropsMap[valueId.commandClass] ||
-			!nodePropsMap[valueId.commandClass].valueProps ||
-			!nodePropsMap[valueId.commandClass].valueProps[valueId.property]
+			!valueId?.commandClass ||
+			!valueId?.property ||
+			!nodeValuesMap?.[node.id]?.[valueId.commandClass]?.[
+				valueId.property
+			] ||
+			!nodePropsMap?.[valueId.commandClass]?.valueProps?.[
+				valueId.property
+			]
 		)
 			return
 		nodePropsMap[valueId.commandClass].valueProps[valueId.property].forEach(
@@ -3570,6 +3558,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				valueId.stateless = !!args.stateless
 
 				this._updateValuesMap(node, valueId)
+				this._mapValueToNodeProps(node, valueId)
 
 				// ensure duration is never undefined
 				if (
