@@ -228,9 +228,10 @@ export default {
 				description = 'mains-powered'
 			} else {
 				label = `${level}%`
-				description =
-					'All battery levels: ' +
-					node.batteryLevels.map((v) => `${v}%`).join(',')
+				description = Array.isArray(node.batteryLevels)
+					? 'All battery levels: ' +
+					  node.batteryLevels.map((v) => `${v}%`).join(',')
+					: 'Unknown battery level'
 				if (level <= 10) {
 					icon = mdiBatteryAlertVariantOutline
 					iconStyle = 'color: red'
