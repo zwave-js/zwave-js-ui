@@ -103,6 +103,20 @@ function(driver) {
 }
 ```
 
+Examples:
+
+```js
+const fs = this.require("fs-extra")
+const { storeDir } = this.require('../config/app')
+const data = await driver.controller.backupNVMRaw()
+await fs.writeFile(storeDir + '/NVM.bin', data, 'binary')
+```
+
+```js
+const node = driver.controller.nodes.get(35);
+await node.refreshInfo();
+```
+
 ### Api call examples
 
 #### Get Associations
