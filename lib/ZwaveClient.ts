@@ -1098,11 +1098,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	driverFunction(code: string): Promise<any> {
 		if (!this.driverReady) {
-			throw Error('Driver is not ready')
-		}
-
-		if (this.closed) {
-			throw Error('Client is closed')
+			throw new DriverNotReadyError()
 		}
 
 		const AsyncFunction = Object.getPrototypeOf(
