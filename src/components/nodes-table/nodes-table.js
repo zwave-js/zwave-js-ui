@@ -13,12 +13,15 @@ import {
 	mdiBattery,
 	mdiBatteryUnknown,
 	mdiCheckCircle,
+	mdiEmoticon,
+	mdiEmoticonDead,
 	mdiHelpCircle,
 	mdiMinusCircle,
 	mdiNumeric1Circle,
 	mdiNumeric2Circle,
 	mdiPlusCircle,
 	mdiPowerPlug,
+	mdiSleep,
 } from '@mdi/js'
 
 export default {
@@ -163,7 +166,37 @@ export default {
 							},
 						}),
 				},
-				status: { type: 'string', label: 'Status' },
+				status: {
+					type: 'string',
+					label: 'Status',
+					richValue: (node) => {
+						let v = {
+							align: 'center',
+							icon: mdiHelpCircle,
+							iconStyle: 'color: grey',
+							description: node.status,
+						}
+						switch (node.status) {
+							case 'Asleep':
+								v.icon = mdiSleep
+								v.iconStyle = 'color: orange'
+								break
+							case 'Awake':
+								v.icon = mdiEmoticon
+								v.iconStyle = 'color: green'
+								break
+							case 'Dead':
+								v.icon = mdiEmoticonDead
+								v.iconStyle = 'color: red'
+								break
+							case 'Alive':
+								v.icon = mdiCheckCircle
+								v.iconStyle = 'color: green'
+								break
+						}
+						return v
+					},
+				},
 				healProgress: { type: 'string', label: 'Heal' },
 				interviewStage: { type: 'string', label: 'Interview' },
 				lastActive: {
@@ -217,6 +250,17 @@ export default {
 				description: map.description,
 			}
 		},
+		interviewStageColor(status) {
+			let map = {
+				None: 'grey',
+				ProtocolInfo: 'red',
+				NodeInfo: 'orange',
+				CommandClasses: 'orange',
+				OverwriteConfig: 'blue',
+				Complete: 'green',
+			}
+			return map[status] || 'grey'
+		},
 		powerRichValue(node) {
 			let level = node.minBatteryLevel
 			let iconStyle = 'color: green'
@@ -248,7 +292,7 @@ export default {
 					icon = mdiBatteryUnknown
 					description = 'Battery level: unknown'
 					iconStyle = 'color: grey'
-					label = '-'
+					label = ''
 				}
 			}
 			return {

@@ -124,6 +124,11 @@
 				>
 			</td>
 		</template>
+		<template v-slot:[`item.id`]="{ item }">
+			<div style="text-align: right">
+				<v-chip>{{ item.id }}</v-chip>
+			</div>
+		</template>
 		<template v-slot:[`item.minBatteryLevel`]="{ item }">
 			<rich-value :value="richValue(item, 'minBatteryLevel')" />
 		</template>
@@ -154,6 +159,9 @@
 		<template v-slot:[`item.failed`]="{ item }">
 			<rich-value :value="richValue(item, 'failed')" />
 		</template>
+		<template v-slot:[`item.status`]="{ item }">
+			<rich-value :value="richValue(item, 'status')" />
+		</template>
 		<template v-slot:[`item.healProgress`]="{ item }">
 			<v-progress-circular
 				class="ml-3"
@@ -180,8 +188,15 @@
 			<div v-else>{{ item.healProgress }}</div>
 		</template>
 		<template v-slot:[`item.interviewStage`]="{ item }">
-			<v-row>
-				<div>{{ item.interviewStage }}</div>
+			<div style="text-align: center">
+				<v-chip
+					small
+					:style="
+						'background-color: ' +
+						interviewStageColor(`${item.interviewStage}`)
+					"
+					>{{ item.interviewStage }}</v-chip
+				>
 				<v-progress-circular
 					class="ml-3"
 					v-if="item.interviewStage !== 'Complete'"
@@ -189,7 +204,7 @@
 					size="20"
 					color="primary"
 				></v-progress-circular>
-			</v-row>
+			</div>
 		</template>
 		<template v-slot:[`item.lastActive`]="{ item }">
 			{{
