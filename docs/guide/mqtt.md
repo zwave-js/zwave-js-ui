@@ -92,6 +92,16 @@ This are the available APIs:
   - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
   - `args`: array of arguments to pass to the command
 - `restart()`: restart client
+- `backupNVMRaw()`: Backup the NVM raw data
+- `restoreNVMRaw(data)`: Restore the NVM raw data
+- `softReset`: Soft reset the controller (restart)
+- `driverFunction(code)`: Execute a driver function. The function `this` allow to access `zwaveClient` instance and `require` (ex: `this.zwaveClient` and `this.require`). The only parameter of the function is `driver`. It's like execute this:
+
+```js
+function(driver) {
+  // your code here
+}
+```
 
 ### Api call examples
 
