@@ -305,7 +305,13 @@ export type HassDevice = {
 }
 
 export class DriverNotReadyError extends Error {
-	message = 'Driver is not ready'
+	public constructor() {
+		super('Driver is not ready')
+
+		// We need to set the prototype explicitly
+		Object.setPrototypeOf(this, ZWaveError.prototype)
+		Object.getPrototypeOf(this).name = 'DriverNotReadyError'
+	}
 }
 
 export type Z2MNode = {
