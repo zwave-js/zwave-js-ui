@@ -124,6 +124,11 @@
 				>
 			</td>
 		</template>
+		<template v-slot:[`item.id`]="{ item }">
+			<div style="text-align: right">
+				<v-chip>{{ item.id }}</v-chip>
+			</div>
+		</template>
 		<template v-slot:[`item.minBatteryLevel`]="{ item }">
 			<rich-value :value="richValue(item, 'minBatteryLevel')" />
 		</template>
