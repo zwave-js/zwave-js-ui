@@ -63,6 +63,7 @@ import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
 import { writeFile } from 'fs-extra'
+import set from 'set-value'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
@@ -144,18 +145,45 @@ const allowedApis = validateMethods([
 	'restoreNVMRaw',
 ] as const)
 
-// Define mapping of node properties to ValueIDs
-const mappedNodeProps: Record<string, ValueID> = {
-	batteryLevel: {
-		commandClass: CommandClasses.Battery,
-		property: 'level',
+// Define mapping of CCs and node values to node properties:
+const nodePropsMap = {
+	[CommandClasses.Battery]: {
+		existsProp: 'isBatteryPowered',
+		valueProps: {
+			level: [
+				{
+					nodeProp: 'minBatteryLevel',
+					fn: (node: Z2MNode, values: Z2MValueId[]) =>
+						values.reduce(
+							(acc, curr) =>
+								acc !== undefined
+									? acc.value < curr.value
+										? acc
+										: curr
+									: curr,
+							undefined
+						).value,
+				},
+				{
+					nodeProp: 'batteryLevels',
+					fn: (node: Z2MNode, values: Z2MValueId[]) =>
+						values.map((v) => v.value),
+				},
+			],
+		},
 	},
 }
-// Extract mapped command classes for better mapping performance
-const mappedCommandClasses: Set<number> = new Set()
-for (const k in mappedNodeProps) {
-	mappedCommandClasses.add(mappedNodeProps[k].commandClass)
+export type ValuePropsMap = {
+	nodeProp: string
+	fn: (node: Z2MNode, values: Z2MValueId[]) => any
 }
+export type CommandClassValueMap = {
+	existsProp?: string
+	valueProps?: Record<CommandClasses, ValuePropsMap[]>
+}
+export type NodeValuesMap = Record<number, CommandClassValueMap>
+// This map contains values from nodePropsMap in an data structure optimized for speed
+const nodeValuesMap: NodeValuesMap = {}
 
 export type SensorTypeScale = {
 	key: string | number
@@ -326,7 +354,9 @@ export type Z2MNode = {
 	status?: keyof typeof NodeStatus
 	inited: boolean
 	healProgress?: string | undefined
-	batteryLevel?: number
+	minBatteryLevel?: number
+	batteryLevels?: { [key: string]: number }
+	isBatteryPowered?: boolean
 }
 
 export type ZwaveConfig = {
@@ -2600,9 +2630,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._mapNodeValuesToProps(node)
-
 		this._onNodeStatus(zwaveNode)
+
+		// handle mapped node properties:
+		this._updateValuesMapForNode(node)
+		this._mapCCExistsToNodeProps(node)
 
 		this.emit(
 			'event',
@@ -3396,39 +3428,115 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Triggered on node ready or node value changes to map certain values (e.g. batteryLevel) to direct node properties.
+	 * Used to map existance of CCs to node properties
+	 */
+	private _mapCCExistsToNodeProps(node: Z2MNode) {
+		for (const cc in nodePropsMap) {
+			if (!nodePropsMap?.[cc]?.existsProp) continue
+			const nodeProp = nodePropsMap[cc].existsProp
+			node[nodeProp] =
+				!!nodeValuesMap[node.id] && !!nodeValuesMap[node.id][cc]
+
+			if (logger.isDebugEnabled) {
+				logger.debug(
+					`Node ${node.id}: mapping ${
+						node[nodeProp] ? 'existence' : 'absence'
+					} of CC ${cc} (${
+						CommandClasses[cc]
+					}) to node property '${nodeProp}`
+				)
+			}
+		}
+	}
+
+	/**
+	 * Used to update the value map for all configured properties
+	 */
+	private _updateValuesMapForNode(node: Z2MNode) {
+		Object.values(node.values).forEach((value) => {
+			if (
+				!nodePropsMap?.[value.commandClass]?.valueProps?.[
+					value.property
+				]
+			)
+				return
+			this._updateValuesMap(node, value)
+		})
+		this._mapValuesToNodeProps(node)
+	}
+
+	/**
+	 * Used to update a single value in the value map
+	 */
+	private _updateValuesMap(node: Z2MNode, value: Z2MValueId) {
+		if (!nodePropsMap?.[value.commandClass]?.valueProps?.[value.property])
+			return
+		set(
+			nodeValuesMap,
+			[node.id, value.commandClass, value.property, value.endpoint].join(
+				'.'
+			),
+			value
+		)
+	}
+
+	/**
+	 * Used when node is ready to map certain values (e.g. batteryLevel) to direct node properties.
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
-	private _mapNodeValuesToProps(
-		node: Z2MNode,
-		valueId?: TranslatedValueID & { [x: string]: any }
-	) {
-		if (valueId) {
-			if (!mappedCommandClasses.has(valueId.commandClass)) return // Return quickly if command class is not synced to node props
-			for (const k in mappedNodeProps) {
-				const syncedValueId: ValueID = mappedNodeProps[k]
-				if (
-					valueId.commandClass === syncedValueId.commandClass &&
-					valueId.property === syncedValueId.property
-				) {
+	private _mapValuesToNodeProps(node: Z2MNode) {
+		for (const cc in nodePropsMap) {
+			if (!nodePropsMap[cc].valueProps) continue
+			for (const valueProp in nodePropsMap[cc].valueProps) {
+				if (!nodeValuesMap?.[node.id]?.[cc]?.[valueProp]) continue
+				Object.values(nodeValuesMap[node.id][cc][valueProp]).forEach(
+					(value: Z2MValueId) =>
+						this._mapValueToNodeProps(node, value)
+				)
+			}
+		}
+	}
+
+	/**
+	 * Used when a value should be mapped to node properties.
+	 * @param node The affected node
+	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
+	 */
+	private _mapValueToNodeProps(node: Z2MNode, valueId?: Z2MValueId) {
+		if (
+			!valueId?.commandClass ||
+			!valueId?.property ||
+			!nodeValuesMap?.[node.id]?.[valueId.commandClass]?.[
+				valueId.property
+			] ||
+			!nodePropsMap?.[valueId.commandClass]?.valueProps?.[
+				valueId.property
+			]
+		)
+			return
+		nodePropsMap[valueId.commandClass].valueProps[valueId.property].forEach(
+			(vMap) => {
+				const vIds: Z2MValueId[] =
+					nodeValuesMap[node.id][valueId.commandClass][
+						valueId.property
+					]
+				const values = Object.values(vIds)
+				const result = vMap.fn(node, values)
+				node[vMap.nodeProp] = result
+				if (logger.isDebugEnabled) {
 					logger.debug(
-						`Node ${
-							node.id
-						}: mapping property '${k}' => commandClass=${
+						`Node ${node.id}: mapping value(s) of property '${
+							valueId.property
+						}' (${valueId.propertyName}) from CC ${
 							valueId.commandClass
 						} (${
 							CommandClasses[valueId.commandClass]
-						}), property='${valueId.property}'`
+						}) to node property '${vMap.nodeProp}`
 					)
-					node[k] = valueId.value
 				}
 			}
-		} else if (node.values) {
-			for (const k in node.values) {
-				this._mapNodeValuesToProps(node, node.values[k])
-			}
-		}
+		)
 	}
 
 	/**
@@ -3473,8 +3581,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				valueId.value = newValue
 				valueId.stateless = !!args.stateless
 
-				// Map defined values (e.g. battery level) to top level node properties:
-				this._mapNodeValuesToProps(node, valueId)
+				this._updateValuesMap(node, valueId)
+				this._mapValueToNodeProps(node, valueId)
 
 				// ensure duration is never undefined
 				if (

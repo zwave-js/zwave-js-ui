@@ -2,14 +2,22 @@ import draggable from 'vuedraggable'
 import { ManagedItems } from '@/modules/ManagedItems'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
+import RichValue from '@/components/nodes-table/RichValue.vue'
 import { mapGetters } from 'vuex'
-import SvgIcon from '@jamescoyle/vue-icon'
 import {
+	mdiAlertCircle,
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
 	mdiBattery50,
 	mdiBattery80,
 	mdiBattery,
+	mdiBatteryUnknown,
+	mdiCheckCircle,
+	mdiHelpCircle,
+	mdiMinusCircle,
+	mdiNumeric1Circle,
+	mdiNumeric2Circle,
+	mdiPlusCircle,
 	mdiPowerPlug,
 } from '@mdi/js'
 
@@ -22,7 +30,7 @@ export default {
 		draggable,
 		ColumnFilter,
 		ExpandedNode,
-		SvgIcon,
+		RichValue,
 	},
 	watch: {},
 	computed: {
@@ -36,47 +44,125 @@ export default {
            - type (string): The type of the property
            - label (string): The label of the property to be displayed as table column
            - groupable (boolean): If the column values can be grouped
+           - customGroupValue (function): Function to format a value for displaying as group value
+           - customSort (function): Custom sort function for a certain column.
            - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
-             NOTE: Currently does not work with value grouping due to a limitation of VDataTable
-           - customInfo (function): Function to provide more detailed information for displaying as a tooltip
-           - customFormat (function): Function to format the value for displaying
+           - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
         */
 				id: { type: 'number', label: 'ID', groupable: false },
-				batteryLevel: {
+				minBatteryLevel: {
 					type: 'number',
 					label: 'Power',
-					customValue: (node) => this.getBatteryLevel(node),
-					customFormat: (value) => (value ? value + '%' : 'mains'),
-					customInfo: (node) =>
-						node.batteryLevel
-							? 'Battery level: ' + node.batteryLevel + '%'
-							: 'mains-powered',
-					customSort: (items, sortBy, sortDesc, nodeA, nodeB) => {
-						// Special sort for power column
-						// Use 100% as fallback (for mains-powered devices)
-						let levelA = this.getBatteryLevel(nodeA, 101)
-						let levelB = this.getBatteryLevel(nodeB, 101)
-						let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
-						res = sortDesc[0] ? -res : res
-						return res
-					},
+					customGroupValue: (group) =>
+						group
+							? `Battery level: ${group}%`
+							: 'Mains-powered or battery level unknown',
+					customSort: (items, sortBy, sortDesc, nodeA, nodeB) =>
+						this.powerSort(items, sortBy, sortDesc, nodeA, nodeB),
+					customValue: (node) => node.minBatteryLevel, // Note: Not required here but kept as demo for use of customValue()
+					richValue: (node) => this.powerRichValue(node),
 				},
 				manufacturer: { type: 'string', label: 'Manufacturer' },
 				productDescription: { type: 'string', label: 'Product' },
 				productLabel: { type: 'string', label: 'Product code' },
 				name: { type: 'string', label: 'Name' },
 				loc: { type: 'string', label: 'Location' },
-				security: { type: 'string', label: 'Security' },
-				supportsBeaming: { type: 'boolean', label: 'Beaming' },
+				security: {
+					type: 'string',
+					label: 'Security',
+					richValue: (node) => {
+						let v = {
+							align: 'center',
+							icon: mdiHelpCircle,
+							iconStyle: 'color: grey',
+							description: 'Unknown security status',
+						}
+						if (node.isSecure === true) {
+							v.icon = mdiCheckCircle
+							v.iconStyle =
+								node.security === 'LOW SECURITY'
+									? 'color: yellow'
+									: 'color: green'
+						} else if (node.isSecure === false) {
+							v.icon = mdiMinusCircle
+							v.iconStyle = 'color: red'
+							v.description = 'No security'
+						}
+						return v
+					},
+				},
+				supportsBeaming: {
+					type: 'boolean',
+					label: 'Beaming',
+					richValue: (node) =>
+						this.booleanRichValue(node.supportsBeaming, {
+							default: {
+								icon: mdiHelpCircle,
+								iconStyle: 'color: grey',
+								description: 'Unknown beaming support',
+							},
+							true: {
+								icon: mdiCheckCircle,
+								iconStyle: 'color: green',
+								description: 'Beaming is supported',
+							},
+							false: {
+								icon: mdiMinusCircle,
+								iconStyle: 'color: red',
+								description: 'Beaming is unsupported',
+							},
+						}),
+				},
 				zwavePlusVersion: {
 					type: 'string',
 					label: 'Z-Wave+',
+					richValue: (node) => {
+						let v = {
+							align: 'center',
+							icon: mdiHelpCircle,
+							iconStyle: 'color: grey',
+							description: 'Unknown ZWave+ version',
+						}
+						if (node.zwavePlusVersion === undefined) return v
+						v.description = `ZWave+ version: ${node.zwavePlusVersion}`
+						v.iconStyle = 'color: green'
+						if (node.zwavePlusVersion === 1) {
+							v.icon = mdiNumeric1Circle
+						} else if (node.zwavePlusVersion === 2) {
+							v.icon = mdiNumeric2Circle
+						} else {
+							v.icon = mdiPlusCircle
+							v.displayValue = `${node.zwavePlusVersion}`
+						}
+						return v
+					},
 				},
 				firmwareVersion: {
 					type: 'string',
 					label: 'FW',
 				},
-				failed: { type: 'boolean', label: 'Failed' },
+				failed: {
+					type: 'boolean',
+					label: 'Failed',
+					richValue: (node) =>
+						this.booleanRichValue(node.failed, {
+							default: {
+								icon: mdiHelpCircle,
+								iconStyle: 'color: grey',
+								description: 'Failure status unknown',
+							},
+							true: {
+								icon: mdiAlertCircle,
+								iconStyle: 'color: red',
+								description: 'Node is failed!',
+							},
+							false: {
+								icon: mdiCheckCircle,
+								iconStyle: 'color: green',
+								description: 'Node is not failed.',
+							},
+						}),
+				},
 				status: { type: 'string', label: 'Status' },
 				healProgress: { type: 'string', label: 'Heal' },
 				interviewStage: { type: 'string', label: 'Interview' },
@@ -108,91 +194,87 @@ export default {
 
 			return undefined
 		},
-		getGroupByLabel(group) {
-			let formattedGroup = group
-			if (
-				this.managedNodes &&
-				this.managedNodes.groupBy &&
-				this.managedNodes.groupBy[0] &&
-				this.nodesProps[this.managedNodes.groupBy[0]] &&
-				typeof this.nodesProps[this.managedNodes.groupBy[0]]
-					.customFormat === 'function'
-			) {
-				formattedGroup =
-					this.nodesProps[this.managedNodes.groupBy[0]].customFormat(
-						group
-					)
+		groupValue(group) {
+			return this.managedNodes.groupValue(group)
+		},
+		richValue(item, propName) {
+			return this.managedNodes.richValue(item, propName)
+		},
+		sort(items, sortBy, sortDesc) {
+			return this.managedNodes.sort(items, sortBy, sortDesc)
+		},
+		booleanRichValue(value, valueMap) {
+			let map =
+				value === undefined
+					? valueMap.default
+					: value
+					? valueMap.true
+					: valueMap.false
+			return {
+				align: 'center',
+				icon: map.icon,
+				iconStyle: map.iconStyle,
+				description: map.description,
 			}
-			return this.managedNodes.groupByTitle + ': ' + formattedGroup
 		},
-		customSort(items, sortBy, sortDesc) {
-			// See https://stackoverflow.com/a/54612408
-			if (!sortBy[0]) {
-				return items
-			}
-			items.sort((a, b) => {
-				let prop = sortBy[0]
-				if (
-					this.nodesProps[sortBy[0]] &&
-					typeof this.nodesProps[sortBy[0]].customSort === 'function'
-				) {
-					// Use special sort function if one is defined for the sortBy column
-					return this.nodesProps[sortBy[0]].customSort(
-						items,
-						sortBy,
-						sortDesc,
-						a,
-						b
-					)
-				} else {
-					// Standard sort for every other column
-					let res = a[prop] < b[prop] ? -1 : a[prop] > b[prop] ? 1 : 0
-					res = sortDesc[0] ? -res : res
-					return res
-				}
-			})
-			return items
-		},
-		getBatteryLevel(node, fallback) {
-			return node.batteryLevel !== undefined
-				? node.batteryLevel
-				: fallback
-		},
-		getPowerInfo(node) {
-			let level = node.batteryLevel
-			let style = 'color: green'
-			let icon
-			let label =
-				typeof this.nodesProps.batteryLevel.customFormat === 'function'
-					? this.nodesProps.batteryLevel.customFormat(level)
-					: level
-			let tooltip =
-				typeof this.nodesProps.batteryLevel.customInfo === 'function'
-					? this.nodesProps.batteryLevel.customInfo(node)
-					: ''
-			if (level === undefined) {
+		powerRichValue(node) {
+			let level = node.minBatteryLevel
+			let iconStyle = 'color: green'
+			let icon = ''
+			let label = ''
+			let description = ''
+			if (node.isBatteryPowered !== undefined && !node.isBatteryPowered) {
 				icon = mdiPowerPlug
-				tooltip = 'mains-powered'
-			} else if (level <= 10) {
-				icon = mdiBatteryAlertVariantOutline
-				style = 'color: red'
-			} else if (level <= 30) {
-				icon = mdiBattery20
-				style = 'color: orange'
-			} else if (level <= 70) {
-				icon = mdiBattery50
-			} else if (level <= 90) {
-				icon = mdiBattery80
+				description = 'mains-powered'
 			} else {
-				icon = mdiBattery
+				label = `${level}%`
+				description =
+					'All battery levels: ' +
+					node.batteryLevels.map((v) => `${v}%`).join(',')
+				if (level <= 10) {
+					icon = mdiBatteryAlertVariantOutline
+					iconStyle = 'color: red'
+				} else if (level <= 30) {
+					icon = mdiBattery20
+					iconStyle = 'color: orange'
+				} else if (level <= 70) {
+					icon = mdiBattery50
+				} else if (level <= 90) {
+					icon = mdiBattery80
+				} else if (level > 90) {
+					icon = mdiBattery
+				} else {
+					icon = mdiBatteryUnknown
+					description = 'Battery level: unknown'
+					iconStyle = 'color: grey'
+					label = '-'
+				}
 			}
 			return {
+				align: 'left',
 				icon: icon,
-				level: level,
-				style: style,
-				label: label,
-				tooltip: tooltip,
+				iconStyle: iconStyle,
+				displayValue: label,
+				displayStyle: '',
+				description: description,
+				rawValue: level,
 			}
+		},
+		powerSort(items, sortBy, sortDesc, nodeA, nodeB) {
+			// Special sort for power column
+			let levelA = nodeA.isBatteryPowered
+				? nodeA.minBatteryLevel
+				: nodeA.isBatteryPowered !== undefined
+				? 101
+				: undefined
+			let levelB = nodeB.isBatteryPowered
+				? nodeB.minBatteryLevel
+				: nodeB.isBatteryPowered !== undefined
+				? 101
+				: undefined
+			let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
+			res = sortDesc[0] ? -res : res
+			return res
 		},
 	},
 	mounted() {

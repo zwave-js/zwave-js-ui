@@ -769,7 +769,7 @@ export default {
 
 				neighbors[id] = node.neighbors
 
-				let batlev = node.batteryLevel
+				let batlev = node.minBatteryLevel
 
 				const nodeName = node.name || 'NodeID ' + node.id
 

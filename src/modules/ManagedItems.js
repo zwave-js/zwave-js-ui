@@ -167,10 +167,11 @@ export class ManagedItems {
 				propDef.groupable === undefined ? true : !!propDef.groupable,
 		}
 		// NOTE: These extend the VDataTable headers:
-		if (propDef.customValue) header.customValue = propDef.customValue
-		if (propDef.customFormat) header.customFormat = propDef.customFormat
-		if (propDef.customInfo) header.customInfo = propDef.customInfo
+		if (propDef.customGroupValue)
+			header.customGroupValue = propDef.customGroupValue
 		if (propDef.customSort) header.customSort = propDef.customSort
+		if (propDef.customValue) header.customValue = propDef.customValue
+		if (propDef.richValue) header.richValue = propDef.richValue
 		return header
 	}
 
@@ -375,6 +376,85 @@ export class ManagedItems {
 	set tableOptions(tableOptions) {
 		this._tableOptions = tableOptions
 		this.storeSetting('tableOptions', tableOptions)
+	}
+
+	/**
+	 * Determine the label to be displayed when grouped
+	 * @param {any} group Value of the group
+	 * @returns Label to be displayed for the group respecting a possibly existent customGroupValue
+	 */
+	groupValue(group) {
+		let formattedGroup = group
+		if (
+			this.groupBy &&
+			this.groupBy[0] &&
+			this.propDefs[this.groupBy[0]] &&
+			typeof this.propDefs[this.groupBy[0]].customGroupValue ===
+				'function'
+		) {
+			formattedGroup = this.propDefs[this.groupBy[0]].customGroupValue(
+				group,
+				this.groupBy
+			)
+		}
+		return this.groupByTitle + ': ' + formattedGroup
+	}
+
+	/**
+	 * Sort the items by a certain property respecting an existing customSort function
+	 * @param {array} items Items to be sorted
+	 * @param {array} sortBy Array with properties to sort by (only one is supported!)
+	 * @param {array} sortDesc Array with boolean values to sort in descending order if true, ascending otherwise (only one is supported!)
+	 * @returns Sorted array of items
+	 */
+	sort(items, sortBy, sortDesc) {
+		// TODO: Why is this.propDefs undefined when this method is directly attached to a VDataTable using 'custom-sort'?
+		// See https://stackoverflow.com/a/54612408
+		if (!sortBy[0] || !this.propDefs || !this.propDefs[sortBy[0]]) {
+			return items
+		}
+		items.sort((a, b) => {
+			let prop = sortBy[0]
+			if (
+				this.propDefs[sortBy[0]] &&
+				typeof this.propDefs[sortBy[0]].customSort === 'function'
+			) {
+				// Use special sort function if one is defined for the sortBy column
+				return this.propDefs[sortBy[0]].customSort(
+					items,
+					sortBy,
+					sortDesc,
+					a,
+					b
+				)
+			} else {
+				// Standard sort for every other column
+				let res = a[prop] < b[prop] ? -1 : a[prop] > b[prop] ? 1 : 0
+				res = sortDesc[0] ? -res : res
+				return res
+			}
+		})
+		return items
+	}
+
+	/**
+	 * Enrich a value of an object property to display with icon, label, tooltip and styles.
+	 * @param {Object} item Object to display the enriched value for
+	 * @param {*} propName Name of the object property to be enriched
+	 * @returns Object with complex value label
+	 */
+	richValue(item, propName) {
+		return typeof this.propDefs[propName].richValue === 'function'
+			? this.propDefs[propName].richValue(item, propName)
+			: {
+					align: 'left',
+					icon: '',
+					iconStyle: '',
+					displayValue: item[propName],
+					displayStyle: '',
+					description: '',
+					rawValue: item[propName],
+			  }
 	}
 }
 

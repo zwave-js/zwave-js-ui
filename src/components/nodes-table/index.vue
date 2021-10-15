@@ -9,7 +9,7 @@
 		:expanded.sync="expanded"
 		:value="managedNodes.selected"
 		:options="managedNodes.tableOptions"
-		:custom-sort="customSort"
+		:custom-sort="sort"
 		@update:options="managedNodes.tableOptions = $event"
 		@input="managedNodes.selected = $event"
 		@click:row="toggleExpanded($event)"
@@ -118,25 +118,14 @@
 				<v-btn @click="toggle" x-small icon :ref="group">
 					<v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
 				</v-btn>
-				<span>{{ getGroupByLabel(group) }}</span>
+				<span>{{ groupValue(group) }}</span>
 				<v-btn x-small icon @click="remove"
 					><v-icon>close</v-icon></v-btn
 				>
 			</td>
 		</template>
-		<template v-slot:[`item.batteryLevel`]="{ item }">
-			<div :title="getPowerInfo(item).tooltip">
-				<v-layout :label="getPowerInfo(item).tooltip">
-					<svg-icon
-						type="mdi"
-						:path="getPowerInfo(item).icon"
-						:style="getPowerInfo(item).style"
-					></svg-icon>
-					<span style="padding-top: 4px">{{
-						getPowerInfo(item).label
-					}}</span>
-				</v-layout>
-			</div>
+		<template v-slot:[`item.minBatteryLevel`]="{ item }">
+			<rich-value :value="richValue(item, 'minBatteryLevel')" />
 		</template>
 		<template v-slot:[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}
@@ -153,20 +142,17 @@
 		<template v-slot:[`item.loc`]="{ item }">
 			{{ item.loc || '' }}
 		</template>
-		<template v-slot:[`item.isSecure`]="{ item }">
-			{{
-				item.isSecure === true
-					? 'Yes'
-					: item.isSecure === false
-					? 'No'
-					: 'Unknown'
-			}}
+		<template v-slot:[`item.security`]="{ item }">
+			<rich-value :value="richValue(item, 'security')" />
 		</template>
 		<template v-slot:[`item.supportsBeaming`]="{ item }">
-			{{ item.supportsBeaming ? 'Yes' : 'No' }}
+			<rich-value :value="richValue(item, 'supportsBeaming')" />
+		</template>
+		<template v-slot:[`item.zwavePlusVersion`]="{ item }">
+			<rich-value :value="richValue(item, 'zwavePlusVersion')" />
 		</template>
 		<template v-slot:[`item.failed`]="{ item }">
-			{{ item.failed ? 'Yes' : 'No' }}
+			<rich-value :value="richValue(item, 'failed')" />
 		</template>
 		<template v-slot:[`item.healProgress`]="{ item }">
 			<v-progress-circular
