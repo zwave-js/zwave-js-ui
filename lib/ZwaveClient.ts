@@ -309,7 +309,7 @@ export class DriverNotReadyError extends Error {
 		super('Driver is not ready')
 
 		// We need to set the prototype explicitly
-		Object.setPrototypeOf(this, ZWaveError.prototype)
+		Object.setPrototypeOf(this, DriverNotReadyError.prototype)
 		Object.getPrototypeOf(this).name = 'DriverNotReadyError'
 	}
 }
