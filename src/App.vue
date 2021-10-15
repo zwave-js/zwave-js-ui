@@ -65,9 +65,14 @@
 
 				<v-spacer></v-spacer>
 
-				<div class="controller-status">
-					{{ appInfo.controllerStatus }}
-				</div>
+				<v-tooltip bottom>
+					<template v-slot:activator="{ on }">
+						<div v-on="on" class="controller-status text-truncate">
+							{{ appInfo.controllerStatus }}
+						</div>
+					</template>
+					<span>{{ appInfo.controllerStatus }}</span>
+				</v-tooltip>
 
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
@@ -268,6 +273,7 @@
 	padding: 0.3rem 0;
 	font-size: 0.8rem;
 	min-width: 220px;
+	max-width: 500px;
 	text-align: center;
 }
 .info-box > div {

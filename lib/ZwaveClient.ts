@@ -119,6 +119,7 @@ const allowedApis = validateMethods([
 	'stopExclusion',
 	'replaceFailedNode',
 	'hardReset',
+	'softReset',
 	'healNode',
 	'beginHealingNetwork',
 	'stopHealingNetwork',
@@ -275,6 +276,10 @@ export type HassDevice = {
 	id?: string
 }
 
+export class DriverNotReadyError extends Error {
+	message = 'Driver is not ready'
+}
+
 export type Z2MNode = {
 	id: number
 	deviceConfig?: DeviceConfig
@@ -334,6 +339,7 @@ export type ZwaveConfig = {
 		S0_Legacy: string
 	}>
 	serverEnabled?: boolean
+	enableSoftReset?: boolean
 	deviceConfigPriorityDir?: string
 	serverPort?: number
 	logEnabled?: boolean
@@ -1111,6 +1117,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				},
 			}
 
+			// when not set let zwavejs handle this based on the envirnoment
+			if (typeof this.cfg.enableSoftReset === 'boolean') {
+				zwaveOptions.enableSoftReset = this.cfg.enableSoftReset
+			}
+
 			if (this.cfg.scales) {
 				const scales: Record<string | number, string | number> = {}
 				for (const s of this.cfg.scales) {
@@ -1498,46 +1509,46 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Refresh all node values
 	 */
 	async refreshValues(nodeId: number): Promise<void> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
 			return zwaveNode.refreshValues()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Ping a node
 	 */
 	async pingNode(nodeId: number): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
 			return zwaveNode.ping()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Refresh all node values of a specific CC
 	 */
 	async refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
 			return zwaveNode.refreshCCValues(cc)
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Set a poll interval
 	 */
 	setPollInterval(valueId: Z2MValueId, interval: number) {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const vID = this._getValueID(valueId, true)
 
 			if (this.pollIntervals[vID]) {
@@ -1551,7 +1562,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				interval * 1000
 			)
 		} else {
-			throw Error('Driver is closed')
+			throw new DriverNotReadyError()
 		}
 	}
 
@@ -1560,13 +1571,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async checkForConfigUpdates(): Promise<string | undefined> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			this.driverInfo.newConfigVersion =
 				await this._driver.checkForConfigUpdates()
 			this.sendToSocket(socketEvents.info, this.getInfo())
 			return this.driverInfo.newConfigVersion
 		} else {
-			throw Error('Driver is closed')
+			throw new DriverNotReadyError()
 		}
 	}
 
@@ -1575,7 +1586,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async installConfigUpdate(): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const updated = await this._driver.installConfigUpdate()
 			if (updated) {
 				this.driverInfo.newConfigVersion = undefined
@@ -1583,7 +1594,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			return updated
 		} else {
-			throw Error('Driver is closed')
+			throw new DriverNotReadyError()
 		}
 	}
 
@@ -1592,7 +1603,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	async pollValue(valueId: Z2MValueId): Promise<unknown> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const zwaveNode = this.getNode(valueId.nodeId)
 
 			logger.debug(`Polling value ${this._getValueID(valueId)}`)
@@ -1600,7 +1611,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return zwaveNode.pollValue(valueId)
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -1610,7 +1621,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		strategy: InclusionStrategy = InclusionStrategy.Security_S2
 	): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1644,7 +1655,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -1654,7 +1665,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		strategy: InclusionStrategy = InclusionStrategy.Default,
 		options?: { forceSecurity?: boolean; provisioningList?: unknown }
 	): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1699,14 +1710,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return this._driver.controller.beginInclusion(inclusionOptions)
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Start exclusion
 	 */
 	async startExclusion(): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1719,14 +1730,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return this._driver.controller.beginExclusion()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Stop exclusion
 	 */
 	async stopExclusion(): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1734,14 +1745,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return this._driver.controller.stopExclusion()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Stops inclusion
 	 */
 	async stopInclusion(): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1749,14 +1760,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return this._driver.controller.stopInclusion()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Heal a node
 	 */
 	async healNode(nodeId: number): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			let status: HealNodeStatus = 'pending'
 			this.sendToSocket(socketEvents.healProgress, [[nodeId, status]])
 			const result = await this._driver.controller.healNode(nodeId)
@@ -1765,14 +1776,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return result
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Check if a node is failed
 	 */
 	async isFailedNode(nodeId: number): Promise<boolean> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const node = this._nodes.get(nodeId)
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1788,25 +1799,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return result
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Remove a failed node
 	 */
 	async removeFailedNode(nodeId: number): Promise<void> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			return this._driver.controller.removeFailedNode(nodeId)
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
 	 * Re interview the node
 	 */
 	async refreshInfo(nodeId: number): Promise<void> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
 			if (!zwaveNode) {
@@ -1816,7 +1827,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return zwaveNode.refreshInfo()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -1828,7 +1839,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		data: Buffer,
 		target: number
 	): Promise<void> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
 			if (!zwaveNode) {
@@ -1859,11 +1870,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	async abortFirmwareUpdate(nodeId: number) {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
 			if (!zwaveNode) {
@@ -1873,31 +1884,39 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return zwaveNode.abortFirmwareUpdate()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	beginHealingNetwork(): boolean {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			return this._driver.controller.beginHealingNetwork()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	stopHealingNetwork(): boolean {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			return this._driver.controller.stopHealingNetwork()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	async hardReset() {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			return this._driver.hardReset()
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
+	}
+
+	softReset() {
+		if (this.driverReady) {
+			return this._driver.softReset()
+		}
+
+		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -1912,7 +1931,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		command: string,
 		args: any[]
 	): Promise<any> {
-		if (this._driver && !this.closed) {
+		if (this.driverReady) {
 			if (typeof ctx.nodeId !== 'number') {
 				throw Error('nodeId must be a number')
 			}
@@ -1958,7 +1977,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return result
 		}
 
-		throw Error('Driver is closed')
+		throw new DriverNotReadyError()
 	}
 
 	/**
