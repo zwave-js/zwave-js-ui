@@ -261,3 +261,17 @@ export function allSettled(promises: Promise<any>[]): Promise<any> {
 	)
 	return Promise.all(wrappedPromises)
 }
+
+export function setProp(obj, path, value) {
+	const paths = path.split('.')
+	let iterator = obj
+	for (let i = 0; i < paths.length - 1; i++) {
+		const prop = paths[i]
+		if (iterator[prop] === undefined) {
+			iterator[prop] = {}
+		}
+		iterator = iterator[prop]
+	}
+
+	iterator[paths[paths.length - 1]] = value
+}

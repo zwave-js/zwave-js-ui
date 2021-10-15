@@ -171,7 +171,17 @@ const nodePropsMap = {
 		},
 	},
 }
+export type ValuePropsMap = {
+	nodeProp: string
+	fn: (node: Z2MNode, values: Z2MValueId[]) => any
+}
+export type CommandClassValueMap = {
+	existsProp?: string
+	valueProps?: Record<CommandClasses, ValuePropsMap[]>
+}
+export type NodeValuesMap = Record<number, CommandClassValueMap>
 // This map contains values from nodePropsMap in an data structure optimized for speed
+const nodeValuesMap: NodeValuesMap = {}
 
 export type SensorTypeScale = {
 	key: string | number
@@ -3441,19 +3451,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _updateValuesMap(node: Z2MNode, value: Z2MValueId) {
 		if (!nodePropsMap?.[value.commandClass]?.valueProps?.[value.property])
 			return
-		nodeValuesMap[node.id] = nodeValuesMap[node.id] || {}
-		nodeValuesMap[node.id][value.commandClass] = nodeValuesMap[node.id][
-			value.commandClass
-		]
-			? nodeValuesMap[node.id][value.commandClass]
-			: {}
-		nodeValuesMap[node.id][value.commandClass][value.property] =
-			nodeValuesMap[node.id][value.commandClass][value.property]
-				? nodeValuesMap[node.id][value.commandClass][value.property]
-				: {}
-		nodeValuesMap[node.id][value.commandClass][value.property][
-			value.endpoint
-		] = value
+		utils.setProp(
+			nodeValuesMap,
+			[node.id, value.commandClass, value.property, value.endpoint].join(
+				'.'
+			),
+			value
+		)
 	}
 
 	/**
@@ -3493,7 +3497,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		nodePropsMap[valueId.commandClass].valueProps[valueId.property].forEach(
 			(vMap) => {
-				const vIds =
+				const vIds: Z2MValueId[] =
 					nodeValuesMap[node.id][valueId.commandClass][
 						valueId.property
 					]
