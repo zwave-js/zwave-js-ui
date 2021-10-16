@@ -370,7 +370,7 @@
 															value: null,
 														},
 													]"
-													hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may be problematic in certain environments like Docker, the functionality must be opted into"
+													hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled."
 													v-model="
 														newZwave.enableSoftReset
 													"
