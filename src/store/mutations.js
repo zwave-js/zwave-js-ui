@@ -18,7 +18,7 @@ export const state = {
     deviceConfigPriorityDir: '',
     logToFile: true,
     serverEnabled: false,
-    enableSoftReset: null,
+    enableSoftReset: true,
     enableStatistics: undefined, // keep it undefined so the user dialog will show up
     serverPort: 3000
   },

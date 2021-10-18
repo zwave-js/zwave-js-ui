@@ -855,6 +855,7 @@ app.get(
 		const defaults = {
 			zwave: {
 				deviceConfigPriorityDir,
+				enableSoftReset: true,
 			},
 		}
 

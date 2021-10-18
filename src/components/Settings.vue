@@ -355,27 +355,14 @@
 												></v-switch>
 											</v-col>
 											<v-col cols="12" sm="6">
-												<v-select
-													:items="[
-														{
-															text: 'Enabled',
-															value: true,
-														},
-														{
-															text: 'Disabled',
-															value: false,
-														},
-														{
-															text: 'Auto',
-															value: null,
-														},
-													]"
+												<v-switch
+													label="Soft Reset"
 													hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled."
+													persistent-hint
 													v-model="
 														newZwave.enableSoftReset
 													"
-													label="Soft Reset"
-												></v-select>
+												></v-switch>
 											</v-col>
 											<input
 												type="hidden"
