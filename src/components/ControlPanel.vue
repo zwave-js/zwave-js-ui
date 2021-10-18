@@ -205,7 +205,7 @@ export default {
 							args: {
 								confirm: `<p>Are you sure you want to soft-reset your controller?</p>
 									<p>USB modules will reconnect, meaning that they might get a new address. Make sure to configure your device address in a way that prevents it from changing, e.g. by using <code>/dev/serial/by-id/...</code> on Linux.</p>
-									<p><strong>This method is known to cause problems in Docker containers</strong> where a reconnection of the serial device will prevent it from being connected again. There are ways around this, but they require host configuration or changes to how the container is started. Therefore this method won't do anything inside Docker unless the <code>ZWAVEJS_ENABLE_SOFT_RESET</code> environment variable or the <code>Soft reset</code> setting is set.</p>`,
+									<p><strong>This method may cause problems in Docker containers with certain Z-Wave stick.</strong> If that happens, you may need to restart your host OS and docker container.</p>`,
 							},
 						},
 					],
