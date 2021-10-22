@@ -128,15 +128,37 @@ export function meterType(
 	}
 
 	// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/meters.json
+	// https://developers.home-assistant.io/docs/core/entity/sensor/#available-device-classes
 	switch (ccSpecific.meterType) {
 		case 0x01: // electric
 			if (ccSpecific.scale == 0x00) {
+				// kWh - energy
 				cfg.props = {
 					device_class: 'energy',
+					state_class: 'total_increasing',
+				}
+			} else if (ccSpecific.scale == 0x02) {
+				// W - power
+				cfg.props = {
+					device_class: 'power',
+					state_class: 'measurement',
+				}
+			} else if (ccSpecific.scale == 0x04) {
+				// V - voltage
+				cfg.props = {
+					device_class: 'voltage',
+					state_class: 'measurement',
+				}
+			} else if (ccSpecific.scale == 0x05) {
+				// A - current
+				cfg.props = {
+					device_class: 'current',
+					state_class: 'measurement',
 				}
 			} else {
 				cfg.props = {
 					device_class: 'power',
+					state_class: 'measurement',
 				}
 			}
 			break
