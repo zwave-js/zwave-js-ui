@@ -11,8 +11,8 @@ on:
         default: 'zwave-js'
       version:
         description: 'Version'
-        required: true
-        default: 'latest'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Update dependency
         run: |
-          yarn add ${{github.event.inputs.dep}}@${{github.event.inputs.version}}
+          yarn add ${{github.event.inputs.dep}}${{github.event.inputs.version}}
       - name: Check for changes
         id: check
         run: |
