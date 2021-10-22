@@ -124,7 +124,7 @@
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
     "@jamescoyle/vue-icon": "^0.1.2",
-    "@mdi/js": "^6.2.95",
+    "@mdi/js": "^6.3.95",
     "@types/set-value": "^4.0.1",
     "@zwave-js/server": "^1.10.7",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-0",
