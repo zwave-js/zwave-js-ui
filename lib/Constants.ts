@@ -130,8 +130,14 @@ export function meterType(
 	// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/meters.json
 	switch (ccSpecific.meterType) {
 		case 0x01: // electric
-			cfg.props = {
-				device_class: 'power',
+			if (ccSpecific.scale == 0x00) {
+				cfg.props = {
+					device_class: 'energy',
+				}
+			} else {
+				cfg.props = {
+					device_class: 'power',
+				}
 			}
 			break
 		case 0x02: // gas
