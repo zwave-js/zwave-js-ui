@@ -166,7 +166,7 @@
     "vue-prism-editor": "^1.3.0",
     "vue-router": "^3.5.2",
     "vuedraggable": "^2.24.3",
-    "vuetify": "^2.5.9",
+    "vuetify": "^2.5.10",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
     "zwave-js": "^8.6.0"
