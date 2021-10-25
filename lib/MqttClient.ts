@@ -354,7 +354,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		}
 
 		if (config.store) {
-			const manager = LevelStore(joinPath(storeDir, 'mqtt-store'))
+			const manager = LevelStore(joinPath(storeDir, 'mqtt'))
 			options.incomingStore = manager.incoming
 			options.outgoingStore = manager.outgoing
 		}
