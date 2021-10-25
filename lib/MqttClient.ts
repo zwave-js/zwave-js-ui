@@ -60,6 +60,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private error?: string
 	private closed: boolean
 	private retrySubTimeout: NodeJS.Timeout | null
+	private _closeTimeout: NodeJS.Timeout | null
 
 	static CLIENTS_PREFIX = '_CLIENTS'
 
@@ -116,12 +117,34 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				this.retrySubTimeout = null
 			}
 
+			let resolved = false
+
 			if (this.client) {
-				this.client.end(true, {}, () => {
+				const onClose = (error: Error) => {
+					// prevent multiple resolve
+					if (resolved) {
+						return
+					}
+
+					resolved = true
+
+					if (this._closeTimeout) {
+						clearTimeout(this._closeTimeout)
+						this._closeTimeout = null
+					}
+
+					if (error) {
+						logger.error('Error while closing client', error)
+					}
 					this.removeAllListeners()
 					logger.info('Client closed')
 					resolve()
-				})
+				}
+				this.client.end(false, {}, onClose)
+				// in case a clean close doens't work, force close
+				this._closeTimeout = setTimeout(() => {
+					this.client.end(true, {}, onClose)
+				}, 5000)
 			} else {
 				this.removeAllListeners()
 				resolve()
@@ -331,7 +354,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		}
 
 		if (config.store) {
-			const manager = LevelStore(joinPath(storeDir, 'mqtt-store'))
+			const manager = LevelStore(joinPath(storeDir, 'mqtt'))
 			options.incomingStore = manager.incoming
 			options.outgoingStore = manager.outgoing
 		}
@@ -471,7 +494,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			try {
 				parsed = JSON.parse(parsed)
 				// eslint-disable-next-line no-empty
-			} catch (e: unknown) {} // it' ok fallback to string
+			} catch (e) {} // it' ok fallback to string
 		} else {
 			parsed = Number(parsed)
 		}
