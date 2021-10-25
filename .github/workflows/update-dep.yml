@@ -37,7 +37,7 @@ jobs:
           if ! git diff --quiet ; then
             echo "Has changes"
             echo "::set-output name=changed::true"
-            VERSION=$(yarn info --silent ${{github.event.inputs.dep}} version)
+            VERSION=$(npm info ${{github.event.inputs.dep}} version)
             echo "::set-output name=version::$VERSION"
           else
             echo "No changes detected. Dependency already up to date"
