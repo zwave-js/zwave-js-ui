@@ -1,3 +1,23 @@
+# [5.10.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.9.0...v5.10.0) (2021-10-25)
+
+
+### Bug Fixes
+
+* **mqtt:** try closing client graceflly and fix level store ([#1879](https://github.com/zwave-js/zwavejs2mqtt/issues/1879)) ([12b5b3f](https://github.com/zwave-js/zwavejs2mqtt/commit/12b5b3f7db9d95ce67323882ef4970376636a16f))
+* alter softReset language to reflect new default ([#1850](https://github.com/zwave-js/zwavejs2mqtt/issues/1850)) ([b60d2c7](https://github.com/zwave-js/zwavejs2mqtt/commit/b60d2c74368d4ef09ff26dec543069c97f4c5aaf))
+* docker contrib ([#1841](https://github.com/zwave-js/zwavejs2mqtt/issues/1841)) ([d8a1b0d](https://github.com/zwave-js/zwavejs2mqtt/commit/d8a1b0d336eb1639a242bf4bddc31a39b2f29383))
+* make `enableSoftReset` option enabled by default ([#1864](https://github.com/zwave-js/zwavejs2mqtt/issues/1864)) ([8839162](https://github.com/zwave-js/zwavejs2mqtt/commit/8839162c055a31c97b2b363d65d58a74b9d4ce4c))
+* race condition with node.batteryLevels ([#1845](https://github.com/zwave-js/zwavejs2mqtt/issues/1845)) ([63d8193](https://github.com/zwave-js/zwavejs2mqtt/commit/63d819349525ecedb77ef55573bc6a12c7ab2a39))
+
+
+### Features
+
+* bump zwave-js@8.5.1 ([bb962bb](https://github.com/zwave-js/zwavejs2mqtt/commit/bb962bbb5aeef74566f215690f82f0405eff7d7b))
+* bump zwave-js@8.6.0 ([#1878](https://github.com/zwave-js/zwavejs2mqtt/issues/1878)) ([053f8e8](https://github.com/zwave-js/zwavejs2mqtt/commit/053f8e8d370460e794fdd1dedd2e3e5d7a1d421c))
+* icons for status + color for interview stage ([#1846](https://github.com/zwave-js/zwavejs2mqtt/issues/1846)) ([85b70bb](https://github.com/zwave-js/zwavejs2mqtt/commit/85b70bb3013ab66f2e553bb7a2fdede559c48b3b))
+* implement `softReset` ([#1844](https://github.com/zwave-js/zwavejs2mqtt/issues/1844)) ([03eaaf7](https://github.com/zwave-js/zwavejs2mqtt/commit/03eaaf7a5c15d378a01203a80be62d0d7a8e7051))
+* support nodes with multiple batteries + more icons in table (rich values) ([#1777](https://github.com/zwave-js/zwavejs2mqtt/issues/1777)) ([aa80130](https://github.com/zwave-js/zwavejs2mqtt/commit/aa801308b4f30a55669196dfcc2edb7d9ee5e9a1))
+
 # [5.9.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.8.0...v5.9.0) (2021-10-14)
 
 
