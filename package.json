@@ -159,7 +159,7 @@
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.5.0",
     "set-value": "^4.1.0",
-    "socket.io": "^4.2.0",
+    "socket.io": "^4.3.1",
     "socket.io-client": "^4.2.0",
     "svg-pan-zoom": "^3.6.1",
     "vue": "^2.6.14",
