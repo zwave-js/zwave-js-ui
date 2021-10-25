@@ -126,6 +126,8 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 						return
 					}
 
+					resolved = true
+
 					if (this._closeTimeout) {
 						clearTimeout(this._closeTimeout)
 						this._closeTimeout = null
@@ -137,7 +139,6 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 					this.removeAllListeners()
 					logger.info('Client closed')
 					resolve()
-					resolved = true
 				}
 				this.client.end(false, {}, onClose)
 				// in case a clean close doens't work, force close
