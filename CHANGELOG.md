@@ -1,3 +1,15 @@
+## [5.10.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.10.0...v5.10.1) (2021-10-26)
+
+
+### Bug Fixes
+
+* wrong security description in table ([#1888](https://github.com/zwave-js/zwavejs2mqtt/issues/1888)) ([1cc5b17](https://github.com/zwave-js/zwavejs2mqtt/commit/1cc5b17ffd0f441bebccbd1548bb7109ac0308c1))
+
+
+### Features
+
+* bump zwave-js@8.6.1 ([#1891](https://github.com/zwave-js/zwavejs2mqtt/issues/1891)) ([bcc9ef4](https://github.com/zwave-js/zwavejs2mqtt/commit/bcc9ef4cf9475e00434593075f0167a453e94bb2))
+
 # [5.10.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.9.0...v5.10.0) (2021-10-25)
 
 
