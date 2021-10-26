@@ -41,6 +41,7 @@
 
   - [Generating Logs](troubleshooting/generating-logs.md)
   - [Bug Report](troubleshooting/bug_report.md)
+  - [Startup crash](troubleshooting/app_crash.md)
 
 - Development
 
