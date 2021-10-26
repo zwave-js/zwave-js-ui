@@ -86,6 +86,7 @@ export default {
 								node.security === 'LOW SECURITY'
 									? 'color: yellow'
 									: 'color: green'
+							v.description = node.security
 						} else if (node.isSecure === false) {
 							v.icon = mdiMinusCircle
 							v.iconStyle = 'color: red'
