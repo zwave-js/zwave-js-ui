@@ -33,6 +33,6 @@ In this case
 
 should be entered in the Zwave settings instead of `/dev/ttyUSB0`.
 
-If this does not help, the stick restart can be disabled by disabling __Soft Reset_ option under Zwave settings, but this may limit functionality.
+If this does not help, the stick restart can be disabled by disabling __Soft Reset__ option under Zwave settings, but this may limit functionality.
 
 > This is definitely necessary with the zwave.me UZB1. However, the adapter tries to detect this stick by itself.
