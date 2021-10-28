@@ -407,6 +407,23 @@
 										persistent-hint
 									></v-checkbox>
 
+									<v-switch
+										label="Pre-fill DSK"
+										v-model="s.values.prefillDsk"
+										persistent-hint
+										hint="Enable this to pre-fill DSK code"
+									></v-switch>
+
+									<v-text-field
+										v-if="s.values.prefillDsk"
+										label="DSK Pin"
+										class="mb-2"
+										persistent-hint
+										hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
+										v-model.trim="s.values.dsk"
+									>
+									</v-text-field>
+
 									<v-card-actions v-if="!loading">
 										<v-btn
 											v-if="!aborted"
@@ -725,6 +742,12 @@ export default {
 		onValidateDSK(dsk) {
 			const dskStep = this.availableSteps.s2Pin
 			dskStep.suffix = dsk
+
+			const s = this.steps[this.currentStep - 1]
+
+			if (s?.values?.prefillDsk) {
+				dskStep.values.pin = s.values.dsk
+			}
 
 			this.loading = false
 			this.alert = false
