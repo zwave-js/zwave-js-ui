@@ -739,20 +739,27 @@ export default {
 
 			this.pushStep(grantStep)
 		},
-		onValidateDSK(dsk) {
+		async onValidateDSK(dsk) {
 			const dskStep = this.availableSteps.s2Pin
 			dskStep.suffix = dsk
 
 			const s = this.steps[this.currentStep - 1]
 
-			if (s?.values?.prefillDsk) {
+			const autoFill = s?.values?.prefillDsk
+
+			if (autoFill) {
 				dskStep.values.pin = s.values.dsk
 			}
 
 			this.loading = false
 			this.alert = false
 
-			this.pushStep(dskStep)
+			await this.pushStep(dskStep)
+
+			// automatically submit dsk
+			if (autoFill) {
+				this.nextStep()
+			}
 		},
 		nextStep() {
 			const s = this.steps[this.currentStep - 1]
@@ -826,8 +833,8 @@ export default {
 
 				this.loading = true
 			} else if (s.key === 's2Pin') {
-				const mode = s.values.pin
-				this.$emit('apiRequest', 'validateDSK', [mode])
+				const pin = s.values.pin
+				this.$emit('apiRequest', 'validateDSK', [pin])
 				this.loading = true
 			} else if (s.key === 'replaceFailed') {
 				this.currentAction = 'Inclusion'
