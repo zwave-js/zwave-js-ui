@@ -600,7 +600,7 @@ export default {
 			const requiredKeys = [
 				'S2_Unauthenticated',
 				'S2_Authenticated',
-				'S2_Authenticated',
+				'S2_AccessControl',
 				'S0_Legacy',
 			]
 			const missing = []
