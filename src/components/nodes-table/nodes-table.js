@@ -123,9 +123,13 @@ export default {
 					richValue: (node) => {
 						let v = {
 							align: 'center',
-							icon: mdiHelpCircle,
-							iconStyle: 'color: grey',
-							description: 'Unknown ZWave+ version',
+							icon: node.ready ? mdiMinusCircle : mdiHelpCircle,
+							iconStyle: node.ready
+								? 'color: red'
+								: 'color: grey',
+							description: node.ready
+								? 'No'
+								: 'Unknown ZWave+ version',
 						}
 						if (node.zwavePlusVersion === undefined) return v
 						v.description = `ZWave+ version: ${node.zwavePlusVersion}`
