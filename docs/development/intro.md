@@ -5,7 +5,7 @@ Developers who wants to debug the application have to open two terminals.
 First, make sure that all dependencies are installed, the build the application:
 
 ```sh
-yarn install
+yarn install --immutable
 yarn build
 ```
 
