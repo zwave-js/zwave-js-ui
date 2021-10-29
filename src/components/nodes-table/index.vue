@@ -191,10 +191,8 @@
 			<div style="text-align: center">
 				<v-chip
 					small
-					:style="
-						'background-color: ' +
-						interviewStageColor(`${item.interviewStage}`)
-					"
+					:color="interviewStageColor(`${item.interviewStage}`)"
+					text-color="white"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular
