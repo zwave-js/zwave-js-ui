@@ -161,7 +161,7 @@ export default {
 			if (
 				await this.$listeners.showConfirm(
 					'Attention',
-					`Are you sure you want to delete this item from provisioning?`,
+					`Are you sure you want to delete this item from provisioning? Removing it from provisioning will not exclude the node`,
 					'alert'
 				)
 			) {
