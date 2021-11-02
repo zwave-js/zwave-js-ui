@@ -183,7 +183,7 @@
 											hint="Prefer S0 over no encryption"
 											persistent-hint
 										></v-checkbox>
-										<v-radio :value="4">
+										<v-radio :value="1">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -282,6 +282,25 @@
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
+										<v-radio :value="1">
+											<template v-slot:label>
+												<div class="option">
+													<v-icon
+														color="primary"
+														small
+														>smart_button</v-icon
+													>
+													<strong
+														>S2 - Scan QR</strong
+													>
+													<small
+														>S2 only. Allows to
+														include node scanning a
+														S2 only QR-Code</small
+													>
+												</div>
+											</template>
+										</v-radio>
 										<v-radio :value="4">
 											<template v-slot:label>
 												<div class="option">
@@ -805,7 +824,7 @@ export default {
 			) {
 				const mode = s.values.inclusionMode
 
-				if (mode === 4) {
+				if (mode === 1) {
 					const qrString = await this.$listeners.showConfirm(
 						'Smart start',
 						'Scan QR Code or import it as an image',
