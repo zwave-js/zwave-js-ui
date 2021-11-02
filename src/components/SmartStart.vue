@@ -17,7 +17,7 @@
 
 			<template v-slot:[`item.s2AccessControl`]="{ item }">
 				<v-checkbox
-					:value="item.s2AccessControl"
+					v-model="item.s2AccessControl"
 					readonly
 					hide-details
 					dense
@@ -25,7 +25,7 @@
 			</template>
 			<template v-slot:[`item.s2Authenticated`]="{ item }">
 				<v-checkbox
-					:value="item.s2Authenticated"
+					v-model="item.s2Authenticated"
 					readonly
 					hide-details
 					dense
@@ -33,7 +33,7 @@
 			</template>
 			<template v-slot:[`item.s2Unhauntenticated`]="{ item }">
 				<v-checkbox
-					:value="item.s2Unhauntenticated"
+					v-model="item.s2Unhauntenticated"
 					readonly
 					hide-details
 					dense
@@ -41,7 +41,7 @@
 			</template>
 			<template v-slot:[`item.s0Legacy`]="{ item }">
 				<v-checkbox
-					:value="item.s0Legacy"
+					v-model="item.s0Legacy"
 					readonly
 					hide-details
 					dense
