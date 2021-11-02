@@ -79,6 +79,7 @@
 					:socket="socket"
 					@close="onAddRemoveClose"
 					@apiRequest="apiRequest"
+					v-on="$listeners"
 				/>
 
 				<DialogAdvanced

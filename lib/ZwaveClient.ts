@@ -42,6 +42,8 @@ import {
 	InclusionUserCallbacks,
 	SmartStartProvisioningEntry,
 	PlannedProvisioningEntry,
+	QRCodeVersion,
+	ReplaceNodeOptions,
 } from 'zwave-js'
 import { parseQRCodeString } from 'zwave-js/Utils'
 import {
@@ -1658,7 +1660,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async replaceFailedNode(
 		nodeId: number,
-		strategy: InclusionStrategy = InclusionStrategy.Security_S2
+		strategy: InclusionStrategy = InclusionStrategy.Security_S2,
+		options?: { qrString?: string; provisioning?: PlannedProvisioningEntry }
 	): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
@@ -1671,15 +1674,43 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}, this.cfg.commandsTimeout * 1000 || 30000)
 			// by default replaceFailedNode is secured, pass true to make it not secured
 			if (strategy === InclusionStrategy.Security_S2) {
-				return this._driver.controller.replaceFailedNode(nodeId, {
-					strategy,
-					userCallbacks: {
-						grantSecurityClasses:
-							this._onGrantSecurityClasses.bind(this),
-						validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-						abort: this._onAbortInclusion.bind(this),
-					},
-				})
+				let inclusionOptions: ReplaceNodeOptions
+				if (options?.qrString) {
+					const parsedQr = parseQRCodeString(options.qrString)
+					if (!parsedQr) {
+						throw Error(`Invalid QR code string`)
+					}
+
+					if (parsedQr.version === QRCodeVersion.S2) {
+						options.provisioning = parsedQr
+					} else if (parsedQr.version === QRCodeVersion.SmartStart) {
+						this.provisionSmartStartNode(parsedQr)
+						return true
+					} else {
+						throw Error(`Invalid QR code version`)
+					}
+				}
+				if (options?.provisioning) {
+					inclusionOptions = {
+						strategy,
+						provisioning: options.provisioning,
+					}
+				} else {
+					inclusionOptions = {
+						strategy,
+						userCallbacks: {
+							grantSecurityClasses:
+								this._onGrantSecurityClasses.bind(this),
+							validateDSKAndEnterPIN:
+								this._onValidateDSK.bind(this),
+							abort: this._onAbortInclusion.bind(this),
+						},
+					}
+				}
+				return this._driver.controller.replaceFailedNode(
+					nodeId,
+					inclusionOptions
+				)
 			} else if (
 				strategy === InclusionStrategy.Insecure ||
 				strategy === InclusionStrategy.Security_S0
@@ -1702,7 +1733,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async startInclusion(
 		strategy: InclusionStrategy = InclusionStrategy.Default,
-		options?: { forceSecurity?: boolean; provisioningList?: unknown }
+		options?: {
+			forceSecurity?: boolean
+			provisioning?: PlannedProvisioningEntry
+			qrString?: string
+		}
 	): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
@@ -1738,7 +1773,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 					break
 				case InclusionStrategy.Security_S2:
-					inclusionOptions = { strategy, userCallbacks }
+					if (options?.qrString) {
+						const parsedQr = parseQRCodeString(options.qrString)
+						if (!parsedQr) {
+							throw Error(`Invalid QR code string`)
+						}
+
+						if (parsedQr.version === QRCodeVersion.S2) {
+							options.provisioning = parsedQr
+						} else if (
+							parsedQr.version === QRCodeVersion.SmartStart
+						) {
+							this.provisionSmartStartNode(parsedQr)
+							return true
+						} else {
+							throw Error(`Invalid QR code version`)
+						}
+					}
+					if (options?.provisioning) {
+						inclusionOptions = {
+							strategy,
+							provisioning: options.provisioning,
+						}
+					} else {
+						inclusionOptions = { strategy, userCallbacks }
+					}
 					break
 				default:
 					inclusionOptions = { strategy }

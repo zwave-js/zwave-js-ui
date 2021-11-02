@@ -183,7 +183,7 @@
 											hint="Prefer S0 over no encryption"
 											persistent-hint
 										></v-checkbox>
-										<v-radio disabled :value="1">
+										<v-radio :value="4">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -191,10 +191,7 @@
 														small
 														>smart_button</v-icon
 													>
-													<strong
-														>Smart start (COMING
-														SOON)</strong
-													>
+													<strong>Smart start</strong>
 													<small
 														>S2 only. Allows
 														pre-configuring the
@@ -737,7 +734,7 @@ export default {
 
 			this.pushStep(dskStep)
 		},
-		nextStep() {
+		async nextStep() {
 			const s = this.steps[this.currentStep - 1]
 			if (s.key === 'action') {
 				const mode = s.values.action
@@ -760,11 +757,31 @@ export default {
 				s.key === 'replaceInclusionMode'
 			) {
 				const mode = s.values.inclusionMode
+
+				let qrString = ''
+
+				if (mode === 4) {
+					qrString = await this.$listeners.showConfirm(
+						'Smart start',
+						'Scan QR Code or import it as an image',
+						'info',
+						{
+							qrScan: 'true',
+							canceltext: 'Close',
+						}
+					)
+
+					if (!qrString) {
+						return
+					}
+				}
+
 				this.aborted = false
 				this.loading = true
 				const replaceStep = this.steps.find(
 					(s) => s.key === 'replaceFailed'
 				)
+
 				if (replaceStep) {
 					let replaceId = replaceStep.values.replaceId
 					if (typeof replaceId === 'object') {
@@ -772,11 +789,15 @@ export default {
 					} else {
 						replaceId = parseInt(replaceId, 10)
 					}
-					this.sendAction('replaceFailedNode', [replaceId, mode])
+					this.sendAction('replaceFailedNode', [
+						replaceId,
+						mode,
+						{ qrString },
+					])
 				} else {
 					this.sendAction('startInclusion', [
 						mode,
-						{ forceSecurity: s.values.forceSecurity },
+						{ forceSecurity: s.values.forceSecurity, qrString },
 					])
 				}
 			} else if (s.key === 's2Classes') {
