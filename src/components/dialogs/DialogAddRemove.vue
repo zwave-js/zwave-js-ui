@@ -763,6 +763,7 @@ export default {
 					doneStep.text = `Node added to provisioning list`
 					doneStep.success = true
 					this.pushStep(doneStep)
+					this.loading = true
 				}
 			}
 		},
