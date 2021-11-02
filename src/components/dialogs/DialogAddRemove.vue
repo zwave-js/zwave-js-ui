@@ -102,7 +102,7 @@
 										<v-btn
 											v-if="state !== 'start'"
 											color="primary"
-											@click="nextStep"
+											@click.stop="nextStep"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -131,7 +131,7 @@
 									<v-card-actions>
 										<v-btn
 											color="primary"
-											@click="nextStep"
+											@click.stop="nextStep"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -259,7 +259,7 @@
 										<v-btn
 											v-if="!loading"
 											color="primary"
-											@click="nextStep"
+											@click.stop="nextStep"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -367,7 +367,7 @@
 										<v-btn
 											v-if="!loading"
 											color="primary"
-											@click="nextStep"
+											@click.stop="nextStep"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -431,7 +431,7 @@
 										<v-btn
 											v-if="!aborted"
 											color="primary"
-											@click="nextStep"
+											@click.stop="nextStep"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -471,7 +471,7 @@
 										<v-btn
 											v-if="!aborted"
 											color="primary"
-											@click="nextStep"
+											@click.stop="nextStep"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -735,7 +735,8 @@ export default {
 								} else {
 									replaceId = parseInt(replaceId, 10)
 								}
-								this.sendAction('replaceFailedNode', [
+
+								this.$emit('apiRequest', 'replaceFailedNode', [
 									replaceId,
 									mode,
 									{ provisioning },
@@ -748,9 +749,11 @@ export default {
 							}
 						} else if (provisioning.version === 1) {
 							// smart start
-							this.sendAction('provisionSmartStartNode', [
-								provisioning,
-							])
+							this.$emit(
+								'apiRequest',
+								'provisionSmartStartNode',
+								[provisioning]
+							)
 						}
 					}
 				} else if (data.api === 'provisionSmartStartNode') {
@@ -839,7 +842,8 @@ export default {
 						return
 					}
 
-					this.sendAction('parseQRCodeString', [qrString])
+					this.$emit('apiRequest', 'parseQRCodeString', [qrString])
+
 					return
 				}
 

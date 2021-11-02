@@ -79,7 +79,7 @@
 					:socket="socket"
 					@close="onAddRemoveClose"
 					@apiRequest="apiRequest"
-					v-on="$listeners"
+					v-on="{ showConfirm: $listeners.showConfirm }"
 				/>
 
 				<DialogAdvanced
