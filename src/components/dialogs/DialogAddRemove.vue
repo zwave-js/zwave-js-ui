@@ -848,6 +848,8 @@ export default {
 				const mode = s.values.inclusionMode
 
 				if (mode === 1) {
+					this.alert = null
+
 					const qrString = await this.$listeners.showConfirm(
 						'Smart start',
 						'Scan QR Code or import it as an image',
@@ -857,7 +859,6 @@ export default {
 							canceltext: 'Close',
 						}
 					)
-
 					if (!qrString) {
 						return
 					}
