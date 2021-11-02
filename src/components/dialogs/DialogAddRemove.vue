@@ -736,7 +736,7 @@ export default {
 									replaceId = parseInt(replaceId, 10)
 								}
 
-								this.$emit('apiRequest', 'replaceFailedNode', [
+								this.sendAction('replaceFailedNode', [
 									replaceId,
 									mode,
 									{ provisioning },
