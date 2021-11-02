@@ -18,7 +18,7 @@
 			<template v-slot:[`item.s2AccessControl`]="{ item }">
 				<v-checkbox
 					v-model="item.s2AccessControl"
-					readonly
+					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
@@ -26,7 +26,7 @@
 			<template v-slot:[`item.s2Authenticated`]="{ item }">
 				<v-checkbox
 					v-model="item.s2Authenticated"
-					readonly
+					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
@@ -34,7 +34,7 @@
 			<template v-slot:[`item.s2Unhauntenticated`]="{ item }">
 				<v-checkbox
 					v-model="item.s2Unhauntenticated"
-					readonly
+					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
@@ -42,7 +42,7 @@
 			<template v-slot:[`item.s0Legacy`]="{ item }">
 				<v-checkbox
 					v-model="item.s0Legacy"
-					readonly
+					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
@@ -85,12 +85,22 @@ export default {
 				{ text: 'S0 Legacy', value: 's0Legacy' },
 				{ text: 'Actions', value: 'actions', sortable: false },
 			],
+			edited: false,
 		}
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
 		refreshItems() {
 			this.apiRequest('getProvisioningEntries', [])
+		},
+		onChange(item) {
+			this.edited = true
+			item = {
+				dsk: item.dsk,
+				securityClasses: securityClassesToArray(item),
+			}
+
+			this.apiRequest('provisionSmartStartNode', [item])
 		},
 		async scanItem() {
 			let qrString = await this.$listeners.showConfirm(
@@ -195,7 +205,12 @@ export default {
 						this.refreshItems()
 						break
 					case 'provisionSmartStartNode':
-						this.showSnackbar('Node successfully added')
+						this.showSnackbar(
+							`Node successfully ${
+								this.edited ? 'updated' : 'added'
+							}`
+						)
+						this.edited = false
 						this.refreshItems()
 						break
 					default:
