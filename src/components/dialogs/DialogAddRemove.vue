@@ -103,6 +103,7 @@
 											v-if="state !== 'start'"
 											color="primary"
 											@click="nextStep"
+											@keypress.enter="nextStep"
 										>
 											Next
 										</v-btn>
@@ -131,6 +132,7 @@
 										<v-btn
 											color="primary"
 											@click="nextStep"
+											@keypress.enter="nextStep"
 										>
 											Next
 										</v-btn>
@@ -261,6 +263,7 @@
 											v-if="!loading"
 											color="primary"
 											@click="nextStep"
+											@keypress.enter="nextStep"
 										>
 											Next
 										</v-btn>
@@ -349,6 +352,7 @@
 											v-if="!loading"
 											color="primary"
 											@click="nextStep"
+											@keypress.enter="nextStep"
 										>
 											Next
 										</v-btn>
@@ -412,6 +416,7 @@
 											v-if="!aborted"
 											color="primary"
 											@click="nextStep"
+											@keypress.enter="nextStep"
 										>
 											Next
 										</v-btn>
@@ -451,6 +456,7 @@
 											v-if="!aborted"
 											color="primary"
 											@click="nextStep"
+											@keypress.enter="nextStep"
 										>
 											Next
 										</v-btn>

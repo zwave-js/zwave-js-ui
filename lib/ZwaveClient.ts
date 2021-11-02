@@ -40,6 +40,8 @@ import {
 	InclusionResult,
 	InclusionOptions,
 	InclusionUserCallbacks,
+	SmartStartProvisioningEntry,
+	PlannedProvisioningEntry,
 } from 'zwave-js'
 import {
 	CommandClasses,
@@ -143,6 +145,10 @@ const allowedApis = validateMethods([
 	'abortInclusion',
 	'backupNVMRaw',
 	'restoreNVMRaw',
+	'getProvisioningEntries',
+	'getProvisioningEntry',
+	'unprovisionSmartStartNode',
+	'provisionSmartStartNode',
 ] as const)
 
 // Define mapping of CCs and node values to node properties:
@@ -1720,11 +1726,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					inclusionOptions = { strategy }
 					break
 				case InclusionStrategy.SmartStart:
-					inclusionOptions = {
-						strategy,
-						provisioningList: options?.provisioningList,
-					}
-					break
+					throw Error(
+						'In order to use Smart Start add you node to provisioning list'
+					)
 				case InclusionStrategy.Default:
 					inclusionOptions = {
 						strategy,
@@ -2511,7 +2515,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async backupNVMRaw() {
 		if (!this.driverReady) {
-			throw Error('Driver is not ready')
+			throw new DriverNotReadyError()
 		}
 
 		const data = await this.driver.controller.backupNVMRaw(
@@ -2532,7 +2536,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async restoreNVMRaw(data: Buffer) {
 		if (!this.driverReady) {
-			throw Error('Driver is not ready')
+			throw new DriverNotReadyError()
 		}
 
 		await this.driver.controller.restoreNVMRaw(
@@ -2545,6 +2549,38 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const progress = Math.round((bytesRead / totalBytes) * 100)
 
 		this._updateControllerStatus(`Restore NVM progress: ${progress}%`)
+	}
+
+	getProvisioningEntries(): SmartStartProvisioningEntry[] {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		return this.driver.controller.getProvisioningEntries()
+	}
+
+	getProvisioningEntry(dsk: string): SmartStartProvisioningEntry | undefined {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		return this.driver.controller.getProvisioningEntry(dsk)
+	}
+
+	unprovisionSmartStartNode(dskOrNodeId: string | number) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		this.driver.controller.unprovisionSmartStartNode(dskOrNodeId)
+	}
+
+	provisionSmartStartNode(entry: PlannedProvisioningEntry) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		this.driver.controller.provisionSmartStartNode(entry)
 	}
 
 	// ---------- NODE EVENTS -------------------------------------
