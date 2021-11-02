@@ -695,6 +695,53 @@ export default {
 				if (data.api === 'replaceFailedNode') {
 					this.init()
 				}
+			} else {
+				if (data.api === 'parseQRCodeString') {
+					const provisioning = data.result
+
+					if (provisioning) {
+						// S2 only, start inclusion
+						if (provisioning.version === 0) {
+							this.aborted = false
+							this.loading = true
+							const mode = 4 // s2 only
+							const replaceStep = this.steps.find(
+								(s) => s.key === 'replaceFailed'
+							)
+
+							if (replaceStep) {
+								let replaceId = replaceStep.values.replaceId
+								if (typeof replaceId === 'object') {
+									replaceId = replaceId.id
+								} else {
+									replaceId = parseInt(replaceId, 10)
+								}
+								this.sendAction('replaceFailedNode', [
+									replaceId,
+									mode,
+									{ provisioning },
+								])
+							} else {
+								this.sendAction('startInclusion', [
+									mode,
+									{ provisioning },
+								])
+							}
+						} else if (provisioning.version === 1) {
+							// smart start
+							this.sendAction('provisionSmartStartNode', [
+								provisioning,
+							])
+						}
+					}
+				} else if (data.api === 'provisionSmartStartNode') {
+					this.alert = null
+					this.aborted = false
+					const doneStep = this.copy(this.availableSteps.done)
+					doneStep.text = `Node added to provisioning list`
+					doneStep.success = true
+					this.pushStep(doneStep)
+				}
 			}
 		},
 		changeStep(index) {
@@ -758,10 +805,8 @@ export default {
 			) {
 				const mode = s.values.inclusionMode
 
-				let qrString = ''
-
 				if (mode === 4) {
-					qrString = await this.$listeners.showConfirm(
+					const qrString = await this.$listeners.showConfirm(
 						'Smart start',
 						'Scan QR Code or import it as an image',
 						'info',
@@ -774,6 +819,9 @@ export default {
 					if (!qrString) {
 						return
 					}
+
+					this.sendAction('parseQRCodeString', [qrString])
+					return
 				}
 
 				this.aborted = false
@@ -789,15 +837,11 @@ export default {
 					} else {
 						replaceId = parseInt(replaceId, 10)
 					}
-					this.sendAction('replaceFailedNode', [
-						replaceId,
-						mode,
-						{ qrString },
-					])
+					this.sendAction('replaceFailedNode', [replaceId, mode])
 				} else {
 					this.sendAction('startInclusion', [
 						mode,
-						{ forceSecurity: s.values.forceSecurity, qrString },
+						{ forceSecurity: s.values.forceSecurity },
 					])
 				}
 			} else if (s.key === 's2Classes') {

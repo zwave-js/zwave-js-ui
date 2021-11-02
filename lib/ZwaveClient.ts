@@ -44,6 +44,7 @@ import {
 	PlannedProvisioningEntry,
 	QRCodeVersion,
 	ReplaceNodeOptions,
+	QRProvisioningInformation,
 } from 'zwave-js'
 import { parseQRCodeString } from 'zwave-js/Utils'
 import {
@@ -152,6 +153,7 @@ const allowedApis = validateMethods([
 	'getProvisioningEntry',
 	'unprovisionSmartStartNode',
 	'provisionSmartStartNode',
+	'parseQRCodeString',
 ] as const)
 
 // Define mapping of CCs and node values to node properties:
@@ -2633,6 +2635,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.driver.controller.unprovisionSmartStartNode(dskOrNodeId)
+	}
+
+	parseQRCodeString(qrString: string): QRProvisioningInformation | undefined {
+		return parseQRCodeString(qrString)
 	}
 
 	provisionSmartStartNode(entry: PlannedProvisioningEntry | string) {
