@@ -1,4 +1,5 @@
 import draggable from 'vuedraggable'
+import colors from 'vuetify/lib/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
@@ -44,14 +45,14 @@ export default {
 			managedNodes: null,
 			nodesProps: {
 				/* The node property definition map entries can have the following attributes:
-           - type (string): The type of the property
-           - label (string): The label of the property to be displayed as table column
-           - groupable (boolean): If the column values can be grouped
-           - customGroupValue (function): Function to format a value for displaying as group value
-           - customSort (function): Custom sort function for a certain column.
-           - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
-           - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
-        */
+		   - type (string): The type of the property
+		   - label (string): The label of the property to be displayed as table column
+		   - groupable (boolean): If the column values can be grouped
+		   - customGroupValue (function): Function to format a value for displaying as group value
+		   - customSort (function): Custom sort function for a certain column.
+		   - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
+		   - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
+		*/
 				id: { type: 'number', label: 'ID', groupable: false },
 				minBatteryLevel: {
 					type: 'number',
@@ -77,19 +78,19 @@ export default {
 						let v = {
 							align: 'center',
 							icon: mdiHelpCircle,
-							iconStyle: 'color: grey',
+							iconStyle: `color: ${colors.grey.base}`,
 							description: 'Unknown security status',
 						}
 						if (node.isSecure === true) {
 							v.icon = mdiCheckCircle
 							v.iconStyle =
 								node.security === 'LOW SECURITY'
-									? 'color: yellow'
-									: 'color: green'
+									? `color: ${colors.orange.base}`
+									: `color: ${colors.green.base}`
 							v.description = node.security
 						} else if (node.isSecure === false) {
 							v.icon = mdiMinusCircle
-							v.iconStyle = 'color: red'
+							v.iconStyle = `color: ${colors.red.base}`
 							v.description = 'No security'
 						}
 						return v
@@ -102,17 +103,17 @@ export default {
 						this.booleanRichValue(node.supportsBeaming, {
 							default: {
 								icon: mdiHelpCircle,
-								iconStyle: 'color: grey',
+								iconStyle: `color: ${colors.grey.base}`,
 								description: 'Unknown beaming support',
 							},
 							true: {
 								icon: mdiCheckCircle,
-								iconStyle: 'color: green',
+								iconStyle: `color: ${colors.green.base}`,
 								description: 'Beaming is supported',
 							},
 							false: {
 								icon: mdiMinusCircle,
-								iconStyle: 'color: red',
+								iconStyle: `color: ${colors.red.base}`,
 								description: 'Beaming is unsupported',
 							},
 						}),
@@ -125,7 +126,7 @@ export default {
 							align: 'center',
 							icon: node.ready ? mdiMinusCircle : mdiHelpCircle,
 							iconStyle: node.ready
-								? 'color: red'
+								? `color: ${colors.red.base}`
 								: 'color: grey',
 							description: node.ready
 								? 'No'
@@ -133,7 +134,7 @@ export default {
 						}
 						if (node.zwavePlusVersion === undefined) return v
 						v.description = `ZWave+ version: ${node.zwavePlusVersion}`
-						v.iconStyle = 'color: green'
+						v.iconStyle = `color: ${colors.green.base}`
 						if (node.zwavePlusVersion === 1) {
 							v.icon = mdiNumeric1Circle
 						} else if (node.zwavePlusVersion === 2) {
@@ -156,17 +157,17 @@ export default {
 						this.booleanRichValue(node.failed, {
 							default: {
 								icon: mdiHelpCircle,
-								iconStyle: 'color: grey',
+								iconStyle: `color: ${colors.grey.base}`,
 								description: 'Failure status unknown',
 							},
 							true: {
 								icon: mdiAlertCircle,
-								iconStyle: 'color: red',
+								iconStyle: `color: ${colors.red.base}`,
 								description: 'Node is failed!',
 							},
 							false: {
 								icon: mdiCheckCircle,
-								iconStyle: 'color: green',
+								iconStyle: `color: ${colors.green.base}`,
 								description: 'Node is not failed.',
 							},
 						}),
@@ -178,25 +179,25 @@ export default {
 						let v = {
 							align: 'center',
 							icon: mdiHelpCircle,
-							iconStyle: 'color: grey',
+							iconStyle: `color: ${colors.grey.base}`,
 							description: node.status,
 						}
 						switch (node.status) {
 							case 'Asleep':
 								v.icon = mdiSleep
-								v.iconStyle = 'color: orange'
+								v.iconStyle = `color: ${colors.orange.base}`
 								break
 							case 'Awake':
 								v.icon = mdiEmoticon
-								v.iconStyle = 'color: green'
+								v.iconStyle = `color: ${colors.green.base}`
 								break
 							case 'Dead':
 								v.icon = mdiEmoticonDead
-								v.iconStyle = 'color: red'
+								v.iconStyle = `color: ${colors.red.base}`
 								break
 							case 'Alive':
 								v.icon = mdiCheckCircle
-								v.iconStyle = 'color: green'
+								v.iconStyle = `color: ${colors.green.base}`
 								break
 						}
 						return v
@@ -268,7 +269,7 @@ export default {
 		},
 		powerRichValue(node) {
 			let level = node.minBatteryLevel
-			let iconStyle = 'color: green'
+			let iconStyle = `color: ${colors.green.base}`
 			let icon = ''
 			let label = ''
 			let description = ''
@@ -283,10 +284,10 @@ export default {
 					: 'Unknown battery level'
 				if (level <= 10) {
 					icon = mdiBatteryAlertVariantOutline
-					iconStyle = 'color: red'
+					iconStyle = `color: ${colors.red.base}`
 				} else if (level <= 30) {
 					icon = mdiBattery20
-					iconStyle = 'color: orange'
+					iconStyle = `color: ${colors.orange.base}`
 				} else if (level <= 70) {
 					icon = mdiBattery50
 				} else if (level <= 90) {
@@ -296,7 +297,7 @@ export default {
 				} else {
 					icon = mdiBatteryUnknown
 					description = 'Battery level: unknown'
-					iconStyle = 'color: grey'
+					iconStyle = `color: ${colors.grey.base}`
 					label = ''
 				}
 			}
