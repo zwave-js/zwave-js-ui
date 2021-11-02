@@ -58,6 +58,15 @@
 									:persistent-hint="!!input.hint"
 									:required="input.required"
 								></v-switch>
+								<v-checkbox
+									v-if="input.type === 'checkbox'"
+									v-model="values[input.key]"
+									:rules="input.rules || []"
+									:label="input.label"
+									:hint="input.hint"
+									:persistent-hint="!!input.hint"
+									:required="input.required"
+								></v-checkbox>
 								<v-select
 									v-if="
 										input.type === 'list' &&
@@ -108,12 +117,88 @@
 					</v-form>
 				</v-container>
 			</v-card-text>
+			<v-card-text v-else-if="options.qrScan" class="pa-4">
+				<v-tabs v-model="scanTab" fixed-tabs icons-and-text>
+					<v-tabs-slider></v-tabs-slider>
 
+					<v-tab>
+						Scan
+						<v-icon>photo_camera</v-icon>
+					</v-tab>
+
+					<v-tab>
+						Import
+						<v-icon>image</v-icon>
+					</v-tab>
+				</v-tabs>
+
+				<v-tabs-items v-model="scanTab">
+					<v-tab-item>
+						<v-card flat>
+							<v-card-text>
+								<center v-show="loadCamera">
+									<p class="caption">Loading camera</p>
+									<v-progress-circular
+										indeterminate
+									></v-progress-circular>
+								</center>
+								<qrcode-stream
+									v-show="!loadCamera"
+									@detect="onDetect"
+									@init="onInit"
+								></qrcode-stream>
+							</v-card-text>
+						</v-card>
+					</v-tab-item>
+					<v-tab-item>
+						<v-card flat>
+							<v-card-text>
+								<qrcode-capture
+									@detect="onDetect"
+									:multiple="false"
+									ref="qrcodeCapture"
+									v-show="false"
+								></qrcode-capture>
+
+								<qrcode-drop-zone
+									class="mt-2"
+									@detect="onDetect"
+								>
+									<v-col
+										@click="$refs.qrcodeCapture.$el.click()"
+										class="dropzone text-center"
+									>
+										<v-icon size="60px"
+											>cloud_upload</v-icon
+										>
+										<p
+											class="
+												caption
+												font-weight-bold
+												text-uppercase
+											"
+										>
+											Drop the image here
+										</p>
+									</v-col>
+								</qrcode-drop-zone>
+							</v-card-text>
+						</v-card>
+					</v-tab-item>
+				</v-tabs-items>
+				<v-alert dense v-if="qrCodeError" type="error">{{
+					qrCodeError
+				}}</v-alert>
+			</v-card-text>
 			<v-card-actions class="pt-0">
 				<v-spacer></v-spacer>
-				<v-btn @click="agree" text :color="options.color">{{
-					options.confirmText
-				}}</v-btn>
+				<v-btn
+					v-if="!options.qrScan"
+					@click="agree"
+					text
+					:color="options.color"
+					>{{ options.confirmText }}</v-btn
+				>
 				<v-btn v-if="options.cancelText" @click="cancel" text>{{
 					options.cancelText
 				}}</v-btn>
@@ -128,6 +213,12 @@
 		'Lucida Console', 'Lucida Sans Typewriter', 'DejaVu Sans Mono',
 		'Bitstream Vera Sans Mono', 'Liberation Mono', 'Nimbus Mono L', Monaco,
 		'Courier New', Courier, monospace;
+}
+
+.dropzone {
+	border: 4px dashed #ccc;
+	border-radius: 20px;
+	cursor: pointer;
 }
 </style>
 <script>
@@ -169,12 +260,19 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
+import { mapMutations } from 'vuex'
+
+import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'vue-qrcode-reader'
 
 export default {
 	components: {
 		PrismEditor,
+		QrcodeStream,
+		QrcodeDropZone,
+		QrcodeCapture,
 	},
 	data: () => ({
+		scanTab: 0,
 		dialog: false,
 		resolve: null,
 		reject: null,
@@ -183,6 +281,7 @@ export default {
 		values: {},
 		title: null,
 		options: null,
+		loadCamera: false,
 		defaultOptions: {
 			color: 'primary',
 			width: 290,
@@ -190,7 +289,9 @@ export default {
 			confirmText: 'Yes',
 			cancelText: 'Cancel',
 			persistent: false,
+			qrScan: false,
 		},
+		qrCodeError: false,
 	}),
 	computed: {
 		show: {
@@ -206,6 +307,43 @@ export default {
 		},
 	},
 	methods: {
+		...mapMutations(['showSnackbar']),
+		async onDetect(promise) {
+			try {
+				// const {
+				// 	imageData, // raw image data of image/frame
+				// 	content, // decoded String or null
+				// 	location, // QR code coordinates or null
+				// } = await promise
+
+				const { content } = await promise
+
+				if (!content) {
+					this.qrCodeError = 'No QR code detected'
+					return
+				} else {
+					this.dialog = false
+					await this.$nextTick()
+					this.resolve(content)
+					this.reset()
+				}
+			} catch (error) {
+				this.qrCodeError = error.message
+			}
+		},
+		async onInit(promise) {
+			this.loadCamera = true
+
+			try {
+				// const { capabilities } = await promise
+				await promise
+				// successfully initialized
+			} catch (error) {
+				console.error(error)
+			} finally {
+				this.loadCamera = false
+			}
+		},
 		highlighter(code) {
 			return highlight(code, languages.js) // returns html
 		},
@@ -251,6 +389,7 @@ export default {
 		reset() {
 			this.options = Object.assign({}, this.defaultOptions)
 			this.values = {}
+			this.qrCodeError = false
 		},
 	},
 	created() {

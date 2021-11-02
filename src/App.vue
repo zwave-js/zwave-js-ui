@@ -351,6 +351,11 @@ export default {
 					title: 'Control Panel',
 					path: Routes.controlPanel,
 				},
+				{
+					icon: 'qr_code_scanner',
+					title: 'Smart Start',
+					path: Routes.smartStart,
+				},
 				{ icon: 'settings', title: 'Settings', path: Routes.settings },
 				{ icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
 				{ icon: 'bug_report', title: 'Debug', path: Routes.debug },

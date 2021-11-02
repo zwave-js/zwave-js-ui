@@ -43,6 +43,7 @@ import {
 	SmartStartProvisioningEntry,
 	PlannedProvisioningEntry,
 } from 'zwave-js'
+import { parseQRCodeString } from 'zwave-js/Utils'
 import {
 	CommandClasses,
 	Duration,
@@ -2575,9 +2576,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.driver.controller.unprovisionSmartStartNode(dskOrNodeId)
 	}
 
-	provisionSmartStartNode(entry: PlannedProvisioningEntry) {
+	provisionSmartStartNode(entry: PlannedProvisioningEntry | string) {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
+		}
+
+		if (typeof entry === 'string') {
+			// it's a qrcode
+			entry = parseQRCodeString(entry)
+		}
+
+		if (!entry.dsk) {
+			throw Error('DSK is required')
 		}
 
 		this.driver.controller.provisionSmartStartNode(entry)

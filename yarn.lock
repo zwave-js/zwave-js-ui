@@ -3067,6 +3067,26 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@zxing/library@npm:^0.18.4":
+  version: 0.18.6
+  resolution: "@zxing/library@npm:0.18.6"
+  dependencies:
+    "@zxing/text-encoding": ~0.9.0
+    ts-custom-error: ^3.0.0
+  dependenciesMeta:
+    "@zxing/text-encoding":
+      optional: true
+  checksum: 564a25f6245b4fd81b4ce686116bf1fe577daa2aaee4263b4dea3776676482fd3e063ad43783c6378713a4a3dcefd311b6154b6cd43e7be24bb7e7c3e5fec98a
+  languageName: node
+  linkType: hard
+
+"@zxing/text-encoding@npm:~0.9.0":
+  version: 0.9.0
+  resolution: "@zxing/text-encoding@npm:0.9.0"
+  checksum: c23b12aee7639382e4949961304a1294776afaffa40f579e09ffecd0e5e68cf26ef3edd75009de46da8a536e571448755ca68b3e2ea707d53793c0edb2e2c34a
+  languageName: node
+  linkType: hard
+
 "JSONStream@npm:^1.0.4":
   version: 1.3.5
   resolution: "JSONStream@npm:1.3.5"
@@ -3775,6 +3795,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"barcode-detector@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "barcode-detector@npm:1.0.0"
+  dependencies:
+    "@zxing/library": ^0.18.4
+    jsqr: ^1.3.1
+  checksum: 457f7fff01ab5bcec688cc859ab99c162099b39fc46163ba627fa0ef7b7aea96b95ee450fbf7888b7a59aae8a1e4b94ca99ae56d5d92fda1999b3b5eef4ec364
+  languageName: node
+  linkType: hard
+
 "base64-arraybuffer@npm:0.1.4":
   version: 0.1.4
   resolution: "base64-arraybuffer@npm:0.1.4"
@@ -4161,6 +4191,13 @@ __metadata:
     function-bind: ^1.1.1
     get-intrinsic: ^1.0.2
   checksum: f8e31de9d19988a4b80f3e704788c4a2d6b6f3d17cfec4f57dc29ced450c53a49270dc66bf0fbd693329ee948dd33e6c90a329519aef17474a4d961e8d6426b0
+  languageName: node
+  linkType: hard
+
+"callforth@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "callforth@npm:0.3.1"
+  checksum: aa50522512d43e1c8923e69b39d1d92dc5f188d858aa6b2072adfff72580866303cc108c1fd6aaa64abea14bb4260102e3a3f6f77df7fe40c81ede3c3ed1b559
   languageName: node
   linkType: hard
 
@@ -5067,6 +5104,13 @@ __metadata:
   version: 3.16.0
   resolution: "core-js@npm:3.16.0"
   checksum: e215cf057fadd86e5386d8042c1bd0ddab1c7811d8f66d272c356ba9bae34c0897c3f5a80d19f93fd74cff832652354a0feb0c817234a066ae9177e28c6d865a
+  languageName: node
+  linkType: hard
+
+"core-js@npm:^3.6.5":
+  version: 3.19.0
+  resolution: "core-js@npm:3.19.0"
+  checksum: 9f03e72f01d9eeafb2724ee5787ab8d6e7dcf0e3b44c4dec23e6a0cfc9e2e0a76460b77ce7d1d0be09db918618b11595fad6838978ff97f2684270738898c5a2
   languageName: node
   linkType: hard
 
@@ -9568,6 +9612,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"jsqr@npm:^1.3.1":
+  version: 1.4.0
+  resolution: "jsqr@npm:1.4.0"
+  checksum: 7c572971f90c42772e30d152bde63b84edf1164bde80c53942e6b2068ea31caf00ad704aa46cacc9e71645f52dbeddebc6e84ba15e883c678ee93cde690de339
+  languageName: node
+  linkType: hard
+
 "just-extend@npm:^4.0.2":
   version: 4.2.1
   resolution: "just-extend@npm:4.2.1"
@@ -13163,6 +13214,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"rtcpeerconnection-shim@npm:^1.2.15":
+  version: 1.2.15
+  resolution: "rtcpeerconnection-shim@npm:1.2.15"
+  dependencies:
+    sdp: ^2.6.0
+  checksum: 42a733d8e3846b7e7e3c33b6d5cddec95659ceb39d3f990f0a4437e6d719ed717237fea02352d4a18d86c825a1493eaeb481cc835267d2288b0ce43582b97f46
+  languageName: node
+  linkType: hard
+
 "run-async@npm:^2.4.0":
   version: 2.4.1
   resolution: "run-async@npm:2.4.1"
@@ -13289,6 +13349,13 @@ fsevents@~2.3.2:
     ajv: ^6.12.5
     ajv-keywords: ^3.5.2
   checksum: fb73f3d759d43ba033c877628fe9751620a26879f6301d3dbeeb48cf2a65baec5cdf99da65d1bf3b4ff5444b2e59cbe4f81c2456b5e0d2ba7d7fd4aed5da29ce
+  languageName: node
+  linkType: hard
+
+"sdp@npm:^2.12.0, sdp@npm:^2.6.0":
+  version: 2.12.0
+  resolution: "sdp@npm:2.12.0"
+  checksum: 5deb20ac50a1aeb4dd5ff2e506c22d1674222c21f08ae97105c9552ae979e90ddc42b8526f2c3dcacfeebc45c7b2e6b6b4254ae2cf335263bf3ddf2ad9b8ec76
   languageName: node
   linkType: hard
 
@@ -14557,6 +14624,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"ts-custom-error@npm:^3.0.0":
+  version: 3.2.0
+  resolution: "ts-custom-error@npm:3.2.0"
+  checksum: b1d2016de891cecea46a70c4adbaf1e6f7c6178994f72070ee3c218cc1a9e2b12c3011defb8385f15dc03ddfafd8d88ef2c9217e23700fb6e537755f33b9c801
+  languageName: node
+  linkType: hard
+
 "ts-node-dev@npm:^1.1.8":
   version: 1.1.8
   resolution: "ts-node-dev@npm:1.1.8"
@@ -15211,6 +15285,19 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
+"vue-qrcode-reader@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "vue-qrcode-reader@npm:3.0.6"
+  dependencies:
+    barcode-detector: ^1.0.0
+    callforth: ^0.3.1
+    core-js: ^3.6.5
+    vue: ^2.6.11
+    webrtc-adapter: 7.7.0
+  checksum: f21bae1d0289a60febed8b7187997b513297159fcc007a5f5b91fb9e88bcd2e36fe2c04e785a72bbec1d93f6025657dac18479ab82afaa0e0dbcf08873010c5f
+  languageName: node
+  linkType: hard
+
 "vue-router@npm:^3.5.2":
   version: 3.5.2
   resolution: "vue-router@npm:3.5.2"
@@ -15245,7 +15332,7 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
-"vue@npm:^2.6.14":
+"vue@npm:^2.6.11, vue@npm:^2.6.14":
   version: 2.6.14
   resolution: "vue@npm:2.6.14"
   checksum: 23524a1bdca094d62cb3491a46317eed75184b5d61d28fa846ea5d2b241c1cc7084fc67ee259d47a50a6d0bbc33ecaceb7bb52bff81312fe7da07263f3419942
@@ -15466,6 +15553,16 @@ typescript@^4.4.3:
   bin:
     webpack: bin/webpack.js
   checksum: e05576c5c7410c9ef25dc3595a870f93b34e3b44778e7df5ccbc1d40a51edb755223959f938b6e8b9b4e2285eb938da2464a08c9103597ff3131cb98c19a1d86
+  languageName: node
+  linkType: hard
+
+"webrtc-adapter@npm:7.7.0":
+  version: 7.7.0
+  resolution: "webrtc-adapter@npm:7.7.0"
+  dependencies:
+    rtcpeerconnection-shim: ^1.2.15
+    sdp: ^2.12.0
+  checksum: 83dd0a474714fa8d0ebb0fa4b1d754768c1d865f71af0e0b3b88a4f097b355d5b1c13e70b09eb80b644ff60701c3939fac292f007570b796d3e02db1d614c10c
   languageName: node
   linkType: hard
 
@@ -16080,6 +16177,7 @@ typescript@^4.4.3:
     vue: ^2.6.14
     vue-loader: ^15.9.8
     vue-prism-editor: ^1.3.0
+    vue-qrcode-reader: ^3.0.6
     vue-router: ^3.5.2
     vue-style-loader: ^4.1.3
     vue-template-compiler: ^2.6.14
