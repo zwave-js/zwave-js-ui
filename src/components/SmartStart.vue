@@ -81,7 +81,7 @@ export default {
 				{ text: 'DSK', value: 'dsk' },
 				{ text: 'S2 Access Control', value: 's2AccessControl' },
 				{ text: 'S2 Authenticated', value: 's2Authenticated' },
-				{ text: 'S2 Unhaunthennitcated', value: 's2Unhauntenticated' },
+				{ text: 'S2 Unhaunthenticated', value: 's2Unhauntenticated' },
 				{ text: 'S0 Legacy', value: 's0Legacy' },
 				{ text: 'Actions', value: 'actions', sortable: false },
 			],
