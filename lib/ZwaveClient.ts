@@ -1814,7 +1814,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Start exclusion
 	 */
-	async startExclusion(): Promise<boolean> {
+	async startExclusion(unprovision = true): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -1825,7 +1825,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.stopExclusion().catch(logger.error)
 			}, this.cfg.commandsTimeout * 1000 || 30000)
 
-			return this._driver.controller.beginExclusion()
+			return this._driver.controller.beginExclusion(unprovision)
 		}
 
 		throw new DriverNotReadyError()
