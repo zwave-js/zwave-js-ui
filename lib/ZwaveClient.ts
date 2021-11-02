@@ -2637,8 +2637,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.driver.controller.unprovisionSmartStartNode(dskOrNodeId)
 	}
 
-	parseQRCodeString(qrString: string): QRProvisioningInformation | undefined {
-		return parseQRCodeString(qrString)
+	parseQRCodeString(qrString: string): {
+		parsed?: QRProvisioningInformation
+		nodeId?: number
+		exists: boolean
+	} {
+		const parsed = parseQRCodeString(qrString)
+		let node: ZWaveNode | undefined
+		let exists = false
+
+		if (parsed?.dsk) {
+			node = this.driver.controller.getNodeByDSK(parsed.dsk)
+
+			if (!node) {
+				exists = !!this.getProvisioningEntry(parsed.dsk)
+			}
+		}
+
+		return {
+			parsed,
+			nodeId: node?.id,
+			exists,
+		}
 	}
 
 	provisionSmartStartNode(entry: PlannedProvisioningEntry | string) {

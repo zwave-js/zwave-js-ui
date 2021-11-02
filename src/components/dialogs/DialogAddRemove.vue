@@ -716,7 +716,26 @@ export default {
 				}
 			} else {
 				if (data.api === 'parseQRCodeString') {
-					const provisioning = data.result
+					const res = data.result
+					const provisioning = res.parsed
+
+					if (res.exists) {
+						this.alert = {
+							type: 'info',
+							text: 'Already added to provisioning list',
+						}
+						this.state = 'stop'
+						return
+					}
+
+					if (res.nodeId) {
+						this.alert = {
+							type: 'info',
+							text: 'Node already added',
+						}
+						this.state = 'stop'
+						return
+					}
 
 					if (provisioning) {
 						// S2 only, start inclusion
@@ -950,6 +969,7 @@ export default {
 			const s =
 				typeof step === 'string' ? this.availableSteps[step] : step
 			s.index = this.steps.length + 1
+			this.alert = null
 			this.steps.push(this.copy(s))
 			await this.$nextTick()
 			this.currentStep = s.index
