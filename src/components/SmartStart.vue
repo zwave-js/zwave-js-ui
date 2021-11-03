@@ -112,8 +112,9 @@ export default {
 				'Scan QR Code or import it as an image',
 				'info',
 				{
-					qrScan: 'true',
+					qrScan: true,
 					canceltext: 'Close',
+					width: 500,
 				}
 			)
 

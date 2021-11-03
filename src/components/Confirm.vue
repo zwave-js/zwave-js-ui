@@ -118,9 +118,7 @@
 				</v-container>
 			</v-card-text>
 			<v-card-text v-else-if="options.qrScan" class="pa-4">
-				<v-tabs v-model="scanTab" fixed-tabs icons-and-text>
-					<v-tabs-slider></v-tabs-slider>
-
+				<v-tabs v-model="scanTab" grow icons-and-text>
 					<v-tab>
 						Scan
 						<v-icon>photo_camera</v-icon>
@@ -130,9 +128,14 @@
 						Import
 						<v-icon>image</v-icon>
 					</v-tab>
+					<v-tab>
+						Text
+						<v-icon>border_color</v-icon>
+					</v-tab>
 				</v-tabs>
 
-				<v-tabs-items v-model="scanTab">
+				<v-tabs-items grow v-model="scanTab">
+					<!-- QR-Code  -->
 					<v-tab-item>
 						<v-card flat>
 							<v-card-text>
@@ -150,6 +153,8 @@
 							</v-card-text>
 						</v-card>
 					</v-tab-item>
+
+					<!-- Image import -->
 					<v-tab-item>
 						<v-card flat>
 							<v-card-text>
@@ -184,6 +189,38 @@
 								</qrcode-drop-zone>
 							</v-card-text>
 						</v-card>
+					</v-tab-item>
+
+					<!-- Text  -->
+					<v-tab-item>
+						<v-form
+							ref="qrForm"
+							v-model="qrForm"
+							@submit.prevent="onDetect(qrString)"
+						>
+							<v-card flat>
+								<v-card-text>
+									<v-row>
+										<v-text-field
+											label="QR Code text"
+											hint="Manually insert the QR Code string"
+											v-model="qrString"
+											:rules="[validQR]"
+										>
+										</v-text-field>
+									</v-row>
+								</v-card-text>
+								<v-card-actions>
+									<v-btn
+										type="submit"
+										color="primary"
+										:disabled="!qrForm"
+										@click="onDetect(qrString)"
+										>Confirm</v-btn
+									>
+								</v-card-actions>
+							</v-card>
+						</v-form>
 					</v-tab-item>
 				</v-tabs-items>
 				<v-alert dense v-if="qrCodeError" type="error">{{
@@ -282,6 +319,8 @@ export default {
 		title: null,
 		options: null,
 		loadCamera: false,
+		qrForm: true,
+		queryString: '',
 		defaultOptions: {
 			color: 'primary',
 			width: 290,
@@ -308,6 +347,15 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		validQR(value) {
+			return (
+				(value &&
+					value.startsWith('90') &&
+					value.length > 52 &&
+					/^\d+$/.test(value)) ||
+				'Not valid. Must be 52 digits long and starts with "90"'
+			)
+		},
 		async onDetect(promise) {
 			try {
 				// const {
@@ -316,7 +364,19 @@ export default {
 				// 	location, // QR code coordinates or null
 				// } = await promise
 
-				const { content } = await promise
+				let content
+
+				if (typeof promise === 'string') {
+					// manually inserted string
+					if (this.qrForm) {
+						// qr form is valid
+						content = promise
+					} else {
+						return
+					}
+				} else {
+					content = (await promise).content
+				}
 
 				if (!content) {
 					this.qrCodeError = 'No QR code detected'
@@ -389,6 +449,8 @@ export default {
 		reset() {
 			this.options = Object.assign({}, this.defaultOptions)
 			this.values = {}
+			this.queryString = ''
+			this.qrForm = true
 			this.qrCodeError = false
 		},
 	},
