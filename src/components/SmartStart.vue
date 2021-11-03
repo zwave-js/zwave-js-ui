@@ -1,70 +1,138 @@
 <template>
 	<v-container grid-list-md>
-		<v-data-table :headers="headers" :items="items" class="elevation-1">
-			<template v-slot:top>
-				<v-btn color="primary" @click="editItem()" dark class="mb-2"
-					>Add</v-btn
+		<v-card>
+			<v-card-title>
+				Provisioning Entities
+				<v-spacer></v-spacer>
+			</v-card-title>
+			<v-data-table :headers="headers" :items="items" class="elevation-1">
+				<template
+					v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
 				>
-
-				<v-btn color="amber" @click="scanItem" dark class="mb-2"
-					>Scan</v-btn
+					<v-checkbox
+						v-model="item.securityClasses.s2AccessControl"
+						@change="onChange(item)"
+						hide-details
+						dense
+					></v-checkbox>
+				</template>
+				<template
+					v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
 				>
-
-				<v-btn color="green" @click="refreshItems" dark class="mb-2"
-					>Refresh</v-btn
+					<v-checkbox
+						v-model="item.securityClasses.s2Authenticated"
+						@change="onChange(item)"
+						hide-details
+						dense
+					></v-checkbox>
+				</template>
+				<template
+					v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
 				>
-				<v-btn color="purple" @click="exportList" dark class="mb-2"
-					>Export</v-btn
-				>
+					<v-checkbox
+						v-model="item.securityClasses.s2Unauthenticated"
+						@change="onChange(item)"
+						hide-details
+						dense
+					></v-checkbox>
+				</template>
+				<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
+					<v-checkbox
+						v-model="item.securityClasses.s0Legacy"
+						@change="onChange(item)"
+						hide-details
+						dense
+					></v-checkbox>
+				</template>
+				<template v-slot:[`item.actions`]="{ item }">
+					<v-icon small color="red" @click="removeItem(item)"
+						>delete</v-icon
+					>
+					<v-icon small color="success" @click="editItem(item)"
+						>edit</v-icon
+					>
+				</template>
+			</v-data-table>
+		</v-card>
+		<v-speed-dial
+			v-model="fab"
+			fixed
+			bottom
+			right
+			transition="slide-y-reverse-transition"
+			class="mb-7"
+		>
+			<template v-slot:activator>
+				<v-btn v-model="fab" color="blue darken-3" dark fab>
+					<v-icon v-if="fab"> close </v-icon>
+					<v-icon v-else> add </v-icon>
+				</v-btn>
 			</template>
-
-			<template
-				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
-			>
-				<v-checkbox
-					v-model="item.securityClasses.s2AccessControl"
-					@change="onChange(item)"
-					hide-details
-					dense
-				></v-checkbox>
-			</template>
-			<template
-				v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
-			>
-				<v-checkbox
-					v-model="item.securityClasses.s2Authenticated"
-					@change="onChange(item)"
-					hide-details
-					dense
-				></v-checkbox>
-			</template>
-			<template
-				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
-			>
-				<v-checkbox
-					v-model="item.securityClasses.s2Unauthenticated"
-					@change="onChange(item)"
-					hide-details
-					dense
-				></v-checkbox>
-			</template>
-			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
-				<v-checkbox
-					v-model="item.securityClasses.s0Legacy"
-					@change="onChange(item)"
-					hide-details
-					dense
-				></v-checkbox>
-			</template>
-			<template v-slot:[`item.actions`]="{ item }">
-				<v-icon small color="red" @click="removeItem(item)"
-					>delete</v-icon
-				>
-				<v-icon small color="success" @click="editItem(item)"
-					>edit</v-icon
-				>
-			</template>
-		</v-data-table>
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
+						@click="editItem()"
+						color="primary"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>add</v-icon>
+					</v-btn>
+				</template>
+				<span>Add</span>
+			</v-tooltip>
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
+						@click="scanItem"
+						color="warning"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>qr_code_scanner</v-icon>
+					</v-btn>
+				</template>
+				<span>Scan</span>
+			</v-tooltip>
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
+						@click="refreshItems"
+						color="success"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>refresh</v-icon>
+					</v-btn>
+				</template>
+				<span>Refresh</span>
+			</v-tooltip>
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
+						@click="exportList"
+						color="purple"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>file_upload</v-icon>
+					</v-btn>
+				</template>
+				<span>Export</span>
+			</v-tooltip>
+		</v-speed-dial>
 	</v-container>
 </template>
 <script>
@@ -88,6 +156,7 @@ export default {
 	data() {
 		return {
 			items: [],
+			fab: false,
 			headers: [
 				{ text: 'ID', value: 'nodeId' },
 				{ text: 'Name', value: 'name' },
@@ -157,7 +226,7 @@ export default {
 				'info',
 				{
 					confirmText: existingItem ? 'Update' : 'Add',
-					width: 900,
+					width: 500,
 					inputs: [
 						{
 							type: 'text',
@@ -301,7 +370,13 @@ export default {
 			}
 		})
 
-		this.refreshItems()
+		if (this.socket.connected) {
+			this.refreshItems()
+		} else {
+			this.socket.once('connect', () => {
+				this.refreshItems()
+			})
+		}
 	},
 	beforeDestroy() {
 		if (this.socket) {
