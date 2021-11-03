@@ -10,14 +10,14 @@ export function parseSecurityClasses(securityClasses) {
 	const classes = {
 		s2AccessControl: false,
 		s2Authenticated: false,
-		s2Unhauntenticated: false,
+		s2Unauthenticated: false,
 		s0Legacy: false,
 	}
 
 	for (const c of securityClasses) {
 		switch (c) {
 			case 0:
-				classes.s2Unhauntenticated = true
+				classes.s2Unauthenticated = true
 				break
 			case 1:
 				classes.s2Authenticated = true
