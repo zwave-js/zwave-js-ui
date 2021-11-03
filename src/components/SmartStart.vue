@@ -2,7 +2,7 @@
 	<v-container grid-list-md>
 		<v-data-table :headers="headers" :items="items" class="elevation-1">
 			<template v-slot:top>
-				<v-btn color="green" @click="editItem" dark class="mb-2"
+				<v-btn color="primary" @click="editItem()" dark class="mb-2"
 					>Add</v-btn
 				>
 
@@ -10,38 +10,47 @@
 					>Scan</v-btn
 				>
 
-				<v-btn color="primary" @click="refreshItems" dark class="mb-2"
+				<v-btn color="green" @click="refreshItems" dark class="mb-2"
 					>Refresh</v-btn
+				>
+				<v-btn color="purple" @click="exportList" dark class="mb-2"
+					>Export</v-btn
 				>
 			</template>
 
-			<template v-slot:[`item.s2AccessControl`]="{ item }">
+			<template
+				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
+			>
 				<v-checkbox
-					v-model="item.s2AccessControl"
+					v-model="item.securityClasses.s2AccessControl"
 					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
 			</template>
-			<template v-slot:[`item.s2Authenticated`]="{ item }">
+			<template
+				v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
+			>
 				<v-checkbox
-					v-model="item.s2Authenticated"
+					v-model="item.securityClasses.s2Authenticated"
 					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
 			</template>
-			<template v-slot:[`item.s2Unauthenticated`]="{ item }">
+			<template
+				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
+			>
 				<v-checkbox
-					v-model="item.s2Unauthenticated"
+					v-model="item.securityClasses.s2Unauthenticated"
 					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
 			</template>
-			<template v-slot:[`item.s0Legacy`]="{ item }">
+			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
 				<v-checkbox
-					v-model="item.s0Legacy"
+					v-model="item.securityClasses.s0Legacy"
 					@change="onChange(item)"
 					hide-details
 					dense
@@ -84,10 +93,19 @@ export default {
 				{ text: 'Name', value: 'name' },
 				{ text: 'Location', value: 'location' },
 				{ text: 'DSK', value: 'dsk' },
-				{ text: 'S2 Access Control', value: 's2AccessControl' },
-				{ text: 'S2 Authenticated', value: 's2Authenticated' },
-				{ text: 'S2 Unhaunthenticated', value: 's2Unauthenticated' },
-				{ text: 'S0 Legacy', value: 's0Legacy' },
+				{
+					text: 'S2 Access Control',
+					value: 'securityClasses.s2AccessControl',
+				},
+				{
+					text: 'S2 Authenticated',
+					value: 'securityClasses.s2Authenticated',
+				},
+				{
+					text: 'S2 Unhaunthenticated',
+					value: 'securityClasses.s2Unauthenticated',
+				},
+				{ text: 'S0 Legacy', value: 'securityClasses.s0Legacy' },
 				{ text: 'Manufacturer', value: 'manufacturer' },
 				{ text: 'Label', value: 'label' },
 				{ text: 'Description', value: 'description' },
@@ -100,6 +118,13 @@ export default {
 		...mapMutations(['showSnackbar']),
 		refreshItems() {
 			this.apiRequest('getProvisioningEntries', [])
+		},
+		async exportList() {
+			await this.$listeners.export(
+				this.items,
+				'provisioningEntries',
+				'json'
+			)
 		},
 		onChange(item) {
 			this.edited = true
@@ -161,10 +186,10 @@ export default {
 						},
 						{
 							type: 'checkbox',
-							label: 'S2 Unhauthenticated',
-							key: 's2Unauthenticated',
+							label: 'S2 Access Control',
+							key: 's2AccessControl',
 							default: existingItem
-								? existingItem.s2Unauthenticated
+								? existingItem.securityClasses.s2AccessControl
 								: false,
 						},
 						{
@@ -172,15 +197,15 @@ export default {
 							label: 'S2 Authenticated',
 							key: 's2Authenticated',
 							default: existingItem
-								? existingItem.s2Authenticated
+								? existingItem.securityClasses.s2Authenticated
 								: false,
 						},
 						{
 							type: 'checkbox',
-							label: 'S2 Access Control',
-							key: 's2AccessControl',
+							label: 'S2 Unhauthenticated',
+							key: 's2Unauthenticated',
 							default: existingItem
-								? existingItem.s2AccessControl
+								? existingItem.securityClasses.s2Unauthenticated
 								: false,
 						},
 						{
@@ -188,7 +213,7 @@ export default {
 							label: 'S0 Legacy',
 							key: 's0Legacy',
 							default: existingItem
-								? existingItem.s0Legacy
+								? existingItem.securityClasses.s0Legacy
 								: false,
 						},
 					],
@@ -196,6 +221,18 @@ export default {
 			)
 
 			if (item.dsk) {
+				const securityClasses = {
+					s2Unauthenticated: item.s2Unauthenticated,
+					s2Authenticated: item.s2Authenticated,
+					s2AccessControl: item.s2AccessControl,
+					s0Legacy: item.s0Legacy,
+				}
+				delete item.s2AccessControl
+				delete item.s2Authenticated
+				delete item.s2Unauthenticated
+				delete item.s0Legacy
+
+				item.securityClasses = securityClasses
 				this.apiRequest('provisionSmartStartNode', [
 					this.convertItem(item),
 				])
@@ -217,20 +254,15 @@ export default {
 			return items.map((item) => {
 				return {
 					...item,
-					...parseSecurityClasses(item.securityClasses),
+					securityClasses: parseSecurityClasses(item.securityClasses),
 				}
 			})
 		},
 		convertItem(item) {
 			item = {
 				...item,
-				securityClasses: securityClassesToArray(item),
+				securityClasses: securityClassesToArray(item.securityClasses),
 			}
-
-			delete item.s2AccessControl
-			delete item.s2Authenticated
-			delete item.s2Unauthenticated
-			delete item.s0Legacy
 
 			return item
 		},
