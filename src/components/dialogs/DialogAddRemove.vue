@@ -385,34 +385,39 @@
 								<v-card-text v-if="s.key == 's2Classes'">
 									<v-checkbox
 										:disabled="
-											s.values.accessControl === undefined
+											s.values.s2AccessControl ===
+											undefined
 										"
-										v-model="s.values.accessControl"
+										v-model="s.values.s2AccessControl"
 										label="S2 Access Control"
 										hint="Example: Door Locks, garage doors"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
-										:disabled="s.values.auth === undefined"
-										v-model="s.values.auth"
+										:disabled="
+											s.values.s2Authenticated ===
+											undefined
+										"
+										v-model="s.values.s2Authenticated"
 										label="S2 Authenticated"
 										hint="Example: Lightning, Sensors, Security Systems"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
 										:disabled="
-											s.values.unAuth === undefined
+											s.values.s2Unauthenticated ===
+											undefined
 										"
-										v-model="s.values.unAuth"
+										v-model="s.values.s2Unauthenticated"
 										label="S2 Unauthenticated"
 										hint="Like S2 Authenticated but without verificationt that the correct device is included"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
 										:disabled="
-											s.values.legacy === undefined
+											s.values.s0Legacy === undefined
 										"
-										v-model="s.values.legacy"
+										v-model="s.values.s0Legacy"
 										label="S0 legacy"
 										hint="Example: Legacy door locks without S2 support"
 										persistent-hint
@@ -529,6 +534,11 @@
 <script>
 import { mapGetters } from 'vuex'
 import { socketEvents } from '@/plugins/socket'
+import {
+	parseSecurityClasses,
+	securityClassesToArray,
+	copy,
+} from '../../lib/utils.js'
 
 export default {
 	props: {
@@ -566,10 +576,10 @@ export default {
 					key: 's2Classes',
 					title: 'Security Classes',
 					values: {
-						accessControl: false,
-						auth: false,
-						unAuth: false,
-						legacy: false,
+						s2AccessControl: false,
+						s2Authenticated: false,
+						s2Unauthenticated: false,
+						s0Legacy: false,
 						clientAuth: false,
 					},
 				},
@@ -692,9 +702,6 @@ export default {
 		},
 	},
 	methods: {
-		copy(o) {
-			return JSON.parse(JSON.stringify(o))
-		},
 		onNodeAdded({ node, result }) {
 			this.nodeFound = node
 			if (this.loading) {
@@ -778,7 +785,7 @@ export default {
 				} else if (data.api === 'provisionSmartStartNode') {
 					this.alert = null
 					this.aborted = false
-					const doneStep = this.copy(this.availableSteps.done)
+					const doneStep = copy(this.availableSteps.done)
 					doneStep.text = `Node added to provisioning list`
 					doneStep.success = true
 					this.pushStep(doneStep)
@@ -801,13 +808,11 @@ export default {
 		onGrantSecurityCC(requested) {
 			const grantStep = this.availableSteps.s2Classes
 			const classes = requested.securityClasses
-			const values = grantStep.values
-			values.accessControl = classes.includes(2) || undefined
-			values.auth = classes.includes(1) || undefined
-			values.unAuth = classes.includes(0) || undefined
-			values.legacy = classes.includes(7) || undefined
-
-			values.clientAuth = requested.clientSideAuth || undefined
+			grantStep.values = {
+				...grantStep.values,
+				...parseSecurityClasses(classes),
+				clientAuth: requested.clientSideAuth || undefined,
+			}
 
 			this.loading = false
 			this.alert = false
@@ -891,23 +896,7 @@ export default {
 			} else if (s.key === 's2Classes') {
 				const values = s.values
 
-				const securityClasses = []
-
-				if (values.accessControl) {
-					securityClasses.push(2)
-				}
-
-				if (values.auth) {
-					securityClasses.push(1)
-				}
-
-				if (values.unAuth) {
-					securityClasses.push(0)
-				}
-
-				if (values.legacy) {
-					securityClasses.push(7)
-				}
+				const securityClasses = securityClassesToArray(s.values)
 
 				this.$emit('apiRequest', 'grantSecurityClasses', [
 					{
@@ -971,7 +960,7 @@ export default {
 				typeof step === 'string' ? this.availableSteps[step] : step
 			s.index = this.steps.length + 1
 			this.alert = null
-			this.steps.push(this.copy(s))
+			this.steps.push(copy(s))
 			await this.$nextTick()
 			this.currentStep = s.index
 		},
@@ -1019,14 +1008,14 @@ export default {
 			} else if (this.currentAction === 'Exclusion') {
 				this.alert = null
 				this.aborted = false
-				const doneStep = this.copy(this.availableSteps.done)
+				const doneStep = copy(this.availableSteps.done)
 				doneStep.text = `Node ${this.nodeFound.id} removed`
 				doneStep.success = true
 				this.pushStep(doneStep)
 			} else {
 				this.alert = null
 				this.aborted = false
-				const doneStep = this.copy(this.availableSteps.done)
+				const doneStep = copy(this.availableSteps.done)
 				doneStep.text = `Node ${
 					this.nodeFound.id
 				} added with security "${this.nodeFound.security || 'None'}"`
