@@ -440,7 +440,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	 * Function called when MQTT client reconnects
 	 */
 	private _onError(error: Error) {
-		logger.info(error.message)
+		logger.error('Mqtt client error', error)
 		this.error = error.message
 	}
 

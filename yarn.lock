@@ -2143,6 +2143,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@socket.io/component-emitter@npm:~3.0.0":
+  version: 3.0.0
+  resolution: "@socket.io/component-emitter@npm:3.0.0"
+  checksum: b5e909dbb16bcf27958d1bfb8319f3255f3a50f62fde78ecf9a584f39f916b928fdc5661519892eea912da082c6413d671c1e67bde70725c75ee62956aa67c26
+  languageName: node
+  linkType: hard
+
 "@szmarczak/http-timer@npm:^1.1.2":
   version: 1.1.2
   resolution: "@szmarczak/http-timer@npm:1.1.2"
@@ -2969,12 +2976,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:8.6.1":
-  version: 8.6.1
-  resolution: "@zwave-js/config@npm:8.6.1"
+"@zwave-js/config@npm:8.7.3":
+  version: 8.7.3
+  resolution: "@zwave-js/config@npm:8.7.3"
   dependencies:
-    "@zwave-js/core": 8.6.1
-    "@zwave-js/shared": 8.6.0
+    "@zwave-js/core": 8.7.3
+    "@zwave-js/shared": 8.7.3
     alcalzone-shared: ^4.0.0
     ansi-colors: ^4.1.1
     fs-extra: ^10.0.0
@@ -2982,16 +2989,16 @@ __metadata:
     json5: ^2.2.0
     semver: ^7.3.5
     winston: ^3.3.3
-  checksum: 1b8f6d6781a878750c548017cdf1286ffbcc88927400a016477f30cb0ae675f611c5517dd6b870725037e0544c36cb40be4edf9f42baad470c2bfaf5e00d3f64
+  checksum: e55cd0d4bf736253c2664d5da0b0d1d11b91a7c1dd65433e40e9c8e5d8535583271ecab27628a5fa257b9d03928e66f3dacfb26787cbdbfb8bb7b067a2e1da15
   languageName: node
   linkType: hard
 
-"@zwave-js/core@npm:8.6.1":
-  version: 8.6.1
-  resolution: "@zwave-js/core@npm:8.6.1"
+"@zwave-js/core@npm:8.7.3":
+  version: 8.7.3
+  resolution: "@zwave-js/core@npm:8.7.3"
   dependencies:
     "@alcalzone/jsonl-db": ^2.2.0
-    "@zwave-js/shared": 8.6.0
+    "@zwave-js/shared": 8.7.3
     "@zwave-js/winston-daily-rotate-file": ^4.5.6-0
     alcalzone-shared: ^4.0.0
     ansi-colors: ^4.1.1
@@ -3001,7 +3008,7 @@ __metadata:
     triple-beam: "*"
     winston: ^3.3.3
     winston-transport: "*"
-  checksum: f6c37fa963eaf6ff696b2e7a39ab0e0a65e56c711942c5333c6f9938dbfba7cb1469ef4380cbdd35f92a111a8f624cd84932732e08ad9717f2dc8e3a6fc91c38
+  checksum: 983b84cca229ebdaa16497d4627dde16359b213287cacfdd95ee524ea4fb20c2457023d980c7da1528d5b6753b98842248ec3dafe3b4e898ccaea9edb7111c16
   languageName: node
   linkType: hard
 
@@ -3014,17 +3021,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/serial@npm:8.6.1":
-  version: 8.6.1
-  resolution: "@zwave-js/serial@npm:8.6.1"
+"@zwave-js/serial@npm:8.7.3":
+  version: 8.7.3
+  resolution: "@zwave-js/serial@npm:8.7.3"
   dependencies:
     "@sentry/node": ^6.13.3
-    "@zwave-js/core": 8.6.1
-    "@zwave-js/shared": 8.6.0
+    "@zwave-js/core": 8.7.3
+    "@zwave-js/shared": 8.7.3
     alcalzone-shared: ^4.0.0
-    serialport: ^9.2.4
+    serialport: ^9.2.5
     winston: ^3.3.3
-  checksum: 790f584a91469c20e768445e79c372df981928a789fdaf7a6256e190f325d49405cfb2cd22ce7afa5d50f820ffd4ad80e8880c7d8e088a76777c201b9add9d60
+  checksum: 562ddf99135f5b149da01582af1474725e71aed26db824b0a71aa6e036f85eaed19902b52f92651b59119b8e61f684ea13b83af568294c9c2732bcdbd7044159
   languageName: node
   linkType: hard
 
@@ -3043,13 +3050,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/shared@npm:8.6.0":
-  version: 8.6.0
-  resolution: "@zwave-js/shared@npm:8.6.0"
+"@zwave-js/shared@npm:8.7.3":
+  version: 8.7.3
+  resolution: "@zwave-js/shared@npm:8.7.3"
   dependencies:
     alcalzone-shared: ^4.0.0
     fs-extra: ^10.0.0
-  checksum: 30db50e5c6ac56a1a77a1531a49e1d0a9bce4633c83ec12b0920917cde18488209289d4f35b8ccc32d288cce864c8a06c53cddf05487c7777b02f4aced96b1f0
+  checksum: efd61d58c31a8d354e7e0f01306f4b11f070329e30d97600f43d47a5b20ce0c26541054433a388aeb72745dca54382cae29dda30f0db23978c66d8e429846dc5
   languageName: node
   linkType: hard
 
@@ -3064,6 +3071,26 @@ __metadata:
   peerDependencies:
     winston: ^3
   checksum: d4b2f8e1523ba98a73766c8f0d0990b587d1674bbc18d573812522555f8cb9c99256d389d6b406f65119b7f5c6e5c4d84d1d144e607bd36492124f1d29d9ee2f
+  languageName: node
+  linkType: hard
+
+"@zxing/library@npm:^0.18.4":
+  version: 0.18.6
+  resolution: "@zxing/library@npm:0.18.6"
+  dependencies:
+    "@zxing/text-encoding": ~0.9.0
+    ts-custom-error: ^3.0.0
+  dependenciesMeta:
+    "@zxing/text-encoding":
+      optional: true
+  checksum: 564a25f6245b4fd81b4ce686116bf1fe577daa2aaee4263b4dea3776676482fd3e063ad43783c6378713a4a3dcefd311b6154b6cd43e7be24bb7e7c3e5fec98a
+  languageName: node
+  linkType: hard
+
+"@zxing/text-encoding@npm:~0.9.0":
+  version: 0.9.0
+  resolution: "@zxing/text-encoding@npm:0.9.0"
+  checksum: c23b12aee7639382e4949961304a1294776afaffa40f579e09ffecd0e5e68cf26ef3edd75009de46da8a536e571448755ca68b3e2ea707d53793c0edb2e2c34a
   languageName: node
   linkType: hard
 
@@ -3644,12 +3671,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^0.23.0":
-  version: 0.23.0
-  resolution: "axios@npm:0.23.0"
+"axios@npm:^0.24.0":
+  version: 0.24.0
+  resolution: "axios@npm:0.24.0"
   dependencies:
     follow-redirects: ^1.14.4
-  checksum: 879f61022bd825da2a7ebb72410bc528683ba54c140436baa0b924b7cab02ec0919fe64a04a546f482a75f5fd570b77884f9826764a95f2fd88265e61dcb70db
+  checksum: 468cf496c08a6aadfb7e699bebdac02851e3043d4e7d282350804ea8900e30d368daa6e3cd4ab83b8ddb5a3b1e17a5a21ada13fc9cebd27b74828f47a4236316
   languageName: node
   linkType: hard
 
@@ -3775,10 +3802,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"base64-arraybuffer@npm:0.1.4":
-  version: 0.1.4
-  resolution: "base64-arraybuffer@npm:0.1.4"
-  checksum: d249a929e27b2430d7ba1527e91a36e14da37ae2f80e350c4d696a038257718f8da07577e820e7262f86a0ecd573c283db10c46502080f53ae11bfdd99b6a029
+"barcode-detector@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "barcode-detector@npm:1.0.0"
+  dependencies:
+    "@zxing/library": ^0.18.4
+    jsqr: ^1.3.1
+  checksum: 457f7fff01ab5bcec688cc859ab99c162099b39fc46163ba627fa0ef7b7aea96b95ee450fbf7888b7a59aae8a1e4b94ca99ae56d5d92fda1999b3b5eef4ec364
+  languageName: node
+  linkType: hard
+
+"base64-arraybuffer@npm:~1.0.1":
+  version: 1.0.1
+  resolution: "base64-arraybuffer@npm:1.0.1"
+  checksum: 04b6fe6818b1c79774fa8aea169063521ad177f2ba04d2a4a0f00fca297d516319b551a3cda76050263da751b4ffb07d939fc1b5eb155f0e429659733e60afb0
   languageName: node
   linkType: hard
 
@@ -4161,6 +4198,13 @@ __metadata:
     function-bind: ^1.1.1
     get-intrinsic: ^1.0.2
   checksum: f8e31de9d19988a4b80f3e704788c4a2d6b6f3d17cfec4f57dc29ced450c53a49270dc66bf0fbd693329ee948dd33e6c90a329519aef17474a4d961e8d6426b0
+  languageName: node
+  linkType: hard
+
+"callforth@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "callforth@npm:0.3.1"
+  checksum: aa50522512d43e1c8923e69b39d1d92dc5f188d858aa6b2072adfff72580866303cc108c1fd6aaa64abea14bb4260102e3a3f6f77df7fe40c81ede3c3ed1b559
   languageName: node
   linkType: hard
 
@@ -5067,6 +5111,13 @@ __metadata:
   version: 3.16.0
   resolution: "core-js@npm:3.16.0"
   checksum: e215cf057fadd86e5386d8042c1bd0ddab1c7811d8f66d272c356ba9bae34c0897c3f5a80d19f93fd74cff832652354a0feb0c817234a066ae9177e28c6d865a
+  languageName: node
+  linkType: hard
+
+"core-js@npm:^3.6.5":
+  version: 3.19.0
+  resolution: "core-js@npm:3.19.0"
+  checksum: 9f03e72f01d9eeafb2724ee5787ab8d6e7dcf0e3b44c4dec23e6a0cfc9e2e0a76460b77ce7d1d0be09db918618b11595fad6838978ff97f2684270738898c5a2
   languageName: node
   linkType: hard
 
@@ -6605,45 +6656,47 @@ __metadata:
   languageName: node
   linkType: hard
 
-"engine.io-client@npm:~5.2.0":
-  version: 5.2.0
-  resolution: "engine.io-client@npm:5.2.0"
+"engine.io-client@npm:~6.0.1":
+  version: 6.0.2
+  resolution: "engine.io-client@npm:6.0.2"
   dependencies:
-    base64-arraybuffer: 0.1.4
-    component-emitter: ~1.3.0
+    "@socket.io/component-emitter": ~3.0.0
     debug: ~4.3.1
-    engine.io-parser: ~4.0.1
+    engine.io-parser: ~5.0.0
     has-cors: 1.1.0
     parseqs: 0.0.6
     parseuri: 0.0.6
-    ws: ~7.4.2
+    ws: ~8.2.3
     xmlhttprequest-ssl: ~2.0.0
     yeast: 0.1.2
-  checksum: 41b9e7c9db8cbf3d8d21994bfde5f1c2ddcf519543988efd04a8762ced1262ffe5da63c19e2901d0c799b1904c780b930cd3df75c90a56ae0b9fa8d6e6448213
+  checksum: c2f3bf016a0f71b77e298d155967752cf33018c4531754acbd758665e5f0087fd9c8ec35ea6a007b884df51197a31ad7d9dff7f4bcf574d0076f67468f69b540
   languageName: node
   linkType: hard
 
-"engine.io-parser@npm:~4.0.0, engine.io-parser@npm:~4.0.1":
-  version: 4.0.2
-  resolution: "engine.io-parser@npm:4.0.2"
+"engine.io-parser@npm:~5.0.0":
+  version: 5.0.1
+  resolution: "engine.io-parser@npm:5.0.1"
   dependencies:
-    base64-arraybuffer: 0.1.4
-  checksum: 763b8a2cc478e80274f5fbf87fdb7f6690112d35a150e0dde29254bf81d9be91f9d428abc7cfc3119c502a069853a12849199b68a61b49b088d1c3aa8be64072
+    base64-arraybuffer: ~1.0.1
+  checksum: a6ec070af0c0f74d15bdb08ec4929846da6e6c561863780129606ab00e93de0b0456e7a0cc2bb441b7d4c7df28a135156c62b9c20e4aee7f1f49343824b2d10a
   languageName: node
   linkType: hard
 
-"engine.io@npm:~5.2.0":
-  version: 5.2.0
-  resolution: "engine.io@npm:5.2.0"
+"engine.io@npm:~6.0.0":
+  version: 6.0.0
+  resolution: "engine.io@npm:6.0.0"
   dependencies:
+    "@types/cookie": ^0.4.1
+    "@types/cors": ^2.8.12
+    "@types/node": ">=10.0.0"
     accepts: ~1.3.4
     base64id: 2.0.0
     cookie: ~0.4.1
     cors: ~2.8.5
     debug: ~4.3.1
-    engine.io-parser: ~4.0.0
-    ws: ~7.4.2
-  checksum: c933fe6a0a40b3dfe2813ea6b9f8ab057255ee315e25c2bc951cf128100fe98af8f9ff1acf80bf2475e1d26357faf969a916076834a93e24f8e207611544945e
+    engine.io-parser: ~5.0.0
+    ws: ~8.2.3
+  checksum: ad6d6b70f443ea61f3f01e325009e00ba7c9a490088a6acc0b6fe9a02758d4a9b5f3f93814a4f4489328bc38719fd713fa0ee674e056db3f2a25e97597539cd4
   languageName: node
   linkType: hard
 
@@ -9565,6 +9618,13 @@ fsevents@~2.3.2:
     ms: ^2.1.1
     semver: ^5.6.0
   checksum: 93c9e3f23c59b758ac88ba15f4e4753b3749dfce7a6f7c40fb86663128a1e282db085eec852d4e0cbca4cefdcd3a8275ee255dbd08fcad0df26ad9f6e4cc853a
+  languageName: node
+  linkType: hard
+
+"jsqr@npm:^1.3.1":
+  version: 1.4.0
+  resolution: "jsqr@npm:1.4.0"
+  checksum: 7c572971f90c42772e30d152bde63b84edf1164bde80c53942e6b2068ea31caf00ad704aa46cacc9e71645f52dbeddebc6e84ba15e883c678ee93cde690de339
   languageName: node
   linkType: hard
 
@@ -13163,6 +13223,15 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"rtcpeerconnection-shim@npm:^1.2.15":
+  version: 1.2.15
+  resolution: "rtcpeerconnection-shim@npm:1.2.15"
+  dependencies:
+    sdp: ^2.6.0
+  checksum: 42a733d8e3846b7e7e3c33b6d5cddec95659ceb39d3f990f0a4437e6d719ed717237fea02352d4a18d86c825a1493eaeb481cc835267d2288b0ce43582b97f46
+  languageName: node
+  linkType: hard
+
 "run-async@npm:^2.4.0":
   version: 2.4.1
   resolution: "run-async@npm:2.4.1"
@@ -13289,6 +13358,13 @@ fsevents@~2.3.2:
     ajv: ^6.12.5
     ajv-keywords: ^3.5.2
   checksum: fb73f3d759d43ba033c877628fe9751620a26879f6301d3dbeeb48cf2a65baec5cdf99da65d1bf3b4ff5444b2e59cbe4f81c2456b5e0d2ba7d7fd4aed5da29ce
+  languageName: node
+  linkType: hard
+
+"sdp@npm:^2.12.0, sdp@npm:^2.6.0":
+  version: 2.12.0
+  resolution: "sdp@npm:2.12.0"
+  checksum: 5deb20ac50a1aeb4dd5ff2e506c22d1674222c21f08ae97105c9552ae979e90ddc42b8526f2c3dcacfeebc45c7b2e6b6b4254ae2cf335263bf3ddf2ad9b8ec76
   languageName: node
   linkType: hard
 
@@ -13692,18 +13768,17 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"socket.io-client@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "socket.io-client@npm:4.2.0"
+"socket.io-client@npm:^4.3.2":
+  version: 4.3.2
+  resolution: "socket.io-client@npm:4.3.2"
   dependencies:
-    "@types/component-emitter": ^1.2.10
+    "@socket.io/component-emitter": ~3.0.0
     backo2: ~1.0.2
-    component-emitter: ~1.3.0
     debug: ~4.3.2
-    engine.io-client: ~5.2.0
+    engine.io-client: ~6.0.1
     parseuri: 0.0.6
-    socket.io-parser: ~4.0.4
-  checksum: 8779ce1697081dd4253ff414c6b9f611cf004ec102cf8cfcfce50ae9245dc85a5c8a2c2584e11c5e523f638c2c45fc52831e92e99c2be9cbcdea2f3eb1054d3c
+    socket.io-parser: ~4.1.1
+  checksum: e8c1c76848020f976958eed0a7630e1ed4a3108de75aa2cf7cb2c6babfcacff6d8fe1b70910b8b201a29e4965e238d520ac1868846c2872a948c9dd0e0761288
   languageName: node
   linkType: hard
 
@@ -13718,20 +13793,27 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
-"socket.io@npm:^4.2.0":
-  version: 4.2.0
-  resolution: "socket.io@npm:4.2.0"
+"socket.io-parser@npm:~4.1.1":
+  version: 4.1.1
+  resolution: "socket.io-parser@npm:4.1.1"
   dependencies:
-    "@types/cookie": ^0.4.1
-    "@types/cors": ^2.8.12
-    "@types/node": ">=10.0.0"
+    "@socket.io/component-emitter": ~3.0.0
+    debug: ~4.3.1
+  checksum: d762d01f372df393ef08fa409c62dffbc69bb9820eb78ee1d646e7679fff60a56366778d7bc78e044ffa4c1d85537d771292133506097d164ad3b9ff7f879ef1
+  languageName: node
+  linkType: hard
+
+"socket.io@npm:^4.3.1":
+  version: 4.3.1
+  resolution: "socket.io@npm:4.3.1"
+  dependencies:
     accepts: ~1.3.4
     base64id: ~2.0.0
     debug: ~4.3.2
-    engine.io: ~5.2.0
+    engine.io: ~6.0.0
     socket.io-adapter: ~2.3.2
     socket.io-parser: ~4.0.4
-  checksum: 137970b230dda9138b2deb983e10d62460cc4b8e81085b45d89d5a763a75917e2a9e4f586d67b29ffe99da415e28c9bac99edeeb166cde22646d858008088b93
+  checksum: 8552f9cdf47fa121393c26c6f5aa526110813865b18f73e4c481a3057f5e095e5508e7c1c9dc57f341b0c6fe4fc970fb43baf33868732e2c2a38540cbf64805c
   languageName: node
   linkType: hard
 
@@ -14557,6 +14639,13 @@ fsevents@~2.3.2:
   languageName: node
   linkType: hard
 
+"ts-custom-error@npm:^3.0.0":
+  version: 3.2.0
+  resolution: "ts-custom-error@npm:3.2.0"
+  checksum: b1d2016de891cecea46a70c4adbaf1e6f7c6178994f72070ee3c218cc1a9e2b12c3011defb8385f15dc03ddfafd8d88ef2c9217e23700fb6e537755f33b9c801
+  languageName: node
+  linkType: hard
+
 "ts-node-dev@npm:^1.1.8":
   version: 1.1.8
   resolution: "ts-node-dev@npm:1.1.8"
@@ -15211,6 +15300,19 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
+"vue-qrcode-reader@npm:^3.0.6":
+  version: 3.0.6
+  resolution: "vue-qrcode-reader@npm:3.0.6"
+  dependencies:
+    barcode-detector: ^1.0.0
+    callforth: ^0.3.1
+    core-js: ^3.6.5
+    vue: ^2.6.11
+    webrtc-adapter: 7.7.0
+  checksum: f21bae1d0289a60febed8b7187997b513297159fcc007a5f5b91fb9e88bcd2e36fe2c04e785a72bbec1d93f6025657dac18479ab82afaa0e0dbcf08873010c5f
+  languageName: node
+  linkType: hard
+
 "vue-router@npm:^3.5.2":
   version: 3.5.2
   resolution: "vue-router@npm:3.5.2"
@@ -15245,7 +15347,7 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
-"vue@npm:^2.6.14":
+"vue@npm:^2.6.11, vue@npm:^2.6.14":
   version: 2.6.14
   resolution: "vue@npm:2.6.14"
   checksum: 23524a1bdca094d62cb3491a46317eed75184b5d61d28fa846ea5d2b241c1cc7084fc67ee259d47a50a6d0bbc33ecaceb7bb52bff81312fe7da07263f3419942
@@ -15469,6 +15571,16 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
+"webrtc-adapter@npm:7.7.0":
+  version: 7.7.0
+  resolution: "webrtc-adapter@npm:7.7.0"
+  dependencies:
+    rtcpeerconnection-shim: ^1.2.15
+    sdp: ^2.12.0
+  checksum: 83dd0a474714fa8d0ebb0fa4b1d754768c1d865f71af0e0b3b88a4f097b355d5b1c13e70b09eb80b644ff60701c3939fac292f007570b796d3e02db1d614c10c
+  languageName: node
+  linkType: hard
+
 "websocket-driver@npm:>=0.5.1, websocket-driver@npm:^0.7.4":
   version: 0.7.4
   resolution: "websocket-driver@npm:0.7.4"
@@ -15689,9 +15801,9 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
-"ws@npm:~7.4.2":
-  version: 7.4.6
-  resolution: "ws@npm:7.4.6"
+"ws@npm:~8.2.3":
+  version: 8.2.3
+  resolution: "ws@npm:8.2.3"
   peerDependencies:
     bufferutil: ^4.0.1
     utf-8-validate: ^5.0.2
@@ -15700,7 +15812,7 @@ typescript@^4.4.3:
       optional: true
     utf-8-validate:
       optional: true
-  checksum: 3a990b32ed08c72070d5e8913e14dfcd831919205be52a3ff0b4cdd998c8d554f167c9df3841605cde8b11d607768cacab3e823c58c96a5c08c987e093eb767a
+  checksum: c869296ccb45f218ac6d32f8f614cd85b50a21fd434caf11646008eef92173be53490810c5c23aea31bc527902261fbfd7b062197eea341b26128d4be56a85e4
   languageName: node
   linkType: hard
 
@@ -15910,31 +16022,31 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:^8.6.1":
-  version: 8.6.1
-  resolution: "zwave-js@npm:8.6.1"
+"zwave-js@npm:^8.7.3":
+  version: 8.7.3
+  resolution: "zwave-js@npm:8.7.3"
   dependencies:
     "@alcalzone/jsonl-db": ^2.2.0
     "@alcalzone/pak": ^0.7.0
     "@sentry/integrations": ^6.13.3
     "@sentry/node": ^6.13.3
-    "@zwave-js/config": 8.6.1
-    "@zwave-js/core": 8.6.1
-    "@zwave-js/serial": 8.6.1
-    "@zwave-js/shared": 8.6.0
+    "@zwave-js/config": 8.7.3
+    "@zwave-js/core": 8.7.3
+    "@zwave-js/serial": 8.7.3
+    "@zwave-js/shared": 8.7.3
     alcalzone-shared: ^4.0.0
     ansi-colors: ^4.1.1
-    axios: ^0.23.0
+    axios: ^0.24.0
     execa: ^5.1.1
     fs-extra: ^10.0.0
     proper-lockfile: ^4.1.2
     reflect-metadata: ^0.1.13
     semver: ^7.3.5
-    serialport: ^9.2.4
+    serialport: ^9.2.5
     source-map-support: ^0.5.20
     winston: ^3.3.3
     xstate: ^4.25.0
-  checksum: e6381b09e99db3f6b1df5e75cd1704a6e2693b3ae07f753f8c5d151604cd13cf454912d822068ba3a5dc3a1f18dfdafb5d669e287a2ec0cd80450157d631e288
+  checksum: 04601d79e29c286eb0db7518e9dd686c90c876de912cdf885ce7eeb8f29df169911669391d3ba3fca96cc5e7213ee6134a79ef720a9eae55055873a981808f05
   languageName: node
   linkType: hard
 
@@ -16069,8 +16181,8 @@ typescript@^4.4.3:
     shelljs: ^0.8.4
     sinon: ^11.1.2
     sinon-chai: ^3.7.0
-    socket.io: ^4.2.0
-    socket.io-client: ^4.2.0
+    socket.io: ^4.3.1
+    socket.io-client: ^4.3.2
     svg-pan-zoom: ^3.6.1
     terser-webpack-plugin: ^5.2.4
     ts-node: ^10.2.1
@@ -16080,6 +16192,7 @@ typescript@^4.4.3:
     vue: ^2.6.14
     vue-loader: ^15.9.8
     vue-prism-editor: ^1.3.0
+    vue-qrcode-reader: ^3.0.6
     vue-router: ^3.5.2
     vue-style-loader: ^4.1.3
     vue-template-compiler: ^2.6.14
@@ -16092,7 +16205,7 @@ typescript@^4.4.3:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: ^8.6.1
+    zwave-js: ^8.7.3
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true

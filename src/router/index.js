@@ -8,6 +8,7 @@ import Scenes from '@/components/Scenes'
 import Debug from '@/components/Debug'
 import Login from '@/components/Login'
 import ErrorPage from '@/components/ErrorPage'
+import SmartStart from '@/components/SmartStart'
 
 import store from '@/store'
 import ConfigApis from '../apis/ConfigApis'
@@ -23,6 +24,7 @@ export const Routes = {
 	debug: '/debug',
 	store: '/store',
 	mesh: '/mesh',
+	smartStart: '/smart-start',
 }
 
 Routes.main = Routes.controlPanel
@@ -44,6 +46,15 @@ const router = new Router({
 			path: Routes.controlPanel,
 			name: 'Control Panel',
 			component: ControlPanel,
+			props: true,
+			meta: {
+				requiresAuth: true,
+			},
+		},
+		{
+			path: Routes.smartStart,
+			name: 'Smart Start',
+			component: SmartStart,
 			props: true,
 			meta: {
 				requiresAuth: true,

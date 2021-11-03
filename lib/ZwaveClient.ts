@@ -40,7 +40,13 @@ import {
 	InclusionResult,
 	InclusionOptions,
 	InclusionUserCallbacks,
+	SmartStartProvisioningEntry,
+	PlannedProvisioningEntry,
+	QRCodeVersion,
+	ReplaceNodeOptions,
+	QRProvisioningInformation,
 } from 'zwave-js'
+import { parseQRCodeString } from 'zwave-js/Utils'
 import {
 	CommandClasses,
 	Duration,
@@ -143,6 +149,11 @@ const allowedApis = validateMethods([
 	'abortInclusion',
 	'backupNVMRaw',
 	'restoreNVMRaw',
+	'getProvisioningEntries',
+	'getProvisioningEntry',
+	'unprovisionSmartStartNode',
+	'provisionSmartStartNode',
+	'parseQRCodeString',
 ] as const)
 
 // Define mapping of CCs and node values to node properties:
@@ -1651,7 +1662,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async replaceFailedNode(
 		nodeId: number,
-		strategy: InclusionStrategy = InclusionStrategy.Security_S2
+		strategy: InclusionStrategy = InclusionStrategy.Security_S2,
+		options?: { qrString?: string; provisioning?: PlannedProvisioningEntry }
 	): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
@@ -1664,15 +1676,43 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}, this.cfg.commandsTimeout * 1000 || 30000)
 			// by default replaceFailedNode is secured, pass true to make it not secured
 			if (strategy === InclusionStrategy.Security_S2) {
-				return this._driver.controller.replaceFailedNode(nodeId, {
-					strategy,
-					userCallbacks: {
-						grantSecurityClasses:
-							this._onGrantSecurityClasses.bind(this),
-						validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-						abort: this._onAbortInclusion.bind(this),
-					},
-				})
+				let inclusionOptions: ReplaceNodeOptions
+				if (options?.qrString) {
+					const parsedQr = parseQRCodeString(options.qrString)
+					if (!parsedQr) {
+						throw Error(`Invalid QR code string`)
+					}
+
+					if (parsedQr.version === QRCodeVersion.S2) {
+						options.provisioning = parsedQr
+					} else if (parsedQr.version === QRCodeVersion.SmartStart) {
+						this.provisionSmartStartNode(parsedQr)
+						return true
+					} else {
+						throw Error(`Invalid QR code version`)
+					}
+				}
+				if (options?.provisioning) {
+					inclusionOptions = {
+						strategy,
+						provisioning: options.provisioning,
+					}
+				} else {
+					inclusionOptions = {
+						strategy,
+						userCallbacks: {
+							grantSecurityClasses:
+								this._onGrantSecurityClasses.bind(this),
+							validateDSKAndEnterPIN:
+								this._onValidateDSK.bind(this),
+							abort: this._onAbortInclusion.bind(this),
+						},
+					}
+				}
+				return this._driver.controller.replaceFailedNode(
+					nodeId,
+					inclusionOptions
+				)
 			} else if (
 				strategy === InclusionStrategy.Insecure ||
 				strategy === InclusionStrategy.Security_S0
@@ -1695,7 +1735,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async startInclusion(
 		strategy: InclusionStrategy = InclusionStrategy.Default,
-		options?: { forceSecurity?: boolean; provisioningList?: unknown }
+		options?: {
+			forceSecurity?: boolean
+			provisioning?: PlannedProvisioningEntry
+			qrString?: string
+		}
 	): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
@@ -1720,11 +1764,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					inclusionOptions = { strategy }
 					break
 				case InclusionStrategy.SmartStart:
-					inclusionOptions = {
-						strategy,
-						provisioningList: options?.provisioningList,
-					}
-					break
+					throw Error(
+						'In order to use Smart Start add you node to provisioning list'
+					)
 				case InclusionStrategy.Default:
 					inclusionOptions = {
 						strategy,
@@ -1733,7 +1775,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 					break
 				case InclusionStrategy.Security_S2:
-					inclusionOptions = { strategy, userCallbacks }
+					if (options?.qrString) {
+						const parsedQr = parseQRCodeString(options.qrString)
+						if (!parsedQr) {
+							throw Error(`Invalid QR code string`)
+						}
+
+						if (parsedQr.version === QRCodeVersion.S2) {
+							options.provisioning = parsedQr
+						} else if (
+							parsedQr.version === QRCodeVersion.SmartStart
+						) {
+							this.provisionSmartStartNode(parsedQr)
+							return true
+						} else {
+							throw Error(`Invalid QR code version`)
+						}
+					}
+					if (options?.provisioning) {
+						inclusionOptions = {
+							strategy,
+							provisioning: options.provisioning,
+						}
+					} else {
+						inclusionOptions = { strategy, userCallbacks }
+					}
 					break
 				default:
 					inclusionOptions = { strategy }
@@ -1748,7 +1814,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Start exclusion
 	 */
-	async startExclusion(): Promise<boolean> {
+	async startExclusion(unprovision = true): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -1759,7 +1825,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.stopExclusion().catch(logger.error)
 			}, this.cfg.commandsTimeout * 1000 || 30000)
 
-			return this._driver.controller.beginExclusion()
+			return this._driver.controller.beginExclusion(unprovision)
 		}
 
 		throw new DriverNotReadyError()
@@ -2382,12 +2448,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Triggered when a node is added
 	 */
-	private _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
+	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
 		let node
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
 			this.sendToSocket(socketEvents.nodeAdded, { node, result })
+
+			if (node.name !== zwaveNode.name) {
+				await this.setNodeName(zwaveNode.id, node.name)
+			}
+
+			if (node.loc !== zwaveNode.location) {
+				await this.setNodeLocation(zwaveNode.id, node.loc)
+			}
 		}
 
 		const security =
@@ -2511,7 +2585,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async backupNVMRaw() {
 		if (!this.driverReady) {
-			throw Error('Driver is not ready')
+			throw new DriverNotReadyError()
 		}
 
 		const data = await this.driver.controller.backupNVMRaw(
@@ -2532,7 +2606,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async restoreNVMRaw(data: Buffer) {
 		if (!this.driverReady) {
-			throw Error('Driver is not ready')
+			throw new DriverNotReadyError()
 		}
 
 		await this.driver.controller.restoreNVMRaw(
@@ -2545,6 +2619,94 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const progress = Math.round((bytesRead / totalBytes) * 100)
 
 		this._updateControllerStatus(`Restore NVM progress: ${progress}%`)
+	}
+
+	async getProvisioningEntries(): Promise<SmartStartProvisioningEntry[]> {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		const result = this.driver.controller.getProvisioningEntries()
+
+		for (const entry of result) {
+			if (
+				typeof entry.manufacturerId === 'number' &&
+				typeof entry.productType === 'number' &&
+				typeof entry.productId === 'number' &&
+				typeof entry.applicationVersion === 'string'
+			) {
+				const device = await this.driver.configManager.lookupDevice(
+					entry.manufacturerId,
+					entry.productType,
+					entry.productId,
+					entry.applicationVersion
+				)
+				if (device) {
+					entry.manufacturer = device.manufacturer
+					entry.label = device.label
+					entry.description = device.description
+				}
+			}
+		}
+
+		return result
+	}
+
+	getProvisioningEntry(dsk: string): SmartStartProvisioningEntry | undefined {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		return this.driver.controller.getProvisioningEntry(dsk)
+	}
+
+	unprovisionSmartStartNode(dskOrNodeId: string | number) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		this.driver.controller.unprovisionSmartStartNode(dskOrNodeId)
+	}
+
+	parseQRCodeString(qrString: string): {
+		parsed?: QRProvisioningInformation
+		nodeId?: number
+		exists: boolean
+	} {
+		const parsed = parseQRCodeString(qrString)
+		let node: ZWaveNode | undefined
+		let exists = false
+
+		if (parsed?.dsk) {
+			node = this.driver.controller.getNodeByDSK(parsed.dsk)
+
+			if (!node) {
+				exists = !!this.getProvisioningEntry(parsed.dsk)
+			}
+		}
+
+		return {
+			parsed,
+			nodeId: node?.id,
+			exists,
+		}
+	}
+
+	provisionSmartStartNode(entry: PlannedProvisioningEntry | string) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		if (typeof entry === 'string') {
+			// it's a qrcode
+			entry = parseQRCodeString(entry)
+		}
+
+		if (!entry.dsk) {
+			throw Error('DSK is required')
+		}
+
+		this.driver.controller.provisionSmartStartNode(entry)
 	}
 
 	// ---------- NODE EVENTS -------------------------------------
@@ -3157,10 +3319,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
+		let nodeName = ''
+		let nodeLocation = ''
+
+		if (this.storeNodes[nodeId]) {
+			nodeName = this.storeNodes[nodeId].name
+			nodeLocation = this.storeNodes[nodeId].loc
+		}
+
+		if (zwaveNode.dsk) {
+			const entry = this.driver.controller.getProvisioningEntry(
+				zwaveNode.dsk.toString()
+			)
+
+			if (entry) {
+				nodeName = entry.name || nodeName
+				nodeLocation = entry.location || nodeLocation
+			}
+		}
+
 		const node: Z2MNode = {
 			id: nodeId,
-			name: this.storeNodes[nodeId] ? this.storeNodes[nodeId].name : '',
-			loc: this.storeNodes[nodeId] ? this.storeNodes[nodeId].loc : '',
+			name: nodeName,
+			loc: nodeLocation,
 			values: {},
 			groups: [],
 			neighbors: [],
