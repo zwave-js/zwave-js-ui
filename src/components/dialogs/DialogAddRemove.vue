@@ -973,7 +973,7 @@ export default {
 			this.alert = {
 				type: 'info',
 				text: `${this.currentAction} ${
-					this.method === 'start' ? 'starting…' : 'stopping…'
+					api.startsWith('start') ? 'starting…' : 'stopping…'
 				}`,
 			}
 
