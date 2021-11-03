@@ -1,5 +1,5 @@
 <template>
-	<v-container grid-list-md>
+	<v-container fluid>
 		<v-card>
 			<v-card-title>
 				Provisioning Entities
