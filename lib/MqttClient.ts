@@ -353,11 +353,12 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			}
 		}
 
-		if (config.store) {
-			const manager = LevelStore(joinPath(storeDir, 'mqtt'))
-			options.incomingStore = manager.incoming
-			options.outgoingStore = manager.outgoing
-		}
+		// Temporary fix, seems mqtt store prevents mqtt to work...
+		// if (config.store) {
+		// 	const manager = LevelStore(joinPath(storeDir, 'mqtt'))
+		// 	options.incomingStore = manager.incoming
+		// 	options.outgoingStore = manager.outgoing
+		// }
 
 		if (config.auth) {
 			options.username = config.username
