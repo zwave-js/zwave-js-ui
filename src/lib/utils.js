@@ -47,7 +47,7 @@ export function securityClassesToArray(securityClasses) {
 				case 's2Authenticated':
 					classes.push(1)
 					break
-				case 's2Unhauntenticated':
+				case 's2Unauthenticated':
 					classes.push(0)
 					break
 				case 's0Legacy':

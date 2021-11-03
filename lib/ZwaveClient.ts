@@ -2613,12 +2613,35 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(`Restore NVM progress: ${progress}%`)
 	}
 
-	getProvisioningEntries(): SmartStartProvisioningEntry[] {
+	async getProvisioningEntries(): Promise<SmartStartProvisioningEntry[]> {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
 
-		return this.driver.controller.getProvisioningEntries()
+		const result = this.driver.controller.getProvisioningEntries()
+
+		for (const entry of result) {
+			if (
+				typeof entry.manufacturerId === 'number' &&
+				typeof entry.productType === 'number' &&
+				typeof entry.productId === 'number' &&
+				typeof entry.applicationVersion === 'string'
+			) {
+				const device = await this.driver.configManager.lookupDevice(
+					entry.manufacturerId,
+					entry.productType,
+					entry.productId,
+					entry.applicationVersion
+				)
+				if (device) {
+					entry.manufacturer = device.manufacturer
+					entry.label = device.label
+					entry.description = device.description
+				}
+			}
+		}
+
+		return result
 	}
 
 	getProvisioningEntry(dsk: string): SmartStartProvisioningEntry | undefined {
