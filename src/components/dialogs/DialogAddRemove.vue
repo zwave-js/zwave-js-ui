@@ -729,14 +729,14 @@ export default {
 					const provisioning = res.parsed
 
 					if (provisioning) {
+						const replaceStep = this.steps.find(
+							(s) => s.key === 'replaceFailed'
+						)
 						// S2 only, start inclusion
 						if (provisioning.version === 0) {
 							this.aborted = false
 							this.loading = true
 							const mode = 4 // s2 only
-							const replaceStep = this.steps.find(
-								(s) => s.key === 'replaceFailed'
-							)
 
 							if (replaceStep) {
 								let replaceId = replaceStep.values.replaceId
@@ -776,11 +776,20 @@ export default {
 							}
 						} else if (provisioning.version === 1) {
 							// smart start
-							this.$emit(
-								'apiRequest',
-								'provisionSmartStartNode',
-								[provisioning]
-							)
+							if (!replaceStep) {
+								this.$emit(
+									'apiRequest',
+									'provisionSmartStartNode',
+									[provisioning]
+								)
+							} else {
+								this.alert = {
+									type: 'error',
+									text: 'Smart start QR Code is not valid when replacing a failed node',
+								}
+								this.state = 'stop'
+								return
+							}
 						}
 					}
 				} else if (data.api === 'provisionSmartStartNode') {
