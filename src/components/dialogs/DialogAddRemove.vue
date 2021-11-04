@@ -191,7 +191,9 @@
 														small
 														>smart_button</v-icon
 													>
-													<strong>Smart start</strong>
+													<strong
+														>Scan QR Code</strong
+													>
 													<small
 														>S2 only. Allows
 														pre-configuring the
@@ -726,24 +728,6 @@ export default {
 					const res = data.result
 					const provisioning = res.parsed
 
-					if (res.exists) {
-						this.alert = {
-							type: 'info',
-							text: 'Already added to provisioning list',
-						}
-						this.state = 'stop'
-						return
-					}
-
-					if (res.nodeId) {
-						this.alert = {
-							type: 'info',
-							text: 'Node already added',
-						}
-						this.state = 'stop'
-						return
-					}
-
 					if (provisioning) {
 						// S2 only, start inclusion
 						if (provisioning.version === 0) {
@@ -768,6 +752,23 @@ export default {
 									{ provisioning },
 								])
 							} else {
+								if (res.exists) {
+									this.alert = {
+										type: 'info',
+										text: 'Already added to provisioning list',
+									}
+									this.state = 'stop'
+									return
+								}
+
+								if (res.nodeId) {
+									this.alert = {
+										type: 'info',
+										text: 'Node already added',
+									}
+									this.state = 'stop'
+									return
+								}
 								this.sendAction('startInclusion', [
 									mode,
 									{ provisioning },

@@ -1686,8 +1686,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					if (parsedQr.version === QRCodeVersion.S2) {
 						options.provisioning = parsedQr
 					} else if (parsedQr.version === QRCodeVersion.SmartStart) {
-						this.provisionSmartStartNode(parsedQr)
-						return true
+						throw Error(
+							'SmartStart QR code is not supported when replacing a failed node'
+						)
 					} else {
 						throw Error(`Invalid QR code version`)
 					}
@@ -2453,6 +2454,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
+
+			node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
 			this.sendToSocket(socketEvents.nodeAdded, { node, result })
 
 			if (node.name !== zwaveNode.name) {
