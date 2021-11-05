@@ -729,23 +729,27 @@ export default {
 					const provisioning = res.parsed
 
 					if (provisioning) {
+						const mode = 4 // s2 only
+
 						const replaceStep = this.steps.find(
 							(s) => s.key === 'replaceFailed'
 						)
+						let replaceId
+
+						if (replaceStep) {
+							replaceId = replaceStep.values.replaceId
+							if (typeof replaceId === 'object') {
+								replaceId = replaceId.id
+							} else {
+								replaceId = parseInt(replaceId, 10)
+							}
+						}
 						// S2 only, start inclusion
 						if (provisioning.version === 0) {
 							this.aborted = false
 							this.loading = true
-							const mode = 4 // s2 only
 
 							if (replaceStep) {
-								let replaceId = replaceStep.values.replaceId
-								if (typeof replaceId === 'object') {
-									replaceId = replaceId.id
-								} else {
-									replaceId = parseInt(replaceId, 10)
-								}
-
 								this.sendAction('replaceFailedNode', [
 									replaceId,
 									mode,
@@ -783,12 +787,12 @@ export default {
 									[provisioning]
 								)
 							} else {
-								this.alert = {
-									type: 'error',
-									text: 'Smart start QR Code is not valid when replacing a failed node',
-								}
-								this.state = 'stop'
-								return
+								// it's a smart start code btw in replace we cannot use it as smart start
+								this.sendAction('replaceFailedNode', [
+									replaceId,
+									mode,
+									{ provisioning },
+								])
 							}
 						}
 					}
@@ -984,7 +988,7 @@ export default {
 			this.alert = {
 				type: 'info',
 				text: `${this.currentAction} ${
-					api.startsWith('start') ? 'starting…' : 'stopping…'
+					api.startsWith('stop') ? 'stopping…' : 'starting…'
 				}`,
 			}
 

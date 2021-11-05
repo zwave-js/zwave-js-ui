@@ -1679,18 +1679,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				let inclusionOptions: ReplaceNodeOptions
 				if (options?.qrString) {
 					const parsedQr = parseQRCodeString(options.qrString)
-					if (!parsedQr) {
-						throw Error(`Invalid QR code string`)
-					}
 
-					if (parsedQr.version === QRCodeVersion.S2) {
+					if (parsedQr) {
+						// when replacing a failed node you cannot use smart start so always use qrcode for provisioning
 						options.provisioning = parsedQr
-					} else if (parsedQr.version === QRCodeVersion.SmartStart) {
-						throw Error(
-							'SmartStart QR code is not supported when replacing a failed node'
-						)
 					} else {
-						throw Error(`Invalid QR code version`)
+						throw Error(`Invalid QR code string`)
 					}
 				}
 				if (options?.provisioning) {
