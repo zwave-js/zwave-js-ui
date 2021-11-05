@@ -402,7 +402,7 @@
 										"
 										v-model="s.values.s2Authenticated"
 										label="S2 Authenticated"
-										hint="Example: Lightning, Sensors, Security Systems"
+										hint="Example: Lighting, Sensors, Security Systems"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
