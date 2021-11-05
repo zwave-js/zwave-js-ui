@@ -72,10 +72,6 @@ jobs:
       - uses: sigstore/cosign-installer@v1.2.1
 
       - name: Sign the images
-        run: while read -r TAG
-          do
-              cosign sign $TAG
-          done <<< "$TAGS"
+        run: cosign sign ${{ steps.docker_meta.outputs.tags }}
         env:
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
           COSIGN_EXPERIMENTAL: 1
