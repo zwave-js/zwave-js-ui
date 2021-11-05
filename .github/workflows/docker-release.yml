@@ -12,8 +12,6 @@ jobs:
   build-push:
     permissions:
       packages: write
-      id-token: write
-
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -68,14 +66,3 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
-
-      - uses: sigstore/cosign-installer@v1.2.1
-
-      - name: Sign the images
-        run: while read -r TAG
-          do
-              cosign sign $TAG
-          done <<< "$TAGS"
-        env:
-          TAGS: ${{ steps.docker_meta.outputs.tags }}
-          COSIGN_EXPERIMENTAL: 1
