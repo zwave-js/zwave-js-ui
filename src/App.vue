@@ -423,6 +423,23 @@ export default {
 			this.password = {}
 			this.dialog_password = true
 		},
+		async onNodeAdded({ node }) {
+			await this.confirm(
+				'Node added',
+				`<div class="d-flex flex-column align-center col">
+					<i aria-hidden="true" class="v-icon notranslate material-icons theme--light success--text" style="font-size: 60px;">check_circle</i>
+					<p class="mt-3 headline text-center">
+						Node ${node.id} added with security "${node.security}"
+					</p>
+				</div>`,
+				'info',
+				{
+					width: 500,
+					confirmText: 'Close',
+					cancelText: '',
+				}
+			)
+		},
 		toggleDrawer() {
 			if (
 				['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0
@@ -702,6 +719,7 @@ export default {
 
 			this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
 			this.socket.on(socketEvents.nodeRemoved, this.removeNode.bind(this))
+			this.socket.on(socketEvents.nodeAdded, this.onNodeAdded.bind(this))
 
 			this.socket.on(
 				socketEvents.valueRemoved,

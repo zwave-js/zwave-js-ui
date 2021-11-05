@@ -191,7 +191,9 @@
 														small
 														>smart_button</v-icon
 													>
-													<strong>Smart start</strong>
+													<strong
+														>Scan QR Code</strong
+													>
 													<small
 														>S2 only. Allows
 														pre-configuring the
@@ -726,48 +728,51 @@ export default {
 					const res = data.result
 					const provisioning = res.parsed
 
-					if (res.exists) {
-						this.alert = {
-							type: 'info',
-							text: 'Already added to provisioning list',
-						}
-						this.state = 'stop'
-						return
-					}
-
-					if (res.nodeId) {
-						this.alert = {
-							type: 'info',
-							text: 'Node already added',
-						}
-						this.state = 'stop'
-						return
-					}
-
 					if (provisioning) {
+						const mode = 4 // s2 only
+
+						const replaceStep = this.steps.find(
+							(s) => s.key === 'replaceFailed'
+						)
+						let replaceId
+
+						if (replaceStep) {
+							replaceId = replaceStep.values.replaceId
+							if (typeof replaceId === 'object') {
+								replaceId = replaceId.id
+							} else {
+								replaceId = parseInt(replaceId, 10)
+							}
+						}
 						// S2 only, start inclusion
 						if (provisioning.version === 0) {
 							this.aborted = false
 							this.loading = true
-							const mode = 4 // s2 only
-							const replaceStep = this.steps.find(
-								(s) => s.key === 'replaceFailed'
-							)
 
 							if (replaceStep) {
-								let replaceId = replaceStep.values.replaceId
-								if (typeof replaceId === 'object') {
-									replaceId = replaceId.id
-								} else {
-									replaceId = parseInt(replaceId, 10)
-								}
-
 								this.sendAction('replaceFailedNode', [
 									replaceId,
 									mode,
 									{ provisioning },
 								])
 							} else {
+								if (res.exists) {
+									this.alert = {
+										type: 'info',
+										text: 'Already added to provisioning list',
+									}
+									this.state = 'stop'
+									return
+								}
+
+								if (res.nodeId) {
+									this.alert = {
+										type: 'info',
+										text: 'Node already added',
+									}
+									this.state = 'stop'
+									return
+								}
 								this.sendAction('startInclusion', [
 									mode,
 									{ provisioning },
@@ -775,11 +780,20 @@ export default {
 							}
 						} else if (provisioning.version === 1) {
 							// smart start
-							this.$emit(
-								'apiRequest',
-								'provisionSmartStartNode',
-								[provisioning]
-							)
+							if (!replaceStep) {
+								this.$emit(
+									'apiRequest',
+									'provisionSmartStartNode',
+									[provisioning]
+								)
+							} else {
+								// it's a smart start code btw in replace we cannot use it as smart start
+								this.sendAction('replaceFailedNode', [
+									replaceId,
+									mode,
+									{ provisioning },
+								])
+							}
 						}
 					}
 				} else if (data.api === 'provisionSmartStartNode') {
@@ -974,7 +988,7 @@ export default {
 			this.alert = {
 				type: 'info',
 				text: `${this.currentAction} ${
-					api.startsWith('start') ? 'starting…' : 'stopping…'
+					api.startsWith('stop') ? 'stopping…' : 'starting…'
 				}`,
 			}
 

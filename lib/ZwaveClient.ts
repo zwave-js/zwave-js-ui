@@ -1679,17 +1679,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				let inclusionOptions: ReplaceNodeOptions
 				if (options?.qrString) {
 					const parsedQr = parseQRCodeString(options.qrString)
-					if (!parsedQr) {
-						throw Error(`Invalid QR code string`)
-					}
 
-					if (parsedQr.version === QRCodeVersion.S2) {
+					if (parsedQr) {
+						// when replacing a failed node you cannot use smart start so always use qrcode for provisioning
 						options.provisioning = parsedQr
-					} else if (parsedQr.version === QRCodeVersion.SmartStart) {
-						this.provisionSmartStartNode(parsedQr)
-						return true
 					} else {
-						throw Error(`Invalid QR code version`)
+						throw Error(`Invalid QR code string`)
 					}
 				}
 				if (options?.provisioning) {
@@ -2453,6 +2448,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
+
+			node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
 			this.sendToSocket(socketEvents.nodeAdded, { node, result })
 
 			if (node.name !== zwaveNode.name) {
