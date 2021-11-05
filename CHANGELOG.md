@@ -1,3 +1,22 @@
+# [5.11.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.10.1...v5.11.0) (2021-11-05)
+
+
+### Bug Fixes
+
+* **mqtt:** disable persistent mqtt storage that could prevent mqtt message to be published ([97af78b](https://github.com/zwave-js/zwavejs2mqtt/commit/97af78bf7cc974ef0051c871693daaf54687ce74))
+* **ui:** correct zwavePlus column icon/toooltip ([#1899](https://github.com/zwave-js/zwavejs2mqtt/issues/1899)) ([3888984](https://github.com/zwave-js/zwavejs2mqtt/commit/388898439bd34aca2a7ff50369cbd5a8d4dbc4fb)), closes [#1885](https://github.com/zwave-js/zwavejs2mqtt/issues/1885)
+* **ui:** fix typo on add/remove dialog ([#1924](https://github.com/zwave-js/zwavejs2mqtt/issues/1924)) ([dfe9f54](https://github.com/zwave-js/zwavejs2mqtt/commit/dfe9f547aa6bf46d10b1667fbd35bd1760d20764))
+* **ui:** make provisioning list table full width ([cee836f](https://github.com/zwave-js/zwavejs2mqtt/commit/cee836fb2a58a5319ccdcb0afb26252d20f55763))
+* **ui:** missing security keys check ([#1898](https://github.com/zwave-js/zwavejs2mqtt/issues/1898)) ([520d8fb](https://github.com/zwave-js/zwavejs2mqtt/commit/520d8fb794fb5271019bb09136b3aa854ee8736b)), closes [#1896](https://github.com/zwave-js/zwavejs2mqtt/issues/1896)
+
+
+### Features
+
+* add node added dialog and fix replace node ([#1926](https://github.com/zwave-js/zwavejs2mqtt/issues/1926)) ([22d9ba5](https://github.com/zwave-js/zwavejs2mqtt/commit/22d9ba5548a88ce97d21ada024bdeb4f7c8e5145))
+* bump @zwave-js/server@1.10.8 ([#1932](https://github.com/zwave-js/zwavejs2mqtt/issues/1932)) ([9029996](https://github.com/zwave-js/zwavejs2mqtt/commit/90299964110f6c5390eb28ddce59fb4204806641))
+* smart start ([#1922](https://github.com/zwave-js/zwavejs2mqtt/issues/1922)) ([8fb0269](https://github.com/zwave-js/zwavejs2mqtt/commit/8fb026996c1e84d5789bd26aae6807b2be885c48)), closes [#1895](https://github.com/zwave-js/zwavejs2mqtt/issues/1895) [#1916](https://github.com/zwave-js/zwavejs2mqtt/issues/1916)
+* **ui:** use theme color for icon in table ([#1906](https://github.com/zwave-js/zwavejs2mqtt/issues/1906)) ([98131db](https://github.com/zwave-js/zwavejs2mqtt/commit/98131db9abf59fee1ac1cd813af7e6a989857cfc))
+
 ## [5.10.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.10.0...v5.10.1) (2021-10-26)
 
 
