@@ -9,9 +9,9 @@ This is the list of the supported environment variables:
   - `KEY_S2_Authenticated`
   - `KEY_S2_AccessControl`
 - HTTPS:
-	- `HTTPS`: Enable https
-	- `SSL_CERTIFICATE`: Absolute path to SSL certificate (for Docker, ensure this is the path as it appears within the container)
-	- `SSL_KEY`: Absolute path to SSL key (for Docker, ensure this is the path as it appears within the container)
+  - `HTTPS`: Enable https
+  - `SSL_CERTIFICATE`: Absolute path to SSL certificate (for Docker, ensure this is the path as it appears within the container)
+  - `SSL_KEY`: Absolute path to SSL key (for Docker, ensure this is the path as it appears within the container)
 - `SESSION_SECRET`: Used as secret for session. If not provided the default one is used
 - `USE_SECURE_COOKIE`: Set the cookie [secure](https://github.com/expressjs/session#cookiesecure) option.
 - `PORT`: The port to listen to for incoming requests. Default is `8091`
