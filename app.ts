@@ -139,7 +139,7 @@ export async function startServer(host: string, port: number | string) {
 	setupLogging(settings)
 
 	if (process.env.HTTPS) {
-		logger.info('HTTPS is enabled. Loading cert and keys from store...')
+		logger.info('HTTPS is enabled. Loading cert and keys')
 		const { cert, key } = await loadCertKey()
 		server = createHttpsServer(
 			{
@@ -226,8 +226,9 @@ async function loadCertKey(): Promise<{
 	cert: Buffer
 	key: Buffer
 }> {
-	const certFile = utils.joinPath(storeDir, 'cert.pem')
-	const keyFile = utils.joinPath(storeDir, 'key.pem')
+	const certFile =
+		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
+	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
 
 	let key: Buffer
 	let cert: Buffer
@@ -251,8 +252,14 @@ async function loadCertKey(): Promise<{
 		key = result.serviceKey
 		cert = result.certificate
 
-		await fs.writeFile(keyFile, result.serviceKey)
-		await fs.writeFile(certFile, result.certificate)
+		await fs.writeFile(
+			utils.joinPath(storeDir, 'key.pem'),
+			result.serviceKey
+		)
+		await fs.writeFile(
+			utils.joinPath(storeDir, 'cert.pem'),
+			result.certificate
+		)
 		logger.info('New cert and key created')
 	}
 
