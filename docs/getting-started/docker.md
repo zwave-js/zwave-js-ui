@@ -63,7 +63,7 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_
 
 ### Run as a service
 
-To run ZWavejs2Mqtt as a service you can use the `docker-compose.yml` found [here](docker/docker-compose.yml):
+To run ZWavejs2Mqtt as a service you can use the `docker-compose.yml` found [here](https://github.com/zwave-js/zwavejs2mqtt/blob/master/docker/docker-compose.yml):
 
 ```yml
 version: "3.7"
