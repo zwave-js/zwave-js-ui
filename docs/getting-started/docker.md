@@ -99,3 +99,6 @@ volumes:
 
 > [!NOTE]
 > Like the other methods replace `/dev/serial/by-id/insert_stick_reference_here` with the serial device for your Z-Wave stick.
+
+> [!NOTE]
+> You may choose to limit websocket connections to only those coming from localhost for security reasons, though doing so may require you to alter your integration's configuration to use the localhost IP. To do so, change the port mapping to "127.0.0.1:3000:3000"
