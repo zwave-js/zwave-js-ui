@@ -63,7 +63,7 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_
 
 ### Run as a service
 
-To run ZWavejs2Mqtt as a service you can use the `docker-compose.yml` found [here](./docker-compose.yml):
+To run ZWavejs2Mqtt as a service you can use the `docker-compose.yml` found [here](https://github.com/zwave-js/zwavejs2mqtt/blob/master/docker/docker-compose.yml):
 
 ```yml
 version: "3.7"
@@ -86,7 +86,7 @@ services:
       # Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
       - '/dev/serial/by-id/insert_stick_reference_here:/dev/zwave'
     volumes:
-      - ./store:/usr/src/app/store
+      - zwave-config:/usr/src/app/store
     ports:
       - "8091:8091" # port for web interface
       - "3000:3000" # port for Z-Wave JS websocket server
@@ -99,3 +99,6 @@ volumes:
 
 > [!NOTE]
 > Like the other methods replace `/dev/serial/by-id/insert_stick_reference_here` with the serial device for your Z-Wave stick.
+
+> [!NOTE]
+> You may choose to limit websocket connections to only those coming from localhost for security reasons, though doing so may require you to alter your integration's configuration to use the localhost IP. To do so, change the port mapping to "127.0.0.1:3000:3000"
