@@ -55,6 +55,7 @@ import {
 	ConfigurationMetadata,
 	ZWaveErrorCodes,
 	SecurityClass,
+	dskToString,
 } from '@zwave-js/core'
 import * as utils from './utils'
 import jsonStore from './jsonStore'
@@ -2450,15 +2451,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node = this._addNode(zwaveNode)
 
 			node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
+
+			if (zwaveNode.dsk) {
+				const entry = this.driver.controller.getProvisioningEntry(
+					dskToString(zwaveNode.dsk)
+				)
+
+				if (entry) {
+					if (entry.name) {
+						await this.setNodeName(zwaveNode.id, entry.name)
+					}
+
+					if (entry.location) {
+						await this.setNodeLocation(zwaveNode.id, entry.location)
+					}
+				}
+			}
+
 			this.sendToSocket(socketEvents.nodeAdded, { node, result })
-
-			if (node.name !== zwaveNode.name) {
-				await this.setNodeName(zwaveNode.id, node.name)
-			}
-
-			if (node.loc !== zwaveNode.location) {
-				await this.setNodeLocation(zwaveNode.id, node.loc)
-			}
 		}
 
 		const security =
@@ -3316,29 +3326,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
-		let nodeName = ''
-		let nodeLocation = ''
-
-		if (this.storeNodes[nodeId]) {
-			nodeName = this.storeNodes[nodeId].name
-			nodeLocation = this.storeNodes[nodeId].loc
-		}
-
-		if (zwaveNode.dsk) {
-			const entry = this.driver.controller.getProvisioningEntry(
-				zwaveNode.dsk.toString()
-			)
-
-			if (entry) {
-				nodeName = entry.name || nodeName
-				nodeLocation = entry.location || nodeLocation
-			}
-		}
-
 		const node: Z2MNode = {
 			id: nodeId,
-			name: nodeName,
-			loc: nodeLocation,
+			name: this.storeNodes[nodeId]?.name || '',
+			loc: this.storeNodes[nodeId]?.loc || '',
 			values: {},
 			groups: [],
 			neighbors: [],
