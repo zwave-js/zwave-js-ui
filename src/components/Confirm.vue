@@ -144,7 +144,7 @@
 									@init="onInit"
 									:track="paintBoundingBox"
 								>
-									<center>
+									<center v-if="loadingQr">
 										<p class="caption">Loading camera</p>
 										<v-progress-circular
 											indeterminate
@@ -320,7 +320,8 @@ export default {
 		title: null,
 		options: null,
 		qrForm: true,
-		queryString: '',
+		loadingQr: false,
+		qrString: '',
 		defaultOptions: {
 			color: 'primary',
 			width: 290,
@@ -403,6 +404,7 @@ export default {
 			}
 		},
 		async onInit(promise) {
+			this.loadingQr = true
 			try {
 				// const { capabilities } = await promise
 				await promise
@@ -431,6 +433,8 @@ export default {
 				} else {
 					this.qrCodeError = `ERROR: Camera error (${error.name})`
 				}
+			} finally {
+				this.loadingQr = false
 			}
 		},
 		highlighter(code) {
@@ -478,7 +482,7 @@ export default {
 		reset() {
 			this.options = Object.assign({}, this.defaultOptions)
 			this.values = {}
-			this.queryString = ''
+			this.qrString = ''
 			this.qrForm = true
 			this.qrCodeError = false
 		},
