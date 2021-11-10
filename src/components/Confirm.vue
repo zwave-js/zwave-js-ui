@@ -139,17 +139,18 @@
 					<v-tab-item>
 						<v-card flat>
 							<v-card-text>
-								<center v-show="loadCamera">
-									<p class="caption">Loading camera</p>
-									<v-progress-circular
-										indeterminate
-									></v-progress-circular>
-								</center>
 								<qrcode-stream
-									v-show="!loadCamera"
 									@detect="onDetect"
 									@init="onInit"
-								></qrcode-stream>
+									:track="paintBoundingBox"
+								>
+									<center>
+										<p class="caption">Loading camera</p>
+										<v-progress-circular
+											indeterminate
+										></v-progress-circular>
+									</center>
+								</qrcode-stream>
 							</v-card-text>
 						</v-card>
 					</v-tab-item>
@@ -318,7 +319,6 @@ export default {
 		values: {},
 		title: null,
 		options: null,
-		loadCamera: false,
 		qrForm: true,
 		queryString: '',
 		defaultOptions: {
@@ -347,6 +347,17 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		paintBoundingBox(detectedCodes, ctx) {
+			for (const detectedCode of detectedCodes) {
+				const {
+					boundingBox: { x, y, width, height },
+				} = detectedCode
+
+				ctx.lineWidth = 2
+				ctx.strokeStyle = '#007bff'
+				ctx.strokeRect(x, y, width, height)
+			}
+		},
 		validQR(value) {
 			return (
 				(value &&
@@ -392,16 +403,34 @@ export default {
 			}
 		},
 		async onInit(promise) {
-			this.loadCamera = true
-
 			try {
 				// const { capabilities } = await promise
 				await promise
 				// successfully initialized
 			} catch (error) {
 				console.error(error)
-			} finally {
-				this.loadCamera = false
+				if (error.name === 'NotAllowedError') {
+					this.qrCodeError =
+						'ERROR: you need to grant camera access permission'
+				} else if (error.name === 'NotFoundError') {
+					this.qrCodeError = 'ERROR: no camera on this device'
+				} else if (error.name === 'NotSupportedError') {
+					this.qrCodeError =
+						'ERROR: secure context required (HTTPS, localhost)'
+				} else if (error.name === 'NotReadableError') {
+					this.qrCodeError = 'ERROR: is the camera already in use?'
+				} else if (error.name === 'OverconstrainedError') {
+					this.qrCodeError =
+						'ERROR: installed cameras are not suitable'
+				} else if (error.name === 'StreamApiNotSupportedError') {
+					this.qrCodeError =
+						'ERROR: Stream API is not supported in this browser'
+				} else if (error.name === 'InsecureContextError') {
+					this.qrCodeError =
+						'ERROR: Camera access is only permitted in secure context. Use HTTPS or localhost rather than HTTP.'
+				} else {
+					this.qrCodeError = `ERROR: Camera error (${error.name})`
+				}
 			}
 		},
 		highlighter(code) {
