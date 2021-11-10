@@ -55,6 +55,7 @@ import {
 	ConfigurationMetadata,
 	ZWaveErrorCodes,
 	SecurityClass,
+	dskToString,
 } from '@zwave-js/core'
 import * as utils from './utils'
 import jsonStore from './jsonStore'
@@ -2453,7 +2454,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (zwaveNode.dsk) {
 				const entry = this.driver.controller.getProvisioningEntry(
-					zwaveNode.dsk.toString()
+					dskToString(zwaveNode.dsk)
 				)
 
 				if (entry) {
