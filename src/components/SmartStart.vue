@@ -303,7 +303,10 @@ export default {
 
 				item.securityClasses = securityClasses
 
-				item = { ...existingItem, ...item }
+				if (existingItem) {
+					// extend existing item props that are not shown in dialog
+					item = { ...existingItem, ...item }
+				}
 				this.apiRequest('provisionSmartStartNode', [
 					this.convertItem(item),
 				])
