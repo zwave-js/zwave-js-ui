@@ -302,6 +302,8 @@ export default {
 				delete item.s0Legacy
 
 				item.securityClasses = securityClasses
+
+				item = { ...existingItem, ...item }
 				this.apiRequest('provisionSmartStartNode', [
 					this.convertItem(item),
 				])
