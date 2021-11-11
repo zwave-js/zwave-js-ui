@@ -139,6 +139,13 @@
 					<v-tab-item>
 						<v-card flat>
 							<v-card-text>
+								<v-select
+									:items="videoDevices"
+									v-model="selectedCamera"
+									label="Input"
+									item-text="label"
+									item-value="deviceId"
+								></v-select>
 								<qrcode-stream
 									@detect="onDetect"
 									@init="onInit"
@@ -159,21 +166,22 @@
 					<v-tab-item>
 						<v-card flat>
 							<v-card-text>
-								<qrcode-capture
-									@detect="onDetect"
+								<v-file-input
+									small-chips
+									truncate-length="15"
+									label="Import QR-Code"
 									:multiple="false"
-									ref="qrcodeCapture"
-									v-show="false"
-								></qrcode-capture>
+									show-size
+									accept="image/*"
+									counter
+									@change="onQrImport"
+								></v-file-input>
 
 								<qrcode-drop-zone
 									class="mt-2"
 									@detect="onDetect"
 								>
-									<v-col
-										@click="$refs.qrcodeCapture.$el.click()"
-										class="dropzone text-center"
-									>
+									<v-col class="dropzone text-center">
 										<v-icon size="60px"
 											>cloud_upload</v-icon
 										>
@@ -260,35 +268,6 @@
 }
 </style>
 <script>
-/**
- * Vuetify Confirm Dialog component
- *
- * Insert component where you want to use it:
- * <confirm ref="confirm"></confirm>
- *
- * Call it:
- * this.$refs.confirm.open('Delete', 'Are you sure?', { color: 'red' }).then((confirm) => {})
- * Or use await:
- * if (await this.$refs.confirm.open('Delete', 'Are you sure?', { color: 'red' })) {
- *   // yes
- * }
- * else {
- *   // cancel
- * }
- *
- * Alternatively you can place it in main App component and access it globally via this.$root.$confirm
- * <template>
- *   <v-app>
- *     ...
- *     <confirm ref="confirm"></confirm>
- *   </v-app>
- * </template>
- *
- * mounted() {
- *   this.$root.$confirm = this.$refs.confirm.open
- * }
- */
-
 // import Prism Editor
 import { PrismEditor } from 'vue-prism-editor'
 import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
@@ -300,14 +279,14 @@ import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { mapMutations } from 'vuex'
 
-import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'vue-qrcode-reader'
+import { QrcodeStream, QrcodeDropZone } from 'vue-qrcode-reader'
+import { processFile } from 'vue-qrcode-reader/src/misc/scanner.js'
 
 export default {
 	components: {
 		PrismEditor,
 		QrcodeStream,
 		QrcodeDropZone,
-		QrcodeCapture,
 	},
 	data: () => ({
 		scanTab: 0,
@@ -332,7 +311,18 @@ export default {
 			qrScan: false,
 		},
 		qrCodeError: false,
+		selectedCamera: null,
+		videoDevices: [],
 	}),
+	watch: {
+		qrCodeError(val) {
+			if (val) {
+				setTimeout(() => {
+					this.qrCodeError = false
+				}, 5000)
+			}
+		},
+	},
 	computed: {
 		show: {
 			get() {
@@ -357,6 +347,27 @@ export default {
 				ctx.lineWidth = 2
 				ctx.strokeStyle = '#007bff'
 				ctx.strokeRect(x, y, width, height)
+			}
+		},
+		async getDevices() {
+			const deviceBlackList = ['OBS Virtual Camera', 'OBS-Camera']
+
+			try {
+				this.videoDevices = (
+					await navigator.mediaDevices.enumerateDevices()
+				)
+					.filter(({ kind }) => kind === 'videoinput')
+					.filter(({ label }) => !deviceBlackList.includes(label))
+					.filter(({ label }) => !label.includes('infrared'))
+				this.selectedCamera = this.videoDevices[0].deviceId
+			} catch (error) {
+				console.error(error)
+				this.qrCodeError = 'Cannot fetch available video devices'
+			}
+		},
+		onQrImport(qrImage) {
+			if (qrImage) {
+				this.onDetect(processFile(qrImage))
 			}
 		},
 		validQR(value) {
@@ -454,6 +465,10 @@ export default {
 						this.$set(this.values, input.key, input.default)
 					}
 				}
+			}
+
+			if (options.qrScan) {
+				this.getDevices()
 			}
 
 			return new Promise((resolve, reject) => {
