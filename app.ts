@@ -138,7 +138,7 @@ export async function startServer(host: string, port: number | string) {
 	// as the really first thing setup loggers so all logs will go to file if specified in settings
 	setupLogging(settings)
 
-	if (process.env.HTTPS) {
+	if (process.env.HTTPS || settings?.gateway?.https) {
 		logger.info('HTTPS is enabled. Loading cert and keys')
 		const { cert, key } = await loadCertKey()
 		server = createHttpsServer(

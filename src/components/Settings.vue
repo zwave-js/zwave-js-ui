@@ -38,6 +38,14 @@
 												></v-switch>
 											</v-col>
 											<v-col cols="12" sm="6" md="4">
+												<v-switch
+													hint="Enable this to serve page using HTTPS. REQUIRES APP RELOAD"
+													persistent-hint
+													label="HTTPS"
+													v-model="newGateway.https"
+												></v-switch>
+											</v-col>
+											<v-col cols="12" sm="6" md="4">
 												<v-combobox
 													hint="You can select a plugin from the list or write the path to your custom plugin and press enter"
 													persistent-hint

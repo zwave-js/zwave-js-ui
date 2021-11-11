@@ -139,17 +139,34 @@
 					<v-tab-item>
 						<v-card flat>
 							<v-card-text>
-								<center v-show="loadCamera">
-									<p class="caption">Loading camera</p>
-									<v-progress-circular
-										indeterminate
-									></v-progress-circular>
-								</center>
+								<v-select
+									:items="videoDevices"
+									v-model="selectedCamera"
+									label="Camera"
+									item-text="label"
+									item-value="deviceId"
+								></v-select>
 								<qrcode-stream
-									v-show="!loadCamera"
 									@detect="onDetect"
 									@init="onInit"
-								></qrcode-stream>
+									:camera="selectedCamera"
+									ref="qrStream"
+									:track="paintBoundingBox"
+								>
+									<center v-if="loadingQr">
+										<p class="caption">Loading camera</p>
+										<v-progress-circular
+											indeterminate
+										></v-progress-circular>
+									</center>
+									<center v-else-if="retryQrLoad">
+										<v-btn
+											@click.stop="retryQr"
+											color="primary"
+											>Retry</v-btn
+										>
+									</center>
+								</qrcode-stream>
 							</v-card-text>
 						</v-card>
 					</v-tab-item>
@@ -158,21 +175,22 @@
 					<v-tab-item>
 						<v-card flat>
 							<v-card-text>
-								<qrcode-capture
-									@detect="onDetect"
+								<v-file-input
+									small-chips
+									truncate-length="15"
+									label="Import QR-Code"
 									:multiple="false"
-									ref="qrcodeCapture"
-									v-show="false"
-								></qrcode-capture>
+									show-size
+									accept="image/*"
+									counter
+									@change="onQrImport"
+								></v-file-input>
 
 								<qrcode-drop-zone
 									class="mt-2"
 									@detect="onDetect"
 								>
-									<v-col
-										@click="$refs.qrcodeCapture.$el.click()"
-										class="dropzone text-center"
-									>
+									<v-col class="dropzone text-center">
 										<v-icon size="60px"
 											>cloud_upload</v-icon
 										>
@@ -259,35 +277,6 @@
 }
 </style>
 <script>
-/**
- * Vuetify Confirm Dialog component
- *
- * Insert component where you want to use it:
- * <confirm ref="confirm"></confirm>
- *
- * Call it:
- * this.$refs.confirm.open('Delete', 'Are you sure?', { color: 'red' }).then((confirm) => {})
- * Or use await:
- * if (await this.$refs.confirm.open('Delete', 'Are you sure?', { color: 'red' })) {
- *   // yes
- * }
- * else {
- *   // cancel
- * }
- *
- * Alternatively you can place it in main App component and access it globally via this.$root.$confirm
- * <template>
- *   <v-app>
- *     ...
- *     <confirm ref="confirm"></confirm>
- *   </v-app>
- * </template>
- *
- * mounted() {
- *   this.$root.$confirm = this.$refs.confirm.open
- * }
- */
-
 // import Prism Editor
 import { PrismEditor } from 'vue-prism-editor'
 import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
@@ -299,14 +288,14 @@ import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { mapMutations } from 'vuex'
 
-import { QrcodeStream, QrcodeDropZone, QrcodeCapture } from 'vue-qrcode-reader'
+import { QrcodeStream, QrcodeDropZone } from 'vue-qrcode-reader'
+import { processFile } from 'vue-qrcode-reader/src/misc/scanner.js'
 
 export default {
 	components: {
 		PrismEditor,
 		QrcodeStream,
 		QrcodeDropZone,
-		QrcodeCapture,
 	},
 	data: () => ({
 		scanTab: 0,
@@ -318,9 +307,9 @@ export default {
 		values: {},
 		title: null,
 		options: null,
-		loadCamera: false,
 		qrForm: true,
-		queryString: '',
+		loadingQr: false,
+		qrString: '',
 		defaultOptions: {
 			color: 'primary',
 			width: 290,
@@ -331,7 +320,19 @@ export default {
 			qrScan: false,
 		},
 		qrCodeError: false,
+		selectedCamera: 'auto',
+		videoDevices: [],
+		retryQrLoad: false,
 	}),
+	watch: {
+		qrCodeError(val) {
+			if (val) {
+				setTimeout(() => {
+					this.qrCodeError = false
+				}, 5000)
+			}
+		},
+	},
 	computed: {
 		show: {
 			get() {
@@ -347,6 +348,59 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		paintBoundingBox(detectedCodes, ctx) {
+			for (const detectedCode of detectedCodes) {
+				const {
+					boundingBox: { x, y, width, height },
+				} = detectedCode
+
+				ctx.lineWidth = 2
+				ctx.strokeStyle = '#007bff'
+				ctx.strokeRect(x, y, width, height)
+			}
+		},
+		retryQr() {
+			this.$refs.qrStream.init()
+		},
+		async getDevices() {
+			const deviceBlackList = ['OBS Virtual Camera', 'OBS-Camera']
+
+			try {
+				const devices = (
+					await navigator.mediaDevices.enumerateDevices()
+				)
+					.filter(({ kind }) => kind === 'videoinput')
+					.filter(({ label }) => !deviceBlackList.includes(label))
+					.filter(({ label }) => !label.includes('infrared'))
+
+				const defaultCamera = [
+					{
+						deviceId: 'auto',
+						label: 'Auto',
+					},
+					{
+						deviceId: 'rear',
+						label: 'Rear',
+					},
+					{
+						deviceId: 'front',
+						label: 'Front',
+					},
+				]
+
+				this.videoDevices = [...defaultCamera, ...devices]
+
+				this.selectedCamera = this.videoDevices[0].deviceId
+			} catch (error) {
+				console.error(error)
+				this.qrCodeError = 'Cannot fetch available video devices'
+			}
+		},
+		onQrImport(qrImage) {
+			if (qrImage) {
+				this.onDetect(processFile(qrImage))
+			}
+		},
 		validQR(value) {
 			return (
 				(value &&
@@ -392,16 +446,39 @@ export default {
 			}
 		},
 		async onInit(promise) {
-			this.loadCamera = true
-
+			this.loadingQr = true
 			try {
 				// const { capabilities } = await promise
 				await promise
+				this.retryQrLoad = false
 				// successfully initialized
 			} catch (error) {
+				this.retryQrLoad = true
 				console.error(error)
+				if (error.name === 'NotAllowedError') {
+					this.qrCodeError =
+						'ERROR: you need to grant camera access permission'
+				} else if (error.name === 'NotFoundError') {
+					this.qrCodeError = 'ERROR: no camera on this device'
+				} else if (error.name === 'NotSupportedError') {
+					this.qrCodeError =
+						'ERROR: secure context required (HTTPS, localhost)'
+				} else if (error.name === 'NotReadableError') {
+					this.qrCodeError = 'ERROR: is the camera already in use?'
+				} else if (error.name === 'OverconstrainedError') {
+					this.qrCodeError =
+						'ERROR: installed cameras are not suitable'
+				} else if (error.name === 'StreamApiNotSupportedError') {
+					this.qrCodeError =
+						'ERROR: Stream API is not supported in this browser'
+				} else if (error.name === 'InsecureContextError') {
+					this.qrCodeError =
+						'ERROR: Camera access is only permitted in secure context. Use HTTPS or localhost rather than HTTP.'
+				} else {
+					this.qrCodeError = `ERROR: Camera error (${error.name})`
+				}
 			} finally {
-				this.loadCamera = false
+				this.loadingQr = false
 			}
 		},
 		highlighter(code) {
@@ -421,6 +498,10 @@ export default {
 						this.$set(this.values, input.key, input.default)
 					}
 				}
+			}
+
+			if (options.qrScan) {
+				this.getDevices()
 			}
 
 			return new Promise((resolve, reject) => {
@@ -449,9 +530,10 @@ export default {
 		reset() {
 			this.options = Object.assign({}, this.defaultOptions)
 			this.values = {}
-			this.queryString = ''
+			this.qrString = ''
 			this.qrForm = true
 			this.qrCodeError = false
+			this.selectedCamera = 'auto'
 		},
 	},
 	created() {
