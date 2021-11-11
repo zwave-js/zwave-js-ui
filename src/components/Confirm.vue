@@ -142,13 +142,15 @@
 								<v-select
 									:items="videoDevices"
 									v-model="selectedCamera"
-									label="Input"
+									label="Camera"
 									item-text="label"
 									item-value="deviceId"
 								></v-select>
 								<qrcode-stream
 									@detect="onDetect"
 									@init="onInit"
+									:camera="selectedCamera"
+									ref="qrStream"
 									:track="paintBoundingBox"
 								>
 									<center v-if="loadingQr">
@@ -156,6 +158,13 @@
 										<v-progress-circular
 											indeterminate
 										></v-progress-circular>
+									</center>
+									<center v-else-if="retryQrLoad">
+										<v-btn
+											@click.stop="retryQr"
+											color="primary"
+											>Retry</v-btn
+										>
 									</center>
 								</qrcode-stream>
 							</v-card-text>
@@ -311,8 +320,9 @@ export default {
 			qrScan: false,
 		},
 		qrCodeError: false,
-		selectedCamera: null,
+		selectedCamera: 'auto',
 		videoDevices: [],
+		retryQrLoad: false,
 	}),
 	watch: {
 		qrCodeError(val) {
@@ -349,16 +359,37 @@ export default {
 				ctx.strokeRect(x, y, width, height)
 			}
 		},
+		retryQr() {
+			this.$refs.qrStream.init()
+		},
 		async getDevices() {
 			const deviceBlackList = ['OBS Virtual Camera', 'OBS-Camera']
 
 			try {
-				this.videoDevices = (
+				const devices = (
 					await navigator.mediaDevices.enumerateDevices()
 				)
 					.filter(({ kind }) => kind === 'videoinput')
 					.filter(({ label }) => !deviceBlackList.includes(label))
 					.filter(({ label }) => !label.includes('infrared'))
+
+				const defaultCamera = [
+					{
+						deviceId: 'auto',
+						label: 'Auto',
+					},
+					{
+						deviceId: 'rear',
+						label: 'Rear',
+					},
+					{
+						deviceId: 'front',
+						label: 'Front',
+					},
+				]
+
+				this.videoDevices = [...defaultCamera, ...devices]
+
 				this.selectedCamera = this.videoDevices[0].deviceId
 			} catch (error) {
 				console.error(error)
@@ -419,8 +450,10 @@ export default {
 			try {
 				// const { capabilities } = await promise
 				await promise
+				this.retryQrLoad = false
 				// successfully initialized
 			} catch (error) {
+				this.retryQrLoad = true
 				console.error(error)
 				if (error.name === 'NotAllowedError') {
 					this.qrCodeError =
@@ -500,6 +533,7 @@ export default {
 			this.qrString = ''
 			this.qrForm = true
 			this.qrCodeError = false
+			this.selectedCamera = 'auto'
 		},
 	},
 	created() {
