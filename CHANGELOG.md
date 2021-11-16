@@ -1,3 +1,19 @@
+# [5.12.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.11.0...v5.12.0) (2021-11-16)
+
+
+### Bug Fixes
+
+* **ui:** provisioning info lost when editing an entry ([#1954](https://github.com/zwave-js/zwavejs2mqtt/issues/1954)) ([1fd057f](https://github.com/zwave-js/zwavejs2mqtt/commit/1fd057f2cab079149185e55a93bb9680dd51eab9)), closes [#1938](https://github.com/zwave-js/zwavejs2mqtt/issues/1938)
+* correctly set node name and location when present on provisioning ([#1953](https://github.com/zwave-js/zwavejs2mqtt/issues/1953)) ([9459a56](https://github.com/zwave-js/zwavejs2mqtt/commit/9459a56f364028d6f18077b40b17165292120459)), closes [#1943](https://github.com/zwave-js/zwavejs2mqtt/issues/1943)
+
+
+### Features
+
+* add HTTPS setting and Qr improvements ([#1956](https://github.com/zwave-js/zwavejs2mqtt/issues/1956)) ([8efa99e](https://github.com/zwave-js/zwavejs2mqtt/commit/8efa99e366f6877f7cd1088e609b16f7a4f86e98))
+* allow SSL key to be specified via env var ([#1940](https://github.com/zwave-js/zwavejs2mqtt/issues/1940)) ([f7bae9f](https://github.com/zwave-js/zwavejs2mqtt/commit/f7bae9ff063593c71d0c068b352d4c371ac95688))
+* bump @zwave-js/server@1.11.0 ([#1965](https://github.com/zwave-js/zwavejs2mqtt/issues/1965)) ([f66204e](https://github.com/zwave-js/zwavejs2mqtt/commit/f66204eabe1a03c101cb92cbd78430e20ebb7840))
+* bump zwave-js@8.7.6 ([#1964](https://github.com/zwave-js/zwavejs2mqtt/issues/1964)) ([ee50f1c](https://github.com/zwave-js/zwavejs2mqtt/commit/ee50f1c3002c6c227a1db1be0c11a56cec3df9f6))
+
 # [5.11.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.10.1...v5.11.0) (2021-11-05)
 
 
