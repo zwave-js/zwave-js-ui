@@ -13,7 +13,7 @@ module.exports = {
 		// consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
 		'eslint:recommended',
 		'plugin:vue/essential',
-		'plugin:prettier/recommended',
+		'prettier',
 	],
 	// required to lint *.vue files
 	plugins: ['vue', 'babel'],
