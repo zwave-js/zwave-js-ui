@@ -13,7 +13,7 @@ module.exports = {
 		// consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
 		'eslint:recommended',
 		'plugin:vue/essential',
-		'prettier',
+		'plugin:prettier/recommended',
 	],
 	// required to lint *.vue files
 	plugins: ['vue', 'babel'],
@@ -44,7 +44,7 @@ module.exports = {
 				'plugin:@typescript-eslint/recommended',
 				'plugin:@typescript-eslint/recommended-requiring-type-checking',
 				// Enables eslint-plugin-prettier and displays prettier errors as ESLint errors. Make sure this is always the last configuration in the extends array.
-				'prettier',
+				'plugin:prettier/recommended',
 			],
 			// add your custom rules here
 			rules: {
