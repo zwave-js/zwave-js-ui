@@ -1345,9 +1345,9 @@ export default {
 		},
 		saveValue() {
 			if (this.editedIndex > -1) {
-				this.$set(
-					this.newGateway.values,
+				this.newGateway.values.splice(
 					this.editedIndex,
+					1,
 					this.editedValue
 				)
 			} else {

@@ -433,6 +433,7 @@ export enum EventSource {
 
 export interface ZwaveClientEventCallbacks {
 	nodeStatus: (node: Z2MNode) => void
+	nodeInited: (node: Z2MNode) => void
 	event: (source: EventSource, eventName: string, ...args: any) => void
 	scanComplete: () => void
 	driverStatus: (status: boolean) => void
@@ -692,7 +693,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				node.hassDevices[id] = hassDevice
 			}
 
-			this.sendToSocket(socketEvents.nodeUpdated, node)
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				hassDevices: node.hassDevices,
+			})
 		}
 	}
 
@@ -709,7 +712,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			hassDevice.persistent = false
 			node.hassDevices[id] = hassDevice
 
-			this.sendToSocket(socketEvents.nodeUpdated, node)
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				hassDevices: node.hassDevices,
+			})
 		}
 	}
 
@@ -738,7 +743,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node.hassDevices = utils.copy(devices)
 			await jsonStore.put(store.nodes, this.storeNodes)
 
-			this.sendToSocket(socketEvents.nodeUpdated, node)
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				hassDevices: node.hassDevices,
+			})
 		}
 	}
 
@@ -1294,6 +1301,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	private valueChanged(valueId: Z2MValueId, node: Z2MNode, changed: boolean) {
+		valueId.lastUpdate = Date.now()
+
+		this.sendToSocket(socketEvents.valueUpdated, valueId)
+
+		this.emit('valueChanged', valueId, node, changed)
+	}
+
+	private nodeStatus(node: Z2MNode) {
+		if (node.ready && !node.inited) {
+			node.inited = true
+			this.emit('nodeInited', node)
+		} else {
+			this.emit('nodeStatus', node)
+		}
+
+		this.sendToSocket(socketEvents.nodeUpdated, node)
+	}
+
 	// ------------NODES MANAGEMENT-----------------------------------
 	/**
 	 * Updates node `name` property and stores updated config in `nodes.json`
@@ -1317,7 +1343,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await jsonStore.put(store.nodes, this.storeNodes)
 
-		this.emit('nodeStatus', node)
+		this.nodeStatus(node)
 
 		return true
 	}
@@ -1344,7 +1370,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await jsonStore.put(store.nodes, this.storeNodes)
 
-		this.emit('nodeStatus', node)
+		this.nodeStatus(node)
 
 		return true
 	}
@@ -2734,7 +2760,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node.interviewStage = InterviewStage[
 				zwaveNode.interviewStage
 			] as keyof typeof InterviewStage
-			this.emit('nodeStatus', node)
+			this.nodeStatus(node)
 		} else {
 			logger.error(
 				Error(
@@ -3542,7 +3568,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 			if (updated) {
-				this.emit('valueChanged', valueId, node)
+				this.valueChanged(valueId, node, true)
 			}
 		}
 	}
@@ -3764,12 +3790,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 
 				if (!skipUpdate) {
-					this.emit(
-						'valueChanged',
-						valueId,
-						node,
-						prevValue !== newValue
-					)
+					this.valueChanged(valueId, node, prevValue !== newValue)
 				}
 			}
 
@@ -3781,7 +3802,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				this.statelessTimeouts[valueId.id] = setTimeout(() => {
 					valueId.value = undefined
-					this.emit('valueChanged', valueId, node, false)
+					this.valueChanged(valueId, node, false)
 				}, 1000)
 			}
 
