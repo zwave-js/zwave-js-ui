@@ -1166,6 +1166,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							? this.cfg.nodeFilter.map((n) => parseInt(n))
 							: undefined,
 				},
+				emitValueUpdateAfterSetValue: true,
 			}
 
 			// when not set let zwavejs handle this based on the envirnoment
