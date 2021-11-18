@@ -1896,7 +1896,7 @@ export default class Gateway {
 			}
 		}
 
-		if (this.config.hassDiscovery) {
+		if (!this._mqtt.disabled && this.config.hassDiscovery) {
 			for (const id in node.hassDevices) {
 				if (node.hassDevices[id].persistent) {
 					this.publishDiscovery(node.hassDevices[id], node.id)
