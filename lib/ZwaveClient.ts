@@ -693,7 +693,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				node.hassDevices[id] = hassDevice
 			}
 
-			this.sendToSocket(socketEvents.nodeUpdated, {
+			this.nodeStatus(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -712,7 +712,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			hassDevice.persistent = false
 			node.hassDevices[id] = hassDevice
 
-			this.sendToSocket(socketEvents.nodeUpdated, {
+			this.nodeStatus(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -743,7 +743,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node.hassDevices = utils.copy(devices)
 			await jsonStore.put(store.nodes, this.storeNodes)
 
-			this.sendToSocket(socketEvents.nodeUpdated, {
+			this.nodeStatus(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -1309,7 +1309,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.emit('valueChanged', valueId, node, changed)
 	}
 
-	private nodeStatus(
+	public nodeStatus(
 		node: Z2MNode,
 		changedProps?: utils.DeepPartial<Z2MNode>
 	) {

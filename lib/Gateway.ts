@@ -547,7 +547,7 @@ export default class Gateway {
 				this.discoverValue(node, id)
 			}
 
-			this._zwave.sendToSocket(socketEvents.nodeUpdated, {
+			this._zwave.nodeStatus(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -564,7 +564,7 @@ export default class Gateway {
 				node.hassDevices[id].ignoreDiscovery = true
 			}
 
-			this._zwave.sendToSocket(socketEvents.nodeUpdated, {
+			this._zwave.nodeStatus(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
