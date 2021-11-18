@@ -9,7 +9,6 @@ import * as path from 'path'
 import * as utils from '../lib/utils'
 import { AlarmSensorType, SetValueAPIOptions } from 'zwave-js'
 import { CommandClasses, ValueID } from '@zwave-js/core'
-import { socketEvents } from '../lib/SocketManager'
 import * as Constants from './Constants'
 import { LogLevel, module } from '../lib/logger'
 import hassCfg from '../hass/configurations'
@@ -1896,14 +1895,8 @@ export default class Gateway {
 				)
 			}
 		}
-	}
 
-	/**
-	 * When there is a node status update
-	 *
-	 */
-	private _onNodeStatus(node: Z2MNode): void {
-		if (node.ready && this.config.hassDiscovery) {
+		if (this.config.hassDiscovery) {
 			for (const id in node.hassDevices) {
 				if (node.hassDevices[id].persistent) {
 					this.publishDiscovery(node.hassDevices[id], node.id)
@@ -1922,7 +1915,13 @@ export default class Gateway {
 				this.discoverValue(node, id)
 			}
 		}
+	}
 
+	/**
+	 * When there is a node status update
+	 *
+	 */
+	private _onNodeStatus(node: Z2MNode): void {
 		if (this._mqtt.disabled) {
 			return
 		}
