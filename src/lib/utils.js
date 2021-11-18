@@ -65,3 +65,8 @@ export function securityClassesToArray(securityClasses) {
 export function validDsk(dsk) {
 	return /^(\d{5}-){7}\d{5}$/.test(dsk) || 'Code not valid'
 }
+
+// Does something like vue $set: https://github.com/vuejs/vue/blob/edf7df0c837557dd3ea8d7b42ad8d4b21858ade0/dist/vue.common.dev.js#L1058
+export function $set(o, p, v) {
+	return Object.assign(o, { [p]: v })
+}

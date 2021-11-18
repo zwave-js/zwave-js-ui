@@ -93,6 +93,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		return this.client && this.client.connected
 	}
 
+	get disabled() {
+		return this.config.disabled
+	}
+
 	/**
 	 * Returns the topic used to send client and devices status updateStates
 	 * if name is null the client is the gateway itself

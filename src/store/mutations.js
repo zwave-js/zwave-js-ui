@@ -1,3 +1,5 @@
+import { $set } from "../lib/utils"
+
 export const state = {
   auth: undefined,
   serial_ports: [],
@@ -160,7 +162,7 @@ export const mutations = {
     if (node && toReplace) {
       const index = node.values.indexOf(toReplace)
       if (index >= 0) {
-        this._vm.$set(node.values, index, valueId)
+        node.values.splice(index, 1, valueId)
       }
     }
   },
@@ -195,27 +197,33 @@ export const mutations = {
   initNode(state, n) {
     const values = []
     // transform object in array
-    for (const k in n.values) {
-      n.values[k].newValue = n.values[k].value
-      values.push(n.values[k])
+
+    if (n.values) {
+      for (const k in n.values) {
+        n.values[k].newValue = n.values[k].value
+        values.push(n.values[k])
+      }
+      n.values = values
     }
-    n.values = values
+
+    let index = state.nodesMap.get(n.id)
+
+    if (index >= 0) {
+      n = Object.assign(state.nodes[index], n)
+    }
+
+
     n._name = n.name
       ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
       : 'NodeID_' + n.id
 
-    let index = state.nodesMap.get(n.id)
 
-    index = index >= 0 ? index : state.nodes.length
-
-    if (index === state.nodes.length) {
-      state.nodes.push(n)
+    if (index >= 0) {
+      state.nodes.splice(index, 1, n)
     } else {
-      // vue set is used to notify changes
-      this._vm.$set(state.nodes, index, n)
+      state.nodes.push(n)
+      state.nodesMap.set(n.id, state.nodes.length - 1)
     }
-
-    state.nodesMap.set(n.id, index)
   },
   removeNode(state, n) {
     const index = state.nodesMap.get(n.id)
@@ -229,14 +237,14 @@ export const mutations = {
     for (const nodeId in neighbors) {
       const node = getNode(nodeId)
       if (node) {
-        this._vm.$set(node, 'neighbors', neighbors[nodeId])
+        $set(node, 'neighbors', neighbors[nodeId])
       }
     }
   },
   setStatistics(state, data) {
     const node = getNode(data.nodeId)
     if (node) {
-      this._vm.$set(node, 'statistics', data.statistics)
+      $set(node, 'statistics', data.statistics)
     }
 
   },
@@ -244,7 +252,7 @@ export const mutations = {
     for (const [nodeId, progress] of nodesProgress) {
       const node = getNode(nodeId)
       if (node) {
-        this._vm.$set(node, 'healProgress', progress)
+        $set(node, 'healProgress', progress)
       }
     }
   },

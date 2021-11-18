@@ -9,7 +9,6 @@ import * as path from 'path'
 import * as utils from '../lib/utils'
 import { AlarmSensorType, SetValueAPIOptions } from 'zwave-js'
 import { CommandClasses, ValueID } from '@zwave-js/core'
-import { socketEvents } from '../lib/SocketManager'
 import * as Constants from './Constants'
 import { LogLevel, module } from '../lib/logger'
 import hassCfg from '../hass/configurations'
@@ -249,7 +248,7 @@ export default class Gateway {
 		// topic levels for subscribes using wildecards
 		this.topicLevels = []
 
-		if (this._mqtt) {
+		if (this._mqtt && !this._mqtt.disabled) {
 			this._mqtt.on('writeRequest', this._onWriteRequest.bind(this))
 			this._mqtt.on('broadcastRequest', this._onBroadRequest.bind(this))
 			this._mqtt.on(
@@ -262,16 +261,20 @@ export default class Gateway {
 		}
 
 		if (this._zwave) {
-			this._zwave.on('valueChanged', this._onValueChanged.bind(this))
-			this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
-			this._zwave.on('notification', this._onNotification.bind(this))
-			this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
+			// this is the only event we need to bind to in order to apply gateway values configs like polling
+			this._zwave.on('nodeInited', this._onNodeInited.bind(this))
 
-			if (this.config.sendEvents) {
-				this._zwave.on('event', this._onEvent.bind(this))
+			if (!this._mqtt.disabled) {
+				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
+				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
+				this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
+				this._zwave.on('notification', this._onNotification.bind(this))
+				this._zwave.on('driverStatus', this._onDriverStatus.bind(this))
+
+				if (this.config.sendEvents) {
+					this._zwave.on('event', this._onEvent.bind(this))
+				}
 			}
-
-			this._zwave.on('driverStatus', this._onDriverStatus.bind(this))
 
 			// this is async but doesn't need to be awaited
 			await this._zwave.connect()
@@ -543,7 +546,9 @@ export default class Gateway {
 				this.discoverValue(node, id)
 			}
 
-			this._zwave.sendToSocket(socketEvents.nodeUpdated, node)
+			this._zwave.emitNodeStatus(node, {
+				hassDevices: node.hassDevices,
+			})
 		}
 	}
 
@@ -558,7 +563,9 @@ export default class Gateway {
 				node.hassDevices[id].ignoreDiscovery = true
 			}
 
-			this._zwave.sendToSocket(socketEvents.nodeUpdated, node)
+			this._zwave.emitNodeStatus(node, {
+				hassDevices: node.hassDevices,
+			})
 		}
 	}
 
@@ -572,6 +579,13 @@ export default class Gateway {
 		options: { deleteDevice?: boolean; forceUpdate?: boolean } = {}
 	): void {
 		try {
+			if (this._mqtt.disabled || !this.config.hassDiscovery) {
+				logger.debug(
+					'Enable MQTT gateway and hass discovery to use this function'
+				)
+				return
+			}
+
 			logger.log(
 				'debug',
 				`${
@@ -670,6 +684,13 @@ export default class Gateway {
 	 * Discover an hass device (from customDevices.js|json)
 	 */
 	discoverDevice(node: Z2MNode, hassDevice: HassDevice): void {
+		if (this._mqtt.disabled || !this.config.hassDiscovery) {
+			logger.info(
+				'Enable MQTT gateway and hass discovery to use this function'
+			)
+			return
+		}
+
 		const hassID = hassDevice
 			? hassDevice.type + '_' + hassDevice.object_id
 			: null
@@ -1072,6 +1093,13 @@ export default class Gateway {
 	 * Try to guess the best way to discover this valueId in Hass
 	 */
 	discoverValue(node: Z2MNode, vId: string): void {
+		if (this._mqtt.disabled || !this.config.hassDiscovery) {
+			logger.debug(
+				'Enable MQTT gateway and hass discovery to use this function'
+			)
+			return
+		}
+
 		const valueId = node.values[vId]
 
 		// if the node is not ready means we don't have all values added yet so we are not sure to discover this value properly
@@ -1628,6 +1656,11 @@ export default class Gateway {
 	 * Removes all retained messages of the specified node
 	 */
 	removeNodeRetained(nodeId: number): void {
+		if (this._mqtt.disabled) {
+			logger.info('Enable MQTT gateway to use this function')
+			return
+		}
+
 		const node = this._zwave.nodes.get(nodeId)
 		if (node) {
 			const topics = Object.keys(node.values).map(
@@ -1677,13 +1710,6 @@ export default class Gateway {
 		node: Z2MNode,
 		changed: boolean
 	): void {
-		valueId.lastUpdate = Date.now()
-
-		// emit event to socket
-		if (this._zwave) {
-			this._zwave.sendToSocket(socketEvents.valueUpdated, valueId)
-		}
-
 		const isDiscovered = this.discovered[valueId.id]
 
 		// check if this value isn't discovered yet (values added after node is ready)
@@ -1728,7 +1754,12 @@ export default class Gateway {
 		}
 
 		// Check if I need to update discovery topics of this device
-		if (changed && valueId.list && this.discovered[valueId.id]) {
+		if (
+			this.config.hassDiscovery &&
+			changed &&
+			valueId.list &&
+			this.discovered[valueId.id]
+		) {
 			const hassDevice = this.discovered[valueId.id]
 			const isOff = hassDevice.mode_map
 				? hassDevice.mode_map.off === valueId.value
@@ -1845,12 +1876,27 @@ export default class Gateway {
 		this._mqtt.publish(topic, data, { retain: false })
 	}
 
-	/**
-	 * When there is a node status update
-	 *
-	 */
-	private _onNodeStatus(node: Z2MNode): void {
-		if (node.ready && this.config.hassDiscovery) {
+	private _onNodeInited(node: Z2MNode): void {
+		// enable poll if required
+		const values = this.config.values?.filter(
+			(v: GatewayValue) => v.enablePoll && v.device === node.deviceId
+		)
+		for (let i = 0; i < values.length; i++) {
+			// don't edit the original object, copy it
+			const valueId = utils.copy(values[i].value)
+			valueId.nodeId = node.id
+			valueId.id = node.id + '-' + valueId.id
+
+			try {
+				this._zwave.setPollInterval(valueId, values[i].pollInterval)
+			} catch (error) {
+				logger.error(
+					`Error while enabling poll interval: ${error.message}`
+				)
+			}
+		}
+
+		if (!this._mqtt.disabled && this.config.hassDiscovery) {
 			for (const id in node.hassDevices) {
 				if (node.hassDevices[id].persistent) {
 					this.publishDiscovery(node.hassDevices[id], node.id)
@@ -1869,31 +1915,15 @@ export default class Gateway {
 				this.discoverValue(node, id)
 			}
 		}
+	}
 
-		if (node.ready && !node.inited) {
-			node.inited = true
-			// enable poll if required
-			const values = this.config.values.filter(
-				(v: GatewayValue) => v.enablePoll && v.device === node.deviceId
-			)
-			for (let i = 0; i < values.length; i++) {
-				// don't edit the original object, copy it
-				const valueId = utils.copy(values[i].value)
-				valueId.nodeId = node.id
-				valueId.id = node.id + '-' + valueId.id
-
-				try {
-					this._zwave.setPollInterval(valueId, values[i].pollInterval)
-				} catch (error) {
-					logger.error(
-						`Error while enabling poll interval: ${error.message}`
-					)
-				}
-			}
-		}
-
-		if (this._zwave) {
-			this._zwave.sendToSocket(socketEvents.nodeUpdated, node)
+	/**
+	 * When there is a node status update
+	 *
+	 */
+	private _onNodeStatus(node: Z2MNode): void {
+		if (this._mqtt.disabled) {
+			return
 		}
 
 		const nodeTopic = this.nodeTopic(node)
