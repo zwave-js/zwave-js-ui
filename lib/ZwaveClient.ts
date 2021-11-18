@@ -853,7 +853,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (!ignoreUpdate) {
-			this._onNodeStatus(zwaveNode)
+			this.nodeStatus(node, { groups: node.groups })
 		}
 	}
 
@@ -1309,7 +1309,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.emit('valueChanged', valueId, node, changed)
 	}
 
-	private nodeStatus(node: Z2MNode) {
+	private nodeStatus(
+		node: Z2MNode,
+		changedProps?: utils.DeepPartial<Z2MNode>
+	) {
 		if (node.ready && !node.inited) {
 			node.inited = true
 			this.emit('nodeInited', node)
@@ -1317,7 +1320,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.emit('nodeStatus', node)
 		}
 
-		this.sendToSocket(socketEvents.nodeUpdated, node)
+		this.sendToSocket(socketEvents.nodeUpdated, changedProps ?? node)
 	}
 
 	// ------------NODES MANAGEMENT-----------------------------------
@@ -1343,7 +1346,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await jsonStore.put(store.nodes, this.storeNodes)
 
-		this.nodeStatus(node)
+		this.nodeStatus(node, { name: name })
 
 		return true
 	}
@@ -1370,8 +1373,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await jsonStore.put(store.nodes, this.storeNodes)
 
-		this.nodeStatus(node)
-
+		this.nodeStatus(node, { loc: loc })
 		return true
 	}
 
@@ -1914,7 +1916,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (zwaveNode) {
-				this._onNodeStatus(zwaveNode)
+				this._onNodeStatus(zwaveNode, {})
 			}
 			return result
 		}
@@ -2748,7 +2750,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Update current node status and interviewState
 	 *
 	 */
-	private _onNodeStatus(zwaveNode: ZWaveNode) {
+	private _onNodeStatus(
+		zwaveNode: ZWaveNode,
+		changedProps?: utils.DeepPartial<Z2MNode>
+	) {
 		const node = this._nodes.get(zwaveNode.id)
 
 		if (node) {
@@ -2760,7 +2765,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node.interviewStage = InterviewStage[
 				zwaveNode.interviewStage
 			] as keyof typeof InterviewStage
-			this.nodeStatus(node)
+
+			if (changedProps) {
+				Object.assign(changedProps, {
+					status: node.status,
+					available: node.available,
+					interviewStage: node.interviewStage,
+				})
+			}
+
+			this.nodeStatus(node, changedProps)
 		} else {
 			logger.error(
 				Error(
@@ -2827,11 +2841,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.getGroups(zwaveNode.id, true)
 
-		this._onNodeStatus(zwaveNode)
-
 		// handle mapped node properties:
 		this._updateValuesMapForNode(node)
 		this._mapCCExistsToNodeProps(node)
+
+		this._onNodeStatus(zwaveNode)
 
 		this.emit(
 			'event',
@@ -2875,7 +2889,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}: interview stage ${stageName.toUpperCase()} completed`
 		)
 
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, {})
 
 		this.emit(
 			'event',
@@ -2901,7 +2915,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Node ${zwaveNode.id}: interview COMPLETED, all values are updated`
 		)
 
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, {})
 
 		this.emit(
 			'event',
@@ -2923,7 +2937,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Interview of node ${zwaveNode.id} has failed: ${args.errorMessage}`
 		)
 
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, {})
 
 		this.emit(
 			'event',
@@ -2944,7 +2958,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}awake`
 		)
 
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, {})
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -2963,7 +2977,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				oldStatus === NodeStatus.Unknown ? '' : 'now '
 			}asleep`
 		)
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, {})
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -2977,7 +2991,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, {})
 		if (oldStatus === NodeStatus.Dead) {
 			logger.info(`Node ${zwaveNode.id}: has returned from the dead`)
 		} else {
@@ -2997,7 +3011,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeDead(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		this._onNodeStatus(zwaveNode)
+		this._onNodeStatus(zwaveNode, {})
 		logger.info(
 			`Node ${zwaveNode.id} is ${
 				oldStatus === NodeStatus.Unknown ? '' : 'now '
@@ -3712,6 +3726,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			]
 		)
 			return
+
+		const updatedProps = {}
 		nodePropsMap[valueId.commandClass].valueProps[valueId.property].forEach(
 			(vMap) => {
 				const vIds: Z2MValueId[] =
@@ -3721,6 +3737,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				const values = Object.values(vIds)
 				const result = vMap.fn(node, values)
 				node[vMap.nodeProp] = result
+				updatedProps[vMap.nodeProp] = result
 				if (logger.isDebugEnabled) {
 					logger.debug(
 						`Node ${node.id}: mapping value(s) of property '${
@@ -3734,6 +3751,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 		)
+
+		this.nodeStatus(node, updatedProps)
 	}
 
 	/**
