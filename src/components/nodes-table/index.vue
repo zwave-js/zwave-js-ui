@@ -148,47 +148,70 @@
 			{{ item.loc || '' }}
 		</template>
 		<template v-slot:[`item.security`]="{ item }">
-			<rich-value :value="richValue(item, 'security')" />
+			<rich-value
+				v-if="!item.isControllerNode"
+				:value="richValue(item, 'security')"
+			/>
+			<div v-else></div>
 		</template>
 		<template v-slot:[`item.supportsBeaming`]="{ item }">
-			<rich-value :value="richValue(item, 'supportsBeaming')" />
+			<rich-value
+				v-if="!item.isControllerNode"
+				:value="richValue(item, 'supportsBeaming')"
+			/>
+			<div v-else></div>
 		</template>
 		<template v-slot:[`item.zwavePlusVersion`]="{ item }">
-			<rich-value :value="richValue(item, 'zwavePlusVersion')" />
+			<rich-value
+				v-if="!item.isControllerNode"
+				:value="richValue(item, 'zwavePlusVersion')"
+			/>
+			<div v-else></div>
 		</template>
 		<template v-slot:[`item.failed`]="{ item }">
-			<rich-value :value="richValue(item, 'failed')" />
+			<rich-value
+				v-if="!item.isControllerNode"
+				:value="richValue(item, 'failed')"
+			/>
+			<div v-else></div>
 		</template>
 		<template v-slot:[`item.status`]="{ item }">
-			<rich-value :value="richValue(item, 'status')" />
+			<rich-value
+				v-if="!item.isControllerNode"
+				:value="richValue(item, 'status')"
+			/>
+			<div v-else></div>
 		</template>
 		<template v-slot:[`item.healProgress`]="{ item }">
-			<v-progress-circular
-				class="ml-3"
-				v-if="item.healProgress === 'pending'"
-				indeterminate
-				size="20"
-				color="primary"
-			></v-progress-circular>
+			<div v-if="!item.isControllerNode">
+				<v-progress-circular
+					class="ml-3"
+					v-if="item.healProgress === 'pending'"
+					indeterminate
+					size="20"
+					color="primary"
+				></v-progress-circular>
 
-			<v-tooltip
-				v-else-if="getHealIcon(item.healProgress) !== undefined"
-				bottom
-			>
-				<template v-slot:activator="{ on }">
-					<v-icon
-						v-on="on"
-						class="ml-3"
-						v-text="getHealIcon(item.healProgress).icon"
-						:color="getHealIcon(item.healProgress).color"
-					></v-icon>
-				</template>
-				<span>{{ item.healProgress.toUpperCase() }}</span>
-			</v-tooltip>
-			<div v-else>{{ item.healProgress }}</div>
+				<v-tooltip
+					v-else-if="getHealIcon(item.healProgress) !== undefined"
+					bottom
+				>
+					<template v-slot:activator="{ on }">
+						<v-icon
+							v-on="on"
+							class="ml-3"
+							v-text="getHealIcon(item.healProgress).icon"
+							:color="getHealIcon(item.healProgress).color"
+						></v-icon>
+					</template>
+					<span>{{ item.healProgress.toUpperCase() }}</span>
+				</v-tooltip>
+				<div v-else>{{ item.healProgress }}</div>
+			</div>
+			<div v-else></div>
 		</template>
 		<template v-slot:[`item.interviewStage`]="{ item }">
-			<div style="text-align: center">
+			<div v-if="!item.isControllerNode" style="text-align: center">
 				<v-chip
 					small
 					:color="interviewStageColor(`${item.interviewStage}`)"
@@ -203,6 +226,7 @@
 					color="primary"
 				></v-progress-circular>
 			</div>
+			<div v-else></div>
 		</template>
 		<template v-slot:[`item.lastActive`]="{ item }">
 			{{
