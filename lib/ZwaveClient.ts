@@ -1320,6 +1320,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.emit('nodeStatus', node)
 		}
 
+		if (changedProps) {
+			// we need it to have a reference of the node to update
+			changedProps.id = node.id
+		}
+
 		this.sendToSocket(socketEvents.nodeUpdated, changedProps ?? node)
 	}
 
