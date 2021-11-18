@@ -444,7 +444,7 @@ export interface ZwaveClientEventCallbacks {
 		node: Z2MNode,
 		changed?: boolean
 	) => void
-	valueWritten: (valueId: Z2MValueId, value: unknown) => void
+	valueWritten: (valueId: Z2MValueId, node: Z2MNode, value: unknown) => void
 }
 
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
@@ -2219,11 +2219,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		value: any,
 		options?: SetValueAPIOptions
 	) {
+		let result = false
 		if (this.driverReady) {
 			const vID = this._getValueID(valueId, true)
 			logger.log('info', `Writing %o to ${vID}`, value)
-
-			let result = false
 
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
@@ -2274,12 +2273,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						value = utils.bufferFromHex(value)
 					}
 
-					result = await this.getNode(valueId.nodeId).setValue(
-						valueId,
-						value,
-						options
-					)
-					this.emit('valueWritten', valueId, value)
+					result = await zwaveNode.setValue(valueId, value, options)
+
+					if (result) {
+						this.emit(
+							'valueWritten',
+							valueId,
+							this.nodes.get(valueId.nodeId),
+							value
+						)
+					}
 				}
 			} catch (error) {
 				logger.log(
@@ -2293,6 +2296,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.log('error', `Unable to write %o on ${vID}`, value)
 			}
 		}
+
+		return result
 	}
 
 	// ---------- DRIVER EVENTS -------------------------------------

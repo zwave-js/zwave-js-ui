@@ -267,6 +267,9 @@ export default class Gateway {
 			if (!this._mqtt.disabled) {
 				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
 				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
+				this._zwave.on('valueWritten', (nodeId, valueId) => {
+					this._onValueChanged(nodeId, valueId, true)
+				})
 				this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
 				this._zwave.on('notification', this._onNotification.bind(this))
 				this._zwave.on('driverStatus', this._onDriverStatus.bind(this))
