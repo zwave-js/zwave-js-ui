@@ -93,7 +93,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		return this.client && this.client.connected
 	}
 
-	get disbled() {
+	get disabled() {
 		return this.config.disabled
 	}
 

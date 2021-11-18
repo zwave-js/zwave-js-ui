@@ -249,7 +249,7 @@ export default class Gateway {
 		// topic levels for subscribes using wildecards
 		this.topicLevels = []
 
-		if (this._mqtt && !this._mqtt.disbled) {
+		if (this._mqtt && !this._mqtt.disabled) {
 			this._mqtt.on('writeRequest', this._onWriteRequest.bind(this))
 			this._mqtt.on('broadcastRequest', this._onBroadRequest.bind(this))
 			this._mqtt.on(
@@ -265,7 +265,7 @@ export default class Gateway {
 			// this is the only event we need to bind to in order to apply gateway values configs like polling
 			this._zwave.on('nodeInited', this._onNodeInited.bind(this))
 
-			if (!this._mqtt.disbled) {
+			if (!this._mqtt.disabled) {
 				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
 				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
 				this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
@@ -580,7 +580,7 @@ export default class Gateway {
 		options: { deleteDevice?: boolean; forceUpdate?: boolean } = {}
 	): void {
 		try {
-			if (this._mqtt.disbled || !this.config.hassDiscovery) {
+			if (this._mqtt.disabled || !this.config.hassDiscovery) {
 				logger.debug(
 					'Enable MQTT gateway and hass discovery to use this function'
 				)
@@ -685,7 +685,7 @@ export default class Gateway {
 	 * Discover an hass device (from customDevices.js|json)
 	 */
 	discoverDevice(node: Z2MNode, hassDevice: HassDevice): void {
-		if (this._mqtt.disbled || !this.config.hassDiscovery) {
+		if (this._mqtt.disabled || !this.config.hassDiscovery) {
 			logger.info(
 				'Enable MQTT gateway and hass discovery to use this function'
 			)
@@ -1094,7 +1094,7 @@ export default class Gateway {
 	 * Try to guess the best way to discover this valueId in Hass
 	 */
 	discoverValue(node: Z2MNode, vId: string): void {
-		if (this._mqtt.disbled || !this.config.hassDiscovery) {
+		if (this._mqtt.disabled || !this.config.hassDiscovery) {
 			logger.debug(
 				'Enable MQTT gateway and hass discovery to use this function'
 			)
@@ -1657,7 +1657,7 @@ export default class Gateway {
 	 * Removes all retained messages of the specified node
 	 */
 	removeNodeRetained(nodeId: number): void {
-		if (this._mqtt.disbled) {
+		if (this._mqtt.disabled) {
 			logger.info('Enable MQTT gateway to use this function')
 			return
 		}
@@ -1923,7 +1923,7 @@ export default class Gateway {
 			}
 		}
 
-		if (this._mqtt.disbled) {
+		if (this._mqtt.disabled) {
 			return
 		}
 

@@ -1316,9 +1316,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (node.ready && !node.inited) {
 			node.inited = true
 			this.emit('nodeInited', node)
-		} else {
-			this.emit('nodeStatus', node)
 		}
+
+		this.emit('nodeStatus', node)
 
 		if (changedProps) {
 			// we need it to have a reference of the node to update
