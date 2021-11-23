@@ -171,7 +171,7 @@ export default {
 					value: 'securityClasses.s2Authenticated',
 				},
 				{
-					text: 'S2 Unhaunthenticated',
+					text: 'S2 Unauthenticated',
 					value: 'securityClasses.s2Unauthenticated',
 				},
 				{ text: 'S0 Legacy', value: 'securityClasses.s0Legacy' },
