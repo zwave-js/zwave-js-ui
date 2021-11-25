@@ -1,3 +1,42 @@
+# [6.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.12.0...v6.0.0) (2021-11-25)
+
+
+### Bug Fixes
+
+* **ui:** spelling of Unauthenticated ([#1984](https://github.com/zwave-js/zwavejs2mqtt/issues/1984)) ([6cad38a](https://github.com/zwave-js/zwavejs2mqtt/commit/6cad38afdbfef310b4590f88d7d9a63b051bb113))
+* hide some columns for controller node ([11099eb](https://github.com/zwave-js/zwavejs2mqtt/commit/11099eba3678be69a883fe52266661062ed43767)), closes [#1886](https://github.com/zwave-js/zwavejs2mqtt/issues/1886)
+* https log ([af8009a](https://github.com/zwave-js/zwavejs2mqtt/commit/af8009aac6c3f47c7f20ca15ff9e068d1259e025))
+* value not updating after set ([#1972](https://github.com/zwave-js/zwavejs2mqtt/issues/1972)) ([035975a](https://github.com/zwave-js/zwavejs2mqtt/commit/035975a83ec2a856c8ce49052eaa3d8b973ad360)), closes [#1971](https://github.com/zwave-js/zwavejs2mqtt/issues/1971)
+
+
+### Features
+
+* bump @zwave-js/server@1.12.0 ([#1987](https://github.com/zwave-js/zwavejs2mqtt/issues/1987)) ([5057281](https://github.com/zwave-js/zwavejs2mqtt/commit/50572817c456f0c08c9d47b6c9d8a2ae11dd2b22))
+* bump zwave-js@8.7.7 ([#1974](https://github.com/zwave-js/zwavejs2mqtt/issues/1974)) ([95a419e](https://github.com/zwave-js/zwavejs2mqtt/commit/95a419e03c289abf1fe32ec9511d6f456b9cc188))
+* bump zwave-js@8.8.0 ([#1991](https://github.com/zwave-js/zwavejs2mqtt/issues/1991)) ([913ea34](https://github.com/zwave-js/zwavejs2mqtt/commit/913ea344eb7d5aa356821a03da78dc89df3cf1f6))
+* optimize socket events and mqtt disabled events ([#1970](https://github.com/zwave-js/zwavejs2mqtt/issues/1970)) ([b18067a](https://github.com/zwave-js/zwavejs2mqtt/commit/b18067abf095b12f6262b673210fc469c1f87362))
+
+
+### BREAKING CHANGES
+
+* Socket events names and content havee changed
+
+* fix: handling of node props updates
+
+* fix: ensure node id is always present in node updated event
+
+* fix: add missing status event and typo
+
+* fix: hass devices updates
+
+* fix: make hass discovery happen only on node inited
+
+* fix: use value written event
+
+* fix: rename some methods
+
+* fix: add check mqtt disabled in node inited
+
 # [5.12.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v5.11.0...v5.12.0) (2021-11-16)
 
 
