@@ -1,3 +1,10 @@
+## [6.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.1...v6.0.2) (2021-11-26)
+
+
+### Features
+
+* bump zwave-js@8.8.2 ([#1998](https://github.com/zwave-js/zwavejs2mqtt/issues/1998)) ([c6719ca](https://github.com/zwave-js/zwavejs2mqtt/commit/c6719ca853a2416714dac1adb2c10fca429e24e1))
+
 ## [6.0.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.0...v6.0.1) (2021-11-25)
 
 
