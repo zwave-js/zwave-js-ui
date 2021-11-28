@@ -1418,6 +1418,42 @@ export default class Gateway {
 						return
 					}
 					break
+				case CommandClasses['Configuration']:
+					// Try to define Binary sensors that are present in the 'Configuration' command set in Fibaro TRVs post firmware 4.7
+					if (valueId.states?.length === 2) {
+						let off = 0 // set default off to 0.
+						switch (valueId.propertyName) {
+							case 'Temperature Sensor':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.CONNECTIVITY
+								)
+								break
+							case 'Open Window Detected':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.OPENING
+								)
+								break
+							case 'Provide Heat':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.HEAT
+								)
+								break
+							case 'Malfunctioning Heating System':
+								cfg = this._getBinarySensorConfig(
+									Constants.deviceClass.sensor_binary.PROBLEM
+								)
+								break
+							default:
+								return
+						}
+						// correct payload from true/false to numeric values
+						this._setBinaryPayloadFromSensor(cfg, valueId, off)
+						// finally update object_id
+						cfg.object_id = valueId.propertyName
+					} else {
+						return
+					}
+					break
 				case CommandClasses['Multilevel Sensor']:
 				case CommandClasses.Meter:
 				case CommandClasses['Pulse Meter']:
