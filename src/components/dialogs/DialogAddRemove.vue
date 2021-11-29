@@ -412,7 +412,7 @@
 										"
 										v-model="s.values.s2Unauthenticated"
 										label="S2 Unauthenticated"
-										hint="Like S2 Authenticated but without verificationt that the correct device is included"
+										hint="Like S2 Authenticated but without verification that the correct device is included"
 										persistent-hint
 									></v-checkbox>
 									<v-checkbox
