@@ -36,7 +36,7 @@ export class StorageHelper {
 	}
 
 	private async _getFile(config: StoreFile) {
-		let err: { code: string }
+		let err: { code: string } | undefined
 		let data: any
 		try {
 			data = await readFile(utils.joinPath(storeDir, config.file))

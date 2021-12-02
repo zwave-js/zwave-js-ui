@@ -37,7 +37,7 @@ interface LoggerConfig {
  */
 export function sanitizedConfig(
 	module: string,
-	config: DeepPartial<GatewayConfig>
+	config: DeepPartial<GatewayConfig> | undefined
 ): LoggerConfig {
 	config = config || ({} as LoggerConfig)
 	const filePath = joinPath(storeDir, config.logFileName || defaultLogFile)

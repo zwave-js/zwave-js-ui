@@ -684,7 +684,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this._nodes.get(nodeId)
 
 		// check for existing node and node hassdevice with given id
-		if (node && hassDevice.id && node.hassDevices[hassDevice.id]) {
+		if (node && hassDevice.id && node.hassDevices?.[hassDevice.id]) {
 			if (deleteDevice) {
 				delete node.hassDevices[hassDevice.id]
 			} else {
@@ -826,7 +826,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			let endpointGroups: ReadonlyMap<
 				number,
 				ReadonlyMap<number, AssociationGroup>
-			>
+			> = new Map()
 			try {
 				endpointGroups =
 					this._driver.controller.getAllAssociationGroups(nodeId)
@@ -837,6 +837,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 			}
 			node.groups = []
+
 			for (const [endpoint, groups] of endpointGroups) {
 				for (const [groupIndex, group] of groups) {
 					// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=associationgroup-interface
@@ -852,7 +853,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		if (!ignoreUpdate) {
+		if (node && !ignoreUpdate) {
 			this.emitNodeStatus(node, { groups: node.groups })
 		}
 	}
@@ -1102,7 +1103,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get neighbors of a specific node
 	 */
-	getNodeNeighbors(
+	async getNodeNeighbors(
 		nodeId: number,
 		dontThrow: boolean
 	): Promise<readonly number[]> {
@@ -1115,6 +1116,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (!dontThrow) {
 				throw error
 			}
+
+			return []
 		}
 	}
 
@@ -1157,7 +1160,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logConfig: {
 					// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
 					enabled: this.cfg.logEnabled,
-					level: loglevels[this.cfg.logLevel],
+					level: this.cfg.logLevel
+						? loglevels[this.cfg.logLevel]
+						: 'info',
 					logToFile: this.cfg.logToFile,
 					filename: ZWAVEJS_LOG_FILE,
 					forceConsole: true,
@@ -1712,7 +1717,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.commandsTimeout = setTimeout(() => {
 				this.stopInclusion().catch(logger.error)
-			}, this.cfg.commandsTimeout * 1000 || 30000)
+			}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
 			// by default replaceFailedNode is secured, pass true to make it not secured
 			if (strategy === InclusionStrategy.Security_S2) {
 				let inclusionOptions: ReplaceNodeOptions
@@ -1783,7 +1788,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.commandsTimeout = setTimeout(() => {
 				this.stopInclusion().catch(logger.error)
-			}, this.cfg.commandsTimeout * 1000 || 30000)
+			}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
 
 			let inclusionOptions: InclusionOptions
 			const userCallbacks: InclusionUserCallbacks = {
@@ -1857,7 +1862,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.commandsTimeout = setTimeout(() => {
 				this.stopExclusion().catch(logger.error)
-			}, this.cfg.commandsTimeout * 1000 || 30000)
+			}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
 
 			return this._driver.controller.beginExclusion(unprovision)
 		}
@@ -2367,7 +2372,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.driverInfo.homeid = this._driver.controller.homeId
-		const homeHex = '0x' + this.driverInfo.homeid.toString(16)
+		const homeHex = '0x' + this.driverInfo?.homeid?.toString(16)
 		this.driverInfo.name = homeHex
 		this.driverInfo.controllerId = this._driver.controller.ownNodeId
 
@@ -2493,7 +2498,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
 
-			node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
+			const security = zwaveNode.getHighestSecurityClass()
+
+			if (security) {
+				node.security = SecurityClass[security]
+			}
 
 			if (zwaveNode.dsk) {
 				const entry = this.driver.controller.getProvisioningEntry(
@@ -2560,7 +2569,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// update heal progress status
 		for (const [nodeId, status] of progress) {
-			this._nodes.get(nodeId).healProgress = status
+			const node = this._nodes.get(nodeId)
+			if (node) {
+				node.healProgress = status
+			}
 		}
 
 		this.emit(
@@ -3377,7 +3389,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'Error while adding node ' + nodeId,
 				Error('node has been added twice')
 			)
-			return
+			return existingNode
 		}
 
 		const node: Z2MNode = {
@@ -3412,6 +3424,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const nodeId = zwaveNode.id
 
 		const node = this._nodes.get(nodeId)
+
+		if (!node) return
 
 		const hexIds = [
 			utils.num2hex(zwaveNode.manufacturerId),

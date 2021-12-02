@@ -17,8 +17,8 @@ function findFiles(folder: string, ext: string) {
 		})
 }
 
-let cssFiles: string[]
-let jsFiles: string[]
+let cssFiles: string[] | undefined
+let jsFiles: string[] | undefined
 
 function basePath(config: Record<string, any>, headers: IncomingHttpHeaders) {
 	return (headers['x-external-path'] || config.base).replace(/\/?$/, '/')

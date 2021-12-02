@@ -37,7 +37,7 @@ interface IDeviceClass {
 }
 
 export interface IMeterCCSpecific {
-	scale?: number
+	scale: number
 	meterType: number
 }
 

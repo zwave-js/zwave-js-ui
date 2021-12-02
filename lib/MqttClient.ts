@@ -398,7 +398,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		logger.info('MQTT client connected')
 		this.emit('connect')
 
-		const subscribePromises = []
+		const subscribePromises: Promise<void>[] = []
 
 		subscribePromises.push(
 			this.subscribe(MqttClient.HASS_WILL, { addPrefix: false, qos: 1 })
@@ -546,7 +546,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		}
 
 		logger.debug('Retry to subscribe to topics...')
-		const subscribePromises = []
+		const subscribePromises: Promise<void>[] = []
 
 		const topics = this.toSubscribe.keys()
 

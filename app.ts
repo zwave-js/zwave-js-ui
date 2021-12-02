@@ -99,7 +99,7 @@ const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
 	socket: Socket & { user?: User },
-	next: (err?: utils.ErrnoException) => void
+	next: (err?) => void
 ) {
 	if (!isAuthEnabled()) {
 		next()
@@ -107,7 +107,7 @@ socketManager.authMiddleware = function (
 		jwt.verify(
 			socket.handshake.query.token as string,
 			sessionSecret,
-			function (err: utils.ErrnoException, decoded: User) {
+			function (err, decoded: User) {
 				if (err) return next(new Error('Authentication error'))
 				socket.user = decoded
 				next()
@@ -158,7 +158,7 @@ export async function startServer(host: string, port: number | string) {
 	server.listen(port as number, host, function () {
 		const addr = server.address()
 		const bind =
-			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port
+			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
 		logger.info(
 			`Listening on ${bind} host ${host} protocol ${
 				httpsEnabled ? 'HTTPS' : 'HTTP'
@@ -622,7 +622,7 @@ async function parseJWT(req: Request) {
 // middleware to check if user is authenticated
 async function isAuthenticated(req: Request, res: Response, next: () => void) {
 	// if user is authenticated in the session, carry on
-	if (req.session.user || !isAuthEnabled()) {
+	if (req?.session?.user || !isAuthEnabled()) {
 		return next()
 	}
 
