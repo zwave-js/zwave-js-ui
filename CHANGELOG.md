@@ -1,3 +1,17 @@
+## [6.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.2...v6.0.3) (2021-12-03)
+
+
+### Bug Fixes
+
+* endpointGroups is not iterable and other possible null pointer errors ([6886825](https://github.com/zwave-js/zwavejs2mqtt/commit/68868255ec5d8d3c12d4de543a2c2596856607e3)), closes [#2012](https://github.com/zwave-js/zwavejs2mqtt/issues/2012)
+* **ui:** typo in dialog ([#2001](https://github.com/zwave-js/zwavejs2mqtt/issues/2001)) ([0255fdc](https://github.com/zwave-js/zwavejs2mqtt/commit/0255fdc16bdeed58b68b92f89a2028bf90dc8058))
+
+
+### Features
+
+* bump @zwave-js/server@1.13.0 ([#2013](https://github.com/zwave-js/zwavejs2mqtt/issues/2013)) ([c0d14e1](https://github.com/zwave-js/zwavejs2mqtt/commit/c0d14e14ebdc92282827e4acad1776f1903eb615))
+* bump zwave-js@8.8.3 ([#2016](https://github.com/zwave-js/zwavejs2mqtt/issues/2016)) ([9190839](https://github.com/zwave-js/zwavejs2mqtt/commit/91908396a68a4a0379c24327efd764057f5aa0f6))
+
 ## [6.0.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.1...v6.0.2) (2021-11-26)
 
 
