@@ -46,4 +46,4 @@ Fully configurable Z-Wave to MQTT **Gateway** and **Control Panel**.
 - **Network Graph**: Provides a beautiful map showing how nodes are communicating with the controller
 - **Supports the Official Home Assistant Integration**: Can act as the backend driver for the official Home Assistant integration, using the same driver and socket server as the official addon
 - **Supports Home Assistant Discovery via MQTT**: In lieu of the official integation, can be used to expose Z-Wave devices to Home Assistant via MQTT discovery. 
-- **Supported by Domoticz (beta 2021.1) using MQTT Autodiscovery. 
+- **Supported by Domoticz** (beta 2021.1) using MQTT Autodiscovery. 
