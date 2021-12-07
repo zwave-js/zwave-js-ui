@@ -87,7 +87,7 @@
 
 		<!-- NODE VALUES -->
 
-		<v-row v-if="node.values && node.values.length > 0">
+		<v-row>
 			<v-subheader class="title">Values</v-subheader>
 
 			<v-expansion-panels accordion multiple>
@@ -134,10 +134,7 @@
 									</v-col>
 								</v-row>
 								<v-col
-									v-if="
-										group[0] &&
-										group[0].commandClass === 112
-									"
+									v-if="className === 'Configuration'"
 									cols="12"
 									sm="6"
 									md="4"
@@ -173,7 +170,6 @@
 										<v-col cols="3">
 											<v-btn
 												width="60px"
-												v-if="group[0]"
 												@click.stop="
 													apiRequest('sendCommand', [
 														{
@@ -190,7 +186,6 @@
 												GET
 											</v-btn>
 											<v-btn
-												v-if="group[0]"
 												width="60px"
 												@click.stop="
 													apiRequest('sendCommand', [
@@ -395,7 +390,7 @@ export default {
 		...mapGetters(['mqtt']),
 		commandGroups() {
 			if (this.node) {
-				const groups = {}
+				const groups = { Configuration: [] }
 				for (const v of this.node.values) {
 					const className = v.commandClassName
 					if (!groups[className]) {
