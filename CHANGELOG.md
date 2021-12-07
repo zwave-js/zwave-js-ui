@@ -1,3 +1,8 @@
+* fix(ui): always show Configuration CC (22aacb3)
+* feat: bump zwave-js@8.9.0-beta.0 (#2031) (7ea362a)
+* docs: fix lint (b0a1aa4)
+* docs: added Domoticz as application using the MQTT Discover function. (#2019) (6588c89)
+
 ## [6.0.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.0.2...v6.0.3) (2021-12-03)
 
 
