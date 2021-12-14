@@ -45,6 +45,7 @@ import {
 	QRCodeVersion,
 	ReplaceNodeOptions,
 	QRProvisioningInformation,
+	RefreshInfoOptions,
 } from 'zwave-js'
 import { parseQRCodeString } from 'zwave-js/Utils'
 import {
@@ -1953,7 +1954,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Re interview the node
 	 */
-	async refreshInfo(nodeId: number): Promise<void> {
+	async refreshInfo(
+		nodeId: number,
+		options?: RefreshInfoOptions
+	): Promise<void> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1961,7 +1965,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw Error(`Node ${nodeId} not found`)
 			}
 
-			return zwaveNode.refreshInfo()
+			return zwaveNode.refreshInfo(options)
 		}
 
 		throw new DriverNotReadyError()

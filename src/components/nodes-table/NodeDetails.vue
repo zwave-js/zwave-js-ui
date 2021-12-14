@@ -342,10 +342,6 @@ export default {
 						{
 							name: 'Interview',
 							action: 'refreshInfo',
-							args: {
-								confirm:
-									"Are you sure you want to re-interview this node? All known information about this node is discarded. Battery powered nodes need to be woken up, interaction with the node won't be reliable until the interview is done.",
-							},
 						},
 					],
 					icon: 'history',

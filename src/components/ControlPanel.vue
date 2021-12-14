@@ -177,8 +177,6 @@ export default {
 							action: 'refreshInfo',
 							args: {
 								broadcast: true,
-								confirm:
-									"Are you sure you want to re-interview all nodes? All known information about your nodes will be discarded. Battery powered nodes need to be woken up, interaction with the nodes won't be reliable until the interview is done.",
 							},
 						},
 					],
@@ -474,6 +472,32 @@ export default {
 					} catch (error) {
 						return
 					}
+				} else if (action === 'refreshInfo') {
+					const options = await this.$listeners.showConfirm(
+						'Refresh info',
+						`Are you sure you want to re-interview ${
+							broadcast ? 'all nodes' : 'node ' + nodeId
+						}? All known information about your nodes will be discarded. Battery powered nodes need to be woken up, interaction with the nodes won't be reliable until the interview is done.`,
+						'info',
+						{
+							width: 900,
+							confirmText: 'Ok',
+							inputs: [
+								{
+									type: 'checkbox',
+									key: 'resetSecurityClasses',
+									default: false,
+									label: 'Reset security classes',
+								},
+							],
+						}
+					)
+
+					if (!options || Object.keys(options).length === 0) {
+						return
+					}
+
+					args.push(options)
 				}
 
 				if (broadcast) {
