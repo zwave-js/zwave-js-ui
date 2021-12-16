@@ -1286,12 +1286,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						)
 					})
 				}
-				await this._onDriverError(error, true)
-				logger.warn('Retry connection in 3 seconds...')
-				this.reconnectTimeout = setTimeout(
-					this.connect.bind(this),
-					3000
-				)
+
+				if (error.code !== ZWaveErrorCodes.Driver_InvalidOptions) {
+					await this._onDriverError(error, true)
+					logger.warn('Retry connection in 3 seconds...')
+					this.reconnectTimeout = setTimeout(
+						this.connect.bind(this),
+						3000
+					)
+				} else {
+					logger.error(
+						`Invalid options for driver: ${error.message}`,
+						error
+					)
+				}
 			}
 		} else {
 			logger.info(`Driver already connected to ${this.cfg.port}`)
