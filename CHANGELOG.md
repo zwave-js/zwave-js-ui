@@ -1,3 +1,11 @@
+## [6.1.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.1.0...v6.1.1) (2021-12-16)
+
+
+### Features
+
+* bump zwave-js@8.9.0-beta.1 ([4684356](https://github.com/zwave-js/zwavejs2mqtt/commit/4684356fe4419319bde22ea962baf96617e6ca8f))
+* support for refreshInfo options ([1570667](https://github.com/zwave-js/zwavejs2mqtt/commit/15706676f5a598a5d308d1f55c41ea32c7d56447))
+
 * fix(ui): always show Configuration CC (22aacb3)
 * feat: bump zwave-js@8.9.0-beta.0 (#2031) (7ea362a)
 * docs: fix lint (b0a1aa4)
