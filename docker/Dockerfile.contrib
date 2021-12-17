@@ -8,7 +8,7 @@ ARG SRC=git-clone-src
 #####################
 
 # Option 1 (default): Clone from git
-FROM node:16.3.0-buster AS git-clone-src
+FROM node:17.2.0-buster AS git-clone-src
 ARG ZWJ_BRANCH=master
 ARG ZWJ_REPOSITORY=https://github.com/zwave-js/node-zwave-js
 ARG Z2M_BRANCH=master
@@ -20,7 +20,7 @@ RUN git clone -b ${ZWJ_BRANCH} --depth 1 ${ZWJ_REPOSITORY}
 RUN git clone -b ${Z2M_BRANCH} --depth 1 ${Z2M_REPOSITORY}
 
 # Option 2: Copy from local sources
-FROM node:16.3.0-buster AS local-copy-src
+FROM node:17.2.0-buster AS local-copy-src
 COPY --chown=node node-zwave-js /home/node/node-zwave-js
 COPY --chown=node zwavejs2mqtt /home/node/zwavejs2mqtt
 
@@ -80,7 +80,7 @@ RUN cp -Lr .git package.json yarn.lock .yarnrc.yml bin config server dist hass l
 #####################
 # Setup Final Image #
 #####################
-FROM node:16.3.0-buster
+FROM node:17.2.0-buster
 LABEL maintainer="robertsLando"
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
