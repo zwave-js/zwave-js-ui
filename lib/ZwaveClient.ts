@@ -161,7 +161,6 @@ const allowedApis = validateMethods([
 // Define mapping of CCs and node values to node properties:
 const nodePropsMap = {
 	[CommandClasses.Battery]: {
-		existsProp: 'isBatteryPowered',
 		valueProps: {
 			level: [
 				{
@@ -375,7 +374,6 @@ export type Z2MNode = {
 	healProgress?: string | undefined
 	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
-	isBatteryPowered?: boolean
 }
 
 export type ZwaveConfig = {
