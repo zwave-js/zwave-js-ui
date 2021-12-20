@@ -253,7 +253,9 @@
 						</div>
 					</center>
 				</template>
-				<span>{{ jsonToList(item.statistics) }}</span>
+				<span style="white-space: pre-wrap">{{
+					jsonToList(item.statistics)
+				}}</span>
 			</v-tooltip>
 		</template>
 		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
