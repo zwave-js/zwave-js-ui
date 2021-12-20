@@ -412,6 +412,7 @@ export type Z2MDriverInfo = {
 	appVersion?: string
 	zwaveVersion?: string
 	serverVersion?: string
+	error?: string | undefined
 	homeid?: number
 	name?: string
 	controllerId?: number
@@ -462,7 +463,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private driverInfo: Z2MDriverInfo
 	private status: ZwaveClientStatus
 
-	private _error: boolean | string
+	private _error: string | undefined
 	private _scanComplete: boolean
 	private _cntStatus: string
 
@@ -1287,8 +1288,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					})
 				}
 
+				await this._onDriverError(error, true)
+
 				if (error.code !== ZWaveErrorCodes.Driver_InvalidOptions) {
-					await this._onDriverError(error, true)
 					logger.warn('Retry connection in 3 seconds...')
 					this.reconnectTimeout = setTimeout(
 						this.connect.bind(this),
@@ -1593,6 +1595,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		info.uptime = process.uptime()
 		info.lastUpdate = this.lastUpdate
 		info.status = this.status
+		info.error = this.error
 		info.cntStatus = this._cntStatus
 		info.appVersion = utils.getVersion()
 		info.zwaveVersion = libVersion
@@ -2390,7 +2393,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.emit('event', EventSource.DRIVER, 'driver ready', this.driverInfo)
 
-		this._error = false
+		this._error = undefined
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
@@ -2461,7 +2464,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this._cntStatus !== status) {
 			logger.info(`Controller status: ${status}`)
 			this._cntStatus = status
-			this.sendToSocket(socketEvents.controller, status)
+			this.sendToSocket(socketEvents.controller, {
+				status,
+				error: this._error,
+			})
 		}
 	}
 

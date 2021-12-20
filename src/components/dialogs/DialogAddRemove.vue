@@ -626,7 +626,7 @@ export default {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
 		controllerStatus() {
-			return this.appInfo.controllerStatus
+			return this.appInfo.controllerStatus?.status
 		},
 		missingKeys() {
 			const keys = this.zwave.securityKeys || {}
