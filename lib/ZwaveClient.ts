@@ -2433,11 +2433,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (controllerNode) {
 			controllerNode.statistics = stats
+			controllerNode.lastActive = Date.now()
 		}
 
 		this.sendToSocket(socketEvents.statistics, {
-			nodeId: controllerNode.id,
+			nodeId: controllerNode?.id,
 			statistics: stats,
+			lastActive: controllerNode?.lastActive,
 		})
 
 		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
@@ -3269,11 +3271,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (node) {
 			node.statistics = stats
+			node.lastActive = Date.now()
 		}
 
 		this.sendToSocket(socketEvents.statistics, {
-			nodeId: node.id,
+			nodeId: node?.id,
 			statistics: stats,
+			lastActive: node?.lastActive,
 		})
 
 		this.emit(

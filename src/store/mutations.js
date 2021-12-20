@@ -245,6 +245,7 @@ export const mutations = {
     const node = getNode(data.nodeId)
     if (node) {
       $set(node, 'statistics', data.statistics)
+      $set(node, 'lastActive', data.lastActive)
     }
 
   },

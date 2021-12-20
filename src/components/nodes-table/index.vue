@@ -229,11 +229,25 @@
 			<div v-else></div>
 		</template>
 		<template v-slot:[`item.lastActive`]="{ item }">
-			{{
-				item.lastActive
-					? new Date(item.lastActive).toLocaleString()
-					: 'Never'
-			}}
+			<v-tooltip bottom>
+				<template v-slot:activator="{ on }">
+					<center v-on="on">
+						<blink-icon
+							v-if="item.lastActive"
+							icon="sync_alt"
+							:active="now - item.lastActive < 5000"
+						/>
+						<div>
+							{{
+								item.lastActive
+									? new Date(item.lastActive).toLocaleString()
+									: 'Never'
+							}}
+						</div>
+					</center>
+				</template>
+				<span>{{ jsonToList(item.statistics) }}</span>
+			</v-tooltip>
 		</template>
 		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
 			<expanded-node
