@@ -233,9 +233,16 @@
 				<template v-slot:activator="{ on }">
 					<center v-on="on">
 						<blink-icon
-							v-if="item.lastActive"
-							icon="sync_alt"
-							:active="now - item.lastActive < 5000"
+							icon="west"
+							:activeColor="
+								item.errorTransmit ? 'error' : 'green'
+							"
+							:active="now - item.lastTransmit < 2000"
+						/>
+						<blink-icon
+							icon="east"
+							:activeColor="item.errorReceive ? 'error' : 'green'"
+							:active="now - item.lastReceive < 2000"
 						/>
 						<div>
 							{{
