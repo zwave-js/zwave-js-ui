@@ -31,7 +31,7 @@
 						border: 1px solid grey;
 						padding: 10px;
 					"
-					class="body-1"
+					class="mono"
 					v-html="debug.join('')"
 				></div>
 			</v-col>
