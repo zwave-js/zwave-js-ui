@@ -259,6 +259,7 @@
 														:rules="[
 															rules.validKey,
 															rules.validLength,
+															differentKeys,
 														]"
 														persistent-hint
 														append-outer-icon="wifi_protected_setup"
@@ -288,6 +289,7 @@
 														:rules="[
 															rules.validKey,
 															rules.validLength,
+															differentKeys,
 														]"
 														append-outer-icon="wifi_protected_setup"
 														@click:append-outer="
@@ -315,6 +317,7 @@
 														:rules="[
 															rules.validKey,
 															rules.validLength,
+															differentKeys,
 														]"
 														append-outer-icon="wifi_protected_setup"
 														@click:append-outer="
@@ -342,6 +345,7 @@
 														:rules="[
 															rules.validKey,
 															rules.validLength,
+															differentKeys,
 														]"
 														append-outer-icon="wifi_protected_setup"
 														@click:append-outer="
@@ -1242,6 +1246,15 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		differentKeys() {
+			const values = Object.values(this.newZwave.securityKeys)
+
+			// ensure thre are no duplicates
+			return (
+				values.length === new Set(values).size ||
+				'Keys must be different'
+			)
+		},
 		fixKey(event, key) {
 			let data = event.clipboardData?.getData('Text')
 

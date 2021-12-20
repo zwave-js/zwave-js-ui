@@ -65,13 +65,29 @@
 
 				<v-spacer></v-spacer>
 
-				<v-tooltip bottom>
+				<v-tooltip v-if="appInfo.controllerStatus" bottom>
 					<template v-slot:activator="{ on }">
-						<div v-on="on" class="controller-status text-truncate">
-							{{ appInfo.controllerStatus }}
+						<div
+							v-on="on"
+							:style="{
+								background: appInfo.controllerStatus.error
+									? 'rgb(244, 67, 54)'
+									: '',
+							}"
+							class="controller-status text-truncate"
+						>
+							{{ appInfo.controllerStatus.status }}
 						</div>
 					</template>
-					<span>{{ appInfo.controllerStatus }}</span>
+					<div>
+						{{ appInfo.controllerStatus.status }}
+						<br />
+						{{
+							appInfo.controllerStatus.error
+								? 'Error: ' + appInfo.controllerStatus.error
+								: ''
+						}}
+					</div>
 				</v-tooltip>
 
 				<v-tooltip bottom>
@@ -701,9 +717,10 @@ export default {
 			this.socket.on(socketEvents.init, (data) => {
 				// convert node values in array
 				this.initNodes(data.nodes)
-				this.setControllerStatus(
-					data.error ? data.error : data.cntStatus
-				)
+				this.setControllerStatus({
+					error: data.error,
+					status: data.cntStatus,
+				})
 				this.setAppInfo(data.info)
 			})
 
