@@ -808,7 +808,7 @@ export default {
 				if (id === hubNode) {
 					entity.shape = 'house'
 				} else {
-					entity.shape = batlev === undefined ? 'rect' : 'battery'
+					entity.shape = node.isListening ? 'rect' : 'battery'
 				}
 
 				if (node.failed) {
