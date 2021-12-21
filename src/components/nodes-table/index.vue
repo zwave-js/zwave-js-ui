@@ -229,11 +229,34 @@
 			<div v-else></div>
 		</template>
 		<template v-slot:[`item.lastActive`]="{ item }">
-			{{
-				item.lastActive
-					? new Date(item.lastActive).toLocaleString()
-					: 'Never'
-			}}
+			<v-tooltip bottom>
+				<template v-slot:activator="{ on }">
+					<center v-on="on">
+						<blink-icon
+							icon="north"
+							:activeColor="
+								item.errorTransmit ? 'error' : 'green'
+							"
+							:active="now - item.lastTransmit < 1000"
+						/>
+						<blink-icon
+							icon="south"
+							:activeColor="item.errorReceive ? 'error' : 'green'"
+							:active="now - item.lastReceive < 1000"
+						/>
+						<div>
+							{{
+								item.lastActive
+									? new Date(item.lastActive).toLocaleString()
+									: 'Never'
+							}}
+						</div>
+					</center>
+				</template>
+				<span style="white-space: pre-wrap">{{
+					jsonToList(item.statistics)
+				}}</span>
+			</v-tooltip>
 		</template>
 		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
 			<expanded-node

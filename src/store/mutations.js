@@ -244,7 +244,82 @@ export const mutations = {
   setStatistics(state, data) {
     const node = getNode(data.nodeId)
     if (node) {
-      $set(node, 'statistics', data.statistics)
+      let lastReceive = node.lastReceive
+      let lastTransmit = node.lastTransmit
+      let errorReceive = false
+      let errorTransmit = false
+  
+      if (node.statistics) {
+        if (node.isControllerNode) {
+          const prev = node.statistics
+          const cur = data.statistics;
+
+          // Check for changes on the TX side
+          if (
+            prev.NAK < cur.NAK ||
+            prev.messagesDroppedTX < cur.messagesDroppedTX ||
+            prev.timeoutACK < cur.timeoutACK ||
+            prev.timeoutResponse < cur.timeoutResponse ||
+            prev.timeoutCallback < cur.timeoutCallback
+          ) {
+            //There was an error transmitting
+            errorTransmit = true
+            lastReceive = data.lastActive
+          } else if (prev.messagesTX < cur.messagesTX) {
+            // A message was sent
+            errorTransmit = false
+            lastReceive = data.lastActive
+          }
+
+          // Check for changes on the RX side
+          if (prev.messagesDroppedRX < cur.messagesDroppedRX) {
+            //There was an error receiving
+            errorReceive = true
+            lastReceive = data.lastActive
+          } else if (prev.messagesRX < cur.messagesRX) {
+            // A message was received
+            errorReceive = false
+            lastReceive = data.lastActive
+          }
+        } else {
+          const prev = node.statistics
+          const cur = data.statistics;
+
+          // Check for changes on the TX side
+          if (
+            prev.commandsDroppedTX < cur.commandsDroppedTX ||
+            prev.timeoutResponse < cur.timeoutResponse
+          ) {
+            //There was an error transmitting
+            errorTransmit = true
+            lastTransmit = data.lastActive
+          } else if (prev.commandsTX < cur.commandsTX) {
+            // A message was sent
+            errorTransmit = false
+            lastTransmit = data.lastActive
+          }
+
+          // Check for changes on the RX side
+          if (prev.commandsDroppedRX < cur.commandsDroppedRX) {
+            //There was an error receiving
+            errorReceive = true
+            lastReceive = data.lastActive
+          } else if (prev.commandsRX < cur.commandsRX) {
+            // A message was received
+            errorReceive = false
+            lastReceive = data.lastActive
+          }
+        }
+      }
+
+      Object.assign(node, {
+        statistics: data.statistics,
+        lastActive: data.lastActive,
+        lastReceive,
+        lastTransmit,
+        errorReceive,
+        errorTransmit
+      })
     }
 
   },

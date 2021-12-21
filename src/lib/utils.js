@@ -70,3 +70,10 @@ export function validDsk(dsk) {
 export function $set(o, p, v) {
 	return Object.assign(o, { [p]: v })
 }
+
+export function jsonToList(obj) {
+	let s = ''
+	for (const k in obj) s += k + ': ' + obj[k] + '\n'
+
+	return s
+}

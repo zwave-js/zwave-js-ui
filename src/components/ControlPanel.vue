@@ -107,6 +107,7 @@ import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
+import { jsonToList } from '@/lib/utils'
 import { socketEvents } from '@/plugins/socket'
 import StatisticsCard from '@/components/custom/StatisticsCard'
 
@@ -268,6 +269,7 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar', 'setHealProgress']),
+		jsonToList,
 		onAddRemoveClose() {
 			this.addRemoveShowDialog = false
 		},
@@ -522,12 +524,6 @@ export default {
 		},
 		saveConfiguration() {
 			this.apiRequest('writeConfig', [])
-		},
-		jsonToList(obj) {
-			let s = ''
-			for (const k in obj) s += k + ': ' + obj[k] + '\n'
-
-			return s
 		},
 		onApiResponse(data) {
 			if (data.success) {

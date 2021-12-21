@@ -1,9 +1,12 @@
 import draggable from 'vuedraggable'
 import colors from 'vuetify/lib/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
+import { jsonToList } from '@/lib/utils'
 import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import RichValue from '@/components/nodes-table/RichValue.vue'
+import BlinkIcon from '@/components/custom/BlinkIcon.vue'
+
 import { mapGetters } from 'vuex'
 import {
 	mdiAlertCircle,
@@ -35,6 +38,7 @@ export default {
 		ColumnFilter,
 		ExpandedNode,
 		RichValue,
+		BlinkIcon,
 	},
 	watch: {},
 	computed: {
@@ -43,6 +47,8 @@ export default {
 	data: function () {
 		return {
 			managedNodes: null,
+			nowInterval: null,
+			now: Date.now(),
 			nodesProps: {
 				/* The node property definition map entries can have the following attributes:
 		   - type (string): The type of the property
@@ -216,6 +222,7 @@ export default {
 		}
 	},
 	methods: {
+		jsonToList,
 		toggleExpanded(item) {
 			this.expanded = this.expanded.includes(item)
 				? this.expanded.filter((i) => i !== item)
@@ -329,5 +336,12 @@ export default {
 			localStorage,
 			'nodes_'
 		)
+
+		this.nowInterval = setInterval(() => {
+			this.now = Date.now()
+		}, 1000)
+	},
+	beforeDestroy() {
+		clearInterval(this.nowInterval)
 	},
 }
