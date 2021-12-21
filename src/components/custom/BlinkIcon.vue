@@ -1,5 +1,5 @@
 <template>
-	<v-icon :color="color">{{ icon }}</v-icon>
+	<v-icon :size="size" :color="color">{{ icon }}</v-icon>
 </template>
 
 <script>
@@ -12,6 +12,10 @@ export default {
 		duration: {
 			type: Number,
 			default: 1000,
+		},
+		size: {
+			type: Number,
+			default: 20,
 		},
 		icon: {
 			type: String,
