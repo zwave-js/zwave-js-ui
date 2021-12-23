@@ -11,6 +11,7 @@ export const state = {
     port: '/dev/zwave',
     commandsTimeout: 30,
     logLevel: 'silly',
+		logEnabled: true,
     securityKeys: {
       S2_Unauthenticated: undefined,
       S2_Authenticated: undefined,
