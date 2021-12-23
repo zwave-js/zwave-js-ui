@@ -10,7 +10,8 @@ export const state = {
   zwave: {
     port: '/dev/zwave',
     commandsTimeout: 30,
-    logLevel: 'silly',
+    logLevel: 'debug',
+		logEnabled: true,
     securityKeys: {
       S2_Unauthenticated: undefined,
       S2_Authenticated: undefined,
@@ -46,8 +47,8 @@ export const state = {
     nodeNames: true,
     hassDiscovery: true,
     discoveryPrefix: 'homeassistant',
-    logEnabled: true,
-    logLevel: 'silly',
+    logEnabled: false,
+    logLevel: 'debug',
     logToFile: false,
     values: []
   },
