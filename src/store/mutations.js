@@ -47,7 +47,7 @@ export const state = {
     nodeNames: true,
     hassDiscovery: true,
     discoveryPrefix: 'homeassistant',
-    logEnabled: true,
+    logEnabled: false,
     logLevel: 'silly',
     logToFile: false,
     values: []
