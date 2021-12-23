@@ -1,3 +1,22 @@
+# [6.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.1.1...v6.2.0) (2021-12-23)
+
+
+### Bug Fixes
+
+* set zwave logs enabled by default ([#2092](https://github.com/zwave-js/zwavejs2mqtt/issues/2092)) ([4eb9726](https://github.com/zwave-js/zwavejs2mqtt/commit/4eb9726c270ae665c0cbf8459c0c5d7b5d12a62e))
+* **ui:** battery and main icons ([c361667](https://github.com/zwave-js/zwavejs2mqtt/commit/c36166733a2b4551ab2b9fe4017e824eb2378a22))
+* **ui:** use monospace in debug ([8caf502](https://github.com/zwave-js/zwavejs2mqtt/commit/8caf50269e6cb7eef4de31d760146da76f1ba68c))
+* use `isListening` node prop to distinguish battery from mains ([22a3620](https://github.com/zwave-js/zwavejs2mqtt/commit/22a3620bfa761483edc3b485ac794a4298516c6a)), closes [#2071](https://github.com/zwave-js/zwavejs2mqtt/issues/2071)
+
+
+### Features
+
+* bump zwave-js@8.9.1 ([#2088](https://github.com/zwave-js/zwavejs2mqtt/issues/2088)) ([8720457](https://github.com/zwave-js/zwavejs2mqtt/commit/87204573c6c20bf46cb69cb7617b3a0871da06ca))
+* **ui:** add active indicator with statistics tooltip ([#2083](https://github.com/zwave-js/zwavejs2mqtt/issues/2083)) ([e82be01](https://github.com/zwave-js/zwavejs2mqtt/commit/e82be01cb657f0dcefe56b973afdf284e8cad1e2))
+* bump zw3ave-js@8.9.0-beta.2 ([80064b3](https://github.com/zwave-js/zwavejs2mqtt/commit/80064b3e0095e05f8aad10b6733b10057de19757))
+* bump zwave-js@8.9.0-beta.3 ([3e06a81](https://github.com/zwave-js/zwavejs2mqtt/commit/3e06a8116ee3fc77f6fc822954f891aef0426e17))
+* show driver errors on UI and prevent restart when zwave options are not valid ([#2069](https://github.com/zwave-js/zwavejs2mqtt/issues/2069)) ([e1e3172](https://github.com/zwave-js/zwavejs2mqtt/commit/e1e317205061a66c7c84a79e11776c53a9b13117))
+
 ## [6.1.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.1.0...v6.1.1) (2021-12-16)
 
 
