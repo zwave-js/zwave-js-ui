@@ -979,25 +979,27 @@ export default class Gateway {
 					'fan_only',
 				]
 				// Zwave modes: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatModeCC.ts#L54
-				const hassModes = [
-					'off',
-					'heat',
-					'cool',
-					'auto',
-					undefined,
-					undefined,
-					'fan_only',
-					undefined,
-					'dry',
-					undefined,
-					'auto',
-					'heat',
-					'cool',
-					'off',
-					'heat',
-					undefined, // manufacturer specific
-				]
-
+        // up to 0x1F modes
+        const hassModes = [
+             'off',       // Off
+             'heat',      // Heat
+             'cool',      // Cool
+             'auto',      // Auto
+             undefined,   // Aux
+             undefined,   // Resume (on)
+             'fan_only',  // Fan
+             undefined,   // Furnance
+             'dry',       // Dry
+             undefined,   // Moist
+             'auto',      // Auto changeover
+             'heat',      // Energy heat
+             'cool',      // Energy cool
+             'off',       // Away
+             undefined,   // No Z-Wave mode 0x0e
+             'heat',      // Full power
+             undefined,   // Up to 0x1f (manufacturer specific)
+        ]
+				
 				config.mode_map = {}
 				config.setpoint_topic = {}
 
@@ -1017,7 +1019,7 @@ export default class Gateway {
 						hM = allowedModes[i++]
 					}
 
-					config.mode_map[hM] = availableModes[m]
+					config.mode_map[hM] = m
 					config.discovery_payload.modes.push(hM)
 					if (m > 0) {
 						// find the mode setpoint, ignore off
@@ -1027,6 +1029,10 @@ export default class Gateway {
 							config.values.push(setId)
 							config.setpoint_topic[m] = setId
 						}
+            else { // Use first one, if no specific SP found
+              config.values.push(setpoints[0])
+              config.setpoint_topic[m] = setpoints[0]
+            }
 					}
 				}
 
