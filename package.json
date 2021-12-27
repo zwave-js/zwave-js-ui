@@ -32,8 +32,9 @@
       "views/**/*",
       "static/**/*",
       "dist/**/*",
-      "/node_modules/@serialport/bindings/**",
-      "/node_modules/leveldown/**"
+      "node_modules/@serialport/bindings/**",
+      "node_modules/leveldown/**",
+      "node_modules/@zwave-js/config/config/devices/**"
     ],
     "patches": {
       "node_modules/leveldown/binding.js": []
