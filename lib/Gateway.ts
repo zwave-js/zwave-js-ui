@@ -2011,6 +2011,7 @@ export default class Gateway {
 
 			if (Array.isArray(args)) {
 				result = await this._zwave.callApi(apiName, ...args)
+				result.origin = payload
 			} else {
 				result = {
 					success: false,
