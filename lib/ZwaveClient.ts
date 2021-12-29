@@ -326,6 +326,12 @@ export class DriverNotReadyError extends Error {
 	}
 }
 
+export interface FirmwareUpdateProgress {
+	sent: number
+	total: number
+	progress: number
+}
+
 export type Z2MNode = {
 	id: number
 	deviceConfig?: DeviceConfig
@@ -374,6 +380,7 @@ export type Z2MNode = {
 	healProgress?: string | undefined
 	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
+	firmwareUpdate?: FirmwareUpdateProgress
 }
 
 export type ZwaveConfig = {
@@ -3296,9 +3303,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		sentFragments: number,
 		totalFragments: number
 	) {
-		this._updateControllerStatus(
-			`Node ${zwaveNode.id} firmware update IN PROGRESS: ${sentFragments}/${totalFragments}`
-		)
+		const node = this.nodes.get(zwaveNode.id)
+		if (node) {
+			const firmwareUpdate: FirmwareUpdateProgress = {
+				sent: sentFragments,
+				total: totalFragments,
+				progress: Math.round((sentFragments / totalFragments) * 100),
+			}
+
+			node.firmwareUpdate = firmwareUpdate
+
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				id: node?.id,
+				firmwareUpdate,
+			})
+		}
+
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -3318,11 +3338,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		status: FirmwareUpdateStatus,
 		waitTime: number
 	) {
-		this._updateControllerStatus(
-			`Node ${zwaveNode.id} firmware update FINISHED: Status ${
-				FirmwareUpdateStatus[status]
-			}, Time: ${waitTime || 0}`
-		)
+		const node = this.nodes.get(zwaveNode.id)
+		if (node) {
+			node.firmwareUpdate = undefined
+
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				id: node?.id,
+				firmwareUpdate: false,
+			})
+		}
 
 		this.emit(
 			'event',
