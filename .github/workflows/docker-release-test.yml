@@ -1,4 +1,4 @@
-name: Docker Release
+name: Docker Test Release
 
 on:
   push:
@@ -41,7 +41,7 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
             maintainer=robertsLando
-      - run: echo ${ steps.docker_meta.outputs.tags }
+      - run: echo ${{ steps.docker_meta.outputs.tags }}
 
       # - name: build+push
       #   uses: docker/build-push-action@v2
