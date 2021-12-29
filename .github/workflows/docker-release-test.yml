@@ -3,10 +3,7 @@ name: Docker Release
 on:
   push:
     branches:
-      - master
-  release:
-    types:
-      - created
+      - test-release
 
 jobs:
   build-push:
@@ -33,29 +30,26 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: docker/metadata-action@v3
         with:
           images: |
             ghcr.io/zwave-js/zwavejs2mqtt
             zwavejs/zwavejs2mqtt
-          tag-sha: true
-          tag-latest: true
-          tag-semver: |
-            {{version}}
           label-custom: |
             org.opencontainers.image.vendor=zwave-js
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
             maintainer=robertsLando
+      - run: echo ${ steps.docker_meta.outputs.tags }
 
-      - name: build+push
-        uses: docker/build-push-action@v2
-        with:
-          platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
-          file: docker/Dockerfile
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          push: true
-          tags: ${{ steps.docker_meta.outputs.tags }}
-          labels: ${{ steps.docker_meta.outputs.labels }}
+      # - name: build+push
+      #   uses: docker/build-push-action@v2
+      #   with:
+      #     platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
+      #     file: docker/Dockerfile
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+      #     push: true
+      #     tags: ${{ steps.docker_meta.outputs.tags }}
+      #     labels: ${{ steps.docker_meta.outputs.labels }}
