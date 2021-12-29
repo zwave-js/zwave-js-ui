@@ -210,6 +210,7 @@ export default {
 					},
 				},
 				healProgress: { type: 'string', label: 'Heal' },
+				firmwareUpdate: { type: 'string', label: 'FW Update' },
 				interviewStage: { type: 'string', label: 'Interview' },
 				lastActive: {
 					type: 'date',

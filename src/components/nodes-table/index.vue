@@ -228,6 +228,16 @@
 			</div>
 			<div v-else></div>
 		</template>
+		<template v-slot:[`item.firmwareUpdate`]="{ item }">
+			<v-progress-circular
+				v-if="item.firmwareUpdate"
+				:value="item.firmwareUpdate.progress"
+				size="40"
+				color="primary"
+			>
+				<span class="caption">{{ item.firmwareUpdate.progress }}</span>
+			</v-progress-circular>
+		</template>
 		<template v-slot:[`item.lastActive`]="{ item }">
 			<v-tooltip bottom>
 				<template v-slot:activator="{ on }">
