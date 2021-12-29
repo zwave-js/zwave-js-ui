@@ -1,9 +1,9 @@
-name: Docker Test Release
+name: Docker Release - Test
 
 on:
   push:
     branches:
-      - test-release
+      - test
 
 jobs:
   build-push:
@@ -41,15 +41,14 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
             maintainer=robertsLando
-      - run: echo ${{ steps.docker_meta.outputs.tags }}
 
-      # - name: build+push
-      #   uses: docker/build-push-action@v2
-      #   with:
-      #     platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
-      #     file: docker/Dockerfile
-      #     cache-from: type=gha
-      #     cache-to: type=gha,mode=max
-      #     push: true
-      #     tags: ${{ steps.docker_meta.outputs.tags }}
-      #     labels: ${{ steps.docker_meta.outputs.labels }}
+      - name: build+push
+        uses: docker/build-push-action@v2
+        with:
+          platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
+          file: docker/Dockerfile
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          push: true
+          tags: ${{ steps.docker_meta.outputs.tags }}
+          labels: ${{ steps.docker_meta.outputs.labels }}
