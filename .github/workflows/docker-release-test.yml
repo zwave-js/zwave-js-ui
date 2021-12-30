@@ -1,12 +1,9 @@
-name: Docker Release
+name: Docker Release - Test
 
 on:
   push:
     branches:
-      - master
-  release:
-    types:
-      - created
+      - test
 
 jobs:
   build-push:
@@ -33,15 +30,11 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: docker/metadata-action@v3
         with:
           images: |
             ghcr.io/zwave-js/zwavejs2mqtt
             zwavejs/zwavejs2mqtt
-          tag-sha: true
-          tag-latest: true
-          tag-semver: |
-            {{version}}
           label-custom: |
             org.opencontainers.image.vendor=zwave-js
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
