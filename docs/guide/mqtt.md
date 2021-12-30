@@ -93,7 +93,7 @@ This are the available APIs:
   - `args`: array of arguments to pass to the command
 - `restart()`: restart client
 - `backupNVMRaw()`: Backup the NVM raw data
-- `restoreNVMRaw(data)`: Restore the NVM raw data
+- `restoreNVM(data)`: Restore the NVM data. If the given buffer is in a different NVM format, it is converted automatically. If the conversion is not supported, the operation fails.
 - `softReset`: Soft reset the controller (restart)
 - `driverFunction(code)`: Execute a driver function. The function `this` allow to access `zwaveClient` instance and `require` (ex: `this.zwaveClient` and `this.require`). The only parameter of the function is `driver`. It's like execute this:
 

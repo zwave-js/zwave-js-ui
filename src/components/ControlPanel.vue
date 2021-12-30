@@ -249,7 +249,7 @@ export default {
 					text: 'NVM Management',
 					options: [
 						{ name: 'Backup', action: 'backupNVMRaw' },
-						{ name: 'Restore', action: 'restoreNVMRaw' },
+						{ name: 'Restore', action: 'restoreNVM' },
 					],
 					icon: 'update',
 					desc: "Backup/Restore controller's NVM (Non Volatile Memory)",
@@ -455,7 +455,7 @@ export default {
 					if (!confirm) {
 						return
 					}
-				} else if (action === 'restoreNVMRaw') {
+				} else if (action === 'restoreNVM') {
 					const confirm = await this.$listeners.showConfirm(
 						'NVM Restore',
 						'While doing the restore the Z-Wave radio will be turned on/off.\n<strong>A failure during this process may brick your controller. Use at your own risk!</strong>',
@@ -553,7 +553,7 @@ export default {
 							)
 						}
 						break
-					case 'restoreNVMRaw':
+					case 'restoreNVM':
 						this.showSnackbar('NVM restore DONE')
 						break
 					default:

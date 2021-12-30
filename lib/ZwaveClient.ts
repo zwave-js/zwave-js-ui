@@ -150,7 +150,7 @@ const allowedApis = validateMethods([
 	'validateDSK',
 	'abortInclusion',
 	'backupNVMRaw',
-	'restoreNVMRaw',
+	'restoreNVM',
 	'getProvisioningEntries',
 	'getProvisioningEntry',
 	'unprovisionSmartStartNode',
@@ -2691,12 +2691,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(`Backup NVM progress: ${progress}%`)
 	}
 
-	async restoreNVMRaw(data: Buffer) {
+	async restoreNVM(data: Buffer) {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
 
-		await this.driver.controller.restoreNVMRaw(
+		await this.driver.controller.restoreNVM(
 			data,
 			this._onRestoreNVMProgress.bind(this)
 		)
