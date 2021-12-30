@@ -2698,8 +2698,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await this.driver.controller.restoreNVM(
 			data,
+			this._onConvertNVMProgress.bind(this),
 			this._onRestoreNVMProgress.bind(this)
 		)
+	}
+
+	private _onConvertNVMProgress(bytesRead: number, totalBytes: number) {
+		const progress = Math.round((bytesRead / totalBytes) * 100)
+
+		this._updateControllerStatus(`Convert NVM progress: ${progress}%`)
 	}
 
 	private _onRestoreNVMProgress(bytesRead: number, totalBytes: number) {
