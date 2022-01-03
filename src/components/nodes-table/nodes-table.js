@@ -9,7 +9,6 @@ import BlinkIcon from '@/components/custom/BlinkIcon.vue'
 
 import { mapGetters } from 'vuex'
 import {
-	mdiAlertCircle,
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
 	mdiBattery50,
