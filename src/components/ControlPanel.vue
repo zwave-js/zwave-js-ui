@@ -217,11 +217,6 @@ export default {
 					text: 'Failed Nodes',
 					options: [
 						{
-							name: 'Check all',
-							action: 'isFailedNode',
-							args: { broadcast: true },
-						},
-						{
 							name: 'Remove all',
 							action: 'removeFailedNode',
 							args: {
