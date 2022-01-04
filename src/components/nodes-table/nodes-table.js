@@ -9,7 +9,6 @@ import BlinkIcon from '@/components/custom/BlinkIcon.vue'
 
 import { mapGetters } from 'vuex'
 import {
-	mdiAlertCircle,
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
 	mdiBattery50,
@@ -155,28 +154,6 @@ export default {
 				firmwareVersion: {
 					type: 'string',
 					label: 'FW',
-				},
-				failed: {
-					type: 'boolean',
-					label: 'Failed',
-					richValue: (node) =>
-						this.booleanRichValue(node.failed, {
-							default: {
-								icon: mdiHelpCircle,
-								iconStyle: `color: ${colors.grey.base}`,
-								description: 'Failure status unknown',
-							},
-							true: {
-								icon: mdiAlertCircle,
-								iconStyle: `color: ${colors.red.base}`,
-								description: 'Node is failed!',
-							},
-							false: {
-								icon: mdiCheckCircle,
-								iconStyle: `color: ${colors.green.base}`,
-								description: 'Node is not failed.',
-							},
-						}),
 				},
 				status: {
 					type: 'string',
