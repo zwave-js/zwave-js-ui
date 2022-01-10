@@ -10,6 +10,7 @@ pull_request_rules:
       - base=master
       - author=dependabot[bot]
       - label!=major
+      - label=automerge
     actions:
       queue:
         method: squash
