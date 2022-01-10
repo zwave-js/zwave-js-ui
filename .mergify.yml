@@ -1,14 +1,19 @@
+queue_rules:
+  - name: default
+    conditions:
+      # Conditions to get out of the queue (= merged)
+      - label=automerge
+
 pull_request_rules:
   - name: automatic merge dependabot
     conditions:
       - base=master
       - author=dependabot[bot]
-      - label=automerge
       - label!=major
     actions:
-      merge:
+      queue:
         method: squash
-        strict: true
+        name: default
 
   - name: approve dependabot
     conditions:
