@@ -1,3 +1,26 @@
+# [6.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.2.0...v6.3.0) (2022-01-10)
+
+
+### Bug Fixes
+
+* restart driver after hard reset ([#2160](https://github.com/zwave-js/zwavejs2mqtt/issues/2160)) ([deac2b8](https://github.com/zwave-js/zwavejs2mqtt/commit/deac2b89ce0dc8d745dce3438b1d84c1ad3c5e4b)), closes [#2141](https://github.com/zwave-js/zwavejs2mqtt/issues/2141)
+* **hass:** barrier State needs value_template ([#2148](https://github.com/zwave-js/zwavejs2mqtt/issues/2148)) ([dae3761](https://github.com/zwave-js/zwavejs2mqtt/commit/dae37613dcf5fa23547db44a2c4cc41255e7b5ae))
+* **ui:** drop `failed` column ([#2134](https://github.com/zwave-js/zwavejs2mqtt/issues/2134)) ([bd8c933](https://github.com/zwave-js/zwavejs2mqtt/commit/bd8c933010ccd0e9c39d7392984c386ff25deaa7)), closes [#2130](https://github.com/zwave-js/zwavejs2mqtt/issues/2130)
+* add missing NVM convert progress callback ([b849be9](https://github.com/zwave-js/zwavejs2mqtt/commit/b849be9f775fb204e266e35cedb552e8fa60eee2))
+* **ui:** move firmware update to fw version column ([fb59d33](https://github.com/zwave-js/zwavejs2mqtt/commit/fb59d334b38bfe31f9e225de4237f19d87b53104))
+* add missing origin to call api result ([5c8a1c0](https://github.com/zwave-js/zwavejs2mqtt/commit/5c8a1c0a48469a964feab9a1a33f28e3e8ced305)), closes [#278](https://github.com/zwave-js/zwavejs2mqtt/issues/278)
+* **hass:** thermostat mode mapping ([#2109](https://github.com/zwave-js/zwavejs2mqtt/issues/2109)) ([9b23c1f](https://github.com/zwave-js/zwavejs2mqtt/commit/9b23c1f6139bbd7a34b7be76b004e62f03a12123))
+
+
+### Features
+
+* **ui:** add cc version ([#2158](https://github.com/zwave-js/zwavejs2mqtt/issues/2158)) ([83c4e42](https://github.com/zwave-js/zwavejs2mqtt/commit/83c4e42b365a2631b7e5484f9a0dadc79b14f981)), closes [#2147](https://github.com/zwave-js/zwavejs2mqtt/issues/2147)
+* bump @zwave-js/server@1.14.0 ([#2098](https://github.com/zwave-js/zwavejs2mqtt/issues/2098)) ([814820a](https://github.com/zwave-js/zwavejs2mqtt/commit/814820a6311682c2f88d4cf6a08fad31a6d9a548))
+* bump zwave-js@8.10.1 ([#2155](https://github.com/zwave-js/zwavejs2mqtt/issues/2155)) ([5c99018](https://github.com/zwave-js/zwavejs2mqtt/commit/5c99018191a5149c5079d3c273b67a5958774504))
+* use new `restoreNVM` API to restore NVM backups ([#2120](https://github.com/zwave-js/zwavejs2mqtt/issues/2120)) ([18b49ea](https://github.com/zwave-js/zwavejs2mqtt/commit/18b49ea00c655b4031678b849ca74ac287dbc20d)), closes [#2119](https://github.com/zwave-js/zwavejs2mqtt/issues/2119)
+* **ui:** visualize running firmware updates ([#2117](https://github.com/zwave-js/zwavejs2mqtt/issues/2117)) ([6238696](https://github.com/zwave-js/zwavejs2mqtt/commit/62386961a0d255541e119899350fbc903a7042eb)), closes [#2110](https://github.com/zwave-js/zwavejs2mqtt/issues/2110)
+* bump zwave-js@8.9.2 ([#2112](https://github.com/zwave-js/zwavejs2mqtt/issues/2112)) ([202f9c4](https://github.com/zwave-js/zwavejs2mqtt/commit/202f9c44de3e7a36a504c16b8d4cc1d478890d05))
+
 # [6.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.1.1...v6.2.0) (2021-12-23)
 
 
