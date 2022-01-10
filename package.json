@@ -93,7 +93,8 @@
   },
   "resolutions": {
     "serialport": "~9.0.7",
-    "@serialport/bindings": "~9.0.8"
+    "@serialport/bindings": "~9.0.8",
+    "colors": "1.4.0"
   },
   "optionalDependencies": {
     "@release-it/conventional-changelog": "^3.3.0",
