@@ -386,14 +386,26 @@ export default {
 		...mapGetters(['mqtt']),
 		commandGroups() {
 			if (this.node) {
-				const groups = { Configuration: [] }
+				const groups = {}
+				let addConfiguration = true
+
 				for (const v of this.node.values) {
-					const className = v.commandClassName
+					const className =
+						v.commandClassName + ' v' + v.commandClassVersion
 					if (!groups[className]) {
+						if (v.commandClassName === 'Configuration') {
+							addConfiguration = false
+						}
 						groups[className] = []
 					}
 					groups[className].push(v)
 				}
+
+				// add empty confgiguration CC group
+				if (addConfiguration) {
+					groups.Configuration = []
+				}
+
 				return groups
 			} else {
 				return {}

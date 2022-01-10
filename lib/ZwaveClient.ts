@@ -252,6 +252,7 @@ export type Z2MValueId = {
 	isCurrentValue?: boolean
 	conf?: GatewayValue
 	allowManualEntry?: boolean
+	commandClassVersion?: number
 } & TranslatedValueID
 
 export type Z2MValueIdScene = Z2MValueId & {
@@ -3570,6 +3571,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			nodeId: zwaveNode.id,
 			commandClass: zwaveValue.commandClass,
 			commandClassName: zwaveValue.commandClassName,
+			commandClassVersion: zwaveNode
+				.getEndpoint(zwaveValue.endpoint)
+				.getCCVersion(zwaveValue.commandClass),
 			endpoint: zwaveValue.endpoint,
 			property: zwaveValue.property,
 			propertyName: zwaveValue.propertyName,
