@@ -2063,10 +2063,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async hardReset() {
 		if (this.driverReady) {
-			return this._driver.hardReset()
+			await this._driver.hardReset()
+			this.restart().catch((err) => {
+				logger.error(err)
+			})
+		} else {
+			throw new DriverNotReadyError()
 		}
-
-		throw new DriverNotReadyError()
 	}
 
 	softReset() {
