@@ -14,8 +14,6 @@ export function parseSecurityClasses(securityClasses, defaultVal) {
 		s0Legacy: defaultVal,
 	}
 
-	debugger
-
 	for (const c of securityClasses) {
 		switch (c) {
 			case 0:
