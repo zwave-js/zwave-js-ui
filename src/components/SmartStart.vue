@@ -328,7 +328,10 @@ export default {
 			return items.map((item) => {
 				return {
 					...item,
-					securityClasses: parseSecurityClasses(item.securityClasses),
+					securityClasses: parseSecurityClasses(
+						item.securityClasses,
+						false
+					),
 				}
 			})
 		},

@@ -6,13 +6,15 @@ export function wait(ms) {
 	return new Promise((r) => setTimeout(r, ms))
 }
 
-export function parseSecurityClasses(securityClasses) {
+export function parseSecurityClasses(securityClasses, defaultVal) {
 	const classes = {
-		s2AccessControl: false,
-		s2Authenticated: false,
-		s2Unauthenticated: false,
-		s0Legacy: false,
+		s2AccessControl: defaultVal,
+		s2Authenticated: defaultVal,
+		s2Unauthenticated: defaultVal,
+		s0Legacy: defaultVal,
 	}
+
+	debugger
 
 	for (const c of securityClasses) {
 		switch (c) {
