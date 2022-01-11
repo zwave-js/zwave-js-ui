@@ -1,71 +1,102 @@
----
-name: Bug Report
-about: Create a report to help to improve the project
-title: "[bug]"
-labels: bug
-assignees: robertsLando
+name: Bug report
+description: Template for bug reports
+title: '[Bug]: '
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |2-
+          **BEFORE** opening an issue, please read and follow these steps:
 
----
+          1. Are you using HomeAssistant?
+          If yes, please open your issue at https://github.com/home-assistant/core/issues
+          UNLESS a developer told you to come here.
 
-<!--
-  🚨🚨🚨 STOP! STOP! STOP! 🚨🚨🚨
-  Before opening an issue, please read and follow these steps:
+          2. Check the troubleshooting section if your problem is described there:
+          https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
 
-  1. Are you using HomeAssistant?
-  If yes, please open your issue at https://github.com/home-assistant/core/issues
-  UNLESS a developer told you to come here.
+          3. Check the changelog if your problem was already fixed recently.
+          https://github.com/zwave-js/zwavejs2mqtt/blob/master/CHANGELOG.md
+          We cannot provide support if you are not using the latest version.
 
-  2. Check the troubleshooting section if your problem is described there:
-  https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
+          4. Make sure to provide the necessary information, as described here:
+          https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
 
-  3. Check the changelog if your problem was already fixed recently.
-  https://github.com/zwave-js/zwavejs2mqtt/blob/master/CHANGELOG.md
-  We cannot provide support if you are not using the latest version.
+          If you are using HomeAssistant, this is how you do it:
 
-  4. Make sure to provide the necessary information, as described here:
-  https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
+         Home Assistant -> settings -> Integrations -> Z-Wave JS -> Configure -> Create dump -> zip the json file and post it here.
 
-  If you are using HomeAssistant, this is how you do it:
-  Home Assistant -> settings -> Integrations -> Z-Wave JS -> Configure -> Create dump -> zip the json file and post it here.
 
-  🙏🏻🙏🏻🙏🏻 Thanks, now on to your issue:
--->
-
-### Version
-
-**Checklist:**
-
-- [ ] I am **not** using Home Assistant. **Or:** a developer has told me to come here.
-- [ ] I have checked the troubleshooting section and my problem is **not** described there.
-- [ ] I have read the changelog and my problem is **not** mentioned there.
-
-Build/Run method
-
-- [ ] Docker
-- [ ] PKG
-- [ ] Snap package
-- [ ] Manually built (git clone - yarn install - yarn run build )
-
-Zwavejs2Mqtt version: <version here, you can find it on control panel>
-Z-Wave JS version: <version here, you can find it on control panel>
-
-### Describe the bug
-
-A clear and concise description of what the bug is.
-
-### To Reproduce
-
-Steps to reproduce the behavior:
-
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
-
-### Expected behavior
-
-A clear and concise description of what you expected to happen.
-
-### Additional context
-
-Add any other context about the problem here.
+        Thanks, now on to your issue:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: ' I am not using Home Assistant. Or: a developer has told me to come here.'
+          validations:
+            required: true
+        - label: >-
+            I have checked the troubleshooting section and my problem is not
+            described there.
+          validations:
+            required: true
+        - label: I have read the changelog and my problem is not mentioned there.
+          validations:
+            required: true
+  - type: dropdown
+    id: build
+    attributes:
+      label: Deploy method
+      description: How did you installed Zwavejs2mqtt
+      options:
+        - Docker
+        - PKG executable
+        - Snap
+        - Manually built (git clone - yarn build - yarn install
+    validations:
+      required: true
+  - type: input
+    id: zjs2m-version
+    attributes:
+      label: Zwavejs2Mqtt version
+    validations:
+      required: true
+  - type: input
+    id: zjs-version
+    attributes:
+      label: ZwaveJS version
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      placeholder: A clear and concise description of what the bug is.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: To Reproduce
+      placeholder: Steps to reproduce the behavior
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: A clear and concise description of what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      placeholder: Add any other context about the problem here
+  - type: markdown
+    attributes:
+      value: >-
+        This template was generated with [Issue Forms
+        Creator](https://www.issue-forms-creator.app/)
