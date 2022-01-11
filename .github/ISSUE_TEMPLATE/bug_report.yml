@@ -35,16 +35,10 @@ body:
       label: Checklist
       options:
         - label: ' I am not using Home Assistant. Or: a developer has told me to come here.'
-          validations:
-            required: true
         - label: >-
             I have checked the troubleshooting section and my problem is not
             described there.
-          validations:
-            required: true
         - label: I have read the changelog and my problem is not mentioned there.
-          validations:
-            required: true
   - type: dropdown
     id: build
     attributes:
