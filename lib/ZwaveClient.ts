@@ -3574,9 +3574,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			nodeId: zwaveNode.id,
 			commandClass: zwaveValue.commandClass,
 			commandClassName: zwaveValue.commandClassName,
-			commandClassVersion: zwaveNode
-				.getEndpoint(zwaveValue.endpoint)
-				.getCCVersion(zwaveValue.commandClass),
 			endpoint: zwaveValue.endpoint,
 			property: zwaveValue.property,
 			propertyName: zwaveValue.propertyName,
@@ -3591,6 +3588,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			default: zwaveValueMeta.default,
 			ccSpecific: zwaveValueMeta.ccSpecific,
 			stateless: zwaveValue.stateless || false, // used for notifications to specify that this should not be persisted (retained)
+		}
+
+		if (zwaveNode.ready) {
+			const endpoint = zwaveNode.getEndpoint(zwaveValue.endpoint)
+
+			valueId.commandClassVersion = endpoint?.getCCVersion(
+				zwaveValue.commandClass
+			)
 		}
 
 		// Value types: https://github.com/zwave-js/node-zwave-js/blob/cb35157da5e95f970447a67cbb2792e364b9d1e1/packages/core/src/values/Metadata.ts#L28
