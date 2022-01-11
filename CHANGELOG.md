@@ -1,3 +1,19 @@
+## [6.3.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.3.0...v6.3.1) (2022-01-11)
+
+
+### Bug Fixes
+
+* **ui:** disable security classes not requested ([fce70c6](https://github.com/zwave-js/zwavejs2mqtt/commit/fce70c6a5f960367bc4b7d56ef08497b92677da6))
+* **ui:** visualization issue on mobile ([c91708c](https://github.com/zwave-js/zwavejs2mqtt/commit/c91708c0791344967cd5e87e53f1fcfdb3143850))
+* ensure node is ready before getting cc version ([#2168](https://github.com/zwave-js/zwavejs2mqtt/issues/2168)) ([835e2e0](https://github.com/zwave-js/zwavejs2mqtt/commit/835e2e06722c2d254a61f4cda7af4248feb63254)), closes [#2162](https://github.com/zwave-js/zwavejs2mqtt/issues/2162)
+
+
+### Features
+
+* bump zwave-js@8.10.2 ([#2171](https://github.com/zwave-js/zwavejs2mqtt/issues/2171)) ([8f17387](https://github.com/zwave-js/zwavejs2mqtt/commit/8f17387b9a44ba8155b47ba95196f8ffeb81369f))
+* **ui:** show node metadata ([cff2059](https://github.com/zwave-js/zwavejs2mqtt/commit/cff205943d0c01af1069334a7cb96aa970c41a95))
+* bump @zwave-js/server@1.14.1 ([#2167](https://github.com/zwave-js/zwavejs2mqtt/issues/2167)) ([2a3e0d4](https://github.com/zwave-js/zwavejs2mqtt/commit/2a3e0d4308b2376364c750b609bbcfdcd0eadb32))
+
 # [6.3.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.2.0...v6.3.0) (2022-01-10)
 
 
