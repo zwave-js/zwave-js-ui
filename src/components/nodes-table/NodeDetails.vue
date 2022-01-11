@@ -36,7 +36,7 @@
 		</v-row>
 
 		<v-row v-if="nodeMetadata" justify="start">
-			<v-card class="ml-3" style="width: 600px; max-width: 600px">
+			<v-card class="ml-3" style="max-width: 600px">
 				<v-tabs vertical>
 					<v-tab
 						v-for="meta in Object.keys(nodeMetadata)"
@@ -51,12 +51,17 @@
 					>
 						<v-card flat>
 							<v-card-text>
-								<v-btn
+								<v-col
+									style="width: 600px"
+									class="text-center"
 									v-if="meta === 'manual'"
-									:href="nodeMetadata[meta]"
-									color="primary"
-									>DOWNLOAD</v-btn
 								>
+									<v-btn
+										:href="nodeMetadata[meta]"
+										color="primary"
+										>DOWNLOAD</v-btn
+									>
+								</v-col>
 								<p v-else>{{ nodeMetadata[meta] }}</p>
 							</v-card-text>
 						</v-card>
