@@ -169,7 +169,7 @@
 									</v-col>
 								</v-row>
 								<v-col
-									v-if="className === 'Configuration'"
+									v-if="className.startsWith('Configuration')"
 									cols="12"
 									sm="6"
 									md="4"
