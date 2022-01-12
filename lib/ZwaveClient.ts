@@ -207,9 +207,7 @@ export type SensorTypeScale = {
 
 export type AllowedApis = typeof allowedApis[number]
 
-const logDir = process.env.ZWAVEJS_LOG_DIR || storeDir
-
-const ZWAVEJS_LOG_FILE = utils.joinPath(logDir, 'zwavejs_%DATE%.log')
+const ZWAVEJS_LOG_FILE = utils.joinPath(process.env.ZWAVEJS_LOGS_DIR || storeDir, 'zwavejs_%DATE%.log')
 
 export type Z2MValueIdState = {
 	text: string
