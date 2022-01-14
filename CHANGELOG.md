@@ -1,3 +1,16 @@
+# [6.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.3.1...v6.4.0) (2022-01-14)
+
+
+### Bug Fixes
+
+* **ui:** hidden custom configuration ([ab5a488](https://github.com/zwave-js/zwavejs2mqtt/commit/ab5a488cef4f2428c5409f5b283d6734e968a6e5)), closes [#2175](https://github.com/zwave-js/zwavejs2mqtt/issues/2175)
+
+
+### Features
+
+* allow to override zwavejs log dir using `ZWAVEJS_LOG_DIR` env var ([#2174](https://github.com/zwave-js/zwavejs2mqtt/issues/2174)) ([d46e08e](https://github.com/zwave-js/zwavejs2mqtt/commit/d46e08eec09a6ee488cdd5a9f650c2ff660fc7fd))
+* bump zwave-js@8.11.0 ([#2184](https://github.com/zwave-js/zwavejs2mqtt/issues/2184)) ([038229d](https://github.com/zwave-js/zwavejs2mqtt/commit/038229d63ebda25091b3d82ebdc5fc189f67fbc4))
+
 ## [6.3.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.3.0...v6.3.1) (2022-01-11)
 
 
