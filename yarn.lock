@@ -2976,9 +2976,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:8.10.2":
-  version: 8.10.2
-  resolution: "@zwave-js/config@npm:8.10.2"
+"@zwave-js/config@npm:8.11.0":
+  version: 8.11.0
+  resolution: "@zwave-js/config@npm:8.11.0"
   dependencies:
     "@zwave-js/core": 8.10.2
     "@zwave-js/shared": 8.10.0
@@ -2989,7 +2989,7 @@ __metadata:
     json5: ^2.2.0
     semver: ^7.3.5
     winston: ^3.3.4
-  checksum: 73df8641ab010e229a3ad13403d36cdd01294ab854dbe8d805a36550db4c8fe9120f8387a37909840192a5fa0d70010024c65f9dfa35f5af6dffbbce6f1fcaeb
+  checksum: 742af5b132ca5b3c1e4800874298cbf0ea77b6d54bfb485b92f17f8bf67cab522b25162caeec269f94cea5a258c6496f3c7ca323937bc094ccd32ae4a39fb86c
   languageName: node
   linkType: hard
 
@@ -16131,15 +16131,15 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:^8.10.2":
-  version: 8.10.2
-  resolution: "zwave-js@npm:8.10.2"
+"zwave-js@npm:^8.11.0":
+  version: 8.11.0
+  resolution: "zwave-js@npm:8.11.0"
   dependencies:
     "@alcalzone/jsonl-db": ^2.4.1
     "@alcalzone/pak": ^0.7.0
     "@sentry/integrations": ^6.16.1
     "@sentry/node": ^6.16.1
-    "@zwave-js/config": 8.10.2
+    "@zwave-js/config": 8.11.0
     "@zwave-js/core": 8.10.2
     "@zwave-js/nvmedit": 8.10.2
     "@zwave-js/serial": 8.10.2
@@ -16156,7 +16156,7 @@ typescript@^4.4.3:
     source-map-support: ^0.5.21
     winston: ^3.3.4
     xstate: ^4.27.0
-  checksum: 52f5e360285812156824625d78a183511c7d53091d38f211bf3014c718451d6e6e3b6fafad4af86b5a0743afcc16018377ca7236c11c89f855e1a1c28cd9c1bd
+  checksum: d7b3ef3c78702925449cee8101ce39b00ca0c72db8c6bd430596aac406289baae4730ce0de0ad135cb2be6a26e56cc0b4795aecdb3d4af9ba983bfb6cbe15bae
   languageName: node
   linkType: hard
 
@@ -16315,7 +16315,7 @@ typescript@^4.4.3:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: ^8.10.2
+    zwave-js: ^8.11.0
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
