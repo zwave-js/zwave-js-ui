@@ -471,6 +471,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _devices: Record<string, Partial<Z2MNode>>
 	private driverInfo: Z2MDriverInfo
 	private status: ZwaveClientStatus
+	// used to store node info before inclusion like name and location
+	private tmpNode: utils.DeepPartial<Z2MNode>
+	// tells if a node replacement is in progress
+	private isReplacing = false
 
 	private _error: string | undefined
 	private _scanComplete: boolean
@@ -567,9 +571,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.storeNodes = storeNodes
 
-			jsonStore.put(store.nodes, storeNodes).catch((err) => {
-				logger.error('Error while updating store nodes', err)
-			})
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.updateStoreNodes(false)
 		}
 
 		this._devices = {}
@@ -752,7 +755,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			node.hassDevices = utils.copy(devices)
-			await jsonStore.put(store.nodes, this.storeNodes)
+			await this.updateStoreNodes()
 
 			this.emitNodeStatus(node, {
 				hassDevices: node.hassDevices,
@@ -1359,6 +1362,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	// ------------NODES MANAGEMENT-----------------------------------
+
+	async updateStoreNodes(throwError = true) {
+		try {
+			logger.debug('Updating store nodes.json')
+			await jsonStore.put(store.nodes, this.storeNodes)
+		} catch (error) {
+			logger.error(
+				`Error while updating store nodes: ${error.message}`,
+				error
+			)
+			if (throwError) {
+				throw error
+			}
+		}
+	}
+
 	/**
 	 * Updates node `name` property and stores updated config in `nodes.json`
 	 */
@@ -1379,7 +1398,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.storeNodes[nodeid].name = name
 
-		await jsonStore.put(store.nodes, this.storeNodes)
+		await this.updateStoreNodes()
 
 		this.emitNodeStatus(node, { name: name })
 
@@ -1406,8 +1425,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.storeNodes[nodeid].loc = loc
 
-		await jsonStore.put(store.nodes, this.storeNodes)
-
+		await this.updateStoreNodes()
 		this.emitNodeStatus(node, { loc: loc })
 		return true
 	}
@@ -1730,7 +1748,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		strategy: InclusionStrategy = InclusionStrategy.Security_S2,
 		options?: { qrString?: string; provisioning?: PlannedProvisioningEntry }
 	): Promise<boolean> {
-		if (this.driverReady) {
+		try {
+			if (!this.driverReady) {
+				throw new DriverNotReadyError()
+			}
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1739,6 +1760,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.commandsTimeout = setTimeout(() => {
 				this.stopInclusion().catch(logger.error)
 			}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
+
+			this.isReplacing = true
 			// by default replaceFailedNode is secured, pass true to make it not secured
 			if (strategy === InclusionStrategy.Security_S2) {
 				let inclusionOptions: ReplaceNodeOptions
@@ -1785,9 +1808,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					`Inclusion strategy not supported with replace failed node api`
 				)
 			}
+		} catch (error) {
+			this.isReplacing = false
+			throw error
 		}
-
-		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -1799,6 +1823,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			forceSecurity?: boolean
 			provisioning?: PlannedProvisioningEntry
 			qrString?: string
+			name?: string
+			location?: string
 		}
 	): Promise<boolean> {
 		if (this.driverReady) {
@@ -1863,6 +1889,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					break
 				default:
 					inclusionOptions = { strategy }
+			}
+
+			if (options.name || options.location) {
+				this.tmpNode = {
+					name: options.name || '',
+					loc: options.location || '',
+				}
 			}
 
 			return this._driver.controller.beginInclusion(inclusionOptions)
@@ -2499,6 +2532,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _onInclusionStopped() {
 		const message = 'Inclusion stopped'
+		this.isReplacing = false
+		this.tmpNode = undefined
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion stopped')
 	}
@@ -3430,6 +3465,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.emit('nodeRemoved', node)
 			this.sendToSocket(socketEvents.nodeRemoved, node)
 		}
+
+		if (!this.isReplacing && this.storeNodes[nodeid]) {
+			delete this.storeNodes[nodeid]
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.updateStoreNodes(false)
+		}
 	}
 
 	/**
@@ -3448,6 +3489,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				Error('node has been added twice')
 			)
 			return existingNode
+		}
+
+		// set node name and location sent with beginInclusion call
+		if (this.tmpNode) {
+			if (this.storeNodes[nodeId]) {
+				this.storeNodes[nodeId].name = this.tmpNode.name
+				this.storeNodes[nodeId].loc = this.tmpNode.loc
+			} else {
+				this.storeNodes[nodeId] = {
+					name: this.tmpNode.name,
+					loc: this.tmpNode.loc,
+				}
+			}
+
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.updateStoreNodes(false)
+
+			this.tmpNode = undefined
 		}
 
 		const node: Z2MNode = {
@@ -3549,9 +3608,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// keep zwaveNode and node name and location synced
 			if (node.name && node.name !== zwaveNode.name) {
+				logger.debug(
+					`Setting node name '${node.name}' to node ${nodeId}`
+				)
 				zwaveNode.name = node.name
 			}
 			if (node.loc && node.loc !== zwaveNode.location) {
+				logger.debug(
+					`Setting node location '${node.loc}' to node ${nodeId}`
+				)
 				zwaveNode.location = node.loc
 			}
 		} else {

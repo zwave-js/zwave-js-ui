@@ -139,6 +139,34 @@
 									</v-card-actions>
 								</v-card-text>
 
+								<v-card-text v-if="s.key == 'inclusionNaming'">
+									<v-text-field
+										label="Name"
+										persistent-hint
+										hint="Node name"
+										v-model.trim="s.values.name"
+									>
+									</v-text-field>
+									<v-text-field
+										label="Location"
+										class="mb-2"
+										persistent-hint
+										hint="Node location"
+										v-model.trim="s.values.location"
+									>
+									</v-text-field>
+
+									<v-card-actions>
+										<v-btn
+											color="primary"
+											@click.stop="nextStep"
+											@keypress.enter="nextStep"
+										>
+											Next
+										</v-btn>
+									</v-card-actions>
+								</v-card-text>
+
 								<v-card-text v-if="s.key == 'inclusionMode'">
 									<v-radio-group
 										v-if="!loading"
@@ -559,6 +587,14 @@ export default {
 						action: 0, //inclusion
 					},
 				},
+				inclusionNaming: {
+					key: 'inclusionNaming',
+					title: 'Name and Location',
+					values: {
+						name: '',
+						location: '',
+					},
+				},
 				inclusionMode: {
 					key: 'inclusionMode',
 					title: 'Inclusion Mode',
@@ -615,6 +651,7 @@ export default {
 			alert: null,
 			nodeFound: null,
 			currentAction: null,
+			nodeProps: {},
 			bindedSocketEvents: {},
 			stopped: false,
 			aborted: false,
@@ -850,7 +887,7 @@ export default {
 				if (mode === 0) {
 					// inclusion
 					this.currentAction = 'Inclusion'
-					this.pushStep('inclusionMode')
+					this.pushStep('inclusionNaming')
 				} else if (mode === 1) {
 					// replace
 					this.currentAction = 'Inclusion'
@@ -860,6 +897,12 @@ export default {
 					this.currentAction = 'Exclusion'
 					this.sendAction('startExclusion', [])
 				}
+			} else if (s.key === 'inclusionNaming') {
+				this.nodeProps = {
+					name: s.values.name,
+					location: s.values.location,
+				}
+				this.pushStep('inclusionMode')
 			} else if (
 				s.key === 'inclusionMode' ||
 				s.key === 'replaceInclusionMode'
@@ -905,7 +948,10 @@ export default {
 				} else {
 					this.sendAction('startInclusion', [
 						mode,
-						{ forceSecurity: s.values.forceSecurity },
+						{
+							forceSecurity: s.values.forceSecurity,
+							...this.nodeProps,
+						},
 					])
 				}
 			} else if (s.key === 's2Classes') {
@@ -943,6 +989,7 @@ export default {
 			}
 
 			this.loading = false
+			this.nodeProps = {}
 			this.alert = null
 			this.nodeFound = null
 			this.aborted = false
