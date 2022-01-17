@@ -472,6 +472,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private driverInfo: Z2MDriverInfo
 	private status: ZwaveClientStatus
 	private tmpNode: utils.DeepPartial<Z2MNode>
+	private isReplacing = false
 
 	private _error: string | undefined
 	private _scanComplete: boolean
@@ -1362,6 +1363,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async updateStoreNodes(throwError = true) {
 		try {
+			logger.debug('Updating store nodes.json')
 			await jsonStore.put(store.nodes, this.storeNodes)
 		} catch (error) {
 			logger.error(
@@ -1744,7 +1746,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		strategy: InclusionStrategy = InclusionStrategy.Security_S2,
 		options?: { qrString?: string; provisioning?: PlannedProvisioningEntry }
 	): Promise<boolean> {
-		if (this.driverReady) {
+		try {
+			if (!this.driverReady) {
+				throw new DriverNotReadyError()
+			}
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1753,6 +1758,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.commandsTimeout = setTimeout(() => {
 				this.stopInclusion().catch(logger.error)
 			}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
+
+			this.isReplacing = true
 			// by default replaceFailedNode is secured, pass true to make it not secured
 			if (strategy === InclusionStrategy.Security_S2) {
 				let inclusionOptions: ReplaceNodeOptions
@@ -1799,9 +1806,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					`Inclusion strategy not supported with replace failed node api`
 				)
 			}
+		} catch (error) {
+			this.isReplacing = false
+			throw error
 		}
-
-		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -2522,6 +2530,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _onInclusionStopped() {
 		const message = 'Inclusion stopped'
+		this.isReplacing = false
+		this.tmpNode = undefined
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion stopped')
 	}
@@ -3452,6 +3462,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.emit('nodeRemoved', node)
 			this.sendToSocket(socketEvents.nodeRemoved, node)
+		}
+
+		if (!this.isReplacing && this.storeNodes[nodeid]) {
+			delete this.storeNodes[nodeid]
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.updateStoreNodes(false)
 		}
 	}
 
