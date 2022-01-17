@@ -207,10 +207,7 @@ export type SensorTypeScale = {
 
 export type AllowedApis = typeof allowedApis[number]
 
-const ZWAVEJS_LOG_FILE = utils.joinPath(
-	process.env.ZWAVEJS_LOGS_DIR || storeDir,
-	'zwavejs_%DATE%.log'
-)
+const ZWAVEJS_LOG_FILE = utils.joinPath(storeDir, 'zwavejs_%DATE%.log')
 
 export type Z2MValueIdState = {
 	text: string
@@ -471,6 +468,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _devices: Record<string, Partial<Z2MNode>>
 	private driverInfo: Z2MDriverInfo
 	private status: ZwaveClientStatus
+	private tmpNode: utils.DeepPartial<Z2MNode>
 
 	private _error: string | undefined
 	private _scanComplete: boolean
@@ -567,9 +565,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.storeNodes = storeNodes
 
-			jsonStore.put(store.nodes, storeNodes).catch((err) => {
-				logger.error('Error while updating store nodes', err)
-			})
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.updateStoreNodes(false)
 		}
 
 		this._devices = {}
@@ -752,7 +749,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			node.hassDevices = utils.copy(devices)
-			await jsonStore.put(store.nodes, this.storeNodes)
+			await this.updateStoreNodes()
 
 			this.emitNodeStatus(node, {
 				hassDevices: node.hassDevices,
@@ -1359,6 +1356,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	// ------------NODES MANAGEMENT-----------------------------------
+
+	async updateStoreNodes(throwError = true) {
+		try {
+			await jsonStore.put(store.nodes, this.storeNodes)
+		} catch (error) {
+			logger.error(
+				`Error while updating store nodes: ${error.message}`,
+				error
+			)
+			if (throwError) {
+				throw error
+			}
+		}
+	}
+
 	/**
 	 * Updates node `name` property and stores updated config in `nodes.json`
 	 */
@@ -1379,7 +1391,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.storeNodes[nodeid].name = name
 
-		await jsonStore.put(store.nodes, this.storeNodes)
+		await this.updateStoreNodes()
 
 		this.emitNodeStatus(node, { name: name })
 
@@ -1406,8 +1418,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.storeNodes[nodeid].loc = loc
 
-		await jsonStore.put(store.nodes, this.storeNodes)
-
+		await this.updateStoreNodes()
 		this.emitNodeStatus(node, { loc: loc })
 		return true
 	}
@@ -1799,6 +1810,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			forceSecurity?: boolean
 			provisioning?: PlannedProvisioningEntry
 			qrString?: string
+			name?: string
+			location?: string
 		}
 	): Promise<boolean> {
 		if (this.driverReady) {
@@ -1863,6 +1876,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					break
 				default:
 					inclusionOptions = { strategy }
+			}
+
+			if (options.name || options.location) {
+				this.tmpNode = {
+					name: options.name || '',
+					loc: options.location || '',
+				}
 			}
 
 			return this._driver.controller.beginInclusion(inclusionOptions)
@@ -3448,6 +3468,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				Error('node has been added twice')
 			)
 			return existingNode
+		}
+
+		// set node name and location sent with beginInclusion call
+		if (this.tmpNode) {
+			if (this.storeNodes[nodeId]) {
+				this.storeNodes[nodeId].name = this.tmpNode.name
+				this.storeNodes[nodeId].loc = this.tmpNode.loc
+			} else {
+				this.storeNodes[nodeId] = {
+					name: this.tmpNode.name,
+					loc: this.tmpNode.loc,
+				}
+			}
+
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this.updateStoreNodes(false)
+
+			this.tmpNode = undefined
 		}
 
 		const node: Z2MNode = {
