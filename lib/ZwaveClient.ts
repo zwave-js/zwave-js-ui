@@ -471,7 +471,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _devices: Record<string, Partial<Z2MNode>>
 	private driverInfo: Z2MDriverInfo
 	private status: ZwaveClientStatus
+	// used to store node info before inclusion like name and location
 	private tmpNode: utils.DeepPartial<Z2MNode>
+	// tells if a node replacement is in progress
 	private isReplacing = false
 
 	private _error: string | undefined
@@ -3606,9 +3608,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// keep zwaveNode and node name and location synced
 			if (node.name && node.name !== zwaveNode.name) {
+				logger.debug(
+					`Setting node name '${node.name}' to node ${nodeId}`
+				)
 				zwaveNode.name = node.name
 			}
 			if (node.loc && node.loc !== zwaveNode.location) {
+				logger.debug(
+					`Setting node location '${node.loc}' to node ${nodeId}`
+				)
 				zwaveNode.location = node.loc
 			}
 		} else {
