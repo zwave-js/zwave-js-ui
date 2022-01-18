@@ -1,3 +1,11 @@
+## [6.4.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.4.0...v6.4.1) (2022-01-18)
+
+
+### Features
+
+* bump zwave-js@8.11.1 ([#2193](https://github.com/zwave-js/zwavejs2mqtt/issues/2193)) ([d1332ea](https://github.com/zwave-js/zwavejs2mqtt/commit/d1332ea5bc94a78a7b6df931dee82f6858707b4d))
+* set node name and location before inclusion and keep `nodes.json` up to date ([#2194](https://github.com/zwave-js/zwavejs2mqtt/issues/2194)) ([e15bcea](https://github.com/zwave-js/zwavejs2mqtt/commit/e15bcea1af3c614ea79fb886f9ab12df8c54c57a))
+
 # [6.4.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.3.1...v6.4.0) (2022-01-14)
 
 
