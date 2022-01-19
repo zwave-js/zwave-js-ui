@@ -35,41 +35,6 @@
 			<statistics-card title="Statistics" :node="node" />
 		</v-row>
 
-		<v-row v-if="nodeMetadata" justify="start">
-			<v-card class="ml-3" style="max-width: 600px">
-				<v-tabs vertical>
-					<v-tab
-						v-for="meta in Object.keys(nodeMetadata)"
-						:key="`tab-${meta}`"
-					>
-						{{ meta }}
-					</v-tab>
-
-					<v-tab-item
-						v-for="meta in Object.keys(nodeMetadata)"
-						:key="`content-${meta}`"
-					>
-						<v-card flat>
-							<v-card-text>
-								<v-col
-									style="width: 600px"
-									class="text-center"
-									v-if="meta === 'manual'"
-								>
-									<v-btn
-										:href="nodeMetadata[meta]"
-										color="primary"
-										>DOWNLOAD</v-btn
-									>
-								</v-col>
-								<p v-else>{{ nodeMetadata[meta] }}</p>
-							</v-card-text>
-						</v-card>
-					</v-tab-item>
-				</v-tabs>
-			</v-card>
-		</v-row>
-
 		<v-row>
 			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
@@ -419,9 +384,6 @@ export default {
 	},
 	computed: {
 		...mapGetters(['mqtt']),
-		nodeMetadata() {
-			return this.node.deviceConfig?.metadata
-		},
 		commandGroups() {
 			if (this.node) {
 				const groups = {}
