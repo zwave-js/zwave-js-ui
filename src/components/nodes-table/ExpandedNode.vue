@@ -6,12 +6,18 @@
 			center-active
 			fixed-tabs
 			show-arrows
+			icons-and-text
 		>
-			<v-tab key="node">Node</v-tab>
-			<v-tab v-if="showHass" key="homeassistant">Home Assistant</v-tab>
-			<v-tab key="groups">Groups</v-tab>
+			<v-tab key="node">Node <v-icon>widgets</v-icon></v-tab>
+			<v-tab v-if="nodeMetadata" key="manual"
+				>Help <v-icon>help</v-icon></v-tab
+			>
+			<v-tab v-if="showHass" key="homeassistant"
+				>Home Assistant <v-icon>home</v-icon></v-tab
+			>
+			<v-tab key="groups">Groups <v-icon>device_hub</v-icon></v-tab>
 			<v-tab v-if="$vuetify.breakpoint.mdAndUp" key="debug"
-				>Debug Info</v-tab
+				>Debug Info <v-icon>bug_report</v-icon></v-tab
 			>
 
 			<!-- TABS -->
@@ -29,6 +35,46 @@
 						:socket="socket"
 						v-on="$listeners"
 					></node-details>
+				</v-tab-item>
+
+				<!-- TAB NODE -->
+				<v-tab-item v-if="nodeMetadata" key="manual">
+					<v-row class="mt-2" justify="center">
+						<v-card class="ma-5" style="max-width: 600px">
+							<v-tabs vertical>
+								<v-tab
+									v-for="meta in Object.keys(nodeMetadata)"
+									:key="`tab-${meta}`"
+								>
+									{{ meta }}
+								</v-tab>
+
+								<v-tab-item
+									v-for="meta in Object.keys(nodeMetadata)"
+									:key="`content-${meta}`"
+								>
+									<v-card flat>
+										<v-card-text>
+											<v-col
+												style="width: 600px"
+												class="text-center"
+												v-if="meta === 'manual'"
+											>
+												<v-btn
+													:href="nodeMetadata[meta]"
+													color="primary"
+													>DOWNLOAD</v-btn
+												>
+											</v-col>
+											<p v-else>
+												{{ nodeMetadata[meta] }}
+											</p>
+										</v-card-text>
+									</v-card>
+								</v-tab-item>
+							</v-tabs>
+						</v-card>
+					</v-row>
 				</v-tab-item>
 
 				<!-- TAB HOMEASSISTANT -->
@@ -84,6 +130,9 @@ export default {
 	},
 	computed: {
 		...mapGetters(['gateway', 'mqtt']),
+		nodeMetadata() {
+			return this.node.deviceConfig?.metadata
+		},
 		nodeJson() {
 			return JSON.stringify(this.node, null, 2)
 		},
