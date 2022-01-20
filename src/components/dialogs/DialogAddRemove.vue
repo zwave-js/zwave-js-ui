@@ -140,27 +140,37 @@
 								</v-card-text>
 
 								<v-card-text v-if="s.key == 'inclusionNaming'">
-									<v-text-field
-										label="Name"
-										persistent-hint
-										hint="Node name"
-										v-model.trim="s.values.name"
+									<v-form
+										ref="namingForm"
+										v-model="validNaming"
+										lazy-validation
+										@submit.prevent
 									>
-									</v-text-field>
-									<v-text-field
-										label="Location"
-										class="mb-2"
-										persistent-hint
-										hint="Node location"
-										v-model.trim="s.values.location"
-									>
-									</v-text-field>
+										<v-text-field
+											label="Name"
+											persistent-hint
+											hint="Node name"
+											:rules="[validateTopic]"
+											v-model.trim="s.values.name"
+										>
+										</v-text-field>
+										<v-text-field
+											label="Location"
+											class="mb-2"
+											persistent-hint
+											:rules="[validateTopic]"
+											hint="Node location"
+											v-model.trim="s.values.location"
+										>
+										</v-text-field>
+									</v-form>
 
 									<v-card-actions>
 										<v-btn
+											:disabled="!validNaming"
 											color="primary"
-											@click.stop="nextStep"
-											@keypress.enter="nextStep"
+											@click.stop="submitNameLoc"
+											@keypress.enter="submitNameLoc"
 										>
 											Next
 										</v-btn>
@@ -568,6 +578,7 @@ import {
 	parseSecurityClasses,
 	securityClassesToArray,
 	copy,
+	validTopic,
 } from '../../lib/utils.js'
 
 export default {
@@ -579,6 +590,7 @@ export default {
 		return {
 			currentStep: 1,
 			loading: false,
+			validNaming: true,
 			availableSteps: {
 				action: {
 					key: 'action',
@@ -658,7 +670,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['appInfo', 'zwave', 'nodes']),
+		...mapGetters(['appInfo', 'zwave', 'nodes', 'mqtt']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -741,6 +753,11 @@ export default {
 		},
 	},
 	methods: {
+		submitNameLoc() {
+			if (this.$refs.namingForm[0].validate()) {
+				this.nextStep()
+			}
+		},
 		onNodeAdded({ node, result }) {
 			this.nodeFound = node
 			if (this.loading) {
@@ -1088,6 +1105,9 @@ export default {
 			this.loading = false
 
 			this.state = 'stop'
+		},
+		validateTopic(name) {
+			return this.mqtt.disabled ? true : validTopic(name)
 		},
 	},
 	beforeDestroy() {

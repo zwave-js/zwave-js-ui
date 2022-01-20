@@ -77,3 +77,11 @@ export function jsonToList(obj) {
 
 	return s
 }
+
+export function validTopic(t) {
+	const match = t
+		? t.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9 _-]+/g)
+		: [t]
+
+	return match[0] !== t ? 'Only a-zA-Z0-9_- chars are allowed' : true
+}

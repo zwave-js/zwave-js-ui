@@ -232,6 +232,7 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 
 import { inboundEvents as socketActions } from '@/plugins/socket'
 import { mapMutations, mapGetters } from 'vuex'
+import { validTopic } from '@/lib/utils'
 import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 
 export default {
@@ -540,13 +541,7 @@ export default {
 			}
 		},
 		validateTopic(name) {
-			const match = name
-				? name.match(/[/a-zA-Z\u00C0-\u024F\u1E00-\u1EFF0-9 _-]+/g)
-				: [name]
-
-			return match[0] !== name
-				? 'Only a-zA-Z0-9_- chars are allowed'
-				: null
+			return this.mqtt.disabled ? true : validTopic(name)
 		},
 	},
 }
