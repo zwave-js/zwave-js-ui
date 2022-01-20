@@ -2532,8 +2532,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _onInclusionStopped() {
 		const message = 'Inclusion stopped'
-		this.isReplacing = false
-		this.tmpNode = undefined
+		// this could happen before node is added/removed so delay the reset
+		setTimeout(() => {
+			this.isReplacing = false
+			this.tmpNode = undefined
+		}, 2000)
+
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion stopped')
 	}
