@@ -26,9 +26,8 @@
 				>
 				<v-subheader>Node properties</v-subheader>
 
-				<v-col>
+				<v-col v-if="selectedNode">
 					<v-list
-						v-if="selectedNode"
 						dense
 						style="min-width: 300px; background: transparent"
 					>
@@ -85,8 +84,15 @@
 							/></v-list-item-content>
 						</v-list-item>
 					</v-list>
-					<v-row class="mt-1" justify="center">
-						<v-btn primary @click="dialogHealth = true"
+					<v-row
+						v-if="!selectedNode.isControllerNode"
+						class="mt-1"
+						justify="center"
+					>
+						<v-btn
+							color="primary"
+							rounded
+							@click="dialogHealth = true"
 							>Check Health</v-btn
 						>
 					</v-row>
