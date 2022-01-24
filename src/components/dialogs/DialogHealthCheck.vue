@@ -121,13 +121,13 @@
 								class="mb-0"
 								v-if="item.minPowerlevelSource !== undefined"
 							>
-								Source: {{ item.minPowerlevelSource }}
+								Source: {{ item.minPowerlevelSource }} dBm
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.minPowerlevelTarget !== undefined"
 							>
-								Target: {{ item.minPowerlevelTarget }}
+								Target: {{ item.minPowerlevelTarget }} dBm
 							</p>
 						</template>
 					</v-data-table>
