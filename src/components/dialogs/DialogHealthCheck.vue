@@ -36,22 +36,12 @@
 						</v-col>
 					</v-row>
 
-					<v-row justify="center">
+					<v-row class="mb-2" justify="center">
 						<v-btn
-							text
-							color="green"
-							@click="checkHealth('Lifeline')"
-							:disabled="loading"
-							class="mb-2"
-							>Lifeline Health</v-btn
-						>
-						<v-btn
-							text
-							color="primary"
+							color="success"
 							:disabled="loading || !targetNode"
-							@click="checkHealth('Route')"
-							class="mb-2"
-							>Route Health</v-btn
+							@click="checkHealth()"
+							>Check</v-btn
 						>
 					</v-row>
 
@@ -280,22 +270,31 @@ export default {
 
 			this.bindedSocketEvents = {}
 		},
-		checkHealth(type) {
+		checkHealth() {
 			this.loading = true
-			this.mode = type
 			this.results = []
 			const args = [this.activeNode.id]
 
-			const id = this.targetNode?.id ?? this.targetNode
+			const targetNode =
+				typeof this.targetNode === 'object'
+					? this.targetNode
+					: this.nodes.find((n) => n.id == this.targetNode)
 
-			if (type === 'Route') {
-				args.push(parseInt(id))
+			if (!targetNode) {
+				return
+			}
+
+			if (targetNode.isControllerNode) {
+				this.mode = 'Lifeline'
+			} else {
+				this.mode = 'Route'
+				args.push(targetNode.id)
 			}
 
 			args.push(this.rounds || 1)
 
 			this.socket.emit(inboundEvents.zwave, {
-				api: `check${type}Health`,
+				api: `check${this.mode}Health`,
 				args,
 			})
 
