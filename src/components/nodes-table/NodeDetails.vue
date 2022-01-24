@@ -541,7 +541,9 @@ export default {
 			}
 		},
 		validateTopic(name) {
-			return this.mqtt.disabled ? true : validTopic(name)
+			const error = this.mqtt.disabled ? '' : validTopic(name)
+
+			return typeof error === 'string' ? error : ''
 		},
 	},
 }
