@@ -244,17 +244,20 @@ export default {
 			// eslint-disable-next-line no-unused-vars
 			const { request, round, totalRounds, lastRating } = data
 
-			const lastResult = this.results[this.results.length - 1]
+			// prevent showing results of other requests
+			if (request.nodeId === this.activeNode.id) {
+				const lastResult = this.results[this.results.length - 1]
 
-			if (lastResult) {
-				Object.assign(lastResult, {
-					rating: lastRating,
+				if (lastResult) {
+					Object.assign(lastResult, {
+						rating: lastRating,
+					})
+				}
+				this.results.push({
+					round,
+					rating: undefined,
 				})
 			}
-			this.results.push({
-				round,
-				rating: undefined,
-			})
 		},
 		bindEvent(eventName, handler) {
 			this.socket.on(socketEvents[eventName], handler)
