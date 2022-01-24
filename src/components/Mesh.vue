@@ -85,12 +85,9 @@
 							/></v-list-item-content>
 						</v-list-item>
 					</v-list>
-					<v-row class="mt-1" justify="space-around">
-						<v-btn @click="checkHealth('Lifeline')"
-							>Lifeline Health</v-btn
-						>
-						<v-btn @click="checkHealth('Route')"
-							>Route Health</v-btn
+					<v-row class="mt-1" justify="center">
+						<v-btn primary @click="dialogHealth = true"
+							>Check Health</v-btn
 						>
 					</v-row>
 				</v-col>
@@ -107,6 +104,13 @@
 				<v-icon>refresh</v-icon>
 			</v-btn>
 		</v-speed-dial>
+		<dialog-health-check
+			v-model="dialogHealth"
+			@close="dialogHealth = false"
+			:node="selectedNode"
+			:socket="socket"
+			:nodes="nodes"
+		/>
 	</v-container>
 </template>
 
@@ -128,6 +132,7 @@ import { mapMutations, mapGetters } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
+import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
 export default {
 	name: 'Mesh',
@@ -137,6 +142,7 @@ export default {
 	components: {
 		ZwaveGraph,
 		StatisticsArrows,
+		DialogHealthCheck,
 	},
 	watch: {
 		nodes() {
@@ -148,6 +154,7 @@ export default {
 	},
 	data() {
 		return {
+			dialogHealth: false,
 			nodeSize: 20,
 			fontSize: 10,
 			force: 2000,

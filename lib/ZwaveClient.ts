@@ -1979,7 +1979,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async checkLifelineHealth(
 		nodeId: number,
-		rounds: 1
+		rounds = 5
 	): Promise<LifelineHealthCheckSummary> {
 		if (this.driverReady) {
 			const result = await this.getNode(nodeId).checkLifelineHealth(
@@ -2000,23 +2000,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async checkRouteHealth(
 		nodeId: number,
-		rounds: 1
-	): Promise<RouteHealthCheckSummary[]> {
+		targetNodeId: number,
+		rounds = 5
+	): Promise<RouteHealthCheckSummary> {
 		if (this.driverReady) {
-			const result = []
-			const neighbors = this.nodes.get(nodeId).neighbors
 			const zwaveNode = this.getNode(nodeId)
-			for (const neigh of neighbors) {
-				const r = await zwaveNode.checkRouteHealth(
-					neigh,
-					rounds,
-					this._onHealthCheckProgress.bind(this, {
-						nodeId,
-						targetNodeId: neigh,
-					})
-				)
-				result.push(r)
-			}
+			const result = await zwaveNode.checkRouteHealth(
+				targetNodeId,
+				rounds,
+				this._onHealthCheckProgress.bind(this, {
+					nodeId,
+					targetNodeId,
+				})
+			)
 
 			return result
 		}
@@ -2717,7 +2713,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		totalRounds: number,
 		lastRating: number
 	) {
-		const message = `Health check process IN PROGRESS: ${round}/${totalRounds} done, last rating ${lastRating}`
+		const message = `Health check ${request.nodeId}-->${request.targetNodeId}: ${round}/${totalRounds} done, last rating ${lastRating}`
 		this._updateControllerStatus(message)
 		this.sendToSocket(socketEvents.healthCheckProgress, {
 			request,
