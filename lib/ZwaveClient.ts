@@ -46,6 +46,8 @@ import {
 	ReplaceNodeOptions,
 	QRProvisioningInformation,
 	RefreshInfoOptions,
+	LifelineHealthCheckSummary,
+	RouteHealthCheckSummary,
 } from 'zwave-js'
 import { parseQRCodeString } from 'zwave-js/Utils'
 import {
@@ -156,6 +158,8 @@ const allowedApis = validateMethods([
 	'unprovisionSmartStartNode',
 	'provisionSmartStartNode',
 	'parseQRCodeString',
+	'checkLifelineHealth',
+	'checkRouteHealth',
 ] as const)
 
 // Define mapping of CCs and node values to node properties:
@@ -1971,6 +1975,56 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Check node lifeline health
+	 */
+	async checkLifelineHealth(
+		nodeId: number,
+		rounds: 1
+	): Promise<LifelineHealthCheckSummary> {
+		if (this.driverReady) {
+			const result = await this.getNode(nodeId).checkLifelineHealth(
+				rounds,
+				this._onHealthCheckProgress.bind(this, {
+					nodeId,
+					targetNodeId: this.driver.controller.ownNodeId,
+				})
+			)
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Check node routes health
+	 */
+	async checkRouteHealth(
+		nodeId: number,
+		rounds: 1
+	): Promise<RouteHealthCheckSummary[]> {
+		if (this.driverReady) {
+			const result = []
+			const neighbors = this.nodes.get(nodeId).neighbors
+			const zwaveNode = this.getNode(nodeId)
+			for (const neigh of neighbors) {
+				const r = await zwaveNode.checkRouteHealth(
+					neigh,
+					rounds,
+					this._onHealthCheckProgress.bind(this, {
+						nodeId,
+						targetNodeId: neigh,
+					})
+				)
+				result.push(r)
+			}
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
 	 * Check if a node is failed
 	 */
 	async isFailedNode(nodeId: number): Promise<boolean> {
@@ -2652,6 +2706,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'heal network progress',
 			progress
 		)
+	}
+
+	/**
+	 * Triggered on each progress of health check processes
+	 */
+	private _onHealthCheckProgress(
+		request: { nodeId: number; targetNodeId: number },
+		round: number,
+		totalRounds: number,
+		lastRating: number
+	) {
+		const message = `Health check process IN PROGRESS: ${round}/${totalRounds} done, last rating ${lastRating}`
+		this._updateControllerStatus(message)
+		this.sendToSocket(socketEvents.healthCheckProgress, {
+			request,
+			round,
+			totalRounds,
+			lastRating,
+		})
 	}
 
 	private _onHealNetworkDone(result) {
