@@ -87,13 +87,14 @@
 								class="mb-0"
 								v-if="item.failedPingsNode !== undefined"
 							>
-								Node: {{ item.failedPingsNode }}
+								Node: {{ item.failedPingsNode }} Fails
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.failedPingsController !== undefined"
 							>
-								Controller: {{ item.failedPingsController }}
+								Controller:
+								{{ item.failedPingsController }} Fails
 							</p>
 						</template>
 
@@ -104,13 +105,13 @@
 								class="mb-0"
 								v-if="item.failedPingsToSource !== undefined"
 							>
-								Source: {{ item.failedPingsToSource }}
+								Source: {{ item.failedPingsToSource }} Fails
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.failedPingsToTarget !== undefined"
 							>
-								Target: {{ item.failedPingsToTarget }}
+								Target: {{ item.failedPingsToTarget }} Fails
 							</p>
 						</template>
 
