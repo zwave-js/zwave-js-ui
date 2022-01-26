@@ -197,9 +197,10 @@
 								>{{ item.snrMargin }} dBm</span
 							>
 						</template>
-						<template v-slot:[`item.minPowerLevel`]="{ item }">
-							<span v-if="item.minPowerLevel !== undefined">{{
-								getPowerLevel(item.minPowerLevel)
+
+						<template v-slot:[`item.minPowerlevel`]="{ item }">
+							<span v-if="item.minPowerlevel !== undefined">{{
+								getPowerLevel(item.minPowerlevel)
 							}}</span>
 						</template>
 
