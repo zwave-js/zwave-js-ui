@@ -53,18 +53,31 @@
 						v-if="results.length > 0"
 					>
 						<template v-slot:[`item.rating`]="{ item }">
-							<span
-								:class="
-									'font-weight-bold ' +
-									ratingColor(item.rating)
-								"
-								v-if="item.rating !== undefined"
-								>{{ item.rating }}</span
-							>
-							<v-progress-circular
-								v-else
-								indeterminate
-							></v-progress-circular>
+							<v-menu offset-y bottom open-on-hover>
+								<template v-slot:activator="{ on, attrs }">
+									<v-progress-linear
+										v-on="on"
+										v-bind="attrs"
+										rounded
+										height="25"
+										:value="item.rating * 10"
+										:color="getRatingColor(item.rating)"
+										:indeterminate="
+											item.rating === undefined
+										"
+									>
+										<strong v-if="item.rating !== undefined"
+											>{{ item.rating }}/10</strong
+										>
+									</v-progress-linear>
+								</template>
+								<v-data-table
+									:headers="hintHeaders"
+									:items="hintValues"
+									class="elevation-1"
+									hide-default-footer
+								></v-data-table>
+							</v-menu>
 						</template>
 						<template v-slot:[`item.latency`]="{ item }">
 							<span v-if="item.latency !== undefined"
@@ -78,7 +91,7 @@
 						</template>
 						<template v-slot:[`item.minPowerLevel`]="{ item }">
 							<span v-if="item.minPowerLevel !== undefined"
-								>{{ item.minPowerLevel }} dBm</span
+								>-{{ getPowerLevel(item.minPowerLevel) }}</span
 							>
 						</template>
 
@@ -87,14 +100,17 @@
 								class="mb-0"
 								v-if="item.failedPingsNode !== undefined"
 							>
-								Node: {{ item.failedPingsNode }}/10
+								Node ←
+								<strong>{{ item.failedPingsNode }}/10</strong>
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.failedPingsController !== undefined"
 							>
-								Controller:
-								{{ item.failedPingsController }}/10
+								Controller ←
+								<strong
+									>{{ item.failedPingsController }}/10</strong
+								>
 							</p>
 						</template>
 
@@ -105,13 +121,16 @@
 								class="mb-0"
 								v-if="item.failedPingsToSource !== undefined"
 							>
-								Source: {{ item.failedPingsToSource }}/10
+								Source ←
+								<strong
+									>{{ item.failedPingsToSource }}/10</strong
+								>
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.failedPingsToTarget !== undefined"
 							>
-								Target: {{ item.failedPingsToTarget }}/10
+								Target ← {{ item.failedPingsToTarget }}/10
 							</p>
 						</template>
 
@@ -122,13 +141,23 @@
 								class="mb-0"
 								v-if="item.minPowerlevelSource !== undefined"
 							>
-								Source: {{ item.minPowerlevelSource }} dBm
+								Source:
+								<strong
+									>-{{
+										getPowerLevel(item.minPowerlevelSource)
+									}}</strong
+								>
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.minPowerlevelTarget !== undefined"
 							>
-								Target: {{ item.minPowerlevelTarget }} dBm
+								Target:
+								<strong
+									>-{{
+										getPowerLevel(item.minPowerlevelTarget)
+									}}</strong
+								>
 							</p>
 						</template>
 					</v-data-table>
@@ -138,7 +167,7 @@
 			<v-card-actions>
 				<v-spacer></v-spacer>
 				<v-btn color="blue darken-1" text @click="$emit('close')"
-					>Cancel</v-btn
+					>Close</v-btn
 				>
 			</v-card-actions>
 		</v-card>
@@ -171,17 +200,23 @@ export default {
 		headers() {
 			if (this.mode === 'Lifeline') {
 				return [
-					{ text: 'Latency', value: 'latency' },
+					{ text: 'Max latency', value: 'latency' },
 					{ text: 'Failed pings', value: 'failedPingsNode' },
 					{ text: 'Route Changes', value: 'routeChanges' },
 					{ text: 'SNR margin', value: 'snrMargin' },
-					{ text: 'Min power level', value: 'minPowerlevel' },
+					{
+						text: 'Min power level w/o errors',
+						value: 'minPowerlevel',
+					},
 					{ text: 'Rating', value: 'rating' },
 				]
 			} else {
 				return [
 					{ text: 'Failed pings', value: 'failedPingsToSource' },
-					{ text: 'Min Power Level', value: 'minPowerlevelSource' },
+					{
+						text: 'Min Power Level w/o errors',
+						value: 'minPowerlevelSource',
+					},
 					{ text: 'Neighbors', value: 'numNeighbors' },
 					{ text: 'Rating', value: 'rating' },
 				]
@@ -197,17 +232,104 @@ export default {
 			targetNode: null,
 			activeNode: null,
 			mode: 'Lifeline',
+			hintHeaders: [
+				{ text: 'Rating', value: 'rating', sortable: false },
+				{ text: 'Failed pings', value: 'failedPings', sortable: false },
+				{ text: 'Max latency', value: 'latency', sortable: false },
+				{
+					text: 'No. of Neighbors',
+					value: 'neighbors',
+					sortable: false,
+				},
+				{ text: 'SNR margin', value: 'snrMargin', sortable: false },
+				{
+					text: 'Min power level w/o errors',
+					value: 'minPowerlevel',
+					sortable: false,
+				},
+			],
+			hintValues: [
+				{
+					rating: 10,
+					failedPings: 0,
+					latency: '≤ 50 ms',
+					neighbors: '> 2',
+					snrMargin: '>= 17 dBm',
+					minPowerlevel: '≤ -6dBm',
+				},
+				{
+					rating: 9,
+					failedPings: 0,
+					latency: '≤ 100 ms',
+					neighbors: '> 2',
+					snrMargin: '≥ 17 dBm',
+					minPowerlevel: '≤ -6dBm',
+				},
+				{
+					rating: 8,
+					failedPings: 0,
+					latency: '≤ 100 ms',
+					neighbors: '≤ 2',
+					snrMargin: '≥ 17 dBm',
+					minPowerlevel: '≤ -6dBm',
+				},
+				{
+					rating: 7,
+					failedPings: 0,
+					latency: '≤ 100 ms',
+					neighbors: '> 2',
+				},
+				{
+					rating: 6,
+					failedPings: 0,
+					latency: '≤ 100 ms',
+					neighbors: '≤ 2',
+				},
+				{
+					rating: 5,
+					failedPings: 0,
+					latency: '≤ 250 ms',
+				},
+				{
+					rating: 4,
+					failedPings: 0,
+					latency: '≤ 500 ms',
+				},
+				{
+					rating: 3,
+					failedPings: 1,
+					latency: '≤ 1000 ms',
+				},
+				{
+					rating: 2,
+					failedPings: '≤ 2',
+					latency: '> 1000 ms',
+				},
+				{
+					rating: 1,
+					failedPings: '≤ 9',
+				},
+				{
+					rating: 0,
+					failedPings: 10,
+				},
+			],
 		}
 	},
 	methods: {
-		ratingColor(rating) {
-			if (rating >= 6) {
-				return 'green--text'
+		getRatingColor(rating) {
+			if (rating === undefined) {
+				return 'primary'
+			} else if (rating >= 6) {
+				return 'success'
 			} else if (rating >= 4) {
-				return 'orange--text'
+				return 'warning'
 			} else {
-				return 'red--text'
+				return 'error'
 			}
+		},
+		getPowerLevel(v) {
+			return v >= 1 ? `-${v} dBm` : 'Normal Power Level'
 		},
 		init(open) {
 			if (open) {
