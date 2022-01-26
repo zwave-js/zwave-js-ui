@@ -248,7 +248,7 @@
 								class="mb-0"
 								v-if="item.failedPingsToTarget !== undefined"
 							>
-								Node {{ targetNode.id }} ←
+								Node {{ resultsTargetNode }} ←
 								{{ item.failedPingsToTarget }}/10
 							</p>
 						</template>
@@ -277,7 +277,7 @@
 								class="mb-0"
 								v-if="item.minPowerlevelTarget !== undefined"
 							>
-								Node {{ targetNode.id }}:
+								Node {{ resultsTargetNode }}:
 								<strong>{{
 									getPowerLevel(item.minPowerlevelTarget)
 								}}</strong>
@@ -362,6 +362,7 @@ export default {
 			rounds: 5,
 			targetNode: null,
 			activeNode: null,
+			resultsTargetNode: null,
 			mode: 'Lifeline',
 			hintHeaders: [
 				{ text: 'Rating', value: 'rating', sortable: false },
@@ -502,6 +503,7 @@ export default {
 					const res = data.result
 
 					this.results = res.results
+					this.resultsTargetNode = res.targetNodeId
 				}
 			}
 		},

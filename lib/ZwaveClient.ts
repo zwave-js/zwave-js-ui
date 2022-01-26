@@ -1980,7 +1980,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async checkLifelineHealth(
 		nodeId: number,
 		rounds = 5
-	): Promise<LifelineHealthCheckSummary> {
+	): Promise<LifelineHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
 			const result = await this.getNode(nodeId).checkLifelineHealth(
 				rounds,
@@ -1989,7 +1989,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					targetNodeId: this.driver.controller.ownNodeId,
 				})
 			)
-			return result
+			return { ...result, targetNodeId: this.driver.controller.ownNodeId }
 		}
 
 		throw new DriverNotReadyError()
@@ -2002,7 +2002,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		targetNodeId: number,
 		rounds = 5
-	): Promise<RouteHealthCheckSummary> {
+	): Promise<RouteHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 			const result = await zwaveNode.checkRouteHealth(
@@ -2014,7 +2014,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				})
 			)
 
-			return result
+			return { ...result, targetNodeId }
 		}
 
 		throw new DriverNotReadyError()
