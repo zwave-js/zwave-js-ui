@@ -36,13 +36,135 @@
 						</v-col>
 					</v-row>
 
-					<v-row class="mb-2" justify="center">
+					<v-row class="mb-2" justify="space-around">
 						<v-btn
 							color="success"
 							:disabled="loading || !targetNode"
 							@click="checkHealth()"
 							>Check</v-btn
 						>
+						<v-menu offset-y bottom open-on-click>
+							<template v-slot:activator="{ on, attrs }">
+								<v-btn color="primary" v-on="on" v-bind="attrs">
+									<v-icon>help</v-icon>
+								</v-btn>
+							</template>
+							<v-list dense>
+								<v-list-item>
+									<v-list-item-content class="ma-0">
+										<v-list-item-title
+											>Route changes</v-list-item-title
+										>
+										<v-list-item-subtitle
+											>How many times at least one new
+											route was needed. Lower = better,
+											ideally 0. Only available if the
+											controller supports TX
+											reports</v-list-item-subtitle
+										>
+									</v-list-item-content>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-content>
+										<v-list-item-title
+											>Latency</v-list-item-title
+										>
+										<v-list-item-subtitle
+											>The maximum time it took to send a
+											ping to the node. Lower = better,
+											ideally 10 ms. ill use the time in
+											TX reports if available, otherwise
+											fall back to measuring the round
+											trip time.</v-list-item-subtitle
+										>
+									</v-list-item-content>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-content>
+										<v-list-item-title
+											>No. Neighbors</v-list-item-title
+										>
+										<v-list-item-subtitle
+											>How many routing neighbors this
+											node has. Higher = better, ideally >
+											2</v-list-item-subtitle
+										>
+									</v-list-item-content>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-content>
+										<v-list-item-title
+											>Failed Pings
+											node</v-list-item-title
+										>
+										<v-list-item-subtitle
+											>How many pings were not ACKed by
+											the node. Lower = better, ideally
+											0.</v-list-item-subtitle
+										>
+									</v-list-item-content>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-content>
+										<v-list-item-title
+											>Min Power Level</v-list-item-title
+										>
+										<v-list-item-subtitle
+											>The minimum powerlevel where all
+											pings from the node/target were
+											ACKed by the controller. Higher =
+											better, ideally 6dBm or more. Only
+											available if the node/target
+											supports Powerlevel
+											CC</v-list-item-subtitle
+										>
+									</v-list-item-content>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-content>
+										<v-list-item-title
+											>Failed pings
+											Controller</v-list-item-title
+										>
+										<v-list-item-subtitle
+											>If no powerlevel was found where
+											the controller ACKed all pings from
+											the node, this contains the number
+											of pings that weren't ACKed. Lower =
+											better, ideally
+											0.</v-list-item-subtitle
+										>
+									</v-list-item-content>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-content>
+										<v-list-item-title
+											>SNR Margin</v-list-item-title
+										>
+										<v-list-item-subtitle
+											>An estimation of the
+											Signal-to-Noise Ratio Margin in dBm.
+											Only available if the controller
+											supports TX
+											reports.</v-list-item-subtitle
+										>
+									</v-list-item-content>
+								</v-list-item>
+								<v-list-item>
+									<v-list-item-content>
+										<v-list-item-title
+											>Rating</v-list-item-title
+										>
+									</v-list-item-content>
+								</v-list-item>
+							</v-list>
+							<v-data-table
+								:headers="hintHeaders"
+								:items="hintValues"
+								class="elevation-1"
+								hide-default-footer
+							></v-data-table>
+						</v-menu>
 					</v-row>
 
 					<v-data-table
@@ -53,31 +175,17 @@
 						v-if="results.length > 0"
 					>
 						<template v-slot:[`item.rating`]="{ item }">
-							<v-menu offset-y bottom open-on-hover>
-								<template v-slot:activator="{ on, attrs }">
-									<v-progress-linear
-										v-on="on"
-										v-bind="attrs"
-										rounded
-										height="25"
-										:value="item.rating * 10"
-										:color="getRatingColor(item.rating)"
-										:indeterminate="
-											item.rating === undefined
-										"
-									>
-										<strong v-if="item.rating !== undefined"
-											>{{ item.rating }}/10</strong
-										>
-									</v-progress-linear>
-								</template>
-								<v-data-table
-									:headers="hintHeaders"
-									:items="hintValues"
-									class="elevation-1"
-									hide-default-footer
-								></v-data-table>
-							</v-menu>
+							<v-progress-linear
+								rounded
+								height="25"
+								:value="item.rating * 10"
+								:color="getRatingColor(item.rating)"
+								:indeterminate="item.rating === undefined"
+							>
+								<strong v-if="item.rating !== undefined"
+									>{{ item.rating }}/10</strong
+								>
+							</v-progress-linear>
 						</template>
 						<template v-slot:[`item.latency`]="{ item }">
 							<span v-if="item.latency !== undefined"
@@ -90,9 +198,9 @@
 							>
 						</template>
 						<template v-slot:[`item.minPowerLevel`]="{ item }">
-							<span v-if="item.minPowerLevel !== undefined"
-								>-{{ getPowerLevel(item.minPowerLevel) }}</span
-							>
+							<span v-if="item.minPowerLevel !== undefined">{{
+								getPowerLevel(item.minPowerLevel)
+							}}</span>
 						</template>
 
 						<template v-slot:[`item.failedPingsNode`]="{ item }">
@@ -143,22 +251,18 @@
 								v-if="item.minPowerlevelSource !== undefined"
 							>
 								Node {{ activeNode.id }}:
-								<strong
-									>-{{
-										getPowerLevel(item.minPowerlevelSource)
-									}}</strong
-								>
+								<strong>{{
+									getPowerLevel(item.minPowerlevelSource)
+								}}</strong>
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.minPowerlevelTarget !== undefined"
 							>
 								Node {{ targetNode.id }}:
-								<strong
-									>-{{
-										getPowerLevel(item.minPowerlevelTarget)
-									}}</strong
-								>
+								<strong>{{
+									getPowerLevel(item.minPowerlevelTarget)
+								}}</strong>
 							</p>
 						</template>
 					</v-data-table>
@@ -255,7 +359,7 @@ export default {
 					failedPings: 0,
 					latency: '≤ 50 ms',
 					neighbors: '> 2',
-					snrMargin: '>= 17 dBm',
+					snrMargin: '>= 17dBm',
 					minPowerlevel: '≤ -6dBm',
 				},
 				{
@@ -263,7 +367,7 @@ export default {
 					failedPings: 0,
 					latency: '≤ 100 ms',
 					neighbors: '> 2',
-					snrMargin: '≥ 17 dBm',
+					snrMargin: '≥ 17dBm',
 					minPowerlevel: '≤ -6dBm',
 				},
 				{
@@ -271,25 +375,25 @@ export default {
 					failedPings: 0,
 					latency: '≤ 100 ms',
 					neighbors: '≤ 2',
-					snrMargin: '≥ 17 dBm',
+					snrMargin: '≥ 17dBm',
 					minPowerlevel: '≤ -6dBm',
 				},
 				{
 					rating: 7,
 					failedPings: 0,
-					latency: '≤ 100 ms',
+					latency: '≤ 100ms',
 					neighbors: '> 2',
 				},
 				{
 					rating: 6,
 					failedPings: 0,
-					latency: '≤ 100 ms',
+					latency: '≤ 100ms',
 					neighbors: '≤ 2',
 				},
 				{
 					rating: 5,
 					failedPings: 0,
-					latency: '≤ 250 ms',
+					latency: '≤ 250ms',
 				},
 				{
 					rating: 4,
@@ -299,12 +403,12 @@ export default {
 				{
 					rating: 3,
 					failedPings: 1,
-					latency: '≤ 1000 ms',
+					latency: '≤ 1000ms',
 				},
 				{
 					rating: 2,
 					failedPings: '≤ 2',
-					latency: '> 1000 ms',
+					latency: '> 1000ms',
 				},
 				{
 					rating: 1,
@@ -330,7 +434,7 @@ export default {
 			}
 		},
 		getPowerLevel(v) {
-			return v >= 1 ? `-${v} dBm` : 'Normal Power Level'
+			return v > 0 ? `-${v} dBm` : 'Normal Power Level'
 		},
 		init(open) {
 			if (open) {
