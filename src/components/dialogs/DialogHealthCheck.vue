@@ -100,7 +100,7 @@
 								class="mb-0"
 								v-if="item.failedPingsNode !== undefined"
 							>
-								Node ←
+								Node {{ activeNode.id }} ←
 								<strong>{{ item.failedPingsNode }}/10</strong>
 							</p>
 							<p
@@ -121,7 +121,7 @@
 								class="mb-0"
 								v-if="item.failedPingsToSource !== undefined"
 							>
-								Source ←
+								Node {{ activeNode.id }} ←
 								<strong
 									>{{ item.failedPingsToSource }}/10</strong
 								>
@@ -130,7 +130,8 @@
 								class="mb-0"
 								v-if="item.failedPingsToTarget !== undefined"
 							>
-								Target ← {{ item.failedPingsToTarget }}/10
+								Node {{ targetNode.id }} ←
+								{{ item.failedPingsToTarget }}/10
 							</p>
 						</template>
 
@@ -141,7 +142,7 @@
 								class="mb-0"
 								v-if="item.minPowerlevelSource !== undefined"
 							>
-								Source:
+								Node {{ activeNode.id }}:
 								<strong
 									>-{{
 										getPowerLevel(item.minPowerlevelSource)
@@ -152,7 +153,7 @@
 								class="mb-0"
 								v-if="item.minPowerlevelTarget !== undefined"
 							>
-								Target:
+								Node {{ targetNode.id }}:
 								<strong
 									>-{{
 										getPowerLevel(item.minPowerlevelTarget)
