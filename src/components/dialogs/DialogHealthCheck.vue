@@ -43,7 +43,12 @@
 							@click="checkHealth()"
 							>Check</v-btn
 						>
-						<v-menu offset-y bottom open-on-click>
+						<v-menu
+							:close-on-content-click="false"
+							offset-y
+							bottom
+							open-on-click
+						>
 							<template v-slot:activator="{ on, attrs }">
 								<v-btn color="primary" v-on="on" v-bind="attrs">
 									<v-icon>help</v-icon>
@@ -111,11 +116,11 @@
 										>
 										<v-list-item-subtitle
 											>The minimum powerlevel where all
-											pings from the node/target were
-											ACKed by the controller. Higher =
-											better, ideally 6dBm or more. Only
-											available if the node/target
-											supports Powerlevel
+											pings from the (source) node were
+											ACKed by the target node /
+											controller. Lower = better, ideally
+											-6dBm or less. Only available if the
+											(source) node supports Powerlevel
 											CC</v-list-item-subtitle
 										>
 									</v-list-item-content>
