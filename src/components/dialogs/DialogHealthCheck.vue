@@ -207,6 +207,10 @@
 							<span v-if="item.minPowerlevel !== undefined">{{
 								getPowerLevel(item.minPowerlevel)
 							}}</span>
+							<v-icon
+								:color="getPowerLevelColor(item.minPowerlevel)"
+								>wifi</v-icon
+							>
 						</template>
 
 						<template v-slot:[`item.failedPingsNode`]="{ item }">
@@ -260,6 +264,14 @@
 								<strong>{{
 									getPowerLevel(item.minPowerlevelSource)
 								}}</strong>
+								<v-icon
+									:color="
+										getPowerLevelColor(
+											item.minPowerlevelSource
+										)
+									"
+									>wifi</v-icon
+								>
 							</p>
 							<p
 								class="mb-0"
@@ -269,6 +281,14 @@
 								<strong>{{
 									getPowerLevel(item.minPowerlevelTarget)
 								}}</strong>
+								<v-icon
+									:color="
+										getPowerLevelColor(
+											item.minPowerlevelTarget
+										)
+									"
+									>wifi</v-icon
+								>
 							</p>
 						</template>
 					</v-data-table>
@@ -440,7 +460,18 @@ export default {
 			}
 		},
 		getPowerLevel(v) {
-			return v > 0 ? `-${v} dBm` : 'Normal Power Level'
+			return `-${v} dBm`
+		},
+		getPowerLevelColor(v) {
+			if (v === undefined) {
+				return 'transparent'
+			} else if (v >= 6) {
+				return 'success'
+			} else if (v >= 3) {
+				return 'warning'
+			} else {
+				return 'error'
+			}
 		},
 		init(open) {
 			if (open) {
