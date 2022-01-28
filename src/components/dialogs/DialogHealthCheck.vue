@@ -48,6 +48,7 @@
 							offset-y
 							bottom
 							open-on-click
+							content-class="help-menu"
 						>
 							<template v-slot:activator="{ on, attrs }">
 								<v-btn color="primary" v-on="on" v-bind="attrs">
@@ -168,6 +169,7 @@
 								:items="hintValues"
 								class="elevation-1"
 								hide-default-footer
+								disable-pagination
 							></v-data-table>
 						</v-menu>
 					</v-row>
@@ -193,23 +195,39 @@
 							</v-progress-linear>
 						</template>
 						<template v-slot:[`item.latency`]="{ item }">
-							<span v-if="item.latency !== undefined"
-								>{{ item.latency }} ms</span
+							<strong
+								:class="getLatencyColor(item.latency)"
+								v-if="item.latency !== undefined"
+								>{{ item.latency }} ms</strong
 							>
 						</template>
 						<template v-slot:[`item.snrMargin`]="{ item }">
-							<span v-if="item.snrMargin !== undefined"
-								>{{ item.snrMargin }} dBm</span
+							<strong
+								:class="getSnrMarginColor(item.snrMargin)"
+								v-if="item.snrMargin !== undefined"
+								>{{ item.snrMargin }} dBm</strong
 							>
 						</template>
 
+						<template v-slot:[`item.numNeighbors`]="{ item }">
+							<strong
+								:class="getNeighborsColor(item.numNeighbors)"
+								v-if="item.numNeighbors !== undefined"
+								>{{ item.numNeighbors }}</strong
+							>
+						</template>
+
+						<template v-slot:[`item.routeChanges`]="{ item }">
+							<strong v-if="item.routeChanges !== undefined">{{
+								item.routeChanges
+							}}</strong>
+						</template>
+
 						<template v-slot:[`item.minPowerlevel`]="{ item }">
-							<span v-if="item.minPowerlevel !== undefined">{{
-								getPowerLevel(item.minPowerlevel)
-							}}</span>
-							<v-icon
-								:color="getPowerLevelColor(item.minPowerlevel)"
-								>wifi</v-icon
+							<strong
+								:class="getPowerLevelColor(item.minPowerlevel)"
+								v-if="item.minPowerlevel !== undefined"
+								>{{ getPowerLevel(item.minPowerlevel) }}</strong
 							>
 						</template>
 
@@ -218,15 +236,27 @@
 								class="mb-0"
 								v-if="item.failedPingsNode !== undefined"
 							>
-								Node {{ activeNode.id }} ←
-								<strong>{{ item.failedPingsNode }}/10</strong>
+								{{ resultsTargetNode }} → {{ activeNode.id }}:
+								<strong
+									:class="
+										getFailedPingsColor(
+											item.failedPingsNode
+										)
+									"
+									>{{ item.failedPingsNode }}/10</strong
+								>
 							</p>
 							<p
 								class="mb-0"
 								v-if="item.failedPingsController !== undefined"
 							>
-								Controller ←
+								{{ resultsTargetNode }} ← {{ activeNode.id }}:
 								<strong
+									:class="
+										getFailedPingsColor(
+											item.failedPingsController
+										)
+									"
 									>{{ item.failedPingsController }}/10</strong
 								>
 							</p>
@@ -239,8 +269,13 @@
 								class="mb-0"
 								v-if="item.failedPingsToSource !== undefined"
 							>
-								Node {{ activeNode.id }} ←
+								{{ resultsTargetNode }} → {{ activeNode.id }}:
 								<strong
+									:class="
+										getFailedPingsColor(
+											item.failedPingsToSource
+										)
+									"
 									>{{ item.failedPingsToSource }}/10</strong
 								>
 							</p>
@@ -248,8 +283,15 @@
 								class="mb-0"
 								v-if="item.failedPingsToTarget !== undefined"
 							>
-								Node {{ resultsTargetNode }} ←
-								{{ item.failedPingsToTarget }}/10
+								{{ resultsTargetNode }} ← {{ activeNode.id }}:
+								<strong
+									:class="
+										getFailedPingsColor(
+											item.failedPingsToTarget
+										)
+									"
+									>{{ item.failedPingsToTarget }}/10</strong
+								>
 							</p>
 						</template>
 
@@ -261,16 +303,15 @@
 								v-if="item.minPowerlevelSource !== undefined"
 							>
 								Node {{ activeNode.id }}:
-								<strong>{{
-									getPowerLevel(item.minPowerlevelSource)
-								}}</strong>
-								<v-icon
-									:color="
+								<strong
+									:class="
 										getPowerLevelColor(
 											item.minPowerlevelSource
 										)
 									"
-									>wifi</v-icon
+									>{{
+										getPowerLevel(item.minPowerlevelSource)
+									}}</strong
 								>
 							</p>
 							<p
@@ -278,16 +319,15 @@
 								v-if="item.minPowerlevelTarget !== undefined"
 							>
 								Node {{ resultsTargetNode }}:
-								<strong>{{
-									getPowerLevel(item.minPowerlevelTarget)
-								}}</strong>
-								<v-icon
-									:color="
+								<strong
+									:class="
 										getPowerLevelColor(
 											item.minPowerlevelTarget
 										)
 									"
-									>wifi</v-icon
+									>{{
+										getPowerLevel(item.minPowerlevelTarget)
+									}}</strong
 								>
 							</p>
 						</template>
@@ -304,6 +344,13 @@
 		</v-card>
 	</v-dialog>
 </template>
+
+<style>
+.help-menu {
+	max-height: 90vh;
+	overflow: scroll;
+}
+</style>
 
 <script>
 import { socketEvents, inboundEvents } from '@/plugins/socket'
@@ -386,7 +433,7 @@ export default {
 					failedPings: 0,
 					latency: '≤ 50 ms',
 					neighbors: '> 2',
-					snrMargin: '>= 17dBm',
+					snrMargin: '≥ 17dBm',
 					minPowerlevel: '≤ -6dBm',
 				},
 				{
@@ -449,6 +496,40 @@ export default {
 		}
 	},
 	methods: {
+		getNeighborsColor(value) {
+			if (value > 2) {
+				return 'success--text'
+			} else if (value === 0) {
+				return 'error--text'
+			} else {
+				return 'warning--text'
+			}
+		},
+		getLatencyColor(value) {
+			if (value <= 100) {
+				return 'success--text'
+			} else if (value <= 500) {
+				return 'warning--text'
+			} else {
+				return 'error--text'
+			}
+		},
+		getSnrMarginColor(value) {
+			if (value >= 17) {
+				return 'success--text'
+			} else {
+				return 'error--text'
+			}
+		},
+		getFailedPingsColor(value) {
+			if (value === 0) {
+				return 'success--text'
+			} else if (value === 1) {
+				return 'warning--text'
+			} else {
+				return 'error--text'
+			}
+		},
 		getRatingColor(rating) {
 			if (rating === undefined) {
 				return 'primary'
@@ -465,13 +546,13 @@ export default {
 		},
 		getPowerLevelColor(v) {
 			if (v === undefined) {
-				return 'transparent'
+				return ''
 			} else if (v >= 6) {
-				return 'success'
+				return 'success--text'
 			} else if (v >= 3) {
-				return 'warning'
+				return 'warning--text'
 			} else {
-				return 'error'
+				return 'error--text'
 			}
 		},
 		init(open) {
