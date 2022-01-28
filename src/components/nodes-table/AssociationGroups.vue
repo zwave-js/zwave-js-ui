@@ -12,7 +12,6 @@
 						text
 						color="green"
 						@click="dialogAssociation = true"
-						dark
 						class="mb-2"
 						>Add</v-btn
 					>
@@ -20,7 +19,6 @@
 						text
 						color="red"
 						@click="removeAllAssociations"
-						dark
 						class="mb-2"
 						>Remove All</v-btn
 					>
@@ -28,7 +26,6 @@
 						text
 						color="primary"
 						@click="getAssociations"
-						dark
 						class="mb-2"
 						>Refresh</v-btn
 					>

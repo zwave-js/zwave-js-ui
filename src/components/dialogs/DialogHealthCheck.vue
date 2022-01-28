@@ -181,6 +181,16 @@
 						class="elevation-1"
 						v-if="results.length > 0"
 					>
+						<template v-slot:top>
+							<v-btn
+								text
+								v-if="!loading && resultsTargetNode >= 0"
+								color="primary"
+								@click="exportResults"
+								class="mb-2"
+								>Export</v-btn
+							>
+						</template>
 						<template v-slot:[`item.rating`]="{ item }">
 							<v-progress-linear
 								rounded
@@ -496,6 +506,13 @@ export default {
 		}
 	},
 	methods: {
+		exportResults() {
+			this.$listeners.export(
+				this.results,
+				`healthCheck_${this.activeNode.id}-${this.resultsTargetNode}`,
+				'json'
+			)
+		},
 		getNeighborsColor(value) {
 			if (value > 2) {
 				return 'success--text'

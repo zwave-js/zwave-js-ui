@@ -116,6 +116,7 @@
 			:node="selectedNode"
 			:socket="socket"
 			:nodes="nodes"
+			v-on="$listeners"
 		/>
 	</v-container>
 </template>
