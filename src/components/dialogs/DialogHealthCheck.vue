@@ -170,7 +170,22 @@
 								class="elevation-1"
 								hide-default-footer
 								disable-pagination
-							></v-data-table>
+							>
+								<template v-slot:footer>
+									<p class="mb-0 text-caption">
+										<code>*</code> Due to missing insight
+										into re-routing attempts between two
+										nodes, some of the values for the for
+										the route check rating don't exist here
+										and are only present in lifeline checks
+										(when target node is the controller).
+										Furthermore, it is not guaranteed that a
+										route between two nodes and lifeline
+										with the same health rating have the
+										same quality.
+									</p>
+								</template>
+							</v-data-table>
 						</v-menu>
 					</v-row>
 
@@ -448,13 +463,13 @@ export default {
 			hintHeaders: [
 				{ text: 'Rating', value: 'rating', sortable: false },
 				{ text: 'Failed pings', value: 'failedPings', sortable: false },
-				{ text: 'Max latency', value: 'latency', sortable: false },
+				{ text: 'Max latency (*)', value: 'latency', sortable: false },
 				{
 					text: 'No. of Neighbors',
 					value: 'neighbors',
 					sortable: false,
 				},
-				{ text: 'SNR margin', value: 'snrMargin', sortable: false },
+				{ text: 'SNR margin (*)', value: 'snrMargin', sortable: false },
 				{
 					text: 'Min power level w/o errors',
 					value: 'minPowerlevel',
