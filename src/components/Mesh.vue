@@ -8,7 +8,7 @@
 				@node-click="nodeClick"
 			/>
 
-			<div
+			<v-container
 				id="properties"
 				draggable
 				v-show="showProperties"
@@ -25,55 +25,79 @@
 					>clear</v-icon
 				>
 				<v-subheader>Node properties</v-subheader>
-				<v-list
-					v-if="selectedNode"
-					dense
-					style="min-width: 300px; background: transparent"
-				>
-					<v-list-item>
-						<v-list-item-content>ID</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							selectedNode.data.id
-						}}</v-list-item-content>
-					</v-list-item>
-					<v-list-item>
-						<v-list-item-content>Status</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							selectedNode.data.status
-						}}</v-list-item-content>
-					</v-list-item>
-					<v-list-item>
-						<v-list-item-content>Code</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							selectedNode.data.productLabel
-						}}</v-list-item-content>
-					</v-list-item>
-					<v-list-item>
-						<v-list-item-content>Product</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							selectedNode.data.productDescription
-						}}</v-list-item-content>
-					</v-list-item>
-					<v-list-item>
-						<v-list-item-content>Manufacturer</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							selectedNode.data.manufacturer
-						}}</v-list-item-content>
-					</v-list-item>
-					<v-list-item>
-						<v-list-item-content>Name</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							selectedNode.data.name
-						}}</v-list-item-content>
-					</v-list-item>
-					<v-list-item>
-						<v-list-item-content>Location</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							selectedNode.data.loc
-						}}</v-list-item-content>
-					</v-list-item>
-				</v-list>
-			</div>
+
+				<v-col v-if="selectedNode">
+					<v-list
+						dense
+						style="min-width: 300px; background: transparent"
+					>
+						<v-list-item>
+							<v-list-item-content>ID</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								selectedNode.id
+							}}</v-list-item-content>
+						</v-list-item>
+						<v-list-item>
+							<v-list-item-content>Status</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								selectedNode.status
+							}}</v-list-item-content>
+						</v-list-item>
+						<v-list-item>
+							<v-list-item-content>Code</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								selectedNode.productLabel
+							}}</v-list-item-content>
+						</v-list-item>
+						<v-list-item>
+							<v-list-item-content>Product</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								selectedNode.productDescription
+							}}</v-list-item-content>
+						</v-list-item>
+						<v-list-item>
+							<v-list-item-content
+								>Manufacturer</v-list-item-content
+							>
+							<v-list-item-content class="align-end">{{
+								selectedNode.manufacturer
+							}}</v-list-item-content>
+						</v-list-item>
+						<v-list-item v-if="selectedNode.name">
+							<v-list-item-content>Name</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								selectedNode.name
+							}}</v-list-item-content>
+						</v-list-item>
+						<v-list-item v-if="selectedNode.loc">
+							<v-list-item-content>Location</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								selectedNode.loc
+							}}</v-list-item-content>
+						</v-list-item>
+						<v-list-item>
+							<v-list-item-content
+								>Statistics</v-list-item-content
+							>
+							<v-list-item-content class="align-end"
+								><statistics-arrows :node="selectedNode"
+							/></v-list-item-content>
+						</v-list-item>
+					</v-list>
+					<v-row
+						v-if="!selectedNode.isControllerNode"
+						class="mt-1"
+						justify="center"
+					>
+						<v-btn
+							color="primary"
+							rounded
+							@click="dialogHealth = true"
+							>Check Health</v-btn
+						>
+					</v-row>
+				</v-col>
+			</v-container>
 		</v-card>
 		<v-speed-dial style="left: 100px" bottom fab left fixed v-model="fab">
 			<template v-slot:activator>
@@ -86,6 +110,14 @@
 				<v-icon>refresh</v-icon>
 			</v-btn>
 		</v-speed-dial>
+		<dialog-health-check
+			v-model="dialogHealth"
+			@close="dialogHealth = false"
+			:node="selectedNode"
+			:socket="socket"
+			:nodes="nodes"
+			v-on="$listeners"
+		/>
 	</v-container>
 </template>
 
@@ -97,6 +129,7 @@
 	background: #ccccccaa;
 	border: 2px solid black;
 	border-radius: 20px;
+	max-width: 400px;
 }
 </style>
 
@@ -105,6 +138,8 @@ import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapMutations, mapGetters } from 'vuex'
 
 import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
+import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
 export default {
 	name: 'Mesh',
@@ -113,6 +148,8 @@ export default {
 	},
 	components: {
 		ZwaveGraph,
+		StatisticsArrows,
+		DialogHealthCheck,
 	},
 	watch: {
 		nodes() {
@@ -124,6 +161,7 @@ export default {
 	},
 	data() {
 		return {
+			dialogHealth: false,
 			nodeSize: 20,
 			fontSize: 10,
 			force: 2000,
@@ -136,7 +174,7 @@ export default {
 	},
 	methods: {
 		...mapMutations(['showSnackbar', 'setNeighbors']),
-		nodeClick(e, node) {
+		nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode
 		},
@@ -151,6 +189,12 @@ export default {
 			this.socket.emit(socketActions.zwave, {
 				api: 'refreshNeighbors',
 				args: [],
+			})
+		},
+		checkHealth(type) {
+			this.socket.emit(socketActions.zwave, {
+				api: `check${type}Health`,
+				args: [this.selectedNode.id],
 			})
 		},
 	},

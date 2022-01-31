@@ -46,6 +46,8 @@ import {
 	ReplaceNodeOptions,
 	QRProvisioningInformation,
 	RefreshInfoOptions,
+	LifelineHealthCheckSummary,
+	RouteHealthCheckSummary,
 } from 'zwave-js'
 import { parseQRCodeString } from 'zwave-js/Utils'
 import {
@@ -156,6 +158,8 @@ const allowedApis = validateMethods([
 	'unprovisionSmartStartNode',
 	'provisionSmartStartNode',
 	'parseQRCodeString',
+	'checkLifelineHealth',
+	'checkRouteHealth',
 ] as const)
 
 // Define mapping of CCs and node values to node properties:
@@ -1971,6 +1975,52 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Check node lifeline health
+	 */
+	async checkLifelineHealth(
+		nodeId: number,
+		rounds = 5
+	): Promise<LifelineHealthCheckSummary & { targetNodeId: number }> {
+		if (this.driverReady) {
+			const result = await this.getNode(nodeId).checkLifelineHealth(
+				rounds,
+				this._onHealthCheckProgress.bind(this, {
+					nodeId,
+					targetNodeId: this.driver.controller.ownNodeId,
+				})
+			)
+			return { ...result, targetNodeId: this.driver.controller.ownNodeId }
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Check node routes health
+	 */
+	async checkRouteHealth(
+		nodeId: number,
+		targetNodeId: number,
+		rounds = 5
+	): Promise<RouteHealthCheckSummary & { targetNodeId: number }> {
+		if (this.driverReady) {
+			const zwaveNode = this.getNode(nodeId)
+			const result = await zwaveNode.checkRouteHealth(
+				targetNodeId,
+				rounds,
+				this._onHealthCheckProgress.bind(this, {
+					nodeId,
+					targetNodeId,
+				})
+			)
+
+			return { ...result, targetNodeId }
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
 	 * Check if a node is failed
 	 */
 	async isFailedNode(nodeId: number): Promise<boolean> {
@@ -2652,6 +2702,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'heal network progress',
 			progress
 		)
+	}
+
+	/**
+	 * Triggered on each progress of health check processes
+	 */
+	private _onHealthCheckProgress(
+		request: { nodeId: number; targetNodeId: number },
+		round: number,
+		totalRounds: number,
+		lastRating: number
+	) {
+		const message = `Health check ${request.nodeId}-->${request.targetNodeId}: ${round}/${totalRounds} done, last rating ${lastRating}`
+		this._updateControllerStatus(message)
+		this.sendToSocket(socketEvents.healthCheckProgress, {
+			request,
+			round,
+			totalRounds,
+			lastRating,
+		})
 	}
 
 	private _onHealNetworkDone(result) {

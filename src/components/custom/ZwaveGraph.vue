@@ -1033,8 +1033,9 @@ export default {
 		// eslint-disable-next-line no-unused-vars
 		handleClick(nodeList, event, index) {
 			// Add interactivity
-			// const nodeId = nodeList[index].id
-			// const node = this.nodes.find(n => n.id === nodeId)
+			const nodeId = parseInt(index)
+			const node = this.nodes.find((n) => n.id === nodeId)
+			this.$emit('node-click', node)
 		},
 		handleMouseOver(nodeList, event, index) {
 			// Add interactivity

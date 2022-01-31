@@ -19,6 +19,7 @@ export enum socketEvents {
 	valueUpdated = 'VALUE_UPDATED',
 	valueRemoved = 'VALUE_REMOVED',
 	healProgress = 'HEAL_PROGRESS',
+	healthCheckProgress = 'HEALTH_CHECK_PROGRESS',
 	info = 'INFO',
 	api = 'API_RETURN', // api results
 	debug = 'DEBUG',
