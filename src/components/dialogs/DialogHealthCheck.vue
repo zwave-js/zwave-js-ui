@@ -174,6 +174,38 @@
 						</v-menu>
 					</v-row>
 
+					<v-row
+						v-if="averages && !loading"
+						class="mb-2"
+						justify="space-around"
+					>
+						<v-col v-if="averages.numNeighbors" class="text-center">
+							<p class="mb-1 subtitle-1 font-weight-bold">
+								No. Neighbors
+							</p>
+							<span
+								:class="
+									getNeighborsColor(averages.numNeighbors)
+								"
+								class="text-h3"
+								>{{ averages.numNeighbors }}</span
+							>
+						</v-col>
+
+						<v-col v-if="averages.rating" class="text-center">
+							<p class="mb-1 subtitle-1 font-weight-bold">
+								Rating
+							</p>
+							<span
+								:class="
+									getRatingColor(averages.rating) + '--text'
+								"
+								class="text-h3"
+								>{{ averages.rating }}</span
+							>
+						</v-col>
+					</v-row>
+
 					<v-data-table
 						:headers="headers"
 						:items="results"
@@ -216,14 +248,6 @@
 								:class="getSnrMarginColor(item.snrMargin)"
 								v-if="item.snrMargin !== undefined"
 								>{{ item.snrMargin }} dBm</strong
-							>
-						</template>
-
-						<template v-slot:[`item.numNeighbors`]="{ item }">
-							<strong
-								:class="getNeighborsColor(item.numNeighbors)"
-								v-if="item.numNeighbors !== undefined"
-								>{{ item.numNeighbors }}</strong
 							>
 						</template>
 
@@ -405,7 +429,6 @@ export default {
 						text: 'Min Power Level w/o errors',
 						value: 'minPowerlevelSource',
 					},
-					{ text: 'Neighbors', value: 'numNeighbors' },
 					{ text: 'Rating', value: 'rating' },
 				]
 			}
@@ -420,6 +443,7 @@ export default {
 			targetNode: null,
 			activeNode: null,
 			resultsTargetNode: null,
+			averages: null,
 			mode: 'Lifeline',
 			hintHeaders: [
 				{ text: 'Rating', value: 'rating', sortable: false },
@@ -589,6 +613,7 @@ export default {
 				this.results = []
 				this.loading = false
 				this.targetNode = null
+				this.averages = null
 			}
 		},
 		onApiResponse(data) {
@@ -601,6 +626,15 @@ export default {
 					const res = data.result
 
 					this.results = res.results
+					delete res.results
+					this.averages = res
+
+					if (this.mode === 'Route') {
+						this.averages.numNeighbors = Math.max(
+							...this.results.map((n) => n.numNeighbors)
+						)
+					}
+
 					this.resultsTargetNode = res.targetNodeId
 				}
 			}
