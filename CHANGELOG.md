@@ -1,3 +1,18 @@
+# [6.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.4.1...v6.5.0) (2022-01-31)
+
+
+### Bug Fixes
+
+* **ui:** name and location validation ([c0eb937](https://github.com/zwave-js/zwavejs2mqtt/commit/c0eb93705f61e71afd1ee2bd2a158296683fa87e))
+* **ui:** skip node name/loc validation when mqtt is disabled ([e6d0435](https://github.com/zwave-js/zwavejs2mqtt/commit/e6d043543732fa94b4fbd67781d53fbea6dc6e0b))
+* prevent replaceFailed resetting node name/loc ([f8a4b12](https://github.com/zwave-js/zwavejs2mqtt/commit/f8a4b1263ba311f71dc6ed2a9cd070e6151537db))
+
+
+### Features
+
+* implement health reporting ([#2205](https://github.com/zwave-js/zwavejs2mqtt/issues/2205)) ([4ca3403](https://github.com/zwave-js/zwavejs2mqtt/commit/4ca34032cfbe67cbc71bf1e327ac7f6a194886a3)), closes [#2113](https://github.com/zwave-js/zwavejs2mqtt/issues/2113)
+* **ui:** move inclusion information to separete tab ([#2198](https://github.com/zwave-js/zwavejs2mqtt/issues/2198)) ([3c34e42](https://github.com/zwave-js/zwavejs2mqtt/commit/3c34e4277571ac7349029872270a08560bf09a67))
+
 ## [6.4.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.4.0...v6.4.1) (2022-01-18)
 
 
