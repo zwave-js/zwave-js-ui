@@ -201,7 +201,7 @@
 									getRatingColor(averages.rating) + '--text'
 								"
 								class="text-h3"
-								>{{ averages.rating }}</span
+								>{{ averages.rating }}/10</span
 							>
 						</v-col>
 					</v-row>
@@ -629,7 +629,7 @@ export default {
 					delete res.results
 					this.averages = res
 
-					if (this.mode === 'Route') {
+					if (this.mode === 'Lifeline') {
 						this.averages.numNeighbors = Math.max(
 							...this.results.map((n) => n.numNeighbors)
 						)
