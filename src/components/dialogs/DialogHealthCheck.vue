@@ -629,11 +629,9 @@ export default {
 					delete res.results
 					this.averages = res
 
-					if (this.mode === 'Lifeline') {
-						this.averages.numNeighbors = Math.max(
-							...this.results.map((n) => n.numNeighbors)
-						)
-					}
+					this.averages.numNeighbors = Math.max(
+						...this.results.map((n) => n.numNeighbors)
+					)
 
 					this.resultsTargetNode = res.targetNodeId
 				}

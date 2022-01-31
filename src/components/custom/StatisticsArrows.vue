@@ -5,12 +5,12 @@
 				<blink-icon
 					icon="north"
 					:activeColor="node.errorTransmit ? 'error' : 'green'"
-					:active="now - node.lastTransmit < 1000"
+					:active="now - node.lastTransmit < 200"
 				/>
 				<blink-icon
 					icon="south"
 					:activeColor="node.errorReceive ? 'error' : 'green'"
-					:active="now - node.lastReceive < 1000"
+					:active="now - node.lastReceive < 200"
 				/>
 				<div>
 					{{
@@ -53,7 +53,7 @@ export default {
 	mounted() {
 		this.nowInterval = setInterval(() => {
 			this.now = Date.now()
-		}, 1000)
+		}, 200)
 	},
 	beforeDestroy() {
 		clearInterval(this.nowInterval)
