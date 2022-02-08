@@ -30,6 +30,7 @@
 								hint="Number of rounds to run the health check"
 								label="Rounds"
 								min="1"
+								max="10"
 								type="number"
 								persistent-hint
 							></v-text-field>
