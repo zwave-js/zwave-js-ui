@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<v-expansion-panels>
+		<v-expansion-panels v-model="openPanel">
 			<v-expansion-panel>
 				<v-expansion-panel-header> Options </v-expansion-panel-header>
 				<v-expansion-panel-content>
@@ -26,7 +26,7 @@
 								</v-list-item>
 							</v-list>
 						</v-col>
-						<v-col>
+						<!-- <v-col>
 							<v-subheader>Layout</v-subheader>
 
 							<v-radio-group v-model="ranker">
@@ -37,8 +37,8 @@
 									:value="item.value"
 								></v-radio>
 							</v-radio-group>
-						</v-col>
-						<v-col>
+						</v-col> -->
+						<!-- <v-col>
 							<v-subheader>Edges</v-subheader>
 
 							<v-radio-group v-model="edgesVisibility">
@@ -49,7 +49,107 @@
 									:value="item.value"
 								></v-radio>
 							</v-radio-group>
+						</v-col> -->
+						<v-col>
+							<v-subheader>Filters</v-subheader>
+
+							<v-select
+								:items="locations"
+								v-model="filterLocations"
+								multiple
+								label="Locations filter"
+								clearable
+								chips
+								deletable-chips
+								solo
+							>
+								<template slot="append-outer">
+									<v-tooltip bottom>
+										<template
+											v-slot:activator="{ on, attrs }"
+										>
+											<v-btn
+												v-bind="attrs"
+												v-on="on"
+												@click="
+													filterLocationsInvert =
+														!filterLocationsInvert
+												"
+												icon
+												:color="
+													filterLocationsInvert
+														? 'primary'
+														: ''
+												"
+												:class="
+													filterLocationsInvert
+														? 'border-primary'
+														: ''
+												"
+											>
+												<v-icon>loop</v-icon>
+											</v-btn>
+										</template>
+										<span>Invert selection</span>
+									</v-tooltip>
+								</template>
+							</v-select>
+
+							<v-select
+								:items="nodes"
+								v-model="filterNodes"
+								multiple
+								label="Nodes filter"
+								clearable
+								item-text="_name"
+								item-value="id"
+								chips
+								deletable-chips
+								solo
+							>
+								<template slot="append-outer">
+									<v-tooltip bottom>
+										<template
+											v-slot:activator="{ on, attrs }"
+										>
+											<v-btn
+												v-bind="attrs"
+												v-on="on"
+												@click="
+													filterNodesInvert =
+														!filterNodesInvert
+												"
+												icon
+												:color="
+													filterNodesInvert
+														? 'primary'
+														: ''
+												"
+												:class="
+													filterNodesInvert
+														? 'border-primary'
+														: ''
+												"
+											>
+												<v-icon>loop</v-icon>
+											</v-btn>
+										</template>
+										<span>Invert selection</span>
+									</v-tooltip>
+								</template>
+							</v-select>
+
+							<v-badge
+								color="error"
+								overlap
+								v-model="shouldReload"
+							>
+								<v-btn color="primary" @click="debounceRefresh">
+									Reload graph
+								</v-btn>
+							</v-badge>
 						</v-col>
+
 						<v-col>
 							<v-subheader>Grouping</v-subheader>
 
@@ -280,9 +380,54 @@ export default {
 		isDark() {
 			return this.$vuetify.theme.dark
 		},
+		locations() {
+			// get unique locations array from nodes
+			return this.nodes.reduce((acc, node) => {
+				if (node.loc && acc.indexOf(node.loc) === -1) {
+					acc.push(node.loc)
+				}
+				return acc
+			}, [])
+		},
+		filteredNodes() {
+			return this.nodes.filter((n) => {
+				if (n.isControllerNode) {
+					return true
+				}
+
+				let toAdd = true
+
+				// check if node is in selected locations
+				if (this.filterLocations.length > 0) {
+					if (this.filterLocationsInvert) {
+						toAdd = this.filterLocations.indexOf(n.loc) === -1
+					} else {
+						toAdd = this.filterLocations.indexOf(n.loc) !== -1
+					}
+				}
+
+				// if not in current locations, check if it's on selected nodes
+				if (!toAdd && this.filterNodes.length > 0) {
+					if (this.filterNodesInvert) {
+						toAdd = this.filterNodes.indexOf(n.id) === -1
+					} else {
+						toAdd = this.filterNodes.indexOf(n.id) !== -1
+					}
+				}
+
+				return toAdd
+			})
+		},
 	},
 	data() {
 		return {
+			openPanel: 0,
+			inited: false,
+			shouldReload: false,
+			filterLocations: [],
+			filterNodes: [],
+			filterNodesInvert: false,
+			filterLocationsInvert: false,
 			edgesVisibility: 'relevant',
 			grouping: 'ungrouped',
 			refreshTimeout: null,
@@ -384,6 +529,9 @@ export default {
 		}
 	},
 	watch: {
+		filteredNodes() {
+			this.shouldReload = true
+		},
 		nodes() {
 			this.debounceRefresh()
 		},
@@ -431,6 +579,14 @@ export default {
 		paintGraph() {
 			this.get('#svg').innerHTML = ''
 			this.get('#miniSvg').innerHTML = ''
+
+			this.shouldReload = false
+
+			if (!this.inited) {
+				this.inited = true
+				this.loading = false
+				return
+			}
 
 			// https://github.com/dagrejs/dagre/wiki#using-dagre
 			const g = new dagreD3.graphlib.Graph({
@@ -759,12 +915,12 @@ export default {
 				nodes: [],
 			}
 
-			let hubNode = this.nodes.find((n) => n.isControllerNode)
+			let hubNode = this.filteredNodes.find((n) => n.isControllerNode)
 			hubNode = hubNode ? hubNode.id : 1
 
 			const neighbors = {}
 
-			for (const node of this.nodes) {
+			for (const node of this.filteredNodes) {
 				const id = node.id
 
 				neighbors[id] = node.neighbors
@@ -1034,7 +1190,7 @@ export default {
 		handleClick(nodeList, event, index) {
 			// Add interactivity
 			const nodeId = parseInt(index)
-			const node = this.nodes.find((n) => n.id === nodeId)
+			const node = this.filteredNodes.find((n) => n.id === nodeId)
 			this.$emit('node-click', node)
 		},
 		handleMouseOver(nodeList, event, index) {
