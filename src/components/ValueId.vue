@@ -344,7 +344,7 @@ export default {
 					this.value.default === item.value ? ' (Default)' : ''
 				}`
 			} else {
-				return `[${item}] Custom`
+				return item
 			}
 		},
 		updateValue(v, customValue) {
