@@ -151,11 +151,6 @@ export default {
 		StatisticsArrows,
 		DialogHealthCheck,
 	},
-	watch: {
-		nodes() {
-			this.debounceRefresh()
-		},
-	},
 	computed: {
 		...mapGetters(['nodes']),
 	},
