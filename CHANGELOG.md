@@ -1,3 +1,20 @@
+## [6.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.0...v6.5.1) (2022-02-08)
+
+
+### Bug Fixes
+
+* inclusion with name and location not working sometimes ([#2247](https://github.com/zwave-js/zwavejs2mqtt/issues/2247)) ([e2071fe](https://github.com/zwave-js/zwavejs2mqtt/commit/e2071fef2f91fd7510564aeed1a5fd8b1dadaa2c)), closes [#2210](https://github.com/zwave-js/zwavejs2mqtt/issues/2210)
+* set max healthcheck rounds ([4d775c7](https://github.com/zwave-js/zwavejs2mqtt/commit/4d775c7c792e87072c05c185ec97ce0a48691011)), closes [#2234](https://github.com/zwave-js/zwavejs2mqtt/issues/2234)
+* **ui:** prevent refresh neighbors automatically on mesh ([6c37bf6](https://github.com/zwave-js/zwavejs2mqtt/commit/6c37bf6c2418d8c274e14a804aab4a3890e4137b))
+* **ui:** remove `custom` text in values ([b684ba9](https://github.com/zwave-js/zwavejs2mqtt/commit/b684ba9583f757fdab903cc487d245e6fe554636))
+
+
+### Features
+
+* **ui:** allow to filter nodes in mesh graph ([#2248](https://github.com/zwave-js/zwavejs2mqtt/issues/2248)) ([83eaede](https://github.com/zwave-js/zwavejs2mqtt/commit/83eaede76a8b6c927ce8ec8b5d2083f2948a20a5))
+* bump zwave-js@8.11.3 ([#2229](https://github.com/zwave-js/zwavejs2mqtt/issues/2229)) ([ef00939](https://github.com/zwave-js/zwavejs2mqtt/commit/ef00939b0289c966370da75b76a55dafc20feb83))
+* bump zwave-js@8.11.4 ([#2245](https://github.com/zwave-js/zwavejs2mqtt/issues/2245)) ([e6f81a9](https://github.com/zwave-js/zwavejs2mqtt/commit/e6f81a94b83fe218305bec2c6e96808bc3c5c1a1))
+
 # [6.5.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.4.1...v6.5.0) (2022-01-31)
 
 
