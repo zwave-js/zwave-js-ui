@@ -130,6 +130,7 @@
 	border: 2px solid black;
 	border-radius: 20px;
 	max-width: 400px;
+	z-index: 1;
 }
 </style>
 
