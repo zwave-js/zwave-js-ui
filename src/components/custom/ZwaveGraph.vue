@@ -397,6 +397,7 @@ export default {
 
 				let toAdd = true
 
+				// check if node is in selected locations
 				if (this.filterLocations.length > 0) {
 					if (this.filterLocationsInvert) {
 						toAdd = this.filterLocations.indexOf(n.loc) === -1
@@ -405,7 +406,8 @@ export default {
 					}
 				}
 
-				if (this.filterNodes.length > 0) {
+				// if not in current locations, check if it's on selected nodes
+				if (!toAdd && this.filterNodes.length > 0) {
 					if (this.filterNodesInvert) {
 						toAdd = this.filterNodes.indexOf(n.id) === -1
 					} else {
