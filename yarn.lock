@@ -3021,9 +3021,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/nvmedit@npm:8.11.4":
-  version: 8.11.4
-  resolution: "@zwave-js/nvmedit@npm:8.11.4"
+"@zwave-js/nvmedit@npm:8.11.5":
+  version: 8.11.5
+  resolution: "@zwave-js/nvmedit@npm:8.11.5"
   dependencies:
     "@zwave-js/core": 8.11.3
     "@zwave-js/shared": 8.11.3
@@ -3034,7 +3034,7 @@ __metadata:
     yargs: ^17.3.1
   bin:
     nvmedit: bin/nvmedit.js
-  checksum: 385a852d37c30e19bf63989d4e58e3293208a8c8284ed3584d35b05006e6c30911e132ca815abcf6e0f904e064722c1293f15b9e0e7fed1c5cbec96f26832475
+  checksum: 9e507bb3d901513f2025ae96535a90e734a9672f7452d03bb82fd0c5445677cce978bbba064d4f1814775396aa1698d3ce530ccfc6c8f0507d2f01718aa0c663
   languageName: node
   linkType: hard
 
@@ -16139,9 +16139,9 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:^8.11.4":
-  version: 8.11.4
-  resolution: "zwave-js@npm:8.11.4"
+"zwave-js@npm:^8.11.5":
+  version: 8.11.5
+  resolution: "zwave-js@npm:8.11.5"
   dependencies:
     "@alcalzone/jsonl-db": ^2.4.1
     "@alcalzone/pak": ^0.7.0
@@ -16149,7 +16149,7 @@ typescript@^4.4.3:
     "@sentry/node": ^6.17.3
     "@zwave-js/config": 8.11.4
     "@zwave-js/core": 8.11.3
-    "@zwave-js/nvmedit": 8.11.4
+    "@zwave-js/nvmedit": 8.11.5
     "@zwave-js/serial": 8.11.3
     "@zwave-js/shared": 8.11.3
     alcalzone-shared: ^4.0.1
@@ -16164,7 +16164,7 @@ typescript@^4.4.3:
     source-map-support: ^0.5.21
     winston: ^3.5.1
     xstate: ^4.27.0
-  checksum: ab83a0825c2d85496921ac341a2c2eb551155a68b42a94939c3e463e1f134a3c3c16ec90c5d69ce125cb16b9d1dfcdc2c43e6fd13095f292e4ee7811050eabab
+  checksum: 75af13db0b0ee8695cf6bef74f01edf53e65a8f8585c03a387c81079e543a0e7cd743423a22a46c3c005947419b30723ef03898d8d439d09dc5ddbafcdfa5607
   languageName: node
   linkType: hard
 
@@ -16323,7 +16323,7 @@ typescript@^4.4.3:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: ^8.11.4
+    zwave-js: ^8.11.5
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
