@@ -19,7 +19,12 @@
 			></v-card-text>
 			<v-card-text v-if="options.inputs" class="pa-4">
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form
+						v-model="valid"
+						ref="form"
+						lazy-validation
+						@submit.prevent="agree"
+					>
 						<v-row>
 							<v-col
 								v-for="(input, index) in options.inputs"
@@ -254,9 +259,13 @@
 					:color="options.color"
 					>{{ options.confirmText }}</v-btn
 				>
-				<v-btn v-if="options.cancelText" @click="cancel" text>{{
-					options.cancelText
-				}}</v-btn>
+				<v-btn
+					v-if="options.cancelText"
+					@keydown.esc="cancel"
+					@click="cancel"
+					text
+					>{{ options.cancelText }}</v-btn
+				>
 			</v-card-actions>
 		</v-card>
 	</v-dialog>
