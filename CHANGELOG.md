@@ -1,3 +1,17 @@
+## [6.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.1...v6.5.2) (2022-02-18)
+
+
+### Bug Fixes
+
+* **ui:** pressing enter reloads page ([8360ee7](https://github.com/zwave-js/zwavejs2mqtt/commit/8360ee767f212482addc227fea7c45e9bc204a6b)), closes [#2256](https://github.com/zwave-js/zwavejs2mqtt/issues/2256)
+
+
+### Features
+
+* bump @zwave-js/server@1.15.0 ([#2268](https://github.com/zwave-js/zwavejs2mqtt/issues/2268)) ([74e5ba7](https://github.com/zwave-js/zwavejs2mqtt/commit/74e5ba74b6e2e2f1208d92e13b3c8c3694870289))
+* bump zwave-js@8.11.5 ([#2253](https://github.com/zwave-js/zwavejs2mqtt/issues/2253)) ([f23e32b](https://github.com/zwave-js/zwavejs2mqtt/commit/f23e32b8f7cababf232ad449f3e7416c0f1c99a9))
+* bump zwave-js@8.11.6 ([#2261](https://github.com/zwave-js/zwavejs2mqtt/issues/2261)) ([a7fee79](https://github.com/zwave-js/zwavejs2mqtt/commit/a7fee7992e9590ae21fde243b9fc6226b0940706))
+
 ## [6.5.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.0...v6.5.1) (2022-02-08)
 
 
