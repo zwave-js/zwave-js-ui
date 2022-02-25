@@ -9,6 +9,42 @@
 					ref="form_settings"
 				>
 					<v-expansion-panels accordion multiple>
+						<v-expansion-panel key="UI">
+							<v-expansion-panel-header>
+								<v-row no-gutters>
+									<v-col align-self="center"> UI </v-col>
+									<v-col class="text-right pr-5">
+										<v-btn
+											@click.stop="openDocs('general')"
+											x-small
+										>
+											Docs
+										</v-btn>
+									</v-col>
+								</v-row>
+							</v-expansion-panel-header>
+							<v-expansion-panel-content>
+								<v-row class="mb-5">
+									<v-col cols="12" sm="6">
+										<v-switch
+											hint="Enable dark mode"
+											persistent-hint
+											label="Dark mode"
+											v-model="internalDarkMode"
+										></v-switch>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-switch
+											hint="Enable this to use Tabs in the top bar instead of a left menu for navigation (useful when integrated in Home Assistant)"
+											persistent-hint
+											label="Use tabs for navigation"
+											v-model="internalNavTabs"
+										></v-switch>
+									</v-col>
+								</v-row>
+							</v-expansion-panel-content>
+							<v-divider />
+						</v-expansion-panel>
 						<v-expansion-panel key="general">
 							<v-expansion-panel-header>
 								<v-row no-gutters>
@@ -1038,7 +1074,7 @@
 </template>
 
 <script>
-import { mapGetters, mapMutations } from 'vuex'
+import { mapActions, mapGetters, mapMutations } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
@@ -1121,11 +1157,20 @@ export default {
 			'devices',
 			'serial_ports',
 			'scales',
+			'darkMode',
+			'navTabs',
 		]),
 	},
 	watch: {
 		dialogValue(val) {
 			val || this.closeDialog()
+		},
+		internalDarkMode(v) {
+			this.setDarkMode(v)
+			this.$vuetify.theme.dark = v
+		},
+		internalNavTabs(v) {
+			this.setNavTabs(v)
 		},
 	},
 	data() {
@@ -1242,10 +1287,13 @@ export default {
 					)
 				},
 			},
+			internalDarkMode: undefined,
+			internalNavTabs: undefined,
 		}
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
+		...mapActions(['setDarkMode', 'setNavTabs']),
 		differentKeys() {
 			const values = Object.values(this.newZwave.securityKeys)
 
@@ -1412,6 +1460,9 @@ export default {
 		// hide socket status indicator from toolbar
 		this.$emit('updateStatus')
 		this.getConfig()
+
+		this.internalDarkMode = this.darkMode
+		this.internalNavTabs = this.navTabs
 	},
 }
 </script>

@@ -1,4 +1,7 @@
 import { $set } from "../lib/utils"
+import { Settings } from '@/modules/Settings'
+
+const settings = new Settings(localStorage);
 
 export const state = {
   auth: undefined,
@@ -59,7 +62,11 @@ export const state = {
     zwaveVersion: '',
     controllerStatus: 'Unknown',
     newConfigVersion: undefined
-  }
+  },
+	ui: {
+		darkMode: settings.load('dark', false),
+		navTabs: settings.load('navTabs', false),
+	}
 }
 
 function getValue(v) {
@@ -91,7 +98,9 @@ export const getters = {
   devices: state => state.devices,
   gateway: state => state.gateway,
   appInfo: state => state.appInfo,
-  scales: state => state.scales
+  scales: state => state.scales,
+	darkMode: state => state.ui.darkMode,
+	navTabs: state => state.ui.navTabs
 }
 
 export const actions = {
@@ -132,7 +141,13 @@ export const actions = {
   },
   removeValue(store, data) {
     store.commit('removeValue', data)
-  }
+  },
+	setDarkMode(store, darkMode) {
+		store.commit('setDarkMode', darkMode)
+	},
+	setNavTabs(store, navTabs) {
+		store.commit('setNavTabs', navTabs)
+	}
 }
 
 export const mutations = {
@@ -249,7 +264,7 @@ export const mutations = {
       let lastTransmit = node.lastTransmit
       let errorReceive = false
       let errorTransmit = false
-  
+
       if (node.statistics) {
         if (node.isControllerNode) {
           const prev = node.statistics
@@ -373,5 +388,13 @@ export const mutations = {
         state.devices.push(d)
       }
     }
-  }
+  },
+	setDarkMode(state, value) {
+		settings.store('dark', value);
+		state.ui.darkMode = value
+	},
+	setNavTabs(state, value) {
+		settings.store('navTabs', value);
+		state.ui.navTabs = value
+	}
 }
