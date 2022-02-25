@@ -64,7 +64,7 @@
 							v-for="item in pages"
 							:key="item.title"
 							:to="item.path === '#' ? '' : item.path"
-							class="px-1"
+							class="smaller-min-width-tabs"
 						>
 							<v-icon
 								left
@@ -860,3 +860,9 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.smaller-min-width-tabs {
+	min-width: 60px;
+}
+</style>

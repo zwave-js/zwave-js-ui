@@ -30,8 +30,8 @@
 						"
 					>
 						<template v-slot:activator="{ on }">
-							<v-btn v-on="on">
-								<v-icon>menu</v-icon>
+							<v-btn color="primary" outlined v-on="on">
+								<v-icon left small>table_chart</v-icon>
 								Columns
 							</v-btn>
 						</template>

@@ -1,36 +1,40 @@
 <template>
-	<v-expansion-panels style="justify-content: start">
-		<v-expansion-panel class="ma-3" style="max-width: 600px">
-			<v-expansion-panel-header>{{ title }}</v-expansion-panel-header>
-			<v-expansion-panel-content>
-				<v-card flat>
-					<v-card-text>
-						<v-row>
-							<v-col
-								v-for="prop in statProps"
-								:key="prop"
-								cols="4"
-							>
-								<div
-									class="caption font-weight-bold"
-									:style="{
-										color:
-											props[prop].color ||
-											$vuetify.theme.themes.light.primary,
-									}"
-								>
-									{{ props[prop].title || prop }}
-								</div>
-								<div class="caption font-weight-bold">
-									{{ getStat(prop) }}
-								</div>
-							</v-col>
-						</v-row>
-					</v-card-text>
-				</v-card>
-			</v-expansion-panel-content>
-		</v-expansion-panel>
-	</v-expansion-panels>
+	<v-row class="pa-4">
+		<template v-for="(section, name) in props">
+			<v-col
+				cols="12"
+				:md="section.cols"
+				:key="`section-content-${name}`"
+			>
+				<div>
+					<h1 class="text-caption text-uppercase grey--text mb-4">
+						{{ name }}
+					</h1>
+					<v-row>
+						<v-col
+							v-for="(stat, index) in section.stats"
+							:key="`controller-stat-${index}`"
+							:cols="section.statCols"
+							:style="{ color: getColor(stat) }"
+						>
+							<h2 class="text-caption">
+								{{ stat.title }}
+							</h2>
+							<div class="text-caption font-weight-bold">
+								{{ getStat(stat) || '-' }}
+							</div>
+						</v-col>
+					</v-row>
+				</div>
+			</v-col>
+			<v-divider
+				:key="`section-divider-${name}`"
+				:vertical="$vuetify.breakpoint.mdAndUp"
+				v-if="name !== 'communication'"
+				class="my-4"
+			/>
+		</template>
+	</v-row>
 </template>
 
 <script>
@@ -43,59 +47,74 @@ export default {
 			type: [String],
 		},
 	},
-	computed: {
-		statProps() {
-			return Object.keys(this.props)
-				.filter((p) => this.hasStat(p))
-				.sort()
-		},
-	},
 	data() {
 		return {
+			hideNoDataStats: false,
 			props: {
-				messagesTX: {
-					title: 'Messages TX',
+				messages: {
+					stats: {
+						messagesTX: {
+							title: 'TX',
+						},
+						messagesRX: {
+							title: 'RX',
+						},
+						messagesDroppedTX: {
+							title: 'Dropped TX',
+							color: 'red',
+						},
+						messagesDroppedRX: {
+							title: 'Dropped RX',
+							color: 'red',
+						},
+					},
+					cols: 3,
+					statCols: 6,
 				},
-				messagesRX: {
-					title: 'Messages RX',
+				commands: {
+					stats: {
+						commandsTX: {
+							title: 'TX',
+						},
+						commandsRX: {
+							title: 'RX',
+						},
+						commandsDroppedTX: {
+							title: 'Dropped TX',
+							color: 'red',
+						},
+						commandsDroppedRX: {
+							title: 'Dropped RX',
+							color: 'red',
+						},
+					},
+					cols: 3,
+					statCols: 6,
 				},
-				messagesDroppedRX: {
-					title: 'Messages Dropped RX',
-					color: 'red',
-				},
-				NAK: {
-					color: 'red',
-				},
-				CAN: {},
-				timeoutACK: {
-					title: 'Timeout ACK',
-					color: 'red',
-				},
-				timeoutResponse: {
-					title: 'Timeout Response',
-					color: 'red',
-				},
-				timeoutCallback: {
-					title: 'Timeout Callback',
-					color: 'red',
-				},
-				messagesDroppedTX: {
-					title: 'Messages Dropped TX',
-					color: 'red',
-				},
-				commandsTX: {
-					title: 'Commands TX',
-				},
-				commandsRX: {
-					title: 'Commands RX',
-				},
-				commandsDroppedRX: {
-					title: 'Commands dropped RX',
-					color: 'red',
-				},
-				commandsDroppedTX: {
-					title: 'Commands Dropped TX',
-					color: 'red',
+				communication: {
+					stats: {
+						CAN: {
+							title: 'CAN',
+						},
+						NAK: {
+							title: 'NAK',
+							color: 'red',
+						},
+						timeoutACK: {
+							title: 'Timeout ACK',
+							color: 'red',
+						},
+						timeoutResponse: {
+							title: 'Timeout Response',
+							color: 'red',
+						},
+						timeoutCallback: {
+							title: 'Timeout Callback',
+							color: 'red',
+						},
+					},
+					cols: 6,
+					statCols: 4,
 				},
 			},
 		}
@@ -117,6 +136,12 @@ export default {
 			} else {
 				return null
 			}
+		},
+		getColor(prop) {
+			if (!this.hasStat(prop)) {
+				return 'grey'
+			}
+			return prop.color || this.$vuetify.theme.themes.light.primary
 		},
 	},
 }

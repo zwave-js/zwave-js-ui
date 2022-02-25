@@ -1,102 +1,127 @@
 <template>
-	<v-container fluid>
-		<v-card>
-			<v-card-text>
-				<v-container fluid>
-					<v-row justify="center">
-						<v-col cols="12" sm="6">
-							<v-expansion-panels style="justify-content: start">
-								<v-expansion-panel
-									class="ma-3"
-									style="max-width: 600px"
+	<div>
+		<v-container fluid class="pa-4">
+			<v-row class="py-4 align-center" no-gutters>
+				<v-col class="text-end">
+					<v-menu>
+						<template #activator="{ on }">
+							<v-item-group class="v-btn-toggle">
+								<v-btn
+									:color="
+										showControllerStatistics
+											? 'green'
+											: 'grey'
+									"
+									outlined
+									@click="toggleControllerStatistics"
 								>
-									<v-expansion-panel-header
-										>Actions</v-expansion-panel-header
+									Controller statistics
+									<v-icon
+										:color="
+											showControllerStatistics
+												? 'green'
+												: 'grey'
+										"
+										right
+										v-on="on"
 									>
-									<v-expansion-panel-content>
-										<v-card flat>
-											<v-card-text>
-												<v-row>
-													<v-col
-														cols="12"
-														md="6"
-														style="
-															text-align: center;
-														"
-													>
-														<v-btn
-															depressed
-															color="primary"
-															@click="
-																addRemoveShowDialog = true
-															"
-														>
-															Manage nodes
-														</v-btn>
-													</v-col>
-													<v-col
-														cols="12"
-														md="6"
-														style="
-															text-align: center;
-														"
-													>
-														<v-btn
-															dark
-															color="green"
-															depressed
-															@click="
-																advancedShowDialog = true
-															"
-														>
-															Advanced
-														</v-btn>
-													</v-col>
-												</v-row>
-											</v-card-text>
-										</v-card>
-									</v-expansion-panel-content>
-								</v-expansion-panel>
-							</v-expansion-panels>
-						</v-col>
+										multiline_chart
+									</v-icon>
+								</v-btn>
+								<v-btn color="primary" outlined v-on="on">
+									Actions
+									<v-icon right>arrow_drop_down</v-icon>
+								</v-btn>
+							</v-item-group>
+						</template>
 
-						<v-col
-							v-if="controllerNode"
-							cols="12"
-							sm="6"
-							style="text-align: center"
-						>
+						<v-list>
+							<v-list-item @click="addRemoveShowDialog = true">
+								<v-list-item-content
+									class="d-none d-sm-inline-flex"
+								>
+									<v-list-item-title>
+										Manage nodes
+									</v-list-item-title>
+									<v-list-item-subtitle>
+										Include, replace or exclude devices
+									</v-list-item-subtitle>
+								</v-list-item-content>
+								<v-list-item-action>
+									<v-btn
+										depressed
+										outlined
+										color="primary"
+										@click="addRemoveShowDialog = true"
+									>
+										Manage nodes
+									</v-btn>
+								</v-list-item-action>
+							</v-list-item>
+							<v-divider />
+							<v-list-item @click="advancedShowDialog = true">
+								<v-list-item-content
+									class="d-none d-sm-inline-flex"
+								>
+									<v-list-item-title>
+										Advanced actions
+									</v-list-item-title>
+									<v-list-item-subtitle>
+										Maintainance, troubleshooting and other
+										advanced actions
+									</v-list-item-subtitle>
+								</v-list-item-content>
+								<v-list-item-action>
+									<v-btn
+										dark
+										color="green"
+										depressed
+										outlined
+										@click="advancedShowDialog = true"
+									>
+										Advanced actions
+									</v-btn>
+								</v-list-item-action>
+							</v-list-item>
+						</v-list>
+					</v-menu>
+				</v-col>
+			</v-row>
+			<v-expand-transition>
+				<v-row v-show="showControllerStatistics">
+					<v-col class="mb-8">
+						<v-sheet outlined rounded>
 							<StatisticsCard
+								v-if="true || controllerNode"
 								title="Controller Statistics"
 								:node="this.controllerNode"
 							/>
-						</v-col>
-					</v-row>
-				</v-container>
+						</v-sheet>
+					</v-col>
+				</v-row>
+			</v-expand-transition>
+			<nodes-table
+				:socket="socket"
+				v-on="$listeners"
+				@action="sendAction"
+			/>
+		</v-container>
 
-				<DialogAddRemove
-					v-model="addRemoveShowDialog"
-					:socket="socket"
-					@close="onAddRemoveClose"
-					@apiRequest="apiRequest"
-					v-on="{ showConfirm: $listeners.showConfirm }"
-				/>
+		<DialogAddRemove
+			v-model="addRemoveShowDialog"
+			:socket="socket"
+			@close="onAddRemoveClose"
+			@apiRequest="apiRequest"
+			v-on="{ showConfirm: $listeners.showConfirm }"
+		/>
 
-				<DialogAdvanced
-					v-model="advancedShowDialog"
-					@close="advancedShowDialog = false"
-					:actions="actions"
-					@action="onAction"
-				/>
-
-				<nodes-table
-					:socket="socket"
-					v-on="$listeners"
-					@action="sendAction"
-				/>
-			</v-card-text>
-		</v-card>
-	</v-container>
+		<DialogAdvanced
+			v-model="advancedShowDialog"
+			@close="advancedShowDialog = false"
+			:actions="actions"
+			@action="onAction"
+		/>
+	</div>
 </template>
 
 <script>
@@ -260,6 +285,7 @@ export default {
 					return valid || 'This field is required.'
 				},
 			},
+			showControllerStatistics: false,
 		}
 	},
 	methods: {
@@ -571,6 +597,9 @@ export default {
 					this.bindedSocketEvents[event]
 				)
 			}
+		},
+		toggleControllerStatistics() {
+			this.showControllerStatistics = !this.showControllerStatistics
 		},
 	},
 	mounted() {
