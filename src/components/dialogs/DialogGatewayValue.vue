@@ -54,9 +54,7 @@
 											}}</v-list-item-title>
 											<v-list-item-subtitle
 												style="max-width: 500px"
-												class="
-													text-truncate text-no-wrap
-												"
+												class="text-truncate text-no-wrap"
 												>{{
 													item.description
 												}}</v-list-item-subtitle

@@ -64,24 +64,14 @@
 				<v-col class="text-center no-scroll full-height">
 					<div
 						v-if="!selected || !selected.ext"
-						class="
-							title
-							grey--text
-							text--lighten-1
-							font-weight-light
-						"
+						class="title grey--text text--lighten-1 font-weight-light"
 						style="align-self: center"
 					>
 						Select a file
 					</div>
 					<div
 						v-else-if="loadingFile"
-						class="
-							title
-							grey--text
-							text--lighten-1
-							font-weight-light
-						"
+						class="title grey--text text--lighten-1 font-weight-light"
 						style="align-self: center"
 					>
 						<v-progress-circular

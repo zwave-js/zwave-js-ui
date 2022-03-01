@@ -200,11 +200,7 @@
 											>cloud_upload</v-icon
 										>
 										<p
-											class="
-												caption
-												font-weight-bold
-												text-uppercase
-											"
+											class="caption font-weight-bold text-uppercase"
 										>
 											Drop the image here
 										</p>
