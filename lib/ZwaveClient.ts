@@ -1267,6 +1267,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				// this could throw so include in the try/catch
 				this._driver = new Driver(this.cfg.port, zwaveOptions)
 
+				this._driver.enableErrorReporting()
 				this._driver.on('error', this._onDriverError.bind(this))
 				this._driver.once(
 					'driver ready',
@@ -3658,7 +3659,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
 		node.supportsSecurity = zwaveNode.supportsSecurity
 		node.supportsBeaming = zwaveNode.supportsBeaming
-		node.isControllerNode = zwaveNode.isControllerNode()
+		node.isControllerNode = zwaveNode.isControllerNode
 		node.isListening = zwaveNode.isListening
 		node.isFrequentListening = zwaveNode.isFrequentListening
 		node.isRouting = zwaveNode.isRouting
