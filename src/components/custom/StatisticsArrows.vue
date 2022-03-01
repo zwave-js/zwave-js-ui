@@ -48,7 +48,16 @@ export default {
 		}
 	},
 	methods: {
-		jsonToList,
+		jsonToList(item) {
+			item.indented = {
+				a: 'c',
+				b: 'd',
+			}
+			return jsonToList(item, {
+				rtt: 'ms',
+				rssi: 'dBm',
+			})
+		},
 	},
 	mounted() {
 		this.nowInterval = setInterval(() => {
