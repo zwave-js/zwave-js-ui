@@ -55,7 +55,7 @@ RUN cat package.json \
       | jq '.resolutions += { "@zwave-js/config": "file:../node-zwave-js/packages/config/package.tgz" }' \
       | jq '.resolutions += { "@zwave-js/core": "file:../node-zwave-js/packages/core/package.tgz" }' \
       | jq '.resolutions += { "@zwave-js/nvmedit": "file:../node-zwave-js/packages/nvmedit/package.tgz" }' \
-			| jq '.resolutions += { "@zwave-js/serial": "file:../node-zwave-js/packages/serial/package.tgz" }' \
+      | jq '.resolutions += { "@zwave-js/serial": "file:../node-zwave-js/packages/serial/package.tgz" }' \
       | jq '.resolutions += { "@zwave-js/shared": "file:../node-zwave-js/packages/shared/package.tgz" }' \
       | jq '.resolutions += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
       | jq '.dependencies += { "zwave-js": "file:../node-zwave-js/packages/zwave-js/package.tgz" }' \
