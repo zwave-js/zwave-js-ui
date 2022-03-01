@@ -91,9 +91,6 @@
       }
     }
   },
-  "resolutions": {
-    "colors": "1.4.0"
-  },
   "optionalDependencies": {
     "@release-it/conventional-changelog": "^3.3.0",
     "@types/node": "^16.10.3",

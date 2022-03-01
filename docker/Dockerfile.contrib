@@ -42,8 +42,7 @@ RUN yarn
 RUN yarn build
 
 # Update the version info to match the branch built
-RUN yarn lerna version --allow-branch "*" --no-git-tag-version --no-push --ignore-scripts --yes \
-    $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD))
+RUN RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
 
 RUN yarn workspaces foreach pack
 
