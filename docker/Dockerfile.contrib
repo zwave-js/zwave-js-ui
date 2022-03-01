@@ -41,8 +41,10 @@ ENV YARN_HTTP_TIMEOUT=300000
 RUN yarn
 RUN yarn build
 
+RUN yarn plugin import version && yarn plugin import workspace-tools
+
 # Update the version info to match the branch built
-RUN RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
+RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
 
 RUN yarn workspaces foreach pack
 
