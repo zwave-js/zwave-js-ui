@@ -73,15 +73,24 @@ export function $set(o, p, v) {
 
 export function jsonToList(obj, suffixes = {}, level = 0) {
 	let s = ''
-	let indent = '    '.repeat(level)
+	let indent = '─'.repeat(level)
 
-	console.log(indent, level)
+	if (indent) {
+		indent = '└' + indent
+	}
 
 	for (const k in obj) {
-		s +=
-			typeof obj[k] === 'object'
-				? indent + k + ': \n' + jsonToList(obj[k], suffixes, level + 1)
-				: indent + k + ': ' + obj[k] + (suffixes[k] || '') + '\n'
+		let value = obj[k]
+		if (Array.isArray(value)) {
+			value = value.join(', ')
+		}
+
+		if (value !== '') {
+			s +=
+				typeof value === 'object'
+					? indent + k + '\n' + jsonToList(value, suffixes, level + 1)
+					: indent + k + ': ' + value + (suffixes[k] || '') + '\n'
+		}
 	}
 
 	return s
