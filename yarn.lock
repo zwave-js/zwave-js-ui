@@ -1852,7 +1852,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/integrations@npm:^6.17.6":
+"@sentry/integrations@npm:^6.18.1":
   version: 6.18.1
   resolution: "@sentry/integrations@npm:6.18.1"
   dependencies:
@@ -1875,7 +1875,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/node@npm:^6.17.6":
+"@sentry/node@npm:^6.18.1":
   version: 6.18.1
   resolution: "@sentry/node@npm:6.18.1"
   dependencies:
@@ -2961,39 +2961,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:8.10.2-0-pr-3773-ac71002":
-  version: 8.10.2-0-pr-3773-ac71002
-  resolution: "@zwave-js/config@npm:8.10.2-0-pr-3773-ac71002"
+"@zwave-js/config@npm:9.0.0-beta.0":
+  version: 9.0.0-beta.0
+  resolution: "@zwave-js/config@npm:9.0.0-beta.0"
   dependencies:
-    "@zwave-js/core": 8.10.2-0-pr-3773-ac71002
-    "@zwave-js/shared": 8.10.2-0-pr-3773-ac71002
+    "@zwave-js/core": 9.0.0-beta.0
+    "@zwave-js/shared": 9.0.0-beta.0
     alcalzone-shared: ^4.0.1
     ansi-colors: ^4.1.1
     fs-extra: ^10.0.1
     json-logic-js: ^2.0.2
     json5: ^2.2.0
     semver: ^7.3.5
-    winston: ^3.5.1
-  checksum: d30e3b6ec7b267b7dd26149371978245b40f461ffba8dafd458f82fc65634da787fb304675e584992396723c51e98931588468b0dfc34df0e15da65b2c0d4fc5
+    winston: ^3.6.0
+  checksum: f89c267fbd7bae0386dc28904808cae022173aba0fb2196213ad3a7f4edecc6d3fac451b8a9fa6a07314877e27c2acd33fa6ceefc839ef7db00f1d40a0daba36
   languageName: node
   linkType: hard
 
-"@zwave-js/core@npm:8.10.2-0-pr-3773-ac71002":
-  version: 8.10.2-0-pr-3773-ac71002
-  resolution: "@zwave-js/core@npm:8.10.2-0-pr-3773-ac71002"
+"@zwave-js/core@npm:9.0.0-beta.0":
+  version: 9.0.0-beta.0
+  resolution: "@zwave-js/core@npm:9.0.0-beta.0"
   dependencies:
     "@alcalzone/jsonl-db": ^2.5.1
-    "@zwave-js/shared": 8.10.2-0-pr-3773-ac71002
+    "@zwave-js/shared": 9.0.0-beta.0
     "@zwave-js/winston-daily-rotate-file": ^4.5.6-1
     alcalzone-shared: ^4.0.1
     ansi-colors: ^4.1.1
     dayjs: ^1.10.8
-    logform: ^2.3.2
+    logform: ^2.4.0
     nrf-intel-hex: ^1.3.0
     triple-beam: "*"
-    winston: ^3.5.1
+    winston: ^3.6.0
     winston-transport: ^4.5.0
-  checksum: 01599ffdf4fe0ecabc8a9483f79329dec0b832d91693e2558cc5c2444ceeedfbcfd3f52dc9be8be1ce640bd1810e31d2fab048867a2159efe3600b58ff285b09
+  checksum: baa87dd2108698ccd30fdb9addf0b4e9cc40a15175109a0e44f403a2da77d18f91479b5d49e8f79622276dd5f977def90663a2162030334afc35ec9735d6be29
   languageName: node
   linkType: hard
 
@@ -3006,12 +3006,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/nvmedit@npm:8.10.2-0-pr-3773-ac71002":
-  version: 8.10.2-0-pr-3773-ac71002
-  resolution: "@zwave-js/nvmedit@npm:8.10.2-0-pr-3773-ac71002"
+"@zwave-js/nvmedit@npm:9.0.0-beta.0":
+  version: 9.0.0-beta.0
+  resolution: "@zwave-js/nvmedit@npm:9.0.0-beta.0"
   dependencies:
-    "@zwave-js/core": 8.10.2-0-pr-3773-ac71002
-    "@zwave-js/shared": 8.10.2-0-pr-3773-ac71002
+    "@zwave-js/core": 9.0.0-beta.0
+    "@zwave-js/shared": 9.0.0-beta.0
     alcalzone-shared: ^4.0.1
     fs-extra: ^10.0.1
     reflect-metadata: ^0.1.13
@@ -3019,21 +3019,21 @@ __metadata:
     yargs: ^17.3.1
   bin:
     nvmedit: bin/nvmedit.js
-  checksum: 0753e99b67b35cd80c70cc79ca9fa453734d0c3cb7acd46cd0c502f891e6f79c2ddcd209b9daf690fc5f50f1b33c4b89e003ba900fa863ded449ed1f05eb45a4
+  checksum: 7dc501d52cfbab29b794a622c6fcbc23b87a4ff87c40fce61f580e567f1431004d9feee5502499df2d7421bc5b8364e832520680189cfb9cfe20554bba3aed09
   languageName: node
   linkType: hard
 
-"@zwave-js/serial@npm:8.10.2-0-pr-3773-ac71002":
-  version: 8.10.2-0-pr-3773-ac71002
-  resolution: "@zwave-js/serial@npm:8.10.2-0-pr-3773-ac71002"
+"@zwave-js/serial@npm:9.0.0-beta.0":
+  version: 9.0.0-beta.0
+  resolution: "@zwave-js/serial@npm:9.0.0-beta.0"
   dependencies:
-    "@sentry/node": ^6.17.6
-    "@zwave-js/core": 8.10.2-0-pr-3773-ac71002
-    "@zwave-js/shared": 8.10.2-0-pr-3773-ac71002
+    "@sentry/node": ^6.18.1
+    "@zwave-js/core": 9.0.0-beta.0
+    "@zwave-js/shared": 9.0.0-beta.0
     alcalzone-shared: ^4.0.1
     serialport: ^10.3.0
-    winston: ^3.5.1
-  checksum: 81f20946ea6e28b4fc6f72d6b5cfc2b3166668d36210023177c3d9df2c8d36ec623e438618db1656b790e3f92b60ac893ac8a742351dbecae0cacbf1bb32ef17
+    winston: ^3.6.0
+  checksum: 724abdbcd0d0093f90f277dd0fefc03f11b8721975a4c13ebc6625395990a4448f050627805bb50db94fd62e58784a02376a1bd76d739f5b6d15d4d28778745c
   languageName: node
   linkType: hard
 
@@ -3052,13 +3052,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/shared@npm:8.10.2-0-pr-3773-ac71002":
-  version: 8.10.2-0-pr-3773-ac71002
-  resolution: "@zwave-js/shared@npm:8.10.2-0-pr-3773-ac71002"
+"@zwave-js/shared@npm:9.0.0-beta.0":
+  version: 9.0.0-beta.0
+  resolution: "@zwave-js/shared@npm:9.0.0-beta.0"
   dependencies:
     alcalzone-shared: ^4.0.1
     fs-extra: ^10.0.1
-  checksum: f96ddb2e1543fea7f68ac1ff633dc05579c8b7ebfc9a7e1da3d6d85880a24d74fcb4bf0483c3e615230b020abfde31bcf9ff44995d58ccecf9677820b2d50117
+  checksum: 0921263d466bdf7405a35979c14950556beaad9b32b70755b4cb9ee13b4f94f0f9a1cd2fd51f7c178d812fee8069dd98d77477932bfdc029b15794ce0507577e
   languageName: node
   linkType: hard
 
@@ -15358,7 +15358,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"winston@npm:^3.3.3, winston@npm:^3.5.1":
+"winston@npm:^3.3.3, winston@npm:^3.6.0":
   version: 3.6.0
   resolution: "winston@npm:3.6.0"
   dependencies:
@@ -15704,19 +15704,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:8.10.2-0-pr-3773-ac71002":
-  version: 8.10.2-0-pr-3773-ac71002
-  resolution: "zwave-js@npm:8.10.2-0-pr-3773-ac71002"
+"zwave-js@npm:9.0.0-beta.0":
+  version: 9.0.0-beta.0
+  resolution: "zwave-js@npm:9.0.0-beta.0"
   dependencies:
     "@alcalzone/jsonl-db": ^2.5.1
     "@alcalzone/pak": ^0.8.0
-    "@sentry/integrations": ^6.17.6
-    "@sentry/node": ^6.17.6
-    "@zwave-js/config": 8.10.2-0-pr-3773-ac71002
-    "@zwave-js/core": 8.10.2-0-pr-3773-ac71002
-    "@zwave-js/nvmedit": 8.10.2-0-pr-3773-ac71002
-    "@zwave-js/serial": 8.10.2-0-pr-3773-ac71002
-    "@zwave-js/shared": 8.10.2-0-pr-3773-ac71002
+    "@sentry/integrations": ^6.18.1
+    "@sentry/node": ^6.18.1
+    "@zwave-js/config": 9.0.0-beta.0
+    "@zwave-js/core": 9.0.0-beta.0
+    "@zwave-js/nvmedit": 9.0.0-beta.0
+    "@zwave-js/serial": 9.0.0-beta.0
+    "@zwave-js/shared": 9.0.0-beta.0
     alcalzone-shared: ^4.0.1
     ansi-colors: ^4.1.1
     axios: ^0.26.0
@@ -15727,9 +15727,9 @@ __metadata:
     semver: ^7.3.5
     serialport: ^10.3.0
     source-map-support: ^0.5.21
-    winston: ^3.5.1
+    winston: ^3.6.0
     xstate: ^4.29.0
-  checksum: fa5945179f3ec505a17cdfa8be513cc4fb08b0bcf6e4276f398e16e60a784fab9c3a7e7efcc6fd2685a9ccab102fc119b72a755f530c2f1472fd87f7977d7583
+  checksum: befbe9d44c898a09f8a9e72c858de06ebc3ff50e9166555062c87079c62d8a9cfb09812c2bdaebeaba68b49498a7c4703489d86d3e2a181c693bf8890c711e4e
   languageName: node
   linkType: hard
 
@@ -15888,7 +15888,7 @@ __metadata:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: 8.10.2-0-pr-3773-ac71002
+    zwave-js: 9.0.0-beta.0
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
