@@ -3347,7 +3347,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			valueId.propertyKey = args.eventLabel as string
 
 			data = this._parseNotification(args.parameters)
-		} else if (ccId === CommandClasses['Entry Control']) {
+		} else if (ccId === CommandClasses['Entry Control'] || ccId === CommandClasses['Multilevel Switch']) {
 			valueId.property = args.eventType as string
 			valueId.propertyKey = args.dataType as string
 			data =
