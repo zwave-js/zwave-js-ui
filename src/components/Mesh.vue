@@ -24,38 +24,37 @@
 					"
 					>clear</v-icon
 				>
-				<v-subheader>Node properties</v-subheader>
-
 				<v-col v-if="selectedNode">
+					<v-subheader>Node properties</v-subheader>
 					<v-list
 						dense
 						style="min-width: 300px; background: transparent"
 					>
-						<v-list-item>
+						<v-list-item dense>
 							<v-list-item-content>ID</v-list-item-content>
 							<v-list-item-content class="align-end">{{
 								selectedNode.id
 							}}</v-list-item-content>
 						</v-list-item>
-						<v-list-item>
+						<v-list-item dense>
 							<v-list-item-content>Status</v-list-item-content>
 							<v-list-item-content class="align-end">{{
 								selectedNode.status
 							}}</v-list-item-content>
 						</v-list-item>
-						<v-list-item>
+						<v-list-item dense>
 							<v-list-item-content>Code</v-list-item-content>
 							<v-list-item-content class="align-end">{{
 								selectedNode.productLabel
 							}}</v-list-item-content>
 						</v-list-item>
-						<v-list-item>
+						<v-list-item dense>
 							<v-list-item-content>Product</v-list-item-content>
 							<v-list-item-content class="align-end">{{
 								selectedNode.productDescription
 							}}</v-list-item-content>
 						</v-list-item>
-						<v-list-item>
+						<v-list-item dense>
 							<v-list-item-content
 								>Manufacturer</v-list-item-content
 							>
@@ -75,7 +74,7 @@
 								selectedNode.loc
 							}}</v-list-item-content>
 						</v-list-item>
-						<v-list-item>
+						<v-list-item dense>
 							<v-list-item-content
 								>Statistics</v-list-item-content
 							>
@@ -83,6 +82,29 @@
 								><statistics-arrows :node="selectedNode"
 							/></v-list-item-content>
 						</v-list-item>
+						<div v-if="lwr">
+							<v-subheader>Last working route</v-subheader>
+							<v-list-item dense v-for="(s, i) in lwr" :key="i">
+								<v-list-item-content>{{
+									s.title
+								}}</v-list-item-content>
+								<v-list-item-content class="align-end">{{
+									s.text
+								}}</v-list-item-content>
+							</v-list-item>
+						</div>
+
+						<div v-if="nlwr">
+							<v-subheader>Next Last working route</v-subheader>
+							<v-list-item dense v-for="(s, i) in nlwr" :key="i">
+								<v-list-item-content>{{
+									s.title
+								}}</v-list-item-content>
+								<v-list-item-content class="align-end">{{
+									s.text
+								}}</v-list-item-content>
+							</v-list-item>
+						</div>
 					</v-list>
 					<v-row
 						v-if="!selectedNode.isControllerNode"
@@ -142,6 +164,13 @@ import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
+const ProtocolDataRate = {
+	1: 'ZWave_9k6',
+	2: 'ZWave_40k',
+	3: 'ZWave_100k',
+	4: 'LongRange_100k',
+}
+
 export default {
 	name: 'Mesh',
 	props: {
@@ -154,6 +183,28 @@ export default {
 	},
 	computed: {
 		...mapGetters(['nodes']),
+		lwr() {
+			if (!this.selectedNode) return null
+
+			const stats = this.selectedNode.statistics
+
+			if (!stats || !stats.lwr) return null
+
+			const routeStats = this.parseRouteStats(stats.lwr)
+
+			return routeStats
+		},
+		nlwr() {
+			if (!this.selectedNode) return null
+
+			const stats = this.selectedNode.statistics
+
+			if (!stats || !stats.nlwr) return null
+
+			const routeStats = this.parseRouteStats(stats.nlwr)
+
+			return routeStats
+		},
 	},
 	data() {
 		return {
@@ -173,6 +224,44 @@ export default {
 		nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode
+		},
+		parseRouteStats(stats) {
+			const repRSSI = stats.repeaterRSSI || []
+			const repeaters =
+				stats.repeaters?.length > 0
+					? stats.repeaters
+							.map(
+								(r, i) =>
+									`${r}${
+										repRSSI[i] ? ` (${repRSSI[i]})` : ''
+									}`
+							)
+							.join(', ')
+					: 'None, direct connection'
+			const routeFiled = stats.routeFailedBetween
+				? stats.routeFailedBetween
+						.map((r) => `${r[0]} --> ${r[1]}`)
+						.join(', ')
+				: 'N/A'
+
+			return [
+				{
+					title: 'RSSI',
+					text: stats.rssi ? stats.rssi + ' ms' : 'N/A',
+				},
+				{
+					title: 'Protocol Data Rate',
+					text: ProtocolDataRate[stats.protocolDataRate] || 'N/A',
+				},
+				{
+					title: 'Repeaters',
+					text: repeaters,
+				},
+				{
+					title: 'Route failed between',
+					text: routeFiled,
+				},
+			]
 		},
 		debounceRefresh() {
 			if (this.refreshTimeout) {

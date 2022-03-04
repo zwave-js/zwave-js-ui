@@ -50,8 +50,8 @@ export default {
 	methods: {
 		jsonToList(item) {
 			return jsonToList(item, {
-				rtt: 'ms',
-				rssi: 'dBm',
+				ignore: ['lwr', 'nlwr', 'rssi'],
+				suffixes: { rtt: 'ms' },
 			})
 		},
 	},
