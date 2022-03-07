@@ -2215,7 +2215,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const api = endpoint.commandClasses[commandClass]
 			if (!api || !api.isSupported()) {
 				throw Error(
-					`Node ${ctx.nodeId} (Endpoint ${ctx.endpoint}) does not support CC ${ctx.commandClass} or it has not been implemented yet`
+					`Node ${ctx.nodeId}${
+						ctx.endpoint ? ` Endpoint ${ctx.endpoint}` : ''
+					} does not support CC ${
+						ctx.commandClass
+					} or it has not been implemented yet`
 				)
 			} else if (!(command in api)) {
 				throw Error(
