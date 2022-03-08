@@ -291,14 +291,10 @@ export default {
 						this.showSnackbar('Nodes Neighbors updated')
 						this.setNeighbors(data.result)
 						// refresh graph
-						this.$refs.mesh.debounceRefresh()
+						// this.$refs.mesh.debounceRefresh()
 						break
 					}
 				}
-			} else {
-				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message
-				)
 			}
 		})
 
