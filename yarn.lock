@@ -16160,9 +16160,9 @@ typescript@^4.4.3:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:^8.11.8":
-  version: 8.11.8
-  resolution: "zwave-js@npm:8.11.8"
+"zwave-js@npm:^8.11.9":
+  version: 8.11.9
+  resolution: "zwave-js@npm:8.11.9"
   dependencies:
     "@alcalzone/jsonl-db": ^2.5.1
     "@alcalzone/pak": ^0.8.0
@@ -16185,7 +16185,7 @@ typescript@^4.4.3:
     source-map-support: ^0.5.21
     winston: ^3.5.1
     xstate: ^4.29.0
-  checksum: 7b80d756f2d26790459a7d3ce37bbb910be7713363f60b4bf32d5a7f2ac09a5b4dd0b3950bb68b618d322f2f4907c5675b4a8398f836bf90ebad1f958a8e2f85
+  checksum: 26321267d78f34bbd10fbf31e52da61a897e2318cda8d1f9c8975d4f8cd5ecb9b70b18e0cc242cd8d7afe281a6494033ae5bc34dbbc942557ec96694dfe02cd2
   languageName: node
   linkType: hard
 
@@ -16344,7 +16344,7 @@ typescript@^4.4.3:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: ^8.11.8
+    zwave-js: ^8.11.9
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
