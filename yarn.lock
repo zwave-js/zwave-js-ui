@@ -2961,9 +2961,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:9.0.0-beta.3":
-  version: 9.0.0-beta.3
-  resolution: "@zwave-js/config@npm:9.0.0-beta.3"
+"@zwave-js/config@npm:9.0.0-beta.4":
+  version: 9.0.0-beta.4
+  resolution: "@zwave-js/config@npm:9.0.0-beta.4"
   dependencies:
     "@zwave-js/core": 9.0.0-beta.3
     "@zwave-js/shared": 9.0.0-beta.2
@@ -2974,7 +2974,7 @@ __metadata:
     json5: ^2.2.0
     semver: ^7.3.5
     winston: ^3.6.0
-  checksum: 38a9a16730d58db364c8d62a34c440e4ef2562efb6a7b166cc700e734f49e565632889f4cafaf74f1960528ed3cb2ae116f75b6cbfff096acfcd538c530dac51
+  checksum: ec83bde425adede23349de0706d48819b4270589d83cde4863b7f5dcf3df9c67f7a6a5138ba9a1bca3468405a1aaff8dc3503a9fc6afee10cc2065ce48885b8b
   languageName: node
   linkType: hard
 
@@ -15695,15 +15695,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:9.0.0-beta.3":
-  version: 9.0.0-beta.3
-  resolution: "zwave-js@npm:9.0.0-beta.3"
+"zwave-js@npm:9.0.0-beta.4":
+  version: 9.0.0-beta.4
+  resolution: "zwave-js@npm:9.0.0-beta.4"
   dependencies:
     "@alcalzone/jsonl-db": ^2.5.1
     "@alcalzone/pak": ^0.8.1
     "@sentry/integrations": ^6.18.1
     "@sentry/node": ^6.18.1
-    "@zwave-js/config": 9.0.0-beta.3
+    "@zwave-js/config": 9.0.0-beta.4
     "@zwave-js/core": 9.0.0-beta.3
     "@zwave-js/nvmedit": 9.0.0-beta.3
     "@zwave-js/serial": 9.0.0-beta.3
@@ -15720,7 +15720,7 @@ __metadata:
     source-map-support: ^0.5.21
     winston: ^3.6.0
     xstate: ^4.29.0
-  checksum: 193f9248ce010336664b17089eb516380d1cad622781a9500e1cfcc2838f692da5c943c6f9c5c92a455777dfff4880c90cb8a097f7e798770e4279eed77bcf87
+  checksum: d846904833a30da7cd629baba88189c82dde64fb566b1358f10c1f4f5940453364e03f282a1ef26f899d036761014bc0c26b63e4bcc50c5545d337e0520ee5d4
   languageName: node
   linkType: hard
 
@@ -15879,7 +15879,7 @@ __metadata:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: 9.0.0-beta.3
+    zwave-js: 9.0.0-beta.4
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
