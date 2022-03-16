@@ -351,6 +351,7 @@ export type Z2MNode = {
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
+	sdkVersion?: string
 	protocolVersion?: ProtocolVersion
 	zwavePlusVersion?: number | undefined
 	zwavePlusNodeType?: ZWavePlusNodeType | undefined
@@ -3652,6 +3653,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.productDescription = deviceConfig.description
 		node.manufacturer = deviceConfig.manufacturer
 		node.firmwareVersion = zwaveNode.firmwareVersion
+		node.sdkVersion = zwaveNode.sdkVersion
 		node.protocolVersion = zwaveNode.protocolVersion
 		node.zwavePlusVersion = zwaveNode.zwavePlusVersion
 		node.zwavePlusNodeType = zwaveNode.zwavePlusNodeType
