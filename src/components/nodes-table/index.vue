@@ -241,9 +241,10 @@
 					}}</span>
 				</v-progress-circular>
 				<div v-else>
-					v{{
-						item.firmwareVersion +
-						(item.sdkVersion ? ` (${item.sdkVersion})` : '')
+					{{
+						`FW: v${item.firmwareVersion}${
+							item.sdkVersion ? `\nSDK: v${item.sdkVersion}` : ''
+						}`
 					}}
 				</div>
 			</div>
