@@ -16,7 +16,7 @@ ARG Z2M_REPOSITORY=https://github.com/zwave-js/zwavejs2mqtt
 USER node
 WORKDIR /home/node
 
-RUN git clone -b ${ZWJ_BRANCH} --depth 1 ${ZWJ_REPOSITORY}
+RUN git clone -b ${ZWJ_BRANCH} ${ZWJ_REPOSITORY}
 RUN git clone -b ${Z2M_BRANCH} --depth 1 ${Z2M_REPOSITORY}
 
 # Option 2: Copy from local sources
