@@ -1,5 +1,5 @@
 <template>
-	<v-row class="pa-4">
+	<v-row v-if="node" class="pa-4">
 		<template v-for="(section, name) in props">
 			<v-col
 				cols="12"
@@ -15,13 +15,13 @@
 							v-for="(stat, index) in section.stats"
 							:key="`controller-stat-${index}`"
 							:cols="section.statCols"
-							:style="{ color: getColor(stat) }"
+							:style="{ color: stat.color }"
 						>
 							<h2 class="text-caption">
 								{{ stat.title }}
 							</h2>
 							<div class="text-caption font-weight-bold">
-								{{ getStat(stat) || '-' }}
+								{{ stat.value || '-' }}
 							</div>
 						</v-col>
 					</v-row>
@@ -50,98 +50,79 @@ export default {
 	data() {
 		return {
 			hideNoDataStats: false,
-			props: {
+			defaultColor: this.$vuetify.theme.themes.light.primary,
+		}
+	},
+	computed: {
+		props() {
+			return {
 				messages: {
 					stats: {
-						messagesTX: {
-							title: 'TX',
-						},
-						messagesRX: {
-							title: 'RX',
-						},
-						messagesDroppedTX: {
-							title: 'Dropped TX',
-							color: 'red',
-						},
-						messagesDroppedRX: {
-							title: 'Dropped RX',
-							color: 'red',
-						},
+						...this.createStat('messagesTX', 'TX'),
+						...this.createStat('messagesRX', 'RX'),
+						...this.createStat(
+							'messagesDroppedTX',
+							'Dropped TX',
+							'red'
+						),
+						...this.createStat(
+							'messagesDroppedRX',
+							'Dropped RX',
+							'red'
+						),
 					},
 					cols: 3,
 					statCols: 6,
 				},
 				commands: {
 					stats: {
-						commandsTX: {
-							title: 'TX',
-						},
-						commandsRX: {
-							title: 'RX',
-						},
-						commandsDroppedTX: {
-							title: 'Dropped TX',
-							color: 'red',
-						},
-						commandsDroppedRX: {
-							title: 'Dropped RX',
-							color: 'red',
-						},
+						...this.createStat('commandsTX', 'TX'),
+						...this.createStat('commandsRX', 'RX'),
+						...this.createStat(
+							'commandsDroppedTX',
+							'Dropped TX',
+							'red'
+						),
+						...this.createStat(
+							'commandsDroppedRX',
+							'Dropped RX',
+							'red'
+						),
 					},
 					cols: 3,
 					statCols: 6,
 				},
 				communication: {
 					stats: {
-						CAN: {
-							title: 'CAN',
-						},
-						NAK: {
-							title: 'NAK',
-							color: 'red',
-						},
-						timeoutACK: {
-							title: 'Timeout ACK',
-							color: 'red',
-						},
-						timeoutResponse: {
-							title: 'Timeout Response',
-							color: 'red',
-						},
-						timeoutCallback: {
-							title: 'Timeout Callback',
-							color: 'red',
-						},
+						...this.createStat('CAN', 'CAN'),
+						...this.createStat('NAK', 'NAK', 'red'),
+						...this.createStat('timeoutACK', 'Timeout ACK', 'red'),
+						...this.createStat(
+							'timeoutResponse',
+							'Timeout Response',
+							'red'
+						),
+						...this.createStat(
+							'timeoutCallback',
+							'Timeout Callback',
+							'red'
+						),
 					},
 					cols: 6,
 					statCols: 4,
 				},
-			},
-		}
+			}
+		},
 	},
 	methods: {
-		hasStat(prop) {
-			if (this.node && this.node.statistics) {
-				return Object.prototype.hasOwnProperty.call(
-					this.node.statistics,
-					prop
-				)
-			} else {
-				return false
+		createStat(slug, title, color = this.defaultColor) {
+			return {
+				[`${slug}`]: {
+					title: title,
+					value: this.node.statistics[slug],
+					color: this.node.statistics[slug] ? color : 'grey',
+				},
 			}
-		},
-		getStat(prop) {
-			if (this.node && this.node.statistics) {
-				return this.node.statistics[prop]
-			} else {
-				return null
-			}
-		},
-		getColor(prop) {
-			if (!this.hasStat(prop)) {
-				return 'grey'
-			}
-			return prop.color || this.$vuetify.theme.themes.light.primary
 		},
 	},
 }
