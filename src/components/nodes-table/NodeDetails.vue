@@ -32,7 +32,9 @@
 		</v-row>
 
 		<v-row justify="start">
-			<statistics-card title="Statistics" :node="node" />
+			<v-sheet outlined rounded>
+				<statistics-card title="Statistics" :node="node" />
+			</v-sheet>
 		</v-row>
 
 		<v-row>
