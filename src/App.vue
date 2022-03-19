@@ -67,7 +67,7 @@
 							class="smaller-min-width-tabs"
 						>
 							<v-icon
-								left
+								:left="item.path === $router.currentRoute.path"
 								:small="item.path === $router.currentRoute.path"
 							>
 								{{ item.icon }}
@@ -862,7 +862,7 @@ export default {
 </script>
 
 <style scoped>
-.smaller-min-width-tabs {
+.v-tabs >>> .smaller-min-width-tabs {
 	min-width: 60px;
 }
 </style>
