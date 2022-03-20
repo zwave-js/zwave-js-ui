@@ -176,7 +176,7 @@
 					</template>
 				</v-tooltip>
 
-				<div v-if="auth">
+				<span v-if="auth">
 					<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
 						<template v-slot:activator="{ on }">
 							<v-btn small v-on="on" icon>
@@ -200,7 +200,7 @@
 						</v-list>
 					</v-menu>
 
-					<div v-else>
+					<span v-else class="text-no-wrap">
 						<v-menu
 							v-for="item in menu"
 							:key="item.text"
@@ -241,8 +241,8 @@
 								</v-list-item>
 							</v-list>
 						</v-menu>
-					</div>
-				</div>
+					</span>
+				</span>
 			</v-app-bar>
 		</div>
 		<main style="height: 100%">
