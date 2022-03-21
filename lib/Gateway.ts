@@ -396,7 +396,7 @@ export default class Gateway {
 		}
 
 		// close mqtt client after zwave connection is closed
-		if (this._mqtt) {
+		if (this.mqttEnabled) {
 			await this._mqtt.close()
 		}
 	}
