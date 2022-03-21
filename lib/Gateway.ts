@@ -227,7 +227,7 @@ export default class Gateway {
 	}
 
 	private get mqttEnabled() {
-		return !this.mqtt?.disabled
+		return this.mqtt && !this.mqtt.disabled
 	}
 
 	constructor(config: GatewayConfig, zwave: ZwaveClient, mqtt: MqttClient) {
