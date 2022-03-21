@@ -265,11 +265,11 @@ export const mutations = {
           ) {
             //There was an error transmitting
             errorTransmit = true
-            lastReceive = data.lastActive
+            lastTransmit = data.lastActive
           } else if (prev.messagesTX < cur.messagesTX) {
             // A message was sent
             errorTransmit = false
-            lastReceive = data.lastActive
+            lastTransmit = data.lastActive
           }
 
           // Check for changes on the RX side
