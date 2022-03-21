@@ -1167,6 +1167,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
+			if (!this.cfg?.port) {
+				logger.warn('Zwave driver not inited, no port configured')
+				return
+			}
+
 			// extend options with hidden `options`
 			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
 				storage: {
@@ -1237,7 +1242,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			]
 
 			const envKeys = Object.keys(process.env)
-				.filter((k) => k.startsWith('KEY_'))
+				.filter((k) => k?.startsWith('KEY_'))
 				.map((k) => k.substring(4))
 
 			// load security keys from env
