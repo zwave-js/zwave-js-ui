@@ -58,7 +58,7 @@ export class StorageHelper {
 		if (!data) {
 			data = config.default
 		} else {
-			data = merge(config.default, data)
+			data = Array.isArray(data) ? data : merge(config.default, data)
 		}
 
 		return { file: config.file, data: data }
