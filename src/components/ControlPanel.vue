@@ -7,24 +7,15 @@
 						<template #activator="{ on }">
 							<v-item-group class="v-btn-toggle">
 								<v-btn
-									:color="
-										showControllerStatistics
-											? 'green'
-											: 'grey'
-									"
+									color="primary"
 									outlined
 									@click="toggleControllerStatistics"
 								>
+									<v-icon left>
+										{{ statisticsOpeningIndicator }}
+									</v-icon>
 									Controller statistics
-									<v-icon
-										:color="
-											showControllerStatistics
-												? 'green'
-												: 'grey'
-										"
-										right
-										v-on="on"
-									>
+									<v-icon color="primary" right>
 										multiline_chart
 									</v-icon>
 								</v-btn>
@@ -154,6 +145,11 @@ export default {
 		},
 		controllerNode() {
 			return this.nodes.find((n) => n.isControllerNode)
+		},
+		statisticsOpeningIndicator() {
+			return this.showControllerStatistics
+				? 'arrow_drop_up'
+				: 'arrow_drop_down'
 		},
 	},
 	watch: {},
