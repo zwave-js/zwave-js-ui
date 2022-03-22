@@ -1167,6 +1167,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				return
 			}
 
+			if (!this.cfg?.port) {
+				logger.warn('Zwave driver not inited, no port configured')
+				return
+			}
+
 			// extend options with hidden `options`
 			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
 				storage: {
@@ -1237,7 +1242,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			]
 
 			const envKeys = Object.keys(process.env)
-				.filter((k) => k.startsWith('KEY_'))
+				.filter((k) => k?.startsWith('KEY_'))
 				.map((k) => k.substring(4))
 
 			// load security keys from env
@@ -1600,14 +1605,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	enableStatistics() {
-		this._driver.enableStatistics({
-			applicationName:
-				pkgjson.name +
-				(this.cfg.serverEnabled ? ' / zwave-js-server' : ''),
-			applicationVersion: pkgjson.version,
-		})
+		if (this._driver) {
+			this._driver.enableStatistics({
+				applicationName:
+					pkgjson.name +
+					(this.cfg.serverEnabled ? ' / zwave-js-server' : ''),
+				applicationVersion: pkgjson.version,
+			})
+			logger.info('Zwavejs usage statistics ENABLED')
+		}
 
-		logger.info('Zwavejs usage statistics ENABLED')
+		logger.warn(
+			'Zwavejs driver is not ready yet, statistics will be enabled on driver initialization'
+		)
 	}
 
 	/**
@@ -1615,9 +1625,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	disableStatistics() {
-		this._driver.disableStatistics()
+		if (this._driver) {
+			this._driver.disableStatistics()
+			logger.info('Zwavejs usage statistics DISABLED')
+		}
 
-		logger.info('Zwavejs usage statistics DISABLED')
+		logger.warn(
+			'Zwavejs driver is not ready yet, statistics will be disabled on driver initialization'
+		)
 	}
 
 	getInfo() {

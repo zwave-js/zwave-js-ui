@@ -6,6 +6,7 @@ import { storeDir } from '../config/app'
 import { StoreFile, StoreKeys } from '../config/store'
 import { module } from './logger'
 import * as utils from './utils'
+import { recursive as merge } from 'merge'
 
 const logger = module('Store')
 
@@ -46,8 +47,9 @@ export class StorageHelper {
 
 		// ignore ENOENT error
 		if (err) {
-			if (err.code !== 'ENOENT') throw err
-			else {
+			if (err.code !== 'ENOENT') {
+				logger.error('Error reading file: ' + config.file, err)
+			} else {
 				logger.warn(`${config.file} not found`)
 			}
 		}
@@ -55,6 +57,8 @@ export class StorageHelper {
 		// replace data with default
 		if (!data) {
 			data = config.default
+		} else {
+			data = merge(config.default, data)
 		}
 
 		return { file: config.file, data: data }
