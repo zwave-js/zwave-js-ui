@@ -3,7 +3,7 @@
 		<template v-for="(section, name) in props">
 			<v-col
 				cols="12"
-				:md="section.cols"
+				:sm="section.cols"
 				:key="`section-content-${name}`"
 			>
 				<div>

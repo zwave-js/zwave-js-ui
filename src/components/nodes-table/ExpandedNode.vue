@@ -48,7 +48,11 @@
 
 		<v-divider class="my-4" />
 
-		<v-tabs v-model="currentTab" class="transparent mb-4" vertical>
+		<v-tabs
+			v-model="currentTab"
+			class="transparent mb-4"
+			:vertical="$vuetify.breakpoint.mdAndUp"
+		>
 			<v-tab class="justify-start" key="node">
 				<v-icon small left>widgets</v-icon> Node
 			</v-tab>
@@ -202,6 +206,9 @@ export default {
 		},
 		statisticsOpeningIndicator() {
 			return this.showStatistics ? 'arrow_drop_up' : 'arrow_drop_down'
+		},
+		statsBorderColor() {
+			return this.showStatistics ? 'border-primary' : ''
 		},
 	},
 	data() {
