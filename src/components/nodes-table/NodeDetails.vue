@@ -1,11 +1,5 @@
 <template>
 	<v-container fluid>
-		<v-row no-gutters>
-			<v-sheet outlined rounded>
-				<statistics-card title="Statistics" :node="node" />
-			</v-sheet>
-		</v-row>
-
 		<v-row>
 			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
@@ -198,7 +192,6 @@ import ValueID from '@/components/ValueId'
 import { inboundEvents as socketActions } from '@/plugins/socket'
 import { mapMutations, mapGetters } from 'vuex'
 import { validTopic } from '@/lib/utils'
-import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 
 export default {
 	props: {
@@ -208,7 +201,6 @@ export default {
 	},
 	components: {
 		ValueID,
-		StatisticsCard,
 	},
 	data() {
 		return {

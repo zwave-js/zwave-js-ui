@@ -13,6 +13,13 @@
 			</v-col>
 			<v-col class="text-end flex-shrink-1">
 				<v-item-group class="v-btn-toggle">
+					<v-btn color="primary" outlined @click="toggleStatistics">
+						<v-icon left>
+							{{ statisticsOpeningIndicator }}
+						</v-icon>
+						Statistics
+						<v-icon color="primary" right> multiline_chart </v-icon>
+					</v-btn>
 					<v-btn
 						dark
 						color="primary"
@@ -31,6 +38,12 @@
 					</v-btn>
 				</v-item-group>
 			</v-col>
+		</v-row>
+
+		<v-row no-gutters>
+			<v-sheet v-if="showStatistics" class="my-4" outlined rounded>
+				<statistics-card title="Statistics" :node="node" />
+			</v-sheet>
 		</v-row>
 
 		<v-divider class="my-4" />
@@ -152,6 +165,7 @@ import AssociationGroups from '@/components/nodes-table/AssociationGroups'
 import HomeAssistant from '@/components/nodes-table/HomeAssistant'
 import NodeDetails from '@/components/nodes-table/NodeDetails'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
+import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 
 import { mapGetters } from 'vuex'
 
@@ -168,6 +182,7 @@ export default {
 		HomeAssistant,
 		NodeDetails,
 		DialogAdvanced,
+		StatisticsCard,
 	},
 	computed: {
 		...mapGetters(['gateway', 'mqtt']),
@@ -185,11 +200,15 @@ export default {
 				Object.keys(this.node.hassDevices).length > 0
 			)
 		},
+		statisticsOpeningIndicator() {
+			return this.showStatistics ? 'arrow_drop_up' : 'arrow_drop_down'
+		},
 	},
 	data() {
 		return {
 			currentTab: 0,
 			advancedShowDialog: false,
+			showStatistics: false,
 			advancedActions: [
 				{
 					text: 'Export json',
@@ -329,6 +348,9 @@ export default {
 			} else {
 				this.$emit('action', action, { ...args, nodeId: this.node.id })
 			}
+		},
+		toggleStatistics() {
+			this.showStatistics = !this.showStatistics
 		},
 		openLink(link) {
 			window.open(link, '_blank')
