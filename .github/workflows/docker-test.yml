@@ -29,7 +29,7 @@ jobs:
 
       - name: Create Docker Meta
         id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: crazy-max/ghaction-docker-meta@v3.6.2
         with:
           images: zwavejs/zwavejs2mqtt
           tag-sha: false
