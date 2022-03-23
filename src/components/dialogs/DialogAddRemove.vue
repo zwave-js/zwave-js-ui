@@ -14,8 +14,14 @@
 				>
 			</v-card-title>
 
-			<v-card-text>
-				<v-stepper v-model="currentStep" @change="changeStep">
+			<v-divider />
+
+			<v-card-text class="pa-0">
+				<v-stepper
+					v-model="currentStep"
+					@change="changeStep"
+					elevation="0"
+				>
 					<v-stepper-header>
 						<template v-for="s in steps">
 							<v-stepper-step
@@ -559,7 +565,7 @@
 				</v-stepper>
 
 				<v-alert
-					class="mt-3"
+					class="mt-3 mb-0"
 					v-if="alert"
 					dense
 					text
