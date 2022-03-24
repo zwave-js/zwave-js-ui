@@ -1,3 +1,10 @@
+## [6.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.0...v6.6.1) (2022-03-24)
+
+
+### Bug Fixes
+
+* **ui:** initialize darkMode at startup ([#2333](https://github.com/zwave-js/zwavejs2mqtt/issues/2333)) ([132a65e](https://github.com/zwave-js/zwavejs2mqtt/commit/132a65ef0866a435f8696ba6d1d64789ab72590f))
+
 # [6.6.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.2...v6.6.0) (2022-03-23)
 
 
