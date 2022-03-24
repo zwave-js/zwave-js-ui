@@ -844,6 +844,8 @@ export default {
 			this.hideTopbar = true
 		}
 
+		this.$vuetify.theme.dark = this.darkMode
+
 		this.changeThemeColor()
 
 		this.$store.subscribe((mutation) => {
