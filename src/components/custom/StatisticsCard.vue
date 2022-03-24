@@ -30,7 +30,7 @@
 			<v-divider
 				:key="`section-divider-${name}`"
 				:vertical="$vuetify.breakpoint.mdAndUp"
-				v-if="name !== 'communication'"
+				v-if="section.divider"
 				class="my-4"
 			/>
 		</template>
@@ -38,6 +38,8 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
+
 export default {
 	props: {
 		node: {
@@ -54,9 +56,43 @@ export default {
 		}
 	},
 	computed: {
+		...mapGetters(['nodes']),
+		total() {
+			return this.nodes.reduce(
+				(acc, node) => {
+					if (!node.statistics) return acc
+
+					for (const k in acc) {
+						acc[k] += node.statistics[k] || 0
+					}
+
+					return acc
+				},
+				{
+					commandsTX: 0,
+					commandsRX: 0,
+					commandsDroppedTX: 0,
+					commandsDroppedRX: 0,
+				}
+			)
+		},
+		stats() {
+			if (!this.node.isControllerNode) {
+				return this.node.statistics
+			} else {
+				return {
+					...this.node.statistics,
+					commandsTX: this.total.commandsTX,
+					commandsRX: this.total.commandsRX,
+					commandsDroppedTX: this.total.commandsDroppedTX,
+					commandsDroppedRX: this.total.commandsDroppedRX,
+				}
+			}
+		},
 		props() {
 			return {
 				messages: {
+					divider: true,
 					stats: {
 						...this.createStat('messagesTX', 'TX'),
 						...this.createStat('messagesRX', 'RX'),
@@ -74,25 +110,8 @@ export default {
 					cols: 3,
 					statCols: 6,
 				},
-				commands: {
-					stats: {
-						...this.createStat('commandsTX', 'TX'),
-						...this.createStat('commandsRX', 'RX'),
-						...this.createStat(
-							'commandsDroppedTX',
-							'Dropped TX',
-							'red'
-						),
-						...this.createStat(
-							'commandsDroppedRX',
-							'Dropped RX',
-							'red'
-						),
-					},
-					cols: 3,
-					statCols: 6,
-				},
 				communication: {
+					divider: true,
 					stats: {
 						...this.createStat('CAN', 'CAN'),
 						...this.createStat('NAK', 'NAK', 'red'),
@@ -111,6 +130,25 @@ export default {
 					cols: 6,
 					statCols: 4,
 				},
+				[this.node.isControllerNode ? 'total Commands' : 'commands']: {
+					divider: false,
+					stats: {
+						...this.createStat('commandsTX', 'TX'),
+						...this.createStat('commandsRX', 'RX'),
+						...this.createStat(
+							'commandsDroppedTX',
+							'Dropped TX',
+							'red'
+						),
+						...this.createStat(
+							'commandsDroppedRX',
+							'Dropped RX',
+							'red'
+						),
+					},
+					cols: 3,
+					statCols: 6,
+				},
 			}
 		},
 	},
@@ -119,8 +157,8 @@ export default {
 			return {
 				[`${slug}`]: {
 					title: title,
-					value: this.node.statistics[slug],
-					color: this.node.statistics[slug] ? color : 'grey',
+					value: this.stats[slug],
+					color: this.stats[slug] ? color : 'grey',
 				},
 			}
 		},
