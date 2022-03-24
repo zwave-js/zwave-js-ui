@@ -1,9 +1,15 @@
 name: Docker Release - Test
 
 on:
-  push:
-    branches:
-      - test
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch'
+        required: true
+      tag:
+        description: 'Tag'
+        required: true
+        default: 'test'
 
 jobs:
   build-push:
@@ -12,6 +18,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0 # fetch everything
+          ref: ${{ github.event.inputs.branch }}
 
       - uses: docker/setup-buildx-action@v1.3.0
       - uses: docker/setup-qemu-action@v1.2.0
@@ -29,13 +38,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - id: docker_meta
+      - name: Create Docker Meta
+        id: docker_meta
         uses: docker/metadata-action@v3
         with:
-          images: |
-            ghcr.io/zwave-js/zwavejs2mqtt
-            zwavejs/zwavejs2mqtt
-          label-custom: |
+          images: zwavejs/zwavejs2mqtt
+          tags: |
+            ${{ github.event.inputs.tag }}
+          flavor: |
+            latest=false
+          labels: |
             org.opencontainers.image.vendor=zwave-js
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>

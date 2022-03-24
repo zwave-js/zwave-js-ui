@@ -1,9 +1,10 @@
 <template>
-	<v-app :dark="dark">
+	<v-app :dark="darkMode">
 		<div
 			v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar"
 		>
 			<v-navigation-drawer
+				v-if="!navTabs || $vuetify.breakpoint.smAndDown"
 				clipped-left
 				:mini-variant="mini"
 				v-model="drawer"
@@ -29,7 +30,7 @@
 					<v-list-item
 						v-for="item in pages"
 						:key="item.title"
-						:to="item.path == '#' ? '' : item.path"
+						:to="item.path === '#' ? '' : item.path"
 						:color="item.path === $route.path ? 'primary' : ''"
 					>
 						<v-list-item-action>
@@ -42,13 +43,6 @@
 							>
 						</v-list-item-content>
 					</v-list-item>
-					<v-list-item v-if="!mini">
-						<v-switch
-							label="Dark theme"
-							hide-details
-							v-model="dark"
-						></v-switch>
-					</v-list-item>
 				</v-list>
 				<v-footer absolute v-if="!mini" class="pa-3">
 					<div>
@@ -58,10 +52,35 @@
 			</v-navigation-drawer>
 
 			<v-app-bar app>
-				<v-app-bar-nav-icon @click.stop="toggleDrawer" />
-				<v-toolbar-title v-if="$vuetify.breakpoint.smAndUp">{{
-					title
-				}}</v-toolbar-title>
+				<template v-if="!navTabs || $vuetify.breakpoint.smAndDown">
+					<v-app-bar-nav-icon @click.stop="toggleDrawer" />
+					<v-toolbar-title v-if="$vuetify.breakpoint.smAndUp">
+						{{ title }}
+					</v-toolbar-title>
+				</template>
+				<template v-else>
+					<v-tabs>
+						<v-tab
+							v-for="item in pages"
+							:key="item.title"
+							:to="item.path === '#' ? '' : item.path"
+							class="smaller-min-width-tabs"
+						>
+							<v-icon
+								:left="item.path === $router.currentRoute.path"
+								:small="item.path === $router.currentRoute.path"
+							>
+								{{ item.icon }}
+							</v-icon>
+							<span
+								v-if="item.path === $router.currentRoute.path"
+								class="subtitle-2"
+							>
+								{{ item.title }}
+							</span>
+						</v-tab>
+					</v-tabs>
+				</template>
 
 				<v-spacer></v-spacer>
 
@@ -157,7 +176,7 @@
 					</template>
 				</v-tooltip>
 
-				<div v-if="auth">
+				<span v-if="auth">
 					<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
 						<template v-slot:activator="{ on }">
 							<v-btn small v-on="on" icon>
@@ -181,7 +200,7 @@
 						</v-list>
 					</v-menu>
 
-					<div v-else>
+					<span v-else class="text-no-wrap">
 						<v-menu
 							v-for="item in menu"
 							:key="item.text"
@@ -222,8 +241,8 @@
 								</v-list-item>
 							</v-list>
 						</v-menu>
-					</div>
-				</div>
+					</span>
+				</span>
 			</v-app-bar>
 		</div>
 		<main style="height: 100%">
@@ -312,7 +331,6 @@ import io from 'socket.io-client'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import PasswordDialog from '@/components/dialogs/Password'
-import { Settings } from '@/modules/Settings'
 import { Routes } from '@/router'
 
 import { mapActions, mapMutations, mapGetters } from 'vuex'
@@ -326,7 +344,7 @@ export default {
 	},
 	name: 'app',
 	computed: {
-		...mapGetters(['user', 'auth', 'appInfo']),
+		...mapGetters(['user', 'auth', 'appInfo', 'navTabs', 'darkMode']),
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
 		},
@@ -335,12 +353,6 @@ export default {
 		$route: function (value) {
 			this.title = value.name || ''
 			this.startSocket()
-		},
-		dark(v) {
-			this.settings.store('dark', this.dark)
-
-			this.$vuetify.theme.dark = v
-			this.changeThemeColor()
 		},
 	},
 	data() {
@@ -378,7 +390,6 @@ export default {
 				{ icon: 'folder', title: 'Store', path: Routes.store },
 				{ icon: 'share', title: 'Network graph', path: Routes.mesh },
 			],
-			settings: new Settings(localStorage),
 			status: '',
 			statusColor: '',
 			drawer: false,
@@ -388,7 +399,6 @@ export default {
 			title: '',
 			snackbar: false,
 			snackbarText: '',
-			dark: undefined,
 			baseURI: ConfigApis.getBasePath(),
 		}
 	},
@@ -535,8 +545,14 @@ export default {
 				'meta[name=msapplication-TileColor]'
 			)
 
-			metaThemeColor.setAttribute('content', this.dark ? '#000' : '#fff')
-			metaThemeColor2.setAttribute('content', this.dark ? '#000' : '#fff')
+			metaThemeColor.setAttribute(
+				'content',
+				this.darkMode ? '#000' : '#fff'
+			)
+			metaThemeColor2.setAttribute(
+				'content',
+				this.darkMode ? '#000' : '#fff'
+			)
 		},
 		importFile: function (ext) {
 			const self = this
@@ -828,7 +844,8 @@ export default {
 			this.hideTopbar = true
 		}
 
-		this.dark = this.settings.load('dark', false)
+		this.$vuetify.theme.dark = this.darkMode
+
 		this.changeThemeColor()
 
 		this.$store.subscribe((mutation) => {
@@ -845,3 +862,9 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.v-tabs >>> .smaller-min-width-tabs {
+	min-width: 60px;
+}
+</style>

@@ -1,59 +1,55 @@
 <template>
-	<v-container fluid>
-		<v-card>
-			<v-card-title>
-				Provisioning Entities
-				<v-spacer></v-spacer>
-			</v-card-title>
-			<v-data-table :headers="headers" :items="items" class="elevation-1">
-				<template
-					v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
+	<v-container fluid class="pa-4">
+		<h1 class="display-1 my-4">Provisioning Entities</h1>
+
+		<v-data-table :headers="headers" :items="items" class="elevation-1">
+			<template
+				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
+			>
+				<v-checkbox
+					v-model="item.securityClasses.s2AccessControl"
+					@change="onChange(item)"
+					hide-details
+					dense
+				></v-checkbox>
+			</template>
+			<template
+				v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
+			>
+				<v-checkbox
+					v-model="item.securityClasses.s2Authenticated"
+					@change="onChange(item)"
+					hide-details
+					dense
+				></v-checkbox>
+			</template>
+			<template
+				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
+			>
+				<v-checkbox
+					v-model="item.securityClasses.s2Unauthenticated"
+					@change="onChange(item)"
+					hide-details
+					dense
+				></v-checkbox>
+			</template>
+			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
+				<v-checkbox
+					v-model="item.securityClasses.s0Legacy"
+					@change="onChange(item)"
+					hide-details
+					dense
+				></v-checkbox>
+			</template>
+			<template v-slot:[`item.actions`]="{ item }">
+				<v-icon small color="red" @click="removeItem(item)"
+					>delete</v-icon
 				>
-					<v-checkbox
-						v-model="item.securityClasses.s2AccessControl"
-						@change="onChange(item)"
-						hide-details
-						dense
-					></v-checkbox>
-				</template>
-				<template
-					v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
+				<v-icon small color="success" @click="editItem(item)"
+					>edit</v-icon
 				>
-					<v-checkbox
-						v-model="item.securityClasses.s2Authenticated"
-						@change="onChange(item)"
-						hide-details
-						dense
-					></v-checkbox>
-				</template>
-				<template
-					v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
-				>
-					<v-checkbox
-						v-model="item.securityClasses.s2Unauthenticated"
-						@change="onChange(item)"
-						hide-details
-						dense
-					></v-checkbox>
-				</template>
-				<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
-					<v-checkbox
-						v-model="item.securityClasses.s0Legacy"
-						@change="onChange(item)"
-						hide-details
-						dense
-					></v-checkbox>
-				</template>
-				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="red" @click="removeItem(item)"
-						>delete</v-icon
-					>
-					<v-icon small color="success" @click="editItem(item)"
-						>edit</v-icon
-					>
-				</template>
-			</v-data-table>
-		</v-card>
+			</template>
+		</v-data-table>
 		<v-speed-dial
 			v-model="fab"
 			fixed

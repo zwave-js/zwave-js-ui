@@ -1,3 +1,29 @@
+## [6.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.0...v6.6.1) (2022-03-24)
+
+
+### Bug Fixes
+
+* **ui:** initialize darkMode at startup ([#2333](https://github.com/zwave-js/zwavejs2mqtt/issues/2333)) ([132a65e](https://github.com/zwave-js/zwavejs2mqtt/commit/132a65ef0866a435f8696ba6d1d64789ab72590f))
+
+# [6.6.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.2...v6.6.0) (2022-03-23)
+
+
+### Bug Fixes
+
+* ensure settings contains default and do not throw errors ([#2328](https://github.com/zwave-js/zwavejs2mqtt/issues/2328)) ([010f22e](https://github.com/zwave-js/zwavejs2mqtt/commit/010f22e03a4abebc16d4bf65ba64b9fb135b02be))
+* only merge objects ([12d8960](https://github.com/zwave-js/zwavejs2mqtt/commit/12d8960503173a2ac71d196ff7ab0acf65dfb94d))
+* **docker:** update Dockerfile.contrib to include nvmedit package ([#2290](https://github.com/zwave-js/zwavejs2mqtt/issues/2290)) ([ec6b2f6](https://github.com/zwave-js/zwavejs2mqtt/commit/ec6b2f6d62209360ef45b5fa5d68db67cf3fa1c6))
+* **hass:** support for Multi Level Switch Start and Stop CC ([#2315](https://github.com/zwave-js/zwavejs2mqtt/issues/2315)) ([254d1e3](https://github.com/zwave-js/zwavejs2mqtt/commit/254d1e390092ed9f21e108aaffd5cbad09b2f60c))
+* **ui:** tx/rx arrows bug ([777725f](https://github.com/zwave-js/zwavejs2mqtt/commit/777725f10e5d028d620dd2fbe33c9cd32c6f52b2))
+
+
+### Features
+
+* **ui:** flatten UI when elevation is not necessary ([#2317](https://github.com/zwave-js/zwavejs2mqtt/issues/2317)) by [@floutchito](https://github.com/floutchito) ([97ec643](https://github.com/zwave-js/zwavejs2mqtt/commit/97ec643ad2e068fa63d08e88568230b7cffa33da))
+* bump zwave-js@8.11.7 ([#2289](https://github.com/zwave-js/zwavejs2mqtt/issues/2289)) ([068a4d9](https://github.com/zwave-js/zwavejs2mqtt/commit/068a4d9f467e04195763c8cd23838af86d3c4e1c))
+* bump zwave-js@8.11.8 ([#2304](https://github.com/zwave-js/zwavejs2mqtt/issues/2304)) ([88470c5](https://github.com/zwave-js/zwavejs2mqtt/commit/88470c5a09eb0be47a5ac12fa4dba503828d5317))
+* bump zwave-js@8.11.9 ([#2306](https://github.com/zwave-js/zwavejs2mqtt/issues/2306)) ([dfa5122](https://github.com/zwave-js/zwavejs2mqtt/commit/dfa5122dcbabc55d3e57d86167f4185045a7b43a))
+
 ## [6.5.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.5.1...v6.5.2) (2022-02-18)
 
 
