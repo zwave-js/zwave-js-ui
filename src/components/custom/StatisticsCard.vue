@@ -90,26 +90,7 @@ export default {
 			}
 		},
 		props() {
-			return {
-				messages: {
-					divider: true,
-					stats: {
-						...this.createStat('messagesTX', 'TX'),
-						...this.createStat('messagesRX', 'RX'),
-						...this.createStat(
-							'messagesDroppedTX',
-							'Dropped TX',
-							'red'
-						),
-						...this.createStat(
-							'messagesDroppedRX',
-							'Dropped RX',
-							'red'
-						),
-					},
-					cols: 3,
-					statCols: 6,
-				},
+			const props = {
 				communication: {
 					divider: true,
 					stats: {
@@ -131,7 +112,7 @@ export default {
 					statCols: 4,
 				},
 				[this.node.isControllerNode ? 'total Commands' : 'commands']: {
-					divider: false,
+					divider: this.node.isControllerNode,
 					stats: {
 						...this.createStat('commandsTX', 'TX'),
 						...this.createStat('commandsRX', 'RX'),
@@ -150,6 +131,30 @@ export default {
 					statCols: 6,
 				},
 			}
+
+			if (this.node.isControllerNode) {
+				props.messages = {
+					divider: false,
+					stats: {
+						...this.createStat('messagesTX', 'TX'),
+						...this.createStat('messagesRX', 'RX'),
+						...this.createStat(
+							'messagesDroppedTX',
+							'Dropped TX',
+							'red'
+						),
+						...this.createStat(
+							'messagesDroppedRX',
+							'Dropped RX',
+							'red'
+						),
+					},
+					cols: 3,
+					statCols: 6,
+				}
+			}
+
+			return props
 		},
 	},
 	methods: {

@@ -29,12 +29,14 @@ jobs:
 
       - name: Create Docker Meta
         id: docker_meta
-        uses: crazy-max/ghaction-docker-meta@v1
+        uses: docker/metadata-action@v3
         with:
           images: zwavejs/zwavejs2mqtt
-          tag-sha: false
-          tag-latest: false
-          label-custom: |
+          tags: |
+            test
+          flavor: |
+            latest=false
+          labels: |
             org.opencontainers.image.vendor=zwave-js
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
