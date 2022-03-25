@@ -245,7 +245,7 @@ export default {
 			return [
 				{
 					title: 'RSSI',
-					text: stats.rssi ? stats.rssi + ' ms' : 'N/A',
+					text: stats.rssi ? stats.rssi + ' dBm' : 'N/A',
 				},
 				{
 					title: 'Protocol Data Rate',
