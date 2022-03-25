@@ -240,13 +240,15 @@
 						item.firmwareUpdate.progress
 					}}</span>
 				</v-progress-circular>
-				<div v-else>
-					{{
+				<div
+					style="white-space: pre"
+					v-text="
 						`FW: v${item.firmwareVersion}${
 							item.sdkVersion ? `\nSDK: v${item.sdkVersion}` : ''
 						}`
-					}}
-				</div>
+					"
+					v-else
+				></div>
 			</div>
 		</template>
 		<template v-slot:[`item.lastActive`]="{ item }">
