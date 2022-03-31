@@ -1,3 +1,15 @@
+## [6.6.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.1...v6.6.2) (2022-03-25)
+
+
+### Bug Fixes
+
+* **ui:** remove messages from stats of non-controller nodes ([3d483ff](https://github.com/zwave-js/zwavejs2mqtt/commit/3d483ff84cf8023e6be7103f4d49fb41f314b869))
+
+
+### Features
+
+* **ui:** show totals in controller commands stats ([d871d36](https://github.com/zwave-js/zwavejs2mqtt/commit/d871d36e334b49379b51a45e28e3e365314dc144))
+
 ## [6.6.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.0...v6.6.1) (2022-03-24)
 
 
