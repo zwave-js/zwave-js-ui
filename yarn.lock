@@ -2961,9 +2961,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:9.0.0-beta.9":
-  version: 9.0.0-beta.9
-  resolution: "@zwave-js/config@npm:9.0.0-beta.9"
+"@zwave-js/config@npm:9.0.0-beta.10":
+  version: 9.0.0-beta.10
+  resolution: "@zwave-js/config@npm:9.0.0-beta.10"
   dependencies:
     "@zwave-js/core": 9.0.0-beta.9
     "@zwave-js/shared": 9.0.0-beta.7
@@ -2974,7 +2974,7 @@ __metadata:
     json5: ^2.2.0
     semver: ^7.3.5
     winston: ^3.6.0
-  checksum: dee5f00bf3cf7c939b343462d2ea56765b306cf283c01a3aa8ba383c69ef6c52f394945b6f8675d609fdecc944e3c68e759a6e5e88d6af91a2ca8fe2ea1b63ea
+  checksum: fc47b44d1f36fd93d73f5520fe9e4c43c250754301f28cae5f11387ccbfc758d0232b2cf2d9b9d64a31ae9755e77f26ff72fcdf2f672f03d9583d0da1a941b39
   languageName: node
   linkType: hard
 
@@ -15695,15 +15695,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:9.0.0-beta.9":
-  version: 9.0.0-beta.9
-  resolution: "zwave-js@npm:9.0.0-beta.9"
+"zwave-js@npm:9.0.0-beta.10":
+  version: 9.0.0-beta.10
+  resolution: "zwave-js@npm:9.0.0-beta.10"
   dependencies:
     "@alcalzone/jsonl-db": ^2.5.1
     "@alcalzone/pak": ^0.8.1
     "@sentry/integrations": ^6.18.1
     "@sentry/node": ^6.18.1
-    "@zwave-js/config": 9.0.0-beta.9
+    "@zwave-js/config": 9.0.0-beta.10
     "@zwave-js/core": 9.0.0-beta.9
     "@zwave-js/nvmedit": 9.0.0-beta.9
     "@zwave-js/serial": 9.0.0-beta.9
@@ -15720,7 +15720,7 @@ __metadata:
     source-map-support: ^0.5.21
     winston: ^3.6.0
     xstate: ^4.29.0
-  checksum: 43db30f25d40cba6688e0ec4f6f4f66562bb35f8c711d8843db13d68af9793a52f8d74e6af7648b927f72331ee544b8485fa592a957c50cb63d70285cd0f41df
+  checksum: abea34b1f9b33a9e549dc922d56314730a13983556f65bd886b88bb6d7af49b0b2fb3f5ace0eb5fd879b5e7950037c500500e712b1da62c337509c9fe6235a33
   languageName: node
   linkType: hard
 
@@ -15879,7 +15879,7 @@ __metadata:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: 9.0.0-beta.9
+    zwave-js: 9.0.0-beta.10
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
