@@ -502,6 +502,7 @@
 										class="mb-2"
 										persistent-hint
 										hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
+										inputmode="numeric"
 										v-model.trim="s.values.pin"
 										:suffix="
 											$vuetify.breakpoint.xsOnly
