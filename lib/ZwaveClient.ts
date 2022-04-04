@@ -416,6 +416,7 @@ export type ZwaveConfig = {
 	logToFile?: boolean
 	nodeFilter?: string[]
 	scales?: SensorTypeScale[]
+	serverServiceDiscoveryDisabled?: boolean
 }
 
 export type Z2MDriverInfo = {
@@ -1292,6 +1293,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.server = new ZwavejsServer(this._driver, {
 						port: this.cfg.serverPort || 3000,
 						logger: LogManager.module('Zwave-Server'),
+						enableDNSServiceDiscovery:
+							!this.cfg.serverServiceDiscoveryDisabled,
 					})
 				}
 
