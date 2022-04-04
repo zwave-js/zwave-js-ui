@@ -2,7 +2,7 @@ import express, { Request, Response, RequestHandler, Router } from 'express'
 
 import morgan from 'morgan'
 import csrf from 'csurf'
-import SerialPort from 'serialport'
+import { SerialPort } from 'serialport'
 import jsonStore from './lib/jsonStore'
 import cors from 'cors'
 import ZWaveClient, {
@@ -867,15 +867,13 @@ app.get(
 			scales: scales,
 		}
 
-		let ports: SerialPort.PortInfo[]
 		if (process.platform !== 'sunos') {
 			try {
-				ports = await SerialPort.list()
+				data.serial_ports = (await SerialPort.list()).map((p) => p.path)
 			} catch (error) {
 				logger.error(error)
+				data.serial_ports = []
 			}
-
-			data.serial_ports = ports?.map((p) => p.path) ?? []
 			res.json(data)
 		} else res.json(data)
 	}

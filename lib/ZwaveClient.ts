@@ -351,6 +351,7 @@ export type Z2MNode = {
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
+	sdkVersion?: string
 	protocolVersion?: ProtocolVersion
 	zwavePlusVersion?: number | undefined
 	zwavePlusNodeType?: ZWavePlusNodeType | undefined
@@ -415,6 +416,7 @@ export type ZwaveConfig = {
 	logToFile?: boolean
 	nodeFilter?: string[]
 	scales?: SensorTypeScale[]
+	serverServiceDiscoveryDisabled?: boolean
 }
 
 export type Z2MDriverInfo = {
@@ -1272,6 +1274,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				// this could throw so include in the try/catch
 				this._driver = new Driver(this.cfg.port, zwaveOptions)
 
+				this._driver.enableErrorReporting()
 				this._driver.on('error', this._onDriverError.bind(this))
 				this._driver.once(
 					'driver ready',
@@ -1290,6 +1293,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.server = new ZwavejsServer(this._driver, {
 						port: this.cfg.serverPort || 3000,
 						logger: LogManager.module('Zwave-Server'),
+						enableDNSServiceDiscovery:
+							!this.cfg.serverServiceDiscoveryDisabled,
 					})
 				}
 
@@ -2229,7 +2234,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const api = endpoint.commandClasses[commandClass]
 			if (!api || !api.isSupported()) {
 				throw Error(
-					`Node ${ctx.nodeId} (Endpoint ${ctx.endpoint}) does not support CC ${ctx.commandClass} or it has not been implemented yet`
+					`Node ${ctx.nodeId}${
+						ctx.endpoint ? ` Endpoint ${ctx.endpoint}` : ''
+					} does not support CC ${
+						ctx.commandClass
+					} or it has not been implemented yet`
 				)
 			} else if (!(command in api)) {
 				throw Error(
@@ -3665,6 +3674,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.productDescription = deviceConfig.description
 		node.manufacturer = deviceConfig.manufacturer
 		node.firmwareVersion = zwaveNode.firmwareVersion
+		node.sdkVersion = zwaveNode.sdkVersion
 		node.protocolVersion = zwaveNode.protocolVersion
 		node.zwavePlusVersion = zwaveNode.zwavePlusVersion
 		node.zwavePlusNodeType = zwaveNode.zwavePlusNodeType
@@ -3676,7 +3686,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
 		node.supportsSecurity = zwaveNode.supportsSecurity
 		node.supportsBeaming = zwaveNode.supportsBeaming
-		node.isControllerNode = zwaveNode.isControllerNode()
+		node.isControllerNode = zwaveNode.isControllerNode
 		node.isListening = zwaveNode.isListening
 		node.isFrequentListening = zwaveNode.isFrequentListening
 		node.isRouting = zwaveNode.isRouting

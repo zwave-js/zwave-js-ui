@@ -71,9 +71,37 @@ export function $set(o, p, v) {
 	return Object.assign(o, { [p]: v })
 }
 
-export function jsonToList(obj) {
+export function jsonToList(obj, options = {}, level = 0) {
 	let s = ''
-	for (const k in obj) s += k + ': ' + obj[k] + '\n'
+	let indent = '─'.repeat(level)
+
+	const defaultOptions = { suffixes: {}, ignore: [] }
+
+	options = Object.assign(defaultOptions, options)
+
+	const { suffixes, ignore } = options
+
+	if (indent) {
+		indent = '└' + indent
+	}
+
+	for (const k in obj) {
+		if (ignore.includes(k)) {
+			continue
+		}
+
+		let value = obj[k]
+		if (Array.isArray(value)) {
+			value = value.join(', ')
+		}
+
+		if (value !== '') {
+			s +=
+				typeof value === 'object'
+					? indent + k + '\n' + jsonToList(value, options, level + 1)
+					: indent + k + ': ' + value + (suffixes[k] || '') + '\n'
+		}
+	}
 
 	return s
 }

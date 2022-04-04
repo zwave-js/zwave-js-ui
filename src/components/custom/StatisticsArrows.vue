@@ -48,7 +48,12 @@ export default {
 		}
 	},
 	methods: {
-		jsonToList,
+		jsonToList(item) {
+			return jsonToList(item, {
+				ignore: ['lwr', 'nlwr', 'rssi'],
+				suffixes: { rtt: 'ms' },
+			})
+		},
 	},
 	mounted() {
 		this.nowInterval = setInterval(() => {

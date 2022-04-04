@@ -855,6 +855,12 @@
 											hint="The port to bind the Zwave Server. Default: 3000"
 											type="number"
 										></v-text-field>
+										<input
+											type="hidden"
+											:value="
+												newZwave.serverServiceDiscoveryDisabled
+											"
+										/>
 									</v-col>
 								</v-row>
 								<v-row v-if="!newMqtt.disabled">

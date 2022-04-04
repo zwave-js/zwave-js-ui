@@ -422,7 +422,6 @@ export default {
 	data() {
 		return {
 			openPanel: 0,
-			inited: false,
 			shouldReload: false,
 			filterLocations: [],
 			filterNodes: [],
@@ -532,9 +531,9 @@ export default {
 		filteredNodes() {
 			this.shouldReload = true
 		},
-		nodes() {
-			this.debounceRefresh()
-		},
+		// nodes() {
+		// 	this.debounceRefresh()
+		// },
 		ranker() {
 			this.debounceRefresh()
 		},
@@ -548,9 +547,9 @@ export default {
 			this.updateLabelsColor()
 		},
 	},
-	mounted() {
-		this.debounceRefresh()
-	},
+	// mounted() {
+	// 	this.debounceRefresh()
+	// },
 	beforeDestroy() {
 		if (this.refreshTimeout) {
 			clearTimeout(this.refreshTimeout)
@@ -581,12 +580,6 @@ export default {
 			this.get('#miniSvg').innerHTML = ''
 
 			this.shouldReload = false
-
-			if (!this.inited) {
-				this.inited = true
-				this.loading = false
-				return
-			}
 
 			// https://github.com/dagrejs/dagre/wiki#using-dagre
 			const g = new dagreD3.graphlib.Graph({

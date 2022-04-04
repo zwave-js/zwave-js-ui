@@ -233,6 +233,10 @@ export const mutations = {
       ? n.name + (n.loc ? ' (' + n.loc + ')' : '')
       : 'NodeID_' + n.id
 
+      // prevent empty stats on startup
+    if(!n.statistics) {
+      n.statistics = false
+    }
 
     if (index >= 0) {
       state.nodes.splice(index, 1, n)

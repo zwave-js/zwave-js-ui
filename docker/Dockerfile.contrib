@@ -16,7 +16,7 @@ ARG Z2M_REPOSITORY=https://github.com/zwave-js/zwavejs2mqtt
 USER node
 WORKDIR /home/node
 
-RUN git clone -b ${ZWJ_BRANCH} --depth 1 ${ZWJ_REPOSITORY}
+RUN git clone -b ${ZWJ_BRANCH} ${ZWJ_REPOSITORY}
 RUN git clone -b ${Z2M_BRANCH} --depth 1 ${Z2M_REPOSITORY}
 
 # Option 2: Copy from local sources
@@ -41,9 +41,10 @@ ENV YARN_HTTP_TIMEOUT=300000
 RUN yarn
 RUN yarn build
 
+RUN yarn plugin import version && yarn plugin import workspace-tools
+
 # Update the version info to match the branch built
-RUN yarn lerna version --allow-branch "*" --no-git-tag-version --no-push --ignore-scripts --yes \
-    $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD))
+RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
 
 RUN yarn workspaces foreach pack
 

@@ -96,13 +96,7 @@
 			<v-col class="text-center overflow-y-auto d-flex justify-center">
 				<div
 					v-if="!selected || !selected.ext"
-					class="
-						title
-						grey--text
-						text--lighten-1
-						font-weight-light
-						align-self-center
-					"
+					class="title grey--text text--lighten-1 font-weight-light align-self-center"
 				>
 					<v-icon color="grey lighten-4" x-large>
 						text_snippet
@@ -112,13 +106,7 @@
 				</div>
 				<div
 					v-else-if="loadingFile"
-					class="
-						title
-						grey--text
-						text--lighten-1
-						font-weight-light
-						align-self-center
-					"
+					class="title grey--text text--lighten-1 font-weight-light align-self-center"
 				>
 					<v-progress-circular
 						indeterminate
