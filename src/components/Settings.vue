@@ -856,9 +856,11 @@
 											type="number"
 										></v-text-field>
 										<input
-										type="hidden"
-										:value="newZwave.serverServiceDiscoveryDisabled"
-									/>
+											type="hidden"
+											:value="
+												newZwave.serverServiceDiscoveryDisabled
+											"
+										/>
 									</v-col>
 								</v-row>
 								<v-row v-if="!newMqtt.disabled">
