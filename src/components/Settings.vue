@@ -844,8 +844,7 @@
 									</v-col>
 									<v-col
 										v-if="newZwave.serverEnabled"
-										cols="12"
-										sm="6"
+										cols="6"
 									>
 										<v-text-field
 											v-model.number="newZwave.serverPort"
@@ -861,6 +860,19 @@
 												newZwave.serverServiceDiscoveryDisabled
 											"
 										/>
+									</v-col>
+									<v-col
+										v-if="newZwave.serverEnabled"
+										cols="6"
+									>
+										<v-switch
+											hint="Enable this to allow applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance"
+											persistent-hint
+											label="Disable DNS Discovery"
+											v-model="
+												newZwave.serverServiceDiscoveryDisabled
+											"
+										></v-switch>
 									</v-col>
 								</v-row>
 								<v-row v-if="!newMqtt.disabled">
