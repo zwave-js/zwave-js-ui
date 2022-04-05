@@ -17,6 +17,9 @@ ENV YARN_HTTP_TIMEOUT=300000
 
 RUN yarn install --immutable
 
+# Fix issue with serialport bindings #2349
+RUN npm_config_build_from_source=true yarn rebuild @serialport/bindings-cpp
+
 COPY . .
 
 RUN yarn run build && \
