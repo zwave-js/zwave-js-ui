@@ -866,7 +866,7 @@
 										cols="6"
 									>
 										<v-switch
-											hint="Enable this to allow applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance"
+											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance"
 											persistent-hint
 											label="Disable DNS Discovery"
 											v-model="
