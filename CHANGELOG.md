@@ -1,3 +1,19 @@
+# [6.7.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.2...v6.7.0) (2022-04-05)
+
+
+### Bug Fixes
+
+* **docker:** serialport bindings issue ([#2351](https://github.com/zwave-js/zwavejs2mqtt/issues/2351)) ([0deb1c9](https://github.com/zwave-js/zwavejs2mqtt/commit/0deb1c9d6dd38248540f600ff70b2a379791ade9)), closes [#2349](https://github.com/zwave-js/zwavejs2mqtt/issues/2349)
+* prevent to update node lastActive when fetched from cache ([8774f30](https://github.com/zwave-js/zwavejs2mqtt/commit/8774f3021bd69f5f6cbcd1acb1014daca5e104e0)), closes [#2341](https://github.com/zwave-js/zwavejs2mqtt/issues/2341)
+* **ui:** create  `serverServiceDiscoveryDisabled` setting input ([4439b31](https://github.com/zwave-js/zwavejs2mqtt/commit/4439b31e1e8f041fd52cde0386f3d03a3d722188))
+* **ui:** hint to on-screen keyboards that DSK pin is numeric ([#2343](https://github.com/zwave-js/zwavejs2mqtt/issues/2343)) ([15caab7](https://github.com/zwave-js/zwavejs2mqtt/commit/15caab771f723e3b137a932a87de6fd40959fdcb))
+* **ui:** setting hint ([1e776cd](https://github.com/zwave-js/zwavejs2mqtt/commit/1e776cdec9c60974388bc6842e23305e3375382f))
+
+
+### Features
+
+* bump zwave-js@9 and @zwave-js/server@1.16.0 and fix breaking changes ([#2294](https://github.com/zwave-js/zwavejs2mqtt/issues/2294)) ([#2294](https://github.com/zwave-js/zwavejs2mqtt/issues/2294)) ([519dee8](https://github.com/zwave-js/zwavejs2mqtt/commit/519dee8fe4d531b2ae9ad453d2d448257c9a76aa)), closes [#2337](https://github.com/zwave-js/zwavejs2mqtt/issues/2337)
+
 ## [6.6.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.1...v6.6.2) (2022-03-25)
 
 
