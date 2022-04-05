@@ -40,6 +40,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=sha
+            type=ref,event=branch
           labels: |
             org.opencontainers.image.vendor=zwave-js
             org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
