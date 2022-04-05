@@ -3035,8 +3035,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// don't set the node as ready before all values are added, to prevent discovery
 		node.ready = true
 
-		node.lastActive = Date.now()
-
 		this.getGroups(zwaveNode.id, true)
 
 		// handle mapped node properties:
@@ -4085,8 +4083,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.emitValueChanged(valueId, node, false)
 				}, 1000)
 			}
-
-			node.lastActive = Date.now()
 		}
 	}
 
