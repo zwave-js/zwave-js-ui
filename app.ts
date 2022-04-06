@@ -2,7 +2,6 @@ import express, { Request, Response, RequestHandler, Router } from 'express'
 
 import morgan from 'morgan'
 import csrf from 'csurf'
-import { SerialPort } from 'serialport'
 import jsonStore from './lib/jsonStore'
 import cors from 'cors'
 import ZWaveClient, {
@@ -37,7 +36,7 @@ import {
 	CustomPlugin,
 	PluginConstructor,
 } from './lib/CustomPlugin'
-import { libVersion } from 'zwave-js'
+import { Driver, libVersion } from 'zwave-js'
 import { serverVersion } from '@zwave-js/server'
 
 declare module 'express' {
@@ -869,7 +868,7 @@ app.get(
 
 		if (process.platform !== 'sunos') {
 			try {
-				data.serial_ports = (await SerialPort.list()).map((p) => p.path)
+				data.serial_ports = await Driver.enumerateSerialPorts()
 			} catch (error) {
 				logger.error(error)
 				data.serial_ports = []

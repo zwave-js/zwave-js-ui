@@ -1931,20 +1931,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@serialport/bindings-cpp@npm:10.6.3":
-  version: 10.6.3
-  resolution: "@serialport/bindings-cpp@npm:10.6.3"
-  dependencies:
-    "@serialport/bindings-interface": 1.2.1
-    "@serialport/parser-readline": ^10.2.1
-    debug: ^4.3.2
-    node-addon-api: ^4.3.0
-    node-gyp: latest
-    node-gyp-build: ^4.3.0
-  checksum: ce4872908fcab3178029150fe3762818435f4167dc1cebb19e2ea1df304112c5acd93eca5861987db398359ce4ff09842808535e78be046160eb5112f3cf95eb
-  languageName: node
-  linkType: hard
-
 "@serialport/bindings-cpp@npm:10.7.0":
   version: 10.7.0
   resolution: "@serialport/bindings-cpp@npm:10.7.0"
@@ -2553,15 +2539,6 @@ __metadata:
   version: 0.12.1
   resolution: "@types/retry@npm:0.12.1"
   checksum: 5f46b2556053655f78262bb33040dc58417c900457cc63ff37d6c35349814471453ef511af0cec76a540c601296cd2b22f64bab1ab649c0dacc0223765ba876c
-  languageName: node
-  linkType: hard
-
-"@types/serialport@npm:^8.0.2":
-  version: 8.0.2
-  resolution: "@types/serialport@npm:8.0.2"
-  dependencies:
-    "@types/node": "*"
-  checksum: c81152b0e8539b4141a07b398b13e6698550761462e9d8f1540ac636d68d68f4c5f53b1351089affa83fc3a30e87fd6d4b87dcd0e9641b7b566eb2e39a3e6f74
   languageName: node
   linkType: hard
 
@@ -13211,28 +13188,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"serialport@npm:10.3.0":
-  version: 10.3.0
-  resolution: "serialport@npm:10.3.0"
-  dependencies:
-    "@serialport/binding-mock": 10.2.2
-    "@serialport/bindings-cpp": 10.6.3
-    "@serialport/parser-byte-length": 10.3.0
-    "@serialport/parser-cctalk": 10.3.0
-    "@serialport/parser-delimiter": 10.3.0
-    "@serialport/parser-inter-byte-timeout": 10.3.0
-    "@serialport/parser-packet-length": 10.3.0
-    "@serialport/parser-readline": 10.3.0
-    "@serialport/parser-ready": 10.3.0
-    "@serialport/parser-regex": 10.3.0
-    "@serialport/parser-slip-encoder": 10.3.0
-    "@serialport/parser-spacepacket": 10.3.0
-    "@serialport/stream": 10.3.0
-    debug: ^4.3.3
-  checksum: 61a7d6db93e08a838b88924f21268a5aa803d6c257286e00eea14140396fb5ec0b74d13f342a1c66993a3b6142b768b86afd25e3b17931f00ccbf86a84ae2814
-  languageName: node
-  linkType: hard
-
 "serialport@npm:^10.4.0":
   version: 10.4.0
   resolution: "serialport@npm:10.4.0"
@@ -15797,7 +15752,6 @@ __metadata:
     "@types/node": ^16.10.3
     "@types/pem": ^1.9.6
     "@types/proxyquire": ^1.3.28
-    "@types/serialport": ^8.0.2
     "@types/set-value": ^4.0.1
     "@types/sinon-chai": ^3.2.5
     "@typescript-eslint/eslint-plugin": ^4.33.0
@@ -15880,7 +15834,6 @@ __metadata:
     sass: ^1.42.1
     sass-loader: ^12.1.0
     semver: ^7.3.5
-    serialport: 10.3.0
     serve-favicon: ^2.5.0
     session-file-store: ^1.5.0
     set-value: ^4.1.0
