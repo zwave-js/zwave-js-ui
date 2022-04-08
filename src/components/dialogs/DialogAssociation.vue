@@ -55,16 +55,16 @@
 							</v-col>
 							<v-col v-if="group.group" cols="12">
 								<p class="text-subtitle-1 pa-0 ma-0">
-									Max Nodes:
+									Max associations:
 									<strong>{{ maxNodes }}</strong>
 								</p>
 								<p class="text-subtitle-1 pa-0 ma-0">
-									Actual Nodes:
+									Actual associations:
 									<strong>{{ nodesInGroup }}</strong>
 								</p>
 							</v-col>
 
-							<v-col class="pa-0" v-if="maxNodes > 0">
+							<v-col class="pa-0" v-if="nodesInGroup < maxNodes">
 								<v-col cols="12">
 									<v-combobox
 										label="Target Node"
@@ -120,6 +120,7 @@ export default {
 	props: {
 		value: Boolean,
 		nodes: Array,
+		associations: Array,
 		node: Object,
 	},
 	watch: {
@@ -143,10 +144,10 @@ export default {
 		},
 		nodesInGroup() {
 			return this.group.group
-				? this.node.groups.filter(
-						(g) =>
-							g.value === this.group.group.value &&
-							g.endpoint === this.group.endpoint
+				? this.associations.filter(
+						(a) =>
+							a.groupId === this.group.group.value &&
+							a.endpoint === this.group.endpoint
 				  ).length
 				: 0
 		},
