@@ -64,7 +64,7 @@
 								</p>
 							</v-col>
 
-							<v-col class="pa-0" v-if="maxNodes > 0">
+							<v-col class="pa-0" v-if="nodesInGroup < maxNodes">
 								<v-col cols="12">
 									<v-combobox
 										label="Target Node"
