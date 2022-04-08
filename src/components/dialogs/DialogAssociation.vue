@@ -55,11 +55,11 @@
 							</v-col>
 							<v-col v-if="group.group" cols="12">
 								<p class="text-subtitle-1 pa-0 ma-0">
-									Max Nodes:
+									Max associations:
 									<strong>{{ maxNodes }}</strong>
 								</p>
 								<p class="text-subtitle-1 pa-0 ma-0">
-									Actual Nodes:
+									Actual associations:
 									<strong>{{ nodesInGroup }}</strong>
 								</p>
 							</v-col>
