@@ -120,6 +120,7 @@ export default {
 	props: {
 		value: Boolean,
 		nodes: Array,
+		associations: Array,
 		node: Object,
 	},
 	watch: {
@@ -143,10 +144,10 @@ export default {
 		},
 		nodesInGroup() {
 			return this.group.group
-				? this.node.groups.filter(
-						(g) =>
-							g.value === this.group.group.value &&
-							g.endpoint === this.group.endpoint
+				? this.associations.filter(
+						(a) =>
+							a.groupId === this.group.group.value &&
+							a.endpoint === this.group.endpoint
 				  ).length
 				: 0
 		},

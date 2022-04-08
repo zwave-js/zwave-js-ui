@@ -64,6 +64,7 @@
 			v-model="dialogAssociation"
 			:nodes="nodes"
 			:node="node"
+			:associations="associations"
 		/>
 	</v-container>
 </template>
