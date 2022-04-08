@@ -53,31 +53,45 @@
 									</template>
 								</v-select>
 							</v-col>
-
-							<v-col cols="12">
-								<v-combobox
-									label="Target Node"
-									v-model="group.target"
-									:items="filteredNodes"
-									return-object
-									:rules="[required]"
-									hint="Node to add to the association group"
-									persistent-hint
-									item-text="_name"
-								></v-combobox>
+							<v-col v-if="group.group" cols="12">
+								<p class="text-subtitle-1 pa-0 ma-0">
+									Max Nodes:
+									<strong>{{ maxNodes }}</strong>
+								</p>
+								<p class="text-subtitle-1 pa-0 ma-0">
+									Actual Nodes:
+									<strong>{{ nodesInGroup }}</strong>
+								</p>
 							</v-col>
 
-							<v-col
-								v-if="group.group && group.group.multiChannel"
-								cols="12"
-							>
-								<v-select
-									v-model.number="group.targetEndpoint"
-									persistent-hint
-									label="Target Endpoint"
-									hint="Target node endpoint"
-									:items="targetEndpoints"
-								></v-select>
+							<v-col class="pa-0" v-if="maxNodes > 0">
+								<v-col cols="12">
+									<v-combobox
+										label="Target Node"
+										v-model="group.target"
+										:items="filteredNodes"
+										return-object
+										:rules="[required]"
+										hint="Node to add to the association group"
+										persistent-hint
+										item-text="_name"
+									></v-combobox>
+								</v-col>
+
+								<v-col
+									v-if="
+										group.group && group.group.multiChannel
+									"
+									cols="12"
+								>
+									<v-select
+										v-model.number="group.targetEndpoint"
+										persistent-hint
+										label="Target Endpoint"
+										hint="Target node endpoint"
+										:items="targetEndpoints"
+									></v-select>
+								</v-col>
 							</v-col>
 						</v-row>
 					</v-form>
@@ -92,6 +106,7 @@
 				<v-btn
 					color="blue darken-1"
 					text
+					:disabled="nodesInGroup >= maxNodes"
 					@click="$refs.form.validate() && $emit('add', group)"
 					>ADD</v-btn
 				>
@@ -121,7 +136,19 @@ export default {
 			return this.getEndpointItems(this.node)
 		},
 		targetEndpoints() {
-			return this.getEndpointItems(this.group.target)
+			return this.getEndpointItems(this.group.target, true)
+		},
+		maxNodes() {
+			return this.group.group ? this.group.group.maxNodes : -1
+		},
+		nodesInGroup() {
+			return this.group.group
+				? this.node.groups.filter(
+						(g) =>
+							g.value === this.group.group.value &&
+							g.endpoint === this.group.endpoint
+				  ).length
+				: 0
 		},
 		endpointGroups() {
 			let groups = []
@@ -153,11 +180,12 @@ export default {
 		resetGroup() {
 			this.group = Object.assign({}, this.defaultGroup)
 		},
-		getEndpointItems(node) {
-			const endpoints = [
-				{ text: 'No endpoint', value: null }, // cannot use undefined here or it will return the value
-				{ text: 'Endpoint 0', value: 0 },
-			]
+		getEndpointItems(node, noEndpoint = false) {
+			const endpoints = [{ text: 'Endpoint 0', value: 0 }]
+
+			if (noEndpoint) {
+				endpoints.unshift({ text: 'No Endpoint', value: null })
+			}
 
 			if (node && node.endpointIndizes) {
 				for (const i of node.endpointIndizes) {
