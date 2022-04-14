@@ -1,3 +1,17 @@
+## [6.7.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.0...v6.7.1) (2022-04-14)
+
+
+### Bug Fixes
+
+* **ui:** dialog when decurity is undefined ([9d6c500](https://github.com/zwave-js/zwavejs2mqtt/commit/9d6c5002f876427e59192dfdd6634f05c50eb7de))
+* **ui:** group association dialog check max nodes and disable add ([6d234ca](https://github.com/zwave-js/zwavejs2mqtt/commit/6d234caea8fa7b8a3815959a9b72575ee7b28c2d))
+* **ui:** hide target node when group is full ([#2359](https://github.com/zwave-js/zwavejs2mqtt/issues/2359)) ([fd10576](https://github.com/zwave-js/zwavejs2mqtt/commit/fd105769be01de8439da4517da362981ef776c4b))
+
+
+### Features
+
+* bump zwave-js@9.0.2 ([#2373](https://github.com/zwave-js/zwavejs2mqtt/issues/2373)) ([2775ecb](https://github.com/zwave-js/zwavejs2mqtt/commit/2775ecbe6ac84f22761f4ee9894d06983e6ef717))
+
 # [6.7.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.6.2...v6.7.0) (2022-04-05)
 
 
