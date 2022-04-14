@@ -72,7 +72,7 @@ import * as pkgjson from '../package.json'
 import { Server as SocketServer } from 'socket.io'
 import { GatewayValue } from './Gateway'
 import { TypedEventEmitter } from './EventEmitter'
-import { writeFile } from 'fs-extra'
+import { ensureDir, writeFile } from 'fs-extra'
 import set from 'set-value'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
@@ -1198,6 +1198,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				},
 				emitValueUpdateAfterSetValue: true,
 			}
+
+			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
+			await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
 
 			// when not set let zwavejs handle this based on the envirnoment
 			if (typeof this.cfg.enableSoftReset === 'boolean') {
