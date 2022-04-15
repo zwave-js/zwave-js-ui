@@ -12,6 +12,8 @@ jobs:
   build-push:
     permissions:
       packages: write
+      contents: read
+      
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +32,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.PAT_PACKAGES }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Docker Meta
         id: docker_meta
