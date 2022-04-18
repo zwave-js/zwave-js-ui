@@ -267,7 +267,7 @@ export default {
 						},
 						{
 							type: 'checkbox',
-							label: 'S2 Unhauthenticated',
+							label: 'S2 UnAuthenticated',
 							key: 's2Unauthenticated',
 							default: existingItem
 								? existingItem.securityClasses.s2Unauthenticated
