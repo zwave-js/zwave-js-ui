@@ -1,3 +1,10 @@
+## [6.7.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.1...v6.7.2) (2022-04-19)
+
+
+### Bug Fixes
+
+* ensure device config priority dir exists ([f266328](https://github.com/zwave-js/zwavejs2mqtt/commit/f266328e2e813bc111f8bf0eda80694d3988a508)), closes [#2374](https://github.com/zwave-js/zwavejs2mqtt/issues/2374)
+
 ## [6.7.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.0...v6.7.1) (2022-04-14)
 
 
