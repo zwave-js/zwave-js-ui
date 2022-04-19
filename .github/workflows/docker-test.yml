@@ -31,7 +31,7 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v3
         with:
-          images: zwavejs/zwavejs2mqtt,ghcr.io/zwavejs/zwavejs2mqtt
+          images: zwavejs/zwavejs2mqtt,ghcr.io/zwave-js/zwavejs2mqtt
           tags: |
             test
           flavor: |
