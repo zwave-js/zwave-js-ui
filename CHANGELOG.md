@@ -1,3 +1,15 @@
+## [6.7.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.2...v6.7.3) (2022-04-20)
+
+
+### Bug Fixes
+
+* **ui:** correct misspelling ([#2378](https://github.com/zwave-js/zwavejs2mqtt/issues/2378)) ([ec4431b](https://github.com/zwave-js/zwavejs2mqtt/commit/ec4431be1499212d82007bf73ef0efd9fccdca70))
+
+
+### Features
+
+* bump zwave-js@9.0.3 ([#2380](https://github.com/zwave-js/zwavejs2mqtt/issues/2380)) ([72deb18](https://github.com/zwave-js/zwavejs2mqtt/commit/72deb189f11341eee1aaeb0e07928e989f0401f8))
+
 ## [6.7.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.1...v6.7.2) (2022-04-19)
 
 
