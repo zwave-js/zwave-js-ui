@@ -162,12 +162,7 @@ import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
-const ProtocolDataRate = {
-	1: 'ZWave_9k6',
-	2: 'ZWave_40k',
-	3: 'ZWave_100k',
-	4: 'LongRange_100k',
-}
+import { ProtocolDataRate } from 'zwave-js/safe'
 
 export default {
 	name: 'Mesh',
