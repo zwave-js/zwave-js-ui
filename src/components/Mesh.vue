@@ -162,7 +162,7 @@ import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
-import { ProtocolDataRate } from 'zwave-js/safe'
+import { ProtocolDataRate, rssiToString } from 'zwave-js/safe'
 
 export default {
 	name: 'Mesh',
@@ -226,7 +226,9 @@ export default {
 							.map(
 								(r, i) =>
 									`${r}${
-										repRSSI[i] ? ` (${repRSSI[i]})` : ''
+										repRSSI[i]
+											? ` (${rssiToString(repRSSI[i])})`
+											: ''
 									}`
 							)
 							.join(', ')
@@ -240,7 +242,7 @@ export default {
 			return [
 				{
 					title: 'RSSI',
-					text: stats.rssi ? stats.rssi + ' dBm' : 'N/A',
+					text: stats.rssi ? rssiToString(stats.rssi) : 'N/A',
 				},
 				{
 					title: 'Protocol Data Rate',
