@@ -62,7 +62,6 @@ import {
 } from '@zwave-js/core'
 import * as utils from './utils'
 import jsonStore from './jsonStore'
-import { socketEvents } from './SocketManager'
 import store from '../config/store'
 import { storeDir } from '../config/app'
 import * as LogManager from './logger'
@@ -76,6 +75,7 @@ import { ensureDir, writeFile } from 'fs-extra'
 import set from 'set-value'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
+import { socketEvents } from './SocketEvents'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 

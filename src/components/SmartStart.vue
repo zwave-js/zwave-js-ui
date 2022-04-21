@@ -132,7 +132,7 @@
 	</v-container>
 </template>
 <script>
-import { socketEvents } from '@/plugins/socket'
+import { socketEvents } from '@/../server/lib/SocketEvents'
 import { mapGetters, mapMutations } from 'vuex'
 import {
 	parseSecurityClasses,

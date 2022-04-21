@@ -580,7 +580,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import { socketEvents } from '@/plugins/socket'
+import { socketEvents } from '@/../server/lib/SocketEvents'
 import {
 	parseSecurityClasses,
 	securityClassesToArray,

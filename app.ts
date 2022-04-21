@@ -1,43 +1,44 @@
-import express, { Request, Response, RequestHandler, Router } from 'express'
+import express, { Request, RequestHandler, Response, Router } from 'express'
 
-import morgan from 'morgan'
-import csrf from 'csurf'
-import jsonStore from './lib/jsonStore'
+import history from 'connect-history-api-fallback'
 import cors from 'cors'
+import csrf from 'csurf'
+import morgan from 'morgan'
+import store, { Settings, User } from './config/store'
+import Gateway, { GatewayConfig } from './lib/Gateway'
+import jsonStore from './lib/jsonStore'
+import * as loggers from './lib/logger'
+import MqttClient from './lib/MqttClient'
+import SocketManager from './lib/SocketManager'
 import ZWaveClient, {
 	CallAPIResult,
 	configManager,
 	loadManager,
 	SensorTypeScale,
 } from './lib/ZwaveClient'
-import MqttClient from './lib/MqttClient'
-import Gateway, { GatewayConfig } from './lib/Gateway'
-import store, { User, Settings } from './config/store'
-import * as loggers from './lib/logger'
-import history from 'connect-history-api-fallback'
-import SocketManager, { inboundEvents, socketEvents } from './lib/SocketManager'
 
-import * as utils from './lib/utils'
-import fs from 'fs-extra'
-import path from 'path'
-import { storeDir, sessionSecret, defaultUser, defaultPsw } from './config/app'
-import renderIndex from './lib/renderIndex'
-import session from 'express-session'
+import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
+import session from 'express-session'
+import fs from 'fs-extra'
+import { createServer as createHttpServer, Server as HttpServer } from 'http'
+import { createServer as createHttpsServer } from 'https'
 import jwt from 'jsonwebtoken'
-import { promisify } from 'util'
+import path from 'path'
 import sessionStore from 'session-file-store'
 import { Socket } from 'socket.io'
-import { Server as HttpServer, createServer as createHttpServer } from 'http'
-import { createServer as createHttpsServer } from 'https'
+import { promisify } from 'util'
+import { Driver, libVersion } from 'zwave-js'
+import { defaultPsw, defaultUser, sessionSecret, storeDir } from './config/app'
 import {
 	createPlugin,
 	CustomPlugin,
 	PluginConstructor,
 } from './lib/CustomPlugin'
-import { Driver, libVersion } from 'zwave-js'
-import { serverVersion } from '@zwave-js/server'
+import renderIndex from './lib/renderIndex'
+import { inboundEvents, socketEvents } from './lib/SocketEvents'
+import * as utils from './lib/utils'
 
 declare module 'express' {
 	interface Request {

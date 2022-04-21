@@ -403,7 +403,7 @@
 </style>
 
 <script>
-import { socketEvents, inboundEvents } from '@/plugins/socket'
+import { socketEvents, inboundEvents } from '@/../server/lib/SocketEvents'
 import { copy } from '@/lib/utils'
 
 export default {

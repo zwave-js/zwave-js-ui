@@ -158,7 +158,10 @@
 import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapMutations, mapGetters } from 'vuex'
 
-import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+import {
+	socketEvents,
+	inboundEvents as socketActions,
+} from '@/../server/lib/SocketEvents'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 

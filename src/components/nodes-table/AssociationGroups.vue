@@ -71,7 +71,7 @@
 
 <script>
 import DialogAssociation from '@/components/dialogs/DialogAssociation'
-import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+import { socketEvents, inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import { mapMutations, mapGetters } from 'vuex'
 export default {
 	components: {
