@@ -1,3 +1,15 @@
+## [6.7.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.3...v6.7.4) (2022-04-22)
+
+
+### Bug Fixes
+
+* correctly parse MultilevelSwitchCC notifications ([#2386](https://github.com/zwave-js/zwavejs2mqtt/issues/2386)) ([9cc840f](https://github.com/zwave-js/zwavejs2mqtt/commit/9cc840f5d6c1693c1f34f67b0769cfd390cace60)), closes [#2382](https://github.com/zwave-js/zwavejs2mqtt/issues/2382)
+
+
+### Features
+
+* bump zwave-js@9.0.4 ([907955a](https://github.com/zwave-js/zwavejs2mqtt/commit/907955aece85c8939673291d41bb247745f12934))
+
 ## [6.7.3](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.2...v6.7.3) (2022-04-20)
 
 
