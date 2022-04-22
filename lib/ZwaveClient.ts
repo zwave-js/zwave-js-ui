@@ -48,8 +48,12 @@ import {
 	RefreshInfoOptions,
 	LifelineHealthCheckSummary,
 	RouteHealthCheckSummary,
+	MultilevelSwitchCommand,
+	ZWaveNotificationCallbackArgs_NotificationCC,
+	ZWaveNotificationCallbackArgs_EntryControlCC,
+	ZWaveNotificationCallbackArgs_MultilevelSwitchCC,
 } from 'zwave-js'
-import { parseQRCodeString } from 'zwave-js/Utils'
+import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import {
 	CommandClasses,
 	Duration,
@@ -3355,7 +3359,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onNodeNotification(
 		zwaveNode: ZWaveNode,
 		ccId: CommandClasses,
-		args: Record<string, unknown>
+		args:
+			| ZWaveNotificationCallbackArgs_NotificationCC
+			| ZWaveNotificationCallbackArgs_EntryControlCC
+			| ZWaveNotificationCallbackArgs_MultilevelSwitchCC
 	) {
 		const valueId: Partial<Z2MValueId> = {
 			id: null,
@@ -3368,19 +3375,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		let data = null
 
 		if (ccId === CommandClasses.Notification) {
-			valueId.property = args.label as string
-			valueId.propertyKey = args.eventLabel as string
+			args = <ZWaveNotificationCallbackArgs_NotificationCC>args
+			valueId.property = args.label
+			valueId.propertyKey = args.eventLabel
 
 			data = this._parseNotification(args.parameters)
 		} else if (ccId === CommandClasses['Entry Control']) {
-			valueId.property = args.eventType as string
-			valueId.propertyKey = args.dataType as string
+			args = <ZWaveNotificationCallbackArgs_EntryControlCC>args
+			valueId.property = args.eventType.toString()
+			valueId.propertyKey = args.dataType
 			data =
 				args.eventData instanceof Buffer
 					? utils.buffer2hex(args.eventData)
 					: args.eventData
 		} else if (ccId === CommandClasses['Multilevel Switch']) {
-			valueId.property = args.eventType as string
+			args = <ZWaveNotificationCallbackArgs_MultilevelSwitchCC>args
+
+			valueId.property = getEnumMemberName(
+				MultilevelSwitchCommand,
+				args.eventType as number
+			)
 			data = args.direction
 		} else {
 			logger.log(
