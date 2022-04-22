@@ -3,77 +3,79 @@
 
 // eslint-disable-next-line one-var
 import {
-	Driver,
-	NodeStatus,
-	InterviewStage,
-	extractFirmware,
-	guessFirmwareFileFormat,
-	libVersion,
-	ZWaveNode,
-	ValueID,
-	AssociationGroup,
+	CommandClasses,
+	ConfigurationMetadata,
+	dskToString,
+	Duration,
+	SecurityClass,
+	ValueMetadataNumeric,
+	ValueMetadataString,
+	ZWaveErrorCodes,
+} from '@zwave-js/core'
+import {
 	AssociationAddress,
+	AssociationGroup,
+	ControllerStatistics,
+	DataRate,
+	Driver,
+	extractFirmware,
 	FirmwareUpdateStatus,
-	TranslatedValueID,
-	ZWaveOptions,
+	FLiRS,
+	guessFirmwareFileFormat,
 	HealNodeStatus,
+	InclusionGrant,
+	InclusionOptions,
+	InclusionResult,
+	InclusionStrategy,
+	InclusionUserCallbacks,
+	InterviewStage,
+	libVersion,
+	LifelineHealthCheckSummary,
+	MultilevelSwitchCommand,
 	NodeInterviewFailedEventArgs,
+	NodeStatistics,
+	NodeStatus,
+	NodeType,
+	PlannedProvisioningEntry,
+	ProtocolVersion,
+	QRCodeVersion,
+	QRProvisioningInformation,
+	RefreshInfoOptions,
+	ReplaceNodeOptions,
+	RouteHealthCheckSummary,
+	SetValueAPIOptions,
+	SmartStartProvisioningEntry,
+	TranslatedValueID,
+	ValueID,
 	ValueMetadata,
+	ValueType,
+	ZWaveError,
+	ZWaveNode,
 	ZWaveNodeMetadataUpdatedArgs,
 	ZWaveNodeValueAddedArgs,
 	ZWaveNodeValueNotificationArgs,
 	ZWaveNodeValueRemovedArgs,
 	ZWaveNodeValueUpdatedArgs,
-	DataRate,
-	FLiRS,
-	NodeType,
-	ProtocolVersion,
-	ValueType,
+	ZWaveNotificationCallback,
+	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
-	ZWaveError,
-	SetValueAPIOptions,
-	ControllerStatistics,
-	NodeStatistics,
-	InclusionStrategy,
-	InclusionGrant,
-	InclusionResult,
-	InclusionOptions,
-	InclusionUserCallbacks,
-	SmartStartProvisioningEntry,
-	PlannedProvisioningEntry,
-	QRCodeVersion,
-	ReplaceNodeOptions,
-	QRProvisioningInformation,
-	RefreshInfoOptions,
-	LifelineHealthCheckSummary,
-	RouteHealthCheckSummary,
 } from 'zwave-js'
-import { parseQRCodeString } from 'zwave-js/Utils'
-import {
-	CommandClasses,
-	Duration,
-	ValueMetadataNumeric,
-	ValueMetadataString,
-	ConfigurationMetadata,
-	ZWaveErrorCodes,
-	SecurityClass,
-	dskToString,
-} from '@zwave-js/core'
-import * as utils from './utils'
-import jsonStore from './jsonStore'
-import { socketEvents } from './SocketManager'
-import store from '../config/store'
+import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { storeDir } from '../config/app'
+import store from '../config/store'
+import jsonStore from './jsonStore'
 import * as LogManager from './logger'
+import { socketEvents } from './SocketManager'
+import * as utils from './utils'
 
-import { ZwavejsServer, serverVersion } from '@zwave-js/server'
-import * as pkgjson from '../package.json'
-import { Server as SocketServer } from 'socket.io'
-import { GatewayValue } from './Gateway'
-import { TypedEventEmitter } from './EventEmitter'
+import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import { ensureDir, writeFile } from 'fs-extra'
 import set from 'set-value'
+import { Server as SocketServer } from 'socket.io'
+import * as pkgjson from '../package.json'
+import { TypedEventEmitter } from './EventEmitter'
+import { GatewayValue } from './Gateway'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 
@@ -3352,11 +3354,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a node `notification` event
 	 *
 	 */
-	private _onNodeNotification(
-		zwaveNode: ZWaveNode,
-		ccId: CommandClasses,
-		args: Record<string, unknown>
-	) {
+	private _onNodeNotification: ZWaveNotificationCallback = (...parms) => {
+		const [zwaveNode, ccId, args] = parms
+
 		const valueId: Partial<Z2MValueId> = {
 			id: null,
 			nodeId: zwaveNode.id,
@@ -3368,25 +3368,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		let data = null
 
 		if (ccId === CommandClasses.Notification) {
-			valueId.property = args.label as string
-			valueId.propertyKey = args.eventLabel as string
+			valueId.property = args.label
+			valueId.propertyKey = args.eventLabel
 
 			data = this._parseNotification(args.parameters)
-		} else if (
-			ccId === CommandClasses['Entry Control'] ||
-			ccId === CommandClasses['Multilevel Switch']
-		) {
-			valueId.property = args.eventType as string
-			valueId.propertyKey = args.dataType as string
+		} else if (ccId === CommandClasses['Entry Control']) {
+			valueId.property = args.eventType.toString()
+			valueId.propertyKey = args.dataType
 			data =
 				args.eventData instanceof Buffer
 					? utils.buffer2hex(args.eventData)
 					: args.eventData
+		} else if (ccId === CommandClasses['Multilevel Switch']) {
+			valueId.property = getEnumMemberName(
+				MultilevelSwitchCommand,
+				args.eventType as number
+			)
+			data = args.direction
+		} else if (ccId === CommandClasses.Powerlevel) {
+			// ignore, this should be handled in zwave-js
+			return
 		} else {
 			logger.log(
 				'error',
 				'Unknown notification received from node %d CC %s: %o',
-				zwaveNode.id,
+				(zwaveNode as ZWaveNode).id,
 				valueId.commandClassName,
 				args
 			)
@@ -3414,8 +3420,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			EventSource.NODE,
 			'node notification',
 			node,
-			valueId,
-			data
+			ccId,
+			args
 		)
 	}
 
