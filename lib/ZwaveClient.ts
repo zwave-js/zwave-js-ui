@@ -57,9 +57,6 @@ import {
 	ZWaveNodeValueRemovedArgs,
 	ZWaveNodeValueUpdatedArgs,
 	ZWaveNotificationCallback,
-	ZWaveNotificationCallbackArgs_EntryControlCC,
-	ZWaveNotificationCallbackArgs_MultilevelSwitchCC,
-	ZWaveNotificationCallbackArgs_NotificationCC,
 	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
@@ -3357,11 +3354,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a node `notification` event
 	 *
 	 */
-	private _onNodeNotification: ZWaveNotificationCallback = (
-		zwaveNode,
-		ccId,
-		args
-	) => {
+	private _onNodeNotification: ZWaveNotificationCallback = (...parms) => {
+		const [zwaveNode, ccId, args] = parms
+
 		const valueId: Partial<Z2MValueId> = {
 			id: null,
 			nodeId: zwaveNode.id,
@@ -3373,13 +3368,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		let data = null
 
 		if (ccId === CommandClasses.Notification) {
-			args = <ZWaveNotificationCallbackArgs_NotificationCC>args
 			valueId.property = args.label
 			valueId.propertyKey = args.eventLabel
 
 			data = this._parseNotification(args.parameters)
 		} else if (ccId === CommandClasses['Entry Control']) {
-			args = <ZWaveNotificationCallbackArgs_EntryControlCC>args
 			valueId.property = args.eventType.toString()
 			valueId.propertyKey = args.dataType
 			data =
@@ -3387,18 +3380,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					? utils.buffer2hex(args.eventData)
 					: args.eventData
 		} else if (ccId === CommandClasses['Multilevel Switch']) {
-			args = <ZWaveNotificationCallbackArgs_MultilevelSwitchCC>args
-
 			valueId.property = getEnumMemberName(
 				MultilevelSwitchCommand,
 				args.eventType as number
 			)
 			data = args.direction
+		} else if (ccId === CommandClasses.Powerlevel) {
+			// ignore, this should be handled in zwave-js
+			return
 		} else {
 			logger.log(
 				'error',
 				'Unknown notification received from node %d CC %s: %o',
-				zwaveNode.id,
+				(zwaveNode as ZWaveNode).id,
 				valueId.commandClassName,
 				args
 			)
