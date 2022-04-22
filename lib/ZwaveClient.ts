@@ -3372,16 +3372,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			valueId.propertyKey = args.eventLabel as string
 
 			data = this._parseNotification(args.parameters)
-		} else if (
-			ccId === CommandClasses['Entry Control'] ||
-			ccId === CommandClasses['Multilevel Switch']
-		) {
+		} else if (ccId === CommandClasses['Entry Control']) {
 			valueId.property = args.eventType as string
 			valueId.propertyKey = args.dataType as string
 			data =
 				args.eventData instanceof Buffer
 					? utils.buffer2hex(args.eventData)
 					: args.eventData
+		} else if (ccId === CommandClasses['Multilevel Switch']) {
+			valueId.property = args.eventType as string
+			data = args.direction
 		} else {
 			logger.log(
 				'error',
@@ -3414,8 +3414,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			EventSource.NODE,
 			'node notification',
 			node,
-			valueId,
-			data
+			ccId,
+			args
 		)
 	}
 
