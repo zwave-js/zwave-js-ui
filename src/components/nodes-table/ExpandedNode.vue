@@ -46,6 +46,7 @@
 					v-for="c in nodeComments"
 					:key="c.level"
 					text
+					style="white-space: break-spaces"
 					:type="c.level"
 					>{{ c.text }}</v-alert
 				>
