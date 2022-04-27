@@ -1857,81 +1857,87 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	): Promise<boolean> {
 		if (this.driverReady) {
-			if (this.commandsTimeout) {
-				clearTimeout(this.commandsTimeout)
-				this.commandsTimeout = null
-			}
+			try {
+				if (this.commandsTimeout) {
+					clearTimeout(this.commandsTimeout)
+					this.commandsTimeout = null
+				}
 
-			this.commandsTimeout = setTimeout(() => {
-				this.stopInclusion().catch(logger.error)
-			}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
-
-			let inclusionOptions: InclusionOptions
-			const userCallbacks: InclusionUserCallbacks = {
-				grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
-				validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-				abort: this._onAbortInclusion.bind(this),
-			}
-
-			switch (strategy) {
-				case InclusionStrategy.Insecure:
-				case InclusionStrategy.Security_S0:
-					inclusionOptions = { strategy }
-					break
-				case InclusionStrategy.SmartStart:
-					throw Error(
-						'In order to use Smart Start add you node to provisioning list'
-					)
-				case InclusionStrategy.Default:
-					inclusionOptions = {
-						strategy,
-						userCallbacks,
-						forceSecurity: options?.forceSecurity,
+				if (options.name || options.location) {
+					this.tmpNode = {
+						name: options.name || '',
+						loc: options.location || '',
 					}
-					break
-				case InclusionStrategy.Security_S2:
-					if (options?.qrString) {
-						const parsedQr = parseQRCodeString(options.qrString)
-						if (!parsedQr) {
-							throw Error(`Invalid QR code string`)
-						}
+				} else {
+					this.tmpNode = undefined
+				}
 
-						if (parsedQr.version === QRCodeVersion.S2) {
-							options.provisioning = parsedQr
-						} else if (
-							parsedQr.version === QRCodeVersion.SmartStart
-						) {
-							this.provisionSmartStartNode(parsedQr)
-							return true
-						} else {
-							throw Error(`Invalid QR code version`)
-						}
-					}
-					if (options?.provisioning) {
+				this.commandsTimeout = setTimeout(() => {
+					this.stopInclusion().catch(logger.error)
+				}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
+
+				let inclusionOptions: InclusionOptions
+				const userCallbacks: InclusionUserCallbacks = {
+					grantSecurityClasses:
+						this._onGrantSecurityClasses.bind(this),
+					validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+					abort: this._onAbortInclusion.bind(this),
+				}
+
+				switch (strategy) {
+					case InclusionStrategy.Insecure:
+					case InclusionStrategy.Security_S0:
+						inclusionOptions = { strategy }
+						break
+					case InclusionStrategy.SmartStart:
+						throw Error(
+							'In order to use Smart Start add you node to provisioning list'
+						)
+					case InclusionStrategy.Default:
 						inclusionOptions = {
 							strategy,
-							provisioning: options.provisioning,
+							userCallbacks,
+							forceSecurity: options?.forceSecurity,
 						}
-					} else {
-						inclusionOptions = { strategy, userCallbacks }
-					}
-					break
-				default:
-					inclusionOptions = { strategy }
-			}
+						break
+					case InclusionStrategy.Security_S2:
+						if (options?.qrString) {
+							const parsedQr = parseQRCodeString(options.qrString)
+							if (!parsedQr) {
+								throw Error(`Invalid QR code string`)
+							}
 
-			if (options.name || options.location) {
-				this.tmpNode = {
-					name: options.name || '',
-					loc: options.location || '',
+							if (parsedQr.version === QRCodeVersion.S2) {
+								options.provisioning = parsedQr
+							} else if (
+								parsedQr.version === QRCodeVersion.SmartStart
+							) {
+								this.provisionSmartStartNode(parsedQr)
+								return true
+							} else {
+								throw Error(`Invalid QR code version`)
+							}
+						}
+						if (options?.provisioning) {
+							inclusionOptions = {
+								strategy,
+								provisioning: options.provisioning,
+							}
+						} else {
+							inclusionOptions = { strategy, userCallbacks }
+						}
+						break
+					default:
+						inclusionOptions = { strategy }
 				}
-			} else {
+
+				this.isReplacing = false
+
+				return this._driver.controller.beginInclusion(inclusionOptions)
+			} catch (error) {
 				this.tmpNode = undefined
+				throw error
 			}
-
-			this.isReplacing = false
-
-			return this._driver.controller.beginInclusion(inclusionOptions)
 		}
 
 		throw new DriverNotReadyError()
