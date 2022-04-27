@@ -40,6 +40,18 @@
 			</v-col>
 		</v-row>
 
+		<v-row v-if="nodeComments.length > 0">
+			<v-col>
+				<v-alert
+					v-for="c in nodeComments"
+					:key="c.level"
+					text
+					:type="c.level"
+					>{{ c.text }}</v-alert
+				>
+			</v-col>
+		</v-row>
+
 		<v-row no-gutters>
 			<v-sheet v-if="showStatistics" class="my-4" outlined rounded>
 				<statistics-card title="Statistics" :node="node" />
@@ -98,7 +110,7 @@
 					transition="slide-y-transition"
 				>
 					<section
-						v-for="meta in Object.keys(nodeMetadata)"
+						v-for="meta in metaKeys"
 						:key="`tab-${meta}`"
 						class="px-8 py-4"
 					>
@@ -192,6 +204,17 @@ export default {
 		...mapGetters(['gateway', 'mqtt']),
 		nodeMetadata() {
 			return this.node.deviceConfig?.metadata
+		},
+		nodeComments() {
+			const comments = this.nodeMetadata?.comments ?? []
+
+			return Array.isArray(comments) ? comments : [comments]
+		},
+		metaKeys() {
+			const helpKeys = ['manual', 'inclusion', 'exclusion', 'reset']
+			const keys = this.nodeMetadata ? Object.keys(this.nodeMetadata) : []
+
+			return keys.filter((key) => helpKeys.includes(key))
 		},
 		nodeJson() {
 			return JSON.stringify(this.node, null, 2)
