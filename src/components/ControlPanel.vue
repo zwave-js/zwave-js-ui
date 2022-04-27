@@ -124,7 +124,7 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { jsonToList } from '@/lib/utils'
-import { socketEvents } from '@/plugins/socket'
+import { socketEvents } from '@/../server/lib/SocketEvents'
 import StatisticsCard from '@/components/custom/StatisticsCard'
 
 export default {

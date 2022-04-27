@@ -168,7 +168,7 @@
 </template>
 
 <script>
-import { inboundEvents as socketActions } from '@/plugins/socket'
+import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 export default {
 	props: {
 		node: Object,

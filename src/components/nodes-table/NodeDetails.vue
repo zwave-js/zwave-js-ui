@@ -189,7 +189,7 @@
 <script>
 import ValueID from '@/components/ValueId'
 
-import { inboundEvents as socketActions } from '@/plugins/socket'
+import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import { mapMutations, mapGetters } from 'vuex'
 import { validTopic } from '@/lib/utils'
 

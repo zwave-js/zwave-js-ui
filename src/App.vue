@@ -335,7 +335,10 @@ import { Routes } from '@/router'
 
 import { mapActions, mapMutations, mapGetters } from 'vuex'
 
-import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+import {
+	socketEvents,
+	inboundEvents as socketActions,
+} from '@/../server/lib/SocketEvents'
 
 export default {
 	components: {

@@ -158,16 +158,14 @@
 import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapMutations, mapGetters } from 'vuex'
 
-import { socketEvents, inboundEvents as socketActions } from '@/plugins/socket'
+import {
+	socketEvents,
+	inboundEvents as socketActions,
+} from '@/../server/lib/SocketEvents'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
-const ProtocolDataRate = {
-	1: 'ZWave_9k6',
-	2: 'ZWave_40k',
-	3: 'ZWave_100k',
-	4: 'LongRange_100k',
-}
+import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 
 export default {
 	name: 'Mesh',
@@ -231,7 +229,9 @@ export default {
 							.map(
 								(r, i) =>
 									`${r}${
-										repRSSI[i] ? ` (${repRSSI[i]})` : ''
+										repRSSI[i]
+											? ` (${rssiToString(repRSSI[i])})`
+											: ''
 									}`
 							)
 							.join(', ')
@@ -245,11 +245,13 @@ export default {
 			return [
 				{
 					title: 'RSSI',
-					text: stats.rssi ? stats.rssi + ' dBm' : 'N/A',
+					text: stats.rssi ? rssiToString(stats.rssi) : 'N/A',
 				},
 				{
 					title: 'Protocol Data Rate',
-					text: ProtocolDataRate[stats.protocolDataRate] || 'N/A',
+					text:
+						protocolDataRateToString(stats.protocolDataRate) ||
+						'N/A',
 				},
 				{
 					title: 'Repeaters',

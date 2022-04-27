@@ -89,7 +89,7 @@
 </template>
 <script>
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
-import { socketEvents } from '@/plugins/socket'
+import { socketEvents } from '@/../server/lib/SocketEvents'
 import { mapGetters, mapMutations } from 'vuex'
 
 export default {
