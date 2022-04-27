@@ -10,7 +10,7 @@ import {
 	SecurityClass,
 	ValueMetadataNumeric,
 	ValueMetadataString,
-	ZWaveErrorCodes
+	ZWaveErrorCodes,
 } from '@zwave-js/core'
 import {
 	AssociationAddress,
@@ -59,7 +59,7 @@ import {
 	ZWaveNotificationCallback,
 	ZWaveOptions,
 	ZWavePlusNodeType,
-	ZWavePlusRoleType
+	ZWavePlusRoleType,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { storeDir } from '../config/app'
