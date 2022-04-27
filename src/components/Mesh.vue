@@ -165,7 +165,7 @@ import {
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
-import { ProtocolDataRate, rssiToString } from 'zwave-js/safe'
+import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 
 export default {
 	name: 'Mesh',
@@ -249,7 +249,9 @@ export default {
 				},
 				{
 					title: 'Protocol Data Rate',
-					text: ProtocolDataRate[stats.protocolDataRate] || 'N/A',
+					text:
+						protocolDataRateToString(stats.protocolDataRate) ||
+						'N/A',
 				},
 				{
 					title: 'Repeaters',

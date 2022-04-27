@@ -405,6 +405,7 @@
 <script>
 import { socketEvents, inboundEvents } from '@/../server/lib/SocketEvents'
 import { copy } from '@/lib/utils'
+import { getEnumMemberName, Powerlevel } from 'zwave-js/safe'
 
 export default {
 	components: {},
@@ -599,7 +600,7 @@ export default {
 			}
 		},
 		getPowerLevel(v) {
-			return `-${v} dBm`
+			return getEnumMemberName(Powerlevel, v)
 		},
 		getPowerLevelColor(v) {
 			if (v === undefined) {
