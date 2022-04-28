@@ -1,3 +1,20 @@
+# [6.8.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.4...v6.8.0) (2022-04-28)
+
+
+### Bug Fixes
+
+* inclusion via QR forgets name/location ([#2391](https://github.com/zwave-js/zwavejs2mqtt/issues/2391)) ([c05863f](https://github.com/zwave-js/zwavejs2mqtt/commit/c05863fcff15ed5cdc3e6c778e848b1a4b2d3388)), closes [#2389](https://github.com/zwave-js/zwavejs2mqtt/issues/2389)
+* **ui:** allow to display comments with line break ([2ea8193](https://github.com/zwave-js/zwavejs2mqtt/commit/2ea8193509b315dd0ceea90182ae87512bcb92b7))
+* **ui:** use types and utils from zwave-js ([#2383](https://github.com/zwave-js/zwavejs2mqtt/issues/2383)) ([20bbfa3](https://github.com/zwave-js/zwavejs2mqtt/commit/20bbfa3bcd114ec4862eedbda78092aff0126a67))
+
+
+### Features
+
+* bump zwave-js@9.0.5 ([#2393](https://github.com/zwave-js/zwavejs2mqtt/issues/2393)) ([4ba01bd](https://github.com/zwave-js/zwavejs2mqtt/commit/4ba01bda9410a2888b01960ca7cc018f6283194d))
+* bump zwave-js@9.0.6 ([de27a71](https://github.com/zwave-js/zwavejs2mqtt/commit/de27a71344d04a96a3c2e6b71bfa8dc16894b32e))
+* **ui:** display node metadata comments ([119ab3b](https://github.com/zwave-js/zwavejs2mqtt/commit/119ab3b73d56ef337a24982c0f344c2ad976e864))
+* **ui:** support url in node comments ([282cf54](https://github.com/zwave-js/zwavejs2mqtt/commit/282cf547856b05ca7978fe19f34c00289d38b843))
+
 ## [6.7.4](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.3...v6.7.4) (2022-04-22)
 
 
