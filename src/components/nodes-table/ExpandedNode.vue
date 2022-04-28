@@ -48,8 +48,9 @@
 					text
 					style="white-space: break-spaces"
 					:type="c.level"
-					>{{ c.text }}</v-alert
 				>
+					<span v-html="linkify(c.text)"></span>
+				</v-alert>
 			</v-col>
 		</v-row>
 
@@ -365,6 +366,13 @@ export default {
 		}
 	},
 	methods: {
+		linkify(text) {
+			var urlRegex =
+				/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])/gi
+			return text.replace(urlRegex, function (url) {
+				return '<a href="' + url + '">' + url + '</a>'
+			})
+		},
 		copyText() {
 			const textToCopy =
 				this.$refs.nodeJsonContent.$el.querySelector('textarea')
