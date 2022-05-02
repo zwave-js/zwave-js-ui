@@ -1349,7 +1349,7 @@ export default {
 						this.getSettingsJSON()
 					)
 					this.showSnackbar(data.message)
-					this.$store.dispatch('init', data.data)
+					this.$store.commit('initSettings', data.data)
 				} catch (error) {
 					console.log(error)
 				}
