@@ -1,3 +1,16 @@
+## [6.8.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.8.0...v6.8.1) (2022-05-02)
+
+
+### Bug Fixes
+
+* **ui:** local settings not correctly updated after submit ([14d5b46](https://github.com/zwave-js/zwavejs2mqtt/commit/14d5b46f3a651ed00b7d20265be6f363c5036e8f)), closes [#2401](https://github.com/zwave-js/zwavejs2mqtt/issues/2401)
+
+
+### Features
+
+* bump @zwave-js/server@1.16.1 ([#2405](https://github.com/zwave-js/zwavejs2mqtt/issues/2405)) ([1ace504](https://github.com/zwave-js/zwavejs2mqtt/commit/1ace504f928078c17e47b5ed5bc9f2a05268a74e))
+* bump zwave-js@9.0.7 ([#2400](https://github.com/zwave-js/zwavejs2mqtt/issues/2400)) ([63b0427](https://github.com/zwave-js/zwavejs2mqtt/commit/63b0427823646370a230d8caf4a8b9612af27c4b))
+
 # [6.8.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.7.4...v6.8.0) (2022-04-28)
 
 
