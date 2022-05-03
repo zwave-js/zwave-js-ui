@@ -5,14 +5,14 @@ __metadata:
   version: 5
   cacheKey: 8
 
-"@alcalzone/jsonl-db@npm:^2.5.1":
-  version: 2.5.1
-  resolution: "@alcalzone/jsonl-db@npm:2.5.1"
+"@alcalzone/jsonl-db@npm:^2.5.2":
+  version: 2.5.2
+  resolution: "@alcalzone/jsonl-db@npm:2.5.2"
   dependencies:
     alcalzone-shared: ^4.0.1
-    fs-extra: ^10.0.0
+    fs-extra: ^10.1.0
     proper-lockfile: ^4.1.2
-  checksum: fa040010d8e7e83fced960d0373970d6276d54a9efa29cfabbfd269241f211ca8c3075b47b70da5921629856a8f8282fb4f46df36927fa1b83c232461c24c3d7
+  checksum: 06435a422c31ac6c1f29d4c1210f638ee2021d897c34d5a41c7781c540c86d849ffd48e64eb4cee4054eb9a2ec300637299dddec0f4144c6f1a7e198fc2e1335
   languageName: node
   linkType: hard
 
@@ -1850,83 +1850,83 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sentry/core@npm:6.19.3":
-  version: 6.19.3
-  resolution: "@sentry/core@npm:6.19.3"
+"@sentry/core@npm:6.19.7":
+  version: 6.19.7
+  resolution: "@sentry/core@npm:6.19.7"
   dependencies:
-    "@sentry/hub": 6.19.3
-    "@sentry/minimal": 6.19.3
-    "@sentry/types": 6.19.3
-    "@sentry/utils": 6.19.3
+    "@sentry/hub": 6.19.7
+    "@sentry/minimal": 6.19.7
+    "@sentry/types": 6.19.7
+    "@sentry/utils": 6.19.7
     tslib: ^1.9.3
-  checksum: a4fd7a9724387ed760867e2779b457398c12122530b2d946e3cde3e88d92dd93045aa638ff07771b922536766322b5a824ff123dc594cc4cb17b2f29e8d05631
+  checksum: d212e8ef07114549de4a93b81f8bfa217ca1550ca7a5eeaa611e5629faef78ff72663ce561ffa2cff48f3dc556745ef65177044f9965cdd3cbccf617cf3bf675
   languageName: node
   linkType: hard
 
-"@sentry/hub@npm:6.19.3":
-  version: 6.19.3
-  resolution: "@sentry/hub@npm:6.19.3"
+"@sentry/hub@npm:6.19.7":
+  version: 6.19.7
+  resolution: "@sentry/hub@npm:6.19.7"
   dependencies:
-    "@sentry/types": 6.19.3
-    "@sentry/utils": 6.19.3
+    "@sentry/types": 6.19.7
+    "@sentry/utils": 6.19.7
     tslib: ^1.9.3
-  checksum: c11435dabe6d53e741539dfb88267de152bfb37170425ee91354b17cf1fd1f23a57d87e5a7468c6c9e5e7bc3a7a63f0e5023ea35421fb562910f0efc7248ff84
+  checksum: 10bb1c5cba1b0f1e27a3dd0a186c22f94aeaf11c4662890ab07b2774f46f46af78d61e3ba71d76edc750a7b45af86edd032f35efecdb4efa2eaf551080ccdcb1
   languageName: node
   linkType: hard
 
-"@sentry/integrations@npm:^6.19.3":
-  version: 6.19.3
-  resolution: "@sentry/integrations@npm:6.19.3"
+"@sentry/integrations@npm:^6.19.7":
+  version: 6.19.7
+  resolution: "@sentry/integrations@npm:6.19.7"
   dependencies:
-    "@sentry/types": 6.19.3
-    "@sentry/utils": 6.19.3
+    "@sentry/types": 6.19.7
+    "@sentry/utils": 6.19.7
     localforage: ^1.8.1
     tslib: ^1.9.3
-  checksum: 4d47cdf0b6a83695acdd8de36964f04ba92672923377c9058f6a7b7614c240c35ccb055608e0b754554d5192076ef72d4b1f8d687725e5b3a349cfabd035cab1
+  checksum: 6ea22ef8d518e6ade96ad00c07f5346c8316264ae6ec353c299e03d1d3cf4b226f639bde07dd5d1da28feaa031338e75df25fc60a083a24d847f4cfde4dbc8e9
   languageName: node
   linkType: hard
 
-"@sentry/minimal@npm:6.19.3":
-  version: 6.19.3
-  resolution: "@sentry/minimal@npm:6.19.3"
+"@sentry/minimal@npm:6.19.7":
+  version: 6.19.7
+  resolution: "@sentry/minimal@npm:6.19.7"
   dependencies:
-    "@sentry/hub": 6.19.3
-    "@sentry/types": 6.19.3
+    "@sentry/hub": 6.19.7
+    "@sentry/types": 6.19.7
     tslib: ^1.9.3
-  checksum: 6cde9b7a3fe3e6121e237681340d137a5725554ba01558d8b44e32e3f4604e833fb7c835ab5c26fe19b7bce318a57efe8eb2b44454e763a947d9ee6abf21926b
+  checksum: 9153ac426ee056fc34c5be898f83d74ec08f559d69f544c5944ec05e584b62ed356b92d1a9b08993a7022ad42b5661c3d72881221adc19bee5fc1af3ad3864a8
   languageName: node
   linkType: hard
 
-"@sentry/node@npm:^6.19.3":
-  version: 6.19.3
-  resolution: "@sentry/node@npm:6.19.3"
+"@sentry/node@npm:^6.19.7":
+  version: 6.19.7
+  resolution: "@sentry/node@npm:6.19.7"
   dependencies:
-    "@sentry/core": 6.19.3
-    "@sentry/hub": 6.19.3
-    "@sentry/types": 6.19.3
-    "@sentry/utils": 6.19.3
+    "@sentry/core": 6.19.7
+    "@sentry/hub": 6.19.7
+    "@sentry/types": 6.19.7
+    "@sentry/utils": 6.19.7
     cookie: ^0.4.1
     https-proxy-agent: ^5.0.0
     lru_map: ^0.3.3
     tslib: ^1.9.3
-  checksum: 06307c1a6543b2121382fa308f7dbfecffb99d62e5aff44fb28bd8767c33f68dbf5b9375098bb28f2f92d2a0ad2eb6222565c16465d1411ce87f48315ba9c0c3
+  checksum: 2293b0d1d1f9fac3a451eb94f820bc27721c8edddd1f373064666ddd6272f0a4c70dbe58c6c4b3d3ccaf4578aab8f466d71ee69f6f6ff93521bbb02dfe829ce5
   languageName: node
   linkType: hard
 
-"@sentry/types@npm:6.19.3":
-  version: 6.19.3
-  resolution: "@sentry/types@npm:6.19.3"
-  checksum: 8a2705eed16fb7fa660c36417a41ca4106829821024be534f74b40a00b6c96b27a84343b101c7478e0b4458f71c280d4fa508d10928a3eccdb30baff49f5827e
+"@sentry/types@npm:6.19.7":
+  version: 6.19.7
+  resolution: "@sentry/types@npm:6.19.7"
+  checksum: f46ef74a33376ad6ea9b128115515c58eb9369d89293c60aa67abca26b5d5d519aa4d0a736db56ae0d75ffd816643d62187018298523cbc2e6c2fb3a6b2a9035
   languageName: node
   linkType: hard
 
-"@sentry/utils@npm:6.19.3":
-  version: 6.19.3
-  resolution: "@sentry/utils@npm:6.19.3"
+"@sentry/utils@npm:6.19.7":
+  version: 6.19.7
+  resolution: "@sentry/utils@npm:6.19.7"
   dependencies:
-    "@sentry/types": 6.19.3
+    "@sentry/types": 6.19.7
     tslib: ^1.9.3
-  checksum: 6c0dd60a24554e9dbe11d5acd18d808f5a0f4c648c45b74818fbf009c9404c6e0d943cfbe62dea6a94c70fec9e1a0aedbd5579b8981f85fcfe0103527c9c5c5a
+  checksum: a000223b9c646c64e3565e79cace1eeb75114342b768367c4dddd646476c215eb1bddfb70c63f05e2352d3bce2d7d415344e4757a001605d0e01ac74da5dd306
   languageName: node
   linkType: hard
 
@@ -3030,39 +3030,39 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:9.0.7":
-  version: 9.0.7
-  resolution: "@zwave-js/config@npm:9.0.7"
+"@zwave-js/config@npm:9.1.0":
+  version: 9.1.0
+  resolution: "@zwave-js/config@npm:9.1.0"
   dependencies:
-    "@zwave-js/core": 9.0.7
-    "@zwave-js/shared": 9.0.4
+    "@zwave-js/core": 9.1.0
+    "@zwave-js/shared": 9.1.0
     alcalzone-shared: ^4.0.1
     ansi-colors: ^4.1.1
-    fs-extra: ^10.0.1
+    fs-extra: ^10.1.0
     json-logic-js: ^2.0.2
     json5: ^2.2.1
-    semver: ^7.3.5
-    winston: ^3.6.0
-  checksum: 2aad3ee21343f2f3c0fe3afa55b3bda25a3577d0f09a3b08cd5e91e8695d641b5c12db10860c55a839cac94f95e5e281d74cbb8ace15316786c0c4a231a8d9f7
+    semver: ^7.3.7
+    winston: ^3.7.2
+  checksum: 5e55bf5f2fafec4b1e24d48f41d8d9a0d96ed457bc41e8bc7242b3c19472231faccef34cd6d82d5a87e917ce0fbf4cc354d20337943f0940fed998a1982c2f47
   languageName: node
   linkType: hard
 
-"@zwave-js/core@npm:9.0.7":
-  version: 9.0.7
-  resolution: "@zwave-js/core@npm:9.0.7"
+"@zwave-js/core@npm:9.1.0":
+  version: 9.1.0
+  resolution: "@zwave-js/core@npm:9.1.0"
   dependencies:
-    "@alcalzone/jsonl-db": ^2.5.1
-    "@zwave-js/shared": 9.0.4
+    "@alcalzone/jsonl-db": ^2.5.2
+    "@zwave-js/shared": 9.1.0
     alcalzone-shared: ^4.0.1
     ansi-colors: ^4.1.1
-    dayjs: ^1.11.0
+    dayjs: ^1.11.1
     logform: ^2.4.0
     nrf-intel-hex: ^1.3.0
     triple-beam: "*"
-    winston: ^3.6.0
+    winston: ^3.7.2
     winston-daily-rotate-file: ^4.6.1
     winston-transport: ^4.5.0
-  checksum: 0706627b846d384b4ebb69b1cb8ffaeb3c26d1e4e0376ab95ded2ed356084e70fafd7787f1175526dd03e10e74db0ecc79a44db41dd141b64053ec927c40bccc
+  checksum: a010bf14455f8878c0c4dce84c5a12fd0e0202a695704d2c0d0bb0753004778d75aa153e24e8d2c489e30910f7e991032d3ab60bb28f245689e086dabaa877b0
   languageName: node
   linkType: hard
 
@@ -3075,34 +3075,34 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/nvmedit@npm:9.0.7":
-  version: 9.0.7
-  resolution: "@zwave-js/nvmedit@npm:9.0.7"
+"@zwave-js/nvmedit@npm:9.1.0":
+  version: 9.1.0
+  resolution: "@zwave-js/nvmedit@npm:9.1.0"
   dependencies:
-    "@zwave-js/core": 9.0.7
-    "@zwave-js/shared": 9.0.4
+    "@zwave-js/core": 9.1.0
+    "@zwave-js/shared": 9.1.0
     alcalzone-shared: ^4.0.1
-    fs-extra: ^10.0.1
+    fs-extra: ^10.1.0
     reflect-metadata: ^0.1.13
-    semver: ^7.3.5
-    yargs: ^17.4.0
+    semver: ^7.3.7
+    yargs: ^17.4.1
   bin:
     nvmedit: bin/nvmedit.js
-  checksum: 3d521a4c1a3bcff032f33fcc7fec86e489a2a6fea87e8000af364c3afc98dad2eecaa1d83961241f5c58518f89f1832698bff6d90ec6e0b9f4011c11b85f7881
+  checksum: ff143f990a3364da5507bb74e2fd045d894cba38c710d271a3056e38018ae085ec7c6d84840a2d9b5481f57a0adc4b9e4ab6a7674ef4677d8a6866571737ada1
   languageName: node
   linkType: hard
 
-"@zwave-js/serial@npm:9.0.7":
-  version: 9.0.7
-  resolution: "@zwave-js/serial@npm:9.0.7"
+"@zwave-js/serial@npm:9.1.0":
+  version: 9.1.0
+  resolution: "@zwave-js/serial@npm:9.1.0"
   dependencies:
-    "@sentry/node": ^6.19.3
-    "@zwave-js/core": 9.0.7
-    "@zwave-js/shared": 9.0.4
+    "@sentry/node": ^6.19.7
+    "@zwave-js/core": 9.1.0
+    "@zwave-js/shared": 9.1.0
     alcalzone-shared: ^4.0.1
     serialport: ^10.4.0
-    winston: ^3.6.0
-  checksum: b5331e3d28950999312be8a65ca770f24b05a1b576a491c4022632f48404674502cf4a59633422bad5f1fdf9c343271c485da4ee451409c48e40ceccb48e57a0
+    winston: ^3.7.2
+  checksum: ce3bc44b7b2edc54c0f16b777276384e893c0df6015324298730043430331cb4897721cf482f13741eebfa26b607851238c5b7d6debd42e63935cb1798e3327e
   languageName: node
   linkType: hard
 
@@ -3122,13 +3122,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/shared@npm:9.0.4":
-  version: 9.0.4
-  resolution: "@zwave-js/shared@npm:9.0.4"
+"@zwave-js/shared@npm:9.1.0":
+  version: 9.1.0
+  resolution: "@zwave-js/shared@npm:9.1.0"
   dependencies:
     alcalzone-shared: ^4.0.1
-    fs-extra: ^10.0.1
-  checksum: bc3886b8d83b14968dad5555ea8b8e7882c0a969a40b9baebc635994f2e198df4bbc74ffb97b3993b0771e07c914ccc184b3e03ec81121dbcabce2c3f36a94d7
+    fs-extra: ^10.1.0
+  checksum: 93faf0269d1cf79b28149c84d9893ba47b90fdac9fe04d303566060408949ea0c22fb8cc984b668dd2da8c36a10e5de0a7cdf47fae318a61719db0de444b20d8
   languageName: node
   linkType: hard
 
@@ -3757,12 +3757,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^0.26.1":
-  version: 0.26.1
-  resolution: "axios@npm:0.26.1"
+"axios@npm:^0.27.2":
+  version: 0.27.2
+  resolution: "axios@npm:0.27.2"
   dependencies:
-    follow-redirects: ^1.14.8
-  checksum: d9eb58ff4bc0b36a04783fc9ff760e9245c829a5a1052ee7ca6013410d427036b1d10d04e7380c02f3508c5eaf3485b1ae67bd2adbfec3683704745c8d7a6e1a
+    follow-redirects: ^1.14.9
+    form-data: ^4.0.0
+  checksum: 38cb7540465fe8c4102850c4368053c21683af85c5fdf0ea619f9628abbcb59415d1e22ebc8a6390d2bbc9b58a9806c874f139767389c862ec9b772235f06854
   languageName: node
   linkType: hard
 
@@ -6033,10 +6034,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dayjs@npm:^1.11.0":
-  version: 1.11.0
-  resolution: "dayjs@npm:1.11.0"
-  checksum: 2d36f6d71345114cdcd89147adf9e05b4f8fe81684e08c8bf1f86b140aa0b86ecc3cae661a9348d96feb7fbefd03e1bc3697303688e95209670abcb36b4ece15
+"dayjs@npm:^1.11.1":
+  version: 1.11.1
+  resolution: "dayjs@npm:1.11.1"
+  checksum: d5fefd79935f64a3c262e67af7ebeca180bc402b3e99be4e12d20b6d438af3f86d507ba1cbaff95dc0b4e67f1067cea3eaf37b6b74f5494fdd4a6a2909514cd1
   languageName: node
   linkType: hard
 
@@ -7636,7 +7637,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.14.4, follow-redirects@npm:^1.14.8":
+"follow-redirects@npm:^1.0.0, follow-redirects@npm:^1.14.4, follow-redirects@npm:^1.14.8, follow-redirects@npm:^1.14.9":
   version: 1.14.9
   resolution: "follow-redirects@npm:1.14.9"
   peerDependenciesMeta:
@@ -7656,7 +7657,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"form-data@npm:4.0.0":
+"form-data@npm:4.0.0, form-data@npm:^4.0.0":
   version: 4.0.0
   resolution: "form-data@npm:4.0.0"
   dependencies:
@@ -7713,6 +7714,17 @@ __metadata:
     jsonfile: ^6.0.1
     universalify: ^2.0.0
   checksum: c1faaa5eb9e1c5c7c7ff09f966e93922ecb068ae1b04801cfc983ef05fcc1f66bfbb8d8d0b745c910014c7a2e7317fb6cf3bfe7390450c1157e3cc1a218f221d
+  languageName: node
+  linkType: hard
+
+"fs-extra@npm:^10.1.0":
+  version: 10.1.0
+  resolution: "fs-extra@npm:10.1.0"
+  dependencies:
+    graceful-fs: ^4.2.0
+    jsonfile: ^6.0.1
+    universalify: ^2.0.0
+  checksum: dc94ab37096f813cc3ca12f0f1b5ad6744dfed9ed21e953d72530d103cea193c2f81584a39e9dee1bea36de5ee66805678c0dddc048e8af1427ac19c00fffc50
   languageName: node
   linkType: hard
 
@@ -13226,6 +13238,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:^7.3.7":
+  version: 7.3.7
+  resolution: "semver@npm:7.3.7"
+  dependencies:
+    lru-cache: ^6.0.0
+  bin:
+    semver: bin/semver.js
+  checksum: 2fa3e877568cd6ce769c75c211beaed1f9fce80b28338cadd9d0b6c40f2e2862bafd62c19a6cff42f3d54292b7c623277bcab8816a2b5521cf15210d43e75232
+  languageName: node
+  linkType: hard
+
 "semver@npm:~5.1.0":
   version: 5.1.1
   resolution: "semver@npm:5.1.1"
@@ -15414,7 +15437,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"winston@npm:^3.3.3, winston@npm:^3.6.0":
+"winston@npm:^3.3.3":
   version: 3.6.0
   resolution: "winston@npm:3.6.0"
   dependencies:
@@ -15429,6 +15452,24 @@ __metadata:
     triple-beam: ^1.3.0
     winston-transport: ^4.5.0
   checksum: 5641837781046a2f73111dfb2af500e88f4350521d01de184d33ac8ee60c28047a8897bd2ab7b438b3812fc31a88bbbee13fd9ed617d60bd16a56d0143e423dc
+  languageName: node
+  linkType: hard
+
+"winston@npm:^3.7.2":
+  version: 3.7.2
+  resolution: "winston@npm:3.7.2"
+  dependencies:
+    "@dabh/diagnostics": ^2.0.2
+    async: ^3.2.3
+    is-stream: ^2.0.0
+    logform: ^2.4.0
+    one-time: ^1.0.0
+    readable-stream: ^3.4.0
+    safe-stable-stringify: ^2.3.1
+    stack-trace: 0.0.x
+    triple-beam: ^1.3.0
+    winston-transport: ^4.5.0
+  checksum: f1f1a860d2fa228b50880b20aaa6cc121085907791fe0d814ff9c062640f6b65da321726322094e7667eb63088b3bb67e7b4e219d998f29efcc6f583185a1cd3
   languageName: node
   linkType: hard
 
@@ -15713,9 +15754,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yargs@npm:^17.4.0":
-  version: 17.4.0
-  resolution: "yargs@npm:17.4.0"
+"yargs@npm:^17.4.1":
+  version: 17.4.1
+  resolution: "yargs@npm:17.4.1"
   dependencies:
     cliui: ^7.0.2
     escalade: ^3.1.1
@@ -15724,7 +15765,7 @@ __metadata:
     string-width: ^4.2.3
     y18n: ^5.0.5
     yargs-parser: ^21.0.0
-  checksum: 63985bddddf1fb6b9c98744591e8b70f99839591521cb84eea60903d52ec0da35ab46c42c325d151f3ab5c41935f976c10da096b5a7067c217714a91c0bd4be3
+  checksum: e9012322870d7e4e912a6ae1f63b203e365f911c0cf158be92c36edefddfb3bd38ce17eb9ef0d18858a4777f047c50589ea22dacb44bd949169ba37dc6d34bee
   languageName: node
   linkType: hard
 
@@ -15760,32 +15801,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:^9.0.7":
-  version: 9.0.7
-  resolution: "zwave-js@npm:9.0.7"
+"zwave-js@npm:^9.1.0":
+  version: 9.1.0
+  resolution: "zwave-js@npm:9.1.0"
   dependencies:
-    "@alcalzone/jsonl-db": ^2.5.1
+    "@alcalzone/jsonl-db": ^2.5.2
     "@alcalzone/pak": ^0.8.1
-    "@sentry/integrations": ^6.19.3
-    "@sentry/node": ^6.19.3
-    "@zwave-js/config": 9.0.7
-    "@zwave-js/core": 9.0.7
-    "@zwave-js/nvmedit": 9.0.7
-    "@zwave-js/serial": 9.0.7
-    "@zwave-js/shared": 9.0.4
+    "@sentry/integrations": ^6.19.7
+    "@sentry/node": ^6.19.7
+    "@zwave-js/config": 9.1.0
+    "@zwave-js/core": 9.1.0
+    "@zwave-js/nvmedit": 9.1.0
+    "@zwave-js/serial": 9.1.0
+    "@zwave-js/shared": 9.1.0
     alcalzone-shared: ^4.0.1
     ansi-colors: ^4.1.1
-    axios: ^0.26.1
+    axios: ^0.27.2
     execa: ^5.1.1
-    fs-extra: ^10.0.1
+    fs-extra: ^10.1.0
     proper-lockfile: ^4.1.2
     reflect-metadata: ^0.1.13
-    semver: ^7.3.5
+    semver: ^7.3.7
     serialport: ^10.4.0
     source-map-support: ^0.5.21
-    winston: ^3.6.0
+    winston: ^3.7.2
     xstate: ^4.29.0
-  checksum: 488348bcf72e017ece4be69018ed05351035ad1f0436fa8655b6eb00c81a1c82bd855ff4cb682bcc77d91753692a784b70bf04694f25e1eee31fd8dd845d8300
+  checksum: 8c4c754dbddab90228b1c8ff4fc5f5543687eb22f6269eab1a06d6e942040333fd9edade9b4063b116f3a098689ae123e76a9886767da53f6089ed8264a567b2
   languageName: node
   linkType: hard
 
@@ -15943,7 +15984,7 @@ __metadata:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: ^9.0.7
+    zwave-js: ^9.1.0
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
