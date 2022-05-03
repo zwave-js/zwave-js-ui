@@ -726,6 +726,11 @@ export default {
 			if (status && status.indexOf('clusion') > 0) {
 				if (this.state === 'new') return // ignore initial status
 
+				// it could be inclusion is started by the driver, in that case get the current action
+				this.currentAction = /inclusion/i.test(status)
+					? 'Inclusion'
+					: 'Exclusion'
+
 				// inclusion/exclusion started, start the countdown timer
 				if (status.indexOf('started') > 0) {
 					this.commandEndDate = new Date(

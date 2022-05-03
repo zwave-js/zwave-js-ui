@@ -98,7 +98,7 @@
 			/>
 		</v-container>
 
-		<DialogAddRemove
+		<DialogNodesManager
 			v-model="addRemoveShowDialog"
 			:socket="socket"
 			@close="onAddRemoveClose"
@@ -119,7 +119,7 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapGetters, mapMutations } from 'vuex'
 
-import DialogAddRemove from '@/components/dialogs/DialogAddRemove'
+import DialogNodesManager from '@/components/dialogs/DialogNodesManager'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
@@ -134,7 +134,7 @@ export default {
 	},
 	components: {
 		NodesTable,
-		DialogAddRemove,
+		DialogNodesManager,
 		DialogAdvanced,
 		StatisticsCard,
 	},
