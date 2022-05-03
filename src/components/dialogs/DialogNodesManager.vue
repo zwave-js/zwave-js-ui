@@ -54,7 +54,10 @@
 										v-model="s.values.action"
 										mandatory
 									>
-										<v-radio :value="0">
+										<v-radio
+											:disabled="state === 'start'"
+											:value="0"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -70,7 +73,10 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="1">
+										<v-radio
+											:disabled="state === 'start'"
+											:value="1"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -86,7 +92,10 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="2">
+										<v-radio
+											:disabled="state === 'start'"
+											:value="2"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -1010,9 +1019,7 @@ export default {
 			this.pushStep('action')
 
 			// stop any running inclusion/exclusion
-			if (this.state === 'start') {
-				this.stopAction()
-			} else {
+			if (this.state !== 'start') {
 				this.stopped = false
 				this.currentAction = null
 			}
