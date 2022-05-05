@@ -7,7 +7,7 @@ export function wait(ms) {
 }
 
 export function parseSecurityClasses(securityClasses, defaultVal) {
-	securityClasses = securityClasses || []
+	securityClasses = Array.isArray(securityClasses) ? securityClasses : []
 	const classes = {
 		s2AccessControl: defaultVal,
 		s2Authenticated: defaultVal,
