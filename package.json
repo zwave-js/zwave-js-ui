@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "6.8.1",
+  "version": "6.9.0",
   "bin": "server/bin/www.js",
   "description": "Zwavejs2Mqtt Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",

@@ -1,3 +1,17 @@
+# [6.9.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.8.1...v6.9.0) (2022-05-05)
+
+
+### Bug Fixes
+
+* **ui:** current action null in nodes manager ([#2406](https://github.com/zwave-js/zwavejs2mqtt/issues/2406)) ([30c28e0](https://github.com/zwave-js/zwavejs2mqtt/commit/30c28e09a58975fb2a8ed7b568ca8dfa50fcfcf5))
+
+
+### Features
+
+* active status and disable non requested security classes in provisioning entities ([#2410](https://github.com/zwave-js/zwavejs2mqtt/issues/2410)) ([11dd784](https://github.com/zwave-js/zwavejs2mqtt/commit/11dd784c0ee519b732027e380e40c07f79629c4b))
+* bump zwave-js@9.1.0 ([#2407](https://github.com/zwave-js/zwavejs2mqtt/issues/2407)) ([3390416](https://github.com/zwave-js/zwavejs2mqtt/commit/339041685bf08a4ddf1ba16767c74ce4df2279b4))
+* bump zwave.js@9.2.0 ([6ee5154](https://github.com/zwave-js/zwavejs2mqtt/commit/6ee51544310a718b149c7e85c9043c0167ac7ba9))
+
 ## [6.8.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.8.0...v6.8.1) (2022-05-02)
 
 
