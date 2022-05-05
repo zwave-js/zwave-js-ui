@@ -3,12 +3,21 @@
 		<h1 class="display-1 my-4">Provisioning Entities</h1>
 
 		<v-data-table :headers="headers" :items="items" class="elevation-1">
+			<template v-slot:[`item.status`]="{ item }">
+				<v-switch
+					v-model="item.status"
+					@change="onChange(item)"
+					dense
+				></v-switch>
+			</template>
+
 			<template
 				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
 			>
 				<v-checkbox
 					v-model="item.securityClasses.s2AccessControl"
 					@change="onChange(item)"
+					:disabled="!item.requestedSecurityClasses.s2AccessControl"
 					hide-details
 					dense
 				></v-checkbox>
@@ -19,6 +28,7 @@
 				<v-checkbox
 					v-model="item.securityClasses.s2Authenticated"
 					@change="onChange(item)"
+					:disabled="!item.requestedSecurityClasses.s2Authenticated"
 					hide-details
 					dense
 				></v-checkbox>
@@ -28,6 +38,7 @@
 			>
 				<v-checkbox
 					v-model="item.securityClasses.s2Unauthenticated"
+					:disabled="!item.requestedSecurityClasses.s2Unauthenticated"
 					@change="onChange(item)"
 					hide-details
 					dense
@@ -36,6 +47,7 @@
 			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
 				<v-checkbox
 					v-model="item.securityClasses.s0Legacy"
+					:disabled="!item.requestedSecurityClasses.s0Legacy"
 					@change="onChange(item)"
 					hide-details
 					dense
@@ -139,6 +151,7 @@ import {
 	validDsk,
 	securityClassesToArray,
 } from '../lib/utils.js'
+// import { ProvisioningEntryStatus } from 'zwave-js/safe'
 
 export default {
 	name: 'SmartStart',
@@ -157,6 +170,7 @@ export default {
 				{ text: 'ID', value: 'nodeId' },
 				{ text: 'Name', value: 'name' },
 				{ text: 'Location', value: 'location' },
+				{ text: 'Active', value: 'status' },
 				{ text: 'DSK', value: 'dsk' },
 				{
 					text: 'S2 Access Control',
@@ -253,6 +267,10 @@ export default {
 							type: 'checkbox',
 							label: 'S2 Access Control',
 							key: 's2AccessControl',
+							disabled: existingItem
+								? !existingItem.requestedSecurityClasses
+										.s2AccessControl
+								: false,
 							default: existingItem
 								? existingItem.securityClasses.s2AccessControl
 								: false,
@@ -261,6 +279,10 @@ export default {
 							type: 'checkbox',
 							label: 'S2 Authenticated',
 							key: 's2Authenticated',
+							disabled: existingItem
+								? !existingItem.requestedSecurityClasses
+										.s2Authenticated
+								: false,
 							default: existingItem
 								? existingItem.securityClasses.s2Authenticated
 								: false,
@@ -269,6 +291,10 @@ export default {
 							type: 'checkbox',
 							label: 'S2 Unauthenticated',
 							key: 's2Unauthenticated',
+							disabled: existingItem
+								? !existingItem.requestedSecurityClasses
+										.s2Unauthenticated
+								: false,
 							default: existingItem
 								? existingItem.securityClasses.s2Unauthenticated
 								: false,
@@ -277,6 +303,10 @@ export default {
 							type: 'checkbox',
 							label: 'S0 Legacy',
 							key: 's0Legacy',
+							disabled: existingItem
+								? !existingItem.requestedSecurityClasses
+										.s0Legacy
+								: false,
 							default: existingItem
 								? existingItem.securityClasses.s0Legacy
 								: false,
@@ -324,9 +354,14 @@ export default {
 			return items.map((item) => {
 				return {
 					...item,
+					status: !item.status,
 					securityClasses: parseSecurityClasses(
 						item.securityClasses,
 						false
+					),
+					requestedSecurityClasses: parseSecurityClasses(
+						item.requestedSecurityClasses,
+						item.requestedSecurityClasses ? false : true
 					),
 				}
 			})
@@ -334,7 +369,11 @@ export default {
 		convertItem(item) {
 			item = {
 				...item,
+				status: item.status ? 0 : 1,
 				securityClasses: securityClassesToArray(item.securityClasses),
+				requestedSecurityClasses: securityClassesToArray(
+					item.requestedSecurityClasses
+				),
 			}
 
 			return item
