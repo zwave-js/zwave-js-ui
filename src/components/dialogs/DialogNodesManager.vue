@@ -161,6 +161,11 @@
 										lazy-validation
 										@submit.prevent
 									>
+										<p>
+											Auto assign a name/location to this
+											node when it is added. Leave empty
+											to ignore
+										</p>
 										<v-text-field
 											label="Name"
 											persistent-hint
