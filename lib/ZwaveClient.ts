@@ -1946,7 +1946,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Start exclusion
 	 */
-	async startExclusion(unprovision = true): Promise<boolean> {
+	async startExclusion(
+		unprovision: boolean | 'inactive' = 'inactive'
+	): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)

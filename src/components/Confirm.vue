@@ -39,6 +39,7 @@
 									:rules="input.rules || []"
 									:required="input.required"
 									:min="input.min"
+									:disabled="input.disabled"
 									:persistent-hint="!!input.hint"
 									:max="input.max"
 								></v-text-field>
@@ -53,6 +54,7 @@
 									:required="input.required"
 									:min="input.min"
 									:max="input.max"
+									:disabled="input.disabled"
 								></v-text-field>
 								<v-switch
 									v-if="input.type === 'boolean'"
@@ -62,6 +64,7 @@
 									:hint="input.hint"
 									:persistent-hint="!!input.hint"
 									:required="input.required"
+									:disabled="input.disabled"
 								></v-switch>
 								<v-checkbox
 									v-if="input.type === 'checkbox'"
@@ -71,6 +74,7 @@
 									:hint="input.hint"
 									:persistent-hint="!!input.hint"
 									:required="input.required"
+									:disabled="input.disabled"
 								></v-checkbox>
 								<v-select
 									v-if="
@@ -87,6 +91,7 @@
 									:multiple="!!input.multiple"
 									:hint="input.hint"
 									:required="input.required"
+									:disabled="input.disabled"
 								></v-select>
 								<v-combobox
 									v-if="
@@ -105,6 +110,7 @@
 									:hint="input.hint"
 									:return-object="false"
 									:required="input.required"
+									:disabled="input.disabled"
 								>
 								</v-combobox>
 								<v-container v-if="input.type === 'code'">
@@ -115,6 +121,7 @@
 										v-model="values[input.key]"
 										language="js"
 										:highlight="highlighter"
+										:disabled="input.disabled"
 									></prism-editor>
 								</v-container>
 							</v-col>
