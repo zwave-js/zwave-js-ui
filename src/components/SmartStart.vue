@@ -151,7 +151,7 @@ import {
 	validDsk,
 	securityClassesToArray,
 } from '../lib/utils.js'
-import { ProvisioningEntryStatus } from 'zwave-js/safe'
+// import { ProvisioningEntryStatus } from 'zwave-js/safe'
 
 export default {
 	name: 'SmartStart',
