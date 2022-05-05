@@ -54,7 +54,10 @@
 										v-model="s.values.action"
 										mandatory
 									>
-										<v-radio :value="0">
+										<v-radio
+											:disabled="state === 'start'"
+											:value="0"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -70,7 +73,10 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="1">
+										<v-radio
+											:disabled="state === 'start'"
+											:value="1"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -86,7 +92,10 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="2">
+										<v-radio
+											:disabled="state === 'start'"
+											:value="2"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -119,7 +128,7 @@
 											color="error"
 											@click="stopAction"
 										>
-											Stop
+											Stop running {{ currentAction }}
 										</v-btn>
 									</v-card-actions>
 								</v-card-text>
@@ -152,6 +161,11 @@
 										lazy-validation
 										@submit.prevent
 									>
+										<p>
+											Auto assign a name/location to this
+											node when it is added. Leave empty
+											to ignore
+										</p>
 										<v-text-field
 											label="Name"
 											persistent-hint
@@ -315,7 +329,7 @@
 											color="error"
 											@click="stopAction"
 										>
-											Stop
+											Stop running {{ currentAction }}
 										</v-btn>
 									</v-card-actions>
 								</v-card-text>
@@ -724,7 +738,10 @@ export default {
 		},
 		controllerStatus(status) {
 			if (status && status.indexOf('clusion') > 0) {
-				if (this.state === 'new') return // ignore initial status
+				// it could be inclusion is started by the driver, in that case get the current action
+				this.currentAction = /inclusion/i.test(status)
+					? 'Inclusion'
+					: 'Exclusion'
 
 				// inclusion/exclusion started, start the countdown timer
 				if (status.indexOf('started') > 0) {
@@ -1005,9 +1022,7 @@ export default {
 			this.pushStep('action')
 
 			// stop any running inclusion/exclusion
-			if (this.state === 'start') {
-				this.stopAction()
-			} else {
+			if (this.state !== 'start') {
 				this.stopped = false
 				this.currentAction = null
 			}
