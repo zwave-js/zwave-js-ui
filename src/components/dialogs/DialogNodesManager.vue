@@ -128,7 +128,7 @@
 											color="error"
 											@click="stopAction"
 										>
-											Stop
+											Stop running {{ currentAction }}
 										</v-btn>
 									</v-card-actions>
 								</v-card-text>
@@ -329,7 +329,7 @@
 											color="error"
 											@click="stopAction"
 										>
-											Stop
+											Stop running {{ currentAction }}
 										</v-btn>
 									</v-card-actions>
 								</v-card-text>
