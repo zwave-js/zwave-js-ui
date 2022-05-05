@@ -7,6 +7,7 @@ export function wait(ms) {
 }
 
 export function parseSecurityClasses(securityClasses, defaultVal) {
+	securityClasses = securityClasses || []
 	const classes = {
 		s2AccessControl: defaultVal,
 		s2Authenticated: defaultVal,
@@ -38,6 +39,7 @@ export function parseSecurityClasses(securityClasses, defaultVal) {
 
 export function securityClassesToArray(securityClasses) {
 	const classes = []
+	securityClasses = securityClasses || {}
 	for (const c in securityClasses) {
 		if (securityClasses[c] === true) {
 			switch (c) {

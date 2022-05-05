@@ -361,7 +361,7 @@ export default {
 					),
 					requestedSecurityClasses: parseSecurityClasses(
 						item.requestedSecurityClasses,
-						false
+						item.requestedSecurityClasses ? false : true
 					),
 				}
 			})
@@ -371,9 +371,6 @@ export default {
 				...item,
 				status: !item.status,
 				securityClasses: securityClassesToArray(item.securityClasses),
-				requestedSecurityClasses: securityClassesToArray(
-					item.requestedSecurityClasses
-				),
 			}
 
 			return item
