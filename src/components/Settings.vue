@@ -1013,6 +1013,23 @@ export default {
 		fileInput,
 	},
 	computed: {
+		internalDarkMode: {
+			get() {
+				return this.darkMode
+			},
+			set(value) {
+				this.setDarkMode(value)
+				this.$vuetify.theme.dark = value
+			},
+		},
+		internalNavTabs: {
+			get() {
+				return this.navTabs
+			},
+			set(value) {
+				this.setNavTabs(value)
+			},
+		},
 		filteredScales() {
 			if (this.newZwave.scales && this.newZwave.scales.length > 0) {
 				return this.scales.filter(
@@ -1088,13 +1105,6 @@ export default {
 	watch: {
 		dialogValue(val) {
 			val || this.closeDialog()
-		},
-		internalDarkMode(v) {
-			this.setDarkMode(v)
-			this.$vuetify.theme.dark = v
-		},
-		internalNavTabs(v) {
-			this.setNavTabs(v)
 		},
 	},
 	data() {
@@ -1211,8 +1221,6 @@ export default {
 					)
 				},
 			},
-			internalDarkMode: undefined,
-			internalNavTabs: undefined,
 		}
 	},
 	methods: {
@@ -1384,9 +1392,6 @@ export default {
 		// hide socket status indicator from toolbar
 		this.$emit('updateStatus')
 		this.getConfig()
-
-		this.internalDarkMode = this.darkMode
-		this.internalNavTabs = this.navTabs
 	},
 }
 </script>
