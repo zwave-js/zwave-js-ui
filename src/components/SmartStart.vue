@@ -369,7 +369,7 @@ export default {
 		convertItem(item) {
 			item = {
 				...item,
-				status: !item.status,
+				status: item.status ? 0 : 1,
 				securityClasses: securityClassesToArray(item.securityClasses),
 			}
 
