@@ -261,3 +261,20 @@ export function allSettled(promises: Promise<any>[]): Promise<any> {
 	)
 	return Promise.all(wrappedPromises)
 }
+
+/** Parses a string to json with buffer decode support */
+export function parseJSON(str: string): any {
+	return JSON.parse(str, (k, v) => {
+		if (
+			v !== null &&
+			typeof v === 'object' &&
+			'type' in v &&
+			v.type === 'Buffer' &&
+			'data' in v &&
+			Array.isArray(v.data)
+		) {
+			return Buffer.from(v.data)
+		}
+		return v
+	})
+}

@@ -2,7 +2,7 @@
 
 // eslint-disable-next-line one-var
 import mqtt, { Client } from 'mqtt'
-import { allSettled, sanitizeTopic } from './utils'
+import { allSettled, parseJSON, sanitizeTopic } from './utils'
 // import { storeDir } from '../config/app'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
@@ -497,7 +497,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		if (isNaN(parseInt(parsed))) {
 			try {
-				parsed = JSON.parse(parsed)
+				parsed = parseJSON(parsed)
 				// eslint-disable-next-line no-empty
 			} catch (e) {} // it' ok fallback to string
 		} else {
