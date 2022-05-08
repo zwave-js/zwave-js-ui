@@ -104,13 +104,10 @@ export class ManagedItems {
 	/**
 	 * Get all property values from items
 	 */
-	getPropValues(propName, customValue) {
+	getPropValues(propName) {
 		const uniqueMap = {}
 		this.items.forEach((item) => {
-			const value =
-				typeof customValue === 'function'
-					? customValue(item)
-					: item[propName]
+			const value = this.getPropValue(item, propName)
 			if (value) {
 				uniqueMap[value] = uniqueMap[value] || value
 			}
@@ -126,10 +123,7 @@ export class ManagedItems {
 	get propValues() {
 		const values = {}
 		Object.keys(this.propDefs).forEach((propName) => {
-			values[propName] = this.getPropValues(
-				propName,
-				this.propDefs[propName].customValue
-			)
+			values[propName] = this.getPropValues(propName)
 		})
 		return values
 	}
@@ -467,10 +461,10 @@ export class ManagedItems {
 					align: 'left',
 					icon: '',
 					iconStyle: '',
-					displayValue: item[propName],
+					displayValue: this.getPropValue(item, propName),
 					displayStyle: '',
 					description: '',
-					rawValue: item[propName],
+					rawValue: this.getPropValue(item, propName),
 			  }
 	}
 }
