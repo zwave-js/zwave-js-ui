@@ -87,15 +87,27 @@ export class ManagedItems {
 	}
 
 	/**
+	 * Get a property value of an item respecting a possibly defined customValue function and a default value (if undefined)
+	 */
+	getPropValue(item, propName, defaultValue) {
+		let customValue = this.propDefs[propName].customValue
+		let value =
+			typeof customValue === 'function'
+				? customValue(item)
+				: item[propName]
+		if (defaultValue !== undefined && value === undefined) {
+			value = defaultValue
+		}
+		return value
+	}
+
+	/**
 	 * Get all property values from items
 	 */
-	getPropValues(propName, customValue) {
+	getPropValues(propName) {
 		const uniqueMap = {}
 		this.items.forEach((item) => {
-			const value =
-				typeof customValue === 'function'
-					? customValue(item)
-					: item[propName]
+			const value = this.getPropValue(item, propName)
 			if (value) {
 				uniqueMap[value] = uniqueMap[value] || value
 			}
@@ -111,10 +123,7 @@ export class ManagedItems {
 	get propValues() {
 		const values = {}
 		Object.keys(this.propDefs).forEach((propName) => {
-			values[propName] = this.getPropValues(
-				propName,
-				this.propDefs[propName].customValue
-			)
+			values[propName] = this.getPropValues(propName)
 		})
 		return values
 	}
@@ -414,7 +423,7 @@ export class ManagedItems {
 			return items
 		}
 		items.sort((a, b) => {
-			let prop = sortBy[0]
+			let propName = sortBy[0]
 			if (
 				this.propDefs[sortBy[0]] &&
 				typeof this.propDefs[sortBy[0]].customSort === 'function'
@@ -429,7 +438,9 @@ export class ManagedItems {
 				)
 			} else {
 				// Standard sort for every other column
-				let res = a[prop] < b[prop] ? -1 : a[prop] > b[prop] ? 1 : 0
+				let valA = this.getPropValue(a, propName, '')
+				let valB = this.getPropValue(b, propName, '')
+				let res = valA < valB ? -1 : valA > valB ? 1 : 0
 				res = sortDesc[0] ? -res : res
 				return res
 			}
@@ -450,10 +461,10 @@ export class ManagedItems {
 					align: 'left',
 					icon: '',
 					iconStyle: '',
-					displayValue: item[propName],
+					displayValue: this.getPropValue(item, propName),
 					displayStyle: '',
 					description: '',
-					rawValue: item[propName],
+					rawValue: this.getPropValue(item, propName),
 			  }
 	}
 }
