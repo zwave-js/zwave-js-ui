@@ -141,7 +141,8 @@ export function num2hex(num: number): string {
 export function getVersion(): string {
 	if (!VERSION) {
 		try {
-			const shellCmd = 'command -v git || exit 0; git rev-parse --short HEAD'
+			const shellCmd =
+				'command -v git || exit 0; git rev-parse --short HEAD'
 			const revision = execSync(shellCmd).toString().trim()
 			VERSION = `${version}${revision ? '.' + revision : ''}`
 		} catch {
