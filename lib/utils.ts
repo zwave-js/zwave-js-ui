@@ -140,13 +140,13 @@ export function num2hex(num: number): string {
  */
 export function getVersion(): string {
 	if (!VERSION) {
-		let revision = ''
 		try {
-			revision = execSync('git rev-parse --short HEAD').toString().trim()
-		} catch (error) {
-			// git not installed
+			const shellCmd = 'command -v git || exit 0; git rev-parse --short HEAD'
+			const revision = execSync(shellCmd).toString().trim()
+			VERSION = `${version}${revision ? '.' + revision : ''}`
+		} catch {
+			VERSION = version
 		}
-		VERSION = `${version}${revision ? '.' + revision : ''}`
 	}
 
 	return VERSION
