@@ -357,3 +357,11 @@ ValueId:
 ```
 
 Data: `args.parameters`
+
+## Buffer payloads
+
+When an MQTT message contains a value of type `Buffer`, such as an Api call argument or return value, the buffer's content is represented as a JSON object of this form:
+
+```json
+{ type: "Buffer", data: [1, 2, 3] }
+```
