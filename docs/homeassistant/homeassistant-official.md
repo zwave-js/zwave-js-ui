@@ -13,3 +13,5 @@ If you do not need the MQTT features, you can [Disable MQTT Gateway](/usage/setu
 Should you need support with the official Home Assistant Integration, please consult that project's [documentation](https://www.home-assistant.io/integrations/zwave_js/).
 
 Support tickets relating to Home Assistant should first be submitted to the Home Assistant [project](https://github.com/home-assistant/core), who will redirect the ticket to Z-Wave JS if need be.
+
+![Home Assistant](../_images/Home_Assistant_sketch.png)
