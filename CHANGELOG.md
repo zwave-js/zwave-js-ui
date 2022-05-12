@@ -1,3 +1,17 @@
+## [6.9.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.9.0...v6.9.1) (2022-05-12)
+
+
+### Bug Fixes
+
+* avoid showing git error on startup ([#2418](https://github.com/zwave-js/zwavejs2mqtt/issues/2418)) ([0d44081](https://github.com/zwave-js/zwavejs2mqtt/commit/0d44081f8359ff447d452c2d6271919640b637f6))
+* correctly parse buffers in MQTT payload ([#2412](https://github.com/zwave-js/zwavejs2mqtt/issues/2412)) ([36db245](https://github.com/zwave-js/zwavejs2mqtt/commit/36db245929b66581406ffcd876bacc0564375c45)), closes [#2303](https://github.com/zwave-js/zwavejs2mqtt/issues/2303)
+* **ui:** table sorting/grouping with undefined values ([#2414](https://github.com/zwave-js/zwavejs2mqtt/issues/2414)) ([28021d7](https://github.com/zwave-js/zwavejs2mqtt/commit/28021d73759fb76737d628ea252a07f28d33cb97))
+
+
+### Features
+
+* bump zwave-js@9.2.2 ([#2421](https://github.com/zwave-js/zwavejs2mqtt/issues/2421)) ([aa1b3a1](https://github.com/zwave-js/zwavejs2mqtt/commit/aa1b3a18289b2c691f40e9cff3600e7e8e556623))
+
 # [6.9.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.8.1...v6.9.0) (2022-05-05)
 
 
