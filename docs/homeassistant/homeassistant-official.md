@@ -14,4 +14,8 @@ Should you need support with the official Home Assistant Integration, please con
 
 Support tickets relating to Home Assistant should first be submitted to the Home Assistant [project](https://github.com/home-assistant/core), who will redirect the ticket to Z-Wave JS if need be.
 
+## How it works
+
+The following diagram shows the flow of data from the Z-Wave network to the Home Assistant application.
+
 ![Home Assistant](../_images/Home_Assistant_sketch.png)
