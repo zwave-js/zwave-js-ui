@@ -1,13 +1,15 @@
-import { joinPath, DeepPartial } from './utils'
+import DailyRotateFile from '@zwave-js/winston-daily-rotate-file'
+import winston from 'winston'
 import { storeDir } from '../config/app'
 import { GatewayConfig } from './Gateway'
-import winston from 'winston'
-import DailyRotateFile from '@zwave-js/winston-daily-rotate-file'
+import { DeepPartial, joinPath } from './utils'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
 
 export const defaultLogFile = 'zwavejs2mqtt_%DATE%.log'
+
+const disableColors = process.env.NO_LOG_COLORS === 'true'
 
 // custom colors for timestamp and module
 addColors({
@@ -54,8 +56,12 @@ export function sanitizedConfig(
 /**
  * Return a custom logger format
  */
-export function customFormat(config: LoggerConfig): winston.Logform.Format {
-	return combine(
+export function customFormat(
+	config: LoggerConfig,
+	noColor = false
+): winston.Logform.Format {
+	noColor = noColor || disableColors
+	const formats: winston.Logform.Format[] = [
 		splat(), // used for formats like: logger.log('info', Message %s', strinVal)
 		timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
 		format((info) => {
@@ -63,15 +69,26 @@ export function customFormat(config: LoggerConfig): winston.Logform.Format {
 			return info
 		})(),
 		label({ label: config.module.toUpperCase() }),
-		colorize({ level: true }),
+	]
+
+	if (!noColor) {
+		formats.push(colorize({ level: true }))
+	}
+
+	// must be added at last
+	formats.push(
 		printf((info) => {
-			info.timestamp = colorizer.colorize('time', info.timestamp)
-			info.label = colorizer.colorize('module', info.label || '-')
+			if (!noColor) {
+				info.timestamp = colorizer.colorize('time', info.timestamp)
+				info.label = colorizer.colorize('module', info.label || '-')
+			}
 			return `${info.timestamp} ${info.level} ${info.label}: ${
 				info.message
 			}${info.stack ? '\n' + info.stack : ''}`
 		})
 	)
+
+	return combine(...formats)
 }
 /**
  * Create the base transports based on settings provided
@@ -88,7 +105,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		let fileTransport
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {
 			fileTransport = new transports.File({
-				format: combine(customFormat(config), format.uncolorize()),
+				format: customFormat(config, true),
 				filename: config.filePath,
 				level: config.level,
 			})
@@ -100,7 +117,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
 				maxSize: process.env.Z2M_LOG_MAXSIZE || '50m',
 				level: config.level,
-				format: combine(customFormat(config), format.uncolorize()),
+				format: customFormat(config, true),
 			})
 		}
 

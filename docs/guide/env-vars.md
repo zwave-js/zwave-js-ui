@@ -23,6 +23,7 @@ This is the list of the supported environment variables:
 - `DISABLE_LOG_ROTATION`: Set this env var to `'true'` to disable application log rotation management
 - `Z2M_LOG_MAXFILES`: The maximum number of files to keep in the log directory, if you add `d` suffix this will set the number of days to keep logs. Default is `7d`
 - `Z2M_LOG_MAXSIZE`: The maximum size of a single log file. Default is `50m` (50MB)
+- `NO_LOG_COLORS`: Set this env var to `'true'` to disable application log colors also in the console.
 
 These variables can be used when running the webpack dev server with HMR (most users will not need them):
 
