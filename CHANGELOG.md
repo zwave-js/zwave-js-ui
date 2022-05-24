@@ -1,3 +1,12 @@
+# [6.10.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.9.1...v6.10.0) (2022-05-24)
+
+
+### Features
+
+* allow to disable logs with `NO_LOG_COLORS` env var ([#2427](https://github.com/zwave-js/zwavejs2mqtt/issues/2427)) ([43650ac](https://github.com/zwave-js/zwavejs2mqtt/commit/43650ac50f8345d3fbd5a92080beb4523a73dfe8)), closes [#2425](https://github.com/zwave-js/zwavejs2mqtt/issues/2425)
+* bump @zwave-js/server@1.17.0 ([#2436](https://github.com/zwave-js/zwavejs2mqtt/issues/2436)) ([e64c062](https://github.com/zwave-js/zwavejs2mqtt/commit/e64c0623de9913cb007af81ebaa53713219777f6))
+* bump zwave-js@9.3.0 ([#2432](https://github.com/zwave-js/zwavejs2mqtt/issues/2432)) ([92bf06a](https://github.com/zwave-js/zwavejs2mqtt/commit/92bf06a204ce14f88c3b4649ed01bc4ebca20356))
+
 ## [6.9.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.9.0...v6.9.1) (2022-05-12)
 
 
