@@ -424,6 +424,7 @@ export default {
 		...mapMutations([
 			'setControllerStatus',
 			'setStatistics',
+			'addNodeEvent',
 			'initNode',
 			'removeNode',
 		]),
@@ -779,6 +780,8 @@ export default {
 				socketEvents.statistics,
 				this.setStatistics.bind(this)
 			)
+
+			this.socket.on(socketEvents.nodeEvent, this.addNodeEvent.bind(this))
 
 			this.socket.emit(socketActions.init, true)
 

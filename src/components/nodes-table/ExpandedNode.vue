@@ -79,6 +79,9 @@
 			<v-tab key="groups" class="justify-start">
 				<v-icon small left>device_hub</v-icon> Groups
 			</v-tab>
+			<v-tab key="events" class="justify-start">
+				<v-icon small left>list_alt</v-icon> Events
+			</v-tab>
 			<v-tab
 				v-if="$vuetify.breakpoint.mdAndUp"
 				class="justify-start"
@@ -150,6 +153,42 @@
 					<association-groups :node="node" :socket="socket" />
 				</v-tab-item>
 
+				<!-- TAB EVENTS -->
+				<v-tab-item key="events" transition="slide-y-transition">
+					<v-container grid-list-md>
+						<v-col
+							class="pa-5"
+							style="
+								max-height: 500px;
+								height: 500px;
+								overflow-y: scroll;
+								border: 1px solid #ccc;
+							"
+						>
+							<div
+								v-for="event in node.eventsQueue"
+								:key="event.time"
+							>
+								<span
+									><i>{{
+										new Date(event.time).toLocaleString()
+									}}</i></span
+								>
+								<strong class="text-uppercase">{{
+									event.event
+								}}</strong>
+								<span
+									class="text-caption"
+									style="white-space: pre"
+									v-for="(arg, i) in event.args"
+									:key="i"
+									>{{ jsonToList(arg) }}</span
+								>
+							</div>
+						</v-col>
+					</v-container>
+				</v-tab-item>
+
 				<!-- TAB DEBUG INFO -->
 				<v-tab-item
 					v-if="$vuetify.breakpoint.mdAndUp"
@@ -184,6 +223,7 @@ import HomeAssistant from '@/components/nodes-table/HomeAssistant'
 import NodeDetails from '@/components/nodes-table/NodeDetails'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import StatisticsCard from '@/components/custom/StatisticsCard.vue'
+import { jsonToList } from '@/lib/utils'
 
 import { mapGetters } from 'vuex'
 
@@ -366,6 +406,7 @@ export default {
 		}
 	},
 	methods: {
+		jsonToList,
 		linkify(text) {
 			var urlRegex =
 				/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])/gi

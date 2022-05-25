@@ -262,6 +262,12 @@ export const mutations = {
       }
     }
   },
+  addNodeEvent(state, data) {
+    const node = getNode(data.nodeId)
+    if (node) {
+      node.eventsQueue.push(data.event)
+    }
+  },
   setStatistics(state, data) {
     const node = getNode(data.nodeId)
     if (node) {

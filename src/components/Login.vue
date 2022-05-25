@@ -76,6 +76,9 @@
 						>Login</v-btn
 					>
 				</v-card-actions>
+				<v-alert dismissible :type="error_type" v-model="error">{{
+					error_text
+				}}</v-alert>
 				<v-footer
 					padless
 					style="position: absolute; bottom: 0; width: 100%"
@@ -91,9 +94,6 @@
 					</v-col>
 				</v-footer>
 			</v-card>
-			<v-alert dismissible :type="error_type" v-model="error">{{
-				error_text
-			}}</v-alert>
 		</v-col>
 	</v-container>
 </template>
