@@ -11,6 +11,9 @@ const opts = {
 	icons: {
 		iconfont: 'md',
 	},
+	theme: {
+		options: { customProperties: true }, // enable sass/scss variables
+	},
 }
 
 export default new Vuetify(opts)

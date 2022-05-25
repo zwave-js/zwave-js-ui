@@ -119,7 +119,7 @@
 						:key="`tab-${meta}`"
 						class="px-8 py-4"
 					>
-						<h1 class="capitalize">{{ meta }}</h1>
+						<h1 class="text-uppercase">{{ meta }}</h1>
 						<p class="caption">
 							<v-btn
 								v-if="meta === 'manual'"
@@ -179,6 +179,7 @@
 							<div
 								v-for="(event, index) in filteredNodeEvents"
 								:key="'event_' + index + event.time"
+								class="log-row"
 							>
 								<span
 									><i>{{
@@ -478,7 +479,11 @@ export default {
 	font-family: 'Fira Code', monospace;
 }
 
-.capitalize {
-	text-transform: capitalize;
+.log-row {
+	cursor: default;
+}
+
+.log-row:hover {
+	background-color: var(--v-secondary-lighten4);
 }
 </style>
