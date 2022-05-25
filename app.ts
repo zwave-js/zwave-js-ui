@@ -391,12 +391,9 @@ app.set('views', utils.joinPath(false, 'views'))
 app.set('view engine', 'ejs')
 
 app.use(
-	morgan(
-		loggers.disableColors ? 'tiny' : 'dev',
-		{
-			stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
-		}
-	) as RequestHandler
+	morgan(loggers.disableColors ? 'tiny' : 'dev', {
+		stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
+	}) as RequestHandler
 )
 app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
