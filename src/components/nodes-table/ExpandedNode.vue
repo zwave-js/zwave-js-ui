@@ -159,7 +159,7 @@
 						<v-text-field
 							v-model="searchEvents"
 							prepend-icon="search"
-							label="Filter"
+							label="Search"
 							class="pa-3"
 							single-line
 							hide-details
