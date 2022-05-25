@@ -156,6 +156,17 @@
 				<!-- TAB EVENTS -->
 				<v-tab-item key="events" transition="slide-y-transition">
 					<v-container grid-list-md>
+						<v-text-field
+							v-model="searchEvents"
+							prepend-icon="search"
+							label="Filter"
+							class="pa-3"
+							single-line
+							hide-details
+							style="max-width: 300px"
+							clearable
+						/>
+
 						<v-col
 							class="pa-5"
 							style="
@@ -166,8 +177,8 @@
 							"
 						>
 							<div
-								v-for="event in node.eventsQueue"
-								:key="event.time"
+								v-for="(event, index) in filteredNodeEvents"
+								:key="'event_' + index + event.time"
 							>
 								<span
 									><i>{{
@@ -181,7 +192,7 @@
 									class="text-caption"
 									style="white-space: pre"
 									v-for="(arg, i) in event.args"
-									:key="i"
+									:key="'arg_' + i"
 									>{{ jsonToList(arg) }}</span
 								>
 							</div>
@@ -275,10 +286,21 @@ export default {
 		statsBorderColor() {
 			return this.showStatistics ? 'border-primary' : ''
 		},
+		filteredNodeEvents() {
+			return this.node.eventsQueue.filter((event) => {
+				return (
+					!this.searchEvents ||
+					JSON.stringify(event)
+						.toLowerCase()
+						.includes(this.searchEvents.toLowerCase())
+				)
+			})
+		},
 	},
 	data() {
 		return {
 			currentTab: 0,
+			searchEvents: '',
 			advancedShowDialog: false,
 			showStatistics: false,
 			advancedActions: [
