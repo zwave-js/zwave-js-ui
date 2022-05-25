@@ -403,7 +403,7 @@ export type Z2MNode = {
 export type NodeEvent = {
 	event: ZwaveNodeEvents
 	args: any[]
-	time: EpochTimeStamp
+	time: Date
 }
 
 export type ZwaveConfig = {
@@ -3024,8 +3024,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this._nodes.get(zwaveNode.id)
 
 		if (node) {
-			const event = {
-				time: Date.now(),
+			const event: NodeEvent = {
+				time: new Date(),
 				event: eventName,
 				args: eventArgs,
 			}
@@ -3626,11 +3626,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'value updated',
 			'value notification',
 			'value removed',
-			'metadata updated',
 			'notification',
 			'firmware update progress',
 			'firmware update finished',
-			'statistics updated',
 		]
 
 		for (const event of events) {

@@ -182,19 +182,22 @@
 							>
 								<span
 									><i>{{
-										new Date(event.time).toLocaleString()
+										new Date(event.time).toISOString()
 									}}</i></span
 								>
+								-
 								<strong class="text-uppercase">{{
 									event.event
 								}}</strong>
+								:
 								<span
 									class="text-caption"
 									style="white-space: pre"
 									v-for="(arg, i) in event.args"
 									:key="'arg_' + i"
-									>{{ jsonToList(arg) }}</span
+									>{{ prettyPrintEventArg(arg, i) }}</span
 								>
+								<v-divider></v-divider>
 							</div>
 						</v-col>
 					</v-container>
@@ -428,7 +431,9 @@ export default {
 		}
 	},
 	methods: {
-		jsonToList,
+		prettyPrintEventArg(arg, index) {
+			return `\nArg ${index}:\n` + jsonToList(arg, undefined, 1)
+		},
 		linkify(text) {
 			var urlRegex =
 				/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])/gi

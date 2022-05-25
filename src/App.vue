@@ -729,6 +729,7 @@ export default {
 
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'green')
+				this.socket.emit(socketActions.init, true)
 			})
 
 			this.socket.on('disconnect', () => {
@@ -782,8 +783,6 @@ export default {
 			)
 
 			this.socket.on(socketEvents.nodeEvent, this.addNodeEvent.bind(this))
-
-			this.socket.emit(socketActions.init, true)
 
 			// don't await this, will cause a loop of calls
 			this.getConfig()
