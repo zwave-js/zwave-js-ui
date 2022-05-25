@@ -391,7 +391,7 @@ app.set('views', utils.joinPath(false, 'views'))
 app.set('view engine', 'ejs')
 
 app.use(
-	morgan('dev', {
+	morgan(loggers.disableColors ? 'tiny' : 'dev', {
 		stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
 	}) as RequestHandler
 )
