@@ -179,7 +179,7 @@
 							<div
 								v-for="(event, index) in filteredNodeEvents"
 								:key="'event_' + index + event.time"
-								class="log-row"
+								class="log-row font-monospace"
 							>
 								<span
 									><i>{{
@@ -190,10 +190,9 @@
 								<strong class="text-uppercase">{{
 									event.event
 								}}</strong>
-								:
+
 								<span
-									class="text-caption"
-									style="white-space: pre"
+									style="white-space: pre; font-size: 0.75rem"
 									v-for="(arg, i) in event.args"
 									:key="'arg_' + i"
 									>{{ prettyPrintEventArg(arg, i) }}</span
@@ -476,7 +475,7 @@ export default {
 	line-height: 1.25 !important;
 }
 .font-monospace {
-	font-family: 'Fira Code', monospace;
+	font-family: 'Fira Code', monospace !important;
 }
 
 .log-row {
