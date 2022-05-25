@@ -392,9 +392,7 @@ app.set('view engine', 'ejs')
 
 app.use(
 	morgan(
-		loggers.disableColors
-			? ':method :url :status :response-time ms - :res[content-length]'
-			: 'dev',
+		loggers.disableColors ? 'tiny' : 'dev',
 		{
 			stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
 		}
