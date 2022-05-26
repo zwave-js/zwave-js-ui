@@ -1,5 +1,8 @@
 <template>
-	<td :colspan="isMobile ? 1 : headers.length">
+	<td
+		:colspan="isMobile ? 1 : headers.length"
+		:style="isMobile ? 'max-width: 90vw' : ''"
+	>
 		<v-row class="d-flex mt-2" align="center">
 			<v-col class="flex-grow-1 flex-shrink-0 ml-4">
 				<span class="title grey--text">Device ID </span>
@@ -64,6 +67,7 @@
 
 		<v-tabs
 			v-model="currentTab"
+			show-arrows
 			class="transparent mb-4"
 			:vertical="$vuetify.breakpoint.mdAndUp"
 		>
@@ -483,6 +487,6 @@ export default {
 }
 
 .log-row:hover {
-	background-color: var(--v-secondary-lighten4);
+	border: 1px solid var(--v-secondary-lighten4);
 }
 </style>
