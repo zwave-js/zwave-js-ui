@@ -201,7 +201,6 @@
 									:key="'arg_' + i"
 									>{{ prettyPrintEventArg(arg, i) }}</span
 								>
-								<v-divider></v-divider>
 							</div>
 						</v-col>
 					</v-container>
@@ -484,9 +483,15 @@ export default {
 
 .log-row {
 	cursor: default;
+	padding: 0.5em 1em;
+}
+
+.log-row:nth-of-type(even) {
+	background: var(--v-secondary-lighten5);
+	color: #000;
 }
 
 .log-row:hover {
-	border: 1px solid var(--v-secondary-lighten4);
+	outline: 1px solid var(--v-secondary-lighten4);
 }
 </style>
