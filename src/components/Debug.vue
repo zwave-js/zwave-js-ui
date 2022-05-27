@@ -21,9 +21,26 @@
 				>
 			</v-col>
 
-			<v-alert v-if="logDisabled" dense text type="warning">
-				Logging is disabled. Please enable it on settings in order to
-				see logs here
+			<v-alert
+				v-if="
+					!zwave.logEnabled || !gateway.logEnabled || zwave.logToFile
+				"
+				dense
+				text
+				type="warning"
+			>
+				<p class="ma-1" v-if="!zwave.logEnabled">
+					• ZwaveJS Logs are disabled. Please enable it on "Settings >
+					Zwave" in order to see Application logs
+				</p>
+				<p class="ma-1" v-if="!gateway.logEnabled">
+					• Application Logs are disabled. Please enable it on
+					"Settings > General" in order to see ZwaveJS logs
+				</p>
+				<p class="ma-1" v-if="zwave.logToFile">
+					• ZwaveJS "Log to file" is enabled. Disable it in order to
+					see ZwaveJS logs
+				</p>
 			</v-alert>
 
 			<v-col cols="12">
