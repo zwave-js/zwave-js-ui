@@ -21,6 +21,11 @@
 				>
 			</v-col>
 
+			<v-alert v-if="logDisabled" dense text type="warning">
+				Logging is disabled. Please enable it on settings in order to
+				see logs here
+			</v-alert>
+
 			<v-col cols="12">
 				<div
 					id="debug_window"
@@ -42,7 +47,7 @@
 import { socketEvents } from '@/../server/lib/SocketEvents'
 
 import AnsiUp from 'ansi_up'
-import { mapMutations } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
 
 const ansiUp = new AnsiUp()
 
@@ -54,7 +59,12 @@ export default {
 		socket: Object,
 	},
 	watch: {},
-	computed: {},
+	computed: {
+		...mapGetters(['zwave', 'gateway']),
+		logDisabled() {
+			return !this.zwave.logEnabled || !this.gateway.logEnabled
+		},
+	},
 	data() {
 		return {
 			debug: [],
