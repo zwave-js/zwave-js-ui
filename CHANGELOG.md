@@ -1,3 +1,16 @@
+# [6.11.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.10.0...v6.11.0) (2022-05-27)
+
+
+### Bug Fixes
+
+* disable colors also in HTTP logging ([#2438](https://github.com/zwave-js/zwavejs2mqtt/issues/2438)) ([a7fea38](https://github.com/zwave-js/zwavejs2mqtt/commit/a7fea38427baa984b2afe87d8bdf5e39a13d8938))
+* **ui:** show warning when zwave or general logs are disabled ([#2443](https://github.com/zwave-js/zwavejs2mqtt/issues/2443)) ([ef2740a](https://github.com/zwave-js/zwavejs2mqtt/commit/ef2740a0364d57fef045606527f3b2367f4bd472))
+
+
+### Features
+
+* **ui:** node events logs queue ([#2439](https://github.com/zwave-js/zwavejs2mqtt/issues/2439)) ([daea2eb](https://github.com/zwave-js/zwavejs2mqtt/commit/daea2eb625f6b3cd2bbbd569ac6422ecbb8c9ac7))
+
 # [6.10.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.9.1...v6.10.0) (2022-05-24)
 
 
