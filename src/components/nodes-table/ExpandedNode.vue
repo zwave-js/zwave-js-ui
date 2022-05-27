@@ -169,17 +169,31 @@
 							hide-details
 							style="max-width: 300px"
 							clearable
-						/>
-
-						<v-col
-							class="pa-5"
-							style="
-								max-height: 500px;
-								height: 500px;
-								overflow-y: scroll;
-								border: 1px solid #ccc;
-							"
 						>
+							<template slot="append-outer">
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on, attrs }">
+										<v-btn
+											@click="toggleAutoScroll"
+											icon
+											:color="autoScroll ? 'primary' : ''"
+											:class="
+												autoScroll
+													? 'border-primary'
+													: ''
+											"
+											v-bind="attrs"
+											v-on="on"
+										>
+											<v-icon>autorenew</v-icon>
+										</v-btn>
+									</template>
+									<span>Enable/Disable auto scroll</span>
+								</v-tooltip>
+							</template>
+						</v-text-field>
+
+						<v-col ref="eventsList" class="pa-5 events-list">
 							<div
 								v-for="(event, index) in filteredNodeEvents"
 								:key="'event_' + index + event.time"
@@ -303,9 +317,18 @@ export default {
 			})
 		},
 	},
+	watch: {
+		'node.eventsQueue'() {
+			this.scrollBottom()
+		},
+		currentTab() {
+			this.scrollBottom()
+		},
+	},
 	data() {
 		return {
 			currentTab: 0,
+			autoScroll: true,
 			searchEvents: '',
 			advancedShowDialog: false,
 			showStatistics: false,
@@ -468,6 +491,19 @@ export default {
 		forwardApiRequest(apiName, args) {
 			this.$refs.nodeDetails.apiRequest(apiName, args)
 		},
+		toggleAutoScroll() {
+			this.autoScroll = !this.autoScroll
+		},
+		async scrollBottom() {
+			if (!this.autoScroll) {
+				return
+			}
+			const el = this.$refs.eventsList
+			if (el) {
+				await this.$nextTick()
+				el.scrollTop = el.scrollHeight
+			}
+		},
 	},
 }
 </script>
@@ -479,6 +515,13 @@ export default {
 }
 .font-monospace {
 	font-family: 'Fira Code', monospace !important;
+}
+
+.events-list {
+	max-height: 500px;
+	height: 500px;
+	overflow-y: scroll;
+	border: 1px solid #ccc;
 }
 
 .log-row {
