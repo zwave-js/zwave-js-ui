@@ -21,6 +21,28 @@
 				>
 			</v-col>
 
+			<v-alert
+				v-if="
+					!zwave.logEnabled || !gateway.logEnabled || zwave.logToFile
+				"
+				dense
+				text
+				type="warning"
+			>
+				<p class="ma-1" v-if="!zwave.logEnabled">
+					• ZwaveJS Logs are disabled. Please enable it on "Settings >
+					Zwave" in order to see Application logs
+				</p>
+				<p class="ma-1" v-if="!gateway.logEnabled">
+					• Application Logs are disabled. Please enable it on
+					"Settings > General" in order to see ZwaveJS logs
+				</p>
+				<p class="ma-1" v-if="zwave.logToFile">
+					• ZwaveJS "Log to file" is enabled. Disable it in order to
+					see ZwaveJS logs
+				</p>
+			</v-alert>
+
 			<v-col cols="12">
 				<div
 					id="debug_window"
@@ -42,7 +64,7 @@
 import { socketEvents } from '@/../server/lib/SocketEvents'
 
 import AnsiUp from 'ansi_up'
-import { mapMutations } from 'vuex'
+import { mapMutations, mapGetters } from 'vuex'
 
 const ansiUp = new AnsiUp()
 
@@ -54,7 +76,12 @@ export default {
 		socket: Object,
 	},
 	watch: {},
-	computed: {},
+	computed: {
+		...mapGetters(['zwave', 'gateway']),
+		logDisabled() {
+			return !this.zwave.logEnabled || !this.gateway.logEnabled
+		},
+	},
 	data() {
 		return {
 			debug: [],
