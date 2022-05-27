@@ -9,7 +9,7 @@ const { combine, timestamp, label, printf, colorize, splat } = format
 
 export const defaultLogFile = 'zwavejs2mqtt_%DATE%.log'
 
-const disableColors = process.env.NO_LOG_COLORS === 'true'
+export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
 // custom colors for timestamp and module
 addColors({
