@@ -1,5 +1,8 @@
 <template>
-	<td :colspan="isMobile ? 1 : headers.length">
+	<td
+		:colspan="isMobile ? 1 : headers.length"
+		:style="isMobile ? 'max-width: 90vw' : ''"
+	>
 		<v-row class="d-flex mt-2" align="center">
 			<v-col class="flex-grow-1 flex-shrink-0 ml-4">
 				<span class="title grey--text">Device ID </span>
@@ -64,6 +67,7 @@
 
 		<v-tabs
 			v-model="currentTab"
+			show-arrows
 			class="transparent mb-4"
 			:vertical="$vuetify.breakpoint.mdAndUp"
 		>
@@ -78,6 +82,9 @@
 			</v-tab>
 			<v-tab key="groups" class="justify-start">
 				<v-icon small left>device_hub</v-icon> Groups
+			</v-tab>
+			<v-tab key="events" class="justify-start">
+				<v-icon small left>list_alt</v-icon> Events
 			</v-tab>
 			<v-tab
 				v-if="$vuetify.breakpoint.mdAndUp"
@@ -116,7 +123,7 @@
 						:key="`tab-${meta}`"
 						class="px-8 py-4"
 					>
-						<h1 class="capitalize">{{ meta }}</h1>
+						<h1 class="text-uppercase">{{ meta }}</h1>
 						<p class="caption">
 							<v-btn
 								v-if="meta === 'manual'"
@@ -148,6 +155,69 @@
 				<!-- TAB GROUPS -->
 				<v-tab-item key="groups" transition="slide-y-transition">
 					<association-groups :node="node" :socket="socket" />
+				</v-tab-item>
+
+				<!-- TAB EVENTS -->
+				<v-tab-item key="events" transition="slide-y-transition">
+					<v-container grid-list-md>
+						<v-text-field
+							v-model="searchEvents"
+							prepend-icon="search"
+							label="Search"
+							class="pa-3"
+							single-line
+							hide-details
+							style="max-width: 300px"
+							clearable
+						>
+							<template slot="append-outer">
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on, attrs }">
+										<v-btn
+											@click="toggleAutoScroll"
+											icon
+											:color="autoScroll ? 'primary' : ''"
+											:class="
+												autoScroll
+													? 'border-primary'
+													: ''
+											"
+											v-bind="attrs"
+											v-on="on"
+										>
+											<v-icon>autorenew</v-icon>
+										</v-btn>
+									</template>
+									<span>Enable/Disable auto scroll</span>
+								</v-tooltip>
+							</template>
+						</v-text-field>
+
+						<v-col ref="eventsList" class="pa-5 events-list">
+							<div
+								v-for="(event, index) in filteredNodeEvents"
+								:key="'event_' + index + event.time"
+								class="log-row font-monospace"
+							>
+								<span
+									><i>{{
+										new Date(event.time).toISOString()
+									}}</i></span
+								>
+								-
+								<strong class="text-uppercase">{{
+									event.event
+								}}</strong>
+
+								<span
+									style="white-space: pre; font-size: 0.75rem"
+									v-for="(arg, i) in event.args"
+									:key="'arg_' + i"
+									>{{ prettyPrintEventArg(arg, i) }}</span
+								>
+							</div>
+						</v-col>
+					</v-container>
 				</v-tab-item>
 
 				<!-- TAB DEBUG INFO -->
@@ -184,6 +254,7 @@ import HomeAssistant from '@/components/nodes-table/HomeAssistant'
 import NodeDetails from '@/components/nodes-table/NodeDetails'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import StatisticsCard from '@/components/custom/StatisticsCard.vue'
+import { jsonToList } from '@/lib/utils'
 
 import { mapGetters } from 'vuex'
 
@@ -235,10 +306,30 @@ export default {
 		statsBorderColor() {
 			return this.showStatistics ? 'border-primary' : ''
 		},
+		filteredNodeEvents() {
+			return this.node.eventsQueue.filter((event) => {
+				return (
+					!this.searchEvents ||
+					JSON.stringify(event)
+						.toLowerCase()
+						.includes(this.searchEvents.toLowerCase())
+				)
+			})
+		},
+	},
+	watch: {
+		'node.eventsQueue'() {
+			this.scrollBottom()
+		},
+		currentTab() {
+			this.scrollBottom()
+		},
 	},
 	data() {
 		return {
 			currentTab: 0,
+			autoScroll: true,
+			searchEvents: '',
 			advancedShowDialog: false,
 			showStatistics: false,
 			advancedActions: [
@@ -366,6 +457,9 @@ export default {
 		}
 	},
 	methods: {
+		prettyPrintEventArg(arg, index) {
+			return `\nArg ${index}:\n` + jsonToList(arg, undefined, 1)
+		},
 		linkify(text) {
 			var urlRegex =
 				/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])/gi
@@ -397,6 +491,19 @@ export default {
 		forwardApiRequest(apiName, args) {
 			this.$refs.nodeDetails.apiRequest(apiName, args)
 		},
+		toggleAutoScroll() {
+			this.autoScroll = !this.autoScroll
+		},
+		async scrollBottom() {
+			if (!this.autoScroll) {
+				return
+			}
+			const el = this.$refs.eventsList
+			if (el) {
+				await this.$nextTick()
+				el.scrollTop = el.scrollHeight
+			}
+		},
 	},
 }
 </script>
@@ -407,10 +514,27 @@ export default {
 	line-height: 1.25 !important;
 }
 .font-monospace {
-	font-family: 'Fira Code', monospace;
+	font-family: 'Fira Code', monospace !important;
 }
 
-.capitalize {
-	text-transform: capitalize;
+.events-list {
+	max-height: 500px;
+	height: 500px;
+	overflow-y: scroll;
+	border: 1px solid #ccc;
+}
+
+.log-row {
+	cursor: default;
+	padding: 0.5em 1em;
+}
+
+.log-row:nth-of-type(even) {
+	background: var(--v-secondary-lighten5);
+	color: #000;
+}
+
+.log-row:hover {
+	outline: 1px solid var(--v-secondary-lighten4);
 }
 </style>

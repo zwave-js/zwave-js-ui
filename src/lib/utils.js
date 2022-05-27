@@ -74,6 +74,14 @@ export function $set(o, p, v) {
 }
 
 export function jsonToList(obj, options = {}, level = 0) {
+	if (obj === null || obj === undefined) {
+		return ''
+	}
+
+	if (typeof obj !== 'object') {
+		return obj.toString()
+	}
+
 	let s = ''
 	let indent = '─'.repeat(level)
 

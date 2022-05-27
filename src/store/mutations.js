@@ -27,7 +27,8 @@ export const state = {
     serverServiceDiscoveryDisabled: false,
     enableSoftReset: true,
     enableStatistics: undefined, // keep it undefined so the user dialog will show up
-    serverPort: 3000
+    serverPort: 3000,
+    maxNodeEventsQueueSize: 100
   },
   mqtt: {
     name: 'Zwavejs2Mqtt',
@@ -259,6 +260,15 @@ export const mutations = {
       const node = getNode(nodeId)
       if (node) {
         $set(node, 'neighbors', neighbors[nodeId])
+      }
+    }
+  },
+  addNodeEvent(state, data) {
+    const node = getNode(data.nodeId)
+    if (node) {
+      node.eventsQueue.push(data.event)
+      while (node.eventsQueue.length > state.zwave.maxNodeEventsQueueSize) {
+        node.eventsQueue.shift()
       }
     }
   },

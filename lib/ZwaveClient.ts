@@ -78,6 +78,7 @@ import { GatewayValue } from './Gateway'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { socketEvents } from './SocketEvents'
+import { ZWaveNodeEventCallbacks } from 'zwave-js/build/lib/node/_Types'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -163,6 +164,10 @@ const allowedApis = validateMethods([
 	'checkLifelineHealth',
 	'checkRouteHealth',
 ] as const)
+
+export type ZwaveNodeEvents =
+	| keyof ZWaveNodeEventCallbacks
+	| 'statistics updated'
 
 // Define mapping of CCs and node values to node properties:
 const nodePropsMap = {
@@ -392,6 +397,13 @@ export type Z2MNode = {
 	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
 	firmwareUpdate?: FirmwareUpdateProgress
+	eventsQueue: NodeEvent[]
+}
+
+export type NodeEvent = {
+	event: ZwaveNodeEvents
+	args: any[]
+	time: Date
 }
 
 export type ZwaveConfig = {
@@ -419,6 +431,7 @@ export type ZwaveConfig = {
 	nodeFilter?: string[]
 	scales?: SensorTypeScale[]
 	serverServiceDiscoveryDisabled?: boolean
+	maxNodeEventsQueueSize?: number
 }
 
 export type Z2MDriverInfo = {
@@ -536,6 +549,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	public get devices() {
 		return this._devices
+	}
+
+	public get maxNodeEventsQueueSize() {
+		return this.cfg.maxNodeEventsQueueSize || 100
 	}
 
 	constructor(config: ZwaveConfig, socket: SocketServer) {
@@ -2996,6 +3013,36 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Triggered every time a node event is received
+	 *
+	 */
+	private _onNodeEvent(
+		eventName: ZwaveNodeEvents,
+		zwaveNode: ZWaveNode,
+		...eventArgs: any[]
+	) {
+		const node = this._nodes.get(zwaveNode.id)
+
+		if (node) {
+			const event: NodeEvent = {
+				time: new Date(),
+				event: eventName,
+				args: eventArgs,
+			}
+			node.eventsQueue.push(event)
+
+			this.sendToSocket(socketEvents.nodeEvent, {
+				nodeId: node?.id,
+				event,
+			})
+
+			while (node.eventsQueue.length > this.maxNodeEventsQueueSize) {
+				node.eventsQueue.shift()
+			}
+		}
+	}
+
+	/**
 	 * Triggered when a node is ready. All values are added and all node info are received
 	 *
 	 */
@@ -3564,6 +3611,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._onNodeFirmwareUpdateFinished.bind(this)
 			)
 			.on('statistics updated', this._onNodeStatisticsUpdated.bind(this))
+
+		const events: ZwaveNodeEvents[] = [
+			'ready',
+			'interview started',
+			'interview stage completed',
+			'interview completed',
+			'interview failed',
+			'wake up',
+			'sleep',
+			'alive',
+			'dead',
+			'value added',
+			'value updated',
+			'value notification',
+			'value removed',
+			'notification',
+			'firmware update progress',
+			'firmware update finished',
+		]
+
+		for (const event of events) {
+			zwaveNode.on(event, this._onNodeEvent.bind(this, event))
+		}
 	}
 
 	/**
@@ -3637,6 +3707,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			hassDevices: {},
 			failed: false,
 			inited: false,
+			eventsQueue: [],
 		}
 
 		this._nodes.set(nodeId, node)

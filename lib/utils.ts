@@ -144,7 +144,9 @@ export function getVersion(): string {
 			const shellCmd =
 				'command -v git || exit 0; git rev-parse --short HEAD'
 			const revision = execSync(shellCmd).toString().trim()
-			VERSION = `${version}${revision ? '.' + revision : ''}`
+			VERSION = `${version}${
+				revision ? '.' + revision.split('\n')[1] : ''
+			}`
 		} catch {
 			VERSION = version
 		}

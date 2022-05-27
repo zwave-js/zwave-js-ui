@@ -493,6 +493,18 @@
 											type="number"
 										></v-text-field>
 									</v-col>
+									<v-col cols="6">
+										<v-text-field
+											v-model.number="
+												newZwave.maxNodeEventsQueueSize
+											"
+											label="Node events queue size"
+											:rules="[rules.required]"
+											required
+											hint="Each node stores a queue of events. This is the maximum size of the queue"
+											type="number"
+										></v-text-field>
+									</v-col>
 									<input
 										type="hidden"
 										:value="newZwave.options"
