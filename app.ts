@@ -63,7 +63,7 @@ const storeLimiter = rateLimit({
 		res.json({
 			success: false,
 			message:
-				'Request limit reached. You can make only 100 reqests every 15 minutes',
+				'Request limit reached. You can make only 100 requests every 15 minutes',
 		})
 	},
 })
