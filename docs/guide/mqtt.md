@@ -187,17 +187,29 @@ Payload:
 
 ## Set values
 
-To write a value using MQTT you need to send the value to the /set API in the same topic where the value updates are published, by adding the suffix `/set` to the topic (**READONLY VALUES CANNOT BE WRITE**).
+To write a value using MQTT you need to send the value to the /set API in the same topic where the value updates are published, by adding the suffix `/set` to the topic.
 
-Example with gateway configured with `named topics`:
+To set the light dimmer of the node named `light` and location `office` to `100`.
 
-To set the Heating setpoint of the node with id `4` located in the `office` to `25.5`.
+`zwave/office/test/38/0/targetValue/set`
 
-`zwave/office/nodeID_4/thermostat_setpoint/heating/set`
+Payload:
+
+```json
+{
+  "value": 100
+}
+```
 
  To check if the value has been successfully write just check when the value changes on the topic:
 
-`zwave/office/nodeID_4/thermostat_setpoint/heating`
+`zwave/office/test/38/0/targetValue`
+
+In this case the Command Class 38 (Multilevel Switch) also has a `currentValue` property that rappresents the current value of the device, MQTT also allows you to write to this valueId even if it is marked as read-only because it will redirect the write request to the associated `targetValue`. So the same payload sent to:
+
+`zwave/office/test/38/0/currentValue/set`
+
+Will work in the same way.
 
 ### Set with options
 
