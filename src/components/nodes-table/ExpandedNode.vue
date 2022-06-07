@@ -1,250 +1,272 @@
 <template>
-	<td
-		:colspan="isMobile ? 1 : headers.length"
-		:style="isMobile ? 'max-width: 90vw' : ''"
-	>
-		<v-row class="d-flex mt-2" align="center">
-			<v-col class="flex-grow-1 flex-shrink-0 ml-4">
-				<span class="title grey--text">Device ID </span>
-				<br />
-				<span class="subtitle font-weight-bold font-monospace">
-					{{ `${node.deviceId} (${node.hexId})` }}
-				</span>
-				<v-icon @click="openLink(node.dbLink)" class="ml-2" small>
-					ios_share
-				</v-icon>
-			</v-col>
-			<v-col class="text-end flex-shrink-1">
-				<v-item-group class="v-btn-toggle">
-					<v-btn color="primary" outlined @click="toggleStatistics">
-						<v-icon left>
-							{{ statisticsOpeningIndicator }}
-						</v-icon>
-						Statistics
-						<v-icon color="primary" right> multiline_chart </v-icon>
-					</v-btn>
-					<v-btn
-						dark
-						color="primary"
-						@click.stop="forwardApiRequest('pingNode', [node.id])"
-						depressed
-					>
-						Ping
-					</v-btn>
-					<v-btn
-						dark
-						color="green"
-						depressed
-						@click="advancedShowDialog = true"
-					>
-						Advanced
-					</v-btn>
-				</v-item-group>
-			</v-col>
-		</v-row>
-
-		<v-row v-if="nodeComments.length > 0">
-			<v-col>
-				<v-alert
-					v-for="c in nodeComments"
-					:key="c.level"
-					text
-					style="white-space: break-spaces"
-					:type="c.level"
-				>
-					<span v-html="linkify(c.text)"></span>
-				</v-alert>
-			</v-col>
-		</v-row>
-
-		<v-row no-gutters>
-			<v-sheet v-if="showStatistics" class="my-4" outlined rounded>
-				<statistics-card title="Statistics" :node="node" />
-			</v-sheet>
-		</v-row>
-
-		<v-divider class="my-4" />
-
-		<v-tabs
-			v-model="currentTab"
-			show-arrows
-			class="transparent mb-4"
-			:vertical="$vuetify.breakpoint.mdAndUp"
+	<td :colspan="isMobile ? 1 : headers.length">
+		<div
+			:style="`max-width: calc(100vw - ${
+				$vuetify.breakpoint.lgAndUp ? 120 : 70
+			}px)`"
 		>
-			<v-tab class="justify-start" key="node">
-				<v-icon small left>widgets</v-icon> Node
-			</v-tab>
-			<v-tab v-if="nodeMetadata" class="justify-start" key="manual">
-				<v-icon small left>help</v-icon> Help
-			</v-tab>
-			<v-tab v-if="showHass" class="justify-start" key="homeassistant">
-				<v-icon small left>home</v-icon> Home Assistant
-			</v-tab>
-			<v-tab key="groups" class="justify-start">
-				<v-icon small left>device_hub</v-icon> Groups
-			</v-tab>
-			<v-tab key="events" class="justify-start">
-				<v-icon small left>list_alt</v-icon> Events
-			</v-tab>
-			<v-tab
-				v-if="$vuetify.breakpoint.mdAndUp"
-				class="justify-start"
-				key="debug"
-			>
-				<v-icon small left>bug_report</v-icon> Debug Info
-			</v-tab>
-
-			<!-- TABS -->
-			<v-tabs-items
-				style="background: transparent; padding-bottom: 10px"
-				touchless
-				v-model="currentTab"
-			>
-				<!-- TAB NODE -->
-				<v-tab-item key="node" transition="slide-y-transition">
-					<node-details
-						ref="nodeDetails"
-						:headers="headers"
-						:node="node"
-						:actions="actions"
-						:socket="socket"
-						v-on="$listeners"
-					></node-details>
-				</v-tab-item>
-
-				<!-- TAB NODE -->
-				<v-tab-item
-					v-if="nodeMetadata"
-					key="manual"
-					transition="slide-y-transition"
-				>
-					<section
-						v-for="meta in metaKeys"
-						:key="`tab-${meta}`"
-						class="px-8 py-4"
-					>
-						<h1 class="text-uppercase">{{ meta }}</h1>
-						<p class="caption">
-							<v-btn
-								v-if="meta === 'manual'"
-								:href="nodeMetadata[meta]"
-								color="primary"
-							>
-								DOWNLOAD
-							</v-btn>
-							<span v-else>
-								{{ nodeMetadata[meta] }}
-							</span>
-						</p>
-					</section>
-				</v-tab-item>
-
-				<!-- TAB HOMEASSISTANT -->
-				<v-tab-item
-					v-if="showHass"
-					key="homeassistant"
-					transition="slide-y-transition"
-				>
-					<home-assistant
-						:node="node"
-						:socket="socket"
-						v-on="$listeners"
-					/>
-				</v-tab-item>
-
-				<!-- TAB GROUPS -->
-				<v-tab-item key="groups" transition="slide-y-transition">
-					<association-groups :node="node" :socket="socket" />
-				</v-tab-item>
-
-				<!-- TAB EVENTS -->
-				<v-tab-item key="events" transition="slide-y-transition">
-					<v-container grid-list-md>
-						<v-text-field
-							v-model="searchEvents"
-							prepend-icon="search"
-							label="Search"
-							class="pa-3"
-							single-line
-							hide-details
-							style="max-width: 300px"
-							clearable
+			<v-row class="mt-2" align="center">
+				<v-col style="min-width: 200px" class="ml-4">
+					<span class="title grey--text">Device ID </span>
+					<br />
+					<span class="subtitle font-weight-bold font-monospace">
+						{{ `${node.deviceId} (${node.hexId})` }}
+					</span>
+					<v-icon @click="openLink(node.dbLink)" class="ml-2" small>
+						ios_share
+					</v-icon>
+				</v-col>
+				<v-col class="text-end">
+					<v-item-group class="v-btn-toggle">
+						<v-btn
+							color="primary"
+							outlined
+							@click="toggleStatistics"
 						>
-							<template slot="append-outer">
-								<v-tooltip bottom>
-									<template v-slot:activator="{ on, attrs }">
-										<v-btn
-											@click="toggleAutoScroll"
-											icon
-											:color="autoScroll ? 'primary' : ''"
-											:class="
-												autoScroll
-													? 'border-primary'
-													: ''
-											"
-											v-bind="attrs"
-											v-on="on"
-										>
-											<v-icon>autorenew</v-icon>
-										</v-btn>
-									</template>
-									<span>Enable/Disable auto scroll</span>
-								</v-tooltip>
-							</template>
-						</v-text-field>
+							<v-icon left>
+								{{ statisticsOpeningIndicator }}
+							</v-icon>
+							Statistics
+							<v-icon color="primary" right>
+								multiline_chart
+							</v-icon>
+						</v-btn>
+						<v-btn
+							dark
+							color="primary"
+							@click.stop="
+								forwardApiRequest('pingNode', [node.id])
+							"
+							depressed
+						>
+							Ping
+						</v-btn>
+						<v-btn
+							dark
+							color="green"
+							depressed
+							@click="advancedShowDialog = true"
+						>
+							Advanced
+						</v-btn>
+					</v-item-group>
+				</v-col>
+			</v-row>
 
-						<v-col ref="eventsList" class="pa-5 events-list">
-							<div
-								v-for="(event, index) in filteredNodeEvents"
-								:key="'event_' + index + event.time"
-								class="log-row font-monospace"
-							>
-								<span
-									><i>{{
-										new Date(event.time).toISOString()
-									}}</i></span
-								>
-								-
-								<strong class="text-uppercase">{{
-									event.event
-								}}</strong>
+			<v-row v-if="nodeComments.length > 0">
+				<v-col>
+					<v-alert
+						v-for="c in nodeComments"
+						:key="c.level"
+						text
+						style="white-space: break-spaces"
+						:type="c.level"
+					>
+						<span v-html="linkify(c.text)"></span>
+					</v-alert>
+				</v-col>
+			</v-row>
 
-								<span
-									style="white-space: pre; font-size: 0.75rem"
-									v-for="(arg, i) in event.args"
-									:key="'arg_' + i"
-									>{{ prettyPrintEventArg(arg, i) }}</span
-								>
-							</div>
-						</v-col>
-					</v-container>
-				</v-tab-item>
+			<v-row no-gutters>
+				<v-sheet v-if="showStatistics" class="my-4" outlined rounded>
+					<statistics-card title="Statistics" :node="node" />
+				</v-sheet>
+			</v-row>
 
-				<!-- TAB DEBUG INFO -->
-				<v-tab-item
-					v-if="$vuetify.breakpoint.mdAndUp"
-					key="debug"
-					transition="slide-y-transition"
+			<v-divider class="my-4" />
+
+			<v-tabs
+				v-model="currentTab"
+				show-arrows
+				class="transparent mb-4"
+				:vertical="$vuetify.breakpoint.mdAndUp"
+			>
+				<v-tab class="justify-start" key="node">
+					<v-icon small left>widgets</v-icon> Node
+				</v-tab>
+				<v-tab v-if="nodeMetadata" class="justify-start" key="manual">
+					<v-icon small left>help</v-icon> Help
+				</v-tab>
+				<v-tab
+					v-if="showHass"
+					class="justify-start"
+					key="homeassistant"
 				>
-					<v-textarea
-						class="debug-content font-monospace mx-2"
-						rows="15"
-						append-icon="content_copy"
-						v-model="nodeJson"
-						readonly
-						ref="nodeJsonContent"
-						@click:append="copyText"
-					></v-textarea>
-				</v-tab-item>
-			</v-tabs-items>
-		</v-tabs>
+					<v-icon small left>home</v-icon> Home Assistant
+				</v-tab>
+				<v-tab key="groups" class="justify-start">
+					<v-icon small left>device_hub</v-icon> Groups
+				</v-tab>
+				<v-tab key="events" class="justify-start">
+					<v-icon small left>list_alt</v-icon> Events
+				</v-tab>
+				<v-tab
+					v-if="$vuetify.breakpoint.mdAndUp"
+					class="justify-start"
+					key="debug"
+				>
+					<v-icon small left>bug_report</v-icon> Debug Info
+				</v-tab>
 
-		<DialogAdvanced
-			v-model="advancedShowDialog"
-			@close="advancedShowDialog = false"
-			:actions="advancedActions"
-			@action="nodeAction"
-		/>
+				<!-- TABS -->
+				<v-tabs-items
+					style="background: transparent; padding-bottom: 10px"
+					touchless
+					v-model="currentTab"
+				>
+					<!-- TAB NODE -->
+					<v-tab-item key="node" transition="slide-y-transition">
+						<node-details
+							ref="nodeDetails"
+							:headers="headers"
+							:node="node"
+							:actions="actions"
+							:socket="socket"
+							v-on="$listeners"
+						></node-details>
+					</v-tab-item>
+
+					<!-- TAB NODE -->
+					<v-tab-item
+						v-if="nodeMetadata"
+						key="manual"
+						transition="slide-y-transition"
+					>
+						<section
+							v-for="meta in metaKeys"
+							:key="`tab-${meta}`"
+							class="px-8 py-4"
+						>
+							<h1 class="text-uppercase">{{ meta }}</h1>
+							<p class="caption">
+								<v-btn
+									v-if="meta === 'manual'"
+									:href="nodeMetadata[meta]"
+									color="primary"
+								>
+									DOWNLOAD
+								</v-btn>
+								<span v-else>
+									{{ nodeMetadata[meta] }}
+								</span>
+							</p>
+						</section>
+					</v-tab-item>
+
+					<!-- TAB HOMEASSISTANT -->
+					<v-tab-item
+						v-if="showHass"
+						key="homeassistant"
+						transition="slide-y-transition"
+					>
+						<home-assistant
+							:node="node"
+							:socket="socket"
+							v-on="$listeners"
+						/>
+					</v-tab-item>
+
+					<!-- TAB GROUPS -->
+					<v-tab-item key="groups" transition="slide-y-transition">
+						<association-groups :node="node" :socket="socket" />
+					</v-tab-item>
+
+					<!-- TAB EVENTS -->
+					<v-tab-item key="events" transition="slide-y-transition">
+						<v-container grid-list-md>
+							<v-text-field
+								v-model="searchEvents"
+								prepend-icon="search"
+								label="Search"
+								class="pa-3"
+								single-line
+								hide-details
+								style="max-width: 300px"
+								clearable
+							>
+								<template slot="append-outer">
+									<v-tooltip bottom>
+										<template
+											v-slot:activator="{ on, attrs }"
+										>
+											<v-btn
+												@click="toggleAutoScroll"
+												icon
+												:color="
+													autoScroll ? 'primary' : ''
+												"
+												:class="
+													autoScroll
+														? 'border-primary'
+														: ''
+												"
+												v-bind="attrs"
+												v-on="on"
+											>
+												<v-icon>autorenew</v-icon>
+											</v-btn>
+										</template>
+										<span>Enable/Disable auto scroll</span>
+									</v-tooltip>
+								</template>
+							</v-text-field>
+
+							<v-col ref="eventsList" class="pa-5 events-list">
+								<div
+									v-for="(event, index) in filteredNodeEvents"
+									:key="'event_' + index + event.time"
+									class="log-row font-monospace"
+								>
+									<span
+										><i>{{
+											new Date(event.time).toISOString()
+										}}</i></span
+									>
+									-
+									<strong class="text-uppercase">{{
+										event.event
+									}}</strong>
+
+									<span
+										style="
+											white-space: pre;
+											font-size: 0.75rem;
+										"
+										v-for="(arg, i) in event.args"
+										:key="'arg_' + i"
+										>{{ prettyPrintEventArg(arg, i) }}</span
+									>
+								</div>
+							</v-col>
+						</v-container>
+					</v-tab-item>
+
+					<!-- TAB DEBUG INFO -->
+					<v-tab-item
+						v-if="$vuetify.breakpoint.mdAndUp"
+						key="debug"
+						transition="slide-y-transition"
+					>
+						<v-textarea
+							class="debug-content font-monospace mx-2"
+							rows="15"
+							append-icon="content_copy"
+							v-model="nodeJson"
+							readonly
+							ref="nodeJsonContent"
+							@click:append="copyText"
+						></v-textarea>
+					</v-tab-item>
+				</v-tabs-items>
+			</v-tabs>
+
+			<DialogAdvanced
+				v-model="advancedShowDialog"
+				@close="advancedShowDialog = false"
+				:actions="advancedActions"
+				@action="nodeAction"
+			/>
+		</div>
 	</td>
 </template>
 
