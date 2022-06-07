@@ -1816,8 +1816,11 @@ export default class Gateway {
 			data.nodeName = node.name
 			data.nodeLocation = node.loc
 		}
-		// valueId is writeable, subscribe for updates
-		if (valueId.writeable && !this.topicValues[topic]) {
+
+		const shouldSubscribe = valueId.writeable || valueId.targetValue
+
+		// valueId is writeable or it has a target value, subscribe for updates
+		if (shouldSubscribe && !this.topicValues[topic]) {
 			const levels = topic.split('/').length
 
 			logger.debug(`Subscribing to updates of ${valueId.id}`)
@@ -1838,7 +1841,9 @@ export default class Gateway {
 				valueId.conf = valueConf
 			}
 
-			this.topicValues[topic] = valueId
+			this.topicValues[topic] = valueId.targetValue
+				? node.values[valueId.targetValue]
+				: valueId
 		}
 
 		let mqttOptions: IClientPublishOptions = valueId.stateless
