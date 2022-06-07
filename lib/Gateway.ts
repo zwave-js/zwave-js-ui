@@ -2086,8 +2086,8 @@ export default class Gateway {
 		const valueId = this.topicValues[valueTopic]
 
 		if (valueId) {
-			payload = this.parsePayload(payload, valueId, valueId.conf)
-			await this._zwave.writeValue(valueId, payload, payload?.options)
+			const value = this.parsePayload(payload, valueId, valueId.conf)
+			await this._zwave.writeValue(valueId, value, payload?.options)
 		} else {
 			logger.debug(`No writeable valueId found for ${valueTopic}`)
 		}
