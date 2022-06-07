@@ -199,6 +199,23 @@ To set the Heating setpoint of the node with id `4` located in the `office` to `
 
 `zwave/office/nodeID_4/thermostat_setpoint/heating`
 
+### Set with options
+
+If you would like to send a write request with options like `transitionDurtation` and `volume` you can do it by using a JSON payload:
+
+Topic: `zwave/office/light/38/0/targetValue`
+
+Payload:
+
+```json
+{
+  "value": 100,
+  "options": {
+    "transitionDuration": "5s"
+  }
+}
+```
+
 ## Broadcast
 
 You can send two kind of broadcast requests:
