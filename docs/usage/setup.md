@@ -7,6 +7,7 @@ To configure ZWavejs2Mqtt, you must access it via your web browser at <http://lo
 - **Auth**: Enable this to password protect your application. Default credentials are:
   - Username:`admin`
   - Password: `zwave`
+- **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload).
 - **Plugins**: List of plugins to use. If the plugin you want to use is not listed just write the name or the path to it and press enter. More about plugins [here](/guide/plugins)
 - **Log enabled**: Enable logging for Zwavejs2Mqtt
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
@@ -38,7 +39,7 @@ Properties of a **valueId configuration**:
 
 ## Z-Wave
 
-- **Serial port**: The serial port where your controller is connected
+- **Serial port**: The serial port where your controller is connected. If your port is not listed here just write the port path here and press enter.
 - **Security Keys** : Zwave network keys for secure inclusion S0/S2. You can manually input them or auto-generate them by using random generator button or by pasting your OZW keys in the input, they will be auto-converted in the correct format. Example of a valid key is: `5C14897467C42598518AF155DE6CCEA8` (length is 32).
   - **S0_Legacy** : Legacy S0 key
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
@@ -54,12 +55,14 @@ Properties of a **valueId configuration**:
 > - **Backup these keys!**
 
 - **Enable statistics**: Please enable usage statistics! More info [here](/usage_stats)
+- **Soft reset**: Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled.
 - **Preferred scales**: Choose preferred sensor scales
 - **Log enabled**: Enable logging for Z-Wave JS websocket server
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
 - **Log nodes**: Filter Z-Wave JS logs to log just this nodes
 - **Inclusion/Exclusion timeout**: Seconds to wait before automatically stopping inclusion/exclusion
+- **Node events queue**: Maximum number of events to queue in memory for each node.
 - **Hidden settings**: Advanced settings not visible to the user interface, you can edit these by setting in the `settings.json` file you fins in store directory
   - `zwave.options` overrides options passed to the Z-Wave JS Driver constructor [ZWaveOptions](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=zwaveoptions)
 
@@ -211,6 +214,9 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
 ## Home Assistant
 
 - **WS Server**: Enable [Z-Wave JS websocket server](https://github.com/zwave-js/zwave-js-server). This can be used by the official Home Assistant [Z-Wave integration](https://www.home-assistant.io/integrations/zwave_js) to automatically create entities
+  - **Server Port**: The port where the websocket server will listen.
+  - **Server Host**: The host where the websocket server will listen.
+  - **Disable DNS Discovery**: Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance
 - **MQTT discovery**: Enable this to use MQTT discovery. This is an alternative to the official integration. (more about this [here](/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to Home Assistant
 - **Retain Discovery**: Set retain flag to true in discovery messages
