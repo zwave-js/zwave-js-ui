@@ -419,6 +419,7 @@ export type ZwaveConfig = {
 	enableSoftReset?: boolean
 	deviceConfigPriorityDir?: string
 	serverPort?: number
+	serverHost?: string
 	logEnabled?: boolean
 	logLevel?: LogManager.LogLevel
 	commandsTimeout?: number
@@ -1314,6 +1315,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (this.cfg.serverEnabled) {
 					this.server = new ZwavejsServer(this._driver, {
 						port: this.cfg.serverPort || 3000,
+						host: this.cfg.serverHost,
 						logger: LogManager.module('Zwave-Server'),
 						enableDNSServiceDiscovery:
 							!this.cfg.serverServiceDiscoveryDisabled,
