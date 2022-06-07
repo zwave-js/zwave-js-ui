@@ -187,7 +187,9 @@ Payload:
 
 ## Set values
 
-To write a value using MQTT you need to send the value to the /set API in the same topic where the value updates are published, by adding the suffix `/set` to the topic.
+To write a value using MQTT you need to send a packet to the same topic where the value updates are published and adding the suffix `/set`.
+
+Example:
 
 To set the light dimmer of the node named `light` and location `office` to `100`.
 
