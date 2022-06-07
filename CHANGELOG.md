@@ -1,3 +1,19 @@
+# [6.12.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.11.0...v6.12.0) (2022-06-07)
+
+
+### Bug Fixes
+
+* smart start inclusion forgets node name and loc ([33167ec](https://github.com/zwave-js/zwavejs2mqtt/commit/33167ecad5a34a30da23eb8d4bd2ab4be97a5ef8)), closes [#2447](https://github.com/zwave-js/zwavejs2mqtt/issues/2447)
+* typo in the storeLimiter error message ([#2448](https://github.com/zwave-js/zwavejs2mqtt/issues/2448)) ([943aee9](https://github.com/zwave-js/zwavejs2mqtt/commit/943aee95dc0ffaae3abd735df7f9deaa087c69e6))
+* **ui:** advanced button overflow in  expanded node ([80fec3a](https://github.com/zwave-js/zwavejs2mqtt/commit/80fec3a9115020a8664ef364c59321751ac4b37c))
+
+
+### Features
+
+* allow to pass custom set value options in MQTT payload ([#2453](https://github.com/zwave-js/zwavejs2mqtt/issues/2453)) ([cbf57c4](https://github.com/zwave-js/zwavejs2mqtt/commit/cbf57c4ecfb341891bee65ce258013975d16b348)), closes [#2305](https://github.com/zwave-js/zwavejs2mqtt/issues/2305)
+* allow to specify custom zwavejs server host ([#2452](https://github.com/zwave-js/zwavejs2mqtt/issues/2452)) ([51e6eb9](https://github.com/zwave-js/zwavejs2mqtt/commit/51e6eb91312cf86d50475ebcff5c9d6769d0dd38)), closes [#2265](https://github.com/zwave-js/zwavejs2mqtt/issues/2265)
+* handle MQTT writes to valueIds that have an associated targetValue ([#2454](https://github.com/zwave-js/zwavejs2mqtt/issues/2454)) ([d437d5e](https://github.com/zwave-js/zwavejs2mqtt/commit/d437d5e359dda7a2a4f895f10ec8cac3917c78bd))
+
 # [6.11.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.10.0...v6.11.0) (2022-05-27)
 
 
