@@ -877,6 +877,16 @@
 										v-if="newZwave.serverEnabled"
 										cols="6"
 									>
+										<v-text-field
+											v-model="newZwave.serverHost"
+											label="Server Host"
+											hint="(Optional) The host to bind the Zwave Server. Default is: 0.0.0.0"
+										></v-text-field>
+									</v-col>
+									<v-col
+										v-if="newZwave.serverEnabled"
+										cols="6"
+									>
 										<v-switch
 											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance"
 											persistent-hint
