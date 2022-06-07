@@ -804,9 +804,17 @@ export default {
 			} else {
 				if (data.api === 'parseQRCodeString') {
 					const res = data.result
-					const provisioning = res.parsed
+					let provisioning = res.parsed
 
 					if (provisioning) {
+						// add name and location to provisioning
+						if (this.nodeProps) {
+							provisioning = {
+								...provisioning,
+								...this.nodeProps,
+							}
+						}
+
 						const mode = 4 // s2 only
 
 						const replaceStep = this.steps.find(
