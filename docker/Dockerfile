@@ -56,7 +56,8 @@ RUN apk add --no-cache \
     libgcc \	
     libusb \	
     tzdata \	
-    eudev	
+    eudev \
+    git
 
 
 # Copy files from previous build stage	
