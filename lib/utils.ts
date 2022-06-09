@@ -4,7 +4,6 @@ import { version } from '../package.json'
 import { ValueID } from 'zwave-js'
 import path from 'path'
 import crypto from 'crypto'
-import { execSync } from 'child_process'
 import { readFileSync } from 'fs'
 
 let VERSION: string
