@@ -1,6 +1,7 @@
 .git
 !/.git/HEAD
-!/.git/master
+!/.git/refs/heads/master
+!/.git/refs/heads/test
 
 .github
 *.md
