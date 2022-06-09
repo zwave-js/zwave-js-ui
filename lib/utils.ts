@@ -5,6 +5,7 @@ import { ValueID } from 'zwave-js'
 import path from 'path'
 import crypto from 'crypto'
 import { execSync } from 'child_process'
+import { readFileSync } from 'fs'
 
 let VERSION: string
 
@@ -141,12 +142,15 @@ export function num2hex(num: number): string {
 export function getVersion(): string {
 	if (!VERSION) {
 		try {
-			const shellCmd =
-				'command -v git || exit 0; git rev-parse --short HEAD'
-			const revision = execSync(shellCmd).toString().trim()
-			VERSION = `${version}${
-				revision ? '.' + revision.split('\n')[1] : ''
-			}`
+			// try to get short sha of last commit
+			let rev = readFileSync('.git/HEAD').toString().trim()
+			if (rev.indexOf(':') !== -1) {
+				rev = readFileSync('.git/' + rev.substring(5))
+					.toString()
+					.trim()
+			}
+
+			VERSION = `${version}${rev ? '.' + rev.substring(0, 7) : ''}`
 		} catch {
 			VERSION = version
 		}

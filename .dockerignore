@@ -1,4 +1,7 @@
 .git
+!/.git/HEAD
+!/.git/master
+
 .github
 *.md
 docs
