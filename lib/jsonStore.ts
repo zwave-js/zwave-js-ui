@@ -1,12 +1,14 @@
-'use strict'
-
 // eslint-disable-next-line one-var
 import { readFile, writeFile } from 'jsonfile'
-import { storeDir } from '../config/app'
+import { backupsDir, storeDir } from '../config/app'
 import { StoreFile, StoreKeys } from '../config/store'
 import { module } from './logger'
 import * as utils from './utils'
 import { recursive as merge } from 'merge'
+import { Writable } from 'stream'
+import archiver from 'archiver'
+import { createWriteStream } from 'fs'
+import { mkdirp, existsSync } from 'fs-extra'
 
 const logger = module('Store')
 
@@ -34,6 +36,55 @@ export class StorageHelper {
 		}
 
 		return this._store
+	}
+
+	async backup(stream?: Writable): Promise<string> {
+		const backupFile = `zwavejs2mqtt-backup_${Date.now()}.zip`
+
+		await mkdirp(backupsDir)
+
+		if (!stream) {
+			stream = createWriteStream(utils.joinPath(backupsDir, backupFile))
+		}
+
+		return new Promise((resolve, reject) => {
+			const archive = archiver('zip')
+
+			archive.on('error', (err) => {
+				reject(err)
+			})
+
+			// on stream closed we can end the request
+			archive.on('end', () => {
+				resolve(backupFile)
+			})
+
+			if (typeof (stream as any).set === 'function') {
+				;(stream as any).set({
+					'Content-Type': 'application/json',
+					'Content-Disposition': `attachment; filename="${backupFile}"`,
+				})
+			}
+
+			archive.pipe(stream)
+
+			// backup zwavejs files too
+			archive.glob('*.jsonl', {
+				cwd: storeDir,
+			})
+
+			for (const model in this.config) {
+				const config: StoreFile = this.config[model]
+				const filePath = utils.joinPath(storeDir, config.file)
+				if (existsSync(filePath)) {
+					archive.file(filePath, {
+						name: config.file,
+					})
+				}
+			}
+
+			void archive.finalize()
+		})
 	}
 
 	private async _getFile(config: StoreFile) {

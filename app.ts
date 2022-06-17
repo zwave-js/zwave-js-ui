@@ -32,6 +32,7 @@ import { Socket } from 'socket.io'
 import { promisify } from 'util'
 import { Driver, libVersion } from 'zwave-js'
 import {
+	backupsDir,
 	defaultPsw,
 	defaultUser,
 	sessionSecret,
@@ -1207,6 +1208,25 @@ app.post(
 		}
 
 		await archive.finalize()
+	}
+)
+
+app.get(
+	'/api/store/backup',
+	storeLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const backupfile = await jsonStore.backup(res)
+
+			res.pipe(
+				fs.createWriteStream(utils.joinPath(backupsDir, backupfile))
+			)
+		} catch (error) {
+			res.status(500).send({
+				error: error.message,
+			})
+		}
 	}
 )
 

@@ -76,29 +76,75 @@
 							<v-icon v-else>settings</v-icon>
 						</v-btn>
 					</template>
-					<v-btn fab dark small color="green" @click="restoreZip">
-						<v-icon>restore</v-icon>
-					</v-btn>
-					<v-btn
-						v-if="selectedFiles.length > 0"
-						fab
-						dark
-						small
-						color="green"
-						@click="downloadZip"
-					>
-						<v-icon>file_download</v-icon>
-					</v-btn>
-					<v-btn
-						v-if="selectedFiles.length > 0"
-						fab
-						dark
-						small
-						color="red"
-						@click="deleteSelected"
-					>
-						<v-icon>delete</v-icon>
-					</v-btn>
+					<v-tooltip left>
+						<template v-slot:activator="{ on, attrs }">
+							<v-btn
+								fab
+								dark
+								small
+								color="green"
+								@click="restoreZip"
+								v-bind="attrs"
+								v-on="on"
+							>
+								<v-icon>restore</v-icon>
+							</v-btn>
+						</template>
+						<span>Restore</span>
+					</v-tooltip>
+
+					<v-tooltip left>
+						<template v-slot:activator="{ on, attrs }">
+							<v-btn
+								fab
+								dark
+								small
+								color="purple"
+								@click="backupStore"
+								v-bind="attrs"
+								v-on="on"
+							>
+								<v-icon>backup</v-icon>
+							</v-btn>
+						</template>
+						<span>Backup</span>
+					</v-tooltip>
+
+					<v-tooltip left>
+						<template v-slot:activator="{ on, attrs }">
+							<v-btn
+								v-if="selectedFiles.length > 0"
+								fab
+								dark
+								small
+								color="primary"
+								@click="downloadSelectedZip"
+								v-bind="attrs"
+								v-on="on"
+							>
+								<v-icon>file_download</v-icon>
+							</v-btn>
+						</template>
+						<span>Download selected</span>
+					</v-tooltip>
+
+					<v-tooltip left>
+						<template v-slot:activator="{ on, attrs }">
+							<v-btn
+								v-if="selectedFiles.length > 0"
+								fab
+								dark
+								small
+								color="red"
+								@click="deleteSelected"
+								v-bind="attrs"
+								v-on="on"
+							>
+								<v-icon>delete</v-icon>
+							</v-btn>
+						</template>
+						<span>Delete selected</span>
+					</v-tooltip>
 				</v-speed-dial>
 			</v-col>
 
@@ -291,36 +337,42 @@ export default {
 				}
 			}
 		},
-		async downloadZip() {
+		async downloadSelectedZip() {
 			const files = this.selectedFiles.map((f) => f.path)
+
 			try {
 				const response = await ConfigApis.downloadZip(files)
-				const regExp = /filename="([^"]+){1}"/g
-				const fileName =
-					regExp.exec(response.headers['content-disposition'])[1] ||
-					'zwavejs2mqtt-store.zip'
-				if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-					// IE variant
-					window.navigator.msSaveOrOpenBlob(
-						new Blob([response.data], {
-							type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-						}),
-						fileName
-					)
-				} else {
-					const url = window.URL.createObjectURL(
-						new Blob([response.data], {
-							type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-						})
-					)
-					const link = document.createElement('a')
-					link.href = url
-					link.setAttribute('download', fileName)
-					document.body.appendChild(link)
-					link.click()
-				}
+
+				await this.downloadZip(response, 'zwavejs2mqtt-store.zip')
 			} catch (error) {
 				this.showSnackbar(error.message)
+			}
+		},
+		async downloadZip(response, defaultName) {
+			console.log(response)
+			const regExp = /filename="([^"]+){1}"/g
+			const fileName =
+				regExp.exec(response.headers['content-disposition'])[1] ||
+				defaultName
+			if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+				// IE variant
+				window.navigator.msSaveOrOpenBlob(
+					new Blob([response.data], {
+						type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+					}),
+					fileName
+				)
+			} else {
+				const url = window.URL.createObjectURL(
+					new Blob([response.data], {
+						type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+					})
+				)
+				const link = document.createElement('a')
+				link.href = url
+				link.setAttribute('download', fileName)
+				document.body.appendChild(link)
+				link.click()
 			}
 		},
 		async downloadFile() {
@@ -335,6 +387,31 @@ export default {
 					fileName,
 					this.selected.ext
 				)
+			}
+		},
+		async backupStore() {
+			const result = await this.$listeners.showConfirm(
+				'Backup store',
+				'Are you sure you want to backup the store? This backup will contain all useful files and settings.',
+				'info',
+				{
+					width: 500,
+					cancelText: 'No',
+					confirmText: 'Yes',
+				}
+			)
+
+			if (result) {
+				try {
+					const response = await ConfigApis.backupStore()
+
+					await this.downloadZip(
+						response,
+						`zwavejs2mqtt-backup_${Date.now()}.zip`
+					)
+				} catch (error) {
+					this.showSnackbar(error.message)
+				}
 			}
 		},
 		async restoreZip() {
