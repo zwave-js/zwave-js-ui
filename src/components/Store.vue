@@ -62,14 +62,7 @@
 						style="align-self: center"
 					></v-progress-circular>
 				</div>
-				<v-speed-dial
-					v-if="selectedFiles.length > 0"
-					bottom
-					fab
-					right
-					absolute
-					v-model="fab"
-				>
+				<v-speed-dial bottom fab right absolute v-model="fab">
 					<template v-slot:activator>
 						<v-btn
 							color="blue darken-2"
@@ -82,10 +75,27 @@
 							<v-icon v-else>settings</v-icon>
 						</v-btn>
 					</template>
-					<v-btn fab dark small color="green" @click="downloadZip">
+					<v-btn fab dark small color="green" @click="restoreZip">
+						<v-icon>restore</v-icon>
+					</v-btn>
+					<v-btn
+						v-if="selectedFiles.length > 0"
+						fab
+						dark
+						small
+						color="green"
+						@click="downloadZip"
+					>
 						<v-icon>file_download</v-icon>
 					</v-btn>
-					<v-btn fab dark small color="red" @click="deleteSelected">
+					<v-btn
+						v-if="selectedFiles.length > 0"
+						fab
+						dark
+						small
+						color="red"
+						@click="deleteSelected"
+					>
 						<v-icon>delete</v-icon>
 					</v-btn>
 				</v-speed-dial>
@@ -324,6 +334,39 @@ export default {
 					fileName,
 					this.selected.ext
 				)
+			}
+		},
+		async restoreZip() {
+			const restore = await this.$listeners.showConfirm(
+				'Restore zip',
+				'',
+				'info',
+				{
+					confirmText: 'Restore',
+					inputs: [
+						{
+							type: 'file',
+							label: 'Zip file',
+							required: true,
+							key: 'file',
+							accept: 'application/zip',
+						},
+					],
+				}
+			)
+
+			if (restore) {
+				try {
+					const formData = new FormData()
+					formData.append('restore', restore.file)
+					const res = await ConfigApis.restoreZip(formData)
+					if (!res.success)
+						throw new Error(res.message || 'Restore failed')
+					await this.refreshTree()
+					this.showSnackbar('Restore successful')
+				} catch (err) {
+					this.showSnackbar(err.message || err)
+				}
 			}
 		},
 		async writeFile(path, isDirectory = false) {

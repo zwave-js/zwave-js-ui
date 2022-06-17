@@ -105,6 +105,16 @@ export default {
 		)
 		return response.data
 	},
+	async restoreZip(formData) {
+		let response = await axios({
+			method: 'post',
+			url: '/store/restore',
+			data: formData,
+			headers: { 'Content-Type': 'multipart/form-data' },
+		})
+		response = responseHandler(response)
+		return response.data
+	},
 	async deleteFile(path) {
 		const response = await request.delete('/store', { params: { path } })
 		return response.data
