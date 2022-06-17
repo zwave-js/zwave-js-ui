@@ -19,6 +19,7 @@
 					item-key="path"
 					open-on-click
 					return-object
+					style="max-height: calc(100vh - 64px); overflow-y: auto"
 				>
 					<template v-slot:prepend="{ item, open }">
 						<v-icon color="#FFC107" v-if="!item.ext">
@@ -355,7 +356,7 @@ export default {
 				}
 			)
 
-			if (restore) {
+			if (restore.file) {
 				try {
 					const formData = new FormData()
 					formData.append('restore', restore.file)
