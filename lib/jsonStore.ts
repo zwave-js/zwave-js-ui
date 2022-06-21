@@ -9,6 +9,7 @@ import { Writable } from 'stream'
 import archiver from 'archiver'
 import { createWriteStream } from 'fs'
 import { mkdirp, existsSync } from 'fs-extra'
+import { Response } from 'express'
 
 const logger = module('Store')
 
@@ -38,14 +39,14 @@ export class StorageHelper {
 		return this._store
 	}
 
-	async backup(stream?: Writable): Promise<string> {
+	async backup(res?: Response): Promise<string> {
 		const backupFile = `zwavejs2mqtt-backup_${Date.now()}.zip`
 
 		await mkdirp(backupsDir)
 
-		if (!stream) {
-			stream = createWriteStream(utils.joinPath(backupsDir, backupFile))
-		}
+		const fileStream = createWriteStream(
+			utils.joinPath(backupsDir, backupFile)
+		)
 
 		return new Promise((resolve, reject) => {
 			const archive = archiver('zip')
@@ -59,14 +60,16 @@ export class StorageHelper {
 				resolve(backupFile)
 			})
 
-			if (typeof (stream as any).set === 'function') {
-				;(stream as any).set({
+			if (res) {
+				res.set({
 					'Content-Type': 'application/json',
 					'Content-Disposition': `attachment; filename="${backupFile}"`,
 				})
+
+				archive.pipe(res)
 			}
 
-			archive.pipe(stream)
+			archive.pipe(fileStream)
 
 			// backup zwavejs files too
 			archive.glob('*.jsonl', {

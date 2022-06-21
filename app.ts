@@ -1217,11 +1217,7 @@ app.get(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			const backupfile = await jsonStore.backup(res)
-
-			res.pipe(
-				fs.createWriteStream(utils.joinPath(backupsDir, backupfile))
-			)
+			await jsonStore.backup(res)
 		} catch (error) {
 			res.status(500).send({
 				error: error.message,
