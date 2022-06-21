@@ -32,7 +32,6 @@ import { Socket } from 'socket.io'
 import { promisify } from 'util'
 import { Driver, libVersion } from 'zwave-js'
 import {
-	backupsDir,
 	defaultPsw,
 	defaultUser,
 	sessionSecret,
@@ -929,7 +928,7 @@ app.post(
 					'Gateway is restarting, wait a moment before doing another request'
 				)
 			}
-			// TODO: validate settings using ajv
+			// TODO: validate settings using calss-validator
 			const settings = req.body
 			restarting = true
 			await jsonStore.put(store.settings, settings)
