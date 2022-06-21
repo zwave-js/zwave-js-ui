@@ -46,6 +46,7 @@ import {
 import renderIndex from './lib/renderIndex'
 import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
+import backupManager from './lib/BackupManager'
 
 declare module 'express' {
 	interface Request {
@@ -327,6 +328,8 @@ async function startGateway(settings: Settings) {
 	if (settings.zwave) {
 		zwave = new ZWaveClient(settings.zwave, socketManager.io)
 	}
+
+	backupManager.init()
 
 	gw = new Gateway(settings.gateway, zwave, mqtt)
 
@@ -938,6 +941,8 @@ app.post(
 			setupLogging(settings)
 			// restart clients and gateway
 			await startGateway(settings)
+			backupManager.init()
+
 			res.json({
 				success: true,
 				message: 'Configuration updated successfully',
