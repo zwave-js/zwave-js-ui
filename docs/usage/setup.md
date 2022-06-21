@@ -37,6 +37,12 @@ Properties of a **valueId configuration**:
 - **Enable Poll**: Enable poll of this value by using Z-Wave JS [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue)
 - **Poll interval**: Seconds between two poll requests
 
+## Backup
+
+- **Enabled**: Enable/Disable scheduled backups
+- **Cron**: Cron expression to schedule the backup
+- **Max backup files**: Number of backups to keep in storage
+
 ## Z-Wave
 
 - **Serial port**: The serial port where your controller is connected. If your port is not listed here just write the port path here and press enter.
