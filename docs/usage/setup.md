@@ -39,8 +39,17 @@ Properties of a **valueId configuration**:
 
 ## Backup
 
-- **Enabled**: Enable/Disable scheduled backups
+Store:
+
+- **Enabled**: Enable/Disable scheduled backups of store
 - **Cron**: Cron expression to schedule the backup
+- **Max backup files**: Number of backups to keep in storage
+
+NVM:
+
+- **Enabled**: Enable/Disable scheduled backups of NVM
+- **Cron**: Cron expression to schedule the backup
+- **On nodes changes**: Enable/Disable backup before node add/delete/replace
 - **Max backup files**: Number of backups to keep in storage
 
 ## Z-Wave

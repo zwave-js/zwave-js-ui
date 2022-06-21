@@ -247,11 +247,15 @@
 									hint="Enable/Disable backup"
 									persistent-hint
 									label="Backup"
-									v-model="newBackup.enabled"
+									v-model="newBackup.storeBackup"
 								></v-switch>
 							</v-col>
 
-							<v-col v-if="newBackup.enabled" cols="12" sm="6">
+							<v-col
+								v-if="newBackup.storeBackup"
+								cols="12"
+								sm="6"
+							>
 								<v-text-field
 									hint="Cron string. Default is '0 0 * * *' that means every day at midnight. Press on help button for cron helper editor"
 									persistent-hint
@@ -259,24 +263,28 @@
 									@click:append="
 										openUrl(
 											'https://crontab.guru/#' +
-												newBackup.cron
+												newBackup.storeCron
 													.split(' ')
 													.join('_')
 										)
 									"
 									label="Cron"
 									:rules="[rules.required, validCron]"
-									v-model="newBackup.cron"
+									v-model="newBackup.storeCron"
 								></v-text-field>
 								<strong>{{ humanCron }}</strong>
 							</v-col>
-							<v-col v-if="newBackup.enabled" cols="12" sm="6">
+							<v-col
+								v-if="newBackup.storeBackup"
+								cols="12"
+								sm="6"
+							>
 								<v-text-field
 									hint="How many backups to keep"
 									persistent-hint
 									:rules="[rules.required, rules.positive]"
 									label="Max backup files"
-									v-model.number="newBackup.keep"
+									v-model.number="newBackup.storeKeep"
 								></v-text-field>
 							</v-col>
 						</v-row>
@@ -1108,7 +1116,7 @@ export default {
 		},
 		humanCron() {
 			try {
-				return cronstrue.toString(this.newBackup.cron, {
+				return cronstrue.toString(this.newBackup.storeCron, {
 					use24HourTimeFormat: true,
 				})
 			} catch (error) {

@@ -480,6 +480,8 @@ export interface ZwaveClientEventCallbacks {
 	valueWritten: (valueId: Z2MValueId, node: Z2MNode, value: unknown) => void
 }
 
+export const NVM_BACKUP_PREFIX = 'NVM_'
+
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
 
 class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
@@ -2851,7 +2853,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._onBackupNVMProgress.bind(this)
 		)
 
-		const fileName = `NVM_${new Date().toISOString().split('T')[0]}`
+		const fileName = `${NVM_BACKUP_PREFIX}${
+			new Date().toISOString().split('T')[0]
+		}`
 
 		await writeFile(utils.joinPath(storeDir, fileName + '.bin'), data)
 

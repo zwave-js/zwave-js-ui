@@ -329,7 +329,7 @@ async function startGateway(settings: Settings) {
 		zwave = new ZWaveClient(settings.zwave, socketManager.io)
 	}
 
-	backupManager.init()
+	backupManager.init(zwave)
 
 	gw = new Gateway(settings.gateway, zwave, mqtt)
 
@@ -941,7 +941,7 @@ app.post(
 			setupLogging(settings)
 			// restart clients and gateway
 			await startGateway(settings)
-			backupManager.init()
+			backupManager.init(gw.zwave)
 
 			res.json({
 				success: true,

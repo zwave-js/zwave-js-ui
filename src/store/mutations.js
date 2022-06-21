@@ -32,9 +32,13 @@ export const state = {
     maxNodeEventsQueueSize: 100
   },
   backup: {
-    enabled: false,
-    cron: '0 0 * * *', // every day at midnight
-    keep: 7,
+    storeBackup: false,
+    storeCron: '0 0 * * *',
+    storeKeep: 7,
+    nvmBackup: false,
+    nvmBackupOnEvent: false,
+    nvmCron: '0 0 * * *',
+    nvmKeep: 7,
   },
   mqtt: {
     name: 'Zwavejs2Mqtt',

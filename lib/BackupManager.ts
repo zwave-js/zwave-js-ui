@@ -3,54 +3,122 @@ import { module } from '../lib/logger'
 import jsonStore from './jsonStore'
 import Cron from 'croner'
 import { readdir, unlink } from 'fs/promises'
-import { backupsDir } from '../config/app'
+import { backupsDir, storeDir } from '../config/app'
 import { joinPath } from './utils'
+import ZwaveClient, { NVM_BACKUP_PREFIX } from './ZwaveClient'
 
 export interface BackupSettings {
-	enabled: boolean
-	cron: string
-	keep: number
+	storeBackup: boolean
+	storeCron: string
+	storeKeep: number
+	nvmBackup: boolean
+	nvmBackupOnEvent: boolean
+	nvmCron: string
+	nvmKeep: number
 }
 
 const logger = module('Backup')
 
 class BackupManager {
 	private config: BackupSettings
-	private backupJob: Cron
+	private storeJob: Cron
+	private nvmJob: Cron
+	private zwaveClient: ZwaveClient
 
 	get default(): BackupSettings {
 		return {
-			enabled: false,
-			cron: '0 0 * * *',
-			keep: 7,
+			storeBackup: false,
+			storeCron: '0 0 * * *',
+			storeKeep: 7,
+			nvmBackup: false,
+			nvmBackupOnEvent: false,
+			nvmCron: '0 0 * * *',
+			nvmKeep: 7,
 		}
 	}
 
-	init() {
+	init(zwaveClient: ZwaveClient) {
 		this.config = {
 			...this.default,
 			...(jsonStore.get(store.settings).backup as BackupSettings),
 		}
 
-		if (!this.config.enabled) {
-			logger.warn('Backup is disabled')
-			return
+		this.zwaveClient = zwaveClient
+
+		if (this.storeJob) {
+			this.storeJob.stop()
 		}
 
-		if (this.backupJob) {
-			this.backupJob.stop()
+		if (!this.config.storeBackup) {
+			logger.warn('Store backup is disabled')
+		} else {
+			this.storeJob = new Cron(
+				this.config.storeCron,
+				this.backupStore.bind(this)
+			)
+
+			logger.info(
+				`Backup job started with cron: ${
+					this.config.storeCron
+				}. Next run: ${this.storeJob.next().toLocaleString()}`
+			)
 		}
 
-		this.backupJob = new Cron(this.config.cron, this.doBackup.bind(this))
+		if (this.nvmJob) {
+			this.nvmJob.stop()
+		}
 
-		logger.info(
-			`Backup job started with cron: ${
-				this.config.cron
-			}. Next run: ${this.backupJob.next().toLocaleString()}`
-		)
+		if (!this.config.nvmBackup) {
+			logger.warn('Nvm backup is disabled')
+		} else {
+			this.nvmJob = new Cron(
+				this.config.nvmCron,
+				this.backupNvm.bind(this)
+			)
+
+			logger.info(
+				`Backup job started with cron: ${
+					this.config.nvmCron
+				}. Next run: ${this.nvmJob.next().toLocaleString()}`
+			)
+		}
 	}
 
-	private async doBackup() {
+	private async backupNvm() {
+		logger.info('Backup started')
+
+		try {
+			const { fileName } = await this.zwaveClient.backupNVMRaw()
+
+			logger.info(`Backup created: ${fileName}`)
+
+			logger.info(`Next backup: ${this.nvmJob.next().toLocaleString()}`)
+
+			// cleanup backups dir, keep last backup files
+			const backups = (await readdir(storeDir)).filter((f) =>
+				f.startsWith(NVM_BACKUP_PREFIX)
+			)
+
+			// keep last `keep` backups
+			if (backups.length > this.config.nvmKeep) {
+				const toDelete = backups.slice(
+					0,
+					backups.length - this.config.nvmKeep
+				)
+				await Promise.all(
+					toDelete.map(async (file) =>
+						unlink(joinPath(storeDir, file))
+					)
+				)
+
+				logger.info(`Deleted ${toDelete.length} old NVM backups`)
+			}
+		} catch (err) {
+			logger.error('Backup failed', err)
+		}
+	}
+
+	private async backupStore() {
 		logger.info('Backup started')
 
 		try {
@@ -58,18 +126,16 @@ class BackupManager {
 
 			logger.info(`Backup created: ${backupFile}`)
 
-			logger.info(
-				`Next backup: ${this.backupJob.next().toLocaleString()}`
-			)
+			logger.info(`Next backup: ${this.storeJob.next().toLocaleString()}`)
 
 			// cleanup backups dir, keep last backup files
 			const backups = await readdir(backupsDir)
 
 			// keep last `keep` backups
-			if (backups.length > this.config.keep) {
+			if (backups.length > this.config.storeKeep) {
 				const toDelete = backups.slice(
 					0,
-					backups.length - this.config.keep
+					backups.length - this.config.storeKeep
 				)
 				await Promise.all(
 					toDelete.map(async (file) =>
@@ -77,7 +143,7 @@ class BackupManager {
 					)
 				)
 
-				logger.info(`Deleted ${toDelete.length} old backups`)
+				logger.info(`Deleted ${toDelete.length} old store backups`)
 			}
 		} catch (err) {
 			logger.error('Backup failed', err)
