@@ -112,6 +112,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		} else {
 			fileTransport = new DailyRotateFile({
 				filename: config.filePath,
+				auditFile: 'z2m-logs.audit.json',
 				datePattern: 'YYYY-MM-DD',
 				zippedArchive: true,
 				maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
