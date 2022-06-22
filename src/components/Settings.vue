@@ -299,7 +299,7 @@
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
 								<v-switch
-									hint="Enable/Disable backup before node add/remove/replace operations. DISCLAIMER: After an NVM backup controller will be soft-resetted, if you disabled soft-reset you should NOT use this feature"
+									hint="Enable/Disable backup before node add/remove/replace operations. DISCLAIMER: After an NVM backup controller will be soft-resetted, please make sure your stick can be soft-reset before enabling this feature"
 									persistent-hint
 									label="Backup on event"
 									v-model="newBackup.nvmBackupOnEvent"
