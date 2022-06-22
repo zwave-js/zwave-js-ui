@@ -2879,7 +2879,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._onBackupNVMProgress.bind(this)
 		)
 
-		const fileName = `${NVM_BACKUP_PREFIX}${event}${utils.fileDate()}`
+		const fileName = `${NVM_BACKUP_PREFIX}${utils.fileDate()}${event}`
 
 		await mkdirp(nvmBackupsDir)
 

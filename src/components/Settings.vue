@@ -294,7 +294,11 @@
 						</v-row>
 
 						<v-divider />
-						<v-subheader><strong>NVM</strong></v-subheader>
+						<v-subheader
+							><strong
+								>Controller (NVM) Backup</strong
+							></v-subheader
+						>
 
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
