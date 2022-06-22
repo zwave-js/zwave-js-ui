@@ -309,9 +309,25 @@
 												primary"
 											>all_inclusive</v-icon
 										>
-										<p class="mt-3 headline text-center">
+										<p
+											v-if="state === 'start'"
+											class="mt-3 headline text-center"
+										>
 											Inclusion is started. Please put
 											your device in INCLUSION MODE
+										</p>
+										<p
+											v-else-if="state === 'stop'"
+											class="mt-3 headline text-center"
+										>
+											Inclusion stopped. Checking for
+											changes...
+										</p>
+										<p
+											v-else-if="nvmProgress > 0"
+											class="mt-3 headline text-center"
+										>
+											Waiting for NVM Backup...
 										</p>
 									</v-col>
 
@@ -688,6 +704,7 @@ export default {
 			bindedSocketEvents: {},
 			stopped: false,
 			aborted: false,
+			nvmProgress: 0,
 		}
 	},
 	computed: {
@@ -737,6 +754,7 @@ export default {
 			}, 500)
 		},
 		controllerStatus(status) {
+			this.nvmProgress = 0
 			if (status && status.indexOf('clusion') > 0) {
 				// it could be inclusion is started by the driver, in that case get the current action
 				this.currentAction = /inclusion/i.test(status)
@@ -776,9 +794,10 @@ export default {
 			} else if (status.indexOf('Backup NVM progress') >= 0) {
 				const progress = status.match(/(\d+)%/)
 				if (progress && progress.length > 1) {
+					this.nvmProgress = parseInt(progress[1])
 					this.alert = {
 						type: 'info',
-						text: `Waiting for NVM backup: ${progress[1]}%`,
+						text: `NVM backup: ${this.nvmProgress}%`,
 					}
 				}
 			}
