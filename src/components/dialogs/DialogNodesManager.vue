@@ -773,6 +773,14 @@ export default {
 					}
 					this.state = 'stop'
 				}
+			} else if (status.indexOf('Backup NVM progress') >= 0) {
+				const progress = status.match(/(\d+)%/)
+				if (progress && progress.length > 1) {
+					this.alert = {
+						type: 'info',
+						text: `Waiting for NVM backup: ${progress[1]}%`,
+					}
+				}
 			}
 		},
 	},
@@ -1083,7 +1091,7 @@ export default {
 			let text = ''
 
 			if (this.backup.nvmBackupOnEvent && api.startsWith('start')) {
-				text = `Backuping NVM before ${this.currentAction}. Check progress in topbar...`
+				text = `Backuping NVM before ${this.currentAction}. Check progress status bar...`
 			} else {
 				text = `${this.currentAction} ${
 					api.startsWith('stop') ? 'stopping…' : 'starting…'
