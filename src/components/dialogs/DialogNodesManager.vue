@@ -691,7 +691,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['appInfo', 'zwave', 'nodes', 'mqtt']),
+		...mapGetters(['appInfo', 'zwave', 'nodes', 'mqtt', 'backup']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -1079,11 +1079,20 @@ export default {
 		},
 		sendAction(api, args) {
 			this.commandEndDate = new Date()
+
+			let text = ''
+
+			if (this.backup.nvmBackupOnEvent && api.startsWith('start')) {
+				text = `Backuping NVM before ${this.currentAction}. Check progress in topbar...`
+			} else {
+				text = `${this.currentAction} ${
+					api.startsWith('stop') ? 'stopping…' : 'starting…'
+				}`
+			}
+
 			this.alert = {
 				type: 'info',
-				text: `${this.currentAction} ${
-					api.startsWith('stop') ? 'stopping…' : 'starting…'
-				}`,
+				text,
 			}
 
 			this.$emit('apiRequest', api, args)
