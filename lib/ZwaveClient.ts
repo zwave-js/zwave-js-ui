@@ -517,6 +517,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _lockNeighborsRefresh: boolean
 
+	private nvmEvent: string
+
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
 
@@ -1803,6 +1805,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_replace_failed_node'
 				await backupManager.backupNvm()
 			}
 
@@ -1883,6 +1886,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): Promise<boolean> {
 		if (this.driverReady) {
 			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_start_inclusion'
 				await backupManager.backupNvm()
 			}
 
@@ -1980,6 +1984,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): Promise<boolean> {
 		if (this.driverReady) {
 			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_start_exclusion'
 				await backupManager.backupNvm()
 			}
 
@@ -2119,6 +2124,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async removeFailedNode(nodeId: number): Promise<void> {
 		if (this.driverReady) {
 			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_remove_failed_node'
 				await backupManager.backupNvm()
 			}
 
@@ -2865,11 +2871,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
+		// it's set when the backup has been triggerd by an event
+		const event = this.nvmEvent ? this.nvmEvent + '_' : ''
+		this.nvmEvent = null
+
 		const data = await this.driver.controller.backupNVMRaw(
 			this._onBackupNVMProgress.bind(this)
 		)
 
-		const fileName = `${NVM_BACKUP_PREFIX}${utils.fileDate()}`
+		const fileName = `${NVM_BACKUP_PREFIX}${event}${utils.fileDate()}`
 
 		await mkdirp(nvmBackupsDir)
 
