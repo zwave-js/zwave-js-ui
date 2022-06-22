@@ -2118,6 +2118,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async removeFailedNode(nodeId: number): Promise<void> {
 		if (this.driverReady) {
+			if (backupManager.backupOnEvent) {
+				await backupManager.backupNvm()
+			}
+
 			return this._driver.controller.removeFailedNode(nodeId)
 		}
 
