@@ -113,6 +113,23 @@
 					<v-tooltip left>
 						<template v-slot:activator="{ on, attrs }">
 							<v-btn
+								fab
+								dark
+								small
+								color="yellow"
+								@click="refreshTree"
+								v-bind="attrs"
+								v-on="on"
+							>
+								<v-icon>refresh</v-icon>
+							</v-btn>
+						</template>
+						<span>Refresh</span>
+					</v-tooltip>
+
+					<v-tooltip left>
+						<template v-slot:activator="{ on, attrs }">
+							<v-btn
 								v-if="selectedFiles.length > 0"
 								fab
 								dark
@@ -407,8 +424,10 @@ export default {
 
 					await this.downloadZip(
 						response,
-						`zwavejs2mqtt-backup_${Date.now()}.zip`
+						`store-backup_${Date.now()}.zip`
 					)
+
+					this.refreshTree()
 				} catch (error) {
 					this.showSnackbar(error.message)
 				}

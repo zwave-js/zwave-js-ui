@@ -1,6 +1,6 @@
 // eslint-disable-next-line one-var
 import { readFile, writeFile } from 'jsonfile'
-import { backupsDir, storeDir } from '../config/app'
+import { storeBackupsDir, storeDir } from '../config/app'
 import { StoreFile, StoreKeys } from '../config/store'
 import { module } from './logger'
 import * as utils from './utils'
@@ -11,6 +11,8 @@ import { mkdirp, existsSync } from 'fs-extra'
 import { Response } from 'express'
 
 const logger = module('Store')
+
+export const STORE_BACKUP_PREFIX = 'store-backup_'
 
 /**
 Constructor
@@ -39,12 +41,12 @@ export class StorageHelper {
 	}
 
 	async backup(res?: Response): Promise<string> {
-		const backupFile = `zwavejs2mqtt-backup_${Date.now()}.zip`
+		const backupFile = `${STORE_BACKUP_PREFIX}${utils.fileDate()}.zip`
 
-		await mkdirp(backupsDir)
+		await mkdirp(storeBackupsDir)
 
 		const fileStream = createWriteStream(
-			utils.joinPath(backupsDir, backupFile)
+			utils.joinPath(storeBackupsDir, backupFile)
 		)
 
 		return new Promise((resolve, reject) => {

@@ -59,6 +59,11 @@ export function applyMixin(
 	}
 }
 
+export function fileDate(date?: Date) {
+	date = date || new Date()
+	return date.toISOString().slice(-24).replace(/\D/g, '').slice(0, 14)
+}
+
 /**
  *  Get the base root path to application directory. When we are in a `pkg` environment
  *  the path of the snapshot is not writable

@@ -1,11 +1,13 @@
 import store from '../config/store'
 import { module } from '../lib/logger'
-import jsonStore from './jsonStore'
+import jsonStore, { STORE_BACKUP_PREFIX } from './jsonStore'
 import Cron from 'croner'
 import { readdir, unlink } from 'fs/promises'
-import { backupsDir, storeDir } from '../config/app'
+import { nvmBackupsDir, storeBackupsDir } from '../config/app'
 import { joinPath } from './utils'
-import ZwaveClient, { NVM_BACKUP_PREFIX } from './ZwaveClient'
+import type ZwaveClient from './ZwaveClient'
+
+export const NVM_BACKUP_PREFIX = 'NVM_'
 
 export interface BackupSettings {
 	storeBackup: boolean
@@ -35,6 +37,10 @@ class BackupManager {
 			nvmCron: '0 0 * * *',
 			nvmKeep: 7,
 		}
+	}
+
+	get backupOnEvent() {
+		return this.config.nvmBackupOnEvent
 	}
 
 	init(zwaveClient: ZwaveClient) {
@@ -84,18 +90,21 @@ class BackupManager {
 		}
 	}
 
-	private async backupNvm() {
-		logger.info('Backup started')
+	async backupNvm() {
+		logger.info('Backup NVM started')
 
 		try {
 			const { fileName } = await this.zwaveClient.backupNVMRaw()
 
-			logger.info(`Backup created: ${fileName}`)
+			logger.info(`Backup NVM created: ${fileName}`)
 
-			logger.info(`Next backup: ${this.nvmJob.next().toLocaleString()}`)
-
+			if (this.nvmJob) {
+				logger.info(
+					`Next NVM backup: ${this.nvmJob.next().toLocaleString()}`
+				)
+			}
 			// cleanup backups dir, keep last backup files
-			const backups = (await readdir(storeDir)).filter((f) =>
+			const backups = (await readdir(nvmBackupsDir)).filter((f) =>
 				f.startsWith(NVM_BACKUP_PREFIX)
 			)
 
@@ -107,29 +116,36 @@ class BackupManager {
 				)
 				await Promise.all(
 					toDelete.map(async (file) =>
-						unlink(joinPath(storeDir, file))
+						unlink(joinPath(nvmBackupsDir, file))
 					)
 				)
 
 				logger.info(`Deleted ${toDelete.length} old NVM backups`)
 			}
 		} catch (err) {
-			logger.error('Backup failed', err)
+			logger.error('Backup NVM failed', err)
 		}
 	}
 
-	private async backupStore() {
-		logger.info('Backup started')
+	async backupStore() {
+		logger.info('Backup STORE started')
 
 		try {
 			const backupFile = await jsonStore.backup()
 
-			logger.info(`Backup created: ${backupFile}`)
+			logger.info(`Backup STORE created: ${backupFile}`)
 
-			logger.info(`Next backup: ${this.storeJob.next().toLocaleString()}`)
-
+			if (this.storeJob) {
+				logger.info(
+					`Next STORE backup: ${this.storeJob
+						.next()
+						.toLocaleString()}`
+				)
+			}
 			// cleanup backups dir, keep last backup files
-			const backups = await readdir(backupsDir)
+			const backups = (await readdir(storeBackupsDir)).filter((f) =>
+				f.startsWith(STORE_BACKUP_PREFIX)
+			)
 
 			// keep last `keep` backups
 			if (backups.length > this.config.storeKeep) {
@@ -139,14 +155,14 @@ class BackupManager {
 				)
 				await Promise.all(
 					toDelete.map(async (file) =>
-						unlink(joinPath(backupsDir, file))
+						unlink(joinPath(storeBackupsDir, file))
 					)
 				)
 
-				logger.info(`Deleted ${toDelete.length} old store backups`)
+				logger.info(`Deleted ${toDelete.length} old STORE backups`)
 			}
 		} catch (err) {
-			logger.error('Backup failed', err)
+			logger.error('Backup STORE failed', err)
 		}
 	}
 }

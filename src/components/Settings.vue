@@ -241,6 +241,8 @@
 						</v-row>
 					</v-expansion-panel-header>
 					<v-expansion-panel-content>
+						<v-subheader><strong>STORE</strong></v-subheader>
+
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
 								<v-switch
@@ -272,7 +274,9 @@
 									:rules="[rules.required, validCron]"
 									v-model="newBackup.storeCron"
 								></v-text-field>
-								<strong>{{ humanCron }}</strong>
+								<strong>{{
+									rules.validCron(newBackup.storeCron)
+								}}</strong>
 							</v-col>
 							<v-col
 								v-if="newBackup.storeBackup"
@@ -285,6 +289,60 @@
 									:rules="[rules.required, rules.positive]"
 									label="Max backup files"
 									v-model.number="newBackup.storeKeep"
+								></v-text-field>
+							</v-col>
+						</v-row>
+
+						<v-divider />
+						<v-subheader><strong>NVM</strong></v-subheader>
+
+						<v-row class="mb-5">
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable/Disable backup before node add/remove/replace operations"
+									persistent-hint
+									label="Backup on event"
+									v-model="newBackup.nvmBackupOnEvent"
+								></v-switch>
+							</v-col>
+
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable/Disable backup"
+									persistent-hint
+									label="Backup"
+									v-model="newBackup.nvmBackup"
+								></v-switch>
+							</v-col>
+
+							<v-col v-if="newBackup.nvmBackup" cols="12" sm="6">
+								<v-text-field
+									hint="Cron string. Default is '0 0 * * *' that means every day at midnight. Press on help button for cron helper editor"
+									persistent-hint
+									append-icon="help"
+									@click:append="
+										openUrl(
+											'https://crontab.guru/#' +
+												newBackup.nvmCron
+													.split(' ')
+													.join('_')
+										)
+									"
+									label="Cron"
+									:rules="[rules.required, validCron]"
+									v-model="newBackup.nvmCron"
+								></v-text-field>
+								<strong>{{
+									rules.validCron(newBackup.nvmCron)
+								}}</strong>
+							</v-col>
+							<v-col v-if="newBackup.nvmBackup" cols="12" sm="6">
+								<v-text-field
+									hint="How many backups to keep"
+									persistent-hint
+									:rules="[rules.required, rules.positive]"
+									label="Max backup files"
+									v-model.number="newBackup.nvmKeep"
 								></v-text-field>
 							</v-col>
 						</v-row>
@@ -1114,15 +1172,6 @@ export default {
 				this.$vuetify.theme.dark = value
 			},
 		},
-		humanCron() {
-			try {
-				return cronstrue.toString(this.newBackup.storeCron, {
-					use24HourTimeFormat: true,
-				})
-			} catch (error) {
-				return 'Not valid'
-			}
-		},
 		internalNavTabs: {
 			get() {
 				return this.navTabs
@@ -1326,15 +1375,24 @@ export default {
 						'Key not valid. Must contain only hex chars'
 					)
 				},
+				validCron: (v) => {
+					let res
+					try {
+						res = cronstrue.toString(v, {
+							use24HourTimeFormat: true,
+						})
+					} catch (err) {
+						//ignore
+					}
+
+					return res || 'Not a valid cron string'
+				},
 			},
 		}
 	},
 	methods: {
 		...mapMutations(['showSnackbar']),
 		...mapActions(['setDarkMode', 'setNavTabs']),
-		validCron() {
-			return this.humanCron !== 'Not valid' || 'Cron string not valid'
-		},
 		differentKeys() {
 			const values = Object.values(this.newZwave.securityKeys)
 

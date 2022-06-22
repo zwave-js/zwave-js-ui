@@ -8,6 +8,8 @@ export const title: string = 'ZWave To MQTT'
 export const storeDir: string = process.env.STORE_DIR || joinPath(true, 'store')
 export const tmpDir: string = joinPath(storeDir, '.tmp')
 export const backupsDir: string = process.env.BACKUPS_DIR || joinPath(storeDir, 'backups')
+export const nvmBackupsDir: string = joinPath(backupsDir, 'nvm')
+export const storeBackupsDir: string = joinPath(backupsDir, 'store')
 
 
 export const defaultUser: string =  'admin'
