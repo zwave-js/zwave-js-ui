@@ -51,7 +51,7 @@ export const state = {
     authEnabled: false,
     payloadType: 0,
     nodeNames: true,
-    hassDiscovery: true,
+    hassDiscovery: false,
     discoveryPrefix: 'homeassistant',
     logEnabled: false,
     logLevel: 'debug',
