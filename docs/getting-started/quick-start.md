@@ -12,6 +12,8 @@ If you are using Home Assistant, the UI can be added to Lovelace so that it can 
 
 The easiest way to run ZWavejs2Mqtt is by using docker:
 
+[x_serial-device_question.txt](https://github.com/zwave-js/zwavejs2mqtt/files/8965706/x_serial-device_question.txt)
+
 ```bash
 # Using volumes as persistence
 docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_stick_reference_here:/dev/zwave \
