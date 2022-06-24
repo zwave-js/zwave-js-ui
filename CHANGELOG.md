@@ -1,3 +1,20 @@
+## [6.12.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.12.0...v6.12.1) (2022-06-24)
+
+
+### Bug Fixes
+
+* log rotation ([#2476](https://github.com/zwave-js/zwavejs2mqtt/issues/2476)) ([a24f1b5](https://github.com/zwave-js/zwavejs2mqtt/commit/a24f1b5e7c1f46390d5a20fd1f810dcd740d3a8e))
+* show commit sha whitout using git ([#2458](https://github.com/zwave-js/zwavejs2mqtt/issues/2458)) ([10fb994](https://github.com/zwave-js/zwavejs2mqtt/commit/10fb994aca8bad73e45f29922497388da8a35d1b))
+* **ui:** disable mqtt hass discovery by default ([17faaad](https://github.com/zwave-js/zwavejs2mqtt/commit/17faaad03d26d42d1032dfc410d9900bbc08778e))
+
+
+### Features
+
+* bump @zwave-js/server@1.18.0 ([#2474](https://github.com/zwave-js/zwavejs2mqtt/issues/2474)) ([1e14238](https://github.com/zwave-js/zwavejs2mqtt/commit/1e14238437c00d83c76705a77b2d8629af06fef0))
+* bump @zwave-js/server@1.19.0 ([#2479](https://github.com/zwave-js/zwavejs2mqtt/issues/2479)) ([2948abc](https://github.com/zwave-js/zwavejs2mqtt/commit/2948abccedda3a3d1de64d2df8228b5fb171e686))
+* bump @zwave-js/server@1.20.0 ([#2481](https://github.com/zwave-js/zwavejs2mqtt/issues/2481)) ([1956772](https://github.com/zwave-js/zwavejs2mqtt/commit/19567722d94f46a0cf339798340abafd08dc1696))
+* bump zwave-js@9.4.0 ([#2460](https://github.com/zwave-js/zwavejs2mqtt/issues/2460)) ([64e4212](https://github.com/zwave-js/zwavejs2mqtt/commit/64e4212e159b86fe65b347c39c0e0f483082f7a7))
+
 # [6.12.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.11.0...v6.12.0) (2022-06-07)
 
 
