@@ -82,9 +82,6 @@
 						@click:clear="apiRequest('updateControllerNodeProps')"
 						@change="updateRFRegion"
 						v-model="node.RFRegion"
-						:min="-12.8"
-						:max="12.7"
-						:step="0.1"
 					></v-select>
 				</v-col>
 			</v-row>
