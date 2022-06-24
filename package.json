@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "6.12.0",
+  "version": "6.12.1",
   "bin": "server/bin/www.js",
   "description": "Zwavejs2Mqtt Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
@@ -124,7 +124,7 @@
     "@babel/polyfill": "^7.12.1",
     "@jamescoyle/vue-icon": "^0.1.2",
     "@mdi/js": "^6.2.95",
-    "@zwave-js/server": "^1.18.0",
+    "@zwave-js/server": "^1.20.0",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-0",
     "ansi_up": "^5.0.1",
     "app-root-path": "^3.0.0",
@@ -266,5 +266,5 @@
     "last 2 versions",
     "not ie <= 8"
   ],
-  "packageManager": "yarn@3.1.1"
+  "packageManager": "yarn@3.2.1"
 }

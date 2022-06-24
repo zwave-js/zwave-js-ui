@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 5
+  version: 6
   cacheKey: 8
 
 "@alcalzone/jsonl-db@npm:^2.5.2":
@@ -3159,9 +3159,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/server@npm:^1.18.0":
-  version: 1.18.0
-  resolution: "@zwave-js/server@npm:1.18.0"
+"@zwave-js/server@npm:^1.20.0":
+  version: 1.20.0
+  resolution: "@zwave-js/server@npm:1.20.0"
   dependencies:
     "@homebridge/ciao": ^1.1.3
     minimist: ^1.2.5
@@ -3171,7 +3171,7 @@ __metadata:
   bin:
     zwave-client: dist/bin/client.js
     zwave-server: dist/bin/server.js
-  checksum: 36e1b70cbee47a26201c6e6fc0b6d3c5f3418cd3aaf3015bd3115769ac00abb3812a41a38a1b4f95bd823f8326be617e325cd5692eb72c48085d47e26e07607a
+  checksum: 05f2eb9ba1ac457ee5ab9cf005106c9c8c60ab140219b9350bd5ae711c4599ef86b6ebe636fb29c5216e2042988eef0d4e362db478d8dcab86aa4c3297c0e217
   languageName: node
   linkType: hard
 
@@ -4190,17 +4190,16 @@ __metadata:
   linkType: hard
 
 "browserslist@npm:^4.14.5, browserslist@npm:^4.20.2, browserslist@npm:^4.20.3, browserslist@npm:^4.20.4":
-  version: 4.20.4
-  resolution: "browserslist@npm:4.20.4"
+  version: 4.21.0
+  resolution: "browserslist@npm:4.21.0"
   dependencies:
-    caniuse-lite: ^1.0.30001349
-    electron-to-chromium: ^1.4.147
-    escalade: ^3.1.1
+    caniuse-lite: ^1.0.30001358
+    electron-to-chromium: ^1.4.164
     node-releases: ^2.0.5
-    picocolors: ^1.0.0
+    update-browserslist-db: ^1.0.0
   bin:
     browserslist: cli.js
-  checksum: 0e56c42da765524e5c31bc9a1f08afaa8d5dba085071137cf21e56dc78d0cf0283764143df4c7d1c0cd18c3187fc9494e1d93fa0255004f0be493251a28635f9
+  checksum: dfad21090d0a4745f55c4c126172bc4d5743a500440791c731773f215a16f201a0b8a114c040fa5788ce2d1a13076601f751e54ee6c5f9de59f0cee3ce9875e3
   languageName: node
   linkType: hard
 
@@ -4399,10 +4398,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"caniuse-lite@npm:^1.0.30001335, caniuse-lite@npm:^1.0.30001349":
-  version: 1.0.30001358
-  resolution: "caniuse-lite@npm:1.0.30001358"
-  checksum: dd8d8e6b1f5e24b97d38bb110c35b96f701f8a303e7066e9d0dc4d0ae99d741e89d56688d4e811e260c5fe573835f2bedd49a6f35f3f43e9fa7e5d154b1fad0e
+"caniuse-lite@npm:^1.0.30001335, caniuse-lite@npm:^1.0.30001358":
+  version: 1.0.30001359
+  resolution: "caniuse-lite@npm:1.0.30001359"
+  checksum: e15dbf4ea445367e998ad525c54620275ae382446d0bc289d14bf014a159074a2207881b46406b011a72676686f8a734457ea8e8d4856dc3f700c3391e89b43e
   languageName: node
   linkType: hard
 
@@ -6686,10 +6685,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"electron-to-chromium@npm:^1.4.147":
-  version: 1.4.164
-  resolution: "electron-to-chromium@npm:1.4.164"
-  checksum: c26b674ddf7703c41d9bfe301aff62706ed6e33b02ddc7330cd3d6b272a534636f6117e7bce0f6a090f773e9157169f99aaa564adfeadc6cff3c98f2fcbc003f
+"electron-to-chromium@npm:^1.4.164":
+  version: 1.4.169
+  resolution: "electron-to-chromium@npm:1.4.169"
+  checksum: 745bb5429082591f54d2f6a22e25bd5e977c60c9f5e636b64dda38120f5750425748a477376ee599236f553ee184247d1ae13e17805b3e01965490450bb543da
   languageName: node
   linkType: hard
 
@@ -8703,9 +8702,9 @@ __metadata:
   linkType: hard
 
 "http-parser-js@npm:>=0.5.1":
-  version: 0.5.6
-  resolution: "http-parser-js@npm:0.5.6"
-  checksum: 8a92f6782542211c77936104ea1eca3c86a95420eb286b100f6421630f29d8f94fd4cc7a245df8e078791d86cd9a237091094440ffb0cd1b44a3f85bfbf539fa
+  version: 0.5.7
+  resolution: "http-parser-js@npm:0.5.7"
+  checksum: d166f575dd7580f61324e4797d74960b30fdc09cd171782bb6c038636e7cf930f75f461035e15b24de299ef5527d8184dd238ad8488ae359c72e9db0c68d80ab
   languageName: node
   linkType: hard
 
@@ -10293,15 +10292,15 @@ __metadata:
   linkType: hard
 
 "logform@npm:^2.3.2, logform@npm:^2.4.0":
-  version: 2.4.0
-  resolution: "logform@npm:2.4.0"
+  version: 2.4.1
+  resolution: "logform@npm:2.4.1"
   dependencies:
     "@colors/colors": 1.5.0
     fecha: ^4.2.0
     ms: ^2.1.1
     safe-stable-stringify: ^2.3.1
     triple-beam: ^1.3.0
-  checksum: e75ccccc1a2664612ade3c7f3d3185787198b4028e54ea2795df87901f28b3881eddd8d7e73ce03f4420dca638a1cbe6d42254179685ab2075e4ac38a71ffb6c
+  checksum: 94b859926dfe6ee99889aaf1c28dcc7de2ed9f55524c9161196e1c889f7317dce84f24a23280e496d5e543e65ebc134c99c96be2008a3108307cc7a2a62781f4
   languageName: node
   linkType: hard
 
@@ -10380,9 +10379,9 @@ __metadata:
   linkType: hard
 
 "lru-cache@npm:^7.7.1":
-  version: 7.10.1
-  resolution: "lru-cache@npm:7.10.1"
-  checksum: e8b190d71ed0fcd7b29c71a3e9b01f851c92d1ef8865ff06b5581ca991db1e5e006920ed4da8b56da1910664ed51abfd76c46fb55e82ac252ff6c970ff910d72
+  version: 7.10.2
+  resolution: "lru-cache@npm:7.10.2"
+  checksum: b8f98064c981ce98e2a3b82903726dd28d842f54b7f53e1d6029c6836546243d4157b8495a405c062209715c612050150bdf30b5fa8200d5a3559fb0fd4072c1
   languageName: node
   linkType: hard
 
@@ -13379,15 +13378,15 @@ __metadata:
   linkType: hard
 
 "sass@npm:^1.42.1":
-  version: 1.52.3
-  resolution: "sass@npm:1.52.3"
+  version: 1.53.0
+  resolution: "sass@npm:1.53.0"
   dependencies:
     chokidar: ">=3.0.0 <4.0.0"
     immutable: ^4.0.0
     source-map-js: ">=0.6.2 <2.0.0"
   bin:
     sass: sass.js
-  checksum: 175a073c0e7b67d1baff6d3969431228002ece681886cebc2a354c241134ff120fda5c12a0465989966dacfb1ca518d85507304f4d4cd03d4a91d71dbc77d978
+  checksum: 4bcb0617d6a4d1f2c089a1cb5c32f65a9ee874b23559f2742fab07cf8478fb74ad20c0730cf9f93915d7dbfc258901f89970674228c3ac91c3883a0a62a0ddab
   languageName: node
   linkType: hard
 
@@ -14872,11 +14871,11 @@ __metadata:
 
 "typescript@patch:typescript@^4.4.3#~builtin<compat/typescript>":
   version: 4.7.4
-  resolution: "typescript@patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=493e53"
+  resolution: "typescript@patch:typescript@npm%3A4.7.4#~builtin<compat/typescript>::version=4.7.4&hash=7ad353"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 96d3030cb01143570567cb4f3a616b10df65f658f0e74e853e77a089a6a954e35c800be7db8b9bfe9a1ae05d9c2897e281359f65e4caa1caf266368e1c4febd3
+  checksum: 9096d8f6c16cb80ef3bf96fcbbd055bf1c4a43bd14f3b7be45a9fbe7ada46ec977f604d5feed3263b4f2aa7d4c7477ce5f9cd87de0d6feedec69a983f3a4f93e
   languageName: node
   linkType: hard
 
@@ -15023,6 +15022,20 @@ __metadata:
   version: 1.0.0
   resolution: "unpipe@npm:1.0.0"
   checksum: 4fa18d8d8d977c55cb09715385c203197105e10a6d220087ec819f50cb68870f02942244f1017565484237f1f8c5d3cd413631b1ae104d3096f24fdfde1b4aa2
+  languageName: node
+  linkType: hard
+
+"update-browserslist-db@npm:^1.0.0":
+  version: 1.0.4
+  resolution: "update-browserslist-db@npm:1.0.4"
+  dependencies:
+    escalade: ^3.1.1
+    picocolors: ^1.0.0
+  peerDependencies:
+    browserslist: ">= 4.21.0"
+  bin:
+    browserslist-lint: cli.js
+  checksum: 7c7da28d0fc733b17e01c8fa9385ab909eadce64b8ea644e9603867dc368c2e2a6611af8247e72612b23f9e7cb87ac7c7585a05ff94e1759e9d646cbe9bf49a7
   languageName: node
   linkType: hard
 
@@ -15695,8 +15708,8 @@ __metadata:
   linkType: hard
 
 "winston@npm:^3.3.3, winston@npm:^3.7.2":
-  version: 3.7.2
-  resolution: "winston@npm:3.7.2"
+  version: 3.8.0
+  resolution: "winston@npm:3.8.0"
   dependencies:
     "@dabh/diagnostics": ^2.0.2
     async: ^3.2.3
@@ -15708,7 +15721,7 @@ __metadata:
     stack-trace: 0.0.x
     triple-beam: ^1.3.0
     winston-transport: ^4.5.0
-  checksum: f1f1a860d2fa228b50880b20aaa6cc121085907791fe0d814ff9c062640f6b65da321726322094e7667eb63088b3bb67e7b4e219d998f29efcc6f583185a1cd3
+  checksum: a091fe4959c04cdab5be823b702c5231a9e5eaec2a892e865dae8cb296e5ab0ac4bba004714b3e48e1efc5679355bbbad2f9fc4db1a23d8ebb22f9025831be2d
   languageName: node
   linkType: hard
 
@@ -16128,7 +16141,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^4.33.0
     "@typescript-eslint/parser": ^4.33.0
     "@vue/compiler-sfc": ^3.2.33
-    "@zwave-js/server": ^1.18.0
+    "@zwave-js/server": ^1.20.0
     "@zwave-js/winston-daily-rotate-file": ^4.5.6-0
     ansi_up: ^5.0.1
     app-root-path: ^3.0.0
