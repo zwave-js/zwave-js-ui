@@ -42,6 +42,7 @@ import {
 	QRProvisioningInformation,
 	RefreshInfoOptions,
 	ReplaceNodeOptions,
+	RFRegion,
 	RouteHealthCheckSummary,
 	SetValueAPIOptions,
 	SmartStartProvisioningEntry,
@@ -127,6 +128,9 @@ const allowedApis = validateMethods([
 	'refreshValues',
 	'refreshCCValues',
 	'pollValue',
+	'setPowerlevel',
+	'setRFRegion',
+	'updateControllerNodeProps',
 	'startInclusion',
 	'startExclusion',
 	'stopInclusion',
@@ -372,6 +376,9 @@ export type Z2MNode = {
 	supportsSecurity?: boolean
 	isListening?: boolean
 	isControllerNode?: boolean
+	powerlevel?: number
+	measured0dBm?: number
+	RFRegion?: RFRegion
 	isFrequentListening?: FLiRS
 	isRouting?: boolean
 	keepAwake?: boolean
@@ -1860,6 +1867,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.isReplacing = false
 			throw error
 		}
+	}
+
+	async setPowerlevel(
+		powerlevel: number,
+		measured0dBm: number
+	): Promise<boolean> {
+		if (this.driverReady) {
+			const result = this._driver.controller.setPowerlevel(
+				powerlevel,
+				measured0dBm
+			)
+
+			await this.updateControllerNodeProps()
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	async setRFRegion(region: RFRegion): Promise<boolean> {
+		if (this.driverReady) {
+			const result = this._driver.controller.setRFRegion(region)
+			await this.updateControllerNodeProps()
+			return result
+		}
+
+		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -3775,6 +3810,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.supportsSecurity = zwaveNode.supportsSecurity
 		node.supportsBeaming = zwaveNode.supportsBeaming
 		node.isControllerNode = zwaveNode.isControllerNode
+		if (node.isControllerNode) {
+			this.updateControllerNodeProps(node).catch((error) => {
+				logger.error(
+					`Failed to get controller node ${node.id} properties: ${error.message}`
+				)
+			})
+		}
 		node.isListening = zwaveNode.isListening
 		node.isFrequentListening = zwaveNode.isFrequentListening
 		node.isRouting = zwaveNode.isRouting
@@ -3814,6 +3856,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		node.deviceId = this._getDeviceID(node)
+	}
+
+	async updateControllerNodeProps(node?: Z2MNode) {
+		node = node || this.nodes.get(this._driver.controller.ownNodeId)
+
+		try {
+			const { powerlevel, measured0dBm } =
+				await this._driver.controller.getPowerlevel()
+			node.powerlevel = powerlevel
+			node.measured0dBm = measured0dBm
+
+			node.RFRegion = await this._driver.controller.getRFRegion()
+		} catch (error) {
+			this.emitNodeStatus(node, {
+				powerlevel: node.powerlevel,
+				measured0dBm: node.measured0dBm,
+				RFRegion: node.RFRegion,
+			})
+
+			throw error
+		}
 	}
 
 	/**

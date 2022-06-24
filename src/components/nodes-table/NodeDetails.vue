@@ -30,6 +30,66 @@
 			</v-col>
 		</v-row>
 
+		<template v-if="node.isControllerNode">
+			<v-subheader class="title" style="padding: 0"
+				>Controller Options</v-subheader
+			>
+
+			<v-row>
+				<v-col cols="12" sm="6" style="max-width: 300px">
+					<v-text-field
+						label="Normal Power Level"
+						append-outer-icon="send"
+						v-model.number="node.powerlevel"
+						:min="-12.8"
+						:max="12.7"
+						:step="0.1"
+						suffix="dBm"
+						type="number"
+						clearable
+						clear-icon="refresh"
+						@click:clear="apiRequest('updateControllerNodeProps')"
+						@click:append-outer="updatePowerLevel"
+					></v-text-field>
+				</v-col>
+				<v-col cols="12" sm="6" style="max-width: 300px">
+					<v-text-field
+						label="Measured output power at 0 dBm"
+						append-outer-icon="send"
+						v-model.number="node.measured0dBm"
+						:min="-12.8"
+						:max="12.7"
+						:step="0.1"
+						suffix="dBm"
+						type="number"
+						clearable
+						clear-icon="refresh"
+						@click:clear="apiRequest('updateControllerNodeProps')"
+						@click:append-outer="updatePowerLevel"
+					></v-text-field>
+				</v-col>
+				<v-col
+					v-if="node.RFRegion !== undefined"
+					cols="12"
+					sm="6"
+					style="max-width: 300px"
+				>
+					<v-select
+						label="RF Region"
+						:items="rfRegions"
+						clearable
+						clear-icon="refresh"
+						@click:clear="apiRequest('updateControllerNodeProps')"
+						@change="updateRFRegion"
+						v-model="node.RFRegion"
+						:min="-12.8"
+						:max="12.7"
+						:step="0.1"
+					></v-select>
+				</v-col>
+			</v-row>
+		</template>
+
 		<v-subheader class="title" style="padding: 0">Send Options</v-subheader>
 		<v-row class="mt-0">
 			<v-col cols="12" sm="6" style="max-width: 300px; padding-top: 0">
@@ -192,6 +252,7 @@ import ValueID from '@/components/ValueId'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import { mapMutations, mapGetters } from 'vuex'
 import { validTopic } from '@/lib/utils'
+import { RFRegion } from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -214,6 +275,12 @@ export default {
 				valueSize: 1,
 				parameter: 1,
 			},
+			rfRegions: Object.keys(RFRegion)
+				.filter((k) => isNaN(k))
+				.map((key) => ({
+					text: key,
+					value: RFRegion[key],
+				})),
 		}
 	},
 	computed: {
@@ -315,6 +382,18 @@ export default {
 					}
 					this.socket.emit(socketActions.mqtt, data)
 				}
+			}
+		},
+		updatePowerLevel() {
+			if (this.node) {
+				const args = [this.node.powerlevel, this.node.measured0dBm]
+				this.apiRequest('setPowerLevel', args)
+			}
+		},
+		updateRFRegion() {
+			if (this.node) {
+				const args = [this.node.RFRegion]
+				this.apiRequest('setRFRegion', args)
 			}
 		},
 		updateLoc() {
