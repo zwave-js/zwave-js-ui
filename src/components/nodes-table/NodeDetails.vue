@@ -71,7 +71,6 @@
 				<v-col
 					v-if="node.RFRegion !== undefined"
 					cols="12"
-					sm="6"
 					style="max-width: 300px"
 				>
 					<v-select
@@ -80,11 +79,43 @@
 						clearable
 						clear-icon="refresh"
 						@click:clear="apiRequest('updateControllerNodeProps')"
-						@change="updateRFRegion"
+						append-outer-icon="send"
+						@click:append-outer="updateRFRegion"
 						v-model="node.RFRegion"
 					></v-select>
 				</v-col>
 			</v-row>
+			<v-col style="max-width: 700px" dense>
+				<v-alert text type="warning">
+					<strong
+						>DO NOT CHANGE THIS VALUES UNLESS YOU KNOW WHAT YOU ARE
+						DOING</strong
+					>
+					<small
+						>Increasing the TX power (normal power level) may be
+						<b>illegal</b>, depending on where you are
+						located</small
+					>
+
+					<small
+						>Increasing the TX power will only make the nodes "hear"
+						the controller better, but not vice versa</small
+					>
+				</v-alert>
+
+				<v-alert
+					class="pb-0"
+					text
+					style="white-space: break-spaces"
+					type="info"
+				>
+					<small
+						>{{
+							`Please consult the manufacturer for the default values, as these can vary between different sticks. The defaults for most 700 series sticks are:\n- TX Power: 0.0 dBm\n- Measured output power at 0 dBm: +3.3 dBm`
+						}}
+					</small>
+				</v-alert>
+			</v-col>
 		</template>
 
 		<v-subheader class="title" style="padding: 0">Send Options</v-subheader>
@@ -384,7 +415,7 @@ export default {
 		updatePowerLevel() {
 			if (this.node) {
 				const args = [this.node.powerlevel, this.node.measured0dBm]
-				this.apiRequest('setPowerLevel', args)
+				this.apiRequest('setPowerlevel', args)
 			}
 		},
 		updateRFRegion() {

@@ -80,6 +80,7 @@ import { GatewayValue } from './Gateway'
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { socketEvents } from './SocketEvents'
 import { ZWaveNodeEventCallbacks } from 'zwave-js/build/lib/node/_Types'
+import { SerialAPISetupCommand } from 'zwave-js/build/lib/serialapi/capability/SerialAPISetupMessages'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -1874,7 +1875,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		measured0dBm: number
 	): Promise<boolean> {
 		if (this.driverReady) {
-			const result = this._driver.controller.setPowerlevel(
+			const result = await this._driver.controller.setPowerlevel(
 				powerlevel,
 				measured0dBm
 			)
@@ -1889,7 +1890,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async setRFRegion(region: RFRegion): Promise<boolean> {
 		if (this.driverReady) {
-			const result = this._driver.controller.setRFRegion(region)
+			const result = await this._driver.controller.setRFRegion(region)
 			await this.updateControllerNodeProps()
 			return result
 		}
@@ -3867,7 +3868,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node.powerlevel = powerlevel
 			node.measured0dBm = measured0dBm
 
-			node.RFRegion = await this._driver.controller.getRFRegion()
+			if (
+				this._driver.controller.isSerialAPISetupCommandSupported(
+					SerialAPISetupCommand.GetRFRegion
+				)
+			) {
+				node.RFRegion = await this._driver.controller.getRFRegion()
+			} else {
+				logger.warn('RF region is not supported by controller')
+			}
 		} catch (error) {
 			this.emitNodeStatus(node, {
 				powerlevel: node.powerlevel,
