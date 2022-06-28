@@ -61,6 +61,8 @@ import {
 	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
+	ZWaveNodeEvents,
+	SerialAPISetupCommand,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { storeDir } from '../config/app'
@@ -79,8 +81,6 @@ import { GatewayValue } from './Gateway'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { socketEvents } from './SocketEvents'
-import { ZWaveNodeEventCallbacks } from 'zwave-js/build/lib/node/_Types'
-import { SerialAPISetupCommand } from 'zwave-js/build/lib/serialapi/capability/SerialAPISetupMessages'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -170,9 +170,7 @@ const allowedApis = validateMethods([
 	'checkRouteHealth',
 ] as const)
 
-export type ZwaveNodeEvents =
-	| keyof ZWaveNodeEventCallbacks
-	| 'statistics updated'
+export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
 
 // Define mapping of CCs and node values to node properties:
 const nodePropsMap = {
