@@ -3861,10 +3861,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node = node || this.nodes.get(this._driver.controller.ownNodeId)
 
 		try {
-			const { powerlevel, measured0dBm } =
-				await this._driver.controller.getPowerlevel()
-			node.powerlevel = powerlevel
-			node.measured0dBm = measured0dBm
+			if (
+				this._driver.controller.isSerialAPISetupCommandSupported(
+					SerialAPISetupCommand.GetPowerlevel
+				)
+			) {
+				const { powerlevel, measured0dBm } =
+					await this._driver.controller.getPowerlevel()
+				node.powerlevel = powerlevel
+				node.measured0dBm = measured0dBm
+			} else {
+				logger.warn('Powerlevel is not supported by controller')
+			}
 
 			if (
 				this._driver.controller.isSerialAPISetupCommandSupported(
