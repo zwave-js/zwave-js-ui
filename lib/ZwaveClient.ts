@@ -42,6 +42,7 @@ import {
 	QRProvisioningInformation,
 	RefreshInfoOptions,
 	ReplaceNodeOptions,
+	RFRegion,
 	RouteHealthCheckSummary,
 	SetValueAPIOptions,
 	SmartStartProvisioningEntry,
@@ -60,6 +61,8 @@ import {
 	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
+	ZWaveNodeEvents,
+	SerialAPISetupCommand,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir } from '../config/app'
@@ -78,7 +81,6 @@ import { GatewayValue } from './Gateway'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { socketEvents } from './SocketEvents'
-import { ZWaveNodeEventCallbacks } from 'zwave-js/build/lib/node/_Types'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
@@ -128,6 +130,9 @@ const allowedApis = validateMethods([
 	'refreshValues',
 	'refreshCCValues',
 	'pollValue',
+	'setPowerlevel',
+	'setRFRegion',
+	'updateControllerNodeProps',
 	'startInclusion',
 	'startExclusion',
 	'stopInclusion',
@@ -166,9 +171,7 @@ const allowedApis = validateMethods([
 	'checkRouteHealth',
 ] as const)
 
-export type ZwaveNodeEvents =
-	| keyof ZWaveNodeEventCallbacks
-	| 'statistics updated'
+export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
 
 // Define mapping of CCs and node values to node properties:
 const nodePropsMap = {
@@ -373,6 +376,9 @@ export type Z2MNode = {
 	supportsSecurity?: boolean
 	isListening?: boolean
 	isControllerNode?: boolean
+	powerlevel?: number
+	measured0dBm?: number
+	RFRegion?: RFRegion
 	isFrequentListening?: FLiRS
 	isRouting?: boolean
 	keepAwake?: boolean
@@ -1869,6 +1875,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.isReplacing = false
 			throw error
 		}
+	}
+
+	async setPowerlevel(
+		powerlevel: number,
+		measured0dBm: number
+	): Promise<boolean> {
+		if (this.driverReady) {
+			const result = await this._driver.controller.setPowerlevel(
+				powerlevel,
+				measured0dBm
+			)
+
+			await this.updateControllerNodeProps()
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	async setRFRegion(region: RFRegion): Promise<boolean> {
+		if (this.driverReady) {
+			const result = await this._driver.controller.setRFRegion(region)
+			await this.updateControllerNodeProps()
+			return result
+		}
+
+		throw new DriverNotReadyError()
 	}
 
 	/**
@@ -3805,6 +3839,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.supportsSecurity = zwaveNode.supportsSecurity
 		node.supportsBeaming = zwaveNode.supportsBeaming
 		node.isControllerNode = zwaveNode.isControllerNode
+		if (node.isControllerNode) {
+			this.updateControllerNodeProps(node).catch((error) => {
+				logger.error(
+					`Failed to get controller node ${node.id} properties: ${error.message}`
+				)
+			})
+		}
 		node.isListening = zwaveNode.isListening
 		node.isFrequentListening = zwaveNode.isFrequentListening
 		node.isRouting = zwaveNode.isRouting
@@ -3844,6 +3885,43 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		node.deviceId = this._getDeviceID(node)
+	}
+
+	async updateControllerNodeProps(node?: Z2MNode) {
+		node = node || this.nodes.get(this._driver.controller.ownNodeId)
+
+		try {
+			if (
+				this._driver.controller.isSerialAPISetupCommandSupported(
+					SerialAPISetupCommand.GetPowerlevel
+				)
+			) {
+				const { powerlevel, measured0dBm } =
+					await this._driver.controller.getPowerlevel()
+				node.powerlevel = powerlevel
+				node.measured0dBm = measured0dBm
+			} else {
+				logger.warn('Powerlevel is not supported by controller')
+			}
+
+			if (
+				this._driver.controller.isSerialAPISetupCommandSupported(
+					SerialAPISetupCommand.GetRFRegion
+				)
+			) {
+				node.RFRegion = await this._driver.controller.getRFRegion()
+			} else {
+				logger.warn('RF region is not supported by controller')
+			}
+		} catch (error) {
+			this.emitNodeStatus(node, {
+				powerlevel: node.powerlevel,
+				measured0dBm: node.measured0dBm,
+				RFRegion: node.RFRegion,
+			})
+
+			throw error
+		}
 	}
 
 	/**

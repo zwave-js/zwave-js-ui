@@ -30,6 +30,94 @@
 			</v-col>
 		</v-row>
 
+		<template v-if="node.isControllerNode">
+			<v-subheader class="title" style="padding: 0"
+				>Controller Options</v-subheader
+			>
+
+			<v-row>
+				<v-col cols="12" sm="6" style="max-width: 300px">
+					<v-text-field
+						label="Normal Power Level"
+						append-outer-icon="send"
+						v-model.number="node.powerlevel"
+						:min="-12.8"
+						:max="12.7"
+						:step="0.1"
+						suffix="dBm"
+						type="number"
+						clearable
+						clear-icon="refresh"
+						@click:clear="apiRequest('updateControllerNodeProps')"
+						@click:append-outer="updatePowerLevel"
+					></v-text-field>
+				</v-col>
+				<v-col cols="12" sm="6" style="max-width: 300px">
+					<v-text-field
+						label="Measured output power at 0 dBm"
+						append-outer-icon="send"
+						v-model.number="node.measured0dBm"
+						:min="-12.8"
+						:max="12.7"
+						:step="0.1"
+						suffix="dBm"
+						type="number"
+						clearable
+						clear-icon="refresh"
+						@click:clear="apiRequest('updateControllerNodeProps')"
+						@click:append-outer="updatePowerLevel"
+					></v-text-field>
+				</v-col>
+				<v-col
+					v-if="node.RFRegion !== undefined"
+					cols="12"
+					style="max-width: 300px"
+				>
+					<v-select
+						label="RF Region"
+						:items="rfRegions"
+						clearable
+						clear-icon="refresh"
+						@click:clear="apiRequest('updateControllerNodeProps')"
+						append-outer-icon="send"
+						@click:append-outer="updateRFRegion"
+						v-model="node.RFRegion"
+					></v-select>
+				</v-col>
+			</v-row>
+			<v-col style="max-width: 700px" dense>
+				<v-alert text type="warning">
+					<strong
+						>DO NOT CHANGE THIS VALUES UNLESS YOU KNOW WHAT YOU ARE
+						DOING</strong
+					>
+					<small
+						>Increasing the TX power (normal power level) may be
+						<b>illegal</b>, depending on where you are
+						located</small
+					>
+
+					<small
+						>Increasing the TX power will only make the nodes "hear"
+						the controller better, but not vice versa</small
+					>
+				</v-alert>
+
+				<v-alert
+					class="pb-0"
+					text
+					style="white-space: break-spaces"
+					type="info"
+				>
+					<small
+						>{{
+							`Please consult the manufacturer for the default values, as these can vary between different sticks. The defaults for most 700 series sticks are:\n- TX Power: 0.0 dBm\n- Measured output power at 0 dBm: +3.3 dBm`
+						}}
+					</small>
+				</v-alert>
+			</v-col>
+		</template>
+
 		<v-subheader class="title" style="padding: 0">Send Options</v-subheader>
 		<v-row class="mt-0">
 			<v-col cols="12" sm="6" style="max-width: 300px; padding-top: 0">
@@ -192,6 +280,7 @@ import ValueID from '@/components/ValueId'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import { mapMutations, mapGetters } from 'vuex'
 import { validTopic } from '@/lib/utils'
+import { RFRegion } from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -214,6 +303,12 @@ export default {
 				valueSize: 1,
 				parameter: 1,
 			},
+			rfRegions: Object.keys(RFRegion)
+				.filter((k) => isNaN(k))
+				.map((key) => ({
+					text: key,
+					value: RFRegion[key],
+				})),
 		}
 	},
 	computed: {
@@ -315,6 +410,18 @@ export default {
 					}
 					this.socket.emit(socketActions.mqtt, data)
 				}
+			}
+		},
+		updatePowerLevel() {
+			if (this.node) {
+				const args = [this.node.powerlevel, this.node.measured0dBm]
+				this.apiRequest('setPowerlevel', args)
+			}
+		},
+		updateRFRegion() {
+			if (this.node) {
+				const args = [this.node.RFRegion]
+				this.apiRequest('setRFRegion', args)
 			}
 		},
 		updateLoc() {
