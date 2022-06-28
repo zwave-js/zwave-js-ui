@@ -207,7 +207,7 @@
     "@typescript-eslint/eslint-plugin": "^4.33.0",
     "@typescript-eslint/parser": "^4.33.0",
     "@vue/compiler-sfc": "^3.2.33",
-    "autoprefixer": "^10.3.7",
+    "autoprefixer": "^10.4.7",
     "babel-eslint": "^10.1.0",
     "babel-helper-vue-jsx-merge-props": "^2.0.3",
     "babel-loader": "^8.2.2",
