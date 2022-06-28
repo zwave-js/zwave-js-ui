@@ -309,9 +309,25 @@
 												primary"
 											>all_inclusive</v-icon
 										>
-										<p class="mt-3 headline text-center">
+										<p
+											v-if="state === 'start'"
+											class="mt-3 headline text-center"
+										>
 											Inclusion is started. Please put
 											your device in INCLUSION MODE
+										</p>
+										<p
+											v-else-if="state === 'stop'"
+											class="mt-3 headline text-center"
+										>
+											Inclusion stopped. Checking for
+											changes...
+										</p>
+										<p
+											v-else-if="nvmProgress > 0"
+											class="mt-3 headline text-center"
+										>
+											Waiting for NVM Backup...
 										</p>
 									</v-col>
 
@@ -688,10 +704,11 @@ export default {
 			bindedSocketEvents: {},
 			stopped: false,
 			aborted: false,
+			nvmProgress: 0,
 		}
 	},
 	computed: {
-		...mapGetters(['appInfo', 'zwave', 'nodes', 'mqtt']),
+		...mapGetters(['appInfo', 'zwave', 'nodes', 'mqtt', 'backup']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -737,6 +754,7 @@ export default {
 			}, 500)
 		},
 		controllerStatus(status) {
+			this.nvmProgress = 0
 			if (status && status.indexOf('clusion') > 0) {
 				// it could be inclusion is started by the driver, in that case get the current action
 				this.currentAction = /inclusion/i.test(status)
@@ -772,6 +790,15 @@ export default {
 						text: status, // TODO: better formatting?
 					}
 					this.state = 'stop'
+				}
+			} else if (status.indexOf('Backup NVM progress') >= 0) {
+				const progress = status.match(/(\d+)%/)
+				if (progress && progress.length > 1) {
+					this.nvmProgress = parseInt(progress[1])
+					this.alert = {
+						type: 'info',
+						text: `NVM backup: ${this.nvmProgress}%`,
+					}
 				}
 			}
 		},
@@ -1079,11 +1106,20 @@ export default {
 		},
 		sendAction(api, args) {
 			this.commandEndDate = new Date()
+
+			let text = ''
+
+			if (this.backup.nvmBackupOnEvent && api.startsWith('start')) {
+				text = `Backuping NVM before ${this.currentAction}. Check progress status bar...`
+			} else {
+				text = `${this.currentAction} ${
+					api.startsWith('stop') ? 'stopping…' : 'starting…'
+				}`
+			}
+
 			this.alert = {
 				type: 'info',
-				text: `${this.currentAction} ${
-					api.startsWith('stop') ? 'stopping…' : 'starting…'
-				}`,
+				text,
 			}
 
 			this.$emit('apiRequest', api, args)

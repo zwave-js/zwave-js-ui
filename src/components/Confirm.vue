@@ -113,6 +113,20 @@
 									:disabled="input.disabled"
 								>
 								</v-combobox>
+								<v-file-input
+									v-if="input.type === 'file'"
+									v-model.trim="values[input.key]"
+									:label="input.label"
+									:hint="input.hint"
+									:rules="input.rules || []"
+									:required="input.required"
+									:persistent-hint="!!input.hint"
+									:accept="input.accept"
+									chips
+									show-size
+									:multiple="input.multiple"
+									truncate-length="15"
+								></v-file-input>
 								<v-container v-if="input.type === 'code'">
 									<p v-html="input.hint"></p>
 									<prism-editor

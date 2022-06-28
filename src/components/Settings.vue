@@ -223,6 +223,137 @@
 					<v-divider />
 				</v-expansion-panel>
 
+				<v-expansion-panel key="Backup">
+					<v-expansion-panel-header>
+						<v-row no-gutters>
+							<v-col align-self="center"> Backup </v-col>
+							<v-col class="text-right pr-5">
+								<v-btn
+									@click.stop="openDocs('backup')"
+									color="primary"
+									outlined
+									x-small
+								>
+									Docs
+									<v-icon x-small right>launch</v-icon>
+								</v-btn>
+							</v-col>
+						</v-row>
+					</v-expansion-panel-header>
+					<v-expansion-panel-content>
+						<v-subheader><strong>STORE</strong></v-subheader>
+
+						<v-row class="mb-5">
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable/Disable backup"
+									persistent-hint
+									label="Backup"
+									v-model="newBackup.storeBackup"
+								></v-switch>
+							</v-col>
+
+							<v-col
+								v-if="newBackup.storeBackup"
+								cols="12"
+								sm="6"
+							>
+								<v-text-field
+									hint="Cron string. Default is '0 0 * * *' that means every day at midnight. Press on help button for cron helper editor"
+									persistent-hint
+									append-icon="help"
+									@click:append="
+										openUrl(
+											'https://crontab.guru/#' +
+												newBackup.storeCron
+													.split(' ')
+													.join('_')
+										)
+									"
+									label="Cron"
+									:rules="[rules.required, validCron]"
+									v-model="newBackup.storeCron"
+								></v-text-field>
+								<strong>{{
+									rules.validCron(newBackup.storeCron)
+								}}</strong>
+							</v-col>
+							<v-col
+								v-if="newBackup.storeBackup"
+								cols="12"
+								sm="6"
+							>
+								<v-text-field
+									hint="How many backups to keep"
+									persistent-hint
+									:rules="[rules.required, rules.positive]"
+									label="Max backup files"
+									v-model.number="newBackup.storeKeep"
+								></v-text-field>
+							</v-col>
+						</v-row>
+
+						<v-divider />
+						<v-subheader
+							><strong
+								>Controller (NVM) Backup</strong
+							></v-subheader
+						>
+
+						<v-row class="mb-5">
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable/Disable backup before node add/remove/replace operations. DISCLAIMER: After an NVM backup controller will be soft-resetted, please make sure your stick can be soft-reset before enabling this feature"
+									persistent-hint
+									label="Backup on event"
+									v-model="newBackup.nvmBackupOnEvent"
+								></v-switch>
+							</v-col>
+
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable/Disable backup"
+									persistent-hint
+									label="Backup"
+									v-model="newBackup.nvmBackup"
+								></v-switch>
+							</v-col>
+
+							<v-col v-if="newBackup.nvmBackup" cols="12" sm="6">
+								<v-text-field
+									hint="Cron string. Default is '0 0 * * *' that means every day at midnight. Press on help button for cron helper editor"
+									persistent-hint
+									append-icon="help"
+									@click:append="
+										openUrl(
+											'https://crontab.guru/#' +
+												newBackup.nvmCron
+													.split(' ')
+													.join('_')
+										)
+									"
+									label="Cron"
+									:rules="[rules.required, validCron]"
+									v-model="newBackup.nvmCron"
+								></v-text-field>
+								<strong>{{
+									rules.validCron(newBackup.nvmCron)
+								}}</strong>
+							</v-col>
+							<v-col v-if="newBackup.nvmBackup" cols="12" sm="6">
+								<v-text-field
+									hint="How many backups to keep"
+									persistent-hint
+									:rules="[rules.required, rules.positive]"
+									label="Max backup files"
+									v-model.number="newBackup.nvmKeep"
+								></v-text-field>
+							</v-col>
+						</v-row>
+					</v-expansion-panel-content>
+					<v-divider />
+				</v-expansion-panel>
+
 				<v-expansion-panel key="zwave">
 					<v-expansion-panel-header>
 						<v-row no-gutters>
@@ -1025,6 +1156,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
 import { wait, copy } from '../lib/utils'
+import cronstrue from 'cronstrue'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
@@ -1117,6 +1249,7 @@ export default {
 			'zwave',
 			'mqtt',
 			'gateway',
+			'backup',
 			'devices',
 			'serial_ports',
 			'scales',
@@ -1136,6 +1269,7 @@ export default {
 			newGateway: {},
 			newMqtt: {},
 			newZwave: {},
+			newBackup: {},
 			editedValue: {},
 			editedIndex: -1,
 			defaultValue: {},
@@ -1194,6 +1328,9 @@ export default {
 
 					return valid || 'This field is required.'
 				},
+				positive: (value) => {
+					return value > 0 || 'Value must be positive.'
+				},
 				uniqueSensorType(values) {
 					if (!values || values.length < 2) {
 						return true
@@ -1242,6 +1379,18 @@ export default {
 						'Key not valid. Must contain only hex chars'
 					)
 				},
+				validCron: (v) => {
+					let res
+					try {
+						res = cronstrue.toString(v, {
+							use24HourTimeFormat: true,
+						})
+					} catch (err) {
+						//ignore
+					}
+
+					return res || 'Not a valid cron string'
+				},
 			},
 		}
 	},
@@ -1267,10 +1416,12 @@ export default {
 			}
 		},
 		openDocs(id) {
-			window.open(
-				`https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=${id}`,
-				'_blank'
+			this.openUrl(
+				`https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=${id}`
 			)
+		},
+		openUrl(url) {
+			window.open(url, '_blank')
 		},
 		scaleName(item) {
 			if (typeof item === 'object' && item) {
@@ -1332,6 +1483,7 @@ export default {
 				mqtt: this.newMqtt,
 				gateway: this.newGateway,
 				zwave: this.newZwave,
+				backup: this.newBackup,
 			}
 		},
 		editItem(item) {
@@ -1391,6 +1543,7 @@ export default {
 			this.newGateway = copy(this.gateway)
 			this.newZwave = copy(this.zwave)
 			this.newMqtt = copy(this.mqtt)
+			this.newBackup = copy(this.backup)
 		},
 		async getConfig() {
 			try {

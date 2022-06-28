@@ -31,6 +31,15 @@ export const state = {
     serverHost: undefined,
     maxNodeEventsQueueSize: 100
   },
+  backup: {
+    storeBackup: false,
+    storeCron: '0 0 * * *',
+    storeKeep: 7,
+    nvmBackup: false,
+    nvmBackupOnEvent: false,
+    nvmCron: '0 0 * * *',
+    nvmKeep: 7,
+  },
   mqtt: {
     name: 'Zwavejs2Mqtt',
     host: 'localhost',
@@ -98,6 +107,7 @@ export const getters = {
   serial_ports: state => state.serial_ports,
   zwave: state => state.zwave,
   mqtt: state => state.mqtt,
+  backup: state => state.backup,
   devices: state => state.devices,
   gateway: state => state.gateway,
   appInfo: state => state.appInfo,
@@ -368,6 +378,7 @@ export const mutations = {
       Object.assign(state.zwave, conf.zwave || {})
       Object.assign(state.mqtt, conf.mqtt || {})
       Object.assign(state.gateway, conf.gateway || {})
+      Object.assign(state.backup, conf.backup || {})
     }
   },
   initPorts(state, ports) {
