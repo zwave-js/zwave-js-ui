@@ -16,12 +16,13 @@ import ZWaveClient, {
 	loadManager,
 	SensorTypeScale,
 } from './lib/ZwaveClient'
-
+import multer, { diskStorage } from 'multer'
+import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
-import fs from 'fs-extra'
+import fs, { mkdirp, rm } from 'fs-extra'
 import { createServer as createHttpServer, Server as HttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
 import jwt from 'jsonwebtoken'
@@ -30,7 +31,13 @@ import sessionStore from 'session-file-store'
 import { Socket } from 'socket.io'
 import { promisify } from 'util'
 import { Driver, libVersion } from 'zwave-js'
-import { defaultPsw, defaultUser, sessionSecret, storeDir } from './config/app'
+import {
+	defaultPsw,
+	defaultUser,
+	sessionSecret,
+	storeDir,
+	tmpDir,
+} from './config/app'
 import {
 	createPlugin,
 	CustomPlugin,
@@ -39,12 +46,43 @@ import {
 import renderIndex from './lib/renderIndex'
 import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
+import backupManager from './lib/BackupManager'
 
 declare module 'express' {
 	interface Request {
 		user?: User
 	}
 }
+
+function multerPromise(
+	m: RequestHandler,
+	req: Request,
+	res: Response
+): Promise<void> {
+	return new Promise((resolve, reject) => {
+		m(req, res, (err: any) => {
+			if (err) {
+				reject(err)
+			} else {
+				resolve()
+			}
+		})
+	})
+}
+
+const Storage = diskStorage({
+	async destination(reqD, file, callback) {
+		await mkdirp(tmpDir)
+		callback(null, tmpDir)
+	},
+	filename(reqF, file, callback) {
+		callback(null, file.originalname)
+	},
+})
+
+const multerRestore = multer({
+	storage: Storage,
+}).array('restore', 1) // Field name and max count
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { createCertificate } = require('pem').promisified
@@ -290,6 +328,8 @@ async function startGateway(settings: Settings) {
 	if (settings.zwave) {
 		zwave = new ZWaveClient(settings.zwave, socketManager.io)
 	}
+
+	backupManager.init(zwave)
 
 	gw = new Gateway(settings.gateway, zwave, mqtt)
 
@@ -891,7 +931,7 @@ app.post(
 					'Gateway is restarting, wait a moment before doing another request'
 				)
 			}
-			// TODO: validate settings using ajv
+			// TODO: validate settings using calss-validator
 			const settings = req.body
 			restarting = true
 			await jsonStore.put(store.settings, settings)
@@ -901,6 +941,8 @@ app.post(
 			setupLogging(settings)
 			// restart clients and gateway
 			await startGateway(settings)
+			backupManager.init(gw.zwave)
+
 			res.json({
 				success: true,
 				message: 'Configuration updated successfully',
@@ -1170,6 +1212,49 @@ app.post(
 		}
 
 		await archive.finalize()
+	}
+)
+
+app.get(
+	'/api/store/backup',
+	storeLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			await jsonStore.backup(res)
+		} catch (error) {
+			res.status(500).send({
+				error: error.message,
+			})
+		}
+	}
+)
+
+app.post(
+	'/api/store/restore',
+	storeLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		let file: any
+		try {
+			// read files from request
+			await multerPromise(multerRestore, req, res)
+
+			file = req.files[0]
+
+			if (!file || !file.path) {
+				throw Error('No file uploaded')
+			}
+
+			await extract(file.path, { dir: storeDir })
+			res.json({ success: true })
+		} catch (err) {
+			res.json({ success: false, message: err.message })
+		}
+
+		if (file) {
+			await rm(file.name)
+		}
 	}
 )
 

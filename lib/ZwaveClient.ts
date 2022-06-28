@@ -62,14 +62,14 @@ import {
 	ZWavePlusRoleType,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { storeDir } from '../config/app'
+import { nvmBackupsDir, storeDir } from '../config/app'
 import store from '../config/store'
 import jsonStore from './jsonStore'
 import * as LogManager from './logger'
 import * as utils from './utils'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
-import { ensureDir, writeFile } from 'fs-extra'
+import { ensureDir, mkdirp, writeFile } from 'fs-extra'
 import set from 'set-value'
 import { Server as SocketServer } from 'socket.io'
 import * as pkgjson from '../package.json'
@@ -79,6 +79,7 @@ import { GatewayValue } from './Gateway'
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { socketEvents } from './SocketEvents'
 import { ZWaveNodeEventCallbacks } from 'zwave-js/build/lib/node/_Types'
+import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -515,6 +516,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
+
+	private nvmEvent: string
 
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
@@ -1800,6 +1803,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (!this.driverReady) {
 				throw new DriverNotReadyError()
 			}
+
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_replace_failed_node'
+				await backupManager.backupNvm()
+			}
+
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -1876,6 +1885,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	): Promise<boolean> {
 		if (this.driverReady) {
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_start_inclusion'
+				await backupManager.backupNvm()
+			}
+
 			try {
 				if (this.commandsTimeout) {
 					clearTimeout(this.commandsTimeout)
@@ -1969,6 +1983,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		unprovision: boolean | 'inactive' = 'inactive'
 	): Promise<boolean> {
 		if (this.driverReady) {
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_start_exclusion'
+				await backupManager.backupNvm()
+			}
+
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
 				this.commandsTimeout = null
@@ -2104,6 +2123,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async removeFailedNode(nodeId: number): Promise<void> {
 		if (this.driverReady) {
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_remove_failed_node'
+				await backupManager.backupNvm()
+			}
+
 			return this._driver.controller.removeFailedNode(nodeId)
 		}
 
@@ -2847,13 +2871,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
+		// it's set when the backup has been triggerd by an event
+		const event = this.nvmEvent ? this.nvmEvent + '_' : ''
+		this.nvmEvent = null
+
 		const data = await this.driver.controller.backupNVMRaw(
 			this._onBackupNVMProgress.bind(this)
 		)
 
-		const fileName = `NVM_${new Date().toISOString().split('T')[0]}`
+		const fileName = `${NVM_BACKUP_PREFIX}${utils.fileDate()}${event}`
 
-		await writeFile(utils.joinPath(storeDir, fileName + '.bin'), data)
+		await mkdirp(nvmBackupsDir)
+
+		await writeFile(utils.joinPath(nvmBackupsDir, fileName + '.bin'), data)
 
 		return { data, fileName }
 	}

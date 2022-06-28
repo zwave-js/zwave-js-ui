@@ -105,12 +105,25 @@ export default {
 		)
 		return response.data
 	},
+	async restoreZip(formData) {
+		let response = await axios({
+			method: 'post',
+			url: '/store/restore',
+			data: formData,
+			headers: { 'Content-Type': 'multipart/form-data' },
+		})
+		response = responseHandler(response)
+		return response.data
+	},
 	async deleteFile(path) {
 		const response = await request.delete('/store', { params: { path } })
 		return response.data
 	},
 	downloadZip(files) {
 		return request.post('/store-multi', { files }, { responseType: 'blob' })
+	},
+	backupStore() {
+		return request.get('/store/backup', { responseType: 'blob' })
 	},
 	async deleteMultiple(files) {
 		const response = await request.put('/store-multi', { files })
