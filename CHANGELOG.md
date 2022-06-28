@@ -1,3 +1,13 @@
+# [6.13.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.12.1...v6.13.0) (2022-06-28)
+
+
+### Features
+
+* backup restore ([#2469](https://github.com/zwave-js/zwavejs2mqtt/issues/2469)) ([b34cde4](https://github.com/zwave-js/zwavejs2mqtt/commit/b34cde43be9a4b536be3cf1acd81e04f8966100d)), closes [#2068](https://github.com/zwave-js/zwavejs2mqtt/issues/2068)
+* bump zwave-js@9.4.1 ([#2496](https://github.com/zwave-js/zwavejs2mqtt/issues/2496)) ([52612e3](https://github.com/zwave-js/zwavejs2mqtt/commit/52612e3ccc3af9d4ebfe23c34d3e7a9ae91bc145))
+* bump zwave-js@9.5.0 ([#2500](https://github.com/zwave-js/zwavejs2mqtt/issues/2500)) ([6fc05f3](https://github.com/zwave-js/zwavejs2mqtt/commit/6fc05f3bcc387fee67ad76c6da036becf9a47ab9))
+* zwave radio configurations ([#2485](https://github.com/zwave-js/zwavejs2mqtt/issues/2485)) ([01909ad](https://github.com/zwave-js/zwavejs2mqtt/commit/01909ade2904db30b1f12f10fc7dad2170b66346)), closes [#2319](https://github.com/zwave-js/zwavejs2mqtt/issues/2319)
+
 ## [6.12.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.12.0...v6.12.1) (2022-06-24)
 
 
