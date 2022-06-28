@@ -3030,9 +3030,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:9.4.1":
-  version: 9.4.1
-  resolution: "@zwave-js/config@npm:9.4.1"
+"@zwave-js/config@npm:9.5.0":
+  version: 9.5.0
+  resolution: "@zwave-js/config@npm:9.5.0"
   dependencies:
     "@zwave-js/core": 9.4.1
     "@zwave-js/shared": 9.4.0
@@ -3043,7 +3043,7 @@ __metadata:
     json5: ^2.2.1
     semver: ^7.3.7
     winston: ^3.7.2
-  checksum: 91dc259ac93e126d9d3062edbc81ab79295fa624f436c9514204a037427e938ab449b3ed65b49fe16528f6c0ef9bbdc4d7fceabca3ccbd013d155b4112e1d344
+  checksum: eb9fe99e04b920c41d2a80a3ac12116abd77c04def97a068fe977b8ed67cb04977183a1ba988a5beae36987435d246d68ede7c266f09bb4008164d0c1f661fb7
   languageName: node
   linkType: hard
 
@@ -15820,15 +15820,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zwave-js@npm:^9.4.1":
-  version: 9.4.1
-  resolution: "zwave-js@npm:9.4.1"
+"zwave-js@npm:^9.5.0":
+  version: 9.5.0
+  resolution: "zwave-js@npm:9.5.0"
   dependencies:
     "@alcalzone/jsonl-db": ^2.5.2
     "@alcalzone/pak": ^0.8.1
     "@sentry/integrations": ^6.19.7
     "@sentry/node": ^6.19.7
-    "@zwave-js/config": 9.4.1
+    "@zwave-js/config": 9.5.0
     "@zwave-js/core": 9.4.1
     "@zwave-js/host": 9.4.1
     "@zwave-js/nvmedit": 9.4.1
@@ -15846,7 +15846,7 @@ __metadata:
     source-map-support: ^0.5.21
     winston: ^3.7.2
     xstate: ^4.29.0
-  checksum: d01e3e820af6fb67f0473ecede9e84955d420b5d8eac5338434e2fe9e199310e5d5a870331934d98965de5d86ca6758b1cd0738b647301d6bbfb6ca546d1dfc4
+  checksum: 71e74e3eb854231b42215b279b40a252c87d2827a26378ddea69fee8cf10ba6e47d522f37268f09781fd268461c372eccfa53a9e03ea663ec7364f004f29b05d
   languageName: node
   linkType: hard
 
@@ -16004,7 +16004,7 @@ __metadata:
     webpack-dev-server: ^4.3.1
     webpack-merge: ^5.8.0
     winston: ^3.3.3
-    zwave-js: ^9.4.1
+    zwave-js: ^9.5.0
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
