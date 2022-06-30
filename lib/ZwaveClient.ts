@@ -63,6 +63,8 @@ import {
 	ZWavePlusRoleType,
 	ZWaveNodeEvents,
 	SerialAPISetupCommand,
+	FirmwareUpdateFileInfo,
+	FirmwareUpdateInfo,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir } from '../config/app'
@@ -148,6 +150,8 @@ const allowedApis = validateMethods([
 	'refreshInfo',
 	'beginFirmwareUpdate',
 	'abortFirmwareUpdate',
+	'getAvailableFirmwareUpdates',
+	'beginOTAFirmwareUpdate',
 	'sendCommand',
 	'writeValue',
 	'writeBroadcast',
@@ -1875,6 +1879,56 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.isReplacing = false
 			throw error
 		}
+	}
+
+	async getAvailableFirmwareUpdates(nodeId: number) {
+		if (this.driverReady) {
+			let result =
+				await this._driver.controller.getAvailableFirmwareUpdates(
+					nodeId
+				)
+
+			result = [
+				{
+					version: '1.13',
+					changelog: '* Fixed some bugs\n* Added other bugs',
+					files: [
+						{
+							target: 0,
+							integrity:
+								'sha256:123456789012345678901234567890123456789012345678901234567890123',
+							url: 'https://example.com/firmware.bin',
+						},
+						{
+							target: 1,
+							integrity:
+								'sha256:123456789012345678901234567890123456789012345678901234567890123',
+							url: 'https://example.com/firmware.bin',
+						},
+					],
+				},
+			]
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	async beginOTAFirmwareUpdate(
+		nodeId: number,
+		update: FirmwareUpdateFileInfo
+	) {
+		if (this.driverReady) {
+			const result = await this._driver.controller.beginOTAFirmwareUpdate(
+				nodeId,
+				update
+			)
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
 	}
 
 	async setPowerlevel(
