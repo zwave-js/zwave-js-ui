@@ -1883,31 +1883,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async getAvailableFirmwareUpdates(nodeId: number) {
 		if (this.driverReady) {
-			let result =
+			const result =
 				await this._driver.controller.getAvailableFirmwareUpdates(
 					nodeId
 				)
 
-			result = [
-				{
-					version: '1.13',
-					changelog: '* Fixed some bugs\n* Added other bugs',
-					files: [
-						{
-							target: 0,
-							integrity:
-								'sha256:123456789012345678901234567890123456789012345678901234567890123',
-							url: 'https://example.com/firmware.bin',
-						},
-						{
-							target: 1,
-							integrity:
-								'sha256:123456789012345678901234567890123456789012345678901234567890123',
-							url: 'https://example.com/firmware.bin',
-						},
-					],
-				},
-			]
+			// result = [
+			// 	{
+			// 		version: '1.13',
+			// 		changelog: '* Fixed some bugs\n* Added other bugs',
+			// 		files: [
+			// 			{
+			// 				target: 0,
+			// 				integrity:
+			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
+			// 				url: 'https://example.com/firmware.bin',
+			// 			},
+			// 			{
+			// 				target: 1,
+			// 				integrity:
+			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
+			// 				url: 'https://example.com/firmware.bin',
+			// 			},
+			// 		],
+			// 	},
+			// ]
 
 			return result
 		}
