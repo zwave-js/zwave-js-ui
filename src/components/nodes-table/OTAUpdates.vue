@@ -58,7 +58,7 @@
 					Remember to weak up sleeping devices...
 				</p>
 			</v-col>
-			<v-col v-else>
+			<v-col style="text-align: center" v-else>
 				<h1>No updates available</h1>
 			</v-col>
 		</v-row>
@@ -70,7 +70,7 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapMutations } from 'vuex'
 
 export default {
 	components: {},
