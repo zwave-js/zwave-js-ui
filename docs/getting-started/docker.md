@@ -88,6 +88,8 @@ services:
       - '/dev/serial/by-id/insert_stick_reference_here:/dev/zwave'
     volumes:
       - zwave-config:/usr/src/app/store
+			# Or by using local folder
+			# - ./store:/usr/src/app/store
     ports:
       - "8091:8091" # port for web interface
       - "3000:3000" # port for Z-Wave JS websocket server
