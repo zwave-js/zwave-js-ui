@@ -138,7 +138,7 @@ export default {
 					'OTA Update',
 					`<p>Are you sure you want to update target <b>${firmware.target}</b> to <b>v${update.version}</b>?</p>
 										
-					<strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong>
+					<p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
 					
 					<p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start an over-the-air (OTA) firmware update for the given node.</p>
 	
