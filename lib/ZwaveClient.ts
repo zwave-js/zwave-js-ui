@@ -975,7 +975,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						)
 					) {
 						logger.info(
-							`Assocaitions: Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
+							`Associations: Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
 						)
 						await this._driver.controller.addAssociations(
 							source,
@@ -1020,7 +1020,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			try {
 				logger.log(
 					'info',
-					`Assocaitions: Removing associations from ${sourceMsg} Group ${groupId}: %o`,
+					`Associations: Removing associations from ${sourceMsg} Group ${groupId}: %o`,
 					associations
 				)
 				await this._driver.controller.removeAssociations(
@@ -1063,7 +1063,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								associations as AssociationAddress[]
 							)
 							logger.info(
-								`Assocaitions: Removed ${
+								`Associations: Removed ${
 									associations.length
 								} associations from Node ${
 									source.nodeId +
@@ -1096,7 +1096,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (zwaveNode) {
 			try {
 				logger.info(
-					`Assocaitions: Removing Node ${nodeId} from all associations`
+					`Associations: Removing Node ${nodeId} from all associations`
 				)
 				await this._driver.controller.removeNodeFromAllAssociations(
 					nodeId
