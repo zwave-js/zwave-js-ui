@@ -169,6 +169,7 @@
 								:headers="hintHeaders"
 								:items="hintValues"
 								class="elevation-1"
+								:mobile-breakpoint="0"
 								hide-default-footer
 								disable-pagination
 							>
@@ -242,6 +243,7 @@
 						<template v-slot:[`item.rating`]="{ item }">
 							<v-progress-linear
 								rounded
+								style="min-width: 80px"
 								height="25"
 								:value="item.rating * 10"
 								:color="getRatingColor(item.rating)"
