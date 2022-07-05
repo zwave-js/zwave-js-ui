@@ -171,7 +171,7 @@
     "vuetify": "^2.5.9",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
-    "zwave-js": "9.5.1-0-pr-4758-dc858e7"
+    "zwave-js": "^9.6.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.15.7",
