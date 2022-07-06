@@ -97,6 +97,9 @@
 				<v-tab key="groups" class="justify-start">
 					<v-icon small left>device_hub</v-icon> Groups
 				</v-tab>
+				<v-tab key="ota" class="justify-start">
+					<v-icon small left>auto_mode</v-icon> OTA Updates
+				</v-tab>
 				<v-tab key="events" class="justify-start">
 					<v-icon small left>list_alt</v-icon> Events
 				</v-tab>
@@ -126,7 +129,7 @@
 						></node-details>
 					</v-tab-item>
 
-					<!-- TAB NODE -->
+					<!-- TAB METADATA -->
 					<v-tab-item
 						v-if="nodeMetadata"
 						key="manual"
@@ -169,6 +172,15 @@
 					<!-- TAB GROUPS -->
 					<v-tab-item key="groups" transition="slide-y-transition">
 						<association-groups :node="node" :socket="socket" />
+					</v-tab-item>
+
+					<!-- TAB OTA UPDATES -->
+					<v-tab-item key="ota" transition="slide-y-transition">
+						<OTAUpdates
+							:node="node"
+							:socket="socket"
+							v-on="$listeners"
+						/>
 					</v-tab-item>
 
 					<!-- TAB EVENTS -->
@@ -279,6 +291,7 @@ import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 import { jsonToList } from '@/lib/utils'
 
 import { mapGetters } from 'vuex'
+import OTAUpdates from './OTAUpdates.vue'
 
 export default {
 	props: {
@@ -294,6 +307,7 @@ export default {
 		NodeDetails,
 		DialogAdvanced,
 		StatisticsCard,
+		OTAUpdates,
 	},
 	computed: {
 		...mapGetters(['gateway', 'mqtt']),
