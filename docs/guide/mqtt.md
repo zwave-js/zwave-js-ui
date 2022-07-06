@@ -230,6 +230,12 @@ Payload:
 }
 ```
 
+### Example setting a value
+
+Here is an example of sending a set command to a valueId using [MQTT Explorer](http://mqtt-explorer.com/)
+
+![Mqtt Explorer](../_images/mqtt-explorer.mp4 ':include :type=video controls width=100% height=400px')
+
 ## Broadcast
 
 You can send two kind of broadcast requests:
