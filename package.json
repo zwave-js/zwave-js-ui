@@ -46,7 +46,7 @@
     "dev": "webpack serve --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
     "dev-https": "SERVER_SSL='true' yarn run dev",
     "dev:server": "ts-node-dev --inspect -- bin/www.ts",
-    "dev-https:server": "HTTPS='true' ts-node-dev --inspect -- bin/www.ts",
+    "server": "ts-node bin/www.ts",
     "start": "node --preserve-symlinks server/bin/www.js",
     "lint": "npm-run-all 'lint:*'",
     "lint-fix": "npm-run-all 'lint-fix:*'",
