@@ -300,10 +300,18 @@
 							></v-subheader
 						>
 
+						<v-alert dense text type="warning">
+							After an NVM backup controller will be
+							soft-resetted, please make sure your stick can be
+							soft-reset before enabling this feature. This is
+							caused by a bug we discovered on 700 series
+							controllers and may be fixed in future
+						</v-alert>
+
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
 								<v-switch
-									hint="Enable/Disable backup before node add/remove/replace operations. DISCLAIMER: After an NVM backup controller will be soft-resetted, please make sure your stick can be soft-reset before enabling this feature"
+									hint="Enable/Disable backup before node add/remove/replace operations."
 									persistent-hint
 									label="Backup on event"
 									v-model="newBackup.nvmBackupOnEvent"
