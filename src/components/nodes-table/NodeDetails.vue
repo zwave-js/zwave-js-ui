@@ -39,17 +39,12 @@
 				<v-col cols="12" sm="6" style="max-width: 300px">
 					<v-text-field
 						label="Normal Power Level"
-						append-outer-icon="send"
 						v-model.number="node.powerlevel"
 						:min="-12.8"
 						:max="12.7"
 						:step="0.1"
 						suffix="dBm"
 						type="number"
-						clearable
-						clear-icon="refresh"
-						@click:clear="apiRequest('updateControllerNodeProps')"
-						@click:append-outer="updatePowerLevel"
 					></v-text-field>
 				</v-col>
 				<v-col cols="12" sm="6" style="max-width: 300px">
