@@ -65,6 +65,9 @@ import {
 	SerialAPISetupCommand,
 	FirmwareUpdateFileInfo,
 	FirmwareUpdateInfo,
+	FoundNode,
+	ExclusionStrategy,
+	ExclusionOptions,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir } from '../config/app'
@@ -2068,7 +2071,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Start exclusion
 	 */
 	async startExclusion(
-		unprovision: boolean | 'inactive' = 'inactive'
+		options: ExclusionOptions = {
+			strategy: ExclusionStrategy.DisableProvisioningEntry,
+		}
 	): Promise<boolean> {
 		if (this.driverReady) {
 			if (backupManager.backupOnEvent) {
@@ -2085,7 +2090,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.stopExclusion().catch(logger.error)
 			}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
 
-			return this._driver.controller.beginExclusion(unprovision)
+			return this._driver.controller.beginExclusion(options)
 		}
 
 		throw new DriverNotReadyError()
@@ -2623,6 +2628,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				.on('exclusion stopped', this._onExclusionStopped.bind(this))
 				.on('inclusion failed', this._onInclusionFailed.bind(this))
 				.on('exclusion failed', this._onExclusionFailed.bind(this))
+				.on('node found', this._onNodeFound.bind(this))
 				.on('node added', this._onNodeAdded.bind(this))
 				.on('node removed', this._onNodeRemoved.bind(this))
 				.on(
@@ -2645,6 +2651,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		for (const [, node] of this._driver.controller.nodes) {
 			// node added will not be triggered if the node is in cache
+			this._createNode(node.id)
 			this._addNode(node)
 
 			// Make sure we didn't miss the ready event
@@ -2780,10 +2787,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Triggered when a node is added
+	 * Triggered when a node is found, this is emitted when stick includes the node
+	 * the only reliable info at this point is the node id
+	 */
+	private _onNodeFound(foundNode: FoundNode) {
+		let node: Z2MNode
+		const nodeId = foundNode.id
+		// the driver is ready so this node has been added on fly
+		if (this.driverReady) {
+			node = this._createNode(nodeId)
+			this.sendToSocket(socketEvents.nodeFound, { node })
+		} else {
+			node = this._nodes.get(nodeId)
+		}
+
+		logger.info(`Node ${nodeId}: found`)
+
+		this.emit('event', EventSource.CONTROLLER, 'node found', { node })
+	}
+
+	/**
+	 * Triggered when a node is added. Emitted after zwave-js exchanges security key, adds lifeline, SUC route, etc.
 	 */
 	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
-		let node
+		let node: Z2MNode
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
@@ -3779,24 +3806,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	/**
-	 * Add a new node to our nodes array. No informations are available yet, the node needs to be ready
-	 *
-	 */
-	private _addNode(zwaveNode: ZWaveNode): Z2MNode {
-		const nodeId = zwaveNode.id
-
-		const existingNode = this._nodes.get(nodeId)
-
-		// this shouldn't happen
-		if (existingNode && existingNode.ready) {
-			logger.error(
-				'Error while adding node ' + nodeId,
-				Error('node has been added twice')
-			)
-			return existingNode
-		}
-
+	private _createNode(nodeId: number) {
 		// set node name and location sent with beginInclusion call
 		if (this.tmpNode) {
 			if (this.storeNodes[nodeId]) {
@@ -3828,16 +3838,39 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			failed: false,
 			inited: false,
 			eventsQueue: [],
+			status: 'Unknown',
+			interviewStage: 'None',
 		}
 
 		this._nodes.set(nodeId, node)
 
-		this._dumpNode(zwaveNode)
+		return node
+	}
+
+	/**
+	 * Add a new node to our nodes array. No informations are available yet, the node needs to be ready
+	 *
+	 */
+	private _addNode(zwaveNode: ZWaveNode): Z2MNode {
+		const nodeId = zwaveNode.id
+
+		const existingNode = this._nodes.get(nodeId)
+
+		// this shouldn't happen
+		if (existingNode && existingNode.ready) {
+			logger.error(
+				'Error while adding node ' + nodeId,
+				Error('node has been added twice')
+			)
+			return existingNode
+		}
+
 		this._bindNodeEvents(zwaveNode)
+		this._dumpNode(zwaveNode)
 		this._onNodeStatus(zwaveNode)
 		logger.debug(`Node ${nodeId} has been added to nodes array`)
 
-		return node
+		return existingNode
 	}
 
 	/**
