@@ -3943,7 +3943,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async updateControllerNodeProps(node?: Z2MNode) {
 		node = node || this.nodes.get(this._driver.controller.ownNodeId)
-
+		let error
 		try {
 			if (
 				this._driver.controller.isSerialAPISetupCommandSupported(
@@ -3967,13 +3967,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			} else {
 				logger.warn('RF region is not supported by controller')
 			}
-		} catch (error) {
-			this.emitNodeStatus(node, {
-				powerlevel: node.powerlevel,
-				measured0dBm: node.measured0dBm,
-				RFRegion: node.RFRegion,
-			})
+		} catch (err) {
+			error = err
+		}
 
+		this.emitNodeStatus(node, {
+			powerlevel: node.powerlevel,
+			measured0dBm: node.measured0dBm,
+			RFRegion: node.RFRegion,
+		})
+
+		if (error) {
 			throw error
 		}
 	}
