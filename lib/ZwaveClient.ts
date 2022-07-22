@@ -2803,6 +2803,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		logger.info(`Node ${nodeId}: found`)
 
+		this.emitNodeStatus(node)
+
 		this.emit('event', EventSource.CONTROLLER, 'node found', { node })
 	}
 
