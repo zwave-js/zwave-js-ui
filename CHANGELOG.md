@@ -1,3 +1,20 @@
+# [6.14.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.13.0...v6.14.0) (2022-07-22)
+
+
+### Bug Fixes
+
+* issues with controller powerlevel settings ([#2541](https://github.com/zwave-js/zwavejs2mqtt/issues/2541)) ([02e5f2b](https://github.com/zwave-js/zwavejs2mqtt/commit/02e5f2b6409a4c673340113e345e487cc22c7e83))
+* **ui:** diaplay issue with healthckeck dialog on smartphones ([af954e9](https://github.com/zwave-js/zwavejs2mqtt/commit/af954e978873903a61c27b7a9d55d2f8ba524557)), closes [#2513](https://github.com/zwave-js/zwavejs2mqtt/issues/2513)
+* **ui:** nvm backup alert ([d49dad8](https://github.com/zwave-js/zwavejs2mqtt/commit/d49dad8b1b44f2058e0d926deb92a34a63ba4db2))
+
+
+### Features
+
+* bump zwave-js@9.6.0 ([#2514](https://github.com/zwave-js/zwavejs2mqtt/issues/2514)) ([d0f25f3](https://github.com/zwave-js/zwavejs2mqtt/commit/d0f25f3ff29a4e210d969a87c6119c199c7dbab1))
+* bump zwave-js@9.6.1 ([#2536](https://github.com/zwave-js/zwavejs2mqtt/issues/2536)) ([8a02b7a](https://github.com/zwave-js/zwavejs2mqtt/commit/8a02b7a6ccd83705d35b71c62f4d96574010fdfc))
+* bump zwave-js@9.6.2 ([#2540](https://github.com/zwave-js/zwavejs2mqtt/issues/2540)) ([c225e6a](https://github.com/zwave-js/zwavejs2mqtt/commit/c225e6ab4b0d3ef6935922763e4dc89c724b02f0))
+* ota device firmware updates ([#2504](https://github.com/zwave-js/zwavejs2mqtt/issues/2504)) ([4ab6264](https://github.com/zwave-js/zwavejs2mqtt/commit/4ab62642b41e97ad7b2ee047f56ca03f72258ed6))
+
 # [6.13.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.12.1...v6.13.0) (2022-06-28)
 
 

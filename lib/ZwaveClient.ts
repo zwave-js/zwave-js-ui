@@ -1947,7 +1947,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				measured0dBm
 			)
 
-			await this.updateControllerNodeProps()
+			await this.updateControllerNodeProps(null, ['powerlevel'])
 
 			return result
 		}
@@ -1958,7 +1958,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async setRFRegion(region: RFRegion): Promise<boolean> {
 		if (this.driverReady) {
 			const result = await this._driver.controller.setRFRegion(region)
-			await this.updateControllerNodeProps()
+			await this.updateControllerNodeProps(null, ['RFRegion'])
 			return result
 		}
 
@@ -3979,10 +3979,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.deviceId = this._getDeviceID(node)
 	}
 
-	async updateControllerNodeProps(node?: Z2MNode) {
+	async updateControllerNodeProps(
+		node?: Z2MNode,
+		props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion']
+	) {
 		node = node || this.nodes.get(this._driver.controller.ownNodeId)
-
-		try {
+		if (props.includes('powerlevel')) {
 			if (
 				this._driver.controller.isSerialAPISetupCommandSupported(
 					SerialAPISetupCommand.GetPowerlevel
@@ -3995,7 +3997,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			} else {
 				logger.warn('Powerlevel is not supported by controller')
 			}
+		}
 
+		if (props.includes('RFRegion')) {
 			if (
 				this._driver.controller.isSerialAPISetupCommandSupported(
 					SerialAPISetupCommand.GetRFRegion
@@ -4005,15 +4009,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			} else {
 				logger.warn('RF region is not supported by controller')
 			}
-		} catch (error) {
-			this.emitNodeStatus(node, {
-				powerlevel: node.powerlevel,
-				measured0dBm: node.measured0dBm,
-				RFRegion: node.RFRegion,
-			})
-
-			throw error
 		}
+
+		this.sendToSocket(socketEvents.nodeUpdated, {
+			id: node.id,
+			powerlevel: node.powerlevel,
+			measured0dBm: node.measured0dBm,
+			RFRegion: node.RFRegion,
+		})
 	}
 
 	/**
