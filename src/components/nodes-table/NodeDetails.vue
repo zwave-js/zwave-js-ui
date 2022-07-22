@@ -57,11 +57,31 @@
 						:step="0.1"
 						suffix="dBm"
 						type="number"
-						clearable
-						clear-icon="refresh"
-						@click:clear="apiRequest('updateControllerNodeProps')"
-						@click:append-outer="updatePowerLevel"
-					></v-text-field>
+					>
+						<template v-slot:append-outer>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="
+									apiRequest('updateControllerNodeProps', [
+										null,
+										['powerlevel'],
+									])
+								"
+							>
+								<v-icon>refresh</v-icon>
+							</v-btn>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="updatePowerLevel"
+							>
+								<v-icon>send</v-icon>
+							</v-btn>
+						</template>
+					</v-text-field>
 				</v-col>
 				<v-col
 					v-if="node.RFRegion !== undefined"
@@ -73,11 +93,17 @@
 						:items="rfRegions"
 						clearable
 						clear-icon="refresh"
-						@click:clear="apiRequest('updateControllerNodeProps')"
+						@click:clear="
+							apiRequest('updateControllerNodeProps', [
+								null,
+								['RFRegion'],
+							])
+						"
 						append-outer-icon="send"
 						@click:append-outer="updateRFRegion"
 						v-model="node.RFRegion"
-					></v-select>
+					>
+					</v-select>
 				</v-col>
 			</v-row>
 			<v-col style="max-width: 700px" dense>
