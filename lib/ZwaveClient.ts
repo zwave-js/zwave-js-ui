@@ -1233,6 +1233,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							: undefined,
 				},
 				emitValueUpdateAfterSetValue: true,
+				apiKeys: {
+					firmwareUpdateService:
+						'ffcc1a6da32e5a863e739a991b1ea92de57eb28ef4f1fd373b164df84095c43637ecc617d2119ae7e4768619fe16d305',
+				},
 			}
 
 			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
@@ -1312,7 +1316,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				// init driver here because if connect fails the driver is destroyed
 				// this could throw so include in the try/catch
 				this._driver = new Driver(this.cfg.port, zwaveOptions)
-
 				this._driver.enableErrorReporting()
 				this._driver.on('error', this._onDriverError.bind(this))
 				this._driver.once(
