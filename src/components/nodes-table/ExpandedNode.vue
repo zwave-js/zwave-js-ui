@@ -99,7 +99,7 @@
 				</v-tab>
 				<v-tab
 					key="ota"
-					v-if="node.isControllerNode"
+					v-if="!node.isControllerNode"
 					class="justify-start"
 				>
 					<v-icon small left>auto_mode</v-icon> OTA Updates
@@ -180,7 +180,7 @@
 
 					<!-- TAB OTA UPDATES -->
 					<v-tab-item
-						v-if="node.isControllerNode"
+						v-if="!node.isControllerNode"
 						key="ota"
 						transition="slide-y-transition"
 					>
