@@ -165,7 +165,7 @@ export const actions = {
 
 export const mutations = {
   showSnackbar() {
-    // empty mutation, will be catched in App.vue from store subscribe
+    // empty mutation, will be caught in App.vue from store subscribe
   },
   setAuth(store, enabled) {
     state.auth = enabled
@@ -396,7 +396,7 @@ export const mutations = {
 
     if (devices) {
       // devices is an object where key is the device ID and value contains
-      // device informations
+      // device information
       for (const k in devices) {
         const d = devices[k]
         d.value = k
@@ -404,7 +404,7 @@ export const mutations = {
         const values = []
 
         // device.values is an object where key is the valueID (cmdClass-instance-index) and value contains
-        // value informations
+        // value information
         for (const id in d.values) {
           const val = d.values[id]
           values.push(val)

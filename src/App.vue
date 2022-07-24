@@ -654,7 +654,7 @@ export default {
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
-						'Error while retriving configuration, check console'
+						'Error while retrieving configuration, check console'
 					)
 					console.log(data)
 				} else {
@@ -676,7 +676,7 @@ export default {
               • Information about which version of <code>node-zwave-js</code> you are running;</br>
               • The <b>manufacturer ID</b>, <b>product type</b>, <b>product ID</b>, and <b>firmware version</b> of each device that is part of your Z-Wave network.</br></br>
 
-              <p>Informations are sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by Z-Wave JS.
+              <p>Information is sent <b>once a day</b> or, if you restart your network, when all nodes are ready. Collecting this information is critical to the user experience provided by Z-Wave JS.
               More information about the data that is collected and how it is used, including an example of the data collected, can be found <a target="_blank" href="https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics">here</a>`,
 							'info</p>',
 							{
