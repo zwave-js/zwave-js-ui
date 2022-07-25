@@ -18,9 +18,13 @@ import {
 	ControllerStatistics,
 	DataRate,
 	Driver,
+	ExclusionOptions,
+	ExclusionStrategy,
 	extractFirmware,
+	FirmwareUpdateFileInfo,
 	FirmwareUpdateStatus,
 	FLiRS,
+	FoundNode,
 	guessFirmwareFileFormat,
 	HealNodeStatus,
 	InclusionGrant,
@@ -44,6 +48,7 @@ import {
 	ReplaceNodeOptions,
 	RFRegion,
 	RouteHealthCheckSummary,
+	SerialAPISetupCommand,
 	SetValueAPIOptions,
 	SmartStartProvisioningEntry,
 	TranslatedValueID,
@@ -52,6 +57,7 @@ import {
 	ValueType,
 	ZWaveError,
 	ZWaveNode,
+	ZWaveNodeEvents,
 	ZWaveNodeMetadataUpdatedArgs,
 	ZWaveNodeValueAddedArgs,
 	ZWaveNodeValueNotificationArgs,
@@ -61,13 +67,6 @@ import {
 	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
-	ZWaveNodeEvents,
-	SerialAPISetupCommand,
-	FirmwareUpdateFileInfo,
-	FirmwareUpdateInfo,
-	FoundNode,
-	ExclusionStrategy,
-	ExclusionOptions,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir } from '../config/app'
@@ -85,8 +84,8 @@ import { TypedEventEmitter } from './EventEmitter'
 import { GatewayValue } from './Gateway'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
-import { socketEvents } from './SocketEvents'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
+import { socketEvents } from './SocketEvents'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
