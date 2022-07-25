@@ -1377,7 +1377,7 @@ export default {
 					return (
 						!value ||
 						value.length === 32 ||
-						'Key must be 32 charaters length'
+						'Key must be 32 characters length'
 					)
 				},
 				validKey: (value) => {
@@ -1408,7 +1408,7 @@ export default {
 		differentKeys() {
 			const values = Object.values(this.newZwave.securityKeys)
 
-			// ensure thre are no duplicates
+			// ensure there are no duplicates
 			return (
 				values.length === new Set(values).size ||
 				'Keys must be different'
@@ -1558,7 +1558,7 @@ export default {
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
-						'Error while retriving configuration, check console'
+						'Error while retrieving configuration, check console'
 					)
 					console.log(data)
 				} else {

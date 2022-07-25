@@ -2337,7 +2337,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Retrives the value of a property from the node valueId
+	 * Retrieves the value of a property from the node valueId
 	 */
 	private _setDiscoveryValue(
 		payload: any,

@@ -124,7 +124,7 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
      - `node_location`: location of the Z-Wave node (optional)
      - `node_name`: name of the node, if not set it will be `nodeID_<node_id>`
      - `class_name`: the valueId command class name corresponding to the given command class number or `unknownClass_<class_id>` if the class name is not known
-     - `?endpoint`: Used only with multi-instance devices. Endpoints, other than the main enpoint (0), will have: `endpoint_<endpoint>`
+     - `?endpoint`: Used only with multi-instance devices. Endpoints, other than the main endpoint (0), will have: `endpoint_<endpoint>`
      - `propertyName`: the value [propertyName](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
      - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 

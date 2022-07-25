@@ -32,7 +32,7 @@ sudo snap connect zwavejs2mqtt:hardware-observe
 > [!NOTE]
 > See `zwavejs2mqtt.help` for usage and environment settings.
 >
-> Raspberry Pi users running Rasbian/Debian, read [this thread](https://github.com/zwave-js/zwavejs2mqtt/discussions/1216#discussion-3364776). Please ask Rasbian/Debian related-questions in this thread.
+> Raspberry Pi users running Raspbian/Debian, read [this thread](https://github.com/zwave-js/zwavejs2mqtt/discussions/1216#discussion-3364776). Please ask Raspbian/Debian related-questions in this thread.
 
 ## NodeJS or PKG version
 
