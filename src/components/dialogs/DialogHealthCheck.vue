@@ -79,7 +79,7 @@
 										<v-list-item-subtitle
 											>The maximum time it took to send a
 											ping to the node. Lower = better,
-											ideally 10 ms. ill use the time in
+											ideally 10 ms. Will use the time in
 											TX reports if available, otherwise
 											fall back to measuring the round
 											trip time.</v-list-item-subtitle

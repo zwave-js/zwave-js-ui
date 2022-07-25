@@ -58,7 +58,7 @@
 										Advanced actions
 									</v-list-item-title>
 									<v-list-item-subtitle>
-										Maintainance, troubleshooting and other
+										Maintenance, troubleshooting and other
 										advanced actions
 									</v-list-item-subtitle>
 								</v-list-item-content>

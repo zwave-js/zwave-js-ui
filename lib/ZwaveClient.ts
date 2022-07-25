@@ -873,7 +873,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Popolate node `groups`
+	 * Populate node `groups`
 	 */
 	getGroups(nodeId: number, ignoreUpdate = false) {
 		const zwaveNode = this.getNode(nodeId)
@@ -1242,7 +1242,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
 			await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
 
-			// when not set let zwavejs handle this based on the envirnoment
+			// when not set let zwavejs handle this based on the environment
 			if (typeof this.cfg.enableSoftReset === 'boolean') {
 				zwaveOptions.enableSoftReset = this.cfg.enableSoftReset
 			}
@@ -1351,7 +1351,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (this._driver) {
 					this._driver.destroy().catch((err) => {
 						logger.error(
-							`Error while destroing driver ${err.message}`,
+							`Error while destroying driver ${err.message}`,
 							error
 						)
 					})
@@ -2991,7 +2991,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
-		// it's set when the backup has been triggerd by an event
+		// it's set when the backup has been triggered by an event
 		const event = this.nvmEvent ? this.nvmEvent + '_' : ''
 		this.nvmEvent = null
 
@@ -4045,7 +4045,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			writeable: zwaveValueMeta.writeable,
 			description: zwaveValueMeta.description,
 			label:
-				zwaveValueMeta.label || zwaveValue.propertyName + ' (property)', // when label is missing, re use propertyName. Usefull for webinterface
+				zwaveValueMeta.label || zwaveValue.propertyName + ' (property)', // when label is missing, re use propertyName. Useful for webinterface
 			default: zwaveValueMeta.default,
 			ccSpecific: zwaveValueMeta.ccSpecific,
 			stateless: zwaveValue.stateless || false, // used for notifications to specify that this should not be persisted (retained)
@@ -4123,7 +4123,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			const vID = this._getValueID(valueId)
 
-			// a valueId is udpated when it doesn't exist or its value is updated
+			// a valueId is updated when it doesn't exist or its value is updated
 			const updated =
 				!oldValues ||
 				!oldValues[vID] ||
@@ -4191,7 +4191,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Used to map existance of CCs to node properties
+	 * Used to map existence of CCs to node properties
 	 */
 	private _mapCCExistsToNodeProps(node: Z2MNode) {
 		for (const cc in nodePropsMap) {

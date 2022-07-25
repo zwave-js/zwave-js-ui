@@ -47,7 +47,7 @@ export class ManagedItems {
 
 		this._selected = this.initialSelected
 
-		// fix possible inconsistance from localstorage
+		// fix possible inconsistence from localstorage
 		for (const p in this.filters) {
 			if (!this.propDefs[p]) {
 				delete this.filters[p]
@@ -220,7 +220,7 @@ export class ManagedItems {
 	}
 
 	/**
-	 * Get the active table colum list
+	 * Get the active table column list
 	 */
 	get tableColumns() {
 		return this._columns
