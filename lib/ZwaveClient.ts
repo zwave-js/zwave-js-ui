@@ -3246,6 +3246,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// don't set the node as ready before all values are added, to prevent discovery
 		node.ready = true
 
+		if (node.isControllerNode) {
+			this.updateControllerNodeProps(node).catch((error) => {
+				logger.error(
+					`Failed to get controller node ${node.id} properties: ${error.message}`
+				)
+			})
+		}
+
 		this.getGroups(zwaveNode.id, true)
 
 		// handle mapped node properties:
@@ -3930,13 +3938,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.supportsSecurity = zwaveNode.supportsSecurity
 		node.supportsBeaming = zwaveNode.supportsBeaming
 		node.isControllerNode = zwaveNode.isControllerNode
-		if (node.isControllerNode) {
-			this.updateControllerNodeProps(node).catch((error) => {
-				logger.error(
-					`Failed to get controller node ${node.id} properties: ${error.message}`
-				)
-			})
-		}
 		node.isListening = zwaveNode.isListening
 		node.isFrequentListening = zwaveNode.isFrequentListening
 		node.isRouting = zwaveNode.isRouting
