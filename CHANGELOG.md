@@ -1,3 +1,15 @@
+## [6.14.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.14.0...v6.14.1) (2022-07-27)
+
+
+### Bug Fixes
+
+* typos in code ([#2544](https://github.com/zwave-js/zwavejs2mqtt/issues/2544)) ([e7e397b](https://github.com/zwave-js/zwavejs2mqtt/commit/e7e397b9f9feff25c31bdfe0cbb03b82af9b715f))
+
+
+### Features
+
+* bump @zwave-js/server@1.21.0 ([#2550](https://github.com/zwave-js/zwavejs2mqtt/issues/2550)) ([a33b85a](https://github.com/zwave-js/zwavejs2mqtt/commit/a33b85ac046dd03438bae92e134fbb61ede94773))
+
 # [6.14.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.13.0...v6.14.0) (2022-07-22)
 
 
