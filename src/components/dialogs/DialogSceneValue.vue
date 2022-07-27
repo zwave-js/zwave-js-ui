@@ -70,7 +70,7 @@
 								<v-text-field
 									v-model.number="editedValue.timeout"
 									label="Timeout"
-									hint="Seconds to wait before send this value. Set to 0 to send immediatly"
+									hint="Seconds to wait before send this value. Set to 0 to send immediately"
 									suffix="s"
 									:rules="[positive]"
 									required

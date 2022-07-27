@@ -1,6 +1,6 @@
 # Home Assistant Using MQTT Discovery
 
-The preferred method of integrating your Z-Wave components with Home Assistant is through the official Home Assistant [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js), this because MQTT Discovery is limited compared to a native integration and Home Assistant updates frequently break it. Based on this I would **NOT RECCOMMEND** using MQTT Discovery, I don't plan to keep it maintained in the future.
+The preferred method of integrating your Z-Wave components with Home Assistant is through the official Home Assistant [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js), this because MQTT Discovery is limited compared to a native integration and Home Assistant updates frequently break it. Based on this I would **NOT RECOMMEND** using MQTT Discovery, I don't plan to keep it maintained in the future.
 
 If you elect to use MQTT discovery, the following settings will allow ZWavejs2Mqtt to automatically add devices to Home Assistant. In addition to ZWavejs2Mqtt, you must run an MQTT broker to act as the server.
 
@@ -318,7 +318,7 @@ sensor:
 
 If you need to create a switch that triggers a scene activation (using MQTT APIs) you can use this example.
 
-Add the following entriy in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with your values, based on your mqtt settings and `<sceneId>` with the scene you want to activate
+Add the following entry in the `configuration.yaml`. Replace `<mqtt_prefix>` and `<mqtt_name>` with your values, based on your mqtt settings and `<sceneId>` with the scene you want to activate
 
 ```yaml
 switch:

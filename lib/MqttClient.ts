@@ -145,7 +145,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 					resolve()
 				}
 				this.client.end(false, {}, onClose)
-				// in case a clean close doens't work, force close
+				// in case a clean close doesn't work, force close
 				this._closeTimeout = setTimeout(() => {
 					this.client.end(true, {}, onClose)
 				}, 5000)
@@ -242,7 +242,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 						for (const res of granted) {
 							if (res.qos === 128) {
 								logger.error(
-									`Error subscribing to ${topic}, client doesn't have permmission to subscribe to it`
+									`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`
 								)
 							} else {
 								logger.info(`Subscribed to ${topic}`)

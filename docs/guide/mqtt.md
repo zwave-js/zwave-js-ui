@@ -38,7 +38,7 @@ The result will be published on the same topic without `/set`
 
 This are the available APIs:
 
-- All Z-Wave Clients scene management methods preceeded by a `_` will use the internal scenes management instead of Z-Wave JS scenes:
+- All Z-Wave Clients scene management methods preceded by a `_` will use the internal scenes management instead of Z-Wave JS scenes:
   - `_createScene(label)`
   - `_removeScene(sceneId)`
   - `_setScenes(scenes[])`: Imports scenes Array in `scenes.json`
