@@ -21,7 +21,7 @@ spec:
             httpHeaders:
             - name: Accept
               value: text/plain
-            path: /health/zwave
+            path: /health
             port: http
           initialDelaySeconds: 30
           periodSeconds: 10
