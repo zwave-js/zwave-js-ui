@@ -131,7 +131,7 @@
     "archiver": "^5.3.0",
     "axios": "^0.22.0",
     "axios-progress-bar": "^1.2.0",
-    "connect-history-api-fallback": "^1.6.0",
+    "connect-history-api-fallback": "^2.0.0",
     "cookie-parser": "^1.4.5",
     "cors": "^2.8.5",
     "croner": "^4.3.14",
