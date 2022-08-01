@@ -122,6 +122,10 @@ const apisLimiter = rateLimit({
 	},
 })
 
+function sslDisabled() {
+	return process.env.FORCE_DISABLE_SSL === 'true'
+}
+
 // apis response codes
 enum RESPONSE_CODES {
 	OK = 'OK',
@@ -177,17 +181,32 @@ export async function startServer(host: string, port: number | string) {
 	const httpsEnabled = process.env.HTTPS || settings?.gateway?.https
 
 	if (httpsEnabled) {
-		logger.info('HTTPS is enabled. Loading cert and keys')
-		const { cert, key } = await loadCertKey()
-		server = createHttpsServer(
-			{
-				key,
-				cert,
-				rejectUnauthorized: false,
-			},
-			app
-		)
-	} else {
+		if (!sslDisabled()) {
+			logger.info('HTTPS is enabled. Loading cert and keys')
+			const { cert, key } = await loadCertKey()
+
+			if (cert && key) {
+				server = createHttpsServer(
+					{
+						key,
+						cert,
+						rejectUnauthorized: false,
+					},
+					app
+				)
+			} else {
+				logger.warn(
+					'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP'
+				)
+			}
+		} else {
+			logger.warn(
+				'HTTPS enabled but FORCE_DISABLE_SSL env var is set. Falling back to HTTP'
+			)
+		}
+	}
+
+	if (!server) {
 		server = createHttpServer(app)
 	}
 
@@ -282,23 +301,27 @@ async function loadCertKey(): Promise<{
 			'Cert and key not found in store, generating fresh new ones...'
 		)
 
-		const result = await createCertificate({
-			days: 99999,
-			selfSigned: true,
-		})
+		try {
+			const result = await createCertificate({
+				days: 99999,
+				selfSigned: true,
+			})
 
-		key = result.serviceKey
-		cert = result.certificate
+			key = result.serviceKey
+			cert = result.certificate
 
-		await fs.writeFile(
-			utils.joinPath(storeDir, 'key.pem'),
-			result.serviceKey
-		)
-		await fs.writeFile(
-			utils.joinPath(storeDir, 'cert.pem'),
-			result.certificate
-		)
-		logger.info('New cert and key created')
+			await fs.writeFile(
+				utils.joinPath(storeDir, 'key.pem'),
+				result.serviceKey
+			)
+			await fs.writeFile(
+				utils.joinPath(storeDir, 'cert.pem'),
+				result.certificate
+			)
+			logger.info('New cert and key created')
+		} catch (error) {
+			logger.error('Error creating cert and key for HTTPS', error)
+		}
 	}
 
 	return { cert, key }
@@ -905,6 +928,7 @@ app.get(
 			devices: gw?.zwave?.devices ?? {},
 			serial_ports: [],
 			scales: scales,
+			sslDisabled: sslDisabled(),
 		}
 
 		if (process.platform !== 'sunos') {
