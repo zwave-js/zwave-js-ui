@@ -2807,7 +2807,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.emitNodeStatus(node)
 
-		this.emit('event', EventSource.CONTROLLER, 'node found', { node })
+		this.emit('event', EventSource.CONTROLLER, 'node found', { id: nodeId })
 	}
 
 	/**
@@ -3995,7 +3995,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				node.powerlevel = powerlevel
 				node.measured0dBm = measured0dBm
 			} else {
-				logger.warn('Powerlevel is not supported by controller')
+				logger.info('Powerlevel is not supported by controller')
 			}
 		}
 
@@ -4007,7 +4007,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			) {
 				node.RFRegion = await this._driver.controller.getRFRegion()
 			} else {
-				logger.warn('RF region is not supported by controller')
+				logger.info('RF region is not supported by controller')
 			}
 		}
 
