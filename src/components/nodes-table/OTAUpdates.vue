@@ -69,7 +69,7 @@
 			<v-col class="text-center" v-else-if="loading">
 				<v-progress-circular indeterminate color="primary" />
 				<p class="text-caption">
-					Remember to weak up sleeping devices...
+					Remember to wake up sleeping devices...
 				</p>
 			</v-col>
 			<v-col class="text-center" v-else>
