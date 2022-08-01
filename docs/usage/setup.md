@@ -54,7 +54,7 @@ NVM:
 
 ## Z-Wave
 
-- **Serial port**: The serial port where your controller is connected. If your port is not listed here just write the port path here and press enter.
+- **Serial port**: The serial port where your controller is connected. This input allows to insert custom values, if your port is not listed or you are using tools like [ser2net](https://github.com/cminyard/ser2net) to make it available throught TCP just write the port path and press enter.
 - **Security Keys** : Zwave network keys for secure inclusion S0/S2. You can manually input them or auto-generate them by using random generator button or by pasting your OZW keys in the input, they will be auto-converted in the correct format. Example of a valid key is: `5C14897467C42598518AF155DE6CCEA8` (length is 32).
   - **S0_Legacy** : Legacy S0 key
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
