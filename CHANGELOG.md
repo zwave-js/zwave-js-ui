@@ -1,3 +1,12 @@
+
+
+# [6.15.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.14.1...v6.15.0) (2022-08-02)
+
+
+### Features
+
+* allow to force disable SSL ([#2562](https://github.com/zwave-js/zwavejs2mqtt/issues/2562)) ([44d86a1](https://github.com/zwave-js/zwavejs2mqtt/commit/44d86a127d3fbb9a5ea2903b2d41d807b08ff4fb))
+
 ## [6.14.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.14.0...v6.14.1) (2022-07-27)
 
 
@@ -1866,6 +1875,3 @@ Co-authored-by: V Aretakis <vassilis@aretakis.eu>
 ### BREAKING CHANGES
 
 * Default Hass Birth/Will topic is changed from `hass/status` to `homeassistant/status` to reflect defaults of Hass 0.113
-
-
-
