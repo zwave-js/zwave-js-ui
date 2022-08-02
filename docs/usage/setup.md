@@ -220,7 +220,7 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
   - **Just value**: The payload will contain only the row Numeric/String/Bool value
 
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
-- **Send Z-Wave Events**: Enable this to send all Z-Wave client events to MQTT. More info [here](#zwave-events)
+- **Send Z-Wave Events**: Enable this to send all Z-Wave client events to MQTT. More info [here](/guide/mqtt#z-wave-events)
 - **Include Node info**: Adds in ValueId json payload two extra values with the Name: `nodeName` and Location `nodeLocation` for better graphing capabilities (useful in tools like InfluxDb,Grafana)
 - **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
 - **Ignore location**: Enable this to remove nodes location from topics
