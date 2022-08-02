@@ -1114,13 +1114,13 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 		let data: StoreFileEntry[] | string
 		if (req.query.path) {
 			const reqPath = getSafePath(req)
-
+			// lgtm [js/path-injection]
 			const stat = await fs.lstat(reqPath)
 
 			if (!stat.isFile()) {
 				throw Error('Path is not a file')
 			}
-
+			// lgtm [js/path-injection]
 			data = await fs.readFile(reqPath, 'utf8')
 		} else {
 			data = [
@@ -1148,6 +1148,7 @@ app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 		const isDirectory = req.query.isDirectory === 'true'
 
 		if (!isNew) {
+			// lgtm [js/path-injection]
 			const stat = await fs.lstat(reqPath)
 
 			if (!stat.isFile()) {
@@ -1156,8 +1157,10 @@ app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 		}
 
 		if (!isDirectory) {
+			// lgtm [js/path-injection]
 			await fs.writeFile(reqPath, req.body.content, 'utf8')
 		} else {
+			// lgtm [js/path-injection]
 			await fs.mkdir(reqPath)
 		}
 
@@ -1176,6 +1179,7 @@ app.delete(
 		try {
 			const reqPath = getSafePath(req)
 
+			// lgtm [js/path-injection]
 			await fs.remove(reqPath)
 
 			res.json({ success: true })

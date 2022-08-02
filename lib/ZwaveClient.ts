@@ -1245,6 +1245,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
+			// lgtm [js/path-injection]
 			await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
 
 			// when not set let zwavejs handle this based on the environment
