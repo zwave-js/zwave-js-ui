@@ -67,6 +67,9 @@ import {
 	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
+	ZWaveNodeEvents,
+	SerialAPISetupCommand,
+	FirmwareUpdateFileInfo,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir } from '../config/app'

@@ -44,20 +44,6 @@
 						</v-list-item-content>
 					</v-list-item>
 				</v-list>
-				<v-footer
-					absolute
-					v-if="!mini"
-					class="text-center text-caption"
-				>
-					<v-col class="d-flex pa-0 justify-center text-caption">
-						&copy;{{ new Date().getFullYear() }} —
-						<strong class="ml-1 mr-2"
-							><a href="https://github.com/sponsors/robertsLando"
-								>Daniel Lando</a
-							></strong
-						>
-					</v-col>
-				</v-footer>
 			</v-navigation-drawer>
 
 			<v-app-bar app>
@@ -257,6 +243,7 @@
 		<main style="height: 100%">
 			<v-main style="height: 100%">
 				<router-view
+					style="padding-bottom: 40px"
 					v-if="auth !== undefined"
 					@import="importFile"
 					@export="exportConfiguration"
@@ -284,6 +271,20 @@
 						>
 					</v-col>
 				</v-row>
+				<v-footer
+					v-if="$route.path !== '/store'"
+					fixed
+					class="text-center text-caption"
+				>
+					<v-col class="d-flex pa-0 justify-center text-caption">
+						Made with &#10084;&#65039; by
+						<strong class="ml-1 mr-2">Daniel Lando</strong>-
+						Enjoying it?&nbsp;
+						<a href="https://github.com/sponsors/robertsLando"
+							>Support me &#128591;</a
+						>
+					</v-col>
+				</v-footer>
 			</v-main>
 		</main>
 
@@ -878,7 +879,7 @@ export default {
 </script>
 
 <style scoped>
-.v-tabs >>> .smaller-min-width-tabs {
+.v-tabs :deep(.smaller-min-width-tabs) {
 	min-width: 60px;
 }
 </style>

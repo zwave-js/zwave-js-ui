@@ -229,7 +229,7 @@
 </template>
 <style scoped>
 /* optional class for removing the outline */
-.prism-editor-wrapper >>> .prism-editor__textarea:focus {
+.prism-editor-wrapper :deep(.prism-editor__textarea:focus) {
 	outline: none !important;
 }
 

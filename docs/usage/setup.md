@@ -7,7 +7,7 @@ To configure ZWavejs2Mqtt, you must access it via your web browser at <http://lo
 - **Auth**: Enable this to password protect your application. Default credentials are:
   - Username:`admin`
   - Password: `zwave`
-- **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload).
+- **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload). **Requires openssl to be installed on the machine.**
 - **Plugins**: List of plugins to use. If the plugin you want to use is not listed just write the name or the path to it and press enter. More about plugins [here](/guide/plugins)
 - **Log enabled**: Enable logging for Zwavejs2Mqtt
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
@@ -54,7 +54,7 @@ NVM:
 
 ## Z-Wave
 
-- **Serial port**: The serial port where your controller is connected. If your port is not listed here just write the port path here and press enter.
+- **Serial port**: The serial port where your controller is connected. This input allows to insert custom values, if your port is not listed or you are using tools like [ser2net](https://github.com/cminyard/ser2net) to make it available throught TCP just write the port path and press enter.
 - **Security Keys** : Zwave network keys for secure inclusion S0/S2. You can manually input them or auto-generate them by using random generator button or by pasting your OZW keys in the input, they will be auto-converted in the correct format. Example of a valid key is: `5C14897467C42598518AF155DE6CCEA8` (length is 32).
   - **S0_Legacy** : Legacy S0 key
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
@@ -220,7 +220,7 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
   - **Just value**: The payload will contain only the row Numeric/String/Bool value
 
 - **Use nodes name instead of numeric nodeIDs**: When gateway type is `ValueId` use this flag to force to use node names instead of node ids in topic.
-- **Send Z-Wave Events**: Enable this to send all Z-Wave client events to MQTT. More info [here](#zwave-events)
+- **Send Z-Wave Events**: Enable this to send all Z-Wave client events to MQTT. More info [here](/guide/mqtt#z-wave-events)
 - **Include Node info**: Adds in ValueId json payload two extra values with the Name: `nodeName` and Location `nodeLocation` for better graphing capabilities (useful in tools like InfluxDb,Grafana)
 - **Ignore status updates**: Enable this to prevent gateway to send an MQTT message when a node changes its status (dead/sleep == false, alive == true)
 - **Ignore location**: Enable this to remove nodes location from topics
