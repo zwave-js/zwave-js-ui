@@ -5728,23 +5728,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"css-loader@npm:5.2.7":
-  version: 5.2.7
-  resolution: "css-loader@npm:5.2.7"
+"css-loader@npm:^6.7.1":
+  version: 6.7.1
+  resolution: "css-loader@npm:6.7.1"
   dependencies:
     icss-utils: ^5.1.0
-    loader-utils: ^2.0.0
-    postcss: ^8.2.15
+    postcss: ^8.4.7
     postcss-modules-extract-imports: ^3.0.0
     postcss-modules-local-by-default: ^4.0.0
     postcss-modules-scope: ^3.0.0
     postcss-modules-values: ^4.0.0
-    postcss-value-parser: ^4.1.0
-    schema-utils: ^3.0.0
+    postcss-value-parser: ^4.2.0
     semver: ^7.3.5
   peerDependencies:
-    webpack: ^4.27.0 || ^5.0.0
-  checksum: fb0742b30ac0919f94b99a323bdefe6d48ae46d66c7d966aae59031350532f368f8bba5951fcd268f2e053c5e6e4655551076268e9073ccb58e453f98ae58f8e
+    webpack: ^5.0.0
+  checksum: 170fdbc630a05a43679ef60fa97694766b568dbde37adccc0faafa964fc675f08b976bc68837bb73b61d60240e8d2cbcbf51540fe94ebc9dafc56e7c46ba5527
   languageName: node
   linkType: hard
 
@@ -10319,7 +10317,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"klona@npm:^2.0.4":
+"klona@npm:^2.0.4, klona@npm:^2.0.5":
   version: 2.0.5
   resolution: "klona@npm:2.0.5"
   checksum: 8c976126ea252b766e648a4866e1bccff9d3b08432474ad80c559f6c7265cf7caede2498d463754d8c88c4759895edd8210c85c0d3155e6aae4968362889466f
@@ -12853,17 +12851,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss-loader@npm:5.3.0":
-  version: 5.3.0
-  resolution: "postcss-loader@npm:5.3.0"
+"postcss-loader@npm:^7.0.1":
+  version: 7.0.1
+  resolution: "postcss-loader@npm:7.0.1"
   dependencies:
     cosmiconfig: ^7.0.0
-    klona: ^2.0.4
-    semver: ^7.3.4
+    klona: ^2.0.5
+    semver: ^7.3.7
   peerDependencies:
     postcss: ^7.0.0 || ^8.0.1
     webpack: ^5.0.0
-  checksum: 15b8b79aca7b072c37836061b0a72fa0ab4a6a204f83352c28a039451190e73dd3aa6e9658c23e49868e2c0982b5f028ebd61f55b3d713fa2a9eada326544aa5
+  checksum: 2a3cbcaaade598d4919824d384ae34ffbfc14a9c8db6cc3b154582356f4f44a1c9af9e731b81cf1947b089accf7d0ab7a0c51c717946985f89aa1708d2b4304d
   languageName: node
   linkType: hard
 
@@ -12952,7 +12950,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"postcss@npm:^8.1.10, postcss@npm:^8.2.15, postcss@npm:^8.4.14":
+"postcss@npm:^8.1.10, postcss@npm:^8.4.14, postcss@npm:^8.4.7":
   version: 8.4.14
   resolution: "postcss@npm:8.4.14"
   dependencies:
@@ -16860,7 +16858,7 @@ __metadata:
     cors: ^2.8.5
     croner: ^4.3.15
     cronstrue: ^2.11.0
-    css-loader: 5.2.7
+    css-loader: ^6.7.1
     csurf: ^1.11.0
     d3: ^7.6.1
     dagre-d3: ^0.6.4
@@ -16908,7 +16906,7 @@ __metadata:
     portfinder: ^1.0.28
     postcss: ^8.4.14
     postcss-import: ^14.1.0
-    postcss-loader: 5.3.0
+    postcss-loader: ^7.0.1
     postcss-url: ^10.1.3
     prettier: ^2.7.1
     prismjs: ^1.28.0
