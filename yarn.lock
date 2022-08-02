@@ -1758,10 +1758,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mdi/js@npm:^6.9.96":
-  version: 6.9.96
-  resolution: "@mdi/js@npm:6.9.96"
-  checksum: 94c43271585981e7ebf8cc5e3ead11915eea1339b79e849b351fbaae58e9626aaca0a8b031f0e80754d880ea6b08fd715906588f3cf980603bb5f6871bff12cc
+"@mdi/js@npm:7.0.96":
+  version: 7.0.96
+  resolution: "@mdi/js@npm:7.0.96"
+  checksum: 4bcc4542a2d8ba9e706a754333e90ce2677616709d3776016b83be59c7219e7514308dbca6e62c7dd38436b3c5d251b8769679c90e354f971b090fa2ebcbc4fe
   languageName: node
   linkType: hard
 
@@ -5024,17 +5024,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"connect-history-api-fallback@npm:2.0.0, connect-history-api-fallback@npm:^2.0.0":
+  version: 2.0.0
+  resolution: "connect-history-api-fallback@npm:2.0.0"
+  checksum: dc5368690f4a5c413889792f8df70d5941ca9da44523cde3f87af0745faee5ee16afb8195434550f0504726642734f2683d6c07f8b460f828a12c45fbd4c9a68
+  languageName: node
+  linkType: hard
+
 "connect-history-api-fallback@npm:^1.6.0":
   version: 1.6.0
   resolution: "connect-history-api-fallback@npm:1.6.0"
   checksum: 804ca2be28c999032ecd37a9f71405e5d7b7a4b3defcebbe41077bb8c5a0a150d7b59f51dcc33b2de30bc7e217a31d10f8cfad27e8e74c2fc7655eeba82d6e7e
-  languageName: node
-  linkType: hard
-
-"connect-history-api-fallback@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "connect-history-api-fallback@npm:2.0.0"
-  checksum: dc5368690f4a5c413889792f8df70d5941ca9da44523cde3f87af0745faee5ee16afb8195434550f0504726642734f2683d6c07f8b460f828a12c45fbd4c9a68
   languageName: node
   linkType: hard
 
@@ -6751,10 +6751,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dotenv@npm:^10.0.0":
-  version: 10.0.0
-  resolution: "dotenv@npm:10.0.0"
-  checksum: f412c5fe8c24fbe313d302d2500e247ba8a1946492db405a4de4d30dd0eb186a88a43f13c958c5a7de303938949c4231c56994f97d05c4bc1f22478d631b4005
+"dotenv@npm:^16.0.1":
+  version: 16.0.1
+  resolution: "dotenv@npm:16.0.1"
+  checksum: f459ffce07b977b7f15d8cc4ee69cdff77d4dd8c5dc8c85d2d485ee84655352c2415f9dd09d42b5b5985ced3be186130871b34e2f3e2569ebc72fbc2e8096792
   languageName: node
   linkType: hard
 
@@ -7550,10 +7550,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express-rate-limit@npm:^5.5.1":
-  version: 5.5.1
-  resolution: "express-rate-limit@npm:5.5.1"
-  checksum: 264820bd5fe350794f90497c5bdc7b323eec4394873cd4b9f9d3654b2c47b285e87270a5a11721fb7fb895d56218e9657ea7bb9a544dd43770c6e7beaad217e8
+"express-rate-limit@npm:^6.5.1":
+  version: 6.5.1
+  resolution: "express-rate-limit@npm:6.5.1"
+  peerDependencies:
+    express: ^4 || ^5
+  checksum: 2a57a3f774e8da26e7b10d5f99fc2c53adebbd8788ab2eff5f4aeb650fd1e099a8961d396b7ebd0c314c5d4a9b4b4ae69d52bb991355823fd7ff0522bdbfe854
   languageName: node
   linkType: hard
 
@@ -16272,7 +16274,7 @@ __metadata:
     "@babel/preset-env": ^7.18.10
     "@babel/register": ^7.18.9
     "@jamescoyle/vue-icon": ^0.1.2
-    "@mdi/js": ^6.9.96
+    "@mdi/js": 7.0.96
     "@release-it/conventional-changelog": ^3.3.0
     "@types/app-root-path": ^1.2.4
     "@types/archiver": ^5.3.1
@@ -16315,7 +16317,7 @@ __metadata:
     chai: ^4.3.6
     chai-as-promised: ^7.1.1
     chalk: ^4.1.2
-    connect-history-api-fallback: ^1.6.0
+    connect-history-api-fallback: 2.0.0
     conventional-changelog-cli: ^2.2.2
     cookie-parser: ^1.4.6
     copy-webpack-plugin: ^9.1.0
@@ -16329,7 +16331,7 @@ __metadata:
     deepmerge: ^4.2.2
     docsify: ^4.12.2
     docsify-cli: ^4.4.4
-    dotenv: ^10.0.0
+    dotenv: ^16.0.1
     ejs: ^3.1.8
     eslint: 7.32.0
     eslint-config-prettier: ^8.5.0
@@ -16342,7 +16344,7 @@ __metadata:
     eslint-plugin-promise: ^5.2.0
     eslint-plugin-vue: ^7.20.0
     express: ^4.18.1
-    express-rate-limit: ^5.5.1
+    express-rate-limit: ^6.5.1
     express-session: ^1.17.3
     extract-zip: ^2.0.1
     file-loader: ^6.2.0
