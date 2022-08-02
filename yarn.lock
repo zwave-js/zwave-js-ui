@@ -4863,14 +4863,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cli-spinners@npm:^2.5.0":
-  version: 2.6.1
-  resolution: "cli-spinners@npm:2.6.1"
-  checksum: 423409baaa7a58e5104b46ca1745fbfc5888bbd0b0c5a626e052ae1387060839c8efd512fb127e25769b3dc9562db1dc1b5add6e0b93b7ef64f477feb6416a45
-  languageName: node
-  linkType: hard
-
-"cli-spinners@npm:^2.6.1":
+"cli-spinners@npm:^2.5.0, cli-spinners@npm:^2.6.1":
   version: 2.7.0
   resolution: "cli-spinners@npm:2.7.0"
   checksum: a9afaf73f58d1f951fb23742f503631b3cf513f43f4c7acb1b640100eb76bfa16efbcd1994d149ffc6603a6d75dd3d4a516a76f125f90dce437de9b16fd0ee6f
@@ -15859,7 +15852,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-loader@npm:^15.10.0":
+"vue-loader@npm:15.10.0":
   version: 15.10.0
   resolution: "vue-loader@npm:15.10.0"
   dependencies:
@@ -16901,7 +16894,7 @@ __metadata:
     typescript: ^4.7.4
     url-loader: ^4.1.1
     vue: ^2.7.8
-    vue-loader: ^15.10.0
+    vue-loader: 15.10.0
     vue-prism-editor: ^1.3.0
     vue-qrcode-reader: ^3.1.0
     vue-router: ^3.5.4
