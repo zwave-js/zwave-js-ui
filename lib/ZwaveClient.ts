@@ -21,7 +21,6 @@ import {
 	ExclusionOptions,
 	ExclusionStrategy,
 	extractFirmware,
-	FirmwareUpdateFileInfo,
 	FirmwareUpdateStatus,
 	FLiRS,
 	FoundNode,
@@ -48,7 +47,6 @@ import {
 	ReplaceNodeOptions,
 	RFRegion,
 	RouteHealthCheckSummary,
-	SerialAPISetupCommand,
 	SetValueAPIOptions,
 	SmartStartProvisioningEntry,
 	TranslatedValueID,
@@ -57,7 +55,6 @@ import {
 	ValueType,
 	ZWaveError,
 	ZWaveNode,
-	ZWaveNodeEvents,
 	ZWaveNodeMetadataUpdatedArgs,
 	ZWaveNodeValueAddedArgs,
 	ZWaveNodeValueNotificationArgs,
@@ -1239,6 +1236,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					firmwareUpdateService:
 						'ffcc1a6da32e5a863e739a991b1ea92de57eb28ef4f1fd373b164df84095c43637ecc617d2119ae7e4768619fe16d305',
 				},
+				inclusionUserCallbacks: {
+					grantSecurityClasses:
+						this._onGrantSecurityClasses.bind(this),
+					validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+					abort: this._onAbortInclusion.bind(this),
+				},
 			}
 
 			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
@@ -1858,13 +1861,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				} else {
 					inclusionOptions = {
 						strategy,
-						userCallbacks: {
-							grantSecurityClasses:
-								this._onGrantSecurityClasses.bind(this),
-							validateDSKAndEnterPIN:
-								this._onValidateDSK.bind(this),
-							abort: this._onAbortInclusion.bind(this),
-						},
 					}
 				}
 				return this._driver.controller.replaceFailedNode(
@@ -2025,7 +2021,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					case InclusionStrategy.Default:
 						inclusionOptions = {
 							strategy,
-							userCallbacks,
 							forceSecurity: options?.forceSecurity,
 						}
 						break
@@ -2053,7 +2048,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								provisioning: options.provisioning,
 							}
 						} else {
-							inclusionOptions = { strategy, userCallbacks }
+							inclusionOptions = { strategy }
 						}
 						break
 					default:
