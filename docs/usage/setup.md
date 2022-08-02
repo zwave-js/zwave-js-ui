@@ -7,7 +7,7 @@ To configure ZWavejs2Mqtt, you must access it via your web browser at <http://lo
 - **Auth**: Enable this to password protect your application. Default credentials are:
   - Username:`admin`
   - Password: `zwave`
-- **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload).
+- **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload). **Requires openssl to be installed on the machine.**
 - **Plugins**: List of plugins to use. If the plugin you want to use is not listed just write the name or the path to it and press enter. More about plugins [here](/guide/plugins)
 - **Log enabled**: Enable logging for Zwavejs2Mqtt
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)

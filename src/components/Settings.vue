@@ -80,7 +80,12 @@
 											v-model="newGateway.authEnabled"
 										></v-switch>
 									</v-col>
-									<v-col cols="12" sm="6" md="4">
+									<v-col
+										v-if="!sslDisabled"
+										cols="12"
+										sm="6"
+										md="4"
+									>
 										<v-switch
 											hint="Enable this to serve page using HTTPS. REQUIRES APP RELOAD"
 											persistent-hint
@@ -1274,6 +1279,7 @@ export default {
 		return {
 			valid_zwave: true,
 			dialogValue: false,
+			sslDisabled: false,
 			newGateway: {},
 			newMqtt: {},
 			newZwave: {},
@@ -1563,6 +1569,7 @@ export default {
 					console.log(data)
 				} else {
 					this.$store.dispatch('init', data)
+					this.sslDisabled = data.sslDisabled
 					this.resetConfig()
 				}
 			} catch (error) {
