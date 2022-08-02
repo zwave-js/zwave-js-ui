@@ -44,20 +44,6 @@
 						</v-list-item-content>
 					</v-list-item>
 				</v-list>
-				<v-footer
-					absolute
-					v-if="!mini"
-					class="text-center text-caption"
-				>
-					<v-col class="d-flex pa-0 justify-center text-caption">
-						&copy;{{ new Date().getFullYear() }} —
-						<strong class="ml-1 mr-2"
-							><a href="https://github.com/sponsors/robertsLando"
-								>Daniel Lando</a
-							></strong
-						>
-					</v-col>
-				</v-footer>
 			</v-navigation-drawer>
 
 			<v-app-bar app>
@@ -306,6 +292,16 @@
 			{{ snackbarText }}
 			<v-btn text @click="snackbar = false">Close</v-btn>
 		</v-snackbar>
+		<v-footer absolute class="text-center text-caption">
+			<v-col class="d-flex pa-0 justify-center text-caption">
+				Made with &#10084;&#65039; by
+				<strong class="ml-1 mr-2">Daniel Lando</strong>- Enjoying
+				it?&nbsp;
+				<a href="https://github.com/sponsors/robertsLando"
+					>Support me &#128591;</a
+				>
+			</v-col>
+		</v-footer>
 	</v-app>
 </template>
 

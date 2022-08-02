@@ -79,20 +79,6 @@
 				<v-alert dismissible :type="error_type" v-model="error">{{
 					error_text
 				}}</v-alert>
-				<v-footer
-					padless
-					style="position: absolute; bottom: 0; width: 100%"
-				>
-					<v-col class="d-flex pa-2 justify-center text-caption">
-						&copy;{{ new Date().getFullYear() }} —
-						<strong class="ml-1 mr-2"
-							><a href="https://github.com/sponsors/robertsLando"
-								>Daniel Lando</a
-							></strong
-						>
-						All Rights Reserved.
-					</v-col>
-				</v-footer>
 			</v-card>
 		</v-col>
 	</v-container>
