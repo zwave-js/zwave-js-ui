@@ -879,7 +879,7 @@ export default {
 </script>
 
 <style scoped>
-.v-tabs >>> .smaller-min-width-tabs {
+.v-tabs :deep(.smaller-min-width-tabs) {
 	min-width: 60px;
 }
 </style>

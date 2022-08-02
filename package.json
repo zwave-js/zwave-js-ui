@@ -94,7 +94,7 @@
     }
   },
   "optionalDependencies": {
-    "@release-it/conventional-changelog": "^3.3.0",
+    "@release-it/conventional-changelog": "^5.0.0",
     "@types/node": "^16.11.47",
     "c8": "^7.12.0",
     "chai": "^4.3.6",
@@ -220,7 +220,7 @@
     "babel-plugin-syntax-jsx": "^6.18.0",
     "babel-plugin-transform-vue-jsx": "^3.7.0",
     "chalk": "^4.1.2",
-    "copy-webpack-plugin": "^9.1.0",
+    "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.1",
     "deepmerge": "^4.2.2",
     "eslint-config-prettier": "^8.5.0",
@@ -239,7 +239,7 @@
     "prettier": "^2.7.1",
     "rimraf": "^3.0.2",
     "sass": "^1.54.0",
-    "sass-loader": "^12.6.0",
+    "sass-loader": "^13.0.2",
     "semver": "^7.3.7",
     "shelljs": "^0.8.5",
     "terser-webpack-plugin": "^5.3.3",

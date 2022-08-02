@@ -1990,17 +1990,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@release-it/conventional-changelog@npm:^3.3.0":
-  version: 3.3.0
-  resolution: "@release-it/conventional-changelog@npm:3.3.0"
+"@release-it/conventional-changelog@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@release-it/conventional-changelog@npm:5.0.0"
   dependencies:
     concat-stream: ^2.0.0
-    conventional-changelog: ^3.1.24
+    conventional-changelog: ^3.1.25
     conventional-recommended-bump: ^6.1.0
-    prepend-file: ^2.0.0
   peerDependencies:
-    release-it: ^14.11.5
-  checksum: af3d74e1715278926f9516822df23db444982e44622506012711675b1b5172617fabae977161c2bd8958cf12b190d0816e8a81ec7f11c82efbe7307cc2c53a3f
+    release-it: ^15.0.0-esm.4
+  checksum: 205a743018451c3c7fe4ab233bbc0142c54dae8dbf607d4629ed2e16e810791ce85db600b0c7dd8e7bab8ebc5ff890cc82bf5d7c053c7b7c7b10d34c4a9d6cea
   languageName: node
   linkType: hard
 
@@ -5431,7 +5430,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"conventional-changelog@npm:^3.1.24":
+"conventional-changelog@npm:^3.1.24, conventional-changelog@npm:^3.1.25":
   version: 3.1.25
   resolution: "conventional-changelog@npm:3.1.25"
   dependencies:
@@ -5548,19 +5547,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"copy-webpack-plugin@npm:^9.1.0":
-  version: 9.1.0
-  resolution: "copy-webpack-plugin@npm:9.1.0"
+"copy-webpack-plugin@npm:^11.0.0":
+  version: 11.0.0
+  resolution: "copy-webpack-plugin@npm:11.0.0"
   dependencies:
-    fast-glob: ^3.2.7
+    fast-glob: ^3.2.11
     glob-parent: ^6.0.1
-    globby: ^11.0.3
+    globby: ^13.1.1
     normalize-path: ^3.0.0
-    schema-utils: ^3.1.1
+    schema-utils: ^4.0.0
     serialize-javascript: ^6.0.0
   peerDependencies:
     webpack: ^5.1.0
-  checksum: 06cb4fb6fc99a95ccfd3169115ee57f64953e5b4075900fc8faab98b7e7d3fcd6915b125fdb98c919cfd55e581a8444f5c6b9dbb342cbd60b154d8fb3f79f2b9
+  checksum: df4f8743f003a29ee7dd3d9b1789998a3a99051c92afb2ba2203d3dacfa696f4e757b275560fafb8f206e520a0aa78af34b990324a0e36c2326cefdeef3ca82e
   languageName: node
   linkType: hard
 
@@ -7925,7 +7924,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:^3.2.11, fast-glob@npm:^3.2.7, fast-glob@npm:^3.2.9":
+"fast-glob@npm:^3.2.11, fast-glob@npm:^3.2.9":
   version: 3.2.11
   resolution: "fast-glob@npm:3.2.11"
   dependencies:
@@ -8732,7 +8731,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:13.1.2":
+"globby@npm:13.1.2, globby@npm:^13.1.1":
   version: 13.1.2
   resolution: "globby@npm:13.1.2"
   dependencies:
@@ -8745,7 +8744,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"globby@npm:^11.0.3, globby@npm:^11.1.0":
+"globby@npm:^11.1.0":
   version: 11.1.0
   resolution: "globby@npm:11.1.0"
   dependencies:
@@ -8820,7 +8819,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"graceful-fs@npm:4.2.10, graceful-fs@npm:^4.1.15, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.9":
+"graceful-fs@npm:4.2.10, graceful-fs@npm:^4.1.2, graceful-fs@npm:^4.1.6, graceful-fs@npm:^4.2.0, graceful-fs@npm:^4.2.4, graceful-fs@npm:^4.2.6, graceful-fs@npm:^4.2.9":
   version: 4.2.10
   resolution: "graceful-fs@npm:4.2.10"
   checksum: 3f109d70ae123951905d85032ebeae3c2a5a7a997430df00ea30df0e3a6c60cf6689b109654d6fdacd28810a053348c4d14642da1d075049e6be1ba5216218da
@@ -12998,15 +12997,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prepend-file@npm:^2.0.0":
-  version: 2.0.1
-  resolution: "prepend-file@npm:2.0.1"
-  dependencies:
-    temp-write: ^4.0.0
-  checksum: 316620a1028abca8f740a4c5d8eef73dc55fc1c35f421b0c6e3c99bbdc6d2efc15f2e0ef211cd90abc8e2cf7f85ce9792a28b997b3dab9abcd44e78e77cb1cf6
-  languageName: node
-  linkType: hard
-
 "prepend-http@npm:^2.0.0":
   version: 2.0.0
   resolution: "prepend-http@npm:2.0.0"
@@ -13995,9 +13985,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sass-loader@npm:^12.6.0":
-  version: 12.6.0
-  resolution: "sass-loader@npm:12.6.0"
+"sass-loader@npm:^13.0.2":
+  version: 13.0.2
+  resolution: "sass-loader@npm:13.0.2"
   dependencies:
     klona: ^2.0.4
     neo-async: ^2.6.2
@@ -14016,7 +14006,7 @@ __metadata:
       optional: true
     sass-embedded:
       optional: true
-  checksum: 5d73a428588150f704016aa27397941bb9246cecd2ee083b573e95d969fc080ac6a16f2fe1cc64aca08f6e70da6f3c586ee68f0efc9f527fecc360e5f1c299ec
+  checksum: 6306712cc75bd4b4260ce67178778c92110089485f358b5956b6b12aba15a55e5c7287154daaf8b32678891df915b7bcda7356991afe8bf08ca7356ed30eb448
   languageName: node
   linkType: hard
 
@@ -15017,30 +15007,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"temp-dir@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "temp-dir@npm:1.0.0"
-  checksum: cb2b58ddfb12efa83e939091386ad73b425c9a8487ea0095fe4653192a40d49184a771a1beba99045fbd011e389fd563122d79f54f82be86a55620667e08a6b2
-  languageName: node
-  linkType: hard
-
 "temp-dir@npm:^2.0.0":
   version: 2.0.0
   resolution: "temp-dir@npm:2.0.0"
   checksum: cc4f0404bf8d6ae1a166e0e64f3f409b423f4d1274d8c02814a59a5529f07db6cd070a749664141b992b2c1af337fa9bb451a460a43bb9bcddc49f235d3115aa
-  languageName: node
-  linkType: hard
-
-"temp-write@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "temp-write@npm:4.0.0"
-  dependencies:
-    graceful-fs: ^4.1.15
-    is-stream: ^2.0.0
-    make-dir: ^3.0.0
-    temp-dir: ^1.0.0
-    uuid: ^3.3.2
-  checksum: 4f94187662968b7cc9d88d7f8eeecc9e7317e26d640d2f90e833151e1049702ec6c63512d095b8bd69c09735eb5b5bfba9bb37dbed3bf2fe8b01076ffa161338
   languageName: node
   linkType: hard
 
@@ -16809,7 +16779,7 @@ __metadata:
     "@babel/register": ^7.18.9
     "@jamescoyle/vue-icon": ^0.1.2
     "@mdi/js": 7.0.96
-    "@release-it/conventional-changelog": ^3.3.0
+    "@release-it/conventional-changelog": ^5.0.0
     "@types/app-root-path": ^1.2.4
     "@types/archiver": ^5.3.1
     "@types/chai": ^4.3.1
@@ -16854,7 +16824,7 @@ __metadata:
     connect-history-api-fallback: 2.0.0
     conventional-changelog-cli: ^2.2.2
     cookie-parser: ^1.4.6
-    copy-webpack-plugin: ^9.1.0
+    copy-webpack-plugin: ^11.0.0
     cors: ^2.8.5
     croner: ^4.3.15
     cronstrue: ^2.11.0
@@ -16914,7 +16884,7 @@ __metadata:
     release-it: ^15.2.0
     rimraf: ^3.0.2
     sass: ^1.54.0
-    sass-loader: ^12.6.0
+    sass-loader: ^13.0.2
     semver: ^7.3.7
     serve-favicon: ^2.5.0
     session-file-store: ^1.5.0
