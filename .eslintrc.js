@@ -28,6 +28,8 @@ module.exports = {
 		// allow debugger during development
 		'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
 		'no-unused-vars': ['error', { vars: 'local' }],
+		'vue/multi-word-component-names': 'off',
+		'vue/no-v-text-v-html-on-component': 'off',
 	},
 	overrides: [
 		{
@@ -58,6 +60,7 @@ module.exports = {
 				'@typescript-eslint/explicit-module-boundary-types': 'off',
 				'@typescript-eslint/no-implied-eval': 'off',
 				'@typescript-eslint/no-misused-promises': 'off',
+				'@typescript-eslint/no-unsafe-argument': 'off',
 			},
 		},
 	],
