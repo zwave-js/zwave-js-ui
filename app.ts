@@ -48,8 +48,8 @@ import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 
-declare module 'express' {
-	interface Request {
+declare module 'express-session' {
+	export interface SessionData {
 		user?: User
 	}
 }
@@ -690,7 +690,7 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 	// third-party cookies must be allowed in order to work
 	try {
 		const user = await parseJWT(req)
-		req.user = user
+		req.session.user = user
 		next()
 	} catch (error) {
 		logger.debug('Authentication failed', error)
