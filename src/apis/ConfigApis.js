@@ -2,8 +2,8 @@ import axios from 'axios'
 import { loadProgressBar } from 'axios-progress-bar'
 import Router from '../router'
 
-function getBasePath() {
-	return document.baseURI.replace(/\/$/, '')
+function getBasePath(path) {
+	return document.baseURI.replace(/\/$/, '') + (path || '')
 }
 
 axios.defaults.socketUrl = getBasePath()
