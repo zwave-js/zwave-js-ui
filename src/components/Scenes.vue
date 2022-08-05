@@ -30,18 +30,6 @@
 					v-model.trim="newScene"
 				></v-text-field>
 			</v-col>
-
-			<v-col v-if="selectedScene" cols="12">
-				<v-btn color="red darken-1" text @click="removeScene"
-					>Delete</v-btn
-				>
-				<v-btn color="green darken-1" text @click="activateScene"
-					>Activate</v-btn
-				>
-				<v-btn color="blue darken-1" text @click="dialogValue = true"
-					>New Value</v-btn
-				>
-			</v-col>
 		</v-row>
 
 		<DialogSceneValue
@@ -59,6 +47,18 @@
 			:items="scene_values"
 			class="elevation-1"
 		>
+			<template v-slot:top>
+				<v-btn color="red darken-1" text @click="removeScene"
+					>Delete</v-btn
+				>
+				<v-btn color="green darken-1" text @click="activateScene"
+					>Activate</v-btn
+				>
+				<v-btn color="blue darken-1" text @click="dialogValue = true"
+					>New Value</v-btn
+				>
+			</template>
+
 			<template v-slot:item="{ item }">
 				<tr>
 					<td class="text-xs">{{ item.id }}</td>
