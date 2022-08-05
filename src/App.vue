@@ -15,7 +15,7 @@
 						<v-list-item-avatar>
 							<img
 								style="padding: 3px; border-radius: 0"
-								:src="`${baseURI}/static/logo.png`"
+								:src="assetPath('/static/logo.png')"
 							/>
 						</v-list-item-avatar>
 						<v-list-item-content>
@@ -412,10 +412,12 @@ export default {
 			title: '',
 			snackbar: false,
 			snackbarText: '',
-			baseURI: ConfigApis.getBasePath(),
 		}
 	},
 	methods: {
+		assetPath(path) {
+			return ConfigApis.getBasePath(path)
+		},
 		...mapActions([
 			'initNodes',
 			'setAppInfo',

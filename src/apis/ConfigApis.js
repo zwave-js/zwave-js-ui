@@ -2,8 +2,8 @@ import axios from 'axios'
 import { loadProgressBar } from 'axios-progress-bar'
 import Router from '../router'
 
-function getBasePath() {
-	return document.baseURI.replace(/\/$/, '')
+function getBasePath(path) {
+	return document.baseURI.replace(/\/$/, '') + (path || '')
 }
 
 axios.defaults.socketUrl = getBasePath()
@@ -59,9 +59,7 @@ export default {
 		return response.data
 	},
 	// ---- CONFIG -----
-	getBasePath() {
-		return getBasePath()
-	},
+	getBasePath,
 	getSocketPath() {
 		const innerPath = document.baseURI.split('/').splice(3).join('/')
 		const socketPath = `/${innerPath}/socket.io`.replace('//', '/')

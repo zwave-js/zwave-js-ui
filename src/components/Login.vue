@@ -10,7 +10,7 @@
 			>
 				<v-card-title style="">
 					<v-avatar style="border-radius: 0" size="40px">
-						<img src="/static/logo.png" alt="Logo" />
+						<img :src="assetPath('/static/logo.png')" alt="Logo" />
 					</v-avatar>
 					<v-toolbar-title style="margin-left: 20px"
 						>Zwavejs2Mqtt</v-toolbar-title
@@ -160,6 +160,9 @@ export default {
 		}
 	},
 	methods: {
+		assetPath(path) {
+			return ConfigApis.getBasePath(path)
+		},
 		isLocalStorageSupported() {
 			const testKey = 'test'
 			const storage = window.localStorage
