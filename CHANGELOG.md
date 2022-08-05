@@ -1,5 +1,13 @@
 
 
+## [6.15.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.1...v6.15.2) (2022-08-05)
+
+
+### Bug Fixes
+
+* lazy load not working behind a proxy ([#2571](https://github.com/zwave-js/zwavejs2mqtt/issues/2571)) ([5774dbf](https://github.com/zwave-js/zwavejs2mqtt/commit/5774dbf5be07d8e2a47a8a71dfd8f692728d7181))
+* **ui:** typo in ota update tab ([#2566](https://github.com/zwave-js/zwavejs2mqtt/issues/2566)) ([ca44f02](https://github.com/zwave-js/zwavejs2mqtt/commit/ca44f02691b24bd7d5ce415dd851f28dac403d57))
+
 ## [6.15.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.0...v6.15.1) (2022-08-02)
 
 
