@@ -89,7 +89,7 @@ module.exports = {
         type: 'asset/resource',
         generator: {
           filename: utils.assetsPath('fonts/[name].[hash:7][ext]'),
-          publicPath: '../..'
+          publicPath: '../../'
         }
       },
       {
