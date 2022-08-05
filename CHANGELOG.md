@@ -1,5 +1,12 @@
 
 
+## [6.15.1](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.0...v6.15.1) (2022-08-02)
+
+
+### Bug Fixes
+
+* icons not diaplaying correctly ([935a18d](https://github.com/zwave-js/zwavejs2mqtt/commit/935a18d977d63087f4dcc6c6fd5a9d4e815e1e41)), closes [#2564](https://github.com/zwave-js/zwavejs2mqtt/issues/2564)
+
 # [6.15.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.14.1...v6.15.0) (2022-08-02)
 
 

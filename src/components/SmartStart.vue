@@ -1,8 +1,10 @@
 <template>
 	<v-container fluid class="pa-4">
-		<h1 class="display-1 my-4">Provisioning Entities</h1>
-
 		<v-data-table :headers="headers" :items="items" class="elevation-1">
+			<template v-slot:top>
+				<h2 class="ma-3">Provisioning Entities</h2>
+			</template>
+
 			<template v-slot:[`item.status`]="{ item }">
 				<v-switch
 					v-model="item.status"
@@ -151,7 +153,6 @@ import {
 	validDsk,
 	securityClassesToArray,
 } from '../lib/utils.js'
-// import { ProvisioningEntryStatus } from 'zwave-js/safe'
 
 export default {
 	name: 'SmartStart',
