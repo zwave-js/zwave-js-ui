@@ -59,9 +59,7 @@ export default {
 		return response.data
 	},
 	// ---- CONFIG -----
-	getBasePath() {
-		return getBasePath()
-	},
+	getBasePath,
 	getSocketPath() {
 		const innerPath = document.baseURI.split('/').splice(3).join('/')
 		const socketPath = `/${innerPath}/socket.io`.replace('//', '/')

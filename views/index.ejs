@@ -7,10 +7,10 @@
   <title><%= config.title %></title>
   <base href="<%= config.base %>" />
   <meta name=mobile-web-app-capable content=yes>
-  <meta name=application-name content="Zwavejs2Mqtt">
+  <meta name=application-name content="<%= config.title %>">
   <meta name=apple-mobile-web-app-capable content=yes>
   <meta name=apple-mobile-web-app-status-bar-style content=black-translucent>
-  <meta name=apple-mobile-web-app-title content="Zwavejs2Mqtt">
+  <meta name=apple-mobile-web-app-title content="<%= config.title %>">
 
   <link rel="apple-touch-icon" sizes="180x180" href="<%= config.base %>static/favicons/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="<%= config.base %>static/favicons/favicon-32x32.png">
@@ -19,6 +19,7 @@
   <link rel="mask-icon" href="<%= config.base %>static/favicons/safari-pinned-tab.svg" color="#5bbad5">
   <meta name="msapplication-TileColor" content="#ffffff">
   <meta name="theme-color" content="#ffffff">
+
   <!-- For serving the index via express -->
   <% if (typeof cssFiles !== 'undefined') { %>
   <% for ( let css of cssFiles ){  %>

@@ -33,12 +33,15 @@ export default function (req: Request, res: Response) {
 	cssFiles = cssFiles || findFiles('static/css', 'css')
 
 	jsFiles = jsFiles || findFiles('static/js', 'js')
-	res.render('index.ejs', {
+
+	const data = {
 		config: {
 			...webConfig,
 			base: basePath(webConfig, req.headers),
 		},
 		cssFiles,
 		jsFiles,
-	})
+	}
+
+	res.render('index.ejs', data)
 }
