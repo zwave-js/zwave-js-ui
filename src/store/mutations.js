@@ -5,6 +5,7 @@ const settings = new Settings(localStorage);
 
 export const state = {
   auth: undefined,
+  nodesManagerOpen: false,
   serial_ports: [],
   scales: [],
   nodes: [],
@@ -113,7 +114,8 @@ export const getters = {
   appInfo: state => state.appInfo,
   scales: state => state.scales,
 	darkMode: state => state.ui.darkMode,
-	navTabs: state => state.ui.navTabs
+	navTabs: state => state.ui.navTabs,
+  nodesManagerOpen: state => state.nodesManagerOpen
 }
 
 export const actions = {
@@ -166,6 +168,9 @@ export const actions = {
 export const mutations = {
   showSnackbar() {
     // empty mutation, will be caught in App.vue from store subscribe
+  },
+  setNodesManagerOpen(store, opened) {
+    state.nodesManagerOpen = opened
   },
   setAuth(store, enabled) {
     state.auth = enabled
