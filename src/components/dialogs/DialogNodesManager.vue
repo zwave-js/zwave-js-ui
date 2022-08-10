@@ -736,6 +736,7 @@ export default {
 	watch: {
 		value(v) {
 			this.init(v)
+			this.$store.commit('setNodesManagerOpen', v)
 		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {

@@ -357,7 +357,14 @@ export default {
 	},
 	name: 'app',
 	computed: {
-		...mapGetters(['user', 'auth', 'appInfo', 'navTabs', 'darkMode']),
+		...mapGetters([
+			'user',
+			'auth',
+			'appInfo',
+			'navTabs',
+			'darkMode',
+			'nodesManagerOpen',
+		]),
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
 		},
@@ -466,21 +473,23 @@ export default {
 			this.dialog_password = true
 		},
 		async onNodeAdded({ node }) {
-			await this.confirm(
-				'Node added',
-				`<div class="d-flex flex-column align-center col">
+			if (!this.nodesManagerOpen) {
+				await this.confirm(
+					'Node added',
+					`<div class="d-flex flex-column align-center col">
 					<i aria-hidden="true" class="v-icon notranslate material-icons theme--light success--text" style="font-size: 60px;">check_circle</i>
 					<p class="mt-3 headline text-center">
 						Node ${node.id} added with security "${node.security || 'None'}"
 					</p>
 				</div>`,
-				'info',
-				{
-					width: 500,
-					confirmText: 'Close',
-					cancelText: '',
-				}
-			)
+					'info',
+					{
+						width: 500,
+						confirmText: 'Close',
+						cancelText: '',
+					}
+				)
+			}
 		},
 		toggleDrawer() {
 			if (
