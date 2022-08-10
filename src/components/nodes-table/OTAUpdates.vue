@@ -35,7 +35,7 @@
 							<p
 								class="text-caption ml-4"
 								v-text="u.changelog"
-								style="white-space: pre"
+								style="white-space: break-spaces"
 							></p>
 
 							<v-list-item

@@ -1887,26 +1887,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					nodeId
 				)
 
-			// result = [
-			// 	{
-			// 		version: '1.13',
-			// 		changelog: '* Fixed some bugs\n* Added other bugs',
-			// 		files: [
-			// 			{
-			// 				target: 0,
-			// 				integrity:
-			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
-			// 				url: 'https://example.com/firmware.bin',
-			// 			},
-			// 			{
-			// 				target: 1,
-			// 				integrity:
-			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
-			// 				url: 'https://example.com/firmware.bin',
-			// 			},
-			// 		],
-			// 	},
-			// ]
+			// 			return [
+			// 				{
+			// 					version: '1.13',
+			// 					changelog: `* Fixed some bugs
+			// * Added other bugs
+			// * Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
+			// 					files: [
+			// 						{
+			// 							target: 0,
+			// 							integrity:
+			// 								'sha256:123456789012345678901234567890123456789012345678901234567890125',
+			// 							url: 'https://example.com/firmware0.bin',
+			// 						},
+			// 						{
+			// 							target: 1,
+			// 							integrity:
+			// 								'sha256:123456789012345678901234567890123456789012345678901234567890123',
+			// 							url: 'https://example.com/firmware1.bin',
+			// 						},
+			// 					],
+			// 				},
+			// 			]
 
 			return result
 		}
