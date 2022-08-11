@@ -152,159 +152,174 @@
 			</v-col>
 		</template>
 
-		<v-subheader class="title" style="padding: 0">Send Options</v-subheader>
-		<v-row class="mt-0">
-			<v-col cols="12" sm="6" style="max-width: 300px; padding-top: 0">
-				<v-text-field
-					label="Transition duration"
-					hint="Ex: '10s' (10 seconds)"
-					persistent-hint
-					v-model.trim="options.transitionDuration"
-				></v-text-field>
-			</v-col>
-			<v-col cols="12" sm="6" style="max-width: 300px; padding-top: 0">
-				<v-text-field
-					label="Volume"
-					hint="The volume (for the Sound Switch CC)"
-					persistent-hint
-					v-model.trim="options.volume"
-				></v-text-field>
-			</v-col>
-		</v-row>
-
-		<!-- NODE VALUES -->
-
-		<v-row>
-			<v-subheader class="title">Values</v-subheader>
-
-			<v-expansion-panels
-				class="expansion-panels-outlined"
-				accordion
-				multiple
-				flat
+		<div v-if="!node.isControllerNode">
+			<v-subheader class="title" style="padding: 0"
+				>Send Options</v-subheader
 			>
-				<v-expansion-panel
-					v-for="(group, className) in commandGroups"
-					:key="className"
+			<v-row class="mt-0">
+				<v-col
+					cols="12"
+					sm="6"
+					style="max-width: 300px; padding-top: 0"
 				>
-					<v-expansion-panel-header>
-						<v-row no-gutters>
-							<v-col align-self="center">
-								{{ className }}
-							</v-col>
-							<v-col class="text-right pr-5">
-								<v-btn
-									v-if="group[0]"
-									@click.stop="
-										apiRequest('refreshCCValues', [
-											node.id,
-											group[0].commandClass,
-										])
-									"
-									color="primary"
-									outlined
-									x-small
+					<v-text-field
+						label="Transition duration"
+						hint="Ex: '10s' (10 seconds)"
+						persistent-hint
+						v-model.trim="options.transitionDuration"
+					></v-text-field>
+				</v-col>
+				<v-col
+					cols="12"
+					sm="6"
+					style="max-width: 300px; padding-top: 0"
+				>
+					<v-text-field
+						label="Volume"
+						hint="The volume (for the Sound Switch CC)"
+						persistent-hint
+						v-model.trim="options.volume"
+					></v-text-field>
+				</v-col>
+			</v-row>
+
+			<!-- NODE VALUES -->
+
+			<v-row>
+				<v-subheader class="title">Values</v-subheader>
+
+				<v-expansion-panels
+					class="expansion-panels-outlined"
+					accordion
+					multiple
+					flat
+				>
+					<v-expansion-panel
+						v-for="(group, className) in commandGroups"
+						:key="className"
+					>
+						<v-expansion-panel-header>
+							<v-row no-gutters>
+								<v-col align-self="center">
+									{{ className }}
+								</v-col>
+								<v-col class="text-right pr-5">
+									<v-btn
+										v-if="group[0]"
+										@click.stop="
+											apiRequest('refreshCCValues', [
+												node.id,
+												group[0].commandClass,
+											])
+										"
+										color="primary"
+										outlined
+										x-small
+									>
+										Refresh
+										<v-icon x-small right>refresh</v-icon>
+									</v-btn>
+								</v-col>
+							</v-row>
+						</v-expansion-panel-header>
+						<v-expansion-panel-content>
+							<v-row>
+								<v-col
+									cols="12"
+									v-for="(v, index) in group"
+									:key="index"
+									sm="6"
+									md="4"
 								>
-									Refresh
-									<v-icon x-small right>refresh</v-icon>
-								</v-btn>
-							</v-col>
-						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
-						<v-row>
-							<v-col
-								cols="12"
-								v-for="(v, index) in group"
-								:key="index"
-								sm="6"
-								md="4"
-							>
-								<ValueID
-									@updateValue="updateValue"
-									v-model="group[index]"
-								></ValueID>
-							</v-col>
-						</v-row>
-						<v-row>
-							<v-col
-								v-if="className.startsWith('Configuration')"
-								cols="12"
-								sm="6"
-								md="4"
-								style="padding-left: 0"
-							>
-								<v-subheader class="valueid-label"
-									>Custom Configuration
-								</v-subheader>
-								<v-row>
-									<v-col cols="3">
-										<v-text-field
-											label="Parameter"
-											v-model.number="configCC.parameter"
-										/>
-									</v-col>
-									<v-col cols="3">
-										<v-select
-											label="Size"
-											:items="[1, 2, 3, 4]"
-											v-model.number="configCC.valueSize"
-										/>
-									</v-col>
-									<v-col cols="3">
-										<v-text-field
-											label="Value"
-											v-model.number="configCC.value"
-										/>
-									</v-col>
-									<v-col cols="3">
-										<v-btn
-											width="60px"
-											@click.stop="
-												apiRequest('sendCommand', [
-													{
-														nodeId: node.id,
-														commandClass: 112,
-													},
-													'get',
-													[configCC.parameter],
-												])
-											"
-											color="green"
-											x-small
-										>
-											GET
-										</v-btn>
-										<v-btn
-											width="60px"
-											@click.stop="
-												apiRequest('sendCommand', [
-													{
-														nodeId: node.id,
-														commandClass: 112,
-													},
-													'set',
-													[
-														configCC.parameter,
-														configCC.value,
-														configCC.valueSize,
-													],
-												])
-											"
-											color="primary"
-											x-small
-										>
-											SET
-										</v-btn>
-									</v-col>
-								</v-row>
-							</v-col>
-						</v-row>
-					</v-expansion-panel-content>
-					<v-divider></v-divider>
-				</v-expansion-panel>
-			</v-expansion-panels>
-		</v-row>
+									<ValueID
+										@updateValue="updateValue"
+										v-model="group[index]"
+									></ValueID>
+								</v-col>
+							</v-row>
+							<v-row>
+								<v-col
+									v-if="className.startsWith('Configuration')"
+									cols="12"
+									sm="6"
+									md="4"
+								>
+									<v-subheader class="valueid-label"
+										>Custom Configuration
+									</v-subheader>
+									<v-row>
+										<v-col cols="3">
+											<v-text-field
+												label="Parameter"
+												v-model.number="
+													configCC.parameter
+												"
+											/>
+										</v-col>
+										<v-col cols="3">
+											<v-select
+												label="Size"
+												:items="[1, 2, 3, 4]"
+												v-model.number="
+													configCC.valueSize
+												"
+											/>
+										</v-col>
+										<v-col cols="3">
+											<v-text-field
+												label="Value"
+												v-model.number="configCC.value"
+											/>
+										</v-col>
+										<v-col cols="3">
+											<v-btn
+												width="60px"
+												@click.stop="
+													apiRequest('sendCommand', [
+														{
+															nodeId: node.id,
+															commandClass: 112,
+														},
+														'get',
+														[configCC.parameter],
+													])
+												"
+												color="green"
+												x-small
+											>
+												GET
+											</v-btn>
+											<v-btn
+												width="60px"
+												@click.stop="
+													apiRequest('sendCommand', [
+														{
+															nodeId: node.id,
+															commandClass: 112,
+														},
+														'set',
+														[
+															configCC.parameter,
+															configCC.value,
+															configCC.valueSize,
+														],
+													])
+												"
+												color="primary"
+												x-small
+											>
+												SET
+											</v-btn>
+										</v-col>
+									</v-row>
+								</v-col>
+							</v-row>
+						</v-expansion-panel-content>
+						<v-divider></v-divider>
+					</v-expansion-panel>
+				</v-expansion-panels>
+			</v-row>
+		</div>
 	</v-container>
 </template>
 
