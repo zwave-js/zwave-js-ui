@@ -33,6 +33,7 @@
 						</v-btn>
 						<v-btn
 							dark
+							v-if="!node.isControllerNode"
 							color="primary"
 							@click.stop="
 								forwardApiRequest('pingNode', [node.id])
