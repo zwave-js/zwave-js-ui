@@ -91,18 +91,31 @@
 					<v-select
 						label="RF Region"
 						:items="rfRegions"
-						clearable
-						clear-icon="refresh"
-						@click:clear="
-							apiRequest('updateControllerNodeProps', [
-								null,
-								['RFRegion'],
-							])
-						"
-						append-outer-icon="send"
-						@click:append-outer="updateRFRegion"
 						v-model="node.RFRegion"
 					>
+						<template v-slot:append-outer>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="
+									apiRequest('updateControllerNodeProps', [
+										null,
+										['RFRegion'],
+									])
+								"
+							>
+								<v-icon>refresh</v-icon>
+							</v-btn>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="updateRFRegion"
+							>
+								<v-icon>send</v-icon>
+							</v-btn>
+						</template>
 					</v-select>
 				</v-col>
 			</v-row>
