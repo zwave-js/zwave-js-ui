@@ -353,23 +353,91 @@ export default {
 				)
 			})
 		},
-	},
-	watch: {
-		'node.eventsQueue'() {
-			this.scrollBottom()
-		},
-		currentTab() {
-			this.scrollBottom()
-		},
-	},
-	data() {
-		return {
-			currentTab: 0,
-			autoScroll: true,
-			searchEvents: '',
-			advancedShowDialog: false,
-			showStatistics: false,
-			advancedActions: [
+		advancedActions() {
+			const nodeActions = this.node.isControllerNode
+				? []
+				: [
+						{
+							text: 'Firmware update',
+							options: [
+								{
+									name: 'Begin',
+									action: 'beginFirmwareUpdate',
+								},
+								{
+									name: 'Abort',
+									action: 'abortFirmwareUpdate',
+								},
+							],
+							icon: 'update',
+							desc: 'Start/Stop a firmware update',
+						},
+						{
+							text: 'Heal Node',
+							options: [
+								{
+									name: 'Heal',
+									action: 'healNode',
+									args: {
+										confirm:
+											'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+									},
+								},
+							],
+							icon: 'healing',
+							desc: 'Force nodes to establish better connections to the controller',
+						},
+						{
+							text: 'Refresh Values',
+							options: [
+								{
+									name: 'Refresh',
+									action: 'refreshValues',
+									args: {
+										confirm:
+											'Are you sure you want to refresh values of this node? This action increases network traffic',
+									},
+								},
+							],
+							icon: 'cached',
+							desc: 'Update all CC values and metadata. Use only when many values seems stale',
+						},
+						{
+							text: 'Re-interview Node',
+							options: [
+								{
+									name: 'Interview',
+									action: 'refreshInfo',
+								},
+							],
+							icon: 'history',
+							desc: 'Clear all info about this node and make a new full interview. Use when the node has wrong or missing capabilities',
+						},
+						{
+							text: 'Failed Nodes',
+							options: [
+								{ name: 'Check', action: 'isFailedNode' },
+								{ name: 'Remove', action: 'removeFailedNode' },
+							],
+							icon: 'dangerous',
+							desc: 'Manage nodes that are dead and/or marked as failed with the controller',
+						},
+				  ]
+
+			const nodeAssociation = this.node.isControllerNode
+				? []
+				: [
+						{
+							name: 'Clear',
+							action: 'removeAllAssociations',
+							args: {
+								confirm:
+									"This action will remove all associations of this node. This will also clear lifeline association with controller node, the node won't report state changes until that is set up again",
+							},
+						},
+				  ]
+
+			return [
 				{
 					text: 'Export json',
 					options: [{ name: 'Export', action: 'exportNode' }],
@@ -408,76 +476,11 @@ export default {
 					icon: 'update',
 					desc: 'Update all node topics. Useful when name/location has changed',
 				},
-				{
-					text: 'Firmware update',
-					options: [
-						{ name: 'Begin', action: 'beginFirmwareUpdate' },
-						{ name: 'Abort', action: 'abortFirmwareUpdate' },
-					],
-					icon: 'update',
-					desc: 'Start/Stop a firmware update',
-				},
-				{
-					text: 'Heal Node',
-					options: [
-						{
-							name: 'Heal',
-							action: 'healNode',
-							args: {
-								confirm:
-									'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
-							},
-						},
-					],
-					icon: 'healing',
-					desc: 'Force nodes to establish better connections to the controller',
-				},
-				{
-					text: 'Refresh Values',
-					options: [
-						{
-							name: 'Refresh',
-							action: 'refreshValues',
-							args: {
-								confirm:
-									'Are you sure you want to refresh values of this node? This action increases network traffic',
-							},
-						},
-					],
-					icon: 'cached',
-					desc: 'Update all CC values and metadata. Use only when many values seems stale',
-				},
-				{
-					text: 'Re-interview Node',
-					options: [
-						{
-							name: 'Interview',
-							action: 'refreshInfo',
-						},
-					],
-					icon: 'history',
-					desc: 'Clear all info about this node and make a new full interview. Use when the node has wrong or missing capabilities',
-				},
-				{
-					text: 'Failed Nodes',
-					options: [
-						{ name: 'Check', action: 'isFailedNode' },
-						{ name: 'Remove', action: 'removeFailedNode' },
-					],
-					icon: 'dangerous',
-					desc: 'Manage nodes that are dead and/or marked as failed with the controller',
-				},
+				...nodeActions,
 				{
 					text: 'Associations',
 					options: [
-						{
-							name: 'Clear',
-							action: 'removeAllAssociations',
-							args: {
-								confirm:
-									"This action will remove all associations of this node. This will also clear lifeline association with controller node, the node won't report state changes until that is set up again",
-							},
-						},
+						...nodeAssociation,
 						{
 							name: 'Remove',
 							action: 'removeNodeFromAllAssociations',
@@ -490,7 +493,24 @@ export default {
 					icon: 'link_off',
 					desc: 'Clear all node associations / Remove node from all associations',
 				},
-			],
+			]
+		},
+	},
+	watch: {
+		'node.eventsQueue'() {
+			this.scrollBottom()
+		},
+		currentTab() {
+			this.scrollBottom()
+		},
+	},
+	data() {
+		return {
+			currentTab: 0,
+			autoScroll: true,
+			searchEvents: '',
+			advancedShowDialog: false,
+			showStatistics: false,
 		}
 	},
 	methods: {
