@@ -66,7 +66,7 @@ import {
 	FirmwareUpdateFileInfo,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { nvmBackupsDir, storeDir } from '../config/app'
+import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
 import store from '../config/store'
 import jsonStore from './jsonStore'
 import * as LogManager from './logger'
@@ -226,7 +226,7 @@ export type SensorTypeScale = {
 export type AllowedApis = typeof allowedApis[number]
 
 const ZWAVEJS_LOG_FILE = utils.joinPath(
-	process.env.ZWAVEJS_LOGS_DIR || storeDir,
+	process.env.ZWAVEJS_LOGS_DIR || logsDir,
 	'zwavejs_%DATE%.log'
 )
 
