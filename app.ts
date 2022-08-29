@@ -1246,7 +1246,13 @@ app.post(
 				archive.file(f, { name })
 			} else if (s.isSymbolicLink()) {
 				const targetPath = await realpath(f)
-				archive.symlink(f, targetPath)
+				try {
+					// check path is secure, if so add it as file
+					getSafePath(targetPath)
+					archive.file(targetPath, { name })
+				} catch (e) {
+					// ignore
+				}
 			}
 		}
 
