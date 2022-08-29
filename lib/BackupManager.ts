@@ -43,6 +43,14 @@ class BackupManager {
 		return this.config.nvmBackupOnEvent
 	}
 
+	nextRun(job: Cron) {
+		if (job?.next()) {
+			return job.next().toLocaleString()
+		}
+
+		return 'UNKNOWN'
+	}
+
 	init(zwaveClient: ZwaveClient) {
 		this.config = {
 			...this.default,
@@ -66,7 +74,7 @@ class BackupManager {
 			logger.info(
 				`Backup job started with cron: ${
 					this.config.storeCron
-				}. Next run: ${this.storeJob.next().toLocaleString()}`
+				}. Next run: ${this.nextRun(this.storeJob)}`
 			)
 		}
 
@@ -85,7 +93,7 @@ class BackupManager {
 			logger.info(
 				`Backup job started with cron: ${
 					this.config.nvmCron
-				}. Next run: ${this.nvmJob.next().toLocaleString()}`
+				}. Next run: ${this.nextRun(this.nvmJob)}`
 			)
 		}
 	}
@@ -99,9 +107,7 @@ class BackupManager {
 			logger.info(`Backup NVM created: ${fileName}`)
 
 			if (this.nvmJob) {
-				logger.info(
-					`Next NVM backup: ${this.nvmJob.next().toLocaleString()}`
-				)
+				logger.info(`Next NVM backup: ${this.nextRun(this.nvmJob)}`)
 			}
 			// cleanup backups dir, keep last backup files
 			const backups = (await readdir(nvmBackupsDir)).filter((f) =>
@@ -136,11 +142,7 @@ class BackupManager {
 			logger.info(`Backup STORE created: ${backupFile}`)
 
 			if (this.storeJob) {
-				logger.info(
-					`Next STORE backup: ${this.storeJob
-						.next()
-						.toLocaleString()}`
-				)
+				logger.info(`Next STORE backup: ${this.nextRun(this.storeJob)}`)
 			}
 			// cleanup backups dir, keep last backup files
 			const backups = (await readdir(storeBackupsDir)).filter((f) =>

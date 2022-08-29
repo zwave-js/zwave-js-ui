@@ -47,6 +47,7 @@ import renderIndex from './lib/renderIndex'
 import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
+import { realpath } from 'fs/promises'
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -263,8 +264,8 @@ export async function startServer(host: string, port: number | string) {
 /**
  * Get the `path` param from a request. Throws if the path is not safe
  */
-function getSafePath(req: Request): string {
-	let reqPath = req.query.path
+function getSafePath(req: Request | string) {
+	let reqPath = typeof req === 'string' ? req : req.query.path
 
 	if (typeof reqPath !== 'string') {
 		throw Error('Invalid path')
@@ -1115,13 +1116,21 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 		if (req.query.path) {
 			const reqPath = getSafePath(req)
 			// lgtm [js/path-injection]
-			const stat = await fs.lstat(reqPath)
+			let stat = await fs.lstat(reqPath)
 
-			if (!stat.isFile()) {
+			// check symlink is secure
+			if (stat.isSymbolicLink()) {
+				const realPath = await realpath(reqPath)
+				getSafePath(realPath)
+				stat = await fs.lstat(realPath)
+			}
+
+			if (stat.isFile()) {
+				// lgtm [js/path-injection]
+				data = await fs.readFile(reqPath, 'utf8')
+			} else {
 				throw Error('Path is not a file')
 			}
-			// lgtm [js/path-injection]
-			data = await fs.readFile(reqPath, 'utf8')
 		} else {
 			data = [
 				{
@@ -1236,7 +1245,20 @@ app.post(
 		archive.pipe(res)
 
 		for (const f of files) {
-			archive.file(f, { name: f.replace(storeDir, '') })
+			const s = await fs.lstat(f)
+			const name = f.replace(storeDir, '')
+			if (s.isFile()) {
+				archive.file(f, { name })
+			} else if (s.isSymbolicLink()) {
+				const targetPath = await realpath(f)
+				try {
+					// check path is secure, if so add it as file
+					getSafePath(targetPath)
+					archive.file(targetPath, { name })
+				} catch (e) {
+					// ignore
+				}
+			}
 		}
 
 		await archive.finalize()

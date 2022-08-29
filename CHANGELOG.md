@@ -1,5 +1,24 @@
 
 
+# [6.16.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.2...v6.16.0) (2022-08-29)
+
+
+### Bug Fixes
+
+* prevent error when cron string is wrong ([61e4803](https://github.com/zwave-js/zwavejs2mqtt/commit/61e4803638344a8f6840d1e3b1aa64b2d84c2852)), closes [#2596](https://github.com/zwave-js/zwavejs2mqtt/issues/2596)
+* symlinks not working in store ([#2611](https://github.com/zwave-js/zwavejs2mqtt/issues/2611)) ([955434f](https://github.com/zwave-js/zwavejs2mqtt/commit/955434f864df7a71fb6888ac850eb4ac8235ad21))
+* **ui:** firmware update changelog overflow ([#2584](https://github.com/zwave-js/zwavejs2mqtt/issues/2584)) ([8776e5c](https://github.com/zwave-js/zwavejs2mqtt/commit/8776e5cea9f1795a921e9e04b2dd0bb7e8ef317a)), closes [#2583](https://github.com/zwave-js/zwavejs2mqtt/issues/2583)
+* **ui:** hide ping action for controller node ([badf2c9](https://github.com/zwave-js/zwavejs2mqtt/commit/badf2c9af70b1faf57da1f58818d631d58ecea3f)), closes [#2586](https://github.com/zwave-js/zwavejs2mqtt/issues/2586)
+* **ui:** hide useless actions from controller node ([#2589](https://github.com/zwave-js/zwavejs2mqtt/issues/2589)) ([7d0bf88](https://github.com/zwave-js/zwavejs2mqtt/commit/7d0bf88d8d1ccc3c69e0287ab504c6a415eb9228)), closes [#2587](https://github.com/zwave-js/zwavejs2mqtt/issues/2587)
+* **ui:** hide values on controller node ([83c1b7a](https://github.com/zwave-js/zwavejs2mqtt/commit/83c1b7a83393115613b88486692eea092f9abb5b))
+* **ui:** including a node shows security class twice ([1178e16](https://github.com/zwave-js/zwavejs2mqtt/commit/1178e16926e3d56930846c17d925b2b0aa18d597)), closes [#2321](https://github.com/zwave-js/zwavejs2mqtt/issues/2321)
+* **ui:** refreshing RF region results in empty field ([#2588](https://github.com/zwave-js/zwavejs2mqtt/issues/2588)) ([84c878d](https://github.com/zwave-js/zwavejs2mqtt/commit/84c878db91ed4f832220ad0888e676fc6d3e91d6)), closes [#2585](https://github.com/zwave-js/zwavejs2mqtt/issues/2585)
+
+
+### Features
+
+* move logs to `logs` folder in store ([#2610](https://github.com/zwave-js/zwavejs2mqtt/issues/2610)) ([61bd39f](https://github.com/zwave-js/zwavejs2mqtt/commit/61bd39ff4538d2fa5fc1bd1382896193ad49b6de)), closes [#2600](https://github.com/zwave-js/zwavejs2mqtt/issues/2600)
+
 ## [6.15.2](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.1...v6.15.2) (2022-08-05)
 
 

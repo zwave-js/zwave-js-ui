@@ -1,6 +1,6 @@
 import DailyRotateFile from '@zwave-js/winston-daily-rotate-file'
 import winston from 'winston'
-import { storeDir } from '../config/app'
+import { logsDir } from '../config/app'
 import { GatewayConfig } from './Gateway'
 import { DeepPartial, joinPath } from './utils'
 
@@ -42,7 +42,7 @@ export function sanitizedConfig(
 	config: DeepPartial<GatewayConfig> | undefined
 ): LoggerConfig {
 	config = config || ({} as LoggerConfig)
-	const filePath = joinPath(storeDir, config.logFileName || defaultLogFile)
+	const filePath = joinPath(logsDir, config.logFileName || defaultLogFile)
 
 	return {
 		module: module || '-',
@@ -112,7 +112,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		} else {
 			fileTransport = new DailyRotateFile({
 				filename: config.filePath,
-				auditFile: joinPath(storeDir, 'z2m-logs.audit.json'),
+				auditFile: joinPath(logsDir, 'z2m-logs.audit.json'),
 				datePattern: 'YYYY-MM-DD',
 				zippedArchive: true,
 				maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
