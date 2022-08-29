@@ -47,7 +47,7 @@ import renderIndex from './lib/renderIndex'
 import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
-import { realpath, stat } from 'fs/promises'
+import { realpath } from 'fs/promises'
 
 declare module 'express-session' {
 	export interface SessionData {
