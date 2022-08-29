@@ -1116,11 +1116,13 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 		if (req.query.path) {
 			const reqPath = getSafePath(req)
 
-			const stat = await fs.lstat(reqPath)
+			let stat = await fs.lstat(reqPath)
 
+			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
 				getSafePath(realPath)
+				stat = await fs.lstat(realPath)
 			}
 
 			if (stat.isFile()) {
