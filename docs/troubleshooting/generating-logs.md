@@ -28,9 +28,9 @@ Driver logger can be configured in `Z-Wave` section, enable `Log enabled` switch
 
 ## Download Zip
 
-Your logs will be stored in separate files inside the `store` folder.
+Your logs will be stored in separate files in `logs` folder inside `store` directory.
 
-You can easily download a zip file with the logs files from the `Explorer` view on the UI. Just select the files you want to export , press on the fab button on the bottom right corner and press the download icon. Remember to attach the zip file to your issue.
+You can easily download a zip file with the logs files from the `Explorer` view on the UI. Just select the files you want to export or the entire logs folder, press on the fab button on the bottom right corner and press the download icon. Remember to attach the zip file to your issue.
 
 ![Enable logging](../_images/download_zip.gif)
 
