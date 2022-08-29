@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import * as utils from '../../lib/utils'
-import { storeDir } from '../../config/app'
+import { logsDir } from '../../config/app'
 import {
 	customTransports,
 	defaultLogFile,
@@ -16,7 +16,7 @@ function checkConfigDefaults(mod, cfg) {
 	expect(cfg.enabled).to.equal(true)
 	expect(cfg.level).to.equal('info')
 	expect(cfg.logToFile).to.equal(false)
-	expect(cfg.filePath).to.equal(utils.joinPath(storeDir, defaultLogFile))
+	expect(cfg.filePath).to.equal(utils.joinPath(logsDir, defaultLogFile))
 }
 
 describe('logger.js', () => {
