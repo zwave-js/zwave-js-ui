@@ -20,7 +20,7 @@ ZWavejs2Mqtt logger can be configured in `General` section, enable `Log enabled`
 > [!NOTE]
 > Driver logs are required for all issues that are not purely a UI issue (for which an Application Log would instead be submitted).
 
-Driver logger can be configured in `Z-Wave` section, enable `Log enabled` switch and `Log To File` and set `Log Level` to `Silly`
+Driver logger can be configured in `Z-Wave` section, enable `Log enabled` switch and `Log To File` and set `Log Level` to `Debug`
 
 > Log file name: `zwavejs_<date>.log`
 
