@@ -2,6 +2,7 @@ export enum socketEvents {
 	init = 'INIT', // automatically sent when a new client connects to the socket
 	controller = 'CONTROLLER_CMD', // controller status updates
 	connected = 'CONNECTED', // socket status
+	nodeFound = 'NODE_FOUND',
 	nodeAdded = 'NODE_ADDED',
 	nodeRemoved = 'NODE_REMOVED',
 	nodeUpdated = 'NODE_UPDATED',

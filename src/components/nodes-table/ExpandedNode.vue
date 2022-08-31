@@ -98,7 +98,11 @@
 				<v-tab key="groups" class="justify-start">
 					<v-icon small left>device_hub</v-icon> Groups
 				</v-tab>
-				<v-tab key="ota" class="justify-start">
+				<v-tab
+					key="ota"
+					v-if="!node.isControllerNode"
+					class="justify-start"
+				>
 					<v-icon small left>auto_mode</v-icon> OTA Updates
 				</v-tab>
 				<v-tab key="events" class="justify-start">
@@ -176,7 +180,11 @@
 					</v-tab-item>
 
 					<!-- TAB OTA UPDATES -->
-					<v-tab-item key="ota" transition="slide-y-transition">
+					<v-tab-item
+						v-if="!node.isControllerNode"
+						key="ota"
+						transition="slide-y-transition"
+					>
 						<OTAUpdates
 							:node="node"
 							:socket="socket"

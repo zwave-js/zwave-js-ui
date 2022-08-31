@@ -16,6 +16,7 @@ export const storeBackupsDir: string = joinPath(backupsDir, 'store')
 
 export const defaultUser: string =  'admin'
 export const defaultPsw: string =  'zwave'
+// lgtm [js/hardcoded-credentials]
 export const sessionSecret: string =  process.env.SESSION_SECRET || 'DEFAULT_SESSION_SECRET_CHANGE_ME'
 export const base: string =  '/'
 export const port: string | number =  process.env.PORT || 8091
