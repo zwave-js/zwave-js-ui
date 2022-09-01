@@ -194,6 +194,7 @@
 				>
 					<div class="file-content pa-4 pb-8">
 						<prism-editor
+							@keydown.ctrl.s.prevent="writeFile"
 							v-if="!notSupported"
 							class="custom-font"
 							lineNumbers
