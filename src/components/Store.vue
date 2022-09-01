@@ -512,11 +512,14 @@ export default {
 				))
 			) {
 				try {
-					const data = await ConfigApis.writeFile(content, {
-						path,
-						isNew,
-						isDirectory,
-					})
+					const data = await ConfigApis.writeFile(
+						isNew ? '' : content,
+						{
+							path,
+							isNew,
+							isDirectory,
+						}
+					)
 					if (data.success) {
 						this.showSnackbar(
 							`${isDirectory ? 'Directory' : 'File'} ${
