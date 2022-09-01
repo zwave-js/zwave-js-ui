@@ -1191,7 +1191,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const fn = new AsyncFunction('driver', code)
 
-		return fn.call({ zwaveClient: this, require }, this._driver)
+		return fn.call({ zwaveClient: this, require, logger }, this._driver)
 	}
 
 	/**
