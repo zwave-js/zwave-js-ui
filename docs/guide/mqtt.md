@@ -95,27 +95,7 @@ This are the available APIs:
 - `backupNVMRaw()`: Backup the NVM raw data
 - `restoreNVM(data)`: Restore the NVM data. If the given buffer is in a different NVM format, it is converted automatically. If the conversion is not supported, the operation fails.
 - `softReset`: Soft reset the controller (restart)
-- `driverFunction(code)`: Execute a driver function. The function `this` allow to access `zwaveClient` instance and `require` (ex: `this.zwaveClient` and `this.require`). The only parameter of the function is `driver`. It's like execute this:
-
-```js
-function(driver) {
-  // your code here
-}
-```
-
-Examples:
-
-```js
-const fs = this.require("fs-extra")
-const { storeDir } = this.require('../config/app')
-const data = await driver.controller.backupNVMRaw()
-await fs.writeFile(storeDir + '/NVM.bin', data, 'binary')
-```
-
-```js
-const node = driver.controller.nodes.get(35);
-await node.refreshInfo();
-```
+- `driverFunction(code)`: Execute a driver function. The function `this` allow to access `zwaveClient` instance and `require` (ex: `this.zwaveClient` and `this.require`). The only parameter of the function is `driver`. More info [here](/usage/driver_function?id=driver-function)
 
 ### Api call examples
 
