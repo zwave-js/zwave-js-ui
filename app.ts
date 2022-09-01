@@ -22,7 +22,7 @@ import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
-import fs, { mkdirp, rm } from 'fs-extra'
+import fs, { mkdirp, readdir, rm, stat } from 'fs-extra'
 import { createServer as createHttpServer, Server as HttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
 import jwt from 'jsonwebtoken'
@@ -35,6 +35,7 @@ import {
 	defaultPsw,
 	defaultUser,
 	sessionSecret,
+	snippetsDir,
 	storeDir,
 	tmpDir,
 } from './config/app'
@@ -47,7 +48,7 @@ import renderIndex from './lib/renderIndex'
 import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
-import { realpath } from 'fs/promises'
+import { readFile, realpath } from 'fs/promises'
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -257,8 +258,52 @@ export async function startServer(host: string, port: number | string) {
 
 	setupSocket(server)
 	setupInterceptor()
+	await loadSnippets()
 	await loadManager()
 	await startGateway(settings)
+}
+
+interface Snippet {
+	name: string
+	content: string
+}
+
+const defaultSnippets: Snippet[] = []
+
+async function loadSnippets() {
+	const localSnippetsDir = path.join(__dirname, 'snippets')
+	await mkdirp(snippetsDir)
+
+	const files = await readdir(localSnippetsDir)
+	for (const file of files) {
+		const filePath = path.join(localSnippetsDir, file)
+
+		if (await isSnippet(filePath)) {
+			const content = await readFile(filePath, 'utf8')
+			const name = path.basename(filePath, '.js')
+			defaultSnippets.push({ name, content })
+		}
+	}
+}
+
+async function isSnippet(file: string): Promise<boolean> {
+	return (await stat(file)).isFile() && file.endsWith('.js')
+}
+
+async function getSnippets() {
+	const files = await readdir(snippetsDir)
+	const snippets: Snippet[] = []
+	for (const file of files) {
+		const filePath = path.join(snippetsDir, file)
+
+		if (await isSnippet(filePath)) {
+			snippets.push({
+				name: file.replace('.js', ''),
+				content: await readFile(filePath, 'utf8'),
+			})
+		}
+	}
+	return [...defaultSnippets, ...snippets]
 }
 
 /**
@@ -1307,6 +1352,15 @@ app.post(
 		}
 	}
 )
+
+app.get('/api/snippet', apisLimiter, async function (req, res) {
+	try {
+		const snippets = await getSnippets()
+		res.json({ success: true, data: snippets })
+	} catch (err) {
+		res.json({ success: false, message: err.message })
+	}
+})
 
 // ### ERROR HANDLERS
 

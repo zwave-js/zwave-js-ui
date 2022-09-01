@@ -87,6 +87,7 @@
 									:items="input.items"
 									:rules="input.rules || []"
 									:label="input.label"
+									@change="input.onChange"
 									:persistent-hint="!!input.hint"
 									:multiple="!!input.multiple"
 									:hint="input.hint"
@@ -515,6 +516,13 @@ export default {
 					if (input.default !== undefined) {
 						// without this code block is bugged, don't simply assign
 						this.$set(this.values, input.key, input.default)
+					}
+
+					if (
+						input.onChange &&
+						typeof input.onChange === 'function'
+					) {
+						input.onChange = input.onChange.bind(this, this.values)
 					}
 				}
 			}
