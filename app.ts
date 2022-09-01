@@ -480,6 +480,7 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 				continue
 			}
 			entry.children = await parseDir(entry.path)
+			sortStore(entry.children)
 		} else {
 			entry.ext = file.split('.').pop()
 		}
@@ -487,7 +488,26 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 		entry.size = utils.humanSize(stats.size)
 		toReturn.push(entry)
 	}
+
+	sortStore(toReturn)
+
 	return toReturn
+}
+
+/**
+ *
+ * Sort children folders first and files after
+ */
+function sortStore(store: StoreFileEntry[]) {
+	return store.sort((a, b) => {
+		if (a.children && !b.children) {
+			return -1
+		}
+		if (!a.children && b.children) {
+			return 1
+		}
+		return 0
+	})
 }
 
 // ### EXPRESS SETUP
