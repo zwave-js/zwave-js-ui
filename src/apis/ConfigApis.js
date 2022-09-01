@@ -89,6 +89,10 @@ export default {
 		const response = await request.get('/store')
 		return response.data
 	},
+	async getSnippets() {
+		const response = await request.get('/snippet')
+		return response.data
+	},
 	async getFile(path) {
 		const response = await request.get('/store', { params: { path } })
 		return response.data

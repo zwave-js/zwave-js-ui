@@ -7,6 +7,7 @@ config({ path: './.env.app' })
 export const title: string = 'ZWave To MQTT'
 export const storeDir: string = process.env.STORE_DIR || joinPath(true, 'store')
 export const logsDir: string = joinPath(storeDir, 'logs')
+export const snippetsDir: string = joinPath(storeDir, 'snippets')
 
 export const tmpDir: string = joinPath(storeDir, '.tmp')
 export const backupsDir: string = process.env.BACKUPS_DIR || joinPath(storeDir, 'backups')

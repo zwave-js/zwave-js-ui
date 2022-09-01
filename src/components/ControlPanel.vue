@@ -435,6 +435,7 @@ export default {
 						return
 					}
 				} else if (action === 'driverFunction') {
+					const { data: snippets } = await ConfigApis.getSnippets()
 					const { code } = await this.$listeners.showConfirm(
 						'Driver function',
 						'',
@@ -443,6 +444,26 @@ export default {
 							width: 900,
 							confirmText: 'Send',
 							inputs: [
+								{
+									type: 'list',
+									key: 'snippet',
+									label: 'Snippets',
+									default: '',
+									items: snippets,
+									itemText: 'name',
+									itemValue: 'name',
+									hint: 'Select a snippet from library',
+									onChange(values, v) {
+										const content = v
+											? snippets.find((s) => s.name === v)
+													?.content
+											: ''
+
+										if (v) {
+											values.code = content
+										}
+									},
+								},
 								{
 									type: 'code',
 									key: 'code',
