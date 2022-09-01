@@ -1,5 +1,13 @@
 
 
+# [7.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.16.0...v7.0.0) (2022-09-01)
+
+
+### Features
+
+* bump zwave-js@10.0.3 ([a4b6027](https://github.com/zwave-js/zwavejs2mqtt/commit/a4b6027eb8dcc56a316e33e89b4e2640f0330fab))
+* zwave-js v10 support ([#2542](https://github.com/zwave-js/zwavejs2mqtt/issues/2542)) ([f51d17e](https://github.com/zwave-js/zwavejs2mqtt/commit/f51d17e22329e6ad1892fc9ba447c942f9df1055))
+
 # [6.16.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.15.2...v6.16.0) (2022-08-29)
 
 
