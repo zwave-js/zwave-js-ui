@@ -30,7 +30,6 @@ import {
 	InclusionOptions,
 	InclusionResult,
 	InclusionStrategy,
-	InclusionUserCallbacks,
 	InterviewStage,
 	libVersion,
 	LifelineHealthCheckSummary,
@@ -2005,12 +2004,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}, (this.cfg.commandsTimeout || 0) * 1000 || 30000)
 
 				let inclusionOptions: InclusionOptions
-				const userCallbacks: InclusionUserCallbacks = {
-					grantSecurityClasses:
-						this._onGrantSecurityClasses.bind(this),
-					validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-					abort: this._onAbortInclusion.bind(this),
-				}
 
 				switch (strategy) {
 					case InclusionStrategy.Insecure:
