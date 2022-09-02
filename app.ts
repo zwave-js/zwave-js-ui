@@ -161,7 +161,7 @@ socketManager.authMiddleware = function (
 }
 
 let gw: Gateway // the gateway instance
-const plugins = [] as CustomPlugin[]
+const plugins: CustomPlugin[] = []
 let pluginsRouter: Router
 
 // flag used to prevent multiple restarts while one is already in progress
@@ -271,7 +271,7 @@ interface Snippet {
 const defaultSnippets: Snippet[] = []
 
 async function loadSnippets() {
-	const localSnippetsDir = path.join(__dirname, 'snippets')
+	const localSnippetsDir = utils.joinPath(false, 'snippets')
 	await mkdirp(snippetsDir)
 
 	const files = await readdir(localSnippetsDir)
@@ -1415,7 +1415,7 @@ process.removeAllListeners('SIGINT')
 async function gracefuShutdown() {
 	logger.warn('Shutdown detected: closing clients...')
 	try {
-		await gw.close()
+		if (gw) await gw.close()
 		await destroyPlugins()
 	} catch (error) {
 		logger.error('Error while closing clients', error)
