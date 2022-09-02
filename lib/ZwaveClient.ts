@@ -1233,7 +1233,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				emitValueUpdateAfterSetValue: true,
 				apiKeys: {
 					firmwareUpdateService:
-						'ffcc1a6da32e5a863e739a991b1ea92de57eb28ef4f1fd373b164df84095c43637ecc617d2119ae7e4768619fe16d305',
+						'421e29797c3c2926f84efc737352d6190354b3b526a6dce6633674dd33a8a4f964c794f5',
 				},
 				inclusionUserCallbacks: {
 					grantSecurityClasses:
