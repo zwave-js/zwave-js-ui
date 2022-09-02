@@ -229,6 +229,8 @@
 						item-key="id"
 						class="elevation-1"
 						v-if="results.length > 0"
+						hide-default-footer
+						:items-per-page="-1"
 					>
 						<template v-slot:top>
 							<v-btn
@@ -407,7 +409,8 @@
 <script>
 import { socketEvents, inboundEvents } from '@/../server/lib/SocketEvents'
 import { copy } from '@/lib/utils'
-import { getEnumMemberName, Powerlevel } from 'zwave-js/safe'
+import { getEnumMemberName } from 'zwave-js/safe'
+import { Powerlevel } from '@zwave-js/cc/safe'
 
 export default {
 	components: {},
