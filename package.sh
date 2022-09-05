@@ -33,7 +33,7 @@ ask() {
 	done
 }
 
-APP="zwavejs2mqtt"
+APP=$(node -p "require('./package.json').name")
 PKG_FOLDER="pkg"
 
 echo "Destination folder: $PKG_FOLDER"
@@ -121,4 +121,10 @@ echo "## Create folders needed"
 cd $PKG_FOLDER
 mkdir store -p
 echo "## Create zip file $APP-v$VERSION"
-zip -r $APP-v$VERSION.zip *
+zip -r $APP-v$VERSION.zip store $APP
+
+## If .exe exists create zip for windows
+if [ -f "$APP.exe" ]; then
+	echo "## Create zip file $APP-v$VERSION-win"
+	zip -r $APP-v$VERSION-win.zip store $APP.exe
+fi
