@@ -1,6 +1,7 @@
 import DailyRotateFile from '@zwave-js/winston-daily-rotate-file'
+import { ensureDirSync } from 'fs-extra'
 import winston from 'winston'
-import { logsDir } from '../config/app'
+import { logsDir, storeDir } from '../config/app'
 import { GatewayConfig } from './Gateway'
 import { DeepPartial, joinPath } from './utils'
 
@@ -10,6 +11,10 @@ const { combine, timestamp, label, printf, colorize, splat } = format
 export const defaultLogFile = 'zwavejs2mqtt_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
+
+// ensure store and logs directories exist
+ensureDirSync(storeDir)
+ensureDirSync(logsDir)
 
 // custom colors for timestamp and module
 addColors({
