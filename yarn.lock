@@ -1690,6 +1690,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@kvaster/zwavejs-prom@npm:^0.0.2":
+  version: 0.0.2
+  resolution: "@kvaster/zwavejs-prom@npm:0.0.2"
+  dependencies:
+    prom-client: ^14.1.0
+  checksum: a5cdc52c14f20d82ab39e5b8733ff5b53743f0fcaeec7e70307df5d14f912737dc6f3d6e7ab1940db56fe8d555b5b02a382ce2bb9ea42ab690adf71d0664e99e
+  languageName: node
+  linkType: hard
+
 "@leichtgewicht/ip-codec@npm:^2.0.1":
   version: 2.0.4
   resolution: "@leichtgewicht/ip-codec@npm:2.0.4"
@@ -4138,6 +4147,13 @@ __metadata:
   version: 2.2.0
   resolution: "binary-extensions@npm:2.2.0"
   checksum: ccd267956c58d2315f5d3ea6757cf09863c5fc703e50fbeb13a7dc849b812ef76e3cf9ca8f35a0c48498776a7478d7b4a0418e1e2b8cb9cb9731f2922aaad7f8
+  languageName: node
+  linkType: hard
+
+"bintrees@npm:1.0.2":
+  version: 1.0.2
+  resolution: "bintrees@npm:1.0.2"
+  checksum: 56a52b7d3634e30002b1eda740d2517a22fa8e9e2eb088e919f37c030a0ed86e364ab59e472fc770fc8751308054bb1c892979d150e11d9e11ac33bcc1b5d16e
   languageName: node
   linkType: hard
 
@@ -12900,6 +12916,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prom-client@npm:^14.1.0":
+  version: 14.1.0
+  resolution: "prom-client@npm:14.1.0"
+  dependencies:
+    tdigest: ^0.1.1
+  checksum: 88f8e67020c0af07d09ab8f15caaa2a3d0810b01d903d0977d82947d3b0100a539db77bcccfde0bf2449a85060475f7fb05b64e7c34951c8a54b84240ae7ae81
+  languageName: node
+  linkType: hard
+
 "promise-inflight@npm:^1.0.1":
   version: 1.0.1
   resolution: "promise-inflight@npm:1.0.1"
@@ -14854,6 +14879,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tdigest@npm:^0.1.1":
+  version: 0.1.2
+  resolution: "tdigest@npm:0.1.2"
+  dependencies:
+    bintrees: 1.0.2
+  checksum: 44de8246752b6f8c2924685f969fd3d94c36949f22b0907e99bef2b2220726dd8467f4730ea96b06040b9aa2587c0866049640039d1b956952dfa962bc2075a3
+  languageName: node
+  linkType: hard
+
 "temp-dir@npm:^2.0.0":
   version: 2.0.0
   resolution: "temp-dir@npm:2.0.0"
@@ -16600,6 +16634,7 @@ __metadata:
     "@babel/preset-env": ^7.18.10
     "@babel/register": ^7.18.9
     "@jamescoyle/vue-icon": ^0.1.2
+    "@kvaster/zwavejs-prom": ^0.0.2
     "@mdi/js": 7.0.96
     "@release-it/conventional-changelog": ^5.0.0
     "@types/app-root-path": ^1.2.4

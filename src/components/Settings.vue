@@ -100,6 +100,7 @@
 											label="Plugins"
 											:items="[
 												'@varet/zj2m-prom-exporter',
+												'@kvaster/zwavejs-prom',
 											]"
 											multiple
 											chips
