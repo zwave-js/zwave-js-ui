@@ -1,6 +1,6 @@
 {
   "name": "zwavejs2mqtt",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "bin": "server/bin/www.js",
   "description": "Zwavejs2Mqtt Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
@@ -173,7 +173,7 @@
     "vuetify": "^2.6.8",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
-    "zwave-js": "^10.0.3"
+    "zwave-js": "^10.0.4"
   },
   "devDependencies": {
     "@babel/cli": "^7.18.10",

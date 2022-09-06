@@ -30,7 +30,8 @@ export const state = {
     enableStatistics: undefined, // keep it undefined so the user dialog will show up
     serverPort: 3000,
     serverHost: undefined,
-    maxNodeEventsQueueSize: 100
+    maxNodeEventsQueueSize: 100,
+    higherReportsTimeout: false
   },
   backup: {
     storeBackup: false,
