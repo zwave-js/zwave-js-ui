@@ -299,9 +299,13 @@
 														},
 														'set',
 														[
-															configCC.parameter,
-															configCC.value,
-															configCC.valueSize,
+															{
+																parameter:
+																	configCC.parameter,
+																value: configCC.value,
+																valueSize:
+																	configCC.valueSize,
+															},
 														],
 													])
 												"
