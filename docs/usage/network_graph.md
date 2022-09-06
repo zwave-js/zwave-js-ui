@@ -14,7 +14,7 @@ When the target node is the controller, this check will be a **Lifeline healthch
 
 ![Lifeline health](../_images/lifeline_health.mp4 ':include :type=video controls width=100% height=600px')
 
-In the example above we have checked the health of the node against the controller node (lifeline healthcheck). Route healthcheck results are a bit different:
+In the example above we have checked the health of the node against the controller node (lifeline healthcheck). Route healthcheck results contain less information, some of which depends on what the node supports:
 
 ![Route health results](../_images/route_health_result.png)
 
