@@ -6,7 +6,7 @@ The network graph allows you to visualize your Z-Wave mesh network and check con
 
 ## Nodes Healthcheck
 
-In order to use this feature you need to open **Network Graph** tab, apply some filters in case you have big graph to only see required nodes and then click on `Reload Graph`. At this point you can see your nodes and how them are connected to the controller.
+In order to use this feature you need to open **Network Graph** tab. If you have a large network, you might want to apply some filters to only see the relevant nodes. Then click on `Reload Graph`. At this point you can see your nodes and how they are connected to the controller.
 
 ![Load Graph](../_images/load_graph.gif)
 
