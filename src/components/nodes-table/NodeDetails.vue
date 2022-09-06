@@ -281,10 +281,7 @@
 															commandClass: 112,
 														},
 														'get',
-														{
-															parameter:
-																configCC.parameter,
-														},
+														[configCC.parameter],
 													])
 												"
 												color="green"
@@ -301,13 +298,15 @@
 															commandClass: 112,
 														},
 														'set',
-														{
-															parameter:
-																configCC.parameter,
-															value: configCC.value,
-															valueSize:
-																configCC.valueSize,
-														},
+														[
+															{
+																parameter:
+																	configCC.parameter,
+																value: configCC.value,
+																valueSize:
+																	configCC.valueSize,
+															},
+														],
 													])
 												"
 												color="primary"
