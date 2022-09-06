@@ -1,5 +1,29 @@
 
 
+# [7.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v7.0.0...v7.1.0) (2022-09-06)
+
+
+### Bug Fixes
+
+* add logger to driver function context ([de180ba](https://github.com/zwave-js/zwavejs2mqtt/commit/de180bae6b6481efbd9c9a88722a9bff1ca96f6a))
+* creating new file in store copies last opened content ([8a71998](https://github.com/zwave-js/zwavejs2mqtt/commit/8a71998b8e3b4e512d7ae59196e351eec2cff97b)), closes [#2619](https://github.com/zwave-js/zwavejs2mqtt/issues/2619)
+* ensure `store` and `logs` dirs exists on startup ([25c13ea](https://github.com/zwave-js/zwavejs2mqtt/commit/25c13eab6e09f9e62ad20d2c7ccd9aead5f68ef4)), closes [#2625](https://github.com/zwave-js/zwavejs2mqtt/issues/2625)
+* fw updates api key ([4f1d091](https://github.com/zwave-js/zwavejs2mqtt/commit/4f1d0914d0447cc172026084ac18544b9b89cb60))
+* more generic snippet ([40fd4c5](https://github.com/zwave-js/zwavejs2mqtt/commit/40fd4c5b5d3f4c23b7ed1242b7c1fdf0f32af6ed))
+* snippets not correctly loaded on production ([c201cdd](https://github.com/zwave-js/zwavejs2mqtt/commit/c201cddebd7a1a37575142463dfa9bc72c8e9e1f))
+* **ui:** get/set configuration CC ([#2627](https://github.com/zwave-js/zwavejs2mqtt/issues/2627)) ([984e613](https://github.com/zwave-js/zwavejs2mqtt/commit/984e613fc79e3b927c066df20713e9cceb755fca))
+* **ui:** healthcheck results not showing correctly ([bd09413](https://github.com/zwave-js/zwavejs2mqtt/commit/bd094138e2cacd24e3f1d13906427a35fde237ca))
+
+
+### Features
+
+* add '@kvaster/zwavejs-prom' plugin ([a55f847](https://github.com/zwave-js/zwavejs2mqtt/commit/a55f8476504d725bdf7e38f66b751c70d99f28b4)), closes [#2604](https://github.com/zwave-js/zwavejs2mqtt/issues/2604)
+* bump zwave-js@10.0.4 ([#2629](https://github.com/zwave-js/zwavejs2mqtt/issues/2629)) ([5893916](https://github.com/zwave-js/zwavejs2mqtt/commit/58939160a41e87ae28d05b770a4ca8972d9ba696))
+* ctrl+s combination to save store file ([f94f739](https://github.com/zwave-js/zwavejs2mqtt/commit/f94f739deb2d7555d3033e5a8e15619f5071ec83)), closes [#2616](https://github.com/zwave-js/zwavejs2mqtt/issues/2616)
+* driver function snippets ([9148bbf](https://github.com/zwave-js/zwavejs2mqtt/commit/9148bbf07c61fd3909ec0cbc12569d5a4fce421a)), closes [#2176](https://github.com/zwave-js/zwavejs2mqtt/issues/2176)
+* higher reports timeout setting ([#2628](https://github.com/zwave-js/zwavejs2mqtt/issues/2628)) ([7964f9e](https://github.com/zwave-js/zwavejs2mqtt/commit/7964f9e60fd088a297f42a652a922bc151d10922))
+* sort store entries like in a computer ([3616a55](https://github.com/zwave-js/zwavejs2mqtt/commit/3616a55de10f1c3f46fe6c86b58d695fcd9c8a95)), closes [#2617](https://github.com/zwave-js/zwavejs2mqtt/issues/2617)
+
 # [7.0.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v6.16.0...v7.0.0) (2022-09-01)
 
 
