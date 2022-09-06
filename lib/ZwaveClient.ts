@@ -445,6 +445,7 @@ export type ZwaveConfig = {
 	scales?: SensorTypeScale[]
 	serverServiceDiscoveryDisabled?: boolean
 	maxNodeEventsQueueSize?: number
+	higherReportsTimeout?: boolean
 }
 
 export type Z2MDriverInfo = {
@@ -1240,6 +1241,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						this._onGrantSecurityClasses.bind(this),
 					validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
 					abort: this._onAbortInclusion.bind(this),
+				},
+				timeouts: {
+					report: this.cfg.higherReportsTimeout ? 10000 : undefined,
 				},
 			}
 

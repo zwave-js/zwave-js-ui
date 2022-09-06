@@ -650,6 +650,16 @@
 											type="number"
 										></v-text-field>
 									</v-col>
+									<v-col cols="12" sm="6">
+										<v-checkbox
+											hint="This can help with the inclusion or interview of some devices, but can also slow down communication a lot."
+											persistent-hint
+											label="Increase node report timeout"
+											v-model="
+												newZwave.higherReportsTimeout
+											"
+										></v-checkbox>
+									</v-col>
 									<input
 										type="hidden"
 										:value="newZwave.options"
