@@ -1,12 +1,10 @@
-# Network graph
+# Nodes Healthcheck
 
-The network graph allows you to visualize your Z-Wave mesh network and check connectivity issues between nodes and the controller.
+In order to use this feature you need to open **Network Graph** tab, here you can visualize your Z-Wave mesh network and check connectivity issues between nodes and the controller.
+
+If you have a large network, you might want to apply some filters to only see the relevant nodes. Then click on `Reload Graph`. At this point you can see your nodes and their connections.
 
 > [!NOTE] In some networks, the neighbor information used to draw this graph can be wrong and nodes may appear to be not connected, even if they are. Refer to the route information (see below) to know how commands are actually routed.
-
-## Nodes Healthcheck
-
-In order to use this feature you need to open **Network Graph** tab. If you have a large network, you might want to apply some filters to only see the relevant nodes. Then click on `Reload Graph`. At this point you can see your nodes and how they are connected to the controller.
 
 ![Load Graph](../_images/load_graph.gif)
 
