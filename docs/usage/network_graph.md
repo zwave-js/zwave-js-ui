@@ -8,7 +8,7 @@ In order to use this feature you need to open **Network Graph** tab, apply some 
 
 ![Load Graph](../_images/load_graph.gif)
 
-By clicking on nodes like you see in previous gif a panel will open showing you all node informations and last working route informations (if available). At the bottom of this panel there is a button `CHECK HEALTH` that opens a dialog that allows to perform health checks on that node.
+By clicking on nodes (see previous video) a panel will open containing more detailed node information, including the last working route (if supported by your stick). At the bottom of this panel there is a button `CHECK HEALTH` that opens a dialog that allows to perform health checks on that node.
 
 Depending on if the target node is the controller or a normal node the UI will perform a `lifeline healtcheck` or a `route healthcheck`.
 
