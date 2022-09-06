@@ -10,7 +10,7 @@ In order to use this feature you need to open **Network Graph** tab, apply some 
 
 By clicking on nodes (see previous video) a panel will open containing more detailed node information, including the last working route (if supported by your stick). At the bottom of this panel there is a button `CHECK HEALTH` that opens a dialog that allows to perform health checks on that node.
 
-Depending on if the target node is the controller or a normal node the UI will perform a `lifeline healtcheck` or a `route healthcheck`.
+When the target node is the controller, this check will be a **Lifeline healthcheck**, for other nodes a **Route healthcheck**.
 
 ![Lifeline health](../_images/lifeline_health.mp4 ':include :type=video controls width=100% height=600px')
 
