@@ -18,4 +18,4 @@ In the example above we have checked the health of the node against the controll
 
 ![Route health results](../_images/route_health_result.png)
 
-If you have problems understanding the results just open the info dialog by pressing on the `?` button and you will see a detailed explanation of the results, them are also available [here](https://zwave-js.github.io/node-zwave-js/#/api/node?id=checklifelinehealth).
+If you have problems understanding the results, just open the info dialog by pressing on the `?` button and you will see a detailed explanation of the results. This explanation is also available [here](https://zwave-js.github.io/node-zwave-js/#/api/node?id=checklifelinehealth).
