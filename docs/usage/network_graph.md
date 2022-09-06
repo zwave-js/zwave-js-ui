@@ -1,6 +1,8 @@
 # Network graph
 
-Network graph allows you to visualize your Zwave mesh network and check connectivity issues between nodes and the controller.
+The network graph allows you to visualize your Z-Wave mesh network and check connectivity issues between nodes and the controller.
+
+> [!NOTE] In some networks, the neighbor information used to draw this graph can be wrong and nodes may appear to be not connected, even if they are. Refer to the route information (see below) to know how commands are actually routed.
 
 ## Nodes Healthcheck
 
