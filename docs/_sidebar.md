@@ -12,6 +12,7 @@
   - [Managing Nodes](usage/nodes-management.md)
   - [Accessing From Behind a Proxy](usage/reverse-proxy.md)
   - [Driver function](usage/driver_function.md)
+  - [Nodes Healthcheck](usage/nodes_healthcheck.md)
 
 - Device Support
   - [Supported and "Unknown" Devices](device-support/supported-unknown-devices.md)
