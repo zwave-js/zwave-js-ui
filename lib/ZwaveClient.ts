@@ -1245,6 +1245,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				timeouts: {
 					report: this.cfg.higherReportsTimeout ? 10000 : undefined,
 				},
+				userAgent: {
+					[pkgjson.name]: pkgjson.version,
+				},
 			}
 
 			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
