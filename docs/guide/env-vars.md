@@ -26,6 +26,7 @@ This is the list of the supported environment variables:
 - `Z2M_LOG_MAXSIZE`: The maximum size of a single log file. Default is `50m` (50MB)
 - `NO_LOG_COLORS`: Set this env var to `'true'` to disable application log colors also in the console.
 - `FORCE_DISABLE_SSL`: Set this env var to `'true'` to disable SSL.
+- `BASE_PATH`: Set this env var to the base path where the application is served. Default is `/`
 
 These variables can be used when running the webpack dev server with HMR (most users will not need them):
 
