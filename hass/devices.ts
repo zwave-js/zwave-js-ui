@@ -150,6 +150,40 @@ const COVER: HassDevice = {
 	},
 }
 
+const AEROPAC: HassDevice = {
+	type: "fan",
+	object_id: "dimmer",
+	values: [
+		"38-0-currentValue",
+		"38-0-targetValue"
+	],
+	discovery_payload: {
+		command_topic: '38-0-targetValue',
+		state_topic: '38-0-currentValue',
+		preset_mode_command_topic: '38-0-targetValue',
+		preset_mode_state_topic: '38-0-currentValue',
+		percentage_command_topic: '38-0-targetValue',
+		percentage_state_topic: '38-0-currentValue',
+		preset_modes: [
+			'off',
+			'silent',
+			'very low',
+			'low',
+			'medium',
+			'high',
+			'very high',
+			'turbo'
+		],
+		speed_range_min: 1,
+		speed_range_max: 7,
+		percentage_value_template: '{{ {0:0 ,16: 1, 32: 2, 48: 3, 64: 4, 80: 5, 96: 6, 99: 7}[value_json.value] }}',
+		percentage_command_template: '{{ {0:0 ,1: 16, 2: 32, 3: 48, 4: 64, 5: 80, 6: 96, 7: 99}[value] }}',
+		state_value_template: '{{ \"OFF\" if value_json.value == 0 else \"ON\" }}',
+		preset_mode_command_template: "{{ {'off': 0, 'silent': 16, 'very low': 32, 'low':48, 'medium': 64, 'high': 80, 'very high': 96, 'turbo': 99}[value] }}",
+		preset_mode_value_template: "{{ {0:'off' ,16: 'silent', 32: 'very low', 48: 'low', 64: 'medium', 80: 'high', 96: 'very high', 99: 'turbo'}[value_json.value] }}"
+	}
+}
+
 const devices: { [deviceId: string]: HassDevice[] } = {
 	'89-3-1': [
 		{
@@ -355,6 +389,7 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 	'345-82-3': [COVER], // Qubino flush shutter
 	'622-23089-17235': [COVER], // Graber/Bali/Spring Fashion Covers
 	'881-21-2': [SPIRIT_ZWAVE_PLUS], // Eurotronic Spirit / Aeotec ZWA021
+	'129-1-20': [AEROPAC], //Siegenia Aeropac
 }
 
 export default devices
