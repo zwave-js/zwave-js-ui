@@ -182,7 +182,7 @@ const AEROPAC: HassDevice = {
 			"{{ {'off': 0, 'silent': 16, 'very low': 32, 'low':48, 'medium': 64, 'high': 80, 'very high': 96, 'turbo': 99}[value] }}",
 		preset_mode_value_template:
 			"{{ {0:'off', 16: 'silent', 32: 'very low', 48: 'low', 64: 'medium', 80: 'high', 96: 'very high', 99: 'turbo'}[value_json.value] }}",
-	}
+	},
 }
 
 const devices: { [deviceId: string]: HassDevice[] } = {
