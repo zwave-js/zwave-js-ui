@@ -1043,7 +1043,7 @@
 										cols="6"
 									>
 										<v-switch
-											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwave-js-ui instance"
+											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
 											persistent-hint
 											label="Disable DNS Discovery"
 											v-model="
