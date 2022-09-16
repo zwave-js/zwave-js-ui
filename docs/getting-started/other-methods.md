@@ -36,7 +36,7 @@ sudo snap connect zwave-js-ui:hardware-observe
 
 ## NodeJS or PKG version
 
-The most complex way to run zwave-js-ui is on bare metal. To do so, you can use the packaged version (you don't need NodeJS/yarn installed) or clone this repository and build the project:
+The most complex way to run Z-Wave JS UI is on bare metal. To do so, you can use the packaged version (you don't need NodeJS/yarn installed) or clone this repository and build the project:
 
 - For the packaged version:
 
