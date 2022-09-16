@@ -20,7 +20,7 @@ Supported architectures are:
 Available tags are:
 
 - `latest` for the latest official release.
-- `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [zwave-js-ui](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
+- `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [Z-Wave JS UI](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
 - `sha-<commit-sha>` (example: `sha-92d502a`)
 - `<version>` (example: `2.1.0`)
 
