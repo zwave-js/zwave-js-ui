@@ -63,7 +63,7 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_
 
 ### Run as a service
 
-To run zwave-js-ui as a service you can use the `docker-compose.yml` found [here](https://github.com/zwave-js/zwave-js-ui/blob/master/docker/docker-compose.yml):
+To run Z-Wave JS UI as a service you can use the `docker-compose.yml` found [here](https://github.com/zwave-js/zwave-js-ui/blob/master/docker/docker-compose.yml):
 
 ```yml
 version: "3.7"

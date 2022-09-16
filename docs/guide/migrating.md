@@ -2,7 +2,7 @@
 
 When migrating from Zwave2Mqtt there will be some breaking changes:
 
-- `settings.json` are almost the same. You can easily export them from Z2M and import them in zwave-js-ui by using the `Export` and `Import` buttons in Settings tab. After importing them you only will have to edit some Z-Wave settings and all Gateway Values entries as now the value ids have changed
+- `settings.json` are almost the same. You can easily export them from Z2M and import them in Z-Wave JS UI by using the `Export` and `Import` buttons in Settings tab. After importing them you only will have to edit some Z-Wave settings and all Gateway Values entries as now the value ids have changed
 - `scenes.json` need to be rewritten for the same reason as valueIds have changed. We suggest to manually recreate them using the UI and trash the old one
 - You cannot use the old OZW cache file but don't worry it will be automatically generated and the nodes names/locations will be restored from `nodes.json` file
 - `nodes.json` can be imported but you will have to manually edit it and delete all nodes `hassDevices` as them will not work in the new implementation (alternatively instead of deleting you can manually convert them, see next steps)

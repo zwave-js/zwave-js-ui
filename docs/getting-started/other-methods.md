@@ -1,8 +1,8 @@
-# Other Methods to Run zwave-js-ui
+# Other Methods to Run Z-Wave JS UI
 
 ## Kubernetes
 
-To run zwave-js-ui as a Kubernetes deployment, download the `kustomization.yaml` file found [here](https://raw.githubusercontent.com/zwave-js/zwave-js-ui/master/kustomization.yaml):
+To run Z-Wave JS UI as a Kubernetes deployment, download the `kustomization.yaml` file found [here](https://raw.githubusercontent.com/zwave-js/zwave-js-ui/master/kustomization.yaml):
 
 ```bash
 kubectl apply -k https://raw.githubusercontent.com/zwave-js/zwave-js-ui/master/kustomization.yaml

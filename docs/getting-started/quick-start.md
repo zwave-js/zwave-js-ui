@@ -1,16 +1,16 @@
 # Quick Start
 
-zwave-js-ui can be run in several different ways. The default method is with docker, but you can also use [Kubernetes, Snap, or NodeJS packages](getting-started/other-methods.md). Choose the one that best fits your needs.
+Z-Wave JS UI can be run in several different ways. The default method is with docker, but you can also use [Kubernetes, Snap, or NodeJS packages](getting-started/other-methods.md). Choose the one that best fits your needs.
 
-After running zwave-js-ui using one of the below methods, you can access it in your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
+After running Z-Wave JS UI using one of the below methods, you can access it in your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
 
-**You must edit the [settings](usage/setup.md) before zwave-js-ui will become functional.** A minimum set of settings are described [below](getting-started/quick-start?id=minimum-settings).
+**You must edit the [settings](usage/setup.md) before Z-Wave JS UI will become functional.** A minimum set of settings are described [below](getting-started/quick-start?id=minimum-settings).
 
 If you are using Home Assistant, the UI can be added to Lovelace so that it can be accessed from within Home Assistant using the [following instructions](homeassistant/accessing-lovelace.md).
 
 ## Docker
 
-The easiest way to run zwave-js-ui is by using docker:
+The easiest way to run Z-Wave JS UI is by using docker:
 
 ```bash
 # Using volumes as persistence
@@ -53,7 +53,7 @@ A [complete](usage/setup.md) guide to the settings is available. At minimum, you
 > - **Backup these keys!**
 
 3. **Enable Z-Wave JS Logging** [Settings -> Z-Wave -> Log Enabled, then elect a Log Level]
-4. **Enable zwave-js-ui Logging** [If using MQTT) (Settings -> General -> Log Enabled, then elect a Log Level]
+4. **Enable Z-Wave JS UI Logging** [If using MQTT) (Settings -> General -> Log Enabled, then elect a Log Level]
 5. **Disable MQTT Gateway** if not using MQTT [On the Settings Page]
 6. **Configure Home Assistant if using Home Assistant** [Settings -> Home Assistant -> WS Server]
 7. **Enable Statistics (please!)** [Settings -> Z-Wave -> Enable Statistics]

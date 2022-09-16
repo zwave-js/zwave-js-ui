@@ -4,7 +4,7 @@ There are two methods to build a custom docker container, using either the proje
 
 ## Building a container using Dockerfile
 
-The docker images are the latest stable images of the [zwave-js-ui](https://github.com/zwave-js/zwave-js-ui) repo. If you want to keep your image updated with the latest changes you can build it on your local machine. For example:
+The docker images are the latest stable images of the [Z-Wave JS UI](https://github.com/zwave-js/zwave-js-ui) repo. If you want to keep your image updated with the latest changes you can build it on your local machine. For example:
 
 ```bash
 git clone https://github.com/zwave-js/zwave-js-ui.git

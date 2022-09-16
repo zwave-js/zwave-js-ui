@@ -1,10 +1,10 @@
 # Plugins
 
-Plugins are NodeJS packages that can be integrated into zwave-js-ui in order to add new awesome features. They have access to all the clients (zwave and mqtt) and express instance.
+Plugins are NodeJS packages that can be integrated into Z-Wave JS UI in order to add new awesome features. They have access to all the clients (zwave and mqtt) and express instance.
 
 ## Usage
 
-A plugin is imported in zwave-js-ui using `require(pluginName)(context)` where the context provides access to these elements:
+A plugin is imported in Z-Wave JS UI using `require(pluginName)(context)` where the context provides access to these elements:
 
 - `zwave`: Z-Wave client
 - `mqtt`: Mqtt client
