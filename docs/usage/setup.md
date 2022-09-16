@@ -88,7 +88,7 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 ## MQTT
 
 - **Name**: A unique name that identifies the Gateway.
-- **Host url**: The url of the broker. Insert the protocol if present, example: `tls://localhost`. Mqtt supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
+- **Host url**: The url of the broker. Insert the protocol if present, example: `tls://localhost`. MQTT supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
 - **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
@@ -108,7 +108,7 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 
      `<mqtt_prefix>/<?node_location>/<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey>`
 
-     - `mqtt_prefix`: the prefix set in Mqtt Settings
+     - `mqtt_prefix`: the prefix set in MQTT Settings
      - `node_location`: location of the Z-Wave node (optional)
      - `nodeId`: the unique numerical id of the node in Z-Wave network
      - `commandClass`: the command class number of the value
@@ -132,7 +132,7 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 
      `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
 
-     - `mqtt_prefix`: the prefix set in Mqtt Settings
+     - `mqtt_prefix`: the prefix set in MQTT Settings
      - `node_location`: location of the Z-Wave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
      - `value_topic`: the topic you want to use for that value (taken from gateway values table).

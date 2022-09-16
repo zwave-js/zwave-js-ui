@@ -689,7 +689,7 @@
 				<v-expansion-panel key="mqtt" v-if="!newMqtt.disabled">
 					<v-expansion-panel-header>
 						<v-row no-gutters>
-							<v-col align-self="center"> Mqtt </v-col>
+							<v-col align-self="center"> MQTT </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('mqtt')"
