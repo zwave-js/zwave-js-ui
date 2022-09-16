@@ -134,7 +134,7 @@
 					</template>
 					<div class="info-box">
 						<div>
-							<small>zwave-js-ui</small>
+							<small>Z-Wave JS UI</small>
 							<strong>{{ appInfo.appVersion }}</strong>
 						</div>
 						<div>
