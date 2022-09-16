@@ -995,6 +995,7 @@ app.get(
 			serial_ports: [],
 			scales: scales,
 			sslDisabled: sslDisabled(),
+			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
 		}
 
 		if (process.platform !== 'sunos') {

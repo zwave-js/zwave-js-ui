@@ -1,3 +1,5 @@
+ARG image=zwave-js-ui
+
 # STEP: 1 doesn't work with alpine 3.13+
 FROM node:16.3.0-alpine3.12 AS build-zui
 
@@ -63,6 +65,8 @@ RUN apk add --no-cache \
 COPY --from=build-zui /usr/src/app /usr/src/app
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
+
+ENV TAG_NAME=${image_name}
 
 WORKDIR /usr/src/app
 
