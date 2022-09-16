@@ -42,7 +42,7 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v3
         with:
-          images: zwavejs/zwavejs2mqtt,ghcr.io/zwave-js/zwavejs2mqtt,zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
+          images: zwavejs/zwavejs2mqtt,zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
           tags: |
             ${{ github.event.inputs.tag }}
           flavor: |
