@@ -1,6 +1,6 @@
 # Generating Log Files
 
-The are two main loggers, one for ZWavejs2Mqtt and one for the Z-Wave JS module. Logs are necessary to diagnose almost all issues.
+The are two main loggers, one for zwave-js-ui and one for the Z-Wave JS module. Logs are necessary to diagnose almost all issues.
 
 Both logger options are configured from the `Settings` page.
 
@@ -9,9 +9,9 @@ Both logger options are configured from the `Settings` page.
 > [!NOTE]
 > Application logs are of limited utility and are only useful for diagnosing **errors in the UI itself**, versus lower-level Z-Wave network operations that are reflected in the driver logs.
 
-ZWavejs2Mqtt logger can be configured in `General` section, enable `Log enabled` switch and `Log To File` and set `Log Level` to `Silly`
+zwave-js-ui logger can be configured in `General` section, enable `Log enabled` switch and `Log To File` and set `Log Level` to `Silly`
 
-> Log file name: `zwavejs2mqtt.log`
+> Log file name: `zwave-js-ui.log`
 
 ![Enable logging](../_images/log_z2m.gif)
 

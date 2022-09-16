@@ -20,7 +20,7 @@
 						</v-list-item-avatar>
 						<v-list-item-content>
 							<v-list-item-title>{{
-								'ZWaveJS2MQTT'
+								'zwave-js-ui'
 							}}</v-list-item-title>
 						</v-list-item-content>
 					</v-list-item>
@@ -134,7 +134,7 @@
 					</template>
 					<div class="info-box">
 						<div>
-							<small>Zwavejs2Mqtt</small>
+							<small>zwave-js-ui</small>
 							<strong>{{ appInfo.appVersion }}</strong>
 						</div>
 						<div>
@@ -440,7 +440,7 @@ export default {
 		]),
 		copyVersion() {
 			const el = document.createElement('textarea')
-			el.value = `zwavejs2mqtt: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\nhome hex: ${this.appInfo.homeHex}`
+			el.value = `zwave-js-ui: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\nhome hex: ${this.appInfo.homeHex}`
 			el.setAttribute('readonly', '')
 			el.style.position = 'absolute'
 			el.style.left = '-9999px'

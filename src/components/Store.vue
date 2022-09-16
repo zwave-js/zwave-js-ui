@@ -361,7 +361,7 @@ export default {
 			try {
 				const response = await ConfigApis.downloadZip(files)
 
-				await this.downloadZip(response, 'zwavejs2mqtt-store.zip')
+				await this.downloadZip(response, 'zwave-js-ui-store.zip')
 			} catch (error) {
 				this.showSnackbar(error.message)
 			}

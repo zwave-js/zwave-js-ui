@@ -17,14 +17,14 @@ body:
           If yes, please open an issue at: https://github.com/zwave-js/node-zwave-js/issues/new?assignees=&labels=&template=bug_report.yml
 
           3. Check the troubleshooting section if your problem is described there:
-          https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
+          https://zwave-js.github.io/zwave-js-ui/#/troubleshooting/bug_report
 
           4. Check the changelog if your problem was already fixed recently.
-          https://github.com/zwave-js/zwavejs2mqtt/blob/master/CHANGELOG.md
+          https://github.com/zwave-js/zwave-js-ui/blob/master/CHANGELOG.md
           We cannot provide support if you are not using the latest version.
 
           5. Make sure to provide the necessary information, as described here:
-          https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report
+          https://zwave-js.github.io/zwave-js-ui/#/troubleshooting/bug_report
 
           If you are using HomeAssistant, this is how you do it:
 
@@ -46,7 +46,7 @@ body:
     id: build
     attributes:
       label: Deploy method
-      description: How did you installed Zwavejs2mqtt
+      description: How did you installed zwave-js-ui
       options:
         - Docker
         - PKG executable
@@ -57,7 +57,7 @@ body:
   - type: input
     id: zjs2m-version
     attributes:
-      label: Zwavejs2Mqtt version
+      label: zwave-js-ui version
     validations:
       required: true
   - type: input

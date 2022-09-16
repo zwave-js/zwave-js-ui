@@ -43,7 +43,7 @@ export const state = {
     nvmKeep: 7,
   },
   mqtt: {
-    name: 'Zwavejs2Mqtt',
+    name: 'zwave-js-ui',
     host: 'localhost',
     port: 1883,
     qos: 1,

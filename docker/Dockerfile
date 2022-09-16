@@ -1,5 +1,5 @@
 # STEP: 1 doesn't work with alpine 3.13+
-FROM node:16.3.0-alpine3.12 AS build-z2m
+FROM node:16.3.0-alpine3.12 AS build-zui
 
 WORKDIR /usr/src/app
 
@@ -60,7 +60,7 @@ RUN apk add --no-cache \
 
 
 # Copy files from previous build stage	
-COPY --from=build-z2m /usr/src/app /usr/src/app
+COPY --from=build-zui /usr/src/app /usr/src/app
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 

@@ -8,7 +8,7 @@ chai.use(require('sinon-chai'))
 declare let process: NodeJS.Process & {
 	pkg: boolean
 }
-const snapshotPath = '/snapshot/z2m'
+const snapshotPath = '/snapshot/zui'
 
 describe('#utils', () => {
 	describe('#getPath()', () => {

@@ -118,7 +118,7 @@ describe('logger.js', () => {
 	})
 
 	describe('setupAll()', () => {
-		it('should change the logger config of all zwavejs2mqtt modules', () => {
+		it('should change the logger config of all zwave-js-ui modules', () => {
 			logger1 = module('mod1').setup({
 				logEnabled: true,
 				logLevel: 'warn',
@@ -150,7 +150,7 @@ describe('logger.js', () => {
 			expect(logger2.level).to.equal('error')
 			expect(logger2.transports.length).to.be.equal(2)
 		})
-		it('should not change the logger config of non-zwavejs2mqtt loggers', () => {
+		it('should not change the logger config of non-zwave-js-ui loggers', () => {
 			logger1 = module('mod1').setup({
 				logEnabled: true,
 				logLevel: 'warn',

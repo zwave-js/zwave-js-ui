@@ -6,7 +6,7 @@ This directory does not get indexed and should be used sparingly, e.g. when cust
 
 For information about the content of device files, see the Z-Wave JS [device file docs](https://zwave-js.github.io/node-zwave-js/#/config-files/file-format).
 
-> [!NOTE] ZWavejs2Mqtt needs to be restarted in order to pick up a user-provided device configs. This can be done from settings by hitting `SAVE` or by completely restarting the application.
+> [!NOTE] zwave-js-ui needs to be restarted in order to pick up a user-provided device configs. This can be done from settings by hitting `SAVE` or by completely restarting the application.
 
 > [!NOTE] You must re-interview a device for many types of changes in the device file to have an effect. E.g. changed configuration parameters, certain compat flags, etc.
 

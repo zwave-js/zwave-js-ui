@@ -8,7 +8,7 @@ import { DeepPartial, joinPath } from './utils'
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
 
-export const defaultLogFile = 'zwavejs2mqtt_%DATE%.log'
+export const defaultLogFile = 'zwave-js-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
@@ -117,11 +117,11 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		} else {
 			fileTransport = new DailyRotateFile({
 				filename: config.filePath,
-				auditFile: joinPath(logsDir, 'z2m-logs.audit.json'),
+				auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
 				datePattern: 'YYYY-MM-DD',
 				zippedArchive: true,
-				maxFiles: process.env.Z2M_LOG_MAXFILES || '7d',
-				maxSize: process.env.Z2M_LOG_MAXSIZE || '50m',
+				maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
+				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
 				level: config.level,
 				format: customFormat(config, true),
 			})

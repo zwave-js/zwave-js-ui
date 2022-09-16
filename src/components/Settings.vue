@@ -135,7 +135,7 @@
 										v-if="newGateway.logEnabled"
 									>
 										<v-switch
-											hint="Store logs in a file. Default: store/zwavejs2mqtt_%DATE%.log"
+											hint="Store logs in a file. Default: store/zwave-js-ui_%DATE%.log"
 											persistent-hint
 											label="Log to file"
 											v-model="newGateway.logToFile"
@@ -673,7 +673,7 @@
 
 			<v-container cols="12" sm="6" class="ml-1">
 				<v-switch
-					hint="Enable this to use zwavejs2mqtt only as Control Panel"
+					hint="Enable this to use zwave-js-ui only as Control Panel"
 					persistent-hint
 					label="Disable MQTT Gateway"
 					v-model="newMqtt.disabled"
@@ -1043,7 +1043,7 @@
 										cols="6"
 									>
 										<v-switch
-											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance"
+											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwave-js-ui instance"
 											persistent-hint
 											label="Disable DNS Discovery"
 											v-model="
@@ -1442,7 +1442,7 @@ export default {
 		},
 		openDocs(id) {
 			this.openUrl(
-				`https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=${id}`
+				`https://zwave-js.github.io/zwave-js-ui/#/usage/setup?id=${id}`
 			)
 		},
 		openUrl(url) {

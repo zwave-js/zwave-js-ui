@@ -1,6 +1,6 @@
 # Accessing From Behind a Proxy
 
-There are two ways to enable access to ZWavejs2Mqtt from behind a reverse proxy that uses
+There are two ways to enable access to zwave-js-ui from behind a reverse proxy that uses
 subpaths to serve the pages and services.
 
 You can use a header to signal where the external path is or you can configure
@@ -55,7 +55,7 @@ would look like:
 
 ```javascript
 module.exports = {
-  title: 'ZWavejs2Mqtt',
+  title: 'zwave-js-ui',
   storeDir: process.env.STORE_DIR || joinPath(true, 'store'),
   base: '/zwave/',
   port: 8091

@@ -16696,9 +16696,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zwavejs2mqtt@workspace:.":
+"zwave-js-ui@workspace:.":
   version: 0.0.0-use.local
-  resolution: "zwavejs2mqtt@workspace:."
+  resolution: "zwave-js-ui@workspace:."
   dependencies:
     "@babel/cli": ^7.18.10
     "@babel/core": ^7.18.10
@@ -16908,6 +16908,6 @@ __metadata:
     sinon-chai:
       optional: true
   bin:
-    zwavejs2mqtt: server/bin/www.js
+    zwave-js-ui: server/bin/www.js
   languageName: unknown
   linkType: soft

@@ -1,6 +1,6 @@
 # Setup
 
-To configure ZWavejs2Mqtt, you must access it via your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
+To configure zwave-js-ui, you must access it via your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
 
 ## General
 
@@ -9,7 +9,7 @@ To configure ZWavejs2Mqtt, you must access it via your web browser at <http://lo
   - Password: `zwave`
 - **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload). **Requires openssl to be installed on the machine.**
 - **Plugins**: List of plugins to use. If the plugin you want to use is not listed just write the name or the path to it and press enter. More about plugins [here](/guide/plugins)
-- **Log enabled**: Enable logging for Zwavejs2Mqtt
+- **Log enabled**: Enable logging for zwave-js-ui
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
 
@@ -83,7 +83,7 @@ NVM:
 
 ## Disable Gateway
 
-Enable this to use ZWavejs2Mqtt as only a Control Panel
+Enable this to use zwave-js-ui as only a Control Panel
 
 ## MQTT
 
@@ -231,7 +231,7 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
 - **WS Server**: Enable [Z-Wave JS websocket server](https://github.com/zwave-js/zwave-js-server). This can be used by the official Home Assistant [Z-Wave integration](https://www.home-assistant.io/integrations/zwave_js) to automatically create entities
   - **Server Port**: The port where the websocket server will listen.
   - **Server Host**: The host where the websocket server will listen.
-  - **Disable DNS Discovery**: Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance
+  - **Disable DNS Discovery**: Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwave-js-ui instance
 - **MQTT discovery**: Enable this to use MQTT discovery. This is an alternative to the official integration. (more about this [here](/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to Home Assistant
 - **Retain Discovery**: Set retain flag to true in discovery messages

@@ -185,7 +185,7 @@ const nodePropsMap = {
 			level: [
 				{
 					nodeProp: 'minBatteryLevel',
-					fn: (node: Z2MNode, values: Z2MValueId[]) =>
+					fn: (node: ZUINode, values: ZUIValueId[]) =>
 						values.reduce(
 							(acc, curr) =>
 								acc !== undefined
@@ -198,7 +198,7 @@ const nodePropsMap = {
 				},
 				{
 					nodeProp: 'batteryLevels',
-					fn: (node: Z2MNode, values: Z2MValueId[]) =>
+					fn: (node: ZUINode, values: ZUIValueId[]) =>
 						values.map((v) => v.value),
 				},
 			],
@@ -207,7 +207,7 @@ const nodePropsMap = {
 }
 export type ValuePropsMap = {
 	nodeProp: string
-	fn: (node: Z2MNode, values: Z2MValueId[]) => any
+	fn: (node: ZUINode, values: ZUIValueId[]) => any
 }
 export type CommandClassValueMap = {
 	existsProp?: string
@@ -232,25 +232,25 @@ const ZWAVEJS_LOG_FILE = utils.joinPath(
 	'zwavejs_%DATE%.log'
 )
 
-export type Z2MValueIdState = {
+export type ZUIValueIdState = {
 	text: string
 	value: number
 }
 
-export type Z2MClientStatus = {
+export type ZUIClientStatus = {
 	driverReady: boolean
 	status: boolean
 	config: ZwaveConfig
 }
 
-export type Z2MGroupAssociation = {
+export type ZUIGroupAssociation = {
 	groupId: number
 	nodeId: number
 	endpoint?: number
 	targetEndpoint?: number
 }
 
-export type Z2MValueId = {
+export type ZUIValueId = {
 	id: string
 	nodeId: number
 	type: ValueType
@@ -267,7 +267,7 @@ export type Z2MValueId = {
 	unit?: string
 	minLength?: number
 	maxLength?: number
-	states?: Z2MValueIdState[]
+	states?: ZUIValueIdState[]
 	list?: boolean
 	lastUpdate?: number
 	value?: any
@@ -278,23 +278,23 @@ export type Z2MValueId = {
 	commandClassVersion?: number
 } & TranslatedValueID
 
-export type Z2MValueIdScene = Z2MValueId & {
+export type ZUIValueIdScene = ZUIValueId & {
 	timeout: number
 }
 
-export type Z2MScene = {
+export type ZUIScene = {
 	sceneid: number
 	label: string
-	values: Z2MValueIdScene[]
+	values: ZUIValueIdScene[]
 }
 
-export type Z2MDeviceClass = {
+export type ZUIDeviceClass = {
 	basic: number
 	generic: number
 	specific: number
 }
 
-export type Z2MNodeGroups = {
+export type ZUINodeGroups = {
 	text: string
 	value: number
 	endpoint: number
@@ -356,7 +356,7 @@ export interface FirmwareUpdateProgress {
 	progress: number
 }
 
-export type Z2MNode = {
+export type ZUINode = {
 	id: number
 	deviceConfig?: DeviceConfig
 	manufacturerId?: number
@@ -387,15 +387,15 @@ export type Z2MNode = {
 	isFrequentListening?: FLiRS
 	isRouting?: boolean
 	keepAwake?: boolean
-	deviceClass?: Z2MDeviceClass
+	deviceClass?: ZUIDeviceClass
 	neighbors?: number[]
 	loc?: string
 	name?: string
 	hassDevices?: { [key: string]: HassDevice }
 	deviceId?: string
 	hexId?: string
-	values?: { [key: string]: Z2MValueId }
-	groups?: Z2MNodeGroups[]
+	values?: { [key: string]: ZUIValueId }
+	groups?: ZUINodeGroups[]
 	ready: boolean
 	available: boolean
 	failed: boolean
@@ -448,7 +448,7 @@ export type ZwaveConfig = {
 	higherReportsTimeout?: boolean
 }
 
-export type Z2MDriverInfo = {
+export type ZUIDriverInfo = {
 	uptime?: number
 	lastUpdate?: number
 	status?: ZwaveClientStatus
@@ -478,19 +478,19 @@ export enum EventSource {
 }
 
 export interface ZwaveClientEventCallbacks {
-	nodeStatus: (node: Z2MNode) => void
-	nodeInited: (node: Z2MNode) => void
+	nodeStatus: (node: ZUINode) => void
+	nodeInited: (node: ZUINode) => void
 	event: (source: EventSource, eventName: string, ...args: any) => void
 	scanComplete: () => void
 	driverStatus: (status: boolean) => void
-	notification: (node: Z2MNode, valueId: Z2MValueId, data: any) => void
-	nodeRemoved: (node: Z2MNode) => void
+	notification: (node: ZUINode, valueId: ZUIValueId, data: any) => void
+	nodeRemoved: (node: ZUINode) => void
 	valueChanged: (
-		valueId: Z2MValueId,
-		node: Z2MNode,
+		valueId: ZUIValueId,
+		node: ZUINode,
 		changed?: boolean
 	) => void
-	valueWritten: (valueId: Z2MValueId, node: Z2MNode, value: unknown) => void
+	valueWritten: (valueId: ZUIValueId, node: ZUINode, value: unknown) => void
 }
 
 export type ZwaveClientEvents = Extract<keyof ZwaveClientEventCallbacks, string>
@@ -500,14 +500,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private socket: SocketServer
 	private closed: boolean
 	private _driverReady: boolean
-	private scenes: Z2MScene[]
-	private _nodes: Map<number, Z2MNode>
-	private storeNodes: Record<number, Partial<Z2MNode>>
-	private _devices: Record<string, Partial<Z2MNode>>
-	private driverInfo: Z2MDriverInfo
+	private scenes: ZUIScene[]
+	private _nodes: Map<number, ZUINode>
+	private storeNodes: Record<number, Partial<ZUINode>>
+	private _devices: Record<string, Partial<ZUINode>>
+	private driverInfo: ZUIDriverInfo
 	private status: ZwaveClientStatus
 	// used to store node info before inclusion like name and location
-	private tmpNode: utils.DeepPartial<Z2MNode>
+	private tmpNode: utils.DeepPartial<ZUINode>
 	// tells if a node replacement is in progress
 	private isReplacing = false
 
@@ -862,7 +862,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	getStatus() {
-		const status: Z2MClientStatus = {
+		const status: ZUIClientStatus = {
 			driverReady: this.driverReady,
 			status: this.driverReady && !this.closed,
 			config: this.cfg,
@@ -916,9 +916,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get current associations of a specific group
 	 */
-	getAssociations(nodeId: number): Z2MGroupAssociation[] {
+	getAssociations(nodeId: number): ZUIGroupAssociation[] {
 		const zwaveNode = this.getNode(nodeId)
-		const toReturn: Z2MGroupAssociation[] = []
+		const toReturn: ZUIGroupAssociation[] = []
 
 		if (zwaveNode) {
 			try {
@@ -934,7 +934,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								groupId: groupId,
 								nodeId: a.nodeId,
 								targetEndpoint: a.endpoint,
-							} as Z2MGroupAssociation)
+							} as ZUIGroupAssociation)
 						}
 					}
 				}
@@ -1400,8 +1400,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	public emitValueChanged(
-		valueId: Z2MValueId,
-		node: Z2MNode,
+		valueId: ZUIValueId,
+		node: ZUINode,
 		changed: boolean
 	) {
 		valueId.lastUpdate = Date.now()
@@ -1412,8 +1412,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	public emitNodeStatus(
-		node: Z2MNode,
-		changedProps?: utils.DeepPartial<Z2MNode>
+		node: ZUINode,
+		changedProps?: utils.DeepPartial<ZUINode>
 	) {
 		if (node.ready && !node.inited) {
 			node.inited = true
@@ -1452,7 +1452,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async setNodeName(nodeid: number, name: string) {
 		if (!this.storeNodes[nodeid]) {
-			this.storeNodes[nodeid] = {} as Z2MNode
+			this.storeNodes[nodeid] = {} as ZUINode
 		}
 
 		const node = this._nodes.get(nodeid)
@@ -1539,7 +1539,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Imports scenes Array in `scenes.json`
 	 */
-	async _setScenes(scenes: Z2MScene[]) {
+	async _setScenes(scenes: ZUIScene[]) {
 		// TODO: add scenes validation
 		this.scenes = scenes
 		await jsonStore.put(store.scenes, this.scenes)
@@ -1551,7 +1551,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get all scenes
 	 *
 	 */
-	_getScenes(): Z2MScene[] {
+	_getScenes(): ZUIScene[] {
 		return this.scenes
 	}
 
@@ -1572,7 +1572,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async _addSceneValue(
 		sceneid: number,
-		valueId: Z2MValueIdScene,
+		valueId: ZUIValueIdScene,
 		value: any,
 		timeout: number
 	) {
@@ -1609,7 +1609,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Remove a value from scene
 	 */
-	async _removeSceneValue(sceneid: number, valueId: Z2MValueIdScene) {
+	async _removeSceneValue(sceneid: number, valueId: ZUIValueIdScene) {
 		const scene = this.scenes.find((s) => s.sceneid === sceneid)
 
 		if (!scene) {
@@ -1651,7 +1651,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get the nodes array
 	 */
-	getNodes(): Z2MNode[] {
+	getNodes(): ZUINode[] {
 		const toReturn = []
 
 		for (const [, node] of this._nodes) {
@@ -1752,7 +1752,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Set a poll interval
 	 */
-	setPollInterval(valueId: Z2MValueId, interval: number) {
+	setPollInterval(valueId: ZUIValueId, interval: number) {
 		if (this.driverReady) {
 			const vID = this._getValueID(valueId, true)
 
@@ -1807,7 +1807,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Request an update of this value
 	 *
 	 */
-	async pollValue(valueId: Z2MValueId): Promise<unknown> {
+	async pollValue(valueId: ZUIValueId): Promise<unknown> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(valueId.nodeId)
 
@@ -2485,7 +2485,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Send multicast write request to a group of nodes
 	 */
-	async writeMulticast(nodes: number[], valueId: Z2MValueId, value: unknown) {
+	async writeMulticast(nodes: number[], valueId: ZUIValueId, value: unknown) {
 		if (this.driverReady) {
 			let fallback = false
 			try {
@@ -2515,7 +2515,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Set a value of a specific zwave valueId
 	 */
 	async writeValue(
-		valueId: Z2MValueId,
+		valueId: ZUIValueId,
 		value: any,
 		options?: SetValueAPIOptions
 	) {
@@ -2700,7 +2700,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onControllerStatisticsUpdated(stats: ControllerStatistics) {
-		let controllerNode: Z2MNode
+		let controllerNode: ZUINode
 		try {
 			controllerNode = this.nodes.get(this.driver.controller.ownNodeId)
 		} catch (e) {
@@ -2794,7 +2794,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * the only reliable info at this point is the node id
 	 */
 	private _onNodeFound(foundNode: FoundNode) {
-		let node: Z2MNode
+		let node: ZUINode
 		const nodeId = foundNode.id
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
@@ -2815,7 +2815,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when a node is added. Emitted after zwave-js exchanges security key, adds lifeline, SUC route, etc.
 	 */
 	private async _onNodeAdded(zwaveNode: ZWaveNode, result: InclusionResult) {
-		let node: Z2MNode
+		let node: ZUINode
 		// the driver is ready so this node has been added on fly
 		if (this.driverReady) {
 			node = this._addNode(zwaveNode)
@@ -3144,7 +3144,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode.interviewStage
 			] as keyof typeof InterviewStage
 
-			let changedProps: utils.DeepPartial<Z2MNode>
+			let changedProps: utils.DeepPartial<ZUINode>
 
 			if (updateStatusOnly) {
 				changedProps = {
@@ -3452,7 +3452,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		logger.info(
 			`Node ${zwaveNode.id}: value added: ${this._getValueID(
-				args as unknown as Z2MValueId
+				args as unknown as ZUIValueId
 			)} => ${args.newValue}`
 		)
 
@@ -3553,7 +3553,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const valueId = this._parseValue(zwaveNode, args, args.metadata)
 		logger.info(
 			`Node ${valueId.nodeId}: metadata updated: ${this._getValueID(
-				args as unknown as Z2MValueId
+				args as unknown as ZUIValueId
 			)}`
 		)
 		this.emit(
@@ -3572,7 +3572,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onNodeNotification: ZWaveNotificationCallback = (...parms) => {
 		const [zwaveNode, ccId, args] = parms
 
-		const valueId: Partial<Z2MValueId> = {
+		const valueId: Partial<ZUIValueId> = {
 			id: null,
 			nodeId: zwaveNode.id,
 			commandClass: ccId,
@@ -3628,7 +3628,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const node = this._nodes.get(zwaveNode.id)
 
-		this.emit('notification', node, valueId as Z2MValueId, data)
+		this.emit('notification', node, valueId as ZUIValueId, data)
 
 		this.emit(
 			'event',
@@ -3838,7 +3838,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.tmpNode = undefined
 		}
 
-		const node: Z2MNode = {
+		const node: ZUINode = {
 			id: nodeId,
 			name: this.storeNodes[nodeId]?.name || '',
 			loc: this.storeNodes[nodeId]?.loc || '',
@@ -3864,7 +3864,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Add a new node to our nodes array. No informations are available yet, the node needs to be ready
 	 *
 	 */
-	private _addNode(zwaveNode: ZWaveNode): Z2MNode {
+	private _addNode(zwaveNode: ZWaveNode): ZUINode {
 		const nodeId = zwaveNode.id
 
 		const existingNode = this._nodes.get(nodeId)
@@ -3981,7 +3981,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	async updateControllerNodeProps(
-		node?: Z2MNode,
+		node?: ZUINode,
 		props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion']
 	) {
 		node = node || this.nodes.get(this._driver.controller.ownNodeId)
@@ -4028,10 +4028,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		zwaveValue: TranslatedValueID & { [x: string]: any },
 		zwaveValueMeta: ValueMetadata
-	): Z2MValueId {
+	): ZUIValueId {
 		zwaveValue.nodeId = zwaveNode.id
 
-		const valueId: Z2MValueId = {
+		const valueId: ZUIValueId = {
 			id: this._getValueID(zwaveValue, true), // the valueId unique in the entire network, it also has the nodeId
 			nodeId: zwaveNode.id,
 			commandClass: zwaveValue.commandClass,
@@ -4106,7 +4106,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		zwaveValue: TranslatedValueID,
 		oldValues?: {
-			[key: string]: Z2MValueId
+			[key: string]: ZUIValueId
 		}
 	) {
 		const node = this._nodes.get(zwaveNode.id)
@@ -4194,7 +4194,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to map existence of CCs to node properties
 	 */
-	private _mapCCExistsToNodeProps(node: Z2MNode) {
+	private _mapCCExistsToNodeProps(node: ZUINode) {
 		for (const cc in nodePropsMap) {
 			if (!nodePropsMap?.[cc]?.existsProp) continue
 			const nodeProp = nodePropsMap[cc].existsProp
@@ -4216,7 +4216,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to update the value map for all configured properties
 	 */
-	private _updateValuesMapForNode(node: Z2MNode) {
+	private _updateValuesMapForNode(node: ZUINode) {
 		Object.values(node.values).forEach((value) => {
 			if (
 				!nodePropsMap?.[value.commandClass]?.valueProps?.[
@@ -4232,7 +4232,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to update a single value in the value map
 	 */
-	private _updateValuesMap(node: Z2MNode, value: Z2MValueId) {
+	private _updateValuesMap(node: ZUINode, value: ZUIValueId) {
 		if (!nodePropsMap?.[value.commandClass]?.valueProps?.[value.property])
 			return
 		set(
@@ -4249,13 +4249,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
-	private _mapValuesToNodeProps(node: Z2MNode) {
+	private _mapValuesToNodeProps(node: ZUINode) {
 		for (const cc in nodePropsMap) {
 			if (!nodePropsMap[cc].valueProps) continue
 			for (const valueProp in nodePropsMap[cc].valueProps) {
 				if (!nodeValuesMap?.[node.id]?.[cc]?.[valueProp]) continue
 				Object.values(nodeValuesMap[node.id][cc][valueProp]).forEach(
-					(value: Z2MValueId) =>
+					(value: ZUIValueId) =>
 						this._mapValueToNodeProps(node, value)
 				)
 			}
@@ -4267,7 +4267,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * @param node The affected node
 	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
 	 */
-	private _mapValueToNodeProps(node: Z2MNode, valueId?: Z2MValueId) {
+	private _mapValueToNodeProps(node: ZUINode, valueId?: ZUIValueId) {
 		if (
 			!valueId?.commandClass ||
 			!valueId?.property ||
@@ -4283,7 +4283,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const updatedProps = {}
 		nodePropsMap[valueId.commandClass].valueProps[valueId.property].forEach(
 			(vMap) => {
-				const vIds: Z2MValueId[] =
+				const vIds: ZUIValueId[] =
 					nodeValuesMap[node.id][valueId.commandClass][
 						valueId.property
 					]
@@ -4323,7 +4323,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		} else {
 			let skipUpdate = false
 
-			const vID = this._getValueID(args as unknown as Z2MValueId)
+			const vID = this._getValueID(args as unknown as ZUIValueId)
 
 			// notifications events are not defined as values, manually create them once we get the first update
 			if (!node.values[vID]) {
@@ -4417,7 +4417,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get the device id of a specific node
 	 *
 	 */
-	private _getDeviceID(node: Z2MNode): string {
+	private _getDeviceID(node: ZUINode): string {
 		if (!node) return ''
 
 		return `${node.manufacturerId}-${node.productId}-${node.productType}`
@@ -4426,7 +4426,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Check if a valueID is a current value
 	 */
-	private _isCurrentValue(valueId: TranslatedValueID | Z2MValueId) {
+	private _isCurrentValue(valueId: TranslatedValueID | ZUIValueId) {
 		return valueId.propertyName && /current/i.test(valueId.propertyName)
 	}
 
@@ -4449,7 +4449,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get a valueId from a valueId object
 	 */
-	private _getValueID(v: Partial<Z2MValueId>, withNode = false) {
+	private _getValueID(v: Partial<ZUIValueId>, withNode = false) {
 		return `${withNode ? v.nodeId + '-' : ''}${v.commandClass}-${
 			v.endpoint || 0
 		}-${v.property}${
@@ -4485,7 +4485,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Try to poll a value, don't throw. Used in the setTimeout
 	 *
 	 */
-	private async _tryPoll(valueId: Z2MValueId, interval: number) {
+	private async _tryPoll(valueId: ZUIValueId, interval: number) {
 		try {
 			await this.pollValue(valueId)
 		} catch (error) {

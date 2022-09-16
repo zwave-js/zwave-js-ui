@@ -7,7 +7,7 @@ assignees: billiaz
 
 ---
 
-Before submitting a bug please read: <https://zwave-js.github.io/zwavejs2mqtt/#/troubleshooting/bug_report>
+Before submitting a bug please read: <https://zwave-js.github.io/zwave-js-ui/#/troubleshooting/bug_report>
 
 If you are using the Home Assistant Z-Wave JS integration, please add a full dump:
 
@@ -21,7 +21,7 @@ Build/Run method:
 [ ] Git Clone + yarn install + yarn run build + yarn start
 [ ] Pkg
 
-Zwavejs2Mqtt version: **[Enter Version Number]**
+zwave-js-ui version: **[Enter Version Number]**
 Z-Wave JS version: **[Enter Version Number]**
 
 ### Describe the bug

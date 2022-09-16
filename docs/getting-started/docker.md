@@ -2,7 +2,7 @@
 # Using Docker
 
 > [!TIP]
-> Building your own docker image is [easy!](development/custom-docker.md). This allows you to change the arch and/or use any combination of node-zwave-js/ZWavejs2Mqtt branches.
+> Building your own docker image is [easy!](development/custom-docker.md). This allows you to change the arch and/or use any combination of node-zwave-js/zwave-js-ui branches.
 
 ## Supported Archs
 
@@ -13,14 +13,14 @@ Supported architectures are:
 - `armv7` (Ex. Raspberry PI)
 - `arm64` (Ex. OrangePI NanoPI)
 
-> [!NOTE] If you get the error `standard_init_linux.go:207: exec user process caused "exec format error"`, you most likely installed the wrong package intended for a [different architecture](https://github.com/zwave-js/zwavejs2mqtt/tree/master/docs/troubleshooting/improper-arch.md).
+> [!NOTE] If you get the error `standard_init_linux.go:207: exec user process caused "exec format error"`, you most likely installed the wrong package intended for a [different architecture](https://github.com/zwave-js/zwave-js-ui/tree/master/docs/troubleshooting/improper-arch.md).
 
 ## Available Tags
 
 Available tags are:
 
 - `latest` for the latest official release.
-- `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [ZWavejs2Mqtt](https://github.com/zwave-js/zwavejs2mqtt/commits/master) repository. Use at your own caution.
+- `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [zwave-js-ui](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
 - `sha-<commit-sha>` (example: `sha-92d502a`)
 - `<version>` (example: `2.1.0`)
 
@@ -42,7 +42,7 @@ There are three different way to start the container and provide data persistenc
 
 ```bash
 docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_stick_reference_here:/dev/zwave \
---mount source=zwavejs2mqtt,target=/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+--mount source=zwave-js-ui,target=/usr/src/app/store zwavejs/zwave-js-ui:latest
 ```
 
 > [!NOTE]
@@ -55,7 +55,7 @@ In this example we will store our data in the current path (`$(pwd)`) named `sto
 ```bash
 mkdir store
 docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_stick_reference_here:/dev/zwave \
--v $(pwd)/store:/usr/src/app/store zwavejs/zwavejs2mqtt:latest
+-v $(pwd)/store:/usr/src/app/store zwavejs/zwave-js-ui:latest
 ```
 
 > [!NOTE]
@@ -63,14 +63,14 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_
 
 ### Run as a service
 
-To run ZWavejs2Mqtt as a service you can use the `docker-compose.yml` found [here](https://github.com/zwave-js/zwavejs2mqtt/blob/master/docker/docker-compose.yml):
+To run zwave-js-ui as a service you can use the `docker-compose.yml` found [here](https://github.com/zwave-js/zwave-js-ui/blob/master/docker/docker-compose.yml):
 
 ```yml
 version: "3.7"
 services:
-  zwavejs2mqtt:
-    container_name: zwavejs2mqtt
-    image: zwavejs/zwavejs2mqtt:latest
+  zwave-js-ui:
+    container_name: zwave-js-ui
+    image: zwavejs/zwave-js-ui:latest
     restart: always
     tty: true
     stop_signal: SIGINT
