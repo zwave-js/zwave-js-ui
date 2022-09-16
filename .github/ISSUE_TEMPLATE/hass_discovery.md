@@ -21,7 +21,7 @@ Build/Run method:
 [ ] Git Clone + yarn install + yarn run build + yarn start
 [ ] Pkg
 
-zwave-js-ui version: **[Enter Version Number]**
+Z-Wave JS UI version: **[Enter Version Number]**
 Z-Wave JS version: **[Enter Version Number]**
 
 ### Describe the bug
