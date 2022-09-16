@@ -19,7 +19,7 @@ jobs:
         node-version: [14.x, 16.x, 18.x]
 
     steps:
-      - name: Checkout zwave-js-ui
+      - name: Checkout Z-Wave JS UI
         uses: actions/checkout@v2
 
       - name: Use Node.js ${{ matrix.node-version }}
