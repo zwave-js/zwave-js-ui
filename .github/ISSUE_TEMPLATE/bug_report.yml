@@ -46,7 +46,7 @@ body:
     id: build
     attributes:
       label: Deploy method
-      description: How did you installed Z-Wave JS UI
+      description: How did you install Z-Wave JS UI
       options:
         - Docker
         - PKG executable

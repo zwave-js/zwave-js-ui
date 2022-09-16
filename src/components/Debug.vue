@@ -31,7 +31,7 @@
 			>
 				<p class="ma-1" v-if="!zwave.logEnabled">
 					• ZwaveJS Logs are disabled. Please enable it on "Settings >
-					Zwave" in order to see Application logs
+					Z-Wave" in order to see Application logs
 				</p>
 				<p class="ma-1" v-if="!gateway.logEnabled">
 					• Application Logs are disabled. Please enable it on

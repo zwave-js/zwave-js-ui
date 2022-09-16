@@ -1108,7 +1108,7 @@ app.post(
 	async function (req, res) {
 		let config = req.body.data
 		try {
-			if (!gw.zwave) throw Error('Zwave client not inited')
+			if (!gw.zwave) throw Error('Z-Wave client not inited')
 
 			// try convert to node object
 			if (Array.isArray(config)) {

@@ -97,7 +97,7 @@ export async function loadManager() {
 	await configManager.loadSensorTypes()
 }
 
-const logger = LogManager.module('Zwave')
+const logger = LogManager.module('Z-Wave')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const loglevels = require('triple-beam').configs.npm.levels
 
@@ -1195,7 +1195,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Method used to start Zwave connection using configuration `port`
+	 * Method used to start Z-Wave connection using configuration `port`
 	 */
 	async connect() {
 		if (!this.driverReady) {
@@ -1205,7 +1205,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (!this.cfg?.port) {
-				logger.warn('Zwave driver not inited, no port configured')
+				logger.warn('Z-Wave driver not inited, no port configured')
 				return
 			}
 
@@ -1347,7 +1347,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					this.server = new ZwavejsServer(this._driver, {
 						port: this.cfg.serverPort || 3000,
 						host: this.cfg.serverHost,
-						logger: LogManager.module('Zwave-Server'),
+						logger: LogManager.module('Z-Wave-Server'),
 						enableDNSServiceDiscovery:
 							!this.cfg.serverServiceDiscoveryDisabled,
 					})
@@ -2409,7 +2409,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/**
 	 * Calls a specific `client` or `ZwaveClient` method based on `apiName`
-	 * ZwaveClients methods used are the ones that overrides default Zwave methods
+	 * ZwaveClients methods used are the ones that overrides default Z-Wave methods
 	 * like nodes name and location and scenes management.
 	 */
 	async callApi<T extends AllowedApis>(
@@ -2436,7 +2436,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				err = e.message
 			}
 		} else {
-			err = 'Zwave client not connected'
+			err = 'Z-Wave client not connected'
 		}
 
 		let toReturn: CallAPIResult<T>
@@ -2614,7 +2614,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.driverReady = true
 
-		logger.info('Zwave driver is ready')
+		logger.info('Z-Wave driver is ready')
 
 		this._updateControllerStatus('Driver ready')
 

@@ -283,7 +283,7 @@ export default class Gateway {
 			// this is async but doesn't need to be awaited
 			await this._zwave.connect()
 		} else {
-			logger.error('Zwave settings are not valid')
+			logger.error('Z-Wave settings are not valid')
 		}
 	}
 
@@ -982,7 +982,7 @@ export default class Gateway {
 					'dry',
 					'fan_only',
 				]
-				// Zwave modes: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatModeCC.ts#L54
+				// Z-Wave modes: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatModeCC.ts#L54
 				// up to 0x1F modes
 				const hassModes = [
 					'off', // Off
@@ -1062,7 +1062,7 @@ export default class Gateway {
 				)
 				// Hass accepted actions as per https://www.home-assistant.io/integrations/climate.mqtt/#action_topic:
 				// ['off', 'heating', 'cooling', 'drying', 'idle', 'fan']
-				// Zwave actions/states: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatOperatingStateCC.ts#L43
+				// Z-Wave actions/states: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatOperatingStateCC.ts#L43
 				const hassActionMap = [
 					'idle',
 					'heating',
@@ -1684,7 +1684,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Catch all Zwave events
+	 * Catch all Z-Wave events
 	 */
 	private _onEvent(
 		emitter: EventSource,
@@ -1699,7 +1699,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Zwave event triggered when a node is removed
+	 * Z-Wave event triggered when a node is removed
 	 */
 	private _onNodeRemoved(node: ZUINode): void {
 		const prefix = node.id + '-'
@@ -1713,7 +1713,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Triggered when a value change is detected in Zwave Network
+	 * Triggered when a value change is detected in Z-Wave Network
 	 */
 	private _onValueChanged(
 		valueId: ZUIValueId,
@@ -1875,7 +1875,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Triggered when a notification is received from a node in Zwave Client
+	 * Triggered when a notification is received from a node in Z-Wave Client
 	 */
 	private _onNotification(
 		node: ZUINode,
@@ -2030,7 +2030,7 @@ export default class Gateway {
 			}
 			this._mqtt.publish(topic, result, { retain: false })
 		} else {
-			logger.error(`Requested Zwave api ${apiName} doesn't exist`)
+			logger.error(`Requested Z-Wave api ${apiName} doesn't exist`)
 		}
 	}
 

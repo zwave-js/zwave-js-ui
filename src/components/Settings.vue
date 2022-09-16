@@ -938,7 +938,7 @@
 									</v-col>
 									<v-col cols="6">
 										<v-switch
-											label="Send Zwave events"
+											label="Send Z-Wave events"
 											hint="Enable this to get all zwave events in MQTT on _EVENTS topic"
 											v-model="newGateway.sendEvents"
 											persistent-hint
@@ -1018,7 +1018,7 @@
 											label="Server Port"
 											:rules="[rules.required]"
 											required
-											hint="The port to bind the Zwave Server. Default: 3000"
+											hint="The port to bind the Z-Wave Server. Default: 3000"
 											type="number"
 										></v-text-field>
 										<input
@@ -1035,7 +1035,7 @@
 										<v-text-field
 											v-model="newZwave.serverHost"
 											label="Server Host"
-											hint="(Optional) The host to bind the Zwave Server. Default is: 0.0.0.0"
+											hint="(Optional) The host to bind the Z-Wave Server. Default is: 0.0.0.0"
 										></v-text-field>
 									</v-col>
 									<v-col
