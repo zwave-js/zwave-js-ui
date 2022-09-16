@@ -20,7 +20,7 @@
 						</v-list-item-avatar>
 						<v-list-item-content>
 							<v-list-item-title>{{
-								'zwave-js-ui'
+								'Z-Wave JS UI'
 							}}</v-list-item-title>
 						</v-list-item-content>
 					</v-list-item>
