@@ -4,7 +4,7 @@ const base = appConfig.base && appConfig.base.replace(/\/?$/, '/')
 
 const defaultConfig = {
   base: '/',
-  title: 'ZWave To MQTT'
+  title: 'ZWaveJS UI'
 }
 
 // don't use export default as it has an unexpected behaviour when used in js files require

@@ -57,7 +57,7 @@ const devWebpackConfig = merge(baseWebpackConfig, {
     new webpack.HotModuleReplacementPlugin(),
     // https://github.com/ampedandwired/html-webpack-plugin
     new HtmlWebpackPlugin({
-      title: 'ZWave To MQTT',
+      title: 'ZZWaveJS UI',
       filename: 'index.html',
       template: 'views/index.ejs',
       templateParameters: {

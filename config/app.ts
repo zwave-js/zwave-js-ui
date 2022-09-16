@@ -4,7 +4,7 @@ import { config } from 'dotenv'
 config({ path: './.env.app' })
 
 // config/app.js
-export const title: string = 'ZWave To MQTT'
+export const title: string = 'ZWaveJS UI'
 export const storeDir: string = process.env.STORE_DIR || joinPath(true, 'store')
 export const logsDir: string = joinPath(storeDir, 'logs')
 export const snippetsDir: string = joinPath(storeDir, 'snippets')
