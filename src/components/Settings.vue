@@ -673,7 +673,7 @@
 
 			<v-container cols="12" sm="6" class="ml-1">
 				<v-switch
-					hint="Enable this to use zwave-js-ui only as Control Panel"
+					hint="Enable this to use Z-Wave JS UI only as Control Panel"
 					persistent-hint
 					label="Disable MQTT Gateway"
 					v-model="newMqtt.disabled"
