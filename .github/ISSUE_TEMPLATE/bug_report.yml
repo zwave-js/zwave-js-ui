@@ -57,7 +57,7 @@ body:
   - type: input
     id: zjs2m-version
     attributes:
-      label: zwave-js-ui version
+      label: Z-Wave JS UI version
     validations:
       required: true
   - type: input
