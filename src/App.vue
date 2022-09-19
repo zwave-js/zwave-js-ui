@@ -672,30 +672,12 @@ export default {
 				} else {
 					this.$store.dispatch('init', data)
 
-					if (data.deprecationWarning) {
+					if (!data.deprecationWarning) {
 						await this.confirm(
 							'Z-Wave JS UI',
-							`<p>
-						After many misunderstandings and confusion, we have decided to rename <b>ZwaveJS2MQTT</b> to <b>Z-Wave JS UI</b>.
-						</p>
-						<p>
-						Many users were confused about 'MQTT' part thinking it needs an MQTT Broker to work when it's most important feature is to be a full featured Control Panel UI for Z-Wave JS.
-						We hope that this will make things more clear for everyone.
-						</p>
-						<p><b>
-						If you are seeing this message it means that you are using the old <code>zwavejs2mqtt</code> docker tag, please update to the new <code>zwave-js-ui</code> tag!.
-						</b></p>
-						<p>
-						There have been some breaking changes but nothing that should affect normal users:
-						</p>
-						<ul>
-							<li>GET <code>/version</code> api json <code>z2m</code> prop has been renamed to <code>appVersion</code></li>
-							<li>Renamed <code>Z2M_LOG_MAXFILES</code> and <code>Z2M_LOG_MAXSIZE</code> env vars to <code>ZUI_LOG_MAXFILES</code> and <code>ZUI_LOG_MAXFILES</code></li>
-							<li><code>Dockerfile.contrib</code> <code>Z2M_BRANCH</code> and <code>Z2M_REPOSITORY</code> renamed to <code>ZUI_BRANCH</code> and <code>ZUI_REPOSITORY</code></li>
-							<li>Default log files and audit file prefix changed: <code>zwavejs2mqtt</code> --> <code>zwave-js-ui</code></code></li>
-							<li>Deprecated <code>zwavejs2mqtt</code> docker tag in favour of the new <code>zwave-js-ui</code> tag</li>
-						</ul>
-						
+							`<h3 style="white-space:pre" class="text-center">If you are seeing this message it means that you are using the old <code>zwavejs2mqtt</code> docker tag.\nStarting from 8.0.0 version it is <b>DEPRECATED</b>, please use the new <code>zwave-js-ui</code> tag.</h3>
+						<p class="mt-4 text-center">
+						You can find more info about this change in <a href="https://github.com/zwave-js/zwavejs2mqtt/releases/tag/v8.0.0" target="_blank">v8.0.0 CHANGELOG</a>.
 						</p>`,
 							'info',
 							{
