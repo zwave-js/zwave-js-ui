@@ -19,9 +19,7 @@
 [![dockeri.co](https://dockeri.co/image/zwavejs/zwave-js-ui)](https://hub.docker.com/r/zwavejs/zwave-js-ui)
 
 <div>
-  <img src="_images/zwavejs_logo.svg" width="300" alt="zwavejs">
-  <span style="font-size: 25px">TO</span>
-  <img src="_images/MQTT-Logo.png" alt="mqtt">
+  <img style="background-color: #fff; border-radius: 15px" src="_images/app_logo.svg" alt="Z-Wave JS UI">
 </div>
 
 Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
