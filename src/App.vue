@@ -672,7 +672,7 @@ export default {
 				} else {
 					this.$store.dispatch('init', data)
 
-					if (!data.deprecationWarning) {
+					if (data.deprecationWarning) {
 						await this.confirm(
 							'Z-Wave JS UI',
 							`<h3 style="white-space:pre" class="text-center">If you are seeing this message it means that you are using the old <code>zwavejs2mqtt</code> docker tag.\nStarting from 8.0.0 version it is <b>DEPRECATED</b>, please use the new <code>zwave-js-ui</code> tag.</h3>
