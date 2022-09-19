@@ -1,6 +1,6 @@
 {
   "name": "zwave-js-ui",
-  "version": "7.1.0",
+  "version": "7.2.0",
   "bin": "server/bin/www.js",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",

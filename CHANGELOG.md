@@ -1,5 +1,16 @@
 
 
+# [7.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v7.1.0...v7.2.0) (2022-09-19)
+
+
+### Features
+
+* add `BASE_PATH` env var ([4952481](https://github.com/zwave-js/zwavejs2mqtt/commit/4952481dcee9b4b7e7530a2ba1a439503bfa9d62)), closes [#2637](https://github.com/zwave-js/zwavejs2mqtt/issues/2637)
+* add reinterview-nodes snippet ([e284ef9](https://github.com/zwave-js/zwavejs2mqtt/commit/e284ef9aadcc197d74748653abcd3eea4a4fcc87))
+* bump zwave-js@10.1.0 ([#2643](https://github.com/zwave-js/zwavejs2mqtt/issues/2643)) ([11dca51](https://github.com/zwave-js/zwavejs2mqtt/commit/11dca51012f7c405e9a7066e534bee57965f07e1))
+* **hass:** added Siegenia Aeropac device discovery for HA ([#2648](https://github.com/zwave-js/zwavejs2mqtt/issues/2648)) ([217d760](https://github.com/zwave-js/zwavejs2mqtt/commit/217d760e0e429321ad456a8495793c62b7d48ad6))
+* set zwave-js `userAgent` option ([#2644](https://github.com/zwave-js/zwavejs2mqtt/issues/2644)) ([e3e7f67](https://github.com/zwave-js/zwavejs2mqtt/commit/e3e7f67babb5a8b841cf227c190d0d5ad6eeecbe)), closes [#2636](https://github.com/zwave-js/zwavejs2mqtt/issues/2636)
+
 # [7.1.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v7.0.0...v7.1.0) (2022-09-06)
 
 
