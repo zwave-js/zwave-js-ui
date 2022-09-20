@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: zwave
-        image: zwavejs/zwavejs2mqtt:latest
+        image: zwavejs/zwave-js-ui:latest
         livenessProbe:
           failureThreshold: 10
           httpGet:
@@ -56,7 +56,7 @@ spec:
       # - name: config <-- if putting your settings.json in a secret
       #   secret:
       #     defaultMode: 420
-      #     secretName: zwavejs2mqtt
+      #     secretName: zwave-js-ui
       - name: zwavestick
         hostPath:
           # Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.

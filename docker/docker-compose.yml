@@ -1,8 +1,8 @@
 version: '3.7'
 services:
-  zwavejs2mqtt:
-    container_name: zwavejs2mqtt
-    image: zwavejs/zwavejs2mqtt:latest
+  zwave-js-ui:
+    container_name: zwave-js-ui
+    image: zwavejs/zwave-js-ui:latest
     restart: always
     tty: true
     stop_signal: SIGINT

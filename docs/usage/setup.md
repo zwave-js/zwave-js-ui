@@ -1,6 +1,6 @@
 # Setup
 
-To configure ZWavejs2Mqtt, you must access it via your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
+To configure Z-Wave JS UI, you must access it via your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
 
 ## General
 
@@ -9,7 +9,7 @@ To configure ZWavejs2Mqtt, you must access it via your web browser at <http://lo
   - Password: `zwave`
 - **HTTPS**: Enable this to serve the UI over HTTPS (Requires app reload). **Requires openssl to be installed on the machine.**
 - **Plugins**: List of plugins to use. If the plugin you want to use is not listed just write the name or the path to it and press enter. More about plugins [here](/guide/plugins)
-- **Log enabled**: Enable logging for Zwavejs2Mqtt
+- **Log enabled**: Enable logging for Z-Wave JS UI
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
 
@@ -55,7 +55,7 @@ NVM:
 ## Z-Wave
 
 - **Serial port**: The serial port where your controller is connected. This input allows to insert custom values, if your port is not listed or you are using tools like [ser2net](https://github.com/cminyard/ser2net) to make it available throught TCP just write the port path and press enter.
-- **Security Keys** : Zwave network keys for secure inclusion S0/S2. You can manually input them or auto-generate them by using random generator button or by pasting your OZW keys in the input, they will be auto-converted in the correct format. Example of a valid key is: `5C14897467C42598518AF155DE6CCEA8` (length is 32).
+- **Security Keys** : Z-Wave network keys for secure inclusion S0/S2. You can manually input them or auto-generate them by using random generator button or by pasting your OZW keys in the input, they will be auto-converted in the correct format. Example of a valid key is: `5C14897467C42598518AF155DE6CCEA8` (length is 32).
   - **S0_Legacy** : Legacy S0 key
   - **S2 Unauthenticated**: Like S2 Authenticated, but without verification that the correct device is included (skip DSK verification step)
   - **S2 Authenticated**: Security systems, sensors, lighting, etc.
@@ -83,12 +83,12 @@ NVM:
 
 ## Disable Gateway
 
-Enable this to use ZWavejs2Mqtt as only a Control Panel
+Enable this to use Z-Wave JS UI as only a Control Panel
 
 ## MQTT
 
 - **Name**: A unique name that identifies the Gateway.
-- **Host url**: The url of the broker. Insert the protocol if present, example: `tls://localhost`. Mqtt supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
+- **Host url**: The url of the broker. Insert the protocol if present, example: `tls://localhost`. MQTT supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
 - **Port**: Broker port
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
@@ -108,7 +108,7 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
 
      `<mqtt_prefix>/<?node_location>/<nodeId>/<commandClass>/<endpoint>/<property>/<propertyKey>`
 
-     - `mqtt_prefix`: the prefix set in Mqtt Settings
+     - `mqtt_prefix`: the prefix set in MQTT Settings
      - `node_location`: location of the Z-Wave node (optional)
      - `nodeId`: the unique numerical id of the node in Z-Wave network
      - `commandClass`: the command class number of the value
@@ -132,7 +132,7 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
 
      `<mqtt_prefix>/<?node_location>/<node_name>/<value_topic>`
 
-     - `mqtt_prefix`: the prefix set in Mqtt Settings
+     - `mqtt_prefix`: the prefix set in MQTT Settings
      - `node_location`: location of the Z-Wave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
      - `value_topic`: the topic you want to use for that value (taken from gateway values table).
@@ -231,7 +231,7 @@ Enable this to use ZWavejs2Mqtt as only a Control Panel
 - **WS Server**: Enable [Z-Wave JS websocket server](https://github.com/zwave-js/zwave-js-server). This can be used by the official Home Assistant [Z-Wave integration](https://www.home-assistant.io/integrations/zwave_js) to automatically create entities
   - **Server Port**: The port where the websocket server will listen.
   - **Server Host**: The host where the websocket server will listen.
-  - **Disable DNS Discovery**: Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance
+  - **Disable DNS Discovery**: Disable this to prevent applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance
 - **MQTT discovery**: Enable this to use MQTT discovery. This is an alternative to the official integration. (more about this [here](/guide/homeassistant))
 - **Discovery Prefix**: The prefix to use to send MQTT discovery messages to Home Assistant
 - **Retain Discovery**: Set retain flag to true in discovery messages

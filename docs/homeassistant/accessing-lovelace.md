@@ -1,6 +1,6 @@
 # Accessing from Within Home Assistant
 
-The ZWavejs2Mqtt Control Panel UI can be accessed from within Home Assistant by using the official [addon](https://github.com/hassio-addons/addon-zwavejs2mqtt) if running Home Assistant OS or Home Assistant Supervised, or by adding a panel to a Lovelace dashboard using the Raw Configuration Editor and substituting your IP address into the below.
+The Z-Wave JS UI Control Panel UI can be accessed from within Home Assistant by using the official [addon](https://github.com/hassio-addons/addon-zwave-js-ui) if running Home Assistant OS or Home Assistant Supervised, or by adding a panel to a Lovelace dashboard using the Raw Configuration Editor and substituting your IP address into the below.
 
 First, add a new Lovelace dashboard. In the dashboard:
 
@@ -10,7 +10,7 @@ First, add a new Lovelace dashboard. In the dashboard:
 4. Paste the code below and save
 
 ```yaml
-- title: zwavejs2mqtt
+- title: Z-Wave JS UI
   panel: true
   cards:
     - type: iframe
@@ -21,4 +21,4 @@ First, add a new Lovelace dashboard. In the dashboard:
 Alternatively, you can add a new tab to a pre-existing dashboard by inserting the above yaml into the pre-existing dashboard's raw configuration.
 
 > [!NOTE]
-> If you access Home Assistant via https, you must also configure ZWavejs2Mqtt to use https by setting the `HTTPS` [environment variable](guide/env-vars.md).
+> If you access Home Assistant via https, you must also configure Z-Wave JS UI to use https by setting the `HTTPS` [environment variable](guide/env-vars.md).

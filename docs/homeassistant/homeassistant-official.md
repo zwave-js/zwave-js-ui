@@ -6,7 +6,7 @@ To integrate your Z-Wave components you can use either the official Home Assista
 
 The Z-Wave JS server is the official way to integrate your Z-Wave devices with Home Assistant. In order to use it go to Settings, [Home Assistant](/usage/setup?id=home-assistant) and enable the flag **WS Server**. Using this method, the official [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js) will automatically create entities in Home Assistant.
 
-If you do not need the MQTT features, you can [Disable MQTT Gateway](/usage/setup?id=disable-gateway) and use ZWavejs2Mqtt as an additional user interface to control your Z-Wave network.
+If you do not need the MQTT features, you can [Disable MQTT Gateway](/usage/setup?id=disable-gateway) and use Z-Wave JS UI as an additional user interface to control your Z-Wave network.
 
 ## Assistance with the Official Integration
 

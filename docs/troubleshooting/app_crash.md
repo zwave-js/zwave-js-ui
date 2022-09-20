@@ -31,8 +31,8 @@ In this case
 /dev/serial/by-id/usb-Silicon_Labs_CP2102N_USB_to_UART_Bridge_Controller_8ad925bd7b84e911a7a7a1d6217343c2-if00-port0
 ```
 
-should be entered in the Zwave settings instead of `/dev/ttyUSB0`.
+should be entered in the Z-Wave settings instead of `/dev/ttyUSB0`.
 
-If this does not help, the stick restart can be disabled by disabling __Soft Reset__ option under Zwave settings, but this may limit functionality.
+If this does not help, the stick restart can be disabled by disabling __Soft Reset__ option under Z-Wave settings, but this may limit functionality.
 
 > This is definitely necessary with the zwave.me UZB1. However, the adapter tries to detect this stick by itself.

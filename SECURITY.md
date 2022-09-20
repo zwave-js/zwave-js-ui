@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-Please email daniel.sorridi+zwavejs2mqtt@gmail.com; chris+zwavejs2mqtt@cns.me.uk
+Please email daniel.sorridi+zwave-js-ui@gmail.com; chris+zwave-js-ui@cns.me.uk

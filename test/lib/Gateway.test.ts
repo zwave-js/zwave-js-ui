@@ -1,6 +1,6 @@
 import chai, { expect } from 'chai'
 import Gateway, { closeWatchers } from '../../lib/Gateway'
-import { Z2MNode } from '../../lib/ZwaveClient'
+import { ZUINode } from '../../lib/ZwaveClient'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 
@@ -32,7 +32,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'a',
-					node as unknown as Z2MNode
+					node as unknown as ZUINode
 				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
@@ -42,7 +42,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'd',
-					node as unknown as Z2MNode
+					node as unknown as ZUINode
 				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
@@ -52,7 +52,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'c',
-					node as unknown as Z2MNode
+					node as unknown as ZUINode
 				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
@@ -62,7 +62,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'b',
-					node as unknown as Z2MNode
+					node as unknown as ZUINode
 				)
 				return expect(payload).to.deep.equal({
 					a: 1,

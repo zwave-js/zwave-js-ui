@@ -278,7 +278,7 @@
 					>{{ options.confirmText }}</v-btn
 				>
 				<v-btn
-					v-if="options.cancelText"
+					v-if="options.cancelText && !options.noCancel"
 					@keydown.esc="cancel"
 					@click="cancel"
 					text
@@ -338,6 +338,7 @@ export default {
 			cancelText: 'Cancel',
 			persistent: false,
 			qrScan: false,
+			noCancel: false,
 		},
 		qrCodeError: false,
 		selectedCamera: 'auto',

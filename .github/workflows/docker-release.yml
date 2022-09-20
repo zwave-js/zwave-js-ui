@@ -38,14 +38,29 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v3
         with:
-          images: zwavejs/zwavejs2mqtt,ghcr.io/zwave-js/zwavejs2mqtt
+          images: zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
           tags: |
             type=semver,pattern={{version}}
             type=sha
             type=ref,event=branch
           labels: |
             org.opencontainers.image.vendor=zwave-js
-            org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt
+            org.opencontainers.image.documentation=https://zwave-js.github.io/zwave-js-ui
+            org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
+            maintainer=robertsLando
+      
+      - name: Create Docker Meta for zwavejs2mqtt
+        id: docker_meta2
+        uses: docker/metadata-action@v3
+        with:
+          images: zwavejs/zwavejs2mqtt
+          tags: |
+            type=semver,pattern={{version}}
+            type=sha
+            type=ref,event=branch
+          labels: |
+            org.opencontainers.image.vendor=zwave-js
+            org.opencontainers.image.documentation=https://zwave-js.github.io/zwave-js-ui
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             maintainer=robertsLando
 
@@ -59,3 +74,16 @@ jobs:
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
+      
+      - name: build+push zwavejs2mqtt
+        uses: docker/build-push-action@v2
+        with:
+          platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
+          file: docker/Dockerfile
+          cache-from: type=gha
+          build-args: |
+            image=zwavejs2mqtt
+          cache-to: type=gha,mode=max
+          push: true
+          tags: ${{ steps.docker_meta2.outputs.tags }}
+          labels: ${{ steps.docker_meta2.outputs.labels }}

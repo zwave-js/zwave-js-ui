@@ -557,7 +557,7 @@ app.use(cors({ credentials: true, origin: true }))
 // enable sessions management
 app.use(
 	session({
-		name: 'zwavejs2mqtt-session',
+		name: 'zwave-js-ui-session',
 		secret: sessionSecret,
 		resave: false,
 		saveUninitialized: false,
@@ -945,7 +945,7 @@ app.get('/health/:client', apisLimiter, function (req, res) {
 
 app.get('/version', apisLimiter, function (req, res) {
 	res.json({
-		z2m: utils.getVersion(),
+		appVersion: utils.getVersion(),
 		zwavejs: libVersion,
 		zwavejsServer: serverVersion,
 	})
@@ -995,6 +995,7 @@ app.get(
 			serial_ports: [],
 			scales: scales,
 			sslDisabled: sslDisabled(),
+			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
 		}
 
 		if (process.platform !== 'sunos') {
@@ -1108,7 +1109,7 @@ app.post(
 	async function (req, res) {
 		let config = req.body.data
 		try {
-			if (!gw.zwave) throw Error('Zwave client not inited')
+			if (!gw.zwave) throw Error('Z-Wave client not inited')
 
 			// try convert to node object
 			if (Array.isArray(config)) {
@@ -1303,7 +1304,7 @@ app.post(
 		})
 
 		// set the archive name
-		res.attachment('zwavejs2mqtt-store.zip')
+		res.attachment('zwave-js-ui-store.zip')
 		res.setHeader('Content-Type', 'application/zip')
 
 		// use res as stream so I don't need to create a temp file

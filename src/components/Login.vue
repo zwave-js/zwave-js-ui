@@ -13,7 +13,7 @@
 						<img :src="assetPath('/static/logo.png')" alt="Logo" />
 					</v-avatar>
 					<v-toolbar-title style="margin-left: 20px"
-						>Zwavejs2Mqtt</v-toolbar-title
+						>Z-Wave JS UI</v-toolbar-title
 					>
 				</v-card-title>
 

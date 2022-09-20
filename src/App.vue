@@ -20,7 +20,7 @@
 						</v-list-item-avatar>
 						<v-list-item-content>
 							<v-list-item-title>{{
-								'ZWaveJS2MQTT'
+								'Z-Wave JS UI'
 							}}</v-list-item-title>
 						</v-list-item-content>
 					</v-list-item>
@@ -134,7 +134,7 @@
 					</template>
 					<div class="info-box">
 						<div>
-							<small>Zwavejs2Mqtt</small>
+							<small>Z-Wave JS UI</small>
 							<strong>{{ appInfo.appVersion }}</strong>
 						</div>
 						<div>
@@ -440,7 +440,7 @@ export default {
 		]),
 		copyVersion() {
 			const el = document.createElement('textarea')
-			el.value = `zwavejs2mqtt: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\nhome hex: ${this.appInfo.homeHex}`
+			el.value = `zwave-js-ui: ${this.appInfo.appVersion}\nzwave-js: ${this.appInfo.zwaveVersion}\nhome id: ${this.appInfo.homeid}\nhome hex: ${this.appInfo.homeHex}`
 			el.setAttribute('readonly', '')
 			el.style.position = 'absolute'
 			el.style.left = '-9999px'
@@ -671,6 +671,23 @@ export default {
 					console.log(data)
 				} else {
 					this.$store.dispatch('init', data)
+
+					if (data.deprecationWarning) {
+						await this.confirm(
+							'Z-Wave JS UI',
+							`<h3 style="white-space:pre" class="text-center">If you are seeing this message it means that you are using the old <code>zwavejs2mqtt</code> docker tag.\nStarting from 8.0.0 version it is <b>DEPRECATED</b>, please use the new <code>zwave-js-ui</code> tag.</h3>
+						<p class="mt-4 text-center">
+						You can find more info about this change in <a href="https://github.com/zwave-js/zwavejs2mqtt/releases/tag/v8.0.0" target="_blank">v8.0.0 CHANGELOG</a>.
+						</p>`,
+							'info',
+							{
+								width: 1000,
+								noCancel: true,
+								confirmText: 'Got it',
+								persistent: true,
+							}
+						)
+					}
 
 					if (
 						!data.settings ||

@@ -214,7 +214,7 @@ Payload:
 
 Here is an example of sending a set command to a valueId using [MQTT Explorer](http://mqtt-explorer.com/)
 
-![Mqtt Explorer](../_images/mqtt-explorer.mp4 ':include :type=video controls width=100% height=400px')
+![MQTT Explorer](../_images/mqtt-explorer.mp4 ':include :type=video controls width=100% height=400px')
 
 ## Broadcast
 
@@ -285,7 +285,7 @@ Payload:
 
 The payload will be in the time-value json format and the value will contain the app string version.
 
-### Mqtt status
+### MQTT status
 
 `<mqtt_prefix>/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/status`
 

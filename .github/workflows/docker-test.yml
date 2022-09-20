@@ -31,16 +31,16 @@ jobs:
         id: docker_meta
         uses: docker/metadata-action@v3
         with:
-          images: zwavejs/zwavejs2mqtt,ghcr.io/zwave-js/zwavejs2mqtt
+          images: zwavejs/zwavejs2mqtt,zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
           tags: |
             test
           flavor: |
             latest=false
           labels: |
             org.opencontainers.image.vendor=zwave-js
-            org.opencontainers.image.documentation=https://zwave-js.github.io/zwavejs2mqtt/#/
+            org.opencontainers.image.documentation=https://zwave-js.github.io/zwave-js-ui/#/
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
-            org.opencontainers.image.url=https://zwave-js.github.io/zwavejs2mqtt/#/
+            org.opencontainers.image.url=https://zwave-js.github.io/zwave-js-ui/#/
             maintainer=robertsLando
 
       - name: Buildx build

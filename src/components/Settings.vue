@@ -135,7 +135,7 @@
 										v-if="newGateway.logEnabled"
 									>
 										<v-switch
-											hint="Store logs in a file. Default: store/zwavejs2mqtt_%DATE%.log"
+											hint="Store logs in a file. Default: store/zwave-js-ui_%DATE%.log"
 											persistent-hint
 											label="Log to file"
 											v-model="newGateway.logToFile"
@@ -673,7 +673,7 @@
 
 			<v-container cols="12" sm="6" class="ml-1">
 				<v-switch
-					hint="Enable this to use zwavejs2mqtt only as Control Panel"
+					hint="Enable this to use Z-Wave JS UI only as Control Panel"
 					persistent-hint
 					label="Disable MQTT Gateway"
 					v-model="newMqtt.disabled"
@@ -689,7 +689,7 @@
 				<v-expansion-panel key="mqtt" v-if="!newMqtt.disabled">
 					<v-expansion-panel-header>
 						<v-row no-gutters>
-							<v-col align-self="center"> Mqtt </v-col>
+							<v-col align-self="center"> MQTT </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('mqtt')"
@@ -938,7 +938,7 @@
 									</v-col>
 									<v-col cols="6">
 										<v-switch
-											label="Send Zwave events"
+											label="Send Z-Wave events"
 											hint="Enable this to get all zwave events in MQTT on _EVENTS topic"
 											v-model="newGateway.sendEvents"
 											persistent-hint
@@ -1018,7 +1018,7 @@
 											label="Server Port"
 											:rules="[rules.required]"
 											required
-											hint="The port to bind the Zwave Server. Default: 3000"
+											hint="The port to bind the Z-Wave Server. Default: 3000"
 											type="number"
 										></v-text-field>
 										<input
@@ -1035,7 +1035,7 @@
 										<v-text-field
 											v-model="newZwave.serverHost"
 											label="Server Host"
-											hint="(Optional) The host to bind the Zwave Server. Default is: 0.0.0.0"
+											hint="(Optional) The host to bind the Z-Wave Server. Default is: 0.0.0.0"
 										></v-text-field>
 									</v-col>
 									<v-col
@@ -1043,7 +1043,7 @@
 										cols="6"
 									>
 										<v-switch
-											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your zwavejs2mqtt instance"
+											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
 											persistent-hint
 											label="Disable DNS Discovery"
 											v-model="
@@ -1442,7 +1442,7 @@ export default {
 		},
 		openDocs(id) {
 			this.openUrl(
-				`https://zwave-js.github.io/zwavejs2mqtt/#/usage/setup?id=${id}`
+				`https://zwave-js.github.io/zwave-js-ui/#/usage/setup?id=${id}`
 			)
 		},
 		openUrl(url) {

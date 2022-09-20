@@ -20,9 +20,9 @@ import ZwaveClient, {
 	AllowedApis,
 	CallAPIResult,
 	HassDevice,
-	Z2MNode,
-	Z2MValueId,
-	Z2MValueIdState,
+	ZUINode,
+	ZUIValueId,
+	ZUIValueIdState,
 } from './ZwaveClient'
 
 import crypto from 'crypto'
@@ -153,7 +153,7 @@ export enum PayloadType {
 
 export type GatewayValue = {
 	device: string
-	value: Z2MValueId
+	value: ZUIValueId
 	topic?: string
 	device_class?: string
 	icon?: string
@@ -209,7 +209,7 @@ export default class Gateway {
 	private config: GatewayConfig
 	private _mqtt: MqttClient
 	private _zwave: ZwaveClient
-	private topicValues: { [key: string]: Z2MValueId }
+	private topicValues: { [key: string]: ZUIValueId }
 	private discovered: { [key: string]: HassDevice }
 	private topicLevels: number[]
 	private _closed: boolean
@@ -283,7 +283,7 @@ export default class Gateway {
 			// this is async but doesn't need to be awaited
 			await this._zwave.connect()
 		} else {
-			logger.error('Zwave settings are not valid')
+			logger.error('Z-Wave settings are not valid')
 		}
 	}
 
@@ -291,7 +291,7 @@ export default class Gateway {
 	 * Parse the value of the payload received from mqtt
 	 * based on the type of the payload and the gateway config
 	 */
-	parsePayload(payload: any, valueId: Z2MValueId, valueConf: GatewayValue) {
+	parsePayload(payload: any, valueId: ZUIValueId, valueConf: GatewayValue) {
 		try {
 			payload =
 				typeof payload === 'object' &&
@@ -404,7 +404,7 @@ export default class Gateway {
 	/**
 	 * Calculates the node topic based on gateway settings
 	 */
-	nodeTopic(node: Z2MNode): string {
+	nodeTopic(node: ZUINode): string {
 		const topic = []
 
 		if (node.loc && !this.config.ignoreLoc) topic.push(node.loc)
@@ -439,8 +439,8 @@ export default class Gateway {
 	 *
 	 */
 	valueTopic(
-		node: Z2MNode,
-		valueId: Z2MValueId,
+		node: ZUINode,
+		valueId: ZUIValueId,
 		returnObject = false
 	): string | ValueIdTopic {
 		const topic = []
@@ -687,7 +687,7 @@ export default class Gateway {
 	/**
 	 * Discover an hass device (from customDevices.js|json)
 	 */
-	discoverDevice(node: Z2MNode, hassDevice: HassDevice): void {
+	discoverDevice(node: ZUINode, hassDevice: HassDevice): void {
 		if (!this.mqttEnabled || !this.config.hassDiscovery) {
 			logger.info(
 				'Enable MQTT gateway and hass discovery to use this function'
@@ -849,7 +849,7 @@ export default class Gateway {
 
 					// set a unique id for the component
 					payload.unique_id =
-						'zwavejs2mqtt_' +
+						'zwave-js-ui_' +
 						this._zwave.homeHex +
 						'_Node' +
 						node.id +
@@ -884,7 +884,7 @@ export default class Gateway {
 	 * Discover climate devices
 	 *
 	 */
-	discoverClimates(node: Z2MNode): void {
+	discoverClimates(node: ZUINode): void {
 		// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/deviceClasses.json#L177
 		// check if device it's a thermostat
 		if (!node.deviceClass || node.deviceClass.generic !== 0x08) {
@@ -982,7 +982,7 @@ export default class Gateway {
 					'dry',
 					'fan_only',
 				]
-				// Zwave modes: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatModeCC.ts#L54
+				// Z-Wave modes: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatModeCC.ts#L54
 				// up to 0x1F modes
 				const hassModes = [
 					'off', // Off
@@ -1062,7 +1062,7 @@ export default class Gateway {
 				)
 				// Hass accepted actions as per https://www.home-assistant.io/integrations/climate.mqtt/#action_topic:
 				// ['off', 'heating', 'cooling', 'drying', 'idle', 'fan']
-				// Zwave actions/states: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatOperatingStateCC.ts#L43
+				// Z-Wave actions/states: https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/ThermostatOperatingStateCC.ts#L43
 				const hassActionMap = [
 					'idle',
 					'heating',
@@ -1102,7 +1102,7 @@ export default class Gateway {
 	/**
 	 * Try to guess the best way to discover this valueId in Hass
 	 */
-	discoverValue(node: Z2MNode, vId: string): void {
+	discoverValue(node: ZUINode, vId: string): void {
 		if (!this.mqttEnabled || !this.config.hassDiscovery) {
 			logger.debug(
 				'Enable MQTT gateway and hass discovery to use this function'
@@ -1607,7 +1607,7 @@ export default class Gateway {
 
 			// Set a unique id for the component
 			payload.unique_id =
-				'zwavejs2mqtt_' +
+				'zwave-js-ui_' +
 				this._zwave.homeHex +
 				'_' +
 				utils.sanitizeTopic(valueId.id, true)
@@ -1684,7 +1684,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Catch all Zwave events
+	 * Catch all Z-Wave events
 	 */
 	private _onEvent(
 		emitter: EventSource,
@@ -1699,9 +1699,9 @@ export default class Gateway {
 	}
 
 	/**
-	 * Zwave event triggered when a node is removed
+	 * Z-Wave event triggered when a node is removed
 	 */
-	private _onNodeRemoved(node: Z2MNode): void {
+	private _onNodeRemoved(node: ZUINode): void {
 		const prefix = node.id + '-'
 
 		// delete discovered values
@@ -1713,11 +1713,11 @@ export default class Gateway {
 	}
 
 	/**
-	 * Triggered when a value change is detected in Zwave Network
+	 * Triggered when a value change is detected in Z-Wave Network
 	 */
 	private _onValueChanged(
-		valueId: Z2MValueId,
-		node: Z2MNode,
+		valueId: ZUIValueId,
+		node: ZUINode,
 		changed: boolean
 	): void {
 		const isDiscovered = this.discovered[valueId.id]
@@ -1875,11 +1875,11 @@ export default class Gateway {
 	}
 
 	/**
-	 * Triggered when a notification is received from a node in Zwave Client
+	 * Triggered when a notification is received from a node in Z-Wave Client
 	 */
 	private _onNotification(
-		node: Z2MNode,
-		valueId: Z2MValueId,
+		node: ZUINode,
+		valueId: ZUIValueId,
 		data: Record<string, any>
 	): void {
 		const topic = this.valueTopic(node, valueId) as string
@@ -1891,7 +1891,7 @@ export default class Gateway {
 		this._mqtt.publish(topic, data, { retain: false })
 	}
 
-	private _onNodeInited(node: Z2MNode): void {
+	private _onNodeInited(node: ZUINode): void {
 		// enable poll if required
 		const values = this.config.values?.filter(
 			(v: GatewayValue) => v.enablePoll && v.device === node.deviceId
@@ -1936,7 +1936,7 @@ export default class Gateway {
 	 * When there is a node status update
 	 *
 	 */
-	private _onNodeStatus(node: Z2MNode): void {
+	private _onNodeStatus(node: ZUINode): void {
 		if (!this.mqttEnabled) {
 			return
 		}
@@ -2030,7 +2030,7 @@ export default class Gateway {
 			}
 			this._mqtt.publish(topic, result, { retain: false })
 		} else {
-			logger.error(`Requested Zwave api ${apiName} doesn't exist`)
+			logger.error(`Requested Z-Wave api ${apiName} doesn't exist`)
 		}
 	}
 
@@ -2099,7 +2099,7 @@ export default class Gateway {
 	}
 
 	private async _onMulticastRequest(
-		payload: Z2MValueId & { nodes: number[]; value: any }
+		payload: ZUIValueId & { nodes: number[]; value: any }
 	): Promise<void> {
 		const nodes = payload.nodes
 		const valueId: ValueID = {
@@ -2127,7 +2127,7 @@ export default class Gateway {
 			return
 		}
 
-		await this._zwave.writeMulticast(nodes, valueId as Z2MValueId, value)
+		await this._zwave.writeMulticast(nodes, valueId as ZUIValueId, value)
 	}
 
 	/**
@@ -2144,9 +2144,9 @@ export default class Gateway {
 	 */
 	private _evalFunction(
 		code: string,
-		valueId: Z2MValueId,
+		valueId: ZUIValueId,
 		value: unknown,
-		node: Z2MNode
+		node: ZUINode
 	) {
 		let result = null
 
@@ -2173,7 +2173,7 @@ export default class Gateway {
 	/**
 	 * Get node name from node object
 	 */
-	private _getNodeName(node: Z2MNode, ignoreLoc: boolean): string {
+	private _getNodeName(node: ZUINode, ignoreLoc: boolean): string {
 		return (
 			(!ignoreLoc && node.loc ? node.loc + '-' : '') +
 			(node.name ? node.name : NODE_PREFIX + node.id)
@@ -2185,7 +2185,7 @@ export default class Gateway {
 	 */
 
 	private _getPriorityCCFirst(values: {
-		[key: string]: Z2MValueId
+		[key: string]: ZUIValueId
 	}): string[] {
 		const priorityCC = [CommandClasses['Color Switch']]
 		const prioritizedValueIds = []
@@ -2203,17 +2203,17 @@ export default class Gateway {
 	/**
 	 * Returns the value id without the node prefix
 	 */
-	private _getIdWithoutNode(valueId: Z2MValueId): string {
+	private _getIdWithoutNode(valueId: ZUIValueId): string {
 		return valueId.id.replace(valueId.nodeId + '-', '')
 	}
 
 	/**
 	 * Get the device Object to send in discovery payload
 	 */
-	private _deviceInfo(node: Z2MNode, nodeName: string): DeviceInfo {
+	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
 		return {
 			identifiers: [
-				'zwavejs2mqtt_' + this._zwave.homeHex + '_node' + node.id,
+				'zwave-js-ui_' + this._zwave.homeHex + '_node' + node.id,
 			],
 			manufacturer: node.manufacturer,
 			model: node.productDescription + ' (' + node.productLabel + ')',
@@ -2279,7 +2279,7 @@ export default class Gateway {
 	 * list based on gateway settings and mapped mode values
 	 */
 	private _getMappedStateTemplate(
-		states: Z2MValueIdState[],
+		states: ZUIValueIdState[],
 		defaultValueKey: string | number
 	): string {
 		const map = []
@@ -2305,7 +2305,7 @@ export default class Gateway {
 	 */
 	private _setBinaryPayloadFromSensor(
 		cfg: HassDevice,
-		valueId: Z2MValueId,
+		valueId: ZUIValueId,
 		offStateValue = 0
 	): HassDevice {
 		const stateKeys = valueId.states.map((s) => s.value)
@@ -2342,7 +2342,7 @@ export default class Gateway {
 	private _setDiscoveryValue(
 		payload: any,
 		prop: string,
-		node: Z2MNode
+		node: ZUINode
 	): void {
 		if (typeof payload[prop] === 'string') {
 			const valueId = node.values[payload[prop]]
@@ -2356,8 +2356,8 @@ export default class Gateway {
 	 * Check if this node supports rgb and if so add it to discovery configuration
 	 */
 	private _addRgbColorSwitch(
-		node: Z2MNode,
-		currentColorValue: Z2MValueId
+		node: ZUINode,
+		currentColorValue: ZUIValueId
 	): HassDevice {
 		const cfg = utils.copy(hassCfg.light_rgb_dimmer)
 
@@ -2456,8 +2456,8 @@ export default class Gateway {
 	}
 
 	private _getEntityName(
-		node: Z2MNode,
-		valueId: Z2MValueId,
+		node: ZUINode,
+		valueId: ZUIValueId,
 		cfg: HassDevice,
 		entityTemplate: string,
 		ignoreLoc: boolean

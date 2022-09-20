@@ -12,8 +12,8 @@ describe('#webConfig', () => {
 	describe('Uses defaults if nothing specified', () => {
 		it('uses "/" as the default base', () =>
 			expect(webConfig.base).to.equal('/'))
-		it('uses "ZWave To MQTT" as the default title', () =>
-			expect(webConfig.title).to.equal('ZWave To MQTT'))
+		it('uses "Z-Wave JS UI" as the default title', () =>
+			expect(webConfig.title).to.equal('Z-Wave JS UI'))
 	})
 	describe('Uses config values when pecified', () => {
 		const { webConfig } = proxyquire('../../config/webConfig', {
