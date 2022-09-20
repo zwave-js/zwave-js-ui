@@ -11,9 +11,9 @@ Both logger options are configured from the `Settings` page.
 
 Z-Wave JS UI logger can be configured in `General` section, enable `Log enabled` switch and `Log To File` and set `Log Level` to `Silly`
 
-> Log file name: `zwave-js-ui.log`
+> Log file name: `z-ui.log`
 
-![Enable logging](../_images/log_z2m.gif)
+![Enable logging](../_images/log_zui.gif)
 
 ## Driver logs
 

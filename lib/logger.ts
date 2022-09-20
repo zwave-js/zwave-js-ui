@@ -8,7 +8,7 @@ import { DeepPartial, joinPath } from './utils'
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
 
-export const defaultLogFile = 'zwave-js-ui_%DATE%.log'
+export const defaultLogFile = 'z-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
