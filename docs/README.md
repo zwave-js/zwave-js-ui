@@ -29,13 +29,13 @@ Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 
 ## Main features
 
-- **Full-Featured Z-Wave to MQTT Gateway**: Expose Z-Wave devices to an MQTT broker in a fully configurable manner
-- **Secured**: Supports *HTTPS* and *user authentication*
 - **Control Panel UI**: Directly control your nodes and their values from the UI, including:
   - *Nodes management*: Add, remove, and configure all nodes in your Z-Wave network
   - *Firmware updates*: Update device firmware using manufacturer-supplied firmware files
   - *Groups associations*: Add, edit, and remove direct node associations
   - *Z-Wave JS Exposed*: Provides full-access to Z-Wave JS's APIs
+- **Full-Featured Z-Wave to MQTT Gateway**: Expose Z-Wave devices to an MQTT broker in a fully configurable manner
+- **Secured**: Supports *HTTPS* and *user authentication*
 - **Scene Management**: Create scenes and trigger them by using MQTT apis (with timeout support)
 - **Debug Logs in the UI**: See debug logs directly from the UI
 - **Access Store Files in the UI**: Access the files are stored in the persistent `store` folder directly from the UI
