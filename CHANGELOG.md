@@ -1,5 +1,12 @@
 
 
+# [8.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v7.2.0...v8.0.0) (2022-09-21)
+
+
+### Features
+
+* bump zwave-js@10.2.0 ([#2666](https://github.com/zwave-js/zwave-js-ui/issues/2666)) ([fe51581](https://github.com/zwave-js/zwave-js-ui/commit/fe5158130c29742617f8240b92f22a5a0af8fbc4))
+
 # [7.2.0](https://github.com/zwave-js/zwavejs2mqtt/compare/v7.1.0...v7.2.0) (2022-09-19)
 
 
