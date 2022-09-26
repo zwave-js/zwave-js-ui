@@ -847,7 +847,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this.server) {
-			this.server.destroy()
+			await this.server.destroy()
 		}
 
 		if (this._driver) {
@@ -2677,7 +2677,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
-			this.server.start()
+			this.server.start().catch((error) => {
+				logger.error(
+					`Failed to start zwave-js server: ${error.message}`
+				)
+			})
 		}
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
