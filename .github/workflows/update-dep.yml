@@ -46,7 +46,7 @@ jobs:
       - name: Create Pull Request
         if: ${{ steps.check.outputs.changed == 'true' }}
         id: cpr
-        uses: peter-evans/create-pull-request@v3
+        uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ secrets.BOT_TOKEN }}
           commit-message: "feat: bump ${{github.event.inputs.dep}}@${{ steps.check.outputs.version }}"
