@@ -36,7 +36,7 @@ jobs:
 
       - name: Create Docker Meta
         id: docker_meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
           tags: |
@@ -51,7 +51,7 @@ jobs:
       
       - name: Create Docker Meta for zwavejs2mqtt
         id: docker_meta2
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v4
         with:
           images: zwavejs/zwavejs2mqtt
           tags: |
