@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout master branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: trusted
 
@@ -62,7 +62,7 @@ jobs:
         if: |
           steps.check-permissions.outputs.result == 'true' &&
           !fromJSON(steps.pr-info.outputs.result).pending
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{secrets.BOT_TOKEN}}
           repository: ${{ fromJSON(steps.pr-info.outputs.result).repoName }}
@@ -124,7 +124,7 @@ jobs:
 
     steps:
       - name: Checkout master branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Check user's permissions to do this
         id: check-permissions
@@ -164,7 +164,7 @@ jobs:
 
       - name: Checkout pull request
         if: steps.check-permissions.outputs.result == 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           token: ${{secrets.BOT_TOKEN}}
           repository: ${{ fromJSON(steps.get-pr.outputs.result).head.repo.full_name }}
@@ -220,7 +220,7 @@ jobs:
 
     steps:
       - name: Checkout master branch
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Check permissions and necessity
         id: check-permissions
@@ -253,7 +253,7 @@ jobs:
 
       - name: Checkout pull request
         if: steps.check-permissions.outputs.result == 'true'
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0 # Fetch the history, or this action will break everything!
           token: ${{secrets.BOT_TOKEN}}
