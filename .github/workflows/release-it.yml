@@ -26,7 +26,7 @@ jobs:
           token: ${{ secrets.BOT_TOKEN }}
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.4.1
+        uses: actions/setup-node@v3.4.1
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
