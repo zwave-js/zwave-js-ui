@@ -1,5 +1,17 @@
 
 
+## [8.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.0...v8.0.1) (2022-09-26)
+
+
+### Bug Fixes
+
+* possible delays in slower systems ([3021f91](https://github.com/zwave-js/zwave-js-ui/commit/3021f914c071947fbd203b3a510abab902e839ac)), closes [#2676](https://github.com/zwave-js/zwave-js-ui/issues/2676)
+
+
+### Features
+
+* bump @zwave-js/server@1.23.0 ([#2680](https://github.com/zwave-js/zwave-js-ui/issues/2680)) ([a3dcbff](https://github.com/zwave-js/zwave-js-ui/commit/a3dcbff695707d502b3da868bff229891b9adad7))
+
 # [8.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v7.2.0...v8.0.0) (2022-09-21)
 
 
