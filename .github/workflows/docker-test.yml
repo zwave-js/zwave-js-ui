@@ -44,7 +44,7 @@ jobs:
             maintainer=robertsLando
 
       - name: Buildx build
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           platforms: ${{ matrix.platform }}
           file: docker/Dockerfile
