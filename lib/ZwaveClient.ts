@@ -1395,7 +1395,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	sendToSocket(evtName: string, data: any) {
 		if (this.socket) {
-			this.socket.emit(evtName, data)
+			// break the sync loop to let the event loop continue #2676
+			process.nextTick(() => {
+				this.socket.emit(evtName, data)
+			})
 		}
 	}
 
