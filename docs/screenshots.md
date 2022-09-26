@@ -8,9 +8,9 @@
 
 ![Control Panel](/_images/control_panel_dark.png)
 
-## Groups associations
+## Node Management
 
-![Groups](/_images/groups_associations.png)
+![Node Management](/_images/node_playground.mp4 ':include :type=video controls width=100% height=400px')
 
 ## Scenes
 
@@ -22,7 +22,7 @@
 
 ## Store Explorer
 
-![Store](/_images/store_explorer.png)
+![Store](/_images/store_explorer.gif)
 
 ## Debug
 
