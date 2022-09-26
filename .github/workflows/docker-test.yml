@@ -16,7 +16,7 @@ jobs:
       matrix:
         platforms: [linux/amd64, linux/arm64, linux/arm/v6, linux/arm/v7]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - uses: docker/setup-buildx-action@v1.3.0
       - uses: docker/setup-qemu-action@v1.2.0
