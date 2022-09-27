@@ -2304,7 +2304,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw Error(`Node ${nodeId} not found`)
 			}
 
-			return zwaveNode.abortFirmwareUpdate()
+			await zwaveNode.abortFirmwareUpdate()
+
+			const node = this._nodes.get(nodeId)
+
+			// reset fw update progress
+			if (node) {
+				node.firmwareUpdate = undefined
+
+				this.sendToSocket(socketEvents.nodeUpdated, {
+					id: node?.id,
+					firmwareUpdate: false,
+				})
+			}
 		}
 
 		throw new DriverNotReadyError()
