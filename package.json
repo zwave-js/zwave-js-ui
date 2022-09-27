@@ -221,7 +221,7 @@
     "babel-loader": "^8.2.5",
     "babel-plugin-syntax-jsx": "^6.18.0",
     "babel-plugin-transform-vue-jsx": "^3.7.0",
-    "chalk": "^4.1.2",
+    "chalk": "^5.0.1",
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^6.7.1",
     "deepmerge": "^4.2.2",
