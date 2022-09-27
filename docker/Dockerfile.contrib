@@ -64,14 +64,29 @@ RUN \
 	&& yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') \
 	&& rm -rf \
 		build \
-		package.sh \
+		docs \
 		src \
 		static \
-		docs \
 		.yarn \
+		package.sh \
 	# Copy to distribution folder
 	&& mkdir my_dist \
-	&& cp -Lr .git package.json yarn.lock .yarnrc.yml bin config server dist hass lib store views node_modules my_dist/
+	&& cp -Lr \
+		.git \
+		bin \
+		config \
+		dist \
+		hass \
+		lib \
+		node_modules \
+		server \
+		snippets \
+		store \
+		views \
+		.yarnrc.yml \
+		package.json \
+		yarn.lock \
+		my_dist
 
 #####################
 # Setup Final Image #
