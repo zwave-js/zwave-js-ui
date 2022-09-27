@@ -16,8 +16,9 @@ ARG ZUI_REPOSITORY=https://github.com/zwave-js/zwave-js-ui
 USER node
 WORKDIR /home/node
 
-RUN git clone -b ${ZWJ_BRANCH} ${ZWJ_REPOSITORY}
-RUN git clone -b ${ZUI_BRANCH} --depth 1 ${ZUI_REPOSITORY}
+RUN \
+	git clone -b ${ZWJ_BRANCH} ${ZWJ_REPOSITORY} \
+	&& git clone -b ${ZUI_BRANCH} --depth 1 ${ZUI_REPOSITORY}
 
 # Option 2: Copy from local sources
 FROM node:16.3.0-buster AS local-copy-src
@@ -38,39 +39,39 @@ USER node
 WORKDIR /home/node/node-zwave-js
 ENV YARN_HTTP_TIMEOUT=300000
 
-RUN yarn
-RUN yarn build
-
-# Update the version info to match the branch built
-RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
-
-# Pack the repo into tarballs that reference each other
-RUN yarn monopack --target $(pwd) --no-version --absolute
+RUN \
+	yarn \
+	&& yarn build \
+	# Update the version info to match the branch built
+	&& yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred \
+	&& yarn version apply --all \
+	# Pack the repo into tarballs that reference each other
+	&& yarn monopack --target $(pwd) --no-version --absolute
 
 ### Build zwave-js-ui ###
 WORKDIR /home/node/zwave-js-ui
 
-# Change dependency to use local packs
-RUN cat package.json \
-      | jq '.dependencies["zwave-js"] = "file:../node-zwave-js/zwave-js.tgz"' \
-      > package2.json && rm package.json && mv package2.json package.json
-
-RUN yarn
-RUN yarn build
-
-# Prune devDependencies
-RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
-    rm -rf \
-    build \
-    package.sh \
-    src \
-    static \
-    docs \
-    .yarn
-
-# Copy to distribution folder
-RUN mkdir my_dist
-RUN cp -Lr .git package.json yarn.lock .yarnrc.yml bin config server dist hass lib store views node_modules my_dist/
+RUN \
+	# Change dependency to use local packs
+	cat package.json \
+		| jq '.dependencies["zwave-js"] = "file:../node-zwave-js/zwave-js.tgz"' \
+		> package2.json \
+	&& rm package.json && mv package2.json package.json \
+	\
+	&& yarn \
+	&& yarn build \
+	# Prune devDependencies
+	&& yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') \
+	&& rm -rf \
+		build \
+		package.sh \
+		src \
+		static \
+		docs \
+		.yarn \
+	# Copy to distribution folder
+	&& mkdir my_dist \
+	&& cp -Lr .git package.json yarn.lock .yarnrc.yml bin config server dist hass lib store views node_modules my_dist/
 
 #####################
 # Setup Final Image #
@@ -80,7 +81,10 @@ LABEL maintainer="robertsLando"
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+RUN \
+	apt-get update \
+	&& apt-get install -y git \
+	&& rm -rf /var/lib/apt/lists/*
 COPY --from=build /home/node/zwave-js-ui/my_dist /usr/src/app
 WORKDIR /usr/src/app
 EXPOSE 8091
