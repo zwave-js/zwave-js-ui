@@ -3362,9 +3362,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/server@npm:^1.23.0":
-  version: 1.23.0
-  resolution: "@zwave-js/server@npm:1.23.0"
+"@zwave-js/server@npm:^1.23.1":
+  version: 1.23.1
+  resolution: "@zwave-js/server@npm:1.23.1"
   dependencies:
     "@homebridge/ciao": ^1.1.3
     minimist: ^1.2.5
@@ -3374,7 +3374,7 @@ __metadata:
   bin:
     zwave-client: dist/bin/client.js
     zwave-server: dist/bin/server.js
-  checksum: 5a3f404f5b51f0ddacee3e5717a9f6be59f0aa55acdef7faeabf64cf8cb90f6d37a910a27db8df0c01f68f405c58396e5894e34c03639eeb168305645230968c
+  checksum: 9f2b5bee2c111e168b0a4d3ec51b57eca851e4123ca2473bf27141bba8cb5703cf596c706f280d5a5946a94c55838cb2b1d59976994f8bec49e160b592e9d5da
   languageName: node
   linkType: hard
 
@@ -16742,7 +16742,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.32.0
     "@typescript-eslint/parser": ^5.32.0
     "@vue/compiler-sfc": ^3.2.37
-    "@zwave-js/server": ^1.23.0
+    "@zwave-js/server": ^1.23.1
     "@zwave-js/winston-daily-rotate-file": ^4.5.6-1
     ansi_up: ^5.1.0
     app-root-path: ^3.0.0
