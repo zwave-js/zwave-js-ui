@@ -9,15 +9,9 @@ import store from '../config/store'
 import * as conf from '../config/app'
 import app, { startServer } from '../app'
 
-console.log(` 
-  ______  __          __                      _  _____     _    _ _____ 
- |___  /  \ \        / /                     | |/ ____|   | |  | |_   _|
-    / /____\ \  /\  / /_ ___   _____         | | (___     | |  | | | |  
-   / /______\ \/  \/ / _' \ \ / / _ \    _   | |\___ \    | |  | | | |  
-  / /__      \  /\  / (_| |\ V /  __/   | |__| |____) |   | |__| |_| |_ 
- /_____|      \/  \/ \__,_| \_/ \___|    \____/|_____/     \____/|_____|
-                                                                  
-`)
+console.log(
+	`  ______  __          __                      _  _____     _    _ _____ \n |___  /  \\ \\        / /                     | |/ ____|   | |  | |_   _|\n    / /____\\ \\  /\\  / /_ ___   _____         | | (___     | |  | | | |  \n   / /______\\ \\/  \\/ / _\' \\ \\ / / _ \\    _   | |\\___ \\    | |  | | | |  \n  / /__      \\  /\\  / (_| |\\ V /  __/   | |__| |____) |   | |__| |_| |_ \n /_____|      \\/  \\/ \\__,_| \\_/ \\___|    \\____/|_____/     \\____/|_____|\n`
+)
 
 // jsonstore is a singleton instance that handles the json configuration files
 // used in the application. Init it before anything else than start app.
