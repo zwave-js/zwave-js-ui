@@ -1,5 +1,20 @@
 
 
+## [8.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.1...v8.0.2) (2022-09-29)
+
+
+### Bug Fixes
+
+* **docker:** use zwave-js's new pack utility, optimize layers, copy snippets ([#2688](https://github.com/zwave-js/zwave-js-ui/issues/2688)) ([281e9c0](https://github.com/zwave-js/zwave-js-ui/commit/281e9c072e890656365e0fe024a03817ef67df6e))
+* reset node fw update progress on abort ([#2692](https://github.com/zwave-js/zwave-js-ui/issues/2692)) ([08ed7cb](https://github.com/zwave-js/zwave-js-ui/commit/08ed7cb3df69cc0192499e21cc7eb943bbf36dc5))
+* revert mqtt discovery `unique_id` prefix change ([2fc3850](https://github.com/zwave-js/zwave-js-ui/commit/2fc3850ed9f4edd4ae64563ce18af16693303e85))
+* startup ASCII logo not escaped ([dc1ce1d](https://github.com/zwave-js/zwave-js-ui/commit/dc1ce1d6daa8f6d9ff3cf36dcbe48f23025a5351))
+
+
+### Features
+
+* bump @zwave-js/server@1.23.1 ([#2689](https://github.com/zwave-js/zwave-js-ui/issues/2689)) ([ee339d3](https://github.com/zwave-js/zwave-js-ui/commit/ee339d388be073df19b4cc0655885db672e3a2ee))
+
 ## [8.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.0...v8.0.1) (2022-09-26)
 
 
