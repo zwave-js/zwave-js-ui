@@ -849,7 +849,7 @@ export default class Gateway {
 
 					// set a unique id for the component
 					payload.unique_id =
-						'zwave-js-ui_' +
+						'zwavejs2mqtt_' +
 						this._zwave.homeHex +
 						'_Node' +
 						node.id +
@@ -1607,7 +1607,7 @@ export default class Gateway {
 
 			// Set a unique id for the component
 			payload.unique_id =
-				'zwave-js-ui_' +
+				'zwavejs2mqtt_' +
 				this._zwave.homeHex +
 				'_' +
 				utils.sanitizeTopic(valueId.id, true)
@@ -2213,7 +2213,7 @@ export default class Gateway {
 	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
 		return {
 			identifiers: [
-				'zwave-js-ui_' + this._zwave.homeHex + '_node' + node.id,
+				'zwavejs2mqtt_' + this._zwave.homeHex + '_node' + node.id,
 			],
 			manufacturer: node.manufacturer,
 			model: node.productDescription + ' (' + node.productLabel + ')',

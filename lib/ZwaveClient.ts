@@ -2758,7 +2758,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ---------- CONTROLLER EVENTS -------------------------------
 
-	private _updateControllerStatus(status) {
+	private _updateControllerStatus(status: string) {
 		if (this._cntStatus !== status) {
 			logger.info(`Controller status: ${status}`)
 			this._cntStatus = status
@@ -2769,7 +2769,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	private _onInclusionStarted(secure) {
+	private _onInclusionStarted(secure: boolean) {
 		const message = `${secure ? 'Secure' : 'Non-secure'} inclusion started`
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion started', secure)
