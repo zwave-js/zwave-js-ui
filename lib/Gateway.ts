@@ -32,6 +32,8 @@ const logger = module('Gateway')
 
 const NODE_PREFIX = 'nodeID_'
 
+const UID_DISCOVERY_PREFIX = process.env.UID_DISCOVERY_PREFIX || 'zwavejs2mqtt_'
+
 const GATEWAY_TYPE = {
 	VALUEID: 0,
 	NAMED: 1,
@@ -849,7 +851,7 @@ export default class Gateway {
 
 					// set a unique id for the component
 					payload.unique_id =
-						'zwavejs2mqtt_' +
+						UID_DISCOVERY_PREFIX +
 						this._zwave.homeHex +
 						'_Node' +
 						node.id +
@@ -1607,7 +1609,7 @@ export default class Gateway {
 
 			// Set a unique id for the component
 			payload.unique_id =
-				'zwavejs2mqtt_' +
+				UID_DISCOVERY_PREFIX +
 				this._zwave.homeHex +
 				'_' +
 				utils.sanitizeTopic(valueId.id, true)
@@ -2213,7 +2215,7 @@ export default class Gateway {
 	private _deviceInfo(node: ZUINode, nodeName: string): DeviceInfo {
 		return {
 			identifiers: [
-				'zwavejs2mqtt_' + this._zwave.homeHex + '_node' + node.id,
+				UID_DISCOVERY_PREFIX + this._zwave.homeHex + '_node' + node.id,
 			],
 			manufacturer: node.manufacturer,
 			model: node.productDescription + ' (' + node.productLabel + ')',
