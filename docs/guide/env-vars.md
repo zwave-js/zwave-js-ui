@@ -22,11 +22,12 @@ This is the list of the supported environment variables:
 - `ZWAVEJS_LOGS_DIR`: The folder used to store Z-Wave JS logs if `Log to file` is selected in the Z-Wave settings. By default, this is the `store` folder.
 - `MQTT_NAME`: The name used as client name when connecting to the mqtt server. Overrides `mqtt.name` in `settings.json`
 - `DISABLE_LOG_ROTATION`: Set this env var to `'true'` to disable application log rotation management
-- `ZUI_LOG_MAXFILES`: The maximum number of files to keep in the log directory, if you add `d` suffix this will set the number of days to keep logs. Default is `7d`
+- `ZUI_LOG_MAXFILES`: The maximum number of files to keep in the log directory, if you add `d` suffix this will set the number of days to keep logs. Default is `7d`.
 - `ZUI_LOG_MAXSIZE`: The maximum size of a single log file. Default is `50m` (50MB)
 - `NO_LOG_COLORS`: Set this env var to `'true'` to disable application log colors also in the console.
 - `FORCE_DISABLE_SSL`: Set this env var to `'true'` to disable SSL.
-- `BASE_PATH`: Set this env var to the base path where the application is served. Default is `/`
+- `BASE_PATH`: Set this env var to the base path where the application is served. Default is `/`.
+- `UID_DISCOVERY_PREFIX`: Sets the prefix used for MQTT Discovery `unique_id` of entities. Default is `zwavejs2mqtt_`.
 
 These variables can be used when running the webpack dev server with HMR (most users will not need them):
 
