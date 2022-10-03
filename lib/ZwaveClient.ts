@@ -71,7 +71,6 @@ import {
 	FirmwareUpdateProgress,
 	ZWaveNodeFirmwareUpdateFinishedCallback,
 	FirmwareUpdateResult,
-	FirmwareUpdateInfo,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
