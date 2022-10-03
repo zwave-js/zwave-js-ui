@@ -370,7 +370,7 @@ export default {
 							options: [
 								{
 									name: 'Begin',
-									action: 'beginFirmwareUpdate',
+									action: 'updateFirmware',
 								},
 								{
 									name: 'Abort',

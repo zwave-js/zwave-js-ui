@@ -398,39 +398,42 @@ export default {
 					if (!confirm || confirm !== 'yes') {
 						return
 					}
-				} else if (action === 'beginFirmwareUpdate') {
+				} else if (action === 'updateFirmware') {
 					try {
-						const { target } = await this.$listeners.showConfirm(
-							'Choose target',
+						const { files } = await this.$listeners.showConfirm(
+							'Firmware udpate',
 							'',
 							'info',
 							{
 								confirmText: 'Ok',
+								width: 500,
 								inputs: [
 									{
-										type: 'number',
-										label: 'Target',
-										default: 0,
-										rules: [
-											(v) => v >= 0 || 'Invalid target',
-										],
-										hint: 'The firmware target (i.e. chip) to upgrade. 0 updates the Z-Wave chip, >=1 updates others if they exist',
+										type: 'file',
+										label: 'Files',
+										multiple: true,
+										hint: 'Firmware files, can be multiple in case of multiple targets',
 										required: true,
-										key: 'target',
+										key: 'files',
 									},
 								],
 							}
 						)
 
-						if (target === undefined)
-							throw Error('Must specify a target')
+						if (files.length === 0) {
+							return
+						}
 
-						const { data, file } = await this.$listeners.import(
-							'buffer'
-						)
-						args.push(file.name)
-						args.push(data)
-						args.push(target)
+						const fwData = []
+
+						for (const f of files) {
+							fwData.push({
+								name: f.name,
+								data: await f.arrayBuffer(),
+							})
+						}
+
+						args.push(fwData)
 					} catch (error) {
 						return
 					}

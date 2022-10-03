@@ -173,7 +173,7 @@
     "vuetify": "^2.6.8",
     "vuex": "^3.6.2",
     "winston": "^3.3.3",
-    "zwave-js": "^10.2.0"
+    "zwave-js": "^10.3.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.18.10",
