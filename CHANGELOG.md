@@ -1,5 +1,12 @@
 
 
+## [8.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.2...v8.0.3) (2022-10-03)
+
+
+### Features
+
+* add `UID_DISCOVERY_PREFIX` env var ([#2698](https://github.com/zwave-js/zwave-js-ui/issues/2698)) ([93c16af](https://github.com/zwave-js/zwave-js-ui/commit/93c16af9f2ed6413d1ee11c6ed40f16cdbf31d0c))
+
 ## [8.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.1...v8.0.2) (2022-09-29)
 
 
