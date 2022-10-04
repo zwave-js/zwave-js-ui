@@ -1,7 +1,7 @@
 ARG image=zwave-js-ui
 
 # STEP: 1 doesn't work with alpine 3.13+
-FROM node:16.3.0-alpine3.12 AS build-zui
+FROM node:18.10.0-alpine3.16 AS build-zui
 
 WORKDIR /usr/src/app
 
@@ -50,7 +50,7 @@ RUN if [ ! -z "$updateDevices"  ]; \
     fi
 
 # STEP: 2 (runtime) doesn't work with alpine 3.13+
-FROM node:16.3.0-alpine3.12
+FROM node:18.10.0-alpine3.16
 
 RUN apk add --no-cache \	
     libstdc++ \
