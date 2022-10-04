@@ -1,5 +1,13 @@
 
 
+# [8.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.3...v8.1.0) (2022-10-04)
+
+
+### Features
+
+* **pkg:** add windows build to release assets ([abb7ca9](https://github.com/zwave-js/zwave-js-ui/commit/abb7ca9e8471a25f5643f876b0bd0ebd0e90f87d))
+* zwave-js@10.3.0 and new fw update apis ([#2702](https://github.com/zwave-js/zwave-js-ui/issues/2702)) ([5255d64](https://github.com/zwave-js/zwave-js-ui/commit/5255d642329f789880db171e98d7f16ccaac2fa3))
+
 ## [8.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.2...v8.0.3) (2022-10-03)
 
 
