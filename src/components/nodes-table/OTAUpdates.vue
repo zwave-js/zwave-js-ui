@@ -68,6 +68,17 @@
 										f.url
 									}}</v-list-item-subtitle>
 								</v-list-item-content>
+								<v-list-item-icon class="my-auto">
+									<v-btn
+										title="Download"
+										@click="download(f.url)"
+										icon
+									>
+										<v-icon color="success"
+											>download</v-icon
+										>
+									</v-btn>
+								</v-list-item-icon>
 							</v-list-item>
 						</v-card-text>
 					</v-card>
@@ -138,6 +149,9 @@ export default {
 			this.loading = true
 			this.fwUpdates = []
 			this.apiRequest('getAvailableFirmwareUpdates', [this.node.id])
+		},
+		download(url) {
+			window.open(url, '_blank')
 		},
 		async updateFirmware(update) {
 			if (
