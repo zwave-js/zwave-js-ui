@@ -7,6 +7,7 @@ import {
 	ConfigurationMetadata,
 	dskToString,
 	Duration,
+	Firmware,
 	SecurityClass,
 	ValueMetadataNumeric,
 	ValueMetadataString,
@@ -66,6 +67,10 @@ import {
 	ZWaveNodeEvents,
 	SerialAPISetupCommand,
 	FirmwareUpdateFileInfo,
+	ZWaveNodeFirmwareUpdateProgressCallback,
+	FirmwareUpdateProgress,
+	ZWaveNodeFirmwareUpdateFinishedCallback,
+	FirmwareUpdateResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -150,9 +155,11 @@ const allowedApis = validateMethods([
 	'removeFailedNode',
 	'refreshInfo',
 	'beginFirmwareUpdate',
+	'updateFirmware',
 	'abortFirmwareUpdate',
 	'getAvailableFirmwareUpdates',
 	'beginOTAFirmwareUpdate',
+	'firmwareUpdateOTA',
 	'sendCommand',
 	'writeValue',
 	'writeBroadcast',
@@ -350,10 +357,15 @@ export class DriverNotReadyError extends Error {
 	}
 }
 
-export interface FirmwareUpdateProgress {
+export interface FwUpdateProgress {
 	sent: number
 	total: number
 	progress: number
+}
+
+export interface FwFile {
+	name: string
+	data: Buffer
 }
 
 export type ZUINode = {
@@ -408,7 +420,7 @@ export type ZUINode = {
 	healProgress?: string | undefined
 	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
-	firmwareUpdate?: FirmwareUpdateProgress
+	firmwareUpdate?: FwUpdateProgress
 	eventsQueue: NodeEvent[]
 }
 
@@ -1902,28 +1914,54 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					nodeId
 				)
 
-			// 			return [
-			// 				{
-			// 					version: '1.13',
-			// 					changelog: `* Fixed some bugs
+			// return [
+			// 	{
+			// 		version: '1.13',
+			// 		downgrade: true,
+			// 		channel: 'stable',
+			// 		normalizedVersion: '1.13',
+			// 		changelog: `* Fixed some bugs
 			// * Added other bugs
 			// * Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
-			// 					files: [
-			// 						{
-			// 							target: 0,
-			// 							integrity:
-			// 								'sha256:123456789012345678901234567890123456789012345678901234567890125',
-			// 							url: 'https://example.com/firmware0.bin',
-			// 						},
-			// 						{
-			// 							target: 1,
-			// 							integrity:
-			// 								'sha256:123456789012345678901234567890123456789012345678901234567890123',
-			// 							url: 'https://example.com/firmware1.bin',
-			// 						},
-			// 					],
-			// 				},
-			// 			]
+			// 		files: [
+			// 			{
+			// 				target: 0,
+			// 				integrity:
+			// 					'sha256:123456789012345678901234567890123456789012345678901234567890125',
+			// 				url: 'https://example.com/firmware0.bin',
+			// 			},
+			// 			{
+			// 				target: 1,
+			// 				integrity:
+			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
+			// 				url: 'https://example.com/firmware1.bin',
+			// 			},
+			// 		],
+			// 	},
+			// 	{
+			// 		version: '2.00',
+			// 		downgrade: false,
+			// 		channel: 'beta',
+			// 		normalizedVersion: '1.13',
+			// 		changelog: `* Fixed some bugs
+			// * Added other bugs
+			// * Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
+			// 		files: [
+			// 			{
+			// 				target: 0,
+			// 				integrity:
+			// 					'sha256:123456789012345678901234567890123456789012345678901234567890125',
+			// 				url: 'https://example.com/firmware0.bin',
+			// 			},
+			// 			{
+			// 				target: 1,
+			// 				integrity:
+			// 					'sha256:123456789012345678901234567890123456789012345678901234567890123',
+			// 				url: 'https://example.com/firmware1.bin',
+			// 			},
+			// 		],
+			// 	},
+			// ] as FirmwareUpdateInfo[]
 
 			return result
 		}
@@ -1931,6 +1969,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]) {
+		if (this.driverReady) {
+			const result = await this._driver.controller.firmwareUpdateOTA(
+				nodeId,
+				updates
+			)
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * @deprecated Use `firmwareUpdateOTA` instead
+	 */
 	async beginOTAFirmwareUpdate(
 		nodeId: number,
 		update: FirmwareUpdateFileInfo
@@ -2253,8 +2307,41 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean> {
+		if (this.driverReady) {
+			const zwaveNode = this.getNode(nodeId)
+
+			if (!zwaveNode) {
+				throw Error(`Node ${nodeId} not found`)
+			}
+
+			const firmwares: Firmware[] = []
+
+			for (const f of files) {
+				const { data, name } = f
+				if (data instanceof Buffer) {
+					try {
+						const format = guessFirmwareFileFormat(name, data)
+						firmwares.push(extractFirmware(data, format))
+					} catch (e) {
+						throw Error(
+							`Unable to extract firmware from file '${name}': ${e.message}`
+						)
+					}
+				} else {
+					throw Error(`Invalid firmware file ${name} is not a Buffer`)
+				}
+			}
+
+			return zwaveNode.updateFirmware(firmwares)
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	/**
-	 * Start a firmware update
+	 * Start a firmware update.
+	 * @deprecated Use `updateFirmware` instead
 	 */
 	async beginFirmwareUpdate(
 		nodeId: number,
@@ -2317,9 +2404,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					firmwareUpdate: false,
 				})
 			}
+		} else {
+			throw new DriverNotReadyError()
 		}
-
-		throw new DriverNotReadyError()
 	}
 
 	beginHealingNetwork(): boolean {
@@ -3689,65 +3776,84 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Emitted when we receive a node `firmware update progress` event
 	 *
 	 */
-	private _onNodeFirmwareUpdateProgress(
-		zwaveNode: ZWaveNode,
-		sentFragments: number,
-		totalFragments: number
-	) {
-		const node = this.nodes.get(zwaveNode.id)
-		if (node) {
-			const firmwareUpdate: FirmwareUpdateProgress = {
-				sent: sentFragments,
-				total: totalFragments,
-				progress: Math.round((sentFragments / totalFragments) * 100),
+	private _onNodeFirmwareUpdateProgress: ZWaveNodeFirmwareUpdateProgressCallback =
+		function _onNodeFirmwareUpdateProgress(
+			zwaveNode: ZWaveNode,
+			sentFragments: number,
+			totalFragments: number,
+			progress: FirmwareUpdateProgress
+		) {
+			const node = this.nodes.get(zwaveNode.id)
+			if (node) {
+				const firmwareUpdate: FwUpdateProgress = {
+					sent: progress.sentFragments,
+					total: progress.totalFragments,
+					progress: Math.round(
+						(progress.sentFragments / progress.totalFragments) * 100
+					),
+				}
+
+				node.firmwareUpdate = firmwareUpdate
+
+				this.sendToSocket(socketEvents.nodeUpdated, {
+					id: node?.id,
+					firmwareUpdate,
+				})
 			}
 
-			node.firmwareUpdate = firmwareUpdate
-
-			this.sendToSocket(socketEvents.nodeUpdated, {
-				id: node?.id,
-				firmwareUpdate,
-			})
+			this.emit(
+				'event',
+				EventSource.NODE,
+				'node firmware update progress',
+				this._nodes.get(zwaveNode.id),
+				progress
+			)
 		}
-
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node firmware update progress',
-			this._nodes.get(zwaveNode.id),
-			sentFragments,
-			totalFragments
-		)
-	}
 
 	/**
 	 * Triggered we receive a node `firmware update finished` event
 	 *
 	 */
-	private _onNodeFirmwareUpdateFinished(
-		zwaveNode: ZWaveNode,
-		status: FirmwareUpdateStatus,
-		waitTime: number
-	) {
-		const node = this.nodes.get(zwaveNode.id)
-		if (node) {
-			node.firmwareUpdate = undefined
+	private _onNodeFirmwareUpdateFinished: ZWaveNodeFirmwareUpdateFinishedCallback =
+		function _onNodeFirmwareUpdateFinished(
+			zwaveNode: ZWaveNode,
+			status: FirmwareUpdateStatus,
+			waitTime: number,
+			result: FirmwareUpdateResult
+		) {
+			const node = this.nodes.get(zwaveNode.id)
+			if (node) {
+				node.firmwareUpdate = undefined
 
-			this.sendToSocket(socketEvents.nodeUpdated, {
-				id: node?.id,
-				firmwareUpdate: false,
-			})
+				this.sendToSocket(socketEvents.nodeUpdated, {
+					id: node?.id,
+					firmwareUpdate: false,
+				})
+			}
+
+			logger.info(
+				`Node ${zwaveNode.id} firmware update finished ${
+					result.success ? 'successfully' : 'with error'
+				}.\n   Status: ${getEnumMemberName(
+					FirmwareUpdateStatus,
+					result.status
+				)}.\n   Wait before interacting: ${
+					result.waitTime !== undefined ? `${result.waitTime}s` : 'No'
+				}.\n   Result: ${result}.`
+			)
+
+			if (result.reInterview) {
+				logger.info(`Node ${zwaveNode.id} will be re-interviewed`)
+			}
+
+			this.emit(
+				'event',
+				EventSource.NODE,
+				'node firmware update finished',
+				this._nodes.get(zwaveNode.id),
+				result
+			)
 		}
-
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node firmware update finished',
-			this._nodes.get(zwaveNode.id),
-			status,
-			waitTime
-		)
-	}
 
 	// ------- NODE METHODS -------------
 

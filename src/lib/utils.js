@@ -6,6 +6,15 @@ export function wait(ms) {
 	return new Promise((r) => setTimeout(r, ms))
 }
 
+export function readAsBuffer(file) {
+	return new Promise((resolve, reject) => {
+		const reader = new FileReader()
+		reader.onload = () => resolve(reader.result)
+		reader.onerror = reject
+		reader.readAsArrayBuffer(file)
+	})
+}
+
 export function parseSecurityClasses(securityClasses, defaultVal) {
 	securityClasses = Array.isArray(securityClasses) ? securityClasses : []
 	const classes = {

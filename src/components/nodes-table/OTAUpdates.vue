@@ -15,7 +15,7 @@
 			<template v-if="fwUpdates.length > 0">
 				<v-col
 					cols="12"
-					sm="2"
+					sm="6"
 					md="4"
 					v-for="u in fwUpdates"
 					:key="u.version"
@@ -24,8 +24,19 @@
 						<v-card-title>
 							<v-icon>mdi-update</v-icon>
 							<span class="headline"
-								><strong>v{{ u.version }}</strong></span
+								><strong
+									>v{{ u.version }} [{{ u.channel }}]</strong
+								></span
 							>
+							<v-spacer></v-spacer>
+							<v-btn
+								outlined
+								small
+								:color="u.downgrade ? 'warning' : 'success'"
+								@click="updateFirmware(u)"
+								><v-icon small>upload</v-icon>
+								{{ u.downgrade ? 'Downgrade' : 'Update' }}
+							</v-btn>
 						</v-card-title>
 						<v-divider class="mx-4"></v-divider>
 						<v-card-text>
@@ -39,7 +50,6 @@
 							></p>
 
 							<v-list-item
-								@click.stop="updateFirmware(u, f)"
 								v-for="f in u.files"
 								:key="f.url"
 								two-line
@@ -59,7 +69,15 @@
 									}}</v-list-item-subtitle>
 								</v-list-item-content>
 								<v-list-item-icon class="my-auto">
-									<v-icon color="success">download</v-icon>
+									<v-btn
+										title="Download"
+										@click="download(f.url)"
+										icon
+									>
+										<v-icon color="success"
+											>download</v-icon
+										>
+									</v-btn>
 								</v-list-item-icon>
 							</v-list-item>
 						</v-card-text>
@@ -132,11 +150,14 @@ export default {
 			this.fwUpdates = []
 			this.apiRequest('getAvailableFirmwareUpdates', [this.node.id])
 		},
-		async updateFirmware(update, firmware) {
+		download(url) {
+			window.open(url, '_blank')
+		},
+		async updateFirmware(update) {
 			if (
 				await this.$listeners.showConfirm(
 					'OTA Update',
-					`<p>Are you sure you want to update target <b>${firmware.target}</b> to <b>v${update.version}</b>?</p>
+					`<p>Are you sure you want to update node to <b>v${update.version}</b>?</p>
 										
 					<p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
 					
@@ -151,9 +172,9 @@ export default {
 					}
 				)
 			) {
-				this.apiRequest('beginOTAFirmwareUpdate', [
+				this.apiRequest('firmwareUpdateOTA', [
 					this.node.id,
-					firmware,
+					update.files,
 				])
 			}
 		},
