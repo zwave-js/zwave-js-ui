@@ -285,8 +285,14 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar', 'setHealProgress']),
+		...mapMutations(['setHealProgress']),
 		jsonToList,
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		onAddRemoveClose() {
 			this.addRemoveShowDialog = false
 		},
@@ -314,24 +320,28 @@ export default {
 					const response = await ConfigApis.importConfig({
 						data: data,
 					})
-					this.showSnackbar(response.message)
+					this.showSnackbar(
+						response.message,
+						response.success ? 'success' : 'error'
+					)
 				} catch (error) {
 					console.log(error)
 				}
 			}
 		},
-		exportConfiguration() {
-			const self = this
-			ConfigApis.exportConfig()
-				.then((data) => {
-					self.showSnackbar(data.message)
-					if (data.success) {
-						self.$listeners.export(data.data, 'nodes', 'json')
-					}
-				})
-				.catch((error) => {
-					console.log(error)
-				})
+		async exportConfiguration() {
+			try {
+				const data = await ConfigApis.exportConfig()
+				this.showSnackbar(
+					data.message,
+					data.success ? 'success' : 'error'
+				)
+				if (data.success) {
+					this.$listeners.export(data.data, 'nodes', 'json')
+				}
+			} catch (error) {
+				console.log(error)
+			}
 		},
 		exportDump() {
 			this.$listeners.export(this.nodes, 'nodes_dump', 'json')
@@ -359,7 +369,8 @@ export default {
 					if (!broadcast) {
 						if (isNaN(nodeId)) {
 							this.showSnackbar(
-								'Node ID must be an integer value'
+								'Node ID must be an integer value',
+								'error'
 							)
 							return
 						}
@@ -584,7 +595,8 @@ export default {
 					case 'backupNVMRaw':
 						{
 							this.showSnackbar(
-								'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory'
+								'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory',
+								'success'
 							)
 							const { result } = data
 							this.$listeners.export(
@@ -595,14 +607,18 @@ export default {
 						}
 						break
 					case 'restoreNVM':
-						this.showSnackbar('NVM restore DONE')
+						this.showSnackbar('NVM restore DONE', 'success')
 						break
 					default:
-						this.showSnackbar('Successfully call api ' + data.api)
+						this.showSnackbar(
+							'Successfully call api ' + data.api,
+							'success'
+						)
 				}
 			} else {
 				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message
+					'Error while calling api ' + data.api + ': ' + data.message,
+					'error'
 				)
 			}
 		},

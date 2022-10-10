@@ -151,7 +151,10 @@ export const actions = {
   updateValue(store, data) {
     const valueId = getValue(data)
     if (valueId && valueId.toUpdate) {
-      store.commit('showSnackbar', 'Value updated')
+      store.commit('showSnackbar', {
+        text: 'Value updated',
+        color: 'success'
+      })
     }
     store.commit('updateValue', { data, valueId })
   },

@@ -306,7 +306,6 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
-import { mapMutations } from 'vuex'
 
 import { QrcodeStream, QrcodeDropZone } from 'vue-qrcode-reader'
 import { processFile } from 'vue-qrcode-reader/src/misc/scanner.js'
@@ -368,7 +367,12 @@ export default {
 		},
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		paintBoundingBox(detectedCodes, ctx) {
 			for (const detectedCode of detectedCodes) {
 				const {

@@ -174,8 +174,11 @@ export default {
 				return false
 			}
 		},
-		showSnackbar(text) {
-			this.$emit('showSnackbar', text)
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
 		},
 		async login(forced) {
 			if (!this.isLocalStorageSupported()) {
