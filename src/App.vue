@@ -302,7 +302,6 @@
 			:timeout="5000"
 			top
 			right
-			outlined
 			style="margin-top: 10px"
 		>
 			<template v-slot="{ message }">
