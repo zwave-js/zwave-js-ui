@@ -278,7 +278,6 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
-import { mapMutations } from 'vuex'
 
 export default {
 	name: 'Store',
@@ -311,7 +310,12 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		async deleteFile(item) {
 			if (
 				await this.$listeners.showConfirm(
@@ -323,13 +327,16 @@ export default {
 				try {
 					const data = await ConfigApis.deleteFile(item.path)
 					if (data.success) {
-						this.showSnackbar('File deleted successfully')
+						this.showSnackbar(
+							'File deleted successfully',
+							'success'
+						)
 						await this.refreshTree(true)
 					} else {
 						throw Error(data.message)
 					}
 				} catch (error) {
-					this.showSnackbar(error.message)
+					this.showSnackbar(error.message, 'error')
 				}
 			}
 		},
@@ -345,13 +352,16 @@ export default {
 				try {
 					const data = await ConfigApis.deleteMultiple(files)
 					if (data.success) {
-						this.showSnackbar('Files deleted successfully')
+						this.showSnackbar(
+							'Files deleted successfully',
+							'success'
+						)
 						await this.refreshTree(true)
 					} else {
 						throw Error(data.message)
 					}
 				} catch (error) {
-					this.showSnackbar(error.message)
+					this.showSnackbar(error.message, 'error')
 				}
 			}
 		},
@@ -363,7 +373,7 @@ export default {
 
 				await this.downloadZip(response, 'zwave-js-ui-store.zip')
 			} catch (error) {
-				this.showSnackbar(error.message)
+				this.showSnackbar(error.message, 'error')
 			}
 		},
 		async downloadZip(response, defaultName) {
@@ -430,7 +440,7 @@ export default {
 
 					this.refreshTree()
 				} catch (error) {
-					this.showSnackbar(error.message)
+					this.showSnackbar(error.message, 'error')
 				}
 			}
 		},
@@ -461,9 +471,9 @@ export default {
 					if (!res.success)
 						throw new Error(res.message || 'Restore failed')
 					await this.refreshTree()
-					this.showSnackbar('Restore successful')
+					this.showSnackbar('Restore successful', 'success')
 				} catch (err) {
-					this.showSnackbar(err.message || err)
+					this.showSnackbar(err.message || err, 'error')
 				}
 			}
 		},
@@ -500,7 +510,7 @@ export default {
 			} else if (this.selected) {
 				path = this.selected.path
 			} else {
-				this.showSnackbar('No file selected')
+				this.showSnackbar('No file selected', 'error')
 				return
 			}
 
@@ -525,14 +535,15 @@ export default {
 						this.showSnackbar(
 							`${isDirectory ? 'Directory' : 'File'} ${
 								isNew ? 'created' : 'updated'
-							} successfully`
+							} successfully`,
+							'success'
 						)
 						await this.refreshTree()
 					} else {
 						throw Error(data.message)
 					}
 				} catch (error) {
-					this.showSnackbar(error.message)
+					this.showSnackbar(error.message, 'error')
 				}
 			}
 		},
@@ -562,7 +573,7 @@ export default {
 					}
 				} catch (error) {
 					this.notSupported = true
-					this.showSnackbar(error.message)
+					this.showSnackbar(error.message, 'error')
 				}
 
 				this.loadingFile = false
@@ -578,7 +589,8 @@ export default {
 				}
 			} catch (error) {
 				this.showSnackbar(
-					'Error while fetching store files: ' + error.message
+					'Error while fetching store files: ' + error.message,
+					'error'
 				)
 				console.log(error)
 			}

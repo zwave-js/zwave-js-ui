@@ -102,7 +102,6 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
-import { mapMutations } from 'vuex'
 
 export default {
 	components: {},
@@ -133,7 +132,12 @@ export default {
 		this.checkUpdates()
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {
 				const data = {
@@ -142,7 +146,7 @@ export default {
 				}
 				this.socket.emit(socketActions.zwave, data)
 			} else {
-				this.showSnackbar('Socket disconnected')
+				this.showSnackbar('Socket disconnected', 'error')
 			}
 		},
 		checkUpdates() {

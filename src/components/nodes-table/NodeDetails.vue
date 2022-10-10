@@ -331,7 +331,7 @@
 import ValueID from '@/components/ValueId'
 
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
 import { validTopic } from '@/lib/utils'
 import { RFRegion } from 'zwave-js/safe'
 
@@ -407,7 +407,12 @@ export default {
 		},
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {
 				const data = {
@@ -416,7 +421,7 @@ export default {
 				}
 				this.socket.emit(socketActions.zwave, data)
 			} else {
-				this.showSnackbar('Socket disconnected')
+				this.showSnackbar('Socket disconnected', 'error')
 			}
 		},
 		exportNode() {

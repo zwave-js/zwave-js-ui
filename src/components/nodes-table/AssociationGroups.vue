@@ -75,7 +75,7 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
 export default {
 	components: {
 		DialogAssociation,
@@ -114,7 +114,12 @@ export default {
 		this.getAssociations()
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		getAssociationAddress(ass) {
 			return {
 				nodeId: ass.nodeId,
@@ -133,7 +138,7 @@ export default {
 				}
 				this.socket.emit(socketActions.zwave, data)
 			} else {
-				this.showSnackbar('Socket disconnected')
+				this.showSnackbar('Socket disconnected', 'error')
 			}
 		},
 		getAssociations() {

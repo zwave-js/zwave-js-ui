@@ -216,7 +216,13 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar', 'setNeighbors']),
+		...mapMutations(['setNeighbors']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode

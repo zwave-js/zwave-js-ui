@@ -132,6 +132,22 @@
 						fab
 						dark
 						small
+						@click="importList"
+						color="red"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>file_download</v-icon>
+					</v-btn>
+				</template>
+				<span>Import</span>
+			</v-tooltip>
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
 						@click="exportList"
 						color="purple"
 						v-bind="attrs"
@@ -147,7 +163,7 @@
 </template>
 <script>
 import { socketEvents } from '@/../server/lib/SocketEvents'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapGetters } from 'vuex'
 import {
 	parseSecurityClasses,
 	validDsk,
@@ -195,7 +211,12 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		refreshItems() {
 			this.apiRequest('getProvisioningEntries', [])
 		},
@@ -205,6 +226,17 @@ export default {
 				'provisioningEntries',
 				'json'
 			)
+		},
+		async importList() {
+			const { data } = await this.$listeners.import('json')
+
+			if (data) {
+				for (const entry of data) {
+					this.apiRequest('provisionSmartStartNode', [
+						this.convertItem(entry),
+					])
+				}
+			}
 		},
 		onChange(item) {
 			this.edited = true
@@ -392,24 +424,32 @@ export default {
 						this.items = this.parseItems(data.result)
 						break
 					case 'unprovisionSmartStartNode':
-						this.showSnackbar('Node successfully removed')
+						this.showSnackbar(
+							'Node successfully removed',
+							'success'
+						)
 						this.refreshItems()
 						break
 					case 'provisionSmartStartNode':
 						this.showSnackbar(
 							`Node successfully ${
 								this.edited ? 'updated' : 'added'
-							}`
+							}`,
+							'success'
 						)
 						this.edited = false
 						this.refreshItems()
 						break
 					default:
-						this.showSnackbar('Successfully call api ' + data.api)
+						this.showSnackbar(
+							'Successfully call api ' + data.api,
+							'success'
+						)
 				}
 			} else {
 				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message
+					'Error while calling api ' + data.api + ': ' + data.message,
+					'error'
 				)
 			}
 		})

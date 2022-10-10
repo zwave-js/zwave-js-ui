@@ -64,7 +64,7 @@
 import { socketEvents } from '@/../server/lib/SocketEvents'
 
 import AnsiUp from 'ansi_up'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
 
 const ansiUp = new AnsiUp()
 
@@ -90,7 +90,12 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		toggleDebug(v) {
 			this.debugActive = v
 			this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))

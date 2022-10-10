@@ -1175,7 +1175,7 @@
 </template>
 
 <script>
-import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { mapActions, mapGetters } from 'vuex'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
@@ -1420,7 +1420,12 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		showSnackbar(text, color = 'info') {
+			this.$store.commit('showSnackbar', {
+				text,
+				color,
+			})
+		},
 		...mapActions(['setDarkMode', 'setNavTabs']),
 		differentKeys() {
 			const values = Object.values(this.newZwave.securityKeys)
@@ -1492,9 +1497,12 @@ export default {
 				const { data } = await this.$listeners.import('json')
 				if (data.zwave && data.mqtt && data.gateway) {
 					this.$store.dispatch('import', data)
-					this.showSnackbar('Configuration imported successfully')
+					this.showSnackbar(
+						'Configuration imported successfully',
+						'success'
+					)
 				} else {
-					this.showSnackbar('Imported settings not valid')
+					this.showSnackbar('Imported settings not valid', 'error')
 				}
 				// eslint-disable-next-line no-empty
 			} catch (error) {}
@@ -1555,13 +1563,19 @@ export default {
 					const data = await ConfigApis.updateConfig(
 						this.getSettingsJSON()
 					)
-					this.showSnackbar(data.message)
+					this.showSnackbar(
+						data.message,
+						data.success ? 'success' : 'error'
+					)
 					this.$store.commit('initSettings', data.data)
 				} catch (error) {
 					console.log(error)
 				}
 			} else {
-				this.showSnackbar('Your configuration contains errors, fix it')
+				this.showSnackbar(
+					'Your configuration contains errors, fix it',
+					'error'
+				)
 			}
 		},
 		resetConfig() {
@@ -1575,7 +1589,8 @@ export default {
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
-						'Error while retrieving configuration, check console'
+						'Error while retrieving configuration, check console',
+						'error'
 					)
 					console.log(data)
 				} else {
@@ -1584,7 +1599,7 @@ export default {
 					this.resetConfig()
 				}
 			} catch (error) {
-				this.showSnackbar(error.message)
+				this.showSnackbar(error.message, 'error')
 				console.log(error)
 			}
 		},
