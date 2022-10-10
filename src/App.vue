@@ -310,7 +310,7 @@
 					class="font-weight-bold"
 					v-if="message && message.title"
 				>
-					{{ message.title || 'Porco' }}
+					{{ message.title }}
 				</p>
 				<p
 					style="margin-bottom: 0; white-space: pre-line"
