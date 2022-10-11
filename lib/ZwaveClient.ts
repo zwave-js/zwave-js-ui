@@ -3324,10 +3324,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._dumpNode(zwaveNode)
 
 		const values = zwaveNode.getDefinedValueIDs()
+		const delayedUpdates = []
 
 		for (const zwaveValue of values) {
-			this._addValue(zwaveNode, zwaveValue, existingValues)
+			const res = this._addValue(
+				zwaveNode,
+				zwaveValue,
+				existingValues,
+				true
+			)
+
+			if (res?.updated) {
+				delayedUpdates.push(
+					this.emitValueChanged.bind(this, res.valueId, node, true)
+				)
+			}
 		}
+
+		// emit value updated events when all values are added
+		// this prevents to have undefined target values when using mqtt
+		delayedUpdates.forEach((fn) => fn())
 
 		// add it to know devices types (if not already present)
 		if (!this._devices[node.deviceId]) {
@@ -4232,7 +4248,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveValue: TranslatedValueID,
 		oldValues?: {
 			[key: string]: ZUIValueId
-		}
+		},
+		skipUpdate = false
 	) {
 		const node = this._nodes.get(zwaveNode.id)
 
@@ -4259,10 +4276,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				`Node ${zwaveNode.id}: value added ${valueId.id} => ${valueId.value}`
 			)
 
-			if (updated) {
+			if (!skipUpdate && updated) {
 				this.emitValueChanged(valueId, node, true)
 			}
+
+			return {
+				updated,
+				valueId,
+			}
 		}
+
+		return null
 	}
 
 	/**
