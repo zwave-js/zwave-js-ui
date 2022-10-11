@@ -545,8 +545,6 @@ export default {
 
 			this.messages.push(message)
 
-			console.log(this.messages)
-
 			return message
 		},
 		apiRequest(apiName, args) {
