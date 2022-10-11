@@ -1,5 +1,18 @@
 
 
+# [8.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.1.0...v8.2.0) (2022-10-11)
+
+
+### Bug Fixes
+
+* **mqtt:** possible write fails when publishing to `/set` ([#2720](https://github.com/zwave-js/zwave-js-ui/issues/2720)) ([03fa9ee](https://github.com/zwave-js/zwave-js-ui/commit/03fa9ee7a9b19887ed2d7974d953b0d73998448c))
+
+
+### Features
+
+* **ui:** better snackbars and import provisioning json ([#2716](https://github.com/zwave-js/zwave-js-ui/issues/2716)) ([1249312](https://github.com/zwave-js/zwave-js-ui/commit/12493125fcf76389b75f865fbfe943c6c3bb1628)), closes [#1942](https://github.com/zwave-js/zwave-js-ui/issues/1942)
+* **ui:** switch from vuex to pinia ([#2719](https://github.com/zwave-js/zwave-js-ui/issues/2719)) ([e9630fd](https://github.com/zwave-js/zwave-js-ui/commit/e9630fd89ea43569ec3916c18ed04f78db16c8e4))
+
 # [8.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.0.3...v8.1.0) (2022-10-04)
 
 
