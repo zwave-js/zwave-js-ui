@@ -3327,16 +3327,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const delayedUpdates = []
 
 		for (const zwaveValue of values) {
-			const { updated, valueId } = this._addValue(
+			const res = this._addValue(
 				zwaveNode,
 				zwaveValue,
 				existingValues,
 				true
 			)
 
-			if (updated) {
+			if (res?.updated) {
 				delayedUpdates.push(
-					this.emitValueChanged.bind(this, valueId, node, true)
+					this.emitValueChanged.bind(this, res.valueId, node, true)
 				)
 			}
 		}
