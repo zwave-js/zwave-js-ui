@@ -281,7 +281,7 @@
 									v-model="newBackup.storeCron"
 								></v-text-field>
 								<strong>{{
-									rules.validCron(newBackup.storeCron)
+									parseCron(newBackup.storeCron) || ''
 								}}</strong>
 							</v-col>
 							<v-col
@@ -351,7 +351,7 @@
 									v-model="newBackup.nvmCron"
 								></v-text-field>
 								<strong>{{
-									rules.validCron(newBackup.nvmCron)
+									parseCron(newBackup.nvmCron) || ''
 								}}</strong>
 							</v-col>
 							<v-col v-if="newBackup.nvmBackup" cols="12" sm="6">
@@ -1408,16 +1408,7 @@ export default {
 					)
 				},
 				validCron: (v) => {
-					let res
-					try {
-						res = cronstrue.toString(v, {
-							use24HourTimeFormat: true,
-						})
-					} catch (err) {
-						//ignore
-					}
-
-					return res || 'Not a valid cron string'
+					return !!this.parseCron(v) || 'Not a valid cron string'
 				},
 			},
 		}
@@ -1430,6 +1421,18 @@ export default {
 			'init',
 			'showSnackbar',
 		]),
+		parseCron(cron) {
+			let res
+			try {
+				res = cronstrue.toString(cron, {
+					use24HourTimeFormat: true,
+				})
+			} catch (err) {
+				//ignore
+			}
+
+			return res
+		},
 		differentKeys() {
 			const values = Object.values(this.newZwave.securityKeys)
 
