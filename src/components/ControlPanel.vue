@@ -117,7 +117,7 @@
 
 <script>
 import ConfigApis from '@/apis/ConfigApis'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapState, mapActions } from 'pinia'
 
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
@@ -126,6 +126,7 @@ import { Settings } from '@/modules/Settings'
 import { jsonToList } from '@/lib/utils'
 import { socketEvents } from '@/../server/lib/SocketEvents'
 import StatisticsCard from '@/components/custom/StatisticsCard'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'ControlPanel',
@@ -139,7 +140,7 @@ export default {
 		StatisticsCard,
 	},
 	computed: {
-		...mapGetters(['nodes', 'zwave']),
+		...mapState(useBaseStore, ['nodes', 'zwave']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -285,14 +286,8 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['setHealProgress']),
+		...mapActions(useBaseStore, ['setHealProgress', 'showSnackbar']),
 		jsonToList,
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
 		onAddRemoveClose() {
 			this.addRemoveShowDialog = false
 		},

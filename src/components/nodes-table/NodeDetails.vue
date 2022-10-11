@@ -331,9 +331,10 @@
 import ValueID from '@/components/ValueId'
 
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
-import { mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
 import { validTopic } from '@/lib/utils'
 import { RFRegion } from 'zwave-js/safe'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
@@ -365,7 +366,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['mqtt']),
+		...mapState(useBaseStore, ['mqtt', 'setValue']),
 		commandGroups() {
 			if (this.node) {
 				const groups = {}
@@ -407,12 +408,7 @@ export default {
 		},
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['showSnackbar']),
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {
 				const data = {
@@ -423,9 +419,6 @@ export default {
 			} else {
 				this.showSnackbar('Socket disconnected', 'error')
 			}
-		},
-		exportNode() {
-			this.$listeners.export(this.node, 'node_' + this.node.id, 'json')
 		},
 		getValue(v) {
 			if (this.node && this.node.values) {
@@ -443,32 +436,6 @@ export default {
 			setTimeout(() => {
 				this.newName = this.node.name
 			}, 10)
-		},
-		async sendMqttAction(action, confirmMessage) {
-			if (this.node) {
-				let ok = true
-
-				if (confirmMessage) {
-					ok = await this.$listeners.showConfirm(
-						'Info',
-						confirmMessage,
-						'info',
-						{
-							confirmText: 'Ok',
-						}
-					)
-				}
-
-				if (ok) {
-					const args = [this.node.id]
-
-					const data = {
-						api: action,
-						args: args,
-					}
-					this.socket.emit(socketActions.mqtt, data)
-				}
-			}
 		},
 		updatePowerLevel() {
 			if (this.node) {
@@ -511,7 +478,7 @@ export default {
 				}
 
 				// update the value in store
-				this.$store.dispatch('setValue', v)
+				this.setValue(v)
 
 				this.apiRequest('writeValue', [
 					{

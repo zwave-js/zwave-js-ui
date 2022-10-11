@@ -6,7 +6,7 @@ import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import RichValue from '@/components/nodes-table/RichValue.vue'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
 import {
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
@@ -25,6 +25,7 @@ import {
 	mdiPowerPlug,
 	mdiSleep,
 } from '@mdi/js'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
@@ -40,7 +41,7 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 	},
 	data: function () {
 		return {

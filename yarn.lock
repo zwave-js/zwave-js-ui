@@ -3038,6 +3038,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@vue/devtools-api@npm:^6.4.4":
+  version: 6.4.4
+  resolution: "@vue/devtools-api@npm:6.4.4"
+  checksum: d4d1079202579eceb8efb503b695dead39d2da4d693419a4a3f4e1823358726325bc2912e15c580ef94128ed61f42be0ce6a23ac013967e04d971b0a7158a263
+  languageName: node
+  linkType: hard
+
 "@vue/reactivity-transform@npm:3.2.37":
   version: 3.2.37
   resolution: "@vue/reactivity-transform@npm:3.2.37"
@@ -12761,6 +12768,25 @@ __metadata:
   languageName: node
   linkType: hard
 
+"pinia@npm:^2.0.23":
+  version: 2.0.23
+  resolution: "pinia@npm:2.0.23"
+  dependencies:
+    "@vue/devtools-api": ^6.4.4
+    vue-demi: "*"
+  peerDependencies:
+    "@vue/composition-api": ^1.4.0
+    typescript: ">=4.4.4"
+    vue: ^2.6.14 || ^3.2.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+    typescript:
+      optional: true
+  checksum: 004c76d80bc1127a25b26f92616f1243c570c6be90b04be83aa95108274036b64ed0678e537f3213c8b8f3dd7bcffb52e768e7445a1fd9378cb1db15ada92f83
+  languageName: node
+  linkType: hard
+
 "pirates@npm:^4.0.5":
   version: 4.0.5
   resolution: "pirates@npm:4.0.5"
@@ -15879,6 +15905,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vue-demi@npm:*":
+  version: 0.13.11
+  resolution: "vue-demi@npm:0.13.11"
+  peerDependencies:
+    "@vue/composition-api": ^1.0.0-rc.1
+    vue: ^3.0.0-0 || ^2.6.0
+  peerDependenciesMeta:
+    "@vue/composition-api":
+      optional: true
+  bin:
+    vue-demi-fix: bin/vue-demi-fix.js
+    vue-demi-switch: bin/vue-demi-switch.js
+  checksum: 0fbe9bf8ab7fe498ffa2bbd0cfc8f6f43a6bbaa5eda3e20ef1b70dca7c8b0ddb216a7ff2f632b694fe0735805638975abb441c621ec0bd2e6d4656353f316c15
+  languageName: node
+  linkType: hard
+
 "vue-eslint-parser@npm:^9.0.1":
   version: 9.0.3
   resolution: "vue-eslint-parser@npm:9.0.3"
@@ -16005,15 +16047,6 @@ __metadata:
   peerDependencies:
     vue: ^2.6.4
   checksum: 202f865319164e9f339a1911354200029b059d198ebdc3caa5b34a25dd6c982430ace7669416b2d180342eb6e4cc08c860be36ed4bc787ee3d6e649623889826
-  languageName: node
-  linkType: hard
-
-"vuex@npm:^3.6.2":
-  version: 3.6.2
-  resolution: "vuex@npm:3.6.2"
-  peerDependencies:
-    vue: ^2.0.0
-  checksum: 37915741ba9557024ea42579e2c8d81847ec699d07d8ea3aa673929f26fceba8c59e7e1e6a875fd3962e50018bc30f782f5ace34d83307ef228ad46a4df343da
   languageName: node
   linkType: hard
 
@@ -16895,6 +16928,7 @@ __metadata:
     npm-run-all: ^4.1.5
     ora: 5.4.1
     pem: ^1.14.6
+    pinia: ^2.0.23
     pkg: ^5.8.0
     portfinder: ^1.0.28
     postcss: ^8.4.14
@@ -16932,7 +16966,6 @@ __metadata:
     vue-template-compiler: ^2.7.8
     vuedraggable: ^2.24.3
     vuetify: ^2.6.8
-    vuex: ^3.6.2
     webpack: ^5.74.0
     webpack-bundle-analyzer: ^4.5.0
     webpack-cli: ^4.10.0

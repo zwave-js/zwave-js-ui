@@ -244,7 +244,8 @@ import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
 
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	components: {
@@ -267,7 +268,7 @@ export default {
 		},
 	},
 	computed: {
-		...mapGetters(['gateway', 'mqtt']),
+		...mapState(useBaseStore, ['gateway', 'mqtt']),
 		deviceValues() {
 			const device = this.devices.find(
 				(d) => d.value == this.editedValue.device

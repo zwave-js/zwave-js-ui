@@ -64,7 +64,8 @@
 import { socketEvents } from '@/../server/lib/SocketEvents'
 
 import AnsiUp from 'ansi_up'
-import { mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import useBaseStore from '../stores/base.js'
 
 const ansiUp = new AnsiUp()
 
@@ -77,7 +78,7 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapGetters(['zwave', 'gateway']),
+		...mapState(useBaseStore, ['zwave', 'gateway']),
 		logDisabled() {
 			return !this.zwave.logEnabled || !this.gateway.logEnabled
 		},
@@ -90,12 +91,7 @@ export default {
 		}
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['showSnackbar']),
 		toggleDebug(v) {
 			this.debugActive = v
 			this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))

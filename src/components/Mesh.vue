@@ -156,7 +156,7 @@
 
 <script>
 import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapActions, mapState } from 'pinia'
 
 import {
 	socketEvents,
@@ -166,6 +166,7 @@ import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
 
 import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'Mesh',
@@ -178,7 +179,7 @@ export default {
 		DialogHealthCheck,
 	},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 		lwr() {
 			if (!this.selectedNode) return null
 
@@ -216,13 +217,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['setNeighbors']),
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['setNeighbors', 'showSnackbar']),
 		nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode
