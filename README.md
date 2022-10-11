@@ -20,7 +20,7 @@
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee") [<img style="background:#ccc;border-radius:10px" alt="PayPal" src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg" alt="PayPal" width="200" height="40px" />](https://paypal.me/daniellando) [![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=16906849)
 
-[![dockeri.co](https://dockeri.co/image/zwavejs/zwave-js-ui)](https://hub.docker.com/r/zwavejs/zwave-js-ui)
+[![dockeri.co](https://cute-peplum-wasp.cyclic.app/image/zwavejs/zwave-js-ui)](https://hub.docker.com/r/zwavejs/zwave-js-ui)
 
 Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 
