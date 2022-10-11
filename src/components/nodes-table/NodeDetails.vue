@@ -366,7 +366,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(useBaseStore, ['mqtt']),
+		...mapState(useBaseStore, ['mqtt', 'setValue']),
 		commandGroups() {
 			if (this.node) {
 				const groups = {}
@@ -478,7 +478,7 @@ export default {
 				}
 
 				// update the value in store
-				useBaseStore().setValue(v)
+				this.setValue(v)
 
 				this.apiRequest('writeValue', [
 					{

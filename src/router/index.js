@@ -156,7 +156,7 @@ router.beforeEach(async (to, from, next) => {
 					logged = false
 					localStorage.removeItem('logged')
 				} else {
-					store.commit('setUser', response.user)
+					store.setUser(response.user)
 				}
 			} else user = {}
 		} catch (error) {

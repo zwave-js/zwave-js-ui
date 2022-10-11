@@ -1278,9 +1278,11 @@ export default {
 			'devices',
 			'serial_ports',
 			'scales',
-			'darkMode',
-			'navTabs',
 		]),
+		...mapState(useBaseStore, {
+			darkMode: (store) => store.ui.darkMode,
+			navTabs: (store) => store.ui.navTabs,
+		}),
 	},
 	watch: {
 		dialogValue(val) {

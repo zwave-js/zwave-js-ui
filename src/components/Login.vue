@@ -98,7 +98,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
 
-import { mapState } from 'pinia'
+import { mapState, mapActions } from 'pinia'
 
 export default {
 	data() {
@@ -119,13 +119,15 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(useBaseStore, ['darkMode']),
+		...mapState(useBaseStore, {
+			darkMode: (store) => store.ui.darkMode,
+		}),
 		internalDarkMode: {
 			get() {
 				return this.darkMode
 			},
 			set(value) {
-				useBaseStore().setDarkMode(value)
+				this.setDarkMode(value)
 				this.$vuetify.theme.dark = value
 			},
 		},
@@ -162,6 +164,7 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['setDarkMode']),
 		assetPath(path) {
 			return ConfigApis.getBasePath(path)
 		},

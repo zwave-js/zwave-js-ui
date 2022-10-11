@@ -381,10 +381,12 @@ export default {
 			'user',
 			'auth',
 			'appInfo',
-			'navTabs',
-			'darkMode',
 			'nodesManagerOpen',
 		]),
+		...mapState(useBaseStore, {
+			darkMode: (store) => store.ui.darkMode,
+			navTabs: (store) => store.ui.navTabs,
+		}),
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
 		},
