@@ -38,7 +38,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
@@ -56,7 +57,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 		total() {
 			return this.nodes.reduce(
 				(acc, node) => {

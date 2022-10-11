@@ -3,10 +3,10 @@
 import '@babel/polyfill'
 
 import Vue from 'vue'
-import App from './App'
+import pinia from './plugins/pinia'
+import vuetify from './plugins/vuetify' // path to vuetify export
 import router from './router'
-import store from './store'
-import vuetify from '@/plugins/vuetify' // path to vuetify export
+import App from './App'
 
 import 'axios-progress-bar/dist/nprogress.css'
 // Custom assets CSS JS
@@ -17,9 +17,9 @@ Vue.config.devtools = true
 
 /* eslint-disable no-new */
 new Vue({
+	pinia,
 	vuetify,
 	router,
-	store,
 	components: { App },
 	template: '<App/>',
 }).$mount('#app')

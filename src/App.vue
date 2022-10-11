@@ -361,7 +361,8 @@ import Confirm from '@/components/Confirm'
 import PasswordDialog from '@/components/dialogs/Password'
 import { Routes } from '@/router'
 
-import { mapActions, mapMutations, mapGetters } from 'vuex'
+import { mapActions, mapState } from 'pinia'
+import useBaseStore from './stores/base.js'
 
 import {
 	socketEvents,
@@ -376,7 +377,7 @@ export default {
 	},
 	name: 'app',
 	computed: {
-		...mapGetters([
+		...mapState(useBaseStore, [
 			'user',
 			'auth',
 			'appInfo',
@@ -443,13 +444,13 @@ export default {
 		assetPath(path) {
 			return ConfigApis.getBasePath(path)
 		},
-		...mapActions([
+		...mapActions(useBaseStore, [
+			'init',
 			'initNodes',
 			'setAppInfo',
+			'setUser',
 			'updateValue',
 			'removeValue',
-		]),
-		...mapMutations([
 			'setControllerStatus',
 			'setStatistics',
 			'addNodeEvent',
@@ -477,7 +478,7 @@ export default {
 				)
 				if (response.success) {
 					this.closePasswordDialog()
-					this.$store.dispatch('setUser', response.user)
+					this.setUser(response.user)
 				}
 			} catch (error) {
 				this.showSnackbar(
@@ -700,7 +701,7 @@ export default {
 						'error'
 					)
 				} else {
-					this.$store.dispatch('init', data)
+					this.init(data)
 
 					if (data.deprecationWarning) {
 						await this.confirm(
@@ -882,7 +883,7 @@ export default {
 					const newAuth = data.data === true
 					const oldAuth = this.auth
 
-					this.$store.dispatch('setAuth', newAuth)
+					useBaseStore().auth = newAuth
 
 					if (oldAuth !== undefined && oldAuth !== newAuth) {
 						await this.logout()
@@ -921,11 +922,10 @@ export default {
 
 		this.changeThemeColor()
 
-		this.$store.subscribe((mutation) => {
-			if (mutation.type === 'showSnackbar') {
-				const { text, color } = mutation.payload
-				this.showSnackbar(text, color)
-			} else if (mutation.type === 'initSettings') {
+		useBaseStore().$onAction(({ name, args }) => {
+			if (name === 'showSnackbar') {
+				this.showSnackbar(...args)
+			} else if (name === 'initSettings') {
 				// check if auth is changed in settings
 				this.checkAuth()
 			}

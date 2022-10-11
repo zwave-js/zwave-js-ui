@@ -90,7 +90,8 @@
 <script>
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 import { socketEvents } from '@/../server/lib/SocketEvents'
-import { mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'Scenes',
@@ -109,7 +110,7 @@ export default {
 		},
 	},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 		scenesWithId() {
 			return this.scenes.map((s) => {
 				s.label = `[${s.sceneid}] ${s.label}`
@@ -140,12 +141,7 @@ export default {
 		}
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['showSnackbar']),
 		async importScenes() {
 			if (
 				await this.$listeners.showConfirm(

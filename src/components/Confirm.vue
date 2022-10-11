@@ -367,12 +367,6 @@ export default {
 		},
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
 		paintBoundingBox(detectedCodes, ctx) {
 			for (const detectedCode of detectedCodes) {
 				const {

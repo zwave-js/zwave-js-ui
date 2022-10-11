@@ -163,12 +163,13 @@
 </template>
 <script>
 import { socketEvents } from '@/../server/lib/SocketEvents'
-import { mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
 	validDsk,
 	securityClassesToArray,
 } from '../lib/utils.js'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'SmartStart',
@@ -177,7 +178,7 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 	},
 	data() {
 		return {
@@ -211,12 +212,7 @@ export default {
 		}
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['showSnackbar']),
 		refreshItems() {
 			this.apiRequest('getProvisioningEntries', [])
 		},

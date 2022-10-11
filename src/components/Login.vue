@@ -96,7 +96,9 @@
 <script>
 import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
-import { mapGetters } from 'vuex'
+import useBaseStore from '../stores/base.js'
+
+import { mapState } from 'pinia'
 
 export default {
 	data() {
@@ -117,13 +119,13 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['darkMode']),
+		...mapState(useBaseStore, ['darkMode']),
 		internalDarkMode: {
 			get() {
 				return this.darkMode
 			},
 			set(value) {
-				this.$store.commit('setDarkMode', value)
+				useBaseStore().setDarkMode(value)
 				this.$vuetify.theme.dark = value
 			},
 		},
@@ -174,12 +176,6 @@ export default {
 				return false
 			}
 		},
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
 		async login(forced) {
 			if (!this.isLocalStorageSupported()) {
 				this.error = true
@@ -205,7 +201,7 @@ export default {
 						user.rememberMe = this.rememberMe
 						localStorage.setItem('user', JSON.stringify(user))
 						localStorage.setItem('logged', 'true')
-						this.$store.dispatch('setUser', user)
+						useBaseStore().setUser(user)
 
 						if (this.$route.params.nextUrl != null) {
 							this.$router.push(this.$route.params.nextUrl)

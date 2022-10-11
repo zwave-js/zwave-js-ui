@@ -158,6 +158,7 @@
     "multer": "^1.4.5-lts.1",
     "native-url": "^0.3.4",
     "pem": "^1.14.6",
+    "pinia": "^2.0.23",
     "prismjs": "^1.28.0",
     "serve-favicon": "^2.5.0",
     "session-file-store": "^1.5.0",
@@ -172,7 +173,6 @@
     "vue-router": "^3.5.4",
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.6.8",
-    "vuex": "^3.6.2",
     "winston": "^3.3.3",
     "zwave-js": "^10.3.0"
   },

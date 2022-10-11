@@ -609,7 +609,7 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
 import { socketEvents } from '@/../server/lib/SocketEvents'
 import {
 	parseSecurityClasses,
@@ -617,6 +617,7 @@ import {
 	copy,
 	validTopic,
 } from '../../lib/utils.js'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
@@ -708,7 +709,13 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['appInfo', 'zwave', 'nodes', 'mqtt', 'backup']),
+		...mapState(useBaseStore, [
+			'appInfo',
+			'zwave',
+			'nodes',
+			'mqtt',
+			'backup',
+		]),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -736,7 +743,7 @@ export default {
 	watch: {
 		value(v) {
 			this.init(v)
-			this.$store.commit('setNodesManagerOpen', v)
+			useBaseStore().nodesManagerOpen = v
 		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {

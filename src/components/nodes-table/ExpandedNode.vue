@@ -299,8 +299,10 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 import { jsonToList } from '@/lib/utils'
 
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
 import OTAUpdates from './OTAUpdates.vue'
+import useBaseStore from '../../stores/base.js'
+import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 
 export default {
 	props: {
@@ -319,7 +321,7 @@ export default {
 		OTAUpdates,
 	},
 	computed: {
-		...mapGetters(['gateway', 'mqtt']),
+		...mapState(useBaseStore, ['gateway', 'mqtt']),
 		nodeMetadata() {
 			return this.node.deviceConfig?.metadata
 		},
@@ -545,6 +547,35 @@ export default {
 				this.sendMqttAction(action, args.confirm)
 			} else {
 				this.$emit('action', action, { ...args, nodeId: this.node.id })
+			}
+		},
+		exportNode() {
+			this.$listeners.export(this.node, 'node_' + this.node.id, 'json')
+		},
+		async sendMqttAction(action, confirmMessage) {
+			if (this.node) {
+				let ok = true
+
+				if (confirmMessage) {
+					ok = await this.$listeners.showConfirm(
+						'Info',
+						confirmMessage,
+						'info',
+						{
+							confirmText: 'Ok',
+						}
+					)
+				}
+
+				if (ok) {
+					const args = [this.node.id]
+
+					const data = {
+						api: action,
+						args: args,
+					}
+					this.socket.emit(socketActions.mqtt, data)
+				}
 			}
 		},
 		toggleStatistics() {

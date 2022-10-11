@@ -278,6 +278,8 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
+import { mapActions } from 'pinia'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'Store',
@@ -310,12 +312,7 @@ export default {
 		}
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['showSnackbar']),
 		async deleteFile(item) {
 			if (
 				await this.$listeners.showConfirm(

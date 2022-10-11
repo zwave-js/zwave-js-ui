@@ -277,7 +277,7 @@
 										)
 									"
 									label="Cron"
-									:rules="[rules.required, validCron]"
+									:rules="[rules.required, rules.validCron]"
 									v-model="newBackup.storeCron"
 								></v-text-field>
 								<strong>{{
@@ -347,7 +347,7 @@
 										)
 									"
 									label="Cron"
-									:rules="[rules.required, validCron]"
+									:rules="[rules.required, rules.validCron]"
 									v-model="newBackup.nvmCron"
 								></v-text-field>
 								<strong>{{
@@ -1175,12 +1175,13 @@
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex'
+import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
 import { wait, copy } from '../lib/utils'
 import cronstrue from 'cronstrue'
+import useBaseStore from '../stores/base'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
@@ -1269,7 +1270,7 @@ export default {
 				'This field is required.'
 			)
 		},
-		...mapGetters([
+		...mapState(useBaseStore, [
 			'zwave',
 			'mqtt',
 			'gateway',
@@ -1420,13 +1421,13 @@ export default {
 		}
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
-		...mapActions(['setDarkMode', 'setNavTabs']),
+		...mapActions(useBaseStore, [
+			'setDarkMode',
+			'setNavTabs',
+			'initSettings',
+			'init',
+			'showSnackbar',
+		]),
 		differentKeys() {
 			const values = Object.values(this.newZwave.securityKeys)
 
@@ -1496,7 +1497,7 @@ export default {
 			try {
 				const { data } = await this.$listeners.import('json')
 				if (data.zwave && data.mqtt && data.gateway) {
-					this.$store.dispatch('import', data)
+					this.initSettings(data)
 					this.showSnackbar(
 						'Configuration imported successfully',
 						'success'
@@ -1567,7 +1568,7 @@ export default {
 						data.message,
 						data.success ? 'success' : 'error'
 					)
-					this.$store.commit('initSettings', data.data)
+					this.initSettings(data.data)
 				} catch (error) {
 					console.log(error)
 				}
@@ -1594,7 +1595,7 @@ export default {
 					)
 					console.log(data)
 				} else {
-					this.$store.dispatch('init', data)
+					this.init(data)
 					this.sslDisabled = data.sslDisabled
 					this.resetConfig()
 				}

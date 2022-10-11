@@ -75,7 +75,10 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
-import { mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+
+import useBaseStore from '../../stores/base.js'
+
 export default {
 	components: {
 		DialogAssociation,
@@ -98,7 +101,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['nodes', 'nodesMap']),
+		...mapState(useBaseStore, ['nodes', 'nodesMap']),
 	},
 	mounted() {
 		this.socket.on(socketEvents.api, (data) => {
@@ -114,12 +117,7 @@ export default {
 		this.getAssociations()
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['showSnackbar']),
 		getAssociationAddress(ass) {
 			return {
 				nodeId: ass.nodeId,

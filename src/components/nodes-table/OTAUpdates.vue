@@ -102,6 +102,8 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
+import useBaseStore from '../../stores/base.js'
+import { mapActions } from 'pinia'
 
 export default {
 	components: {},
@@ -132,12 +134,7 @@ export default {
 		this.checkUpdates()
 	},
 	methods: {
-		showSnackbar(text, color = 'info') {
-			this.$store.commit('showSnackbar', {
-				text,
-				color,
-			})
-		},
+		...mapActions(useBaseStore, ['showSnackbar']),
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {
 				const data = {
