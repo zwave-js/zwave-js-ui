@@ -29,7 +29,7 @@
 							<v-col
 								v-for="(input, index) in options.inputs"
 								:key="index"
-								cols="12"
+								:cols="input.cols || 12"
 							>
 								<v-text-field
 									v-if="input.type === 'text'"
