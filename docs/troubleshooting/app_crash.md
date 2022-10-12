@@ -36,3 +36,29 @@ should be entered in the Z-Wave settings instead of `/dev/ttyUSB0`.
 If this does not help, the stick restart can be disabled by disabling __Soft Reset__ option under Z-Wave settings, but this may limit functionality.
 
 > This is definitely necessary with the zwave.me UZB1. However, the adapter tries to detect this stick by itself.
+
+## Raspberry PI crash with 8.2.0+
+
+If you are getting this error on startup:
+
+```bash
+#
+# Fatal error in , line 0
+# unreachable code
+#
+#
+#
+#FailureMessage Object: 0x7ed0149c
+```
+
+You have 2 options:
+
+1. Upgrade to Raspbian __Bullseye__ (Reccomended, check guide [here](https://www.tomshardware.com/how-to/upgrade-raspberry-pi-os-to-bullseye-from-buster)). You can find out your distribution by executing `grep "PRETTY_NAME" /etc/os-release`)
+2. If you are running Raspbian __Buster__  you need to install `libseccomp2`, this can be done by executing the following commands:
+
+```bash
+sudo apt-key adv --keyserver hkps://keyserver.ubuntu.com:443 --recv-keys 04EE7237B7D453EC 648ACFD622F3D138
+echo "deb http://httpredir.debian.org/debian buster-backports main contrib non-free" | sudo tee -a "/etc/apt/sources.list.d/debian-backports.list"
+sudo apt update
+sudo apt install libseccomp2 -t buster-backports
+```
