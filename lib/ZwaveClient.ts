@@ -71,6 +71,7 @@ import {
 	FirmwareUpdateProgress,
 	ZWaveNodeFirmwareUpdateFinishedCallback,
 	FirmwareUpdateResult,
+	FirmwareUpdateCapabilities,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -366,6 +367,7 @@ export interface FwUpdateProgress {
 export interface FwFile {
 	name: string
 	data: Buffer
+	target?: number
 }
 
 export type ZUINode = {
@@ -421,6 +423,7 @@ export type ZUINode = {
 	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
 	firmwareUpdate?: FwUpdateProgress
+	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
 }
 
@@ -2318,11 +2321,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const firmwares: Firmware[] = []
 
 			for (const f of files) {
-				const { data, name } = f
+				const { data, name, target } = f
 				if (data instanceof Buffer) {
 					try {
 						const format = guessFirmwareFileFormat(name, data)
-						firmwares.push(extractFirmware(data, format))
+						const firmware = extractFirmware(data, format)
+						if (target !== undefined) {
+							firmware.firmwareTarget = target
+						}
+						firmwares.push(firmware)
 					} catch (e) {
 						throw Error(
 							`Unable to extract firmware from file '${name}': ${e.message}`
@@ -4090,6 +4097,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			generic: zwaveNode.deviceClass?.generic.key,
 			specific: zwaveNode.deviceClass?.specific.key,
 		}
+
+		node.firmwareCapabilities =
+			zwaveNode.getFirmwareUpdateCapabilitiesCached()
 
 		const storedNode = this.storeNodes[nodeId]
 

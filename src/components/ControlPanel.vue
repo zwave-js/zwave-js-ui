@@ -406,37 +406,80 @@ export default {
 					}
 				} else if (action === 'updateFirmware') {
 					try {
-						const { files } = await this.$listeners.showConfirm(
+						const node = this.nodes.find((n) => n.id === nodeId)
+						const targets = node.firmwareCapabilities
+							.firmwareTargets || [0]
+
+						const fileInput = {
+							cols: 8,
+							type: 'file',
+							label: 'File',
+							hint: 'Firmware file',
+							key: 'file',
+						}
+
+						const targetInput = {
+							type: 'list',
+							cols: 4,
+							allowManualEntry: true,
+							label: 'Target',
+							hint: 'Target to update',
+							key: 'target',
+							items: targets.map((t) => ({
+								text: 'Target ' + t,
+								value: t,
+							})),
+						}
+
+						const inputs = []
+
+						for (const t of targets) {
+							inputs.push({
+								...fileInput,
+								key: 'file_' + t,
+							})
+
+							inputs.push({
+								...targetInput,
+								key: 'target_' + t,
+							})
+						}
+
+						const result = await this.$listeners.showConfirm(
 							'Firmware udpate',
 							'',
 							'info',
 							{
 								confirmText: 'Ok',
 								width: 500,
-								inputs: [
-									{
-										type: 'file',
-										label: 'Files',
-										multiple: true,
-										hint: 'Firmware files, can be multiple in case of multiple targets',
-										required: true,
-										key: 'files',
-									},
-								],
+								inputs,
 							}
 						)
 
-						if (files.length === 0) {
+						if (!result) {
 							return
 						}
 
 						const fwData = []
+						for (const t of targets) {
+							if (result['file_' + t]) {
+								const f = result['file_' + t]
+								const fwEntry = {
+									name: f.name,
+									data: await f.arrayBuffer(),
+									target: parseInt(result['target_' + t]),
+								}
 
-						for (const f of files) {
-							fwData.push({
-								name: f.name,
-								data: await f.arrayBuffer(),
-							})
+								if (isNaN(fwEntry.target)) {
+									delete fwEntry.target
+								}
+
+								fwData.push(fwEntry)
+							}
+						}
+
+						if (fwData.length === 0) {
+							return
 						}
 
 						args.push(fwData)
