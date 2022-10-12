@@ -24,15 +24,19 @@ RUN npm_config_build_from_source=true yarn rebuild @serialport/bindings-cpp
 
 COPY . .
 
-RUN yarn run build && \
-    yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
+# Build back and frontend only when not existing
+RUN [ ! -d 'dist' ] && yarn run build
+
+RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
     rm -rf \
     build \
     package.sh \
     src \
     static \
     docs \
-    .yarn
+    .yarn \
+    .github \
+    .vscode
 
 # add plugin support, space separated
 ARG plugins
