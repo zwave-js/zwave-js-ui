@@ -78,6 +78,7 @@ jobs:
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile
+          context: . # without this it will clone master branch instead of using local
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
@@ -89,6 +90,7 @@ jobs:
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile
+          context: . # without this it will clone master branch instead of using local
           cache-from: type=gha
           build-args: |
             image=zwavejs2mqtt
