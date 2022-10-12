@@ -25,7 +25,7 @@ RUN npm_config_build_from_source=true yarn rebuild @serialport/bindings-cpp
 COPY . .
 
 # Build back and frontend only when not existing
-RUN [ ! -d 'dist' ] && yarn run build
+RUN [ -d 'dist' ] && echo "Skipping build" || yarn build
 
 RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
     rm -rf \
