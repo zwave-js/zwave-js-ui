@@ -1,5 +1,12 @@
 
 
+## [8.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.0...v8.2.1) (2022-10-12)
+
+
+### Bug Fixes
+
+* **ui:** add back target selection to firmware update dialog ([#2726](https://github.com/zwave-js/zwave-js-ui/issues/2726)) ([c3c6c1c](https://github.com/zwave-js/zwave-js-ui/commit/c3c6c1c902971b35149948a211562e12d09dc5f0))
+
 # [8.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.1.0...v8.2.0) (2022-10-11)
 
 
