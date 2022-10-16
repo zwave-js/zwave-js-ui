@@ -4,7 +4,7 @@ To integrate your Z-Wave components you can use either the official Home Assista
 
 ## Z-Wave JS integration
 
-Home Assistant has an integration for zwave which is based on zwave-js - you can read more about this at the [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js) docs on Home Assistants docs.
+Home Assistant has an integration for zwave which is based on zwave-js - you can read more about this at the [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js) docs.
 
 To enable the integration:
 
