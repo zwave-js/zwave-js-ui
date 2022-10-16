@@ -2,17 +2,33 @@
 
 To integrate your Z-Wave components you can use either the official Home Assistant [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js) and/or MQTT discovery.
 
-## Z-Wave JS server
+## Z-Wave JS integration
 
-The Z-Wave JS server is the official way to integrate your Z-Wave devices with Home Assistant. In order to use it go to Settings, [Home Assistant](/usage/setup?id=home-assistant) and enable the flag **WS Server**. Using this method, the official [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js) will automatically create entities in Home Assistant.
+Home Assistant has an integration for zwave which is based on zwave-js - you can read more about this at the [Z-Wave JS integration](https://www.home-assistant.io/integrations/zwave_js) docs on Home Assistants docs.
 
-If you do not need the MQTT features, you can [Disable MQTT Gateway](/usage/setup?id=disable-gateway) and use Z-Wave JS UI as an additional user interface to control your Z-Wave network.
+To enable the integration:
 
-## Assistance with the Official Integration
+1. Open Zwave-js-ui settings page
+2. Enable the "WS Server" setting in the "Home Assistant" tab
+3. If you do not need the MQTT features, you can [Disable MQTT Gateway](/usage/setup?id=disable-gateway) and use Z-Wave JS UI as an additional user interface to control your Z-Wave network.
+4. Configure the ZWave JS Integration in Home Assistant, by following [the official docs](https://www.home-assistant.io/integrations/zwave_js)
+
+Once this has been configured, entities should automatically be created in HA.
+
+### Assistance with the Official Integration
 
 Should you need support with the official Home Assistant Integration, please consult that project's [documentation](https://www.home-assistant.io/integrations/zwave_js/).
 
 Support tickets relating to Home Assistant should first be submitted to the Home Assistant [project](https://github.com/home-assistant/core), who will redirect the ticket to Z-Wave JS if need be.
+
+## MQTT Discovery
+
+To configure this method, you need an MQTT server in addition to the other components. 
+
+1. Set up the MQTT server, for example using the well known Mosquitto server
+2. Open Zwave-js-ui settings page
+3. Configure the MQTT server information under the "MQTT" tab
+4. Enable "MQTT Discovery", in the "Home Assistant" tab
 
 ## How it works
 
