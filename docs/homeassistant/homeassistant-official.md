@@ -23,7 +23,7 @@ Support tickets relating to Home Assistant should first be submitted to the Home
 
 ## MQTT Discovery
 
-To configure this method, you need an MQTT server in addition to the other components. 
+To configure this method, you need an MQTT server in addition to the other components.
 
 1. Set up the MQTT server, for example using the well known Mosquitto server
 2. Open Zwave-js-ui settings page
