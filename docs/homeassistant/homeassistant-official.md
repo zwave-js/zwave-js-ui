@@ -3,7 +3,7 @@
 To integrate your Z-Wave components you can use either the official Home Assistant [Z-Wave integration](https://www.home-assistant.io/integrations/zwave_js) or MQTT discovery. To read more about the MQTT discovery, see [these docs](/usage/setup?id=home-assistant-using-mqtt-discovery).
 
 > [!NOTE]
-> Home assistant Z-Wave Integration it's the recommended choice as MQTT discovery is much more limited and less maintained.
+> Home assistant Z-Wave Integration is the recommended choice as MQTT discovery is much more limited and less maintained.
 
 ## Z-Wave integration
 
