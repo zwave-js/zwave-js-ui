@@ -1,7 +1,6 @@
 ---
 name: Home Assistant Discovery Issues
 about: Z-Wave JS integration and MQTT discovery issuess
-title: "[Home Assistant]"
 labels: discovery
 assignees: billiaz
 

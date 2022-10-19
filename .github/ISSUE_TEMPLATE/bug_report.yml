@@ -1,6 +1,5 @@
 name: Bug report
 description: Template for bug reports
-title: '[Bug]: '
 labels:
   - bug
 body:
