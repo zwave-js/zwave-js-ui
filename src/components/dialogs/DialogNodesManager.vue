@@ -29,7 +29,8 @@
 								:complete="currentStep > s.index"
 								:step="s.index"
 								:editable="
-									!['s2Classes', 's2Pin'].includes(s.key)
+									!['s2Classes', 's2Pin'].includes(s.key) &&
+									!loading
 								"
 							>
 								{{ s.title }}
@@ -695,7 +696,7 @@ export default {
 			},
 			steps: [],
 			state: 'new',
-			commandEndDate: new Date(),
+			commandEndDate: null,
 			commandTimer: null,
 			waitTimeout: null,
 			alert: null,
@@ -706,6 +707,7 @@ export default {
 			stopped: false,
 			aborted: false,
 			nvmProgress: 0,
+			commandTimedOut: false,
 		}
 	},
 	computed: {
@@ -748,18 +750,29 @@ export default {
 		commandEndDate(newVal) {
 			if (this.commandTimer) {
 				clearInterval(this.commandTimer)
+				this.commandTimer = null
 			}
+
+			if (!newVal) return
+
 			this.commandTimer = setInterval(() => {
-				const now = new Date()
-				const s = Math.trunc((this.commandEndDate - now) / 1000)
+				const now = Date.now()
+				const end = newVal.getTime() - 1000 // add small buffer to end before controller trigger
+				const s = Math.trunc((end - now) / 1000)
 				if (this.state === 'start') {
 					this.alert = {
 						type: 'info',
 						text: `${this.currentAction} started: ${s}s remaining`,
 					}
 				}
-				if (now > newVal) clearInterval(this.commandTimer)
-			}, 500)
+
+				// timeout ended
+				if (s <= 0) {
+					this.commandTimedOut = true
+					clearInterval(this.commandTimer)
+					this.alert = null
+				}
+			}, 250)
 		},
 		controllerStatus(status) {
 			this.nvmProgress = 0
@@ -778,21 +791,25 @@ export default {
 					this.state = 'start'
 				} else if (status.indexOf('stopped') > 0) {
 					// inclusion/exclusion stopped, check what happened
-					this.commandEndDate = new Date()
-					this.state = 'wait'
-					let timeout = this.currentAction === 'Exclusion' ? 1000 : 0
-					if (this.stopped) {
-						timeout = 1000
-						this.stopped = false
-					}
 
-					if (timeout > 0) {
-						// don't use a timeout for inclusion
+					// inclusion has been stopped manually
+					if (this.stopped || this.commandTimedOut) {
+						this.stopped = false
+						this.showResults()
+					} else {
+						// inclusion stopped by controller, see if a node was found
+						let timeout =
+							this.currentAction === 'Exclusion' ? 1000 : 5000
+						this.state = 'wait'
+
+						// when a node is added/removed showResults it's called from socket event listeners
+						// (onNodeAdded onNodeRemoved) set a timeout in case the events for some reason are not received
+						// fixes issue #2746
 						this.waitTimeout = setTimeout(this.showResults, timeout) // add additional discovery time
 					}
 				} else {
 					// error
-					this.commandEndDate = new Date()
+					this.commandEndDate = null
 					this.alert = {
 						type: 'error',
 						text: status, // TODO: better formatting?
@@ -1113,7 +1130,7 @@ export default {
 			this.sendAction('stop' + this.currentAction)
 		},
 		sendAction(api, args) {
-			this.commandEndDate = new Date()
+			this.commandEndDate = null
 
 			let text = ''
 
@@ -1156,7 +1173,9 @@ export default {
 			if (this.nodeFound === null) {
 				this.alert = {
 					type: 'warning',
-					text: `${this.currentAction} stopped, no changes detected`,
+					text: this.commandTimedOut
+						? `Timed Out! No device has been found to complete ${this.currentAction}`
+						: `${this.currentAction} stopped, no changes detected`,
 				}
 			} else if (this.currentAction === 'Exclusion') {
 				this.alert = null
@@ -1177,6 +1196,7 @@ export default {
 			}
 
 			this.loading = false
+			this.commandTimedOut = false
 
 			this.state = 'stop'
 		},
