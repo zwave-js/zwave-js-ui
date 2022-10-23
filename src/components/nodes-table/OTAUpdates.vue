@@ -92,6 +92,7 @@
 			</v-col>
 			<v-col class="text-center" v-else>
 				<h1 class="title">No updates available</h1>
+				<span>This service relies on <a href="https://github.com/zwave-js/firmware-updates#readme">Z-Wave JS Firmware Update Service</a>, and may not represent all updates for your device.</span>
 			</v-col>
 		</v-row>
 	</v-container>
