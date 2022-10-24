@@ -230,16 +230,23 @@
 		</template>
 		<template v-slot:[`item.firmwareVersion`]="{ item }">
 			<div style="text-align: center">
-				<v-progress-circular
-					v-if="item.firmwareUpdate"
-					:value="item.firmwareUpdate.progress"
-					size="40"
-					color="primary"
-				>
-					<span class="caption">{{
-						item.firmwareUpdate.progress
-					}}</span>
-				</v-progress-circular>
+				<div v-if="item.firmwareUpdate">
+					<v-progress-circular
+						:value="item.firmwareUpdate.progress"
+						size="40"
+						class="mt-1"
+						color="primary"
+					>
+						<span class="caption">{{
+							item.firmwareUpdate.progress
+						}}</span>
+					</v-progress-circular>
+					<p class="caption mb-0 mt-1">
+						{{ item.firmwareUpdate.currentFile }}/{{
+							item.firmwareUpdate.totalFiles
+						}}: {{ getProgress(item) }}%
+					</p>
+				</div>
 				<div
 					style="white-space: pre"
 					v-text="

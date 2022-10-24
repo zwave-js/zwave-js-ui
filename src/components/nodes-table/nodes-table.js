@@ -197,6 +197,15 @@ export default {
 		}
 	},
 	methods: {
+		getProgress(node) {
+			return node.firmwareUpdate
+				? Math.round(
+						(node.firmwareUpdate.sentFragments /
+							node.firmwareUpdate.totalFragments) *
+							100
+				  )
+				: null
+		},
 		toggleExpanded(item) {
 			this.expanded = this.expanded.includes(item)
 				? this.expanded.filter((i) => i !== item)
