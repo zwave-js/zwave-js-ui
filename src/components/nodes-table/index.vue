@@ -241,7 +241,7 @@
 							item.firmwareUpdate.progress
 						}}</span>
 					</v-progress-circular>
-					<p class="caption mb-0 mt-1">
+					<p class="caption font-weight-bold mb-0 mt-1">
 						{{ item.firmwareUpdate.currentFile }}/{{
 							item.firmwareUpdate.totalFiles
 						}}: {{ getProgress(item) }}%
