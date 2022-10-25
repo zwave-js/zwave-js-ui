@@ -2,6 +2,20 @@
 	<v-col>
 		<v-subheader>Home Assistant - Devices</v-subheader>
 
+		<v-alert
+			max-width="1150"
+			v-if="gateway.manualDiscovery"
+			text
+			type="warning"
+		>
+			<small
+				>Manual discovery is enabled, you have to select an entity in
+				the table and then press on `REDISCOVER` button on the top of
+				JSON input in order to publish the discovery payload to
+				MQTT</small
+			>
+		</v-alert>
+
 		<!-- HASS DEVICES -->
 		<v-row v-if="hassDevices.length > 0">
 			<v-col cols="12" md="6" pa-1>
@@ -169,6 +183,9 @@
 
 <script>
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
+import { mapState } from 'pinia'
+import useBaseStore from '../../stores/base'
+
 export default {
 	props: {
 		node: Object,
@@ -189,6 +206,7 @@ export default {
 		}
 	},
 	computed: {
+		...mapState(useBaseStore, ['gateway']),
 		hassDevices() {
 			const devices = []
 			if (this.node && this.node.hassDevices) {

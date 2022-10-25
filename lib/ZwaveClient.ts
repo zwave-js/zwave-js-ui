@@ -358,12 +358,6 @@ export class DriverNotReadyError extends Error {
 	}
 }
 
-export interface FwUpdateProgress {
-	sent: number
-	total: number
-	progress: number
-}
-
 export interface FwFile {
 	name: string
 	data: Buffer
@@ -422,7 +416,7 @@ export type ZUINode = {
 	healProgress?: string | undefined
 	minBatteryLevel?: number
 	batteryLevels?: { [key: string]: number }
-	firmwareUpdate?: FwUpdateProgress
+	firmwareUpdate?: FirmwareUpdateProgress
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
 }
@@ -3808,20 +3802,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		) {
 			const node = this.nodes.get(zwaveNode.id)
 			if (node) {
-				const firmwareUpdate: FwUpdateProgress = {
-					sent: progress.sentFragments,
-					total: progress.totalFragments,
-					progress: Math.round(
-						(progress.sentFragments / progress.totalFragments) * 100
-					),
-				}
-
-				node.firmwareUpdate = firmwareUpdate
-
+				node.firmwareUpdate = progress
 				this.sendToSocket(socketEvents.nodeUpdated, {
 					id: node?.id,
-					firmwareUpdate,
-				})
+					firmwareUpdate: progress,
+				} as utils.DeepPartial<ZUINode>)
 			}
 
 			this.emit(
@@ -4657,6 +4642,48 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.setPollInterval(valueId, interval)
+	}
+
+	/** Used for testing purposes */
+	private emulateFwUpdate(nodeId: number) {
+		setInterval(() => {
+			const fragmentsPerFile = 100
+			const totalFiles = 3
+			const totalFilesFragments = totalFiles * fragmentsPerFile
+			const progress = this.nodes.get(nodeId)?.firmwareUpdate || {
+				totalFiles,
+				currentFile: 1,
+				sentFragments: 0,
+				totalFragments: fragmentsPerFile,
+				progress: 0,
+			}
+
+			// random increment from 0 to 5
+			progress.sentFragments += Math.round(Math.random() * 5)
+			if (progress.sentFragments >= progress.totalFragments) {
+				progress.currentFile += 1
+				progress.sentFragments = 0
+			}
+
+			if (progress.currentFile > totalFiles) {
+				progress.currentFile = 1
+				progress.sentFragments = 0
+			}
+
+			progress.progress = Math.round(
+				(100 *
+					(fragmentsPerFile * (progress.currentFile - 1) +
+						progress.sentFragments)) /
+					totalFilesFragments
+			)
+
+			this._onNodeFirmwareUpdateProgress(
+				this.driver.controller.nodes.get(nodeId),
+				progress.sentFragments,
+				progress.totalFragments,
+				progress
+			)
+		}, 1000)
 	}
 }
 
