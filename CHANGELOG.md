@@ -1,5 +1,19 @@
 
 
+## [8.2.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.1...v8.2.2) (2022-10-25)
+
+
+### Bug Fixes
+
+* **ui:** better firmware update progress ([#2755](https://github.com/zwave-js/zwave-js-ui/issues/2755)) ([d6c7867](https://github.com/zwave-js/zwave-js-ui/commit/d6c78679d650b60e0234403d865f90fc433908d6))
+* **ui:** nodes manager dialog improvements ([#2747](https://github.com/zwave-js/zwave-js-ui/issues/2747)) ([fe152d9](https://github.com/zwave-js/zwave-js-ui/commit/fe152d921fba4b960e4b55c8ee022733c345cbdd)), closes [#2079](https://github.com/zwave-js/zwave-js-ui/issues/2079) [#2746](https://github.com/zwave-js/zwave-js-ui/issues/2746) [#2735](https://github.com/zwave-js/zwave-js-ui/issues/2735)
+* **ui:** show warning if `manualDiscovery` is enabled ([bbb16db](https://github.com/zwave-js/zwave-js-ui/commit/bbb16db4b23fe7264c4a3ac3bd0e96b0e819eb76)), closes [#2733](https://github.com/zwave-js/zwave-js-ui/issues/2733)
+
+
+### Features
+
+* **ui:** add notice on OTA updates not being complete ([#2753](https://github.com/zwave-js/zwave-js-ui/issues/2753)) ([39fc9d2](https://github.com/zwave-js/zwave-js-ui/commit/39fc9d27a99e83049f978574a39e401f78a910e3))
+
 ## [8.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.0...v8.2.1) (2022-10-12)
 
 
