@@ -53,7 +53,7 @@ if [ ! -z "$1" ]; then
 	yarn run build
 
 	echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64 --out-path $PKG_FOLDER"
-	pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
+	pkg package.json -t node$NODE_MAJOR-linux-arm64,node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
 else
 
 	if ask "Re-build $APP?"; then
@@ -123,10 +123,13 @@ mkdir store -p
 
 if [ ! -z "$1" ]; then
 	echo "## Create zip file $APP-v$VERSION-win"
-	zip -r $APP-v$VERSION-win.zip store $APP-win.exe
+	zip -r $APP-v$VERSION-win-x64.zip store $APP-win-x64.exe
 
-	echo "## Create zip file $APP-v$VERSION-linux"
-	zip -r $APP-v$VERSION-linux.zip store $APP-linux
+	echo "## Create zip file $APP-v$VERSION-linux-x64"
+	zip -r $APP-v$VERSION-linux-x64.zip store $APP-linux-x64
+
+	echo "## Create zip file $APP-v$VERSION-linux-arm64"
+	zip -r $APP-v$VERSION-linux-arm64.zip store $APP-linux-arm64
 else
 	echo "## Create zip file $APP-v$VERSION"
 	zip -r $APP-v$VERSION.zip store $APP

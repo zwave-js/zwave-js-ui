@@ -16,8 +16,9 @@ jobs:
     runs-on: [ubuntu-latest]
     strategy:
       matrix:
-        node-version: [14.17.2]
+        node-version: [18.x]
     steps:
+      - uses: docker/setup-qemu-action@v2.0.0
       - name: Checkout master
         uses: actions/checkout@v3
         with:
