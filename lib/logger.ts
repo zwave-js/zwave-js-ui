@@ -107,7 +107,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		}),
 	]
 	if (config.logToFile) {
-		let fileTransport
+		let fileTransport: winston.transport
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {
 			fileTransport = new transports.File({
 				format: customFormat(config, true),
@@ -144,6 +144,7 @@ export function setupLogger(
 	// Winston automatically reuses an existing module logger
 	const logger = container.add(module) as ModuleLogger
 	logger.configure({
+		format: combine(format.errors({ stack: true }), format.json()), // to correctly parse errors
 		silent: !sanitized.enabled,
 		level: sanitized.level,
 		transports: customTransports(sanitized),
