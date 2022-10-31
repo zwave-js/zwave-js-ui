@@ -72,6 +72,7 @@ import {
 	ZWaveNodeFirmwareUpdateFinishedCallback,
 	FirmwareUpdateResult,
 	FirmwareUpdateCapabilities,
+	GetFirmwareUpdatesOptions,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -1904,11 +1905,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	async getAvailableFirmwareUpdates(nodeId: number) {
+	async getAvailableFirmwareUpdates(
+		nodeId: number,
+		options?: GetFirmwareUpdatesOptions
+	) {
 		if (this.driverReady) {
 			const result =
 				await this._driver.controller.getAvailableFirmwareUpdates(
-					nodeId
+					nodeId,
+					options
 				)
 
 			// return [

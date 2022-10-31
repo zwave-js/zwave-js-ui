@@ -10,6 +10,12 @@
 					class="mb-2"
 					>Check updates</v-btn
 				>
+				<v-checkbox
+					v-model="includePrereleases"
+					label="Include Pre-Releases"
+					class="mb-2 ml-2"
+				>
+				</v-checkbox>
 			</v-col>
 
 			<template v-if="fwUpdates.length > 0">
@@ -129,6 +135,7 @@ export default {
 		return {
 			fwUpdates: [],
 			loading: false,
+			includePrereleases: false,
 		}
 	},
 	computed: {},
@@ -163,7 +170,12 @@ export default {
 		checkUpdates() {
 			this.loading = true
 			this.fwUpdates = []
-			this.apiRequest('getAvailableFirmwareUpdates', [this.node.id])
+			this.apiRequest('getAvailableFirmwareUpdates', [
+				this.node.id,
+				{
+					includePrereleases: this.includePrereleases,
+				},
+			])
 		},
 		download(url) {
 			window.open(url, '_blank')
