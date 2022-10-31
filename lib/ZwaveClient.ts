@@ -1361,6 +1361,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						enableDNSServiceDiscovery:
 							!this.cfg.serverServiceDiscoveryDisabled,
 					})
+
+					this.server.on('error', () => {
+						// this is already logged by the server but we need this to prevent
+						// unhandled exceptions
+					})
 				}
 
 				if (this.cfg.enableStatistics) {
