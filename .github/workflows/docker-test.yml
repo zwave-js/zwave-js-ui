@@ -46,6 +46,7 @@ jobs:
 
       - name: Buildx build
         uses: docker/build-push-action@v3
+        timeout-minutes: 120
         with:
           platforms: ${{ matrix.platform }}
           file: docker/Dockerfile

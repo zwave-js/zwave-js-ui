@@ -78,6 +78,7 @@ jobs:
           yarn build
 
       - name: build+push
+        timeout-minutes: 120 # prevents this to run indeterminatly
         uses: docker/build-push-action@v3
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
@@ -90,6 +91,7 @@ jobs:
           labels: ${{ steps.docker_meta.outputs.labels }}
 
       - name: build+push zwavejs2mqtt
+        timeout-minutes: 120
         uses: docker/build-push-action@v3
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
