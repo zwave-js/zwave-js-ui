@@ -1,5 +1,20 @@
 
 
+# [8.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.2...v8.3.0) (2022-11-02)
+
+
+### Bug Fixes
+
+* catch zwave js server errors ([#2754](https://github.com/zwave-js/zwave-js-ui/issues/2754)) ([af754ad](https://github.com/zwave-js/zwave-js-ui/commit/af754ad6b5c9b015f2179025fd222abb03499628)), closes [#782](https://github.com/zwave-js/zwave-js-ui/issues/782)
+* **ui:** typo in fw update dialog title ([#2764](https://github.com/zwave-js/zwave-js-ui/issues/2764)) ([044d543](https://github.com/zwave-js/zwave-js-ui/commit/044d543ed963445d33cf5bbaa9d8bfa25816ecaf))
+* **ui:** update favicons ([a16b670](https://github.com/zwave-js/zwave-js-ui/commit/a16b670419be4866dfa1b411a5822bdf33e07682))
+
+
+### Features
+
+* bump @zwave-js/server@1.24.1 ([#2765](https://github.com/zwave-js/zwave-js-ui/issues/2765)) ([2cc76b6](https://github.com/zwave-js/zwave-js-ui/commit/2cc76b6759aaad4ba466e1bc2466297292366cc8))
+* **ui:** allow to fetch OTA pre-releases ([#2773](https://github.com/zwave-js/zwave-js-ui/issues/2773)) ([098432e](https://github.com/zwave-js/zwave-js-ui/commit/098432ea6e76270d80832496a903f29e69555fc5)), closes [#2768](https://github.com/zwave-js/zwave-js-ui/issues/2768)
+
 ## [8.2.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.1...v8.2.2) (2022-10-25)
 
 
