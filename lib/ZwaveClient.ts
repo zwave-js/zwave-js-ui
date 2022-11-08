@@ -265,6 +265,7 @@ export type ZUIValueId = {
 	type: ValueType
 	readable: boolean
 	writeable: boolean
+	toUpdate?: boolean
 	description?: string
 	label?: string
 	default: any
@@ -2686,6 +2687,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						value = utils.bufferFromHex(value)
 					}
 
+					valueId.toUpdate = true
+
 					result = await zwaveNode.setValue(valueId, value, options)
 
 					if (result) {
@@ -4464,6 +4467,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const valueId = node.values[vID]
 
 			if (valueId) {
+				// this is set when the updates comes from a write request
+				if (valueId.toUpdate) {
+					valueId.toUpdate = false
+				}
+
 				let newValue = args.newValue
 				if (Buffer.isBuffer(newValue)) {
 					// encode Buffers as HEX strings

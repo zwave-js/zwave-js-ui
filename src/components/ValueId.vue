@@ -12,7 +12,14 @@
 			</div>
 		</div>
 
-		<div v-else>
+		<div class="d-flex align-center" v-else>
+			<v-progress-circular
+				v-if="value.toUpdate"
+				indeterminate
+				class="mr-2"
+				size="20"
+				color="primary"
+			></v-progress-circular>
 			<v-text-field
 				v-if="
 					!value.list &&
