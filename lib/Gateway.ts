@@ -19,6 +19,7 @@ import MqttClient from './MqttClient'
 import ZwaveClient, {
 	AllowedApis,
 	CallAPIResult,
+	EventSource,
 	HassDevice,
 	ZUINode,
 	ZUIValueId,
