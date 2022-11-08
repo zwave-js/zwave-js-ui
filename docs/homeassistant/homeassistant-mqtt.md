@@ -67,11 +67,13 @@ If no device is selected, you can manually insert a device JSON configuration. I
 
 ## Custom Components
 
-At the moment, MQTT discovery creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan`, you will need to create your own configuration. Components configurations are stored in the `hass/devices.js` file. There, all components are stored that Z-Wave JS UI needs to create for each Z-Wave device type. The key is the Z-Wave **device id**(`<manufacturerid>-<productid>-<producttype>`). The value is an array with all Home Assistant components to be created for that Z-Wave device.
+At the moment, MQTT discovery creates components like `sensor`, `cover` `binary_sensor` and `switch`. For more complex components like `climate` and `fan`, you will need to create your own configuration.
+
+Default components configurations are stored in the `hass/devices.js` file. In order to add your **custom components configurations** you have to create a file named `customDevices.js`  or `customDevices.json` in **store** folder, there is also a watcher on this files that will automatically pick up new configurations, the watcher is setup on application startup so the file must exists before starting the application or you should restart application after creating it the first time.
+
+There, all components are stored that Z-Wave JS UI needs to create for each Z-Wave device type. The key is the Z-Wave **device id**(`<manufacturerid>-<productid>-<producttype>`). The value is an array with all Home Assistant components to be created for that Z-Wave device.
 
 To get the **Device id** of a specific node, go to Control Panel, select a node in the table, and select the Node tab. It will then be displayed under the Node Actions dropdown menu.
-
-You can specify (custom device configurations([usage/custom-device-files.md]) if needed.
 
 > [!NOTE]
 > ONCE YOU SUCCESSFULLY INTEGRATE NEW COMPONENTS, PLEASE SEND A PR!
