@@ -213,7 +213,7 @@
 						color="primary"
 						dark
 						@click="updateValue(value)"
-						class="mb-2"
+						class="mb-2 mt-2"
 						>{{ value.label }}</v-btn
 					>
 				</template>
