@@ -1,5 +1,19 @@
 
 
+# [8.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.3.0...v8.4.0) (2022-11-08)
+
+
+### Bug Fixes
+
+* **mqtt:** always send zwaveNode to node `event` as first arg ([#2790](https://github.com/zwave-js/zwave-js-ui/issues/2790)) ([c254a86](https://github.com/zwave-js/zwave-js-ui/commit/c254a86acccef87efab3673ae38b92fe45f41c13)), closes [#2789](https://github.com/zwave-js/zwave-js-ui/issues/2789)
+* **ui:** filter mains powered devices ([#2788](https://github.com/zwave-js/zwave-js-ui/issues/2788)) ([e16225c](https://github.com/zwave-js/zwave-js-ui/commit/e16225c1f0723a441519a57eea43f10ab66bdeed)), closes [#2761](https://github.com/zwave-js/zwave-js-ui/issues/2761)
+* **ui:** valueId button text overlaps ([33d1cf5](https://github.com/zwave-js/zwave-js-ui/commit/33d1cf524096449799f9a557541b5cba177f2ebb)), closes [#2780](https://github.com/zwave-js/zwave-js-ui/issues/2780)
+
+
+### Features
+
+* **ui:** show loader when value is waiting an update ([#2791](https://github.com/zwave-js/zwave-js-ui/issues/2791)) ([ff2396b](https://github.com/zwave-js/zwave-js-ui/commit/ff2396b0d48b7a77de9ce503395db29bd12ddf52)), closes [/github.com/zwave-js/zwave-js-ui/issues/188#issuecomment-1295987999](https://github.com//github.com/zwave-js/zwave-js-ui/issues/188/issues/issuecomment-1295987999)
+
 # [8.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.2...v8.3.0) (2022-11-02)
 
 
