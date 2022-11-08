@@ -26,7 +26,7 @@
 			<v-row>
 				<v-col>
 					<v-select
-						v-model="value.values"
+						v-model="values"
 						:items="items"
 						label="Values"
 						clearable
@@ -55,6 +55,28 @@ export default {
 			type: Array,
 			default: () => [],
 			required: true,
+		},
+	},
+	computed: {
+		values: {
+			get() {
+				const undefinedPlaceholder = this.items.find(
+					(i) => i?.value === undefined
+				)?.text
+
+				if (undefinedPlaceholder) {
+					return (
+						this.value.values?.map((v) =>
+							v === undefined ? undefinedPlaceholder : v
+						) ?? []
+					)
+				} else {
+					return this.value.values ?? []
+				}
+			},
+			set(v) {
+				this.value.values = v
+			},
 		},
 	},
 	data() {
