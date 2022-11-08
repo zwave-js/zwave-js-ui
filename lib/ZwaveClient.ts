@@ -3396,12 +3396,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._onNodeStatus(zwaveNode)
 
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node ready',
-			this._nodes.get(zwaveNode.id)
-		)
+		this.emit('event', EventSource.NODE, 'node ready', zwaveNode)
 
 		logger.info(
 			`Node ${node.id} ready: ${node.manufacturer} - ${
@@ -3419,7 +3414,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		logger.info(`Node ${zwaveNode.id}: interview started`)
 
-		this.emit('event', EventSource.NODE, 'node interview started', node)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node interview started',
+			zwaveNode
+		)
 	}
 
 	/**
@@ -3444,7 +3444,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview stage completed',
-			node
+			zwaveNode
 		)
 	}
 
@@ -3470,7 +3470,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview completed',
-			this._nodes.get(zwaveNode.id)
+			zwaveNode
 		)
 	}
 
@@ -3488,12 +3488,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._onNodeStatus(zwaveNode, true)
 
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node interview failed',
-			this._nodes.get(zwaveNode.id)
-		)
+		this.emit('event', EventSource.NODE, 'node interview failed', zwaveNode)
 	}
 
 	/**
@@ -3508,12 +3503,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		this._onNodeStatus(zwaveNode, true)
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node wakeup',
-			this._nodes.get(zwaveNode.id)
-		)
+		this.emit('event', EventSource.NODE, 'node wakeup', zwaveNode)
 	}
 
 	/**
@@ -3527,12 +3517,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}asleep`
 		)
 		this._onNodeStatus(zwaveNode, true)
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node sleep',
-			this._nodes.get(zwaveNode.id)
-		)
+		this.emit('event', EventSource.NODE, 'node sleep', zwaveNode)
 	}
 
 	/**
@@ -3547,12 +3532,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			logger.info(`Node ${zwaveNode.id} is alive`)
 		}
 
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node alive',
-			this._nodes.get(zwaveNode.id)
-		)
+		this.emit('event', EventSource.NODE, 'node alive', zwaveNode)
 	}
 
 	/**
@@ -3567,12 +3547,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}dead`
 		)
 
-		this.emit(
-			'event',
-			EventSource.NODE,
-			'node dead',
-			this._nodes.get(zwaveNode.id)
-		)
+		this.emit('event', EventSource.NODE, 'node dead', zwaveNode)
 	}
 
 	/**
@@ -3598,7 +3573,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value added',
-			this._nodes.get(zwaveNode.id),
+			zwaveNode,
 			args
 		)
 	}
@@ -3649,7 +3624,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value updated',
-			this._nodes.get(zwaveNode.id),
+			zwaveNode,
 			args
 		)
 	}
@@ -3670,7 +3645,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value removed',
-			this._nodes.get(zwaveNode.id),
+			zwaveNode,
 			args
 		)
 	}
@@ -3693,7 +3668,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node metadata updated',
-			this._nodes.get(zwaveNode.id),
+			zwaveNode,
 			args
 		)
 	}
@@ -3767,7 +3742,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node notification',
-			node,
+			zwaveNode,
 			ccId,
 			args
 		)
@@ -3794,7 +3769,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'statistics updated',
-			node.id,
+			zwaveNode,
 			stats
 		)
 	}
@@ -3823,7 +3798,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'event',
 				EventSource.NODE,
 				'node firmware update progress',
-				this._nodes.get(zwaveNode.id),
+				zwaveNode,
 				progress
 			)
 		}
@@ -3868,7 +3843,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'event',
 				EventSource.NODE,
 				'node firmware update finished',
-				this._nodes.get(zwaveNode.id),
+				zwaveNode,
 				result
 			)
 		}
