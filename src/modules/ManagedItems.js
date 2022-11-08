@@ -106,10 +106,16 @@ export class ManagedItems {
 	 */
 	getPropValues(propName) {
 		const uniqueMap = {}
+
+		const undefinedPlaceholder =
+			this.propDefs[propName].undefinedPlaceholder
+
 		this.items.forEach((item) => {
 			const value = this.getPropValue(item, propName)
-			if (value) {
-				uniqueMap[value] = uniqueMap[value] || value
+			if (value !== undefined && value !== null) {
+				uniqueMap[value] = uniqueMap[value] ?? value
+			} else if (undefinedPlaceholder) {
+				uniqueMap[undefinedPlaceholder] = undefinedPlaceholder
 			}
 		})
 		return Object.keys(uniqueMap)
@@ -287,6 +293,16 @@ export class ManagedItems {
 	 */
 	setPropFilter(propName, filterDef) {
 		this.filters = this.filters ? this.filters : {}
+		const undefinedPlaceholder =
+			this.propDefs[propName].undefinedPlaceholder
+
+		// when undeginedPlaceholder is set, we need to replace the filter value with undefined
+		if (undefinedPlaceholder && filterDef?.values) {
+			filterDef.values = filterDef.values.map((f) =>
+				f === undefinedPlaceholder ? undefined : f
+			)
+		}
+
 		this.filters[propName] = filterDef
 		this.storeSetting('filters', this.filters)
 	}
