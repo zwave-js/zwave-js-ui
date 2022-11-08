@@ -2976,7 +2976,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.CONTROLLER,
 			'node added',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -2992,7 +2992,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.CONTROLLER,
 			'node removed',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 
 		this._removeNode(zwaveNode.id)
@@ -3400,7 +3400,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._onNodeStatus(zwaveNode)
 
-		this.emit('event', EventSource.NODE, 'node ready', zwaveNode)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node ready',
+			this.zwaveNodeToJSON(zwaveNode)
+		)
 
 		logger.info(
 			`Node ${node.id} ready: ${node.manufacturer} - ${
@@ -3420,7 +3425,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview started',
-			zwaveNode
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3444,7 +3449,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview stage completed',
-			zwaveNode
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3470,7 +3475,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview completed',
-			zwaveNode
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3488,7 +3493,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._onNodeStatus(zwaveNode, true)
 
-		this.emit('event', EventSource.NODE, 'node interview failed', zwaveNode)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node interview failed',
+			this.zwaveNodeToJSON(zwaveNode)
+		)
 	}
 
 	/**
@@ -3503,7 +3513,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 
 		this._onNodeStatus(zwaveNode, true)
-		this.emit('event', EventSource.NODE, 'node wakeup', zwaveNode)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node wakeup',
+			this.zwaveNodeToJSON(zwaveNode)
+		)
 	}
 
 	/**
@@ -3517,7 +3532,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}asleep`
 		)
 		this._onNodeStatus(zwaveNode, true)
-		this.emit('event', EventSource.NODE, 'node sleep', zwaveNode)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node sleep',
+			this.zwaveNodeToJSON(zwaveNode)
+		)
 	}
 
 	/**
@@ -3532,7 +3552,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			logger.info(`Node ${zwaveNode.id} is alive`)
 		}
 
-		this.emit('event', EventSource.NODE, 'node alive', zwaveNode)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node alive',
+			this.zwaveNodeToJSON(zwaveNode)
+		)
 	}
 
 	/**
@@ -3547,7 +3572,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}dead`
 		)
 
-		this.emit('event', EventSource.NODE, 'node dead', zwaveNode)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node dead',
+			this.zwaveNodeToJSON(zwaveNode)
+		)
 	}
 
 	/**
@@ -3573,7 +3603,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value added',
-			zwaveNode,
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3624,7 +3654,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value updated',
-			zwaveNode,
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3645,7 +3675,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value removed',
-			zwaveNode,
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3668,7 +3698,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node metadata updated',
-			zwaveNode,
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3742,7 +3772,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node notification',
-			zwaveNode,
+			this.zwaveNodeToJSON(zwaveNode),
 			ccId,
 			args
 		)
@@ -3769,7 +3799,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'statistics updated',
-			zwaveNode,
+			this.zwaveNodeToJSON(zwaveNode),
 			stats
 		)
 	}
@@ -3798,7 +3828,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'event',
 				EventSource.NODE,
 				'node firmware update progress',
-				zwaveNode,
+				this.zwaveNodeToJSON(zwaveNode),
 				progress
 			)
 		}
@@ -3843,7 +3873,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'event',
 				EventSource.NODE,
 				'node firmware update finished',
-				zwaveNode,
+				this.zwaveNodeToJSON(zwaveNode),
 				result
 			)
 		}
@@ -4579,6 +4609,38 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				v.propertyKey === zwaveValue.propertyKey &&
 				/target/i.test(v.property.toString())
 		)
+	}
+
+	private zwaveNodeToJSON(node: ZWaveNode): Partial<ZWaveNode> {
+		return {
+			id: node.id,
+			name: node.name,
+			location: node.location,
+			status: node.status,
+			isControllerNode: node.isControllerNode,
+			interviewStage: node.interviewStage,
+			deviceClass: node.deviceClass,
+			zwavePlusVersion: node.zwavePlusVersion,
+			ready: node.ready,
+			zwavePlusRoleType: node.zwavePlusRoleType,
+			isListening: node.isListening,
+			isFrequentListening: node.isFrequentListening,
+			canSleep: node.canSleep,
+			isRouting: node.isRouting,
+			supportedDataRates: node.supportedDataRates,
+			maxDataRate: node.maxDataRate,
+			supportsSecurity: node.supportsSecurity,
+			isSecure: node.isSecure,
+			supportsBeaming: node.supportsBeaming,
+			protocolVersion: node.protocolVersion,
+			sdkVersion: node.sdkVersion,
+			firmwareVersion: node.firmwareVersion,
+			manufacturerId: node.manufacturerId,
+			productId: node.productId,
+			productType: node.productType,
+			deviceDatabaseUrl: node.deviceDatabaseUrl,
+			keepAwake: node.keepAwake,
+		}
 	}
 
 	/**
