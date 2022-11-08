@@ -106,14 +106,16 @@ export class ManagedItems {
 	 */
 	getPropValues(propName) {
 		const uniqueMap = {}
-		if (typeof this.propDefs[propName].customValues === 'function') {
-			return this.propDefs[propName].customValues(this.items)
-		}
+
+		const undefinedPlaceholder =
+			this.propDefs[propName].undefinedPlaceholder
 
 		this.items.forEach((item) => {
 			const value = this.getPropValue(item, propName)
 			if (value !== undefined && value !== null) {
 				uniqueMap[value] = uniqueMap[value] ?? value
+			} else if (undefinedPlaceholder) {
+				uniqueMap[undefinedPlaceholder] = undefinedPlaceholder
 			}
 		})
 		return Object.keys(uniqueMap)

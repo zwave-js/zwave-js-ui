@@ -54,7 +54,6 @@ export default {
 		   - customGroupValue (function): Function to format a value for displaying as group value
 		   - customSort (function): Custom sort function for a certain column.
 		   - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
-		   - customValues (function): Function to dynamically extract all the values of this property.
 		   - undefinedPlaceholder (string): The placeholder to use in filter when value is undefined.
 		   - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
 		*/
@@ -71,31 +70,6 @@ export default {
 					customValue: (node) => node.minBatteryLevel, // Note: Not required here but kept as demo for use of customValue()
 					richValue: (node) => this.powerRichValue(node),
 					undefinedPlaceholder: 'Mains', // must match the text of undefined value
-					customValues: (nodes) => {
-						const values = [
-							{
-								text: 'Mains',
-								value: undefined,
-							},
-						]
-
-						const levels = []
-
-						for (const n of nodes) {
-							if (
-								n.minBatteryLevel !== undefined &&
-								!levels.includes(n.minBatteryLevel)
-							) {
-								values.push({
-									text: `${n.minBatteryLevel}%`,
-									value: n.minBatteryLevel,
-								})
-								levels.push(n.minBatteryLevel)
-							}
-						}
-
-						return values
-					},
 				},
 				manufacturer: { type: 'string', label: 'Manufacturer' },
 				productDescription: { type: 'string', label: 'Product' },

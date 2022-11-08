@@ -61,8 +61,8 @@ export default {
 		values: {
 			get() {
 				const undefinedPlaceholder = this.items.find(
-					(i) => i?.value === undefined
-				)?.text
+					(i) => typeof i === 'string'
+				)
 
 				if (undefinedPlaceholder) {
 					return (
