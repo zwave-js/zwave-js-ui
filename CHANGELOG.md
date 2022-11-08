@@ -1,5 +1,12 @@
 
 
+## [8.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.0...v8.4.1) (2022-11-08)
+
+
+### Bug Fixes
+
+* **mqtt:** possible circular reference error in publish ([#2792](https://github.com/zwave-js/zwave-js-ui/issues/2792)) ([1424dd4](https://github.com/zwave-js/zwave-js-ui/commit/1424dd400ea99647cee1b4109a41e28f38542db6))
+
 # [8.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.3.0...v8.4.0) (2022-11-08)
 
 
