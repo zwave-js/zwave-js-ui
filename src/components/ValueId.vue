@@ -13,13 +13,18 @@
 		</div>
 
 		<div class="d-flex align-center" v-else>
-			<v-progress-circular
-				v-if="value.toUpdate"
-				indeterminate
-				class="mr-2"
-				size="20"
-				color="primary"
-			></v-progress-circular>
+			<v-tooltip v-if="value.toUpdate" bottom>
+				<template v-slot:activator="{ on }">
+					<v-progress-circular
+						v-on="on"
+						indeterminate
+						class="mr-2"
+						size="20"
+						color="primary"
+					></v-progress-circular>
+				</template>
+				<span>Set value in progress...</span>
+			</v-tooltip>
 			<v-text-field
 				v-if="
 					!value.list &&
