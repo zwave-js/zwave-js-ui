@@ -133,15 +133,13 @@ const useBaseStore = defineStore('base', {
 		},
 		updateValue(data) {
 			const valueId = this.getValue(data)
-			if (valueId && valueId.toUpdate) {
-				this.showSnackbar('Value updated', 'success')
-			}
 
 			if (valueId) {
 				valueId.newValue = data.value
 				valueId.value = data.value
 
 				if (valueId.toUpdate) {
+					this.showSnackbar('Value updated', 'success')
 					valueId.toUpdate = false
 				}
 			} else {

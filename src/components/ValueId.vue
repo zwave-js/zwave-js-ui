@@ -12,7 +12,19 @@
 			</div>
 		</div>
 
-		<div v-else>
+		<div class="d-flex align-center" v-else>
+			<v-tooltip v-if="value.toUpdate" bottom>
+				<template v-slot:activator="{ on }">
+					<v-progress-circular
+						v-on="on"
+						indeterminate
+						class="mr-2"
+						size="20"
+						color="primary"
+					></v-progress-circular>
+				</template>
+				<span>Set value in progress...</span>
+			</v-tooltip>
 			<v-text-field
 				v-if="
 					!value.list &&

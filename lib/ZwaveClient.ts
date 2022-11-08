@@ -265,6 +265,7 @@ export type ZUIValueId = {
 	type: ValueType
 	readable: boolean
 	writeable: boolean
+	toUpdate?: boolean
 	description?: string
 	label?: string
 	default: any
@@ -2634,8 +2635,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		let result = false
 		if (this.driverReady) {
-			const vID = this._getValueID(valueId, true)
-			logger.log('info', `Writing %o to ${vID}`, value)
+			const vID = this._getValueID(valueId)
+			logger.log('info', `Writing %o to ${valueId.nodeId}-${vID}`, value)
 
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
@@ -2686,15 +2687,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						value = utils.bufferFromHex(value)
 					}
 
+					const node = this.nodes.get(valueId.nodeId)
+
+					const targetValueId = node?.values[vID]
+
+					if (targetValueId) {
+						targetValueId.toUpdate = true
+					}
+
 					result = await zwaveNode.setValue(valueId, value, options)
 
 					if (result) {
-						this.emit(
-							'valueWritten',
-							valueId,
-							this.nodes.get(valueId.nodeId),
-							value
-						)
+						this.emit('valueWritten', valueId, node, value)
 					}
 				}
 			} catch (error) {
@@ -3410,8 +3414,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
-		const node = this._nodes.get(zwaveNode.id)
-
 		logger.info(`Node ${zwaveNode.id}: interview started`)
 
 		this.emit(
@@ -3430,8 +3432,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		stageName: string
 	) {
-		const node = this._nodes.get(zwaveNode.id)
-
 		logger.info(
 			`Node ${
 				zwaveNode.id
@@ -4155,6 +4155,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const valueId: ZUIValueId = {
 			id: this._getValueID(zwaveValue, true), // the valueId unique in the entire network, it also has the nodeId
 			nodeId: zwaveNode.id,
+			toUpdate: false,
 			commandClass: zwaveValue.commandClass,
 			commandClassName: zwaveValue.commandClassName,
 			endpoint: zwaveValue.endpoint,
@@ -4464,6 +4465,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const valueId = node.values[vID]
 
 			if (valueId) {
+				// this is set when the updates comes from a write request
+				if (valueId.toUpdate) {
+					valueId.toUpdate = false
+				}
+
 				let newValue = args.newValue
 				if (Buffer.isBuffer(newValue)) {
 					// encode Buffers as HEX strings
