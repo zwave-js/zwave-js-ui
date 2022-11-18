@@ -20,10 +20,16 @@
 						indeterminate
 						class="mr-2"
 						size="20"
-						color="primary"
+						:color="
+							node?.status === 'Asleep' ? 'warning' : 'primary'
+						"
 					></v-progress-circular>
 				</template>
-				<span>Set value in progress...</span>
+				<span>{{
+					node?.status === 'Asleep'
+						? 'Wake up your device in order to send commands'
+						: 'Set value in progress...'
+				}}</span>
 			</v-tooltip>
 			<v-text-field
 				v-if="
@@ -256,6 +262,9 @@ export default {
 		},
 		disable_send: {
 			type: Boolean,
+		},
+		node: {
+			type: Object,
 		},
 	},
 	data() {

@@ -234,6 +234,7 @@
 									<ValueID
 										@updateValue="updateValue"
 										v-model="group[index]"
+										:node="node"
 									></ValueID>
 								</v-col>
 							</v-row>
