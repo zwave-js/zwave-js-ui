@@ -1510,8 +1510,9 @@ export default {
 				} else {
 					this.showSnackbar('Imported settings not valid', 'error')
 				}
-				// eslint-disable-next-line no-empty
-			} catch (error) {}
+			} catch (error) {
+				// noop
+			}
 		},
 		exportSettings() {
 			const settings = this.getSettingsJSON()

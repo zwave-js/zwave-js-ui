@@ -36,12 +36,8 @@
       "node_modules/@serialport/**",
       "node_modules/@zwave-js/serial/node_modules/@serialport/**",
       "node_modules/zwave-js/node_modules/@serialport/**",
-      "node_modules/leveldown/**",
       "node_modules/@zwave-js/config/config/devices/**"
-    ],
-    "patches": {
-      "node_modules/leveldown/binding.js": []
-    }
+    ]
   },
   "scripts": {
     "dev": "webpack serve --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
@@ -154,7 +150,7 @@
     "merge": "^2.1.1",
     "morgan": "~1.10.0",
     "mqtt": "^4.3.7",
-    "mqtt-level-store": "^3.1.0",
+    "mqtt-jsonl-store": "^0.1.2",
     "multer": "^1.4.5-lts.1",
     "native-url": "^0.3.4",
     "pem": "^1.14.6",

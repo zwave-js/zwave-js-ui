@@ -15,7 +15,6 @@ require('./assets/css/main.css')
 Vue.config.productionTip = false
 Vue.config.devtools = true
 
-/* eslint-disable no-new */
 new Vue({
 	pinia,
 	vuetify,

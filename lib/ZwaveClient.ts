@@ -1,6 +1,3 @@
-/* eslint-disable camelcase */
-'use strict'
-
 // eslint-disable-next-line one-var
 import {
 	CommandClasses,
@@ -1169,7 +1166,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get neighbors of a specific node
 	 */
-	async getNodeNeighbors(
+	getNodeNeighbors(
 		nodeId: number,
 		dontThrow: boolean
 	): Promise<readonly number[]> {
@@ -1183,7 +1180,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw error
 			}
 
-			return []
+			return Promise.resolve([])
 		}
 	}
 
@@ -1732,7 +1729,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Refresh all node values
 	 */
-	async refreshValues(nodeId: number): Promise<void> {
+	refreshValues(nodeId: number): Promise<void> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1745,7 +1742,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Ping a node
 	 */
-	async pingNode(nodeId: number): Promise<boolean> {
+	pingNode(nodeId: number): Promise<boolean> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1758,7 +1755,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Refresh all node values of a specific CC
 	 */
-	async refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void> {
+	refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1826,7 +1823,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Request an update of this value
 	 *
 	 */
-	async pollValue(valueId: ZUIValueId): Promise<unknown> {
+	pollValue(valueId: ZUIValueId): Promise<unknown> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(valueId.nodeId)
 
@@ -2167,7 +2164,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Stop exclusion
 	 */
-	async stopExclusion(): Promise<boolean> {
+	stopExclusion(): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -2182,7 +2179,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Stops inclusion
 	 */
-	async stopInclusion(): Promise<boolean> {
+	stopInclusion(): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -2298,10 +2295,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Re interview the node
 	 */
-	async refreshInfo(
-		nodeId: number,
-		options?: RefreshInfoOptions
-	): Promise<void> {
+	refreshInfo(nodeId: number, options?: RefreshInfoOptions): Promise<void> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -2355,7 +2349,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Start a firmware update.
 	 * @deprecated Use `updateFirmware` instead
 	 */
-	async beginFirmwareUpdate(
+	beginFirmwareUpdate(
 		nodeId: number,
 		fileName: string,
 		data: Buffer,

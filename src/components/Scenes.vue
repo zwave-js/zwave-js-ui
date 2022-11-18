@@ -157,8 +157,9 @@ export default {
 					} else {
 						this.showSnackbar('Imported file not valid', 'error')
 					}
-					// eslint-disable-next-line no-empty
-				} catch (error) {}
+				} catch (error) {
+					// noop
+				}
 			}
 		},
 		exportScenes() {
