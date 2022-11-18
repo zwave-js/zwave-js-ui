@@ -2824,15 +2824,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (controllerNode) {
+			const oldStatistics =
+				controllerNode.statistics as ControllerStatistics
 			controllerNode.statistics = stats
-			controllerNode.lastActive = Date.now()
-		}
 
-		this.sendToSocket(socketEvents.statistics, {
-			nodeId: controllerNode?.id,
-			statistics: stats,
-			lastActive: controllerNode?.lastActive,
-		})
+			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
+				controllerNode.lastActive = Date.now()
+			}
+
+			this.sendToSocket(socketEvents.statistics, {
+				nodeId: controllerNode.id,
+				statistics: stats,
+				lastActive: controllerNode.lastActive,
+			})
+		}
 
 		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
 	}
@@ -3266,6 +3271,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					status: node.status,
 					available: node.available,
 					interviewStage: node.interviewStage,
+				}
+			}
+
+			// update last active bacause on startup the ping
+			// is not counted in node stats
+			if (zwaveNode.status === NodeStatus.Alive) {
+				node.lastActive = Date.now()
+				if (changedProps) {
+					changedProps.lastActive = node.lastActive
 				}
 			}
 
@@ -3779,15 +3793,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
+			const oldStatistics = node.statistics as NodeStatistics
 			node.statistics = stats
-			node.lastActive = Date.now()
-		}
 
-		this.sendToSocket(socketEvents.statistics, {
-			nodeId: node?.id,
-			statistics: stats,
-			lastActive: node?.lastActive,
-		})
+			// update stats only when node is doing something
+			if (
+				(stats.commandsRX > oldStatistics?.commandsRX ?? 0) ||
+				(stats.commandsTX > oldStatistics?.commandsTX ?? 0)
+			) {
+				node.lastActive = Date.now()
+			}
+
+			this.sendToSocket(socketEvents.statistics, {
+				nodeId: node.id,
+				statistics: stats,
+				lastActive: node.lastActive,
+			})
+		}
 
 		this.emit(
 			'event',
