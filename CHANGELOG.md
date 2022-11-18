@@ -1,5 +1,19 @@
 
 
+# [8.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.1...v8.5.0) (2022-11-18)
+
+
+### Bug Fixes
+
+* correctly update node `last seen` ([b97dd0d](https://github.com/zwave-js/zwave-js-ui/commit/b97dd0d30de2a106eb8c68fa326d9a48db27fd11)), closes [#2800](https://github.com/zwave-js/zwave-js-ui/issues/2800)
+
+
+### Features
+
+* bump zwave-js@10.3.1 ([#2801](https://github.com/zwave-js/zwave-js-ui/issues/2801)) ([4f40677](https://github.com/zwave-js/zwave-js-ui/commit/4f406772fdb3112bcc6b27007ed5e93bc1438db8))
+* **mqtt:** restore on disk store support of offline packets ([6c44920](https://github.com/zwave-js/zwave-js-ui/commit/6c4492097e4912b0a7cae79d1f0c5501ad46721b))
+* **ui:** show info tooltip when set value of sleeping node ([4a6d60f](https://github.com/zwave-js/zwave-js-ui/commit/4a6d60f4807e27431658f0fbf220f5c83c9fb4cf))
+
 ## [8.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.0...v8.4.1) (2022-11-08)
 
 
