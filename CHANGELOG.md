@@ -1,5 +1,12 @@
 
 
+## [8.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.5.0...v8.5.1) (2022-11-25)
+
+
+### Bug Fixes
+
+* **mqtt:** node added on fly not subscribed to changes ([#2820](https://github.com/zwave-js/zwave-js-ui/issues/2820)) ([954b395](https://github.com/zwave-js/zwave-js-ui/commit/954b395226ed37f1fead5c6efbd0d88eac2ddeb2))
+
 # [8.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.1...v8.5.0) (2022-11-18)
 
 
