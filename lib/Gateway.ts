@@ -1708,6 +1708,13 @@ export default class Gateway {
 				delete this.discovered[id]
 			}
 		}
+
+		// clean topicValues
+		for (const topic in this.topicValues) {
+			if (this.topicValues[topic].nodeId === node.id) {
+				delete this.topicValues[topic]
+			}
+		}
 	}
 
 	/**
