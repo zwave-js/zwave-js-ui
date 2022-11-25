@@ -3357,7 +3357,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				true
 			)
 
-			if (res?.updated) {
+			// in case of writeable values whe always need to emit a
+			// value change event in order to subscribe mqtt topics
+			if (res?.updated || res.valueId.writeable) {
 				delayedUpdates.push(
 					this.emitValueChanged.bind(this, res.valueId, node, true)
 				)
@@ -4627,9 +4629,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
-	private zwaveNodeToJSON(node: ZWaveNode): Partial<ZWaveNode> {
+	private zwaveNodeToJSON(
+		node: ZWaveNode
+	): Partial<
+		ZWaveNode &
+			Pick<
+				ZUINode,
+				| 'inited'
+				| 'manufacturer'
+				| 'productDescription'
+				| 'productLabel'
+			>
+	> {
+		const zuiNode = this.nodes.get(node.id)
+
 		return {
 			id: node.id,
+			inited: zuiNode?.inited,
 			name: node.name,
 			location: node.location,
 			status: node.status,
@@ -4652,8 +4668,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			sdkVersion: node.sdkVersion,
 			firmwareVersion: node.firmwareVersion,
 			manufacturerId: node.manufacturerId,
+			manufacturer: zuiNode?.manufacturer,
 			productId: node.productId,
+			productDescription: zuiNode?.productDescription,
 			productType: node.productType,
+			productLabel: zuiNode?.productLabel,
 			deviceDatabaseUrl: node.deviceDatabaseUrl,
 			keepAwake: node.keepAwake,
 		}
