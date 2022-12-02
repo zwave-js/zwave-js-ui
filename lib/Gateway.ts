@@ -1,9 +1,3 @@
-/* eslint-disable no-case-declarations */
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable no-eval */
-/* eslint-disable one-var */
-'use strict'
-
 import * as fs from 'fs'
 import * as path from 'path'
 import * as utils from '../lib/utils'
@@ -19,6 +13,7 @@ import MqttClient from './MqttClient'
 import ZwaveClient, {
 	AllowedApis,
 	CallAPIResult,
+	EventSource,
 	HassDevice,
 	ZUINode,
 	ZUIValueId,
@@ -428,7 +423,6 @@ export default class Gateway {
 		}
 
 		// clean topic parts
-		// eslint-disable-next-line no-redeclare
 		for (let i = 0; i < topic.length; i++) {
 			topic[i] = utils.sanitizeTopic(topic[i])
 		}
@@ -606,8 +600,8 @@ export default class Gateway {
 				const p = hassDevice.discovery_payload
 				const template =
 					'value' +
-					(p.hasOwnProperty('payload_on') &&
-					p.hasOwnProperty('payload_off')
+					(utils.hasProperty(p, 'payload_on') &&
+					utils.hasProperty(p, 'payload_off')
 						? " == 'true'"
 						: '')
 
@@ -1226,7 +1220,7 @@ export default class Gateway {
 						valueId.propertyKey
 					)
 					break
-				case CommandClasses['Binary Sensor']:
+				case CommandClasses['Binary Sensor']: {
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/BinarySensorCC.ts#L41
 					// change the sensorTypeName to use directly valueId.property, as the old way was returning a number
 					// add a comment which shows the old way of achieving this value. This change fixes the Binary Sensor
@@ -1306,6 +1300,7 @@ export default class Gateway {
 					}
 
 					break
+				}
 				case CommandClasses['Alarm Sensor']:
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/AlarmSensorCC.ts#L40
 					if (valueId.property === 'state') {
@@ -1435,7 +1430,7 @@ export default class Gateway {
 				case CommandClasses['Pulse Meter']:
 				case CommandClasses.Time:
 				case CommandClasses['Energy Production']:
-				case CommandClasses.Battery:
+				case CommandClasses.Battery: {
 					let sensor = null
 					// set it as been sensor (ex not Binary)
 					let isSensor = true
@@ -1551,6 +1546,7 @@ export default class Gateway {
 							cfg.discovery_payload.icon = valueConf.icon
 					}
 					break
+				}
 				default:
 					return
 			}
@@ -1558,7 +1554,7 @@ export default class Gateway {
 			const payload = cfg.discovery_payload
 
 			if (
-				!payload.hasOwnProperty('state_topic') ||
+				!utils.hasProperty(payload, 'state_topic') ||
 				payload.state_topic === true
 			) {
 				payload.state_topic = getTopic
@@ -1710,6 +1706,13 @@ export default class Gateway {
 		for (const id in this.discovered) {
 			if (id.startsWith(prefix)) {
 				delete this.discovered[id]
+			}
+		}
+
+		// clean topicValues
+		for (const topic in this.topicValues) {
+			if (this.topicValues[topic].nodeId === node.id) {
+				delete this.topicValues[topic]
 			}
 		}
 	}

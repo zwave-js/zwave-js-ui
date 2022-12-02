@@ -1,5 +1,76 @@
 
 
+## [8.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.5.0...v8.5.1) (2022-11-25)
+
+
+### Bug Fixes
+
+* **mqtt:** node added on fly not subscribed to changes ([#2820](https://github.com/zwave-js/zwave-js-ui/issues/2820)) ([954b395](https://github.com/zwave-js/zwave-js-ui/commit/954b395226ed37f1fead5c6efbd0d88eac2ddeb2))
+
+# [8.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.1...v8.5.0) (2022-11-18)
+
+
+### Bug Fixes
+
+* correctly update node `last seen` ([b97dd0d](https://github.com/zwave-js/zwave-js-ui/commit/b97dd0d30de2a106eb8c68fa326d9a48db27fd11)), closes [#2800](https://github.com/zwave-js/zwave-js-ui/issues/2800)
+
+
+### Features
+
+* bump zwave-js@10.3.1 ([#2801](https://github.com/zwave-js/zwave-js-ui/issues/2801)) ([4f40677](https://github.com/zwave-js/zwave-js-ui/commit/4f406772fdb3112bcc6b27007ed5e93bc1438db8))
+* **mqtt:** restore on disk store support of offline packets ([6c44920](https://github.com/zwave-js/zwave-js-ui/commit/6c4492097e4912b0a7cae79d1f0c5501ad46721b))
+* **ui:** show info tooltip when set value of sleeping node ([4a6d60f](https://github.com/zwave-js/zwave-js-ui/commit/4a6d60f4807e27431658f0fbf220f5c83c9fb4cf))
+
+## [8.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.4.0...v8.4.1) (2022-11-08)
+
+
+### Bug Fixes
+
+* **mqtt:** possible circular reference error in publish ([#2792](https://github.com/zwave-js/zwave-js-ui/issues/2792)) ([1424dd4](https://github.com/zwave-js/zwave-js-ui/commit/1424dd400ea99647cee1b4109a41e28f38542db6))
+
+# [8.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.3.0...v8.4.0) (2022-11-08)
+
+
+### Bug Fixes
+
+* **mqtt:** always send zwaveNode to node `event` as first arg ([#2790](https://github.com/zwave-js/zwave-js-ui/issues/2790)) ([c254a86](https://github.com/zwave-js/zwave-js-ui/commit/c254a86acccef87efab3673ae38b92fe45f41c13)), closes [#2789](https://github.com/zwave-js/zwave-js-ui/issues/2789)
+* **ui:** filter mains powered devices ([#2788](https://github.com/zwave-js/zwave-js-ui/issues/2788)) ([e16225c](https://github.com/zwave-js/zwave-js-ui/commit/e16225c1f0723a441519a57eea43f10ab66bdeed)), closes [#2761](https://github.com/zwave-js/zwave-js-ui/issues/2761)
+* **ui:** valueId button text overlaps ([33d1cf5](https://github.com/zwave-js/zwave-js-ui/commit/33d1cf524096449799f9a557541b5cba177f2ebb)), closes [#2780](https://github.com/zwave-js/zwave-js-ui/issues/2780)
+
+
+### Features
+
+* **ui:** show loader when value is waiting an update ([#2791](https://github.com/zwave-js/zwave-js-ui/issues/2791)) ([ff2396b](https://github.com/zwave-js/zwave-js-ui/commit/ff2396b0d48b7a77de9ce503395db29bd12ddf52)), closes [/github.com/zwave-js/zwave-js-ui/issues/188#issuecomment-1295987999](https://github.com//github.com/zwave-js/zwave-js-ui/issues/188/issues/issuecomment-1295987999)
+
+# [8.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.2...v8.3.0) (2022-11-02)
+
+
+### Bug Fixes
+
+* catch zwave js server errors ([#2754](https://github.com/zwave-js/zwave-js-ui/issues/2754)) ([af754ad](https://github.com/zwave-js/zwave-js-ui/commit/af754ad6b5c9b015f2179025fd222abb03499628)), closes [#782](https://github.com/zwave-js/zwave-js-ui/issues/782)
+* **ui:** typo in fw update dialog title ([#2764](https://github.com/zwave-js/zwave-js-ui/issues/2764)) ([044d543](https://github.com/zwave-js/zwave-js-ui/commit/044d543ed963445d33cf5bbaa9d8bfa25816ecaf))
+* **ui:** update favicons ([a16b670](https://github.com/zwave-js/zwave-js-ui/commit/a16b670419be4866dfa1b411a5822bdf33e07682))
+
+
+### Features
+
+* bump @zwave-js/server@1.24.1 ([#2765](https://github.com/zwave-js/zwave-js-ui/issues/2765)) ([2cc76b6](https://github.com/zwave-js/zwave-js-ui/commit/2cc76b6759aaad4ba466e1bc2466297292366cc8))
+* **ui:** allow to fetch OTA pre-releases ([#2773](https://github.com/zwave-js/zwave-js-ui/issues/2773)) ([098432e](https://github.com/zwave-js/zwave-js-ui/commit/098432ea6e76270d80832496a903f29e69555fc5)), closes [#2768](https://github.com/zwave-js/zwave-js-ui/issues/2768)
+
+## [8.2.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.1...v8.2.2) (2022-10-25)
+
+
+### Bug Fixes
+
+* **ui:** better firmware update progress ([#2755](https://github.com/zwave-js/zwave-js-ui/issues/2755)) ([d6c7867](https://github.com/zwave-js/zwave-js-ui/commit/d6c78679d650b60e0234403d865f90fc433908d6))
+* **ui:** nodes manager dialog improvements ([#2747](https://github.com/zwave-js/zwave-js-ui/issues/2747)) ([fe152d9](https://github.com/zwave-js/zwave-js-ui/commit/fe152d921fba4b960e4b55c8ee022733c345cbdd)), closes [#2079](https://github.com/zwave-js/zwave-js-ui/issues/2079) [#2746](https://github.com/zwave-js/zwave-js-ui/issues/2746) [#2735](https://github.com/zwave-js/zwave-js-ui/issues/2735)
+* **ui:** show warning if `manualDiscovery` is enabled ([bbb16db](https://github.com/zwave-js/zwave-js-ui/commit/bbb16db4b23fe7264c4a3ac3bd0e96b0e819eb76)), closes [#2733](https://github.com/zwave-js/zwave-js-ui/issues/2733)
+
+
+### Features
+
+* **ui:** add notice on OTA updates not being complete ([#2753](https://github.com/zwave-js/zwave-js-ui/issues/2753)) ([39fc9d2](https://github.com/zwave-js/zwave-js-ui/commit/39fc9d27a99e83049f978574a39e401f78a910e3))
+
 ## [8.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.2.0...v8.2.1) (2022-10-12)
 
 

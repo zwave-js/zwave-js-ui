@@ -10,12 +10,13 @@ First, add a new Lovelace dashboard. In the dashboard:
 4. Paste the code below and save
 
 ```yaml
-- title: Z-Wave JS UI
-  panel: true
-  cards:
-    - type: iframe
-      url: 'http:/127.0.0.1[SUBSTITUTE YOUR IP ADDRESS HERE]:8091/'
-      aspect_ratio: 100%
+views:
+ - title: Z-Wave JS UI
+   panel: true
+   cards:
+     - type: iframe
+       url: 'http://127.0.0.1[OR SUBSTITUTE YOUR IP ADDRESS HERE]:8091/'
+       aspect_ratio: 100%
 ```
 
 Alternatively, you can add a new tab to a pre-existing dashboard by inserting the above yaml into the pre-existing dashboard's raw configuration.

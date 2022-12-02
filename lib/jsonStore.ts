@@ -1,4 +1,3 @@
-// eslint-disable-next-line one-var
 import { readFile, writeFile } from 'jsonfile'
 import { storeBackupsDir, storeDir } from '../config/app'
 import { StoreFile, StoreKeys } from '../config/store'
@@ -134,5 +133,4 @@ export class StorageHelper {
 	}
 }
 
-// eslint-disable-next-line camelcase
 export default new StorageHelper()

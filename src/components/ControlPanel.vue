@@ -446,7 +446,7 @@ export default {
 						}
 
 						const result = await this.$listeners.showConfirm(
-							'Firmware udpate',
+							'Firmware update',
 							'',
 							'info',
 							{

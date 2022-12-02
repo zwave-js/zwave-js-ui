@@ -1,6 +1,3 @@
-/* eslint-disable camelcase */
-'use strict'
-
 // eslint-disable-next-line one-var
 import {
 	CommandClasses,
@@ -72,6 +69,7 @@ import {
 	ZWaveNodeFirmwareUpdateFinishedCallback,
 	FirmwareUpdateResult,
 	FirmwareUpdateCapabilities,
+	GetFirmwareUpdatesOptions,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -264,6 +262,7 @@ export type ZUIValueId = {
 	type: ValueType
 	readable: boolean
 	writeable: boolean
+	toUpdate?: boolean
 	description?: string
 	label?: string
 	default: any
@@ -1167,7 +1166,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get neighbors of a specific node
 	 */
-	async getNodeNeighbors(
+	getNodeNeighbors(
 		nodeId: number,
 		dontThrow: boolean
 	): Promise<readonly number[]> {
@@ -1181,7 +1180,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw error
 			}
 
-			return []
+			return Promise.resolve([])
 		}
 	}
 
@@ -1359,6 +1358,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						logger: LogManager.module('Z-Wave-Server'),
 						enableDNSServiceDiscovery:
 							!this.cfg.serverServiceDiscoveryDisabled,
+					})
+
+					this.server.on('error', () => {
+						// this is already logged by the server but we need this to prevent
+						// unhandled exceptions
 					})
 				}
 
@@ -1725,7 +1729,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Refresh all node values
 	 */
-	async refreshValues(nodeId: number): Promise<void> {
+	refreshValues(nodeId: number): Promise<void> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1738,7 +1742,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Ping a node
 	 */
-	async pingNode(nodeId: number): Promise<boolean> {
+	pingNode(nodeId: number): Promise<boolean> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1751,7 +1755,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Refresh all node values of a specific CC
 	 */
-	async refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void> {
+	refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -1819,7 +1823,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Request an update of this value
 	 *
 	 */
-	async pollValue(valueId: ZUIValueId): Promise<unknown> {
+	pollValue(valueId: ZUIValueId): Promise<unknown> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(valueId.nodeId)
 
@@ -1904,11 +1908,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	async getAvailableFirmwareUpdates(nodeId: number) {
+	async getAvailableFirmwareUpdates(
+		nodeId: number,
+		options?: GetFirmwareUpdatesOptions
+	) {
 		if (this.driverReady) {
 			const result =
 				await this._driver.controller.getAvailableFirmwareUpdates(
-					nodeId
+					nodeId,
+					options
 				)
 
 			// return [
@@ -2156,7 +2164,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Stop exclusion
 	 */
-	async stopExclusion(): Promise<boolean> {
+	stopExclusion(): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -2171,7 +2179,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Stops inclusion
 	 */
-	async stopInclusion(): Promise<boolean> {
+	stopInclusion(): Promise<boolean> {
 		if (this.driverReady) {
 			if (this.commandsTimeout) {
 				clearTimeout(this.commandsTimeout)
@@ -2287,10 +2295,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Re interview the node
 	 */
-	async refreshInfo(
-		nodeId: number,
-		options?: RefreshInfoOptions
-	): Promise<void> {
+	refreshInfo(nodeId: number, options?: RefreshInfoOptions): Promise<void> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -2344,7 +2349,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Start a firmware update.
 	 * @deprecated Use `updateFirmware` instead
 	 */
-	async beginFirmwareUpdate(
+	beginFirmwareUpdate(
 		nodeId: number,
 		fileName: string,
 		data: Buffer,
@@ -2624,8 +2629,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		let result = false
 		if (this.driverReady) {
-			const vID = this._getValueID(valueId, true)
-			logger.log('info', `Writing %o to ${vID}`, value)
+			const vID = this._getValueID(valueId)
+			logger.log('info', `Writing %o to ${valueId.nodeId}-${vID}`, value)
 
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
@@ -2676,15 +2681,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						value = utils.bufferFromHex(value)
 					}
 
+					const node = this.nodes.get(valueId.nodeId)
+
+					const targetValueId = node?.values[vID]
+
+					if (targetValueId) {
+						targetValueId.toUpdate = true
+					}
+
 					result = await zwaveNode.setValue(valueId, value, options)
 
 					if (result) {
-						this.emit(
-							'valueWritten',
-							valueId,
-							this.nodes.get(valueId.nodeId),
-							value
-						)
+						this.emit('valueWritten', valueId, node, value)
 					}
 				}
 			} catch (error) {
@@ -2816,15 +2824,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (controllerNode) {
+			const oldStatistics =
+				controllerNode.statistics as ControllerStatistics
 			controllerNode.statistics = stats
-			controllerNode.lastActive = Date.now()
-		}
 
-		this.sendToSocket(socketEvents.statistics, {
-			nodeId: controllerNode?.id,
-			statistics: stats,
-			lastActive: controllerNode?.lastActive,
-		})
+			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
+				controllerNode.lastActive = Date.now()
+			}
+
+			this.sendToSocket(socketEvents.statistics, {
+				nodeId: controllerNode.id,
+				statistics: stats,
+				lastActive: controllerNode.lastActive,
+			})
+		}
 
 		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
 	}
@@ -2962,7 +2975,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.CONTROLLER,
 			'node added',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -2978,7 +2991,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.CONTROLLER,
 			'node removed',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 
 		this._removeNode(zwaveNode.id)
@@ -3261,6 +3274,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
+			// update last active bacause on startup the ping
+			// is not counted in node stats
+			if (zwaveNode.status === NodeStatus.Alive) {
+				node.lastActive = Date.now()
+				if (changedProps) {
+					changedProps.lastActive = node.lastActive
+				}
+			}
+
 			this.emitNodeStatus(node, changedProps)
 		} else {
 			logger.error(
@@ -3335,7 +3357,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				true
 			)
 
-			if (res?.updated) {
+			// in case of writeable values whe always need to emit a
+			// value change event in order to subscribe mqtt topics
+			if (res?.updated || res.valueId.writeable) {
 				delayedUpdates.push(
 					this.emitValueChanged.bind(this, res.valueId, node, true)
 				)
@@ -3390,7 +3414,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node ready',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 
 		logger.info(
@@ -3405,11 +3429,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
-		const node = this._nodes.get(zwaveNode.id)
-
 		logger.info(`Node ${zwaveNode.id}: interview started`)
 
-		this.emit('event', EventSource.NODE, 'node interview started', node)
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node interview started',
+			this.zwaveNodeToJSON(zwaveNode)
+		)
 	}
 
 	/**
@@ -3420,8 +3447,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		stageName: string
 	) {
-		const node = this._nodes.get(zwaveNode.id)
-
 		logger.info(
 			`Node ${
 				zwaveNode.id
@@ -3434,7 +3459,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview stage completed',
-			node
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3460,7 +3485,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview completed',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3482,7 +3507,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node interview failed',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3502,7 +3527,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node wakeup',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3521,7 +3546,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node sleep',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3541,7 +3566,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node alive',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3561,7 +3586,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node dead',
-			this._nodes.get(zwaveNode.id)
+			this.zwaveNodeToJSON(zwaveNode)
 		)
 	}
 
@@ -3588,7 +3613,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value added',
-			this._nodes.get(zwaveNode.id),
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3639,7 +3664,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value updated',
-			this._nodes.get(zwaveNode.id),
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3660,7 +3685,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node value removed',
-			this._nodes.get(zwaveNode.id),
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3683,7 +3708,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node metadata updated',
-			this._nodes.get(zwaveNode.id),
+			this.zwaveNodeToJSON(zwaveNode),
 			args
 		)
 	}
@@ -3757,7 +3782,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'event',
 			EventSource.NODE,
 			'node notification',
-			node,
+			this.zwaveNodeToJSON(zwaveNode),
 			ccId,
 			args
 		)
@@ -3770,21 +3795,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
+			const oldStatistics = node.statistics as NodeStatistics
 			node.statistics = stats
-			node.lastActive = Date.now()
-		}
 
-		this.sendToSocket(socketEvents.statistics, {
-			nodeId: node?.id,
-			statistics: stats,
-			lastActive: node?.lastActive,
-		})
+			// update stats only when node is doing something
+			if (
+				(stats.commandsRX > oldStatistics?.commandsRX ?? 0) ||
+				(stats.commandsTX > oldStatistics?.commandsTX ?? 0)
+			) {
+				node.lastActive = Date.now()
+			}
+
+			this.sendToSocket(socketEvents.statistics, {
+				nodeId: node.id,
+				statistics: stats,
+				lastActive: node.lastActive,
+			})
+		}
 
 		this.emit(
 			'event',
 			EventSource.NODE,
 			'statistics updated',
-			node.id,
+			this.zwaveNodeToJSON(zwaveNode),
 			stats
 		)
 	}
@@ -3813,7 +3846,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'event',
 				EventSource.NODE,
 				'node firmware update progress',
-				this._nodes.get(zwaveNode.id),
+				this.zwaveNodeToJSON(zwaveNode),
 				progress
 			)
 		}
@@ -3858,7 +3891,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'event',
 				EventSource.NODE,
 				'node firmware update finished',
-				this._nodes.get(zwaveNode.id),
+				this.zwaveNodeToJSON(zwaveNode),
 				result
 			)
 		}
@@ -4170,6 +4203,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const valueId: ZUIValueId = {
 			id: this._getValueID(zwaveValue, true), // the valueId unique in the entire network, it also has the nodeId
 			nodeId: zwaveNode.id,
+			toUpdate: false,
 			commandClass: zwaveValue.commandClass,
 			commandClassName: zwaveValue.commandClassName,
 			endpoint: zwaveValue.endpoint,
@@ -4479,6 +4513,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const valueId = node.values[vID]
 
 			if (valueId) {
+				// this is set when the updates comes from a write request
+				if (valueId.toUpdate) {
+					valueId.toUpdate = false
+				}
+
 				let newValue = args.newValue
 				if (Buffer.isBuffer(newValue)) {
 					// encode Buffers as HEX strings
@@ -4588,6 +4627,55 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				v.propertyKey === zwaveValue.propertyKey &&
 				/target/i.test(v.property.toString())
 		)
+	}
+
+	private zwaveNodeToJSON(
+		node: ZWaveNode
+	): Partial<
+		ZWaveNode &
+			Pick<
+				ZUINode,
+				| 'inited'
+				| 'manufacturer'
+				| 'productDescription'
+				| 'productLabel'
+			>
+	> {
+		const zuiNode = this.nodes.get(node.id)
+
+		return {
+			id: node.id,
+			inited: zuiNode?.inited,
+			name: node.name,
+			location: node.location,
+			status: node.status,
+			isControllerNode: node.isControllerNode,
+			interviewStage: node.interviewStage,
+			deviceClass: node.deviceClass,
+			zwavePlusVersion: node.zwavePlusVersion,
+			ready: node.ready,
+			zwavePlusRoleType: node.zwavePlusRoleType,
+			isListening: node.isListening,
+			isFrequentListening: node.isFrequentListening,
+			canSleep: node.canSleep,
+			isRouting: node.isRouting,
+			supportedDataRates: node.supportedDataRates,
+			maxDataRate: node.maxDataRate,
+			supportsSecurity: node.supportsSecurity,
+			isSecure: node.isSecure,
+			supportsBeaming: node.supportsBeaming,
+			protocolVersion: node.protocolVersion,
+			sdkVersion: node.sdkVersion,
+			firmwareVersion: node.firmwareVersion,
+			manufacturerId: node.manufacturerId,
+			manufacturer: zuiNode?.manufacturer,
+			productId: node.productId,
+			productDescription: zuiNode?.productDescription,
+			productType: node.productType,
+			productLabel: zuiNode?.productLabel,
+			deviceDatabaseUrl: node.deviceDatabaseUrl,
+			keepAwake: node.keepAwake,
+		}
 	}
 
 	/**

@@ -1,15 +1,24 @@
 <template>
 	<v-container grid-list-md>
 		<v-row class="ml-5">
-			<v-col class="text-center" cols="12">
-				<v-btn
-					v-if="!loading"
-					text
-					color="green"
-					@click="checkUpdates"
-					class="mb-2"
-					>Check updates</v-btn
-				>
+			<v-col cols="12">
+				<v-row justify="center" class="mb-2 text-center" dense>
+					<v-btn
+						:disabled="loading"
+						text
+						color="green"
+						@click="checkUpdates"
+						>Check updates</v-btn
+					>
+					<v-checkbox
+						v-model="includePrereleases"
+						hide-details
+						dense
+						label="Include pre-releases"
+						class="ml-1"
+					>
+					</v-checkbox>
+				</v-row>
 			</v-col>
 
 			<template v-if="fwUpdates.length > 0">
@@ -129,6 +138,7 @@ export default {
 		return {
 			fwUpdates: [],
 			loading: false,
+			includePrereleases: false,
 		}
 	},
 	computed: {},
@@ -163,7 +173,12 @@ export default {
 		checkUpdates() {
 			this.loading = true
 			this.fwUpdates = []
-			this.apiRequest('getAvailableFirmwareUpdates', [this.node.id])
+			this.apiRequest('getAvailableFirmwareUpdates', [
+				this.node.id,
+				{
+					includePrereleases: this.includePrereleases,
+				},
+			])
 		},
 		download(url) {
 			window.open(url, '_blank')

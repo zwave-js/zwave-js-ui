@@ -89,7 +89,6 @@ const multerRestore = multer({
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { createCertificate } = require('pem').promisified
 
-// eslint-disable-next-line
 const FileStore = sessionStore(session)
 const app = express()
 const logger = loggers.module('App')
@@ -339,8 +338,9 @@ async function loadCertKey(): Promise<{
 	try {
 		cert = await fs.readFile(certFile)
 		key = await fs.readFile(keyFile)
-		// eslint-disable-next-line no-empty
-	} catch (error) {}
+	} catch (error) {
+		// noop
+	}
 
 	if (!cert || !key) {
 		logger.info(
