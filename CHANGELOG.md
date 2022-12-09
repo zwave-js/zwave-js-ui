@@ -1,5 +1,12 @@
 
 
+# [8.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.5.1...v8.6.0) (2022-12-09)
+
+
+### Features
+
+* **ui:** add value format to Custom ConfigCC ([#2837](https://github.com/zwave-js/zwave-js-ui/issues/2837)) ([11dc84d](https://github.com/zwave-js/zwave-js-ui/commit/11dc84dc36c5b5873153dcdd044dfc8e0248d2ea))
+
 ## [8.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.5.0...v8.5.1) (2022-11-25)
 
 
