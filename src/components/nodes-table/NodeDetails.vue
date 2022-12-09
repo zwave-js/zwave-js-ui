@@ -273,6 +273,13 @@
 											/>
 										</v-col>
 										<v-col cols="3">
+											<v-select
+												label="Format"
+												:items="configCCValueFormats"
+												v-model="configCC.valueFormat"
+											/>
+										</v-col>
+										<v-col cols="3">
 											<v-btn
 												width="60px"
 												@click.stop="
@@ -306,6 +313,8 @@
 																value: configCC.value,
 																valueSize:
 																	configCC.valueSize,
+																valueFormat:
+																	configCC.valueFormat,
 															},
 														],
 													])
@@ -334,6 +343,7 @@ import ValueID from '@/components/ValueId'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '@/lib/utils'
+import { ConfigValueFormat } from '@zwave-js/core/safe'
 import { RFRegion } from 'zwave-js/safe'
 import useBaseStore from '../../stores/base.js'
 
@@ -353,10 +363,17 @@ export default {
 			options: {},
 			newName: this.node.name,
 			newLoc: this.node.loc,
+			configCCValueFormats: Object.keys(ConfigValueFormat)
+				.filter((k) => isNaN(k))
+				.map((key) => ({
+					text: key,
+					value: ConfigValueFormat[key],
+				})),
 			configCC: {
 				value: 0,
 				valueSize: 1,
 				parameter: 1,
+				valueFormat: ConfigValueFormat.UnsignedInteger,
 			},
 			rfRegions: Object.keys(RFRegion)
 				.filter((k) => isNaN(k))
