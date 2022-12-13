@@ -622,6 +622,9 @@ export default {
 			if (open) {
 				this.rounds = 5
 				this.activeNode = copy(this.node)
+				this.targetNode = this.filteredNodes.find(
+					(n) => n.isControllerNode
+				)
 				this.selectedNode = this.filteredNodes[0]
 					? this.filteredNodes[0].id
 					: null
