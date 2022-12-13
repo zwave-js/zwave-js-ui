@@ -675,10 +675,12 @@ export default {
 						rating: lastRating,
 					})
 				}
-				this.results.push({
-					round,
-					rating: undefined,
-				})
+				if (round < totalRounds) {
+					this.results.push({
+						round,
+						rating: undefined,
+					})
+				}
 			}
 		},
 		bindEvent(eventName, handler) {
