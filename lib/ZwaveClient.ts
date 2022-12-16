@@ -3054,6 +3054,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): Promise<InclusionGrant | false> {
 		logger.log('info', `Grant security classes: %o`, requested)
 		this.sendToSocket(socketEvents.grantSecurityClasses, requested)
+
+		this.emit(
+			'event',
+			EventSource.CONTROLLER,
+			'grant security classes',
+			requested
+		)
+
 		return new Promise((resolve) => {
 			this._grantResolve = resolve
 		})
@@ -3071,6 +3079,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onValidateDSK(dsk: string): Promise<string | false> {
 		logger.info(`DSK received ${dsk}`)
 		this.sendToSocket(socketEvents.validateDSK, dsk)
+
+		this.emit('event', EventSource.CONTROLLER, 'validate dsk', dsk)
 
 		return new Promise((resolve) => {
 			this._dskResolve = resolve
@@ -3102,6 +3112,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._dskResolve = null
 		this._grantResolve = null
 		this.sendToSocket(socketEvents.inclusionAborted, true)
+
+		this.emit('event', EventSource.CONTROLLER, 'inclusion aborted')
 
 		logger.warn('Inclusion aborted')
 	}
