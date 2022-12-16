@@ -922,7 +922,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Get current associations of a specific group
+	 * Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
 	 */
 	getAssociations(nodeId: number): ZUIGroupAssociation[] {
 		const zwaveNode = this.getNode(nodeId)
@@ -963,8 +963,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Add a node to an association group
-	 *
+	 * Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
 	 */
 	async addAssociations(
 		source: AssociationAddress,
@@ -1185,7 +1184,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Execute a custom function with the driver
+	 * Execute a driver function.
+	 * More info [here](/usage/driver_function?id=driver-function)
 	 */
 	driverFunction(code: string): Promise<any> {
 		if (!this.driverReady) {
@@ -2451,7 +2451,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Send a command
+	 * Send a custom CC command. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
 	 */
 	async sendCommand(
 		ctx: {
@@ -2570,7 +2570,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/**
 	 * Send broadcast write request
-	 *
 	 */
 	async writeBroadcast(valueId: ValueID, value: unknown) {
 		if (this.driverReady) {

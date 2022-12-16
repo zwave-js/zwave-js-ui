@@ -53,7 +53,7 @@ Restart client connection.
 getAssociations(nodeId: number): ZUIGroupAssociation[];
 ```
 
-Get current associations of a specific group.
+Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group.
 
 #### `addAssociations`
 
@@ -65,7 +65,7 @@ async addAssociations(
 ): Promise<void>;
 ```
 
-Add a node to an association group.
+Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface).
 
 #### `removeAssociations`
 
@@ -120,7 +120,8 @@ Get neighbors of a specific node.
 driverFunction(code: string): Promise<any>;
 ```
 
-Execute a custom function with the driver.
+Execute a driver function.
+More info [here](/usage/driver_function?id=driver-function).
 
 #### `setNodeName`
 
@@ -485,7 +486,7 @@ async sendCommand(
 ): Promise<any>;
 ```
 
-Send a command.
+Send a custom CC command. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index).
 
 #### `writeBroadcast`
 
