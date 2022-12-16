@@ -1,5 +1,18 @@
 
 
+## [8.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.0...v8.6.1) (2022-12-16)
+
+
+### Bug Fixes
+
+* **ui:** controller as default target in healthcheck ([1df4afb](https://github.com/zwave-js/zwave-js-ui/commit/1df4afb521dd81a774f7f22e43091ef7583ec3c5)), closes [#2842](https://github.com/zwave-js/zwave-js-ui/issues/2842)
+* **ui:** progress bar never hides in healthcheck dialog ([01c659b](https://github.com/zwave-js/zwave-js-ui/commit/01c659bd33dbb3152880c9d749c17af4adc876f4)), closes [#2841](https://github.com/zwave-js/zwave-js-ui/issues/2841)
+
+
+### Features
+
+* **mqtt:** add mqtt support for inclusion callbacks ([#2848](https://github.com/zwave-js/zwave-js-ui/issues/2848)) ([47c0a72](https://github.com/zwave-js/zwave-js-ui/commit/47c0a72f05804c150c8c6c26f3dd93f4d690d31a)), closes [#2847](https://github.com/zwave-js/zwave-js-ui/issues/2847)
+
 # [8.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.5.1...v8.6.0) (2022-12-09)
 
 
