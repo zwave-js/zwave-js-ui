@@ -24,7 +24,7 @@ To call a Z-Wave API you just need to publish a JSON object like:
 
 ```json
 {
-  "args": [2, 1]
+ "args": [2, 1]
 }
 ```
 
@@ -38,64 +38,556 @@ The result will be published on the same topic without `/set`
 
 This are the available APIs:
 
-- All Z-Wave Clients scene management methods preceded by a `_` will use the internal scenes management instead of Z-Wave JS scenes:
-  - `_createScene(label)`
-  - `_removeScene(sceneId)`
-  - `_setScenes(scenes[])`: Imports scenes Array in `scenes.json`
-  - `_getScenes()`: Get the scenes array
-  - `_sceneGetValues(sceneId)`: Return all values of the scene with given `sceneid`
-  - `_addSceneValue(sceneId, valueId, value, timeout)`: Add a value to a specific scene
-  - `_removeSceneValue(sceneId, valueId)`: remove a valueId from a scene
-  - `_activateScene(sceneId)`: activate a scene
-- `setNodeName(name)` and `setNodeLocation(location)` will use the internal nodes store to save node names/locations in a json file, and it will also try to store this info on the controller
-- `refreshNeighborns()`: Returns an Array where the Array index is the `nodeId`, array value is an Array with all the ids of the node neighborns
-- `getNodes()`: Returns an array with all nodes in the network (and their info/valueids)
-- `getInfo()`: Returns an object with:
-  - `homeid`: homeId
-  - `name`: homeId Hex
-  - `version`: Z-Wave JS version
-  - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
-  - `lastUpdate`: Timestamp of latest event received
-  - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
-  - `cntStatus`: The controller status
-- `getAssociations(nodeId, groupId)`: Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
-- `addAssociations(nodeId, groupId, associations)`: add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
-- `removeAssociations(nodeId, groupId, associations[])`: the opposite of add associations
-- `removeAllAssociations(nodeId)`: Remove all associations of a specific node
-- `removeNodeFromAllAssociations(nodeId)`: Remove a node from all associations
-- `refreshValues(nodeId)`: Refresh all node values
-- `refreshCCValues(nodeId, cc)`: Refresh all node values of a specific CC
-- `pingNode(nodeId)`: Ping a node
-- `pollValue(valueId)`: Polls a value from the node
-- `startInclusion(inclusionStrategy, options)`: Starts the inclusion
-- `startExclusion()`: Starts the exclusion
-- `stopInclusion()`: Stops the inclusion
-- `stopExclusion()`: Stops the exclusion
-- `grantSecurityClasses(requested)`: Used to resolve the S2 userCallback promise
-- `validateDSK(dsk)`: Used to resolve the S2 userCallback promise
-- `abortInclusion()`: Aborts any active S2 inclusion process
-- `replaceFailedNode(nodeId, inclusionStrategy)`: Replace a failed node
-- `hardReset()`: Hard reset the controller
-- `healNode(nodeId)`: Heal a specific node
-- `beginHealingNetwork()`: Starts healing the network
-- `stopHealingNetwork()`: Stops network healing
-- `isFailedNode(nodeId)`: Checks if a node is failed
-- `removeFailedNode(nodeId)`: Remove a failed node
-- `refreshInfo(nodeId)`: Re-interview a node to fetch its info and supported CCs
-- `beginFirmwareUpdate(nodeId, fileName, data, target)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
-- `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
-- `writeValue(valueId, value, options)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid) with optional options (ex: `{"transitionDuration": "10s"}`)
-- `writeBroadcast(valueId, value)`: Send a broadcast request to all nodes that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
-- `writeMulticast(nodes, valueId, value)`: Send a multicast request to all `nodes` provided that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
-- `sendCommand(ctx, command, args)`: Send a custom command.
-  - `ctx`: context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
-  - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
-  - `args`: array of arguments to pass to the command
-- `restart()`: restart client
-- `backupNVMRaw()`: Backup the NVM raw data
-- `restoreNVM(data)`: Restore the NVM data. If the given buffer is in a different NVM format, it is converted automatically. If the conversion is not supported, the operation fails.
-- `softReset`: Soft reset the controller (restart)
-- `driverFunction(code)`: Execute a driver function. The function `this` allow to access `zwaveClient` instance and `require` (ex: `this.zwaveClient` and `this.require`). The only parameter of the function is `driver`. More info [here](/usage/driver_function?id=driver-function)
+<!-- AUTO GENERATED START -->
+#### `restart`
+
+```ts
+async restart(): Promise<void>;
+```
+
+Restart client connection.
+
+#### `getAssociations`
+
+```ts
+getAssociations(nodeId: number): ZUIGroupAssociation[];
+```
+
+Get current associations of a specific group.
+
+#### `addAssociations`
+
+```ts
+async addAssociations(
+	source: AssociationAddress,
+	groupId: number,
+	associations: AssociationAddress[]
+): Promise<void>;
+```
+
+Add a node to an association group.
+
+#### `removeAssociations`
+
+```ts
+async removeAssociations(
+	source: AssociationAddress,
+	groupId: number,
+	associations: AssociationAddress[]
+): Promise<void>;
+```
+
+Remove a node from an association group.
+
+#### `removeAllAssociations`
+
+```ts
+async removeAllAssociations(nodeId: number): Promise<void>;
+```
+
+Remove all associations.
+
+#### `removeNodeFromAllAssociations`
+
+```ts
+async removeNodeFromAllAssociations(nodeId: number): Promise<void>;
+```
+
+Remove node from all associations.
+
+#### `refreshNeighbors`
+
+```ts
+async refreshNeighbors(): Promise<Record<number, number[]>>;
+```
+
+Refresh all nodes neighbors.
+
+#### `getNodeNeighbors`
+
+```ts
+getNodeNeighbors(
+	nodeId: number,
+	dontThrow: boolean
+): Promise<readonly number[]>;
+```
+
+Get neighbors of a specific node.
+
+#### `driverFunction`
+
+```ts
+driverFunction(code: string): Promise<any>;
+```
+
+Execute a custom function with the driver.
+
+#### `setNodeName`
+
+```ts
+async setNodeName(nodeid: number, name: string): Promise<boolean>;
+```
+
+Updates node `name` property and stores updated config in `nodes.json`.
+
+#### `setNodeLocation`
+
+```ts
+async setNodeLocation(nodeid: number, loc: string): Promise<boolean>;
+```
+
+Updates node `loc` property and stores updated config in `nodes.json`.
+
+#### `_createScene`
+
+```ts
+async _createScene(label: string): Promise<boolean>;
+```
+
+Creates a new scene with a specific `label` and stores it in `scenes.json`.
+
+#### `_removeScene`
+
+```ts
+async _removeScene(sceneid: number): Promise<boolean>;
+```
+
+Delete a scene with a specific `sceneid` and updates `scenes.json`.
+
+#### `_setScenes`
+
+```ts
+async _setScenes(scenes: ZUIScene[]): Promise<ZUIScene[]>;
+```
+
+Imports scenes Array in `scenes.json`.
+
+#### `_getScenes`
+
+```ts
+_getScenes(): ZUIScene[];
+```
+
+Get all scenes.
+
+#### `_sceneGetValues`
+
+```ts
+_sceneGetValues(sceneid: number): ZUIValueIdScene[];
+```
+
+Return all values of the scene with given `sceneid`.
+
+#### `_addSceneValue`
+
+```ts
+async _addSceneValue(
+	sceneid: number,
+	valueId: ZUIValueIdScene,
+	value: any,
+	timeout: number
+): Promise<any>;
+```
+
+Add a value to a scene.
+
+#### `_removeSceneValue`
+
+```ts
+async _removeSceneValue(sceneid: number, valueId: ZUIValueIdScene): Promise<any>;
+```
+
+Remove a value from scene.
+
+#### `_activateScene`
+
+```ts
+_activateScene(sceneId: number): boolean;
+```
+
+Activate a scene with given scene id.
+
+#### `getNodes`
+
+```ts
+getNodes(): ZUINode[];
+```
+
+Get the nodes array.
+
+#### `getInfo`
+
+```ts
+getInfo(): ZUIDriverInfo;
+```
+
+#### `refreshValues`
+
+```ts
+refreshValues(nodeId: number): Promise<void>;
+```
+
+Refresh all node values.
+
+#### `pingNode`
+
+```ts
+pingNode(nodeId: number): Promise<boolean>;
+```
+
+Ping a node.
+
+#### `refreshCCValues`
+
+```ts
+refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void>;
+```
+
+Refresh all node values of a specific CC.
+
+#### `checkForConfigUpdates`
+
+```ts
+async checkForConfigUpdates(): Promise<string | undefined>;
+```
+
+Checks for configs updates.
+
+#### `installConfigUpdate`
+
+```ts
+async installConfigUpdate(): Promise<boolean>;
+```
+
+Checks for configs updates and installs them.
+
+#### `pollValue`
+
+```ts
+pollValue(valueId: ZUIValueId): Promise<unknown>;
+```
+
+Request an update of this value.
+
+#### `replaceFailedNode`
+
+```ts
+async replaceFailedNode(
+	nodeId: number,
+	strategy: InclusionStrategy = InclusionStrategy.Security_S2,
+	options?: { qrString?: string; provisioning?: PlannedProvisioningEntry }
+): Promise<boolean>;
+```
+
+Replace failed node.
+
+#### `getAvailableFirmwareUpdates`
+
+```ts
+async getAvailableFirmwareUpdates(
+	nodeId: number,
+	options?: GetFirmwareUpdatesOptions
+): Promise<import("/home/daniel/GitProjects/zwave-js-ui/node_modules/zwave-js/build/index").FirmwareUpdateInfo[]>;
+```
+
+#### `firmwareUpdateOTA`
+
+```ts
+async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]): Promise<boolean>;
+```
+
+#### `beginOTAFirmwareUpdate`
+
+```ts
+async beginOTAFirmwareUpdate(
+	nodeId: number,
+	update: FirmwareUpdateFileInfo
+): Promise<void>;
+```
+
+.
+
+#### `setPowerlevel`
+
+```ts
+async setPowerlevel(
+	powerlevel: number,
+	measured0dBm: number
+): Promise<boolean>;
+```
+
+#### `setRFRegion`
+
+```ts
+async setRFRegion(region: RFRegion): Promise<boolean>;
+```
+
+#### `startInclusion`
+
+```ts
+async startInclusion(
+	strategy: InclusionStrategy = InclusionStrategy.Default,
+	options?: {
+		forceSecurity?: boolean
+		provisioning?: PlannedProvisioningEntry
+		qrString?: string
+		name?: string
+		location?: string
+	}
+): Promise<boolean>;
+```
+
+Start inclusion.
+
+#### `startExclusion`
+
+```ts
+async startExclusion(
+	options: ExclusionOptions = {
+		strategy: ExclusionStrategy.DisableProvisioningEntry,
+	}
+): Promise<boolean>;
+```
+
+Start exclusion.
+
+#### `stopExclusion`
+
+```ts
+stopExclusion(): Promise<boolean>;
+```
+
+Stop exclusion.
+
+#### `stopInclusion`
+
+```ts
+stopInclusion(): Promise<boolean>;
+```
+
+Stops inclusion.
+
+#### `healNode`
+
+```ts
+async healNode(nodeId: number): Promise<boolean>;
+```
+
+Heal a node.
+
+#### `checkLifelineHealth`
+
+```ts
+async checkLifelineHealth(
+	nodeId: number,
+	rounds = 5
+): Promise<LifelineHealthCheckSummary & { targetNodeId: number }>;
+```
+
+Check node lifeline health.
+
+#### `checkRouteHealth`
+
+```ts
+async checkRouteHealth(
+	nodeId: number,
+	targetNodeId: number,
+	rounds = 5
+): Promise<RouteHealthCheckSummary & { targetNodeId: number }>;
+```
+
+Check node routes health.
+
+#### `isFailedNode`
+
+```ts
+async isFailedNode(nodeId: number): Promise<boolean>;
+```
+
+Check if a node is failed.
+
+#### `removeFailedNode`
+
+```ts
+async removeFailedNode(nodeId: number): Promise<void>;
+```
+
+Remove a failed node.
+
+#### `refreshInfo`
+
+```ts
+refreshInfo(nodeId: number, options?: RefreshInfoOptions): Promise<void>;
+```
+
+Re interview the node.
+
+#### `updateFirmware`
+
+```ts
+updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean>;
+```
+
+#### `beginFirmwareUpdate`
+
+```ts
+beginFirmwareUpdate(
+	nodeId: number,
+	fileName: string,
+	data: Buffer,
+	target: number
+): Promise<void>;
+```
+
+Start a firmware update.
+
+#### `abortFirmwareUpdate`
+
+```ts
+async abortFirmwareUpdate(nodeId: number): Promise<void>;
+```
+
+#### `beginHealingNetwork`
+
+```ts
+beginHealingNetwork(): boolean;
+```
+
+#### `stopHealingNetwork`
+
+```ts
+stopHealingNetwork(): boolean;
+```
+
+#### `hardReset`
+
+```ts
+async hardReset(): Promise<void>;
+```
+
+#### `softReset`
+
+```ts
+softReset(): Promise<void>;
+```
+
+#### `sendCommand`
+
+```ts
+async sendCommand(
+	ctx: {
+		nodeId: number
+		endpoint: number
+		commandClass: CommandClasses | keyof typeof CommandClasses
+	},
+	command: string,
+	args: any[]
+): Promise<any>;
+```
+
+Send a command.
+
+#### `writeBroadcast`
+
+```ts
+async writeBroadcast(valueId: ValueID, value: unknown): Promise<void>;
+```
+
+Send broadcast write request.
+
+#### `writeMulticast`
+
+```ts
+async writeMulticast(nodes: number[], valueId: ZUIValueId, value: unknown): Promise<void>;
+```
+
+Send multicast write request to a group of nodes.
+
+#### `writeValue`
+
+```ts
+async writeValue(
+	valueId: ZUIValueId,
+	value: any,
+	options?: SetValueAPIOptions
+): Promise<boolean>;
+```
+
+Set a value of a specific zwave valueId.
+
+#### `grantSecurityClasses`
+
+```ts
+grantSecurityClasses(requested: InclusionGrant): void;
+```
+
+#### `validateDSK`
+
+```ts
+validateDSK(dsk: string): void;
+```
+
+#### `abortInclusion`
+
+```ts
+abortInclusion(): void;
+```
+
+#### `backupNVMRaw`
+
+```ts
+async backupNVMRaw(): Promise<{ data: Buffer; fileName: string; }>;
+```
+
+#### `restoreNVM`
+
+```ts
+async restoreNVM(data: Buffer): Promise<void>;
+```
+
+#### `getProvisioningEntries`
+
+```ts
+async getProvisioningEntries(): Promise<SmartStartProvisioningEntry[]>;
+```
+
+#### `getProvisioningEntry`
+
+```ts
+getProvisioningEntry(dsk: string): SmartStartProvisioningEntry | undefined;
+```
+
+#### `unprovisionSmartStartNode`
+
+```ts
+unprovisionSmartStartNode(dskOrNodeId: string | number): void;
+```
+
+#### `parseQRCodeString`
+
+```ts
+parseQRCodeString(qrString: string): {
+	parsed?: QRProvisioningInformation
+	nodeId?: number
+	exists: boolean
+};
+```
+
+#### `provisionSmartStartNode`
+
+```ts
+provisionSmartStartNode(entry: PlannedProvisioningEntry | string): void;
+```
+
+#### `updateControllerNodeProps`
+
+```ts
+async updateControllerNodeProps(
+	node?: ZUINode,
+	props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion']
+): Promise<void>;
+```
+<!-- AUTO GENERATED END -->
 
 ### Api call examples
 
@@ -179,11 +671,11 @@ Payload:
 
 ```json
 {
-  "value": 100
+ "value": 100
 }
 ```
 
- To check if the value has been successfully write just check when the value changes on the topic:
+To check if the value has been successfully write just check when the value changes on the topic:
 
 `zwave/office/test/38/0/targetValue`
 
@@ -203,10 +695,10 @@ Payload:
 
 ```json
 {
-  "value": 100,
-  "options": {
-    "transitionDuration": "5s"
-  }
+ "value": 100,
+ "options": {
+  "transitionDuration": "5s"
+ }
 }
 ```
 
@@ -308,38 +800,38 @@ A example of payload is:
 
 ```json
 {
-  "id": 97,
-  "deviceId": "271-4098-2049",
-  "manufacturer": "Fibargroup",
-  "manufacturerId": 271,
-  "productType": 2049,
-  "productId": 4098,
-  "name": "Sensor",
-  "loc": "Hallway",
-  "neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
-  "ready": true,
-  "available": true,
-  "failed": false,
-  "lastActive": 1610009585743,
-  "firmwareVersion": "3.3",
-  "supportsBeaming": true,
-  "isSecure": false,
-  "keepAwake": false,
-  "maxBaudRate": null,
-  "isRouting": true,
-  "isFrequentListening": false,
-  "isListening": false,
-  "status": "Asleep",
-  "interviewStage": "Complete",
-  "productLabel": "FGMS001",
-  "productDescription": "Motion Sensor",
-  "zwaveVersion": 4,
-  "deviceClass": {
-    "basic": 4,
-    "generic": 7,
-    "specific": 1
-  },
-  "hexId": "0x010f-0x1002-0x0801"
+ "id": 97,
+ "deviceId": "271-4098-2049",
+ "manufacturer": "Fibargroup",
+ "manufacturerId": 271,
+ "productType": 2049,
+ "productId": 4098,
+ "name": "Sensor",
+ "loc": "Hallway",
+ "neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
+ "ready": true,
+ "available": true,
+ "failed": false,
+ "lastActive": 1610009585743,
+ "firmwareVersion": "3.3",
+ "supportsBeaming": true,
+ "isSecure": false,
+ "keepAwake": false,
+ "maxBaudRate": null,
+ "isRouting": true,
+ "isFrequentListening": false,
+ "isListening": false,
+ "status": "Asleep",
+ "interviewStage": "Complete",
+ "productLabel": "FGMS001",
+ "productDescription": "Motion Sensor",
+ "zwaveVersion": 4,
+ "deviceClass": {
+  "basic": 4,
+  "generic": 7,
+  "specific": 1
+ },
+ "hexId": "0x010f-0x1002-0x0801"
 }
 ```
 
@@ -380,5 +872,5 @@ Data: `args.parameters`
 When an MQTT message contains a value of type `Buffer`, such as an Api call argument or return value, the buffer's content is represented as a JSON object of this form:
 
 ```json
-{ type: "Buffer", data: [1, 2, 3] }
+{ "type": "Buffer", "data": [1, 2, 3] }
 ```

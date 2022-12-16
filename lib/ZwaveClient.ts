@@ -114,7 +114,7 @@ function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
 }
 
 // ZwaveClient Apis that can be called with MQTT apis
-const allowedApis = validateMethods([
+export const allowedApis = validateMethods([
 	'setNodeName',
 	'setNodeLocation',
 	'_createScene',
