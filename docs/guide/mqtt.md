@@ -36,37 +36,6 @@ The result will be published on the same topic without `/set`
 
 ### Api call examples
 
-#### Get Associations
-
-Get all of the associations of node `23` and the group `Lifeline` (groupId `1`).
-
-Method: [getAssociations](#getassociations)
-
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/getAssociations/set`
-
-Payload:
-
-```js
-{
-  "args": [
-    23, // nodeid
-    1 // lifeline group id
-  ]
-}
-```
-
-You will get this response (in the same topic without the suffix `/set`):
-
-```js
-{
-  "success": true,
-  "message": "Success zwave api call",
-  "result": [1] // the controller id
-}
-```
-
-`result` will contain the value returned from the API. In this example you will get an array with all node IDs that are associated to the group 1 (lifeline) of node 23.
-
 #### Execute Scene
 
 Execute the scene with the id `1` via mqtt.
@@ -77,9 +46,9 @@ Payload:
 
 ```js
 {
-  "args": [
-    1 // id of scene
-  ]
+	"args": [
+		1 // id of scene
+	]
 }
 ```
 
@@ -92,14 +61,15 @@ Topic: `zwavejs/_CLIENTS/ZWAVE_GATEWAY-<yourName>/api/sendCommand/set`
 Payload:
 
 ```js
-{ "args": [
-  {
-    "nodeId": 23,
-    "commandClass": 38,
-    "endpoint": 0,
-  },
-  "startLevelChange",
-  [{}] // this are the args, in this case it could be omitted
+{ 
+	"args": [
+		{
+			"nodeId": 23,
+			"commandClass": 38,
+			"endpoint": 0,
+		},
+		"startLevelChange",
+		[{ duration: "1m"}] // this are the args of the command
   ]
 }
 ```
