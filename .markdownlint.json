@@ -4,7 +4,7 @@
     "line_length": -1
   },
   "MD033": {
-    "allowed_elements": ["img", "span", "div"]
+    "allowed_elements": ["img", "span", "div", "details", "summary"]
   },
   "MD028": false,
   "MD029": false,

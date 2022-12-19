@@ -109,6 +109,27 @@ ${
 				text += description + '\n\n'
 			}
 		}
+
+		const params = method.getParameters()
+
+		text += `<details>
+<summary>Example</summary>
+
+Topic: \`zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/${method.getName()}/set\`
+
+Payload:
+
+\`\`\`json
+{
+	"args": [${
+		params.length > 0
+			? '\n\t\t' + params.map((p) => p.getName()).join(',\n\t\t') + '\n\t'
+			: ''
+	}]
+}
+\`\`\`
+
+</details>\n\n`
 	}
 
 	return text
