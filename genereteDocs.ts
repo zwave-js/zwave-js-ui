@@ -113,7 +113,7 @@ ${
 		const params = method.getParameters()
 
 		text += `<details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: \`zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/${method.getName()}/set\`
 

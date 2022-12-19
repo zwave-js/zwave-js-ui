@@ -88,7 +88,7 @@ async restart(): Promise<void>;
 Restart client connection.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/restart/set`
 
@@ -111,7 +111,7 @@ getAssociations(nodeId: number): ZUIGroupAssociation[];
 Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getAssociations/set`
 
@@ -140,7 +140,7 @@ async addAssociations(
 Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface).
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/addAssociations/set`
 
@@ -171,7 +171,7 @@ async removeAssociations(
 Remove a node from an association group.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeAssociations/set`
 
@@ -198,7 +198,7 @@ async removeAllAssociations(nodeId: number): Promise<void>;
 Remove all associations.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeAllAssociations/set`
 
@@ -223,7 +223,7 @@ async removeNodeFromAllAssociations(nodeId: number): Promise<void>;
 Remove node from all associations.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeNodeFromAllAssociations/set`
 
@@ -248,7 +248,7 @@ async refreshNeighbors(): Promise<Record<number, number[]>>;
 Refresh all nodes neighbors.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshNeighbors/set`
 
@@ -274,7 +274,7 @@ getNodeNeighbors(
 Get neighbors of a specific node.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getNodeNeighbors/set`
 
@@ -301,7 +301,7 @@ Execute a driver function.
 More info [here](/usage/driver_function?id=driver-function).
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/driverFunction/set`
 
@@ -326,7 +326,7 @@ async setNodeName(nodeid: number, name: string): Promise<boolean>;
 Updates node `name` property and stores updated config in `nodes.json`.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setNodeName/set`
 
@@ -352,7 +352,7 @@ async setNodeLocation(nodeid: number, loc: string): Promise<boolean>;
 Updates node `loc` property and stores updated config in `nodes.json`.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setNodeLocation/set`
 
@@ -378,7 +378,7 @@ async _createScene(label: string): Promise<boolean>;
 Creates a new scene with a specific `label` and stores it in `scenes.json`.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_createScene/set`
 
@@ -403,7 +403,7 @@ async _removeScene(sceneid: number): Promise<boolean>;
 Delete a scene with a specific `sceneid` and updates `scenes.json`.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_removeScene/set`
 
@@ -428,7 +428,7 @@ async _setScenes(scenes: ZUIScene[]): Promise<ZUIScene[]>;
 Imports scenes Array in `scenes.json`.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_setScenes/set`
 
@@ -453,7 +453,7 @@ _getScenes(): ZUIScene[];
 Get all scenes.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_getScenes/set`
 
@@ -476,7 +476,7 @@ _sceneGetValues(sceneid: number): ZUIValueIdScene[];
 Return all values of the scene with given `sceneid`.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_sceneGetValues/set`
 
@@ -506,7 +506,7 @@ async _addSceneValue(
 Add a value to a scene.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_addSceneValue/set`
 
@@ -534,7 +534,7 @@ async _removeSceneValue(sceneid: number, valueId: ZUIValueIdScene): Promise<any>
 Remove a value from scene.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_removeSceneValue/set`
 
@@ -560,7 +560,7 @@ _activateScene(sceneId: number): boolean;
 Activate a scene with given scene id.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_activateScene/set`
 
@@ -585,7 +585,7 @@ getNodes(): ZUINode[];
 Get the nodes array.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getNodes/set`
 
@@ -606,7 +606,7 @@ getInfo(): ZUIDriverInfo;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getInfo/set`
 
@@ -629,7 +629,7 @@ refreshValues(nodeId: number): Promise<void>;
 Refresh all node values.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshValues/set`
 
@@ -654,7 +654,7 @@ pingNode(nodeId: number): Promise<boolean>;
 Ping a node.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/pingNode/set`
 
@@ -679,7 +679,7 @@ refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void>;
 Refresh all node values of a specific CC.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshCCValues/set`
 
@@ -705,7 +705,7 @@ async checkForConfigUpdates(): Promise<string | undefined>;
 Checks for configs updates.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkForConfigUpdates/set`
 
@@ -728,7 +728,7 @@ async installConfigUpdate(): Promise<boolean>;
 Checks for configs updates and installs them.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/installConfigUpdate/set`
 
@@ -751,7 +751,7 @@ pollValue(valueId: ZUIValueId): Promise<unknown>;
 Request an update of this value.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/pollValue/set`
 
@@ -780,7 +780,7 @@ async replaceFailedNode(
 Replace failed node.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/replaceFailedNode/set`
 
@@ -808,7 +808,7 @@ async getAvailableFirmwareUpdates(
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getAvailableFirmwareUpdates/set`
 
@@ -832,7 +832,7 @@ async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]): Prom
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/firmwareUpdateOTA/set`
 
@@ -861,7 +861,7 @@ async beginOTAFirmwareUpdate(
 .
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginOTAFirmwareUpdate/set`
 
@@ -888,7 +888,7 @@ async setPowerlevel(
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setPowerlevel/set`
 
@@ -912,7 +912,7 @@ async setRFRegion(region: RFRegion): Promise<boolean>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setRFRegion/set`
 
@@ -946,7 +946,7 @@ async startInclusion(
 Start inclusion.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/startInclusion/set`
 
@@ -976,7 +976,7 @@ async startExclusion(
 Start exclusion.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/startExclusion/set`
 
@@ -1001,7 +1001,7 @@ stopExclusion(): Promise<boolean>;
 Stop exclusion.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopExclusion/set`
 
@@ -1024,7 +1024,7 @@ stopInclusion(): Promise<boolean>;
 Stops inclusion.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopInclusion/set`
 
@@ -1047,7 +1047,7 @@ async healNode(nodeId: number): Promise<boolean>;
 Heal a node.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/healNode/set`
 
@@ -1075,7 +1075,7 @@ async checkLifelineHealth(
 Check node lifeline health.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkLifelineHealth/set`
 
@@ -1105,7 +1105,7 @@ async checkRouteHealth(
 Check node routes health.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkRouteHealth/set`
 
@@ -1132,7 +1132,7 @@ async isFailedNode(nodeId: number): Promise<boolean>;
 Check if a node is failed.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/isFailedNode/set`
 
@@ -1157,7 +1157,7 @@ async removeFailedNode(nodeId: number): Promise<void>;
 Remove a failed node.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeFailedNode/set`
 
@@ -1182,7 +1182,7 @@ refreshInfo(nodeId: number, options?: RefreshInfoOptions): Promise<void>;
 Re interview the node.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshInfo/set`
 
@@ -1206,7 +1206,7 @@ updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/updateFirmware/set`
 
@@ -1237,7 +1237,7 @@ beginFirmwareUpdate(
 Start a firmware update.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginFirmwareUpdate/set`
 
@@ -1263,7 +1263,7 @@ async abortFirmwareUpdate(nodeId: number): Promise<void>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/abortFirmwareUpdate/set`
 
@@ -1286,7 +1286,7 @@ beginHealingNetwork(): boolean;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginHealingNetwork/set`
 
@@ -1307,7 +1307,7 @@ stopHealingNetwork(): boolean;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopHealingNetwork/set`
 
@@ -1328,7 +1328,7 @@ async hardReset(): Promise<void>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/hardReset/set`
 
@@ -1349,7 +1349,7 @@ softReset(): Promise<void>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/softReset/set`
 
@@ -1380,7 +1380,7 @@ async sendCommand(
 Send a custom CC command. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index).
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/sendCommand/set`
 
@@ -1407,7 +1407,7 @@ async writeBroadcast(valueId: ValueID, value: unknown): Promise<void>;
 Send broadcast write request.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/writeBroadcast/set`
 
@@ -1433,7 +1433,7 @@ async writeMulticast(nodes: number[], valueId: ZUIValueId, value: unknown): Prom
 Send multicast write request to a group of nodes.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/writeMulticast/set`
 
@@ -1464,7 +1464,7 @@ async writeValue(
 Set a value of a specific zwave valueId.
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/writeValue/set`
 
@@ -1489,7 +1489,7 @@ grantSecurityClasses(requested: InclusionGrant): void;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/grantSecurityClasses/set`
 
@@ -1512,7 +1512,7 @@ validateDSK(dsk: string): void;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/validateDSK/set`
 
@@ -1535,7 +1535,7 @@ abortInclusion(): void;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/abortInclusion/set`
 
@@ -1556,7 +1556,7 @@ async backupNVMRaw(): Promise<{ data: Buffer; fileName: string; }>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/backupNVMRaw/set`
 
@@ -1577,7 +1577,7 @@ async restoreNVM(data: Buffer): Promise<void>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/restoreNVM/set`
 
@@ -1600,7 +1600,7 @@ async getProvisioningEntries(): Promise<SmartStartProvisioningEntry[]>;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getProvisioningEntries/set`
 
@@ -1621,7 +1621,7 @@ getProvisioningEntry(dsk: string): SmartStartProvisioningEntry | undefined;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getProvisioningEntry/set`
 
@@ -1644,7 +1644,7 @@ unprovisionSmartStartNode(dskOrNodeId: string | number): void;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/unprovisionSmartStartNode/set`
 
@@ -1671,7 +1671,7 @@ parseQRCodeString(qrString: string): {
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/parseQRCodeString/set`
 
@@ -1694,7 +1694,7 @@ provisionSmartStartNode(entry: PlannedProvisioningEntry | string): void;
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/provisionSmartStartNode/set`
 
@@ -1720,7 +1720,7 @@ async updateControllerNodeProps(
 ```
 
 <details>
-<summary>Example</summary>
+<summary>Mqtt usage</summary>
 
 Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/updateControllerNodeProps/set`
 
