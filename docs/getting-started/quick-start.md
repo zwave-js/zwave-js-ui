@@ -1,12 +1,12 @@
 # Quick Start
 
-Z-Wave JS UI can be run in several different ways. The default method is with docker, but you can also use [Kubernetes, Snap, or NodeJS packages](getting-started/other-methods.md). Choose the one that best fits your needs.
+Z-Wave JS UI can be run in several different ways. The default method is with docker, but you can also use [Kubernetes, Snap, or NodeJS packages](other-methods.md). Choose the one that best fits your needs.
 
 After running Z-Wave JS UI using one of the below methods, you can access it in your web browser at <http://localhost:8091> on the machine on which it was run, or at the IP address of your remote installation on port 8091.
 
-**You must edit the [settings](usage/setup.md) before Z-Wave JS UI will become functional.** A minimum set of settings are described [below](getting-started/quick-start?id=minimum-settings).
+**You must edit the [settings](/docs/usage/setup.md) before Z-Wave JS UI will become functional.** A minimum set of settings are described [below](quick-start.md?id=minimum-settings#minimum-settings).
 
-If you are using Home Assistant, the UI can be added to Lovelace so that it can be accessed from within Home Assistant using the [following instructions](homeassistant/accessing-lovelace.md).
+If you are using Home Assistant, the UI can be added to Lovelace so that it can be accessed from within Home Assistant using the [following instructions](/docs/homeassistant/accessing-lovelace.md).
 
 ## Docker
 
@@ -35,11 +35,11 @@ docker-compose up
 > - Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
 > - Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
 
-For more info about using docker check [here](getting-started/docker.md)
+For more info about using docker check [here](docker.md).
 
 ## Minimum settings
 
-A [complete](usage/setup.md) guide to the settings is available. At minimum, you should:
+A [complete](/docs/usage/setup.md) guide to the settings is available. At minimum, you should:
 
 1. **Configure the serial port** [Settings -> Z-Wave -> Serial Port] (The template [Docker Compose file](https://github.com/zwave-js/zwave-js-ui/blob/master/docker/docker-compose.yml) maps the Z-Wave stick to /dev/zwave.)
 
