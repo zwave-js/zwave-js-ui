@@ -1,5 +1,7 @@
 
 
+## [8.6.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.1...v8.6.2) (2022-12-23)
+
 ## [8.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.0...v8.6.1) (2022-12-16)
 
 
