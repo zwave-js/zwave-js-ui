@@ -61,7 +61,7 @@
     "build:server": "tsc",
     "build:ui": "node build/build.js",
     "clean": "tsc --build --clean",
-    "pkg": "sudo chmod +x package.sh && ./package.sh",
+    "pkg": "chmod +x package.sh && ./package.sh",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "changelog-init": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it"

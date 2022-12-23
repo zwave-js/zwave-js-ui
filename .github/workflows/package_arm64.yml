@@ -22,7 +22,7 @@ jobs:
       - name: Build and package
         run: |
           yarn install --immutable
-          yarn package --aarch64
+          yarn pkg --aarch64
 
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
