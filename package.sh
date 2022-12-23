@@ -135,7 +135,7 @@ if [ ! -z "$1" ]; then
 
 	if [ "$ARCH" = "aarch64" ]; then
 		echo "## Create zip file $APP-v$VERSION-linux-arm64"
-		zip -r $APP-v$VERSION-linux-arm64.zip store $APP-linux
+		zip -r $APP-v$VERSION-linux-arm64.zip store $APP
 	else
 		echo "## Create zip file $APP-v$VERSION-win"
 		zip -r $APP-v$VERSION-win.zip store $APP-win.exe
