@@ -47,13 +47,23 @@ NODE_MAJOR=$(node -v | egrep -o '[0-9].' | head -n 1)
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
 
+ARCH=$(arch)
+
+echo "## Architecture: $ARCH"
+
 if [ ! -z "$1" ]; then
 	echo "## Building application..."
 	echo ''
 	yarn run build
 
-	echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64 --out-path $PKG_FOLDER"
-	pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
+	if [ "$ARCH" = "aarch64" ]; then
+		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER"
+		pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER
+	else
+		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64 --out-path $PKG_FOLDER"
+		pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
+	fi
+	
 else
 
 	if ask "Re-build $APP?"; then
@@ -122,11 +132,18 @@ cd $PKG_FOLDER
 mkdir store -p
 
 if [ ! -z "$1" ]; then
-	echo "## Create zip file $APP-v$VERSION-win"
-	zip -r $APP-v$VERSION-win.zip store $APP-win.exe
 
-	echo "## Create zip file $APP-v$VERSION-linux"
-	zip -r $APP-v$VERSION-linux.zip store $APP-linux
+	if [ "$ARCH" = "aarch64" ]; then
+		echo "## Create zip file $APP-v$VERSION-linux-arm64"
+		zip -r $APP-v$VERSION-linux-arm64.zip store $APP-linux
+	else
+		echo "## Create zip file $APP-v$VERSION-win"
+		zip -r $APP-v$VERSION-win.zip store $APP-win.exe
+
+		echo "## Create zip file $APP-v$VERSION-linux"
+		zip -r $APP-v$VERSION-linux.zip store $APP-linux
+	fi
+	
 else
 	echo "## Create zip file $APP-v$VERSION"
 	zip -r $APP-v$VERSION.zip store $APP
