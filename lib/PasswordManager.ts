@@ -67,7 +67,7 @@ export default class PasswordManager {
 			return decrypted.toString()
 		} catch (error) {
 			logger.error(error, 'Unable to decrypt')
-			throw Error(error)
+			throw error
 		}
 	}
 
@@ -77,19 +77,6 @@ export default class PasswordManager {
 
 	static base64Decode(data: string): string {
 		return Buffer.from(data, 'base64').toString('utf-8')
-	}
-
-	static validateCrypt(password: string, hash: string): boolean {
-		try {
-			if (!this.isEncrypted(hash)) {
-				return password === hash
-			}
-
-			return password === this.decrypt(hash)
-		} catch (error) {
-			logger.error(error, 'Unable to validate crypt')
-			throw Error(error)
-		}
 	}
 
 	static isEncrypted(data: string): boolean {
