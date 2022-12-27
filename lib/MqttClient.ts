@@ -9,6 +9,7 @@ import { storeDir } from '../config/app'
 import { ensureDir } from 'fs-extra'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'path'
+import PasswordManager from './PasswordManager'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const url = require('native-url')
@@ -373,7 +374,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		if (config.auth) {
 			options.username = config.username
-			options.password = config.password
+			options.password = PasswordManager.decrypt(config.password)
 		}
 
 		try {

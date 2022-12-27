@@ -49,6 +49,7 @@ import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
+import PasswordManager from './lib/PasswordManager'
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -168,6 +169,10 @@ let restarting = false
 
 // ### UTILS
 
+function updateSettings(settings: Settings) {
+	return jsonStore.put(store.settings, settings)
+}
+
 /**
  * Start http/https server and all the manager
  */
@@ -259,7 +264,11 @@ export async function startServer(host: string, port: number | string) {
 	setupInterceptor()
 	await loadSnippets()
 	await loadManager()
-	await startGateway(settings)
+	const updated = await startGateway(settings)
+
+	if (updated) {
+		await updateSettings(settings)
+	}
 }
 
 interface Snippet {
@@ -381,6 +390,8 @@ async function startGateway(settings: Settings) {
 	let mqtt: MqttClient
 	let zwave: ZWaveClient
 
+	let updated = false
+
 	if (
 		isAuthEnabled() &&
 		sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME'
@@ -391,6 +402,16 @@ async function startGateway(settings: Settings) {
 	}
 
 	if (settings.mqtt) {
+		if (
+			settings.mqtt.password &&
+			!PasswordManager.isEncrypted(settings.mqtt.password)
+		) {
+			settings.mqtt.password = PasswordManager.encrypt(
+				settings.mqtt.password
+			)
+			updated = true
+		}
+
 		mqtt = new MqttClient(settings.mqtt)
 	}
 
@@ -434,6 +455,8 @@ async function startGateway(settings: Settings) {
 	}
 
 	restarting = false
+
+	return updated
 }
 
 async function destroyPlugins() {
@@ -1025,7 +1048,6 @@ app.post(
 			// TODO: validate settings using calss-validator
 			const settings = req.body
 			restarting = true
-			await jsonStore.put(store.settings, settings)
 			await gw.close()
 			await destroyPlugins()
 			// reload loggers settings
@@ -1033,6 +1055,8 @@ app.post(
 			// restart clients and gateway
 			await startGateway(settings)
 			backupManager.init(gw.zwave)
+
+			await updateSettings(settings)
 
 			res.json({
 				success: true,
@@ -1070,7 +1094,7 @@ app.post(
 			settings.zwave.enableStatistics = enableStatistics
 			settings.zwave.disclaimerVersion = 1
 
-			await jsonStore.put(store.settings, settings)
+			await updateSettings(settings)
 
 			if (gw && gw.zwave) {
 				if (enableStatistics) {
