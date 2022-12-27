@@ -80,7 +80,6 @@ import * as utils from './utils'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import { ensureDir, mkdirp, writeFile } from 'fs-extra'
-import set from 'set-value'
 import { Server as SocketServer } from 'socket.io'
 import * as pkgjson from '../package.json'
 import { TypedEventEmitter } from './EventEmitter'
@@ -184,44 +183,31 @@ export const allowedApis = validateMethods([
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
 
-// Define mapping of CCs and node values to node properties:
-const nodePropsMap = {
+export type ValueIdObserver = (
+	this: ZwaveClient,
+	node: ZUINode,
+	valueId: ZUIValueId
+) => void
+
+// Define CommandClasses and properties that should be observed
+const observedCCProps: {
+	[key in CommandClasses]?: Record<string, ValueIdObserver>
+} = {
 	[CommandClasses.Battery]: {
-		valueProps: {
-			level: [
-				{
-					nodeProp: 'minBatteryLevel',
-					fn: (node: ZUINode, values: ZUIValueId[]) =>
-						values.reduce(
-							(acc, curr) =>
-								acc !== undefined
-									? acc.value < curr.value
-										? acc
-										: curr
-									: curr,
-							undefined
-						).value,
-				},
-				{
-					nodeProp: 'batteryLevels',
-					fn: (node: ZUINode, values: ZUIValueId[]) =>
-						values.map((v) => v.value),
-				},
-			],
+		level(node, value) {
+			const levels: number[] = node.batteryLevels || []
+
+			levels[value.endpoint] = value.value
+			node.batteryLevels = levels
+			node.minBatteryLevel = Math.min(...levels)
+
+			this.emitNodeStatus(node, {
+				batteryLevels: levels,
+				minBatteryLevel: node.minBatteryLevel,
+			})
 		},
 	},
 }
-export type ValuePropsMap = {
-	nodeProp: string
-	fn: (node: ZUINode, values: ZUIValueId[]) => any
-}
-export type CommandClassValueMap = {
-	existsProp?: string
-	valueProps?: Record<CommandClasses, ValuePropsMap[]>
-}
-export type NodeValuesMap = Record<number, CommandClassValueMap>
-// This map contains values from nodePropsMap in an data structure optimized for speed
-const nodeValuesMap: NodeValuesMap = {}
 
 export type SensorTypeScale = {
 	key: string | number
@@ -414,7 +400,7 @@ export type ZUINode = {
 	inited: boolean
 	healProgress?: string | undefined
 	minBatteryLevel?: number
-	batteryLevels?: { [key: string]: number }
+	batteryLevels?: number[]
 	firmwareUpdate?: FirmwareUpdateProgress
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
@@ -538,6 +524,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _lockNeighborsRefresh: boolean
 
 	private nvmEvent: string
+
+	// Foreach valueId, we store a callback function to be called when the value changes
+	private valuesObservers: Record<string, ValueIdObserver> = {}
 
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
@@ -712,6 +701,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			endpoint: parseInt(parts[1]),
 			property: parts[2],
 			propertyKey: parts[3],
+		}
+	}
+
+	subscribeObservers(node: ZUINode, valueId: ZUIValueId) {
+		const valueObserver =
+			observedCCProps[valueId.commandClass]?.[valueId.property]
+
+		if (valueObserver) {
+			this.valuesObservers[valueId.id] = valueObserver
+			valueObserver.call(this, node, valueId)
 		}
 	}
 
@@ -3368,13 +3367,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				true
 			)
 
+			if (!res) continue
+
+			const { valueId, updated } = res
+
 			// in case of writeable values whe always need to emit a
 			// value change event in order to subscribe mqtt topics
-			if (res?.updated || res.valueId.writeable) {
+			if (updated || valueId.writeable) {
 				delayedUpdates.push(
-					this.emitValueChanged.bind(this, res.valueId, node, true)
+					this.emitValueChanged.bind(this, valueId, node, true)
 				)
 			}
+
+			// setup value observer (if any)
+			this.subscribeObservers(node, valueId)
 		}
 
 		// emit value updated events when all values are added
@@ -3414,10 +3420,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.getGroups(zwaveNode.id, true)
-
-		// handle mapped node properties:
-		this._updateValuesMapForNode(node)
-		this._mapCCExistsToNodeProps(node)
 
 		this._onNodeStatus(zwaveNode)
 
@@ -3617,7 +3619,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// handle node values added 'on fly'
 		if (zwaveNode.ready) {
-			this._addValue(zwaveNode, args)
+			const res = this._addValue(zwaveNode, args)
+
+			if (res.valueId) {
+				const node = this._nodes.get(zwaveNode.id)
+				this.subscribeObservers(node, res.valueId)
+			}
 		}
 
 		this.emit(
@@ -4381,123 +4388,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Used to map existence of CCs to node properties
-	 */
-	private _mapCCExistsToNodeProps(node: ZUINode) {
-		for (const cc in nodePropsMap) {
-			if (!nodePropsMap?.[cc]?.existsProp) continue
-			const nodeProp = nodePropsMap[cc].existsProp
-			node[nodeProp] =
-				!!nodeValuesMap[node.id] && !!nodeValuesMap[node.id][cc]
-
-			if (logger.isDebugEnabled) {
-				logger.debug(
-					`Node ${node.id}: mapping ${
-						node[nodeProp] ? 'existence' : 'absence'
-					} of CC ${cc} (${
-						CommandClasses[cc]
-					}) to node property '${nodeProp}`
-				)
-			}
-		}
-	}
-
-	/**
-	 * Used to update the value map for all configured properties
-	 */
-	private _updateValuesMapForNode(node: ZUINode) {
-		Object.values(node.values).forEach((value) => {
-			if (
-				!nodePropsMap?.[value.commandClass]?.valueProps?.[
-					value.property
-				]
-			)
-				return
-			this._updateValuesMap(node, value)
-		})
-		this._mapValuesToNodeProps(node)
-	}
-
-	/**
-	 * Used to update a single value in the value map
-	 */
-	private _updateValuesMap(node: ZUINode, value: ZUIValueId) {
-		if (!nodePropsMap?.[value.commandClass]?.valueProps?.[value.property])
-			return
-		set(
-			nodeValuesMap,
-			[node.id, value.commandClass, value.property, value.endpoint].join(
-				'.'
-			),
-			value
-		)
-	}
-
-	/**
-	 * Used when node is ready to map certain values (e.g. batteryLevel) to direct node properties.
-	 * @param node The affected node
-	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
-	 */
-	private _mapValuesToNodeProps(node: ZUINode) {
-		for (const cc in nodePropsMap) {
-			if (!nodePropsMap[cc].valueProps) continue
-			for (const valueProp in nodePropsMap[cc].valueProps) {
-				if (!nodeValuesMap?.[node.id]?.[cc]?.[valueProp]) continue
-				Object.values(nodeValuesMap[node.id][cc][valueProp]).forEach(
-					(value: ZUIValueId) =>
-						this._mapValueToNodeProps(node, value)
-				)
-			}
-		}
-	}
-
-	/**
-	 * Used when a value should be mapped to node properties.
-	 * @param node The affected node
-	 * @param valueId The value to be mapped (if undefined, all node values are iterated)
-	 */
-	private _mapValueToNodeProps(node: ZUINode, valueId?: ZUIValueId) {
-		if (
-			!valueId?.commandClass ||
-			!valueId?.property ||
-			!nodeValuesMap?.[node.id]?.[valueId.commandClass]?.[
-				valueId.property
-			] ||
-			!nodePropsMap?.[valueId.commandClass]?.valueProps?.[
-				valueId.property
-			]
-		)
-			return
-
-		const updatedProps = {}
-		nodePropsMap[valueId.commandClass].valueProps[valueId.property].forEach(
-			(vMap) => {
-				const vIds: ZUIValueId[] =
-					nodeValuesMap[node.id][valueId.commandClass][
-						valueId.property
-					]
-				const values = Object.values(vIds)
-				const result = vMap.fn(node, values)
-				node[vMap.nodeProp] = result
-				updatedProps[vMap.nodeProp] = result
-				if (logger.isDebugEnabled) {
-					logger.debug(
-						`Node ${node.id}: mapping value(s) of property '${
-							valueId.property
-						}' (${valueId.propertyName}) from CC ${
-							valueId.commandClass
-						} (${
-							CommandClasses[valueId.commandClass]
-						}) to node property '${vMap.nodeProp}`
-					)
-				}
-			}
-		)
-
-		this.emitNodeStatus(node, updatedProps)
-	}
-
-	/**
 	 * Triggered when a node is ready and a value changes
 	 *
 	 */
@@ -4544,8 +4434,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				valueId.value = newValue
 				valueId.stateless = !!args.stateless
 
-				this._updateValuesMap(node, valueId)
-				this._mapValueToNodeProps(node, valueId)
+				if (this.valuesObservers[valueId.id]) {
+					this.valuesObservers[valueId.id].call(this, node, valueId)
+				}
 
 				// ensure duration is never undefined
 				if (
