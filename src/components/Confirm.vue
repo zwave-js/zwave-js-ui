@@ -245,7 +245,7 @@
 										<v-text-field
 											label="QR Code text"
 											hint="Manually insert the QR Code string"
-											v-model="qrString"
+											v-model.trim="qrString"
 											:rules="[validQR]"
 										>
 										</v-text-field>
