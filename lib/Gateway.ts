@@ -19,6 +19,7 @@ import ZwaveClient, {
 	ZUIValueId,
 	ZUIValueIdState,
 } from './ZwaveClient'
+import Cron from 'croner'
 
 import crypto from 'crypto'
 import { IMeterCCSpecific } from './Constants'
@@ -165,6 +166,13 @@ export type GatewayValue = {
 	retain?: boolean
 }
 
+export type ScheduledJob = {
+	name: string
+	cron: string
+	enabled: boolean
+	code: string
+}
+
 export type GatewayConfig = {
 	type: GatewayType
 	payloadType?: PayloadType
@@ -182,6 +190,7 @@ export type GatewayConfig = {
 	logLevel?: LogLevel
 	logToFile?: boolean
 	values?: GatewayValue[]
+	jobs?: ScheduledJob[]
 	plugins?: string[]
 	logFileName?: string
 	manualDiscovery?: boolean
@@ -210,6 +219,7 @@ export default class Gateway {
 	private discovered: { [key: string]: HassDevice }
 	private topicLevels: number[]
 	private _closed: boolean
+	private jobs: Map<string, Cron> = new Map()
 
 	public get mqtt() {
 		return this._mqtt
@@ -281,6 +291,40 @@ export default class Gateway {
 			await this._zwave.connect()
 		} else {
 			logger.error('Z-Wave settings are not valid')
+		}
+	}
+
+	scheduleJob(jobConfig: ScheduledJob) {
+		if (jobConfig.enabled) {
+			const job = new Cron(jobConfig.cron, async () => {
+				logger.info(`Executing scheduled job ${jobConfig.name}...`)
+				try {
+					await this.zwave.driverFunction(jobConfig.code)
+				} catch (error) {
+					logger.error(
+						`Error executing scheduled job ${jobConfig.name}: ${error.message}`
+					)
+				}
+
+				const job = this.jobs.get(jobConfig.name)
+
+				if (job?.next()) {
+					logger.info(
+						`Next scheduled job ${jobConfig.name} will run at ${job
+							.next()
+							.toISOString()}`
+					)
+				}
+			})
+
+			if (job?.next()) {
+				this.jobs.set(jobConfig.name, job)
+				logger.info(
+					`Scheduled job ${jobConfig.name} will run at ${job
+						.next()
+						.toISOString()}`
+				)
+			}
 		}
 	}
 
@@ -381,6 +425,18 @@ export default class Gateway {
 	}
 
 	/**
+	 * Method used to cancel all scheduled jobs
+	 */
+	cancelJobs() {
+		// cancel jobs
+		for (const [, job] of this.jobs) {
+			job.stop()
+		}
+
+		this.jobs.clear()
+	}
+
+	/**
 	 * Method used to close clients connection, use this before destroy
 	 */
 	async close(): Promise<void> {
@@ -391,6 +447,8 @@ export default class Gateway {
 		if (this._zwave) {
 			await this._zwave.close()
 		}
+
+		this.cancelJobs()
 
 		// close mqtt client after zwave connection is closed
 		if (this.mqttEnabled) {
@@ -1984,6 +2042,16 @@ export default class Gateway {
 	 */
 	private _onDriverStatus(ready: boolean): void {
 		logger.info(`Driver is ${ready ? 'READY' : 'CLOSED'}`)
+
+		this.cancelJobs()
+
+		if (ready) {
+			if (this.config.jobs?.length > 0) {
+				for (const jobConfig of this.config.jobs) {
+					this.scheduleJob(jobConfig)
+				}
+			}
+		}
 
 		this._mqtt.publish('driver/status', ready)
 	}
