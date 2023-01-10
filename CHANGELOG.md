@@ -1,5 +1,14 @@
 
 
+## [8.6.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.2...v8.6.3) (2023-01-10)
+
+
+### Bug Fixes
+
+* **discovery:** errors with electricity device_class and HA 2023.1 ([#2881](https://github.com/zwave-js/zwave-js-ui/issues/2881)) ([402a560](https://github.com/zwave-js/zwave-js-ui/commit/402a5602df583c9327cf7731027fe82780e72f30))
+* improved handling of battery levels updates ([#2860](https://github.com/zwave-js/zwave-js-ui/issues/2860)) ([08f994b](https://github.com/zwave-js/zwave-js-ui/commit/08f994b9003bdfe5638f43b2ca50cf40019c1306)), closes [#2845](https://github.com/zwave-js/zwave-js-ui/issues/2845)
+* **ui:** automatically trim qr strings ([b1572ad](https://github.com/zwave-js/zwave-js-ui/commit/b1572ad4430573767288d183e85cb8203b36fb3b)), closes [#2766](https://github.com/zwave-js/zwave-js-ui/issues/2766)
+
 ## [8.6.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.1...v8.6.2) (2022-12-23)
 
 ## [8.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.0...v8.6.1) (2022-12-16)
