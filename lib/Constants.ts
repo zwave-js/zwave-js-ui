@@ -18,6 +18,7 @@ interface ISensorType {
 
 interface ISensorProps {
 	device_class?: string
+	unit_of_measurement?: string
 	icon?: string
 }
 
@@ -208,6 +209,7 @@ export const _sensorMap: ISensorMap = {
 		3: '', // illuminance
 		props: {
 			device_class: 'illuminance',
+			unit_of_measurement: 'lx',
 		},
 	},
 	power: {
