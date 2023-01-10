@@ -1528,12 +1528,13 @@ export default class Gateway {
 						sensor.sensor,
 						sensor.objectId
 					)
-					Object.assign(cfg.discovery_payload, sensor.props || {})
 
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/scales.json
 					if (valueId.unit) {
 						cfg.discovery_payload.unit_of_measurement = valueId.unit
 					}
+
+					Object.assign(cfg.discovery_payload, sensor.props || {})
 
 					// check if there is a custom value configuration for this valueID
 					if (valueConf) {
