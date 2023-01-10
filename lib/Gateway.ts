@@ -297,12 +297,12 @@ export default class Gateway {
 	scheduleJob(jobConfig: ScheduledJob) {
 		if (jobConfig.enabled) {
 			const job = new Cron(jobConfig.cron, async () => {
-				logger.info(`Executing scheduled job ${jobConfig.name}...`)
+				logger.info(`Executing scheduled job "${jobConfig.name}"...`)
 				try {
 					await this.zwave.driverFunction(jobConfig.code)
 				} catch (error) {
 					logger.error(
-						`Error executing scheduled job ${jobConfig.name}: ${error.message}`
+						`Error executing scheduled job "${jobConfig.name}": ${error.message}`
 					)
 				}
 
@@ -310,9 +310,9 @@ export default class Gateway {
 
 				if (job?.next()) {
 					logger.info(
-						`Next scheduled job ${jobConfig.name} will run at ${job
-							.next()
-							.toISOString()}`
+						`Next scheduled job "${
+							jobConfig.name
+						}" will run at ${job.next().toISOString()}`
 					)
 				}
 			})
@@ -320,7 +320,7 @@ export default class Gateway {
 			if (job?.next()) {
 				this.jobs.set(jobConfig.name, job)
 				logger.info(
-					`Scheduled job ${jobConfig.name} will run at ${job
+					`Scheduled job "${jobConfig.name}" will run at ${job
 						.next()
 						.toISOString()}`
 				)
