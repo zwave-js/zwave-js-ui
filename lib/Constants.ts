@@ -130,8 +130,32 @@ export function meterType(
 	// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/meters.json
 	switch (ccSpecific.meterType) {
 		case 0x01: // electric
-			cfg.props = {
-				device_class: 'power',
+			switch (ccSpecific.scale) {
+				case 0x00: // kWh
+					cfg.props = {
+						device_class: 'energy',
+					}
+					break
+				case 0x02: // W
+					cfg.props = {
+						device_class: 'power',
+					}
+					break
+				case 0x04: // V
+					cfg.props = {
+						device_class: 'voltage',
+					}
+					break
+				case 0x05: // A
+					cfg.props = {
+						device_class: 'current',
+					}
+					break
+				default:
+					cfg.props = {
+						device_class: 'power',
+					}
+					break
 			}
 			break
 		case 0x02: // gas
@@ -186,10 +210,25 @@ export const _sensorMap: ISensorMap = {
 			device_class: 'illuminance',
 		},
 	},
-	electricity: {
+	power: {
 		4: 'power',
+		props: {
+			device_class: 'power',
+		},
+	},
+	voltage: {
 		15: 'voltage',
+		props: {
+			device_class: 'voltage',
+		},
+	},
+	current: {
 		16: 'current',
+		props: {
+			device_class: 'current',
+		},
+	},
+	electricity: {
 		28: 'resistivity',
 		29: 'conductivity',
 		props: {
