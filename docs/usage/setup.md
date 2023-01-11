@@ -37,6 +37,17 @@ Properties of a **valueId configuration**:
 - **Enable Poll**: Enable poll of this value by using Z-Wave JS [pollValue](https://zwave-js.github.io/node-zwave-js/#/api/node?id=pollvalue)
 - **Poll interval**: Seconds between two poll requests
 
+### Scheduled Jobs
+
+In this table it's possible to create scheduled jobs to execute custom [driver functions](/usage/driver_function?id=driver-function) with a specific [cron expression](https://crontab.guru/).
+
+Properties of a **scheduled job**:
+
+- **Name**: The name of the job
+- **Enabled**: Enable/Disable the job
+- **Cron**: Cron expression to schedule the job. Example: `0 0 * * *` to run the job every day at midnight
+- **Code**: The code to execute. It must be a valid [driver function](/usage/driver_function?id=driver-function)
+
 ## Backup
 
 Store:
