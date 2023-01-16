@@ -62,6 +62,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private closed: boolean
 	private retrySubTimeout: NodeJS.Timeout | null
 	private _closeTimeout: NodeJS.Timeout | null
+	private storeManager: Manager | null
 
 	static CLIENTS_PREFIX = '_CLIENTS'
 
@@ -127,13 +128,16 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			let resolved = false
 
 			if (this.client) {
-				const onClose = (error: Error) => {
+				const onClose = async (error: Error) => {
 					// prevent multiple resolve
 					if (resolved) {
 						return
 					}
 
 					resolved = true
+
+					// fix error:Failed to lock DB file when force closing
+					await this.storeManager?.close()
 
 					if (this._closeTimeout) {
 						clearTimeout(this._closeTimeout)
@@ -363,12 +367,12 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		if (config.store) {
 			const dbDir = join(storeDir, 'mqtt-packets-store')
 			await ensureDir(dbDir)
-			const manager = new Manager(dbDir)
-			await manager.open()
+			this.storeManager = new Manager(dbDir)
+			await this.storeManager.open()
 
 			// no reason to use a memory store for incoming messages
-			options.incomingStore = manager.incoming
-			options.outgoingStore = manager.outgoing
+			options.incomingStore = this.storeManager.incoming
+			options.outgoingStore = this.storeManager.outgoing
 		}
 
 		if (config.auth) {
