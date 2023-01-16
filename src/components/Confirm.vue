@@ -299,6 +299,7 @@
 <script>
 // import Prism Editor
 import { PrismEditor } from 'vue-prism-editor'
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
 import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
 
 // import highlighting library (you can use any library you want just return html string)
@@ -421,6 +422,13 @@ export default {
 			}
 		},
 		validQR(value) {
+			if (this.options.tryParseDsk) {
+				const dsk = tryParseDSKFromQRCodeString(value)
+				if (dsk) {
+					return true
+				}
+			}
+
 			return (
 				(value &&
 					value.startsWith('90') &&

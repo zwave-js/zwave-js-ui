@@ -2037,12 +2037,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Start inclusion
 	 */
 	async startInclusion(
-		strategy: InclusionStrategy = InclusionStrategy.Default,
+		strategy: InclusionStrategy = InclusionStrategy.Security_S2,
 		options?: {
 			forceSecurity?: boolean
 			provisioning?: PlannedProvisioningEntry
 			qrString?: string
 			name?: string
+			dsk?: string
 			location?: string
 		}
 	): Promise<boolean> {
@@ -2109,11 +2110,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						if (options?.provisioning) {
 							inclusionOptions = {
 								strategy,
+								dsk: options.dsk,
 								provisioning: options.provisioning,
 							}
 						} else {
-							inclusionOptions = { strategy }
+							inclusionOptions = { strategy, dsk: options.dsk }
 						}
+
 						break
 					default:
 						inclusionOptions = { strategy }
