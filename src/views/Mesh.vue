@@ -163,7 +163,7 @@ import {
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
-import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
+import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 
 import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 import useBaseStore from '../stores/base.js'
