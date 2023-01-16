@@ -45,6 +45,7 @@ Properties of a **scheduled job**:
 
 - **Name**: The name of the job
 - **Enabled**: Enable/Disable the job
+- **On Init**: Run the job on gateway init
 - **Cron**: Cron expression to schedule the job. Example: `0 0 * * *` to run the job every day at midnight
 - **Code**: The code to execute. It must be a valid [driver function](/usage/driver_function?id=driver-function)
 
