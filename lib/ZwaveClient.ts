@@ -2037,7 +2037,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Start inclusion
 	 */
 	async startInclusion(
-		strategy: InclusionStrategy = InclusionStrategy.Security_S2,
+		strategy: InclusionStrategy = InclusionStrategy.Default,
 		options?: {
 			forceSecurity?: boolean
 			provisioning?: PlannedProvisioningEntry
