@@ -276,6 +276,21 @@
 										</v-icon>
 									</template>
 									<template
+										v-slot:[`item.runOnInit`]="{ item }"
+									>
+										<v-icon
+											:color="
+												item.runOnInit ? 'green' : 'red'
+											"
+										>
+											{{
+												item.runOnInit
+													? 'check_circle'
+													: 'cancel'
+											}}
+										</v-icon>
+									</template>
+									<template
 										v-slot:[`item.actions`]="{ item }"
 									>
 										<v-icon
@@ -1396,6 +1411,7 @@ export default {
 			headersJobs: [
 				{ text: 'Name', value: 'name' },
 				{ text: 'Enabled', value: 'enabled' },
+				{ text: 'On Init', value: 'runOnInit' },
 				{ text: 'Code', value: 'code' },
 				{ text: 'Cron', value: 'cron' },
 				{ text: 'Actions', value: 'actions', sortable: false },
@@ -1490,7 +1506,9 @@ export default {
 					)
 				},
 				validCron: (v) => {
-					return !!this.parseCron(v) || 'Not a valid cron string'
+					return (
+						!v || !!this.parseCron(v) || 'Not a valid cron string'
+					)
 				},
 			},
 		}
@@ -1632,12 +1650,19 @@ export default {
 							default: item ? item.enabled : true,
 						},
 						{
+							type: 'boolean',
+							key: 'runOnInit',
+							label: 'Run on init',
+							hint: 'Run the job on gateway init',
+							default: item ? item.runOnInit : false,
+						},
+						{
 							type: 'text',
 							key: 'cron',
 							label: 'Cron string',
 							default: item ? item.cron : '0 0 * * *',
 							hint: "Cron string. Default is '0 0 * * *' that means every day at midnight.",
-							rules: [this.rules.required, this.rules.validCron],
+							rules: [this.rules.validCron],
 						},
 						{
 							type: 'list',

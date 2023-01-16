@@ -168,8 +168,9 @@ export type GatewayValue = {
 
 export type ScheduledJob = {
 	name: string
-	cron: string
+	cron?: string
 	enabled: boolean
+	runOnInit: boolean
 	code: string
 }
 
@@ -294,37 +295,64 @@ export default class Gateway {
 		}
 	}
 
+	/**
+	 * Schedule a job
+	 */
 	scheduleJob(jobConfig: ScheduledJob) {
 		if (jobConfig.enabled) {
-			const job = new Cron(jobConfig.cron, async () => {
-				logger.info(`Executing scheduled job "${jobConfig.name}"...`)
+			if (jobConfig.runOnInit) {
+				this.runJob(jobConfig).catch((error) => {
+					logger.error(
+						`Error while executing scheduled job "${jobConfig.name}": ${error.message}`
+					)
+				})
+			}
+
+			if (jobConfig.cron) {
 				try {
-					await this.zwave.driverFunction(jobConfig.code)
+					const job = new Cron(
+						jobConfig.cron,
+						this.runJob.bind(this, jobConfig)
+					)
+
+					if (job?.next()) {
+						this.jobs.set(jobConfig.name, job)
+						logger.info(
+							`Scheduled job "${jobConfig.name}" will run at ${job
+								.next()
+								.toISOString()}`
+						)
+					}
 				} catch (error) {
 					logger.error(
-						`Error executing scheduled job "${jobConfig.name}": ${error.message}`
+						`Error while scheduling job "${jobConfig.name}": ${error.message}`
 					)
 				}
-
-				const job = this.jobs.get(jobConfig.name)
-
-				if (job?.next()) {
-					logger.info(
-						`Next scheduled job "${
-							jobConfig.name
-						}" will run at ${job.next().toISOString()}`
-					)
-				}
-			})
-
-			if (job?.next()) {
-				this.jobs.set(jobConfig.name, job)
-				logger.info(
-					`Scheduled job "${jobConfig.name}" will run at ${job
-						.next()
-						.toISOString()}`
-				)
 			}
+		}
+	}
+
+	/**
+	 * Executes a scheduled job
+	 */
+	private async runJob(jobConfig: ScheduledJob) {
+		logger.info(`Executing scheduled job "${jobConfig.name}"...`)
+		try {
+			await this.zwave.driverFunction(jobConfig.code)
+		} catch (error) {
+			logger.error(
+				`Error executing scheduled job "${jobConfig.name}": ${error.message}`
+			)
+		}
+
+		const job = this.jobs.get(jobConfig.name)
+
+		if (job?.next()) {
+			logger.info(
+				`Next scheduled job "${jobConfig.name}" will run at ${job
+					.next()
+					.toISOString()}`
+			)
 		}
 	}
 
