@@ -1,5 +1,18 @@
 
 
+# [8.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.3...v8.7.0) (2023-01-16)
+
+
+### Bug Fixes
+
+* **mqtt:** lock error when persistent store is enabled ([082209b](https://github.com/zwave-js/zwave-js-ui/commit/082209bb6ac84dc8573a13bca28fdfe2b49009e2))
+
+
+### Features
+
+* allow to run scheduled jobs on init ([3d2950c](https://github.com/zwave-js/zwave-js-ui/commit/3d2950c34101a321a1fa027c86f3d4b49219a7e1))
+* scheduled jobs ([#2882](https://github.com/zwave-js/zwave-js-ui/issues/2882)) ([c9cabbb](https://github.com/zwave-js/zwave-js-ui/commit/c9cabbb8c2f3cd1a3c0cb1d3f472951e24d5a53c))
+
 ## [8.6.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.2...v8.6.3) (2023-01-10)
 
 
