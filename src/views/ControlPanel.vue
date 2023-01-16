@@ -404,6 +404,42 @@ export default {
 					if (!confirm || confirm !== 'yes') {
 						return
 					}
+				} else if (action === 'firmwareUpdateOTW') {
+					const result = await this.$listeners.showConfirm(
+						'Firmware update OTW',
+						'',
+						'info',
+						{
+							confirmText: 'Ok',
+							width: 500,
+							inputs: [
+								{
+									type: 'file',
+									label: 'File',
+									hint: 'Firmware file',
+									key: 'file',
+								},
+							],
+						}
+					)
+
+					if (!result) {
+						return
+					}
+
+					const file = result.file
+					if (!file) {
+						this.showSnackbar('No file selected', 'error')
+						return
+					}
+
+					try {
+						const buffer = await file.arrayBuffer()
+						args.push(nodeId, buffer)
+					} catch (error) {
+						this.showSnackbar('Error reading file', 'error')
+						return
+					}
 				} else if (action === 'updateFirmware') {
 					try {
 						const node = this.nodes.find((n) => n.id === nodeId)

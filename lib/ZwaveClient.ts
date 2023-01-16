@@ -70,6 +70,9 @@ import {
 	FirmwareUpdateResult,
 	FirmwareUpdateCapabilities,
 	GetFirmwareUpdatesOptions,
+	ControllerFirmwareUpdateProgress,
+	ControllerFirmwareUpdateResult,
+	ControllerFirmwareUpdateStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -154,6 +157,7 @@ export const allowedApis = validateMethods([
 	'refreshInfo',
 	'beginFirmwareUpdate',
 	'updateFirmware',
+	'firmwareUpdateOTW',
 	'abortFirmwareUpdate',
 	'getAvailableFirmwareUpdates',
 	'beginOTAFirmwareUpdate',
@@ -2308,6 +2312,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	/**
+	 * Used to trigger an update of controller FW
+	 */
+	firmwareUpdateOTW(file: Buffer): Promise<boolean> {
+		if (this.driverReady) {
+			return this.driver.controller.firmwareUpdateOTW(file)
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
@@ -2752,6 +2767,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					'statistics updated',
 					this._onControllerStatisticsUpdated.bind(this)
 				)
+				.on(
+					'firmware update progress',
+					this._onControllerFirmwareUpdateProgress.bind(this)
+				)
+				.on(
+					'firmware update finished',
+					this._onControllerFirmwareUpdateFinished.bind(this)
+				)
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -2810,6 +2833,68 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.error(`Error while restarting driver: ${error.message}`)
 			}
 		}
+	}
+
+	private _onControllerFirmwareUpdateProgress(
+		progress: ControllerFirmwareUpdateProgress
+	) {
+		const nodeId = this.driver.controller.ownNodeId
+		const node = this.nodes.get(nodeId)
+		if (node) {
+			node.firmwareUpdate = {
+				sentFragments: progress.sentFragments,
+				totalFragments: progress.totalFragments,
+				progress: progress.progress,
+				currentFile: 1,
+				totalFiles: 1,
+			}
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				id: node?.id,
+				firmwareUpdate: progress,
+			} as utils.DeepPartial<ZUINode>)
+		}
+
+		this.emit(
+			'event',
+			EventSource.CONTROLLER,
+			'controller firmware update progress',
+			this.zwaveNodeToJSON(this.driver.controller.nodes.get(nodeId)),
+			progress
+		)
+	}
+
+	private _onControllerFirmwareUpdateFinished(
+		result: ControllerFirmwareUpdateResult
+	) {
+		const nodeId = this.driver.controller.ownNodeId
+		const node = this.nodes.get(nodeId)
+		const zwaveNode = this.driver.controller.nodes.get(nodeId)
+
+		if (node) {
+			node.firmwareUpdate = undefined
+
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				id: node?.id,
+				firmwareUpdate: false,
+			})
+		}
+
+		logger.info(
+			`Controller ${zwaveNode.id} firmware update OTW finished ${
+				result.success ? 'successfully' : 'with error'
+			}.\n   Status: ${getEnumMemberName(
+				ControllerFirmwareUpdateStatus,
+				result.status
+			)}. Result: ${result}.`
+		)
+
+		this.emit(
+			'event',
+			EventSource.CONTROLLER,
+			'controller firmware update finished',
+			this.zwaveNodeToJSON(zwaveNode),
+			result
+		)
 	}
 
 	private _onControllerStatisticsUpdated(stats: ControllerStatistics) {

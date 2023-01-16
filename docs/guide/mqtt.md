@@ -1199,6 +1199,31 @@ Payload:
 
 </details>
 
+#### `firmwareUpdateOTW`
+
+```ts
+firmwareUpdateOTW(file: Buffer): Promise<boolean>;
+```
+
+Used to trigger an update of controller FW.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/firmwareUpdateOTW/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		file
+	]
+}
+```
+
+</details>
+
 #### `updateFirmware`
 
 ```ts

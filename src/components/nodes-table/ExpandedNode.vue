@@ -365,7 +365,19 @@ export default {
 		},
 		advancedActions() {
 			const nodeActions = this.node.isControllerNode
-				? []
+				? [
+						{
+							text: 'Firmware update OTW',
+							options: [
+								{
+									name: 'Begin',
+									action: 'firmwareUpdateOTW',
+								},
+							],
+							icon: 'update',
+							desc: 'Start/Stop a firmware update OTW',
+						},
+				  ]
 				: [
 						{
 							text: 'Firmware update',
