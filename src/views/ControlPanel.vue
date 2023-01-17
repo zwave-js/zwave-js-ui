@@ -527,13 +527,14 @@ export default {
 					}
 				} else if (action === 'driverFunction') {
 					const { data: snippets } = await ConfigApis.getSnippets()
-					const { code } = await this.$listeners.showConfirm(
+					await this.$listeners.showConfirm(
 						'Driver function',
 						'',
 						'info',
 						{
 							width: 900,
-							confirmText: 'Send',
+							confirmText: '',
+							cancelText: 'Close',
 							inputs: [
 								{
 									type: 'list',
@@ -556,6 +557,15 @@ export default {
 									},
 								},
 								{
+									type: 'button',
+									label: 'Run',
+									icon: 'play_circle_outline',
+									color: 'primary',
+									onChange: (values) => {
+										this.apiRequest(action, [values.code])
+									},
+								},
+								{
 									type: 'code',
 									key: 'code',
 									default:
@@ -567,11 +577,7 @@ export default {
 						}
 					)
 
-					if (!code) {
-						return
-					}
-
-					args.push(code)
+					return
 				} else if (action === 'backupNVMRaw') {
 					const confirm = await this.$listeners.showConfirm(
 						'NVM Backup',

@@ -5,7 +5,7 @@
  * issues. More info here: https://zwave-js.github.io/node-zwave-js/#/troubleshooting/connectivity-issues
  */
 
-this.driver.controller.nodes.forEach(async (node) => {
+driver.controller.nodes.forEach(async (node) => {
     // if node is Dead
     if (node.status === 3) {
         // pinging it
