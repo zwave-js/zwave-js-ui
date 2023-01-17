@@ -2315,9 +2315,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to trigger an update of controller FW
 	 */
-	firmwareUpdateOTW(file: Buffer): Promise<boolean> {
+	firmwareUpdateOTW(file: FwFile): Promise<boolean> {
 		if (this.driverReady) {
-			return this.driver.controller.firmwareUpdateOTW(file)
+			try {
+				const format = guessFirmwareFileFormat(file.name, file.data)
+				const firmware = extractFirmware(file.data, format)
+				return this.driver.controller.firmwareUpdateOTW(firmware.data)
+			} catch (e) {
+				throw Error(
+					`Unable to extract firmware from file '${file.name}': ${e.message}`
+				)
+			}
 		}
 
 		throw new DriverNotReadyError()

@@ -407,10 +407,12 @@ export default {
 				} else if (action === 'firmwareUpdateOTW') {
 					const result = await this.$listeners.showConfirm(
 						'Firmware update OTW',
-						'',
-						'info',
+						`<h3 class="red--text">We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed.</h3>
+						<h3 class="mt-2 red--text">A failure during this process may leave your controller in recovery mode, rendering it unusable until a correct firmware image is uploaded. In case of 500 series controllers a failure on this process is likely unrecoverable</h3>
+						`,
+						'alert',
 						{
-							confirmText: 'Ok',
+							confirmText: 'Update',
 							width: 500,
 							inputs: [
 								{
@@ -423,19 +425,18 @@ export default {
 						}
 					)
 
-					if (!result) {
-						return
-					}
+					const file = result?.file
 
-					const file = result.file
 					if (!file) {
-						this.showSnackbar('No file selected', 'error')
 						return
 					}
 
 					try {
 						const buffer = await file.arrayBuffer()
-						args.push(nodeId, buffer)
+						args.push({
+							name: file.name,
+							data: buffer,
+						})
 					} catch (error) {
 						this.showSnackbar('Error reading file', 'error')
 						return
