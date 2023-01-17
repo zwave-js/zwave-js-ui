@@ -139,6 +139,19 @@
 										:disabled="input.disabled"
 									></prism-editor>
 								</v-container>
+								<v-container v-if="input.type === 'button'">
+									<v-btn
+										@click="input.onChange"
+										:color="input.color"
+										:outlined="input.outlined"
+									>
+										<v-icon
+											class="mr-2"
+											v-if="input.icon"
+											>{{ input.icon }}</v-icon
+										>{{ input.label }}</v-btn
+									>
+								</v-container>
 							</v-col>
 						</v-row>
 					</v-form>
