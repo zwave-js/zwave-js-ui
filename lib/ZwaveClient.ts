@@ -2835,8 +2835,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			})
 		}
 
-		this.emulateFwUpdate(1, 1, 50)
-
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 	}
 
@@ -4759,7 +4757,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		totalFiles = 3,
 		fragmentsPerFile = 100
 	) {
-		setInterval(() => {
+		const interval = setInterval(() => {
 			const totalFilesFragments = totalFiles * fragmentsPerFile
 			const progress = this.nodes.get(nodeId)?.firmwareUpdate || {
 				totalFiles,
@@ -4783,9 +4781,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						success: true,
 					})
 				} else {
-					progress.currentFile = 1
-					progress.sentFragments = 0
+					this._onNodeFirmwareUpdateFinished(
+						this.driver.controller.nodes.get(nodeId),
+						FirmwareUpdateStatus.OK_NoRestart,
+						1000,
+						{
+							reInterview: false,
+							status: FirmwareUpdateStatus.OK_NoRestart,
+							success: true,
+							waitTime: 1000,
+						}
+					)
 				}
+
+				clearInterval(interval)
+				return
 			}
 
 			progress.progress = Math.round(
