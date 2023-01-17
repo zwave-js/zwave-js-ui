@@ -4749,10 +4749,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/** Used for testing purposes */
-	private emulateFwUpdate(nodeId: number) {
+	private emulateFwUpdate(
+		nodeId: number,
+		totalFiles = 3,
+		fragmentsPerFile = 100
+	) {
 		setInterval(() => {
-			const fragmentsPerFile = 100
-			const totalFiles = 3
 			const totalFilesFragments = totalFiles * fragmentsPerFile
 			const progress = this.nodes.get(nodeId)?.firmwareUpdate || {
 				totalFiles,
@@ -4781,12 +4783,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					totalFilesFragments
 			)
 
-			this._onNodeFirmwareUpdateProgress(
-				this.driver.controller.nodes.get(nodeId),
-				progress.sentFragments,
-				progress.totalFragments,
-				progress
-			)
+			if (this.nodes.get(nodeId).isControllerNode) {
+				this._onControllerFirmwareUpdateProgress({
+					sentFragments: progress.sentFragments,
+					totalFragments: progress.totalFragments,
+					progress: progress.progress,
+				})
+			} else {
+				this._onNodeFirmwareUpdateProgress(
+					this.driver.controller.nodes.get(nodeId),
+					progress.sentFragments,
+					progress.totalFragments,
+					progress
+				)
+			}
 		}, 1000)
 	}
 }
