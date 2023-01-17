@@ -162,6 +162,7 @@
 	</v-container>
 </template>
 <script>
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
 import { socketEvents } from '@/../server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 import {
@@ -252,7 +253,15 @@ export default {
 			)
 
 			if (qrString) {
-				this.apiRequest('provisionSmartStartNode', [qrString])
+				const dsk = tryParseDSKFromQRCodeString(qrString)
+				if (dsk) {
+					this.showSnackbar(
+						`Provided QR Code is not a SmartStart QR Code.\nIn order to use it go to Control Panel > Manage Nodes and use Scan QR Code Inclusion.`,
+						'warning'
+					)
+				} else {
+					this.apiRequest('provisionSmartStartNode', [qrString])
+				}
 			}
 		},
 		async editItem(existingItem) {
