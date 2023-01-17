@@ -233,7 +233,7 @@
 				<div v-if="item.firmwareUpdate">
 					<v-progress-circular
 						:value="item.firmwareUpdate.progress"
-						size="40"
+						size="50"
 						class="mt-1"
 						color="primary"
 					>
