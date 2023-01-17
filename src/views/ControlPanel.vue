@@ -359,7 +359,7 @@ export default {
 						return
 					}
 				}
-				const args = []
+				let args = []
 				if (nodeId !== undefined) {
 					if (!broadcast) {
 						if (isNaN(nodeId)) {
@@ -433,10 +433,12 @@ export default {
 
 					try {
 						const buffer = await file.arrayBuffer()
-						args.push({
-							name: file.name,
-							data: buffer,
-						})
+						args = [
+							{
+								name: file.name,
+								data: buffer,
+							},
+						]
 					} catch (error) {
 						this.showSnackbar('Error reading file', 'error')
 						return
