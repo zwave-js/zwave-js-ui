@@ -22,11 +22,11 @@ jobs:
           fetch-depth: 0 # fetch everything
           ref: ${{ github.event.inputs.branch }}
 
-      - uses: actions/setup-node@v3.4.1
+      - uses: actions/setup-node@v3.6.0
         with:
           node-version: 16
           cache: 'yarn'
-  
+
       - uses: docker/setup-buildx-action@v2
       - uses: docker/setup-qemu-action@v2
 
@@ -58,7 +58,7 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             org.opencontainers.image.url=https://zwave-js.github.io/zwave-js-ui/#/
             maintainer=robertsLando
-      
+
       - name: Pre-build frontend and backend files
         run: |
           yarn install --immutable
