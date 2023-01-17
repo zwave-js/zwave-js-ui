@@ -12,7 +12,6 @@ const useBaseStore = defineStore('base', {
 		serial_ports: [],
 		scales: [],
 		nodes: [],
-		controllerNode: null,
 		nodesMap: new Map(),
 		user: {},
 		zwave: {
@@ -88,6 +87,11 @@ const useBaseStore = defineStore('base', {
 			navTabs: settings.load('navTabs', false),
 		},
 	}),
+	getters: {
+		controllerNode() {
+			return this.nodes.find((n) => n.isControllerNode)
+		},
+	},
 	actions: {
 		getNode(id) {
 			if (typeof id === 'string') {
@@ -181,10 +185,6 @@ const useBaseStore = defineStore('base', {
 
 			if (index >= 0) {
 				n = Object.assign(this.nodes[index], n)
-			}
-
-			if (n.isControllerNode && this.controllerNode !== n) {
-				this.controllerNode = n
 			}
 
 			n._name = n.name

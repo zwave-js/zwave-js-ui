@@ -407,14 +407,16 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
-		'controllerNode.firmwareUpdate': function (value) {
-			if (value) {
-				console.log('Firmware update started', value)
-				this.loaderTitle = ''
-				this.loaderText = 'Updating controller firmware, please wait...'
-				this.dialogLoader = true
-				this.loaderProgress = value.progress
-			} else {
+		controllerNode(node) {
+			if (node.firmwareUpdate) {
+				if (!this.dialogLoader) {
+					this.loaderTitle = ''
+					this.loaderText =
+						'Updating controller firmware, please wait...'
+					this.dialogLoader = true
+				}
+				this.loaderProgress = node.firmwareUpdate.progress
+			} else if (this.dialogLoader) {
 				this.dialogLoader = false
 				this.loaderProgress = -1
 				this.loaderTitle = ''
