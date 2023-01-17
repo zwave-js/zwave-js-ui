@@ -686,6 +686,15 @@ export default {
 					case 'restoreNVM':
 						this.showSnackbar('NVM restore DONE', 'success')
 						break
+					case 'firmwareUpdateOTW': {
+						const { result } = data
+						this.showSnackbar(
+							`Controller firmware update ` +
+								(result ? 'DONE' : 'FAILED'),
+							result ? 'success' : 'error'
+						)
+						break
+					}
 					default:
 						this.showSnackbar(
 							'Successfully call api ' + data.api,

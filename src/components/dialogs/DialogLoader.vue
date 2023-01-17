@@ -4,7 +4,7 @@
 			<v-card-title v-if="title">
 				<span class="headline">{{ title }}</span>
 			</v-card-title>
-			<v-card-text :class="{ 'pt-2': !title }" class="text-center">
+			<v-card-text :class="{ 'pt-5': !title }" class="text-center">
 				{{ text }}
 				<v-progress-linear
 					v-model="progress"

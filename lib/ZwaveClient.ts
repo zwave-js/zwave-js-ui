@@ -2835,6 +2835,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			})
 		}
 
+		this.emulateFwUpdate(1, 1, 50)
+
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 	}
 
@@ -4775,8 +4777,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (progress.currentFile > totalFiles) {
-				progress.currentFile = 1
-				progress.sentFragments = 0
+				if (this.nodes.get(nodeId).isControllerNode) {
+					this._onControllerFirmwareUpdateFinished({
+						status: ControllerFirmwareUpdateStatus.OK,
+						success: true,
+					})
+				} else {
+					progress.currentFile = 1
+					progress.sentFragments = 0
+				}
 			}
 
 			progress.progress = Math.round(
