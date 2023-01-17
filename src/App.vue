@@ -297,6 +297,13 @@
 
 		<Confirm ref="confirm"></Confirm>
 
+		<LoaderDialog
+			v-model="dialogLoader"
+			:progress="loaderProgress"
+			:title="loaderTitle"
+			:text="loaderText"
+		></LoaderDialog>
+
 		<v-snackbars
 			:objects.sync="messages"
 			:timeout="5000"
@@ -359,6 +366,8 @@ import VSnackbars from 'v-snackbars'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import PasswordDialog from '@/components/dialogs/Password'
+import LoaderDialog from '@/components/dialogs/DialogLoader'
+
 import { Routes } from '@/router'
 
 import { mapActions, mapState } from 'pinia'
@@ -372,6 +381,7 @@ import {
 export default {
 	components: {
 		PasswordDialog,
+		LoaderDialog,
 		VSnackbars,
 		Confirm,
 	},
@@ -382,6 +392,7 @@ export default {
 			'auth',
 			'appInfo',
 			'nodesManagerOpen',
+			'controllerNode',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
@@ -396,12 +407,30 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
+		'controllerNode.firmwareUpdate': function (value) {
+			if (value) {
+				console.log('Firmware update started', value)
+				this.loaderTitle = ''
+				this.loaderText = 'Updating controller firmware, please wait...'
+				this.dialogLoader = true
+				this.loaderProgress = value.progress
+			} else {
+				this.dialogLoader = false
+				this.loaderProgress = -1
+				this.loaderTitle = ''
+				this.loaderText = ''
+			}
+		},
 	},
 	data() {
 		return {
 			socket: null,
 			error: false,
 			dialog_password: false,
+			dialogLoader: false,
+			loaderTitle: '',
+			loaderText: '',
+			loaderProgress: -1,
 			password: {},
 			menu: [
 				{

@@ -2814,6 +2814,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
+		this.emulateFwUpdate(1)
+
 		this.driverInfo.homeid = this._driver.controller.homeId
 		const homeHex = '0x' + this.driverInfo?.homeid?.toString(16)
 		this.driverInfo.name = homeHex
