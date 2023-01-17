@@ -370,12 +370,13 @@ export default {
 							text: 'Firmware update OTW',
 							options: [
 								{
-									name: 'Begin',
+									name: 'Update',
 									action: 'firmwareUpdateOTW',
 								},
 							],
 							icon: 'update',
-							desc: 'Start/Stop a firmware update OTW',
+							color: 'red',
+							desc: 'Perform a firmware update OTW (Over The Wire)',
 						},
 				  ]
 				: [
