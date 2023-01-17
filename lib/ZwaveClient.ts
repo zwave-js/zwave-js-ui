@@ -417,6 +417,7 @@ export type NodeEvent = {
 }
 
 export type ZwaveConfig = {
+	allowBootloaderOnly?: boolean
 	port?: string
 	networkKey?: string
 	securityKeys?: utils.DeepPartial<{
@@ -463,6 +464,7 @@ export type ZUIDriverInfo = {
 
 export enum ZwaveClientStatus {
 	CONNECTED = 'connected',
+	BOOTLOADER_READY = 'bootloader ready',
 	DRIVER_READY = 'driver ready',
 	SCAN_DONE = 'scan done',
 	DRIVER_FAILED = 'driver failed',
@@ -1222,6 +1224,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// extend options with hidden `options`
 			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
+				allowBootloaderOnly: this.cfg.allowBootloaderOnly || false,
 				storage: {
 					cacheDir: storeDir,
 					deviceConfigPriorityDir:
@@ -1348,6 +1351,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._driver.on(
 					'all nodes ready',
 					this._onScanComplete.bind(this)
+				)
+				this._driver.on(
+					'bootloader ready',
+					this._onBootLoaderReady.bind(this)
 				)
 
 				logger.info(`Connecting to ${this.cfg.port}`)
@@ -2931,6 +2938,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
+	}
+
+	private _onBootLoaderReady() {
+		this._updateControllerStatus('Bootloader is READY')
+
+		this.status = ZwaveClientStatus.BOOTLOADER_READY
+
+		logger.info(`Bootloader is READY`)
+
+		this.emit('event', EventSource.DRIVER, 'bootloader ready')
 	}
 
 	private _onScanComplete() {

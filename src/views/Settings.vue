@@ -607,6 +607,16 @@
 									</v-row>
 									<v-col cols="12" sm="6">
 										<v-switch
+											hint="Enable this to start driver in bootloader only mode, useful to recover sticks when an FW upgrade fails. When this is enabled stick will NOT be able to communicate with the network."
+											persistent-hint
+											label="Bootloader only"
+											v-model="
+												newZwave.allowBootloaderOnly
+											"
+										></v-switch>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-switch
 											hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"
 											persistent-hint
 											label="Enable statistics"

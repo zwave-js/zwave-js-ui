@@ -16,6 +16,7 @@ const useBaseStore = defineStore('base', {
 		user: {},
 		zwave: {
 			port: '/dev/zwave',
+			allowBootloaderOnly: false,
 			commandsTimeout: 30,
 			logLevel: 'debug',
 			logEnabled: true,
