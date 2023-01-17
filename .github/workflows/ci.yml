@@ -6,7 +6,7 @@ on:
       - master
   pull_request:
 
-concurrency: 
+concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
@@ -48,10 +48,10 @@ jobs:
           if ! git diff --quiet ; then
             echo "has changes"
             git diff > fix.patch
-            echo "::set-output name=changed::true"
+            echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "unchanged"
-            echo "::set-output name=changed::false"
+            echo "changed=false" >> $GITHUB_OUTPUT
           fi
       - name: Upload Patch
         if: |

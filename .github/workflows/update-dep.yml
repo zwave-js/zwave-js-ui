@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Use Node.js 14
         uses: actions/setup-node@v3.4.1
         with:
@@ -36,12 +36,12 @@ jobs:
           git diff --name-only || true
           if ! git diff --quiet ; then
             echo "Has changes"
-            echo "::set-output name=changed::true"
+            echo "changed=true" >> $GITHUB_OUTPUT
             VERSION=$(npm info ${{github.event.inputs.dep}} version)
-            echo "::set-output name=version::$VERSION"
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
           else
             echo "No changes detected. Dependency already up to date"
-            echo "::set-output name=changed::false"
+            echo "changed=false" >> $GITHUB_OUTPUT
           fi
       - name: Create Pull Request
         if: ${{ steps.check.outputs.changed == 'true' }}
