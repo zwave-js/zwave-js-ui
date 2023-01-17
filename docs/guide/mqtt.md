@@ -938,6 +938,7 @@ async startInclusion(
 		provisioning?: PlannedProvisioningEntry
 		qrString?: string
 		name?: string
+		dsk?: string
 		location?: string
 	}
 ): Promise<boolean>;
@@ -1202,7 +1203,7 @@ Payload:
 #### `firmwareUpdateOTW`
 
 ```ts
-firmwareUpdateOTW(file: Buffer): Promise<boolean>;
+async firmwareUpdateOTW(file: FwFile): Promise<boolean>;
 ```
 
 Used to trigger an update of controller FW.
