@@ -4775,12 +4775,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (progress.currentFile > totalFiles) {
+				let api: 'firmwareUpdateOTW' | 'firmwareUpdateOTA'
 				if (this.nodes.get(nodeId).isControllerNode) {
+					api = 'firmwareUpdateOTW'
 					this._onControllerFirmwareUpdateFinished({
 						status: ControllerFirmwareUpdateStatus.OK,
 						success: true,
 					})
 				} else {
+					api = 'firmwareUpdateOTA'
 					this._onNodeFirmwareUpdateFinished(
 						this.driver.controller.nodes.get(nodeId),
 						FirmwareUpdateStatus.OK_NoRestart,
@@ -4794,6 +4797,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					)
 				}
 
+				const result = {
+					success: true,
+					message: 'Firmware update finished',
+					result: true,
+					api,
+					args: [],
+				}
+
+				this.socket.emit(socketEvents.api, result)
+
 				clearInterval(interval)
 				return
 			}
@@ -4806,12 +4819,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 			if (this.nodes.get(nodeId).isControllerNode) {
+				// emulate a ping to another node
+				Array.from(this.driver.controller.nodes.entries())[1][1]
+					.ping()
+					.catch(() => {
+						//noop
+					})
 				this._onControllerFirmwareUpdateProgress({
 					sentFragments: progress.sentFragments,
 					totalFragments: progress.totalFragments,
 					progress: progress.progress,
 				})
 			} else {
+				// emulate a ping to node
+				this.driver.controller.nodes
+					.get(nodeId)
+					.ping()
+					.catch(() => {
+						//noop
+					})
 				this._onNodeFirmwareUpdateProgress(
 					this.driver.controller.nodes.get(nodeId),
 					progress.sentFragments,

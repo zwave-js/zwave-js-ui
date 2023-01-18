@@ -533,8 +533,8 @@ export default {
 						'info',
 						{
 							width: 900,
-							confirmText: '',
-							cancelText: 'Close',
+							confirmText: 'Close',
+							cancelText: '',
 							inputs: [
 								{
 									type: 'list',

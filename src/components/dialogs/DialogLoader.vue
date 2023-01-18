@@ -7,7 +7,7 @@
 			<v-card-text :class="{ 'pt-5': !title }" class="text-center">
 				{{ text }}
 				<v-progress-linear
-					v-model="progress"
+					:value="progress"
 					:indeterminate="progress === -1"
 					class="mt-1"
 				>
