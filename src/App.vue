@@ -407,21 +407,24 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
-		controllerNode(node) {
-			if (node.firmwareUpdate) {
-				if (!this.dialogLoader) {
+		controllerNode: {
+			handler: function (node) {
+				if (node.firmwareUpdate) {
+					if (!this.dialogLoader) {
+						this.loaderTitle = ''
+						this.loaderText =
+							'Updating controller firmware, please wait...'
+						this.dialogLoader = true
+					}
+					this.loaderProgress = node.firmwareUpdate.progress
+				} else if (this.dialogLoader) {
+					this.dialogLoader = false
+					this.loaderProgress = -1
 					this.loaderTitle = ''
-					this.loaderText =
-						'Updating controller firmware, please wait...'
-					this.dialogLoader = true
+					this.loaderText = ''
 				}
-				this.loaderProgress = node.firmwareUpdate.progress
-			} else if (this.dialogLoader) {
-				this.dialogLoader = false
-				this.loaderProgress = -1
-				this.loaderTitle = ''
-				this.loaderText = ''
-			}
+			},
+			deep: true,
 		},
 	},
 	data() {
