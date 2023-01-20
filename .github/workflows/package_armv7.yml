@@ -34,14 +34,12 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}:/app"
 
-          # The shell to run commands with in the container
-          shell: /bin/sh
 
           base_image: arm32v7/node:16-bullseye
 
           # Produce a binary artifact and place it in the mounted volume
           run: |
-            cd app
+            cd /app
             yarn rebuild
             yarn pkg --skip-build --arch=armv7
 
