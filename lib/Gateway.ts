@@ -278,6 +278,11 @@ export default class Gateway {
 
 			if (this.mqttEnabled) {
 				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
+				this._zwave.on(
+					'nodeLastActive',
+					this._onNodeLastActive.bind(this)
+				)
+
 				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
 				this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
 				this._zwave.on('notification', this._onNotification.bind(this))
@@ -2061,6 +2066,33 @@ export default class Gateway {
 			delete nodeData.values
 
 			this._mqtt.publish(nodeTopic + '/nodeinfo', nodeData)
+		}
+	}
+
+	/**
+	 * When a packet is received from a node to update it's last activity timestamp
+	 *
+	 */
+	private _onNodeLastActive(node: ZUINode): void {
+		if (!this.mqttEnabled) {
+			return
+		}
+
+		const nodeTopic = this.nodeTopic(node)
+
+		if (!this.config.ignoreStatus) {
+			let data: any
+
+			if (this.config.payloadType === PAYLOAD_TYPE.RAW) {
+				data = node.lastActive
+			} else {
+				data = {
+					time: Date.now(),
+					value: node.lastActive,
+				}
+			}
+
+			this._mqtt.publish(nodeTopic + '/lastActive', data)
 		}
 	}
 

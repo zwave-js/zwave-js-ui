@@ -473,6 +473,7 @@ export enum EventSource {
 
 export interface ZwaveClientEventCallbacks {
 	nodeStatus: (node: ZUINode) => void
+	nodeLastActive: (node: ZUINode) => void
 	nodeInited: (node: ZUINode) => void
 	event: (source: EventSource, eventName: string, ...args: any) => void
 	scanComplete: () => void
@@ -2831,6 +2832,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
 				controllerNode.lastActive = Date.now()
+				this.emit('nodeLastActive', controllerNode)
 			}
 
 			this.sendToSocket(socketEvents.statistics, {
@@ -3825,6 +3827,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				(stats.commandsTX > oldStatistics?.commandsTX ?? 0)
 			) {
 				node.lastActive = Date.now()
+				this.emit('nodeLastActive', node)
 			}
 
 			this.sendToSocket(socketEvents.statistics, {
