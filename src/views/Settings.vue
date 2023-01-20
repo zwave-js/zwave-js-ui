@@ -705,6 +705,17 @@
 											v-model="newZwave.logToFile"
 										></v-switch>
 									</v-col>
+									<v-col cols="6" v-if="newZwave.logEnabled">
+										<v-text-field
+											v-model.number="newZwave.maxFiles"
+											label="Max files"
+											:rules="[rules.required]"
+											required
+											persistent-hint
+											hint="Maximum number of log files to keep"
+											type="number"
+										></v-text-field>
+									</v-col>
 									<v-col
 										v-if="newZwave.logEnabled"
 										cols="12"

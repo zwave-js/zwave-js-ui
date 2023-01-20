@@ -432,6 +432,7 @@ export type ZwaveConfig = {
 	serverPort?: number
 	serverHost?: string
 	logEnabled?: boolean
+	maxFiles?: number
 	logLevel?: LogManager.LogLevel
 	commandsTimeout?: number
 	enableStatistics?: boolean
@@ -479,6 +480,7 @@ export enum EventSource {
 
 export interface ZwaveClientEventCallbacks {
 	nodeStatus: (node: ZUINode) => void
+	nodeLastActive: (node: ZUINode) => void
 	nodeInited: (node: ZUINode) => void
 	event: (source: EventSource, eventName: string, ...args: any) => void
 	scanComplete: () => void
@@ -1240,6 +1242,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					logToFile: this.cfg.logToFile,
 					filename: ZWAVEJS_LOG_FILE,
 					forceConsole: true,
+					maxFiles: this.cfg.maxFiles || 7,
 					nodeFilter:
 						this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
 							? this.cfg.nodeFilter.map((n) => parseInt(n))
@@ -2935,6 +2938,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
 				controllerNode.lastActive = Date.now()
+				this.emit('nodeLastActive', controllerNode)
 			}
 
 			this.sendToSocket(socketEvents.statistics, {
@@ -3939,6 +3943,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				(stats.commandsTX > oldStatistics?.commandsTX ?? 0)
 			) {
 				node.lastActive = Date.now()
+				this.emit('nodeLastActive', node)
 			}
 
 			this.sendToSocket(socketEvents.statistics, {

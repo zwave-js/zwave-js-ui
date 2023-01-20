@@ -1896,6 +1896,12 @@ The payload will be in the time-value json format and the value will be `true` w
 
 The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`).
 
+### Node Last Active
+
+`<mqtt_prefix>/<?node_location>/<node_name>/lastActive`
+
+The payload will be the timestamp of last time a packet is received by controller from this node.
+
 ### Node information
 
 `<mqtt_prefix>/<?node_location>/<node_name>/nodeinfo`
