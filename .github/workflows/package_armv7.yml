@@ -1,4 +1,4 @@
-name: Build pkg arm64
+name: Build pkg armv7
 
 on:
   release:
