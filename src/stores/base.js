@@ -9,6 +9,7 @@ const useBaseStore = defineStore('base', {
 	state: () => ({
 		auth: undefined,
 		nodesManagerOpen: false,
+		controllerId: undefined,
 		serial_ports: [],
 		scales: [],
 		nodes: [],
@@ -89,7 +90,7 @@ const useBaseStore = defineStore('base', {
 	}),
 	getters: {
 		controllerNode() {
-			return this.nodes.find((n) => n.isControllerNode)
+			return this.controllerId ? this.getNode(this.controllerId) : null
 		},
 	},
 	actions: {
@@ -194,6 +195,10 @@ const useBaseStore = defineStore('base', {
 			// prevent empty stats on startup
 			if (!n.statistics) {
 				n.statistics = false
+			}
+
+			if (n.isControllerNode) {
+				this.controllerId = n.id
 			}
 
 			if (index >= 0) {
