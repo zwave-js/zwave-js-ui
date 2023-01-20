@@ -70,7 +70,7 @@ if [ ! -z "$1" ]; then
 	if [ "$ARCH" = "aarch64" ]; then
 		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER
-	else if [ "$ARCH" = "armv7" ]; then
+	elif [ "$ARCH" = "armv7" ]; then
 		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-armv7 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
 	else
@@ -150,7 +150,7 @@ if [ ! -z "$1" ]; then
 	if [ "$ARCH" = "aarch64" ]; then
 		echo "## Create zip file $APP-v$VERSION-linux-arm64"
 		zip -r $APP-v$VERSION-linux-arm64.zip store $APP
-	else if [ "$ARCH" = "armv7" ]; then
+	elif [ "$ARCH" = "armv7" ]; then
 		echo "## Create zip file $APP-v$VERSION-linux-armv7"
 		zip -r $APP-v$VERSION-linux-armv7.zip store $APP
 	else
