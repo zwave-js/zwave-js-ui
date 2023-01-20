@@ -569,7 +569,7 @@ export default {
 									type: 'code',
 									key: 'code',
 									default:
-										'// Example:\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();',
+										'// Example:\n// const { logger, zwaveClient, require } = this\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();\n// logger.info(`Node ${node.id} is ready: ${node.ready}`);',
 									hint: `Write the function here. The only arg is:
                     <code>driver</code>. The function is <code>async</code>.`,
 								},
