@@ -27,6 +27,7 @@ const useBaseStore = defineStore('base', {
 			},
 			deviceConfigPriorityDir: '',
 			logToFile: true,
+			maxFiles: 7,
 			serverEnabled: false,
 			serverServiceDiscoveryDisabled: false,
 			enableSoftReset: true,

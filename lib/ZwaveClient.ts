@@ -427,6 +427,7 @@ export type ZwaveConfig = {
 	serverPort?: number
 	serverHost?: string
 	logEnabled?: boolean
+	maxFiles?: number
 	logLevel?: LogManager.LogLevel
 	commandsTimeout?: number
 	enableStatistics?: boolean
@@ -1234,6 +1235,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					logToFile: this.cfg.logToFile,
 					filename: ZWAVEJS_LOG_FILE,
 					forceConsole: true,
+					maxFiles: this.cfg.maxFiles || 7,
 					nodeFilter:
 						this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
 							? this.cfg.nodeFilter.map((n) => parseInt(n))
