@@ -983,6 +983,11 @@ export default {
 				clientAuth: requested.clientSideAuth || undefined,
 			}
 
+			if (this.waitTimeout) {
+				clearTimeout(this.waitTimeout)
+				this.waitTimeout = null
+			}
+
 			this.loading = false
 			this.alert = false
 
