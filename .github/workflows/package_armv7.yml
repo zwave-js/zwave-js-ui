@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build package and attach to release
-    runs-on: ubuntu-latest
+    runs-on: ARM64
     steps:
       - uses: actions/checkout@v3
 
@@ -23,6 +23,14 @@ jobs:
         run: |
           yarn install --immutable
           yarn build
+          mkdir -p ~/.cache/pkg
+      
+      - name: Restore cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cache/pkg
+          key: ${{ runner.os }}-pkg-${{ hashFiles('**/yarn.lock') }}
       
       - uses: uraimo/run-on-arch-action@v2
         name: Package
@@ -33,9 +41,11 @@ jobs:
           githubToken: ${{ github.token }}
           dockerRunArgs: |
             --volume "${PWD}:/app"
-
+            --volume "${HOME}/.cache/pkg:/root/.cache/pkg"
 
           base_image: arm32v7/node:16-bullseye
+          env: |
+            PKG_CACHE_PATH: /root/.cache/pkg
 
           # Produce a binary artifact and place it in the mounted volume
           run: |
