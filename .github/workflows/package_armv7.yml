@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build package and attach to release
-    runs-on: ARM64
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [16.16.0] # this must be fixed, when changes it will take a lot to re-build nodejs sources
@@ -26,10 +26,9 @@ jobs:
         run: |
           yarn install --immutable
           yarn build
-          mkdir -p ~/.cache/pkg
       
       - name: Restore cache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cache/pkg
@@ -44,17 +43,19 @@ jobs:
           githubToken: ${{ github.token }}
           dockerRunArgs: |
             --volume "${PWD}:/app"
-            --volume "${HOME}/.cache/pkg:/root/.cache/pkg"
 
           base_image: arm32v7/node:16-bullseye
-          env: |
-            PKG_CACHE_PATH: /root/.cache/pkg
 
-          # Produce a binary artifact and place it in the mounted volume
+          # Rebuild .node modules for amv7
           run: |
             cd /app
             yarn rebuild
-            yarn pkg --skip-build --arch=armv7
+
+      - name: Build for armv7
+        run: |
+          mkdir -p ~/.cache/pkg
+          export PKG_CACHE_PATH=~/.cache/pkg
+          yarn pkg --skip-build --arch=armv7
 
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
