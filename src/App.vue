@@ -297,6 +297,13 @@
 
 		<Confirm ref="confirm"></Confirm>
 
+		<LoaderDialog
+			v-model="dialogLoader"
+			:progress="loaderProgress"
+			:title="loaderTitle"
+			:text="loaderText"
+		></LoaderDialog>
+
 		<v-snackbars
 			:objects.sync="messages"
 			:timeout="5000"
@@ -359,6 +366,8 @@ import VSnackbars from 'v-snackbars'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import PasswordDialog from '@/components/dialogs/Password'
+import LoaderDialog from '@/components/dialogs/DialogLoader'
+
 import { Routes } from '@/router'
 
 import { mapActions, mapState } from 'pinia'
@@ -372,6 +381,7 @@ import {
 export default {
 	components: {
 		PasswordDialog,
+		LoaderDialog,
 		VSnackbars,
 		Confirm,
 	},
@@ -382,6 +392,7 @@ export default {
 			'auth',
 			'appInfo',
 			'nodesManagerOpen',
+			'controllerNode',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
@@ -396,12 +407,37 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
+		controllerNode(node) {
+			if (node.firmwareUpdate) {
+				if (!this.dialogLoader) {
+					this.loaderTitle = ''
+					this.loaderText =
+						'Updating controller firmware, please wait...'
+					this.dialogLoader = true
+				}
+				this.loaderProgress = node.firmwareUpdate.progress
+			} else if (this.dialogLoader) {
+				this.loaderProgress = -1
+				this.loaderTitle = ''
+				const result = node.firmwareUpdateResult
+
+				this.loaderText = `<span style="white-space: break-spaces;" class="${
+					result.success ? 'success' : 'error'
+				}--text">Controller firmware update finished ${
+					result.success ? 'successfully' : 'with error'
+				}.\n Status: ${result.status}</span>`
+			}
+		},
 	},
 	data() {
 		return {
 			socket: null,
 			error: false,
 			dialog_password: false,
+			dialogLoader: false,
+			loaderTitle: '',
+			loaderText: '',
+			loaderProgress: -1,
 			password: {},
 			menu: [
 				{

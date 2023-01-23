@@ -938,6 +938,7 @@ async startInclusion(
 		provisioning?: PlannedProvisioningEntry
 		qrString?: string
 		name?: string
+		dsk?: string
 		location?: string
 	}
 ): Promise<boolean>;
@@ -1193,6 +1194,31 @@ Payload:
 	"args": [
 		nodeId,
 		options
+	]
+}
+```
+
+</details>
+
+#### `firmwareUpdateOTW`
+
+```ts
+async firmwareUpdateOTW(file: FwFile): Promise<boolean>;
+```
+
+Used to trigger an update of controller FW.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/firmwareUpdateOTW/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		file
 	]
 }
 ```

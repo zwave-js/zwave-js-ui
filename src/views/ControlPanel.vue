@@ -359,7 +359,7 @@ export default {
 						return
 					}
 				}
-				const args = []
+				let args = []
 				if (nodeId !== undefined) {
 					if (!broadcast) {
 						if (isNaN(nodeId)) {
@@ -402,6 +402,45 @@ export default {
 						}
 					)
 					if (!confirm || confirm !== 'yes') {
+						return
+					}
+				} else if (action === 'firmwareUpdateOTW') {
+					const result = await this.$listeners.showConfirm(
+						'Firmware update OTW',
+						`<h3 class="red--text">We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed.</h3>
+						<h3 class="mt-2 red--text">A failure during this process may leave your controller in recovery mode, rendering it unusable until a correct firmware image is uploaded. In case of 500 series controllers a failure on this process is likely unrecoverable.</h3>
+						`,
+						'alert',
+						{
+							confirmText: 'Update',
+							width: 500,
+							inputs: [
+								{
+									type: 'file',
+									label: 'File',
+									hint: 'Firmware file',
+									key: 'file',
+								},
+							],
+						}
+					)
+
+					const file = result?.file
+
+					if (!file) {
+						return
+					}
+
+					try {
+						const buffer = await file.arrayBuffer()
+						args = [
+							{
+								name: file.name,
+								data: buffer,
+							},
+						]
+					} catch (error) {
+						this.showSnackbar('Error reading file', 'error')
 						return
 					}
 				} else if (action === 'updateFirmware') {
@@ -494,8 +533,8 @@ export default {
 						'info',
 						{
 							width: 900,
-							confirmText: '',
-							cancelText: 'Close',
+							confirmText: 'Close',
+							cancelText: '',
 							inputs: [
 								{
 									type: 'list',
@@ -530,7 +569,7 @@ export default {
 									type: 'code',
 									key: 'code',
 									default:
-										'// Example:\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();',
+										'// Example:\n// const { logger, zwaveClient, require } = this\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();\n// logger.info(`Node ${node.id} is ready: ${node.ready}`);',
 									hint: `Write the function here. The only arg is:
                     <code>driver</code>. The function is <code>async</code>.`,
 								},
@@ -653,6 +692,10 @@ export default {
 					case 'restoreNVM':
 						this.showSnackbar('NVM restore DONE', 'success')
 						break
+					case 'firmwareUpdateOTW': {
+						// handled in App.vue
+						break
+					}
 					default:
 						this.showSnackbar(
 							'Successfully call api ' + data.api,

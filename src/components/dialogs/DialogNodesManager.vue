@@ -791,8 +791,9 @@ export default {
 			}, 250)
 		},
 		controllerStatus(status) {
+			if (!status) return
 			this.nvmProgress = 0
-			if (status && status.indexOf('clusion') > 0) {
+			if (status.indexOf('clusion') > 0) {
 				// it could be inclusion is started by the driver, in that case get the current action
 				this.currentAction = /inclusion/i.test(status)
 					? 'Inclusion'

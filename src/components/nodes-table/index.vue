@@ -240,10 +240,10 @@
 		</template>
 		<template v-slot:[`item.firmwareVersion`]="{ item }">
 			<div style="text-align: center">
-				<div v-if="item.firmwareUpdate">
+				<div v-if="item.firmwareUpdate && !item.isControllerNode">
 					<v-progress-circular
 						:value="item.firmwareUpdate.progress"
-						size="40"
+						size="50"
 						class="mt-1"
 						color="primary"
 					>

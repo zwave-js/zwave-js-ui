@@ -70,6 +70,9 @@ import {
 	FirmwareUpdateResult,
 	FirmwareUpdateCapabilities,
 	GetFirmwareUpdatesOptions,
+	ControllerFirmwareUpdateProgress,
+	ControllerFirmwareUpdateResult,
+	ControllerFirmwareUpdateStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -154,6 +157,7 @@ export const allowedApis = validateMethods([
 	'refreshInfo',
 	'beginFirmwareUpdate',
 	'updateFirmware',
+	'firmwareUpdateOTW',
 	'abortFirmwareUpdate',
 	'getAvailableFirmwareUpdates',
 	'beginOTAFirmwareUpdate',
@@ -413,6 +417,7 @@ export type NodeEvent = {
 }
 
 export type ZwaveConfig = {
+	allowBootloaderOnly?: boolean
 	port?: string
 	networkKey?: string
 	securityKeys?: utils.DeepPartial<{
@@ -460,6 +465,7 @@ export type ZUIDriverInfo = {
 
 export enum ZwaveClientStatus {
 	CONNECTED = 'connected',
+	BOOTLOADER_READY = 'bootloader ready',
 	DRIVER_READY = 'driver ready',
 	SCAN_DONE = 'scan done',
 	DRIVER_FAILED = 'driver failed',
@@ -1220,6 +1226,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// extend options with hidden `options`
 			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
+				allowBootloaderOnly: this.cfg.allowBootloaderOnly || false,
 				storage: {
 					cacheDir: storeDir,
 					deviceConfigPriorityDir:
@@ -1347,6 +1354,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._driver.on(
 					'all nodes ready',
 					this._onScanComplete.bind(this)
+				)
+				this._driver.on(
+					'bootloader ready',
+					this._onBootLoaderReady.bind(this)
 				)
 
 				logger.info(`Connecting to ${this.cfg.port}`)
@@ -2314,6 +2325,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	/**
+	 * Used to trigger an update of controller FW
+	 */
+	async firmwareUpdateOTW(file: FwFile): Promise<boolean> {
+		if (this.driverReady) {
+			try {
+				if (backupManager.backupOnEvent) {
+					this.nvmEvent = 'before_controller_fw_update_otw'
+					await backupManager.backupNvm()
+				}
+				const format = guessFirmwareFileFormat(file.name, file.data)
+				const firmware = extractFirmware(file.data, format)
+				return this.driver.controller.firmwareUpdateOTW(firmware.data)
+			} catch (e) {
+				throw Error(
+					`Unable to extract firmware from file '${file.name}': ${e.message}`
+				)
+			}
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
@@ -2758,6 +2792,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					'statistics updated',
 					this._onControllerStatisticsUpdated.bind(this)
 				)
+				.on(
+					'firmware update progress',
+					this._onControllerFirmwareUpdateProgress.bind(this)
+				)
+				.on(
+					'firmware update finished',
+					this._onControllerFirmwareUpdateFinished.bind(this)
+				)
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -2818,6 +2860,75 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	private _onControllerFirmwareUpdateProgress(
+		progress: ControllerFirmwareUpdateProgress
+	) {
+		const nodeId = this.driver.controller.ownNodeId
+		const node = this.nodes.get(nodeId)
+		if (node) {
+			node.firmwareUpdate = {
+				sentFragments: progress.sentFragments,
+				totalFragments: progress.totalFragments,
+				progress: progress.progress,
+				currentFile: 1,
+				totalFiles: 1,
+			}
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				id: node?.id,
+				firmwareUpdate: node.firmwareUpdate,
+			} as utils.DeepPartial<ZUINode>)
+		}
+
+		this.emit(
+			'event',
+			EventSource.CONTROLLER,
+			'controller firmware update progress',
+			this.zwaveNodeToJSON(this.driver.controller.nodes.get(nodeId)),
+			progress
+		)
+	}
+
+	private _onControllerFirmwareUpdateFinished(
+		result: ControllerFirmwareUpdateResult
+	) {
+		const nodeId = this.driver.controller.ownNodeId
+		const node = this.nodes.get(nodeId)
+		const zwaveNode = this.driver.controller.nodes.get(nodeId)
+
+		if (node) {
+			node.firmwareUpdate = undefined
+
+			this.sendToSocket(socketEvents.nodeUpdated, {
+				id: node?.id,
+				firmwareUpdate: false,
+				firmwareUpdateResult: {
+					success: result.success,
+					status: getEnumMemberName(
+						ControllerFirmwareUpdateStatus,
+						result.status
+					),
+				},
+			})
+		}
+
+		logger.info(
+			`Controller ${zwaveNode.id} firmware update OTW finished ${
+				result.success ? 'successfully' : 'with error'
+			}.\n   Status: ${getEnumMemberName(
+				ControllerFirmwareUpdateStatus,
+				result.status
+			)}. Result: ${result}.`
+		)
+
+		this.emit(
+			'event',
+			EventSource.CONTROLLER,
+			'controller firmware update finished',
+			this.zwaveNodeToJSON(zwaveNode),
+			result
+		)
+	}
+
 	private _onControllerStatisticsUpdated(stats: ControllerStatistics) {
 		let controllerNode: ZUINode
 		try {
@@ -2845,6 +2956,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
+	}
+
+	private _onBootLoaderReady() {
+		this._updateControllerStatus('Bootloader is READY')
+
+		this.status = ZwaveClientStatus.BOOTLOADER_READY
+
+		logger.info(`Bootloader is READY`)
+
+		this.emit('event', EventSource.DRIVER, 'bootloader ready')
 	}
 
 	private _onScanComplete() {
@@ -4643,10 +4764,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/** Used for testing purposes */
-	private emulateFwUpdate(nodeId: number) {
-		setInterval(() => {
-			const fragmentsPerFile = 100
-			const totalFiles = 3
+	private emulateFwUpdate(
+		nodeId: number,
+		totalFiles = 3,
+		fragmentsPerFile = 100
+	) {
+		const interval = setInterval(() => {
 			const totalFilesFragments = totalFiles * fragmentsPerFile
 			const progress = this.nodes.get(nodeId)?.firmwareUpdate || {
 				totalFiles,
@@ -4664,8 +4787,40 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			if (progress.currentFile > totalFiles) {
-				progress.currentFile = 1
-				progress.sentFragments = 0
+				let api: 'firmwareUpdateOTW' | 'firmwareUpdateOTA'
+				if (this.nodes.get(nodeId).isControllerNode) {
+					api = 'firmwareUpdateOTW'
+					this._onControllerFirmwareUpdateFinished({
+						status: ControllerFirmwareUpdateStatus.OK,
+						success: true,
+					})
+				} else {
+					api = 'firmwareUpdateOTA'
+					this._onNodeFirmwareUpdateFinished(
+						this.driver.controller.nodes.get(nodeId),
+						FirmwareUpdateStatus.OK_NoRestart,
+						1000,
+						{
+							reInterview: false,
+							status: FirmwareUpdateStatus.OK_NoRestart,
+							success: true,
+							waitTime: 1000,
+						}
+					)
+				}
+
+				const result = {
+					success: true,
+					message: 'Firmware update finished',
+					result: true,
+					api,
+					args: [],
+				}
+
+				this.socket.emit(socketEvents.api, result)
+
+				clearInterval(interval)
+				return
 			}
 
 			progress.progress = Math.round(
@@ -4675,12 +4830,33 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					totalFilesFragments
 			)
 
-			this._onNodeFirmwareUpdateProgress(
-				this.driver.controller.nodes.get(nodeId),
-				progress.sentFragments,
-				progress.totalFragments,
-				progress
-			)
+			if (this.nodes.get(nodeId).isControllerNode) {
+				// emulate a ping to another node
+				Array.from(this.driver.controller.nodes.entries())[1][1]
+					.ping()
+					.catch(() => {
+						//noop
+					})
+				this._onControllerFirmwareUpdateProgress({
+					sentFragments: progress.sentFragments,
+					totalFragments: progress.totalFragments,
+					progress: progress.progress,
+				})
+			} else {
+				// emulate a ping to node
+				this.driver.controller.nodes
+					.get(nodeId)
+					.ping()
+					.catch(() => {
+						//noop
+					})
+				this._onNodeFirmwareUpdateProgress(
+					this.driver.controller.nodes.get(nodeId),
+					progress.sentFragments,
+					progress.totalFragments,
+					progress
+				)
+			}
 		}, 1000)
 	}
 }

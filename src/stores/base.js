@@ -9,6 +9,7 @@ const useBaseStore = defineStore('base', {
 	state: () => ({
 		auth: undefined,
 		nodesManagerOpen: false,
+		controllerId: undefined,
 		serial_ports: [],
 		scales: [],
 		nodes: [],
@@ -16,6 +17,7 @@ const useBaseStore = defineStore('base', {
 		user: {},
 		zwave: {
 			port: '/dev/zwave',
+			allowBootloaderOnly: false,
 			commandsTimeout: 30,
 			logLevel: 'debug',
 			logEnabled: true,
@@ -87,6 +89,11 @@ const useBaseStore = defineStore('base', {
 			navTabs: settings.load('navTabs', false),
 		},
 	}),
+	getters: {
+		controllerNode() {
+			return this.controllerId ? this.getNode(this.controllerId) : null
+		},
+	},
 	actions: {
 		getNode(id) {
 			if (typeof id === 'string') {
@@ -189,6 +196,10 @@ const useBaseStore = defineStore('base', {
 			// prevent empty stats on startup
 			if (!n.statistics) {
 				n.statistics = false
+			}
+
+			if (n.isControllerNode) {
+				this.controllerId = n.id
 			}
 
 			if (index >= 0) {

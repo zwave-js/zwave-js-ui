@@ -607,6 +607,16 @@
 									</v-row>
 									<v-col cols="12" sm="6">
 										<v-switch
+											hint="Enable this to start driver in bootloader only mode, useful to recover sticks when an FW upgrade fails. When this is enabled stick will NOT be able to communicate with the network."
+											persistent-hint
+											label="Bootloader only"
+											v-model="
+												newZwave.allowBootloaderOnly
+											"
+										></v-switch>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-switch
 											hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"
 											persistent-hint
 											label="Enable statistics"
@@ -1701,7 +1711,7 @@ export default {
 							label: 'Code',
 							default: item
 								? item.code
-								: '// Example:\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();',
+								: '// Example:\n// const { logger, zwaveClient, require } = this\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();\n// logger.info(`Node ${node.id} is ready: ${node.ready}`);',
 							rules: [this.rules.required],
 							hint: `Write the function here. The only arg is:
                     <code>driver</code>. The function is <code>async</code>.`,
