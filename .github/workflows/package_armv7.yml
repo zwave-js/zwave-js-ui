@@ -10,13 +10,16 @@ jobs:
   build:
     name: Build package and attach to release
     runs-on: ARM64
+    strategy:
+      matrix:
+        node-version: [16.16.0] # this must be fixed, when changes it will take a lot to re-build nodejs sources
     steps:
       - uses: actions/checkout@v3
 
       - name: Use Node.js 16
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: ${{ matrix.node-version }}
           cache: "yarn"
 
       - name: Install and pre-build
@@ -30,7 +33,7 @@ jobs:
         with:
           path: |
             ~/.cache/pkg
-          key: ${{ runner.os }}-pkg-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-pkg-${{ matrix.node-version }}
       
       - uses: uraimo/run-on-arch-action@v2
         name: Package
