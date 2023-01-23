@@ -2901,6 +2901,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.nodeUpdated, {
 				id: node?.id,
 				firmwareUpdate: false,
+				firmwareUpdateResult: {
+					success: result.success,
+					status: getEnumMemberName(
+						ControllerFirmwareUpdateStatus,
+						result.status
+					),
+				},
 			})
 		}
 

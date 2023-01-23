@@ -693,12 +693,7 @@ export default {
 						this.showSnackbar('NVM restore DONE', 'success')
 						break
 					case 'firmwareUpdateOTW': {
-						const { result } = data
-						this.showSnackbar(
-							`Controller firmware update ` +
-								(result ? 'DONE' : 'FAILED'),
-							result ? 'success' : 'error'
-						)
+						// handled in App.vue
 						break
 					}
 					default:

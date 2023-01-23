@@ -1,18 +1,31 @@
 <template>
-	<v-dialog v-model="value" persistent width="500">
+	<v-dialog v-model="value" :persistent="!ended" width="500">
 		<v-card>
 			<v-card-title v-if="title">
 				<span class="headline">{{ title }}</span>
 			</v-card-title>
+			<v-btn
+				v-if="ended"
+				icon
+				x-small
+				@click="$emit('input', false)"
+				style="position: absolute; right: 5px; top: 5px"
+			>
+				<v-icon>close</v-icon>
+			</v-btn>
 			<v-card-text :class="{ 'pt-5': !title }" class="text-center">
-				{{ text }}
-				<v-progress-linear
-					:value="progress"
-					:indeterminate="progress === -1"
-					class="mt-1"
-				>
-				</v-progress-linear>
-				<span v-if="progress !== -1">{{ progress }}%</span>
+				<v-col class="pa-0">
+					<p v-html="text" class="ma-0"></p>
+					<div v-if="!ended">
+						<v-progress-linear
+							:value="progress"
+							:indeterminate="indeterminate"
+							class="mt-1"
+						>
+						</v-progress-linear>
+						<span>{{ progress }}%</span>
+					</div>
+				</v-col>
 			</v-card-text>
 		</v-card>
 	</v-dialog>
@@ -36,6 +49,15 @@ export default {
 		progress: {
 			type: Number,
 			default: -1,
+		},
+		indeterminate: {
+			type: Boolean,
+			default: false,
+		},
+	},
+	computed: {
+		ended() {
+			return this.progress === 100 || this.progress === -1
 		},
 	},
 }
