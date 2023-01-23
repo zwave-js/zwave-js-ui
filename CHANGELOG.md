@@ -1,5 +1,25 @@
 
 
+# [8.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.7.0...v8.8.0) (2023-01-23)
+
+
+### Bug Fixes
+
+* **mqtt:** don't send `lastActive` from controller node ([fe4a377](https://github.com/zwave-js/zwave-js-ui/commit/fe4a377f49169794620456d5fbe8e2c268000257))
+* **ui:** checkbox in columns not working ([26c423e](https://github.com/zwave-js/zwave-js-ui/commit/26c423e17d0b7b913e4d78eab115bc79069e5064)), closes [#2890](https://github.com/zwave-js/zwave-js-ui/issues/2890)
+* **ui:** doubled scrollbars dimensions ([dda1dd4](https://github.com/zwave-js/zwave-js-ui/commit/dda1dd48e0b2668795a606de4aebdccb848f71cc)), closes [#2899](https://github.com/zwave-js/zwave-js-ui/issues/2899)
+* **ui:** hide inclusion stopped alert on grant security classes ([2dee8de](https://github.com/zwave-js/zwave-js-ui/commit/2dee8de5dd41e4230c101fc743fa056755b5b7c7))
+
+
+### Features
+
+* allow to parse pre-filled dsk qr ([#2885](https://github.com/zwave-js/zwave-js-ui/issues/2885)) ([a6a9e52](https://github.com/zwave-js/zwave-js-ui/commit/a6a9e523ec45791cd901535e99bc9fbf194d61bb))
+* bump zwave-js@10.4.0 ([87e594c](https://github.com/zwave-js/zwave-js-ui/commit/87e594c9f9716fd22c9da03d6ce4ec1ea791c9f3))
+* **mqtt:** add node `lastActive` topic ([#2901](https://github.com/zwave-js/zwave-js-ui/issues/2901)) ([831df1f](https://github.com/zwave-js/zwave-js-ui/commit/831df1f7374a4ab182f29f1bfc8e46b64df6cc03))
+* support for max files zwave setting ([#2880](https://github.com/zwave-js/zwave-js-ui/issues/2880)) ([87333e9](https://github.com/zwave-js/zwave-js-ui/commit/87333e92fd27b5d170ed89af94bb09718603a02a))
+* support otw update ([#2886](https://github.com/zwave-js/zwave-js-ui/issues/2886)) ([999d863](https://github.com/zwave-js/zwave-js-ui/commit/999d863ca12f33a0278ecdb4350d2a336e4be85a))
+* **ui:** allow to run driver function without closing dialog ([07d0c38](https://github.com/zwave-js/zwave-js-ui/commit/07d0c38dfe1c868672e3d00c50a21d64460d027f)), closes [#2889](https://github.com/zwave-js/zwave-js-ui/issues/2889)
+
 # [8.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.3...v8.7.0) (2023-01-16)
 
 
