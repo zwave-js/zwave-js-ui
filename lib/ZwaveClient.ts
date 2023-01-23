@@ -2945,7 +2945,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
 				controllerNode.lastActive = Date.now()
-				this.emit('nodeLastActive', controllerNode)
 			}
 
 			this.sendToSocket(socketEvents.statistics, {
