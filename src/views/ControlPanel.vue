@@ -140,12 +140,9 @@ export default {
 		StatisticsCard,
 	},
 	computed: {
-		...mapState(useBaseStore, ['nodes', 'zwave']),
+		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
-		},
-		controllerNode() {
-			return this.nodes.find((n) => n.isControllerNode)
 		},
 		statisticsOpeningIndicator() {
 			return this.showControllerStatistics
@@ -439,6 +436,15 @@ export default {
 								data: buffer,
 							},
 						]
+						const store = useBaseStore()
+
+						// start the progress bar
+						store.initNode({
+							id: nodeId,
+							firmwareUpdate: {
+								progress: 0,
+							},
+						})
 					} catch (error) {
 						this.showSnackbar('Error reading file', 'error')
 						return
@@ -703,10 +709,26 @@ export default {
 						)
 				}
 			} else {
-				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message,
-					'error'
-				)
+				if (data.api === 'firmwareUpdateOTW') {
+					if (this.controllerNode.firmwareUpdate) {
+						useBaseStore().initNode({
+							id: this.controllerNode.id,
+							firmwareUpdate: false,
+							firmwareUpdateResult: {
+								success: false,
+								status: data.message,
+							},
+						})
+					}
+				} else {
+					this.showSnackbar(
+						'Error while calling api ' +
+							data.api +
+							': ' +
+							data.message,
+						'error'
+					)
+				}
 			}
 		},
 		bindEvent(eventName, handler) {

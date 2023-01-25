@@ -530,6 +530,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
+	private _lockOTWUpdates: boolean
 
 	private nvmEvent: string
 
@@ -2330,6 +2331,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async firmwareUpdateOTW(file: FwFile): Promise<boolean> {
 		if (this.driverReady) {
+			if (this._lockOTWUpdates) {
+				throw Error('Firmware update already in progress')
+			}
+
+			this._lockOTWUpdates = true
 			try {
 				if (backupManager.backupOnEvent) {
 					this.nvmEvent = 'before_controller_fw_update_otw'
@@ -2337,8 +2343,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 				const format = guessFirmwareFileFormat(file.name, file.data)
 				const firmware = extractFirmware(file.data, format)
-				return this.driver.controller.firmwareUpdateOTW(firmware.data)
+				const result = await this.driver.controller.firmwareUpdateOTW(
+					firmware.data
+				)
+				this._lockOTWUpdates = false
+				return result
 			} catch (e) {
+				this._lockOTWUpdates = false
 				throw Error(
 					`Unable to extract firmware from file '${file.name}': ${e.message}`
 				)

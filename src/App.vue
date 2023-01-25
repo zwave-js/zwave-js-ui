@@ -302,6 +302,7 @@
 			:progress="loaderProgress"
 			:title="loaderTitle"
 			:text="loaderText"
+			:indeterminate="loaderIndeterminate"
 		></LoaderDialog>
 
 		<v-snackbars
@@ -416,12 +417,12 @@ export default {
 					this.dialogLoader = true
 				}
 				this.loaderProgress = node.firmwareUpdate.progress
+				this.loaderIndeterminate = this.loaderProgress === 0
 			} else if (node.firmwareUpdateResult) {
 				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
 				this.loaderProgress = -1
 				this.loaderTitle = ''
 				const result = node.firmwareUpdateResult
-				delete node.firmwareUpdateResult
 
 				this.loaderText = `<span style="white-space: break-spaces;" class="${
 					result.success ? 'success' : 'error'
@@ -440,6 +441,7 @@ export default {
 			loaderTitle: '',
 			loaderText: '',
 			loaderProgress: -1,
+			loaderIndeterminate: false,
 			password: {},
 			menu: [
 				{
