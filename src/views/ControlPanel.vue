@@ -710,6 +710,8 @@ export default {
 				}
 			} else {
 				if (data.api === 'firmwareUpdateOTW') {
+					// this could happen when the update fails before start
+					// used to close the firmware update dialog
 					if (this.controllerNode.firmwareUpdate) {
 						useBaseStore().initNode({
 							id: this.controllerNode.id,
