@@ -122,6 +122,10 @@ const useBaseStore = defineStore('base', {
 			this.appInfo.controllerStatus = data
 		},
 		setAppInfo(data) {
+			// new controller has been plugged in
+			if (this.appInfo?.homeid && this.appInfo.homeid !== data.homeid) {
+				this.resetNodes()
+			}
 			this.appInfo.homeid = data.homeid
 			this.appInfo.homeHex = data.name
 			this.appInfo.appVersion = data.appVersion
@@ -208,6 +212,10 @@ const useBaseStore = defineStore('base', {
 				this.nodes.push(n)
 				this.nodesMap.set(n.id, this.nodes.length - 1)
 			}
+		},
+		resetNodes() {
+			this.nodes = []
+			this.nodesMap = new Map()
 		},
 		initNodes(nodes) {
 			for (let i = 0; i < nodes.length; i++) {

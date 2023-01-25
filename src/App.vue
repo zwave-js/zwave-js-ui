@@ -409,6 +409,8 @@ export default {
 			this.startSocket()
 		},
 		controllerNode(node) {
+			if (!node) return
+
 			if (node.firmwareUpdate) {
 				if (!this.dialogLoader) {
 					this.loaderTitle = ''
@@ -854,13 +856,14 @@ export default {
 			})
 
 			this.socket.on(socketEvents.init, (data) => {
-				// convert node values in array
-				this.initNodes(data.nodes)
+				// must be run before initNodes
+				this.setAppInfo(data.info)
 				this.setControllerStatus({
 					error: data.error,
 					status: data.cntStatus,
 				})
-				this.setAppInfo(data.info)
+				// convert node values in array
+				this.initNodes(data.nodes)
 			})
 
 			this.socket.on(socketEvents.info, (data) => {
