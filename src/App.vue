@@ -416,7 +416,8 @@ export default {
 					this.dialogLoader = true
 				}
 				this.loaderProgress = node.firmwareUpdate.progress
-			} else if (this.dialogLoader) {
+			} else {
+				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
 				this.loaderProgress = -1
 				this.loaderTitle = ''
 				const result = node.firmwareUpdateResult
