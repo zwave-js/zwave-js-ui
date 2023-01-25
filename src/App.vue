@@ -424,6 +424,11 @@ export default {
 				this.loaderTitle = ''
 				const result = node.firmwareUpdateResult
 
+				useBaseStore().initNode({
+					id: node.id,
+					firmwareUpdateResult: false,
+				})
+
 				this.loaderText = `<span style="white-space: break-spaces;" class="${
 					result.success ? 'success' : 'error'
 				}--text">Controller firmware update finished ${
