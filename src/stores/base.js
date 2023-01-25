@@ -122,10 +122,6 @@ const useBaseStore = defineStore('base', {
 			this.appInfo.controllerStatus = data
 		},
 		setAppInfo(data) {
-			// new controller has been plugged in
-			if (this.appInfo?.homeid && this.appInfo.homeid !== data.homeid) {
-				this.resetNodes()
-			}
 			this.appInfo.homeid = data.homeid
 			this.appInfo.homeHex = data.name
 			this.appInfo.appVersion = data.appVersion
@@ -214,10 +210,12 @@ const useBaseStore = defineStore('base', {
 			}
 		},
 		resetNodes() {
-			this.nodes = []
+			// using this.nodes = [] doesn't work for reactivity
+			this.nodes.splice(0, this.nodes.length)
 			this.nodesMap = new Map()
 		},
 		initNodes(nodes) {
+			this.resetNodes()
 			for (let i = 0; i < nodes.length; i++) {
 				this.initNode(nodes[i])
 			}

@@ -597,13 +597,7 @@ function setupSocket(server: HttpServer) {
 
 	socketManager.on(inboundEvents.init, (socket) => {
 		if (gw.zwave) {
-			const payload = {
-				nodes: gw.zwave.getNodes(),
-				info: gw.zwave.getInfo(),
-				error: gw.zwave.error,
-				cntStatus: gw.zwave.cntStatus,
-			}
-			socket.emit(socketEvents.init, payload)
+			socket.emit(socketEvents.init, gw.zwave.getState())
 		}
 	})
 

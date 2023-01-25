@@ -1292,7 +1292,6 @@ import { parse } from 'native-url'
 import { wait, copy } from '../lib/utils'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
-import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
@@ -1806,7 +1805,6 @@ export default {
 				} catch (error) {
 					console.log(error)
 				}
-				this.socket.emit(socketActions.init, true)
 			} else {
 				this.showSnackbar(
 					'Your configuration contains errors, fix it',
