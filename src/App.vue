@@ -432,7 +432,9 @@ export default {
 				this.loaderText = `<span style="white-space: break-spaces;" class="${
 					result.success ? 'success' : 'error'
 				}--text">Controller firmware update finished ${
-					result.success ? 'successfully' : 'with error'
+					result.success
+						? 'successfully. It may take a few seconds for the stick to restart.'
+						: 'with error'
 				}.\n Status: ${result.status}</span>`
 			}
 		},
