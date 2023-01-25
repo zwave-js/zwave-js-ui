@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags-ignore: # prevents to run duplicated on releases
+      - '**'
   release:
     types:
       - created
