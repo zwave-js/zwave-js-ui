@@ -1425,6 +1425,10 @@ async function gracefuShutdown() {
 	return process.exit()
 }
 
+process.on('unhandledRejection', (reason) => {
+	logger.error(`Unhandled Rejection, reason: ${reason}`)
+})
+
 for (const signal of ['SIGINT', 'SIGTERM']) {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	process.once(signal as NodeJS.Signals, gracefuShutdown)
