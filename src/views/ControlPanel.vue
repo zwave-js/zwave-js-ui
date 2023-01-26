@@ -268,6 +268,18 @@ export default {
 					icon: 'update',
 					desc: "Backup/Restore controller's NVM (Non Volatile Memory)",
 				},
+				{
+					text: 'Firmware update OTW',
+					options: [
+						{
+							name: 'Update',
+							action: 'firmwareUpdateOTW',
+						},
+					],
+					icon: 'update',
+					color: 'red',
+					desc: 'Perform a firmware update OTW (Over The Wire)',
+				},
 			],
 			rules: {
 				required: (value) => {
@@ -440,7 +452,7 @@ export default {
 
 						// start the progress bar
 						store.initNode({
-							id: nodeId,
+							id: this.controllerNode.id,
 							firmwareUpdate: {
 								progress: 0,
 							},
