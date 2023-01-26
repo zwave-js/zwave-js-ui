@@ -1,5 +1,22 @@
 
 
+## [8.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.0...v8.8.1) (2023-01-26)
+
+
+### Bug Fixes
+
+* catch unhandled rejections ([69f2709](https://github.com/zwave-js/zwave-js-ui/commit/69f2709f36baa753c4ae4231ac053a0e404bff65))
+* **ui:** always show OTW result ([a72d467](https://github.com/zwave-js/zwave-js-ui/commit/a72d46748639f375f009a846c049c308f41ed92e))
+* **ui:** move otw update to main advanced actions ([557cec1](https://github.com/zwave-js/zwave-js-ui/commit/557cec14a81bd8de823274a1d9ebaba31b5566bb))
+* **ui:** otw update edge cases and ui sync ([#2911](https://github.com/zwave-js/zwave-js-ui/issues/2911)) ([f0b175e](https://github.com/zwave-js/zwave-js-ui/commit/f0b175e86b1b2a21f14fff54d121c88021459699))
+* **ui:** prevent showing empty controller update result ([8ef4ab7](https://github.com/zwave-js/zwave-js-ui/commit/8ef4ab71c6b6df4cbcd82a4ff5e831c6d4836dff))
+* **ui:** show different color for S0 security ([85b0371](https://github.com/zwave-js/zwave-js-ui/commit/85b0371c617ede5debbac7aa4d54468ebe8058ca)), closes [#2894](https://github.com/zwave-js/zwave-js-ui/issues/2894)
+
+
+### Features
+
+* bump zwave-js@10.5.0 ([#2913](https://github.com/zwave-js/zwave-js-ui/issues/2913)) ([bf7d623](https://github.com/zwave-js/zwave-js-ui/commit/bf7d623e2535dcfc2cc37cb0f771756bacece916))
+
 # [8.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.7.0...v8.8.0) (2023-01-23)
 
 
