@@ -1301,6 +1301,12 @@ export default {
 		DialogGatewayValue,
 		fileInput,
 	},
+	props: {
+		socket: {
+			type: Object,
+			required: true,
+		},
+	},
 	computed: {
 		internalDarkMode: {
 			get() {
@@ -1786,6 +1792,7 @@ export default {
 			if (this.$refs.form_settings.validate()) {
 				try {
 					this.saving = true
+					useBaseStore().resetNodes()
 					const data = await ConfigApis.updateConfig(
 						this.getSettingsJSON()
 					)

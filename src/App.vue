@@ -302,6 +302,7 @@
 			:progress="loaderProgress"
 			:title="loaderTitle"
 			:text="loaderText"
+			:indeterminate="loaderIndeterminate"
 		></LoaderDialog>
 
 		<v-snackbars
@@ -408,6 +409,8 @@ export default {
 			this.startSocket()
 		},
 		controllerNode(node) {
+			if (!node) return
+
 			if (node.firmwareUpdate) {
 				if (!this.dialogLoader) {
 					this.loaderTitle = ''
@@ -416,17 +419,24 @@ export default {
 					this.dialogLoader = true
 				}
 				this.loaderProgress = node.firmwareUpdate.progress
+				this.loaderIndeterminate = this.loaderProgress === 0
 			} else if (node.firmwareUpdateResult) {
 				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
 				this.loaderProgress = -1
 				this.loaderTitle = ''
 				const result = node.firmwareUpdateResult
-				delete node.firmwareUpdateResult
+
+				useBaseStore().initNode({
+					id: node.id,
+					firmwareUpdateResult: false,
+				})
 
 				this.loaderText = `<span style="white-space: break-spaces;" class="${
 					result.success ? 'success' : 'error'
 				}--text">Controller firmware update finished ${
-					result.success ? 'successfully' : 'with error'
+					result.success
+						? 'successfully. It may take a few seconds for the stick to restart.'
+						: 'with error'
 				}.\n Status: ${result.status}</span>`
 			}
 		},
@@ -440,6 +450,7 @@ export default {
 			loaderTitle: '',
 			loaderText: '',
 			loaderProgress: -1,
+			loaderIndeterminate: false,
 			password: {},
 			menu: [
 				{
@@ -845,13 +856,14 @@ export default {
 			})
 
 			this.socket.on(socketEvents.init, (data) => {
-				// convert node values in array
-				this.initNodes(data.nodes)
+				// must be run before initNodes
+				this.setAppInfo(data.info)
 				this.setControllerStatus({
 					error: data.error,
 					status: data.cntStatus,
 				})
-				this.setAppInfo(data.info)
+				// convert node values in array
+				this.initNodes(data.nodes)
 			})
 
 			this.socket.on(socketEvents.info, (data) => {

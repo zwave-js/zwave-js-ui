@@ -73,6 +73,7 @@ import {
 	ControllerFirmwareUpdateProgress,
 	ControllerFirmwareUpdateResult,
 	ControllerFirmwareUpdateStatus,
+	DoorLockLoggingEventType,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -530,6 +531,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
+	private _lockOTWUpdates: boolean
 
 	private nvmEvent: string
 
@@ -884,6 +886,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		return status
+	}
+
+	/** Used to get the general state of the client. Sent to socket on connection */
+	getState() {
+		return {
+			nodes: this.getNodes(),
+			info: this.getInfo(),
+			error: this.error,
+			cntStatus: this.cntStatus,
+		}
 	}
 
 	/**
@@ -2330,6 +2342,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	async firmwareUpdateOTW(file: FwFile): Promise<boolean> {
 		if (this.driverReady) {
+			if (this._lockOTWUpdates) {
+				throw Error('Firmware update already in progress')
+			}
+
+			this._lockOTWUpdates = true
 			try {
 				if (backupManager.backupOnEvent) {
 					this.nvmEvent = 'before_controller_fw_update_otw'
@@ -2337,8 +2354,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 				const format = guessFirmwareFileFormat(file.name, file.data)
 				const firmware = extractFirmware(file.data, format)
-				return this.driver.controller.firmwareUpdateOTW(firmware.data)
+				const result = await this.driver.controller.firmwareUpdateOTW(
+					firmware.data
+				)
+				this._lockOTWUpdates = false
+				return result
 			} catch (e) {
+				this._lockOTWUpdates = false
 				throw Error(
 					`Unable to extract firmware from file '${file.name}': ${e.message}`
 				)
@@ -2751,7 +2773,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ---------- DRIVER EVENTS -------------------------------------
 
-	private _onDriverReady() {
+	private async _onDriverReady() {
 		/*
     Now the controller interview is complete. This means we know which nodes
     are included in the network, but they might not be ready yet.
@@ -2839,6 +2861,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
+
+		const sockets = await this.socket.fetchSockets()
+
+		for (const socket of sockets) {
+			// force send init to all connected sockets
+			socket.emit(socketEvents.init, this.getState())
+		}
 	}
 
 	private async _onDriverError(

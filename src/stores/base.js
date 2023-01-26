@@ -209,7 +209,13 @@ const useBaseStore = defineStore('base', {
 				this.nodesMap.set(n.id, this.nodes.length - 1)
 			}
 		},
+		resetNodes() {
+			// using this.nodes = [] doesn't work for reactivity
+			this.nodes.splice(0, this.nodes.length)
+			this.nodesMap = new Map()
+		},
 		initNodes(nodes) {
+			this.resetNodes()
 			for (let i = 0; i < nodes.length; i++) {
 				this.initNode(nodes[i])
 			}
