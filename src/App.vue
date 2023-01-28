@@ -297,6 +297,14 @@
 
 		<Confirm ref="confirm"></Confirm>
 
+		<LoaderDialog
+			v-model="dialogLoader"
+			:progress="loaderProgress"
+			:title="loaderTitle"
+			:text="loaderText"
+			:indeterminate="loaderIndeterminate"
+		></LoaderDialog>
+
 		<v-snackbars
 			:objects.sync="messages"
 			:timeout="5000"
@@ -359,6 +367,8 @@ import VSnackbars from 'v-snackbars'
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import PasswordDialog from '@/components/dialogs/Password'
+import LoaderDialog from '@/components/dialogs/DialogLoader'
+
 import { Routes } from '@/router'
 
 import { mapActions, mapState } from 'pinia'
@@ -372,6 +382,7 @@ import {
 export default {
 	components: {
 		PasswordDialog,
+		LoaderDialog,
 		VSnackbars,
 		Confirm,
 	},
@@ -382,6 +393,7 @@ export default {
 			'auth',
 			'appInfo',
 			'nodesManagerOpen',
+			'controllerNode',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
@@ -396,12 +408,49 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
+		controllerNode(node) {
+			if (!node) return
+
+			if (node.firmwareUpdate) {
+				if (!this.dialogLoader) {
+					this.loaderTitle = ''
+					this.loaderText =
+						'Updating controller firmware, please wait...'
+					this.dialogLoader = true
+				}
+				this.loaderProgress = node.firmwareUpdate.progress
+				this.loaderIndeterminate = this.loaderProgress === 0
+			} else if (node.firmwareUpdateResult) {
+				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
+				this.loaderProgress = -1
+				this.loaderTitle = ''
+				const result = node.firmwareUpdateResult
+
+				useBaseStore().initNode({
+					id: node.id,
+					firmwareUpdateResult: false,
+				})
+
+				this.loaderText = `<span style="white-space: break-spaces;" class="${
+					result.success ? 'success' : 'error'
+				}--text">Controller firmware update finished ${
+					result.success
+						? 'successfully. It may take a few seconds for the stick to restart.'
+						: 'with error'
+				}.\n Status: ${result.status}</span>`
+			}
+		},
 	},
 	data() {
 		return {
 			socket: null,
 			error: false,
 			dialog_password: false,
+			dialogLoader: false,
+			loaderTitle: '',
+			loaderText: '',
+			loaderProgress: -1,
+			loaderIndeterminate: false,
 			password: {},
 			menu: [
 				{
@@ -807,13 +856,14 @@ export default {
 			})
 
 			this.socket.on(socketEvents.init, (data) => {
-				// convert node values in array
-				this.initNodes(data.nodes)
+				// must be run before initNodes
+				this.setAppInfo(data.info)
 				this.setControllerStatus({
 					error: data.error,
 					status: data.cntStatus,
 				})
-				this.setAppInfo(data.info)
+				// convert node values in array
+				this.initNodes(data.nodes)
 			})
 
 			this.socket.on(socketEvents.info, (data) => {

@@ -37,7 +37,10 @@
 						</template>
 						<v-card>
 							<v-card-text>
-								<draggable v-model="managedNodes.tableColumns">
+								<draggable
+									v-model="managedNodes.tableColumns"
+									handle=".handle"
+								>
 									<v-checkbox
 										v-for="col in managedNodes.tableColumns"
 										:key="col.name"
@@ -50,8 +53,15 @@
 										"
 										:input-value="col.visible"
 										@change="col.visible = !!$event"
-										prepend-icon="drag_indicator"
-									></v-checkbox>
+									>
+										<template v-slot:prepend>
+											<v-icon
+												class="handle"
+												style="cursor: move"
+												>drag_indicator</v-icon
+											>
+										</template>
+									</v-checkbox>
 								</draggable>
 							</v-card-text>
 							<v-card-actions>
@@ -230,10 +240,10 @@
 		</template>
 		<template v-slot:[`item.firmwareVersion`]="{ item }">
 			<div style="text-align: center">
-				<div v-if="item.firmwareUpdate">
+				<div v-if="item.firmwareUpdate && !item.isControllerNode">
 					<v-progress-circular
 						:value="item.firmwareUpdate.progress"
-						size="40"
+						size="50"
 						class="mt-1"
 						color="primary"
 					>

@@ -9,6 +9,7 @@ const useBaseStore = defineStore('base', {
 	state: () => ({
 		auth: undefined,
 		nodesManagerOpen: false,
+		controllerId: undefined,
 		serial_ports: [],
 		scales: [],
 		nodes: [],
@@ -16,6 +17,7 @@ const useBaseStore = defineStore('base', {
 		user: {},
 		zwave: {
 			port: '/dev/zwave',
+			allowBootloaderOnly: false,
 			commandsTimeout: 30,
 			logLevel: 'debug',
 			logEnabled: true,
@@ -27,6 +29,7 @@ const useBaseStore = defineStore('base', {
 			},
 			deviceConfigPriorityDir: '',
 			logToFile: true,
+			maxFiles: 7,
 			serverEnabled: false,
 			serverServiceDiscoveryDisabled: false,
 			enableSoftReset: true,
@@ -71,6 +74,7 @@ const useBaseStore = defineStore('base', {
 			logLevel: 'debug',
 			logToFile: false,
 			values: [],
+			jobs: [],
 		},
 		appInfo: {
 			homeid: '',
@@ -85,6 +89,11 @@ const useBaseStore = defineStore('base', {
 			navTabs: settings.load('navTabs', false),
 		},
 	}),
+	getters: {
+		controllerNode() {
+			return this.controllerId ? this.getNode(this.controllerId) : null
+		},
+	},
 	actions: {
 		getNode(id) {
 			if (typeof id === 'string') {
@@ -189,6 +198,10 @@ const useBaseStore = defineStore('base', {
 				n.statistics = false
 			}
 
+			if (n.isControllerNode) {
+				this.controllerId = n.id
+			}
+
 			if (index >= 0) {
 				this.nodes.splice(index, 1, n)
 			} else {
@@ -196,7 +209,13 @@ const useBaseStore = defineStore('base', {
 				this.nodesMap.set(n.id, this.nodes.length - 1)
 			}
 		},
+		resetNodes() {
+			// using this.nodes = [] doesn't work for reactivity
+			this.nodes.splice(0, this.nodes.length)
+			this.nodesMap = new Map()
+		},
 		initNodes(nodes) {
+			this.resetNodes()
 			for (let i = 0; i < nodes.length; i++) {
 				this.initNode(nodes[i])
 			}

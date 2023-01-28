@@ -1,6 +1,6 @@
 {
   "name": "zwave-js-ui",
-  "version": "8.6.2",
+  "version": "8.8.1",
   "bin": "server/bin/www.js",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
@@ -122,7 +122,7 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@kvaster/zwavejs-prom": "^0.0.2",
     "@mdi/js": "7.0.96",
-    "@zwave-js/server": "^1.24.1",
+    "@zwave-js/server": "^1.25.0",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-1",
     "ansi_up": "^5.1.0",
     "app-root-path": "^3.0.0",
@@ -169,7 +169,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.6.8",
     "winston": "^3.3.3",
-    "zwave-js": "^10.3.1"
+    "zwave-js": "^10.5.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.18.10",

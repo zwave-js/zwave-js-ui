@@ -89,7 +89,7 @@ export default {
 						if (node.isSecure === true) {
 							v.icon = mdiCheckCircle
 							v.iconStyle =
-								node.security === 'LOW SECURITY'
+								node.security === 'S0_Legacy'
 									? `color: ${colors.orange.base}`
 									: `color: ${colors.green.base}`
 							v.description = node.security

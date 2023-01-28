@@ -3,8 +3,8 @@
 }
 
 ::-webkit-scrollbar {
-  height: 5px;
-  width: 4px;
+  height: 10px;
+  width: 8px;
   background: rgba(0, 0, 0, 0.233);
   padding-right: 10;
 }

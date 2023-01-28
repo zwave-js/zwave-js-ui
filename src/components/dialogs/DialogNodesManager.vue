@@ -216,7 +216,9 @@
 											}}</strong
 											>. Please check your zwave settings.
 										</v-alert>
-										<v-radio :value="0">
+										<v-radio
+											:value="InclusionStrategy.Default"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -242,7 +244,11 @@
 											hint="Prefer S0 over no encryption"
 											persistent-hint
 										></v-checkbox>
-										<v-radio :value="1">
+										<v-radio
+											:value="
+												InclusionStrategy.SmartStart
+											"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -264,7 +270,11 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="3">
+										<v-radio
+											:value="
+												InclusionStrategy.Security_S0
+											"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -282,7 +292,9 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="2">
+										<v-radio
+											:value="InclusionStrategy.Insecure"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon color="error" small
@@ -611,6 +623,8 @@
 
 <script>
 import { mapState } from 'pinia'
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
+
 import { socketEvents } from '@/../server/lib/SocketEvents'
 import {
 	parseSecurityClasses,
@@ -619,6 +633,7 @@ import {
 	validTopic,
 } from '../../lib/utils.js'
 import useBaseStore from '../../stores/base.js'
+import { InclusionStrategy } from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -630,6 +645,7 @@ export default {
 			currentStep: 1,
 			loading: false,
 			validNaming: true,
+			InclusionStrategy,
 			availableSteps: {
 				action: {
 					key: 'action',
@@ -650,7 +666,7 @@ export default {
 					key: 'inclusionMode',
 					title: 'Inclusion Mode',
 					values: {
-						inclusionMode: 0, //default, smartstart no encryption
+						inclusionMode: InclusionStrategy.Default, //default, smartstart no encryption
 						forceSecurity: false,
 					},
 				},
@@ -658,7 +674,7 @@ export default {
 					key: 'replaceInclusionMode',
 					title: 'Inclusion Mode',
 					values: {
-						inclusionMode: 0, //default, smartstart no encryption
+						inclusionMode: InclusionStrategy.Default, //default, smartstart no encryption
 					},
 				},
 				s2Classes: {
@@ -775,8 +791,9 @@ export default {
 			}, 250)
 		},
 		controllerStatus(status) {
+			if (!status) return
 			this.nvmProgress = 0
-			if (status && status.indexOf('clusion') > 0) {
+			if (status.indexOf('clusion') > 0) {
 				// it could be inclusion is started by the driver, in that case get the current action
 				this.currentAction = /inclusion/i.test(status)
 					? 'Inclusion'
@@ -966,6 +983,11 @@ export default {
 				clientAuth: requested.clientSideAuth || undefined,
 			}
 
+			if (this.waitTimeout) {
+				clearTimeout(this.waitTimeout)
+				this.waitTimeout = null
+			}
+
 			this.loading = false
 			this.alert = false
 
@@ -1008,9 +1030,10 @@ export default {
 				s.key === 'inclusionMode' ||
 				s.key === 'replaceInclusionMode'
 			) {
-				const mode = s.values.inclusionMode
+				let mode = s.values.inclusionMode
+				let dsk
 
-				if (mode === 1) {
+				if (mode === InclusionStrategy.SmartStart) {
 					this.alert = null
 
 					const qrString = await this.$listeners.showConfirm(
@@ -1019,6 +1042,7 @@ export default {
 						'info',
 						{
 							qrScan: true,
+							tryParseDsk: true,
 							canceltext: 'Close',
 							width: 500,
 						}
@@ -1027,9 +1051,17 @@ export default {
 						return
 					}
 
-					this.$emit('apiRequest', 'parseQRCodeString', [qrString])
+					dsk = tryParseDSKFromQRCodeString(qrString)
 
-					return
+					if (!dsk) {
+						this.$emit('apiRequest', 'parseQRCodeString', [
+							qrString,
+						])
+						return
+					} else {
+						// prefilled DSK qr code
+						mode = InclusionStrategy.Security_S2
+					}
 				}
 
 				this.aborted = false
@@ -1051,6 +1083,7 @@ export default {
 						mode,
 						{
 							forceSecurity: s.values.forceSecurity,
+							dsk,
 							...this.nodeProps,
 						},
 					])

@@ -938,6 +938,7 @@ async startInclusion(
 		provisioning?: PlannedProvisioningEntry
 		qrString?: string
 		name?: string
+		dsk?: string
 		location?: string
 	}
 ): Promise<boolean>;
@@ -1193,6 +1194,31 @@ Payload:
 	"args": [
 		nodeId,
 		options
+	]
+}
+```
+
+</details>
+
+#### `firmwareUpdateOTW`
+
+```ts
+async firmwareUpdateOTW(file: FwFile): Promise<boolean>;
+```
+
+Used to trigger an update of controller FW.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/firmwareUpdateOTW/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		file
 	]
 }
 ```
@@ -1869,6 +1895,12 @@ The payload will be in the time-value json format and the value will be `true` w
 `<mqtt_prefix>/<?node_location>/<node_name>/status`
 
 The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`).
+
+### Node Last Active
+
+`<mqtt_prefix>/<?node_location>/<node_name>/lastActive`
+
+The payload will be the timestamp of last time a packet is received by controller from this node.
 
 ### Node information
 

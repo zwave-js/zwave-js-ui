@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags-ignore: # prevents to run duplicated on releases
+      - '**'
   release:
     types:
       - created
@@ -17,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3.4.1
+      - uses: actions/setup-node@v3.6.0
         with:
           node-version: 16
           cache: 'yarn'

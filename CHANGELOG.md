@@ -1,5 +1,64 @@
 
 
+## [8.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.0...v8.8.1) (2023-01-26)
+
+
+### Bug Fixes
+
+* catch unhandled rejections ([69f2709](https://github.com/zwave-js/zwave-js-ui/commit/69f2709f36baa753c4ae4231ac053a0e404bff65))
+* **ui:** always show OTW result ([a72d467](https://github.com/zwave-js/zwave-js-ui/commit/a72d46748639f375f009a846c049c308f41ed92e))
+* **ui:** move otw update to main advanced actions ([557cec1](https://github.com/zwave-js/zwave-js-ui/commit/557cec14a81bd8de823274a1d9ebaba31b5566bb))
+* **ui:** otw update edge cases and ui sync ([#2911](https://github.com/zwave-js/zwave-js-ui/issues/2911)) ([f0b175e](https://github.com/zwave-js/zwave-js-ui/commit/f0b175e86b1b2a21f14fff54d121c88021459699))
+* **ui:** prevent showing empty controller update result ([8ef4ab7](https://github.com/zwave-js/zwave-js-ui/commit/8ef4ab71c6b6df4cbcd82a4ff5e831c6d4836dff))
+* **ui:** show different color for S0 security ([85b0371](https://github.com/zwave-js/zwave-js-ui/commit/85b0371c617ede5debbac7aa4d54468ebe8058ca)), closes [#2894](https://github.com/zwave-js/zwave-js-ui/issues/2894)
+
+
+### Features
+
+* bump zwave-js@10.5.0 ([#2913](https://github.com/zwave-js/zwave-js-ui/issues/2913)) ([bf7d623](https://github.com/zwave-js/zwave-js-ui/commit/bf7d623e2535dcfc2cc37cb0f771756bacece916))
+
+# [8.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.7.0...v8.8.0) (2023-01-23)
+
+
+### Bug Fixes
+
+* **mqtt:** don't send `lastActive` from controller node ([fe4a377](https://github.com/zwave-js/zwave-js-ui/commit/fe4a377f49169794620456d5fbe8e2c268000257))
+* **ui:** checkbox in columns not working ([26c423e](https://github.com/zwave-js/zwave-js-ui/commit/26c423e17d0b7b913e4d78eab115bc79069e5064)), closes [#2890](https://github.com/zwave-js/zwave-js-ui/issues/2890)
+* **ui:** doubled scrollbars dimensions ([dda1dd4](https://github.com/zwave-js/zwave-js-ui/commit/dda1dd48e0b2668795a606de4aebdccb848f71cc)), closes [#2899](https://github.com/zwave-js/zwave-js-ui/issues/2899)
+* **ui:** hide inclusion stopped alert on grant security classes ([2dee8de](https://github.com/zwave-js/zwave-js-ui/commit/2dee8de5dd41e4230c101fc743fa056755b5b7c7))
+
+
+### Features
+
+* allow to parse pre-filled dsk qr ([#2885](https://github.com/zwave-js/zwave-js-ui/issues/2885)) ([a6a9e52](https://github.com/zwave-js/zwave-js-ui/commit/a6a9e523ec45791cd901535e99bc9fbf194d61bb))
+* bump zwave-js@10.4.0 ([87e594c](https://github.com/zwave-js/zwave-js-ui/commit/87e594c9f9716fd22c9da03d6ce4ec1ea791c9f3))
+* **mqtt:** add node `lastActive` topic ([#2901](https://github.com/zwave-js/zwave-js-ui/issues/2901)) ([831df1f](https://github.com/zwave-js/zwave-js-ui/commit/831df1f7374a4ab182f29f1bfc8e46b64df6cc03))
+* support for max files zwave setting ([#2880](https://github.com/zwave-js/zwave-js-ui/issues/2880)) ([87333e9](https://github.com/zwave-js/zwave-js-ui/commit/87333e92fd27b5d170ed89af94bb09718603a02a))
+* support otw update ([#2886](https://github.com/zwave-js/zwave-js-ui/issues/2886)) ([999d863](https://github.com/zwave-js/zwave-js-ui/commit/999d863ca12f33a0278ecdb4350d2a336e4be85a))
+* **ui:** allow to run driver function without closing dialog ([07d0c38](https://github.com/zwave-js/zwave-js-ui/commit/07d0c38dfe1c868672e3d00c50a21d64460d027f)), closes [#2889](https://github.com/zwave-js/zwave-js-ui/issues/2889)
+
+# [8.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.3...v8.7.0) (2023-01-16)
+
+
+### Bug Fixes
+
+* **mqtt:** lock error when persistent store is enabled ([082209b](https://github.com/zwave-js/zwave-js-ui/commit/082209bb6ac84dc8573a13bca28fdfe2b49009e2))
+
+
+### Features
+
+* allow to run scheduled jobs on init ([3d2950c](https://github.com/zwave-js/zwave-js-ui/commit/3d2950c34101a321a1fa027c86f3d4b49219a7e1))
+* scheduled jobs ([#2882](https://github.com/zwave-js/zwave-js-ui/issues/2882)) ([c9cabbb](https://github.com/zwave-js/zwave-js-ui/commit/c9cabbb8c2f3cd1a3c0cb1d3f472951e24d5a53c))
+
+## [8.6.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.2...v8.6.3) (2023-01-10)
+
+
+### Bug Fixes
+
+* **discovery:** errors with electricity device_class and HA 2023.1 ([#2881](https://github.com/zwave-js/zwave-js-ui/issues/2881)) ([402a560](https://github.com/zwave-js/zwave-js-ui/commit/402a5602df583c9327cf7731027fe82780e72f30))
+* improved handling of battery levels updates ([#2860](https://github.com/zwave-js/zwave-js-ui/issues/2860)) ([08f994b](https://github.com/zwave-js/zwave-js-ui/commit/08f994b9003bdfe5638f43b2ca50cf40019c1306)), closes [#2845](https://github.com/zwave-js/zwave-js-ui/issues/2845)
+* **ui:** automatically trim qr strings ([b1572ad](https://github.com/zwave-js/zwave-js-ui/commit/b1572ad4430573767288d183e85cb8203b36fb3b)), closes [#2766](https://github.com/zwave-js/zwave-js-ui/issues/2766)
+
 ## [8.6.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.1...v8.6.2) (2022-12-23)
 
 ## [8.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.6.0...v8.6.1) (2022-12-16)
