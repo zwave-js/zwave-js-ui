@@ -1389,6 +1389,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						// this is already logged by the server but we need this to prevent
 						// unhandled exceptions
 					})
+
+					this.server.on('hard reset', () => {
+						logger.info('Hard reset requested by ZwaveJS Server')
+						this.restart().catch((err) => {
+							logger.error(err)
+						})
+					})
 				}
 
 				if (this.cfg.enableStatistics) {
