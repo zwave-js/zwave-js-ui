@@ -1,5 +1,14 @@
 
 
+## [8.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.1...v8.8.2) (2023-01-29)
+
+
+### Features
+
+* bump zwave-js-server@1.25.0 ([#2917](https://github.com/zwave-js/zwave-js-ui/issues/2917)) ([c391e1a](https://github.com/zwave-js/zwave-js-ui/commit/c391e1a1a76826a5ea7a1a2d7d78457ca360ebfb))
+* bump zwave-js@10.5.4 ([#2919](https://github.com/zwave-js/zwave-js-ui/issues/2919)) ([32f4dc6](https://github.com/zwave-js/zwave-js-ui/commit/32f4dc601a9c61d8546987d4e817c18194410d49))
+* intercept zwave-js server `hard reset` event ([#2879](https://github.com/zwave-js/zwave-js-ui/issues/2879)) ([8501609](https://github.com/zwave-js/zwave-js-ui/commit/8501609007ce8847baf5673ee96f044c6a81a469))
+
 ## [8.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.0...v8.8.1) (2023-01-26)
 
 
