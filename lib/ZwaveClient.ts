@@ -1024,7 +1024,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						this.logNode(
 							zwaveNode,
 							'warn',
-							`Associations: Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
+							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
 						)
 					}
 				}
@@ -1138,7 +1138,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				zwaveNode,
 				'warn',
-				`node not found when calling 'removeAllAssociations'`
+				`Node not found when calling 'removeAllAssociations'`
 			)
 		}
 	}
@@ -1154,7 +1154,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.logNode(
 					zwaveNode,
 					'info',
-					`Associations: Removing Node ${nodeId} from all associations`
+					`Removing Node ${nodeId} from all associations`
 				)
 
 				await this._driver.controller.removeNodeFromAllAssociations(
@@ -1171,7 +1171,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				zwaveNode,
 				'warn',
-				`node not found when calling 'removeNodeFromAllAssociations'`
+				`Node not found when calling 'removeNodeFromAllAssociations'`
 			)
 		}
 	}
@@ -1477,7 +1477,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const nodeId = typeof node === 'number' ? node : node.id
 		logger.log(
 			level,
-			`Node ${utils.padNumber(nodeId, 3)}: ${message}`,
+			`[Node ${utils.padNumber(nodeId, 3)}] ${message}`,
 			...args
 		)
 	}
@@ -3133,7 +3133,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node = this._nodes.get(nodeId)
 		}
 
-		this.logNode(node, 'info', 'found')
+		this.logNode(node, 'info', 'Found')
 
 		this.emitNodeStatus(node)
 
@@ -3178,7 +3178,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node?.security ||
 			(result.lowSecurity ? 'LOW SECURITY' : 'HIGH SECURITY')
 
-		this.logNode(node, 'info', `added with security ${security}`)
+		this.logNode(node, 'info', `Added with security ${security}`)
 
 		this.emit(
 			'event',
@@ -3193,7 +3193,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeRemoved(zwaveNode: ZWaveNode) {
-		this.logNode(zwaveNode, 'info', 'removed')
+		this.logNode(zwaveNode, 'info', 'Removed')
 		zwaveNode.removeAllListeners()
 
 		this.emit(
@@ -3555,7 +3555,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				zwaveNode,
 				'error',
-				`ready event called but node doesn't exists`
+				`Ready event called but node doesn't exists`
 			)
 
 			return
@@ -3649,7 +3649,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`ready: ${node.manufacturer} - ${node.productLabel} (${
+			`Ready: ${node.manufacturer} - ${node.productLabel} (${
 				node.productDescription || 'Unknown'
 			})`
 		)
@@ -3660,7 +3660,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
-		this.logNode(zwaveNode, 'info', 'interview started')
+		this.logNode(zwaveNode, 'info', 'Interview started')
 
 		this.emit(
 			'event',
@@ -3681,7 +3681,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`interview stage ${stageName.toUpperCase()} completed`
+			`Interview stage ${stageName.toUpperCase()} completed`
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3709,7 +3709,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			'interview COMPLETED, all values are updated'
+			'Interview COMPLETED, all values are updated'
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3733,7 +3733,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'error',
-			`interview FAILED: ${args.errorMessage}`
+			`Interview FAILED: ${args.errorMessage}`
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3754,7 +3754,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`is is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}awake`
+			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}awake`
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3774,7 +3774,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}asleep`
+			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}asleep`
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3793,9 +3793,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		this._onNodeStatus(zwaveNode, true)
 		if (oldStatus === NodeStatus.Dead) {
-			this.logNode(zwaveNode, 'info', 'has returned from the dead')
+			this.logNode(zwaveNode, 'info', 'Has returned from the dead')
 		} else {
-			this.logNode(zwaveNode, 'info', 'is alive')
+			this.logNode(zwaveNode, 'info', 'Is alive')
 		}
 
 		this.emit(
@@ -3815,7 +3815,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}dead`
+			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}dead`
 		)
 
 		this.emit(
@@ -3837,7 +3837,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`value added: ${this._getValueID(
+			`Value added: ${this._getValueID(
 				args as unknown as ZUIValueId
 			)} => ${args.newValue}`
 		)
@@ -3897,7 +3897,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`value ${
+			`Value ${
 				args.stateless ? 'notification' : 'updated'
 			}: ${this._getValueID(args)} ${
 				args.stateless
@@ -3928,7 +3928,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`value removed: ${this._getValueID(args)}`
+			`Value removed: ${this._getValueID(args)}`
 		)
 		this.emit(
 			'event',
@@ -3952,7 +3952,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`metadata updated: ${this._getValueID(
+			`Metadata updated: ${this._getValueID(
 				args as unknown as ZUIValueId
 			)}`
 		)
@@ -4128,7 +4128,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				zwaveNode,
 				'info',
-				`firmware update finished ${
+				`Firmware update finished ${
 					result.success ? 'successfully' : 'with error'
 				}.\n   Status: ${getEnumMemberName(
 					FirmwareUpdateStatus,
@@ -4139,7 +4139,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 			if (result.reInterview) {
-				this.logNode(zwaveNode, 'info', 'will be re-interviewed')
+				this.logNode(zwaveNode, 'info', 'Will be re-interviewed')
 			}
 
 			this.emit(
@@ -4222,7 +4222,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _removeNode(nodeid: number) {
-		this.logNode(nodeid, 'info', `removed`)
+		this.logNode(nodeid, 'info', `Removed`)
 
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
@@ -4303,7 +4303,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._dumpNode(zwaveNode)
 		this._onNodeStatus(zwaveNode)
 
-		this.logNode(zwaveNode, 'debug', `has been added to nodes array`)
+		this.logNode(zwaveNode, 'debug', `Has been added to nodes array`)
 
 		return existingNode
 	}
@@ -4564,7 +4564,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				zwaveNode,
 				'info',
-				`value added ${valueId.id} => ${valueId.value}`
+				`Value added ${valueId.id} => ${valueId.value}`
 			)
 
 			if (!skipUpdate && updated) {
