@@ -59,6 +59,10 @@ export function applyMixin(
 	}
 }
 
+export function padNumber(num: number, digits: number): string {
+	return num ? num.toString().padStart(digits, '0') : 'unknown'
+}
+
 export function fileDate(date?: Date) {
 	date = date || new Date()
 	return date.toISOString().slice(-24).replace(/\D/g, '').slice(0, 14)

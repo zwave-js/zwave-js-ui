@@ -73,7 +73,6 @@ import {
 	ControllerFirmwareUpdateProgress,
 	ControllerFirmwareUpdateResult,
 	ControllerFirmwareUpdateStatus,
-	DoorLockLoggingEventType,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -913,9 +912,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				endpointGroups =
 					this._driver.controller.getAllAssociationGroups(nodeId)
 			} catch (error) {
-				logger.warn(
-					`Node ${nodeId} error while fetching groups associations: ` +
-						error.message
+				this.logNode(
+					zwaveNode,
+					'warn',
+					`Error while fetching groups associations: ${error.message}`
 				)
 			}
 			node.groups = []
@@ -966,15 +966,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 				}
 			} catch (error) {
-				logger.warn(
-					`Error while looking for Node ${nodeId}
-          associations: ${error.message}`
+				this.logNode(
+					zwaveNode,
+					'warn',
+					`Error while fetching groups associations: ${error.message}`
 				)
 				// node doesn't support groups associations
 			}
 		} else {
-			logger.warn(
-				`Node ${nodeId} not found when calling 'getAssociations'`
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Error while fetching groups associations, node not found`
 			)
 		}
 
@@ -1006,28 +1009,37 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							a
 						)
 					) {
-						logger.info(
-							`Associations: Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
+						this.logNode(
+							zwaveNode,
+							'info',
+							`Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
 						)
+
 						await this._driver.controller.addAssociations(
 							source,
 							groupId,
 							[a]
 						)
 					} else {
-						logger.warn(
-							`Associations: Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
+						this.logNode(
+							zwaveNode,
+							'warn',
+							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`
 						)
 					}
 				}
 			} catch (error) {
-				logger.warn(
+				this.logNode(
+					zwaveNode,
+					'warn',
 					`Error while adding associations to ${sourceMsg}: ${error.message}`
 				)
 			}
 		} else {
-			logger.warn(
-				`Node ${source.nodeId} not found when calling 'addAssociations'`
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Error while adding associations to ${sourceMsg}, node not found`
 			)
 		}
 	}
@@ -1050,24 +1062,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (zwaveNode) {
 			try {
-				logger.log(
+				this.logNode(
+					zwaveNode,
 					'info',
-					`Associations: Removing associations from ${sourceMsg} Group ${groupId}: %o`,
+					`Removing associations from ${sourceMsg} Group ${groupId}: %o`,
 					associations
 				)
+
 				await this._driver.controller.removeAssociations(
 					source,
 					groupId,
 					associations
 				)
 			} catch (error) {
-				logger.warn(
+				this.logNode(
+					zwaveNode,
+					'warn',
 					`Error while removing associations from ${sourceMsg}: ${error.message}`
 				)
 			}
 		} else {
-			logger.warn(
-				`Node ${source.nodeId} not found when calling 'removeAssociations'`
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Error while removing associations from ${sourceMsg}, node not found`
 			)
 		}
 	}
@@ -1094,8 +1112,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								groupId,
 								associations as AssociationAddress[]
 							)
-							logger.info(
-								`Associations: Removed ${
+							this.logNode(
+								zwaveNode,
+								'info',
+								`Removed ${
 									associations.length
 								} associations from Node ${
 									source.nodeId +
@@ -1108,13 +1128,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 				}
 			} catch (error) {
-				logger.warn(
+				this.logNode(
+					zwaveNode,
+					'warn',
 					`Error while removing all associations from ${nodeId}: ${error.message}`
 				)
 			}
 		} else {
-			logger.warn(
-				`Node ${nodeId} not found when calling 'removeAllAssociations'`
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Node not found when calling 'removeAllAssociations'`
 			)
 		}
 	}
@@ -1127,20 +1151,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (zwaveNode) {
 			try {
-				logger.info(
-					`Associations: Removing Node ${nodeId} from all associations`
+				this.logNode(
+					zwaveNode,
+					'info',
+					`Removing Node ${nodeId} from all associations`
 				)
+
 				await this._driver.controller.removeNodeFromAllAssociations(
 					nodeId
 				)
 			} catch (error) {
-				logger.warn(
+				this.logNode(
+					zwaveNode,
+					'warn',
 					`Error while removing Node ${nodeId} from all associations: ${error.message}`
 				)
 			}
 		} else {
-			logger.warn(
-				`Node ${nodeId} not found when calling 'removeNodeFromAllAssociations'`
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Node not found when calling 'removeNodeFromAllAssociations'`
 			)
 		}
 	}
@@ -1191,9 +1222,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		try {
 			return this._driver.controller.getNodeNeighbors(nodeId)
 		} catch (error) {
-			logger.error(
-				`Node ${nodeId} error while updating Neighbors: ${error.message}`
+			this.logNode(
+				nodeId,
+				'warn',
+				`Error while getting neighbors from ${nodeId}: ${error.message}`
 			)
+
 			if (!dontThrow) {
 				throw error
 			}
@@ -1434,11 +1468,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	private logNode(
+		node: ZWaveNode | ZUINode | number,
+		level: LogManager.LogLevel,
+		message: string,
+		...args: any[]
+	) {
+		const nodeId = typeof node === 'number' ? node : node.id
+		logger.log(
+			level,
+			`[Node ${utils.padNumber(nodeId, 3)}] ${message}`,
+			...args
+		)
+	}
+
 	/**
 	 * Send an event to socket with `data`
 	 *
 	 */
-	sendToSocket(evtName: string, data: any) {
+	private sendToSocket(evtName: string, data: any) {
 		if (this.socket) {
 			// break the sync loop to let the event loop continue #2676
 			process.nextTick(() => {
@@ -3085,7 +3133,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node = this._nodes.get(nodeId)
 		}
 
-		logger.info(`Node ${nodeId}: found`)
+		this.logNode(node, 'info', 'Found')
 
 		this.emitNodeStatus(node)
 
@@ -3130,7 +3178,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node?.security ||
 			(result.lowSecurity ? 'LOW SECURITY' : 'HIGH SECURITY')
 
-		logger.info(`Node ${zwaveNode.id}: added with security ${security}`)
+		this.logNode(node, 'info', `Added with security ${security}`)
 
 		this.emit(
 			'event',
@@ -3145,7 +3193,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeRemoved(zwaveNode: ZWaveNode) {
-		logger.info(`Node ${zwaveNode.id}: removed`)
+		this.logNode(zwaveNode, 'info', 'Removed')
 		zwaveNode.removeAllListeners()
 
 		this.emit(
@@ -3458,10 +3506,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.emitNodeStatus(node, changedProps)
 		} else {
-			logger.error(
-				Error(
-					`Received update from node ${zwaveNode.id} that doesn't exists`
-				)
+			this.logNode(
+				zwaveNode,
+				'error',
+				`Received status update but node doesn't exists`
 			)
 		}
 	}
@@ -3504,9 +3552,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this._nodes.get(zwaveNode.id)
 
 		if (!node) {
-			logger.error(
-				`Node ${zwaveNode.id} ready event called on a node that doesn't exists in memory`
+			this.logNode(
+				zwaveNode,
+				'error',
+				`Ready event called but node doesn't exists`
 			)
+
 			return
 		}
 
@@ -3576,7 +3627,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (node.isControllerNode) {
 			this.updateControllerNodeProps(node).catch((error) => {
-				logger.error(
+				this.logNode(
+					zwaveNode,
+					'error',
 					`Failed to get controller node ${node.id} properties: ${error.message}`
 				)
 			})
@@ -3593,10 +3646,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.zwaveNodeToJSON(zwaveNode)
 		)
 
-		logger.info(
-			`Node ${node.id} ready: ${node.manufacturer} - ${
-				node.productLabel
-			} (${node.productDescription || 'Unknown'})`
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Ready: ${node.manufacturer} - ${node.productLabel} (${
+				node.productDescription || 'Unknown'
+			})`
 		)
 	}
 
@@ -3605,7 +3660,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeInterviewStarted(zwaveNode: ZWaveNode) {
-		logger.info(`Node ${zwaveNode.id}: interview started`)
+		this.logNode(zwaveNode, 'info', 'Interview started')
 
 		this.emit(
 			'event',
@@ -3623,10 +3678,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		stageName: string
 	) {
-		logger.info(
-			`Node ${
-				zwaveNode.id
-			}: interview stage ${stageName.toUpperCase()} completed`
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Interview stage ${stageName.toUpperCase()} completed`
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3651,8 +3706,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._dumpNode(zwaveNode)
 		}
 
-		logger.info(
-			`Node ${zwaveNode.id}: interview COMPLETED, all values are updated`
+		this.logNode(
+			zwaveNode,
+			'info',
+			'Interview COMPLETED, all values are updated'
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3673,8 +3730,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		args: NodeInterviewFailedEventArgs
 	) {
-		logger.error(
-			`Interview of node ${zwaveNode.id} has failed: ${args.errorMessage}`
+		this.logNode(
+			zwaveNode,
+			'error',
+			`Interview FAILED: ${args.errorMessage}`
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3692,10 +3751,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeWakeUp(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		logger.info(
-			`Node ${zwaveNode.id} is ${
-				oldStatus === NodeStatus.Unknown ? '' : 'now '
-			}awake`
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}awake`
 		)
 
 		this._onNodeStatus(zwaveNode, true)
@@ -3712,11 +3771,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeSleep(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
-		logger.info(
-			`Node ${zwaveNode.id} is ${
-				oldStatus === NodeStatus.Unknown ? '' : 'now '
-			}asleep`
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}asleep`
 		)
+
 		this._onNodeStatus(zwaveNode, true)
 		this.emit(
 			'event',
@@ -3733,9 +3793,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onNodeAlive(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		this._onNodeStatus(zwaveNode, true)
 		if (oldStatus === NodeStatus.Dead) {
-			logger.info(`Node ${zwaveNode.id}: has returned from the dead`)
+			this.logNode(zwaveNode, 'info', 'Has returned from the dead')
 		} else {
-			logger.info(`Node ${zwaveNode.id} is alive`)
+			this.logNode(zwaveNode, 'info', 'Is alive')
 		}
 
 		this.emit(
@@ -3752,10 +3812,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _onNodeDead(zwaveNode: ZWaveNode, oldStatus: NodeStatus) {
 		this._onNodeStatus(zwaveNode, true)
-		logger.info(
-			`Node ${zwaveNode.id} is ${
-				oldStatus === NodeStatus.Unknown ? '' : 'now '
-			}dead`
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Is ${oldStatus === NodeStatus.Unknown ? '' : 'now '}dead`
 		)
 
 		this.emit(
@@ -3774,8 +3834,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		args: ZWaveNodeValueAddedArgs
 	) {
-		logger.info(
-			`Node ${zwaveNode.id}: value added: ${this._getValueID(
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Value added: ${this._getValueID(
 				args as unknown as ZUIValueId
 			)} => ${args.newValue}`
 		)
@@ -3831,8 +3893,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	) {
 		this._updateValue(zwaveNode, args)
-		logger.info(
-			`Node ${zwaveNode.id}: value ${
+
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Value ${
 				args.stateless ? 'notification' : 'updated'
 			}: ${this._getValueID(args)} ${
 				args.stateless
@@ -3859,8 +3924,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		args: ZWaveNodeValueRemovedArgs
 	) {
 		this._removeValue(zwaveNode, args)
-		logger.info(
-			`Node ${zwaveNode.id}: value removed: ${this._getValueID(args)}`
+
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Value removed: ${this._getValueID(args)}`
 		)
 		this.emit(
 			'event',
@@ -3879,9 +3947,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		args: ZWaveNodeMetadataUpdatedArgs
 	) {
-		const valueId = this._parseValue(zwaveNode, args, args.metadata)
-		logger.info(
-			`Node ${valueId.nodeId}: metadata updated: ${this._getValueID(
+		this._parseValue(zwaveNode, args, args.metadata)
+
+		this.logNode(
+			zwaveNode,
+			'info',
+			`Metadata updated: ${this._getValueID(
 				args as unknown as ZUIValueId
 			)}`
 		)
@@ -3933,10 +4004,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// ignore, this should be handled in zwave-js
 			return
 		} else {
-			logger.log(
+			this.logNode(
+				zwaveNode,
 				'error',
-				'Unknown notification received from node %d CC %s: %o',
-				(zwaveNode as ZWaveNode).id,
+				'Unknown notification received CC %s: %o',
 				valueId.commandClassName,
 				args
 			)
@@ -3947,10 +4018,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		valueId.id = this._getValueID(valueId, true)
 		valueId.propertyName = valueId.property // must be defined in named topics
 
-		logger.log(
+		this.logNode(
+			zwaveNode,
 			'info',
-			'Node %d CC %s %o',
-			zwaveNode.id,
+			`CC %s notification %o`,
 			valueId.commandClassName,
 			args
 		)
@@ -4054,8 +4125,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				})
 			}
 
-			logger.info(
-				`Node ${zwaveNode.id} firmware update finished ${
+			this.logNode(
+				zwaveNode,
+				'info',
+				`Firmware update finished ${
 					result.success ? 'successfully' : 'with error'
 				}.\n   Status: ${getEnumMemberName(
 					FirmwareUpdateStatus,
@@ -4066,7 +4139,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 			if (result.reInterview) {
-				logger.info(`Node ${zwaveNode.id} will be re-interviewed`)
+				this.logNode(zwaveNode, 'info', 'Will be re-interviewed')
 			}
 
 			this.emit(
@@ -4085,7 +4158,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _bindNodeEvents(zwaveNode: ZWaveNode) {
-		logger.debug(`Binding to node ${zwaveNode.id} events`)
+		this.logNode(zwaveNode, 'debug', 'Binding to node events')
 
 		// https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events
 		zwaveNode
@@ -4149,7 +4222,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _removeNode(nodeid: number) {
-		logger.info(`Node removed ${nodeid}`)
+		this.logNode(nodeid, 'info', `Removed`)
 
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
@@ -4229,7 +4302,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._bindNodeEvents(zwaveNode)
 		this._dumpNode(zwaveNode)
 		this._onNodeStatus(zwaveNode)
-		logger.debug(`Node ${nodeId} has been added to nodes array`)
+
+		this.logNode(zwaveNode, 'debug', `Has been added to nodes array`)
 
 		return existingNode
 	}
@@ -4313,14 +4387,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// keep zwaveNode and node name and location synced
 			if (node.name && node.name !== zwaveNode.name) {
-				logger.debug(
-					`Setting node name '${node.name}' to node ${nodeId}`
+				this.logNode(
+					zwaveNode,
+					'debug',
+					`Setting node name to '${node.name}'`
 				)
 				zwaveNode.name = node.name
 			}
 			if (node.loc && node.loc !== zwaveNode.location) {
-				logger.debug(
-					`Setting node location '${node.loc}' to node ${nodeId}`
+				this.logNode(
+					zwaveNode,
+					'debug',
+					`Setting node location to '${node.loc}'`
 				)
 				zwaveNode.location = node.loc
 			}
@@ -4483,8 +4561,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				!oldValues[vID] ||
 				oldValues[vID].value !== valueId.value
 
-			logger.info(
-				`Node ${zwaveNode.id}: value added ${valueId.id} => ${valueId.value}`
+			this.logNode(
+				zwaveNode,
+				'info',
+				`Value added ${valueId.id} => ${valueId.value}`
 			)
 
 			if (!skipUpdate && updated) {
@@ -4644,9 +4724,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (toRemove) {
 			delete node.values[vID]
 			this.sendToSocket(socketEvents.valueRemoved, toRemove)
-			logger.info(`ValueRemoved: ${vID} from node ${zwaveNode.id}`)
+			this.logNode(zwaveNode, 'info', `ValueId ${vID} removed`)
 		} else {
-			logger.info(`ValueRemoved: no such node: ${zwaveNode.id} error`)
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`ValueId ${vID} removed: no such node`
+			)
 		}
 	}
 
