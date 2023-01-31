@@ -2,7 +2,7 @@
 	<v-container fluid class="pa-4">
 		<v-data-table :headers="headers" :items="items" class="elevation-1">
 			<template v-slot:top>
-				<h2 class="ma-3">Provisioning Entities</h2>
+				<h2 class="ma-3">Provisioning Entries</h2>
 			</template>
 
 			<template v-slot:[`item.status`]="{ item }">
