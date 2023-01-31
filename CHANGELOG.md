@@ -1,5 +1,20 @@
 
 
+## [8.8.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.2...v8.8.3) (2023-01-31)
+
+
+### Bug Fixes
+
+* **mqtt:** set correct `device_class` on gas sensor ([892e49a](https://github.com/zwave-js/zwave-js-ui/commit/892e49a4bc2ec3012ff216d357456dca2b8355c9)), closes [#2930](https://github.com/zwave-js/zwave-js-ui/issues/2930)
+* stopping network heal does not clear healing progress in ui ([6cddde3](https://github.com/zwave-js/zwave-js-ui/commit/6cddde35947d674584e7b017136f21ca2eac5f93)), closes [#2926](https://github.com/zwave-js/zwave-js-ui/issues/2926)
+* **ui:** typo in smart start tab ([c0dd46c](https://github.com/zwave-js/zwave-js-ui/commit/c0dd46cc07f5f409208fb000966e398983f528f1)), closes [#2925](https://github.com/zwave-js/zwave-js-ui/issues/2925)
+
+
+### Features
+
+* bump zwave-js@10.5.5 ([#2931](https://github.com/zwave-js/zwave-js-ui/issues/2931)) ([abf2d14](https://github.com/zwave-js/zwave-js-ui/commit/abf2d148331ea391dcb9aea2d7101923518c694c))
+* standardize node id in logs and filter in debug view ([#2923](https://github.com/zwave-js/zwave-js-ui/issues/2923)) ([2b326b5](https://github.com/zwave-js/zwave-js-ui/commit/2b326b51897572cab7cb7ae8e43607f074c238f4))
+
 ## [8.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.1...v8.8.2) (2023-01-29)
 
 
