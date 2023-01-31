@@ -162,6 +162,7 @@ export function meterType(
 		case 0x02: // gas
 			cfg.props = {
 				icon: 'mdi:thought-bubble',
+				device_class: 'gas',
 			}
 			break
 		case 0x03: // water
