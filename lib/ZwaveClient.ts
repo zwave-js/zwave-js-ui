@@ -402,7 +402,7 @@ export type ZUINode = {
 	interviewStage?: keyof typeof InterviewStage
 	status?: keyof typeof NodeStatus
 	inited: boolean
-	healProgress?: string | undefined
+	healProgress?: HealNodeStatus | undefined
 	minBatteryLevel?: number
 	batteryLevels?: number[]
 	firmwareUpdate?: FirmwareUpdateProgress
@@ -2541,7 +2541,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	stopHealingNetwork(): boolean {
 		if (this.driverReady) {
-			return this._driver.controller.stopHealingNetwork()
+			const result = this._driver.controller.stopHealingNetwork()
+			if (result) {
+				const toReturn: [number, HealNodeStatus][] = []
+				for (const [nodeId, node] of this.nodes) {
+					if (node.healProgress === 'pending') {
+						node.healProgress = 'skipped'
+					}
+					toReturn.push([nodeId, node.healProgress])
+				}
+				this.sendToSocket(socketEvents.healProgress, toReturn)
+			}
+			return result
 		}
 
 		throw new DriverNotReadyError()
