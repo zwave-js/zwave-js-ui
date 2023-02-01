@@ -49,6 +49,9 @@ import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
+import { generate } from 'selfsigned'
+
+const createCertificate = promisify(generate)
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -85,9 +88,6 @@ const Storage = diskStorage({
 const multerRestore = multer({
 	storage: Storage,
 }).array('restore', 1) // Field name and max count
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { createCertificate } = require('pem').promisified
 
 const FileStore = sessionStore(session)
 const app = express()
@@ -325,19 +325,19 @@ function getSafePath(req: Request | string) {
 }
 
 async function loadCertKey(): Promise<{
-	cert: Buffer
-	key: Buffer
+	cert: string
+	key: string
 }> {
 	const certFile =
 		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
 	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
 
-	let key: Buffer
-	let cert: Buffer
+	let key: string
+	let cert: string
 
 	try {
-		cert = await fs.readFile(certFile)
-		key = await fs.readFile(keyFile)
+		cert = await fs.readFile(certFile, 'utf8')
+		key = await fs.readFile(keyFile, 'utf8')
 	} catch (error) {
 		// noop
 	}
@@ -348,22 +348,15 @@ async function loadCertKey(): Promise<{
 		)
 
 		try {
-			const result = await createCertificate({
+			const result = await createCertificate([], {
 				days: 99999,
-				selfSigned: true,
 			})
 
-			key = result.serviceKey
-			cert = result.certificate
+			key = result.private
+			cert = result.cert
 
-			await fs.writeFile(
-				utils.joinPath(storeDir, 'key.pem'),
-				result.serviceKey
-			)
-			await fs.writeFile(
-				utils.joinPath(storeDir, 'cert.pem'),
-				result.certificate
-			)
+			await fs.writeFile(utils.joinPath(storeDir, 'key.pem'), key)
+			await fs.writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
 			logger.info('New cert and key created')
 		} catch (error) {
 			logger.error('Error creating cert and key for HTTPS', error)
