@@ -429,6 +429,7 @@ export default {
 									label: 'File',
 									hint: 'Firmware file',
 									key: 'file',
+									accept: '.hex,.gbl,.otz,.ota',
 								},
 							],
 						}
@@ -473,6 +474,7 @@ export default {
 							label: 'File',
 							hint: 'Firmware file',
 							key: 'file',
+							accept: '.bin,.exe,.ex_,.hex,.gbl,.otz,.ota,.hec',
 						}
 
 						const targetInput = {
