@@ -272,7 +272,13 @@
 												v-model.number="configCC.value"
 											/>
 										</v-col>
-										<v-col cols="3">
+										<v-col
+											:cols="
+												$vuetify.breakpoint.xsOnly
+													? 4
+													: 3
+											"
+										>
 											<v-select
 												label="Format"
 												:items="configCCValueFormats"
@@ -363,12 +369,16 @@ export default {
 			options: {},
 			newName: this.node.name,
 			newLoc: this.node.loc,
-			configCCValueFormats: Object.keys(ConfigValueFormat)
-				.filter((k) => isNaN(k))
-				.map((key) => ({
-					text: key,
-					value: ConfigValueFormat[key],
-				})),
+			configCCValueFormats: [
+				{
+					text: 'Signed',
+					value: ConfigValueFormat.SignedInteger,
+				},
+				{
+					text: 'Unsigned',
+					value: ConfigValueFormat.UnsignedInteger,
+				},
+			],
 			configCC: {
 				value: 0,
 				valueSize: 1,
