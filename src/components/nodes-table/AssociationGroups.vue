@@ -43,11 +43,17 @@
 					{{ getNodeName(item.nodeId) }}
 				</template>
 				<template v-slot:[`item.endpoint`]="{ item }">
-					{{ item.endpoint >= 0 ? item.endpoint : 'None' }}
+					{{
+						item.endpoint >= 0
+							? getEndpointLabel(node.id, item.endpoint)
+							: 'None'
+					}}
 				</template>
 				<template v-slot:[`item.targetEndpoint`]="{ item }">
 					{{
-						item.targetEndpoint >= 0 ? item.targetEndpoint : 'None'
+						item.targetEndpoint >= 0
+							? getEndpointLabel(item.nodeId, item.targetEndpoint)
+							: 'None'
 					}}
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
@@ -127,6 +133,15 @@ export default {
 		getNodeName(nodeId) {
 			const node = this.nodes[this.nodesMap.get(nodeId)]
 			return node ? node._name : 'NodeID_' + nodeId
+		},
+		getEndpointLabel(nodeId, endpoint) {
+			const node = this.nodes[this.nodesMap.get(nodeId)]
+			if (node) {
+				const ep = node.endpoints.find((e) => e.index === endpoint)
+				return ep?.label ? ep.label : 'Endpoint ' + endpoint
+			} else {
+				return 'Endpoint ' + endpoint
+			}
 		},
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {

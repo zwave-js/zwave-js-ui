@@ -179,10 +179,6 @@ export default {
 						{
 							name: 'Begin',
 							action: 'beginHealingNetwork',
-							args: {
-								confirm:
-									'Healing network causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
-							},
 						},
 						{ name: 'Stop', action: 'stopHealingNetwork' },
 					],
@@ -413,6 +409,28 @@ export default {
 					if (!confirm || confirm !== 'yes') {
 						return
 					}
+				} else if (action === 'beginHealingNetwork') {
+					const { includeSleeping } =
+						await this.$listeners.showConfirm(
+							'Info',
+							'Healing network causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
+							'info',
+							{
+								confirmText: 'Heal',
+								inputs: [
+									{
+										type: 'checkbox',
+										label: 'Include sleeping nodes',
+										key: 'includeSleeping',
+										value: false,
+									},
+								],
+							}
+						)
+					if (includeSleeping === undefined) {
+						return
+					}
+					args.push({ includeSleeping })
 				} else if (action === 'firmwareUpdateOTW') {
 					const result = await this.$listeners.showConfirm(
 						'Firmware update OTW',

@@ -73,6 +73,7 @@ import {
 	ControllerFirmwareUpdateProgress,
 	ControllerFirmwareUpdateResult,
 	ControllerFirmwareUpdateStatus,
+	HealNetworkOptions,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -353,6 +354,11 @@ export interface FwFile {
 	target?: number
 }
 
+export interface ZUIEndpoint {
+	index: number
+	label?: string
+}
+
 export type ZUINode = {
 	id: number
 	deviceConfig?: DeviceConfig
@@ -371,7 +377,7 @@ export type ZUINode = {
 	zwavePlusRoleType?: ZWavePlusRoleType | undefined
 	nodeType?: NodeType
 	endpointsCount?: number
-	endpointIndizes?: number[]
+	endpoints?: ZUIEndpoint[]
 	isSecure?: boolean | 'unknown'
 	security?: string | undefined
 	supportsBeaming?: boolean
@@ -2531,9 +2537,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	beginHealingNetwork(): boolean {
+	beginHealingNetwork(options?: HealNetworkOptions): boolean {
 		if (this.driverReady) {
-			return this._driver.controller.beginHealingNetwork()
+			return this._driver.controller.beginHealingNetwork(options)
 		}
 
 		throw new DriverNotReadyError()
@@ -4366,7 +4372,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.zwavePlusRoleType = zwaveNode.zwavePlusRoleType
 		node.nodeType = zwaveNode.nodeType
 		node.endpointsCount = zwaveNode.getEndpointCount()
-		node.endpointIndizes = zwaveNode.getEndpointIndizes()
+		node.endpoints = zwaveNode.getAllEndpoints().map((e) => {
+			return {
+				index: e.index,
+				label: e.label,
+			}
+		})
 		node.isSecure = zwaveNode.isSecure
 		node.security = SecurityClass[zwaveNode.getHighestSecurityClass()]
 		node.supportsSecurity = zwaveNode.supportsSecurity
