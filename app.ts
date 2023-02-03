@@ -462,24 +462,28 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 	const toReturn = []
 	const files = await fs.readdir(dir)
 	for (const file of files) {
-		const entry: StoreFileEntry = {
-			name: path.basename(file),
-			path: utils.joinPath(dir, file),
-		}
-		const stats = await fs.lstat(entry.path)
-		if (stats.isDirectory()) {
-			if (entry.path === process.env.ZWAVEJS_EXTERNAL_CONFIG) {
-				// hide config-db
-				continue
+		try {
+			const entry: StoreFileEntry = {
+				name: path.basename(file),
+				path: utils.joinPath(dir, file),
 			}
-			entry.children = await parseDir(entry.path)
-			sortStore(entry.children)
-		} else {
-			entry.ext = file.split('.').pop()
-		}
+			const stats = await fs.lstat(entry.path)
+			if (stats.isDirectory()) {
+				if (entry.path === process.env.ZWAVEJS_EXTERNAL_CONFIG) {
+					// hide config-db
+					continue
+				}
+				entry.children = await parseDir(entry.path)
+				sortStore(entry.children)
+			} else {
+				entry.ext = file.split('.').pop()
+			}
 
-		entry.size = utils.humanSize(stats.size)
-		toReturn.push(entry)
+			entry.size = utils.humanSize(stats.size)
+			toReturn.push(entry)
+		} catch (error) {
+			logger.error(`Error while parsing ${file} in ${dir}`, error)
+		}
 	}
 
 	sortStore(toReturn)
