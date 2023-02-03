@@ -138,10 +138,12 @@ export default {
 			const node = this.nodes[this.nodesMap.get(nodeId)]
 			if (node) {
 				const ep = node.endpoints.find((e) => e.index === endpoint)
-				return ep?.label ? ep.label : 'Endpoint ' + endpoint
-			} else {
-				return 'Endpoint ' + endpoint
+				if (ep) {
+					return ep.label
+				}
 			}
+
+			return 'Endpoint ' + endpoint
 		},
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {
