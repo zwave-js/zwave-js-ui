@@ -4375,7 +4375,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.endpoints = zwaveNode.getAllEndpoints().map((e) => {
 			return {
 				index: e.index,
-				label: e.label,
+				label:
+					e.index === 0 && !e.endpointLabel
+						? 'Root Endpoint'
+						: e.endpointLabel,
 			}
 		})
 		node.isSecure = zwaveNode.isSecure
