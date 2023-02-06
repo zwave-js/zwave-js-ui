@@ -820,9 +820,17 @@ app.post(
 				req.session.user = userData
 				result.user = userData
 				loginLimiter.resetKey(req.ip)
+				logger.info(
+					`User ${user.username} logged in successfully from ${req.ip}`
+				)
 			} else {
 				result.code = 3
 				result.message = RESPONSE_CODES.GENERAL_ERROR
+				logger.error(
+					`User ${
+						user?.username || req.body.username
+					} failed to login from ${req.ip}: wrong credentials`
+				)
 			}
 
 			res.json(result)
@@ -832,6 +840,12 @@ app.post(
 				message: 'Authentication failed',
 				code: 3,
 			})
+
+			logger.error(
+				`User ${
+					user?.username || req.body.username
+				} failed to login from ${req.ip}: ${error.message}`
+			)
 		}
 	}
 )
