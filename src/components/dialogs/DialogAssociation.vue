@@ -188,9 +188,12 @@ export default {
 				endpoints.unshift({ text: 'No Endpoint', value: null })
 			}
 
-			if (node && node.endpointIndizes) {
-				for (const i of node.endpointIndizes) {
-					endpoints.push({ text: 'Endpoint ' + i, value: i })
+			if (node && node.endpoints) {
+				for (const endpoint of node.endpoints) {
+					endpoints.push({
+						text: endpoint.label || 'Endpoint ' + endpoint.index,
+						value: endpoint.index,
+					})
 				}
 			}
 
