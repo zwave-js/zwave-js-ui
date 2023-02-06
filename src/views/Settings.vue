@@ -1255,21 +1255,39 @@
 				:devices="devices"
 			/>
 		</v-form>
-		<v-toolbar elevation="0" class="mt-2">
-			<v-spacer></v-spacer>
-			<v-btn color="red darken-1" text @click="resetConfig">
+		<v-row
+			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
+			class="mt-2"
+		>
+			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
+				color="red darken-1"
+				text
+				@click="resetConfig"
+			>
 				Reset
 				<v-icon right dark>clear</v-icon>
 			</v-btn>
-			<v-btn color="purple darken-1" text @click="importSettings">
+			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
+				color="purple darken-1"
+				text
+				@click="importSettings"
+			>
 				Import
 				<v-icon right dark>file_upload</v-icon>
 			</v-btn>
-			<v-btn color="green darken-1" text @click="exportSettings">
+			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
+				color="green darken-1"
+				text
+				@click="exportSettings"
+			>
 				Export
 				<v-icon right dark>file_download</v-icon>
 			</v-btn>
 			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
 				color="blue darken-1"
 				text
 				type="submit"
@@ -1280,7 +1298,7 @@
 				Save
 				<v-icon right dark>save</v-icon>
 			</v-btn>
-		</v-toolbar>
+		</v-row>
 	</v-container>
 </template>
 
