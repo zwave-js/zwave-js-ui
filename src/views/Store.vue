@@ -234,6 +234,18 @@
 	outline: none !important;
 }
 
+.prism-editor-wrapper :deep(.prism-editor__editor) {
+	white-space: pre !important;
+}
+
+.prism-editor-wrapper :deep(.prism-editor__container) {
+	overflow-x: scroll !important;
+}
+
+prism-editor-wrapper :deep(.prism-editor__textarea) {
+	width: 999999px !important;
+}
+
 .custom-font {
 	font-family: 'Fira Code', monospace;
 }
