@@ -411,6 +411,9 @@ import { socketEvents, inboundEvents } from '@/../server/lib/SocketEvents'
 import { copy } from '@/lib/utils'
 import { getEnumMemberName } from 'zwave-js/safe'
 import { Powerlevel } from '@zwave-js/cc/safe'
+import { mapActions } from 'pinia'
+
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	components: {},
@@ -552,6 +555,7 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['showSnackbar']),
 		exportResults() {
 			this.$listeners.export(
 				this.results,
@@ -659,6 +663,13 @@ export default {
 					)
 
 					this.resultsTargetNode = res.targetNodeId
+				} else {
+					this.results.pop()
+					this.showSnackbar(
+						data.message || 'Health check failed',
+						'error'
+					)
+					console.error(data)
 				}
 			}
 		},
