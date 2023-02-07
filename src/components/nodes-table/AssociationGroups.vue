@@ -136,14 +136,14 @@ export default {
 		},
 		getEndpointLabel(nodeId, endpoint) {
 			const node = this.nodes[this.nodesMap.get(nodeId)]
-			if (node) {
+			if (node && endpoint >= 0) {
 				const ep = node.endpoints.find((e) => e.index === endpoint)
 				if (ep) {
 					return ep.label
 				}
 			}
 
-			return 'Endpoint ' + endpoint
+			return endpoint >= 0 ? 'Endpoint ' + endpoint : 'No Endpoint'
 		},
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {

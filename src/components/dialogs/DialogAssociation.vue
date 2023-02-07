@@ -44,9 +44,11 @@
 												}}</v-list-item-title>
 												<v-list-item-subtitle>{{
 													item.endpoint >= 0
-														? 'Endpoint ' +
-														  item.endpoint
-														: ''
+														? getEndpointLabel(
+																node,
+																item.endpoint
+														  )
+														: 'No Endpoint'
 												}}</v-list-item-subtitle>
 											</v-list-item-content>
 										</v-list-item>
@@ -181,8 +183,17 @@ export default {
 		resetGroup() {
 			this.group = Object.assign({}, this.defaultGroup)
 		},
+		getEndpointLabel(node, endpoint) {
+			if (node && node.endpoints) {
+				const ep = node.endpoints.find((e) => e.index === endpoint)
+				if (ep) {
+					return ep.label
+				}
+			}
+			return 'Endpoint ' + endpoint
+		},
 		getEndpointItems(node, noEndpoint = false) {
-			const endpoints = [{ text: 'Endpoint 0', value: 0 }]
+			const endpoints = []
 
 			if (noEndpoint) {
 				endpoints.unshift({ text: 'No Endpoint', value: null })
@@ -191,7 +202,7 @@ export default {
 			if (node && node.endpoints) {
 				for (const endpoint of node.endpoints) {
 					endpoints.push({
-						text: endpoint.label || 'Endpoint ' + endpoint.index,
+						text: endpoint.label,
 						value: endpoint.index,
 					})
 				}
