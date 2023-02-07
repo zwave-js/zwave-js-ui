@@ -1,5 +1,24 @@
 
 
+## [8.8.4](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.3...v8.8.4) (2023-02-07)
+
+
+### Bug Fixes
+
+* catch lstat errors when parsing store files ([589e172](https://github.com/zwave-js/zwave-js-ui/commit/589e1728b5eb828eba9f8153f50b7b80f4cf615d)), closes [#2937](https://github.com/zwave-js/zwave-js-ui/issues/2937)
+* **ui:** endpoints labels ([6b8fa3e](https://github.com/zwave-js/zwave-js-ui/commit/6b8fa3ec2a89405dceb65e54cf3c0242165a322d))
+* **ui:** filter ota/otw file upload extensions ([6026645](https://github.com/zwave-js/zwave-js-ui/commit/60266459d1c2a23ffc0dfac1e7c512d74f4340e2)), closes [#2915](https://github.com/zwave-js/zwave-js-ui/issues/2915)
+* **ui:** hide loading when healthcheck fails ([0992778](https://github.com/zwave-js/zwave-js-ui/commit/099277802baad9e0ba735d8e8503f680238fe48f)), closes [#2946](https://github.com/zwave-js/zwave-js-ui/issues/2946)
+* **ui:** save button not visible on smartphones ([1d4e3bc](https://github.com/zwave-js/zwave-js-ui/commit/1d4e3bc04548e5a9f93de8b990e84be24f8258f9)), closes [#2944](https://github.com/zwave-js/zwave-js-ui/issues/2944)
+* **ui:** visualization issues with custom configuration parameter setting ([0551c81](https://github.com/zwave-js/zwave-js-ui/commit/0551c8173c6d4e2703ce9ffa540b551846d04714)), closes [#2940](https://github.com/zwave-js/zwave-js-ui/issues/2940)
+
+
+### Features
+
+* add logins logs ([b1dc1a4](https://github.com/zwave-js/zwave-js-ui/commit/b1dc1a4f535fbba65020d8e45943bb1c8e7e4e33)), closes [#2933](https://github.com/zwave-js/zwave-js-ui/issues/2933)
+* bump zwave-js@10.5.6 ([#2932](https://github.com/zwave-js/zwave-js-ui/issues/2932)) ([4594284](https://github.com/zwave-js/zwave-js-ui/commit/4594284189e402e4bdd17fb6918d06459a047be9))
+* zwave-js@10.7.0, heal network options, endpoints labels ([#2941](https://github.com/zwave-js/zwave-js-ui/issues/2941) ([6bcf8e3](https://github.com/zwave-js/zwave-js-ui/commit/6bcf8e359deb5185540ee6edd2cbfca376c25afc))
+
 ## [8.8.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.2...v8.8.3) (2023-01-31)
 
 
