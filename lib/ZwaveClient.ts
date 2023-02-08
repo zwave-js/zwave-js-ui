@@ -3016,14 +3016,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				totalFiles: 1,
 			}
 			
-			// send at most once per second
+			// send at most 4mss per second
 			this.throttle(
 				this._onControllerFirmwareUpdateProgress.name,
 				this.sendToSocket.bind(this, socketEvents.nodeUpdated, {
 					id: node?.id,
 					firmwareUpdate: node.firmwareUpdate,
 				} as utils.DeepPartial<ZUINode>),
-				1000
+				250
 			)
 		}
 
