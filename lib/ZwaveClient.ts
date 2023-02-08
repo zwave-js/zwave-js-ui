@@ -699,7 +699,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Call `fn` function at most once every `wait` milliseconds
 	 * */
 	private throttle(key: string, fn: Function, wait: number) {
-		let entry = this.throttledFunctions.get(key)
+		const entry = this.throttledFunctions.get(key)
 		const now = Date.now()
 
 		// first time it's called or wait is already passed since last call
