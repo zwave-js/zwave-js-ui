@@ -14,10 +14,9 @@
 					v-model="selectedFiles"
 					:items="items"
 					activatable
-					open-all
 					selectable
 					item-key="path"
-					open-on-click
+					:open.sync="openFolders"
 					return-object
 					style="max-height: calc(100vh - 64px); overflow-y: auto"
 				>
@@ -317,6 +316,7 @@ export default {
 			allowedExt: ['json', 'jsonl', 'txt', 'log', 'js', 'ts'],
 			active: [],
 			items: [],
+			openFolders: [],
 			fileContent: '',
 			notSupported: false,
 			loadingStore: true,
@@ -608,6 +608,11 @@ export default {
 			this.loadingFile = false
 			if (reset) {
 				this.active = []
+			}
+
+			// open first level by default
+			if (this.openFolders.length === 0) {
+				this.openFolders.push(this.items[0])
 			}
 		},
 	},
