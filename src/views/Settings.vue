@@ -1257,7 +1257,7 @@
 		</v-form>
 		<v-row
 			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
-			class="mt-2"
+			class="mt-2 mb-3"
 		>
 			<v-btn
 				:small="$vuetify.breakpoint.xsOnly"
