@@ -134,6 +134,7 @@ export function meterType(
 			switch (ccSpecific.scale) {
 				case 0x00: // kWh
 					cfg.props = {
+						state_class: 'total_increasing',
 						device_class: 'energy',
 					}
 					break
