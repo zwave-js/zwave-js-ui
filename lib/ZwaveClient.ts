@@ -548,7 +548,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private throttledFunctions: Map<
 		string,
-		{ lastUpdate: number; fn: Function; timeout: NodeJS.Timeout }
+		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
 	> = new Map()
 
 	public get driverReady() {
@@ -698,7 +698,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Call `fn` function at most once every `wait` milliseconds
 	 * */
-	private throttle(key: string, fn: Function, wait: number) {
+	private throttle(key: string, fn: () => void, wait: number) {
 		const entry = this.throttledFunctions.get(key)
 		const now = Date.now()
 
@@ -3015,8 +3015,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				currentFile: 1,
 				totalFiles: 1,
 			}
-			
-			// send at most 4mss per second
+
+			// send at most 4msg per second
 			this.throttle(
 				this._onControllerFirmwareUpdateProgress.name,
 				this.sendToSocket.bind(this, socketEvents.nodeUpdated, {
@@ -4145,6 +4145,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _onNodeFirmwareUpdateProgress: ZWaveNodeFirmwareUpdateProgressCallback =
 		function _onNodeFirmwareUpdateProgress(
+			this: ZwaveClient,
 			zwaveNode: ZWaveNode,
 			sentFragments: number,
 			totalFragments: number,
@@ -4153,10 +4154,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const node = this.nodes.get(zwaveNode.id)
 			if (node) {
 				node.firmwareUpdate = progress
-				this.sendToSocket(socketEvents.nodeUpdated, {
-					id: node?.id,
-					firmwareUpdate: progress,
-				} as utils.DeepPartial<ZUINode>)
+				// send at most 4msg per second
+				this.throttle(
+					this._onNodeFirmwareUpdateProgress.name + '_' + node.id,
+					this.sendToSocket.bind(this, socketEvents.nodeUpdated, {
+						id: node?.id,
+						firmwareUpdate: progress,
+					} as utils.DeepPartial<ZUINode>),
+					250
+				)
 			}
 
 			this.emit(
@@ -4174,6 +4180,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _onNodeFirmwareUpdateFinished: ZWaveNodeFirmwareUpdateFinishedCallback =
 		function _onNodeFirmwareUpdateFinished(
+			this: ZwaveClient,
 			zwaveNode: ZWaveNode,
 			status: FirmwareUpdateStatus,
 			waitTime: number,
