@@ -1,5 +1,21 @@
 
 
+## [8.8.5](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.4...v8.8.5) (2023-02-09)
+
+
+### Bug Fixes
+
+* **discovery:** add `state_class` to kwh sensors ([#2953](https://github.com/zwave-js/zwave-js-ui/issues/2953)) ([f570d04](https://github.com/zwave-js/zwave-js-ui/commit/f570d04b5b19fcfc6cedd0f9450a2bbf01f3d6f9))
+* throttle otw updates progress ([#2951](https://github.com/zwave-js/zwave-js-ui/issues/2951) ([c0a6f78](https://github.com/zwave-js/zwave-js-ui/commit/c0a6f7871eab8729da5ea610586d68162e594302))
+* **ui:** footer overlaps buttons in settings ([6840532](https://github.com/zwave-js/zwave-js-ui/commit/684053281d4c749fd0367ba917c6fd8b35710f3f)), closes [#2949](https://github.com/zwave-js/zwave-js-ui/issues/2949)
+* **ui:** only open first level on store ([5e7df02](https://github.com/zwave-js/zwave-js-ui/commit/5e7df02bade54a8cebf3a58178c954547fcae9c8)), closes [#2950](https://github.com/zwave-js/zwave-js-ui/issues/2950)
+* **ui:** prismjs editor line numbers ([#2947](https://github.com/zwave-js/zwave-js-ui/issues/2947) ([d091834](https://github.com/zwave-js/zwave-js-ui/commit/d091834ad7512bf9be2b6c99051dcd09b6b8a864)), closes [#2945](https://github.com/zwave-js/zwave-js-ui/issues/2945)
+
+
+### Features
+
+* bump zwave-js@10.10.0 ([#2954](https://github.com/zwave-js/zwave-js-ui/issues/2954)) ([e0cf08c](https://github.com/zwave-js/zwave-js-ui/commit/e0cf08c3be2dd3bb758fa5a64914840bd424a8ee))
+
 ## [8.8.4](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.3...v8.8.4) (2023-02-07)
 
 
