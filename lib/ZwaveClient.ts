@@ -546,6 +546,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _grantResolve: (grant: InclusionGrant | false) => void | null
 	private _dskResolve: (dsk: string | false) => void | null
 
+	private throttledFunctions: Map<
+		string,
+		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
+	> = new Map()
+
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
 	}
@@ -687,6 +692,37 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.healTimeout = setTimeout(() => {
 				this.heal()
 			}, wait)
+		}
+	}
+
+	/**
+	 * Call `fn` function at most once every `wait` milliseconds
+	 * */
+	private throttle(key: string, fn: () => void, wait: number) {
+		const entry = this.throttledFunctions.get(key)
+		const now = Date.now()
+
+		// first time it's called or wait is already passed since last call
+		if (!entry || entry.lastUpdate + wait < now) {
+			this.throttledFunctions.set(key, {
+				lastUpdate: now,
+				fn,
+				timeout: null,
+			})
+			fn()
+		} else {
+			// if it's called again and no timeout is set, set a timeout to call function
+			if (!entry.timeout) {
+				entry.timeout = setTimeout(() => {
+					const oldEntry = this.throttledFunctions.get(key)
+					if (oldEntry?.fn) {
+						oldEntry.lastUpdate = Date.now()
+						fn()
+					}
+				}, entry.lastUpdate + wait - now)
+			}
+			// discard the old function and store the new one
+			entry.fn = fn
 		}
 	}
 
@@ -866,6 +902,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				clearTimeout(this.pollIntervals[k])
 				delete this.pollIntervals[k]
 			}
+		}
+
+		for (const [key, entry] of this.throttledFunctions) {
+			clearTimeout(entry.timeout)
+			this.throttledFunctions.delete(key)
 		}
 
 		if (this.server) {
@@ -2974,10 +3015,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				currentFile: 1,
 				totalFiles: 1,
 			}
-			this.sendToSocket(socketEvents.nodeUpdated, {
-				id: node?.id,
-				firmwareUpdate: node.firmwareUpdate,
-			} as utils.DeepPartial<ZUINode>)
+
+			// send at most 4msg per second
+			this.throttle(
+				this._onControllerFirmwareUpdateProgress.name,
+				this.sendToSocket.bind(this, socketEvents.nodeUpdated, {
+					id: node?.id,
+					firmwareUpdate: node.firmwareUpdate,
+				} as utils.DeepPartial<ZUINode>),
+				250
+			)
 		}
 
 		this.emit(
@@ -4098,6 +4145,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _onNodeFirmwareUpdateProgress: ZWaveNodeFirmwareUpdateProgressCallback =
 		function _onNodeFirmwareUpdateProgress(
+			this: ZwaveClient,
 			zwaveNode: ZWaveNode,
 			sentFragments: number,
 			totalFragments: number,
@@ -4106,10 +4154,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const node = this.nodes.get(zwaveNode.id)
 			if (node) {
 				node.firmwareUpdate = progress
-				this.sendToSocket(socketEvents.nodeUpdated, {
-					id: node?.id,
-					firmwareUpdate: progress,
-				} as utils.DeepPartial<ZUINode>)
+				// send at most 4msg per second
+				this.throttle(
+					this._onNodeFirmwareUpdateProgress.name + '_' + node.id,
+					this.sendToSocket.bind(this, socketEvents.nodeUpdated, {
+						id: node?.id,
+						firmwareUpdate: progress,
+					} as utils.DeepPartial<ZUINode>),
+					250
+				)
 			}
 
 			this.emit(
@@ -4127,6 +4180,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	private _onNodeFirmwareUpdateFinished: ZWaveNodeFirmwareUpdateFinishedCallback =
 		function _onNodeFirmwareUpdateFinished(
+			this: ZwaveClient,
 			zwaveNode: ZWaveNode,
 			status: FirmwareUpdateStatus,
 			waitTime: number,
