@@ -56,8 +56,8 @@ jobs:
           mkdir -p ~/.cache/pkg
           export PKG_CACHE_PATH=~/.cache/pkg
           export PKG_IGNORE_TAG=true
-          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node16/built-v${{ matrix.node-version }}-linux-armv7 \
-               -LO ~/.cache/pkg/built-v${{ matrix.node-version }}-linux-armv7
+          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node16/built-v${{ matrix.node-version }}-linux-armv7 -LOJ
+          mv built-v${{ matrix.node-version }}-linux-armv7 $PKG_CACHE_PATH/
           yarn pkg --skip-build --arch=armv7
 
       - name: Upload artifacts
