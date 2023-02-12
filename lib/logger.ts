@@ -4,6 +4,7 @@ import winston from 'winston'
 import { logsDir, storeDir } from '../config/app'
 import { GatewayConfig } from './Gateway'
 import { DeepPartial, joinPath } from './utils'
+import * as path from 'path'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
@@ -119,6 +120,10 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				filename: config.filePath,
 				auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
 				datePattern: 'YYYY-MM-DD',
+				createSymlink: true,
+				symlinkName: path
+					.basename(config.filePath)
+					.replace(`_%DATE%`, "_current"),
 				zippedArchive: true,
 				maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
 				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
