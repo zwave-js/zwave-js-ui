@@ -123,7 +123,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				createSymlink: true,
 				symlinkName: path
 					.basename(config.filePath)
-					.replace(`_%DATE%`, "_current"),
+					.replace(`_%DATE%`, '_current'),
 				zippedArchive: true,
 				maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
 				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
