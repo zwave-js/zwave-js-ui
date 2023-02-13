@@ -70,6 +70,7 @@
 						color="primary"
 						style="min-width: 150px; margin: 10px"
 						rounded
+						class="mb-6"
 						type="submit"
 						form="login-form"
 						>Login</v-btn
