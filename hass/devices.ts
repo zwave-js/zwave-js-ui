@@ -24,6 +24,27 @@ const FAN_DIMMER: HassDevice = {
 	},
 }
 
+const THERMOSTAT_DANFOSS: HassDevice = {
+	type: 'climate',
+	object_id: 'thermostat',
+	values: ['67-0-setpoint-1', '67-0-setpoint-2', '67-0-setpoint-10'],
+	setpoint_topic: {
+		1: '67-0-setpoint-1',
+		2: '67-0-setpoint-2',
+		10: '67-0-setpoint-10',
+	},
+	default_setpoint: '67-0-setpoint-1',
+	discovery_payload: {
+		max_temp: 40,
+		min_temp: 0,
+		temp_step: 0.1,
+		temperature_state_template: '{{ value_json.value }}',
+		temperature_state_topic: '67-0-setpoint-1',
+		temperature_unit: 'C',
+		temperature_command_topic: true,
+	},
+}
+
 // Radio Thermostat / 2GIG CT32, CT100 and CT101
 const THERMOSTAT_2GIG: HassDevice = {
 	type: 'climate',
@@ -391,6 +412,7 @@ const devices: { [deviceId: string]: HassDevice[] } = {
 	'622-23089-17235': [COVER], // Graber/Bali/Spring Fashion Covers
 	'881-21-2': [SPIRIT_ZWAVE_PLUS], // Eurotronic Spirit / Aeotec ZWA021
 	'129-1-20': [AEROPAC], //Siegenia Aeropac
+	'2-32784-3': [THERMOSTAT_DANFOSS], // Danfoss Room Thermostat (MT2649 / DRS21) https://products.z-wavealliance.org/products/1062
 }
 
 export default devices

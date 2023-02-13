@@ -274,9 +274,16 @@
 				<v-footer
 					v-if="$route.path !== '/store'"
 					fixed
-					class="text-center text-caption"
+					class="text-center"
 				>
-					<v-col class="d-flex pa-0 justify-center text-caption">
+					<v-col
+						class="d-flex pa-0 justify-center text-caption"
+						:style="{
+							fontSize: $vuetify.breakpoint.xsOnly
+								? '0.7rem !important'
+								: '',
+						}"
+					>
 						Made with &#10084;&#65039; by
 						<strong class="ml-1 mr-2">Daniel Lando</strong>-
 						Enjoying it?&nbsp;

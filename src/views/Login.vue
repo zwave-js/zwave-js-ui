@@ -65,12 +65,12 @@
 						></v-checkbox>
 					</v-form>
 				</v-card-text>
-				<v-card-actions>
-					<v-spacer></v-spacer>
+				<v-card-actions class="justify-center">
 					<v-btn
 						color="primary"
 						style="min-width: 150px; margin: 10px"
 						rounded
+						class="mb-6"
 						type="submit"
 						form="login-form"
 						>Login</v-btn
