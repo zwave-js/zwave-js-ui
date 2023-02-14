@@ -512,6 +512,9 @@ function sortStore(store: StoreFileEntry[]) {
 logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
 
+// ensure the server sees the real client ip even behind a proxy (eg. for rate limiting or authentication checks)
+app.set('trust proxy', true)
+
 // view engine setup
 app.set('views', utils.joinPath(false, 'views'))
 app.set('view engine', 'ejs')
