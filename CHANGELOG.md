@@ -1,5 +1,18 @@
 
 
+## [8.8.6](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.5...v8.8.6) (2023-02-21)
+
+
+### Bug Fixes
+
+* create symlink to current UI logfile ([#2959](https://github.com/zwave-js/zwave-js-ui/issues/2959)) ([e77346b](https://github.com/zwave-js/zwave-js-ui/commit/e77346bbe746036407a511af6912f5fa5cf97ce5))
+
+
+### Features
+
+* bump zwave-js-server@1.26.0 ([#2968](https://github.com/zwave-js/zwave-js-ui/issues/2968)) ([600f02f](https://github.com/zwave-js/zwave-js-ui/commit/600f02f88b689cf80a62514e4845b592e85deac2))
+* **discovery:** danfoss thermostat support ([de7ab08](https://github.com/zwave-js/zwave-js-ui/commit/de7ab0859e4a51b07b883c5c32bdf1edb717cca1)), closes [#2834](https://github.com/zwave-js/zwave-js-ui/issues/2834)
+
 ## [8.8.5](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.4...v8.8.5) (2023-02-09)
 
 
