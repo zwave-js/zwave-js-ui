@@ -30,7 +30,7 @@
 			</v-col>
 			<v-divider
 				:key="`section-divider-${name}`"
-				:vertical="$vuetify.breakpoint.mdAndUp"
+				:vertical="$vuetify.breakpoint.smAndUp"
 				v-if="section.divider"
 				class="my-4"
 			/>

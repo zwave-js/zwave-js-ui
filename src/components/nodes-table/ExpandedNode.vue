@@ -15,7 +15,11 @@
 					ios_share
 				</v-icon>
 			</v-col>
-			<v-col class="text-end">
+			<v-col
+				:class="
+					$vuetify.breakpoint.smAndDown ? 'text-center' : 'text-end'
+				"
+			>
 				<v-item-group class="v-btn-toggle">
 					<v-btn color="primary" outlined @click="toggleStatistics">
 						<v-icon left>
