@@ -29,7 +29,6 @@ import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
-		nodeActions: Array,
 		socket: Object,
 	},
 	components: {

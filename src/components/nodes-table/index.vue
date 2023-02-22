@@ -273,7 +273,6 @@
 		</template>
 		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
 			<expanded-node
-				:actions="nodeActions"
 				:headers="headers"
 				:isMobile="isMobile"
 				:node="item"

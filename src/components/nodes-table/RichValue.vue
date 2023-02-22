@@ -15,6 +15,7 @@
 			<svg-icon
 				type="mdi"
 				:path="value.icon"
+				:size="value.size || 24"
 				:style="value.iconStyle"
 			></svg-icon>
 			<span
@@ -37,6 +38,7 @@ export default {
 				return {
 					align: 'left',
 					icon: '',
+					size: 24,
 					iconStyle: '',
 					displayValue: '',
 					displayStyle: '',

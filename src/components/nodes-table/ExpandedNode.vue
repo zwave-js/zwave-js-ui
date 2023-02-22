@@ -128,7 +128,6 @@
 							ref="nodeDetails"
 							:headers="headers"
 							:node="node"
-							:actions="actions"
 							:socket="socket"
 							v-on="$listeners"
 						></node-details>
@@ -307,7 +306,10 @@ import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 export default {
 	props: {
 		actions: Array,
-		headers: Array,
+		headers: {
+			type: Array,
+			default: () => [],
+		},
 		isMobile: Boolean,
 		node: Object,
 		socket: Object,
