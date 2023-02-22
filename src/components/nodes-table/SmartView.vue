@@ -82,6 +82,11 @@
 										<rich-value
 											:value="statusRichValue(item)"
 										/>
+
+										<rich-value
+											:value="healRichValue(item)"
+										/>
+
 										<rich-value
 											:value="securityRichValue(item)"
 										/>
@@ -109,57 +114,6 @@
 									>
 										<div
 											v-if="
-												!item.isControllerNode &&
-												item.healProgress
-											"
-										>
-											<v-progress-circular
-												class="ml-3"
-												v-if="
-													item.healProgress ===
-													'pending'
-												"
-												indeterminate
-												size="20"
-												color="primary"
-											></v-progress-circular>
-
-											<v-tooltip
-												v-else-if="
-													getHealIcon(
-														item.healProgress
-													) !== undefined
-												"
-												bottom
-											>
-												<template
-													v-slot:activator="{ on }"
-												>
-													<v-icon
-														v-on="on"
-														class="ml-3"
-														v-text="
-															getHealIcon(
-																item.healProgress
-															).icon
-														"
-														:color="
-															getHealIcon(
-																item.healProgress
-															).color
-														"
-													></v-icon>
-												</template>
-												<span>{{
-													item.healProgress.toUpperCase()
-												}}</span>
-											</v-tooltip>
-											<div v-else>
-												{{ item.healProgress }}
-											</div>
-										</div>
-										<div
-											v-else-if="
 												item.interviewStage ===
 												'Complete'
 											"
@@ -278,12 +232,14 @@ import RichValue from '@/components/nodes-table/RichValue.vue'
 import colors from 'vuetify/lib/util/colors'
 
 import {
+	mdiAlertCircle,
 	mdiBattery,
 	mdiBattery20,
 	mdiBattery50,
 	mdiBattery80,
 	mdiBatteryAlertVariantOutline,
 	mdiBatteryUnknown,
+	mdiCheckAll,
 	mdiCheckCircle,
 	mdiEmoticon,
 	mdiEmoticonDead,
@@ -295,6 +251,7 @@ import {
 	mdiNumeric2Circle,
 	mdiPlusCircle,
 	mdiPowerPlug,
+	mdiSkipNext,
 	mdiSleep,
 } from '@mdi/js'
 import { mapState } from 'pinia'
@@ -351,6 +308,36 @@ export default {
 				  )
 				: null
 		},
+		healRichValue(node) {
+			const progress = node.healProgress || 'done'
+
+			let v = {
+				align: 'center',
+				icon: '',
+				iconStyle: `color: ${colors.grey.base}`,
+				description: 'Heal ' + progress,
+				size: 18,
+			}
+
+			switch (progress) {
+				case 'done':
+					v.icon = mdiCheckAll
+					v.iconStyle = `color: ${colors.green.base}`
+					break
+				case 'failed':
+					v.icon = mdiAlertCircle
+					v.iconStyle = `color: ${colors.red.base}`
+					break
+				case 'skipped':
+					v.icon = mdiSkipNext
+					v.iconStyle = `color: ${colors.blue.base}`
+					break
+				case 'pending':
+					v.loading = true
+			}
+
+			return v
+		},
 		statusRichValue(node) {
 			let v = {
 				align: 'center',
@@ -359,6 +346,7 @@ export default {
 				description: node.status,
 				size: 18,
 			}
+
 			switch (node.status) {
 				case 'Asleep':
 					v.icon = mdiSleep
@@ -377,6 +365,7 @@ export default {
 					v.iconStyle = `color: ${colors.green.base}`
 					break
 			}
+
 			return v
 		},
 		securityRichValue(node) {

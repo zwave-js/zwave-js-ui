@@ -24,6 +24,12 @@
 				>{{ value.displayValue }}</span
 			>
 		</v-layout>
+		<v-progress-circular
+			v-else-if="value && value.loading"
+			color="primary"
+			:size="value.size || 24"
+			indeterminate
+		></v-progress-circular>
 	</div>
 </template>
 
