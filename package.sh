@@ -147,7 +147,7 @@ mkdir store -p
 
 if [ ! -z "$1" ]; then
 
-	if [ "$ARCH" = "aarch64" ]; then
+	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
 		echo "## Create zip file $APP-v$VERSION-linux-arm64"
 		zip -r $APP-v$VERSION-linux-arm64.zip store $APP
 	elif [ "$ARCH" = "armv7" ]; then
