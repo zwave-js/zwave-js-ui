@@ -32,7 +32,7 @@ jobs:
         with:
           path: |
             ~/.cache/pkg
-          key: ${{ runner.os }}-pkg-${{ matrix.node-version }}
+          key: ${{ runner.os }}-pkg-armv7-${{ matrix.node-version }}
       
       - uses: uraimo/run-on-arch-action@v2
         name: Package
@@ -40,7 +40,6 @@ jobs:
           arch: none # armv7
           distro: none # bullseye
 
-          githubToken: ${{ github.token }}
           dockerRunArgs: |
             --volume "${PWD}:/app"
 

@@ -67,7 +67,7 @@ if [ ! -z "$1" ]; then
 		echo "## Skipping build..."
 	fi
 	
-	if [ "$ARCH" = "aarch64" ]; then
+	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
 		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER
 	elif [ "$ARCH" = "armv7" ]; then

@@ -9,21 +9,44 @@ on:
 jobs:
   build:
     name: Build package and attach to release
-    runs-on: ARM64
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
     steps:
       - uses: actions/checkout@v3
 
-      - name: Use Node.js 16
+      - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
-          node-version: 16.x
+          node-version: ${{ matrix.node-version }}
           cache: "yarn"
 
-      - name: Build and package
+      - name: Install and pre-build
         run: |
           yarn install --immutable
-          yarn pkg --aarch64
+          yarn build
 
+      - uses: uraimo/run-on-arch-action@v2
+        name: Package
+        with:
+          arch: none # arm64
+          distro: none # bullseye
+
+          dockerRunArgs: |
+            --volume "${PWD}:/app"
+
+          base_image: arm64v8/node:16-bullseye
+
+          # Rebuild .node modules for am64
+          run: |
+            cd /app
+            yarn rebuild
+
+      - name: Build for arm64
+        run: |
+          yarn pkg --skip-build --arch=arm64
+      
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v3
