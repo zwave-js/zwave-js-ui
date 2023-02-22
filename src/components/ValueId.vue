@@ -227,6 +227,8 @@
 			<v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
 				<template v-slot:activator="{ on }">
 					<v-btn
+						max-width="100%"
+						small
 						v-on="on"
 						color="primary"
 						dark

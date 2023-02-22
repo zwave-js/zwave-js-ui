@@ -199,7 +199,7 @@
 
 		<v-dialog
 			:fullscreen="$vuetify.breakpoint.xs"
-			max-width="900px"
+			max-width="1200px"
 			v-model="expandedNodeDialog"
 			@keydown.exit="closeDialog()"
 		>
