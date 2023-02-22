@@ -117,7 +117,9 @@
 												'Complete'
 											"
 										>
-											<v-icon size="40">dataset</v-icon>
+											<div class="display-1">
+												<strong> {{ item.id }}</strong>
+											</div>
 										</div>
 										<div
 											v-else
