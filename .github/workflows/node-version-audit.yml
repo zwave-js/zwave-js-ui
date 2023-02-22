@@ -1,0 +1,19 @@
+name: Node Version Audit
+
+on:
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  schedule:
+    - cron: '0 0 16 * *' # run arbitrarily once a month
+  workflow_dispatch:
+
+jobs:
+  node-version-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/github-script@v5
+        with:
+          script: |
+            const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.js`);
+            return bot.nodeVersionAudit();

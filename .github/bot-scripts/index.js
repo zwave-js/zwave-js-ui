@@ -7,5 +7,6 @@ module.exports = {
 		require("./renameCommitGetPRInfo")(...args),
 	renameCommitCheck: (...args) => require("./renameCommitCheck")(...args),
 	renameCommitFeedback: (...args) =>
-		require("./renameCommitFeedback")(...args)
+		require("./renameCommitFeedback")(...args),
+	nodeVersionAudit: () => require("./nodeVersionAudit")(),
 };
