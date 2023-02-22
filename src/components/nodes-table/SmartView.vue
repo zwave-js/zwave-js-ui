@@ -117,9 +117,31 @@
 												'Complete'
 											"
 										>
-											<div class="display-1">
-												<strong> {{ item.id }}</strong>
-											</div>
+											<v-tooltip bottom>
+												<template
+													v-slot:activator="{
+														on: tooltip,
+													}"
+												>
+													<div
+														v-on="{ ...tooltip }"
+														class="display-1"
+													>
+														<strong>
+															{{
+																item.id
+															}}</strong
+														>
+													</div>
+												</template>
+												<span
+													style="
+														white-space: pre-wrap;
+													"
+													v-text="nodeInfo(item)"
+												>
+												</span>
+											</v-tooltip>
 										</div>
 										<div
 											v-else
@@ -257,6 +279,7 @@ import {
 } from '@mdi/js'
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import { jsonToList } from '../../lib/utils.js'
 
 export default {
 	props: {
@@ -280,6 +303,13 @@ export default {
 		}
 	},
 	methods: {
+		nodeInfo(node) {
+			return jsonToList({
+				Manufacturer: node.manufacturer,
+				'Product Description': node.productDescription,
+				'Product Label': node.productLabel,
+			})
+		},
 		showNodeDialog(node) {
 			this.expandedNode = node
 			this.expandedNodeDialog = true
