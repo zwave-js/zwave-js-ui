@@ -96,14 +96,13 @@
 									</v-row>
 
 									<span
-										class="caption pb-0 font-weight-bold primary--text text-truncate"
+										class="caption pb-0 font-weight-bold primary--text text-truncate text-capitalize"
 										>{{ item.name }}
-										{{
-											item.loc
-												? `(${item.loc}) egerg e`
-												: ''
-										}}</span
-									>
+									</span>
+									<span
+										class="caption pb-0 font-weight-bold text-truncate text-capitalize"
+										>{{ item.loc }}
+									</span>
 
 									<v-badge
 										bordered
@@ -118,7 +117,7 @@
 												'Complete'
 											"
 										>
-											<v-icon size="64">dataset</v-icon>
+											<v-icon size="40">dataset</v-icon>
 										</div>
 										<div
 											v-else
@@ -134,7 +133,7 @@
 													<v-progress-circular
 														indeterminate
 														class="ma-1"
-														size="50"
+														size="32"
 														v-on="{ ...tooltip }"
 														color="primary"
 													></v-progress-circular>
