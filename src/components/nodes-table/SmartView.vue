@@ -116,6 +116,7 @@
 									<v-badge
 										bordered
 										:content="'v' + item.firmwareVersion"
+										:value="!!item.firmwareVersion"
 										offset-x="50"
 										offset-y="20"
 										overlap
