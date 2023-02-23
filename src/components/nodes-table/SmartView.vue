@@ -75,12 +75,20 @@
 										class="pa-0 ma-0"
 										justify="space-between"
 									>
-										<rich-value
-											:value="powerRichValue(item)"
-										/>
+										<strong
+											style="
+												font-size: 14px;
+												line-height: 1.3;
+												padding: 2px;
+												border: 1px solid #ccc;
+												border-radius: 4px;
+											"
+										>
+											{{ padId(item.id) }}
+										</strong>
 
 										<rich-value
-											:value="statusRichValue(item)"
+											:value="powerRichValue(item)"
 										/>
 
 										<rich-value
@@ -90,8 +98,9 @@
 										<rich-value
 											:value="securityRichValue(item)"
 										/>
+
 										<rich-value
-											:value="zwavePlusRichValue(item)"
+											:value="readyRichValue(item)"
 										/>
 									</v-row>
 
@@ -127,11 +136,13 @@
 														v-on="{ ...tooltip }"
 														class="display-1"
 													>
-														<strong>
-															{{
-																item.id
-															}}</strong
-														>
+														<rich-value
+															:value="
+																statusRichValue(
+																	item
+																)
+															"
+														/>
 													</div>
 												</template>
 												<span
@@ -226,7 +237,7 @@
 			v-model="expandedNodeDialog"
 			@keydown.exit="closeDialog()"
 		>
-			<v-card>
+			<v-card min-height="90vh">
 				<v-btn
 					style="position: absolute; right: 5px; top: 5px"
 					x-small
@@ -303,11 +314,15 @@ export default {
 		}
 	},
 	methods: {
+		padId(id) {
+			return id.toString().padStart(3, '0')
+		},
 		nodeInfo(node) {
 			return jsonToList({
 				Manufacturer: node.manufacturer,
 				'Product Description': node.productDescription,
 				'Product Label': node.productLabel,
+				'Zwave+ Version': node.zwavePlusVersion || 'N/A',
 			})
 		},
 		showNodeDialog(node) {
@@ -338,6 +353,27 @@ export default {
 							100
 				  )
 				: null
+		},
+		readyRichValue(node) {
+			const ready = node.ready || false
+
+			let v = {
+				align: 'center',
+				icon: '',
+				iconStyle: `color: ${colors.grey.base}`,
+				description: ready ? 'Ready' : 'Not ready',
+				size: 18,
+			}
+
+			if (ready) {
+				v.icon = mdiCheckCircle
+				v.iconStyle = `color: ${colors.green.base}`
+			} else {
+				v.icon = mdiAlertCircle
+				v.iconStyle = `color: ${colors.red.base}`
+			}
+
+			return v
 		},
 		healRichValue(node) {
 			const progress = node.healProgress || 'done'
@@ -375,7 +411,7 @@ export default {
 				icon: mdiHelpCircle,
 				iconStyle: `color: ${colors.grey.base}`,
 				description: node.status,
-				size: 18,
+				size: 40,
 			}
 
 			switch (node.status) {

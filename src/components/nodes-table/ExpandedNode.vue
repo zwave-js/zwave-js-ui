@@ -251,15 +251,19 @@
 					key="debug"
 					transition="slide-y-transition"
 				>
-					<v-textarea
-						class="debug-content font-monospace mx-2"
-						rows="15"
-						append-icon="content_copy"
-						v-model="nodeJson"
-						readonly
-						ref="nodeJsonContent"
-						@click:append="copyText"
-					></v-textarea>
+					<v-container grid-list-md>
+						<v-textarea
+							class="debug-content font-monospace mx-2"
+							append-icon="content_copy"
+							v-model="nodeJson"
+							readonly
+							hide-details
+							no-resize
+							rows="37"
+							ref="nodeJsonContent"
+							@click:append="copyText"
+						></v-textarea>
+					</v-container>
 				</v-tab-item>
 			</v-tabs-items>
 		</v-tabs>
