@@ -488,7 +488,7 @@ export default {
 			let description = ''
 			if (node.isListening) {
 				icon = mdiPowerPlug
-				description = 'mains-powered'
+				description = 'Main power source'
 			} else {
 				description = Array.isArray(node.batteryLevels)
 					? 'All battery levels: ' +
