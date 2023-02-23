@@ -1,15 +1,15 @@
 ARG image=zwave-js-ui
 
 # STEP: 1 build
-FROM node:18.10.0-alpine3.16 AS build-zui
+FROM node:18.14.2-alpine3.16 AS build-zui
 
 WORKDIR /usr/src/app
 
 RUN apk --no-cache add \
-    coreutils \	
+    coreutils \
     jq \
     linux-headers \
-    alpine-sdk \	
+    alpine-sdk \
     python3
 
 COPY package.json yarn.lock .yarnrc.yml ./
@@ -54,18 +54,18 @@ RUN if [ ! -z "$updateDevices"  ]; \
     fi
 
 # STEP: 2 (runtime)
-FROM node:18.10.0-alpine3.16
+FROM node:18.14.2-alpine3.16
 
-RUN apk add --no-cache \	
+RUN apk add --no-cache \
     libstdc++ \
     openssl \
-    libgcc \	
-    libusb \	
-    tzdata \	
-    eudev	
+    libgcc \
+    libusb \
+    tzdata \
+    eudev
 
 
-# Copy files from previous build stage	
+# Copy files from previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
