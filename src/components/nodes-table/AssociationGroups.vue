@@ -139,7 +139,7 @@ export default {
 
 			if (data.success) this.associations = data.result
 		},
-		addAssociation(association) {
+		async addAssociation(association) {
 			const target = !isNaN(association.target)
 				? parseInt(association.target)
 				: association.target.id
@@ -161,15 +161,24 @@ export default {
 				[toAdd],
 			]
 
-			this.apiRequest('addAssociations', args)
+			const data = await this.app.apiRequest('addAssociations', args)
 
-			// wait a moment before refresh to check if the node
-			// has been added to the group correctly
-			setTimeout(this.getAssociations, 1000)
+			if (data.success) {
+				this.showSnackbar({
+					message: 'Association added',
+					color: 'success',
+				})
+				this.getAssociations()
+			} else {
+				this.showSnackbar({
+					message: data.message || 'Association failed',
+					color: 'error',
+				})
+			}
 
 			this.dialogAssociation = false
 		},
-		removeAssociation(association) {
+		async removeAssociation(association) {
 			const args = [
 				this.getAssociationAddress({
 					nodeId: this.node.id,
@@ -184,18 +193,41 @@ export default {
 				],
 			]
 
-			this.apiRequest('removeAssociations', args)
-			// wait a moment before refresh to check if the node
-			// has been added to the group correctly
-			setTimeout(this.getAssociations, 1000)
+			const data = await this.app.apiRequest('removeAssociations', args)
+
+			if (data.success) {
+				this.showSnackbar({
+					message: 'Association removed',
+					color: 'success',
+				})
+				this.getAssociations()
+			} else {
+				this.showSnackbar({
+					message: data.message || 'Failed to remove association',
+					color: 'error',
+				})
+			}
 		},
-		removeAllAssociations() {
+		async removeAllAssociations() {
 			const args = [this.node.id]
 
-			this.apiRequest('removeAllAssociations', args)
-			// wait a moment before refresh to check if the node
-			// has been added to the group correctly
-			setTimeout(this.getAssociations, 1000)
+			const data = await this.app.apiRequest(
+				'removeAllAssociations',
+				args
+			)
+
+			if (data.success) {
+				this.showSnackbar({
+					message: 'Association removed',
+					color: 'success',
+				})
+				this.getAssociations()
+			} else {
+				this.showSnackbar({
+					message: data.message || 'Failed to remove association',
+					color: 'error',
+				})
+			}
 		},
 	},
 }
