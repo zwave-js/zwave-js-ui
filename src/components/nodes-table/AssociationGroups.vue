@@ -1,6 +1,6 @@
 <template>
 	<v-container grid-list-md>
-		<v-row class="pa-5">
+		<v-row justify="center" class="pa-5">
 			<v-data-table
 				:headers="headers"
 				:items="associations"

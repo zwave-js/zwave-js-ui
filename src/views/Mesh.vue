@@ -81,7 +81,9 @@
 					<v-list-item dense>
 						<v-list-item-content>Statistics</v-list-item-content>
 						<v-list-item-content class="align-end"
-							><statistics-arrows :node="selectedNode"
+							><statistics-arrows
+								inactive-color="black"
+								:node="selectedNode"
 						/></v-list-item-content>
 					</v-list-item>
 					<div v-if="lwr">

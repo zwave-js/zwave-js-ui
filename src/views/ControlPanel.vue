@@ -23,6 +23,14 @@
 									Actions
 									<v-icon right>arrow_drop_down</v-icon>
 								</v-btn>
+								<v-btn
+									color="primary"
+									v-if="$vuetify.breakpoint.mdAndUp"
+									:outlined="!compactMode"
+									@click.stop="compactMode = !compactMode"
+								>
+									Compact
+								</v-btn>
 							</v-item-group>
 						</template>
 
@@ -92,10 +100,18 @@
 				</v-row>
 			</v-expand-transition>
 			<nodes-table
+				v-if="!compact"
 				:socket="socket"
 				v-on="$listeners"
 				@action="sendAction"
 			/>
+			<smart-view
+				:socket="socket"
+				v-on="$listeners"
+				@action="sendAction"
+				v-else
+			>
+			</smart-view>
 		</v-container>
 
 		<DialogNodesManager
@@ -127,6 +143,7 @@ import { jsonToList } from '@/lib/utils'
 import { socketEvents } from '@/../server/lib/SocketEvents'
 import StatisticsCard from '@/components/custom/StatisticsCard'
 import useBaseStore from '../stores/base.js'
+import SmartView from '@/components/nodes-table/SmartView.vue'
 
 export default {
 	name: 'ControlPanel',
@@ -138,6 +155,7 @@ export default {
 		DialogNodesManager,
 		DialogAdvanced,
 		StatisticsCard,
+		SmartView,
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
@@ -149,10 +167,14 @@ export default {
 				? 'arrow_drop_up'
 				: 'arrow_drop_down'
 		},
+		compact() {
+			return this.$vuetify.breakpoint.smAndDown || this.compactMode
+		},
 	},
 	watch: {},
 	data() {
 		return {
+			compactMode: false,
 			settings: new Settings(localStorage),
 			bindedSocketEvents: {}, // keep track of the events-handlers
 			addRemoveShowDialog: false,

@@ -272,14 +272,15 @@
 			<statistics-arrows :node="item"></statistics-arrows>
 		</template>
 		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
-			<expanded-node
-				:actions="nodeActions"
-				:headers="headers"
-				:isMobile="isMobile"
-				:node="item"
-				:socket="socket"
-				v-on="$listeners"
-			/>
+			<td :colspan="isMobile ? 1 : headers.length">
+				<expanded-node
+					:headers="headers"
+					:isMobile="isMobile"
+					:node="item"
+					:socket="socket"
+					v-on="$listeners"
+				/>
+			</td>
 		</template>
 	</v-data-table>
 </template>

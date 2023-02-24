@@ -12,12 +12,14 @@
 					:activeColor="node.errorReceive ? 'error' : 'green'"
 					:active="now - node.lastReceive < 200"
 				/>
-				<div>
-					{{
-						node.lastActive
-							? new Date(node.lastActive).toLocaleString()
-							: 'Never'
-					}}
+				<div class="text-caption">
+					<i
+						>{{
+							node.lastActive
+								? new Date(node.lastActive).toLocaleString()
+								: 'Never'
+						}}
+					</i>
 				</div>
 			</center>
 		</template>

@@ -15,6 +15,7 @@
 			<svg-icon
 				type="mdi"
 				:path="value.icon"
+				:size="value.size || 24"
 				:style="value.iconStyle"
 			></svg-icon>
 			<span
@@ -23,6 +24,12 @@
 				>{{ value.displayValue }}</span
 			>
 		</v-layout>
+		<v-progress-circular
+			v-else-if="value && value.loading"
+			color="primary"
+			:size="value.size || 24"
+			indeterminate
+		></v-progress-circular>
 	</div>
 </template>
 
@@ -37,6 +44,7 @@ export default {
 				return {
 					align: 'left',
 					icon: '',
+					size: 24,
 					iconStyle: '',
 					displayValue: '',
 					displayStyle: '',
