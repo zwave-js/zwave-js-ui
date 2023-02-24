@@ -3,6 +3,7 @@
 		:style="`max-width: calc(100vw - ${
 			$vuetify.breakpoint.lgAndUp ? 120 : 70
 		}px)`"
+		v-if="node"
 	>
 		<v-row class="mt-2" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
