@@ -1,5 +1,17 @@
 
 
+# [8.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.6...v8.9.0) (2023-02-24)
+
+
+### Bug Fixes
+
+* **ui:** prevent error on expanded node ([8377e60](https://github.com/zwave-js/zwave-js-ui/commit/8377e600938e368eff77e0fce1c7ab9c54b8e1e9))
+
+
+### Features
+
+* **ui:** smart table view for smaller screens ([#2971](https://github.com/zwave-js/zwave-js-ui/issues/2971) ([a974a6f](https://github.com/zwave-js/zwave-js-ui/commit/a974a6f963a93fede0501abd5e11ad791726f35c))
+
 ## [8.8.6](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.5...v8.8.6) (2023-02-21)
 
 
