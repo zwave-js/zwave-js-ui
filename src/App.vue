@@ -380,6 +380,7 @@ import { Routes } from '@/router'
 
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from './stores/base.js'
+import { manager, instances } from './lib/instanceManager'
 
 import {
 	socketEvents,
@@ -607,15 +608,23 @@ export default {
 			return message
 		},
 		apiRequest(apiName, args) {
-			if (this.socket.connected) {
-				const data = {
-					api: apiName,
-					args: args,
+			return new Promise((resolve) => {
+				if (this.socket.connected) {
+					const data = {
+						api: apiName,
+						args: args,
+					}
+					this.socket.emit(socketActions.zwave, data, (response) => {
+						resolve(response)
+					})
+				} else {
+					resolve({
+						success: false,
+						message: 'Socket disconnected',
+					})
+					this.showSnackbar('Socket disconnected', 'error')
 				}
-				this.socket.emit(socketActions.zwave, data)
-			} else {
-				this.showSnackbar('Socket disconnected', 'error')
-			}
+			})
 		},
 		updateStatus: function (status, color) {
 			this.status = status
@@ -823,6 +832,15 @@ export default {
 				console.log(error)
 			}
 		},
+		onInit(data) {
+			this.setAppInfo(data.info)
+			this.setControllerStatus({
+				error: data.error,
+				status: data.cntStatus,
+			})
+			// convert node values in array
+			this.initNodes(data.nodes)
+		},
 		async startSocket() {
 			if (
 				this.auth === undefined ||
@@ -847,7 +865,11 @@ export default {
 
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'green')
-				this.socket.emit(socketActions.init, true)
+				this.socket.emit(
+					socketActions.init,
+					true,
+					this.onInit.bind(this)
+				)
 			})
 
 			this.socket.on('disconnect', () => {
@@ -862,20 +884,9 @@ export default {
 				this.updateStatus('Reconnecting', 'yellow')
 			})
 
-			this.socket.on(socketEvents.init, (data) => {
-				// must be run before initNodes
-				this.setAppInfo(data.info)
-				this.setControllerStatus({
-					error: data.error,
-					status: data.cntStatus,
-				})
-				// convert node values in array
-				this.initNodes(data.nodes)
-			})
+			this.socket.on(socketEvents.init, this.onInit.bind(this))
 
-			this.socket.on(socketEvents.info, (data) => {
-				this.setAppInfo(data)
-			})
+			this.socket.on(socketEvents.info, this.setAppInfo.bind(this))
 
 			this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
 			this.socket.on(
@@ -963,6 +974,7 @@ export default {
 		},
 	},
 	beforeMount() {
+		manager.register(instances.APP, this)
 		this.title = this.$route.name || ''
 		this.checkAuth()
 	},

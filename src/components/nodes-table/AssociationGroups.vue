@@ -77,21 +77,18 @@
 
 <script>
 import DialogAssociation from '@/components/dialogs/DialogAssociation'
-import {
-	socketEvents,
-	inboundEvents as socketActions,
-} from '@/../server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	components: {
 		DialogAssociation,
 	},
+	mixins: [InstancesMixin],
 	props: {
 		node: Object,
-		socket: Object,
 	},
 	data() {
 		return {
@@ -110,16 +107,6 @@ export default {
 		...mapState(useBaseStore, ['nodes', 'nodesMap']),
 	},
 	mounted() {
-		this.socket.on(socketEvents.api, (data) => {
-			if (
-				data.success &&
-				data.api === 'getAssociations' &&
-				data.originalArgs[0] === this.node.id
-			) {
-				this.associations = data.result
-			}
-		})
-
 		this.getAssociations()
 	},
 	methods: {
@@ -145,19 +132,12 @@ export default {
 
 			return endpoint >= 0 ? 'Endpoint ' + endpoint : 'No Endpoint'
 		},
-		apiRequest(apiName, args) {
-			if (this.socket.connected) {
-				const data = {
-					api: apiName,
-					args: args,
-				}
-				this.socket.emit(socketActions.zwave, data)
-			} else {
-				this.showSnackbar('Socket disconnected', 'error')
-			}
-		},
-		getAssociations() {
-			this.apiRequest('getAssociations', [this.node.id])
+		async getAssociations() {
+			const data = await this.app.apiRequest('getAssociations', [
+				this.node.id,
+			])
+
+			if (data.success) this.associations = data.result
 		},
 		addAssociation(association) {
 			const target = !isNaN(association.target)

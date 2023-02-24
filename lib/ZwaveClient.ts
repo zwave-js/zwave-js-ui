@@ -4293,8 +4293,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _removeNode(nodeid: number) {
-		this.logNode(nodeid, 'info', `Removed`)
-
 		// don't use splice here, nodeid equals to the index in the array
 		const node = this._nodes.get(nodeid)
 		if (node) {

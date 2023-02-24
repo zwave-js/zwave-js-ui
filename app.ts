@@ -592,113 +592,124 @@ const csrfProtection = csrf({
 function setupSocket(server: HttpServer) {
 	socketManager.bindServer(server)
 
-	socketManager.on(inboundEvents.init, (socket) => {
-		if (gw.zwave) {
-			socket.emit(socketEvents.init, gw.zwave.getState())
-		}
-	})
-
-	socketManager.on(
-		inboundEvents.zwave,
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		async (socket, data) => {
+	socketManager.io.on('connection', (socket) => {
+		// Server: https://socket.io/docs/v4/server-application-structure/#all-event-handlers-are-registered-in-the-indexjs-file
+		// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
+		socket.on(inboundEvents.init, (data, cb) => {
 			if (gw.zwave) {
-				if (!data.args) data.args = []
-				const result: CallAPIResult<any> & {
-					api?: string
-					originalArgs?: any[]
-				} = await gw.zwave.callApi(data.api, ...data.args)
-				result.api = data.api
-				result.originalArgs = data.args
-				socket.emit(socketEvents.api, result)
+				const state = gw.zwave.getState()
+				cb(state)
 			}
-		}
-	)
+		})
 
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	socketManager.on(inboundEvents.mqtt, (socket, data) => {
-		logger.info(`Mqtt api call: ${data.api}`)
-
-		let res: void, err: string
-
-		try {
-			switch (data.api) {
-				case 'updateNodeTopics':
-					res = gw.updateNodeTopics(data.args[0])
-					break
-				case 'removeNodeRetained':
-					res = gw.removeNodeRetained(data.args[0])
-					break
-				default:
-					err = `Unknown MQTT api ${data.apiName}`
+		socket.on(
+			inboundEvents.zwave,
+			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+			async (data, cb) => {
+				if (gw.zwave) {
+					if (!data.args) data.args = []
+					const result: CallAPIResult<any> & {
+						api?: string
+						originalArgs?: any[]
+					} = await gw.zwave.callApi(data.api, ...data.args)
+					result.api = data.api
+					result.originalArgs = data.args
+					if (cb) cb(result)
+				} else {
+					if (cb)
+						cb({
+							success: false,
+							message: 'Zwave client not connected',
+						})
+				}
 			}
-		} catch (error) {
-			logger.error('Error while calling MQTT api', error)
-			err = error.message
-		}
+		)
 
-		const result = {
-			success: !err,
-			message: err || 'Success MQTT api call',
-			result: res,
-			api: data.api,
-		}
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		socket.on(inboundEvents.mqtt, (data, cb) => {
+			logger.info(`Mqtt api call: ${data.api}`)
 
-		socket.emit(socketEvents.api, result)
-	})
+			let res: void, err: string
 
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	socketManager.on(inboundEvents.hass, async (socket, data) => {
-		logger.info(`Hass api call: ${data.apiName}`)
-
-		let res: any, err: string
-		try {
-			switch (data.apiName) {
-				case 'delete':
-					res = gw.publishDiscovery(data.device, data.nodeId, {
-						deleteDevice: true,
-						forceUpdate: true,
-					})
-					break
-				case 'discover':
-					res = gw.publishDiscovery(data.device, data.nodeId, {
-						deleteDevice: false,
-						forceUpdate: true,
-					})
-					break
-				case 'rediscoverNode':
-					res = gw.rediscoverNode(data.nodeId)
-					break
-				case 'disableDiscovery':
-					res = gw.disableDiscovery(data.nodeId)
-					break
-				case 'update':
-					res = gw.zwave.updateDevice(data.device, data.nodeId)
-					break
-				case 'add':
-					res = gw.zwave.addDevice(data.device, data.nodeId)
-					break
-				case 'store':
-					res = await gw.zwave.storeDevices(
-						data.devices,
-						data.nodeId,
-						data.remove
-					)
-					break
+			try {
+				switch (data.api) {
+					case 'updateNodeTopics':
+						res = gw.updateNodeTopics(data.args[0])
+						break
+					case 'removeNodeRetained':
+						res = gw.removeNodeRetained(data.args[0])
+						break
+					default:
+						err = `Unknown MQTT api ${data.apiName}`
+				}
+			} catch (error) {
+				logger.error('Error while calling MQTT api', error)
+				err = error.message
 			}
-		} catch (error) {
-			logger.error('Error while calling HASS api', error)
-			err = error.message
-		}
 
-		const result = {
-			success: !err,
-			message: err || 'Success HASS api call',
-			result: res,
-			api: data.apiName,
-		}
+			const result = {
+				success: !err,
+				message: err || 'Success MQTT api call',
+				result: res,
+				api: data.api,
+			}
 
-		socket.emit(socketEvents.api, result)
+			if (cb) cb(result)
+		})
+
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		socket.on(inboundEvents.hass, async (data, cb) => {
+			logger.info(`Hass api call: ${data.apiName}`)
+
+			let res: any, err: string
+			try {
+				switch (data.apiName) {
+					case 'delete':
+						res = gw.publishDiscovery(data.device, data.nodeId, {
+							deleteDevice: true,
+							forceUpdate: true,
+						})
+						break
+					case 'discover':
+						res = gw.publishDiscovery(data.device, data.nodeId, {
+							deleteDevice: false,
+							forceUpdate: true,
+						})
+						break
+					case 'rediscoverNode':
+						res = gw.rediscoverNode(data.nodeId)
+						break
+					case 'disableDiscovery':
+						res = gw.disableDiscovery(data.nodeId)
+						break
+					case 'update':
+						res = gw.zwave.updateDevice(data.device, data.nodeId)
+						break
+					case 'add':
+						res = gw.zwave.addDevice(data.device, data.nodeId)
+						break
+					case 'store':
+						res = await gw.zwave.storeDevices(
+							data.devices,
+							data.nodeId,
+							data.remove
+						)
+						break
+				}
+			} catch (error) {
+				logger.error('Error while calling HASS api', error)
+				err = error.message
+			}
+
+			const result = {
+				success: !err,
+				message: err || 'Success HASS api call',
+				result: res,
+				api: data.apiName,
+			}
+
+			if (cb) cb(result)
+		})
 	})
 }
 
