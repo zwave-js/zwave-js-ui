@@ -29,7 +29,8 @@
 								:complete="currentStep > s.index"
 								:step="s.index"
 								:editable="
-									!['s2Classes', 's2Pin'].includes(s.key)
+									!['s2Classes', 's2Pin'].includes(s.key) &&
+									!loading
 								"
 							>
 								{{ s.title }}
@@ -215,7 +216,9 @@
 											}}</strong
 											>. Please check your zwave settings.
 										</v-alert>
-										<v-radio :value="0">
+										<v-radio
+											:value="InclusionStrategy.Default"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -241,7 +244,11 @@
 											hint="Prefer S0 over no encryption"
 											persistent-hint
 										></v-checkbox>
-										<v-radio :value="1">
+										<v-radio
+											:value="
+												InclusionStrategy.SmartStart
+											"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -263,7 +270,11 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="3">
+										<v-radio
+											:value="
+												InclusionStrategy.Security_S0
+											"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -281,7 +292,9 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="2">
+										<v-radio
+											:value="InclusionStrategy.Insecure"
+										>
 											<template v-slot:label>
 												<div class="option">
 													<v-icon color="error" small
@@ -609,7 +622,9 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
+
 import { socketEvents } from '@/../server/lib/SocketEvents'
 import {
 	parseSecurityClasses,
@@ -617,6 +632,8 @@ import {
 	copy,
 	validTopic,
 } from '../../lib/utils.js'
+import useBaseStore from '../../stores/base.js'
+import { InclusionStrategy } from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -628,6 +645,7 @@ export default {
 			currentStep: 1,
 			loading: false,
 			validNaming: true,
+			InclusionStrategy,
 			availableSteps: {
 				action: {
 					key: 'action',
@@ -648,7 +666,7 @@ export default {
 					key: 'inclusionMode',
 					title: 'Inclusion Mode',
 					values: {
-						inclusionMode: 0, //default, smartstart no encryption
+						inclusionMode: InclusionStrategy.Default, //default, smartstart no encryption
 						forceSecurity: false,
 					},
 				},
@@ -656,7 +674,7 @@ export default {
 					key: 'replaceInclusionMode',
 					title: 'Inclusion Mode',
 					values: {
-						inclusionMode: 0, //default, smartstart no encryption
+						inclusionMode: InclusionStrategy.Default, //default, smartstart no encryption
 					},
 				},
 				s2Classes: {
@@ -694,7 +712,7 @@ export default {
 			},
 			steps: [],
 			state: 'new',
-			commandEndDate: new Date(),
+			commandEndDate: null,
 			commandTimer: null,
 			waitTimeout: null,
 			alert: null,
@@ -705,10 +723,17 @@ export default {
 			stopped: false,
 			aborted: false,
 			nvmProgress: 0,
+			commandTimedOut: false,
 		}
 	},
 	computed: {
-		...mapGetters(['appInfo', 'zwave', 'nodes', 'mqtt', 'backup']),
+		...mapState(useBaseStore, [
+			'appInfo',
+			'zwave',
+			'nodes',
+			'mqtt',
+			'backup',
+		]),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -736,27 +761,39 @@ export default {
 	watch: {
 		value(v) {
 			this.init(v)
-			this.$store.commit('setNodesManagerOpen', v)
+			useBaseStore().nodesManagerOpen = v
 		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {
 				clearInterval(this.commandTimer)
+				this.commandTimer = null
 			}
+
+			if (!newVal) return
+
 			this.commandTimer = setInterval(() => {
-				const now = new Date()
-				const s = Math.trunc((this.commandEndDate - now) / 1000)
+				const now = Date.now()
+				const end = newVal.getTime() - 1000 // add small buffer to end before controller trigger
+				const s = Math.trunc((end - now) / 1000)
 				if (this.state === 'start') {
 					this.alert = {
 						type: 'info',
 						text: `${this.currentAction} started: ${s}s remaining`,
 					}
 				}
-				if (now > newVal) clearInterval(this.commandTimer)
-			}, 500)
+
+				// timeout ended
+				if (s <= 0) {
+					this.commandTimedOut = true
+					clearInterval(this.commandTimer)
+					this.alert = null
+				}
+			}, 250)
 		},
 		controllerStatus(status) {
+			if (!status) return
 			this.nvmProgress = 0
-			if (status && status.indexOf('clusion') > 0) {
+			if (status.indexOf('clusion') > 0) {
 				// it could be inclusion is started by the driver, in that case get the current action
 				this.currentAction = /inclusion/i.test(status)
 					? 'Inclusion'
@@ -771,21 +808,25 @@ export default {
 					this.state = 'start'
 				} else if (status.indexOf('stopped') > 0) {
 					// inclusion/exclusion stopped, check what happened
-					this.commandEndDate = new Date()
-					this.state = 'wait'
-					let timeout = this.currentAction === 'Exclusion' ? 1000 : 0
-					if (this.stopped) {
-						timeout = 1000
-						this.stopped = false
-					}
 
-					if (timeout > 0) {
-						// don't use a timeout for inclusion
+					// inclusion has been stopped manually
+					if (this.stopped || this.commandTimedOut) {
+						this.stopped = false
+						this.showResults()
+					} else {
+						// inclusion stopped by controller, see if a node was found
+						let timeout =
+							this.currentAction === 'Exclusion' ? 1000 : 5000
+						this.state = 'wait'
+
+						// when a node is added/removed showResults it's called from socket event listeners
+						// (onNodeAdded onNodeRemoved) set a timeout in case the events for some reason are not received
+						// fixes issue #2746
 						this.waitTimeout = setTimeout(this.showResults, timeout) // add additional discovery time
 					}
 				} else {
 					// error
-					this.commandEndDate = new Date()
+					this.commandEndDate = null
 					this.alert = {
 						type: 'error',
 						text: status, // TODO: better formatting?
@@ -942,6 +983,11 @@ export default {
 				clientAuth: requested.clientSideAuth || undefined,
 			}
 
+			if (this.waitTimeout) {
+				clearTimeout(this.waitTimeout)
+				this.waitTimeout = null
+			}
+
 			this.loading = false
 			this.alert = false
 
@@ -984,9 +1030,10 @@ export default {
 				s.key === 'inclusionMode' ||
 				s.key === 'replaceInclusionMode'
 			) {
-				const mode = s.values.inclusionMode
+				let mode = s.values.inclusionMode
+				let dsk
 
-				if (mode === 1) {
+				if (mode === InclusionStrategy.SmartStart) {
 					this.alert = null
 
 					const qrString = await this.$listeners.showConfirm(
@@ -995,6 +1042,7 @@ export default {
 						'info',
 						{
 							qrScan: true,
+							tryParseDsk: true,
 							canceltext: 'Close',
 							width: 500,
 						}
@@ -1003,9 +1051,17 @@ export default {
 						return
 					}
 
-					this.$emit('apiRequest', 'parseQRCodeString', [qrString])
+					dsk = tryParseDSKFromQRCodeString(qrString)
 
-					return
+					if (!dsk) {
+						this.$emit('apiRequest', 'parseQRCodeString', [
+							qrString,
+						])
+						return
+					} else {
+						// prefilled DSK qr code
+						mode = InclusionStrategy.Security_S2
+					}
 				}
 
 				this.aborted = false
@@ -1027,6 +1083,7 @@ export default {
 						mode,
 						{
 							forceSecurity: s.values.forceSecurity,
+							dsk,
 							...this.nodeProps,
 						},
 					])
@@ -1106,7 +1163,7 @@ export default {
 			this.sendAction('stop' + this.currentAction)
 		},
 		sendAction(api, args) {
-			this.commandEndDate = new Date()
+			this.commandEndDate = null
 
 			let text = ''
 
@@ -1149,7 +1206,9 @@ export default {
 			if (this.nodeFound === null) {
 				this.alert = {
 					type: 'warning',
-					text: `${this.currentAction} stopped, no changes detected`,
+					text: this.commandTimedOut
+						? `Timed Out! No device has been found to complete ${this.currentAction}`
+						: `${this.currentAction} stopped, no changes detected`,
 				}
 			} else if (this.currentAction === 'Exclusion') {
 				this.alert = null
@@ -1170,6 +1229,7 @@ export default {
 			}
 
 			this.loading = false
+			this.commandTimedOut = false
 
 			this.state = 'stop'
 		},

@@ -411,6 +411,9 @@ import { socketEvents, inboundEvents } from '@/../server/lib/SocketEvents'
 import { copy } from '@/lib/utils'
 import { getEnumMemberName } from 'zwave-js/safe'
 import { Powerlevel } from '@zwave-js/cc/safe'
+import { mapActions } from 'pinia'
+
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	components: {},
@@ -552,6 +555,7 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['showSnackbar']),
 		exportResults() {
 			this.$listeners.export(
 				this.results,
@@ -622,6 +626,9 @@ export default {
 			if (open) {
 				this.rounds = 5
 				this.activeNode = copy(this.node)
+				this.targetNode = this.filteredNodes.find(
+					(n) => n.isControllerNode
+				)
 				this.selectedNode = this.filteredNodes[0]
 					? this.filteredNodes[0].id
 					: null
@@ -656,6 +663,13 @@ export default {
 					)
 
 					this.resultsTargetNode = res.targetNodeId
+				} else {
+					this.results.pop()
+					this.showSnackbar(
+						data.message || 'Health check failed',
+						'error'
+					)
+					console.error(data)
 				}
 			}
 		},
@@ -672,10 +686,12 @@ export default {
 						rating: lastRating,
 					})
 				}
-				this.results.push({
-					round,
-					rating: undefined,
-				})
+				if (round < totalRounds) {
+					this.results.push({
+						round,
+						rating: undefined,
+					})
+				}
 			}
 		},
 		bindEvent(eventName, handler) {

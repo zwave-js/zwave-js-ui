@@ -162,6 +162,17 @@
 									]"
 									class="elevation-1"
 								>
+									<template v-slot:top>
+										<v-btn
+											color="blue darken-1"
+											text
+											@click="dialogValue = true"
+										>
+											<v-icon>add</v-icon>
+
+											New Value
+										</v-btn>
+									</template>
 									<template v-slot:[`item.device`]="{ item }">
 										{{ deviceName(item.device) }}
 									</template>
@@ -214,16 +225,92 @@
 										</v-icon>
 									</template>
 								</v-data-table>
-							</v-card-text>
-							<v-card-actions>
-								<v-btn
-									color="blue darken-1"
-									text
-									@click="dialogValue = true"
+
+								<v-subheader class="font-weight-bold">
+									Scheduled Jobs
+								</v-subheader>
+								<div class="mb-5 caption">
+									Add here a list of scheduled jobs that will
+									run specified driver function based on a
+									cron expression.
+								</div>
+								<v-data-table
+									:headers="headersJobs"
+									:items="newGateway.jobs"
+									:items-per-page-options="[
+										10,
+										20,
+										{ text: 'All', value: -1 },
+									]"
+									class="elevation-1"
 								>
-									New Value
-								</v-btn>
-							</v-card-actions>
+									<template v-slot:top>
+										<v-btn
+											color="blue darken-1"
+											text
+											@click="editJob()"
+										>
+											<v-icon>add</v-icon>
+
+											New Value
+										</v-btn>
+									</template>
+									<template v-slot:[`item.code`]="{ item }">
+										<code>{{
+											item.code.substring(0, 30)
+										}}</code>
+									</template>
+									<template
+										v-slot:[`item.enabled`]="{ item }"
+									>
+										<v-icon
+											:color="
+												item.enabled ? 'green' : 'red'
+											"
+										>
+											{{
+												item.enabled
+													? 'check_circle'
+													: 'cancel'
+											}}
+										</v-icon>
+									</template>
+									<template
+										v-slot:[`item.runOnInit`]="{ item }"
+									>
+										<v-icon
+											:color="
+												item.runOnInit ? 'green' : 'red'
+											"
+										>
+											{{
+												item.runOnInit
+													? 'check_circle'
+													: 'cancel'
+											}}
+										</v-icon>
+									</template>
+									<template
+										v-slot:[`item.actions`]="{ item }"
+									>
+										<v-icon
+											small
+											class="mr-2"
+											color="green"
+											@click="editJob(item)"
+										>
+											edit
+										</v-icon>
+										<v-icon
+											small
+											color="red"
+											@click="deleteJob(item)"
+										>
+											delete
+										</v-icon>
+									</template>
+								</v-data-table>
+							</v-card-text>
 						</v-card>
 					</v-expansion-panel-content>
 					<v-divider />
@@ -277,11 +364,11 @@
 										)
 									"
 									label="Cron"
-									:rules="[rules.required, validCron]"
+									:rules="[rules.required, rules.validCron]"
 									v-model="newBackup.storeCron"
 								></v-text-field>
 								<strong>{{
-									rules.validCron(newBackup.storeCron)
+									parseCron(newBackup.storeCron) || ''
 								}}</strong>
 							</v-col>
 							<v-col
@@ -347,11 +434,11 @@
 										)
 									"
 									label="Cron"
-									:rules="[rules.required, validCron]"
+									:rules="[rules.required, rules.validCron]"
 									v-model="newBackup.nvmCron"
 								></v-text-field>
 								<strong>{{
-									rules.validCron(newBackup.nvmCron)
+									parseCron(newBackup.nvmCron) || ''
 								}}</strong>
 							</v-col>
 							<v-col v-if="newBackup.nvmBackup" cols="12" sm="6">
@@ -520,6 +607,16 @@
 									</v-row>
 									<v-col cols="12" sm="6">
 										<v-switch
+											hint="Enable this to start driver in bootloader only mode, useful to recover sticks when an FW upgrade fails. When this is enabled stick will NOT be able to communicate with the network."
+											persistent-hint
+											label="Bootloader only"
+											v-model="
+												newZwave.allowBootloaderOnly
+											"
+										></v-switch>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-switch
 											hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"
 											persistent-hint
 											label="Enable statistics"
@@ -607,6 +704,17 @@
 											label="Log to file"
 											v-model="newZwave.logToFile"
 										></v-switch>
+									</v-col>
+									<v-col cols="6" v-if="newZwave.logEnabled">
+										<v-text-field
+											v-model.number="newZwave.maxFiles"
+											label="Max files"
+											:rules="[rules.required]"
+											required
+											persistent-hint
+											hint="Maximum number of log files to keep"
+											type="number"
+										></v-text-field>
 									</v-col>
 									<v-col
 										v-if="newZwave.logEnabled"
@@ -1147,40 +1255,61 @@
 				:devices="devices"
 			/>
 		</v-form>
-		<v-toolbar elevation="0" class="mt-2">
-			<v-spacer></v-spacer>
-			<v-btn color="red darken-1" text @click="resetConfig">
+		<v-row
+			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
+			class="mt-2 mb-3"
+		>
+			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
+				color="red darken-1"
+				text
+				@click="resetConfig"
+			>
 				Reset
 				<v-icon right dark>clear</v-icon>
 			</v-btn>
-			<v-btn color="purple darken-1" text @click="importSettings">
+			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
+				color="purple darken-1"
+				text
+				@click="importSettings"
+			>
 				Import
 				<v-icon right dark>file_upload</v-icon>
 			</v-btn>
-			<v-btn color="green darken-1" text @click="exportSettings">
+			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
+				color="green darken-1"
+				text
+				@click="exportSettings"
+			>
 				Export
 				<v-icon right dark>file_download</v-icon>
 			</v-btn>
 			<v-btn
+				:small="$vuetify.breakpoint.xsOnly"
 				color="blue darken-1"
 				text
 				type="submit"
+				:loading="saving"
+				:disabled="saving"
 				form="form_settings"
 			>
 				Save
 				<v-icon right dark>save</v-icon>
 			</v-btn>
-		</v-toolbar>
+		</v-row>
 	</v-container>
 </template>
 
 <script>
-import { mapActions, mapGetters, mapMutations } from 'vuex'
+import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
 import { wait, copy } from '../lib/utils'
 import cronstrue from 'cronstrue'
+import useBaseStore from '../stores/base'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
 
@@ -1189,6 +1318,12 @@ export default {
 	components: {
 		DialogGatewayValue,
 		fileInput,
+	},
+	props: {
+		socket: {
+			type: Object,
+			required: true,
+		},
 	},
 	computed: {
 		internalDarkMode: {
@@ -1269,7 +1404,7 @@ export default {
 				'This field is required.'
 			)
 		},
-		...mapGetters([
+		...mapState(useBaseStore, [
 			'zwave',
 			'mqtt',
 			'gateway',
@@ -1277,9 +1412,11 @@ export default {
 			'devices',
 			'serial_ports',
 			'scales',
-			'darkMode',
-			'navTabs',
 		]),
+		...mapState(useBaseStore, {
+			darkMode: (store) => store.ui.darkMode,
+			navTabs: (store) => store.ui.navTabs,
+		}),
 	},
 	watch: {
 		dialogValue(val) {
@@ -1291,6 +1428,7 @@ export default {
 			valid_zwave: true,
 			dialogValue: false,
 			sslDisabled: false,
+			saving: false,
 			newGateway: {},
 			newMqtt: {},
 			newZwave: {},
@@ -1313,6 +1451,14 @@ export default {
 				{ text: 'Post Operation', value: 'postOperation' },
 				{ text: 'Poll', value: 'enablePoll' },
 				// { text: 'Changes', value: 'verifyChanges' },
+				{ text: 'Actions', value: 'actions', sortable: false },
+			],
+			headersJobs: [
+				{ text: 'Name', value: 'name' },
+				{ text: 'Enabled', value: 'enabled' },
+				{ text: 'On Init', value: 'runOnInit' },
+				{ text: 'Code', value: 'code' },
+				{ text: 'Cron', value: 'cron' },
 				{ text: 'Actions', value: 'actions', sortable: false },
 			],
 			e1: true,
@@ -1405,23 +1551,33 @@ export default {
 					)
 				},
 				validCron: (v) => {
-					let res
-					try {
-						res = cronstrue.toString(v, {
-							use24HourTimeFormat: true,
-						})
-					} catch (err) {
-						//ignore
-					}
-
-					return res || 'Not a valid cron string'
+					return (
+						!v || !!this.parseCron(v) || 'Not a valid cron string'
+					)
 				},
 			},
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
-		...mapActions(['setDarkMode', 'setNavTabs']),
+		...mapActions(useBaseStore, [
+			'setDarkMode',
+			'setNavTabs',
+			'initSettings',
+			'init',
+			'showSnackbar',
+		]),
+		parseCron(cron) {
+			let res
+			try {
+				res = cronstrue.toString(cron, {
+					use24HourTimeFormat: true,
+				})
+			} catch (err) {
+				//ignore
+			}
+
+			return res
+		},
 		differentKeys() {
 			const values = Object.values(this.newZwave.securityKeys)
 
@@ -1491,13 +1647,17 @@ export default {
 			try {
 				const { data } = await this.$listeners.import('json')
 				if (data.zwave && data.mqtt && data.gateway) {
-					this.$store.dispatch('import', data)
-					this.showSnackbar('Configuration imported successfully')
+					this.initSettings(data)
+					this.showSnackbar(
+						'Configuration imported successfully',
+						'success'
+					)
 				} else {
-					this.showSnackbar('Imported settings not valid')
+					this.showSnackbar('Imported settings not valid', 'error')
 				}
-				// eslint-disable-next-line no-empty
-			} catch (error) {}
+			} catch (error) {
+				// noop
+			}
 		},
 		exportSettings() {
 			const settings = this.getSettingsJSON()
@@ -1509,6 +1669,103 @@ export default {
 				gateway: this.newGateway,
 				zwave: this.newZwave,
 				backup: this.newBackup,
+			}
+		},
+		async editJob(item) {
+			const { data: snippets } = await ConfigApis.getSnippets()
+
+			const res = await this.$listeners.showConfirm(
+				item ? 'Edit job' : 'New Job',
+				'',
+				'info',
+				{
+					width: 900,
+					inputs: [
+						{
+							type: 'text',
+							key: 'name',
+							label: 'Name',
+							default: item ? item.name : '',
+							rules: [this.rules.required],
+						},
+						{
+							type: 'boolean',
+							key: 'enabled',
+							label: 'Enabled',
+							default: item ? item.enabled : true,
+						},
+						{
+							type: 'boolean',
+							key: 'runOnInit',
+							label: 'Run on init',
+							hint: 'Run the job on gateway init',
+							default: item ? item.runOnInit : false,
+						},
+						{
+							type: 'text',
+							key: 'cron',
+							label: 'Cron string',
+							default: item ? item.cron : '0 0 * * *',
+							hint: "Cron string. Default is '0 0 * * *' that means every day at midnight.",
+							rules: [this.rules.validCron],
+						},
+						{
+							type: 'list',
+							key: 'snippet',
+							label: 'Snippets',
+							default: '',
+							items: snippets,
+							itemText: 'name',
+							itemValue: 'name',
+							hint: 'Select a snippet from library',
+							onChange(values, v) {
+								const content = v
+									? snippets.find((s) => s.name === v)
+											?.content
+									: ''
+
+								if (v) {
+									values.code = content
+								}
+							},
+						},
+						{
+							type: 'code',
+							key: 'code',
+							label: 'Code',
+							default: item
+								? item.code
+								: '// Example:\n// const { logger, zwaveClient, require } = this\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();\n// logger.info(`Node ${node.id} is ready: ${node.ready}`);',
+							rules: [this.rules.required],
+							hint: `Write the function here. The only arg is:
+                    <code>driver</code>. The function is <code>async</code>.`,
+						},
+					],
+					confirmText: item ? 'Edit' : 'Add',
+				}
+			)
+
+			if (res.code) {
+				delete res.snippet
+				if (item) {
+					Object.assign(item, res)
+				} else {
+					this.newGateway.jobs.push(res)
+				}
+			}
+		},
+		async deleteJob(item) {
+			const index = this.newGateway.jobs.indexOf(item)
+
+			if (
+				index >= 0 &&
+				(await this.$listeners.showConfirm(
+					'Attention',
+					'Are you sure you want to delete this item?',
+					'alert'
+				))
+			) {
+				this.newGateway.jobs.splice(index, 1)
 			}
 		},
 		editItem(item) {
@@ -1552,16 +1809,25 @@ export default {
 			await wait(200)
 			if (this.$refs.form_settings.validate()) {
 				try {
+					this.saving = true
+					useBaseStore().resetNodes()
 					const data = await ConfigApis.updateConfig(
 						this.getSettingsJSON()
 					)
-					this.showSnackbar(data.message)
-					this.$store.commit('initSettings', data.data)
+					this.saving = false
+					this.showSnackbar(
+						data.message,
+						data.success ? 'success' : 'error'
+					)
+					this.initSettings(data.data)
 				} catch (error) {
 					console.log(error)
 				}
 			} else {
-				this.showSnackbar('Your configuration contains errors, fix it')
+				this.showSnackbar(
+					'Your configuration contains errors, fix it',
+					'error'
+				)
 			}
 		},
 		resetConfig() {
@@ -1575,16 +1841,17 @@ export default {
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
-						'Error while retrieving configuration, check console'
+						'Error while retrieving configuration, check console',
+						'error'
 					)
 					console.log(data)
 				} else {
-					this.$store.dispatch('init', data)
+					this.init(data)
 					this.sslDisabled = data.sslDisabled
 					this.resetConfig()
 				}
 			} catch (error) {
-				this.showSnackbar(error.message)
+				this.showSnackbar(error.message, 'error')
 				console.log(error)
 			}
 		},

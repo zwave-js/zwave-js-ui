@@ -12,7 +12,25 @@
 			</div>
 		</div>
 
-		<div v-else>
+		<div class="d-flex align-center" v-else>
+			<v-tooltip v-if="value.toUpdate" bottom>
+				<template v-slot:activator="{ on }">
+					<v-progress-circular
+						v-on="on"
+						indeterminate
+						class="mr-2"
+						size="20"
+						:color="
+							node?.status === 'Asleep' ? 'warning' : 'primary'
+						"
+					></v-progress-circular>
+				</template>
+				<span>{{
+					node?.status === 'Asleep'
+						? 'Wake up your device in order to send commands'
+						: 'Set value in progress...'
+				}}</span>
+			</v-tooltip>
 			<v-text-field
 				v-if="
 					!value.list &&
@@ -209,11 +227,13 @@
 			<v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
 				<template v-slot:activator="{ on }">
 					<v-btn
+						max-width="100%"
+						small
 						v-on="on"
 						color="primary"
 						dark
 						@click="updateValue(value)"
-						class="mb-2"
+						class="mb-2 mt-2"
 						>{{ value.label }}</v-btn
 					>
 				</template>
@@ -244,6 +264,9 @@ export default {
 		},
 		disable_send: {
 			type: Boolean,
+		},
+		node: {
+			type: Object,
 		},
 	},
 	data() {

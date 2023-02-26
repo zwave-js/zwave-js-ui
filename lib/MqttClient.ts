@@ -1,13 +1,14 @@
 'use strict'
 
-// eslint-disable-next-line one-var
 import mqtt, { Client } from 'mqtt'
 import { allSettled, parseJSON, sanitizeTopic } from './utils'
-// import { storeDir } from '../config/app'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
 import { TypedEventEmitter } from './EventEmitter'
-// import LevelStore from 'mqtt-level-store'
+import { storeDir } from '../config/app'
+import { ensureDir } from 'fs-extra'
+import { Manager } from 'mqtt-jsonl-store'
+import { join } from 'path'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const url = require('native-url')
@@ -61,6 +62,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private closed: boolean
 	private retrySubTimeout: NodeJS.Timeout | null
 	private _closeTimeout: NodeJS.Timeout | null
+	private storeManager: Manager | null
 
 	static CLIENTS_PREFIX = '_CLIENTS'
 
@@ -86,7 +88,9 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	 */
 	constructor(config: MqttConfig) {
 		super()
-		this._init(config)
+		this._init(config).catch((e) => {
+			logger.error('Error while initializing MQTT Client', e)
+		})
 	}
 
 	get connected() {
@@ -124,13 +128,16 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			let resolved = false
 
 			if (this.client) {
-				const onClose = (error: Error) => {
+				const onClose = async (error: Error) => {
 					// prevent multiple resolve
 					if (resolved) {
 						return
 					}
 
 					resolved = true
+
+					// fix error:Failed to lock DB file when force closing
+					await this.storeManager?.close()
 
 					if (this._closeTimeout) {
 						clearTimeout(this._closeTimeout)
@@ -203,7 +210,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		logger.info('Restarting Mqtt Client after update...')
 
-		this._init(config)
+		await this._init(config)
 	}
 
 	/**
@@ -315,7 +322,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	/**
 	 * Initialize client
 	 */
-	private _init(config: MqttConfig) {
+	private async _init(config: MqttConfig) {
 		this.config = config
 		this.toSubscribe = new Map()
 
@@ -357,12 +364,16 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			}
 		}
 
-		// Temporary fix, seems mqtt store prevents mqtt to work...
-		// if (config.store) {
-		// 	const manager = LevelStore(joinPath(storeDir, 'mqtt'))
-		// 	options.incomingStore = manager.incoming
-		// 	options.outgoingStore = manager.outgoing
-		// }
+		if (config.store) {
+			const dbDir = join(storeDir, 'mqtt-packets-store')
+			await ensureDir(dbDir)
+			this.storeManager = new Manager(dbDir)
+			await this.storeManager.open()
+
+			// no reason to use a memory store for incoming messages
+			options.incomingStore = this.storeManager.incoming
+			options.outgoingStore = this.storeManager.outgoing
+		}
 
 		if (config.auth) {
 			options.username = config.username
@@ -405,7 +416,6 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		)
 
 		// subscribe to actions
-		// eslint-disable-next-line no-redeclare
 		for (let i = 0; i < MqttClient.ACTIONS.length; i++) {
 			subscribePromises.push(
 				this.subscribe(
@@ -498,8 +508,9 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		if (isNaN(parseInt(parsed))) {
 			try {
 				parsed = parseJSON(parsed)
-				// eslint-disable-next-line no-empty
-			} catch (e) {} // it' ok fallback to string
+			} catch (e) {
+				// it' ok fallback to string
+			}
 		} else {
 			parsed = Number(parsed)
 		}

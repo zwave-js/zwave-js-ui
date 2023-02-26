@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    tags-ignore: # prevents to run duplicated on releases
+      - '**'
   release:
     types:
       - created
@@ -13,13 +15,17 @@ jobs:
     permissions:
       packages: write
       contents: read
-      
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3.6.0
+        with:
+          node-version: 16
+          cache: 'yarn'
 
-      - uses: docker/setup-buildx-action@v1.3.0
-      - uses: docker/setup-qemu-action@v2.0.0
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/setup-qemu-action@v2
 
       - name: Login to dockerhub
         uses: docker/login-action@v2
@@ -41,21 +47,8 @@ jobs:
           images: zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
           tags: |
             type=semver,pattern={{version}}
-            type=sha
-            type=ref,event=branch
-          labels: |
-            org.opencontainers.image.vendor=zwave-js
-            org.opencontainers.image.documentation=https://zwave-js.github.io/zwave-js-ui
-            org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
-            maintainer=robertsLando
-      
-      - name: Create Docker Meta for zwavejs2mqtt
-        id: docker_meta2
-        uses: docker/metadata-action@v4
-        with:
-          images: zwavejs/zwavejs2mqtt
-          tags: |
-            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
             type=sha
             type=ref,event=branch
           labels: |
@@ -64,22 +57,48 @@ jobs:
             org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
             maintainer=robertsLando
 
+      - name: Create Docker Meta for zwavejs2mqtt
+        id: docker_meta2
+        uses: docker/metadata-action@v4
+        with:
+          images: zwavejs/zwavejs2mqtt
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha
+            type=ref,event=branch
+          labels: |
+            org.opencontainers.image.vendor=zwave-js
+            org.opencontainers.image.documentation=https://zwave-js.github.io/zwave-js-ui
+            org.opencontainers.image.authors=Daniel Lando <daniel.sorridi@gmail.com>
+            maintainer=robertsLando
+
+      - name: Pre-build frontend and backend files
+        run: |
+          yarn install --immutable
+          yarn build
+
       - name: build+push
+        timeout-minutes: 120 # prevents this to run indeterminatly
         uses: docker/build-push-action@v3
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile
+          context: . # without this it will clone master branch instead of using local
           cache-from: type=gha
           cache-to: type=gha,mode=max
           push: true
           tags: ${{ steps.docker_meta.outputs.tags }}
           labels: ${{ steps.docker_meta.outputs.labels }}
-      
+
       - name: build+push zwavejs2mqtt
+        timeout-minutes: 120
         uses: docker/build-push-action@v3
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile
+          context: . # without this it will clone master branch instead of using local
           cache-from: type=gha
           build-args: |
             image=zwavejs2mqtt

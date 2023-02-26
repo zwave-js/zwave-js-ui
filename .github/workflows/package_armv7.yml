@@ -1,0 +1,77 @@
+name: Build pkg armv7
+
+on:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build package and attach to release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.16.0] # this must be fixed, when changes it will take a lot to re-build nodejs sources
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Use Node.js 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+
+      - name: Install and pre-build
+        run: |
+          yarn install --immutable
+          yarn build
+      
+      - name: Restore cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pkg
+          key: ${{ runner.os }}-pkg-armv7-${{ matrix.node-version }}
+      
+      - uses: uraimo/run-on-arch-action@v2
+        name: Package
+        with:
+          arch: none # armv7
+          distro: none # bullseye
+
+          dockerRunArgs: |
+            --volume "${PWD}:/app"
+
+          base_image: arm32v7/node:16-bullseye
+
+          # Rebuild .node modules for amv7
+          run: |
+            cd /app
+            yarn rebuild
+
+      - name: Build for armv7
+        run: |
+          mkdir -p ~/.cache/pkg
+          export PKG_CACHE_PATH=~/.cache/pkg
+          export PKG_IGNORE_TAG=true
+          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node16/built-v${{ matrix.node-version }}-linux-armv7 -LOJ
+          mv built-v${{ matrix.node-version }}-linux-armv7 $PKG_CACHE_PATH/
+          yarn pkg --skip-build --arch=armv7
+
+      - name: Upload artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v3
+        with:
+          name: pkg-build
+          path: ./pkg/*.zip
+
+      - name: Upload binaries to release
+        if: github.event_name == 'release'
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: ./pkg/*.zip
+          file_glob: true
+          tag: ${{ github.ref }}
+          overwrite: true

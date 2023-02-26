@@ -18,6 +18,7 @@ interface ISensorType {
 
 interface ISensorProps {
 	device_class?: string
+	unit_of_measurement?: string
 	icon?: string
 }
 
@@ -130,13 +131,39 @@ export function meterType(
 	// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/meters.json
 	switch (ccSpecific.meterType) {
 		case 0x01: // electric
-			cfg.props = {
-				device_class: 'power',
+			switch (ccSpecific.scale) {
+				case 0x00: // kWh
+					cfg.props = {
+						state_class: 'total_increasing',
+						device_class: 'energy',
+					}
+					break
+				case 0x02: // W
+					cfg.props = {
+						device_class: 'power',
+					}
+					break
+				case 0x04: // V
+					cfg.props = {
+						device_class: 'voltage',
+					}
+					break
+				case 0x05: // A
+					cfg.props = {
+						device_class: 'current',
+					}
+					break
+				default:
+					cfg.props = {
+						device_class: 'power',
+					}
+					break
 			}
 			break
 		case 0x02: // gas
 			cfg.props = {
 				icon: 'mdi:thought-bubble',
+				device_class: 'gas',
 			}
 			break
 		case 0x03: // water
@@ -184,12 +211,28 @@ export const _sensorMap: ISensorMap = {
 		3: '', // illuminance
 		props: {
 			device_class: 'illuminance',
+			unit_of_measurement: 'lx',
+		},
+	},
+	power: {
+		4: 'power',
+		props: {
+			device_class: 'power',
+		},
+	},
+	voltage: {
+		15: 'voltage',
+		props: {
+			device_class: 'voltage',
+		},
+	},
+	current: {
+		16: 'current',
+		props: {
+			device_class: 'current',
 		},
 	},
 	electricity: {
-		4: 'power',
-		15: 'voltage',
-		16: 'current',
 		28: 'resistivity',
 		29: 'conductivity',
 		props: {

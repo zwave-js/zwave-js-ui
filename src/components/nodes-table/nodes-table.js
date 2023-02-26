@@ -6,7 +6,7 @@ import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import RichValue from '@/components/nodes-table/RichValue.vue'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
 import {
 	mdiBatteryAlertVariantOutline,
 	mdiBattery20,
@@ -25,10 +25,10 @@ import {
 	mdiPowerPlug,
 	mdiSleep,
 } from '@mdi/js'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
-		nodeActions: Array,
 		socket: Object,
 	},
 	components: {
@@ -40,7 +40,7 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 	},
 	data: function () {
 		return {
@@ -53,6 +53,7 @@ export default {
 		   - customGroupValue (function): Function to format a value for displaying as group value
 		   - customSort (function): Custom sort function for a certain column.
 		   - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
+		   - undefinedPlaceholder (string): The placeholder to use in filter when value is undefined.
 		   - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
 		*/
 				id: { type: 'number', label: 'ID', groupable: false },
@@ -67,6 +68,7 @@ export default {
 						this.powerSort(items, sortBy, sortDesc, nodeA, nodeB),
 					customValue: (node) => node.minBatteryLevel, // Note: Not required here but kept as demo for use of customValue()
 					richValue: (node) => this.powerRichValue(node),
+					undefinedPlaceholder: 'Mains', // must match the text of undefined value
 				},
 				manufacturer: { type: 'string', label: 'Manufacturer' },
 				productDescription: { type: 'string', label: 'Product' },
@@ -86,7 +88,7 @@ export default {
 						if (node.isSecure === true) {
 							v.icon = mdiCheckCircle
 							v.iconStyle =
-								node.security === 'LOW SECURITY'
+								node.security === 'S0_Legacy'
 									? `color: ${colors.orange.base}`
 									: `color: ${colors.green.base}`
 							v.description = node.security
@@ -196,6 +198,15 @@ export default {
 		}
 	},
 	methods: {
+		getProgress(node) {
+			return node.firmwareUpdate
+				? Math.round(
+						(node.firmwareUpdate.sentFragments /
+							node.firmwareUpdate.totalFragments) *
+							100
+				  )
+				: null
+		},
 		toggleExpanded(item) {
 			this.expanded = this.expanded.includes(item)
 				? this.expanded.filter((i) => i !== item)

@@ -23,6 +23,14 @@
 									Actions
 									<v-icon right>arrow_drop_down</v-icon>
 								</v-btn>
+								<v-btn
+									color="primary"
+									v-if="$vuetify.breakpoint.mdAndUp"
+									:outlined="!compactMode"
+									@click.stop="compactMode = !compactMode"
+								>
+									Compact
+								</v-btn>
 							</v-item-group>
 						</template>
 
@@ -92,10 +100,18 @@
 				</v-row>
 			</v-expand-transition>
 			<nodes-table
+				v-if="!compact"
 				:socket="socket"
 				v-on="$listeners"
 				@action="sendAction"
 			/>
+			<smart-view
+				:socket="socket"
+				v-on="$listeners"
+				@action="sendAction"
+				v-else
+			>
+			</smart-view>
 		</v-container>
 
 		<DialogNodesManager
@@ -117,7 +133,7 @@
 
 <script>
 import ConfigApis from '@/apis/ConfigApis'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapState, mapActions } from 'pinia'
 
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
@@ -126,6 +142,8 @@ import { Settings } from '@/modules/Settings'
 import { jsonToList } from '@/lib/utils'
 import { socketEvents } from '@/../server/lib/SocketEvents'
 import StatisticsCard from '@/components/custom/StatisticsCard'
+import useBaseStore from '../stores/base.js'
+import SmartView from '@/components/nodes-table/SmartView.vue'
 
 export default {
 	name: 'ControlPanel',
@@ -137,24 +155,26 @@ export default {
 		DialogNodesManager,
 		DialogAdvanced,
 		StatisticsCard,
+		SmartView,
 	},
 	computed: {
-		...mapGetters(['nodes', 'zwave']),
+		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
-		},
-		controllerNode() {
-			return this.nodes.find((n) => n.isControllerNode)
 		},
 		statisticsOpeningIndicator() {
 			return this.showControllerStatistics
 				? 'arrow_drop_up'
 				: 'arrow_drop_down'
 		},
+		compact() {
+			return this.$vuetify.breakpoint.smAndDown || this.compactMode
+		},
 	},
 	watch: {},
 	data() {
 		return {
+			compactMode: false,
 			settings: new Settings(localStorage),
 			bindedSocketEvents: {}, // keep track of the events-handlers
 			addRemoveShowDialog: false,
@@ -181,10 +201,6 @@ export default {
 						{
 							name: 'Begin',
 							action: 'beginHealingNetwork',
-							args: {
-								confirm:
-									'Healing network causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
-							},
 						},
 						{ name: 'Stop', action: 'stopHealingNetwork' },
 					],
@@ -270,6 +286,18 @@ export default {
 					icon: 'update',
 					desc: "Backup/Restore controller's NVM (Non Volatile Memory)",
 				},
+				{
+					text: 'Firmware update OTW',
+					options: [
+						{
+							name: 'Update',
+							action: 'firmwareUpdateOTW',
+						},
+					],
+					icon: 'update',
+					color: 'red',
+					desc: 'Perform a firmware update OTW (Over The Wire)',
+				},
 			],
 			rules: {
 				required: (value) => {
@@ -285,7 +313,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar', 'setHealProgress']),
+		...mapActions(useBaseStore, ['setHealProgress', 'showSnackbar']),
 		jsonToList,
 		onAddRemoveClose() {
 			this.addRemoveShowDialog = false
@@ -314,24 +342,28 @@ export default {
 					const response = await ConfigApis.importConfig({
 						data: data,
 					})
-					this.showSnackbar(response.message)
+					this.showSnackbar(
+						response.message,
+						response.success ? 'success' : 'error'
+					)
 				} catch (error) {
 					console.log(error)
 				}
 			}
 		},
-		exportConfiguration() {
-			const self = this
-			ConfigApis.exportConfig()
-				.then((data) => {
-					self.showSnackbar(data.message)
-					if (data.success) {
-						self.$listeners.export(data.data, 'nodes', 'json')
-					}
-				})
-				.catch((error) => {
-					console.log(error)
-				})
+		async exportConfiguration() {
+			try {
+				const data = await ConfigApis.exportConfig()
+				this.showSnackbar(
+					data.message,
+					data.success ? 'success' : 'error'
+				)
+				if (data.success) {
+					this.$listeners.export(data.data, 'nodes', 'json')
+				}
+			} catch (error) {
+				console.log(error)
+			}
 		},
 		exportDump() {
 			this.$listeners.export(this.nodes, 'nodes_dump', 'json')
@@ -354,12 +386,13 @@ export default {
 						return
 					}
 				}
-				const args = []
+				let args = []
 				if (nodeId !== undefined) {
 					if (!broadcast) {
 						if (isNaN(nodeId)) {
 							this.showSnackbar(
-								'Node ID must be an integer value'
+								'Node ID must be an integer value',
+								'error'
 							)
 							return
 						}
@@ -398,39 +431,154 @@ export default {
 					if (!confirm || confirm !== 'yes') {
 						return
 					}
+				} else if (action === 'beginHealingNetwork') {
+					const { includeSleeping } =
+						await this.$listeners.showConfirm(
+							'Info',
+							'Healing network causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
+							'info',
+							{
+								confirmText: 'Heal',
+								inputs: [
+									{
+										type: 'checkbox',
+										label: 'Include sleeping nodes',
+										key: 'includeSleeping',
+										value: false,
+									},
+								],
+							}
+						)
+					if (includeSleeping === undefined) {
+						return
+					}
+					args.push({ includeSleeping })
+				} else if (action === 'firmwareUpdateOTW') {
+					const result = await this.$listeners.showConfirm(
+						'Firmware update OTW',
+						`<h3 class="red--text">We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed.</h3>
+						<h3 class="mt-2 red--text">A failure during this process may leave your controller in recovery mode, rendering it unusable until a correct firmware image is uploaded. In case of 500 series controllers a failure on this process is likely unrecoverable.</h3>
+						`,
+						'alert',
+						{
+							confirmText: 'Update',
+							width: 500,
+							inputs: [
+								{
+									type: 'file',
+									label: 'File',
+									hint: 'Firmware file',
+									key: 'file',
+									accept: '.hex,.gbl,.otz,.ota',
+								},
+							],
+						}
+					)
+
+					const file = result?.file
+
+					if (!file) {
+						return
+					}
+
+					try {
+						const buffer = await file.arrayBuffer()
+						args = [
+							{
+								name: file.name,
+								data: buffer,
+							},
+						]
+						const store = useBaseStore()
+
+						// start the progress bar
+						store.initNode({
+							id: this.controllerNode.id,
+							firmwareUpdate: {
+								progress: 0,
+							},
+						})
+					} catch (error) {
+						this.showSnackbar('Error reading file', 'error')
+						return
+					}
 				} else if (action === 'updateFirmware') {
 					try {
-						const { files } = await this.$listeners.showConfirm(
-							'Firmware udpate',
+						const node = this.nodes.find((n) => n.id === nodeId)
+						const targets = node.firmwareCapabilities
+							.firmwareTargets || [0]
+
+						const fileInput = {
+							cols: 8,
+							type: 'file',
+							label: 'File',
+							hint: 'Firmware file',
+							key: 'file',
+							accept: '.bin,.exe,.ex_,.hex,.gbl,.otz,.ota,.hec',
+						}
+
+						const targetInput = {
+							type: 'list',
+							cols: 4,
+							allowManualEntry: true,
+							label: 'Target',
+							hint: 'Target to update',
+							key: 'target',
+							items: targets.map((t) => ({
+								text: 'Target ' + t,
+								value: t,
+							})),
+						}
+
+						const inputs = []
+
+						for (const t of targets) {
+							inputs.push({
+								...fileInput,
+								key: 'file_' + t,
+							})
+
+							inputs.push({
+								...targetInput,
+								key: 'target_' + t,
+							})
+						}
+
+						const result = await this.$listeners.showConfirm(
+							'Firmware update',
 							'',
 							'info',
 							{
 								confirmText: 'Ok',
 								width: 500,
-								inputs: [
-									{
-										type: 'file',
-										label: 'Files',
-										multiple: true,
-										hint: 'Firmware files, can be multiple in case of multiple targets',
-										required: true,
-										key: 'files',
-									},
-								],
+								inputs,
 							}
 						)
 
-						if (files.length === 0) {
+						if (!result) {
 							return
 						}
 
 						const fwData = []
+						for (const t of targets) {
+							if (result['file_' + t]) {
+								const f = result['file_' + t]
+								const fwEntry = {
+									name: f.name,
+									data: await f.arrayBuffer(),
+									target: parseInt(result['target_' + t]),
+								}
 
-						for (const f of files) {
-							fwData.push({
-								name: f.name,
-								data: await f.arrayBuffer(),
-							})
+								if (isNaN(fwEntry.target)) {
+									delete fwEntry.target
+								}
+
+								fwData.push(fwEntry)
+							}
+						}
+
+						if (fwData.length === 0) {
+							return
 						}
 
 						args.push(fwData)
@@ -439,13 +587,14 @@ export default {
 					}
 				} else if (action === 'driverFunction') {
 					const { data: snippets } = await ConfigApis.getSnippets()
-					const { code } = await this.$listeners.showConfirm(
+					await this.$listeners.showConfirm(
 						'Driver function',
 						'',
 						'info',
 						{
 							width: 900,
-							confirmText: 'Send',
+							confirmText: 'Close',
+							cancelText: '',
 							inputs: [
 								{
 									type: 'list',
@@ -468,10 +617,19 @@ export default {
 									},
 								},
 								{
+									type: 'button',
+									label: 'Run',
+									icon: 'play_circle_outline',
+									color: 'primary',
+									onChange: (values) => {
+										this.apiRequest(action, [values.code])
+									},
+								},
+								{
 									type: 'code',
 									key: 'code',
 									default:
-										'// Example:\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();',
+										'// Example:\n// const { logger, zwaveClient, require } = this\n// const node = driver.controller.nodes.get(35);\n// await node.refreshInfo();\n// logger.info(`Node ${node.id} is ready: ${node.ready}`);',
 									hint: `Write the function here. The only arg is:
                     <code>driver</code>. The function is <code>async</code>.`,
 								},
@@ -479,11 +637,7 @@ export default {
 						}
 					)
 
-					if (!code) {
-						return
-					}
-
-					args.push(code)
+					return
 				} else if (action === 'backupNVMRaw') {
 					const confirm = await this.$listeners.showConfirm(
 						'NVM Backup',
@@ -584,7 +738,8 @@ export default {
 					case 'backupNVMRaw':
 						{
 							this.showSnackbar(
-								'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory'
+								'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory',
+								'success'
 							)
 							const { result } = data
 							this.$listeners.export(
@@ -595,15 +750,41 @@ export default {
 						}
 						break
 					case 'restoreNVM':
-						this.showSnackbar('NVM restore DONE')
+						this.showSnackbar('NVM restore DONE', 'success')
 						break
+					case 'firmwareUpdateOTW': {
+						// handled in App.vue
+						break
+					}
 					default:
-						this.showSnackbar('Successfully call api ' + data.api)
+						this.showSnackbar(
+							'Successfully call api ' + data.api,
+							'success'
+						)
 				}
 			} else {
-				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message
-				)
+				if (data.api === 'firmwareUpdateOTW') {
+					// this could happen when the update fails before start
+					// used to close the firmware update dialog
+					if (this.controllerNode.firmwareUpdate) {
+						useBaseStore().initNode({
+							id: this.controllerNode.id,
+							firmwareUpdate: false,
+							firmwareUpdateResult: {
+								success: false,
+								status: data.message,
+							},
+						})
+					}
+				} else {
+					this.showSnackbar(
+						'Error while calling api ' +
+							data.api +
+							': ' +
+							data.message,
+						'error'
+					)
+				}
 			}
 		},
 		bindEvent(eventName, handler) {

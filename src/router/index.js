@@ -2,18 +2,18 @@ import Vue from 'vue'
 import Router from 'vue-router'
 
 // DON'T use lazy loading here, it would break application running behind a proxy
-import ControlPanel from '@/components/ControlPanel'
-import Settings from '@/components/Settings'
-import Mesh from '@/components/Mesh'
-import Store from '@/components/Store'
-import Scenes from '@/components/Scenes'
-import Debug from '@/components/Debug'
-import Login from '@/components/Login'
-import ErrorPage from '@/components/ErrorPage'
-import SmartStart from '@/components/SmartStart'
+import ControlPanel from '@/views/ControlPanel'
+import Settings from '@/views/Settings'
+import Mesh from '@/views/Mesh'
+import Store from '@/views/Store'
+import Scenes from '@/views/Scenes'
+import Debug from '@/views/Debug'
+import Login from '@/views/Login'
+import ErrorPage from '@/views/ErrorPage'
+import SmartStart from '@/views/SmartStart'
 
-import store from '@/store'
 import ConfigApis from '../apis/ConfigApis'
+import useBaseStore from '../stores/base'
 
 Vue.use(Router)
 
@@ -120,11 +120,13 @@ router.beforeEach(async (to, from, next) => {
 		return
 	}
 
-	if (store.state.auth === undefined && to.path !== Routes.login) {
+	const store = useBaseStore()
+
+	if (store.auth === undefined && to.path !== Routes.login) {
 		localStorage.setItem('nextUrl', to.path)
 	}
 
-	if (store.state.auth === false) {
+	if (store.auth === false) {
 		if (to.path === Routes.login) {
 			next({
 				path: Routes.main,
@@ -140,7 +142,7 @@ router.beforeEach(async (to, from, next) => {
 		auth: to.matched.some((record) => record.meta.requiresAuth),
 	}
 
-	let user = store.state.user
+	let user = store.user
 	let logged = !!localStorage.getItem('logged')
 
 	if (!user || Object.keys(user).length === 0) {
@@ -154,7 +156,7 @@ router.beforeEach(async (to, from, next) => {
 					logged = false
 					localStorage.removeItem('logged')
 				} else {
-					store.commit('setUser', response.user)
+					store.setUser(response.user)
 				}
 			} else user = {}
 		} catch (error) {

@@ -37,7 +37,10 @@
 						</template>
 						<v-card>
 							<v-card-text>
-								<draggable v-model="managedNodes.tableColumns">
+								<draggable
+									v-model="managedNodes.tableColumns"
+									handle=".handle"
+								>
 									<v-checkbox
 										v-for="col in managedNodes.tableColumns"
 										:key="col.name"
@@ -50,8 +53,15 @@
 										"
 										:input-value="col.visible"
 										@change="col.visible = !!$event"
-										prepend-icon="drag_indicator"
-									></v-checkbox>
+									>
+										<template v-slot:prepend>
+											<v-icon
+												class="handle"
+												style="cursor: move"
+												>drag_indicator</v-icon
+											>
+										</template>
+									</v-checkbox>
 								</draggable>
 							</v-card-text>
 							<v-card-actions>
@@ -230,16 +240,23 @@
 		</template>
 		<template v-slot:[`item.firmwareVersion`]="{ item }">
 			<div style="text-align: center">
-				<v-progress-circular
-					v-if="item.firmwareUpdate"
-					:value="item.firmwareUpdate.progress"
-					size="40"
-					color="primary"
-				>
-					<span class="caption">{{
-						item.firmwareUpdate.progress
-					}}</span>
-				</v-progress-circular>
+				<div v-if="item.firmwareUpdate && !item.isControllerNode">
+					<v-progress-circular
+						:value="item.firmwareUpdate.progress"
+						size="50"
+						class="mt-1"
+						color="primary"
+					>
+						<span class="caption">{{
+							item.firmwareUpdate.progress
+						}}</span>
+					</v-progress-circular>
+					<p class="caption font-weight-bold mb-0 mt-1">
+						{{ item.firmwareUpdate.currentFile }}/{{
+							item.firmwareUpdate.totalFiles
+						}}: {{ getProgress(item) }}%
+					</p>
+				</div>
 				<div
 					style="white-space: pre"
 					v-text="
@@ -255,14 +272,15 @@
 			<statistics-arrows :node="item"></statistics-arrows>
 		</template>
 		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
-			<expanded-node
-				:actions="nodeActions"
-				:headers="headers"
-				:isMobile="isMobile"
-				:node="item"
-				:socket="socket"
-				v-on="$listeners"
-			/>
+			<td :colspan="isMobile ? 1 : headers.length">
+				<expanded-node
+					:headers="headers"
+					:isMobile="isMobile"
+					:node="item"
+					:socket="socket"
+					v-on="$listeners"
+				/>
+			</td>
 		</template>
 	</v-data-table>
 </template>

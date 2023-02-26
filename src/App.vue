@@ -274,9 +274,16 @@
 				<v-footer
 					v-if="$route.path !== '/store'"
 					fixed
-					class="text-center text-caption"
+					class="text-center"
 				>
-					<v-col class="d-flex pa-0 justify-center text-caption">
+					<v-col
+						class="d-flex pa-0 justify-center text-caption"
+						:style="{
+							fontSize: $vuetify.breakpoint.xsOnly
+								? '0.7rem !important'
+								: '',
+						}"
+					>
 						Made with &#10084;&#65039; by
 						<strong class="ml-1 mr-2">Daniel Lando</strong>-
 						Enjoying it?&nbsp;
@@ -297,16 +304,40 @@
 
 		<Confirm ref="confirm"></Confirm>
 
-		<v-snackbar
-			:timeout="3000"
-			:bottom="true"
-			:multi-line="false"
-			:vertical="false"
-			v-model="snackbar"
+		<LoaderDialog
+			v-model="dialogLoader"
+			:progress="loaderProgress"
+			:title="loaderTitle"
+			:text="loaderText"
+			:indeterminate="loaderIndeterminate"
+		></LoaderDialog>
+
+		<v-snackbars
+			:objects.sync="messages"
+			:timeout="5000"
+			top
+			right
+			style="margin-top: 10px"
 		>
-			{{ snackbarText }}
-			<v-btn text @click="snackbar = false">Close</v-btn>
-		</v-snackbar>
+			<template v-slot="{ message }">
+				<p
+					style="margin-bottom: 2px"
+					class="font-weight-bold"
+					v-if="message && message.title"
+				>
+					{{ message.title }}
+				</p>
+				<p
+					style="margin-bottom: 0; white-space: pre-line"
+					v-text="
+						typeof message === 'object' ? message.text : message
+					"
+				></p>
+			</template>
+			<template v-slot:action="{ close }">
+				<v-btn text @click="close">Close</v-btn>
+			</template>
+		</v-snackbars>
 	</v-app>
 </template>
 
@@ -338,12 +369,17 @@ code {
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
+import VSnackbars from 'v-snackbars'
+
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm'
 import PasswordDialog from '@/components/dialogs/Password'
+import LoaderDialog from '@/components/dialogs/DialogLoader'
+
 import { Routes } from '@/router'
 
-import { mapActions, mapMutations, mapGetters } from 'vuex'
+import { mapActions, mapState } from 'pinia'
+import useBaseStore from './stores/base.js'
 
 import {
 	socketEvents,
@@ -353,18 +389,23 @@ import {
 export default {
 	components: {
 		PasswordDialog,
+		LoaderDialog,
+		VSnackbars,
 		Confirm,
 	},
 	name: 'app',
 	computed: {
-		...mapGetters([
+		...mapState(useBaseStore, [
 			'user',
 			'auth',
 			'appInfo',
-			'navTabs',
-			'darkMode',
 			'nodesManagerOpen',
+			'controllerNode',
 		]),
+		...mapState(useBaseStore, {
+			darkMode: (store) => store.ui.darkMode,
+			navTabs: (store) => store.ui.navTabs,
+		}),
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
 		},
@@ -374,12 +415,49 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
+		controllerNode(node) {
+			if (!node) return
+
+			if (node.firmwareUpdate) {
+				if (!this.dialogLoader) {
+					this.loaderTitle = ''
+					this.loaderText =
+						'Updating controller firmware, please wait...'
+					this.dialogLoader = true
+				}
+				this.loaderProgress = node.firmwareUpdate.progress
+				this.loaderIndeterminate = this.loaderProgress === 0
+			} else if (node.firmwareUpdateResult) {
+				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
+				this.loaderProgress = -1
+				this.loaderTitle = ''
+				const result = node.firmwareUpdateResult
+
+				useBaseStore().initNode({
+					id: node.id,
+					firmwareUpdateResult: false,
+				})
+
+				this.loaderText = `<span style="white-space: break-spaces;" class="${
+					result.success ? 'success' : 'error'
+				}--text">Controller firmware update finished ${
+					result.success
+						? 'successfully. It may take a few seconds for the stick to restart.'
+						: 'with error'
+				}.\n Status: ${result.status}</span>`
+			}
+		},
 	},
 	data() {
 		return {
 			socket: null,
 			error: false,
 			dialog_password: false,
+			dialogLoader: false,
+			loaderTitle: '',
+			loaderText: '',
+			loaderProgress: -1,
+			loaderIndeterminate: false,
 			password: {},
 			menu: [
 				{
@@ -417,21 +495,20 @@ export default {
 			topbar: [],
 			hideTopbar: false,
 			title: '',
-			snackbar: false,
-			snackbarText: '',
+			messages: [],
 		}
 	},
 	methods: {
 		assetPath(path) {
 			return ConfigApis.getBasePath(path)
 		},
-		...mapActions([
+		...mapActions(useBaseStore, [
+			'init',
 			'initNodes',
 			'setAppInfo',
+			'setUser',
 			'updateValue',
 			'removeValue',
-		]),
-		...mapMutations([
 			'setControllerStatus',
 			'setStatistics',
 			'addNodeEvent',
@@ -453,14 +530,18 @@ export default {
 		async updatePassword() {
 			try {
 				const response = await ConfigApis.updatePassword(this.password)
-				this.showSnackbar(response.message)
+				this.showSnackbar(
+					response.message,
+					response.success ? 'success' : 'error'
+				)
 				if (response.success) {
 					this.closePasswordDialog()
-					this.$store.dispatch('setUser', response.user)
+					this.setUser(response.user)
 				}
 			} catch (error) {
 				this.showSnackbar(
-					'Error while updating password, check console for more info'
+					'Error while updating password, check console for more info',
+					'error'
 				)
 				console.log(error)
 			}
@@ -514,9 +595,16 @@ export default {
 
 			return this.$refs.confirm.open(title, text, options)
 		},
-		showSnackbar: function (text) {
-			this.snackbarText = text
-			this.snackbar = true
+		showSnackbar: function (text, color, timeout) {
+			const message = {
+				message: text,
+				color: color || 'info',
+				timeout,
+			}
+
+			this.messages.push(message)
+
+			return message
 		},
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {
@@ -526,7 +614,7 @@ export default {
 				}
 				this.socket.emit(socketActions.zwave, data)
 			} else {
-				this.showSnackbar('Socket disconnected')
+				this.showSnackbar('Socket disconnected', 'error')
 			}
 		},
 		updateStatus: function (status, color) {
@@ -609,7 +697,8 @@ export default {
 											data = JSON.parse(data)
 										} catch (e) {
 											self.showSnackbar(
-												'Error while parsing input file, check console for more info'
+												'Error while parsing input file, check console for more info',
+												'error'
 											)
 											console.error(e)
 											err = e
@@ -666,11 +755,11 @@ export default {
 				const data = await ConfigApis.getConfig()
 				if (!data.success) {
 					this.showSnackbar(
-						'Error while retrieving configuration, check console'
+						'Error while retrieving configuration, check console',
+						'error'
 					)
-					console.log(data)
 				} else {
-					this.$store.dispatch('init', data)
+					this.init(data)
 
 					if (data.deprecationWarning) {
 						await this.confirm(
@@ -730,7 +819,7 @@ export default {
 					}
 				}
 			} catch (error) {
-				this.showSnackbar(error.message)
+				this.showSnackbar(error.message, 'error')
 				console.log(error)
 			}
 		},
@@ -774,13 +863,14 @@ export default {
 			})
 
 			this.socket.on(socketEvents.init, (data) => {
-				// convert node values in array
-				this.initNodes(data.nodes)
+				// must be run before initNodes
+				this.setAppInfo(data.info)
 				this.setControllerStatus({
 					error: data.error,
 					status: data.cntStatus,
 				})
-				this.setAppInfo(data.info)
+				// convert node values in array
+				this.initNodes(data.nodes)
 			})
 
 			this.socket.on(socketEvents.info, (data) => {
@@ -829,9 +919,9 @@ export default {
 			if (this.auth) {
 				try {
 					await ConfigApis.logout()
-					this.showSnackbar('Logged out')
+					this.showSnackbar('Logged out', 'success')
 				} catch (error) {
-					this.showSnackbar('Logout failed')
+					this.showSnackbar('Logout failed', 'error')
 				}
 
 				if (this.$route.path !== Routes.login) {
@@ -852,7 +942,7 @@ export default {
 					const newAuth = data.data === true
 					const oldAuth = this.auth
 
-					this.$store.dispatch('setAuth', newAuth)
+					useBaseStore().auth = newAuth
 
 					if (oldAuth !== undefined && oldAuth !== newAuth) {
 						await this.logout()
@@ -891,10 +981,10 @@ export default {
 
 		this.changeThemeColor()
 
-		this.$store.subscribe((mutation) => {
-			if (mutation.type === 'showSnackbar') {
-				this.showSnackbar(mutation.payload)
-			} else if (mutation.type === 'initSettings') {
+		useBaseStore().$onAction(({ name, args }) => {
+			if (name === 'showSnackbar') {
+				this.showSnackbar(...args)
+			} else if (name === 'initSettings') {
 				// check if auth is changed in settings
 				this.checkAuth()
 			}
@@ -909,5 +999,9 @@ export default {
 <style scoped>
 .v-tabs :deep(.smaller-min-width-tabs) {
 	min-width: 60px;
+}
+
+:deep(.v-snack) {
+	top: 65px;
 }
 </style>

@@ -7,11 +7,12 @@
 				:key="`section-content-${name}`"
 			>
 				<div>
-					<h1 class="text-caption text-uppercase grey--text mb-4">
+					<h1 class="text-caption text-uppercase grey--text mb-2">
 						{{ name }}
 					</h1>
-					<v-row>
+					<v-row dense>
 						<v-col
+							class="pa-1"
 							v-for="(stat, index) in section.stats"
 							:key="`controller-stat-${index}`"
 							:cols="section.statCols"
@@ -29,7 +30,7 @@
 			</v-col>
 			<v-divider
 				:key="`section-divider-${name}`"
-				:vertical="$vuetify.breakpoint.mdAndUp"
+				:vertical="$vuetify.breakpoint.smAndUp"
 				v-if="section.divider"
 				class="my-4"
 			/>
@@ -38,7 +39,8 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+import { mapState } from 'pinia'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
@@ -56,7 +58,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 		total() {
 			return this.nodes.reduce(
 				(acc, node) => {

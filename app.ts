@@ -49,6 +49,9 @@ import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
+import { generate } from 'selfsigned'
+
+const createCertificate = promisify(generate)
 
 declare module 'express-session' {
 	export interface SessionData {
@@ -86,10 +89,6 @@ const multerRestore = multer({
 	storage: Storage,
 }).array('restore', 1) // Field name and max count
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { createCertificate } = require('pem').promisified
-
-// eslint-disable-next-line
 const FileStore = sessionStore(session)
 const app = express()
 const logger = loggers.module('App')
@@ -326,21 +325,22 @@ function getSafePath(req: Request | string) {
 }
 
 async function loadCertKey(): Promise<{
-	cert: Buffer
-	key: Buffer
+	cert: string
+	key: string
 }> {
 	const certFile =
 		process.env.SSL_CERTIFICATE || utils.joinPath(storeDir, 'cert.pem')
 	const keyFile = process.env.SSL_KEY || utils.joinPath(storeDir, 'key.pem')
 
-	let key: Buffer
-	let cert: Buffer
+	let key: string
+	let cert: string
 
 	try {
-		cert = await fs.readFile(certFile)
-		key = await fs.readFile(keyFile)
-		// eslint-disable-next-line no-empty
-	} catch (error) {}
+		cert = await fs.readFile(certFile, 'utf8')
+		key = await fs.readFile(keyFile, 'utf8')
+	} catch (error) {
+		// noop
+	}
 
 	if (!cert || !key) {
 		logger.info(
@@ -348,22 +348,15 @@ async function loadCertKey(): Promise<{
 		)
 
 		try {
-			const result = await createCertificate({
+			const result = await createCertificate([], {
 				days: 99999,
-				selfSigned: true,
 			})
 
-			key = result.serviceKey
-			cert = result.certificate
+			key = result.private
+			cert = result.cert
 
-			await fs.writeFile(
-				utils.joinPath(storeDir, 'key.pem'),
-				result.serviceKey
-			)
-			await fs.writeFile(
-				utils.joinPath(storeDir, 'cert.pem'),
-				result.certificate
-			)
+			await fs.writeFile(utils.joinPath(storeDir, 'key.pem'), key)
+			await fs.writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
 			logger.info('New cert and key created')
 		} catch (error) {
 			logger.error('Error creating cert and key for HTTPS', error)
@@ -469,24 +462,28 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 	const toReturn = []
 	const files = await fs.readdir(dir)
 	for (const file of files) {
-		const entry: StoreFileEntry = {
-			name: path.basename(file),
-			path: utils.joinPath(dir, file),
-		}
-		const stats = await fs.lstat(entry.path)
-		if (stats.isDirectory()) {
-			if (entry.path === process.env.ZWAVEJS_EXTERNAL_CONFIG) {
-				// hide config-db
-				continue
+		try {
+			const entry: StoreFileEntry = {
+				name: path.basename(file),
+				path: utils.joinPath(dir, file),
 			}
-			entry.children = await parseDir(entry.path)
-			sortStore(entry.children)
-		} else {
-			entry.ext = file.split('.').pop()
-		}
+			const stats = await fs.lstat(entry.path)
+			if (stats.isDirectory()) {
+				if (entry.path === process.env.ZWAVEJS_EXTERNAL_CONFIG) {
+					// hide config-db
+					continue
+				}
+				entry.children = await parseDir(entry.path)
+				sortStore(entry.children)
+			} else {
+				entry.ext = file.split('.').pop()
+			}
 
-		entry.size = utils.humanSize(stats.size)
-		toReturn.push(entry)
+			entry.size = utils.humanSize(stats.size)
+			toReturn.push(entry)
+		} catch (error) {
+			logger.error(`Error while parsing ${file} in ${dir}`, error)
+		}
 	}
 
 	sortStore(toReturn)
@@ -597,13 +594,7 @@ function setupSocket(server: HttpServer) {
 
 	socketManager.on(inboundEvents.init, (socket) => {
 		if (gw.zwave) {
-			const payload = {
-				nodes: gw.zwave.getNodes(),
-				info: gw.zwave.getInfo(),
-				error: gw.zwave.error,
-				cntStatus: gw.zwave.cntStatus,
-			}
-			socket.emit(socketEvents.init, payload)
+			socket.emit(socketEvents.init, gw.zwave.getState())
 		}
 	})
 
@@ -829,9 +820,17 @@ app.post(
 				req.session.user = userData
 				result.user = userData
 				loginLimiter.resetKey(req.ip)
+				logger.info(
+					`User ${user.username} logged in successfully from ${req.ip}`
+				)
 			} else {
 				result.code = 3
 				result.message = RESPONSE_CODES.GENERAL_ERROR
+				logger.error(
+					`User ${
+						user?.username || req.body.username
+					} failed to login from ${req.ip}: wrong credentials`
+				)
 			}
 
 			res.json(result)
@@ -841,6 +840,12 @@ app.post(
 				message: 'Authentication failed',
 				code: 3,
 			})
+
+			logger.error(
+				`User ${
+					user?.username || req.body.username
+				} failed to login from ${req.ip}: ${error.message}`
+			)
 		}
 	}
 )
@@ -1424,6 +1429,10 @@ async function gracefuShutdown() {
 
 	return process.exit()
 }
+
+process.on('unhandledRejection', (reason) => {
+	logger.error(`Unhandled Rejection, reason: ${reason}`)
+})
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises

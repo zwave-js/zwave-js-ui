@@ -29,7 +29,7 @@
 							<v-col
 								v-for="(input, index) in options.inputs"
 								:key="index"
-								cols="12"
+								:cols="input.cols || 12"
 							>
 								<v-text-field
 									v-if="input.type === 'text'"
@@ -139,6 +139,19 @@
 										:disabled="input.disabled"
 									></prism-editor>
 								</v-container>
+								<v-container v-if="input.type === 'button'">
+									<v-btn
+										@click="input.onChange"
+										:color="input.color"
+										:outlined="input.outlined"
+									>
+										<v-icon
+											class="mr-2"
+											v-if="input.icon"
+											>{{ input.icon }}</v-icon
+										>{{ input.label }}</v-btn
+									>
+								</v-container>
 							</v-col>
 						</v-row>
 					</v-form>
@@ -245,7 +258,7 @@
 										<v-text-field
 											label="QR Code text"
 											hint="Manually insert the QR Code string"
-											v-model="qrString"
+											v-model.trim="qrString"
 											:rules="[validQR]"
 										>
 										</v-text-field>
@@ -299,6 +312,7 @@
 <script>
 // import Prism Editor
 import { PrismEditor } from 'vue-prism-editor'
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
 import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
 
 // import highlighting library (you can use any library you want just return html string)
@@ -306,7 +320,6 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
-import { mapMutations } from 'vuex'
 
 import { QrcodeStream, QrcodeDropZone } from 'vue-qrcode-reader'
 import { processFile } from 'vue-qrcode-reader/src/misc/scanner.js'
@@ -368,7 +381,6 @@ export default {
 		},
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
 		paintBoundingBox(detectedCodes, ctx) {
 			for (const detectedCode of detectedCodes) {
 				const {
@@ -423,6 +435,13 @@ export default {
 			}
 		},
 		validQR(value) {
+			if (this.options.tryParseDsk) {
+				const dsk = tryParseDSKFromQRCodeString(value)
+				if (dsk) {
+					return true
+				}
+			}
+
 			return (
 				(value &&
 					value.startsWith('90') &&

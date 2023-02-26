@@ -1,9 +1,3 @@
-/* eslint-disable no-case-declarations */
-/* eslint-disable no-prototype-builtins */
-/* eslint-disable no-eval */
-/* eslint-disable one-var */
-'use strict'
-
 import * as fs from 'fs'
 import * as path from 'path'
 import * as utils from '../lib/utils'
@@ -19,11 +13,13 @@ import MqttClient from './MqttClient'
 import ZwaveClient, {
 	AllowedApis,
 	CallAPIResult,
+	EventSource,
 	HassDevice,
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
 } from './ZwaveClient'
+import Cron from 'croner'
 
 import crypto from 'crypto'
 import { IMeterCCSpecific } from './Constants'
@@ -170,6 +166,14 @@ export type GatewayValue = {
 	retain?: boolean
 }
 
+export type ScheduledJob = {
+	name: string
+	cron?: string
+	enabled: boolean
+	runOnInit: boolean
+	code: string
+}
+
 export type GatewayConfig = {
 	type: GatewayType
 	payloadType?: PayloadType
@@ -187,6 +191,7 @@ export type GatewayConfig = {
 	logLevel?: LogLevel
 	logToFile?: boolean
 	values?: GatewayValue[]
+	jobs?: ScheduledJob[]
 	plugins?: string[]
 	logFileName?: string
 	manualDiscovery?: boolean
@@ -215,6 +220,7 @@ export default class Gateway {
 	private discovered: { [key: string]: HassDevice }
 	private topicLevels: number[]
 	private _closed: boolean
+	private jobs: Map<string, Cron> = new Map()
 
 	public get mqtt() {
 		return this._mqtt
@@ -272,6 +278,11 @@ export default class Gateway {
 
 			if (this.mqttEnabled) {
 				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
+				this._zwave.on(
+					'nodeLastActive',
+					this._onNodeLastActive.bind(this)
+				)
+
 				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
 				this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
 				this._zwave.on('notification', this._onNotification.bind(this))
@@ -286,6 +297,67 @@ export default class Gateway {
 			await this._zwave.connect()
 		} else {
 			logger.error('Z-Wave settings are not valid')
+		}
+	}
+
+	/**
+	 * Schedule a job
+	 */
+	scheduleJob(jobConfig: ScheduledJob) {
+		if (jobConfig.enabled) {
+			if (jobConfig.runOnInit) {
+				this.runJob(jobConfig).catch((error) => {
+					logger.error(
+						`Error while executing scheduled job "${jobConfig.name}": ${error.message}`
+					)
+				})
+			}
+
+			if (jobConfig.cron) {
+				try {
+					const job = new Cron(
+						jobConfig.cron,
+						this.runJob.bind(this, jobConfig)
+					)
+
+					if (job?.next()) {
+						this.jobs.set(jobConfig.name, job)
+						logger.info(
+							`Scheduled job "${jobConfig.name}" will run at ${job
+								.next()
+								.toISOString()}`
+						)
+					}
+				} catch (error) {
+					logger.error(
+						`Error while scheduling job "${jobConfig.name}": ${error.message}`
+					)
+				}
+			}
+		}
+	}
+
+	/**
+	 * Executes a scheduled job
+	 */
+	private async runJob(jobConfig: ScheduledJob) {
+		logger.info(`Executing scheduled job "${jobConfig.name}"...`)
+		try {
+			await this.zwave.driverFunction(jobConfig.code)
+		} catch (error) {
+			logger.error(
+				`Error executing scheduled job "${jobConfig.name}": ${error.message}`
+			)
+		}
+
+		const job = this.jobs.get(jobConfig.name)
+
+		if (job?.next()) {
+			logger.info(
+				`Next scheduled job "${jobConfig.name}" will run at ${job
+					.next()
+					.toISOString()}`
+			)
 		}
 	}
 
@@ -386,6 +458,18 @@ export default class Gateway {
 	}
 
 	/**
+	 * Method used to cancel all scheduled jobs
+	 */
+	cancelJobs() {
+		// cancel jobs
+		for (const [, job] of this.jobs) {
+			job.stop()
+		}
+
+		this.jobs.clear()
+	}
+
+	/**
 	 * Method used to close clients connection, use this before destroy
 	 */
 	async close(): Promise<void> {
@@ -396,6 +480,8 @@ export default class Gateway {
 		if (this._zwave) {
 			await this._zwave.close()
 		}
+
+		this.cancelJobs()
 
 		// close mqtt client after zwave connection is closed
 		if (this.mqttEnabled) {
@@ -428,7 +514,6 @@ export default class Gateway {
 		}
 
 		// clean topic parts
-		// eslint-disable-next-line no-redeclare
 		for (let i = 0; i < topic.length; i++) {
 			topic[i] = utils.sanitizeTopic(topic[i])
 		}
@@ -606,8 +691,8 @@ export default class Gateway {
 				const p = hassDevice.discovery_payload
 				const template =
 					'value' +
-					(p.hasOwnProperty('payload_on') &&
-					p.hasOwnProperty('payload_off')
+					(utils.hasProperty(p, 'payload_on') &&
+					utils.hasProperty(p, 'payload_off')
 						? " == 'true'"
 						: '')
 
@@ -1226,7 +1311,7 @@ export default class Gateway {
 						valueId.propertyKey
 					)
 					break
-				case CommandClasses['Binary Sensor']:
+				case CommandClasses['Binary Sensor']: {
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/BinarySensorCC.ts#L41
 					// change the sensorTypeName to use directly valueId.property, as the old way was returning a number
 					// add a comment which shows the old way of achieving this value. This change fixes the Binary Sensor
@@ -1306,6 +1391,7 @@ export default class Gateway {
 					}
 
 					break
+				}
 				case CommandClasses['Alarm Sensor']:
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/AlarmSensorCC.ts#L40
 					if (valueId.property === 'state') {
@@ -1435,7 +1521,7 @@ export default class Gateway {
 				case CommandClasses['Pulse Meter']:
 				case CommandClasses.Time:
 				case CommandClasses['Energy Production']:
-				case CommandClasses.Battery:
+				case CommandClasses.Battery: {
 					let sensor = null
 					// set it as been sensor (ex not Binary)
 					let isSensor = true
@@ -1533,12 +1619,13 @@ export default class Gateway {
 						sensor.sensor,
 						sensor.objectId
 					)
-					Object.assign(cfg.discovery_payload, sensor.props || {})
 
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/scales.json
 					if (valueId.unit) {
 						cfg.discovery_payload.unit_of_measurement = valueId.unit
 					}
+
+					Object.assign(cfg.discovery_payload, sensor.props || {})
 
 					// check if there is a custom value configuration for this valueID
 					if (valueConf) {
@@ -1551,6 +1638,7 @@ export default class Gateway {
 							cfg.discovery_payload.icon = valueConf.icon
 					}
 					break
+				}
 				default:
 					return
 			}
@@ -1558,7 +1646,7 @@ export default class Gateway {
 			const payload = cfg.discovery_payload
 
 			if (
-				!payload.hasOwnProperty('state_topic') ||
+				!utils.hasProperty(payload, 'state_topic') ||
 				payload.state_topic === true
 			) {
 				payload.state_topic = getTopic
@@ -1710,6 +1798,13 @@ export default class Gateway {
 		for (const id in this.discovered) {
 			if (id.startsWith(prefix)) {
 				delete this.discovered[id]
+			}
+		}
+
+		// clean topicValues
+		for (const topic in this.topicValues) {
+			if (this.topicValues[topic].nodeId === node.id) {
+				delete this.topicValues[topic]
 			}
 		}
 	}
@@ -1975,11 +2070,48 @@ export default class Gateway {
 	}
 
 	/**
+	 * When a packet is received from a node to update it's last activity timestamp
+	 *
+	 */
+	private _onNodeLastActive(node: ZUINode): void {
+		if (!this.mqttEnabled) {
+			return
+		}
+
+		const nodeTopic = this.nodeTopic(node)
+
+		if (!this.config.ignoreStatus) {
+			let data: any
+
+			if (this.config.payloadType === PAYLOAD_TYPE.RAW) {
+				data = node.lastActive
+			} else {
+				data = {
+					time: Date.now(),
+					value: node.lastActive,
+				}
+			}
+
+			this._mqtt.publish(nodeTopic + '/lastActive', data)
+		}
+	}
+
+	/**
 	 * Driver status updates
 	 *
 	 */
 	private _onDriverStatus(ready: boolean): void {
 		logger.info(`Driver is ${ready ? 'READY' : 'CLOSED'}`)
+
+		this.cancelJobs()
+
+		if (ready) {
+			if (this.config.jobs?.length > 0) {
+				for (const jobConfig of this.config.jobs) {
+					this.scheduleJob(jobConfig)
+				}
+			}
+		}
 
 		this._mqtt.publish('driver/status', ready)
 	}

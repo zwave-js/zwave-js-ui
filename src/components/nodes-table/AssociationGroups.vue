@@ -1,6 +1,6 @@
 <template>
 	<v-container grid-list-md>
-		<v-row class="pa-5">
+		<v-row justify="center" class="pa-5">
 			<v-data-table
 				:headers="headers"
 				:items="associations"
@@ -43,11 +43,17 @@
 					{{ getNodeName(item.nodeId) }}
 				</template>
 				<template v-slot:[`item.endpoint`]="{ item }">
-					{{ item.endpoint >= 0 ? item.endpoint : 'None' }}
+					{{
+						item.endpoint >= 0
+							? getEndpointLabel(node.id, item.endpoint)
+							: 'None'
+					}}
 				</template>
 				<template v-slot:[`item.targetEndpoint`]="{ item }">
 					{{
-						item.targetEndpoint >= 0 ? item.targetEndpoint : 'None'
+						item.targetEndpoint >= 0
+							? getEndpointLabel(item.nodeId, item.targetEndpoint)
+							: 'None'
 					}}
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
@@ -75,7 +81,10 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+
+import useBaseStore from '../../stores/base.js'
+
 export default {
 	components: {
 		DialogAssociation,
@@ -98,7 +107,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapGetters(['nodes', 'nodesMap']),
+		...mapState(useBaseStore, ['nodes', 'nodesMap']),
 	},
 	mounted() {
 		this.socket.on(socketEvents.api, (data) => {
@@ -114,7 +123,7 @@ export default {
 		this.getAssociations()
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar']),
 		getAssociationAddress(ass) {
 			return {
 				nodeId: ass.nodeId,
@@ -125,6 +134,17 @@ export default {
 			const node = this.nodes[this.nodesMap.get(nodeId)]
 			return node ? node._name : 'NodeID_' + nodeId
 		},
+		getEndpointLabel(nodeId, endpoint) {
+			const node = this.nodes[this.nodesMap.get(nodeId)]
+			if (node && endpoint >= 0) {
+				const ep = node.endpoints.find((e) => e.index === endpoint)
+				if (ep) {
+					return ep.label
+				}
+			}
+
+			return endpoint >= 0 ? 'Endpoint ' + endpoint : 'No Endpoint'
+		},
 		apiRequest(apiName, args) {
 			if (this.socket.connected) {
 				const data = {
@@ -133,7 +153,7 @@ export default {
 				}
 				this.socket.emit(socketActions.zwave, data)
 			} else {
-				this.showSnackbar('Socket disconnected')
+				this.showSnackbar('Socket disconnected', 'error')
 			}
 		},
 		getAssociations() {

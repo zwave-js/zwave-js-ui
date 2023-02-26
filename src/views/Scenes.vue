@@ -90,7 +90,8 @@
 <script>
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
 import { socketEvents } from '@/../server/lib/SocketEvents'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'Scenes',
@@ -109,7 +110,7 @@ export default {
 		},
 	},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 		scenesWithId() {
 			return this.scenes.map((s) => {
 				s.label = `[${s.sceneid}] ${s.label}`
@@ -140,7 +141,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar']),
 		async importScenes() {
 			if (
 				await this.$listeners.showConfirm(
@@ -154,10 +155,11 @@ export default {
 					if (data instanceof Array) {
 						this.apiRequest('_setScenes', [data])
 					} else {
-						this.showSnackbar('Imported file not valid')
+						this.showSnackbar('Imported file not valid', 'error')
 					}
-					// eslint-disable-next-line no-empty
-				} catch (error) {}
+				} catch (error) {
+					// noop
+				}
 			}
 		},
 		exportScenes() {
@@ -262,26 +264,32 @@ export default {
 	},
 	mounted() {
 		// init socket events
-		const self = this
 		this.socket.on(socketEvents.api, async (data) => {
 			if (data.success) {
 				switch (data.api) {
 					case '_getScenes':
-						self.scenes = data.result
+						this.scenes = data.result
 						break
 					case '_setScenes':
-						self.scenes = data.result
-						self.showSnackbar('Successfully updated scenes')
+						this.scenes = data.result
+						this.showSnackbar(
+							'Successfully updated scenes',
+							'success'
+						)
 						break
 					case '_sceneGetValues':
-						self.scene_values = data.result
+						this.scene_values = data.result
 						break
 					default:
-						self.showSnackbar('Successfully call api ' + data.api)
+						this.showSnackbar(
+							'Successfully call api ' + data.api,
+							'success'
+						)
 				}
 			} else {
-				self.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message
+				this.showSnackbar(
+					'Error while calling api ' + data.api + ': ' + data.message,
+					'error'
 				)
 			}
 		})

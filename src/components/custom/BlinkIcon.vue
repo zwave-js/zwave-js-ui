@@ -27,7 +27,7 @@ export default {
 		},
 		inactiveColor: {
 			type: String,
-			default: 'black',
+			default: 'grey',
 		},
 	},
 	data: () => ({

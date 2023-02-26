@@ -2,7 +2,7 @@
 	<v-container fluid class="pa-4">
 		<v-data-table :headers="headers" :items="items" class="elevation-1">
 			<template v-slot:top>
-				<h2 class="ma-3">Provisioning Entities</h2>
+				<h2 class="ma-3">Provisioning Entries</h2>
 			</template>
 
 			<template v-slot:[`item.status`]="{ item }">
@@ -132,6 +132,22 @@
 						fab
 						dark
 						small
+						@click="importList"
+						color="red"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>file_download</v-icon>
+					</v-btn>
+				</template>
+				<span>Import</span>
+			</v-tooltip>
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
 						@click="exportList"
 						color="purple"
 						v-bind="attrs"
@@ -146,13 +162,15 @@
 	</v-container>
 </template>
 <script>
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
 import { socketEvents } from '@/../server/lib/SocketEvents'
-import { mapGetters, mapMutations } from 'vuex'
+import { mapState, mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
 	validDsk,
 	securityClassesToArray,
 } from '../lib/utils.js'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'SmartStart',
@@ -161,7 +179,7 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 	},
 	data() {
 		return {
@@ -195,7 +213,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar']),
 		refreshItems() {
 			this.apiRequest('getProvisioningEntries', [])
 		},
@@ -205,6 +223,17 @@ export default {
 				'provisioningEntries',
 				'json'
 			)
+		},
+		async importList() {
+			const { data } = await this.$listeners.import('json')
+
+			if (data) {
+				for (const entry of data) {
+					this.apiRequest('provisionSmartStartNode', [
+						this.convertItem(entry),
+					])
+				}
+			}
 		},
 		onChange(item) {
 			this.edited = true
@@ -224,7 +253,15 @@ export default {
 			)
 
 			if (qrString) {
-				this.apiRequest('provisionSmartStartNode', [qrString])
+				const dsk = tryParseDSKFromQRCodeString(qrString)
+				if (dsk) {
+					this.showSnackbar(
+						`Provided QR Code is not a SmartStart QR Code.\nIn order to use it go to Control Panel > Manage Nodes and use Scan QR Code Inclusion.`,
+						'warning'
+					)
+				} else {
+					this.apiRequest('provisionSmartStartNode', [qrString])
+				}
 			}
 		},
 		async editItem(existingItem) {
@@ -392,24 +429,32 @@ export default {
 						this.items = this.parseItems(data.result)
 						break
 					case 'unprovisionSmartStartNode':
-						this.showSnackbar('Node successfully removed')
+						this.showSnackbar(
+							'Node successfully removed',
+							'success'
+						)
 						this.refreshItems()
 						break
 					case 'provisionSmartStartNode':
 						this.showSnackbar(
 							`Node successfully ${
 								this.edited ? 'updated' : 'added'
-							}`
+							}`,
+							'success'
 						)
 						this.edited = false
 						this.refreshItems()
 						break
 					default:
-						this.showSnackbar('Successfully call api ' + data.api)
+						this.showSnackbar(
+							'Successfully call api ' + data.api,
+							'success'
+						)
 				}
 			} else {
 				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message
+					'Error while calling api ' + data.api + ': ' + data.message,
+					'error'
 				)
 			}
 		})

@@ -1,15 +1,15 @@
 ARG image=zwave-js-ui
 
 # STEP: 1 build
-FROM node:16.17.1-alpine3.16 AS build-zui
+FROM node:18.14.2-alpine3.16 AS build-zui
 
 WORKDIR /usr/src/app
 
 RUN apk --no-cache add \
-    coreutils \	
+    coreutils \
     jq \
     linux-headers \
-    alpine-sdk \	
+    alpine-sdk \
     python3
 
 COPY package.json yarn.lock .yarnrc.yml ./
@@ -24,15 +24,19 @@ RUN npm_config_build_from_source=true yarn rebuild @serialport/bindings-cpp
 
 COPY . .
 
-RUN yarn run build && \
-    yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
+# Build back and frontend only when not existing
+RUN [ -d 'dist' ] && echo "Skipping build" || yarn build
+
+RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
     rm -rf \
     build \
     package.sh \
     src \
     static \
     docs \
-    .yarn
+    .yarn \
+    .github \
+    .vscode
 
 # add plugin support, space separated
 ARG plugins
@@ -50,18 +54,18 @@ RUN if [ ! -z "$updateDevices"  ]; \
     fi
 
 # STEP: 2 (runtime)
-FROM node:16.17.1-alpine3.16
+FROM node:18.14.2-alpine3.16
 
-RUN apk add --no-cache \	
+RUN apk add --no-cache \
     libstdc++ \
     openssl \
-    libgcc \	
-    libusb \	
-    tzdata \	
-    eudev	
+    libgcc \
+    libusb \
+    tzdata \
+    eudev
 
 
-# Copy files from previous build stage	
+# Copy files from previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db

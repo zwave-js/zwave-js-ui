@@ -24,7 +24,7 @@ To call a Z-Wave API you just need to publish a JSON object like:
 
 ```json
 {
-  "args": [2, 1]
+	"args": [2, 1]
 }
 ```
 
@@ -34,99 +34,7 @@ Where `args` is an array with the args used to call the api, the topic is:
 
 The result will be published on the same topic without `/set`
 
-### APIs
-
-This are the available APIs:
-
-- All Z-Wave Clients scene management methods preceded by a `_` will use the internal scenes management instead of Z-Wave JS scenes:
-  - `_createScene(label)`
-  - `_removeScene(sceneId)`
-  - `_setScenes(scenes[])`: Imports scenes Array in `scenes.json`
-  - `_getScenes()`: Get the scenes array
-  - `_sceneGetValues(sceneId)`: Return all values of the scene with given `sceneid`
-  - `_addSceneValue(sceneId, valueId, value, timeout)`: Add a value to a specific scene
-  - `_removeSceneValue(sceneId, valueId)`: remove a valueId from a scene
-  - `_activateScene(sceneId)`: activate a scene
-- `setNodeName(name)` and `setNodeLocation(location)` will use the internal nodes store to save node names/locations in a json file, and it will also try to store this info on the controller
-- `refreshNeighborns()`: Returns an Array where the Array index is the `nodeId`, array value is an Array with all the ids of the node neighborns
-- `getNodes()`: Returns an array with all nodes in the network (and their info/valueids)
-- `getInfo()`: Returns an object with:
-  - `homeid`: homeId
-  - `name`: homeId Hex
-  - `version`: Z-Wave JS version
-  - `uptime`: Seconds from when the app process is started. It's the result of `process.uptime()`
-  - `lastUpdate`: Timestamp of latest event received
-  - `status`: Client status. Could be: 'driverReady', 'connected', 'scanDone', 'driverFailed', 'closed'
-  - `cntStatus`: The controller status
-- `getAssociations(nodeId, groupId)`: Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
-- `addAssociations(nodeId, groupId, associations)`: add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
-- `removeAssociations(nodeId, groupId, associations[])`: the opposite of add associations
-- `removeAllAssociations(nodeId)`: Remove all associations of a specific node
-- `removeNodeFromAllAssociations(nodeId)`: Remove a node from all associations
-- `refreshValues(nodeId)`: Refresh all node values
-- `refreshCCValues(nodeId, cc)`: Refresh all node values of a specific CC
-- `pingNode(nodeId)`: Ping a node
-- `pollValue(valueId)`: Polls a value from the node
-- `startInclusion(inclusionStrategy, options)`: Starts the inclusion
-- `startExclusion()`: Starts the exclusion
-- `stopInclusion()`: Stops the inclusion
-- `stopExclusion()`: Stops the exclusion
-- `grantSecurityClasses(requested)`: Used to resolve the S2 userCallback promise
-- `validateDSK(dsk)`: Used to resolve the S2 userCallback promise
-- `abortInclusion()`: Aborts any active S2 inclusion process
-- `replaceFailedNode(nodeId, inclusionStrategy)`: Replace a failed node
-- `hardReset()`: Hard reset the controller
-- `healNode(nodeId)`: Heal a specific node
-- `beginHealingNetwork()`: Starts healing the network
-- `stopHealingNetwork()`: Stops network healing
-- `isFailedNode(nodeId)`: Checks if a node is failed
-- `removeFailedNode(nodeId)`: Remove a failed node
-- `refreshInfo(nodeId)`: Re-interview a node to fetch its info and supported CCs
-- `beginFirmwareUpdate(nodeId, fileName, data, target)`: Starts a firmware update of a node. The `fileName` is used to check the extension (used to detect the firmware file type) and data is a `Buffer`
-- `abortFirmwareUpdate(nodeId)`: Aborts a firmware update
-- `writeValue(valueId, value, options)`: Write a specific value to a [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid) with optional options (ex: `{"transitionDuration": "10s"}`)
-- `writeBroadcast(valueId, value)`: Send a broadcast request to all nodes that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
-- `writeMulticast(nodes, valueId, value)`: Send a multicast request to all `nodes` provided that support [valueId](https://zwave-js.github.io/node-zwave-js/#/api/valueid?id=valueid)
-- `sendCommand(ctx, command, args)`: Send a custom command.
-  - `ctx`: context to get the instance to send the command (`{ nodeId: number, endpoint: number, commandClass: number }`)
-  - `command`: the command name. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index)
-  - `args`: array of arguments to pass to the command
-- `restart()`: restart client
-- `backupNVMRaw()`: Backup the NVM raw data
-- `restoreNVM(data)`: Restore the NVM data. If the given buffer is in a different NVM format, it is converted automatically. If the conversion is not supported, the operation fails.
-- `softReset`: Soft reset the controller (restart)
-- `driverFunction(code)`: Execute a driver function. The function `this` allow to access `zwaveClient` instance and `require` (ex: `this.zwaveClient` and `this.require`). The only parameter of the function is `driver`. More info [here](/usage/driver_function?id=driver-function)
-
 ### Api call examples
-
-#### Get Associations
-
-Get all of the associations of node `23` and the group `Lifeline` (groupId `1`)
-
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-office/api/getAssociations/set`
-
-Payload:
-
-```js
-{
-  "args": [
-    23, // nodeid
-    1 // lifeline group id
-  ]
-}
-```
-
-You will get this response (in the same topic without the suffix `/set`):
-
-```js
-{
-  "success": true,
-  "message": "Success zwave api call",
-  "result": [1] // the controller id
-}
-```
-
-`result` will contain the value returned from the API. In this example you will get an array with all node IDs that are associated to the group 1 (lifeline) of node 23.
 
 #### Execute Scene
 
@@ -138,9 +46,9 @@ Payload:
 
 ```js
 {
-  "args": [
-    1 // id of scene
-  ]
+	"args": [
+		1 // id of scene
+	]
 }
 ```
 
@@ -153,17 +61,1708 @@ Topic: `zwavejs/_CLIENTS/ZWAVE_GATEWAY-<yourName>/api/sendCommand/set`
 Payload:
 
 ```js
-{ "args": [
-  {
-    "nodeId": 23,
-    "commandClass": 38,
-    "endpoint": 0,
-  },
-  "startLevelChange",
-  [{}] // this are the args, in this case it could be omitted
+{ 
+	"args": [
+		{
+			"nodeId": 23,
+			"commandClass": 38,
+			"endpoint": 0,
+		},
+		"startLevelChange",
+		[{ duration: "1m"}] // this are the args of the command
   ]
 }
 ```
+
+### APIs
+
+This are the available APIs:
+
+<!-- AUTO GENERATED START -->
+#### `restart`
+
+```ts
+async restart(): Promise<void>;
+```
+
+Restart client connection.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/restart/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `getAssociations`
+
+```ts
+getAssociations(nodeId: number): ZUIGroupAssociation[];
+```
+
+Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getAssociations/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `addAssociations`
+
+```ts
+async addAssociations(
+	source: AssociationAddress,
+	groupId: number,
+	associations: AssociationAddress[]
+): Promise<void>;
+```
+
+Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface).
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/addAssociations/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		source,
+		groupId,
+		associations
+	]
+}
+```
+
+</details>
+
+#### `removeAssociations`
+
+```ts
+async removeAssociations(
+	source: AssociationAddress,
+	groupId: number,
+	associations: AssociationAddress[]
+): Promise<void>;
+```
+
+Remove a node from an association group.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeAssociations/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		source,
+		groupId,
+		associations
+	]
+}
+```
+
+</details>
+
+#### `removeAllAssociations`
+
+```ts
+async removeAllAssociations(nodeId: number): Promise<void>;
+```
+
+Remove all associations.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeAllAssociations/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `removeNodeFromAllAssociations`
+
+```ts
+async removeNodeFromAllAssociations(nodeId: number): Promise<void>;
+```
+
+Remove node from all associations.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeNodeFromAllAssociations/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `refreshNeighbors`
+
+```ts
+async refreshNeighbors(): Promise<Record<number, number[]>>;
+```
+
+Refresh all nodes neighbors.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshNeighbors/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `getNodeNeighbors`
+
+```ts
+getNodeNeighbors(
+	nodeId: number,
+	dontThrow: boolean
+): Promise<readonly number[]>;
+```
+
+Get neighbors of a specific node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getNodeNeighbors/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		dontThrow
+	]
+}
+```
+
+</details>
+
+#### `driverFunction`
+
+```ts
+driverFunction(code: string): Promise<any>;
+```
+
+Execute a driver function.
+More info [here](/usage/driver_function?id=driver-function).
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/driverFunction/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		code
+	]
+}
+```
+
+</details>
+
+#### `setNodeName`
+
+```ts
+async setNodeName(nodeid: number, name: string): Promise<boolean>;
+```
+
+Updates node `name` property and stores updated config in `nodes.json`.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setNodeName/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeid,
+		name
+	]
+}
+```
+
+</details>
+
+#### `setNodeLocation`
+
+```ts
+async setNodeLocation(nodeid: number, loc: string): Promise<boolean>;
+```
+
+Updates node `loc` property and stores updated config in `nodes.json`.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setNodeLocation/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeid,
+		loc
+	]
+}
+```
+
+</details>
+
+#### `_createScene`
+
+```ts
+async _createScene(label: string): Promise<boolean>;
+```
+
+Creates a new scene with a specific `label` and stores it in `scenes.json`.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_createScene/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		label
+	]
+}
+```
+
+</details>
+
+#### `_removeScene`
+
+```ts
+async _removeScene(sceneid: number): Promise<boolean>;
+```
+
+Delete a scene with a specific `sceneid` and updates `scenes.json`.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_removeScene/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		sceneid
+	]
+}
+```
+
+</details>
+
+#### `_setScenes`
+
+```ts
+async _setScenes(scenes: ZUIScene[]): Promise<ZUIScene[]>;
+```
+
+Imports scenes Array in `scenes.json`.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_setScenes/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		scenes
+	]
+}
+```
+
+</details>
+
+#### `_getScenes`
+
+```ts
+_getScenes(): ZUIScene[];
+```
+
+Get all scenes.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_getScenes/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `_sceneGetValues`
+
+```ts
+_sceneGetValues(sceneid: number): ZUIValueIdScene[];
+```
+
+Return all values of the scene with given `sceneid`.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_sceneGetValues/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		sceneid
+	]
+}
+```
+
+</details>
+
+#### `_addSceneValue`
+
+```ts
+async _addSceneValue(
+	sceneid: number,
+	valueId: ZUIValueIdScene,
+	value: any,
+	timeout: number
+): Promise<any>;
+```
+
+Add a value to a scene.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_addSceneValue/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		sceneid,
+		valueId,
+		value,
+		timeout
+	]
+}
+```
+
+</details>
+
+#### `_removeSceneValue`
+
+```ts
+async _removeSceneValue(sceneid: number, valueId: ZUIValueIdScene): Promise<any>;
+```
+
+Remove a value from scene.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_removeSceneValue/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		sceneid,
+		valueId
+	]
+}
+```
+
+</details>
+
+#### `_activateScene`
+
+```ts
+_activateScene(sceneId: number): boolean;
+```
+
+Activate a scene with given scene id.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/_activateScene/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		sceneId
+	]
+}
+```
+
+</details>
+
+#### `getNodes`
+
+```ts
+getNodes(): ZUINode[];
+```
+
+Get the nodes array.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getNodes/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `getInfo`
+
+```ts
+getInfo(): ZUIDriverInfo;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getInfo/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `refreshValues`
+
+```ts
+refreshValues(nodeId: number): Promise<void>;
+```
+
+Refresh all node values.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshValues/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `pingNode`
+
+```ts
+pingNode(nodeId: number): Promise<boolean>;
+```
+
+Ping a node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/pingNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `refreshCCValues`
+
+```ts
+refreshCCValues(nodeId: number, cc: CommandClasses): Promise<void>;
+```
+
+Refresh all node values of a specific CC.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshCCValues/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		cc
+	]
+}
+```
+
+</details>
+
+#### `checkForConfigUpdates`
+
+```ts
+async checkForConfigUpdates(): Promise<string | undefined>;
+```
+
+Checks for configs updates.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkForConfigUpdates/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `installConfigUpdate`
+
+```ts
+async installConfigUpdate(): Promise<boolean>;
+```
+
+Checks for configs updates and installs them.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/installConfigUpdate/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `pollValue`
+
+```ts
+pollValue(valueId: ZUIValueId): Promise<unknown>;
+```
+
+Request an update of this value.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/pollValue/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		valueId
+	]
+}
+```
+
+</details>
+
+#### `replaceFailedNode`
+
+```ts
+async replaceFailedNode(
+	nodeId: number,
+	strategy: InclusionStrategy = InclusionStrategy.Security_S2,
+	options?: { qrString?: string; provisioning?: PlannedProvisioningEntry }
+): Promise<boolean>;
+```
+
+Replace failed node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/replaceFailedNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		strategy,
+		options
+	]
+}
+```
+
+</details>
+
+#### `getAvailableFirmwareUpdates`
+
+```ts
+async getAvailableFirmwareUpdates(
+	nodeId: number,
+	options?: GetFirmwareUpdatesOptions
+): Promise<import("/home/daniel/GitProjects/zwave-js-ui/node_modules/zwave-js/build/index").FirmwareUpdateInfo[]>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getAvailableFirmwareUpdates/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		options
+	]
+}
+```
+
+</details>
+
+#### `firmwareUpdateOTA`
+
+```ts
+async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]): Promise<boolean>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/firmwareUpdateOTA/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		updates
+	]
+}
+```
+
+</details>
+
+#### `beginOTAFirmwareUpdate`
+
+```ts
+async beginOTAFirmwareUpdate(
+	nodeId: number,
+	update: FirmwareUpdateFileInfo
+): Promise<void>;
+```
+
+.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginOTAFirmwareUpdate/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		update
+	]
+}
+```
+
+</details>
+
+#### `setPowerlevel`
+
+```ts
+async setPowerlevel(
+	powerlevel: number,
+	measured0dBm: number
+): Promise<boolean>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setPowerlevel/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		powerlevel,
+		measured0dBm
+	]
+}
+```
+
+</details>
+
+#### `setRFRegion`
+
+```ts
+async setRFRegion(region: RFRegion): Promise<boolean>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setRFRegion/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		region
+	]
+}
+```
+
+</details>
+
+#### `startInclusion`
+
+```ts
+async startInclusion(
+	strategy: InclusionStrategy = InclusionStrategy.Default,
+	options?: {
+		forceSecurity?: boolean
+		provisioning?: PlannedProvisioningEntry
+		qrString?: string
+		name?: string
+		dsk?: string
+		location?: string
+	}
+): Promise<boolean>;
+```
+
+Start inclusion.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/startInclusion/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		strategy,
+		options
+	]
+}
+```
+
+</details>
+
+#### `startExclusion`
+
+```ts
+async startExclusion(
+	options: ExclusionOptions = {
+		strategy: ExclusionStrategy.DisableProvisioningEntry,
+	}
+): Promise<boolean>;
+```
+
+Start exclusion.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/startExclusion/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		options
+	]
+}
+```
+
+</details>
+
+#### `stopExclusion`
+
+```ts
+stopExclusion(): Promise<boolean>;
+```
+
+Stop exclusion.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopExclusion/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `stopInclusion`
+
+```ts
+stopInclusion(): Promise<boolean>;
+```
+
+Stops inclusion.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopInclusion/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `healNode`
+
+```ts
+async healNode(nodeId: number): Promise<boolean>;
+```
+
+Heal a node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/healNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `checkLifelineHealth`
+
+```ts
+async checkLifelineHealth(
+	nodeId: number,
+	rounds = 5
+): Promise<LifelineHealthCheckSummary & { targetNodeId: number }>;
+```
+
+Check node lifeline health.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkLifelineHealth/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		rounds
+	]
+}
+```
+
+</details>
+
+#### `checkRouteHealth`
+
+```ts
+async checkRouteHealth(
+	nodeId: number,
+	targetNodeId: number,
+	rounds = 5
+): Promise<RouteHealthCheckSummary & { targetNodeId: number }>;
+```
+
+Check node routes health.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkRouteHealth/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		targetNodeId,
+		rounds
+	]
+}
+```
+
+</details>
+
+#### `isFailedNode`
+
+```ts
+async isFailedNode(nodeId: number): Promise<boolean>;
+```
+
+Check if a node is failed.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/isFailedNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `removeFailedNode`
+
+```ts
+async removeFailedNode(nodeId: number): Promise<void>;
+```
+
+Remove a failed node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removeFailedNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `refreshInfo`
+
+```ts
+refreshInfo(nodeId: number, options?: RefreshInfoOptions): Promise<void>;
+```
+
+Re interview the node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/refreshInfo/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		options
+	]
+}
+```
+
+</details>
+
+#### `firmwareUpdateOTW`
+
+```ts
+async firmwareUpdateOTW(file: FwFile): Promise<boolean>;
+```
+
+Used to trigger an update of controller FW.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/firmwareUpdateOTW/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		file
+	]
+}
+```
+
+</details>
+
+#### `updateFirmware`
+
+```ts
+updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/updateFirmware/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		files
+	]
+}
+```
+
+</details>
+
+#### `beginFirmwareUpdate`
+
+```ts
+beginFirmwareUpdate(
+	nodeId: number,
+	fileName: string,
+	data: Buffer,
+	target: number
+): Promise<void>;
+```
+
+Start a firmware update.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginFirmwareUpdate/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		fileName,
+		data,
+		target
+	]
+}
+```
+
+</details>
+
+#### `abortFirmwareUpdate`
+
+```ts
+async abortFirmwareUpdate(nodeId: number): Promise<void>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/abortFirmwareUpdate/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `beginHealingNetwork`
+
+```ts
+beginHealingNetwork(): boolean;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginHealingNetwork/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `stopHealingNetwork`
+
+```ts
+stopHealingNetwork(): boolean;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopHealingNetwork/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `hardReset`
+
+```ts
+async hardReset(): Promise<void>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/hardReset/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `softReset`
+
+```ts
+softReset(): Promise<void>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/softReset/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `sendCommand`
+
+```ts
+async sendCommand(
+	ctx: {
+		nodeId: number
+		endpoint: number
+		commandClass: CommandClasses | keyof typeof CommandClasses
+	},
+	command: string,
+	args: any[]
+): Promise<any>;
+```
+
+Send a custom CC command. Check available commands by selecting a CC [here](https://zwave-js.github.io/node-zwave-js/#/api/CCs/index).
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/sendCommand/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		ctx,
+		command,
+		args
+	]
+}
+```
+
+</details>
+
+#### `writeBroadcast`
+
+```ts
+async writeBroadcast(valueId: ValueID, value: unknown): Promise<void>;
+```
+
+Send broadcast write request.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/writeBroadcast/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		valueId,
+		value
+	]
+}
+```
+
+</details>
+
+#### `writeMulticast`
+
+```ts
+async writeMulticast(nodes: number[], valueId: ZUIValueId, value: unknown): Promise<void>;
+```
+
+Send multicast write request to a group of nodes.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/writeMulticast/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodes,
+		valueId,
+		value
+	]
+}
+```
+
+</details>
+
+#### `writeValue`
+
+```ts
+async writeValue(
+	valueId: ZUIValueId,
+	value: any,
+	options?: SetValueAPIOptions
+): Promise<boolean>;
+```
+
+Set a value of a specific zwave valueId.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/writeValue/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		valueId,
+		value,
+		options
+	]
+}
+```
+
+</details>
+
+#### `grantSecurityClasses`
+
+```ts
+grantSecurityClasses(requested: InclusionGrant): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/grantSecurityClasses/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		requested
+	]
+}
+```
+
+</details>
+
+#### `validateDSK`
+
+```ts
+validateDSK(dsk: string): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/validateDSK/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		dsk
+	]
+}
+```
+
+</details>
+
+#### `abortInclusion`
+
+```ts
+abortInclusion(): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/abortInclusion/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `backupNVMRaw`
+
+```ts
+async backupNVMRaw(): Promise<{ data: Buffer; fileName: string; }>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/backupNVMRaw/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `restoreNVM`
+
+```ts
+async restoreNVM(data: Buffer): Promise<void>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/restoreNVM/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		data
+	]
+}
+```
+
+</details>
+
+#### `getProvisioningEntries`
+
+```ts
+async getProvisioningEntries(): Promise<SmartStartProvisioningEntry[]>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getProvisioningEntries/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `getProvisioningEntry`
+
+```ts
+getProvisioningEntry(dsk: string): SmartStartProvisioningEntry | undefined;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getProvisioningEntry/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		dsk
+	]
+}
+```
+
+</details>
+
+#### `unprovisionSmartStartNode`
+
+```ts
+unprovisionSmartStartNode(dskOrNodeId: string | number): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/unprovisionSmartStartNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		dskOrNodeId
+	]
+}
+```
+
+</details>
+
+#### `parseQRCodeString`
+
+```ts
+parseQRCodeString(qrString: string): {
+	parsed?: QRProvisioningInformation
+	nodeId?: number
+	exists: boolean
+};
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/parseQRCodeString/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		qrString
+	]
+}
+```
+
+</details>
+
+#### `provisionSmartStartNode`
+
+```ts
+provisionSmartStartNode(entry: PlannedProvisioningEntry | string): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/provisionSmartStartNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		entry
+	]
+}
+```
+
+</details>
+
+#### `updateControllerNodeProps`
+
+```ts
+async updateControllerNodeProps(
+	node?: ZUINode,
+	props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion']
+): Promise<void>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/updateControllerNodeProps/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		node,
+		props
+	]
+}
+```
+
+</details>
+<!-- AUTO GENERATED END -->
 
 ## Set values
 
@@ -179,11 +1778,11 @@ Payload:
 
 ```json
 {
-  "value": 100
+	"value": 100
 }
 ```
 
- To check if the value has been successfully write just check when the value changes on the topic:
+To check if the value has been successfully write just check when the value changes on the topic:
 
 `zwave/office/test/38/0/targetValue`
 
@@ -203,10 +1802,10 @@ Payload:
 
 ```json
 {
-  "value": 100,
-  "options": {
-    "transitionDuration": "5s"
-  }
+	"value": 100,
+	"options": {
+		"transitionDuration": "5s"
+	}
 }
 ```
 
@@ -297,6 +1896,12 @@ The payload will be in the time-value json format and the value will be `true` w
 
 The payload will be `true` if node is ready `false` otherwise. If the payload is in JSON format it will also contain the node status string in `status` property (`Alive`, `Awake`, `Dead`).
 
+### Node Last Active
+
+`<mqtt_prefix>/<?node_location>/<node_name>/lastActive`
+
+The payload will be the timestamp of last time a packet is received by controller from this node.
+
 ### Node information
 
 `<mqtt_prefix>/<?node_location>/<node_name>/nodeinfo`
@@ -308,38 +1913,38 @@ A example of payload is:
 
 ```json
 {
-  "id": 97,
-  "deviceId": "271-4098-2049",
-  "manufacturer": "Fibargroup",
-  "manufacturerId": 271,
-  "productType": 2049,
-  "productId": 4098,
-  "name": "Sensor",
-  "loc": "Hallway",
-  "neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
-  "ready": true,
-  "available": true,
-  "failed": false,
-  "lastActive": 1610009585743,
-  "firmwareVersion": "3.3",
-  "supportsBeaming": true,
-  "isSecure": false,
-  "keepAwake": false,
-  "maxBaudRate": null,
-  "isRouting": true,
-  "isFrequentListening": false,
-  "isListening": false,
-  "status": "Asleep",
-  "interviewStage": "Complete",
-  "productLabel": "FGMS001",
-  "productDescription": "Motion Sensor",
-  "zwaveVersion": 4,
-  "deviceClass": {
-    "basic": 4,
-    "generic": 7,
-    "specific": 1
-  },
-  "hexId": "0x010f-0x1002-0x0801"
+	"id": 97,
+	"deviceId": "271-4098-2049",
+	"manufacturer": "Fibargroup",
+	"manufacturerId": 271,
+	"productType": 2049,
+	"productId": 4098,
+	"name": "Sensor",
+	"loc": "Hallway",
+	"neighbors": [29, 43, 63, 64, 65, 66, 67, 72, 74, 86],
+	"ready": true,
+	"available": true,
+	"failed": false,
+	"lastActive": 1610009585743,
+	"firmwareVersion": "3.3",
+	"supportsBeaming": true,
+	"isSecure": false,
+	"keepAwake": false,
+	"maxBaudRate": null,
+	"isRouting": true,
+	"isFrequentListening": false,
+	"isListening": false,
+	"status": "Asleep",
+	"interviewStage": "Complete",
+	"productLabel": "FGMS001",
+	"productDescription": "Motion Sensor",
+	"zwaveVersion": 4,
+	"deviceClass": {
+		"basic": 4,
+		"generic": 7,
+		"specific": 1
+	},
+	"hexId": "0x010f-0x1002-0x0801"
 }
 ```
 
@@ -380,5 +1985,5 @@ Data: `args.parameters`
 When an MQTT message contains a value of type `Buffer`, such as an Api call argument or return value, the buffer's content is represented as a JSON object of this form:
 
 ```json
-{ type: "Buffer", data: [1, 2, 3] }
+{ "type": "Buffer", "data": [1, 2, 3] }
 ```

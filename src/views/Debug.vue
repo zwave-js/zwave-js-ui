@@ -22,6 +22,7 @@
 			</v-col>
 
 			<v-alert
+				class="mb-0"
 				v-if="
 					!zwave.logEnabled || !gateway.logEnabled || zwave.logToFile
 				"
@@ -43,7 +44,18 @@
 				</p>
 			</v-alert>
 
-			<v-col cols="12">
+			<v-col class="pa-2" cols="12">
+				<v-text-field
+					style="max-width: 300px"
+					label="Filter logs"
+					hint="Type to filter logs, case sensitive"
+					v-model="filter"
+					persistent-hint
+					prepend-icon="search"
+				></v-text-field>
+			</v-col>
+
+			<v-col class="pt-0" cols="12">
 				<div
 					id="debug_window"
 					style="
@@ -54,7 +66,7 @@
 						padding: 10px;
 					"
 					class="mono"
-					v-html="debug.join('')"
+					v-html="filteredLogs.join('')"
 				></div>
 			</v-col>
 		</v-row>
@@ -64,11 +76,12 @@
 import { socketEvents } from '@/../server/lib/SocketEvents'
 
 import AnsiUp from 'ansi_up'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapState, mapActions } from 'pinia'
+import useBaseStore from '../stores/base.js'
 
 const ansiUp = new AnsiUp()
 
-const MAX_DEBUG_LINES = 300
+const MAX_DEBUG_LINES = 500
 
 export default {
 	name: 'Debug',
@@ -77,20 +90,29 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapGetters(['zwave', 'gateway']),
+		...mapState(useBaseStore, ['zwave', 'gateway']),
 		logDisabled() {
 			return !this.zwave.logEnabled || !this.gateway.logEnabled
+		},
+		filteredLogs() {
+			if (!this.filter) {
+				return this.debug
+			}
+			return this.debug.filter((line) => {
+				return line.includes(this.filter)
+			})
 		},
 	},
 	data() {
 		return {
 			debug: [],
+			filter: '',
 			debugActive: true,
 			hideTopbar: false,
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar']),
 		toggleDebug(v) {
 			this.debugActive = v
 			this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))
@@ -108,7 +130,6 @@ export default {
 	},
 	mounted() {
 		// init socket events
-		const self = this
 
 		const hash = window.location.hash.substr(1)
 
@@ -117,13 +138,15 @@ export default {
 		}
 
 		this.socket.on(socketEvents.debug, (data) => {
-			if (self.debugActive) {
+			if (this.debugActive) {
 				data = ansiUp.ansi_to_html(data)
 				data = data.replace(/\n/g, '</br>')
 				// \b[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z\b
-				self.debug.push(data)
+				this.debug.push(data)
 
-				if (self.debug.length > MAX_DEBUG_LINES) self.debug.shift()
+				if (this.debug.length > MAX_DEBUG_LINES) {
+					this.debug.shift()
+				}
 
 				const textarea = document.getElementById('debug_window')
 				if (textarea) {

@@ -81,7 +81,9 @@
 					<v-list-item dense>
 						<v-list-item-content>Statistics</v-list-item-content>
 						<v-list-item-content class="align-end"
-							><statistics-arrows :node="selectedNode"
+							><statistics-arrows
+								inactive-color="black"
+								:node="selectedNode"
 						/></v-list-item-content>
 					</v-list-item>
 					<div v-if="lwr">
@@ -156,16 +158,17 @@
 
 <script>
 import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
-import { mapMutations, mapGetters } from 'vuex'
+import { mapActions, mapState } from 'pinia'
 
 import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
-import DialogHealthCheck from './dialogs/DialogHealthCheck.vue'
+import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 
 import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
+import useBaseStore from '../stores/base.js'
 
 export default {
 	name: 'Mesh',
@@ -178,7 +181,7 @@ export default {
 		DialogHealthCheck,
 	},
 	computed: {
-		...mapGetters(['nodes']),
+		...mapState(useBaseStore, ['nodes']),
 		lwr() {
 			if (!this.selectedNode) return null
 
@@ -216,7 +219,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapMutations(['showSnackbar', 'setNeighbors']),
+		...mapActions(useBaseStore, ['setNeighbors', 'showSnackbar']),
 		nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode

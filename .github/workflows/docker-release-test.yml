@@ -22,8 +22,13 @@ jobs:
           fetch-depth: 0 # fetch everything
           ref: ${{ github.event.inputs.branch }}
 
-      - uses: docker/setup-buildx-action@v1.3.0
-      - uses: docker/setup-qemu-action@v2.0.0
+      - uses: actions/setup-node@v3.6.0
+        with:
+          node-version: 16
+          cache: 'yarn'
+
+      - uses: docker/setup-buildx-action@v2
+      - uses: docker/setup-qemu-action@v2
 
       - name: Login to dockerhub
         uses: docker/login-action@v2
@@ -54,8 +59,14 @@ jobs:
             org.opencontainers.image.url=https://zwave-js.github.io/zwave-js-ui/#/
             maintainer=robertsLando
 
+      - name: Pre-build frontend and backend files
+        run: |
+          yarn install --immutable
+          yarn build
+
       - name: build+push
         uses: docker/build-push-action@v3
+        timeout-minutes: 120
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
           file: docker/Dockerfile

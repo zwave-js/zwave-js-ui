@@ -13,14 +13,12 @@
 [![GitHub All Releases](https://img.shields.io/github/downloads/zwave-js/zwave-js-ui/total)](https://github.com/zwave-js/zwave-js-ui/releases)
 [![Coverage Status](https://coveralls.io/repos/github/zwave-js/zwave-js-ui/badge.svg?branch=master)](https://coveralls.io/github/zwave-js/zwave-js-ui?branch=master)
 [![Known Vulnerabilities](https://snyk.io/test/github/zwave-js/zwave-js-ui/badge.svg?targetFile=package.json)](https://snyk.io/test/github/zwave-js/zwave-js-ui?targetFile=package.json)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/zwave-js/zwave-js-ui.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwave-js-ui/alerts/)
-[![Language grade: JavaScript](https://img.shields.io/lgtm/grade/javascript/g/zwave-js/zwave-js-ui.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/zwave-js/zwave-js-ui/context:javascript)
 
 [![Join channel](https://img.shields.io/badge/SLACK-zwave--js.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave-js/shared_invite/zt-8ns655f6-d407vtI~KjU~1z11jyaQ9Q "Join channel")
 
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee") [<img style="background:#ccc;border-radius:10px" alt="PayPal" src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg" alt="PayPal" width="200" height="40px" />](https://paypal.me/daniellando) [![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=16906849)
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee") [<img style="background:#ccc;border-radius:10px" alt="PayPal" src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg" width="200" height="40px" />](https://paypal.me/daniellando) [![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=16906849) [<img src="https://liberapay.com/assets/widgets/donate.svg" alt="Donate using Liberapay" />](https://liberapay.com/robertsLando/donate)
 
-[![dockeri.co](https://dockeri.co/image/zwavejs/zwave-js-ui)](https://hub.docker.com/r/zwavejs/zwave-js-ui)
+[![dockeri.co](https://dockerico.blankenship.io/image/zwavejs/zwave-js-ui)](https://hub.docker.com/r/zwavejs/zwave-js-ui)
 
 Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 
