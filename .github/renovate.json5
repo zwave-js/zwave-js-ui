@@ -1,23 +1,28 @@
-  {
-    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-    "extends": [
-      "config:base",
-      "workarounds:typesNodeVersioning"
-    ],
-    // "automerge": true,
-    // "platformAutomerge": true,
-    "lockFileMaintenance": {
-      "enabled": true
-    },
-    "nvm": {
-      "enabled": true
-    },
-    "pinDigests": true,
-    "dependencyDashboard": true,
-    "rollbackPrs": true,
-    "github-actions": {
-      "ignorePaths": [
-        "\\.github/workflows/codeql-analysis.yml"
-      ]
-    }
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    "workarounds:typesNodeVersioning"
+  ],
+  // "automerge": true,
+  // "platformAutomerge": true,
+  "lockFileMaintenance": {
+    "enabled": true
+  },
+  "nvm": {
+    "enabled": true
+  },
+  "enabledManagers": [
+    "nvm",
+    "docker-compose",
+    "dockerfile"
+  ],
+  "pinDigests": true,
+  "dependencyDashboard": true,
+  "rollbackPrs": true,
+  "github-actions": {
+    "ignorePaths": [
+      "\\.github/workflows/codeql-analysis.yml"
+    ]
   }
+}
