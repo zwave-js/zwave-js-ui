@@ -2103,6 +2103,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]) {
 		if (this.driverReady) {
+			const node = this._nodes.get(nodeId)
+
+			if (node.firmwareUpdate) {
+				throw Error(`Firmware update already in progress`)
+			}
+
 			const result = await this._driver.controller.firmwareUpdateOTA(
 				nodeId,
 				updates
@@ -2480,6 +2486,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw Error(`Node ${nodeId} not found`)
 			}
 
+			const node = this._nodes.get(nodeId)
+
+			if (node.firmwareUpdate) {
+				throw Error(`Firmware update already in progress`)
+			}
+
 			const firmwares: Firmware[] = []
 
 			for (const f of files) {
@@ -2523,6 +2535,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (!zwaveNode) {
 				throw Error(`Node ${nodeId} not found`)
+			}
+
+			const node = this._nodes.get(nodeId)
+
+			if (node.firmwareUpdate) {
+				throw Error(`Firmware update already in progress`)
 			}
 
 			if (!(data instanceof Buffer)) {
