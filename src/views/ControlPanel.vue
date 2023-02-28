@@ -775,7 +775,7 @@ export default {
 							}
 							default:
 								this.showSnackbar(
-									'Successfully call api ' + response.api,
+									`API ${response.api} ended successfully`,
 									'success'
 								)
 						}

@@ -635,6 +635,7 @@ export default {
 					socketQueue.push({
 						apiName,
 						args,
+						options,
 						resolve: resolve,
 					})
 					// resolve({
@@ -892,9 +893,11 @@ export default {
 
 				if (socketQueue.length > 0) {
 					socketQueue.forEach((item) => {
-						this.apiRequest(item.apiName, item.args).then(
-							item.resolve
-						)
+						this.apiRequest(
+							item.apiName,
+							item.args,
+							item.options
+						).then(item.resolve)
 					})
 					socketQueue = []
 				}

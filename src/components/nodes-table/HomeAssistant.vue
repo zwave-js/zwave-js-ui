@@ -183,7 +183,7 @@
 
 <script>
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
-import { mapState } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base'
 
 export default {
@@ -230,18 +230,46 @@ export default {
 		},
 	},
 	methods: {
+		...mapActions(useBaseStore, ['showSnackbar']),
+		async sendAction(data = {}) {
+			return new Promise((resolve) => {
+				if (this.socket.connected) {
+					this.showSnackbar(`API ${data.apiName} called`, 'info')
+
+					this.socket.emit(socketActions.hass, data, (response) => {
+						if (!response.success) {
+							this.showSnackbar(
+								`Error while calling ${data.apiName}: ${response.message}`,
+								'error'
+							)
+						}
+						resolve(response)
+					})
+				} else {
+					resolve({
+						success: false,
+						message: 'Socket disconnected',
+					})
+					this.showSnackbar('Socket disconnected', 'error')
+				}
+			})
+		},
 		selectDevice(item, row) {
 			row.select(!row.isSelected)
 			this.selectedDevice = this.selectedDevice === item ? null : item
 		},
-		addDevice() {
+		async addDevice() {
 			if (!this.errorDevice) {
 				const newDevice = JSON.parse(this.deviceJSON)
-				this.socket.emit(socketActions.hass, {
+				const response = await this.sendAction({
 					apiName: 'add',
 					device: newDevice,
 					nodeId: this.node.id,
 				})
+
+				if (response.success) {
+					this.showSnackbar(`Device ${newDevice.id} added`, 'success')
+				}
 			}
 		},
 		async deleteDevice() {
@@ -254,11 +282,15 @@ export default {
 					'alert'
 				))
 			) {
-				this.socket.emit(socketActions.hass, {
+				const response = await this.sendAction({
 					apiName: 'delete',
 					device: device,
 					nodeId: this.node.id,
 				})
+
+				if (response.success) {
+					this.showSnackbar(`Device ${device.id} deleted`, 'success')
+				}
 			}
 		},
 		async disableDiscovery() {
@@ -269,10 +301,17 @@ export default {
 					'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store'
 				))
 			) {
-				this.socket.emit(socketActions.hass, {
+				const response = await this.sendAction({
 					apiName: 'disableDiscovery',
 					nodeId: this.node.id,
 				})
+
+				if (response.success) {
+					this.showSnackbar(
+						`Discovery disabled for node ${this.node.id}`,
+						'success'
+					)
+				}
 			}
 		},
 		async rediscoverDevice() {
@@ -284,11 +323,18 @@ export default {
 					'Are you sure you want to re-discover selected device?'
 				))
 			) {
-				this.socket.emit(socketActions.hass, {
+				const response = await this.sendAction({
 					apiName: 'discover',
 					device: device,
 					nodeId: this.node.id,
 				})
+
+				if (response.success) {
+					this.showSnackbar(
+						`Device ${device.id} re-discovered`,
+						'success'
+					)
+				}
 			}
 		},
 		async rediscoverNode() {
@@ -299,21 +345,35 @@ export default {
 					'Are you sure you want to re-discover all node values?'
 				))
 			) {
-				this.socket.emit(socketActions.hass, {
+				const response = await this.sendAction({
 					apiName: 'rediscoverNode',
 					nodeId: this.node.id,
 				})
+
+				if (response.success) {
+					this.showSnackbar(
+						`Node ${this.node.id} re-discovered`,
+						'success'
+					)
+				}
 			}
 		},
-		storeDevices(remove) {
-			this.socket.emit(socketActions.hass, {
+		async storeDevices(remove) {
+			const response = await this.sendAction({
 				apiName: 'store',
 				devices: this.node.hassDevices,
 				nodeId: this.node.id,
 				remove: remove,
 			})
+
+			if (response.success) {
+				this.showSnackbar(
+					`Devices stored for node ${this.node.id}`,
+					'success'
+				)
+			}
 		},
-		updateDevice() {
+		async updateDevice() {
 			if (!this.errorDevice) {
 				const updated = JSON.parse(this.deviceJSON)
 				this.$set(
@@ -321,11 +381,15 @@ export default {
 					this.selectedDevice.id,
 					updated
 				)
-				this.socket.emit(socketActions.hass, {
+				const response = await this.sendAction({
 					apiName: 'update',
 					device: updated,
 					nodeId: this.node.id,
 				})
+
+				if (response.success) {
+					this.showSnackbar(`Device ${updated.id} updated`, 'success')
+				}
 			}
 		},
 		validJSONdevice() {
