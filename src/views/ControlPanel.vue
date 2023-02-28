@@ -446,7 +446,7 @@ export default {
 										type: 'checkbox',
 										label: 'Include sleeping nodes',
 										key: 'includeSleeping',
-										value: false,
+										default: false,
 									},
 								],
 							}
