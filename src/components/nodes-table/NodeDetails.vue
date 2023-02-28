@@ -63,12 +63,7 @@
 								color="primary"
 								small
 								icon
-								@click="
-									app.apiRequest(
-										'updateControllerNodeProps',
-										[null, ['powerlevel']]
-									)
-								"
+								@click="updateControllerNodeProp('powerlevel')"
 							>
 								<v-icon>refresh</v-icon>
 							</v-btn>
@@ -98,12 +93,7 @@
 								color="primary"
 								small
 								icon
-								@click="
-									app.apiRequest(
-										'updateControllerNodeProps',
-										[null, ['RFRegion']]
-									)
-								"
+								@click="updateControllerNodeProp('RFRegion')"
 							>
 								<v-icon>refresh</v-icon>
 							</v-btn>
@@ -207,10 +197,9 @@
 									<v-btn
 										v-if="group[0]"
 										@click.stop="
-											app.apiRequest('refreshCCValues', [
-												node.id,
-												group[0].commandClass,
-											])
+											refreshCCValues(
+												group[0].commandClass
+											)
 										"
 										color="primary"
 										outlined
@@ -288,21 +277,7 @@
 										<v-col cols="3">
 											<v-btn
 												width="60px"
-												@click.stop="
-													app.apiRequest(
-														'sendCommand',
-														[
-															{
-																nodeId: node.id,
-																commandClass: 112,
-															},
-															'get',
-															[
-																configCC.parameter,
-															],
-														]
-													)
-												"
+												@click.stop="configurationGet()"
 												color="green"
 												x-small
 											>
@@ -310,29 +285,7 @@
 											</v-btn>
 											<v-btn
 												width="60px"
-												@click.stop="
-													app.apiRequest(
-														'sendCommand',
-														[
-															{
-																nodeId: node.id,
-																commandClass: 112,
-															},
-															'set',
-															[
-																{
-																	parameter:
-																		configCC.parameter,
-																	value: configCC.value,
-																	valueSize:
-																		configCC.valueSize,
-																	valueFormat:
-																		configCC.valueFormat,
-																},
-															],
-														]
-													)
-												"
+												@click.stop="configurationSet()"
 												color="primary"
 												x-small
 											>
@@ -445,6 +398,67 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		async updateControllerNodeProp(prop) {
+			const response = await this.app.apiRequest(
+				'updateControllerNodeProps',
+				[null, [prop]]
+			)
+
+			if (response.success) {
+				this.showSnackbar('Powerlevel updated', 'success')
+			}
+		},
+		async refreshCCValues(cc) {
+			const response = await this.app.apiRequest('refreshCCValues', [
+				this.node.id,
+				cc,
+			])
+
+			if (response.success) {
+				this.showSnackbar(`Values of CC ${cc} refreshed`, 'success')
+			}
+		},
+		async configurationGet() {
+			const response = await this.app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 112,
+				},
+				'get',
+				[this.configCC.parameter],
+			])
+
+			if (response.success) {
+				this.showSnackbar(
+					`Parameter ${this.configCC.parameter}: ${response.result}`,
+					'success'
+				)
+			}
+		},
+		async configurationSet() {
+			const response = await this.app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 112,
+				},
+				'set',
+				[
+					{
+						parameter: this.configCC.parameter,
+						value: this.configCC.value,
+						valueSize: this.configCC.valueSize,
+						valueFormat: this.configCC.valueFormat,
+					},
+				],
+			])
+
+			if (response.success) {
+				this.showSnackbar(
+					'Configuration parameter set successfully',
+					'success'
+				)
+			}
+		},
 		getValue(v) {
 			if (this.node && this.node.values) {
 				return this.node.values.find((i) => i.id === v.id)
