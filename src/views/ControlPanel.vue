@@ -623,10 +623,22 @@ export default {
 									label: 'Run',
 									icon: 'play_circle_outline',
 									color: 'primary',
-									onChange: (values) => {
-										this.app.apiRequest(action, [
-											values.code,
-										])
+									onChange: async (values) => {
+										const response =
+											await this.app.apiRequest(action, [
+												values.code,
+											])
+
+										if (response.success) {
+											this.showSnackbar(
+												'Function executed successfully, check console for result',
+												'success'
+											)
+											log.info(
+												'Driver function result:',
+												response.data
+											)
+										}
 									},
 								},
 								{
