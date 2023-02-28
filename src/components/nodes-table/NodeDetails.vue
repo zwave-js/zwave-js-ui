@@ -365,7 +365,6 @@ export default {
 	props: {
 		headers: Array,
 		node: Object,
-		socket: Object,
 	},
 	components: {
 		ValueID,

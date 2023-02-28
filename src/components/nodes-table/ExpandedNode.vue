@@ -120,8 +120,6 @@
 						ref="nodeDetails"
 						:headers="headers"
 						:node="node"
-						:socket="socket"
-						v-on="$listeners"
 					></node-details>
 				</v-tab-item>
 
