@@ -407,7 +407,6 @@
 </style>
 
 <script>
-import { socketEvents } from '@/../server/lib/SocketEvents'
 import { copy } from '@/lib/utils'
 import { getEnumMemberName } from 'zwave-js/safe'
 import { Powerlevel } from '@zwave-js/cc/safe'
@@ -463,7 +462,6 @@ export default {
 	},
 	data() {
 		return {
-			bindedSocketEvents: {},
 			loading: false,
 			results: [],
 			rounds: 5,
@@ -666,20 +664,6 @@ export default {
 					})
 				}
 			}
-		},
-		bindEvent(eventName, handler) {
-			this.socket.on(socketEvents[eventName], handler)
-			this.bindedSocketEvents[eventName] = handler
-		},
-		unbindEvents() {
-			for (const event in this.bindedSocketEvents) {
-				this.socket.off(
-					socketEvents[event],
-					this.bindedSocketEvents[event]
-				)
-			}
-
-			this.bindedSocketEvents = {}
 		},
 		async checkHealth() {
 			this.loading = true

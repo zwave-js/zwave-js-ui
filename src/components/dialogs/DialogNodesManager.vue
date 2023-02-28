@@ -625,7 +625,6 @@
 import { mapState } from 'pinia'
 import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
 
-import { socketEvents } from '@/../server/lib/SocketEvents'
 import {
 	parseSecurityClasses,
 	securityClassesToArray,
@@ -721,7 +720,6 @@ export default {
 			nodeFound: null,
 			currentAction: null,
 			nodeProps: {},
-			bindedSocketEvents: {},
 			stopped: false,
 			aborted: false,
 			nvmProgress: 0,
@@ -1196,20 +1194,6 @@ export default {
 					this.init()
 				}
 			}
-		},
-		bindEvent(eventName, handler) {
-			this.socket.on(socketEvents[eventName], handler)
-			this.bindedSocketEvents[eventName] = handler
-		},
-		unbindEvents() {
-			for (const event in this.bindedSocketEvents) {
-				this.socket.off(
-					socketEvents[event],
-					this.bindedSocketEvents[event]
-				)
-			}
-
-			this.bindedSocketEvents = {}
 		},
 		showResults(result) {
 			if (this.waitTimeout) {

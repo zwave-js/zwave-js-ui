@@ -139,7 +139,6 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
 import { jsonToList } from '@/lib/utils'
-import { socketEvents } from '@/../server/lib/SocketEvents'
 import StatisticsCard from '@/components/custom/StatisticsCard'
 import useBaseStore from '../stores/base.js'
 import SmartView from '@/components/nodes-table/SmartView.vue'
@@ -177,7 +176,6 @@ export default {
 		return {
 			compactMode: false,
 			settings: new Settings(localStorage),
-			bindedSocketEvents: {}, // keep track of the events-handlers
 			addRemoveShowDialog: false,
 			advancedShowDialog: false,
 			actions: [
@@ -798,26 +796,12 @@ export default {
 				}
 			}
 		},
-		bindEvent(eventName, handler) {
-			this.socket.on(socketEvents[eventName], handler)
-			this.bindedSocketEvents[eventName] = handler
-		},
-		unbindEvents() {
-			for (const event in this.bindedSocketEvents) {
-				this.socket.off(
-					socketEvents[event],
-					this.bindedSocketEvents[event]
-				)
-			}
-		},
 		toggleControllerStatistics() {
 			this.showControllerStatistics = !this.showControllerStatistics
 		},
 	},
 	mounted() {
-		const onHealProgress = this.setHealProgress.bind(this)
-
-		this.bindEvent('healProgress', onHealProgress)
+		this.bindEvent('healProgress', this.setHealProgress.bind(this))
 	},
 	beforeDestroy() {
 		if (this.socket) {

@@ -275,7 +275,7 @@ export default {
 			const response = await this.app.apiRequest('refreshNeighbors')
 
 			if (response.success) {
-				this.showSnackbar('Nodes Neighbors updated')
+				this.showSnackbar('Nodes Neighbors updated', 'success')
 				this.setNeighbors(response.result)
 				// refresh graph
 				// this.$refs.mesh.debounceRefresh()
