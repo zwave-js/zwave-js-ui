@@ -9861,6 +9861,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"js-logger@npm:^1.6.1":
+  version: 1.6.1
+  resolution: "js-logger@npm:1.6.1"
+  checksum: c191a612a198c6a3263cb35a1953b8de9bc9ff8962cfdb393a771c26be726630a18a15765aa471dd8e0a20666011e3ddbc5addb2d2494e964d39fd13f2246aca
+  languageName: node
+  linkType: hard
+
 "js-sdsl@npm:4.1.4":
   version: 4.1.4
   resolution: "js-sdsl@npm:4.1.4"
@@ -16292,6 +16299,7 @@ __metadata:
     fs-extra: ^10.1.0
     hammerjs: ^2.0.8
     html-webpack-plugin: ^5.5.0
+    js-logger: ^1.6.1
     jsonfile: ^6.1.0
     jsonwebtoken: ^8.5.1
     lodash: ^4.17.21

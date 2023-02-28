@@ -97,8 +97,11 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
+import logger from '../lib/logger'
 
 import { mapState, mapActions } from 'pinia'
+
+const log = logger.get('Login')
 
 export default {
 	data() {
@@ -213,7 +216,7 @@ export default {
 						}
 					}
 				} catch (error) {
-					console.log(error)
+					log.error(error)
 					this.error = true
 					this.error_type = 'error'
 					this.error_text = error.message

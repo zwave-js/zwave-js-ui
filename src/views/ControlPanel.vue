@@ -143,6 +143,9 @@ import StatisticsCard from '@/components/custom/StatisticsCard'
 import useBaseStore from '../stores/base.js'
 import SmartView from '@/components/nodes-table/SmartView.vue'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import logger from '../lib/logger'
+
+const log = logger.get('ControlPanel')
 
 export default {
 	name: 'ControlPanel',
@@ -346,7 +349,7 @@ export default {
 						response.success ? 'success' : 'error'
 					)
 				} catch (error) {
-					console.log(error)
+					log.error(error)
 				}
 			}
 		},
@@ -361,7 +364,7 @@ export default {
 					this.$listeners.export(data.data, 'nodes', 'json')
 				}
 			} catch (error) {
-				console.log(error)
+				log.error(error)
 			}
 		},
 		exportDump() {

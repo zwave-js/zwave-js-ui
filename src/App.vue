@@ -380,6 +380,7 @@ import { Routes } from '@/router'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from './stores/base.js'
 import { manager, instances } from './lib/instanceManager'
+import logger from './lib/logger'
 
 import {
 	socketEvents,
@@ -387,6 +388,8 @@ import {
 } from '@/../server/lib/SocketEvents'
 
 let socketQueue = []
+
+const log = logger.get('App')
 
 export default {
 	components: {
@@ -545,7 +548,7 @@ export default {
 					'Error while updating password, check console for more info',
 					'error'
 				)
-				console.log(error)
+				log.error(error)
 			}
 		},
 		closePasswordDialog() {
@@ -615,6 +618,10 @@ export default {
 		) {
 			return new Promise((resolve) => {
 				if (this.socket.connected) {
+					log.debug(
+						`Sending API request: ${apiName} with args:`,
+						args
+					)
 					if (options.infoSnack) {
 						this.showSnackbar(`API ${apiName} called`, 'info')
 					}
@@ -623,15 +630,26 @@ export default {
 						args: args,
 					}
 					this.socket.emit(socketActions.zwave, data, (response) => {
-						if (options.errorSnack && !response.success) {
-							this.showSnackbar(
-								`Error while calling ${apiName}: ${response.message}`,
-								'error'
+						log.debug(`API response for ${apiName}:`, response)
+						if (!response.success) {
+							log.error(
+								`Error while calling ${apiName}:`,
+								response
 							)
+							if (options.errorSnack) {
+								this.showSnackbar(
+									`Error while calling ${apiName}: ${response.message}`,
+									'error'
+								)
+							}
 						}
 						resolve(response)
 					})
 				} else {
+					log.debug(
+						`Socket disconnected, queueing API request: ${apiName} with args:`,
+						args
+					)
 					socketQueue.push({
 						apiName,
 						args,
@@ -849,7 +867,7 @@ export default {
 				}
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
-				console.log(error)
+				log.error(error)
 			}
 		},
 		onInit(data) {
@@ -885,6 +903,7 @@ export default {
 
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'green')
+				log.info('Socket connected')
 				this.socket.emit(
 					socketActions.init,
 					true,
@@ -904,11 +923,12 @@ export default {
 			})
 
 			this.socket.on('disconnect', () => {
+				log.info('Socket disconnected')
 				this.updateStatus('Disconnected', 'red')
 			})
 
-			this.socket.on('error', () => {
-				console.log('Socket error')
+			this.socket.on('error', (err) => {
+				log.info('Socket error', err)
 			})
 
 			this.socket.on('reconnecting', () => {
@@ -1000,7 +1020,7 @@ export default {
 				}
 			} catch (error) {
 				setTimeout(() => (this.error = error.message), 1000)
-				console.log(error)
+				log.error(error)
 			}
 		},
 	},
