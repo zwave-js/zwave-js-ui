@@ -33,7 +33,7 @@
 						dark
 						v-if="!node.isControllerNode"
 						color="primary"
-						@click.stop="forwardApiRequest('pingNode', [node.id])"
+						@click.stop="app.apiRequest('pingNode', [node.id])"
 						depressed
 					>
 						Ping
@@ -290,6 +290,7 @@ import { mapState } from 'pinia'
 import OTAUpdates from './OTAUpdates.vue'
 import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	props: {
@@ -302,6 +303,7 @@ export default {
 		node: Object,
 		socket: Object,
 	},
+	mixins: [InstancesMixin],
 	components: {
 		AssociationGroups,
 		HomeAssistant,
@@ -573,9 +575,6 @@ export default {
 		},
 		openLink(link) {
 			window.open(link, '_blank')
-		},
-		forwardApiRequest(apiName, args) {
-			this.$refs.nodeDetails.apiRequest(apiName, args)
 		},
 		toggleAutoScroll() {
 			this.autoScroll = !this.autoScroll

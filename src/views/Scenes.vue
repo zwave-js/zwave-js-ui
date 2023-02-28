@@ -89,15 +89,13 @@
 </template>
 <script>
 import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
-import { socketEvents } from '@/../server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 
 export default {
 	name: 'Scenes',
-	props: {
-		socket: Object,
-	},
+	mixins: [InstancesMixin],
 	components: {
 		DialogSceneValue,
 	},
@@ -153,7 +151,17 @@ export default {
 				try {
 					const { data } = await this.$listeners.import('json')
 					if (data instanceof Array) {
-						this.apiRequest('_setScenes', [data])
+						const response = await this.app.apiRequest(
+							'_setScenes',
+							[data]
+						)
+						if (response.success) {
+							this.showSnackbar(
+								'Successfully updated scenes',
+								'success'
+							)
+							this.scenes = response.result
+						}
 					} else {
 						this.showSnackbar('Imported file not valid', 'error')
 					}
@@ -165,14 +173,24 @@ export default {
 		exportScenes() {
 			this.$listeners.export(this.scenes, 'scenes')
 		},
-		refreshScenes() {
-			this.apiRequest('_getScenes', [])
+		async refreshScenes() {
+			const response = await this.app.apiRequest('_getScenes', [])
+
+			if (response.success) {
+				this.scenes = response.result
+			}
 		},
-		createScene() {
+		async createScene() {
 			if (this.newScene) {
-				this.apiRequest('_createScene', [this.newScene])
-				this.refreshScenes()
-				this.newScene = ''
+				const response = await this.app.apiRequest('_createScene', [
+					this.newScene,
+				])
+
+				if (response.success) {
+					this.showSnackbar('Scene created', 'success')
+					this.newScene = ''
+					this.refreshScenes()
+				}
 			}
 		},
 		async removeScene() {
@@ -184,14 +202,26 @@ export default {
 					'alert'
 				))
 			) {
-				this.apiRequest('_removeScene', [this.selectedScene])
-				this.selectedScene = null
-				this.refreshScenes()
+				const response = await this.app.apiRequest('_removeScene', [
+					this.selectedScene,
+				])
+
+				if (response.success) {
+					this.selectedScene = null
+					this.showSnackbar('Scene removed', 'success')
+					this.refreshScenes()
+				}
 			}
 		},
-		activateScene() {
+		async activateScene() {
 			if (this.selectedScene) {
-				this.apiRequest('_activateScene', [this.selectedScene])
+				const response = await this.app.apiRequest('_activateScene', [
+					this.selectedScene,
+				])
+
+				if (response.success) {
+					this.showSnackbar('Scene activated', 'success')
+				}
 			}
 		},
 		editItem(item) {
@@ -224,11 +254,15 @@ export default {
 					'alert'
 				)
 			) {
-				this.apiRequest('_removeSceneValue', [
-					this.selectedScene,
-					value,
-				])
-				this.refreshValues()
+				const response = await this.app.apiRequest(
+					'_removeSceneValue',
+					[this.selectedScene, value]
+				)
+
+				if (response.success) {
+					this.showSnackbar('Value removed', 'success')
+					this.refreshValues()
+				}
 			}
 		},
 		closeDialog() {
@@ -238,69 +272,38 @@ export default {
 				this.editedIndex = -1
 			}, 300)
 		},
-		saveValue() {
+		async saveValue() {
 			const value = this.editedValue.value
 			value.value = value.newValue
 
 			// if value already exists it will be updated
-			this.apiRequest('_addSceneValue', [
+			const response = await this.app.apiRequest('_addSceneValue', [
 				this.selectedScene,
 				value,
 				value.value,
 				this.editedValue.timeout,
 			])
-			this.refreshValues()
 
-			this.closeDialog()
+			if (response.success) {
+				this.showSnackbar('Value saved', 'success')
+				this.refreshValues()
+				this.closeDialog()
+			}
 		},
-		apiRequest(apiName, args) {
-			this.$emit('apiRequest', apiName, args)
-		},
-		refreshValues() {
+		async refreshValues() {
 			if (this.selectedScene) {
-				this.apiRequest('_sceneGetValues', [this.selectedScene])
+				const response = await this.app.apiRequest('_sceneGetValues', [
+					this.selectedScene,
+				])
+
+				if (response.success) {
+					this.scene_values = response.result
+				}
 			}
 		},
 	},
 	mounted() {
-		// init socket events
-		this.socket.on(socketEvents.api, async (data) => {
-			if (data.success) {
-				switch (data.api) {
-					case '_getScenes':
-						this.scenes = data.result
-						break
-					case '_setScenes':
-						this.scenes = data.result
-						this.showSnackbar(
-							'Successfully updated scenes',
-							'success'
-						)
-						break
-					case '_sceneGetValues':
-						this.scene_values = data.result
-						break
-					default:
-						this.showSnackbar(
-							'Successfully call api ' + data.api,
-							'success'
-						)
-				}
-			} else {
-				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message,
-					'error'
-				)
-			}
-		})
-
 		this.refreshScenes()
-	},
-	beforeDestroy() {
-		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.api)
-		}
 	},
 }
 </script>

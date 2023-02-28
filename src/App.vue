@@ -248,7 +248,6 @@
 					@import="importFile"
 					@export="exportConfiguration"
 					@showConfirm="confirm"
-					@apiRequest="apiRequest"
 					:socket="socket"
 				/>
 				<v-row
@@ -386,6 +385,8 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
+
+let socketQueue = []
 
 export default {
 	components: {
@@ -607,22 +608,40 @@ export default {
 
 			return message
 		},
-		apiRequest(apiName, args) {
+		apiRequest(
+			apiName,
+			args = [],
+			options = { infoSnack: true, errorSnack: true }
+		) {
 			return new Promise((resolve) => {
 				if (this.socket.connected) {
+					if (options.infoSnack) {
+						this.showSnackbar(`API ${apiName} called`, 'info')
+					}
 					const data = {
 						api: apiName,
 						args: args,
 					}
 					this.socket.emit(socketActions.zwave, data, (response) => {
+						if (options.errorSnack && !response.success) {
+							this.showSnackbar(
+								`Error while calling ${apiName}: ${response.message}`,
+								'error'
+							)
+						}
 						resolve(response)
 					})
 				} else {
-					resolve({
-						success: false,
-						message: 'Socket disconnected',
+					socketQueue.push({
+						apiName,
+						args,
+						resolve: resolve,
 					})
-					this.showSnackbar('Socket disconnected', 'error')
+					// resolve({
+					// 	success: false,
+					// 	message: 'Socket disconnected',
+					// })
+					//this.showSnackbar('Socket disconnected', 'error')
 				}
 			})
 		},
@@ -870,6 +889,15 @@ export default {
 					true,
 					this.onInit.bind(this)
 				)
+
+				if (socketQueue.length > 0) {
+					socketQueue.forEach((item) => {
+						this.apiRequest(item.apiName, item.args).then(
+							item.resolve
+						)
+					})
+					socketQueue = []
+				}
 			})
 
 			this.socket.on('disconnect', () => {

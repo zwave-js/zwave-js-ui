@@ -3546,6 +3546,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.driver.controller.provisionSmartStartNode(entry)
+
+		return entry
 	}
 
 	// ---------- NODE EVENTS -------------------------------------

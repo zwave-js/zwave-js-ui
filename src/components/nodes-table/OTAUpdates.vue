@@ -121,12 +121,9 @@
 </template>
 
 <script>
-import {
-	socketEvents,
-	inboundEvents as socketActions,
-} from '@/../server/lib/SocketEvents'
 import useBaseStore from '../../stores/base.js'
 import { mapActions } from 'pinia'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	components: {},
@@ -134,6 +131,7 @@ export default {
 		node: Object,
 		socket: Object,
 	},
+	mixins: [InstancesMixin],
 	data() {
 		return {
 			fwUpdates: [],
@@ -143,42 +141,32 @@ export default {
 	},
 	computed: {},
 	mounted() {
-		this.socket.on(socketEvents.api, (data) => {
-			if (
-				data.api === 'getAvailableFirmwareUpdates' &&
-				data.originalArgs[0] === this.node.id
-			) {
-				this.loading = false
-				if (data.success) {
-					this.fwUpdates = data.result
-				}
-			}
-		})
-
 		this.checkUpdates()
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		apiRequest(apiName, args) {
-			if (this.socket.connected) {
-				const data = {
-					api: apiName,
-					args: args,
-				}
-				this.socket.emit(socketActions.zwave, data)
-			} else {
-				this.showSnackbar('Socket disconnected', 'error')
-			}
-		},
-		checkUpdates() {
+		async checkUpdates() {
 			this.loading = true
 			this.fwUpdates = []
-			this.apiRequest('getAvailableFirmwareUpdates', [
-				this.node.id,
-				{
-					includePrereleases: this.includePrereleases,
-				},
-			])
+			const response = await this.app.apiRequest(
+				'getAvailableFirmwareUpdates',
+				[
+					this.node.id,
+					{
+						includePrereleases: this.includePrereleases,
+					},
+				]
+			)
+			this.loading = false
+
+			if (response.success) {
+				this.fwUpdates = response.result
+			} else {
+				this.showSnackbar(
+					`Failed to check for firmware updates: ${response.message}`,
+					'error'
+				)
+			}
 		},
 		download(url) {
 			window.open(url, '_blank')
@@ -202,7 +190,7 @@ export default {
 					}
 				)
 			) {
-				this.apiRequest('firmwareUpdateOTA', [
+				this.app.apiRequest('firmwareUpdateOTA', [
 					this.node.id,
 					update.files,
 				])

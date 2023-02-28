@@ -634,12 +634,14 @@ import {
 } from '../../lib/utils.js'
 import useBaseStore from '../../stores/base.js'
 import { InclusionStrategy } from 'zwave-js/safe'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	props: {
 		value: Boolean, // show or hide
 		socket: Object,
 	},
+	mixins: [InstancesMixin],
 	data() {
 		return {
 			currentStep: 1,
@@ -865,103 +867,97 @@ export default {
 				this.showResults()
 			}
 		},
-		onApiResponse(data) {
-			if (!data.success) {
-				if (data.api === 'replaceFailedNode') {
-					this.init()
-				}
-			} else {
-				if (data.api === 'parseQRCodeString') {
-					const res = data.result
-					let provisioning = res.parsed
+		async onParseQrCode(data) {
+			const res = data.result
+			let provisioning = res.parsed
 
-					if (provisioning) {
-						// add name and location to provisioning
-						if (this.nodeProps) {
-							provisioning = {
-								...provisioning,
-								...this.nodeProps,
-							}
-						}
-
-						const mode = 4 // s2 only
-
-						const replaceStep = this.steps.find(
-							(s) => s.key === 'replaceFailed'
-						)
-						let replaceId
-
-						if (replaceStep) {
-							replaceId = replaceStep.values.replaceId
-							if (typeof replaceId === 'object') {
-								replaceId = replaceId.id
-							} else {
-								replaceId = parseInt(replaceId, 10)
-							}
-						}
-						// S2 only, start inclusion
-						if (provisioning.version === 0) {
-							this.aborted = false
-							this.loading = true
-
-							if (replaceStep) {
-								this.sendAction('replaceFailedNode', [
-									replaceId,
-									mode,
-									{ provisioning },
-								])
-							} else {
-								if (res.exists) {
-									this.alert = {
-										type: 'info',
-										text: 'Already added to provisioning list',
-									}
-									this.state = 'stop'
-									return
-								}
-
-								if (res.nodeId) {
-									this.alert = {
-										type: 'info',
-										text: 'Node already added',
-									}
-									this.state = 'stop'
-									return
-								}
-								this.sendAction('startInclusion', [
-									mode,
-									{ provisioning },
-								])
-							}
-						} else if (provisioning.version === 1) {
-							// smart start
-							if (!replaceStep) {
-								this.$emit(
-									'apiRequest',
-									'provisionSmartStartNode',
-									[provisioning]
-								)
-							} else {
-								// it's a smart start code btw in replace we cannot use it as smart start
-								this.sendAction('replaceFailedNode', [
-									replaceId,
-									mode,
-									{ provisioning },
-								])
-							}
-						}
+			if (provisioning) {
+				// add name and location to provisioning
+				if (this.nodeProps) {
+					provisioning = {
+						...provisioning,
+						...this.nodeProps,
 					}
-				} else if (data.api === 'provisionSmartStartNode') {
-					this.alert = null
+				}
+
+				const mode = 4 // s2 only
+
+				const replaceStep = this.steps.find(
+					(s) => s.key === 'replaceFailed'
+				)
+				let replaceId
+
+				if (replaceStep) {
+					replaceId = replaceStep.values.replaceId
+					if (typeof replaceId === 'object') {
+						replaceId = replaceId.id
+					} else {
+						replaceId = parseInt(replaceId, 10)
+					}
+				}
+				// S2 only, start inclusion
+				if (provisioning.version === 0) {
 					this.aborted = false
-					const doneStep = copy(this.availableSteps.done)
-					doneStep.text = `Node added to provisioning list`
-					doneStep.success = true
-					this.pushStep(doneStep)
 					this.loading = true
+
+					if (replaceStep) {
+						this.sendAction('replaceFailedNode', [
+							replaceId,
+							mode,
+							{ provisioning },
+						])
+					} else {
+						if (res.exists) {
+							this.alert = {
+								type: 'info',
+								text: 'Already added to provisioning list',
+							}
+							this.state = 'stop'
+							return
+						}
+
+						if (res.nodeId) {
+							this.alert = {
+								type: 'info',
+								text: 'Node already added',
+							}
+							this.state = 'stop'
+							return
+						}
+						this.sendAction('startInclusion', [
+							mode,
+							{ provisioning },
+						])
+					}
+				} else if (provisioning.version === 1) {
+					// smart start
+					if (!replaceStep) {
+						const response = await this.app.apiRequest(
+							'provisionSmartStartNode',
+							[provisioning]
+						)
+
+						if (response.success) {
+							this.alert = null
+							this.aborted = false
+							const doneStep = copy(this.availableSteps.done)
+							doneStep.text = `Node added to provisioning list`
+							doneStep.success = true
+							this.pushStep(doneStep)
+							this.loading = true
+						}
+					} else {
+						// it's a smart start code btw in replace we cannot use it as smart start
+						this.sendAction('replaceFailedNode', [
+							replaceId,
+							mode,
+							{ provisioning },
+						])
+					}
 				}
 			}
 		},
+
 		changeStep(index) {
 			if (index <= 1) {
 				this.init() // calling it without the bind parameter will not touch events
@@ -969,10 +965,10 @@ export default {
 				this.steps = this.steps.slice(0, index)
 			}
 		},
-		abortInclusion() {
+		async abortInclusion() {
 			this.aborted = true
 			this.loading = true
-			this.$emit('apiRequest', 'abortInclusion', [])
+			await this.app.apiRequest('abortInclusion', [])
 		},
 		onGrantSecurityCC(requested) {
 			const grantStep = this.availableSteps.s2Classes
@@ -1054,9 +1050,13 @@ export default {
 					dsk = tryParseDSKFromQRCodeString(qrString)
 
 					if (!dsk) {
-						this.$emit('apiRequest', 'parseQRCodeString', [
-							qrString,
-						])
+						const response = await this.app.apiRequest(
+							'parseQRCodeString',
+							[qrString]
+						)
+
+						this.onParseQrCode(response)
+
 						return
 					} else {
 						// prefilled DSK qr code
@@ -1093,18 +1093,30 @@ export default {
 
 				const securityClasses = securityClassesToArray(s.values)
 
-				this.$emit('apiRequest', 'grantSecurityClasses', [
-					{
-						securityClasses,
-						clientSideAuth: !!values.clientAuth,
-					},
-				])
+				const response = await this.app.apiRequest(
+					'grantSecurityClasses',
+					[
+						{
+							securityClasses,
+							clientSideAuth: !!values.clientAuth,
+						},
+					]
+				)
+
+				if (response.success) {
+					this.onGrantSecurityCC(response.result)
+				}
 
 				this.loading = true
 			} else if (s.key === 's2Pin') {
 				const mode = s.values.pin
-				this.$emit('apiRequest', 'validateDSK', [mode])
 				this.loading = true
+				const response = await this.app.apiRequest('validateDSK', [
+					mode,
+				])
+				if (response.success) {
+					this.onValidateDSK(response.result)
+				}
 			} else if (s.key === 'replaceFailed') {
 				this.currentAction = 'Inclusion'
 				this.pushStep('replaceInclusionMode')
@@ -1137,14 +1149,8 @@ export default {
 			}
 
 			if (bind) {
-				this.bindEvent(
-					'grantSecurityClasses',
-					this.onGrantSecurityCC.bind(this)
-				)
-				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
 				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
 				this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
-				this.bindEvent('api', this.onApiResponse.bind(this))
 			} else if (bind === false) {
 				this.unbindEvents()
 			}
@@ -1162,7 +1168,7 @@ export default {
 			this.stopped = true
 			this.sendAction('stop' + this.currentAction)
 		},
-		sendAction(api, args) {
+		async sendAction(api, args) {
 			this.commandEndDate = null
 
 			let text = ''
@@ -1180,8 +1186,16 @@ export default {
 				text,
 			}
 
-			this.$emit('apiRequest', api, args)
 			this.state = 'wait' // make sure user can't trigger another action too soon
+			const response = await this.app.apiRequest(api, args)
+
+			if (response.success) {
+				// done
+			} else {
+				if (api === 'replaceFailedNode') {
+					this.init()
+				}
+			}
 		},
 		bindEvent(eventName, handler) {
 			this.socket.on(socketEvents[eventName], handler)

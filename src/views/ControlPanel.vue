@@ -118,7 +118,6 @@
 			v-model="addRemoveShowDialog"
 			:socket="socket"
 			@close="onAddRemoveClose"
-			@apiRequest="apiRequest"
 			v-on="{ showConfirm: $listeners.showConfirm }"
 		/>
 
@@ -144,12 +143,14 @@ import { socketEvents } from '@/../server/lib/SocketEvents'
 import StatisticsCard from '@/components/custom/StatisticsCard'
 import useBaseStore from '../stores/base.js'
 import SmartView from '@/components/nodes-table/SmartView.vue'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 
 export default {
 	name: 'ControlPanel',
 	props: {
 		socket: Object,
 	},
+	mixins: [InstancesMixin],
 	components: {
 		NodesTable,
 		DialogNodesManager,
@@ -622,7 +623,9 @@ export default {
 									icon: 'play_circle_outline',
 									color: 'primary',
 									onChange: (values) => {
-										this.apiRequest(action, [values.code])
+										this.app.apiRequest(action, [
+											values.code,
+										])
 									},
 								},
 								{
@@ -705,85 +708,93 @@ export default {
 						nodes = nodes.filter((n) => n.status !== 'Asleep')
 					}
 
+					const requests = []
+
 					for (let i = 0; i < nodes.length; i++) {
 						const nodeid = nodes[i].id
-						this.apiRequest(action, [nodeid])
+						requests.push(
+							this.app
+								.apiRequest(action, [nodeid], {
+									infoSnack: false,
+									errorSnack: false,
+								})
+								.then((response) => {
+									if (response.success) {
+										this.showSnackbar(
+											`Node ${nodeid} api request success`,
+											'success'
+										)
+									} else {
+										this.showSnackbar(
+											`Node ${nodeid} error: ${response.error}`,
+											'error'
+										)
+									}
+								})
+						)
 					}
+
+					await Promise.allSettled(requests)
 				} else {
-					this.apiRequest(action, args)
-				}
-			}
-		},
-		apiRequest(apiName, args) {
-			this.$emit('apiRequest', apiName, args)
-		},
-		saveConfiguration() {
-			this.apiRequest('writeConfig', [])
-		},
-		onApiResponse(data) {
-			if (data.success) {
-				switch (data.api) {
-					case 'getDriverStatistics':
-						this.$listeners.showConfirm(
-							'Driver statistics',
-							this.jsonToList(data.result)
-						)
-						break
-					case 'getNodeStatistics':
-						this.$listeners.showConfirm(
-							'Node statistics',
-							this.jsonToList(data.result)
-						)
-						break
-					case 'backupNVMRaw':
-						{
-							this.showSnackbar(
-								'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory',
-								'success'
-							)
-							const { result } = data
-							this.$listeners.export(
-								result.data,
-								result.fileName,
-								'bin'
-							)
+					const response = await this.app.apiRequest(action, args)
+
+					if (response.success) {
+						switch (response.api) {
+							case 'getDriverStatistics':
+								this.$listeners.showConfirm(
+									'Driver statistics',
+									this.jsonToList(response.result)
+								)
+								break
+							case 'getNodeStatistics':
+								this.$listeners.showConfirm(
+									'Node statistics',
+									this.jsonToList(response.result)
+								)
+								break
+							case 'backupNVMRaw':
+								{
+									this.showSnackbar(
+										'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory',
+										'success'
+									)
+									const { result } = response
+									this.$listeners.export(
+										result.data,
+										result.fileName,
+										'bin'
+									)
+								}
+								break
+							case 'restoreNVM':
+								this.showSnackbar('NVM restore DONE', 'success')
+								break
+							case 'firmwareUpdateOTW': {
+								// handled in App.vue
+								break
+							}
+							default:
+								this.showSnackbar(
+									'Successfully call api ' + response.api,
+									'success'
+								)
 						}
-						break
-					case 'restoreNVM':
-						this.showSnackbar('NVM restore DONE', 'success')
-						break
-					case 'firmwareUpdateOTW': {
-						// handled in App.vue
-						break
+					} else {
+						if (response.api === 'firmwareUpdateOTW') {
+							// this could happen when the update fails before start
+							// used to close the firmware update dialog
+							if (this.controllerNode.firmwareUpdate) {
+								useBaseStore().initNode({
+									id: this.controllerNode.id,
+									firmwareUpdate: false,
+									firmwareUpdateResult: {
+										success: false,
+										status: response.message,
+									},
+								})
+							}
+						}
 					}
-					default:
-						this.showSnackbar(
-							'Successfully call api ' + data.api,
-							'success'
-						)
-				}
-			} else {
-				if (data.api === 'firmwareUpdateOTW') {
-					// this could happen when the update fails before start
-					// used to close the firmware update dialog
-					if (this.controllerNode.firmwareUpdate) {
-						useBaseStore().initNode({
-							id: this.controllerNode.id,
-							firmwareUpdate: false,
-							firmwareUpdateResult: {
-								success: false,
-								status: data.message,
-							},
-						})
-					}
-				} else {
-					this.showSnackbar(
-						'Error while calling api ' +
-							data.api +
-							': ' +
-							data.message,
-						'error'
-					)
 				}
 			}
 		},
@@ -804,10 +815,8 @@ export default {
 		},
 	},
 	mounted() {
-		const onApiResponse = this.onApiResponse.bind(this)
 		const onHealProgress = this.setHealProgress.bind(this)
 
-		this.bindEvent('api', onApiResponse)
 		this.bindEvent('healProgress', onHealProgress)
 	},
 	beforeDestroy() {
