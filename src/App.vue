@@ -935,6 +935,16 @@ export default {
 				this.updateStatus('Reconnecting', 'yellow')
 			})
 
+			this.socket.onAny((eventName, ...args) => {
+				if (
+					![socketEvents.debug, socketEvents.statistics].includes(
+						eventName
+					)
+				) {
+					log.debug('Socket event', eventName, args)
+				}
+			})
+
 			this.socket.on(socketEvents.init, this.onInit.bind(this))
 
 			this.socket.on(socketEvents.info, this.setAppInfo.bind(this))

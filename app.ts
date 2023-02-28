@@ -610,10 +610,8 @@ function setupSocket(server: HttpServer) {
 					if (!data.args) data.args = []
 					const result: CallAPIResult<any> & {
 						api?: string
-						originalArgs?: any[]
 					} = await gw.zwave.callApi(data.api, ...data.args)
 					result.api = data.api
-					result.originalArgs = data.args
 					if (cb) cb(result)
 				} else {
 					if (cb)
