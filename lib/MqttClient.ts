@@ -565,7 +565,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			subscribePromises.push(this.subscribe(t, this.toSubscribe.get(t)))
 		}
 
-		this.toSubscribe == new Map()
+		this.toSubscribe = new Map()
 
 		await allSettled(subscribePromises)
 
