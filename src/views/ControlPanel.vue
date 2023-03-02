@@ -494,12 +494,15 @@ export default {
 						const store = useBaseStore()
 
 						// start the progress bar
-						store.initNode({
-							id: this.controllerNode.id,
-							firmwareUpdate: {
-								progress: 0,
+						store.updateNode(
+							{
+								id: this.controllerNode.id,
+								firmwareUpdate: {
+									progress: 0,
+								},
 							},
-						})
+							true
+						)
 					} catch (error) {
 						this.showSnackbar('Error reading file', 'error')
 						return
@@ -797,14 +800,17 @@ export default {
 							// this could happen when the update fails before start
 							// used to close the firmware update dialog
 							if (this.controllerNode.firmwareUpdate) {
-								useBaseStore().initNode({
-									id: this.controllerNode.id,
-									firmwareUpdate: false,
-									firmwareUpdateResult: {
-										success: false,
-										status: response.message,
+								useBaseStore().updateNode(
+									{
+										id: this.controllerNode.id,
+										firmwareUpdate: false,
+										firmwareUpdateResult: {
+											success: false,
+											status: response.message,
+										},
 									},
-								})
+									true
+								)
 							}
 						}
 					}

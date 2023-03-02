@@ -206,7 +206,7 @@ const observedCCProps: {
 			node.batteryLevels = levels
 			node.minBatteryLevel = Math.min(...levels)
 
-			this.emitNodeStatus(node, {
+			this.emitNodeUpdate(node, {
 				batteryLevels: levels,
 				minBatteryLevel: node.minBatteryLevel,
 			})
@@ -492,7 +492,7 @@ export interface ZwaveClientEventCallbacks {
 	scanComplete: () => void
 	driverStatus: (status: boolean) => void
 	notification: (node: ZUINode, valueId: ZUIValueId, data: any) => void
-	nodeRemoved: (node: ZUINode) => void
+	nodeRemoved: (node: Partial<ZUINode>) => void
 	valueChanged: (
 		valueId: ZUIValueId,
 		node: ZUINode,
@@ -806,7 +806,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				node.hassDevices[id] = hassDevice
 			}
 
-			this.emitNodeStatus(node, {
+			this.emitNodeUpdate(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -825,7 +825,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			hassDevice.persistent = false
 			node.hassDevices[id] = hassDevice
 
-			this.emitNodeStatus(node, {
+			this.emitNodeUpdate(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -856,7 +856,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			node.hassDevices = utils.copy(devices)
 			await this.updateStoreNodes()
 
-			this.emitNodeStatus(node, {
+			this.emitNodeUpdate(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -983,7 +983,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (node && !ignoreUpdate) {
-			this.emitNodeStatus(node, { groups: node.groups })
+			this.emitNodeUpdate(node, { groups: node.groups })
 		}
 	}
 
@@ -1533,11 +1533,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Send an event to socket with `data`
 	 *
 	 */
-	private sendToSocket(evtName: string, data: any) {
+	private sendToSocket(evtName: string, data: any, ...args: any[]) {
 		if (this.socket) {
 			// break the sync loop to let the event loop continue #2676
 			process.nextTick(() => {
-				this.socket.emit(evtName, data)
+				this.socket.emit(evtName, data, ...args)
 			})
 		}
 	}
@@ -1554,7 +1554,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.emit('valueChanged', valueId, node, changed)
 	}
 
-	public emitNodeStatus(
+	public emitNodeUpdate(
 		node: ZUINode,
 		changedProps?: utils.DeepPartial<ZUINode>
 	) {
@@ -1563,14 +1563,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.emit('nodeInited', node)
 		}
 
-		this.emit('nodeStatus', node)
+		const isPartial = !!changedProps
 
-		if (changedProps) {
+		if (!isPartial || utils.hasProperty(changedProps, 'status')) {
+			this.emit('nodeStatus', node)
+		}
+
+		if (isPartial) {
 			// we need it to have a reference of the node to update
 			changedProps.id = node.id
 		}
 
-		this.sendToSocket(socketEvents.nodeUpdated, changedProps ?? node)
+		this.sendToSocket(
+			socketEvents.nodeUpdated,
+			changedProps ?? node,
+			isPartial
+		)
 	}
 
 	// ------------NODES MANAGEMENT-----------------------------------
@@ -1612,7 +1620,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await this.updateStoreNodes()
 
-		this.emitNodeStatus(node, { name: name })
+		this.emitNodeUpdate(node, { name: name })
 
 		return true
 	}
@@ -1638,7 +1646,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.storeNodes[nodeid].loc = loc
 
 		await this.updateStoreNodes()
-		this.emitNodeStatus(node, { loc: loc })
+		this.emitNodeUpdate(node, { loc: loc })
 		return true
 	}
 
@@ -2586,10 +2594,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (node) {
 				node.firmwareUpdate = undefined
 
-				this.sendToSocket(socketEvents.nodeUpdated, {
-					id: node?.id,
+				this.emitNodeUpdate(node, {
 					firmwareUpdate: false,
-				})
+				} as any)
 			}
 		} else {
 			throw new DriverNotReadyError()
@@ -3037,8 +3044,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// send at most 4msg per second
 			this.throttle(
 				this._onControllerFirmwareUpdateProgress.name,
-				this.sendToSocket.bind(this, socketEvents.nodeUpdated, {
-					id: node?.id,
+				this.emitNodeUpdate.bind(this, node, {
 					firmwareUpdate: node.firmwareUpdate,
 				} as utils.DeepPartial<ZUINode>),
 				250
@@ -3064,8 +3070,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (node) {
 			node.firmwareUpdate = undefined
 
-			this.sendToSocket(socketEvents.nodeUpdated, {
-				id: node?.id,
+			this.emitNodeUpdate(node, {
 				firmwareUpdate: false,
 				firmwareUpdateResult: {
 					success: result.success,
@@ -3074,7 +3079,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						result.status
 					),
 				},
-			})
+			} as any)
 		}
 
 		logger.info(
@@ -3217,7 +3222,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.logNode(node, 'info', 'Found')
 
-		this.emitNodeStatus(node)
+		this.emitNodeUpdate(node)
 
 		this.emit('event', EventSource.CONTROLLER, 'node found', { id: nodeId })
 	}
@@ -3585,7 +3590,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			this.emitNodeStatus(node, changedProps)
+			this.emitNodeUpdate(node, changedProps)
 		} else {
 			this.logNode(
 				zwaveNode,
@@ -4174,8 +4179,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				// send at most 4msg per second
 				this.throttle(
 					this._onNodeFirmwareUpdateProgress.name + '_' + node.id,
-					this.sendToSocket.bind(this, socketEvents.nodeUpdated, {
-						id: node?.id,
+					this.emitNodeUpdate.bind(this, node, {
 						firmwareUpdate: progress,
 					} as utils.DeepPartial<ZUINode>),
 					250
@@ -4207,10 +4211,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (node) {
 				node.firmwareUpdate = undefined
 
-				this.sendToSocket(socketEvents.nodeUpdated, {
-					id: node?.id,
+				this.emitNodeUpdate(node, {
 					firmwareUpdate: false,
-				})
+				} as any)
 			}
 
 			this.logNode(
@@ -4315,7 +4318,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (node) {
 			this._nodes.delete(nodeid)
 
-			this.emit('nodeRemoved', node)
+			this.emit('nodeRemoved', {
+				id: node.id,
+				name: node.name,
+				loc: node.loc,
+			})
 			this.sendToSocket(socketEvents.nodeRemoved, node)
 		}
 
@@ -4534,8 +4541,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		this.sendToSocket(socketEvents.nodeUpdated, {
-			id: node.id,
+		this.emitNodeUpdate(node, {
 			powerlevel: node.powerlevel,
 			measured0dBm: node.measured0dBm,
 			RFRegion: node.RFRegion,

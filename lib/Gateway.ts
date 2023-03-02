@@ -637,7 +637,7 @@ export default class Gateway {
 				this.discoverValue(node, id)
 			}
 
-			this._zwave.emitNodeStatus(node, {
+			this._zwave.emitNodeUpdate(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -654,7 +654,7 @@ export default class Gateway {
 				node.hassDevices[id].ignoreDiscovery = true
 			}
 
-			this._zwave.emitNodeStatus(node, {
+			this._zwave.emitNodeUpdate(node, {
 				hassDevices: node.hassDevices,
 			})
 		}
@@ -1791,7 +1791,7 @@ export default class Gateway {
 	/**
 	 * Z-Wave event triggered when a node is removed
 	 */
-	private _onNodeRemoved(node: ZUINode): void {
+	private _onNodeRemoved(node: Partial<ZUINode>): void {
 		const prefix = node.id + '-'
 
 		// delete discovered values

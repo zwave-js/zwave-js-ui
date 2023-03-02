@@ -438,10 +438,13 @@ export default {
 				this.loaderTitle = ''
 				const result = node.firmwareUpdateResult
 
-				useBaseStore().initNode({
-					id: node.id,
-					firmwareUpdateResult: false,
-				})
+				useBaseStore().updateNode(
+					{
+						id: node.id,
+						firmwareUpdateResult: false,
+					},
+					true
+				)
 
 				this.loaderText = `<span style="white-space: break-spaces;" class="${
 					result.success ? 'success' : 'error'
@@ -517,7 +520,7 @@ export default {
 			'setControllerStatus',
 			'setStatistics',
 			'addNodeEvent',
-			'initNode',
+			'updateNode',
 			'removeNode',
 		]),
 		copyVersion() {
@@ -935,15 +938,19 @@ export default {
 				this.updateStatus('Reconnecting', 'yellow')
 			})
 
-			this.socket.onAny((eventName, ...args) => {
-				if (
-					![socketEvents.debug, socketEvents.statistics].includes(
-						eventName
-					)
-				) {
-					log.debug('Socket event', eventName, args)
-				}
-			})
+			if (log.enabledFor(logger.DEBUG)) {
+				this.socket.onAny((eventName, ...args) => {
+					if (
+						![
+							socketEvents.nodeEvent,
+							socketEvents.debug,
+							socketEvents.statistics,
+						].includes(eventName)
+					) {
+						log.debug('Socket event', eventName, args)
+					}
+				})
+			}
 
 			this.socket.on(socketEvents.init, this.onInit.bind(this))
 
@@ -955,7 +962,7 @@ export default {
 				this.setControllerStatus.bind(this)
 			)
 
-			this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
+			this.socket.on(socketEvents.nodeUpdated, this.updateNode.bind(this))
 			this.socket.on(socketEvents.nodeRemoved, this.removeNode.bind(this))
 			this.socket.on(socketEvents.nodeAdded, this.onNodeAdded.bind(this))
 
