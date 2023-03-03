@@ -33,7 +33,7 @@
 						dark
 						v-if="!node.isControllerNode"
 						color="primary"
-						@click.stop="forwardApiRequest('pingNode', [node.id])"
+						@click.stop="app.apiRequest('pingNode', [node.id])"
 						depressed
 					>
 						Ping
@@ -120,8 +120,6 @@
 						ref="nodeDetails"
 						:headers="headers"
 						:node="node"
-						:socket="socket"
-						v-on="$listeners"
 					></node-details>
 				</v-tab-item>
 
@@ -286,10 +284,11 @@ import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 import { jsonToList } from '@/lib/utils'
 
-import { mapState } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 import OTAUpdates from './OTAUpdates.vue'
 import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	props: {
@@ -302,6 +301,7 @@ export default {
 		node: Object,
 		socket: Object,
 	},
+	mixins: [InstancesMixin],
 	components: {
 		AssociationGroups,
 		HomeAssistant,
@@ -514,6 +514,7 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['showSnackbar']),
 		prettyPrintEventArg(arg, index) {
 			return `\nArg ${index}:\n` + jsonToList(arg, undefined, 1)
 		},
@@ -564,7 +565,19 @@ export default {
 						api: action,
 						args: args,
 					}
-					this.socket.emit(socketActions.mqtt, data)
+					this.socket.emit(socketActions.mqtt, data, (response) => {
+						if (response.success) {
+							this.showSnackbar(
+								`Node ${this.node.id}: ${action} successfully sent `,
+								'success'
+							)
+						} else {
+							this.showSnackbar(
+								`Error sending ${action} to node ${this.node.id}: ${response.message}`,
+								'error'
+							)
+						}
+					})
 				}
 			}
 		},
@@ -573,9 +586,6 @@ export default {
 		},
 		openLink(link) {
 			window.open(link, '_blank')
-		},
-		forwardApiRequest(apiName, args) {
-			this.$refs.nodeDetails.apiRequest(apiName, args)
 		},
 		toggleAutoScroll() {
 			this.autoScroll = !this.autoScroll

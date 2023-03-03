@@ -77,21 +77,18 @@
 
 <script>
 import DialogAssociation from '@/components/dialogs/DialogAssociation'
-import {
-	socketEvents,
-	inboundEvents as socketActions,
-} from '@/../server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	components: {
 		DialogAssociation,
 	},
+	mixins: [InstancesMixin],
 	props: {
 		node: Object,
-		socket: Object,
 	},
 	data() {
 		return {
@@ -110,16 +107,6 @@ export default {
 		...mapState(useBaseStore, ['nodes', 'nodesMap']),
 	},
 	mounted() {
-		this.socket.on(socketEvents.api, (data) => {
-			if (
-				data.success &&
-				data.api === 'getAssociations' &&
-				data.originalArgs[0] === this.node.id
-			) {
-				this.associations = data.result
-			}
-		})
-
 		this.getAssociations()
 	},
 	methods: {
@@ -145,21 +132,17 @@ export default {
 
 			return endpoint >= 0 ? 'Endpoint ' + endpoint : 'No Endpoint'
 		},
-		apiRequest(apiName, args) {
-			if (this.socket.connected) {
-				const data = {
-					api: apiName,
-					args: args,
-				}
-				this.socket.emit(socketActions.zwave, data)
-			} else {
-				this.showSnackbar('Socket disconnected', 'error')
+		async getAssociations() {
+			const response = await this.app.apiRequest('getAssociations', [
+				this.node.id,
+			])
+
+			if (response.success) {
+				this.associations = response.result
+				this.showSnackbar('Associations updated', 'success')
 			}
 		},
-		getAssociations() {
-			this.apiRequest('getAssociations', [this.node.id])
-		},
-		addAssociation(association) {
+		async addAssociation(association) {
 			const target = !isNaN(association.target)
 				? parseInt(association.target)
 				: association.target.id
@@ -181,15 +164,16 @@ export default {
 				[toAdd],
 			]
 
-			this.apiRequest('addAssociations', args)
+			const response = await this.app.apiRequest('addAssociations', args)
 
-			// wait a moment before refresh to check if the node
-			// has been added to the group correctly
-			setTimeout(this.getAssociations, 1000)
+			if (response.success) {
+				this.showSnackbar('Association added', 'success')
+				this.getAssociations()
+			}
 
 			this.dialogAssociation = false
 		},
-		removeAssociation(association) {
+		async removeAssociation(association) {
 			const args = [
 				this.getAssociationAddress({
 					nodeId: this.node.id,
@@ -204,18 +188,28 @@ export default {
 				],
 			]
 
-			this.apiRequest('removeAssociations', args)
-			// wait a moment before refresh to check if the node
-			// has been added to the group correctly
-			setTimeout(this.getAssociations, 1000)
+			const response = await this.app.apiRequest(
+				'removeAssociations',
+				args
+			)
+
+			if (response.success) {
+				this.showSnackbar('Association removed', 'success')
+				this.getAssociations()
+			}
 		},
-		removeAllAssociations() {
+		async removeAllAssociations() {
 			const args = [this.node.id]
 
-			this.apiRequest('removeAllAssociations', args)
-			// wait a moment before refresh to check if the node
-			// has been added to the group correctly
-			setTimeout(this.getAssociations, 1000)
+			const response = await this.app.apiRequest(
+				'removeAllAssociations',
+				args
+			)
+
+			if (response.success) {
+				this.showSnackbar('Association removed', 'success')
+				this.getAssociations()
+			}
 		},
 	},
 }

@@ -1,9 +1,12 @@
 import { defineStore } from 'pinia'
 import { $set } from '../lib/utils'
+import logger from '../lib/logger'
 
 import { Settings } from '@/modules/Settings'
 
 const settings = new Settings(localStorage)
+
+const log = logger.get('Store:Base')
 
 const useBaseStore = defineStore('base', {
 	state: () => ({
@@ -171,10 +174,28 @@ const useBaseStore = defineStore('base', {
 				}
 			}
 		},
-		initNode(n) {
-			const values = []
-			// transform object in array
+		updateNode(n, isPartial = false) {
+			let index = this.nodesMap.get(n.id)
 
+			// we received a partial node but we don't have
+			// the full node yet, so ignore it
+			if (isPartial && index === undefined) {
+				log.warn(
+					'Received partial node info about an unknown node, skipping...',
+					n
+				)
+				return
+			}
+
+			// when a node in included this is called multiple times:
+			// - on node found event, isPartial = false
+			// - on node added, isPartial = false
+			// - on different interview stages updates, isPartial = true
+			// - on node ready, isPartial = false
+
+			const values = []
+
+			// transform values object in array
 			if (n.values) {
 				for (const k in n.values) {
 					n.values[k].newValue = n.values[k].value
@@ -182,8 +203,6 @@ const useBaseStore = defineStore('base', {
 				}
 				n.values = values
 			}
-
-			let index = this.nodesMap.get(n.id)
 
 			if (index >= 0) {
 				n = Object.assign(this.nodes[index], n)
@@ -217,7 +236,7 @@ const useBaseStore = defineStore('base', {
 		initNodes(nodes) {
 			this.resetNodes()
 			for (let i = 0; i < nodes.length; i++) {
-				this.initNode(nodes[i])
+				this.updateNode(nodes[i])
 			}
 		},
 		removeNode(n) {

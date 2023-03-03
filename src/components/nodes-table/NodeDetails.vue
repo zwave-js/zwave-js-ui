@@ -63,12 +63,7 @@
 								color="primary"
 								small
 								icon
-								@click="
-									apiRequest('updateControllerNodeProps', [
-										null,
-										['powerlevel'],
-									])
-								"
+								@click="updateControllerNodeProp('powerlevel')"
 							>
 								<v-icon>refresh</v-icon>
 							</v-btn>
@@ -98,12 +93,7 @@
 								color="primary"
 								small
 								icon
-								@click="
-									apiRequest('updateControllerNodeProps', [
-										null,
-										['RFRegion'],
-									])
-								"
+								@click="updateControllerNodeProp('RFRegion')"
 							>
 								<v-icon>refresh</v-icon>
 							</v-btn>
@@ -207,10 +197,9 @@
 									<v-btn
 										v-if="group[0]"
 										@click.stop="
-											apiRequest('refreshCCValues', [
-												node.id,
-												group[0].commandClass,
-											])
+											refreshCCValues(
+												group[0].commandClass
+											)
 										"
 										color="primary"
 										outlined
@@ -288,16 +277,7 @@
 										<v-col cols="3">
 											<v-btn
 												width="60px"
-												@click.stop="
-													apiRequest('sendCommand', [
-														{
-															nodeId: node.id,
-															commandClass: 112,
-														},
-														'get',
-														[configCC.parameter],
-													])
-												"
+												@click.stop="configurationGet()"
 												color="green"
 												x-small
 											>
@@ -305,26 +285,7 @@
 											</v-btn>
 											<v-btn
 												width="60px"
-												@click.stop="
-													apiRequest('sendCommand', [
-														{
-															nodeId: node.id,
-															commandClass: 112,
-														},
-														'set',
-														[
-															{
-																parameter:
-																	configCC.parameter,
-																value: configCC.value,
-																valueSize:
-																	configCC.valueSize,
-																valueFormat:
-																	configCC.valueFormat,
-															},
-														],
-													])
-												"
+												@click.stop="configurationSet()"
 												color="primary"
 												x-small
 											>
@@ -346,22 +307,22 @@
 <script>
 import ValueID from '@/components/ValueId'
 
-import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '@/lib/utils'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
 import { RFRegion } from 'zwave-js/safe'
 import useBaseStore from '../../stores/base.js'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	props: {
 		headers: Array,
 		node: Object,
-		socket: Object,
 	},
 	components: {
 		ValueID,
 	},
+	mixins: [InstancesMixin],
 	data() {
 		return {
 			locError: null,
@@ -437,15 +398,65 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		apiRequest(apiName, args) {
-			if (this.socket.connected) {
-				const data = {
-					api: apiName,
-					args: args,
-				}
-				this.socket.emit(socketActions.zwave, data)
-			} else {
-				this.showSnackbar('Socket disconnected', 'error')
+		async updateControllerNodeProp(prop) {
+			const response = await this.app.apiRequest(
+				'updateControllerNodeProps',
+				[null, [prop]]
+			)
+
+			if (response.success) {
+				this.showSnackbar('Powerlevel updated', 'success')
+			}
+		},
+		async refreshCCValues(cc) {
+			const response = await this.app.apiRequest('refreshCCValues', [
+				this.node.id,
+				cc,
+			])
+
+			if (response.success) {
+				this.showSnackbar(`Values of CC ${cc} refreshed`, 'success')
+			}
+		},
+		async configurationGet() {
+			const response = await this.app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 112,
+				},
+				'get',
+				[this.configCC.parameter],
+			])
+
+			if (response.success) {
+				this.showSnackbar(
+					`Parameter ${this.configCC.parameter}: ${response.result}`,
+					'success'
+				)
+			}
+		},
+		async configurationSet() {
+			const response = await this.app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 112,
+				},
+				'set',
+				[
+					{
+						parameter: this.configCC.parameter,
+						value: this.configCC.value,
+						valueSize: this.configCC.valueSize,
+						valueFormat: this.configCC.valueFormat,
+					},
+				],
+			])
+
+			if (response.success) {
+				this.showSnackbar(
+					'Configuration parameter set successfully',
+					'success'
+				)
 			}
 		},
 		getValue(v) {
@@ -465,26 +476,51 @@ export default {
 				this.newName = this.node.name
 			}, 10)
 		},
-		updatePowerLevel() {
+		async updatePowerLevel() {
 			if (this.node) {
 				const args = [this.node.powerlevel, this.node.measured0dBm]
-				this.apiRequest('setPowerlevel', args)
+				const response = await this.app.apiRequest(
+					'setPowerlevel',
+					args
+				)
+
+				if (response.success) {
+					this.showSnackbar('Powerlevel updated', 'success')
+				}
 			}
 		},
-		updateRFRegion() {
+		async updateRFRegion() {
 			if (this.node) {
 				const args = [this.node.RFRegion]
-				this.apiRequest('setRFRegion', args)
+				const response = await this.app.apiRequest('setRFRegion', args)
+
+				if (response.success) {
+					this.showSnackbar('RF Region updated', 'success')
+				}
 			}
 		},
-		updateLoc() {
+		async updateLoc() {
 			if (this.node && !this.locError) {
-				this.apiRequest('setNodeLocation', [this.node.id, this.newLoc])
+				const response = await this.app.apiRequest('setNodeLocation', [
+					this.node.id,
+					this.newLoc,
+				])
+
+				if (response.success) {
+					this.showSnackbar('Node location updated', 'success')
+				}
 			}
 		},
-		updateName() {
+		async updateName() {
 			if (this.node && !this.nameError) {
-				this.apiRequest('setNodeName', [this.node.id, this.newName])
+				const response = await this.app.apiRequest('setNodeName', [
+					this.node.id,
+					this.newName,
+				])
+
+				if (response.success) {
+					this.showSnackbar('Node name updated', 'success')
+				}
 			}
 		},
 		updateValue(v, customValue) {
@@ -508,7 +544,7 @@ export default {
 				// update the value in store
 				this.setValue(v)
 
-				this.apiRequest('writeValue', [
+				this.app.apiRequest('writeValue', [
 					{
 						nodeId: v.nodeId,
 						commandClass: v.commandClass,

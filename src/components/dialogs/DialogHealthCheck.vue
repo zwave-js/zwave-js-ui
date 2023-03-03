@@ -407,13 +407,13 @@
 </style>
 
 <script>
-import { socketEvents, inboundEvents } from '@/../server/lib/SocketEvents'
 import { copy } from '@/lib/utils'
 import { getEnumMemberName } from 'zwave-js/safe'
 import { Powerlevel } from '@zwave-js/cc/safe'
 import { mapActions } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	components: {},
@@ -423,6 +423,7 @@ export default {
 		node: Object,
 		nodes: Array,
 	},
+	mixins: [InstancesMixin],
 	watch: {
 		value(v) {
 			this.init(v)
@@ -461,7 +462,6 @@ export default {
 	},
 	data() {
 		return {
-			bindedSocketEvents: {},
 			loading: false,
 			results: [],
 			rounds: 5,
@@ -636,41 +636,12 @@ export default {
 					'healthCheckProgress',
 					this.onHealthCheckProgress.bind(this)
 				)
-				this.bindEvent('api', this.onApiResponse.bind(this))
 			} else if (open === false) {
 				this.unbindEvents()
 				this.results = []
 				this.loading = false
 				this.targetNode = null
 				this.averages = null
-			}
-		},
-		onApiResponse(data) {
-			if (
-				data.api === 'checkLifelineHealth' ||
-				data.api === 'checkRouteHealth'
-			) {
-				this.loading = false
-				if (data.success) {
-					const res = data.result
-
-					this.results = res.results
-					delete res.results
-					this.averages = res
-
-					this.averages.numNeighbors = Math.max(
-						...this.results.map((n) => n.numNeighbors)
-					)
-
-					this.resultsTargetNode = res.targetNodeId
-				} else {
-					this.results.pop()
-					this.showSnackbar(
-						data.message || 'Health check failed',
-						'error'
-					)
-					console.error(data)
-				}
 			}
 		},
 		onHealthCheckProgress(data) {
@@ -694,21 +665,7 @@ export default {
 				}
 			}
 		},
-		bindEvent(eventName, handler) {
-			this.socket.on(socketEvents[eventName], handler)
-			this.bindedSocketEvents[eventName] = handler
-		},
-		unbindEvents() {
-			for (const event in this.bindedSocketEvents) {
-				this.socket.off(
-					socketEvents[event],
-					this.bindedSocketEvents[event]
-				)
-			}
-
-			this.bindedSocketEvents = {}
-		},
-		checkHealth() {
+		async checkHealth() {
 			this.loading = true
 			this.results = []
 			const args = [this.activeNode.id]
@@ -731,15 +688,40 @@ export default {
 
 			args.push(this.rounds || 1)
 
-			this.socket.emit(inboundEvents.zwave, {
-				api: `check${this.mode}Health`,
-				args,
-			})
-
 			this.results.push({
 				round: 1,
 				rating: undefined,
 			})
+
+			const response = await this.app.apiRequest(
+				`check${this.mode}Health`,
+				args,
+				{
+					infoSnack: true,
+					errorSnack: false,
+				}
+			)
+
+			this.loading = false
+			if (response.success) {
+				const res = response.result
+
+				this.results = res.results
+				delete res.results
+				this.averages = res
+
+				this.averages.numNeighbors = Math.max(
+					...this.results.map((n) => n.numNeighbors)
+				)
+
+				this.resultsTargetNode = res.targetNodeId
+			} else {
+				this.results.pop()
+				this.showSnackbar(
+					response.message || 'Health check failed',
+					'error'
+				)
+			}
 		},
 	},
 	beforeDestroy() {

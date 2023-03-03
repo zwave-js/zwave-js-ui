@@ -248,7 +248,6 @@
 					@import="importFile"
 					@export="exportConfiguration"
 					@showConfirm="confirm"
-					@apiRequest="apiRequest"
 					:socket="socket"
 				/>
 				<v-row
@@ -380,11 +379,17 @@ import { Routes } from '@/router'
 
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from './stores/base.js'
+import { manager, instances } from './lib/instanceManager'
+import logger from './lib/logger'
 
 import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
+
+let socketQueue = []
+
+const log = logger.get('App')
 
 export default {
 	components: {
@@ -433,10 +438,13 @@ export default {
 				this.loaderTitle = ''
 				const result = node.firmwareUpdateResult
 
-				useBaseStore().initNode({
-					id: node.id,
-					firmwareUpdateResult: false,
-				})
+				useBaseStore().updateNode(
+					{
+						id: node.id,
+						firmwareUpdateResult: false,
+					},
+					true
+				)
 
 				this.loaderText = `<span style="white-space: break-spaces;" class="${
 					result.success ? 'success' : 'error'
@@ -512,7 +520,7 @@ export default {
 			'setControllerStatus',
 			'setStatistics',
 			'addNodeEvent',
-			'initNode',
+			'updateNode',
 			'removeNode',
 		]),
 		copyVersion() {
@@ -543,7 +551,7 @@ export default {
 					'Error while updating password, check console for more info',
 					'error'
 				)
-				console.log(error)
+				log.error(error)
 			}
 		},
 		closePasswordDialog() {
@@ -606,16 +614,58 @@ export default {
 
 			return message
 		},
-		apiRequest(apiName, args) {
-			if (this.socket.connected) {
-				const data = {
-					api: apiName,
-					args: args,
+		apiRequest(
+			apiName,
+			args = [],
+			options = { infoSnack: true, errorSnack: true }
+		) {
+			return new Promise((resolve) => {
+				if (this.socket.connected) {
+					log.debug(
+						`Sending API request: ${apiName} with args:`,
+						args
+					)
+					if (options.infoSnack) {
+						this.showSnackbar(`API ${apiName} called`, 'info')
+					}
+					const data = {
+						api: apiName,
+						args: args,
+					}
+					this.socket.emit(socketActions.zwave, data, (response) => {
+						log.debug(`API response for ${apiName}:`, response)
+						if (!response.success) {
+							log.error(
+								`Error while calling ${apiName}:`,
+								response
+							)
+							if (options.errorSnack) {
+								this.showSnackbar(
+									`Error while calling ${apiName}: ${response.message}`,
+									'error'
+								)
+							}
+						}
+						resolve(response)
+					})
+				} else {
+					log.debug(
+						`Socket disconnected, queueing API request: ${apiName} with args:`,
+						args
+					)
+					socketQueue.push({
+						apiName,
+						args,
+						options,
+						resolve: resolve,
+					})
+					// resolve({
+					// 	success: false,
+					// 	message: 'Socket disconnected',
+					// })
+					//this.showSnackbar('Socket disconnected', 'error')
 				}
-				this.socket.emit(socketActions.zwave, data)
-			} else {
-				this.showSnackbar('Socket disconnected', 'error')
-			}
+			})
 		},
 		updateStatus: function (status, color) {
 			this.status = status
@@ -820,8 +870,17 @@ export default {
 				}
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
-				console.log(error)
+				log.error(error)
 			}
+		},
+		onInit(data) {
+			this.setAppInfo(data.info)
+			this.setControllerStatus({
+				error: data.error,
+				status: data.cntStatus,
+			})
+			// convert node values in array
+			this.initNodes(data.nodes)
 		},
 		async startSocket() {
 			if (
@@ -847,35 +906,55 @@ export default {
 
 			this.socket.on('connect', () => {
 				this.updateStatus('Connected', 'green')
-				this.socket.emit(socketActions.init, true)
+				log.info('Socket connected')
+				this.socket.emit(
+					socketActions.init,
+					true,
+					this.onInit.bind(this)
+				)
+
+				if (socketQueue.length > 0) {
+					socketQueue.forEach((item) => {
+						this.apiRequest(
+							item.apiName,
+							item.args,
+							item.options
+						).then(item.resolve)
+					})
+					socketQueue = []
+				}
 			})
 
 			this.socket.on('disconnect', () => {
+				log.info('Socket disconnected')
 				this.updateStatus('Disconnected', 'red')
 			})
 
-			this.socket.on('error', () => {
-				console.log('Socket error')
+			this.socket.on('error', (err) => {
+				log.info('Socket error', err)
 			})
 
 			this.socket.on('reconnecting', () => {
 				this.updateStatus('Reconnecting', 'yellow')
 			})
 
-			this.socket.on(socketEvents.init, (data) => {
-				// must be run before initNodes
-				this.setAppInfo(data.info)
-				this.setControllerStatus({
-					error: data.error,
-					status: data.cntStatus,
+			if (log.enabledFor(logger.DEBUG)) {
+				this.socket.onAny((eventName, ...args) => {
+					if (
+						![
+							socketEvents.nodeEvent,
+							socketEvents.debug,
+							socketEvents.statistics,
+						].includes(eventName)
+					) {
+						log.debug('Socket event', eventName, args)
+					}
 				})
-				// convert node values in array
-				this.initNodes(data.nodes)
-			})
+			}
 
-			this.socket.on(socketEvents.info, (data) => {
-				this.setAppInfo(data)
-			})
+			this.socket.on(socketEvents.init, this.onInit.bind(this))
+
+			this.socket.on(socketEvents.info, this.setAppInfo.bind(this))
 
 			this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
 			this.socket.on(
@@ -883,7 +962,7 @@ export default {
 				this.setControllerStatus.bind(this)
 			)
 
-			this.socket.on(socketEvents.nodeUpdated, this.initNode.bind(this))
+			this.socket.on(socketEvents.nodeUpdated, this.updateNode.bind(this))
 			this.socket.on(socketEvents.nodeRemoved, this.removeNode.bind(this))
 			this.socket.on(socketEvents.nodeAdded, this.onNodeAdded.bind(this))
 
@@ -958,11 +1037,12 @@ export default {
 				}
 			} catch (error) {
 				setTimeout(() => (this.error = error.message), 1000)
-				console.log(error)
+				log.error(error)
 			}
 		},
 	},
 	beforeMount() {
+		manager.register(instances.APP, this)
 		this.title = this.$route.name || ''
 		this.checkAuth()
 	},

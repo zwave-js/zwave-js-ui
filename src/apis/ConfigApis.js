@@ -1,6 +1,9 @@
 import axios from 'axios'
 import { loadProgressBar } from 'axios-progress-bar'
 import Router from '../router'
+import logger from '../lib/logger'
+
+const log = logger.get('ConfigApis')
 
 function getBasePath(path) {
 	return document.baseURI.replace(/\/$/, '') + (path || '')
@@ -10,6 +13,7 @@ axios.defaults.socketUrl = getBasePath()
 axios.defaults.baseURL = `${axios.defaults.socketUrl}/api`
 
 function responseHandler(response) {
+	log.debug('Response', response)
 	if (response.data && response.data.code === 3) {
 		localStorage.removeItem('logged')
 		Router.push('/')
@@ -21,18 +25,22 @@ function responseHandler(response) {
 
 const request = {
 	async get(...args) {
+		log.debug('Request', ...args)
 		const response = await axios.get(...args)
 		return responseHandler(response)
 	},
 	async put(...args) {
+		log.debug('Request', ...args)
 		const response = await axios.put(...args)
 		return responseHandler(response)
 	},
 	async post(...args) {
+		log.debug('Request', ...args)
 		const response = await axios.post(...args)
 		return responseHandler(response)
 	},
 	async delete(...args) {
+		log.debug('Request', ...args)
 		const response = await axios.delete(...args)
 		return responseHandler(response)
 	},

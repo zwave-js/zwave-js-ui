@@ -1312,6 +1312,9 @@ import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
 import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
+import logger from '../lib/logger'
+
+const log = logger.get('Settings')
 
 export default {
 	name: 'Settings',
@@ -1821,7 +1824,7 @@ export default {
 					)
 					this.initSettings(data.data)
 				} catch (error) {
-					console.log(error)
+					log.error(error)
 				}
 			} else {
 				this.showSnackbar(
@@ -1844,7 +1847,7 @@ export default {
 						'Error while retrieving configuration, check console',
 						'error'
 					)
-					console.log(data)
+					log.error(data)
 				} else {
 					this.init(data)
 					this.sslDisabled = data.sslDisabled
@@ -1852,7 +1855,7 @@ export default {
 				}
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
-				console.log(error)
+				log.error(error)
 			}
 		},
 	},

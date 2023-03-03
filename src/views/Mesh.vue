@@ -160,18 +160,16 @@
 import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapActions, mapState } from 'pinia'
 
-import {
-	socketEvents,
-	inboundEvents as socketActions,
-} from '@/../server/lib/SocketEvents'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 
 import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 import useBaseStore from '../stores/base.js'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 
 export default {
 	name: 'Mesh',
+	mixins: [InstancesMixin],
 	props: {
 		socket: Object,
 	},
@@ -273,34 +271,18 @@ export default {
 
 			this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
 		},
-		refresh() {
-			this.socket.emit(socketActions.zwave, {
-				api: 'refreshNeighbors',
-				args: [],
-			})
-		},
-		checkHealth(type) {
-			this.socket.emit(socketActions.zwave, {
-				api: `check${type}Health`,
-				args: [this.selectedNode.id],
-			})
+		async refresh() {
+			const response = await this.app.apiRequest('refreshNeighbors')
+
+			if (response.success) {
+				this.showSnackbar('Nodes Neighbors updated', 'success')
+				this.setNeighbors(response.result)
+				// refresh graph
+				// this.$refs.mesh.debounceRefresh()
+			}
 		},
 	},
 	mounted() {
-		this.socket.on(socketEvents.api, (data) => {
-			if (data.success) {
-				switch (data.api) {
-					case 'refreshNeighbors': {
-						this.showSnackbar('Nodes Neighbors updated')
-						this.setNeighbors(data.result)
-						// refresh graph
-						// this.$refs.mesh.debounceRefresh()
-						break
-					}
-				}
-			}
-		})
-
 		// make properties window draggable
 		const propertiesDiv = document.getElementById('properties')
 		const mesh = document.getElementById('mesh')
@@ -354,10 +336,6 @@ export default {
 	beforeDestroy() {
 		if (this.refreshTimeout) {
 			clearTimeout(this.refreshTimeout)
-		}
-		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.api)
 		}
 	},
 }

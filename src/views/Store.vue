@@ -291,6 +291,9 @@ import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
+import logger from '../lib/logger.js'
+
+const log = logger.get('Store')
 
 export default {
 	name: 'Store',
@@ -386,7 +389,6 @@ export default {
 			}
 		},
 		async downloadZip(response, defaultName) {
-			console.log(response)
 			const regExp = /filename="([^"]+){1}"/g
 			const fileName =
 				regExp.exec(response.headers['content-disposition'])[1] ||
@@ -601,7 +603,7 @@ export default {
 					'Error while fetching store files: ' + error.message,
 					'error'
 				)
-				console.log(error)
+				log.error(error)
 			}
 
 			this.loadingStore = false

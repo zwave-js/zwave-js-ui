@@ -64,8 +64,9 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 			socket.on(eventName, this._emitEvent.bind(this, eventName, socket))
 		}
 
-		socket.on('disconnect', function () {
-			logger.debug(`User disconnected ${socket.id}`)
+		// https://socket.io/docs/v4/server-socket-instance/#events
+		socket.on('disconnect', function (reason) {
+			logger.debug(`User disconnected from ${socket.id}: ${reason}`)
 		})
 	}
 

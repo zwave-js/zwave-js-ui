@@ -163,7 +163,6 @@
 </template>
 <script>
 import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
-import { socketEvents } from '@/../server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
@@ -171,12 +170,11 @@ import {
 	securityClassesToArray,
 } from '../lib/utils.js'
 import useBaseStore from '../stores/base.js'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 
 export default {
 	name: 'SmartStart',
-	props: {
-		socket: Object,
-	},
+	mixins: [InstancesMixin],
 	watch: {},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
@@ -212,10 +210,24 @@ export default {
 			edited: false,
 		}
 	},
+	mounted() {
+		this.refreshItems()
+	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		refreshItems() {
-			this.apiRequest('getProvisioningEntries', [])
+		async refreshItems() {
+			const response = await this.app.apiRequest(
+				'getProvisioningEntries',
+				[],
+				{
+					infoSnack: false,
+					errorSnack: true,
+				}
+			)
+
+			if (response.success) {
+				this.items = this.parseItems(response.result)
+			}
 		},
 		async exportList() {
 			await this.$listeners.export(
@@ -229,16 +241,34 @@ export default {
 
 			if (data) {
 				for (const entry of data) {
-					this.apiRequest('provisionSmartStartNode', [
-						this.convertItem(entry),
-					])
+					this.updateItem(entry)
 				}
 			}
 		},
-		onChange(item) {
-			this.edited = true
+		async onChange(item) {
+			await this.updateItem(item)
+			this.edited = false
+			this.refreshItems()
+		},
+		async updateItem(itemOrQr) {
+			const response = await this.app.apiRequest(
+				'provisionSmartStartNode',
+				[
+					typeof itemOrQr === 'string'
+						? itemOrQr
+						: this.convertItem(itemOrQr),
+				]
+			)
 
-			this.apiRequest('provisionSmartStartNode', [this.convertItem(item)])
+			if (response.success) {
+				const entry = response.result
+				this.showSnackbar(
+					`Node ${entry.nodeId || entry.name || ''} ${
+						this.edited ? 'updated' : 'added'
+					}`,
+					'success'
+				)
+			}
 		},
 		async scanItem() {
 			let qrString = await this.$listeners.showConfirm(
@@ -260,7 +290,7 @@ export default {
 						'warning'
 					)
 				} else {
-					this.apiRequest('provisionSmartStartNode', [qrString])
+					this.updateItem(qrString)
 				}
 			}
 		},
@@ -371,9 +401,8 @@ export default {
 					// extend existing item props that are not shown in dialog
 					item = { ...existingItem, ...item }
 				}
-				this.apiRequest('provisionSmartStartNode', [
-					this.convertItem(item),
-				])
+
+				this.updateItem(item)
 			}
 		},
 		async removeItem(item) {
@@ -384,8 +413,15 @@ export default {
 					'alert'
 				)
 			) {
-				this.apiRequest('unprovisionSmartStartNode', [item.dsk])
-				this.refreshItems()
+				const response = await this.app.apiRequest(
+					'unprovisionSmartStartNode',
+					[item.dsk]
+				)
+
+				if (response.success) {
+					this.showSnackbar(`Node ${item.nodeId} removed`, 'success')
+					this.refreshItems()
+				}
 			}
 		},
 		parseItems(items) {
@@ -416,62 +452,6 @@ export default {
 
 			return item
 		},
-		apiRequest(apiName, args) {
-			this.$emit('apiRequest', apiName, args)
-		},
-	},
-	mounted() {
-		// init socket events
-		this.socket.on(socketEvents.api, async (data) => {
-			if (data.success) {
-				switch (data.api) {
-					case 'getProvisioningEntries':
-						this.items = this.parseItems(data.result)
-						break
-					case 'unprovisionSmartStartNode':
-						this.showSnackbar(
-							'Node successfully removed',
-							'success'
-						)
-						this.refreshItems()
-						break
-					case 'provisionSmartStartNode':
-						this.showSnackbar(
-							`Node successfully ${
-								this.edited ? 'updated' : 'added'
-							}`,
-							'success'
-						)
-						this.edited = false
-						this.refreshItems()
-						break
-					default:
-						this.showSnackbar(
-							'Successfully call api ' + data.api,
-							'success'
-						)
-				}
-			} else {
-				this.showSnackbar(
-					'Error while calling api ' + data.api + ': ' + data.message,
-					'error'
-				)
-			}
-		})
-
-		if (this.socket.connected) {
-			this.refreshItems()
-		} else {
-			this.socket.once('connect', () => {
-				this.refreshItems()
-			})
-		}
-	},
-	beforeDestroy() {
-		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.api)
-		}
 	},
 }
 </script>
