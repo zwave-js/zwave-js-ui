@@ -272,7 +272,10 @@ export default {
 			this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
 		},
 		async refresh() {
-			const response = await this.app.apiRequest('refreshNeighbors')
+			const response = await this.app.apiRequest('refreshNeighbors', [], {
+				infoSnack: false,
+				errorSnack: true,
+			})
 
 			if (response.success) {
 				this.showSnackbar('Nodes Neighbors updated', 'success')

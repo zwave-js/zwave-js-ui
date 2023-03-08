@@ -174,7 +174,10 @@ export default {
 			this.$listeners.export(this.scenes, 'scenes')
 		},
 		async refreshScenes() {
-			const response = await this.app.apiRequest('_getScenes', [])
+			const response = await this.app.apiRequest('_getScenes', [], {
+				infoSnack: false,
+				errorSnack: true,
+			})
 
 			if (response.success) {
 				this.scenes = response.result
@@ -292,9 +295,11 @@ export default {
 		},
 		async refreshValues() {
 			if (this.selectedScene) {
-				const response = await this.app.apiRequest('_sceneGetValues', [
-					this.selectedScene,
-				])
+				const response = await this.app.apiRequest(
+					'_sceneGetValues',
+					[this.selectedScene],
+					{ infoSnack: false, errorSnack: true }
+				)
 
 				if (response.success) {
 					this.scene_values = response.result
