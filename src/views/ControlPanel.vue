@@ -2,88 +2,30 @@
 	<div>
 		<v-container fluid class="pa-4">
 			<v-row class="py-4 align-center" no-gutters>
-				<v-col class="text-end">
-					<v-menu>
-						<template #activator="{ on }">
-							<v-item-group class="v-btn-toggle">
-								<v-btn
-									color="primary"
-									outlined
-									@click="toggleControllerStatistics"
-								>
-									<v-icon left>
-										{{ statisticsOpeningIndicator }}
-									</v-icon>
-									Controller statistics
-									<v-icon color="primary" right>
-										multiline_chart
-									</v-icon>
-								</v-btn>
-								<v-btn color="primary" outlined v-on="on">
-									Actions
-									<v-icon right>arrow_drop_down</v-icon>
-								</v-btn>
-								<v-btn
-									color="primary"
-									v-if="$vuetify.breakpoint.mdAndUp"
-									:outlined="!compactMode"
-									@click.stop="compactMode = !compactMode"
-								>
-									Compact
-								</v-btn>
-							</v-item-group>
-						</template>
-
-						<v-list>
-							<v-list-item @click="addRemoveShowDialog = true">
-								<v-list-item-content
-									class="d-none d-sm-inline-flex"
-								>
-									<v-list-item-title>
-										Manage nodes
-									</v-list-item-title>
-									<v-list-item-subtitle>
-										Include, replace or exclude devices
-									</v-list-item-subtitle>
-								</v-list-item-content>
-								<v-list-item-action>
-									<v-btn
-										depressed
-										outlined
-										color="primary"
-										@click="addRemoveShowDialog = true"
-									>
-										Manage nodes
-									</v-btn>
-								</v-list-item-action>
-							</v-list-item>
-							<v-divider />
-							<v-list-item @click="advancedShowDialog = true">
-								<v-list-item-content
-									class="d-none d-sm-inline-flex"
-								>
-									<v-list-item-title>
-										Advanced actions
-									</v-list-item-title>
-									<v-list-item-subtitle>
-										Maintenance, troubleshooting and other
-										advanced actions
-									</v-list-item-subtitle>
-								</v-list-item-content>
-								<v-list-item-action>
-									<v-btn
-										dark
-										color="green"
-										depressed
-										outlined
-										@click="advancedShowDialog = true"
-									>
-										Advanced actions
-									</v-btn>
-								</v-list-item-action>
-							</v-list-item>
-						</v-list>
-					</v-menu>
+				<v-col :class="compact ? 'text-center' : 'text-end'">
+					<v-item-group class="v-btn-toggle">
+						<v-btn
+							color="primary"
+							outlined
+							@click="toggleControllerStatistics"
+						>
+							<v-icon left>
+								{{ statisticsOpeningIndicator }}
+							</v-icon>
+							Controller statistics
+							<v-icon color="primary" right>
+								multiline_chart
+							</v-icon>
+						</v-btn>
+						<v-btn
+							color="primary"
+							v-if="$vuetify.breakpoint.mdAndUp"
+							:outlined="!compactMode"
+							@click.stop="compactMode = !compactMode"
+						>
+							Compact
+						</v-btn>
+					</v-item-group>
 				</v-col>
 			</v-row>
 			<v-expand-transition>
@@ -127,6 +69,48 @@
 			:actions="actions"
 			@action="onAction"
 		/>
+
+		<v-speed-dial bottom fab right fixed class="pb-6" v-model="fab">
+			<template v-slot:activator>
+				<v-btn color="blue darken-2" dark fab hover v-model="fab">
+					<v-icon v-if="fab">close</v-icon>
+					<v-icon v-else>add</v-icon>
+				</v-btn>
+			</template>
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
+						color="green"
+						@click="addRemoveShowDialog = true"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>all_inclusive</v-icon>
+					</v-btn>
+				</template>
+				<span>Manage nodes</span>
+			</v-tooltip>
+
+			<v-tooltip left>
+				<template v-slot:activator="{ on, attrs }">
+					<v-btn
+						fab
+						dark
+						small
+						color="purple"
+						@click="advancedShowDialog = true"
+						v-bind="attrs"
+						v-on="on"
+					>
+						<v-icon>auto_fix_high</v-icon>
+					</v-btn>
+				</template>
+				<span>Advanced actions</span>
+			</v-tooltip>
+		</v-speed-dial>
 	</div>
 </template>
 
@@ -177,6 +161,7 @@ export default {
 	watch: {},
 	data() {
 		return {
+			fab: false,
 			compactMode: false,
 			settings: new Settings(localStorage),
 			addRemoveShowDialog: false,

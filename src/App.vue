@@ -347,7 +347,7 @@
 	border-radius: 4px;
 	padding: 0.3rem 0;
 	font-size: 0.8rem;
-	min-width: 220px;
+	min-width: 150px;
 	max-width: 500px;
 	text-align: center;
 }

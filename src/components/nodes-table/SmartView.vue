@@ -1,12 +1,14 @@
 <template>
-	<v-container fluid class="fill">
+	<v-container fluid class="fill pa-0">
 		<v-text-field
 			v-model="search"
 			v-if="!loading"
-			prepend-icon="mdi-magnify"
+			prepend-icon="search"
 			label="Search"
+			class="mx-auto my-2"
+			hide-details
 			single-line
-			style="max-width: 250px; margin: auto"
+			style="max-width: 250px"
 			clearable
 		></v-text-field>
 		<v-data-iterator
@@ -106,11 +108,11 @@
 
 									<span
 										class="caption pb-0 font-weight-bold primary--text text-truncate text-capitalize"
-										>{{ item.name }}
+										>{{ item.name || '---' }}
 									</span>
 									<span
 										class="caption pb-0 font-weight-bold text-truncate text-capitalize"
-										>{{ item.loc }}
+										>{{ item.loc || '&#8205;' }}
 									</span>
 
 									<v-badge
