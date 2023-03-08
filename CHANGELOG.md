@@ -1,5 +1,20 @@
 
 
+# [8.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.9.0...v8.10.0) (2023-03-08)
+
+
+### Bug Fixes
+
+* improve socket messages delivery ([#2978](https://github.com/zwave-js/zwave-js-ui/issues/2978) ([0b78aa6](https://github.com/zwave-js/zwave-js-ui/commit/0b78aa61150686c464a11a875201c68bff37b8c0)), closes [#2975](https://github.com/zwave-js/zwave-js-ui/issues/2975)
+* prevent fw updates when update in progress ([#2984](https://github.com/zwave-js/zwave-js-ui/issues/2984)) ([dad95b4](https://github.com/zwave-js/zwave-js-ui/commit/dad95b481dda76e1e767a39ad781b85604062152)), closes [#2983](https://github.com/zwave-js/zwave-js-ui/issues/2983)
+* toSubscribe being set to bool instead of map ([#2985](https://github.com/zwave-js/zwave-js-ui/issues/2985)) ([f6e3338](https://github.com/zwave-js/zwave-js-ui/commit/f6e333898bab88eb44d27e84aff2b7ea93106b91))
+* **ui:** heal network action not working ([3e4df63](https://github.com/zwave-js/zwave-js-ui/commit/3e4df63075c973d12dd4928a6d054c0000969727)), closes [#2987](https://github.com/zwave-js/zwave-js-ui/issues/2987)
+
+
+### Features
+
+* bump zwave-js@10.11.0 ([e7556b4](https://github.com/zwave-js/zwave-js-ui/commit/e7556b4bb177a5271dd84d4f4f6d94804c551b6d))
+
 # [8.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.8.6...v8.9.0) (2023-02-24)
 
 
