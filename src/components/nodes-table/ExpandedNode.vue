@@ -33,7 +33,7 @@
 						dark
 						v-if="!node.isControllerNode"
 						color="primary"
-						@click.stop="app.apiRequest('pingNode', [node.id])"
+						@click.stop="nodeAction('pingNode')"
 						depressed
 					>
 						Ping

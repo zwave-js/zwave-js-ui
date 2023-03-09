@@ -1091,30 +1091,17 @@ export default {
 
 				const securityClasses = securityClassesToArray(s.values)
 
-				const response = await this.app.apiRequest(
-					'grantSecurityClasses',
-					[
-						{
-							securityClasses,
-							clientSideAuth: !!values.clientAuth,
-						},
-					]
-				)
-
-				if (response.success) {
-					this.onGrantSecurityCC(response.result)
-				}
-
 				this.loading = true
-			} else if (s.key === 's2Pin') {
-				const mode = s.values.pin
-				this.loading = true
-				const response = await this.app.apiRequest('validateDSK', [
-					mode,
+				await this.app.apiRequest('grantSecurityClasses', [
+					{
+						securityClasses,
+						clientSideAuth: !!values.clientAuth,
+					},
 				])
-				if (response.success) {
-					this.onValidateDSK(response.result)
-				}
+			} else if (s.key === 's2Pin') {
+				const pin = s.values.pin
+				this.loading = true
+				await this.app.apiRequest('validateDSK', [pin])
 			} else if (s.key === 'replaceFailed') {
 				this.currentAction = 'Inclusion'
 				this.pushStep('replaceInclusionMode')
@@ -1147,6 +1134,11 @@ export default {
 			}
 
 			if (bind) {
+				this.bindEvent(
+					'grantSecurityClasses',
+					this.onGrantSecurityCC.bind(this)
+				)
+				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
 				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
 				this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
 			} else if (bind === false) {
