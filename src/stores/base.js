@@ -90,6 +90,7 @@ const useBaseStore = defineStore('base', {
 		ui: {
 			darkMode: settings.load('dark', false),
 			navTabs: settings.load('navTabs', false),
+			compactMode: settings.load('compact', false),
 		},
 	}),
 	getters: {
@@ -413,6 +414,10 @@ const useBaseStore = defineStore('base', {
 		setNavTabs(value) {
 			settings.store('navTabs', value)
 			this.ui.navTabs = value
+		},
+		setCompactMode(value) {
+			settings.store('compact', value)
+			this.ui.compactMode = value
 		},
 	},
 })

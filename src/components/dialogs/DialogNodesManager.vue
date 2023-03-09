@@ -330,17 +330,17 @@
 											your device in INCLUSION MODE
 										</p>
 										<p
-											v-else-if="state === 'stop'"
-											class="mt-3 headline text-center"
-										>
-											Inclusion stopped. Checking for
-											changes...
-										</p>
-										<p
 											v-else-if="nvmProgress > 0"
 											class="mt-3 headline text-center"
 										>
 											Waiting for NVM Backup...
+										</p>
+										<p
+											v-else
+											class="mt-3 headline text-center"
+										>
+											Inclusion stopped. Checking for
+											changes...
 										</p>
 									</v-col>
 
@@ -472,113 +472,142 @@
 								</v-card-text>
 
 								<v-card-text v-if="s.key == 's2Classes'">
-									<v-checkbox
-										:disabled="
-											s.values.s2AccessControl ===
-											undefined
-										"
-										v-model="s.values.s2AccessControl"
-										label="S2 Access Control"
-										hint="Example: Door Locks, garage doors"
-										persistent-hint
-									></v-checkbox>
-									<v-checkbox
-										:disabled="
-											s.values.s2Authenticated ===
-											undefined
-										"
-										v-model="s.values.s2Authenticated"
-										label="S2 Authenticated"
-										hint="Example: Lighting, Sensors, Security Systems"
-										persistent-hint
-									></v-checkbox>
-									<v-checkbox
-										:disabled="
-											s.values.s2Unauthenticated ===
-											undefined
-										"
-										v-model="s.values.s2Unauthenticated"
-										label="S2 Unauthenticated"
-										hint="Like S2 Authenticated but without verification that the correct device is included"
-										persistent-hint
-									></v-checkbox>
-									<v-checkbox
-										:disabled="
-											s.values.s0Legacy === undefined
-										"
-										v-model="s.values.s0Legacy"
-										label="S0 legacy"
-										hint="Example: Legacy door locks without S2 support"
-										persistent-hint
-									></v-checkbox>
-									<v-checkbox
-										:disabled="
-											s.values.clientAuth === undefined
-										"
-										v-model="s.values.clientAuth"
-										label="Client-side authentication"
-										hint="Authentication of the inclusion happens on the device instead of on the controller (for devices without DSK)"
-										persistent-hint
-									></v-checkbox>
+									<div v-if="!loading">
+										<v-checkbox
+											:disabled="
+												s.values.s2AccessControl ===
+												undefined
+											"
+											v-model="s.values.s2AccessControl"
+											label="S2 Access Control"
+											hint="Example: Door Locks, garage doors"
+											persistent-hint
+										></v-checkbox>
+										<v-checkbox
+											:disabled="
+												s.values.s2Authenticated ===
+												undefined
+											"
+											v-model="s.values.s2Authenticated"
+											label="S2 Authenticated"
+											hint="Example: Lighting, Sensors, Security Systems"
+											persistent-hint
+										></v-checkbox>
+										<v-checkbox
+											:disabled="
+												s.values.s2Unauthenticated ===
+												undefined
+											"
+											v-model="s.values.s2Unauthenticated"
+											label="S2 Unauthenticated"
+											hint="Like S2 Authenticated but without verification that the correct device is included"
+											persistent-hint
+										></v-checkbox>
+										<v-checkbox
+											:disabled="
+												s.values.s0Legacy === undefined
+											"
+											v-model="s.values.s0Legacy"
+											label="S0 legacy"
+											hint="Example: Legacy door locks without S2 support"
+											persistent-hint
+										></v-checkbox>
+										<v-checkbox
+											:disabled="
+												s.values.clientAuth ===
+												undefined
+											"
+											v-model="s.values.clientAuth"
+											label="Client-side authentication"
+											hint="Authentication of the inclusion happens on the device instead of on the controller (for devices without DSK)"
+											persistent-hint
+										></v-checkbox>
 
-									<v-card-actions v-if="!loading">
-										<v-btn
-											v-if="!aborted"
-											color="primary"
-											@click.stop="nextStep"
-											@keypress.enter="nextStep"
-										>
-											Next
-										</v-btn>
+										<v-card-actions>
+											<v-btn
+												v-if="!aborted"
+												color="primary"
+												@click.stop="nextStep"
+												@keypress.enter="nextStep"
+											>
+												Next
+											</v-btn>
 
-										<v-btn
-											color="error"
-											@click="abortInclusion"
-										>
-											Abort
-										</v-btn>
-									</v-card-actions>
+											<v-btn
+												color="error"
+												@click="abortInclusion"
+											>
+												Abort
+											</v-btn>
+										</v-card-actions>
+									</div>
+									<div v-else>
+										<v-col class="text-center">
+											<v-progress-circular
+												size="64"
+												indeterminate
+												color="primary"
+											></v-progress-circular>
+											<p class="mt-3 headline">
+												Waiting response from node...
+											</p>
+										</v-col>
+									</div>
 								</v-card-text>
 								<v-card-text v-if="s.key == 's2Pin'">
-									<v-text-field
-										label="DSK Pin"
-										class="mb-2"
-										persistent-hint
-										hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
-										inputmode="numeric"
-										v-model.trim="s.values.pin"
-										:suffix="
-											$vuetify.breakpoint.xsOnly
-												? ''
-												: s.suffix
-										"
-									>
-									</v-text-field>
-
-									<code
-										class="code font-weight-bold"
-										v-if="$vuetify.breakpoint.xsOnly"
-									>
-										{{ s.suffix }}
-									</code>
-
-									<v-card-actions v-if="!loading">
-										<v-btn
-											v-if="!aborted"
-											color="primary"
-											@click.stop="nextStep"
-											@keypress.enter="nextStep"
+									<div v-if="!loading">
+										<v-text-field
+											label="DSK Pin"
+											class="mb-2"
+											persistent-hint
+											hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
+											inputmode="numeric"
+											v-model.trim="s.values.pin"
+											:suffix="
+												$vuetify.breakpoint.xsOnly
+													? ''
+													: s.suffix
+											"
 										>
-											Next
-										</v-btn>
+										</v-text-field>
 
-										<v-btn
-											color="error"
-											@click="abortInclusion"
+										<code
+											class="code font-weight-bold"
+											v-if="$vuetify.breakpoint.xsOnly"
 										>
-											Abort
-										</v-btn>
-									</v-card-actions>
+											{{ s.suffix }}
+										</code>
+
+										<v-card-actions>
+											<v-btn
+												v-if="!aborted"
+												color="primary"
+												@click.stop="nextStep"
+												@keypress.enter="nextStep"
+											>
+												Next
+											</v-btn>
+
+											<v-btn
+												color="error"
+												@click="abortInclusion"
+											>
+												Abort
+											</v-btn>
+										</v-card-actions>
+									</div>
+									<div v-else>
+										<v-col class="text-center">
+											<v-progress-circular
+												size="64"
+												indeterminate
+												color="primary"
+											></v-progress-circular>
+											<p class="mt-3 headline">
+												Waiting response from node...
+											</p>
+										</v-col>
+									</div>
 								</v-card-text>
 
 								<v-card-text v-if="s.key == 'done'">
@@ -816,13 +845,16 @@ export default {
 					} else {
 						// inclusion stopped by controller, see if a node was found
 						let timeout =
-							this.currentAction === 'Exclusion' ? 1000 : 5000
+							this.currentAction === 'Exclusion' ? 3000 : 5000
 						this.state = 'wait'
 
 						// when a node is added/removed showResults it's called from socket event listeners
 						// (onNodeAdded onNodeRemoved) set a timeout in case the events for some reason are not received
 						// fixes issue #2746
-						this.waitTimeout = setTimeout(this.showResults, timeout) // add additional discovery time
+						this.waitTimeout = setTimeout(
+							() => this.showResults(),
+							timeout
+						) // add additional discovery time
 					}
 				} else {
 					// error
@@ -1091,30 +1123,17 @@ export default {
 
 				const securityClasses = securityClassesToArray(s.values)
 
-				const response = await this.app.apiRequest(
-					'grantSecurityClasses',
-					[
-						{
-							securityClasses,
-							clientSideAuth: !!values.clientAuth,
-						},
-					]
-				)
-
-				if (response.success) {
-					this.onGrantSecurityCC(response.result)
-				}
-
 				this.loading = true
-			} else if (s.key === 's2Pin') {
-				const mode = s.values.pin
-				this.loading = true
-				const response = await this.app.apiRequest('validateDSK', [
-					mode,
+				await this.app.apiRequest('grantSecurityClasses', [
+					{
+						securityClasses,
+						clientSideAuth: !!values.clientAuth,
+					},
 				])
-				if (response.success) {
-					this.onValidateDSK(response.result)
-				}
+			} else if (s.key === 's2Pin') {
+				const pin = s.values.pin
+				this.loading = true
+				await this.app.apiRequest('validateDSK', [pin])
 			} else if (s.key === 'replaceFailed') {
 				this.currentAction = 'Inclusion'
 				this.pushStep('replaceInclusionMode')
@@ -1147,6 +1166,11 @@ export default {
 			}
 
 			if (bind) {
+				this.bindEvent(
+					'grantSecurityClasses',
+					this.onGrantSecurityCC.bind(this)
+				)
+				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
 				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))
 				this.bindEvent('nodeAdded', this.onNodeAdded.bind(this))
 			} else if (bind === false) {

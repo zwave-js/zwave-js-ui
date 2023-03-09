@@ -157,12 +157,19 @@ export default {
 		compact() {
 			return this.$vuetify.breakpoint.smAndDown || this.compactMode
 		},
+		compactMode: {
+			get() {
+				return useBaseStore().ui.compactMode
+			},
+			set(value) {
+				useBaseStore().setCompactMode(value)
+			},
+		},
 	},
 	watch: {},
 	data() {
 		return {
 			fab: false,
-			compactMode: false,
 			settings: new Settings(localStorage),
 			addRemoveShowDialog: false,
 			advancedShowDialog: false,

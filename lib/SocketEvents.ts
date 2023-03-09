@@ -15,6 +15,9 @@ export enum socketEvents {
 	debug = 'DEBUG',
 	statistics = 'STATISTICS',
 	nodeEvent = 'NODE_EVENT',
+	grantSecurityClasses = 'GRANT_SECURITY_CLASSES',
+	validateDSK = 'VALIDATE_DSK',
+	inclusionAborted = 'INCLUSION_ABORTED',
 }
 
 // events from client ---> server
