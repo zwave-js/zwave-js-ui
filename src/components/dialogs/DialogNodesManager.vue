@@ -471,7 +471,10 @@
 									</v-card-actions>
 								</v-card-text>
 
-								<v-card-text v-if="s.key == 's2Classes'">
+								<v-card-text
+									v-show="!loading"
+									v-if="s.key == 's2Classes'"
+								>
 									<v-checkbox
 										:disabled="
 											s.values.s2AccessControl ===
@@ -539,7 +542,10 @@
 										</v-btn>
 									</v-card-actions>
 								</v-card-text>
-								<v-card-text v-if="s.key == 's2Pin'">
+								<v-card-text
+									v-show="!loading"
+									v-if="s.key == 's2Pin'"
+								>
 									<v-text-field
 										label="DSK Pin"
 										class="mb-2"
@@ -816,7 +822,7 @@ export default {
 					} else {
 						// inclusion stopped by controller, see if a node was found
 						let timeout =
-							this.currentAction === 'Exclusion' ? 1000 : 5000
+							this.currentAction === 'Exclusion' ? 3000 : 5000
 						this.state = 'wait'
 
 						// when a node is added/removed showResults it's called from socket event listeners
