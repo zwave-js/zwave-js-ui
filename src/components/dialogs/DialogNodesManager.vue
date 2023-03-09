@@ -330,17 +330,17 @@
 											your device in INCLUSION MODE
 										</p>
 										<p
-											v-else-if="state === 'stop'"
-											class="mt-3 headline text-center"
-										>
-											Inclusion stopped. Checking for
-											changes...
-										</p>
-										<p
 											v-else-if="nvmProgress > 0"
 											class="mt-3 headline text-center"
 										>
 											Waiting for NVM Backup...
+										</p>
+										<p
+											v-else
+											class="mt-3 headline text-center"
+										>
+											Inclusion stopped. Checking for
+											changes...
 										</p>
 									</v-col>
 
