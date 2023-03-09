@@ -1,5 +1,18 @@
 
 
+## [8.10.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.10.0...v8.10.1) (2023-03-09)
+
+
+### Bug Fixes
+
+* broken inclusion process ([#2995](https://github.com/zwave-js/zwave-js-ui/issues/2995) ([51b806d](https://github.com/zwave-js/zwave-js-ui/commit/51b806de972a52aa042bd74d4a1965e8397984af)), closes [#2993](https://github.com/zwave-js/zwave-js-ui/issues/2993)
+* possible issue on startup `cb` is not a function ([4f12e5e](https://github.com/zwave-js/zwave-js-ui/commit/4f12e5e4ab7f1750650c6b90788176bdc6627672)), closes [#2994](https://github.com/zwave-js/zwave-js-ui/issues/2994)
+
+
+### Features
+
+* **ui:** improve smart view for smaller screens ([2a77652](https://github.com/zwave-js/zwave-js-ui/commit/2a77652268f66d7a6f2fd9d3311eaef53d40eec5))
+
 # [8.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.9.0...v8.10.0) (2023-03-08)
 
 
