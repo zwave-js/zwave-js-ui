@@ -586,6 +586,9 @@ const csrfProtection = csrf({
 
 // ### SOCKET SETUP
 
+// eslint-disable-next-line @typescript-eslint/no-empty-function
+const noop = () => {}
+
 /**
  * Binds socketManager to `server`
  */
@@ -595,7 +598,7 @@ function setupSocket(server: HttpServer) {
 	socketManager.io.on('connection', (socket) => {
 		// Server: https://socket.io/docs/v4/server-application-structure/#all-event-handlers-are-registered-in-the-indexjs-file
 		// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
-		socket.on(inboundEvents.init, (data, cb) => {
+		socket.on(inboundEvents.init, (data, cb = noop) => {
 			if (gw.zwave) {
 				const state = gw.zwave.getState()
 				cb(state)
@@ -605,26 +608,25 @@ function setupSocket(server: HttpServer) {
 		socket.on(
 			inboundEvents.zwave,
 			// eslint-disable-next-line @typescript-eslint/no-misused-promises
-			async (data, cb) => {
+			async (data, cb = noop) => {
 				if (gw.zwave) {
 					if (!data.args) data.args = []
 					const result: CallAPIResult<any> & {
 						api?: string
 					} = await gw.zwave.callApi(data.api, ...data.args)
 					result.api = data.api
-					if (cb) cb(result)
+					cb(result)
 				} else {
-					if (cb)
-						cb({
-							success: false,
-							message: 'Zwave client not connected',
-						})
+					cb({
+						success: false,
+						message: 'Zwave client not connected',
+					})
 				}
 			}
 		)
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		socket.on(inboundEvents.mqtt, (data, cb) => {
+		socket.on(inboundEvents.mqtt, (data, cb = noop) => {
 			logger.info(`Mqtt api call: ${data.api}`)
 
 			let res: void, err: string
@@ -652,11 +654,11 @@ function setupSocket(server: HttpServer) {
 				api: data.api,
 			}
 
-			if (cb) cb(result)
+			cb(result)
 		})
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
-		socket.on(inboundEvents.hass, async (data, cb) => {
+		socket.on(inboundEvents.hass, async (data, cb = noop) => {
 			logger.info(`Hass api call: ${data.apiName}`)
 
 			let res: any, err: string
@@ -706,7 +708,7 @@ function setupSocket(server: HttpServer) {
 				api: data.apiName,
 			}
 
-			if (cb) cb(result)
+			cb(result)
 		})
 	})
 }
