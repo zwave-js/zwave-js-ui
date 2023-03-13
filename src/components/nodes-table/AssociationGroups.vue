@@ -25,7 +25,7 @@
 					<v-btn
 						text
 						color="primary"
-						@click="getAssociations"
+						@click="getAssociations(true)"
 						class="mb-2"
 						>Refresh</v-btn
 					>
@@ -132,9 +132,22 @@ export default {
 
 			return endpoint >= 0 ? 'Endpoint ' + endpoint : 'No Endpoint'
 		},
-		async getAssociations() {
+		async getAssociations(ask = false) {
+			let refresh = false
+			if (ask && this.node.status !== 'Dead') {
+				refresh = await this.$listeners.showConfirm(
+					'Info',
+					`Do you want to force query associations?${
+						this.node.status === 'Alive'
+							? ''
+							: ' This node is Asleep, so you should wake it up first.'
+					}`,
+					'info'
+				)
+			}
 			const response = await this.app.apiRequest('getAssociations', [
 				this.node.id,
+				refresh,
 			])
 
 			if (response.success) {
@@ -200,6 +213,16 @@ export default {
 		},
 		async removeAllAssociations() {
 			const args = [this.node.id]
+
+			if (
+				!(await this.$listeners.showConfirm(
+					'Attention',
+					`Are you sure you want to remove all associations from this node? This will also remove lifeline association if it exists.`,
+					'alert'
+				))
+			) {
+				return
+			}
 
 			const response = await this.app.apiRequest(
 				'removeAllAssociations',

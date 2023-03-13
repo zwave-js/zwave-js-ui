@@ -990,12 +990,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group
 	 */
-	getAssociations(nodeId: number): ZUIGroupAssociation[] {
+	async getAssociations(
+		nodeId: number,
+		refresh = false
+	): Promise<ZUIGroupAssociation[]> {
 		const zwaveNode = this.getNode(nodeId)
 		const toReturn: ZUIGroupAssociation[] = []
 
 		if (zwaveNode) {
 			try {
+				if (refresh) {
+					await zwaveNode.refreshCCValues(CommandClasses.Association)
+					await zwaveNode.refreshCCValues(
+						CommandClasses['Multi Channel Association']
+					)
+				}
 				// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface
 				// the result is a map where the key is the group number and the value is the array of associations {nodeId, endpoint?}
 				const result =

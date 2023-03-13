@@ -105,7 +105,10 @@ Payload:
 #### `getAssociations`
 
 ```ts
-getAssociations(nodeId: number): ZUIGroupAssociation[];
+async getAssociations(
+	nodeId: number,
+	refresh = false
+): Promise<ZUIGroupAssociation[]>;
 ```
 
 Get an array of current [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface) of a specific group.
@@ -120,7 +123,8 @@ Payload:
 ```json
 {
 	"args": [
-		nodeId
+		nodeId,
+		refresh
 	]
 }
 ```
@@ -1308,7 +1312,7 @@ Payload:
 #### `beginHealingNetwork`
 
 ```ts
-beginHealingNetwork(): boolean;
+beginHealingNetwork(options?: HealNetworkOptions): boolean;
 ```
 
 <details>
@@ -1320,7 +1324,9 @@ Payload:
 
 ```json
 {
-	"args": []
+	"args": [
+		options
+	]
 }
 ```
 
@@ -1716,7 +1722,7 @@ Payload:
 #### `provisionSmartStartNode`
 
 ```ts
-provisionSmartStartNode(entry: PlannedProvisioningEntry | string): void;
+provisionSmartStartNode(entry: PlannedProvisioningEntry | string): PlannedProvisioningEntry;
 ```
 
 <details>

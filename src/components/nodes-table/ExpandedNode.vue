@@ -165,7 +165,11 @@
 
 				<!-- TAB GROUPS -->
 				<v-tab-item key="groups" transition="slide-y-transition">
-					<association-groups :node="node" :socket="socket" />
+					<association-groups
+						:node="node"
+						v-on="$listeners"
+						:socket="socket"
+					/>
 				</v-tab-item>
 
 				<!-- TAB OTA UPDATES -->
