@@ -631,7 +631,7 @@ export default {
 											)
 											log.info(
 												'Driver function result:',
-												response.data
+												response.result
 											)
 										}
 									},
