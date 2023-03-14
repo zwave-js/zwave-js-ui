@@ -115,10 +115,10 @@ export default {
 		)
 		return response.data
 	},
-	async restoreZip(formData) {
+	async storeUpload(formData) {
 		let response = await axios({
 			method: 'post',
-			url: '/store/restore',
+			url: '/store/upload',
 			data: formData,
 			headers: { 'Content-Type': 'multipart/form-data' },
 		})

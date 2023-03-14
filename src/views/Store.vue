@@ -98,6 +98,23 @@
 								fab
 								dark
 								small
+								color="orange"
+								@click="uploadFile"
+								v-bind="attrs"
+								v-on="on"
+							>
+								<v-icon>upload</v-icon>
+							</v-btn>
+						</template>
+						<span>Upload File</span>
+					</v-tooltip>
+
+					<v-tooltip left>
+						<template v-slot:activator="{ on, attrs }">
+							<v-btn
+								fab
+								dark
+								small
 								color="purple"
 								@click="backupStore"
 								v-bind="attrs"
@@ -477,12 +494,45 @@ export default {
 			if (restore.file) {
 				try {
 					const formData = new FormData()
-					formData.append('restore', restore.file)
-					const res = await ConfigApis.restoreZip(formData)
+					formData.append('upload', restore.file)
+					formData.append('restore', 'true')
+					const res = await ConfigApis.storeUpload(formData)
 					if (!res.success)
 						throw new Error(res.message || 'Restore failed')
 					await this.refreshTree()
 					this.showSnackbar('Restore successful', 'success')
+				} catch (err) {
+					this.showSnackbar(err.message || err, 'error')
+				}
+			}
+		},
+		async uploadFile() {
+			const upload = await this.$listeners.showConfirm(
+				'Upload file',
+				'',
+				'info',
+				{
+					confirmText: 'Upload',
+					inputs: [
+						{
+							type: 'file',
+							label: 'File',
+							required: true,
+							key: 'file',
+						},
+					],
+				}
+			)
+
+			if (upload.file) {
+				try {
+					const formData = new FormData()
+					formData.append('upload', upload.file)
+					const res = await ConfigApis.storeUpload(formData)
+					if (!res.success)
+						throw new Error(res.message || 'Upload failed')
+					await this.refreshTree()
+					this.showSnackbar('Upload successful', 'success')
 				} catch (err) {
 					this.showSnackbar(err.message || err, 'error')
 				}

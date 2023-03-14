@@ -22,7 +22,7 @@ import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
-import fs, { mkdirp, readdir, rm, stat } from 'fs-extra'
+import fs, { mkdirp, move, readdir, rm, stat } from 'fs-extra'
 import { createServer as createHttpServer, Server as HttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
 import jwt from 'jsonwebtoken'
@@ -50,6 +50,7 @@ import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
+import { writeFile } from 'fs'
 
 const createCertificate = promisify(generate)
 
@@ -85,9 +86,9 @@ const Storage = diskStorage({
 	},
 })
 
-const multerRestore = multer({
+const multerUpload = multer({
 	storage: Storage,
-}).array('restore', 1) // Field name and max count
+}).array('upload', 1) // Field name and max count
 
 const FileStore = sessionStore(session)
 const app = express()
@@ -1363,14 +1364,17 @@ app.get(
 )
 
 app.post(
-	'/api/store/restore',
+	'/api/store/upload',
 	storeLimiter,
 	isAuthenticated,
 	async function (req, res) {
 		let file: any
+		let isRestore = false
 		try {
 			// read files from request
-			await multerPromise(multerRestore, req, res)
+			await multerPromise(multerUpload, req, res)
+
+			isRestore = req.body.restore === 'true'
 
 			file = req.files[0]
 
@@ -1378,14 +1382,19 @@ app.post(
 				throw Error('No file uploaded')
 			}
 
-			await extract(file.path, { dir: storeDir })
+			if (isRestore) {
+				await extract(file.path, { dir: storeDir })
+			} else {
+				await move(file.path, path.join(storeDir, file.originalname))
+			}
+
 			res.json({ success: true })
 		} catch (err) {
 			res.json({ success: false, message: err.message })
 		}
 
-		if (file) {
-			await rm(file.name)
+		if (file && isRestore) {
+			await rm(file.path)
 		}
 	}
 )
