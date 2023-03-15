@@ -7,5 +7,8 @@ spec:
     - name: http
       port: 80
       targetPort: http
+    - name: websocket
+      port: 3000
+      targetPort: websocket
   selector:
     name: zwave

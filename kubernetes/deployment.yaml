@@ -31,6 +31,9 @@ spec:
         - containerPort: 8091
           name: http
           protocol: TCP
+        - containerPort: 3000
+          name: websocket
+          protocol: TCP
         resources:
           limits:
             cpu: "1"
