@@ -386,6 +386,7 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
+import { getEnumMemberName, SecurityBootstrapFailure } from 'zwave-js/safe'
 
 let socketQueue = []
 
@@ -561,14 +562,21 @@ export default {
 			this.password = {}
 			this.dialog_password = true
 		},
-		async onNodeAdded({ node }) {
+		async onNodeAdded({ node, result }) {
 			if (!this.nodesManagerOpen) {
 				await this.confirm(
 					'Node added',
 					`<div class="d-flex flex-column align-center col">
 					<i aria-hidden="true" class="v-icon notranslate material-icons theme--light success--text" style="font-size: 60px;">check_circle</i>
 					<p class="mt-3 headline text-center">
-						Node ${node.id} added with security "${node.security || 'None'}"
+						Node ${node.id} added with security "${node.security || 'None'} ${
+						result.lowSecurityReason
+							? ` (${getEnumMemberName(
+									SecurityBootstrapFailure,
+									result.lowSecurityReason
+							  )})`
+							: ''
+					}"
 					</p>
 				</div>`,
 					'info',
