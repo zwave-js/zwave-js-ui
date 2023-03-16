@@ -185,6 +185,7 @@ export const allowedApis = validateMethods([
 	'parseQRCodeString',
 	'checkLifelineHealth',
 	'checkRouteHealth',
+	'syncNodeDateAndTime',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -1196,6 +1197,35 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode,
 				'warn',
 				`Node not found when calling 'removeAllAssociations'`
+			)
+		}
+	}
+
+	/**
+	 * Setting the date and time on a node could be hard, this helper method will set it using the date provided (default to now).
+	 *
+	 * The following CCs will be used (when supported or necessary) in this process:
+	 * -   Time Parameters CC
+	 * -   Clock CC
+	 * -   Time CC
+	 * -   Schedule Entry Lock CC (for setting the timezone)
+	 */
+	syncNodeDateAndTime(nodeId: number, date = new Date()): Promise<boolean> {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (zwaveNode) {
+			this.logNode(
+				zwaveNode,
+				'info',
+				`Syncing Node ${nodeId} date and time`
+			)
+
+			return zwaveNode.setDateAndTime(date)
+		} else {
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Node not found when calling 'syncNodeDateAndTime'`
 			)
 		}
 	}

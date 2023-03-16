@@ -441,6 +441,31 @@ export default {
 						},
 				  ]
 
+			const CCActions = []
+
+			const supportsTime = this.node.values.some((value) =>
+				[
+					138, // CommandClasses.Time,
+					139, // CommandClasses['Time Parameters'],
+					129, // CommandClasses.Clock,
+					78, // CommandClasses['Schedule Entry Lock'],
+				].includes(value.commandClass)
+			)
+
+			if (supportsTime) {
+				CCActions.push({
+					text: 'Set Date and Time',
+					options: [
+						{
+							name: 'Sync',
+							action: 'syncNodeDateAndTime',
+						},
+					],
+					icon: 'schedule',
+					desc: 'Set date and time of this node to current time',
+				})
+			}
+
 			return [
 				{
 					text: 'Export json',
@@ -497,6 +522,7 @@ export default {
 					icon: 'link_off',
 					desc: 'Clear all node associations / Remove node from all associations',
 				},
+				...CCActions,
 			]
 		},
 	},
