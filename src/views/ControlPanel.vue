@@ -292,6 +292,23 @@ export default {
 					color: 'red',
 					desc: 'Perform a firmware update OTW (Over The Wire)',
 				},
+				{
+					text: 'Shutdown Zwave API',
+					options: [
+						{
+							name: 'Shutdown',
+							action: 'shutdownZwaveAPI',
+							args: {
+								confirm:
+									'Are you sure you want to shutdown the Zwave API? You will have to unplug and replug the Zwave stick manually to restart it.',
+								confirmLevel: 'warning',
+							},
+						},
+					],
+					icon: 'power_off',
+					color: 'warning',
+					desc: 'Allows to shutdown the Zwave API to safely unplug the Zwave stick.',
+				},
 			],
 			rules: {
 				required: (value) => {
@@ -362,13 +379,13 @@ export default {
 		exportDump() {
 			this.$listeners.export(this.nodes, 'nodes_dump', 'json')
 		},
-		async sendAction(action, { nodeId, broadcast, confirm }) {
+		async sendAction(action, { nodeId, broadcast, confirm, confirmLevel }) {
 			if (action) {
 				if (confirm) {
 					const ok = await this.$listeners.showConfirm(
 						'Info',
 						confirm,
-						'info',
+						confirmLevel || 'info',
 						{
 							cancelText: 'cancel',
 							confirmText: 'ok',

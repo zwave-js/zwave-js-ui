@@ -746,6 +746,31 @@ Payload:
 
 </details>
 
+#### `shutdownZwaveAPI`
+
+```ts
+async shutdownZwaveAPI(): Promise<boolean>;
+```
+
+If supported by the controller, this instructs it to shut down the Z-Wave API, so it can safely be removed from power. If this is successful (returns `true`), the driver instance will be destroyed and can no longer be used.
+
+> [!WARNING] The controller will have to be restarted manually (e.g. by unplugging and plugging it back in) before it can be used again!.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/shutdownZwaveAPI/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
 #### `pollValue`
 
 ```ts
