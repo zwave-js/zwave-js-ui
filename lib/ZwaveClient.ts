@@ -170,6 +170,7 @@ export const allowedApis = validateMethods([
 	'driverFunction',
 	'checkForConfigUpdates',
 	'installConfigUpdate',
+	'shutdownZwaveAPI',
 	'pingNode',
 	'restart',
 	'grantSecurityClasses',
@@ -1958,6 +1959,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.sendToSocket(socketEvents.info, this.getInfo())
 			}
 			return updated
+		} else {
+			throw new DriverNotReadyError()
+		}
+	}
+
+	/**
+	 * If supported by the controller, this instructs it to shut down the Z-Wave API, so it can safely be removed from power. If this is successful (returns `true`), the driver instance will be destroyed and can no longer be used.
+	 *
+	 * > [!WARNING] The controller will have to be restarted manually (e.g. by unplugging and plugging it back in) before it can be used again!
+	 */
+	async shutdownZwaveAPI(): Promise<boolean> {
+		if (this.driverReady) {
+			logger.info('Shutting down ZwaveJS driver...')
+			const success = await this._driver.shutdown()
+			return success
 		} else {
 			throw new DriverNotReadyError()
 		}
