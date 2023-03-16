@@ -661,7 +661,11 @@ import {
 	validTopic,
 } from '../../lib/utils.js'
 import useBaseStore from '../../stores/base.js'
-import { InclusionStrategy } from 'zwave-js/safe'
+import {
+	getEnumMemberName,
+	InclusionStrategy,
+	SecurityBootstrapFailure,
+} from 'zwave-js/safe'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
@@ -1245,7 +1249,14 @@ export default {
 				const doneStep = copy(this.availableSteps.done)
 				doneStep.text = `Node ${
 					this.nodeFound.id
-				} added with security "${this.nodeFound.security || 'None'}"`
+				} added with security "${this.nodeFound.security || 'None'}${
+					result.lowSecurityReason
+						? ` (${getEnumMemberName(
+								SecurityBootstrapFailure,
+								result.lowSecurityReason
+						  )})`
+						: ''
+				}"`
 				doneStep.success = !(result && result.lowSecurity)
 				this.pushStep(doneStep)
 			}
