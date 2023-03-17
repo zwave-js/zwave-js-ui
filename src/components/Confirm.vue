@@ -265,6 +265,12 @@ export default {
 				'Not valid. Must be 52 digits long and starts with "90"'
 			)
 		},
+		async onDetect(qrString) {
+			this.dialog = false
+			await this.$nextTick()
+			this.resolve(qrString)
+			this.reset()
+		},
 		highlighter(code) {
 			return highlight(code, languages.js) // returns html
 		},
