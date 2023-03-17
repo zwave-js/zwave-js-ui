@@ -2730,6 +2730,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/offscreencanvas@npm:^2019.6.4":
+  version: 2019.7.0
+  resolution: "@types/offscreencanvas@npm:2019.7.0"
+  checksum: 018cfcd19e0c59c44d14ba61caaca7246f77fbb512839c7881654b7f2b6591dbdd5857362eccbf49f29cdc93724e71a4b37c8b6cf203388f9c04e913a53ea390
+  languageName: node
+  linkType: hard
+
 "@types/parse-json@npm:^4.0.0":
   version: 4.0.0
   resolution: "@types/parse-json@npm:4.0.0"
@@ -3451,26 +3458,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zxing/library@npm:^0.18.4":
-  version: 0.18.6
-  resolution: "@zxing/library@npm:0.18.6"
-  dependencies:
-    "@zxing/text-encoding": ~0.9.0
-    ts-custom-error: ^3.0.0
-  dependenciesMeta:
-    "@zxing/text-encoding":
-      optional: true
-  checksum: 564a25f6245b4fd81b4ce686116bf1fe577daa2aaee4263b4dea3776676482fd3e063ad43783c6378713a4a3dcefd311b6154b6cd43e7be24bb7e7c3e5fec98a
-  languageName: node
-  linkType: hard
-
-"@zxing/text-encoding@npm:~0.9.0":
-  version: 0.9.0
-  resolution: "@zxing/text-encoding@npm:0.9.0"
-  checksum: c23b12aee7639382e4949961304a1294776afaffa40f579e09ffecd0e5e68cf26ef3edd75009de46da8a536e571448755ca68b3e2ea707d53793c0edb2e2c34a
-  languageName: node
-  linkType: hard
-
 "JSONStream@npm:^1.0.4":
   version: 1.3.5
   resolution: "JSONStream@npm:1.3.5"
@@ -4156,16 +4143,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"barcode-detector@npm:^1.0.0":
-  version: 1.0.0
-  resolution: "barcode-detector@npm:1.0.0"
-  dependencies:
-    "@zxing/library": ^0.18.4
-    jsqr: ^1.3.1
-  checksum: 457f7fff01ab5bcec688cc859ab99c162099b39fc46163ba627fa0ef7b7aea96b95ee450fbf7888b7a59aae8a1e4b94ca99ae56d5d92fda1999b3b5eef4ec364
-  languageName: node
-  linkType: hard
-
 "base64-js@npm:^1.3.1":
   version: 1.5.1
   resolution: "base64-js@npm:1.5.1"
@@ -4536,13 +4513,6 @@ __metadata:
     function-bind: ^1.1.1
     get-intrinsic: ^1.0.2
   checksum: f8e31de9d19988a4b80f3e704788c4a2d6b6f3d17cfec4f57dc29ced450c53a49270dc66bf0fbd693329ee948dd33e6c90a329519aef17474a4d961e8d6426b0
-  languageName: node
-  linkType: hard
-
-"callforth@npm:^0.3.1":
-  version: 0.3.1
-  resolution: "callforth@npm:0.3.1"
-  checksum: aa50522512d43e1c8923e69b39d1d92dc5f188d858aa6b2072adfff72580866303cc108c1fd6aaa64abea14bb4260102e3a3f6f77df7fe40c81ede3c3ed1b559
   languageName: node
   linkType: hard
 
@@ -5510,7 +5480,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"core-js@npm:^3.25.1, core-js@npm:^3.6.5":
+"core-js@npm:^3.25.1":
   version: 3.26.0
   resolution: "core-js@npm:3.26.0"
   checksum: 0149eb9d3909fde9c17626af3a6e625c326e8598d0bb5e6c5b48a18e5fcd4eaf48d4964d873667d8148542ff590fb98eb3f93618da114ca54999d6bc0349734b
@@ -10078,13 +10048,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsqr@npm:^1.3.1":
-  version: 1.4.0
-  resolution: "jsqr@npm:1.4.0"
-  checksum: 7c572971f90c42772e30d152bde63b84edf1164bde80c53942e6b2068ea31caf00ad704aa46cacc9e71645f52dbeddebc6e84ba15e883c678ee93cde690de339
-  languageName: node
-  linkType: hard
-
 "just-extend@npm:^4.0.2":
   version: 4.2.1
   resolution: "just-extend@npm:4.2.1"
@@ -12832,6 +12795,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"qr-scanner@npm:^1.4.2":
+  version: 1.4.2
+  resolution: "qr-scanner@npm:1.4.2"
+  dependencies:
+    "@types/offscreencanvas": ^2019.6.4
+  checksum: 554855c1d61cc9f502162d43d76d0cd03d6df77b0ecbfcae2c0f936c31cbd1ac45e673857b91628dde1d3f5156eca6651c4973187fa061ae9ec7ec07a95f7738
+  languageName: node
+  linkType: hard
+
 "qs@npm:6.11.0":
   version: 6.11.0
   resolution: "qs@npm:6.11.0"
@@ -13437,15 +13409,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rtcpeerconnection-shim@npm:^1.2.15":
-  version: 1.2.15
-  resolution: "rtcpeerconnection-shim@npm:1.2.15"
-  dependencies:
-    sdp: ^2.6.0
-  checksum: 42a733d8e3846b7e7e3c33b6d5cddec95659ceb39d3f990f0a4437e6d719ed717237fea02352d4a18d86c825a1493eaeb481cc835267d2288b0ce43582b97f46
-  languageName: node
-  linkType: hard
-
 "run-async@npm:^2.4.0":
   version: 2.4.1
   resolution: "run-async@npm:2.4.1"
@@ -13607,13 +13570,6 @@ __metadata:
     ajv-formats: ^2.1.1
     ajv-keywords: ^5.0.0
   checksum: c843e92fdd1a5c145dbb6ffdae33e501867f9703afac67bdf35a685e49f85b1dcc10ea250033175a64bd9d31f0555bc6785b8359da0c90bcea30cf6dfbb55a8f
-  languageName: node
-  linkType: hard
-
-"sdp@npm:^2.12.0, sdp@npm:^2.6.0":
-  version: 2.12.0
-  resolution: "sdp@npm:2.12.0"
-  checksum: 5deb20ac50a1aeb4dd5ff2e506c22d1674222c21f08ae97105c9552ae979e90ddc42b8526f2c3dcacfeebc45c7b2e6b6b4254ae2cf335263bf3ddf2ad9b8ec76
   languageName: node
   linkType: hard
 
@@ -14748,13 +14704,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ts-custom-error@npm:^3.0.0":
-  version: 3.2.2
-  resolution: "ts-custom-error@npm:3.2.2"
-  checksum: e0d8ab82c631ae16111eb9d55941151c060290b245203f425df2878c2dc0cd4ba9deea4fbb7a3b5e527dc03d434c4a34ca1c96ac122e3edb08d5cbdd6f544802
-  languageName: node
-  linkType: hard
-
 "ts-morph@npm:^17.0.1":
   version: 17.0.1
   resolution: "ts-morph@npm:17.0.1"
@@ -15401,19 +15350,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue-qrcode-reader@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "vue-qrcode-reader@npm:3.1.0"
-  dependencies:
-    barcode-detector: ^1.0.0
-    callforth: ^0.3.1
-    core-js: ^3.6.5
-    vue: ^2.6.11
-    webrtc-adapter: 7.7.0
-  checksum: 7efb577b81d0aa455679d9a1b0c500f1de4d4e2295eb820487b70702a935467c632d3e575581f1b22a658e073e4e9499aa3b7934f9b07e02d13e47f2aea24004
-  languageName: node
-  linkType: hard
-
 "vue-router@npm:^3.5.4":
   version: 3.6.5
   resolution: "vue-router@npm:3.6.5"
@@ -15448,7 +15384,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vue@npm:^2.6.11, vue@npm:^2.7.8":
+"vue@npm:^2.7.8":
   version: 2.7.13
   resolution: "vue@npm:2.7.13"
   dependencies:
@@ -15680,16 +15616,6 @@ __metadata:
   bin:
     webpack: bin/webpack.js
   checksum: 320c41369a75051b19e18c63f408b3dcc481852e992f83d311771c5ec0f05f2946385e8ebef62030cf3587f0a3d2f12779ffdb191569a966847289ba7313f946
-  languageName: node
-  linkType: hard
-
-"webrtc-adapter@npm:7.7.0":
-  version: 7.7.0
-  resolution: "webrtc-adapter@npm:7.7.0"
-  dependencies:
-    rtcpeerconnection-shim: ^1.2.15
-    sdp: ^2.12.0
-  checksum: 83dd0a474714fa8d0ebb0fa4b1d754768c1d865f71af0e0b3b88a4f097b355d5b1c13e70b09eb80b644ff60701c3939fac292f007570b796d3e02db1d614c10c
   languageName: node
   linkType: hard
 
@@ -16337,6 +16263,7 @@ __metadata:
     prettier: ^2.7.1
     prismjs: ^1.28.0
     proxyquire: ^2.1.3
+    qr-scanner: ^1.4.2
     release-it: ^15.2.0
     rimraf: ^3.0.2
     sass: ^1.54.0
@@ -16360,7 +16287,6 @@ __metadata:
     vue: ^2.7.8
     vue-loader: 15.10.0
     vue-prism-editor: ^1.3.0
-    vue-qrcode-reader: ^3.1.0
     vue-router: ^3.5.4
     vue-style-loader: ^4.1.3
     vue-template-compiler: ^2.7.8
