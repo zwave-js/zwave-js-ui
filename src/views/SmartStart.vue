@@ -268,6 +268,8 @@ export default {
 					}`,
 					'success'
 				)
+
+				this.refreshItems()
 			}
 		},
 		async scanItem() {
