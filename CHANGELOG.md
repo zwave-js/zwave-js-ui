@@ -1,5 +1,23 @@
 
 
+# [8.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.10.1...v8.11.0) (2023-03-17)
+
+
+### Bug Fixes
+
+* **ui:** correctly print driver function result ([d6f42d7](https://github.com/zwave-js/zwave-js-ui/commit/d6f42d75aaf1d377fe52e13d9ec8c0f9b7b5ea93))
+
+
+### Features
+
+* ability to force query associations ([5154a02](https://github.com/zwave-js/zwave-js-ui/commit/5154a0276e41ae7b134a5a0db0b84df93327a00b)), closes [#2752](https://github.com/zwave-js/zwave-js-ui/issues/2752)
+* add `shutdownZwaveAPI` command ([6755044](https://github.com/zwave-js/zwave-js-ui/commit/67550449c30190f698c433172e9ba23b923aadcd))
+* add access-store-dir snippet ([83607e0](https://github.com/zwave-js/zwave-js-ui/commit/83607e0c6fc35af5248f4076ef3ab4bebc372da0))
+* allow to upload a file in store ([c00dfcc](https://github.com/zwave-js/zwave-js-ui/commit/c00dfccbf76253d51fd29db9ad93a47944b7d48f))
+* bump zwave-js@10.12.0 ([adc9dcc](https://github.com/zwave-js/zwave-js-ui/commit/adc9dcc8999a79b20ab12216d41ed53b800f53ad))
+* **ui:** better scan of small qr codes ([#3007](https://github.com/zwave-js/zwave-js-ui/issues/3007) ([295bec0](https://github.com/zwave-js/zwave-js-ui/commit/295bec0c50d20697812036e40e662b281ec27f68)), closes [#2767](https://github.com/zwave-js/zwave-js-ui/issues/2767)
+* **ui:** show low level security reason when node added with low security ([245f596](https://github.com/zwave-js/zwave-js-ui/commit/245f5963e27960584ec7c62c9ea1bfc918309ed0))
+
 ## [8.10.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.10.0...v8.10.1) (2023-03-09)
 
 
