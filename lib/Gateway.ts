@@ -904,8 +904,8 @@ export default class Gateway {
 						if (key.indexOf('topic') >= 0 && topics[payload[key]]) {
 							payload[key] =
 								topics[payload[key]] +
-								((key.indexOf('command') >= 0 ||
-									key.indexOf('set_')) >= 0
+								(key.indexOf('command') >= 0 ||
+								key.indexOf('set_') >= 0
 									? '/set'
 									: '')
 						}
