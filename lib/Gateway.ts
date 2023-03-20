@@ -320,11 +320,11 @@ export default class Gateway {
 						this.runJob.bind(this, jobConfig)
 					)
 
-					if (job?.next()) {
+					if (job?.nextRun()) {
 						this.jobs.set(jobConfig.name, job)
 						logger.info(
 							`Scheduled job "${jobConfig.name}" will run at ${job
-								.next()
+								.nextRun()
 								.toISOString()}`
 						)
 					}
@@ -352,10 +352,10 @@ export default class Gateway {
 
 		const job = this.jobs.get(jobConfig.name)
 
-		if (job?.next()) {
+		if (job?.nextRun()) {
 			logger.info(
 				`Next scheduled job "${jobConfig.name}" will run at ${job
-					.next()
+					.nextRun()
 					.toISOString()}`
 			)
 		}

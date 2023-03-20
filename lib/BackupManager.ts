@@ -44,8 +44,8 @@ class BackupManager {
 	}
 
 	nextRun(job: Cron) {
-		if (job?.next()) {
-			return job.next().toLocaleString()
+		if (job?.nextRun()) {
+			return job.nextRun().toLocaleString()
 		}
 
 		return 'UNKNOWN'
