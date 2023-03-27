@@ -1,6 +1,7 @@
 <template>
 	<v-data-table
 		v-if="managedNodes"
+		v-model="managedNodes.selected"
 		:headers="managedNodes.tableHeaders"
 		:items="managedNodes.filteredItems"
 		:footer-props="{

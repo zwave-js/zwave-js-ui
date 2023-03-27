@@ -15,6 +15,7 @@
 			:loading="loading"
 			:items="nodes"
 			:search="search"
+			v-model="selected"
 			item-key="id"
 			hide-default-footer
 			:itemsPerPage="-1"
@@ -54,7 +55,7 @@
 				</v-container>
 			</template>
 
-			<template v-slot:default="{ items }">
+			<template v-slot:default="{ items, isSelected, select }">
 				<v-container style="min-height: 600px">
 					<v-row justify="center" class="pa-0">
 						<v-col
@@ -69,6 +70,8 @@
 								outlined
 								height="150"
 								width="150"
+								class="lighten-2"
+								:color="isSelected(item) ? 'blue' : ''"
 							>
 								<v-card-text
 									class="text-center pa-1 d-flex flex-column"
@@ -78,6 +81,10 @@
 										justify="space-between"
 									>
 										<strong
+											@click.stop="
+												select(item, !isSelected(item))
+											"
+											title="Click to select"
 											style="
 												font-size: 14px;
 												line-height: 1.3;
@@ -304,13 +311,18 @@ export default {
 		RichValue,
 		StatisticsArrows,
 	},
-	watch: {},
+	watch: {
+		selected() {
+			this.$emit('selected', this.selected)
+		},
+	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
 	},
 	data() {
 		return {
 			search: '',
+			selected: [],
 			loading: false,
 			expandedNode: null,
 			expandedNodeDialog: false,

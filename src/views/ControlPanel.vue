@@ -46,10 +46,12 @@
 				:socket="socket"
 				v-on="$listeners"
 				@action="sendAction"
+				@selected="selected = $event"
 			/>
 			<smart-view
 				:socket="socket"
 				v-on="$listeners"
+				@selected="selected = $event"
 				@action="sendAction"
 				v-else
 			>
@@ -68,6 +70,7 @@
 			@close="advancedShowDialog = false"
 			:actions="actions"
 			@action="onAction"
+			:title="advancedDialogTitle"
 		/>
 
 		<v-speed-dial bottom fab right fixed class="pb-6" v-model="fab">
@@ -165,15 +168,28 @@ export default {
 				useBaseStore().setCompactMode(value)
 			},
 		},
+		actions() {
+			if (this.selected.length === 0) return this.generalActions
+
+			return this.selectedActions
+		},
+		advancedDialogTitle() {
+			if (this.selected.length === 0) return 'General actions'
+
+			return `Actions for ${this.selected.length} selected node${
+				this.selected.length > 1 ? 's' : ''
+			}`
+		},
 	},
 	watch: {},
 	data() {
 		return {
 			fab: false,
+			selected: [],
 			settings: new Settings(localStorage),
 			addRemoveShowDialog: false,
 			advancedShowDialog: false,
-			actions: [
+			generalActions: [
 				{
 					text: 'Backup',
 					options: [
@@ -320,6 +336,60 @@ export default {
 					return valid || 'This field is required.'
 				},
 			},
+			selectedActions: [
+				{
+					text: 'Re-interview Node',
+					options: [
+						{
+							name: 'Interview',
+							action: 'refreshInfo',
+						},
+					],
+					icon: 'history',
+					desc: 'Clear all info about this node and make a new full interview. Use when the node has wrong or missing capabilities',
+				},
+				{
+					text: 'Refresh Values',
+					options: [
+						{
+							name: 'Refresh',
+							action: 'refreshValues',
+							args: {
+								confirm:
+									'Are you sure you want to refresh values of this node? This action increases network traffic',
+							},
+						},
+					],
+					icon: 'cached',
+					desc: 'Update all CC values and metadata. Use only when many values seems stale',
+				},
+				{
+					text: 'Heal Node',
+					options: [
+						{
+							name: 'Heal',
+							action: 'healNode',
+							args: {
+								confirm:
+									'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+							},
+						},
+					],
+					icon: 'healing',
+					desc: 'Force nodes to establish better connections to the controller',
+				},
+				{
+					text: 'Ping',
+					options: [
+						{
+							name: 'Ping',
+							action: 'pingNode',
+						},
+					],
+					icon: 'swap_horiz',
+					desc: 'Ping node to check if it is alive',
+				},
+			],
 			showControllerStatistics: false,
 		}
 	},
@@ -337,7 +407,7 @@ export default {
 			} else if (action === 'exportDump') {
 				this.exportDump()
 			} else {
-				this.sendAction(action, args)
+				this.sendAction(action, { ...args, nodes: this.selected })
 			}
 		},
 		async importConfiguration() {
@@ -379,7 +449,10 @@ export default {
 		exportDump() {
 			this.$listeners.export(this.nodes, 'nodes_dump', 'json')
 		},
-		async sendAction(action, { nodeId, broadcast, confirm, confirmLevel }) {
+		async sendAction(
+			action,
+			{ nodeId, broadcast, confirm, confirmLevel, nodes }
+		) {
 			if (action) {
 				if (confirm) {
 					const ok = await this.$listeners.showConfirm(
@@ -397,6 +470,20 @@ export default {
 						return
 					}
 				}
+
+				if (nodes?.length > 0) {
+					const requests = nodes.map((node) =>
+						this.app.apiRequest(action, [node.id])
+					)
+
+					await Promise.allSettled(requests)
+					this.showSnackbar(
+						`Action ${action} sent to all nodes`,
+						'success'
+					)
+					return
+				}
+
 				let args = []
 				if (nodeId !== undefined) {
 					if (!broadcast) {

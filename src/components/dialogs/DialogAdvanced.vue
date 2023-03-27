@@ -2,7 +2,7 @@
 	<v-dialog v-model="value" persistent max-width="800">
 		<v-card>
 			<v-card-title>
-				<span class="headline">Advanced</span>
+				<span class="headline">{{ title }}</span>
 				<v-spacer></v-spacer>
 				<v-btn icon @click="$emit('close')"
 					><v-icon>close</v-icon></v-btn
@@ -37,6 +37,10 @@ export default {
 	props: {
 		value: Boolean, // show or hide
 		actions: Array,
+		title: {
+			type: String,
+			default: 'Advanced',
+		},
 	},
 	data() {
 		return {}
