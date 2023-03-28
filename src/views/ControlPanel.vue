@@ -33,7 +33,7 @@
 					<v-col class="mb-8">
 						<v-sheet outlined rounded>
 							<StatisticsCard
-								v-if="true || controllerNode"
+								v-if="!!controllerNode"
 								title="Controller Statistics"
 								:node="this.controllerNode"
 							/>
@@ -589,10 +589,25 @@ export default {
 						]
 						const store = useBaseStore()
 
+						const controllerNode = this.controllerNode || {
+							id: 1,
+							name: 'Controller',
+							_name: 'Controller',
+							isControllerNode: true,
+							loc: '',
+							ready: true,
+							values: [],
+						}
+
+						if (!this.controllerNode) {
+							// bootloader only mode, add a fake node to the store
+							store.updateNode(controllerNode)
+						}
+
 						// start the progress bar
 						store.updateNode(
 							{
-								id: this.controllerNode.id,
+								id: controllerNode.id,
 								firmwareUpdate: {
 									progress: 0,
 								},
@@ -600,7 +615,10 @@ export default {
 							true
 						)
 					} catch (error) {
-						this.showSnackbar('Error reading file', 'error')
+						this.showSnackbar(
+							'Error reading file: ' + error.message,
+							'error'
+						)
 						return
 					}
 				} else if (action === 'updateFirmware') {
@@ -895,7 +913,7 @@ export default {
 						if (response.api === 'firmwareUpdateOTW') {
 							// this could happen when the update fails before start
 							// used to close the firmware update dialog
-							if (this.controllerNode.firmwareUpdate) {
+							if (this.controllerNode?.firmwareUpdate) {
 								useBaseStore().updateNode(
 									{
 										id: this.controllerNode.id,
