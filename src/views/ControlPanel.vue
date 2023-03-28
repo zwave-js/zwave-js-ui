@@ -75,7 +75,13 @@
 
 		<v-speed-dial bottom fab right fixed class="pb-6" v-model="fab">
 			<template v-slot:activator>
-				<v-btn color="blue darken-2" dark fab hover v-model="fab">
+				<v-btn
+					:color="selected.length === 0 ? 'blue darken-2' : 'success'"
+					dark
+					fab
+					hover
+					v-model="fab"
+				>
 					<v-icon v-if="fab">close</v-icon>
 					<v-icon v-else>add</v-icon>
 				</v-btn>
@@ -84,6 +90,7 @@
 				<template v-slot:activator="{ on, attrs }">
 					<v-btn
 						fab
+						v-if="selected.length === 0"
 						dark
 						small
 						color="green"
