@@ -2482,33 +2482,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Used to trigger an update of controller FW
 	 */
 	async firmwareUpdateOTW(file: FwFile): Promise<boolean> {
-		if (this.driverReady) {
-			if (this._lockOTWUpdates) {
-				throw Error('Firmware update already in progress')
-			}
-
-			this._lockOTWUpdates = true
-			try {
-				if (backupManager.backupOnEvent) {
-					this.nvmEvent = 'before_controller_fw_update_otw'
-					await backupManager.backupNvm()
-				}
-				const format = guessFirmwareFileFormat(file.name, file.data)
-				const firmware = extractFirmware(file.data, format)
-				const result = await this.driver.controller.firmwareUpdateOTW(
-					firmware.data
-				)
-				this._lockOTWUpdates = false
-				return result
-			} catch (e) {
-				this._lockOTWUpdates = false
-				throw Error(
-					`Unable to extract firmware from file '${file.name}': ${e.message}`
-				)
-			}
+		if (this._lockOTWUpdates) {
+			throw Error('Firmware update already in progress')
 		}
 
-		throw new DriverNotReadyError()
+		this._lockOTWUpdates = true
+		try {
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_controller_fw_update_otw'
+				await backupManager.backupNvm()
+			}
+			const format = guessFirmwareFileFormat(file.name, file.data)
+			const firmware = extractFirmware(file.data, format)
+			const result = await this.driver.controller.firmwareUpdateOTW(
+				firmware.data
+			)
+			this._lockOTWUpdates = false
+			return result
+		} catch (e) {
+			this._lockOTWUpdates = false
+			throw Error(
+				`Unable to extract firmware from file '${file.name}': ${e.message}`
+			)
+		}
 	}
 
 	updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean> {
