@@ -115,7 +115,7 @@
 
 									<span
 										class="caption pb-0 font-weight-bold primary--text text-truncate text-capitalize"
-										>{{ item.name || '---' }}
+										>{{ item._name || '---' }}
 									</span>
 									<span
 										class="caption pb-0 font-weight-bold text-truncate text-capitalize"
