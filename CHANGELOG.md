@@ -1,5 +1,23 @@
 
 
+# [8.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.11.1...v8.12.0) (2023-04-03)
+
+
+### Bug Fixes
+
+* allow to call zwave apis in boot loader mode ([a286a8f](https://github.com/zwave-js/zwave-js-ui/commit/a286a8f399e3cc52948f0afa31f7a976f6fdf12f)), closes [#3023](https://github.com/zwave-js/zwave-js-ui/issues/3023)
+* remove driver ready check from `firmwareUpdateOTW` ([a793dd0](https://github.com/zwave-js/zwave-js-ui/commit/a793dd02a051459b99a186173e1dc07aa66e2b73))
+* **ui:** better default node name in compact view ([71a9884](https://github.com/zwave-js/zwave-js-ui/commit/71a988421679dc7e61ca5959f5a661b6f6c48c53))
+* **ui:** catch value write errors ([5195433](https://github.com/zwave-js/zwave-js-ui/commit/5195433469022574c810a33e907aa7978f6bf055)), closes [#3025](https://github.com/zwave-js/zwave-js-ui/issues/3025)
+* **ui:** hide manage nodes when there are selected ones ([be89889](https://github.com/zwave-js/zwave-js-ui/commit/be89889b7ef49e310aa2ff4dd03b145e3ef0d030))
+* **ui:** otw update not working in bootloader only mode ([89bb3e2](https://github.com/zwave-js/zwave-js-ui/commit/89bb3e2d3859d383f656a35eef490b81693e91ba)), closes [#3023](https://github.com/zwave-js/zwave-js-ui/issues/3023)
+
+
+### Features
+
+* **ui:** allow to send actions to selected nodes in table ([9806539](https://github.com/zwave-js/zwave-js-ui/commit/980653973e29e40f17f5b248da60693bb37e234a))
+* use valueId stored timestamp in MQTT JSON payload ([7b373c3](https://github.com/zwave-js/zwave-js-ui/commit/7b373c3d5956e4b46e1ffa762566fe04546e7a47)), closes [#3029](https://github.com/zwave-js/zwave-js-ui/issues/3029)
+
 ## [8.11.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.11.0...v8.11.1) (2023-03-24)
 
 
