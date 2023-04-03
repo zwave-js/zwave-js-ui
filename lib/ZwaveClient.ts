@@ -1557,7 +1557,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node: ZUINode,
 		changed: boolean
 	) {
-		valueId.lastUpdate = Date.now()
+		valueId.lastUpdate =
+			this.getNode(valueId.nodeId)?.getValueTimestamp(valueId) ??
+			Date.now()
 
 		this.sendToSocket(socketEvents.valueUpdated, valueId)
 

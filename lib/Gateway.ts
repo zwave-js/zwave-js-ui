@@ -1906,7 +1906,7 @@ export default class Gateway {
 				data = tmpVal
 				break
 			default:
-				data = { time: Date.now(), value: tmpVal }
+				data = { time: valueId.lastUpdate, value: tmpVal }
 		}
 
 		if (this.config.includeNodeInfo && typeof data === 'object') {
