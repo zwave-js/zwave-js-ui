@@ -340,6 +340,7 @@ const useBaseStore = defineStore('base', {
 					lastTransmit,
 					errorReceive,
 					errorTransmit,
+					bgRSSIPoints: data.bgRSSIPoints,
 				})
 			}
 		},

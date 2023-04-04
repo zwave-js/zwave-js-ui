@@ -12,10 +12,20 @@ export default {
 			type: Object,
 			required: true,
 		},
+		fillSize: {
+			type: Boolean,
+			default: false,
+		},
+		container: {
+			type: Element,
+			default: null,
+		},
 	},
 	data() {
 		return {
 			chart: null,
+			ro: null,
+			resizeTimeout: null,
 		}
 	},
 	computed: {
@@ -45,8 +55,8 @@ export default {
 			if (!this.chart) {
 				this.create()
 			} else if (this.isChanged(data, prevData)) {
-				this._chart.setData(data, false)
-				// this._chart.redraw();
+				this.chart.setData(data)
+				// this.chart.redraw();
 			}
 		},
 	},
@@ -72,6 +82,16 @@ export default {
 				this.chart.destroy()
 				this.chart = null
 			}
+
+			if (this.ro) {
+				this.ro.disconnect()
+				this.ro = null
+			}
+
+			if (this.resizeTimeout) {
+				clearTimeout(this.resizeTimeout)
+				this.resizeTimeout = null
+			}
 		},
 		createSerie(s) {
 			const current = {
@@ -81,7 +101,7 @@ export default {
 				// in-legend display
 				label: '',
 				value: (self, rawValue) =>
-					rawValue ? rawValue.toFixed(2) + ' dBm' : null,
+					rawValue ? rawValue.toFixed(2) + ' dBm' : '----- dBm',
 				// series style
 				stroke: 'red',
 				width: 1,
@@ -100,10 +120,38 @@ export default {
 
 			return [current, average]
 		},
+		setSize() {
+			if (this.resizeTimeout) {
+				clearTimeout(this.resizeTimeout)
+				this.resizeTimeout = null
+			}
+
+			this.resizeTimeout = setTimeout(() => {
+				const container = this.container || this.$parent.$el
+				const maxHeight = window.innerHeight - 200
+				const width = container.offsetWidth - 100
+				let height = container.offsetHeight - 100
+				if (height > maxHeight) {
+					height = maxHeight
+				}
+
+				this.chart.setSize({
+					width,
+					height,
+				})
+			}, 500)
+		},
 		create() {
+			this.destroy()
+
+			if (this.fillSize) {
+				const container = this.container || this.$parent.$el
+				this.ro = new ResizeObserver(this.setSize.bind(this))
+				this.ro.observe(container)
+			}
+
 			const opts = {
 				title: 'Background RSSI',
-				id: 'rssi-chart',
 				// class: "my-chart",
 				width: 400,
 				height: 400,

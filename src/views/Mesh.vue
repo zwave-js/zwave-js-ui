@@ -120,6 +120,13 @@
 					>
 				</v-row>
 				<v-row v-else class="mt-1" justify="center">
+					<!-- Full screen button -->
+					<v-btn
+						color="primary"
+						rounded
+						@click="showFullscreen = true"
+						>Full Screen</v-btn
+					>
 					<bg-rssi-chart :node="selectedNode" />
 				</v-row>
 			</v-col>
@@ -143,6 +150,48 @@
 			:nodes="nodes"
 			v-on="$listeners"
 		/>
+
+		<!-- <v-overlay
+			:style="{
+				color: $vuetify.theme.dark ? 'white' : 'black',
+				backgroundColor: $vuetify.theme.dark ? 'black' : 'white',
+			}"
+			opacity="0"
+			z-index="9999"
+			v-if="showFullscreen"
+		>
+			<v-btn
+				style="position: absolute; top: 10px; right: 10px"
+				icon
+				large
+				:color="$vuetify.theme.dark ? 'white' : 'black'"
+				@click="showFullscreen = false"
+			>
+				<v-icon>close</v-icon>
+			</v-btn>
+			<bg-rssi-chart :node="selectedNode" fill-size />
+		</v-overlay> -->
+
+		<v-dialog
+			fullscreen
+			persistent
+			@keydown.esc="showFullscreen = false"
+			z-index="9999"
+			v-model="showFullscreen"
+		>
+			<v-card>
+				<v-card-text class="pt-4">
+					<v-btn
+						style="position: absolute; top: 10px; right: 10px"
+						icon
+						@click="showFullscreen = false"
+					>
+						<v-icon>close</v-icon>
+					</v-btn>
+					<bg-rssi-chart :node="selectedNode" fill-size />
+				</v-card-text>
+			</v-card>
+		</v-dialog>
 	</v-container>
 </template>
 
@@ -219,6 +268,7 @@ export default {
 			showProperties: false,
 			showLocation: false,
 			refreshTimeout: null,
+			showFullscreen: false,
 		}
 	},
 	methods: {
