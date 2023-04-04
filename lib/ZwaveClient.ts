@@ -349,6 +349,18 @@ export class DriverNotReadyError extends Error {
 	}
 }
 
+export interface BackgroundRSSIValue {
+	current: number
+	average: number
+}
+
+export interface BackgroundRSSIPoint {
+	channel0: BackgroundRSSIValue
+	channel1: BackgroundRSSIValue
+	channel2?: BackgroundRSSIValue
+	timestamp: number
+}
+
 export interface FwFile {
 	name: string
 	data: Buffer
@@ -415,6 +427,7 @@ export type ZUINode = {
 	firmwareUpdate?: FirmwareUpdateProgress
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
+	bgRSSIPoints?: BackgroundRSSIPoint[]
 }
 
 export type NodeEvent = {
@@ -3141,10 +3154,43 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				controllerNode.lastActive = Date.now()
 			}
 
+			const bgRssi = stats.backgroundRSSI
+
+			if (bgRssi) {
+				if (!controllerNode.bgRSSIPoints) {
+					controllerNode.bgRSSIPoints = []
+				}
+
+				controllerNode.bgRSSIPoints.push({
+					timestamp: stats.backgroundRSSI.timestamp,
+					channel0: bgRssi.channel0,
+					channel1: bgRssi.channel1,
+					channel2: bgRssi.channel2,
+				})
+
+				if (controllerNode.bgRSSIPoints.length > 360) {
+					const firstPoint = controllerNode.bgRSSIPoints[0]
+					const lastPoint =
+						controllerNode.bgRSSIPoints[
+							controllerNode.bgRSSIPoints.length - 1
+						]
+
+					const maxTimeSpan = 3 * 60 * 60 * 1000 // 3 hours
+
+					if (
+						lastPoint.timestamp - firstPoint.timestamp >
+						maxTimeSpan
+					) {
+						controllerNode.bgRSSIPoints.shift()
+					}
+				}
+			}
+
 			this.sendToSocket(socketEvents.statistics, {
 				nodeId: controllerNode.id,
 				statistics: stats,
 				lastActive: controllerNode.lastActive,
+				bgRSSIPoints: controllerNode.bgRSSIPoints,
 			})
 		}
 

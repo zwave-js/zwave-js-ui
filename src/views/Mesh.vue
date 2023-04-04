@@ -119,6 +119,9 @@
 						>Check Health</v-btn
 					>
 				</v-row>
+				<v-row v-else class="mt-1" justify="center">
+					<bg-rssi-chart :node="selectedNode" />
+				</v-row>
 			</v-col>
 		</v-container>
 		<v-speed-dial style="left: 100px" bottom fab left fixed v-model="fab">
@@ -166,6 +169,7 @@ import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import BgRssiChart from '../components/custom/BgRssiChart.vue'
 
 export default {
 	name: 'Mesh',
@@ -177,6 +181,7 @@ export default {
 		ZwaveGraph,
 		StatisticsArrows,
 		DialogHealthCheck,
+		BgRssiChart,
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
