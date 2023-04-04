@@ -127,7 +127,7 @@
 						@click="showFullscreen = true"
 						>Full Screen</v-btn
 					>
-					<bg-rssi-chart :zoom="false" :node="selectedNode" />
+					<bg-rssi-chart :node="selectedNode" />
 				</v-row>
 			</v-col>
 		</v-container>
@@ -353,6 +353,9 @@ export default {
 		propertiesDiv.addEventListener(
 			'mousedown',
 			function (e) {
+				// disable dragging if user clicks on graph
+				if (e.target.classList.contains('u-over')) return
+
 				isDown = true
 				offset = [
 					propertiesDiv.offsetLeft - e.clientX,
