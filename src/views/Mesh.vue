@@ -138,7 +138,7 @@
 						<v-icon>open_in_new</v-icon>
 					</v-btn>
 
-					<bg-rssi-chart :node="selectedNode" />
+					<bg-rssi-chart class="mt-2" :node="selectedNode" />
 				</v-row>
 			</v-col>
 		</v-container>
