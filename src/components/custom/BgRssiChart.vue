@@ -226,7 +226,7 @@ export default {
 			}
 		},
 		createSerie(s, i = 1) {
-			const dash = [2, 3, 5, 7]
+			const dash = [3, 5, 7]
 			const current = {
 				// initial toggled state (optional)
 				show: true,
@@ -239,7 +239,7 @@ export default {
 				stroke: 'red',
 				width: 1,
 				fill: 'rgba(255, 0, 0, 0.3)',
-				dash: [dash[i], dash[i - 1]],
+				dash: [dash[i - 1], dash[i - 1]],
 				...s,
 			}
 
@@ -305,24 +305,24 @@ export default {
 					...this.createSerie(
 						{
 							label: 'Channel 0',
-							stroke: 'red',
-							fill: 'rgba(255, 0, 0, 0.3)',
+							stroke: '#7a5195',
+							fill: 'rgba(122, 81, 149, 0.35)',
 						},
 						3
 					),
 					...this.createSerie(
 						{
 							label: 'Channel 1',
-							stroke: 'green',
-							fill: 'rgba(0, 255, 0, 0.3)',
+							stroke: '#bc5090',
+							fill: 'rgba(188, 80, 144, 0.35)',
 						},
 						2
 					),
 					...this.createSerie(
 						{
 							label: 'Channel 2',
-							stroke: 'blue',
-							fill: 'rgba(0, 0, 255, 0.3)',
+							stroke: '#ffa600',
+							fill: 'rgba(255, 166, 0, 0.35)',
 						},
 						1
 					),
