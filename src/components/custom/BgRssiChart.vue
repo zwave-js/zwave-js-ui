@@ -282,6 +282,14 @@ export default {
 				width: 400,
 				height: 400,
 				plugins: [touchZoomPlugin()],
+				axes: [
+					{
+						stroke: this.$vuetify.theme.dark ? '#fff' : '#000',
+					},
+					{
+						stroke: this.$vuetify.theme.dark ? '#fff' : '#000',
+					},
+				],
 				series: [
 					{}, // timestamp
 					...this.createSerie(
