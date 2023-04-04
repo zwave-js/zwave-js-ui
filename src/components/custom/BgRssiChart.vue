@@ -232,14 +232,14 @@ export default {
 				stroke: 'red',
 				width: 1,
 				fill: 'rgba(255, 0, 0, 0.3)',
-				dash: [10, 5],
+				dash: [2 * i + 1, 5],
 				...s,
 			}
 
 			const average = {
 				...current,
 				label: current.label + ' (avg)',
-				dash: [5 * i, 5],
+				dash: [2 * i + 1, 5],
 				width: 4,
 				fill: undefined,
 			}
