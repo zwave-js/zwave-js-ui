@@ -220,6 +220,7 @@ export default {
 			}
 		},
 		createSerie(s, i = 1) {
+			const dash = [5, 9, 11]
 			const current = {
 				// initial toggled state (optional)
 				show: true,
@@ -232,14 +233,13 @@ export default {
 				stroke: 'red',
 				width: 1,
 				fill: 'rgba(255, 0, 0, 0.3)',
-				dash: [2 * i + 1, 5],
+				dash: [dash[i - 1], dash[i - 1]],
 				...s,
 			}
 
 			const average = {
 				...current,
 				label: current.label + ' (avg)',
-				dash: [2 * i + 1, 5],
 				width: 4,
 				fill: undefined,
 			}
