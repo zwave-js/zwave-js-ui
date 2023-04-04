@@ -127,7 +127,7 @@
 						@click="showFullscreen = true"
 						>Full Screen</v-btn
 					>
-					<bg-rssi-chart :node="selectedNode" />
+					<bg-rssi-chart :zoom="false" :node="selectedNode" />
 				</v-row>
 			</v-col>
 		</v-container>
@@ -179,7 +179,7 @@
 			z-index="9999"
 			v-model="showFullscreen"
 		>
-			<v-card>
+			<v-card v-if="selectedNode && selectedNode.isControllerNode">
 				<v-card-text class="pt-4">
 					<v-btn
 						style="position: absolute; top: 10px; right: 10px"

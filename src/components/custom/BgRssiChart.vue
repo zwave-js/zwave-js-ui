@@ -20,6 +20,10 @@ export default {
 			type: Element,
 			default: null,
 		},
+		zoom: {
+			type: Boolean,
+			default: true,
+		},
 	},
 	data() {
 		return {
@@ -173,6 +177,17 @@ export default {
 						fill: 'rgba(0, 0, 255, 0.3)',
 					}),
 				],
+			}
+
+			if (!this.zoom) {
+				opts.cursor = {
+					drag: {
+						setScale: false,
+					},
+				}
+				opts.select = {
+					show: false,
+				}
 			}
 
 			this.chart = new uPlot(opts, this.data, this.$refs.chart)
