@@ -1,5 +1,10 @@
 <template>
-	<div ref="chart"></div>
+	<div
+		:style="{
+			visibility: !isLoading ? 'visible' : 'hidden',
+		}"
+		ref="chart"
+	></div>
 </template>
 
 <script>
@@ -152,6 +157,7 @@ export default {
 			chart: null,
 			ro: null,
 			resizeTimeout: null,
+			isLoading: false,
 		}
 	},
 	computed: {
@@ -220,7 +226,7 @@ export default {
 			}
 		},
 		createSerie(s, i = 1) {
-			const dash = [5, 9, 11]
+			const dash = [2, 3, 5, 7]
 			const current = {
 				// initial toggled state (optional)
 				show: true,
@@ -233,7 +239,7 @@ export default {
 				stroke: 'red',
 				width: 1,
 				fill: 'rgba(255, 0, 0, 0.3)',
-				dash: [dash[i - 1], dash[i - 1]],
+				dash: [dash[i], dash[i - 1]],
 				...s,
 			}
 
@@ -252,6 +258,8 @@ export default {
 				this.resizeTimeout = null
 			}
 
+			this.isLoading = true
+
 			this.resizeTimeout = setTimeout(() => {
 				const container = this.container || this.$parent.$el
 				const maxHeight = window.innerHeight - 200
@@ -265,7 +273,9 @@ export default {
 					width,
 					height,
 				})
-			}, 500)
+
+				this.isLoading = false
+			}, 150)
 		},
 		create() {
 			this.destroy()

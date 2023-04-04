@@ -125,8 +125,19 @@
 						color="primary"
 						rounded
 						@click="showFullscreen = true"
-						>Full Screen</v-btn
-					>
+						>Full Screen
+						<v-icon>fullscreen</v-icon>
+					</v-btn>
+
+					<v-btn
+						class="ml-2"
+						color="warning"
+						rounded
+						@click="newWindow()"
+						>Open
+						<v-icon>open_in_new</v-icon>
+					</v-btn>
+
 					<bg-rssi-chart :node="selectedNode" />
 				</v-row>
 			</v-col>
@@ -219,6 +230,7 @@ import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import BgRssiChart from '../components/custom/BgRssiChart.vue'
+import { Routes } from '../router/index.js'
 
 export default {
 	name: 'Mesh',
@@ -273,6 +285,16 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['setNeighbors', 'showSnackbar']),
+		newWindow() {
+			const newwindow = window.open(
+				Routes.controllerChart + '#no-topbar',
+				'BG-RSSI-Chart',
+				'height=800,width=1200,status=no,toolbar:no,scrollbars:no,menubar:no' // check https://www.w3schools.com/jsref/met_win_open.asp for all available specs
+			)
+			if (window.focus) {
+				newwindow.focus()
+			}
+		},
 		nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode
