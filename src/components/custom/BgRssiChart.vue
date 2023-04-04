@@ -219,7 +219,7 @@ export default {
 				this.resizeTimeout = null
 			}
 		},
-		createSerie(s) {
+		createSerie(s, i = 1) {
 			const current = {
 				// initial toggled state (optional)
 				show: true,
@@ -239,7 +239,8 @@ export default {
 			const average = {
 				...current,
 				label: current.label + ' (avg)',
-				dash: [5, 5],
+				dash: [5 * i, 5],
+				width: 4,
 				fill: undefined,
 			}
 
@@ -283,21 +284,30 @@ export default {
 				plugins: [touchZoomPlugin()],
 				series: [
 					{}, // timestamp
-					...this.createSerie({
-						label: 'Channel 0',
-						stroke: 'red',
-						fill: 'rgba(255, 0, 0, 0.3)',
-					}),
-					...this.createSerie({
-						label: 'Channel 1',
-						stroke: 'green',
-						fill: 'rgba(0, 255, 0, 0.3)',
-					}),
-					...this.createSerie({
-						label: 'Channel 2',
-						stroke: 'blue',
-						fill: 'rgba(0, 0, 255, 0.3)',
-					}),
+					...this.createSerie(
+						{
+							label: 'Channel 0',
+							stroke: 'red',
+							fill: 'rgba(255, 0, 0, 0.3)',
+						},
+						1
+					),
+					...this.createSerie(
+						{
+							label: 'Channel 1',
+							stroke: 'green',
+							fill: 'rgba(0, 255, 0, 0.3)',
+						},
+						2
+					),
+					...this.createSerie(
+						{
+							label: 'Channel 2',
+							stroke: 'blue',
+							fill: 'rgba(0, 0, 255, 0.3)',
+						},
+						3
+					),
 				],
 			}
 
