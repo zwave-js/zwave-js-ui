@@ -3161,12 +3161,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					controllerNode.bgRSSIPoints = []
 				}
 
-				controllerNode.bgRSSIPoints.push({
-					timestamp: stats.backgroundRSSI.timestamp,
-					channel0: bgRssi.channel0,
-					channel1: bgRssi.channel1,
-					channel2: bgRssi.channel2,
-				})
+				controllerNode.bgRSSIPoints.push(bgRssi)
 
 				if (controllerNode.bgRSSIPoints.length > 360) {
 					const firstPoint = controllerNode.bgRSSIPoints[0]
