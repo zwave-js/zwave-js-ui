@@ -298,7 +298,7 @@ export default {
 							stroke: 'red',
 							fill: 'rgba(255, 0, 0, 0.3)',
 						},
-						1
+						3
 					),
 					...this.createSerie(
 						{
@@ -314,7 +314,7 @@ export default {
 							stroke: 'blue',
 							fill: 'rgba(0, 0, 255, 0.3)',
 						},
-						3
+						1
 					),
 				],
 			}
