@@ -1431,7 +1431,7 @@ export default class Gateway {
 									Constants.deviceClass.sensor_binary.OPENING
 								)
 								break
-							case 'Door state':
+							case 'Door state (simple)':
 								cfg = this._getBinarySensorConfig(
 									Constants.deviceClass.sensor_binary.DOOR
 								)
