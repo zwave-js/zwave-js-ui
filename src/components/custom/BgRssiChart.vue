@@ -10,6 +10,7 @@
 <script>
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
+import { isRssiError } from 'zwave-js/safe'
 
 // eslint-disable-next-line no-unused-vars
 function touchZoomPlugin(opts) {
@@ -170,11 +171,17 @@ export default {
 			if (this.node.bgRSSIPoints && this.node.bgRSSIPoints.length > 0) {
 				this.node.bgRSSIPoints.forEach((point) => {
 					timestamps.push(point.timestamp / 1000)
-					channel0[0].push(point.channel0.current)
+					channel0[0].push(
+						this.checkRssiError(point.channel0.current)
+					)
 					channel0[1].push(point.channel0.average)
-					channel1[0].push(point.channel1.current)
+					channel1[0].push(
+						this.checkRssiError(point.channel1.current)
+					)
 					channel1[1].push(point.channel1.average)
-					channel2[0].push(point.channel2?.current)
+					channel2[0].push(
+						this.checkRssiError(point.channel2?.current)
+					)
 					channel2[1].push(point.channel2?.average)
 				})
 			}
@@ -202,6 +209,9 @@ export default {
 		this.destroy()
 	},
 	methods: {
+		checkRssiError(v) {
+			return isRssiError(v) ? null : v
+		},
 		isChanged(newT, oldT) {
 			newT = newT?.[0]
 			oldT = oldT?.[0]
