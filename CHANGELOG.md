@@ -1,5 +1,19 @@
 
 
+# [8.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.12.0...v8.13.0) (2023-04-05)
+
+
+### Bug Fixes
+
+* **discovery:** door state binary sensor ([90316f4](https://github.com/zwave-js/zwave-js-ui/commit/90316f4ca6e6b8d8f638878b3236eaff5a7eece1)), closes [#3003](https://github.com/zwave-js/zwave-js-ui/issues/3003)
+
+
+### Features
+
+* add command to set current node date/time ([#3005](https://github.com/zwave-js/zwave-js-ui/issues/3005) ([d84fa03](https://github.com/zwave-js/zwave-js-ui/commit/d84fa0387b153e7b304088c3f908c657fac9dc4d))
+* background RSSI chart ([#3033](https://github.com/zwave-js/zwave-js-ui/issues/3033))Co-authored-by: Dominic Griesel <dominic.griesel@nabucasa.com> ([e6a00ba](https://github.com/zwave-js/zwave-js-ui/commit/e6a00ba8ab3f7faf887285de0256572a434aab21)), closes [#3008](https://github.com/zwave-js/zwave-js-ui/issues/3008)
+* bump zwave-js@10.13.0 ([d5f2920](https://github.com/zwave-js/zwave-js-ui/commit/d5f2920a398dd7e6f170deadf6c57d2f4e33a9d6))
+
 # [8.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.11.1...v8.12.0) (2023-04-03)
 
 
