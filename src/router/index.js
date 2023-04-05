@@ -11,6 +11,7 @@ import Debug from '@/views/Debug'
 import Login from '@/views/Login'
 import ErrorPage from '@/views/ErrorPage'
 import SmartStart from '@/views/SmartStart'
+import ControllerChart from '@/views/ControllerChart'
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
@@ -27,6 +28,7 @@ export const Routes = {
 	store: '/store',
 	mesh: '/mesh',
 	smartStart: '/smart-start',
+	controllerChart: '/controller-chart',
 }
 
 Routes.main = Routes.controlPanel
@@ -102,6 +104,15 @@ const router = new Router({
 			path: Routes.mesh,
 			name: 'Network Graph',
 			component: Mesh,
+			props: true,
+			meta: {
+				requiresAuth: true,
+			},
+		},
+		{
+			path: Routes.controllerChart,
+			name: 'Controller Chart',
+			component: ControllerChart,
 			props: true,
 			meta: {
 				requiresAuth: true,

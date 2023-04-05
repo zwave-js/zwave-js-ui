@@ -224,7 +224,7 @@ export type SensorTypeScale = {
 	description?: string
 }
 
-export type AllowedApis = typeof allowedApis[number]
+export type AllowedApis = (typeof allowedApis)[number]
 
 const ZWAVEJS_LOG_FILE = utils.joinPath(
 	process.env.ZWAVEJS_LOGS_DIR || logsDir,
@@ -350,6 +350,18 @@ export class DriverNotReadyError extends Error {
 	}
 }
 
+export interface BackgroundRSSIValue {
+	current: number
+	average: number
+}
+
+export interface BackgroundRSSIPoint {
+	channel0: BackgroundRSSIValue
+	channel1: BackgroundRSSIValue
+	channel2?: BackgroundRSSIValue
+	timestamp: number
+}
+
 export interface FwFile {
 	name: string
 	data: Buffer
@@ -416,6 +428,7 @@ export type ZUINode = {
 	firmwareUpdate?: FirmwareUpdateProgress
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
+	bgRSSIPoints?: BackgroundRSSIPoint[]
 }
 
 export type NodeEvent = {
@@ -1587,7 +1600,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node: ZUINode,
 		changed: boolean
 	) {
-		valueId.lastUpdate = Date.now()
+		valueId.lastUpdate =
+			this.getNode(valueId.nodeId)?.getValueTimestamp(valueId) ??
+			Date.now()
 
 		this.sendToSocket(socketEvents.valueUpdated, valueId)
 
@@ -2512,33 +2527,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Used to trigger an update of controller FW
 	 */
 	async firmwareUpdateOTW(file: FwFile): Promise<boolean> {
-		if (this.driverReady) {
-			if (this._lockOTWUpdates) {
-				throw Error('Firmware update already in progress')
-			}
-
-			this._lockOTWUpdates = true
-			try {
-				if (backupManager.backupOnEvent) {
-					this.nvmEvent = 'before_controller_fw_update_otw'
-					await backupManager.backupNvm()
-				}
-				const format = guessFirmwareFileFormat(file.name, file.data)
-				const firmware = extractFirmware(file.data, format)
-				const result = await this.driver.controller.firmwareUpdateOTW(
-					firmware.data
-				)
-				this._lockOTWUpdates = false
-				return result
-			} catch (e) {
-				this._lockOTWUpdates = false
-				throw Error(
-					`Unable to extract firmware from file '${file.name}': ${e.message}`
-				)
-			}
+		if (this._lockOTWUpdates) {
+			throw Error('Firmware update already in progress')
 		}
 
-		throw new DriverNotReadyError()
+		this._lockOTWUpdates = true
+		try {
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_controller_fw_update_otw'
+				await backupManager.backupNvm()
+			}
+			const format = guessFirmwareFileFormat(file.name, file.data)
+			const firmware = extractFirmware(file.data, format)
+			const result = await this.driver.controller.firmwareUpdateOTW(
+				firmware.data
+			)
+			this._lockOTWUpdates = false
+			return result
+		} catch (e) {
+			this._lockOTWUpdates = false
+			throw Error(
+				`Unable to extract firmware from file '${file.name}': ${e.message}`
+			)
+		}
 	}
 
 	updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean> {
@@ -2782,7 +2793,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
-		if (this.driverReady) {
+		if (this.driverReady || this.driver.isInBootloader()) {
 			try {
 				const allowed =
 					typeof this[apiName] === 'function' &&
@@ -3173,10 +3184,38 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				controllerNode.lastActive = Date.now()
 			}
 
+			const bgRssi = stats.backgroundRSSI
+
+			if (bgRssi) {
+				if (!controllerNode.bgRSSIPoints) {
+					controllerNode.bgRSSIPoints = []
+				}
+
+				controllerNode.bgRSSIPoints.push(bgRssi)
+
+				if (controllerNode.bgRSSIPoints.length > 360) {
+					const firstPoint = controllerNode.bgRSSIPoints[0]
+					const lastPoint =
+						controllerNode.bgRSSIPoints[
+							controllerNode.bgRSSIPoints.length - 1
+						]
+
+					const maxTimeSpan = 3 * 60 * 60 * 1000 // 3 hours
+
+					if (
+						lastPoint.timestamp - firstPoint.timestamp >
+						maxTimeSpan
+					) {
+						controllerNode.bgRSSIPoints.shift()
+					}
+				}
+			}
+
 			this.sendToSocket(socketEvents.statistics, {
 				nodeId: controllerNode.id,
 				statistics: stats,
 				lastActive: controllerNode.lastActive,
+				bgRSSIPoints: controllerNode.bgRSSIPoints,
 			})
 		}
 

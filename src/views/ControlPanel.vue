@@ -33,7 +33,7 @@
 					<v-col class="mb-8">
 						<v-sheet outlined rounded>
 							<StatisticsCard
-								v-if="true || controllerNode"
+								v-if="!!controllerNode"
 								title="Controller Statistics"
 								:node="this.controllerNode"
 							/>
@@ -46,10 +46,12 @@
 				:socket="socket"
 				v-on="$listeners"
 				@action="sendAction"
+				@selected="selected = $event"
 			/>
 			<smart-view
 				:socket="socket"
 				v-on="$listeners"
+				@selected="selected = $event"
 				@action="sendAction"
 				v-else
 			>
@@ -68,11 +70,18 @@
 			@close="advancedShowDialog = false"
 			:actions="actions"
 			@action="onAction"
+			:title="advancedDialogTitle"
 		/>
 
 		<v-speed-dial bottom fab right fixed class="pb-6" v-model="fab">
 			<template v-slot:activator>
-				<v-btn color="blue darken-2" dark fab hover v-model="fab">
+				<v-btn
+					:color="selected.length === 0 ? 'blue darken-2' : 'success'"
+					dark
+					fab
+					hover
+					v-model="fab"
+				>
 					<v-icon v-if="fab">close</v-icon>
 					<v-icon v-else>add</v-icon>
 				</v-btn>
@@ -81,6 +90,7 @@
 				<template v-slot:activator="{ on, attrs }">
 					<v-btn
 						fab
+						v-if="selected.length === 0"
 						dark
 						small
 						color="green"
@@ -165,15 +175,28 @@ export default {
 				useBaseStore().setCompactMode(value)
 			},
 		},
+		actions() {
+			if (this.selected.length === 0) return this.generalActions
+
+			return this.selectedActions
+		},
+		advancedDialogTitle() {
+			if (this.selected.length === 0) return 'General actions'
+
+			return `Actions for ${this.selected.length} selected node${
+				this.selected.length > 1 ? 's' : ''
+			}`
+		},
 	},
 	watch: {},
 	data() {
 		return {
 			fab: false,
+			selected: [],
 			settings: new Settings(localStorage),
 			addRemoveShowDialog: false,
 			advancedShowDialog: false,
-			actions: [
+			generalActions: [
 				{
 					text: 'Backup',
 					options: [
@@ -320,6 +343,60 @@ export default {
 					return valid || 'This field is required.'
 				},
 			},
+			selectedActions: [
+				{
+					text: 'Re-interview Node',
+					options: [
+						{
+							name: 'Interview',
+							action: 'refreshInfo',
+						},
+					],
+					icon: 'history',
+					desc: 'Clear all info about this node and make a new full interview. Use when the node has wrong or missing capabilities',
+				},
+				{
+					text: 'Refresh Values',
+					options: [
+						{
+							name: 'Refresh',
+							action: 'refreshValues',
+							args: {
+								confirm:
+									'Are you sure you want to refresh values of this node? This action increases network traffic',
+							},
+						},
+					],
+					icon: 'cached',
+					desc: 'Update all CC values and metadata. Use only when many values seems stale',
+				},
+				{
+					text: 'Heal Node',
+					options: [
+						{
+							name: 'Heal',
+							action: 'healNode',
+							args: {
+								confirm:
+									'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+							},
+						},
+					],
+					icon: 'healing',
+					desc: 'Force nodes to establish better connections to the controller',
+				},
+				{
+					text: 'Ping',
+					options: [
+						{
+							name: 'Ping',
+							action: 'pingNode',
+						},
+					],
+					icon: 'swap_horiz',
+					desc: 'Ping node to check if it is alive',
+				},
+			],
 			showControllerStatistics: false,
 		}
 	},
@@ -337,7 +414,7 @@ export default {
 			} else if (action === 'exportDump') {
 				this.exportDump()
 			} else {
-				this.sendAction(action, args)
+				this.sendAction(action, { ...args, nodes: this.selected })
 			}
 		},
 		async importConfiguration() {
@@ -379,7 +456,10 @@ export default {
 		exportDump() {
 			this.$listeners.export(this.nodes, 'nodes_dump', 'json')
 		},
-		async sendAction(action, { nodeId, broadcast, confirm, confirmLevel }) {
+		async sendAction(
+			action,
+			{ nodeId, broadcast, confirm, confirmLevel, nodes }
+		) {
 			if (action) {
 				if (confirm) {
 					const ok = await this.$listeners.showConfirm(
@@ -397,6 +477,20 @@ export default {
 						return
 					}
 				}
+
+				if (nodes?.length > 0) {
+					const requests = nodes.map((node) =>
+						this.app.apiRequest(action, [node.id])
+					)
+
+					await Promise.allSettled(requests)
+					this.showSnackbar(
+						`Action ${action} sent to all nodes`,
+						'success'
+					)
+					return
+				}
+
 				let args = []
 				if (nodeId !== undefined) {
 					if (!broadcast) {
@@ -502,10 +596,25 @@ export default {
 						]
 						const store = useBaseStore()
 
+						const controllerNode = this.controllerNode || {
+							id: 1,
+							name: 'Controller',
+							_name: 'Controller',
+							isControllerNode: true,
+							loc: '',
+							ready: true,
+							values: [],
+						}
+
+						if (!this.controllerNode) {
+							// bootloader only mode, add a fake node to the store
+							store.updateNode(controllerNode)
+						}
+
 						// start the progress bar
 						store.updateNode(
 							{
-								id: this.controllerNode.id,
+								id: controllerNode.id,
 								firmwareUpdate: {
 									progress: 0,
 								},
@@ -513,7 +622,10 @@ export default {
 							true
 						)
 					} catch (error) {
-						this.showSnackbar('Error reading file', 'error')
+						this.showSnackbar(
+							'Error reading file: ' + error.message,
+							'error'
+						)
 						return
 					}
 				} else if (action === 'updateFirmware') {
@@ -808,7 +920,7 @@ export default {
 						if (response.api === 'firmwareUpdateOTW') {
 							// this could happen when the update fails before start
 							// used to close the firmware update dialog
-							if (this.controllerNode.firmwareUpdate) {
+							if (this.controllerNode?.firmwareUpdate) {
 								useBaseStore().updateNode(
 									{
 										id: this.controllerNode.id,

@@ -50,7 +50,6 @@ import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
-import { writeFile } from 'fs'
 
 const createCertificate = promisify(generate)
 

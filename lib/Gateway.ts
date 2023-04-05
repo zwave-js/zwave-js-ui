@@ -320,11 +320,11 @@ export default class Gateway {
 						this.runJob.bind(this, jobConfig)
 					)
 
-					if (job?.next()) {
+					if (job?.nextRun()) {
 						this.jobs.set(jobConfig.name, job)
 						logger.info(
 							`Scheduled job "${jobConfig.name}" will run at ${job
-								.next()
+								.nextRun()
 								.toISOString()}`
 						)
 					}
@@ -352,10 +352,10 @@ export default class Gateway {
 
 		const job = this.jobs.get(jobConfig.name)
 
-		if (job?.next()) {
+		if (job?.nextRun()) {
 			logger.info(
 				`Next scheduled job "${jobConfig.name}" will run at ${job
-					.next()
+					.nextRun()
 					.toISOString()}`
 			)
 		}
@@ -904,8 +904,8 @@ export default class Gateway {
 						if (key.indexOf('topic') >= 0 && topics[payload[key]]) {
 							payload[key] =
 								topics[payload[key]] +
-								((key.indexOf('command') >= 0 ||
-									key.indexOf('set_')) >= 0
+								(key.indexOf('command') >= 0 ||
+								key.indexOf('set_') >= 0
 									? '/set'
 									: '')
 						}
@@ -1431,7 +1431,7 @@ export default class Gateway {
 									Constants.deviceClass.sensor_binary.OPENING
 								)
 								break
-							case 'Door state':
+							case 'Door state (simple)':
 								cfg = this._getBinarySensorConfig(
 									Constants.deviceClass.sensor_binary.DOOR
 								)
@@ -1906,7 +1906,7 @@ export default class Gateway {
 				data = tmpVal
 				break
 			default:
-				data = { time: Date.now(), value: tmpVal }
+				data = { time: valueId.lastUpdate, value: tmpVal }
 		}
 
 		if (this.config.includeNodeInfo && typeof data === 'object') {

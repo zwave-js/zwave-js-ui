@@ -523,7 +523,7 @@ export default {
 				}
 			}
 		},
-		updateValue(v, customValue) {
+		async updateValue(v, customValue) {
 			if (v) {
 				// in this way I can check when the value receives an update
 				v.toUpdate = true
@@ -544,7 +544,7 @@ export default {
 				// update the value in store
 				this.setValue(v)
 
-				this.app.apiRequest('writeValue', [
+				const response = await this.app.apiRequest('writeValue', [
 					{
 						nodeId: v.nodeId,
 						commandClass: v.commandClass,
@@ -555,6 +555,23 @@ export default {
 					v.newValue,
 					this.options,
 				])
+
+				v.toUpdate = false
+
+				if (response.success) {
+					if (response.result) {
+						this.showSnackbar('Value updated', 'success')
+					} else {
+						this.showSnackbar('Value update failed', 'error')
+					}
+				} else {
+					this.showSnackbar(
+						`Error updating value${
+							response.message ? ': ' + response.message : ''
+						}`,
+						'error'
+					)
+				}
 			}
 		},
 		validateTopic(name) {

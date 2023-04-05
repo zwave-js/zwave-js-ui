@@ -150,11 +150,6 @@ const useBaseStore = defineStore('base', {
 			if (valueId) {
 				valueId.newValue = data.value
 				valueId.value = data.value
-
-				if (valueId.toUpdate) {
-					this.showSnackbar('Value updated', 'success')
-					valueId.toUpdate = false
-				}
 			} else {
 				// means that this value has been added
 				const node = this.getNode(data.nodeId)
@@ -345,6 +340,7 @@ const useBaseStore = defineStore('base', {
 					lastTransmit,
 					errorReceive,
 					errorTransmit,
+					bgRSSIPoints: data.bgRSSIPoints,
 				})
 			}
 		},
