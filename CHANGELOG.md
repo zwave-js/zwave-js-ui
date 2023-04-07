@@ -1,5 +1,17 @@
 
 
+## [8.13.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.0...v8.13.1) (2023-04-07)
+
+
+### Bug Fixes
+
+* **ui:** ignore rssi error on chart ([67cce90](https://github.com/zwave-js/zwave-js-ui/commit/67cce90c61338b7dce9b8214702f091c612a5ca9))
+
+
+### Features
+
+* bump zwave-js@10.14.0 ([#3036](https://github.com/zwave-js/zwave-js-ui/issues/3036)) ([002b300](https://github.com/zwave-js/zwave-js-ui/commit/002b300ce3ef016945c0384a71e062976e34ab5f))
+
 # [8.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.12.0...v8.13.0) (2023-04-05)
 
 
