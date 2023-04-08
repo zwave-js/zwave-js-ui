@@ -16933,7 +16933,7 @@ __metadata:
     webpack-dev-server: ^4.13.1
     webpack-merge: ^5.8.0
     winston: ^3.8.2
-    zwave-js: ^10.14.0
+    zwave-js: ^10.14.1
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
@@ -16990,9 +16990,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"zwave-js@npm:^10.14.0":
-  version: 10.14.0
-  resolution: "zwave-js@npm:10.14.0"
+"zwave-js@npm:^10.14.1":
+  version: 10.14.1
+  resolution: "zwave-js@npm:10.14.1"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
     "@alcalzone/pak": ^0.8.1
@@ -17019,6 +17019,6 @@ __metadata:
     source-map-support: ^0.5.21
     winston: ^3.8.2
     xstate: 4.29.0
-  checksum: 3e05d6a278f6e7e1b265c05aea79cb7c42655eca2821a564d93e1f783ffba803fde30bf0943b57ed744bdf17ca62abbd954bf4e99b3de1b962716ea820ef3f04
+  checksum: b67cbe608a736b35b18ba1a00b70be42e2749a3c66652cb8c4de97e36b1d781daf299a95ae0f7eed704049e080c7f4194774f6f6e0a8c4d3f70223e1376f58c5
   languageName: node
   linkType: hard
