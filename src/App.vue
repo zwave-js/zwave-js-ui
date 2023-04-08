@@ -517,6 +517,7 @@ export default {
 			'setAppInfo',
 			'setUser',
 			'updateValue',
+			'setValue',
 			'removeValue',
 			'setControllerStatus',
 			'setStatistics',
@@ -981,6 +982,11 @@ export default {
 			this.socket.on(
 				socketEvents.valueUpdated,
 				this.updateValue.bind(this)
+			)
+
+			this.socket.on(
+				socketEvents.metadataUpdated,
+				this.setValue.bind(this)
 			)
 
 			this.socket.on(
