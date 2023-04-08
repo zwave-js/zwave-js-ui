@@ -305,27 +305,27 @@ export type ZUINodeGroups = {
 
 export type CallAPIResult<T extends AllowedApis> =
 	| {
-		success: true
-		message: string
-		result: ReturnType<ZwaveClient[T]>
-		args?: Parameters<ZwaveClient[T]>
-	}
+			success: true
+			message: string
+			result: ReturnType<ZwaveClient[T]>
+			args?: Parameters<ZwaveClient[T]>
+	  }
 	| {
-		success: false
-		message: string
-		args?: Parameters<ZwaveClient[T]>
-	}
+			success: false
+			message: string
+			args?: Parameters<ZwaveClient[T]>
+	  }
 
 export type HassDevice = {
 	type:
-	| 'sensor'
-	| 'light'
-	| 'binary_sensor'
-	| 'cover'
-	| 'climate'
-	| 'lock'
-	| 'switch'
-	| 'fan'
+		| 'sensor'
+		| 'light'
+		| 'binary_sensor'
+		| 'cover'
+		| 'climate'
+		| 'lock'
+		| 'switch'
+		| 'fan'
 	object_id: string
 	discovery_payload: { [key: string]: any }
 	discoveryTopic?: string
@@ -1065,9 +1065,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		const zwaveNode = this.getNode(source.nodeId)
 
-		const sourceMsg = `Node ${source.nodeId +
+		const sourceMsg = `Node ${
+			source.nodeId +
 			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
-			}`
+		}`
 
 		if (zwaveNode) {
 			try {
@@ -1125,9 +1126,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		const zwaveNode = this.getNode(source.nodeId)
 
-		const sourceMsg = `Node ${source.nodeId +
+		const sourceMsg = `Node ${
+			source.nodeId +
 			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
-			}`
+		}`
 
 		if (zwaveNode) {
 			try {
@@ -1184,11 +1186,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							this.logNode(
 								zwaveNode,
 								'info',
-								`Removed ${associations.length
-								} associations from Node ${source.nodeId +
-								(source.endpoint
-									? ' Endpoint ' + source.endpoint
-									: '')
+								`Removed ${
+									associations.length
+								} associations from Node ${
+									source.nodeId +
+									(source.endpoint
+										? ' Endpoint ' + source.endpoint
+										: '')
 								} group ${groupId}`
 							)
 						}
@@ -1343,7 +1347,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const AsyncFunction = Object.getPrototypeOf(
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
-			async function () { }
+			async function () {}
 		).constructor
 
 		const fn = new AsyncFunction('driver', code)
@@ -2755,8 +2759,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const api = endpoint.commandClasses[commandClass]
 			if (!api || !api.isSupported()) {
 				throw Error(
-					`Node ${ctx.nodeId}${ctx.endpoint ? ` Endpoint ${ctx.endpoint}` : ''
-					} does not support CC ${ctx.commandClass
+					`Node ${ctx.nodeId}${
+						ctx.endpoint ? ` Endpoint ${ctx.endpoint}` : ''
+					} does not support CC ${
+						ctx.commandClass
 					} or it has not been implemented yet`
 				)
 			} else if (!(command in api)) {
@@ -2838,8 +2844,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				await broadcastNode.setValue(valueId, value)
 			} catch (error) {
 				logger.error(
-					`Error while sending broadcast ${value} to CC ${valueId.commandClass
-					} ${valueId.property} ${valueId.propertyKey || ''}: ${error.message
+					`Error while sending broadcast ${value} to CC ${
+						valueId.commandClass
+					} ${valueId.property} ${valueId.propertyKey || ''}: ${
+						error.message
 					}`
 				)
 			}
@@ -2859,8 +2867,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			} catch (error) {
 				fallback = error.code === ZWaveErrorCodes.CC_NotSupported
 				logger.error(
-					`Error while sending multicast ${value} to CC ${valueId.commandClass
-					} ${valueId.property} ${valueId.propertyKey || ''}: ${error.message
+					`Error while sending multicast ${value} to CC ${
+						valueId.commandClass
+					} ${valueId.property} ${valueId.propertyKey || ''}: ${
+						error.message
 					}`
 				)
 			}
@@ -2895,7 +2905,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				if (
 					!isDuration &&
 					valueId.commandClass ===
-					CommandClasses['Multilevel Switch'] &&
+						CommandClasses['Multilevel Switch'] &&
 					isNaN(value)
 				) {
 					if (/stop/i.test(value)) {
@@ -3139,7 +3149,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		logger.info(
-			`Controller ${zwaveNode.id} firmware update OTW finished ${result.success ? 'successfully' : 'with error'
+			`Controller ${zwaveNode.id} firmware update OTW finished ${
+				result.success ? 'successfully' : 'with error'
 			}.\n   Status: ${getEnumMemberName(
 				ControllerFirmwareUpdateStatus,
 				result.status
@@ -3186,7 +3197,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					const firstPoint = controllerNode.bgRSSIPoints[0]
 					const lastPoint =
 						controllerNode.bgRSSIPoints[
-						controllerNode.bgRSSIPoints.length - 1
+							controllerNode.bgRSSIPoints.length - 1
 						]
 
 					const maxTimeSpan = 3 * 60 * 60 * 1000 // 3 hours
@@ -3822,7 +3833,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`Ready: ${node.manufacturer} - ${node.productLabel} (${node.productDescription || 'Unknown'
+			`Ready: ${node.manufacturer} - ${node.productLabel} (${
+				node.productDescription || 'Unknown'
 			})`
 		)
 	}
@@ -4069,10 +4081,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.logNode(
 			zwaveNode,
 			'info',
-			`Value ${args.stateless ? 'notification' : 'updated'
-			}: ${this._getValueID(args)} ${args.stateless
-				? args.newValue
-				: `${args.prevValue} => ${args.newValue}`
+			`Value ${
+				args.stateless ? 'notification' : 'updated'
+			}: ${this._getValueID(args)} ${
+				args.stateless
+					? args.newValue
+					: `${args.prevValue} => ${args.newValue}`
 			}`
 		)
 
@@ -4305,11 +4319,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				zwaveNode,
 				'info',
-				`Firmware update finished ${result.success ? 'successfully' : 'with error'
+				`Firmware update finished ${
+					result.success ? 'successfully' : 'with error'
 				}.\n   Status: ${getEnumMemberName(
 					FirmwareUpdateStatus,
 					result.status
-				)}.\n   Wait before interacting: ${result.waitTime !== undefined ? `${result.waitTime}s` : 'No'
+				)}.\n   Wait before interacting: ${
+					result.waitTime !== undefined ? `${result.waitTime}s` : 'No'
 				}.\n   Result: ${result}.`
 			)
 
@@ -4502,8 +4518,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			utils.num2hex(zwaveNode.productType),
 		]
 		node.hexId = `${hexIds[0]}-${hexIds[2]}-${hexIds[1]}`
-		node.dbLink = `https://devices.zwave-js.io/?jumpTo=${hexIds[0]}:${hexIds[2]
-			}:${hexIds[1]}:${node.firmwareVersion || '0.0'}`
+		node.dbLink = `https://devices.zwave-js.io/?jumpTo=${hexIds[0]}:${
+			hexIds[2]
+		}:${hexIds[1]}:${node.firmwareVersion || '0.0'}`
 
 		const deviceConfig = zwaveNode.deviceConfig || {
 			label: `Unknown product ${hexIds[1]}`,
@@ -4965,13 +4982,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node: ZWaveNode
 	): Partial<
 		ZWaveNode &
-		Pick<
-			ZUINode,
-			| 'inited'
-			| 'manufacturer'
-			| 'productDescription'
-			| 'productLabel'
-		>
+			Pick<
+				ZUINode,
+				| 'inited'
+				| 'manufacturer'
+				| 'productDescription'
+				| 'productLabel'
+			>
 	> {
 		const zuiNode = this.nodes.get(node.id)
 
@@ -5014,9 +5031,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Get a valueId from a valueId object
 	 */
 	private _getValueID(v: Partial<ZUIValueId>, withNode = false) {
-		return `${withNode ? v.nodeId + '-' : ''}${v.commandClass}-${v.endpoint || 0
-			}-${v.property}${v.propertyKey !== undefined ? '-' + v.propertyKey : ''
-			}`
+		return `${withNode ? v.nodeId + '-' : ''}${v.commandClass}-${
+			v.endpoint || 0
+		}-${v.property}${
+			v.propertyKey !== undefined ? '-' + v.propertyKey : ''
+		}`
 	}
 
 	/**
@@ -5126,7 +5145,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				(100 *
 					(fragmentsPerFile * (progress.currentFile - 1) +
 						progress.sentFragments)) /
-				totalFilesFragments
+					totalFilesFragments
 			)
 
 			if (this.nodes.get(nodeId).isControllerNode) {
