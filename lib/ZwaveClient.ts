@@ -4682,7 +4682,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (zwaveNode.ready) {
 			const endpoint = zwaveNode.getEndpoint(zwaveValue.endpoint || 0)
 
-			valueId.commandClassVersion = endpoint?.getCCVersion(
+			valueId.commandClassVersion = (endpoint ?? zwaveNode).getCCVersion(
 				zwaveValue.commandClass
 			)
 		}
