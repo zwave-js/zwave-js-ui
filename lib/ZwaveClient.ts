@@ -4674,7 +4674,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): ZUIValueId {
 		zwaveValue.nodeId = zwaveNode.id
 
+		const node = this._nodes.get(zwaveNode.id)
+		const vID = this._getValueID(zwaveValue)
+
 		const valueId: ZUIValueId = {
+			...(node.values[vID] || {}), // extend existing valueId
 			id: this._getValueID(zwaveValue, true), // the valueId unique in the entire network, it also has the nodeId
 			nodeId: zwaveNode.id,
 			toUpdate: false,
