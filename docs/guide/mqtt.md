@@ -251,6 +251,29 @@ Payload:
 
 </details>
 
+#### `manuallyIdleNotificationValue`
+
+```ts
+manuallyIdleNotificationValue(valueId: ZUIValueId): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/manuallyIdleNotificationValue/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		valueId
+	]
+}
+```
+
+</details>
+
 #### `removeNodeFromAllAssociations`
 
 ```ts

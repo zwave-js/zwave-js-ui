@@ -667,6 +667,7 @@ export default {
 							inputs.push({
 								...targetInput,
 								key: 'target_' + t,
+								default: t,
 							})
 						}
 
