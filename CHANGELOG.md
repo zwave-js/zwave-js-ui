@@ -1,5 +1,22 @@
 
 
+# [8.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.1...v8.14.0) (2023-04-17)
+
+
+### Bug Fixes
+
+* remove useless res.locals in error handler ([ea33475](https://github.com/zwave-js/zwave-js-ui/commit/ea3347588db94ceea8c37f9db2edb8a8ebd82c3a))
+* **ui:** prefill targets in fw update ([9c35a8d](https://github.com/zwave-js/zwave-js-ui/commit/9c35a8d4240aca5af853d6f8d5cebe74832e8932))
+* undefined CC version after re-interview/refresh values ([#3050](https://github.com/zwave-js/zwave-js-ui/issues/3050))Co-authored-by: AlCalzone <d.griesel@gmx.net> ([c3d8432](https://github.com/zwave-js/zwave-js-ui/commit/c3d8432f31cbce95527f12d7bd6053c7a11120c9)), closes [#3045](https://github.com/zwave-js/zwave-js-ui/issues/3045)
+* valueId metadata out of sync with ui ([#3040](https://github.com/zwave-js/zwave-js-ui/issues/3040)) ([ff0e12b](https://github.com/zwave-js/zwave-js-ui/commit/ff0e12bd032140c33e17bc8db6a20fd5066c3c3e))
+
+
+### Features
+
+* allow to manually idle notifications ([6448cc8](https://github.com/zwave-js/zwave-js-ui/commit/6448cc8679ce2cc34d96e7cec71dc742a19b3db3)), closes [#3051](https://github.com/zwave-js/zwave-js-ui/issues/3051)
+* bump zwave-js@10.14.1 ([#3039](https://github.com/zwave-js/zwave-js-ui/issues/3039)) ([6d8e57d](https://github.com/zwave-js/zwave-js-ui/commit/6d8e57de42270b002a612812cbf84d73e978381b))
+* bump zwave-js@10.15.0 ([457bd9e](https://github.com/zwave-js/zwave-js-ui/commit/457bd9e0affbf18a6215ae14313ecae354d13790))
+
 ## [8.13.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.0...v8.13.1) (2023-04-07)
 
 
