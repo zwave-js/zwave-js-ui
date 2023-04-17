@@ -5,6 +5,14 @@
 		<div v-if="!value.writeable">
 			<div class="readonly mt-5">
 				{{ parsedValue + (value.unit ? ' ' + value.unit : '') }}
+
+				<v-btn
+					@click="idleNotification"
+					v-if="canIdleNotification"
+					small
+					color="primary"
+					>Idle</v-btn
+				>
 			</div>
 
 			<div v-if="help" class="caption mt-1">
@@ -257,6 +265,9 @@
 </style>
 
 <script>
+import { manager, instances } from '../lib/instanceManager'
+import useBaseStore from '../stores/base.js'
+
 export default {
 	props: {
 		value: {
@@ -284,6 +295,15 @@ export default {
 					: this.value.newValue
 			if (!this.value.states) return null
 			else return this.value.states.find((s) => s.value === value)
+		},
+		canIdleNotification() {
+			if (!this.value || this.disable_send) return false
+
+			// feat #3051
+			return (
+				this.value.commandClassName === 'Notification' &&
+				this.value.states?.find((s) => s.value === 0)
+			)
 		},
 		items() {
 			if (this.selectedItem) {
@@ -361,6 +381,25 @@ export default {
 		},
 	},
 	methods: {
+		async idleNotification() {
+			const app = manager.getInstance(instances.APP)
+
+			const response = await app.apiRequest(
+				'manuallyIdleNotificationValue',
+				[this.value],
+				{
+					infoSnack: false,
+					errorSnack: true,
+				}
+			)
+
+			if (response.success) {
+				useBaseStore().showSnackbar(
+					'Notification manually idled',
+					'success'
+				)
+			}
+		},
 		itemText(item) {
 			if (typeof item === 'object') {
 				return `[${item.value}] ${item.text}${

@@ -186,6 +186,7 @@ export const allowedApis = validateMethods([
 	'checkLifelineHealth',
 	'checkRouteHealth',
 	'syncNodeDateAndTime',
+	'manuallyIdleNotificationValue',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -1218,10 +1219,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Setting the date and time on a node could be hard, this helper method will set it using the date provided (default to now).
 	 *
 	 * The following CCs will be used (when supported or necessary) in this process:
-	 * -   Time Parameters CC
-	 * -   Clock CC
-	 * -   Time CC
-	 * -   Schedule Entry Lock CC (for setting the timezone)
+	 * - Time Parameters CC
+	 * - Clock CC
+	 * - Time CC
+	 * - Schedule Entry Lock CC (for setting the timezone)
 	 */
 	syncNodeDateAndTime(nodeId: number, date = new Date()): Promise<boolean> {
 		const zwaveNode = this.getNode(nodeId)
@@ -1239,6 +1240,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode,
 				'warn',
 				`Node not found when calling 'syncNodeDateAndTime'`
+			)
+		}
+	}
+
+	manuallyIdleNotificationValue(valueId: ZUIValueId) {
+		const zwaveNode = this.getNode(valueId.nodeId)
+
+		if (zwaveNode) {
+			zwaveNode.manuallyIdleNotificationValue(valueId)
+		} else {
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Node not found when calling 'manuallyIdleNotificationValue'`
 			)
 		}
 	}
