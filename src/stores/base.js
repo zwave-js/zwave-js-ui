@@ -140,6 +140,7 @@ const useBaseStore = defineStore('base', {
 			if (node && toReplace) {
 				const index = node.values.indexOf(toReplace)
 				if (index >= 0) {
+					valueId.newValue = valueId.value
 					node.values.splice(index, 1, valueId)
 				}
 			}

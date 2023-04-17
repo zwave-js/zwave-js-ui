@@ -2994,9 +2994,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _onDriverReady() {
 		/*
-    Now the controller interview is complete. This means we know which nodes
-    are included in the network, but they might not be ready yet.
-    The node interview will continue in the background.
+	Now the controller interview is complete. This means we know which nodes
+	are included in the network, but they might not be ready yet.
+	The node interview will continue in the background.
   */
 
 		// driver ready
@@ -4146,7 +4146,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		args: ZWaveNodeMetadataUpdatedArgs
 	) {
-		this._parseValue(zwaveNode, args, args.metadata)
+		const value = this._parseValue(zwaveNode, args, args.metadata)
+
+		this.sendToSocket(socketEvents.metadataUpdated, value)
 
 		this.logNode(
 			zwaveNode,
@@ -4672,7 +4674,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): ZUIValueId {
 		zwaveValue.nodeId = zwaveNode.id
 
+		const node = this._nodes.get(zwaveNode.id)
+		const vID = this._getValueID(zwaveValue)
+
 		const valueId: ZUIValueId = {
+			...(node.values[vID] || {}), // extend existing valueId
 			id: this._getValueID(zwaveValue, true), // the valueId unique in the entire network, it also has the nodeId
 			nodeId: zwaveNode.id,
 			toUpdate: false,

@@ -8,6 +8,7 @@ export enum socketEvents {
 	nodeUpdated = 'NODE_UPDATED',
 	valueUpdated = 'VALUE_UPDATED',
 	valueRemoved = 'VALUE_REMOVED',
+	metadataUpdated = 'METADATA_UPDATED',
 	healProgress = 'HEAL_PROGRESS',
 	healthCheckProgress = 'HEALTH_CHECK_PROGRESS',
 	info = 'INFO',
