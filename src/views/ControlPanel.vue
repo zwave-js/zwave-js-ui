@@ -631,8 +631,10 @@ export default {
 				} else if (action === 'updateFirmware') {
 					try {
 						const node = this.nodes.find((n) => n.id === nodeId)
-						const targets = node.firmwareCapabilities
-							.firmwareTargets || [0]
+						// const targets = node.firmwareCapabilities
+						// 	.firmwareTargets || [0]
+
+						const targets = [0, 1, 2]
 
 						const fileInput = {
 							cols: 8,
@@ -667,6 +669,7 @@ export default {
 							inputs.push({
 								...targetInput,
 								key: 'target_' + t,
+								default: t,
 							})
 						}
 
