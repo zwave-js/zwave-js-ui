@@ -14,5 +14,19 @@
 			"sourceMaps": true,
 			"preLaunchTask": "Webpack",
 		},
+		{
+			"type": "node",
+			"request": "launch",
+			"name": "Debug HTTPS",
+			"runtimeExecutable": "yarn",
+			"runtimeArgs": [
+				"dev:server"
+			],
+			"env": {},
+			"console": "integratedTerminal",
+			"skipFiles": ["<node_internals>/**"],
+			"sourceMaps": true,
+			"preLaunchTask": "Webpack HTTPS",
+		},
 	]
 }

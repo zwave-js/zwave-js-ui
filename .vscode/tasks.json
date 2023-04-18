@@ -37,6 +37,41 @@
 					}
 				}
 			],
+		},
+		{
+			"type": "npm",
+			"script": "dev-https",
+			"label": "Webpack HTTPS",
+			"detail": "webpack serve --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
+			"isBackground": true,
+			"icon": {
+				"id": "server-process",
+				"color": "terminal.ansiBlue"
+			},
+			"problemMatcher": [
+				{
+					"owner": "webpack",
+					"severity": "error",
+					"fileLocation": "absolute",
+					"pattern": [
+						{
+							"regexp": "ERROR in [^ ]* (.*):(.*):(.*)",
+							"file": 1,
+							"line": 2,
+							"column": 3
+						},
+						{
+							"regexp": ".*",
+							"message": 0
+						}
+					],
+					"background": {
+						"activeOnStart": false,
+						"beginsPattern": "Project is running at",
+						"endsPattern": "compiled successfully"
+					}
+				}
+			],
 		}
 	]
 }
