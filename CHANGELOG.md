@@ -1,5 +1,12 @@
 
 
+## [8.14.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.0...v8.14.1) (2023-04-19)
+
+
+### Bug Fixes
+
+* **ui:** set value not working ([f3e57e1](https://github.com/zwave-js/zwave-js-ui/commit/f3e57e14a4583572f590f6f2cc9e9cc9c8dc8b15)), closes [#3055](https://github.com/zwave-js/zwave-js-ui/issues/3055)
+
 # [8.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.1...v8.14.0) (2023-04-17)
 
 
