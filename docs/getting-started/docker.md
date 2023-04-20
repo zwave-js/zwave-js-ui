@@ -7,10 +7,10 @@
 
 Supported architectures are:
 
--   `x86_64 amd64`
--   `armv6`
--   `armv7` (Ex. Raspberry PI)
--   `arm64` (Ex. OrangePI NanoPI)
+- `x86_64 amd64`
+- `armv6`
+- `armv7` (Ex. Raspberry PI)
+- `arm64` (Ex. OrangePI NanoPI)
 
 > [!NOTE] If you get the error `standard_init_linux.go:207: exec user process caused "exec format error"`, you most likely installed the wrong package intended for a [different architecture](https://github.com/zwave-js/zwave-js-ui/tree/master/docs/troubleshooting/improper-arch.md).
 
@@ -18,13 +18,13 @@ Supported architectures are:
 
 Available tags are:
 
--   `latest` for the latest official release.
--   `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [Z-Wave JS UI](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
--   `sha-<commit-sha>` (example: `sha-92d502a`)
--   _Version tags:_ We provide multiple ones with different specificity in the [samentic versioning](https://semver.org/):
-    -   `<major>`: latest release **within the same major**, example: `8` will update for any v8.\* but will not update for v9.0.0.
-    -   `<major>.<minor>`: latest release **within the same minor**, example: `8.2` will update for any v8.2.1, v8.2.2 and v8.2.9; but not for v8.3.0.
-    -   `<major>.<minor>.<patch>`: static pointer to a specific release, example `8.2.1`.
+- `latest` for the latest official release.
+- `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [Z-Wave JS UI](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
+- `sha-<commit-sha>` (example: `sha-92d502a`)
+- _Version tags:_ We provide multiple ones with different specificity in the [samentic versioning](https://semver.org/):
+  - `<major>`: latest release **within the same major**, example: `8` will update for any v8.\* but will not update for v9.0.0.
+  - `<major>.<minor>`: latest release **within the same minor**, example: `8.2` will update for any v8.2.1, v8.2.2 and v8.2.9; but not for v8.3.0.
+  - `<major>.<minor>.<patch>`: static pointer to a specific release, example `8.2.1`.
 
 ## Installation
 
@@ -37,8 +37,8 @@ There are three different way to start the container and provide data persistenc
 
 > [!WARNING]
 >
-> -   Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
-> -   Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
+> - Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
+> - Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
 
 ### Run using volumes
 
