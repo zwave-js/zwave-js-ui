@@ -1,4 +1,3 @@
-
 # Using Docker
 
 > [!TIP]
@@ -8,10 +7,10 @@
 
 Supported architectures are:
 
-- `x86_64 amd64`
-- `armv6`
-- `armv7` (Ex. Raspberry PI)
-- `arm64` (Ex. OrangePI NanoPI)
+-   `x86_64 amd64`
+-   `armv6`
+-   `armv7` (Ex. Raspberry PI)
+-   `arm64` (Ex. OrangePI NanoPI)
 
 > [!NOTE] If you get the error `standard_init_linux.go:207: exec user process caused "exec format error"`, you most likely installed the wrong package intended for a [different architecture](https://github.com/zwave-js/zwave-js-ui/tree/master/docs/troubleshooting/improper-arch.md).
 
@@ -19,13 +18,13 @@ Supported architectures are:
 
 Available tags are:
 
-- `latest` for the latest official release.
-- `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [Z-Wave JS UI](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
-- `sha-<commit-sha>` (example: `sha-92d502a`)
-- *Version tags:* We provide multiple ones with different specificity in the [samentic versioning](https://semver.org/):
-  - `<major>`: latest release **within the same major**, example: `8` will update for any v8.* but will not update for v9.0.0.
-  - `<major>.<minor>`: latest release **within the same minor**, example: `8.2` will update for any v8.2.1, v8.2.2 and v8.2.9; but not for v8.3.0.
-  - `<major>.<minor>.<patch>`: static pointer to a specific release, example `8.2.1`.
+-   `latest` for the latest official release.
+-   `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [Z-Wave JS UI](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
+-   `sha-<commit-sha>` (example: `sha-92d502a`)
+-   _Version tags:_ We provide multiple ones with different specificity in the [samentic versioning](https://semver.org/):
+    -   `<major>`: latest release **within the same major**, example: `8` will update for any v8.\* but will not update for v9.0.0.
+    -   `<major>.<minor>`: latest release **within the same minor**, example: `8.2` will update for any v8.2.1, v8.2.2 and v8.2.9; but not for v8.3.0.
+    -   `<major>.<minor>.<patch>`: static pointer to a specific release, example `8.2.1`.
 
 ## Installation
 
@@ -38,8 +37,8 @@ There are three different way to start the container and provide data persistenc
 
 > [!WARNING]
 >
-> - Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
-> - Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
+> -   Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
+> -   Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
 
 ### Run using volumes
 
@@ -69,38 +68,38 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_
 To run Z-Wave JS UI as a service you can use the `docker-compose.yml` found [here](https://github.com/zwave-js/zwave-js-ui/blob/master/docker/docker-compose.yml):
 
 ```yml
-version: "3.7"
+version: '3.7'
 services:
-  zwave-js-ui:
-    container_name: zwave-js-ui
-    image: zwavejs/zwave-js-ui:latest
-    restart: always
-    tty: true
-    stop_signal: SIGINT
-    environment:
-      - SESSION_SECRET=mysupersecretkey
-      - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
-      # Uncomment if you want log times and dates to match your timezone instead of UTC
-      # Available at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-      #- TZ=America/New_York
-    networks:
-      - zwave
-    devices:
-      # Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
-      # Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
-      - '/dev/serial/by-id/insert_stick_reference_here:/dev/zwave'
-    volumes:
-      - zwave-config:/usr/src/app/store
-   # Or by using local folder
-   # - ./store:/usr/src/app/store
-    ports:
-      - "8091:8091" # port for web interface
-      - "3000:3000" # port for Z-Wave JS websocket server
+    zwave-js-ui:
+        container_name: zwave-js-ui
+        image: zwavejs/zwave-js-ui:latest
+        restart: always
+        tty: true
+        stop_signal: SIGINT
+        environment:
+            - SESSION_SECRET=mysupersecretkey
+            - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
+            # Uncomment if you want log times and dates to match your timezone instead of UTC
+            # Available at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+            #- TZ=America/New_York
+        networks:
+            - zwave
+        devices:
+            # Do not use /dev/ttyUSBX serial devices, as those mappings can change over time.
+            # Instead, use the /dev/serial/by-id/X serial device for your Z-Wave stick.
+            - '/dev/serial/by-id/insert_stick_reference_here:/dev/zwave'
+        volumes:
+            - zwave-config:/usr/src/app/store
+        # Or by using local folder
+        # - ./store:/usr/src/app/store
+        ports:
+            - '8091:8091' # port for web interface
+            - '3000:3000' # port for Z-Wave JS websocket server
 networks:
-  zwave:
+    zwave:
 volumes:
-  zwave-config:
-    name: zwave-config
+    zwave-config:
+        name: zwave-config
 ```
 
 > [!NOTE]
@@ -108,3 +107,34 @@ volumes:
 
 > [!NOTE]
 > You may choose to limit websocket connections to only those coming from localhost for security reasons, though doing so may require you to alter your integration's configuration to use the localhost IP. To do so, change the port mapping to "127.0.0.1:3000:3000"
+
+### Healthcheck
+
+In order to add an healthcheck to your container you can use this command:
+
+```bash
+wget --no-verbose --spider --no-check-certificate --header "Accept: text/plain" https://localhost:8091/health || exit 1
+```
+
+Remember to change `https` with `http` if you didn't enable HTTPS in settings.
+
+Docker compose:
+
+```yml
+version: '3.7'
+services:
+    zwave-js-ui:
+    # ..... other settings .....
+      healthcheck:
+          test: wget --no-verbose --spider --no-check-certificate --header "Accept: text/plain" https://localhost:8091/health || exit 1
+          interval: 1m
+          timeout: 10s
+          start_period: 30s
+          retries: 3
+```
+
+Docker:
+
+```bash
+docker run <other options here> --health-cmd="wget --no-verbose --spider --no-check-certificate --header "Accept: text/plain" https://localhost:8091/health || exit 1" --health-start-period=30s
+```
