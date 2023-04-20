@@ -40,7 +40,7 @@
 							:rules="[rules.required]"
 							v-model="password"
 							prepend-icon="lock"
-							name="current-password"
+							name="password"
 							label="Password"
 							autocomplete
 							:type="showPsw ? 'text' : 'password'"
