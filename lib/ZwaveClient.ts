@@ -5111,11 +5111,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	/** Loads fake nodes exported from UI */
 	private async loadFakeNodes() {
+		const filePath = utils.joinPath(true, 'fakeNodes.json')
 		// load fake nodes from `fakeNodes.json` for testing
-		if (await exists(utils.joinPath(true, 'fakeNodes.json'))) {
-			const fakeNodes = JSON.parse(
-				await readFile(utils.joinPath(true, 'fakeNodes.json'), 'utf-8')
-			)
+		if (await exists(filePath)) {
+			const fakeNodes = JSON.parse(await readFile(filePath, 'utf-8'))
 			for (const node of fakeNodes) {
 				// convert valueIds array to map
 				const values = {}
