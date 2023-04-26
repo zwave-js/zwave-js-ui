@@ -83,7 +83,7 @@ import * as LogManager from './logger'
 import * as utils from './utils'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
-import { ensureDir, mkdirp, writeFile } from 'fs-extra'
+import { ensureDir, exists, mkdirp, writeFile } from 'fs-extra'
 import { Server as SocketServer } from 'socket.io'
 import * as pkgjson from '../package.json'
 import { TypedEventEmitter } from './EventEmitter'
@@ -92,6 +92,7 @@ import { GatewayValue } from './Gateway'
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
+import { readFile } from 'fs/promises'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -2914,6 +2915,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
 
+				if (!zwaveNode) {
+					throw Error(`Node ${valueId.nodeId} not found`)
+				}
+
 				const isDuration = typeof value === 'object'
 
 				// handle multilevel switch 'start' and 'stop' commands
@@ -3087,6 +3092,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// force send init to all connected sockets
 			socket.emit(socketEvents.init, this.getState())
 		}
+
+		this.loadFakeNodes().catch((e) => {
+			logger.error(`Error while loading fake nodes: ${e.message}`)
+		})
 	}
 
 	private async _onDriverError(
@@ -5098,6 +5107,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.setPollInterval(valueId, interval)
+	}
+
+	/** Loads fake nodes exported from UI */
+	private async loadFakeNodes() {
+		// load fake nodes from `fakeNodes.json` for testing
+		if (await exists(utils.joinPath(true, 'fakeNodes.json'))) {
+			const fakeNodes = JSON.parse(
+				await readFile(utils.joinPath(true, 'fakeNodes.json'), 'utf-8')
+			)
+			for (const node of fakeNodes) {
+				// convert valueIds array to map
+				const values = {}
+				for (const value of node.values) {
+					values[this._getValueID(value)] = value
+				}
+				node.values = values
+				this._nodes.set(node.id, node)
+				this.emitNodeUpdate(node)
+			}
+		}
 	}
 
 	/** Used for testing purposes */
