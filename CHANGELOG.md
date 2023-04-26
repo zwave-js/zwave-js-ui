@@ -1,5 +1,19 @@
 
 
+## [8.14.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.1...v8.14.2) (2023-04-26)
+
+
+### Bug Fixes
+
+* **ui:** add device info in expanded node compat view ([726c383](https://github.com/zwave-js/zwave-js-ui/commit/726c383478a5394aa478b4286d21b0324decf733)), closes [#3060](https://github.com/zwave-js/zwave-js-ui/issues/3060)
+* **ui:** make login form pass manager friendly ([5a95b7b](https://github.com/zwave-js/zwave-js-ui/commit/5a95b7be95cd8e4df807fe956af9e0db2cbca5bd)), closes [#3053](https://github.com/zwave-js/zwave-js-ui/issues/3053)
+
+
+### Features
+
+* bump zwave-js@10.16.0 ([#3062](https://github.com/zwave-js/zwave-js-ui/issues/3062)) ([53c4e35](https://github.com/zwave-js/zwave-js-ui/commit/53c4e355f147dfe85d0c365b35b64d16c12f04d7))
+* bump zwave-js/server@1.28.0 ([#3061](https://github.com/zwave-js/zwave-js-ui/issues/3061)) ([50306e6](https://github.com/zwave-js/zwave-js-ui/commit/50306e6f7529e2895383ef9f2335da364a1079fc))
+
 ## [8.14.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.0...v8.14.1) (2023-04-19)
 
 
