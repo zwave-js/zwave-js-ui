@@ -7,14 +7,28 @@
 	>
 		<v-row class="mt-2" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
-				<span class="title grey--text">Device ID </span>
+				<span class="title grey--text">Device </span>
 				<br />
 				<span class="subtitle font-weight-bold font-monospace">
 					{{ `${node.deviceId} (${node.hexId})` }}
 				</span>
+
 				<v-icon @click="openLink(node.dbLink)" class="ml-2" small>
 					ios_share
 				</v-icon>
+				<br />
+				<span
+					v-if="$vuetify.breakpoint.smAndDown"
+					class="comment font-weight-bold primary--text"
+				>
+					{{
+						`${node.manufacturer || ''}${
+							node.productDescription
+								? ' - ' + node.productDescription
+								: ''
+						}`
+					}}
+				</span>
 			</v-col>
 			<v-col
 				:class="
