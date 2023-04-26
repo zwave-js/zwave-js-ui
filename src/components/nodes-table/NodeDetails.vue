@@ -212,7 +212,7 @@
 							</v-row>
 						</v-expansion-panel-header>
 						<v-expansion-panel-content>
-							<v-row>
+							<v-row v-if="!className.startsWith('User Code')">
 								<v-col
 									cols="12"
 									v-for="(v, index) in group"
@@ -226,6 +226,13 @@
 										:node="node"
 									></ValueID>
 								</v-col>
+							</v-row>
+							<v-row v-else>
+								<UserCodeTable
+									@updateValue="updateValue"
+									:node="node"
+									:values="group"
+								></UserCodeTable>
 							</v-row>
 							<v-row>
 								<v-col
@@ -305,10 +312,10 @@
 </template>
 
 <script>
-import ValueID from '@/components/ValueId'
-
+import ValueID from '../ValueId'
+import UserCodeTable from './UserCodeTable'
 import { mapState, mapActions } from 'pinia'
-import { validTopic } from '@/lib/utils'
+import { validTopic } from '../../lib/utils'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
 import { RFRegion } from 'zwave-js/safe'
 import useBaseStore from '../../stores/base.js'
@@ -321,6 +328,7 @@ export default {
 	},
 	components: {
 		ValueID,
+		UserCodeTable,
 	},
 	mixins: [InstancesMixin],
 	data() {
