@@ -47,8 +47,6 @@
 </template>
 
 <script>
-import { instances, manager } from '../../lib/instanceManager'
-
 const DIALOG_HASH = '#usercodes'
 
 export default {
@@ -116,9 +114,6 @@ export default {
 			}
 
 			return toReturn
-		},
-		app() {
-			return manager.getInstance(instances.APP)
 		},
 	},
 	methods: {
