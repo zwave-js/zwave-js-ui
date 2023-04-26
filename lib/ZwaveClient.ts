@@ -9,6 +9,8 @@ import {
 	ValueMetadataNumeric,
 	ValueMetadataString,
 	ZWaveErrorCodes,
+	SupervisionStatus,
+	SupervisionResult,
 } from '@zwave-js/core'
 import {
 	AssociationAddress,
@@ -74,6 +76,10 @@ import {
 	ControllerFirmwareUpdateResult,
 	ControllerFirmwareUpdateStatus,
 	HealNetworkOptions,
+	ScheduleEntryLockWeekDaySchedule,
+	ScheduleEntryLockYearDaySchedule,
+	ScheduleEntryLockDailyRepeatingSchedule,
+	ScheduleEntryLockSlotId,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -188,6 +194,7 @@ export const allowedApis = validateMethods([
 	'checkRouteHealth',
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
+	'getSchedules',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -375,6 +382,17 @@ export interface ZUIEndpoint {
 	label?: string
 }
 
+export interface ZUISchedule {
+	daily: ZUIScheduleConfig<ScheduleEntryLockDailyRepeatingSchedule>
+	weekly: ZUIScheduleConfig<ScheduleEntryLockWeekDaySchedule>
+	yearly: ZUIScheduleConfig<ScheduleEntryLockYearDaySchedule>
+}
+
+export interface ZUIScheduleConfig<T> {
+	numSlots: number
+	slots: (T & ScheduleEntryLockSlotId)[]
+}
+
 export type ZUINode = {
 	id: number
 	deviceConfig?: DeviceConfig
@@ -431,6 +449,7 @@ export type ZUINode = {
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
 	bgRSSIPoints?: BackgroundRSSIPoint[]
+	schedule?: ZUISchedule
 }
 
 export type NodeEvent = {
@@ -959,6 +978,173 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			error: this.error,
 			cntStatus: this.cntStatus,
 		}
+	}
+
+	/**
+	 * If the node supports Schedule Lock CC parses all available schedules and cache them
+	 */
+	async getSchedules(nodeId: number) {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
+			throw new Error(
+				'Schedule Entry Lock CC not supported on node ' + nodeId
+			)
+		}
+
+		const userCodes = await zwaveNode.commandClasses[
+			'User Code'
+		].getUsersCount()
+
+		const numSlots = await zwaveNode.commandClasses[
+			'Schedule Entry Lock'
+		].getNumSlots()
+
+		const weeklySchedules: (ScheduleEntryLockWeekDaySchedule &
+			ScheduleEntryLockSlotId)[] = []
+		const yearlySchedules: (ScheduleEntryLockYearDaySchedule &
+			ScheduleEntryLockSlotId)[] = []
+		const dailySchedules: (ScheduleEntryLockDailyRepeatingSchedule &
+			ScheduleEntryLockSlotId)[] = []
+		for (let i = 1; i <= userCodes; i++) {
+			for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
+				const slot: ScheduleEntryLockSlotId = {
+					userId: i,
+					slotId: s,
+				}
+				const schedule = await zwaveNode.commandClasses[
+					'Schedule Entry Lock'
+				].getWeekDaySchedule(slot)
+				if (schedule) weeklySchedules.push({ ...slot, ...schedule })
+			}
+
+			for (let s = 1; s <= numSlots.numYearDaySlots; s++) {
+				const slot: ScheduleEntryLockSlotId = {
+					userId: i,
+					slotId: s,
+				}
+				const schedule = await zwaveNode.commandClasses[
+					'Schedule Entry Lock'
+				].getYearDaySchedule(slot)
+				if (schedule) yearlySchedules.push({ ...slot, ...schedule })
+			}
+
+			for (let s = 1; s <= numSlots.numDailyRepeatingSlots; s++) {
+				const slot: ScheduleEntryLockSlotId = {
+					userId: i,
+					slotId: s,
+				}
+				const schedule = await zwaveNode.commandClasses[
+					'Schedule Entry Lock'
+				].getDailyRepeatingSchedule(slot)
+				if (schedule) dailySchedules.push({ ...slot, ...schedule })
+			}
+		}
+
+		const node = this._nodes.get(nodeId)
+		node.schedule = {
+			daily: {
+				numSlots: numSlots.numDailyRepeatingSlots,
+				slots: dailySchedules,
+			},
+			weekly: {
+				numSlots: numSlots.numWeekDaySlots,
+				slots: weeklySchedules,
+			},
+			yearly: {
+				numSlots: numSlots.numYearDaySlots,
+				slots: yearlySchedules,
+			},
+		}
+
+		this.emitNodeUpdate(node, {
+			schedule: node.schedule,
+		})
+
+		return node.schedule
+	}
+
+	async setSchedule(
+		nodeId: number,
+		type: 'daily' | 'weekly' | 'yearly',
+		schedule: ScheduleEntryLockSlotId &
+			(
+				| ScheduleEntryLockDailyRepeatingSchedule
+				| ScheduleEntryLockWeekDaySchedule
+				| ScheduleEntryLockYearDaySchedule
+			)
+	) {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
+			throw new Error(
+				'Schedule Entry Lock CC not supported on node ' + nodeId
+			)
+		}
+
+		const slot: ScheduleEntryLockSlotId = {
+			userId: schedule.userId,
+			slotId: schedule.slotId,
+		}
+
+		delete schedule.userId
+		delete schedule.slotId
+
+		const isDelete = Object.keys(schedule).length === 0
+
+		let result: SupervisionResult
+
+		if (type === 'daily') {
+			result = await zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setDailyRepeatingSchedule(
+				slot,
+				schedule as ScheduleEntryLockDailyRepeatingSchedule
+			)
+		} else if (type === 'weekly') {
+			result = await zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setWeekDaySchedule(
+				slot,
+				schedule as ScheduleEntryLockWeekDaySchedule
+			)
+		} else if (type === 'yearly') {
+			result = await zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setYearDaySchedule(
+				slot,
+				schedule as ScheduleEntryLockYearDaySchedule
+			)
+		} else {
+			throw new Error('Invalid schedule type')
+		}
+
+		if (result.status === SupervisionStatus.Success) {
+			const node = this._nodes.get(nodeId)
+
+			const slots = node.schedule?.[type]?.slots
+
+			if (slots) {
+				const slotIndex = slots.findIndex(
+					(s) => s.userId === slot.userId && s.slotId === slot.slotId
+				)
+				if (slotIndex !== -1) {
+					if (isDelete) {
+						slots.splice(slotIndex, 1)
+					}
+				}
+
+				if (!isDelete) {
+					slots.push({ ...slot, ...schedule } as any)
+				}
+
+				this.emitNodeUpdate(node, {
+					schedule: node.schedule,
+				})
+			}
+		}
+
+		return result
 	}
 
 	/**
@@ -3861,6 +4047,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				node.productDescription || 'Unknown'
 			})`
 		)
+
+		if (zwaveNode.commandClasses['Schedule Entry Lock'].isSupported()) {
+			this.logNode(zwaveNode, 'info', `Schedule Entry Lock is supported`)
+
+			this.getSchedules(zwaveNode.id).catch((error) => {
+				this.logNode(
+					zwaveNode,
+					'error',
+					`Failed to get schedules for node ${node.id}: ${error.message}`
+				)
+			})
+		}
 	}
 
 	/**
