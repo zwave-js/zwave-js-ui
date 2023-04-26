@@ -120,11 +120,14 @@ export default {
 		getStatus(status) {
 			return this.statuses.find((s) => s.value === status)?.text
 		},
+		getValueId(id, prop) {
+			return this.values.find(
+				(v) => v.propertyKey === id && v.property === prop
+			)
+		},
 		async setUserCode(item) {
 			const code = this.newCode
-			const valueId = this.values.find(
-				(v) => v.propertyKey === item.id && v.property === 'userCode'
-			)
+			const valueId = this.getValueId(item.id, 'userCode')
 
 			if (!valueId) return
 
@@ -134,10 +137,7 @@ export default {
 		},
 		async setUserStatus(item) {
 			const status = this.newStatus
-			const valueId = this.values.find(
-				(v) =>
-					v.propertyKey === item.id && v.property === 'userIdStatus'
-			)
+			const valueId = this.getValueId(item.id, 'userIdStatus')
 
 			if (!valueId) return
 

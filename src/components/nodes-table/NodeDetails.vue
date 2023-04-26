@@ -212,22 +212,24 @@
 							</v-row>
 						</v-expansion-panel-header>
 						<v-expansion-panel-content>
-							<v-row v-if="!className.startsWith('User Code')">
+							<v-row>
 								<v-col
 									cols="12"
 									v-for="(v, index) in group"
 									:key="index"
+									v-show="displayValue(v)"
 									sm="6"
 									md="4"
 								>
 									<ValueID
+										v-if="displayValue(v)"
 										@updateValue="updateValue"
 										v-model="group[index]"
 										:node="node"
 									></ValueID>
 								</v-col>
 							</v-row>
-							<v-row v-else>
+							<v-row v-if="className.startsWith('User Code')">
 								<UserCodeTable
 									@updateValue="updateValue"
 									:node="node"
@@ -406,6 +408,12 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		displayValue(v) {
+			return (
+				v.commandClassName !== 'User Code' ||
+				!['userCode', 'userIdStatus'].includes(v.property)
+			)
+		},
 		async updateControllerNodeProp(prop) {
 			const response = await this.app.apiRequest(
 				'updateControllerNodeProps',
