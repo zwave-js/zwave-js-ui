@@ -80,6 +80,8 @@ import {
 	ScheduleEntryLockYearDaySchedule,
 	ScheduleEntryLockDailyRepeatingSchedule,
 	ScheduleEntryLockSlotId,
+	ScheduleEntryLockCC,
+	UserCodeCC,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -195,6 +197,7 @@ export const allowedApis = validateMethods([
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
 	'getSchedules',
+	'setSchedule',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -992,14 +995,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		const userCodes = await zwaveNode.commandClasses[
-			'User Code'
-		].getUsersCount()
+		const userCodes = UserCodeCC.getSupportedUsersCached(
+			// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+			this.driver,
+			zwaveNode
+		)
 
-		const numSlots = await zwaveNode.commandClasses[
-			'Schedule Entry Lock'
-		].getNumSlots()
-
+		const numSlots = {
+			numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
+				// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+				this.driver,
+				zwaveNode
+			),
+			numYearDaySlots: ScheduleEntryLockCC.getNumYearDaySlotsCached(
+				// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+				this.driver,
+				zwaveNode
+			),
+			numDailyRepeatingSlots:
+				ScheduleEntryLockCC.getNumDailyRepeatingSlotsCached(
+					// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+					this.driver,
+					zwaveNode
+				),
+		}
 		const weeklySchedules: (ScheduleEntryLockWeekDaySchedule &
 			ScheduleEntryLockSlotId)[] = []
 		const yearlySchedules: (ScheduleEntryLockYearDaySchedule &
@@ -1117,6 +1136,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		} else {
 			throw new Error('Invalid schedule type')
+		}
+
+		// means that is not using supervision, read slot and check if it matches
+		if (!result) {
+			const methods = {
+				daily: 'getDailyRepeatingSchedule',
+				weekly: 'getWeekDaySchedule',
+				yearly: 'getYearDaySchedule',
+			}
+			const res = await zwaveNode.commandClasses['Schedule Entry Lock'][
+				methods[type]
+			](slot)
+
+			if (
+				(isDelete && !res) ||
+				(!isDelete && res && utils.deepEqual(res, schedule))
+			) {
+				result = {
+					status: SupervisionStatus.Success,
+				}
+			} else {
+				result = {
+					status: SupervisionStatus.Fail,
+				}
+			}
 		}
 
 		if (result.status === SupervisionStatus.Success) {
