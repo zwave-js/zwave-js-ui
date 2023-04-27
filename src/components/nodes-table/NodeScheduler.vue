@@ -435,7 +435,7 @@ export default {
 					Object.assign(slot, res)
 				}
 
-				const response = await this.app.apiRequest('setSchedules', [
+				const response = await this.app.apiRequest('setSchedule', [
 					this.node.id,
 					this.mode,
 					res,
