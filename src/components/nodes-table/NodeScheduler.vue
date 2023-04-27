@@ -387,16 +387,24 @@ export default {
 					inputs.startDay,
 					inputs.startHour,
 					inputs.startMinute,
-					{ ...inputs.stopYear, key: 'stopYear', label: 'Stop Year' },
 					{
-						...inputs.stopMonth,
+						...inputs.startYear,
+						key: 'stopYear',
+						label: 'Stop Year',
+					},
+					{
+						...inputs.startMonth,
 						key: 'stopMonth',
 						label: 'Stop Month',
 					},
-					{ ...inputs.stopDay, key: 'stopDay', label: 'Stop Day' },
-					{ ...inputs.stopHour, key: 'stopHour', label: 'Stop Hour' },
+					{ ...inputs.startDay, key: 'stopDay', label: 'Stop Day' },
 					{
-						...inputs.stopMinute,
+						...inputs.startHour,
+						key: 'stopHour',
+						label: 'Stop Hour',
+					},
+					{
+						...inputs.startMinute,
 						key: 'stopMinute',
 						label: 'Stop Minute',
 					},
@@ -418,6 +426,11 @@ export default {
 			)
 
 			if (res.userId) {
+				if (res.startYear) {
+					res.startYear -= 2000
+					res.stopYear -= 2000
+				}
+
 				if (slot) {
 					Object.assign(slot, res)
 				}
