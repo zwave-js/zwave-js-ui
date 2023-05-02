@@ -112,7 +112,11 @@ export default {
 	data() {
 		return {
 			mode: 'daily',
-			modes: ['daily', 'weekly', 'yearly'],
+			modes: [
+				{ text: 'Daily', value: 'daily' },
+				{ text: 'Weekly', value: 'weekly' },
+				{ text: 'Yearly', value: 'yearly' },
+			],
 			weekdays: Object.keys(ScheduleEntryLockWeekday)
 				.map((key) => ({
 					text: key,
