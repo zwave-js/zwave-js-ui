@@ -255,7 +255,7 @@ export default {
 			}
 		},
 		async removeSlot(slot) {
-			const response = await this.app.apiRequest('setSchedules', [
+			const response = await this.app.apiRequest('setSchedule', [
 				this.node.id,
 				this.mode,
 				{
