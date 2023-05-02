@@ -453,6 +453,7 @@ export type ZUINode = {
 	eventsQueue: NodeEvent[]
 	bgRSSIPoints?: BackgroundRSSIPoint[]
 	schedule?: ZUISchedule
+	numUsers?: number
 }
 
 export type NodeEvent = {
@@ -1076,8 +1077,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			},
 		}
 
+		node.numUsers = userCodes
+
 		this.emitNodeUpdate(node, {
 			schedule: node.schedule,
+			numUsers: node.numUsers,
 		})
 
 		return node.schedule

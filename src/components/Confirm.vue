@@ -79,7 +79,8 @@
 								<v-select
 									v-if="
 										input.type === 'list' &&
-										!input.allowManualEntry
+										!input.allowManualEntry &&
+										!input.autocomplete
 									"
 									v-model="values[input.key]"
 									:item-text="input.itemText || 'text'"
@@ -94,6 +95,25 @@
 									:required="input.required"
 									:disabled="input.disabled"
 								></v-select>
+								<v-autocomplete
+									v-if="
+										input.type === 'list' &&
+										!input.allowManualEntry &&
+										input.autocomplete
+									"
+									v-model="values[input.key]"
+									:item-text="input.itemText || 'text'"
+									:item-value="input.itemValue || 'value'"
+									:items="input.items"
+									:rules="input.rules || []"
+									:label="input.label"
+									@change="input.onChange"
+									:persistent-hint="!!input.hint"
+									:multiple="!!input.multiple"
+									:hint="input.hint"
+									:required="input.required"
+									:disabled="input.disabled"
+								></v-autocomplete>
 								<v-combobox
 									v-if="
 										input.type === 'list' &&
@@ -281,11 +301,17 @@ export default {
 
 			Object.assign(this.options, options)
 
+			const values = options.values || {}
+
 			if (options.inputs) {
 				for (const input of options.inputs) {
 					if (input.default !== undefined) {
 						// without this code block is bugged, don't simply assign
-						this.$set(this.values, input.key, input.default)
+						this.$set(
+							this.values,
+							input.key,
+							values[input.key] ?? input.default
+						)
 					}
 
 					if (

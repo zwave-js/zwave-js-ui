@@ -51,7 +51,7 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { getEnumMemberName } from 'zwave-js/safe'
 import { ScheduleEntryLockWeekday } from '@zwave-js/cc/safe'
-import { padNumber } from '../../lib/utils.js'
+import { padNumber, copy } from '../../lib/utils.js'
 
 const months = [
 	{
@@ -136,12 +136,13 @@ export default {
 		}
 	},
 	computed: {
+		schedule() {
+			return this.node.schedule[this.mode]
+		},
 		items() {
-			const schedule = this.node.schedule[this.mode]
-
 			const items = []
 
-			for (const s of schedule.slots) {
+			for (const s of this.schedule.slots) {
 				let item = {
 					id: `${s.userId}-${s.slotId}`,
 					userId: s.userId,
@@ -264,23 +265,32 @@ export default {
 			}
 		},
 		getInputs() {
+			const maxSlots = this.schedule.numSlots
+			const numUsers = this.node.numUsers
 			const inputs = {
 				userId: {
-					type: 'number',
+					type: 'list',
+					autocomplete: true,
 					key: 'userId',
 					label: 'User Id',
 					default: 1,
+					cols: 6,
 					rules: [this.rules.required],
+					items: [...Array(numUsers).keys()].map((i) => i + 1),
 				},
 				slotId: {
-					type: 'number',
+					type: 'list',
+					autocomplete: true,
 					key: 'slotId',
 					label: 'Slot Id',
 					default: 1,
+					cols: 6,
 					rules: [this.rules.required],
+					items: [...Array(maxSlots).keys()].map((i) => i + 1),
 				},
 				weekdays: {
 					type: 'list',
+					autocomplete: true,
 					key: 'weekdays',
 					label: 'Weekdays',
 					default: this.weekdays.map((w) => w.value),
@@ -290,57 +300,71 @@ export default {
 				},
 				startHour: {
 					type: 'list',
+					autocomplete: true,
 					key: 'startHour',
 					label: 'Start Hour',
 					default: 0,
+					cols: 6,
 					rules: [this.rules.required],
 					items: [...Array(24).keys()],
 				},
 				startMinute: {
 					type: 'list',
+					autocomplete: true,
 					key: 'startMinute',
 					label: 'Start Minute',
 					default: 0,
+					cols: 6,
 					rules: [this.rules.required],
 					items: [...Array(60).keys()],
 				},
 				durationHour: {
 					type: 'list',
+					autocomplete: true,
 					key: 'durationHour',
 					label: 'Duration Hour',
+					cols: 6,
 					default: 0,
 					rules: [this.rules.required],
 					items: [...Array(24).keys()],
 				},
 				durationMinute: {
 					type: 'list',
+					autocomplete: true,
 					key: 'durationMinute',
 					label: 'Duration Minute',
 					default: 0,
+					cols: 6,
 					rules: [this.rules.required],
 					items: [...Array(60).keys()],
 				},
 				startYear: {
 					type: 'list',
+					autocomplete: true,
 					key: 'startYear',
 					label: 'Start Year',
 					default: 0,
+					cols: 6,
 					rules: [this.rules.required],
 					items: [...Array(100).keys()].map((i) => i + 2000),
 				},
 				startMonth: {
 					type: 'list',
+					autocomplete: true,
 					key: 'startMonth',
 					label: 'Start Month',
 					default: 1,
+					cols: 6,
 					rules: [this.rules.required],
 					items: months,
 				},
 				startDay: {
 					type: 'list',
+					autocomplete: true,
 					key: 'startDay',
 					label: 'Start Day',
 					default: 1,
+					cols: 6,
 					rules: [this.rules.required],
 					items: [...Array(31).keys()].map((i) => i + 1),
 				},
@@ -414,14 +438,25 @@ export default {
 			return []
 		},
 		async editSlot(slot) {
+			let values = {}
+			if (slot) {
+				values = copy(slot)
+
+				if (values.startYear) {
+					values.startYear += 2000
+					values.stopYear += 2000
+				}
+			}
+
 			const res = await this.$listeners.showConfirm(
 				slot ? 'Edit slot' : 'New slot',
 				'',
 				'info',
 				{
 					width: 900,
-					inputs: this.getInputs(),
+					inputs: this.getInputs(slot),
 					confirmText: slot ? 'Edit' : 'Add',
+					values,
 				}
 			)
 
