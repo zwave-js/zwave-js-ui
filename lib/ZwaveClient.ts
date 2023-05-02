@@ -3829,7 +3829,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		// node is ready when all it's info are parsed and all values added
+		// node is ready when all its info are parsed and all values added
 		// don't set the node as ready before all values are added, to prevent discovery
 		node.ready = true
 

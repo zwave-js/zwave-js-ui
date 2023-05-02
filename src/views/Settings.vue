@@ -1055,7 +1055,7 @@
 									<v-col cols="6">
 										<v-switch
 											label="Ignore status updates"
-											hint="Prevent gateway to send updates when a node changes it's status (dead/sleep, alive)"
+											hint="Prevent gateway to send updates when a node changes its status (dead/sleep, alive)"
 											v-model="newGateway.ignoreStatus"
 											persistent-hint
 										></v-switch>
