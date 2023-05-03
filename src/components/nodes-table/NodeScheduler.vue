@@ -390,7 +390,12 @@ export default {
 				return [
 					inputs.userId,
 					inputs.slotId,
-					{ ...inputs.weekdays, multiple: false, default: 1 },
+					{
+						...inputs.weekdays,
+						key: 'weekday',
+						multiple: false,
+						default: 1,
+					},
 					inputs.startHour,
 					inputs.startMinute,
 					{

@@ -1115,6 +1115,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const isDelete = Object.keys(schedule).length === 0
 
+		if (isDelete) {
+			schedule = undefined
+		}
+
 		let result: SupervisionResult
 
 		if (type === 'daily') {
