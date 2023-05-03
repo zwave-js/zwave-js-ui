@@ -268,7 +268,7 @@ export default {
 				this.showSnackbar('Slot removed', 'success')
 			}
 		},
-		getInputs() {
+		getInputs(slot) {
 			const maxSlots = this.schedule.numSlots
 			const numUsers = this.node.numUsers
 			const inputs = {
@@ -374,22 +374,18 @@ export default {
 				},
 			}
 
+			let toReturn = []
+
 			if (this.mode === 'daily') {
-				return [
-					inputs.userId,
-					inputs.slotId,
+				toReturn = [
 					inputs.weekdays,
 					inputs.startHour,
 					inputs.startMinute,
 					inputs.durationHour,
 					inputs.durationMinute,
 				]
-			}
-
-			if (this.mode === 'weekly') {
-				return [
-					inputs.userId,
-					inputs.slotId,
+			} else if (this.mode === 'weekly') {
+				toReturn = [
 					{
 						...inputs.weekdays,
 						key: 'weekday',
@@ -409,12 +405,8 @@ export default {
 						label: 'Stop Minute',
 					},
 				]
-			}
-
-			if (this.mode === 'yearly') {
-				return [
-					inputs.userId,
-					inputs.slotId,
+			} else if (this.mode === 'yearly') {
+				toReturn = [
 					inputs.startYear,
 					inputs.startMonth,
 					inputs.startDay,
@@ -444,7 +436,11 @@ export default {
 				]
 			}
 
-			return []
+			if (!slot) {
+				toReturn.unshift(inputs.userId, inputs.slotId)
+			}
+
+			return toReturn
 		},
 		async editSlot(slot) {
 			let values = {}
@@ -469,25 +465,32 @@ export default {
 				}
 			)
 
-			if (res.userId) {
-				if (res.startYear) {
-					res.startYear -= 2000
-					res.stopYear -= 2000
-				}
+			if (Object.keys(res).length === 0) {
+				return
+			}
 
-				if (slot) {
-					Object.assign(slot, res)
-				}
+			if (slot) {
+				res.slotId = slot.slotId
+				res.userId = slot.userId
+			}
 
-				const response = await this.app.apiRequest('setSchedule', [
-					this.node.id,
-					this.mode,
-					res,
-				])
+			if (res.startYear) {
+				res.startYear -= 2000
+				res.stopYear -= 2000
+			}
 
-				if (response.success) {
-					this.showSnackbar('Slot saved', 'success')
-				}
+			if (slot) {
+				Object.assign(slot, res)
+			}
+
+			const response = await this.app.apiRequest('setSchedule', [
+				this.node.id,
+				this.mode,
+				res,
+			])
+
+			if (response.success) {
+				this.showSnackbar('Slot saved', 'success')
 			}
 		},
 	},
