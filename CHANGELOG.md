@@ -1,5 +1,20 @@
 
 
+# [8.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.2...v8.15.0) (2023-05-04)
+
+
+### Bug Fixes
+
+* **ui:** show missing props on user codes ([a2f071a](https://github.com/zwave-js/zwave-js-ui/commit/a2f071a2cf1f4bf8505a2919d8f37385110d0114))
+
+
+### Features
+
+* bump zwave-js@10.17.0 ([#3073](https://github.com/zwave-js/zwave-js-ui/issues/3073)) ([d67858c](https://github.com/zwave-js/zwave-js-ui/commit/d67858c9f32352574ee5988eb090afdb28b61ab9))
+* bump zwave-js@10.17.1 ([2eb5b8c](https://github.com/zwave-js/zwave-js-ui/commit/2eb5b8c762550607375ec95aad2fb8200228f74b))
+* **ui:** support for Schedule Entry Lock CC ([#3065](https://github.com/zwave-js/zwave-js-ui/issues/3065)) ([4f1138f](https://github.com/zwave-js/zwave-js-ui/commit/4f1138faf210edda28cde0a167cf8ccb2c6367f1))
+* **ui:** user codes management ([#3063](https://github.com/zwave-js/zwave-js-ui/issues/3063)) ([d3a8b9b](https://github.com/zwave-js/zwave-js-ui/commit/d3a8b9bb1d763771241b936b1e055505ee0a74fd))
+
 ## [8.14.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.1...v8.14.2) (2023-04-26)
 
 
