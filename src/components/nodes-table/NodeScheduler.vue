@@ -242,6 +242,14 @@ export default {
 	mounted() {},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		validSlot(v, values) {
+			return (
+				!this.items.some(
+					(i) =>
+						i.userId === values.userId && i.slotId === values.slotId
+				) || 'Slot already exists'
+			)
+		},
 		async refresh() {
 			this.loading = true
 			const response = await this.app.apiRequest('getSchedules', [
@@ -271,6 +279,7 @@ export default {
 		getInputs(slot) {
 			const maxSlots = this.schedule.numSlots
 			const numUsers = this.node.numUsers
+
 			const inputs = {
 				userId: {
 					type: 'list',
@@ -279,7 +288,7 @@ export default {
 					label: 'User Id',
 					default: 1,
 					cols: 6,
-					rules: [this.rules.required],
+					rules: [this.rules.required, this.validSlot],
 					items: [...Array(numUsers).keys()].map((i) => i + 1),
 				},
 				slotId: {
@@ -289,7 +298,7 @@ export default {
 					label: 'Slot Id',
 					default: 1,
 					cols: 6,
-					rules: [this.rules.required],
+					rules: [this.rules.required, this.validSlot],
 					items: [...Array(maxSlots).keys()].map((i) => i + 1),
 				},
 				weekdays: {

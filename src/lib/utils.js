@@ -14,6 +14,10 @@ export function padNumber(num, digits) {
 		: 'unknown'
 }
 
+export function wrapFunc(fn, ...args) {
+	return (...args2) => fn(...args2, ...args)
+}
+
 export function readAsBuffer(file) {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader()
