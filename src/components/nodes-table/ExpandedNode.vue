@@ -104,6 +104,9 @@
 			<v-tab key="groups" class="justify-start">
 				<v-icon small left>device_hub</v-icon> Groups
 			</v-tab>
+			<v-tab v-if="node.schedule" key="scheduler" class="justify-start">
+				<v-icon small left>event</v-icon> Scheduler
+			</v-tab>
 			<v-tab
 				key="ota"
 				v-if="!node.isControllerNode"
@@ -179,11 +182,16 @@
 
 				<!-- TAB GROUPS -->
 				<v-tab-item key="groups" transition="slide-y-transition">
-					<association-groups
-						:node="node"
-						v-on="$listeners"
-						:socket="socket"
-					/>
+					<association-groups :node="node" v-on="$listeners" />
+				</v-tab-item>
+
+				<!-- TAB SCHEDULER -->
+				<v-tab-item
+					v-if="node.schedule"
+					key="scheduler"
+					transition="slide-y-transition"
+				>
+					<node-scheduler :node="node" v-on="$listeners" />
 				</v-tab-item>
 
 				<!-- TAB OTA UPDATES -->
@@ -307,6 +315,7 @@ import OTAUpdates from './OTAUpdates.vue'
 import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import NodeScheduler from './NodeScheduler.vue'
 
 export default {
 	props: {
@@ -327,6 +336,7 @@ export default {
 		DialogAdvanced,
 		StatisticsCard,
 		OTAUpdates,
+		NodeScheduler,
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
