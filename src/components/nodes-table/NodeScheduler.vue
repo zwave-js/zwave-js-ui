@@ -219,7 +219,7 @@ export default {
 					headers = [
 						...headers,
 						{ text: 'Weekdays', value: 'weekdays' },
-						{ text: 'duration', value: 'duration' },
+						{ text: 'Duration', value: 'duration' },
 					]
 					break
 				case 'weekly':
@@ -279,6 +279,8 @@ export default {
 		getInputs(slot) {
 			const maxSlots = this.schedule.numSlots
 			const numUsers = this.node.numUsers
+
+			const actualYear = new Date().getFullYear()
 
 			const inputs = {
 				userId: {
@@ -359,7 +361,9 @@ export default {
 					default: 0,
 					cols: 6,
 					rules: [this.rules.required],
-					items: [...Array(100).keys()].map((i) => i + 2000),
+					items: [...Array(100).keys()]
+						.map((i) => i + 2000)
+						.filter((i) => i >= actualYear),
 				},
 				startMonth: {
 					type: 'list',
