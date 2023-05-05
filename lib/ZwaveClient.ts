@@ -1032,7 +1032,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const node = this._nodes.get(nodeId)
 
-		const isInited = !node.schedule
+		const isInited = !!node.schedule
 
 		node.schedule = {
 			daily: {
