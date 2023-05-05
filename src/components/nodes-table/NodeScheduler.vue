@@ -300,7 +300,7 @@ export default {
 		},
 		getInputs(slot) {
 			const maxSlots = this.schedule.numSlots
-			const numUsers = this.node.numUsers
+			const userCodes = this.node.userCodes
 
 			const actualYear = new Date().getFullYear()
 
@@ -313,7 +313,18 @@ export default {
 					default: 1,
 					cols: 6,
 					rules: [this.rules.required, this.validSlot],
-					items: [...Array(numUsers).keys()].map((i) => i + 1),
+					items: [...Array(userCodes.total).keys()].map((i) => {
+						const disabled = !userCodes.enabled.includes(i + 1)
+
+						return {
+							text:
+								i +
+								1 +
+								(disabled ? ' (user code not set)' : ''),
+							value: i + 1,
+							disabled,
+						}
+					}),
 				},
 				slotId: {
 					type: 'list',

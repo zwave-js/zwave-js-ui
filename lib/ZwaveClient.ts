@@ -462,7 +462,10 @@ export type ZUINode = {
 	eventsQueue: NodeEvent[]
 	bgRSSIPoints?: BackgroundRSSIPoint[]
 	schedule?: ZUISchedule
-	numUsers?: number
+	userCodes?: {
+		total: number
+		enabled: number[]
+	}
 }
 
 export type NodeEvent = {
@@ -1068,7 +1071,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				},
 			}
 
-			node.numUsers = userCodes
+			node.userCodes = {
+				total: userCodes,
+				enabled: [],
+			}
 
 			// for performance reasons we skip query the schedules on init
 			// some locks may have tons of slots causing network congestion
@@ -1084,6 +1090,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						// skip query on not enabled userIds
 						continue
 					}
+
+					node.userCodes.enabled.push(i)
 
 					if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
 						weeklySchedules.length = 0
@@ -1147,7 +1155,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.emitNodeUpdate(node, {
 				schedule: node.schedule,
-				numUsers: node.numUsers,
+				userCodes: node.userCodes,
 			})
 
 			return node.schedule
