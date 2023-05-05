@@ -19,12 +19,20 @@
 			>
 				<template v-slot:top>
 					<v-btn
-						:disabled="loading"
+						v-if="!loading"
 						text
 						color="primary"
 						@click="refresh()"
 						class="mb-2"
 						>Refresh</v-btn
+					>
+					<v-btn
+						v-else
+						text
+						color="error"
+						@click="cancel()"
+						class="mb-2"
+						>Stop</v-btn
 					>
 					<v-btn text color="green" @click="editSlot()" class="mb-2"
 						>Add</v-btn
@@ -254,12 +262,21 @@ export default {
 			this.loading = true
 			const response = await this.app.apiRequest('getSchedules', [
 				this.node.id,
+				this.mode,
 			])
 
 			this.loading = false
 
 			if (response.success) {
 				this.showSnackbar('Schedules updated', 'success')
+			}
+		},
+		async cancel() {
+			const response = await this.app.apiRequest('cancelGetSchedule', [])
+
+			if (response.success) {
+				this.loading = false
+				this.showSnackbar('Schedule cancelled', 'success')
 			}
 		},
 		async removeSlot(slot) {
