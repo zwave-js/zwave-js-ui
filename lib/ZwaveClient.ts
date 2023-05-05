@@ -82,6 +82,8 @@ import {
 	ScheduleEntryLockSlotId,
 	ScheduleEntryLockCC,
 	UserCodeCC,
+	UserCodeCCValues,
+	UserIDStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -1027,6 +1029,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const dailySchedules: (ScheduleEntryLockDailyRepeatingSchedule &
 			ScheduleEntryLockSlotId)[] = []
 		for (let i = 1; i <= userCodes; i++) {
+			const valueId = UserCodeCCValues.userIdStatus(i).endpoint(0)
+			const value = zwaveNode.getValue<UserIDStatus>(valueId)
+			if (
+				value === undefined ||
+				value === UserIDStatus.Available ||
+				value === UserIDStatus.StatusNotAvailable
+			) {
+				// skip query on not enabled userIds
+				continue
+			}
+
 			for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
 				const slot: ScheduleEntryLockSlotId = {
 					userId: i,
