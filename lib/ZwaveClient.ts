@@ -1022,59 +1022,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					zwaveNode
 				),
 		}
+
 		const weeklySchedules: (ScheduleEntryLockWeekDaySchedule &
 			ScheduleEntryLockSlotId)[] = []
 		const yearlySchedules: (ScheduleEntryLockYearDaySchedule &
 			ScheduleEntryLockSlotId)[] = []
 		const dailySchedules: (ScheduleEntryLockDailyRepeatingSchedule &
 			ScheduleEntryLockSlotId)[] = []
-		for (let i = 1; i <= userCodes; i++) {
-			const valueId = UserCodeCCValues.userIdStatus(i).endpoint(0)
-			const value = zwaveNode.getValue<UserIDStatus>(valueId)
-			if (
-				value === undefined ||
-				value === UserIDStatus.Available ||
-				value === UserIDStatus.StatusNotAvailable
-			) {
-				// skip query on not enabled userIds
-				continue
-			}
-
-			for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
-				const slot: ScheduleEntryLockSlotId = {
-					userId: i,
-					slotId: s,
-				}
-				const schedule = await zwaveNode.commandClasses[
-					'Schedule Entry Lock'
-				].getWeekDaySchedule(slot)
-				if (schedule) weeklySchedules.push({ ...slot, ...schedule })
-			}
-
-			for (let s = 1; s <= numSlots.numYearDaySlots; s++) {
-				const slot: ScheduleEntryLockSlotId = {
-					userId: i,
-					slotId: s,
-				}
-				const schedule = await zwaveNode.commandClasses[
-					'Schedule Entry Lock'
-				].getYearDaySchedule(slot)
-				if (schedule) yearlySchedules.push({ ...slot, ...schedule })
-			}
-
-			for (let s = 1; s <= numSlots.numDailyRepeatingSlots; s++) {
-				const slot: ScheduleEntryLockSlotId = {
-					userId: i,
-					slotId: s,
-				}
-				const schedule = await zwaveNode.commandClasses[
-					'Schedule Entry Lock'
-				].getDailyRepeatingSchedule(slot)
-				if (schedule) dailySchedules.push({ ...slot, ...schedule })
-			}
-		}
 
 		const node = this._nodes.get(nodeId)
+
+		const isInited = !node.schedule
+
 		node.schedule = {
 			daily: {
 				numSlots: numSlots.numDailyRepeatingSlots,
@@ -1091,6 +1050,56 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		node.numUsers = userCodes
+
+		// for performance reasons we skip query the schedules on init
+		// some locks may have tons of slots causing network congestion
+		if (isInited) {
+			for (let i = 1; i <= userCodes; i++) {
+				const valueId = UserCodeCCValues.userIdStatus(i).endpoint(0)
+				const value = zwaveNode.getValue<UserIDStatus>(valueId)
+				if (
+					value === undefined ||
+					value === UserIDStatus.Available ||
+					value === UserIDStatus.StatusNotAvailable
+				) {
+					// skip query on not enabled userIds
+					continue
+				}
+
+				for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
+					const slot: ScheduleEntryLockSlotId = {
+						userId: i,
+						slotId: s,
+					}
+					const schedule = await zwaveNode.commandClasses[
+						'Schedule Entry Lock'
+					].getWeekDaySchedule(slot)
+					if (schedule) weeklySchedules.push({ ...slot, ...schedule })
+				}
+
+				for (let s = 1; s <= numSlots.numYearDaySlots; s++) {
+					const slot: ScheduleEntryLockSlotId = {
+						userId: i,
+						slotId: s,
+					}
+					const schedule = await zwaveNode.commandClasses[
+						'Schedule Entry Lock'
+					].getYearDaySchedule(slot)
+					if (schedule) yearlySchedules.push({ ...slot, ...schedule })
+				}
+
+				for (let s = 1; s <= numSlots.numDailyRepeatingSlots; s++) {
+					const slot: ScheduleEntryLockSlotId = {
+						userId: i,
+						slotId: s,
+					}
+					const schedule = await zwaveNode.commandClasses[
+						'Schedule Entry Lock'
+					].getDailyRepeatingSchedule(slot)
+					if (schedule) dailySchedules.push({ ...slot, ...schedule })
+				}
+			}
+		}
 
 		this.emitNodeUpdate(node, {
 			schedule: node.schedule,
