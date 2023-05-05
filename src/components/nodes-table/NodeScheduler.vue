@@ -6,7 +6,7 @@
 				label="Schedule mode"
 				style="max-width: 200px"
 				v-model="mode"
-				:items="modes"
+				:items="supportedModes"
 			></v-select>
 		</v-row>
 		<v-row justify="center" class="pa-1">
@@ -150,6 +150,11 @@ export default {
 	computed: {
 		schedule() {
 			return this.node.schedule[this.mode]
+		},
+		supportedModes() {
+			return this.modes.filter((m) => {
+				return this.node.schedule[m.value].numSlots > 0
+			})
 		},
 		items() {
 			const items = []
