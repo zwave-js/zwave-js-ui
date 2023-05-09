@@ -277,7 +277,6 @@ export default {
 			)
 		},
 		async setEnabled(slot) {
-			this.loading = true
 			const response = await this.app.apiRequest('sendCommand', [
 				{
 					nodeId: this.node.id,
@@ -286,8 +285,6 @@ export default {
 				'setEnabled',
 				[!slot.enabled, slot.userId],
 			])
-
-			this.loading = false
 
 			if (response.success) {
 				this.showSnackbar(`User ID ${slot.userId} enabled`, 'success')
