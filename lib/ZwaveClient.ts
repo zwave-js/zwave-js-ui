@@ -1019,6 +1019,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const promise = async () => {
 			this._cancelGetSchedule = false
 			this._lockGetSchedule = true
+			// TODO: should we check also other endpoints?
+			const endpoint = 0
 
 			const userCodes = UserCodeCC.getSupportedUsersCached(
 				// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
@@ -1083,13 +1085,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					const status = UserCodeCC.getUserIdStatusCached(
 						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 						this.driver,
-						0,
+						endpoint,
 						i
 					)
 					const code = UserCodeCC.getUserCodeCached(
 						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 						this.driver,
-						0,
+						endpoint,
 						i
 					)
 
