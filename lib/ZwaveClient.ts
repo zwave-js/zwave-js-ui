@@ -1080,14 +1080,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// some locks may have tons of slots causing network congestion
 			if (isInited) {
 				for (let i = 1; i <= userCodes; i++) {
-					const valueId = UserCodeCCValues.userIdStatus(i).endpoint(0)
-					const value = zwaveNode.getValue<UserIDStatus>(valueId)
+					const status = UserCodeCC.getUserIdStatusCached(
+						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+						this.driver,
+						0,
+						i
+					)
+					const code = UserCodeCC.getUserCodeCached(
+						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+						this.driver,
+						0,
+						i
+					)
+
 					if (
-						value === undefined ||
-						value === UserIDStatus.Available ||
-						value === UserIDStatus.StatusNotAvailable
+						code &&
+						(status === undefined ||
+							status === UserIDStatus.Available ||
+							status === UserIDStatus.StatusNotAvailable)
 					) {
-						// skip query on not enabled userIds
+						// skip query on not enabled userIds or empty codes
 						continue
 					}
 
