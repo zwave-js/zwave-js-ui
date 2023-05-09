@@ -464,6 +464,7 @@ export type ZUINode = {
 	schedule?: ZUISchedule
 	userCodes?: {
 		total: number
+		available: number[]
 		enabled: number[]
 	}
 }
@@ -1075,6 +1076,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			node.userCodes = {
 				total: userCodes,
+				available: [],
 				enabled: [],
 			}
 
@@ -1105,7 +1107,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						continue
 					}
 
-					node.userCodes.enabled.push(i)
+					node.userCodes.available.push(i)
 
 					if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
 						weeklySchedules.length = 0

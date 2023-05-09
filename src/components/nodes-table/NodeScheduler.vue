@@ -16,6 +16,7 @@
 				item-key="id"
 				:loading="loading"
 				class="elevation-1"
+				:mobile-breakpoint="0"
 			>
 				<template v-slot:top>
 					<v-btn
@@ -36,6 +37,15 @@
 					>
 					<v-btn text color="green" @click="editSlot()" class="mb-2"
 						>Add</v-btn
+					>
+				</template>
+
+				<template v-slot:[`item.enabled`]="{ item }">
+					<v-btn
+						x-small
+						:color="item.enabled ? 'success' : 'error'"
+						@click="setEnabled(item)"
+						>{{ item.enabled ? 'Enabled' : 'Disabled' }}</v-btn
 					>
 				</template>
 
@@ -158,10 +168,12 @@ export default {
 		},
 		items() {
 			const items = []
+			const userCodes = this.node.userCodes
 
 			for (const s of this.schedule.slots) {
 				let item = {
 					id: `${s.userId}-${s.slotId}`,
+					enabled: userCodes.enabled.includes(s.userId),
 					userId: s.userId,
 					slotId: s.slotId,
 					start: '',
@@ -247,6 +259,7 @@ export default {
 					break
 			}
 
+			headers.push({ text: 'Enable', value: 'enabled', sortable: false })
 			headers.push({ text: 'Actions', value: 'actions', sortable: false })
 
 			return headers
@@ -262,6 +275,23 @@ export default {
 						i.userId === values.userId && i.slotId === values.slotId
 				) || 'Slot already exists'
 			)
+		},
+		async setEnabled(slot) {
+			this.loading = true
+			const response = await this.app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 78,
+				},
+				'setEnabled',
+				[!slot.enabled, slot.userId],
+			])
+
+			this.loading = false
+
+			if (response.success) {
+				this.showSnackbar(`User ID ${slot.userId} enabled`, 'success')
+			}
 		},
 		async refresh() {
 			this.loading = true
@@ -314,7 +344,7 @@ export default {
 					cols: 6,
 					rules: [this.rules.required, this.validSlot],
 					items: [...Array(userCodes.total).keys()].map((i) => {
-						const disabled = !userCodes.enabled.includes(i + 1)
+						const disabled = !userCodes.available.includes(i + 1)
 
 						return {
 							text:
