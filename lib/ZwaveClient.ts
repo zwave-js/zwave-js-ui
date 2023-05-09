@@ -82,7 +82,6 @@ import {
 	ScheduleEntryLockSlotId,
 	ScheduleEntryLockCC,
 	UserCodeCC,
-	UserCodeCCValues,
 	UserIDStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
