@@ -277,17 +277,32 @@ export default {
 			)
 		},
 		async setEnabled(slot) {
+			const enabled = !slot.enabled
 			const response = await this.app.apiRequest('sendCommand', [
 				{
 					nodeId: this.node.id,
 					commandClass: 78,
 				},
 				'setEnabled',
-				[!slot.enabled, slot.userId],
+				[enabled, slot.userId],
 			])
 
-			if (response.success) {
-				this.showSnackbar(`User ID ${slot.userId} enabled`, 'success')
+			if (!response.success) {
+				this.showSnackbar(
+					`User ID ${slot.userId} ${
+						enabled ? 'enabled' : 'disabled'
+					}`,
+					'success'
+				)
+
+				if (enabled) {
+					this.node.userCodes.enabled.push(slot.userId)
+				} else {
+					this.node.userCodes.enabled.slice(
+						this.node.userCodes.enabled.indexOf(slot.userId),
+						1
+					)
+				}
 			}
 		},
 		async refresh() {
