@@ -1090,18 +1090,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						endpoint,
 						i
 					)
-					const code = UserCodeCC.getUserCodeCached(
-						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
-						this.driver,
-						endpoint,
-						i
-					)
 
 					if (
-						code &&
-						(status === undefined ||
-							status === UserIDStatus.Available ||
-							status === UserIDStatus.StatusNotAvailable)
+						status === undefined ||
+						status === UserIDStatus.Available ||
+						status === UserIDStatus.StatusNotAvailable
 					) {
 						// skip query on not enabled userIds or empty codes
 						continue
