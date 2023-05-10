@@ -1020,30 +1020,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._cancelGetSchedule = false
 			this._lockGetSchedule = true
 			// TODO: should we check also other endpoints?
-			const endpoint = 0
+			const endpointIndex = 0
+			const endpoint = zwaveNode.getEndpoint(endpointIndex)
 
 			const userCodes = UserCodeCC.getSupportedUsersCached(
 				// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 				this.driver,
-				zwaveNode
+				endpoint
 			)
 
 			const numSlots = {
 				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
 					// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 					this.driver,
-					zwaveNode
+					endpoint
 				),
 				numYearDaySlots: ScheduleEntryLockCC.getNumYearDaySlotsCached(
 					// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 					this.driver,
-					zwaveNode
+					endpoint
 				),
 				numDailyRepeatingSlots:
 					ScheduleEntryLockCC.getNumDailyRepeatingSlotsCached(
 						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 						this.driver,
-						zwaveNode
+						endpoint
 					),
 			}
 
@@ -1107,6 +1108,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 
 					node.userCodes.available.push(i)
+
+					// TODO: get from cache if userId i is enabled and
+					// push it to node.userCodes.enabled if so
+					// const enalbed =
+					// 	ScheduleEntryLockCC.getUserCodeEnabledCached(
+					// 		// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+					// 		this.driver,
+					// 		endpoint,
+					// 		i
+					// 	)
+
+					// if (enalbed) {
+					// 	node.userCodes.enabled.push(i)
+					// }
 
 					if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
 						weeklySchedules.length = 0

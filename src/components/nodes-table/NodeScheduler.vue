@@ -337,7 +337,7 @@ export default {
 					autocomplete: true,
 					key: 'userId',
 					label: 'User Id',
-					default: 1,
+					default: userCodes.enabled[0],
 					cols: 6,
 					rules: [this.rules.required, this.validSlot],
 					items: [...Array(userCodes.total).keys()].map((i) => {
