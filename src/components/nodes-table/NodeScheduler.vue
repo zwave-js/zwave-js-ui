@@ -15,7 +15,6 @@
 				:items="items"
 				item-key="id"
 				:loading="loading"
-				class="elevation-1"
 				:mobile-breakpoint="0"
 			>
 				<template v-slot:top>
@@ -282,7 +281,9 @@ export default {
 			return headers
 		},
 	},
-	mounted() {},
+	mounted() {
+		this.mode = this.activeMode
+	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		validSlot(v, values) {

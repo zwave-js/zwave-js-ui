@@ -51,9 +51,10 @@
 				@click="setEnabled(item)"
 				>{{ item.schedule.enabled ? 'Enabled' : 'Disabled' }}</v-btn
 			>
-			<p>
-				Mode: {{ item.schedule.type || '---' }} Slots:
-				{{ item.schedule.slots.length }}
+			<p class="mb-0">
+				Mode:
+				<b class="text-capitalize">{{ item.schedule.type || '---' }}</b>
+				Slots:<b> {{ item.schedule.slots.length }}</b>
 			</p>
 		</template>
 
