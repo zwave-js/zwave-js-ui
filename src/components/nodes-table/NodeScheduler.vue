@@ -21,6 +21,7 @@
 				<template v-slot:top>
 					<v-btn
 						v-if="!loading"
+						small
 						text
 						color="primary"
 						@click="refresh()"
@@ -29,23 +30,31 @@
 					>
 					<v-btn
 						v-else
+						small
 						text
 						color="error"
 						@click="cancel()"
 						class="mb-2"
 						>Stop</v-btn
 					>
-					<v-btn text color="green" @click="editSlot()" class="mb-2"
+
+					<v-btn
+						small
+						text
+						color="green"
+						@click="editSlot()"
+						class="mb-2"
 						>Add</v-btn
 					>
-				</template>
 
-				<template v-slot:[`item.enabled`]="{ item }">
 					<v-btn
-						x-small
-						:color="item.enabled ? 'success' : 'error'"
-						@click="setEnabled(item)"
-						>{{ item.enabled ? 'Enabled' : 'Disabled' }}</v-btn
+						small
+						v-if="mode !== activeMode && items.length > 0"
+						text
+						color="warning"
+						@click="enableMode()"
+						class="mb-2"
+						>Enable</v-btn
 					>
 				</template>
 
@@ -126,15 +135,12 @@ export default {
 	mixins: [InstancesMixin],
 	props: {
 		node: Object,
+		user: Object,
+		activeMode: String,
 	},
 	data() {
 		return {
 			mode: 'daily',
-			modes: [
-				{ text: 'Daily', value: 'daily' },
-				{ text: 'Weekly', value: 'weekly' },
-				{ text: 'Yearly', value: 'yearly' },
-			],
 			weekdays: Object.keys(ScheduleEntryLockWeekday)
 				.map((key) => ({
 					text: key,
@@ -166,15 +172,28 @@ export default {
 				return this.node.schedule[m.value].numSlots > 0
 			})
 		},
+		modes() {
+			const modes = [
+				{ text: 'Daily', value: 'daily' },
+				{ text: 'Weekly', value: 'weekly' },
+				{ text: 'Yearly', value: 'yearly' },
+			]
+
+			for (const m of modes) {
+				if (this.activeMode !== m.value) {
+					m.text = `${m.text} (disabled)`
+				}
+			}
+
+			return modes
+		},
 		items() {
 			const items = []
-			const userCodes = this.node.userCodes
 
-			for (const s of this.schedule.slots) {
+			for (const s of this.user.schedule.slots) {
+				if (s.type !== this.mode) continue
+
 				let item = {
-					id: `${s.userId}-${s.slotId}`,
-					enabled: userCodes.enabled.includes(s.userId),
-					userId: s.userId,
 					slotId: s.slotId,
 					start: '',
 					end: '',
@@ -234,7 +253,6 @@ export default {
 		},
 		headers() {
 			let headers = [
-				{ text: 'User Id', value: 'userId' },
 				{ text: 'Slot Id', value: 'slotId' },
 				{ text: 'Start', value: 'start' },
 			]
@@ -259,7 +277,6 @@ export default {
 					break
 			}
 
-			headers.push({ text: 'Enable', value: 'enabled', sortable: false })
 			headers.push({ text: 'Actions', value: 'actions', sortable: false })
 
 			return headers
@@ -270,39 +287,20 @@ export default {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		validSlot(v, values) {
 			return (
-				!this.items.some(
-					(i) =>
-						i.userId === values.userId && i.slotId === values.slotId
-				) || 'Slot already exists'
+				!this.items.some((i) => i.slotId === values.slotId) ||
+				'Slot already exists'
 			)
 		},
-		async setEnabled(slot) {
-			const enabled = !slot.enabled
-			const response = await this.app.apiRequest('sendCommand', [
-				{
-					nodeId: this.node.id,
-					commandClass: 78,
-				},
-				'setEnabled',
-				[enabled, slot.userId],
+		async enableMode() {
+			// in order to enable a mode we need to set a schedule
+			const response = await this.app.apiRequest('setSchedule', [
+				this.node.id,
+				this.mode,
+				{ ...this.items[0].slot, type: undefined },
 			])
 
-			if (!response.success) {
-				this.showSnackbar(
-					`User ID ${slot.userId} ${
-						enabled ? 'enabled' : 'disabled'
-					}`,
-					'success'
-				)
-
-				if (enabled) {
-					this.node.userCodes.enabled.push(slot.userId)
-				} else {
-					this.node.userCodes.enabled.slice(
-						this.node.userCodes.enabled.indexOf(slot.userId),
-						1
-					)
-				}
+			if (response.success) {
+				this.showSnackbar(`Mode ${this.mode} enabled`, 'success')
 			}
 		},
 		async refresh() {
@@ -332,7 +330,7 @@ export default {
 				this.mode,
 				{
 					slotId: slot.slotId,
-					userId: slot.userId,
+					userId: this.user.id,
 				},
 			])
 
@@ -342,32 +340,10 @@ export default {
 		},
 		getInputs(slot) {
 			const maxSlots = this.schedule.numSlots
-			const userCodes = this.node.userCodes
 
 			const actualYear = new Date().getFullYear()
 
 			const inputs = {
-				userId: {
-					type: 'list',
-					autocomplete: true,
-					key: 'userId',
-					label: 'User Id',
-					default: userCodes.available[0],
-					cols: 6,
-					rules: [this.rules.required, this.validSlot],
-					items: [...Array(userCodes.total).keys()].map((i) => {
-						const disabled = !userCodes.available.includes(i + 1)
-
-						return {
-							text:
-								i +
-								1 +
-								(disabled ? ' (user code not set)' : ''),
-							value: i + 1,
-							disabled,
-						}
-					}),
-				},
 				slotId: {
 					type: 'list',
 					autocomplete: true,
@@ -525,7 +501,7 @@ export default {
 			}
 
 			if (!slot) {
-				toReturn.unshift(inputs.userId, inputs.slotId)
+				toReturn.unshift(inputs.slotId)
 			}
 
 			return toReturn
@@ -541,7 +517,7 @@ export default {
 				}
 			}
 
-			const res = await this.$listeners.showConfirm(
+			const res = await this.app.confirm(
 				slot ? 'Edit slot' : 'New slot',
 				'',
 				'info',
@@ -559,7 +535,6 @@ export default {
 
 			if (slot) {
 				res.slotId = slot.slotId
-				res.userId = slot.userId
 			}
 
 			if (res.startYear) {
@@ -574,7 +549,7 @@ export default {
 			const response = await this.app.apiRequest('setSchedule', [
 				this.node.id,
 				this.mode,
-				res,
+				{ ...res, userId: this.user.id },
 			])
 
 			if (response.success) {

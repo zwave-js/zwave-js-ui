@@ -217,24 +217,15 @@
 									cols="12"
 									v-for="(v, index) in group"
 									:key="index"
-									v-show="displayValue(v)"
 									sm="6"
 									md="4"
 								>
 									<ValueID
-										v-if="displayValue(v)"
 										@updateValue="updateValue"
 										v-model="group[index]"
 										:node="node"
 									></ValueID>
 								</v-col>
-							</v-row>
-							<v-row v-if="className.startsWith('User Code')">
-								<UserCodeTable
-									@updateValue="updateValue"
-									:node="node"
-									:values="group"
-								></UserCodeTable>
 							</v-row>
 							<v-row>
 								<v-col
@@ -315,7 +306,6 @@
 
 <script>
 import ValueID from '../ValueId'
-import UserCodeTable from './UserCodeTable'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
@@ -330,7 +320,6 @@ export default {
 	},
 	components: {
 		ValueID,
-		UserCodeTable,
 	},
 	mixins: [InstancesMixin],
 	data() {
@@ -408,12 +397,6 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		displayValue(v) {
-			return (
-				v.commandClassName !== 'User Code' ||
-				!['userCode', 'userIdStatus'].includes(v.property)
-			)
-		},
 		async updateControllerNodeProp(prop) {
 			const response = await this.app.apiRequest(
 				'updateControllerNodeProps',

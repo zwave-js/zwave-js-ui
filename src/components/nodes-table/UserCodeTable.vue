@@ -7,6 +7,7 @@
 		:footer-props="{
 			showFirstLastPage: true,
 		}"
+		:show-expand="!!node.schedule"
 	>
 		<template v-slot:[`item.code`]="props">
 			<v-edit-dialog
@@ -43,21 +44,41 @@
 				</template>
 			</v-edit-dialog>
 		</template>
+		<template v-slot:[`item.schedule`]="{ item }">
+			<v-btn
+				x-small
+				:color="item.schedule.enabled ? 'success' : 'error'"
+				@click="setEnabled(item)"
+				>{{ item.schedule.enabled ? 'Enabled' : 'Disabled' }}</v-btn
+			>
+			<p>
+				Mode: {{ item.schedule.type || '---' }} Slots:
+				{{ item.schedule.slots.length }}
+			</p>
+		</template>
+
+		<template v-slot:expanded-item="{ headers, item }">
+			<td :colspan="headers.length">
+				<node-scheduler
+					:node="node"
+					:user="item"
+					:activeMode="item.schedule.type"
+				></node-scheduler>
+			</td>
+		</template>
 	</v-data-table>
 </template>
 
 <script>
-const DIALOG_HASH = '#usercodes'
+import NodeScheduler from './NodeScheduler.vue'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
-	props: { node: Object, values: Array },
+	mixins: [InstancesMixin],
+	props: { node: Object },
+	components: { NodeScheduler },
 	data() {
 		return {
-			headers: [
-				{ text: 'Index', value: 'id' },
-				{ text: 'Code', value: 'code' },
-				{ text: 'Status', value: 'status' },
-			],
 			statuses: [
 				{
 					text: 'Available',
@@ -77,30 +98,30 @@ export default {
 			newStatus: -1,
 		}
 	},
-	watch: {
-		value(val) {
-			if (val) {
-				this.$router.push(DIALOG_HASH)
-			} else if (this.$route.hash === DIALOG_HASH) {
-				this.$router.back()
-			}
-		},
-		'$route.hash': function hash(newHash, oldHash) {
-			if (newHash === DIALOG_HASH) {
-				this._open = true
-			} else if (oldHash === DIALOG_HASH) {
-				this._open = false
-			}
-		},
-	},
 	computed: {
+		headers() {
+			const base = [
+				{ text: 'Index', value: 'id' },
+				{ text: 'Code', value: 'code' },
+				{ text: 'Status', value: 'status' },
+			]
+
+			if (this.node.schedule) {
+				base.push({ text: 'Scheduling', value: 'schedule' })
+			}
+
+			return base
+		},
+		values() {
+			return this.node.values?.filter((v) => v.commandClass === 99) || []
+		},
 		userCodes() {
 			if (!this.values) return []
 			const toReturn = []
 
 			for (const v of this.values) {
 				const id = v.propertyKey
-				const code = toReturn[id] || { id }
+				const code = toReturn[id] || this.getBaseItem(id)
 				const prop = v.property
 				if (prop === 'userCode') {
 					code.code = v.value
@@ -117,8 +138,63 @@ export default {
 		},
 	},
 	methods: {
+		async setEnabled(user) {
+			const enabled = !user.schedule.enabled
+			const response = await this.app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 78,
+				},
+				'setEnabled',
+				[enabled, user.id],
+			])
+
+			if (!response.success) {
+				this.showSnackbar(
+					`User ID ${user.id} ${enabled ? 'enabled' : 'disabled'}`,
+					'success'
+				)
+
+				// TODO: refresh user codes
+
+				// if (enabled) {
+				// 	this.node.userCodes.enabled.push(this.user.id)
+				// } else {
+				// 	this.node.userCodes.enabled.slice(
+				// 		this.node.userCodes.enabled.indexOf(this.user.id),
+				// 		1
+				// 	)
+				// }
+			}
+		},
 		getStatus(status) {
 			return this.statuses.find((s) => s.value === status)?.text
+		},
+		getSlots(id) {
+			const allSlots = []
+			for (const type in this.node.schedule) {
+				allSlots.push(
+					...this.node.schedule[type].slots
+						.filter((s) => s.userId === id)
+						.map((s) => ({ ...s, type }))
+				)
+			}
+
+			return allSlots
+		},
+		getBaseItem(id) {
+			const base = { id }
+
+			if (this.node.schedule) {
+				const slots = this.getSlots(id)
+				base.schedule = {
+					type: slots.find((s) => s.enabled)?.type,
+					slots,
+					enabled: this.node.userCodes.enabled.includes(id),
+				}
+			}
+
+			return base
 		},
 		getValueId(id, prop) {
 			return this.values.find(
