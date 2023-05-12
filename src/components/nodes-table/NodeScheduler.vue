@@ -7,6 +7,8 @@
 				style="max-width: 200px"
 				v-model="mode"
 				:items="supportedModes"
+				persistent-hint
+				:hint="`Max slots: ${this.schedule.numSlots}`"
 			></v-select>
 		</v-row>
 		<v-row justify="center" class="pa-1">
@@ -40,6 +42,7 @@
 					<v-btn
 						small
 						text
+						:disabled="schedule.numSlots <= items.length"
 						color="green"
 						@click="editSlot()"
 						class="mb-2"
