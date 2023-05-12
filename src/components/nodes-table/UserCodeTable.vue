@@ -142,13 +142,10 @@ export default {
 	methods: {
 		async setEnabled(user) {
 			const enabled = !user.schedule.enabled
-			const response = await this.app.apiRequest('sendCommand', [
-				{
-					nodeId: this.node.id,
-					commandClass: 78,
-				},
-				'setEnabled',
-				[enabled, user.id],
+			const response = await this.app.apiRequest('setEnabledSchedule', [
+				this.node.id,
+				enabled,
+				user.id,
 			])
 
 			if (!response.success) {

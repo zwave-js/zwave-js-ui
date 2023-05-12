@@ -201,6 +201,7 @@ export const allowedApis = validateMethods([
 	'getSchedules',
 	'cancelGetSchedule',
 	'setSchedule',
+	'setEnabledSchedule',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -1342,6 +1343,45 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				this.emitNodeUpdate(node, {
 					schedule: node.schedule,
+				})
+			}
+		}
+
+		return result
+	}
+
+	async setEnabledSchedule(nodeId: number, enabled: boolean, userId: number) {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (!zwaveNode) {
+			throw new Error('Node not found')
+		}
+
+		const result = await zwaveNode.commandClasses[
+			'Schedule Entry Lock'
+		].setEnabled(enabled, userId)
+
+		if (result.status === SupervisionStatus.Success) {
+			const node = this._nodes.get(nodeId)
+
+			if (node) {
+				if (userId) {
+					if (enabled) {
+						node.userCodes?.enabled.push(userId)
+					} else {
+						const index = node.userCodes?.enabled.indexOf(userId)
+						if (index >= 0) {
+							node.userCodes.enabled.splice(index, 1)
+						}
+					}
+				} else {
+					node.userCodes.enabled = enabled
+						? node.userCodes.available.slice()
+						: []
+				}
+
+				this.emitNodeUpdate(node, {
+					userCodes: node.userCodes,
 				})
 			}
 		}
@@ -3178,29 +3218,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// send the command with args
 			const method = api[command].bind(api)
 			const result = args ? await method(...args) : await method()
-
-			if (
-				commandClass === CommandClasses['Schedule Entry Lock'] &&
-				command === 'setEnabled'
-			) {
-				// update enabled user codes
-				const node = this._nodes.get(ctx.nodeId)
-				if (node) {
-					const [enabled, userId] = args
-					if (enabled) {
-						node.userCodes?.enabled.push(userId)
-					} else {
-						const index = node.userCodes?.enabled.indexOf(userId)
-						if (index >= 0) {
-							node.userCodes.enabled.splice(index, 1)
-						}
-					}
-
-					this.emitNodeUpdate(node, {
-						userCodes: node.userCodes,
-					})
-				}
-			}
 
 			return result
 		}
