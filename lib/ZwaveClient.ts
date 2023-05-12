@@ -3178,6 +3178,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// send the command with args
 			const method = api[command].bind(api)
 			const result = args ? await method(...args) : await method()
+
+			if (
+				commandClass === CommandClasses['Schedule Entry Lock'] &&
+				command === 'setEnabled'
+			) {
+				// update enabled user codes
+				const node = this._nodes.get(ctx.nodeId)
+				if (node) {
+					const [enabled, userId] = args
+					if (enabled) {
+						node.userCodes?.enabled.push(userId)
+					} else {
+						const index = node.userCodes?.enabled.indexOf(userId)
+						if (index >= 0) {
+							node.userCodes.enabled.splice(index, 1)
+						}
+					}
+
+					this.emitNodeUpdate(node, {
+						userCodes: node.userCodes,
+					})
+				}
+			}
+
 			return result
 		}
 

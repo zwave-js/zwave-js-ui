@@ -3,9 +3,9 @@
 		<v-row justify="center">
 			<v-select
 				class="ma-2"
-				label="Schedule mode"
 				style="max-width: 200px"
 				v-model="mode"
+				dense
 				:items="supportedModes"
 				persistent-hint
 				:hint="`Max slots: ${this.schedule.numSlots}`"
@@ -17,12 +17,14 @@
 				:items="items"
 				item-key="id"
 				:loading="loading"
+				dense
 				:mobile-breakpoint="0"
 			>
 				<template v-slot:top>
 					<v-btn
 						v-if="!loading"
 						small
+						outlined
 						text
 						color="primary"
 						@click="refresh()"
@@ -32,6 +34,7 @@
 					<v-btn
 						v-else
 						small
+						outlined
 						text
 						color="error"
 						@click="cancel()"
@@ -41,6 +44,7 @@
 
 					<v-btn
 						small
+						outlined
 						text
 						:disabled="schedule.numSlots <= items.length"
 						color="green"
@@ -51,6 +55,7 @@
 
 					<v-btn
 						small
+						outlined
 						v-if="mode !== activeMode && items.length > 0"
 						text
 						color="warning"

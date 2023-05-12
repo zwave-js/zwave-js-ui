@@ -7,6 +7,7 @@
 		:footer-props="{
 			showFirstLastPage: true,
 		}"
+		dense
 		:show-expand="!!node.schedule"
 	>
 		<template v-slot:[`item.code`]="props">
@@ -155,17 +156,6 @@ export default {
 					`User ID ${user.id} ${enabled ? 'enabled' : 'disabled'}`,
 					'success'
 				)
-
-				// TODO: refresh user codes
-
-				// if (enabled) {
-				// 	this.node.userCodes.enabled.push(this.user.id)
-				// } else {
-				// 	this.node.userCodes.enabled.slice(
-				// 		this.node.userCodes.enabled.indexOf(this.user.id),
-				// 		1
-				// 	)
-				// }
 			}
 		},
 		getStatus(status) {
