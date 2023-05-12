@@ -209,7 +209,6 @@ export default {
 			if (!valueId) return
 
 			valueId.newValue = code
-
 			this.$emit('updateValue', valueId)
 		},
 		async setUserStatus(item) {
@@ -219,7 +218,6 @@ export default {
 			if (!valueId) return
 
 			valueId.newValue = status
-
 			this.$emit('updateValue', valueId)
 		},
 	},

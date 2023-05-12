@@ -137,6 +137,7 @@
 						ref="nodeDetails"
 						:headers="headers"
 						:node="node"
+						@updateValue="updateValue"
 					></node-details>
 				</v-tab-item>
 
@@ -191,7 +192,7 @@
 					key="users"
 					transition="slide-y-transition"
 				>
-					<user-code-table :node="node" />
+					<user-code-table :node="node" @updateValue="updateValue" />
 				</v-tab-item>
 
 				<!-- TAB OTA UPDATES -->
@@ -568,7 +569,58 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar', 'setValue']),
+		async updateValue(v, customValue) {
+			if (v) {
+				// in this way I can check when the value receives an update
+				v.toUpdate = true
+
+				if (v.type === 'number') {
+					v.newValue = Number(v.newValue)
+				}
+
+				// it's a button
+				if (v.type === 'boolean' && !v.readable) {
+					v.newValue = true
+				}
+
+				if (customValue !== undefined) {
+					v.newValue = customValue
+				}
+
+				// update the value in store
+				this.setValue(v)
+
+				const response = await this.app.apiRequest('writeValue', [
+					{
+						nodeId: v.nodeId,
+						commandClass: v.commandClass,
+						endpoint: v.endpoint,
+						property: v.property,
+						propertyKey: v.propertyKey,
+					},
+					v.newValue,
+					this.options,
+				])
+
+				v.toUpdate = false
+
+				if (response.success) {
+					if (response.result) {
+						this.showSnackbar('Value updated', 'success')
+					} else {
+						this.showSnackbar('Value update failed', 'error')
+					}
+				} else {
+					this.showSnackbar(
+						`Error updating value${
+							response.message ? ': ' + response.message : ''
+						}`,
+						'error'
+					)
+				}
+			}
+		},
 		prettyPrintEventArg(arg, index) {
 			return `\nArg ${index}:\n` + jsonToList(arg, undefined, 1)
 		},
