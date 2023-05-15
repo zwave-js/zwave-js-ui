@@ -12,6 +12,7 @@ import {
 	SupervisionStatus,
 	SupervisionResult,
 } from '@zwave-js/core'
+import { isDocker } from '@zwave-js/shared'
 import {
 	AssociationAddress,
 	AssociationGroup,
@@ -249,7 +250,7 @@ const ZWAVEJS_LOG_FILE = utils.joinPath(
 
 export type ZUIValueIdState = {
 	text: string
-	value: number
+	value: number | string | boolean
 }
 
 export type ZUIClientStatus = {
@@ -1865,7 +1866,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						: 'info',
 					logToFile: this.cfg.logToFile,
 					filename: ZWAVEJS_LOG_FILE,
-					forceConsole: true,
+					forceConsole: isDocker() ? !this.cfg.logToFile : false,
 					maxFiles: this.cfg.maxFiles || 7,
 					nodeFilter:
 						this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
@@ -5220,7 +5221,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			for (const k in (zwaveValueMeta as ValueMetadataNumeric).states) {
 				valueId.states.push({
 					text: (zwaveValueMeta as ValueMetadataNumeric).states[k],
-					value: parseInt(k),
+					value:
+						zwaveValueMeta.type === 'number'
+							? parseInt(k)
+							: zwaveValueMeta.type === 'boolean'
+							? k === 'true'
+							: k,
 				})
 			}
 		} else {
