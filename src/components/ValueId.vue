@@ -136,7 +136,11 @@
 			</v-text-field>
 
 			<v-select
-				v-if="value.list && !value.allowManualEntry"
+				v-if="
+					value.list &&
+					!value.allowManualEntry &&
+					!value.type == 'boolean'
+				"
 				:items="items"
 				:style="{
 					'max-width': $vuetify.breakpoint.smAndDown
@@ -163,7 +167,11 @@
 			</v-select>
 
 			<v-combobox
-				v-if="value.list && value.allowManualEntry"
+				v-if="
+					value.list &&
+					value.allowManualEntry &&
+					!value.type == 'boolean'
+				"
 				:items="items"
 				:style="{
 					'max-width': $vuetify.breakpoint.smAndDown
@@ -196,7 +204,8 @@
 
 			<div
 				v-if="
-					value.type == 'boolean' && value.writeable && value.readable
+					value.type == 'boolean' &&
+					((value.writeable && value.readable) || value.list)
 				"
 			>
 				<v-btn-toggle class="mt-4" v-model="value.newValue" rounded>
@@ -206,13 +215,22 @@
 						:value="true"
 						:style="{
 							background:
-								value.newValue === true ? '#4CAF50' : '',
+								value.newValue === true && !value.list
+									? '#4CAF50'
+									: '',
 						}"
-						:color="value.newValue === true ? 'white' : 'green'"
 						dark
 						@click="updateValue(value, true)"
 					>
-						ON
+						<v-icon
+							:color="
+								value.newValue === true && !value.list
+									? 'white'
+									: 'green'
+							"
+							style="rotate: 90deg"
+							>horizontal_rule</v-icon
+						>
 					</v-btn>
 					<v-btn
 						outlined
@@ -220,19 +238,30 @@
 						:value="false"
 						:style="{
 							background:
-								value.newValue === false ? '#f44336' : '',
+								value.newValue === false && !value.list
+									? '#f44336'
+									: '',
 						}"
-						:color="value.newValue === false ? 'white' : 'red'"
 						@click="updateValue(value, false)"
 						dark
 					>
-						OFF
+						<v-icon
+							:color="
+								value.newValue === false && !value.list
+									? 'white'
+									: 'red'
+							"
+							>radio_button_unchecked</v-icon
+						>
 					</v-btn>
 				</v-btn-toggle>
 				<div v-if="help" class="caption mt-2">{{ help }}</div>
 			</div>
 
-			<v-tooltip v-if="value.type == 'boolean' && !value.readable" right>
+			<v-tooltip
+				v-if="value.type == 'boolean' && !value.readable && !value.list"
+				right
+			>
 				<template v-slot:activator="{ on }">
 					<v-btn
 						max-width="100%"
