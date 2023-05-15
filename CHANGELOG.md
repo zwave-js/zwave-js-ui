@@ -1,5 +1,14 @@
 
 
+## [8.16.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.0...v8.16.1) (2023-05-15)
+
+
+### Bug Fixes
+
+* **ui:** other visualization issues on inputs ([#3089](https://github.com/zwave-js/zwave-js-ui/issues/3089)) ([775ce59](https://github.com/zwave-js/zwave-js-ui/commit/775ce59308cbe8f208110db0db3b5332ab611cf9))
+* **ui:** valueId inputs not showing correctly ([#3087](https://github.com/zwave-js/zwave-js-ui/issues/3087)) ([0abd62f](https://github.com/zwave-js/zwave-js-ui/commit/0abd62f51917732d55f64fdc47ede86fd205c5a1))
+* use CharDevice for USB device ([#3020](https://github.com/zwave-js/zwave-js-ui/issues/3020)) ([c3eea2c](https://github.com/zwave-js/zwave-js-ui/commit/c3eea2cc6caa65edbb6001bf95d1a56f4b85e0c4))
+
 # [8.16.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.15.0...v8.16.0) (2023-05-15)
 
 
