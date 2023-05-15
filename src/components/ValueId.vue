@@ -21,6 +21,7 @@
 		</div>
 
 		<div class="d-flex align-center" v-else>
+			<!-- Prefix loader with tooltip -->
 			<v-tooltip v-if="value.toUpdate" bottom>
 				<template v-slot:activator="{ on }">
 					<v-progress-circular
@@ -39,6 +40,10 @@
 						: 'Set value in progress...'
 				}}</span>
 			</v-tooltip>
+
+			<!-- ### VALUEID INPUTS ### -->
+
+			<!-- Text Input -->
 			<v-text-field
 				v-if="
 					!value.list &&
@@ -52,8 +57,9 @@
 				@click:append-outer="updateValue(value)"
 			></v-text-field>
 
+			<!-- Number Input -->
 			<v-text-field
-				v-if="!value.list && value.type === 'number'"
+				v-else-if="!value.list && value.type === 'number'"
 				type="number"
 				:append-outer-icon="!disable_send ? 'send' : null"
 				:suffix="value.unit"
@@ -66,8 +72,9 @@
 				@click:append-outer="updateValue(value)"
 			></v-text-field>
 
+			<!-- Object Input -->
 			<v-text-field
-				v-if="!value.list && value.type === 'any'"
+				v-else-if="!value.list && value.type === 'any'"
 				:append-outer-icon="!disable_send ? 'send' : null"
 				:suffix="value.unit"
 				persistent-hint
@@ -78,7 +85,8 @@
 				@click:append-outer="updateValue(value)"
 			></v-text-field>
 
-			<div style="display: flex" v-if="value.type === 'duration'">
+			<!-- Duration Input -->
+			<div style="display: flex" v-else-if="value.type === 'duration'">
 				<v-text-field
 					:type="value.type === 'number' ? 'number' : 'text'"
 					:min="value.min != value.max ? value.min : null"
@@ -100,11 +108,12 @@
 				></v-select>
 			</div>
 
+			<!-- Color Input -->
 			<v-text-field
 				style="max-width: 250px; margin-top: 10px"
 				flat
 				solo
-				v-if="value.type === 'color'"
+				v-else-if="value.type === 'color'"
 				v-model="color"
 				persistent-hint
 				:append-outer-icon="!disable_send ? 'send' : null"
@@ -135,11 +144,12 @@
 				</template>
 			</v-text-field>
 
+			<!-- Select Input -->
 			<v-select
-				v-if="
+				v-else-if="
 					value.list &&
 					!value.allowManualEntry &&
-					!value.type == 'boolean'
+					value.type !== 'boolean'
 				"
 				:items="items"
 				:style="{
@@ -166,11 +176,12 @@
 				</template>
 			</v-select>
 
+			<!-- Select Input with Manual Entry -->
 			<v-combobox
-				v-if="
+				v-else-if="
 					value.list &&
 					value.allowManualEntry &&
-					!value.type == 'boolean'
+					value.type !== 'boolean'
 				"
 				:items="items"
 				:style="{
@@ -202,9 +213,10 @@
 				</template>
 			</v-combobox>
 
+			<!-- On/Off Input -->
 			<div
-				v-if="
-					value.type == 'boolean' &&
+				v-else-if="
+					value.type === 'boolean' &&
 					((value.writeable && value.readable) || value.list)
 				"
 			>
@@ -258,8 +270,11 @@
 				<div v-if="help" class="caption mt-2">{{ help }}</div>
 			</div>
 
+			<!-- Button Input -->
 			<v-tooltip
-				v-if="value.type == 'boolean' && !value.readable && !value.list"
+				v-else-if="
+					value.type === 'boolean' && !value.readable && !value.list
+				"
 				right
 			>
 				<template v-slot:activator="{ on }">
