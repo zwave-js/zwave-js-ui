@@ -1058,7 +1058,7 @@ export default class Gateway {
 				config.discovery_payload.mode_command_topic = modeId + '/set'
 
 				// [0, 1, 2 ... ] (['off', 'heat', 'cold', ...])
-				const availableModes = mode.states.map((s) => s.value)
+				const availableModes = <number[]>mode.states.map((s) => s.value)
 
 				// Hass accepted modes as per: https://www.home-assistant.io/integrations/climate.mqtt/#modes
 				const allowedModes = [
@@ -1144,8 +1144,8 @@ export default class Gateway {
 
 				const action = node.values[actionId]
 				// [0, 1, 2 ... ] list of value fields from objects in states list
-				const availableActions = action.states.map(
-					(state) => state.value
+				const availableActions = <number[]>(
+					action.states.map((state) => state.value)
 				)
 				// Hass accepted actions as per https://www.home-assistant.io/integrations/climate.mqtt/#action_topic:
 				// ['off', 'heating', 'cooling', 'drying', 'idle', 'fan']
