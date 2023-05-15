@@ -22,7 +22,7 @@
 
 		<div class="d-flex align-center" v-else>
 			<!-- Prefix loader with tooltip -->
-			<v-tooltip v-if="value.toUpdate" bottom>
+			<v-tooltip bottom>
 				<template v-slot:activator="{ on }">
 					<v-progress-circular
 						v-on="on"
@@ -220,7 +220,7 @@
 					((value.writeable && value.readable) || value.list)
 				"
 			>
-				<v-btn-toggle class="mt-4" v-model="value.newValue" rounded>
+				<v-btn-toggle class="my-2" v-model="value.newValue" rounded>
 					<v-btn
 						outlined
 						height="40px"
