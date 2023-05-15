@@ -217,24 +217,15 @@
 									cols="12"
 									v-for="(v, index) in group"
 									:key="index"
-									v-show="displayValue(v)"
 									sm="6"
 									md="4"
 								>
 									<ValueID
-										v-if="displayValue(v)"
 										@updateValue="updateValue"
 										v-model="group[index]"
 										:node="node"
 									></ValueID>
 								</v-col>
-							</v-row>
-							<v-row v-if="className.startsWith('User Code')">
-								<UserCodeTable
-									@updateValue="updateValue"
-									:node="node"
-									:values="group"
-								></UserCodeTable>
 							</v-row>
 							<v-row>
 								<v-col
@@ -315,7 +306,6 @@
 
 <script>
 import ValueID from '../ValueId'
-import UserCodeTable from './UserCodeTable'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
@@ -330,7 +320,6 @@ export default {
 	},
 	components: {
 		ValueID,
-		UserCodeTable,
 	},
 	mixins: [InstancesMixin],
 	data() {
@@ -365,7 +354,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(useBaseStore, ['mqtt', 'setValue']),
+		...mapState(useBaseStore, ['mqtt']),
 		commandGroups() {
 			if (this.node) {
 				const groups = {}
@@ -408,12 +397,6 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		displayValue(v) {
-			return (
-				v.commandClassName !== 'User Code' ||
-				!['userCode', 'userIdStatus'].includes(v.property)
-			)
-		},
 		async updateControllerNodeProp(prop) {
 			const response = await this.app.apiRequest(
 				'updateControllerNodeProps',
@@ -539,56 +522,8 @@ export default {
 				}
 			}
 		},
-		async updateValue(v, customValue) {
-			if (v) {
-				// in this way I can check when the value receives an update
-				v.toUpdate = true
-
-				if (v.type === 'number') {
-					v.newValue = Number(v.newValue)
-				}
-
-				// it's a button
-				if (v.type === 'boolean' && !v.readable) {
-					v.newValue = true
-				}
-
-				if (customValue !== undefined) {
-					v.newValue = customValue
-				}
-
-				// update the value in store
-				this.setValue(v)
-
-				const response = await this.app.apiRequest('writeValue', [
-					{
-						nodeId: v.nodeId,
-						commandClass: v.commandClass,
-						endpoint: v.endpoint,
-						property: v.property,
-						propertyKey: v.propertyKey,
-					},
-					v.newValue,
-					this.options,
-				])
-
-				v.toUpdate = false
-
-				if (response.success) {
-					if (response.result) {
-						this.showSnackbar('Value updated', 'success')
-					} else {
-						this.showSnackbar('Value update failed', 'error')
-					}
-				} else {
-					this.showSnackbar(
-						`Error updating value${
-							response.message ? ': ' + response.message : ''
-						}`,
-						'error'
-					)
-				}
-			}
+		updateValue(v, customValue) {
+			this.$emit('updateValue', v, customValue)
 		},
 		validateTopic(name) {
 			const error = this.mqtt.disabled ? '' : validTopic(name)

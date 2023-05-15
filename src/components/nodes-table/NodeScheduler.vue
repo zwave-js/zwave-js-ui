@@ -3,10 +3,12 @@
 		<v-row justify="center">
 			<v-select
 				class="ma-2"
-				label="Schedule mode"
 				style="max-width: 200px"
 				v-model="mode"
-				:items="modes"
+				dense
+				:items="supportedModes"
+				persistent-hint
+				:hint="`Max slots: ${this.schedule.numSlots}`"
 			></v-select>
 		</v-row>
 		<v-row justify="center" class="pa-1">
@@ -15,19 +17,51 @@
 				:items="items"
 				item-key="id"
 				:loading="loading"
-				class="elevation-1"
+				dense
+				:mobile-breakpoint="0"
 			>
 				<template v-slot:top>
 					<v-btn
-						:disabled="loading"
+						v-if="!loading"
+						small
+						outlined
 						text
 						color="primary"
 						@click="refresh()"
 						class="mb-2"
 						>Refresh</v-btn
 					>
-					<v-btn text color="green" @click="editSlot()" class="mb-2"
+					<v-btn
+						v-else
+						small
+						outlined
+						text
+						color="error"
+						@click="cancel()"
+						class="mb-2"
+						>Stop</v-btn
+					>
+
+					<v-btn
+						small
+						outlined
+						text
+						:disabled="schedule.numSlots <= items.length"
+						color="green"
+						@click="editSlot()"
+						class="mb-2"
 						>Add</v-btn
+					>
+
+					<v-btn
+						small
+						outlined
+						v-if="mode !== activeMode && items.length > 0"
+						text
+						color="warning"
+						@click="enableMode()"
+						class="mb-2"
+						>Enable</v-btn
 					>
 				</template>
 
@@ -108,15 +142,12 @@ export default {
 	mixins: [InstancesMixin],
 	props: {
 		node: Object,
+		user: Object,
+		activeMode: String,
 	},
 	data() {
 		return {
 			mode: 'daily',
-			modes: [
-				{ text: 'Daily', value: 'daily' },
-				{ text: 'Weekly', value: 'weekly' },
-				{ text: 'Yearly', value: 'yearly' },
-			],
 			weekdays: Object.keys(ScheduleEntryLockWeekday)
 				.map((key) => ({
 					text: key,
@@ -143,13 +174,33 @@ export default {
 		schedule() {
 			return this.node.schedule[this.mode]
 		},
+		supportedModes() {
+			return this.modes.filter((m) => {
+				return this.node.schedule[m.value].numSlots > 0
+			})
+		},
+		modes() {
+			const modes = [
+				{ text: 'Daily', value: 'daily' },
+				{ text: 'Weekly', value: 'weekly' },
+				{ text: 'Yearly', value: 'yearly' },
+			]
+
+			for (const m of modes) {
+				if (this.activeMode !== m.value) {
+					m.text = `${m.text} (disabled)`
+				}
+			}
+
+			return modes
+		},
 		items() {
 			const items = []
 
-			for (const s of this.schedule.slots) {
+			for (const s of this.user.schedule.slots) {
+				if (s.type !== this.mode) continue
+
 				let item = {
-					id: `${s.userId}-${s.slotId}`,
-					userId: s.userId,
 					slotId: s.slotId,
 					start: '',
 					end: '',
@@ -209,7 +260,6 @@ export default {
 		},
 		headers() {
 			let headers = [
-				{ text: 'User Id', value: 'userId' },
 				{ text: 'Slot Id', value: 'slotId' },
 				{ text: 'Start', value: 'start' },
 			]
@@ -219,7 +269,7 @@ export default {
 					headers = [
 						...headers,
 						{ text: 'Weekdays', value: 'weekdays' },
-						{ text: 'duration', value: 'duration' },
+						{ text: 'Duration', value: 'duration' },
 					]
 					break
 				case 'weekly':
@@ -239,21 +289,40 @@ export default {
 			return headers
 		},
 	},
-	mounted() {},
+	mounted() {
+		this.mode = this.activeMode
+	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		validSlot(v, values) {
 			return (
-				!this.items.some(
-					(i) =>
-						i.userId === values.userId && i.slotId === values.slotId
-				) || 'Slot already exists'
+				!this.items.some((i) => i.slotId === values.slotId) ||
+				'Slot already exists'
 			)
 		},
+		async enableMode() {
+			// in order to enable a mode we need to set a schedule
+			const response = await this.app.apiRequest('setSchedule', [
+				this.node.id,
+				this.mode,
+				{ ...this.items[0].slot, type: undefined },
+			])
+
+			if (response.success) {
+				this.showSnackbar(`Mode ${this.mode} enabled`, 'success')
+			}
+		},
 		async refresh() {
+			const fromCache = await this.app.confirm(
+				'Refresh schedules',
+				'Do you want to query the schedules from the device or to get them from the cache? Querying from the device may take a while but will always return the latest schedules stored on it.',
+				'info'
+			)
+
 			this.loading = true
 			const response = await this.app.apiRequest('getSchedules', [
 				this.node.id,
+				{ mode: this.mode, fromCache },
 			])
 
 			this.loading = false
@@ -262,13 +331,21 @@ export default {
 				this.showSnackbar('Schedules updated', 'success')
 			}
 		},
+		async cancel() {
+			const response = await this.app.apiRequest('cancelGetSchedule', [])
+
+			if (response.success) {
+				this.loading = false
+				this.showSnackbar('Schedule cancelled', 'success')
+			}
+		},
 		async removeSlot(slot) {
 			const response = await this.app.apiRequest('setSchedule', [
 				this.node.id,
 				this.mode,
 				{
 					slotId: slot.slotId,
-					userId: slot.userId,
+					userId: this.user.id,
 				},
 			])
 
@@ -278,19 +355,10 @@ export default {
 		},
 		getInputs(slot) {
 			const maxSlots = this.schedule.numSlots
-			const numUsers = this.node.numUsers
+
+			const actualYear = new Date().getFullYear()
 
 			const inputs = {
-				userId: {
-					type: 'list',
-					autocomplete: true,
-					key: 'userId',
-					label: 'User Id',
-					default: 1,
-					cols: 6,
-					rules: [this.rules.required, this.validSlot],
-					items: [...Array(numUsers).keys()].map((i) => i + 1),
-				},
 				slotId: {
 					type: 'list',
 					autocomplete: true,
@@ -359,7 +427,9 @@ export default {
 					default: 0,
 					cols: 6,
 					rules: [this.rules.required],
-					items: [...Array(100).keys()].map((i) => i + 2000),
+					items: [...Array(100).keys()]
+						.map((i) => i + 2000)
+						.filter((i) => i >= actualYear),
 				},
 				startMonth: {
 					type: 'list',
@@ -446,7 +516,7 @@ export default {
 			}
 
 			if (!slot) {
-				toReturn.unshift(inputs.userId, inputs.slotId)
+				toReturn.unshift(inputs.slotId)
 			}
 
 			return toReturn
@@ -462,7 +532,7 @@ export default {
 				}
 			}
 
-			const res = await this.$listeners.showConfirm(
+			const res = await this.app.confirm(
 				slot ? 'Edit slot' : 'New slot',
 				'',
 				'info',
@@ -480,7 +550,6 @@ export default {
 
 			if (slot) {
 				res.slotId = slot.slotId
-				res.userId = slot.userId
 			}
 
 			if (res.startYear) {
@@ -495,7 +564,7 @@ export default {
 			const response = await this.app.apiRequest('setSchedule', [
 				this.node.id,
 				this.mode,
-				res,
+				{ ...res, userId: this.user.id },
 			])
 
 			if (response.success) {

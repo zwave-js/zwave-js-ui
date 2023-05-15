@@ -104,8 +104,8 @@
 			<v-tab key="groups" class="justify-start">
 				<v-icon small left>device_hub</v-icon> Groups
 			</v-tab>
-			<v-tab v-if="node.schedule" key="scheduler" class="justify-start">
-				<v-icon small left>event</v-icon> Scheduler
+			<v-tab v-if="node.schedule" key="users" class="justify-start">
+				<v-icon small left>group</v-icon> Users
 			</v-tab>
 			<v-tab
 				key="ota"
@@ -137,6 +137,7 @@
 						ref="nodeDetails"
 						:headers="headers"
 						:node="node"
+						@updateValue="updateValue"
 					></node-details>
 				</v-tab-item>
 
@@ -185,13 +186,13 @@
 					<association-groups :node="node" v-on="$listeners" />
 				</v-tab-item>
 
-				<!-- TAB SCHEDULER -->
+				<!-- TAB USERS -->
 				<v-tab-item
 					v-if="node.schedule"
-					key="scheduler"
+					key="users"
 					transition="slide-y-transition"
 				>
-					<node-scheduler :node="node" v-on="$listeners" />
+					<user-code-table :node="node" @updateValue="updateValue" />
 				</v-tab-item>
 
 				<!-- TAB OTA UPDATES -->
@@ -315,7 +316,7 @@ import OTAUpdates from './OTAUpdates.vue'
 import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import NodeScheduler from './NodeScheduler.vue'
+import UserCodeTable from './UserCodeTable.vue'
 
 export default {
 	props: {
@@ -336,7 +337,7 @@ export default {
 		DialogAdvanced,
 		StatisticsCard,
 		OTAUpdates,
-		NodeScheduler,
+		UserCodeTable,
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
@@ -568,7 +569,58 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar', 'setValue']),
+		async updateValue(v, customValue) {
+			if (v) {
+				// in this way I can check when the value receives an update
+				v.toUpdate = true
+
+				if (v.type === 'number') {
+					v.newValue = Number(v.newValue)
+				}
+
+				// it's a button
+				if (v.type === 'boolean' && !v.readable) {
+					v.newValue = true
+				}
+
+				if (customValue !== undefined) {
+					v.newValue = customValue
+				}
+
+				// update the value in store
+				this.setValue(v)
+
+				const response = await this.app.apiRequest('writeValue', [
+					{
+						nodeId: v.nodeId,
+						commandClass: v.commandClass,
+						endpoint: v.endpoint,
+						property: v.property,
+						propertyKey: v.propertyKey,
+					},
+					v.newValue,
+					this.options,
+				])
+
+				v.toUpdate = false
+
+				if (response.success) {
+					if (response.result) {
+						this.showSnackbar('Value updated', 'success')
+					} else {
+						this.showSnackbar('Value update failed', 'error')
+					}
+				} else {
+					this.showSnackbar(
+						`Error updating value${
+							response.message ? ': ' + response.message : ''
+						}`,
+						'error'
+					)
+				}
+			}
+		},
 		prettyPrintEventArg(arg, index) {
 			return `\nArg ${index}:\n` + jsonToList(arg, undefined, 1)
 		},
