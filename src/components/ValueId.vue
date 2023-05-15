@@ -2,6 +2,7 @@
 	<div>
 		<v-subheader class="valueid-label">{{ label }} </v-subheader>
 
+		<!-- Not writeable value -->
 		<div v-if="!value.writeable">
 			<div class="readonly mt-5">
 				{{ parsedValue + (value.unit ? ' ' + value.unit : '') }}
@@ -22,7 +23,7 @@
 
 		<div class="d-flex align-center" v-else>
 			<!-- Prefix loader with tooltip -->
-			<v-tooltip bottom>
+			<v-tooltip v-if="value.toUpdate" bottom>
 				<template v-slot:activator="{ on }">
 					<v-progress-circular
 						v-on="on"
