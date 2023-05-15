@@ -1,5 +1,109 @@
 
 
+# [8.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.2...v8.15.0) (2023-05-04)
+
+
+### Bug Fixes
+
+* **ui:** show missing props on user codes ([a2f071a](https://github.com/zwave-js/zwave-js-ui/commit/a2f071a2cf1f4bf8505a2919d8f37385110d0114))
+
+
+### Features
+
+* bump zwave-js@10.17.0 ([#3073](https://github.com/zwave-js/zwave-js-ui/issues/3073)) ([d67858c](https://github.com/zwave-js/zwave-js-ui/commit/d67858c9f32352574ee5988eb090afdb28b61ab9))
+* bump zwave-js@10.17.1 ([2eb5b8c](https://github.com/zwave-js/zwave-js-ui/commit/2eb5b8c762550607375ec95aad2fb8200228f74b))
+* **ui:** support for Schedule Entry Lock CC ([#3065](https://github.com/zwave-js/zwave-js-ui/issues/3065)) ([4f1138f](https://github.com/zwave-js/zwave-js-ui/commit/4f1138faf210edda28cde0a167cf8ccb2c6367f1))
+* **ui:** user codes management ([#3063](https://github.com/zwave-js/zwave-js-ui/issues/3063)) ([d3a8b9b](https://github.com/zwave-js/zwave-js-ui/commit/d3a8b9bb1d763771241b936b1e055505ee0a74fd))
+
+## [8.14.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.1...v8.14.2) (2023-04-26)
+
+
+### Bug Fixes
+
+* **ui:** add device info in expanded node compat view ([726c383](https://github.com/zwave-js/zwave-js-ui/commit/726c383478a5394aa478b4286d21b0324decf733)), closes [#3060](https://github.com/zwave-js/zwave-js-ui/issues/3060)
+* **ui:** make login form pass manager friendly ([5a95b7b](https://github.com/zwave-js/zwave-js-ui/commit/5a95b7be95cd8e4df807fe956af9e0db2cbca5bd)), closes [#3053](https://github.com/zwave-js/zwave-js-ui/issues/3053)
+
+
+### Features
+
+* bump zwave-js@10.16.0 ([#3062](https://github.com/zwave-js/zwave-js-ui/issues/3062)) ([53c4e35](https://github.com/zwave-js/zwave-js-ui/commit/53c4e355f147dfe85d0c365b35b64d16c12f04d7))
+* bump zwave-js/server@1.28.0 ([#3061](https://github.com/zwave-js/zwave-js-ui/issues/3061)) ([50306e6](https://github.com/zwave-js/zwave-js-ui/commit/50306e6f7529e2895383ef9f2335da364a1079fc))
+
+## [8.14.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.0...v8.14.1) (2023-04-19)
+
+
+### Bug Fixes
+
+* **ui:** set value not working ([f3e57e1](https://github.com/zwave-js/zwave-js-ui/commit/f3e57e14a4583572f590f6f2cc9e9cc9c8dc8b15)), closes [#3055](https://github.com/zwave-js/zwave-js-ui/issues/3055)
+
+# [8.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.1...v8.14.0) (2023-04-17)
+
+
+### Bug Fixes
+
+* remove useless res.locals in error handler ([ea33475](https://github.com/zwave-js/zwave-js-ui/commit/ea3347588db94ceea8c37f9db2edb8a8ebd82c3a))
+* **ui:** prefill targets in fw update ([9c35a8d](https://github.com/zwave-js/zwave-js-ui/commit/9c35a8d4240aca5af853d6f8d5cebe74832e8932))
+* undefined CC version after re-interview/refresh values ([#3050](https://github.com/zwave-js/zwave-js-ui/issues/3050))Co-authored-by: AlCalzone <d.griesel@gmx.net> ([c3d8432](https://github.com/zwave-js/zwave-js-ui/commit/c3d8432f31cbce95527f12d7bd6053c7a11120c9)), closes [#3045](https://github.com/zwave-js/zwave-js-ui/issues/3045)
+* valueId metadata out of sync with ui ([#3040](https://github.com/zwave-js/zwave-js-ui/issues/3040)) ([ff0e12b](https://github.com/zwave-js/zwave-js-ui/commit/ff0e12bd032140c33e17bc8db6a20fd5066c3c3e))
+
+
+### Features
+
+* allow to manually idle notifications ([6448cc8](https://github.com/zwave-js/zwave-js-ui/commit/6448cc8679ce2cc34d96e7cec71dc742a19b3db3)), closes [#3051](https://github.com/zwave-js/zwave-js-ui/issues/3051)
+* bump zwave-js@10.14.1 ([#3039](https://github.com/zwave-js/zwave-js-ui/issues/3039)) ([6d8e57d](https://github.com/zwave-js/zwave-js-ui/commit/6d8e57de42270b002a612812cbf84d73e978381b))
+* bump zwave-js@10.15.0 ([457bd9e](https://github.com/zwave-js/zwave-js-ui/commit/457bd9e0affbf18a6215ae14313ecae354d13790))
+
+## [8.13.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.13.0...v8.13.1) (2023-04-07)
+
+
+### Bug Fixes
+
+* **ui:** ignore rssi error on chart ([67cce90](https://github.com/zwave-js/zwave-js-ui/commit/67cce90c61338b7dce9b8214702f091c612a5ca9))
+
+
+### Features
+
+* bump zwave-js@10.14.0 ([#3036](https://github.com/zwave-js/zwave-js-ui/issues/3036)) ([002b300](https://github.com/zwave-js/zwave-js-ui/commit/002b300ce3ef016945c0384a71e062976e34ab5f))
+
+# [8.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.12.0...v8.13.0) (2023-04-05)
+
+
+### Bug Fixes
+
+* **discovery:** door state binary sensor ([90316f4](https://github.com/zwave-js/zwave-js-ui/commit/90316f4ca6e6b8d8f638878b3236eaff5a7eece1)), closes [#3003](https://github.com/zwave-js/zwave-js-ui/issues/3003)
+
+
+### Features
+
+* add command to set current node date/time ([#3005](https://github.com/zwave-js/zwave-js-ui/issues/3005) ([d84fa03](https://github.com/zwave-js/zwave-js-ui/commit/d84fa0387b153e7b304088c3f908c657fac9dc4d))
+* background RSSI chart ([#3033](https://github.com/zwave-js/zwave-js-ui/issues/3033))Co-authored-by: Dominic Griesel <dominic.griesel@nabucasa.com> ([e6a00ba](https://github.com/zwave-js/zwave-js-ui/commit/e6a00ba8ab3f7faf887285de0256572a434aab21)), closes [#3008](https://github.com/zwave-js/zwave-js-ui/issues/3008)
+* bump zwave-js@10.13.0 ([d5f2920](https://github.com/zwave-js/zwave-js-ui/commit/d5f2920a398dd7e6f170deadf6c57d2f4e33a9d6))
+
+# [8.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.11.1...v8.12.0) (2023-04-03)
+
+
+### Bug Fixes
+
+* allow to call zwave apis in boot loader mode ([a286a8f](https://github.com/zwave-js/zwave-js-ui/commit/a286a8f399e3cc52948f0afa31f7a976f6fdf12f)), closes [#3023](https://github.com/zwave-js/zwave-js-ui/issues/3023)
+* remove driver ready check from `firmwareUpdateOTW` ([a793dd0](https://github.com/zwave-js/zwave-js-ui/commit/a793dd02a051459b99a186173e1dc07aa66e2b73))
+* **ui:** better default node name in compact view ([71a9884](https://github.com/zwave-js/zwave-js-ui/commit/71a988421679dc7e61ca5959f5a661b6f6c48c53))
+* **ui:** catch value write errors ([5195433](https://github.com/zwave-js/zwave-js-ui/commit/5195433469022574c810a33e907aa7978f6bf055)), closes [#3025](https://github.com/zwave-js/zwave-js-ui/issues/3025)
+* **ui:** hide manage nodes when there are selected ones ([be89889](https://github.com/zwave-js/zwave-js-ui/commit/be89889b7ef49e310aa2ff4dd03b145e3ef0d030))
+* **ui:** otw update not working in bootloader only mode ([89bb3e2](https://github.com/zwave-js/zwave-js-ui/commit/89bb3e2d3859d383f656a35eef490b81693e91ba)), closes [#3023](https://github.com/zwave-js/zwave-js-ui/issues/3023)
+
+
+### Features
+
+* **ui:** allow to send actions to selected nodes in table ([9806539](https://github.com/zwave-js/zwave-js-ui/commit/980653973e29e40f17f5b248da60693bb37e234a))
+* use valueId stored timestamp in MQTT JSON payload ([7b373c3](https://github.com/zwave-js/zwave-js-ui/commit/7b373c3d5956e4b46e1ffa762566fe04546e7a47)), closes [#3029](https://github.com/zwave-js/zwave-js-ui/issues/3029)
+
+## [8.11.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.11.0...v8.11.1) (2023-03-24)
+
+
+### Features
+
+* bump zwave-js-server@1.27.0 ([#3018](https://github.com/zwave-js/zwave-js-ui/issues/3018)) ([0349aed](https://github.com/zwave-js/zwave-js-ui/commit/0349aedcc967a74ee3ea1f6a1b0f322b10ff7946))
+
 # [8.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.10.1...v8.11.0) (2023-03-17)
 
 

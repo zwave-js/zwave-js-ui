@@ -8,6 +8,16 @@ export function wait(ms) {
 	return new Promise((r) => setTimeout(r, ms))
 }
 
+export function padNumber(num, digits) {
+	return typeof num === 'number'
+		? num.toString().padStart(digits, '0')
+		: 'unknown'
+}
+
+export function wrapFunc(fn, ...args) {
+	return (...args2) => fn(...args2, ...args)
+}
+
 export function readAsBuffer(file) {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader()

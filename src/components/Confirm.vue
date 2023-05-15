@@ -36,7 +36,7 @@
 									v-model.trim="values[input.key]"
 									:label="input.label"
 									:hint="input.hint"
-									:rules="input.rules || []"
+									:rules="inputProps[input.key].rules"
 									:required="input.required"
 									:min="input.min"
 									:disabled="input.disabled"
@@ -48,7 +48,7 @@
 									v-model.number="values[input.key]"
 									:label="input.label"
 									:hint="input.hint"
-									:rules="input.rules || []"
+									:rules="inputProps[input.key].rules"
 									type="number"
 									:persistent-hint="!!input.hint"
 									:required="input.required"
@@ -59,7 +59,7 @@
 								<v-switch
 									v-if="input.type === 'boolean'"
 									v-model="values[input.key]"
-									:rules="input.rules || []"
+									:rules="inputProps[input.key].rules"
 									:label="input.label"
 									:hint="input.hint"
 									:persistent-hint="!!input.hint"
@@ -69,7 +69,7 @@
 								<v-checkbox
 									v-if="input.type === 'checkbox'"
 									v-model="values[input.key]"
-									:rules="input.rules || []"
+									:rules="inputProps[input.key].rules"
 									:label="input.label"
 									:hint="input.hint"
 									:persistent-hint="!!input.hint"
@@ -79,21 +79,41 @@
 								<v-select
 									v-if="
 										input.type === 'list' &&
-										!input.allowManualEntry
+										!input.allowManualEntry &&
+										!input.autocomplete
 									"
 									v-model="values[input.key]"
 									:item-text="input.itemText || 'text'"
 									:item-value="input.itemValue || 'value'"
 									:items="input.items"
-									:rules="input.rules || []"
+									:rules="inputProps[input.key].rules"
 									:label="input.label"
-									@change="input.onChange"
+									@change="input.onChange || (() => {})"
 									:persistent-hint="!!input.hint"
 									:multiple="!!input.multiple"
 									:hint="input.hint"
 									:required="input.required"
 									:disabled="input.disabled"
 								></v-select>
+								<v-autocomplete
+									v-if="
+										input.type === 'list' &&
+										!input.allowManualEntry &&
+										input.autocomplete
+									"
+									v-model="values[input.key]"
+									:item-text="input.itemText || 'text'"
+									:item-value="input.itemValue || 'value'"
+									:items="input.items"
+									:rules="inputProps[input.key].rules"
+									:label="input.label"
+									@change="input.onChange || (() => {})"
+									:persistent-hint="!!input.hint"
+									:multiple="!!input.multiple"
+									:hint="input.hint"
+									:required="input.required"
+									:disabled="input.disabled"
+								></v-autocomplete>
 								<v-combobox
 									v-if="
 										input.type === 'list' &&
@@ -104,7 +124,7 @@
 									:item-value="input.itemValue || 'value'"
 									chips
 									:items="input.items"
-									:rules="input.rules || []"
+									:rules="inputProps[input.key].rules"
 									:label="input.label"
 									:multiple="!!input.multiple"
 									:persistent-hint="!!input.hint"
@@ -119,7 +139,7 @@
 									v-model.trim="values[input.key]"
 									:label="input.label"
 									:hint="input.hint"
-									:rules="input.rules || []"
+									:rules="inputProps[input.key].rules"
 									:required="input.required"
 									:persistent-hint="!!input.hint"
 									:accept="input.accept"
@@ -198,6 +218,7 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
+import { wrapFunc } from '../lib/utils'
 
 export default {
 	components: {
@@ -213,6 +234,7 @@ export default {
 		values: {},
 		title: null,
 		options: null,
+		inputProps: null,
 		defaultOptions: {
 			color: 'primary',
 			width: 290,
@@ -281,11 +303,19 @@ export default {
 
 			Object.assign(this.options, options)
 
+			const values = options.values || {}
+			this.inputProps = {}
+
 			if (options.inputs) {
 				for (const input of options.inputs) {
+					this.inputProps[input.key] = {}
 					if (input.default !== undefined) {
 						// without this code block is bugged, don't simply assign
-						this.$set(this.values, input.key, input.default)
+						this.$set(
+							this.values,
+							input.key,
+							values[input.key] ?? input.default
+						)
 					}
 
 					if (
@@ -293,6 +323,14 @@ export default {
 						typeof input.onChange === 'function'
 					) {
 						input.onChange = input.onChange.bind(this, this.values)
+					}
+
+					if (input.rules) {
+						this.inputProps[input.key].rules = input.rules.map(
+							(r) => wrapFunc(r, this.values)
+						)
+					} else {
+						this.inputProps[input.key].rules = []
 					}
 				}
 			}
@@ -323,6 +361,7 @@ export default {
 		reset() {
 			this.options = Object.assign({}, this.defaultOptions)
 			this.values = {}
+			this.inputProps = {}
 		},
 	},
 	created() {

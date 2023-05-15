@@ -140,6 +140,9 @@ const useBaseStore = defineStore('base', {
 			if (node && toReplace) {
 				const index = node.values.indexOf(toReplace)
 				if (index >= 0) {
+					if (valueId.newValue === undefined) {
+						valueId.newValue = valueId.value
+					}
 					node.values.splice(index, 1, valueId)
 				}
 			}
@@ -150,11 +153,6 @@ const useBaseStore = defineStore('base', {
 			if (valueId) {
 				valueId.newValue = data.value
 				valueId.value = data.value
-
-				if (valueId.toUpdate) {
-					this.showSnackbar('Value updated', 'success')
-					valueId.toUpdate = false
-				}
 			} else {
 				// means that this value has been added
 				const node = this.getNode(data.nodeId)
@@ -345,6 +343,7 @@ const useBaseStore = defineStore('base', {
 					lastTransmit,
 					errorReceive,
 					errorTransmit,
+					bgRSSIPoints: data.bgRSSIPoints,
 				})
 			}
 		},

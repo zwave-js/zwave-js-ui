@@ -38,7 +38,11 @@ export default {
 		RichValue,
 		StatisticsArrows,
 	},
-	watch: {},
+	watch: {
+		'managedNodes.selected': function (val) {
+			this.$emit('selected', val)
+		},
+	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
 	},

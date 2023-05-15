@@ -218,6 +218,62 @@ Payload:
 
 </details>
 
+#### `syncNodeDateAndTime`
+
+```ts
+syncNodeDateAndTime(nodeId: number, date = new Date()): Promise<boolean>;
+```
+
+Setting the date and time on a node could be hard, this helper method will set it using the date provided (default to now).
+
+The following CCs will be used (when supported or necessary) in this process:
+
+- Time Parameters CC
+- Clock CC
+- Time CC
+- Schedule Entry Lock CC (for setting the timezone).
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/syncNodeDateAndTime/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		date
+	]
+}
+```
+
+</details>
+
+#### `manuallyIdleNotificationValue`
+
+```ts
+manuallyIdleNotificationValue(valueId: ZUIValueId): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/manuallyIdleNotificationValue/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		valueId
+	]
+}
+```
+
+</details>
+
 #### `removeNodeFromAllAssociations`
 
 ```ts

@@ -1,5 +1,4 @@
 {
-  // "editor.formatOnSave": true,
   "javascript-test-runner.additionalArgs": "node_modules/.bin/mocha",
   "javascript-test-runner.envVars": {},
   "eslint.format.enable": true,
@@ -7,19 +6,16 @@
   "wallaby.startAutomatically": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.eslint": true,
+    "source.fixAll.markdownlint": true
   },
-  // "[vue]": {
-  //   "editor.defaultFormatter": "numso.prettier-standard-vscode"
-  // },
-  // "[javascript]": {
-  //   "editor.defaultFormatter": "numso.prettier-standard-vscode"
-  // },
-  "standard.enable": false,
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[vue]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "DavidAnson.vscode-markdownlint"
   }
 }

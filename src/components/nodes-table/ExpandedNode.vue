@@ -7,14 +7,28 @@
 	>
 		<v-row class="mt-2" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
-				<span class="title grey--text">Device ID </span>
+				<span class="title grey--text">Device </span>
 				<br />
 				<span class="subtitle font-weight-bold font-monospace">
 					{{ `${node.deviceId} (${node.hexId})` }}
 				</span>
+
 				<v-icon @click="openLink(node.dbLink)" class="ml-2" small>
 					ios_share
 				</v-icon>
+				<br />
+				<span
+					v-if="$vuetify.breakpoint.smAndDown"
+					class="comment font-weight-bold primary--text"
+				>
+					{{
+						`${node.manufacturer || ''}${
+							node.productDescription
+								? ' - ' + node.productDescription
+								: ''
+						}`
+					}}
+				</span>
 			</v-col>
 			<v-col
 				:class="
@@ -90,6 +104,9 @@
 			<v-tab key="groups" class="justify-start">
 				<v-icon small left>device_hub</v-icon> Groups
 			</v-tab>
+			<v-tab v-if="node.schedule" key="users" class="justify-start">
+				<v-icon small left>group</v-icon> Users
+			</v-tab>
 			<v-tab
 				key="ota"
 				v-if="!node.isControllerNode"
@@ -120,6 +137,7 @@
 						ref="nodeDetails"
 						:headers="headers"
 						:node="node"
+						@updateValue="updateValue"
 					></node-details>
 				</v-tab-item>
 
@@ -165,11 +183,16 @@
 
 				<!-- TAB GROUPS -->
 				<v-tab-item key="groups" transition="slide-y-transition">
-					<association-groups
-						:node="node"
-						v-on="$listeners"
-						:socket="socket"
-					/>
+					<association-groups :node="node" v-on="$listeners" />
+				</v-tab-item>
+
+				<!-- TAB USERS -->
+				<v-tab-item
+					v-if="node.schedule"
+					key="users"
+					transition="slide-y-transition"
+				>
+					<user-code-table :node="node" @updateValue="updateValue" />
 				</v-tab-item>
 
 				<!-- TAB OTA UPDATES -->
@@ -293,6 +316,7 @@ import OTAUpdates from './OTAUpdates.vue'
 import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import UserCodeTable from './UserCodeTable.vue'
 
 export default {
 	props: {
@@ -313,6 +337,7 @@ export default {
 		DialogAdvanced,
 		StatisticsCard,
 		OTAUpdates,
+		UserCodeTable,
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
@@ -441,6 +466,31 @@ export default {
 						},
 				  ]
 
+			const CCActions = []
+
+			const supportsTime = this.node.values.some((value) =>
+				[
+					138, // CommandClasses.Time,
+					139, // CommandClasses['Time Parameters'],
+					129, // CommandClasses.Clock,
+					78, // CommandClasses['Schedule Entry Lock'],
+				].includes(value.commandClass)
+			)
+
+			if (supportsTime) {
+				CCActions.push({
+					text: 'Set Date and Time',
+					options: [
+						{
+							name: 'Sync',
+							action: 'syncNodeDateAndTime',
+						},
+					],
+					icon: 'schedule',
+					desc: 'Set date and time of this node to current time',
+				})
+			}
+
 			return [
 				{
 					text: 'Export json',
@@ -497,6 +547,7 @@ export default {
 					icon: 'link_off',
 					desc: 'Clear all node associations / Remove node from all associations',
 				},
+				...CCActions,
 			]
 		},
 	},
@@ -518,7 +569,58 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar', 'setValue']),
+		async updateValue(v, customValue) {
+			if (v) {
+				// in this way I can check when the value receives an update
+				v.toUpdate = true
+
+				if (v.type === 'number') {
+					v.newValue = Number(v.newValue)
+				}
+
+				// it's a button
+				if (v.type === 'boolean' && !v.readable) {
+					v.newValue = true
+				}
+
+				if (customValue !== undefined) {
+					v.newValue = customValue
+				}
+
+				// update the value in store
+				this.setValue(v)
+
+				const response = await this.app.apiRequest('writeValue', [
+					{
+						nodeId: v.nodeId,
+						commandClass: v.commandClass,
+						endpoint: v.endpoint,
+						property: v.property,
+						propertyKey: v.propertyKey,
+					},
+					v.newValue,
+					this.options,
+				])
+
+				v.toUpdate = false
+
+				if (response.success) {
+					if (response.result) {
+						this.showSnackbar('Value updated', 'success')
+					} else {
+						this.showSnackbar('Value update failed', 'error')
+					}
+				} else {
+					this.showSnackbar(
+						`Error updating value${
+							response.message ? ': ' + response.message : ''
+						}`,
+						'error'
+					)
+				}
+			}
+		},
 		prettyPrintEventArg(arg, index) {
 			return `\nArg ${index}:\n` + jsonToList(arg, undefined, 1)
 		},

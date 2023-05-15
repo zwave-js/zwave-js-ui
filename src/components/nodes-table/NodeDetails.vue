@@ -305,10 +305,9 @@
 </template>
 
 <script>
-import ValueID from '@/components/ValueId'
-
+import ValueID from '../ValueId'
 import { mapState, mapActions } from 'pinia'
-import { validTopic } from '@/lib/utils'
+import { validTopic } from '../../lib/utils'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
 import { RFRegion } from 'zwave-js/safe'
 import useBaseStore from '../../stores/base.js'
@@ -355,7 +354,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(useBaseStore, ['mqtt', 'setValue']),
+		...mapState(useBaseStore, ['mqtt']),
 		commandGroups() {
 			if (this.node) {
 				const groups = {}
@@ -524,38 +523,7 @@ export default {
 			}
 		},
 		updateValue(v, customValue) {
-			if (v) {
-				// in this way I can check when the value receives an update
-				v.toUpdate = true
-
-				if (v.type === 'number') {
-					v.newValue = Number(v.newValue)
-				}
-
-				// it's a button
-				if (v.type === 'boolean' && !v.readable) {
-					v.newValue = true
-				}
-
-				if (customValue !== undefined) {
-					v.newValue = customValue
-				}
-
-				// update the value in store
-				this.setValue(v)
-
-				this.app.apiRequest('writeValue', [
-					{
-						nodeId: v.nodeId,
-						commandClass: v.commandClass,
-						endpoint: v.endpoint,
-						property: v.property,
-						propertyKey: v.propertyKey,
-					},
-					v.newValue,
-					this.options,
-				])
-			}
+			this.$emit('updateValue', v, customValue)
 		},
 		validateTopic(name) {
 			const error = this.mqtt.disabled ? '' : validTopic(name)

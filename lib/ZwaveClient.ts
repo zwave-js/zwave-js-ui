@@ -9,6 +9,8 @@ import {
 	ValueMetadataNumeric,
 	ValueMetadataString,
 	ZWaveErrorCodes,
+	SupervisionStatus,
+	SupervisionResult,
 } from '@zwave-js/core'
 import {
 	AssociationAddress,
@@ -74,6 +76,14 @@ import {
 	ControllerFirmwareUpdateResult,
 	ControllerFirmwareUpdateStatus,
 	HealNetworkOptions,
+	ScheduleEntryLockWeekDaySchedule,
+	ScheduleEntryLockYearDaySchedule,
+	ScheduleEntryLockDailyRepeatingSchedule,
+	ScheduleEntryLockSlotId,
+	ScheduleEntryLockCC,
+	UserCodeCC,
+	UserIDStatus,
+	ScheduleEntryLockScheduleKind,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -83,7 +93,7 @@ import * as LogManager from './logger'
 import * as utils from './utils'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
-import { ensureDir, mkdirp, writeFile } from 'fs-extra'
+import { ensureDir, exists, mkdirp, writeFile } from 'fs-extra'
 import { Server as SocketServer } from 'socket.io'
 import * as pkgjson from '../package.json'
 import { TypedEventEmitter } from './EventEmitter'
@@ -92,6 +102,7 @@ import { GatewayValue } from './Gateway'
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
+import { readFile } from 'fs/promises'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -185,6 +196,12 @@ export const allowedApis = validateMethods([
 	'parseQRCodeString',
 	'checkLifelineHealth',
 	'checkRouteHealth',
+	'syncNodeDateAndTime',
+	'manuallyIdleNotificationValue',
+	'getSchedules',
+	'cancelGetSchedule',
+	'setSchedule',
+	'setEnabledSchedule',
 ] as const)
 
 export type ZwaveNodeEvents = ZWaveNodeEvents | 'statistics updated'
@@ -349,6 +366,18 @@ export class DriverNotReadyError extends Error {
 	}
 }
 
+export interface BackgroundRSSIValue {
+	current: number
+	average: number
+}
+
+export interface BackgroundRSSIPoint {
+	channel0: BackgroundRSSIValue
+	channel1: BackgroundRSSIValue
+	channel2?: BackgroundRSSIValue
+	timestamp: number
+}
+
 export interface FwFile {
 	name: string
 	data: Buffer
@@ -358,6 +387,25 @@ export interface FwFile {
 export interface ZUIEndpoint {
 	index: number
 	label?: string
+}
+
+export enum ZUIScheduleEntryLockMode {
+	DAILY = 'daily',
+	WEEKLY = 'weekly',
+	YEARLY = 'yearly',
+}
+
+export interface ZUISchedule {
+	[ZUIScheduleEntryLockMode.DAILY]: ZUIScheduleConfig<ScheduleEntryLockDailyRepeatingSchedule>
+	[ZUIScheduleEntryLockMode.WEEKLY]: ZUIScheduleConfig<ScheduleEntryLockWeekDaySchedule>
+	[ZUIScheduleEntryLockMode.YEARLY]: ZUIScheduleConfig<ScheduleEntryLockYearDaySchedule>
+}
+
+export type ZUISlot<T> = T & { enabled: boolean } & ScheduleEntryLockSlotId
+
+export interface ZUIScheduleConfig<T> {
+	numSlots: number
+	slots: ZUISlot<T>[]
 }
 
 export type ZUINode = {
@@ -415,6 +463,13 @@ export type ZUINode = {
 	firmwareUpdate?: FirmwareUpdateProgress
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
+	bgRSSIPoints?: BackgroundRSSIPoint[]
+	schedule?: ZUISchedule
+	userCodes?: {
+		total: number
+		available: number[]
+		enabled: number[]
+	}
 }
 
 export type NodeEvent = {
@@ -538,6 +593,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _lockNeighborsRefresh: boolean
 	private _lockOTWUpdates: boolean
+	private _lockGetSchedule: boolean
+	private _cancelGetSchedule: boolean
 
 	private nvmEvent: string
 
@@ -946,6 +1003,427 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * If the node supports Schedule Lock CC parses all available schedules and cache them
+	 */
+	async getSchedules(
+		nodeId: number,
+		opts: { mode?: ZUIScheduleEntryLockMode; fromCache: boolean } = {
+			fromCache: true,
+		}
+	) {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
+			throw new Error(
+				'Schedule Entry Lock CC not supported on node ' + nodeId
+			)
+		}
+
+		if (this._lockGetSchedule) {
+			throw new Error(
+				'Another request is in progress, cancel it or wait...'
+			)
+		}
+
+		const promise = async () => {
+			this._cancelGetSchedule = false
+			this._lockGetSchedule = true
+			const { mode, fromCache } = opts
+			// TODO: should we check also other endpoints?
+			const endpointIndex = 0
+			const endpoint = zwaveNode.getEndpoint(endpointIndex)
+
+			const userCodes = UserCodeCC.getSupportedUsersCached(
+				// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+				this.driver,
+				endpoint
+			)
+
+			const numSlots = {
+				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
+					// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+					this.driver,
+					endpoint
+				),
+				numYearDaySlots: ScheduleEntryLockCC.getNumYearDaySlotsCached(
+					// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+					this.driver,
+					endpoint
+				),
+				numDailyRepeatingSlots:
+					ScheduleEntryLockCC.getNumDailyRepeatingSlotsCached(
+						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+						this.driver,
+						endpoint
+					),
+			}
+
+			const node = this._nodes.get(nodeId)
+
+			const weeklySchedules: ZUISlot<ScheduleEntryLockWeekDaySchedule>[] =
+				node.schedule?.weekly?.slots ?? []
+			const yearlySchedules: ZUISlot<ScheduleEntryLockYearDaySchedule>[] =
+				node.schedule?.yearly?.slots ?? []
+			const dailySchedules: ZUISlot<ScheduleEntryLockDailyRepeatingSchedule>[] =
+				node.schedule?.daily?.slots ?? []
+
+			const isInited = !!node.schedule
+
+			node.schedule = {
+				daily: {
+					numSlots: numSlots.numDailyRepeatingSlots,
+					slots: dailySchedules,
+				},
+				weekly: {
+					numSlots: numSlots.numWeekDaySlots,
+					slots: weeklySchedules,
+				},
+				yearly: {
+					numSlots: numSlots.numYearDaySlots,
+					slots: yearlySchedules,
+				},
+			}
+
+			node.userCodes = {
+				total: userCodes,
+				available: [],
+				enabled: [],
+			}
+
+			// for performance reasons we skip query the schedules on init
+			// some locks may have tons of slots causing network congestion
+			if (isInited) {
+				for (let i = 1; i <= userCodes; i++) {
+					const status = UserCodeCC.getUserIdStatusCached(
+						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+						this.driver,
+						endpoint,
+						i
+					)
+
+					if (
+						status === undefined ||
+						status === UserIDStatus.Available ||
+						status === UserIDStatus.StatusNotAvailable
+					) {
+						// skip query on not enabled userIds or empty codes
+						continue
+					}
+
+					node.userCodes.available.push(i)
+
+					const enabledUserId =
+						ScheduleEntryLockCC.getUserCodeScheduleEnabledCached(
+							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+							this.driver,
+							endpoint,
+							i
+						)
+
+					if (enabledUserId) {
+						node.userCodes.enabled.push(i)
+					}
+
+					const enabledType =
+						ScheduleEntryLockCC.getUserCodeScheduleKindCached(
+							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+							this.driver,
+							endpoint,
+							i
+						)
+
+					const getCached = (
+						kind: ScheduleEntryLockScheduleKind,
+						slotId: number
+					) =>
+						ScheduleEntryLockCC.getScheduleCached(
+							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+							this.driver,
+							endpoint,
+							kind,
+							i,
+							slotId
+						)
+
+					if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
+						weeklySchedules.length = 0
+						const enabled =
+							enabledType ===
+							ScheduleEntryLockScheduleKind.WeekDay
+
+						for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
+							if (this._cancelGetSchedule) return
+
+							const slot: ScheduleEntryLockSlotId = {
+								userId: i,
+								slotId: s,
+							}
+
+							const schedule = fromCache
+								? getCached(
+										ScheduleEntryLockScheduleKind.WeekDay,
+										s
+								  )
+								: await zwaveNode.commandClasses[
+										'Schedule Entry Lock'
+								  ].getWeekDaySchedule(slot)
+							if (schedule)
+								weeklySchedules.push({
+									...slot,
+									...schedule,
+									enabled,
+								})
+						}
+					}
+
+					if (!mode || mode === ZUIScheduleEntryLockMode.YEARLY) {
+						yearlySchedules.length = 0
+
+						const enabled =
+							enabledType ===
+							ScheduleEntryLockScheduleKind.YearDay
+
+						for (let s = 1; s <= numSlots.numYearDaySlots; s++) {
+							if (this._cancelGetSchedule) return
+
+							const slot: ScheduleEntryLockSlotId = {
+								userId: i,
+								slotId: s,
+							}
+							const schedule = fromCache
+								? getCached(
+										ScheduleEntryLockScheduleKind.YearDay,
+										s
+								  )
+								: await zwaveNode.commandClasses[
+										'Schedule Entry Lock'
+								  ].getYearDaySchedule(slot)
+							if (schedule)
+								yearlySchedules.push({
+									...slot,
+									...schedule,
+									enabled,
+								})
+						}
+					}
+
+					if (!mode || mode === ZUIScheduleEntryLockMode.DAILY) {
+						dailySchedules.length = 0
+
+						const enabled =
+							enabledType ===
+							ScheduleEntryLockScheduleKind.DailyRepeating
+
+						for (
+							let s = 1;
+							s <= numSlots.numDailyRepeatingSlots;
+							s++
+						) {
+							if (this._cancelGetSchedule) return
+
+							const slot: ScheduleEntryLockSlotId = {
+								userId: i,
+								slotId: s,
+							}
+							const schedule = fromCache
+								? getCached(
+										ScheduleEntryLockScheduleKind.WeekDay,
+										s
+								  )
+								: await zwaveNode.commandClasses[
+										'Schedule Entry Lock'
+								  ].getDailyRepeatingSchedule(slot)
+							if (schedule)
+								dailySchedules.push({
+									...slot,
+									...schedule,
+									enabled,
+								})
+						}
+					}
+				}
+			}
+
+			this.emitNodeUpdate(node, {
+				schedule: node.schedule,
+				userCodes: node.userCodes,
+			})
+
+			return node.schedule
+		}
+
+		return promise().finally(() => {
+			this._lockGetSchedule = false
+			this._cancelGetSchedule = false
+		})
+	}
+
+	cancelGetSchedule() {
+		this._cancelGetSchedule = true
+	}
+
+	async setSchedule(
+		nodeId: number,
+		type: 'daily' | 'weekly' | 'yearly',
+		schedule: ScheduleEntryLockSlotId &
+			(
+				| ScheduleEntryLockDailyRepeatingSchedule
+				| ScheduleEntryLockWeekDaySchedule
+				| ScheduleEntryLockYearDaySchedule
+			)
+	) {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
+			throw new Error(
+				'Schedule Entry Lock CC not supported on node ' + nodeId
+			)
+		}
+
+		const slot: ScheduleEntryLockSlotId = {
+			userId: schedule.userId,
+			slotId: schedule.slotId,
+		}
+
+		delete schedule.userId
+		delete schedule.slotId
+
+		const isDelete = Object.keys(schedule).length === 0
+
+		if (isDelete) {
+			schedule = undefined
+		}
+
+		let result: SupervisionResult
+
+		if (type === 'daily') {
+			result = await zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setDailyRepeatingSchedule(
+				slot,
+				schedule as ScheduleEntryLockDailyRepeatingSchedule
+			)
+		} else if (type === 'weekly') {
+			result = await zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setWeekDaySchedule(
+				slot,
+				schedule as ScheduleEntryLockWeekDaySchedule
+			)
+		} else if (type === 'yearly') {
+			result = await zwaveNode.commandClasses[
+				'Schedule Entry Lock'
+			].setYearDaySchedule(
+				slot,
+				schedule as ScheduleEntryLockYearDaySchedule
+			)
+		} else {
+			throw new Error('Invalid schedule type')
+		}
+
+		// means that is not using supervision, read slot and check if it matches
+		if (!result) {
+			const methods = {
+				daily: 'getDailyRepeatingSchedule',
+				weekly: 'getWeekDaySchedule',
+				yearly: 'getYearDaySchedule',
+			}
+			const res = await zwaveNode.commandClasses['Schedule Entry Lock'][
+				methods[type]
+			](slot)
+
+			if (
+				(isDelete && !res) ||
+				(!isDelete && res && utils.deepEqual(res, schedule))
+			) {
+				result = {
+					status: SupervisionStatus.Success,
+				}
+			} else {
+				result = {
+					status: SupervisionStatus.Fail,
+				}
+			}
+		}
+
+		if (result.status === SupervisionStatus.Success) {
+			const node = this._nodes.get(nodeId)
+
+			// update enabled state
+			for (const mode in node.schedule) {
+				node.schedule[mode].slots = node.schedule[mode].slots.map(
+					(s: ZUISlot<any>) => ({
+						...s,
+						enabled: mode === type,
+					})
+				)
+			}
+
+			const slots = node.schedule?.[type]?.slots
+
+			if (slots) {
+				const slotIndex = slots.findIndex(
+					(s) => s.userId === slot.userId && s.slotId === slot.slotId
+				)
+				if (slotIndex !== -1) {
+					if (isDelete) {
+						slots.splice(slotIndex, 1)
+					}
+				}
+
+				if (!isDelete) {
+					slots.push({ ...slot, ...schedule } as any)
+				}
+
+				this.emitNodeUpdate(node, {
+					schedule: node.schedule,
+				})
+			}
+		}
+
+		return result
+	}
+
+	async setEnabledSchedule(nodeId: number, enabled: boolean, userId: number) {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (!zwaveNode) {
+			throw new Error('Node not found')
+		}
+
+		const result = await zwaveNode.commandClasses[
+			'Schedule Entry Lock'
+		].setEnabled(enabled, userId)
+
+		if (result.status === SupervisionStatus.Success) {
+			const node = this._nodes.get(nodeId)
+
+			if (node) {
+				if (userId) {
+					if (enabled) {
+						node.userCodes?.enabled.push(userId)
+					} else {
+						const index = node.userCodes?.enabled.indexOf(userId)
+						if (index >= 0) {
+							node.userCodes.enabled.splice(index, 1)
+						}
+					}
+				} else {
+					node.userCodes.enabled = enabled
+						? node.userCodes.available.slice()
+						: []
+				}
+
+				this.emitNodeUpdate(node, {
+					userCodes: node.userCodes,
+				})
+			}
+		}
+
+		return result
+	}
+
+	/**
 	 * Populate node `groups`
 	 */
 	getGroups(nodeId: number, ignoreUpdate = false) {
@@ -1196,6 +1674,49 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode,
 				'warn',
 				`Node not found when calling 'removeAllAssociations'`
+			)
+		}
+	}
+
+	/**
+	 * Setting the date and time on a node could be hard, this helper method will set it using the date provided (default to now).
+	 *
+	 * The following CCs will be used (when supported or necessary) in this process:
+	 * - Time Parameters CC
+	 * - Clock CC
+	 * - Time CC
+	 * - Schedule Entry Lock CC (for setting the timezone)
+	 */
+	syncNodeDateAndTime(nodeId: number, date = new Date()): Promise<boolean> {
+		const zwaveNode = this.getNode(nodeId)
+
+		if (zwaveNode) {
+			this.logNode(
+				zwaveNode,
+				'info',
+				`Syncing Node ${nodeId} date and time`
+			)
+
+			return zwaveNode.setDateAndTime(date)
+		} else {
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Node not found when calling 'syncNodeDateAndTime'`
+			)
+		}
+	}
+
+	manuallyIdleNotificationValue(valueId: ZUIValueId) {
+		const zwaveNode = this.getNode(valueId.nodeId)
+
+		if (zwaveNode) {
+			zwaveNode.manuallyIdleNotificationValue(valueId)
+		} else {
+			this.logNode(
+				zwaveNode,
+				'warn',
+				`Node not found when calling 'manuallyIdleNotificationValue'`
 			)
 		}
 	}
@@ -1557,7 +2078,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node: ZUINode,
 		changed: boolean
 	) {
-		valueId.lastUpdate = Date.now()
+		valueId.lastUpdate =
+			this.getNode(valueId.nodeId)?.getValueTimestamp(valueId) ??
+			Date.now()
 
 		this.sendToSocket(socketEvents.valueUpdated, valueId)
 
@@ -2482,33 +3005,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Used to trigger an update of controller FW
 	 */
 	async firmwareUpdateOTW(file: FwFile): Promise<boolean> {
-		if (this.driverReady) {
-			if (this._lockOTWUpdates) {
-				throw Error('Firmware update already in progress')
-			}
-
-			this._lockOTWUpdates = true
-			try {
-				if (backupManager.backupOnEvent) {
-					this.nvmEvent = 'before_controller_fw_update_otw'
-					await backupManager.backupNvm()
-				}
-				const format = guessFirmwareFileFormat(file.name, file.data)
-				const firmware = extractFirmware(file.data, format)
-				const result = await this.driver.controller.firmwareUpdateOTW(
-					firmware.data
-				)
-				this._lockOTWUpdates = false
-				return result
-			} catch (e) {
-				this._lockOTWUpdates = false
-				throw Error(
-					`Unable to extract firmware from file '${file.name}': ${e.message}`
-				)
-			}
+		if (this._lockOTWUpdates) {
+			throw Error('Firmware update already in progress')
 		}
 
-		throw new DriverNotReadyError()
+		this._lockOTWUpdates = true
+		try {
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_controller_fw_update_otw'
+				await backupManager.backupNvm()
+			}
+			const format = guessFirmwareFileFormat(file.name, file.data)
+			const firmware = extractFirmware(file.data, format)
+			const result = await this.driver.controller.firmwareUpdateOTW(
+				firmware.data
+			)
+			this._lockOTWUpdates = false
+			return result
+		} catch (e) {
+			this._lockOTWUpdates = false
+			throw Error(
+				`Unable to extract firmware from file '${file.name}': ${e.message}`
+			)
+		}
 	}
 
 	updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean> {
@@ -2733,6 +3252,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// send the command with args
 			const method = api[command].bind(api)
 			const result = args ? await method(...args) : await method()
+
 			return result
 		}
 
@@ -2752,7 +3272,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
-		if (this.driverReady) {
+		if (this.driverReady || this.driver.isInBootloader()) {
 			try {
 				const allowed =
 					typeof this[apiName] === 'function' &&
@@ -2858,6 +3378,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			try {
 				const zwaveNode = this.getNode(valueId.nodeId)
 
+				if (!zwaveNode) {
+					throw Error(`Node ${valueId.nodeId} not found`)
+				}
+
 				const isDuration = typeof value === 'object'
 
 				// handle multilevel switch 'start' and 'stop' commands
@@ -2938,9 +3462,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _onDriverReady() {
 		/*
-    Now the controller interview is complete. This means we know which nodes
-    are included in the network, but they might not be ready yet.
-    The node interview will continue in the background.
+	Now the controller interview is complete. This means we know which nodes
+	are included in the network, but they might not be ready yet.
+	The node interview will continue in the background.
   */
 
 		// driver ready
@@ -3031,6 +3555,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// force send init to all connected sockets
 			socket.emit(socketEvents.init, this.getState())
 		}
+
+		this.loadFakeNodes().catch((e) => {
+			logger.error(`Error while loading fake nodes: ${e.message}`)
+		})
 	}
 
 	private async _onDriverError(
@@ -3143,10 +3671,38 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				controllerNode.lastActive = Date.now()
 			}
 
+			const bgRssi = stats.backgroundRSSI
+
+			if (bgRssi) {
+				if (!controllerNode.bgRSSIPoints) {
+					controllerNode.bgRSSIPoints = []
+				}
+
+				controllerNode.bgRSSIPoints.push(bgRssi)
+
+				if (controllerNode.bgRSSIPoints.length > 360) {
+					const firstPoint = controllerNode.bgRSSIPoints[0]
+					const lastPoint =
+						controllerNode.bgRSSIPoints[
+							controllerNode.bgRSSIPoints.length - 1
+						]
+
+					const maxTimeSpan = 3 * 60 * 60 * 1000 // 3 hours
+
+					if (
+						lastPoint.timestamp - firstPoint.timestamp >
+						maxTimeSpan
+					) {
+						controllerNode.bgRSSIPoints.shift()
+					}
+				}
+			}
+
 			this.sendToSocket(socketEvents.statistics, {
 				nodeId: controllerNode.id,
 				statistics: stats,
 				lastActive: controllerNode.lastActive,
+				bgRSSIPoints: controllerNode.bgRSSIPoints,
 			})
 		}
 
@@ -3736,7 +4292,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		// node is ready when all it's info are parsed and all values added
+		// node is ready when all its info are parsed and all values added
 		// don't set the node as ready before all values are added, to prevent discovery
 		node.ready = true
 
@@ -3768,6 +4324,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				node.productDescription || 'Unknown'
 			})`
 		)
+
+		if (zwaveNode.commandClasses['Schedule Entry Lock'].isSupported()) {
+			this.logNode(zwaveNode, 'info', `Schedule Entry Lock is supported`)
+
+			this.getSchedules(zwaveNode.id).catch((error) => {
+				this.logNode(
+					zwaveNode,
+					'error',
+					`Failed to get schedules for node ${node.id}: ${error.message}`
+				)
+			})
+		}
 	}
 
 	/**
@@ -4062,7 +4630,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		args: ZWaveNodeMetadataUpdatedArgs
 	) {
-		this._parseValue(zwaveNode, args, args.metadata)
+		const value = this._parseValue(zwaveNode, args, args.metadata)
+
+		this.sendToSocket(socketEvents.metadataUpdated, value)
 
 		this.logNode(
 			zwaveNode,
@@ -4588,7 +5158,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	): ZUIValueId {
 		zwaveValue.nodeId = zwaveNode.id
 
+		const node = this._nodes.get(zwaveNode.id)
+		const vID = this._getValueID(zwaveValue)
+
 		const valueId: ZUIValueId = {
+			...(node.values[vID] || {}), // extend existing valueId
 			id: this._getValueID(zwaveValue, true), // the valueId unique in the entire network, it also has the nodeId
 			nodeId: zwaveNode.id,
 			toUpdate: false,
@@ -4613,7 +5187,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (zwaveNode.ready) {
 			const endpoint = zwaveNode.getEndpoint(zwaveValue.endpoint)
 
-			valueId.commandClassVersion = endpoint?.getCCVersion(
+			valueId.commandClassVersion = (endpoint ?? zwaveNode).getCCVersion(
 				zwaveValue.commandClass
 			)
 		}
@@ -5008,6 +5582,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.setPollInterval(valueId, interval)
+	}
+
+	/** Loads fake nodes exported from UI */
+	private async loadFakeNodes() {
+		const filePath = utils.joinPath(true, 'fakeNodes.json')
+		// load fake nodes from `fakeNodes.json` for testing
+		if (await exists(filePath)) {
+			const fakeNodes = JSON.parse(await readFile(filePath, 'utf-8'))
+			for (const node of fakeNodes) {
+				// convert valueIds array to map
+				const values = {}
+				for (const value of node.values) {
+					values[this._getValueID(value)] = value
+				}
+				node.values = values
+				this._nodes.set(node.id, node)
+				this.emitNodeUpdate(node)
+			}
+		}
 	}
 
 	/** Used for testing purposes */

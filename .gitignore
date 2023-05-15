@@ -71,7 +71,6 @@ typings/
 
 # Editor directories and files
 .idea
-.vscode
 *.suo
 *.ntvs*
 *.njsproj
@@ -84,3 +83,5 @@ typings/
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+fakeNodes.json
