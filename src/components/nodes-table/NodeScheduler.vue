@@ -313,10 +313,16 @@ export default {
 			}
 		},
 		async refresh() {
+			const fromCache = await this.app.confirm(
+				'Refresh schedules',
+				'Do you want to query the schedules from the device or to get them from the cache? Querying from the device may take a while but will always return the latest schedules stored on it.',
+				'info'
+			)
+
 			this.loading = true
 			const response = await this.app.apiRequest('getSchedules', [
 				this.node.id,
-				this.mode,
+				{ mode: this.mode, fromCache },
 			])
 
 			this.loading = false

@@ -1005,7 +1005,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * If the node supports Schedule Lock CC parses all available schedules and cache them
 	 */
-	async getSchedules(nodeId: number, mode?: ZUIScheduleEntryLockMode) {
+	async getSchedules(
+		nodeId: number,
+		opts: { mode?: ZUIScheduleEntryLockMode; fromCache: boolean } = {
+			fromCache: true,
+		}
+	) {
 		const zwaveNode = this.getNode(nodeId)
 
 		if (!zwaveNode?.commandClasses['Schedule Entry Lock'].isSupported()) {
@@ -1023,6 +1028,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const promise = async () => {
 			this._cancelGetSchedule = false
 			this._lockGetSchedule = true
+			const { mode, fromCache } = opts
 			// TODO: should we check also other endpoints?
 			const endpointIndex = 0
 			const endpoint = zwaveNode.getEndpoint(endpointIndex)
@@ -1106,7 +1112,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					node.userCodes.available.push(i)
 
-					const enalbedUserid =
+					const enabledUserId =
 						ScheduleEntryLockCC.getUserCodeScheduleEnabledCached(
 							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 							this.driver,
@@ -1114,7 +1120,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							i
 						)
 
-					if (enalbedUserid) {
+					if (enabledUserId) {
 						node.userCodes.enabled.push(i)
 					}
 
@@ -1124,6 +1130,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							this.driver,
 							endpoint,
 							i
+						)
+
+					const getCached = (
+						kind: ScheduleEntryLockScheduleKind,
+						slotId: number
+					) =>
+						ScheduleEntryLockCC.getScheduleCached(
+							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
+							this.driver,
+							endpoint,
+							kind,
+							i,
+							slotId
 						)
 
 					if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
@@ -1140,9 +1159,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								slotId: s,
 							}
 
-							const schedule = await zwaveNode.commandClasses[
-								'Schedule Entry Lock'
-							].getWeekDaySchedule(slot)
+							const schedule = fromCache
+								? getCached(
+										ScheduleEntryLockScheduleKind.WeekDay,
+										s
+								  )
+								: await zwaveNode.commandClasses[
+										'Schedule Entry Lock'
+								  ].getWeekDaySchedule(slot)
 							if (schedule)
 								weeklySchedules.push({
 									...slot,
@@ -1166,9 +1190,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								userId: i,
 								slotId: s,
 							}
-							const schedule = await zwaveNode.commandClasses[
-								'Schedule Entry Lock'
-							].getYearDaySchedule(slot)
+							const schedule = fromCache
+								? getCached(
+										ScheduleEntryLockScheduleKind.YearDay,
+										s
+								  )
+								: await zwaveNode.commandClasses[
+										'Schedule Entry Lock'
+								  ].getYearDaySchedule(slot)
 							if (schedule)
 								yearlySchedules.push({
 									...slot,
@@ -1196,9 +1225,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								userId: i,
 								slotId: s,
 							}
-							const schedule = await zwaveNode.commandClasses[
-								'Schedule Entry Lock'
-							].getDailyRepeatingSchedule(slot)
+							const schedule = fromCache
+								? getCached(
+										ScheduleEntryLockScheduleKind.WeekDay,
+										s
+								  )
+								: await zwaveNode.commandClasses[
+										'Schedule Entry Lock'
+								  ].getDailyRepeatingSchedule(slot)
 							if (schedule)
 								dailySchedules.push({
 									...slot,
