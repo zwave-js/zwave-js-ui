@@ -218,7 +218,8 @@
 			<div
 				v-else-if="
 					value.type === 'boolean' &&
-					((value.writeable && value.readable) || value.list)
+					((value.writeable && value.readable) ||
+						(value.states && value.states.length === 2))
 				"
 			>
 				<v-btn-toggle class="my-2" v-model="value.newValue" rounded>
@@ -232,10 +233,16 @@
 									? '#4CAF50'
 									: '',
 						}"
+						:color="
+							value.newValue === true && !value.list
+								? 'white'
+								: 'green'
+						"
 						dark
 						@click="updateValue(value, true)"
 					>
 						<v-icon
+							v-if="!trueLabel"
 							:color="
 								value.newValue === true && !value.list
 									? 'white'
@@ -244,6 +251,7 @@
 							style="rotate: 90deg"
 							>horizontal_rule</v-icon
 						>
+						<span v-else>{{ trueLabel }}</span>
 					</v-btn>
 					<v-btn
 						outlined
@@ -255,10 +263,16 @@
 									? '#f44336'
 									: '',
 						}"
+						:color="
+							value.newValue === false && !value.list
+								? 'white'
+								: 'red'
+						"
 						@click="updateValue(value, false)"
 						dark
 					>
 						<v-icon
+							v-if="!falseLabel"
 							:color="
 								value.newValue === false && !value.list
 									? 'white'
@@ -266,6 +280,7 @@
 							"
 							>radio_button_unchecked</v-icon
 						>
+						<span v-else>{{ falseLabel }}</span>
 					</v-btn>
 				</v-btn-toggle>
 				<div v-if="help" class="caption mt-2">{{ help }}</div>
@@ -273,9 +288,7 @@
 
 			<!-- Button Input -->
 			<v-tooltip
-				v-else-if="
-					value.type === 'boolean' && !value.readable && !value.list
-				"
+				v-else-if="value.type === 'boolean' && !value.readable"
 				right
 			>
 				<template v-slot:activator="{ on }">
@@ -287,7 +300,7 @@
 						dark
 						@click="updateValue(value)"
 						class="mb-2 mt-2"
-						>{{ value.label }}</v-btn
+						>{{ trueLabel || falseLabel || value.label }}</v-btn
 					>
 				</template>
 				<span>{{ '[' + value.id + '] ' + help }}</span>
@@ -333,6 +346,18 @@ export default {
 		}
 	},
 	computed: {
+		trueLabel() {
+			return this.value.type === 'boolean' &&
+				this.value.states?.length > 0
+				? this.value.states.find((s) => s.value === true)?.text
+				: null
+		},
+		falseLabel() {
+			return this.value.type === 'boolean' &&
+				this.value.states?.length > 0
+				? this.value.states.find((s) => s.value === false)?.text
+				: null
+		},
 		selectedItem() {
 			const value =
 				this.value.type === 'number'
@@ -466,6 +491,11 @@ export default {
 			}
 
 			if (customValue !== undefined) {
+				v.newValue = customValue
+			}
+
+			if (v.type === 'boolean' && v.states.length === 1) {
+				customValue = v.states[0].value
 				v.newValue = customValue
 			}
 
