@@ -1,5 +1,14 @@
 
 
+# [8.16.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.15.0...v8.16.0) (2023-05-15)
+
+
+### Features
+
+* bump zwave-js@10.18.0 ([#3081](https://github.com/zwave-js/zwave-js-ui/issues/3081)) ([2311e70](https://github.com/zwave-js/zwave-js-ui/commit/2311e709315f61cba2c1bae35272c60b1e9bb6ac))
+* bump zwave-js@10.20.0 ([46930e3](https://github.com/zwave-js/zwave-js-ui/commit/46930e305f864d9cfe7fb49f9a6886e11e39b960))
+* reworked Schedule Entry Lock CC support ([#3078](https://github.com/zwave-js/zwave-js-ui/issues/3078)) ([401f4bc](https://github.com/zwave-js/zwave-js-ui/commit/401f4bc2f267db9b92f935b97bdf76738cc2bca4))
+
 # [8.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.14.2...v8.15.0) (2023-05-04)
 
 
