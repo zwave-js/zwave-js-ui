@@ -494,7 +494,7 @@ export default {
 				v.newValue = customValue
 			}
 
-			if (v.type === 'boolean' && v.states.length === 1) {
+			if (v.type === 'boolean' && v.states?.length === 1) {
 				customValue = v.states[0].value
 				v.newValue = customValue
 			}
