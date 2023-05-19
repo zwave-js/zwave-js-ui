@@ -1035,25 +1035,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const endpoint = zwaveNode.getEndpoint(endpointIndex)
 
 			const userCodes = UserCodeCC.getSupportedUsersCached(
-				// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 				this.driver,
 				endpoint
 			)
 
 			const numSlots = {
 				numWeekDaySlots: ScheduleEntryLockCC.getNumWeekDaySlotsCached(
-					// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 					this.driver,
 					endpoint
 				),
 				numYearDaySlots: ScheduleEntryLockCC.getNumYearDaySlotsCached(
-					// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 					this.driver,
 					endpoint
 				),
 				numDailyRepeatingSlots:
 					ScheduleEntryLockCC.getNumDailyRepeatingSlotsCached(
-						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 						this.driver,
 						endpoint
 					),
@@ -1096,7 +1092,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (isInited) {
 				for (let i = 1; i <= userCodes; i++) {
 					const status = UserCodeCC.getUserIdStatusCached(
-						// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 						this.driver,
 						endpoint,
 						i
@@ -1115,7 +1110,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					const enabledUserId =
 						ScheduleEntryLockCC.getUserCodeScheduleEnabledCached(
-							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 							this.driver,
 							endpoint,
 							i
@@ -1127,7 +1121,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					const enabledType =
 						ScheduleEntryLockCC.getUserCodeScheduleKindCached(
-							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 							this.driver,
 							endpoint,
 							i
@@ -1138,7 +1131,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						slotId: number
 					) =>
 						ScheduleEntryLockCC.getScheduleCached(
-							// @ts-expect-error https://github.com/zwave-js/node-zwave-js/issues/5602
 							this.driver,
 							endpoint,
 							kind,
@@ -1161,9 +1153,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							}
 
 							const schedule = fromCache
-								? getCached(
-										ScheduleEntryLockScheduleKind.WeekDay,
-										s
+								? <ScheduleEntryLockWeekDaySchedule>(
+										getCached(
+											ScheduleEntryLockScheduleKind.WeekDay,
+											s
+										)
 								  )
 								: await zwaveNode.commandClasses[
 										'Schedule Entry Lock'
@@ -1192,9 +1186,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								slotId: s,
 							}
 							const schedule = fromCache
-								? getCached(
-										ScheduleEntryLockScheduleKind.YearDay,
-										s
+								? <ScheduleEntryLockYearDaySchedule>(
+										getCached(
+											ScheduleEntryLockScheduleKind.YearDay,
+											s
+										)
 								  )
 								: await zwaveNode.commandClasses[
 										'Schedule Entry Lock'
@@ -1227,9 +1223,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								slotId: s,
 							}
 							const schedule = fromCache
-								? getCached(
-										ScheduleEntryLockScheduleKind.WeekDay,
-										s
+								? <ScheduleEntryLockDailyRepeatingSchedule>(
+										getCached(
+											ScheduleEntryLockScheduleKind.DailyRepeating,
+											s
+										)
 								  )
 								: await zwaveNode.commandClasses[
 										'Schedule Entry Lock'
