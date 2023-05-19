@@ -1,5 +1,18 @@
 
 
+## [8.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.1...v8.16.2) (2023-05-19)
+
+
+### Bug Fixes
+
+* **ui:** boolean valueId may fail to set value ([c6a36e3](https://github.com/zwave-js/zwave-js-ui/commit/c6a36e3b8743f2e03c5633ea2c5ea0a6e0ef8190))
+* **ui:** ensure mode is set when no one is enabled ([4a48b1f](https://github.com/zwave-js/zwave-js-ui/commit/4a48b1fcddd6dddc3d81179502cbdb736563a9ac))
+
+
+### Features
+
+* bump zwave-js@10.21.0 ([#3090](https://github.com/zwave-js/zwave-js-ui/issues/3090)) ([f8a681d](https://github.com/zwave-js/zwave-js-ui/commit/f8a681de979a56efc69279656f0e68308eae4667))
+
 ## [8.16.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.0...v8.16.1) (2023-05-15)
 
 
