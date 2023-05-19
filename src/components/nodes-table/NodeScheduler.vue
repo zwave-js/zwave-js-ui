@@ -172,7 +172,7 @@ export default {
 	},
 	computed: {
 		schedule() {
-			return this.node.schedule[this.mode]
+			return this.node.schedule[this.mode || 'daily']
 		},
 		supportedModes() {
 			return this.modes.filter((m) => {
@@ -290,7 +290,7 @@ export default {
 		},
 	},
 	mounted() {
-		this.mode = this.activeMode
+		this.mode = this.activeMode || 'daily'
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
