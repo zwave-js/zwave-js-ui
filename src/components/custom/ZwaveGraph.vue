@@ -425,8 +425,8 @@ export default {
 		handleHoverNode(params) {
 			// show menu
 			const { node, event } = params
-			this.menuX = event.clientX
-			this.menuY = event.clientY
+			this.menuX = event.clientX + 15
+			this.menuY = event.clientY + 15
 			this.menu = true
 			const item = this.filteredNodes.find((n) => n.id === node)
 
