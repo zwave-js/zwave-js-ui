@@ -1394,7 +1394,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'Schedule Entry Lock'
 		].setEnabled(enabled, userId)
 
-		if (result.status === SupervisionStatus.Success) {
+		// if result is not defined here we don't have a way
+		// to know if the command was successful or not as there is no
+		// 'get' command for this, so we just assume it was successful
+		if (!result || result.status === SupervisionStatus.Success) {
 			const node = this._nodes.get(nodeId)
 
 			if (node) {
