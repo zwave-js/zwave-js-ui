@@ -11,6 +11,7 @@ import {
 	ZWaveErrorCodes,
 	SupervisionStatus,
 	SupervisionResult,
+	isUnsupervisedOrSucceeded,
 } from '@zwave-js/core'
 import { isDocker } from '@zwave-js/shared'
 import {
@@ -1397,7 +1398,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// if result is not defined here we don't have a way
 		// to know if the command was successful or not as there is no
 		// 'get' command for this, so we just assume it was successful
-		if (!result || result.status === SupervisionStatus.Success) {
+		if (isUnsupervisedOrSucceeded(result)) {
 			const node = this._nodes.get(nodeId)
 
 			if (node) {
