@@ -100,13 +100,18 @@ export function customFormat(
  * Create the base transports based on settings provided
  */
 export function customTransports(config: LoggerConfig): winston.transport[] {
-	const transportsList: winston.transport[] = [
-		new transports.Console({
-			format: customFormat(config),
-			level: config.level,
-			stderrLevels: ['error'],
-		}),
-	]
+	const transportsList: winston.transport[] = []
+
+	if (process.env.ZUI_NO_CONSOLE !== 'true') {
+		transportsList.push(
+			new transports.Console({
+				format: customFormat(config),
+				level: config.level,
+				stderrLevels: ['error'],
+			})
+		)
+	}
+
 	if (config.logToFile) {
 		let fileTransport: winston.transport
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {

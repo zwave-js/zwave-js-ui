@@ -25,6 +25,7 @@ This is the list of the supported environment variables:
 - `ZUI_LOG_MAXFILES`: The maximum number of files to keep in the log directory, if you add `d` suffix this will set the number of days to keep logs. Default is `7d`.
 - `ZUI_LOG_MAXSIZE`: The maximum size of a single log file. Default is `50m` (50MB)
 - `NO_LOG_COLORS`: Set this env var to `'true'` to disable application log colors also in the console.
+- `ZUI_NO_CONSOLE`: Set this env var to `'true'` to disable application log in the console.
 - `FORCE_DISABLE_SSL`: Set this env var to `'true'` to disable SSL.
 - `BASE_PATH`: Set this env var to the base path where the application is served. Default is `/`.
 - `UID_DISCOVERY_PREFIX`: Sets the prefix used for MQTT Discovery `unique_id` of entities. Default is `zwavejs2mqtt_`.
