@@ -2,6 +2,7 @@
 	<v-dialog
 		v-model="value"
 		@keydown.esc="$emit('close')"
+		@keydown.enter="dispatchEnter"
 		max-width="800px"
 		persistent
 	>
@@ -49,7 +50,7 @@
 							:key="`${s.key}-content`"
 							:step="s.index"
 						>
-							<v-card elevation="0">
+							<v-card ref="content" elevation="0">
 								<v-card-text v-if="s.key == 'action'">
 									<v-radio-group
 										v-model="s.values.action"
@@ -119,6 +120,7 @@
 											v-if="state !== 'start'"
 											color="primary"
 											@click.stop="nextStep"
+											class="next-btn"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -133,6 +135,7 @@
 										</v-btn>
 									</v-card-actions>
 								</v-card-text>
+
 								<v-card-text v-if="s.key == 'replaceFailed'">
 									<v-combobox
 										label="Node"
@@ -148,6 +151,7 @@
 										<v-btn
 											color="primary"
 											@click.stop="nextStep"
+											class="next-btn"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -170,6 +174,7 @@
 										<v-text-field
 											label="Name"
 											persistent-hint
+											autofocus
 											hint="Node name"
 											:rules="[validateTopic]"
 											v-model.trim="s.values.name"
@@ -191,6 +196,7 @@
 											:disabled="!validNaming"
 											color="primary"
 											@click.stop="submitNameLoc"
+											class="next-btn"
 											@keypress.enter="submitNameLoc"
 										>
 											Next
@@ -349,6 +355,7 @@
 											v-if="!loading"
 											color="primary"
 											@click.stop="nextStep"
+											class="next-btn"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -457,6 +464,7 @@
 											v-if="!loading"
 											color="primary"
 											@click.stop="nextStep"
+											class="next-btn"
 											@keypress.enter="nextStep"
 										>
 											Next
@@ -528,6 +536,7 @@
 												v-if="!aborted"
 												color="primary"
 												@click.stop="nextStep"
+												class="next-btn"
 												@keypress.enter="nextStep"
 											>
 												Next
@@ -554,15 +563,20 @@
 										</v-col>
 									</div>
 								</v-card-text>
+
 								<v-card-text v-if="s.key == 's2Pin'">
 									<div v-if="!loading">
 										<v-text-field
 											label="DSK Pin"
 											class="mb-2"
+											autofocus
 											persistent-hint
 											hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
 											inputmode="numeric"
 											v-model.trim="s.values.pin"
+											:error="
+												validPin(s.values.pin) !== true
+											"
 											:suffix="
 												$vuetify.breakpoint.xsOnly
 													? ''
@@ -582,7 +596,12 @@
 											<v-btn
 												v-if="!aborted"
 												color="primary"
+												:disabled="
+													validPin(s.values.pin) !==
+													true
+												"
 												@click.stop="nextStep"
+												class="next-btn"
 												@keypress.enter="nextStep"
 											>
 												Next
@@ -887,6 +906,26 @@ export default {
 				this.nextStep()
 			}
 		},
+		validPin(pin) {
+			return pin?.length === 5 || 'PIN must be 5 digits'
+		},
+		dispatchEnter() {
+			const isDoneStep = this.steps[this.currentStep - 1]?.key === 'done'
+
+			if (isDoneStep) {
+				this.changeStep(0)
+			} else {
+				// for some reason using @keydown.enter on buttons isn't working
+				// this trick is used to dispatch the enter event to the button
+				const button = this.$refs.content[0].$el.querySelector(
+					'.next-btn:not([disabled])'
+				)
+
+				if (button) {
+					button.click()
+				}
+			}
+		},
 		onNodeAdded({ node, result }) {
 			this.nodeFound = node
 			if (this.loading) {
@@ -991,7 +1030,6 @@ export default {
 				}
 			}
 		},
-
 		changeStep(index) {
 			if (index <= 1) {
 				this.init() // calling it without the bind parameter will not touch events

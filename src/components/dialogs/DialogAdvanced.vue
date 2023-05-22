@@ -1,5 +1,10 @@
 <template>
-	<v-dialog v-model="value" persistent max-width="800">
+	<v-dialog
+		@keydown.esc="$emit('close')"
+		v-model="value"
+		persistent
+		max-width="800"
+	>
 		<v-card>
 			<v-card-title>
 				<span class="headline">{{ title }}</span>
