@@ -2,6 +2,14 @@
 	<div>
 		<v-subheader class="valueid-label">{{ label }} </v-subheader>
 
+		<v-btn
+			@click="resetConfig"
+			v-if="canResetConfiguration"
+			x-small
+			color="error"
+			>Reset</v-btn
+		>
+
 		<!-- Not writeable value -->
 		<div v-if="!value.writeable">
 			<div class="readonly mt-5">
@@ -375,6 +383,14 @@ export default {
 				this.value.states?.find((s) => s.value === 0)
 			)
 		},
+		canResetConfiguration() {
+			if (!this.value || this.disable_send) return false
+
+			return (
+				this.value.commandClass === 112 &&
+				this.value.commandClassVersion > 3
+			)
+		},
 		items() {
 			if (this.selectedItem) {
 				return this.value.states
@@ -451,6 +467,22 @@ export default {
 		},
 	},
 	methods: {
+		async resetConfig() {
+			const app = manager.getInstance(instances.APP)
+
+			const response = await app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 112,
+				},
+				'reset',
+				[this.value.property],
+			])
+
+			if (response.success) {
+				useBaseStore().showSnackbar('Configuration reset', 'success')
+			}
+		},
 		async idleNotification() {
 			const app = manager.getInstance(instances.APP)
 

@@ -195,6 +195,16 @@
 								</v-col>
 								<v-col class="text-right pr-5">
 									<v-btn
+										v-if="canResetConfig(group[0])"
+										@click.stop="resetAllConfig()"
+										color="error"
+										outlined
+										x-small
+									>
+										Reset
+										<v-icon x-small right>clear</v-icon>
+									</v-btn>
+									<v-btn
 										v-if="group[0]"
 										@click.stop="
 											refreshCCValues(
@@ -237,6 +247,15 @@
 									<v-subheader class="valueid-label"
 										>Custom Configuration
 									</v-subheader>
+
+									<v-btn
+										@click="resetConfig"
+										v-if="canResetConfig(group[0])"
+										x-small
+										color="error"
+										>Reset</v-btn
+									>
+
 									<v-row>
 										<v-col cols="3">
 											<v-text-field
@@ -405,6 +424,52 @@ export default {
 
 			if (response.success) {
 				this.showSnackbar('Powerlevel updated', 'success')
+			}
+		},
+		canResetConfig(value) {
+			return (
+				value &&
+				value.commandClass === 112 &&
+				value.commandClassVersion > 3
+			)
+		},
+		async resetAllConfig() {
+			if (
+				await this.app.confirm(
+					'Attention',
+					'Are you sure you want to reset all configurations to default?',
+					'alert'
+				)
+			) {
+				const response = await this.app.apiRequest('sendCommand', [
+					{
+						nodeId: this.node.id,
+						commandClass: 112,
+					},
+					'resetAll',
+					[],
+				])
+
+				if (response.success) {
+					this.showSnackbar('All config values resetted', 'success')
+				}
+			}
+		},
+		async resetConfig() {
+			const response = await this.app.apiRequest('sendCommand', [
+				{
+					nodeId: this.node.id,
+					commandClass: 112,
+				},
+				'reset',
+				[this.configCC.parameter],
+			])
+
+			if (response.success) {
+				this.showSnackbar(
+					`Parameter ${this.configCC.parameter}: resetted`,
+					'success'
+				)
 			}
 		},
 		async refreshCCValues(cc) {
