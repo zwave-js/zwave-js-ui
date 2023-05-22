@@ -1249,7 +1249,8 @@ export default class Gateway {
 								'specific_type_class_b_motor_control',
 								'specific_type_class_c_motor_control',
 								'specific_type_class_motor_multiposition',
-							].includes(specificDeviceClass)
+							].includes(specificDeviceClass) ||
+							node.deviceId === '615-0-258' // Issue #3088
 						) {
 							cfg = utils.copy(hassCfg.cover_position)
 							cfg.discovery_payload.command_topic = setTopic
