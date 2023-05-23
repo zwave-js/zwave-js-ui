@@ -454,23 +454,23 @@ export default {
 
 			this.network.on('select', this.handleSelectNode.bind(this))
 
-			this.network.on('hoverEdge', function (e) {
-				this.body.data.edges.update({
-					id: e.edge,
-					font: {
-						size: 12,
-					},
-				})
-			})
+			// this.network.on('hoverEdge', function (e) {
+			// 	this.body.data.edges.update({
+			// 		id: e.edge,
+			// 		font: {
+			// 			size: 12,
+			// 		},
+			// 	})
+			// })
 
-			this.network.on('blurEdge', function (e) {
-				this.body.data.edges.update({
-					id: e.edge,
-					font: {
-						size: 0,
-					},
-				})
-			})
+			// this.network.on('blurEdge', function (e) {
+			// 	this.body.data.edges.update({
+			// 		id: e.edge,
+			// 		font: {
+			// 			size: 0,
+			// 		},
+			// 	})
+			// })
 
 			this.network.once('stabilizationIterationsDone', () => {
 				this.loading = false
@@ -491,10 +491,15 @@ export default {
 					selectedNodes.length > 0 &&
 					!selectedNodes.includes(e.repeaterOf)
 
-				if (shouldBeHidden !== e.hidden) {
+				const fontSize = selectedNodes.length > 0 ? 12 : 0
+
+				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
 					edgesToUpdate.push({
 						id: e.id,
 						hidden: shouldBeHidden,
+						font: {
+							size: fontSize,
+						},
 					})
 				}
 
