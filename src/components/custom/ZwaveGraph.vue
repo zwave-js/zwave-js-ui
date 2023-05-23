@@ -631,7 +631,9 @@ export default {
 					repeaterOf: node.id,
 				}
 
-				node.color = this.legends[repeaters.length + 1].color
+				if (!nlwr) {
+					node.color = this.legends[repeaters.length + 1].color
+				}
 
 				edges.push(edge)
 				// this.edgesCache.push(edgeId)
