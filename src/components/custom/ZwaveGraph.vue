@@ -355,29 +355,34 @@ export default {
 			],
 			edgesLegend: [
 				{
+					icon: 'minimize',
+					textColor: '',
+					text: 'Last working route',
+				},
+				{
 					icon: 'more_horiz',
 					textColor: '',
-					text: 'NLWR (Next last working route)',
+					text: 'Next last working route',
 				},
 				{
 					color: '#8b0000',
 					textColor: '#8b0000',
-					text: 'ZWave_9k6',
+					text: 'ZWave 9.6 kbit/s',
 				},
 				{
 					color: '#F1C40F',
 					textColor: '#F1C40F',
-					text: 'ZWave_40k',
+					text: 'ZWave 40 kbit/s',
 				},
 				{
 					color: '#2DCC70',
 					textColor: '#2DCC70',
-					text: 'ZWave_100k',
+					text: 'ZWave 100 kbit/s',
 				},
 				{
 					color: '#3F51B5',
 					textColor: '#3F51B5',
-					text: 'LongRange_100k',
+					text: 'Long Range 100 kbit/s',
 				},
 				{
 					color: '#666666',
