@@ -218,7 +218,7 @@
 import { Network } from 'vis-network'
 import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
-import fakeNodes from '@/assets/testNodes.json'
+// import fakeNodes from '@/assets/testNodes.json'
 import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 
 export default {
@@ -236,7 +236,7 @@ export default {
 		},
 		locations() {
 			// get unique locations array from nodes
-			return fakeNodes.reduce((acc, node) => {
+			return this.nodes.reduce((acc, node) => {
 				if (node.loc && acc.indexOf(node.loc) === -1) {
 					acc.push(node.loc)
 				}
@@ -244,7 +244,7 @@ export default {
 			}, [])
 		},
 		filteredNodes() {
-			return fakeNodes.filter((n) => {
+			return this.nodes.filter((n) => {
 				if (n.isControllerNode) {
 					return true
 				}
@@ -462,7 +462,13 @@ export default {
 			this.hoverNode = null
 		},
 		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
-			if (!route) return
+			if (!route) {
+				if (!nlwr) {
+					// unconnected
+					node.color = this.legends[6].color
+				}
+				return
+			}
 
 			const { repeaters, repeaterRSSI, rssi, protocolDataRate } = route
 
@@ -483,10 +489,11 @@ export default {
 
 				// prevent drawing duplicated edges
 				if (
-					this.edgesCache.includes[edgeId] ||
-					this.edgesCache.includes[`${to}-${from}`]
-				)
+					this.edgesCache.includes(edgeId) ||
+					this.edgesCache.includes(`${to}-${from}`)
+				) {
 					continue
+				}
 
 				// create the edge
 				// https://visjs.github.io/vis-network/docs/network/edges.html
