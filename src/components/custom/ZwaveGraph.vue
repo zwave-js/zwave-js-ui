@@ -427,7 +427,14 @@ export default {
 					// shadow: true,
 				},
 				physics: {
-					enabled: false, // enabling physics reduces performance a lot
+					enabled: true, // enabling physics reduces performance a lot
+					stabilization: {
+						enabled: true,
+						iterations: 200,
+						updateInterval: 100,
+						onlyDynamicEdges: false,
+						fit: true,
+					},
 				},
 			}
 			this.network = new Network(container, data, options)
