@@ -665,18 +665,45 @@ export default {
 				return
 			}
 
-			const { repeaters, repeaterRSSI, rssi, protocolDataRate } = route
+			const {
+				repeaters,
+				repeaterRSSI,
+				rssi,
+				protocolDataRate,
+				routeFailedBetween,
+			} = route
+
+			if (routeFailedBetween) {
+				const edge = {
+					id: uuid(),
+					from: routeFailedBetween[0],
+					to: routeFailedBetween[1],
+					color: this.getDataRateColor(ProtocolDataRate.ZWave_9k6),
+					protocolDataRate,
+					width: nlwr ? 1 : 4,
+					// rssi: rssiToString(repeaterRSSI?.[i] || rssi),
+					// layer: -1,
+					label: 'Failed ❌',
+					font: { align: 'top', size: 0 },
+					dashes: nlwr ? [5, 5] : false,
+					hidden: nlwr,
+					repeaterOf: node.id,
+					physics: !nlwr,
+				}
+
+				edges.push(edge)
+			}
 
 			for (let i = 0; i <= repeaters.length; i++) {
 				const repeater = repeaters[i]
 				const prevRepeater = repeaters[i - 1] || controllerId
 
+				const from = prevRepeater
+				const to = repeater || node.id
+
 				const label = `RSSI: ${rssiToString(
 					i === 0 ? rssi : repeaterRSSI?.[i - 1]
 				)}`
-
-				const from = prevRepeater
-				const to = repeater || node.id
 
 				const edgeId = `${from}-${to}`
 
@@ -692,7 +719,7 @@ export default {
 					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
 					layer: i + 1,
 					label,
-					font: { align: 'top', multi: 'html', size: 0 },
+					font: { align: 'top', size: 0 }, //  multi: 'html'
 					// arrows: 'to from',
 					dashes: nlwr ? [5, 5] : false,
 					hidden: nlwr,
