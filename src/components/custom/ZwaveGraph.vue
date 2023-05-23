@@ -367,22 +367,24 @@ export default {
 				{
 					color: '#8b0000',
 					textColor: '#8b0000',
-					text: 'ZWave 9.6 kbit/s',
+					text: protocolDataRateToString(ProtocolDataRate.ZWave_9k6),
 				},
 				{
 					color: '#F1C40F',
 					textColor: '#F1C40F',
-					text: 'ZWave 40 kbit/s',
+					text: protocolDataRateToString(ProtocolDataRate.ZWave_40k),
 				},
 				{
 					color: '#2DCC70',
 					textColor: '#2DCC70',
-					text: 'ZWave 100 kbit/s',
+					text: protocolDataRateToString(ProtocolDataRate.ZWave_100k),
 				},
 				{
 					color: '#3F51B5',
 					textColor: '#3F51B5',
-					text: 'Long Range 100 kbit/s',
+					text: protocolDataRateToString(
+						ProtocolDataRate.LongRange_100k
+					),
 				},
 				{
 					color: '#666666',
@@ -658,14 +660,12 @@ export default {
 				const repeater = repeaters[i]
 				const prevRepeater = repeaters[i - 1] || controllerId
 
-				const label = `${rssiToString(
-					repeaterRSSI?.[i] || rssi
-				)}\n${protocolDataRateToString(protocolDataRate)}`
+				const label = `RSSI: ${rssiToString(repeaterRSSI?.[i] || rssi)}`
 
 				const from = prevRepeater
 				const to = repeater || node.id
 
-				const edgeId = `${from}-${to}`
+				// const edgeId = `${from}-${to}`
 
 				// prevent drawing duplicated edges
 				// if (
@@ -683,11 +683,9 @@ export default {
 					color: this.getDataRateColor(protocolDataRate),
 					width: nlwr ? 1 : 4,
 					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
-					protocolDataRate:
-						protocolDataRateToString(protocolDataRate),
 					layer: i + 1,
 					label,
-					font: { align: 'middle', multi: 'html', size: 0 },
+					font: { align: 'top', multi: 'html', size: 0 },
 					// arrows: 'to from',
 					dashes: nlwr ? [5, 5] : false,
 					hidden: false,
