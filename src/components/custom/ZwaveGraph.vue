@@ -270,7 +270,7 @@ export default {
 			}, [])
 		},
 		filteredNodes() {
-			return fakeNodes.filter((n) => {
+			return this.allNodes.filter((n) => {
 				if (n.isControllerNode) {
 					return true
 				}
@@ -298,11 +298,15 @@ export default {
 				return toAdd
 			})
 		},
+		allNodes() {
+			return fakeNodes
+		},
 	},
 	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
 	data() {
 		return {
 			openPanel: -1,
+			selectedNodes: [],
 			menuX: 0,
 			menuY: 0,
 			menu: false,
@@ -312,7 +316,6 @@ export default {
 			filterNodes: [],
 			filterNodesInvert: false,
 			filterLocationsInvert: false,
-			edgesVisibility: 'relevant',
 			grouping: 'ungrouped',
 			refreshTimeout: null,
 			loading: false,
@@ -406,20 +409,26 @@ export default {
 		}
 	},
 	watch: {
-		filteredNodes() {
-			this.shouldReload = true
-		},
 		// nodes() {
 		// 	this.debounceRefresh()
 		// },
-		edgesVisibility() {
-			this.debounceRefresh()
-		},
 		grouping() {
 			this.debounceRefresh()
 		},
 		isDark() {
-			this.updateLabelsColor()
+			// this.updateLabelsColor()
+		},
+		filteredNodes(val) {
+			this.selectedNodes = val.map((n) => n.id)
+
+			if (this.network) {
+				const all = val.length === this.allNodes.length
+				const params = {
+					nodes: all ? [] : this.selectedNodes,
+				}
+				this.network.setSelection(params)
+				this.handleSelectNode(params)
+			}
 		},
 	},
 	mounted() {
@@ -441,6 +450,8 @@ export default {
 				clearTimeout(this.refreshTimeout)
 			}
 
+			this.loading = true
+
 			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
 		},
 		getDataRateColor(dataRate) {
@@ -457,10 +468,12 @@ export default {
 					return '#666666'
 			}
 		},
-		async paintGraph() {
+		paintGraph() {
 			this.shouldReload = false
 
 			this.edgesCache = {}
+
+			this.loading = true
 
 			const { edges, nodes } = this.listNodes()
 
@@ -514,8 +527,6 @@ export default {
 				},
 			}
 
-			this.loading = true
-			await this.$nextTick()
 			this.network = new Network(container, data, options)
 
 			// event handlers
@@ -570,6 +581,8 @@ export default {
 			) {
 				selectedNodes = []
 			}
+
+			this.selectedNodes = selectedNodes
 
 			const showAll = selectedNodes.length === 0
 
@@ -633,7 +646,7 @@ export default {
 			this.menuX = event.clientX + 15
 			this.menuY = event.clientY + 15
 			this.menu = true
-			const item = this.filteredNodes.find((n) => n.id === node)
+			const item = this.allNodes.find((n) => n.id === node)
 
 			if (item) {
 				this.hoverNode = item
@@ -645,12 +658,12 @@ export default {
 			this.hoverNode = null
 		},
 		handleClick(params) {
-			params.event.preventDefault()
+			params.event?.preventDefault()
 			// https://visjs.github.io/vis-network/docs/network/#events
 			// Add interactivity
 			const nodeId = params.nodes[0]
 			if (nodeId) {
-				const node = this.filteredNodes.find((n) => n.id === nodeId)
+				const node = this.allNodes.find((n) => n.id === nodeId)
 				this.$emit('node-click', node)
 			} else {
 				this.$emit('node-click', null)
@@ -755,13 +768,13 @@ export default {
 				nodes: [],
 			}
 
-			let hubNode = this.filteredNodes.find((n) => n.isControllerNode)
+			let hubNode = this.allNodes.find((n) => n.isControllerNode)
 			hubNode = hubNode ? hubNode.id : 1
 
 			/** node id --> neghbors array */
 			const neighbors = {}
 
-			for (const node of this.filteredNodes) {
+			for (const node of this.allNodes) {
 				const id = node.id
 
 				neighbors[id] = node.neighbors
