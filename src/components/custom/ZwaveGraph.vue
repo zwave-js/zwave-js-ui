@@ -13,9 +13,30 @@
 									:key="i"
 								>
 									<v-list-item-icon>
-										<v-icon :color="item.color"
-											>turned_in</v-icon
-										>
+										<v-icon :color="item.color">{{
+											item.icon || 'turned_in'
+										}}</v-icon>
+									</v-list-item-icon>
+									<v-list-item-content>
+										<v-list-item-title
+											:style="{ color: item.textColor }"
+											v-text="item.text"
+										></v-list-item-title>
+									</v-list-item-content>
+								</v-list-item>
+							</v-list>
+						</v-col>
+						<v-col>
+							<v-subheader>Edges</v-subheader>
+							<v-list dense>
+								<v-list-item
+									v-for="(item, i) in edgesLegend"
+									:key="i"
+								>
+									<v-list-item-icon>
+										<v-icon :color="item.color">{{
+											item.icon || 'turned_in'
+										}}</v-icon>
 									</v-list-item-icon>
 									<v-list-item-content>
 										<v-list-item-title
@@ -126,7 +147,7 @@
 							</v-badge>
 						</v-col>
 
-						<v-col>
+						<!-- <v-col>
 							<v-subheader>Grouping</v-subheader>
 
 							<v-radio-group v-model="grouping">
@@ -137,7 +158,7 @@
 									:value="item.value"
 								></v-radio>
 							</v-radio-group>
-						</v-col>
+						</v-col> -->
 					</v-row>
 				</v-expansion-panel-content>
 			</v-expansion-panel>
@@ -297,8 +318,8 @@ export default {
 			edgesCache: [],
 			legends: [
 				{
-					color: '#3F51B5',
-					textColor: '#2470A2',
+					color: '#7e57c2',
+					textColor: '#7e57c2',
 					text: 'Controller',
 				},
 				{
@@ -334,24 +355,46 @@ export default {
 			],
 			edgesLegend: [
 				{
-					text: 'Relevant Neighbors',
-					value: 'relevant',
+					icon: 'more_horiz',
+					textColor: '',
+					text: 'NLWR (Next last working route)',
 				},
 				{
-					text: 'All Neighbors',
-					value: 'all',
+					color: '#8b0000',
+					textColor: '#8b0000',
+					text: 'ZWave_9k6',
+				},
+				{
+					color: '#F1C40F',
+					textColor: '#F1C40F',
+					text: 'ZWave_40k',
+				},
+				{
+					color: '#2DCC70',
+					textColor: '#2DCC70',
+					text: 'ZWave_100k',
+				},
+				{
+					color: '#3F51B5',
+					textColor: '#3F51B5',
+					text: 'LongRange_100k',
+				},
+				{
+					color: '#666666',
+					textColor: '#666666',
+					text: 'Unkwown',
 				},
 			],
-			groupingLegend: [
-				{
-					text: 'Z-Wave Locations',
-					value: 'z-wave',
-				},
-				{
-					text: 'Ungrouped',
-					value: 'ungrouped',
-				},
-			],
+			// groupingLegend: [
+			// 	{
+			// 		text: 'Z-Wave Locations',
+			// 		value: 'z-wave',
+			// 	},
+			// 	{
+			// 		text: 'Ungrouped',
+			// 		value: 'ungrouped',
+			// 	},
+			// ],
 		}
 	},
 	watch: {
@@ -518,6 +561,7 @@ export default {
 						font: {
 							size: fontSize,
 						},
+						color: e.color,
 					})
 				}
 
@@ -679,7 +723,7 @@ export default {
 
 				if (id === hubNode) {
 					entity.shape = 'star'
-					entity.color = '#7e57c2'
+					entity.color = this.legends[0].color
 				} else if (node.isListening) {
 					entity.shape = 'hexagon'
 				} else {
