@@ -671,7 +671,9 @@ export default {
 				const repeater = repeaters[i]
 				const prevRepeater = repeaters[i - 1] || controllerId
 
-				const label = `RSSI: ${rssiToString(repeaterRSSI?.[i] || rssi)}`
+				const label = `RSSI: ${rssiToString(
+					i === 0 ? rssi : repeaterRSSI?.[i - 1]
+				)}`
 
 				const from = prevRepeater
 				const to = repeater || node.id
