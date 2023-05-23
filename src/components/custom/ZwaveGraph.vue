@@ -386,11 +386,9 @@ export default {
 				clearTimeout(this.refreshTimeout)
 			}
 
-			this.loading = true
-
 			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
 		},
-		paintGraph() {
+		async paintGraph() {
 			this.shouldReload = false
 
 			this.edgesCache = []
@@ -437,6 +435,9 @@ export default {
 					},
 				},
 			}
+
+			this.loading = true
+			await this.$nextTick()
 			this.network = new Network(container, data, options)
 
 			// event handlers
@@ -470,7 +471,9 @@ export default {
 				})
 			})
 
-			this.loading = false
+			this.network.once('stabilizationIterationsDone', () => {
+				this.loading = false
+			})
 		},
 		handleSelectNode(params) {
 			const { nodes: selectedNodes } = params
