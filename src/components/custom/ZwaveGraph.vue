@@ -652,6 +652,8 @@ export default {
 			if (nodeId) {
 				const node = this.filteredNodes.find((n) => n.id === nodeId)
 				this.$emit('node-click', node)
+			} else {
+				this.$emit('node-click', null)
 			}
 		},
 		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
