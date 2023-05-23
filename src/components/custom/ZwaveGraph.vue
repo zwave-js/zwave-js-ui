@@ -466,20 +466,51 @@ export default {
 			this.loading = false
 		},
 		handleSelectNode(params) {
-			const { nodes } = params
+			const { nodes: selectedNodes } = params
 
-			const { edges } = this.network.body.data
+			const { edges, nodes } = this.network.body.data
+			const repeaters = []
 
+			const edgesToUpdate = []
+			const nodesToUpdate = []
+
+			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
 			edges.forEach((e) => {
-				const shouldBeHidden = !nodes.includes(e.repeaterOf)
+				const shouldBeHidden =
+					selectedNodes.length > 0 &&
+					!selectedNodes.includes(e.repeaterOf)
 
 				if (shouldBeHidden !== e.hidden) {
-					edges.update({
+					edgesToUpdate.push({
 						id: e.id,
 						hidden: shouldBeHidden,
 					})
 				}
+
+				if (!shouldBeHidden) {
+					repeaters.push(e.from)
+					repeaters.push(e.to)
+				}
 			})
+
+			edges.update(edgesToUpdate)
+
+			nodes.forEach((n) => {
+				const shouldBeHidden =
+					selectedNodes.length > 0 &&
+					!selectedNodes.includes(n.id) &&
+					!repeaters.includes(n.id)
+
+				if (shouldBeHidden !== n.hidden) {
+					nodesToUpdate.push({
+						id: n.id,
+						hidden: shouldBeHidden,
+						color: n.color,
+					})
+				}
+			})
+
+			nodes.update(nodesToUpdate)
 		},
 		handleDragStart() {
 			this.dragging = true
@@ -562,7 +593,7 @@ export default {
 					font: { align: 'middle', multi: 'html', size: 0 },
 					// arrows: 'to from',
 					dashes: nlwr ? [5, 5] : false,
-					hidden: true,
+					hidden: false,
 					repeaterOf: node.id,
 				}
 
@@ -570,40 +601,6 @@ export default {
 
 				edges.push(edge)
 				// this.edgesCache.push(edgeId)
-			}
-		},
-		renderBattery({ ctx, x, y, state: { selected, hover }, style, label }) {
-			const width = 20
-			const height = 10
-			const padding = 2
-
-			const level = 50
-
-			// Draw battery outline
-			ctx.beginPath()
-			ctx.rect(x, y, width, height)
-			ctx.stroke()
-
-			// Draw battery fill
-			ctx.beginPath()
-			ctx.rect(
-				x + padding,
-				y + padding,
-				(width - 2 * padding) * level,
-				height - 2 * padding
-			)
-			ctx.fill()
-
-			// Draw battery label
-			ctx.font = 'normal 12px sans-serif'
-			ctx.fillStyle = 'black'
-			ctx.textAlign = 'center'
-			ctx.fillText(label, x + width / 2, y + height + 12)
-
-			return {
-				drawNode() {},
-				drawExternalLabel() {},
-				nodeDimensions: { width, height },
 			}
 		},
 		listNodes() {
@@ -631,6 +628,7 @@ export default {
 				// https://visjs.github.io/vis-network/docs/network/nodes.html
 				const entity = {
 					id: id,
+					hidden: false,
 					label: nodeName,
 					neighbors: neighbors[id],
 					battery_level: batlev,
