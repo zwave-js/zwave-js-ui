@@ -480,6 +480,9 @@ export default {
 				},
 				nodes: {
 					borderWidth: 2,
+					widthConstraint: {
+						maximum: 180,
+					},
 					// shadow: true,
 				},
 				edges: {
@@ -490,10 +493,15 @@ export default {
 					enabled: true, // enabling physics reduces performance a lot
 					stabilization: {
 						enabled: true,
-						iterations: 200,
-						updateInterval: 100,
+						iterations: 50,
+						updateInterval: 50,
 						onlyDynamicEdges: false,
 						fit: true,
+					},
+					barnesHut: {
+						theta: 0.99,
+						damping: 0.9,
+						avoidOverlap: 0.15,
 					},
 				},
 			}
