@@ -520,7 +520,6 @@ export default {
 			// event handlers
 			// https://visjs.github.io/vis-network/docs/network/#Events
 			this.network.on('oncontext', this.handleClick.bind(this))
-			this.network.on('doubleClick', this.handleClick.bind(this))
 
 			this.network.on('hoverNode', this.handleHoverNode.bind(this))
 			this.network.on('blurNode', this.handleBlurNode.bind(this))
@@ -553,6 +552,8 @@ export default {
 			})
 		},
 		handleSelectNode(params) {
+			this.handleClick(params)
+
 			let { nodes: selectedNodes } = params
 
 			const { edges, nodes } = this.network.body.data
