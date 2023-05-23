@@ -218,7 +218,7 @@
 import { Network } from 'vis-network'
 import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
-// import fakeNodes from '@/assets/testNodes.json'
+import fakeNodes from '@/assets/testNodes.json'
 import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 
 export default {
@@ -236,7 +236,7 @@ export default {
 		},
 		locations() {
 			// get unique locations array from nodes
-			return this.nodes.reduce((acc, node) => {
+			return fakeNodes.reduce((acc, node) => {
 				if (node.loc && acc.indexOf(node.loc) === -1) {
 					acc.push(node.loc)
 				}
@@ -244,7 +244,7 @@ export default {
 			}, [])
 		},
 		filteredNodes() {
-			return this.nodes.filter((n) => {
+			return fakeNodes.filter((n) => {
 				if (n.isControllerNode) {
 					return true
 				}
@@ -275,7 +275,7 @@ export default {
 	},
 	data() {
 		return {
-			openPanel: 0,
+			openPanel: -1,
 			menuX: 0,
 			menuY: 0,
 			menu: false,
@@ -416,6 +416,9 @@ export default {
 					width: 2,
 					// shadow: true,
 				},
+				physics: {
+					enabled: false, // enabling physics reduces performance a lot
+				},
 			}
 			this.network = new Network(container, data, options)
 
@@ -476,11 +479,9 @@ export default {
 				const repeater = repeaters[i]
 				const prevRepeater = repeaters[i - 1] || controllerId
 
-				const label = `${nlwr ? 'NLWR' : 'LWR'}\nrssi: ${rssiToString(
+				const label = `${nlwr ? 'NLWR' : 'LWR'}\n${rssiToString(
 					repeaterRSSI?.[i] || rssi
-				)}\nprotocolDataRate: ${protocolDataRateToString(
-					protocolDataRate
-				)}`
+				)}\n${protocolDataRateToString(protocolDataRate)}`
 
 				const from = prevRepeater
 				const to = repeater || node.id
