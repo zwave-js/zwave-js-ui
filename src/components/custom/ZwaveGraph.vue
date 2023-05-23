@@ -577,7 +577,7 @@ export default {
 				const repeater = repeaters[i]
 				const prevRepeater = repeaters[i - 1] || controllerId
 
-				const label = `${nlwr ? 'NLWR' : 'LWR'}\n${rssiToString(
+				const label = `${rssiToString(
 					repeaterRSSI?.[i] || rssi
 				)}\n${protocolDataRateToString(protocolDataRate)}`
 
