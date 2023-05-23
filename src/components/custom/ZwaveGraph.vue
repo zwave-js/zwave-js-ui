@@ -545,6 +545,8 @@ export default {
 			})
 
 			nodes.update(nodesToUpdate)
+
+			this.network.fit()
 		},
 		handleDragStart() {
 			this.dragging = true
