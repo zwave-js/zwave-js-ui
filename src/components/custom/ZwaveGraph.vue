@@ -219,6 +219,7 @@ import { Network } from 'vis-network'
 import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
 import fakeNodes from '@/assets/testNodes.json'
+import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -289,6 +290,7 @@ export default {
 			refreshTimeout: null,
 			loading: false,
 			network: null,
+			edgesCache: [],
 			legends: [
 				{
 					color: '#3F51B5',
@@ -391,6 +393,8 @@ export default {
 		paintGraph() {
 			this.shouldReload = false
 
+			this.edgesCache = []
+
 			const { edges, nodes } = this.listNodes()
 
 			const container = this.content
@@ -406,11 +410,11 @@ export default {
 				},
 				nodes: {
 					borderWidth: 2,
-					shadow: true,
+					// shadow: true,
 				},
 				edges: {
 					width: 2,
-					shadow: true,
+					// shadow: true,
 				},
 			}
 			this.network = new Network(container, data, options)
@@ -419,6 +423,24 @@ export default {
 			this.network.on('click', this.handleClick.bind(this))
 			this.network.on('hoverNode', this.handleHoverNode.bind(this))
 			this.network.on('blurNode', this.handleBlurNode.bind(this))
+
+			this.network.on('hoverEdge', function (e) {
+				this.body.data.edges.update({
+					id: e.edge,
+					font: {
+						size: 8,
+					},
+				})
+			})
+
+			this.network.on('blurEdge', function (e) {
+				this.body.data.edges.update({
+					id: e.edge,
+					font: {
+						size: 0,
+					},
+				})
+			})
 
 			this.loading = false
 		},
@@ -438,6 +460,91 @@ export default {
 			// hide menu
 			this.menu = false
 			this.hoverNode = null
+		},
+		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
+			if (!route) return
+
+			const { repeaters, repeaterRSSI, rssi, protocolDataRate } = route
+
+			for (let i = 0; i <= repeaters.length; i++) {
+				const repeater = repeaters[i]
+				const prevRepeater = repeaters[i - 1] || controllerId
+
+				const label = `${nlwr ? 'NLWR' : 'LWR'}\nrssi: ${rssiToString(
+					repeaterRSSI?.[i] || rssi
+				)}\nprotocolDataRate: ${protocolDataRateToString(
+					protocolDataRate
+				)}`
+
+				const from = prevRepeater
+				const to = repeater || node.id
+
+				const edgeId = `${from}-${to}`
+
+				// prevent drawing duplicated edges
+				if (
+					this.edgesCache.includes[edgeId] ||
+					this.edgesCache.includes[`${to}-${from}`]
+				)
+					continue
+
+				// create the edge
+				// https://visjs.github.io/vis-network/docs/network/edges.html
+				const edge = {
+					from,
+					to,
+					color: this.legends[i].color,
+					width: 2,
+					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
+					protocolDataRate:
+						protocolDataRateToString(protocolDataRate),
+					layer: i + 1,
+					label,
+					font: { align: 'middle', multi: 'html', size: 0 },
+					// arrows: 'to from',
+					dashes: nlwr ? [5, 5] : false,
+					hidden: false,
+				}
+
+				node.color = this.legends[repeaters.length + 1].color
+
+				edges.push(edge)
+				this.edgesCache.push(edgeId)
+			}
+		},
+		renderBattery({ ctx, x, y, state: { selected, hover }, style, label }) {
+			const width = 20
+			const height = 10
+			const padding = 2
+
+			const level = 50
+
+			// Draw battery outline
+			ctx.beginPath()
+			ctx.rect(x, y, width, height)
+			ctx.stroke()
+
+			// Draw battery fill
+			ctx.beginPath()
+			ctx.rect(
+				x + padding,
+				y + padding,
+				(width - 2 * padding) * level,
+				height - 2 * padding
+			)
+			ctx.fill()
+
+			// Draw battery label
+			ctx.font = 'normal 12px sans-serif'
+			ctx.fillStyle = 'black'
+			ctx.textAlign = 'center'
+			ctx.fillText(label, x + width / 2, y + height + 12)
+
+			return {
+				drawNode() {},
+				drawExternalLabel() {},
+				nodeDimensions: { width, height },
+			}
 		},
 		listNodes() {
 			const result = {
@@ -461,12 +568,12 @@ export default {
 				const nodeName = node.name || 'NodeID ' + node.id
 
 				// create node
+				// https://visjs.github.io/vis-network/docs/network/nodes.html
 				const entity = {
 					id: id,
 					label: nodeName,
 					neighbors: neighbors[id],
 					battery_level: batlev,
-					mains: batlev,
 					group: node.loc,
 					failed: node.failed,
 					forwards:
@@ -476,8 +583,12 @@ export default {
 
 				if (id === hubNode) {
 					entity.shape = 'star'
+					entity.color = '#7e57c2'
+				} else if (node.isListening) {
+					entity.shape = 'hexagon'
 				} else {
-					entity.shape = node.isListening ? 'hexagon' : 'database'
+					entity.shape = 'square'
+					// entity.ctxRenderer = this.renderBattery
 				}
 
 				if (node.failed) {
@@ -491,93 +602,29 @@ export default {
 				if (hubNode === id) {
 					entity.label = 'Controller'
 					entity.fixed = true
+				} else {
+					// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
+					this.parseRouteStats(
+						result.edges,
+						hubNode,
+						entity,
+						node.statistics?.lwr,
+						false
+					)
+
+					// parse node NLWR (next last working route)
+					this.parseRouteStats(
+						result.edges,
+						hubNode,
+						entity,
+						node.statistics?.nlwr,
+						true
+					)
 				}
 
 				result.nodes.push(entity)
 			}
 
-			if (hubNode > 0) {
-				let layer = 0
-				let previousRow = [hubNode]
-				const mappedNodes = [hubNode]
-				const layers = []
-
-				const resultMap = result.nodes.reduce((map, obj) => {
-					map[obj.id] = obj
-					return map
-				}, {})
-
-				// create layers
-				while (previousRow.length > 0) {
-					layer = layer + 1
-					const nextRow = []
-					const layerMembers = []
-					layers[layer] = layerMembers
-
-					// foreach node in previous layer
-					for (const target of previousRow) {
-						// assign node to layer
-						const targetNode = resultMap[target]
-
-						targetNode.class = 'layer-' + layer
-						targetNode.layer = layer
-						targetNode.color =
-							targetNode.id === hubNode
-								? '#7e57c2'
-								: this.legends[layer - 1]?.color
-						if (targetNode.failed) {
-							targetNode.color = this.legends[5].color
-							targetNode.class = targetNode.class + ' Error'
-						}
-
-						// if the node forwards check it's neighbors
-						if (targetNode.forwards) {
-							const row = neighbors[target]
-							// foreach neighbor of target node
-							for (const node of row) {
-								// if node has neighbors and is not already mapped
-								if (neighbors[node] !== undefined) {
-									if (!mappedNodes.includes(node)) {
-										layerMembers.push(node)
-										result.edges.push({
-											from: node,
-											to: target,
-											color: this.legends[layer]?.color,
-											class:
-												'layer-' +
-												(layer + 1) +
-												' node-' +
-												node +
-												' node-' +
-												target,
-											layer: layer,
-										})
-										nextRow.push(node)
-										mappedNodes.push(node)
-									} else {
-										// uncomment to show edges regardless of rows - mess!
-										if (this.edgesVisibility === 'all') {
-											result.edges.push({
-												from: node,
-												to: target,
-												style: 'stroke-dasharray: 5, 5; fill:transparent; ', // "stroke: #ddd; stroke-width: 1px; fill:transparent; stroke-dasharray: 5, 5;",
-												class:
-													'layer-' +
-													(layer + 1) +
-													' node-' +
-													node +
-													' node-' +
-													target,
-											})
-										}
-									}
-								}
-							}
-						}
-					}
-					previousRow = nextRow
-				}
-			}
 			return result
 		},
 		handleClick(params) {
