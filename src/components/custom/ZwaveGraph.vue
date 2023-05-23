@@ -404,9 +404,19 @@ export default {
 			}
 			const options = {
 				interaction: {
+					// https://visjs.github.io/vis-network/docs/network/interaction.html#
 					hover: true,
 					navigationButtons: true,
 					keyboard: true,
+					multiselect: false,
+					hideEdgesOnDrag: false,
+					hideEdgesOnZoom: false,
+					hideNodesOnDrag: false,
+					selectable: true,
+					selectConnectedEdges: true,
+					tooltipDelay: 300,
+					zoomSpeed: 1,
+					zoomView: true,
 				},
 				nodes: {
 					borderWidth: 2,
@@ -422,16 +432,24 @@ export default {
 			}
 			this.network = new Network(container, data, options)
 
-			// append handlers
-			this.network.on('click', this.handleClick.bind(this))
+			// event handlers
+			// https://visjs.github.io/vis-network/docs/network/#Events
+			this.network.on('oncontext', this.handleClick.bind(this))
+			this.network.on('doubleClick', this.handleClick.bind(this))
+
 			this.network.on('hoverNode', this.handleHoverNode.bind(this))
 			this.network.on('blurNode', this.handleBlurNode.bind(this))
+
+			this.network.on('dragStart', this.handleDragStart.bind(this))
+			this.network.on('dragEnd', this.handleDragEnd.bind(this))
+
+			this.network.on('select', this.handleSelectNode.bind(this))
 
 			this.network.on('hoverEdge', function (e) {
 				this.body.data.edges.update({
 					id: e.edge,
 					font: {
-						size: 8,
+						size: 12,
 					},
 				})
 			})
@@ -447,8 +465,31 @@ export default {
 
 			this.loading = false
 		},
+		handleSelectNode(params) {
+			const { nodes } = params
+
+			const { edges } = this.network.body.data
+
+			edges.forEach((e) => {
+				const shouldBeHidden = !nodes.includes(e.repeaterOf)
+
+				if (shouldBeHidden !== e.hidden) {
+					edges.update({
+						id: e.id,
+						hidden: shouldBeHidden,
+					})
+				}
+			})
+		},
+		handleDragStart() {
+			this.dragging = true
+		},
+		handleDragEnd() {
+			this.dragging = false
+		},
 		handleHoverNode(params) {
 			// show menu
+			if (this.dragging) return
 			const { node, event } = params
 			this.menuX = event.clientX + 15
 			this.menuY = event.clientY + 15
@@ -463,6 +504,16 @@ export default {
 			// hide menu
 			this.menu = false
 			this.hoverNode = null
+		},
+		handleClick(params) {
+			params.event.preventDefault()
+			// https://visjs.github.io/vis-network/docs/network/#events
+			// Add interactivity
+			const nodeId = params.nodes[0]
+			if (nodeId) {
+				const node = this.filteredNodes.find((n) => n.id === nodeId)
+				this.$emit('node-click', node)
+			}
 		},
 		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
 			if (!route) {
@@ -486,23 +537,23 @@ export default {
 				const from = prevRepeater
 				const to = repeater || node.id
 
-				const edgeId = `${from}-${to}`
+				// const edgeId = `${from}-${to}`
 
 				// prevent drawing duplicated edges
-				if (
-					this.edgesCache.includes(edgeId) ||
-					this.edgesCache.includes(`${to}-${from}`)
-				) {
-					continue
-				}
+				// if (
+				// 	this.edgesCache.includes(edgeId) ||
+				// 	this.edgesCache.includes(`${to}-${from}`)
+				// ) {
+				// 	continue
+				// }
 
 				// create the edge
 				// https://visjs.github.io/vis-network/docs/network/edges.html
 				const edge = {
 					from,
 					to,
-					color: this.legends[i].color,
-					width: 2,
+					color: nlwr ? '#666666' : '#2DCC70',
+					width: nlwr ? 1 : 4,
 					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
 					protocolDataRate:
 						protocolDataRateToString(protocolDataRate),
@@ -511,13 +562,14 @@ export default {
 					font: { align: 'middle', multi: 'html', size: 0 },
 					// arrows: 'to from',
 					dashes: nlwr ? [5, 5] : false,
-					hidden: false,
+					hidden: true,
+					repeaterOf: node.id,
 				}
 
 				node.color = this.legends[repeaters.length + 1].color
 
 				edges.push(edge)
-				this.edgesCache.push(edgeId)
+				// this.edgesCache.push(edgeId)
 			}
 		},
 		renderBattery({ ctx, x, y, state: { selected, hover }, style, label }) {
@@ -609,7 +661,7 @@ export default {
 
 				if (hubNode === id) {
 					entity.label = 'Controller'
-					entity.fixed = true
+					// entity.fixed = true
 				} else {
 					// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
 					this.parseRouteStats(
@@ -634,15 +686,6 @@ export default {
 			}
 
 			return result
-		},
-		handleClick(params) {
-			// https://visjs.github.io/vis-network/docs/network/#events
-			// Add interactivity
-			const nodeId = params.nodes[0]
-			if (nodeId) {
-				const node = this.filteredNodes.find((n) => n.id === nodeId)
-				this.$emit('node-click', node)
-			}
 		},
 	},
 }
