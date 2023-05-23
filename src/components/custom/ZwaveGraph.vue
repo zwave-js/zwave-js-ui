@@ -219,7 +219,11 @@ import { Network } from 'vis-network'
 import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
 import fakeNodes from '@/assets/testNodes.json'
-import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
+import {
+	ProtocolDataRate,
+	protocolDataRateToString,
+	rssiToString,
+} from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -387,6 +391,20 @@ export default {
 			}
 
 			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
+		},
+		getDataRateColor(dataRate) {
+			switch (dataRate) {
+				case ProtocolDataRate.ZWave_9k6:
+					return '#8b0000'
+				case ProtocolDataRate.ZWave_40k:
+					return '#F1C40F'
+				case ProtocolDataRate.ZWave_100k:
+					return '#2DCC70'
+				case ProtocolDataRate.LongRange_100k:
+					return '#3F51B5'
+				default:
+					return '#666666'
+			}
 		},
 		async paintGraph() {
 			this.shouldReload = false
@@ -599,7 +617,7 @@ export default {
 				const edge = {
 					from,
 					to,
-					color: nlwr ? '#666666' : '#2DCC70',
+					color: this.getDataRateColor(protocolDataRate),
 					width: nlwr ? 1 : 4,
 					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
 					protocolDataRate:
