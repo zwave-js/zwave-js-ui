@@ -298,6 +298,7 @@ export default {
 			})
 		},
 	},
+	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
 	data() {
 		return {
 			openPanel: -1,
@@ -314,7 +315,6 @@ export default {
 			grouping: 'ungrouped',
 			refreshTimeout: null,
 			loading: false,
-			network: null,
 			edgesCache: [],
 			legends: [
 				{
@@ -561,7 +561,6 @@ export default {
 						font: {
 							size: fontSize,
 						},
-						color: e.color,
 					})
 				}
 
