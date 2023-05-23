@@ -553,13 +553,21 @@ export default {
 			})
 		},
 		handleSelectNode(params) {
-			const { nodes: selectedNodes } = params
+			let { nodes: selectedNodes } = params
 
 			const { edges, nodes } = this.network.body.data
 			const repeaters = []
 
 			const edgesToUpdate = []
 			const nodesToUpdate = []
+
+			// click on controller
+			if (
+				selectedNodes.length === 1 &&
+				nodes.get(selectedNodes[0]).isControllerNode
+			) {
+				selectedNodes = []
+			}
 
 			//this.edgesCache = []
 
@@ -738,6 +746,7 @@ export default {
 
 				if (id === hubNode) {
 					entity.shape = 'star'
+					entity.isControllerNode = true
 					entity.color = this.legends[0].color
 				} else if (node.isListening) {
 					entity.shape = 'hexagon'
