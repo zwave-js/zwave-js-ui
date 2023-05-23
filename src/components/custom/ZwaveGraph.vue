@@ -698,6 +698,7 @@ export default {
 					dashes: nlwr ? [5, 5] : false,
 					hidden: false,
 					repeaterOf: node.id,
+					physics: !nlwr,
 				}
 
 				if (!nlwr) {
