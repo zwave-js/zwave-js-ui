@@ -245,6 +245,7 @@ import {
 	protocolDataRateToString,
 	rssiToString,
 } from 'zwave-js/safe'
+import { uuid } from '../../lib/utils'
 
 export default {
 	props: {
@@ -315,7 +316,7 @@ export default {
 			grouping: 'ungrouped',
 			refreshTimeout: null,
 			loading: false,
-			//	edgesCache: [],
+			edgesCache: {},
 			legends: [
 				{
 					color: '#7e57c2',
@@ -459,7 +460,7 @@ export default {
 		async paintGraph() {
 			this.shouldReload = false
 
-			this.edgesCache = []
+			this.edgesCache = {}
 
 			const { edges, nodes } = this.listNodes()
 
@@ -570,17 +571,17 @@ export default {
 				selectedNodes = []
 			}
 
-			//this.edgesCache = []
+			const showAll = selectedNodes.length === 0
 
 			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
 			edges.forEach((e) => {
 				const edgeId = `${e.from}-${e.to}`
 				const shouldBeHidden =
-					//this.edgesCache.includes(edgeId) ||
-					selectedNodes.length > 0 &&
-					!selectedNodes.includes(e.repeaterOf)
+					(showAll && this.edgesCache[edgeId]?.id !== e.id) ||
+					(selectedNodes.length > 0 &&
+						!selectedNodes.includes(e.repeaterOf))
 
-				const fontSize = selectedNodes.length > 0 ? 12 : 0
+				const fontSize = showAll ? 0 : 12
 
 				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
 					edgesToUpdate.push({
@@ -595,7 +596,6 @@ export default {
 				if (!shouldBeHidden) {
 					repeaters.push(e.from)
 					repeaters.push(e.to)
-					// this.edgesCache.push(edgeId)
 				}
 			})
 
@@ -676,22 +676,16 @@ export default {
 				const from = prevRepeater
 				const to = repeater || node.id
 
-				// const edgeId = `${from}-${to}`
-
-				// prevent drawing duplicated edges
-				// if (
-				// 	this.edgesCache.includes(edgeId) ||
-				// 	this.edgesCache.includes(`${to}-${from}`)
-				// ) {
-				// 	continue
-				// }
+				const edgeId = `${from}-${to}`
 
 				// create the edge
 				// https://visjs.github.io/vis-network/docs/network/edges.html
 				const edge = {
+					id: uuid(),
 					from,
 					to,
 					color: this.getDataRateColor(protocolDataRate),
+					protocolDataRate,
 					width: nlwr ? 1 : 4,
 					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
 					layer: i + 1,
@@ -699,17 +693,31 @@ export default {
 					font: { align: 'top', multi: 'html', size: 0 },
 					// arrows: 'to from',
 					dashes: nlwr ? [5, 5] : false,
-					hidden: false,
+					hidden: nlwr,
 					repeaterOf: node.id,
 					physics: !nlwr,
 				}
 
+				edges.push(edge)
+
 				if (!nlwr) {
 					node.color = this.legends[repeaters.length + 1].color
-				}
 
-				edges.push(edge)
-				// this.edgesCache.push(edgeId)
+					// only draw the edge with higher data rate
+					if (this.edgesCache[edgeId]) {
+						if (
+							this.edgesCache[edgeId].protocolDataRate >=
+							protocolDataRate
+						) {
+							edge.hidden = true
+						} else {
+							this.edgesCache[edgeId].hidden = true
+							this.edgesCache[edgeId] = edge
+						}
+					} else {
+						this.edgesCache[edgeId] = edge
+					}
+				}
 			}
 		},
 		listNodes() {
