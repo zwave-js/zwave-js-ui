@@ -546,11 +546,15 @@ export default {
 			const edgesToUpdate = []
 			const nodesToUpdate = []
 
+			this.edgesCache = []
+
 			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
 			edges.forEach((e) => {
+				const edgeId = `${e.from}-${e.to}`
 				const shouldBeHidden =
-					selectedNodes.length > 0 &&
-					!selectedNodes.includes(e.repeaterOf)
+					this.edgesCache.includes(edgeId) ||
+					(selectedNodes.length > 0 &&
+						!selectedNodes.includes(e.repeaterOf))
 
 				const fontSize = selectedNodes.length > 0 ? 12 : 0
 
@@ -567,6 +571,7 @@ export default {
 				if (!shouldBeHidden) {
 					repeaters.push(e.from)
 					repeaters.push(e.to)
+					this.edgesCache.push(edgeId)
 				}
 			})
 
@@ -647,15 +652,15 @@ export default {
 				const from = prevRepeater
 				const to = repeater || node.id
 
-				// const edgeId = `${from}-${to}`
+				const edgeId = `${from}-${to}`
 
 				// prevent drawing duplicated edges
-				// if (
-				// 	this.edgesCache.includes(edgeId) ||
-				// 	this.edgesCache.includes(`${to}-${from}`)
-				// ) {
-				// 	continue
-				// }
+				if (
+					this.edgesCache.includes(edgeId) ||
+					this.edgesCache.includes(`${to}-${from}`)
+				) {
+					continue
+				}
 
 				// create the edge
 				// https://visjs.github.io/vis-network/docs/network/edges.html
@@ -681,7 +686,7 @@ export default {
 				}
 
 				edges.push(edge)
-				// this.edgesCache.push(edgeId)
+				this.edgesCache.push(edgeId)
 			}
 		},
 		listNodes() {
