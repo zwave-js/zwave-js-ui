@@ -680,15 +680,15 @@ export default {
 					to: routeFailedBetween[1],
 					color: this.getDataRateColor(ProtocolDataRate.ZWave_9k6),
 					protocolDataRate,
-					width: nlwr ? 1 : 4,
+					width: 1,
 					// rssi: rssiToString(repeaterRSSI?.[i] || rssi),
 					// layer: -1,
 					label: 'Failed ❌',
 					font: { align: 'top', size: 0 },
-					dashes: nlwr ? [5, 5] : false,
-					hidden: nlwr,
-					repeaterOf: node.id,
-					physics: !nlwr,
+					dashes: [2, 2],
+					hidden: true,
+					repeaterOf: node.id, // used to know this edge needs to be shown when highlighting a node
+					physics: false,
 				}
 
 				edges.push(edge)
@@ -723,7 +723,7 @@ export default {
 					// arrows: 'to from',
 					dashes: nlwr ? [5, 5] : false,
 					hidden: nlwr,
-					repeaterOf: node.id,
+					repeaterOf: node.id, // used to know this edge needs to be shown when highlighting a node
 					physics: !nlwr,
 				}
 
