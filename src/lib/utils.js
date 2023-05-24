@@ -148,3 +148,7 @@ export function validTopic(t) {
 
 	return match?.[0] !== t ? 'Only a-zA-Z0-9_- chars are allowed' : true
 }
+
+export function deepEqual(a, b) {
+	return JSON.stringify(a) === JSON.stringify(b)
+}

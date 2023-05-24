@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { $set } from '../lib/utils'
+import { $set, deepEqual } from '../lib/utils'
 import logger from '../lib/logger'
 
 import { Settings } from '@/modules/Settings'
@@ -118,6 +118,10 @@ const useBaseStore = defineStore('base', {
 		// eslint-disable-next-line no-unused-vars
 		showSnackbar(text, color = 'info', timeout = 3000) {
 			// empty mutation, will be caught in App.vue $onAction
+		},
+		// eslint-disable-next-line no-unused-vars
+		updateMeshGraph(node) {
+			// empty mutation, will be caught in Mesh.vue $onAction
 		},
 		setUser(data) {
 			Object.assign(this.user, data)
@@ -332,6 +336,15 @@ const useBaseStore = defineStore('base', {
 							// A message was received
 							errorReceive = false
 							lastReceive = data.lastActive
+						}
+
+						if (
+							!deepEqual(prev.lwr != cur.lwr) ||
+							!deepEqual(prev.nlwr != cur.nlwr) ||
+							cur.rssi != prev.rssi
+						) {
+							// mesh graph changed
+							this.updateMeshGraph(node)
 						}
 					}
 				}

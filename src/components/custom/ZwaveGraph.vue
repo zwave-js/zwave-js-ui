@@ -145,6 +145,16 @@
 									Reload graph
 								</v-btn>
 							</v-badge>
+
+							<v-btn
+								:color="liveUpdate ? 'error' : 'success'"
+								@click="liveUpdate = !liveUpdate"
+							>
+								Live
+								<v-icon>{{
+									liveUpdate ? 'pause' : 'play_arrow'
+								}}</v-icon>
+							</v-btn>
 						</v-col>
 
 						<!-- <v-col>
@@ -246,6 +256,7 @@ import {
 	rssiToString,
 } from 'zwave-js/safe'
 import { uuid } from '../../lib/utils'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
@@ -275,23 +286,23 @@ export default {
 					return true
 				}
 
-				let toAdd = true
+				let toAdd = false
 
 				// check if node is in selected locations
 				if (this.filterLocations.length > 0) {
 					if (this.filterLocationsInvert) {
-						toAdd = this.filterLocations.indexOf(n.loc) === -1
+						toAdd = !this.filterLocations.includes(n.loc)
 					} else {
-						toAdd = this.filterLocations.indexOf(n.loc) !== -1
+						toAdd = this.filterLocations.includes(n.loc)
 					}
 				}
 
 				// if not in current locations, check if it's on selected nodes
 				if (!toAdd && this.filterNodes.length > 0) {
 					if (this.filterNodesInvert) {
-						toAdd = this.filterNodes.indexOf(n.id) === -1
+						toAdd = !this.filterNodes.includes(n.id)
 					} else {
-						toAdd = this.filterNodes.indexOf(n.id) !== -1
+						toAdd = this.filterNodes.includes(n.id)
 					}
 				}
 
@@ -303,6 +314,7 @@ export default {
 		},
 	},
 	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
+	unsubscribeUpdate: null, // pinia update action unsubscribe function
 	data() {
 		return {
 			openPanel: -1,
@@ -311,11 +323,12 @@ export default {
 			menuY: 0,
 			menu: false,
 			hoverNode: null,
+			liveUpdate: false,
 			shouldReload: false,
 			filterLocations: [],
+			filterLocationsInvert: false,
 			filterNodes: [],
 			filterNodesInvert: false,
-			filterLocationsInvert: false,
 			grouping: 'ungrouped',
 			refreshTimeout: null,
 			loading: false,
@@ -409,9 +422,6 @@ export default {
 		}
 	},
 	watch: {
-		// nodes() {
-		// 	this.debounceRefresh()
-		// },
 		grouping() {
 			this.debounceRefresh()
 		},
@@ -420,19 +430,21 @@ export default {
 		},
 		filteredNodes(val) {
 			this.selectedNodes = val.map((n) => n.id)
-
-			if (this.network) {
-				const all = val.length === this.allNodes.length
-				const params = {
-					nodes: all ? [] : this.selectedNodes,
-				}
-				this.network.setSelection(params)
-				this.handleSelectNode(params)
-			}
+			this.setSelection()
 		},
 	},
 	mounted() {
 		this.paintGraph()
+
+		this.unsubscribeUpdate = useBaseStore().$onAction(({ name, args }) => {
+			if (name === 'updateMeshGraph') {
+				if (this.liveUpdate) {
+					this.debounceRefresh()
+				} else {
+					this.shouldReload = true
+				}
+			}
+		})
 	},
 	beforeDestroy() {
 		if (this.refreshTimeout) {
@@ -443,6 +455,8 @@ export default {
 			this.network.destroy()
 			this.content.innerHTML = ''
 		}
+
+		this.unsubscribeUpdate()
 	},
 	methods: {
 		debounceRefresh() {
@@ -466,6 +480,16 @@ export default {
 					return '#3F51B5'
 				default:
 					return '#666666'
+			}
+		},
+		setSelection() {
+			if (this.network) {
+				const all = this.filteredNodes.length === this.allNodes.length
+				const params = {
+					nodes: all ? [] : this.selectedNodes,
+				}
+				this.network.setSelection(params)
+				this.handleSelectNode(params)
 			}
 		},
 		paintGraph() {
@@ -562,6 +586,8 @@ export default {
 			this.network.once('stabilizationIterationsDone', () => {
 				this.loading = false
 			})
+
+			this.setSelection()
 		},
 		handleSelectNode(params) {
 			this.handleClick(params)
