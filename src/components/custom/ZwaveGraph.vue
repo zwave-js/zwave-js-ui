@@ -187,7 +187,11 @@
 					indeterminate
 				></v-progress-circular>
 			</v-col>
-			<v-col class="fill-height" :style="{ visible: !loading }" cols="12">
+			<v-col
+				class="fill-height"
+				:style="{ opacity: loading ? 0 : '' }"
+				cols="12"
+			>
 				<div class="fill-height" ref="content"></div>
 				<v-menu
 					v-model="menu"
@@ -484,10 +488,17 @@ export default {
 		},
 		setSelection() {
 			if (this.network && !this.loading) {
+				const emptyFilters =
+					this.filterNodes.length === 0 &&
+					this.filterLocations.length === 0 &&
+					!this.filterNodesInvert &&
+					!this.filterLocationsInvert
+
+				// check if all nodes are selected
 				const all =
 					this.filteredNodes.length === this.allNodes.length &&
-					this.filterNodes.length === 0 &&
-					this.filterLocations.length === 0
+					emptyFilters
+
 				const params = {
 					nodes: all ? [] : this.selectedNodes,
 				}
