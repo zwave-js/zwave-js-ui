@@ -141,7 +141,7 @@
 								overlap
 								v-model="shouldReload"
 							>
-								<v-btn color="primary" @click="debounceRefresh">
+								<v-btn color="primary" @click="paintGraph">
 									Reload graph
 								</v-btn>
 							</v-badge>
@@ -336,7 +336,7 @@ export default {
 			filterLocationsInvert: false,
 			filterNodes: [],
 			filterNodesInvert: false,
-			grouping: 'ungrouped',
+			// grouping: 'ungrouped',
 			refreshTimeout: null,
 			loading: false,
 			edgesCache: {},
@@ -429,9 +429,9 @@ export default {
 		}
 	},
 	watch: {
-		grouping() {
-			this.debounceRefresh()
-		},
+		// grouping() {
+		// 	this.debounceRefresh()
+		// },
 		filteredNodes(val) {
 			this.selectedNodes = val.map((n) => n.id)
 			this.setSelection()
@@ -470,7 +470,7 @@ export default {
 
 			this.loading = true
 
-			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 200)
+			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
 		},
 		getDataRateColor(dataRate) {
 			switch (dataRate) {
