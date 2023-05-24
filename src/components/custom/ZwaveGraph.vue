@@ -272,6 +272,9 @@ export default {
 		content() {
 			return this.$refs.content
 		},
+		fontColor() {
+			return this.isDark ? '#ddd' : '#333'
+		},
 		isDark() {
 			return this.$vuetify.theme.dark
 		},
@@ -428,9 +431,6 @@ export default {
 	watch: {
 		grouping() {
 			this.debounceRefresh()
-		},
-		isDark() {
-			// this.updateLabelsColor()
 		},
 		filteredNodes(val) {
 			this.selectedNodes = val.map((n) => n.id)
@@ -836,6 +836,7 @@ export default {
 					group: node.loc,
 					failed: node.failed,
 					available: node.available,
+					font: { color: this.fontColor },
 					forwards:
 						node.isControllerNode ||
 						(node.ready && !node.failed && node.isListening),
