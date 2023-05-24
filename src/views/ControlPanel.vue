@@ -759,11 +759,12 @@ export default {
 												'Function executed successfully, check console for result',
 												'success'
 											)
-											log.info(
-												'Driver function result:',
-												response.result
-											)
 										}
+
+										log.info(
+											'Driver function result:',
+											response.result
+										)
 									},
 								},
 								{

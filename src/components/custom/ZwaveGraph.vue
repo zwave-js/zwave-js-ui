@@ -52,7 +52,7 @@
 
 							<v-autocomplete
 								:items="locations"
-								v-model="filterLocations"
+								v-model="locationsFilter"
 								multiple
 								label="Locations filter"
 								clearable
@@ -69,17 +69,17 @@
 												v-bind="attrs"
 												v-on="on"
 												@click="
-													filterLocationsInvert =
-														!filterLocationsInvert
+													invertLocationsFilter =
+														!invertLocationsFilter
 												"
 												icon
 												:color="
-													filterLocationsInvert
+													invertLocationsFilter
 														? 'primary'
 														: ''
 												"
 												:class="
-													filterLocationsInvert
+													invertLocationsFilter
 														? 'border-primary'
 														: ''
 												"
@@ -94,7 +94,7 @@
 
 							<v-autocomplete
 								:items="allNodes"
-								v-model="filterNodes"
+								v-model="nodesFilter"
 								multiple
 								label="Nodes filter"
 								clearable
@@ -113,17 +113,17 @@
 												v-bind="attrs"
 												v-on="on"
 												@click="
-													filterNodesInvert =
-														!filterNodesInvert
+													invertNodesFilter =
+														!invertNodesFilter
 												"
 												icon
 												:color="
-													filterNodesInvert
+													invertNodesFilter
 														? 'primary'
 														: ''
 												"
 												:class="
-													filterNodesInvert
+													invertNodesFilter
 														? 'border-primary'
 														: ''
 												"
@@ -261,6 +261,7 @@ import {
 } from 'zwave-js/safe'
 import { uuid } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
+import { mapState } from 'pinia'
 
 export default {
 	props: {
@@ -269,6 +270,7 @@ export default {
 		},
 	},
 	computed: {
+		...mapState(useBaseStore, ['controllerNode']),
 		content() {
 			return this.$refs.content
 		},
@@ -296,20 +298,20 @@ export default {
 				let toAdd = false
 
 				// check if node is in selected locations
-				if (this.filterLocations.length > 0) {
-					if (this.filterLocationsInvert) {
-						toAdd = !this.filterLocations.includes(n.loc)
+				if (this.locationsFilter.length > 0) {
+					if (this.invertLocationsFilter) {
+						toAdd = !this.locationsFilter.includes(n.loc)
 					} else {
-						toAdd = this.filterLocations.includes(n.loc)
+						toAdd = this.locationsFilter.includes(n.loc)
 					}
 				}
 
 				// if not in current locations, check if it's on selected nodes
-				if (!toAdd && this.filterNodes.length > 0) {
-					if (this.filterNodesInvert) {
-						toAdd = !this.filterNodes.includes(n.id)
+				if (!toAdd && this.nodesFilter.length > 0) {
+					if (this.invertNodesFilter) {
+						toAdd = !this.nodesFilter.includes(n.id)
 					} else {
-						toAdd = this.filterNodes.includes(n.id)
+						toAdd = this.nodesFilter.includes(n.id)
 					}
 				}
 
@@ -332,10 +334,10 @@ export default {
 			hoverNode: null,
 			liveUpdate: false,
 			shouldReload: false,
-			filterLocations: [],
-			filterLocationsInvert: false,
-			filterNodes: [],
-			filterNodesInvert: false,
+			locationsFilter: [],
+			invertLocationsFilter: false,
+			nodesFilter: [],
+			invertNodesFilter: false,
 			// grouping: 'ungrouped',
 			refreshTimeout: null,
 			loading: false,
@@ -440,10 +442,25 @@ export default {
 	mounted() {
 		this.paintGraph()
 
-		this.unsubscribeUpdate = useBaseStore().$onAction(({ name }) => {
+		this.unsubscribeUpdate = useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'updateMeshGraph') {
 				if (this.liveUpdate) {
-					this.debounceRefresh()
+					if (this.network && !this.loading) {
+						const node = args[0]
+						const result = this.parseNode(node)
+						const { nodes, edges } = this.network.body.data
+
+						nodes.remove(node.id)
+						nodes.add(result.node)
+						const edgesToRemove = []
+						edges.forEach((e) => {
+							if (e.routeOf === node.id) {
+								edgesToRemove.push(e.id)
+							}
+						})
+						edges.remove(edgesToRemove)
+						edges.add(result.edges)
+					}
 				} else {
 					this.shouldReload = true
 				}
@@ -489,10 +506,10 @@ export default {
 		setSelection() {
 			if (this.network && !this.loading) {
 				const emptyFilters =
-					this.filterNodes.length === 0 &&
-					this.filterLocations.length === 0 &&
-					!this.filterNodesInvert &&
-					!this.filterLocationsInvert
+					this.nodesFilter.length === 0 &&
+					this.locationsFilter.length === 0 &&
+					!this.invertNodesFilter &&
+					!this.invertLocationsFilter
 
 				// check if all nodes are selected
 				const all =
@@ -513,7 +530,7 @@ export default {
 
 			this.loading = true
 
-			const { edges, nodes } = this.listNodes()
+			const { edges, nodes } = this.parseNodes()
 
 			const container = this.content
 			const data = {
@@ -533,7 +550,7 @@ export default {
 					hoverConnectedEdges: false,
 					selectable: true,
 					selectConnectedEdges: false,
-					tooltipDelay: 300,
+					tooltipDelay: 1000,
 					zoomSpeed: 1,
 					zoomView: true,
 				},
@@ -631,7 +648,7 @@ export default {
 				const shouldBeHidden =
 					(showAll && this.edgesCache[edgeId]?.id !== e.id) ||
 					(selectedNodes.length > 0 &&
-						!selectedNodes.includes(e.repeaterOf))
+						!selectedNodes.includes(e.routeOf))
 
 				const fontSize = showAll ? 0 : 12
 
@@ -739,7 +756,7 @@ export default {
 					font: { align: 'top', size: 0 },
 					dashes: [2, 2],
 					hidden: true,
-					repeaterOf: node.id, // used to know this edge needs to be shown when highlighting a node
+					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
 					physics: false,
 				}
 
@@ -775,7 +792,7 @@ export default {
 					// arrows: 'to from',
 					dashes: nlwr ? [5, 5] : false,
 					hidden: nlwr,
-					repeaterOf: node.id, // used to know this edge needs to be shown when highlighting a node
+					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
 					physics: !nlwr,
 				}
 
@@ -803,94 +820,92 @@ export default {
 				}
 			}
 		},
-		listNodes() {
+		parseNodes() {
 			const result = {
 				edges: [],
 				nodes: [],
 			}
 
-			let hubNode = this.allNodes.find((n) => n.isControllerNode)
-			hubNode = hubNode ? hubNode.id : 1
-
-			/** node id --> neghbors array */
-			const neighbors = {}
-
 			for (const node of this.allNodes) {
-				const id = node.id
-
-				neighbors[id] = node.neighbors
-
-				let batlev = node.minBatteryLevel
-
-				const nodeName = node.name || 'NodeID ' + node.id
-
-				// create node
-				// https://visjs.github.io/vis-network/docs/network/nodes.html
-				const entity = {
-					id: id,
-					hidden: false,
-					label: nodeName,
-					neighbors: neighbors[id],
-					battery_level: batlev,
-					group: node.loc,
-					failed: node.failed,
-					available: node.available,
-					font: { color: this.fontColor },
-					forwards:
-						node.isControllerNode ||
-						(node.ready && !node.failed && node.isListening),
-				}
-
-				if (id === hubNode) {
-					entity.shape = 'star'
-					entity.isControllerNode = true
-					entity.color = this.legends[0].color
-				} else if (node.isListening) {
-					entity.shape = 'hexagon'
-				} else {
-					entity.shape = 'square'
-					// entity.ctxRenderer = this.renderBattery
-				}
-
-				if (node.failed) {
-					entity.label = 'FAILED: ' + entity.label
-					entity.group = 'Failed'
-					entity.color = this.legends[5].color
-				}
-
-				if (!node.available) {
-					entity.label = 'DEATH: ' + entity.label
-					entity.group = 'Death'
-					entity.color = this.legends[5].color
-				}
-
-				if (hubNode === id) {
-					entity.label = 'Controller'
-					// entity.fixed = true
-				} else {
-					// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
-					this.parseRouteStats(
-						result.edges,
-						hubNode,
-						entity,
-						node.statistics?.lwr,
-						false
-					)
-
-					// parse node NLWR (next last working route)
-					this.parseRouteStats(
-						result.edges,
-						hubNode,
-						entity,
-						node.statistics?.nlwr,
-						true
-					)
-				}
-
+				const { node: entity } = this.parseNode(node, result.edges)
 				result.nodes.push(entity)
 			}
 
 			return result
+		},
+		parseNode(node, edges = []) {
+			const hubNode = this.controllerNode?.id ?? 1
+
+			const id = node.id
+
+			let batlev = node.minBatteryLevel
+
+			const nodeName = node.name || 'NodeID ' + node.id
+
+			// create node
+			// https://visjs.github.io/vis-network/docs/network/nodes.html
+			const entity = {
+				id: id,
+				hidden: false,
+				label: nodeName,
+				neighbors: node.neighbors,
+				battery_level: batlev,
+				group: node.loc,
+				failed: node.failed,
+				available: node.available,
+				font: { color: this.fontColor },
+				forwards:
+					node.isControllerNode ||
+					(node.ready && !node.failed && node.isListening),
+			}
+
+			if (id === hubNode) {
+				entity.shape = 'star'
+				entity.isControllerNode = true
+				entity.color = this.legends[0].color
+			} else if (node.isListening) {
+				entity.shape = 'hexagon'
+			} else {
+				entity.shape = 'square'
+				// entity.ctxRenderer = this.renderBattery
+			}
+
+			if (node.failed) {
+				entity.label = 'FAILED: ' + entity.label
+				entity.group = 'Failed'
+				entity.color = this.legends[5].color
+			}
+
+			if (!node.available) {
+				entity.label = 'DEAD: ' + entity.label
+				entity.group = 'Dead'
+				entity.color = this.legends[5].color
+			}
+
+			if (hubNode === id) {
+				entity.label = 'Controller'
+				// entity.fixed = true
+			} else {
+				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.statistics?.lwr,
+					false
+				)
+
+				// parse node NLWR (next last working route)
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.statistics?.nlwr,
+					true
+				)
+			}
+
+			return { node: entity, edges }
 		},
 	},
 }
