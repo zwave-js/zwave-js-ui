@@ -13,9 +13,9 @@
 									:key="i"
 								>
 									<v-list-item-icon>
-										<v-icon :color="item.color"
-											>turned_in</v-icon
-										>
+										<v-icon :color="item.color">{{
+											item.icon || 'turned_in'
+										}}</v-icon>
 									</v-list-item-icon>
 									<v-list-item-content>
 										<v-list-item-title
@@ -26,36 +26,33 @@
 								</v-list-item>
 							</v-list>
 						</v-col>
-						<!-- <v-col>
-							<v-subheader>Layout</v-subheader>
-
-							<v-radio-group v-model="ranker">
-								<v-radio
-									v-for="(item, i) in layouts"
-									:key="i"
-									:label="item.text"
-									:value="item.value"
-								></v-radio>
-							</v-radio-group>
-						</v-col> -->
-						<!-- <v-col>
+						<v-col>
 							<v-subheader>Edges</v-subheader>
-
-							<v-radio-group v-model="edgesVisibility">
-								<v-radio
+							<v-list dense>
+								<v-list-item
 									v-for="(item, i) in edgesLegend"
 									:key="i"
-									:label="item.text"
-									:value="item.value"
-								></v-radio>
-							</v-radio-group>
-						</v-col> -->
+								>
+									<v-list-item-icon>
+										<v-icon :color="item.color">{{
+											item.icon || 'turned_in'
+										}}</v-icon>
+									</v-list-item-icon>
+									<v-list-item-content>
+										<v-list-item-title
+											:style="{ color: item.textColor }"
+											v-text="item.text"
+										></v-list-item-title>
+									</v-list-item-content>
+								</v-list-item>
+							</v-list>
+						</v-col>
 						<v-col>
 							<v-subheader>Filters</v-subheader>
 
-							<v-select
+							<v-autocomplete
 								:items="locations"
-								v-model="filterLocations"
+								v-model="locationsFilter"
 								multiple
 								label="Locations filter"
 								clearable
@@ -72,17 +69,17 @@
 												v-bind="attrs"
 												v-on="on"
 												@click="
-													filterLocationsInvert =
-														!filterLocationsInvert
+													invertLocationsFilter =
+														!invertLocationsFilter
 												"
 												icon
 												:color="
-													filterLocationsInvert
+													invertLocationsFilter
 														? 'primary'
 														: ''
 												"
 												:class="
-													filterLocationsInvert
+													invertLocationsFilter
 														? 'border-primary'
 														: ''
 												"
@@ -93,11 +90,11 @@
 										<span>Invert selection</span>
 									</v-tooltip>
 								</template>
-							</v-select>
+							</v-autocomplete>
 
-							<v-select
-								:items="nodes"
-								v-model="filterNodes"
+							<v-autocomplete
+								:items="allNodes"
+								v-model="nodesFilter"
 								multiple
 								label="Nodes filter"
 								clearable
@@ -116,17 +113,17 @@
 												v-bind="attrs"
 												v-on="on"
 												@click="
-													filterNodesInvert =
-														!filterNodesInvert
+													invertNodesFilter =
+														!invertNodesFilter
 												"
 												icon
 												:color="
-													filterNodesInvert
+													invertNodesFilter
 														? 'primary'
 														: ''
 												"
 												:class="
-													filterNodesInvert
+													invertNodesFilter
 														? 'border-primary'
 														: ''
 												"
@@ -137,20 +134,34 @@
 										<span>Invert selection</span>
 									</v-tooltip>
 								</template>
-							</v-select>
+							</v-autocomplete>
 
 							<v-badge
 								color="error"
 								overlap
 								v-model="shouldReload"
 							>
-								<v-btn color="primary" @click="debounceRefresh">
+								<v-btn
+									class="mr-4"
+									color="primary"
+									@click="paintGraph"
+								>
 									Reload graph
 								</v-btn>
 							</v-badge>
+
+							<v-btn
+								:color="liveUpdate ? 'error' : 'success'"
+								@click="liveUpdate = !liveUpdate"
+							>
+								Live
+								<v-icon>{{
+									liveUpdate ? 'pause' : 'play_arrow'
+								}}</v-icon>
+							</v-btn>
 						</v-col>
 
-						<v-col>
+						<!-- <v-col>
 							<v-subheader>Grouping</v-subheader>
 
 							<v-radio-group v-model="grouping">
@@ -161,11 +172,12 @@
 									:value="item.value"
 								></v-radio>
 							</v-radio-group>
-						</v-col>
+						</v-col> -->
 					</v-row>
 				</v-expansion-panel-content>
 			</v-expansion-panel>
 		</v-expansion-panels>
+
 		<v-row class="mt-5" style="height: 776px">
 			<v-col
 				align-self="center"
@@ -181,191 +193,79 @@
 			</v-col>
 			<v-col
 				class="fill-height"
-				:style="{ visible: !loading }"
-				ref="content"
+				:style="{ opacity: loading ? 0 : '' }"
 				cols="12"
 			>
+				<div class="fill-height" ref="content"></div>
+				<v-menu
+					v-model="menu"
+					:close-on-content-click="false"
+					:position-x="menuX"
+					:position-y="menuY"
+					:offset-y="true"
+					:z-index="120"
+				>
+					<v-card v-if="hoverNode">
+						<v-subheader>{{ hoverNode._name }}</v-subheader>
+
+						<v-list
+							style="min-width: 300px; background: transparent"
+							dense
+							class="pa-0 text-caption"
+						>
+							<v-list-item dense>
+								<v-list-item-content>ID</v-list-item-content>
+								<v-list-item-content class="align-end">{{
+									hoverNode.id
+								}}</v-list-item-content>
+							</v-list-item>
+							<v-list-item dense>
+								<v-list-item-content
+									>Product</v-list-item-content
+								>
+								<v-list-item-content class="align-end">{{
+									hoverNode.productLabel
+								}}</v-list-item-content>
+							</v-list-item>
+							<v-list-item dense>
+								<v-list-item-content>Power</v-list-item-content>
+								<v-list-item-content class="align-end">{{
+									hoverNode.minBatteryLevel
+										? hoverNode.minBatteryLevel + '%'
+										: 'MAIN'
+								}}</v-list-item-content>
+							</v-list-item>
+							<v-list-item dense>
+								<v-list-item-content
+									>Neighbors</v-list-item-content
+								>
+								<v-list-item-content class="align-end">{{
+									hoverNode.neighbors.join(', ')
+								}}</v-list-item-content>
+							</v-list-item>
+						</v-list>
+					</v-card>
+				</v-menu>
 			</v-col>
 		</v-row>
 	</div>
 </template>
 
-<style>
-.thumb {
-	border: 1px solid #ddd;
-	position: absolute;
-	bottom: 5px;
-	right: 5px;
-	margin: 1px;
-	padding: 1px;
-	overflow: hidden;
-}
-
-#miniSvg {
-	z-index: 110;
-	background: white;
-}
-
-#scopeContainer {
-	z-index: 120;
-}
-
-svg > .output {
-	fill: #3598db;
-	stroke: #2470a2;
-}
-
-.node > rect {
-	stroke: black;
-}
-
-.node.layer-1 > rect,
-.edgePath.layer-1 > path {
-	fill: #3f51b5;
-	stroke: #1a237e;
-}
-
-.node.layer-1 > polygon,
-.node.layer-1 > rect,
-.edgePath.layer-1 > path {
-	fill: #3f51b5;
-	stroke: #1a237e;
-}
-
-.node.layer-1 text {
-	fill: #ffffff;
-}
-
-.node.layer-2 > polygon,
-.node.layer-2 > rect,
-.edgePath.layer-2 > path {
-	stroke: #009688;
-}
-
-.node.layer-2 > rect,
-.edgePath.layer-2 > path {
-	fill: #00bcd4;
-}
-
-.node.layer-2 text {
-	fill: #006064;
-}
-
-.node.layer-3 > polygon,
-.node.layer-3 > rect,
-.edgePath.layer-3 > path {
-	stroke: #1d8548;
-}
-
-.node.layer-3 > rect,
-.edgePath.layer-3 > path {
-	fill: #2dcc70;
-}
-
-.node.layer-3 text {
-	fill: #1d8548;
-}
-
-.node.layer-4 > polygon,
-.node.layer-4 > rect,
-.edgePath.layer-4 > path {
-	stroke: #d25400;
-}
-
-.node.layer-4 > rect,
-.edgePath.layer-4 > path {
-	fill: #f1c40f;
-}
-
-.node.layer-5 > polygon,
-.node.layer-4 text {
-	fill: #d25400;
-}
-
-.node.layer-5 > polygon,
-.node.layer-5 > rect,
-.edgePath.layer-5 > path {
-	stroke: #d25400;
-}
-
-.node.layer-5 > rect,
-.edgePath.layer-5 > path {
-	fill: #e77e23;
-}
-
-.node.layer-5 text {
-	fill: #d25400;
-}
-
-.node.Error > polygon,
-.node.Error > rect {
-	fill: #ff7676;
-	stroke: #8b0000;
-}
-
-.node.Error text {
-	fill: #8b0000;
-}
-
-.node.unset > rect {
-	stroke: #666;
-}
-
-.node.unset > polygon,
-.node.unset > rect {
-	stroke: #666;
-	fill: lightgray;
-}
-
-.cluster > rect {
-	stroke: lightgray;
-	fill: transparent;
-	stroke-width: 1px;
-	stroke-linecap: round;
-}
-
-.cluster > .label {
-	/* stroke: gray; */
-	fill: lightgray;
-}
-
-.node.unset text {
-	fill: #666;
-}
-
-.node text {
-	font-size: 12px;
-}
-
-.edgePath.layer-1 > path {
-	fill: transparent;
-}
-
-.edgePath path {
-	stroke: #333;
-	fill: #333;
-}
-
-.node > polygon {
-	opacity: 0.7;
-}
-
-.node > rect {
-	stroke-width: 1px;
-	stroke-linecap: round;
-}
-</style>
+<style></style>
 
 <script>
-// Code ported from https://github.com/AdamNaj/ZWaveGraphHA/blob/master/zwavegraph3.js
-
-import * as d3 from 'd3'
-import * as dagreD3 from 'dagre-d3'
-import * as svgPanZoom from 'svg-pan-zoom'
-import * as Hammer from 'hammerjs'
-
+import { Network } from 'vis-network'
+import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
-// import testNodes from '@/assets/testNodes.json'
+// import fakeNodes from '@/assets/testNodes.json'
+import {
+	ProtocolDataRate,
+	protocolDataRateToString,
+	rssiToString,
+} from 'zwave-js/safe'
+import { uuid } from '../../lib/utils'
+import useBaseStore from '../../stores/base.js'
+import { mapState } from 'pinia'
 
 export default {
 	props: {
@@ -374,15 +274,19 @@ export default {
 		},
 	},
 	computed: {
+		...mapState(useBaseStore, ['controllerNode']),
 		content() {
 			return this.$refs.content
+		},
+		fontColor() {
+			return this.isDark ? '#ddd' : '#333'
 		},
 		isDark() {
 			return this.$vuetify.theme.dark
 		},
 		locations() {
 			// get unique locations array from nodes
-			return this.nodes.reduce((acc, node) => {
+			return this.allNodes.reduce((acc, node) => {
 				if (node.loc && acc.indexOf(node.loc) === -1) {
 					acc.push(node.loc)
 				}
@@ -390,74 +294,63 @@ export default {
 			}, [])
 		},
 		filteredNodes() {
-			return this.nodes.filter((n) => {
+			return this.allNodes.filter((n) => {
 				if (n.isControllerNode) {
 					return true
 				}
 
-				let toAdd = true
+				let toAdd = false
 
 				// check if node is in selected locations
-				if (this.filterLocations.length > 0) {
-					if (this.filterLocationsInvert) {
-						toAdd = this.filterLocations.indexOf(n.loc) === -1
+				if (this.locationsFilter.length > 0) {
+					if (this.invertLocationsFilter) {
+						toAdd = !this.locationsFilter.includes(n.loc)
 					} else {
-						toAdd = this.filterLocations.indexOf(n.loc) !== -1
+						toAdd = this.locationsFilter.includes(n.loc)
 					}
 				}
 
 				// if not in current locations, check if it's on selected nodes
-				if (!toAdd && this.filterNodes.length > 0) {
-					if (this.filterNodesInvert) {
-						toAdd = this.filterNodes.indexOf(n.id) === -1
+				if (!toAdd && this.nodesFilter.length > 0) {
+					if (this.invertNodesFilter) {
+						toAdd = !this.nodesFilter.includes(n.id)
 					} else {
-						toAdd = this.filterNodes.indexOf(n.id) !== -1
+						toAdd = this.nodesFilter.includes(n.id)
 					}
 				}
 
 				return toAdd
 			})
 		},
+		allNodes() {
+			return this.nodes // replace this with `fakeNodes` when testing
+		},
 	},
+	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
+	unsubscribeUpdate: null, // pinia update action unsubscribe function
 	data() {
 		return {
-			openPanel: 0,
+			openPanel: -1,
+			selectedNodes: [],
+			menuX: 0,
+			menuY: 0,
+			menu: false,
+			hoverNode: null,
+			liveUpdate: false,
 			shouldReload: false,
-			filterLocations: [],
-			filterNodes: [],
-			filterNodesInvert: false,
-			filterLocationsInvert: false,
-			edgesVisibility: 'relevant',
-			grouping: 'ungrouped',
+			locationsFilter: [],
+			invertLocationsFilter: false,
+			nodesFilter: [],
+			invertNodesFilter: false,
+			// grouping: 'ungrouped',
 			refreshTimeout: null,
-			ranker: 'network-simplex',
+			updateTimeout: null,
 			loading: false,
-			htmlTemplate: `
-      <svg id="svg" width="100%" height="100%"></svg>
-    <svg id="scopeContainer" class="thumb">
-      <g>
-        <rect
-          id="scope"
-          fill="red"
-          fill-opacity="0.03"
-          stroke="red"
-          stroke-width="1px"
-          stroke-opacity="0.3"
-          x="0"
-          y="0"
-          width="0"
-          height="0"
-        />
-        <!-- <line ref="line1" stroke="red" stroke-width="1px" x1="0" y1="0" x2="0" y2="0" />
-              <line ref="line2" stroke="red" stroke-width="1px" x1="0" y1="0" x2="0" y2="0" /> -->
-      </g>
-    </svg>
-    <svg id="miniSvg" class="thumb"></svg>
-      `,
+			edgesCache: {},
 			legends: [
 				{
-					color: '#3F51B5',
-					textColor: '#2470A2',
+					color: '#7e57c2',
+					textColor: '#7e57c2',
 					text: 'Controller',
 				},
 				{
@@ -491,75 +384,109 @@ export default {
 					text: 'Unconnected',
 				},
 			],
-			layouts: [
-				{
-					text: 'Network Simplex',
-					value: 'network-simplex',
-				},
-				{
-					text: 'Tight Tree',
-					value: 'tight-tree',
-				},
-				{
-					text: 'Longest Path',
-					value: 'longest-path',
-				},
-			],
 			edgesLegend: [
 				{
-					text: 'Relevant Neighbors',
-					value: 'relevant',
+					icon: 'minimize',
+					textColor: '',
+					text: 'Last working route',
 				},
 				{
-					text: 'All Neighbors',
-					value: 'all',
+					icon: 'more_horiz',
+					textColor: '',
+					text: 'Next last working route',
+				},
+				{
+					color: '#8b0000',
+					textColor: '#8b0000',
+					text: protocolDataRateToString(ProtocolDataRate.ZWave_9k6),
+				},
+				{
+					color: '#F1C40F',
+					textColor: '#F1C40F',
+					text: protocolDataRateToString(ProtocolDataRate.ZWave_40k),
+				},
+				{
+					color: '#2DCC70',
+					textColor: '#2DCC70',
+					text: protocolDataRateToString(ProtocolDataRate.ZWave_100k),
+				},
+				{
+					color: '#3F51B5',
+					textColor: '#3F51B5',
+					text: protocolDataRateToString(
+						ProtocolDataRate.LongRange_100k
+					),
+				},
+				{
+					color: '#666666',
+					textColor: '#666666',
+					text: 'Unkwown',
 				},
 			],
-			groupingLegend: [
-				{
-					text: 'Z-Wave Locations',
-					value: 'z-wave',
-				},
-				{
-					text: 'Ungrouped',
-					value: 'ungrouped',
-				},
-			],
+			// groupingLegend: [
+			// 	{
+			// 		text: 'Z-Wave Locations',
+			// 		value: 'z-wave',
+			// 	},
+			// 	{
+			// 		text: 'Ungrouped',
+			// 		value: 'ungrouped',
+			// 	},
+			// ],
 		}
 	},
 	watch: {
-		filteredNodes() {
-			this.shouldReload = true
-		},
-		// nodes() {
-		// 	this.debounceRefresh()
-		// },
-		ranker() {
-			this.debounceRefresh()
-		},
-		edgesVisibility() {
-			this.debounceRefresh()
-		},
 		grouping() {
 			this.debounceRefresh()
 		},
-		isDark() {
-			this.updateLabelsColor()
+		filteredNodes(val) {
+			this.selectedNodes = val.map((n) => n.id)
+			this.setSelection()
 		},
 	},
-	// mounted() {
-	// 	this.debounceRefresh()
-	// },
+	mounted() {
+		this.paintGraph()
+
+		this.unsubscribeUpdate = useBaseStore().$onAction(({ name, args }) => {
+			if (name === 'updateMeshGraph') {
+				if (this.liveUpdate) {
+					if (this.updateTimeout) {
+						clearTimeout(this.updateTimeout)
+					}
+
+					this.updateTimeout = setTimeout(
+						this.onNodeUpdate.bind(this, args[0]),
+						500
+					)
+				} else {
+					this.shouldReload = true
+				}
+			} else if (name === 'initNodes') {
+				// trick to prevent empty network when refreshing page
+				this.debounceRefresh()
+			}
+		})
+	},
 	beforeDestroy() {
 		if (this.refreshTimeout) {
 			clearTimeout(this.refreshTimeout)
 		}
+
+		if (this.updateTimeout) {
+			clearTimeout(this.updateTimeout)
+		}
+
+		this.destroyNetwork()
+
+		this.unsubscribeUpdate()
 	},
 	methods: {
-		updateLabelsColor() {
-			d3.select('#svg')
-				.selectAll('g.cluster text')
-				.style('fill', this.isDark ? 'lightgrey' : 'black')
+		destroyNetwork() {
+			if (this.network) {
+				this.network.destroy()
+				this.network = null
+				this.content.innerHTML = ''
+			}
 		},
 		debounceRefresh() {
 			if (this.refreshTimeout) {
@@ -568,668 +495,458 @@ export default {
 
 			this.loading = true
 
-			this.content.innerHTML = this.htmlTemplate
-
 			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
 		},
-		get(selector) {
-			return this.content.querySelector(selector)
+		onNodeUpdate(node) {
+			if (this.updateTimeout) {
+				clearTimeout(this.updateTimeout)
+			}
+
+			if (this.network && !this.loading) {
+				const { nodes, edges } = this.network.body.data
+
+				const edgesToRemove = []
+				edges.forEach((e) => {
+					if (e.routeOf === node.id) {
+						edgesToRemove.push(e.id)
+						const edgeId = this.getEdgeId(e)
+						if (this.edgesCache[edgeId]) {
+							delete this.edgesCache[edgeId]
+						}
+					}
+				})
+
+				nodes.remove(node.id)
+				edges.remove(edgesToRemove)
+				const result = this.parseNode(node)
+				nodes.add(result.node)
+				edges.add(result.edges)
+			}
+		},
+		getEdgeId(edge) {
+			return `${edge.from}-${edge.to}`
+		},
+		getDataRateColor(dataRate) {
+			switch (dataRate) {
+				case ProtocolDataRate.ZWave_9k6:
+					return '#8b0000'
+				case ProtocolDataRate.ZWave_40k:
+					return '#F1C40F'
+				case ProtocolDataRate.ZWave_100k:
+					return '#2DCC70'
+				case ProtocolDataRate.LongRange_100k:
+					return '#3F51B5'
+				default:
+					return '#666666'
+			}
+		},
+		setSelection() {
+			if (this.network && !this.loading) {
+				const emptyFilters =
+					this.nodesFilter.length === 0 &&
+					this.locationsFilter.length === 0 &&
+					!this.invertNodesFilter &&
+					!this.invertLocationsFilter
+
+				// check if all nodes are selected
+				const all =
+					this.filteredNodes.length === this.allNodes.length &&
+					emptyFilters
+
+				const params = {
+					nodes: all ? [] : this.selectedNodes,
+				}
+				this.network.setSelection(params)
+				this.handleSelectNode(params)
+			}
 		},
 		paintGraph() {
-			this.get('#svg').innerHTML = ''
-			this.get('#miniSvg').innerHTML = ''
-
 			this.shouldReload = false
 
-			// https://github.com/dagrejs/dagre/wiki#using-dagre
-			const g = new dagreD3.graphlib.Graph({
-				compound: true,
-			}).setGraph({})
-			g.graph().rankDir = 'BT'
-			g.graph().nodesep = 10
-			g.graph().ranker = this.ranker
+			this.destroyNetwork()
 
-			// Create the renderer
-			// eslint-disable-next-line new-cap
-			const render = new dagreD3.render()
+			this.edgesCache = {}
 
-			const svg = d3.select('#svg')
-			const inner = svg
-				.append('g')
-				.attr('transform', 'translate(20,200)scale(1)')
+			this.loading = true
 
-			g.graph().minlen = 0
+			const { edges, nodes } = this.parseNodes()
 
-			// Add our custom shape (a house): https://dagrejs.github.io/project/dagre-d3/latest/demo/user-defined.html
-			render.shapes().house = this.renderHouse
-			render.shapes().battery = this.renderBattery
-
-			const { edges, nodes } = this.listNodes()
-			// Set the parents to define which nodes belong to which cluster
-
-			// add nodes  to graph
-			for (let i = 0; i < nodes.length; i++) {
-				const node = nodes[i]
-				g.setNode(node.id, node)
-				if (
-					this.grouping !== 'ungrouped' &&
-					node.loc !== '' &&
-					node.loc !== undefined
-				) {
-					g.setNode(node.loc, {
-						label: node.loc,
-						clusterLabelPos: 'bottom',
-						class: 'group',
-					})
-					g.setParent(node.id, node.loc)
-				}
+			const container = this.content
+			const data = {
+				nodes,
+				edges,
 			}
-
-			// add edges to graph
-			for (let i = 0; i < edges.length; i++) {
-				g.setEdge(edges[i].from, edges[i].to, {
-					label: '',
-					arrowhead: 'undirected',
-					style: edges[i].style,
-					class: edges[i].class,
-					curve: d3.curveBundle.beta(0.2),
-					// curve: d3.curveBasis
-				})
-			}
-
-			// Run the renderer. This is what draws the final graph.
-			render(inner, g)
-
-			this.updateLabelsColor()
-
-			// create battery state gradients
-			for (let layer = 0; layer < this.legends.length; layer++) {
-				for (let percent = 0; percent <= 100; percent += 10) {
-					const grad = svg
-						.append('defs')
-						.append('linearGradient')
-						.attr('id', 'fill-' + (layer + 1) + '-' + percent)
-						.attr('x1', '0%')
-						.attr('x2', '0%')
-						.attr('y1', '0%')
-						.attr('y2', '100%')
-					grad.append('stop')
-						.attr('offset', 100 - percent - 10 + '%')
-						.style('stop-color', 'white')
-					grad.append('stop')
-						.attr('offset', 100 - percent + '%')
-						.style('stop-color', this.legends[layer].color)
-				}
-			}
-
-			// Add the title element to be used for a tooltip (SVG functionality)
-			inner
-				.selectAll('g.node')
-				.append('title')
-				.html(function (d) {
-					return g.node(d).title
-				})
-
-			inner
-				.selectAll('g.node')
-				.attr('layer', function (d) {
-					return g.node(d).layer
-				})
-				.attr('fill', function (d) {
-					if (g.node(d).battery_level === 100) {
-						return 'url(#fill-' + g.node(d).layer + '-100)'
-					}
-					if (g.node(d).battery_level !== undefined) {
-						return (
-							'url(#fill-' +
-							g.node(d).layer +
-							'-' +
-							Math.floor((g.node(d).battery_level / 10) % 10) +
-							'0)'
-						)
-					}
-				})
-
-			inner.selectAll('g.edgePath').attr('layer', function (d) {
-				return g.edges(d).layer
-			})
-
-			const selection = svg.selectAll('.node')
-
-			const nodeList = selection.nodes()
-
-			// append handlers
-			selection
-				.on('mouseover', this.handleMouseOver.bind(this, nodeList))
-				.on('mouseout', this.handleMouseOut.bind(this, nodeList))
-				.on('click tap', this.handleClick.bind(this, nodeList))
-
-			setTimeout(this.bindThumbnail.bind(this), 500)
-		},
-		bindThumbnail() {
-			this.get('#miniSvg').innerHTML = this.get('#svg').innerHTML
-			// https://github.com/ariutta/svg-pan-zoom
-			const main = svgPanZoom('#svg', {
-				zoomEnabled: true,
-				controlIconsEnabled: true,
-				fit: true,
-				center: true,
-				customEventsHandler: {
-					haltEventListeners: [
-						'touchstart',
-						'touchend',
-						'touchmove',
-						'touchleave',
-						'touchcancel',
-					],
-					init: function (options) {
-						const instance = options.instance
-						let initialScale = 1
-						let pannedX = 0
-						let pannedY = 0
-
-						// Init Hammer
-						// Listen only for pointer and touch events
-						this.hammer = Hammer(options.svgElement, {
-							inputClass: Hammer.SUPPORT_POINTER_EVENTS
-								? Hammer.PointerEventInput
-								: Hammer.TouchInput,
-						})
-
-						// Enable pinch
-						this.hammer.get('pinch').set({
-							enable: true,
-						})
-
-						// Handle double tap
-						this.hammer.on('doubletap', function () {
-							instance.zoomIn()
-						})
-
-						// Handle pan
-						this.hammer.on('panstart panmove', function (ev) {
-							// On pan start reset panned variables
-							if (ev.type === 'panstart') {
-								pannedX = 0
-								pannedY = 0
-							}
-
-							// Pan only the difference
-							instance.panBy({
-								x: ev.deltaX - pannedX,
-								y: ev.deltaY - pannedY,
-							})
-							pannedX = ev.deltaX
-							pannedY = ev.deltaY
-						})
-
-						// Handle pinch
-						this.hammer.on('pinchstart pinchmove', function (ev) {
-							// On pinch start remember initial zoom
-							if (ev.type === 'pinchstart') {
-								initialScale = instance.getZoom()
-								instance.zoomAtPoint(initialScale * ev.scale, {
-									x: ev.center.x,
-									y: ev.center.y,
-								})
-							}
-
-							instance.zoomAtPoint(initialScale * ev.scale, {
-								x: ev.center.x,
-								y: ev.center.y,
-							})
-						})
-
-						// Prevent moving the page on some devices when panning over SVG
-						options.svgElement.addEventListener(
-							'touchmove',
-							function (e) {
-								e.preventDefault()
-							}
-						)
+			const options = {
+				interaction: {
+					// https://visjs.github.io/vis-network/docs/network/interaction.html#
+					hover: true,
+					navigationButtons: true,
+					keyboard: true,
+					multiselect: true,
+					hideEdgesOnDrag: false,
+					hideEdgesOnZoom: false,
+					hideNodesOnDrag: false,
+					hoverConnectedEdges: false,
+					selectable: true,
+					selectConnectedEdges: false,
+					tooltipDelay: 1000,
+					zoomSpeed: 1,
+					zoomView: true,
+				},
+				nodes: {
+					borderWidth: 2,
+					widthConstraint: {
+						maximum: 180,
 					},
-					destroy() {
-						this.hammer.destroy()
+					// shadow: true,
+				},
+				edges: {
+					width: 2,
+					// shadow: true,
+				},
+				physics: {
+					enabled: true, // enabling physics reduces performance a lot
+					stabilization: {
+						enabled: true,
+						iterations: 50,
+						updateInterval: 50,
+						onlyDynamicEdges: false,
+						fit: true,
+					},
+					barnesHut: {
+						theta: 0.99,
+						damping: 0.9,
+						avoidOverlap: 0.15,
 					},
 				},
-			})
-
-			const thumb = svgPanZoom('#miniSvg', {
-				zoomEnabled: false,
-				panEnabled: false,
-				controlIconsEnabled: false,
-				dblClickZoomEnabled: false,
-				preventMouseEventsDefault: true,
-			})
-
-			let resizeTimer
-			const interval = 300 // msec
-			window.addEventListener('resize', function () {
-				if (resizeTimer !== false) {
-					clearTimeout(resizeTimer)
-				}
-				resizeTimer = setTimeout(function () {
-					main.resize()
-					thumb.resize()
-				}, interval)
-			})
-
-			main.setOnZoom(function () {
-				thumb.updateThumbScope()
-			})
-
-			main.setOnPan(function () {
-				thumb.updateThumbScope()
-			})
-
-			const self = this
-
-			thumb.updateThumbScope = function () {
-				const scope = self.get('#scope')
-				const mainPanX = main.getPan().x
-				const mainPanY = main.getPan().y
-				const mainWidth = main.getSizes().width
-				const mainHeight = main.getSizes().height
-				const mainZoom = main.getSizes().realZoom
-				const thumbPanX = thumb.getPan().x
-				const thumbPanY = thumb.getPan().y
-				const thumbZoom = thumb.getSizes().realZoom
-
-				if (mainZoom === 0) {
-					return
-				}
-
-				const thumByMainZoomRatio = thumbZoom / mainZoom
-
-				const scopeX = thumbPanX - mainPanX * thumByMainZoomRatio
-				const scopeY = thumbPanY - mainPanY * thumByMainZoomRatio
-				const scopeWidth = mainWidth * thumByMainZoomRatio
-				const scopeHeight = mainHeight * thumByMainZoomRatio
-
-				scope.setAttribute('x', scopeX + 1)
-				scope.setAttribute('y', scopeY + 1)
-				scope.setAttribute('width', scopeWidth - 2)
-				scope.setAttribute('height', scopeHeight - 2)
-			}
-			thumb.updateThumbScope()
-
-			const _updateMainViewPan = function (
-				clientX,
-				clientY,
-				scopeContainer,
-				main,
-				thumb
-			) {
-				const dim = scopeContainer.getBoundingClientRect()
-				// const mainWidth = main.getSizes().width
-				// const mainHeight = main.getSizes().height
-				const mainZoom = main.getSizes().realZoom
-				const thumbWidth = thumb.getSizes().width
-				const thumbHeight = thumb.getSizes().height
-				const thumbZoom = thumb.getSizes().realZoom
-
-				const thumbPanX = clientX - dim.left - thumbWidth / 2
-				const thumbPanY = clientY - dim.top - thumbHeight / 2
-				const mainPanX = (-thumbPanX * mainZoom) / thumbZoom
-				const mainPanY = (-thumbPanY * mainZoom) / thumbZoom
-				main.pan({
-					x: mainPanX,
-					y: mainPanY,
-				})
 			}
 
-			const updateMainViewPan = function (evt) {
-				if (evt.which === 0 && evt.button === 0) {
-					return false
-				}
-				_updateMainViewPan(
-					evt.clientX,
-					evt.clientY,
-					scopeContainer,
-					main,
-					thumb
-				)
-			}
+			this.network = new Network(container, data, options)
 
-			const scopeContainer = this.get('#scopeContainer')
-			scopeContainer.addEventListener('click', function (evt) {
-				updateMainViewPan(evt)
+			// event handlers
+			// https://visjs.github.io/vis-network/docs/network/#Events
+			this.network.once('stabilizationIterationsDone', () => {
+				this.loading = false
+				this.setSelection()
 			})
 
-			scopeContainer.addEventListener('mousemove', function (evt) {
-				updateMainViewPan(evt)
-			})
+			this.network.on('oncontext', this.handleClick.bind(this))
 
-			this.loading = false
+			this.network.on('hoverNode', this.handleHoverNode.bind(this))
+			this.network.on('blurNode', this.handleBlurNode.bind(this))
+
+			this.network.on('dragStart', this.handleDragStart.bind(this))
+			this.network.on('dragEnd', this.handleDragEnd.bind(this))
+
+			this.network.on('select', this.handleSelectNode.bind(this))
+
+			// this.network.on('hoverEdge', function (e) {
+			// 	this.body.data.edges.update({
+			// 		id: e.edge,
+			// 		font: {
+			// 			size: 12,
+			// 		},
+			// 	})
+			// })
+
+			// this.network.on('blurEdge', function (e) {
+			// 	this.body.data.edges.update({
+			// 		id: e.edge,
+			// 		font: {
+			// 			size: 0,
+			// 		},
+			// 	})
+			// })
 		},
-		listNodes() {
+		handleSelectNode(params) {
+			this.handleClick(params)
+
+			let { nodes: selectedNodes } = params
+
+			const { edges, nodes } = this.network.body.data
+			const repeaters = []
+
+			const edgesToUpdate = []
+			const nodesToUpdate = []
+
+			// click on controller
+			if (
+				selectedNodes.length === 1 &&
+				nodes.get(selectedNodes[0]).isControllerNode
+			) {
+				selectedNodes = []
+			}
+
+			this.selectedNodes = selectedNodes
+
+			const showAll = selectedNodes.length === 0
+
+			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
+			edges.forEach((e) => {
+				const edgeId = this.getEdgeId(e)
+				const shouldBeHidden =
+					(showAll && this.edgesCache[edgeId]?.id !== e.id) ||
+					(selectedNodes.length > 0 &&
+						!selectedNodes.includes(e.routeOf))
+
+				const fontSize = showAll ? 0 : 12
+
+				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
+					edgesToUpdate.push({
+						id: e.id,
+						hidden: shouldBeHidden,
+						font: {
+							size: fontSize,
+						},
+					})
+				}
+
+				if (!shouldBeHidden) {
+					repeaters.push(e.from)
+					repeaters.push(e.to)
+				}
+			})
+
+			edges.update(edgesToUpdate)
+
+			nodes.forEach((n) => {
+				const shouldBeHidden =
+					selectedNodes.length > 0 &&
+					!selectedNodes.includes(n.id) &&
+					!repeaters.includes(n.id)
+
+				if (shouldBeHidden !== n.hidden) {
+					nodesToUpdate.push({
+						id: n.id,
+						hidden: shouldBeHidden,
+						color: n.color,
+					})
+				}
+			})
+
+			nodes.update(nodesToUpdate)
+
+			this.network.fit()
+		},
+		handleDragStart() {
+			this.dragging = true
+		},
+		handleDragEnd() {
+			this.dragging = false
+		},
+		handleHoverNode(params) {
+			// show menu
+			if (this.dragging) return
+			const { node, event } = params
+			this.menuX = event.clientX + 15
+			this.menuY = event.clientY + 15
+			this.menu = true
+			const item = this.allNodes.find((n) => n.id === node)
+
+			if (item) {
+				this.hoverNode = item
+			}
+		},
+		handleBlurNode() {
+			// hide menu
+			this.menu = false
+			this.hoverNode = null
+		},
+		handleClick(params) {
+			if (params.event) {
+				params.event.preventDefault()
+				// https://visjs.github.io/vis-network/docs/network/#events
+				// Add interactivity
+				const nodeId = params.nodes[0]
+				if (nodeId) {
+					const node = this.allNodes.find((n) => n.id === nodeId)
+					this.$emit('node-click', node)
+				} else {
+					this.$emit('node-click', null)
+				}
+			}
+		},
+		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
+			if (!route) {
+				if (!nlwr) {
+					// unconnected
+					node.color = this.legends[6].color
+				}
+				return
+			}
+
+			const {
+				repeaters,
+				repeaterRSSI,
+				rssi,
+				protocolDataRate,
+				routeFailedBetween,
+			} = route
+
+			if (routeFailedBetween) {
+				const edge = {
+					id: uuid(),
+					from: routeFailedBetween[0],
+					to: routeFailedBetween[1],
+					color: this.getDataRateColor(ProtocolDataRate.ZWave_9k6),
+					protocolDataRate,
+					width: 1,
+					// rssi: rssiToString(repeaterRSSI?.[i] || rssi),
+					// layer: -1,
+					label: 'Failed ❌',
+					font: { align: 'top', size: 0 },
+					dashes: [2, 2],
+					hidden: true,
+					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
+					physics: true,
+				}
+
+				edges.push(edge)
+			}
+
+			for (let i = 0; i <= repeaters.length; i++) {
+				const repeater = repeaters[i]
+				const prevRepeater = repeaters[i - 1] || controllerId
+
+				const from = prevRepeater
+				const to = repeater || node.id
+
+				const label = `RSSI: ${rssiToString(
+					i === 0 ? rssi : repeaterRSSI?.[i - 1]
+				)}`
+
+				const edgeId = this.getEdgeId({ from, to })
+
+				// create the edge
+				// https://visjs.github.io/vis-network/docs/network/edges.html
+				const edge = {
+					id: uuid(),
+					from,
+					to,
+					color: this.getDataRateColor(protocolDataRate),
+					protocolDataRate,
+					width: nlwr ? 1 : 4,
+					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
+					layer: i + 1,
+					label,
+					font: { align: 'top', size: 0 }, //  multi: 'html'
+					// arrows: 'to from',
+					dashes: nlwr ? [5, 5] : false,
+					hidden: nlwr,
+					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
+					physics: !nlwr,
+				}
+
+				edges.push(edge)
+
+				if (!nlwr) {
+					if (!node.failed && node.available) {
+						node.color = this.legends[repeaters.length + 1].color
+					}
+
+					// only draw the edge with higher data rate
+					if (this.edgesCache[edgeId]) {
+						if (
+							this.edgesCache[edgeId].protocolDataRate >=
+							protocolDataRate
+						) {
+							edge.hidden = true
+						} else {
+							this.edgesCache[edgeId].hidden = true
+							this.edgesCache[edgeId] = edge
+						}
+					} else {
+						this.edgesCache[edgeId] = edge
+					}
+				}
+			}
+		},
+		parseNodes() {
 			const result = {
 				edges: [],
 				nodes: [],
 			}
 
-			let hubNode = this.filteredNodes.find((n) => n.isControllerNode)
-			hubNode = hubNode ? hubNode.id : 1
-
-			const neighbors = {}
-
-			for (const node of this.filteredNodes) {
-				const id = node.id
-
-				neighbors[id] = node.neighbors
-
-				let batlev = node.minBatteryLevel
-
-				const nodeName = node.name || 'NodeID ' + node.id
-
-				// create node
-				const entity = {
-					id: id,
-					label: nodeName,
-					class: 'unset layer-7',
-					layer: 7,
-					rx: '6',
-					ry: '6',
-					neighbors: neighbors[id],
-					battery_level: batlev,
-					mains: batlev,
-					loc: node.loc,
-					failed: node.failed,
-					title:
-						'<b>' +
-						nodeName +
-						'</b>' +
-						'\n Node: ' +
-						id +
-						'\n Product Name: ' +
-						node.productLabel +
-						'\n Power source: ' +
-						(batlev !== undefined
-							? 'battery (' + batlev + '%)'
-							: 'mains') +
-						'\n Neighbors: ' +
-						node.neighbors,
-					forwards:
-						node.isControllerNode ||
-						(node.ready && !node.failed && node.isListening),
-				}
-
-				if (id === hubNode) {
-					entity.shape = 'house'
-				} else {
-					entity.shape = node.isListening ? 'rect' : 'battery'
-				}
-
-				if (node.failed) {
-					entity.label = 'FAILED: ' + entity.label
-					entity['font.multi'] = true
-					entity.title = '<b>FAILED: </b>' + entity.title
-					entity.group = 'Failed'
-					entity.failed = true
-					entity.class = 'Error'
-				}
-
-				if (hubNode === id) {
-					entity.label = 'Controller'
-					entity.borderWidth = 2
-					entity.fixed = true
-				}
-
+			for (const node of this.allNodes) {
+				const { node: entity } = this.parseNode(node, result.edges)
 				result.nodes.push(entity)
 			}
 
-			if (hubNode > 0) {
-				let layer = 0
-				let previousRow = [hubNode]
-				const mappedNodes = [hubNode]
-				const layers = []
-
-				while (previousRow.length > 0) {
-					layer = layer + 1
-					const nextRow = []
-					const layerMembers = []
-					layers[layer] = layerMembers
-
-					for (const target in previousRow) {
-						// assign node to layer
-						result.nodes
-							.filter((n) => {
-								return (
-									n.id === previousRow[target] &&
-									(n.group = 'unset')
-								)
-							})
-							.forEach((d) => {
-								d.class = 'layer-' + layer
-								d.layer = layer
-								if (d.failed) {
-									d.class = d.class + ' Error'
-								}
-
-								if (d.neighbors !== undefined) {
-									d.neighbors.forEach((n) => {
-										d.class = d.class + ' neighbor-' + n
-									})
-								}
-							})
-
-						if (
-							result.nodes.filter((n) => {
-								return (
-									n.id === previousRow[target] && n.forwards
-								)
-							}).length > 0
-						) {
-							const row = neighbors[previousRow[target]]
-							for (const node in row) {
-								if (neighbors[row[node]] !== undefined) {
-									if (!mappedNodes.includes(row[node])) {
-										layerMembers.push(row[node])
-										result.edges.push({
-											from: row[node],
-											to: previousRow[target],
-											style: '',
-											class:
-												'layer-' +
-												(layer + 1) +
-												' node-' +
-												row[node] +
-												' node-' +
-												previousRow[target],
-											layer: layer,
-										})
-										nextRow.push(row[node])
-									} else {
-										// uncomment to show edges regardless of rows - mess!
-										if (this.edgesVisibility === 'all') {
-											result.edges.push({
-												from: row[node],
-												to: previousRow[target],
-												style: 'stroke-dasharray: 5, 5; fill:transparent; ', // "stroke: #ddd; stroke-width: 1px; fill:transparent; stroke-dasharray: 5, 5;",
-												class:
-													'layer-' +
-													(layer + 1) +
-													' node-' +
-													row[node] +
-													' node-' +
-													previousRow[target],
-											})
-										}
-									}
-								}
-							}
-						}
-					}
-
-					for (const idx in nextRow) {
-						mappedNodes.push(nextRow[idx])
-					}
-					previousRow = nextRow
-				}
-			}
 			return result
 		},
-		// Add our custom shape (a house)
-		renderHouse(parent, bbox, node) {
-			const w = bbox.width
-			const h = bbox.height
-			const points = [
-				{
-					x: 0,
-					y: 0,
-				},
-				{
-					x: w,
-					y: 0,
-				},
-				{
-					x: w,
-					y: -h,
-				},
-				{
-					x: w / 2,
-					y: (-h * 3) / 2,
-				},
-				{
-					x: 0,
-					y: -h,
-				},
-			]
-			const shapeSvg = parent
-				.insert('polygon', ':first-child')
-				.attr(
-					'points',
-					points
-						.map(function (d) {
-							return d.x + ',' + d.y
-						})
-						.join(' ')
-				)
-				.attr(
-					'transform',
-					'translate(' + -w / 2 + ',' + (h * 3) / 4 + ')'
-				)
+		parseNode(node, edges = []) {
+			const hubNode = this.controllerNode?.id ?? 1
 
-			node.intersect = function (point) {
-				return dagreD3.intersect.polygon(node, points, point)
+			const id = node.id
+
+			let batlev = node.minBatteryLevel
+
+			const nodeName = node.name || 'NodeID ' + node.id
+
+			// create node
+			// https://visjs.github.io/vis-network/docs/network/nodes.html
+			const entity = {
+				id: id,
+				hidden: false,
+				label: nodeName,
+				neighbors: node.neighbors,
+				battery_level: batlev,
+				group: node.loc,
+				failed: node.failed,
+				available: node.available,
+				font: { color: this.fontColor },
+				forwards:
+					node.isControllerNode ||
+					(node.ready && !node.failed && node.isListening),
 			}
 
-			return shapeSvg
-		},
-		renderBattery(parent, bbox, node) {
-			const w = bbox.width
-			const h = bbox.height
-			const points = [
-				{
-					x: 0,
-					y: 0,
-				}, // bottom left
-				{
-					x: w,
-					y: 0,
-				}, // bottom line
-				{
-					x: w,
-					y: -h,
-				}, // right line
-				{
-					x: (w * 7) / 10,
-					y: -h,
-				}, // top right
-				{
-					x: (w * 7) / 10,
-					y: (-h * 20) / 17,
-				}, // battery tip - right
-				{
-					x: (w * 3) / 10,
-					y: (-h * 20) / 17,
-				}, // battery tip
-				{
-					x: (w * 3) / 10,
-					y: -h,
-				}, // battery tip - left
-				{
-					x: 0,
-					y: -h,
-				}, // top left
-				{
-					x: 0,
-					y: -h,
-				}, // left line
-			]
+			if (id === hubNode) {
+				entity.shape = 'star'
+				entity.isControllerNode = true
+				entity.color = this.legends[0].color
+			} else if (node.isListening) {
+				entity.shape = 'hexagon'
+			} else {
+				entity.shape = 'square'
+				// entity.ctxRenderer = this.renderBattery
+			}
 
-			const shapeSvg = parent
-				.insert('polygon', ':first-child')
-				.attr(
-					'points',
-					points
-						.map(function (d) {
-							return d.x + ',' + d.y
-						})
-						.join(' ')
-				)
-				.attr(
-					'transform',
-					'translate(' + -w / 2 + ',' + (h * 2) / 4 + ')'
+			if (node.failed) {
+				entity.label = 'FAILED: ' + entity.label
+				entity.group = 'Failed'
+				entity.color = this.legends[5].color
+			}
+
+			if (!node.available) {
+				entity.label = 'DEAD: ' + entity.label
+				entity.group = 'Dead'
+				entity.color = this.legends[5].color
+			}
+
+			if (hubNode === id) {
+				entity.label = 'Controller'
+				// entity.fixed = true
+			} else {
+				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.statistics?.lwr,
+					false
 				)
 
-			node.intersect = function (point) {
-				return dagreD3.intersect.polygon(node, points, point)
+				// parse node NLWR (next last working route)
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.statistics?.nlwr,
+					true
+				)
 			}
 
-			return shapeSvg
-		},
-		// eslint-disable-next-line no-unused-vars
-		handleClick(nodeList, event, index) {
-			// Add interactivity
-			const nodeId = parseInt(index)
-			const node = this.filteredNodes.find((n) => n.id === nodeId)
-			this.$emit('node-click', node)
-		},
-		handleMouseOver(nodeList, event, index) {
-			// Add interactivity
-			let svg
-			for (const nodeNum in nodeList) {
-				const node = nodeList[nodeNum]
-				if (node.style !== undefined && node.id !== index) {
-					node.style.opacity = 0.1
-					svg = node.ownerSVGElement
-				}
-			}
-
-			// Use D3 to select element, change color and size
-			svg.querySelectorAll('.edgePath').forEach(function (node) {
-				node.style.opacity = '0.3'
-			})
-
-			const edges = svg.querySelectorAll('.edgePath.node-' + index)
-			for (let i = 0; i < edges.length; i++) {
-				edges[i].style.opacity = '1'
-				edges[i].style['stroke-width'] = '2'
-			}
-
-			const neighbors = svg.querySelectorAll('.node.neighbor-' + index)
-			for (let i = 0; i < neighbors.length; i++) {
-				neighbors[i].style.opacity = '0.7'
-			}
-		},
-
-		handleMouseOut(nodeList, event, index) {
-			// Add interactivity
-			let svg
-			for (const nodeNum in nodeList) {
-				const node = nodeList[nodeNum]
-				if (node.style !== undefined && node.id !== index) {
-					node.style.opacity = 1
-					svg = node.ownerSVGElement
-				}
-			}
-
-			// Use D3 to select element, change color and size
-			svg.querySelectorAll('.edgePath').forEach(function (node) {
-				node.style.opacity = '1'
-				node.style['stroke-width'] = '1'
-			})
+			return { node: entity, edges }
 		},
 	},
 }

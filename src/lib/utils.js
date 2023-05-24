@@ -18,6 +18,10 @@ export function wrapFunc(fn, ...args) {
 	return (...args2) => fn(...args2, ...args)
 }
 
+export function uuid() {
+	return Math.random().toString(36).substring(2, 15)
+}
+
 export function readAsBuffer(file) {
 	return new Promise((resolve, reject) => {
 		const reader = new FileReader()
@@ -143,4 +147,8 @@ export function validTopic(t) {
 		: [t]
 
 	return match?.[0] !== t ? 'Only a-zA-Z0-9_- chars are allowed' : true
+}
+
+export function deepEqual(a, b) {
+	return JSON.stringify(a) === JSON.stringify(b)
 }
