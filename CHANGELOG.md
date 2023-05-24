@@ -1,5 +1,24 @@
 
 
+# [8.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.2...v8.17.0) (2023-05-24)
+
+
+### Bug Fixes
+
+* check if supervision result is null in `setEnabledSchedule` ([62d1f51](https://github.com/zwave-js/zwave-js-ui/commit/62d1f51c387f2ff16851577c9aa46ee86b6b9c8b))
+* **discovery:** add exception for Simon IO 100 roller blind ([310b768](https://github.com/zwave-js/zwave-js-ui/commit/310b768c9faaf3ea321ae8876457f97fbe431f4c)), closes [#3088](https://github.com/zwave-js/zwave-js-ui/issues/3088)
+* **ui:** improve keyboard navigation in nodes manager ([42baeff](https://github.com/zwave-js/zwave-js-ui/commit/42baeff17a5cce33a44a540655663b3cba1af5e6)), closes [#3079](https://github.com/zwave-js/zwave-js-ui/issues/3079)
+* **ui:** schedule refresh message is backward ([1342a69](https://github.com/zwave-js/zwave-js-ui/commit/1342a698a5290e70f8c405051d5727ad95b193a7)), closes [#3093](https://github.com/zwave-js/zwave-js-ui/issues/3093)
+* use isUnsupervisedOrSucceeded util ([e7cfc48](https://github.com/zwave-js/zwave-js-ui/commit/e7cfc488037ffffe5c3f62904fcab360e7c82dc8))
+
+
+### Features
+
+* add `ZUI_NO_CONSOLE` env var to disable console log ([f9c88dd](https://github.com/zwave-js/zwave-js-ui/commit/f9c88dd83eb276b145d102e68743feff127475a3)), closes [#3091](https://github.com/zwave-js/zwave-js-ui/issues/3091)
+* bump zwave-js@10.22.1 ([#3101](https://github.com/zwave-js/zwave-js-ui/issues/3101)) ([cbb9e12](https://github.com/zwave-js/zwave-js-ui/commit/cbb9e12898c7803accda9b7ac736254752910ae0))
+* **ui:** reset one/all configuration buttons ([765794e](https://github.com/zwave-js/zwave-js-ui/commit/765794e04b10c6ce76459bc29834184675b30fbc)), closes [#3076](https://github.com/zwave-js/zwave-js-ui/issues/3076)
+* **ui:** rewrite network graph ([#3098](https://github.com/zwave-js/zwave-js-ui/issues/3098)) ([e483dfa](https://github.com/zwave-js/zwave-js-ui/commit/e483dfac09fa5a922098532c7c5054433a620e76))
+
 ## [8.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.1...v8.16.2) (2023-05-19)
 
 
