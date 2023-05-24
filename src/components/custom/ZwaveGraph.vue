@@ -432,9 +432,9 @@ export default {
 		}
 	},
 	watch: {
-		// grouping() {
-		// 	this.debounceRefresh()
-		// },
+		grouping() {
+			this.debounceRefresh()
+		},
 		filteredNodes(val) {
 			this.selectedNodes = val.map((n) => n.id)
 			this.setSelection()
@@ -457,6 +457,9 @@ export default {
 				} else {
 					this.shouldReload = true
 				}
+			} else if (name === 'initNodes') {
+				// trick to prevent empty network when refreshing page
+				this.debounceRefresh()
 			}
 		})
 	},
@@ -469,14 +472,18 @@ export default {
 			clearTimeout(this.updateTimeout)
 		}
 
-		if (this.network) {
-			this.network.destroy()
-			this.content.innerHTML = ''
-		}
+		this.destroyNetwork()
 
 		this.unsubscribeUpdate()
 	},
 	methods: {
+		destroyNetwork() {
+			if (this.network) {
+				this.network.destroy()
+				this.network = null
+				this.content.innerHTML = ''
+			}
+		},
 		debounceRefresh() {
 			if (this.refreshTimeout) {
 				clearTimeout(this.refreshTimeout)
@@ -492,20 +499,28 @@ export default {
 			}
 
 			if (this.network && !this.loading) {
-				const result = this.parseNode(node)
 				const { nodes, edges } = this.network.body.data
 
-				nodes.remove(node.id)
-				nodes.add(result.node)
 				const edgesToRemove = []
 				edges.forEach((e) => {
 					if (e.routeOf === node.id) {
 						edgesToRemove.push(e.id)
+						const edgeId = this.getEdgeId(e)
+						if (this.edgesCache[edgeId]) {
+							delete this.edgesCache[edgeId]
+						}
 					}
 				})
+
+				nodes.remove(node.id)
 				edges.remove(edgesToRemove)
+				const result = this.parseNode(node)
+				nodes.add(result.node)
 				edges.add(result.edges)
 			}
+		},
+		getEdgeId(edge) {
+			return `${edge.from}-${edge.to}`
 		},
 		getDataRateColor(dataRate) {
 			switch (dataRate) {
@@ -543,6 +558,8 @@ export default {
 		},
 		paintGraph() {
 			this.shouldReload = false
+
+			this.destroyNetwork()
 
 			this.edgesCache = {}
 
@@ -604,6 +621,11 @@ export default {
 
 			// event handlers
 			// https://visjs.github.io/vis-network/docs/network/#Events
+			this.network.once('stabilizationIterationsDone', () => {
+				this.loading = false
+				this.setSelection()
+			})
+
 			this.network.on('oncontext', this.handleClick.bind(this))
 
 			this.network.on('hoverNode', this.handleHoverNode.bind(this))
@@ -631,11 +653,6 @@ export default {
 			// 		},
 			// 	})
 			// })
-
-			this.network.once('stabilizationIterationsDone', () => {
-				this.loading = false
-				this.setSelection()
-			})
 		},
 		handleSelectNode(params) {
 			this.handleClick(params)
@@ -662,7 +679,7 @@ export default {
 
 			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
 			edges.forEach((e) => {
-				const edgeId = `${e.from}-${e.to}`
+				const edgeId = this.getEdgeId(e)
 				const shouldBeHidden =
 					(showAll && this.edgesCache[edgeId]?.id !== e.id) ||
 					(selectedNodes.length > 0 &&
@@ -775,7 +792,7 @@ export default {
 					dashes: [2, 2],
 					hidden: true,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
-					physics: false,
+					physics: true,
 				}
 
 				edges.push(edge)
@@ -792,7 +809,7 @@ export default {
 					i === 0 ? rssi : repeaterRSSI?.[i - 1]
 				)}`
 
-				const edgeId = `${from}-${to}`
+				const edgeId = this.getEdgeId({ from, to })
 
 				// create the edge
 				// https://visjs.github.io/vis-network/docs/network/edges.html
