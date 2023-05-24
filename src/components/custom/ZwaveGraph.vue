@@ -141,7 +141,11 @@
 								overlap
 								v-model="shouldReload"
 							>
-								<v-btn color="primary" @click="paintGraph">
+								<v-btn
+									class="mr-4"
+									color="primary"
+									@click="paintGraph"
+								>
 									Reload graph
 								</v-btn>
 							</v-badge>
