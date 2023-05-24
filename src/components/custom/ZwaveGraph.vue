@@ -470,7 +470,7 @@ export default {
 
 			this.loading = true
 
-			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
+			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 200)
 		},
 		getDataRateColor(dataRate) {
 			switch (dataRate) {
@@ -599,9 +599,8 @@ export default {
 
 			this.network.once('stabilizationIterationsDone', () => {
 				this.loading = false
+				this.setSelection()
 			})
-
-			this.setSelection()
 		},
 		handleSelectNode(params) {
 			this.handleClick(params)
