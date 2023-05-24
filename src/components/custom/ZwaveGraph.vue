@@ -440,7 +440,7 @@ export default {
 	mounted() {
 		this.paintGraph()
 
-		this.unsubscribeUpdate = useBaseStore().$onAction(({ name, args }) => {
+		this.unsubscribeUpdate = useBaseStore().$onAction(({ name }) => {
 			if (name === 'updateMeshGraph') {
 				if (this.liveUpdate) {
 					this.debounceRefresh()
