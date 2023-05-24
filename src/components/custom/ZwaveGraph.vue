@@ -484,7 +484,10 @@ export default {
 		},
 		setSelection() {
 			if (this.network && !this.loading) {
-				const all = this.filteredNodes.length === this.allNodes.length
+				const all =
+					this.filteredNodes.length === this.allNodes.length &&
+					this.filterNodes.length === 0 &&
+					this.filterLocations.length === 0
 				const params = {
 					nodes: all ? [] : this.selectedNodes,
 				}
