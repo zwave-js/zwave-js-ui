@@ -749,15 +749,17 @@ export default {
 			this.hoverNode = null
 		},
 		handleClick(params) {
-			params.event?.preventDefault()
-			// https://visjs.github.io/vis-network/docs/network/#events
-			// Add interactivity
-			const nodeId = params.nodes[0]
-			if (nodeId) {
-				const node = this.allNodes.find((n) => n.id === nodeId)
-				this.$emit('node-click', node)
-			} else {
-				this.$emit('node-click', null)
+			if (params.event) {
+				params.event.preventDefault()
+				// https://visjs.github.io/vis-network/docs/network/#events
+				// Add interactivity
+				const nodeId = params.nodes[0]
+				if (nodeId) {
+					const node = this.allNodes.find((n) => n.id === nodeId)
+					this.$emit('node-click', node)
+				} else {
+					this.$emit('node-click', null)
+				}
 			}
 		},
 		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
