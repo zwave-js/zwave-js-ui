@@ -50,7 +50,7 @@
 						<v-col>
 							<v-subheader>Filters</v-subheader>
 
-							<v-select
+							<v-autocomplete
 								:items="locations"
 								v-model="filterLocations"
 								multiple
@@ -90,10 +90,10 @@
 										<span>Invert selection</span>
 									</v-tooltip>
 								</template>
-							</v-select>
+							</v-autocomplete>
 
-							<v-select
-								:items="nodes"
+							<v-autocomplete
+								:items="allNodes"
 								v-model="filterNodes"
 								multiple
 								label="Nodes filter"
@@ -134,7 +134,7 @@
 										<span>Invert selection</span>
 									</v-tooltip>
 								</template>
-							</v-select>
+							</v-autocomplete>
 
 							<v-badge
 								color="error"
@@ -249,7 +249,7 @@
 import { Network } from 'vis-network'
 import 'vis-network/styles/vis-network.css'
 // when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
-import fakeNodes from '@/assets/testNodes.json'
+// import fakeNodes from '@/assets/testNodes.json'
 import {
 	ProtocolDataRate,
 	protocolDataRateToString,
@@ -273,7 +273,7 @@ export default {
 		},
 		locations() {
 			// get unique locations array from nodes
-			return fakeNodes.reduce((acc, node) => {
+			return this.allNodes.reduce((acc, node) => {
 				if (node.loc && acc.indexOf(node.loc) === -1) {
 					acc.push(node.loc)
 				}
@@ -310,7 +310,7 @@ export default {
 			})
 		},
 		allNodes() {
-			return fakeNodes
+			return this.nodes // replace this with `fakeNodes` when testing
 		},
 	},
 	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
@@ -483,7 +483,7 @@ export default {
 			}
 		},
 		setSelection() {
-			if (this.network) {
+			if (this.network && !this.loading) {
 				const all = this.filteredNodes.length === this.allNodes.length
 				const params = {
 					nodes: all ? [] : this.selectedNodes,
@@ -769,7 +769,9 @@ export default {
 				edges.push(edge)
 
 				if (!nlwr) {
-					node.color = this.legends[repeaters.length + 1].color
+					if (!node.failed && node.available) {
+						node.color = this.legends[repeaters.length + 1].color
+					}
 
 					// only draw the edge with higher data rate
 					if (this.edgesCache[edgeId]) {
@@ -819,6 +821,7 @@ export default {
 					battery_level: batlev,
 					group: node.loc,
 					failed: node.failed,
+					available: node.available,
 					forwards:
 						node.isControllerNode ||
 						(node.ready && !node.failed && node.isListening),
@@ -838,9 +841,13 @@ export default {
 				if (node.failed) {
 					entity.label = 'FAILED: ' + entity.label
 					entity.group = 'Failed'
-					entity.failed = true
 					entity.color = this.legends[5].color
-					entity.class = 'Error'
+				}
+
+				if (!node.available) {
+					entity.label = 'DEATH: ' + entity.label
+					entity.group = 'Death'
+					entity.color = this.legends[5].color
 				}
 
 				if (hubNode === id) {

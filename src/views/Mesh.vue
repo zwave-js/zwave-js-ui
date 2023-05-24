@@ -119,7 +119,7 @@
 				</v-row>
 			</v-col>
 		</v-container>
-		<v-speed-dial style="left: 100px" bottom fab left fixed v-model="fab">
+		<!-- <v-speed-dial style="left: 100px" bottom fab left fixed v-model="fab">
 			<template v-slot:activator>
 				<v-btn color="blue darken-2" dark fab hover v-model="fab">
 					<v-icon v-if="fab">close</v-icon>
@@ -129,7 +129,7 @@
 			<v-btn fab dark small color="green" @click="debounceRefresh">
 				<v-icon>refresh</v-icon>
 			</v-btn>
-		</v-speed-dial>
+		</v-speed-dial> -->
 		<dialog-health-check
 			v-model="dialogHealth"
 			@close="dialogHealth = false"
@@ -318,26 +318,26 @@ export default {
 				},
 			]
 		},
-		debounceRefresh() {
-			if (this.refreshTimeout) {
-				clearTimeout(this.refreshTimeout)
-			}
+		// debounceRefresh() {
+		// 	if (this.refreshTimeout) {
+		// 		clearTimeout(this.refreshTimeout)
+		// 	}
 
-			this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
-		},
-		async refresh() {
-			const response = await this.app.apiRequest('refreshNeighbors', [], {
-				infoSnack: false,
-				errorSnack: true,
-			})
+		// 	this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
+		// },
+		// async refresh() {
+		// 	const response = await this.app.apiRequest('refreshNeighbors', [], {
+		// 		infoSnack: false,
+		// 		errorSnack: true,
+		// 	})
 
-			if (response.success) {
-				this.showSnackbar('Nodes Neighbors updated', 'success')
-				this.setNeighbors(response.result)
-				// refresh graph
-				// this.$refs.mesh.debounceRefresh()
-			}
-		},
+		// 	if (response.success) {
+		// 		this.showSnackbar('Nodes Neighbors updated', 'success')
+		// 		this.setNeighbors(response.result)
+		// 		// refresh graph
+		// 		// this.$refs.mesh.debounceRefresh()
+		// 	}
+		// },
 	},
 	mounted() {
 		// make properties window draggable
@@ -391,7 +391,7 @@ export default {
 			true
 		)
 
-		this.debounceRefresh()
+		// this.debounceRefresh()
 	},
 	beforeDestroy() {
 		if (this.refreshTimeout) {
