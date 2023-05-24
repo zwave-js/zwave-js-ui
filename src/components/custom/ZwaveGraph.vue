@@ -340,6 +340,7 @@ export default {
 			invertNodesFilter: false,
 			// grouping: 'ungrouped',
 			refreshTimeout: null,
+			updateTimeout: null,
 			loading: false,
 			edgesCache: {},
 			legends: [
@@ -445,22 +446,14 @@ export default {
 		this.unsubscribeUpdate = useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'updateMeshGraph') {
 				if (this.liveUpdate) {
-					if (this.network && !this.loading) {
-						const node = args[0]
-						const result = this.parseNode(node)
-						const { nodes, edges } = this.network.body.data
-
-						nodes.remove(node.id)
-						nodes.add(result.node)
-						const edgesToRemove = []
-						edges.forEach((e) => {
-							if (e.routeOf === node.id) {
-								edgesToRemove.push(e.id)
-							}
-						})
-						edges.remove(edgesToRemove)
-						edges.add(result.edges)
+					if (this.updateTimeout) {
+						clearTimeout(this.updateTimeout)
 					}
+
+					this.updateTimeout = setTimeout(
+						this.onNodeUpdate.bind(this, args[0]),
+						500
+					)
 				} else {
 					this.shouldReload = true
 				}
@@ -470,6 +463,10 @@ export default {
 	beforeDestroy() {
 		if (this.refreshTimeout) {
 			clearTimeout(this.refreshTimeout)
+		}
+
+		if (this.updateTimeout) {
+			clearTimeout(this.updateTimeout)
 		}
 
 		if (this.network) {
@@ -488,6 +485,27 @@ export default {
 			this.loading = true
 
 			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
+		},
+		onNodeUpdate(node) {
+			if (this.updateTimeout) {
+				clearTimeout(this.updateTimeout)
+			}
+
+			if (this.network && !this.loading) {
+				const result = this.parseNode(node)
+				const { nodes, edges } = this.network.body.data
+
+				nodes.remove(node.id)
+				nodes.add(result.node)
+				const edgesToRemove = []
+				edges.forEach((e) => {
+					if (e.routeOf === node.id) {
+						edgesToRemove.push(e.id)
+					}
+				})
+				edges.remove(edgesToRemove)
+				edges.add(result.edges)
+			}
 		},
 		getDataRateColor(dataRate) {
 			switch (dataRate) {
