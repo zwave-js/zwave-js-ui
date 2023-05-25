@@ -3542,9 +3542,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/cc@npm:10.22.1":
-  version: 10.22.1
-  resolution: "@zwave-js/cc@npm:10.22.1"
+"@zwave-js/cc@npm:10.22.2":
+  version: 10.22.2
+  resolution: "@zwave-js/cc@npm:10.22.2"
   dependencies:
     "@zwave-js/core": 10.22.1
     "@zwave-js/host": 10.22.1
@@ -3553,7 +3553,7 @@ __metadata:
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     reflect-metadata: ^0.1.13
-  checksum: 47661f1fb5aa584b0e2941866ad41204d3e74e95130a28eea0276da40084fece39941f964953f87f622fff273b2e3b88f0b0e697f04270dea03bcc645fde0b47
+  checksum: bae2fe224c0ac296bed3aa50503864c0411fb9b5ed2423e972f07f73c0d9bc061e34c8b503df85adec659128c817a9e47250535a8a2a6ecadcb10fd61389861d
   languageName: node
   linkType: hard
 
@@ -16307,7 +16307,7 @@ __metadata:
     webpack-dev-server: ^4.13.1
     webpack-merge: ^5.8.0
     winston: ^3.8.2
-    zwave-js: ^10.22.1
+    zwave-js: ^10.22.2
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
@@ -16364,9 +16364,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"zwave-js@npm:^10.22.1":
-  version: 10.22.1
-  resolution: "zwave-js@npm:10.22.1"
+"zwave-js@npm:^10.22.2":
+  version: 10.22.2
+  resolution: "zwave-js@npm:10.22.2"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
     "@alcalzone/pak": ^0.9.0
@@ -16374,7 +16374,7 @@ __metadata:
     "@esm2cjs/p-queue": ^7.3.0
     "@sentry/integrations": ^7.12.1
     "@sentry/node": ^7.12.1
-    "@zwave-js/cc": 10.22.1
+    "@zwave-js/cc": 10.22.2
     "@zwave-js/config": 10.22.1
     "@zwave-js/core": 10.22.1
     "@zwave-js/host": 10.22.1
@@ -16395,6 +16395,6 @@ __metadata:
     xstate: 4.29.0
   bin:
     mock-server: bin/mock-server.js
-  checksum: e6ba0929d66645d96e3ab7ab396faf87439c9e07e3922dd93134a3500f15b9af54785d450fc2140edddc47f7e85dfad81ebfabdd3852d5f1184934bfe89ceee5
+  checksum: 065072a891009a3c8cb8537380632add3550943325e27990a0e35e34aedd54605a80f17cca058a061dcbada22f00b9f5024c4ac0ec7476b946d20f7788a52f84
   languageName: node
   linkType: hard
