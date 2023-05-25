@@ -1,5 +1,17 @@
 
 
+## [8.17.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.17.0...v8.17.1) (2023-05-25)
+
+
+### Bug Fixes
+
+* **ui:** mesh graph styles ([94c3b67](https://github.com/zwave-js/zwave-js-ui/commit/94c3b67528a54108e044e2dcd6720b5560971267))
+
+
+### Features
+
+* bump zwave-js@10.22.2 ([#3102](https://github.com/zwave-js/zwave-js-ui/issues/3102)) ([410baf6](https://github.com/zwave-js/zwave-js-ui/commit/410baf64fed29159bb631c344471c281d1f1481e))
+
 # [8.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.16.2...v8.17.0) (2023-05-24)
 
 
