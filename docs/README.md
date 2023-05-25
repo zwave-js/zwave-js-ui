@@ -14,7 +14,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/zwave-js/zwave-js-ui/badge.svg?branch=master)](https://coveralls.io/github/zwave-js/zwave-js-ui?branch=master)
 [![Known Vulnerabilities](https://snyk.io/test/github/zwave-js/zwave-js-ui/badge.svg?targetFile=package.json)](https://snyk.io/test/github/zwave-js/zwave-js-ui?targetFile=package.json)
 
-[![Join channel](https://img.shields.io/badge/SLACK-zwave--js.slack.com-red.svg?style=popout&logo=slack&logoColor=red)](https://join.slack.com/t/zwave-js/shared_invite/zt-8ns655f6-d407vtI~KjU~1z11jyaQ9Q "Join channel")
+[![Discord](https://img.shields.io/discord/1111193770935996459?color=D82167&label=Chat%20on%20Discord&logo=Discord&logoColor=ffffff)](https://discord.gg/HFqcyFNfWd)
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee") [<img style="background:#ccc;border-radius:10px" alt="PayPal" src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg" width="200" height="40px" />](https://paypal.me/daniellando) [![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=16906849) [<img src="https://liberapay.com/assets/widgets/donate.svg" alt="Donate using Liberapay" />](https://liberapay.com/robertsLando/donate)[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I2I1JN3M5)
 
