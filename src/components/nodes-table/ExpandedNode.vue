@@ -47,7 +47,7 @@
 						dark
 						v-if="!node.isControllerNode"
 						color="primary"
-						@click.stop="pingNode()"
+						@click.stop="pingNode(node)"
 						depressed
 					>
 						Ping
@@ -644,29 +644,6 @@ export default {
 				this.sendMqttAction(action, args.confirm)
 			} else {
 				this.$emit('action', action, { ...args, nodeId: this.node.id })
-			}
-		},
-		async pingNode() {
-			const response = await this.app.apiRequest(
-				'pingNode',
-				[this.node.id],
-				{
-					infoSnack: true,
-					errorSnack: false,
-				}
-			)
-
-			if (response.success && response.result) {
-				this.showSnackbar(`Ping successfull`, 'success')
-			} else {
-				this.showSnackbar(
-					`Error pinging node: ${
-						!response.success
-							? response.message
-							: "node doesn't respond to ping"
-					}`,
-					'error'
-				)
 			}
 		},
 		exportNode() {

@@ -92,9 +92,42 @@
 					class="mt-1"
 					justify="center"
 				>
-					<v-btn color="primary" rounded @click="dialogHealth = true"
-						>Check Health</v-btn
-					>
+					<v-btn
+						color="primary"
+						small
+						rounded
+						@click="dialogHealth = true"
+						>Health
+						<v-icon>monitor_heart</v-icon>
+					</v-btn>
+					<v-btn
+						class="ml-1"
+						color="error"
+						small
+						rounded
+						@click="healNode(selectedNode)"
+						>Heal
+						<v-icon>heart_broken</v-icon>
+					</v-btn>
+					<v-btn
+						class="ml-1"
+						color="success"
+						small
+						rounded
+						@click="pingNode(selectedNode)"
+						>Ping
+						<v-icon>settings_ethernet</v-icon>
+					</v-btn>
+					<v-btn
+						v-if="!selectedNode.isControllerNode"
+						class="ml-1 mt-2"
+						color="purple"
+						small
+						rounded
+						@click="setRoute()"
+						>Route
+						<v-icon>route</v-icon>
+					</v-btn>
 				</v-row>
 				<v-row v-else class="mt-1" justify="center">
 					<!-- Full screen button -->
@@ -203,7 +236,11 @@ import { mapActions, mapState } from 'pinia'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 
-import { protocolDataRateToString, rssiToString } from 'zwave-js/safe'
+import {
+	ProtocolDataRate,
+	protocolDataRateToString,
+	rssiToString,
+} from 'zwave-js/safe'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import BgRssiChart from '../components/custom/BgRssiChart.vue'
@@ -222,7 +259,7 @@ export default {
 		BgRssiChart,
 	},
 	computed: {
-		...mapState(useBaseStore, ['nodes']),
+		...mapState(useBaseStore, ['nodes', 'controllerNode']),
 		lwr() {
 			if (!this.selectedNode) return null
 
@@ -258,6 +295,11 @@ export default {
 			showLocation: false,
 			refreshTimeout: null,
 			showFullscreen: false,
+			dataRateItems: Object.keys(ProtocolDataRate).map((key) => ({
+				text: protocolDataRateToString(ProtocolDataRate[key]),
+				value: ProtocolDataRate[key],
+			})),
+			required: (v) => !!v || 'This field is required',
 		}
 	},
 	methods: {
@@ -270,6 +312,79 @@ export default {
 			)
 			if (window.focus) {
 				newwindow.focus()
+			}
+		},
+		async setRoute() {
+			if (!this.selectedNode) return
+
+			const res = await this.app.confirm(
+				'Set route',
+				'Manually assign a priority route to this node',
+				'info',
+				{
+					width: 500,
+					inputs: [
+						{
+							type: 'list',
+							autocomplete: true,
+							key: 'destinationNodeId',
+							label: 'Destination node',
+							default: this.controllerNode.id,
+							rules: [this.required],
+							itemKey: 'id',
+							itemText: '_name',
+							items: this.nodes.filter(
+								(n) => n.id !== this.selectedNode.id
+							),
+						},
+						{
+							type: 'list',
+							autocomplete: true,
+							multiple: true,
+							key: 'repeaters',
+							label: 'Repeaters',
+							itemKey: 'id',
+							itemText: '_name',
+							default: [],
+							rules: [this.required],
+							items: this.nodes.filter(
+								(n) =>
+									!n.isControllerNode &&
+									n.isListening &&
+									n.id !== this.selectedNode.id
+							),
+						},
+						{
+							type: 'list',
+							autocomplete: true,
+							key: 'routeSpeed',
+							label: 'Route speed',
+							default: ProtocolDataRate.ZWave_40k,
+							rules: [this.required],
+							items: this.dataRateItems,
+						},
+					],
+					confirmText: 'Set',
+				}
+			)
+
+			if (Object.keys(res).length === 0) {
+				return
+			}
+
+			const { destinationNodeId, repeaters, routeSpeed } = res
+
+			const response = await this.app.apiRequest('setPriorityRoute', [
+				this.selectedNode.id,
+				destinationNodeId,
+				repeaters,
+				routeSpeed,
+			])
+
+			if (response.success) {
+				this.showSnackbar(
+					`New priority route set for node "${this.selectedNode._name}"`
+				)
 			}
 		},
 		nodeClick(node) {
