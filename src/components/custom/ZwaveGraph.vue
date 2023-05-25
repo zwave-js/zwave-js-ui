@@ -141,18 +141,15 @@
 								overlap
 								v-model="shouldReload"
 							>
-								<v-btn
-									class="mr-4"
-									color="primary"
-									@click="paintGraph"
-								>
+								<v-btn color="primary" @click="paintGraph">
 									Reload graph
 								</v-btn>
 							</v-badge>
 
 							<v-btn
+								class="ml-3"
 								:color="liveUpdate ? 'error' : 'success'"
-								@click="liveUpdate = !liveUpdate"
+								@click="toggleLive()"
 							>
 								Live
 								<v-icon>{{
@@ -202,11 +199,13 @@
 					:close-on-content-click="false"
 					:position-x="menuX"
 					:position-y="menuY"
-					:offset-y="true"
-					:z-index="120"
 				>
 					<v-card v-if="hoverNode">
-						<v-subheader>{{ hoverNode._name }}</v-subheader>
+						<v-subheader class="font-weight-bold">{{
+							hoverNode._name
+						}}</v-subheader>
+
+						<v-divider></v-divider>
 
 						<v-list
 							style="min-width: 300px; background: transparent"
@@ -215,33 +214,48 @@
 						>
 							<v-list-item dense>
 								<v-list-item-content>ID</v-list-item-content>
-								<v-list-item-content class="align-end">{{
-									hoverNode.id
-								}}</v-list-item-content>
+								<v-list-item-content
+									class="align-end font-weight-bold"
+									>{{ hoverNode.id }}</v-list-item-content
+								>
 							</v-list-item>
 							<v-list-item dense>
 								<v-list-item-content
 									>Product</v-list-item-content
 								>
-								<v-list-item-content class="align-end">{{
-									hoverNode.productLabel
-								}}</v-list-item-content>
+								<v-list-item-content
+									class="align-end font-weight-bold"
+									>{{
+										hoverNode.productLabel +
+										(hoverNode.productDescription
+											? ' (' +
+											  hoverNode.productDescription +
+											  ')'
+											: '')
+									}}</v-list-item-content
+								>
 							</v-list-item>
 							<v-list-item dense>
 								<v-list-item-content>Power</v-list-item-content>
-								<v-list-item-content class="align-end">{{
-									hoverNode.minBatteryLevel
-										? hoverNode.minBatteryLevel + '%'
-										: 'MAIN'
-								}}</v-list-item-content>
+								<v-list-item-content
+									class="align-end font-weight-bold"
+									>{{
+										hoverNode.minBatteryLevel
+											? hoverNode.minBatteryLevel + '%'
+											: 'MAIN'
+									}}</v-list-item-content
+								>
 							</v-list-item>
 							<v-list-item dense>
 								<v-list-item-content
 									>Neighbors</v-list-item-content
 								>
-								<v-list-item-content class="align-end">{{
-									hoverNode.neighbors.join(', ')
-								}}</v-list-item-content>
+								<v-list-item-content
+									class="align-end font-weight-bold"
+									>{{
+										hoverNode.neighbors.join(', ') || 'None'
+									}}</v-list-item-content
+								>
 							</v-list-item>
 						</v-list>
 					</v-card>
@@ -481,6 +495,16 @@ export default {
 		this.unsubscribeUpdate()
 	},
 	methods: {
+		toggleLive() {
+			this.liveUpdate = !this.liveUpdate
+
+			// if should reload is true it means we have some
+			// updates that were not applied, so we need to firstly
+			// reload the graph and then start the live update
+			if (this.liveUpdate && this.shouldReload) {
+				this.paintGraph()
+			}
+		},
 		destroyNetwork() {
 			if (this.network) {
 				this.network.destroy()
@@ -738,8 +762,8 @@ export default {
 			// show menu
 			if (this.dragging) return
 			const { node, event } = params
-			this.menuX = event.clientX + 15
-			this.menuY = event.clientY + 15
+			this.menuX = event.clientX + 5
+			this.menuY = event.clientY + 5
 			this.menu = true
 			const item = this.allNodes.find((n) => n.id === node)
 
