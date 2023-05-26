@@ -831,9 +831,9 @@ export default {
 				const from = prevRepeater
 				const to = repeater || node.id
 
-				const label = `RSSI: ${rssiToString(
-					i === 0 ? rssi : repeaterRSSI?.[i - 1]
-				)}`
+				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
+
+				const label = `RSSI: ${rssiToString(edgeRssi ?? 127)}`
 
 				const edgeId = this.getEdgeId({ from, to })
 
