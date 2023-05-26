@@ -97,7 +97,7 @@
 						small
 						rounded
 						@click="dialogHealth = true"
-						>Health
+						>Diagnose
 						<v-icon>monitor_heart</v-icon>
 					</v-btn>
 					<v-btn
@@ -119,13 +119,12 @@
 						<v-icon>settings_ethernet</v-icon>
 					</v-btn>
 					<v-btn
-						v-if="!selectedNode.isControllerNode"
 						class="ml-1 mt-2"
 						color="purple"
 						small
 						rounded
 						@click="setRoute()"
-						>Route
+						>Set Route
 						<v-icon>route</v-icon>
 					</v-btn>
 				</v-row>
@@ -295,10 +294,20 @@ export default {
 			showLocation: false,
 			refreshTimeout: null,
 			showFullscreen: false,
-			dataRateItems: Object.keys(ProtocolDataRate).map((key) => ({
-				text: protocolDataRateToString(ProtocolDataRate[key]),
-				value: ProtocolDataRate[key],
-			})),
+			dataRateItems: [
+				{
+					text: '100 Kbps',
+					value: ProtocolDataRate.ZWave_100k
+				},
+				{
+					text: '40 Kbps',
+					value: ProtocolDataRate.ZWave_40k
+				},
+				{
+					text: '9.6 Kbps',
+					value: ProtocolDataRate.ZWave_9k6
+				},
+			],
 			required: (v) => !!v || 'This field is required',
 		}
 	},
@@ -347,7 +356,7 @@ export default {
 							autocomplete: true,
 							key: 'routeSpeed',
 							label: 'Route speed',
-							default: ProtocolDataRate.ZWave_40k,
+							default: ProtocolDataRate.ZWave_100k,
 							rules: [this.required],
 							items: this.dataRateItems,
 						},
