@@ -1000,7 +1000,7 @@ Payload:
 async getAvailableFirmwareUpdates(
 	nodeId: number,
 	options?: GetFirmwareUpdatesOptions
-): Promise<import("/home/daniel/GitProjects/zwave-js-ui/node_modules/zwave-js/build/index").FirmwareUpdateInfo[]>;
+): Promise<FirmwareUpdateInfo[]>;
 ```
 
 <details>
