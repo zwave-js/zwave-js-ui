@@ -4426,13 +4426,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			})
 		}
 
-		this.getPriorityRoute(zwaveNode.id).catch((error) => {
-			this.logNode(
-				zwaveNode,
-				'error',
-				`Failed to get priority route for node ${node.id}: ${error.message}`
-			)
-		})
+		if (!zwaveNode.isControllerNode) {
+			this.getPriorityRoute(zwaveNode.id).catch((error) => {
+				this.logNode(
+					zwaveNode,
+					'error',
+					`Failed to get priority route for node ${node.id}: ${error.message}`
+				)
+			})
+		}
 	}
 
 	/**
