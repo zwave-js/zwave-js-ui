@@ -12,6 +12,8 @@ import {
 	SupervisionStatus,
 	SupervisionResult,
 	isUnsupervisedOrSucceeded,
+	RouteKind,
+	ZWaveDataRate,
 } from '@zwave-js/core'
 import { isDocker } from '@zwave-js/shared'
 import {
@@ -41,6 +43,7 @@ import {
 	NodeStatus,
 	NodeType,
 	PlannedProvisioningEntry,
+	ProtocolDataRate,
 	ProtocolVersion,
 	QRCodeVersion,
 	QRProvisioningInformation,
@@ -86,6 +89,7 @@ import {
 	UserCodeCC,
 	UserIDStatus,
 	ScheduleEntryLockScheduleKind,
+	RouteStatistics,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -164,6 +168,8 @@ export const allowedApis = validateMethods([
 	'hardReset',
 	'softReset',
 	'healNode',
+	'getPriorityRoute',
+	'setPriorityRoute',
 	'beginHealingNetwork',
 	'stopHealingNetwork',
 	'isFailedNode',
@@ -417,7 +423,9 @@ export type ZUINode = {
 	productId?: number
 	productLabel?: string
 	productDescription?: string
-	statistics?: ControllerStatistics | NodeStatistics
+	statistics?: (ControllerStatistics | NodeStatistics) & {
+		applicationRoute?: RouteStatistics
+	}
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -2902,6 +2910,76 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	async getPriorityRoute(nodeId: number) {
+		if (this.driverReady) {
+			const result = await this._driver.controller.getPriorityRoute(
+				nodeId
+			)
+
+			if (result) {
+				const node = this.nodes.get(nodeId)
+				if (node) {
+					const statistics: Partial<NodeStatistics & { applicationRoute: RouteStatistics }> = node.statistics || {}
+
+					const route = {
+						repeaters: result.repeaters,
+						protocolDataRate:
+							result.routeSpeed as unknown as ProtocolDataRate,
+					}
+					switch (result.routeKind) {
+						case RouteKind.Application:
+							statistics.applicationRoute = route
+							break
+						case RouteKind.NLWR:
+							statistics.nlwr = {
+								...(statistics.nlwr || {}),
+								...route,
+							}
+							break
+						case RouteKind.LWR:
+							statistics.lwr = {
+								...(statistics.lwr || {}),
+								...route,
+							}
+							break
+					}
+
+					node.statistics = statistics as NodeStatistics
+
+					this.emitNodeUpdate(node, {
+						statistics
+					})
+				}
+			}
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	async setPriorityRoute(
+		nodeId: number,
+		repeaters: number[],
+		routeSpeed: ZWaveDataRate
+	): Promise<boolean> {
+		if (this.driverReady) {
+			const result = this._driver.controller.setPriorityRoute(
+				nodeId,
+				repeaters,
+				routeSpeed
+			)
+
+			if (result) {
+				// query the new route
+			}
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	/**
 	 * Check node lifeline health
 	 */
@@ -4339,6 +4417,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 			})
 		}
+
+		this.getPriorityRoute(zwaveNode.id).catch((error) => {
+			this.logNode(
+				zwaveNode,
+				'error',
+				`Failed to get priority route for node ${node.id}: ${error.message}`
+			)
+		})
 	}
 
 	/**

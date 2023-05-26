@@ -327,26 +327,14 @@ export default {
 						{
 							type: 'list',
 							autocomplete: true,
-							key: 'destinationNodeId',
-							label: 'Destination node',
-							default: this.controllerNode.id,
-							rules: [this.required],
-							itemKey: 'id',
-							itemText: '_name',
-							items: this.nodes.filter(
-								(n) => n.id !== this.selectedNode.id
-							),
-						},
-						{
-							type: 'list',
-							autocomplete: true,
 							multiple: true,
 							key: 'repeaters',
 							label: 'Repeaters',
+							hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
 							itemKey: 'id',
 							itemText: '_name',
 							default: [],
-							rules: [this.required],
+							rules: [(v) => v.length <= 4 || 'Max 4 repeaters'],
 							items: this.nodes.filter(
 								(n) =>
 									!n.isControllerNode &&
@@ -372,18 +360,21 @@ export default {
 				return
 			}
 
-			const { destinationNodeId, repeaters, routeSpeed } = res
+			const { repeaters, routeSpeed } = res
 
 			const response = await this.app.apiRequest('setPriorityRoute', [
 				this.selectedNode.id,
-				destinationNodeId,
 				repeaters,
 				routeSpeed,
 			])
 
-			if (response.success) {
+			if (response.success && response.result) {
 				this.showSnackbar(
 					`New priority route set for node "${this.selectedNode._name}"`
+				)
+			} else if (!response.result) {
+				this.showSnackbar(
+					`Failed to set new priority route for node "${this.selectedNode._name}"`
 				)
 			}
 		},
