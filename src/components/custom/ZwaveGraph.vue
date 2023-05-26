@@ -655,7 +655,7 @@ export default {
 				this.setSelection()
 			})
 
-			this.network.on('oncontext', this.handleClick.bind(this))
+			this.network.on('click', this.handleClick.bind(this))
 
 			this.network.on('hoverNode', this.handleHoverNode.bind(this))
 			this.network.on('blurNode', this.handleBlurNode.bind(this))
@@ -684,8 +684,6 @@ export default {
 			// })
 		},
 		handleSelectNode(params) {
-			this.handleClick(params)
-
 			let { nodes: selectedNodes } = params
 
 			const { edges, nodes } = this.network.body.data
@@ -841,7 +839,7 @@ export default {
 
 				let width, dashes
 
-				switch(routeKind) {
+				switch (routeKind) {
 					case RouteKind.NLWR:
 						width = 1
 						dashes = [5, 5]
@@ -875,7 +873,7 @@ export default {
 					hidden: routeKind === RouteKind.NLWR,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
 					physics: routeKind !== RouteKind.NLWR,
-					routeKind
+					routeKind,
 				}
 
 				edges.push(edge)
@@ -968,7 +966,6 @@ export default {
 				entity.label = 'Controller'
 				// entity.fixed = true
 			} else {
-
 				// parse application route
 				this.parseRouteStats(
 					edges,

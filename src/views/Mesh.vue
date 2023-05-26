@@ -122,6 +122,7 @@
 						class="ml-1 mt-2"
 						color="purple"
 						small
+						dark
 						rounded
 						@click="setRoute()"
 						>Set Route
@@ -297,15 +298,15 @@ export default {
 			dataRateItems: [
 				{
 					text: '100 Kbps',
-					value: ProtocolDataRate.ZWave_100k
+					value: ProtocolDataRate.ZWave_100k,
 				},
 				{
 					text: '40 Kbps',
-					value: ProtocolDataRate.ZWave_40k
+					value: ProtocolDataRate.ZWave_40k,
 				},
 				{
 					text: '9.6 Kbps',
-					value: ProtocolDataRate.ZWave_9k6
+					value: ProtocolDataRate.ZWave_9k6,
 				},
 			],
 			required: (v) => !!v || 'This field is required',
