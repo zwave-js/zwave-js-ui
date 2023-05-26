@@ -277,6 +277,7 @@ import {
 	protocolDataRateToString,
 	rssiToString,
 } from 'zwave-js/safe'
+import { RouteKind } from '@zwave-js/core/safe'
 import { uuid } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
@@ -790,9 +791,9 @@ export default {
 				}
 			}
 		},
-		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
+		parseRouteStats(edges, controllerId, node, route, routeKind) {
 			if (!route) {
-				if (!nlwr) {
+				if (routeKind !== RouteKind.NLWR) {
 					// unconnected
 					node.color = this.legends[6].color
 				}
@@ -813,10 +814,7 @@ export default {
 					from: routeFailedBetween[0],
 					to: routeFailedBetween[1],
 					color: this.getDataRateColor(ProtocolDataRate.ZWave_9k6),
-					protocolDataRate,
 					width: 1,
-					// rssi: rssiToString(repeaterRSSI?.[i] || rssi),
-					// layer: -1,
 					label: 'Failed ❌',
 					font: { align: 'top', size: 0 },
 					dashes: [2, 2],
@@ -841,6 +839,26 @@ export default {
 
 				const edgeId = this.getEdgeId({ from, to })
 
+				let width, dashes
+
+				switch(routeKind) {
+					case RouteKind.NLWR:
+						width = 1
+						dashes = [5, 5]
+						break
+					case RouteKind.LWR:
+						width = 4
+						dashes = false
+						break
+					case RouteKind.Application:
+						width = 4
+						dashes = [10, 10]
+						break
+					default:
+						width = 1
+						dashes = [5, 5]
+				}
+
 				// create the edge
 				// https://visjs.github.io/vis-network/docs/network/edges.html
 				const edge = {
@@ -848,22 +866,21 @@ export default {
 					from,
 					to,
 					color: this.getDataRateColor(protocolDataRate),
-					protocolDataRate,
-					width: nlwr ? 1 : 4,
-					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
+					width,
 					layer: i + 1,
 					label,
 					font: { align: 'top', size: 0 }, //  multi: 'html'
 					// arrows: 'to from',
-					dashes: nlwr ? [5, 5] : false,
-					hidden: nlwr,
+					dashes,
+					hidden: routeKind === RouteKind.NLWR,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
-					physics: !nlwr,
+					physics: routeKind !== RouteKind.NLWR,
+					routeKind
 				}
 
 				edges.push(edge)
 
-				if (!nlwr) {
+				if (routeKind !== RouteKind.NLWR) {
 					if (!node.failed && node.available) {
 						node.color = this.legends[repeaters.length + 1].color
 					}
@@ -951,13 +968,23 @@ export default {
 				entity.label = 'Controller'
 				// entity.fixed = true
 			} else {
+
+				// parse application route
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.statistics?.applicationRoute,
+					RouteKind.Application
+				)
+
 				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
 				this.parseRouteStats(
 					edges,
 					hubNode,
 					entity,
 					node.statistics?.lwr,
-					false
+					RouteKind.LWR
 				)
 
 				// parse node NLWR (next last working route)
@@ -966,7 +993,7 @@ export default {
 					hubNode,
 					entity,
 					node.statistics?.nlwr,
-					true
+					RouteKind.NLWR
 				)
 			}
 
