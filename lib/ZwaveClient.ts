@@ -2910,6 +2910,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	/**
+	 * Returns the priority route for a given node ID
+	 */
 	async getPriorityRoute(nodeId: number) {
 		if (this.driverReady) {
 			const result = await this._driver.controller.getPriorityRoute(
@@ -2960,6 +2963,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	/**
+	 * Sets the priority route for a given node ID
+	 */
 	async setPriorityRoute(
 		nodeId: number,
 		repeaters: number[],
