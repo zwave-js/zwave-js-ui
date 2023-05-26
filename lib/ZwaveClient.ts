@@ -2919,7 +2919,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (result) {
 				const node = this.nodes.get(nodeId)
 				if (node) {
-					const statistics: Partial<NodeStatistics & { applicationRoute: RouteStatistics }> = node.statistics || {}
+					const statistics: Partial<
+						NodeStatistics & { applicationRoute: RouteStatistics }
+					> = node.statistics || {}
 
 					const route = {
 						repeaters: result.repeaters,
@@ -2947,7 +2949,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					node.statistics = statistics as NodeStatistics
 
 					this.emitNodeUpdate(node, {
-						statistics
+						statistics,
 					})
 				}
 			}
