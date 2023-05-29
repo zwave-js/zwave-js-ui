@@ -434,7 +434,7 @@ export default {
 				{
 					color: '#666666',
 					textColor: '#666666',
-					text: 'Unkwown',
+					text: 'Unknown',
 				},
 			],
 			// groupingLegend: [
