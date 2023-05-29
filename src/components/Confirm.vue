@@ -134,6 +134,12 @@
 									:disabled="input.disabled"
 								>
 								</v-combobox>
+								<list-input
+									v-if="input.type === 'array' && input.list"
+									v-model="values[input.key]"
+									:rules="inputProps[input.key].rules"
+									:input="input"
+								></list-input>
 								<v-file-input
 									v-if="input.type === 'file'"
 									v-model.trim="values[input.key]"
@@ -219,11 +225,13 @@ import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { wrapFunc } from '../lib/utils'
+import ListInput from './custom/ListInput.vue'
 
 export default {
 	components: {
 		PrismEditor,
 		QrReader,
+		ListInput,
 	},
 	data: () => ({
 		dialog: false,

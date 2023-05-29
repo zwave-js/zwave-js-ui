@@ -327,44 +327,42 @@ export default {
 		async setRoute() {
 			if (!this.selectedNode) return
 
-			const res = await this.app.confirm(
-				'Set route',
-				'Manually assign a priority route to this node',
-				'info',
-				{
-					width: 500,
-					inputs: [
-						{
-							type: 'list',
-							autocomplete: true,
-							multiple: true,
-							key: 'repeaters',
-							label: 'Repeaters',
-							hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
-							itemKey: 'id',
-							itemText: '_name',
-							default: [],
-							rules: [(v) => v.length <= 4 || 'Max 4 repeaters'],
-							items: this.nodes.filter(
-								(n) =>
-									!n.isControllerNode &&
-									n.isListening &&
-									n.id !== this.selectedNode.id
-							),
-						},
-						{
-							type: 'list',
-							autocomplete: true,
-							key: 'routeSpeed',
-							label: 'Route speed',
-							default: ProtocolDataRate.ZWave_100k,
-							rules: [this.required],
-							items: this.dataRateItems,
-						},
-					],
-					confirmText: 'Set',
-				}
-			)
+			const res = await this.app.confirm('Set route', '', 'info', {
+				width: 500,
+				inputs: [
+					{
+						type: 'array',
+						inputType: 'autocomplete',
+						list: true,
+						multiple: true,
+						prefix: 'Controller',
+						suffix: `Node "${this.selectedNode._name}"`,
+						key: 'repeaters',
+						label: 'Repeaters',
+						hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
+						itemValue: 'id',
+						itemText: '_name',
+						default: [],
+						rules: [(v) => v.length <= 4 || 'Max 4 repeaters'],
+						items: this.nodes.filter(
+							(n) =>
+								!n.isControllerNode &&
+								n.isListening &&
+								n.id !== this.selectedNode.id
+						),
+					},
+					{
+						type: 'list',
+						autocomplete: true,
+						key: 'routeSpeed',
+						label: 'Route speed',
+						default: ProtocolDataRate.ZWave_100k,
+						rules: [this.required],
+						items: this.dataRateItems,
+					},
+				],
+				confirmText: 'Set',
+			})
 
 			if (Object.keys(res).length === 0) {
 				return
@@ -380,7 +378,8 @@ export default {
 
 			if (response.success && response.result) {
 				this.showSnackbar(
-					`New priority route set for node "${this.selectedNode._name}"`
+					`New priority route set for node "${this.selectedNode._name}"`,
+					'success'
 				)
 			} else if (!response.result) {
 				this.showSnackbar(
