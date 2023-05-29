@@ -86,6 +86,52 @@
 								:node="selectedNode"
 						/></v-list-item-content>
 					</v-list-item>
+					<!-- <div v-if="lwr">
+						<v-subheader>Last working route</v-subheader>
+						<v-list-item dense v-for="(s, i) in lwr" :key="i">
+							<v-list-item-content>{{
+								s.title
+							}}</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								s.text
+							}}</v-list-item-content>
+						</v-list-item>
+					</div>
+
+					<div v-if="nlwr">
+						<v-subheader>Next Last working route</v-subheader>
+						<v-list-item dense v-for="(s, i) in nlwr" :key="i">
+							<v-list-item-content>{{
+								s.title
+							}}</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								s.text
+							}}</v-list-item-content>
+						</v-list-item>
+					</div> -->
+
+					<div v-if="appRoute">
+						<v-subheader
+							>Application route
+							<v-btn
+								class="ml-2"
+								color="error"
+								x-small
+								@click="deleteRoute()"
+								>Delete
+								<v-icon x-small>delete</v-icon>
+							</v-btn></v-subheader
+						>
+
+						<v-list-item dense v-for="(s, i) in appRoute" :key="i">
+							<v-list-item-content>{{
+								s.title
+							}}</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								s.text
+							}}</v-list-item-content>
+						</v-list-item>
+					</div>
 				</v-list>
 				<v-row
 					v-if="!selectedNode.isControllerNode"
@@ -282,6 +328,17 @@ export default {
 
 			return routeStats
 		},
+		appRoute() {
+			if (!this.selectedNode) return null
+
+			const stats = this.selectedNode.statistics
+
+			if (!stats || !stats.applicationRoute) return null
+
+			const routeStats = this.parseRouteStats(stats.applicationRoute)
+
+			return routeStats
+		},
 	},
 	data() {
 		return {
@@ -322,6 +379,31 @@ export default {
 			)
 			if (window.focus) {
 				newwindow.focus()
+			}
+		},
+		async deleteRoute() {
+			if (!this.selectedNode) return
+
+			if (
+				await this.app.confirm(
+					'Delete',
+					'Are you sure you want to delete this route?',
+					'alert'
+				)
+			) {
+				const response = await this.app.apiRequest(
+					'removePriorityRoute',
+					[this.selectedNode.id]
+				)
+
+				if (response.success && response.result) {
+					this.showSnackbar('Route deleted')
+				} else if (!response.result) {
+					this.showSnackbar(
+						`Failed delete priority route for node "${this.selectedNode._name}"`,
+						'error'
+					)
+				}
 			}
 		},
 		async setRoute() {

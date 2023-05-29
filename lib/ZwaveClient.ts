@@ -170,6 +170,7 @@ export const allowedApis = validateMethods([
 	'healNode',
 	'getPriorityRoute',
 	'setPriorityRoute',
+	'removePriorityRoute',
 	'beginHealingNetwork',
 	'stopHealingNetwork',
 	'isFailedNode',
@@ -2972,14 +2973,33 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		routeSpeed: ZWaveDataRate
 	): Promise<boolean> {
 		if (this.driverReady) {
-			const result = this._driver.controller.setPriorityRoute(
+			const result = await this._driver.controller.setPriorityRoute(
 				nodeId,
 				repeaters,
 				routeSpeed
 			)
 
 			if (result) {
-				// query the new route
+				// TODO: fix node statistics
+			}
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Remove priority route for a given node ID.
+	 */
+	async removePriorityRoute(nodeId: number) {
+		if (this.driverReady) {
+			const result = await this._driver.controller.removePriorityRoute(
+				nodeId
+			)
+
+			if (result) {
+				// TODO: fix node statistics
 			}
 
 			return result
