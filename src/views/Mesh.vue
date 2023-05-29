@@ -397,7 +397,7 @@ export default {
 				)
 
 				if (response.success && response.result) {
-					this.showSnackbar('Route deleted')
+					this.showSnackbar('Route deleted', 'success')
 				} else if (!response.result) {
 					this.showSnackbar(
 						`Failed delete priority route for node "${this.selectedNode._name}"`,
