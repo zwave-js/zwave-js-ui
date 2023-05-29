@@ -339,10 +339,10 @@ Setting the date and time on a node could be hard, this helper method will set i
 
 The following CCs will be used (when supported or necessary) in this process:
 
--   Time Parameters CC
--   Clock CC
--   Time CC
--   Schedule Entry Lock CC (for setting the timezone).
+- Time Parameters CC
+- Clock CC
+- Time CC
+- Schedule Entry Lock CC (for setting the timezone).
 
 <details>
 <summary>Mqtt usage</summary>
