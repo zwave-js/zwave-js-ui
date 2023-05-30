@@ -535,7 +535,7 @@ export default {
 					if (e.routeOf === node.id) {
 						edgesToRemove.push(e.id)
 						const edgeId = this.getEdgeId(e)
-						if (this.edgesCache[edgeId]) {
+						if (this.edgesCache[edgeId]?.id === e.id) {
 							delete this.edgesCache[edgeId]
 						}
 					}
@@ -546,6 +546,13 @@ export default {
 				const result = this.parseNode(node)
 				nodes.add(result.node)
 				edges.add(result.edges)
+
+				const params = {
+					nodes: this.selectedNodes,
+				}
+
+				this.network.setSelection(params)
+				this.handleSelectNode(params)
 			}
 		},
 		getEdgeId(edge) {
@@ -850,7 +857,7 @@ export default {
 						break
 					case RouteKind.Application:
 						width = 4
-						dashes = [10, 10]
+						dashes = false
 						break
 					default:
 						width = 1
@@ -967,22 +974,24 @@ export default {
 				// entity.fixed = true
 			} else {
 				// parse application route
-				this.parseRouteStats(
-					edges,
-					hubNode,
-					entity,
-					node.statistics?.applicationRoute,
-					RouteKind.Application
-				)
-
-				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
-				this.parseRouteStats(
-					edges,
-					hubNode,
-					entity,
-					node.statistics?.lwr,
-					RouteKind.LWR
-				)
+				if (node.statistics?.applicationRoute) {
+					this.parseRouteStats(
+						edges,
+						hubNode,
+						entity,
+						node.statistics?.applicationRoute,
+						RouteKind.Application
+					)
+				} else {
+					// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
+					this.parseRouteStats(
+						edges,
+						hubNode,
+						entity,
+						node.statistics?.lwr,
+						RouteKind.LWR
+					)
+				}
 
 				// parse node NLWR (next last working route)
 				this.parseRouteStats(
