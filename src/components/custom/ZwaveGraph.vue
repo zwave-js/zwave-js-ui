@@ -278,7 +278,7 @@ import {
 	rssiToString,
 } from 'zwave-js/safe'
 import { RouteKind } from '@zwave-js/core/safe'
-import { uuid } from '../../lib/utils'
+import { uuid, arraysEqual } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 
@@ -454,9 +454,11 @@ export default {
 		grouping() {
 			this.debounceRefresh()
 		},
-		filteredNodes(val) {
-			this.selectedNodes = val.map((n) => n.id)
-			this.setSelection()
+		filteredNodes(val, oldVal) {
+			if (!arraysEqual(val, oldVal)) {
+				this.selectedNodes = val.map((n) => n.id)
+				this.setSelection()
+			}
 		},
 	},
 	mounted() {
@@ -471,7 +473,7 @@ export default {
 
 					this.updateTimeout = setTimeout(
 						this.onNodeUpdate.bind(this, args[0]),
-						500
+						1000
 					)
 				} else {
 					this.shouldReload = true
