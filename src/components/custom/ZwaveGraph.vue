@@ -361,7 +361,7 @@ export default {
 			refreshTimeout: null,
 			updateTimeout: null,
 			loading: false,
-			edgesCache: {},
+			priorityEdges: {}, // keeps track of the edges that should be shown in overview
 			legends: [
 				{
 					color: '#7e57c2',
@@ -533,16 +533,18 @@ export default {
 				const { nodes, edges } = this.network.body.data
 
 				const edgesToRemove = []
-				const allEdges = {}
-				const removedIds = []
+				const allEdges = {} // edgeId => [edge, edge, ...]
+				const removedIds = [] // removed edgeIds
 
 				edges.forEach((e) => {
 					const edgeId = this.getEdgeId(e)
 
 					if (e.routeOf === node.id) {
 						edgesToRemove.push(e.id)
-						if (this.edgesCache[edgeId]?.id === e.id) {
-							delete this.edgesCache[edgeId]
+						if (this.priorityEdges[edgeId]?.id === e.id) {
+							delete this.priorityEdges[edgeId]
+							// we deleted the edge with the higher protocolDataRate
+							// keep track of it so we can update this later
 							removedIds.push(edgeId)
 						}
 					} else if (allEdges[edgeId]) {
@@ -552,15 +554,17 @@ export default {
 					}
 				})
 
-				// update the edge with hight protocolDataRate
+				// update the edge with hight protocolDataRate to prevent
+				// having unconneted nodes
 				for (const edgeId of removedIds) {
 					const edges = allEdges[edgeId]
 					if (edges) {
 						// set the edge with hight protocolDataRate
-						this.edgesCache[edgeId] = edges.reduce((prev, curr) =>
-							prev.protocolDataRate > curr.protocolDataRate
-								? prev
-								: curr
+						this.priorityEdges[edgeId] = edges.reduce(
+							(prev, curr) =>
+								prev.protocolDataRate > curr.protocolDataRate
+									? prev
+									: curr
 						)
 					}
 				}
@@ -621,7 +625,7 @@ export default {
 
 			this.destroyNetwork()
 
-			this.edgesCache = {}
+			this.priorityEdges = {}
 
 			this.loading = true
 
@@ -739,7 +743,7 @@ export default {
 			edges.forEach((e) => {
 				const edgeId = this.getEdgeId(e)
 				const shouldBeHidden =
-					(showAll && this.edgesCache[edgeId]?.id !== e.id) ||
+					(showAll && this.priorityEdges[edgeId]?.id !== e.id) ||
 					(selectedNodes.length > 0 &&
 						!selectedNodes.includes(e.routeOf))
 
@@ -915,18 +919,18 @@ export default {
 					}
 
 					// only draw the edge with higher data rate
-					if (this.edgesCache[edgeId]) {
+					if (this.priorityEdges[edgeId]) {
 						if (
-							this.edgesCache[edgeId].protocolDataRate >=
+							this.priorityEdges[edgeId].protocolDataRate >=
 							protocolDataRate
 						) {
 							edge.hidden = true
 						} else {
-							this.edgesCache[edgeId].hidden = true
-							this.edgesCache[edgeId] = edge
+							this.priorityEdges[edgeId].hidden = true
+							this.priorityEdges[edgeId] = edge
 						}
 					} else {
-						this.edgesCache[edgeId] = edge
+						this.priorityEdges[edgeId] = edge
 					}
 				}
 			}
