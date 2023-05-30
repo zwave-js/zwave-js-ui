@@ -2981,6 +2981,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (result) {
 				// TODO: fix node statistics
+				await this.getPriorityRoute(nodeId)
 			}
 
 			return result
