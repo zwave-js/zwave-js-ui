@@ -150,7 +150,7 @@ export function validTopic(t) {
 }
 
 export function deepEqual(a, b) {
-	return JSON.stringify(a) === JSON.stringify(b)
+	return a === b || JSON.stringify(a) === JSON.stringify(b)
 }
 
 export function arraysEqual(a, b) {

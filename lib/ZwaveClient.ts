@@ -2955,8 +2955,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					node.statistics = statistics as NodeStatistics
 
-					this.emitNodeUpdate(node, {
-						statistics,
+					this.sendToSocket(socketEvents.statistics, {
+						nodeId: node.id,
+						statistics: statistics,
+						lastActive: node.lastActive,
 					})
 				}
 			}
@@ -4855,12 +4857,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (node) {
 			const oldStatistics = node.statistics as ZUINodeStatistics
-			const applicationRoute = oldStatistics?.applicationRoute
-			node.statistics = stats
-
-			// keep application route info
-			if (applicationRoute) {
-				node.statistics.applicationRoute = applicationRoute
+			node.statistics = {
+				...stats,
+				applicationRoute: oldStatistics?.applicationRoute,
 			}
 
 			// update stats only when node is doing something

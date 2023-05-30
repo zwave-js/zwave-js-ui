@@ -339,8 +339,12 @@ const useBaseStore = defineStore('base', {
 						}
 
 						if (
-							!deepEqual(prev.lwr != cur.lwr) ||
-							!deepEqual(prev.nlwr != cur.nlwr) ||
+							!deepEqual(prev.lwr, cur.lwr) ||
+							!deepEqual(prev.nlwr, cur.nlwr) ||
+							!deepEqual(
+								prev.applicationRoute,
+								cur.applicationRoute
+							) ||
 							cur.rssi != prev.rssi
 						) {
 							// mesh graph changed
