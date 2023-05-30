@@ -533,15 +533,37 @@ export default {
 				const { nodes, edges } = this.network.body.data
 
 				const edgesToRemove = []
+				const allEdges = {}
+				const removedIds = []
+
 				edges.forEach((e) => {
+					const edgeId = this.getEdgeId(e)
+
 					if (e.routeOf === node.id) {
 						edgesToRemove.push(e.id)
-						const edgeId = this.getEdgeId(e)
 						if (this.edgesCache[edgeId]?.id === e.id) {
 							delete this.edgesCache[edgeId]
+							removedIds.push(edgeId)
 						}
+					} else if (allEdges[edgeId]) {
+						allEdges[edgeId].push(e)
+					} else {
+						allEdges[edgeId] = [e]
 					}
 				})
+
+				// update the edge with hight protocolDataRate
+				for (const edgeId of removedIds) {
+					const edges = allEdges[edgeId]
+					if (edges) {
+						// set the edge with hight protocolDataRate
+						this.edgesCache[edgeId] = edges.reduce((prev, curr) =>
+							prev.protocolDataRate > curr.protocolDataRate
+								? prev
+								: curr
+						)
+					}
+				}
 
 				nodes.remove(node.id)
 				edges.remove(edgesToRemove)
