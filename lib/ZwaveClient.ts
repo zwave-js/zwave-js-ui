@@ -417,6 +417,10 @@ export interface ZUIScheduleConfig<T> {
 	slots: ZUISlot<T>[]
 }
 
+export type ZUINodeStatistics = NodeStatistics & {
+	applicationRoute?: RouteStatistics
+}
+
 export type ZUINode = {
 	id: number
 	deviceConfig?: DeviceConfig
@@ -424,9 +428,7 @@ export type ZUINode = {
 	productId?: number
 	productLabel?: string
 	productDescription?: string
-	statistics?: (ControllerStatistics | NodeStatistics) & {
-		applicationRoute?: RouteStatistics
-	}
+	statistics?: ControllerStatistics | ZUINodeStatistics
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -2923,9 +2925,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (result) {
 				const node = this.nodes.get(nodeId)
 				if (node) {
-					const statistics: Partial<
-						NodeStatistics & { applicationRoute: RouteStatistics }
-					> = node.statistics || {}
+					const statistics: Partial<ZUINodeStatistics> =
+						node.statistics || {}
 
 					const route = {
 						repeaters: result.repeaters,
@@ -2941,12 +2942,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								...(statistics.nlwr || {}),
 								...route,
 							}
+							delete statistics.applicationRoute
 							break
 						case RouteKind.LWR:
 							statistics.lwr = {
 								...(statistics.lwr || {}),
 								...route,
 							}
+							delete statistics.applicationRoute
 							break
 					}
 
@@ -2980,7 +2983,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 			if (result) {
-				// TODO: fix node statistics
 				await this.getPriorityRoute(nodeId)
 			}
 
@@ -3000,7 +3002,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 			if (result) {
-				// TODO: fix node statistics
+				await this.getPriorityRoute(nodeId)
 			}
 
 			return result
@@ -4852,8 +4854,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
-			const oldStatistics = node.statistics as NodeStatistics
+			const oldStatistics = node.statistics as ZUINodeStatistics
+			const applicationRoute = oldStatistics?.applicationRoute
 			node.statistics = stats
+
+			// keep application route info
+			if (applicationRoute) {
+				node.statistics.applicationRoute = applicationRoute
+			}
 
 			// update stats only when node is doing something
 			if (

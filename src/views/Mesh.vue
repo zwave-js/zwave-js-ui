@@ -112,7 +112,7 @@
 
 					<div v-if="appRoute">
 						<v-subheader
-							>Application route
+							>Priority route
 							<v-btn
 								class="ml-2"
 								color="error"
@@ -171,7 +171,7 @@
 						dark
 						rounded
 						@click="setRoute()"
-						>Set Route
+						>Set Priority Route
 						<v-icon>route</v-icon>
 					</v-btn>
 				</v-row>
