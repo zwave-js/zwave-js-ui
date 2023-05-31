@@ -6,14 +6,7 @@
 
 			<v-icon v-if="input.prefix" class="ml-5">arrow_downward</v-icon>
 
-			<draggable
-				v-model="items"
-				@start="onStart"
-				@end="onEnd"
-				@update="onUpdate"
-				handle=".handle"
-				:sort="true"
-			>
+			<draggable v-model="items" handle=".handle">
 				<template v-for="(item, i) in items">
 					<v-list-item :key="`${i}_${item}`">
 						<v-list-item-action class="mr-0" style="min-width: 0px">
@@ -187,15 +180,6 @@ export default {
 					this.input.itemText || 'text'
 				] ?? item
 			)
-		},
-		onStart() {
-			console.log('start')
-		},
-		onEnd() {
-			console.log('end')
-		},
-		onUpdate() {
-			console.log('update')
 		},
 	},
 }

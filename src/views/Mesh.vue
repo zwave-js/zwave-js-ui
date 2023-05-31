@@ -338,6 +338,7 @@ export default {
 			return routeStats
 		},
 	},
+	documentListeners: {},
 	data() {
 		return {
 			dialogHealth: false,
@@ -559,18 +560,11 @@ export default {
 			true
 		)
 
-		document.addEventListener(
-			'mouseup',
-			function () {
+		this.documentListeners = {
+			mouseup: () => {
 				isDown = false
 			},
-			true
-		)
-
-		document.addEventListener(
-			'mousemove',
-			function (e) {
-				e.preventDefault()
+			mousemove: (e) => {
 				if (isDown) {
 					const l = e.clientX
 					const r = e.clientY
@@ -581,10 +575,18 @@ export default {
 					if (r > 0 && r < dimensions[1]) {
 						propertiesDiv.style.top = r + offset[1] + 'px'
 					}
+					e.preventDefault()
 				}
 			},
-			true
-		)
+		}
+
+		Object.keys(this.documentListeners).forEach((event) => {
+			document.addEventListener(
+				event,
+				this.documentListeners[event],
+				true
+			)
+		})
 
 		// this.debounceRefresh()
 	},
@@ -592,6 +594,10 @@ export default {
 		if (this.refreshTimeout) {
 			clearTimeout(this.refreshTimeout)
 		}
+
+		Object.keys(this.documentListeners).forEach((event) => {
+			document.removeEventListener(event, this.documentListeners[event])
+		})
 	},
 }
 </script>
