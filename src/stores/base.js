@@ -215,9 +215,14 @@ const useBaseStore = defineStore('base', {
 				? n.name + (n.loc ? ' (' + n.loc + ')' : '')
 				: 'NodeID_' + n.id
 
-			// prevent empty stats on startup
+			// make them observable
 			if (!n.statistics) {
 				n.statistics = false
+			}
+
+			// make it observable
+			if (!n.applicationRoute) {
+				n.applicationRoute = false
 			}
 
 			if (n.isControllerNode) {
