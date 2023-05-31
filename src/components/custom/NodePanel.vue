@@ -435,48 +435,6 @@ export default {
 				)
 			}
 		},
-		parseRouteStats(stats) {
-			const repRSSI = stats.repeaterRSSI || []
-			const repeaters =
-				stats.repeaters?.length > 0
-					? stats.repeaters
-							.map(
-								(r, i) =>
-									`${r}${
-										repRSSI[i]
-											? ` (${rssiToString(repRSSI[i])})`
-											: ''
-									}`
-							)
-							.join(', ')
-					: 'None, direct connection'
-			const routeFiled = stats.routeFailedBetween
-				? stats.routeFailedBetween
-						.map((r) => `${r[0]} --> ${r[1]}`)
-						.join(', ')
-				: 'N/A'
-
-			return [
-				{
-					title: 'RSSI',
-					text: stats.rssi ? rssiToString(stats.rssi) : 'N/A',
-				},
-				{
-					title: 'Protocol Data Rate',
-					text:
-						protocolDataRateToString(stats.protocolDataRate) ||
-						'N/A',
-				},
-				{
-					title: 'Repeaters',
-					text: repeaters,
-				},
-				{
-					title: 'Route failed between',
-					text: routeFiled,
-				},
-			]
-		},
 	},
 }
 </script>
