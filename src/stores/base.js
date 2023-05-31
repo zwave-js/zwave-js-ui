@@ -378,7 +378,7 @@ const useBaseStore = defineStore('base', {
 				Object.assign(node, {
 					statistics: data.statistics,
 					lastActive: data.lastActive,
-					applicationRoute: data.applicationRoute || null,
+					applicationRoute: data.applicationRoute,
 					lastReceive,
 					lastTransmit,
 					errorReceive,

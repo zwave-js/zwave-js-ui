@@ -329,9 +329,7 @@ export default {
 			return routeStats
 		},
 		appRoute() {
-			if (!this.selectedNode) return null
-
-			if (!this.selectedNode.applicationRoute) return null
+			if (!this.selectedNode?.applicationRoute) return null
 
 			const routeStats = this.parseRouteStats(
 				this.selectedNode.applicationRoute
