@@ -1002,12 +1002,12 @@ export default {
 				// entity.fixed = true
 			} else {
 				// parse application route
-				if (node.statistics?.applicationRoute) {
+				if (node.applicationRoute) {
 					this.parseRouteStats(
 						edges,
 						hubNode,
 						entity,
-						node.statistics?.applicationRoute,
+						node.applicationRoute,
 						RouteKind.Application
 					)
 				} else {

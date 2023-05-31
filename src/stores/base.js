@@ -342,8 +342,8 @@ const useBaseStore = defineStore('base', {
 							!deepEqual(prev.lwr, cur.lwr) ||
 							!deepEqual(prev.nlwr, cur.nlwr) ||
 							!deepEqual(
-								prev.applicationRoute,
-								cur.applicationRoute
+								node.applicationRoute,
+								data.applicationRoute
 							) ||
 							cur.rssi != prev.rssi
 						) {
@@ -353,14 +353,36 @@ const useBaseStore = defineStore('base', {
 					}
 				}
 
+				if (node.isControllerNode && data.bgRssi) {
+					if (!node.bgRSSIPoints) {
+						node.bgRSSIPoints = []
+					}
+					node.bgRSSIPoints.push(data.bgRssi)
+
+					if (node.bgRSSIPoints.length > 360) {
+						const firstPoint = node.bgRSSIPoints[0]
+						const lastPoint =
+							node.bgRSSIPoints[node.bgRSSIPoints.length - 1]
+
+						const maxTimeSpan = 3 * 60 * 60 * 1000 // 3 hours
+
+						if (
+							lastPoint.timestamp - firstPoint.timestamp >
+							maxTimeSpan
+						) {
+							node.bgRSSIPoints.shift()
+						}
+					}
+				}
+
 				Object.assign(node, {
 					statistics: data.statistics,
 					lastActive: data.lastActive,
+					applicationRoute: data.applicationRoute || null,
 					lastReceive,
 					lastTransmit,
 					errorReceive,
 					errorTransmit,
-					bgRSSIPoints: data.bgRSSIPoints,
 				})
 			}
 		},

@@ -417,10 +417,6 @@ export interface ZUIScheduleConfig<T> {
 	slots: ZUISlot<T>[]
 }
 
-export type ZUINodeStatistics = NodeStatistics & {
-	applicationRoute?: RouteStatistics
-}
-
 export type ZUINode = {
 	id: number
 	deviceConfig?: DeviceConfig
@@ -428,7 +424,8 @@ export type ZUINode = {
 	productId?: number
 	productLabel?: string
 	productDescription?: string
-	statistics?: ControllerStatistics | ZUINodeStatistics
+	statistics?: ControllerStatistics | NodeStatistics
+	applicationRoute?: RouteStatistics
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -2925,7 +2922,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (result) {
 				const node = this.nodes.get(nodeId)
 				if (node) {
-					const statistics: Partial<ZUINodeStatistics> =
+					const statistics: Partial<NodeStatistics> =
 						node.statistics || {}
 
 					const route = {
@@ -2935,21 +2932,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 					switch (result.routeKind) {
 						case RouteKind.Application:
-							statistics.applicationRoute = route
+							node.applicationRoute = route
 							break
 						case RouteKind.NLWR:
 							statistics.nlwr = {
 								...(statistics.nlwr || {}),
 								...route,
 							}
-							delete statistics.applicationRoute
+							delete node.applicationRoute
 							break
 						case RouteKind.LWR:
 							statistics.lwr = {
 								...(statistics.lwr || {}),
 								...route,
 							}
-							delete statistics.applicationRoute
+							delete node.applicationRoute
 							break
 					}
 
@@ -2959,6 +2956,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						nodeId: node.id,
 						statistics: statistics,
 						lastActive: node.lastActive,
+						applicationRoute: node.applicationRoute || false,
 					})
 				}
 			}
@@ -3816,7 +3814,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				nodeId: controllerNode.id,
 				statistics: stats,
 				lastActive: controllerNode.lastActive,
-				bgRSSIPoints: controllerNode.bgRSSIPoints,
+				bgRssi,
 			})
 		}
 
@@ -4856,11 +4854,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
-			const oldStatistics = node.statistics as ZUINodeStatistics
-			node.statistics = {
-				...stats,
-				applicationRoute: oldStatistics?.applicationRoute,
-			}
+			const oldStatistics = node.statistics as NodeStatistics | undefined
+			node.statistics = { ...stats } // stats is readonly, we need to be able to edit it in getPriorityRoute
 
 			// update stats only when node is doing something
 			if (
@@ -4875,6 +4870,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				nodeId: node.id,
 				statistics: stats,
 				lastActive: node.lastActive,
+				applicationRoute: node.applicationRoute || false,
 			})
 		}
 

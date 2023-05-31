@@ -331,11 +331,11 @@ export default {
 		appRoute() {
 			if (!this.selectedNode) return null
 
-			const stats = this.selectedNode.statistics
+			if (!this.selectedNode.applicationRoute) return null
 
-			if (!stats || !stats.applicationRoute) return null
-
-			const routeStats = this.parseRouteStats(stats.applicationRoute)
+			const routeStats = this.parseRouteStats(
+				this.selectedNode.applicationRoute
+			)
 
 			return routeStats
 		},
