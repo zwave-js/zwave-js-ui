@@ -1,5 +1,25 @@
 
 
+# [8.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.17.1...v8.18.0) (2023-06-01)
+
+
+### Bug Fixes
+
+* show error when add association fails ([7baeaf9](https://github.com/zwave-js/zwave-js-ui/commit/7baeaf93fa361dc0817951cdf7f3b5835ef1f1b8)), closes [#3112](https://github.com/zwave-js/zwave-js-ui/issues/3112)
+* ts error ([baaf098](https://github.com/zwave-js/zwave-js-ui/commit/baaf09891473f2ebbceba7f47a6dd38c153ab4ff))
+* **ui:** dialog nodes manager keyboard issues ([cf78a46](https://github.com/zwave-js/zwave-js-ui/commit/cf78a4626c84cb7a9e4b93dd7d7d66e073cc45cf)), closes [#3079](https://github.com/zwave-js/zwave-js-ui/issues/3079)
+* **ui:** duplicated beforeDestroy hook ([aa6be2b](https://github.com/zwave-js/zwave-js-ui/commit/aa6be2b9f5251cca2982b9058a7bdc145b425011))
+* **ui:** ping node show error when ping fails ([ef7fe17](https://github.com/zwave-js/zwave-js-ui/commit/ef7fe17b981c9adf49ba99902b24e7228666806a)), closes [#3099](https://github.com/zwave-js/zwave-js-ui/issues/3099)
+* **ui:** prevent kepress listener to trigger when dialog not opened ([3a2998d](https://github.com/zwave-js/zwave-js-ui/commit/3a2998dec85d5bad6904d772e985a4a58a1d4aa2))
+
+
+### Features
+
+* bump zwave-js@10.22.3 ([#3114](https://github.com/zwave-js/zwave-js-ui/issues/3114)) ([92ff545](https://github.com/zwave-js/zwave-js-ui/commit/92ff545ed763f3ae244299fcb7f75e0c13c95025))
+* bump zwave-js@10.23.0 ([4082fcf](https://github.com/zwave-js/zwave-js-ui/commit/4082fcf3dc978109028aa5282e61df74544c6f3a))
+* bump zwave-js@10.23.1 ([#3115](https://github.com/zwave-js/zwave-js-ui/issues/3115)) ([87f1e34](https://github.com/zwave-js/zwave-js-ui/commit/87f1e343312b9fa5809ae85976b77a0726a9acd7))
+* priority routes management ([#3104](https://github.com/zwave-js/zwave-js-ui/issues/3104)) ([cb5d751](https://github.com/zwave-js/zwave-js-ui/commit/cb5d751bf064d4f168d842d29f8fd39eb7d14623))
+
 ## [8.17.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.17.0...v8.17.1) (2023-05-25)
 
 
