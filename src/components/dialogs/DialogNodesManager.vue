@@ -2,7 +2,6 @@
 	<v-dialog
 		v-model="value"
 		@keydown.esc="$emit('close')"
-		@keydown.enter="dispatchEnter"
 		max-width="800px"
 		persistent
 	>
@@ -129,6 +128,7 @@
 										<v-btn
 											v-else
 											color="error"
+											class="next-btn"
 											@click="stopAction"
 										>
 											Stop running {{ currentAction }}
@@ -574,7 +574,9 @@
 											hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
 											inputmode="numeric"
 											v-model.trim="s.values.pin"
+											validate-on-blur
 											:error="
+												!!s.values.pin &&
 												validPin(s.values.pin) !== true
 											"
 											:suffix="
@@ -900,6 +902,18 @@ export default {
 			}
 		},
 	},
+	mounted() {
+		this.onKeypressed = (event) => {
+			if (event.key === 'Enter') {
+				this.dispatchEnter()
+			}
+		}
+
+		window.addEventListener('keydown', this.onKeypressed)
+	},
+	beforeDestroy() {
+		window.removeEventListener('keydown', this.onKeypressed)
+	},
 	methods: {
 		submitNameLoc() {
 			if (this.$refs.namingForm[0].validate()) {
@@ -1184,6 +1198,7 @@ export default {
 		init(bind) {
 			this.steps = []
 			this.pushStep('action')
+			// this.pushStep('s2Pin')
 
 			// stop any running inclusion/exclusion
 			if (this.state !== 'start') {
