@@ -277,9 +277,11 @@ import {
 	protocolDataRateToString,
 	rssiToString,
 } from 'zwave-js/safe'
-import { uuid } from '../../lib/utils'
+import { RouteKind } from '@zwave-js/core/safe'
+import { uuid, arraysEqual } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
+import ConfigApis from '../../apis/ConfigApis.js'
 
 export default {
 	props: {
@@ -346,6 +348,7 @@ export default {
 		return {
 			openPanel: -1,
 			selectedNodes: [],
+			starSvg: ConfigApis.getBasePath('/static/star.svg'),
 			menuX: 0,
 			menuY: 0,
 			menu: false,
@@ -360,7 +363,7 @@ export default {
 			refreshTimeout: null,
 			updateTimeout: null,
 			loading: false,
-			edgesCache: {},
+			priorityEdges: {}, // keeps track of the edges that should be shown in overview
 			legends: [
 				{
 					color: '#7e57c2',
@@ -399,6 +402,12 @@ export default {
 				},
 			],
 			edgesLegend: [
+				{
+					icon: 'star',
+					textColor: '',
+					color: '#F1C40F',
+					text: 'Priority route',
+				},
 				{
 					icon: 'minimize',
 					textColor: '',
@@ -453,9 +462,11 @@ export default {
 		grouping() {
 			this.debounceRefresh()
 		},
-		filteredNodes(val) {
-			this.selectedNodes = val.map((n) => n.id)
-			this.setSelection()
+		filteredNodes(val, oldVal) {
+			if (!arraysEqual(val, oldVal)) {
+				this.selectedNodes = val.map((n) => n.id)
+				this.setSelection()
+			}
 		},
 	},
 	mounted() {
@@ -470,7 +481,7 @@ export default {
 
 					this.updateTimeout = setTimeout(
 						this.onNodeUpdate.bind(this, args[0]),
-						500
+						1000
 					)
 				} else {
 					this.shouldReload = true
@@ -530,21 +541,54 @@ export default {
 				const { nodes, edges } = this.network.body.data
 
 				const edgesToRemove = []
+				const allEdges = {} // edgeId => [edge, edge, ...]
+				const removedIds = [] // removed edgeIds
+
 				edges.forEach((e) => {
+					const edgeId = this.getEdgeId(e)
+
 					if (e.routeOf === node.id) {
 						edgesToRemove.push(e.id)
-						const edgeId = this.getEdgeId(e)
-						if (this.edgesCache[edgeId]) {
-							delete this.edgesCache[edgeId]
+						if (this.priorityEdges[edgeId]?.id === e.id) {
+							delete this.priorityEdges[edgeId]
+							// we deleted the edge with the higher protocolDataRate
+							// keep track of it so we can update this later
+							removedIds.push(edgeId)
 						}
+					} else if (allEdges[edgeId]) {
+						allEdges[edgeId].push(e)
+					} else {
+						allEdges[edgeId] = [e]
 					}
 				})
+
+				// update the edge with hight protocolDataRate to prevent
+				// having unconneted nodes
+				for (const edgeId of removedIds) {
+					const edges = allEdges[edgeId]
+					if (edges) {
+						// set the edge with hight protocolDataRate
+						this.priorityEdges[edgeId] = edges.reduce(
+							(prev, curr) =>
+								prev.protocolDataRate > curr.protocolDataRate
+									? prev
+									: curr
+						)
+					}
+				}
 
 				nodes.remove(node.id)
 				edges.remove(edgesToRemove)
 				const result = this.parseNode(node)
 				nodes.add(result.node)
 				edges.add(result.edges)
+
+				const params = {
+					nodes: this.selectedNodes,
+				}
+
+				this.network.setSelection(params)
+				this.handleSelectNode(params)
 			}
 		},
 		getEdgeId(edge) {
@@ -589,7 +633,7 @@ export default {
 
 			this.destroyNetwork()
 
-			this.edgesCache = {}
+			this.priorityEdges = {}
 
 			this.loading = true
 
@@ -654,7 +698,7 @@ export default {
 				this.setSelection()
 			})
 
-			this.network.on('oncontext', this.handleClick.bind(this))
+			this.network.on('click', this.handleClick.bind(this))
 
 			this.network.on('hoverNode', this.handleHoverNode.bind(this))
 			this.network.on('blurNode', this.handleBlurNode.bind(this))
@@ -683,8 +727,6 @@ export default {
 			// })
 		},
 		handleSelectNode(params) {
-			this.handleClick(params)
-
 			let { nodes: selectedNodes } = params
 
 			const { edges, nodes } = this.network.body.data
@@ -709,7 +751,7 @@ export default {
 			edges.forEach((e) => {
 				const edgeId = this.getEdgeId(e)
 				const shouldBeHidden =
-					(showAll && this.edgesCache[edgeId]?.id !== e.id) ||
+					(showAll && this.priorityEdges[edgeId]?.id !== e.id) ||
 					(selectedNodes.length > 0 &&
 						!selectedNodes.includes(e.routeOf))
 
@@ -790,9 +832,9 @@ export default {
 				}
 			}
 		},
-		parseRouteStats(edges, controllerId, node, route, nlwr = false) {
+		parseRouteStats(edges, controllerId, node, route, routeKind) {
 			if (!route) {
-				if (!nlwr) {
+				if (routeKind !== RouteKind.NLWR) {
 					// unconnected
 					node.color = this.legends[6].color
 				}
@@ -813,10 +855,7 @@ export default {
 					from: routeFailedBetween[0],
 					to: routeFailedBetween[1],
 					color: this.getDataRateColor(ProtocolDataRate.ZWave_9k6),
-					protocolDataRate,
 					width: 1,
-					// rssi: rssiToString(repeaterRSSI?.[i] || rssi),
-					// layer: -1,
 					label: 'Failed ❌',
 					font: { align: 'top', size: 0 },
 					dashes: [2, 2],
@@ -835,11 +874,31 @@ export default {
 				const from = prevRepeater
 				const to = repeater || node.id
 
-				const label = `RSSI: ${rssiToString(
-					i === 0 ? rssi : repeaterRSSI?.[i - 1]
-				)}`
+				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
+
+				const label = `RSSI: ${rssiToString(edgeRssi ?? 127)}`
 
 				const edgeId = this.getEdgeId({ from, to })
+
+				let width, dashes
+
+				switch (routeKind) {
+					case RouteKind.NLWR:
+						width = 1
+						dashes = [5, 5]
+						break
+					case RouteKind.LWR:
+						width = 4
+						dashes = false
+						break
+					case RouteKind.Application:
+						width = 4
+						dashes = false
+						break
+					default:
+						width = 1
+						dashes = [5, 5]
+				}
 
 				// create the edge
 				// https://visjs.github.io/vis-network/docs/network/edges.html
@@ -848,39 +907,53 @@ export default {
 					from,
 					to,
 					color: this.getDataRateColor(protocolDataRate),
-					protocolDataRate,
-					width: nlwr ? 1 : 4,
-					rssi: rssiToString(repeaterRSSI?.[i] || rssi),
+					width,
 					layer: i + 1,
 					label,
-					font: { align: 'top', size: 0 }, //  multi: 'html'
+					font: {
+						align: 'top',
+						size: 0,
+						vadjust: routeKind === RouteKind.Application ? -5 : 0,
+					}, //  multi: 'html'
 					// arrows: 'to from',
-					dashes: nlwr ? [5, 5] : false,
-					hidden: nlwr,
+					dashes,
+					arrows:
+						routeKind === RouteKind.Application
+							? {
+									middle: {
+										enabled: true,
+										type: 'image',
+										src: this.starSvg,
+										scaleFactor: 1,
+									},
+							  }
+							: undefined,
+					hidden: routeKind === RouteKind.NLWR,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
-					physics: !nlwr,
+					physics: routeKind !== RouteKind.NLWR,
+					routeKind,
 				}
 
 				edges.push(edge)
 
-				if (!nlwr) {
+				if (routeKind !== RouteKind.NLWR) {
 					if (!node.failed && node.available) {
 						node.color = this.legends[repeaters.length + 1].color
 					}
 
 					// only draw the edge with higher data rate
-					if (this.edgesCache[edgeId]) {
+					if (this.priorityEdges[edgeId]) {
 						if (
-							this.edgesCache[edgeId].protocolDataRate >=
+							this.priorityEdges[edgeId].protocolDataRate >=
 							protocolDataRate
 						) {
 							edge.hidden = true
 						} else {
-							this.edgesCache[edgeId].hidden = true
-							this.edgesCache[edgeId] = edge
+							this.priorityEdges[edgeId].hidden = true
+							this.priorityEdges[edgeId] = edge
 						}
 					} else {
-						this.edgesCache[edgeId] = edge
+						this.priorityEdges[edgeId] = edge
 					}
 				}
 			}
@@ -951,14 +1024,25 @@ export default {
 				entity.label = 'Controller'
 				// entity.fixed = true
 			} else {
-				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
-				this.parseRouteStats(
-					edges,
-					hubNode,
-					entity,
-					node.statistics?.lwr,
-					false
-				)
+				// parse application route
+				if (node.applicationRoute) {
+					this.parseRouteStats(
+						edges,
+						hubNode,
+						entity,
+						node.applicationRoute,
+						RouteKind.Application
+					)
+				} else {
+					// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
+					this.parseRouteStats(
+						edges,
+						hubNode,
+						entity,
+						node.statistics?.lwr,
+						RouteKind.LWR
+					)
+				}
 
 				// parse node NLWR (next last working route)
 				this.parseRouteStats(
@@ -966,7 +1050,7 @@ export default {
 					hubNode,
 					entity,
 					node.statistics?.nlwr,
-					true
+					RouteKind.NLWR
 				)
 			}
 

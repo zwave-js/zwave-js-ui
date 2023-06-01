@@ -732,7 +732,7 @@ export default {
 									itemText: 'name',
 									itemValue: 'name',
 									hint: 'Select a snippet from library',
-									onChange(values, v) {
+									onChange: (values, v) => {
 										const content = v
 											? snippets.find((s) => s.name === v)
 													?.content

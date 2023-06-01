@@ -102,6 +102,117 @@ Payload:
 
 </details>
 
+#### `getSchedules`
+
+```ts
+async getSchedules(
+	nodeId: number,
+	opts: { mode?: ZUIScheduleEntryLockMode; fromCache: boolean } = {
+		fromCache: true,
+	}
+): Promise<ZUISchedule>;
+```
+
+If the node supports Schedule Lock CC parses all available schedules and cache them.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getSchedules/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		opts
+	]
+}
+```
+
+</details>
+
+#### `cancelGetSchedule`
+
+```ts
+cancelGetSchedule(): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/cancelGetSchedule/set`
+
+Payload:
+
+```json
+{
+	"args": []
+}
+```
+
+</details>
+
+#### `setSchedule`
+
+```ts
+async setSchedule(
+	nodeId: number,
+	type: 'daily' | 'weekly' | 'yearly',
+	schedule: ScheduleEntryLockSlotId &
+		(
+			| ScheduleEntryLockDailyRepeatingSchedule
+			| ScheduleEntryLockWeekDaySchedule
+			| ScheduleEntryLockYearDaySchedule
+		)
+): Promise<SupervisionResult>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setSchedule/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		type,
+		schedule
+	]
+}
+```
+
+</details>
+
+#### `setEnabledSchedule`
+
+```ts
+async setEnabledSchedule(nodeId: number, enabled: boolean, userId: number): Promise<{ status: SupervisionStatus.NoSupport | SupervisionStatus.Fail | SupervisionStatus.Success; remainingDuration?: undefined; } | ({ status: SupervisionStatus.Working; remainingDuration: Duration; } & { status: SupervisionStatus.Working | SupervisionStatus.Success; })>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setEnabledSchedule/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		enabled,
+		userId
+	]
+}
+```
+
+</details>
+
 #### `getAssociations`
 
 ```ts
@@ -889,7 +1000,7 @@ Payload:
 async getAvailableFirmwareUpdates(
 	nodeId: number,
 	options?: GetFirmwareUpdatesOptions
-): Promise<import("/home/daniel/GitProjects/zwave-js-ui/node_modules/zwave-js/build/index").FirmwareUpdateInfo[]>;
+): Promise<FirmwareUpdateInfo[]>;
 ```
 
 <details>
@@ -1143,6 +1254,62 @@ Payload:
 {
 	"args": [
 		nodeId
+	]
+}
+```
+
+</details>
+
+#### `getPriorityRoute`
+
+```ts
+async getPriorityRoute(nodeId: number): Promise<{ routeKind: RouteKind.LWR | RouteKind.NLWR | RouteKind.Application; repeaters: number[]; routeSpeed: ZWaveDataRate; }>;
+```
+
+Returns the priority route for a given node ID.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getPriorityRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `setPriorityRoute`
+
+```ts
+async setPriorityRoute(
+	nodeId: number,
+	repeaters: number[],
+	routeSpeed: ZWaveDataRate
+): Promise<boolean>;
+```
+
+Sets the priority route for a given node ID.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setPriorityRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		repeaters,
+		routeSpeed
 	]
 }
 ```

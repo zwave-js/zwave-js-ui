@@ -410,7 +410,7 @@
 import { copy } from '@/lib/utils'
 import { getEnumMemberName } from 'zwave-js/safe'
 import { Powerlevel } from '@zwave-js/cc/safe'
-import { mapActions } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
@@ -419,9 +419,8 @@ export default {
 	components: {},
 	props: {
 		value: Boolean, // show or hide
-		socket: Object,
 		node: Object,
-		nodes: Array,
+		socket: Object,
 	},
 	mixins: [InstancesMixin],
 	watch: {
@@ -430,6 +429,7 @@ export default {
 		},
 	},
 	computed: {
+		...mapState(useBaseStore, ['nodes']),
 		filteredNodes() {
 			return this.activeNode
 				? this.nodes.filter((n) => n.id !== this.activeNode.id)
@@ -557,7 +557,7 @@ export default {
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		exportResults() {
-			this.$listeners.export(
+			this.app.exportConfiguration(
 				this.results,
 				`healthCheck_${this.activeNode.id}-${this.resultsTargetNode}`,
 				'json'

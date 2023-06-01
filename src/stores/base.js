@@ -215,9 +215,14 @@ const useBaseStore = defineStore('base', {
 				? n.name + (n.loc ? ' (' + n.loc + ')' : '')
 				: 'NodeID_' + n.id
 
-			// prevent empty stats on startup
+			// make them observable
 			if (!n.statistics) {
 				n.statistics = false
+			}
+
+			// make it observable
+			if (!n.applicationRoute) {
+				n.applicationRoute = false
 			}
 
 			if (n.isControllerNode) {
@@ -338,9 +343,24 @@ const useBaseStore = defineStore('base', {
 							lastReceive = data.lastActive
 						}
 
+						// application route will always miss the
+						// rssi and other info, they match the lwr ones so copy them
+						if (data.applicationRoute && cur.lwr) {
+							data.applicationRoute = {
+								...cur.lwr,
+								repeaters: data.applicationRoute.repeaters,
+								protocolDataRate:
+									data.applicationRoute.protocolDataRate,
+							}
+						}
+
 						if (
-							!deepEqual(prev.lwr != cur.lwr) ||
-							!deepEqual(prev.nlwr != cur.nlwr) ||
+							!deepEqual(prev.lwr, cur.lwr) ||
+							!deepEqual(prev.nlwr, cur.nlwr) ||
+							!deepEqual(
+								node.applicationRoute,
+								data.applicationRoute
+							) ||
 							cur.rssi != prev.rssi
 						) {
 							// mesh graph changed
@@ -349,14 +369,36 @@ const useBaseStore = defineStore('base', {
 					}
 				}
 
+				if (node.isControllerNode && data.bgRssi) {
+					if (!node.bgRSSIPoints) {
+						node.bgRSSIPoints = []
+					}
+					node.bgRSSIPoints.push(data.bgRssi)
+
+					if (node.bgRSSIPoints.length > 360) {
+						const firstPoint = node.bgRSSIPoints[0]
+						const lastPoint =
+							node.bgRSSIPoints[node.bgRSSIPoints.length - 1]
+
+						const maxTimeSpan = 3 * 60 * 60 * 1000 // 3 hours
+
+						if (
+							lastPoint.timestamp - firstPoint.timestamp >
+							maxTimeSpan
+						) {
+							node.bgRSSIPoints.shift()
+						}
+					}
+				}
+
 				Object.assign(node, {
 					statistics: data.statistics,
 					lastActive: data.lastActive,
+					applicationRoute: data.applicationRoute,
 					lastReceive,
 					lastTransmit,
 					errorReceive,
 					errorTransmit,
-					bgRSSIPoints: data.bgRSSIPoints,
 				})
 			}
 		},
