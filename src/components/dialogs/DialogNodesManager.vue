@@ -916,6 +916,7 @@ export default {
 		window.addEventListener('keydown', this.onKeypressed)
 	},
 	beforeDestroy() {
+		this.init(false)
 		window.removeEventListener('keydown', this.onKeypressed)
 	},
 	methods: {
@@ -1326,9 +1327,6 @@ export default {
 		validateTopic(name) {
 			return this.mqtt.disabled ? true : validTopic(name)
 		},
-	},
-	beforeDestroy() {
-		this.init(false)
 	},
 }
 </script>
