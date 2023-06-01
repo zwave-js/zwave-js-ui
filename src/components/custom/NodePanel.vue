@@ -379,13 +379,15 @@ export default {
 					[this.node.id]
 				)
 
-				if (response.success && response.result) {
-					this.showSnackbar('Route deleted', 'success')
-				} else if (!response.result) {
-					this.showSnackbar(
-						`Failed delete priority route for node "${this.node._name}"`,
-						'error'
-					)
+				if (response.success) {
+					if (response.result) {
+						this.showSnackbar('Route deleted', 'success')
+					} else {
+						this.showSnackbar(
+							`Failed delete priority route for node "${this.node._name}"`,
+							'error'
+						)
+					}
 				}
 			}
 		},
@@ -394,13 +396,15 @@ export default {
 				this.node.id,
 			])
 
-			if (response.success && response.result) {
-				this.showSnackbar('Route updated', 'success')
-			} else if (!response.result) {
-				this.showSnackbar(
-					`Failed update priority route for node "${this.node._name}"`,
-					'error'
-				)
+			if (response.success) {
+				if (response.result) {
+					this.showSnackbar('Route updated', 'success')
+				} else {
+					this.showSnackbar(
+						`Failed update priority route for node "${this.node._name}"`,
+						'error'
+					)
+				}
 			}
 		},
 		async setRoute() {
@@ -455,15 +459,17 @@ export default {
 				routeSpeed,
 			])
 
-			if (response.success && response.result) {
-				this.showSnackbar(
-					`New priority route set for node "${this.node._name}"`,
-					'success'
-				)
-			} else if (!response.result) {
-				this.showSnackbar(
-					`Failed to set new priority route for node "${this.node._name}"`
-				)
+			if (response.success) {
+				if (response.result) {
+					this.showSnackbar(
+						`New priority route set for node "${this.node._name}"`,
+						'success'
+					)
+				} else {
+					this.showSnackbar(
+						`Failed to set new priority route for node "${this.node._name}"`
+					)
+				}
 			}
 		},
 	},

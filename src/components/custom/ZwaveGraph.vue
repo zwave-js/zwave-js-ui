@@ -876,7 +876,7 @@ export default {
 
 				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
 
-				const label = `RSSI: ${rssiToString(edgeRssi ?? 127)}`
+				const label = `${rssiToString(edgeRssi ?? 127)}`
 
 				const edgeId = this.getEdgeId({ from, to })
 

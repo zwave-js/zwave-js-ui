@@ -180,10 +180,13 @@ export default {
 			const response = await this.app.apiRequest('addAssociations', args)
 
 			if (response.success) {
-				this.showSnackbar('Association added', 'success')
-				this.getAssociations()
+				if (response.result) {
+					this.showSnackbar('Association added', 'success')
+					this.getAssociations()
+				} else {
+					this.showSnackbar('Error while adding association', 'error')
+				}
 			}
-
 			this.dialogAssociation = false
 		},
 		async removeAssociation(association) {

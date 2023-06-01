@@ -1566,6 +1566,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							groupId,
 							[a]
 						)
+
+						return true
 					} else {
 						this.logNode(
 							zwaveNode,
@@ -1588,6 +1590,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				`Error while adding associations to ${sourceMsg}, node not found`
 			)
 		}
+
+		return false
 	}
 
 	/**
