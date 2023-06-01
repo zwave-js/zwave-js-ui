@@ -281,6 +281,7 @@ import { RouteKind } from '@zwave-js/core/safe'
 import { uuid, arraysEqual } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
+import ConfigApis from '../../apis/ConfigApis.js'
 
 export default {
 	props: {
@@ -347,6 +348,7 @@ export default {
 		return {
 			openPanel: -1,
 			selectedNodes: [],
+			starSvg: ConfigApis.getBasePath('/static/star.svg'),
 			menuX: 0,
 			menuY: 0,
 			menu: false,
@@ -400,6 +402,12 @@ export default {
 				},
 			],
 			edgesLegend: [
+				{
+					icon: 'star',
+					textColor: '#F1C40F',
+					color: '#F1C40F',
+					text: 'Priority route',
+				},
 				{
 					icon: 'minimize',
 					textColor: '',
@@ -910,8 +918,9 @@ export default {
 							? {
 									middle: {
 										enabled: true,
-										type: 'circle',
-										scaleFactor: 0.2,
+										type: 'image',
+										src: this.starSvg,
+										scaleFactor: 1,
 									},
 							  }
 							: undefined,
