@@ -904,6 +904,10 @@ export default {
 	},
 	mounted() {
 		this.onKeypressed = (event) => {
+			if (!this.value) {
+				return
+			}
+
 			if (event.key === 'Enter') {
 				this.dispatchEnter()
 			}
