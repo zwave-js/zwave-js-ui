@@ -82,25 +82,48 @@
 						</v-list-item>
 					</div> -->
 
-				<div v-if="appRoute">
+				<div>
 					<v-subheader
 						>Priority route
 						<v-btn
+							v-if="appRoute"
 							class="ml-2"
 							color="error"
 							x-small
 							@click="deleteRoute()"
 							>Delete
 							<v-icon x-small>delete</v-icon>
-						</v-btn></v-subheader
-					>
-
-					<v-list-item dense v-for="(s, i) in appRoute" :key="i">
-						<v-list-item-content>{{ s.title }}</v-list-item-content>
-						<v-list-item-content class="align-end">{{
-							s.text
-						}}</v-list-item-content>
-					</v-list-item>
+						</v-btn>
+						<v-btn
+							class="ml-2"
+							color="success"
+							x-small
+							dark
+							@click="getRoute()"
+							>Get
+							<v-icon x-small>refresh</v-icon>
+						</v-btn>
+						<v-btn
+							class="ml-2"
+							color="purple"
+							x-small
+							dark
+							@click="setRoute()"
+							>Set
+							<v-icon x-small>route</v-icon>
+						</v-btn>
+					</v-subheader>
+					<div v-if="appRoute">
+						<v-list-item dense v-for="(s, i) in appRoute" :key="i">
+							<v-list-item-content>{{
+								s.title
+							}}</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								s.text
+							}}</v-list-item-content>
+						</v-list-item>
+					</div>
+					<p class="text-center" v-else>None</p>
 				</div>
 			</v-list>
 			<v-row
@@ -128,12 +151,6 @@
 					<v-btn color="success" small rounded @click="pingNode(node)"
 						>Ping
 						<v-icon>settings_ethernet</v-icon>
-					</v-btn>
-				</v-col>
-				<v-col class="pa-1">
-					<v-btn color="purple" small dark rounded @click="setRoute()"
-						>Set Priority Route
-						<v-icon>route</v-icon>
 					</v-btn>
 				</v-col>
 			</v-row>
@@ -370,6 +387,20 @@ export default {
 						'error'
 					)
 				}
+			}
+		},
+		async getRoute() {
+			const response = await this.app.apiRequest('getPriorityRoute', [
+				this.node.id,
+			])
+
+			if (response.success && response.result) {
+				this.showSnackbar('Route updated', 'success')
+			} else if (!response.result) {
+				this.showSnackbar(
+					`Failed update priority route for node "${this.node._name}"`,
+					'error'
+				)
 			}
 		},
 		async setRoute() {
