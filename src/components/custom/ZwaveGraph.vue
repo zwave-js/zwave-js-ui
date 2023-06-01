@@ -910,7 +910,11 @@ export default {
 					width,
 					layer: i + 1,
 					label,
-					font: { align: 'top', size: 0 }, //  multi: 'html'
+					font: {
+						align: 'top',
+						size: 0,
+						vadjust: routeKind === RouteKind.Application ? -5 : 0,
+					}, //  multi: 'html'
 					// arrows: 'to from',
 					dashes,
 					arrows:
