@@ -404,7 +404,7 @@ export default {
 			edgesLegend: [
 				{
 					icon: 'star',
-					textColor: '#F1C40F',
+					textColor: '',
 					color: '#F1C40F',
 					text: 'Priority route',
 				},
