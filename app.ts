@@ -1016,7 +1016,10 @@ app.get(
 
 		if (process.platform !== 'sunos') {
 			try {
-				data.serial_ports = await Driver.enumerateSerialPorts()
+				data.serial_ports = await Driver.enumerateSerialPorts({
+					local: true,
+					remote: true,
+				})
 			} catch (error) {
 				logger.error(error)
 				data.serial_ports = []
