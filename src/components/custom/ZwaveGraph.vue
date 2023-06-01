@@ -905,6 +905,16 @@ export default {
 					font: { align: 'top', size: 0 }, //  multi: 'html'
 					// arrows: 'to from',
 					dashes,
+					arrows:
+						routeKind === RouteKind.Application
+							? {
+									middle: {
+										enabled: true,
+										type: 'circle',
+										scaleFactor: 0.2,
+									},
+							  }
+							: undefined,
 					hidden: routeKind === RouteKind.NLWR,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
 					physics: routeKind !== RouteKind.NLWR,

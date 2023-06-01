@@ -343,6 +343,15 @@ const useBaseStore = defineStore('base', {
 							lastReceive = data.lastActive
 						}
 
+						// application route will always miss the
+						// rssi and other info, they match the lwr ones so copy them
+						if (data.applicationRoute && cur.lwr) {
+							data.applicationRoute = {
+								...cur.lwr,
+								repeaters: data.applicationRoute.repeaters,
+							}
+						}
+
 						if (
 							!deepEqual(prev.lwr, cur.lwr) ||
 							!deepEqual(prev.nlwr, cur.nlwr) ||
