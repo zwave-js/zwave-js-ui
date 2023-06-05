@@ -198,6 +198,7 @@
 										v-if="canResetConfig(group[0])"
 										@click.stop="resetAllConfig()"
 										color="error"
+										class="mb-1"
 										outlined
 										x-small
 									>
@@ -206,6 +207,7 @@
 									</v-btn>
 									<v-btn
 										v-if="group[0]"
+										class="mb-1"
 										@click.stop="
 											refreshCCValues(
 												group[0].commandClass
@@ -248,18 +250,11 @@
 										>Custom Configuration
 									</v-subheader>
 
-									<v-btn
-										@click="resetConfig"
-										v-if="canResetConfig(group[0])"
-										x-small
-										color="error"
-										>Reset</v-btn
-									>
-
 									<v-row>
 										<v-col cols="3">
 											<v-text-field
 												label="Parameter"
+												hide-details
 												v-model.number="
 													configCC.parameter
 												"
@@ -268,6 +263,7 @@
 										<v-col cols="3">
 											<v-select
 												label="Size"
+												hide-details
 												:items="[1, 2, 3, 4]"
 												v-model.number="
 													configCC.valueSize
@@ -277,6 +273,7 @@
 										<v-col cols="3">
 											<v-text-field
 												label="Value"
+												hide-details
 												v-model.number="configCC.value"
 											/>
 										</v-col>
@@ -289,16 +286,18 @@
 										>
 											<v-select
 												label="Format"
+												hide-details
 												:items="configCCValueFormats"
 												v-model="configCC.valueFormat"
 											/>
 										</v-col>
-										<v-col cols="3">
+										<v-col class="d-flex" style="gap: 10px">
 											<v-btn
 												width="60px"
 												@click.stop="configurationGet()"
 												color="green"
 												x-small
+												dark
 											>
 												GET
 											</v-btn>
@@ -310,6 +309,14 @@
 											>
 												SET
 											</v-btn>
+											<v-btn
+												v-if="canResetConfig(group[0])"
+												width="60px"
+												@click.stop="resetConfig"
+												x-small
+												color="error"
+												>Reset</v-btn
+											>
 										</v-col>
 									</v-row>
 								</v-col>
