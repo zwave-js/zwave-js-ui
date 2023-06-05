@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="valueid-slot">
 		<v-subheader class="valueid-label">{{ label }} </v-subheader>
 
 		<v-btn
@@ -24,7 +24,7 @@
 				>
 			</div>
 
-			<div v-if="help" class="caption mt-1">
+			<div v-if="help" class="caption mt-1 help">
 				{{ help }}
 			</div>
 		</div>
@@ -291,7 +291,7 @@
 						<span v-else>{{ falseLabel }}</span>
 					</v-btn>
 				</v-btn-toggle>
-				<div v-if="help" class="caption mt-2">{{ help }}</div>
+				<div v-if="help" class="caption mt-2 help">{{ help }}</div>
 			</div>
 
 			<!-- Button Input -->
@@ -311,13 +311,13 @@
 						>{{ trueLabel || falseLabel || value.label }}</v-btn
 					>
 				</template>
-				<span>{{ '[' + value.id + '] ' + help }}</span>
+				<span class="help">{{ '[' + value.id + '] ' + help }}</span>
 			</v-tooltip>
 		</div>
 	</div>
 </template>
 
-<style>
+<style scoped>
 .valueid-label {
 	font-weight: bold !important;
 	padding-left: 0 !important;
@@ -327,6 +327,11 @@
 .readonly {
 	font-size: x-large !important;
 	font-weight: bold !important;
+}
+
+.valueid-slot::v-deep .v-messages__message,
+.valueid-slot::v-deep .help {
+	white-space: pre-line;
 }
 </style>
 
