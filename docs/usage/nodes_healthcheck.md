@@ -2,13 +2,15 @@
 
 In order to use this feature you need to open **Network Graph** tab, here you can visualize your Z-Wave mesh network and check connectivity issues between nodes and the controller.
 
-If you have a large network, you might want to apply some filters to only see the relevant nodes. Then click on `Reload Graph`. At this point you can see your nodes and their connections.
+Starting from 8.17.0 version Network Graph shows nodes connection based on known routes instead of using neighbors informations as before. This allows to show more accurate connections between nodes. Each node has 3 routes:
 
-> [!NOTE] In some networks, the neighbor information used to draw this graph can be wrong and nodes may appear to be not connected, even if they are. Refer to the route information (see below) to know how commands are actually routed.
+- **Priority route**: set by the user, it's the first route the controller tries
+- **Last working route**: the last route that worked for the node
+- **Next last working route**: the next route that will be tried if the last working route fails
 
-![Load Graph](../_images/load_graph.gif)
+By clicking on nodes a panel will open containing more detailed node information. At the bottom of this panel there is a button `DIAGNOSE` that opens a dialog that allows to perform health checks on that node.
 
-By clicking on nodes (see previous video) a panel will open containing more detailed node information, including the last working route (if supported by your stick). At the bottom of this panel there is a button `CHECK HEALTH` that opens a dialog that allows to perform health checks on that node.
+![Mesh node selected](../_images/mesh-selected.png)
 
 When the target node is the controller, this check will be a **Lifeline healthcheck**, for other nodes a **Route healthcheck**.
 
