@@ -392,6 +392,7 @@ export default {
 			if (!this.value || this.disable_send) return false
 
 			return (
+				this.value.writeable &&
 				this.value.commandClass === 112 &&
 				this.value.commandClassVersion > 3
 			)
