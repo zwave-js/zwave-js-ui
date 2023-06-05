@@ -448,7 +448,8 @@ export default {
 				status: item.status ? 0 : 1,
 				securityClasses: securityClassesToArray(item.securityClasses),
 				requestedSecurityClasses: securityClassesToArray(
-					item.requestedSecurityClasses
+					item.requestedSecurityClasses ||
+						parseSecurityClasses([], true)
 				),
 			}
 
