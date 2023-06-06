@@ -243,7 +243,6 @@
 		<main style="height: 100%">
 			<v-main style="height: 100%">
 				<router-view
-					style="padding-bottom: 40px"
 					v-if="auth !== undefined"
 					@import="importFile"
 					@export="exportConfiguration"

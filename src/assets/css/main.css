@@ -28,3 +28,16 @@
 		'Bitstream Vera Sans Mono', 'Liberation Mono', 'Nimbus Mono L', Monaco,
 		'Courier New', Courier, monospace !important;
 }
+
+.fill {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.fill-height {
+  height: 100% !important;
+}
+
+.fill-width {
+  width: 100% !important;
+}

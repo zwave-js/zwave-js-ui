@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div class="fill-height">
 		<v-expansion-panels v-model="openPanel">
 			<v-expansion-panel>
 				<v-expansion-panel-header> Options </v-expansion-panel-header>
@@ -175,7 +175,7 @@
 			</v-expansion-panel>
 		</v-expansion-panels>
 
-		<v-row class="mt-5" style="height: 776px">
+		<div class="mt-5" style="height: calc(100% - 95px)">
 			<v-col
 				align-self="center"
 				class="text-center"
@@ -192,8 +192,15 @@
 				class="fill-height"
 				:style="{ opacity: loading ? 0 : '' }"
 				cols="12"
+				ref="container"
+				v-resize="onResize"
 			>
-				<div class="fill-height" ref="content"></div>
+				<div
+					:style="{
+						height: containerHeight + 'px',
+					}"
+					ref="content"
+				></div>
 				<v-menu
 					v-model="menu"
 					:close-on-content-click="false"
@@ -261,7 +268,7 @@
 					</v-card>
 				</v-menu>
 			</v-col>
-		</v-row>
+		</div>
 	</div>
 </template>
 
@@ -347,6 +354,7 @@ export default {
 	data() {
 		return {
 			openPanel: -1,
+			containerHeight: 400,
 			selectedNodes: [],
 			starSvg: ConfigApis.getBasePath('/static/star.svg'),
 			menuX: 0,
@@ -506,6 +514,16 @@ export default {
 		this.unsubscribeUpdate()
 	},
 	methods: {
+		onResize() {
+			// when container resizes get its height and set content to that
+			// so that the graph can be resized
+			this.containerHeight = this.$refs.container.offsetHeight
+			const maxHeight = window.innerHeight - 180
+			// prevent to grow bigger then window height
+			if (this.containerHeight > maxHeight) {
+				this.containerHeight = maxHeight
+			}
+		},
 		toggleLive() {
 			this.liveUpdate = !this.liveUpdate
 
