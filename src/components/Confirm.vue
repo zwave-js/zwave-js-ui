@@ -88,7 +88,9 @@
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
-									@change="input.onChange || (() => {})"
+									@change="
+										inputProps[input.key].onChange($event)
+									"
 									:persistent-hint="!!input.hint"
 									:multiple="!!input.multiple"
 									:hint="input.hint"
@@ -107,7 +109,9 @@
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
-									@change="input.onChange || (() => {})"
+									@change="
+										inputProps[input.key].onChange($event)
+									"
 									:persistent-hint="!!input.hint"
 									:multiple="!!input.multiple"
 									:hint="input.hint"
@@ -167,7 +171,7 @@
 								</v-container>
 								<v-container v-if="input.type === 'button'">
 									<v-btn
-										@click="input.onChange"
+										@click="inputProps[input.key].onChange"
 										:color="input.color"
 										:outlined="input.outlined"
 									>
@@ -224,7 +228,7 @@ import { highlight, languages } from 'prismjs/components/prism-core'
 import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
-import { wrapFunc } from '../lib/utils'
+import { wrapFunc, noop } from '../lib/utils'
 import ListInput from './custom/ListInput.vue'
 
 export default {
@@ -268,6 +272,7 @@ export default {
 		},
 	},
 	methods: {
+		noop,
 		paintBoundingBox(detectedCodes, ctx) {
 			for (const detectedCode of detectedCodes) {
 				const {
@@ -330,7 +335,10 @@ export default {
 						input.onChange &&
 						typeof input.onChange === 'function'
 					) {
-						input.onChange = input.onChange.bind(this, this.values)
+						this.inputProps[input.key].onChange =
+							input.onChange.bind(this, this.values)
+					} else {
+						this.inputProps[input.key].onChange = noop
 					}
 
 					if (input.rules) {
