@@ -648,9 +648,15 @@
 													: 'warning'
 											}}</v-icon
 										>
-										<p class="mt-3 headline text-center">
-											{{ s.text }}
-										</p>
+										<p
+											v-text="s.text"
+											class="mt-3 headline text-center"
+										></p>
+										<p
+											v-if="s.error"
+											v-text="s.error"
+											class="headline text-center error--text"
+										></p>
 									</v-col>
 								</v-card-text>
 							</v-card>
@@ -682,11 +688,7 @@ import {
 	validTopic,
 } from '../../lib/utils.js'
 import useBaseStore from '../../stores/base.js'
-import {
-	getEnumMemberName,
-	InclusionStrategy,
-	SecurityBootstrapFailure,
-} from 'zwave-js/safe'
+import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js/safe'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
@@ -763,6 +765,7 @@ export default {
 					success: false,
 					title: 'Done',
 					text: 'Test',
+					error: false,
 				},
 			},
 			steps: [],
@@ -1281,6 +1284,30 @@ export default {
 				}
 			}
 		},
+		getSecurityBootstrapError(val) {
+			switch (val) {
+				case SecurityBootstrapFailure.NodeCanceled:
+					return 'Security bootstrap canceled by the included node'
+				case SecurityBootstrapFailure.NoKeysConfigured:
+					return 'Required security keys not configured'
+				case SecurityBootstrapFailure.ParameterMismatch:
+					return 'No possible match in encryption parameters between the controller and the node'
+				case SecurityBootstrapFailure.S2IncorrectPIN:
+					return 'Incorrect S2 PIN'
+				case SecurityBootstrapFailure.S2NoUserCallbacks:
+					return 'No user callbacks'
+				case SecurityBootstrapFailure.S2WrongSecurityLevel:
+					return 'Security keys mismatch between the controller and the node'
+				case SecurityBootstrapFailure.Timeout:
+					return 'Expected message was not received within the corresponding timeout'
+				case SecurityBootstrapFailure.Unknown:
+					return 'Unknown error'
+				case SecurityBootstrapFailure.UserCanceled:
+					return 'Security bootstrap canceled by the user'
+				default:
+					return 'Unknown error'
+			}
+		},
 		showResults(result) {
 			if (this.waitTimeout) {
 				clearTimeout(this.waitTimeout)
@@ -1307,14 +1334,10 @@ export default {
 				const doneStep = copy(this.availableSteps.done)
 				doneStep.text = `Node ${
 					this.nodeFound.id
-				} added with security "${this.nodeFound.security || 'None'}${
-					result.lowSecurityReason
-						? ` (${getEnumMemberName(
-								SecurityBootstrapFailure,
-								result.lowSecurityReason
-						  )})`
-						: ''
-				}"`
+				} added with security "${this.nodeFound.security || 'None'}"`
+				doneStep.error = result.lowSecurityReason
+					? this.getSecurityBootstrapError(result.lowSecurityReason)
+					: false
 				doneStep.success = !(result && result.lowSecurity)
 				this.pushStep(doneStep)
 			}
