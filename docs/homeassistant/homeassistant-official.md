@@ -14,7 +14,7 @@ To enable the integration:
 1. Open the Z-Wave JS UI Settings page
 2. Enable the "WS Server" setting in the [Home Assistant](/usage/setup?id=home-assistant) panel
 3. If you do not need the MQTT features, you can [Disable MQTT Gateway](/usage/setup?id=disable-gateway) and use Z-Wave JS UI as an additional user interface to control your Z-Wave network.
-4. Configure the Z-Wave integration in Home Assistant by following [the official docs](https://www.home-assistant.io/integrations/zwave_js)
+4. Configure the Z-Wave integration in Home Assistant by following [the official docs](https://www.home-assistant.io/integrations/zwave_js). Note that the default URL for the WS Server is `ws://a0d7b954-zwavejs2mqtt:3000`.
 
 Once this has been configured, entities should automatically be created in HA.
 
