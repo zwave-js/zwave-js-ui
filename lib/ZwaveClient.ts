@@ -441,6 +441,7 @@ export type ZUINode = {
 	security?: string | undefined
 	supportsBeaming?: boolean
 	supportsSecurity?: boolean
+	supportsTime?: boolean
 	isListening?: boolean
 	isControllerNode?: boolean
 	powerlevel?: number
@@ -4421,6 +4422,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 			})
 		}
+
+		// check if this node can call the Sync time
+		node.supportsTime =
+			zwaveNode.supportsCC(CommandClasses.Time) ||
+			zwaveNode.supportsCC(CommandClasses['Time Parameters']) ||
+			zwaveNode.supportsCC(CommandClasses['Clock']) ||
+			zwaveNode.supportsCC(CommandClasses['Schedule Entry Lock'])
 
 		this.getGroups(zwaveNode.id, true)
 

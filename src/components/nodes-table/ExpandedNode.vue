@@ -468,16 +468,7 @@ export default {
 
 			const CCActions = []
 
-			const supportsTime = this.node.values.some((value) =>
-				[
-					138, // CommandClasses.Time,
-					139, // CommandClasses['Time Parameters'],
-					129, // CommandClasses.Clock,
-					78, // CommandClasses['Schedule Entry Lock'],
-				].includes(value.commandClass)
-			)
-
-			if (supportsTime) {
+			if (this.node.supportsTime) {
 				CCActions.push({
 					text: 'Set Date and Time',
 					options: [
