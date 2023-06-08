@@ -83,7 +83,7 @@
 					v-model="fab"
 				>
 					<v-icon v-if="fab">close</v-icon>
-					<v-icon v-else>add</v-icon>
+					<v-icon v-else>menu</v-icon>
 				</v-btn>
 			</template>
 			<v-tooltip left>
