@@ -66,7 +66,7 @@ if [ ! -z "$1" ]; then
 	else
 		echo "## Skipping build..."
 	fi
-	
+
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
 		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER
@@ -77,7 +77,7 @@ if [ ! -z "$1" ]; then
 		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
 	fi
-	
+
 else
 
 	if ask "Re-build $APP?"; then
@@ -160,7 +160,7 @@ if [ ! -z "$1" ]; then
 		echo "## Create zip file $APP-v$VERSION-linux"
 		zip -r $APP-v$VERSION-linux.zip store $APP-linux
 	fi
-	
+
 else
 	echo "## Create zip file $APP-v$VERSION"
 	zip -r $APP-v$VERSION.zip store $APP
