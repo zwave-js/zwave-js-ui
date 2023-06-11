@@ -42,7 +42,7 @@ echo "App-name: $APP"
 VERSION=$(node -p "require('./package.json').version")
 echo "Version: $VERSION"
 
-NODE_MAJOR=$(node -v | egrep -o '[0-9].' | head -n 1)
+NODE_MAJOR=$(node -v | grep -E -o '[0-9].' | head -n 1)
 
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
@@ -51,7 +51,7 @@ rm -rf $PKG_FOLDER/*
 if [[ "$@" == *"--arch"* ]]; then
 	ARCH=$(echo "$@" | grep -oP '(?<=--arch=)[^ ]+')
 else
-	ARCH=$(arch)
+	ARCH=$(uname -m)
 fi
 
 echo "## Architecture: $ARCH"
@@ -89,7 +89,7 @@ else
 	echo '## Choose architecture to build'
 	echo '###################################################'
 	echo ' '
-	echo 'Your architecture is' $(arch)
+	echo 'Your architecture is' $ARCH
 	PS3="Architecture: >"
 	options=(
 		"x64"
