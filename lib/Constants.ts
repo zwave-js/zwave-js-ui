@@ -17,6 +17,7 @@ interface ISensorType {
 }
 
 interface ISensorProps {
+	state_class?: string
 	device_class?: string
 	unit_of_measurement?: string
 	icon?: string
@@ -140,16 +141,19 @@ export function meterType(
 					break
 				case 0x02: // W
 					cfg.props = {
+						state_class: 'measurement',
 						device_class: 'power',
 					}
 					break
 				case 0x04: // V
 					cfg.props = {
+						state_class: 'measurement',
 						device_class: 'voltage',
 					}
 					break
 				case 0x05: // A
 					cfg.props = {
+						state_class: 'measurement',
 						device_class: 'current',
 					}
 					break
@@ -204,12 +208,14 @@ export const _sensorMap: ISensorMap = {
 		77: 'discharge_line',
 		80: 'defrost',
 		props: {
+			state_class: 'measurement',
 			device_class: 'temperature',
 		},
 	},
 	illuminance: {
 		3: '', // illuminance
 		props: {
+			state_class: 'measurement',
 			device_class: 'illuminance',
 			unit_of_measurement: 'lx',
 		},
@@ -217,18 +223,21 @@ export const _sensorMap: ISensorMap = {
 	power: {
 		4: 'power',
 		props: {
+			state_class: 'measurement',
 			device_class: 'power',
 		},
 	},
 	voltage: {
 		15: 'voltage',
 		props: {
+			state_class: 'measurement',
 			device_class: 'voltage',
 		},
 	},
 	current: {
 		16: 'current',
 		props: {
+			state_class: 'measurement',
 			device_class: 'current',
 		},
 	},
@@ -236,6 +245,7 @@ export const _sensorMap: ISensorMap = {
 		28: 'resistivity',
 		29: 'conductivity',
 		props: {
+			state_class: 'measurement',
 			device_class: 'power',
 		},
 	},
@@ -243,6 +253,7 @@ export const _sensorMap: ISensorMap = {
 		5: 'air', // humidity
 		41: 'soil',
 		props: {
+			state_class: 'measurement',
 			device_class: 'humidity',
 		},
 	},
@@ -267,6 +278,7 @@ export const _sensorMap: ISensorMap = {
 		9: 'barometric',
 		57: 'water',
 		props: {
+			state_class: 'measurement',
 			device_class: 'pressure',
 		},
 	},
@@ -328,6 +340,7 @@ export const _sensorMap: ISensorMap = {
 	signal: {
 		58: 'strength',
 		props: {
+			state_class: 'measurement',
 			device_class: 'signal_strength',
 		},
 	},

@@ -42,7 +42,7 @@ echo "App-name: $APP"
 VERSION=$(node -p "require('./package.json').version")
 echo "Version: $VERSION"
 
-NODE_MAJOR=$(node -v | egrep -o '[0-9].' | head -n 1)
+NODE_MAJOR=$(node -v | grep -E -o '[0-9].' | head -n 1)
 
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
@@ -51,7 +51,7 @@ rm -rf $PKG_FOLDER/*
 if [[ "$@" == *"--arch"* ]]; then
 	ARCH=$(echo "$@" | grep -oP '(?<=--arch=)[^ ]+')
 else
-	ARCH=$(arch)
+	ARCH=$(uname -m)
 fi
 
 echo "## Architecture: $ARCH"
@@ -66,7 +66,7 @@ if [ ! -z "$1" ]; then
 	else
 		echo "## Skipping build..."
 	fi
-	
+
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
 		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER
@@ -77,7 +77,7 @@ if [ ! -z "$1" ]; then
 		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
 	fi
-	
+
 else
 
 	if ask "Re-build $APP?"; then
@@ -89,7 +89,7 @@ else
 	echo '## Choose architecture to build'
 	echo '###################################################'
 	echo ' '
-	echo 'Your architecture is' $(arch)
+	echo 'Your architecture is' $ARCH
 	PS3="Architecture: >"
 	options=(
 		"x64"
@@ -160,7 +160,7 @@ if [ ! -z "$1" ]; then
 		echo "## Create zip file $APP-v$VERSION-linux"
 		zip -r $APP-v$VERSION-linux.zip store $APP-linux
 	fi
-	
+
 else
 	echo "## Create zip file $APP-v$VERSION"
 	zip -r $APP-v$VERSION.zip store $APP

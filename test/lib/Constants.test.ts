@@ -32,7 +32,10 @@ describe('#Constants', () => {
 			expect(mod.sensorType(1)).to.deep.equal({
 				sensor: 'temperature',
 				objectId: 'air',
-				props: { device_class: 'temperature' },
+				props: {
+					device_class: 'temperature',
+					state_class: 'measurement',
+				},
 			}))
 		it('no props', () =>
 			expect(mod.sensorType(2)).to.deep.equal({
