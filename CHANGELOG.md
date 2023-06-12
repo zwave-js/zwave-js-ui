@@ -1,5 +1,26 @@
 
 
+## [8.18.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.18.0...v8.18.1) (2023-06-12)
+
+
+### Bug Fixes
+
+* **ui:** cannot edit manually granted security classes ([9f42ec3](https://github.com/zwave-js/zwave-js-ui/commit/9f42ec37b828c4b79b9f80ec257bee68161d4984)), closes [#3122](https://github.com/zwave-js/zwave-js-ui/issues/3122)
+* **ui:** cleaner s2 inclusion error in done step ([c6c9ee1](https://github.com/zwave-js/zwave-js-ui/commit/c6c9ee196d83e27ebf051d225de98be3c8dd9e7d)), closes [#3123](https://github.com/zwave-js/zwave-js-ui/issues/3123)
+* **ui:** disable reset on read-only config ([f59d44f](https://github.com/zwave-js/zwave-js-ui/commit/f59d44f14f185fdcfd277d0a09644bf185b05f3f)), closes [#3117](https://github.com/zwave-js/zwave-js-ui/issues/3117)
+* **ui:** driver function snippets select not working ([80be583](https://github.com/zwave-js/zwave-js-ui/commit/80be5834f8f3e0b9e21031a6fa59deebdb13ebb9))
+* **ui:** line break support on valueId descriptions ([f9b6bf4](https://github.com/zwave-js/zwave-js-ui/commit/f9b6bf4104abf7df8c2972bc961187763241a987)), closes [#3116](https://github.com/zwave-js/zwave-js-ui/issues/3116)
+* **ui:** network graph fill height ([300fb2e](https://github.com/zwave-js/zwave-js-ui/commit/300fb2e441e028748f215f70ff3b408e79e38fc6)), closes [#3125](https://github.com/zwave-js/zwave-js-ui/issues/3125)
+* **ui:** reset button position ([42ecf30](https://github.com/zwave-js/zwave-js-ui/commit/42ecf30f6209c95e2bbf6bd9e6102781c78406c4)), closes [#3118](https://github.com/zwave-js/zwave-js-ui/issues/3118)
+* **ui:** sync time action never visible on nodes ([9395466](https://github.com/zwave-js/zwave-js-ui/commit/939546627102fced961343fc8bec8fc92c6b0369))
+* **ui:** use humburger button for control panel fab ([5c12eae](https://github.com/zwave-js/zwave-js-ui/commit/5c12eae71ba2e83456b93a12420eebad633a31f1))
+
+
+### Features
+
+* bump zwave-js@10.23.2 ([3565dfc](https://github.com/zwave-js/zwave-js-ui/commit/3565dfcb560b810ec3c2d5be35e82e9ef6e3ea11))
+* **discovery:** add `state_class: measurement` to sensors ([#3139](https://github.com/zwave-js/zwave-js-ui/issues/3139)) ([e07078a](https://github.com/zwave-js/zwave-js-ui/commit/e07078a3e17c2cfe8d346e462bfd1d6421134756))
+
 # [8.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.17.1...v8.18.0) (2023-06-01)
 
 
