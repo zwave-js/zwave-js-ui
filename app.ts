@@ -762,13 +762,13 @@ async function isAuthenticated(req: Request, res: Response, next: () => void) {
 		next()
 	} catch (error) {
 		logger.debug('Authentication failed', error)
-	}
 
-	res.json({
-		success: false,
-		message: RESPONSE_CODES.GENERAL_ERROR,
-		code: 3,
-	})
+		res.json({
+			success: false,
+			message: RESPONSE_CODES.GENERAL_ERROR,
+			code: 3,
+		})
+	}
 }
 
 // logout the user
