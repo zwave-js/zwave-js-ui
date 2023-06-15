@@ -317,6 +317,11 @@ import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import UserCodeTable from './UserCodeTable.vue'
+import {
+	getEnumMemberName,
+	SetValueStatus,
+	setValueWasUnsupervisedOrSucceeded,
+} from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -597,10 +602,21 @@ export default {
 				v.toUpdate = false
 
 				if (response.success) {
-					if (response.result) {
+					const result = response.result
+					const success = setValueWasUnsupervisedOrSucceeded(
+						result.status
+					)
+					if (success) {
 						this.showSnackbar('Value updated', 'success')
 					} else {
-						this.showSnackbar('Value update failed', 'error')
+						this.showSnackbar(
+							'Value update failed: ' + result.message ||
+								getEnumMemberName(
+									SetValueStatus,
+									result.status
+								),
+							'error'
+						)
 					}
 				} else {
 					this.showSnackbar(

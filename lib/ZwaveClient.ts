@@ -93,6 +93,8 @@ import {
 	SetValueResult,
 	SetValueStatus,
 	setValueFailed,
+	setValueWasUnsupervisedOrSucceeded,
+	RemoveNodeReason,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -3494,7 +3496,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					result = await zwaveNode.setValue(valueId, value, options)
 
-					if (result) {
+					if (setValueWasUnsupervisedOrSucceeded(result)) {
 						this.emit('valueWritten', valueId, node, value)
 					}
 				}
@@ -3507,7 +3509,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// https://zwave-js.github.io/node-zwave-js/#/api/node?id=setvalue
 			if (setValueFailed(result)) {
-				logger.log('error', `Unable to write %o on ${vID}`, value)
+				logger.log(
+					'error',
+					`Unable to write %o on ${vID}: %s`,
+					value,
+					result.message ||
+						getEnumMemberName(SetValueStatus, result.status)
+				)
 			}
 		}
 
@@ -3916,15 +3924,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when node is removed
 	 *
 	 */
-	private _onNodeRemoved(zwaveNode: ZWaveNode) {
-		this.logNode(zwaveNode, 'info', 'Removed')
+	private _onNodeRemoved(zwaveNode: ZWaveNode, reason: RemoveNodeReason) {
+		this.logNode(zwaveNode, 'info', 'Removed, reason: ' + reason)
 		zwaveNode.removeAllListeners()
 
 		this.emit(
 			'event',
 			EventSource.CONTROLLER,
 			'node removed',
-			this.zwaveNodeToJSON(zwaveNode)
+			this.zwaveNodeToJSON(zwaveNode),
+			reason
 		)
 
 		this._removeNode(zwaveNode.id)
