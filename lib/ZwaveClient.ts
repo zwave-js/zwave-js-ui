@@ -3131,7 +3131,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	updateFirmware(nodeId: number, files: FwFile[]): Promise<FirmwareUpdateResult> {
+	updateFirmware(
+		nodeId: number,
+		files: FwFile[]
+	): Promise<FirmwareUpdateResult> {
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -3421,7 +3424,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		value: any,
 		options?: SetValueAPIOptions
 	) {
-		let result: SetValueResult;
+		let result: SetValueResult
 		if (this.driverReady) {
 			const vID = this._getValueID(valueId)
 			logger.log('info', `Writing %o to ${valueId.nodeId}-${vID}`, value)
@@ -3456,8 +3459,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						throw Error('Command not valid for Multilevel Switch')
 					}
 					result = {
-						status: SetValueStatus.SuccessUnsupervised
-					};
+						status: SetValueStatus.SuccessUnsupervised,
+					}
 				} else {
 					// coerce string to numbers when value type is number and received a string
 					if (

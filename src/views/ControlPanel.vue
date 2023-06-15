@@ -138,6 +138,7 @@ import useBaseStore from '../stores/base.js'
 import SmartView from '@/components/nodes-table/SmartView.vue'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import logger from '../lib/logger'
+import { FirmwareUpdateStatus, getEnumMemberName } from 'zwave-js/safe'
 
 const log = logger.get('ControlPanel')
 
@@ -910,6 +911,36 @@ export default {
 								break
 							case 'firmwareUpdateOTW': {
 								// handled in App.vue
+								break
+							}
+							case 'updateFirmware': {
+								const result = response.result
+								const status = getEnumMemberName(
+									FirmwareUpdateStatus,
+									result.status
+								)?.replace(/_/g, ' ')
+
+								this.app.confirm(
+									'Firmware update',
+									`<p>The update finished with result: <b>${status}</b></p>${
+										result.waitTime
+											? `<p>&bull; Wait <b>${result.waitTime} seconds</b> before interacting with the node</p>`
+											: ''
+									}${
+										result.reInterview
+											? '<p>&bull; <b>Node requires to be reinterviewed</b></p>'
+											: ''
+									}`,
+									'info',
+									{
+										confirmText: 'Ok',
+										noCancel: true,
+										color: result.success
+											? 'success'
+											: 'error',
+									}
+								)
+
 								break
 							}
 							default:
