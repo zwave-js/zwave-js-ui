@@ -75,7 +75,7 @@
 			<template v-slot:activator>
 				<v-btn v-model="fab" color="blue darken-3" dark fab>
 					<v-icon v-if="fab"> close </v-icon>
-					<v-icon v-else> add </v-icon>
+					<v-icon v-else> menu </v-icon>
 				</v-btn>
 			</template>
 			<v-tooltip left>
