@@ -171,7 +171,7 @@
 								</v-container>
 								<v-container v-if="input.type === 'button'">
 									<v-btn
-										@click="inputProps[input.key].onChange"
+										@click="inputProps[input.key].onChange()"
 										:color="input.color"
 										:outlined="input.outlined"
 									>
