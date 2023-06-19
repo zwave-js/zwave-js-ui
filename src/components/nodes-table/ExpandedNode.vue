@@ -604,9 +604,7 @@ export default {
 
 				if (response.success) {
 					const result = response.result
-					const success = setValueWasUnsupervisedOrSucceeded(
-						result.status
-					)
+					const success = setValueWasUnsupervisedOrSucceeded(result)
 					if (success) {
 						this.showSnackbar('Value updated', 'success')
 					} else {
