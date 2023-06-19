@@ -26,6 +26,7 @@ import {
 	mdiSleep,
 } from '@mdi/js'
 import useBaseStore from '../../stores/base.js'
+import { getBatteryDescription } from '../../lib/utils.js'
 
 export default {
 	props: {
@@ -273,10 +274,7 @@ export default {
 				description = 'mains-powered'
 			} else {
 				label = `${level}%`
-				description = Array.isArray(node.batteryLevels)
-					? 'All battery levels: ' +
-					  node.batteryLevels.map((v) => `${v}%`).join(',')
-					: 'Unknown battery level'
+				description = getBatteryDescription(node)
 				if (level <= 10) {
 					icon = mdiBatteryAlertVariantOutline
 					iconStyle = `color: ${colors.red.base}`
