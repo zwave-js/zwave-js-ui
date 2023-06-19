@@ -317,11 +317,12 @@ import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import UserCodeTable from './UserCodeTable.vue'
+import { getEnumMemberName } from 'zwave-js/safe'
+
 import {
-	getEnumMemberName,
 	SetValueStatus,
 	setValueWasUnsupervisedOrSucceeded,
-} from 'zwave-js/safe'
+} from '@zwave-js/cc/safe'
 
 export default {
 	props: {

@@ -3137,6 +3137,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		nodeId: number,
 		files: FwFile[]
 	): Promise<FirmwareUpdateResult> {
+		// const result: FirmwareUpdateResult = {
+		// 	status: FirmwareUpdateStatus.Error_Checksum,
+		// 	waitTime: 10,
+		// 	success: false,
+		// 	reInterview: true,
+		// }
+
+		// return Promise.resolve(result)
+
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
