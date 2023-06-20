@@ -172,6 +172,6 @@ export function getBatteryDescription(node) {
 		? 'All battery levels: ' +
 				Object.values(node.batteryLevels)
 					.map((v) => `${v}%`)
-					.join(',')
+					.join(', ')
 		: 'Unknown battery level'
 }
