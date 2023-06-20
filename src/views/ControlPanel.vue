@@ -139,6 +139,7 @@ import useBaseStore from '../stores/base.js'
 import SmartView from '@/components/nodes-table/SmartView.vue'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import logger from '../lib/logger'
+import { FirmwareUpdateStatus } from 'zwave-js/safe'
 
 const log = logger.get('ControlPanel')
 
@@ -911,6 +912,100 @@ export default {
 								break
 							case 'firmwareUpdateOTW': {
 								// handled in App.vue
+								break
+							}
+							case 'updateFirmware': {
+								const result = response.result
+
+								const title = `Firmware update ${
+									result.success ? 'success' : 'failed'
+								}`
+
+								let message = ''
+
+								if (result.success) {
+									if (
+										result.status ===
+										FirmwareUpdateStatus.OK_WaitingForActivation
+									) {
+										message =
+											'<p>The firmware must be activated <b>manually</b>, likely by pushing a button on the device.</p>'
+									} else if (
+										result.status ===
+										FirmwareUpdateStatus.OK_RestartPending
+									) {
+										message = `<p>The device will now restart.${
+											result.waitTime
+												? ` This will take approximately <b>${result.waitTime}</b> seconds.`
+												: ''
+										}</p>`
+									} else if (
+										// status is OK_NoRestart
+										result.waitTime &&
+										!result.reInterview
+									) {
+										message = `<p>Please wait <b>${result.waitTime}</b> seconds before interacting with the device again.<p>`
+									}
+
+									if (result.reInterview) {
+										if (result.waitTime) {
+											message +=
+												'<p>Afterwards the device will be <b>re-interviewed</b>.<p>'
+										} else {
+											message +=
+												'<p>The device will now be <b>re-interviewed</b>.<p>'
+										}
+
+										message +=
+											'<p>Wait until the interview is done before interacting with the device again.<p/>'
+									}
+								} else {
+									switch (result.status) {
+										case FirmwareUpdateStatus.Error_Timeout:
+											message =
+												'There was a timeout during the firmware update.'
+											break
+										case FirmwareUpdateStatus.Error_Checksum:
+											message = 'Invalid checksum'
+											break
+										case FirmwareUpdateStatus.Error_TransmissionFailed:
+											message =
+												'The transmission failed or was aborted'
+											break
+										case FirmwareUpdateStatus.Error_InvalidManufacturerID:
+											message =
+												'The manufacturer ID is invalid'
+											break
+										case FirmwareUpdateStatus.Error_InvalidFirmwareID:
+											message =
+												'The firmware ID is invalid'
+											break
+										case FirmwareUpdateStatus.Error_InvalidFirmwareTarget:
+											message =
+												'The firmware target is invalid'
+											break
+										case FirmwareUpdateStatus.Error_InvalidHeaderInformation:
+										case FirmwareUpdateStatus.Error_InvalidHeaderFormat:
+											message =
+												'The firmware header is invalid'
+											break
+										case FirmwareUpdateStatus.Error_InsufficientMemory:
+											message =
+												'The device does not have enough memory to perform the firmware update'
+											break
+										case FirmwareUpdateStatus.Error_InvalidHardwareVersion:
+											message =
+												'The hardware version is invalid'
+											break
+									}
+								}
+
+								this.app.confirm(title, message, 'info', {
+									confirmText: 'Ok',
+									noCancel: true,
+									color: result.success ? 'success' : 'error',
+								})
+
 								break
 							}
 							default:

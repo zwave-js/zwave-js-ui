@@ -338,6 +338,7 @@ import { ConfigValueFormat } from '@zwave-js/core/safe'
 import { RFRegion } from 'zwave-js/safe'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { isUnsupervisedOrSucceeded } from '@zwave-js/core/safe'
 
 export default {
 	props: {
@@ -524,10 +525,17 @@ export default {
 			])
 
 			if (response.success) {
-				this.showSnackbar(
-					'Configuration parameter set successfully',
-					'success'
-				)
+				if (isUnsupervisedOrSucceeded(response.result)) {
+					this.showSnackbar(
+						`Parameter ${this.configCC.parameter} set successfully`,
+						'success'
+					)
+				} else {
+					this.showSnackbar(
+						`Parameter ${this.configCC.parameter} set failed`,
+						'error'
+					)
+				}
 			}
 		},
 		getValue(v) {

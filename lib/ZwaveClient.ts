@@ -90,6 +90,11 @@ import {
 	UserIDStatus,
 	ScheduleEntryLockScheduleKind,
 	RouteStatistics,
+	SetValueResult,
+	SetValueStatus,
+	setValueFailed,
+	setValueWasUnsupervisedOrSucceeded,
+	RemoveNodeReason,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
@@ -176,12 +181,10 @@ export const allowedApis = validateMethods([
 	'isFailedNode',
 	'removeFailedNode',
 	'refreshInfo',
-	'beginFirmwareUpdate',
 	'updateFirmware',
 	'firmwareUpdateOTW',
 	'abortFirmwareUpdate',
 	'getAvailableFirmwareUpdates',
-	'beginOTAFirmwareUpdate',
 	'firmwareUpdateOTA',
 	'sendCommand',
 	'writeValue',
@@ -2692,25 +2695,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
-	/**
-	 * @deprecated Use `firmwareUpdateOTA` instead
-	 */
-	async beginOTAFirmwareUpdate(
-		nodeId: number,
-		update: FirmwareUpdateFileInfo
-	) {
-		if (this.driverReady) {
-			const result = await this._driver.controller.beginOTAFirmwareUpdate(
-				nodeId,
-				update
-			)
-
-			return result
-		}
-
-		throw new DriverNotReadyError()
-	}
-
 	async setPowerlevel(
 		powerlevel: number,
 		measured0dBm: number
@@ -3121,7 +3105,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to trigger an update of controller FW
 	 */
-	async firmwareUpdateOTW(file: FwFile): Promise<boolean> {
+	async firmwareUpdateOTW(
+		file: FwFile
+	): Promise<ControllerFirmwareUpdateResult> {
 		if (this._lockOTWUpdates) {
 			throw Error('Firmware update already in progress')
 		}
@@ -3147,7 +3133,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean> {
+	updateFirmware(
+		nodeId: number,
+		files: FwFile[]
+	): Promise<FirmwareUpdateResult> {
+		// const result: FirmwareUpdateResult = {
+		// 	status: FirmwareUpdateStatus.Error_Checksum,
+		// 	waitTime: 10,
+		// 	success: false,
+		// 	reInterview: true,
+		// }
+
+		// return Promise.resolve(result)
+
 		if (this.driverReady) {
 			const zwaveNode = this.getNode(nodeId)
 
@@ -3184,56 +3182,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			return zwaveNode.updateFirmware(firmwares)
-		}
-
-		throw new DriverNotReadyError()
-	}
-
-	/**
-	 * Start a firmware update.
-	 * @deprecated Use `updateFirmware` instead
-	 */
-	beginFirmwareUpdate(
-		nodeId: number,
-		fileName: string,
-		data: Buffer,
-		target: number
-	): Promise<void> {
-		if (this.driverReady) {
-			const zwaveNode = this.getNode(nodeId)
-
-			if (!zwaveNode) {
-				throw Error(`Node ${nodeId} not found`)
-			}
-
-			const node = this._nodes.get(nodeId)
-
-			if (node.firmwareUpdate) {
-				throw Error(`Firmware update already in progress`)
-			}
-
-			if (!(data instanceof Buffer)) {
-				throw Error('Data must be a buffer')
-			}
-
-			let actualFirmware
-			try {
-				const format = guessFirmwareFileFormat(fileName, data)
-				actualFirmware = extractFirmware(data, format)
-			} catch (e) {
-				throw Error(
-					'Unable to extract firmware from file: ' + e.message
-				)
-			}
-
-			if (target >= 0) {
-				actualFirmware.firmwareTarget = target
-			}
-
-			return zwaveNode.beginFirmwareUpdate(
-				actualFirmware.data,
-				actualFirmware.firmwareTarget
-			)
 		}
 
 		throw new DriverNotReadyError()
@@ -3487,7 +3435,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		value: any,
 		options?: SetValueAPIOptions
 	) {
-		let result = false
+		let result: SetValueResult = {
+			status: SetValueStatus.Fail,
+		}
 		if (this.driverReady) {
 			const vID = this._getValueID(valueId)
 			logger.log('info', `Writing %o to ${valueId.nodeId}-${vID}`, value)
@@ -3521,7 +3471,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					} else {
 						throw Error('Command not valid for Multilevel Switch')
 					}
-					result = true
+					result = {
+						status: SetValueStatus.SuccessUnsupervised,
+					}
 				} else {
 					// coerce string to numbers when value type is number and received a string
 					if (
@@ -3555,7 +3507,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					result = await zwaveNode.setValue(valueId, value, options)
 
-					if (result) {
+					if (setValueWasUnsupervisedOrSucceeded(result)) {
 						this.emit('valueWritten', valueId, node, value)
 					}
 				}
@@ -3567,8 +3519,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 			}
 			// https://zwave-js.github.io/node-zwave-js/#/api/node?id=setvalue
-			if (result === false) {
-				logger.log('error', `Unable to write %o on ${vID}`, value)
+			if (setValueFailed(result)) {
+				logger.log(
+					'error',
+					`Unable to write %o on ${vID}: %s`,
+					value,
+					result.message ||
+						getEnumMemberName(SetValueStatus, result.status)
+				)
 			}
 		}
 
@@ -3977,15 +3935,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Triggered when node is removed
 	 *
 	 */
-	private _onNodeRemoved(zwaveNode: ZWaveNode) {
-		this.logNode(zwaveNode, 'info', 'Removed')
+	private _onNodeRemoved(zwaveNode: ZWaveNode, reason: RemoveNodeReason) {
+		this.logNode(zwaveNode, 'info', 'Removed, reason: ' + reason)
 		zwaveNode.removeAllListeners()
 
 		this.emit(
 			'event',
 			EventSource.CONTROLLER,
 			'node removed',
-			this.zwaveNodeToJSON(zwaveNode)
+			this.zwaveNodeToJSON(zwaveNode),
+			reason
 		)
 
 		this._removeNode(zwaveNode.id)
@@ -4903,8 +4862,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		function _onNodeFirmwareUpdateProgress(
 			this: ZwaveClient,
 			zwaveNode: ZWaveNode,
-			sentFragments: number,
-			totalFragments: number,
 			progress: FirmwareUpdateProgress
 		) {
 			const node = this.nodes.get(zwaveNode.id)
@@ -4937,8 +4894,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		function _onNodeFirmwareUpdateFinished(
 			this: ZwaveClient,
 			zwaveNode: ZWaveNode,
-			status: FirmwareUpdateStatus,
-			waitTime: number,
 			result: FirmwareUpdateResult
 		) {
 			const node = this.nodes.get(zwaveNode.id)
@@ -5778,8 +5733,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					api = 'firmwareUpdateOTA'
 					this._onNodeFirmwareUpdateFinished(
 						this.driver.controller.nodes.get(nodeId),
-						FirmwareUpdateStatus.OK_NoRestart,
-						1000,
 						{
 							reInterview: false,
 							status: FirmwareUpdateStatus.OK_NoRestart,
@@ -5832,8 +5785,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					})
 				this._onNodeFirmwareUpdateProgress(
 					this.driver.controller.nodes.get(nodeId),
-					progress.sentFragments,
-					progress.totalFragments,
 					progress
 				)
 			}

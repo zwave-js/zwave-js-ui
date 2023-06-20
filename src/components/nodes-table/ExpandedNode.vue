@@ -317,6 +317,12 @@ import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import UserCodeTable from './UserCodeTable.vue'
+import { getEnumMemberName } from 'zwave-js/safe'
+
+import {
+	SetValueStatus,
+	setValueWasUnsupervisedOrSucceeded,
+} from '@zwave-js/cc/safe'
 
 export default {
 	props: {
@@ -597,10 +603,23 @@ export default {
 				v.toUpdate = false
 
 				if (response.success) {
-					if (response.result) {
+					const result = response.result
+					const success = setValueWasUnsupervisedOrSucceeded(result)
+					if (success) {
 						this.showSnackbar('Value updated', 'success')
 					} else {
-						this.showSnackbar('Value update failed', 'error')
+						let reason = result.message
+						if (
+							!reason &&
+							result.status === SetValueStatus.NoDeviceSupport
+						) {
+							reason = 'No device support'
+						}
+						this.showSnackbar(
+							'Value update failed' +
+								(reason ? ': ' + reason : ''),
+							'error'
+						)
 					}
 				} else {
 					this.showSnackbar(
