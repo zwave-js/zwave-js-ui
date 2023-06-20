@@ -1,5 +1,22 @@
 
 
+# [8.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.18.1...v8.19.0) (2023-06-20)
+
+
+### Bug Fixes
+
+* authentication flow for JWT tokens ([#3140](https://github.com/zwave-js/zwave-js-ui/issues/3140)) ([6758a53](https://github.com/zwave-js/zwave-js-ui/commit/6758a53318f270ff1d4de070af33bc10ac473601))
+* RUN driver function button not working ([7c0bd6e](https://github.com/zwave-js/zwave-js-ui/commit/7c0bd6eb60eff9abd6daf76dfa357e56f65c537d))
+* **ui:** filter battery null values ([#3131](https://github.com/zwave-js/zwave-js-ui/issues/3131)) ([4721f91](https://github.com/zwave-js/zwave-js-ui/commit/4721f918ee0e21d629468356bee7082d6e426459))
+* **ui:** next page button behind fab in control panel ([1415037](https://github.com/zwave-js/zwave-js-ui/commit/1415037240ad827c2de27d59148cc42b88ca29ee)), closes [#3147](https://github.com/zwave-js/zwave-js-ui/issues/3147)
+* **ui:** use humburger button for SS fab ([8ffa0be](https://github.com/zwave-js/zwave-js-ui/commit/8ffa0be2ea3cc64c39bdcf2f42a62e85895b2a46))
+
+
+### Features
+
+* bump zwave-js@10.23.5 ([#3144](https://github.com/zwave-js/zwave-js-ui/issues/3144)) ([7b05851](https://github.com/zwave-js/zwave-js-ui/commit/7b05851892fa8b16c7831e8e1bf6e45234c7f84d))
+* zwave-js v11 improvements ([#3143](https://github.com/zwave-js/zwave-js-ui/issues/3143)) ([652b08b](https://github.com/zwave-js/zwave-js-ui/commit/652b08beffff4febec2d6f14d7e96c4ea941016e))
+
 ## [8.18.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.18.0...v8.18.1) (2023-06-12)
 
 
