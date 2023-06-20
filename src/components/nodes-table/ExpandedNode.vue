@@ -608,13 +608,16 @@ export default {
 					if (success) {
 						this.showSnackbar('Value updated', 'success')
 					} else {
+						let reason = result.message
+						if (
+							!reason &&
+							result.status === SetValueStatus.NoDeviceSupport
+						) {
+							reason = 'No device support'
+						}
 						this.showSnackbar(
-							'Value update failed: ' +
-								(result.message ||
-									getEnumMemberName(
-										SetValueStatus,
-										result.status
-									)),
+							'Value update failed' +
+								(reason ? ': ' + reason : ''),
 							'error'
 						)
 					}
