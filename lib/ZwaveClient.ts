@@ -230,11 +230,11 @@ const observedCCProps: {
 } = {
 	[CommandClasses.Battery]: {
 		level(node, value) {
-			const levels: number[] = node.batteryLevels || []
+			const levels: { [key: number]: number } = node.batteryLevels || {}
 
 			levels[value.endpoint] = value.value
 			node.batteryLevels = levels
-			node.minBatteryLevel = Math.min(...levels)
+			node.minBatteryLevel = Math.min(...Object.values(levels))
 
 			this.emitNodeUpdate(node, {
 				batteryLevels: levels,
@@ -473,7 +473,7 @@ export type ZUINode = {
 	inited: boolean
 	healProgress?: HealNodeStatus | undefined
 	minBatteryLevel?: number
-	batteryLevels?: number[]
+	batteryLevels?: { [key: number]: number }
 	firmwareUpdate?: FirmwareUpdateProgress
 	firmwareCapabilities?: FirmwareUpdateCapabilities
 	eventsQueue: NodeEvent[]
