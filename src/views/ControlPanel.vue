@@ -43,6 +43,7 @@
 			</v-expand-transition>
 			<nodes-table
 				v-if="!compact"
+				class="pb-8"
 				:socket="socket"
 				v-on="$listeners"
 				@action="sendAction"
@@ -73,7 +74,7 @@
 			:title="advancedDialogTitle"
 		/>
 
-		<v-speed-dial bottom fab right fixed class="pb-6" v-model="fab">
+		<v-speed-dial bottom fab right fixed v-model="fab">
 			<template v-slot:activator>
 				<v-btn
 					:color="selected.length === 0 ? 'blue darken-2' : 'success'"
