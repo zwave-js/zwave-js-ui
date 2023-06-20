@@ -139,7 +139,7 @@ import useBaseStore from '../stores/base.js'
 import SmartView from '@/components/nodes-table/SmartView.vue'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import logger from '../lib/logger'
-import { FirmwareUpdateStatus, getEnumMemberName } from 'zwave-js/safe'
+import { FirmwareUpdateStatus } from 'zwave-js/safe'
 
 const log = logger.get('ControlPanel')
 
@@ -916,10 +916,6 @@ export default {
 							}
 							case 'updateFirmware': {
 								const result = response.result
-								const status = getEnumMemberName(
-									FirmwareUpdateStatus,
-									result.status
-								)?.replace(/_/g, ' ')
 
 								const title = `Firmware update ${
 									result.success ? 'success' : 'failed'
@@ -929,26 +925,26 @@ export default {
 
 								if (result.success) {
 									if (
-										status ===
+										result.status ===
 										FirmwareUpdateStatus.OK_WaitingForActivation
 									) {
 										message =
 											'<p>The firmware must be activated <b>manually</b>, likely by pushing a button on the device.</p>'
 									} else if (
-										status ===
+										result.status ===
 										FirmwareUpdateStatus.OK_RestartPending
 									) {
-										message =
-											'<p>The device will now restart.</p>'
-										if (result.waitTime) {
-											message += `<p>Wait <b>${result.waitTime}</b> seconds before interacting with the node.</p>`
-										}
+										message = `<p>The device will now restart.${
+											result.waitTime
+												? ` This will take approximately <b>${result.waitTime}</b> seconds.`
+												: ''
+										}</p>`
 									} else if (
 										// status is OK_NoRestart
 										result.waitTime &&
 										!result.reInterview
 									) {
-										message = `<p>Please wait <b>${result.waitTime}</b> seconds before interacting with the device again<p>`
+										message = `<p>Please wait <b>${result.waitTime}</b> seconds before interacting with the device again.<p>`
 									}
 
 									if (result.reInterview) {
@@ -964,7 +960,7 @@ export default {
 											'<p>Wait until the interview is done before interacting with the device again.<p/>'
 									}
 								} else {
-									switch (status) {
+									switch (result.status) {
 										case FirmwareUpdateStatus.Error_Timeout:
 											message =
 												'There was a timeout during the firmware update.'
