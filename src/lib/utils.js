@@ -166,3 +166,12 @@ export function arraysEqual(a, b) {
 
 	return true
 }
+
+export function getBatteryDescription(node) {
+	return typeof node.batteryLevels !== 'undefined'
+		? 'All battery levels: ' +
+				Object.values(node.batteryLevels)
+					.map((v) => `${v}%`)
+					.join(', ')
+		: 'Unknown battery level'
+}
