@@ -3435,7 +3435,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		value: any,
 		options?: SetValueAPIOptions
 	) {
-		let result: SetValueResult
+		let result: SetValueResult = {
+			status: SetValueStatus.Fail,
+		}
 		if (this.driverReady) {
 			const vID = this._getValueID(valueId)
 			logger.log('info', `Writing %o to ${valueId.nodeId}-${vID}`, value)

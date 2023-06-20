@@ -609,11 +609,12 @@ export default {
 						this.showSnackbar('Value updated', 'success')
 					} else {
 						this.showSnackbar(
-							'Value update failed: ' + result.message ||
-								getEnumMemberName(
-									SetValueStatus,
-									result.status
-								),
+							'Value update failed: ' +
+								(result.message ||
+									getEnumMemberName(
+										SetValueStatus,
+										result.status
+									)),
 							'error'
 						)
 					}
