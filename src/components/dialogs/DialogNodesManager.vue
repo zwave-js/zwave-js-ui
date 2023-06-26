@@ -1,7 +1,7 @@
 <template>
 	<v-dialog
 		v-model="value"
-		@keydown.esc="$emit('close')"
+		@keydown.esc="close()"
 		max-width="800px"
 		persistent
 	>
@@ -9,9 +9,7 @@
 			<v-card-title>
 				<span class="headline">Nodes Manager</span>
 				<v-spacer></v-spacer>
-				<v-btn icon @click="$emit('close')"
-					><v-icon>clear</v-icon></v-btn
-				>
+				<v-btn icon @click="close()"><v-icon>clear</v-icon></v-btn>
 			</v-card-title>
 
 			<v-divider />
@@ -816,10 +814,6 @@ export default {
 		},
 	},
 	watch: {
-		value(v) {
-			this.init(v)
-			useBaseStore().nodesManagerOpen = v
-		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {
 				clearInterval(this.commandTimer)
@@ -1203,9 +1197,17 @@ export default {
 				this.pushStep('replaceInclusionMode')
 			}
 		},
-		init(bind) {
+		show(step) {
+			this.$emit('input', true)
+			this.init(true, step)
+		},
+		close() {
+			this.$emit('input', false)
+			this.init(false)
+		},
+		init(bind, step = 'action') {
 			this.steps = []
-			this.pushStep('action')
+			this.pushStep(step)
 			// this.pushStep('s2Pin')
 
 			// stop any running inclusion/exclusion

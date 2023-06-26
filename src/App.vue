@@ -336,6 +336,13 @@
 				<v-btn text @click="close">Close</v-btn>
 			</template>
 		</v-snackbars>
+
+		<DialogNodesManager
+			v-model="nodesManagerDialog"
+			:socket="socket"
+			ref="nodesManager"
+			v-on="{ showConfirm: confirm }"
+		/>
 	</v-app>
 </template>
 
@@ -386,6 +393,7 @@ import {
 	inboundEvents as socketActions,
 } from '@/../server/lib/SocketEvents'
 import { getEnumMemberName, SecurityBootstrapFailure } from 'zwave-js/safe'
+import DialogNodesManager from '@/components/dialogs/DialogNodesManager'
 
 let socketQueue = []
 
@@ -397,6 +405,7 @@ export default {
 		LoaderDialog,
 		VSnackbars,
 		Confirm,
+		DialogNodesManager,
 	},
 	name: 'app',
 	computed: {
@@ -404,7 +413,6 @@ export default {
 			'user',
 			'auth',
 			'appInfo',
-			'nodesManagerOpen',
 			'controllerNode',
 		]),
 		...mapState(useBaseStore, {
@@ -467,6 +475,7 @@ export default {
 			loaderProgress: -1,
 			loaderIndeterminate: false,
 			password: {},
+			nodesManagerDialog: false,
 			menu: [
 				{
 					icon: 'lock',
@@ -509,6 +518,16 @@ export default {
 	methods: {
 		assetPath(path) {
 			return ConfigApis.getBasePath(path)
+		},
+		showNodesManager(step) {
+			// used in ControlPanel.vue
+			this.$refs.nodesManager.show(step)
+		},
+		onGrantSecurityClasses() {
+			if (this.nodesManagerDialog) {
+				return
+			}
+			this.showNodesManager('s2Classes')
 		},
 		...mapActions(useBaseStore, [
 			'init',
@@ -563,7 +582,7 @@ export default {
 			this.dialog_password = true
 		},
 		async onNodeAdded({ node, result }) {
-			if (!this.nodesManagerOpen) {
+			if (!this.nodesManagerDialog) {
 				await this.confirm(
 					'Node added',
 					`<div class="d-flex flex-column align-center col">
@@ -995,6 +1014,10 @@ export default {
 
 			this.socket.on(socketEvents.nodeEvent, this.addNodeEvent.bind(this))
 
+			this.socket.on(
+				socketEvents.grantSecurityClasses,
+				this.onGrantSecurityClasses.bind(this)
+			)
 			// don't await this, will cause a loop of calls
 			this.getConfig()
 		},

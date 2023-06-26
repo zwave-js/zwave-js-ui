@@ -839,7 +839,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// when no user is connected, give back the control to HA server
 		if (this.server) {
-			this.server.setInclusionUserCallbacks()
+			// this.server.setInclusionUserCallbacks()
 		}
 	}
 
