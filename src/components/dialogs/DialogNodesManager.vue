@@ -1207,8 +1207,11 @@ export default {
 		},
 		init(bind, step = 'action') {
 			this.steps = []
-			this.pushStep(step)
-			// this.pushStep('s2Pin')
+
+			if (this.availableSteps[step]) {
+				this.pushStep(step)
+				// this.pushStep('s2Pin')
+			}
 
 			// stop any running inclusion/exclusion
 			if (this.state !== 'start') {

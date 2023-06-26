@@ -523,11 +523,12 @@ export default {
 			// used in ControlPanel.vue
 			this.$refs.nodesManager.show(step)
 		},
-		onGrantSecurityClasses() {
+		onGrantSecurityClasses(requested) {
 			if (this.nodesManagerDialog) {
 				return
 			}
-			this.showNodesManager('s2Classes')
+			this.showNodesManager('')
+			this.$refs.nodesManager.onGrantSecurityCC(requested)
 		},
 		...mapActions(useBaseStore, [
 			'init',
