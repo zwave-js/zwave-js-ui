@@ -830,11 +830,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.driver.updateOptions({
-			inclusionUserCallbacks: {
-				grantSecurityClasses: undefined,
-				validateDSKAndEnterPIN: undefined,
-				abort: undefined,
-			},
+			inclusionUserCallbacks: undefined,
 		})
 
 		// when no user is connected, give back the control to HA server

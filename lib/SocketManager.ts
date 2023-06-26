@@ -67,12 +67,6 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 		this.activeSockets.set(socket.id, socket)
 		this.emit('clients', 'connection', this.activeSockets)
 
-		socket.on('disconnect', () => {
-			logger.debug(`User disconnected from ${socket.id}`)
-			this.activeSockets.delete(socket.id)
-			this.emit('clients', 'disconnect', this.activeSockets)
-		})
-
 		// register inbound events from this socket
 		for (const k in inboundEvents) {
 			const eventName = inboundEvents[k]
@@ -81,8 +75,10 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 		}
 
 		// https://socket.io/docs/v4/server-socket-instance/#events
-		socket.on('disconnect', function (reason) {
+		socket.on('disconnect', (reason) => {
 			logger.debug(`User disconnected from ${socket.id}: ${reason}`)
+			this.activeSockets.delete(socket.id)
+			this.emit('clients', 'disconnect', this.activeSockets)
 		})
 	}
 
