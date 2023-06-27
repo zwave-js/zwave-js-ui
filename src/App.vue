@@ -338,10 +338,10 @@
 		</v-snackbars>
 
 		<DialogNodesManager
-			v-model="nodesManagerDialog"
+			@open="nodesManagerDialog = true"
+			@close="nodesManagerDialog = false"
 			:socket="socket"
 			ref="nodesManager"
-			v-on="{ showConfirm: confirm }"
 		/>
 	</v-app>
 </template>
