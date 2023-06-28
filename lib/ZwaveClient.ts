@@ -835,7 +835,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// when no user is connected, give back the control to HA server
 		if (this.server) {
-			// this.server.setInclusionUserCallbacks()
+			this.server.setInclusionUserCallbacks()
 		}
 	}
 
@@ -3651,7 +3651,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
-			this.server.start().catch((error) => {
+			this.server.start(!this.hasUserCallbacks).catch((error) => {
 				logger.error(
 					`Failed to start zwave-js server: ${error.message}`
 				)
