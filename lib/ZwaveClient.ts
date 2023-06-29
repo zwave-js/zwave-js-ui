@@ -442,9 +442,9 @@ export type ZUINode = {
 	productDescription?: string
 	statistics?: ControllerStatistics | NodeStatistics
 	applicationRoute?: RouteStatistics
-	priorityReturnRoute?: Route
+	priorityReturnRoute?: Record<number, Route>
 	prioritySUCReturnRoute?: Route
-	customReturnRoute?: Route[]
+	customReturnRoute?: Record<number, Route[]>
 	customSUCReturnRoute?: Route[]
 	productType?: number
 	manufacturer?: string
@@ -2989,9 +2989,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const node = this.nodes.get(nodeId)
 
 			if (node) {
-				node.priorityReturnRoute = result
+				node.priorityReturnRoute[destinationId] = result
 				this.emitStatistics(node, {
-					priorityReturnRoute: result,
+					priorityReturnRoute: node.priorityReturnRoute,
 				})
 			}
 		}
@@ -3082,9 +3082,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const node = this.nodes.get(nodeId)
 
 			if (node) {
-				node.customReturnRoute = result
+				node.customReturnRoute[destinationId] = result
 				this.emitStatistics(node, {
-					customReturnRoute: result,
+					customReturnRoute: node.customReturnRoute,
 				})
 			}
 		}
@@ -5394,6 +5394,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			eventsQueue: [],
 			status: 'Unknown',
 			interviewStage: 'None',
+			priorityReturnRoute: {},
+			customReturnRoute: {},
+			prioritySUCReturnRoute: null,
+			customSUCReturnRoute: null,
+			applicationRoute: null,
 		}
 
 		this._nodes.set(nodeId, node)
