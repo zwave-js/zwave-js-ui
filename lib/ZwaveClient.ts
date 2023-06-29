@@ -188,7 +188,6 @@ export const allowedApis = validateMethods([
 	'assignCustomSUCReturnRoute',
 	'deleteReturnRoute',
 	'deleteSUCReturnRoute',
-	'assignPrior'
 	'removePriorityRoute',
 	'beginHealingNetwork',
 	'stopHealingNetwork',
