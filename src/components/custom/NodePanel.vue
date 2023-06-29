@@ -112,7 +112,7 @@
 							class="ml-2"
 							color="error"
 							x-small
-							@click="deleteRoute()"
+							@click="deleteRoute(appRoute)"
 							>Delete
 							<v-icon x-small>delete</v-icon>
 						</v-btn>
@@ -121,7 +121,7 @@
 							color="success"
 							x-small
 							dark
-							@click="getRoute()"
+							@click="getRoute(appRoute)"
 							>Get
 							<v-icon x-small>refresh</v-icon>
 						</v-btn>
@@ -130,7 +130,7 @@
 							color="purple"
 							x-small
 							dark
-							@click="setRoute()"
+							@click="setRoute(appRoute)"
 							>Set
 							<v-icon x-small>route</v-icon>
 						</v-btn>
@@ -144,6 +144,100 @@
 								s.text
 							}}</v-list-item-content>
 						</v-list-item>
+					</div>
+					<p class="text-center" v-else>None</p>
+				</div>
+
+				<div>
+					<v-subheader
+						>Priority return route
+						<v-btn
+							v-if="prioritySUCReturnRoute"
+							class="ml-2"
+							color="error"
+							x-small
+							@click="deleteRoute(prioritySUCReturnRoute)"
+							>Delete
+							<v-icon x-small>delete</v-icon>
+						</v-btn>
+						<v-btn
+							class="ml-2"
+							color="success"
+							x-small
+							dark
+							@click="getRoute(prioritySUCReturnRoute)"
+							>Get
+							<v-icon x-small>refresh</v-icon>
+						</v-btn>
+						<v-btn
+							class="ml-2"
+							color="purple"
+							x-small
+							dark
+							@click="setRoute(prioritySUCReturnRoute)"
+							>Set
+							<v-icon x-small>route</v-icon>
+						</v-btn>
+					</v-subheader>
+					<div v-if="prioritySUCReturnRoute">
+						<v-list-item
+							dense
+							v-for="(s, i) in prioritySUCReturnRoute"
+							:key="i"
+						>
+							<v-list-item-content>{{
+								s.title
+							}}</v-list-item-content>
+							<v-list-item-content class="align-end">{{
+								s.text
+							}}</v-list-item-content>
+						</v-list-item>
+					</div>
+					<p class="text-center" v-else>None</p>
+				</div>
+
+				<div>
+					<v-subheader
+						>Custom return route
+						<v-btn
+							v-if="customSUCReturnRoutes"
+							class="ml-2"
+							color="error"
+							x-small
+							@click="deleteRoute(customSUCReturnRoutes)"
+							>Delete
+							<v-icon x-small>delete</v-icon>
+						</v-btn>
+						<v-btn
+							class="ml-2"
+							color="success"
+							x-small
+							dark
+							@click="getRoute(customSUCReturnRoutes)"
+							>Get
+							<v-icon x-small>refresh</v-icon>
+						</v-btn>
+						<v-btn
+							class="ml-2"
+							color="purple"
+							x-small
+							dark
+							@click="setRoute(customSUCReturnRoutes)"
+							>Set
+							<v-icon x-small>route</v-icon>
+						</v-btn>
+					</v-subheader>
+					<div v-if="customSUCReturnRoutes">
+						<div v-for="(r, i) in customSUCReturnRoutes" :key="i">
+							<v-list-item dense v-for="(s, j) in r" :key="j">
+								<v-list-item-content>{{
+									s.title
+								}}</v-list-item-content>
+								<v-list-item-content class="align-end">{{
+									s.text
+								}}</v-list-item-content>
+							</v-list-item>
+						</div>
 					</div>
 					<p class="text-center" v-else>None</p>
 				</div>
@@ -332,6 +426,23 @@ export default {
 
 			return routeStats
 		},
+		prioritySUCReturnRoute() {
+			if (!this.node?.prioritySUCReturnRoute) return null
+
+			const routeStats = this.parseRouteStats(
+				this.node.prioritySUCReturnRoute
+			)
+
+			return routeStats
+		},
+		customSUCReturnRoutes() {
+			const routes = this.node?.customSUCReturnRoutes
+			if (!routes || routes.length === 0) return null
+
+			const routeStats = routes.map((r) => this.parseRouteStats(r))
+
+			return routeStats
+		},
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
@@ -387,8 +498,25 @@ export default {
 				newwindow.focus()
 			}
 		},
-		async deleteRoute() {
+		async deleteRoute(route) {
 			if (!this.node) return
+
+			let api = ''
+
+			switch (route) {
+				case this.appRoute:
+					api = 'removePriorityRoute'
+					break
+				case this.prioritySUCReturnRoute:
+				case this.customSUCReturnRoutes:
+					api = 'deleteReturnRoutes'
+					break
+				default:
+					api = ''
+					break
+			}
+
+			if (!api) return
 
 			if (
 				await this.app.confirm(
@@ -397,17 +525,14 @@ export default {
 					'alert'
 				)
 			) {
-				const response = await this.app.apiRequest(
-					'removePriorityRoute',
-					[this.node.id]
-				)
+				const response = await this.app.apiRequest(api, [this.node.id])
 
 				if (response.success) {
 					if (response.result) {
 						this.showSnackbar('Route deleted', 'success')
 					} else {
 						this.showSnackbar(
-							`Failed delete priority route for node "${this.node._name}"`,
+							`Failed delete route for node "${this.node._name}"`,
 							'error'
 						)
 					}
@@ -434,24 +559,70 @@ export default {
 				}
 			}
 		},
-		async getRoute() {
-			const response = await this.app.apiRequest('getPriorityRoute', [
-				this.node.id,
-			])
+		async getRoute(route) {
+			if (!this.node) return
+
+			let api = ''
+
+			switch (route) {
+				case this.appRoute:
+					api = 'getPriorityRoute'
+					break
+				case this.prioritySUCReturnRoute:
+					api = 'getPrioritySUCReturnRoute'
+					break
+				case this.customSUCReturnRoutes:
+					api = 'getCustomSUCReturnRoute'
+					break
+				default:
+					api = ''
+					break
+			}
+
+			if (!api) return
+
+			const response = await this.app.apiRequest(api, [this.node.id])
 
 			if (response.success) {
 				if (response.result) {
 					this.showSnackbar('Route updated', 'success')
 				} else {
 					this.showSnackbar(
-						`Failed update priority route for node "${this.node._name}"`,
+						`Failed update route for node "${this.node._name}"`,
 						'error'
 					)
 				}
 			}
 		},
-		async setRoute() {
+		async setRoute(route) {
 			if (!this.node) return
+
+			let api = ''
+			let prefix = ''
+			let suffix = ''
+
+			switch (route) {
+				case this.appRoute:
+					prefix = 'Controller'
+					suffix = `Node "${this.node._name}"`
+					api = 'setPriorityRoute'
+					break
+				case this.prioritySUCReturnRoute:
+					prefix = `Node "${this.node._name}"`
+					suffix = `Controller`
+					api = 'assignPrioritySUCReturnRoute'
+					break
+				case this.customSUCReturnRoutes:
+					prefix = `Node "${this.node._name}"`
+					suffix = `Controller`
+					api = 'assignCustomSUCReturnRoutes'
+					break
+				default:
+					api = ''
+					break
+			}
+
+			if (!api) return
 
 			const res = await this.app.confirm('Set route', '', 'info', {
 				width: 500,
@@ -461,8 +632,8 @@ export default {
 						inputType: 'autocomplete',
 						list: true,
 						multiple: true,
-						prefix: 'Controller',
-						suffix: `Node "${this.node._name}"`,
+						prefix,
+						suffix,
 						key: 'repeaters',
 						label: 'Repeaters',
 						hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
@@ -496,21 +667,31 @@ export default {
 
 			const { repeaters, routeSpeed } = res
 
-			const response = await this.app.apiRequest('setPriorityRoute', [
-				this.node.id,
-				repeaters,
-				routeSpeed,
-			])
+			let args = []
+
+			switch (route) {
+				case this.appRoute:
+				case this.prioritySUCReturnRoute:
+					args = [this.node.id, repeaters, routeSpeed]
+					break
+				case this.customSUCReturnRoutes:
+					args = [this.node.id, [{ repeaters, routeSpeed }]]
+					break
+				default:
+					break
+			}
+
+			const response = await this.app.apiRequest(api, args)
 
 			if (response.success) {
 				if (response.result) {
 					this.showSnackbar(
-						`New priority route set for node "${this.node._name}"`,
+						`New route set for node "${this.node._name}"`,
 						'success'
 					)
 				} else {
 					this.showSnackbar(
-						`Failed to set new priority route for node "${this.node._name}"`
+						`Failed to set route for node "${this.node._name}"`
 					)
 				}
 			}

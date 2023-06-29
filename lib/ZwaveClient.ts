@@ -445,7 +445,7 @@ export type ZUINode = {
 	priorityReturnRoute?: Record<number, Route>
 	prioritySUCReturnRoute?: Route
 	customReturnRoute?: Record<number, Route[]>
-	customSUCReturnRoute?: Route[]
+	customSUCReturnRoutes?: Route[]
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -2163,7 +2163,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			| 'statistics'
 			| 'lastActive'
 			| 'applicationRoute'
-			| 'customSUCReturnRoute'
+			| 'customSUCReturnRoutes'
 			| 'customReturnRoute'
 			| 'prioritySUCReturnRoute'
 			| 'priorityReturnRoute'
@@ -3128,9 +3128,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const node = this.nodes.get(nodeId)
 
 			if (node) {
-				node.customSUCReturnRoute = result
+				node.customSUCReturnRoutes = result
 				this.emitStatistics(node, {
-					customSUCReturnRoute: result,
+					customSUCReturnRoutes: result,
 				})
 			}
 		}
@@ -3250,10 +3250,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (node) {
 				node.prioritySUCReturnRoute = null
-				node.customSUCReturnRoute = null
+				node.customSUCReturnRoutes = null
 				this.emitStatistics(node, {
 					prioritySUCReturnRoute: null,
-					customSUCReturnRoute: null,
+					customSUCReturnRoutes: null,
 				})
 			}
 		}
@@ -4769,6 +4769,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					`Failed to get priority route for node ${node.id}: ${error.message}`
 				)
 			})
+
+			this.getCustomSUCReturnRoute(zwaveNode.id)
+			this.getPrioritySUCReturnRoute(zwaveNode.id)
 		}
 	}
 
@@ -5398,8 +5401,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			interviewStage: 'None',
 			priorityReturnRoute: {},
 			customReturnRoute: {},
-			prioritySUCReturnRoute: null,
-			customSUCReturnRoute: null,
+			prioritySUCReturnRoute:
+				this._driver.controller.getPrioritySUCReturnRouteCached(nodeId),
+			customSUCReturnRoutes:
+				this._driver.controller.getCustomSUCReturnRoutesCached(nodeId),
 			applicationRoute: null,
 		}
 
