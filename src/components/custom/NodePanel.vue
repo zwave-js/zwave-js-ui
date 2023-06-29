@@ -112,7 +112,7 @@
 							class="ml-2"
 							color="error"
 							x-small
-							@click="deleteRoute(appRoute)"
+							@click="deleteRoute('appRoute')"
 							>Delete
 							<v-icon x-small>delete</v-icon>
 						</v-btn>
@@ -121,7 +121,7 @@
 							color="success"
 							x-small
 							dark
-							@click="getRoute(appRoute)"
+							@click="getRoute('appRoute')"
 							>Get
 							<v-icon x-small>refresh</v-icon>
 						</v-btn>
@@ -130,7 +130,7 @@
 							color="purple"
 							x-small
 							dark
-							@click="setRoute(appRoute)"
+							@click="setRoute('appRoute')"
 							>Set
 							<v-icon x-small>route</v-icon>
 						</v-btn>
@@ -156,7 +156,7 @@
 							class="ml-2"
 							color="error"
 							x-small
-							@click="deleteRoute(prioritySUCReturnRoute)"
+							@click="deleteRoute('prioritySUCReturnRoute')"
 							>Delete
 							<v-icon x-small>delete</v-icon>
 						</v-btn>
@@ -165,7 +165,7 @@
 							color="success"
 							x-small
 							dark
-							@click="getRoute(prioritySUCReturnRoute)"
+							@click="getRoute('prioritySUCReturnRoute')"
 							>Get
 							<v-icon x-small>refresh</v-icon>
 						</v-btn>
@@ -174,7 +174,7 @@
 							color="purple"
 							x-small
 							dark
-							@click="setRoute(prioritySUCReturnRoute)"
+							@click="setRoute('prioritySUCReturnRoute')"
 							>Set
 							<v-icon x-small>route</v-icon>
 						</v-btn>
@@ -204,7 +204,7 @@
 							class="ml-2"
 							color="error"
 							x-small
-							@click="deleteRoute(customSUCReturnRoutes)"
+							@click="deleteRoute('customSUCReturnRoutes')"
 							>Delete
 							<v-icon x-small>delete</v-icon>
 						</v-btn>
@@ -213,7 +213,7 @@
 							color="success"
 							x-small
 							dark
-							@click="getRoute(customSUCReturnRoutes)"
+							@click="getRoute('customSUCReturnRoutes')"
 							>Get
 							<v-icon x-small>refresh</v-icon>
 						</v-btn>
@@ -222,7 +222,7 @@
 							color="purple"
 							x-small
 							dark
-							@click="setRoute(customSUCReturnRoutes)"
+							@click="setRoute('customSUCReturnRoutes')"
 							>Set
 							<v-icon x-small>route</v-icon>
 						</v-btn>
@@ -504,11 +504,11 @@ export default {
 			let api = ''
 
 			switch (route) {
-				case this.appRoute:
+				case 'appRoute':
 					api = 'removePriorityRoute'
 					break
-				case this.prioritySUCReturnRoute:
-				case this.customSUCReturnRoutes:
+				case 'prioritySUCReturnRoute':
+				case 'customSUCReturnRoutes':
 					api = 'deleteReturnRoutes'
 					break
 				default:
@@ -565,13 +565,13 @@ export default {
 			let api = ''
 
 			switch (route) {
-				case this.appRoute:
+				case 'appRoute':
 					api = 'getPriorityRoute'
 					break
-				case this.prioritySUCReturnRoute:
+				case 'prioritySUCReturnRoute':
 					api = 'getPrioritySUCReturnRoute'
 					break
-				case this.customSUCReturnRoutes:
+				case 'customSUCReturnRoutes':
 					api = 'getCustomSUCReturnRoute'
 					break
 				default:
@@ -602,17 +602,17 @@ export default {
 			let suffix = ''
 
 			switch (route) {
-				case this.appRoute:
+				case 'appRoute':
 					prefix = 'Controller'
 					suffix = `Node "${this.node._name}"`
 					api = 'setPriorityRoute'
 					break
-				case this.prioritySUCReturnRoute:
+				case 'prioritySUCReturnRoute':
 					prefix = `Node "${this.node._name}"`
 					suffix = `Controller`
 					api = 'assignPrioritySUCReturnRoute'
 					break
-				case this.customSUCReturnRoutes:
+				case 'customSUCReturnRoutes':
 					prefix = `Node "${this.node._name}"`
 					suffix = `Controller`
 					api = 'assignCustomSUCReturnRoutes'
@@ -670,11 +670,11 @@ export default {
 			let args = []
 
 			switch (route) {
-				case this.appRoute:
-				case this.prioritySUCReturnRoute:
+				case 'appRoute':
+				case 'prioritySUCReturnRoute':
 					args = [this.node.id, repeaters, routeSpeed]
 					break
-				case this.customSUCReturnRoutes:
+				case 'customSUCReturnRoutes':
 					args = [this.node.id, [{ repeaters, routeSpeed }]]
 					break
 				default:
