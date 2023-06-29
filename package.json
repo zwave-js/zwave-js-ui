@@ -170,7 +170,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.6.14",
     "winston": "^3.8.2",
-    "zwave-js": "^11.0.0"
+    "zwave-js": "^11.1.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.21.0",

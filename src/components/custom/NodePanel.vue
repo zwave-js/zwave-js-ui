@@ -52,6 +52,28 @@
 						node.loc
 					}}</v-list-item-content>
 				</v-list-item>
+				<v-list-item v-if="node.neighbors">
+					<v-list-item-content>Neighbors</v-list-item-content>
+					<v-list-item-content class="align-end"
+						>{{
+							node.neighbors.length > 0
+								? node.neighbors.join(', ')
+								: 'None'
+						}}
+					</v-list-item-content>
+					<v-list-item-action>
+						<v-btn
+							class="ml-2"
+							color="primary"
+							x-small
+							:loading="discoverLoading"
+							dark
+							@click="discoverNeighbors()"
+							>Discover
+							<v-icon x-small>refresh</v-icon>
+						</v-btn>
+					</v-list-item-action>
+				</v-list-item>
 				<v-list-item dense>
 					<v-list-item-content>Statistics</v-list-item-content>
 					<v-list-item-content class="align-end"
@@ -254,6 +276,7 @@ export default {
 	data: () => ({
 		showFullscreen: false,
 		dialogHealth: false,
+		discoverLoading: false,
 		dataRateItems: [
 			{
 				text: '100 Kbps',
@@ -388,6 +411,26 @@ export default {
 							'error'
 						)
 					}
+				}
+			}
+		},
+		async discoverNeighbors() {
+			this.discoverLoading = true
+			const response = await this.app.apiRequest(
+				'discoverNodeNeighbors',
+				[this.node.id]
+			)
+
+			this.discoverLoading = false
+
+			if (response.success) {
+				if (response.result) {
+					this.showSnackbar('Neighbors updated', 'success')
+				} else {
+					this.showSnackbar(
+						`Failed to discover neighbors of node "${this.node._name}"`,
+						'error'
+					)
 				}
 			}
 		},

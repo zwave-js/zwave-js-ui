@@ -276,13 +276,15 @@ const useBaseStore = defineStore('base', {
 		},
 		setStatistics(data) {
 			const node = this.getNode(data.nodeId)
+			delete data.nodeId
+
 			if (node) {
 				let lastReceive = node.lastReceive
 				let lastTransmit = node.lastTransmit
 				let errorReceive = false
 				let errorTransmit = false
 
-				if (node.statistics) {
+				if (node.statistics && data.statistics) {
 					if (node.isControllerNode) {
 						const prev = node.statistics
 						const cur = data.statistics
@@ -392,9 +394,7 @@ const useBaseStore = defineStore('base', {
 				}
 
 				Object.assign(node, {
-					statistics: data.statistics,
-					lastActive: data.lastActive,
-					applicationRoute: data.applicationRoute,
+					...data,
 					lastReceive,
 					lastTransmit,
 					errorReceive,

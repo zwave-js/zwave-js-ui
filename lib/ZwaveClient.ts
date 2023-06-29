@@ -14,6 +14,7 @@ import {
 	isUnsupervisedOrSucceeded,
 	RouteKind,
 	ZWaveDataRate,
+	Route,
 } from '@zwave-js/core'
 import { isDocker } from '@zwave-js/shared'
 import {
@@ -152,6 +153,7 @@ export const allowedApis = validateMethods([
 	'_activateScene',
 	'refreshNeighbors',
 	'getNodeNeighbors',
+	'discoverNodeNeighbors',
 	'getAssociations',
 	'addAssociations',
 	'removeAssociations',
@@ -429,6 +431,10 @@ export type ZUINode = {
 	productDescription?: string
 	statistics?: ControllerStatistics | NodeStatistics
 	applicationRoute?: RouteStatistics
+	priorityReturnRoute?: Route
+	prioritySUCReturnRoute?: Route
+	customReturnRoute?: Route[]
+	customSUCReturnRoute?: Route[]
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -1793,14 +1799,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// when accessing the controller memory, the Z-Wave radio must be turned off with to avoid resource conflicts and inconsistent data
 		await this._driver.controller.toggleRF(false)
 		for (const [nodeId, node] of this._nodes) {
-			try {
-				node.neighbors = (await this.getNodeNeighbors(
-					nodeId,
-					true
-				)) as number[]
-			} catch (error) {
-				logger.error(error)
-			}
+			await this.getNodeNeighbors(nodeId, true, false)
 			toReturn[nodeId] = node.neighbors
 		}
 		// turn rf back to on
@@ -1812,12 +1811,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get neighbors of a specific node
 	 */
-	getNodeNeighbors(
+	async getNodeNeighbors(
 		nodeId: number,
-		dontThrow: boolean
+		preventThrow = false,
+		emitNodeUpdate = true
 	): Promise<readonly number[]> {
 		try {
-			return this._driver.controller.getNodeNeighbors(nodeId)
+			if (!this.driverReady) {
+				throw new DriverNotReadyError()
+			}
+
+			const neighbors = await this._driver.controller.getNodeNeighbors(
+				nodeId
+			)
+			this.logNode(nodeId, 'debug', `Neighbors: ${neighbors.join(', ')}`)
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.neighbors = [...neighbors]
+				if (emitNodeUpdate) {
+					this.emitNodeUpdate(node, {
+						neighbors: node.neighbors,
+					})
+				}
+			}
 		} catch (error) {
 			this.logNode(
 				nodeId,
@@ -1825,12 +1842,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				`Error while getting neighbors from ${nodeId}: ${error.message}`
 			)
 
-			if (!dontThrow) {
+			if (!preventThrow) {
 				throw error
 			}
 
 			return Promise.resolve([])
 		}
+	}
+
+	/**
+	 * Instructs a node to (re-)discover its neighbors.
+	 */
+	async discoverNodeNeighbors(nodeId: number): Promise<boolean> {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		const result = await this._driver.controller.discoverNodeNeighbors(
+			nodeId
+		)
+
+		if (result) {
+			// update neighbors
+			this.getNodeNeighbors(nodeId, true).catch(() => {
+				// noop
+			})
+		}
+
+		return result
 	}
 
 	/**
@@ -2104,6 +2143,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.sendToSocket(socketEvents.valueUpdated, valueId)
 
 		this.emit('valueChanged', valueId, node, changed)
+	}
+
+	public emitStatistics(
+		node: ZUINode,
+		props: Pick<
+			ZUINode,
+			| 'statistics'
+			| 'lastActive'
+			| 'applicationRoute'
+			| 'customSUCReturnRoute'
+			| 'customReturnRoute'
+			| 'prioritySUCReturnRoute'
+			| 'priorityReturnRoute'
+		> & { bgRssi?: ControllerStatistics['backgroundRSSI'] }
+	) {
+		this.sendToSocket(socketEvents.statistics, {
+			nodeId: node.id,
+			...props,
+		})
 	}
 
 	public emitNodeUpdate(
@@ -2899,6 +2957,88 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	getPriorityReturnRoute(nodeId: number, destinationId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const controllerId = this._driver.controller.ownNodeId
+
+		if (!destinationId) {
+			destinationId = controllerId
+		}
+
+		const result = this._driver.controller.getPriorityReturnRouteCached(
+			nodeId,
+			destinationId
+		)
+
+		if (result && destinationId === controllerId) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.priorityReturnRoute = result
+				this.emitStatistics(node, {
+					priorityReturnRoute: result,
+				})
+			}
+		}
+	}
+
+	getPrioritySUCReturnRoute(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			this._driver.controller.getPrioritySUCReturnRouteCached(nodeId)
+
+		if (result) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.prioritySUCReturnRoute = result
+				this.emitStatistics(node, {
+					prioritySUCReturnRoute: result,
+				})
+			}
+		}
+	}
+
+	getCustomReturnRoute(nodeId: number, destinationId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = this._driver.controller.getCustomReturnRoutesCached(
+			nodeId,
+			destinationId
+		)
+
+		if (result) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.customReturnRoute = result
+				this.emitStatistics(node, {
+					customReturnRoute: result,
+				})
+			}
+		}
+	}
+
+	getCustomSUCReturnRoute(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			this._driver.controller.getCustomSUCReturnRoutesCached(nodeId)
+
+		if (result) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.customSUCReturnRoute = result
+				this.emitStatistics(node, {
+					customSUCReturnRoute: result,
+				})
+			}
+		}
+	}
+
 	/**
 	 * Returns the priority route for a given node ID
 	 */
@@ -2941,11 +3081,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					node.statistics = statistics as NodeStatistics
 
-					this.sendToSocket(socketEvents.statistics, {
-						nodeId: node.id,
-						statistics: statistics,
+					this.emitStatistics(node, {
+						statistics: node.statistics,
 						lastActive: node.lastActive,
-						applicationRoute: node.applicationRoute || false,
+						applicationRoute: node.applicationRoute || null,
 					})
 				}
 			}
@@ -3773,8 +3912,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			this.sendToSocket(socketEvents.statistics, {
-				nodeId: controllerNode.id,
+			this.emitStatistics(controllerNode, {
 				statistics: stats,
 				lastActive: controllerNode.lastActive,
 				bgRssi,
@@ -4837,11 +4975,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.emit('nodeLastActive', node)
 			}
 
-			this.sendToSocket(socketEvents.statistics, {
-				nodeId: node.id,
+			this.emitStatistics(node, {
 				statistics: stats,
 				lastActive: node.lastActive,
-				applicationRoute: node.applicationRoute || false,
+				applicationRoute: node.applicationRoute || null,
 			})
 		}
 
