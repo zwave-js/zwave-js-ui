@@ -2169,6 +2169,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			| 'priorityReturnRoute'
 		> & { bgRssi?: ControllerStatistics['backgroundRSSI'] }
 	) {
+		// NB: be sure that when `statistics` is defined also `lastActive` must be.
+		// when removing props them should be set to null or false in order to be removed on ui
 		this.sendToSocket(socketEvents.statistics, {
 			nodeId: node.id,
 			...props,
