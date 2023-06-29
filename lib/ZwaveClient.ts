@@ -177,6 +177,18 @@ export const allowedApis = validateMethods([
 	'healNode',
 	'getPriorityRoute',
 	'setPriorityRoute',
+	'assignReturnRoutes',
+	'getPriorityReturnRoute',
+	'getPrioritySUCReturnRoute',
+	'getCustomReturnRoute',
+	'getCustomSUCReturnRoute',
+	'assignPriorityReturnRoute',
+	'assignPrioritySUCReturnRoute',
+	'assignCustomReturnRoute',
+	'assignCustomSUCReturnRoute',
+	'deleteReturnRoute',
+	'deleteSUCReturnRoute',
+	'assignPrior'
 	'removePriorityRoute',
 	'beginHealingNetwork',
 	'stopHealingNetwork',
@@ -2957,6 +2969,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	/**
+	 * Get priority return route from nodeId to destinationId
+	 */
 	getPriorityReturnRoute(nodeId: number, destinationId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
@@ -2983,6 +2998,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	/**
+	 * Assigns a priority return route from nodeId to destinationId
+	 */
+	async assignPriorityReturnRoute(
+		nodeId: number,
+		destinationNodeId: number,
+		repeaters: number[],
+		routeSpeed: ZWaveDataRate
+	) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignPriorityReturnRoute(
+			nodeId,
+			destinationNodeId,
+			repeaters,
+			routeSpeed
+		)
+
+		if (result) {
+			this.getPriorityReturnRoute(nodeId, destinationNodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Get priority return route from node to controller
+	 */
 	getPrioritySUCReturnRoute(nodeId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
@@ -3001,6 +3044,33 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	/**
+	 * Assign a priority return route from node to controller
+	 */
+	async assignPrioritySUCReturnRoute(
+		nodeId: number,
+		repeaters: number[],
+		routeSpeed: ZWaveDataRate
+	) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			await this._driver.controller.assignPrioritySUCReturnRoute(
+				nodeId,
+				repeaters,
+				routeSpeed
+			)
+
+		if (result) {
+			this.getPrioritySUCReturnRoute(nodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Get custom return routes from nodeId to destinationId
+	 */
 	getCustomReturnRoute(nodeId: number, destinationId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
@@ -3021,6 +3091,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	/**
+	 * Assigns custom return routes from a node to a destination node
+	 */
+	async assignCustomReturnRoutes(
+		nodeId: number,
+		destinationNodeId: number,
+		routes: Route[]
+	) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignCustomReturnRoutes(
+			nodeId,
+			destinationNodeId,
+			routes
+		)
+
+		if (result) {
+			this.getCustomReturnRoute(nodeId, destinationNodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Get custom return routes from node to controller
+	 */
 	getCustomSUCReturnRoute(nodeId: number) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
@@ -3037,6 +3133,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				})
 			}
 		}
+	}
+
+	/**
+	 * Assigns up to 4 return routes to a node to the controller
+	 */
+	async assignCustomSUCReturnRoutes(nodeId: number, routes: Route[]) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			await this._driver.controller.assignCustomSUCReturnRoutes(
+				nodeId,
+				routes
+			)
+
+		if (result) {
+			this.getCustomSUCReturnRoute(nodeId)
+		}
+
+		return result
 	}
 
 	/**
@@ -3093,6 +3208,93 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Delete ALL previously assigned return routes
+	 */
+	async deleteReturnRoutes(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.deleteReturnRoutes(nodeId)
+
+		if (result) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.priorityReturnRoute = null
+				node.customReturnRoute = null
+				this.emitStatistics(node, {
+					priorityReturnRoute: null,
+					customReturnRoute: null,
+				})
+			}
+		}
+
+		return result
+	}
+
+	/**
+	 * Delete ALL previously assigned return routes to the controller
+	 */
+	async deleteSUCReturnRoutes(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.deleteSUCReturnRoutes(
+			nodeId
+		)
+
+		if (result) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.prioritySUCReturnRoute = null
+				node.customSUCReturnRoute = null
+				this.emitStatistics(node, {
+					prioritySUCReturnRoute: null,
+					customSUCReturnRoute: null,
+				})
+			}
+		}
+
+		return result
+	}
+
+	/**
+	 * Ask the controller to automatically assign to node nodeId a set of routes to node destinationNodeId.
+	 */
+	async assignReturnRoutes(nodeId: number, destinationNodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignReturnRoutes(
+			nodeId,
+			destinationNodeId
+		)
+
+		if (result) {
+			this.getCustomReturnRoute(nodeId, destinationNodeId)
+			this.getPriorityReturnRoute(nodeId, destinationNodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Ask the controller to automatically assign to node nodeId a set of routes to controller.
+	 */
+	async assignSUCReturnRoutes(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignSUCReturnRoutes(
+			nodeId
+		)
+
+		if (result) {
+			this.getCustomSUCReturnRoute(nodeId)
+			this.getPrioritySUCReturnRoute(nodeId)
+		}
+
+		return result
 	}
 
 	/**
