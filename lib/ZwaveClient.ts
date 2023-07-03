@@ -2173,7 +2173,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// when removing props them should be set to null or false in order to be removed on ui
 		this.sendToSocket(socketEvents.statistics, {
 			nodeId: node.id,
-			...props,
+			...Object.keys(props).reduce((acc, k) => {
+				if (props[k] === null) acc[k] = false
+				else acc[k] = props[k]
+				return acc
+			}, {} as any),
 		})
 	}
 
