@@ -468,9 +468,9 @@ export default {
 				: ''
 
 			const protocolDataRate = protocolDataRateToString(
-				stats.protocolDataRate
+				stats.protocolDataRate || stats.routeSpeed
 			)
-			const rssi = stats.rssi ? rssiToString(stats.rssi) : 'N/A'
+			const rssi = stats.rssi ? rssiToString(stats.rssi) : ''
 			return [
 				rssi
 					? {
