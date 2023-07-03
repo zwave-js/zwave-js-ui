@@ -465,28 +465,36 @@ export default {
 				? stats.routeFailedBetween
 						.map((r) => `${r[0]} --> ${r[1]}`)
 						.join(', ')
-				: 'N/A'
+				: ''
 
+			const protocolDataRate = protocolDataRateToString(
+				stats.protocolDataRate
+			)
+			const rssi = stats.rssi ? rssiToString(stats.rssi) : 'N/A'
 			return [
-				{
-					title: 'RSSI',
-					text: stats.rssi ? rssiToString(stats.rssi) : 'N/A',
-				},
-				{
-					title: 'Protocol Data Rate',
-					text:
-						protocolDataRateToString(stats.protocolDataRate) ||
-						'N/A',
-				},
+				rssi
+					? {
+							title: 'RSSI',
+							text: rssi,
+					  }
+					: null,
+				protocolDataRate
+					? {
+							title: 'Protocol Data Rate',
+							text: protocolDataRate,
+					  }
+					: null,
 				{
 					title: 'Repeaters',
 					text: repeaters,
 				},
-				{
-					title: 'Route failed between',
-					text: routeFiled,
-				},
-			]
+				routeFiled
+					? {
+							title: 'Route failed between',
+							text: routeFiled,
+					  }
+					: null,
+			].filter((r) => !!r)
 		},
 		newWindow() {
 			const newwindow = window.open(
