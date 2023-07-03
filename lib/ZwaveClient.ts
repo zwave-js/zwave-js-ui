@@ -3250,10 +3250,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (node) {
 				node.prioritySUCReturnRoute = null
-				node.customSUCReturnRoutes = null
+				node.customSUCReturnRoutes = []
 				this.emitStatistics(node, {
 					prioritySUCReturnRoute: null,
-					customSUCReturnRoutes: null,
+					customSUCReturnRoutes: [],
 				})
 			}
 		}

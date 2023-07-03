@@ -683,7 +683,47 @@ export default {
 					args = [this.node.id, repeaters, routeSpeed]
 					break
 				case 'customSUCReturnRoutes':
-					args = [this.node.id, [{ repeaters, routeSpeed }]]
+					{
+						const routes = this.node.customSUCReturnRoutes || []
+						const newRoute = { repeaters, routeSpeed }
+
+						if (routes.length >= 4) {
+							const res = await this.app.confirm(
+								'Replace route',
+								'',
+								'info',
+								{
+									width: 500,
+									inputs: [
+										{
+											type: 'list',
+											key: 'routeIndex',
+											label: 'Route index',
+											default: 0,
+											rules: [this.required],
+											items: routes.map((r, i) => ({
+												text: `Route ${
+													i + 1
+												}: ${r.repeaters.join(', ')}`,
+												value: i,
+											})),
+										},
+									],
+									confirmText: 'Replace',
+								}
+							)
+							if (Object.keys(res).length === 0) {
+								return
+							}
+
+							const { routeIndex } = res
+
+							routes[routeIndex] = newRoute
+						} else {
+							routes.push(newRoute)
+						}
+						args = [this.node.id, routes]
+					}
 					break
 				default:
 					break
