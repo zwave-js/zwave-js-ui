@@ -509,7 +509,7 @@ export default {
 					break
 				case 'prioritySUCReturnRoute':
 				case 'customSUCReturnRoutes':
-					api = 'deleteReturnRoutes'
+					api = 'deleteSUCReturnRoutes'
 					break
 				default:
 					api = ''
