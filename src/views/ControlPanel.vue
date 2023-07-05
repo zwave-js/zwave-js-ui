@@ -59,13 +59,6 @@
 			</smart-view>
 		</v-container>
 
-		<DialogNodesManager
-			v-model="addRemoveShowDialog"
-			:socket="socket"
-			@close="onAddRemoveClose"
-			v-on="{ showConfirm: $listeners.showConfirm }"
-		/>
-
 		<DialogAdvanced
 			v-model="advancedShowDialog"
 			@close="advancedShowDialog = false"
@@ -95,7 +88,7 @@
 						dark
 						small
 						color="green"
-						@click="addRemoveShowDialog = true"
+						@click="showNodesManager()"
 						v-bind="attrs"
 						v-on="on"
 					>
@@ -129,7 +122,6 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapState, mapActions } from 'pinia'
 
-import DialogNodesManager from '@/components/dialogs/DialogNodesManager'
 import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
 import NodesTable from '@/components/nodes-table'
 import { Settings } from '@/modules/Settings'
@@ -151,7 +143,6 @@ export default {
 	mixins: [InstancesMixin],
 	components: {
 		NodesTable,
-		DialogNodesManager,
 		DialogAdvanced,
 		StatisticsCard,
 		SmartView,
@@ -196,7 +187,6 @@ export default {
 			fab: false,
 			selected: [],
 			settings: new Settings(localStorage),
-			addRemoveShowDialog: false,
 			advancedShowDialog: false,
 			generalActions: [
 				{
@@ -405,8 +395,8 @@ export default {
 	methods: {
 		...mapActions(useBaseStore, ['setHealProgress', 'showSnackbar']),
 		jsonToList,
-		onAddRemoveClose() {
-			this.addRemoveShowDialog = false
+		showNodesManager() {
+			this.app.showNodesManager()
 		},
 		async onAction(action, args = {}) {
 			if (action === 'import') {

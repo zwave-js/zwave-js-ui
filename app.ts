@@ -711,6 +711,15 @@ function setupSocket(server: HttpServer) {
 			cb(result)
 		})
 	})
+
+	// emitted every time a new client connects/disconnects
+	socketManager.on('clients', (event, activeSockets) => {
+		if (event === 'connection' && activeSockets.size === 1) {
+			gw.zwave?.setUserCallbacks()
+		} else if (event === 'disconnect' && activeSockets.size === 0) {
+			gw.zwave?.removeUserCallbacks()
+		}
+	})
 }
 
 // ### APIs

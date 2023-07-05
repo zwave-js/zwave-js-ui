@@ -1,7 +1,7 @@
 <template>
 	<v-dialog
-		v-model="value"
-		@keydown.esc="$emit('close')"
+		v-model="isOpen"
+		@keydown.esc="close()"
 		max-width="800px"
 		persistent
 	>
@@ -9,14 +9,12 @@
 			<v-card-title>
 				<span class="headline">Nodes Manager</span>
 				<v-spacer></v-spacer>
-				<v-btn icon @click="$emit('close')"
-					><v-icon>clear</v-icon></v-btn
-				>
+				<v-btn icon @click="close()"><v-icon>clear</v-icon></v-btn>
 			</v-card-title>
 
 			<v-divider />
 
-			<v-card-text class="pa-0">
+			<v-card-text v-if="isOpen" class="pa-0">
 				<v-stepper
 					v-model="currentStep"
 					@change="changeStep"
@@ -693,12 +691,12 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	props: {
-		value: Boolean, // show or hide
 		socket: Object,
 	},
 	mixins: [InstancesMixin],
 	data() {
 		return {
+			isOpen: false,
 			currentStep: 1,
 			loading: false,
 			validNaming: true,
@@ -816,10 +814,6 @@ export default {
 		},
 	},
 	watch: {
-		value(v) {
-			this.init(v)
-			useBaseStore().nodesManagerOpen = v
-		},
 		commandEndDate(newVal) {
 			if (this.commandTimer) {
 				clearInterval(this.commandTimer)
@@ -907,7 +901,7 @@ export default {
 	},
 	mounted() {
 		this.onKeypressed = (event) => {
-			if (!this.value) {
+			if (!this.isOpen) {
 				return
 			}
 
@@ -1054,7 +1048,7 @@ export default {
 		},
 		changeStep(index) {
 			if (index <= 1) {
-				this.init() // calling it without the bind parameter will not touch events
+				this.init(false) // calling it without the bind parameter will not touch events
 			} else {
 				this.steps = this.steps.slice(0, index)
 			}
@@ -1126,7 +1120,7 @@ export default {
 				if (mode === InclusionStrategy.SmartStart) {
 					this.alert = null
 
-					const qrString = await this.$listeners.showConfirm(
+					const qrString = await this.app.confirm(
 						'Smart start',
 						'Scan QR Code or import it as an image',
 						'info',
@@ -1203,10 +1197,23 @@ export default {
 				this.pushStep('replaceInclusionMode')
 			}
 		},
-		init(bind) {
+		show(step) {
+			this.isOpen = true
+			this.$emit('open')
+			this.init(true, step)
+		},
+		close() {
+			this.isOpen = false
+			this.$emit('close')
+			this.init(false)
+		},
+		init(bind, step = 'action') {
 			this.steps = []
-			this.pushStep('action')
-			// this.pushStep('s2Pin')
+
+			if (this.availableSteps[step]) {
+				this.pushStep(step)
+				// this.pushStep('s2Pin')
+			}
 
 			// stop any running inclusion/exclusion
 			if (this.state !== 'start') {
@@ -1280,7 +1287,7 @@ export default {
 				// done
 			} else {
 				if (api === 'replaceFailedNode') {
-					this.init()
+					this.init(false)
 				}
 			}
 		},
