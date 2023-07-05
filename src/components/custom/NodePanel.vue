@@ -178,6 +178,7 @@
 							:mobile-breakpoint="0"
 							class="elevation-0"
 							hide-default-footer
+							hide-default-header
 							disable-pagination
 						>
 							<template v-slot:top>
