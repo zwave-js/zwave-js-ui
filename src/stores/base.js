@@ -11,7 +11,6 @@ const log = logger.get('Store:Base')
 const useBaseStore = defineStore('base', {
 	state: () => ({
 		auth: undefined,
-		nodesManagerOpen: false,
 		controllerId: undefined,
 		serial_ports: [],
 		scales: [],

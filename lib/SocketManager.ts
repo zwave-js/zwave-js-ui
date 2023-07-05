@@ -13,6 +13,10 @@ export interface SocketManagerEventCallbacks {
 	[inboundEvents.zwave]: (socket: Socket, data: any) => void
 	[inboundEvents.hass]: (socket: Socket, data: any) => void
 	[inboundEvents.mqtt]: (socket: Socket, data: any) => void
+	clients: (
+		event: 'connection' | 'disconnect',
+		sockets: Map<string, Socket>
+	) => void
 }
 
 export type SocketManagerEvents = Extract<
@@ -25,6 +29,8 @@ export type SocketManagerEvents = Extract<
  */
 class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	public io: SocketServer
+
+	private activeSockets: Map<string, Socket> = new Map()
 
 	authMiddleware: (socket: Socket, next: () => void) => void | undefined
 
@@ -57,6 +63,10 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	private _onConnection(socket: Socket) {
 		logger.debug(`New connection ${socket.id}`)
 
+		// add socket to active sockets
+		this.activeSockets.set(socket.id, socket)
+		this.emit('clients', 'connection', this.activeSockets)
+
 		// register inbound events from this socket
 		for (const k in inboundEvents) {
 			const eventName = inboundEvents[k]
@@ -65,8 +75,10 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 		}
 
 		// https://socket.io/docs/v4/server-socket-instance/#events
-		socket.on('disconnect', function (reason) {
+		socket.on('disconnect', (reason) => {
 			logger.debug(`User disconnected from ${socket.id}: ${reason}`)
+			this.activeSockets.delete(socket.id)
+			this.emit('clients', 'disconnect', this.activeSockets)
 		})
 	}
 

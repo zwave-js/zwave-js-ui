@@ -606,6 +606,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// tells if a node replacement is in progress
 	private isReplacing = false
 
+	private hasUserCallbacks = false
+
 	private _error: string | undefined
 	private _scanComplete: boolean
 	private _cntStatus: string
@@ -701,6 +703,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.closed = false
 		this.driverReady = false
+		this.hasUserCallbacks = false
 		this.scenes = jsonStore.get(store.scenes)
 
 		this._nodes = new Map()
@@ -820,6 +823,41 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	getNode(nodeId: number): ZWaveNode {
 		return this._driver.controller.nodes.get(nodeId)
+	}
+
+	setUserCallbacks() {
+		this.hasUserCallbacks = true
+		if (!this._driver) {
+			return
+		}
+
+		logger.info('Setting user callbacks')
+
+		this.driver.updateOptions({
+			inclusionUserCallbacks: {
+				grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
+				validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+				abort: this._onAbortInclusion.bind(this),
+			},
+		})
+	}
+
+	removeUserCallbacks() {
+		this.hasUserCallbacks = false
+		if (!this._driver) {
+			return
+		}
+
+		logger.info('Removing user callbacks')
+
+		this.driver.updateOptions({
+			inclusionUserCallbacks: undefined,
+		})
+
+		// when no user is connected, give back the control to HA server
+		if (this.server) {
+			this.server.setInclusionUserCallbacks()
+		}
 	}
 
 	/**
@@ -1946,12 +1984,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					firmwareUpdateService:
 						'421e29797c3c2926f84efc737352d6190354b3b526a6dce6633674dd33a8a4f964c794f5',
 				},
-				inclusionUserCallbacks: {
-					grantSecurityClasses:
-						this._onGrantSecurityClasses.bind(this),
-					validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-					abort: this._onAbortInclusion.bind(this),
-				},
 				timeouts: {
 					report: this.cfg.higherReportsTimeout ? 10000 : undefined,
 				},
@@ -2054,6 +2086,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 
 				logger.info(`Connecting to ${this.cfg.port}`)
+
+				// setup user callbacks only if there are connected clients
+				this.hasUserCallbacks =
+					(await this.socket.fetchSockets()).length > 0
+
+				if (this.hasUserCallbacks) {
+					this.setUserCallbacks()
+				}
 
 				await this._driver.start()
 
@@ -3961,7 +4001,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
-			this.server.start().catch((error) => {
+			this.server.start(!this.hasUserCallbacks).catch((error) => {
 				logger.error(
 					`Failed to start zwave-js server: ${error.message}`
 				)
