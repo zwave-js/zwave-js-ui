@@ -3031,16 +3031,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			destinationId
 		)
 
-		if (result && destinationId === controllerId) {
-			const node = this.nodes.get(nodeId)
+		const node = this.nodes.get(nodeId)
 
-			if (node) {
+		if (node) {
+			if (result) {
 				node.priorityReturnRoute[destinationId] = result
-				this.emitStatistics(node, {
-					priorityReturnRoute: node.priorityReturnRoute,
-				})
+			} else {
+				delete node.priorityReturnRoute[destinationId]
 			}
+			this.emitStatistics(node, {
+				priorityReturnRoute: node.priorityReturnRoute,
+			})
 		}
+
+		return result
 	}
 
 	/**
@@ -3075,18 +3079,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
 		const result =
-			this._driver.controller.getPrioritySUCReturnRouteCached(nodeId)
+			this._driver.controller.getPrioritySUCReturnRouteCached(nodeId) ??
+			null
 
-		if (result) {
-			const node = this.nodes.get(nodeId)
+		const node = this.nodes.get(nodeId)
 
-			if (node) {
-				node.prioritySUCReturnRoute = result
-				this.emitStatistics(node, {
-					prioritySUCReturnRoute: result,
-				})
-			}
+		if (node) {
+			node.prioritySUCReturnRoute = result
+			this.emitStatistics(node, {
+				prioritySUCReturnRoute: result,
+			})
 		}
+
+		return result
 	}
 
 	/**
@@ -3126,16 +3131,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			destinationId
 		)
 
-		if (result) {
-			const node = this.nodes.get(nodeId)
+		const node = this.nodes.get(nodeId)
 
-			if (node) {
+		if (node) {
+			if (result) {
 				node.customReturnRoute[destinationId] = result
-				this.emitStatistics(node, {
-					customReturnRoute: node.customReturnRoute,
-				})
+			} else {
+				delete node.customReturnRoute[destinationId]
 			}
+			this.emitStatistics(node, {
+				customReturnRoute: node.customReturnRoute,
+			})
 		}
+
+		return result
 	}
 
 	/**
@@ -3168,18 +3177,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
 		const result =
-			this._driver.controller.getCustomSUCReturnRoutesCached(nodeId)
+			this._driver.controller.getCustomSUCReturnRoutesCached(nodeId) ?? []
 
-		if (result) {
-			const node = this.nodes.get(nodeId)
+		const node = this.nodes.get(nodeId)
 
-			if (node) {
-				node.customSUCReturnRoutes = result
-				this.emitStatistics(node, {
-					customSUCReturnRoutes: result,
-				})
-			}
+		if (node) {
+			node.customSUCReturnRoutes = result
+			this.emitStatistics(node, {
+				customSUCReturnRoutes: result,
+			})
 		}
+
+		return result
 	}
 
 	/**

@@ -593,14 +593,7 @@ export default {
 			const response = await this.app.apiRequest(api, [this.node.id])
 
 			if (response.success) {
-				if (response.result) {
-					this.showSnackbar('Route updated', 'success')
-				} else {
-					this.showSnackbar(
-						`Failed update route for node "${this.node._name}"`,
-						'error'
-					)
-				}
+				this.showSnackbar('Route updated', 'success')
 			}
 		},
 		async setRoute(route) {
