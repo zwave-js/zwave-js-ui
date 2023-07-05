@@ -3107,6 +3107,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 		if (result) {
+			// when changing the SUC priority return routes custom SUC return routes are removed
+			this.getCustomSUCReturnRoute(nodeId)
 			this.getPrioritySUCReturnRoute(nodeId)
 		}
 
@@ -3193,7 +3195,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 
 		if (result) {
+			// when changing the SUC return routes the priority SUC return route is removed
 			this.getCustomSUCReturnRoute(nodeId)
+			this.getPrioritySUCReturnRoute(nodeId)
 		}
 
 		return result

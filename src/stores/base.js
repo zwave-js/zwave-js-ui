@@ -224,6 +224,10 @@ const useBaseStore = defineStore('base', {
 				n.applicationRoute = false
 			}
 
+			if (!n.prioritySUCReturnRoute) {
+				n.prioritySUCReturnRoute = false
+			}
+
 			if (n.isControllerNode) {
 				this.controllerId = n.id
 			}

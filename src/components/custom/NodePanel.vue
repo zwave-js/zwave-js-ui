@@ -198,15 +198,15 @@
 
 				<div>
 					<v-subheader
-						>Custom return route
+						>Custom return routes
 						<v-btn
 							v-if="customSUCReturnRoutes"
 							class="ml-2"
 							color="error"
 							x-small
 							@click="deleteRoute('customSUCReturnRoutes')"
-							>Delete
-							<v-icon x-small>delete</v-icon>
+							>Delete All
+							<v-icon x-small>delete_sweep</v-icon>
 						</v-btn>
 						<v-btn
 							class="ml-2"
@@ -223,7 +223,7 @@
 							x-small
 							dark
 							@click="setRoute('customSUCReturnRoutes')"
-							>Set
+							>Add
 							<v-icon x-small>route</v-icon>
 						</v-btn>
 					</v-subheader>
@@ -237,6 +237,7 @@
 									s.text
 								}}</v-list-item-content>
 							</v-list-item>
+							<v-divider />
 						</div>
 					</div>
 					<p class="text-center" v-else>None</p>
@@ -702,9 +703,10 @@ export default {
 											default: 0,
 											rules: [this.required],
 											items: routes.map((r, i) => ({
-												text: `Route ${
-													i + 1
-												}: ${r.repeaters.join(', ')}`,
+												text: `Route ${i + 1}: ${
+													r.repeaters.join(', ') ||
+													'Direct'
+												}`,
 												value: i,
 											})),
 										},
