@@ -180,6 +180,7 @@
 							hide-default-footer
 							hide-default-header
 							disable-pagination
+							no-data-text="No return routes"
 						>
 							<template v-slot:top>
 								<v-btn
