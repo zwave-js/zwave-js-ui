@@ -747,10 +747,8 @@ export default {
 				route = 'prioritySUCReturnRoute'
 				args = [
 					this.node.id,
-					{
-						repeaters: priorityRoute.repeaters,
-						routeSpeed: priorityRoute.routeSpeed,
-					},
+					priorityRoute.repeaters,
+					priorityRoute.routeSpeed,
 				]
 			} else {
 				route = 'customSUCReturnRoutes'
