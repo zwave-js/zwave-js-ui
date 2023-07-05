@@ -61,7 +61,7 @@
 								: 'None'
 						}}
 					</v-list-item-content>
-					<v-list-item-action>
+					<v-list-item-action v-if="!node.isControllerNode">
 						<v-btn
 							class="ml-2"
 							color="primary"
@@ -104,7 +104,7 @@
 						</v-list-item>
 					</div> -->
 
-				<div>
+				<div v-if="!node.isControllerNode">
 					<v-subheader
 						>Priority route
 						<v-btn
@@ -148,7 +148,7 @@
 					<p class="text-center" v-else>None</p>
 				</div>
 
-				<div>
+				<div v-if="!node.isControllerNode">
 					<v-subheader
 						>Priority return route
 						<v-btn
@@ -196,7 +196,7 @@
 					<p class="text-center" v-else>None</p>
 				</div>
 
-				<div>
+				<div v-if="!node.isControllerNode">
 					<v-subheader
 						>Custom return routes
 						<v-btn
@@ -471,14 +471,14 @@ export default {
 			const protocolDataRate = protocolDataRateToString(
 				stats.protocolDataRate || stats.routeSpeed
 			)
-			const rssi = stats.rssi ? rssiToString(stats.rssi) : ''
+			// const rssi = stats.rssi ? rssiToString(stats.rssi) : ''
 			return [
-				rssi
-					? {
-							title: 'RSSI',
-							text: rssi,
-					  }
-					: null,
+				// rssi
+				// 	? {
+				// 			title: 'RSSI',
+				// 			text: rssi,
+				// 	  }
+				// 	: null,
 				protocolDataRate
 					? {
 							title: 'Protocol Data Rate',
