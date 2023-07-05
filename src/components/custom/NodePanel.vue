@@ -150,22 +150,13 @@
 
 				<div v-if="!node.isControllerNode">
 					<v-subheader
-						>Priority return route
-						<v-btn
-							v-if="prioritySUCReturnRoute"
-							class="ml-2"
-							color="error"
-							x-small
-							@click="deleteRoute('prioritySUCReturnRoute')"
-							>Delete
-							<v-icon x-small>delete</v-icon>
-						</v-btn>
+						>Return routes
 						<v-btn
 							class="ml-2"
 							color="success"
 							x-small
 							dark
-							@click="getRoute('prioritySUCReturnRoute')"
+							@click="getRouteReturnRoutes()"
 							>Get
 							<v-icon x-small>refresh</v-icon>
 						</v-btn>
@@ -174,73 +165,73 @@
 							color="purple"
 							x-small
 							dark
-							@click="setRoute('prioritySUCReturnRoute')"
-							>Set
-							<v-icon x-small>route</v-icon>
-						</v-btn>
-					</v-subheader>
-					<div v-if="prioritySUCReturnRoute">
-						<v-list-item
-							dense
-							v-for="(s, i) in prioritySUCReturnRoute"
-							:key="i"
-						>
-							<v-list-item-content>{{
-								s.title
-							}}</v-list-item-content>
-							<v-list-item-content class="align-end">{{
-								s.text
-							}}</v-list-item-content>
-						</v-list-item>
-					</div>
-					<p class="text-center" v-else>None</p>
-				</div>
-
-				<div v-if="!node.isControllerNode">
-					<v-subheader
-						>Custom return routes
-						<v-btn
-							v-if="customSUCReturnRoutes"
-							class="ml-2"
-							color="error"
-							x-small
-							@click="deleteRoute('customSUCReturnRoutes')"
-							>Delete All
-							<v-icon x-small>delete_sweep</v-icon>
-						</v-btn>
-						<v-btn
-							class="ml-2"
-							color="success"
-							x-small
-							dark
-							@click="getRoute('customSUCReturnRoutes')"
-							>Get
-							<v-icon x-small>refresh</v-icon>
-						</v-btn>
-						<v-btn
-							class="ml-2"
-							color="purple"
-							x-small
-							dark
-							@click="setRoute('customSUCReturnRoutes')"
+							@click="addReturnRoute()"
 							>Add
 							<v-icon x-small>route</v-icon>
 						</v-btn>
 					</v-subheader>
-					<div v-if="customSUCReturnRoutes">
-						<div v-for="(r, i) in customSUCReturnRoutes" :key="i">
-							<v-list-item dense v-for="(s, j) in r" :key="j">
-								<v-list-item-content>{{
-									s.title
-								}}</v-list-item-content>
-								<v-list-item-content class="align-end">{{
-									s.text
-								}}</v-list-item-content>
-							</v-list-item>
-							<v-divider />
-						</div>
+					<div>
+						<v-data-table
+							:items="returnRoutes"
+							:headers="returnRoutesHeaders"
+							:items-per-page="5"
+							:mobile-breakpoint="0"
+							class="elevation-0"
+							hide-default-footer
+							disable-pagination
+						>
+							<template v-slot:top>
+								<v-btn
+									v-if="routesChanged"
+									class="ma-2"
+									color="success"
+									x-small
+									dark
+									@click="setReturnRoutes()"
+									>Save
+									<v-icon x-small>save</v-icon>
+								</v-btn>
+
+								<v-btn
+									v-if="routesChanged"
+									class="ma-2"
+									color="error"
+									x-small
+									dark
+									@click="resetReturnRoutes()"
+									>Reset
+									<v-icon x-small>clear</v-icon>
+								</v-btn>
+							</template>
+
+							<template v-slot:[`item.routeSpeed`]="{ item }">
+								{{ protocolDataRateToString(item.routeSpeed) }}
+							</template>
+
+							<template v-slot:[`item.repeaters`]="{ item }">
+								{{
+									item.repeaters.length > 0
+										? item.repeaters.join(', ')
+										: 'Direct connection'
+								}}
+							</template>
+
+							<template v-slot:[`item.isPriority`]="{ item }">
+								{{ item.isPriority ? 'Yes' : 'No' }}
+							</template>
+
+							<template v-slot:[`item.actions`]="{ item }">
+								<v-btn
+									class="ml-2"
+									color="error"
+									x-small
+									@click="deleteReturnRoute(item)"
+									>Delete
+									<v-icon x-small>delete</v-icon>
+								</v-btn>
+							</template>
+						</v-data-table>
 					</div>
-					<p class="text-center" v-else>None</p>
 				</div>
 			</v-list>
 			<v-row
@@ -347,6 +338,7 @@ import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import { copy } from '../../lib/utils'
 
 export default {
 	mixins: [InstancesMixin],
@@ -372,6 +364,30 @@ export default {
 		showFullscreen: false,
 		dialogHealth: false,
 		discoverLoading: false,
+		routesChanged: false,
+		returnRoutes: [],
+		returnRoutesHeaders: [
+			{
+				text: 'Repeaters',
+				value: 'repeaters',
+				sortable: false,
+			},
+			{
+				text: 'Speed',
+				value: 'routeSpeed',
+				sortable: false,
+			},
+			{
+				text: 'Priority',
+				value: 'isPriority',
+				sortable: false,
+			},
+			{
+				text: 'Actions',
+				value: 'actions',
+				sortable: false,
+			},
+		],
 		dataRateItems: [
 			{
 				text: '100 Kbps',
@@ -390,6 +406,20 @@ export default {
 	}),
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		nodeReturnRoutes() {
+			if (!this.node) return null
+
+			const routes = [...(this.node.customSUCReturnRoutes || [])]
+
+			if (this.node.prioritySUCReturnRoute) {
+				routes.push({
+					...this.node.prioritySUCReturnRoute,
+					isPriority: true,
+				})
+			}
+
+			return routes
+		},
 		_value: {
 			get() {
 				return this.value
@@ -445,8 +475,18 @@ export default {
 			return routeStats
 		},
 	},
+	watch: {
+		nodeReturnRoutes: {
+			handler(val) {
+				this.returnRoutes = copy(val)
+				this.routesChanged = false
+			},
+			immediate: true,
+		},
+	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		protocolDataRateToString,
 		parseRouteStats(stats) {
 			const repRSSI = stats.repeaterRSSI || []
 			const repeaters =
@@ -471,6 +511,7 @@ export default {
 			const protocolDataRate = protocolDataRateToString(
 				stats.protocolDataRate || stats.routeSpeed
 			)
+
 			// const rssi = stats.rssi ? rssiToString(stats.rssi) : ''
 			return [
 				// rssi
@@ -596,7 +637,135 @@ export default {
 				this.showSnackbar('Route updated', 'success')
 			}
 		},
-		async setRoute(route) {
+		async promptRoute(prefix, suffix, showPriority = false) {
+			const inputs = [
+				{
+					type: 'array',
+					inputType: 'autocomplete',
+					list: true,
+					multiple: true,
+					prefix,
+					suffix,
+					key: 'repeaters',
+					label: 'Repeaters',
+					hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
+					itemValue: 'id',
+					itemText: '_name',
+					default: [],
+					rules: [(v) => v.length <= 4 || 'Max 4 repeaters'],
+					items: this.nodes.filter(
+						(n) =>
+							!n.isControllerNode &&
+							n.isListening &&
+							n.id !== this.node.id
+					),
+				},
+				{
+					type: 'list',
+					autocomplete: true,
+					key: 'routeSpeed',
+					label: 'Route speed',
+					default: ProtocolDataRate.ZWave_100k,
+					rules: [this.required],
+					items: this.dataRateItems,
+				},
+			]
+
+			if (showPriority) {
+				inputs.push({
+					type: 'boolean',
+					key: 'isPriority',
+					label: 'Priority route',
+					hint: 'If enabled, this route will be the first to be used',
+					default: false,
+				})
+			}
+
+			const res = await this.app.confirm('Set route', '', 'info', {
+				width: 500,
+				inputs,
+				confirmText: 'Set',
+			})
+
+			if (Object.keys(res).length === 0) {
+				return null
+			}
+
+			return res
+		},
+		async getRouteReturnRoutes() {
+			await this.getRoute('prioritySUCReturnRoute')
+			await this.getRoute('customSUCReturnRoutes')
+		},
+		deleteReturnRoute(route) {
+			this.returnRoutes.splice(this.returnRoutes.indexOf(route), 1)
+			this.routesChanged = true
+		},
+		async addReturnRoute() {
+			if (!this.node) return
+
+			const res = await this.promptRoute(
+				`Node "${this.node._name}"`,
+				'Controller',
+				true
+			)
+
+			if (!res) return
+
+			this.routesChanged = true
+
+			const { repeaters, routeSpeed, isPriority } = res
+
+			if (isPriority) {
+				this.returnRoutes = [{ repeaters, routeSpeed, isPriority }]
+				return
+			}
+
+			this.returnRoutes.push({ repeaters, routeSpeed, isPriority })
+		},
+		resetReturnRoutes() {
+			this.returnRoutes = copy(this.nodeReturnRoutes)
+			this.routesChanged = false
+		},
+		async setReturnRoutes() {
+			if (!this.node) return
+
+			let route, args
+
+			if (this.returnRoutes.length === 0) {
+				await this.deleteRoute('customSUCReturnRoutes')
+				return
+			}
+
+			const customRoutes = this.returnRoutes.filter((r) => !r.isPriority)
+
+			if (customRoutes.length === 0) {
+				const priorityRoute = this.returnRoutes.find(
+					(r) => r.isPriority
+				)
+
+				route = 'prioritySUCReturnRoute'
+				args = [
+					this.node.id,
+					{
+						repeaters: priorityRoute.repeaters,
+						routeSpeed: priorityRoute.routeSpeed,
+					},
+				]
+			} else {
+				route = 'customSUCReturnRoutes'
+				args = [
+					this.node.id,
+					customRoutes.map((r) => ({
+						repeaters: r.repeaters,
+						routeSpeed: r.routeSpeed,
+					})),
+				]
+			}
+
+			await this.setRoute(route, args)
+		},
+		async setRoute(route, args) {
 			if (!this.node) return
 
 			let api = ''
@@ -626,102 +795,26 @@ export default {
 
 			if (!api) return
 
-			const res = await this.app.confirm('Set route', '', 'info', {
-				width: 500,
-				inputs: [
-					{
-						type: 'array',
-						inputType: 'autocomplete',
-						list: true,
-						multiple: true,
-						prefix,
-						suffix,
-						key: 'repeaters',
-						label: 'Repeaters',
-						hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
-						itemValue: 'id',
-						itemText: '_name',
-						default: [],
-						rules: [(v) => v.length <= 4 || 'Max 4 repeaters'],
-						items: this.nodes.filter(
-							(n) =>
-								!n.isControllerNode &&
-								n.isListening &&
-								n.id !== this.node.id
-						),
-					},
-					{
-						type: 'list',
-						autocomplete: true,
-						key: 'routeSpeed',
-						label: 'Route speed',
-						default: ProtocolDataRate.ZWave_100k,
-						rules: [this.required],
-						items: this.dataRateItems,
-					},
-				],
-				confirmText: 'Set',
-			})
+			if (!args) {
+				const res = await this.promptRoute(prefix, suffix)
 
-			if (Object.keys(res).length === 0) {
-				return
-			}
+				const { repeaters, routeSpeed } = res
 
-			const { repeaters, routeSpeed } = res
-
-			let args = []
-
-			switch (route) {
-				case 'appRoute':
-				case 'prioritySUCReturnRoute':
-					args = [this.node.id, repeaters, routeSpeed]
-					break
-				case 'customSUCReturnRoutes':
-					{
-						const routes = this.node.customSUCReturnRoutes || []
-						const newRoute = { repeaters, routeSpeed }
-
-						if (routes.length >= 4) {
-							const res = await this.app.confirm(
-								'Replace route',
-								'',
-								'info',
-								{
-									width: 500,
-									inputs: [
-										{
-											type: 'list',
-											key: 'routeIndex',
-											label: 'Route index',
-											default: 0,
-											rules: [this.required],
-											items: routes.map((r, i) => ({
-												text: `Route ${i + 1}: ${
-													r.repeaters.join(', ') ||
-													'Direct'
-												}`,
-												value: i,
-											})),
-										},
-									],
-									confirmText: 'Replace',
-								}
-							)
-							if (Object.keys(res).length === 0) {
-								return
-							}
-
-							const { routeIndex } = res
-
-							routes[routeIndex] = newRoute
-						} else {
-							routes.push(newRoute)
+				args = []
+				switch (route) {
+					case 'appRoute':
+					case 'prioritySUCReturnRoute':
+						args = [this.node.id, repeaters, routeSpeed]
+						break
+					case 'customSUCReturnRoutes':
+						{
+							const routes = this.node.customSUCReturnRoutes || []
+							args = [this.node.id, routes]
 						}
-						args = [this.node.id, routes]
-					}
-					break
-				default:
-					break
+						break
+					default:
+						break
+				}
 			}
 
 			const response = await this.app.apiRequest(api, args)
