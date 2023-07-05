@@ -814,6 +814,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
+		logger.info('Setting user callbacks')
+
 		this.driver.updateOptions({
 			inclusionUserCallbacks: {
 				grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
@@ -828,6 +830,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this._driver) {
 			return
 		}
+
+		logger.info('Removing user callbacks')
 
 		this.driver.updateOptions({
 			inclusionUserCallbacks: undefined,
