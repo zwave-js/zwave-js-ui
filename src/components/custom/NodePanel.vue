@@ -458,23 +458,6 @@ export default {
 
 			return routeStats
 		},
-		prioritySUCReturnRoute() {
-			if (!this.node?.prioritySUCReturnRoute) return null
-
-			const routeStats = this.parseRouteStats(
-				this.node.prioritySUCReturnRoute
-			)
-
-			return routeStats
-		},
-		customSUCReturnRoutes() {
-			const routes = this.node?.customSUCReturnRoutes
-			if (!routes || routes.length === 0) return null
-
-			const routeStats = routes.map((r) => this.parseRouteStats(r))
-
-			return routeStats
-		},
 	},
 	watch: {
 		nodeReturnRoutes: {
