@@ -219,7 +219,7 @@
 							</template>
 
 							<template v-slot:[`item.isPriority`]="{ item }">
-								{{ item.isPriority ? 'Yes' : 'No' }}
+								{{ item.isPriority ? 'Priority' : 'Custom' }}
 							</template>
 
 							<template v-slot:[`item.actions`]="{ item }">
