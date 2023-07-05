@@ -359,13 +359,20 @@ const useBaseStore = defineStore('base', {
 							}
 						}
 
+						const routeUpdated = (prop) => {
+							return (
+								data[prop] === false ||
+								(data[prop] !== undefined &&
+									!deepEqual(data[prop], node[prop]))
+							)
+						}
+
 						if (
 							!deepEqual(prev.lwr, cur.lwr) ||
 							!deepEqual(prev.nlwr, cur.nlwr) ||
-							!deepEqual(
-								node.applicationRoute,
-								data.applicationRoute
-							) ||
+							routeUpdated('applicationRoute') ||
+							routeUpdated('prioritySUCReturnRoute') ||
+							routeUpdated('customSUCReturnRoutes') ||
 							cur.rssi != prev.rssi
 						) {
 							// mesh graph changed

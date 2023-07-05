@@ -290,6 +290,11 @@ import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 import ConfigApis from '../../apis/ConfigApis.js'
 
+const ReturnRouteKind = {
+	PRIORITY: 20,
+	CUSTOM: 21,
+}
+
 export default {
 	props: {
 		nodes: {
@@ -859,13 +864,18 @@ export default {
 				return
 			}
 
-			const {
-				repeaters,
-				repeaterRSSI,
-				rssi,
-				protocolDataRate,
-				routeFailedBetween,
-			} = route
+			const isReturn = routeKind >= 20
+
+			// tells if this route should be shown in overview
+			const showInOverview = routeKind !== RouteKind.NLWR && !isReturn
+
+			const { repeaters, repeaterRSSI, rssi, routeFailedBetween } = route
+
+			let { protocolDataRate } = route
+
+			if (route.routeSpeed) {
+				protocolDataRate = route.routeSpeed
+			}
 
 			if (routeFailedBetween) {
 				const edge = {
@@ -885,12 +895,15 @@ export default {
 				edges.push(edge)
 			}
 
+			const sourceNodeId = isReturn ? node.id : controllerId
+			const destinationNodeId = isReturn ? controllerId : node.id
+
 			for (let i = 0; i <= repeaters.length; i++) {
 				const repeater = repeaters[i]
-				const prevRepeater = repeaters[i - 1] || controllerId
+				const prevRepeater = repeaters[i - 1] || sourceNodeId
 
 				const from = prevRepeater
-				const to = repeater || node.id
+				const to = repeater || destinationNodeId
 
 				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
 
@@ -898,7 +911,7 @@ export default {
 
 				const edgeId = this.getEdgeId({ from, to })
 
-				let width, dashes
+				let width, dashes, arrows
 
 				switch (routeKind) {
 					case RouteKind.NLWR:
@@ -912,6 +925,34 @@ export default {
 					case RouteKind.Application:
 						width = 4
 						dashes = false
+						arrows = {
+							middle: {
+								enabled: true,
+								type: 'image',
+								src: this.starSvg,
+								scaleFactor: 1,
+							},
+						}
+						break
+					case ReturnRouteKind.PRIORITY:
+						width = 2
+						dashes = [5, 10]
+						arrows = {
+							to: {
+								enabled: true,
+								scaleFactor: 1,
+							},
+						}
+						break
+					case ReturnRouteKind.CUSTOM:
+						width = 1
+						dashes = [5, 10]
+						arrows = {
+							to: {
+								enabled: true,
+								scaleFactor: 1,
+							},
+						}
 						break
 					default:
 						width = 1
@@ -935,26 +976,16 @@ export default {
 					}, //  multi: 'html'
 					// arrows: 'to from',
 					dashes,
-					arrows:
-						routeKind === RouteKind.Application
-							? {
-									middle: {
-										enabled: true,
-										type: 'image',
-										src: this.starSvg,
-										scaleFactor: 1,
-									},
-							  }
-							: undefined,
-					hidden: routeKind === RouteKind.NLWR,
+					arrows,
+					hidden: !showInOverview,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
-					physics: routeKind !== RouteKind.NLWR,
+					physics: showInOverview,
 					routeKind,
 				}
 
 				edges.push(edge)
 
-				if (routeKind !== RouteKind.NLWR) {
+				if (showInOverview) {
 					if (!node.failed && node.available) {
 						node.color = this.legends[repeaters.length + 1].color
 					}
@@ -1070,6 +1101,28 @@ export default {
 					node.statistics?.nlwr,
 					RouteKind.NLWR
 				)
+
+				if (node.customSUCReturnRoutes) {
+					for (const r of node.customSUCReturnRoutes) {
+						this.parseRouteStats(
+							edges,
+							hubNode,
+							entity,
+							r,
+							ReturnRouteKind.CUSTOM
+						)
+					}
+				}
+
+				if (node.prioritySUCReturnRoute) {
+					this.parseRouteStats(
+						edges,
+						hubNode,
+						entity,
+						node.prioritySUCReturnRoute,
+						ReturnRouteKind.PRIORITY
+					)
+				}
 			}
 
 			return { node: entity, edges }
