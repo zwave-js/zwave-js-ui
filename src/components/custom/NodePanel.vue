@@ -135,7 +135,7 @@
 							<v-icon x-small>route</v-icon>
 						</v-btn>
 					</v-subheader>
-					<div v-if="appRoute">
+					<div v-if="appRoute" class="text-caption">
 						<v-list-item dense v-for="(s, i) in appRoute" :key="i">
 							<v-list-item-content>{{
 								s.title
