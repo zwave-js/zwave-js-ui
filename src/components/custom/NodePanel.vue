@@ -171,68 +171,82 @@
 						</v-btn>
 					</v-subheader>
 					<div>
-						<v-data-table
-							:items="returnRoutes"
-							:headers="returnRoutesHeaders"
-							:items-per-page="5"
-							:mobile-breakpoint="0"
-							class="elevation-0"
-							hide-default-footer
-							hide-default-header
-							disable-pagination
-							no-data-text="No return routes"
-						>
-							<template v-slot:top>
-								<v-btn
-									v-if="routesChanged"
-									class="ma-2"
-									color="success"
-									x-small
-									dark
-									@click="setReturnRoutes()"
-									>Save
-									<v-icon x-small>save</v-icon>
-								</v-btn>
+						<div v-if="returnRoutes.length > 0">
+							<draggable
+								v-model="returnRoutes"
+								@change="routesChanged = true"
+								handle=".handle"
+							>
+								<v-row
+									v-for="(r, i) in returnRoutes"
+									:key="`returnRoute_${i}`"
+									dense
+									class="text-caption"
+								>
+									<v-icon
+										class="handle"
+										style="cursor: move"
+										color="primary lighten-2"
+										>drag_indicator</v-icon
+									>
+									<v-col>
+										{{
+											protocolDataRateToString(
+												r.routeSpeed
+											)
+										}}
+									</v-col>
+									<v-col>
+										{{
+											r.repeaters.length > 0
+												? r.repeaters.join(', ')
+												: 'Direct connection'
+										}}
+									</v-col>
+									<v-col>
+										{{
+											r.isPriority ? 'Priority' : 'Custom'
+										}}
+									</v-col>
+									<v-col>
+										<v-btn
+											class="ml-2"
+											color="error"
+											x-small
+											@click="deleteReturnRoute(r)"
+											>Delete
+											<v-icon x-small>delete</v-icon>
+										</v-btn>
+									</v-col>
+								</v-row>
+							</draggable>
+						</div>
+						<div v-else>
+							<p class="text-center">None</p>
+						</div>
+						<v-row dense>
+							<v-btn
+								v-if="routesChanged"
+								class="ma-2"
+								color="success"
+								x-small
+								dark
+								@click="setReturnRoutes()"
+								>Save
+								<v-icon x-small>save</v-icon>
+							</v-btn>
 
-								<v-btn
-									v-if="routesChanged"
-									class="ma-2"
-									color="error"
-									x-small
-									dark
-									@click="resetReturnRoutes()"
-									>Reset
-									<v-icon x-small>clear</v-icon>
-								</v-btn>
-							</template>
-
-							<template v-slot:[`item.routeSpeed`]="{ item }">
-								{{ protocolDataRateToString(item.routeSpeed) }}
-							</template>
-
-							<template v-slot:[`item.repeaters`]="{ item }">
-								{{
-									item.repeaters.length > 0
-										? item.repeaters.join(', ')
-										: 'Direct connection'
-								}}
-							</template>
-
-							<template v-slot:[`item.isPriority`]="{ item }">
-								{{ item.isPriority ? 'Priority' : 'Custom' }}
-							</template>
-
-							<template v-slot:[`item.actions`]="{ item }">
-								<v-btn
-									class="ml-2"
-									color="error"
-									x-small
-									@click="deleteReturnRoute(item)"
-									>Delete
-									<v-icon x-small>delete</v-icon>
-								</v-btn>
-							</template>
-						</v-data-table>
+							<v-btn
+								v-if="routesChanged"
+								class="ma-2"
+								color="error"
+								x-small
+								dark
+								@click="resetReturnRoutes()"
+								>Reset
+								<v-icon x-small>clear</v-icon>
+							</v-btn>
+						</v-row>
 					</div>
 				</div>
 			</v-list>
@@ -333,6 +347,8 @@ import {
 	protocolDataRateToString,
 	rssiToString,
 } from 'zwave-js/safe'
+import draggable from 'vuedraggable'
+
 import { Routes } from '../../router/index.js'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import BgRssiChart from '@/components/custom/BgRssiChart.vue'
@@ -348,6 +364,7 @@ export default {
 		StatisticsArrows,
 		BgRssiChart,
 		DialogHealthCheck,
+		draggable,
 	},
 	props: {
 		value: {
@@ -368,28 +385,6 @@ export default {
 		discoverLoading: false,
 		routesChanged: false,
 		returnRoutes: [],
-		returnRoutesHeaders: [
-			{
-				text: 'Repeaters',
-				value: 'repeaters',
-				sortable: false,
-			},
-			{
-				text: 'Speed',
-				value: 'routeSpeed',
-				sortable: false,
-			},
-			{
-				text: 'Priority',
-				value: 'isPriority',
-				sortable: false,
-			},
-			{
-				text: 'Actions',
-				value: 'actions',
-				sortable: false,
-			},
-		],
 		dataRateItems: [
 			{
 				text: '100 Kbps',

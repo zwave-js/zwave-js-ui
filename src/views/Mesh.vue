@@ -130,8 +130,13 @@ export default {
 			function dragMouseDown(e) {
 				e = e || window.event
 				e.preventDefault()
+
+				console.log(e.target.classList)
 				// prevent drag when clicking on chart
-				if (e.target.classList.contains('u-over')) {
+				if (
+					e.target.classList.contains('u-over') ||
+					e.target.classList.contains('handle')
+				) {
 					return
 				}
 				// get the mouse cursor position at startup:
