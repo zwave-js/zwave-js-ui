@@ -152,6 +152,7 @@
 					<v-subheader
 						>Return routes
 						<v-btn
+							v-if="!routesChanged"
 							class="ml-2"
 							color="success"
 							x-small
@@ -161,6 +162,7 @@
 							<v-icon x-small>refresh</v-icon>
 						</v-btn>
 						<v-btn
+							:disabled="returnRoutes.length === 4"
 							class="ml-2"
 							color="purple"
 							x-small
@@ -172,6 +174,13 @@
 					</v-subheader>
 					<div>
 						<div v-if="returnRoutes.length > 0">
+							<!-- Headers -->
+							<v-row dense class="text-caption">
+								<v-col>Speed</v-col>
+								<v-col>Repeaters</v-col>
+								<v-col>Priority</v-col>
+								<v-col></v-col>
+							</v-row>
 							<draggable
 								v-model="returnRoutes"
 								@change="routesChanged = true"
@@ -191,9 +200,7 @@
 									>
 									<v-col>
 										{{
-											protocolDataRateToString(
-												r.routeSpeed
-											)
+											zwaveDataRateToString(r.routeSpeed)
 										}}
 									</v-col>
 									<v-col>
@@ -345,6 +352,8 @@
 import {
 	ProtocolDataRate,
 	protocolDataRateToString,
+	zwaveDataRateToString,
+	isRssiError,
 	rssiToString,
 } from 'zwave-js/safe'
 import draggable from 'vuedraggable'
@@ -466,7 +475,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		protocolDataRateToString,
+		zwaveDataRateToString,
 		parseRouteStats(stats) {
 			const repRSSI = stats.repeaterRSSI || []
 			const repeaters =
@@ -475,7 +484,7 @@ export default {
 							.map(
 								(r, i) =>
 									`${r}${
-										repRSSI[i]
+										repRSSI[i] && !isRssiError(repRSSI[i])
 											? ` (${rssiToString(repRSSI[i])})`
 											: ''
 									}`
@@ -488,9 +497,13 @@ export default {
 						.join(', ')
 				: ''
 
-			const protocolDataRate = protocolDataRateToString(
-				stats.protocolDataRate || stats.routeSpeed
-			)
+			const protocolDataRate = stats.protocolDataRate
+				? protocolDataRateToString(stats.protocolDataRate)
+				: ''
+
+			const routeSpeed = stats.routeSpeed
+				? zwaveDataRateToString(stats.routeSpeed)
+				: ''
 
 			// const rssi = stats.rssi ? rssiToString(stats.rssi) : ''
 			return [
@@ -502,8 +515,14 @@ export default {
 				// 	: null,
 				protocolDataRate
 					? {
-							title: 'Protocol Data Rate',
+							title: 'Data Rate',
 							text: protocolDataRate,
+					  }
+					: null,
+				routeSpeed
+					? {
+							title: 'Route Speed',
+							text: routeSpeed,
 					  }
 					: null,
 				{
@@ -697,7 +716,34 @@ export default {
 			const { repeaters, routeSpeed, isPriority } = res
 
 			if (isPriority) {
-				this.returnRoutes = [{ repeaters, routeSpeed, isPriority }]
+				const existingPriorityRoute = this.returnRoutes.find(
+					(r) => r.isPriority
+				)
+
+				const newRoute = {
+					repeaters,
+					routeSpeed,
+					isPriority,
+				}
+
+				if (existingPriorityRoute) {
+					// ask if he wants to replace the existing priority route
+					const res = await this.app.confirm(
+						'Priority route',
+						'You already have a priority route set. Do you want to replace it?',
+						'info'
+					)
+
+					if (!res) return
+
+					this.returnRoutes.splice(
+						this.returnRoutes.indexOf(existingPriorityRoute),
+						1,
+						newRoute
+					)
+				} else {
+					this.returnRoutes.push(newRoute)
+				}
 				return
 			}
 
