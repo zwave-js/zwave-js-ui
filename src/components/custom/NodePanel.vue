@@ -756,38 +756,27 @@ export default {
 		async setReturnRoutes() {
 			if (!this.node) return
 
-			let route, args
-
 			if (this.returnRoutes.length === 0) {
 				await this.deleteRoute('customSUCReturnRoutes')
 				return
 			}
 
 			const customRoutes = this.returnRoutes.filter((r) => !r.isPriority)
+			const priorityRoute = this.returnRoutes.find((r) => r.isPriority)
 
-			if (customRoutes.length === 0) {
-				const priorityRoute = this.returnRoutes.find(
-					(r) => r.isPriority
-				)
+			const args = [
+				this.node.id,
+				customRoutes.map((r) => ({
+					repeaters: r.repeaters,
+					routeSpeed: r.routeSpeed,
+				})),
+				{
+					repeaters: priorityRoute.repeaters,
+					routeSpeed: priorityRoute.routeSpeed,
+				},
+			]
 
-				route = 'prioritySUCReturnRoute'
-				args = [
-					this.node.id,
-					priorityRoute.repeaters,
-					priorityRoute.routeSpeed,
-				]
-			} else {
-				route = 'customSUCReturnRoutes'
-				args = [
-					this.node.id,
-					customRoutes.map((r) => ({
-						repeaters: r.repeaters,
-						routeSpeed: r.routeSpeed,
-					})),
-				]
-			}
-
-			await this.setRoute(route, args)
+			await this.setRoute('customSUCReturnRoutes', args)
 		},
 		async setRoute(route, args) {
 			if (!this.node) return
