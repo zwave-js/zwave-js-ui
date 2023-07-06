@@ -359,6 +359,7 @@ export default {
 	data() {
 		return {
 			openPanel: -1,
+			hoverNodeTimeout: null,
 			containerHeight: 400,
 			selectedNodes: [],
 			starSvg: ConfigApis.getBasePath('/static/star.svg'),
@@ -512,6 +513,10 @@ export default {
 
 		if (this.updateTimeout) {
 			clearTimeout(this.updateTimeout)
+		}
+
+		if (this.hoverNodeTimeout) {
+			clearTimeout(this.hoverNodeTimeout)
 		}
 
 		this.destroyNetwork()
@@ -827,19 +832,28 @@ export default {
 			// show menu
 			if (this.dragging) return
 			const { node, event } = params
-			this.menuX = event.clientX + 5
-			this.menuY = event.clientY + 5
-			this.menu = true
+
 			const item = this.allNodes.find((n) => n.id === node)
 
 			if (item) {
-				this.hoverNode = item
+				this.hoverNodeTimeout = setTimeout(() => {
+					this.hoverNode = item
+					this.menuX = event.clientX + 5
+					this.menuY = event.clientY + 5
+					this.menu = true
+					this.hoverNodeTimeout = null
+				}, 1000)
 			}
 		},
 		handleBlurNode() {
-			// hide menu
-			this.menu = false
-			this.hoverNode = null
+			if (this.hoverNodeTimeout) {
+				clearTimeout(this.hoverNodeTimeout)
+				this.hoverNodeTimeout = null
+			} else {
+				// hide menu
+				this.menu = false
+				this.hoverNode = null
+			}
 		},
 		handleClick(params) {
 			if (params.event) {
