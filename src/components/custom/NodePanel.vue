@@ -178,7 +178,7 @@
 							<v-row dense class="text-caption">
 								<v-col>Speed</v-col>
 								<v-col>Repeaters</v-col>
-								<v-col>Priority</v-col>
+								<v-col>Type</v-col>
 								<v-col></v-col>
 							</v-row>
 							<draggable
