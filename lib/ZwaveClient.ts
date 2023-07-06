@@ -3153,14 +3153,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async assignCustomReturnRoutes(
 		nodeId: number,
 		destinationNodeId: number,
-		routes: Route[]
+		routes: Route[],
+		priorityRoute?: Route
 	) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
 		const result = await this._driver.controller.assignCustomReturnRoutes(
 			nodeId,
 			destinationNodeId,
-			routes
+			routes,
+			priorityRoute
 		)
 
 		if (result) {
@@ -3194,13 +3196,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Assigns up to 4 return routes to a node to the controller
 	 */
-	async assignCustomSUCReturnRoutes(nodeId: number, routes: Route[]) {
+	async assignCustomSUCReturnRoutes(
+		nodeId: number,
+		routes: Route[],
+		priorityRoute?: Route
+	) {
 		if (!this.driverReady) throw new DriverNotReadyError()
 
 		const result =
 			await this._driver.controller.assignCustomSUCReturnRoutes(
 				nodeId,
-				routes
+				routes,
+				priorityRoute
 			)
 
 		if (result) {
