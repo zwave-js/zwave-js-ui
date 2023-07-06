@@ -281,6 +281,8 @@ const useBaseStore = defineStore('base', {
 			const node = this.getNode(data.nodeId)
 			delete data.nodeId
 
+			let emitMeshUpdate = false
+
 			if (node) {
 				let lastReceive = node.lastReceive
 				let lastTransmit = node.lastTransmit
@@ -359,24 +361,13 @@ const useBaseStore = defineStore('base', {
 							}
 						}
 
-						const routeUpdated = (prop) => {
-							return (
-								data[prop] === false ||
-								(data[prop] !== undefined &&
-									!deepEqual(data[prop], node[prop]))
-							)
-						}
-
 						if (
 							!deepEqual(prev.lwr, cur.lwr) ||
 							!deepEqual(prev.nlwr, cur.nlwr) ||
-							routeUpdated('applicationRoute') ||
-							routeUpdated('prioritySUCReturnRoute') ||
-							routeUpdated('customSUCReturnRoutes') ||
 							cur.rssi != prev.rssi
 						) {
 							// mesh graph changed
-							this.updateMeshGraph(node)
+							emitMeshUpdate = true
 						}
 					}
 				}
@@ -401,6 +392,28 @@ const useBaseStore = defineStore('base', {
 							node.bgRSSIPoints.shift()
 						}
 					}
+				}
+
+				const routeUpdated = (prop) => {
+					return (
+						data[prop] === false ||
+						(data[prop] !== undefined &&
+							!deepEqual(data[prop], node[prop]))
+					)
+				}
+
+				if (
+					!emitMeshUpdate &&
+					(routeUpdated('applicationRoute') ||
+						routeUpdated('prioritySUCReturnRoute') ||
+						routeUpdated('customSUCReturnRoutes'))
+				) {
+					// mesh graph changed
+					emitMeshUpdate = true
+				}
+
+				if (emitMeshUpdate) {
+					this.updateMeshGraph(node)
 				}
 
 				Object.assign(node, {
