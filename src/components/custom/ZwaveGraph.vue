@@ -998,7 +998,7 @@ export default {
 					arrows,
 					hidden: !showInOverview,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
-					physics: showInOverview,
+					physics: true,
 					routeKind,
 				}
 

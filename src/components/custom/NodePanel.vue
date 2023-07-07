@@ -216,14 +216,12 @@
 										}}
 									</v-col>
 									<v-col>
-										<v-btn
-											class="ml-2"
+										<v-icon
 											color="error"
 											x-small
 											@click="deleteReturnRoute(r)"
-											>Delete
-											<v-icon x-small>delete</v-icon>
-										</v-btn>
+											>delete</v-icon
+										>
 									</v-col>
 								</v-row>
 							</draggable>
@@ -675,7 +673,7 @@ export default {
 					type: 'boolean',
 					key: 'isPriority',
 					label: 'Priority route',
-					hint: 'If enabled, this route will be the first to be used',
+					hint: 'If enabled, this route will always be used first',
 					default: false,
 				})
 			}
