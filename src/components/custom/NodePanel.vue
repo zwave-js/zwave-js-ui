@@ -175,12 +175,13 @@
 					<div>
 						<div v-if="returnRoutes.length > 0">
 							<!-- Headers -->
-							<v-row dense class="text-caption">
+							<!-- <v-row dense class="text-caption">
+								<v-col></v-col>
 								<v-col>Speed</v-col>
 								<v-col>Repeaters</v-col>
 								<v-col>Type</v-col>
 								<v-col></v-col>
-							</v-row>
+							</v-row> -->
 							<draggable
 								v-model="returnRoutes"
 								@change="routesChanged = true"
@@ -190,7 +191,7 @@
 									v-for="(r, i) in returnRoutes"
 									:key="`returnRoute_${i}`"
 									dense
-									class="text-caption"
+									class="text-caption text-center my-1"
 								>
 									<v-icon
 										class="handle"
@@ -198,27 +199,27 @@
 										color="primary lighten-2"
 										>drag_indicator</v-icon
 									>
-									<v-col>
+									<v-col class="my-auto">
 										{{
 											zwaveDataRateToString(r.routeSpeed)
 										}}
 									</v-col>
-									<v-col>
+									<v-col class="my-auto">
 										{{
 											r.repeaters.length > 0
 												? r.repeaters.join(', ')
 												: 'Direct connection'
 										}}
 									</v-col>
-									<v-col>
+									<v-col class="my-auto">
 										{{
 											r.isPriority ? 'Priority' : 'Custom'
 										}}
 									</v-col>
-									<v-col>
+									<v-col class="my-auto">
 										<v-icon
 											color="error"
-											x-small
+											small
 											@click="deleteReturnRoute(r)"
 											>delete</v-icon
 										>
@@ -350,10 +351,10 @@
 import {
 	ProtocolDataRate,
 	protocolDataRateToString,
-	zwaveDataRateToString,
 	isRssiError,
 	rssiToString,
 } from 'zwave-js/safe'
+import { zwaveDataRateToString } from '@zwave-js/core/safe'
 import draggable from 'vuedraggable'
 
 import { Routes } from '../../router/index.js'
