@@ -143,7 +143,7 @@
 
 							<v-checkbox
 								v-model="showApplicationRoutes"
-								label="Show application routes"
+								label="Show priority routes"
 							></v-checkbox>
 
 							<v-badge
