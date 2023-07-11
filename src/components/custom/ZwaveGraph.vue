@@ -930,6 +930,13 @@ export default {
 
 				const edgeId = this.getEdgeId({ from, to })
 
+				const starArrow = {
+					enabled: true,
+					type: 'image',
+					src: this.starSvg,
+					scaleFactor: 1,
+				}
+
 				let width, dashes, arrows
 
 				switch (routeKind) {
@@ -945,12 +952,7 @@ export default {
 						width = 4
 						dashes = false
 						arrows = {
-							middle: {
-								enabled: true,
-								type: 'image',
-								src: this.starSvg,
-								scaleFactor: 1,
-							},
+							middle: starArrow,
 						}
 						break
 					case ReturnRouteKind.PRIORITY:
@@ -961,6 +963,7 @@ export default {
 								enabled: true,
 								scaleFactor: 1,
 							},
+							middle: starArrow,
 						}
 						break
 					case ReturnRouteKind.CUSTOM:
