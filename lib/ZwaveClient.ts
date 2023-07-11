@@ -441,7 +441,7 @@ export type ZUINode = {
 	productLabel?: string
 	productDescription?: string
 	statistics?: ControllerStatistics | NodeStatistics
-	applicationRoute?: RouteStatistics
+	applicationRoute?: Route
 	priorityReturnRoute?: Record<number, Route>
 	prioritySUCReturnRoute?: Route
 	customReturnRoute?: Record<number, Route[]>
@@ -3234,26 +3234,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					const statistics: Partial<NodeStatistics> =
 						node.statistics || {}
 
-					const route = {
-						repeaters: result.repeaters,
-						protocolDataRate:
-							result.routeSpeed as unknown as ProtocolDataRate,
-					}
 					switch (result.routeKind) {
 						case RouteKind.Application:
-							node.applicationRoute = route
+							node.applicationRoute = {
+								repeaters: result.repeaters,
+								routeSpeed: result.routeSpeed,
+							}
 							break
 						case RouteKind.NLWR:
 							statistics.nlwr = {
 								...(statistics.nlwr || {}),
-								...route,
+								repeaters: result.repeaters,
+								protocolDataRate: result.routeSpeed as any,
 							}
 							delete node.applicationRoute
 							break
 						case RouteKind.LWR:
 							statistics.lwr = {
 								...(statistics.lwr || {}),
-								...route,
+								repeaters: result.repeaters,
+								protocolDataRate: result.routeSpeed as any,
 							}
 							delete node.applicationRoute
 							break
