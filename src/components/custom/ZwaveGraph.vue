@@ -136,6 +136,16 @@
 								</template>
 							</v-autocomplete>
 
+							<v-checkbox
+								v-model="showReturnRoutes"
+								label="Show return routes"
+							></v-checkbox>
+
+							<v-checkbox
+								v-model="showApplicationRoutes"
+								label="Show application routes"
+							></v-checkbox>
+
 							<v-badge
 								color="error"
 								overlap
@@ -363,6 +373,8 @@ export default {
 			hoverNodeTimeout: null,
 			containerHeight: 400,
 			selectedNodes: [],
+			showReturnRoutes: true,
+			showApplicationRoutes: true,
 			starSvg: ConfigApis.getBasePath('/static/star.svg'),
 			menuX: 0,
 			menuY: 0,
@@ -481,6 +493,52 @@ export default {
 			if (!arraysEqual(val, oldVal)) {
 				this.selectedNodes = val.map((n) => n.id)
 				this.setSelection()
+			}
+		},
+		showReturnRoutes(v) {
+			// hide/show all edges with returnRoute = true
+			if (
+				this.network &&
+				!this.loading &&
+				this.selectedNodes.length > 0
+			) {
+				const { edges } = this.network.body.data
+
+				const edgesToUpdate = []
+
+				edges.forEach((e) => {
+					if (e.routeKind >= ReturnRouteKind.PRIORITY) {
+						edgesToUpdate.push({
+							id: e.id,
+							hidden: !v,
+						})
+					}
+				})
+
+				edges.update(edgesToUpdate)
+			}
+		},
+		showApplicationRoutes(v) {
+			// hide/show all edges with returnRoute = false
+			if (
+				this.network &&
+				!this.loading &&
+				this.selectedNodes.length > 0
+			) {
+				const { edges } = this.network.body.data
+
+				const edgesToUpdate = []
+
+				edges.forEach((e) => {
+					if (e.routeKind === RouteKind.Application) {
+						edgesToUpdate.push({
+							id: e.id,
+							hidden: !v,
+						})
+					}
+				})
+
+				edges.update(edgesToUpdate)
 			}
 		},
 	},
@@ -784,12 +842,26 @@ export default {
 					(selectedNodes.length > 0 &&
 						!selectedNodes.includes(e.routeOf))
 
+				let checkboxHide = false
+
+				if (
+					e.routeKind === RouteKind.Application &&
+					!this.showApplicationRoutes
+				) {
+					checkboxHide = true
+				} else if (
+					e.routeKind >= ReturnRouteKind.PRIORITY &&
+					!this.showReturnRoutes
+				) {
+					checkboxHide = true
+				}
+
 				const fontSize = showAll ? 0 : 12
 
 				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
 					edgesToUpdate.push({
 						id: e.id,
-						hidden: shouldBeHidden,
+						hidden: shouldBeHidden || checkboxHide,
 						font: {
 							size: fontSize,
 						},
