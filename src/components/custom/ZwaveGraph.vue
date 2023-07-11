@@ -1075,6 +1075,7 @@ export default {
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
 					physics: true,
 					routeKind,
+					protocolDataRate,
 				}
 
 				edges.push(edge)

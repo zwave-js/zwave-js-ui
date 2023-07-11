@@ -356,8 +356,7 @@ const useBaseStore = defineStore('base', {
 							data.applicationRoute = {
 								...cur.lwr,
 								repeaters: data.applicationRoute.repeaters,
-								protocolDataRate:
-									data.applicationRoute.protocolDataRate,
+								routeSpeed: data.applicationRoute.routeSpeed,
 							}
 						}
 
