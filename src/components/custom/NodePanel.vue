@@ -516,11 +516,13 @@ export default {
 							)
 							.join(', ')
 					: 'None, direct connection'
-			const routeFiled = stats.routeFailedBetween
-				? stats.routeFailedBetween
-						.map((r) => `${r[0]} --> ${r[1]}`)
-						.join(', ')
-				: ''
+
+			const filterFailed =
+				stats.routeFailedBetween?.filter((r) => !!r[0] && !!r[1]) || []
+			const routeFailed =
+				filterFailed.length > 0
+					? filterFailed.map((r) => `${r[0]} --> ${r[1]}`).join(', ')
+					: ''
 
 			const protocolDataRate = stats.protocolDataRate
 				? protocolDataRateToString(stats.protocolDataRate)
@@ -554,10 +556,10 @@ export default {
 					title: 'Repeaters',
 					text: repeaters,
 				},
-				routeFiled
+				routeFailed
 					? {
 							title: 'Route failed between',
-							text: routeFiled,
+							text: routeFailed,
 					  }
 					: null,
 			].filter((r) => !!r)
