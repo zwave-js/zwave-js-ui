@@ -174,58 +174,74 @@
 					</v-subheader>
 					<div>
 						<div v-if="returnRoutes.length > 0">
-							<!-- Headers -->
-							<!-- <v-row dense class="text-caption">
-								<v-col></v-col>
-								<v-col>Speed</v-col>
-								<v-col>Repeaters</v-col>
-								<v-col>Type</v-col>
-								<v-col></v-col>
-							</v-row> -->
-							<draggable
-								v-model="returnRoutes"
-								@change="routesChanged = true"
-								handle=".handle"
-							>
-								<v-row
-									v-for="(r, i) in returnRoutes"
-									:key="`returnRoute_${i}`"
-									dense
-									class="text-caption text-center my-1"
+							<table class="fill-width">
+								<thead
+									class="text-caption text-center font-weight-bold"
 								>
-									<v-icon
-										class="handle"
-										style="cursor: move"
-										color="primary lighten-2"
-										>drag_indicator</v-icon
+									<tr>
+										<th></th>
+										<th>Repeaters</th>
+										<th>Speed</th>
+										<th>Priority</th>
+										<th></th>
+									</tr>
+								</thead>
+								<draggable
+									v-model="returnRoutes"
+									@change="routesChanged = true"
+									handle=".handle"
+									:move="checkMove"
+									tag="tbody"
+								>
+									<tr
+										v-for="(r, i) in returnRoutes"
+										:key="`returnRoute_${i}`"
+										dense
+										class="text-caption text-center"
 									>
-									<v-col class="my-auto">
-										{{
-											zwaveDataRateToString(r.routeSpeed)
-										}}
-									</v-col>
-									<v-col class="my-auto">
-										{{
-											r.repeaters.length > 0
-												? r.repeaters.join(', ')
-												: 'Direct connection'
-										}}
-									</v-col>
-									<v-col class="my-auto">
-										{{
-											r.isPriority ? 'Priority' : 'Custom'
-										}}
-									</v-col>
-									<v-col class="my-auto">
-										<v-icon
-											color="error"
-											small
-											@click="deleteReturnRoute(r)"
-											>delete</v-icon
-										>
-									</v-col>
-								</v-row>
-							</draggable>
+										<td>
+											<v-icon
+												v-if="!r.isPriority"
+												class="handle"
+												style="cursor: move"
+												color="primary lighten-2"
+												>drag_indicator</v-icon
+											>
+										</td>
+										<td>
+											{{
+												r.repeaters.length > 0
+													? r.repeaters.join(', ')
+													: 'Direct connection'
+											}}
+										</td>
+										<td>
+											{{
+												zwaveDataRateToString(
+													r.routeSpeed
+												)
+											}}
+										</td>
+										<td>
+											<v-icon
+												v-if="r.isPriority"
+												color="success"
+												small
+												>check</v-icon
+											>
+										</td>
+										<td>
+											<v-icon
+												color="error"
+												small
+												@click="deleteReturnRoute(r)"
+												>delete</v-icon
+											>
+										</td>
+										<td></td>
+									</tr>
+								</draggable>
+							</table>
 						</div>
 						<div v-else>
 							<p class="text-center">None</p>
@@ -417,7 +433,8 @@ export default {
 			const routes = [...(this.node.customSUCReturnRoutes || [])]
 
 			if (this.node.prioritySUCReturnRoute) {
-				routes.push({
+				// priority must be first
+				routes.unshift({
 					...this.node.prioritySUCReturnRoute,
 					isPriority: true,
 				})
@@ -475,6 +492,15 @@ export default {
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		zwaveDataRateToString,
+		checkMove(evt) {
+			const { futureIndex } = evt.draggedContext
+			const hasPriority = this.returnRoutes.some((r) => r.isPriority)
+			if (hasPriority && futureIndex === 0) {
+				return false
+			}
+
+			return true
+		},
 		parseRouteStats(stats) {
 			const repRSSI = stats.repeaterRSSI || []
 			const repeaters =
@@ -741,7 +767,11 @@ export default {
 						newRoute
 					)
 				} else {
-					this.returnRoutes.push(newRoute)
+					if (newRoute.isPriority) {
+						this.returnRoutes.unshift(newRoute)
+					} else {
+						this.returnRoutes.push(newRoute)
+					}
 				}
 				return
 			}
