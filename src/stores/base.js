@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { $set, arraysEqual, deepEqual } from '../lib/utils'
+import { $set, deepEqual } from '../lib/utils'
 import logger from '../lib/logger'
 
 import { Settings } from '@/modules/Settings'
