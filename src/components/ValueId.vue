@@ -437,6 +437,10 @@ export default {
 					return this.itemText(
 						this.selectedItem || this.value.newValue
 					)
+				} else if (this.value === null) {
+					return '(unknown)'
+				} else if (this.value === undefined) {
+					return '(missing)'
 				}
 				return this.value.newValue
 			},
