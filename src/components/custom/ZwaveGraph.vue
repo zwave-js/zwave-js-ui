@@ -676,7 +676,7 @@ export default {
 					selectable: true,
 					selectConnectedEdges: false,
 					tooltipDelay: 1000,
-					zoomSpeed: 1,
+					zoomSpeed: 2,
 					zoomView: true,
 				},
 				nodes: {

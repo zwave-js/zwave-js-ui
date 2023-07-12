@@ -262,5 +262,8 @@
     "last 2 versions",
     "not ie <= 8"
   ],
-  "packageManager": "yarn@3.2.1"
+  "packageManager": "yarn@3.2.1",
+  "resolutions": {
+    "vis-network@9.1.6": "patch:vis-network@npm:9.1.6#.yarn/patches/vis-network-npm-9.1.6-d3a334f213.patch"
+  }
 }
