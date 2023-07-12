@@ -846,16 +846,18 @@ export default {
 
 				let checkboxHide = false
 
-				if (
-					e.routeKind === RouteKind.Application &&
-					!this.showApplicationRoutes
-				) {
-					checkboxHide = true
-				} else if (
-					e.routeKind >= ReturnRouteKind.PRIORITY &&
-					!this.showReturnRoutes
-				) {
-					checkboxHide = true
+				if (!showAll) {
+					if (
+						e.routeKind === RouteKind.Application &&
+						!this.showApplicationRoutes
+					) {
+						checkboxHide = true
+					} else if (
+						e.routeKind >= ReturnRouteKind.PRIORITY &&
+						!this.showReturnRoutes
+					) {
+						checkboxHide = true
+					}
 				}
 
 				const fontSize = showAll ? 0 : 12
