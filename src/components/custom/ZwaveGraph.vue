@@ -139,11 +139,13 @@
 							<v-checkbox
 								v-model="showReturnRoutes"
 								label="Show return routes"
+								:disabled="selectedNodes.length === 0"
 							></v-checkbox>
 
 							<v-checkbox
 								v-model="showApplicationRoutes"
 								label="Show priority routes"
+								:disabled="selectedNodes.length === 0"
 							></v-checkbox>
 
 							<v-badge
