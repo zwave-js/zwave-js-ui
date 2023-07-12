@@ -316,7 +316,11 @@ export default {
 			const shouldQuery = await this.app.confirm(
 				'Refresh schedules',
 				'Do you want to query the schedules from the device or to get them from the cache? Querying from the device may take a while but will always return the latest schedules stored on it.',
-				'info'
+				'info',
+				{
+					confirmText: 'Query',
+					cancelText: 'Cache',
+				}
 			)
 
 			this.loading = true
