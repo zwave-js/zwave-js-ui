@@ -1173,24 +1173,22 @@ export default {
 				// entity.fixed = true
 			} else {
 				// parse application route
-				if (node.applicationRoute) {
-					this.parseRouteStats(
-						edges,
-						hubNode,
-						entity,
-						node.applicationRoute,
-						RouteKind.Application
-					)
-				} else {
-					// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
-					this.parseRouteStats(
-						edges,
-						hubNode,
-						entity,
-						node.statistics?.lwr,
-						RouteKind.LWR
-					)
-				}
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.applicationRoute,
+					RouteKind.Application
+				)
+
+				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.statistics?.lwr,
+					RouteKind.LWR
+				)
 
 				// parse node NLWR (next last working route)
 				this.parseRouteStats(
