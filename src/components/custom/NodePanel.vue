@@ -70,7 +70,7 @@
 							dark
 							@click="discoverNeighbors()"
 							>Discover
-							<v-icon x-small>refresh</v-icon>
+							<v-icon x-small>search</v-icon>
 						</v-btn>
 					</v-list-item-action>
 				</v-list-item>
