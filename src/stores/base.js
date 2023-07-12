@@ -224,6 +224,10 @@ const useBaseStore = defineStore('base', {
 				n.applicationRoute = false
 			}
 
+			if (!n.prioritySUCReturnRoute) {
+				n.prioritySUCReturnRoute = false
+			}
+
 			if (n.isControllerNode) {
 				this.controllerId = n.id
 			}
@@ -275,13 +279,17 @@ const useBaseStore = defineStore('base', {
 		},
 		setStatistics(data) {
 			const node = this.getNode(data.nodeId)
+			delete data.nodeId
+
+			let emitMeshUpdate = false
+
 			if (node) {
 				let lastReceive = node.lastReceive
 				let lastTransmit = node.lastTransmit
 				let errorReceive = false
 				let errorTransmit = false
 
-				if (node.statistics) {
+				if (node.statistics && data.statistics) {
 					if (node.isControllerNode) {
 						const prev = node.statistics
 						const cur = data.statistics
@@ -342,28 +350,13 @@ const useBaseStore = defineStore('base', {
 							lastReceive = data.lastActive
 						}
 
-						// application route will always miss the
-						// rssi and other info, they match the lwr ones so copy them
-						if (data.applicationRoute && cur.lwr) {
-							data.applicationRoute = {
-								...cur.lwr,
-								repeaters: data.applicationRoute.repeaters,
-								protocolDataRate:
-									data.applicationRoute.protocolDataRate,
-							}
-						}
-
 						if (
 							!deepEqual(prev.lwr, cur.lwr) ||
 							!deepEqual(prev.nlwr, cur.nlwr) ||
-							!deepEqual(
-								node.applicationRoute,
-								data.applicationRoute
-							) ||
 							cur.rssi != prev.rssi
 						) {
 							// mesh graph changed
-							this.updateMeshGraph(node)
+							emitMeshUpdate = true
 						}
 					}
 				}
@@ -390,10 +383,30 @@ const useBaseStore = defineStore('base', {
 					}
 				}
 
+				const routeUpdated = (prop) => {
+					return (
+						data[prop] === false ||
+						(data[prop] !== undefined &&
+							!deepEqual(data[prop], node[prop]))
+					)
+				}
+
+				if (
+					!emitMeshUpdate &&
+					(routeUpdated('applicationRoute') ||
+						routeUpdated('prioritySUCReturnRoute') ||
+						routeUpdated('customSUCReturnRoutes'))
+				) {
+					// mesh graph changed
+					emitMeshUpdate = true
+				}
+
+				if (emitMeshUpdate) {
+					this.updateMeshGraph(node)
+				}
+
 				Object.assign(node, {
-					statistics: data.statistics,
-					lastActive: data.lastActive,
-					applicationRoute: data.applicationRoute,
+					...data,
 					lastReceive,
 					lastTransmit,
 					errorReceive,

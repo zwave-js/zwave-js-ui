@@ -136,6 +136,18 @@
 								</template>
 							</v-autocomplete>
 
+							<v-checkbox
+								v-model="showReturnRoutes"
+								label="Show return routes"
+								:disabled="selectedNodes.length === 0"
+							></v-checkbox>
+
+							<v-checkbox
+								v-model="showApplicationRoutes"
+								label="Show priority routes"
+								:disabled="selectedNodes.length === 0"
+							></v-checkbox>
+
 							<v-badge
 								color="error"
 								overlap
@@ -283,12 +295,18 @@ import {
 	ProtocolDataRate,
 	protocolDataRateToString,
 	rssiToString,
+	isRssiError,
 } from 'zwave-js/safe'
 import { RouteKind } from '@zwave-js/core/safe'
 import { uuid, arraysEqual } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
 import ConfigApis from '../../apis/ConfigApis.js'
+
+const ReturnRouteKind = {
+	PRIORITY: 20,
+	CUSTOM: 21,
+}
 
 export default {
 	props: {
@@ -354,8 +372,11 @@ export default {
 	data() {
 		return {
 			openPanel: -1,
+			hoverNodeTimeout: null,
 			containerHeight: 400,
 			selectedNodes: [],
+			showReturnRoutes: true,
+			showApplicationRoutes: true,
 			starSvg: ConfigApis.getBasePath('/static/star.svg'),
 			menuX: 0,
 			menuY: 0,
@@ -476,6 +497,52 @@ export default {
 				this.setSelection()
 			}
 		},
+		showReturnRoutes(v) {
+			// hide/show all edges with returnRoute = true
+			if (
+				this.network &&
+				!this.loading &&
+				this.selectedNodes.length > 0
+			) {
+				const { edges } = this.network.body.data
+
+				const edgesToUpdate = []
+
+				edges.forEach((e) => {
+					if (e.routeKind >= ReturnRouteKind.PRIORITY) {
+						edgesToUpdate.push({
+							id: e.id,
+							hidden: !v,
+						})
+					}
+				})
+
+				edges.update(edgesToUpdate)
+			}
+		},
+		showApplicationRoutes(v) {
+			// hide/show all edges with returnRoute = false
+			if (
+				this.network &&
+				!this.loading &&
+				this.selectedNodes.length > 0
+			) {
+				const { edges } = this.network.body.data
+
+				const edgesToUpdate = []
+
+				edges.forEach((e) => {
+					if (e.routeKind === RouteKind.Application) {
+						edgesToUpdate.push({
+							id: e.id,
+							hidden: !v,
+						})
+					}
+				})
+
+				edges.update(edgesToUpdate)
+			}
+		},
 	},
 	mounted() {
 		this.paintGraph()
@@ -507,6 +574,10 @@ export default {
 
 		if (this.updateTimeout) {
 			clearTimeout(this.updateTimeout)
+		}
+
+		if (this.hoverNodeTimeout) {
+			clearTimeout(this.hoverNodeTimeout)
 		}
 
 		this.destroyNetwork()
@@ -773,12 +844,28 @@ export default {
 					(selectedNodes.length > 0 &&
 						!selectedNodes.includes(e.routeOf))
 
+				let checkboxHide = false
+
+				if (!showAll) {
+					if (
+						e.routeKind === RouteKind.Application &&
+						!this.showApplicationRoutes
+					) {
+						checkboxHide = true
+					} else if (
+						e.routeKind >= ReturnRouteKind.PRIORITY &&
+						!this.showReturnRoutes
+					) {
+						checkboxHide = true
+					}
+				}
+
 				const fontSize = showAll ? 0 : 12
 
 				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
 					edgesToUpdate.push({
 						id: e.id,
-						hidden: shouldBeHidden,
+						hidden: shouldBeHidden || checkboxHide,
 						font: {
 							size: fontSize,
 						},
@@ -822,19 +909,28 @@ export default {
 			// show menu
 			if (this.dragging) return
 			const { node, event } = params
-			this.menuX = event.clientX + 5
-			this.menuY = event.clientY + 5
-			this.menu = true
+
 			const item = this.allNodes.find((n) => n.id === node)
 
 			if (item) {
-				this.hoverNode = item
+				this.hoverNodeTimeout = setTimeout(() => {
+					this.hoverNode = item
+					this.menuX = event.clientX + 5
+					this.menuY = event.clientY + 5
+					this.menu = true
+					this.hoverNodeTimeout = null
+				}, 1000)
 			}
 		},
 		handleBlurNode() {
-			// hide menu
-			this.menu = false
-			this.hoverNode = null
+			if (this.hoverNodeTimeout) {
+				clearTimeout(this.hoverNodeTimeout)
+				this.hoverNodeTimeout = null
+			} else {
+				// hide menu
+				this.menu = false
+				this.hoverNode = null
+			}
 		},
 		handleClick(params) {
 			if (params.event) {
@@ -859,13 +955,18 @@ export default {
 				return
 			}
 
-			const {
-				repeaters,
-				repeaterRSSI,
-				rssi,
-				protocolDataRate,
-				routeFailedBetween,
-			} = route
+			const isReturn = routeKind >= 20
+
+			// tells if this route should be shown in overview
+			const showInOverview = routeKind !== RouteKind.NLWR && !isReturn
+
+			const { repeaters, repeaterRSSI, rssi, routeFailedBetween } = route
+
+			let { protocolDataRate } = route
+
+			if (route.routeSpeed) {
+				protocolDataRate = route.routeSpeed
+			}
 
 			if (routeFailedBetween) {
 				const edge = {
@@ -885,20 +986,34 @@ export default {
 				edges.push(edge)
 			}
 
+			const sourceNodeId = isReturn ? node.id : controllerId
+			const destinationNodeId = isReturn ? controllerId : node.id
+
 			for (let i = 0; i <= repeaters.length; i++) {
 				const repeater = repeaters[i]
-				const prevRepeater = repeaters[i - 1] || controllerId
+				const prevRepeater = repeaters[i - 1] || sourceNodeId
 
 				const from = prevRepeater
-				const to = repeater || node.id
+				const to = repeater || destinationNodeId
 
 				const edgeRssi = i === 0 ? rssi : repeaterRSSI?.[i - 1]
 
-				const label = `${rssiToString(edgeRssi ?? 127)}`
+				let label = ''
+
+				if (edgeRssi && !isRssiError(edgeRssi)) {
+					label = rssiToString(edgeRssi)
+				}
 
 				const edgeId = this.getEdgeId({ from, to })
 
-				let width, dashes
+				const starArrow = {
+					enabled: true,
+					type: 'image',
+					src: this.starSvg,
+					scaleFactor: 1,
+				}
+
+				let width, dashes, arrows
 
 				switch (routeKind) {
 					case RouteKind.NLWR:
@@ -912,6 +1027,30 @@ export default {
 					case RouteKind.Application:
 						width = 4
 						dashes = false
+						arrows = {
+							middle: starArrow,
+						}
+						break
+					case ReturnRouteKind.PRIORITY:
+						width = 2
+						dashes = [5, 10]
+						arrows = {
+							to: {
+								enabled: true,
+								scaleFactor: 1,
+							},
+							middle: starArrow,
+						}
+						break
+					case ReturnRouteKind.CUSTOM:
+						width = 1
+						dashes = [5, 10]
+						arrows = {
+							to: {
+								enabled: true,
+								scaleFactor: 1,
+							},
+						}
 						break
 					default:
 						width = 1
@@ -935,26 +1074,17 @@ export default {
 					}, //  multi: 'html'
 					// arrows: 'to from',
 					dashes,
-					arrows:
-						routeKind === RouteKind.Application
-							? {
-									middle: {
-										enabled: true,
-										type: 'image',
-										src: this.starSvg,
-										scaleFactor: 1,
-									},
-							  }
-							: undefined,
-					hidden: routeKind === RouteKind.NLWR,
+					arrows,
+					hidden: !showInOverview,
 					routeOf: node.id, // used to know this edge needs to be shown when highlighting a node
-					physics: routeKind !== RouteKind.NLWR,
+					physics: true,
 					routeKind,
+					protocolDataRate,
 				}
 
 				edges.push(edge)
 
-				if (routeKind !== RouteKind.NLWR) {
+				if (showInOverview) {
 					if (!node.failed && node.available) {
 						node.color = this.legends[repeaters.length + 1].color
 					}
@@ -1043,24 +1173,22 @@ export default {
 				// entity.fixed = true
 			} else {
 				// parse application route
-				if (node.applicationRoute) {
-					this.parseRouteStats(
-						edges,
-						hubNode,
-						entity,
-						node.applicationRoute,
-						RouteKind.Application
-					)
-				} else {
-					// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
-					this.parseRouteStats(
-						edges,
-						hubNode,
-						entity,
-						node.statistics?.lwr,
-						RouteKind.LWR
-					)
-				}
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.applicationRoute,
+					RouteKind.Application
+				)
+
+				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
+				this.parseRouteStats(
+					edges,
+					hubNode,
+					entity,
+					node.statistics?.lwr,
+					RouteKind.LWR
+				)
 
 				// parse node NLWR (next last working route)
 				this.parseRouteStats(
@@ -1070,6 +1198,28 @@ export default {
 					node.statistics?.nlwr,
 					RouteKind.NLWR
 				)
+
+				if (node.customSUCReturnRoutes) {
+					for (const r of node.customSUCReturnRoutes) {
+						this.parseRouteStats(
+							edges,
+							hubNode,
+							entity,
+							r,
+							ReturnRouteKind.CUSTOM
+						)
+					}
+				}
+
+				if (node.prioritySUCReturnRoute) {
+					this.parseRouteStats(
+						edges,
+						hubNode,
+						entity,
+						node.prioritySUCReturnRoute,
+						ReturnRouteKind.PRIORITY
+					)
+				}
 			}
 
 			return { node: entity, edges }

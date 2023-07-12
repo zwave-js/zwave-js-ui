@@ -5,30 +5,40 @@ import {
 	dskToString,
 	Duration,
 	Firmware,
+	isUnsupervisedOrSucceeded,
+	Route,
+	RouteKind,
 	SecurityClass,
+	SupervisionResult,
+	SupervisionStatus,
 	ValueMetadataNumeric,
 	ValueMetadataString,
-	ZWaveErrorCodes,
-	SupervisionStatus,
-	SupervisionResult,
-	isUnsupervisedOrSucceeded,
-	RouteKind,
 	ZWaveDataRate,
+	ZWaveErrorCodes,
 } from '@zwave-js/core'
 import { isDocker } from '@zwave-js/shared'
 import {
 	AssociationAddress,
 	AssociationGroup,
+	ControllerFirmwareUpdateProgress,
+	ControllerFirmwareUpdateResult,
+	ControllerFirmwareUpdateStatus,
 	ControllerStatistics,
 	DataRate,
 	Driver,
 	ExclusionOptions,
 	ExclusionStrategy,
 	extractFirmware,
+	FirmwareUpdateCapabilities,
+	FirmwareUpdateFileInfo,
+	FirmwareUpdateProgress,
+	FirmwareUpdateResult,
 	FirmwareUpdateStatus,
 	FLiRS,
 	FoundNode,
+	GetFirmwareUpdatesOptions,
 	guessFirmwareFileFormat,
+	HealNetworkOptions,
 	HealNodeStatus,
 	InclusionGrant,
 	InclusionOptions,
@@ -43,22 +53,38 @@ import {
 	NodeStatus,
 	NodeType,
 	PlannedProvisioningEntry,
-	ProtocolDataRate,
 	ProtocolVersion,
 	QRCodeVersion,
 	QRProvisioningInformation,
 	RefreshInfoOptions,
+	RemoveNodeReason,
 	ReplaceNodeOptions,
 	RFRegion,
 	RouteHealthCheckSummary,
+	ScheduleEntryLockCC,
+	ScheduleEntryLockDailyRepeatingSchedule,
+	ScheduleEntryLockScheduleKind,
+	ScheduleEntryLockSlotId,
+	ScheduleEntryLockWeekDaySchedule,
+	ScheduleEntryLockYearDaySchedule,
+	SerialAPISetupCommand,
 	SetValueAPIOptions,
+	setValueFailed,
+	SetValueResult,
+	SetValueStatus,
+	setValueWasUnsupervisedOrSucceeded,
 	SmartStartProvisioningEntry,
 	TranslatedValueID,
+	UserCodeCC,
+	UserIDStatus,
 	ValueID,
 	ValueMetadata,
 	ValueType,
 	ZWaveError,
 	ZWaveNode,
+	ZWaveNodeEvents,
+	ZWaveNodeFirmwareUpdateFinishedCallback,
+	ZWaveNodeFirmwareUpdateProgressCallback,
 	ZWaveNodeMetadataUpdatedArgs,
 	ZWaveNodeValueAddedArgs,
 	ZWaveNodeValueNotificationArgs,
@@ -68,36 +94,9 @@ import {
 	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
-	ZWaveNodeEvents,
-	SerialAPISetupCommand,
-	FirmwareUpdateFileInfo,
-	ZWaveNodeFirmwareUpdateProgressCallback,
-	FirmwareUpdateProgress,
-	ZWaveNodeFirmwareUpdateFinishedCallback,
-	FirmwareUpdateResult,
-	FirmwareUpdateCapabilities,
-	GetFirmwareUpdatesOptions,
-	ControllerFirmwareUpdateProgress,
-	ControllerFirmwareUpdateResult,
-	ControllerFirmwareUpdateStatus,
-	HealNetworkOptions,
-	ScheduleEntryLockWeekDaySchedule,
-	ScheduleEntryLockYearDaySchedule,
-	ScheduleEntryLockDailyRepeatingSchedule,
-	ScheduleEntryLockSlotId,
-	ScheduleEntryLockCC,
-	UserCodeCC,
-	UserIDStatus,
-	ScheduleEntryLockScheduleKind,
-	RouteStatistics,
-	SetValueResult,
-	SetValueStatus,
-	setValueFailed,
-	setValueWasUnsupervisedOrSucceeded,
-	RemoveNodeReason,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { nvmBackupsDir, storeDir, logsDir } from '../config/app'
+import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
 import store from '../config/store'
 import jsonStore from './jsonStore'
 import * as LogManager from './logger'
@@ -111,9 +110,9 @@ import { TypedEventEmitter } from './EventEmitter'
 import { GatewayValue } from './Gateway'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
+import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
-import { readFile } from 'fs/promises'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -152,6 +151,7 @@ export const allowedApis = validateMethods([
 	'_activateScene',
 	'refreshNeighbors',
 	'getNodeNeighbors',
+	'discoverNodeNeighbors',
 	'getAssociations',
 	'addAssociations',
 	'removeAssociations',
@@ -175,6 +175,17 @@ export const allowedApis = validateMethods([
 	'healNode',
 	'getPriorityRoute',
 	'setPriorityRoute',
+	'assignReturnRoutes',
+	'getPriorityReturnRoute',
+	'getPrioritySUCReturnRoute',
+	'getCustomReturnRoute',
+	'getCustomSUCReturnRoute',
+	'assignPriorityReturnRoute',
+	'assignPrioritySUCReturnRoute',
+	'assignCustomReturnRoutes',
+	'assignCustomSUCReturnRoutes',
+	'deleteReturnRoutes',
+	'deleteSUCReturnRoutes',
 	'removePriorityRoute',
 	'beginHealingNetwork',
 	'stopHealingNetwork',
@@ -428,7 +439,11 @@ export type ZUINode = {
 	productLabel?: string
 	productDescription?: string
 	statistics?: ControllerStatistics | NodeStatistics
-	applicationRoute?: RouteStatistics
+	applicationRoute?: Route
+	priorityReturnRoute?: Record<number, Route>
+	prioritySUCReturnRoute?: Route
+	customReturnRoute?: Record<number, Route[]>
+	customSUCReturnRoutes?: Route[]
 	productType?: number
 	manufacturer?: string
 	firmwareVersion?: string
@@ -1831,14 +1846,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// when accessing the controller memory, the Z-Wave radio must be turned off with to avoid resource conflicts and inconsistent data
 		await this._driver.controller.toggleRF(false)
 		for (const [nodeId, node] of this._nodes) {
-			try {
-				node.neighbors = (await this.getNodeNeighbors(
-					nodeId,
-					true
-				)) as number[]
-			} catch (error) {
-				logger.error(error)
-			}
+			await this.getNodeNeighbors(nodeId, true, false)
 			toReturn[nodeId] = node.neighbors
 		}
 		// turn rf back to on
@@ -1850,12 +1858,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Get neighbors of a specific node
 	 */
-	getNodeNeighbors(
+	async getNodeNeighbors(
 		nodeId: number,
-		dontThrow: boolean
+		preventThrow = false,
+		emitNodeUpdate = true
 	): Promise<readonly number[]> {
 		try {
-			return this._driver.controller.getNodeNeighbors(nodeId)
+			if (!this.driverReady) {
+				throw new DriverNotReadyError()
+			}
+
+			const neighbors = await this._driver.controller.getNodeNeighbors(
+				nodeId
+			)
+			this.logNode(nodeId, 'debug', `Neighbors: ${neighbors.join(', ')}`)
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.neighbors = [...neighbors]
+				if (emitNodeUpdate) {
+					this.emitNodeUpdate(node, {
+						neighbors: node.neighbors,
+					})
+				}
+			}
 		} catch (error) {
 			this.logNode(
 				nodeId,
@@ -1863,12 +1889,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				`Error while getting neighbors from ${nodeId}: ${error.message}`
 			)
 
-			if (!dontThrow) {
+			if (!preventThrow) {
 				throw error
 			}
 
 			return Promise.resolve([])
 		}
+	}
+
+	/**
+	 * Instructs a node to (re-)discover its neighbors.
+	 */
+	async discoverNodeNeighbors(nodeId: number): Promise<boolean> {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		const result = await this._driver.controller.discoverNodeNeighbors(
+			nodeId
+		)
+
+		if (result) {
+			// update neighbors
+			this.getNodeNeighbors(nodeId, true).catch(() => {
+				// noop
+			})
+		}
+
+		return result
 	}
 
 	/**
@@ -2144,6 +2192,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.sendToSocket(socketEvents.valueUpdated, valueId)
 
 		this.emit('valueChanged', valueId, node, changed)
+	}
+
+	public emitStatistics(
+		node: ZUINode,
+		props: Pick<
+			ZUINode,
+			| 'statistics'
+			| 'lastActive'
+			| 'applicationRoute'
+			| 'customSUCReturnRoutes'
+			| 'customReturnRoute'
+			| 'prioritySUCReturnRoute'
+			| 'priorityReturnRoute'
+		> & { bgRssi?: ControllerStatistics['backgroundRSSI'] }
+	) {
+		// NB: be sure that when `statistics` is defined also `lastActive` must be.
+		// when removing props them should be set to null or false in order to be removed on ui
+		this.sendToSocket(socketEvents.statistics, {
+			nodeId: node.id,
+			...Object.keys(props).reduce((acc, k) => {
+				if (props[k] === null) acc[k] = false
+				else acc[k] = props[k]
+				return acc
+			}, {} as any),
+		})
 	}
 
 	public emitNodeUpdate(
@@ -2940,6 +3013,211 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Get priority return route from nodeId to destinationId
+	 */
+	getPriorityReturnRoute(nodeId: number, destinationId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const controllerId = this._driver.controller.ownNodeId
+
+		if (!destinationId) {
+			destinationId = controllerId
+		}
+
+		const result = this._driver.controller.getPriorityReturnRouteCached(
+			nodeId,
+			destinationId
+		)
+
+		const node = this.nodes.get(nodeId)
+
+		if (node) {
+			if (result) {
+				node.priorityReturnRoute[destinationId] = result
+			} else {
+				delete node.priorityReturnRoute[destinationId]
+			}
+			this.emitStatistics(node, {
+				priorityReturnRoute: node.priorityReturnRoute,
+			})
+		}
+
+		return result
+	}
+
+	/**
+	 * Assigns a priority return route from nodeId to destinationId
+	 */
+	async assignPriorityReturnRoute(
+		nodeId: number,
+		destinationNodeId: number,
+		repeaters: number[],
+		routeSpeed: ZWaveDataRate
+	) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignPriorityReturnRoute(
+			nodeId,
+			destinationNodeId,
+			repeaters,
+			routeSpeed
+		)
+
+		if (result) {
+			this.getPriorityReturnRoute(nodeId, destinationNodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Get priority return route from node to controller
+	 */
+	getPrioritySUCReturnRoute(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			this._driver.controller.getPrioritySUCReturnRouteCached(nodeId) ??
+			null
+
+		const node = this.nodes.get(nodeId)
+
+		if (node) {
+			node.prioritySUCReturnRoute = result
+			this.emitStatistics(node, {
+				prioritySUCReturnRoute: result,
+			})
+		}
+
+		return result
+	}
+
+	/**
+	 * Assign a priority return route from node to controller
+	 */
+	async assignPrioritySUCReturnRoute(
+		nodeId: number,
+		repeaters: number[],
+		routeSpeed: ZWaveDataRate
+	) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			await this._driver.controller.assignPrioritySUCReturnRoute(
+				nodeId,
+				repeaters,
+				routeSpeed
+			)
+
+		if (result) {
+			// when changing the SUC priority return routes custom SUC return routes are removed
+			this.getCustomSUCReturnRoute(nodeId)
+			this.getPrioritySUCReturnRoute(nodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Get custom return routes from nodeId to destinationId
+	 */
+	getCustomReturnRoute(nodeId: number, destinationId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = this._driver.controller.getCustomReturnRoutesCached(
+			nodeId,
+			destinationId
+		)
+
+		const node = this.nodes.get(nodeId)
+
+		if (node) {
+			if (result) {
+				node.customReturnRoute[destinationId] = result
+			} else {
+				delete node.customReturnRoute[destinationId]
+			}
+			this.emitStatistics(node, {
+				customReturnRoute: node.customReturnRoute,
+			})
+		}
+
+		return result
+	}
+
+	/**
+	 * Assigns custom return routes from a node to a destination node
+	 */
+	async assignCustomReturnRoutes(
+		nodeId: number,
+		destinationNodeId: number,
+		routes: Route[],
+		priorityRoute?: Route
+	) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignCustomReturnRoutes(
+			nodeId,
+			destinationNodeId,
+			routes,
+			priorityRoute
+		)
+
+		if (result) {
+			this.getCustomReturnRoute(nodeId, destinationNodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Get custom return routes from node to controller
+	 */
+	getCustomSUCReturnRoute(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			this._driver.controller.getCustomSUCReturnRoutesCached(nodeId) ?? []
+
+		const node = this.nodes.get(nodeId)
+
+		if (node) {
+			node.customSUCReturnRoutes = result
+			this.emitStatistics(node, {
+				customSUCReturnRoutes: result,
+			})
+		}
+
+		return result
+	}
+
+	/**
+	 * Assigns up to 4 return routes to a node to the controller
+	 */
+	async assignCustomSUCReturnRoutes(
+		nodeId: number,
+		routes: Route[],
+		priorityRoute?: Route
+	) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result =
+			await this._driver.controller.assignCustomSUCReturnRoutes(
+				nodeId,
+				routes,
+				priorityRoute
+			)
+
+		if (result) {
+			// when changing the SUC return routes the priority SUC return route is removed
+			this.getCustomSUCReturnRoute(nodeId)
+			this.getPrioritySUCReturnRoute(nodeId)
+		}
+
+		return result
+	}
+
+	/**
 	 * Returns the priority route for a given node ID
 	 */
 	async getPriorityRoute(nodeId: number) {
@@ -2954,26 +3232,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					const statistics: Partial<NodeStatistics> =
 						node.statistics || {}
 
-					const route = {
-						repeaters: result.repeaters,
-						protocolDataRate:
-							result.routeSpeed as unknown as ProtocolDataRate,
-					}
 					switch (result.routeKind) {
 						case RouteKind.Application:
-							node.applicationRoute = route
+							node.applicationRoute = {
+								repeaters: result.repeaters,
+								routeSpeed: result.routeSpeed,
+							}
 							break
 						case RouteKind.NLWR:
 							statistics.nlwr = {
 								...(statistics.nlwr || {}),
-								...route,
+								repeaters: result.repeaters,
+								protocolDataRate: result.routeSpeed as any,
 							}
 							delete node.applicationRoute
 							break
 						case RouteKind.LWR:
 							statistics.lwr = {
 								...(statistics.lwr || {}),
-								...route,
+								repeaters: result.repeaters,
+								protocolDataRate: result.routeSpeed as any,
 							}
 							delete node.applicationRoute
 							break
@@ -2981,11 +3259,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 					node.statistics = statistics as NodeStatistics
 
-					this.sendToSocket(socketEvents.statistics, {
-						nodeId: node.id,
-						statistics: statistics,
+					this.emitStatistics(node, {
+						statistics: node.statistics,
 						lastActive: node.lastActive,
-						applicationRoute: node.applicationRoute || false,
+						applicationRoute: node.applicationRoute || null,
 					})
 				}
 			}
@@ -2994,6 +3271,93 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Delete ALL previously assigned return routes
+	 */
+	async deleteReturnRoutes(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.deleteReturnRoutes(nodeId)
+
+		if (result) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.priorityReturnRoute = null
+				node.customReturnRoute = null
+				this.emitStatistics(node, {
+					priorityReturnRoute: null,
+					customReturnRoute: null,
+				})
+			}
+		}
+
+		return result
+	}
+
+	/**
+	 * Delete ALL previously assigned return routes to the controller
+	 */
+	async deleteSUCReturnRoutes(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.deleteSUCReturnRoutes(
+			nodeId
+		)
+
+		if (result) {
+			const node = this.nodes.get(nodeId)
+
+			if (node) {
+				node.prioritySUCReturnRoute = null
+				node.customSUCReturnRoutes = []
+				this.emitStatistics(node, {
+					prioritySUCReturnRoute: null,
+					customSUCReturnRoutes: [],
+				})
+			}
+		}
+
+		return result
+	}
+
+	/**
+	 * Ask the controller to automatically assign to node nodeId a set of routes to node destinationNodeId.
+	 */
+	async assignReturnRoutes(nodeId: number, destinationNodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignReturnRoutes(
+			nodeId,
+			destinationNodeId
+		)
+
+		if (result) {
+			this.getCustomReturnRoute(nodeId, destinationNodeId)
+			this.getPriorityReturnRoute(nodeId, destinationNodeId)
+		}
+
+		return result
+	}
+
+	/**
+	 * Ask the controller to automatically assign to node nodeId a set of routes to controller.
+	 */
+	async assignSUCReturnRoutes(nodeId: number) {
+		if (!this.driverReady) throw new DriverNotReadyError()
+
+		const result = await this._driver.controller.assignSUCReturnRoutes(
+			nodeId
+		)
+
+		if (result) {
+			this.getCustomSUCReturnRoute(nodeId)
+			this.getPrioritySUCReturnRoute(nodeId)
+		}
+
+		return result
 	}
 
 	/**
@@ -3813,8 +4177,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 			}
 
-			this.sendToSocket(socketEvents.statistics, {
-				nodeId: controllerNode.id,
+			this.emitStatistics(controllerNode, {
 				statistics: stats,
 				lastActive: controllerNode.lastActive,
 				bgRssi,
@@ -4468,6 +4831,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					`Failed to get priority route for node ${node.id}: ${error.message}`
 				)
 			})
+
+			this.getCustomSUCReturnRoute(zwaveNode.id)
+			this.getPrioritySUCReturnRoute(zwaveNode.id)
 		}
 	}
 
@@ -4877,11 +5243,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.emit('nodeLastActive', node)
 			}
 
-			this.sendToSocket(socketEvents.statistics, {
-				nodeId: node.id,
+			this.emitStatistics(node, {
 				statistics: stats,
 				lastActive: node.lastActive,
-				applicationRoute: node.applicationRoute || false,
+				applicationRoute: node.applicationRoute || null,
 			})
 		}
 
@@ -5096,6 +5461,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			eventsQueue: [],
 			status: 'Unknown',
 			interviewStage: 'None',
+			priorityReturnRoute: {},
+			customReturnRoute: {},
+			prioritySUCReturnRoute:
+				this._driver.controller.getPrioritySUCReturnRouteCached(nodeId),
+			customSUCReturnRoutes:
+				this._driver.controller.getCustomSUCReturnRoutesCached(nodeId),
+			applicationRoute: null,
 		}
 
 		this._nodes.set(nodeId, node)

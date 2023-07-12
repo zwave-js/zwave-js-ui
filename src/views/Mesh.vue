@@ -114,7 +114,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
+		...mapActions(useBaseStore, ['showSnackbar', 'setNeighbors']),
 		makeDivDraggable() {
 			const elmnt = document.getElementById('properties')
 
@@ -129,7 +129,14 @@ export default {
 
 			function dragMouseDown(e) {
 				e = e || window.event
+
+				// return routes drag
+				if (e.target.classList.contains('handle')) {
+					return
+				}
+
 				e.preventDefault()
+
 				// prevent drag when clicking on chart
 				if (e.target.classList.contains('u-over')) {
 					return
@@ -170,29 +177,27 @@ export default {
 				this.makeDivDraggable()
 			}
 		},
-		// debounceRefresh() {
-		// 	if (this.refreshTimeout) {
-		// 		clearTimeout(this.refreshTimeout)
-		// 	}
+		debounceRefresh() {
+			if (this.refreshTimeout) {
+				clearTimeout(this.refreshTimeout)
+			}
 
-		// 	this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
-		// },
-		// async refresh() {
-		// 	const response = await this.app.apiRequest('refreshNeighbors', [], {
-		// 		infoSnack: false,
-		// 		errorSnack: true,
-		// 	})
+			this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
+		},
+		async refresh() {
+			const response = await this.app.apiRequest('refreshNeighbors', [], {
+				infoSnack: false,
+				errorSnack: false, // prevent to show error
+			})
 
-		// 	if (response.success) {
-		// 		this.showSnackbar('Nodes Neighbors updated', 'success')
-		// 		this.setNeighbors(response.result)
-		// 		// refresh graph
-		// 		// this.$refs.mesh.debounceRefresh()
-		// 	}
-		// },
+			if (response.success) {
+				this.showSnackbar('Nodes Neighbors updated', 'success')
+				this.setNeighbors(response.result)
+			}
+		},
 	},
 	mounted() {
-		// this.debounceRefresh()
+		this.debounceRefresh()
 	},
 	beforeDestroy() {
 		if (this.refreshTimeout) {

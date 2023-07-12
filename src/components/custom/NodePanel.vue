@@ -52,6 +52,28 @@
 						node.loc
 					}}</v-list-item-content>
 				</v-list-item>
+				<v-list-item v-if="node.neighbors">
+					<v-list-item-content>Neighbors</v-list-item-content>
+					<v-list-item-content class="align-end"
+						>{{
+							node.neighbors.length > 0
+								? node.neighbors.join(', ')
+								: 'None'
+						}}
+					</v-list-item-content>
+					<v-list-item-action v-if="!node.isControllerNode">
+						<v-btn
+							class="ml-2"
+							color="primary"
+							x-small
+							:loading="discoverLoading"
+							dark
+							@click="discoverNeighbors()"
+							>Discover
+							<v-icon x-small>search</v-icon>
+						</v-btn>
+					</v-list-item-action>
+				</v-list-item>
 				<v-list-item dense>
 					<v-list-item-content>Statistics</v-list-item-content>
 					<v-list-item-content class="align-end"
@@ -82,7 +104,7 @@
 						</v-list-item>
 					</div> -->
 
-				<div>
+				<div v-if="!node.isControllerNode">
 					<v-subheader
 						>Priority route
 						<v-btn
@@ -90,7 +112,7 @@
 							class="ml-2"
 							color="error"
 							x-small
-							@click="deleteRoute()"
+							@click="deleteRoute('appRoute')"
 							>Delete
 							<v-icon x-small>delete</v-icon>
 						</v-btn>
@@ -99,7 +121,7 @@
 							color="success"
 							x-small
 							dark
-							@click="getRoute()"
+							@click="getRoute('appRoute')"
 							>Get
 							<v-icon x-small>refresh</v-icon>
 						</v-btn>
@@ -108,12 +130,12 @@
 							color="purple"
 							x-small
 							dark
-							@click="setRoute()"
+							@click="setRoute('appRoute')"
 							>Set
 							<v-icon x-small>route</v-icon>
 						</v-btn>
 					</v-subheader>
-					<div v-if="appRoute">
+					<div v-if="appRoute" class="text-caption">
 						<v-list-item dense v-for="(s, i) in appRoute" :key="i">
 							<v-list-item-content>{{
 								s.title
@@ -124,6 +146,130 @@
 						</v-list-item>
 					</div>
 					<p class="text-center" v-else>None</p>
+				</div>
+
+				<div v-if="!node.isControllerNode">
+					<v-subheader
+						>Return routes
+						<v-btn
+							v-if="!routesChanged"
+							class="ml-2"
+							color="success"
+							x-small
+							dark
+							@click="getRouteReturnRoutes()"
+							>Get
+							<v-icon x-small>refresh</v-icon>
+						</v-btn>
+						<v-btn
+							:disabled="returnRoutes.length === 4"
+							class="ml-2"
+							color="purple"
+							x-small
+							dark
+							@click="addReturnRoute()"
+							>Add
+							<v-icon x-small>route</v-icon>
+						</v-btn>
+					</v-subheader>
+					<div>
+						<div v-if="returnRoutes.length > 0">
+							<table class="fill-width">
+								<thead
+									class="text-caption text-center font-weight-bold"
+								>
+									<tr>
+										<th></th>
+										<th>Repeaters</th>
+										<th>Speed</th>
+										<th>Priority</th>
+										<th></th>
+									</tr>
+								</thead>
+								<draggable
+									v-model="returnRoutes"
+									@change="routesChanged = true"
+									handle=".handle"
+									:move="checkMove"
+									tag="tbody"
+								>
+									<tr
+										v-for="(r, i) in returnRoutes"
+										:key="`returnRoute_${i}`"
+										dense
+										class="text-caption text-center"
+									>
+										<td>
+											<v-icon
+												v-if="!r.isPriority"
+												class="handle"
+												style="cursor: move"
+												color="primary lighten-2"
+												>drag_indicator</v-icon
+											>
+										</td>
+										<td>
+											{{
+												r.repeaters.length > 0
+													? r.repeaters.join(', ')
+													: 'Direct connection'
+											}}
+										</td>
+										<td>
+											{{
+												zwaveDataRateToString(
+													r.routeSpeed
+												)
+											}}
+										</td>
+										<td>
+											<v-icon
+												v-if="r.isPriority"
+												color="success"
+												small
+												>check</v-icon
+											>
+										</td>
+										<td>
+											<v-icon
+												color="error"
+												small
+												@click="deleteReturnRoute(r)"
+												>delete</v-icon
+											>
+										</td>
+										<td></td>
+									</tr>
+								</draggable>
+							</table>
+						</div>
+						<div v-else>
+							<p class="text-center">None</p>
+						</div>
+						<v-row dense>
+							<v-btn
+								v-if="routesChanged"
+								class="ma-2"
+								color="success"
+								x-small
+								dark
+								@click="setReturnRoutes()"
+								>Save
+								<v-icon x-small>save</v-icon>
+							</v-btn>
+
+							<v-btn
+								v-if="routesChanged"
+								class="ma-2"
+								color="error"
+								x-small
+								dark
+								@click="resetReturnRoutes()"
+								>Reset
+								<v-icon x-small>clear</v-icon>
+							</v-btn>
+						</v-row>
+					</div>
 				</div>
 			</v-list>
 			<v-row
@@ -221,8 +367,12 @@
 import {
 	ProtocolDataRate,
 	protocolDataRateToString,
+	isRssiError,
 	rssiToString,
 } from 'zwave-js/safe'
+import { zwaveDataRateToString } from '@zwave-js/core/safe'
+import draggable from 'vuedraggable'
+
 import { Routes } from '../../router/index.js'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
 import BgRssiChart from '@/components/custom/BgRssiChart.vue'
@@ -230,6 +380,7 @@ import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import { copy } from '../../lib/utils'
 
 export default {
 	mixins: [InstancesMixin],
@@ -237,6 +388,7 @@ export default {
 		StatisticsArrows,
 		BgRssiChart,
 		DialogHealthCheck,
+		draggable,
 	},
 	props: {
 		value: {
@@ -254,6 +406,9 @@ export default {
 	data: () => ({
 		showFullscreen: false,
 		dialogHealth: false,
+		discoverLoading: false,
+		routesChanged: false,
+		returnRoutes: [],
 		dataRateItems: [
 			{
 				text: '100 Kbps',
@@ -272,6 +427,21 @@ export default {
 	}),
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		nodeReturnRoutes() {
+			if (!this.node) return null
+
+			const routes = [...(this.node.customSUCReturnRoutes || [])]
+
+			if (this.node.prioritySUCReturnRoute) {
+				// priority must be first
+				routes.unshift({
+					...this.node.prioritySUCReturnRoute,
+					isPriority: true,
+				})
+			}
+
+			return routes
+		},
 		_value: {
 			get() {
 				return this.value
@@ -310,8 +480,27 @@ export default {
 			return routeStats
 		},
 	},
+	watch: {
+		nodeReturnRoutes: {
+			handler(val) {
+				this.returnRoutes = copy(val)
+				this.routesChanged = false
+			},
+			immediate: true,
+		},
+	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		zwaveDataRateToString,
+		checkMove(evt) {
+			const { futureIndex } = evt.draggedContext
+			const hasPriority = this.returnRoutes.some((r) => r.isPriority)
+			if (hasPriority && futureIndex === 0) {
+				return false
+			}
+
+			return true
+		},
 		parseRouteStats(stats) {
 			const repRSSI = stats.repeaterRSSI || []
 			const repeaters =
@@ -320,39 +509,60 @@ export default {
 							.map(
 								(r, i) =>
 									`${r}${
-										repRSSI[i]
+										repRSSI[i] && !isRssiError(repRSSI[i])
 											? ` (${rssiToString(repRSSI[i])})`
 											: ''
 									}`
 							)
 							.join(', ')
 					: 'None, direct connection'
-			const routeFiled = stats.routeFailedBetween
-				? stats.routeFailedBetween
-						.map((r) => `${r[0]} --> ${r[1]}`)
-						.join(', ')
-				: 'N/A'
 
+			const filterFailed =
+				stats.routeFailedBetween?.filter((r) => !!r[0] && !!r[1]) || []
+			const routeFailed =
+				filterFailed.length > 0
+					? filterFailed.map((r) => `${r[0]} --> ${r[1]}`).join(', ')
+					: ''
+
+			const protocolDataRate = stats.protocolDataRate
+				? protocolDataRateToString(stats.protocolDataRate)
+				: ''
+
+			const routeSpeed = stats.routeSpeed
+				? zwaveDataRateToString(stats.routeSpeed)
+				: ''
+
+			// const rssi = stats.rssi ? rssiToString(stats.rssi) : ''
 			return [
-				{
-					title: 'RSSI',
-					text: stats.rssi ? rssiToString(stats.rssi) : 'N/A',
-				},
-				{
-					title: 'Protocol Data Rate',
-					text:
-						protocolDataRateToString(stats.protocolDataRate) ||
-						'N/A',
-				},
+				// rssi
+				// 	? {
+				// 			title: 'RSSI',
+				// 			text: rssi,
+				// 	  }
+				// 	: null,
+				protocolDataRate
+					? {
+							title: 'Data Rate',
+							text: protocolDataRate,
+					  }
+					: null,
+				routeSpeed
+					? {
+							title: 'Route Speed',
+							text: routeSpeed,
+					  }
+					: null,
 				{
 					title: 'Repeaters',
 					text: repeaters,
 				},
-				{
-					title: 'Route failed between',
-					text: routeFiled,
-				},
-			]
+				routeFailed
+					? {
+							title: 'Route failed between',
+							text: routeFailed,
+					  }
+					: null,
+			].filter((r) => !!r)
 		},
 		newWindow() {
 			const newwindow = window.open(
@@ -364,8 +574,25 @@ export default {
 				newwindow.focus()
 			}
 		},
-		async deleteRoute() {
+		async deleteRoute(route) {
 			if (!this.node) return
+
+			let api = ''
+
+			switch (route) {
+				case 'appRoute':
+					api = 'removePriorityRoute'
+					break
+				case 'prioritySUCReturnRoute':
+				case 'customSUCReturnRoutes':
+					api = 'deleteSUCReturnRoutes'
+					break
+				default:
+					api = ''
+					break
+			}
+
+			if (!api) return
 
 			if (
 				await this.app.confirm(
@@ -374,100 +601,277 @@ export default {
 					'alert'
 				)
 			) {
-				const response = await this.app.apiRequest(
-					'removePriorityRoute',
-					[this.node.id]
-				)
+				const response = await this.app.apiRequest(api, [this.node.id])
 
 				if (response.success) {
 					if (response.result) {
 						this.showSnackbar('Route deleted', 'success')
 					} else {
 						this.showSnackbar(
-							`Failed delete priority route for node "${this.node._name}"`,
+							`Failed delete route for node "${this.node._name}"`,
 							'error'
 						)
 					}
 				}
 			}
 		},
-		async getRoute() {
-			const response = await this.app.apiRequest('getPriorityRoute', [
-				this.node.id,
-			])
+		async discoverNeighbors() {
+			this.discoverLoading = true
+			const response = await this.app.apiRequest(
+				'discoverNodeNeighbors',
+				[this.node.id]
+			)
+
+			this.discoverLoading = false
 
 			if (response.success) {
 				if (response.result) {
-					this.showSnackbar('Route updated', 'success')
+					this.showSnackbar('Neighbors updated', 'success')
 				} else {
 					this.showSnackbar(
-						`Failed update priority route for node "${this.node._name}"`,
+						`Failed to discover neighbors of node "${this.node._name}"`,
 						'error'
 					)
 				}
 			}
 		},
-		async setRoute() {
+		async getRoute(route) {
 			if (!this.node) return
+
+			let api = ''
+
+			switch (route) {
+				case 'appRoute':
+					api = 'getPriorityRoute'
+					break
+				case 'prioritySUCReturnRoute':
+					api = 'getPrioritySUCReturnRoute'
+					break
+				case 'customSUCReturnRoutes':
+					api = 'getCustomSUCReturnRoute'
+					break
+				default:
+					api = ''
+					break
+			}
+
+			if (!api) return
+
+			const response = await this.app.apiRequest(api, [this.node.id])
+
+			if (response.success) {
+				this.showSnackbar('Route updated', 'success')
+			}
+		},
+		async promptRoute(prefix, suffix, showPriority = false) {
+			const inputs = [
+				{
+					type: 'array',
+					inputType: 'autocomplete',
+					list: true,
+					multiple: true,
+					prefix,
+					suffix,
+					key: 'repeaters',
+					label: 'Repeaters',
+					hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
+					itemValue: 'id',
+					itemText: '_name',
+					default: [],
+					rules: [(v) => v.length <= 4 || 'Max 4 repeaters'],
+					items: this.nodes.filter(
+						(n) =>
+							!n.isControllerNode &&
+							n.isListening &&
+							n.id !== this.node.id
+					),
+				},
+				{
+					type: 'list',
+					autocomplete: true,
+					key: 'routeSpeed',
+					label: 'Route speed',
+					default: ProtocolDataRate.ZWave_100k,
+					rules: [this.required],
+					items: this.dataRateItems,
+				},
+			]
+
+			if (showPriority) {
+				inputs.push({
+					type: 'boolean',
+					key: 'isPriority',
+					label: 'Priority route',
+					hint: 'If enabled, this route will always be used first',
+					default: false,
+				})
+			}
 
 			const res = await this.app.confirm('Set route', '', 'info', {
 				width: 500,
-				inputs: [
-					{
-						type: 'array',
-						inputType: 'autocomplete',
-						list: true,
-						multiple: true,
-						prefix: 'Controller',
-						suffix: `Node "${this.node._name}"`,
-						key: 'repeaters',
-						label: 'Repeaters',
-						hint: 'Select the nodes that should be used as repeaters starting from the closest to the controller. Empty list means direct route to controller',
-						itemValue: 'id',
-						itemText: '_name',
-						default: [],
-						rules: [(v) => v.length <= 4 || 'Max 4 repeaters'],
-						items: this.nodes.filter(
-							(n) =>
-								!n.isControllerNode &&
-								n.isListening &&
-								n.id !== this.node.id
-						),
-					},
-					{
-						type: 'list',
-						autocomplete: true,
-						key: 'routeSpeed',
-						label: 'Route speed',
-						default: ProtocolDataRate.ZWave_100k,
-						rules: [this.required],
-						items: this.dataRateItems,
-					},
-				],
+				inputs,
 				confirmText: 'Set',
 			})
 
 			if (Object.keys(res).length === 0) {
+				return null
+			}
+
+			return res
+		},
+		async getRouteReturnRoutes() {
+			await this.getRoute('prioritySUCReturnRoute')
+			await this.getRoute('customSUCReturnRoutes')
+		},
+		deleteReturnRoute(route) {
+			this.returnRoutes.splice(this.returnRoutes.indexOf(route), 1)
+			this.routesChanged = true
+		},
+		async addReturnRoute() {
+			if (!this.node) return
+
+			const res = await this.promptRoute(
+				`Node "${this.node._name}"`,
+				'Controller',
+				true
+			)
+
+			if (!res) return
+
+			this.routesChanged = true
+
+			const { repeaters, routeSpeed, isPriority } = res
+
+			if (isPriority) {
+				const existingPriorityRoute = this.returnRoutes.find(
+					(r) => r.isPriority
+				)
+
+				const newRoute = {
+					repeaters,
+					routeSpeed,
+					isPriority,
+				}
+
+				if (existingPriorityRoute) {
+					// ask if he wants to replace the existing priority route
+					const res = await this.app.confirm(
+						'Priority route',
+						'You already have a priority route set. Do you want to replace it?',
+						'info'
+					)
+
+					if (!res) return
+
+					this.returnRoutes.splice(
+						this.returnRoutes.indexOf(existingPriorityRoute),
+						1,
+						newRoute
+					)
+				} else {
+					if (newRoute.isPriority) {
+						this.returnRoutes.unshift(newRoute)
+					} else {
+						this.returnRoutes.push(newRoute)
+					}
+				}
 				return
 			}
 
-			const { repeaters, routeSpeed } = res
+			this.returnRoutes.push({ repeaters, routeSpeed, isPriority })
+		},
+		resetReturnRoutes() {
+			this.returnRoutes = copy(this.nodeReturnRoutes)
+			this.routesChanged = false
+		},
+		async setReturnRoutes() {
+			if (!this.node) return
 
-			const response = await this.app.apiRequest('setPriorityRoute', [
+			if (this.returnRoutes.length === 0) {
+				await this.deleteRoute('customSUCReturnRoutes')
+				return
+			}
+
+			const customRoutes = this.returnRoutes.filter((r) => !r.isPriority)
+			const priorityRoute = this.returnRoutes.find((r) => r.isPriority)
+
+			const args = [
 				this.node.id,
-				repeaters,
-				routeSpeed,
-			])
+				customRoutes.map((r) => ({
+					repeaters: r.repeaters,
+					routeSpeed: r.routeSpeed,
+				})),
+				{
+					repeaters: priorityRoute.repeaters,
+					routeSpeed: priorityRoute.routeSpeed,
+				},
+			]
+
+			await this.setRoute('customSUCReturnRoutes', args)
+		},
+		async setRoute(route, args) {
+			if (!this.node) return
+
+			let api = ''
+			let prefix = ''
+			let suffix = ''
+
+			switch (route) {
+				case 'appRoute':
+					prefix = 'Controller'
+					suffix = `Node "${this.node._name}"`
+					api = 'setPriorityRoute'
+					break
+				case 'prioritySUCReturnRoute':
+					prefix = `Node "${this.node._name}"`
+					suffix = `Controller`
+					api = 'assignPrioritySUCReturnRoute'
+					break
+				case 'customSUCReturnRoutes':
+					prefix = `Node "${this.node._name}"`
+					suffix = `Controller`
+					api = 'assignCustomSUCReturnRoutes'
+					break
+				default:
+					api = ''
+					break
+			}
+
+			if (!api) return
+
+			if (!args) {
+				const res = await this.promptRoute(prefix, suffix)
+
+				const { repeaters, routeSpeed } = res
+
+				args = []
+				switch (route) {
+					case 'appRoute':
+					case 'prioritySUCReturnRoute':
+						args = [this.node.id, repeaters, routeSpeed]
+						break
+					case 'customSUCReturnRoutes':
+						{
+							const routes = this.node.customSUCReturnRoutes || []
+							args = [this.node.id, routes]
+						}
+						break
+					default:
+						break
+				}
+			}
+
+			const response = await this.app.apiRequest(api, args)
 
 			if (response.success) {
 				if (response.result) {
 					this.showSnackbar(
-						`New priority route set for node "${this.node._name}"`,
+						`New route set for node "${this.node._name}"`,
 						'success'
 					)
 				} else {
 					this.showSnackbar(
-						`Failed to set new priority route for node "${this.node._name}"`
+						`Failed to set route for node "${this.node._name}"`
 					)
 				}
 			}

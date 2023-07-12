@@ -249,7 +249,7 @@ async addAssociations(
 	source: AssociationAddress,
 	groupId: number,
 	associations: AssociationAddress[]
-): Promise<void>;
+): Promise<boolean>;
 ```
 
 Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface).
@@ -436,9 +436,10 @@ Payload:
 #### `getNodeNeighbors`
 
 ```ts
-getNodeNeighbors(
+async getNodeNeighbors(
 	nodeId: number,
-	dontThrow: boolean
+	preventThrow = false,
+	emitNodeUpdate = true
 ): Promise<readonly number[]>;
 ```
 
@@ -455,7 +456,33 @@ Payload:
 {
 	"args": [
 		nodeId,
-		dontThrow
+		preventThrow,
+		emitNodeUpdate
+	]
+}
+```
+
+</details>
+
+#### `discoverNodeNeighbors`
+
+```ts
+async discoverNodeNeighbors(nodeId: number): Promise<boolean>;
+```
+
+Instructs a node to (re-)discover its neighbors.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/discoverNodeNeighbors/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
 	]
 }
 ```
@@ -1024,7 +1051,7 @@ Payload:
 #### `firmwareUpdateOTA`
 
 ```ts
-async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]): Promise<boolean>;
+async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]): Promise<FirmwareUpdateResult>;
 ```
 
 <details>
@@ -1039,35 +1066,6 @@ Payload:
 	"args": [
 		nodeId,
 		updates
-	]
-}
-```
-
-</details>
-
-#### `beginOTAFirmwareUpdate`
-
-```ts
-async beginOTAFirmwareUpdate(
-	nodeId: number,
-	update: FirmwareUpdateFileInfo
-): Promise<void>;
-```
-
-.
-
-<details>
-<summary>Mqtt usage</summary>
-
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginOTAFirmwareUpdate/set`
-
-Payload:
-
-```json
-{
-	"args": [
-		nodeId,
-		update
 	]
 }
 ```
@@ -1260,6 +1258,229 @@ Payload:
 
 </details>
 
+#### `getPriorityReturnRoute`
+
+```ts
+getPriorityReturnRoute(nodeId: number, destinationId: number): Route;
+```
+
+Get priority return route from nodeId to destinationId.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getPriorityReturnRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		destinationId
+	]
+}
+```
+
+</details>
+
+#### `assignPriorityReturnRoute`
+
+```ts
+async assignPriorityReturnRoute(
+	nodeId: number,
+	destinationNodeId: number,
+	repeaters: number[],
+	routeSpeed: ZWaveDataRate
+): Promise<boolean>;
+```
+
+Assigns a priority return route from nodeId to destinationId.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/assignPriorityReturnRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		destinationNodeId,
+		repeaters,
+		routeSpeed
+	]
+}
+```
+
+</details>
+
+#### `getPrioritySUCReturnRoute`
+
+```ts
+getPrioritySUCReturnRoute(nodeId: number): Route;
+```
+
+Get priority return route from node to controller.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getPrioritySUCReturnRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `assignPrioritySUCReturnRoute`
+
+```ts
+async assignPrioritySUCReturnRoute(
+	nodeId: number,
+	repeaters: number[],
+	routeSpeed: ZWaveDataRate
+): Promise<boolean>;
+```
+
+Assign a priority return route from node to controller.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/assignPrioritySUCReturnRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		repeaters,
+		routeSpeed
+	]
+}
+```
+
+</details>
+
+#### `getCustomReturnRoute`
+
+```ts
+getCustomReturnRoute(nodeId: number, destinationId: number): Route[];
+```
+
+Get custom return routes from nodeId to destinationId.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getCustomReturnRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		destinationId
+	]
+}
+```
+
+</details>
+
+#### `assignCustomReturnRoutes`
+
+```ts
+async assignCustomReturnRoutes(
+	nodeId: number,
+	destinationNodeId: number,
+	routes: Route[]
+): Promise<boolean>;
+```
+
+Assigns custom return routes from a node to a destination node.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/assignCustomReturnRoutes/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		destinationNodeId,
+		routes
+	]
+}
+```
+
+</details>
+
+#### `getCustomSUCReturnRoute`
+
+```ts
+getCustomSUCReturnRoute(nodeId: number): Route[];
+```
+
+Get custom return routes from node to controller.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/getCustomSUCReturnRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `assignCustomSUCReturnRoutes`
+
+```ts
+async assignCustomSUCReturnRoutes(nodeId: number, routes: Route[]): Promise<boolean>;
+```
+
+Assigns up to 4 return routes to a node to the controller.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/assignCustomSUCReturnRoutes/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		routes
+	]
+}
+```
+
+</details>
+
 #### `getPriorityRoute`
 
 ```ts
@@ -1279,6 +1500,82 @@ Payload:
 {
 	"args": [
 		nodeId
+	]
+}
+```
+
+</details>
+
+#### `deleteReturnRoutes`
+
+```ts
+async deleteReturnRoutes(nodeId: number): Promise<boolean>;
+```
+
+Delete ALL previously assigned return routes.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/deleteReturnRoutes/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `deleteSUCReturnRoutes`
+
+```ts
+async deleteSUCReturnRoutes(nodeId: number): Promise<boolean>;
+```
+
+Delete ALL previously assigned return routes to the controller.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/deleteSUCReturnRoutes/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
+#### `assignReturnRoutes`
+
+```ts
+async assignReturnRoutes(nodeId: number, destinationNodeId: number): Promise<boolean>;
+```
+
+Ask the controller to automatically assign to node nodeId a set of routes to node destinationNodeId.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/assignReturnRoutes/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		destinationNodeId
 	]
 }
 ```
@@ -1310,6 +1607,31 @@ Payload:
 		nodeId,
 		repeaters,
 		routeSpeed
+	]
+}
+```
+
+</details>
+
+#### `removePriorityRoute`
+
+```ts
+async removePriorityRoute(nodeId: number): Promise<boolean>;
+```
+
+Remove priority route for a given node ID.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/removePriorityRoute/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
 	]
 }
 ```
@@ -1455,7 +1777,9 @@ Payload:
 #### `firmwareUpdateOTW`
 
 ```ts
-async firmwareUpdateOTW(file: FwFile): Promise<boolean>;
+async firmwareUpdateOTW(
+	file: FwFile
+): Promise<ControllerFirmwareUpdateResult>;
 ```
 
 Used to trigger an update of controller FW.
@@ -1480,7 +1804,10 @@ Payload:
 #### `updateFirmware`
 
 ```ts
-updateFirmware(nodeId: number, files: FwFile[]): Promise<boolean>;
+updateFirmware(
+	nodeId: number,
+	files: FwFile[]
+): Promise<FirmwareUpdateResult>;
 ```
 
 <details>
@@ -1495,39 +1822,6 @@ Payload:
 	"args": [
 		nodeId,
 		files
-	]
-}
-```
-
-</details>
-
-#### `beginFirmwareUpdate`
-
-```ts
-beginFirmwareUpdate(
-	nodeId: number,
-	fileName: string,
-	data: Buffer,
-	target: number
-): Promise<void>;
-```
-
-Start a firmware update.
-
-<details>
-<summary>Mqtt usage</summary>
-
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginFirmwareUpdate/set`
-
-Payload:
-
-```json
-{
-	"args": [
-		nodeId,
-		fileName,
-		data,
-		target
 	]
 }
 ```
@@ -1738,7 +2032,7 @@ async writeValue(
 	valueId: ZUIValueId,
 	value: any,
 	options?: SetValueAPIOptions
-): Promise<boolean>;
+): Promise<{ status: SetValueStatus.NoDeviceSupport | SetValueStatus.Fail | SetValueStatus.Success; remainingDuration?: undefined; message?: undefined; } | { status: SetValueStatus.Working; remainingDuration: Duration; message?: undefined; } | { status: SetValueStatus.SuccessUnsupervised; remainingDuration?: undefined; message?: undefined; } | ({ status: SetValueStatus.EndpointNotFound | SetValueStatus.NotImplemented | SetValueStatus.InvalidValue; remainingDuration?: undefined; message: string; } & { status: SetValueStatus.NoDeviceSupport | SetValueStatus.Fail | SetValueStatus.EndpointNotFound | SetValueStatus.NotImplemented | SetValueStatus.InvalidValue; })>;
 ```
 
 Set a value of a specific zwave valueId.
