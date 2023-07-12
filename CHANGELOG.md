@@ -1,5 +1,23 @@
 
 
+# [8.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.19.0...v8.20.0) (2023-07-12)
+
+
+### Bug Fixes
+
+* **ui:** distinguish unknown/missing values ([5ea53a6](https://github.com/zwave-js/zwave-js-ui/commit/5ea53a605828006cad29b731e48c9477d381ee30)), closes [#3153](https://github.com/zwave-js/zwave-js-ui/issues/3153)
+* **ui:** refresh schedule confirmation dialog is confusing ([3d528b1](https://github.com/zwave-js/zwave-js-ui/commit/3d528b17ef1b90068ad239feb20340c6131441eb)), closes [#3161](https://github.com/zwave-js/zwave-js-ui/issues/3161)
+
+
+### Features
+
+* better user callbacks management with HA ([#3150](https://github.com/zwave-js/zwave-js-ui/issues/3150)) ([07f7b0e](https://github.com/zwave-js/zwave-js-ui/commit/07f7b0e9855123aaae9704564d0e754cc8324088))
+* bump zwave-js@11.1.0 and @zwave-js/server@1.29.1 ([9181505](https://github.com/zwave-js/zwave-js-ui/commit/9181505ed758bf81f514d7f7619df2fd19c27ebd))
+* bump zwave-js@11.4.0 ([ca4d456](https://github.com/zwave-js/zwave-js-ui/commit/ca4d45628a98506743019c4489281b600f32e3c3))
+* bump zwave-js@11.4.1 ([#3163](https://github.com/zwave-js/zwave-js-ui/issues/3163)) ([67ccdda](https://github.com/zwave-js/zwave-js-ui/commit/67ccdda2a3c2e3ad87aa04dcd668dc101cbd08b9))
+* bump zwave-js@11.4.2 ([#3164](https://github.com/zwave-js/zwave-js-ui/issues/3164)) ([ad07d52](https://github.com/zwave-js/zwave-js-ui/commit/ad07d52439ec11424836c8f951db896c3aa2f3f0))
+* custom return routes management ([#3154](https://github.com/zwave-js/zwave-js-ui/issues/3154)) ([a642934](https://github.com/zwave-js/zwave-js-ui/commit/a6429345ed5ba0cfda32536fe9fdaa7d72aa90a5))
+
 # [8.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.18.1...v8.19.0) (2023-06-20)
 
 
