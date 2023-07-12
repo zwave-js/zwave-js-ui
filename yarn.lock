@@ -3542,24 +3542,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/cc@npm:11.4.1":
-  version: 11.4.1
-  resolution: "@zwave-js/cc@npm:11.4.1"
+"@zwave-js/cc@npm:11.4.2":
+  version: 11.4.2
+  resolution: "@zwave-js/cc@npm:11.4.2"
   dependencies:
     "@zwave-js/core": 11.4.0
-    "@zwave-js/host": 11.4.1
-    "@zwave-js/serial": 11.4.1
+    "@zwave-js/host": 11.4.2
+    "@zwave-js/serial": 11.4.2
     "@zwave-js/shared": 11.3.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     reflect-metadata: ^0.1.13
-  checksum: 61782402372a5c837fdf26c70c15e9a70a4a0799621c04e0cccb583ec097a3a7bdeac4e27320319248ef2baa900439318c0afcdc6cd98807f436444451696337
+  checksum: 347bd7f090309cef03899e78e16585eb8ae56ea23c419093a424b8790d33d8eaa7688cbd43c3ce00c78c79edc01b0401b9ac6918ed80144e512fb656a01d47e9
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:11.4.1":
-  version: 11.4.1
-  resolution: "@zwave-js/config@npm:11.4.1"
+"@zwave-js/config@npm:11.4.2":
+  version: 11.4.2
+  resolution: "@zwave-js/config@npm:11.4.2"
   dependencies:
     "@zwave-js/core": 11.4.0
     "@zwave-js/shared": 11.3.0
@@ -3570,7 +3570,7 @@ __metadata:
     json5: ^2.2.3
     semver: ^7.5.2
     winston: ^3.8.2
-  checksum: 898b12bd8dca3a9b8b4e9b3587e095a5ff1764619e78f78983b77f945f1dd8ce9aa84ec5de8e8809ea071f3e88a76963e77aa4dc66d6fd0be73bcafc67f46cae
+  checksum: 4f277124805c05be6f2c595b9d05f9bdd8a7aab6fcd739f6829c29bf45ce9de3f0ca5ffc84e2e678b781b9ba004f24d7f5c2186277762172effde0e370d10702
   languageName: node
   linkType: hard
 
@@ -3603,15 +3603,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/host@npm:11.4.1":
-  version: 11.4.1
-  resolution: "@zwave-js/host@npm:11.4.1"
+"@zwave-js/host@npm:11.4.2":
+  version: 11.4.2
+  resolution: "@zwave-js/host@npm:11.4.2"
   dependencies:
-    "@zwave-js/config": 11.4.1
+    "@zwave-js/config": 11.4.2
     "@zwave-js/core": 11.4.0
     "@zwave-js/shared": 11.3.0
     alcalzone-shared: ^4.0.8
-  checksum: 994f0a308230c6a39d696e59d2ed3d9c4f755bf1f585546d75c798194e79a1f757d9fcc99b06bfb950a1cf65bd5f2dd4d80e6313f61243c65ff7daa121b7ce2f
+  checksum: e624b1a0defa29c06c3d035fa02500a67e855b8c80428bd04e2ed171cb6ab07adc98dd9772ebabf9019f5be5830a23d039d80a1bd0437136d64b002625b30237
   languageName: node
   linkType: hard
 
@@ -3632,19 +3632,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/serial@npm:11.4.1":
-  version: 11.4.1
-  resolution: "@zwave-js/serial@npm:11.4.1"
+"@zwave-js/serial@npm:11.4.2":
+  version: 11.4.2
+  resolution: "@zwave-js/serial@npm:11.4.2"
   dependencies:
     "@sentry/node": ^7.12.1
     "@serialport/stream": ^10.3.0
     "@zwave-js/core": 11.4.0
-    "@zwave-js/host": 11.4.1
+    "@zwave-js/host": 11.4.2
     "@zwave-js/shared": 11.3.0
     alcalzone-shared: ^4.0.8
     serialport: ^10.4.0
     winston: ^3.8.2
-  checksum: 9dacfea384ffc3ed8fe0390af5d2e4213b478a9540b8f753fdcccbcf75b6a46d96146b096920a526bbbc8fb5afebfd04936c07008d376a68509d09805970d374
+  checksum: ee5fdb40dcd9a045a92f5e3e459a183c2967e5a9701012984d1beb380f1d8e9fc9c91ccde755ecde526d1040a5eaff2cce89b3d2242efc029ca718c4089d9778
   languageName: node
   linkType: hard
 
@@ -3674,16 +3674,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/testing@npm:11.4.1":
-  version: 11.4.1
-  resolution: "@zwave-js/testing@npm:11.4.1"
+"@zwave-js/testing@npm:11.4.2":
+  version: 11.4.2
+  resolution: "@zwave-js/testing@npm:11.4.2"
   dependencies:
     "@zwave-js/core": 11.4.0
-    "@zwave-js/host": 11.4.1
-    "@zwave-js/serial": 11.4.1
+    "@zwave-js/host": 11.4.2
+    "@zwave-js/serial": 11.4.2
     "@zwave-js/shared": 11.3.0
     ansi-colors: ^4.1.3
-  checksum: e6026aea0fbc467280c9abee1439e261fb4228f80e1b1489090daf55d8658ef511899e7b97183723349e41ad5745cfec3614babdab3d402c97b4a066600ee431
+  checksum: 71edd8632b27a78ca83e767e1d2c5197b9217fb06934fd7091d14a858093fc191a89f940fe6b6546b0c85339ff1dfdce5cc8ac3e55894cd1d4b32dcb181c5b4a
   languageName: node
   linkType: hard
 
@@ -16316,7 +16316,7 @@ __metadata:
     webpack-dev-server: ^4.13.1
     webpack-merge: ^5.8.0
     winston: ^3.8.2
-    zwave-js: ^11.4.1
+    zwave-js: ^11.4.2
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
@@ -16373,9 +16373,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"zwave-js@npm:^11.4.1":
-  version: 11.4.1
-  resolution: "zwave-js@npm:11.4.1"
+"zwave-js@npm:^11.4.2":
+  version: 11.4.2
+  resolution: "zwave-js@npm:11.4.2"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
     "@alcalzone/pak": ^0.9.0
@@ -16383,14 +16383,14 @@ __metadata:
     "@esm2cjs/p-queue": ^7.3.0
     "@sentry/integrations": ^7.12.1
     "@sentry/node": ^7.12.1
-    "@zwave-js/cc": 11.4.1
-    "@zwave-js/config": 11.4.1
+    "@zwave-js/cc": 11.4.2
+    "@zwave-js/config": 11.4.2
     "@zwave-js/core": 11.4.0
-    "@zwave-js/host": 11.4.1
+    "@zwave-js/host": 11.4.2
     "@zwave-js/nvmedit": 11.4.0
-    "@zwave-js/serial": 11.4.1
+    "@zwave-js/serial": 11.4.2
     "@zwave-js/shared": 11.3.0
-    "@zwave-js/testing": 11.4.1
+    "@zwave-js/testing": 11.4.2
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     execa: ^5.1.1
@@ -16405,6 +16405,6 @@ __metadata:
     xstate: 4.38.0
   bin:
     mock-server: bin/mock-server.js
-  checksum: 7ddcf19242d6657e635f251cf5057a6a55028528366f2511563e3d14062033de6dcf0e2673d7605e29bf39dd3e0ae4557569b1aa2369291c6df08c010b8f525e
+  checksum: 05a765c70cc6d38f9af4f613ed10c9d58dc272c34618ae5d94e17b2f30beb2a2b66991dff710e44c4c59ef2605bf835f5fd766228f28c607b9058b856a118978
   languageName: node
   linkType: hard
