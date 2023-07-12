@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { $set, deepEqual } from '../lib/utils'
+import { $set, arraysEqual, deepEqual } from '../lib/utils'
 import logger from '../lib/logger'
 
 import { Settings } from '@/modules/Settings'
@@ -353,10 +353,13 @@ const useBaseStore = defineStore('base', {
 						// application route will always miss the
 						// rssi and other info, they match the lwr ones so copy them
 						if (data.applicationRoute && cur.lwr) {
-							data.applicationRoute = {
-								...cur.lwr,
-								repeaters: data.applicationRoute.repeaters,
-								routeSpeed: data.applicationRoute.routeSpeed,
+							if (
+								arraysEqual(
+									data.applicationRoute.repeaters,
+									cur.lwr.repeaters
+								)
+							) {
+								data.applicationRoute.rssi = cur.lwr.rssi
 							}
 						}
 
