@@ -617,7 +617,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private server: ZwavejsServer
 	private statelessTimeouts: Record<string, NodeJS.Timeout>
 	private commandsTimeout: NodeJS.Timeout
-	private reconnectTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
 	private pollIntervals: Record<string, NodeJS.Timeout>
@@ -628,6 +627,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _cancelGetSchedule: boolean
 
 	private nvmEvent: string
+
+	private backoffRetry = 0
+	private restartTimeout: NodeJS.Timeout
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
@@ -738,6 +740,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		await this.close(true)
 		this.init()
 		return this.connect()
+	}
+
+	backoffRestart(): void {
+		this.backoffRetry++
+
+		const timeout = Math.min(2 ** this.backoffRetry * 1000, 15000)
+
+		logger.info(
+			`Restarting client in ${timeout / 1000} seconds, retry ${
+				this.backoffRetry
+			}`
+		)
+
+		this.restartTimeout = setTimeout(() => {
+			this.restart().catch((error) => {
+				logger.error(`Error while restarting driver: ${error.message}`)
+			})
+		}, timeout)
 	}
 
 	/**
@@ -1000,9 +1020,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.commandsTimeout = null
 		}
 
-		if (this.reconnectTimeout) {
-			clearTimeout(this.reconnectTimeout)
-			this.reconnectTimeout = null
+		if (this.restartTimeout) {
+			clearTimeout(this.restartTimeout)
+			this.restartTimeout = null
 		}
 
 		if (this.healTimeout) {
@@ -2133,14 +2153,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					})
 				}
 
-				await this._onDriverError(error, true)
+				this._onDriverError(error, true)
 
 				if (error.code !== ZWaveErrorCodes.Driver_InvalidOptions) {
-					logger.warn('Retry connection in 3 seconds...')
-					this.reconnectTimeout = setTimeout(
-						this.connect.bind(this),
-						3000
-					)
+					this.backoffRestart()
 				} else {
 					logger.error(
 						`Invalid options for driver: ${error.message}`,
@@ -3991,11 +4007,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
-			this.restart().catch((err) => {
-				logger.error(err)
-			})
+			this.backoffRestart()
 			return
 		}
+
+		// reset retries
+		this.backoffRetry = 0
 
 		for (const [, node] of this._driver.controller.nodes) {
 			// node added will not be triggered if the node is in cache
@@ -4040,10 +4057,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
-	private async _onDriverError(
-		error: ZWaveError,
-		skipRestart = false
-	): Promise<void> {
+	private _onDriverError(error: ZWaveError, skipRestart = false): void {
 		this._error = 'Driver: ' + error.message
 		this.status = ZwaveClientStatus.DRIVER_FAILED
 		this._updateControllerStatus(this._error)
@@ -4051,11 +4065,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (!skipRestart && error.code === ZWaveErrorCodes.Driver_Failed) {
 			// this cannot be recovered by zwave-js, requires a manual restart
-			try {
-				await this.restart()
-			} catch (error) {
-				logger.error(`Error while restarting driver: ${error.message}`)
-			}
+			this.backoffRestart()
 		}
 	}
 
