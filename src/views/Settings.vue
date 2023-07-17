@@ -394,11 +394,11 @@
 						>
 
 						<v-alert dense text type="warning">
-							After an NVM backup controller will be
-							soft-resetted, please make sure your stick can be
-							soft-reset before enabling this feature. This is
-							caused by a bug we discovered on 700 series
-							controllers and may be fixed in future
+							Some 700 series controllers may stop functioning
+							properly after an NVM backup. Z-Wave JS will try to
+							restart (soft reset) the controller afterwards to
+							restore normal operation. If that does not work, the
+							controller will have to be re-plugged manually.
 						</v-alert>
 
 						<v-row class="mb-5">
