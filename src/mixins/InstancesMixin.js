@@ -50,6 +50,25 @@ export default {
 			}
 		},
 		async healNode(node) {
+			const shouldWarn =
+				node.applicationRoute ||
+				node.customSUCReturnRoutes?.length > 0 ||
+				node.prioritySUCReturnRoute
+
+			if (shouldWarn) {
+				const confirmed = await this.app.confirm(
+					'Priority/Custom return routes configured',
+					`The node has priority/custom return routes configured, healing it will reset them. Are you sure you want to continue?`,
+					'warning',
+					{
+						width: 600,
+					}
+				)
+
+				if (!confirmed) {
+					return
+				}
+			}
 			const response = await this.app.apiRequest('healNode', [node.id], {
 				infoSnack: true,
 				errorSnack: false,
