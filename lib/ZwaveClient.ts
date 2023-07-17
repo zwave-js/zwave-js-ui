@@ -631,6 +631,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private backoffRetry = 0
 	private restartTimeout: NodeJS.Timeout
 
+	private driverFunctionCache: utils.Snippet[] = []
+
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
 
@@ -677,6 +679,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	public get maxNodeEventsQueueSize() {
 		return this.cfg.maxNodeEventsQueueSize || 100
+	}
+
+	public get cacheSnippets(): utils.Snippet[] {
+		return this.driverFunctionCache
 	}
 
 	constructor(config: ZwaveConfig, socket: SocketServer) {
@@ -1945,6 +1951,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	driverFunction(code: string): Promise<any> {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
+		}
+
+		if (!this.driverFunctionCache.find((c) => c.content === code)) {
+			const name = `CACHED_${this.driverFunctionCache.length}`
+			this.driverFunctionCache.push({ name, content: code })
 		}
 
 		const AsyncFunction = Object.getPrototypeOf(

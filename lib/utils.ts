@@ -8,6 +8,11 @@ import { readFileSync } from 'fs'
 
 let VERSION: string
 
+export interface Snippet {
+	name: string
+	content: string
+}
+
 export type DeepPartial<T> = {
 	[P in keyof T]?: T[P] extends Array<infer U>
 		? Array<DeepPartial<U>>
