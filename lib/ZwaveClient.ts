@@ -743,9 +743,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	backoffRestart(): void {
-		this.backoffRetry++
-
 		const timeout = Math.min(2 ** this.backoffRetry * 1000, 15000)
+		this.backoffRetry++
 
 		logger.info(
 			`Restarting client in ${timeout / 1000} seconds, retry ${
