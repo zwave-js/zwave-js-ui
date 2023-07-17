@@ -35,7 +35,7 @@ export default {
 
 			if (response.success && response.result) {
 				this.showSnackbar(
-					`Ping of node ${node.id} successfull`,
+					`Ping of node ${node.id} successful`,
 					'success'
 				)
 			} else {
@@ -57,7 +57,7 @@ export default {
 
 			if (response.success && response.result) {
 				this.showSnackbar(
-					`Heal of node ${node.id} successfull`,
+					`Heal of node ${node.id} successful`,
 					'success'
 				)
 			} else {
