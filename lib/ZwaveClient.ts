@@ -592,6 +592,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
 	private socket: SocketServer
 	private closed: boolean
+	private destroyed = false
 	private _driverReady: boolean
 	private scenes: ZUIScene[]
 	private _nodes: Map<number, ZUINode>
@@ -745,7 +746,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async restart(): Promise<void> {
 		await this.close(true)
 		this.init()
-		return this.connect()
+		await this.connect()
 	}
 
 	backoffRestart(): void {
@@ -1068,6 +1069,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (!keepListeners) {
+			this.destroyed = true
 			this.removeAllListeners()
 		}
 
@@ -1974,7 +1976,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async connect() {
 		if (!this.driverReady) {
 			// this could happen when the driver fails the connect and a reconnect timeout triggers
-			if (this.closed) {
+			if (this.closed || this.destroyed) {
 				return
 			}
 
