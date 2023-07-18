@@ -1,5 +1,24 @@
 
 
+# [8.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.20.0...v8.21.0) (2023-07-18)
+
+
+### Bug Fixes
+
+* add `destroyed` flag to client to prevent edge case on reconnect ([e83b146](https://github.com/zwave-js/zwave-js-ui/commit/e83b1464fefc33dae13ccaf7e994d44a04c009c1))
+* minor typo in ping and heal messages ([#3170](https://github.com/zwave-js/zwave-js-ui/issues/3170)) ([3c7be58](https://github.com/zwave-js/zwave-js-ui/commit/3c7be58d3d288e53e945207735d51ff1e464fdbf))
+* **ui:** cleaner alert message on NVM backup ([52d7766](https://github.com/zwave-js/zwave-js-ui/commit/52d7766432304470a1fb6f0105322462f65c0d62))
+* **ui:** warn user before healing a node ([edc0125](https://github.com/zwave-js/zwave-js-ui/commit/edc0125800d97d31a996b0903de2e610d172f32f)), closes [#3175](https://github.com/zwave-js/zwave-js-ui/issues/3175)
+* user callbacks on the server are set too early when recovering from a serial disconnect ([2a8bf03](https://github.com/zwave-js/zwave-js-ui/commit/2a8bf03334a0e6fa468190b509edfbaa80eefb8b)), closes [#3174](https://github.com/zwave-js/zwave-js-ui/issues/3174)
+
+
+### Features
+
+* bump zwave-js@11.5.0 ([06ac54a](https://github.com/zwave-js/zwave-js-ui/commit/06ac54a17f998a38423fa069df616373a08635d3))
+* cache recently executed driver functions ([36b915c](https://github.com/zwave-js/zwave-js-ui/commit/36b915c42d2dc706d3eea65a273bdc88b123dd8e)), closes [#3160](https://github.com/zwave-js/zwave-js-ui/issues/3160)
+* exponential backoff when restarting driver ([#3173](https://github.com/zwave-js/zwave-js-ui/issues/3173)) ([1f0f63c](https://github.com/zwave-js/zwave-js-ui/commit/1f0f63ce45bc2c6dcbafb2e4b889ef9b1f15908f))
+* use new `lastSeen` zwaveNode prop ([#3178](https://github.com/zwave-js/zwave-js-ui/issues/3178)) ([9851875](https://github.com/zwave-js/zwave-js-ui/commit/985187537fb1321cf9f88e58824aae2a95e672b7))
+
 # [8.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.19.0...v8.20.0) (2023-07-12)
 
 
