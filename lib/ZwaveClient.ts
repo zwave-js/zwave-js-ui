@@ -4172,6 +4172,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			controllerNode.statistics = stats
 
 			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
+				// no need to emit `lastActive` event. That would cause useless traffic
 				controllerNode.lastActive = Date.now()
 			}
 
@@ -4667,15 +4668,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					status: node.status,
 					available: node.available,
 					interviewStage: node.interviewStage,
-				}
-			}
-
-			// update last active bacause on startup the ping
-			// is not counted in node stats
-			if (zwaveNode.status === NodeStatus.Alive) {
-				node.lastActive = Date.now()
-				if (changedProps) {
-					changedProps.lastActive = node.lastActive
 				}
 			}
 
@@ -5256,15 +5248,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
-			const oldStatistics = node.statistics as NodeStatistics | undefined
 			node.statistics = { ...stats } // stats is readonly, we need to be able to edit it in getPriorityRoute
 
 			// update stats only when node is doing something
-			if (
-				(stats.commandsRX > oldStatistics?.commandsRX ?? 0) ||
-				(stats.commandsTX > oldStatistics?.commandsTX ?? 0)
-			) {
-				node.lastActive = Date.now()
+			if (stats.lastSeen) {
+				node.lastActive = stats.lastSeen?.getTime()
 				this.emit('nodeLastActive', node)
 			}
 
@@ -5597,6 +5585,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			generic: zwaveNode.deviceClass?.generic.key,
 			specific: zwaveNode.deviceClass?.specific.key,
 		}
+
+		node.lastActive = zwaveNode.lastSeen?.getTime() || null
 
 		node.firmwareCapabilities =
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
