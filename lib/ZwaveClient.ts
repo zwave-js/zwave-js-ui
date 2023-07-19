@@ -750,6 +750,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	backoffRestart(): void {
+		// fix edge case where client is half closed and restart is called
+		if (this.destroyed) {
+			this.close(true).catch((error) => {
+				logger.error(`Error while restarting driver: ${error.message}`)
+			})
+			return
+		}
+
 		const timeout = Math.min(2 ** this.backoffRetry * 1000, 15000)
 		this.backoffRetry++
 
