@@ -751,10 +751,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	backoffRestart(): void {
 		// fix edge case where client is half closed and restart is called
-		if (this.destroyed) {
-			this.close(true).catch((error) => {
-				logger.error(`Error while restarting driver: ${error.message}`)
-			})
+		if (this.checkIfDestroyed()) {
 			return
 		}
 
@@ -772,6 +769,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.error(`Error while restarting driver: ${error.message}`)
 			})
 		}, timeout)
+	}
+
+	/**
+	 * Checks if this client is destroyed and if so closes it
+	 * @returns True if client is destroyed
+	 */
+	checkIfDestroyed() {
+		if (this.destroyed) {
+			logger.info(
+				`Client listening on '${this.cfg.port}' is destroyed, closing`
+			)
+			this.close(true).catch((error) => {
+				logger.error(`Error while restarting driver: ${error.message}`)
+			})
+			return true
+		}
+
+		return false
 	}
 
 	/**
@@ -1070,10 +1085,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (this.server) {
 			await this.server.destroy()
+			this.server = null
 		}
 
 		if (this._driver) {
 			await this._driver.destroy()
+			this._driver = null
 		}
 
 		if (!keepListeners) {
@@ -1984,7 +2001,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async connect() {
 		if (!this.driverReady) {
 			// this could happen when the driver fails the connect and a reconnect timeout triggers
-			if (this.closed || this.destroyed) {
+			if (this.closed || this.checkIfDestroyed()) {
 				return
 			}
 
@@ -2135,6 +2152,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				await this._driver.start()
 
+				if (this.checkIfDestroyed()) {
+					return
+				}
+
 				if (this.cfg.serverEnabled) {
 					this.server = new ZwavejsServer(this._driver, {
 						port: this.cfg.serverPort || 3000,
@@ -2171,6 +2192,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							error
 						)
 					})
+				}
+
+				if (this.checkIfDestroyed()) {
+					return
 				}
 
 				this._onDriverError(error, true)
