@@ -3583,8 +3583,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.nvmEvent = 'before_controller_fw_update_otw'
 				await backupManager.backupNvm()
 			}
-			const format = guessFirmwareFileFormat(file.name, file.data)
-			const firmware = extractFirmware(file.data, format)
+			let firmware: Firmware
+
+			try {
+				const format = guessFirmwareFileFormat(file.name, file.data)
+				firmware = extractFirmware(file.data, format)
+			} catch (err) {
+				throw Error(
+					`Unable to extract firmware from file '${file.name}'`
+				)
+			}
 			const result = await this.driver.controller.firmwareUpdateOTW(
 				firmware.data
 			)
@@ -3592,9 +3600,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return result
 		} catch (e) {
 			this._lockOTWUpdates = false
-			throw Error(
-				`Unable to extract firmware from file '${file.name}': ${e.message}`
-			)
+			throw Error(`Error while updating firmware: ${e.message}`)
 		}
 	}
 
