@@ -1,5 +1,19 @@
 
 
+## [8.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.0...v8.21.1) (2023-07-21)
+
+
+### Bug Fixes
+
+* misleading controller OTW error message ([1b7eadb](https://github.com/zwave-js/zwave-js-ui/commit/1b7eadbf40129dea92543951b45c49e191ae4575)), closes [#3181](https://github.com/zwave-js/zwave-js-ui/issues/3181)
+* prevent edge case on zwave client restart ([#3180](https://github.com/zwave-js/zwave-js-ui/issues/3180)) ([01dd87b](https://github.com/zwave-js/zwave-js-ui/commit/01dd87ba70999fb192748965e859a5ce57c0bffb))
+
+
+### Features
+
+* bump zwave-js@11.5.1 ([#3179](https://github.com/zwave-js/zwave-js-ui/issues/3179)) ([edfdb00](https://github.com/zwave-js/zwave-js-ui/commit/edfdb003a205d2e1c8287006ea1b8141369764f4))
+* bump zwave-js@11.5.3 ([259a0a3](https://github.com/zwave-js/zwave-js-ui/commit/259a0a3ae62019a321426ca13be5be77d24f7622))
+
 # [8.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.20.0...v8.21.0) (2023-07-18)
 
 
