@@ -777,11 +777,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 */
 	checkIfDestroyed() {
 		if (this.destroyed) {
-			logger.info(
+			logger.debug(
 				`Client listening on '${this.cfg.port}' is destroyed, closing`
 			)
 			this.close(true).catch((error) => {
-				logger.error(`Error while restarting driver: ${error.message}`)
+				logger.error(`Error while closing driver: ${error.message}`)
 			})
 			return true
 		}
