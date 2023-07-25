@@ -801,11 +801,14 @@ export default {
 					repeaters: r.repeaters,
 					routeSpeed: r.routeSpeed,
 				})),
-				{
+			]
+
+			if (priorityRoute) {
+				args.push({
 					repeaters: priorityRoute.repeaters,
 					routeSpeed: priorityRoute.routeSpeed,
-				},
-			]
+				})
+			}
 
 			await this.setRoute('customSUCReturnRoutes', args)
 		},
