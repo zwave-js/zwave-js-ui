@@ -1,5 +1,17 @@
 
 
+## [8.21.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.1...v8.21.2) (2023-07-25)
+
+
+### Bug Fixes
+
+* typo on log ([1f01867](https://github.com/zwave-js/zwave-js-ui/commit/1f018677a512124e74fc9f5a4f0feaf83e9f07df))
+
+
+### Features
+
+* bump zwave-js@11.6.0 ([#3186](https://github.com/zwave-js/zwave-js-ui/issues/3186)) ([0ebf8a0](https://github.com/zwave-js/zwave-js-ui/commit/0ebf8a05c34e44c5cd30cb1b6c1f4e8b839c190b))
+
 ## [8.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.0...v8.21.1) (2023-07-21)
 
 
