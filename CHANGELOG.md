@@ -1,5 +1,20 @@
 
 
+# [8.22.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.2...v8.22.0) (2023-07-31)
+
+
+### Bug Fixes
+
+* **ui:** hide lastSeen from statistics arrows tooltip ([7859795](https://github.com/zwave-js/zwave-js-ui/commit/78597959cb3993e2a80829a258030300780747d7))
+* **ui:** remove `check` action for failed nodes ([#3200](https://github.com/zwave-js/zwave-js-ui/issues/3200)) ([d6fc4d1](https://github.com/zwave-js/zwave-js-ui/commit/d6fc4d16c9c76a644d9b7062868f9cd140991331))
+* **ui:** return routes set not working without a priority route ([#3188](https://github.com/zwave-js/zwave-js-ui/issues/3188)) ([be2ece4](https://github.com/zwave-js/zwave-js-ui/commit/be2ece42968127d33488642121a6d3314b499d81))
+
+
+### Features
+
+* allow to abort health checks and show steps results ([#3199](https://github.com/zwave-js/zwave-js-ui/issues/3199)) ([cc6ddce](https://github.com/zwave-js/zwave-js-ui/commit/cc6ddce00f1f319b1625b08deb28ea274559291b))
+* bump zwave-js@11.8 and @zwave-js/server to 1.30.0 ([#3195](https://github.com/zwave-js/zwave-js-ui/issues/3195)) ([bffa740](https://github.com/zwave-js/zwave-js-ui/commit/bffa74001c45185aa7f1f3f956053a6e13aea698))
+
 ## [8.21.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.1...v8.21.2) (2023-07-25)
 
 
