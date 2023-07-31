@@ -52,7 +52,7 @@ export default {
 	methods: {
 		jsonToList(item) {
 			return jsonToList(item, {
-				ignore: ['lwr', 'nlwr', 'rssi', 'backgroundRSSI'],
+				ignore: ['lwr', 'nlwr', 'rssi', 'backgroundRSSI', 'lastSeen'],
 				suffixes: { rtt: 'ms' },
 			})
 		},
