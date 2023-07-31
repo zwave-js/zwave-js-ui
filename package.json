@@ -123,7 +123,7 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@kvaster/zwavejs-prom": "^0.0.2",
     "@mdi/js": "7.2.96",
-    "@zwave-js/server": "^1.29.1",
+    "@zwave-js/server": "^1.30.0",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-1",
     "ansi_up": "^5.1.0",
     "app-root-path": "^3.1.0",
