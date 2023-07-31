@@ -46,6 +46,7 @@ import {
 	InclusionStrategy,
 	InterviewStage,
 	libVersion,
+	LifelineHealthCheckResult,
 	LifelineHealthCheckSummary,
 	MultilevelSwitchCommand,
 	NodeInterviewFailedEventArgs,
@@ -60,6 +61,7 @@ import {
 	RemoveNodeReason,
 	ReplaceNodeOptions,
 	RFRegion,
+	RouteHealthCheckResult,
 	RouteHealthCheckSummary,
 	ScheduleEntryLockCC,
 	ScheduleEntryLockDailyRepeatingSchedule,
@@ -218,6 +220,7 @@ export const allowedApis = validateMethods([
 	'provisionSmartStartNode',
 	'parseQRCodeString',
 	'checkLifelineHealth',
+	'abortHealthCheck',
 	'checkRouteHealth',
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
@@ -3512,6 +3515,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Aborts an ongoing health check if one is currently in progress.
+	 */
+	abortHealthCheck(nodeId: number) {
+		if (this.driverReady) {
+			const zwaveNode = this.getNode(nodeId)
+
+			if (!zwaveNode) {
+				throw Error(`Node ${nodeId} not found`)
+			}
+
+			if (!zwaveNode.isHealthCheckInProgress()) {
+				throw Error(`Health check not in progress`)
+			}
+
+			return zwaveNode.abortHealthCheck()
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
 	 * Check if a node is failed
 	 */
 	async isFailedNode(nodeId: number): Promise<boolean> {
@@ -4455,7 +4479,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		request: { nodeId: number; targetNodeId: number },
 		round: number,
 		totalRounds: number,
-		lastRating: number
+		lastRating: number,
+		lastResult: RouteHealthCheckResult | LifelineHealthCheckResult
 	) {
 		const message = `Health check ${request.nodeId}-->${request.targetNodeId}: ${round}/${totalRounds} done, last rating ${lastRating}`
 		this._updateControllerStatus(message)
@@ -4464,6 +4489,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			round,
 			totalRounds,
 			lastRating,
+			lastResult,
 		})
 	}
 
