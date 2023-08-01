@@ -262,12 +262,7 @@ export async function startServer(host: string, port: number | string) {
 	await startGateway(settings)
 }
 
-interface Snippet {
-	name: string
-	content: string
-}
-
-const defaultSnippets: Snippet[] = []
+const defaultSnippets: utils.Snippet[] = []
 
 async function loadSnippets() {
 	const localSnippetsDir = utils.joinPath(false, 'snippets')
@@ -291,7 +286,7 @@ async function isSnippet(file: string): Promise<boolean> {
 
 async function getSnippets() {
 	const files = await readdir(snippetsDir)
-	const snippets: Snippet[] = []
+	const snippets: utils.Snippet[] = []
 	for (const file of files) {
 		const filePath = path.join(snippetsDir, file)
 
@@ -302,7 +297,9 @@ async function getSnippets() {
 			})
 		}
 	}
-	return [...defaultSnippets, ...snippets]
+
+	const snippetsCache = gw.zwave?.cacheSnippets ?? []
+	return [...snippetsCache, ...defaultSnippets, ...snippets]
 }
 
 /**

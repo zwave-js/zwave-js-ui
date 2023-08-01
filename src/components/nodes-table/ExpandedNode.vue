@@ -450,7 +450,6 @@ export default {
 						{
 							text: 'Failed Nodes',
 							options: [
-								{ name: 'Check', action: 'isFailedNode' },
 								{ name: 'Remove', action: 'removeFailedNode' },
 							],
 							icon: 'dangerous',

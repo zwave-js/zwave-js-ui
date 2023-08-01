@@ -39,10 +39,10 @@
 
 					<v-row class="mb-2" justify="space-around">
 						<v-btn
-							color="success"
-							:disabled="loading || !targetNode"
-							@click="checkHealth()"
-							>Check</v-btn
+							:color="loading ? 'error' : 'success'"
+							:disabled="!targetNode"
+							@click="loading ? stopHealth() : checkHealth()"
+							>{{ loading ? 'Stop' : 'Check' }}</v-btn
 						>
 						<v-menu
 							:close-on-content-click="false"
@@ -646,16 +646,14 @@ export default {
 		},
 		onHealthCheckProgress(data) {
 			// eslint-disable-next-line no-unused-vars
-			const { request, round, totalRounds, lastRating } = data
+			const { request, round, totalRounds, lastResult } = data
 
 			// prevent showing results of other requests
 			if (request.nodeId === this.activeNode.id) {
-				const lastResult = this.results[this.results.length - 1]
+				const step = this.results[this.results.length - 1]
 
 				if (lastResult) {
-					Object.assign(lastResult, {
-						rating: lastRating,
-					})
+					Object.assign(step, lastResult)
 				}
 				if (round < totalRounds) {
 					this.results.push({
@@ -663,6 +661,15 @@ export default {
 						rating: undefined,
 					})
 				}
+			}
+		},
+		async stopHealth() {
+			const response = await this.app.apiRequest(`abortHealthCheck`, [
+				this.activeNode.id,
+			])
+
+			if (response.success) {
+				this.showSnackbar('Health check aborted', 'success')
 			}
 		},
 		async checkHealth() {

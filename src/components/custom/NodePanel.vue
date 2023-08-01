@@ -1,6 +1,6 @@
 <template>
-	<v-container class="pt-0" v-if="_value">
-		<v-col class="pa-0 pb-2" v-if="node">
+	<v-container class="pt-0" v-show="_value">
+		<v-col class="pa-0 pb-2" v-if="_value && node">
 			<v-subheader
 				class="font-weight-bold"
 				style="position: sticky; top: 0; z-index: 10"
@@ -801,11 +801,14 @@ export default {
 					repeaters: r.repeaters,
 					routeSpeed: r.routeSpeed,
 				})),
-				{
+			]
+
+			if (priorityRoute) {
+				args.push({
 					repeaters: priorityRoute.repeaters,
 					routeSpeed: priorityRoute.routeSpeed,
-				},
-			]
+				})
+			}
 
 			await this.setRoute('customSUCReturnRoutes', args)
 		},

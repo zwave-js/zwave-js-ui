@@ -46,6 +46,7 @@ import {
 	InclusionStrategy,
 	InterviewStage,
 	libVersion,
+	LifelineHealthCheckResult,
 	LifelineHealthCheckSummary,
 	MultilevelSwitchCommand,
 	NodeInterviewFailedEventArgs,
@@ -60,6 +61,7 @@ import {
 	RemoveNodeReason,
 	ReplaceNodeOptions,
 	RFRegion,
+	RouteHealthCheckResult,
 	RouteHealthCheckSummary,
 	ScheduleEntryLockCC,
 	ScheduleEntryLockDailyRepeatingSchedule,
@@ -218,6 +220,7 @@ export const allowedApis = validateMethods([
 	'provisionSmartStartNode',
 	'parseQRCodeString',
 	'checkLifelineHealth',
+	'abortHealthCheck',
 	'checkRouteHealth',
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
@@ -592,6 +595,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private cfg: ZwaveConfig
 	private socket: SocketServer
 	private closed: boolean
+	private destroyed = false
 	private _driverReady: boolean
 	private scenes: ZUIScene[]
 	private _nodes: Map<number, ZUINode>
@@ -630,6 +634,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private backoffRetry = 0
 	private restartTimeout: NodeJS.Timeout
+
+	private driverFunctionCache: utils.Snippet[] = []
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
@@ -677,6 +683,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	public get maxNodeEventsQueueSize() {
 		return this.cfg.maxNodeEventsQueueSize || 100
+	}
+
+	public get cacheSnippets(): utils.Snippet[] {
+		return this.driverFunctionCache
 	}
 
 	constructor(config: ZwaveConfig, socket: SocketServer) {
@@ -739,10 +749,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async restart(): Promise<void> {
 		await this.close(true)
 		this.init()
-		return this.connect()
+		await this.connect()
 	}
 
 	backoffRestart(): void {
+		// fix edge case where client is half closed and restart is called
+		if (this.checkIfDestroyed()) {
+			return
+		}
+
 		const timeout = Math.min(2 ** this.backoffRetry * 1000, 15000)
 		this.backoffRetry++
 
@@ -757,6 +772,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.error(`Error while restarting driver: ${error.message}`)
 			})
 		}, timeout)
+	}
+
+	/**
+	 * Checks if this client is destroyed and if so closes it
+	 * @returns True if client is destroyed
+	 */
+	checkIfDestroyed() {
+		if (this.destroyed) {
+			logger.debug(
+				`Client listening on '${this.cfg.port}' is destroyed, closing`
+			)
+			this.close(true).catch((error) => {
+				logger.error(`Error while closing driver: ${error.message}`)
+			})
+			return true
+		}
+
+		return false
 	}
 
 	/**
@@ -872,7 +905,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		// when no user is connected, give back the control to HA server
-		if (this.server) {
+		if (this.server?.['sockets'] !== undefined) {
 			this.server.setInclusionUserCallbacks()
 		}
 	}
@@ -1055,13 +1088,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (this.server) {
 			await this.server.destroy()
+			this.server = null
 		}
 
 		if (this._driver) {
 			await this._driver.destroy()
+			this._driver = null
 		}
 
 		if (!keepListeners) {
+			this.destroyed = true
 			this.removeAllListeners()
 		}
 
@@ -1947,6 +1983,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw new DriverNotReadyError()
 		}
 
+		if (!this.driverFunctionCache.find((c) => c.content === code)) {
+			const name = `CACHED_${this.driverFunctionCache.length}`
+			this.driverFunctionCache.push({ name, content: code })
+		}
+
 		const AsyncFunction = Object.getPrototypeOf(
 			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			async function () {}
@@ -1963,7 +2004,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async connect() {
 		if (!this.driverReady) {
 			// this could happen when the driver fails the connect and a reconnect timeout triggers
-			if (this.closed) {
+			if (this.closed || this.checkIfDestroyed()) {
 				return
 			}
 
@@ -2114,6 +2155,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				await this._driver.start()
 
+				if (this.checkIfDestroyed()) {
+					return
+				}
+
 				if (this.cfg.serverEnabled) {
 					this.server = new ZwavejsServer(this._driver, {
 						port: this.cfg.serverPort || 3000,
@@ -2150,6 +2195,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							error
 						)
 					})
+				}
+
+				if (this.checkIfDestroyed()) {
+					return
 				}
 
 				this._onDriverError(error, true)
@@ -3466,6 +3515,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Aborts an ongoing health check if one is currently in progress.
+	 */
+	abortHealthCheck(nodeId: number) {
+		if (this.driverReady) {
+			const zwaveNode = this.getNode(nodeId)
+
+			if (!zwaveNode) {
+				throw Error(`Node ${nodeId} not found`)
+			}
+
+			if (!zwaveNode.isHealthCheckInProgress()) {
+				throw Error(`Health check not in progress`)
+			}
+
+			return zwaveNode.abortHealthCheck()
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
 	 * Check if a node is failed
 	 */
 	async isFailedNode(nodeId: number): Promise<boolean> {
@@ -3537,8 +3607,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.nvmEvent = 'before_controller_fw_update_otw'
 				await backupManager.backupNvm()
 			}
-			const format = guessFirmwareFileFormat(file.name, file.data)
-			const firmware = extractFirmware(file.data, format)
+			let firmware: Firmware
+
+			try {
+				const format = guessFirmwareFileFormat(file.name, file.data)
+				firmware = extractFirmware(file.data, format)
+			} catch (err) {
+				throw Error(
+					`Unable to extract firmware from file '${file.name}'`
+				)
+			}
 			const result = await this.driver.controller.firmwareUpdateOTW(
 				firmware.data
 			)
@@ -3546,9 +3624,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return result
 		} catch (e) {
 			this._lockOTWUpdates = false
-			throw Error(
-				`Unable to extract firmware from file '${file.name}': ${e.message}`
-			)
+			throw Error(`Error while updating firmware: ${e.message}`)
 		}
 	}
 
@@ -4035,11 +4111,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
-			this.server.start(!this.hasUserCallbacks).catch((error) => {
-				logger.error(
-					`Failed to start zwave-js server: ${error.message}`
-				)
-			})
+			this.server
+				.start(!this.hasUserCallbacks)
+				.then(() => {
+					logger.info('Z-Wave server started')
+				})
+				.catch((error) => {
+					logger.error(
+						`Failed to start zwave-js server: ${error.message}`
+					)
+				})
 		}
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
@@ -4156,6 +4237,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			controllerNode.statistics = stats
 
 			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
+				// no need to emit `lastActive` event. That would cause useless traffic
 				controllerNode.lastActive = Date.now()
 			}
 
@@ -4397,7 +4479,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		request: { nodeId: number; targetNodeId: number },
 		round: number,
 		totalRounds: number,
-		lastRating: number
+		lastRating: number,
+		lastResult: RouteHealthCheckResult | LifelineHealthCheckResult
 	) {
 		const message = `Health check ${request.nodeId}-->${request.targetNodeId}: ${round}/${totalRounds} done, last rating ${lastRating}`
 		this._updateControllerStatus(message)
@@ -4406,6 +4489,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			round,
 			totalRounds,
 			lastRating,
+			lastResult,
 		})
 	}
 
@@ -4651,15 +4735,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					status: node.status,
 					available: node.available,
 					interviewStage: node.interviewStage,
-				}
-			}
-
-			// update last active bacause on startup the ping
-			// is not counted in node stats
-			if (zwaveNode.status === NodeStatus.Alive) {
-				node.lastActive = Date.now()
-				if (changedProps) {
-					changedProps.lastActive = node.lastActive
 				}
 			}
 
@@ -5240,15 +5315,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const node = this.nodes.get(zwaveNode.id)
 
 		if (node) {
-			const oldStatistics = node.statistics as NodeStatistics | undefined
 			node.statistics = { ...stats } // stats is readonly, we need to be able to edit it in getPriorityRoute
 
 			// update stats only when node is doing something
-			if (
-				(stats.commandsRX > oldStatistics?.commandsRX ?? 0) ||
-				(stats.commandsTX > oldStatistics?.commandsTX ?? 0)
-			) {
-				node.lastActive = Date.now()
+			if (stats.lastSeen) {
+				node.lastActive = stats.lastSeen?.getTime()
 				this.emit('nodeLastActive', node)
 			}
 
@@ -5581,6 +5652,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			generic: zwaveNode.deviceClass?.generic.key,
 			specific: zwaveNode.deviceClass?.specific.key,
 		}
+
+		node.lastActive = zwaveNode.lastSeen?.getTime() || null
 
 		node.firmwareCapabilities =
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
