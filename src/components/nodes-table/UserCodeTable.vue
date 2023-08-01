@@ -176,7 +176,7 @@ export default {
 			if (this.node.schedule) {
 				const slots = this.getSlots(id)
 				base.schedule = {
-					type: slots.find((s) => s.enabled)?.type,
+					type: slots.find((s) => s.enabled)?.type || 'daily',
 					slots,
 					enabled: this.node.userCodes.enabled.includes(id),
 				}
