@@ -118,12 +118,19 @@ export default {
 		makeDivDraggable() {
 			const elmnt = document.getElementById('properties')
 
-			let startX = 0
-			let startY = 0
-
 			if (!elmnt) {
 				return
 			}
+
+			// prevent to make it draggable multiple times
+			if (elmnt.hasAttribute('data-draggable')) {
+				return
+			}
+
+			elmnt.setAttribute('data-draggable', true)
+
+			let startX = 0
+			let startY = 0
 
 			elmnt.onmousedown = dragMouseDown
 
