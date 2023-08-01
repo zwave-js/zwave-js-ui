@@ -1,6 +1,6 @@
 'use strict'
 
-import mqtt, { Client } from 'mqtt'
+import mqtt, { MqttClient as Client } from 'mqtt'
 import { allSettled, parseJSON, sanitizeTopic } from './utils'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
@@ -347,7 +347,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			rejectUnauthorized: !config.allowSelfsigned,
 			will: {
 				topic: this.getClientTopic(MqttClient.STATUS_TOPIC),
-				payload: JSON.stringify({ value: false }),
+				payload: JSON.stringify({ value: false }) as any,
 				qos: this.config.qos,
 				retain: this.config.retain,
 			},
