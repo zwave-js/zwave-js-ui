@@ -1,6 +1,12 @@
 'use strict'
 
-import mqtt, { MqttClient as Client } from 'mqtt'
+import {
+	MqttClient as Client,
+	IClientOptions,
+	IClientPublishOptions,
+	IClientSubscribeOptions,
+	connect,
+} from 'mqtt'
 import { allSettled, parseJSON, sanitizeTopic } from './utils'
 import { module } from './logger'
 import { version as appVersion } from '../package.json'
@@ -54,7 +60,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	private config: MqttConfig
 	private toSubscribe: Map<
 		string,
-		mqtt.IClientSubscribeOptions & { addPrefix: boolean }
+		IClientSubscribeOptions & { addPrefix: boolean }
 	>
 	private _clientID: string
 	private client: Client
@@ -218,13 +224,13 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	 */
 	subscribe(
 		topic: string,
-		options: mqtt.IClientSubscribeOptions & { addPrefix: boolean } = {
+		options: IClientSubscribeOptions & { addPrefix: boolean } = {
 			qos: 1,
 			addPrefix: true,
 		}
 	): Promise<void> {
 		return new Promise((resolve, reject) => {
-			const subOptions: mqtt.IClientSubscribeOptions = {
+			const subOptions: IClientSubscribeOptions = {
 				qos: options.qos,
 			}
 
@@ -275,7 +281,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	publish(
 		topic: string,
 		data: any,
-		options?: mqtt.IClientPublishOptions,
+		options?: IClientPublishOptions,
 		prefix?: string
 	) {
 		if (this.client) {
@@ -340,7 +346,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		if (parsed.protocol) protocol = parsed.protocol.replace(/:$/, '')
 
-		const options: mqtt.IClientOptions = {
+		const options: IClientOptions = {
 			clientId: this._clientID,
 			reconnectPeriod: config.reconnectPeriod,
 			clean: config.clean,
@@ -386,7 +392,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			}:${config.port}`
 			logger.info(`Connecting to ${serverUrl}`)
 
-			const client = mqtt.connect(serverUrl, options)
+			const client = connect(serverUrl, options)
 
 			this.client = client
 
