@@ -1211,6 +1211,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// for performance reasons we skip query the schedules on init
 			// some locks may have tons of slots causing network congestion
 			if (isInited) {
+				const pushSchedule = (
+					arr: ZUISlot<any>[],
+					schedule: ZUISlot<any>
+				) => {
+					const index = arr.findIndex(
+						(s) =>
+							s.userId === schedule.userId &&
+							s.slotId === schedule.slotId
+					)
+
+					if (index === -1) {
+						arr.push(schedule)
+					} else {
+						arr[index] = schedule
+					}
+				}
+
 				for (let i = 1; i <= userCodes; i++) {
 					const status = UserCodeCC.getUserIdStatusCached(
 						this.driver,
@@ -1260,7 +1277,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						)
 
 					if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
-						weeklySchedules.length = 0
 						const enabled =
 							enabledType ===
 							ScheduleEntryLockScheduleKind.WeekDay
@@ -1283,8 +1299,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								: await zwaveNode.commandClasses[
 										'Schedule Entry Lock'
 								  ].getWeekDaySchedule(slot)
+
 							if (schedule)
-								weeklySchedules.push({
+								pushSchedule(weeklySchedules, {
 									...slot,
 									...schedule,
 									enabled,
@@ -1293,8 +1310,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 
 					if (!mode || mode === ZUIScheduleEntryLockMode.YEARLY) {
-						yearlySchedules.length = 0
-
 						const enabled =
 							enabledType ===
 							ScheduleEntryLockScheduleKind.YearDay
@@ -1317,7 +1332,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										'Schedule Entry Lock'
 								  ].getYearDaySchedule(slot)
 							if (schedule)
-								yearlySchedules.push({
+								pushSchedule(yearlySchedules, {
 									...slot,
 									...schedule,
 									enabled,
@@ -1326,8 +1341,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					}
 
 					if (!mode || mode === ZUIScheduleEntryLockMode.DAILY) {
-						dailySchedules.length = 0
-
 						const enabled =
 							enabledType ===
 							ScheduleEntryLockScheduleKind.DailyRepeating
@@ -1354,7 +1367,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										'Schedule Entry Lock'
 								  ].getDailyRepeatingSchedule(slot)
 							if (schedule)
-								dailySchedules.push({
+								pushSchedule(dailySchedules, {
 									...slot,
 									...schedule,
 									enabled,
