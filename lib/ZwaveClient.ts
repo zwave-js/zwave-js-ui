@@ -256,6 +256,36 @@ const observedCCProps: {
 			})
 		},
 	},
+	[CommandClasses['User Code']]: {
+		userIdStatus(node, value) {
+			const userId = value.propertyKey as number
+			const status = value.value as UserIDStatus
+
+			if (
+				status === undefined ||
+				status === UserIDStatus.Available ||
+				status === UserIDStatus.StatusNotAvailable
+			) {
+				node.userCodes.available = node.userCodes.available.filter(
+					(id) => id !== userId
+				)
+			} else {
+				node.userCodes.available.push(userId)
+			}
+
+			if (status === UserIDStatus.Enabled) {
+				node.userCodes.enabled.push(userId)
+			} else {
+				node.userCodes.enabled = node.userCodes.enabled.filter(
+					(id) => id !== userId
+				)
+			}
+
+			this.emitNodeUpdate(node, {
+				userCodes: node.userCodes,
+			})
+		},
+	},
 }
 
 export type SensorTypeScale = {
