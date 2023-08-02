@@ -1422,14 +1422,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							)
 						}
 					}
-
-					this.emitNodeUpdate(node, {
-						schedule: node.schedule,
-						userCodes: node.userCodes,
-					})
-
-					return node.schedule
 				}
+
+				this.emitNodeUpdate(node, {
+					schedule: node.schedule,
+					userCodes: node.userCodes,
+				})
+
+				return node.schedule
 			}
 		}
 
