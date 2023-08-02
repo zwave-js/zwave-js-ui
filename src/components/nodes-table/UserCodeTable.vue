@@ -62,10 +62,14 @@
 		<template v-slot:expanded-item="{ headers, item }">
 			<td :colspan="headers.length">
 				<node-scheduler
+					v-if="item.status === 1"
 					:node="node"
 					:user="item"
 					:activeMode="item.schedule.type"
 				></node-scheduler>
+				<p class="text-center ma-3" v-else>
+					<b>Enable this User Id in order to set schedules</b>
+				</p>
 			</td>
 		</template>
 	</v-data-table>
@@ -103,7 +107,7 @@ export default {
 	computed: {
 		headers() {
 			const base = [
-				{ text: 'Index', value: 'id' },
+				{ text: 'User Id', value: 'id' },
 				{ text: 'Code', value: 'code' },
 				{ text: 'Status', value: 'status' },
 			]
