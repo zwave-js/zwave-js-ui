@@ -1546,14 +1546,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				const slotIndex = slots.findIndex(
 					(s) => s.userId === slot.userId && s.slotId === slot.slotId
 				)
-				if (slotIndex !== -1) {
-					if (isDelete) {
+				const newSlot = isDelete
+					? null
+					: {
+							...slot,
+							...schedule,
+							enabled: true,
+					  }
+
+				if (isDelete) {
+					if (slotIndex !== -1) {
 						slots.splice(slotIndex, 1)
 					}
-				}
-
-				if (!isDelete) {
-					slots.push({ ...slot, ...schedule } as any)
+				} else if (slotIndex !== -1) {
+					slots[slotIndex] = newSlot
+				} else {
+					slots.push(newSlot as any)
 				}
 
 				this.emitNodeUpdate(node, {
