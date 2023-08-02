@@ -62,7 +62,7 @@
 		<template v-slot:expanded-item="{ headers, item }">
 			<td :colspan="headers.length">
 				<node-scheduler
-					v-if="item.schedule.enabled"
+					v-if="node.userCodes.available.includes(item.id)"
 					:node="node"
 					:user="item"
 					:activeMode="item.schedule.type"

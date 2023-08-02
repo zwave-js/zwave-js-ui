@@ -261,6 +261,10 @@ const observedCCProps: {
 			const userId = value.propertyKey as number
 			const status = value.value as UserIDStatus
 
+			if (!node.userCodes) {
+				return
+			}
+
 			if (
 				status === undefined ||
 				status === UserIDStatus.Available ||
