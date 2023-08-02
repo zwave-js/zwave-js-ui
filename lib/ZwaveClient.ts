@@ -1213,18 +1213,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (isInited) {
 				const pushSchedule = (
 					arr: ZUISlot<any>[],
-					schedule: ZUISlot<any>
+					slot: ScheduleEntryLockSlotId,
+					schedule:
+						| ScheduleEntryLockWeekDaySchedule
+						| ScheduleEntryLockYearDaySchedule
+						| ScheduleEntryLockDailyRepeatingSchedule,
+					enabled: boolean
 				) => {
 					const index = arr.findIndex(
 						(s) =>
-							s.userId === schedule.userId &&
-							s.slotId === schedule.slotId
+							s.userId === slot.userId && s.slotId === slot.slotId
 					)
-
-					if (index === -1) {
-						arr.push(schedule)
-					} else {
-						arr[index] = schedule
+					if (schedule) {
+						const newSlot = {
+							...slot,
+							...schedule,
+							enabled,
+						}
+						if (index === -1) {
+							arr.push(newSlot)
+						} else {
+							arr[index] = newSlot
+						}
+					} else if (index !== -1) {
+						arr.splice(index, 1)
 					}
 				}
 
@@ -1300,12 +1312,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										'Schedule Entry Lock'
 								  ].getWeekDaySchedule(slot)
 
-							if (schedule)
-								pushSchedule(weeklySchedules, {
-									...slot,
-									...schedule,
-									enabled,
-								})
+							pushSchedule(
+								weeklySchedules,
+								slot,
+								schedule,
+								enabled
+							)
 						}
 					}
 
@@ -1331,12 +1343,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								: await zwaveNode.commandClasses[
 										'Schedule Entry Lock'
 								  ].getYearDaySchedule(slot)
-							if (schedule)
-								pushSchedule(yearlySchedules, {
-									...slot,
-									...schedule,
-									enabled,
-								})
+
+							pushSchedule(
+								yearlySchedules,
+								slot,
+								schedule,
+								enabled
+							)
 						}
 					}
 
@@ -1366,23 +1379,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								: await zwaveNode.commandClasses[
 										'Schedule Entry Lock'
 								  ].getDailyRepeatingSchedule(slot)
-							if (schedule)
-								pushSchedule(dailySchedules, {
-									...slot,
-									...schedule,
-									enabled,
-								})
+
+							pushSchedule(
+								dailySchedules,
+								slot,
+								schedule,
+								enabled
+							)
 						}
 					}
+
+					this.emitNodeUpdate(node, {
+						schedule: node.schedule,
+						userCodes: node.userCodes,
+					})
+
+					return node.schedule
 				}
 			}
-
-			this.emitNodeUpdate(node, {
-				schedule: node.schedule,
-				userCodes: node.userCodes,
-			})
-
-			return node.schedule
 		}
 
 		return promise().finally(() => {
