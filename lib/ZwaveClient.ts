@@ -1440,6 +1440,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		delete schedule.userId
 		delete schedule.slotId
+		delete schedule['enabled']
 
 		const isDelete = Object.keys(schedule).length === 0
 
