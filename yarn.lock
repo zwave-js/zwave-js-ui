@@ -10963,9 +10963,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mqtt@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "mqtt@npm:5.0.1"
+"mqtt@npm:^5.0.2":
+  version: 5.0.2
+  resolution: "mqtt@npm:5.0.2"
   dependencies:
     commist: ^3.2.0
     concat-stream: ^2.0.0
@@ -10985,7 +10985,7 @@ __metadata:
     mqtt: build/bin/mqtt.js
     mqtt_pub: build/bin/pub.js
     mqtt_sub: build/bin/sub.js
-  checksum: 29125039ca5c7261f1ad932d71e27c0df21d15e64ca85239c8be35625f512588acdb261f83556ba1d1c96e51b2928b3dc1760b2df1d5b5af59e227463afd8351
+  checksum: 68b3e14a5232d8be8f2ea2d942ac166d2f798681642c460b8d9347bf22e5e7a1d5f5a932c43c818fcc7f780ebf463fa8707369e6862747be15aed516fc9277d6
   languageName: node
   linkType: hard
 
@@ -16302,7 +16302,7 @@ __metadata:
     mini-css-extract-plugin: ^2.7.5
     mocha: ^10.2.0
     morgan: ~1.10.0
-    mqtt: ^5.0.1
+    mqtt: ^5.0.2
     mqtt-jsonl-store: ^0.2.0
     multer: ^1.4.5-lts.1
     native-url: ^0.3.4
