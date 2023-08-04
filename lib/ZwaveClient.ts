@@ -1219,8 +1219,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const dailySchedules: ZUISlot<ScheduleEntryLockDailyRepeatingSchedule>[] =
 				node.schedule?.daily?.slots ?? []
 
-			const isInited = !!node.schedule
-
 			node.schedule = {
 				daily: {
 					numSlots: numSlots.numDailyRepeatingSlots,
@@ -1242,195 +1240,169 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				enabled: [],
 			}
 
-			// for performance reasons we skip query the schedules on init
-			// some locks may have tons of slots causing network congestion
-			if (isInited) {
-				const pushSchedule = (
-					arr: ZUISlot<any>[],
-					slot: ScheduleEntryLockSlotId,
-					schedule:
-						| ScheduleEntryLockWeekDaySchedule
-						| ScheduleEntryLockYearDaySchedule
-						| ScheduleEntryLockDailyRepeatingSchedule,
-					enabled: boolean
-				) => {
-					const index = arr.findIndex(
-						(s) =>
-							s.userId === slot.userId && s.slotId === slot.slotId
-					)
-					if (schedule) {
-						const newSlot = {
-							...slot,
-							...schedule,
-							enabled,
-						}
-						if (index === -1) {
-							arr.push(newSlot)
-						} else {
-							arr[index] = newSlot
-						}
-					} else if (index !== -1) {
-						arr.splice(index, 1)
+			const pushSchedule = (
+				arr: ZUISlot<any>[],
+				slot: ScheduleEntryLockSlotId,
+				schedule:
+					| ScheduleEntryLockWeekDaySchedule
+					| ScheduleEntryLockYearDaySchedule
+					| ScheduleEntryLockDailyRepeatingSchedule,
+				enabled: boolean
+			) => {
+				const index = arr.findIndex(
+					(s) => s.userId === slot.userId && s.slotId === slot.slotId
+				)
+				if (schedule) {
+					const newSlot = {
+						...slot,
+						...schedule,
+						enabled,
 					}
+					if (index === -1) {
+						arr.push(newSlot)
+					} else {
+						arr[index] = newSlot
+					}
+				} else if (index !== -1) {
+					arr.splice(index, 1)
+				}
+			}
+
+			for (let i = 1; i <= userCodes; i++) {
+				const status = UserCodeCC.getUserIdStatusCached(
+					this.driver,
+					endpoint,
+					i
+				)
+
+				if (
+					status === undefined ||
+					status === UserIDStatus.Available ||
+					status === UserIDStatus.StatusNotAvailable
+				) {
+					// skip query on not enabled userIds or empty codes
+					continue
 				}
 
-				for (let i = 1; i <= userCodes; i++) {
-					const status = UserCodeCC.getUserIdStatusCached(
+				node.userCodes.available.push(i)
+
+				const enabledUserId =
+					ScheduleEntryLockCC.getUserCodeScheduleEnabledCached(
 						this.driver,
 						endpoint,
 						i
 					)
 
-					if (
-						status === undefined ||
-						status === UserIDStatus.Available ||
-						status === UserIDStatus.StatusNotAvailable
-					) {
-						// skip query on not enabled userIds or empty codes
-						continue
-					}
+				if (enabledUserId) {
+					node.userCodes.enabled.push(i)
+				}
 
-					node.userCodes.available.push(i)
+				const enabledType =
+					ScheduleEntryLockCC.getUserCodeScheduleKindCached(
+						this.driver,
+						endpoint,
+						i
+					)
 
-					const enabledUserId =
-						ScheduleEntryLockCC.getUserCodeScheduleEnabledCached(
-							this.driver,
-							endpoint,
-							i
-						)
+				const getCached = (
+					kind: ScheduleEntryLockScheduleKind,
+					slotId: number
+				) =>
+					ScheduleEntryLockCC.getScheduleCached(
+						this.driver,
+						endpoint,
+						kind,
+						i,
+						slotId
+					)
 
-					if (enabledUserId) {
-						node.userCodes.enabled.push(i)
-					}
+				if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
+					const enabled =
+						enabledType === ScheduleEntryLockScheduleKind.WeekDay
 
-					const enabledType =
-						ScheduleEntryLockCC.getUserCodeScheduleKindCached(
-							this.driver,
-							endpoint,
-							i
-						)
+					for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
+						if (this._cancelGetSchedule) return
 
-					const getCached = (
-						kind: ScheduleEntryLockScheduleKind,
-						slotId: number
-					) =>
-						ScheduleEntryLockCC.getScheduleCached(
-							this.driver,
-							endpoint,
-							kind,
-							i,
-							slotId
-						)
-
-					if (!mode || mode === ZUIScheduleEntryLockMode.WEEKLY) {
-						const enabled =
-							enabledType ===
-							ScheduleEntryLockScheduleKind.WeekDay
-
-						for (let s = 1; s <= numSlots.numWeekDaySlots; s++) {
-							if (this._cancelGetSchedule) return
-
-							const slot: ScheduleEntryLockSlotId = {
-								userId: i,
-								slotId: s,
-							}
-
-							const schedule = fromCache
-								? <ScheduleEntryLockWeekDaySchedule>(
-										getCached(
-											ScheduleEntryLockScheduleKind.WeekDay,
-											s
-										)
-								  )
-								: await zwaveNode.commandClasses[
-										'Schedule Entry Lock'
-								  ].getWeekDaySchedule(slot)
-
-							pushSchedule(
-								weeklySchedules,
-								slot,
-								schedule,
-								enabled
-							)
+						const slot: ScheduleEntryLockSlotId = {
+							userId: i,
+							slotId: s,
 						}
-					}
 
-					if (!mode || mode === ZUIScheduleEntryLockMode.YEARLY) {
-						const enabled =
-							enabledType ===
-							ScheduleEntryLockScheduleKind.YearDay
+						const schedule = fromCache
+							? <ScheduleEntryLockWeekDaySchedule>(
+									getCached(
+										ScheduleEntryLockScheduleKind.WeekDay,
+										s
+									)
+							  )
+							: await zwaveNode.commandClasses[
+									'Schedule Entry Lock'
+							  ].getWeekDaySchedule(slot)
 
-						for (let s = 1; s <= numSlots.numYearDaySlots; s++) {
-							if (this._cancelGetSchedule) return
-
-							const slot: ScheduleEntryLockSlotId = {
-								userId: i,
-								slotId: s,
-							}
-							const schedule = fromCache
-								? <ScheduleEntryLockYearDaySchedule>(
-										getCached(
-											ScheduleEntryLockScheduleKind.YearDay,
-											s
-										)
-								  )
-								: await zwaveNode.commandClasses[
-										'Schedule Entry Lock'
-								  ].getYearDaySchedule(slot)
-
-							pushSchedule(
-								yearlySchedules,
-								slot,
-								schedule,
-								enabled
-							)
-						}
-					}
-
-					if (!mode || mode === ZUIScheduleEntryLockMode.DAILY) {
-						const enabled =
-							enabledType ===
-							ScheduleEntryLockScheduleKind.DailyRepeating
-
-						for (
-							let s = 1;
-							s <= numSlots.numDailyRepeatingSlots;
-							s++
-						) {
-							if (this._cancelGetSchedule) return
-
-							const slot: ScheduleEntryLockSlotId = {
-								userId: i,
-								slotId: s,
-							}
-							const schedule = fromCache
-								? <ScheduleEntryLockDailyRepeatingSchedule>(
-										getCached(
-											ScheduleEntryLockScheduleKind.DailyRepeating,
-											s
-										)
-								  )
-								: await zwaveNode.commandClasses[
-										'Schedule Entry Lock'
-								  ].getDailyRepeatingSchedule(slot)
-
-							pushSchedule(
-								dailySchedules,
-								slot,
-								schedule,
-								enabled
-							)
-						}
+						pushSchedule(weeklySchedules, slot, schedule, enabled)
 					}
 				}
 
-				this.emitNodeUpdate(node, {
-					schedule: node.schedule,
-					userCodes: node.userCodes,
-				})
+				if (!mode || mode === ZUIScheduleEntryLockMode.YEARLY) {
+					const enabled =
+						enabledType === ScheduleEntryLockScheduleKind.YearDay
 
-				return node.schedule
+					for (let s = 1; s <= numSlots.numYearDaySlots; s++) {
+						if (this._cancelGetSchedule) return
+
+						const slot: ScheduleEntryLockSlotId = {
+							userId: i,
+							slotId: s,
+						}
+						const schedule = fromCache
+							? <ScheduleEntryLockYearDaySchedule>(
+									getCached(
+										ScheduleEntryLockScheduleKind.YearDay,
+										s
+									)
+							  )
+							: await zwaveNode.commandClasses[
+									'Schedule Entry Lock'
+							  ].getYearDaySchedule(slot)
+
+						pushSchedule(yearlySchedules, slot, schedule, enabled)
+					}
+				}
+
+				if (!mode || mode === ZUIScheduleEntryLockMode.DAILY) {
+					const enabled =
+						enabledType ===
+						ScheduleEntryLockScheduleKind.DailyRepeating
+
+					for (let s = 1; s <= numSlots.numDailyRepeatingSlots; s++) {
+						if (this._cancelGetSchedule) return
+
+						const slot: ScheduleEntryLockSlotId = {
+							userId: i,
+							slotId: s,
+						}
+						const schedule = fromCache
+							? <ScheduleEntryLockDailyRepeatingSchedule>(
+									getCached(
+										ScheduleEntryLockScheduleKind.DailyRepeating,
+										s
+									)
+							  )
+							: await zwaveNode.commandClasses[
+									'Schedule Entry Lock'
+							  ].getDailyRepeatingSchedule(slot)
+
+						pushSchedule(dailySchedules, slot, schedule, enabled)
+					}
+				}
 			}
+
+			this.emitNodeUpdate(node, {
+				schedule: node.schedule,
+				userCodes: node.userCodes,
+			})
+
+			return node.schedule
 		}
 
 		return promise().finally(() => {
@@ -4967,13 +4939,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (zwaveNode.commandClasses['Schedule Entry Lock'].isSupported()) {
 			this.logNode(zwaveNode, 'info', `Schedule Entry Lock is supported`)
 
-			this.getSchedules(zwaveNode.id).catch((error) => {
-				this.logNode(
-					zwaveNode,
-					'error',
-					`Failed to get schedules for node ${node.id}: ${error.message}`
-				)
-			})
+			this.getSchedules(zwaveNode.id, { fromCache: true }).catch(
+				(error) => {
+					this.logNode(
+						zwaveNode,
+						'error',
+						`Failed to get schedules for node ${node.id}: ${error.message}`
+					)
+				}
+			)
 		}
 
 		if (!zwaveNode.isControllerNode) {
