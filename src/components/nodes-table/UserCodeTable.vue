@@ -55,7 +55,13 @@
 			<p class="mb-0">
 				Mode:
 				<b class="text-capitalize">{{ item.schedule.type || '---' }}</b>
-				Slots:<b> {{ item.schedule.slots.length }}</b>
+				Slots:<b>
+					{{
+						item.schedule.slots.filter(
+							(s) => s.type === item.schedule.type
+						).length
+					}}</b
+				>
 			</p>
 		</template>
 
