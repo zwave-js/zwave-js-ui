@@ -1,5 +1,21 @@
 
 
+## [8.22.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.0...v8.22.1) (2023-08-07)
+
+
+### Bug Fixes
+
+* **mqtt:** mqtt throws error on connect ([483d858](https://github.com/zwave-js/zwave-js-ui/commit/483d85818a8d64f6d7f7404cf2c1dbf6f4fcdbb3)), closes [#3206](https://github.com/zwave-js/zwave-js-ui/issues/3206)
+* **ui:** persist node panel position when dragged ([cdddb33](https://github.com/zwave-js/zwave-js-ui/commit/cdddb33a0afda314b0b63766d155e13157ae245a)), closes [#3191](https://github.com/zwave-js/zwave-js-ui/issues/3191)
+
+
+### Features
+
+* bump mqtt@5.0.2 ([#3210](https://github.com/zwave-js/zwave-js-ui/issues/3210)) ([b01f6ea](https://github.com/zwave-js/zwave-js-ui/commit/b01f6ea345e87f66785d6b75a402717c1f064e8c))
+* bump zwave-js@11.8.1 ([#3205](https://github.com/zwave-js/zwave-js-ui/issues/3205)) ([538cd31](https://github.com/zwave-js/zwave-js-ui/commit/538cd3157c1cd7524f91cd5cc64eb1b379b2a1fe))
+* bump zwave-js@11.9.0 ([#3207](https://github.com/zwave-js/zwave-js-ui/issues/3207)) ([08b1505](https://github.com/zwave-js/zwave-js-ui/commit/08b15052a9d3e52f4cb3be3e593fc2d28834e2cb))
+* bump zwave-js@11.9.1 ([#3212](https://github.com/zwave-js/zwave-js-ui/issues/3212)) ([d1537e1](https://github.com/zwave-js/zwave-js-ui/commit/d1537e1612523bcaa59d3804a2d895a1afe3fff9))
+
 # [8.22.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.21.2...v8.22.0) (2023-07-31)
 
 
