@@ -1537,8 +1537,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					slots.push(newSlot as any)
 				}
 
+				const isEnabledUsercode = node.userCodes?.enabled?.includes(
+					slot.userId
+				)
+
+				if (!isDelete && !isEnabledUsercode) {
+					node.userCodes.enabled.push(slot.userId)
+				} else if (isDelete && isEnabledUsercode) {
+					const index = node.userCodes.enabled.indexOf(slot.userId)
+					if (index >= 0) {
+						node.userCodes.enabled.splice(index, 1)
+					}
+				}
+
 				this.emitNodeUpdate(node, {
 					schedule: node.schedule,
+					userCodes: node.userCodes,
 				})
 			}
 		}
