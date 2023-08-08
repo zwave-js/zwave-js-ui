@@ -1,5 +1,12 @@
 
 
+## [8.22.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.1...v8.22.2) (2023-08-08)
+
+
+### Features
+
+* bump zwave-js@11.9.2 ([#3215](https://github.com/zwave-js/zwave-js-ui/issues/3215)) ([6b4e7aa](https://github.com/zwave-js/zwave-js-ui/commit/6b4e7aa133159875f0cd5b8108bc9aceb53d5a97))
+
 ## [8.22.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.0...v8.22.1) (2023-08-07)
 
 
