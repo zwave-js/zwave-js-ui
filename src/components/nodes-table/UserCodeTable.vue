@@ -55,17 +55,27 @@
 			<p class="mb-0">
 				Mode:
 				<b class="text-capitalize">{{ item.schedule.type || '---' }}</b>
-				Slots:<b> {{ item.schedule.slots.length }}</b>
+				Slots:<b>
+					{{
+						item.schedule.slots.filter(
+							(s) => s.type === item.schedule.type
+						).length
+					}}</b
+				>
 			</p>
 		</template>
 
 		<template v-slot:expanded-item="{ headers, item }">
 			<td :colspan="headers.length">
 				<node-scheduler
+					v-if="node.userCodes.available.includes(item.id)"
 					:node="node"
 					:user="item"
 					:activeMode="item.schedule.type"
 				></node-scheduler>
+				<p class="text-center ma-3" v-else>
+					<b>Enable this User Id in order to set schedules</b>
+				</p>
 			</td>
 		</template>
 	</v-data-table>
@@ -103,7 +113,7 @@ export default {
 	computed: {
 		headers() {
 			const base = [
-				{ text: 'Index', value: 'id' },
+				{ text: 'User Id', value: 'id' },
 				{ text: 'Code', value: 'code' },
 				{ text: 'Status', value: 'status' },
 			]
@@ -176,7 +186,7 @@ export default {
 			if (this.node.schedule) {
 				const slots = this.getSlots(id)
 				base.schedule = {
-					type: slots.find((s) => s.enabled)?.type,
+					type: slots.find((s) => s.enabled)?.type || 'daily',
 					slots,
 					enabled: this.node.userCodes.enabled.includes(id),
 				}
