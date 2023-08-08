@@ -1,5 +1,12 @@
 
 
+## [8.22.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.2...v8.22.3) (2023-08-08)
+
+
+### Bug Fixes
+
+* scheduler not synced correctly ([#3176](https://github.com/zwave-js/zwave-js-ui/issues/3176)) ([5de915e](https://github.com/zwave-js/zwave-js-ui/commit/5de915e7d4813c4cd7d06bc8baa9600363f61c3f))
+
 ## [8.22.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.1...v8.22.2) (2023-08-08)
 
 
