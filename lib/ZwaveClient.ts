@@ -577,7 +577,7 @@ export type ZwaveConfig = {
 	serverServiceDiscoveryDisabled?: boolean
 	maxNodeEventsQueueSize?: number
 	higherReportsTimeout?: boolean
-	rf: {
+	rf?: {
 		region?: RFRegion
 		txPower?: {
 			powerlevel: number
