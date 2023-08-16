@@ -2114,7 +2114,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				userAgent: {
 					[pkgjson.name]: pkgjson.version,
 				},
-				rf: this.cfg.rf,
+			}
+
+			if (this.cfg.rf) {
+				const { region, txPower } = this.cfg.rf
+
+				if (region) {
+					zwaveOptions.rf.region = region
+				}
+
+				if (
+					txPower &&
+					typeof txPower.measured0dBm === 'number' &&
+					typeof txPower.powerlevel === 'number'
+				) {
+					zwaveOptions.rf.txPower = txPower
+				}
 			}
 
 			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
