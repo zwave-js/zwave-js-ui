@@ -626,6 +626,7 @@
 											hint="Power level in dBm. Min -12.8, Max 12.7"
 											suffix="dBm"
 											type="number"
+											:rules="[validTxPower]"
 										></v-text-field>
 									</v-col>
 									<v-col cols="12" sm="6">
@@ -640,6 +641,7 @@
 											hint="Measured output power at 0 dBm in dBm. Min -12.8, Max 12.7"
 											suffix="dBm"
 											type="number"
+											:rules="[validTxPower]"
 										></v-text-field>
 									</v-col>
 									<v-col cols="12" sm="6">
@@ -1344,7 +1346,7 @@ import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
-import { wait, copy } from '../lib/utils'
+import { wait, copy, isUndef } from '../lib/utils'
 import { rfRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
@@ -1608,6 +1610,29 @@ export default {
 			'init',
 			'showSnackbar',
 		]),
+		validTxPower() {
+			const { powerlevel, measured0dBm } = this.newZwave.rf?.txPower ?? {}
+
+			const validPower = !isUndef(powerlevel)
+			const validMeasured = !isUndef(measured0dBm)
+
+			if (validPower && (powerlevel < -12.8 || powerlevel > 12.7)) {
+				return 'Power level must be between -12.8 and 12.7'
+			}
+
+			if (
+				validMeasured &&
+				(measured0dBm < -12.8 || measured0dBm > 12.7)
+			) {
+				return 'Measured 0dBm must be between -12.8 and 12.7'
+			}
+
+			return (
+				(validPower && validMeasured) ||
+				(!validPower && !validMeasured) ||
+				'Both powerlevel and measured 0 dBm must be set when using custom tx power'
+			)
+		},
 		parseCron(cron) {
 			let res
 			try {

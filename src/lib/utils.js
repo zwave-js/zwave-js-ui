@@ -175,3 +175,7 @@ export function getBatteryDescription(node) {
 					.join(', ')
 		: 'Unknown battery level'
 }
+
+export function isUndef(v) {
+	return v === undefined || v === null || v === ''
+}
