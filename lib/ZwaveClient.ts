@@ -577,6 +577,13 @@ export type ZwaveConfig = {
 	serverServiceDiscoveryDisabled?: boolean
 	maxNodeEventsQueueSize?: number
 	higherReportsTimeout?: boolean
+	rf: {
+		region?: RFRegion
+		txPower?: {
+			powerlevel: number
+			measured0dBm: number
+		}
+	}
 }
 
 export type ZUIDriverInfo = {
@@ -2107,6 +2114,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				userAgent: {
 					[pkgjson.name]: pkgjson.version,
 				},
+				rf: this.cfg.rf,
 			}
 
 			// ensure deviceConfigPriorityDir exists to prevent warnings #2374

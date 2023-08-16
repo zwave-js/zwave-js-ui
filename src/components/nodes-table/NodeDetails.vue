@@ -347,8 +347,8 @@
 import ValueID from '../ValueId'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
+import { rfRegions } from '../../lib/items'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
-import { RFRegion } from 'zwave-js/safe'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { isUnsupervisedOrSucceeded } from '@zwave-js/core/safe'
@@ -385,12 +385,7 @@ export default {
 				parameter: 1,
 				valueFormat: ConfigValueFormat.UnsignedInteger,
 			},
-			rfRegions: Object.keys(RFRegion)
-				.filter((k) => isNaN(k))
-				.map((key) => ({
-					text: key,
-					value: RFRegion[key],
-				})),
+			rfRegions,
 		}
 	},
 	computed: {

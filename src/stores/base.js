@@ -22,6 +22,13 @@ const useBaseStore = defineStore('base', {
 			allowBootloaderOnly: false,
 			commandsTimeout: 30,
 			logLevel: 'debug',
+			rf: {
+				region: undefined,
+				txPower: {
+					powerLevel: undefined,
+					measured0dBm: undefined,
+				},
+			},
 			logEnabled: true,
 			securityKeys: {
 				S2_Unauthenticated: undefined,

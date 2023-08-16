@@ -606,6 +606,40 @@
 										</v-col>
 									</v-row>
 									<v-col cols="12" sm="6">
+										<v-select
+											label="RF Region"
+											:items="rfRegions"
+											v-model="newZwave.rf.region"
+										>
+										</v-select>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-text-field
+											label="Normal Power Level"
+											v-model.number="
+												newZwave.rf.txPower.powerlevel
+											"
+											:min="-12.8"
+											:max="12.7"
+											:step="0.1"
+											suffix="dBm"
+											type="number"
+										></v-text-field>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-text-field
+											label="Measured output power at 0 dBml"
+											v-model.number="
+												newZwave.rf.txPower.measured0dBm
+											"
+											:min="-12.8"
+											:max="12.7"
+											:step="0.1"
+											suffix="dBm"
+											type="number"
+										></v-text-field>
+									</v-col>
+									<v-col cols="12" sm="6">
 										<v-switch
 											hint="Enable this to start driver in bootloader only mode, useful to recover sticks when an FW upgrade fails. When this is enabled stick will NOT be able to communicate with the network."
 											persistent-hint
@@ -1308,6 +1342,7 @@ import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
 import { wait, copy } from '../lib/utils'
+import { rfRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
@@ -1428,6 +1463,7 @@ export default {
 	},
 	data() {
 		return {
+			rfRegions,
 			valid_zwave: true,
 			dialogValue: false,
 			sslDisabled: false,
