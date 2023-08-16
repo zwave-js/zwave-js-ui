@@ -143,6 +143,7 @@ function validateMethods<T extends readonly (keyof ZwaveClient)[]>(
 export const allowedApis = validateMethods([
 	'setNodeName',
 	'setNodeLocation',
+	'setNodeDefaultSetValueOptions',
 	'_createScene',
 	'_removeScene',
 	'_setScenes',
@@ -536,6 +537,8 @@ export type ZUINode = {
 		available: number[]
 		enabled: number[]
 	}
+	defaultTransitionDuration?: string
+	defaultVolume?: number
 }
 
 export type NodeEvent = {
@@ -2433,6 +2436,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		await this.updateStoreNodes()
 		this.emitNodeUpdate(node, { loc: loc })
 		return true
+	}
+
+	setNodeDefaultSetValueOptions(
+		nodeId: number,
+		props: Pick<ZUINode, 'defaultTransitionDuration' | 'defaultVolume'>
+	) {
+		const node = this._nodes.get(nodeId)
+
+		if (!node) {
+			throw Error('Invalid Node ID')
+		}
+
+		for (const k in props) {
+			node[k] = props[k]
+		}
 	}
 
 	// ------------SCENES MANAGEMENT-----------------------------------
@@ -5712,7 +5730,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		node.lastActive = zwaveNode.lastSeen?.getTime() || null
-
+		node.defaultTransitionDuration = zwaveNode.defaultTransitionDuration
+		node.defaultVolume = zwaveNode.defaultVolume
 		node.firmwareCapabilities =
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
 

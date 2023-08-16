@@ -157,6 +157,13 @@
 						hint="Ex: '10s' (10 seconds)"
 						persistent-hint
 						v-model.trim="options.transitionDuration"
+						append-icon="clear"
+						@click:append="
+							options.transitionDuration =
+								node.defaultTransitionDuration || ''
+						"
+						append-outer-icon="save"
+						@click:append-outer="setDefaults('transitionDuration')"
 					></v-text-field>
 				</v-col>
 				<v-col
@@ -169,6 +176,12 @@
 						hint="The volume (for the Sound Switch CC)"
 						persistent-hint
 						v-model.trim="options.volume"
+						append-icon="clear"
+						@click:append="
+							options.volume = node.defaultVolume || ''
+						"
+						append-outer-icon="save"
+						@click:append-outer="setDefaults('volume')"
 					></v-text-field>
 				</v-col>
 			</v-row>
@@ -422,8 +435,42 @@ export default {
 			this.nameError = this.validateTopic(val)
 		},
 	},
+	mounted() {
+		this.options = {
+			transitionDuration: this.node.defaultTransitionDuration,
+			volume: this.node.defaultVolume,
+		}
+	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		async setDefaults(prop) {
+			let defaultProp = ''
+
+			switch (prop) {
+				case 'transitionDuration':
+					defaultProp = 'defaultTransitionDuration'
+					break
+				case 'volume':
+					defaultProp = 'defaultVolume'
+					break
+			}
+
+			if (!defaultProp) {
+				return
+			}
+
+			const response = await this.app.apiRequest(
+				'setNodeDefaultSetValueOptions',
+				[this.node.id, { [defaultProp]: this.options[prop] }]
+			)
+
+			if (response.success) {
+				this.showSnackbar(
+					`Default node ${prop} updated successffully`,
+					'success'
+				)
+			}
+		},
 		async updateControllerNodeProp(prop) {
 			const response = await this.app.apiRequest(
 				'updateControllerNodeProps',
