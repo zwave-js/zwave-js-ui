@@ -138,7 +138,11 @@
 									<v-combobox
 										label="Node"
 										v-model="s.values.replaceId"
-										:items="nodes"
+										:items="
+											nodes.filter(
+												(n) => !n.isControllerNode
+											)
+										"
 										return-object
 										chips
 										hint="Failed node to remove. Write the node Id and press enter if not present"
