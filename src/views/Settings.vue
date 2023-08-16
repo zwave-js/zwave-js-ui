@@ -626,7 +626,7 @@
 									<v-col cols="12" sm="6">
 										<v-switch
 											label="Soft Reset"
-											hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled."
+											hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled. NB: Disabling this functionality only affects 500 series and older controllers"
 											persistent-hint
 											v-model="newZwave.enableSoftReset"
 										></v-switch>
