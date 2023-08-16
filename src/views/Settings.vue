@@ -608,6 +608,7 @@
 									<v-col cols="12" sm="6">
 										<v-select
 											label="RF Region"
+											persistent-hint
 											hint="Select the RF region of your Z-Wave stick. Used to set the correct frequency and channel for your region. If you are unsure, check the label on your stick or the manual. Leave this empty to use the default region of your stick."
 											:items="rfRegions"
 											v-model="newZwave.rf.region"
@@ -620,6 +621,7 @@
 											v-model.number="
 												newZwave.rf.txPower.powerlevel
 											"
+											persistent-hint
 											:min="-12.8"
 											:max="12.7"
 											:step="0.1"
@@ -632,6 +634,7 @@
 									<v-col cols="12" sm="6">
 										<v-text-field
 											label="Measured output power at 0 dBml"
+											persistent-hint
 											v-model.number="
 												newZwave.rf.txPower.measured0dBm
 											"
