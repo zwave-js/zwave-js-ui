@@ -606,6 +606,48 @@
 										</v-col>
 									</v-row>
 									<v-col cols="12" sm="6">
+										<v-select
+											label="RF Region"
+											persistent-hint
+											hint="Select the RF region of your Z-Wave stick. Used to set the correct frequency and channel for your region. If you are unsure, check the label on your stick or the manual. Leave this empty to use the default region of your stick."
+											:items="rfRegions"
+											v-model="newZwave.rf.region"
+										>
+										</v-select>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-text-field
+											label="Normal Power Level"
+											v-model.number="
+												newZwave.rf.txPower.powerlevel
+											"
+											persistent-hint
+											:min="-12.8"
+											:max="12.7"
+											:step="0.1"
+											hint="Power level in dBm. Min -12.8, Max 12.7"
+											suffix="dBm"
+											type="number"
+											:rules="[validTxPower]"
+										></v-text-field>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-text-field
+											label="Measured output power at 0 dBml"
+											persistent-hint
+											v-model.number="
+												newZwave.rf.txPower.measured0dBm
+											"
+											:min="-12.8"
+											:max="12.7"
+											:step="0.1"
+											hint="Measured output power at 0 dBm in dBm. Min -12.8, Max 12.7"
+											suffix="dBm"
+											type="number"
+											:rules="[validTxPower]"
+										></v-text-field>
+									</v-col>
+									<v-col cols="12" sm="6">
 										<v-switch
 											hint="Enable this to start driver in bootloader only mode, useful to recover sticks when an FW upgrade fails. When this is enabled stick will NOT be able to communicate with the network."
 											persistent-hint
@@ -1307,7 +1349,8 @@ import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
-import { wait, copy } from '../lib/utils'
+import { wait, copy, isUndef } from '../lib/utils'
+import { rfRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
@@ -1428,6 +1471,7 @@ export default {
 	},
 	data() {
 		return {
+			rfRegions,
 			valid_zwave: true,
 			dialogValue: false,
 			sslDisabled: false,
@@ -1569,6 +1613,29 @@ export default {
 			'init',
 			'showSnackbar',
 		]),
+		validTxPower() {
+			const { powerlevel, measured0dBm } = this.newZwave.rf?.txPower ?? {}
+
+			const validPower = !isUndef(powerlevel)
+			const validMeasured = !isUndef(measured0dBm)
+
+			if (validPower && (powerlevel < -12.8 || powerlevel > 12.7)) {
+				return 'Power level must be between -12.8 and 12.7'
+			}
+
+			if (
+				validMeasured &&
+				(measured0dBm < -12.8 || measured0dBm > 12.7)
+			) {
+				return 'Measured 0dBm must be between -12.8 and 12.7'
+			}
+
+			return (
+				(validPower && validMeasured) ||
+				(!validPower && !validMeasured) ||
+				'Both powerlevel and measured 0 dBm must be set when using custom tx power'
+			)
+		},
 		parseCron(cron) {
 			let res
 			try {
