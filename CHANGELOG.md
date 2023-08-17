@@ -1,5 +1,23 @@
 
 
+# [8.23.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.3...v8.23.0) (2023-08-17)
+
+
+### Bug Fixes
+
+* prevent to throw when setting `rf` options ([c838698](https://github.com/zwave-js/zwave-js-ui/commit/c8386982417dea662be7448965adcb3d3bcbd494))
+* **ui:** remove controller from replace nodes list ([1a43b0a](https://github.com/zwave-js/zwave-js-ui/commit/1a43b0abbec4d035480036aa61c858401167bc16)), closes [#3223](https://github.com/zwave-js/zwave-js-ui/issues/3223)
+* **ui:** soft reset hint ([a69139f](https://github.com/zwave-js/zwave-js-ui/commit/a69139f518f5069b95e918fda30f428aa50d65ca))
+
+
+### Features
+
+* add new controller rfregion and txpower settings ([#3224](https://github.com/zwave-js/zwave-js-ui/issues/3224)) ([62ecc4b](https://github.com/zwave-js/zwave-js-ui/commit/62ecc4b261b3dbfd5b912853f68d31d67c1f36c8))
+* bump zwave-js@11.10.0 ([#3219](https://github.com/zwave-js/zwave-js-ui/issues/3219)) ([7c6a4ab](https://github.com/zwave-js/zwave-js-ui/commit/7c6a4abc5d8f53958ba8c20bd6a1bd0411f75dc0))
+* bump zwave-js@11.11.0 ([67664f8](https://github.com/zwave-js/zwave-js-ui/commit/67664f889b2c8cafaa14bcb572982a8be6f8d615))
+* bump zwave-js@11.12.0 ([c97e2dd](https://github.com/zwave-js/zwave-js-ui/commit/c97e2dd5fe7f223d7a7b98a810f36fe022b8c046))
+* store default node set value options ([32f5828](https://github.com/zwave-js/zwave-js-ui/commit/32f58283b8623dce861ccb85abbc8d380d0a46d5)), closes [#3121](https://github.com/zwave-js/zwave-js-ui/issues/3121)
+
 ## [8.22.3](https://github.com/zwave-js/zwave-js-ui/compare/v8.22.2...v8.22.3) (2023-08-08)
 
 
