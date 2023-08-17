@@ -2119,6 +2119,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (this.cfg.rf) {
 				const { region, txPower } = this.cfg.rf
 
+				zwaveOptions.rf = {}
+
 				if (region) {
 					zwaveOptions.rf.region = region
 				}
