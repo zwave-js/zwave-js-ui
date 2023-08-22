@@ -3531,27 +3531,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/cc@npm:11.12.0":
-  version: 11.12.0
-  resolution: "@zwave-js/cc@npm:11.12.0"
+"@zwave-js/cc@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/cc@npm:11.13.0"
   dependencies:
-    "@zwave-js/core": 11.12.0
-    "@zwave-js/host": 11.12.0
-    "@zwave-js/serial": 11.12.0
-    "@zwave-js/shared": 11.8.0
+    "@zwave-js/core": 11.13.0
+    "@zwave-js/host": 11.13.0
+    "@zwave-js/serial": 11.13.0
+    "@zwave-js/shared": 11.13.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     reflect-metadata: ^0.1.13
-  checksum: e2c3dbd53e10c9db805ff191f47689f5fe597e43f10a2cca7e99b3d754a4f36b25146b7a605bac5dca52707cfa40aff72e69247356a2328bf2b9d2a75bf7580e
+  checksum: bb4c602a256c5bd422ffa0bade5a776f0e93b51325bf65955dec3aa2244e39fac7ee9d9c7b15022f28387d809c2ef2ad797b968ea86513b96c598d8c81eb556e
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:11.12.0":
-  version: 11.12.0
-  resolution: "@zwave-js/config@npm:11.12.0"
+"@zwave-js/config@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/config@npm:11.13.0"
   dependencies:
-    "@zwave-js/core": 11.12.0
-    "@zwave-js/shared": 11.8.0
+    "@zwave-js/core": 11.13.0
+    "@zwave-js/shared": 11.13.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     fs-extra: ^10.1.0
@@ -3559,16 +3559,16 @@ __metadata:
     json5: ^2.2.3
     semver: ^7.5.2
     winston: ^3.8.2
-  checksum: d49a73e9c3e19a2bfaefdd0b85f0575259ac90c50e908080218a72aa80c15c3ab4242626eb5809c3065ae22eb985df69307e92fbbd7d3c5c40861693a7c9e4c9
+  checksum: bbdd19b26435b0e24ec8833709d8f74fce104e8c8a3f89d284101d7d07ad00190011e92f6dbae4f547c1916476326f1d869fbfd3c05df23eb6f92e3e49001947
   languageName: node
   linkType: hard
 
-"@zwave-js/core@npm:11.12.0":
-  version: 11.12.0
-  resolution: "@zwave-js/core@npm:11.12.0"
+"@zwave-js/core@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/core@npm:11.13.0"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
-    "@zwave-js/shared": 11.8.0
+    "@zwave-js/shared": 11.13.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     dayjs: ^1.11.7
@@ -3579,7 +3579,7 @@ __metadata:
     winston: ^3.8.2
     winston-daily-rotate-file: ^4.7.1
     winston-transport: ^4.5.0
-  checksum: 9b9f6593e625ef829d8b2e48545dfcf82eee0813282acce4076b454d60b6f85d761106c4f68cbbd56e66a3a0bbaa7b845738ccd890fb4097e93406bcd8e19136
+  checksum: ab9f2288f9b2c5d4c443188c2004204aac09cfaf636cffb698313b10d44d40f40d829da498660901f35dca3e161f84b3d2592c199c3728a164f2dc8a3d758454
   languageName: node
   linkType: hard
 
@@ -3592,24 +3592,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/host@npm:11.12.0":
-  version: 11.12.0
-  resolution: "@zwave-js/host@npm:11.12.0"
+"@zwave-js/host@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/host@npm:11.13.0"
   dependencies:
-    "@zwave-js/config": 11.12.0
-    "@zwave-js/core": 11.12.0
-    "@zwave-js/shared": 11.8.0
+    "@zwave-js/config": 11.13.0
+    "@zwave-js/core": 11.13.0
+    "@zwave-js/shared": 11.13.0
     alcalzone-shared: ^4.0.8
-  checksum: ed806c0e0d1365f17865abc0c47e14964eeaeb1f2a95f6f1ecdd3086314d8b4ad599baf944bc7ddd3448da997ade815ca7dc9562a0a4f824afe9e4ee4340531a
+  checksum: 9fc6862d547f59a16f84a3edbeac841f7784a54abc58cfb0df15749437fe75d8fe9e3b0ce4066c88cd8bfa8900c05f24abed44ed4e9f97642a89e7ae9631c3c8
   languageName: node
   linkType: hard
 
-"@zwave-js/nvmedit@npm:11.12.0":
-  version: 11.12.0
-  resolution: "@zwave-js/nvmedit@npm:11.12.0"
+"@zwave-js/nvmedit@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/nvmedit@npm:11.13.0"
   dependencies:
-    "@zwave-js/core": 11.12.0
-    "@zwave-js/shared": 11.8.0
+    "@zwave-js/core": 11.13.0
+    "@zwave-js/shared": 11.13.0
     alcalzone-shared: ^4.0.8
     fs-extra: ^10.1.0
     reflect-metadata: ^0.1.13
@@ -3617,23 +3617,23 @@ __metadata:
     yargs: ^17.7.2
   bin:
     nvmedit: bin/nvmedit.js
-  checksum: 606886d83d54b7f9f749414c8afbeeaeaa429beb4d5a4f82b1352092881420201c3ea60e45ed18e20db83e4156f6401a44eb878d2ab1532c18f9b9b17567ae42
+  checksum: f9056d4f678cd40149f062a10038a06b2d41c751885462da8296ac6c28846bfd6c8d03ea8848acea96e2ffff84d0d6fb4b099874b915c0774f5781981210b091
   languageName: node
   linkType: hard
 
-"@zwave-js/serial@npm:11.12.0":
-  version: 11.12.0
-  resolution: "@zwave-js/serial@npm:11.12.0"
+"@zwave-js/serial@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/serial@npm:11.13.0"
   dependencies:
     "@sentry/node": ^7.12.1
     "@serialport/stream": ^10.3.0
-    "@zwave-js/core": 11.12.0
-    "@zwave-js/host": 11.12.0
-    "@zwave-js/shared": 11.8.0
+    "@zwave-js/core": 11.13.0
+    "@zwave-js/host": 11.13.0
+    "@zwave-js/shared": 11.13.0
     alcalzone-shared: ^4.0.8
     serialport: ^10.4.0
     winston: ^3.8.2
-  checksum: 48d7ae7ce5c3a3b122fde0f17c9dea905a58aa9123c7de1f02faf96c594a895b69214cdaea3c335c1e18447313f7b1926fcb800cf70bda91858e8d6e1d24dd24
+  checksum: a30c58486232a9bd926fe023fc0493cddc39d6671c0cd68916c7f560e5265412b14c6505d57d2bb28d29407ce72afa3b8f14c61203c9dfd003857e8aab2ed0d9
   languageName: node
   linkType: hard
 
@@ -3653,27 +3653,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/shared@npm:11.8.0":
-  version: 11.8.0
-  resolution: "@zwave-js/shared@npm:11.8.0"
+"@zwave-js/shared@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/shared@npm:11.13.0"
   dependencies:
     alcalzone-shared: ^4.0.8
     fs-extra: ^10.1.0
-  checksum: e4950ac37019b7dce2a435b3659aa39b1ba1259ac607d5bc9ab7d583f92708b3118332fe5148ebe209c091573ca0ba984bcf5d98a604845f7cff9acd4e7225f6
+  checksum: e4555b35858e05dee1dada0815d85f7236033b60e1d32b673dd7be9a5689745943548ca69655600656d01afc8362ddf8e140dfed310f924ac5d5d6964d10d7d9
   languageName: node
   linkType: hard
 
-"@zwave-js/testing@npm:11.12.0":
-  version: 11.12.0
-  resolution: "@zwave-js/testing@npm:11.12.0"
+"@zwave-js/testing@npm:11.13.0":
+  version: 11.13.0
+  resolution: "@zwave-js/testing@npm:11.13.0"
   dependencies:
-    "@zwave-js/core": 11.12.0
-    "@zwave-js/host": 11.12.0
-    "@zwave-js/serial": 11.12.0
-    "@zwave-js/shared": 11.8.0
+    "@zwave-js/core": 11.13.0
+    "@zwave-js/host": 11.13.0
+    "@zwave-js/serial": 11.13.0
+    "@zwave-js/shared": 11.13.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
-  checksum: c1742b9f95bb10cf74663834f74549150e9af2ca4504da62ce332721a2cbd632779711cca7a93a95d996db49a7352987a989e46e9d5a3c700d9e679e5aa663f2
+  checksum: 4637559bb49cbbea9e9b3ec20db5017f1f12c1618063e611bee135677677c3036e03e4a8697d7ffaa0e4cf73bfb82c1e1ec52636d12078d9e1181b0a31ebb957
   languageName: node
   linkType: hard
 
@@ -16356,7 +16356,7 @@ __metadata:
     webpack-dev-server: ^4.13.1
     webpack-merge: ^5.8.0
     winston: ^3.8.2
-    zwave-js: ^11.12.0
+    zwave-js: ^11.13.0
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
@@ -16413,9 +16413,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"zwave-js@npm:^11.12.0":
-  version: 11.12.0
-  resolution: "zwave-js@npm:11.12.0"
+"zwave-js@npm:^11.13.0":
+  version: 11.13.0
+  resolution: "zwave-js@npm:11.13.0"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
     "@alcalzone/pak": ^0.9.0
@@ -16423,14 +16423,14 @@ __metadata:
     "@esm2cjs/p-queue": ^7.3.0
     "@sentry/integrations": ^7.12.1
     "@sentry/node": ^7.12.1
-    "@zwave-js/cc": 11.12.0
-    "@zwave-js/config": 11.12.0
-    "@zwave-js/core": 11.12.0
-    "@zwave-js/host": 11.12.0
-    "@zwave-js/nvmedit": 11.12.0
-    "@zwave-js/serial": 11.12.0
-    "@zwave-js/shared": 11.8.0
-    "@zwave-js/testing": 11.12.0
+    "@zwave-js/cc": 11.13.0
+    "@zwave-js/config": 11.13.0
+    "@zwave-js/core": 11.13.0
+    "@zwave-js/host": 11.13.0
+    "@zwave-js/nvmedit": 11.13.0
+    "@zwave-js/serial": 11.13.0
+    "@zwave-js/shared": 11.13.0
+    "@zwave-js/testing": 11.13.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     execa: ^5.1.1
@@ -16445,6 +16445,6 @@ __metadata:
     xstate: 4.38.0
   bin:
     mock-server: bin/mock-server.js
-  checksum: 87323400a8178055c7903be4f2ec7f66e23cc77498a99f3e01b22aaef44d6484b7bed66976e224bc51d05da3e86ca1feac43251c7077992ebbf1ec7ead02ebad
+  checksum: a7fe34ad0cb3ad0f5d1b6c6bcd17bc795e3040d223a0262e18270244cdc8b258f580f7ca9799b70c0156a891e21b944842eb2cb641c0a2081823a12b7e06b739
   languageName: node
   linkType: hard
