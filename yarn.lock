@@ -1887,17 +1887,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@homebridge/ciao@npm:^1.1.3":
-  version: 1.1.5
-  resolution: "@homebridge/ciao@npm:1.1.5"
+"@homebridge/ciao@npm:^1.1.7":
+  version: 1.1.7
+  resolution: "@homebridge/ciao@npm:1.1.7"
   dependencies:
     debug: ^4.3.4
     fast-deep-equal: ^3.1.3
     source-map-support: ^0.5.21
-    tslib: ^2.4.0
+    tslib: ^2.5.0
   bin:
     ciao-bcs: lib/bonjour-conformance-testing.js
-  checksum: 7c1211dd49d7c735e852297d3fe7236f09fb9029b36a95f0f2aa2a116fda5af0708b713e813821799c55caf63cca482e73e6610f30bc955864961ed6388a8883
+  checksum: a3c0aecfc3bfb0f93691c73e0256bfcd292bdbf19ad8f68c4a3ea3dd55a522ba22119daec18c33616ffe656fc360464426ccf606e735bdebcfa0169e1f001c6d
   languageName: node
   linkType: hard
 
@@ -3637,19 +3637,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/server@npm:^1.30.0":
-  version: 1.30.0
-  resolution: "@zwave-js/server@npm:1.30.0"
+"@zwave-js/server@npm:^1.31.0":
+  version: 1.31.0
+  resolution: "@zwave-js/server@npm:1.31.0"
   dependencies:
-    "@homebridge/ciao": ^1.1.3
-    minimist: ^1.2.5
-    ws: ^8.0.0
+    "@homebridge/ciao": ^1.1.7
+    minimist: ^1.2.8
+    ws: ^8.13.0
   peerDependencies:
-    zwave-js: ^11.5.3
+    zwave-js: ^11.13.0
   bin:
     zwave-client: dist/bin/client.js
     zwave-server: dist/bin/server.js
-  checksum: a242be23b00dbc463ed0559a50fade975c3c6a6ed00dc2fca40de61f8c4401c9b2a21eb39bc75dc70652217413c2aa9a079568cf3d6cf3fa25427b8980532091
+  checksum: 02db7536fe580eaade89c35ca5ef378cc5f2f6fe1276446599346a08b32b6201de16120b02c0b7b9d65c799d0f954e031bf66f111ec480b163d1d73b5d0a4a56
   languageName: node
   linkType: hard
 
@@ -14793,10 +14793,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0, tslib@npm:^2.4.0":
+"tslib@npm:^2.0.1, tslib@npm:^2.0.3, tslib@npm:^2.1.0":
   version: 2.4.0
   resolution: "tslib@npm:2.4.0"
   checksum: 8c4aa6a3c5a754bf76aefc38026134180c053b7bd2f81338cb5e5ebf96fefa0f417bff221592bf801077f5bf990562f6264fecbc42cd3309b33872cb6fc3b113
+  languageName: node
+  linkType: hard
+
+"tslib@npm:^2.5.0":
+  version: 2.6.2
+  resolution: "tslib@npm:2.6.2"
+  checksum: 329ea56123005922f39642318e3d1f0f8265d1e7fcb92c633e0809521da75eeaca28d2cf96d7248229deb40e5c19adf408259f4b9640afd20d13aecc1430f3ad
   languageName: node
   linkType: hard
 
@@ -15922,21 +15929,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ws@npm:^8.0.0":
-  version: 8.10.0
-  resolution: "ws@npm:8.10.0"
-  peerDependencies:
-    bufferutil: ^4.0.1
-    utf-8-validate: ^5.0.2
-  peerDependenciesMeta:
-    bufferutil:
-      optional: true
-    utf-8-validate:
-      optional: true
-  checksum: 3a32e15dffe633dd5ce99659793dbcf1440ea25d2da1060c88cbd22efdfb7986a6933e68aaa4b098fc3f1f7870cb386afd378a1ceaca4b31748471576d5a8b52
-  languageName: node
-  linkType: hard
-
 "ws@npm:^8.13.0":
   version: 8.13.0
   resolution: "ws@npm:8.13.0"
@@ -16245,7 +16237,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": ^5.55.0
     "@typescript-eslint/parser": ^5.55.0
     "@vue/compiler-sfc": ^3.2.47
-    "@zwave-js/server": ^1.30.0
+    "@zwave-js/server": ^1.31.0
     "@zwave-js/winston-daily-rotate-file": ^4.5.6-1
     ansi_up: ^5.1.0
     app-root-path: ^3.1.0
