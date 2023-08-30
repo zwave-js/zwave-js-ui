@@ -135,7 +135,7 @@
 				>
 					<small
 						>{{
-							`Please consult the manufacturer for the default values, as these can vary between different sticks. The defaults for most 700 series sticks are:\n- TX Power: 0.0 dBm\n- Measured output power at 0 dBm: +3.3 dBm`
+							`Please consult the manufacturer for the default values, as these can vary between different sticks.`
 						}}
 					</small>
 				</v-alert>
