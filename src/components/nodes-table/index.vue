@@ -137,7 +137,32 @@
 		</template>
 		<template v-slot:[`item.id`]="{ item }">
 			<div style="text-align: right">
-				<v-chip>{{ item.id }}</v-chip>
+				<v-chip v-on="on">{{
+					item.id.toString().padStart(3, '0')
+				}}</v-chip>
+
+				<v-tooltip v-if="!!item.hasDeviceConfigChanged" bottom>
+					<template v-slot:activator="{ on }">
+						<v-btn
+							style="position: absolute"
+							v-on="on"
+							@click="
+								$emit('action', 'refreshInfo', {
+									nodeId: item.id,
+								})
+							"
+							color="primary"
+							fab
+							height="20"
+							width="20"
+							><v-icon x-small>update</v-icon></v-btn
+						>
+					</template>
+					<span
+						>Configuration update available, re-interview the
+						node</span
+					>
+				</v-tooltip>
 			</div>
 		</template>
 		<template v-slot:[`item.minBatteryLevel`]="{ item }">
