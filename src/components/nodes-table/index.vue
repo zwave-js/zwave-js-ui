@@ -137,9 +137,7 @@
 		</template>
 		<template v-slot:[`item.id`]="{ item }">
 			<div style="text-align: right">
-				<v-chip v-on="on">{{
-					item.id.toString().padStart(3, '0')
-				}}</v-chip>
+				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
 
 				<reinterview-badge
 					:node="item"
