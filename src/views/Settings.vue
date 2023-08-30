@@ -611,6 +611,7 @@
 											persistent-hint
 											hint="Select the RF region of your Z-Wave stick. Used to set the correct frequency and channel for your region. If you are unsure, check the label on your stick or the manual. Leave this empty to use the default region of your stick."
 											:items="rfRegions"
+											clearable
 											v-model="newZwave.rf.region"
 										>
 										</v-select>
