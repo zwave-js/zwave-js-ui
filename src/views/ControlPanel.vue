@@ -214,6 +214,7 @@ export default {
 						{ name: 'Stop', action: 'stopHealingNetwork' },
 					],
 					icon: 'healing',
+					color: 'warning',
 					desc: 'Force nodes to establish better connections to the controller',
 				},
 				{
@@ -228,6 +229,7 @@ export default {
 						},
 					],
 					icon: 'history',
+					color: 'warning',
 					desc: 'Clear all info about all nodes and make a new full interview. Use when nodes has wrong or missing capabilities',
 				},
 				{
@@ -273,6 +275,7 @@ export default {
 						},
 					],
 					icon: 'dangerous',
+					color: 'error',
 					desc: 'Manage nodes that are dead and/or marked as failed with the controller',
 				},
 				{
@@ -293,6 +296,7 @@ export default {
 						{ name: 'Restore', action: 'restoreNVM' },
 					],
 					icon: 'update',
+					color: 'warning',
 					desc: "Backup/Restore controller's NVM (Non Volatile Memory)",
 				},
 				{
