@@ -137,7 +137,12 @@
 		</template>
 		<template v-slot:[`item.id`]="{ item }">
 			<div style="text-align: right">
-				<v-chip>{{ item.id }}</v-chip>
+				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
+
+				<reinterview-badge
+					:node="item"
+					v-on="$listeners"
+				></reinterview-badge>
 			</div>
 		</template>
 		<template v-slot:[`item.minBatteryLevel`]="{ item }">

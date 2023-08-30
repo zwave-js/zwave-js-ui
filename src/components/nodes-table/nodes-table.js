@@ -5,6 +5,7 @@ import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import RichValue from '@/components/nodes-table/RichValue.vue'
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
+import ReinterviewBadge from '@/components/custom/ReinterviewBadge.vue'
 
 import { mapState } from 'pinia'
 import {
@@ -38,6 +39,7 @@ export default {
 		ExpandedNode,
 		RichValue,
 		StatisticsArrows,
+		ReinterviewBadge,
 	},
 	watch: {
 		'managedNodes.selected': function (val) {

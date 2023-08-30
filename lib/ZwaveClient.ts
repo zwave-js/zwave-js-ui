@@ -512,6 +512,7 @@ export type ZUINode = {
 	name?: string
 	hassDevices?: { [key: string]: HassDevice }
 	deviceId?: string
+	hasDeviceConfigChanged?: boolean
 	hexId?: string
 	values?: { [key: string]: ZUIValueId }
 	groups?: ZUINodeGroups[]
@@ -5792,6 +5793,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		node.deviceId = this._getDeviceID(node)
+		node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
 	}
 
 	async updateControllerNodeProps(
