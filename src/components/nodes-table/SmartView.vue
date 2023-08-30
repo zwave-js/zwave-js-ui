@@ -164,46 +164,12 @@
 												</span>
 											</v-tooltip>
 
-											<v-tooltip
-												v-if="
-													!!item.hasDeviceConfigChanged
-												"
-												bottom
-											>
-												<template
-													v-slot:activator="{ on }"
-												>
-													<v-btn
-														style="
-															position: absolute;
-															top: 0px;
-															left: 30px;
-														"
-														v-on="on"
-														@click.stop="
-															$emit(
-																'action',
-																'refreshInfo',
-																{
-																	nodeId: item.id,
-																}
-															)
-														"
-														color="primary"
-														fab
-														height="20"
-														width="20"
-														><v-icon x-small
-															>update</v-icon
-														></v-btn
-													>
-												</template>
-												<span
-													>Configuration update
-													available, re-interview the
-													node</span
-												>
-											</v-tooltip>
+											<reinterview-badge
+												:node="item"
+												v-on="$listeners"
+												top="0px"
+												left="30px"
+											></reinterview-badge>
 										</div>
 										<div
 											v-else
@@ -313,6 +279,7 @@
 
 <script>
 import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
+import ReinterviewBadge from '@/components/custom/ReinterviewBadge.vue'
 import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
 import RichValue from '@/components/nodes-table/RichValue.vue'
 import colors from 'vuetify/lib/util/colors'
@@ -352,6 +319,7 @@ export default {
 		ExpandedNode,
 		RichValue,
 		StatisticsArrows,
+		ReinterviewBadge,
 	},
 	watch: {
 		selected() {
