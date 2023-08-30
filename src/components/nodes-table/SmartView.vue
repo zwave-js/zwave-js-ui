@@ -163,6 +163,47 @@
 												>
 												</span>
 											</v-tooltip>
+
+											<v-tooltip
+												v-if="
+													!!item.hasDeviceConfigChanged
+												"
+												bottom
+											>
+												<template
+													v-slot:activator="{ on }"
+												>
+													<v-btn
+														style="
+															position: absolute;
+															top: 0px;
+															left: 30px;
+														"
+														v-on="on"
+														@click.stop="
+															$emit(
+																'action',
+																'refreshInfo',
+																{
+																	nodeId: item.id,
+																}
+															)
+														"
+														color="primary"
+														fab
+														height="20"
+														width="20"
+														><v-icon x-small
+															>update</v-icon
+														></v-btn
+													>
+												</template>
+												<span
+													>Configuration update
+													available, re-interview the
+													node</span
+												>
+											</v-tooltip>
 										</div>
 										<div
 											v-else

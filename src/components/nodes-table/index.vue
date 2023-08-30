@@ -146,7 +146,7 @@
 						<v-btn
 							style="position: absolute"
 							v-on="on"
-							@click="
+							@click.stop="
 								$emit('action', 'refreshInfo', {
 									nodeId: item.id,
 								})
