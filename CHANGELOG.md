@@ -1,5 +1,19 @@
 
 
+# [8.24.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.23.2...v8.24.0) (2023-08-31)
+
+
+### Bug Fixes
+
+* **ui:** advanced actions colors ([77afac4](https://github.com/zwave-js/zwave-js-ui/commit/77afac40acdd42b573653e007daf19243ffda826)), closes [#3242](https://github.com/zwave-js/zwave-js-ui/issues/3242)
+* **ui:** make rf region setting clearable ([58c24d4](https://github.com/zwave-js/zwave-js-ui/commit/58c24d4b5c04a7d87daf07b709f04b05019712cc)), closes [#3241](https://github.com/zwave-js/zwave-js-ui/issues/3241)
+* **ui:** remove controller default powerlevel message ([#3244](https://github.com/zwave-js/zwave-js-ui/issues/3244)) ([88555cd](https://github.com/zwave-js/zwave-js-ui/commit/88555cd2ff351b8aad2e62a45da112423bb47d88))
+
+
+### Features
+
+* **ui:** show when devices needs to be re-interviewed ([#3252](https://github.com/zwave-js/zwave-js-ui/issues/3252)) ([b2c7f84](https://github.com/zwave-js/zwave-js-ui/commit/b2c7f84ad8debc8b23a2e6d27006a7febf2bd645))
+
 ## [8.23.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.23.1...v8.23.2) (2023-08-29)
 
 ## [8.23.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.23.0...v8.23.1) (2023-08-22)
