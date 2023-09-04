@@ -1,5 +1,5 @@
 <template>
-	<v-tooltip v-if="!node.hasDeviceConfigChanged" bottom>
+	<v-tooltip v-if="!!node.hasDeviceConfigChanged" bottom>
 		<template v-slot:activator="{ on }">
 			<v-btn
 				:style="bStyle"
