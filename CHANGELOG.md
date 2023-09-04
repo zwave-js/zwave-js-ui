@@ -1,5 +1,17 @@
 
 
+## [8.24.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.1...v8.24.2) (2023-09-04)
+
+
+### Bug Fixes
+
+* **ui:** better re-discover tooltip ([1e04cab](https://github.com/zwave-js/zwave-js-ui/commit/1e04cab0e551a9996081a94fe81e1545d614f656))
+
+
+### Features
+
+* bump zwave-js@11.14.0 ([#3261](https://github.com/zwave-js/zwave-js-ui/issues/3261)) ([4fa18a8](https://github.com/zwave-js/zwave-js-ui/commit/4fa18a89ac4f0fd922fd9218d2542e41b5d56ea3))
+
 ## [8.24.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.0...v8.24.1) (2023-09-04)
 
 
