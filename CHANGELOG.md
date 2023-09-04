@@ -1,5 +1,17 @@
 
 
+## [8.24.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.0...v8.24.1) (2023-09-04)
+
+
+### Bug Fixes
+
+* **ui:** hide config update badge after re-interview ([#3260](https://github.com/zwave-js/zwave-js-ui/issues/3260)) ([94fc10e](https://github.com/zwave-js/zwave-js-ui/commit/94fc10e2f932cb6574041430a88613ecd11c3ee4))
+
+
+### Features
+
+* bump zwave-js@11.13.1 ([#3257](https://github.com/zwave-js/zwave-js-ui/issues/3257)) ([07d99cc](https://github.com/zwave-js/zwave-js-ui/commit/07d99ccea6c595d2303db6d5117836b1d10ef1d9))
+
 # [8.24.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.23.2...v8.24.0) (2023-08-31)
 
 
