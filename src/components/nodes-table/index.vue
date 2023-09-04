@@ -136,7 +136,7 @@
 			</td>
 		</template>
 		<template v-slot:[`item.id`]="{ item }">
-			<div style="text-align: right">
+			<div class="d-flex">
 				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
 
 				<reinterview-badge

@@ -167,8 +167,11 @@
 											<reinterview-badge
 												:node="item"
 												v-on="$listeners"
-												top="0px"
-												left="30px"
+												:b-style="{
+													position: 'absolute',
+													top: '0',
+													left: '31px',
+												}"
 											></reinterview-badge>
 										</div>
 										<div
