@@ -4828,6 +4828,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveNode.interviewStage
 			] as keyof typeof InterviewStage
 
+			if (zwaveNode.interviewStage === InterviewStage.Complete) {
+				node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
+			}
+
 			let changedProps: utils.DeepPartial<ZUINode>
 
 			if (updateStatusOnly) {
