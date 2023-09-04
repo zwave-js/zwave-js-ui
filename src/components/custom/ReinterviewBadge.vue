@@ -16,7 +16,10 @@
 				><v-icon x-small>update</v-icon></v-btn
 			>
 		</template>
-		<span>Configuration update available, re-interview the node</span>
+		<span>
+			Auto-discovered functionality has changed since the last interview;
+			re-interview to apply</span
+		>
 	</v-tooltip>
 </template>
 
