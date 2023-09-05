@@ -304,17 +304,17 @@
 </template>
 
 <script>
-import AssociationGroups from '@/components/nodes-table/AssociationGroups'
-import HomeAssistant from '@/components/nodes-table/HomeAssistant'
-import NodeDetails from '@/components/nodes-table/NodeDetails'
-import DialogAdvanced from '@/components/dialogs/DialogAdvanced'
+import AssociationGroups from '@/components/nodes-table/AssociationGroups.vue'
+import HomeAssistant from '@/components/nodes-table/HomeAssistant.vue'
+import NodeDetails from '@/components/nodes-table/NodeDetails.vue'
+import DialogAdvanced from '@/components/dialogs/DialogAdvanced.vue'
 import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 import { jsonToList } from '@/lib/utils'
 
 import { mapActions, mapState } from 'pinia'
 import OTAUpdates from './OTAUpdates.vue'
 import useBaseStore from '../../stores/base.js'
-import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
+import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import UserCodeTable from './UserCodeTable.vue'
 

@@ -5,12 +5,17 @@ import logger from '../lib/logger'
 
 const log = logger.get('ConfigApis')
 
+const basePath =
+	import.meta.env.MODE === 'production'
+		? ''
+		: `${location.protocol}//${location.host}`
+
 function getBasePath(path) {
-	return document.baseURI.replace(/\/$/, '') + (path || '')
+	// console.log('getBasePath', basePath, path)
+	return basePath + (path || '')
 }
 
-axios.defaults.socketUrl = getBasePath()
-axios.defaults.baseURL = `${axios.defaults.socketUrl}/api`
+axios.defaults.baseURL = `/api`
 
 function responseHandler(response) {
 	log.debug('Response', response)
@@ -69,9 +74,11 @@ export default {
 	// ---- CONFIG -----
 	getBasePath,
 	getSocketPath() {
-		const innerPath = document.baseURI.split('/').splice(3).join('/')
-		const socketPath = `/${innerPath}/socket.io`.replace('//', '/')
-		return socketPath === '/socket.io' ? undefined : socketPath
+		// return import.meta.env.MODE === 'production'
+		// 	? '/'
+		// 	: import.meta.env.VITE_API_ENDPOINT
+
+		return `${getBasePath()}/socket.io`
 	},
 	async getConfig() {
 		const response = await request.get('/settings')

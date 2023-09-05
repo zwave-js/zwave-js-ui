@@ -76,7 +76,7 @@
 </template>
 
 <script>
-import DialogAssociation from '@/components/dialogs/DialogAssociation'
+import DialogAssociation from '@/components/dialogs/DialogAssociation.vue'
 import { mapState, mapActions } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'

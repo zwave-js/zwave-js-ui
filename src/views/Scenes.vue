@@ -88,7 +88,7 @@
 	</v-container>
 </template>
 <script>
-import DialogSceneValue from '@/components/dialogs/DialogSceneValue'
+import DialogSceneValue from '@/components/dialogs/DialogSceneValue.vue'
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'

@@ -344,7 +344,7 @@
 </template>
 
 <script>
-import ValueID from '../ValueId'
+import ValueID from '../ValueId.vue'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { rfRegions } from '../../lib/items'

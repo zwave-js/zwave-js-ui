@@ -1355,7 +1355,7 @@ import { rfRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
-import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue'
+import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue.vue'
 import logger from '../lib/logger'
 
 const log = logger.get('Settings')

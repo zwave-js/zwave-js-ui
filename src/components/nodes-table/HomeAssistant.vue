@@ -182,7 +182,7 @@
 </template>
 
 <script>
-import { inboundEvents as socketActions } from '@/../server/lib/SocketEvents'
+import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base'
 

@@ -377,7 +377,7 @@ export default {
 			selectedNodes: [],
 			showReturnRoutes: true,
 			showApplicationRoutes: true,
-			starSvg: ConfigApis.getBasePath('/static/star.svg'),
+			starSvg: ConfigApis.getBasePath('/star.svg'),
 			menuX: 0,
 			menuY: 0,
 			menu: false,

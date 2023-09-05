@@ -99,7 +99,7 @@
 </template>
 
 <script>
-import ValueID from '@/components/ValueId'
+import ValueID from '@/components/ValueId.vue'
 
 export default {
 	components: {
