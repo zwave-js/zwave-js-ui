@@ -1,43 +1,48 @@
 <!DOCTYPE html>
-<html>
-
-<head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width,initial-scale=1.0">
-	<title><%= config.title %></title>
+<html lang="en">
+	<head>
 	<base href="<%= config.base %>" />
-	<meta name=mobile-web-app-capable content=yes>
-	<meta name=application-name content="<%= config.title %>">
-	<meta name=apple-mobile-web-app-capable content=yes>
-	<meta name=apple-mobile-web-app-status-bar-style content=black-translucent>
-	<meta name=apple-mobile-web-app-title content="<%= config.title %>">
+		<meta charset="utf-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta
+			name="viewport"
+			content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0"
+		/>
+		<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="mobile-web-app-capable" content="yes" />
+		<meta name="application-name" content="Z-Wave JS UI" />
+		<meta name="apple-mobile-web-app-title" content="Z-Wave JS UI" />
+		
+		<link
+			rel="apple-touch-icon"
+			sizes="180x180"
+			href="<%- config.base %>apple-touch-icon-180x180.png"
+		/>
+		<link rel="icon" href="<%- config.base %>favicon.ico" sizes="any">
+		<link rel="icon" href="<%- config.base %>favicon.svg" type="image/svg+xml">
+	
+		
+		<link rel="shortcut icon" href="<%- config.base %>favicon.ico" />
 
-	<link rel="apple-touch-icon" sizes="180x180" href="<%= config.base %>static/favicons/apple-touch-icon.png">
-	<link rel="icon" type="image/png" sizes="32x32" href="<%= config.base %>static/favicons/favicon-32x32.png">
-	<link rel="icon" type="image/png" sizes="16x16" href="<%= config.base %>static/favicons/favicon-16x16.png">
-	<link rel="manifest" href="<%= config.base %>static/favicons/site.webmanifest">
-	<link rel="mask-icon" href="<%= config.base %>static/favicons/safari-pinned-tab.svg" color="#5bbad5">
-	<meta name="msapplication-TileColor" content="#2d89ef">
-	<meta name="msapplication-config" content="<%= config.base %>static/favicons/browserconfig.xml">
-	<meta name="theme-color" content="#ffffff">
+		<meta name="msapplication-TileColor" content="#da532c" />
+		<meta name="theme-color" content="#ffffff" />
+		<title>Z-Wave JS UI</title>
+		<meta name="description" content="Z-Wave JS UI">
 
-	<!-- For serving the index via express -->
-	<% if (typeof cssFiles !== 'undefined') { %>
-    <% for ( let css of cssFiles ){  %>
-    <link rel="stylesheet" href="<%= config.base %><%= css %>">
-    <% } %>
-	<% } %>
-</head>
+		<script type="module" crossorigin src="<%- config.base %>assets/index-01658f6b.js"></script>
+		<link rel="stylesheet" href="<%- config.base %>assets/index-af4de16e.css">
+	<link rel="manifest" href="<%- config.base %>manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="<%- config.base %>registerSW.js"></script></head>
 
-<body>
-	<div id="app"></div>
-	<!-- For serving the index via express -->
-	<% if (typeof jsFiles !== 'undefined') { %>
-    <% for ( let src of jsFiles ){  %>
-    <script src="<%= config.base %><%= src %>"></script>
-    <% } %>
-	<% } %>
-	<!-- built files will be auto injected -->
-</body>
-
+	<body class="hidden-scrollbars">
+		<noscript>
+			<strong
+				>We're sorry but Z-Wave JS UI doesn't work properly without
+				JavaScript enabled. Please enable it to continue.</strong
+			>
+		</noscript>
+		<div id="app"></div>
+		
+		<!-- built files will be auto injected -->
+	</body>
 </html>
