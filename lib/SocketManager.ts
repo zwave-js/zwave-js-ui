@@ -39,7 +39,13 @@ class SocketManager extends TypedEventEmitter<SocketManagerEventCallbacks> {
 	 *
 	 */
 	bindServer(server: HttpServer) {
-		this.io = new SocketServer(server)
+		this.io = new SocketServer(server, {
+			path: '/socket.io',
+		})
+
+		this.io.on('error', (err) => {
+			logger.error(`Socket error: ${err.message}`)
+		})
 
 		this.io
 			.use(this._authMiddleware())

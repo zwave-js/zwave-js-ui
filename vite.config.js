@@ -93,7 +93,7 @@ export default defineConfig(({ mode }) => {
 			proxy: {
 				'/socket.io': {
 					// not working, see https://github.com/vitejs/vite/issues/4124
-					target: proxyWebSocketURL,
+					target: proxyURL,
 					ws: true,
 					secure: false, // allow self signed certificates
 					changeOrigin: true,

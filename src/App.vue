@@ -927,10 +927,9 @@ export default {
 
 			const query = this.auth ? { token: this.user.token } : undefined
 
-			this.socket = io('https://localhost:8091', {
-				// path: ConfigApis.getSocketPath(),
+			this.socket = io('/', {
 				query: query,
-				withCredentials: true,
+				rejectUnauthorized: false,
 			})
 
 			this.socket.on('connect', () => {

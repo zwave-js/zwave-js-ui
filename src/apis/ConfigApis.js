@@ -73,13 +73,6 @@ export default {
 	},
 	// ---- CONFIG -----
 	getBasePath,
-	getSocketPath() {
-		// return import.meta.env.MODE === 'production'
-		// 	? '/'
-		// 	: import.meta.env.VITE_API_ENDPOINT
-
-		return `${getBasePath()}/socket.io`
-	},
 	async getConfig() {
 		const response = await request.get('/settings')
 		return response.data
