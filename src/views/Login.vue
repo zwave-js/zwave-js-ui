@@ -10,7 +10,7 @@
 			>
 				<v-card-title style="">
 					<v-avatar style="border-radius: 0" size="40px">
-						<img src="/logo.png" alt="Logo" />
+						<img src="/logo.svg" alt="Logo" />
 					</v-avatar>
 					<v-toolbar-title style="margin-left: 20px"
 						>Z-Wave JS UI</v-toolbar-title

@@ -64,7 +64,7 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "changelog-init": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it",
-    "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.png"
+    "generate-pwa-assets": "pwa-assets-generator --preset minimal public/logo.svg"
   },
   "release-it": {
     "github": {

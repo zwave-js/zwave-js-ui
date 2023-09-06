@@ -15,7 +15,7 @@
 						<v-list-item-avatar>
 							<img
 								style="padding: 3px; border-radius: 0"
-								src="/logo.png"
+								src="/logo.svg"
 							/>
 						</v-list-item-avatar>
 						<v-list-item-content>
