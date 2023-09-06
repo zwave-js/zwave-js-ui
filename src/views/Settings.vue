@@ -1478,7 +1478,11 @@ export default {
 			saving: false,
 			newGateway: {},
 			newMqtt: {},
-			newZwave: {},
+			newZwave: {
+				rf: {
+					txPower: {},
+				},
+			},
 			newBackup: {},
 			editedValue: {},
 			editedIndex: -1,

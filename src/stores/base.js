@@ -432,6 +432,13 @@ const useBaseStore = defineStore('base', {
 		initSettings(conf) {
 			if (conf) {
 				Object.assign(this.zwave, conf.zwave || {})
+				if (!this.zwave.rf) {
+					this.zwave.rf = {}
+				}
+
+				if (!this.zwave.rf.txPower) {
+					this.zwave.rf.txPower = {}
+				}
 				Object.assign(this.mqtt, conf.mqtt || {})
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
