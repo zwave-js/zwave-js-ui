@@ -5,17 +5,20 @@ import logger from '../lib/logger'
 
 const log = logger.get('ConfigApis')
 
-const basePath =
-	import.meta.env.MODE === 'production'
-		? ''
-		: `${location.protocol}//${location.host}`
+const baseHost = `${location.protocol}//${location.host}`
+const base = document.baseURI.replace(baseHost, '')
+
+const basePath = (import.meta.env.MODE === 'production' ? '' : baseHost) + base
+
+console.log('basePath', basePath)
+console.log('baseUrl', base)
 
 function getBasePath(path) {
 	// console.log('getBasePath', basePath, path)
 	return basePath + (path || '')
 }
 
-axios.defaults.baseURL = `/api`
+axios.defaults.baseURL = `${base}api`
 
 function responseHandler(response) {
 	log.debug('Response', response)

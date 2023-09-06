@@ -3,7 +3,6 @@ import vue2 from '@vitejs/plugin-vue2'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import * as pkgJson from './package.json'
-import { readFileSync, writeFileSync } from 'fs'
 
 const distFolder = path.resolve(__dirname, 'dist')
 
@@ -65,27 +64,6 @@ export default defineConfig(({ mode }) => {
 					],
 				},
 			}),
-			{
-				name: 'postbuild-commands',
-				closeBundle: async () => {
-					const indexPath = path.join(__dirname, './dist/index.html')
-
-					const content = readFileSync(indexPath, 'utf8')
-						.replace(/href="\//g, 'href="<%- config.base %>')
-						.replace(/src="\//g, 'src="<%- config.base %>')
-						.replace(
-							'<head>',
-							'<head>\n		<base href="<%= config.base %>" />'
-						)
-
-					// update the views/index.ejs file
-					writeFileSync(
-						path.join(__dirname, './views/index.ejs'),
-						content,
-						'utf8'
-					)
-				},
-			},
 		],
 		resolve: {
 			alias: [

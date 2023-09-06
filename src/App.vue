@@ -927,7 +927,7 @@ export default {
 
 			const query = this.auth ? { token: this.user.token } : undefined
 
-			this.socket = io('/', {
+			this.socket = io(ConfigApis.getBasePath(), {
 				query: query,
 				rejectUnauthorized: false,
 			})
