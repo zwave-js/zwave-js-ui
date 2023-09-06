@@ -76,7 +76,6 @@
 </template>
 
 <script>
-import DialogAssociation from '@/components/dialogs/DialogAssociation'
 import { mapState, mapActions } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
@@ -84,7 +83,8 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	components: {
-		DialogAssociation,
+		DialogAssociation: () =>
+			import('@/components/dialogs/DialogAssociation.vue'),
 	},
 	mixins: [InstancesMixin],
 	props: {

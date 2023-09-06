@@ -219,9 +219,6 @@
 </template>
 
 <script>
-// import Prism Editor
-import { PrismEditor } from 'vue-prism-editor'
-import QrReader from './custom/QrReader.vue'
 import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
 import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
 
@@ -231,13 +228,13 @@ import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { wrapFunc, noop } from '../lib/utils'
-import ListInput from './custom/ListInput.vue'
 
 export default {
 	components: {
-		PrismEditor,
-		QrReader,
-		ListInput,
+		PrismEditor: () =>
+			import('vue-prism-editor').then((m) => m.PrismEditor),
+		QrReader: () => import('./custom/QrReader.vue'),
+		ListInput: () => import('./custom/ListInput.vue'),
 	},
 	data: () => ({
 		dialog: false,

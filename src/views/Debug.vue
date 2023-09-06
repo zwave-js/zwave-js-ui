@@ -73,7 +73,7 @@
 	</v-container>
 </template>
 <script>
-import { socketEvents } from '@/../server/lib/SocketEvents'
+import { socketEvents } from '@server/lib/SocketEvents'
 
 import AnsiUp from 'ansi_up'
 import { mapState, mapActions } from 'pinia'

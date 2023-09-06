@@ -82,13 +82,12 @@
 </template>
 
 <script>
-import NodeScheduler from './NodeScheduler.vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	mixins: [InstancesMixin],
 	props: { node: Object },
-	components: { NodeScheduler },
+	components: { NodeScheduler: () => import('./NodeScheduler.vue') },
 	data() {
 		return {
 			statuses: [

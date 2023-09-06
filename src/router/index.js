@@ -2,16 +2,16 @@ import Vue from 'vue'
 import Router from 'vue-router'
 
 // DON'T use lazy loading here, it would break application running behind a proxy
-import ControlPanel from '@/views/ControlPanel'
-import Settings from '@/views/Settings'
-import Mesh from '@/views/Mesh'
-import Store from '@/views/Store'
-import Scenes from '@/views/Scenes'
-import Debug from '@/views/Debug'
-import Login from '@/views/Login'
-import ErrorPage from '@/views/ErrorPage'
-import SmartStart from '@/views/SmartStart'
-import ControllerChart from '@/views/ControllerChart'
+const ControlPanel = () => import('@/views/ControlPanel.vue')
+const Settings = () => import('@/views/Settings.vue')
+const Mesh = () => import('@/views/Mesh.vue')
+const Store = () => import('@/views/Store.vue')
+const Scenes = () => import('@/views/Scenes.vue')
+const Debug = () => import('@/views/Debug.vue')
+const Login = () => import('@/views/Login.vue')
+const ErrorPage = () => import('@/views/ErrorPage.vue')
+const SmartStart = () => import('@/views/SmartStart.vue')
+const ControllerChart = () => import('@/views/ControllerChart.vue')
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
@@ -34,7 +34,7 @@ export const Routes = {
 Routes.main = Routes.controlPanel
 
 const router = new Router({
-	mode: 'history',
+	mode: 'hash',
 	routes: [
 		{
 			path: Routes.login,

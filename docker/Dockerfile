@@ -72,6 +72,8 @@ ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 
 ENV TAG_NAME=${image_name}
 
+ENV NODE_ENV=production
+
 WORKDIR /usr/src/app
 
 EXPOSE 8091

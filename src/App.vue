@@ -15,7 +15,7 @@
 						<v-list-item-avatar>
 							<img
 								style="padding: 3px; border-radius: 0"
-								:src="assetPath('/static/logo.png')"
+								src="/logo.svg"
 							/>
 						</v-list-item-avatar>
 						<v-list-item-content>
@@ -377,9 +377,9 @@ import io from 'socket.io-client'
 import VSnackbars from 'v-snackbars'
 
 import ConfigApis from '@/apis/ConfigApis'
-import Confirm from '@/components/Confirm'
-import PasswordDialog from '@/components/dialogs/Password'
-import LoaderDialog from '@/components/dialogs/DialogLoader'
+import Confirm from '@/components/Confirm.vue'
+import PasswordDialog from '@/components/dialogs/Password.vue'
+import LoaderDialog from '@/components/dialogs/DialogLoader.vue'
 
 import { Routes } from '@/router'
 
@@ -391,9 +391,9 @@ import logger from './lib/logger'
 import {
 	socketEvents,
 	inboundEvents as socketActions,
-} from '@/../server/lib/SocketEvents'
+} from '@server/lib/SocketEvents'
 import { getEnumMemberName, SecurityBootstrapFailure } from 'zwave-js/safe'
-import DialogNodesManager from '@/components/dialogs/DialogNodesManager'
+import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 
 let socketQueue = []
 
@@ -516,9 +516,6 @@ export default {
 		}
 	},
 	methods: {
-		assetPath(path) {
-			return ConfigApis.getBasePath(path)
-		},
 		showNodesManager(step) {
 			// used in ControlPanel.vue
 			this.$refs.nodesManager.show(step)
@@ -928,8 +925,11 @@ export default {
 			const query = this.auth ? { token: this.user.token } : undefined
 
 			this.socket = io('/', {
-				path: ConfigApis.getSocketPath(),
+				path: location.pathname
+					? location.pathname + 'socket.io'
+					: undefined,
 				query: query,
+				rejectUnauthorized: false,
 			})
 
 			this.socket.on('connect', () => {

@@ -1,5 +1,5 @@
 import { manager, instances } from '../lib/instanceManager'
-import { socketEvents } from '../../server/lib/SocketEvents'
+import { socketEvents } from '@server/lib/SocketEvents.js'
 
 export default {
 	data() {

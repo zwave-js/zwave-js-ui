@@ -85,11 +85,9 @@
 </style>
 
 <script>
-import ZwaveGraph from '@/components/custom/ZwaveGraph.vue'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
-import NodePanel from '../components/custom/NodePanel.vue'
 
 export default {
 	name: 'Mesh',
@@ -98,8 +96,8 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ZwaveGraph,
-		NodePanel,
+		ZwaveGraph: () => import('@/components/custom/ZwaveGraph.vue'),
+		NodePanel: () => import('@/components/custom/NodePanel.vue'),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),

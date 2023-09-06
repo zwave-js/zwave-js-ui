@@ -344,7 +344,6 @@
 </template>
 
 <script>
-import ValueID from '../ValueId'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { rfRegions } from '../../lib/items'
@@ -359,7 +358,7 @@ export default {
 		node: Object,
 	},
 	components: {
-		ValueID,
+		ValueID: () => import('../ValueId.vue'),
 	},
 	mixins: [InstancesMixin],
 	data() {

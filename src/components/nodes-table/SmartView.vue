@@ -281,10 +281,6 @@
 </template>
 
 <script>
-import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
-import ReinterviewBadge from '@/components/custom/ReinterviewBadge.vue'
-import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
-import RichValue from '@/components/nodes-table/RichValue.vue'
 import colors from 'vuetify/lib/util/colors'
 
 import {
@@ -319,10 +315,12 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ExpandedNode,
-		RichValue,
-		StatisticsArrows,
-		ReinterviewBadge,
+		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
+		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
+		StatisticsArrows: () =>
+			import('@/components/custom/StatisticsArrows.vue'),
+		ReinterviewBadge: () =>
+			import('@/components/custom/ReinterviewBadge.vue'),
 	},
 	watch: {
 		selected() {

@@ -5,12 +5,13 @@
 </template>
 
 <script>
-import BgRssiChart from '../components/custom/BgRssiChart.vue'
 import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 
 export default {
-	components: { BgRssiChart },
+	components: {
+		BgRssiChart: () => import('../components/custom/BgRssiChart.vue'),
+	},
 	computed: {
 		...mapState(useBaseStore, ['controllerNode']),
 	},

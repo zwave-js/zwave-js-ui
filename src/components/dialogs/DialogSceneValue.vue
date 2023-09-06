@@ -99,11 +99,9 @@
 </template>
 
 <script>
-import ValueID from '@/components/ValueId'
-
 export default {
 	components: {
-		ValueID,
+		ValueID: () => import('@/components/ValueId.vue'),
 	},
 	props: {
 		value: Boolean,

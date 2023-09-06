@@ -1,11 +1,6 @@
 import draggable from 'vuedraggable'
 import colors from 'vuetify/lib/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
-import ColumnFilter from '@/components/nodes-table/ColumnFilter.vue'
-import ExpandedNode from '@/components/nodes-table/ExpandedNode.vue'
-import RichValue from '@/components/nodes-table/RichValue.vue'
-import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
-import ReinterviewBadge from '@/components/custom/ReinterviewBadge.vue'
 
 import { mapState } from 'pinia'
 import {
@@ -35,11 +30,13 @@ export default {
 	},
 	components: {
 		draggable,
-		ColumnFilter,
-		ExpandedNode,
-		RichValue,
-		StatisticsArrows,
-		ReinterviewBadge,
+		ColumnFilter: () => import('@/components/nodes-table/ColumnFilter.vue'),
+		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
+		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
+		StatisticsArrows: () =>
+			import('@/components/custom/StatisticsArrows.vue'),
+		ReinterviewBadge: () =>
+			import('@/components/custom/ReinterviewBadge.vue'),
 	},
 	watch: {
 		'managedNodes.selected': function (val) {
