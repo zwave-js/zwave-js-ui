@@ -29,8 +29,6 @@
       "server/**/*"
     ],
     "assets": [
-      "views/**/*",
-      "public/**/*",
       "dist/**/*",
       "snippets/**",
       "node_modules/@serialport/**",
