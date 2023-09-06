@@ -28,6 +28,7 @@ export default defineConfig(({ mode }) => {
 	process.env.VITE_VERSION = pkgJson.version
 	process.env.VITE_API_ENDPOINT = proxyURL
 	return {
+		base: './',
 		plugins: [
 			vue2(),
 			VitePWA({
@@ -50,23 +51,23 @@ export default defineConfig(({ mode }) => {
 					background_color: '#2196F3',
 					icons: [
 						{
-							src: '/pwa-64x64.png',
+							src: 'pwa-64x64.png',
 							sizes: '64x64',
 							type: 'image/png',
 						},
 						{
-							src: '/pwa-192x192.png',
+							src: 'pwa-192x192.png',
 							sizes: '192x192',
 							type: 'image/png',
 						},
 						{
-							src: '/pwa-512x512.png',
+							src: 'pwa-512x512.png',
 							sizes: '512x512',
 							type: 'image/png',
 							purpose: 'any',
 						},
 						{
-							src: '/maskable-icon-512x512.png',
+							src: 'maskable-icon-512x512.png',
 							sizes: '512x512',
 							type: 'image/png',
 							purpose: 'maskable',

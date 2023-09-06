@@ -5,7 +5,7 @@ import logger from '../lib/logger'
 
 const log = logger.get('ConfigApis')
 
-axios.defaults.baseURL = `/api`
+axios.defaults.baseURL = `./api`
 
 function responseHandler(response) {
 	log.debug('Response', response)

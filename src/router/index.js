@@ -34,8 +34,7 @@ export const Routes = {
 Routes.main = Routes.controlPanel
 
 const router = new Router({
-	mode: 'history',
-	base: import.meta.env.BASE_URL,
+	mode: 'hash',
 	routes: [
 		{
 			path: Routes.login,

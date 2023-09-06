@@ -44,7 +44,6 @@ import {
 	CustomPlugin,
 	PluginConstructor,
 } from './lib/CustomPlugin'
-import renderIndex from './lib/renderIndex'
 import { inboundEvents, socketEvents } from './lib/SocketEvents'
 import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
@@ -541,8 +540,6 @@ app.use(
 		index: '/',
 	})
 )
-
-app.get('/', apisLimiter, renderIndex)
 
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
