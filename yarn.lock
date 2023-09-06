@@ -5833,7 +5833,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ejs@npm:^3.1.6, ejs@npm:^3.1.9":
+"ejs@npm:^3.1.6":
   version: 3.1.9
   resolution: "ejs@npm:3.1.9"
   dependencies:
@@ -15202,7 +15202,6 @@ __metadata:
     docsify: ^4.13.0
     docsify-cli: ^4.4.4
     dotenv: ^16.0.3
-    ejs: ^3.1.9
     eslint: ^8.36.0
     eslint-config-prettier: ^8.7.0
     eslint-friendly-formatter: ^4.0.1
