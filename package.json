@@ -172,6 +172,7 @@
     "zwave-js": "^11.14.0"
   },
   "devDependencies": {
+    "@babel/register": "^7.22.15",
     "@types/app-root-path": "^1.2.4",
     "@types/archiver": "^5.3.2",
     "@types/chai": "^4.3.4",
