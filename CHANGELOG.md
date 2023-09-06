@@ -1,5 +1,17 @@
 
 
+# [8.25.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.2...v8.25.0) (2023-09-06)
+
+
+### Bug Fixes
+
+* **ui:** prevent undefined error in settings ([92c3623](https://github.com/zwave-js/zwave-js-ui/commit/92c36236424f5aa4dc745c4d0c136702b207175f)), closes [#3262](https://github.com/zwave-js/zwave-js-ui/issues/3262)
+
+
+### Features
+
+* vitejs and PWA support ([#3263](https://github.com/zwave-js/zwave-js-ui/issues/3263)) ([d409051](https://github.com/zwave-js/zwave-js-ui/commit/d409051b9e96939fa0510399e45693b331a34cf1))
+
 ## [8.24.2](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.1...v8.24.2) (2023-09-04)
 
 
