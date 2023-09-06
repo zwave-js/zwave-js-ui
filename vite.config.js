@@ -7,7 +7,6 @@ import * as pkgJson from './package.json'
 const distFolder = path.resolve(__dirname, 'dist')
 
 const proxyScheme = process.env.SERVER_SSL ? 'https' : 'http'
-const proxyWebSocketScheme = process.env.SERVER_SSL ? 'wss' : 'ws'
 const proxyHostname = process.env.SERVER_HOST
 	? process.env.SERVER_HOST
 	: 'localhost'
@@ -17,7 +16,8 @@ const proxyURL = process.env.SERVER_URL
 	? process.env.SERVER_URL
 	: `${proxyScheme}://${proxyHostname}:${proxyPort}`
 
-const proxyWebSocketURL = `${proxyWebSocketScheme}://${proxyHostname}:${proxyPort}`
+// const proxyWebSocketScheme = process.env.SERVER_SSL ? 'wss' : 'ws'
+// const proxyWebSocketURL = `${proxyWebSocketScheme}://${proxyHostname}:${proxyPort}`
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
