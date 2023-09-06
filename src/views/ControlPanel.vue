@@ -122,13 +122,9 @@
 import ConfigApis from '@/apis/ConfigApis'
 import { mapState, mapActions } from 'pinia'
 
-import DialogAdvanced from '@/components/dialogs/DialogAdvanced.vue'
-import NodesTable from '@/components/nodes-table/index.vue'
 import { Settings } from '@/modules/Settings'
 import { jsonToList } from '@/lib/utils'
-import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 import useBaseStore from '../stores/base.js'
-import SmartView from '@/components/nodes-table/SmartView.vue'
 import InstancesMixin from '../mixins/InstancesMixin.js'
 import logger from '../lib/logger'
 import { FirmwareUpdateStatus } from 'zwave-js/safe'
@@ -142,10 +138,10 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		NodesTable,
-		DialogAdvanced,
-		StatisticsCard,
-		SmartView,
+		NodesTable: () => import('@/components/nodes-table/index.vue'),
+		DialogAdvanced: () => import('@/components/dialogs/DialogAdvanced.vue'),
+		StatisticsCard: () => import('@/components/custom/StatisticsCard.vue'),
+		SmartView: () => import('@/components/nodes-table/SmartView.vue'),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),

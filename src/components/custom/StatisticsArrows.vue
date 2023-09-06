@@ -31,7 +31,6 @@
 
 <script>
 import { jsonToList } from '@/lib/utils'
-import BlinkIcon from '@/components/custom/BlinkIcon.vue'
 
 export default {
 	props: {
@@ -41,7 +40,7 @@ export default {
 		},
 	},
 	components: {
-		BlinkIcon,
+		BlinkIcon: () => import('@/components/custom/BlinkIcon.vue'),
 	},
 	data() {
 		return {

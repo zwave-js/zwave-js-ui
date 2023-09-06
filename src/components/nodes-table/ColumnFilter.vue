@@ -54,17 +54,13 @@
 
 <script>
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
-import ColumnFilterBoolean from './ColumnFilterBoolean.vue'
-import ColumnFilterDate from './ColumnFilterDate.vue'
-import ColumnFilterNumber from './ColumnFilterNumber.vue'
-import ColumnFilterString from './ColumnFilterString.vue'
 
 export default {
 	components: {
-		ColumnFilterBoolean,
-		ColumnFilterDate,
-		ColumnFilterNumber,
-		ColumnFilterString,
+		ColumnFilterBoolean: () => import('./ColumnFilterBoolean.vue'),
+		ColumnFilterDate: () => import('./ColumnFilterDate.vue'),
+		ColumnFilterNumber: () => import('./ColumnFilterNumber.vue'),
+		ColumnFilterString: () => import('./ColumnFilterString.vue'),
 	},
 	props: {
 		value: {

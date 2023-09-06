@@ -1348,14 +1348,12 @@
 <script>
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
-import fileInput from '@/components/custom/file-input.vue'
 import { parse } from 'native-url'
 import { wait, copy, isUndef } from '../lib/utils'
 import { rfRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
-import DialogGatewayValue from '@/components/dialogs/DialogGatewayValue.vue'
 import logger from '../lib/logger'
 
 const log = logger.get('Settings')
@@ -1363,8 +1361,9 @@ const log = logger.get('Settings')
 export default {
 	name: 'Settings',
 	components: {
-		DialogGatewayValue,
-		fileInput,
+		DialogGatewayValue: () =>
+			import('@/components/dialogs/DialogGatewayValue.vue'),
+		fileInput: () => import('@/components/custom/file-input.vue'),
 	},
 	props: {
 		socket: {

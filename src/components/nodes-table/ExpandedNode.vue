@@ -304,19 +304,11 @@
 </template>
 
 <script>
-import AssociationGroups from '@/components/nodes-table/AssociationGroups.vue'
-import HomeAssistant from '@/components/nodes-table/HomeAssistant.vue'
-import NodeDetails from '@/components/nodes-table/NodeDetails.vue'
-import DialogAdvanced from '@/components/dialogs/DialogAdvanced.vue'
-import StatisticsCard from '@/components/custom/StatisticsCard.vue'
 import { jsonToList } from '@/lib/utils'
-
 import { mapActions, mapState } from 'pinia'
-import OTAUpdates from './OTAUpdates.vue'
 import useBaseStore from '../../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import UserCodeTable from './UserCodeTable.vue'
 
 import {
 	SetValueStatus,
@@ -336,13 +328,15 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		AssociationGroups,
-		HomeAssistant,
-		NodeDetails,
-		DialogAdvanced,
-		StatisticsCard,
-		OTAUpdates,
-		UserCodeTable,
+		AssociationGroups: () =>
+			import('@/components/nodes-table/AssociationGroups.vue'),
+		HomeAssistant: () =>
+			import('@/components/nodes-table/HomeAssistant.vue'),
+		NodeDetails: () => import('@/components/nodes-table/NodeDetails.vue'),
+		DialogAdvanced: () => import('@/components/dialogs/DialogAdvanced.vue'),
+		StatisticsCard: () => import('@/components/custom/StatisticsCard.vue'),
+		OTAUpdates: () => import('./OTAUpdates.vue'),
+		UserCodeTable: () => import('./UserCodeTable.vue'),
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),

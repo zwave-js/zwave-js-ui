@@ -374,9 +374,6 @@ import { zwaveDataRateToString } from '@zwave-js/core/safe'
 import draggable from 'vuedraggable'
 
 import { Routes } from '../../router/index.js'
-import StatisticsArrows from '@/components/custom/StatisticsArrows.vue'
-import BgRssiChart from '@/components/custom/BgRssiChart.vue'
-import DialogHealthCheck from '@/components/dialogs/DialogHealthCheck.vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
@@ -385,9 +382,11 @@ import { copy } from '../../lib/utils'
 export default {
 	mixins: [InstancesMixin],
 	components: {
-		StatisticsArrows,
-		BgRssiChart,
-		DialogHealthCheck,
+		StatisticsArrows: () =>
+			import('@/components/custom/StatisticsArrows.vue'),
+		BgRssiChart: () => import('@/components/custom/BgRssiChart.vue'),
+		DialogHealthCheck: () =>
+			import('@/components/dialogs/DialogHealthCheck.vue'),
 		draggable,
 	},
 	props: {

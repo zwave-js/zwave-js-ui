@@ -2,16 +2,16 @@ import Vue from 'vue'
 import Router from 'vue-router'
 
 // DON'T use lazy loading here, it would break application running behind a proxy
-import ControlPanel from '@/views/ControlPanel.vue'
-import Settings from '@/views/Settings.vue'
-import Mesh from '@/views/Mesh.vue'
-import Store from '@/views/Store.vue'
-import Scenes from '@/views/Scenes.vue'
-import Debug from '@/views/Debug.vue'
-import Login from '@/views/Login.vue'
-import ErrorPage from '@/views/ErrorPage.vue'
-import SmartStart from '@/views/SmartStart.vue'
-import ControllerChart from '@/views/ControllerChart.vue'
+const ControlPanel = () => import('@/views/ControlPanel.vue')
+const Settings = () => import('@/views/Settings.vue')
+const Mesh = () => import('@/views/Mesh.vue')
+const Store = () => import('@/views/Store.vue')
+const Scenes = () => import('@/views/Scenes.vue')
+const Debug = () => import('@/views/Debug.vue')
+const Login = () => import('@/views/Login.vue')
+const ErrorPage = () => import('@/views/ErrorPage.vue')
+const SmartStart = () => import('@/views/SmartStart.vue')
+const ControllerChart = () => import('@/views/ControllerChart.vue')
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'

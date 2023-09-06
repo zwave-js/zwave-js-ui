@@ -298,7 +298,6 @@ prism-editor-wrapper :deep(.prism-editor__textarea) {
 import ConfigApis from '@/apis/ConfigApis'
 
 // import Prism Editor
-import { PrismEditor } from 'vue-prism-editor'
 import 'vue-prism-editor/dist/prismeditor.min.css' // import the styles somewhere
 
 // import highlighting library (you can use any library you want just return html string)
@@ -315,7 +314,8 @@ const log = logger.get('Store')
 export default {
 	name: 'Store',
 	components: {
-		PrismEditor,
+		PrismEditor: () =>
+			import('vue-prism-editor').then((m) => m.PrismEditor),
 	},
 	watch: {
 		selected() {
