@@ -15,7 +15,7 @@
 						<v-list-item-avatar>
 							<img
 								style="padding: 3px; border-radius: 0"
-								:src="assetPath('/logo.png')"
+								src="/logo.png"
 							/>
 						</v-list-item-avatar>
 						<v-list-item-content>
@@ -516,9 +516,6 @@ export default {
 		}
 	},
 	methods: {
-		assetPath(path) {
-			return ConfigApis.getBasePath(path)
-		},
 		showNodesManager(step) {
 			// used in ControlPanel.vue
 			this.$refs.nodesManager.show(step)
@@ -927,7 +924,7 @@ export default {
 
 			const query = this.auth ? { token: this.user.token } : undefined
 
-			this.socket = io(ConfigApis.getBasePath(), {
+			this.socket = io('/', {
 				query: query,
 				rejectUnauthorized: false,
 			})

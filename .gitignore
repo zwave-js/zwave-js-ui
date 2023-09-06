@@ -8,6 +8,7 @@ yarn-error.log*
 
 # Distribution path
 /dist/
+/dev-dist/
 /server/
 /store/
 /pkg/

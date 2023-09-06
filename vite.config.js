@@ -32,6 +32,16 @@ export default defineConfig(({ mode }) => {
 			vue2(),
 			VitePWA({
 				registerType: 'autoUpdate',
+				strategies: 'injectManifest',
+				injectRegister: 'auto',
+				// https://vite-pwa-org.netlify.app/guide/inject-manifest.html#plugin-configuration-2
+				srcDir: 'src',
+				filename: 'sw.js',
+				devOptions: {
+					enabled: true,
+					type: 'module',
+					/* other options */
+				},
 				manifest: {
 					name: process.env.VITE_TITLE,
 					description: process.env.VITE_TITLE,

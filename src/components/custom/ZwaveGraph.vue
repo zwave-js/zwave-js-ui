@@ -301,7 +301,6 @@ import { RouteKind } from '@zwave-js/core/safe'
 import { uuid, arraysEqual } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'
-import ConfigApis from '../../apis/ConfigApis.js'
 
 const ReturnRouteKind = {
 	PRIORITY: 20,
@@ -377,7 +376,7 @@ export default {
 			selectedNodes: [],
 			showReturnRoutes: true,
 			showApplicationRoutes: true,
-			starSvg: ConfigApis.getBasePath('/star.svg'),
+			starSvg: '/star.svg',
 			menuX: 0,
 			menuY: 0,
 			menu: false,
