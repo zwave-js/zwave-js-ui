@@ -49,7 +49,7 @@ export default {
 				)
 			}
 		},
-		async healNode(node) {
+		async rebuildNodeRoutes(node) {
 			const shouldWarn =
 				node.applicationRoute ||
 				node.customSUCReturnRoutes?.length > 0 ||
@@ -69,10 +69,14 @@ export default {
 					return
 				}
 			}
-			const response = await this.app.apiRequest('healNode', [node.id], {
-				infoSnack: true,
-				errorSnack: false,
-			})
+			const response = await this.app.apiRequest(
+				'rebuildNodeRoutes',
+				[node.id],
+				{
+					infoSnack: true,
+					errorSnack: false,
+				}
+			)
 
 			if (response.success && response.result) {
 				this.showSnackbar(
@@ -84,7 +88,7 @@ export default {
 					`Error healing node ${node.id}: ${
 						!response.success
 							? response.message
-							: 'failed to heal node'
+							: 'failed to rebuild node routes'
 					}`,
 					'error'
 				)

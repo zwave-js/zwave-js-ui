@@ -136,7 +136,7 @@
     "csurf": "^1.11.0",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
-    "express-rate-limit": "^6.7.0",
+    "express-rate-limit": "^6.11.0",
     "express-session": "^1.17.3",
     "extract-zip": "^2.0.1",
     "fs-extra": "^11.1.0",
@@ -167,7 +167,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.6.14",
     "winston": "^3.8.2",
-    "zwave-js": "^11.14.0"
+    "zwave-js": "12.0.0-beta.0"
   },
   "devDependencies": {
     "@babel/register": "^7.22.15",
@@ -214,9 +214,7 @@
     "vue-template-compiler": "^2.7.14"
   },
   "engines": {
-    "node": ">= 14",
-    "npm": ">= 6.14.0",
-    "yarn": ">= 3.2.1"
+    "node": ">= 18"
   },
   "browserslist": [
     "> 1%",

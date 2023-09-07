@@ -1051,7 +1051,7 @@ Payload:
 #### `firmwareUpdateOTA`
 
 ```ts
-async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]): Promise<FirmwareUpdateResult>;
+async firmwareUpdateOTA(nodeId: number, updateInfo: FirmwareUpdateInfo): Promise<FirmwareUpdateResult>;
 ```
 
 <details>
@@ -1233,10 +1233,10 @@ Payload:
 
 </details>
 
-#### `healNode`
+#### `rebuildNodeRoutes`
 
 ```ts
-async healNode(nodeId: number): Promise<boolean>;
+async rebuildNodeRoutes(nodeId: number): Promise<boolean>;
 ```
 
 Heal a node.
@@ -1244,7 +1244,7 @@ Heal a node.
 <details>
 <summary>Mqtt usage</summary>
 
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/healNode/set`
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/rebuildNodeRoutes/set`
 
 Payload:
 
@@ -1851,16 +1851,16 @@ Payload:
 
 </details>
 
-#### `beginHealingNetwork`
+#### `beginRebuildingRoutes`
 
 ```ts
-beginHealingNetwork(options?: HealNetworkOptions): boolean;
+beginRebuildingRoutes(options?: RebuildRoutesOptions): boolean;
 ```
 
 <details>
 <summary>Mqtt usage</summary>
 
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginHealingNetwork/set`
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginRebuildingRoutes/set`
 
 Payload:
 
@@ -1874,16 +1874,16 @@ Payload:
 
 </details>
 
-#### `stopHealingNetwork`
+#### `stopRebuildingRoutes`
 
 ```ts
-stopHealingNetwork(): boolean;
+stopRebuildingRoutes(): boolean;
 ```
 
 <details>
 <summary>Mqtt usage</summary>
 
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopHealingNetwork/set`
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopRebuildingRoutes/set`
 
 Payload:
 

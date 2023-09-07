@@ -1722,124 +1722,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@esm2cjs/cacheable-lookup@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "@esm2cjs/cacheable-lookup@npm:7.0.0"
-  checksum: 8e4f1bb19e5b5bee020773f87b0b371cf16a3c49aa721c038bcdeaef66f8103464bb38e2f2315d109d8aa2262aef784e8a3c6e56f447f670751437f28fabe083
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/cacheable-request@npm:^10.2.1":
-  version: 10.2.2
-  resolution: "@esm2cjs/cacheable-request@npm:10.2.2"
-  dependencies:
-    "@esm2cjs/mimic-response": ^4.0.0
-    "@esm2cjs/normalize-url": ^7.2.0
-    "@esm2cjs/responselike": ^3.0.0
-    "@types/http-cache-semantics": ^4.0.1
-    get-stream: ^6.0.1
-    http-cache-semantics: ^4.1.0
-    keyv: ^4.5.0
-  checksum: 5c2d3ba69cddaf169e12eaac262df34ebb9e3b06f63ca7e8150d18c00decb1fe660db5e433a69e33664ab74242694ea79ffeb538415c2a00d426665d7dfbecf4
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/form-data-encoder@npm:^2.1.2":
-  version: 2.1.3
-  resolution: "@esm2cjs/form-data-encoder@npm:2.1.3"
-  checksum: 058d60237d94c045452d1be109b34785fdbcd282395db4b07ca84af54a5d7a72cf50c0b149404cfe81efa58077e507dc4e7aca18c67c19cb0852b4d23104fc3d
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/got@npm:^12.5.3":
-  version: 12.5.3
-  resolution: "@esm2cjs/got@npm:12.5.3"
-  dependencies:
-    "@esm2cjs/cacheable-lookup": ^7.0.0
-    "@esm2cjs/cacheable-request": ^10.2.1
-    "@esm2cjs/form-data-encoder": ^2.1.2
-    "@esm2cjs/http-timer": ^5.0.1
-    "@esm2cjs/is": ^5.2.0
-    "@esm2cjs/lowercase-keys": ^3.0.0
-    "@esm2cjs/p-cancelable": ^3.0.0
-    decompress-response: ^6.0.0
-    get-stream: ^6.0.1
-    http2-wrapper: ^2.1.10
-    responselike: ^3.0.0
-  checksum: 069c96a5f1065f48a3c13fc318fdca331bb6ce0b98dd7e8697e1ffbb091f90712113671e230df6f8683db59f1b636368a71366f4256b73c4f96eb75252f94738
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/http-timer@npm:^5.0.1":
-  version: 5.0.1
-  resolution: "@esm2cjs/http-timer@npm:5.0.1"
-  dependencies:
-    defer-to-connect: ^2.0.1
-  checksum: b753a1e744443b234528af521f7c1e5283d64ce9ec9f1ac5519f88fda7025b73871d938a07b7d456c7e532786ddafdc8fabde64ea3765fd096985d3708bffe82
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/is@npm:^5.2.0":
-  version: 5.3.0
-  resolution: "@esm2cjs/is@npm:5.3.0"
-  checksum: 893190193c0088e4fb8be1d87b4bbee7a820c8689be76f4fb7cd2544fdb8354c9f7b7f510b5579eb238913f7cbc23ac202510210648489d923c1d7e1ce3e1177
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/lowercase-keys@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@esm2cjs/lowercase-keys@npm:3.0.0"
-  checksum: 62915a7064f2d2085bd6885372ce789473f2722a77f4d8e30c33c052ecc34e366618f13cc00f1dcf6b721e8512fe6f5ab68a3e467763046bc819d54be57a212a
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/mimic-response@npm:^4.0.0":
-  version: 4.0.0
-  resolution: "@esm2cjs/mimic-response@npm:4.0.0"
-  checksum: 1c9c50d0231f630263976c885c1a0371ef1d162a6952da26cb9f87d90189ef85ce1d31cd1ba914738af22b4598f7d4312bc018fa27da35d0d0737cbb12312139
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/normalize-url@npm:^7.2.0":
-  version: 7.2.0
-  resolution: "@esm2cjs/normalize-url@npm:7.2.0"
-  checksum: 679eb6a8e42a6b6ed36633992a43c8d18532fc5313fb8e766a8d7c40565eab9cf2d3fef17de9f36bbdafc1f250f5bb9db0618a57618e41a63d610772c9deda82
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/p-cancelable@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@esm2cjs/p-cancelable@npm:3.0.0"
-  checksum: 0e19b5bd7ab0273aafef87243a456fe09a5f88fd11695c6e6cb16c3cf8d4ac055e3e01ecfc9bd5da01663e59431f7b548c921adb8c7474ff0b47fff4d0af1ded
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/p-queue@npm:^7.3.0":
-  version: 7.3.0
-  resolution: "@esm2cjs/p-queue@npm:7.3.0"
-  dependencies:
-    "@esm2cjs/p-timeout": ^5.0.2
-    eventemitter3: ^4.0.7
-  checksum: fe9c5433e4ae3d3a417e52a5752591ca644663f7b5b7e025fe3e7e11667713ee4bee26a69f7b57d06c70cfdcc39a27b81bdf86f88416fad94e9c54f9ff5fad66
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/p-timeout@npm:^5.0.2":
-  version: 5.1.0
-  resolution: "@esm2cjs/p-timeout@npm:5.1.0"
-  checksum: e586799a8232a90b5bad38b6b72b0da1c4da15efac1719662afc6d4ec575fa53c49a0204263612ae2d5012dd62df7fd9e577e5b7b65b183e1b9de52b5783303d
-  languageName: node
-  linkType: hard
-
-"@esm2cjs/responselike@npm:^3.0.0":
-  version: 3.0.0
-  resolution: "@esm2cjs/responselike@npm:3.0.0"
-  dependencies:
-    "@esm2cjs/lowercase-keys": ^3.0.0
-  checksum: c0c15ac29c56dcdc3c2c96c8732534e048a97e2d8c3c0eadd04568e228b2b15d1150f3d320b5df1a6376e4e20276113ba4c1243b1c540fd6d52ee139b6a80ad6
-  languageName: node
-  linkType: hard
-
 "@gar/promisify@npm:^1.1.3":
   version: 1.1.3
   resolution: "@gar/promisify@npm:1.1.3"
@@ -3130,27 +3012,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/cc@npm:11.14.0":
-  version: 11.14.0
-  resolution: "@zwave-js/cc@npm:11.14.0"
+"@zwave-js/cc@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/cc@npm:12.0.0-beta.0"
   dependencies:
-    "@zwave-js/core": 11.14.0
-    "@zwave-js/host": 11.14.0
-    "@zwave-js/serial": 11.14.0
-    "@zwave-js/shared": 11.13.1
+    "@zwave-js/core": 12.0.0-beta.0
+    "@zwave-js/host": 12.0.0-beta.0
+    "@zwave-js/serial": 12.0.0-beta.0
+    "@zwave-js/shared": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     reflect-metadata: ^0.1.13
-  checksum: a1dd7ed68e27802f0a1c199bc2015d2767f4f4bd78a50773d6304e1b12b9d86a3b62216ed8a0bd9b680b1ed2b674483f301a907f43cf40bd54d93a38c4a15bd4
+  checksum: acd764cfc1c12b42cce34bdbcc9177201466230ed33e6f9fcbe37339abd754d3d68406b26af4b9ac77e9485d0c2d7aa247f2979e10119d928c642afe96ae0e65
   languageName: node
   linkType: hard
 
-"@zwave-js/config@npm:11.14.0":
-  version: 11.14.0
-  resolution: "@zwave-js/config@npm:11.14.0"
+"@zwave-js/config@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/config@npm:12.0.0-beta.0"
   dependencies:
-    "@zwave-js/core": 11.14.0
-    "@zwave-js/shared": 11.13.1
+    "@zwave-js/core": 12.0.0-beta.0
+    "@zwave-js/shared": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     fs-extra: ^10.1.0
@@ -3158,16 +3040,16 @@ __metadata:
     json5: ^2.2.3
     semver: ^7.5.2
     winston: ^3.8.2
-  checksum: c61b7349a53bc499f7e71a34f63b4af38727914fae410f30c88fc58b2afc9924e86cfad9f5fb256a41c2bb7dfa4933a9f243f5ac44d07b20ef038ff79e533a40
+  checksum: 8095e3ee4e26f0c125df2bab0e8c03d87ba1968e3cc3552a5b3c6cd1ac0279e9d8a883623f3365b97f34e61f570d835546db61224b2e1d852c9943132e1e9eaa
   languageName: node
   linkType: hard
 
-"@zwave-js/core@npm:11.14.0":
-  version: 11.14.0
-  resolution: "@zwave-js/core@npm:11.14.0"
+"@zwave-js/core@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/core@npm:12.0.0-beta.0"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
-    "@zwave-js/shared": 11.13.1
+    "@zwave-js/shared": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     dayjs: ^1.11.7
@@ -3178,7 +3060,7 @@ __metadata:
     winston: ^3.8.2
     winston-daily-rotate-file: ^4.7.1
     winston-transport: ^4.5.0
-  checksum: 15e4dd3ae201cac4d5479e3ed1a609f65eb04f2df6a536e8041ce11db8bc3d5c99dcfd5feadc0a511df91d862cd25c7ddc6848b4d738e0936f65321f12528db7
+  checksum: 5a211c5c0deedd0cb708666a695cb6de79e164a0a1bcbc9ac3aebe2a37f34028ee40b6c654ad875963fcac48c564aee2ee64112f670a6af0942e08541985cefb
   languageName: node
   linkType: hard
 
@@ -3191,24 +3073,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/host@npm:11.14.0":
-  version: 11.14.0
-  resolution: "@zwave-js/host@npm:11.14.0"
+"@zwave-js/host@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/host@npm:12.0.0-beta.0"
   dependencies:
-    "@zwave-js/config": 11.14.0
-    "@zwave-js/core": 11.14.0
-    "@zwave-js/shared": 11.13.1
+    "@zwave-js/config": 12.0.0-beta.0
+    "@zwave-js/core": 12.0.0-beta.0
+    "@zwave-js/shared": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
-  checksum: b1ace6745eb9fc7385bbc85304632d209f10d6ebad95db7b977fc33c1ebb2a092deb4460fd8591a54962086769258143d9a15d63585643ea8ab9a3583e4e0318
+  checksum: 5da37825027315e5f2acb646c46f6b46684ec4d89f1ef24027c3c76b33eb1eb4cf890777f1ab33c44d1f0ad764efcfc07c41562d98b0b804807dfdc3197013e8
   languageName: node
   linkType: hard
 
-"@zwave-js/nvmedit@npm:11.14.0":
-  version: 11.14.0
-  resolution: "@zwave-js/nvmedit@npm:11.14.0"
+"@zwave-js/nvmedit@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/nvmedit@npm:12.0.0-beta.0"
   dependencies:
-    "@zwave-js/core": 11.14.0
-    "@zwave-js/shared": 11.13.1
+    "@zwave-js/core": 12.0.0-beta.0
+    "@zwave-js/shared": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
     fs-extra: ^10.1.0
     reflect-metadata: ^0.1.13
@@ -3216,22 +3098,22 @@ __metadata:
     yargs: ^17.7.2
   bin:
     nvmedit: bin/nvmedit.js
-  checksum: 2b2be24fbedbec4d39d045f61f6a415985fd5be2dd2673e2bfad4b112ee2d563f45d3c6e325a1b6ef1e868f019eba5e1d9fbc8a8d7bcfd123562289f5d1c9ed0
+  checksum: 970adc667ceb8465a1084087e7850e480fb88fa72b1e1e9be32b1f4bbf1cc53eec93e6707c058400f559a18534041f4c798bdc1a317d1eef7769a095b58d6bbe
   languageName: node
   linkType: hard
 
-"@zwave-js/serial@npm:11.14.0":
-  version: 11.14.0
-  resolution: "@zwave-js/serial@npm:11.14.0"
+"@zwave-js/serial@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/serial@npm:12.0.0-beta.0"
   dependencies:
     "@serialport/stream": ^10.3.0
-    "@zwave-js/core": 11.14.0
-    "@zwave-js/host": 11.14.0
-    "@zwave-js/shared": 11.13.1
+    "@zwave-js/core": 12.0.0-beta.0
+    "@zwave-js/host": 12.0.0-beta.0
+    "@zwave-js/shared": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
     serialport: ^10.4.0
     winston: ^3.8.2
-  checksum: f4826f36d159a638906fc28b479ec23638285615c1ce5f4c9b337b73e5012c86811dc2b23ea4d1608ff3e0a9657fa6e4f589b1e142d461edf126ea0c8154bf5f
+  checksum: 427b5f17e444a8cc965edc031356f57b5fa0b4eaf7416feebfe5aa6e88f7b7d68bd50db5482e8a3f074a0edbf5c132a20437c0b29968070a4dbd121549990e27
   languageName: node
   linkType: hard
 
@@ -3251,27 +3133,27 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@zwave-js/shared@npm:11.13.1":
-  version: 11.13.1
-  resolution: "@zwave-js/shared@npm:11.13.1"
+"@zwave-js/shared@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/shared@npm:12.0.0-beta.0"
   dependencies:
     alcalzone-shared: ^4.0.8
     fs-extra: ^10.1.0
-  checksum: 8b69689f3bb508daaac405b0f0b39ea37bb685d3e04217e52472454426354d0759171f71285dc8b828dfba91d49d09dee1f33fa01b178961a28e1a6f2ae9a342
+  checksum: 22adce359898d3fffa0960d829a15f9280ea6fc89052308bf56c84287fcb0e88dd88a437914283ee360b2280166669cc5558727a28639cc73dfb832206e9bcb8
   languageName: node
   linkType: hard
 
-"@zwave-js/testing@npm:11.14.0":
-  version: 11.14.0
-  resolution: "@zwave-js/testing@npm:11.14.0"
+"@zwave-js/testing@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "@zwave-js/testing@npm:12.0.0-beta.0"
   dependencies:
-    "@zwave-js/core": 11.14.0
-    "@zwave-js/host": 11.14.0
-    "@zwave-js/serial": 11.14.0
-    "@zwave-js/shared": 11.13.1
+    "@zwave-js/core": 12.0.0-beta.0
+    "@zwave-js/host": 12.0.0-beta.0
+    "@zwave-js/serial": 12.0.0-beta.0
+    "@zwave-js/shared": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
-  checksum: 50dc6620cd935fc99505cb21f6bbf62e25f77576e947fa55adadd5a2be9fcf256e1ff7cff201bf521cdac244f23eb7e720eb99820978744176351bace8487b94
+  checksum: 93f4c349901333931363a719c693f4683bcf47f99c9067bddd35e52b2772eb0ec8091340d427d36f678eed33be0dfc235456962d0ae003f34e1126022adb1029
   languageName: node
   linkType: hard
 
@@ -6600,10 +6482,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eventemitter3@npm:^4.0.7":
-  version: 4.0.7
-  resolution: "eventemitter3@npm:4.0.7"
-  checksum: 1875311c42fcfe9c707b2712c32664a245629b42bb0a5a84439762dd0fd637fc54d078155ea83c2af9e0323c9ac13687e03cfba79b03af9f40c89b4960099374
+"eventemitter3@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "eventemitter3@npm:5.0.1"
+  checksum: 543d6c858ab699303c3c32e0f0f47fc64d360bf73c3daf0ac0b5079710e340d6fe9f15487f94e66c629f5f82cd1a8678d692f3dbb6f6fcd1190e1b97fcad36f8
   languageName: node
   linkType: hard
 
@@ -6672,12 +6554,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express-rate-limit@npm:^6.7.0":
-  version: 6.7.0
-  resolution: "express-rate-limit@npm:6.7.0"
+"express-rate-limit@npm:^6.11.0":
+  version: 6.11.0
+  resolution: "express-rate-limit@npm:6.11.0"
   peerDependencies:
     express: ^4 || ^5
-  checksum: 7bd3f298b202cdb11c3d7c2dcff9be12c6885be5e64fb112f6c79103ba93a8e5d899ce15a5a3ce48f82190ab3515bed403e067dc3e42fc2832558cbe2620f955
+  checksum: a2dc7ffa9eb6c43c7d2840bd481fb18f67d2541d705d4ea272fc6c1ddcce290cb80b21fea699808fd2e809da3e8e14e8e34f11a0006d6d5740a7b0057f92d144
   languageName: node
   linkType: hard
 
@@ -7689,6 +7571,25 @@ __metadata:
     p-cancelable: ^3.0.0
     responselike: ^3.0.0
   checksum: f84b704ca8edb5af17b4df32d21729a0a837a680d197c9d5a922090024ffc15d71a2c5a470de57ca2bb3e3e55aa7e996767d9106df7c57eb99d8de84ce56691f
+  languageName: node
+  linkType: hard
+
+"got@npm:^12.6.1":
+  version: 12.6.1
+  resolution: "got@npm:12.6.1"
+  dependencies:
+    "@sindresorhus/is": ^5.2.0
+    "@szmarczak/http-timer": ^5.0.1
+    cacheable-lookup: ^7.0.0
+    cacheable-request: ^10.2.8
+    decompress-response: ^6.0.0
+    form-data-encoder: ^2.1.2
+    get-stream: ^6.0.1
+    http2-wrapper: ^2.1.10
+    lowercase-keys: ^3.0.0
+    p-cancelable: ^3.0.0
+    responselike: ^3.0.0
+  checksum: 3c37f5d858aca2859f9932e7609d35881d07e7f2d44c039d189396f0656896af6c77c22f2c51c563f8918be483f60ff41e219de742ab4642d4b106711baccbd5
   languageName: node
   linkType: hard
 
@@ -10839,12 +10740,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"p-queue@npm:^7.3.4":
+  version: 7.4.1
+  resolution: "p-queue@npm:7.4.1"
+  dependencies:
+    eventemitter3: ^5.0.1
+    p-timeout: ^5.0.2
+  checksum: 1c6888aa994d399262a9fbdd49c7066f8359732397f7a42ecf03f22875a1d65899797b46413f97e44acc18dddafbcc101eb135c284714c931dbbc83c3967f450
+  languageName: node
+  linkType: hard
+
 "p-timeout@npm:^3.1.0":
   version: 3.2.0
   resolution: "p-timeout@npm:3.2.0"
   dependencies:
     p-finally: ^1.0.0
   checksum: 3dd0eaa048780a6f23e5855df3dd45c7beacff1f820476c1d0d1bcd6648e3298752ba2c877aa1c92f6453c7dd23faaf13d9f5149fc14c0598a142e2c5e8d649c
+  languageName: node
+  linkType: hard
+
+"p-timeout@npm:^5.0.2":
+  version: 5.1.0
+  resolution: "p-timeout@npm:5.1.0"
+  checksum: f5cd4e17301ff1ff1d8dbf2817df0ad88c6bba99349fc24d8d181827176ad4f8aca649190b8a5b1a428dfd6ddc091af4606835d3e0cb0656e04045da5c9e270c
   languageName: node
   linkType: hard
 
@@ -15089,7 +15007,7 @@ __metadata:
     eslint-plugin-promise: ^6.1.1
     eslint-plugin-vue: ^9.9.0
     express: ^4.18.2
-    express-rate-limit: ^6.7.0
+    express-rate-limit: ^6.11.0
     express-session: ^1.17.3
     extract-zip: ^2.0.1
     fs-extra: ^11.1.0
@@ -15145,7 +15063,7 @@ __metadata:
     vuedraggable: ^2.24.3
     vuetify: ^2.6.14
     winston: ^3.8.2
-    zwave-js: ^11.14.0
+    zwave-js: 12.0.0-beta.0
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
@@ -15202,27 +15120,27 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"zwave-js@npm:^11.14.0":
-  version: 11.14.0
-  resolution: "zwave-js@npm:11.14.0"
+"zwave-js@npm:12.0.0-beta.0":
+  version: 12.0.0-beta.0
+  resolution: "zwave-js@npm:12.0.0-beta.0"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
     "@alcalzone/pak": ^0.9.0
-    "@esm2cjs/got": ^12.5.3
-    "@esm2cjs/p-queue": ^7.3.0
-    "@zwave-js/cc": 11.14.0
-    "@zwave-js/config": 11.14.0
-    "@zwave-js/core": 11.14.0
-    "@zwave-js/host": 11.14.0
-    "@zwave-js/nvmedit": 11.14.0
-    "@zwave-js/serial": 11.14.0
-    "@zwave-js/shared": 11.13.1
-    "@zwave-js/testing": 11.14.0
+    "@zwave-js/cc": 12.0.0-beta.0
+    "@zwave-js/config": 12.0.0-beta.0
+    "@zwave-js/core": 12.0.0-beta.0
+    "@zwave-js/host": 12.0.0-beta.0
+    "@zwave-js/nvmedit": 12.0.0-beta.0
+    "@zwave-js/serial": 12.0.0-beta.0
+    "@zwave-js/shared": 12.0.0-beta.0
+    "@zwave-js/testing": 12.0.0-beta.0
     alcalzone-shared: ^4.0.8
     ansi-colors: ^4.1.3
     execa: ^5.1.1
     fs-extra: ^10.1.0
+    got: ^12.6.1
     mdns-server: ^1.0.11
+    p-queue: ^7.3.4
     proper-lockfile: ^4.1.2
     reflect-metadata: ^0.1.13
     semver: ^7.5.2
@@ -15232,6 +15150,6 @@ __metadata:
     xstate: 4.38.0
   bin:
     mock-server: bin/mock-server.js
-  checksum: 1d90574985e42ee73cdeccb2af2dae4f2e6fe7a91fc3643e880143f40f1d545032ab92cc1202d7be12a15d9447d722d940467033703b9dddc185690e43d99636
+  checksum: 6a05be3740ec9046c033750bd247d243398481f622b473b4f5f6855edbc01b1d043aca07b9e72091a06d041268bf41ea23b8534f5e6e485c832a97ec947d7d04
   languageName: node
   linkType: hard

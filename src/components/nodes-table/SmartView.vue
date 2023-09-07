@@ -402,7 +402,7 @@ export default {
 			return v
 		},
 		healRichValue(node) {
-			const progress = node.healProgress || 'done'
+			const progress = node.rebuildRoutesProgress || 'done'
 
 			let v = {
 				align: 'center',

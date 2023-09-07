@@ -201,13 +201,13 @@ export default {
 					desc: 'Export all nodes in a json file. Useful for debugging purposes',
 				},
 				{
-					text: 'Heal Network',
+					text: 'Rebuild Routes',
 					options: [
 						{
 							name: 'Begin',
-							action: 'beginHealingNetwork',
+							action: 'beginRebuildingRoutes',
 						},
-						{ name: 'Stop', action: 'stopHealingNetwork' },
+						{ name: 'Stop', action: 'stopRebuildingRoutes' },
 					],
 					icon: 'healing',
 					color: 'warning',
@@ -363,11 +363,11 @@ export default {
 					desc: 'Update all CC values and metadata. Use only when many values seems stale',
 				},
 				{
-					text: 'Heal Node',
+					text: 'Rebuild Routes',
 					options: [
 						{
-							name: 'Heal',
-							action: 'healNode',
+							name: 'Rebuild',
+							action: 'rebuildNodeRoutes',
 							args: {
 								confirm:
 									'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
@@ -528,7 +528,7 @@ export default {
 					if (!confirm || confirm !== 'yes') {
 						return
 					}
-				} else if (action === 'beginHealingNetwork') {
+				} else if (action === 'beginRebuildingRoutes') {
 					const { includeSleeping } =
 						await this.$listeners.showConfirm(
 							'Info',
@@ -1031,7 +1031,7 @@ export default {
 		},
 	},
 	mounted() {
-		this.bindEvent('healProgress', this.setHealProgress.bind(this))
+		this.bindEvent('rebuildRoutesProgress', this.setHealProgress.bind(this))
 	},
 	beforeDestroy() {
 		if (this.socket) {

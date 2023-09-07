@@ -38,8 +38,8 @@ import {
 	FoundNode,
 	GetFirmwareUpdatesOptions,
 	guessFirmwareFileFormat,
-	HealNetworkOptions,
-	HealNodeStatus,
+	RebuildRoutesOptions,
+	RebuildRoutesStatus,
 	InclusionGrant,
 	InclusionOptions,
 	InclusionResult,
@@ -96,6 +96,7 @@ import {
 	ZWaveOptions,
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
+	FirmwareUpdateInfo,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -175,7 +176,7 @@ export const allowedApis = validateMethods([
 	'replaceFailedNode',
 	'hardReset',
 	'softReset',
-	'healNode',
+	'rebuildNodeRoutes',
 	'getPriorityRoute',
 	'setPriorityRoute',
 	'assignReturnRoutes',
@@ -190,8 +191,8 @@ export const allowedApis = validateMethods([
 	'deleteReturnRoutes',
 	'deleteSUCReturnRoutes',
 	'removePriorityRoute',
-	'beginHealingNetwork',
-	'stopHealingNetwork',
+	'beginRebuildingRoutes',
+	'stopRebuildingRoutes',
 	'isFailedNode',
 	'removeFailedNode',
 	'refreshInfo',
@@ -525,7 +526,7 @@ export type ZUINode = {
 	interviewStage?: keyof typeof InterviewStage
 	status?: keyof typeof NodeStatus
 	inited: boolean
-	healProgress?: HealNodeStatus | undefined
+	rebuildRoutesProgress?: RebuildRoutesStatus | undefined
 	minBatteryLevel?: number
 	batteryLevels?: { [key: number]: number }
 	firmwareUpdate?: FirmwareUpdateProgress
@@ -570,7 +571,7 @@ export type ZwaveConfig = {
 	enableStatistics?: boolean
 	disclaimerVersion?: number
 	options?: ZWaveOptions
-	healNetwork?: boolean
+	// healNetwork?: boolean
 	healHour?: number
 	logToFile?: boolean
 	nodeFilter?: string[]
@@ -838,49 +839,49 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Used to schedule next network heal at hours: cfg.healHours
+	 * Used to schedule next network rebuildNodeRoutes at hours: cfg.healHours
 	 */
-	scheduleHeal() {
-		if (!this.cfg.healNetwork) {
-			return
-		}
+	// scheduleHeal() {
+	// 	if (!this.cfg.healNetwork) {
+	// 		return
+	// 	}
 
-		const now = new Date()
-		let start: Date
-		const hour = this.cfg.healHour
+	// 	const now = new Date()
+	// 	let start: Date
+	// 	const hour = this.cfg.healHour
 
-		if (now.getHours() < hour) {
-			start = new Date(
-				now.getFullYear(),
-				now.getMonth(),
-				now.getDate(),
-				hour,
-				0,
-				0,
-				0
-			)
-		} else {
-			start = new Date(
-				now.getFullYear(),
-				now.getMonth(),
-				now.getDate() + 1,
-				hour,
-				0,
-				0,
-				0
-			)
-		}
+	// 	if (now.getHours() < hour) {
+	// 		start = new Date(
+	// 			now.getFullYear(),
+	// 			now.getMonth(),
+	// 			now.getDate(),
+	// 			hour,
+	// 			0,
+	// 			0,
+	// 			0
+	// 		)
+	// 	} else {
+	// 		start = new Date(
+	// 			now.getFullYear(),
+	// 			now.getMonth(),
+	// 			now.getDate() + 1,
+	// 			hour,
+	// 			0,
+	// 			0,
+	// 			0
+	// 		)
+	// 	}
 
-		const wait = start.getTime() - now.getTime()
+	// 	const wait = start.getTime() - now.getTime()
 
-		if (wait < 0) {
-			this.scheduleHeal()
-		} else {
-			this.healTimeout = setTimeout(() => {
-				this.heal()
-			}, wait)
-		}
-	}
+	// 	if (wait < 0) {
+	// 		this.scheduleHeal()
+	// 	} else {
+	// 		this.healTimeout = setTimeout(() => {
+	// 			this.rebuildNodeRoutes()
+	// 		}, wait)
+	// 	}
+	// }
 
 	/**
 	 * Call `fn` function at most once every `wait` milliseconds
@@ -988,28 +989,28 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Calls driver healNetwork function and schedule next heal
+	 * Calls driver healNetwork function and schedule next rebuildNodeRoutes
 	 *
 	 */
-	heal() {
-		if (this.healTimeout) {
-			clearTimeout(this.healTimeout)
-			this.healTimeout = null
-		}
+	// rebuildNodeRoutes() {
+	// 	if (this.healTimeout) {
+	// 		clearTimeout(this.healTimeout)
+	// 		this.healTimeout = null
+	// 	}
 
-		try {
-			this.beginHealingNetwork()
-			logger.info('Network auto heal started')
-		} catch (error) {
-			logger.error(
-				`Error while doing scheduled network heal ${error.message}`,
-				error
-			)
-		}
+	// 	try {
+	// 		this.beginRebuildingRoutes()
+	// 		logger.info('Network auto rebuildNodeRoutes started')
+	// 	} catch (error) {
+	// 		logger.error(
+	// 			`Error while doing scheduled network rebuildNodeRoutes ${error.message}`,
+	// 			error
+	// 		)
+	// 	}
 
-		// schedule next
-		this.scheduleHeal()
-	}
+	// 	// schedule next
+	// 	this.scheduleHeal()
+	// }
 
 	/**
 	 * Used to Update an hass device of a specific node
@@ -2213,7 +2214,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				// init driver here because if connect fails the driver is destroyed
 				// this could throw so include in the try/catch
 				this._driver = new Driver(this.cfg.port, zwaveOptions)
-				this._driver.enableErrorReporting()
 				this._driver.on('error', this._onDriverError.bind(this))
 				this._driver.once(
 					'driver ready',
@@ -2953,7 +2953,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
-	async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]) {
+	async firmwareUpdateOTA(nodeId: number, updateInfo: FirmwareUpdateInfo) {
 		if (this.driverReady) {
 			const node = this._nodes.get(nodeId)
 
@@ -2963,7 +2963,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			const result = await this._driver.controller.firmwareUpdateOTA(
 				nodeId,
-				updates
+				updateInfo
 			)
 
 			return result
@@ -3163,13 +3163,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Heal a node
 	 */
-	async healNode(nodeId: number): Promise<boolean> {
+	async rebuildNodeRoutes(nodeId: number): Promise<boolean> {
 		if (this.driverReady) {
-			let status: HealNodeStatus = 'pending'
-			this.sendToSocket(socketEvents.healProgress, [[nodeId, status]])
-			const result = await this._driver.controller.healNode(nodeId)
+			let status: RebuildRoutesStatus = 'pending'
+			this.sendToSocket(socketEvents.rebuildRoutesProgress, [
+				[nodeId, status],
+			])
+			const result = await this._driver.controller.rebuildNodeRoutes(
+				nodeId
+			)
 			status = result ? 'done' : 'failed'
-			this.sendToSocket(socketEvents.healProgress, [[nodeId, status]])
+			this.sendToSocket(socketEvents.rebuildRoutesProgress, [
+				[nodeId, status],
+			])
 			return result
 		}
 
@@ -3807,26 +3813,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	beginHealingNetwork(options?: HealNetworkOptions): boolean {
+	beginRebuildingRoutes(options?: RebuildRoutesOptions): boolean {
 		if (this.driverReady) {
-			return this._driver.controller.beginHealingNetwork(options)
+			return this._driver.controller.beginRebuildingRoutes(options)
 		}
 
 		throw new DriverNotReadyError()
 	}
 
-	stopHealingNetwork(): boolean {
+	stopRebuildingRoutes(): boolean {
 		if (this.driverReady) {
-			const result = this._driver.controller.stopHealingNetwork()
+			const result = this._driver.controller.stopRebuildingRoutes()
 			if (result) {
-				const toReturn: [number, HealNodeStatus][] = []
+				const toReturn: [number, RebuildRoutesStatus][] = []
 				for (const [nodeId, node] of this.nodes) {
-					if (node.healProgress === 'pending') {
-						node.healProgress = 'skipped'
+					if (node.rebuildRoutesProgress === 'pending') {
+						node.rebuildRoutesProgress = 'skipped'
 					}
-					toReturn.push([nodeId, node.healProgress])
+					toReturn.push([nodeId, node.rebuildRoutesProgress])
 				}
-				this.sendToSocket(socketEvents.healProgress, toReturn)
+				this.sendToSocket(socketEvents.rebuildRoutesProgress, toReturn)
 			}
 			return result
 		}
@@ -4163,10 +4169,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				.on('node added', this._onNodeAdded.bind(this))
 				.on('node removed', this._onNodeRemoved.bind(this))
 				.on(
-					'heal network progress',
-					this._onHealNetworkProgress.bind(this)
+					'rebuild routes progress',
+					this._onRebuildRoutesProgress.bind(this)
 				)
-				.on('heal network done', this._onHealNetworkDone.bind(this))
+				.on('rebuild routes done', this._onRebuildRoutesDone.bind(this))
 				.on(
 					'statistics updated',
 					this._onControllerStatisticsUpdated.bind(this)
@@ -4547,27 +4553,29 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Triggered on each progress of healing process
 	 */
-	private _onHealNetworkProgress(
-		progress: ReadonlyMap<number, HealNodeStatus>
+	private _onRebuildRoutesProgress(
+		progress: ReadonlyMap<number, RebuildRoutesStatus>
 	) {
 		const toHeal = [...progress.values()]
 		const healedNodes = toHeal.filter((v) => v !== 'pending')
 		const message = `Healing process IN PROGRESS. Healed ${healedNodes.length} nodes`
 		this._updateControllerStatus(message)
-		this.sendToSocket(socketEvents.healProgress, [...progress.entries()])
+		this.sendToSocket(socketEvents.rebuildRoutesProgress, [
+			...progress.entries(),
+		])
 
-		// update heal progress status
+		// update rebuildNodeRoutes progress status
 		for (const [nodeId, status] of progress) {
 			const node = this._nodes.get(nodeId)
 			if (node) {
-				node.healProgress = status
+				node.rebuildRoutesProgress = status
 			}
 		}
 
 		this.emit(
 			'event',
 			EventSource.CONTROLLER,
-			'heal network progress',
+			'rebuild routes progress',
 			progress
 		)
 	}
@@ -4593,7 +4601,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
-	private _onHealNetworkDone(result) {
+	private _onRebuildRoutesDone(result) {
 		const message = `Healing process COMPLETED. Healed ${result.size} nodes`
 		this._updateControllerStatus(message)
 	}
@@ -5344,7 +5352,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeNotification: ZWaveNotificationCallback = (...parms) => {
-		const [zwaveNode, ccId, args] = parms
+		const [endpoint, ccId, args] = parms
+
+		const zwaveNode = endpoint.getNodeUnsafe()
+
+		if (!zwaveNode) {
+			this.logNode(
+				endpoint.nodeId,
+				'error',
+				`Notification received but node doesn't exists`
+			)
+
+			return
+		}
 
 		const valueId: Partial<ZUIValueId> = {
 			id: null,

@@ -190,10 +190,7 @@ export default {
 					}
 				)
 			) {
-				this.app.apiRequest('firmwareUpdateOTA', [
-					this.node.id,
-					update.files,
-				])
+				this.app.apiRequest('firmwareUpdateOTA', [this.node.id, update])
 			}
 		},
 	},
