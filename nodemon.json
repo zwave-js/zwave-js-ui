@@ -1,14 +1,6 @@
 {
-  "restartable": "rs",
-  "colours": true,
-  "ignore": [
-    ".git",
-    "node_modules/**/node_modules",
-    "docs",
-    "store/*",
-    "*.log"
-  ],
-  "verbose": false,
-  "watch": ["*.*"],
-  "ext": "js json"
+	"watch": ["**/*.ts", "package.json", "tsconfig.json"],
+	"ext": "ts,json",
+	"ignore": ["pkg", "store", "node_modules", "src", "dist", "server"],
+	"exec": "node --inspect=7004 --trace-warnings -r esbuild-register bin/www.ts"
 }

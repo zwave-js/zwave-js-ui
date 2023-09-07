@@ -6,71 +6,93 @@
 		{
 			"type": "npm",
 			"script": "dev",
-			"label": "Webpack",
-			"detail": "webpack serve --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
+			"label": "ViteJS",
+			"detail": "vite",
 			"isBackground": true,
 			"icon": {
 				"id": "server-process",
 				"color": "terminal.ansiBlue"
 			},
-			"problemMatcher": [
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"revealProblems": "onProblem",
+				"focus": false,
+				"showReuseMessage": true,
+				"clear": true,
+				"panel": "dedicated"
+			  },
+			  "problemMatcher": [
 				{
-					"owner": "webpack",
-					"severity": "error",
-					"fileLocation": "absolute",
-					"pattern": [
-						{
-							"regexp": "ERROR in [^ ]* (.*):(.*):(.*)",
-							"file": 1,
-							"line": 2,
-							"column": 3
-						},
-						{
-							"regexp": ".*",
-							"message": 0
-						}
-					],
-					"background": {
-						"activeOnStart": false,
-						"beginsPattern": "Project is running at",
-						"endsPattern": "compiled successfully"
+				  "owner": "typescript",
+				  "source": "Typescript",
+				  "fileLocation": "absolute",
+				  "applyTo": "allDocuments",
+				  "background": {
+					"activeOnStart": true
+					// "beginsPattern": "sd",
+					// "endsPattern": " > "
+				  },
+				  "pattern": [
+					{
+					  "regexp": "(ERROR|WARNING)\\(TypeScript\\)  (.*)",
+					  "severity": 1,
+					  "message": 2
+					},
+					{
+					  "regexp": "^ FILE  (.*):(\\d*):(\\d*)$",
+					  "file": 1,
+					  "line": 2,
+					  "column": 3
 					}
-				}
+				  ]
+				},
 			],
 		},
 		{
 			"type": "npm",
 			"script": "dev-https",
-			"label": "Webpack HTTPS",
-			"detail": "webpack serve --progress --host 0.0.0.0 --config build/webpack.dev.conf.js",
+			"label": "ViteJS HTTPS",
+			"detail": "vite",
 			"isBackground": true,
 			"icon": {
 				"id": "server-process",
 				"color": "terminal.ansiBlue"
 			},
-			"problemMatcher": [
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"revealProblems": "onProblem",
+				"focus": false,
+				"showReuseMessage": true,
+				"clear": true,
+				"panel": "dedicated"
+			  },
+			  "problemMatcher": [
 				{
-					"owner": "webpack",
-					"severity": "error",
-					"fileLocation": "absolute",
-					"pattern": [
-						{
-							"regexp": "ERROR in [^ ]* (.*):(.*):(.*)",
-							"file": 1,
-							"line": 2,
-							"column": 3
-						},
-						{
-							"regexp": ".*",
-							"message": 0
-						}
-					],
-					"background": {
-						"activeOnStart": false,
-						"beginsPattern": "Project is running at",
-						"endsPattern": "compiled successfully"
+				  "owner": "typescript",
+				  "source": "Typescript",
+				  "fileLocation": "absolute",
+				  "applyTo": "allDocuments",
+				  "background": {
+					"activeOnStart": true
+					// "beginsPattern": "sd",
+					// "endsPattern": " > "
+				  },
+				  "pattern": [
+					{
+					  "regexp": "(ERROR|WARNING)\\(TypeScript\\)  (.*)",
+					  "severity": 1,
+					  "message": 2
+					},
+					{
+					  "regexp": "^ FILE  (.*):(\\d*):(\\d*)$",
+					  "file": 1,
+					  "line": 2,
+					  "column": 3
 					}
-				}
+				  ]
+				},
 			],
 		}
 	]

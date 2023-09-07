@@ -65,7 +65,6 @@ typings/
 # dotenv environment variables file
 .env
 .env.app
-.env.webpack
 
 # next.js build output
 .next
