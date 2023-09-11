@@ -1,5 +1,17 @@
 
 
+## [8.25.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.25.0...v8.25.1) (2023-09-11)
+
+
+### Bug Fixes
+
+* **ui:** add missing webmanifest link in head ([40b25e9](https://github.com/zwave-js/zwave-js-ui/commit/40b25e96e73d3a88a603fa48e1f23b6a45a12e96))
+
+
+### Features
+
+* bump zwave-js@11.14.2 ([#3278](https://github.com/zwave-js/zwave-js-ui/issues/3278)) ([c8b47e0](https://github.com/zwave-js/zwave-js-ui/commit/c8b47e068eff24b41616ae6cd08fe7e6a3117ced))
+
 # [8.25.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.24.2...v8.25.0) (2023-09-06)
 
 
