@@ -15145,7 +15145,7 @@ __metadata:
     vuedraggable: ^2.24.3
     vuetify: ^2.6.14
     winston: ^3.8.2
-    zwave-js: ^11.14.0
+    zwave-js: ^11.14.2
   dependenciesMeta:
     "@release-it/conventional-changelog":
       optional: true
@@ -15202,9 +15202,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"zwave-js@npm:^11.14.0":
-  version: 11.14.0
-  resolution: "zwave-js@npm:11.14.0"
+"zwave-js@npm:^11.14.2":
+  version: 11.14.2
+  resolution: "zwave-js@npm:11.14.2"
   dependencies:
     "@alcalzone/jsonl-db": ^3.1.0
     "@alcalzone/pak": ^0.9.0
@@ -15232,6 +15232,6 @@ __metadata:
     xstate: 4.38.0
   bin:
     mock-server: bin/mock-server.js
-  checksum: 1d90574985e42ee73cdeccb2af2dae4f2e6fe7a91fc3643e880143f40f1d545032ab92cc1202d7be12a15d9447d722d940467033703b9dddc185690e43d99636
+  checksum: b716a920057b21275fccb4b59dffcca817ff6fcbfb75a7439d907d922da72b7c903ec4d7816c712567fbca2e1897f575f687ec19c304fdc3f4f2121639088da6
   languageName: node
   linkType: hard
