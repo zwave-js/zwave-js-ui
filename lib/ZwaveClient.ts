@@ -3161,7 +3161,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Heal a node
+	 * Rebuild node routes
 	 */
 	async rebuildNodeRoutes(nodeId: number): Promise<boolean> {
 		if (this.driverReady) {
@@ -4556,9 +4556,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onRebuildRoutesProgress(
 		progress: ReadonlyMap<number, RebuildRoutesStatus>
 	) {
-		const toHeal = [...progress.values()]
-		const healedNodes = toHeal.filter((v) => v !== 'pending')
-		const message = `Rebuild Routes process IN PROGRESS. Healed ${healedNodes.length} nodes`
+		const toRebuild = [...progress.values()]
+		const rebuiltNodes = toRebuild.filter((v) => v !== 'pending')
+		const message = `Rebuild Routes process IN PROGRESS. Healed ${rebuiltNodes.length} nodes`
 		this._updateControllerStatus(message)
 		this.sendToSocket(socketEvents.rebuildRoutesProgress, [
 			...progress.entries(),
@@ -6385,7 +6385,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					totalFilesFragments
 			)
 
-			if (this.nodes.get(nodeId).isControllerNode) {
+			if (this.nodes.get(nodeId)?.isControllerNode) {
 				// emulate a ping to another node
 				Array.from(this.driver.controller.nodes.entries())[1][1]
 					.ping()

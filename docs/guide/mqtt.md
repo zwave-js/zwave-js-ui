@@ -1239,7 +1239,7 @@ Payload:
 async rebuildNodeRoutes(nodeId: number): Promise<boolean>;
 ```
 
-Heal a node.
+Rebuild node routes.
 
 <details>
 <summary>Mqtt usage</summary>
