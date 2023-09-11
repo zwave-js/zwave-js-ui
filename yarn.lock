@@ -2455,6 +2455,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@tsconfig/node18@npm:^18.2.1":
+  version: 18.2.1
+  resolution: "@tsconfig/node18@npm:18.2.1"
+  checksum: 9d969456125f37c4d14baa7fe028cfcd448fde4bec7072f7518acf83919bd1e5b25695897954e1bad6fabd54658583c44a56d140a8dc87039ad9d96fd4c5a1ed
+  languageName: node
+  linkType: hard
+
 "@types/app-root-path@npm:^1.2.4":
   version: 1.2.4
   resolution: "@types/app-root-path@npm:1.2.4"
@@ -14980,6 +14987,7 @@ __metadata:
     "@kvaster/zwavejs-prom": ^0.0.2
     "@mdi/js": 7.2.96
     "@release-it/conventional-changelog": ^5.1.1
+    "@tsconfig/node18": ^18.2.1
     "@types/app-root-path": ^1.2.4
     "@types/archiver": ^5.3.2
     "@types/chai": ^4.3.4
