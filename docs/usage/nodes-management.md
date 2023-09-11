@@ -1,6 +1,6 @@
 # Managing Nodes
 
-Nodes can be managed from the Control Panel page by clicking on `MANAGE NODES` button under `Actions` section. This will open the **Node Manager** dialog
+Nodes can be managed from the Control Panel page by clicking on bottom right FAB `+` and then `∞` button. This will open the **Node Manager** dialog
 
 ![Nodes Manager](../_images/nodes_manager.png)
 
