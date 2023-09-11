@@ -4551,14 +4551,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Triggered on each progress of healing process
+	 * Triggered on each progress of rebuild routes process
 	 */
 	private _onRebuildRoutesProgress(
 		progress: ReadonlyMap<number, RebuildRoutesStatus>
 	) {
 		const toHeal = [...progress.values()]
 		const healedNodes = toHeal.filter((v) => v !== 'pending')
-		const message = `Healing process IN PROGRESS. Healed ${healedNodes.length} nodes`
+		const message = `Rebuild Routes process IN PROGRESS. Healed ${healedNodes.length} nodes`
 		this._updateControllerStatus(message)
 		this.sendToSocket(socketEvents.rebuildRoutesProgress, [
 			...progress.entries(),
@@ -4602,7 +4602,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onRebuildRoutesDone(result) {
-		const message = `Healing process COMPLETED. Healed ${result.size} nodes`
+		const message = `Rebuild Routes process COMPLETED. Healed ${result.size} nodes`
 		this._updateControllerStatus(message)
 	}
 

@@ -370,12 +370,13 @@ export default {
 							action: 'rebuildNodeRoutes',
 							args: {
 								confirm:
-									'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+									'Rebuilding node routes causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
 							},
 						},
 					],
 					icon: 'healing',
-					desc: 'Force nodes to establish better connections to the controller',
+					color: 'warning',
+					desc: 'Discover and assign new routes from nodes to the controller and other nodes.',
 				},
 				{
 					text: 'Ping',
@@ -393,7 +394,10 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['setHealProgress', 'showSnackbar']),
+		...mapActions(useBaseStore, [
+			'setRebuildRoutesProgress',
+			'showSnackbar',
+		]),
 		jsonToList,
 		showNodesManager() {
 			this.app.showNodesManager()
@@ -532,10 +536,10 @@ export default {
 					const { includeSleeping } =
 						await this.$listeners.showConfirm(
 							'Info',
-							'Healing network causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
+							'Rebuilding nodes routes causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
 							'info',
 							{
-								confirmText: 'Heal',
+								confirmText: 'Rebuild',
 								inputs: [
 									{
 										type: 'checkbox',
@@ -1031,7 +1035,10 @@ export default {
 		},
 	},
 	mounted() {
-		this.bindEvent('rebuildRoutesProgress', this.setHealProgress.bind(this))
+		this.bindEvent(
+			'rebuildRoutesProgress',
+			this.setRebuildRoutesProgress.bind(this)
+		)
 	},
 	beforeDestroy() {
 		if (this.socket) {

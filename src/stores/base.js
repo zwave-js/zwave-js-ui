@@ -421,7 +421,7 @@ const useBaseStore = defineStore('base', {
 				})
 			}
 		},
-		setHealProgress(nodesProgress) {
+		setRebuildRoutesProgress(nodesProgress) {
 			for (const [nodeId, progress] of nodesProgress) {
 				const node = this.getNode(nodeId)
 				if (node) {

@@ -413,7 +413,7 @@ export default {
 								},
 							],
 							icon: 'healing',
-							desc: 'Force nodes to establish better connections to the controller',
+							desc: 'Discover and assign new routes from node to the controller and other nodes.',
 						},
 						{
 							text: 'Refresh Values',

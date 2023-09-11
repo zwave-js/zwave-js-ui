@@ -80,12 +80,12 @@ export default {
 
 			if (response.success && response.result) {
 				this.showSnackbar(
-					`Heal of node ${node.id} successful`,
+					`Routes of node ${node.id} has been rebuilt successfully`,
 					'success'
 				)
 			} else {
 				this.showSnackbar(
-					`Error healing node ${node.id}: ${
+					`Error while rebuilding node ${node.id} routes: ${
 						!response.success
 							? response.message
 							: 'failed to rebuild node routes'
