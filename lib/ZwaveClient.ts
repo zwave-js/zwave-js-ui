@@ -2004,6 +2004,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					})
 				}
 			}
+
+			return neighbors
 		} catch (error) {
 			this.logNode(
 				nodeId,
