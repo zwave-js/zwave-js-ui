@@ -370,7 +370,7 @@ export default {
 							action: 'rebuildNodeRoutes',
 							args: {
 								confirm:
-									'Rebuilding node routes causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+									'Rebuilding routes causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
 							},
 						},
 					],
