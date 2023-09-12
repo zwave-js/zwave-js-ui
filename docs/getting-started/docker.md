@@ -126,7 +126,7 @@ services:
     zwave-js-ui:
     # ..... other settings .....
       healthcheck:
-          test: wget --no-verbose --spider --no-check-certificate --header "Accept: text/plain" https://localhost:8091/health || exit 1
+          test: 'wget --no-verbose --spider --no-check-certificate --header "Accept: text/plain" https://localhost:8091/health || exit 1'
           interval: 1m
           timeout: 10s
           start_period: 30s
