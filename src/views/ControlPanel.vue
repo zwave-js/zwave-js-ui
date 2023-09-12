@@ -536,7 +536,7 @@ export default {
 					const { includeSleeping } =
 						await this.$listeners.showConfirm(
 							'Info',
-							'Rebuilding nodes routes causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
+							'Rebuilding routes causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
 							'info',
 							{
 								confirmText: 'Rebuild',
