@@ -100,8 +100,6 @@
     "docsify": "^4.13.0",
     "docsify-cli": "^4.4.4",
     "eslint": "^8.36.0",
-    "eslint-friendly-formatter": "^4.0.1",
-    "eslint-loader": "^4.0.2",
     "eslint-plugin-babel": "^5.3.1",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-node": "^11.1.0",
