@@ -32,7 +32,7 @@ async function(driver) {
 }
 ```
 
-This functionality is both available using [MQTT Apis](/guide/mqtt?id=apis) and directly from Control Panel UI by clicking on Actions > Advanced Actions > Driver Function. Once you've clicked on the action, you'll see a modal that asks you to enter a function and/or select an existing **Snippet**
+This functionality is both available using [MQTT Apis](/guide/mqtt?id=apis) and directly from Control Panel UI by clicking on bottom right FAB `+` > `🪄` button > Driver Function. Once you've clicked on the action, you'll see a modal that asks you to enter a function and/or select an existing **Snippet**
 
 ## Examples
 
