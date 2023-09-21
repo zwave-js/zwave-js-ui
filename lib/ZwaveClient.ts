@@ -24,6 +24,7 @@ import {
 	ControllerFirmwareUpdateResult,
 	ControllerFirmwareUpdateStatus,
 	ControllerStatistics,
+	ControllerStatus,
 	DataRate,
 	Driver,
 	ExclusionOptions,
@@ -4181,6 +4182,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					'firmware update finished',
 					this._onControllerFirmwareUpdateFinished.bind(this)
 				)
+				.on(
+					'status changed',
+					this._onControllerStatusChanged.bind(this)
+				)
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -4378,6 +4383,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this.emit('event', EventSource.CONTROLLER, 'statistics updated', stats)
+	}
+
+	private _onControllerStatusChanged(status: ControllerStatus) {
+		let message = ''
+
+		if (status === ControllerStatus.Unresponsive) {
+			this._error = 'Controller is unresponsive'
+			message = this._error
+		} else if (status === ControllerStatus.Jammed) {
+			this._error = 'Controller is unable to transmit'
+			message = this._error
+		} else {
+			message = `Controller is ${getEnumMemberName(
+				ControllerStatus,
+				status
+			)}`
+			this._error = undefined
+		}
+
+		this._updateControllerStatus(message)
+		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
 
 	private _onBootLoaderReady() {
