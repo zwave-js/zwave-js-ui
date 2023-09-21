@@ -5,6 +5,7 @@ import {
 	IClientOptions,
 	IClientPublishOptions,
 	IClientSubscribeOptions,
+	IStore,
 	connect,
 } from 'mqtt'
 import { allSettled, parseJSON, sanitizeTopic } from './utils'
@@ -377,8 +378,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			await this.storeManager.open()
 
 			// no reason to use a memory store for incoming messages
-			options.incomingStore = this.storeManager.incoming
-			options.outgoingStore = this.storeManager.outgoing
+			options.incomingStore = this.storeManager
+				.incoming as unknown as IStore
+			options.outgoingStore = this.storeManager
+				.outgoing as unknown as IStore
 		}
 
 		if (config.auth) {
