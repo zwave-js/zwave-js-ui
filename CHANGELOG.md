@@ -1,5 +1,18 @@
 
 
+# [8.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.25.1...v8.26.0) (2023-09-21)
+
+
+### Bug Fixes
+
+* add missing return in `getNodeNeighbors` api ([e38b13f](https://github.com/zwave-js/zwave-js-ui/commit/e38b13fea8fb637f072771b31a71ec8e703964b7)), closes [#3276](https://github.com/zwave-js/zwave-js-ui/issues/3276)
+
+
+### Features
+
+* bump zwave-js@11.14.3 ([#3293](https://github.com/zwave-js/zwave-js-ui/issues/3293)) ([653913c](https://github.com/zwave-js/zwave-js-ui/commit/653913c7970e5de090677c1a543836d1687af87b))
+* show controller status ([#3294](https://github.com/zwave-js/zwave-js-ui/issues/3294)) ([a43e74f](https://github.com/zwave-js/zwave-js-ui/commit/a43e74fc6b3b100729540832b04d79c652236319))
+
 ## [8.25.1](https://github.com/zwave-js/zwave-js-ui/compare/v8.25.0...v8.25.1) (2023-09-11)
 
 
