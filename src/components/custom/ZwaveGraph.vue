@@ -400,22 +400,22 @@ export default {
 				},
 				{
 					color: '#00BCD4',
-					textColor: '#006064',
+					textColor: '#00BCD4',
 					text: '1 hop',
 				},
 				{
 					color: '#2DCC70',
-					textColor: '#1D8548',
+					textColor: '#2DCC70',
 					text: '2 hops',
 				},
 				{
 					color: '#F1C40F',
-					textColor: '#D25400',
+					textColor: '#F1C40F',
 					text: '3 hops',
 				},
 				{
 					color: '#E77E23',
-					textColor: '#D25400',
+					textColor: '#E77E23',
 					text: '4 hops',
 				},
 				{
