@@ -31,7 +31,6 @@ import {
 	ExclusionStrategy,
 	extractFirmware,
 	FirmwareUpdateCapabilities,
-	FirmwareUpdateFileInfo,
 	FirmwareUpdateProgress,
 	FirmwareUpdateResult,
 	FirmwareUpdateStatus,
@@ -98,6 +97,7 @@ import {
 	ZWavePlusNodeType,
 	ZWavePlusRoleType,
 	FirmwareUpdateInfo,
+	PartialZWaveOptions,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -2085,7 +2085,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			// extend options with hidden `options`
-			const zwaveOptions: utils.DeepPartial<ZWaveOptions> = {
+			const zwaveOptions: PartialZWaveOptions = {
 				allowBootloaderOnly: this.cfg.allowBootloaderOnly || false,
 				storage: {
 					cacheDir: storeDir,
