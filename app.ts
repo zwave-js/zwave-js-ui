@@ -1452,7 +1452,11 @@ async function gracefuShutdown() {
 }
 
 process.on('unhandledRejection', (reason) => {
-	logger.error(`Unhandled Rejection, reason: ${reason}`)
+	logger.error(
+		`Unhandled Rejection, reason: ${reason}${
+			reason.stack ? `\n${reason.stack}` : ''
+		}`
+	)
 })
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
