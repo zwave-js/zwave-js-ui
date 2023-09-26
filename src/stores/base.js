@@ -21,7 +21,6 @@ const useBaseStore = defineStore('base', {
 			port: '/dev/zwave',
 			allowBootloaderOnly: false,
 			commandsTimeout: 30,
-			sendToSleepTimeout: 250,
 			logLevel: 'debug',
 			rf: {
 				region: undefined,

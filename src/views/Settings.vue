@@ -795,7 +795,6 @@
 												newZwave.sendToSleepTimeout
 											"
 											label="Send to sleep timeout"
-											:rules="[rules.required]"
 											required
 											suffix="seconds"
 											hint="How long to wait without pending commands before sending a node back to sleep"
