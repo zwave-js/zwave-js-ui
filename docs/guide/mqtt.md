@@ -567,6 +567,33 @@ Payload:
 
 </details>
 
+#### `setNodeDefaultSetValueOptions`
+
+```ts
+setNodeDefaultSetValueOptions(
+	nodeId: number,
+	props: Pick<ZUINode, 'defaultTransitionDuration' | 'defaultVolume'>
+): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setNodeDefaultSetValueOptions/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		props
+	]
+}
+```
+
+</details>
+
 #### `_createScene`
 
 ```ts
@@ -1027,7 +1054,7 @@ Payload:
 async getAvailableFirmwareUpdates(
 	nodeId: number,
 	options?: GetFirmwareUpdatesOptions
-): Promise<FirmwareUpdateInfo[]>;
+): Promise<{ version: string; changelog: string; channel: "stable" | "beta"; files: FirmwareUpdateFileInfo[]; downgrade: boolean; normalizedVersion: string; device: { manufacturerId: number; productType: number; productId: number; firmwareVersion: string; rfRegion?: RFRegion; }; }[]>;
 ```
 
 <details>
@@ -1065,7 +1092,7 @@ Payload:
 {
 	"args": [
 		nodeId,
-		updates
+		updateInfo
 	]
 }
 ```
@@ -1405,7 +1432,8 @@ Payload:
 async assignCustomReturnRoutes(
 	nodeId: number,
 	destinationNodeId: number,
-	routes: Route[]
+	routes: Route[],
+	priorityRoute?: Route
 ): Promise<boolean>;
 ```
 
@@ -1423,7 +1451,8 @@ Payload:
 	"args": [
 		nodeId,
 		destinationNodeId,
-		routes
+		routes,
+		priorityRoute
 	]
 }
 ```
@@ -1458,7 +1487,11 @@ Payload:
 #### `assignCustomSUCReturnRoutes`
 
 ```ts
-async assignCustomSUCReturnRoutes(nodeId: number, routes: Route[]): Promise<boolean>;
+async assignCustomSUCReturnRoutes(
+	nodeId: number,
+	routes: Route[],
+	priorityRoute?: Route
+): Promise<boolean>;
 ```
 
 Assigns up to 4 return routes to a node to the controller.
@@ -1474,7 +1507,8 @@ Payload:
 {
 	"args": [
 		nodeId,
-		routes
+		routes,
+		priorityRoute
 	]
 }
 ```
@@ -1692,6 +1726,31 @@ Payload:
 		nodeId,
 		targetNodeId,
 		rounds
+	]
+}
+```
+
+</details>
+
+#### `abortHealthCheck`
+
+```ts
+abortHealthCheck(nodeId: number): void;
+```
+
+Aborts an ongoing health check if one is currently in progress.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/abortHealthCheck/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
 	]
 }
 ```
