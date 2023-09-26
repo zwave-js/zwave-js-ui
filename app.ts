@@ -1452,10 +1452,9 @@ async function gracefuShutdown() {
 }
 
 process.on('unhandledRejection', (reason) => {
+	const stack = (reason as any).stack || ''
 	logger.error(
-		`Unhandled Rejection, reason: ${reason}${
-			reason.stack ? `\n${reason.stack}` : ''
-		}`
+		`Unhandled Rejection, reason: ${reason}${stack ? `\n${stack}` : ''}`
 	)
 })
 
