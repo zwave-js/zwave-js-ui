@@ -567,6 +567,33 @@ Payload:
 
 </details>
 
+#### `setNodeDefaultSetValueOptions`
+
+```ts
+setNodeDefaultSetValueOptions(
+	nodeId: number,
+	props: Pick<ZUINode, 'defaultTransitionDuration' | 'defaultVolume'>
+): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setNodeDefaultSetValueOptions/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		props
+	]
+}
+```
+
+</details>
+
 #### `_createScene`
 
 ```ts
@@ -1027,7 +1054,7 @@ Payload:
 async getAvailableFirmwareUpdates(
 	nodeId: number,
 	options?: GetFirmwareUpdatesOptions
-): Promise<FirmwareUpdateInfo[]>;
+): Promise<{ version: string; changelog: string; channel: "stable" | "beta"; files: FirmwareUpdateFileInfo[]; downgrade: boolean; normalizedVersion: string; device: { manufacturerId: number; productType: number; productId: number; firmwareVersion: string; rfRegion?: RFRegion; }; }[]>;
 ```
 
 <details>
@@ -1051,7 +1078,7 @@ Payload:
 #### `firmwareUpdateOTA`
 
 ```ts
-async firmwareUpdateOTA(nodeId: number, updates: FirmwareUpdateFileInfo[]): Promise<FirmwareUpdateResult>;
+async firmwareUpdateOTA(nodeId: number, updateInfo: FirmwareUpdateInfo): Promise<FirmwareUpdateResult>;
 ```
 
 <details>
@@ -1065,7 +1092,7 @@ Payload:
 {
 	"args": [
 		nodeId,
-		updates
+		updateInfo
 	]
 }
 ```
@@ -1233,18 +1260,18 @@ Payload:
 
 </details>
 
-#### `healNode`
+#### `rebuildNodeRoutes`
 
 ```ts
-async healNode(nodeId: number): Promise<boolean>;
+async rebuildNodeRoutes(nodeId: number): Promise<boolean>;
 ```
 
-Heal a node.
+Rebuild node routes.
 
 <details>
 <summary>Mqtt usage</summary>
 
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/healNode/set`
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/rebuildNodeRoutes/set`
 
 Payload:
 
@@ -1405,7 +1432,8 @@ Payload:
 async assignCustomReturnRoutes(
 	nodeId: number,
 	destinationNodeId: number,
-	routes: Route[]
+	routes: Route[],
+	priorityRoute?: Route
 ): Promise<boolean>;
 ```
 
@@ -1423,7 +1451,8 @@ Payload:
 	"args": [
 		nodeId,
 		destinationNodeId,
-		routes
+		routes,
+		priorityRoute
 	]
 }
 ```
@@ -1458,7 +1487,11 @@ Payload:
 #### `assignCustomSUCReturnRoutes`
 
 ```ts
-async assignCustomSUCReturnRoutes(nodeId: number, routes: Route[]): Promise<boolean>;
+async assignCustomSUCReturnRoutes(
+	nodeId: number,
+	routes: Route[],
+	priorityRoute?: Route
+): Promise<boolean>;
 ```
 
 Assigns up to 4 return routes to a node to the controller.
@@ -1474,7 +1507,8 @@ Payload:
 {
 	"args": [
 		nodeId,
-		routes
+		routes,
+		priorityRoute
 	]
 }
 ```
@@ -1698,6 +1732,31 @@ Payload:
 
 </details>
 
+#### `abortHealthCheck`
+
+```ts
+abortHealthCheck(nodeId: number): void;
+```
+
+Aborts an ongoing health check if one is currently in progress.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/abortHealthCheck/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
 #### `isFailedNode`
 
 ```ts
@@ -1851,16 +1910,16 @@ Payload:
 
 </details>
 
-#### `beginHealingNetwork`
+#### `beginRebuildingRoutes`
 
 ```ts
-beginHealingNetwork(options?: HealNetworkOptions): boolean;
+beginRebuildingRoutes(options?: RebuildRoutesOptions): boolean;
 ```
 
 <details>
 <summary>Mqtt usage</summary>
 
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginHealingNetwork/set`
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/beginRebuildingRoutes/set`
 
 Payload:
 
@@ -1874,16 +1933,16 @@ Payload:
 
 </details>
 
-#### `stopHealingNetwork`
+#### `stopRebuildingRoutes`
 
 ```ts
-stopHealingNetwork(): boolean;
+stopRebuildingRoutes(): boolean;
 ```
 
 <details>
 <summary>Mqtt usage</summary>
 
-Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopHealingNetwork/set`
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopRebuildingRoutes/set`
 
 Payload:
 

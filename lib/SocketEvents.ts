@@ -9,7 +9,7 @@ export enum socketEvents {
 	valueUpdated = 'VALUE_UPDATED',
 	valueRemoved = 'VALUE_REMOVED',
 	metadataUpdated = 'METADATA_UPDATED',
-	healProgress = 'HEAL_PROGRESS',
+	rebuildRoutesProgress = 'REBUILD_ROUTES_PROGRESS',
 	healthCheckProgress = 'HEALTH_CHECK_PROGRESS',
 	info = 'INFO',
 	api = 'API_RETURN', // api results

@@ -288,8 +288,12 @@
 					</v-btn>
 				</v-col>
 				<v-col class="pa-1">
-					<v-btn color="error" small rounded @click="healNode(node)"
-						>Heal
+					<v-btn
+						color="error"
+						small
+						rounded
+						@click="rebuildNodeRoutes(node)"
+						>Rebuild Routes
 						<v-icon>heart_broken</v-icon>
 					</v-btn>
 				</v-col>

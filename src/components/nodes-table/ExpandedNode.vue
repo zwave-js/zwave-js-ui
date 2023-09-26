@@ -401,19 +401,19 @@ export default {
 							desc: 'Start/Stop a firmware update',
 						},
 						{
-							text: 'Heal Node',
+							text: 'Rebuild Routes',
 							options: [
 								{
-									name: 'Heal',
-									action: 'healNode',
+									name: 'Rebuild',
+									action: 'rebuildNodeRoutes',
 									args: {
 										confirm:
-											'Healing a node causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+											'Rebuilding node routes causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
 									},
 								},
 							],
 							icon: 'healing',
-							desc: 'Force nodes to establish better connections to the controller',
+							desc: 'Discover and assign new routes from node to the controller and other nodes.',
 						},
 						{
 							text: 'Refresh Values',

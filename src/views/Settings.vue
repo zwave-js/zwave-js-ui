@@ -792,6 +792,18 @@
 									<v-col cols="6">
 										<v-text-field
 											v-model.number="
+												newZwave.sendToSleepTimeout
+											"
+											label="Send to sleep timeout"
+											required
+											suffix="seconds"
+											hint="How long to wait without pending commands before sending a node back to sleep"
+											type="number"
+										></v-text-field>
+									</v-col>
+									<v-col cols="6">
+										<v-text-field
+											v-model.number="
 												newZwave.maxNodeEventsQueueSize
 											"
 											label="Node events queue size"

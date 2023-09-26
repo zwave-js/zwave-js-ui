@@ -198,31 +198,37 @@
 			/>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.healProgress`]="{ item }">
+		<template v-slot:[`item.rebuildRoutesProgress`]="{ item }">
 			<div v-if="!item.isControllerNode">
 				<v-progress-circular
 					class="ml-3"
-					v-if="item.healProgress === 'pending'"
+					v-if="item.rebuildRoutesProgress === 'pending'"
 					indeterminate
 					size="20"
 					color="primary"
 				></v-progress-circular>
 
 				<v-tooltip
-					v-else-if="getHealIcon(item.healProgress) !== undefined"
+					v-else-if="
+						getHealIcon(item.rebuildRoutesProgress) !== undefined
+					"
 					bottom
 				>
 					<template v-slot:activator="{ on }">
 						<v-icon
 							v-on="on"
 							class="ml-3"
-							v-text="getHealIcon(item.healProgress).icon"
-							:color="getHealIcon(item.healProgress).color"
+							v-text="
+								getHealIcon(item.rebuildRoutesProgress).icon
+							"
+							:color="
+								getHealIcon(item.rebuildRoutesProgress).color
+							"
 						></v-icon>
 					</template>
-					<span>{{ item.healProgress.toUpperCase() }}</span>
+					<span>{{ item.rebuildRoutesProgress.toUpperCase() }}</span>
 				</v-tooltip>
-				<div v-else>{{ item.healProgress }}</div>
+				<div v-else>{{ item.rebuildRoutesProgress }}</div>
 			</div>
 			<div v-else></div>
 		</template>

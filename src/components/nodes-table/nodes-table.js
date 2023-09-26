@@ -189,7 +189,7 @@ export default {
 						return v
 					},
 				},
-				healProgress: { type: 'string', label: 'Heal' },
+				rebuildRoutesProgress: { type: 'string', label: 'Heal' },
 				interviewStage: { type: 'string', label: 'Interview' },
 				lastActive: {
 					type: 'date',
