@@ -1,5 +1,12 @@
 
 
+## [9.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.0...v9.0.1) (2023-09-27)
+
+
+### Bug Fixes
+
+* bump @zwave-js/server to 1.32.1 ([#3305](https://github.com/zwave-js/zwave-js-ui/issues/3305)) ([70cbd7a](https://github.com/zwave-js/zwave-js-ui/commit/70cbd7abc876517d922cbca3cf87561f2c3b6006))
+
 # [9.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.26.0...v9.0.0) (2023-09-27)
 
 
