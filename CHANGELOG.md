@@ -1,5 +1,13 @@
 
 
+# [9.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.26.0...v9.0.0) (2023-09-27)
+
+
+### Bug Fixes
+
+* **graph:** match text color with icon color on ZWave Graph legend ([#3299](https://github.com/zwave-js/zwave-js-ui/issues/3299)) ([f546160](https://github.com/zwave-js/zwave-js-ui/commit/f546160794002b33d27efbdc86efd506cec3afef))
+* include error stack in unhandled rejections ([bd41112](https://github.com/zwave-js/zwave-js-ui/commit/bd41112afb19471fc7ea0bb212fe6fb0422be9a4)), closes [#3300](https://github.com/zwave-js/zwave-js-ui/issues/3300)
+
 # [8.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v8.25.1...v8.26.0) (2023-09-21)
 
 
