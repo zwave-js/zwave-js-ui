@@ -541,6 +541,27 @@ app.use(
 	})
 )
 
+// fix back compatibility with old history mode after switching to hash mode
+const redirectPaths = [
+	'/control-panel',
+	'/smart-start',
+	'/settings',
+	'/scenes',
+	'/debug',
+	'/store',
+	'/mesh',
+]
+app.use('/', (req, res, next) => {
+	if (redirectPaths.includes(req.originalUrl)) {
+		// get path when running behind a proxy
+		const path = req.header('X-External-Path').replace(/\/$/, '')
+
+		res.redirect(`${path}/#${req.originalUrl}`)
+	} else {
+		next()
+	}
+})
+
 app.use('/', express.static(utils.joinPath(false, 'dist')))
 
 app.use(cors({ credentials: true, origin: true }))
