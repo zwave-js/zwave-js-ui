@@ -1,0 +1,23 @@
+name: Post Release Notes to Discord
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  post-release-notes:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - uses: actions/github-script@v6
+        name: Post release notes to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        with:
+          script: |
+            const script = require('./.github/bot-scripts/post-release-notes.js')
+            script({github, context})
