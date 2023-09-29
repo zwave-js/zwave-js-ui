@@ -20,4 +20,4 @@ jobs:
         with:
           script: |
             const script = require('./.github/bot-scripts/post-release-notes.js')
-            script({github, context})
+            script({github, context, fetch})
