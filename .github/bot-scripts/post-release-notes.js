@@ -13,6 +13,9 @@ async function main(param) {
     const releaseNotes = context.payload.release.body.replace(/(\r\n+|\n+|\r+)/gm, '\n').replace(/(https:\/\/[^)]+)/g, '<$1>');
 
     try {
+        console.log('Posting release notes to Discord...');
+        console.log(releaseNotes);
+        
         const response = await fetch(discordWebhookUrl, {
             method: 'POST',
             headers: {

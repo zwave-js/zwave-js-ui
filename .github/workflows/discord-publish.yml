@@ -13,12 +13,11 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Post release notes to Discord
+      - uses: actions/github-script@v6
+        name: Post release notes to Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-        run: node post-release-notes.js
+        with:
+          script: |
+            const script = require('./.github/bot-scripts/post-release-notes.js')
+            script({github, context})
