@@ -165,6 +165,7 @@
     "zwave-js": "^12.0.0"
   },
   "devDependencies": {
+    "@actions/github": "^5.1.1",
     "@babel/register": "^7.22.15",
     "@tsconfig/node18": "^18.2.1",
     "@types/app-root-path": "^1.2.4",

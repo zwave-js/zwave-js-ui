@@ -2,10 +2,10 @@
 // @ts-check
 
 /**
- * @param {{github: Github, context: Context}} param
+ * @param {{github: Github, context: Context, fetch: Fetch }} param
  */
 async function main(param) {
-	const { github, context } = param;
+	const { context, fetch } = param;
 
     const discordWebhookUrl = process.env.DISCORD_WEBHOOK_URL || '';
 
@@ -15,7 +15,7 @@ async function main(param) {
     try {
         console.log('Posting release notes to Discord...');
         console.log(releaseNotes);
-        
+
         const response = await fetch(discordWebhookUrl, {
             method: 'POST',
             headers: {
