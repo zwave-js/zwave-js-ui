@@ -1,5 +1,12 @@
 
 
+## [9.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.1...v9.0.2) (2023-09-29)
+
+
+### Bug Fixes
+
+* auto redirect when using old paths ([#3308](https://github.com/zwave-js/zwave-js-ui/issues/3308)) ([e5793bd](https://github.com/zwave-js/zwave-js-ui/commit/e5793bdf4b5a0bfb4935eea211f220da52220adb))
+
 ## [9.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.0...v9.0.1) (2023-09-27)
 
 
