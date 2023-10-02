@@ -210,7 +210,8 @@
 
 				<v-tooltip
 					v-else-if="
-						getHealIcon(item.rebuildRoutesProgress) !== undefined
+						getRebuildRoutesIcon(item.rebuildRoutesProgress) !==
+						undefined
 					"
 					bottom
 				>
@@ -219,10 +220,12 @@
 							v-on="on"
 							class="ml-3"
 							v-text="
-								getHealIcon(item.rebuildRoutesProgress).icon
+								getRebuildRoutesIcon(item.rebuildRoutesProgress)
+									.icon
 							"
 							:color="
-								getHealIcon(item.rebuildRoutesProgress).color
+								getRebuildRoutesIcon(item.rebuildRoutesProgress)
+									.color
 							"
 						></v-icon>
 					</template>

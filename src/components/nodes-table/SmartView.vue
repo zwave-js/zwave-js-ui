@@ -101,7 +101,9 @@
 										/>
 
 										<rich-value
-											:value="healRichValue(item)"
+											:value="
+												rebuildRoutesRichValue(item)
+											"
 										/>
 
 										<rich-value
@@ -359,18 +361,6 @@ export default {
 			this.expandedNode = null
 			this.expandedNodeDialog = false
 		},
-		getHealIcon(status) {
-			switch (status) {
-				case 'done':
-					return { icon: 'done', color: 'green' }
-				case 'failed':
-					return { icon: 'error', color: 'red' }
-				case 'skipped':
-					return { icon: 'next_plan', color: 'blue' }
-			}
-
-			return undefined
-		},
 		getProgress(node) {
 			return node.firmwareUpdate
 				? Math.round(
@@ -401,14 +391,14 @@ export default {
 
 			return v
 		},
-		healRichValue(node) {
+		rebuildRoutesRichValue(node) {
 			const progress = node.rebuildRoutesProgress || 'done'
 
 			let v = {
 				align: 'center',
 				icon: '',
 				iconStyle: `color: ${colors.grey.base}`,
-				description: 'Heal ' + progress,
+				description: 'Rebuild routes ' + progress,
 				size: 18,
 			}
 
