@@ -1106,7 +1106,9 @@ export default {
 						'info',
 						15000
 					)
-				} else if (versions?.app !== this.appInfo.appVersion) {
+				}
+
+				if (versions?.app !== this.appInfo.appVersion) {
 					const current = await this.getRelease(
 						'zwave-js-ui',
 						'v' + currentVersion
