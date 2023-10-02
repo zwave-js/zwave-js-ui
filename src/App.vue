@@ -892,6 +892,8 @@ export default {
 							throw Error(data.message)
 						}
 					}
+
+					await this.checkChangelog()
 				}
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
@@ -1074,6 +1076,77 @@ export default {
 				}
 			} catch (error) {
 				setTimeout(() => (this.error = error.message), 1000)
+				log.error(error)
+			}
+		},
+		async getRelease(project, version) {
+			try {
+				const response = await fetch(
+					`https://api.github.com/repos/zwave-js/${project}/releases/${
+						version === 'latest' ? 'latest' : 'tags/' + version
+					}`
+				)
+				const data = await response.json()
+				return data
+			} catch (error) {
+				log.error(error)
+			}
+		},
+		async checkChangelog() {
+			const versions = useBaseStore().gateway?.versions
+			// get changelog from github latest release
+			try {
+				const latest = await this.getRelease('zwave-js-ui', 'latest')
+				const currentVersion = import.meta.env.VITE_VERSION
+				const latestVersion = latest.tag_name.replace('v', '')
+
+				if (latestVersion !== currentVersion) {
+					this.showSnackbar(
+						`New version available: ${latest.tag_name}`,
+						'info',
+						15000
+					)
+				} else if (versions?.app !== this.appInfo.appVersion) {
+					const current = await this.getRelease(
+						'zwave-js-ui',
+						'v' + currentVersion
+					)
+					const { default: md } = await import('markdown-it')
+
+					let changelog = md().render(current.body)
+
+					if (this.appInfo.zwaveVersion !== versions?.zwave) {
+						// get changelog from github latest release
+						const zwaveLatest = await this.getRelease(
+							'node-zwave-js',
+							'v' + this.appInfo.zwaveVersion
+						)
+
+						const zwaveChangelog = md().render(zwaveLatest.body)
+						changelog += `</br><h2>Driver v${this.appInfo.zwaveVersion}</h2></br>${zwaveChangelog}`
+					}
+
+					if (this.appInfo.serverVersion !== versions?.server) {
+						// get changelog from github latest release
+						const serverLatest = await this.getRelease(
+							'zwave-js-server',
+							this.appInfo.serverVersion
+						)
+
+						const serverChangelog = md().render(serverLatest.body)
+
+						changelog += `</br><h2>Server v${this.appInfo.serverVersion}</h2></br>${serverChangelog}`
+					}
+
+					// means we never saw the changelog for this version
+					await this.confirm(`Changelog`, changelog, 'info', {
+						width: 1000,
+						cancelText: '',
+						confirmText: 'Close',
+					})
+					await ConfigApis.updateVersions()
+				}
+			} catch (error) {
 				log.error(error)
 			}
 		},

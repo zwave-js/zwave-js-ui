@@ -90,6 +90,7 @@ const useBaseStore = defineStore('base', {
 			homeHex: '',
 			appVersion: '',
 			zwaveVersion: '',
+			serverVersion: '',
 			controllerStatus: 'Unknown',
 			newConfigVersion: undefined,
 		},
