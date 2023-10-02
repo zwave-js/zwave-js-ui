@@ -189,7 +189,10 @@ export default {
 						return v
 					},
 				},
-				rebuildRoutesProgress: { type: 'string', label: 'Heal' },
+				rebuildRoutesProgress: {
+					type: 'string',
+					label: 'Rebuild routes',
+				},
 				interviewStage: { type: 'string', label: 'Interview' },
 				lastActive: {
 					type: 'date',
@@ -216,7 +219,7 @@ export default {
 				? this.expanded.filter((i) => i !== item)
 				: [...this.expanded, item]
 		},
-		getHealIcon(status) {
+		getRebuildRoutesIcon(status) {
 			switch (status) {
 				case 'done':
 					return { icon: 'done', color: 'green' }
