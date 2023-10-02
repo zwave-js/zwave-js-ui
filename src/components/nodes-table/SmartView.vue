@@ -361,18 +361,6 @@ export default {
 			this.expandedNode = null
 			this.expandedNodeDialog = false
 		},
-		getRebuildRoutesIcon(status) {
-			switch (status) {
-				case 'done':
-					return { icon: 'done', color: 'green' }
-				case 'failed':
-					return { icon: 'error', color: 'red' }
-				case 'skipped':
-					return { icon: 'next_plan', color: 'blue' }
-			}
-
-			return undefined
-		},
 		getProgress(node) {
 			return node.firmwareUpdate
 				? Math.round(
