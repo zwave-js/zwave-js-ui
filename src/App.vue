@@ -1097,6 +1097,8 @@ export default {
 			// get changelog from github latest release
 			try {
 				const latest = await this.getRelease('zwave-js-ui', 'latest')
+
+				if (!latest?.tag_name) return
 				const currentVersion = import.meta.env.VITE_VERSION
 				const latestVersion = latest.tag_name.replace('v', '')
 
