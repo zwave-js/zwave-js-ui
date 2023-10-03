@@ -141,6 +141,15 @@
 											v-model="newGateway.logToFile"
 										></v-switch>
 									</v-col>
+
+									<v-col cols="12" sm="6" md="4">
+										<v-checkbox
+											persistent-hint
+											label="Disable changelogs"
+											hint="Check this to disable changelogs dialogs on new versions"
+											v-model="newZwave.disableChangelog"
+										></v-checkbox>
+									</v-col>
 								</v-row>
 								<v-subheader class="font-weight-bold">
 									Devices values configuration

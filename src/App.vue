@@ -1093,7 +1093,10 @@ export default {
 			}
 		},
 		async checkChangelog() {
-			const versions = useBaseStore().gateway?.versions
+			const settings = useBaseStore().gateway
+			if (settings?.disableChangelog) return
+
+			const versions = settings?.versions
 			// get changelog from github latest release
 			try {
 				const latest = await this.getRelease('zwave-js-ui', 'latest')
@@ -1143,12 +1146,27 @@ export default {
 					}
 
 					// means we never saw the changelog for this version
-					await this.confirm(`Changelog`, changelog, 'info', {
-						width: 1000,
-						cancelText: '',
-						confirmText: 'Close',
-					})
-					await ConfigApis.updateVersions()
+					const result = await this.confirm(
+						`Changelog`,
+						changelog,
+						'info',
+						{
+							width: 1000,
+							cancelText: '',
+							confirmText: 'OK',
+							persistent: true,
+							inputs: [
+								{
+									type: 'checkbox',
+									label: "Don't show again",
+									key: 'dontShowAgain',
+									hint: 'Enable this to never show changelogs on next updates',
+								},
+							],
+						}
+					)
+
+					await ConfigApis.updateVersions(result?.dontShowAgain)
 				}
 			} catch (error) {
 				log.error(error)

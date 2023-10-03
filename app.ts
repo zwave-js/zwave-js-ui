@@ -1142,11 +1142,7 @@ app.post(
 	isAuthenticated,
 	async function (req, res) {
 		try {
-			if (restarting) {
-				throw Error(
-					'Gateway is restarting, wait a moment before doing another request'
-				)
-			}
+			const { disableChangelog } = req.body
 			const settings: Settings =
 				jsonStore.get(store.settings) || ({} as Settings)
 
@@ -1163,6 +1159,8 @@ app.post(
 				driver: libVersion,
 				server: serverVersion,
 			}
+
+			settings.gateway.disableChangelog = disableChangelog
 
 			await jsonStore.put(store.settings, settings)
 

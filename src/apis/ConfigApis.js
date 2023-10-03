@@ -128,8 +128,8 @@ export default {
 		const response = await request.put('/store-multi', { files })
 		return response.data
 	},
-	async updateVersions() {
-		const response = await request.post('/versions')
+	async updateVersions(disableChangelog = false) {
+		const response = await request.post('/versions', { disableChangelog })
 		return response.data
 	},
 }
