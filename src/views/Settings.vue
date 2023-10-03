@@ -147,7 +147,9 @@
 											persistent-hint
 											label="Disable changelogs"
 											hint="Check this to disable changelogs dialogs on new versions"
-											v-model="newZwave.disableChangelog"
+											v-model="
+												newGateway.disableChangelog
+											"
 										></v-checkbox>
 									</v-col>
 								</v-row>
