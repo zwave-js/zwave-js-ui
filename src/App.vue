@@ -1120,7 +1120,14 @@ export default {
 					)
 					const { default: md } = await import('markdown-it')
 
-					let changelog = md().render(current.body)
+					current.body = current.body.replace(
+						`## [${currentVersion}]`,
+						`## Z-Wave JS UI [v${currentVersion}]`
+					)
+
+					let changelog = md()
+						.render(current.body)
+						.replace('<p>', '</br><p>')
 
 					if (this.appInfo.zwaveVersion !== versions?.zwave) {
 						// get changelog from github latest release
@@ -1129,7 +1136,13 @@ export default {
 							'v' + this.appInfo.zwaveVersion
 						)
 
-						const zwaveChangelog = md().render(zwaveLatest.body)
+						const zwaveChangelog = md()
+							.render(zwaveLatest.body)
+							.replace(
+								/#(\d+)/g,
+								'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>'
+							)
+
 						changelog += `</br><h2>Driver v${this.appInfo.zwaveVersion}</h2></br>${zwaveChangelog}`
 					}
 
@@ -1140,7 +1153,16 @@ export default {
 							this.appInfo.serverVersion
 						)
 
-						const serverChangelog = md().render(serverLatest.body)
+						const serverChangelog = md()
+							.render(serverLatest.body)
+							.replace(
+								"<h2>What's Changed</h2>",
+								'<h3>Changes</h3>'
+							)
+							.replace(
+								/#(\d+)/g,
+								'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
+							)
 
 						changelog += `</br><h2>Server v${this.appInfo.serverVersion}</h2></br>${serverChangelog}`
 					}

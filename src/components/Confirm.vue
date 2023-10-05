@@ -15,9 +15,9 @@
 			<v-card-text
 				v-show="!!message"
 				v-html="message"
-				class="pa-4"
+				class="px-4 pt-4"
 			></v-card-text>
-			<v-card-text v-if="options.inputs" class="pa-4">
+			<v-card-text v-if="options.inputs" class="px-4">
 				<v-container grid-list-md>
 					<v-form
 						v-model="valid"
