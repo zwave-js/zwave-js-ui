@@ -554,7 +554,7 @@ const redirectPaths = [
 app.use('/', (req, res, next) => {
 	if (redirectPaths.includes(req.originalUrl)) {
 		// get path when running behind a proxy
-		const path = req.header('X-External-Path').replace(/\/$/, '')
+		const path = req.header('X-External-Path')?.replace(/\/$/, '') ?? ''
 
 		res.redirect(`${path}/#${req.originalUrl}`)
 	} else {
