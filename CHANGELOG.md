@@ -1,5 +1,20 @@
 
 
+# [9.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.3...v9.1.0) (2023-10-06)
+
+
+### Bug Fixes
+
+* issue when header not present in request ([ba835a7](https://github.com/zwave-js/zwave-js-ui/commit/ba835a7ee2b57728c6843336c1bd79ddabeda8a9))
+* **ui:** missing `Heal` references in control panel ([#3318](https://github.com/zwave-js/zwave-js-ui/issues/3318)) ([a13d26f](https://github.com/zwave-js/zwave-js-ui/commit/a13d26f5869acf76fdfd15d2986ca58eb47d8380))
+
+
+### Features
+
+* add `response timeout` setting support ([#3325](https://github.com/zwave-js/zwave-js-ui/issues/3325)) ([74e5c39](https://github.com/zwave-js/zwave-js-ui/commit/74e5c39febc250f9a2cb8e5b96a4f066fee6a842))
+* bump zwave-js@12.0.3 ([#3324](https://github.com/zwave-js/zwave-js-ui/issues/3324)) ([9937eb2](https://github.com/zwave-js/zwave-js-ui/commit/9937eb2878655d90bded51747647522fa5ead287))
+* show releases changelog on login ([#3319](https://github.com/zwave-js/zwave-js-ui/issues/3319)) ([e672c5c](https://github.com/zwave-js/zwave-js-ui/commit/e672c5c3afcf401f5ecc0dde46fd7928c4dd089f))
+
 ## [9.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.2...v9.0.3) (2023-09-29)
 
 
