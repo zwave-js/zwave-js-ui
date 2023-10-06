@@ -1167,7 +1167,7 @@ export default {
 								'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
 							)
 
-						changelog += `</br><h2>Server <a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${serverLatest.tag_name}">${serverLatest.tag_name}</a></h2></br>${serverChangelog}`
+						changelog += `</br><h2>Server <a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${serverLatest.tag_name}">v${serverLatest.tag_name}</a></h2></br>${serverChangelog}`
 					}
 
 					// means we never saw the changelog for this version
