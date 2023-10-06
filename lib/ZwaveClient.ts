@@ -570,6 +570,7 @@ export type ZwaveConfig = {
 	logLevel?: LogManager.LogLevel
 	commandsTimeout?: number
 	sendToSleepTimeout?: number
+	responseTimeout?: number
 	enableStatistics?: boolean
 	disclaimerVersion?: number
 	options?: ZWaveOptions
@@ -2117,6 +2118,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				timeouts: {
 					report: this.cfg.higherReportsTimeout ? 10000 : undefined,
 					sendToSleep: this.cfg.sendToSleepTimeout,
+					response: this.cfg.responseTimeout,
 				},
 				userAgent: {
 					[pkgjson.name]: pkgjson.version,
