@@ -892,6 +892,8 @@ export default {
 							throw Error(data.message)
 						}
 					}
+
+					await this.checkChangelog()
 				}
 			} catch (error) {
 				this.showSnackbar(error.message, 'error')
@@ -1074,6 +1076,124 @@ export default {
 				}
 			} catch (error) {
 				setTimeout(() => (this.error = error.message), 1000)
+				log.error(error)
+			}
+		},
+		async getRelease(project, version) {
+			try {
+				const response = await fetch(
+					`https://api.github.com/repos/zwave-js/${project}/releases/${
+						version === 'latest' ? 'latest' : 'tags/' + version
+					}`
+				)
+				const data = await response.json()
+				return data
+			} catch (error) {
+				log.error(error)
+			}
+		},
+		async checkChangelog() {
+			const settings = useBaseStore().gateway
+			if (settings?.disableChangelog) return
+
+			const versions = settings?.versions
+			// get changelog from github latest release
+			try {
+				const latest = await this.getRelease('zwave-js-ui', 'latest')
+
+				if (!latest?.tag_name) return
+				const currentVersion = import.meta.env.VITE_VERSION
+				const latestVersion = latest.tag_name.replace('v', '')
+
+				if (latestVersion !== currentVersion) {
+					this.showSnackbar(
+						`New version available: ${latest.tag_name}`,
+						'info',
+						15000
+					)
+				}
+
+				if (versions?.app !== this.appInfo.appVersion) {
+					const current = await this.getRelease(
+						'zwave-js-ui',
+						'v' + currentVersion
+					)
+					const { default: md } = await import('markdown-it')
+
+					current.body = current.body.replace(
+						new RegExp(
+							`## \\[${currentVersion}\\]\\([^\\)]+\\)`,
+							'g'
+						),
+						`## Z-Wave JS UI [${current.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${current.tag_name})`
+					)
+
+					let changelog = md()
+						.render(current.body)
+						.replace('<p>', '</br><p>')
+
+					if (this.appInfo.zwaveVersion !== versions?.zwave) {
+						// get changelog from github latest release
+						const zwaveLatest = await this.getRelease(
+							'node-zwave-js',
+							'v' + this.appInfo.zwaveVersion
+						)
+
+						const zwaveChangelog = md()
+							.render(zwaveLatest.body)
+							.replace(
+								/#(\d+)/g,
+								'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>'
+							)
+
+						changelog += `</br><h2>Driver <a target="_blank" href="https://github.com/zwave-js/node-zwave-js/releases/tag/${zwaveLatest.tag_name}">${zwaveLatest.tag_name}</a></h2></br>${zwaveChangelog}`
+					}
+
+					if (this.appInfo.serverVersion !== versions?.server) {
+						// get changelog from github latest release
+						const serverLatest = await this.getRelease(
+							'zwave-js-server',
+							this.appInfo.serverVersion
+						)
+
+						const serverChangelog = md()
+							.render(serverLatest.body)
+							.replace(
+								"<h2>What's Changed</h2>",
+								'<h3>Changes</h3>'
+							)
+							.replace(
+								/#(\d+)/g,
+								'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
+							)
+
+						changelog += `</br><h2>Server <a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${serverLatest.tag_name}">${serverLatest.tag_name}</a></h2></br>${serverChangelog}`
+					}
+
+					// means we never saw the changelog for this version
+					const result = await this.confirm(
+						`Changelog`,
+						changelog,
+						'info',
+						{
+							width: 1000,
+							cancelText: '',
+							confirmText: 'OK',
+							persistent: true,
+							inputs: [
+								{
+									type: 'checkbox',
+									label: "Don't show again",
+									key: 'dontShowAgain',
+									hint: 'Enable this to never show changelogs on next updates',
+								},
+							],
+						}
+					)
+
+					await ConfigApis.updateVersions(result?.dontShowAgain)
+				}
+			} catch (error) {
 				log.error(error)
 			}
 		},

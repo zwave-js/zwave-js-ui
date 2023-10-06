@@ -5,7 +5,7 @@ import cors from 'cors'
 import csrf from 'csurf'
 import morgan from 'morgan'
 import store, { Settings, User } from './config/store'
-import Gateway, { GatewayConfig } from './lib/Gateway'
+import Gateway, { GatewayConfig, GatewayType } from './lib/Gateway'
 import jsonStore from './lib/jsonStore'
 import * as loggers from './lib/logger'
 import MqttClient from './lib/MqttClient'
@@ -1127,6 +1127,46 @@ app.post(
 				success: true,
 				enabled: enableStatistics,
 				message: 'Statistics configuration updated successfully',
+			})
+		} catch (error) {
+			logger.error(error)
+			res.json({ success: false, message: error.message })
+		}
+	}
+)
+
+// update versions
+app.post(
+	'/api/versions',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			const { disableChangelog } = req.body
+			const settings: Settings =
+				jsonStore.get(store.settings) || ({} as Settings)
+
+			if (!settings.zwave) {
+				settings.gateway = {
+					type: GatewayType.NAMED,
+				}
+				settings.gateway.versions = {}
+			}
+
+			// update versions to actual ones
+			settings.gateway.versions = {
+				app: utils.getVersion(),
+				driver: libVersion,
+				server: serverVersion,
+			}
+
+			settings.gateway.disableChangelog = disableChangelog
+
+			await jsonStore.put(store.settings, settings)
+
+			res.json({
+				success: true,
+				message: 'Versions updated successfully',
 			})
 		} catch (error) {
 			logger.error(error)

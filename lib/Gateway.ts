@@ -196,6 +196,12 @@ export type GatewayConfig = {
 	logFileName?: string
 	manualDiscovery?: boolean
 	authEnabled?: boolean
+	versions?: {
+		driver?: string
+		app?: string
+		server?: string
+	}
+	disableChangelog?: boolean
 }
 
 interface ValueIdTopic {
