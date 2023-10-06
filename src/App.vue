@@ -1121,8 +1121,11 @@ export default {
 					const { default: md } = await import('markdown-it')
 
 					current.body = current.body.replace(
-						`## [${currentVersion}]`,
-						`## Z-Wave JS UI [v${currentVersion}]`
+						new RegExp(
+							`## \\[${currentVersion}\\]\\([^\\)]+\\)`,
+							'g'
+						),
+						`## Z-Wave JS UI [${current.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${current.tag_name})`
 					)
 
 					let changelog = md()
@@ -1143,7 +1146,7 @@ export default {
 								'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>'
 							)
 
-						changelog += `</br><h2>Driver v${this.appInfo.zwaveVersion}</h2></br>${zwaveChangelog}`
+						changelog += `</br><h2>Driver <a target="_blank" href="https://github.com/zwave-js/node-zwave-js/releases/tag/${zwaveLatest.tag_name}">${zwaveLatest.tag_name}</a></h2></br>${zwaveChangelog}`
 					}
 
 					if (this.appInfo.serverVersion !== versions?.server) {
@@ -1164,7 +1167,7 @@ export default {
 								'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
 							)
 
-						changelog += `</br><h2>Server v${this.appInfo.serverVersion}</h2></br>${serverChangelog}`
+						changelog += `</br><h2>Server <a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${serverLatest.tag_name}">${serverLatest.tag_name}</a></h2></br>${serverChangelog}`
 					}
 
 					// means we never saw the changelog for this version
