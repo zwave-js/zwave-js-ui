@@ -807,8 +807,22 @@
 											"
 											label="Send to sleep timeout"
 											required
-											suffix="seconds"
-											hint="How long to wait without pending commands before sending a node back to sleep"
+											persistent-hint
+											suffix="ms"
+											hint="How long to wait without pending commands before sending a node back to sleep. Leave blank to use default (250ms)"
+											type="number"
+										></v-text-field>
+									</v-col>
+									<v-col cols="6">
+										<v-text-field
+											v-model.number="
+												newZwave.responseTimeout
+											"
+											label="Response timeout"
+											required
+											persistent-hint
+											suffix="ms"
+											hint="How long to wait for a controller response. Leave blank to use default (10000ms)"
 											type="number"
 										></v-text-field>
 									</v-col>
