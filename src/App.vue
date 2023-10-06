@@ -1122,7 +1122,7 @@ export default {
 
 					current.body = current.body.replace(
 						new RegExp(
-							`## \\[${currentVersion}\\]\\([^\\)]+\\)`,
+							`#+ \\[${currentVersion}\\]\\([^\\)]+\\)`,
 							'g'
 						),
 						`## Z-Wave JS UI [${current.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${current.tag_name})`
@@ -1130,7 +1130,7 @@ export default {
 
 					let changelog = md()
 						.render(current.body)
-						.replace('<p>', '</br><p>')
+						.replace('</h2>', '</h2><br>')
 
 					if (this.appInfo.zwaveVersion !== versions?.zwave) {
 						// get changelog from github latest release
@@ -1173,7 +1173,7 @@ export default {
 					// means we never saw the changelog for this version
 					const result = await this.confirm(
 						`Changelog`,
-						changelog,
+						`<div style="line-height: 1.5rem">${changelog}</div>`,
 						'info',
 						{
 							width: 1000,
