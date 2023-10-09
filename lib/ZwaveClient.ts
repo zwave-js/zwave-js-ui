@@ -5756,7 +5756,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			utils.num2hex(zwaveNode.productId),
 			utils.num2hex(zwaveNode.productType),
 		]
-		node.hexId = `${hexIds[0]}-${hexIds[2]}-${hexIds[1]}`
+		node.hexId = `${hexIds[0]} ${hexIds[2]}-${hexIds[1]}`
 		node.dbLink = `https://devices.zwave-js.io/?jumpTo=${hexIds[0]}:${
 			hexIds[2]
 		}:${hexIds[1]}:${node.firmwareVersion || '0.0'}`

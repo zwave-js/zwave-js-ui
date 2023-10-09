@@ -10,11 +10,11 @@
 				<span class="title grey--text">Device </span>
 				<br />
 				<span class="subtitle font-weight-bold font-monospace">
-					{{ `${node.deviceId} (${node.hexId})` }}
+					{{ node.hexId }}
 				</span>
 
-				<v-icon @click="openLink(node.dbLink)" class="ml-2" small>
-					ios_share
+				<v-icon @click="openLink(node.dbLink)" class="ml-2">
+					open_in_new
 				</v-icon>
 				<br />
 				<span
