@@ -25,7 +25,7 @@ const useBaseStore = defineStore('base', {
 			rf: {
 				region: undefined,
 				txPower: {
-					powerLevel: undefined,
+					powerlevel: undefined,
 					measured0dBm: undefined,
 				},
 			},
