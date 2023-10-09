@@ -1,5 +1,21 @@
 
 
+## [9.1.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.0...v9.1.1) (2023-10-09)
+
+
+### Bug Fixes
+
+* possible startup bug `versions` of undefined ([5286879](https://github.com/zwave-js/zwave-js-ui/commit/5286879888c9880feb20a72cdf7752365ac4268c)), closes [#3328](https://github.com/zwave-js/zwave-js-ui/issues/3328)
+* **ui:** add `v` prefix in server version changelog for consistency ([1741fac](https://github.com/zwave-js/zwave-js-ui/commit/1741fac56a5b4a75a5f3446c4988e77b63cfd374))
+* **ui:** changelog spacing ([c6abd78](https://github.com/zwave-js/zwave-js-ui/commit/c6abd7818a0abd26d825b4ff7a6b381c920098a5))
+* **ui:** cleanup device id display ([fa5a8e9](https://github.com/zwave-js/zwave-js-ui/commit/fa5a8e941e359d0f890aa8aed66f0d2d49ca1d60)), closes [#3314](https://github.com/zwave-js/zwave-js-ui/issues/3314)
+* **ui:** typo on pinia store ([5b3a205](https://github.com/zwave-js/zwave-js-ui/commit/5b3a20569c60463bf545c3df5a1cf1bb47380978)), closes [#3327](https://github.com/zwave-js/zwave-js-ui/issues/3327)
+
+
+### Features
+
+* bump zwave-js@12.0.4 ([#3331](https://github.com/zwave-js/zwave-js-ui/issues/3331)) ([1f0dc2f](https://github.com/zwave-js/zwave-js-ui/commit/1f0dc2f5c40f3bcc7d6fe32f9c26e1cb2bacdcf4))
+
 # [9.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.0.3...v9.1.0) (2023-10-06)
 
 
