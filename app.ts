@@ -1146,7 +1146,7 @@ app.post(
 			const settings: Settings =
 				jsonStore.get(store.settings) || ({} as Settings)
 
-			if (!settings.zwave) {
+			if (!settings.gateway) {
 				settings.gateway = {
 					type: GatewayType.NAMED,
 				}
