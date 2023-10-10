@@ -1,5 +1,12 @@
 
 
+## [9.1.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.1...v9.1.2) (2023-10-10)
+
+
+### Features
+
+* add setting to enable new version notification ([#3332](https://github.com/zwave-js/zwave-js-ui/issues/3332)) ([7e00e02](https://github.com/zwave-js/zwave-js-ui/commit/7e00e02ada3c5140a2f09533b2a79f8f8df988e5))
+
 ## [9.1.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.0...v9.1.1) (2023-10-09)
 
 
