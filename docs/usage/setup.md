@@ -12,6 +12,8 @@ To configure Z-Wave JS UI, you must access it via your web browser at <http://lo
 - **Log enabled**: Enable logging for Z-Wave JS UI
 - **Log level**: Set the log level (Error, Warn, Info, Verbose, Debug, Silly)
 - **Log to file**: Enable this to store the logs to a file
+- **Disable changelog**: Disable the changelog popup on new releases
+- **Notify on new releases**: Enable this to receive a notification when a new release is available
 
 ### Device values configuration
 

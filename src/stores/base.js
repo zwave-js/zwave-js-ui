@@ -85,6 +85,7 @@ const useBaseStore = defineStore('base', {
 			values: [],
 			jobs: [],
 			disableChangelog: false,
+			notifyNewVersions: false,
 		},
 		appInfo: {
 			homeid: '',

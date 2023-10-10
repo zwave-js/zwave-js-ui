@@ -1094,7 +1094,6 @@ export default {
 		},
 		async checkChangelog() {
 			const settings = useBaseStore().gateway
-			if (settings?.disableChangelog) return
 
 			const versions = settings?.versions
 			// get changelog from github latest release
@@ -1105,13 +1104,18 @@ export default {
 				const currentVersion = import.meta.env.VITE_VERSION
 				const latestVersion = latest.tag_name.replace('v', '')
 
-				if (latestVersion !== currentVersion) {
+				if (
+					latestVersion !== currentVersion &&
+					settings.notifyNewVersions
+				) {
 					this.showSnackbar(
 						`New version available: ${latest.tag_name}`,
 						'info',
 						15000
 					)
 				}
+
+				if (settings?.disableChangelog) return
 
 				if (versions?.app !== this.appInfo.appVersion) {
 					const current = await this.getRelease(
