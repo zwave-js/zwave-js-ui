@@ -152,6 +152,16 @@
 											"
 										></v-checkbox>
 									</v-col>
+									<v-col cols="12" sm="6" md="4">
+										<v-checkbox
+											persistent-hint
+											label="Notify new versions"
+											hint="Check this to show a notification when a new version is available"
+											v-model="
+												newGateway.notifyNewVersions
+											"
+										></v-checkbox>
+									</v-col>
 								</v-row>
 								<v-subheader class="font-weight-bold">
 									Devices values configuration

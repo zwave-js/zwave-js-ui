@@ -202,6 +202,7 @@ export type GatewayConfig = {
 		server?: string
 	}
 	disableChangelog?: boolean
+	notifyNewVersions?: boolean
 }
 
 interface ValueIdTopic {
