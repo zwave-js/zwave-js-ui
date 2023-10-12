@@ -789,21 +789,36 @@ export default {
 						return
 					}
 				} else if (action === 'restoreNVM') {
-					const confirm = await this.$listeners.showConfirm(
+					const result = await this.$listeners.showConfirm(
 						'NVM Restore',
 						'While doing the restore the Z-Wave radio will be turned on/off.\n<strong>A failure during this process may brick your controller. Use at your own risk!</strong>',
 						'alert',
 						{
 							confirmText: 'Ok',
+							width: 500,
+							inputs: [
+								{
+									type: 'file',
+									label: 'File',
+									hint: 'NVM file',
+									key: 'file',
+								},
+								{
+									type: 'checkbox',
+									label: 'Skip compatibility check',
+									hint: 'This needs to be checked in order to allow restoring NVM backups on older controllers, with the risk of restoring an incompatible backup',
+									key: 'useRaw',
+								},
+							],
 						}
 					)
-					if (!confirm) {
+					if (!result?.file) {
 						return
 					}
 
 					try {
-						const { data } = await this.$listeners.import('buffer')
-						args.push(data)
+						const data = await result.file.arrayBuffer()
+						args.push(data, result.useRaw)
 					} catch (error) {
 						return
 					}
