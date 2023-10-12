@@ -811,7 +811,7 @@ export default {
 
 					try {
 						const { data } = await this.$listeners.import('buffer')
-						args.push(data, confirm.useRaw)
+						args.push(data, result.useRaw)
 					} catch (error) {
 						return
 					}
