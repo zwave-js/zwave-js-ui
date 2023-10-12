@@ -795,7 +795,14 @@ export default {
 						'alert',
 						{
 							confirmText: 'Ok',
+							width: 500,
 							inputs: [
+								{
+									type: 'file',
+									label: 'File',
+									hint: 'NVM file',
+									key: 'file',
+								},
 								{
 									type: 'checkbox',
 									label: 'Skip compatibility check',
@@ -805,12 +812,12 @@ export default {
 							],
 						}
 					)
-					if (result?.useRaw === undefined) {
+					if (!result?.file) {
 						return
 					}
 
 					try {
-						const { data } = await this.$listeners.import('buffer')
+						const data = await result.file.arrayBuffer()
 						args.push(data, result.useRaw)
 					} catch (error) {
 						return
