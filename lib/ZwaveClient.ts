@@ -4735,16 +4735,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(`Backup NVM progress: ${progress}%`)
 	}
 
-	async restoreNVM(data: Buffer) {
+	async restoreNVM(data: Buffer, useRaw = false) {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
 
-		await this.driver.controller.restoreNVM(
-			data,
-			this._onConvertNVMProgress.bind(this),
-			this._onRestoreNVMProgress.bind(this)
-		)
+		if (useRaw) {
+			await this.driver.controller.restoreNVMRaw(
+				data,
+				this._onRestoreNVMProgress.bind(this)
+			)
+		} else {
+			await this.driver.controller.restoreNVM(
+				data,
+				this._onConvertNVMProgress.bind(this),
+				this._onRestoreNVMProgress.bind(this)
+			)
+		}
 	}
 
 	private _onConvertNVMProgress(bytesRead: number, totalBytes: number) {
