@@ -21,7 +21,7 @@ Available tags are:
 - `latest` for the latest official release.
 - `master` for the bleeding-edge version. This image is built after every new commit to the master branch in the [Z-Wave JS UI](https://github.com/zwave-js/zwave-js-ui/commits/master) repository. Use at your own caution.
 - `sha-<commit-sha>` (example: `sha-92d502a`)
-- _Version tags:_ We provide multiple ones with different specificity in the [samentic versioning](https://semver.org/):
+- _Version tags:_ We provide multiple ones with different specificity in the [semantic versioning](https://semver.org/):
   - `<major>`: latest release **within the same major**, example: `8` will update for any v8.\* but will not update for v9.0.0.
   - `<major>.<minor>`: latest release **within the same minor**, example: `8.2` will update for any v8.2.1, v8.2.2 and v8.2.9; but not for v8.3.0.
   - `<major>.<minor>.<patch>`: static pointer to a specific release, example `8.2.1`.
