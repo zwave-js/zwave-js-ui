@@ -18,15 +18,23 @@
 						class="ml-1"
 					>
 					</v-checkbox>
+					<v-checkbox
+						v-model="showDowngrades"
+						hide-details
+						dense
+						label="Show downgrades"
+						class="ml-1"
+					>
+					</v-checkbox>
 				</v-row>
 			</v-col>
 
-			<template v-if="fwUpdates.length > 0">
+			<template v-if="filteredUpdates.length > 0">
 				<v-col
 					cols="12"
 					sm="6"
 					md="4"
-					v-for="u in fwUpdates"
+					v-for="u in filteredUpdates"
 					:key="u.version"
 				>
 					<v-card dense elevation="5">
@@ -43,7 +51,9 @@
 								small
 								:color="u.downgrade ? 'warning' : 'success'"
 								@click="updateFirmware(u)"
-								><v-icon small>upload</v-icon>
+								><v-icon small>{{
+									u.downgrade ? 'download' : 'upload'
+								}}</v-icon>
 								{{ u.downgrade ? 'Downgrade' : 'Update' }}
 							</v-btn>
 						</v-card-title>
@@ -137,9 +147,16 @@ export default {
 			fwUpdates: [],
 			loading: false,
 			includePrereleases: false,
+			showDowngrades: false,
 		}
 	},
-	computed: {},
+	computed: {
+		filteredUpdates() {
+			return this.fwUpdates.filter(
+				(u) => !u.downgrade || (u.downgrade && this.showDowngrades)
+			)
+		},
+	},
 	mounted() {
 		this.checkUpdates()
 	},
