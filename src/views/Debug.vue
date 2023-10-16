@@ -64,6 +64,7 @@
 						overflow-y: scroll;
 						border: 1px solid grey;
 						padding: 10px;
+						white-space: pre;
 					"
 					class="mono"
 					v-html="filteredLogs.join('')"
