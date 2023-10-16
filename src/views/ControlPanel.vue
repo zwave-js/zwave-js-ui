@@ -923,7 +923,8 @@ export default {
 								// handled in App.vue
 								break
 							}
-							case 'updateFirmware': {
+							case 'updateFirmware':
+							case 'firmwareUpdateOTA': {
 								const result = response.result
 
 								const title = `Firmware update ${
