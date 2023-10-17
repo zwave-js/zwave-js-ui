@@ -1092,6 +1092,41 @@ export default {
 				log.error(error)
 			}
 		},
+		async getChangelogs(project, lastVersion, nextVersion, parseChangelog) {
+			const changelogs = []
+
+			try {
+				const response = await fetch(
+					`https://api.github.com/repos/zwave-js/${project}/releases`
+				)
+				const data = await response.json()
+
+				let start = false
+
+				for (const release of data) {
+					if (release.tag_name === lastVersion) {
+						break
+					}
+
+					if (release.tag_name === nextVersion) {
+						start = true
+					}
+
+					if (!start) continue
+
+					if (release.draft || release.prerelease) continue
+
+					changelogs.push(parseChangelog(release))
+
+					// if last version is not defined just print the last
+					if (!lastVersion) break
+				}
+			} catch (error) {
+				log.error(error)
+			}
+
+			return changelogs
+		},
 		async checkChangelog() {
 			const settings = useBaseStore().gateway
 
@@ -1117,61 +1152,75 @@ export default {
 
 				if (settings?.disableChangelog) return
 
-				if (versions?.app !== this.appInfo.appVersion) {
-					const current = await this.getRelease(
+				const { default: md } = await import('markdown-it')
+
+				if (versions?.app !== currentVersion) {
+					const appChangelogs = await this.getChangelogs(
 						'zwave-js-ui',
-						'v' + currentVersion
-					)
-					const { default: md } = await import('markdown-it')
-
-					current.body = current.body.replace(
-						new RegExp(
-							`#+ \\[${currentVersion}\\]\\([^\\)]+\\)`,
-							'g'
-						),
-						`## Z-Wave JS UI [${current.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${current.tag_name})`
-					)
-
-					let changelog = md()
-						.render(current.body)
-						.replace('</h2>', '</h2><br>')
-
-					if (this.appInfo.zwaveVersion !== versions?.zwave) {
-						// get changelog from github latest release
-						const zwaveLatest = await this.getRelease(
-							'node-zwave-js',
-							'v' + this.appInfo.zwaveVersion
-						)
-
-						const zwaveChangelog = md()
-							.render(zwaveLatest.body)
-							.replace(
-								/#(\d+)/g,
-								'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>'
+						versions.app ? 'v' + versions.app : null,
+						'v' + currentVersion,
+						(release) => {
+							release.body = release.body.replace(
+								new RegExp(
+									`#+ \\[${release.tag_name.replace(
+										'v',
+										''
+									)}\\]\\([^\\)]+\\)`,
+									'g'
+								),
+								`## Z-Wave JS UI [${release.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${release.tag_name})`
 							)
 
-						changelog += `</br><h2>Driver <a target="_blank" href="https://github.com/zwave-js/node-zwave-js/releases/tag/${zwaveLatest.tag_name}">${zwaveLatest.tag_name}</a></h2></br>${zwaveChangelog}`
+							return md()
+								.render(release.body)
+								.replace('</h2>', '</h2><br>')
+						}
+					)
+
+					let changelog = appChangelogs.join('</br>')
+
+					if (this.appInfo.zwaveVersion !== versions?.driver) {
+						const driverChangelogs = await this.getChangelogs(
+							'node-zwave-js',
+							versions.driver ? 'v' + versions.driver : null,
+							'v' + this.appInfo.zwaveVersion,
+							(release) => {
+								const changelog = md()
+									.render(release.body)
+									.replace(
+										/#(\d+)/g,
+										'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>'
+									)
+
+								return `</br><h2>Driver <a target="_blank" href="https://github.com/zwave-js/node-zwave-js/releases/tag/${release.tag_name}">${release.tag_name}</a></h2></br>${changelog}`
+							}
+						)
+
+						changelog += driverChangelogs.join('')
 					}
 
 					if (this.appInfo.serverVersion !== versions?.server) {
-						// get changelog from github latest release
-						const serverLatest = await this.getRelease(
+						const serverChangelogs = await this.getChangelogs(
 							'zwave-js-server',
-							this.appInfo.serverVersion
+							versions.server || null,
+							this.appInfo.serverVersion,
+							(release) => {
+								const changelog = md()
+									.render(release.body)
+									.replace(
+										"<h2>What's Changed</h2>",
+										'<h3>Changes</h3>'
+									)
+									.replace(
+										/#(\d+)/g,
+										'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
+									)
+
+								return `</br><h2>Server <a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${release.tag_name}">v${release.tag_name}</a></h2></br>${changelog}`
+							}
 						)
 
-						const serverChangelog = md()
-							.render(serverLatest.body)
-							.replace(
-								"<h2>What's Changed</h2>",
-								'<h3>Changes</h3>'
-							)
-							.replace(
-								/#(\d+)/g,
-								'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
-							)
-
-						changelog += `</br><h2>Server <a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${serverLatest.tag_name}">v${serverLatest.tag_name}</a></h2></br>${serverChangelog}`
+						changelog += serverChangelogs.join('')
 					}
 
 					// means we never saw the changelog for this version

@@ -1,5 +1,5 @@
 import express, { Request, RequestHandler, Response, Router } from 'express'
-
+import { version } from './package.json'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import csrf from 'csurf'
@@ -1155,7 +1155,7 @@ app.post(
 
 			// update versions to actual ones
 			settings.gateway.versions = {
-				app: utils.getVersion(),
+				app: version, // don't use getVersion here as it may include commit sha
 				driver: libVersion,
 				server: serverVersion,
 			}
