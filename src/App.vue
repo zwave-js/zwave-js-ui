@@ -1157,7 +1157,7 @@ export default {
 				if (versions?.app !== currentVersion) {
 					const appChangelogs = await this.getChangelogs(
 						'zwave-js-ui',
-						versions.app ? 'v' + versions.app : null,
+						versions?.app ? 'v' + versions?.app : null,
 						'v' + currentVersion,
 						(release) => {
 							release.body = release.body.replace(
@@ -1168,7 +1168,7 @@ export default {
 									)}\\]\\([^\\)]+\\)`,
 									'g'
 								),
-								`## Z-Wave JS UI [${release.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${release.tag_name})`
+								`## UI [${release.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${release.tag_name})`
 							)
 
 							return md()
@@ -1182,7 +1182,7 @@ export default {
 					if (this.appInfo.zwaveVersion !== versions?.driver) {
 						const driverChangelogs = await this.getChangelogs(
 							'node-zwave-js',
-							versions.driver ? 'v' + versions.driver : null,
+							versions?.driver ? 'v' + versions?.driver : null,
 							'v' + this.appInfo.zwaveVersion,
 							(release) => {
 								const changelog = md()
@@ -1202,7 +1202,7 @@ export default {
 					if (this.appInfo.serverVersion !== versions?.server) {
 						const serverChangelogs = await this.getChangelogs(
 							'zwave-js-server',
-							versions.server || null,
+							versions?.server || null,
 							this.appInfo.serverVersion,
 							(release) => {
 								const changelog = md()
