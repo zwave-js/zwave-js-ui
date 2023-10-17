@@ -1233,7 +1233,7 @@
 										<v-text-field
 											v-model="newZwave.serverHost"
 											label="Server Host"
-											hint="(Optional) The host to bind the Z-Wave Server. Default is: 0.0.0.0"
+											hint="(Optional) The host to bind the Z-Wave Server. Default is: ::"
 										></v-text-field>
 									</v-col>
 									<v-col

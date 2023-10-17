@@ -21,4 +21,4 @@ export const defaultPsw: string =  'zwave'
 export const sessionSecret: string =  process.env.SESSION_SECRET || 'DEFAULT_SESSION_SECRET_CHANGE_ME'
 export const base: string =  process.env.BASE_PATH || '/'
 export const port: string | number =  process.env.PORT || 8091
-export const host: string =  process.env.HOST || '0.0.0.0'
+export const host: string =  process.env.HOST || '::'
