@@ -1,7 +1,7 @@
 <template>
 	<v-container grid-list-md>
 		<v-row class="ml-5">
-			<v-col cols="12">
+			<v-col v-show="!node.firmwareUpdate" cols="12">
 				<v-row justify="center" class="mb-2 text-center" dense>
 					<v-btn
 						:disabled="loading"
@@ -29,7 +29,7 @@
 				</v-row>
 			</v-col>
 
-			<template v-if="filteredUpdates.length > 0">
+			<template v-if="filteredUpdates.length > 0 && !node.firmwareUpdate">
 				<v-col
 					cols="12"
 					sm="6"
@@ -103,10 +103,17 @@
 					</v-card>
 				</v-col>
 			</template>
-			<v-col class="text-center" v-else-if="loading">
+			<v-col
+				class="text-center"
+				v-else-if="loading || node.firmwareUpdate"
+			>
 				<v-progress-circular indeterminate color="primary" />
 				<p class="text-caption">
-					Remember to wake up sleeping devices...
+					{{
+						node.firmwareUpdate
+							? 'Update in progress...'
+							: 'Remember to wake up sleeping devices...'
+					}}
 				</p>
 			</v-col>
 			<v-col class="text-center" v-else>
@@ -192,7 +199,9 @@ export default {
 			if (
 				await this.$listeners.showConfirm(
 					'OTA Update',
-					`<p>Are you sure you want to update node to <b>v${update.version}</b>?</p>
+					`<p>Are you sure you want to ${
+						update.downgrade ? 'downgrade' : 'update'
+					} node to <b>v${update.version}</b>?</p>
 										
 					<p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
 					
