@@ -1229,7 +1229,7 @@ export default {
 							versions?.server || null,
 							this.appInfo.serverVersion,
 							(release, i) => {
-								const changelog = md()
+								let changelog = md()
 									.render(release.body)
 									.replace(
 										"<h2>What's Changed</h2>",
@@ -1239,6 +1239,12 @@ export default {
 										/#(\d+)/g,
 										'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>',
 									)
+
+								// remove everything after "⬆️ Dependencies"
+								changelog = changelog.substr(
+									0,
+									changelog.indexOf('⬆️ Dependencies') - 1,
+								)
 
 								return `${
 									i === 0
