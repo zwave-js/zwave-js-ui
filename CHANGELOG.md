@@ -1,5 +1,24 @@
 
 
+# [9.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.2...v9.2.0) (2023-10-18)
+
+
+### Bug Fixes
+
+* set default host to `::` ([#3348](https://github.com/zwave-js/zwave-js-ui/issues/3348)) ([68cc58e](https://github.com/zwave-js/zwave-js-ui/commit/68cc58e1f330681e691d390459eafa5f58a9e655))
+* **ui:** firmware update OTA result not shown ([#3346](https://github.com/zwave-js/zwave-js-ui/issues/3346)) ([1406015](https://github.com/zwave-js/zwave-js-ui/commit/140601501dd38692e1eadba302c7ac79c0cf695d))
+* **ui:** formatting in debug window ([#3344](https://github.com/zwave-js/zwave-js-ui/issues/3344)) ([cfd1dea](https://github.com/zwave-js/zwave-js-ui/commit/cfd1dea302b493747b1c5e659ff1c1c725378e06))
+* **ui:** hide OTA downgrades by default and fix icon ([#3345](https://github.com/zwave-js/zwave-js-ui/issues/3345)) ([82f5ee4](https://github.com/zwave-js/zwave-js-ui/commit/82f5ee41b209e6c3661efa490eb6e83a86322177))
+
+
+### Features
+
+* allow to restore NVM raw ([#3337](https://github.com/zwave-js/zwave-js-ui/issues/3337)) ([0b8f33f](https://github.com/zwave-js/zwave-js-ui/commit/0b8f33f94bcf230489f6c0e8288bae7554011669))
+* bump zwave-js@12.1.0 ([#3335](https://github.com/zwave-js/zwave-js-ui/issues/3335)) ([a16b962](https://github.com/zwave-js/zwave-js-ui/commit/a16b9622c3b950c8729a5968b22fef899b4a14ae))
+* bump zwave-js@12.1.1 ([#3338](https://github.com/zwave-js/zwave-js-ui/issues/3338)) ([c224d11](https://github.com/zwave-js/zwave-js-ui/commit/c224d11abbb8e4c0fe6f8ce22164bcb48ca0af13))
+* bump zwave-js@12.2.0 ([#3349](https://github.com/zwave-js/zwave-js-ui/issues/3349)) ([9f45b50](https://github.com/zwave-js/zwave-js-ui/commit/9f45b5035a76a963cc187e8a1cd26018810bdec0))
+* parse multiple releases in changelogs ([#3351](https://github.com/zwave-js/zwave-js-ui/issues/3351)) ([e37d2cf](https://github.com/zwave-js/zwave-js-ui/commit/e37d2cf97ad9012140e43668f27379616180818b))
+
 ## [9.1.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.1...v9.1.2) (2023-10-10)
 
 
