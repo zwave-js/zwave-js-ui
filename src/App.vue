@@ -1268,7 +1268,7 @@ export default {
 							inputs: [
 								{
 									type: 'checkbox',
-									label: "Don't show again",
+									label: 'Disable changelogs',
 									key: 'dontShowAgain',
 									hint: 'Enable this to never show changelogs on next updates',
 								},
