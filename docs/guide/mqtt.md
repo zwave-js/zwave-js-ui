@@ -109,7 +109,7 @@ async getSchedules(
 	nodeId: number,
 	opts: { mode?: ZUIScheduleEntryLockMode; fromCache: boolean } = {
 		fromCache: true,
-	}
+	},
 ): Promise<ZUISchedule>;
 ```
 
@@ -165,7 +165,7 @@ async setSchedule(
 			| ScheduleEntryLockDailyRepeatingSchedule
 			| ScheduleEntryLockWeekDaySchedule
 			| ScheduleEntryLockYearDaySchedule
-		)
+		),
 ): Promise<SupervisionResult>;
 ```
 
@@ -191,7 +191,7 @@ Payload:
 #### `setEnabledSchedule`
 
 ```ts
-async setEnabledSchedule(nodeId: number, enabled: boolean, userId: number): Promise<{ status: SupervisionStatus.NoSupport | SupervisionStatus.Fail | SupervisionStatus.Success; remainingDuration?: undefined; } | ({ status: SupervisionStatus.Working; remainingDuration: Duration; } & { status: SupervisionStatus.Working | SupervisionStatus.Success; })>;
+async setEnabledSchedule(nodeId: number, enabled: boolean, userId: number): Promise<SupervisionResult>;
 ```
 
 <details>
@@ -218,7 +218,7 @@ Payload:
 ```ts
 async getAssociations(
 	nodeId: number,
-	refresh = false
+	refresh = false,
 ): Promise<ZUIGroupAssociation[]>;
 ```
 
@@ -248,7 +248,7 @@ Payload:
 async addAssociations(
 	source: AssociationAddress,
 	groupId: number,
-	associations: AssociationAddress[]
+	associations: AssociationAddress[],
 ): Promise<boolean>;
 ```
 
@@ -279,7 +279,7 @@ Payload:
 async removeAssociations(
 	source: AssociationAddress,
 	groupId: number,
-	associations: AssociationAddress[]
+	associations: AssociationAddress[],
 ): Promise<void>;
 ```
 
@@ -439,7 +439,7 @@ Payload:
 async getNodeNeighbors(
 	nodeId: number,
 	preventThrow = false,
-	emitNodeUpdate = true
+	emitNodeUpdate = true,
 ): Promise<readonly number[]>;
 ```
 
@@ -572,7 +572,7 @@ Payload:
 ```ts
 setNodeDefaultSetValueOptions(
 	nodeId: number,
-	props: Pick<ZUINode, 'defaultTransitionDuration' | 'defaultVolume'>
+	props: Pick<ZUINode, 'defaultTransitionDuration' | 'defaultVolume'>,
 ): void;
 ```
 
@@ -724,7 +724,7 @@ async _addSceneValue(
 	sceneid: number,
 	valueId: ZUIValueIdScene,
 	value: any,
-	timeout: number
+	timeout: number,
 ): Promise<any>;
 ```
 
@@ -1023,7 +1023,10 @@ Payload:
 async replaceFailedNode(
 	nodeId: number,
 	strategy: InclusionStrategy = InclusionStrategy.Security_S2,
-	options?: { qrString?: string; provisioning?: PlannedProvisioningEntry }
+	options?: {
+		qrString?: string
+		provisioning?: PlannedProvisioningEntry
+	},
 ): Promise<boolean>;
 ```
 
@@ -1053,7 +1056,7 @@ Payload:
 ```ts
 async getAvailableFirmwareUpdates(
 	nodeId: number,
-	options?: GetFirmwareUpdatesOptions
+	options?: GetFirmwareUpdatesOptions,
 ): Promise<{ version: string; changelog: string; channel: "stable" | "beta"; files: FirmwareUpdateFileInfo[]; downgrade: boolean; normalizedVersion: string; device: { manufacturerId: number; productType: number; productId: number; firmwareVersion: string; rfRegion?: RFRegion; }; }[]>;
 ```
 
@@ -1104,7 +1107,7 @@ Payload:
 ```ts
 async setPowerlevel(
 	powerlevel: number,
-	measured0dBm: number
+	measured0dBm: number,
 ): Promise<boolean>;
 ```
 
@@ -1161,7 +1164,7 @@ async startInclusion(
 		name?: string
 		dsk?: string
 		location?: string
-	}
+	},
 ): Promise<boolean>;
 ```
 
@@ -1191,7 +1194,7 @@ Payload:
 async startExclusion(
 	options: ExclusionOptions = {
 		strategy: ExclusionStrategy.DisableProvisioningEntry,
-	}
+	},
 ): Promise<boolean>;
 ```
 
@@ -1318,7 +1321,7 @@ async assignPriorityReturnRoute(
 	nodeId: number,
 	destinationNodeId: number,
 	repeaters: number[],
-	routeSpeed: ZWaveDataRate
+	routeSpeed: ZWaveDataRate,
 ): Promise<boolean>;
 ```
 
@@ -1375,7 +1378,7 @@ Payload:
 async assignPrioritySUCReturnRoute(
 	nodeId: number,
 	repeaters: number[],
-	routeSpeed: ZWaveDataRate
+	routeSpeed: ZWaveDataRate,
 ): Promise<boolean>;
 ```
 
@@ -1433,7 +1436,7 @@ async assignCustomReturnRoutes(
 	nodeId: number,
 	destinationNodeId: number,
 	routes: Route[],
-	priorityRoute?: Route
+	priorityRoute?: Route,
 ): Promise<boolean>;
 ```
 
@@ -1490,7 +1493,7 @@ Payload:
 async assignCustomSUCReturnRoutes(
 	nodeId: number,
 	routes: Route[],
-	priorityRoute?: Route
+	priorityRoute?: Route,
 ): Promise<boolean>;
 ```
 
@@ -1622,7 +1625,7 @@ Payload:
 async setPriorityRoute(
 	nodeId: number,
 	repeaters: number[],
-	routeSpeed: ZWaveDataRate
+	routeSpeed: ZWaveDataRate,
 ): Promise<boolean>;
 ```
 
@@ -1677,7 +1680,7 @@ Payload:
 ```ts
 async checkLifelineHealth(
 	nodeId: number,
-	rounds = 5
+	rounds = 5,
 ): Promise<LifelineHealthCheckSummary & { targetNodeId: number }>;
 ```
 
@@ -1707,7 +1710,7 @@ Payload:
 async checkRouteHealth(
 	nodeId: number,
 	targetNodeId: number,
-	rounds = 5
+	rounds = 5,
 ): Promise<RouteHealthCheckSummary & { targetNodeId: number }>;
 ```
 
@@ -1837,7 +1840,7 @@ Payload:
 
 ```ts
 async firmwareUpdateOTW(
-	file: FwFile
+	file: FwFile,
 ): Promise<ControllerFirmwareUpdateResult>;
 ```
 
@@ -1865,7 +1868,7 @@ Payload:
 ```ts
 updateFirmware(
 	nodeId: number,
-	files: FwFile[]
+	files: FwFile[],
 ): Promise<FirmwareUpdateResult>;
 ```
 
@@ -2006,7 +2009,7 @@ async sendCommand(
 		commandClass: CommandClasses | keyof typeof CommandClasses
 	},
 	command: string,
-	args: any[]
+	args: any[],
 ): Promise<any>;
 ```
 
@@ -2090,8 +2093,8 @@ Payload:
 async writeValue(
 	valueId: ZUIValueId,
 	value: any,
-	options?: SetValueAPIOptions
-): Promise<{ status: SetValueStatus.NoDeviceSupport | SetValueStatus.Fail | SetValueStatus.Success; remainingDuration?: undefined; message?: undefined; } | { status: SetValueStatus.Working; remainingDuration: Duration; message?: undefined; } | { status: SetValueStatus.SuccessUnsupervised; remainingDuration?: undefined; message?: undefined; } | ({ status: SetValueStatus.EndpointNotFound | SetValueStatus.NotImplemented | SetValueStatus.InvalidValue; remainingDuration?: undefined; message: string; } & { status: SetValueStatus.NoDeviceSupport | SetValueStatus.Fail | SetValueStatus.EndpointNotFound | SetValueStatus.NotImplemented | SetValueStatus.InvalidValue; })>;
+	options?: SetValueAPIOptions,
+): Promise<SetValueResult>;
 ```
 
 Set a value of a specific zwave valueId.
@@ -2206,7 +2209,7 @@ Payload:
 #### `restoreNVM`
 
 ```ts
-async restoreNVM(data: Buffer): Promise<void>;
+async restoreNVM(data: Buffer, useRaw = false): Promise<void>;
 ```
 
 <details>
@@ -2219,7 +2222,8 @@ Payload:
 ```json
 {
 	"args": [
-		data
+		data,
+		useRaw
 	]
 }
 ```
@@ -2348,7 +2352,7 @@ Payload:
 ```ts
 async updateControllerNodeProps(
 	node?: ZUINode,
-	props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion']
+	props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion'],
 ): Promise<void>;
 ```
 
