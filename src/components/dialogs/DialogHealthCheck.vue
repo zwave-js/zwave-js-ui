@@ -294,7 +294,7 @@
 								<strong
 									:class="
 										getFailedPingsColor(
-											item.failedPingsNode
+											item.failedPingsNode,
 										)
 									"
 									>{{ item.failedPingsNode }}/10</strong
@@ -308,7 +308,7 @@
 								<strong
 									:class="
 										getFailedPingsColor(
-											item.failedPingsController
+											item.failedPingsController,
 										)
 									"
 									>{{ item.failedPingsController }}/10</strong
@@ -327,7 +327,7 @@
 								<strong
 									:class="
 										getFailedPingsColor(
-											item.failedPingsToSource
+											item.failedPingsToSource,
 										)
 									"
 									>{{ item.failedPingsToSource }}/10</strong
@@ -341,7 +341,7 @@
 								<strong
 									:class="
 										getFailedPingsColor(
-											item.failedPingsToTarget
+											item.failedPingsToTarget,
 										)
 									"
 									>{{ item.failedPingsToTarget }}/10</strong
@@ -360,7 +360,7 @@
 								<strong
 									:class="
 										getPowerLevelColor(
-											item.minPowerlevelSource
+											item.minPowerlevelSource,
 										)
 									"
 									>{{
@@ -376,7 +376,7 @@
 								<strong
 									:class="
 										getPowerLevelColor(
-											item.minPowerlevelTarget
+											item.minPowerlevelTarget,
 										)
 									"
 									>{{
@@ -560,7 +560,7 @@ export default {
 			this.app.exportConfiguration(
 				this.results,
 				`healthCheck_${this.activeNode.id}-${this.resultsTargetNode}`,
-				'json'
+				'json',
 			)
 		},
 		getNeighborsColor(value) {
@@ -627,14 +627,14 @@ export default {
 				this.rounds = 5
 				this.activeNode = copy(this.node)
 				this.targetNode = this.filteredNodes.find(
-					(n) => n.isControllerNode
+					(n) => n.isControllerNode,
 				)
 				this.selectedNode = this.filteredNodes[0]
 					? this.filteredNodes[0].id
 					: null
 				this.bindEvent(
 					'healthCheckProgress',
-					this.onHealthCheckProgress.bind(this)
+					this.onHealthCheckProgress.bind(this),
 				)
 			} else if (open === false) {
 				this.unbindEvents()
@@ -706,7 +706,7 @@ export default {
 				{
 					infoSnack: true,
 					errorSnack: false,
-				}
+				},
 			)
 
 			this.loading = false
@@ -718,7 +718,7 @@ export default {
 				this.averages = res
 
 				this.averages.numNeighbors = Math.max(
-					...this.results.map((n) => n.numNeighbors)
+					...this.results.map((n) => n.numNeighbors),
 				)
 
 				this.resultsTargetNode = res.targetNodeId
@@ -726,7 +726,7 @@ export default {
 				this.results.pop()
 				this.showSnackbar(
 					response.message || 'Health check failed',
-					'error'
+					'error',
 				)
 			}
 		},

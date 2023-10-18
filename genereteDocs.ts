@@ -6,16 +6,16 @@ import * as prettier from 'prettier'
 import { join } from 'path'
 
 // Make the linter happy
-export function formatWithPrettier(
+export async function formatWithPrettier(
 	filename: string,
-	sourceText: string
-): string {
+	sourceText: string,
+): Promise<string> {
 	const prettierOptions = {
 		...require(join(__dirname, '.prettierrc.js')),
 		// To infer the correct parser
 		filepath: filename,
 	}
-	return prettier.format(sourceText, prettierOptions)
+	return await prettier.format(sourceText, prettierOptions)
 }
 
 // Inpired by https://github.com/zwave-js/node-zwave-js/blob/master/packages/maintenance/src/generateTypedDocs.ts#L334
@@ -27,7 +27,7 @@ async function main() {
 
 	const sourceFile = program.getSourceFileOrThrow(fileName)
 
-	const text = formatWithPrettier(docsFile, mqttApis(sourceFile))
+	const text = await formatWithPrettier(docsFile, mqttApis(sourceFile))
 
 	const content = await readFile(docsFile, 'utf8')
 
@@ -80,7 +80,7 @@ function mqttApis(file: SourceFile) {
 	if (!ZwaveClientClass) throw new Error('ZwaveClient class not found')
 
 	const methods = ZwaveClientClass.getInstanceMethods().filter((c) =>
-		allowedApis.includes(c.getName() as any)
+		allowedApis.includes(c.getName() as any),
 	)
 
 	let text = ''

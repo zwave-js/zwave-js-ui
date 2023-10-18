@@ -61,6 +61,7 @@ module.exports = {
 				'@typescript-eslint/no-implied-eval': 'off',
 				'@typescript-eslint/no-misused-promises': 'off',
 				'@typescript-eslint/no-unsafe-argument': 'off',
+				'@typescript-eslint/no-unsafe-enum-comparison': 'off',
 			},
 		},
 	],

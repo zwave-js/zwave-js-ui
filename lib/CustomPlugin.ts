@@ -20,7 +20,7 @@ export type PluginConstructor = new (context: PluginContext) => CustomPlugin
 export function createPlugin<T extends PluginConstructor>(
 	constr: T,
 	context: PluginContext,
-	name: string
+	name: string,
 ): CustomPlugin {
 	const ret = new constr(context)
 	ret.name = name

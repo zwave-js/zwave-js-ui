@@ -145,7 +145,7 @@ export default {
 				await this.$listeners.showConfirm(
 					'Attention',
 					'This operation will override all current scenes and cannot be undone',
-					'alert'
+					'alert',
 				)
 			) {
 				try {
@@ -153,12 +153,12 @@ export default {
 					if (data instanceof Array) {
 						const response = await this.app.apiRequest(
 							'_setScenes',
-							[data]
+							[data],
 						)
 						if (response.success) {
 							this.showSnackbar(
 								'Successfully updated scenes',
-								'success'
+								'success',
 							)
 							this.scenes = response.result
 						}
@@ -202,7 +202,7 @@ export default {
 				(await this.$listeners.showConfirm(
 					'Attention',
 					'Are you sure you want to delete this scene?',
-					'alert'
+					'alert',
 				))
 			) {
 				const response = await this.app.apiRequest('_removeScene', [
@@ -254,12 +254,12 @@ export default {
 				await this.$listeners.showConfirm(
 					'Attention',
 					'Are you sure you want to delete this item?',
-					'alert'
+					'alert',
 				)
 			) {
 				const response = await this.app.apiRequest(
 					'_removeSceneValue',
-					[this.selectedScene, value]
+					[this.selectedScene, value],
 				)
 
 				if (response.success) {
@@ -298,7 +298,7 @@ export default {
 				const response = await this.app.apiRequest(
 					'_sceneGetValues',
 					[this.selectedScene],
-					{ infoSnack: false, errorSnack: true }
+					{ infoSnack: false, errorSnack: true },
 				)
 
 				if (response.success) {

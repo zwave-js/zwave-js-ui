@@ -58,25 +58,25 @@ describe('#Constants', () => {
 	describe('#genericDeviceClass()', () => {
 		it('known generic type', () =>
 			expect(mod.genericDeviceClass(1)).to.equal(
-				'generic_type_generic_controller'
+				'generic_type_generic_controller',
 			))
 		it('unknown generic type', () =>
 			expect(mod.genericDeviceClass(-1)).to.equal(
-				'unknownGenericDeviceType_-1'
+				'unknownGenericDeviceType_-1',
 			))
 	})
 	describe('#specificDeviceClass()', () => {
 		it('known specific type', () =>
 			expect(mod.specificDeviceClass(1, 1)).to.equal(
-				'specific_type_portable_controller'
+				'specific_type_portable_controller',
 			))
 		it('unknown specific type', () =>
 			expect(mod.specificDeviceClass(1, 8)).to.equal(
-				'unknownSpecificDeviceType_8'
+				'unknownSpecificDeviceType_8',
 			))
 		it('unknown generic type 260', () =>
 			expect(mod.specificDeviceClass(260, 1)).to.equal(
-				'unknownGenericDeviceType_260'
+				'unknownGenericDeviceType_260',
 			))
 	})
 })

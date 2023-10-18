@@ -210,27 +210,27 @@ export default {
 				switch (this.mode) {
 					case 'daily':
 						item.weekdays = s.weekdays.map((w) =>
-							getEnumMemberName(ScheduleEntryLockWeekday, w)
+							getEnumMemberName(ScheduleEntryLockWeekday, w),
 						)
 						item.start = `${padNumber(s.startHour, 2)}:${padNumber(
 							s.startMinute,
-							2
+							2,
 						)}`
 						item.duration = `${s.durationHour}h ${s.durationMinute}m`
 						break
 					case 'weekly':
 						item.weekday = getEnumMemberName(
 							ScheduleEntryLockWeekday,
-							s.weekday
+							s.weekday,
 						)
 						item.start = `${padNumber(s.startHour, 2)}:${padNumber(
 							s.startMinute,
-							2
+							2,
 						)}`
 
 						item.stop = `${padNumber(s.stopHour, 2)}:${padNumber(
 							s.stopMinute,
-							2
+							2,
 						)}`
 						break
 					case 'yearly':
@@ -239,7 +239,7 @@ export default {
 							s.startMonth - 1,
 							s.startDay,
 							s.startHour,
-							s.startMinute
+							s.startMinute,
 						).toLocaleString()
 
 						item.stop = new Date(
@@ -247,7 +247,7 @@ export default {
 							s.stopMonth - 1,
 							s.stopDay,
 							s.stopHour,
-							s.stopMinute
+							s.stopMinute,
 						).toLocaleString()
 
 						break
@@ -320,7 +320,7 @@ export default {
 				{
 					confirmText: 'Query',
 					cancelText: 'Cache',
-				}
+				},
 			)
 
 			this.loading = true
@@ -545,7 +545,7 @@ export default {
 					inputs: this.getInputs(slot),
 					confirmText: slot ? 'Edit' : 'Add',
 					values,
-				}
+				},
 			)
 
 			if (Object.keys(res).length === 0) {

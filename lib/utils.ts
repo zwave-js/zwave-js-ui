@@ -35,7 +35,7 @@ export type Constructor<T = {}> = new (...args: any[]) => T
 export function applyMixin(
 	target: Constructor,
 	mixin: Constructor,
-	includeConstructor = false
+	includeConstructor = false,
 ): void {
 	// Figure out the inheritance chain of the mixin
 	const inheritanceChain: Constructor[] = [mixin]
@@ -57,7 +57,7 @@ export function applyMixin(
 					target.prototype,
 					prop,
 					Object.getOwnPropertyDescriptor(ctor.prototype, prop) ??
-						Object.create(null)
+						Object.create(null),
 				)
 			}
 		}
@@ -182,7 +182,7 @@ export function getVersion(): string {
  */
 export function sanitizeTopic(
 	str: string | number,
-	sanitizeSlash = false
+	sanitizeSlash = false,
 ): string {
 	if (typeof str === 'number' || !str) return str.toString()
 
@@ -243,7 +243,7 @@ export async function hashPsw(password: crypto.BinaryLike): Promise<string> {
 
 export async function verifyPsw(
 	password: crypto.BinaryLike,
-	hash: string
+	hash: string,
 ): Promise<boolean> {
 	return new Promise((resolve, reject) => {
 		const [salt, key] = hash.split(':')
@@ -280,8 +280,8 @@ export function allSettled(promises: Promise<any>[]): Promise<any> {
 	const wrappedPromises = promises.map((p) =>
 		Promise.resolve(p).then(
 			(val) => ({ status: 'fulfilled', value: val }),
-			(err) => ({ status: 'rejected', reason: err })
-		)
+			(err) => ({ status: 'rejected', reason: err }),
+		),
 	)
 	return Promise.all(wrappedPromises)
 }

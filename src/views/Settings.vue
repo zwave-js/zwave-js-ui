@@ -381,7 +381,7 @@
 											'https://crontab.guru/#' +
 												newBackup.storeCron
 													.split(' ')
-													.join('_')
+													.join('_'),
 										)
 									"
 									label="Cron"
@@ -451,7 +451,7 @@
 											'https://crontab.guru/#' +
 												newBackup.nvmCron
 													.split(' ')
-													.join('_')
+													.join('_'),
 										)
 									"
 									label="Cron"
@@ -531,7 +531,7 @@
 												@paste="
 													fixKey(
 														$event,
-														'S2_Unauthenticated'
+														'S2_Unauthenticated',
 													)
 												"
 												:rules="[
@@ -543,7 +543,7 @@
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
-														'S2_Unauthenticated'
+														'S2_Unauthenticated',
 													)
 												"
 											></v-text-field>
@@ -557,7 +557,7 @@
 												@paste="
 													fixKey(
 														$event,
-														'S2_Authenticated'
+														'S2_Authenticated',
 													)
 												"
 												prepend-icon="vpn_key"
@@ -571,7 +571,7 @@
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
-														'S2_Authenticated'
+														'S2_Authenticated',
 													)
 												"
 											></v-text-field>
@@ -585,7 +585,7 @@
 												@paste="
 													fixKey(
 														$event,
-														'S2_AccessControl'
+														'S2_AccessControl',
 													)
 												"
 												prepend-icon="vpn_key"
@@ -598,7 +598,7 @@
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
-														'S2_AccessControl'
+														'S2_AccessControl',
 													)
 												"
 											></v-text-field>
@@ -1441,8 +1441,8 @@ export default {
 				return this.scales.filter(
 					(a) =>
 						!this.newZwave.scales.find(
-							(b) => b.key === a.key && a.label !== b.label
-						)
+							(b) => b.key === a.key && a.label !== b.label,
+						),
 				)
 			} else {
 				return this.scales
@@ -1609,8 +1609,8 @@ export default {
 								(a, index) =>
 									values.findIndex(
 										(b, index2) =>
-											index2 > index && a.key === b.key
-									) >= 0
+											index2 > index && a.key === b.key,
+									) >= 0,
 							) || 'Duplicated sensor type scale'
 						)
 					}
@@ -1719,7 +1719,7 @@ export default {
 		},
 		openDocs(id) {
 			this.openUrl(
-				`https://zwave-js.github.io/zwave-js-ui/#/usage/setup?id=${id}`
+				`https://zwave-js.github.io/zwave-js-ui/#/usage/setup?id=${id}`,
 			)
 		},
 		openUrl(url) {
@@ -1771,7 +1771,7 @@ export default {
 					this.initSettings(data)
 					this.showSnackbar(
 						'Configuration imported successfully',
-						'success'
+						'success',
 					)
 				} else {
 					this.showSnackbar('Imported settings not valid', 'error')
@@ -1863,7 +1863,7 @@ export default {
 						},
 					],
 					confirmText: item ? 'Edit' : 'Add',
-				}
+				},
 			)
 
 			if (res.code) {
@@ -1883,7 +1883,7 @@ export default {
 				(await this.$listeners.showConfirm(
 					'Attention',
 					'Are you sure you want to delete this item?',
-					'alert'
+					'alert',
 				))
 			) {
 				this.newGateway.jobs.splice(index, 1)
@@ -1899,7 +1899,7 @@ export default {
 			;(await this.$listeners.showConfirm(
 				'Attention',
 				'Are you sure you want to delete this item?',
-				'alert'
+				'alert',
 			)) && this.newGateway.values.splice(index, 1)
 		},
 		closeDialog() {
@@ -1918,7 +1918,7 @@ export default {
 				this.newGateway.values.splice(
 					this.editedIndex,
 					1,
-					this.editedValue
+					this.editedValue,
 				)
 			} else {
 				this.newGateway.values.push(this.editedValue)
@@ -1933,12 +1933,12 @@ export default {
 					this.saving = true
 					useBaseStore().resetNodes()
 					const data = await ConfigApis.updateConfig(
-						this.getSettingsJSON()
+						this.getSettingsJSON(),
 					)
 					this.saving = false
 					this.showSnackbar(
 						data.message,
-						data.success ? 'success' : 'error'
+						data.success ? 'success' : 'error',
 					)
 					this.initSettings(data.data)
 				} catch (error) {
@@ -1947,7 +1947,7 @@ export default {
 			} else {
 				this.showSnackbar(
 					'Your configuration contains errors, fix it',
-					'error'
+					'error',
 				)
 			}
 		},
@@ -1963,7 +1963,7 @@ export default {
 				if (!data.success) {
 					this.showSnackbar(
 						'Error while retrieving configuration, check console',
-						'error'
+						'error',
 					)
 					log.error(data)
 				} else {

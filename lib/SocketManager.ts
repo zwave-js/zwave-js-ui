@@ -15,7 +15,7 @@ export interface SocketManagerEventCallbacks {
 	[inboundEvents.mqtt]: (socket: Socket, data: any) => void
 	clients: (
 		event: 'connection' | 'disconnect',
-		sockets: Map<string, Socket>
+		sockets: Map<string, Socket>,
 	) => void
 }
 

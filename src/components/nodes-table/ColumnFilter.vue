@@ -103,7 +103,7 @@ export default {
 				Object.keys(obj).some(
 					(k) =>
 						(!!obj[k] && !!Object.keys(obj[k]).length) ||
-						typeof obj[k] === 'boolean'
+						typeof obj[k] === 'boolean',
 				)
 			)
 		},
@@ -119,7 +119,7 @@ export default {
 				// Emit minimal storable filter spec (with empty default values removed):
 				this.$emit(
 					'change',
-					ColumnFilterHelper.filterSpec(this.column.type, value)
+					ColumnFilterHelper.filterSpec(this.column.type, value),
 				)
 			}
 		},

@@ -62,7 +62,7 @@ describe('#utils', () => {
 			utils.joinPath(true, 'bar')
 			return expect(path.join).to.have.been.calledWithExactly(
 				snapshotPath,
-				'bar'
+				'bar',
 			)
 		})
 	})

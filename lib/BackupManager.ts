@@ -68,13 +68,13 @@ class BackupManager {
 		} else {
 			this.storeJob = new Cron(
 				this.config.storeCron,
-				this.backupStore.bind(this)
+				this.backupStore.bind(this),
 			)
 
 			logger.info(
 				`Backup job started with cron: ${
 					this.config.storeCron
-				}. Next run: ${this.nextRun(this.storeJob)}`
+				}. Next run: ${this.nextRun(this.storeJob)}`,
 			)
 		}
 
@@ -87,13 +87,13 @@ class BackupManager {
 		} else {
 			this.nvmJob = new Cron(
 				this.config.nvmCron,
-				this.backupNvm.bind(this)
+				this.backupNvm.bind(this),
 			)
 
 			logger.info(
 				`Backup job started with cron: ${
 					this.config.nvmCron
-				}. Next run: ${this.nextRun(this.nvmJob)}`
+				}. Next run: ${this.nextRun(this.nvmJob)}`,
 			)
 		}
 	}
@@ -111,19 +111,19 @@ class BackupManager {
 			}
 			// cleanup backups dir, keep last backup files
 			const backups = (await readdir(nvmBackupsDir)).filter((f) =>
-				f.startsWith(NVM_BACKUP_PREFIX)
+				f.startsWith(NVM_BACKUP_PREFIX),
 			)
 
 			// keep last `keep` backups
 			if (backups.length > this.config.nvmKeep) {
 				const toDelete = backups.slice(
 					0,
-					backups.length - this.config.nvmKeep
+					backups.length - this.config.nvmKeep,
 				)
 				await Promise.all(
 					toDelete.map(async (file) =>
-						unlink(joinPath(nvmBackupsDir, file))
-					)
+						unlink(joinPath(nvmBackupsDir, file)),
+					),
 				)
 
 				logger.info(`Deleted ${toDelete.length} old NVM backups`)
@@ -146,19 +146,19 @@ class BackupManager {
 			}
 			// cleanup backups dir, keep last backup files
 			const backups = (await readdir(storeBackupsDir)).filter((f) =>
-				f.startsWith(STORE_BACKUP_PREFIX)
+				f.startsWith(STORE_BACKUP_PREFIX),
 			)
 
 			// keep last `keep` backups
 			if (backups.length > this.config.storeKeep) {
 				const toDelete = backups.slice(
 					0,
-					backups.length - this.config.storeKeep
+					backups.length - this.config.storeKeep,
 				)
 				await Promise.all(
 					toDelete.map(async (file) =>
-						unlink(joinPath(storeBackupsDir, file))
-					)
+						unlink(joinPath(storeBackupsDir, file)),
+					),
 				)
 
 				logger.info(`Deleted ${toDelete.length} old STORE backups`)

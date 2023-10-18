@@ -210,7 +210,7 @@ export default {
 				? Math.round(
 						(node.firmwareUpdate.sentFragments /
 							node.firmwareUpdate.totalFragments) *
-							100
+							100,
 				  )
 				: null
 		},
@@ -322,7 +322,7 @@ export default {
 			this.nodes,
 			this.nodesProps,
 			localStorage,
-			'nodes_'
+			'nodes_',
 		)
 	},
 }

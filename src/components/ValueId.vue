@@ -435,7 +435,7 @@ export default {
 					this.value.newValue !== undefined
 				) {
 					return this.itemText(
-						this.selectedItem || this.value.newValue
+						this.selectedItem || this.value.newValue,
 					)
 				} else if (this.value === null) {
 					return '(unknown)'
@@ -502,13 +502,13 @@ export default {
 				{
 					infoSnack: false,
 					errorSnack: true,
-				}
+				},
 			)
 
 			if (response.success) {
 				useBaseStore().showSnackbar(
 					'Notification manually idled',
-					'success'
+					'success',
 				)
 			}
 		},

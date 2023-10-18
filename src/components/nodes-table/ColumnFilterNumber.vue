@@ -61,13 +61,13 @@ export default {
 		values: {
 			get() {
 				const undefinedPlaceholder = this.items.find(
-					(i) => typeof i === 'string'
+					(i) => typeof i === 'string',
 				)
 
 				if (undefinedPlaceholder) {
 					return (
 						this.value.values?.map((v) =>
-							v === undefined ? undefinedPlaceholder : v
+							v === undefined ? undefinedPlaceholder : v,
 						) ?? []
 					)
 				} else {

@@ -83,7 +83,7 @@ describe('#jsonStore', () => {
 						jsonfile: {
 							readFile: sinon.stub().resolves(data),
 						},
-					}
+					},
 				).default
 
 				await mod.init(fakeStore)
@@ -100,7 +100,7 @@ describe('#jsonStore', () => {
 						jsonfile: {
 							readFile: sinon.stub().rejects(Error('foo')),
 						},
-					}
+					},
 				).default
 
 				await mod.init(fakeStore)
@@ -122,14 +122,14 @@ describe('#jsonStore', () => {
 
 			it('known', () =>
 				expect(
-					mod.get({ file: fakeStore.settings.file } as StoreFile)
+					mod.get({ file: fakeStore.settings.file } as StoreFile),
 				).to.equal(fakeStore.settings.default))
 			it('unknown', () => {
 				try {
 					mod.get({ file: 'unknown' } as StoreFile)
 				} catch (error) {
 					return expect(error.message).to.equal(
-						'Requested file not present in store: unknown'
+						'Requested file not present in store: unknown',
 					)
 				}
 			})
@@ -143,11 +143,11 @@ describe('#jsonStore', () => {
 						jsonfile: {
 							writeFile: sinon.stub().resolves('bar'),
 						},
-					}
+					},
 				).default
 
 				return expect(
-					mod.put({ file: 'foo' } as StoreFile, 'bardata')
+					mod.put({ file: 'foo' } as StoreFile, 'bardata'),
 				).to.eventually.equal('bardata')
 			})
 			it('error', () => {
@@ -157,11 +157,11 @@ describe('#jsonStore', () => {
 						jsonfile: {
 							writeFile: sinon.stub().rejects(Error('foo')),
 						},
-					}
+					},
 				).default
 
 				return expect(
-					mod.put({ file: 'foo' } as StoreFile, '')
+					mod.put({ file: 'foo' } as StoreFile, ''),
 				).to.be.rejectedWith('foo')
 			})
 		})

@@ -140,7 +140,7 @@
 										v-model="s.values.replaceId"
 										:items="
 											nodes.filter(
-												(n) => !n.isControllerNode
+												(n) => !n.isControllerNode,
 											)
 										"
 										return-object
@@ -857,7 +857,7 @@ export default {
 				// inclusion/exclusion started, start the countdown timer
 				if (status.indexOf('started') > 0) {
 					this.commandEndDate = new Date(
-						new Date().getTime() + this.timeoutMs
+						new Date().getTime() + this.timeoutMs,
 					)
 					this.nodeFound = null
 					this.state = 'start'
@@ -879,7 +879,7 @@ export default {
 						// fixes issue #2746
 						this.waitTimeout = setTimeout(
 							() => this.showResults(),
-							timeout
+							timeout,
 						) // add additional discovery time
 					}
 				} else {
@@ -938,7 +938,7 @@ export default {
 				// for some reason using @keydown.enter on buttons isn't working
 				// this trick is used to dispatch the enter event to the button
 				const button = this.$refs.content[0].$el.querySelector(
-					'.next-btn:not([disabled])'
+					'.next-btn:not([disabled])',
 				)
 
 				if (button) {
@@ -976,7 +976,7 @@ export default {
 				const mode = 4 // s2 only
 
 				const replaceStep = this.steps.find(
-					(s) => s.key === 'replaceFailed'
+					(s) => s.key === 'replaceFailed',
 				)
 				let replaceId
 
@@ -1027,7 +1027,7 @@ export default {
 					if (!replaceStep) {
 						const response = await this.app.apiRequest(
 							'provisionSmartStartNode',
-							[provisioning]
+							[provisioning],
 						)
 
 						if (response.success) {
@@ -1133,7 +1133,7 @@ export default {
 							tryParseDsk: true,
 							canceltext: 'Close',
 							width: 500,
-						}
+						},
 					)
 					if (!qrString) {
 						return
@@ -1144,7 +1144,7 @@ export default {
 					if (!dsk) {
 						const response = await this.app.apiRequest(
 							'parseQRCodeString',
-							[qrString]
+							[qrString],
 						)
 
 						this.onParseQrCode(response)
@@ -1159,7 +1159,7 @@ export default {
 				this.aborted = false
 				this.loading = true
 				const replaceStep = this.steps.find(
-					(s) => s.key === 'replaceFailed'
+					(s) => s.key === 'replaceFailed',
 				)
 
 				if (replaceStep) {
@@ -1244,7 +1244,7 @@ export default {
 			if (bind) {
 				this.bindEvent(
 					'grantSecurityClasses',
-					this.onGrantSecurityCC.bind(this)
+					this.onGrantSecurityCC.bind(this),
 				)
 				this.bindEvent('validateDSK', this.onValidateDSK.bind(this))
 				this.bindEvent('nodeRemoved', this.onNodeRemoved.bind(this))

@@ -100,7 +100,7 @@ export default {
 			{
 				content,
 			},
-			{ params: query }
+			{ params: query },
 		)
 		return response.data
 	},
