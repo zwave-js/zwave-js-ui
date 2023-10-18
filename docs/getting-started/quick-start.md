@@ -24,7 +24,7 @@ docker run --rm -it -p 8091:8091 -p 3000:3000 --device=/dev/serial/by-id/insert_
 
 # As a service
 wget https://raw.githubusercontent.com/zwave-js/zwave-js-ui/master/docker/docker-compose.yml
-docker-compose up
+docker-compose up -d
 ```
 
 > [!NOTE]
