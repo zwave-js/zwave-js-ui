@@ -1,5 +1,15 @@
 
 
+## [9.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.0...v9.2.1) (2023-10-18)
+
+
+### Bug Fixes
+
+* **ui:** clarify changelogs checkbox label ([d97d044](https://github.com/zwave-js/zwave-js-ui/commit/d97d044d42e2a183802f0a7727b74d7b89268394))
+* **ui:** disable ota updates while upgrading ([#3357](https://github.com/zwave-js/zwave-js-ui/issues/3357)) ([d68f33a](https://github.com/zwave-js/zwave-js-ui/commit/d68f33a6308ccdee54f9b8c18f61f71971b13b00))
+* **ui:** remove dependencies from changelog ([9c4e14a](https://github.com/zwave-js/zwave-js-ui/commit/9c4e14a54735324ded67cd328991211a9696c0dd))
+* **ui:** show OTA result ([#3360](https://github.com/zwave-js/zwave-js-ui/issues/3360)) ([39f09bd](https://github.com/zwave-js/zwave-js-ui/commit/39f09bdfb04ca65909ac51c9e8e0b298ceeac936))
+
 # [9.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.1.2...v9.2.0) (2023-10-18)
 
 
