@@ -216,7 +216,12 @@ export default {
 					},
 				)
 			) {
-				this.app.apiRequest('firmwareUpdateOTA', [this.node.id, update])
+				const response = await this.app.apiRequest(
+					'firmwareUpdateOTA',
+					[this.node.id, update],
+				)
+
+				await this.app.handleFwUpdateResponse(response)
 			}
 		},
 	},
