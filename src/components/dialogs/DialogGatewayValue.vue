@@ -271,7 +271,7 @@ export default {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
 		deviceValues() {
 			const device = this.devices.find(
-				(d) => d.value == this.editedValue.device
+				(d) => d.value == this.editedValue.device,
 			) // eslint-disable-line eqeqeq
 			return device ? device.values : []
 		},

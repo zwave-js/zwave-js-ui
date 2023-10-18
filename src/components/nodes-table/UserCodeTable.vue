@@ -58,7 +58,7 @@
 				Slots:<b>
 					{{
 						item.schedule.slots.filter(
-							(s) => s.type === item.schedule.type
+							(s) => s.type === item.schedule.type,
 						).length
 					}}</b
 				>
@@ -160,7 +160,7 @@ export default {
 			if (!response.success) {
 				this.showSnackbar(
 					`User ID ${user.id} ${enabled ? 'enabled' : 'disabled'}`,
-					'success'
+					'success',
 				)
 			}
 		},
@@ -173,7 +173,7 @@ export default {
 				allSlots.push(
 					...this.node.schedule[type].slots
 						.filter((s) => s.userId === id)
-						.map((s) => ({ ...s, type }))
+						.map((s) => ({ ...s, type })),
 				)
 			}
 
@@ -195,7 +195,7 @@ export default {
 		},
 		getValueId(id, prop) {
 			return this.values.find(
-				(v) => v.propertyKey === id && v.property === prop
+				(v) => v.propertyKey === id && v.property === prop,
 			)
 		},
 		async setUserCode(item) {

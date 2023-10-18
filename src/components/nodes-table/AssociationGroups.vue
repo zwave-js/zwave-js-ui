@@ -35,7 +35,7 @@
 						node.groups.find(
 							(g) =>
 								g.value === item.groupId &&
-								g.endpoint === item.endpoint
+								g.endpoint === item.endpoint,
 						).text
 					}}
 				</template>
@@ -142,7 +142,7 @@ export default {
 							? ''
 							: ' This node is Asleep, so you should wake it up first.'
 					}`,
-					'info'
+					'info',
 				)
 			}
 			const response = await this.app.apiRequest('getAssociations', [
@@ -206,7 +206,7 @@ export default {
 
 			const response = await this.app.apiRequest(
 				'removeAssociations',
-				args
+				args,
 			)
 
 			if (response.success) {
@@ -221,7 +221,7 @@ export default {
 				!(await this.$listeners.showConfirm(
 					'Attention',
 					`Are you sure you want to remove all associations from this node? This will also remove lifeline association if it exists.`,
-					'alert'
+					'alert',
 				))
 			) {
 				return
@@ -229,7 +229,7 @@ export default {
 
 			const response = await this.app.apiRequest(
 				'removeAllAssociations',
-				args
+				args,
 			)
 
 			if (response.success) {

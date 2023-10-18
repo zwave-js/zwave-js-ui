@@ -39,21 +39,21 @@ export class NodeCollection {
 	_filterByProps(node, properties, filter) {
 		const mergedProps = [properties].reduce(
 			(merged, prop) => merged.concat(prop),
-			[]
+			[],
 		)
 		return mergedProps.find((prop) =>
 			filter(
 				this.propDefs &&
 					typeof this.propDefs[prop].customValue === 'function'
 					? this.propDefs[prop].customValue(node)
-					: node[prop]
-			)
+					: node[prop],
+			),
 		)
 	}
 
 	filter(properties, filter) {
 		const filtered = this.nodes.filter((node) =>
-			this._filterByProps(node, properties, filter)
+			this._filterByProps(node, properties, filter),
 		)
 		return new NodeCollection(filtered, this.propDefs)
 	}
@@ -61,21 +61,21 @@ export class NodeCollection {
 	contains(properties, value, caseSensitive = false) {
 		return this.filter(
 			properties,
-			this._createStringFilter(value, caseSensitive)
+			this._createStringFilter(value, caseSensitive),
 		)
 	}
 
 	matches(properties, value, caseSensitive = false) {
 		return this.filter(
 			properties,
-			this._createRegexFilter(value, caseSensitive)
+			this._createRegexFilter(value, caseSensitive),
 		)
 	}
 
 	equals(properties, value) {
 		return this.filter(
 			properties,
-			(nodeValue) => this._isUndefined(value) || value === nodeValue
+			(nodeValue) => this._isUndefined(value) || value === nodeValue,
 		)
 	}
 
@@ -83,14 +83,14 @@ export class NodeCollection {
 		return this.betweenNumber(
 			col,
 			filter ? filter.min : null,
-			filter ? filter.max : null
+			filter ? filter.max : null,
 		).equalsAny(col, filter ? (filter.values ? filter.values : []) : [])
 	}
 
 	filterStringCol(col, filter) {
 		return this.matches([col], filter ? filter.match : '').equalsAny(
 			col,
-			filter ? (filter.values ? filter.values : []) : []
+			filter ? (filter.values ? filter.values : []) : [],
 		)
 	}
 
@@ -102,7 +102,7 @@ export class NodeCollection {
 		return this.betweenDate(
 			col,
 			filter ? filter.from : null,
-			filter ? filter.to : null
+			filter ? filter.to : null,
 		)
 	}
 
@@ -111,7 +111,7 @@ export class NodeCollection {
 			properties,
 			(nodeValue) =>
 				(this._isUndefined(minValue) || minValue <= nodeValue) &&
-				(this._isUndefined(maxValue) || maxValue >= nodeValue)
+				(this._isUndefined(maxValue) || maxValue >= nodeValue),
 		)
 	}
 
@@ -130,7 +130,8 @@ export class NodeCollection {
 	equalsAny(properties, values) {
 		return this.filter(
 			properties,
-			(nodeValue) => values.length === 0 || values.indexOf(nodeValue) >= 0
+			(nodeValue) =>
+				values.length === 0 || values.indexOf(nodeValue) >= 0,
 		)
 	}
 }

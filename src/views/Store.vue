@@ -350,7 +350,7 @@ export default {
 				await this.$listeners.showConfirm(
 					'Attention',
 					`Are you sure you want to delete the file ${item.name}?`,
-					'alert'
+					'alert',
 				)
 			) {
 				try {
@@ -358,7 +358,7 @@ export default {
 					if (data.success) {
 						this.showSnackbar(
 							'File deleted successfully',
-							'success'
+							'success',
 						)
 						await this.refreshTree(true)
 					} else {
@@ -375,7 +375,7 @@ export default {
 				await this.$listeners.showConfirm(
 					'Attention',
 					`Are you sure you want to delete ${files.length} files?`,
-					'alert'
+					'alert',
 				)
 			) {
 				try {
@@ -383,7 +383,7 @@ export default {
 					if (data.success) {
 						this.showSnackbar(
 							'Files deleted successfully',
-							'success'
+							'success',
 						)
 						await this.refreshTree(true)
 					} else {
@@ -416,13 +416,13 @@ export default {
 					new Blob([response.data], {
 						type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 					}),
-					fileName
+					fileName,
 				)
 			} else {
 				const url = window.URL.createObjectURL(
 					new Blob([response.data], {
 						type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-					})
+					}),
 				)
 				const link = document.createElement('a')
 				link.href = url
@@ -441,7 +441,7 @@ export default {
 				this.$listeners.export(
 					this.fileContent,
 					fileName,
-					this.selected.ext
+					this.selected.ext,
 				)
 			}
 		},
@@ -454,7 +454,7 @@ export default {
 					width: 500,
 					cancelText: 'No',
 					confirmText: 'Yes',
-				}
+				},
 			)
 
 			if (result) {
@@ -463,7 +463,7 @@ export default {
 
 					await this.downloadZip(
 						response,
-						`store-backup_${Date.now()}.zip`
+						`store-backup_${Date.now()}.zip`,
 					)
 
 					this.refreshTree()
@@ -488,7 +488,7 @@ export default {
 							accept: 'application/zip',
 						},
 					],
-				}
+				},
 			)
 
 			if (restore.file) {
@@ -521,7 +521,7 @@ export default {
 							key: 'file',
 						},
 					],
-				}
+				},
 			)
 
 			if (upload.file) {
@@ -560,7 +560,7 @@ export default {
 								hint: `Insert the ${text} name`,
 							},
 						],
-					}
+					},
 				)
 
 				if (!name) {
@@ -580,7 +580,7 @@ export default {
 				(await this.$listeners.showConfirm(
 					'Attention',
 					`Are you sure you want to overwrite the content of the file ${this.selected.name}?`,
-					'alert'
+					'alert',
 				))
 			) {
 				try {
@@ -590,14 +590,14 @@ export default {
 							path,
 							isNew,
 							isDirectory,
-						}
+						},
 					)
 					if (data.success) {
 						this.showSnackbar(
 							`${isDirectory ? 'Directory' : 'File'} ${
 								isNew ? 'created' : 'updated'
 							} successfully`,
-							'success'
+							'success',
 						)
 						await this.refreshTree()
 					} else {
@@ -623,7 +623,7 @@ export default {
 				try {
 					if (!this.allowedExt.includes(this.selected.ext)) {
 						throw Error(
-							`Preview of .${this.selected.ext} files is not supported`
+							`Preview of .${this.selected.ext} files is not supported`,
 						)
 					}
 					const data = await ConfigApis.getFile(this.selected.path)
@@ -651,7 +651,7 @@ export default {
 			} catch (error) {
 				this.showSnackbar(
 					'Error while fetching store files: ' + error.message,
-					'error'
+					'error',
 				)
 				log.error(error)
 			}

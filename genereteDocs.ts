@@ -8,7 +8,7 @@ import { join } from 'path'
 // Make the linter happy
 export function formatWithPrettier(
 	filename: string,
-	sourceText: string
+	sourceText: string,
 ): string {
 	const prettierOptions = {
 		...require(join(__dirname, '.prettierrc.js')),
@@ -80,7 +80,7 @@ function mqttApis(file: SourceFile) {
 	if (!ZwaveClientClass) throw new Error('ZwaveClient class not found')
 
 	const methods = ZwaveClientClass.getInstanceMethods().filter((c) =>
-		allowedApis.includes(c.getName() as any)
+		allowedApis.includes(c.getName() as any),
 	)
 
 	let text = ''

@@ -151,7 +151,7 @@
 														<rich-value
 															:value="
 																statusRichValue(
-																	item
+																	item,
 																)
 															"
 														/>
@@ -366,7 +366,7 @@ export default {
 				? Math.round(
 						(node.firmwareUpdate.sentFragments /
 							node.firmwareUpdate.totalFragments) *
-							100
+							100,
 				  )
 				: null
 		},

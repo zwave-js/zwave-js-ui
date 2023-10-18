@@ -152,7 +152,7 @@ describe('NodeCollection', () => {
 			const filtered = collection.betweenNumber(
 				'id',
 				undefined,
-				undefined
+				undefined,
 			)
 			expect(filtered.nodes).to.eql([
 				{ id: 10, sample: 10 },
@@ -217,7 +217,7 @@ describe('NodeCollection', () => {
 			const filtered = collection.betweenDate(
 				'lastActive',
 				undefined,
-				undefined
+				undefined,
 			)
 			expect(filtered.nodes).to.eql([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
@@ -247,7 +247,7 @@ describe('NodeCollection', () => {
 			const filtered = collection.betweenDate(
 				'lastActive',
 				new Date(2020, 11, 10, 0, 0),
-				null
+				null,
 			)
 			expect(filtered.nodes).to.eql([
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },
@@ -263,7 +263,7 @@ describe('NodeCollection', () => {
 			const filtered = collection.betweenDate(
 				'lastActive',
 				null,
-				new Date(2020, 11, 10, 0, 0)
+				new Date(2020, 11, 10, 0, 0),
 			)
 			expect(filtered.nodes).to.eql([
 				{ id: 10, lastActive: new Date(2020, 11, 9, 0, 0) },
@@ -279,7 +279,7 @@ describe('NodeCollection', () => {
 			const filtered = collection.betweenDate(
 				'lastActive',
 				new Date(2020, 11, 9, 12, 0),
-				new Date(2020, 11, 10, 12, 0)
+				new Date(2020, 11, 10, 12, 0),
 			)
 			expect(filtered.nodes).to.eql([
 				{ id: 20, lastActive: new Date(2020, 11, 10, 0, 0) },

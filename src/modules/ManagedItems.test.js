@@ -51,7 +51,7 @@ function getNewManagedTestItems() {
 		testItems,
 		testPropDefs,
 		new LocalStorageMock(),
-		'test_'
+		'test_',
 	)
 }
 
@@ -114,7 +114,7 @@ describe('ManagedItems', () => {
 			// Ensure pre-conditions:
 			expect(managedItems.selected).to.be.eql([])
 			expect(managedItems.filteredItems.length).to.be.eql(
-				managedItems.items.length
+				managedItems.items.length,
 			)
 			const itemsToBeSelected = [{ id: 1 }, { id: 3 }]
 			managedItems.selected = itemsToBeSelected
@@ -123,13 +123,13 @@ describe('ManagedItems', () => {
 			managedItems.setFilterToSelected()
 			// Ensure post-conditions:
 			expect(managedItems.filteredItems.length).to.eql(
-				itemsToBeSelected.length
+				itemsToBeSelected.length,
 			)
 			expect(managedItems.filteredItems[0].id).to.eql(
-				itemsToBeSelected[0].id
+				itemsToBeSelected[0].id,
 			)
 			expect(managedItems.filteredItems[1].id).to.eql(
-				itemsToBeSelected[1].id
+				itemsToBeSelected[1].id,
 			)
 		})
 	})
@@ -173,7 +173,7 @@ describe('ManagedItems', () => {
 				testItems,
 				{ id: {} },
 				new LocalStorageMock(),
-				'test_'
+				'test_',
 			)
 			expect(managedItems.allTableHeaders).to.be.eql([
 				{ text: 'id', type: 'string', value: 'id', groupable: true },
@@ -209,7 +209,7 @@ describe('ManagedItems', () => {
 				testItems,
 				{ id: {} },
 				new LocalStorageMock(),
-				'test_'
+				'test_',
 			)
 			managedItems.groupBy = ['value']
 			expect(managedItems.groupByTitle).to.eql('value')

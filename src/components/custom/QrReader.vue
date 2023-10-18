@@ -240,7 +240,7 @@ export default {
 									return this.smallQrCodeRegion(v)
 							  }
 							: null,
-					}
+					},
 				)
 
 				await this.qrReader.start()
@@ -280,11 +280,11 @@ export default {
 		onScanSuccess(result) {
 			log.log(
 				'QR-Code scanned: ',
-				typeof result === 'string' ? result : result.data
+				typeof result === 'string' ? result : result.data,
 			)
 			this.$emit(
 				'result',
-				typeof result === 'string' ? result : result.data
+				typeof result === 'string' ? result : result.data,
 			)
 		},
 		onDrop(e) {

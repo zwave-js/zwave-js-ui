@@ -115,12 +115,12 @@ export function productionType(index: number): Record<string, any> {
 }
 export function meterType(
 	ccSpecific: IMeterCCSpecific,
-	configManager: ConfigManager
+	configManager: ConfigManager,
 ): any {
 	const meter = configManager.lookupMeter(ccSpecific.meterType)
 	const scale = configManager.lookupMeterScale(
 		ccSpecific.meterType,
-		ccSpecific.scale
+		ccSpecific.scale,
 	)
 
 	const cfg = {
@@ -741,7 +741,7 @@ export function genericDeviceClass(cls: number): string {
 }
 export function specificDeviceClass(
 	genericCls: number,
-	specificCls: number
+	specificCls: number,
 ): string {
 	const clsAttr = genericDeviceClassAttributes(genericCls)
 	if (clsAttr) {

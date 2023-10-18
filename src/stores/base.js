@@ -194,7 +194,7 @@ const useBaseStore = defineStore('base', {
 			if (isPartial && index === undefined) {
 				log.warn(
 					'Received partial node info about an unknown node, skipping...',
-					n
+					n,
 				)
 				return
 			}

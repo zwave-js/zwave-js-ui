@@ -451,7 +451,7 @@ export default {
 						id: node.id,
 						firmwareUpdateResult: false,
 					},
-					true
+					true,
 				)
 
 				this.loaderText = `<span style="white-space: break-spaces;" class="${
@@ -558,7 +558,7 @@ export default {
 				const response = await ConfigApis.updatePassword(this.password)
 				this.showSnackbar(
 					response.message,
-					response.success ? 'success' : 'error'
+					response.success ? 'success' : 'error',
 				)
 				if (response.success) {
 					this.closePasswordDialog()
@@ -567,7 +567,7 @@ export default {
 			} catch (error) {
 				this.showSnackbar(
 					'Error while updating password, check console for more info',
-					'error'
+					'error',
 				)
 				log.error(error)
 			}
@@ -587,13 +587,13 @@ export default {
 					<i aria-hidden="true" class="v-icon notranslate material-icons theme--light success--text" style="font-size: 60px;">check_circle</i>
 					<p class="mt-3 headline text-center">
 						Node ${node.id} added with security "${node.security || 'None'} ${
-						result.lowSecurityReason
-							? ` (${getEnumMemberName(
-									SecurityBootstrapFailure,
-									result.lowSecurityReason
-							  )})`
-							: ''
-					}"
+							result.lowSecurityReason
+								? ` (${getEnumMemberName(
+										SecurityBootstrapFailure,
+										result.lowSecurityReason,
+								  )})`
+								: ''
+						}"
 					</p>
 				</div>`,
 					'info',
@@ -601,7 +601,7 @@ export default {
 						width: 500,
 						confirmText: 'Close',
 						cancelText: '',
-					}
+					},
 				)
 			}
 		},
@@ -642,13 +642,13 @@ export default {
 		apiRequest(
 			apiName,
 			args = [],
-			options = { infoSnack: true, errorSnack: true }
+			options = { infoSnack: true, errorSnack: true },
 		) {
 			return new Promise((resolve) => {
 				if (this.socket.connected) {
 					log.debug(
 						`Sending API request: ${apiName} with args:`,
-						args
+						args,
 					)
 					if (options.infoSnack) {
 						this.showSnackbar(`API ${apiName} called`, 'info')
@@ -662,12 +662,12 @@ export default {
 						if (!response.success) {
 							log.error(
 								`Error while calling ${apiName}:`,
-								response
+								response,
 							)
 							if (options.errorSnack) {
 								this.showSnackbar(
 									`Error while calling ${apiName}: ${response.message}`,
-									'error'
+									'error',
 								)
 							}
 						}
@@ -676,7 +676,7 @@ export default {
 				} else {
 					log.debug(
 						`Socket disconnected, queueing API request: ${apiName} with args:`,
-						args
+						args,
 					)
 					socketQueue.push({
 						apiName,
@@ -709,7 +709,7 @@ export default {
 					width: 500,
 					cancelText: 'Close',
 					confirmText: newVersion ? 'Install' : 'Check',
-				}
+				},
 			)
 
 			if (result) {
@@ -717,29 +717,29 @@ export default {
 					newVersion
 						? 'installConfigUpdate'
 						: 'checkForConfigUpdates',
-					[]
+					[],
 				)
 
 				this.showSnackbar(
-					newVersion ? 'Installation started' : 'Check requested'
+					newVersion ? 'Installation started' : 'Check requested',
 				)
 			}
 		},
 		changeThemeColor: function () {
 			const metaThemeColor = document.querySelector(
-				'meta[name=theme-color]'
+				'meta[name=theme-color]',
 			)
 			const metaThemeColor2 = document.querySelector(
-				'meta[name=msapplication-TileColor]'
+				'meta[name=msapplication-TileColor]',
 			)
 
 			metaThemeColor.setAttribute(
 				'content',
-				this.darkMode ? '#000' : '#fff'
+				this.darkMode ? '#000' : '#fff',
 			)
 			metaThemeColor2.setAttribute(
 				'content',
-				this.darkMode ? '#000' : '#fff'
+				this.darkMode ? '#000' : '#fff',
 			)
 		},
 		importFile: function (ext) {
@@ -773,7 +773,7 @@ export default {
 										} catch (e) {
 											self.showSnackbar(
 												'Error while parsing input file, check console for more info',
-												'error'
+												'error',
 											)
 											console.error(e)
 											err = e
@@ -785,7 +785,7 @@ export default {
 									} else {
 										resolve({ data, file })
 									}
-								}
+								},
 							)
 
 							if (ext === 'buffer') {
@@ -831,7 +831,7 @@ export default {
 				if (!data.success) {
 					this.showSnackbar(
 						'Error while retrieving configuration, check console',
-						'error'
+						'error',
 					)
 				} else {
 					this.init(data)
@@ -849,7 +849,7 @@ export default {
 								noCancel: true,
 								confirmText: 'Got it',
 								persistent: true,
-							}
+							},
 						)
 					}
 
@@ -877,7 +877,7 @@ export default {
 								cancelText: 'No 😢',
 								confirmText: 'Ok 😍',
 								persistent: true,
-							}
+							},
 						)
 
 						const data = await ConfigApis.updateStats(result)
@@ -886,7 +886,7 @@ export default {
 							this.showSnackbar(
 								`Statistics are ${
 									data.enabled ? 'enabled' : 'disabled'
-								}`
+								}`,
 							)
 						} else {
 							throw Error(data.message)
@@ -940,7 +940,7 @@ export default {
 				this.socket.emit(
 					socketActions.init,
 					true,
-					this.onInit.bind(this)
+					this.onInit.bind(this),
 				)
 
 				if (socketQueue.length > 0) {
@@ -948,7 +948,7 @@ export default {
 						this.apiRequest(
 							item.apiName,
 							item.args,
-							item.options
+							item.options,
 						).then(item.resolve)
 					})
 					socketQueue = []
@@ -989,7 +989,7 @@ export default {
 			this.socket.on(socketEvents.connected, this.setAppInfo.bind(this))
 			this.socket.on(
 				socketEvents.controller,
-				this.setControllerStatus.bind(this)
+				this.setControllerStatus.bind(this),
 			)
 
 			this.socket.on(socketEvents.nodeUpdated, this.updateNode.bind(this))
@@ -998,28 +998,28 @@ export default {
 
 			this.socket.on(
 				socketEvents.valueRemoved,
-				this.removeValue.bind(this)
+				this.removeValue.bind(this),
 			)
 			this.socket.on(
 				socketEvents.valueUpdated,
-				this.updateValue.bind(this)
+				this.updateValue.bind(this),
 			)
 
 			this.socket.on(
 				socketEvents.metadataUpdated,
-				this.setValue.bind(this)
+				this.setValue.bind(this),
 			)
 
 			this.socket.on(
 				socketEvents.statistics,
-				this.setStatistics.bind(this)
+				this.setStatistics.bind(this),
 			)
 
 			this.socket.on(socketEvents.nodeEvent, this.addNodeEvent.bind(this))
 
 			this.socket.on(
 				socketEvents.grantSecurityClasses,
-				this.onGrantSecurityClasses.bind(this)
+				this.onGrantSecurityClasses.bind(this),
 			)
 			// don't await this, will cause a loop of calls
 			this.getConfig()
@@ -1054,7 +1054,7 @@ export default {
 				const data = await ConfigApis.isAuthEnabled()
 				if (!data.success) {
 					throw Error(
-						data.message || 'Error while checking authorizations'
+						data.message || 'Error while checking authorizations',
 					)
 				} else {
 					const newAuth = data.data === true
@@ -1068,7 +1068,7 @@ export default {
 
 					if (!newAuth && this.$route.path === Routes.login) {
 						this.$router.push(
-							localStorage.getItem('nextUrl') || Routes.main
+							localStorage.getItem('nextUrl') || Routes.main,
 						)
 						localStorage.removeItem('nextUrl')
 					}
@@ -1084,7 +1084,7 @@ export default {
 				const response = await fetch(
 					`https://api.github.com/repos/zwave-js/${project}/releases/${
 						version === 'latest' ? 'latest' : 'tags/' + version
-					}`
+					}`,
 				)
 				const data = await response.json()
 				return data
@@ -1097,7 +1097,7 @@ export default {
 
 			try {
 				const response = await fetch(
-					`https://api.github.com/repos/zwave-js/${project}/releases`
+					`https://api.github.com/repos/zwave-js/${project}/releases`,
 				)
 				const data = await response.json()
 
@@ -1149,7 +1149,7 @@ export default {
 					this.showSnackbar(
 						`New version available: ${latest.tag_name}`,
 						'info',
-						15000
+						15000,
 					)
 				}
 
@@ -1167,15 +1167,15 @@ export default {
 								new RegExp(
 									`#+ \\[${release.tag_name.replace(
 										'v',
-										''
+										'',
 									)}\\]\\([^\\)]+\\)`,
-									'g'
+									'g',
 								),
 								`${i === 0 ? '# UI\n---\n' : ''}## [${
 									release.tag_name
 								}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${
 									release.tag_name
-								})`
+								})`,
 							)
 
 							let changelog = md()
@@ -1185,12 +1185,12 @@ export default {
 							if (i === 0) {
 								changelog = changelog.replace(
 									'<h2>',
-									'</br><h2>'
+									'</br><h2>',
 								)
 							}
 
 							return changelog
-						}
+						},
 					)
 
 					let changelog = appChangelogs.join('</br>')
@@ -1205,7 +1205,7 @@ export default {
 									.render(release.body)
 									.replace(
 										/#(\d+)/g,
-										'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>'
+										'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>',
 									)
 
 								return `${
@@ -1217,7 +1217,7 @@ export default {
 								}">${
 									release.tag_name
 								}</a></h2></br>${changelog}</br>`
-							}
+							},
 						)
 
 						changelog += driverChangelogs.join('')
@@ -1233,11 +1233,11 @@ export default {
 									.render(release.body)
 									.replace(
 										"<h2>What's Changed</h2>",
-										'<h3>Changes</h3>'
+										'<h3>Changes</h3>',
 									)
 									.replace(
 										/#(\d+)/g,
-										'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
+										'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>',
 									)
 
 								return `${
@@ -1249,7 +1249,7 @@ export default {
 								}">v${
 									release.tag_name
 								}</a></h2></br>${changelog}</br>`
-							}
+							},
 						)
 
 						changelog += serverChangelogs.join('')
@@ -1273,7 +1273,7 @@ export default {
 									hint: 'Enable this to never show changelogs on next updates',
 								},
 							],
-						}
+						},
 					)
 
 					await ConfigApis.updateVersions(result?.dontShowAgain)

@@ -61,7 +61,7 @@ declare module 'express-session' {
 function multerPromise(
 	m: RequestHandler,
 	req: Request,
-	res: Response
+	res: Response,
 ): Promise<void> {
 	return new Promise((resolve, reject) => {
 		m(req, res, (err: any) => {
@@ -139,7 +139,7 @@ const socketManager = new SocketManager()
 
 socketManager.authMiddleware = function (
 	socket: Socket & { user?: User },
-	next: (err?) => void
+	next: (err?) => void,
 ) {
 	if (!isAuthEnabled()) {
 		next()
@@ -151,7 +151,7 @@ socketManager.authMiddleware = function (
 				if (err) return next(new Error('Authentication error'))
 				socket.user = decoded
 				next()
-			}
+			},
 		)
 	} else {
 		next(new Error('Authentication error'))
@@ -192,16 +192,16 @@ export async function startServer(host: string, port: number | string) {
 						cert,
 						rejectUnauthorized: false,
 					},
-					app
+					app,
 				)
 			} else {
 				logger.warn(
-					'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP'
+					'HTTPS is enabled but cert or key cannot be generated. Falling back to HTTP',
 				)
 			}
 		} else {
 			logger.warn(
-				'HTTPS enabled but FORCE_DISABLE_SSL env var is set. Falling back to HTTP'
+				'HTTPS enabled but FORCE_DISABLE_SSL env var is set. Falling back to HTTP',
 			)
 		}
 	}
@@ -217,7 +217,7 @@ export async function startServer(host: string, port: number | string) {
 		logger.info(
 			`Listening on ${bind} host ${host} protocol ${
 				httpsEnabled ? 'HTTPS' : 'HTTP'
-			}`
+			}`,
 		)
 	})
 
@@ -340,7 +340,7 @@ async function loadCertKey(): Promise<{
 
 	if (!cert || !key) {
 		logger.info(
-			'Cert and key not found in store, generating fresh new ones...'
+			'Cert and key not found in store, generating fresh new ones...',
 		)
 
 		try {
@@ -375,7 +375,7 @@ async function startGateway(settings: Settings) {
 		sessionSecret === 'DEFAULT_SESSION_SECRET_CHANGE_ME'
 	) {
 		logger.error(
-			'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var'
+			'Session secret is the default one. For security reasons you should change it by using SESSION_SECRET env var',
 		)
 	}
 
@@ -411,7 +411,7 @@ async function startGateway(settings: Settings) {
 					// eslint-disable-next-line @typescript-eslint/no-var-requires
 					require(plugin) as PluginConstructor,
 					pluginsContext,
-					pluginName
+					pluginName,
 				)
 
 				plugins.push(instance)
@@ -438,7 +438,10 @@ async function destroyPlugins() {
 function setupInterceptor() {
 	// intercept logs and redirect them to socket
 	const interceptor = (
-		write: (buffer: string | Uint8Array, cb?: (err?: Error) => void) => void
+		write: (
+			buffer: string | Uint8Array,
+			cb?: (err?: Error) => void,
+		) => void,
 	) => {
 		return function (...args: any[]): boolean {
 			socketManager.io.emit(socketEvents.debug, args[0]?.toString())
@@ -447,10 +450,10 @@ function setupInterceptor() {
 	}
 
 	process.stdout.write = interceptor(
-		process.stdout.write.bind(process.stdout)
+		process.stdout.write.bind(process.stdout),
 	)
 	process.stderr.write = interceptor(
-		process.stderr.write.bind(process.stderr)
+		process.stderr.write.bind(process.stderr),
 	)
 }
 
@@ -515,7 +518,7 @@ app.set('view engine', 'ejs')
 app.use(
 	morgan(loggers.disableColors ? 'tiny' : 'dev', {
 		stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
-	}) as RequestHandler
+	}) as RequestHandler,
 )
 app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
@@ -523,7 +526,7 @@ app.use(
 		limit: '50mb',
 		extended: true,
 		parameterLimit: 50000,
-	}) as RequestHandler
+	}) as RequestHandler,
 )
 
 // must be placed before history middleware
@@ -538,7 +541,7 @@ app.use(function (req, res, next) {
 app.use(
 	history({
 		index: '/',
-	})
+	}),
 )
 
 // fix back compatibility with old history mode after switching to hash mode
@@ -590,7 +593,7 @@ app.use(
 			httpOnly: true, // prevents cookie to be sent by client javascript
 			maxAge: 24 * 60 * 60 * 1000, // one day
 		},
-	})
+	}),
 )
 
 // Node.js CSRF protection middleware.
@@ -637,7 +640,7 @@ function setupSocket(server: HttpServer) {
 						message: 'Zwave client not connected',
 					})
 				}
-			}
+			},
 		)
 
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -707,7 +710,7 @@ function setupSocket(server: HttpServer) {
 						res = await gw.zwave.storeDevices(
 							data.devices,
 							data.nodeId,
-							data.remove
+							data.remove,
 						)
 						break
 				}
@@ -856,7 +859,7 @@ app.post(
 				result.user = userData
 				loginLimiter.resetKey(req.ip)
 				logger.info(
-					`User ${user.username} logged in successfully from ${req.ip}`
+					`User ${user.username} logged in successfully from ${req.ip}`,
 				)
 			} else {
 				result.code = 3
@@ -864,7 +867,7 @@ app.post(
 				logger.error(
 					`User ${
 						user?.username || req.body.username
-					} failed to login from ${req.ip}: wrong credentials`
+					} failed to login from ${req.ip}: wrong credentials`,
 				)
 			}
 
@@ -879,10 +882,10 @@ app.post(
 			logger.error(
 				`User ${
 					user?.username || req.body.username
-				} failed to login from ${req.ip}: ${error.message}`
+				} failed to login from ${req.ip}: ${error.message}`,
 			)
 		}
-	}
+	},
 )
 
 // logout the user
@@ -948,7 +951,7 @@ app.put(
 			})
 			logger.error('Error while updating password', error)
 		}
-	}
+	},
 )
 
 app.get('/health', apisLimiter, function (req, res) {
@@ -1050,7 +1053,7 @@ app.get(
 			}
 			res.json(data)
 		} else res.json(data)
-	}
+	},
 )
 
 // update settings
@@ -1062,7 +1065,7 @@ app.post(
 		try {
 			if (restarting) {
 				throw Error(
-					'Gateway is restarting, wait a moment before doing another request'
+					'Gateway is restarting, wait a moment before doing another request',
 				)
 			}
 			// TODO: validate settings using calss-validator
@@ -1086,7 +1089,7 @@ app.post(
 			logger.error(error)
 			res.json({ success: false, message: error.message })
 		}
-	}
+	},
 )
 
 // update settings
@@ -1098,7 +1101,7 @@ app.post(
 		try {
 			if (restarting) {
 				throw Error(
-					'Gateway is restarting, wait a moment before doing another request'
+					'Gateway is restarting, wait a moment before doing another request',
 				)
 			}
 			const { enableStatistics } = req.body
@@ -1132,7 +1135,7 @@ app.post(
 			logger.error(error)
 			res.json({ success: false, message: error.message })
 		}
-	}
+	},
 )
 
 // update versions
@@ -1172,7 +1175,7 @@ app.post(
 			logger.error(error)
 			res.json({ success: false, message: error.message })
 		}
-	}
+	},
 )
 
 // get config
@@ -1217,7 +1220,7 @@ app.post(
 					await gw.zwave.callApi(
 						'setNodeName',
 						nodeIdNumber,
-						node.name || ''
+						node.name || '',
 					)
 				}
 
@@ -1225,7 +1228,7 @@ app.post(
 					await gw.zwave.callApi(
 						'setNodeLocation',
 						nodeIdNumber,
-						node.loc || ''
+						node.loc || '',
 					)
 				}
 
@@ -1233,7 +1236,7 @@ app.post(
 					await gw.zwave.storeDevices(
 						node.hassDevices,
 						nodeIdNumber,
-						false
+						false,
 					)
 				}
 			}
@@ -1246,7 +1249,7 @@ app.post(
 			logger.error(error.message)
 			return res.json({ success: false, message: error.message })
 		}
-	}
+	},
 )
 
 interface StoreFileEntry {
@@ -1345,7 +1348,7 @@ app.delete(
 			logger.error(error.message)
 			return res.json({ success: false, message: error.message })
 		}
-	}
+	},
 )
 
 app.put(
@@ -1363,7 +1366,7 @@ app.put(
 			logger.error(error.message)
 			return res.json({ success: false, message: error.message })
 		}
-	}
+	},
 )
 
 app.post(
@@ -1411,7 +1414,7 @@ app.post(
 		}
 
 		await archive.finalize()
-	}
+	},
 )
 
 app.get(
@@ -1426,7 +1429,7 @@ app.get(
 				error: error.message,
 			})
 		}
-	}
+	},
 )
 
 app.post(
@@ -1462,7 +1465,7 @@ app.post(
 		if (file && isRestore) {
 			await rm(file.path)
 		}
-	}
+	},
 )
 
 app.get('/api/snippet', apisLimiter, async function (req, res) {
@@ -1490,7 +1493,7 @@ app.use(function (req, res, next) {
 // error handler
 app.use(function (err: HttpError, req: Request, res: Response) {
 	logger.error(
-		`${req.method} ${req.url} ${err.status} - Error: ${err.message}`
+		`${req.method} ${req.url} ${err.status} - Error: ${err.message}`,
 	)
 
 	// render the error page
@@ -1515,7 +1518,8 @@ async function gracefuShutdown() {
 process.on('unhandledRejection', (reason) => {
 	const stack = (reason as any).stack || ''
 	logger.error(
-		`Unhandled Rejection, reason: ${reason}${stack ? `\n${stack}` : ''}`
+		// eslint-disable-next-line @typescript-eslint/no-base-to-string
+		`Unhandled Rejection, reason: ${reason}${stack ? `\n${stack}` : ''}`,
 	)
 })
 

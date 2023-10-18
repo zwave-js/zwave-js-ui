@@ -21,7 +21,7 @@ export default {
 			for (const event in this.bindedSocketEvents) {
 				this.socket.off(
 					socketEvents[event],
-					this.bindedSocketEvents[event]
+					this.bindedSocketEvents[event],
 				)
 			}
 
@@ -36,7 +36,7 @@ export default {
 			if (response.success && response.result) {
 				this.showSnackbar(
 					`Ping of node ${node.id} successful`,
-					'success'
+					'success',
 				)
 			} else {
 				this.showSnackbar(
@@ -45,7 +45,7 @@ export default {
 							? response.message
 							: 'no response to ping'
 					}`,
-					'error'
+					'error',
 				)
 			}
 		},
@@ -62,7 +62,7 @@ export default {
 					'warning',
 					{
 						width: 600,
-					}
+					},
 				)
 
 				if (!confirmed) {
@@ -75,13 +75,13 @@ export default {
 				{
 					infoSnack: true,
 					errorSnack: false,
-				}
+				},
 			)
 
 			if (response.success && response.result) {
 				this.showSnackbar(
 					`Routes of node ${node.id} has been rebuilt successfully`,
-					'success'
+					'success',
 				)
 			} else {
 				this.showSnackbar(
@@ -90,7 +90,7 @@ export default {
 							? response.message
 							: 'failed to rebuild node routes'
 					}`,
-					'error'
+					'error',
 				)
 			}
 		},

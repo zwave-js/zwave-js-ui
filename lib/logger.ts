@@ -45,7 +45,7 @@ interface LoggerConfig {
  */
 export function sanitizedConfig(
 	module: string,
-	config: DeepPartial<GatewayConfig> | undefined
+	config: DeepPartial<GatewayConfig> | undefined,
 ): LoggerConfig {
 	config = config || ({} as LoggerConfig)
 	const filePath = joinPath(logsDir, config.logFileName || defaultLogFile)
@@ -64,7 +64,7 @@ export function sanitizedConfig(
  */
 export function customFormat(
 	config: LoggerConfig,
-	noColor = false
+	noColor = false,
 ): winston.Logform.Format {
 	noColor = noColor || disableColors
 	const formats: winston.Logform.Format[] = [
@@ -91,7 +91,7 @@ export function customFormat(
 			return `${info.timestamp} ${info.level} ${info.label}: ${
 				info.message
 			}${info.stack ? '\n' + info.stack : ''}`
-		})
+		}),
 	)
 
 	return combine(...formats)
@@ -108,7 +108,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				format: customFormat(config),
 				level: config.level,
 				stderrLevels: ['error'],
-			})
+			}),
 		)
 	}
 
@@ -148,7 +148,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 export function setupLogger(
 	container: winston.Container,
 	module: string,
-	config?: DeepPartial<GatewayConfig>
+	config?: DeepPartial<GatewayConfig>,
 ): ModuleLogger {
 	const sanitized = sanitizedConfig(module, config)
 	// Winston automatically reuses an existing module logger

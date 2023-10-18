@@ -60,7 +60,7 @@ const watch = (filename: string, fn: () => void) => {
 					watchers.get(filename).close()
 					watch(filename, fn)
 				}
-			})
+			}),
 		)
 	} catch {
 		watchers.set(
@@ -75,7 +75,7 @@ const watch = (filename: string, fn: () => void) => {
 					watch(filename, fn)
 					fn()
 				}
-			})
+			}),
 		)
 	}
 }
@@ -123,7 +123,7 @@ const loadCustomDevices = () => {
 	logger.info(
 		`Loaded ${
 			Object.keys(devices).length
-		} custom Hass devices configurations`
+		} custom Hass devices configurations`,
 	)
 }
 
@@ -272,7 +272,7 @@ export default class Gateway {
 			this._mqtt.on('broadcastRequest', this._onBroadRequest.bind(this))
 			this._mqtt.on(
 				'multicastRequest',
-				this._onMulticastRequest.bind(this)
+				this._onMulticastRequest.bind(this),
 			)
 			this._mqtt.on('apiCall', this._onApiRequest.bind(this))
 			this._mqtt.on('hassStatus', this._onHassStatus.bind(this))
@@ -287,7 +287,7 @@ export default class Gateway {
 				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
 				this._zwave.on(
 					'nodeLastActive',
-					this._onNodeLastActive.bind(this)
+					this._onNodeLastActive.bind(this),
 				)
 
 				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
@@ -315,7 +315,7 @@ export default class Gateway {
 			if (jobConfig.runOnInit) {
 				this.runJob(jobConfig).catch((error) => {
 					logger.error(
-						`Error while executing scheduled job "${jobConfig.name}": ${error.message}`
+						`Error while executing scheduled job "${jobConfig.name}": ${error.message}`,
 					)
 				})
 			}
@@ -324,7 +324,7 @@ export default class Gateway {
 				try {
 					const job = new Cron(
 						jobConfig.cron,
-						this.runJob.bind(this, jobConfig)
+						this.runJob.bind(this, jobConfig),
 					)
 
 					if (job?.nextRun()) {
@@ -332,12 +332,12 @@ export default class Gateway {
 						logger.info(
 							`Scheduled job "${jobConfig.name}" will run at ${job
 								.nextRun()
-								.toISOString()}`
+								.toISOString()}`,
 						)
 					}
 				} catch (error) {
 					logger.error(
-						`Error while scheduling job "${jobConfig.name}": ${error.message}`
+						`Error while scheduling job "${jobConfig.name}": ${error.message}`,
 					)
 				}
 			}
@@ -353,7 +353,7 @@ export default class Gateway {
 			await this.zwave.driverFunction(jobConfig.code)
 		} catch (error) {
 			logger.error(
-				`Error executing scheduled job "${jobConfig.name}": ${error.message}`
+				`Error executing scheduled job "${jobConfig.name}": ${error.message}`,
 			)
 		}
 
@@ -363,7 +363,7 @@ export default class Gateway {
 			logger.info(
 				`Next scheduled job "${jobConfig.name}" will run at ${job
 					.nextRun()
-					.toISOString()}`
+					.toISOString()}`,
 			)
 		}
 	}
@@ -448,7 +448,7 @@ export default class Gateway {
 						valueConf.receiveFunction,
 						valueId,
 						payload,
-						node
+						node,
 					)
 					if (parsedVal != null) {
 						payload = parsedVal
@@ -457,7 +457,7 @@ export default class Gateway {
 			}
 		} catch (error) {
 			logger.error(
-				`Error while parsing payload ${payload} for valueID ${valueId}`
+				`Error while parsing payload ${payload} for valueID ${valueId.id}`,
 			)
 		}
 
@@ -535,14 +535,14 @@ export default class Gateway {
 	valueTopic(
 		node: ZUINode,
 		valueId: ZUIValueId,
-		returnObject = false
+		returnObject = false,
 	): string | ValueIdTopic {
 		const topic = []
 		let valueConf: GatewayValue
 
 		// check if this value is in configuration values array
 		const values = this.config.values.filter(
-			(v: GatewayValue) => v.device === node.deviceId
+			(v: GatewayValue) => v.device === node.deviceId,
 		)
 		if (values && values.length > 0) {
 			const vID = this._getIdWithoutNode(valueId)
@@ -562,7 +562,7 @@ export default class Gateway {
 				targetTopic = this.valueTopic(
 					node,
 					targetValue,
-					false
+					false,
 				) as string
 			}
 		}
@@ -573,7 +573,7 @@ export default class Gateway {
 			switch (this.config.type) {
 				case GATEWAY_TYPE.NAMED:
 					topic.push(
-						node.name ? node.name : NODE_PREFIX + valueId.nodeId
+						node.name ? node.name : NODE_PREFIX + valueId.nodeId,
 					)
 					topic.push(Constants.commandClass(valueId.commandClass))
 
@@ -589,7 +589,9 @@ export default class Gateway {
 						topic.push(valueId.nodeId)
 					} else {
 						topic.push(
-							node.name ? node.name : NODE_PREFIX + valueId.nodeId
+							node.name
+								? node.name
+								: NODE_PREFIX + valueId.nodeId,
 						)
 					}
 					topic.push(valueId.commandClass)
@@ -674,12 +676,12 @@ export default class Gateway {
 	publishDiscovery(
 		hassDevice: HassDevice,
 		nodeId: number,
-		options: { deleteDevice?: boolean; forceUpdate?: boolean } = {}
+		options: { deleteDevice?: boolean; forceUpdate?: boolean } = {},
 	): void {
 		try {
 			if (!this.mqttEnabled || !this.config.hassDiscovery) {
 				logger.debug(
-					'Enable MQTT gateway and hass discovery to use this function'
+					'Enable MQTT gateway and hass discovery to use this function',
 				)
 				return
 			}
@@ -689,7 +691,7 @@ export default class Gateway {
 				`${
 					options.deleteDevice ? 'Removing' : 'Publishing'
 				} discovery: %o`,
-				hassDevice
+				hassDevice,
 			)
 
 			this.setDiscovery(nodeId, hassDevice, options.deleteDevice)
@@ -719,7 +721,7 @@ export default class Gateway {
 					hassDevice.discoveryTopic,
 					options.deleteDevice ? '' : hassDevice.discovery_payload,
 					{ qos: 0, retain: this.config.retainedDiscovery || false },
-					this.config.discoveryPrefix
+					this.config.discoveryPrefix,
 				)
 			}
 
@@ -727,14 +729,14 @@ export default class Gateway {
 				this._zwave.updateDevice(
 					hassDevice,
 					nodeId,
-					options.deleteDevice
+					options.deleteDevice,
 				)
 			}
 		} catch (error) {
 			logger.log(
 				'error',
 				`Error while publishing discovery for node ${nodeId}: ${error.message}. Hass device: %o`,
-				hassDevice
+				hassDevice,
 			)
 		}
 	}
@@ -746,7 +748,7 @@ export default class Gateway {
 	setDiscovery(
 		nodeId: number,
 		hassDevice: HassDevice,
-		deleteDevice = false
+		deleteDevice = false,
 	): void {
 		for (let k = 0; k < hassDevice.values.length; k++) {
 			const vId = nodeId + '-' + hassDevice.values[k]
@@ -784,7 +786,7 @@ export default class Gateway {
 	discoverDevice(node: ZUINode, hassDevice: HassDevice): void {
 		if (!this.mqttEnabled || !this.config.hassDiscovery) {
 			logger.info(
-				'Enable MQTT gateway and hass discovery to use this function'
+				'Enable MQTT gateway and hass discovery to use this function',
 			)
 			return
 		}
@@ -817,10 +819,10 @@ export default class Gateway {
 						payload.mode_state_template =
 							this._getMappedValuesInverseTemplate(
 								hassDevice.mode_map,
-								'off'
+								'off',
 							)
 						payload.mode_state_topic = this._mqtt.getTopic(
-							this.valueTopic(node, mode) as string
+							this.valueTopic(node, mode) as string,
 						)
 						payload.mode_command_topic =
 							payload.mode_state_topic + '/set'
@@ -834,7 +836,7 @@ export default class Gateway {
 
 					const setpoint = node.values[setId]
 					payload.temperature_state_topic = this._mqtt.getTopic(
-						this.valueTopic(node, setpoint) as string
+						this.valueTopic(node, setpoint) as string,
 					)
 					payload.temperature_command_topic =
 						payload.temperature_state_topic + '/set'
@@ -842,13 +844,13 @@ export default class Gateway {
 					const action = node.values[payload.action_topic]
 					if (action) {
 						payload.action_topic = this._mqtt.getTopic(
-							this.valueTopic(node, action) as string
+							this.valueTopic(node, action) as string,
 						)
 						if (hassDevice.action_map) {
 							payload.action_template =
 								this._getMappedValuesTemplate(
 									hassDevice.action_map,
-									'idle'
+									'idle',
 								)
 						}
 					}
@@ -856,7 +858,7 @@ export default class Gateway {
 					const fan = node.values[payload.fan_mode_state_topic]
 					if (fan !== undefined) {
 						payload.fan_mode_state_topic = this._mqtt.getTopic(
-							this.valueTopic(node, fan) as string
+							this.valueTopic(node, fan) as string,
 						)
 						payload.fan_mode_command_topic =
 							payload.fan_mode_state_topic + '/set'
@@ -865,7 +867,7 @@ export default class Gateway {
 							payload.fan_mode_state_template =
 								this._getMappedValuesInverseTemplate(
 									hassDevice.fan_mode_map,
-									'auto'
+									'auto',
 								)
 						}
 					}
@@ -874,12 +876,12 @@ export default class Gateway {
 						node.values[payload.current_temperature_topic]
 					if (currTemp !== undefined) {
 						payload.current_temperature_topic = this._mqtt.getTopic(
-							this.valueTopic(node, currTemp) as string
+							this.valueTopic(node, currTemp) as string,
 						)
 
 						if (currTemp.unit) {
 							payload.temperature_unit = currTemp.unit.includes(
-								'C'
+								'C',
 							)
 								? 'C'
 								: 'F'
@@ -900,8 +902,8 @@ export default class Gateway {
 							? this._mqtt.getTopic(
 									this.valueTopic(
 										node,
-										node.values[v]
-									) as string
+										node.values[v],
+									) as string,
 							  )
 							: null
 					}
@@ -922,7 +924,7 @@ export default class Gateway {
 				if (payload) {
 					const nodeName = this._getNodeName(
 						node,
-						this.config.ignoreLoc
+						this.config.ignoreLoc,
 					)
 
 					// Set device information using node info
@@ -938,7 +940,7 @@ export default class Gateway {
 						undefined,
 						hassDevice,
 						this.config.entityTemplate,
-						this.config.ignoreLoc
+						this.config.ignoreLoc,
 					)
 
 					// set a unique id for the component
@@ -952,7 +954,7 @@ export default class Gateway {
 
 					const discoveryTopic = this._getDiscoveryTopic(
 						hassDevice,
-						nodeName
+						nodeName,
 					)
 					hassDevice.discoveryTopic = discoveryTopic
 
@@ -969,7 +971,7 @@ export default class Gateway {
 		} catch (error) {
 			logger.error(
 				`Error while discovering device ${hassID} of node ${node.id}: ${error.message}`,
-				error
+				error,
 			)
 		}
 	}
@@ -1033,7 +1035,7 @@ export default class Gateway {
 
 			if (setpoints.length === 0) {
 				logger.warn(
-					'Unable to discover climate device, there is no valid setpoint valueId'
+					'Unable to discover climate device, there is no valid setpoint valueId',
 				)
 				return
 			}
@@ -1199,7 +1201,7 @@ export default class Gateway {
 	discoverValue(node: ZUINode, vId: string): void {
 		if (!this.mqttEnabled || !this.config.hassDiscovery) {
 			logger.debug(
-				'Enable MQTT gateway and hass discovery to use this function'
+				'Enable MQTT gateway and hass discovery to use this function',
 			)
 			return
 		}
@@ -1247,7 +1249,7 @@ export default class Gateway {
 						const specificDeviceClass =
 							Constants.specificDeviceClass(
 								node.deviceClass.generic,
-								node.deviceClass.specific
+								node.deviceClass.specific,
 							)
 						// Use a cover_position configuration if ...
 						if (
@@ -1316,7 +1318,7 @@ export default class Gateway {
 					cfg.object_id = utils.joinProps(
 						cfg.object_id,
 						valueId.property,
-						valueId.propertyKey
+						valueId.propertyKey,
 					)
 					break
 				case CommandClasses['Binary Sensor']: {
@@ -1329,7 +1331,7 @@ export default class Gateway {
 					if (sensorTypeName) {
 						sensorTypeName = utils.sanitizeTopic(
 							sensorTypeName.toLocaleLowerCase(),
-							true
+							true,
 						)
 					}
 
@@ -1347,14 +1349,14 @@ export default class Gateway {
 						case 'lock':
 							cfg = this._getBinarySensorConfig(
 								sensorTypeName,
-								true
+								true,
 							)
 							break
 						// moisture - normal
 						case 'contact':
 						case 'water':
 							cfg = this._getBinarySensorConfig(
-								Constants.deviceClass.sensor_binary.MOISTURE
+								Constants.deviceClass.sensor_binary.MOISTURE,
 							)
 							break
 						// safety - normal
@@ -1362,25 +1364,26 @@ export default class Gateway {
 						case 'co2':
 						case 'tamper':
 							cfg = this._getBinarySensorConfig(
-								Constants.deviceClass.sensor_binary.SAFETY
+								Constants.deviceClass.sensor_binary.SAFETY,
 							)
 							break
 						// problem - normal
 						case 'alarm':
 							cfg = this._getBinarySensorConfig(
-								Constants.deviceClass.sensor_binary.PROBLEM
+								Constants.deviceClass.sensor_binary.PROBLEM,
 							)
 							break
 						// connectivity - normal
 						case 'router':
 							cfg = this._getBinarySensorConfig(
-								Constants.deviceClass.sensor_binary.CONNECTIVITY
+								Constants.deviceClass.sensor_binary
+									.CONNECTIVITY,
 							)
 							break
 						// battery - normal
 						case 'battery_low':
 							cfg = this._getBinarySensorConfig(
-								Constants.deviceClass.sensor_binary.BATTERY
+								Constants.deviceClass.sensor_binary.BATTERY,
 							)
 							break
 						default:
@@ -1404,7 +1407,7 @@ export default class Gateway {
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/AlarmSensorCC.ts#L40
 					if (valueId.property === 'state') {
 						cfg = this._getBinarySensorConfig(
-							Constants.deviceClass.sensor_binary.PROBLEM
+							Constants.deviceClass.sensor_binary.PROBLEM,
 						)
 						cfg.object_id += AlarmSensorType[valueId.propertyKey]
 							? '_' + AlarmSensorType[valueId.propertyKey]
@@ -1430,18 +1433,18 @@ export default class Gateway {
 						switch (valueId.propertyKeyName) {
 							case 'Access Control':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary.LOCK
+									Constants.deviceClass.sensor_binary.LOCK,
 								)
 								off = 23 // Closed state
 								break
 							case 'Cover status':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary.OPENING
+									Constants.deviceClass.sensor_binary.OPENING,
 								)
 								break
 							case 'Door state (simple)':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary.DOOR
+									Constants.deviceClass.sensor_binary.DOOR,
 								)
 								off = 1 // Door closed on payload 1
 								break
@@ -1452,22 +1455,23 @@ export default class Gateway {
 							case 'Over-load status':
 							case 'Hardware status':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary.PROBLEM
+									Constants.deviceClass.sensor_binary.PROBLEM,
 								)
 								break
 							case 'Heat sensor status':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary.HEAT
+									Constants.deviceClass.sensor_binary.HEAT,
 								)
 								break
 							case 'Motion sensor status':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary.MOTION
+									Constants.deviceClass.sensor_binary.MOTION,
 								)
 								break
 							case 'Water Alarm':
 								cfg = this._getBinarySensorConfig(
-									Constants.deviceClass.sensor_binary.MOISTURE
+									Constants.deviceClass.sensor_binary
+										.MOISTURE,
 								)
 								break
 							// sensor status has multiple Properties. therefore is good to work
@@ -1477,13 +1481,13 @@ export default class Gateway {
 									case 'Smoke Alarm':
 										cfg = this._getBinarySensorConfig(
 											Constants.deviceClass.sensor_binary
-												.SMOKE
+												.SMOKE,
 										)
 										break
 									case 'Water Alarm':
 										cfg = this._getBinarySensorConfig(
 											Constants.deviceClass.sensor_binary
-												.MOISTURE
+												.MOISTURE,
 										)
 										break
 									default:
@@ -1505,7 +1509,7 @@ export default class Gateway {
 						cfg.object_id = utils.joinProps(
 							'notification',
 							valueId.property,
-							valueId.propertyKey
+							valueId.propertyKey,
 						)
 						// TODO: Improve the icons for different propertyKeys!
 						switch (valueId.propertyKey) {
@@ -1518,7 +1522,7 @@ export default class Gateway {
 						cfg.discovery_payload.value_template =
 							this._getMappedStateTemplate(
 								valueId.states,
-								valueId.default
+								valueId.default,
 							)
 					} else {
 						return
@@ -1541,7 +1545,7 @@ export default class Gateway {
 						// information. With this change, we target only the sensors and not the additional Properties.
 						if (valueId.ccSpecific) {
 							sensor = Constants.sensorType(
-								valueId.ccSpecific.sensorType
+								valueId.ccSpecific.sensorType,
 							)
 						} else {
 							return
@@ -1554,7 +1558,7 @@ export default class Gateway {
 						if (valueId.ccSpecific) {
 							sensor = Constants.meterType(
 								valueId.ccSpecific as IMeterCCSpecific,
-								this._zwave.driver.configManager
+								this._zwave.driver.configManager,
 							)
 
 							sensor.objectId += '_' + valueId.property
@@ -1583,7 +1587,7 @@ export default class Gateway {
 					) {
 						// TODO: class not yet supported by zwavejs
 						logger.warn(
-							'Energy Production CC not supported so value cannot be discovered'
+							'Energy Production CC not supported so value cannot be discovered',
 						)
 						// sensor = Constants.productionType(valueId.property)
 						return
@@ -1611,7 +1615,7 @@ export default class Gateway {
 
 							// use battery_low binary sensor
 							cfg = this._getBinarySensorConfig(
-								Constants.deviceClass.sensor_binary.BATTERY
+								Constants.deviceClass.sensor_binary.BATTERY,
 							)
 							// support the case a binary sensor is served under multilevel sensor CC
 							isSensor = false
@@ -1625,7 +1629,7 @@ export default class Gateway {
 
 					cfg.object_id = utils.joinProps(
 						sensor.sensor,
-						sensor.objectId
+						sensor.objectId,
 					)
 
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/scales.json
@@ -1672,7 +1676,7 @@ export default class Gateway {
 			// payload.payload_not_available = false
 			if (
 				['binary_sensor', 'sensor', 'lock', 'climate', 'fan'].includes(
-					cfg.type
+					cfg.type,
 				)
 			) {
 				payload.json_attributes_topic = payload.state_topic
@@ -1700,7 +1704,7 @@ export default class Gateway {
 				valueId,
 				cfg,
 				this.config.entityTemplate,
-				this.config.ignoreLoc
+				this.config.ignoreLoc,
 			)
 
 			// Set a unique id for the component
@@ -1735,7 +1739,7 @@ export default class Gateway {
 		} catch (error) {
 			logger.error(
 				`Error while discovering value ${valueId.id} of node ${node.id}: ${error.message}`,
-				error
+				error,
 			)
 		}
 	}
@@ -1748,7 +1752,7 @@ export default class Gateway {
 		const node = this._zwave.nodes.get(nodeId)
 		if (node) {
 			const topics = Object.keys(this.topicValues).filter(
-				(k) => this.topicValues[k].nodeId === node.id
+				(k) => this.topicValues[k].nodeId === node.id,
 			)
 
 			for (const t of topics) {
@@ -1772,7 +1776,7 @@ export default class Gateway {
 		const node = this._zwave.nodes.get(nodeId)
 		if (node) {
 			const topics = Object.keys(node.values).map(
-				(v) => this.valueTopic(node, node.values[v]) as string
+				(v) => this.valueTopic(node, node.values[v]) as string,
 			)
 
 			for (const t of topics) {
@@ -1823,7 +1827,7 @@ export default class Gateway {
 	private _onValueChanged(
 		valueId: ZUIValueId,
 		node: ZUINode,
-		changed: boolean
+		changed: boolean,
 	): void {
 		const isDiscovered = this.discovered[valueId.id]
 
@@ -1860,7 +1864,7 @@ export default class Gateway {
 					valueConf.sendFunction,
 					valueId,
 					tmpVal,
-					node
+					node,
 				)
 				if (parsedVal != null) {
 					tmpVal = parsedVal
@@ -1886,7 +1890,7 @@ export default class Gateway {
 					// check if the setpoint topic has changed
 					const setpoint = node.values[setId]
 					const setTopic = this._mqtt.getTopic(
-						this.valueTopic(node, setpoint) as string
+						this.valueTopic(node, setpoint) as string,
 					)
 					if (
 						setTopic !==
@@ -1972,7 +1976,7 @@ export default class Gateway {
 		// prevent to send cached values if them are stateless
 		if (isFromCache && valueId.stateless) {
 			logger.debug(
-				`Skipping send of stateless value ${valueId.id}: it's from cache`
+				`Skipping send of stateless value ${valueId.id}: it's from cache`,
 			)
 		} else {
 			this._mqtt.publish(topic, data, mqttOptions)
@@ -1985,7 +1989,7 @@ export default class Gateway {
 	private _onNotification(
 		node: ZUINode,
 		valueId: ZUIValueId,
-		data: Record<string, any>
+		data: Record<string, any>,
 	): void {
 		const topic = this.valueTopic(node, valueId) as string
 
@@ -1999,7 +2003,7 @@ export default class Gateway {
 	private _onNodeInited(node: ZUINode): void {
 		// enable poll if required
 		const values = this.config.values?.filter(
-			(v: GatewayValue) => v.enablePoll && v.device === node.deviceId
+			(v: GatewayValue) => v.enablePoll && v.device === node.deviceId,
 		)
 		for (let i = 0; i < values.length; i++) {
 			// don't edit the original object, copy it
@@ -2011,7 +2015,7 @@ export default class Gateway {
 				this._zwave.setPollInterval(valueId, values[i].pollInterval)
 			} catch (error) {
 				logger.error(
-					`Error while enabling poll interval: ${error.message}`
+					`Error while enabling poll interval: ${error.message}`,
 				)
 			}
 		}
@@ -2153,7 +2157,7 @@ export default class Gateway {
 	private async _onApiRequest(
 		topic: string,
 		apiName: AllowedApis,
-		payload: { args: Parameters<ZwaveClient[AllowedApis]> }
+		payload: { args: Parameters<ZwaveClient[AllowedApis]> },
 	): Promise<void> {
 		if (this._zwave) {
 			const args = payload.args || []
@@ -2181,26 +2185,26 @@ export default class Gateway {
 	 */
 	private async _onBroadRequest(
 		parts: string[],
-		payload: ValueID & { value: unknown; options?: SetValueAPIOptions }
+		payload: ValueID & { value: unknown; options?: SetValueAPIOptions },
 	): Promise<void> {
 		if (parts.length > 0) {
 			// multiple writes (back compatibility mode)
 			const topic = parts.join('/')
 			const values = Object.keys(this.topicValues).filter((t) =>
-				t.endsWith(topic)
+				t.endsWith(topic),
 			)
 			if (values.length > 0) {
 				// all values are the same type just different node,parse the Payload by using the first one
 				payload = this.parsePayload(
 					payload,
 					this.topicValues[values[0]],
-					this.topicValues[values[0]].conf
+					this.topicValues[values[0]].conf,
 				)
 				for (let i = 0; i < values.length; i++) {
 					await this._zwave.writeValue(
 						this.topicValues[values[i]],
 						payload,
-						payload?.options
+						payload?.options,
 					)
 				}
 			}
@@ -2227,7 +2231,7 @@ export default class Gateway {
 	 */
 	private async _onWriteRequest(
 		parts: string[],
-		payload: any
+		payload: any,
 	): Promise<void> {
 		const valueTopic = parts.join('/')
 		const valueId = this.topicValues[valueTopic]
@@ -2241,7 +2245,7 @@ export default class Gateway {
 	}
 
 	private async _onMulticastRequest(
-		payload: ZUIValueId & { nodes: number[]; value: any }
+		payload: ZUIValueId & { nodes: number[]; value: any },
 	): Promise<void> {
 		const nodes = payload.nodes
 		const valueId: ValueID = {
@@ -2288,7 +2292,7 @@ export default class Gateway {
 		code: string,
 		valueId: ZUIValueId,
 		value: unknown,
-		node: ZUINode
+		node: ZUINode,
 	) {
 		let result = null
 
@@ -2300,12 +2304,12 @@ export default class Gateway {
 				'valueId',
 				'node',
 				'logger',
-				code
+				code,
 			)
 			result = parseFunc(value, valueId, node, logger)
 		} catch (error) {
 			logger.error(
-				`Error eval function of value ${valueId.id} ${error.message}`
+				`Error eval function of value ${valueId.id} ${error.message}`,
 			)
 		}
 
@@ -2369,7 +2373,7 @@ export default class Gateway {
 	 */
 	private _getDiscoveryTopic(
 		hassDevice: HassDevice,
-		nodeName: string
+		nodeName: string,
 	): string {
 		return `${hassDevice.type}/${utils.sanitizeTopic(nodeName, true)}/${
 			hassDevice.object_id
@@ -2382,7 +2386,7 @@ export default class Gateway {
 	 */
 	private _getMappedValuesTemplate(
 		valueMap: { [x: string]: any },
-		defaultValue: string
+		defaultValue: string,
 	): string {
 		const map = []
 		// JSON.stringify converts props to strings and this breaks the template
@@ -2392,7 +2396,7 @@ export default class Gateway {
 		}
 
 		return `{{ {${map.join(
-			', '
+			', ',
 		)}}[value_json.value] | default('${defaultValue}') }}`
 	}
 
@@ -2402,7 +2406,7 @@ export default class Gateway {
 	 */
 	private _getMappedValuesInverseTemplate(
 		valueMap: { [x: string]: number },
-		defaultValue: string
+		defaultValue: string,
 	): string {
 		const map = []
 		// JSON.stringify converts props to strings and this breaks the template
@@ -2412,7 +2416,7 @@ export default class Gateway {
 		}
 
 		return `{{ {${map.join(
-			', '
+			', ',
 		)}}[value_json.value] | default('${defaultValue}') }}`
 	}
 
@@ -2422,7 +2426,7 @@ export default class Gateway {
 	 */
 	private _getMappedStateTemplate(
 		states: ZUIValueIdState[],
-		defaultValueKey: string | number
+		defaultValueKey: string | number,
 	): string {
 		const map = []
 		let defaultValue = 'value_json.value'
@@ -2430,7 +2434,7 @@ export default class Gateway {
 			map.push(
 				`${
 					typeof s.value === 'number' ? s.value : '"' + s.value + '"'
-				}: "${s.text}"`
+				}: "${s.text}"`,
 			)
 			if (s.value === defaultValueKey) {
 				defaultValue = `'${s.text}'`
@@ -2438,7 +2442,7 @@ export default class Gateway {
 		}
 
 		return `{{ {${map.join(
-			','
+			',',
 		)}}[value_json.value] | default(${defaultValue}) }}`
 	}
 
@@ -2448,7 +2452,7 @@ export default class Gateway {
 	private _setBinaryPayloadFromSensor(
 		cfg: HassDevice,
 		valueId: ZUIValueId,
-		offStateValue = 0
+		offStateValue = 0,
 	): HassDevice {
 		const stateKeys = valueId.states.map((s) => s.value)
 		// Set on/off state from keys
@@ -2467,7 +2471,7 @@ export default class Gateway {
 	 */
 	private _getBinarySensorConfig(
 		devClass: string,
-		reversePayload = false
+		reversePayload = false,
 	): HassDevice {
 		const cfg = utils.copy(hassCfg.binary_sensor)
 		cfg.discovery_payload.device_class = devClass
@@ -2484,7 +2488,7 @@ export default class Gateway {
 	private _setDiscoveryValue(
 		payload: any,
 		prop: string,
-		node: ZUINode
+		node: ZUINode,
 	): void {
 		if (typeof payload[prop] === 'string') {
 			const valueId = node.values[payload[prop]]
@@ -2499,14 +2503,14 @@ export default class Gateway {
 	 */
 	private _addRgbColorSwitch(
 		node: ZUINode,
-		currentColorValue: ZUIValueId
+		currentColorValue: ZUIValueId,
 	): HassDevice {
 		const cfg = utils.copy(hassCfg.light_rgb_dimmer)
 
 		const currentColorTopics = this.valueTopic(
 			node,
 			currentColorValue,
-			true
+			true,
 		) as ValueIdTopic
 
 		const endpoint = currentColorValue.endpoint
@@ -2515,11 +2519,11 @@ export default class Gateway {
 		cfg.values = []
 
 		cfg.discovery_payload.rgb_state_topic = this._mqtt.getTopic(
-			currentColorTopics.topic
+			currentColorTopics.topic,
 		)
 		cfg.discovery_payload.rgb_command_topic = this._mqtt.getTopic(
 			currentColorTopics.targetTopic,
-			true
+			true,
 		)
 
 		// The following part of code, checks if ML or Binary works. If one exists the other
@@ -2548,7 +2552,7 @@ export default class Gateway {
 			const topics = this.valueTopic(
 				node,
 				valueIdState,
-				true
+				true,
 			) as ValueIdTopic
 
 			if (!topics) {
@@ -2560,7 +2564,7 @@ export default class Gateway {
 			discoveredStateTopic = this._mqtt.getTopic(topics.topic)
 			discoveredCommandTopic = this._mqtt.getTopic(
 				topics.targetTopic,
-				true
+				true,
 			)
 		}
 
@@ -2602,7 +2606,7 @@ export default class Gateway {
 		valueId: ZUIValueId,
 		cfg: HassDevice,
 		entityTemplate: string,
-		ignoreLoc: boolean
+		ignoreLoc: boolean,
 	): string {
 		entityTemplate = entityTemplate || '%ln_%o'
 		// when getting the entity name of a device use node props

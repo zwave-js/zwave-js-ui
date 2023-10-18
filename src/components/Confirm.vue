@@ -326,7 +326,7 @@ export default {
 						this.$set(
 							this.values,
 							input.key,
-							values[input.key] ?? input.default
+							values[input.key] ?? input.default,
 						)
 					}
 
@@ -342,7 +342,7 @@ export default {
 
 					if (input.rules) {
 						this.inputProps[input.key].rules = input.rules.map(
-							(r) => wrapFunc(r, this.values)
+							(r) => wrapFunc(r, this.values),
 						)
 					} else {
 						this.inputProps[input.key].rules = []

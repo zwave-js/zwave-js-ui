@@ -160,7 +160,7 @@ export default {
 				this.items.push(this.item)
 				this.inputItems.splice(
 					this.inputItems.indexOf(this.getItem(this.item)),
-					1
+					1,
 				)
 				await this.$nextTick()
 				this.item = null

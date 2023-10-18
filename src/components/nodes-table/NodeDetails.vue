@@ -223,7 +223,7 @@
 										class="mb-1"
 										@click.stop="
 											refreshCCValues(
-												group[0].commandClass
+												group[0].commandClass,
 											)
 										"
 										color="primary"
@@ -455,20 +455,20 @@ export default {
 
 			const response = await this.app.apiRequest(
 				'setNodeDefaultSetValueOptions',
-				[this.node.id, { [defaultProp]: this.options[prop] }]
+				[this.node.id, { [defaultProp]: this.options[prop] }],
 			)
 
 			if (response.success) {
 				this.showSnackbar(
 					`Default node ${prop} updated successffully`,
-					'success'
+					'success',
 				)
 			}
 		},
 		async updateControllerNodeProp(prop) {
 			const response = await this.app.apiRequest(
 				'updateControllerNodeProps',
-				[null, [prop]]
+				[null, [prop]],
 			)
 
 			if (response.success) {
@@ -487,7 +487,7 @@ export default {
 				await this.app.confirm(
 					'Attention',
 					'Are you sure you want to reset all configurations to default?',
-					'alert'
+					'alert',
 				)
 			) {
 				const response = await this.app.apiRequest('sendCommand', [
@@ -517,7 +517,7 @@ export default {
 			if (response.success) {
 				this.showSnackbar(
 					`Parameter ${this.configCC.parameter}: resetted`,
-					'success'
+					'success',
 				)
 			}
 		},
@@ -544,7 +544,7 @@ export default {
 			if (response.success) {
 				this.showSnackbar(
 					`Parameter ${this.configCC.parameter}: ${response.result}`,
-					'success'
+					'success',
 				)
 			}
 		},
@@ -569,12 +569,12 @@ export default {
 				if (isUnsupervisedOrSucceeded(response.result)) {
 					this.showSnackbar(
 						`Parameter ${this.configCC.parameter} set successfully`,
-						'success'
+						'success',
 					)
 				} else {
 					this.showSnackbar(
 						`Parameter ${this.configCC.parameter} set failed`,
-						'error'
+						'error',
 					)
 				}
 			}
@@ -601,7 +601,7 @@ export default {
 				const args = [this.node.powerlevel, this.node.measured0dBm]
 				const response = await this.app.apiRequest(
 					'setPowerlevel',
-					args
+					args,
 				)
 
 				if (response.success) {

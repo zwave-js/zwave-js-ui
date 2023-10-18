@@ -32,7 +32,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'a',
-					node as unknown as ZUINode
+					node as unknown as ZUINode,
 				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
@@ -42,7 +42,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'd',
-					node as unknown as ZUINode
+					node as unknown as ZUINode,
 				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
@@ -52,7 +52,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'c',
-					node as unknown as ZUINode
+					node as unknown as ZUINode,
 				)
 				return expect(payload).to.deep.equal(untouchedPayload)
 			})
@@ -62,7 +62,7 @@ describe('#Gateway', () => {
 				gw['_setDiscoveryValue'](
 					payload,
 					'b',
-					node as unknown as ZUINode
+					node as unknown as ZUINode,
 				)
 				return expect(payload).to.deep.equal({
 					a: 1,

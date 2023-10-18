@@ -465,7 +465,7 @@ export default {
 					color: '#3F51B5',
 					textColor: '#3F51B5',
 					text: protocolDataRateToString(
-						ProtocolDataRate.LongRange_100k
+						ProtocolDataRate.LongRange_100k,
 					),
 				},
 				{
@@ -555,7 +555,7 @@ export default {
 
 					this.updateTimeout = setTimeout(
 						this.onNodeUpdate.bind(this, args[0]),
-						1000
+						1000,
 					)
 				} else {
 					this.shouldReload = true
@@ -660,7 +660,7 @@ export default {
 							(prev, curr) =>
 								prev.protocolDataRate > curr.protocolDataRate
 									? prev
-									: curr
+									: curr,
 						)
 					}
 				}
@@ -1177,7 +1177,7 @@ export default {
 					hubNode,
 					entity,
 					node.applicationRoute,
-					RouteKind.Application
+					RouteKind.Application,
 				)
 
 				// parse node LWR (last working route) https://zwave-js.github.io/node-zwave-js/#/api/node?id=quotstatistics-updatedquot
@@ -1186,7 +1186,7 @@ export default {
 					hubNode,
 					entity,
 					node.statistics?.lwr,
-					RouteKind.LWR
+					RouteKind.LWR,
 				)
 
 				// parse node NLWR (next last working route)
@@ -1195,7 +1195,7 @@ export default {
 					hubNode,
 					entity,
 					node.statistics?.nlwr,
-					RouteKind.NLWR
+					RouteKind.NLWR,
 				)
 
 				if (node.customSUCReturnRoutes) {
@@ -1205,7 +1205,7 @@ export default {
 							hubNode,
 							entity,
 							r,
-							ReturnRouteKind.CUSTOM
+							ReturnRouteKind.CUSTOM,
 						)
 					}
 				}
@@ -1216,7 +1216,7 @@ export default {
 						hubNode,
 						entity,
 						node.prioritySUCReturnRoute,
-						ReturnRouteKind.PRIORITY
+						ReturnRouteKind.PRIORITY,
 					)
 				}
 			}

@@ -218,7 +218,7 @@
 										<td>
 											{{
 												zwaveDataRateToString(
-													r.routeSpeed
+													r.routeSpeed,
 												)
 											}}
 										</td>
@@ -515,7 +515,7 @@ export default {
 										repRSSI[i] && !isRssiError(repRSSI[i])
 											? ` (${rssiToString(repRSSI[i])})`
 											: ''
-									}`
+									}`,
 							)
 							.join(', ')
 					: 'None, direct connection'
@@ -571,7 +571,7 @@ export default {
 			const newwindow = window.open(
 				Routes.controllerChart + '#no-topbar',
 				'BG-RSSI-Chart',
-				'height=800,width=1200,status=no,toolbar:no,scrollbars:no,menubar:no' // check https://www.w3schools.com/jsref/met_win_open.asp for all available specs
+				'height=800,width=1200,status=no,toolbar:no,scrollbars:no,menubar:no', // check https://www.w3schools.com/jsref/met_win_open.asp for all available specs
 			)
 			if (window.focus) {
 				newwindow.focus()
@@ -601,7 +601,7 @@ export default {
 				await this.app.confirm(
 					'Delete',
 					'Are you sure you want to delete this route?',
-					'alert'
+					'alert',
 				)
 			) {
 				const response = await this.app.apiRequest(api, [this.node.id])
@@ -612,7 +612,7 @@ export default {
 					} else {
 						this.showSnackbar(
 							`Failed delete route for node "${this.node._name}"`,
-							'error'
+							'error',
 						)
 					}
 				}
@@ -622,7 +622,7 @@ export default {
 			this.discoverLoading = true
 			const response = await this.app.apiRequest(
 				'discoverNodeNeighbors',
-				[this.node.id]
+				[this.node.id],
 			)
 
 			this.discoverLoading = false
@@ -633,7 +633,7 @@ export default {
 				} else {
 					this.showSnackbar(
 						`Failed to discover neighbors of node "${this.node._name}"`,
-						'error'
+						'error',
 					)
 				}
 			}
@@ -686,7 +686,7 @@ export default {
 						(n) =>
 							!n.isControllerNode &&
 							n.isListening &&
-							n.id !== this.node.id
+							n.id !== this.node.id,
 					),
 				},
 				{
@@ -736,7 +736,7 @@ export default {
 			const res = await this.promptRoute(
 				`Node "${this.node._name}"`,
 				'Controller',
-				true
+				true,
 			)
 
 			if (!res) return
@@ -747,7 +747,7 @@ export default {
 
 			if (isPriority) {
 				const existingPriorityRoute = this.returnRoutes.find(
-					(r) => r.isPriority
+					(r) => r.isPriority,
 				)
 
 				const newRoute = {
@@ -761,7 +761,7 @@ export default {
 					const res = await this.app.confirm(
 						'Priority route',
 						'You already have a priority route set. Do you want to replace it?',
-						'info'
+						'info',
 					)
 
 					if (!res) return
@@ -769,7 +769,7 @@ export default {
 					this.returnRoutes.splice(
 						this.returnRoutes.indexOf(existingPriorityRoute),
 						1,
-						newRoute
+						newRoute,
 					)
 				} else {
 					if (newRoute.isPriority) {
@@ -873,11 +873,11 @@ export default {
 				if (response.result) {
 					this.showSnackbar(
 						`New route set for node "${this.node._name}"`,
-						'success'
+						'success',
 					)
 				} else {
 					this.showSnackbar(
-						`Failed to set route for node "${this.node._name}"`
+						`Failed to set route for node "${this.node._name}"`,
 					)
 				}
 			}

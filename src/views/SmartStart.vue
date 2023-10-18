@@ -222,7 +222,7 @@ export default {
 				{
 					infoSnack: false,
 					errorSnack: true,
-				}
+				},
 			)
 
 			if (response.success) {
@@ -233,7 +233,7 @@ export default {
 			await this.$listeners.export(
 				this.items,
 				'provisioningEntries',
-				'json'
+				'json',
 			)
 		},
 		async importList() {
@@ -257,7 +257,7 @@ export default {
 					typeof itemOrQr === 'string'
 						? itemOrQr
 						: this.convertItem(itemOrQr),
-				]
+				],
 			)
 
 			if (response.success) {
@@ -266,7 +266,7 @@ export default {
 					`Node ${entry.nodeId || entry.name || ''} ${
 						this.edited ? 'updated' : 'added'
 					}`,
-					'success'
+					'success',
 				)
 
 				this.refreshItems()
@@ -281,7 +281,7 @@ export default {
 					qrScan: true,
 					canceltext: 'Close',
 					width: 500,
-				}
+				},
 			)
 
 			if (qrString) {
@@ -289,7 +289,7 @@ export default {
 				if (dsk) {
 					this.showSnackbar(
 						`Provided QR Code is not a SmartStart QR Code.\nIn order to use it go to Control Panel > Manage Nodes and use Scan QR Code Inclusion.`,
-						'warning'
+						'warning',
 					)
 				} else {
 					this.updateItem(qrString)
@@ -382,7 +382,7 @@ export default {
 								: false,
 						},
 					],
-				}
+				},
 			)
 
 			if (item.dsk) {
@@ -412,12 +412,12 @@ export default {
 				await this.$listeners.showConfirm(
 					'Attention',
 					`Are you sure you want to delete this item from provisioning? Removing it from provisioning will not exclude the node`,
-					'alert'
+					'alert',
 				)
 			) {
 				const response = await this.app.apiRequest(
 					'unprovisionSmartStartNode',
-					[item.dsk]
+					[item.dsk],
 				)
 
 				if (response.success) {
@@ -433,11 +433,11 @@ export default {
 					status: !item.status,
 					securityClasses: parseSecurityClasses(
 						item.securityClasses,
-						false
+						false,
 					),
 					requestedSecurityClasses: parseSecurityClasses(
 						item.requestedSecurityClasses,
-						item.requestedSecurityClasses ? false : true
+						item.requestedSecurityClasses ? false : true,
 					),
 				}
 			})
@@ -449,7 +449,7 @@ export default {
 				securityClasses: securityClassesToArray(item.securityClasses),
 				requestedSecurityClasses: securityClassesToArray(
 					item.requestedSecurityClasses ||
-						parseSecurityClasses([], true)
+						parseSecurityClasses([], true),
 				),
 			}
 

@@ -610,7 +610,7 @@ export default {
 						this.showSnackbar(
 							'Value update failed' +
 								(reason ? ': ' + reason : ''),
-							'error'
+							'error',
 						)
 					}
 				} else {
@@ -618,7 +618,7 @@ export default {
 						`Error updating value${
 							response.message ? ': ' + response.message : ''
 						}`,
-						'error'
+						'error',
 					)
 				}
 			}
@@ -662,7 +662,7 @@ export default {
 						'info',
 						{
 							confirmText: 'Ok',
-						}
+						},
 					)
 				}
 
@@ -677,12 +677,12 @@ export default {
 						if (response.success) {
 							this.showSnackbar(
 								`Node ${this.node.id}: ${action} successfully sent `,
-								'success'
+								'success',
 							)
 						} else {
 							this.showSnackbar(
 								`Error sending ${action} to node ${this.node.id}: ${response.message}`,
-								'error'
+								'error',
 							)
 						}
 					})

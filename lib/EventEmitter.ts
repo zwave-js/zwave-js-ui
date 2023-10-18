@@ -39,23 +39,23 @@ export type EventHandler =
 	| ((...args: any[]) => void)
 
 export interface TypedEventEmitter<
-	TEvents extends Record<keyof TEvents, EventHandler>
+	TEvents extends Record<keyof TEvents, EventHandler>,
 > {
 	on<TEvent extends keyof TEvents>(
 		event: TEvent,
-		callback: TEvents[TEvent]
+		callback: TEvents[TEvent],
 	): this
 	once<TEvent extends keyof TEvents>(
 		event: TEvent,
-		callback: TEvents[TEvent]
+		callback: TEvents[TEvent],
 	): this
 	removeListener<TEvent extends keyof TEvents>(
 		event: TEvent,
-		callback: TEvents[TEvent]
+		callback: TEvents[TEvent],
 	): this
 	off<TEvent extends keyof TEvents>(
 		event: TEvent,
-		callback: TEvents[TEvent]
+		callback: TEvents[TEvent],
 	): this
 	removeAllListeners(event?: keyof TEvents): this
 
@@ -65,8 +65,9 @@ export interface TypedEventEmitter<
 	): boolean
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unsafe-declaration-merging
 export class TypedEventEmitter<
-	TEvents extends Record<keyof TEvents, EventHandler>
+	TEvents extends Record<keyof TEvents, EventHandler>,
 > {}
 
 // Make TypedEventEmitter inherit from EventEmitter without actually extending

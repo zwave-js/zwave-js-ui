@@ -172,15 +172,15 @@ export default {
 				this.node.bgRSSIPoints.forEach((point) => {
 					timestamps.push(point.timestamp / 1000)
 					channel0[0].push(
-						this.checkRssiError(point.channel0.current)
+						this.checkRssiError(point.channel0.current),
 					)
 					channel0[1].push(point.channel0.average)
 					channel1[0].push(
-						this.checkRssiError(point.channel1.current)
+						this.checkRssiError(point.channel1.current),
 					)
 					channel1[1].push(point.channel1.average)
 					channel2[0].push(
-						this.checkRssiError(point.channel2?.current)
+						this.checkRssiError(point.channel2?.current),
 					)
 					channel2[1].push(point.channel2?.average)
 				})
@@ -318,7 +318,7 @@ export default {
 							stroke: '#7a5195',
 							fill: 'rgba(122, 81, 149, 0.35)',
 						},
-						3
+						3,
 					),
 					...this.createSerie(
 						{
@@ -326,7 +326,7 @@ export default {
 							stroke: '#bc5090',
 							fill: 'rgba(188, 80, 144, 0.35)',
 						},
-						2
+						2,
 					),
 					...this.createSerie(
 						{
@@ -334,7 +334,7 @@ export default {
 							stroke: '#ffa600',
 							fill: 'rgba(255, 166, 0, 0.35)',
 						},
-						1
+						1,
 					),
 				],
 			}

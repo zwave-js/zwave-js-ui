@@ -212,7 +212,7 @@ export default {
 			if (this.node && this.node.hassDevices) {
 				for (const id in this.node.hassDevices) {
 					const d = JSON.parse(
-						JSON.stringify(this.node.hassDevices[id])
+						JSON.stringify(this.node.hassDevices[id]),
 					)
 					d.id = id
 					devices.push(d)
@@ -240,7 +240,7 @@ export default {
 						if (!response.success) {
 							this.showSnackbar(
 								`Error while calling ${data.apiName}: ${response.message}`,
-								'error'
+								'error',
 							)
 						}
 						resolve(response)
@@ -279,7 +279,7 @@ export default {
 				(await this.$listeners.showConfirm(
 					'Attention',
 					'Are you sure you want to delete selected device?',
-					'alert'
+					'alert',
 				))
 			) {
 				const response = await this.sendAction({
@@ -298,7 +298,7 @@ export default {
 				this.node &&
 				(await this.$listeners.showConfirm(
 					'Rediscover node',
-					'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store'
+					'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store',
 				))
 			) {
 				const response = await this.sendAction({
@@ -309,7 +309,7 @@ export default {
 				if (response.success) {
 					this.showSnackbar(
 						`Discovery disabled for node ${this.node.id}`,
-						'success'
+						'success',
 					)
 				}
 			}
@@ -320,7 +320,7 @@ export default {
 				device &&
 				(await this.$listeners.showConfirm(
 					'Rediscover Device',
-					'Are you sure you want to re-discover selected device?'
+					'Are you sure you want to re-discover selected device?',
 				))
 			) {
 				const response = await this.sendAction({
@@ -332,7 +332,7 @@ export default {
 				if (response.success) {
 					this.showSnackbar(
 						`Device ${device.id} re-discovered`,
-						'success'
+						'success',
 					)
 				}
 			}
@@ -342,7 +342,7 @@ export default {
 				this.node &&
 				(await this.$listeners.showConfirm(
 					'Rediscover node',
-					'Are you sure you want to re-discover all node values?'
+					'Are you sure you want to re-discover all node values?',
 				))
 			) {
 				const response = await this.sendAction({
@@ -353,7 +353,7 @@ export default {
 				if (response.success) {
 					this.showSnackbar(
 						`Node ${this.node.id} re-discovered`,
-						'success'
+						'success',
 					)
 				}
 			}
@@ -369,7 +369,7 @@ export default {
 			if (response.success) {
 				this.showSnackbar(
 					`Devices stored for node ${this.node.id}`,
-					'success'
+					'success',
 				)
 			}
 		},
@@ -379,7 +379,7 @@ export default {
 				this.$set(
 					this.node.hassDevices,
 					this.selectedDevice.id,
-					updated
+					updated,
 				)
 				const response = await this.sendAction({
 					apiName: 'update',

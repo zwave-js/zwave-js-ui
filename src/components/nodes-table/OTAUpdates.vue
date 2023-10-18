@@ -160,7 +160,7 @@ export default {
 	computed: {
 		filteredUpdates() {
 			return this.fwUpdates.filter(
-				(u) => !u.downgrade || (u.downgrade && this.showDowngrades)
+				(u) => !u.downgrade || (u.downgrade && this.showDowngrades),
 			)
 		},
 	},
@@ -179,7 +179,7 @@ export default {
 					{
 						includePrereleases: this.includePrereleases,
 					},
-				]
+				],
 			)
 			this.loading = false
 
@@ -188,7 +188,7 @@ export default {
 			} else {
 				this.showSnackbar(
 					`Failed to check for firmware updates: ${response.message}`,
-					'error'
+					'error',
 				)
 			}
 		},
@@ -213,7 +213,7 @@ export default {
 						confirmText: 'Update',
 						cancelText: 'Cancel',
 						width: '500px',
-					}
+					},
 				)
 			) {
 				this.app.apiRequest('firmwareUpdateOTA', [this.node.id, update])

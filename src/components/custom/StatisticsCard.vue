@@ -75,7 +75,7 @@ export default {
 					commandsRX: 0,
 					commandsDroppedTX: 0,
 					commandsDroppedRX: 0,
-				}
+				},
 			)
 		},
 		stats() {
@@ -102,12 +102,12 @@ export default {
 						...this.createStat(
 							'timeoutResponse',
 							'Timeout Response',
-							'red'
+							'red',
 						),
 						...this.createStat(
 							'timeoutCallback',
 							'Timeout Callback',
-							'red'
+							'red',
 						),
 					},
 					cols: 6,
@@ -121,12 +121,12 @@ export default {
 						...this.createStat(
 							'commandsDroppedTX',
 							'Dropped TX',
-							'red'
+							'red',
 						),
 						...this.createStat(
 							'commandsDroppedRX',
 							'Dropped RX',
-							'red'
+							'red',
 						),
 					},
 					cols: 3,
@@ -143,12 +143,12 @@ export default {
 						...this.createStat(
 							'messagesDroppedTX',
 							'Dropped TX',
-							'red'
+							'red',
 						),
 						...this.createStat(
 							'messagesDroppedRX',
 							'Dropped RX',
-							'red'
+							'red',
 						),
 					},
 					cols: 3,

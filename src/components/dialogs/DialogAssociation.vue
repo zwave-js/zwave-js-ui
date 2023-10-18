@@ -46,7 +46,7 @@
 													item.endpoint >= 0
 														? getEndpointLabel(
 																node,
-																item.endpoint
+																item.endpoint,
 														  )
 														: 'No Endpoint'
 												}}</v-list-item-subtitle>
@@ -149,7 +149,7 @@ export default {
 				? this.associations.filter(
 						(a) =>
 							a.groupId === this.group.group.value &&
-							a.endpoint === this.group.endpoint
+							a.endpoint === this.group.endpoint,
 				  ).length
 				: 0
 		},
@@ -163,7 +163,7 @@ export default {
 						g.endpoint === endpoint ||
 						(endpoint === null &&
 							g.endpoint === 0 &&
-							!g.multiChannel)
+							!g.multiChannel),
 				)
 				// eslint-disable-next-line no-empty
 			} catch (error) {}

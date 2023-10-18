@@ -191,7 +191,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			this.client.publish(
 				this.getClientTopic(MqttClient.STATUS_TOPIC),
 				JSON.stringify({ value: connected, time: Date.now() }),
-				{ retain: this.config.retain, qos: this.config.qos }
+				{ retain: this.config.retain, qos: this.config.qos },
 			)
 		}
 	}
@@ -204,7 +204,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			this.client.publish(
 				this.getClientTopic(MqttClient.VERSION_TOPIC),
 				JSON.stringify({ value: appVersion, time: Date.now() }),
-				{ retain: this.config.retain, qos: this.config.qos }
+				{ retain: this.config.retain, qos: this.config.qos },
 			)
 		}
 	}
@@ -228,7 +228,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		options: IClientSubscribeOptions & { addPrefix: boolean } = {
 			qos: 1,
 			addPrefix: true,
-		}
+		},
 	): Promise<void> {
 		return new Promise((resolve, reject) => {
 			const subOptions: IClientSubscribeOptions = {
@@ -245,7 +245,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				logger.log(
 					'debug',
 					`Subscribing to ${topic} with options %o`,
-					subOptions
+					subOptions,
 				)
 				this.client.subscribe(topic, subOptions, (err, granted) => {
 					if (err) {
@@ -256,7 +256,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 						for (const res of granted) {
 							if (res.qos === 128) {
 								logger.error(
-									`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`
+									`Error subscribing to ${topic}, client doesn't have permission to subscribe to it`,
 								)
 							} else {
 								logger.info(`Subscribed to ${topic}`)
@@ -268,7 +268,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				})
 			} else {
 				logger.debug(
-					`Client not connected yet, subscribing to ${topic} later...`
+					`Client not connected yet, subscribing to ${topic} later...`,
 				)
 				this.toSubscribe.set(topic, options)
 				reject(Error('Client not connected'))
@@ -283,7 +283,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		topic: string,
 		data: any,
 		options?: IClientPublishOptions,
-		prefix?: string
+		prefix?: string,
 	) {
 		if (this.client) {
 			const settingOptions = {
@@ -301,7 +301,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				'Publishing to %s: %o with options %o',
 				topic,
 				data,
-				options
+				options,
 			)
 
 			this.client.publish(
@@ -311,10 +311,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 				function (err) {
 					if (err) {
 						logger.error(
-							`Error while publishing a value ${err.message}`
+							`Error while publishing a value ${err.message}`,
 						)
 					}
-				}
+				},
 			)
 		} // end if client
 	}
@@ -339,7 +339,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		}
 
 		this._clientID = sanitizeTopic(
-			MqttClient.NAME_PREFIX + (process.env.MQTT_NAME || config.name)
+			MqttClient.NAME_PREFIX + (process.env.MQTT_NAME || config.name),
 		)
 
 		const parsed = url.parse(config.host || '')
@@ -421,7 +421,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		const subscribePromises: Promise<void>[] = []
 
 		subscribePromises.push(
-			this.subscribe(MqttClient.HASS_WILL, { addPrefix: false, qos: 1 })
+			this.subscribe(MqttClient.HASS_WILL, { addPrefix: false, qos: 1 }),
 		)
 
 		// subscribe to actions
@@ -435,8 +435,8 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 						MqttClient.ACTIONS[i],
 						'#',
 					].join('/'),
-					{ addPrefix: false, qos: 1 }
-				)
+					{ addPrefix: false, qos: 1 },
+				),
 			)
 		}
 
@@ -581,7 +581,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		if (this.toSubscribe.size > 0) {
 			this.retrySubTimeout = setTimeout(
 				this._retrySubscribe.bind(this),
-				5000
+				5000,
 			)
 		}
 	}

@@ -418,7 +418,7 @@ export default {
 				await this.$listeners.showConfirm(
 					'Attention',
 					'This will override all existing nodes names and locations',
-					'alert'
+					'alert',
 				)
 			) {
 				try {
@@ -428,7 +428,7 @@ export default {
 					})
 					this.showSnackbar(
 						response.message,
-						response.success ? 'success' : 'error'
+						response.success ? 'success' : 'error',
 					)
 				} catch (error) {
 					log.error(error)
@@ -440,7 +440,7 @@ export default {
 				const data = await ConfigApis.exportConfig()
 				this.showSnackbar(
 					data.message,
-					data.success ? 'success' : 'error'
+					data.success ? 'success' : 'error',
 				)
 				if (data.success) {
 					this.$listeners.export(data.data, 'nodes', 'json')
@@ -454,7 +454,7 @@ export default {
 		},
 		async sendAction(
 			action,
-			{ nodeId, broadcast, confirm, confirmLevel, nodes }
+			{ nodeId, broadcast, confirm, confirmLevel, nodes },
 		) {
 			if (action) {
 				if (confirm) {
@@ -466,7 +466,7 @@ export default {
 							cancelText: 'cancel',
 							confirmText: 'ok',
 							width: 900,
-						}
+						},
 					)
 
 					if (!ok) {
@@ -476,13 +476,13 @@ export default {
 
 				if (nodes?.length > 0) {
 					const requests = nodes.map((node) =>
-						this.app.apiRequest(action, [node.id])
+						this.app.apiRequest(action, [node.id]),
 					)
 
 					await Promise.allSettled(requests)
 					this.showSnackbar(
 						`Action ${action} sent to all nodes`,
-						'success'
+						'success',
 					)
 					return
 				}
@@ -493,7 +493,7 @@ export default {
 						if (isNaN(nodeId)) {
 							this.showSnackbar(
 								'Node ID must be an integer value',
-								'error'
+								'error',
 							)
 							return
 						}
@@ -508,7 +508,7 @@ export default {
 						'info',
 						{
 							cancelText: 'No',
-						}
+						},
 					)
 					args.push(secure)
 				} else if (action === 'hardReset') {
@@ -527,7 +527,7 @@ export default {
 									hint: 'Type "yes" and press OK to confirm',
 								},
 							],
-						}
+						},
 					)
 					if (!confirm || confirm !== 'yes') {
 						return
@@ -548,7 +548,7 @@ export default {
 										default: false,
 									},
 								],
-							}
+							},
 						)
 					if (includeSleeping === undefined) {
 						return
@@ -573,7 +573,7 @@ export default {
 									accept: '.hex,.gbl,.otz,.ota',
 								},
 							],
-						}
+						},
 					)
 
 					const file = result?.file
@@ -615,12 +615,12 @@ export default {
 									progress: 0,
 								},
 							},
-							true
+							true,
 						)
 					} catch (error) {
 						this.showSnackbar(
 							'Error reading file: ' + error.message,
-							'error'
+							'error',
 						)
 						return
 					}
@@ -675,7 +675,7 @@ export default {
 								confirmText: 'Ok',
 								width: 500,
 								inputs,
-							}
+							},
 						)
 
 						if (!result) {
@@ -753,13 +753,13 @@ export default {
 										if (response.success) {
 											this.showSnackbar(
 												'Function executed successfully, check console for result',
-												'success'
+												'success',
 											)
 										}
 
 										log.info(
 											'Driver function result:',
-											response.result
+											response.result,
 										)
 									},
 								},
@@ -772,7 +772,7 @@ export default {
                     <code>driver</code>. The function is <code>async</code>.`,
 								},
 							],
-						}
+						},
 					)
 
 					return
@@ -783,7 +783,7 @@ export default {
 						'alert',
 						{
 							confirmText: 'Ok',
-						}
+						},
 					)
 					if (!confirm) {
 						return
@@ -810,7 +810,7 @@ export default {
 									key: 'useRaw',
 								},
 							],
-						}
+						},
 					)
 					if (!result?.file) {
 						return
@@ -840,7 +840,7 @@ export default {
 									label: 'Reset security classes',
 								},
 							],
-						}
+						},
 					)
 
 					if (!options || Object.keys(options).length === 0) {
@@ -872,15 +872,15 @@ export default {
 									if (response.success) {
 										this.showSnackbar(
 											`Node ${nodeid} api request success`,
-											'success'
+											'success',
 										)
 									} else {
 										this.showSnackbar(
 											`Node ${nodeid} error: ${response.error}`,
-											'error'
+											'error',
 										)
 									}
-								})
+								}),
 						)
 					}
 
@@ -893,26 +893,26 @@ export default {
 							case 'getDriverStatistics':
 								this.$listeners.showConfirm(
 									'Driver statistics',
-									this.jsonToList(response.result)
+									this.jsonToList(response.result),
 								)
 								break
 							case 'getNodeStatistics':
 								this.$listeners.showConfirm(
 									'Node statistics',
-									this.jsonToList(response.result)
+									this.jsonToList(response.result),
 								)
 								break
 							case 'backupNVMRaw':
 								{
 									this.showSnackbar(
 										'NVM Backup DONE. You can find your file NVM_<date>.bin in store directory',
-										'success'
+										'success',
 									)
 									const { result } = response
 									this.$listeners.export(
 										result.data,
 										result.fileName,
-										'bin'
+										'bin',
 									)
 								}
 								break
@@ -1021,7 +1021,7 @@ export default {
 							default:
 								this.showSnackbar(
 									`API ${response.api} ended successfully`,
-									'success'
+									'success',
 								)
 						}
 					} else {
@@ -1038,7 +1038,7 @@ export default {
 											status: response.message,
 										},
 									},
-									true
+									true,
 								)
 							}
 						}
@@ -1053,7 +1053,7 @@ export default {
 	mounted() {
 		this.bindEvent(
 			'rebuildRoutesProgress',
-			this.setRebuildRoutesProgress.bind(this)
+			this.setRebuildRoutesProgress.bind(this),
 		)
 	},
 	beforeDestroy() {

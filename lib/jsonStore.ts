@@ -45,7 +45,7 @@ export class StorageHelper {
 		await mkdirp(storeBackupsDir)
 
 		const fileStream = createWriteStream(
-			utils.joinPath(storeBackupsDir, backupFile)
+			utils.joinPath(storeBackupsDir, backupFile),
 		)
 
 		return new Promise((resolve, reject) => {
