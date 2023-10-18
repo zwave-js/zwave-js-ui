@@ -1092,7 +1092,7 @@ export default {
 				log.error(error)
 			}
 		},
-		async getChangelogs(project, lastVersion, nextVersion, parseChangelog) {
+		async getChangelogs(project, prevTag, nextTag, parseChangelog) {
 			const changelogs = []
 
 			try {
@@ -1102,13 +1102,14 @@ export default {
 				const data = await response.json()
 
 				let start = false
+				let maxParse = 10
 
 				for (const release of data) {
-					if (release.tag_name === lastVersion) {
+					if (release.tag_name === prevTag) {
 						break
 					}
 
-					if (release.tag_name === nextVersion) {
+					if (release.tag_name === nextTag) {
 						start = true
 					}
 
@@ -1116,10 +1117,12 @@ export default {
 
 					if (release.draft || release.prerelease) continue
 
-					changelogs.push(parseChangelog(release))
+					changelogs.push(parseChangelog(release, changelogs.length))
+
+					if (--maxParse === 0) break
 
 					// if last version is not defined just print the last
-					if (!lastVersion) break
+					if (!prevTag) break
 				}
 			} catch (error) {
 				log.error(error)
@@ -1159,7 +1162,7 @@ export default {
 						'zwave-js-ui',
 						versions?.app ? 'v' + versions?.app : null,
 						'v' + currentVersion,
-						(release) => {
+						(release, i) => {
 							release.body = release.body.replace(
 								new RegExp(
 									`#+ \\[${release.tag_name.replace(
@@ -1168,12 +1171,25 @@ export default {
 									)}\\]\\([^\\)]+\\)`,
 									'g'
 								),
-								`## UI [${release.tag_name}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${release.tag_name})`
+								`${i === 0 ? '# UI\n---\n' : ''}## [${
+									release.tag_name
+								}](https://github.com/zwave-js/zwave-js-ui/releases/tag/${
+									release.tag_name
+								})`
 							)
 
-							return md()
+							let changelog = md()
 								.render(release.body)
-								.replace('</h2>', '</h2><br>')
+								.replace('</h2>', '</h2></br>')
+
+							if (i === 0) {
+								changelog = changelog.replace(
+									'<h2>',
+									'</br><h2>'
+								)
+							}
+
+							return changelog
 						}
 					)
 
@@ -1184,7 +1200,7 @@ export default {
 							'node-zwave-js',
 							versions?.driver ? 'v' + versions?.driver : null,
 							'v' + this.appInfo.zwaveVersion,
-							(release) => {
+							(release, i) => {
 								const changelog = md()
 									.render(release.body)
 									.replace(
@@ -1192,7 +1208,15 @@ export default {
 										'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>'
 									)
 
-								return `</br><h2>Driver <a target="_blank" href="https://github.com/zwave-js/node-zwave-js/releases/tag/${release.tag_name}">${release.tag_name}</a></h2></br>${changelog}`
+								return `${
+									i === 0
+										? '</br><h1>Driver</h1><hr><br>'
+										: ''
+								}<h2><a target="_blank" href="https://github.com/zwave-js/node-zwave-js/releases/tag/${
+									release.tag_name
+								}">${
+									release.tag_name
+								}</a></h2></br>${changelog}</br>`
 							}
 						)
 
@@ -1204,7 +1228,7 @@ export default {
 							'zwave-js-server',
 							versions?.server || null,
 							this.appInfo.serverVersion,
-							(release) => {
+							(release, i) => {
 								const changelog = md()
 									.render(release.body)
 									.replace(
@@ -1216,7 +1240,15 @@ export default {
 										'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>'
 									)
 
-								return `</br><h2>Server <a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${release.tag_name}">v${release.tag_name}</a></h2></br>${changelog}`
+								return `${
+									i === 0
+										? '</br><h1>Server</h1><hr><br>'
+										: ''
+								}<h2><a target="_blank" href="https://github.com/zwave-js/zwave-js-server/releases/tag/${
+									release.tag_name
+								}">v${
+									release.tag_name
+								}</a></h2></br>${changelog}</br>`
 							}
 						)
 
