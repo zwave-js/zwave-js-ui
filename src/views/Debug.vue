@@ -76,7 +76,7 @@
 <script>
 import { socketEvents } from '@server/lib/SocketEvents'
 
-import AnsiUp from 'ansi_up'
+import { AnsiUp } from 'ansi_up'
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 
