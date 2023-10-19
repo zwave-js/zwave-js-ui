@@ -1,5 +1,12 @@
 
 
+## [9.2.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.1...v9.2.2) (2023-10-19)
+
+
+### Bug Fixes
+
+* set default host to undefined ([#3362](https://github.com/zwave-js/zwave-js-ui/issues/3362)) ([6a30ab0](https://github.com/zwave-js/zwave-js-ui/commit/6a30ab066a964b111283db4d44819bb59089102d))
+
 ## [9.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.0...v9.2.1) (2023-10-18)
 
 
