@@ -170,7 +170,7 @@ let restarting = false
 /**
  * Start http/https server and all the manager
  */
-export async function startServer(host: string, port: number | string) {
+export async function startServer(port: number | string, host?: string) {
 	let server: HttpServer
 
 	const settings = jsonStore.get(store.settings)
@@ -215,7 +215,7 @@ export async function startServer(host: string, port: number | string) {
 		const bind =
 			typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
 		logger.info(
-			`Listening on ${bind} host ${host} protocol ${
+			`Listening on ${bind}${host ? 'host ' + host : ''} protocol ${
 				httpsEnabled ? 'HTTPS' : 'HTTP'
 			}`,
 		)

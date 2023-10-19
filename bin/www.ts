@@ -46,7 +46,7 @@ jsonStore
 		const port = normalizePort(conf.port)
 		app.set('port', port)
 
-		return startServer(conf.host, port)
+		return startServer(port, conf.host)
 	})
 	.catch((err: unknown) => {
 		console.error(err)
