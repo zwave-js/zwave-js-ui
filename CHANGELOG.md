@@ -1,5 +1,18 @@
 
 
+## [9.2.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.2...v9.2.3) (2023-10-20)
+
+
+### Bug Fixes
+
+* add all `EventListener` methods to `TypedEventEmitter` interface ([6e8a6ca](https://github.com/zwave-js/zwave-js-ui/commit/6e8a6caa60deace2fd96cd68390f6d3238e66047))
+
+
+### Features
+
+* bump zwave-js-server@1.33.0 ([#3368](https://github.com/zwave-js/zwave-js-ui/issues/3368)) ([2b8b2eb](https://github.com/zwave-js/zwave-js-ui/commit/2b8b2eb6d5bc1fbcb4592687aa03726450a6c1db))
+* bump zwave-js@12.2.1 ([#3367](https://github.com/zwave-js/zwave-js-ui/issues/3367)) ([b055453](https://github.com/zwave-js/zwave-js-ui/commit/b0554535761157b54b6829ab218ac4500329d24b))
+
 ## [9.2.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.1...v9.2.2) (2023-10-19)
 
 
