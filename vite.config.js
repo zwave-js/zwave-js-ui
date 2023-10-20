@@ -87,6 +87,7 @@ export default defineConfig(({ mode }) => {
 					replacement: `${path.resolve(__dirname, 'src')}/$1`,
 				},
 			],
+			preserveSymlinks: true,
 		},
 		define: {
 			__APP_ENV__: JSON.stringify(env.APP_ENV),
