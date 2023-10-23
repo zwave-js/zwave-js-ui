@@ -496,6 +496,7 @@ const useBaseStore = defineStore('base', {
 		},
 		setDarkMode(value) {
 			settings.store('dark', value)
+			// the `darkMode` watcher in App.vue will change vuetify theme
 			this.ui.darkMode = value
 
 			const metaThemeColor = document.querySelector(

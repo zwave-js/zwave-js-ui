@@ -1425,7 +1425,6 @@ export default {
 			},
 			set(value) {
 				this.setDarkMode(value)
-				this.$vuetify.theme.dark = value
 			},
 		},
 		internalNavTabs: {

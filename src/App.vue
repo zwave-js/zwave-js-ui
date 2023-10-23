@@ -538,7 +538,7 @@ export default {
 			'init',
 			'initNodes',
 			'setAppInfo',
-			'setUser',
+			'onUserLogged',
 			'updateValue',
 			'setValue',
 			'removeValue',
@@ -569,7 +569,7 @@ export default {
 				)
 				if (response.success) {
 					this.closePasswordDialog()
-					this.setUser(response.user)
+					this.onUserLogged(response.user)
 				}
 			} catch (error) {
 				this.showSnackbar(
