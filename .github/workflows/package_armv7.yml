@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [16.16.0] # this must be fixed, when changes it will take a lot to re-build nodejs sources
+        node-version: [16.20.2] # this must be fixed, when changes it will take a lot to re-build nodejs sources
     steps:
       - uses: actions/checkout@v3
 
@@ -55,8 +55,8 @@ jobs:
           mkdir -p ~/.cache/pkg
           export PKG_CACHE_PATH=~/.cache/pkg
           export PKG_IGNORE_TAG=true
-          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node16/built-v${{ matrix.node-version }}-linux-armv7 -LOJ
-          mv built-v${{ matrix.node-version }}-linux-armv7 $PKG_CACHE_PATH/
+          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node16/built-v16.16.0-linux-armv7 -LOJ
+          mv built-v16.16.0-linux-armv7 $PKG_CACHE_PATH/built-v${{ matrix.node-version }}-linux-armv7
           yarn pkg --skip-build --arch=armv7
 
       - name: Upload artifacts
