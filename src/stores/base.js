@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { $set, deepEqual } from '../lib/utils'
 import logger from '../lib/logger'
 
-import { Settings } from '@/modules/Settings'
+import { Settings } from '../modules/Settings'
 
 const settings = new Settings(localStorage)
 
@@ -105,6 +105,9 @@ const useBaseStore = defineStore('base', {
 	getters: {
 		controllerNode() {
 			return this.controllerId ? this.getNode(this.controllerId) : null
+		},
+		settings() {
+			return settings
 		},
 	},
 	actions: {
@@ -445,6 +448,7 @@ const useBaseStore = defineStore('base', {
 				Object.assign(this.mqtt, conf.mqtt || {})
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
+				Object.assign(this.ui, conf.ui || {})
 			}
 		},
 		initPorts(ports) {
@@ -493,6 +497,16 @@ const useBaseStore = defineStore('base', {
 		setDarkMode(value) {
 			settings.store('dark', value)
 			this.ui.darkMode = value
+
+			const metaThemeColor = document.querySelector(
+				'meta[name=theme-color]',
+			)
+			const metaThemeColor2 = document.querySelector(
+				'meta[name=msapplication-TileColor]',
+			)
+
+			metaThemeColor.setAttribute('content', value ? '#000' : '#fff')
+			metaThemeColor2.setAttribute('content', value ? '#000' : '#fff')
 		},
 		setNavTabs(value) {
 			settings.store('navTabs', value)

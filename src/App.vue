@@ -729,23 +729,6 @@ export default {
 				)
 			}
 		},
-		changeThemeColor: function () {
-			const metaThemeColor = document.querySelector(
-				'meta[name=theme-color]',
-			)
-			const metaThemeColor2 = document.querySelector(
-				'meta[name=msapplication-TileColor]',
-			)
-
-			metaThemeColor.setAttribute(
-				'content',
-				this.darkMode ? '#000' : '#fff',
-			)
-			metaThemeColor2.setAttribute(
-				'content',
-				this.darkMode ? '#000' : '#fff',
-			)
-		},
 		importFile: function (ext) {
 			const self = this
 			// Check for the various File API support.
@@ -1394,9 +1377,18 @@ export default {
 			this.hideTopbar = true
 		}
 
-		this.$vuetify.theme.dark = this.darkMode
+		const settings = useBaseStore().settings
 
-		this.changeThemeColor()
+		// set the dark mode to the system dark mode if it's different
+		if (settings.load('dark') === undefined) {
+			// system dark mode
+			const systemThemeDark = !!window.matchMedia(
+				'(prefers-color-scheme: dark)',
+			).matches
+			useBaseStore().setDarkMode(systemThemeDark)
+		}
+
+		this.$vuetify.theme.dark = this.darkMode
 
 		useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'showSnackbar') {

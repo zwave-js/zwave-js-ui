@@ -1505,6 +1505,7 @@ export default {
 			'devices',
 			'serial_ports',
 			'scales',
+			'ui',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
@@ -1790,6 +1791,7 @@ export default {
 				gateway: this.newGateway,
 				zwave: this.newZwave,
 				backup: this.newBackup,
+				ui: this.ui,
 			}
 		},
 		async editJob(item) {
