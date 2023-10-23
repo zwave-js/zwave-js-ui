@@ -7,7 +7,13 @@
 		:persistent="options.persistent"
 	>
 		<v-card>
-			<v-toolbar :color="options.color" dark dense flat>
+			<v-toolbar
+				class="sticky-title"
+				:color="options.color"
+				dark
+				dense
+				flat
+			>
 				<v-toolbar-title class="white--text">{{
 					title
 				}}</v-toolbar-title>
@@ -197,7 +203,7 @@
 					:rules="[validQR]"
 				></qr-reader>
 			</v-card-text>
-			<v-card-actions class="pt-0">
+			<v-card-actions class="sticky-actions pt-0">
 				<v-spacer></v-spacer>
 				<v-btn
 					v-if="!options.qrScan"
@@ -384,3 +390,20 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.v-card::v-deep .sticky-title {
+	position: sticky;
+	top: 0;
+	z-index: 3;
+	background-color: inherit;
+	border-bottom: 1px solid var(--v-secondary-base);
+}
+
+.v-card::v-deep .sticky-actions {
+	position: sticky;
+	z-index: 3;
+	bottom: 0;
+	background-color: inherit;
+}
+</style>
