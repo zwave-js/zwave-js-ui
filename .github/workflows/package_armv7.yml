@@ -52,11 +52,10 @@ jobs:
 
       - name: Build for armv7
         run: |
-          mkdir -p ~/.cache/pkg
-          export PKG_CACHE_PATH=~/.cache/pkg
-          export PKG_IGNORE_TAG=true
-          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node16/built-v16.16.0-linux-armv7 -LOJ
-          mv built-v16.16.0-linux-armv7 $PKG_CACHE_PATH/built-v${{ matrix.node-version }}-linux-armv7
+          export NODE_PATCH=built-v16.16.0-linux-armv7
+          export PKG_NODE_PATH=./${NODE_PATCH}
+
+          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node16/${NODE_PATCH} -LOJ
           yarn pkg --skip-build --arch=armv7
 
       - name: Upload artifacts
