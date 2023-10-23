@@ -45,6 +45,9 @@ export class Settings {
 						? val
 						: defaultVal
 				break
+			case 'undefined':
+				val = valStr || valStr === '' ? valStr : defaultVal
+				break
 		}
 		return val
 	}

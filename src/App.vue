@@ -432,6 +432,9 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
+		darkMode(val) {
+			this.$vuetify.theme.dark = val || false
+		},
 		controllerNode(node) {
 			if (!node) return
 
@@ -535,7 +538,7 @@ export default {
 			'init',
 			'initNodes',
 			'setAppInfo',
-			'setUser',
+			'onUserLogged',
 			'updateValue',
 			'setValue',
 			'removeValue',
@@ -566,7 +569,7 @@ export default {
 				)
 				if (response.success) {
 					this.closePasswordDialog()
-					this.setUser(response.user)
+					this.onUserLogged(response.user)
 				}
 			} catch (error) {
 				this.showSnackbar(
@@ -728,23 +731,6 @@ export default {
 					newVersion ? 'Installation started' : 'Check requested',
 				)
 			}
-		},
-		changeThemeColor: function () {
-			const metaThemeColor = document.querySelector(
-				'meta[name=theme-color]',
-			)
-			const metaThemeColor2 = document.querySelector(
-				'meta[name=msapplication-TileColor]',
-			)
-
-			metaThemeColor.setAttribute(
-				'content',
-				this.darkMode ? '#000' : '#fff',
-			)
-			metaThemeColor2.setAttribute(
-				'content',
-				this.darkMode ? '#000' : '#fff',
-			)
 		},
 		importFile: function (ext) {
 			const self = this
@@ -1394,9 +1380,17 @@ export default {
 			this.hideTopbar = true
 		}
 
-		this.$vuetify.theme.dark = this.darkMode
+		const settings = useBaseStore().settings
 
-		this.changeThemeColor()
+		// system dark mode
+		const systemThemeDark = !!window.matchMedia(
+			'(prefers-color-scheme: dark)',
+		).matches
+
+		// set the dark mode to the system dark mode if it's different
+		if (settings.load('dark') === undefined) {
+			useBaseStore().setDarkMode(systemThemeDark)
+		}
 
 		useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'showSnackbar') {

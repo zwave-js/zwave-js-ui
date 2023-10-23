@@ -131,7 +131,6 @@ export default {
 			},
 			set(value) {
 				this.setDarkMode(value)
-				this.$vuetify.theme.dark = value
 			},
 		},
 	},
@@ -204,7 +203,7 @@ export default {
 						user.rememberMe = this.rememberMe
 						localStorage.setItem('user', JSON.stringify(user))
 						localStorage.setItem('logged', 'true')
-						useBaseStore().setUser(user)
+						useBaseStore().onUserLogged(user)
 
 						if (this.$route.params.nextUrl != null) {
 							this.$router.push(this.$route.params.nextUrl)
