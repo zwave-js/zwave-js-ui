@@ -432,6 +432,9 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
+		darkMode(val) {
+			this.$vuetify.theme.dark = val || false
+		},
 		controllerNode(node) {
 			if (!node) return
 
@@ -1379,16 +1382,15 @@ export default {
 
 		const settings = useBaseStore().settings
 
+		// system dark mode
+		const systemThemeDark = !!window.matchMedia(
+			'(prefers-color-scheme: dark)',
+		).matches
+
 		// set the dark mode to the system dark mode if it's different
 		if (settings.load('dark') === undefined) {
-			// system dark mode
-			const systemThemeDark = !!window.matchMedia(
-				'(prefers-color-scheme: dark)',
-			).matches
 			useBaseStore().setDarkMode(systemThemeDark)
 		}
-
-		this.$vuetify.theme.dark = this.darkMode
 
 		useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'showSnackbar') {

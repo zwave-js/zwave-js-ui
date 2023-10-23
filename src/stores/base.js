@@ -135,8 +135,8 @@ const useBaseStore = defineStore('base', {
 		updateMeshGraph(node) {
 			// empty mutation, will be caught in Mesh.vue $onAction
 		},
-		setUser(data) {
-			Object.assign(this.user, data)
+		onUserLogged(user) {
+			Object.assign(this.user, user)
 		},
 		setControllerStatus(data) {
 			this.appInfo.controllerStatus = data
