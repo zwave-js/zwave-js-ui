@@ -1,5 +1,18 @@
 
 
+# [9.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.3...v9.3.0) (2023-10-26)
+
+
+### Bug Fixes
+
+* **ui:** make topbar and actions sticky on popups ([87e88ef](https://github.com/zwave-js/zwave-js-ui/commit/87e88ef2a7ca3ff63d0b073e087022829da82fb6)), closes [#3372](https://github.com/zwave-js/zwave-js-ui/issues/3372)
+
+
+### Features
+
+* bump zwave-js@12.2.3 ([#3377](https://github.com/zwave-js/zwave-js-ui/issues/3377)) ([c3d85a4](https://github.com/zwave-js/zwave-js-ui/commit/c3d85a4d5bbc288b3bbbe7976af656aa583dbfa2))
+* **ui:** persist ui settings and use system theme as default ([#3375](https://github.com/zwave-js/zwave-js-ui/issues/3375)) ([2eaa11c](https://github.com/zwave-js/zwave-js-ui/commit/2eaa11c46a18165703c17acf5c2582e645672d86))
+
 ## [9.2.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.2...v9.2.3) (2023-10-20)
 
 
