@@ -1,5 +1,14 @@
 
 
+## [9.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.0...v9.3.1) (2023-10-30)
+
+
+### Bug Fixes
+
+* rebuild node routes doesn't update status on node object ([#3391](https://github.com/zwave-js/zwave-js-ui/issues/3391)) ([8f00446](https://github.com/zwave-js/zwave-js-ui/commit/8f00446949e1800791099487dfc4ab6890376a71))
+* **ui:** ensure theme is in sync with local storage to prevent flickering ([6ad4d0d](https://github.com/zwave-js/zwave-js-ui/commit/6ad4d0dd1fb71a1615c32b7757601ef33884a935))
+* **ui:** theme not persisted correctly ([#3390](https://github.com/zwave-js/zwave-js-ui/issues/3390)) ([c36ebc8](https://github.com/zwave-js/zwave-js-ui/commit/c36ebc8f499a89225e73a106ec32094dd5d66b9e))
+
 # [9.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.2.3...v9.3.0) (2023-10-26)
 
 
