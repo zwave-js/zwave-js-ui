@@ -1390,6 +1390,9 @@ export default {
 		// set the dark mode to the system dark mode if it's different
 		if (settings.load('dark') === undefined) {
 			useBaseStore().setDarkMode(systemThemeDark)
+		} else {
+			// default to white
+			this.$vuetify.theme.dark = settings.load('dark', false)
 		}
 
 		useBaseStore().$onAction(({ name, args }) => {
