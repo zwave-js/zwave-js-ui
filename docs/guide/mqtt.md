@@ -2407,7 +2407,7 @@ Will work in the same way.
 
 If you would like to send a write request with options like `transitionDurtation` and `volume` you can do it by using a JSON payload:
 
-Topic: `zwave/office/light/38/0/targetValue`
+Topic: `zwave/office/light/38/0/targetValue/set`
 
 Payload:
 
