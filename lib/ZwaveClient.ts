@@ -3187,12 +3187,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async rebuildNodeRoutes(nodeId: number): Promise<boolean> {
 		if (this.driverReady) {
 			let status: RebuildRoutesStatus = 'pending'
+
+			const node = this.nodes.get(nodeId)
+
+			if (!node) {
+				throw Error(`Node ${nodeId} not found`)
+			}
+
+			node.rebuildRoutesProgress = status
 			this.sendToSocket(socketEvents.rebuildRoutesProgress, [
 				[nodeId, status],
 			])
 			const result =
 				await this._driver.controller.rebuildNodeRoutes(nodeId)
 			status = result ? 'done' : 'failed'
+
+			node.rebuildRoutesProgress = status
 			this.sendToSocket(socketEvents.rebuildRoutesProgress, [
 				[nodeId, status],
 			])
