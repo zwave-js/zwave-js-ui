@@ -433,7 +433,7 @@ export default {
 			this.startSocket()
 		},
 		darkMode(val) {
-			this.$vuetify.theme.dark = val || false
+			this.$vuetify.theme.dark = !!val
 		},
 		controllerNode(node) {
 			if (!node) return
