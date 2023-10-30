@@ -1391,7 +1391,10 @@ export default {
 		if (settings.load('dark') === undefined) {
 			useBaseStore().setDarkMode(systemThemeDark)
 		} else {
-			// default to white
+			// load the theme from localstorage
+			// this is needed to prevent the theme switch on load
+			// this will be overriden by settings value once `initSettings`
+			// base store method is called
 			this.$vuetify.theme.dark = settings.load('dark', false)
 		}
 

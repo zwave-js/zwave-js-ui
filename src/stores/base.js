@@ -449,6 +449,10 @@ const useBaseStore = defineStore('base', {
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
 				Object.assign(this.ui, conf.ui || {})
+
+				// ensure local storage is in sync with the store
+				// to prevent theme switch on startup
+				this.setDarkMode(this.ui.darkMode)
 			}
 		},
 		initPorts(ports) {
