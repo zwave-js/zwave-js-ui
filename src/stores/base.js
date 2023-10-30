@@ -97,7 +97,7 @@ const useBaseStore = defineStore('base', {
 			newConfigVersion: undefined,
 		},
 		ui: {
-			darkMode: settings.load('dark', undefined), // do not set a default here, otherwise the watch in App.vue will not trigger the change
+			darkMode: settings.load('dark', false),
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
 		},
