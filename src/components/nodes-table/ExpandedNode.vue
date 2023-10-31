@@ -349,7 +349,13 @@ export default {
 			return Array.isArray(comments) ? comments : [comments]
 		},
 		metaKeys() {
-			const helpKeys = ['manual', 'inclusion', 'exclusion', 'reset']
+			const helpKeys = [
+				'manual',
+				'inclusion',
+				'exclusion',
+				'reset',
+				'wakeup',
+			]
 			const keys = this.nodeMetadata ? Object.keys(this.nodeMetadata) : []
 
 			return keys.filter((key) => helpKeys.includes(key))
