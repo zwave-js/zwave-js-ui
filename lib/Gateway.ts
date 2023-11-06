@@ -280,8 +280,10 @@ export default class Gateway {
 		}
 
 		if (this._zwave) {
-			// this is the only event we need to bind to in order to apply gateway values configs like polling
+			// needed in order to apply gateway values configs like polling
 			this._zwave.on('nodeInited', this._onNodeInited.bind(this))
+			// needed to init scheduled jobs
+			this._zwave.on('driverStatus', this._onDriverStatus.bind(this))
 
 			if (this.mqttEnabled) {
 				this._zwave.on('nodeStatus', this._onNodeStatus.bind(this))
@@ -293,7 +295,6 @@ export default class Gateway {
 				this._zwave.on('valueChanged', this._onValueChanged.bind(this))
 				this._zwave.on('nodeRemoved', this._onNodeRemoved.bind(this))
 				this._zwave.on('notification', this._onNotification.bind(this))
-				this._zwave.on('driverStatus', this._onDriverStatus.bind(this))
 
 				if (this.config.sendEvents) {
 					this._zwave.on('event', this._onEvent.bind(this))
@@ -2110,7 +2111,6 @@ export default class Gateway {
 
 	/**
 	 * Driver status updates
-	 *
 	 */
 	private _onDriverStatus(ready: boolean): void {
 		logger.info(`Driver is ${ready ? 'READY' : 'CLOSED'}`)
@@ -2125,7 +2125,9 @@ export default class Gateway {
 			}
 		}
 
-		this._mqtt.publish('driver/status', ready)
+		if (this.mqttEnabled) {
+			this._mqtt.publish('driver/status', ready)
+		}
 	}
 
 	/**
