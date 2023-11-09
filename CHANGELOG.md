@@ -1,5 +1,18 @@
 
 
+## [9.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.1...v9.3.2) (2023-11-09)
+
+
+### Bug Fixes
+
+* scheduled jobs not running when mqtt disabled ([#3409](https://github.com/zwave-js/zwave-js-ui/issues/3409)) ([c3d00e6](https://github.com/zwave-js/zwave-js-ui/commit/c3d00e62551e654d2e3ac0aea5e9ba75f7c986ba))
+* **ui:** add wakeup help ([9b3b766](https://github.com/zwave-js/zwave-js-ui/commit/9b3b766bf0d66373c6e381141d358f389150acd5)), closes [#3395](https://github.com/zwave-js/zwave-js-ui/issues/3395)
+
+
+### Features
+
+* bump zwave-js@12.3.0 ([#3396](https://github.com/zwave-js/zwave-js-ui/issues/3396)) ([49ccf97](https://github.com/zwave-js/zwave-js-ui/commit/49ccf974d414cbc3d3485b85140ec0c8f7330a7a))
+
 ## [9.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.0...v9.3.1) (2023-10-30)
 
 
