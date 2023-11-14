@@ -119,7 +119,7 @@
 					<span>{{ status }}</span>
 				</v-tooltip>
 
-				<v-tooltip bottom open-on-click>
+				<v-tooltip z-index="9999" bottom open-on-click>
 					<template v-slot:activator="{ on }">
 						<v-icon
 							dark
