@@ -2260,7 +2260,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.info(`Connecting to ${this.cfg.port}`)
 
 				// setup user callbacks only if there are connected clients
-				if ((await this.socket.fetchSockets()).length > 0) {
+				this.hasUserCallbacks =
+					(await this.socket.fetchSockets()).length > 0
+
+				if (this.hasUserCallbacks) {
 					this.setUserCallbacks()
 				}
 
