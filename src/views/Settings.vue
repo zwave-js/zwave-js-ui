@@ -860,7 +860,7 @@
 									</v-col>
 									<v-col cols="12" sm="6">
 										<v-checkbox
-											hint="Disables automatic recovery of unresponsive controller."
+											hint="When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own."
 											persistent-hint
 											label="Disable controller recovery"
 											v-model="
