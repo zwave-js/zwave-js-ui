@@ -582,6 +582,7 @@ export type ZwaveConfig = {
 	serverServiceDiscoveryDisabled?: boolean
 	maxNodeEventsQueueSize?: number
 	higherReportsTimeout?: boolean
+	disableControllerRecovery?: boolean
 	rf?: {
 		region?: RFRegion
 		txPower?: {
@@ -2122,6 +2123,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					sendToSleep: this.cfg.sendToSleepTimeout,
 					response: this.cfg.responseTimeout,
 				},
+				features: {
+					unresponsiveControllerRecovery: this.cfg
+						.disableControllerRecovery
+						? false
+						: true,
+				},
 				userAgent: {
 					[pkgjson.name]: pkgjson.version,
 				},
@@ -2151,7 +2158,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// when not set let zwavejs handle this based on the environment
 			if (typeof this.cfg.enableSoftReset === 'boolean') {
-				zwaveOptions.enableSoftReset = this.cfg.enableSoftReset
+				zwaveOptions.features.softReset = this.cfg.enableSoftReset
 			}
 
 			if (this.cfg.scales) {

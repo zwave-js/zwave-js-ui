@@ -858,6 +858,16 @@
 											"
 										></v-checkbox>
 									</v-col>
+									<v-col cols="12" sm="6">
+										<v-checkbox
+											hint="Disables automatic recovery of unresponsive controller."
+											persistent-hint
+											label="Disable controller recovery"
+											v-model="
+												newZwave.disableControllerRecovery
+											"
+										></v-checkbox>
+									</v-col>
 									<input
 										type="hidden"
 										:value="newZwave.options"
