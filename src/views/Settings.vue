@@ -858,6 +858,16 @@
 											"
 										></v-checkbox>
 									</v-col>
+									<v-col cols="12" sm="6">
+										<v-checkbox
+											hint="When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own."
+											persistent-hint
+											label="Disable controller recovery"
+											v-model="
+												newZwave.disableControllerRecovery
+											"
+										></v-checkbox>
+									</v-col>
 									<input
 										type="hidden"
 										:value="newZwave.options"
