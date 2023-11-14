@@ -98,6 +98,7 @@ import {
 	ZWavePlusRoleType,
 	FirmwareUpdateInfo,
 	PartialZWaveOptions,
+	InclusionUserCallbacks,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -698,6 +699,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
 	> = new Map()
 
+	private inclusionUserCallbacks: InclusionUserCallbacks = {
+		grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
+		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+		abort: this._onAbortInclusion.bind(this),
+	}
+
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
 	}
@@ -930,7 +937,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	setUserCallbacks() {
 		this.hasUserCallbacks = true
-		if (!this._driver) {
+		if (!this._driver || !this.cfg.serverEnabled) {
 			return
 		}
 
@@ -938,16 +945,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.driver.updateOptions({
 			inclusionUserCallbacks: {
-				grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
-				validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-				abort: this._onAbortInclusion.bind(this),
+				...this.inclusionUserCallbacks,
 			},
 		})
 	}
 
 	removeUserCallbacks() {
 		this.hasUserCallbacks = false
-		if (!this._driver) {
+		if (!this._driver || !this.cfg.serverEnabled) {
 			return
 		}
 
@@ -2161,6 +2166,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveOptions.features.softReset = this.cfg.enableSoftReset
 			}
 
+			// when server is not enabled, disable the user callbacks set/remove
+			// so it can be used through MQTT
+			if (!this.cfg.serverEnabled) {
+				zwaveOptions.inclusionUserCallbacks = {
+					...this.inclusionUserCallbacks,
+				}
+			}
+
 			if (this.cfg.scales) {
 				const scales: Record<string | number, string | number> = {}
 				for (const s of this.cfg.scales) {
@@ -2247,10 +2260,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				logger.info(`Connecting to ${this.cfg.port}`)
 
 				// setup user callbacks only if there are connected clients
-				this.hasUserCallbacks =
-					(await this.socket.fetchSockets()).length > 0
-
-				if (this.hasUserCallbacks) {
+				if ((await this.socket.fetchSockets()).length > 0) {
 					this.setUserCallbacks()
 				}
 
