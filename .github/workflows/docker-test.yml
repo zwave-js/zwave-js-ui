@@ -18,8 +18,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: docker/setup-buildx-action@v2
-      - uses: docker/setup-qemu-action@v2
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-qemu-action@v3
 
       - uses: actions/github-script@v6
         id: ref-sanitized
@@ -30,7 +30,7 @@ jobs:
 
       - name: Create Docker Meta
         id: docker_meta
-        uses: docker/metadata-action@v4
+        uses: docker/metadata-action@v5
         with:
           images: zwavejs/zwavejs2mqtt,zwavejs/zwave-js-ui,ghcr.io/zwave-js/zwave-js-ui
           tags: |
@@ -45,7 +45,7 @@ jobs:
             maintainer=robertsLando
 
       - name: Buildx build
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         timeout-minutes: 120
         with:
           platforms: ${{ matrix.platform }}
