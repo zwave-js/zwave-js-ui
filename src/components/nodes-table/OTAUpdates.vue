@@ -64,8 +64,7 @@
 							>
 							<p
 								class="text-caption ml-4"
-								v-text="u.changelog"
-								style="white-space: break-spaces"
+								v-html="u.changelog"
 							></p>
 
 							<v-list-item
@@ -184,6 +183,13 @@ export default {
 			this.loading = false
 
 			if (response.success) {
+				const { default: md } = await import('markdown-it')
+
+				// convert markdown changelog to html
+				for (const update of response.result) {
+					update.changelog = md().render(update.changelog)
+				}
+
 				this.fwUpdates = response.result
 			} else {
 				this.showSnackbar(
