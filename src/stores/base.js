@@ -47,6 +47,7 @@ const useBaseStore = defineStore('base', {
 			serverHost: undefined,
 			maxNodeEventsQueueSize: 100,
 			higherReportsTimeout: false,
+			disableControllerRecovery: false,
 		},
 		backup: {
 			storeBackup: false,

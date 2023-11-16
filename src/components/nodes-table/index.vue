@@ -18,6 +18,7 @@
 		class="elevation-1"
 		show-expand
 		show-select
+		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
 		<template v-slot:top>
 			<v-row class="ma-2" justify-start>

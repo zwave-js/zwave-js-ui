@@ -1,6 +1,11 @@
 <template>
 	<v-container fluid class="pa-4">
-		<v-data-table :headers="headers" :items="items" class="elevation-1">
+		<v-data-table
+			:headers="headers"
+			:items="items"
+			class="elevation-1"
+			style="margin-bottom: 80px"
+		>
 			<template v-slot:top>
 				<h2 class="ma-3">Provisioning Entries</h2>
 			</template>

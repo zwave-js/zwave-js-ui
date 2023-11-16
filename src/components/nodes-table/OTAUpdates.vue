@@ -64,8 +64,7 @@
 							>
 							<p
 								class="text-caption ml-4"
-								v-text="u.changelog"
-								style="white-space: break-spaces"
+								v-html="u.changelog"
 							></p>
 
 							<v-list-item
@@ -184,6 +183,13 @@ export default {
 			this.loading = false
 
 			if (response.success) {
+				const { default: md } = await import('markdown-it')
+
+				// convert markdown changelog to html
+				for (const update of response.result) {
+					update.changelog = md().render(update.changelog)
+				}
+
 				this.fwUpdates = response.result
 			} else {
 				this.showSnackbar(
@@ -198,9 +204,9 @@ export default {
 		async updateFirmware(update) {
 			if (
 				await this.$listeners.showConfirm(
-					'OTA Update',
+					`OTA ${update.downgrade ? 'Downgrade' : 'Upgrade'}`,
 					`<p>Are you sure you want to ${
-						update.downgrade ? 'downgrade' : 'update'
+						update.downgrade ? 'downgrade' : 'upgrade'
 					} node to <b>v${update.version}</b>?</p>
 										
 					<p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
@@ -208,9 +214,11 @@ export default {
 					<p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start an over-the-air (OTA) firmware update for the given node.</p>
 	
 					`,
-					'warning',
+					update.downgrade ? 'error' : 'warning',
 					{
-						confirmText: 'Update',
+						confirmText: `${
+							update.downgrade ? 'Downgrade' : 'Upgrade'
+						}`,
 						cancelText: 'Cancel',
 						width: '500px',
 					},

@@ -98,6 +98,7 @@ import {
 	ZWavePlusRoleType,
 	FirmwareUpdateInfo,
 	PartialZWaveOptions,
+	InclusionUserCallbacks,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -581,6 +582,7 @@ export type ZwaveConfig = {
 	serverServiceDiscoveryDisabled?: boolean
 	maxNodeEventsQueueSize?: number
 	higherReportsTimeout?: boolean
+	disableControllerRecovery?: boolean
 	rf?: {
 		region?: RFRegion
 		txPower?: {
@@ -695,6 +697,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		string,
 		{ lastUpdate: number; fn: () => void; timeout: NodeJS.Timeout }
 	> = new Map()
+
+	private inclusionUserCallbacks: InclusionUserCallbacks = {
+		grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
+		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
+		abort: this._onAbortInclusion.bind(this),
+	}
 
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
@@ -928,7 +936,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	setUserCallbacks() {
 		this.hasUserCallbacks = true
-		if (!this._driver) {
+		if (!this._driver || !this.cfg.serverEnabled) {
 			return
 		}
 
@@ -936,16 +944,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.driver.updateOptions({
 			inclusionUserCallbacks: {
-				grantSecurityClasses: this._onGrantSecurityClasses.bind(this),
-				validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
-				abort: this._onAbortInclusion.bind(this),
+				...this.inclusionUserCallbacks,
 			},
 		})
 	}
 
 	removeUserCallbacks() {
 		this.hasUserCallbacks = false
-		if (!this._driver) {
+		if (!this._driver || !this.cfg.serverEnabled) {
 			return
 		}
 
@@ -2121,6 +2127,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					sendToSleep: this.cfg.sendToSleepTimeout,
 					response: this.cfg.responseTimeout,
 				},
+				features: {
+					unresponsiveControllerRecovery: this.cfg
+						.disableControllerRecovery
+						? false
+						: true,
+				},
 				userAgent: {
 					[utils.pkgJson.name]: utils.pkgJson.version,
 				},
@@ -2150,7 +2162,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// when not set let zwavejs handle this based on the environment
 			if (typeof this.cfg.enableSoftReset === 'boolean') {
-				zwaveOptions.enableSoftReset = this.cfg.enableSoftReset
+				zwaveOptions.features.softReset = this.cfg.enableSoftReset
+			}
+
+			// when server is not enabled, disable the user callbacks set/remove
+			// so it can be used through MQTT
+			if (!this.cfg.serverEnabled) {
+				zwaveOptions.inclusionUserCallbacks = {
+					...this.inclusionUserCallbacks,
+				}
 			}
 
 			if (this.cfg.scales) {
@@ -2918,9 +2938,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 		downgrade: true,
 			// 		channel: 'stable',
 			// 		normalizedVersion: '1.13',
-			// 		changelog: `* Fixed some bugs
-			// * Added other bugs
-			// * Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
+			// 		changelog: `* Fixed some bugs by [robertsLando](https://github.com/robertsLando)\n* Added other bugs\n* Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
 			// 		files: [
 			// 			{
 			// 				target: 0,
@@ -2935,15 +2953,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 				url: 'https://example.com/firmware1.bin',
 			// 			},
 			// 		],
+			// 		device: {
+			// 			manufacturerId: 123,
+			// 			productType: 456,
+			// 			productId: 789,
+			// 			firmwareVersion: '1.13',
+			// 			rfRegion: 1,
+			// 		},
 			// 	},
 			// 	{
 			// 		version: '2.00',
 			// 		downgrade: false,
 			// 		channel: 'beta',
 			// 		normalizedVersion: '1.13',
-			// 		changelog: `* Fixed some bugs
-			// * Added other bugs
-			// * Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
+			// 		changelog: `* Fixed some bugs by [robertsLando](https://github.com/robertsLando)\n* Added other bugs\n* Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
 			// 		files: [
 			// 			{
 			// 				target: 0,
@@ -2958,6 +2981,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 				url: 'https://example.com/firmware1.bin',
 			// 			},
 			// 		],
+			// 		device: {
+			// 			manufacturerId: 123,
+			// 			productType: 456,
+			// 			productId: 789,
+			// 			firmwareVersion: '1.13',
+			// 			rfRegion: 1,
+			// 		},
 			// 	},
 			// ] as FirmwareUpdateInfo[]
 
