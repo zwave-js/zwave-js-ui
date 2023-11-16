@@ -2511,13 +2511,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/app-root-path@npm:^1.2.7":
-  version: 1.2.7
-  resolution: "@types/app-root-path@npm:1.2.7"
-  checksum: 288bb3af23cfa237e45d513435b4f85fb6af481065b70f5efdfe39e950de4f2b29d1fb4cdeb6773fbd247b69bc8e405dcf5a548dbe11833de3f6186570b322f7
-  languageName: node
-  linkType: hard
-
 "@types/archiver@npm:^5.3.4":
   version: 5.3.4
   resolution: "@types/archiver@npm:5.3.4"
@@ -3552,13 +3545,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"app-root-path@npm:^3.1.0":
-  version: 3.1.0
-  resolution: "app-root-path@npm:3.1.0"
-  checksum: e3db3957aee197143a0f6c75e39fe89b19e7244f28b4f2944f7276a9c526d2a7ab2d115b4b2d70a51a65a9a3ca17506690e5b36f75a068a7e5a13f8c092389ba
-  languageName: node
-  linkType: hard
-
 "append-field@npm:^1.0.0":
   version: 1.0.0
   resolution: "append-field@npm:1.0.0"
@@ -3797,15 +3783,6 @@ __metadata:
   version: 1.0.5
   resolution: "available-typed-arrays@npm:1.0.5"
   checksum: 20eb47b3cefd7db027b9bbb993c658abd36d4edd3fe1060e83699a03ee275b0c9b216cc076ff3f2db29073225fb70e7613987af14269ac1fe2a19803ccc97f1a
-  languageName: node
-  linkType: hard
-
-"axios-progress-bar@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "axios-progress-bar@npm:1.2.0"
-  peerDependencies:
-    axios: 0.x
-  checksum: f39ed6e6d657e80beadd536ff1fb9c38ac3e7878f8696494ba2969273cfd1cbd29904485c64f4123f8ef1b387d83e7a8ad354edfd53922d8da2e011ea1fda371
   languageName: node
   linkType: hard
 
@@ -10111,6 +10088,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nprogress@npm:^0.2.0":
+  version: 0.2.0
+  resolution: "nprogress@npm:0.2.0"
+  checksum: 66b7bec5d563ecf2d1c3d2815e6d5eb74ed815eee8563e0afa63d3f185ab1b9cf2ddd97e1ded263b9995c5019d26d600320e849e50f3747984daa033744619dc
+  languageName: node
+  linkType: hard
+
 "nrf-intel-hex@npm:^1.3.0":
   version: 1.3.0
   resolution: "nrf-intel-hex@npm:1.3.0"
@@ -14386,7 +14370,6 @@ __metadata:
     "@mdi/js": 7.3.67
     "@release-it/conventional-changelog": ^7.0.2
     "@tsconfig/node18": ^18.2.2
-    "@types/app-root-path": ^1.2.7
     "@types/archiver": ^5.3.4
     "@types/chai": ^4.3.9
     "@types/chai-as-promised": ^7.1.7
@@ -14412,10 +14395,8 @@ __metadata:
     "@zwave-js/server": ^1.33.0
     "@zwave-js/winston-daily-rotate-file": ^4.5.6-1
     ansi_up: ^6.0.2
-    app-root-path: ^3.1.0
     archiver: ^6.0.1
     axios: ^1.5.1
-    axios-progress-bar: ^1.2.0
     c8: ^8.0.1
     chai: ^4.3.10
     chai-as-promised: ^7.1.1
@@ -14458,6 +14439,7 @@ __metadata:
     native-url: ^0.3.4
     nodemon: ^3.0.1
     npm-run-all: ^4.1.5
+    nprogress: ^0.2.0
     pinia: ^2.1.7
     prettier: ^3.0.3
     prismjs: ^1.29.0

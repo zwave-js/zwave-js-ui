@@ -41,7 +41,7 @@
     "dev": "vite",
     "dev-https": "SERVER_SSL='true' yarn run dev",
     "dev:server": "nodemon",
-    "server": "ts-node -r esbuild-register bin/www.ts",
+    "server": "ts-node -r esbuild-register api/bin/www.ts",
     "fake-stick": "yarn mock-server -c server_config.js",
     "start": "node --preserve-symlinks server/bin/www.js",
     "lint": "npm-run-all 'lint:*'",
@@ -81,7 +81,7 @@
       "before:release": "./package.sh --release"
     },
     "npm": {
-      "publish": false
+      "publish": true
     },
     "plugins": {
       "@release-it/conventional-changelog": {
@@ -119,10 +119,8 @@
     "@zwave-js/server": "^1.33.0",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-1",
     "ansi_up": "^6.0.2",
-    "app-root-path": "^3.1.0",
     "archiver": "^6.0.1",
     "axios": "^1.5.1",
-    "axios-progress-bar": "^1.2.0",
     "connect-history-api-fallback": "2.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -145,6 +143,7 @@
     "mqtt-jsonl-store": "^0.2.0",
     "multer": "^1.4.5-lts.1",
     "native-url": "^0.3.4",
+    "nprogress": "^0.2.0",
     "pinia": "^2.1.7",
     "prismjs": "^1.29.0",
     "qr-scanner": "^1.4.2",
@@ -168,7 +167,6 @@
     "@actions/github": "^6.0.0",
     "@babel/register": "^7.22.15",
     "@tsconfig/node18": "^18.2.2",
-    "@types/app-root-path": "^1.2.7",
     "@types/archiver": "^5.3.4",
     "@types/chai": "^4.3.9",
     "@types/chai-as-promised": "^7.1.7",

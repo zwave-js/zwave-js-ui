@@ -1,6 +1,6 @@
 import { expect } from 'chai'
-import * as utils from '../../lib/utils'
-import { logsDir } from '../../config/app'
+import * as utils from '../../api/lib/utils'
+import { logsDir } from '../../api/config/app'
 import {
 	customTransports,
 	defaultLogFile,
@@ -8,7 +8,7 @@ import {
 	sanitizedConfig,
 	module,
 	setupAll,
-} from '../../lib/logger'
+} from '../../api/lib/logger'
 import winston from 'winston'
 
 function checkConfigDefaults(mod, cfg) {
