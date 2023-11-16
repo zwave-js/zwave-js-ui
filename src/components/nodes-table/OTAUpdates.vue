@@ -64,8 +64,7 @@
 							>
 							<p
 								class="text-caption ml-4"
-								v-text="u.changelog"
-								style="white-space: break-spaces"
+								v-html="u.changelog"
 							></p>
 
 							<v-list-item

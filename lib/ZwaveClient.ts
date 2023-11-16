@@ -2939,9 +2939,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 		downgrade: true,
 			// 		channel: 'stable',
 			// 		normalizedVersion: '1.13',
-			// 		changelog: `* Fixed some bugs
-			// * Added other bugs
-			// * Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
+			// 		changelog: `* Fixed some bugs by [robertsLando](https://github.com/robertsLando)\n* Added other bugs\n* Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
 			// 		files: [
 			// 			{
 			// 				target: 0,
@@ -2956,15 +2954,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 				url: 'https://example.com/firmware1.bin',
 			// 			},
 			// 		],
+			// 		device: {
+			// 			manufacturerId: 123,
+			// 			productType: 456,
+			// 			productId: 789,
+			// 			firmwareVersion: '1.13',
+			// 			rfRegion: 1,
+			// 		},
 			// 	},
 			// 	{
 			// 		version: '2.00',
 			// 		downgrade: false,
 			// 		channel: 'beta',
 			// 		normalizedVersion: '1.13',
-			// 		changelog: `* Fixed some bugs
-			// * Added other bugs
-			// * Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
+			// 		changelog: `* Fixed some bugs by [robertsLando](https://github.com/robertsLando)\n* Added other bugs\n* Very long changelog line that should not overflow the UI. Very long changelog line that should not overflow the UI Very long changelog line that should not overflow the UI`,
 			// 		files: [
 			// 			{
 			// 				target: 0,
@@ -2979,6 +2982,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 				url: 'https://example.com/firmware1.bin',
 			// 			},
 			// 		],
+			// 		device: {
+			// 			manufacturerId: 123,
+			// 			productType: 456,
+			// 			productId: 789,
+			// 			firmwareVersion: '1.13',
+			// 			rfRegion: 1,
+			// 		},
 			// 	},
 			// ] as FirmwareUpdateInfo[]
 
