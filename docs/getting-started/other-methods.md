@@ -54,8 +54,8 @@ zwave-js-ui
 Run with custom storage path:
 
 ```bash
-STORE_DIR=/home/$USER/.zwave-js-ui \
-ZWAVEJS_EXTERNAL_CONFIG=/home/$USER/.zwave-js-ui/.config-db \
+STORE_DIR=~/.zwave-js-ui \
+ZWAVEJS_EXTERNAL_CONFIG=~/.zwave-js-ui/.config-db \
 zwave-js-ui
 ```
 
@@ -65,7 +65,7 @@ If you want to run it as a service, you can use [PM2](https://pm2.keymetrics.io/
 npm install -g pm2
 ```
 
-Create a file named `ecosystem.config.js` with the following content:
+Create a file named `ecosystem.config.js` with the following content (change the paths to match your system):
 
 ```js
 module.exports = {
@@ -76,8 +76,8 @@ module.exports = {
         cwd: "~/",
         script: "zwave-js-ui",
         env: {
-          STORE_DIR: "/home/<your-user>/.zwave-js-ui",
-          ZWAVEJS_EXTERNAL_CONFIG: "/home/<your-user>/.zwave-js-ui/.config-db",
+          STORE_DIR: "~/.zwave-js-ui",
+          ZWAVEJS_EXTERNAL_CONFIG: "~/.zwave-js-ui/.config-db",
         },
       },
   ]
