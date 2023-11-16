@@ -43,6 +43,7 @@ jobs:
       - name: Make the release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }} 
         run: |
           git config user.email "bot@zwave-js.io"
           git config user.name "Z-Wave JS Bot"
