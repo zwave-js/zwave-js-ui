@@ -81,7 +81,7 @@
       "before:release": "./package.sh --release"
     },
     "npm": {
-      "publish": false
+      "publish": true
     },
     "plugins": {
       "@release-it/conventional-changelog": {

@@ -34,6 +34,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Initialize NPM config
+        run: |
+          npm config set //registry.npmjs.org/:_authToken $NPM_TOKEN
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Make the release
         env:
           GITHUB_TOKEN: ${{ secrets.BOT_TOKEN }}
