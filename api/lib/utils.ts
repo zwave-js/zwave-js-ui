@@ -1,10 +1,12 @@
 // eslint-disable-next-line one-var
-import * as appRoot from 'app-root-path'
-import { version } from '../package.json'
 import { ValueID } from 'zwave-js'
-import path from 'path'
+import path, { resolve } from 'path'
 import crypto from 'crypto'
 import { readFileSync } from 'fs'
+
+// don't use import here, it will break the build
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+export const pkgJson = require('../../package.json')
 
 let VERSION: string
 
@@ -77,13 +79,16 @@ export function fileDate(date?: Date) {
 	return date.toISOString().slice(-24).replace(/\D/g, '').slice(0, 14)
 }
 
+/** Where package.json is */
+export const basePath = resolve(__dirname, '..', '..')
+
 /**
  *  Get the base root path to application directory. When we are in a `pkg` environment
  *  the path of the snapshot is not writable
  */
 export function getPath(write: boolean): string {
 	if (write && hasProperty(process, 'pkg')) return process.cwd()
-	else return appRoot.toString()
+	else return basePath
 }
 
 /**
@@ -167,9 +172,11 @@ export function getVersion(): string {
 					.trim()
 			}
 
-			VERSION = `${version}${rev ? '.' + rev.substring(0, 7) : ''}`
+			VERSION = `${pkgJson.version}${
+				rev ? '.' + rev.substring(0, 7) : ''
+			}`
 		} catch {
-			VERSION = version
+			VERSION = pkgJson.version
 		}
 	}
 

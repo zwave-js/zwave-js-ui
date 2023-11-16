@@ -1,5 +1,5 @@
 import store from '../config/store'
-import { module } from '../lib/logger'
+import { module } from './logger'
 import jsonStore, { STORE_BACKUP_PREFIX } from './jsonStore'
 import Cron from 'croner'
 import { readdir, unlink } from 'fs/promises'

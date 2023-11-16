@@ -1,29 +1,26 @@
 .github
 .vscode
 .yarn
-bin
-certs
-config
-docker
-docs
-hass
-kubernetes
-lib
-src
-test
-pkg
-store
+/api/
+/src/
+/certs/
+/docker/
+/docs/
+/kubernetes/
+/test/
+/pkg/
+/store/
 
 
-.*
-*.ts
-*.js
-kustomization.yaml
-fakeNodes.json
-nodemon.json
-package.sh
-index.html
+/.*
+/*.ts
+/*.js
+/kustomization.yaml
+/fakeNodes.json
+/nodemon.json
+/package.sh
+/index.html
 
-tsconfig.*
+/tsconfig.*
 
-*.md
+/*.md

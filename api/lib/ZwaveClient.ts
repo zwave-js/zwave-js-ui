@@ -109,7 +109,6 @@ import * as utils from './utils'
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import { ensureDir, exists, mkdirp, writeFile } from 'fs-extra'
 import { Server as SocketServer } from 'socket.io'
-import * as pkgjson from '../package.json'
 import { TypedEventEmitter } from './EventEmitter'
 import { GatewayValue } from './Gateway'
 
@@ -2123,7 +2122,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					response: this.cfg.responseTimeout,
 				},
 				userAgent: {
-					[pkgjson.name]: pkgjson.version,
+					[utils.pkgJson.name]: utils.pkgJson.version,
 				},
 			}
 
@@ -2657,9 +2656,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this._driver) {
 			this._driver.enableStatistics({
 				applicationName:
-					pkgjson.name +
+					utils.pkgJson.name +
 					(this.cfg.serverEnabled ? ' / zwave-js-server' : ''),
-				applicationVersion: pkgjson.version,
+				applicationVersion: utils.pkgJson.version,
 			})
 			logger.info('Zwavejs usage statistics ENABLED')
 		}

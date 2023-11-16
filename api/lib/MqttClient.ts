@@ -8,9 +8,8 @@ import {
 	IStore,
 	connect,
 } from 'mqtt'
-import { allSettled, parseJSON, sanitizeTopic } from './utils'
+import { allSettled, parseJSON, sanitizeTopic, pkgJson } from './utils'
 import { module } from './logger'
-import { version as appVersion } from '../package.json'
 import { TypedEventEmitter } from './EventEmitter'
 import { storeDir } from '../config/app'
 import { ensureDir } from 'fs-extra'
@@ -203,7 +202,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 		if (this.client) {
 			this.client.publish(
 				this.getClientTopic(MqttClient.VERSION_TOPIC),
-				JSON.stringify({ value: appVersion, time: Date.now() }),
+				JSON.stringify({ value: pkgJson.version, time: Date.now() }),
 				{ retain: this.config.retain, qos: this.config.qos },
 			)
 		}

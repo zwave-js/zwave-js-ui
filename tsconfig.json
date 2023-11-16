@@ -10,11 +10,6 @@
     "strict": false
   },
   "include": [
-    "app.ts",
-    "bin/www.ts",
-    "config/*.ts",
-    "hass/*.ts",
-    "lib/*.ts",
-    "types/*.ts"
+    "api/**/*.ts",
   ],
 }
