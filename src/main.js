@@ -3,8 +3,6 @@ import pinia from './plugins/pinia'
 import vuetify from './plugins/vuetify' // path to vuetify export
 import router from './router'
 import App from './App.vue'
-
-import 'axios-progress-bar/dist/nprogress.css'
 // Custom assets CSS JS
 import './assets/css/main.css'
 

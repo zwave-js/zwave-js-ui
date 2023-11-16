@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { loadProgressBar } from 'axios-progress-bar'
+import loadProgressBar from '../lib/axios-progress-bar'
 import Router from '../router'
 import logger from '../lib/logger'
 
