@@ -1,6 +1,6 @@
 import chai, { expect } from 'chai'
-import Gateway, { closeWatchers } from '../../lib/Gateway'
-import { ZUINode } from '../../lib/ZwaveClient'
+import Gateway, { closeWatchers } from '../../api/lib/Gateway'
+import { ZUINode } from '../../api/lib/ZwaveClient'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 

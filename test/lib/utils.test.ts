@@ -6,15 +6,15 @@ import sinon, { SinonStub } from 'sinon'
 chai.use(require('sinon-chai'))
 
 declare let process: NodeJS.Process & {
-	pkg: boolean
+	pkg?: boolean
 }
 const snapshotPath = '/snapshot/zui'
 
 describe('#utils', () => {
 	describe('#getPath()', () => {
-		const utils = proxyquire('../../lib/utils', {
-			'app-root-path': {
-				toString: () => snapshotPath,
+		const utils = proxyquire('../../api/lib/utils', {
+			path: {
+				resolve: () => snapshotPath,
 			},
 		})
 
@@ -37,15 +37,12 @@ describe('#utils', () => {
 	})
 
 	describe('#joinPath()', () => {
-		let path: { join: SinonStub }
+		let path: { join: SinonStub; resolve: () => string }
 		let utils
 
 		before(() => {
-			path = { join: sinon.stub() }
-			utils = proxyquire('../../lib/utils', {
-				'app-root-path': {
-					toString: () => snapshotPath,
-				},
+			path = { join: sinon.stub(), resolve: () => snapshotPath }
+			utils = proxyquire('../../api/lib/utils', {
 				path: path,
 			})
 		})

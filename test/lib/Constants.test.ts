@@ -4,7 +4,7 @@ import chai, { expect } from 'chai'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 chai.use(require('sinon-chai'))
 
-import * as mod from '../../lib/Constants'
+import * as mod from '../../api/lib/Constants'
 
 describe('#Constants', () => {
 	describe('#productionType()', () => {
