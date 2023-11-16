@@ -1,5 +1,22 @@
 
 
+# [9.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.2...v9.4.0) (2023-11-16)
+
+
+### Bug Fixes
+
+* **ui:** inconsistency in ota popup warning ([8378946](https://github.com/zwave-js/zwave-js-ui/commit/8378946ee7e6699007d4815369c4450cc8b198ee))
+* **ui:** make versions tooltip above snackbar ([91376a3](https://github.com/zwave-js/zwave-js-ui/commit/91376a3a1c1c4fd2da1e9196282de8408ba6fc7a)), closes [#3416](https://github.com/zwave-js/zwave-js-ui/issues/3416)
+* **ui:** prevent fab to overlap table pagination ([9dbe5bf](https://github.com/zwave-js/zwave-js-ui/commit/9dbe5bff0526c87c6e37729a2e5e420b0d051540)), closes [#3426](https://github.com/zwave-js/zwave-js-ui/issues/3426)
+* user callbacks not working with MQTT ([#3424](https://github.com/zwave-js/zwave-js-ui/issues/3424)) ([3f630fd](https://github.com/zwave-js/zwave-js-ui/commit/3f630fd40e2e45bf554952727225947f73bd4571))
+
+
+### Features
+
+* add npm deploy and move backend source to `/api` folder ([#3422](https://github.com/zwave-js/zwave-js-ui/issues/3422)) ([fe7a2c5](https://github.com/zwave-js/zwave-js-ui/commit/fe7a2c5a2a5c0b5ef761b5b8bb05f774dd4a2c61))
+* add setting to disable controller recovery feature ([#3423](https://github.com/zwave-js/zwave-js-ui/issues/3423)) ([f956deb](https://github.com/zwave-js/zwave-js-ui/commit/f956deb066c5d2b39e2562259d3d6a46baacd03b))
+* **ui:** parse fw OTA changelog ([#3428](https://github.com/zwave-js/zwave-js-ui/issues/3428)) ([734ca0f](https://github.com/zwave-js/zwave-js-ui/commit/734ca0fc46a487d5b71df24bd4edc4300c986afb))
+
 ## [9.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.1...v9.3.2) (2023-11-09)
 
 
