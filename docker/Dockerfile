@@ -16,6 +16,8 @@ COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn/releases .yarn/releases
 
 ENV YARN_HTTP_TIMEOUT=300000
+# set production env install will not install devDependencies
+ENV NODE_ENV=production
 
 # if node_modules does not exist, run it, otherwise skip
 RUN test -d node_modules || yarn install --immutable
