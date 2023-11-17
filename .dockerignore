@@ -10,7 +10,6 @@ docs
 .coverage
 pkg
 test
-node_modules
 kubernetes
 wallaby.js
 docker
