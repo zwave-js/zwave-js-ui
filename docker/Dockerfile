@@ -20,7 +20,7 @@ ENV YARN_HTTP_TIMEOUT=300000
 ENV NODE_ENV=production
 
 # if node_modules does not exist, run it, otherwise skip
-RUN test -d node_modules || yarn install --immutable
+RUN [ -d 'node_modules' ] && echo "Skipping install" || yarn install --immutable
 
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true yarn rebuild @serialport/bindings-cpp
