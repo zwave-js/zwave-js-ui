@@ -19,6 +19,8 @@ ENV YARN_HTTP_TIMEOUT=300000
 # set production env install will not install devDependencies
 ENV NODE_ENV=production
 
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 COPY . .
 
 # if node_modules does not exist, run it, otherwise skip
