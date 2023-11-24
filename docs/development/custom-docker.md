@@ -20,6 +20,23 @@ docker build -f docker/Dockerfile --target=build -t zwavejs/zwave-js-ui_build .
 
 ```
 
+## Building multi-arch containers using buildx
+
+If you want to build multi-arch containers, you can use [buildx](https://docs.docker.com/buildx/working-with-buildx/):
+
+```bash
+# create a builder instance
+docker buildx create --use
+docker buildx inspect --bootstrap
+
+# build the containers
+docker buildx build \
+    --platform linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7 \
+    -t zwavejs/zwave-js-ui:latest \
+    -f docker/Dockerfile \
+    .
+```
+
 ## Building a container using Dockerfile.contrib
 
 You can also build a custom docker image using any mix of branches or repositories (such as your own), simply run the following series of commands, indicating the name of the branches you wish to build for node-zwave-js (ZWJ_BRANCH) and zwave-js-ui (ZUI_BRANCH) and the resulting docker image name (e.g. zwave-js-ui):
