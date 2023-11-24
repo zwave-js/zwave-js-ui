@@ -1,7 +1,7 @@
 ARG image=zwave-js-ui
 
 # STEP: 1 build
-FROM node:20.9-bookworm AS build-zui
+FROM node:20.10.0-bookworm AS build-zui
 
 WORKDIR /usr/src/app
 
@@ -59,7 +59,7 @@ RUN if [ ! -z "$updateDevices"  ]; \
     fi
 
 # STEP: 2 (runtime)
-FROM node:20.9-bookworm
+FROM node:20.10.0-bookworm
 
 RUN apk add --no-cache \
     libstdc++ \
