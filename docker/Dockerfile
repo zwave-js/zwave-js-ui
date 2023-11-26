@@ -26,9 +26,6 @@ COPY . .
 # if node_modules does not exist, run it, otherwise skip
 RUN [ -d 'node_modules' ] && echo "Skipping install" || yarn install --immutable
 
-# Fix issue with serialport bindings #2349
-RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
-
 # Build back and frontend only when not existing
 RUN [ -d 'dist' ] && echo "Skipping build" || yarn build
 
