@@ -165,8 +165,8 @@
 					'max-width': $vuetify.breakpoint.smAndDown
 						? '280px'
 						: $vuetify.breakpoint.smOnly
-						? '400px'
-						: 'auto',
+						  ? '400px'
+						  : 'auto',
 				}"
 				:hint="help"
 				persistent-hint
@@ -197,8 +197,8 @@
 					'max-width': $vuetify.breakpoint.smAndDown
 						? '280px'
 						: $vuetify.breakpoint.smOnly
-						? '400px'
-						: 'auto',
+						  ? '400px'
+						  : 'auto',
 				}"
 				:hint="help"
 				persistent-hint

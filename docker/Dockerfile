@@ -1,17 +1,28 @@
 ARG image=zwave-js-ui
 
-# STEP: 1 build
-FROM node:20.10.0-bookworm AS build-zui
+FROM alpine:3.18.4 as base
+
+RUN apk add --no-cache \
+    openssl \
+    libusb \
+    tzdata \
+    eudev \
+    nodejs=18.18.2-r0
 
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y \
-    jq \
-    python3 \
-    && rm -rf /var/lib/apt/lists/*
+# STEP: 1 build
+FROM base AS build-zui
 
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn/releases .yarn/releases
+RUN \
+    apk add --no-cache --virtual .build-dependencies \
+        jq \
+        build-base \
+        linux-headers \
+        python3-dev \
+        npm=9.6.6-r0 \
+    \
+    && npm install --global yarn
 
 ENV YARN_HTTP_TIMEOUT=300000
 # set production env install will not install devDependencies
@@ -26,15 +37,19 @@ RUN [ -d 'node_modules' ] && echo "Skipping install" || yarn install --immutable
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
 # Build back and frontend only when not existing
-RUN [ -d 'dist' ] && echo "Skipping build" || yarn build
+RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
-RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
+RUN npm prune --production && \
     rm -rf \
+    package-lock.json \
     build \
     package.sh \
     src \
+    api \
     static \
     docs \
+    kubernetes \
+    test \
     .yarn \
     .github \
     .vscode
@@ -54,14 +69,12 @@ RUN if [ ! -z "$updateDevices"  ]; \
     node-zwave-js-master/packages/config/config/devices/ ;\
     fi
 
+RUN apk del --no-cache --purge .build-dependencies
+
 # STEP: 2 (runtime)
-FROM node:20.10.0-bookworm-slim
+FROM base AS runtime
 
-RUN apt-get update && apt-get install -y \
-    openssl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy files from the previous build stage
+# Copy files from previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
@@ -69,8 +82,6 @@ ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 ENV TAG_NAME=${image_name}
 
 ENV NODE_ENV=production
-
-WORKDIR /usr/src/app
 
 EXPOSE 8091
 
