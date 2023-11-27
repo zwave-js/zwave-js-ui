@@ -50,6 +50,8 @@ body:
         - Docker
         - PKG executable
         - Snap
+        - NPM
+        - Home Assistant Add-on
         - Manually built (git clone - yarn build - yarn install
     validations:
       required: true
