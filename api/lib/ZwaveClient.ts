@@ -6023,8 +6023,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						zwaveValueMeta.type === 'number'
 							? parseInt(k)
 							: zwaveValueMeta.type === 'boolean'
-							? k === 'true'
-							: k,
+							  ? k === 'true'
+							  : k,
 				})
 			}
 		} else {

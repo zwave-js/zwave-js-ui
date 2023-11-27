@@ -245,8 +245,8 @@ export default {
 				value === undefined
 					? valueMap.default
 					: value
-					? valueMap.true
-					: valueMap.false
+					  ? valueMap.true
+					  : valueMap.false
 			return {
 				align: 'center',
 				icon: map.icon,
