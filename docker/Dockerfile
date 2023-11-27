@@ -1,14 +1,30 @@
 ARG image=zwave-js-ui
 
-# STEP: 1 build
-FROM node:20.10.0-bookworm AS build-zui
+FROM alpine:3.18.4 as base
+
+RUN apk add --no-cache \
+    libstdc++ \
+    openssl \
+    libgcc \
+    libusb \
+    tzdata \
+    eudev \
+    nodejs=18.18.2-r0
 
 WORKDIR /usr/src/app
 
-RUN apt-get update && apt-get install -y \
+# STEP: 1 build
+FROM base AS build-zui
+
+RUN apk --no-cache add \
+    coreutils \
     jq \
+    linux-headers \
+    alpine-sdk \
     python3 \
-    && rm -rf /var/lib/apt/lists/*
+    npm=9.6.6-r0
+    
+RUN npm install --global yarn@2.4.3
 
 COPY package.json yarn.lock .yarnrc.yml ./
 COPY .yarn/releases .yarn/releases
@@ -16,6 +32,8 @@ COPY .yarn/releases .yarn/releases
 ENV YARN_HTTP_TIMEOUT=300000
 # set production env install will not install devDependencies
 ENV NODE_ENV=production
+
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 COPY . .
 
@@ -55,13 +73,9 @@ RUN if [ ! -z "$updateDevices"  ]; \
     fi
 
 # STEP: 2 (runtime)
-FROM node:20.10.0-bookworm-slim
+FROM base AS runtime
 
-RUN apt-get update && apt-get install -y \
-    openssl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy files from the previous build stage
+# Copy files from previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
 ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
