@@ -6,11 +6,8 @@ FROM node:20.10.0-bookworm AS build-zui
 WORKDIR /usr/src/app
 
 RUN apt-get update && apt-get install -y \
-    coreutils \
     jq \
-    build-essential \
     python3 \
-    libudev-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package.json yarn.lock .yarnrc.yml ./
@@ -63,12 +60,7 @@ RUN if [ ! -z "$updateDevices"  ]; \
 FROM node:20.10.0-bookworm-slim
 
 RUN apt-get update && apt-get install -y \
-    libstdc++ \
     openssl \
-    libgcc1 \
-    libusb-1.0-0 \
-    tzdata \
-    libudev1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy files from the previous build stage
