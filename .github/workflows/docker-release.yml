@@ -84,7 +84,7 @@ jobs:
         timeout-minutes: 120 # prevents this to run indeterminatly
         uses: docker/build-push-action@v5
         with:
-          platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7
+          platforms: linux/arm64,linux/amd64,linux/arm/v7
           file: docker/Dockerfile
           context: . # without this it will clone master branch instead of using local
           cache-from: type=gha
