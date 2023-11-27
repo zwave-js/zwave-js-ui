@@ -3817,7 +3817,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.0":
+"axios@npm:^1.6.2":
   version: 1.6.2
   resolution: "axios@npm:1.6.2"
   dependencies:
@@ -14315,7 +14315,7 @@ __metadata:
     "@zwave-js/winston-daily-rotate-file": "npm:^4.5.6-1"
     ansi_up: "npm:^6.0.2"
     archiver: "npm:^6.0.1"
-    axios: "npm:^1.6.0"
+    axios: "npm:^1.6.2"
     axios-progress-bar: "npm:^1.2.0"
     c8: "npm:^8.0.1"
     chai: "npm:^4.3.10"

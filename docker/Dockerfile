@@ -39,9 +39,8 @@ RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 # Build back and frontend only when not existing
 RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
-RUN npm prune --production && \
+RUN yarn workspaces focus --production && \
     rm -rf \
-    package-lock.json \
     build \
     package.sh \
     src \
