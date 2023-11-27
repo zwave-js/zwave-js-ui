@@ -6,7 +6,8 @@ config({ path: './.env.app' })
 // config/app.js
 export const title: string = 'Z-Wave JS UI'
 export const storeDir: string = process.env.STORE_DIR || joinPath(true, 'store')
-export const logsDir: string = process.env.ZWAVEJS_LOGS_DIR || joinPath(storeDir, 'logs')
+export const logsDir: string =
+	process.env.ZWAVEJS_LOGS_DIR || joinPath(storeDir, 'logs')
 export const snippetsDir: string = joinPath(storeDir, 'snippets')
 
 export const tmpDir: string = joinPath(storeDir, '.tmp')
