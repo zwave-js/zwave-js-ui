@@ -14,20 +14,19 @@ WORKDIR /usr/src/app
 # STEP: 1 build
 FROM base AS build-zui
 
-RUN apk --no-cache add \
-    jq make gcc g++ python3 linux-headers \
-    npm=9.6.6-r0
-    
-RUN npm install --global yarn@2.4.3
-
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn/releases .yarn/releases
+RUN \
+    apk add --no-cache --virtual .build-dependencies \
+        jq \
+        build-base \
+        linux-headers \
+        python3-dev \
+        npm=9.6.6-r0 \
+    \
+    && npm install --global yarn@2.4.3
 
 ENV YARN_HTTP_TIMEOUT=300000
 # set production env install will not install devDependencies
 ENV NODE_ENV=production
-
-ENV NODE_OPTIONS="--max-old-space-size=4096"
 
 COPY . .
 
@@ -45,8 +44,11 @@ RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")'
     build \
     package.sh \
     src \
+    api \
     static \
     docs \
+    kubernetes \
+    test \
     .yarn \
     .github \
     .vscode
@@ -65,6 +67,8 @@ RUN if [ ! -z "$updateDevices"  ]; \
     tar vxz --strip=5 -C ./node_modules/@zwave-js/config/config/devices \
     node-zwave-js-master/packages/config/config/devices/ ;\
     fi
+
+RUN apk del --no-cache --purge .build-dependencies
 
 # STEP: 2 (runtime)
 FROM base AS runtime
