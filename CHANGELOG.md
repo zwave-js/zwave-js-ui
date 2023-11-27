@@ -1,5 +1,19 @@
 
 
+## [9.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.4.0...v9.4.1) (2023-11-27)
+
+
+### Bug Fixes
+
+* **docker:** skip install when node_modules is present ([#3429](https://github.com/zwave-js/zwave-js-ui/issues/3429)) ([65fe9a4](https://github.com/zwave-js/zwave-js-ui/commit/65fe9a4efffa9653b10225556c76b8edc96dc502))
+* **docker:** try using custom alpine ([#3443](https://github.com/zwave-js/zwave-js-ui/issues/3443)) ([400cb4f](https://github.com/zwave-js/zwave-js-ui/commit/400cb4fcd97e0367d4b9fe5a22cb441574a9cae5))
+* don't create `STORE_DIR/logs` if `ZWAVEJS_LOGS_DIR` is setted ([#3439](https://github.com/zwave-js/zwave-js-ui/issues/3439)) ([46773f7](https://github.com/zwave-js/zwave-js-ui/commit/46773f7c5a1447b490fe902657139f46b17761ff))
+
+
+### Features
+
+* bump zwave-js@12.3.1 ([#3444](https://github.com/zwave-js/zwave-js-ui/issues/3444)) ([662a2c8](https://github.com/zwave-js/zwave-js-ui/commit/662a2c8bd4d9583ae54afccd3b824a142973b3be))
+
 # [9.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.3.2...v9.4.0) (2023-11-16)
 
 
