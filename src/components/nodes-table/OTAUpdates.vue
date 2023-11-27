@@ -121,6 +121,7 @@
 					>This service relies on
 					<a
 						href="https://github.com/zwave-js/firmware-updates#readme"
+						target="_blank"
 						>Z-Wave JS Firmware Update Service</a
 					>, and may not represent all updates for your device.</span
 				>
