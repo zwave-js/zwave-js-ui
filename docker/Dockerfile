@@ -3,9 +3,7 @@ ARG image=zwave-js-ui
 FROM alpine:3.18.4 as base
 
 RUN apk add --no-cache \
-    libstdc++ \
     openssl \
-    libgcc \
     libusb \
     tzdata \
     eudev \
@@ -17,11 +15,7 @@ WORKDIR /usr/src/app
 FROM base AS build-zui
 
 RUN apk --no-cache add \
-    coreutils \
-    jq \
-    linux-headers \
-    alpine-sdk \
-    python3 \
+    jq make gcc g++ python3 linux-headers \
     npm=9.6.6-r0
     
 RUN npm install --global yarn@2.4.3
@@ -83,8 +77,6 @@ ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 ENV TAG_NAME=${image_name}
 
 ENV NODE_ENV=production
-
-WORKDIR /usr/src/app
 
 EXPOSE 8091
 
