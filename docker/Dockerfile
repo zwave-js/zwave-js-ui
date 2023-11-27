@@ -22,7 +22,7 @@ RUN \
         python3-dev \
         npm=9.6.6-r0 \
     \
-    && npm install --global yarn@2.4.3
+    && npm install --global yarn
 
 ENV YARN_HTTP_TIMEOUT=300000
 # set production env install will not install devDependencies
@@ -37,10 +37,11 @@ RUN [ -d 'node_modules' ] && echo "Skipping install" || yarn install --immutable
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
 # Build back and frontend only when not existing
-RUN [ -d 'dist' ] && echo "Skipping build" || yarn build
+RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
-RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
+RUN npm prune --production && \
     rm -rf \
+    package-lock.json \
     build \
     package.sh \
     src \
