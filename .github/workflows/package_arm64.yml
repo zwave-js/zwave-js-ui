@@ -41,7 +41,7 @@ jobs:
           # Rebuild .node modules for am64
           run: |
             cd /app
-            yarn rebuild
+            npm rebuild
 
       - name: Build for arm64
         run: |

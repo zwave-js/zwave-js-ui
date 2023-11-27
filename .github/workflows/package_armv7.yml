@@ -48,7 +48,7 @@ jobs:
           # Rebuild .node modules for amv7
           run: |
             cd /app
-            yarn rebuild
+            npm rebuild
 
       - name: Build for armv7
         run: |
