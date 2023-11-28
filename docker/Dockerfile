@@ -22,9 +22,6 @@ RUN \
         python3-dev \
         npm=9.6.6-r0
 
-# set production env install will not install devDependencies
-ENV NODE_ENV=production
-
 COPY . .
 
 # if node_modules does not exist, run it, otherwise skip
