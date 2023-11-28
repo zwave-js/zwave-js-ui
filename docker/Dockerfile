@@ -24,14 +24,14 @@ RUN \
 
 COPY . .
 
-# if node_modules does not exist, run it, otherwise skip
-RUN [ -d 'node_modules' ] && echo "Skipping install" || npm install --omit=dev
+# if node_modules does not exist, install deps, if dist is missing, install also dev deps
+RUN [ -d 'node_modules' ] && echo "Skipping install" || npm install $([ -d 'dist'] && echo '--omit=dev' || echo '')
 
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
 # Build back and frontend only when not existing
-RUN [ -d 'dist' ] && echo "Skipping build" || npm install && npm run build
+RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
 RUN npm prune --omit=dev && \
     rm -rf \
