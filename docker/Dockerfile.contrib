@@ -31,21 +31,19 @@ FROM ${SRC} AS build
 
 # Setup the container
 USER root
-RUN apt-get update && apt-get install -y jq
 
 ### Build node-zwave-js ###
 USER node
 WORKDIR /home/node/node-zwave-js
-ENV YARN_HTTP_TIMEOUT=300000
 
-RUN yarn
+RUN yarn install --immutable
 RUN yarn build
 
 # Update the version info to match the branch built
 RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
 
 # Pack the repo into tarballs that reference each other
-RUN yarn monopack --target $(pwd) --no-version --absolute
+RUN yarn monopack --target $(pwd) --no-version
 
 ### Build zwave-js-ui ###
 WORKDIR /home/node/zwave-js-ui
@@ -56,18 +54,23 @@ RUN cat package.json \
 		> package2.json \
 	&& rm package.json && mv package2.json package.json
 
-RUN yarn
-RUN yarn build
+RUN npm ci
+RUN npm run build
 
 # Prune devDependencies
-RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') \
-	&& rm -rf \
-		build \
-		docs \
-		src \
-		static \
-		.yarn \
-		package.sh
+RUN npm prune --production && \
+    rm -rf \
+    package-lock.json \
+    build \
+    package.sh \
+    src \
+    api \
+    static \
+    docs \
+    kubernetes \
+    test \
+    .github \
+    .vscode
 
 # Copy to distribution folder
 RUN mkdir my_dist \
@@ -83,9 +86,7 @@ RUN mkdir my_dist \
 		snippets \
 		store \
 		views \
-		.yarnrc.yml \
 		package.json \
-		yarn.lock \
 		my_dist
 
 #####################

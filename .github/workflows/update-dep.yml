@@ -25,11 +25,11 @@ jobs:
         uses: actions/setup-node@v3.6.0
         with:
           node-version: 20.x
-          cache: 'yarn'
+          cache: 'npm'
 
       - name: Update dependency
         run: |
-          yarn add ${{github.event.inputs.dep}}${{github.event.inputs.version}}
+          npm install ${{github.event.inputs.dep}}${{github.event.inputs.version || 'latest'}}
       - name: Check for changes
         id: check
         run: |

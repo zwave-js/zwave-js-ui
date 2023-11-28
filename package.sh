@@ -62,7 +62,7 @@ if [ ! -z "$1" ]; then
 
 	# skip build if args contains --skip-build
 	if [[ "$@" != *"--skip-build"* ]]; then
-		yarn run build
+		npm run build
 	else
 		echo "## Skipping build..."
 	fi
@@ -82,7 +82,7 @@ else
 
 	if ask "Re-build $APP?"; then
 		echo "## Building application"
-		yarn run build
+		npm run build
 	fi
 
 	echo '###################################################'

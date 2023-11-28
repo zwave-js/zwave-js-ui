@@ -20,18 +20,12 @@ RUN \
         build-base \
         linux-headers \
         python3-dev \
-        npm=9.6.6-r0 \
-    \
-    && npm install --global yarn
-
-ENV YARN_HTTP_TIMEOUT=300000
-# set production env install will not install devDependencies
-ENV NODE_ENV=production
+        npm=9.6.6-r0
 
 COPY . .
 
-# if node_modules does not exist, run it, otherwise skip
-RUN [ -d 'node_modules' ] && echo "Skipping install" || yarn install --immutable
+# if node_modules does not exist, install deps, if dist is missing, install also dev deps
+RUN [ -d 'node_modules' ] && echo "Skipping install" || npm install $([ -d 'dist'] && echo '--omit=dev' || echo '')
 
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
@@ -39,7 +33,7 @@ RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 # Build back and frontend only when not existing
 RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
-RUN npm prune --production && \
+RUN npm prune --omit=dev && \
     rm -rf \
     package-lock.json \
     build \
@@ -50,14 +44,13 @@ RUN npm prune --production && \
     docs \
     kubernetes \
     test \
-    .yarn \
     .github \
     .vscode
 
 # add plugin support, space separated
 ARG plugins
 RUN if [ ! -z "$plugins" ]; \
-    then echo "Installing plugins ${plugins}"; yarn add ${plugins} ; fi
+    then echo "Installing plugins ${plugins}"; npm install ${plugins} ; fi
 
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices

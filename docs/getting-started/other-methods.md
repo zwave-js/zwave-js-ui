@@ -94,7 +94,7 @@ pm2 startup
 
 ## NodeJS or PKG version
 
-The most complex way to run Z-Wave JS UI is on bare metal. To do so, you can use the packaged version (you don't need NodeJS/yarn installed) or clone this repository and build the project:
+The most complex way to run Z-Wave JS UI is on bare metal. To do so, you can use the packaged version (you don't need NodeJS/NPM installed) or clone this repository and build the project:
 
 - For the packaged version:
 
@@ -117,7 +117,7 @@ The most complex way to run Z-Wave JS UI is on bare metal. To do so, you can use
     ```bash
     git clone https://github.com/zwave-js/zwave-js-ui
     cd zwave-js-ui
-    yarn install
-    yarn run build
-    yarn start
+    npm install
+    npm run build
+    npm start
     ```

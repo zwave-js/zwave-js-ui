@@ -26,14 +26,14 @@ jobs:
         uses: actions/setup-node@v3.4.1
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'yarn'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: yarn install --immutable
+        run: npm ci
 
       - name: Lint
         if: matrix['node-version'] == '18.x'
-        run: yarn run lint
+        run: npm run lint
 
       - name: Prepare lint auto-fix patch
         if: |
@@ -43,7 +43,7 @@ jobs:
         id: lint
         run: |
           # Run all lint commands and abort if one has unfixable errors
-          yarn run lint-fix
+          npm run lint-fix
           git diff --name-only || true
           if ! git diff --quiet ; then
             echo "has changes"
@@ -65,13 +65,13 @@ jobs:
           path: fix.patch
 
       - name: Test
-        run: yarn run test
+        run: npm run test
 
       - name: Generate coverage report
         if: matrix['node-version'] == '18.x'
         run: |
-          yarn run coverage
-          yarn run record-coverage
+          npm run coverage
+          npm run record-coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master

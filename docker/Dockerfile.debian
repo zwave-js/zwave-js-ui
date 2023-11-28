@@ -10,39 +10,35 @@ RUN apt-get update && apt-get install -y \
     python3 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY package.json yarn.lock .yarnrc.yml ./
-COPY .yarn/releases .yarn/releases
-
-ENV YARN_HTTP_TIMEOUT=300000
 # set production env install will not install devDependencies
 ENV NODE_ENV=production
 
 COPY . .
 
 # if node_modules does not exist, run it, otherwise skip
-RUN [ -d 'node_modules' ] && echo "Skipping install" || yarn install --immutable
+RUN [ -d 'node_modules' ] && echo "Skipping install" || npm ci
 
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
 # Build back and frontend only when not existing
-RUN [ -d 'dist' ] && echo "Skipping build" || yarn build
+RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
-RUN yarn remove $(cat package.json | jq -r '.devDependencies | keys | join(" ")') && \
+RUN npm prune --production && \
     rm -rf \
     build \
     package.sh \
     src \
+    api \
     static \
     docs \
-    .yarn \
     .github \
     .vscode
 
 # add plugin support, space separated
 ARG plugins
 RUN if [ ! -z "$plugins" ]; \
-    then echo "Installing plugins ${plugins}"; yarn add ${plugins} ; fi
+    then echo "Installing plugins ${plugins}"; npm install ${plugins} ; fi
 
 # when update devices arg is set update config files from zwavejs repo
 ARG updateDevices
