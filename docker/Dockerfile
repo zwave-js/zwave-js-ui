@@ -28,15 +28,15 @@ ENV NODE_ENV=production
 COPY . .
 
 # if node_modules does not exist, run it, otherwise skip
-RUN [ -d 'node_modules' ] && echo "Skipping install" || npm ci
+RUN [ -d 'node_modules' ] && echo "Skipping install" || npm install --omit=dev
 
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 
 # Build back and frontend only when not existing
-RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
+RUN [ -d 'dist' ] && echo "Skipping build" || npm install && npm run build
 
-RUN npm prune --production && \
+RUN npm prune --omit=dev && \
     rm -rf \
     package-lock.json \
     build \
