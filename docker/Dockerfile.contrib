@@ -43,7 +43,7 @@ RUN yarn build
 RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
 
 # Pack the repo into tarballs that reference each other
-RUN yarn monopack --target $(pwd) --no-version --absolute
+RUN yarn monopack --target $(pwd) --no-version
 
 ### Build zwave-js-ui ###
 WORKDIR /home/node/zwave-js-ui
