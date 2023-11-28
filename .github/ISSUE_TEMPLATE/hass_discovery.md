@@ -17,7 +17,7 @@ Home Assistant --> settings --> Integrations --> Z-Wave JS --> Configure --> Cre
 Build/Run method:
 
 [ ] Docker
-[ ] Git Clone + yarn install + yarn run build + yarn start
+[ ] Git Clone + npm install + npm run build + npm start
 [ ] Pkg
 
 Z-Wave JS UI version: **[Enter Version Number]**

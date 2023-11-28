@@ -52,7 +52,7 @@ body:
         - Snap
         - NPM
         - Home Assistant Add-on
-        - Manually built (git clone - yarn build - yarn install
+        - Manually built (git clone - npm run build - npm install
     validations:
       required: true
   - type: input

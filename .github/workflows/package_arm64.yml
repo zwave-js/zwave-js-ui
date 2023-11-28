@@ -20,12 +20,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: "yarn"
+          cache: "npm"
 
       - name: Install and pre-build
         run: |
-          yarn install --immutable
-          yarn build
+          npm ci
+          npm run build
 
       - uses: uraimo/run-on-arch-action@v2
         name: Package
@@ -45,7 +45,7 @@ jobs:
 
       - name: Build for arm64
         run: |
-          yarn pkg --skip-build --arch=arm64
+          npm run pkg -- --skip-build --arch=arm64
       
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'

@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'yarn'
+          cache: 'npm'
 
       - uses: docker/setup-buildx-action@v3
       - uses: docker/setup-qemu-action@v3
@@ -77,8 +77,8 @@ jobs:
 
       - name: Pre-build frontend and backend files
         run: |
-          yarn install --immutable
-          yarn build
+          npm ci
+          npm run build
 
       - name: build+push
         timeout-minutes: 120 # prevents this to run indeterminatly
