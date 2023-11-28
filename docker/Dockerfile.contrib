@@ -36,8 +36,8 @@ USER root
 USER node
 WORKDIR /home/node/node-zwave-js
 
-RUN npm ci
-RUN npm run build
+RUN yarn install --immutable
+RUN yarn build
 
 # Update the version info to match the branch built
 RUN yarn workspaces foreach version $(echo $(yarn node -p 'require("semver").inc(require("zwave-js/package.json").version, "prerelease")+".dev"')-$(git rev-parse --short HEAD)) --deferred && yarn version apply --all
