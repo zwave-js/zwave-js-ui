@@ -35,6 +35,7 @@ RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
 RUN npm prune --omit=dev && \
     find . -maxdepth 1 \
+    ! -name "." \
     ! -name "node_modules" \
     ! -name "snippets" \
     ! -name ".git" \
