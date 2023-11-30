@@ -34,8 +34,7 @@ RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
 RUN npm prune --omit=dev && \
-    find . -maxdepth 1 \
-    ! -name "." \
+    find . -mindepth 1 -maxdepth 1 \
     ! -name "node_modules" \
     ! -name "snippets" \
     ! -name ".git" \
