@@ -1,5 +1,19 @@
 
 
+# [9.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.4.1...v9.5.0) (2023-11-30)
+
+
+### Bug Fixes
+
+* **ui:** open ota link in new page ([d7621c1](https://github.com/zwave-js/zwave-js-ui/commit/d7621c15dc0eecd91043fa2160d2fbd6bdf6a860)), closes [#3446](https://github.com/zwave-js/zwave-js-ui/issues/3446)
+
+
+### Features
+
+* bump zwave-js@12.3.2 ([#3452](https://github.com/zwave-js/zwave-js-ui/issues/3452)) ([8727b56](https://github.com/zwave-js/zwave-js-ui/commit/8727b561afcca59355be18fa04627f4ebbf9a2a1))
+* bump zwave-js@12.4.0 ([#3457](https://github.com/zwave-js/zwave-js-ui/issues/3457)) ([1304124](https://github.com/zwave-js/zwave-js-ui/commit/1304124bc79ae9d5234ef0ed35304459d75f2da3))
+* use `npm` instead of `yarn` ([#3447](https://github.com/zwave-js/zwave-js-ui/issues/3447)) ([1dc07ed](https://github.com/zwave-js/zwave-js-ui/commit/1dc07edb91a5fa124acc41f9dda2e5a0ae8a43d0))
+
 ## [9.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.4.0...v9.4.1) (2023-11-27)
 
 
