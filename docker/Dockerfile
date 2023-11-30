@@ -34,18 +34,14 @@ RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
 RUN [ -d 'dist' ] && echo "Skipping build" || npm run build
 
 RUN npm prune --omit=dev && \
-    rm -rf \
-    package-lock.json \
-    build \
-    package.sh \
-    src \
-    api \
-    static \
-    docs \
-    kubernetes \
-    test \
-    .github \
-    .vscode
+    find . -mindepth 1 -maxdepth 1 \
+    ! -name "node_modules" \
+    ! -name "snippets" \
+    ! -name ".git" \
+    ! -name "package.json" \
+    ! -name "server" \
+    ! -name "dist" \
+    -exec rm -rf {} +
 
 # add plugin support, space separated
 ARG plugins
