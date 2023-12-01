@@ -1,5 +1,12 @@
 
 
+## [9.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.5.0...v9.5.1) (2023-12-01)
+
+
+### Bug Fixes
+
+* pkg missing `axios` exec ([4856efd](https://github.com/zwave-js/zwave-js-ui/commit/4856efd3af76c50b5096b6a8bdf833bf3f7ee376)), closes [#3458](https://github.com/zwave-js/zwave-js-ui/issues/3458)
+
 # [9.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.4.1...v9.5.0) (2023-11-30)
 
 
