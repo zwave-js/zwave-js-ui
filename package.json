@@ -26,7 +26,8 @@
   ],
   "pkg": {
     "scripts": [
-      "server/**/*"
+      "server/**/*",
+      "node_modules/axios/dist/node/*"
     ],
     "assets": [
       "dist/**/*",
