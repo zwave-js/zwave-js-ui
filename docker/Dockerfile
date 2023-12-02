@@ -25,7 +25,7 @@ RUN \
 COPY . .
 
 # if node_modules does not exist, install deps, if dist is missing, install also dev deps
-RUN [ -d 'node_modules' ] && echo "Skipping install" || npm install $([ -d 'dist'] && echo '--omit=dev' || echo '')
+RUN [ -d 'node_modules' ] && echo "Skipping install" || npm install $([ -d 'dist' ] && echo '--omit=dev' || echo '')
 
 # Fix issue with serialport bindings #2349
 RUN npm_config_build_from_source=true npm rebuild @serialport/bindings-cpp
