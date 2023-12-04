@@ -3990,7 +3990,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
-		if (this.driverReady || this.driver.isInBootloader()) {
+		if (this.driverReady || this.driver?.isInBootloader()) {
 			try {
 				const allowed =
 					typeof this[apiName] === 'function' &&
