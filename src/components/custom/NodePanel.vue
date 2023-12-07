@@ -569,7 +569,7 @@ export default {
 		},
 		newWindow() {
 			const newwindow = window.open(
-				Routes.controllerChart + '#no-topbar',
+				'#' + Routes.controllerChart + '/#no-topbar',
 				'BG-RSSI-Chart',
 				'height=800,width=1200,status=no,toolbar:no,scrollbars:no,menubar:no', // check https://www.w3schools.com/jsref/met_win_open.asp for all available specs
 			)

@@ -1374,9 +1374,7 @@ export default {
 			this.toggleDrawer()
 		}
 
-		const hash = window.location.hash.substr(1)
-
-		if (hash === 'no-topbar') {
+		if (window.location.hash.includes('#no-topbar')) {
 			this.hideTopbar = true
 		}
 
