@@ -85,3 +85,5 @@ typings/
 !.yarn/versions
 
 fakeNodes.json
+
+/build/

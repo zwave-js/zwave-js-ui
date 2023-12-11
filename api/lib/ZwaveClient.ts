@@ -4400,7 +4400,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				controllerNode.statistics as ControllerStatistics
 			controllerNode.statistics = stats
 
-			if (stats.messagesRX > oldStatistics?.messagesRX ?? 0) {
+			if (stats.messagesRX > (oldStatistics?.messagesRX ?? 0)) {
 				// no need to emit `lastActive` event. That would cause useless traffic
 				controllerNode.lastActive = Date.now()
 			}
