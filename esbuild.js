@@ -1,7 +1,7 @@
 const esbuild = require('esbuild')
-const { cp } = require('fs/promises')
+const { cp, stat } = require('fs/promises')
 const pkgJson = require('./package.json')
-const { exists, removeSync } = require('fs-extra')
+const { exists, emptyDir } = require('fs-extra')
 
 const outputDir = 'build'
 
@@ -45,35 +45,56 @@ const nativeNodeModulesPlugin = {
 	},
 }
 
-// clean build folder
-removeSync(outputDir)
+async function main() {
+	const start = Date.now()
+	// clean build folder
+	await emptyDir(outputDir)
 
-esbuild
-	.build({
+	const outfile = `${outputDir}/src/bin/index.js`
+
+	await esbuild.build({
 		entryPoints: ['api/bin/www.ts'],
 		plugins: [nativeNodeModulesPlugin],
 		bundle: true,
-
 		platform: 'node',
 		target: 'node18',
-		outfile: `${outputDir}/src/bin/index.js`,
-		external: ['serialport', '@zwave-js/config'],
+		outfile,
+		// suppress direct-eval warning
+		logOverride: {
+			'direct-eval': 'silent',
+		},
+		external: ['serialport', '@zwave-js/config', 'zwave-js/package.json'],
 	})
-	.then(async () => {
-		// copy assets to build folder
-		for (let asset of pkgJson.pkg.assets) {
-			console.log(`copying ${asset} to ${outputDir} folder`)
-			// resolve glob assets
-			asset = asset.replace('/**/*', '').replace('/**', '')
 
-			if (await exists(asset)) {
-				await cp(asset, `${outputDir}/${asset}`, { recursive: true })
-			} else {
-				console.log(`asset ${asset} does not exist`)
-			}
+	// copy assets to build folder
+	for (let asset of pkgJson.pkg.assets) {
+		// resolve glob assets
+		asset = asset.replace('/**/*', '').replace('/**', '')
+
+		// only copy bindings-cpp folder if serialport is used
+		if (asset.includes('@serialport')) {
+			asset += '/bindings-cpp'
 		}
-	})
-	.catch((err) => {
-		console.error(err)
-		process.exit(1)
-	})
+
+		if (await exists(asset)) {
+			console.log(`Copying ${asset} to ${outputDir} folder`)
+			await cp(asset, `${outputDir}/${asset}`, { recursive: true })
+		} else {
+			console.log(`Asset ${asset} does not exist. Skipping...`)
+		}
+	}
+
+	const end = Date.now()
+
+	console.log(`\n\nBuild took ${end - start}ms`)
+
+	const stats = await stat(outfile)
+
+	// print size in MB
+	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB`)
+}
+
+main().catch((err) => {
+	console.error(err)
+	process.exit(1)
+})
