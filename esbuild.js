@@ -56,7 +56,7 @@ esbuild
 
 		platform: 'node',
 		target: 'node18',
-		outfile: `${outputDir}/code/index.js`,
+		outfile: `${outputDir}/code/bin/index.js`,
 		external: ['serialport'],
 	})
 	.then(async () => {
