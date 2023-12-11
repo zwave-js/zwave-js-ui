@@ -57,7 +57,7 @@ esbuild
 		platform: 'node',
 		target: 'node18',
 		outfile: `${outputDir}/src/bin/index.js`,
-		external: ['serialport'],
+		external: ['serialport', '@zwave-js/config'],
 	})
 	.then(async () => {
 		// copy assets to build folder
