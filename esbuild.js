@@ -66,6 +66,14 @@ async function main() {
 		external: ['serialport', '@zwave-js/config', 'zwave-js/package.json'],
 	})
 
+	const end = Date.now()
+
+	console.log(`Build took ${end - start}ms`)
+	const stats = await stat(outfile)
+
+	// print size in MB
+	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB\n\n`)
+
 	// copy assets to build folder
 	for (let asset of pkgJson.pkg.assets) {
 		// resolve glob assets
@@ -77,21 +85,12 @@ async function main() {
 		}
 
 		if (await exists(asset)) {
-			console.log(`Copying ${asset} to ${outputDir} folder`)
+			console.log(`Copying "${asset}" to "${outputDir}" folder`)
 			await cp(asset, `${outputDir}/${asset}`, { recursive: true })
 		} else {
-			console.log(`Asset ${asset} does not exist. Skipping...`)
+			console.log(`Asset "${asset}" does not exist. Skipping...`)
 		}
 	}
-
-	const end = Date.now()
-
-	console.log(`\n\nBuild took ${end - start}ms`)
-
-	const stats = await stat(outfile)
-
-	// print size in MB
-	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB`)
 }
 
 main().catch((err) => {
