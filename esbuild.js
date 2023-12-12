@@ -75,7 +75,7 @@ async function main() {
 		bundle: true,
 		platform: 'node',
 		target: 'node18',
-		// sourcemap: true,
+		sourcemap: process.argv.includes('--sourcemap'),
 		outfile,
 		// suppress direct-eval warning
 		logOverride: {
@@ -105,18 +105,20 @@ async function main() {
 
 	await writeFile(outfile, content)
 
-	// minify the file
-	await esbuild.build({
-		...config,
-		entryPoints: [outfile],
-		minify: true,
-		keepNames: true, // needed for zwave-js as it relies on class names
-		allowOverwrite: true,
-		outfile,
-	})
+	if (process.argv.includes('--minify')) {
+		// minify the file
+		await esbuild.build({
+			...config,
+			entryPoints: [outfile],
+			minify: true,
+			keepNames: true, // needed for zwave-js as it relies on class names
+			allowOverwrite: true,
+			outfile,
+		})
 
-	console.log(`Minify took ${Date.now() - start}ms`)
-	await printSize(outfile)
+		console.log(`Minify took ${Date.now() - start}ms`)
+		await printSize(outfile)
+	}
 
 	// copy assets to build folder
 	for (const ext of externals) {
