@@ -56,6 +56,7 @@ async function main() {
 		'zwave-js/package.json',
 		'@zwave-js/config/package.json',
 		'@zwave-js/config/config',
+		'@zwave-js/config/build',
 		'./snippets',
 		'./dist',
 	]
@@ -81,10 +82,19 @@ async function main() {
 
 	const stats = await stat(outfile)
 
-	const content = (await readFile(outfile, 'utf-8')).replace(
-		/__dirname, "\.\.\/"/g,
-		'__dirname, "./node_modules/@serialport/bindings-cpp"',
-	)
+	const content = (await readFile(outfile, 'utf-8'))
+		.replace(
+			/__dirname, "\.\.\/"/g,
+			'__dirname, "./node_modules/@serialport/bindings-cpp"',
+		)
+		.replace(
+			`__dirname, "../package.json"`,
+			`__dirname, "./node_modules/@zwave-js/config/package.json"`,
+		)
+		.replace(
+			`__dirname, "../config"`,
+			`__dirname, "./node_modules/@zwave-js/config/config"`,
+		)
 
 	await writeFile(outfile, content)
 
