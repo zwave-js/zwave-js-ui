@@ -45,6 +45,7 @@
     "server": "ts-node -r esbuild-register api/bin/www.ts",
     "fake-stick": "npm run mock-server -c server_config.js",
     "start": "node --preserve-symlinks server/bin/www.js",
+    "bundle": "node esbuild.js",
     "lint": "npm-run-all 'lint:*'",
     "lint-fix": "npm-run-all 'lint-fix:*'",
     "lint:eslint": "eslint --ext .js,.ts,.vue .",
