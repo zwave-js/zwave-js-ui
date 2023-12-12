@@ -57,7 +57,7 @@ async function main() {
 		'@zwave-js/config/package.json',
 		'@zwave-js/config/config',
 		'./snippets',
-		'./dist'
+		'./dist',
 	]
 
 	await esbuild.build({
