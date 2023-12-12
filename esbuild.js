@@ -44,6 +44,13 @@ const nativeNodeModulesPlugin = {
 	},
 }
 
+async function printSize(fileName) {
+	const stats = await stat(fileName)
+
+	// print size in MB
+	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB\n\n`)
+}
+
 async function main() {
 	const start = Date.now()
 	// clean build folder
@@ -79,6 +86,9 @@ async function main() {
 
 	await esbuild.build(config)
 
+	console.log(`Build took ${Date.now() - start}ms`)
+	await printSize(outfile)
+
 	const content = (await readFile(outfile, 'utf-8'))
 		.replace(
 			/__dirname, "\.\.\/"/g,
@@ -105,14 +115,8 @@ async function main() {
 		outfile,
 	})
 
-	const end = Date.now()
-
-	console.log(`Build took ${end - start}ms`)
-
-	const stats = await stat(outfile)
-
-	// print size in MB
-	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB\n\n`)
+	console.log(`Minify took ${Date.now() - start}ms`)
+	await printSize(outfile)
 
 	// copy assets to build folder
 	for (const ext of externals) {
