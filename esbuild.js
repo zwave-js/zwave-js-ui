@@ -57,6 +57,7 @@ async function main() {
 		'@zwave-js/config/package.json',
 		'@zwave-js/config/config',
 		'./snippets',
+		'./dist'
 	]
 
 	await esbuild.build({
@@ -91,9 +92,8 @@ async function main() {
 	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB\n\n`)
 
 	// copy assets to build folder
-	for (let ext of externals) {
+	for (const ext of externals) {
 		const path = ext.startsWith('./') ? ext : `node_modules/${ext}`
-
 		if (await exists(path)) {
 			console.log(`Copying "${path}" to "${outputDir}" folder`)
 			await cp(path, `${outputDir}/${path}`, { recursive: true })
