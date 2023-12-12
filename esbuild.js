@@ -1,9 +1,6 @@
 const esbuild = require('esbuild')
 const { cp, stat, readFile, writeFile } = require('fs/promises')
-const pkgJson = require('./package.json')
 const { exists, emptyDir } = require('fs-extra')
-const { resolve } = require('path')
-// const { replace } = require('esbuild-plugin-replace')
 
 const outputDir = 'build'
 
@@ -57,6 +54,8 @@ async function main() {
 	const externals = [
 		'@serialport/bindings-cpp/prebuilds',
 		'zwave-js/package.json',
+		'@zwave-js/config/package.json',
+		'@zwave-js/config/config',
 		'./snippets',
 	]
 
@@ -90,9 +89,6 @@ async function main() {
 
 	// print size in MB
 	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB\n\n`)
-
-	// copy package.json
-	await cp('package.json', `${outputDir}/package.json`)
 
 	// copy assets to build folder
 	for (let ext of externals) {
