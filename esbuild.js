@@ -67,6 +67,7 @@ async function main() {
 		bundle: true,
 		platform: 'node',
 		target: 'node18',
+		minify: true,
 		// sourcemap: true,
 		outfile,
 		// suppress direct-eval warning
