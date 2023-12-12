@@ -80,7 +80,9 @@ export function fileDate(date?: Date) {
 }
 
 /** Where package.json is */
-export const basePath = resolve(__dirname, '..', '..')
+export const basePath = __filename.endsWith('index.js')
+	? resolve(__dirname) // esbuild bundle
+	: resolve(__dirname, '..', '..')
 
 /**
  *  Get the base root path to application directory. When we are in a `pkg` environment

@@ -1,7 +1,9 @@
 const esbuild = require('esbuild')
-const { cp, stat } = require('fs/promises')
+const { cp, stat, readFile, writeFile } = require('fs/promises')
 const pkgJson = require('./package.json')
 const { exists, emptyDir } = require('fs-extra')
+const { resolve } = require('path')
+// const { replace } = require('esbuild-plugin-replace')
 
 const outputDir = 'build'
 
@@ -50,7 +52,13 @@ async function main() {
 	// clean build folder
 	await emptyDir(outputDir)
 
-	const outfile = `${outputDir}/src/bin/index.js`
+	const outfile = `${outputDir}/index.js`
+
+	const externals = [
+		'@serialport/bindings-cpp/prebuilds',
+		'zwave-js/package.json',
+		'./snippets',
+	]
 
 	await esbuild.build({
 		entryPoints: ['api/bin/www.ts'],
@@ -58,37 +66,43 @@ async function main() {
 		bundle: true,
 		platform: 'node',
 		target: 'node18',
+		// sourcemap: true,
 		outfile,
 		// suppress direct-eval warning
 		logOverride: {
 			'direct-eval': 'silent',
 		},
-		external: ['serialport', '@zwave-js/config', 'zwave-js/package.json'],
+		external: externals,
 	})
 
 	const end = Date.now()
 
 	console.log(`Build took ${end - start}ms`)
+
 	const stats = await stat(outfile)
+
+	const content = (await readFile(outfile, 'utf-8')).replace(
+		/__dirname, "\.\.\/"/g,
+		'__dirname, "./node_modules/@serialport/bindings-cpp"',
+	)
+
+	await writeFile(outfile, content)
 
 	// print size in MB
 	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB\n\n`)
 
+	// copy package.json
+	await cp('package.json', `${outputDir}/package.json`)
+
 	// copy assets to build folder
-	for (let asset of pkgJson.pkg.assets) {
-		// resolve glob assets
-		asset = asset.replace('/**/*', '').replace('/**', '')
+	for (let ext of externals) {
+		const path = ext.startsWith('./') ? ext : `node_modules/${ext}`
 
-		// only copy bindings-cpp folder if serialport is used
-		if (asset.includes('@serialport')) {
-			asset += '/bindings-cpp'
-		}
-
-		if (await exists(asset)) {
-			console.log(`Copying "${asset}" to "${outputDir}" folder`)
-			await cp(asset, `${outputDir}/${asset}`, { recursive: true })
+		if (await exists(path)) {
+			console.log(`Copying "${path}" to "${outputDir}" folder`)
+			await cp(path, `${outputDir}/${path}`, { recursive: true })
 		} else {
-			console.log(`Asset "${asset}" does not exist. Skipping...`)
+			console.log(`Asset "${path}" does not exist. Skipping...`)
 		}
 	}
 }
