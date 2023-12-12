@@ -61,13 +61,13 @@ async function main() {
 		'./dist',
 	]
 
-	await esbuild.build({
+	/** @type { import('esbuild').BuildOptions } */
+	const config = {
 		entryPoints: ['api/bin/www.ts'],
 		plugins: [nativeNodeModulesPlugin],
 		bundle: true,
 		platform: 'node',
 		target: 'node18',
-		minify: false,
 		// sourcemap: true,
 		outfile,
 		// suppress direct-eval warning
@@ -75,13 +75,9 @@ async function main() {
 			'direct-eval': 'silent',
 		},
 		external: externals,
-	})
+	}
 
-	const end = Date.now()
-
-	console.log(`Build took ${end - start}ms`)
-
-	const stats = await stat(outfile)
+	await esbuild.build(config)
 
 	const content = (await readFile(outfile, 'utf-8'))
 		.replace(
@@ -98,6 +94,22 @@ async function main() {
 		)
 
 	await writeFile(outfile, content)
+
+	// minify the file
+	await esbuild.build({
+		...config,
+		entryPoints: [outfile],
+		minify: true,
+		keepNames: true,
+		allowOverwrite: true,
+		outfile,
+	})
+
+	const end = Date.now()
+
+	console.log(`Build took ${end - start}ms`)
+
+	const stats = await stat(outfile)
 
 	// print size in MB
 	console.log(`Bundle size: ${Math.round(stats.size / 10000) / 100}MB\n\n`)
