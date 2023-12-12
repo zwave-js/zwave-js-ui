@@ -100,7 +100,7 @@ async function main() {
 		...config,
 		entryPoints: [outfile],
 		minify: true,
-		keepNames: true,
+		keepNames: true, // needed for zwave-js as it relies on class names
 		allowOverwrite: true,
 		outfile,
 	})
