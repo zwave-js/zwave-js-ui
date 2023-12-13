@@ -1,6 +1,6 @@
 <template>
 	<v-container fluid class="fill pa-0">
-		<v-text-field
+		<!-- <v-text-field
 			v-model="search"
 			v-if="!loading"
 			prepend-icon="search"
@@ -10,16 +10,58 @@
 			single-line
 			style="max-width: 250px"
 			clearable
-		></v-text-field>
+		></v-text-field> -->
 		<v-data-iterator
 			:loading="loading"
 			:items="nodes"
 			:search="search"
 			v-model="selected"
 			item-key="id"
+			:sort-by="sortBy.toLowerCase()"
+			:sort-desc="sortDesc"
 			hide-default-footer
 			:itemsPerPage="-1"
 		>
+			<template v-slot:header>
+				<v-row class="my-2" justify="center">
+					<v-text-field
+						v-model="search"
+						clearable
+						flat
+						solo-inverted
+						hide-details
+						single-line
+						class="mx-auto my-1"
+						style="max-width: 250px"
+						prepend-inner-icon="search"
+						label="Search"
+					></v-text-field>
+					<v-select
+						v-model="sortBy"
+						flat
+						solo-inverted
+						single-line
+						hide-details
+						class="mx-auto my-1"
+						style="max-width: 250px"
+						:items="keys"
+						prepend-inner-icon="sort"
+						label="Sort by"
+					></v-select>
+					<v-btn-toggle
+						class="mx-auto my-1"
+						v-model="sortDesc"
+						mandatory
+					>
+						<v-btn depressed :value="false">
+							<v-icon>arrow_upward</v-icon>
+						</v-btn>
+						<v-btn depressed :value="true">
+							<v-icon>arrow_downward</v-icon>
+						</v-btn>
+					</v-btn-toggle>
+				</v-row>
+			</template>
 			<template v-slot:no-data>
 				<v-container>
 					<v-row class="pa-0">
@@ -335,6 +377,30 @@ export default {
 	data() {
 		return {
 			search: '',
+			sortBy: 'id',
+			keys: [
+				{
+					text: 'ID',
+					value: 'id',
+				},
+				{
+					text: 'Name',
+					value: 'name',
+				},
+				{
+					text: 'Location',
+					value: 'loc',
+				},
+				{
+					text: 'Status',
+					value: 'status',
+				},
+				{
+					text: 'Ready',
+					value: 'ready',
+				},
+			],
+			sortDesc: false,
 			selected: [],
 			loading: false,
 			expandedNode: null,
