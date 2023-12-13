@@ -23,44 +23,53 @@
 			:itemsPerPage="-1"
 		>
 			<template v-slot:header>
-				<v-row class="my-2" justify="center">
-					<v-text-field
-						v-model="search"
-						clearable
-						flat
-						solo-inverted
-						hide-details
-						single-line
-						class="mx-auto my-1"
-						style="max-width: 250px"
-						prepend-inner-icon="search"
-						label="Search"
-					></v-text-field>
-					<v-select
-						v-model="sortBy"
-						flat
-						solo-inverted
-						single-line
-						hide-details
-						class="mx-auto my-1"
-						style="max-width: 250px"
-						:items="keys"
-						prepend-inner-icon="sort"
-						label="Sort by"
-					></v-select>
-					<v-btn-toggle
-						class="mx-auto my-1"
-						v-model="sortDesc"
-						mandatory
-					>
-						<v-btn depressed :value="false">
-							<v-icon>arrow_upward</v-icon>
-						</v-btn>
-						<v-btn depressed :value="true">
-							<v-icon>arrow_downward</v-icon>
-						</v-btn>
-					</v-btn-toggle>
-				</v-row>
+				<div
+					class="my-2 d-flex justify-center"
+					style="column-gap: 10px; flex-wrap: wrap"
+				>
+					<div>
+						<v-text-field
+							v-model="search"
+							clearable
+							flat
+							solo-inverted
+							hide-details
+							single-line
+							class="mx-auto my-1"
+							style="max-width: 250px; min-width: 250px"
+							prepend-inner-icon="search"
+							label="Search"
+						></v-text-field>
+					</div>
+					<div>
+						<v-select
+							v-model="sortBy"
+							flat
+							solo-inverted
+							single-line
+							hide-details
+							class="mx-auto my-1"
+							style="max-width: 150px"
+							:items="keys"
+							prepend-inner-icon="sort"
+							label="Sort by"
+						></v-select>
+					</div>
+					<div>
+						<v-btn-toggle
+							class="mx-auto my-1"
+							v-model="sortDesc"
+							mandatory
+						>
+							<v-btn depressed :value="false">
+								<v-icon>arrow_upward</v-icon>
+							</v-btn>
+							<v-btn depressed :value="true">
+								<v-icon>arrow_downward</v-icon>
+							</v-btn>
+						</v-btn-toggle>
+					</div>
+				</div>
 			</template>
 			<template v-slot:no-data>
 				<v-container>
