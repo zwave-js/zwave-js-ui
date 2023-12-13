@@ -70,7 +70,11 @@ async function main() {
 
 	/** @type { import('esbuild').BuildOptions } */
 	const config = {
-		entryPoints: ['api/bin/www.ts'],
+		entryPoints: [
+			process.argv.includes('--js-entrypoint')
+				? 'server/bin/www.js'
+				: 'api/bin/www.ts',
+		],
 		plugins: [nativeNodeModulesPlugin],
 		bundle: true,
 		platform: 'node',
