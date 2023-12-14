@@ -1,5 +1,20 @@
 
 
+# [9.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.5.1...v9.6.0) (2023-12-14)
+
+
+### Bug Fixes
+
+* check for undefined driver ([#3464](https://github.com/zwave-js/zwave-js-ui/issues/3464)) ([f499d5b](https://github.com/zwave-js/zwave-js-ui/commit/f499d5b4069074a6ecb5c3d8f4fef45ee39b8cee))
+* **ui:** open in new window ([c618fd1](https://github.com/zwave-js/zwave-js-ui/commit/c618fd10cd5c5f5e2444ed097c64dcc9e7f4aa73))
+
+
+### Features
+
+* bump zwave-js@12.4.1 ([#3479](https://github.com/zwave-js/zwave-js-ui/issues/3479)) ([932495e](https://github.com/zwave-js/zwave-js-ui/commit/932495e99191256e792e9438fcca2304082c7bd4))
+* create esbuild bundle for embedded devices ([#3480](https://github.com/zwave-js/zwave-js-ui/issues/3480)) ([68326d6](https://github.com/zwave-js/zwave-js-ui/commit/68326d635917895520be883013934d2789998d83))
+* **ui:** compact view sort ([#3484](https://github.com/zwave-js/zwave-js-ui/issues/3484)) ([1f4cc1f](https://github.com/zwave-js/zwave-js-ui/commit/1f4cc1f9feaef9dbe6e393f37bfc12e755d51d97))
+
 ## [9.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.5.0...v9.5.1) (2023-12-01)
 
 
