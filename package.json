@@ -72,7 +72,7 @@
     "github": {
       "release": true,
       "assets": [
-        "pkg/*.zip"
+        "build/pkg/*.zip"
       ]
     },
     "git": {
