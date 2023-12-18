@@ -80,7 +80,7 @@
       "requireCleanWorkingDir": false
     },
     "hooks": {
-      "before:release": "./package.sh --release"
+      "before:release": "./package.sh --bundle"
     },
     "npm": {
       "publish": true
