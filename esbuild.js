@@ -1,6 +1,7 @@
 const esbuild = require('esbuild')
 const { cp, stat, readFile, writeFile } = require('fs/promises')
 const { exists, emptyDir } = require('fs-extra')
+const pkgJson = require('./package.json')
 
 const outputDir = 'build'
 
@@ -134,6 +135,25 @@ async function main() {
 			console.log(`Asset "${path}" does not exist. Skipping...`)
 		}
 	}
+
+	// create patched packege.json
+	delete pkgJson.devDependencies
+	delete pkgJson['release-it']
+	delete pkgJson.optionalDependencies
+
+	pkgJson.scripts = {
+		start: 'node index.js',
+	}
+
+	pkgJson.bin = 'index.js'
+	pkgJson.pkg = {
+		assets: ['dist/**', 'snippets/**', 'node_modules/**'],
+	}
+
+	await writeFile(
+		`${outputDir}/package.json`,
+		JSON.stringify(pkgJson, null, 2),
+	)
 }
 
 main().catch((err) => {
