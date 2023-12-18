@@ -45,7 +45,7 @@ jobs:
 
       - name: Build for arm64
         run: |
-          npm run pkg -- --skip-build --arch=arm64
+          npm run pkg -- --bundle --skip-build --arch=arm64
       
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'

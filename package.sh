@@ -35,7 +35,7 @@ ask() {
 
 pkg() {
 	echo "Executing command: npx pkg $@"
-	npx pkg -d $@
+	npx pkg $@
 }
 
 APP=$(node -p "require('./package.json').name")
@@ -48,12 +48,6 @@ VERSION=$(node -p "require('./package.json').version")
 echo "Version: $VERSION"
 
 NODE_MAJOR=$(node -v | grep -E -o '[0-9].' | head -n 1)
-
-# if --bundle is passed as argument, cd to `build` folder
-if [[ "$@" == *"--bundle"* ]]; then
-	echo "## Changing directory to build"
-	cd build
-fi
 
 echo "## Clear $PKG_FOLDER folder"
 rm -rf $PKG_FOLDER/*
@@ -76,6 +70,15 @@ if [ ! -z "$1" ]; then
 		npm run build
 	else
 		echo "## Skipping build..."
+	fi
+
+	# if --bundle is passed as argument, cd to `build` folder
+	if [[ "$@" == *"--bundle"* ]]; then
+		echo "## Building bundle..."
+		echo ''
+		npm run bundle
+		echo "## Changing directory to build folder"
+		cd build
 	fi
 
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
