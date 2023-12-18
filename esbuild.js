@@ -140,6 +140,7 @@ async function main() {
 	delete pkgJson.devDependencies
 	delete pkgJson['release-it']
 	delete pkgJson.optionalDependencies
+	delete pkgJson.dependencies
 
 	pkgJson.scripts = {
 		start: 'node index.js',
