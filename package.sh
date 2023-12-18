@@ -35,7 +35,7 @@ ask() {
 
 pkg() {
 	echo "Executing command: npx pkg $@"
-	npx pkg $@
+	npx pkg -d $@
 }
 
 APP=$(node -p "require('./package.json').name")
@@ -79,13 +79,10 @@ if [ ! -z "$1" ]; then
 	fi
 
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER
 	elif [ "$ARCH" = "armv7" ]; then
-		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-armv7 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
 	else
-		echo "Executing command: pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64 --out-path $PKG_FOLDER"
 		pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
 	fi
 

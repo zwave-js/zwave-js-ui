@@ -1,9 +1,30 @@
 const esbuild = require('esbuild')
 const { cp, stat, readFile, writeFile } = require('fs/promises')
 const { exists, emptyDir } = require('fs-extra')
-const pkgJson = require('./package.json')
+const { join } = require('path')
 
 const outputDir = 'build'
+
+function cleanPkgJson(json) {
+	delete json.devDependencies
+	delete json['release-it']
+	delete json.optionalDependencies
+	delete json.dependencies
+	return json
+}
+
+/**
+ * Remove useless fields from package.json, this is needed mostly for `pkg`
+ * otherwise it will try to bundle dependencies
+ */
+async function patchPkgJson(path) {
+	const pkgJsonPath = join(outputDir, path, 'package.json')
+	const pkgJson = require('./' + pkgJsonPath)
+	cleanPkgJson(pkgJson)
+	delete pkgJson.scripts
+	delete pkgJson.exports
+	await writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2))
+}
 
 // from https://github.com/evanw/esbuild/issues/1051#issuecomment-806325487
 const nativeNodeModulesPlugin = {
@@ -136,11 +157,9 @@ async function main() {
 		}
 	}
 
-	// create patched packege.json
-	delete pkgJson.devDependencies
-	delete pkgJson['release-it']
-	delete pkgJson.optionalDependencies
-	delete pkgJson.dependencies
+	// create main patched packege.json
+	const pkgJson = require('./package.json')
+	cleanPkgJson(pkgJson)
 
 	pkgJson.scripts = {
 		start: 'node index.js',
@@ -155,6 +174,9 @@ async function main() {
 		`${outputDir}/package.json`,
 		JSON.stringify(pkgJson, null, 2),
 	)
+
+	await patchPkgJson('node_modules/@zwave-js/config')
+	await patchPkgJson('node_modules/zwave-js')
 }
 
 main().catch((err) => {
