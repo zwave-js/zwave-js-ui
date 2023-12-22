@@ -699,7 +699,7 @@
 										type="hidden"
 										:value="newZwave.disclaimerVersion"
 									/>
-									<v-col cols="12" sm="6" md="4">
+									<v-col cols="12" sm="6">
 										<v-autocomplete
 											hint="Select preferred sensors scales. You can select a scale For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
 											persistent-hint
