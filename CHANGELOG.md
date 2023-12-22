@@ -1,5 +1,12 @@
 
 
+## [9.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.0...v9.6.1) (2023-12-22)
+
+
+### Bug Fixes
+
+* move optional deps to dev dependencies ([#3493](https://github.com/zwave-js/zwave-js-ui/issues/3493)) ([1ffe349](https://github.com/zwave-js/zwave-js-ui/commit/1ffe349dcd6f05001a934b37b1e34c74f6353c76))
+
 # [9.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.5.1...v9.6.0) (2023-12-14)
 
 
