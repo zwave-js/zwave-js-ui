@@ -769,7 +769,11 @@
 											v-model="newZwave.logToFile"
 										></v-switch>
 									</v-col>
-									<v-col cols="12" sm="6" v-if="newZwave.logEnabled">
+									<v-col
+										cols="12"
+										sm="6"
+										v-if="newZwave.logEnabled"
+									>
 										<v-text-field
 											v-model.number="newZwave.maxFiles"
 											label="Max files"
