@@ -57,21 +57,21 @@ jobs:
           export PKG_IGNORE_TAG=true
           curl https://github.com/yao-pkg/pkg-binaries/releases/download/node18/built-v18.18.2-linux-armv7 -LOJ
           mv built-v18.18.2-linux-armv7 $PKG_CACHE_PATH/built-v${{ matrix.node-version }}-linux-armv7
-          npm run pkg -- --skip-build --arch=armv7
+          npm run pkg -- --bundle --skip-build --arch=armv7
 
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v3
         with:
           name: pkg-build
-          path: ./pkg/*.zip
+          path: ./build/pkg/*.zip
 
       - name: Upload binaries to release
         if: github.event_name == 'release'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./pkg/*.zip
+          file: ./build/pkg/*.zip
           file_glob: true
           tag: ${{ github.ref }}
           overwrite: true
