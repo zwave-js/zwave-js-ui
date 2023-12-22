@@ -1,5 +1,12 @@
 
 
+## [9.6.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.1...v9.6.2) (2023-12-22)
+
+
+### Bug Fixes
+
+* ignore `build` dir in NPM publish ([af5c542](https://github.com/zwave-js/zwave-js-ui/commit/af5c542b4b287051792da9f0a0eec7a11a6a0cd5))
+
 ## [9.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.0...v9.6.1) (2023-12-22)
 
 
