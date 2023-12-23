@@ -699,7 +699,7 @@
 										type="hidden"
 										:value="newZwave.disclaimerVersion"
 									/>
-									<v-col cols="12" sm="6" md="4">
+									<v-col cols="12" sm="6">
 										<v-autocomplete
 											hint="Select preferred sensors scales. You can select a scale For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
 											persistent-hint
@@ -769,7 +769,11 @@
 											v-model="newZwave.logToFile"
 										></v-switch>
 									</v-col>
-									<v-col cols="6" v-if="newZwave.logEnabled">
+									<v-col
+										cols="12"
+										sm="6"
+										v-if="newZwave.logEnabled"
+									>
 										<v-text-field
 											v-model.number="newZwave.maxFiles"
 											label="Max files"
@@ -797,7 +801,7 @@
 											v-model="newZwave.nodeFilter"
 										></v-combobox>
 									</v-col>
-									<v-col cols="6">
+									<v-col cols="12" sm="6">
 										<v-text-field
 											v-model.number="
 												newZwave.commandsTimeout
@@ -810,7 +814,7 @@
 											type="number"
 										></v-text-field>
 									</v-col>
-									<v-col cols="6">
+									<v-col cols="12" sm="6">
 										<v-text-field
 											v-model.number="
 												newZwave.sendToSleepTimeout
@@ -823,7 +827,7 @@
 											type="number"
 										></v-text-field>
 									</v-col>
-									<v-col cols="6">
+									<v-col cols="12" sm="6">
 										<v-text-field
 											v-model.number="
 												newZwave.responseTimeout
@@ -836,7 +840,7 @@
 											type="number"
 										></v-text-field>
 									</v-col>
-									<v-col cols="6">
+									<v-col cols="12" sm="6">
 										<v-text-field
 											v-model.number="
 												newZwave.maxNodeEventsQueueSize
