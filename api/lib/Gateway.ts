@@ -1671,10 +1671,29 @@ export default class Gateway {
 				payload.command_topic = setTopic || getTopic + '/set'
 			}
 
-			// Set availability topic using node status topic
-			// payload.availability_topic = this.mqtt.getTopic(this.nodeTopic(node)) + '/status/hass'
-			// payload.payload_available = true
-			// payload.payload_not_available = false
+			// Set availability config using node status topic, client status topic
+			// (which is the LWT), and driver status topic
+			payload.availability = [
+				{
+					payload_available: 'true',
+					payload_not_available: 'false',
+					topic: this.mqtt.getTopic(this.nodeTopic(node)) + '/status'
+				},
+				{
+					topic: this.mqtt.getStatusTopic(),
+					value_template: "{{'online' if value_json.value else 'offline'}}"
+				},
+				{
+					payload_available: 'true',
+					payload_not_available: 'false',
+					topic: this.mqtt.getTopic('driver/status')
+				}
+			]
+			if (this.config.payloadType !== PAYLOAD_TYPE.RAW) {
+				payload.availability[0].value_template = "{{'true' if value_json.value else 'false'}}"
+			}
+			payload.availability_mode = "all"
+
 			if (
 				['binary_sensor', 'sensor', 'lock', 'climate', 'fan'].includes(
 					cfg.type,
