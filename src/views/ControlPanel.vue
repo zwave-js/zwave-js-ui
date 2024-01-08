@@ -668,7 +668,13 @@ export default {
 
 						const result = await this.$listeners.showConfirm(
 							'Firmware update',
-							'',
+							`
+								<b>ID:</b> ${node.id}<br>
+								<b>Name:</b> ${node._name}<br>
+								<b>Product:</b> ${node.productDescription} (${node.manufacturer})<br>
+								<b>Current Firmware:</b> ${node.firmwareVersion}<br>
+								<b>Current SDK:</b> ${node.sdkVersion || '---'}<br>
+							`,
 							'info',
 							{
 								confirmText: 'Ok',

@@ -7,4 +7,12 @@
 > [!NOTE]
 > Remember to add the header: `Accept: text/plain` to your request.
 
-Example: `curl localhost:8091/health/zwave -H "Accept: text/plain"`
+Example:
+
+Using `wget`:
+
+`wget --no-verbose --spider --no-check-certificate --header "Accept: text/plain" http://localhost:8091/health`
+
+Using `curl`:
+
+`curl localhost:8091/health/zwave -H "Accept: text/plain`
