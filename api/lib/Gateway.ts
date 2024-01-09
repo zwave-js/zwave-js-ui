@@ -931,6 +931,8 @@ export default class Gateway {
 					// Set device information using node info
 					payload.device = this._deviceInfo(node, nodeName)
 
+					this._availabilityConfig(node, payload)
+
 					hassDevice.object_id = utils
 						.sanitizeTopic(hassDevice.object_id, true)
 						.toLocaleLowerCase()
@@ -1671,30 +1673,7 @@ export default class Gateway {
 				payload.command_topic = setTopic || getTopic + '/set'
 			}
 
-			// Set availability config using node status topic, client status topic
-			// (which is the LWT), and driver status topic
-			payload.availability = [
-				{
-					payload_available: 'true',
-					payload_not_available: 'false',
-					topic: this.mqtt.getTopic(this.nodeTopic(node)) + '/status',
-				},
-				{
-					topic: this.mqtt.getStatusTopic(),
-					value_template:
-						"{{'online' if value_json.value else 'offline'}}",
-				},
-				{
-					payload_available: 'true',
-					payload_not_available: 'false',
-					topic: this.mqtt.getTopic('driver/status'),
-				},
-			]
-			if (this.config.payloadType !== PAYLOAD_TYPE.RAW) {
-				payload.availability[0].value_template =
-					"{{'true' if value_json.value else 'false'}}"
-			}
-			payload.availability_mode = 'all'
+			this._availabilityConfig(node, payload)
 
 			if (
 				['binary_sensor', 'sensor', 'lock', 'climate', 'fan'].includes(
@@ -2389,6 +2368,36 @@ export default class Gateway {
 			name: nodeName,
 			sw_version: node.firmwareVersion || utils.getVersion(),
 		}
+	}
+
+	private _availabilityConfig(
+		node: ZUINode,
+		payload: { [key: string]: any },
+	) {
+		// Set availability config using node status topic, client status topic
+		// (which is the LWT), and driver status topic
+		payload.availability = [
+			{
+				payload_available: 'true',
+				payload_not_available: 'false',
+				topic: this.mqtt.getTopic(this.nodeTopic(node)) + '/status',
+			},
+			{
+				topic: this.mqtt.getStatusTopic(),
+				value_template:
+					"{{'online' if value_json.value else 'offline'}}",
+			},
+			{
+				payload_available: 'true',
+				payload_not_available: 'false',
+				topic: this.mqtt.getTopic('driver/status'),
+			},
+		]
+		if (this.config.payloadType !== PAYLOAD_TYPE.RAW) {
+			payload.availability[0].value_template =
+				"{{'true' if value_json.value else 'false'}}"
+		}
+		payload.availability_mode = 'all'
 	}
 
 	/**
