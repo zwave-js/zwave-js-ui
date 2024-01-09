@@ -931,7 +931,7 @@ export default class Gateway {
 					// Set device information using node info
 					payload.device = this._deviceInfo(node, nodeName)
 
-					this._availabilityConfig(node, payload)
+					this.setDiscoveryAvailability(node, payload)
 
 					hassDevice.object_id = utils
 						.sanitizeTopic(hassDevice.object_id, true)
@@ -1673,7 +1673,7 @@ export default class Gateway {
 				payload.command_topic = setTopic || getTopic + '/set'
 			}
 
-			this._availabilityConfig(node, payload)
+			this.setDiscoveryAvailability(node, payload)
 
 			if (
 				['binary_sensor', 'sensor', 'lock', 'climate', 'fan'].includes(
@@ -2370,7 +2370,7 @@ export default class Gateway {
 		}
 	}
 
-	private _availabilityConfig(
+	private setDiscoveryAvailability(
 		node: ZUINode,
 		payload: { [key: string]: any },
 	) {
