@@ -1677,22 +1677,24 @@ export default class Gateway {
 				{
 					payload_available: 'true',
 					payload_not_available: 'false',
-					topic: this.mqtt.getTopic(this.nodeTopic(node)) + '/status'
+					topic: this.mqtt.getTopic(this.nodeTopic(node)) + '/status',
 				},
 				{
 					topic: this.mqtt.getStatusTopic(),
-					value_template: "{{'online' if value_json.value else 'offline'}}"
+					value_template:
+						"{{'online' if value_json.value else 'offline'}}",
 				},
 				{
 					payload_available: 'true',
 					payload_not_available: 'false',
-					topic: this.mqtt.getTopic('driver/status')
-				}
+					topic: this.mqtt.getTopic('driver/status'),
+				},
 			]
 			if (this.config.payloadType !== PAYLOAD_TYPE.RAW) {
-				payload.availability[0].value_template = "{{'true' if value_json.value else 'false'}}"
+				payload.availability[0].value_template =
+					"{{'true' if value_json.value else 'false'}}"
 			}
-			payload.availability_mode = "all"
+			payload.availability_mode = 'all'
 
 			if (
 				['binary_sensor', 'sensor', 'lock', 'climate', 'fan'].includes(
