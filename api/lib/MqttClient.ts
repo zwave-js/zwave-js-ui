@@ -116,6 +116,13 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 	}
 
 	/**
+	 * Returns the topic used to report client status
+	 */
+	getStatusTopic() {
+		return this.getClientTopic(MqttClient.STATUS_TOPIC)
+	}
+
+	/**
 	 * Method used to close clients connection, use this before destroy
 	 */
 	close(): Promise<void> {
@@ -352,7 +359,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 			clean: config.clean,
 			rejectUnauthorized: !config.allowSelfsigned,
 			will: {
-				topic: this.getClientTopic(MqttClient.STATUS_TOPIC),
+				topic: this.getStatusTopic(),
 				payload: JSON.stringify({ value: false }) as any,
 				qos: this.config.qos,
 				retain: this.config.retain,
