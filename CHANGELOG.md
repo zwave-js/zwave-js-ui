@@ -1,5 +1,18 @@
 
 
+# [9.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.2...v9.7.0) (2024-01-15)
+
+
+### Bug Fixes
+
+* **ui:** preferred scales alignment ([#3494](https://github.com/zwave-js/zwave-js-ui/issues/3494)) ([74d7c31](https://github.com/zwave-js/zwave-js-ui/commit/74d7c313b516b9dcae82f8a90275c1a14b2f461a))
+
+
+### Features
+
+* **discovery:** add support for availability topics ([#3510](https://github.com/zwave-js/zwave-js-ui/issues/3510)) ([e7ce406](https://github.com/zwave-js/zwave-js-ui/commit/e7ce406bbb2c742b2bc6af0d6c70bfc0a7b548d3))
+* **ui:** show node info in fw update dialog ([#3500](https://github.com/zwave-js/zwave-js-ui/issues/3500)) ([7c75532](https://github.com/zwave-js/zwave-js-ui/commit/7c7553217ef02a117cc9bb8c54bd3c19b6be3a97))
+
 ## [9.6.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.1...v9.6.2) (2023-12-22)
 
 
