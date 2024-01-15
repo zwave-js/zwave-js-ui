@@ -44,7 +44,7 @@ export default defineConfig(({ mode }) => {
 					/* other options */
 				},
 				workbox: {
-					globIgnores: ['/api/**'],
+					globIgnores: ['**/api/**'],
 				},
 				manifest: {
 					name: process.env.VITE_TITLE,
