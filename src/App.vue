@@ -833,7 +833,7 @@ export default {
 							'Z-Wave JS UI',
 							`<h3 style="white-space:pre" class="text-center">If you are seeing this message it means that you are using the old <code>zwavejs2mqtt</code> docker tag.\nStarting from 8.0.0 version it is <b>DEPRECATED</b>, please use the new <code>zwave-js-ui</code> tag.</h3>
 						<p class="mt-4 text-center">
-						You can find more info about this change in <a href="https://github.com/zwave-js/zwavejs2mqtt/releases/tag/v8.0.0" target="_blank">v8.0.0 CHANGELOG</a>.
+						You can find more info about this change in <a target="_blank" href="https://github.com/zwave-js/zwavejs2mqtt/releases/tag/v8.0.0" target="_blank">v8.0.0 CHANGELOG</a>.
 						</p>`,
 							'info',
 							{
