@@ -285,7 +285,9 @@
 						Made with &#10084;&#65039; by
 						<strong class="ml-1 mr-2">Daniel Lando</strong>-
 						Enjoying it?&nbsp;
-						<a href="https://github.com/sponsors/robertsLando"
+						<a
+							target="_blank"
+							href="https://github.com/sponsors/robertsLando"
 							>Support me &#128591;</a
 						>
 					</v-col>
@@ -1280,7 +1282,7 @@ export default {
 									.render(release.body)
 									.replace(
 										/#(\d+)/g,
-										'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>',
+										'<a target="_blank" href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>',
 									)
 
 								return `${
@@ -1312,7 +1314,7 @@ export default {
 									)
 									.replace(
 										/#(\d+)/g,
-										'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>',
+										'<a target="_blank" href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>',
 									)
 
 								// remove everything after "⬆️ Dependencies"
@@ -1335,6 +1337,12 @@ export default {
 
 						changelog += serverChangelogs.join('')
 					}
+
+					// ensure all links are opened in new tab
+					changelog = changelog.replace(
+						/<a href="/g,
+						'<a target="_blank" href="',
+					)
 
 					// means we never saw the changelog for this version
 					const result = await this.confirm(

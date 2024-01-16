@@ -34,7 +34,9 @@
 			<v-col class="d-flex pa-0 justify-center py-3 text-caption">
 				&copy;{{ new Date().getFullYear() }} —
 				<strong class="ml-1 mr-2"
-					><a href="https://github.com/sponsors/robertsLando"
+					><a
+						target="_blank"
+						href="https://github.com/sponsors/robertsLando"
 						>Daniel Lando</a
 					></strong
 				>
