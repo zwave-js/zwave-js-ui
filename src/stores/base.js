@@ -17,6 +17,8 @@ const useBaseStore = defineStore('base', {
 		nodes: [],
 		nodesMap: new Map(),
 		user: {},
+		tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+		locale: undefined, // uses default browser locale
 		zwave: {
 			port: '/dev/zwave',
 			allowBootloaderOnly: false,
@@ -112,6 +114,15 @@ const useBaseStore = defineStore('base', {
 		},
 	},
 	actions: {
+		getDateTimeString(date) {
+			if (typeof date === 'string' || typeof date === 'number') {
+				date = new Date(date)
+			}
+
+			return date.toLocaleString(this.locale, {
+				timeZone: this.tz,
+			})
+		},
 		getNode(id) {
 			if (typeof id === 'string') {
 				id = parseInt(id)
@@ -493,6 +504,14 @@ const useBaseStore = defineStore('base', {
 		},
 		init(data) {
 			if (data) {
+				if (data.tz) {
+					this.tz = data.tzd
+				}
+
+				if (data.locale) {
+					this.locale = data.locale
+				}
+
 				this.initSettings(data.settings)
 				this.initPorts(data.serial_ports)
 				this.initScales(data.scales)

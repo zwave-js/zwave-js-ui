@@ -225,7 +225,7 @@
 								<v-tooltip bottom>
 									<template v-slot:activator="{ on, attrs }">
 										<v-btn
-											@click="toggleAutoScroll"
+											@click="toggleAutoScroll()"
 											icon
 											:color="autoScroll ? 'primary' : ''"
 											:class="
@@ -241,6 +241,28 @@
 									</template>
 									<span>Enable/Disable auto scroll</span>
 								</v-tooltip>
+
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on, attrs }">
+										<v-btn
+											@click="toggleSort()"
+											icon
+											:color="
+												inverseSort ? 'primary' : ''
+											"
+											:class="
+												inverseSort
+													? 'border-primary'
+													: ''
+											"
+											v-bind="attrs"
+											v-on="on"
+										>
+											<v-icon>swap_vert</v-icon>
+										</v-btn>
+									</template>
+									<span>Inverse Sort</span>
+								</v-tooltip>
 							</template>
 						</v-text-field>
 
@@ -252,7 +274,7 @@
 							>
 								<span
 									><i>{{
-										new Date(event.time).toISOString()
+										getDateTimeString(event.time)
 									}}</i></span
 								>
 								-
@@ -378,14 +400,20 @@ export default {
 			return this.showStatistics ? 'border-primary' : ''
 		},
 		filteredNodeEvents() {
-			return this.node.eventsQueue.filter((event) => {
-				return (
-					!this.searchEvents ||
-					JSON.stringify(event)
-						.toLowerCase()
-						.includes(this.searchEvents.toLowerCase())
-				)
-			})
+			return this.node.eventsQueue
+				.filter((event) => {
+					return (
+						!this.searchEvents ||
+						JSON.stringify(event)
+							.toLowerCase()
+							.includes(this.searchEvents.toLowerCase())
+					)
+				})
+				.sort((a, b) => {
+					a = new Date(a.time)
+					b = new Date(b.time)
+					return this.inverseSort ? b - a : a - b
+				})
 		},
 		advancedActions() {
 			const nodeActions = this.node.isControllerNode
@@ -558,13 +586,18 @@ export default {
 		return {
 			currentTab: 0,
 			autoScroll: true,
+			inverseSort: false,
 			searchEvents: '',
 			advancedShowDialog: false,
 			showStatistics: false,
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar', 'setValue']),
+		...mapActions(useBaseStore, [
+			'showSnackbar',
+			'setValue',
+			'getDateTimeString',
+		]),
 		async updateValue(v, customValue) {
 			if (v) {
 				// in this way I can check when the value receives an update
@@ -703,6 +736,9 @@ export default {
 		},
 		toggleAutoScroll() {
 			this.autoScroll = !this.autoScroll
+		},
+		toggleSort() {
+			this.inverseSort = !this.inverseSort
 		},
 		async scrollBottom() {
 			if (!this.autoScroll) {
