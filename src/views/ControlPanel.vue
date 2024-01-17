@@ -671,7 +671,8 @@ export default {
 							`
 								<b>ID:</b> ${node.id}<br>
 								<b>Name:</b> ${node._name}<br>
-								<b>Product:</b> ${node.productDescription} (${node.manufacturer})<br>
+								<b>Manufacturer:</b> ${node.manufacturer}<br>
+								<b>Product:</b> ${node.productDescription} (${node.productLabel})<br>
 								<b>Current Firmware:</b> ${node.firmwareVersion}<br>
 								<b>Current SDK:</b> ${node.sdkVersion || '---'}<br>
 							`,
