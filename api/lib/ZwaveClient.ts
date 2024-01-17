@@ -99,6 +99,7 @@ import {
 	FirmwareUpdateInfo,
 	PartialZWaveOptions,
 	InclusionUserCallbacks,
+	InclusionState,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -700,6 +701,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
 		abort: this._onAbortInclusion.bind(this),
 	}
+	private _inclusionStateInterval: NodeJS.Timeout
+
+	private _inclusionState: InclusionState = undefined
 
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
@@ -1100,6 +1104,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.status = ZwaveClientStatus.CLOSED
 		this.closed = true
 		this.driverReady = false
+
+		if (this._inclusionStateInterval) {
+			clearInterval(this._inclusionStateInterval)
+			this._inclusionStateInterval = null
+		}
 
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
@@ -4205,6 +4214,36 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.info('Z-Wave driver is ready')
 
 		this._updateControllerStatus('Driver ready')
+
+		this._inclusionStateInterval = setInterval(() => {
+			if (
+				this._driver.controller.inclusionState !== this._inclusionState
+			) {
+				this._inclusionState = this._driver.controller.inclusionState
+				let message = ''
+
+				switch (this._inclusionState) {
+					case InclusionState.Idle:
+						message = 'Controller is idle'
+						break
+					case InclusionState.Including:
+						message = 'Inclusion is active'
+						break
+					case InclusionState.Excluding:
+						message = 'Exclusion is active'
+						break
+					case InclusionState.Busy:
+						message =
+							'Waiting for inclusion/exclusion to complete...'
+						break
+					case InclusionState.SmartStart:
+						message = 'SmartStart inclusion is active'
+						break
+				}
+
+				this._updateControllerStatus(message)
+			}
+		}, 2000)
 
 		try {
 			// this must be done only after driver is ready
