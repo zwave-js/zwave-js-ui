@@ -222,7 +222,7 @@
 							clearable
 						>
 							<template slot="append-outer">
-								<v-tooltip bottom>
+								<v-tooltip v-if="!inverseSort" bottom>
 									<template v-slot:activator="{ on, attrs }">
 										<v-btn
 											@click="toggleAutoScroll()"
@@ -741,7 +741,7 @@ export default {
 			this.inverseSort = !this.inverseSort
 		},
 		async scrollBottom() {
-			if (!this.autoScroll) {
+			if (!this.autoScroll || this.inverseSort) {
 				return
 			}
 			const el = this.$refs.eventsList
