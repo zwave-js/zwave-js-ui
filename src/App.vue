@@ -534,7 +534,7 @@ export default {
 				return
 			}
 			this.showNodesManager('')
-			this.$refs.nPodesManager.onGrantSecurityCC(requested)
+			this.$refs.nodesManager.onGrantSecurityCC(requested)
 		},
 		...mapActions(useBaseStore, [
 			'init',
