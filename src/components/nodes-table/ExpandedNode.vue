@@ -581,16 +581,31 @@ export default {
 		currentTab() {
 			this.scrollBottom()
 		},
+		inverseSort() {
+			this.savePreferences()
+		},
+		autoScroll() {
+			this.savePreferences()
+		},
 	},
 	data() {
 		return {
 			currentTab: 0,
 			autoScroll: true,
-			inverseSort: false,
+			inverseSort: true,
 			searchEvents: '',
 			advancedShowDialog: false,
 			showStatistics: false,
 		}
+	},
+	mounted() {
+		const pref = useBaseStore().getPreference('eventsList', {
+			inverseSort: true,
+			autoScroll: true,
+		})
+
+		this.inverseSort = pref.inverseSort
+		this.autoScroll = pref.autoScroll
 	},
 	methods: {
 		...mapActions(useBaseStore, [
@@ -598,6 +613,14 @@ export default {
 			'setValue',
 			'getDateTimeString',
 		]),
+		savePreferences() {
+			useBaseStore().savePreferences({
+				eventsList: {
+					inverseSort: this.inverseSort,
+					autoScroll: this.autoScroll,
+				},
+			})
+		},
 		async updateValue(v, customValue) {
 			if (v) {
 				// in this way I can check when the value receives an update

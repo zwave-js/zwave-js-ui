@@ -5,6 +5,7 @@
 			:items="items"
 			class="elevation-1"
 			style="margin-bottom: 80px"
+			:options.sync="tableOptions"
 		>
 			<template v-slot:top>
 				<h2 class="ma-3">Provisioning Entries</h2>
@@ -180,7 +181,16 @@ import InstancesMixin from '../mixins/InstancesMixin.js'
 export default {
 	name: 'SmartStart',
 	mixins: [InstancesMixin],
-	watch: {},
+	watch: {
+		tableOptions: {
+			handler() {
+				useBaseStore().savePreferences({
+					smartStartTable: this.tableOptions,
+				})
+			},
+			deep: true,
+		},
+	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
 	},
@@ -188,6 +198,9 @@ export default {
 		return {
 			items: [],
 			fab: false,
+			tableOptions: {
+				sortBy: ['nodeId'],
+			},
 			headers: [
 				{ text: 'ID', value: 'nodeId' },
 				{ text: 'Name', value: 'name' },
@@ -216,6 +229,17 @@ export default {
 		}
 	},
 	mounted() {
+		this.tableOptions = useBaseStore().getPreference('smartStartTable', {
+			page: 1,
+			itemsPerPage: 10,
+			sortBy: ['nodeId'],
+			sortDesc: [false],
+			groupBy: [],
+			groupDesc: [],
+			mustSort: false,
+			multiSort: false,
+		})
+
 		this.refreshItems()
 	},
 	methods: {

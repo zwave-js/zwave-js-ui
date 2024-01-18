@@ -19,6 +19,10 @@ const useBaseStore = defineStore('base', {
 		user: {},
 		tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		locale: undefined, // uses default browser locale
+		preferences: settings.load('preferences', {
+			eventsList: {},
+			smartStartTable: {},
+		}),
 		zwave: {
 			port: '/dev/zwave',
 			allowBootloaderOnly: false,
@@ -540,6 +544,18 @@ const useBaseStore = defineStore('base', {
 		setCompactMode(value) {
 			settings.store('compact', value)
 			this.ui.compactMode = value
+		},
+		getPreference(key, defaultValue) {
+			return {
+				...defaultValue,
+				...(this.preferences[key] || {}),
+			}
+		},
+		savePreferences(pref) {
+			settings.store(
+				'preferences',
+				pref ? Object.assign(this.preferences, pref) : this.preferences,
+			)
 		},
 	},
 })
