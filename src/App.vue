@@ -104,6 +104,21 @@
 					</div>
 				</v-tooltip>
 
+				<v-tooltip v-if="appInfo.controllerStatus" bottom>
+					<template v-slot:activator="{ on }">
+						<v-icon
+							class="ml-3"
+							dark
+							medium
+							style="cursor: default"
+							:color="inclusionState.color"
+							v-on="on"
+							>{{ inclusionState.icon }}</v-icon
+						>
+					</template>
+					<span>{{ inclusionState.message }}</span>
+				</v-tooltip>
+
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-icon
@@ -398,6 +413,7 @@ import {
 	getEnumMemberName,
 	SecurityBootstrapFailure,
 	FirmwareUpdateStatus,
+	InclusionState,
 } from 'zwave-js/safe'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 
@@ -427,6 +443,46 @@ export default {
 		}),
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
+		},
+		inclusionState() {
+			const state = this.appInfo.controllerStatus?.inclusionState
+
+			const toReturn = {
+				icon: 'help',
+				color: 'grey',
+				message: 'Unknown state',
+			}
+
+			switch (state) {
+				case InclusionState.Idle:
+					toReturn.message = 'Controller is idle'
+					toReturn.icon = 'notifications_paused'
+					toReturn.color = 'grey'
+					break
+				case InclusionState.Including:
+					toReturn.message = 'Inclusion is active'
+					toReturn.icon = 'all_inclusive'
+					toReturn.color = 'purple'
+					break
+				case InclusionState.Excluding:
+					toReturn.message = 'Exclusion is active'
+					toReturn.icon = 'cancel'
+					toReturn.color = 'red'
+					break
+				case InclusionState.Busy:
+					toReturn.message =
+						'Waiting for inclusion/exclusion to complete...'
+					toReturn.icon = 'hourglass_bottom'
+					toReturn.color = 'yellow'
+					break
+				case InclusionState.SmartStart:
+					toReturn.message = 'SmartStart inclusion is active'
+					toReturn.icon = 'auto_fix_normal'
+					toReturn.color = 'primary'
+					break
+			}
+
+			return toReturn
 		},
 	},
 	watch: {
@@ -897,6 +953,7 @@ export default {
 			this.setControllerStatus({
 				error: data.error,
 				status: data.cntStatus,
+				inclusionState: data.inclusionState,
 			})
 			// convert node values in array
 			this.initNodes(data.nodes)
