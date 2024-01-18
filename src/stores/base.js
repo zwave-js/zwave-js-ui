@@ -17,6 +17,12 @@ const useBaseStore = defineStore('base', {
 		nodes: [],
 		nodesMap: new Map(),
 		user: {},
+		tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+		locale: undefined, // uses default browser locale
+		preferences: settings.load('preferences', {
+			eventsList: {},
+			smartStartTable: {},
+		}),
 		zwave: {
 			port: '/dev/zwave',
 			allowBootloaderOnly: false,
@@ -112,6 +118,15 @@ const useBaseStore = defineStore('base', {
 		},
 	},
 	actions: {
+		getDateTimeString(date) {
+			if (typeof date === 'string' || typeof date === 'number') {
+				date = new Date(date)
+			}
+
+			return date.toLocaleString(this.locale, {
+				timeZone: this.tz,
+			})
+		},
 		getNode(id) {
 			if (typeof id === 'string') {
 				id = parseInt(id)
@@ -493,6 +508,14 @@ const useBaseStore = defineStore('base', {
 		},
 		init(data) {
 			if (data) {
+				if (data.tz) {
+					this.tz = data.tzd
+				}
+
+				if (data.locale) {
+					this.locale = data.locale
+				}
+
 				this.initSettings(data.settings)
 				this.initPorts(data.serial_ports)
 				this.initScales(data.scales)
@@ -521,6 +544,18 @@ const useBaseStore = defineStore('base', {
 		setCompactMode(value) {
 			settings.store('compact', value)
 			this.ui.compactMode = value
+		},
+		getPreference(key, defaultValue) {
+			return {
+				...defaultValue,
+				...(this.preferences[key] || {}),
+			}
+		},
+		savePreferences(pref) {
+			settings.store(
+				'preferences',
+				pref ? Object.assign(this.preferences, pref) : this.preferences,
+			)
 		},
 	},
 })

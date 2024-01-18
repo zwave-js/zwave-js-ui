@@ -1037,6 +1037,8 @@ app.get(
 			serial_ports: [],
 			scales: scales,
 			sslDisabled: sslDisabled(),
+			tz: process.env.TZ,
+			locale: process.env.LOCALE,
 			deprecationWarning: process.env.TAG_NAME === 'zwavejs2mqtt',
 		}
 
