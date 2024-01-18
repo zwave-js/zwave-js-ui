@@ -595,6 +595,7 @@ export type ZUIDriverInfo = {
 	lastUpdate?: number
 	status?: ZwaveClientStatus
 	cntStatus?: string
+	inclusionState?: InclusionState
 	appVersion?: string
 	zwaveVersion?: string
 	serverVersion?: string
@@ -1184,6 +1185,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			info: this.getInfo(),
 			error: this.error,
 			cntStatus: this.cntStatus,
+			inclusionState: this._inclusionState,
 		}
 	}
 
@@ -2717,6 +2719,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		info.status = this.status
 		info.error = this.error
 		info.cntStatus = this._cntStatus
+		info.inclusionState = this._inclusionState
 		info.appVersion = utils.getVersion()
 		info.zwaveVersion = libVersion
 		info.serverVersion = serverVersion
@@ -4220,28 +4223,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._driver.controller.inclusionState !== this._inclusionState
 			) {
 				this._inclusionState = this._driver.controller.inclusionState
-				let message = ''
 
-				switch (this._inclusionState) {
-					case InclusionState.Idle:
-						message = 'Controller is idle'
-						break
-					case InclusionState.Including:
-						message = 'Inclusion is active'
-						break
-					case InclusionState.Excluding:
-						message = 'Exclusion is active'
-						break
-					case InclusionState.Busy:
-						message =
-							'Waiting for inclusion/exclusion to complete...'
-						break
-					case InclusionState.SmartStart:
-						message = 'SmartStart inclusion is active'
-						break
-				}
-
-				this._updateControllerStatus(message)
+				this.sendToSocket(socketEvents.controller, {
+					status: this._cntStatus,
+					error: this._error,
+					inclusionState: this._inclusionState,
+				})
 			}
 		}, 2000)
 
@@ -4536,6 +4523,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.controller, {
 				status,
 				error: this._error,
+				inclusionState: this._inclusionState,
 			})
 		}
 	}
