@@ -1126,7 +1126,8 @@ export default {
 			} catch (error) {
 				// in case of a redirect (302) trigger a page reload
 				// needed to fix external auth issues #3427
-				if (error.response?.status === 302) {
+				const statusCode = error.response?.status
+				if ([302, 401].includes(statusCode)) {
 					location.reload()
 					return
 				}
