@@ -1124,6 +1124,12 @@ export default {
 					this.startSocket()
 				}
 			} catch (error) {
+				// in case of a redirect (302) trigger a page reload
+				// needed to fix external auth issues #3427
+				if (error.response?.status === 302) {
+					location.reload()
+					return
+				}
 				setTimeout(() => (this.error = error.message), 1000)
 				log.error(error)
 			}
