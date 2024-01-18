@@ -99,6 +99,7 @@ import {
 	FirmwareUpdateInfo,
 	PartialZWaveOptions,
 	InclusionUserCallbacks,
+	InclusionState,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -594,6 +595,7 @@ export type ZUIDriverInfo = {
 	lastUpdate?: number
 	status?: ZwaveClientStatus
 	cntStatus?: string
+	inclusionState?: InclusionState
 	appVersion?: string
 	zwaveVersion?: string
 	serverVersion?: string
@@ -700,6 +702,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
 		abort: this._onAbortInclusion.bind(this),
 	}
+	private _inclusionStateInterval: NodeJS.Timeout
+
+	private _inclusionState: InclusionState = undefined
 
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
@@ -1101,6 +1106,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = true
 		this.driverReady = false
 
+		if (this._inclusionStateInterval) {
+			clearInterval(this._inclusionStateInterval)
+			this._inclusionStateInterval = null
+		}
+
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
 			this.commandsTimeout = null
@@ -1175,6 +1185,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			info: this.getInfo(),
 			error: this.error,
 			cntStatus: this.cntStatus,
+			inclusionState: this._inclusionState,
 		}
 	}
 
@@ -2708,6 +2719,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		info.status = this.status
 		info.error = this.error
 		info.cntStatus = this._cntStatus
+		info.inclusionState = this._inclusionState
 		info.appVersion = utils.getVersion()
 		info.zwaveVersion = libVersion
 		info.serverVersion = serverVersion
@@ -4206,6 +4218,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._updateControllerStatus('Driver ready')
 
+		this._inclusionStateInterval = setInterval(() => {
+			if (
+				this._driver.controller.inclusionState !== this._inclusionState
+			) {
+				this._inclusionState = this._driver.controller.inclusionState
+
+				this.sendToSocket(socketEvents.controller, {
+					status: this._cntStatus,
+					error: this._error,
+					inclusionState: this._inclusionState,
+				})
+			}
+		}, 2000)
+
 		try {
 			// this must be done only after driver is ready
 			this._scheduledConfigCheck().catch(() => {
@@ -4497,6 +4523,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.controller, {
 				status,
 				error: this._error,
+				inclusionState: this._inclusionState,
 			})
 		}
 	}

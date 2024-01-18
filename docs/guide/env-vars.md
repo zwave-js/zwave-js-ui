@@ -29,3 +29,5 @@ This is the list of the supported environment variables:
 - `FORCE_DISABLE_SSL`: Set this env var to `'true'` to disable SSL.
 - `BASE_PATH`: Set this env var to the base path where the application is served. Default is `/`.
 - `UID_DISCOVERY_PREFIX`: Sets the prefix used for MQTT Discovery `unique_id` of entities. Default is `zwavejs2mqtt_`.
+- `TZ`: Set this env var to the timezone you want to use on UI. Default to browser TZ.
+- `LOCALE`: Set this env var to the locale you want to use on UI. Default to browser locale.

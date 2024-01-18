@@ -1,5 +1,13 @@
 
 
+## [9.7.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.7.0...v9.7.1) (2024-01-16)
+
+
+### Bug Fixes
+
+* **ui:** ensure all changelog links open on new tab ([#3521](https://github.com/zwave-js/zwave-js-ui/issues/3521)) ([51c53a1](https://github.com/zwave-js/zwave-js-ui/commit/51c53a1c9aeb76a0b3f8a6879b2b601f63f41bb2))
+* **ui:** make all links open in a new page to make them work in hass-addon (tx Andrew) ([d7db465](https://github.com/zwave-js/zwave-js-ui/commit/d7db46570f9b57e3381cd75084a2cbc82ed32fc7))
+
 # [9.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.6.2...v9.7.0) (2024-01-15)
 
 

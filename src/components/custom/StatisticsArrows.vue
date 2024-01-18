@@ -16,7 +16,7 @@
 					<i
 						>{{
 							node.lastActive
-								? new Date(node.lastActive).toLocaleString()
+								? getDateTimeString(node.lastActive)
 								: 'Never'
 						}}
 					</i>
@@ -31,6 +31,8 @@
 
 <script>
 import { jsonToList } from '@/lib/utils'
+import { mapActions } from 'pinia'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
@@ -49,6 +51,7 @@ export default {
 		}
 	},
 	methods: {
+		...mapActions(useBaseStore, ['getDateTimeString']),
 		jsonToList(item) {
 			return jsonToList(item, {
 				ignore: ['lwr', 'nlwr', 'rssi', 'backgroundRSSI', 'lastSeen'],

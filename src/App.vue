@@ -104,6 +104,21 @@
 					</div>
 				</v-tooltip>
 
+				<v-tooltip v-if="appInfo.controllerStatus" bottom>
+					<template v-slot:activator="{ on }">
+						<v-icon
+							class="ml-3"
+							dark
+							medium
+							style="cursor: default"
+							:color="inclusionState.color"
+							v-on="on"
+							>{{ inclusionState.icon }}</v-icon
+						>
+					</template>
+					<span>{{ inclusionState.message }}</span>
+				</v-tooltip>
+
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-icon
@@ -285,7 +300,9 @@
 						Made with &#10084;&#65039; by
 						<strong class="ml-1 mr-2">Daniel Lando</strong>-
 						Enjoying it?&nbsp;
-						<a href="https://github.com/sponsors/robertsLando"
+						<a
+							target="_blank"
+							href="https://github.com/sponsors/robertsLando"
 							>Support me &#128591;</a
 						>
 					</v-col>
@@ -396,6 +413,7 @@ import {
 	getEnumMemberName,
 	SecurityBootstrapFailure,
 	FirmwareUpdateStatus,
+	InclusionState,
 } from 'zwave-js/safe'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 
@@ -425,6 +443,46 @@ export default {
 		}),
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
+		},
+		inclusionState() {
+			const state = this.appInfo.controllerStatus?.inclusionState
+
+			const toReturn = {
+				icon: 'help',
+				color: 'grey',
+				message: 'Unknown state',
+			}
+
+			switch (state) {
+				case InclusionState.Idle:
+					toReturn.message = 'Controller is idle'
+					toReturn.icon = 'notifications_paused'
+					toReturn.color = 'grey'
+					break
+				case InclusionState.Including:
+					toReturn.message = 'Inclusion is active'
+					toReturn.icon = 'all_inclusive'
+					toReturn.color = 'purple'
+					break
+				case InclusionState.Excluding:
+					toReturn.message = 'Exclusion is active'
+					toReturn.icon = 'cancel'
+					toReturn.color = 'red'
+					break
+				case InclusionState.Busy:
+					toReturn.message =
+						'Waiting for inclusion/exclusion to complete...'
+					toReturn.icon = 'hourglass_bottom'
+					toReturn.color = 'yellow'
+					break
+				case InclusionState.SmartStart:
+					toReturn.message = 'SmartStart inclusion is active'
+					toReturn.icon = 'auto_fix_normal'
+					toReturn.color = 'primary'
+					break
+			}
+
+			return toReturn
 		},
 	},
 	watch: {
@@ -831,7 +889,7 @@ export default {
 							'Z-Wave JS UI',
 							`<h3 style="white-space:pre" class="text-center">If you are seeing this message it means that you are using the old <code>zwavejs2mqtt</code> docker tag.\nStarting from 8.0.0 version it is <b>DEPRECATED</b>, please use the new <code>zwave-js-ui</code> tag.</h3>
 						<p class="mt-4 text-center">
-						You can find more info about this change in <a href="https://github.com/zwave-js/zwavejs2mqtt/releases/tag/v8.0.0" target="_blank">v8.0.0 CHANGELOG</a>.
+						You can find more info about this change in <a target="_blank" href="https://github.com/zwave-js/zwavejs2mqtt/releases/tag/v8.0.0">v8.0.0 CHANGELOG</a>.
 						</p>`,
 							'info',
 							{
@@ -895,6 +953,7 @@ export default {
 			this.setControllerStatus({
 				error: data.error,
 				status: data.cntStatus,
+				inclusionState: data.inclusionState,
 			})
 			// convert node values in array
 			this.initNodes(data.nodes)
@@ -1280,7 +1339,7 @@ export default {
 									.render(release.body)
 									.replace(
 										/#(\d+)/g,
-										'<a href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>',
+										'<a target="_blank" href="https://github.com/zwave-js/node-zwave-js/pull/$1">#$1</a>',
 									)
 
 								return `${
@@ -1312,7 +1371,7 @@ export default {
 									)
 									.replace(
 										/#(\d+)/g,
-										'<a href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>',
+										'<a target="_blank" href="https://github.com/zwave-js/zwave-js-server/pull/$1">#$1</a>',
 									)
 
 								// remove everything after "⬆️ Dependencies"
@@ -1335,6 +1394,12 @@ export default {
 
 						changelog += serverChangelogs.join('')
 					}
+
+					// ensure all links are opened in new tab
+					changelog = changelog.replace(
+						/<a href="/g,
+						'<a target="_blank" href="',
+					)
 
 					// means we never saw the changelog for this version
 					const result = await this.confirm(
