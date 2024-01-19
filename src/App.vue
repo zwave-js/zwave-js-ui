@@ -416,6 +416,7 @@ import {
 	InclusionState,
 } from 'zwave-js/safe'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
+import { uuid } from './lib/utils'
 
 let socketQueue = []
 
@@ -1128,7 +1129,8 @@ export default {
 				// needed to fix external auth issues #3427
 				const statusCode = error.response?.status
 				if ([302, 401].includes(statusCode)) {
-					location.reload()
+					// reload current page, be sure this doesn't hits cache, add a random query param
+					location.search = `?auth=${uuid()}`
 					return
 				}
 				setTimeout(() => (this.error = error.message), 1000)
