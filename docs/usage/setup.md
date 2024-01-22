@@ -102,8 +102,8 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 ## MQTT
 
 - **Name**: A unique name that identifies the Gateway.
-- **Host url**: The url of the broker. Insert the protocol if present, example: `tls://localhost`. MQTT supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`
-- **Port**: Broker port
+- **Host url**: The url of the broker. Insert the protocol if present, example: `tls://localhost`. MQTT supports these protocols: `mqtt`, `mqtts`, `tcp`, `tls`, `ws` and `wss`. When running Zwave-JS-UI in a Docker container use the real IP of the MQTT server and not localhost or 127.0.0.1, even if it is running on the same system.
+- **Port**: Broker port, normally 1883
 - **Reconnect period**: Milliseconds between two reconnection tries
 - **Prefix**: The prefix where all values are published
 - **QoS**: Quality Of Service (check MQTT specs) of outgoing packets
