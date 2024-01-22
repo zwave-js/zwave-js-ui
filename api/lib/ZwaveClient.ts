@@ -15,6 +15,7 @@ import {
 	ValueMetadataString,
 	ZWaveDataRate,
 	ZWaveErrorCodes,
+	Protocols,
 } from '@zwave-js/core'
 import { isDocker } from '@zwave-js/shared'
 import {
@@ -541,6 +542,7 @@ export type ZUINode = {
 	}
 	defaultTransitionDuration?: string
 	defaultVolume?: number
+	protocol?: Protocols
 }
 
 export type NodeEvent = {
@@ -558,6 +560,10 @@ export type ZwaveConfig = {
 		S2_Authenticated: string
 		S2_AccessControl: string
 		S0_Legacy: string
+	}>
+	securityKeysLongRange?: utils.DeepPartial<{
+		S2_Authenticated: string
+		S2_AccessControl: string
 	}>
 	serverEnabled?: boolean
 	enableSoftReset?: boolean
@@ -2233,6 +2239,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			zwaveOptions.securityKeys = {}
+			zwaveOptions.securityKeysLongRange = {}
 
 			// convert security keys to buffer
 			for (const key in this.cfg.securityKeys) {
@@ -2242,6 +2249,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				) {
 					zwaveOptions.securityKeys[key] = Buffer.from(
 						this.cfg.securityKeys[key],
+						'hex',
+					)
+				}
+			}
+
+			this.cfg.securityKeysLongRange =
+				this.cfg.securityKeysLongRange || {}
+
+			// convert security keys to buffer
+			for (const key in this.cfg.securityKeysLongRange) {
+				if (
+					availableKeys.includes(key) &&
+					this.cfg.securityKeysLongRange[key].length === 32
+				) {
+					zwaveOptions.securityKeysLongRange[key] = Buffer.from(
+						this.cfg.securityKeysLongRange[key],
 						'hex',
 					)
 				}
@@ -5899,6 +5922,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.defaultVolume = zwaveNode.defaultVolume
 		node.firmwareCapabilities =
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
+
+		node.protocol = zwaveNode.protocol
 
 		const storedNode = this.storeNodes[nodeId]
 

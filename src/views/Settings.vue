@@ -519,7 +519,17 @@
 											required
 										></v-text-field>
 									</v-col>
-									<v-row v-if="newZwave.securityKeys">
+									<v-row
+										class="mt-0"
+										v-if="newZwave.securityKeys"
+									>
+										<v-col cols="12">
+											<v-subheader
+												class="font-weight-bold primary--text"
+											>
+												Security Keys
+											</v-subheader>
+										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
 												v-model="
@@ -537,7 +547,7 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys,
+													differentKeys(),
 												]"
 												persistent-hint
 												append-outer-icon="wifi_protected_setup"
@@ -566,7 +576,7 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys,
+													differentKeys(),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
@@ -593,7 +603,7 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys,
+													differentKeys(),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
@@ -617,7 +627,7 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys,
+													differentKeys(),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
@@ -626,6 +636,80 @@
 											></v-text-field>
 										</v-col>
 									</v-row>
+									<v-row
+										class="mt-0"
+										v-if="newZwave.securityKeysLongRange"
+									>
+										<v-col cols="12">
+											<v-subheader
+												class="font-weight-bold primary--text"
+											>
+												Security Keys (Long Range)
+											</v-subheader>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZwave
+														.securityKeysLongRange
+														.S2_Authenticated
+												"
+												@paste="
+													fixKey(
+														$event,
+														'S2_Authenticated',
+														true,
+													)
+												"
+												prepend-icon="vpn_key"
+												label="S2 Authenticated"
+												persistent-hint
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(true),
+												]"
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S2_Authenticated',
+														true,
+													)
+												"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZwave
+														.securityKeysLongRange
+														.S2_AccessControl
+												"
+												@paste="
+													fixKey(
+														$event,
+														'S2_AccessControl',
+														true,
+													)
+												"
+												prepend-icon="vpn_key"
+												label="S2 Access Control"
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(true),
+												]"
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S2_AccessControl',
+														true,
+													)
+												"
+											></v-text-field>
+										</v-col>
+									</v-row>
+									<v-col cols="12"> </v-col>
 									<v-col cols="12" sm="6">
 										<v-select
 											label="RF Region"
@@ -1713,21 +1797,30 @@ export default {
 
 			return res
 		},
-		differentKeys() {
-			const values = Object.values(this.newZwave.securityKeys)
+		differentKeys(isLongRange = false) {
+			return () => {
+				const keys = isLongRange
+					? this.newZwave.securityKeysLongRange
+					: this.newZwave.securityKeys
+				const values = Object.values(keys)
 
-			// ensure there are no duplicates
-			return (
-				values.length === new Set(values).size ||
-				'Keys must be different'
-			)
+				// ensure there are no duplicates
+				return (
+					values.length === new Set(values).size ||
+					'Keys must be different'
+				)
+			}
 		},
-		fixKey(event, key) {
+		fixKey(event, key, isLongRange = false) {
 			let data = event.clipboardData?.getData('Text')
+
+			const keys = isLongRange
+				? this.newZwave.securityKeysLongRange
+				: this.newZwave.securityKeys
 
 			if (data) {
 				data = data.replace(/0x|,|\s/gi, '')
-				this.$set(this.newZwave.securityKeys, key, data)
+				this.$set(keys, key, data)
 				event.preventDefault()
 			}
 		},
@@ -1752,7 +1845,11 @@ export default {
 				return item
 			}
 		},
-		randomKey(k) {
+		randomKey(k, isLongRange = false) {
+			const keys = isLongRange
+				? this.newZwave.securityKeysLongRange
+				: this.newZwave.securityKeys
+
 			let key = ''
 
 			while (key.length < 32) {
@@ -1762,7 +1859,7 @@ export default {
 				key += x.length === 2 ? x : '0' + x
 			}
 
-			this.$set(this.newZwave.securityKeys, k, key)
+			this.$set(keys, k, key)
 		},
 		readFile(file, callback) {
 			const reader = new FileReader()
