@@ -1,4 +1,4 @@
-import { RFRegion } from 'zwave-js/safe'
+import { RFRegion, Protocols } from 'zwave-js/safe'
 
 export const rfRegions = Object.keys(RFRegion)
 	.filter((k) => isNaN(k))
@@ -6,3 +6,14 @@ export const rfRegions = Object.keys(RFRegion)
 		text: key,
 		value: RFRegion[key],
 	}))
+
+export const protocolsItems = [
+	{
+		text: 'Z-Wave Mesh',
+		value: Protocols.ZWave,
+	},
+	{
+		text: 'Z-Wave Long Range',
+		value: Protocols.ZWaveLongRange,
+	},
+]

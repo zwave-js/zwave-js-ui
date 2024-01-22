@@ -19,6 +19,14 @@
 				></v-switch>
 			</template>
 
+			<template v-slot:[`item.protocol`]="{ item }">
+				<span>{{
+					!item.protocol || item.protocol === Protocols.ZWave
+						? 'Z-Wave Mesh'
+						: 'Z-Wave Long Range'
+				}}</span>
+			</template>
+
 			<template
 				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
 			>
@@ -168,7 +176,7 @@
 	</v-container>
 </template>
 <script>
-import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
+import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core/safe'
 import { mapState, mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
@@ -177,6 +185,7 @@ import {
 } from '../lib/utils.js'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import { protocolsItems } from '../lib/items.js'
 
 export default {
 	name: 'SmartStart',
@@ -197,6 +206,7 @@ export default {
 	data() {
 		return {
 			items: [],
+			Protocols,
 			fab: false,
 			tableOptions: {
 				sortBy: ['nodeId'],
@@ -206,6 +216,7 @@ export default {
 				{ text: 'Name', value: 'name' },
 				{ text: 'Location', value: 'location' },
 				{ text: 'Active', value: 'status' },
+				{ text: 'Protocol', value: 'protocol' },
 				{ text: 'DSK', value: 'dsk' },
 				{
 					text: 'S2 Access Control',
@@ -329,6 +340,93 @@ export default {
 			if (existingItem) {
 				this.edited = true
 			}
+
+			const inputs = [
+				{
+					type: 'text',
+					label: 'DSK',
+					required: true,
+					key: 'dsk',
+					hint: 'Enter the full DSK code (dashes included) for your device',
+					rules: [validDsk],
+					default: existingItem ? existingItem.dsk : '',
+				},
+				{
+					type: 'list',
+					label: 'Protocol',
+					required: true,
+					key: 'protocol',
+					items: protocolsItems,
+					hint: 'Inclusion protocol to use',
+					default: Protocols.ZWave,
+				},
+				{
+					type: 'text',
+					label: 'Name',
+					required: true,
+					key: 'name',
+					hint: 'The node name',
+					default: existingItem ? existingItem.name : '',
+				},
+				{
+					type: 'text',
+					label: 'Location',
+					required: true,
+					key: 'location',
+					hint: 'The node location',
+					default: existingItem ? existingItem.location : '',
+				},
+				{
+					type: 'checkbox',
+					label: 'S2 Access Control',
+					key: 's2AccessControl',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses.s2AccessControl
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s2AccessControl
+						: false,
+				},
+				{
+					type: 'checkbox',
+					label: 'S2 Authenticated',
+					key: 's2Authenticated',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses.s2Authenticated
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s2Authenticated
+						: false,
+				},
+				{
+					type: 'checkbox',
+					label: 'S2 Unauthenticated',
+					key: 's2Unauthenticated',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses
+								.s2Unauthenticated
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s2Unauthenticated
+						: false,
+				},
+				{
+					type: 'checkbox',
+					label: 'S0 Legacy',
+					key: 's0Legacy',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses.s0Legacy
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s0Legacy
+						: false,
+				},
+			]
+
+			if (existingItem && existingItem.supportedProtocols?.length < 2) {
+				inputs.splice(1, 1)
+			}
+
 			let item = await this.$listeners.showConfirm(
 				(existingItem ? 'Update' : 'New') + ' entry',
 				'',
@@ -336,81 +434,7 @@ export default {
 				{
 					confirmText: existingItem ? 'Update' : 'Add',
 					width: 500,
-					inputs: [
-						{
-							type: 'text',
-							label: 'DSK',
-							required: true,
-							key: 'dsk',
-							hint: 'Enter the full DSK code (dashes included) for your device',
-							rules: [validDsk],
-							default: existingItem ? existingItem.dsk : '',
-						},
-						{
-							type: 'text',
-							label: 'Name',
-							required: true,
-							key: 'name',
-							hint: 'The node name',
-							default: existingItem ? existingItem.name : '',
-						},
-						{
-							type: 'text',
-							label: 'Location',
-							required: true,
-							key: 'location',
-							hint: 'The node location',
-							default: existingItem ? existingItem.location : '',
-						},
-						{
-							type: 'checkbox',
-							label: 'S2 Access Control',
-							key: 's2AccessControl',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s2AccessControl
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s2AccessControl
-								: false,
-						},
-						{
-							type: 'checkbox',
-							label: 'S2 Authenticated',
-							key: 's2Authenticated',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s2Authenticated
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s2Authenticated
-								: false,
-						},
-						{
-							type: 'checkbox',
-							label: 'S2 Unauthenticated',
-							key: 's2Unauthenticated',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s2Unauthenticated
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s2Unauthenticated
-								: false,
-						},
-						{
-							type: 'checkbox',
-							label: 'S0 Legacy',
-							key: 's0Legacy',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s0Legacy
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s0Legacy
-								: false,
-						},
-					],
+					inputs,
 				},
 			)
 
