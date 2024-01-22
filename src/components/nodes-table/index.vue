@@ -185,6 +185,13 @@
 			/>
 			<div v-else></div>
 		</template>
+		<template v-slot:[`item.protocol`]="{ item }">
+			<rich-value
+				v-if="!item.isControllerNode"
+				:value="richValue(item, 'protocol')"
+			/>
+			<div v-else></div>
+		</template>
 		<template v-slot:[`item.failed`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"

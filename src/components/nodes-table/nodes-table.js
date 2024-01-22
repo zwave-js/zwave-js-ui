@@ -20,9 +20,11 @@ import {
 	mdiPlusCircle,
 	mdiPowerPlug,
 	mdiSleep,
+	mdiZWave,
 } from '@mdi/js'
 import useBaseStore from '../../stores/base.js'
 import { getBatteryDescription } from '../../lib/utils.js'
+import { getEnumMemberName, Protocols } from 'zwave-js/safe'
 
 export default {
 	props: {
@@ -150,6 +152,36 @@ export default {
 						} else {
 							v.icon = mdiPlusCircle
 							v.displayValue = `${node.zwavePlusVersion}`
+						}
+						return v
+					},
+				},
+				protocol: {
+					type: 'string',
+					label: 'Protocol',
+					richValue: (node) => {
+						let v = {
+							align: 'center',
+							icon: node.ready ? mdiMinusCircle : mdiHelpCircle,
+							iconStyle: node.ready
+								? `color: ${colors.red.base}`
+								: 'color: grey',
+							description: node.ready ? 'No' : 'Unknown Protocol',
+						}
+						if (node.protocol === undefined) return v
+						v.description = `${getEnumMemberName(
+							Protocols,
+							node.protocol,
+						)}`
+
+						v.icon = mdiZWave
+
+						if (node.protocol === Protocols.ZWave) {
+							v.iconStyle = `color: ${colors.green.base}`
+						} else if (node.protocol === Protocols.ZWaveLongRange) {
+							v.iconStyle = `color: ${colors.purple.base}`
+						} else {
+							v.displayValue = `${node.protocol}`
 						}
 						return v
 					},

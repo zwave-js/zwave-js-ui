@@ -39,10 +39,10 @@ export class ManagedItems {
 				: this.filters
 
 		// sometimes columns are updated in new releases, this allows us to show them
-		if (!this.loadSetting('cleared', false)) {
+		if (!this.loadSetting('cleared2', false)) {
 			this._filters = this.initialFilters
 			this._columns = this.initialTableColumns
-			this.storeSetting('cleared', true)
+			this.storeSetting('cleared2', true)
 		}
 
 		this._selected = this.initialSelected
