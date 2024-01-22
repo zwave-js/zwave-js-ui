@@ -504,6 +504,10 @@
 											persistent-hint
 										></v-checkbox>
 										<v-checkbox
+											v-if="
+												s.values.protocol ===
+												Protocols.ZWave
+											"
 											:disabled="
 												s.values.s2Unauthenticated ===
 												undefined
@@ -514,6 +518,10 @@
 											persistent-hint
 										></v-checkbox>
 										<v-checkbox
+											v-if="
+												s.values.protocol ===
+												Protocols.ZWave
+											"
 											:disabled="
 												s.values.s0Legacy === undefined
 											"
@@ -532,6 +540,18 @@
 											hint="Authentication of the inclusion happens on the device instead of on the controller (for devices without DSK)"
 											persistent-hint
 										></v-checkbox>
+
+										<v-select
+											v-if="
+												s.values.supportedProtocols
+													.length > 1
+											"
+											v-model="s.values.protocol"
+											:items="protocolsItems"
+											label="Protocol"
+											hint="Select the protocol to use for inclusion"
+											persistent-hint
+										></v-select>
 
 										<v-card-actions>
 											<v-btn
@@ -681,8 +701,7 @@
 
 <script>
 import { mapState } from 'pinia'
-import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
-
+import { Protocols, tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
 import {
 	parseSecurityClasses,
 	securityClassesToArray,
@@ -692,6 +711,7 @@ import {
 import useBaseStore from '../../stores/base.js'
 import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js/safe'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { protocolsItems } from '../../lib/items'
 
 export default {
 	props: {
@@ -705,6 +725,8 @@ export default {
 			loading: false,
 			validNaming: true,
 			InclusionStrategy,
+			protocolsItems,
+			Protocols,
 			availableSteps: {
 				action: {
 					key: 'action',
@@ -745,6 +767,8 @@ export default {
 						s2Unauthenticated: undefined,
 						s0Legacy: undefined,
 						clientAuth: false,
+						supportedProtocols: [],
+						protocol: Protocols.ZWave,
 					},
 				},
 				s2Pin: {
@@ -1069,6 +1093,8 @@ export default {
 				...grantStep.values,
 				...parseSecurityClasses(classes),
 				clientAuth: requested.clientSideAuth || undefined,
+				supportedProtocols: requested.supportedProtocols || [],
+				protocol: Protocols.ZWave,
 			}
 
 			if (this.waitTimeout) {
@@ -1190,6 +1216,7 @@ export default {
 					{
 						securityClasses,
 						clientSideAuth: !!values.clientAuth,
+						protocol: values.protocol,
 					},
 				])
 			} else if (s.key === 's2Pin') {
