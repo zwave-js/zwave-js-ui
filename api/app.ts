@@ -510,9 +510,11 @@ function sortStore(store: StoreFileEntry[]) {
 logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
 
-if (process.env.TRUST_PROXY === 'true') {
-	// ensure the server sees the real client ip even behind a proxy (eg. for rate limiting or authentication checks)
-	app.set('trust proxy', true)
+if (process.env.TRUST_PROXY) {
+	app.set(
+		'trust proxy',
+		process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY,
+	)
 }
 
 app.use(
