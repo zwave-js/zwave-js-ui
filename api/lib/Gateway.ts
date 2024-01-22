@@ -1654,6 +1654,50 @@ export default class Gateway {
 					}
 					break
 				}
+				case CommandClasses.Configuration: {
+					if (!valueId.writeable) {
+						return
+					}
+					let type = valueId.type
+					if (
+						type === 'number' &&
+						valueId.min === 0 &&
+						valueId.max === 1
+					) {
+						type = 'boolean'
+					}
+					switch (type) {
+						case 'boolean':
+							cfg = utils.copy(hassCfg.config_switch)
+
+							// Combine unique Object id, by using all possible scenarios
+							cfg.object_id = utils.joinProps(
+								cfg.object_id,
+								valueId.property,
+								valueId.propertyKey,
+							)
+							break
+						case 'number':
+							cfg = utils.copy(hassCfg.config_number)
+
+							// Combine unique Object id, by using all possible scenarios
+							cfg.object_id = utils.joinProps(
+								cfg.object_id,
+								valueId.property,
+								valueId.propertyKey,
+							)
+							if (valueId.min !== 1) {
+								cfg.discovery_payload.min = valueId.min
+							}
+							if (valueId.max !== 100) {
+								cfg.discovery_payload.max = valueId.max
+							}
+							break
+						default:
+							return
+					}
+					break
+				}
 				default:
 					return
 			}

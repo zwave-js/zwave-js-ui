@@ -403,6 +403,7 @@ export type HassDevice = {
 		| 'lock'
 		| 'switch'
 		| 'fan'
+		| 'number'
 	object_id: string
 	discovery_payload: { [key: string]: any }
 	discoveryTopic?: string

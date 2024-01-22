@@ -18,6 +18,8 @@ type HassDeviceKey =
 	| 'thermostat'
 	| 'fan'
 	| 'sound_switch'
+	| 'config_switch'
+	| 'config_number'
 
 const configurations: Record<HassDeviceKey, HassDevice> = {
 	// Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
@@ -216,6 +218,31 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 			payload_on: 25,
 			state_value_template: '{{ value_json.value | int }}',
 			speed_value_template: '{{ value_json.value | int }}',
+		},
+	},
+
+	config_switch: {
+		type: 'switch',
+		object_id: 'config_switch',
+		discovery_payload: {
+			payload_off: '0',
+			payload_on: '1',
+			value_template: '{{ value_json.value }}',
+			command_topic: true,
+			enabled_by_default: false,
+			entity_category: 'config',
+		},
+	},
+
+	// https://www.home-assistant.io/integrations/number.mqtt
+	config_number: {
+		type: 'number',
+		object_id: 'config_number',
+		discovery_payload: {
+			value_template: '{{ value_json.value }}',
+			command_topic: true,
+			enabled_by_default: false,
+			entity_category: 'config',
 		},
 	},
 }
