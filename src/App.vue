@@ -1128,7 +1128,10 @@ export default {
 				// in case of a redirect (302) trigger a page reload
 				// needed to fix external auth issues #3427
 				const statusCode = error.response?.status
-				if ([302, 401].includes(statusCode)) {
+				if (
+					[302, 401].includes(statusCode) ||
+					error.response?.type === 'opaqueredirect'
+				) {
 					// reload current page, be sure this doesn't hits cache, add a random query param
 					location.search = `?auth=${uuid()}`
 					return

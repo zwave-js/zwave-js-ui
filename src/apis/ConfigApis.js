@@ -53,8 +53,29 @@ export default {
 		return request.get('/logout')
 	},
 	async isAuthEnabled() {
-		const response = await request.get('/auth-enabled')
-		return response.data
+		// use fetch instead of axios here in order to catch
+		// redirects and fix external auth:
+		// https://github.com/zwave-js/zwave-js-ui/issues/3427
+		// const response = await request.get('/auth-enabled')
+		// return response.data
+
+		const response = await fetch('/api/auth-enabled', {
+			credentials: 'include',
+			redirect: 'manual',
+			headers: {
+				Accept: 'application/json',
+			},
+		})
+		if (response.type === 'opaqueredirect') {
+			throw new axios.AxiosError(
+				'Caught redirect for auth-enabled, rethrowing',
+				response.status,
+				response.config,
+				response.request,
+				response,
+			)
+		}
+		return await response.json()
 	},
 	// ---- USER ------
 	async updatePassword(data) {
