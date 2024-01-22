@@ -543,6 +543,7 @@ export type ZUINode = {
 	defaultTransitionDuration?: string
 	defaultVolume?: number
 	protocol?: Protocols
+	supportsLongRange?: boolean
 }
 
 export type NodeEvent = {
@@ -5109,6 +5110,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.ready = true
 
 		if (node.isControllerNode) {
+			node.supportsLongRange = this.driver.controller.supportsLongRange
 			this.updateControllerNodeProps(node).catch((error) => {
 				this.logNode(
 					zwaveNode,
@@ -5924,7 +5926,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
 
 		node.protocol = zwaveNode.protocol
-
 		const storedNode = this.storeNodes[nodeId]
 
 		if (storedNode) {
@@ -6348,6 +6349,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				| 'manufacturer'
 				| 'productDescription'
 				| 'productLabel'
+				| 'supportsLongRange'
 			>
 	> {
 		const zuiNode = this.nodes.get(node.id)
@@ -6384,6 +6386,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			productLabel: zuiNode?.productLabel,
 			deviceDatabaseUrl: node.deviceDatabaseUrl,
 			keepAwake: node.keepAwake,
+			protocol: node.protocol,
+			supportsLongRange: zuiNode?.supportsLongRange,
 		}
 	}
 
