@@ -273,7 +273,7 @@
 				</div>
 			</v-list>
 			<v-row
-				v-if="!node.isControllerNode && !isLongRange"
+				v-if="!node.isControllerNode"
 				class="mt-1 pa-0 text-center"
 				justify="center"
 			>
@@ -287,7 +287,7 @@
 						<v-icon>monitor_heart</v-icon>
 					</v-btn>
 				</v-col>
-				<v-col class="pa-1">
+				<v-col v-if="!isLongRange" class="pa-1">
 					<v-btn
 						color="error"
 						small
@@ -329,6 +329,7 @@
 			</v-row>
 		</v-col>
 		<dialog-health-check
+			v-if="!node.isControllerNode && !isLongRange"
 			v-model="dialogHealth"
 			@close="dialogHealth = false"
 			:socket="socket"
