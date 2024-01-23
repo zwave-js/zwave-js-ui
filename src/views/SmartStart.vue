@@ -54,21 +54,25 @@
 				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
 			>
 				<v-checkbox
+					v-if="item.protocol === Protocols.ZWave"
 					v-model="item.securityClasses.s2Unauthenticated"
 					:disabled="!item.requestedSecurityClasses.s2Unauthenticated"
 					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
+				<span v-else></span>
 			</template>
 			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
 				<v-checkbox
+					v-if="item.protocol === Protocols.ZWave"
 					v-model="item.securityClasses.s0Legacy"
 					:disabled="!item.requestedSecurityClasses.s0Legacy"
 					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
+				<span v-else></span>
 			</template>
 			<template v-slot:[`item.actions`]="{ item }">
 				<v-icon small color="red" @click="removeItem(item)"
@@ -510,6 +514,14 @@ export default {
 			})
 		},
 		convertItem(item) {
+			if (
+				item.protocol === Protocols.ZWaveLongRange &&
+				item.requestedSecurityClasses
+			) {
+				item.requestedSecurityClasses.s2Unauthenticated = false
+				item.requestedSecurityClasses.s0Legacy = false
+			}
+
 			item = {
 				...item,
 				status: item.status ? 0 : 1,
