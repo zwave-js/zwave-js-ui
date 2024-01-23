@@ -101,6 +101,7 @@ import {
 	PartialZWaveOptions,
 	InclusionUserCallbacks,
 	InclusionState,
+	ProvisioningEntryStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -4948,6 +4949,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (!entry.dsk) {
 			throw Error('DSK is required')
+		}
+
+		//disable it so user can choose the protocol to use
+		if (entry.supportedProtocols?.includes(Protocols.ZWaveLongRange)) {
+			entry.status = ProvisioningEntryStatus.Inactive
 		}
 
 		this.driver.controller.provisionSmartStartNode(entry)

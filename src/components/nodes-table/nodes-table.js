@@ -169,19 +169,20 @@ export default {
 							description: node.ready ? 'No' : 'Unknown Protocol',
 						}
 						if (node.protocol === undefined) return v
-						v.description = `${getEnumMemberName(
-							Protocols,
-							node.protocol,
-						)}`
 
 						v.icon = mdiZWave
 
 						if (node.protocol === Protocols.ZWave) {
 							v.iconStyle = `color: ${colors.green.base}`
+							v.description = 'Z-Wave'
 						} else if (node.protocol === Protocols.ZWaveLongRange) {
 							v.iconStyle = `color: ${colors.purple.base}`
+							v.description = 'Z-Wave Long Range'
 						} else {
-							v.displayValue = `${node.protocol}`
+							v.displayValue = `${getEnumMemberName(
+								Protocols,
+								node.protocol,
+							)}`
 						}
 						return v
 					},

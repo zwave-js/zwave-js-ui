@@ -22,7 +22,7 @@
 			<template v-slot:[`item.protocol`]="{ item }">
 				<span>{{
 					!item.protocol || item.protocol === Protocols.ZWave
-						? 'Z-Wave Mesh'
+						? 'Z-Wave'
 						: 'Z-Wave Long Range'
 				}}</span>
 			</template>
