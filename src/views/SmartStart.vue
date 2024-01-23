@@ -22,7 +22,12 @@
 
 			<template v-slot:[`item.protocol`]="{ item }">
 				<v-checkbox
-					:value="item.protocol"
+					v-if="
+						item.supportedProtocols?.includes(
+							Protocols.ZWaveLongRange,
+						)
+					"
+					v-model="item.isLongRange"
 					@change="toggleProtocol(item)"
 					hide-details
 					:disabled="!!item.nodeId"
@@ -522,6 +527,7 @@ export default {
 					...item,
 					status: !item.status,
 					protocol: item.protocol ?? Protocols.ZWave,
+					isLongRange: item.protocol === Protocols.ZWaveLongRange,
 					securityClasses: parseSecurityClasses(
 						item.securityClasses,
 						false,
@@ -544,6 +550,7 @@ export default {
 
 			item = {
 				...item,
+				isLongRange: undefined,
 				status: item.status ? 0 : 1,
 				protocol: item.protocol ?? Protocols.ZWave,
 				securityClasses: securityClassesToArray(item.securityClasses),
