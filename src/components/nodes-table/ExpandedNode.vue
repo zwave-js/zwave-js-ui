@@ -336,6 +336,7 @@ import {
 	SetValueStatus,
 	setValueWasUnsupervisedOrSucceeded,
 } from '@zwave-js/cc/safe'
+import { Protocols } from '@zwave-js/core/safe'
 
 export default {
 	props: {
@@ -435,21 +436,6 @@ export default {
 							desc: 'Start/Stop a firmware update',
 						},
 						{
-							text: 'Rebuild Routes',
-							options: [
-								{
-									name: 'Rebuild',
-									action: 'rebuildNodeRoutes',
-									args: {
-										confirm:
-											'Rebuilding node routes causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
-									},
-								},
-							],
-							icon: 'healing',
-							desc: 'Discover and assign new routes from node to the controller and other nodes.',
-						},
-						{
 							text: 'Refresh Values',
 							options: [
 								{
@@ -484,6 +470,24 @@ export default {
 							desc: 'Manage nodes that are dead and/or marked as failed with the controller',
 						},
 				  ]
+
+			if (this.node.protocol !== Protocols.ZWaveLongRange) {
+				nodeActions.splice(1, 0, {
+					text: 'Rebuild Routes',
+					options: [
+						{
+							name: 'Rebuild',
+							action: 'rebuildNodeRoutes',
+							args: {
+								confirm:
+									'Rebuilding node routes causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+							},
+						},
+					],
+					icon: 'healing',
+					desc: 'Discover and assign new routes from node to the controller and other nodes.',
+				})
+			}
 
 			const nodeAssociation = this.node.isControllerNode
 				? []
