@@ -1684,15 +1684,12 @@ export default {
 			const validPower = !isUndef(powerlevel)
 			const validMeasured = !isUndef(measured0dBm)
 
-			if (validPower && (powerlevel < -12.8 || powerlevel > 12.7)) {
-				return 'Power level must be between -12.8 and 12.7'
+			if (validPower && (powerlevel < -10 || powerlevel > 20)) {
+				return 'Power level must be between -10 and 20'
 			}
 
-			if (
-				validMeasured &&
-				(measured0dBm < -12.8 || measured0dBm > 12.7)
-			) {
-				return 'Measured 0dBm must be between -12.8 and 12.7'
+			if (validMeasured && (measured0dBm < -10 || measured0dBm > 10)) {
+				return 'Measured 0dBm must be between -10 and 10'
 			}
 
 			return (
