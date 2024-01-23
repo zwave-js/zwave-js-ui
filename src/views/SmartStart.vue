@@ -15,6 +15,7 @@
 				<v-switch
 					v-model="item.status"
 					@change="onChange(item)"
+					:disabled="!!item.nodeId"
 					dense
 				></v-switch>
 			</template>
@@ -24,6 +25,7 @@
 					:value="item.protocol"
 					@change="toggleProtocol(item)"
 					hide-details
+					:disabled="!!item.nodeId"
 					dense
 				></v-checkbox>
 			</template>
@@ -34,7 +36,10 @@
 				<v-checkbox
 					v-model="item.securityClasses.s2AccessControl"
 					@change="onChange(item)"
-					:disabled="!item.requestedSecurityClasses.s2AccessControl"
+					:disabled="
+						!!item.nodeId ||
+						!item.requestedSecurityClasses.s2AccessControl
+					"
 					hide-details
 					dense
 				></v-checkbox>
@@ -45,7 +50,10 @@
 				<v-checkbox
 					v-model="item.securityClasses.s2Authenticated"
 					@change="onChange(item)"
-					:disabled="!item.requestedSecurityClasses.s2Authenticated"
+					:disabled="
+						!!item.nodeId ||
+						!item.requestedSecurityClasses.s2Authenticated
+					"
 					hide-details
 					dense
 				></v-checkbox>
@@ -56,7 +64,10 @@
 				<v-checkbox
 					v-if="item.protocol === Protocols.ZWave"
 					v-model="item.securityClasses.s2Unauthenticated"
-					:disabled="!item.requestedSecurityClasses.s2Unauthenticated"
+					:disabled="
+						!!item.nodeId ||
+						!item.requestedSecurityClasses.s2Unauthenticated
+					"
 					@change="onChange(item)"
 					hide-details
 					dense
@@ -67,7 +78,9 @@
 				<v-checkbox
 					v-if="item.protocol === Protocols.ZWave"
 					v-model="item.securityClasses.s0Legacy"
-					:disabled="!item.requestedSecurityClasses.s0Legacy"
+					:disabled="
+						!!item.nodeId || !item.requestedSecurityClasses.s0Legacy
+					"
 					@change="onChange(item)"
 					hide-details
 					dense
@@ -78,7 +91,11 @@
 				<v-icon small color="red" @click="removeItem(item)"
 					>delete</v-icon
 				>
-				<v-icon small color="success" @click="editItem(item)"
+				<v-icon
+					v-if="!item.nodeId"
+					small
+					color="success"
+					@click="editItem(item)"
 					>edit</v-icon
 				>
 			</template>
