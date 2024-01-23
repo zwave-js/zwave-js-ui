@@ -21,8 +21,8 @@
 
 			<template v-slot:[`item.protocol`]="{ item }">
 				<v-checkbox
-					:value="item.protocol === Protocols.ZWaveLongRange"
-					@click="toggleProtocol(item)"
+					:value="item.protocol"
+					@change="toggleProtocol(item)"
 					hide-details
 					dense
 				></v-checkbox>
@@ -502,6 +502,7 @@ export default {
 				return {
 					...item,
 					status: !item.status,
+					protocol: item.protocol ?? Protocols.ZWave,
 					securityClasses: parseSecurityClasses(
 						item.securityClasses,
 						false,
@@ -525,6 +526,7 @@ export default {
 			item = {
 				...item,
 				status: item.status ? 0 : 1,
+				protocol: item.protocol ?? Protocols.ZWave,
 				securityClasses: securityClassesToArray(item.securityClasses),
 				requestedSecurityClasses: securityClassesToArray(
 					item.requestedSecurityClasses ||
