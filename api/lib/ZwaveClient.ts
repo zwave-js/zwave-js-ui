@@ -4951,8 +4951,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw Error('DSK is required')
 		}
 
-		//disable it so user can choose the protocol to use
-		if (entry.supportedProtocols?.includes(Protocols.ZWaveLongRange)) {
+		const isNew = !this.driver.controller.getProvisioningEntry(entry.dsk)
+
+		// disable it so user can choose the protocol to use
+		if (
+			isNew &&
+			entry.supportedProtocols?.includes(Protocols.ZWaveLongRange)
+		) {
 			entry.status = ProvisioningEntryStatus.Inactive
 		}
 
@@ -5166,7 +5171,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		if (!zwaveNode.isControllerNode) {
+		// Long range nodes use a star topology, so they don't have return/priority routes
+		if (
+			!zwaveNode.isControllerNode &&
+			zwaveNode.protocol !== Protocols.ZWaveLongRange
+		) {
 			this.getPriorityRoute(zwaveNode.id).catch((error) => {
 				this.logNode(
 					zwaveNode,
@@ -5175,11 +5184,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 			})
 
-			// Long range nodes use a star topology, so they don't have return/priority routes
-			if (zwaveNode.protocol !== Protocols.ZWaveLongRange) {
-				this.getCustomSUCReturnRoute(zwaveNode.id)
-				this.getPrioritySUCReturnRoute(zwaveNode.id)
-			}
+			this.getCustomSUCReturnRoute(zwaveNode.id)
+			this.getPrioritySUCReturnRoute(zwaveNode.id)
 		}
 	}
 

@@ -20,11 +20,12 @@
 			</template>
 
 			<template v-slot:[`item.protocol`]="{ item }">
-				<span>{{
-					!item.protocol || item.protocol === Protocols.ZWave
-						? 'Z-Wave'
-						: 'Z-Wave Long Range'
-				}}</span>
+				<v-checkbox
+					:value="item.protocol === Protocols.ZWaveLongRange"
+					@click="toggleProtocol(item)"
+					hide-details
+					dense
+				></v-checkbox>
 			</template>
 
 			<template
@@ -216,7 +217,7 @@ export default {
 				{ text: 'Name', value: 'name' },
 				{ text: 'Location', value: 'location' },
 				{ text: 'Active', value: 'status' },
-				{ text: 'Protocol', value: 'protocol' },
+				{ text: 'Long Range', value: 'protocol' },
 				{ text: 'DSK', value: 'dsk' },
 				{
 					text: 'S2 Access Control',
@@ -289,6 +290,13 @@ export default {
 			await this.updateItem(item)
 			this.edited = false
 			this.refreshItems()
+		},
+		async toggleProtocol(item) {
+			item.protocol =
+				item.protocol === Protocols.ZWave
+					? Protocols.ZWaveLongRange
+					: Protocols.ZWave
+			await this.onChange(item)
 		},
 		async updateItem(itemOrQr) {
 			const response = await this.app.apiRequest(
