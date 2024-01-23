@@ -510,9 +510,12 @@ function sortStore(store: StoreFileEntry[]) {
 logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
 
-// view engine setup
-app.set('views', utils.joinPath(false, 'views'))
-app.set('view engine', 'ejs')
+if (process.env.TRUST_PROXY) {
+	app.set(
+		'trust proxy',
+		process.env.TRUST_PROXY === 'true' ? true : process.env.TRUST_PROXY,
+	)
+}
 
 app.use(
 	morgan(loggers.disableColors ? 'tiny' : 'dev', {

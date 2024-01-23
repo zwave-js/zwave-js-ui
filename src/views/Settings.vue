@@ -728,10 +728,10 @@
 												newZwave.rf.txPower.powerlevel
 											"
 											persistent-hint
-											:min="-12.8"
-											:max="12.7"
+											:min="-10"
+											:max="20"
 											:step="0.1"
-											hint="Power level in dBm. Min -12.8, Max 12.7"
+											hint="Power level in dBm. Min -10, Max +20"
 											suffix="dBm"
 											type="number"
 											:rules="[validTxPower]"
@@ -744,10 +744,10 @@
 											v-model.number="
 												newZwave.rf.txPower.measured0dBm
 											"
-											:min="-12.8"
-											:max="12.7"
+											:min="-10"
+											:max="10"
 											:step="0.1"
-											hint="Measured output power at 0 dBm in dBm. Min -12.8, Max 12.7"
+											hint="Measured output power at 0 dBm in dBm. Min -10, Max +10"
 											suffix="dBm"
 											type="number"
 											:rules="[validTxPower]"
@@ -1768,15 +1768,12 @@ export default {
 			const validPower = !isUndef(powerlevel)
 			const validMeasured = !isUndef(measured0dBm)
 
-			if (validPower && (powerlevel < -12.8 || powerlevel > 12.7)) {
-				return 'Power level must be between -12.8 and 12.7'
+			if (validPower && (powerlevel < -10 || powerlevel > 20)) {
+				return 'Power level must be between -10 and 20'
 			}
 
-			if (
-				validMeasured &&
-				(measured0dBm < -12.8 || measured0dBm > 12.7)
-			) {
-				return 'Measured 0dBm must be between -12.8 and 12.7'
+			if (validMeasured && (measured0dBm < -10 || measured0dBm > 10)) {
+				return 'Measured 0dBm must be between -10 and 10'
 			}
 
 			return (
