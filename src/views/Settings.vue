@@ -644,10 +644,10 @@
 												newZwave.rf.txPower.powerlevel
 											"
 											persistent-hint
-											:min="-12.8"
-											:max="12.7"
+											:min="-10"
+											:max="20"
 											:step="0.1"
-											hint="Power level in dBm. Min -12.8, Max 12.7"
+											hint="Power level in dBm. Min -10, Max +20"
 											suffix="dBm"
 											type="number"
 											:rules="[validTxPower]"
@@ -660,10 +660,10 @@
 											v-model.number="
 												newZwave.rf.txPower.measured0dBm
 											"
-											:min="-12.8"
-											:max="12.7"
+											:min="-10"
+											:max="10"
 											:step="0.1"
-											hint="Measured output power at 0 dBm in dBm. Min -12.8, Max 12.7"
+											hint="Measured output power at 0 dBm in dBm. Min -10, Max +10"
 											suffix="dBm"
 											type="number"
 											:rules="[validTxPower]"
