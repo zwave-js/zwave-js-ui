@@ -52,7 +52,7 @@
 						node.loc
 					}}</v-list-item-content>
 				</v-list-item>
-				<v-list-item v-if="node.neighbors">
+				<v-list-item v-if="node.neighbors && !isLongRange">
 					<v-list-item-content>Neighbors</v-list-item-content>
 					<v-list-item-content class="align-end"
 						>{{
@@ -104,7 +104,7 @@
 						</v-list-item>
 					</div> -->
 
-				<div v-if="!node.isControllerNode">
+				<div v-if="!node.isControllerNode && !isLongRange">
 					<v-subheader
 						>Priority route
 						<v-btn
@@ -135,7 +135,7 @@
 							<v-icon x-small>route</v-icon>
 						</v-btn>
 					</v-subheader>
-					<div v-if="appRoute" class="text-caption">
+					<div v-if="appRoute && !isLongRange" class="text-caption">
 						<v-list-item dense v-for="(s, i) in appRoute" :key="i">
 							<v-list-item-content>{{
 								s.title
@@ -148,7 +148,7 @@
 					<p class="text-center" v-else>None</p>
 				</div>
 
-				<div v-if="!node.isControllerNode">
+				<div v-if="!node.isControllerNode && !isLongRange">
 					<v-subheader
 						>Return routes
 						<v-btn
@@ -273,7 +273,7 @@
 				</div>
 			</v-list>
 			<v-row
-				v-if="!node.isControllerNode"
+				v-if="!node.isControllerNode && !isLongRange"
 				class="mt-1 pa-0 text-center"
 				justify="center"
 			>
@@ -374,7 +374,7 @@ import {
 	isRssiError,
 	rssiToString,
 } from 'zwave-js/safe'
-import { zwaveDataRateToString } from '@zwave-js/core/safe'
+import { Protocols, zwaveDataRateToString } from '@zwave-js/core/safe'
 import draggable from 'vuedraggable'
 
 import { Routes } from '../../router/index.js'
@@ -481,6 +481,11 @@ export default {
 			const routeStats = this.parseRouteStats(this.node.applicationRoute)
 
 			return routeStats
+		},
+		isLongRange() {
+			if (!this.node) return false
+
+			return this.node.protocol === Protocols.ZWaveLongRange
 		},
 	},
 	watch: {

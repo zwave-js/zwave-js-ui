@@ -5175,8 +5175,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 			})
 
-			this.getCustomSUCReturnRoute(zwaveNode.id)
-			this.getPrioritySUCReturnRoute(zwaveNode.id)
+			// Long range nodes use a star topology, so they don't have return/priority routes
+			if (zwaveNode.protocol !== Protocols.ZWaveLongRange) {
+				this.getCustomSUCReturnRoute(zwaveNode.id)
+				this.getPrioritySUCReturnRoute(zwaveNode.id)
+			}
 		}
 	}
 
