@@ -21,18 +21,27 @@
 			</template>
 
 			<template v-slot:[`item.protocol`]="{ item }">
-				<v-checkbox
+				<v-btn
 					v-if="
 						item.supportedProtocols?.includes(
 							Protocols.ZWaveLongRange,
 						)
 					"
-					v-model="item.isLongRange"
-					@change="toggleProtocol(item)"
-					hide-details
+					@click="toggleProtocol(item)"
 					:disabled="!!item.nodeId"
 					dense
-				></v-checkbox>
+					rounded
+					small
+					outlined
+					:color="
+						item.protocol === Protocols.ZWave ? 'primary' : 'purple'
+					"
+					>{{
+						item.protocol === Protocols.ZWave
+							? 'Z-Wave'
+							: 'Long Range'
+					}}</v-btn
+				>
 			</template>
 
 			<template
@@ -243,7 +252,7 @@ export default {
 				{ text: 'Name', value: 'name' },
 				{ text: 'Location', value: 'location' },
 				{ text: 'Active', value: 'status' },
-				{ text: 'Long Range', value: 'protocol' },
+				{ text: 'Protocol', value: 'protocol' },
 				{ text: 'DSK', value: 'dsk' },
 				{
 					text: 'S2 Access Control',
@@ -527,7 +536,6 @@ export default {
 					...item,
 					status: !item.status,
 					protocol: item.protocol ?? Protocols.ZWave,
-					isLongRange: item.protocol === Protocols.ZWaveLongRange,
 					securityClasses: parseSecurityClasses(
 						item.securityClasses,
 						false,
@@ -550,7 +558,6 @@ export default {
 
 			item = {
 				...item,
-				isLongRange: undefined,
 				status: item.status ? 0 : 1,
 				protocol: item.protocol ?? Protocols.ZWave,
 				securityClasses: securityClassesToArray(item.securityClasses),
