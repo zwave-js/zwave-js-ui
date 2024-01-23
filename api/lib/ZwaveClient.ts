@@ -2020,6 +2020,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw new DriverNotReadyError()
 			}
 
+			const zwaveNode = this.getNode(nodeId)
+
+			if (zwaveNode.protocol === Protocols.ZWaveLongRange) {
+				return []
+			}
+
 			const neighbors =
 				await this._driver.controller.getNodeNeighbors(nodeId)
 			this.logNode(nodeId, 'debug', `Neighbors: ${neighbors.join(', ')}`)
