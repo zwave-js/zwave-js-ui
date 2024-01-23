@@ -409,6 +409,9 @@ export default {
 					default: existingItem
 						? existingItem.securityClasses.s2Unauthenticated
 						: false,
+					show: (item) => {
+						return item.protocol === Protocols.ZWave
+					},
 				},
 				{
 					type: 'checkbox',
@@ -420,6 +423,9 @@ export default {
 					default: existingItem
 						? existingItem.securityClasses.s0Legacy
 						: false,
+					show: (item) => {
+						return item.protocol === Protocols.ZWave
+					},
 				},
 			]
 
