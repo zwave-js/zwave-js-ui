@@ -370,7 +370,9 @@ export default {
 					key: 'protocol',
 					items: protocolsItems,
 					hint: 'Inclusion protocol to use',
-					default: Protocols.ZWave,
+					default: existingItem
+						? existingItem.protocol
+						: Protocols.ZWave,
 				},
 				{
 					type: 'text',
