@@ -190,8 +190,8 @@
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'protocol')"
 			/>
-			<div v-else>
-				{{ item.supportsLongRange ? 'Long Range' : '' }}
+			<div title="Long range" v-else>
+				{{ item.supportsLongRange ? 'LR ✅' : 'LR ❌' }}
 			</div>
 		</template>
 		<template v-slot:[`item.failed`]="{ item }">

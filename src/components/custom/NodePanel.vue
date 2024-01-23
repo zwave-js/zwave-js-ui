@@ -25,9 +25,7 @@
 				<v-list-item dense>
 					<v-list-item-content>Protocol</v-list-item-content>
 					<v-list-item-content class="align-end">{{
-						node.protocol === Protocols.ZWave
-							? 'Z-Wave'
-							: 'Long Range'
+						getProtocol(node)
 					}}</v-list-item-content>
 				</v-list-item>
 				<v-list-item dense>
@@ -390,7 +388,7 @@ import { Routes } from '../../router/index.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
-import { copy } from '../../lib/utils'
+import { copy, getProtocol } from '../../lib/utils'
 
 export default {
 	mixins: [InstancesMixin],
@@ -509,6 +507,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		getProtocol,
 		zwaveDataRateToString,
 		checkMove(evt) {
 			const { futureIndex } = evt.draggedContext

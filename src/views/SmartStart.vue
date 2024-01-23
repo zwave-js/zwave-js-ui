@@ -33,14 +33,8 @@
 					rounded
 					small
 					outlined
-					:color="
-						item.protocol === Protocols.ZWave ? 'primary' : 'purple'
-					"
-					>{{
-						item.protocol === Protocols.ZWave
-							? 'Z-Wave'
-							: 'Long Range'
-					}}</v-btn
+					:color="getProtocolColor(item)"
+					>{{ getProtocol(item) }}</v-btn
 				>
 			</template>
 
@@ -218,6 +212,8 @@ import {
 	parseSecurityClasses,
 	validDsk,
 	securityClassesToArray,
+	getProtocol,
+	getProtocolColor,
 } from '../lib/utils.js'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
@@ -291,6 +287,8 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		getProtocol,
+		getProtocolColor,
 		async refreshItems() {
 			const response = await this.app.apiRequest(
 				'getProvisioningEntries',

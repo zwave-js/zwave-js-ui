@@ -9,7 +9,7 @@ export const rfRegions = Object.keys(RFRegion)
 
 export const protocolsItems = [
 	{
-		text: 'Z-Wave Mesh',
+		text: 'Z-Wave',
 		value: Protocols.ZWave,
 	},
 	{

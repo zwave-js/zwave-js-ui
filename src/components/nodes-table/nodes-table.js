@@ -23,8 +23,11 @@ import {
 	mdiZWave,
 } from '@mdi/js'
 import useBaseStore from '../../stores/base.js'
-import { getBatteryDescription } from '../../lib/utils.js'
-import { getEnumMemberName, Protocols } from 'zwave-js/safe'
+import {
+	getBatteryDescription,
+	getProtocol,
+	getProtocolColor,
+} from '../../lib/utils.js'
 
 export default {
 	props: {
@@ -171,19 +174,8 @@ export default {
 						if (node.protocol === undefined) return v
 
 						v.icon = mdiZWave
-
-						if (node.protocol === Protocols.ZWave) {
-							v.iconStyle = `color: ${colors.green.base}`
-							v.description = 'Z-Wave'
-						} else if (node.protocol === Protocols.ZWaveLongRange) {
-							v.iconStyle = `color: ${colors.purple.base}`
-							v.description = 'Z-Wave Long Range'
-						} else {
-							v.displayValue = `${getEnumMemberName(
-								Protocols,
-								node.protocol,
-							)}`
-						}
+						v.description = getProtocol(node)
+						v.iconStyle = `color: ${getProtocolColor(node)}`
 						return v
 					},
 				},
