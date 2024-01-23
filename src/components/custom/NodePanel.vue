@@ -23,6 +23,14 @@
 					}}</v-list-item-content>
 				</v-list-item>
 				<v-list-item dense>
+					<v-list-item-content>Protocol</v-list-item-content>
+					<v-list-item-content class="align-end">{{
+						node.protocol === Protocols.ZWave
+							? 'Z-Wave'
+							: 'Long Range'
+					}}</v-list-item-content>
+				</v-list-item>
+				<v-list-item dense>
 					<v-list-item-content>Code</v-list-item-content>
 					<v-list-item-content class="align-end">{{
 						node.productLabel
@@ -329,7 +337,7 @@
 			</v-row>
 		</v-col>
 		<dialog-health-check
-			v-if="!node.isControllerNode && !isLongRange"
+			v-if="node && !node.isControllerNode"
 			v-model="dialogHealth"
 			@close="dialogHealth = false"
 			:socket="socket"
@@ -413,6 +421,7 @@ export default {
 		discoverLoading: false,
 		routesChanged: false,
 		returnRoutes: [],
+		Protocols,
 		dataRateItems: [
 			{
 				text: '100 Kbps',
