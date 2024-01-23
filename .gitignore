@@ -84,6 +84,8 @@ typings/
 !.yarn/sdks
 !.yarn/versions
 
+.vite
+
 fakeNodes.json
 
 /build/
