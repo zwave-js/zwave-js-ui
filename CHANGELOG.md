@@ -1,5 +1,12 @@
 
 
+## [9.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.0...v9.8.1) (2024-01-25)
+
+
+### Bug Fixes
+
+* auth check api not working with proxy ([366b8dc](https://github.com/zwave-js/zwave-js-ui/commit/366b8dcb056fee10c1d32e9311a8161047f1fe10)), closes [#3553](https://github.com/zwave-js/zwave-js-ui/issues/3553)
+
 # [9.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.7.1...v9.8.0) (2024-01-24)
 
 
