@@ -413,6 +413,13 @@ export default {
 					...this.node.hassDevices,
 					[device.id]: device,
 				}
+
+				if (
+					this.selectedDevice &&
+					this.selectedDevice.id === device.id
+				) {
+					this.deviceJSON = JSON.stringify(device, null, 2)
+				}
 				this.showSnackbar(`Device ${device.id} updated`, 'success')
 			}
 		},
