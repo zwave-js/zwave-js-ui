@@ -1,5 +1,18 @@
 
 
+## [9.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.1...v9.8.2) (2024-01-29)
+
+
+### Bug Fixes
+
+* **mqtt:** handel numbers to bool coerce and value conf on current value ([49ac0a3](https://github.com/zwave-js/zwave-js-ui/commit/49ac0a30e56cd780684414b32890772fd904b7f9))
+
+
+### Features
+
+* bump zwave-js@12.4.3 ([#3555](https://github.com/zwave-js/zwave-js-ui/issues/3555)) ([e9d3118](https://github.com/zwave-js/zwave-js-ui/commit/e9d31180fc9dd1cf503abde5ead1f7fa599285a2))
+* **ui:** allow to toggle persistent/discovery fields from HA discovery table ([#3569](https://github.com/zwave-js/zwave-js-ui/issues/3569)) ([b86b84c](https://github.com/zwave-js/zwave-js-ui/commit/b86b84c571f7d9ad0ca81f0b7b30213c3f830c68))
+
 ## [9.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.0...v9.8.1) (2024-01-25)
 
 
