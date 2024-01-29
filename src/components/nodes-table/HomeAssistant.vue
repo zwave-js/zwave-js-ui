@@ -100,10 +100,23 @@
 						{{ item.object_id }}
 					</template>
 					<template v-slot:[`item.persistent`]="{ item }">
-						{{ item.persistent ? 'Yes' : 'No' }}
+						<v-checkbox
+							v-model="item.persistent"
+							@click.stop
+							@change="updateDevice(item)"
+							hide-details
+							dense
+						></v-checkbox>
 					</template>
 					<template v-slot:[`item.ignoreDiscovery`]="{ item }">
-						{{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
+						<v-btn
+							@click.stop="toggleField(item, 'ignoreDiscovery')"
+							:color="item.ignoreDiscovery ? 'error' : 'success'"
+							rounded
+							x-small
+						>
+							{{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
+						</v-btn>
 					</template>
 				</v-data-table>
 			</v-col>
@@ -115,7 +128,7 @@
 							color="blue darken-1"
 							:disabled="errorDevice"
 							text
-							@click="addDevice"
+							@click="addDevice()"
 							>Add</v-btn
 						>
 					</template>
@@ -129,7 +142,7 @@
 							color="blue darken-1"
 							:disabled="errorDevice"
 							text
-							@click="updateDevice"
+							@click="updateDeviceJSON()"
 							>Update</v-btn
 						>
 					</template>
@@ -373,7 +386,7 @@ export default {
 				)
 			}
 		},
-		async updateDevice() {
+		async updateDeviceJSON() {
 			if (!this.errorDevice) {
 				const updated = JSON.parse(this.deviceJSON)
 				this.$set(
@@ -381,15 +394,26 @@ export default {
 					this.selectedDevice.id,
 					updated,
 				)
-				const response = await this.sendAction({
-					apiName: 'update',
-					device: updated,
-					nodeId: this.node.id,
-				})
+				await this.updateDevice(updated)
+			}
+		},
+		async toggleField(device, field) {
+			device[field] = !device[field]
+			await this.updateDevice(device)
+		},
+		async updateDevice(device) {
+			const response = await this.sendAction({
+				apiName: 'update',
+				device,
+				nodeId: this.node.id,
+			})
 
-				if (response.success) {
-					this.showSnackbar(`Device ${updated.id} updated`, 'success')
+			if (response.success) {
+				this.node.hassDevices = {
+					...this.node.hassDevices,
+					[device.id]: device,
 				}
+				this.showSnackbar(`Device ${device.id} updated`, 'success')
 			}
 		},
 		validJSONdevice() {
