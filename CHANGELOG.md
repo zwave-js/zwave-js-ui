@@ -1,5 +1,48 @@
 
 
+## [9.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.1...v9.8.2) (2024-01-29)
+
+
+### Bug Fixes
+
+* **mqtt:** handel numbers to bool coerce and value conf on current value ([49ac0a3](https://github.com/zwave-js/zwave-js-ui/commit/49ac0a30e56cd780684414b32890772fd904b7f9))
+
+
+### Features
+
+* bump zwave-js@12.4.3 ([#3555](https://github.com/zwave-js/zwave-js-ui/issues/3555)) ([e9d3118](https://github.com/zwave-js/zwave-js-ui/commit/e9d31180fc9dd1cf503abde5ead1f7fa599285a2))
+* **ui:** allow to toggle persistent/discovery fields from HA discovery table ([#3569](https://github.com/zwave-js/zwave-js-ui/issues/3569)) ([b86b84c](https://github.com/zwave-js/zwave-js-ui/commit/b86b84c571f7d9ad0ca81f0b7b30213c3f830c68))
+
+## [9.8.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.0...v9.8.1) (2024-01-25)
+
+
+### Bug Fixes
+
+* auth check api not working with proxy ([366b8dc](https://github.com/zwave-js/zwave-js-ui/commit/366b8dcb056fee10c1d32e9311a8161047f1fe10)), closes [#3553](https://github.com/zwave-js/zwave-js-ui/issues/3553)
+
+# [9.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.7.1...v9.8.0) (2024-01-24)
+
+
+### Bug Fixes
+
+* allow to set a custom trust proxy value ([b1a34df](https://github.com/zwave-js/zwave-js-ui/commit/b1a34dfb634d43099b008279e70bba46783314f4))
+* **discovery:** improve MQTT discovery for scene CC ([#3539](https://github.com/zwave-js/zwave-js-ui/issues/3539)) ([383ad83](https://github.com/zwave-js/zwave-js-ui/commit/383ad831a31c7b4f86ae51518fc14c04f390beb3))
+* **ui:** add product code to fw update dialog ([22bd7ab](https://github.com/zwave-js/zwave-js-ui/commit/22bd7ab2555ad8645f79d87bdc2c409adec4d35f)), closes [#3488](https://github.com/zwave-js/zwave-js-ui/issues/3488)
+* **ui:** bump mqtt@5.3.5 ([7d01148](https://github.com/zwave-js/zwave-js-ui/commit/7d01148f09140f4ba401eb773602d49d83bddb4f))
+* **ui:** correct tx power validation limits ([ff08456](https://github.com/zwave-js/zwave-js-ui/commit/ff0845690b21b9fd61903ad57e01d20162fdf508))
+* **ui:** ignore `**/api/**` from service worker cache ([#3519](https://github.com/zwave-js/zwave-js-ui/issues/3519)) ([2b7d53c](https://github.com/zwave-js/zwave-js-ui/commit/2b7d53c0c6d7a34f9183074f4e35c774f3344bd2))
+* **ui:** power level and measured power at 0 dbm limits ([#3548](https://github.com/zwave-js/zwave-js-ui/issues/3548)) ([ae57c72](https://github.com/zwave-js/zwave-js-ui/commit/ae57c721525d6fe88a4dba105139261c72789ef6))
+* **ui:** remove duplicated target in link ([76802d5](https://github.com/zwave-js/zwave-js-ui/commit/76802d575081127ec02f3860b22efbc1d73a01d4))
+
+
+### Features
+
+* add `TRUST_PROXY` env var ([3035d65](https://github.com/zwave-js/zwave-js-ui/commit/3035d653ebb25f7578219f3821d3f4f21b95c4dc)), closes [#3506](https://github.com/zwave-js/zwave-js-ui/issues/3506)
+* bump zwave-js@12.4.2 ([#3550](https://github.com/zwave-js/zwave-js-ui/issues/3550)) ([7fc5c0f](https://github.com/zwave-js/zwave-js-ui/commit/7fc5c0f2e2d00385f84eb804d4b6f6e0c6e7151f))
+* expose configuration properties via HASS discovery ([#3538](https://github.com/zwave-js/zwave-js-ui/issues/3538)) ([3048fed](https://github.com/zwave-js/zwave-js-ui/commit/3048fede52d4cd5ac3c32f7064712266f3bedcfc))
+* show inclusion state on UI ([#3527](https://github.com/zwave-js/zwave-js-ui/issues/3527)) ([8906358](https://github.com/zwave-js/zwave-js-ui/commit/89063584b01ce6c6f1c3dd466ea49a73445cc63b))
+* **ui:** custom browser TZ/LOCALE and UI persistent preferences ([#3525](https://github.com/zwave-js/zwave-js-ui/issues/3525)) ([f85f225](https://github.com/zwave-js/zwave-js-ui/commit/f85f225595187cb6ed0ddad19f61371e4f702199))
+
 ## [9.7.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.7.0...v9.7.1) (2024-01-16)
 
 

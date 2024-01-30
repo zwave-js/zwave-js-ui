@@ -394,6 +394,11 @@ export default class Gateway {
 				payload = payload ? 0xff : valueId.min
 			}
 
+			// 1/0 becomes true/false
+			if (typeof payload === 'number' && valueId.type === 'boolean') {
+				payload = payload > 0
+			}
+
 			if (
 				valueId.commandClass === CommandClasses['Binary Toggle Switch']
 			) {
@@ -2000,9 +2005,16 @@ export default class Gateway {
 				valueId.conf = valueConf
 			}
 
-			this.topicValues[topic] = valueId.targetValue
-				? node.values[valueId.targetValue]
-				: valueId
+			// handle the case the conf is set on current value but not in target value
+			if (valueId.targetValue && node.values[valueId.targetValue]) {
+				const targetValueId = utils.copy(
+					node.values[valueId.targetValue],
+				)
+				targetValueId.conf = valueConf
+				this.topicValues[topic] = targetValueId
+			} else {
+				this.topicValues[topic] = valueId
+			}
 		}
 
 		let mqttOptions: IClientPublishOptions = valueId.stateless

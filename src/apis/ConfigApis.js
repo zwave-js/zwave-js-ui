@@ -59,7 +59,7 @@ export default {
 		// const response = await request.get('/auth-enabled')
 		// return response.data
 
-		const response = await fetch('/api/auth-enabled', {
+		const response = await fetch(axios.defaults.baseURL + '/auth-enabled', {
 			credentials: 'include',
 			redirect: 'manual',
 			headers: {
