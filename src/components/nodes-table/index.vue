@@ -190,8 +190,12 @@
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'protocol')"
 			/>
-			<div title="Long range" v-else>
-				{{ item.supportsLongRange ? 'LR ✅' : 'LR ❌' }}
+			<div v-else>
+				<rich-value :value="getControllerProtocolIcon(false)" />
+				<rich-value
+					v-if="item.supportsLongRange"
+					:value="getControllerProtocolIcon(true)"
+				/>
 			</div>
 		</template>
 		<template v-slot:[`item.failed`]="{ item }">

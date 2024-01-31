@@ -1,6 +1,7 @@
 import draggable from 'vuedraggable'
 import colors from 'vuetify/lib/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
+import { Protocols } from '@zwave-js/core/safe'
 
 import { mapState } from 'pinia'
 import {
@@ -255,6 +256,20 @@ export default {
 			}
 
 			return undefined
+		},
+		getControllerProtocolIcon(longRange) {
+			const protocol = longRange
+				? Protocols.ZWaveLongRange
+				: Protocols.ZWave
+
+			return {
+				align: 'center',
+				icon: mdiZWave,
+				iconStyle: `color: ${getProtocolColor({
+					protocol,
+				})}`,
+				description: getProtocol({ protocol }),
+			}
 		},
 		groupValue(group) {
 			return this.managedNodes.groupValue(group)

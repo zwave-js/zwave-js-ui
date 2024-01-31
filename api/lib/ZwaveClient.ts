@@ -6012,12 +6012,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			} else {
 				logger.info('RF region is not supported by controller')
 			}
+
+			// when RF region changes, check if long range is supported
+			if (
+				this.driver.controller.supportsLongRange !==
+				node.supportsLongRange
+			) {
+				node.supportsLongRange =
+					this.driver.controller.supportsLongRange
+			}
 		}
 
 		this.emitNodeUpdate(node, {
 			powerlevel: node.powerlevel,
 			measured0dBm: node.measured0dBm,
 			RFRegion: node.RFRegion,
+			supportsLongRange: node.supportsLongRange,
 		})
 	}
 
