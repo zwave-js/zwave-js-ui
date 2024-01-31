@@ -289,9 +289,11 @@
 				<div
 					style="white-space: pre"
 					v-text="
-						`FW: v${item.firmwareVersion}${
-							item.sdkVersion ? `\nSDK: v${item.sdkVersion}` : ''
-						}`
+						`${
+							item.firmwareVersion
+								? 'FW: v' + item.firmwareVersion
+								: '-----'
+						}${item.sdkVersion ? `\nSDK: v${item.sdkVersion}` : ''}`
 					"
 					v-else
 				></div>
