@@ -2284,7 +2284,11 @@ export default class Gateway {
 				logger.error('Invalid valueId: ' + error)
 				return
 			}
-			await this._zwave.writeBroadcast(payload, payload.value)
+			await this._zwave.writeBroadcast(
+				payload,
+				payload.value,
+				payload.options,
+			)
 		}
 	}
 
@@ -2308,7 +2312,11 @@ export default class Gateway {
 	}
 
 	private async _onMulticastRequest(
-		payload: ZUIValueId & { nodes: number[]; value: any },
+		payload: ZUIValueId & {
+			nodes: number[]
+			value: any
+			options?: SetValueAPIOptions
+		},
 	): Promise<void> {
 		const nodes = payload.nodes
 		const valueId: ValueID = {
@@ -2336,7 +2344,12 @@ export default class Gateway {
 			return
 		}
 
-		await this._zwave.writeMulticast(nodes, valueId as ZUIValueId, value)
+		await this._zwave.writeMulticast(
+			nodes,
+			valueId as ZUIValueId,
+			value,
+			payload.options,
+		)
 	}
 
 	/**
