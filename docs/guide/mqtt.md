@@ -2037,7 +2037,11 @@ Payload:
 #### `writeBroadcast`
 
 ```ts
-async writeBroadcast(valueId: ValueID, value: unknown): Promise<void>;
+async writeBroadcast(
+	valueId: ValueID,
+	value: unknown,
+	options?: SetValueAPIOptions,
+): Promise<void>;
 ```
 
 Send broadcast write request.
@@ -2053,7 +2057,8 @@ Payload:
 {
 	"args": [
 		valueId,
-		value
+		value,
+		options
 	]
 }
 ```
@@ -2063,7 +2068,12 @@ Payload:
 #### `writeMulticast`
 
 ```ts
-async writeMulticast(nodes: number[], valueId: ZUIValueId, value: unknown): Promise<void>;
+async writeMulticast(
+	nodes: number[],
+	valueId: ZUIValueId,
+	value: unknown,
+	options?: SetValueAPIOptions,
+): Promise<void>;
 ```
 
 Send multicast write request to a group of nodes.
@@ -2080,7 +2090,8 @@ Payload:
 	"args": [
 		nodes,
 		valueId,
-		value
+		value,
+		options
 	]
 }
 ```
