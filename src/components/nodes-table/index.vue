@@ -190,8 +190,11 @@
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'protocol')"
 			/>
-			<div v-else>
-				<rich-value :value="getControllerProtocolIcon(false)" />
+			<div class="d-flex" v-else>
+				<rich-value
+					class="mr-1"
+					:value="getControllerProtocolIcon(false)"
+				/>
 				<rich-value
 					v-if="item.supportsLongRange"
 					:value="getControllerProtocolIcon(true)"
