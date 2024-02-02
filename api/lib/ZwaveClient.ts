@@ -4077,12 +4077,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Send broadcast write request
 	 */
-	async writeBroadcast(valueId: ValueID, value: unknown) {
+	async writeBroadcast(
+		valueId: ValueID,
+		value: unknown,
+		options?: SetValueAPIOptions,
+	) {
 		if (this.driverReady) {
 			try {
 				const broadcastNode = this._driver.controller.getBroadcastNode()
 
-				await broadcastNode.setValue(valueId, value)
+				await broadcastNode.setValue(valueId, value, options)
 			} catch (error) {
 				logger.error(
 					// eslint-disable-next-line @typescript-eslint/no-base-to-string
@@ -4099,13 +4103,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Send multicast write request to a group of nodes
 	 */
-	async writeMulticast(nodes: number[], valueId: ZUIValueId, value: unknown) {
+	async writeMulticast(
+		nodes: number[],
+		valueId: ZUIValueId,
+		value: unknown,
+		options?: SetValueAPIOptions,
+	) {
 		if (this.driverReady) {
 			let fallback = false
 			try {
 				const multicastGroup =
 					this._driver.controller.getMulticastGroup(nodes)
-				await multicastGroup.setValue(valueId, value)
+				await multicastGroup.setValue(valueId, value, options)
 			} catch (error) {
 				fallback = error.code === ZWaveErrorCodes.CC_NotSupported
 				logger.error(

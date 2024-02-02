@@ -1,5 +1,5 @@
 import { MethodDeclaration, Project, SourceFile } from 'ts-morph'
-import { allowedApis } from './lib/ZwaveClient'
+import { allowedApis } from './api/lib/ZwaveClient'
 import { readFile, writeFile } from 'fs/promises'
 
 import * as prettier from 'prettier'
@@ -22,7 +22,7 @@ export async function formatWithPrettier(
 async function main() {
 	const program = new Project({ tsConfigFilePath: 'tsconfig.json' })
 
-	const fileName = './lib/ZwaveClient.ts'
+	const fileName = './api/lib/ZwaveClient.ts'
 	const docsFile = './docs/guide/mqtt.md'
 
 	const sourceFile = program.getSourceFileOrThrow(fileName)
