@@ -20,6 +20,7 @@ type HassDeviceKey =
 	| 'sound_switch'
 	| 'config_switch'
 	| 'config_number'
+	| 'scene_activation'
 
 const configurations: Record<HassDeviceKey, HassDevice> = {
 	// Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
@@ -243,6 +244,14 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 			command_topic: true,
 			enabled_by_default: false,
 			entity_category: 'config',
+		},
+	},
+
+	scene_activation: {
+		type: 'number',
+		object_id: 'scene_activation',
+		discovery_payload: {
+			value_template: '{{ value_json.value }}',
 		},
 	},
 }
