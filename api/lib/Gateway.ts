@@ -1320,14 +1320,6 @@ export default class Gateway {
 					break
 				case CommandClasses['Scene Activation']:
 					cfg = utils.copy(hassCfg.scene_activation)
-					if (valueId.writeable) {
-						cfg.discovery_payload.command_topic = true
-					} else {
-						cfg.type = 'sensor'
-						if (valueId.type === 'number') {
-							cfg.discovery_payload.state_class = 'measurement'
-						}
-					}
 
 					// Combine unique Object id, by using all possible scenarios
 					cfg.object_id = utils.joinProps(

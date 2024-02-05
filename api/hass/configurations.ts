@@ -252,6 +252,7 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 		object_id: 'scene_activation',
 		discovery_payload: {
 			value_template: '{{ value_json.value }}',
+			command_topic: true,
 		},
 	},
 }
