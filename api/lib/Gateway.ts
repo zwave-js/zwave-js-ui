@@ -1330,9 +1330,6 @@ export default class Gateway {
 						valueId.property,
 						valueId.propertyKey,
 					)
-					if (valueId.type === 'number') {
-						cfg.discovery_payload.state_class = 'measurement'
-					}
 					break
 				case CommandClasses['Binary Sensor']: {
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/BinarySensorCC.ts#L41
