@@ -394,6 +394,11 @@ export default class Gateway {
 				payload = payload ? 0xff : valueId.min
 			}
 
+			// 1/0 becomes true/false
+			if (typeof payload === 'number' && valueId.type === 'boolean') {
+				payload = payload > 0
+			}
+
 			if (
 				valueId.commandClass === CommandClasses['Binary Toggle Switch']
 			) {
@@ -2018,9 +2023,16 @@ export default class Gateway {
 				valueId.conf = valueConf
 			}
 
-			this.topicValues[topic] = valueId.targetValue
-				? node.values[valueId.targetValue]
-				: valueId
+			// handle the case the conf is set on current value but not in target value
+			if (valueId.targetValue && node.values[valueId.targetValue]) {
+				const targetValueId = utils.copy(
+					node.values[valueId.targetValue],
+				)
+				targetValueId.conf = valueConf
+				this.topicValues[topic] = targetValueId
+			} else {
+				this.topicValues[topic] = valueId
+			}
 		}
 
 		let mqttOptions: IClientPublishOptions = valueId.stateless
@@ -2290,7 +2302,11 @@ export default class Gateway {
 				logger.error('Invalid valueId: ' + error)
 				return
 			}
-			await this._zwave.writeBroadcast(payload, payload.value)
+			await this._zwave.writeBroadcast(
+				payload,
+				payload.value,
+				payload.options,
+			)
 		}
 	}
 
@@ -2314,7 +2330,11 @@ export default class Gateway {
 	}
 
 	private async _onMulticastRequest(
-		payload: ZUIValueId & { nodes: number[]; value: any },
+		payload: ZUIValueId & {
+			nodes: number[]
+			value: any
+			options?: SetValueAPIOptions
+		},
 	): Promise<void> {
 		const nodes = payload.nodes
 		const valueId: ValueID = {
@@ -2342,7 +2362,12 @@ export default class Gateway {
 			return
 		}
 
-		await this._zwave.writeMulticast(nodes, valueId as ZUIValueId, value)
+		await this._zwave.writeMulticast(
+			nodes,
+			valueId as ZUIValueId,
+			value,
+			payload.options,
+		)
 	}
 
 	/**
