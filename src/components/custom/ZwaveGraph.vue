@@ -1204,7 +1204,7 @@ export default {
 					entity,
 					node.statistics?.nlwr,
 					RouteKind.NLWR,
-					!!node.statistics?.lwr,
+					!node.statistics?.lwr,
 				)
 
 				if (node.customSUCReturnRoutes) {
