@@ -1,5 +1,20 @@
 
 
+## [9.8.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.2...v9.8.3) (2024-02-06)
+
+
+### Bug Fixes
+
+* **discovery:** revert "improve MQTT discovery for scene CC" ([#3583](https://github.com/zwave-js/zwave-js-ui/issues/3583)) ([16b8c1f](https://github.com/zwave-js/zwave-js-ui/commit/16b8c1fc82bfb5ce99c7e0bf2bd1e78fa4161fa7))
+* **mqtt-discovery:** modify thermostat_2gig to use endpoint 0 ([#3579](https://github.com/zwave-js/zwave-js-ui/issues/3579)) ([4ba9ead](https://github.com/zwave-js/zwave-js-ui/commit/4ba9ead46592497baed73d06e45122f598a8fd5e))
+* **ui:** misleading `unconnected` label changed to `unknown` ([beaa1a2](https://github.com/zwave-js/zwave-js-ui/commit/beaa1a2090fdc017cff1c1d62850001a05392ef1)), closes [#3562](https://github.com/zwave-js/zwave-js-ui/issues/3562)
+* **ui:** show nlwr route when lwr is unknown in overview ([#3584](https://github.com/zwave-js/zwave-js-ui/issues/3584)) ([a1f8cc2](https://github.com/zwave-js/zwave-js-ui/commit/a1f8cc2a9343b4eb6179f85033215d9d69f29a6e))
+
+
+### Features
+
+* **mqtt:** allow to set options in multicast/broadcast requests ([#3573](https://github.com/zwave-js/zwave-js-ui/issues/3573)) ([9ba5886](https://github.com/zwave-js/zwave-js-ui/commit/9ba5886bea16228921e0e545721f5d0d6a5bb922))
+
 ## [9.8.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.1...v9.8.2) (2024-01-29)
 
 
