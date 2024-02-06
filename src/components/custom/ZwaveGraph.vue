@@ -426,7 +426,7 @@ export default {
 				{
 					color: '#666666',
 					textColor: '#666666',
-					text: 'Unconnected',
+					text: 'Unknown',
 				},
 			],
 			edgesLegend: [
@@ -955,7 +955,7 @@ export default {
 		) {
 			if (!route) {
 				if (routeKind !== RouteKind.NLWR) {
-					// unconnected
+					// unknown route
 					node.color = this.legends[6].color
 				}
 				return
