@@ -294,6 +294,16 @@ const observedCCProps: {
 			})
 		},
 	},
+	[CommandClasses['Node Naming and Location']]: {
+		name(node, value) {
+			node.name = value.value
+			this.emitNodeUpdate(node, { name: value.value })
+		},
+		location(node, value) {
+			node.loc = value.value
+			this.emitNodeUpdate(node, { loc: value.value })
+		},
+	},
 }
 
 export type SensorTypeScale = {
