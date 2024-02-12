@@ -5368,7 +5368,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (zwaveNode.ready) {
 			const res = this._addValue(zwaveNode, args)
 
-			if (res.valueId) {
+			if (res?.valueId) {
 				const node = this._nodes.get(zwaveNode.id)
 				this.subscribeObservers(node, res.valueId)
 			}
@@ -6229,7 +6229,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (!valueId) {
 				// node name and location emit a value update but
 				// there could be no defined valueId as not all nodes
-				// support that CC but zwave-js does (https://github.com/zwave-js/zwave-js-ui/issues/3591)
+				// support that CC but zwave-js does, also we ignore it
+				// on `_valueAdded`. Ref: (https://github.com/zwave-js/zwave-js-ui/issues/3591)
 				if (
 					args.commandClass ===
 					CommandClasses['Node Naming and Location']
