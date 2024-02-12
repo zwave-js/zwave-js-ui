@@ -48,6 +48,7 @@ export default {
 	},
 	data: function () {
 		return {
+			search: '',
 			managedNodes: null,
 			nodesProps: {
 				/* The node property definition map entries can have the following attributes:

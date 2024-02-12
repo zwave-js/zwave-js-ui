@@ -18,93 +18,107 @@
 		class="elevation-1"
 		show-expand
 		show-select
+		:search="search"
 		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
 		<template v-slot:top>
-			<v-row class="ma-2" justify-start>
-				<v-col cols="12">
-					<v-menu
-						v-model="headersMenu"
-						:close-on-content-click="false"
-						@input="
-							managedNodes.tableColumns =
-								managedNodes.tableColumns
-						"
-					>
-						<template v-slot:activator="{ on }">
-							<v-btn color="primary" outlined v-on="on">
-								<v-icon left small>table_chart</v-icon>
-								Columns
-							</v-btn>
-						</template>
-						<v-card>
-							<v-card-text>
-								<draggable
-									v-model="managedNodes.tableColumns"
-									handle=".handle"
-								>
-									<v-checkbox
-										v-for="col in managedNodes.tableColumns"
-										:key="col.name"
-										v-model="col.visible"
-										:value="col.visible"
-										hide-details
-										:label="
-											managedNodes.propDefs[col.name]
-												.label
-										"
-										:input-value="col.visible"
-										@change="col.visible = !!$event"
-									>
-										<template v-slot:prepend>
-											<v-icon
-												class="handle"
-												style="cursor: move"
-												>drag_indicator</v-icon
-											>
-										</template>
-									</v-checkbox>
-								</draggable>
-							</v-card-text>
-							<v-card-actions>
-								<v-btn
-									@click.native="
-										managedNodes.tableColumns =
-											managedNodes.initialTableColumns
+			<v-row class="my-4 ml-1" justify-start>
+				<v-text-field
+					v-model="search"
+					clearable
+					flat
+					solo-inverted
+					hide-details
+					single-line
+					class="ma-2"
+					style="max-width: 250px; min-width: 250px"
+					prepend-inner-icon="search"
+					label="Search"
+				></v-text-field>
+				<v-menu
+					v-model="headersMenu"
+					:close-on-content-click="false"
+					@input="
+						managedNodes.tableColumns = managedNodes.tableColumns
+					"
+				>
+					<template v-slot:activator="{ on }">
+						<v-btn
+							class="my-auto"
+							color="primary"
+							outlined
+							v-on="on"
+						>
+							<v-icon left small>table_chart</v-icon>
+							Columns
+						</v-btn>
+					</template>
+					<v-card>
+						<v-card-text>
+							<draggable
+								v-model="managedNodes.tableColumns"
+								handle=".handle"
+							>
+								<v-checkbox
+									v-for="col in managedNodes.tableColumns"
+									:key="col.name"
+									v-model="col.visible"
+									:value="col.visible"
+									hide-details
+									:label="
+										managedNodes.propDefs[col.name].label
 									"
-									>Reset</v-btn
+									:input-value="col.visible"
+									@change="col.visible = !!$event"
 								>
-							</v-card-actions>
-						</v-card>
-					</v-menu>
-					<v-tooltip bottom>
-						<template v-slot:activator="{ on }">
+									<template v-slot:prepend>
+										<v-icon
+											class="handle"
+											style="cursor: move"
+											>drag_indicator</v-icon
+										>
+									</template>
+								</v-checkbox>
+							</draggable>
+						</v-card-text>
+						<v-card-actions>
 							<v-btn
-								color="blue darken-1"
-								text
-								v-on="on"
 								@click.native="
-									managedNodes.setFilterToSelected()
+									managedNodes.tableColumns =
+										managedNodes.initialTableColumns
 								"
-								:disabled="managedNodes.selected.length === 0"
-								>Filter Selected</v-btn
+								>Reset</v-btn
 							>
-						</template>
-						<span>Show only selected nodes</span>
-					</v-tooltip>
-					<v-tooltip bottom>
-						<template v-slot:activator="{ on }">
-							<v-btn
-								color="blue darken-1"
-								text
-								v-on="on"
-								@click.native="managedNodes.reset()"
-								>Reset Table</v-btn
-							>
-						</template>
-						<span>Reset all table settings</span>
-					</v-tooltip>
-				</v-col>
+						</v-card-actions>
+					</v-card>
+				</v-menu>
+				<v-tooltip bottom>
+					<template v-slot:activator="{ on }">
+						<v-btn
+							color="blue darken-1"
+							class="my-auto"
+							text
+							v-on="on"
+							@click.native="managedNodes.setFilterToSelected()"
+							:disabled="managedNodes.selected.length === 0"
+							>Filter Selected</v-btn
+						>
+					</template>
+					<span>Show only selected nodes</span>
+				</v-tooltip>
+				<v-tooltip bottom>
+					<template v-slot:activator="{ on }">
+						<v-btn
+							color="blue darken-1"
+							class="my-auto"
+							text
+							v-on="on"
+							@click.native="managedNodes.reset()"
+							>Reset Table</v-btn
+						>
+					</template>
+					<span>Reset all table settings</span>
+				</v-tooltip>
 			</v-row>
 		</template>
 		<template
