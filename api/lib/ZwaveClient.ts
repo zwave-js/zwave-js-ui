@@ -296,12 +296,16 @@ const observedCCProps: {
 	},
 	[CommandClasses['Node Naming and Location']]: {
 		name(node, value) {
-			node.name = value.value
-			this.emitNodeUpdate(node, { name: value.value })
+			this.setNodeName(node.id, value.value).catch((error) => {
+				logger.error(`Error while setting node name: ${error.message}`)
+			})
 		},
 		location(node, value) {
-			node.loc = value.value
-			this.emitNodeUpdate(node, { loc: value.value })
+			this.setNodeLocation(node.id, value.value).catch((error) => {
+				logger.error(
+					`Error while setting node location: ${error.message}`,
+				)
+			})
 		},
 	},
 }
@@ -1006,7 +1010,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const valueObserver =
 			observedCCProps[valueId.commandClass]?.[valueId.property]
 
-		if (valueObserver) {
+		if (valueObserver && !this.valuesObservers[valueId.id]) {
 			this.valuesObservers[valueId.id] = valueObserver
 			valueObserver.call(this, node, valueId)
 		}
@@ -2472,7 +2476,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (zwaveNode && node) {
 			node.name = name
-			zwaveNode.name = name
+			if (zwaveNode.name !== name) {
+				zwaveNode.name = name
+			}
 		} else {
 			throw Error('Invalid Node ID')
 		}
@@ -2499,7 +2505,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (node) {
 			node.loc = loc
-			zwaveNode.location = loc
+			if (zwaveNode.location !== loc) {
+				zwaveNode.location = loc
+			}
 		} else {
 			throw Error('Invalid Node ID')
 		}
@@ -6098,6 +6106,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!node) {
 			logger.info(`ValueAdded: no such node: ${zwaveNode.id} error`)
 		} else {
+			// ignore node name and location CC, we already show the inputs for it
+			if (
+				zwaveValue.commandClass ===
+				CommandClasses['Node Naming and Location']
+			) {
+				return null
+			}
+
 			const zwaveValueMeta = zwaveNode.getValueMetadata(zwaveValue)
 
 			const valueId = this._parseValue(
@@ -6210,42 +6226,59 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			const valueId = node.values[vID]
 
-			if (valueId) {
-				// this is set when the updates comes from a write request
-				if (valueId.toUpdate) {
-					valueId.toUpdate = false
-				}
-
-				let newValue = args.newValue
-				if (Buffer.isBuffer(newValue)) {
-					// encode Buffers as HEX strings
-					newValue = utils.buffer2hex(newValue)
-				}
-
-				let prevValue = args.prevValue
-				if (Buffer.isBuffer(prevValue)) {
-					// encode Buffers as HEX strings
-					prevValue = utils.buffer2hex(prevValue)
-				}
-
-				valueId.value = newValue
-				valueId.stateless = !!args.stateless
-
-				if (this.valuesObservers[valueId.id]) {
-					this.valuesObservers[valueId.id].call(this, node, valueId)
-				}
-
-				// ensure duration is never undefined
+			if (!valueId) {
+				// node name and location emit a value update but
+				// there could be no defined valueId as not all nodes
+				// support that CC but zwave-js does (https://github.com/zwave-js/zwave-js-ui/issues/3591)
 				if (
-					valueId.type === 'duration' &&
-					valueId.value === undefined
+					args.commandClass ===
+					CommandClasses['Node Naming and Location']
 				) {
-					valueId.value = new Duration(undefined, 'seconds')
+					const prop = args.property
+					const observer =
+						observedCCProps[
+							CommandClasses['Node Naming and Location']
+						]?.[prop]
+
+					if (observer) {
+						observer.call(this, node, args)
+					}
 				}
 
-				if (!skipUpdate) {
-					this.emitValueChanged(valueId, node, prevValue !== newValue)
-				}
+				return
+			}
+
+			// this is set when the updates comes from a write request
+			if (valueId.toUpdate) {
+				valueId.toUpdate = false
+			}
+
+			let newValue = args.newValue
+			if (Buffer.isBuffer(newValue)) {
+				// encode Buffers as HEX strings
+				newValue = utils.buffer2hex(newValue)
+			}
+
+			let prevValue = args.prevValue
+			if (Buffer.isBuffer(prevValue)) {
+				// encode Buffers as HEX strings
+				prevValue = utils.buffer2hex(prevValue)
+			}
+
+			valueId.value = newValue
+			valueId.stateless = !!args.stateless
+
+			if (this.valuesObservers[valueId.id]) {
+				this.valuesObservers[valueId.id].call(this, node, valueId)
+			}
+
+			// ensure duration is never undefined
+			if (valueId.type === 'duration' && valueId.value === undefined) {
+				valueId.value = new Duration(undefined, 'seconds')
+			}
+
+			if (!skipUpdate) {
+				this.emitValueChanged(valueId, node, prevValue !== newValue)
 			}
 
 			// if valueId is stateless, automatically reset the value after 1 sec
