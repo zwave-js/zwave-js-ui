@@ -1010,7 +1010,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const valueObserver =
 			observedCCProps[valueId.commandClass]?.[valueId.property]
 
-		if (valueObserver && !this.valuesObservers[valueId.id]) {
+		if (valueObserver) {
 			this.valuesObservers[valueId.id] = valueObserver
 			valueObserver.call(this, node, valueId)
 		}
