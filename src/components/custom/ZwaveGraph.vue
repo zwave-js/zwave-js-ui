@@ -426,7 +426,7 @@ export default {
 				{
 					color: '#666666',
 					textColor: '#666666',
-					text: 'Unconnected',
+					text: 'Unknown',
 				},
 			],
 			edgesLegend: [
@@ -945,10 +945,17 @@ export default {
 				}
 			}
 		},
-		parseRouteStats(edges, controllerId, node, route, routeKind) {
+		parseRouteStats(
+			edges,
+			controllerId,
+			node,
+			route,
+			routeKind,
+			forceShow = false,
+		) {
 			if (!route) {
 				if (routeKind !== RouteKind.NLWR) {
-					// unconnected
+					// unknown route
 					node.color = this.legends[6].color
 				}
 				return
@@ -957,7 +964,8 @@ export default {
 			const isReturn = routeKind >= 20
 
 			// tells if this route should be shown in overview
-			const showInOverview = routeKind !== RouteKind.NLWR && !isReturn
+			const showInOverview =
+				forceShow || (routeKind !== RouteKind.NLWR && !isReturn)
 
 			const { repeaters, repeaterRSSI, rssi, routeFailedBetween } = route
 
@@ -1196,6 +1204,7 @@ export default {
 					entity,
 					node.statistics?.nlwr,
 					RouteKind.NLWR,
+					!node.statistics?.lwr,
 				)
 
 				if (node.customSUCReturnRoutes) {

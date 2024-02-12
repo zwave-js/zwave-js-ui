@@ -15,6 +15,17 @@
   -webkit-border-radius: 1ex;
 }
 
+/*
+In Chrome 121, support was added for scrollbar-color and scrollbar-width. If some of these properties are used, then ::-webkit-scrollbar won't work.
+https://syntackle.com/blog/changes-to-scrollbar-styling-in-chrome-121/
+*/
+@supports not selector(::-webkit-scrollbar) {
+  html {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.233);
+  }
+}
+
 /* Hacky hack. Remove scrollbars for 320 width screens */
 @media screen and (max-width: 320px) {
   body::-webkit-scrollbar {
