@@ -6242,7 +6242,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						]?.[prop]
 
 					if (observer) {
-						observer.call(this, node, args)
+						observer.call(this, node, {
+							...args,
+							value: args.newValue,
+						})
 					}
 				}
 
