@@ -1,5 +1,19 @@
 
 
+# [9.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.3...v9.9.0) (2024-02-15)
+
+
+### Bug Fixes
+
+* keep node name and location in sync ([#3592](https://github.com/zwave-js/zwave-js-ui/issues/3592)) ([697967b](https://github.com/zwave-js/zwave-js-ui/commit/697967bcf9270657dab71b8e9d7d7e46fdaaa298))
+* **ui:** scrollbars size ([ff5875d](https://github.com/zwave-js/zwave-js-ui/commit/ff5875d9ebec2bd5ddb1b866bb978cabbe0f2967))
+
+
+### Features
+
+* bump zwave-js@12.4.4 ([#3597](https://github.com/zwave-js/zwave-js-ui/issues/3597)) ([55431cf](https://github.com/zwave-js/zwave-js-ui/commit/55431cf57aa640f0799c5bd16b796dcedaaa76c8))
+* **ui:** search box in control panel table ([#3598](https://github.com/zwave-js/zwave-js-ui/issues/3598)) ([e72217d](https://github.com/zwave-js/zwave-js-ui/commit/e72217d8232be33d9ab4c10f4af0506cceef1f78))
+
 ## [9.8.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.2...v9.8.3) (2024-02-06)
 
 
