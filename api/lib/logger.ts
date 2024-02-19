@@ -262,7 +262,9 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 	const deleteFile = async (filePath: string) => {
 		logger.info(`Deleting log file: ${filePath}`)
 		return unlink(filePath).catch((e) => {
-			logger.error(`Error deleting log file: ${filePath}`, e)
+			if (e.code !== 'ENOENT') {
+				logger.error(`Error deleting log file: ${filePath}`, e)
+			}
 		})
 	}
 
