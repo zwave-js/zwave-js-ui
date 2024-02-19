@@ -8,6 +8,8 @@ import { GatewayConfig } from './Gateway'
 import { DeepPartial, joinPath } from './utils'
 import * as path from 'path'
 import { readdir, stat, unlink } from 'fs/promises'
+import { log } from 'console'
+import { Stats } from 'fs'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
@@ -277,12 +279,28 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 					file !== settings.symlinkName && filePathRegExp.test(file),
 			)
 
-			const logFilesStats = await Promise.all(
+			const fileStats = await Promise.allSettled<{
+				file: string
+				stats: Stats
+			}>(
 				logFiles.map(async (file) => ({
 					file,
 					stats: await stat(path.join(logsDir, file)),
 				})),
 			)
+
+			const logFilesStats: {
+				file: string
+				stats: Stats
+			}[] = []
+
+			for (const res of fileStats) {
+				if (res.status === 'fulfilled') {
+					logFilesStats.push(res.value)
+				} else {
+					logger.error('Error getting file stats:', res.reason)
+				}
+			}
 
 			logFilesStats.sort((a, b) => a.stats.mtimeMs - b.stats.mtimeMs)
 
