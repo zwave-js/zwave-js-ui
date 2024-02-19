@@ -1,10 +1,13 @@
-import DailyRotateFile from '@zwave-js/winston-daily-rotate-file'
+import DailyRotateFile, {
+	DailyRotateFileTransportOptions,
+} from '@zwave-js/winston-daily-rotate-file'
 import { ensureDirSync } from 'fs-extra'
 import winston from 'winston'
 import { logsDir, storeDir } from '../config/app'
 import { GatewayConfig } from './Gateway'
 import { DeepPartial, joinPath } from './utils'
 import * as path from 'path'
+import { readdir, stat, unlink } from 'fs/promises'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
@@ -121,7 +124,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				level: config.level,
 			})
 		} else {
-			fileTransport = new DailyRotateFile({
+			const options: DailyRotateFileTransportOptions = {
 				filename: config.filePath,
 				auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
 				datePattern: 'YYYY-MM-DD',
@@ -134,7 +137,10 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
 				level: config.level,
 				format: customFormat(config, true),
-			})
+			}
+			fileTransport = new DailyRotateFile(options)
+
+			setupCleanJob(options)
 		}
 
 		transportsList.push(fileTransport)
@@ -177,9 +183,122 @@ export function module(module: string): ModuleLogger {
  * Setup all loggers starting from config
  */
 export function setupAll(config: DeepPartial<GatewayConfig>) {
+	if (cleanJob) {
+		clearInterval(cleanJob)
+		cleanJob = undefined
+	}
+
 	logContainer.loggers.forEach((logger: ModuleLogger) => {
 		logger.setup(config)
 	})
+}
+
+let cleanJob: NodeJS.Timeout
+
+function setupCleanJob(settings: DailyRotateFileTransportOptions) {
+	if (cleanJob) {
+		return
+	}
+
+	let maxFilesMs: number
+	let maxFiles: number
+	let maxSizeBytes: number
+
+	const logger = module('LOGGER')
+
+	// convert maxFiles to milliseconds
+	if (settings.maxFiles !== undefined) {
+		const matches = settings.maxFiles.toString().match(/(\d+)([dhm])/)
+
+		if (settings.maxFiles) {
+			const value = parseInt(matches[1])
+			const unit = matches[2]
+			switch (unit) {
+				case 'd':
+					maxFilesMs = value * 24 * 60 * 60 * 1000
+					break
+				case 'h':
+					maxFilesMs = value * 60 * 60 * 1000
+					break
+				case 'm':
+					maxFilesMs = value * 60 * 1000
+					break
+			}
+		} else {
+			maxFiles = Number(settings.maxFiles)
+		}
+	}
+
+	if (settings.maxSize !== undefined) {
+		// convert maxSize to bytes
+		const matches2 = settings.maxSize.toString().match(/(\d+)([kmg])/)
+		if (matches2) {
+			const value = parseInt(matches2[1])
+			const unit = matches2[2]
+			switch (unit) {
+				case 'k':
+					maxSizeBytes = value * 1024
+					break
+				case 'm':
+					maxSizeBytes = value * 1024 * 1024
+					break
+				case 'g':
+					maxSizeBytes = value * 1024 * 1024 * 1024
+					break
+			}
+		} else {
+			maxSizeBytes = Number(settings.maxSize)
+		}
+	}
+
+	// clean up old log files based on maxFiles and maxSize
+
+	const filePathRegExp = new RegExp(
+		path.basename(settings.filename).replace(/%DATE%/g, '([^.]+)'),
+	)
+
+	const logsDir = path.dirname(settings.filename)
+
+	const clean = async () => {
+		try {
+			logger.info('Cleaning up log files...')
+			const files = await readdir(logsDir)
+			const logFiles = files.filter(
+				(file) =>
+					file !== settings.symlinkName && filePathRegExp.test(file),
+			)
+			logFiles.sort()
+
+			let totalSize = 0
+			let deletedFiles = 0
+			for (const file of logFiles) {
+				const filePath = path.join(logsDir, file)
+				const stats = await stat(filePath)
+				totalSize += stats.size
+				const fileDateStr = file.match(filePathRegExp)
+
+				const fileMs = fileDateStr[1]
+					? new Date(fileDateStr[1]).getTime()
+					: 0
+
+				const shouldDelete =
+					(maxSizeBytes && totalSize > maxSizeBytes) ||
+					(maxFiles && logFiles.length - deletedFiles > maxFiles) ||
+					(maxFilesMs && fileMs && Date.now() - fileMs > maxFilesMs)
+
+				if (shouldDelete) {
+					logger.info(`Deleting log file: ${filePath}`)
+					await unlink(filePath)
+					deletedFiles++
+				}
+			}
+		} catch (e) {
+			console.error('Error cleaning up log files:', e)
+		}
+	}
+
+	cleanJob = setInterval(clean, 60 * 60 * 1000)
+	clean().catch(() => {})
 }
 
 export default logContainer.loggers
