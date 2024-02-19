@@ -259,6 +259,13 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 
 	const logsDir = path.dirname(settings.filename)
 
+	const deleteFile = async (filePath: string) => {
+		logger.info(`Deleting log file: ${filePath}`)
+		return unlink(filePath).catch((e) => {
+			logger.error(`Error deleting log file: ${filePath}`, e)
+		})
+	}
+
 	const clean = async () => {
 		try {
 			logger.info('Cleaning up log files...')
@@ -285,6 +292,7 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 				const filePath = path.join(logsDir, file)
 				totalSize += stats.size
 
+				// last modified time in milliseconds
 				const fileMs = stats.mtimeMs
 
 				const shouldDelete =
@@ -293,13 +301,12 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 					(maxFilesMs && fileMs && Date.now() - fileMs > maxFilesMs)
 
 				if (shouldDelete) {
-					logger.info(`Deleting log file: ${filePath}`)
-					await unlink(filePath)
+					await deleteFile(filePath)
 					deletedFiles++
 				}
 			}
 		} catch (e) {
-			console.error('Error cleaning up log files:', e)
+			logger.error('Error cleaning up log files:', e)
 		}
 	}
 
