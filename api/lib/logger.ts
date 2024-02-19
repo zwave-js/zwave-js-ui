@@ -267,19 +267,25 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 				(file) =>
 					file !== settings.symlinkName && filePathRegExp.test(file),
 			)
-			logFiles.sort()
+
+			const logFilesStats = await Promise.all(
+				logFiles.map(async (file) => ({
+					file,
+					stats: await stat(path.join(logsDir, file)),
+				})),
+			)
+
+			logFilesStats.sort((a, b) => a.stats.mtimeMs - b.stats.mtimeMs)
+
+			// sort by mtime
 
 			let totalSize = 0
 			let deletedFiles = 0
-			for (const file of logFiles) {
+			for (const { file, stats } of logFilesStats) {
 				const filePath = path.join(logsDir, file)
-				const stats = await stat(filePath)
 				totalSize += stats.size
-				const fileDateStr = file.match(filePathRegExp)
 
-				const fileMs = fileDateStr[1]
-					? new Date(fileDateStr[1]).getTime()
-					: 0
+				const fileMs = stats.mtimeMs
 
 				const shouldDelete =
 					(maxSizeBytes && totalSize > maxSizeBytes) ||
