@@ -8,7 +8,6 @@ import { GatewayConfig } from './Gateway'
 import { DeepPartial, joinPath } from './utils'
 import * as path from 'path'
 import { readdir, stat, unlink } from 'fs/promises'
-import { log } from 'console'
 import { Stats } from 'fs'
 
 const { format, transports, addColors } = winston
@@ -256,7 +255,7 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 	// clean up old log files based on maxFiles and maxSize
 
 	const filePathRegExp = new RegExp(
-		path.basename(settings.filename).replace(/%DATE%/g, '([^.]+)'),
+		path.basename(settings.filename).replace(/%DATE%/g, '(.*)'),
 	)
 
 	const logsDir = path.dirname(settings.filename)
