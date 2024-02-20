@@ -9,6 +9,7 @@ import { DeepPartial, joinPath } from './utils'
 import * as path from 'path'
 import { readdir, stat, unlink } from 'fs/promises'
 import { Stats } from 'fs'
+import escapeStringRegexp from 'escape-string-regexp'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
@@ -255,10 +256,10 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 	// clean up old log files based on maxFiles and maxSize
 
 	const filePathRegExp = new RegExp(
-		path
-			.basename(settings.filename)
-			.replace(/\./g, '\\.') // here we should escape every possible regex character, but for now we just escape the dot
-			.replace(/%DATE%/g, '(.*)'),
+		escapeStringRegexp(path.basename(settings.filename)).replace(
+			/%DATE%/g,
+			'(.*)',
+		),
 	)
 
 	const logsDir = path.dirname(settings.filename)
