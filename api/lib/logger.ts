@@ -255,7 +255,10 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 	// clean up old log files based on maxFiles and maxSize
 
 	const filePathRegExp = new RegExp(
-		path.basename(settings.filename).replace(/%DATE%/g, '(.*)'),
+		path
+			.basename(settings.filename)
+			.replace(/\./g, '\\.') // here we should escape every possible regex character, but for now we just escape the dot
+			.replace(/%DATE%/g, '(.*)'),
 	)
 
 	const logsDir = path.dirname(settings.filename)
