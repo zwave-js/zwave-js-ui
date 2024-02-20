@@ -6132,6 +6132,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					zwaveValue as ZUIValueId,
 					zwaveNode.getValue(zwaveValue),
 				)
+
+				return null
 			}
 
 			const zwaveValueMeta = zwaveNode.getValueMetadata(zwaveValue)
