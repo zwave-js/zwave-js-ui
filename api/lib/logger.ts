@@ -185,10 +185,7 @@ export function module(module: string): ModuleLogger {
  * Setup all loggers starting from config
  */
 export function setupAll(config: DeepPartial<GatewayConfig>) {
-	if (cleanJob) {
-		clearInterval(cleanJob)
-		cleanJob = undefined
-	}
+	stopCleanJob()
 
 	logContainer.loggers.forEach((logger: ModuleLogger) => {
 		logger.setup(config)
@@ -197,7 +194,7 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 
 let cleanJob: NodeJS.Timeout
 
-function setupCleanJob(settings: DailyRotateFileTransportOptions) {
+export function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 	if (cleanJob) {
 		return
 	}
@@ -335,6 +332,13 @@ function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 
 	cleanJob = setInterval(clean, 60 * 60 * 1000)
 	clean().catch(() => {})
+}
+
+export function stopCleanJob() {
+	if (cleanJob) {
+		clearInterval(cleanJob)
+		cleanJob = undefined
+	}
 }
 
 export default logContainer.loggers

@@ -8,6 +8,7 @@ import {
 	sanitizedConfig,
 	module,
 	setupAll,
+	stopCleanJob,
 } from '../../api/lib/logger'
 import winston from 'winston'
 
@@ -22,6 +23,10 @@ function checkConfigDefaults(mod, cfg) {
 describe('logger.js', () => {
 	let logger1: ModuleLogger
 	let logger2: ModuleLogger
+
+	afterEach(() => {
+		stopCleanJob()
+	})
 
 	describe('sanitizedConfig()', () => {
 		it('should set undefined config object to defaults', () => {
