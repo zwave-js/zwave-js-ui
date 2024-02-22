@@ -2367,6 +2367,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	private onNodeNameLocationChanged(
+		node: ZUINode,
+		valueId: ZUIValueId,
+		value: string,
+	) {
+		const prop = valueId.property
+		const observer =
+			observedCCProps[CommandClasses['Node Naming and Location']]?.[prop]
+
+		if (observer) {
+			observer.call(this, node, {
+				...valueId,
+				value,
+			})
+		}
+	}
+
 	/**
 	 * Send an event to socket with `data`
 	 *
@@ -6106,11 +6123,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!node) {
 			logger.info(`ValueAdded: no such node: ${zwaveNode.id} error`)
 		} else {
-			// ignore node name and location CC, we already show the inputs for it
 			if (
 				zwaveValue.commandClass ===
 				CommandClasses['Node Naming and Location']
 			) {
+				this.onNodeNameLocationChanged(
+					node,
+					zwaveValue as ZUIValueId,
+					zwaveNode.getValue(zwaveValue),
+				)
+
 				return null
 			}
 
@@ -6230,23 +6252,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				// node name and location emit a value update but
 				// there could be no defined valueId as not all nodes
 				// support that CC but zwave-js does, also we ignore it
-				// on `_valueAdded`. Ref: (https://github.com/zwave-js/zwave-js-ui/issues/3591)
+				// on `_addvalue`. Ref: (https://github.com/zwave-js/zwave-js-ui/issues/3591)
 				if (
 					args.commandClass ===
 					CommandClasses['Node Naming and Location']
 				) {
-					const prop = args.property
-					const observer =
-						observedCCProps[
-							CommandClasses['Node Naming and Location']
-						]?.[prop]
-
-					if (observer) {
-						observer.call(this, node, {
-							...args,
-							value: args.newValue,
-						})
-					}
+					this.onNodeNameLocationChanged(
+						node,
+						args as ZUIValueId,
+						args.newValue,
+					)
 				}
 
 				return
