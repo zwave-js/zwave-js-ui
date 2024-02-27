@@ -1787,7 +1787,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						this.logNode(
 							zwaveNode,
 							'warn',
-							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`,
+							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}, association not allowed`,
 						)
 					}
 				}
