@@ -136,7 +136,7 @@ Enable this to use Z-Wave JS UI as only a Control Panel
 
      - `mqtt_prefix`: the prefix set in MQTT settings
      - `node_location`: location of the Z-Wave node (optional)
-     - `node_name`: name of the node, if not set it will be `nodeID_<node_id>`
+     - `node_name`: name of the node, if not set it will be `nodeID_<node_id>`. Can also be configured to only be the `nodeId`.
      - `class_name`: the valueId command class name corresponding to the given command class number or `unknownClass_<class_id>` if the class name is not known
      - `?endpoint`: Used only with multi-instance devices. Endpoints, other than the main endpoint (0), will have: `endpoint_<endpoint>`
      - `propertyName`: the value [propertyName](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
