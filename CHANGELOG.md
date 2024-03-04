@@ -1,5 +1,14 @@
 
 
+## [9.9.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.9.0...v9.9.1) (2024-03-04)
+
+
+### Bug Fixes
+
+* better message in case association is not allowed ([#3624](https://github.com/zwave-js/zwave-js-ui/issues/3624)) ([abcfd41](https://github.com/zwave-js/zwave-js-ui/commit/abcfd41a286283efc8483974a64be23dbf064f11))
+* create custom logs cleanup function ([#3610](https://github.com/zwave-js/zwave-js-ui/issues/3610)) ([64f32f0](https://github.com/zwave-js/zwave-js-ui/commit/64f32f0020f4a9da68576862fbaaadf2f1d7f96d))
+* node name and location change not catched on value added ([#3612](https://github.com/zwave-js/zwave-js-ui/issues/3612)) ([fa37244](https://github.com/zwave-js/zwave-js-ui/commit/fa37244cd1addcd6f55625b516aec617f91ed8f4))
+
 # [9.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.8.3...v9.9.0) (2024-02-15)
 
 
