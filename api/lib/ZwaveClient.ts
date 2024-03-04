@@ -296,6 +296,20 @@ const observedCCProps: {
 			})
 		},
 	},
+	[CommandClasses['Node Naming and Location']]: {
+		name(node, value) {
+			this.setNodeName(node.id, value.value).catch((error) => {
+				logger.error(`Error while setting node name: ${error.message}`)
+			})
+		},
+		location(node, value) {
+			this.setNodeLocation(node.id, value.value).catch((error) => {
+				logger.error(
+					`Error while setting node location: ${error.message}`,
+				)
+			})
+		},
+	},
 }
 
 export type SensorTypeScale = {
@@ -2384,6 +2398,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	private onNodeNameLocationChanged(
+		node: ZUINode,
+		valueId: ZUIValueId,
+		value: string,
+	) {
+		const prop = valueId.property
+		const observer =
+			observedCCProps[CommandClasses['Node Naming and Location']]?.[prop]
+
+		if (observer) {
+			observer.call(this, node, {
+				...valueId,
+				value,
+			})
+		}
+	}
+
 	/**
 	 * Send an event to socket with `data`
 	 *
@@ -2493,7 +2524,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (zwaveNode && node) {
 			node.name = name
-			zwaveNode.name = name
+			if (zwaveNode.name !== name) {
+				zwaveNode.name = name
+			}
 		} else {
 			throw Error('Invalid Node ID')
 		}
@@ -2520,7 +2553,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (node) {
 			node.loc = loc
-			zwaveNode.location = loc
+			if (zwaveNode.location !== loc) {
+				zwaveNode.location = loc
+			}
 		} else {
 			throw Error('Invalid Node ID')
 		}
@@ -5396,7 +5431,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (zwaveNode.ready) {
 			const res = this._addValue(zwaveNode, args)
 
-			if (res.valueId) {
+			if (res?.valueId) {
 				const node = this._nodes.get(zwaveNode.id)
 				this.subscribeObservers(node, res.valueId)
 			}
@@ -6145,6 +6180,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!node) {
 			logger.info(`ValueAdded: no such node: ${zwaveNode.id} error`)
 		} else {
+			if (
+				zwaveValue.commandClass ===
+				CommandClasses['Node Naming and Location']
+			) {
+				this.onNodeNameLocationChanged(
+					node,
+					zwaveValue as ZUIValueId,
+					zwaveNode.getValue(zwaveValue),
+				)
+
+				return null
+			}
+
 			const zwaveValueMeta = zwaveNode.getValueMetadata(zwaveValue)
 
 			const valueId = this._parseValue(
@@ -6257,42 +6305,56 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			const valueId = node.values[vID]
 
-			if (valueId) {
-				// this is set when the updates comes from a write request
-				if (valueId.toUpdate) {
-					valueId.toUpdate = false
-				}
-
-				let newValue = args.newValue
-				if (Buffer.isBuffer(newValue)) {
-					// encode Buffers as HEX strings
-					newValue = utils.buffer2hex(newValue)
-				}
-
-				let prevValue = args.prevValue
-				if (Buffer.isBuffer(prevValue)) {
-					// encode Buffers as HEX strings
-					prevValue = utils.buffer2hex(prevValue)
-				}
-
-				valueId.value = newValue
-				valueId.stateless = !!args.stateless
-
-				if (this.valuesObservers[valueId.id]) {
-					this.valuesObservers[valueId.id].call(this, node, valueId)
-				}
-
-				// ensure duration is never undefined
+			if (!valueId) {
+				// node name and location emit a value update but
+				// there could be no defined valueId as not all nodes
+				// support that CC but zwave-js does, also we ignore it
+				// on `_addvalue`. Ref: (https://github.com/zwave-js/zwave-js-ui/issues/3591)
 				if (
-					valueId.type === 'duration' &&
-					valueId.value === undefined
+					args.commandClass ===
+					CommandClasses['Node Naming and Location']
 				) {
-					valueId.value = new Duration(undefined, 'seconds')
+					this.onNodeNameLocationChanged(
+						node,
+						args as ZUIValueId,
+						args.newValue,
+					)
 				}
 
-				if (!skipUpdate) {
-					this.emitValueChanged(valueId, node, prevValue !== newValue)
-				}
+				return
+			}
+
+			// this is set when the updates comes from a write request
+			if (valueId.toUpdate) {
+				valueId.toUpdate = false
+			}
+
+			let newValue = args.newValue
+			if (Buffer.isBuffer(newValue)) {
+				// encode Buffers as HEX strings
+				newValue = utils.buffer2hex(newValue)
+			}
+
+			let prevValue = args.prevValue
+			if (Buffer.isBuffer(prevValue)) {
+				// encode Buffers as HEX strings
+				prevValue = utils.buffer2hex(prevValue)
+			}
+
+			valueId.value = newValue
+			valueId.stateless = !!args.stateless
+
+			if (this.valuesObservers[valueId.id]) {
+				this.valuesObservers[valueId.id].call(this, node, valueId)
+			}
+
+			// ensure duration is never undefined
+			if (valueId.type === 'duration' && valueId.value === undefined) {
+				valueId.value = new Duration(undefined, 'seconds')
+			}
+
+			if (!skipUpdate) {
+				this.emitValueChanged(valueId, node, prevValue !== newValue)
 			}
 
 			// if valueId is stateless, automatically reset the value after 1 sec
