@@ -66,7 +66,7 @@
     "@zwave-js/server": "^1.33.0",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-1",
     "ansi_up": "^6.0.2",
-    "archiver": "^6.0.1",
+    "archiver": "^7.0.0",
     "axios": "^1.5.1",
     "connect-history-api-fallback": "2.0.0",
     "cookie-parser": "^1.4.6",
