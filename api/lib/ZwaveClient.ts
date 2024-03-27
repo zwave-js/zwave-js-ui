@@ -15,6 +15,7 @@ import {
 	ValueMetadataString,
 	ZWaveDataRate,
 	ZWaveErrorCodes,
+	Protocols,
 } from '@zwave-js/core'
 import { isDocker } from '@zwave-js/shared'
 import {
@@ -100,6 +101,7 @@ import {
 	PartialZWaveOptions,
 	InclusionUserCallbacks,
 	InclusionState,
+	ProvisioningEntryStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -555,6 +557,8 @@ export type ZUINode = {
 	}
 	defaultTransitionDuration?: string
 	defaultVolume?: number
+	protocol?: Protocols
+	supportsLongRange?: boolean
 }
 
 export type NodeEvent = {
@@ -572,6 +576,10 @@ export type ZwaveConfig = {
 		S2_Authenticated: string
 		S2_AccessControl: string
 		S0_Legacy: string
+	}>
+	securityKeysLongRange?: utils.DeepPartial<{
+		S2_Authenticated: string
+		S2_AccessControl: string
 	}>
 	serverEnabled?: boolean
 	enableSoftReset?: boolean
@@ -2028,6 +2036,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				throw new DriverNotReadyError()
 			}
 
+			const zwaveNode = this.getNode(nodeId)
+
+			if (zwaveNode.protocol === Protocols.ZWaveLongRange) {
+				return []
+			}
+
 			const neighbors =
 				await this._driver.controller.getNodeNeighbors(nodeId)
 			this.logNode(nodeId, 'debug', `Neighbors: ${neighbors.join(', ')}`)
@@ -2249,6 +2263,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			zwaveOptions.securityKeys = {}
+			zwaveOptions.securityKeysLongRange = {}
 
 			// convert security keys to buffer
 			for (const key in this.cfg.securityKeys) {
@@ -2258,6 +2273,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				) {
 					zwaveOptions.securityKeys[key] = Buffer.from(
 						this.cfg.securityKeys[key],
+						'hex',
+					)
+				}
+			}
+
+			this.cfg.securityKeysLongRange =
+				this.cfg.securityKeysLongRange || {}
+
+			// convert security keys to buffer
+			for (const key in this.cfg.securityKeysLongRange) {
+				if (
+					availableKeys.includes(key) &&
+					this.cfg.securityKeysLongRange[key].length === 32
+				) {
+					zwaveOptions.securityKeysLongRange[key] = Buffer.from(
+						this.cfg.securityKeysLongRange[key],
 						'hex',
 					)
 				}
@@ -4973,6 +5004,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			throw Error('DSK is required')
 		}
 
+		const isNew = !this.driver.controller.getProvisioningEntry(entry.dsk)
+
+		// disable it so user can choose the protocol to use
+		if (
+			isNew &&
+			entry.supportedProtocols?.includes(Protocols.ZWaveLongRange)
+		) {
+			entry.status = ProvisioningEntryStatus.Inactive
+		}
+
 		this.driver.controller.provisionSmartStartNode(entry)
 
 		return entry
@@ -5133,6 +5174,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.ready = true
 
 		if (node.isControllerNode) {
+			node.supportsLongRange = this.driver.controller.supportsLongRange
 			this.updateControllerNodeProps(node).catch((error) => {
 				this.logNode(
 					zwaveNode,
@@ -5182,7 +5224,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		if (!zwaveNode.isControllerNode) {
+		// Long range nodes use a star topology, so they don't have return/priority routes
+		if (
+			!zwaveNode.isControllerNode &&
+			zwaveNode.protocol !== Protocols.ZWaveLongRange
+		) {
 			this.getPriorityRoute(zwaveNode.id).catch((error) => {
 				this.logNode(
 					zwaveNode,
@@ -5947,6 +5993,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.firmwareCapabilities =
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
 
+		node.protocol = zwaveNode.protocol
 		const storedNode = this.storeNodes[nodeId]
 
 		if (storedNode) {
@@ -6012,12 +6059,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			} else {
 				logger.info('RF region is not supported by controller')
 			}
+
+			// when RF region changes, check if long range is supported
+			if (
+				this.driver.controller.supportsLongRange !==
+				node.supportsLongRange
+			) {
+				node.supportsLongRange =
+					this.driver.controller.supportsLongRange
+			}
 		}
 
 		this.emitNodeUpdate(node, {
 			powerlevel: node.powerlevel,
 			measured0dBm: node.measured0dBm,
 			RFRegion: node.RFRegion,
+			supportsLongRange: node.supportsLongRange,
 		})
 	}
 
@@ -6397,6 +6454,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				| 'manufacturer'
 				| 'productDescription'
 				| 'productLabel'
+				| 'supportsLongRange'
 			>
 	> {
 		const zuiNode = this.nodes.get(node.id)
@@ -6433,6 +6491,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			productLabel: zuiNode?.productLabel,
 			deviceDatabaseUrl: node.deviceDatabaseUrl,
 			keepAwake: node.keepAwake,
+			protocol: node.protocol,
+			supportsLongRange: zuiNode?.supportsLongRange,
 		}
 	}
 

@@ -1,6 +1,7 @@
 import draggable from 'vuedraggable'
 import colors from 'vuetify/lib/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
+import { Protocols } from '@zwave-js/core/safe'
 
 import { mapState } from 'pinia'
 import {
@@ -20,9 +21,14 @@ import {
 	mdiPlusCircle,
 	mdiPowerPlug,
 	mdiSleep,
+	mdiZWave,
 } from '@mdi/js'
 import useBaseStore from '../../stores/base.js'
-import { getBatteryDescription } from '../../lib/utils.js'
+import {
+	getBatteryDescription,
+	getProtocol,
+	getProtocolColor,
+} from '../../lib/utils.js'
 
 export default {
 	props: {
@@ -155,6 +161,26 @@ export default {
 						return v
 					},
 				},
+				protocol: {
+					type: 'string',
+					label: 'Protocol',
+					richValue: (node) => {
+						let v = {
+							align: 'center',
+							icon: node.ready ? mdiMinusCircle : mdiHelpCircle,
+							iconStyle: node.ready
+								? `color: ${colors.red.base}`
+								: 'color: grey',
+							description: node.ready ? 'No' : 'Unknown Protocol',
+						}
+						if (node.protocol === undefined) return v
+
+						v.icon = mdiZWave
+						v.description = getProtocol(node)
+						v.iconStyle = `color: ${getProtocolColor(node)}`
+						return v
+					},
+				},
 				firmwareVersion: {
 					type: 'string',
 					label: 'FW',
@@ -231,6 +257,20 @@ export default {
 			}
 
 			return undefined
+		},
+		getControllerProtocolIcon(longRange) {
+			const protocol = longRange
+				? Protocols.ZWaveLongRange
+				: Protocols.ZWave
+
+			return {
+				align: 'center',
+				icon: mdiZWave,
+				iconStyle: `color: ${getProtocolColor({
+					protocol,
+				})}`,
+				description: getProtocol({ protocol }),
+			}
 		},
 		groupValue(group) {
 			return this.managedNodes.groupValue(group)

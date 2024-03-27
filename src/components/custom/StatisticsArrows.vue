@@ -24,7 +24,7 @@
 			</center>
 		</template>
 		<span style="white-space: pre-wrap">{{
-			jsonToList(node.statistics)
+			node.statistics ? jsonToList(node.statistics) : '-----'
 		}}</span>
 	</v-tooltip>
 </template>

@@ -37,10 +37,14 @@ const useBaseStore = defineStore('base', {
 			},
 			logEnabled: true,
 			securityKeys: {
-				S2_Unauthenticated: undefined,
-				S2_Authenticated: undefined,
-				S2_AccessControl: undefined,
-				S0_Legacy: undefined,
+				S2_Unauthenticated: '',
+				S2_Authenticated: '',
+				S2_AccessControl: '',
+				S0_Legacy: '',
+			},
+			securityKeysLongRange: {
+				S2_Authenticated: '',
+				S2_AccessControl: '',
 			},
 			deviceConfigPriorityDir: '',
 			logToFile: true,

@@ -33,7 +33,7 @@
 					>
 						<v-row>
 							<v-col
-								v-for="(input, index) in options.inputs"
+								v-for="(input, index) in inputs"
 								:key="index"
 								:cols="input.cols || 12"
 							>
@@ -275,6 +275,64 @@ export default {
 				}
 			},
 		},
+		inputs() {
+			const values = this.options.values || {}
+			const inputs = this.options.inputs || []
+
+			for (const input of inputs) {
+				const inited = !!this.inputProps[input.key]
+				const inputProp = this.inputProps[input.key] ?? {
+					show: false,
+					onChange: noop,
+					rules: [],
+				}
+
+				this.inputProps = {
+					...this.inputProps,
+					[input.key]: inputProp,
+				}
+
+				// this must be re-evaluated every time `this.values` changes
+				if (typeof input.show === 'function') {
+					inputProp.show = input.show(this.values)
+				} else {
+					inputProp.show = true
+				}
+
+				if (!inited) {
+					if (input.default !== undefined) {
+						// without this code block is bugged, don't simply assign
+						this.$set(
+							this.values,
+							input.key,
+							values[input.key] ?? input.default,
+						)
+					}
+
+					if (input.rules) {
+						inputProp.rules = input.rules.map((r) =>
+							wrapFunc(r, this.values),
+						)
+					}
+
+					if (
+						input.onChange &&
+						typeof input.onChange === 'function'
+					) {
+						inputProp.onChange = input.onChange.bind(
+							this,
+							this.values,
+						)
+					}
+				}
+			}
+
+			return (
+				inputs?.filter(
+					(input) => !input.hidden && this.inputProps[input.key].show,
+				) ?? []
+			)
+		},
 	},
 	methods: {
 		noop,
@@ -318,43 +376,9 @@ export default {
 			this.dialog = true
 			this.title = title
 			this.message = message
-
-			Object.assign(this.options, options)
-
-			const values = options.values || {}
 			this.inputProps = {}
 
-			if (options.inputs) {
-				for (const input of options.inputs) {
-					this.inputProps[input.key] = {}
-					if (input.default !== undefined) {
-						// without this code block is bugged, don't simply assign
-						this.$set(
-							this.values,
-							input.key,
-							values[input.key] ?? input.default,
-						)
-					}
-
-					if (
-						input.onChange &&
-						typeof input.onChange === 'function'
-					) {
-						this.inputProps[input.key].onChange =
-							input.onChange.bind(this, this.values)
-					} else {
-						this.inputProps[input.key].onChange = noop
-					}
-
-					if (input.rules) {
-						this.inputProps[input.key].rules = input.rules.map(
-							(r) => wrapFunc(r, this.values),
-						)
-					} else {
-						this.inputProps[input.key].rules = []
-					}
-				}
-			}
+			Object.assign(this.options, options)
 
 			return new Promise((resolve, reject) => {
 				this.resolve = resolve

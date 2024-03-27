@@ -1,4 +1,4 @@
-import { isValidDSK } from '@zwave-js/core/safe'
+import { isValidDSK, Protocols } from '@zwave-js/core/safe'
 
 export function copy(o) {
 	return JSON.parse(JSON.stringify(o))
@@ -178,4 +178,26 @@ export function getBatteryDescription(node) {
 
 export function isUndef(v) {
 	return v === undefined || v === null || v === ''
+}
+
+export function getProtocol(node) {
+	switch (node.protocol) {
+		case Protocols.ZWave:
+			return 'Z-Wave'
+		case Protocols.ZWaveLongRange:
+			return 'Z-Wave Long Range'
+		default:
+			return 'Unknown'
+	}
+}
+
+export function getProtocolColor(node) {
+	switch (node.protocol) {
+		case Protocols.ZWave:
+			return 'blue'
+		case Protocols.ZWaveLongRange:
+			return 'purple'
+		default:
+			return 'grey'
+	}
 }

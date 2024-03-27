@@ -199,6 +199,22 @@
 			/>
 			<div v-else></div>
 		</template>
+		<template v-slot:[`item.protocol`]="{ item }">
+			<rich-value
+				v-if="!item.isControllerNode"
+				:value="richValue(item, 'protocol')"
+			/>
+			<div class="d-flex" v-else>
+				<rich-value
+					class="mr-1"
+					:value="getControllerProtocolIcon(false)"
+				/>
+				<rich-value
+					v-if="item.supportsLongRange"
+					:value="getControllerProtocolIcon(true)"
+				/>
+			</div>
+		</template>
 		<template v-slot:[`item.failed`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"
@@ -290,9 +306,11 @@
 				<div
 					style="white-space: pre"
 					v-text="
-						`FW: v${item.firmwareVersion}${
-							item.sdkVersion ? `\nSDK: v${item.sdkVersion}` : ''
-						}`
+						`${
+							item.firmwareVersion
+								? 'FW: v' + item.firmwareVersion
+								: '-----'
+						}${item.sdkVersion ? `\nSDK: v${item.sdkVersion}` : ''}`
 					"
 					v-else
 				></div>

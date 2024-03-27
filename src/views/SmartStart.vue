@@ -15,8 +15,27 @@
 				<v-switch
 					v-model="item.status"
 					@change="onChange(item)"
+					:disabled="!!item.nodeId"
 					dense
 				></v-switch>
+			</template>
+
+			<template v-slot:[`item.protocol`]="{ item }">
+				<v-btn
+					v-if="
+						item.supportedProtocols?.includes(
+							Protocols.ZWaveLongRange,
+						)
+					"
+					@click="toggleProtocol(item)"
+					:disabled="!!item.nodeId"
+					dense
+					rounded
+					small
+					outlined
+					:color="getProtocolColor(item)"
+					>{{ getProtocol(item) }}</v-btn
+				>
 			</template>
 
 			<template
@@ -25,7 +44,10 @@
 				<v-checkbox
 					v-model="item.securityClasses.s2AccessControl"
 					@change="onChange(item)"
-					:disabled="!item.requestedSecurityClasses.s2AccessControl"
+					:disabled="
+						!!item.nodeId ||
+						!item.requestedSecurityClasses.s2AccessControl
+					"
 					hide-details
 					dense
 				></v-checkbox>
@@ -36,7 +58,10 @@
 				<v-checkbox
 					v-model="item.securityClasses.s2Authenticated"
 					@change="onChange(item)"
-					:disabled="!item.requestedSecurityClasses.s2Authenticated"
+					:disabled="
+						!!item.nodeId ||
+						!item.requestedSecurityClasses.s2Authenticated
+					"
 					hide-details
 					dense
 				></v-checkbox>
@@ -45,27 +70,40 @@
 				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
 			>
 				<v-checkbox
+					v-if="item.protocol === Protocols.ZWave"
 					v-model="item.securityClasses.s2Unauthenticated"
-					:disabled="!item.requestedSecurityClasses.s2Unauthenticated"
+					:disabled="
+						!!item.nodeId ||
+						!item.requestedSecurityClasses.s2Unauthenticated
+					"
 					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
+				<span v-else></span>
 			</template>
 			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
 				<v-checkbox
+					v-if="item.protocol === Protocols.ZWave"
 					v-model="item.securityClasses.s0Legacy"
-					:disabled="!item.requestedSecurityClasses.s0Legacy"
+					:disabled="
+						!!item.nodeId || !item.requestedSecurityClasses.s0Legacy
+					"
 					@change="onChange(item)"
 					hide-details
 					dense
 				></v-checkbox>
+				<span v-else></span>
 			</template>
 			<template v-slot:[`item.actions`]="{ item }">
 				<v-icon small color="red" @click="removeItem(item)"
 					>delete</v-icon
 				>
-				<v-icon small color="success" @click="editItem(item)"
+				<v-icon
+					v-if="!item.nodeId"
+					small
+					color="success"
+					@click="editItem(item)"
 					>edit</v-icon
 				>
 			</template>
@@ -168,15 +206,18 @@
 	</v-container>
 </template>
 <script>
-import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
+import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core/safe'
 import { mapState, mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
 	validDsk,
 	securityClassesToArray,
+	getProtocol,
+	getProtocolColor,
 } from '../lib/utils.js'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import { protocolsItems } from '../lib/items.js'
 
 export default {
 	name: 'SmartStart',
@@ -197,6 +238,7 @@ export default {
 	data() {
 		return {
 			items: [],
+			Protocols,
 			fab: false,
 			tableOptions: {
 				sortBy: ['nodeId'],
@@ -206,6 +248,7 @@ export default {
 				{ text: 'Name', value: 'name' },
 				{ text: 'Location', value: 'location' },
 				{ text: 'Active', value: 'status' },
+				{ text: 'Protocol', value: 'protocol' },
 				{ text: 'DSK', value: 'dsk' },
 				{
 					text: 'S2 Access Control',
@@ -244,6 +287,8 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		getProtocol,
+		getProtocolColor,
 		async refreshItems() {
 			const response = await this.app.apiRequest(
 				'getProvisioningEntries',
@@ -278,6 +323,13 @@ export default {
 			await this.updateItem(item)
 			this.edited = false
 			this.refreshItems()
+		},
+		async toggleProtocol(item) {
+			item.protocol =
+				item.protocol === Protocols.ZWave
+					? Protocols.ZWaveLongRange
+					: Protocols.ZWave
+			await this.onChange(item)
 		},
 		async updateItem(itemOrQr) {
 			const response = await this.app.apiRequest(
@@ -329,6 +381,101 @@ export default {
 			if (existingItem) {
 				this.edited = true
 			}
+
+			const inputs = [
+				{
+					type: 'text',
+					label: 'DSK',
+					required: true,
+					key: 'dsk',
+					hint: 'Enter the full DSK code (dashes included) for your device',
+					rules: [validDsk],
+					default: existingItem ? existingItem.dsk : '',
+				},
+				{
+					type: 'list',
+					label: 'Protocol',
+					required: true,
+					key: 'protocol',
+					items: protocolsItems,
+					hint: 'Inclusion protocol to use',
+					default: existingItem
+						? existingItem.protocol
+						: Protocols.ZWave,
+				},
+				{
+					type: 'text',
+					label: 'Name',
+					required: true,
+					key: 'name',
+					hint: 'The node name',
+					default: existingItem ? existingItem.name : '',
+				},
+				{
+					type: 'text',
+					label: 'Location',
+					required: true,
+					key: 'location',
+					hint: 'The node location',
+					default: existingItem ? existingItem.location : '',
+				},
+				{
+					type: 'checkbox',
+					label: 'S2 Access Control',
+					key: 's2AccessControl',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses.s2AccessControl
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s2AccessControl
+						: false,
+				},
+				{
+					type: 'checkbox',
+					label: 'S2 Authenticated',
+					key: 's2Authenticated',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses.s2Authenticated
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s2Authenticated
+						: false,
+				},
+				{
+					type: 'checkbox',
+					label: 'S2 Unauthenticated',
+					key: 's2Unauthenticated',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses
+								.s2Unauthenticated
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s2Unauthenticated
+						: false,
+					show: (item) => {
+						return item.protocol === Protocols.ZWave
+					},
+				},
+				{
+					type: 'checkbox',
+					label: 'S0 Legacy',
+					key: 's0Legacy',
+					disabled: existingItem
+						? !existingItem.requestedSecurityClasses.s0Legacy
+						: false,
+					default: existingItem
+						? existingItem.securityClasses.s0Legacy
+						: false,
+					show: (item) => {
+						return item.protocol === Protocols.ZWave
+					},
+				},
+			]
+
+			if (existingItem && existingItem.supportedProtocols?.length < 2) {
+				inputs.splice(1, 1)
+			}
+
 			let item = await this.$listeners.showConfirm(
 				(existingItem ? 'Update' : 'New') + ' entry',
 				'',
@@ -336,81 +483,7 @@ export default {
 				{
 					confirmText: existingItem ? 'Update' : 'Add',
 					width: 500,
-					inputs: [
-						{
-							type: 'text',
-							label: 'DSK',
-							required: true,
-							key: 'dsk',
-							hint: 'Enter the full DSK code (dashes included) for your device',
-							rules: [validDsk],
-							default: existingItem ? existingItem.dsk : '',
-						},
-						{
-							type: 'text',
-							label: 'Name',
-							required: true,
-							key: 'name',
-							hint: 'The node name',
-							default: existingItem ? existingItem.name : '',
-						},
-						{
-							type: 'text',
-							label: 'Location',
-							required: true,
-							key: 'location',
-							hint: 'The node location',
-							default: existingItem ? existingItem.location : '',
-						},
-						{
-							type: 'checkbox',
-							label: 'S2 Access Control',
-							key: 's2AccessControl',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s2AccessControl
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s2AccessControl
-								: false,
-						},
-						{
-							type: 'checkbox',
-							label: 'S2 Authenticated',
-							key: 's2Authenticated',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s2Authenticated
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s2Authenticated
-								: false,
-						},
-						{
-							type: 'checkbox',
-							label: 'S2 Unauthenticated',
-							key: 's2Unauthenticated',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s2Unauthenticated
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s2Unauthenticated
-								: false,
-						},
-						{
-							type: 'checkbox',
-							label: 'S0 Legacy',
-							key: 's0Legacy',
-							disabled: existingItem
-								? !existingItem.requestedSecurityClasses
-										.s0Legacy
-								: false,
-							default: existingItem
-								? existingItem.securityClasses.s0Legacy
-								: false,
-						},
-					],
+					inputs,
 				},
 			)
 
@@ -460,6 +533,7 @@ export default {
 				return {
 					...item,
 					status: !item.status,
+					protocol: item.protocol ?? Protocols.ZWave,
 					securityClasses: parseSecurityClasses(
 						item.securityClasses,
 						false,
@@ -472,9 +546,18 @@ export default {
 			})
 		},
 		convertItem(item) {
+			if (
+				item.protocol === Protocols.ZWaveLongRange &&
+				item.requestedSecurityClasses
+			) {
+				item.requestedSecurityClasses.s2Unauthenticated = false
+				item.requestedSecurityClasses.s0Legacy = false
+			}
+
 			item = {
 				...item,
 				status: item.status ? 0 : 1,
+				protocol: item.protocol ?? Protocols.ZWave,
 				securityClasses: securityClassesToArray(item.securityClasses),
 				requestedSecurityClasses: securityClassesToArray(
 					item.requestedSecurityClasses ||
