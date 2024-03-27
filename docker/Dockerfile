@@ -7,7 +7,7 @@ RUN apk add --no-cache \
     libusb \
     tzdata \
     eudev \
-    nodejs=18.18.2-r0
+    nodejs=20.11.1-r0
 
 WORKDIR /usr/src/app
 
