@@ -7,7 +7,9 @@ RUN apk add --no-cache \
     libusb \
     tzdata \
     eudev \
-    nodejs=20.11.1-r0
+    nodejs=18.19.1-r0
+
+# https://pkgs.alpinelinux.org/packages?name=nodejs&branch=edge&repo=&arch=&maintainer=
 
 WORKDIR /usr/src/app
 
