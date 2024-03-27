@@ -726,8 +726,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	public set driverReady(ready) {
-		this._driverReady = ready
-		this.emit('driverStatus', ready)
+		if (this._driverReady !== ready) {
+			this._driverReady = ready
+			this.emit('driverStatus', ready)
+		}
 	}
 
 	public get cntStatus() {
@@ -4380,6 +4382,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		if (!skipRestart && error.code === ZWaveErrorCodes.Driver_Failed) {
 			// this cannot be recovered by zwave-js, requires a manual restart
+			this.driverReady = false
 			this.backoffRestart()
 		}
 	}
