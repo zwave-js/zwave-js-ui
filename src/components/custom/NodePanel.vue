@@ -23,6 +23,12 @@
 					}}</v-list-item-content>
 				</v-list-item>
 				<v-list-item dense>
+					<v-list-item-content>Protocol</v-list-item-content>
+					<v-list-item-content class="align-end">{{
+						getProtocol(node)
+					}}</v-list-item-content>
+				</v-list-item>
+				<v-list-item dense>
 					<v-list-item-content>Code</v-list-item-content>
 					<v-list-item-content class="align-end">{{
 						node.productLabel
@@ -52,7 +58,7 @@
 						node.loc
 					}}</v-list-item-content>
 				</v-list-item>
-				<v-list-item v-if="node.neighbors">
+				<v-list-item v-if="node.neighbors && !isLongRange">
 					<v-list-item-content>Neighbors</v-list-item-content>
 					<v-list-item-content class="align-end"
 						>{{
@@ -104,7 +110,7 @@
 						</v-list-item>
 					</div> -->
 
-				<div v-if="!node.isControllerNode">
+				<div v-if="!node.isControllerNode && !isLongRange">
 					<v-subheader
 						>Priority route
 						<v-btn
@@ -135,7 +141,7 @@
 							<v-icon x-small>route</v-icon>
 						</v-btn>
 					</v-subheader>
-					<div v-if="appRoute" class="text-caption">
+					<div v-if="appRoute && !isLongRange" class="text-caption">
 						<v-list-item dense v-for="(s, i) in appRoute" :key="i">
 							<v-list-item-content>{{
 								s.title
@@ -148,7 +154,7 @@
 					<p class="text-center" v-else>None</p>
 				</div>
 
-				<div v-if="!node.isControllerNode">
+				<div v-if="!node.isControllerNode && !isLongRange">
 					<v-subheader
 						>Return routes
 						<v-btn
@@ -287,7 +293,7 @@
 						<v-icon>monitor_heart</v-icon>
 					</v-btn>
 				</v-col>
-				<v-col class="pa-1">
+				<v-col v-if="!isLongRange" class="pa-1">
 					<v-btn
 						color="error"
 						small
@@ -329,6 +335,7 @@
 			</v-row>
 		</v-col>
 		<dialog-health-check
+			v-if="node && !node.isControllerNode"
 			v-model="dialogHealth"
 			@close="dialogHealth = false"
 			:socket="socket"
@@ -374,14 +381,14 @@ import {
 	isRssiError,
 	rssiToString,
 } from 'zwave-js/safe'
-import { zwaveDataRateToString } from '@zwave-js/core/safe'
+import { Protocols, zwaveDataRateToString } from '@zwave-js/core/safe'
 import draggable from 'vuedraggable'
 
 import { Routes } from '../../router/index.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
-import { copy } from '../../lib/utils'
+import { copy, getProtocol } from '../../lib/utils'
 
 export default {
 	mixins: [InstancesMixin],
@@ -412,6 +419,7 @@ export default {
 		discoverLoading: false,
 		routesChanged: false,
 		returnRoutes: [],
+		Protocols,
 		dataRateItems: [
 			{
 				text: '100 Kbps',
@@ -482,6 +490,11 @@ export default {
 
 			return routeStats
 		},
+		isLongRange() {
+			if (!this.node) return false
+
+			return this.node.protocol === Protocols.ZWaveLongRange
+		},
 	},
 	watch: {
 		nodeReturnRoutes: {
@@ -494,6 +507,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		getProtocol,
 		zwaveDataRateToString,
 		checkMove(evt) {
 			const { futureIndex } = evt.draggedContext

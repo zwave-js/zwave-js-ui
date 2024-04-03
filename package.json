@@ -63,7 +63,7 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@kvaster/zwavejs-prom": "^0.0.2",
     "@mdi/js": "7.3.67",
-    "@zwave-js/server": "^1.33.0",
+    "@zwave-js/server": "^1.35.0-beta.1",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-1",
     "ansi_up": "^6.0.2",
     "archiver": "^6.0.1",
@@ -109,7 +109,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.7.1",
     "winston": "^3.11.0",
-    "zwave-js": "^12.4.4"
+    "zwave-js": "^12.5.0"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
@@ -144,6 +144,7 @@
     "conventional-changelog-cli": "^4.1.0",
     "docsify": "^4.13.1",
     "docsify-cli": "^4.4.4",
+    "esbuild": "^0.19.11",
     "esbuild-register": "^3.5.0",
     "eslint": "^8.51.0",
     "eslint-config-prettier": "^9.0.0",
