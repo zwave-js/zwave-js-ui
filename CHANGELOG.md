@@ -1,5 +1,17 @@
 
 
+# [9.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.9.1...v9.10.0) (2024-04-03)
+
+
+### Bug Fixes
+
+* set driver ready to false immediatly on driver error ([9693ba5](https://github.com/zwave-js/zwave-js-ui/commit/9693ba57c1e3c00aa53dabc4e585c5b0788725c3)), closes [#3647](https://github.com/zwave-js/zwave-js-ui/issues/3647)
+
+
+### Features
+
+* long range support zwave-js@12.5.0 ([#3545](https://github.com/zwave-js/zwave-js-ui/issues/3545)) ([bbf5ee6](https://github.com/zwave-js/zwave-js-ui/commit/bbf5ee604a9b1df2d9f296d30deaadb69c42d036))
+
 ## [9.9.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.9.0...v9.9.1) (2024-03-04)
 
 
