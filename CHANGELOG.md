@@ -1,5 +1,17 @@
 
 
+## [9.10.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.1...v9.10.2) (2024-04-04)
+
+
+### Bug Fixes
+
+* **discovery:** add `DISCOVERY_DISABLE_CC_CONFIGURATION` env var ([52241db](https://github.com/zwave-js/zwave-js-ui/commit/52241db40fe47e4ae06e8af218923a3e0fbc981f)), closes [#3571](https://github.com/zwave-js/zwave-js-ui/issues/3571)
+
+
+### Features
+
+* bump zwave-js@12.5.2 ([#3655](https://github.com/zwave-js/zwave-js-ui/issues/3655)) ([87d74f2](https://github.com/zwave-js/zwave-js-ui/commit/87d74f21e29986ead0abf9ea0102734186a3b221))
+
 ## [9.10.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.0...v9.10.1) (2024-04-03)
 
 
