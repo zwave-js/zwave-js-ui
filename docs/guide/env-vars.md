@@ -32,3 +32,4 @@ This is the list of the supported environment variables:
 - `UID_DISCOVERY_PREFIX`: Sets the prefix used for MQTT Discovery `unique_id` of entities. Default is `zwavejs2mqtt_`.
 - `TZ`: Set this env var to the timezone you want to use on UI. Default to browser TZ.
 - `LOCALE`: Set this env var to the locale you want to use on UI. Default to browser locale.
+- `DISCOVERY_DISABLE_CC_CONFIGURATION`: Set this env var to `'true'` to disable Configuration CC MQTT Discovery.

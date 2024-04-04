@@ -1660,7 +1660,11 @@ export default class Gateway {
 					break
 				}
 				case CommandClasses.Configuration: {
-					if (!valueId.writeable) {
+					if (
+						!valueId.writeable ||
+						process.env.DISCOVERY_DISABLE_CC_CONFIGURATION ===
+							'true'
+					) {
 						return
 					}
 					let type = valueId.type
