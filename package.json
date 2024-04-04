@@ -109,7 +109,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.7.1",
     "winston": "^3.11.0",
-    "zwave-js": "^12.5.1"
+    "zwave-js": "^12.5.2"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
