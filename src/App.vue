@@ -1413,6 +1413,9 @@ export default {
 						'<a target="_blank" href="',
 					)
 
+					// downgrades could create empty changelogs
+					if (!changelog.trim()) return
+
 					// means we never saw the changelog for this version
 					const result = await this.confirm(
 						`Changelog`,
