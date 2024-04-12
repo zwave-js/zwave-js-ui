@@ -1345,7 +1345,7 @@ export default {
 				const doneStep = copy(this.availableSteps.done)
 				doneStep.text = `Node ${
 					this.nodeFound.id
-				} added with security "${this.nodeFound.security || 'None'}"`
+				} added with security ${this.nodeFound.security || 'None'}`
 				doneStep.error = result.lowSecurityReason
 					? this.getSecurityBootstrapError(result.lowSecurityReason)
 					: false

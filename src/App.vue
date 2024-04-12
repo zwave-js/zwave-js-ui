@@ -652,14 +652,14 @@ export default {
 					`<div class="d-flex flex-column align-center col">
 					<i aria-hidden="true" class="v-icon notranslate material-icons theme--light success--text" style="font-size: 60px;">check_circle</i>
 					<p class="mt-3 headline text-center">
-						Node ${node.id} added with security "${node.security || 'None'} ${
+						Node ${node.id} added with security ${node.security || 'None'}${
 							result.lowSecurityReason
 								? ` (${getEnumMemberName(
 										SecurityBootstrapFailure,
 										result.lowSecurityReason,
 								  )})`
 								: ''
-						}"
+						}
 					</p>
 				</div>`,
 					'info',
