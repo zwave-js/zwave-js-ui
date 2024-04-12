@@ -1052,7 +1052,7 @@ export default {
 		},
 		changeStep(index) {
 			if (index <= 1) {
-				this.init(false) // calling it without the bind parameter will not touch events
+				this.init() // calling it without the bind parameter will not touch events
 			} else {
 				this.steps = this.steps.slice(0, index)
 			}
@@ -1241,7 +1241,7 @@ export default {
 				this.commandTimer = null
 			}
 
-			if (bind) {
+			if (bind && Object.keys(this.bindedSocketEvents).length === 0) {
 				this.bindEvent(
 					'grantSecurityClasses',
 					this.onGrantSecurityCC.bind(this),
@@ -1291,7 +1291,7 @@ export default {
 				// done
 			} else {
 				if (api === 'replaceFailedNode') {
-					this.init(false)
+					this.init()
 				}
 			}
 		},
