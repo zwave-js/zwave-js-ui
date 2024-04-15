@@ -1,6 +1,6 @@
 {
   "name": "zwave-js-ui",
-  "version": "9.10.2",
+  "version": "9.10.3",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "keywords": [
     "mqtt",
@@ -109,7 +109,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.7.1",
     "winston": "^3.11.0",
-    "zwave-js": "^12.5.3"
+    "zwave-js": "^12.5.4"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",

@@ -1,5 +1,19 @@
 
 
+## [9.10.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.2...v9.10.3) (2024-04-12)
+
+
+### Bug Fixes
+
+* **ui:** downgrades show empty changelogs ([ee50c0e](https://github.com/zwave-js/zwave-js-ui/commit/ee50c0e8594e01d8f22a75b59806e39d1fc40622)), closes [#3663](https://github.com/zwave-js/zwave-js-ui/issues/3663)
+* **ui:** typo in info message on node added ([a8aecb7](https://github.com/zwave-js/zwave-js-ui/commit/a8aecb782938e02bd65cd4acadecf0c2ff56f9b1))
+
+
+### Features
+
+* bump zwave-js@12.5.3 ([#3664](https://github.com/zwave-js/zwave-js-ui/issues/3664)) ([6a8619c](https://github.com/zwave-js/zwave-js-ui/commit/6a8619c1078a5d17a0375c17c3c60ba5996a5d9e))
+* bump zwave-js@12.5.4 ([#3666](https://github.com/zwave-js/zwave-js-ui/issues/3666)) ([3827dfc](https://github.com/zwave-js/zwave-js-ui/commit/3827dfccd9f798f061dd9837bf258ad55916ef04))
+
 ## [9.10.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.1...v9.10.2) (2024-04-04)
 
 
