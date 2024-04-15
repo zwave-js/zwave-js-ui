@@ -15,7 +15,6 @@
 				<v-switch
 					v-model="item.status"
 					@change="onChange(item)"
-					:disabled="!!item.nodeId"
 					dense
 				></v-switch>
 			</template>
