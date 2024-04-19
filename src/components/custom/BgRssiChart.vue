@@ -354,6 +354,14 @@ export default {
 						},
 						1,
 					),
+					...this.createSerie(
+						{
+							label: 'Channel 3',
+							stroke: '#003f5c',
+							fill: 'rgba(0, 63, 92, 0.35)',
+						},
+						1,
+					),
 				],
 			}
 
