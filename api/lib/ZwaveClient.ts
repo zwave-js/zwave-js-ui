@@ -453,6 +453,7 @@ export interface BackgroundRSSIPoint {
 	channel0: BackgroundRSSIValue
 	channel1: BackgroundRSSIValue
 	channel2?: BackgroundRSSIValue
+	channel3?: BackgroundRSSIValue
 	timestamp: number
 }
 
