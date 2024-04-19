@@ -1,5 +1,12 @@
 
 
+## [9.11.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.11.0...v9.11.1) (2024-04-19)
+
+
+### Bug Fixes
+
+* **ui:** add missing channel 3 serie to bgRssi chart ([3961d53](https://github.com/zwave-js/zwave-js-ui/commit/3961d537bb1a121ae204f4790bbde339ca9ce339))
+
 # [9.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.3...v9.11.0) (2024-04-19)
 
 
