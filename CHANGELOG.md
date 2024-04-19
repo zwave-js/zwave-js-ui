@@ -1,5 +1,19 @@
 
 
+# [9.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.3...v9.11.0) (2024-04-19)
+
+
+### Bug Fixes
+
+* **ui:** do not disable `active` field in smart start table ([eccd132](https://github.com/zwave-js/zwave-js-ui/commit/eccd1326086cbc41169160ec6adbe82d35780bc0))
+* **ui:** ensure nodes manager events are not binded twice ([#3665](https://github.com/zwave-js/zwave-js-ui/issues/3665)) ([02f5227](https://github.com/zwave-js/zwave-js-ui/commit/02f5227025fd40b42b1f3d9e45a0b102fef8ba77))
+
+
+### Features
+
+* bump zwave-js@12.5.5 ([#3672](https://github.com/zwave-js/zwave-js-ui/issues/3672)) ([c10d532](https://github.com/zwave-js/zwave-js-ui/commit/c10d5329e63f2de44c496a410aafdca09b9871a2))
+* **ui:** add channel 3 to background rsi chart ([b34856d](https://github.com/zwave-js/zwave-js-ui/commit/b34856d6efda60b886009b69a729035221df8e4f)), closes [#3669](https://github.com/zwave-js/zwave-js-ui/issues/3669)
+
 ## [9.10.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.10.2...v9.10.3) (2024-04-12)
 
 
