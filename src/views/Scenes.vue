@@ -142,14 +142,14 @@ export default {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		async importScenes() {
 			if (
-				await this.$listeners.showConfirm(
+				await this.app.confirm(
 					'Attention',
 					'This operation will override all current scenes and cannot be undone',
 					'alert',
 				)
 			) {
 				try {
-					const { data } = await this.$listeners.import('json')
+					const { data } = await this.app.importFile('json')
 					if (data instanceof Array) {
 						const response = await this.app.apiRequest(
 							'_setScenes',
@@ -171,7 +171,7 @@ export default {
 			}
 		},
 		exportScenes() {
-			this.$listeners.export(this.scenes, 'scenes')
+			this.app.exportConfiguration(this.scenes, 'scenes')
 		},
 		async refreshScenes() {
 			const response = await this.app.apiRequest('_getScenes', [], {
@@ -199,7 +199,7 @@ export default {
 		async removeScene() {
 			if (
 				this.selectedScene &&
-				(await this.$listeners.showConfirm(
+				(await this.app.confirm(
 					'Attention',
 					'Are you sure you want to delete this scene?',
 					'alert',
@@ -251,7 +251,7 @@ export default {
 		},
 		async deleteItem(value) {
 			if (
-				await this.$listeners.showConfirm(
+				await this.app.confirm(
 					'Attention',
 					'Are you sure you want to delete this item?',
 					'alert',

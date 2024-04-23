@@ -154,10 +154,7 @@
 			<div class="d-flex">
 				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
 
-				<reinterview-badge
-					:node="item"
-					v-on="$listeners"
-				></reinterview-badge>
+				<reinterview-badge :node="item"></reinterview-badge>
 			</div>
 		</template>
 		<template v-slot:[`item.minBatteryLevel`]="{ item }">
@@ -326,7 +323,6 @@
 					:isMobile="isMobile"
 					:node="item"
 					:socket="socket"
-					v-on="$listeners"
 				/>
 			</td>
 		</template>

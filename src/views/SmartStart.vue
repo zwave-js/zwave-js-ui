@@ -5,10 +5,41 @@
 			:items="items"
 			class="elevation-1"
 			style="margin-bottom: 80px"
+			:search="search"
 			:options.sync="tableOptions"
 		>
 			<template v-slot:top>
-				<h2 class="ma-3">Provisioning Entries</h2>
+				<h2 class="pa-3">Provisioning Entries</h2>
+
+				<v-row>
+					<v-col cols="12" sm="6">
+						<v-text-field
+							v-model="search"
+							clearable
+							flat
+							solo-inverted
+							hide-details
+							single-line
+							class="ma-2"
+							style="max-width: 250px; min-width: 250px"
+							prepend-inner-icon="search"
+							label="Search"
+							append-icon="refresh"
+							@click:append="refreshItems"
+						></v-text-field>
+					</v-col>
+				</v-row>
+			</template>
+
+			<template v-slot:[`item.nodeId`]="{ item }">
+				<v-chip
+					v-if="item.nodeId"
+					color="primary"
+					dense
+					@click.stop="showNodeDialog(item)"
+				>
+					{{ item.nodeId }}
+				</v-chip>
 			</template>
 
 			<template v-slot:[`item.status`]="{ item }">
@@ -202,11 +233,34 @@
 				<span>Export</span>
 			</v-tooltip>
 		</v-speed-dial>
+
+		<v-dialog
+			:fullscreen="$vuetify.breakpoint.xs"
+			max-width="1200px"
+			v-model="expandedNodeDialog"
+			persistent
+			@keydown.exit="closeDialog()"
+		>
+			<v-card min-height="90vh">
+				<v-btn
+					style="position: absolute; right: 5px; top: 5px"
+					x-small
+					@click="closeDialog()"
+					icon
+					fab
+				>
+					<v-icon>close</v-icon>
+				</v-btn>
+				<v-card-text class="pt-3">
+					<expanded-node :node="expandedNode" :socket="socket" />
+				</v-card-text>
+			</v-card>
+		</v-dialog>
 	</v-container>
 </template>
 <script>
 import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core/safe'
-import { mapState, mapActions } from 'pinia'
+import { mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
 	validDsk,
@@ -220,7 +274,13 @@ import { protocolsItems } from '../lib/items.js'
 
 export default {
 	name: 'SmartStart',
+	props: {
+		socket: Object,
+	},
 	mixins: [InstancesMixin],
+	components: {
+		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
+	},
 	watch: {
 		tableOptions: {
 			handler() {
@@ -231,17 +291,17 @@ export default {
 			deep: true,
 		},
 	},
-	computed: {
-		...mapState(useBaseStore, ['nodes']),
-	},
 	data() {
 		return {
 			items: [],
 			Protocols,
 			fab: false,
+			search: '',
 			tableOptions: {
 				sortBy: ['nodeId'],
 			},
+			expandedNode: null,
+			expandedNodeDialog: false,
 			headers: [
 				{ text: 'ID', value: 'nodeId' },
 				{ text: 'Name', value: 'name' },
@@ -288,6 +348,17 @@ export default {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		getProtocol,
 		getProtocolColor,
+		showNodeDialog(entity) {
+			const node = this.nodes.find((n) => n.id === entity.nodeId)
+			if (node) {
+				this.expandedNode = node
+				this.expandedNodeDialog = true
+			}
+		},
+		closeDialog() {
+			this.expandedNode = null
+			this.expandedNodeDialog = false
+		},
 		async refreshItems() {
 			const response = await this.app.apiRequest(
 				'getProvisioningEntries',
@@ -303,14 +374,14 @@ export default {
 			}
 		},
 		async exportList() {
-			await this.$listeners.export(
+			await this.app.exportConfiguration(
 				this.items,
 				'provisioningEntries',
 				'json',
 			)
 		},
 		async importList() {
-			const { data } = await this.$listeners.import('json')
+			const { data } = await this.app.importFile('json')
 
 			if (data) {
 				for (const entry of data) {
@@ -353,7 +424,7 @@ export default {
 			}
 		},
 		async scanItem() {
-			let qrString = await this.$listeners.showConfirm(
+			let qrString = await this.app.confirm(
 				'New entry',
 				'Scan QR Code or import it as an image',
 				'info',
@@ -475,7 +546,7 @@ export default {
 				inputs.splice(1, 1)
 			}
 
-			let item = await this.$listeners.showConfirm(
+			let item = await this.app.confirm(
 				(existingItem ? 'Update' : 'New') + ' entry',
 				'',
 				'info',
@@ -510,7 +581,7 @@ export default {
 		},
 		async removeItem(item) {
 			if (
-				await this.$listeners.showConfirm(
+				await this.app.confirm(
 					'Attention',
 					`Are you sure you want to delete this item from provisioning? Removing it from provisioning will not exclude the node`,
 					'alert',

@@ -4928,7 +4928,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const result = this.driver.controller.getProvisioningEntries()
 
 		for (const entry of result) {
-			if (
+			const node = this.nodes.get(entry.nodeId)
+			if (node) {
+				if (node.deviceConfig) {
+					entry.manufacturer = node.deviceConfig.manufacturer
+					entry.label = node.deviceConfig.label
+					entry.description = node.deviceConfig.description
+				}
+				entry.protocol = node.protocol
+			} else if (
 				typeof entry.manufacturerId === 'number' &&
 				typeof entry.productType === 'number' &&
 				typeof entry.productId === 'number' &&

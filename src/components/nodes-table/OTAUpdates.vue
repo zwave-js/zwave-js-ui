@@ -204,7 +204,7 @@ export default {
 		},
 		async updateFirmware(update) {
 			if (
-				await this.$listeners.showConfirm(
+				await this.app.confirm(
 					`OTA ${update.downgrade ? 'Downgrade' : 'Upgrade'}`,
 					`<p>Are you sure you want to ${
 						update.downgrade ? 'downgrade' : 'upgrade'
