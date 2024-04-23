@@ -196,7 +196,10 @@
 						class="mb-2"
 						justify="space-around"
 					>
-						<v-col v-if="averages.numNeighbors" class="text-center">
+						<v-col
+							v-if="averages.numNeighbors && !isLR()"
+							class="text-center"
+						>
 							<p class="mb-1 subtitle-1 font-weight-bold">
 								No. Neighbors
 							</p>
@@ -414,6 +417,7 @@ import { mapActions, mapState } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { Protocols } from '@zwave-js/core/safe'
 
 export default {
 	components: {},
@@ -430,7 +434,13 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		isLR() {
+			return this.activeNode?.protocol === Protocols.ZWaveLongRange
+		},
 		filteredNodes() {
+			if (this.isLR) {
+				return this.nodes.filter((n) => n.isControllerNode)
+			}
 			return this.activeNode
 				? this.nodes.filter((n) => n.id !== this.activeNode.id)
 				: this.nodes
