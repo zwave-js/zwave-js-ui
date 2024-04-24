@@ -32,14 +32,17 @@
 			</template>
 
 			<template v-slot:[`item.nodeId`]="{ item }">
-				<v-chip
+				<v-btn
 					v-if="item.nodeId"
 					color="primary"
-					dense
+					small
+					rounded
 					@click.stop="showNodeDialog(item)"
 				>
 					{{ item.nodeId }}
-				</v-chip>
+
+					<v-icon class="ml-2" small>open_in_new</v-icon>
+				</v-btn>
 			</template>
 
 			<template v-slot:[`item.status`]="{ item }">
