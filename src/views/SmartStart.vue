@@ -9,26 +9,31 @@
 			:options.sync="tableOptions"
 		>
 			<template v-slot:top>
-				<h2 class="pa-3">Provisioning Entries</h2>
-
-				<v-row>
-					<v-col cols="12" sm="6">
-						<v-text-field
-							v-model="search"
-							clearable
-							flat
-							solo-inverted
-							hide-details
-							single-line
-							class="ma-2"
-							style="max-width: 250px; min-width: 250px"
-							prepend-inner-icon="search"
-							label="Search"
-							append-icon="refresh"
-							@click:append="refreshItems"
-						></v-text-field>
-					</v-col>
-				</v-row>
+				<v-col class="pt-0" dense>
+					<h2 class="pa-3">Provisioning Entries</h2>
+					<missing-keys-alert />
+					<v-alert max-width="600px" dense border="left" type="info">
+						When an entry has a Node associated it cannot be edited
+					</v-alert>
+					<v-row>
+						<v-col cols="12" sm="6">
+							<v-text-field
+								v-model="search"
+								clearable
+								flat
+								solo-inverted
+								hide-details
+								single-line
+								class="ma-2"
+								style="max-width: 250px; min-width: 250px"
+								prepend-inner-icon="search"
+								label="Search"
+								append-icon="refresh"
+								@click:append="refreshItems"
+							></v-text-field>
+						</v-col>
+					</v-row>
+				</v-col>
 			</template>
 
 			<template v-slot:[`item.nodeId`]="{ item }">
@@ -69,6 +74,7 @@
 					:color="getProtocolColor(item)"
 					>{{ getProtocol(item) }}</v-btn
 				>
+				<span class="caption" v-else> Z-Wave </span>
 			</template>
 
 			<template
@@ -284,6 +290,8 @@ export default {
 	mixins: [InstancesMixin],
 	components: {
 		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
+		MissingKeysAlert: () =>
+			import('@/components/custom/MissingKeysAlert.vue'),
 	},
 	watch: {
 		tableOptions: {
