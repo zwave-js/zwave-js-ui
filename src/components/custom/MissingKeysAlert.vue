@@ -8,7 +8,7 @@
 	>
 		Some security keys are missing:
 		<strong>{{ missingKeys.join(', ') }}</strong
-		>. Please check your zwave settings.
+		>. Please check your Z-Wave settings.
 	</v-alert>
 </template>
 

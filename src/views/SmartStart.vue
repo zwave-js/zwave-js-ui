@@ -7,14 +7,32 @@
 			style="margin-bottom: 80px"
 			:search="search"
 			:options.sync="tableOptions"
+			@focus:row="onRowFocus"
+			@blur:row="onRowBlur"
+			@mouseenter:row="onRowFocus"
+			@mouseleave:row="onRowBlur"
 		>
 			<template v-slot:top>
 				<v-col class="pt-0" dense>
 					<h2 class="pa-3">Provisioning Entries</h2>
 					<missing-keys-alert />
-					<v-alert max-width="600px" dense border="left" type="info">
-						When an entry has a Node associated it cannot be edited
-					</v-alert>
+					<v-menu
+						v-model="showInfoTooltip"
+						:position-x="x"
+						:position-y="y"
+						absolute
+						offset-y
+					>
+						<v-list dense>
+							<v-list-item dense>
+								<v-list-item-title>
+									When an entry has a Node associated it
+									cannot be edited
+								</v-list-item-title>
+							</v-list-item>
+						</v-list>
+					</v-menu>
+
 					<v-row>
 						<v-col cols="12" sm="6">
 							<v-text-field
@@ -306,6 +324,9 @@ export default {
 	data() {
 		return {
 			items: [],
+			showInfoTooltip: false,
+			x: 0,
+			y: 0,
 			Protocols,
 			fab: false,
 			search: '',
@@ -367,6 +388,18 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		onRowFocus(event, { item }) {
+			if (item.nodeId) {
+				// get mouse position
+				this.x = event.clientX
+				this.y = event.clientY
+
+				this.showInfoTooltip = true
+			}
+		},
+		onRowBlur() {
+			this.showInfoTooltip = false
+		},
 		getProtocol,
 		getProtocolColor,
 		showNodeDialog(entity) {
