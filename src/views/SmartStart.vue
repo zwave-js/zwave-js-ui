@@ -670,14 +670,6 @@ export default {
 			})
 		},
 		convertItem(item) {
-			if (
-				item.protocol === Protocols.ZWaveLongRange &&
-				item.requestedSecurityClasses
-			) {
-				item.requestedSecurityClasses.s2Unauthenticated = false
-				item.requestedSecurityClasses.s0Legacy = false
-			}
-
 			item = {
 				...item,
 				status: item.status ? 0 : 1,
