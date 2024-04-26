@@ -32,6 +32,7 @@ export default {
 			'S2_AccessControl',
 			'S0_Legacy',
 		],
+		requiredKeysLongRange: ['S2_Authenticated', 'S2_AccessControl'],
 	}),
 	computed: {
 		...mapState(useBaseStore, ['zwave']),
@@ -50,7 +51,7 @@ export default {
 			const keys = this.zwave.securityKeysLongRange || {}
 
 			const missing = []
-			for (const key of this.requiredKeys) {
+			for (const key of this.requiredKeysLongRange) {
 				if (!keys[key] || keys[key].length !== 32) {
 					missing.push(key)
 				}
