@@ -29,7 +29,7 @@
     "dev-https": "SERVER_SSL='true' npm run dev",
     "dev:server": "nodemon",
     "server": "ts-node -r esbuild-register api/bin/www.ts",
-    "fake-stick": "npm run mock-server -c server_config.js",
+    "fake-stick": "npx mock-server -- -c server_config.js",
     "start": "node --preserve-symlinks server/bin/www.js",
     "bundle": "node esbuild.js",
     "lint": "npm-run-all 'lint:*'",
