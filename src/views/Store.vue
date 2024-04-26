@@ -308,11 +308,13 @@ import 'prismjs/themes/prism-tomorrow.css'
 import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger.js'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 
 const log = logger.get('Store')
 
 export default {
 	name: 'Store',
+	mixins: [InstancesMixin],
 	components: {
 		PrismEditor: () =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
@@ -347,7 +349,7 @@ export default {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		async deleteFile(item) {
 			if (
-				await this.$listeners.showConfirm(
+				await this.app.confirm(
 					'Attention',
 					`Are you sure you want to delete the file ${item.name}?`,
 					'alert',
@@ -372,7 +374,7 @@ export default {
 		async deleteSelected() {
 			const files = this.selectedFiles.map((f) => f.path)
 			if (
-				await this.$listeners.showConfirm(
+				await this.app.confirm(
 					'Attention',
 					`Are you sure you want to delete ${files.length} files?`,
 					'alert',
@@ -438,7 +440,7 @@ export default {
 					.split('.')
 					.slice(0, -1)
 					.join('.')
-				this.$listeners.export(
+				this.app.exportConfiguration(
 					this.fileContent,
 					fileName,
 					this.selected.ext,
@@ -446,7 +448,7 @@ export default {
 			}
 		},
 		async backupStore() {
-			const result = await this.$listeners.showConfirm(
+			const result = await this.app.confirm(
 				'Backup store',
 				'Are you sure you want to backup the store? This backup will contain all useful files and settings.',
 				'info',
@@ -473,23 +475,18 @@ export default {
 			}
 		},
 		async restoreZip() {
-			const restore = await this.$listeners.showConfirm(
-				'Restore zip',
-				'',
-				'info',
-				{
-					confirmText: 'Restore',
-					inputs: [
-						{
-							type: 'file',
-							label: 'Zip file',
-							required: true,
-							key: 'file',
-							accept: 'application/zip',
-						},
-					],
-				},
-			)
+			const restore = await this.app.confirm('Restore zip', '', 'info', {
+				confirmText: 'Restore',
+				inputs: [
+					{
+						type: 'file',
+						label: 'Zip file',
+						required: true,
+						key: 'file',
+						accept: 'application/zip',
+					},
+				],
+			})
 
 			if (restore.file) {
 				try {
@@ -507,22 +504,17 @@ export default {
 			}
 		},
 		async uploadFile() {
-			const upload = await this.$listeners.showConfirm(
-				'Upload file',
-				'',
-				'info',
-				{
-					confirmText: 'Upload',
-					inputs: [
-						{
-							type: 'file',
-							label: 'File',
-							required: true,
-							key: 'file',
-						},
-					],
-				},
-			)
+			const upload = await this.app.confirm('Upload file', '', 'info', {
+				confirmText: 'Upload',
+				inputs: [
+					{
+						type: 'file',
+						label: 'File',
+						required: true,
+						key: 'file',
+					},
+				],
+			})
 
 			if (upload.file) {
 				try {
@@ -545,7 +537,7 @@ export default {
 			// create a new file
 			if (isNew) {
 				const text = isDirectory ? 'Directory' : 'File'
-				const { name } = await this.$listeners.showConfirm(
+				const { name } = await this.app.confirm(
 					'New ' + text,
 					'',
 					'info',
@@ -577,7 +569,7 @@ export default {
 
 			if (
 				isNew ||
-				(await this.$listeners.showConfirm(
+				(await this.app.confirm(
 					'Attention',
 					`Are you sure you want to overwrite the content of the file ${this.selected.name}?`,
 					'alert',

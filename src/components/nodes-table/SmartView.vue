@@ -219,7 +219,6 @@
 
 											<reinterview-badge
 												:node="item"
-												v-on="$listeners"
 												:b-style="{
 													position: 'absolute',
 													top: '0',
@@ -322,11 +321,7 @@
 					<v-icon>close</v-icon>
 				</v-btn>
 				<v-card-text class="pt-3">
-					<expanded-node
-						:node="expandedNode"
-						:socket="socket"
-						v-on="$listeners"
-					/>
+					<expanded-node :node="expandedNode" :socket="socket" />
 				</v-card-text>
 			</v-card>
 		</v-dialog>

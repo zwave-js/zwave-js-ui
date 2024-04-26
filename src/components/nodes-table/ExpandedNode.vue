@@ -174,16 +174,12 @@
 					key="homeassistant"
 					transition="slide-y-transition"
 				>
-					<home-assistant
-						:node="node"
-						:socket="socket"
-						v-on="$listeners"
-					/>
+					<home-assistant :node="node" :socket="socket" />
 				</v-tab-item>
 
 				<!-- TAB GROUPS -->
 				<v-tab-item key="groups" transition="slide-y-transition">
-					<association-groups :node="node" v-on="$listeners" />
+					<association-groups :node="node" />
 				</v-tab-item>
 
 				<!-- TAB USERS -->
@@ -201,11 +197,7 @@
 					key="ota"
 					transition="slide-y-transition"
 				>
-					<OTAUpdates
-						:node="node"
-						:socket="socket"
-						v-on="$listeners"
-					/>
+					<OTAUpdates :node="node" :socket="socket" />
 				</v-tab-item>
 
 				<!-- TAB EVENTS -->
@@ -715,14 +707,18 @@ export default {
 			}
 		},
 		exportNode() {
-			this.$listeners.export(this.node, 'node_' + this.node.id, 'json')
+			this.app.exportConfiguration(
+				this.node,
+				'node_' + this.node.id,
+				'json',
+			)
 		},
 		async sendMqttAction(action, confirmMessage) {
 			if (this.node) {
 				let ok = true
 
 				if (confirmMessage) {
-					ok = await this.$listeners.showConfirm(
+					ok = await this.app.confirm(
 						'Info',
 						confirmMessage,
 						'info',

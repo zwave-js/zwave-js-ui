@@ -1500,11 +1500,13 @@ import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
 import logger from '../lib/logger'
+import InstancesMixin from '../mixins/InstancesMixin'
 
 const log = logger.get('Settings')
 
 export default {
 	name: 'Settings',
+	mixins: [InstancesMixin],
 	components: {
 		DialogGatewayValue: () =>
 			import('@/components/dialogs/DialogGatewayValue.vue'),
@@ -1874,7 +1876,7 @@ export default {
 		},
 		async importSettings() {
 			try {
-				const { data } = await this.$listeners.import('json')
+				const { data } = await this.app.importFile('json')
 				if (data.zwave && data.mqtt && data.gateway) {
 					this.initSettings(data)
 					this.showSnackbar(
@@ -1890,7 +1892,7 @@ export default {
 		},
 		exportSettings() {
 			const settings = this.getSettingsJSON()
-			this.$listeners.export(settings, 'settings')
+			this.app.exportConfiguration(settings, 'settings')
 		},
 		getSettingsJSON() {
 			return {
@@ -1904,7 +1906,7 @@ export default {
 		async editJob(item) {
 			const { data: snippets } = await ConfigApis.getSnippets()
 
-			const res = await this.$listeners.showConfirm(
+			const res = await this.app.confirm(
 				item ? 'Edit job' : 'New Job',
 				'',
 				'info',
@@ -1989,7 +1991,7 @@ export default {
 
 			if (
 				index >= 0 &&
-				(await this.$listeners.showConfirm(
+				(await this.app.confirm(
 					'Attention',
 					'Are you sure you want to delete this item?',
 					'alert',
@@ -2005,7 +2007,7 @@ export default {
 		},
 		async deleteItem(item) {
 			const index = this.newGateway.values.indexOf(item)
-			;(await this.$listeners.showConfirm(
+			;(await this.app.confirm(
 				'Attention',
 				'Are you sure you want to delete this item?',
 				'alert',

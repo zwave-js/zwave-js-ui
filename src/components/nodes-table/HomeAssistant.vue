@@ -198,12 +198,14 @@
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base'
+import InstancesMixin from '../../mixins/InstancesMixin'
 
 export default {
 	props: {
 		node: Object,
 		socket: Object,
 	},
+	mixins: [InstancesMixin],
 	data() {
 		return {
 			deviceJSON: '',
@@ -289,7 +291,7 @@ export default {
 			const device = this.selectedDevice
 			if (
 				device &&
-				(await this.$listeners.showConfirm(
+				(await this.app.confirm(
 					'Attention',
 					'Are you sure you want to delete selected device?',
 					'alert',
@@ -309,7 +311,7 @@ export default {
 		async disableDiscovery() {
 			if (
 				this.node &&
-				(await this.$listeners.showConfirm(
+				(await this.app.confirm(
 					'Rediscover node',
 					'Are you sure you want to disable discovery of all values? In order to make this persistent remember to click on Store',
 				))
@@ -331,7 +333,7 @@ export default {
 			const device = this.selectedDevice
 			if (
 				device &&
-				(await this.$listeners.showConfirm(
+				(await this.app.confirm(
 					'Rediscover Device',
 					'Are you sure you want to re-discover selected device?',
 				))
@@ -353,7 +355,7 @@ export default {
 		async rediscoverNode() {
 			if (
 				this.node &&
-				(await this.$listeners.showConfirm(
+				(await this.app.confirm(
 					'Rediscover node',
 					'Are you sure you want to re-discover all node values?',
 				))

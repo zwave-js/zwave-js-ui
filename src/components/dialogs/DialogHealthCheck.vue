@@ -197,7 +197,7 @@
 						justify="space-around"
 					>
 						<v-col
-							v-if="averages.numNeighbors && !isLR()"
+							v-if="averages.numNeighbors && !isLR"
 							class="text-center"
 						>
 							<p class="mb-1 subtitle-1 font-weight-bold">

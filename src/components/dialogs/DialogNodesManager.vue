@@ -212,18 +212,7 @@
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
-										<v-alert
-											dense
-											border="left"
-											type="warning"
-											v-if="missingKeys.length > 0"
-										>
-											Some security keys are missing:
-											<strong>{{
-												missingKeys.join(', ')
-											}}</strong
-											>. Please check your zwave settings.
-										</v-alert>
+										<missing-keys-alert />
 										<v-radio
 											:value="InclusionStrategy.Default"
 										>
@@ -697,6 +686,9 @@ export default {
 	props: {
 		socket: Object,
 	},
+	components: {
+		MissingKeysAlert: () => import('../custom/MissingKeysAlert.vue'),
+	},
 	mixins: [InstancesMixin],
 	data() {
 		return {
@@ -798,23 +790,6 @@ export default {
 		},
 		controllerStatus() {
 			return this.appInfo.controllerStatus?.status
-		},
-		missingKeys() {
-			const keys = this.zwave.securityKeys || {}
-
-			const requiredKeys = [
-				'S2_Unauthenticated',
-				'S2_Authenticated',
-				'S2_AccessControl',
-				'S0_Legacy',
-			]
-			const missing = []
-			for (const key of requiredKeys) {
-				if (!keys[key] || keys[key].length !== 32) {
-					missing.push(key)
-				}
-			}
-			return missing
 		},
 	},
 	watch: {
