@@ -262,7 +262,7 @@ export default {
 				// in-legend display
 				label: '',
 				value: (self, rawValue) =>
-					rawValue ? rawValue.toFixed(2) + ' dBm' : '----- dBm',
+					rawValue ? rawValue.toFixed(2) + ' dBm' : '---',
 				// series style
 				stroke: 'red',
 				width: 1,
@@ -314,11 +314,13 @@ export default {
 				this.ro.observe(container)
 			}
 
+			const width = this.$parent.$el.offsetWidth
+
 			const opts = {
 				title: 'Background RSSI',
 				// class: "my-chart",
-				width: 400,
-				height: 400,
+				width,
+				height: 500,
 				plugins: [touchZoomPlugin()],
 				axes: [
 					{
