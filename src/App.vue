@@ -318,6 +318,8 @@
 		/>
 
 		<Confirm ref="confirm"></Confirm>
+		<!-- Used for node added only -->
+		<Confirm ref="confirm2"></Confirm>
 
 		<LoaderDialog
 			v-model="dialogLoader"
@@ -647,7 +649,7 @@ export default {
 		},
 		async onNodeAdded({ node, result }) {
 			if (!this.nodesManagerDialog) {
-				await this.confirm(
+				await this.confirm2(
 					'Node added',
 					`<div class="d-flex flex-column align-center col">
 					<i aria-hidden="true" class="v-icon notranslate material-icons theme--light success--text" style="font-size: 60px;">check_circle</i>
@@ -693,6 +695,18 @@ export default {
 			options.color = options.color || levelMap[level] || 'primary'
 
 			return this.$refs.confirm.open(title, text, options)
+		},
+		async confirm2(title, text, level, options) {
+			options = options || {}
+
+			const levelMap = {
+				warning: 'orange',
+				alert: 'red',
+			}
+
+			options.color = options.color || levelMap[level] || 'primary'
+
+			return this.$refs.confirm2.open(title, text, options)
 		},
 		showSnackbar: function (text, color, timeout) {
 			const message = {
