@@ -1,5 +1,26 @@
 
 
+# [9.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.11.1...v9.12.0) (2024-04-29)
+
+
+### Bug Fixes
+
+* **ui:** add offset to smart start hover menu ([9f72cf3](https://github.com/zwave-js/zwave-js-ui/commit/9f72cf3625b2d0078e5d718fc8c9c736a2ca1b1c)), closes [#3688](https://github.com/zwave-js/zwave-js-ui/issues/3688)
+* **ui:** cannot scroll down to channel values in controller info panel ([8d75372](https://github.com/zwave-js/zwave-js-ui/commit/8d75372440743858db56f59ce382c71e8036ea98)), closes [#3685](https://github.com/zwave-js/zwave-js-ui/issues/3685)
+* **ui:** display missing zwlr keys ([315ab0f](https://github.com/zwave-js/zwave-js-ui/commit/315ab0ffaa55d937df51639ccdf88532b39c115c))
+* **ui:** not able to sending actions from advanced dialog ([367b75f](https://github.com/zwave-js/zwave-js-ui/commit/367b75f6b96ea7b74208d0b852d6bd722560d99f)), closes [#3693](https://github.com/zwave-js/zwave-js-ui/issues/3693)
+* **ui:** only allow healthchecks against controller and hide neighbors ([0209b55](https://github.com/zwave-js/zwave-js-ui/commit/0209b55ef3acfaf6b29db4c49c83eda95d2165eb)), closes [#3681](https://github.com/zwave-js/zwave-js-ui/issues/3681)
+* **ui:** only check for missing keys that are valid LR keys ([#3689](https://github.com/zwave-js/zwave-js-ui/issues/3689)) ([1aaf299](https://github.com/zwave-js/zwave-js-ui/commit/1aaf2997f6aed145cfe753c136a84fe37bcd1363))
+* **ui:** prevent changing requested security classes when switching protocol ([e327942](https://github.com/zwave-js/zwave-js-ui/commit/e327942edd0ab9234dede2e50bb4ad5458c27cd5))
+* **ui:** use different dialog for node added popup ([2affdce](https://github.com/zwave-js/zwave-js-ui/commit/2affdcee295f75b60ee56a2b25e8c02bb88fa1f7)), closes [#3690](https://github.com/zwave-js/zwave-js-ui/issues/3690)
+* **ui:** use vuetify's material design palette colors for protocol color ([#3692](https://github.com/zwave-js/zwave-js-ui/issues/3692)) ([2df5105](https://github.com/zwave-js/zwave-js-ui/commit/2df5105afda0dc879bd2231e9d02cb314f7f783a))
+
+
+### Features
+
+* bump zwave-js@12.5.6 ([#3683](https://github.com/zwave-js/zwave-js-ui/issues/3683)) ([1b0e49d](https://github.com/zwave-js/zwave-js-ui/commit/1b0e49d826a59115edb12842c66c1f9d3ecd9a56))
+* **ui:** smart start view improvements ([#3684](https://github.com/zwave-js/zwave-js-ui/issues/3684)) ([425a817](https://github.com/zwave-js/zwave-js-ui/commit/425a817d9875e360a471270daa93741874bd500d))
+
 ## [9.11.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.11.0...v9.11.1) (2024-04-19)
 
 
