@@ -22,6 +22,7 @@
 						:position-y="y"
 						absolute
 						offset-y
+						offset-x
 					>
 						<v-list dense>
 							<v-list-item dense>
@@ -391,8 +392,8 @@ export default {
 		onRowFocus(event, { item }) {
 			if (item.nodeId) {
 				// get mouse position
-				this.x = event.clientX
-				this.y = event.clientY
+				this.x = event.clientX + 10
+				this.y = event.clientY + 10
 
 				this.showInfoTooltip = true
 			}
