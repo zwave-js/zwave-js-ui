@@ -703,7 +703,7 @@ export default {
 			} else if (args.mqtt) {
 				this.sendMqttAction(action, args.confirm)
 			} else {
-				this.$emit('action', action, { ...args, nodeId: this.node.id })
+				this.sendAction(action, { ...args, nodeId: this.node.id })
 			}
 		},
 		exportNode() {
