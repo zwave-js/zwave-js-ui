@@ -1,4 +1,5 @@
 import { isValidDSK, Protocols } from '@zwave-js/core/safe'
+import colors from 'vuetify/lib/util/colors'
 
 export function copy(o) {
 	return JSON.parse(JSON.stringify(o))
@@ -194,10 +195,10 @@ export function getProtocol(node) {
 export function getProtocolColor(node) {
 	switch (node.protocol) {
 		case Protocols.ZWave:
-			return 'blue'
+			return colors.blue.base
 		case Protocols.ZWaveLongRange:
-			return 'purple'
+			return colors.purple.base
 		default:
-			return 'grey'
+			return colors.grey.base
 	}
 }
