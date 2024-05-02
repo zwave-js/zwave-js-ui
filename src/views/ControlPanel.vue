@@ -208,7 +208,7 @@ export default {
 					],
 					icon: 'healing',
 					color: 'warning',
-					desc: 'Force nodes to establish better connections to the controller',
+					desc: 'Force nodes to establish new connections to the controller',
 				},
 				{
 					text: 'Re-interview Nodes',
