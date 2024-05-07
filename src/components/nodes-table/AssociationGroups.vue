@@ -68,7 +68,6 @@
 			@add="addAssociation"
 			@close="dialogAssociation = false"
 			v-model="dialogAssociation"
-			:nodes="nodes"
 			:node="node"
 			:associations="associations"
 		/>

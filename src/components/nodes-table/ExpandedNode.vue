@@ -355,6 +355,11 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		isLongRange() {
+			if (!this.node) return false
+
+			return this.node.protocol === Protocols.ZWaveLongRange
+		},
 		nodeMetadata() {
 			return this.node.deviceConfig?.metadata
 		},
