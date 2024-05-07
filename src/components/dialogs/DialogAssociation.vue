@@ -118,6 +118,8 @@
 </template>
 
 <script>
+import { Protocols } from '@zwave-js/core/safe'
+
 export default {
 	props: {
 		value: Boolean,
@@ -133,7 +135,11 @@ export default {
 	},
 	computed: {
 		filteredNodes() {
-			return this.nodes.filter((n) => n.id !== this.node.id)
+			return this.nodes.filter(
+				(n) =>
+					n.id !== this.node.id &&
+					n.protocol !== Protocols.ZWaveLongRange,
+			)
 		},
 		endpoints() {
 			return this.getEndpointItems(this.node)

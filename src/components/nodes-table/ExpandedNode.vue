@@ -101,7 +101,7 @@
 			<v-tab v-if="showHass" class="justify-start" key="homeassistant">
 				<v-icon small left>home</v-icon> Home Assistant
 			</v-tab>
-			<v-tab key="groups" class="justify-start">
+			<v-tab v-if="!isLongRange" key="groups" class="justify-start">
 				<v-icon small left>device_hub</v-icon> Groups
 			</v-tab>
 			<v-tab v-if="node.schedule" key="users" class="justify-start">
@@ -178,7 +178,11 @@
 				</v-tab-item>
 
 				<!-- TAB GROUPS -->
-				<v-tab-item key="groups" transition="slide-y-transition">
+				<v-tab-item
+					v-if="!isLongRange"
+					key="groups"
+					transition="slide-y-transition"
+				>
 					<association-groups :node="node" />
 				</v-tab-item>
 
@@ -355,6 +359,11 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		isLongRange() {
+			if (!this.node) return false
+
+			return this.node.protocol === Protocols.ZWaveLongRange
+		},
 		nodeMetadata() {
 			return this.node.deviceConfig?.metadata
 		},
