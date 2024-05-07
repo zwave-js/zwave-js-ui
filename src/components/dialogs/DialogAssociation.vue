@@ -119,11 +119,12 @@
 
 <script>
 import { Protocols } from '@zwave-js/core/safe'
+import { mapState } from 'pinia'
+import useBaseStore from '../../stores/base.js'
 
 export default {
 	props: {
 		value: Boolean,
-		nodes: Array,
 		associations: Array,
 		node: Object,
 	},
@@ -134,12 +135,15 @@ export default {
 		},
 	},
 	computed: {
+		...mapState(useBaseStore, ['controllerNode', 'nodes']),
 		filteredNodes() {
-			return this.nodes.filter(
-				(n) =>
-					n.id !== this.node.id &&
-					n.protocol !== Protocols.ZWaveLongRange,
-			)
+			return this.node.protocol === Protocols.ZWaveLongRange
+				? [this.controllerNode]
+				: this.nodes.filter(
+						(n) =>
+							n.id !== this.node.id &&
+							n.protocol !== Protocols.ZWaveLongRange,
+				  )
 		},
 		endpoints() {
 			return this.getEndpointItems(this.node)
