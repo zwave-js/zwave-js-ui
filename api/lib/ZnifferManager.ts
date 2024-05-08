@@ -102,7 +102,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	private ccToLogRecord(commandClass: CommandClass): Record<string, any> {
 		const parsed: Record<string, any> = commandClass.toLogEntry(
 			this.zniffer as any,
-		).message
+		)
 
 		if (isEncapsulatingCommandClass(commandClass)) {
 			parsed.encapsulated = [
