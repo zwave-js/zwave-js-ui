@@ -32,9 +32,11 @@
 					</template>
 
 					<template v-slot:[`item.payload`]="{ item }">
-						<p v-if="item.parsedPayload">
-							{{ jsonToList(item.parsedPayload) }}
-						</p>
+						<cc-tree-view
+							v-if="item.parsedPayload"
+							:value="item.parsedPayload"
+						>
+						</cc-tree-view>
 						<p v-else-if="item.payload">
 							{{ item.payload }}
 						</p>
@@ -65,7 +67,9 @@ export default {
 	props: {
 		socket: Object,
 	},
-	watch: {},
+	components: {
+		ccTreeView: () => import('../components/custom/CCTreeView.vue'),
+	},
 	computed: {
 		...mapState(useBaseStore, ['zniffer']),
 	},
@@ -125,6 +129,19 @@ export default {
 
 			if (response.success) {
 				this.showSnackbar(`Zniffer stopped`, 'success')
+			}
+		},
+		async createCapture() {
+			const response = await this.sendAction({
+				apiName: 'saveCaptureToFile',
+			})
+
+			if (response.success) {
+				const result = response.result
+				this.showSnackbar(
+					`Capture "${result.name}" created in store`,
+					'success',
+				)
 			}
 		},
 	},

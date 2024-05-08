@@ -49,6 +49,14 @@ export type SocketFrame = (Frame | CorruptedFrame) & {
 	timestamp: number
 }
 
+export interface FrameCCLogEntry {
+	tags: string[]
+	message?: {
+		encapsulated?: FrameCCLogEntry[]
+		[key: string]: string | number | boolean | FrameCCLogEntry[]
+	}
+}
+
 export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEventCallbacks> {
 	private zniffer: Zniffer
 
