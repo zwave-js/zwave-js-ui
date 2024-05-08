@@ -19,6 +19,8 @@ export enum socketEvents {
 	grantSecurityClasses = 'GRANT_SECURITY_CLASSES',
 	validateDSK = 'VALIDATE_DSK',
 	inclusionAborted = 'INCLUSION_ABORTED',
+	znifferFrame = 'ZNIFFER_FRAME',
+	znifferError = 'ZNIFFER_ERROR',
 }
 
 // events from client ---> server
@@ -27,4 +29,5 @@ export enum inboundEvents {
 	zwave = 'ZWAVE_API', // call a zwave api
 	hass = 'HASS_API', // call an hass api
 	mqtt = 'MQTT_API', // call an mqtt api
+	zniffer = 'ZNIFFER_API', // call a zniffer api
 }

@@ -48,6 +48,7 @@ import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
+import ZnifferManager from './lib/ZnifferManager'
 
 const createCertificate = promisify(generate)
 
@@ -158,6 +159,7 @@ socketManager.authMiddleware = function (
 }
 
 let gw: Gateway // the gateway instance
+let zniffer: ZnifferManager // the zniffer instance
 const plugins: CustomPlugin[] = []
 let pluginsRouter: Router
 
@@ -384,6 +386,10 @@ async function startGateway(settings: Settings) {
 
 	if (settings.zwave) {
 		zwave = new ZWaveClient(settings.zwave, socketManager.io)
+	}
+
+	if (settings.zniffer) {
+		zniffer = new ZnifferManager(settings.zniffer, socketManager.io)
 	}
 
 	backupManager.init(zwave)
@@ -724,6 +730,38 @@ function setupSocket(server: HttpServer) {
 			const result = {
 				success: !err,
 				message: err || 'Success HASS api call',
+				result: res,
+				api: data.apiName,
+			}
+
+			cb(result)
+		})
+
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		socket.on(inboundEvents.zniffer, async (data, cb = noop) => {
+			logger.info(`Zniffer api call: ${data.api}`)
+
+			let res: any, err: string
+			try {
+				switch (data.apiName) {
+					case 'start':
+						res = await zniffer.start()
+						break
+					case 'stop':
+						res = await zniffer.stop()
+						break
+					case 'capture':
+						res = await zniffer.saveCaptureToFile()
+						break
+				}
+			} catch (error) {
+				logger.error('Error while calling ZNIFFER api', error)
+				err = error.message
+			}
+
+			const result = {
+				success: !err,
+				message: err || 'Success ZNIFFER api call',
 				result: res,
 				api: data.apiName,
 			}

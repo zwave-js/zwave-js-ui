@@ -2236,64 +2236,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			this.cfg.securityKeys = this.cfg.securityKeys || {}
 
+			// update settings to fix compatibility
 			if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
 				this.cfg.securityKeys.S0_Legacy = s0Key
 				const settings = jsonStore.get(store.settings)
 				settings.zwave = this.cfg
 				await jsonStore.put(store.settings, settings)
-			} else if (process.env.NETWORK_KEY) {
-				this.cfg.securityKeys.S0_Legacy = process.env.NETWORK_KEY
 			}
 
-			const availableKeys = [
-				'S2_Unauthenticated',
-				'S2_Authenticated',
-				'S2_AccessControl',
-				'S0_Legacy',
-			]
-
-			const envKeys = Object.keys(process.env)
-				.filter((k) => k?.startsWith('KEY_'))
-				.map((k) => k.substring(4))
-
-			// load security keys from env
-			for (const k of envKeys) {
-				if (availableKeys.includes(k)) {
-					this.cfg.securityKeys[k] = process.env[`KEY_${k}`]
-				}
-			}
-
-			zwaveOptions.securityKeys = {}
-			zwaveOptions.securityKeysLongRange = {}
-
-			// convert security keys to buffer
-			for (const key in this.cfg.securityKeys) {
-				if (
-					availableKeys.includes(key) &&
-					this.cfg.securityKeys[key].length === 32
-				) {
-					zwaveOptions.securityKeys[key] = Buffer.from(
-						this.cfg.securityKeys[key],
-						'hex',
-					)
-				}
-			}
-
-			this.cfg.securityKeysLongRange =
-				this.cfg.securityKeysLongRange || {}
-
-			// convert security keys to buffer
-			for (const key in this.cfg.securityKeysLongRange) {
-				if (
-					availableKeys.includes(key) &&
-					this.cfg.securityKeysLongRange[key].length === 32
-				) {
-					zwaveOptions.securityKeysLongRange[key] = Buffer.from(
-						this.cfg.securityKeysLongRange[key],
-						'hex',
-					)
-				}
-			}
+			utils.parseSecurityKeys(this.cfg, zwaveOptions)
 
 			try {
 				// init driver here because if connect fails the driver is destroyed

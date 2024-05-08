@@ -35,7 +35,6 @@ const useBaseStore = defineStore('base', {
 					measured0dBm: undefined,
 				},
 			},
-			logEnabled: true,
 			securityKeys: {
 				S2_Unauthenticated: '',
 				S2_Authenticated: '',
@@ -47,6 +46,7 @@ const useBaseStore = defineStore('base', {
 				S2_AccessControl: '',
 			},
 			deviceConfigPriorityDir: '',
+			logEnabled: true,
 			logToFile: true,
 			maxFiles: 7,
 			serverEnabled: false,
@@ -80,6 +80,25 @@ const useBaseStore = defineStore('base', {
 			auth: false,
 			username: undefined,
 			password: undefined,
+		},
+		zniffer: {
+			enabled: false,
+			port: '',
+			logEnabled: true,
+			logToFile: true,
+			maxFiles: 7,
+			securityKeys: {
+				S2_Unauthenticated: '',
+				S2_Authenticated: '',
+				S2_AccessControl: '',
+				S0_Legacy: '',
+			},
+			securityKeysLongRange: {
+				S2_Authenticated: '',
+				S2_AccessControl: '',
+			},
+			convertRSSI: false,
+			defaultFrequency: undefined,
 		},
 		devices: [],
 		gateway: {
