@@ -27,8 +27,24 @@
 						{{ new Date(item.timestamp).toLocaleString() }}
 					</template>
 
+					<template v-slot:[`item.channel`]="{ item }">
+						{{ item.channel }}
+					</template>
+
+					<template v-slot:[`item.region`]="{ item }">
+						{{ getRegion(item.region) }}
+					</template>
+
+					<template v-slot:[`item.rssi`]="{ item }">
+						{{ getRssi(item) }}
+					</template>
+
+					<template v-slot:[`item.protocolDataRate`]="{ item }">
+						{{ getProtocolDataRate(item) }}
+					</template>
+
 					<template v-slot:[`item.type`]="{ item }">
-						{{ item.type }}
+						{{ getType(item) }}
 					</template>
 
 					<template v-slot:[`item.payload`]="{ item }">
@@ -41,6 +57,10 @@
 							{{ item.payload }}
 						</p>
 						<p v-else>---</p>
+					</template>
+
+					<template v-slot:[`item.repeaters`]="{ item }">
+						{{ getRepeaters(item) }}
 					</template>
 				</v-data-table>
 			</v-col>
@@ -55,12 +75,20 @@
 	</v-container>
 </template>
 <script>
+import {
+	protocolDataRateToString,
+	isRssiError,
+	rssiToString,
+	getEnumMemberName,
+} from 'zwave-js/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
 import { jsonToList } from '../lib/utils'
 
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
+import { rfRegions } from '../lib/items.js'
+import { ZWaveFrameType } from 'zwave-js/core/safe'
 
 export default {
 	name: 'Zniffer',
@@ -79,13 +107,59 @@ export default {
 			headers: [
 				{ text: 'Timestamp', value: 'timestamp' },
 				{ text: 'Type', value: 'type' },
+				{ text: 'Channel', value: 'channel' },
+				{ text: 'Sequence #', value: 'sequenceNumber' },
+				{ text: 'Home Id', value: 'homeId' },
+				{ text: 'Region', value: 'region' },
+				{ text: 'Source', value: 'sourceNodeId' },
+				{ text: 'Destination', value: 'destinationNodeId' },
+				{ text: 'RSSI', value: 'rssi' },
+				{ text: 'Protocol Data Rate', value: 'protocolDataRate' },
+				{ text: 'Tx Power', value: 'txPower' },
 				{ text: 'Payload', value: 'payload' },
+				{ text: 'Repeaters', value: 'repeaters' },
 			],
 		}
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		jsonToList,
+		getRegion(region) {
+			return (
+				rfRegions.find((r) => r.value === region)?.text ||
+				`Unknown region ${region}`
+			)
+		},
+		getRepeaters(item) {
+			const repRSSI = item.repeaterRSSI || []
+			return item.repeaters?.length > 0
+				? item.repeaters
+						.map(
+							(r, i) =>
+								`${r}${
+									repRSSI[i] && !isRssiError(repRSSI[i])
+										? ` (${rssiToString(repRSSI[i])})`
+										: ''
+								}`,
+						)
+						.join(', ')
+				: 'None, direct connection'
+		},
+		getType(item) {
+			return getEnumMemberName(ZWaveFrameType, item.type)
+		},
+		getRssi(item) {
+			if (item.rssi && !isRssiError(item.rssi)) {
+				return rssiToString(item.rssi)
+			}
+
+			return item.rssiRaw
+		},
+		getProtocolDataRate(item) {
+			return item.protocolDataRate !== undefined
+				? protocolDataRateToString(item.protocolDataRate)
+				: '---'
+		},
 		async sendAction(data = {}) {
 			return new Promise((resolve) => {
 				if (this.socket.connected) {

@@ -439,11 +439,42 @@ export default {
 			'auth',
 			'appInfo',
 			'controllerNode',
+			'zniffer',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
+		pages() {
+			const pages = [
+				{
+					icon: 'widgets',
+					title: 'Control Panel',
+					path: Routes.controlPanel,
+				},
+
+				{
+					icon: 'qr_code_scanner',
+					title: 'Smart Start',
+					path: Routes.smartStart,
+				},
+				{ icon: 'settings', title: 'Settings', path: Routes.settings },
+				{ icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
+				{ icon: 'bug_report', title: 'Debug', path: Routes.debug },
+				{ icon: 'folder', title: 'Store', path: Routes.store },
+				{ icon: 'share', title: 'Network graph', path: Routes.mesh },
+			]
+
+			if (this.zniffer?.enabled) {
+				pages.splice(1, 0, {
+					icon: 'preview',
+					title: 'Zniffer',
+					path: Routes.zniffer,
+				})
+			}
+
+			return pages
+		},
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
 		},
@@ -555,28 +586,6 @@ export default {
 					func: this.logout,
 					tooltip: 'Logout',
 				},
-			],
-			pages: [
-				{
-					icon: 'widgets',
-					title: 'Control Panel',
-					path: Routes.controlPanel,
-				},
-				{
-					icon: 'preview',
-					title: 'Zniffer',
-					path: Routes.zniffer,
-				},
-				{
-					icon: 'qr_code_scanner',
-					title: 'Smart Start',
-					path: Routes.smartStart,
-				},
-				{ icon: 'settings', title: 'Settings', path: Routes.settings },
-				{ icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
-				{ icon: 'bug_report', title: 'Debug', path: Routes.debug },
-				{ icon: 'folder', title: 'Store', path: Routes.store },
-				{ icon: 'share', title: 'Network graph', path: Routes.mesh },
 			],
 			status: '',
 			statusColor: '',

@@ -1115,7 +1115,9 @@ app.post(
 			restarting = true
 			await jsonStore.put(store.settings, settings)
 			await gw.close()
-			await zniffer.close()
+			if (zniffer) {
+				await zniffer.close()
+			}
 			await destroyPlugins()
 			// reload loggers settings
 			setupLogging(settings)
