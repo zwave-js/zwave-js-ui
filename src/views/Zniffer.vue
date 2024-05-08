@@ -80,6 +80,7 @@ import {
 	isRssiError,
 	rssiToString,
 	getEnumMemberName,
+	ZWaveFrameType,
 } from 'zwave-js/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
 import { jsonToList } from '../lib/utils'
@@ -88,7 +89,6 @@ import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import { rfRegions } from '../lib/items.js'
-import { ZWaveFrameType } from 'zwave-js/core/safe'
 
 export default {
 	name: 'Zniffer',
