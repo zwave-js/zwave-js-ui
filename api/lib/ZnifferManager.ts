@@ -1,10 +1,18 @@
-import { CommandClass, Frame, Zniffer, ZnifferOptions } from 'zwave-js'
+import {
+	CommandClass,
+	CorruptedFrame,
+	Frame,
+	isEncapsulatingCommandClass,
+	isMultiEncapsulatingCommandClass,
+	Zniffer,
+	ZnifferOptions,
+} from 'zwave-js'
 import { TypedEventEmitter } from './EventEmitter'
 import { module } from './logger'
 import { Server as SocketServer } from 'socket.io'
 import { socketEvents } from './SocketEvents'
 import { ZwaveConfig } from './ZwaveClient'
-import { base, logsDir, storeDir } from '../config/app'
+import { logsDir, storeDir } from '../config/app'
 import { joinPath, parseSecurityKeys } from './utils'
 import { isDocker } from '@zwave-js/shared'
 import { basename } from 'path'
@@ -20,6 +28,7 @@ export type ZnifferConfig = Pick<
 	| 'logEnabled'
 	| 'logToFile'
 	| 'logLevel'
+	| 'nodeFilter'
 > & {
 	port: string
 	enabled: boolean
@@ -34,7 +43,10 @@ const logger = module('ZnifferManager')
 const ZNIFFER_LOG_FILE = joinPath(logsDir, 'zniffer_%DATE%.log')
 const ZNIFFER_CAPTURE_FILE = joinPath(storeDir, 'zniffer_capture_%DATE%.zlf')
 
-export type SocketFrame = Frame & { parsedPayload?: string; corrupted: boolean }
+export type SocketFrame = (Frame | CorruptedFrame) & {
+	parsedPayload?: Record<string, any>
+	corrupted: boolean
+}
 
 export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEventCallbacks> {
 	private zniffer: Zniffer
@@ -65,7 +77,11 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 				logToFile: config.logToFile,
 				filename: ZNIFFER_LOG_FILE,
 				forceConsole: isDocker() ? !config.logToFile : false,
-				maxFiles: config.maxFiles,
+				maxFiles: config.maxFiles || 7,
+				nodeFilter:
+					config.nodeFilter && config.nodeFilter.length > 0
+						? config.nodeFilter.map((n) => parseInt(n))
+						: undefined,
 			},
 		}
 
@@ -83,9 +99,29 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.socket.emit(socketEvents.znifferError, error)
 	}
 
+	private ccToLogRecord(commandClass: CommandClass): Record<string, any> {
+		const parsed: Record<string, any> = commandClass.toLogEntry(
+			this.zniffer as any,
+		).message
+
+		if (isEncapsulatingCommandClass(commandClass)) {
+			parsed.encapsulated = [
+				this.ccToLogRecord(commandClass.encapsulated),
+			]
+		} else if (isMultiEncapsulatingCommandClass(commandClass)) {
+			parsed.encapsulated = [
+				commandClass.encapsulated.map((cc) => this.ccToLogRecord(cc)),
+			]
+		}
+
+		return parsed
+	}
+
 	public async close() {
-		this.zniffer.removeAllListeners()
-		await this.stop()
+		if (this.zniffer) {
+			this.zniffer.removeAllListeners()
+			await this.stop()
+		}
 	}
 
 	public async start() {
@@ -97,13 +133,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.zniffer.on('frame', (frame) => {
 			const socketFrame: SocketFrame = { ...frame, corrupted: false }
 
-			// try parsing payload to something human-readable
-			const payload: CommandClass | Buffer = (frame as any).payload
-
-			if (payload instanceof CommandClass) {
-				socketFrame.parsedPayload = payload.toLogEntry(
-					this.zniffer,
-				).message
+			if ('payload' in frame && frame.payload instanceof CommandClass) {
+				socketFrame.parsedPayload = this.ccToLogRecord(frame.payload)
 			}
 
 			this.socket.emit(socketEvents.znifferFrame, socketFrame)

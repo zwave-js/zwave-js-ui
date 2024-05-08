@@ -485,6 +485,7 @@ const useBaseStore = defineStore('base', {
 					this.zwave.rf.txPower = {}
 				}
 				Object.assign(this.mqtt, conf.mqtt || {})
+				Object.assign(this.zniffer, conf.zniffer || {})
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
 				Object.assign(this.ui, conf.ui || {})

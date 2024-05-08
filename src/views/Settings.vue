@@ -51,7 +51,7 @@
 					</v-expansion-panel-content>
 					<v-divider />
 				</v-expansion-panel>
-				<v-expansion-panel key="general">
+				<v-expansion-panel key="General">
 					<v-expansion-panel-header>
 						<v-row no-gutters>
 							<v-col align-self="center"> General </v-col>
@@ -476,7 +476,7 @@
 					<v-divider />
 				</v-expansion-panel>
 
-				<v-expansion-panel key="zwave">
+				<v-expansion-panel key="Zwave">
 					<v-expansion-panel-header>
 						<v-row no-gutters>
 							<v-col align-self="center"> Z-Wave </v-col>
@@ -542,18 +542,22 @@
 													fixKey(
 														$event,
 														'S2_Unauthenticated',
+														newZwave.securityKeys,
 													)
 												"
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys(),
+													differentKeys(
+														newZwave.securityKeys,
+													),
 												]"
 												persistent-hint
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
 														'S2_Unauthenticated',
+														newZwave.securityKeys,
 													)
 												"
 											></v-text-field>
@@ -568,6 +572,7 @@
 													fixKey(
 														$event,
 														'S2_Authenticated',
+														newZwave.securityKeys,
 													)
 												"
 												prepend-icon="vpn_key"
@@ -576,12 +581,15 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys(),
+													differentKeys(
+														newZwave.securityKeys,
+													),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
+														newZwave.securityKeys,
 													)
 												"
 											></v-text-field>
@@ -596,6 +604,7 @@
 													fixKey(
 														$event,
 														'S2_AccessControl',
+														newZwave.securityKeys,
 													)
 												"
 												prepend-icon="vpn_key"
@@ -603,12 +612,15 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys(),
+													differentKeys(
+														newZwave.securityKeys,
+													),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
+														newZwave.securityKeys,
 													)
 												"
 											></v-text-field>
@@ -627,11 +639,16 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys(),
+													differentKeys(
+														newZwave.securityKeys,
+													),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
-													randomKey('S0_Legacy')
+													randomKey(
+														'S0_Legacy',
+														newZwave.securityKeys,
+													)
 												"
 											></v-text-field>
 										</v-col>
@@ -658,7 +675,7 @@
 													fixKey(
 														$event,
 														'S2_Authenticated',
-														true,
+														newZwave.securityKeysLongRange,
 													)
 												"
 												prepend-icon="vpn_key"
@@ -667,13 +684,15 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys(true),
+													differentKeys(
+														newZwave.securityKeysLongRange,
+													),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
-														true,
+														newZwave.securityKeysLongRange,
 													)
 												"
 											></v-text-field>
@@ -689,7 +708,7 @@
 													fixKey(
 														$event,
 														'S2_AccessControl',
-														true,
+														newZwave.securityKeysLongRange,
 													)
 												"
 												prepend-icon="vpn_key"
@@ -697,13 +716,15 @@
 												:rules="[
 													rules.validKey,
 													rules.validLength,
-													differentKeys(true),
+													differentKeys(
+														newZwave.securityKeysLongRange,
+													),
 												]"
 												append-outer-icon="wifi_protected_setup"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
-														true,
+														newZwave.securityKeysLongRange,
 													)
 												"
 											></v-text-field>
@@ -960,6 +981,351 @@
 										type="hidden"
 										:value="newZwave.options"
 									/>
+								</v-row>
+							</v-card-text>
+						</v-card>
+					</v-expansion-panel-content>
+					<v-divider />
+				</v-expansion-panel>
+
+				<v-expansion-panel key="Zniffer">
+					<v-expansion-panel-header>
+						<v-row no-gutters>
+							<v-col align-self="center"> Zniffer </v-col>
+							<v-col class="text-right pr-5">
+								<v-btn
+									@click.stop="openDocs('zniffer')"
+									color="primary"
+									outlined
+									x-small
+								>
+									Docs
+									<v-icon x-small right>launch</v-icon>
+								</v-btn>
+							</v-col>
+						</v-row>
+					</v-expansion-panel-header>
+					<v-expansion-panel-content>
+						<v-card flat>
+							<v-card-text>
+								<v-row>
+									<v-col cols="12" sm="6">
+										<v-switch
+											hint="Enable/Disable Zniffer"
+											persistent-hint
+											label="Enabled"
+											v-model="newZniffer.enabled"
+										></v-switch>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<v-combobox
+											v-model="newZniffer.port"
+											label="Serial Port"
+											hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
+											persistent-hint
+											:rules="[rules.required]"
+											required
+											:items="serial_ports"
+										></v-combobox>
+									</v-col>
+									<v-row
+										class="mt-0"
+										v-if="newZniffer.securityKeys"
+									>
+										<v-col cols="12">
+											<v-subheader
+												class="font-weight-bold primary--text"
+											>
+												Security Keys
+											</v-subheader>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZniffer.securityKeys
+														.S2_Unauthenticated
+												"
+												label="S2 Unauthenticated"
+												prepend-icon="vpn_key"
+												@paste="
+													fixKey(
+														$event,
+														'S2_Unauthenticated',
+														newZniffer.securityKeys,
+													)
+												"
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(
+														newZniffer.securityKeys,
+													),
+												]"
+												persistent-hint
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S2_Unauthenticated',
+														newZniffer.securityKeys,
+													)
+												"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZniffer.securityKeys
+														.S2_Authenticated
+												"
+												@paste="
+													fixKey(
+														$event,
+														'S2_Authenticated',
+														newZniffer.securityKeys,
+													)
+												"
+												prepend-icon="vpn_key"
+												label="S2 Authenticated"
+												persistent-hint
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(
+														newZniffer.securityKeys,
+													),
+												]"
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S2_Authenticated',
+														newZniffer.securityKeys,
+													)
+												"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZniffer.securityKeys
+														.S2_AccessControl
+												"
+												@paste="
+													fixKey(
+														$event,
+														'S2_AccessControl',
+														newZniffer.securityKeys,
+													)
+												"
+												prepend-icon="vpn_key"
+												label="S2 Access Control"
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(
+														newZniffer.securityKeys,
+													),
+												]"
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S2_AccessControl',
+														newZniffer.securityKeys,
+													)
+												"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZniffer.securityKeys
+														.S0_Legacy
+												"
+												@paste="
+													fixKey($event, 'S0_Legacy')
+												"
+												prepend-icon="vpn_key"
+												label="S0 Legacy"
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(
+														newZniffer.securityKeys,
+													),
+												]"
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S0_Legacy',
+														newZniffer.securityKeys,
+													)
+												"
+											></v-text-field>
+										</v-col>
+									</v-row>
+									<v-row
+										class="mt-0"
+										v-if="newZniffer.securityKeysLongRange"
+									>
+										<v-col cols="12">
+											<v-subheader
+												class="font-weight-bold primary--text"
+											>
+												Security Keys (Long Range)
+											</v-subheader>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZniffer
+														.securityKeysLongRange
+														.S2_Authenticated
+												"
+												@paste="
+													fixKey(
+														$event,
+														'S2_Authenticated',
+														newZniffer.securityKeysLongRange,
+													)
+												"
+												prepend-icon="vpn_key"
+												label="S2 Authenticated"
+												persistent-hint
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(
+														newZniffer.securityKeysLongRange,
+													),
+												]"
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S2_Authenticated',
+														newZniffer.securityKeysLongRange,
+													)
+												"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model="
+													newZniffer
+														.securityKeysLongRange
+														.S2_AccessControl
+												"
+												@paste="
+													fixKey(
+														$event,
+														'S2_AccessControl',
+														newZniffer.securityKeysLongRange,
+													)
+												"
+												prepend-icon="vpn_key"
+												label="S2 Access Control"
+												:rules="[
+													rules.validKey,
+													rules.validLength,
+													differentKeys(
+														newZniffer.securityKeysLongRange,
+													),
+												]"
+												append-outer-icon="wifi_protected_setup"
+												@click:append-outer="
+													randomKey(
+														'S2_AccessControl',
+														newZniffer.securityKeysLongRange,
+													)
+												"
+											></v-text-field>
+										</v-col>
+									</v-row>
+									<v-col cols="12" sm="6">
+										<v-switch
+											hint="The RSSI values reported by the Zniffer are not actual RSSI values. They can be converted to dBm, but the conversion is chip dependent and not documented for 700/800 series Zniffers. Set this option to `true` enable the conversion. Otherwise the raw values from the Zniffer will be used."
+											persistent-hint
+											label="Convert RSSI"
+											v-model="newZniffer.convertRSSI"
+										></v-switch>
+									</v-col>
+
+									<v-col cols="12" sm="6">
+										<v-select
+											label="Default frequency"
+											persistent-hint
+											hint="The frequency to initialize the Zniffer with. If not specified, the current setting will be kept."
+											:items="rfRegions"
+											clearable
+											v-model="
+												newZniffer.defaultFrequency
+											"
+										>
+										</v-select>
+									</v-col>
+									<v-col cols="12"> </v-col>
+
+									<v-col cols="12" sm="6">
+										<v-switch
+											hint="Enable zniffer logging"
+											persistent-hint
+											label="Log Enabled"
+											v-model="newZniffer.logEnabled"
+										></v-switch>
+									</v-col>
+									<v-col
+										v-if="newZniffer.logEnabled"
+										cols="12"
+										sm="6"
+									>
+										<v-select
+											:items="logLevels"
+											v-model="newZniffer.logLevel"
+											label="Log Level"
+										></v-select>
+									</v-col>
+									<v-col
+										v-if="newZniffer.logEnabled"
+										cols="12"
+										sm="6"
+									>
+										<v-switch
+											hint="Store zniffer logs in a file (stored in store folder)"
+											persistent-hint
+											label="Log to file"
+											v-model="newZniffer.logToFile"
+										></v-switch>
+									</v-col>
+									<v-col
+										cols="12"
+										sm="6"
+										v-if="newZniffer.logEnabled"
+									>
+										<v-text-field
+											v-model.number="newZniffer.maxFiles"
+											label="Max files"
+											:rules="[rules.required]"
+											required
+											persistent-hint
+											hint="Maximum number of log files to keep"
+											type="number"
+										></v-text-field>
+									</v-col>
+									<v-col
+										v-if="newZniffer.logEnabled"
+										cols="12"
+										sm="6"
+									>
+										<v-combobox
+											hint="Choose which nodes to log. Leave this empty to log all nodes"
+											persistent-hint
+											label="Log nodes"
+											:items="newZniffer.nodeFilter || []"
+											multiple
+											:rules="[rules.validNodeLog]"
+											chips
+											deletable-chips
+											v-model="newZniffer.nodeFilter"
+										></v-combobox>
+									</v-col>
 								</v-row>
 							</v-card-text>
 						</v-card>
@@ -1443,6 +1809,7 @@
 				:devices="devices"
 			/>
 		</v-form>
+
 		<v-row
 			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
 			class="mt-2 mb-3"
@@ -1598,6 +1965,7 @@ export default {
 		},
 		...mapState(useBaseStore, [
 			'zwave',
+			'zniffer',
 			'mqtt',
 			'gateway',
 			'backup',
@@ -1630,6 +1998,7 @@ export default {
 					txPower: {},
 				},
 			},
+			newZniffer: {},
 			newBackup: {},
 			editedValue: {},
 			editedIndex: -1,
@@ -1796,12 +2165,9 @@ export default {
 
 			return res
 		},
-		differentKeys(isLongRange = false) {
+		differentKeys(obj) {
 			return () => {
-				const keys = isLongRange
-					? this.newZwave.securityKeysLongRange
-					: this.newZwave.securityKeys
-				const values = Object.values(keys)
+				const values = Object.values(obj)
 
 				// ensure there are no duplicates
 				return (
@@ -1810,16 +2176,12 @@ export default {
 				)
 			}
 		},
-		fixKey(event, key, isLongRange = false) {
+		fixKey(event, key, obj) {
 			let data = event.clipboardData?.getData('Text')
-
-			const keys = isLongRange
-				? this.newZwave.securityKeysLongRange
-				: this.newZwave.securityKeys
 
 			if (data) {
 				data = data.replace(/0x|,|\s/gi, '')
-				this.$set(keys, key, data)
+				this.$set(obj, key, data)
 				event.preventDefault()
 			}
 		},
@@ -1844,11 +2206,7 @@ export default {
 				return item
 			}
 		},
-		randomKey(k, isLongRange = false) {
-			const keys = isLongRange
-				? this.newZwave.securityKeysLongRange
-				: this.newZwave.securityKeys
-
+		randomKey(k, obj) {
 			let key = ''
 
 			while (key.length < 32) {
@@ -1858,7 +2216,7 @@ export default {
 				key += x.length === 2 ? x : '0' + x
 			}
 
-			this.$set(keys, k, key)
+			this.$set(obj, k, key)
 		},
 		readFile(file, callback) {
 			const reader = new FileReader()
@@ -1900,6 +2258,7 @@ export default {
 				gateway: this.newGateway,
 				zwave: this.newZwave,
 				backup: this.newBackup,
+				zniffer: this.newZniffer,
 				ui: this.ui,
 			}
 		},
@@ -2065,6 +2424,7 @@ export default {
 		resetConfig() {
 			this.newGateway = copy(this.gateway)
 			this.newZwave = copy(this.zwave)
+			this.newZniffer = copy(this.zniffer)
 			this.newMqtt = copy(this.mqtt)
 			this.newBackup = copy(this.backup)
 		},
