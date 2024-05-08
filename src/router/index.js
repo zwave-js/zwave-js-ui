@@ -12,6 +12,7 @@ const Login = () => import('@/views/Login.vue')
 const ErrorPage = () => import('@/views/ErrorPage.vue')
 const SmartStart = () => import('@/views/SmartStart.vue')
 const ControllerChart = () => import('@/views/ControllerChart.vue')
+const Zniffer = () => import('@/views/Zniffer.vue')
 
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
@@ -29,6 +30,7 @@ export const Routes = {
 	mesh: '/mesh',
 	smartStart: '/smart-start',
 	controllerChart: '/controller-chart',
+	zniffer: '/zniffer',
 }
 
 Routes.main = Routes.controlPanel
@@ -50,6 +52,15 @@ const router = new Router({
 			path: Routes.controlPanel,
 			name: 'Control Panel',
 			component: ControlPanel,
+			props: true,
+			meta: {
+				requiresAuth: true,
+			},
+		},
+		{
+			path: Routes.zniffer,
+			name: 'Zniffer',
+			component: Zniffer,
 			props: true,
 			meta: {
 				requiresAuth: true,

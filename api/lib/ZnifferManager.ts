@@ -46,6 +46,7 @@ const ZNIFFER_CAPTURE_FILE = joinPath(storeDir, 'zniffer_capture_%DATE%.zlf')
 export type SocketFrame = (Frame | CorruptedFrame) & {
 	parsedPayload?: Record<string, any>
 	corrupted: boolean
+	timestamp: number
 }
 
 export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEventCallbacks> {
@@ -131,7 +132,11 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info('ZnifferManager started')
 
 		this.zniffer.on('frame', (frame) => {
-			const socketFrame: SocketFrame = { ...frame, corrupted: false }
+			const socketFrame: SocketFrame = {
+				...frame,
+				corrupted: false,
+				timestamp: Date.now(),
+			}
 
 			if ('payload' in frame && frame.payload instanceof CommandClass) {
 				socketFrame.parsedPayload = this.ccToLogRecord(frame.payload)
@@ -141,7 +146,11 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		})
 
 		this.zniffer.on('corrupted frame', (frame) => {
-			const socketFrame: SocketFrame = { ...frame, corrupted: true }
+			const socketFrame: SocketFrame = {
+				...frame,
+				corrupted: true,
+				timestamp: Date.now(),
+			}
 
 			this.socket.emit(socketEvents.znifferFrame, socketFrame)
 		})

@@ -563,6 +563,11 @@ export default {
 					path: Routes.controlPanel,
 				},
 				{
+					icon: 'preview',
+					title: 'Zniffer',
+					path: Routes.zniffer,
+				},
+				{
 					icon: 'qr_code_scanner',
 					title: 'Smart Start',
 					path: Routes.smartStart,
