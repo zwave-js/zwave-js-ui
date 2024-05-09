@@ -24,6 +24,7 @@ const useBaseStore = defineStore('base', {
 			smartStartTable: {},
 		}),
 		zwave: {
+			enabled: true,
 			port: '/dev/zwave',
 			allowBootloaderOnly: false,
 			commandsTimeout: 30,

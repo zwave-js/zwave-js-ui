@@ -479,7 +479,19 @@
 				<v-expansion-panel key="Zwave">
 					<v-expansion-panel-header>
 						<v-row no-gutters>
-							<v-col align-self="center"> Z-Wave </v-col>
+							<v-col align-self="center">
+								<v-row align-self="center">
+									<span class="my-auto ml-3"> Z-Wave </span>
+									<v-checkbox
+										class="mt-0 ml-2"
+										hide-details
+										@click.stop
+										label="Enabled"
+										v-model="newZwave.enabled"
+									></v-checkbox>
+								</v-row>
+							</v-col>
+
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('zwave')"
@@ -493,7 +505,7 @@
 							</v-col>
 						</v-row>
 					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					<v-expansion-panel-content v-if="newZwave.enabled">
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -991,7 +1003,18 @@
 				<v-expansion-panel key="Zniffer">
 					<v-expansion-panel-header>
 						<v-row no-gutters>
-							<v-col align-self="center"> Zniffer </v-col>
+							<v-col align-self="center">
+								<v-row align-self="center">
+									<span class="my-auto ml-3"> Zniffer </span>
+									<v-checkbox
+										class="mt-0 ml-2"
+										hide-details
+										label="Enabled"
+										@click.stop
+										v-model="newZniffer.enabled"
+									></v-checkbox>
+								</v-row>
+							</v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('zniffer')"
@@ -1005,18 +1028,10 @@
 							</v-col>
 						</v-row>
 					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					<v-expansion-panel-content v-if="newZniffer.enabled">
 						<v-card flat>
 							<v-card-text>
 								<v-row>
-									<v-col cols="12" sm="6">
-										<v-switch
-											hint="Enable/Disable Zniffer"
-											persistent-hint
-											label="Enabled"
-											v-model="newZniffer.enabled"
-										></v-switch>
-									</v-col>
 									<v-col cols="12" sm="6">
 										<v-combobox
 											v-model="newZniffer.port"

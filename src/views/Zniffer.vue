@@ -79,7 +79,7 @@ import {
 	protocolDataRateToString,
 	isRssiError,
 	rssiToString,
-	getEnumMemberName,
+	// getEnumMemberName,
 	// ZWaveFrameType,
 } from 'zwave-js/safe'
 import { socketEvents } from '@server/lib/SocketEvents'

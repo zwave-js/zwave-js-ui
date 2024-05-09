@@ -440,6 +440,7 @@ export default {
 			'appInfo',
 			'controllerNode',
 			'zniffer',
+			'zwave',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
@@ -447,23 +448,37 @@ export default {
 		}),
 		pages() {
 			const pages = [
-				{
-					icon: 'widgets',
-					title: 'Control Panel',
-					path: Routes.controlPanel,
-				},
-
-				{
-					icon: 'qr_code_scanner',
-					title: 'Smart Start',
-					path: Routes.smartStart,
-				},
 				{ icon: 'settings', title: 'Settings', path: Routes.settings },
-				{ icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
 				{ icon: 'bug_report', title: 'Debug', path: Routes.debug },
 				{ icon: 'folder', title: 'Store', path: Routes.store },
-				{ icon: 'share', title: 'Network graph', path: Routes.mesh },
 			]
+
+			if (this.zwave?.enabled) {
+				pages.unshift(
+					{
+						icon: 'widgets',
+						title: 'Control Panel',
+						path: Routes.controlPanel,
+					},
+					{
+						icon: 'qr_code_scanner',
+						title: 'Smart Start',
+						path: Routes.smartStart,
+					},
+				)
+
+				pages.splice(3, 0, {
+					icon: 'movie_filter',
+					title: 'Scenes',
+					path: Routes.scenes,
+				})
+
+				pages.push({
+					icon: 'share',
+					title: 'Network graph',
+					path: Routes.mesh,
+				})
+			}
 
 			if (this.zniffer?.enabled) {
 				pages.splice(1, 0, {
