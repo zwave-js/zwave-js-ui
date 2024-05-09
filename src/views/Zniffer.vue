@@ -80,7 +80,7 @@ import {
 	isRssiError,
 	rssiToString,
 	getEnumMemberName,
-	ZWaveFrameType,
+	// ZWaveFrameType,
 } from 'zwave-js/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
 import { jsonToList } from '../lib/utils'
@@ -146,7 +146,7 @@ export default {
 				: 'None, direct connection'
 		},
 		getType(item) {
-			return getEnumMemberName(ZWaveFrameType, item.type)
+			return item.type // getEnumMemberName(ZWaveFrameType, item.type)
 		},
 		getRssi(item) {
 			if (item.rssi && !isRssiError(item.rssi)) {
