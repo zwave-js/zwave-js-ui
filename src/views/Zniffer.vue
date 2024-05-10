@@ -38,6 +38,7 @@
 							:headers="headers"
 							:items="framesLimited"
 							dense
+							v-scroll.self="onScroll"
 							:style="{
 								height: `${topPaneHeight - 80}px`,
 								maxHeight: `${topPaneHeight - 80}px`,
@@ -95,27 +96,33 @@
 							</template>
 
 							<template v-if="start > 0" v-slot:[`body.prepend`]>
-								<tr v-intersect.quiet="loadLess">
+								<tr>
 									<td
 										:colspan="headers.length"
 										class="text-center"
+										:style="
+											'padding-top:' + startHeight + 'px'
+										"
 									>
-										<v-skeleton-loader
+										<!-- <v-skeleton-loader
 											type="table-row"
-										/><v-skeleton-loader type="table-row" />
+										/><v-skeleton-loader type="table-row" /> -->
 									</td>
 								</tr>
 							</template>
 							<template
-								v-if="totalFrames > endIndex"
+								v-if="start + perPage <= totalFrames"
 								v-slot:[`body.append`]
 							>
-								<tr v-intersect.quiet="loadMore">
+								<tr>
 									<td
 										:colspan="headers.length"
 										class="text-center"
+										:style="
+											'padding-top:' + endHeight + 'px'
+										"
 									>
-										<v-skeleton-loader type="table-row" />
+										<!-- <v-skeleton-loader type="table-row" /> -->
 									</td>
 								</tr>
 							</template>
@@ -175,6 +182,13 @@ export default {
 		totalFrames() {
 			return this.frames.length
 		},
+		startHeight() {
+			return this.start * this.rowHeight
+		},
+		endHeight() {
+			const lastIndex = this.start + this.perPage
+			return this.rowHeight * (this.totalFrames - lastIndex + 1)
+		},
 	},
 	mounted() {
 		this.socket.on(socketEvents.znifferFrame, (data) => {
@@ -218,7 +232,6 @@ export default {
 	data() {
 		return {
 			start: 0,
-			endIndex: 22,
 			busy: false,
 			rowHeight: 32,
 			perPage: 22,
@@ -251,9 +264,6 @@ export default {
 			const el = this.$refs.framesTable?.$el
 			if (el) {
 				el.scrollTo(0, el.scrollHeight)
-				this.$nextTick(() => {
-					this.loadMore(null, null, true)
-				})
 			}
 		},
 		scrollToRow(index) {
@@ -283,31 +293,7 @@ export default {
 				e.target.scrollTop = scrollTop
 			}, 10)
 		},
-		loadMore(entries, observer, isIntersecting) {
-			if (isIntersecting) {
-				const indexesLeft = this.totalFrames - this.endIndex
-				if (indexesLeft < this.perPage) {
-					this.start = this.endIndex + indexesLeft - this.perPage
-					this.endIndex = this.totalFrames
-				} else {
-					this.inventoryStartIndex += this.perPage
-					this.endIndex += this.perPage
-				}
-				this.scrollToRow(this.perPage)
-			}
-		},
-		loadLess(entries, observer, isIntersecting) {
-			if (isIntersecting) {
-				if (this.start < this.perPage) {
-					this.start = 0
-					this.endIndex = this.perPage
-				} else {
-					this.start -= this.perPage
-					this.endIndex -= this.perPage
-				}
-				this.scrollToRow(5)
-			}
-		},
+
 		getRegion(region) {
 			return (
 				rfRegions.find((r) => r.value === region)?.text ||
