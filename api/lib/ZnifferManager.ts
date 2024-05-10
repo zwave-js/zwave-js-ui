@@ -66,11 +66,24 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 	private error: string
 
+	private _started = false
+
+	get started() {
+		return this._started
+	}
+
+	set started(value: boolean) {
+		this._started = value
+		this.onStateChange()
+	}
+
 	constructor(config: ZnifferConfig, socket: SocketServer) {
 		super()
 
 		this.config = config
 		this.socket = socket
+
+		this.started = false
 
 		if (!config.enabled) {
 			logger.info('Zniffer is DISABLED')
@@ -105,7 +118,24 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	private onError(error: Error) {
 		logger.error('Zniffer error:', error)
 		this.error = error.message
-		this.socket.emit(socketEvents.znifferError, error)
+		this.onStateChange()
+	}
+
+	private onStateChange() {
+		this.socket.emit(socketEvents.znifferState, this.status())
+	}
+
+	private checkReady() {
+		if (!this.config.enabled || !this.zniffer) {
+			throw new Error('Zniffer is not initialized')
+		}
+	}
+
+	public status() {
+		return {
+			error: this.error,
+			started: this.started,
+		}
 	}
 
 	private ccToLogRecord(commandClass: CommandClass): Record<string, any> {
@@ -134,8 +164,17 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async start() {
+		this.checkReady()
+
+		if (this.started) {
+			logger.info('Zniffer already started')
+			return
+		}
+
 		logger.info('Starting...')
 		await this.zniffer.start()
+
+		this.started = true
 
 		logger.info('ZnifferManager started')
 
@@ -173,13 +212,24 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async stop() {
+		this.checkReady()
+
+		if (!this.started) {
+			logger.info('Zniffer is already stopped')
+			return
+		}
+
 		logger.info('Stopping...')
 		await this.zniffer.stop()
+
+		this.started = false
 
 		logger.info('ZnifferManager stopped')
 	}
 
 	public async saveCaptureToFile() {
+		this.checkReady()
+
 		const filePath = ZNIFFER_CAPTURE_FILE.replace(
 			'%DATE%',
 			new Date().toISOString(),

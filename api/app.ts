@@ -628,10 +628,17 @@ function setupSocket(server: HttpServer) {
 		// Server: https://socket.io/docs/v4/server-application-structure/#all-event-handlers-are-registered-in-the-indexjs-file
 		// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
 		socket.on(inboundEvents.init, (data, cb = noop) => {
+			let state = {} as any
+
 			if (gw.zwave) {
-				const state = gw.zwave.getState()
-				cb(state)
+				state = gw.zwave.getState()
 			}
+
+			if (zniffer) {
+				state.zniffer = zniffer.status()
+			}
+
+			cb(state)
 		})
 
 		socket.on(

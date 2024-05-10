@@ -127,6 +127,10 @@ const useBaseStore = defineStore('base', {
 			controllerStatus: 'Unknown',
 			newConfigVersion: undefined,
 		},
+		znifferState: {
+			error: '',
+			started: false,
+		},
 		ui: {
 			darkMode: settings.load('dark', false),
 			navTabs: settings.load('navTabs', false),
@@ -188,6 +192,10 @@ const useBaseStore = defineStore('base', {
 			this.appInfo.zwaveVersion = data.zwaveVersion
 			this.appInfo.serverVersion = data.serverVersion
 			this.appInfo.newConfigVersion = data.newConfigVersion
+		},
+		setZnifferState(data) {
+			this.znifferState.error = data?.error || ''
+			this.znifferState.started = data?.started || false
 		},
 		setValue(valueId) {
 			const toReplace = this.getValue(valueId)

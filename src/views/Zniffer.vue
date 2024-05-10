@@ -1,77 +1,144 @@
 <template>
-	<v-container grid-list-md>
-		<v-row v-if="zniffer.enabled">
-			<v-col cols="12">
-				<v-btn color="green darken-1" text @click="startZniffer()"
-					>Start</v-btn
-				>
-				<v-btn color="red darken-1" text @click="stopZniffer()"
-					>Stop</v-btn
-				>
-				<v-btn color="blue darken-1" text @click="createCapture()"
-					>Capture</v-btn
-				>
-			</v-col>
-
-			<v-col cols="12">
-				<v-data-table
-					:headers="headers"
-					:items="frames"
-					item-key="timestamp"
-					class="elevation-1"
-				>
-					<template v-slot:top>
-						<!-- Top template -->
-					</template>
-					<template v-slot:[`item.timestamp`]="{ item }">
-						{{ new Date(item.timestamp).toLocaleString() }}
-					</template>
-
-					<template v-slot:[`item.channel`]="{ item }">
-						{{ item.channel }}
-					</template>
-
-					<template v-slot:[`item.region`]="{ item }">
-						{{ getRegion(item.region) }}
-					</template>
-
-					<template v-slot:[`item.rssi`]="{ item }">
-						{{ getRssi(item) }}
-					</template>
-
-					<template v-slot:[`item.protocolDataRate`]="{ item }">
-						{{ getProtocolDataRate(item) }}
-					</template>
-
-					<template v-slot:[`item.type`]="{ item }">
-						{{ getType(item) }}
-					</template>
-
-					<template v-slot:[`item.payload`]="{ item }">
-						<cc-tree-view
-							v-if="item.parsedPayload"
-							:value="item.parsedPayload"
+	<v-container class="fill">
+		<multipane class="horizontal-panes" layout="horizontal">
+			<div
+				class="pane"
+				:style="{
+					minHeight: '500px',
+					height: `${topPaneHeight}px`,
+				}"
+			>
+				<v-row v-if="zniffer.enabled">
+					<v-col cols="12">
+						<v-btn
+							color="green darken-1"
+							text
+							:disabled="znifferState.started"
+							@click="startZniffer()"
+							>Start</v-btn
 						>
-						</cc-tree-view>
-						<p v-else-if="item.payload">
-							{{ item.payload }}
-						</p>
-						<p v-else>---</p>
-					</template>
+						<v-btn
+							color="red darken-1"
+							:disabled="!znifferState.started"
+							text
+							@click="stopZniffer()"
+							>Stop</v-btn
+						>
+						<v-btn
+							color="blue darken-1"
+							text
+							:disabled="!znifferState.started"
+							@click="createCapture()"
+							>Capture</v-btn
+						>
+					</v-col>
 
-					<template v-slot:[`item.repeaters`]="{ item }">
-						{{ getRepeaters(item) }}
-					</template>
-				</v-data-table>
-			</v-col>
-		</v-row>
-		<v-row v-else>
-			<v-col cols="12">
-				<v-alert type="info">
-					<span>Zniffer is disabled, enable it in settings</span>
-				</v-alert>
-			</v-col>
-		</v-row>
+					<v-col cols="12">
+						<v-data-table
+							:headers="headers"
+							:items="framesLimited"
+							dense
+							:style="{
+								height: `${topPaneHeight - 80}px`,
+								maxHeight: `${topPaneHeight - 80}px`,
+								overflow: 'auto',
+							}"
+							id="framesTable"
+							ref="framesTable"
+							hide-default-footer
+							disable-pagination
+							:mobile-breakpoint="-1"
+						>
+							<template v-slot:top>
+								<!-- Top template -->
+							</template>
+							<template v-slot:[`item.timestamp`]="{ item }">
+								{{ new Date(item.timestamp).toLocaleString() }}
+							</template>
+
+							<template v-slot:[`item.channel`]="{ item }">
+								{{ item.channel }}
+							</template>
+
+							<template v-slot:[`item.region`]="{ item }">
+								{{ getRegion(item.region) }}
+							</template>
+
+							<template v-slot:[`item.rssi`]="{ item }">
+								{{ getRssi(item) }}
+							</template>
+
+							<template
+								v-slot:[`item.protocolDataRate`]="{ item }"
+							>
+								{{ getProtocolDataRate(item) }}
+							</template>
+
+							<template v-slot:[`item.type`]="{ item }">
+								{{ getType(item) }}
+							</template>
+
+							<template v-slot:[`item.payload`]="{ item }">
+								<cc-tree-view
+									v-if="item.parsedPayload"
+									:value="item.parsedPayload"
+								>
+								</cc-tree-view>
+								<p v-else-if="item.payload">
+									{{ item.payload.data }}
+								</p>
+								<p v-else>---</p>
+							</template>
+
+							<template v-slot:[`item.repeaters`]="{ item }">
+								{{ getRepeaters(item) }}
+							</template>
+
+							<template v-if="start > 0" v-slot:[`body.prepend`]>
+								<tr v-intersect.quiet="loadLess">
+									<td
+										:colspan="headers.length"
+										class="text-center"
+									>
+										<v-skeleton-loader
+											type="table-row"
+										/><v-skeleton-loader type="table-row" />
+									</td>
+								</tr>
+							</template>
+							<template
+								v-if="totalFrames > endIndex"
+								v-slot:[`body.append`]
+							>
+								<tr v-intersect.quiet="loadMore">
+									<td
+										:colspan="headers.length"
+										class="text-center"
+									>
+										<v-skeleton-loader type="table-row" />
+									</td>
+								</tr>
+							</template>
+						</v-data-table>
+					</v-col>
+				</v-row>
+				<v-row v-else>
+					<v-col cols="12">
+						<v-alert type="info">
+							<span
+								>Zniffer is disabled, enable it in
+								settings</span
+							>
+						</v-alert>
+					</v-col>
+				</v-row>
+			</div>
+			<multipane-resizer></multipane-resizer>
+			<div class="pane" :style="{ flexGrow: 1, minHeight: '200px' }">
+				<!-- add a fake div full width and fill heigh color red -->
+				<div class="fill" style="background-color: red"></div>
+			</div>
+		</multipane>
 	</v-container>
 </template>
 <script>
@@ -83,7 +150,6 @@ import {
 	// ZWaveFrameType,
 } from 'zwave-js/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
-import { jsonToList } from '../lib/utils'
 
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
@@ -97,15 +163,69 @@ export default {
 	},
 	components: {
 		ccTreeView: () => import('../components/custom/CCTreeView.vue'),
+		Multipane: () => import('../components/custom/Multipane.vue'),
+		MultipaneResizer: () =>
+			import('../components/custom/MultipaneResizer.vue'),
 	},
 	computed: {
-		...mapState(useBaseStore, ['zniffer']),
+		...mapState(useBaseStore, ['zniffer', 'znifferState']),
+		framesLimited() {
+			return this.frames.slice(this.start, this.perPage + this.start)
+		},
+		totalFrames() {
+			return this.frames.length
+		},
+	},
+	mounted() {
+		this.socket.on(socketEvents.znifferFrame, (data) => {
+			this.frames.push(data)
+
+			this.scrollBottom()
+		})
+
+		this.socket.on(socketEvents.znifferState, (data) => {
+			this.setZnifferState(data)
+		})
+
+		const onWindowResize = () => {
+			const oneThird = window.innerHeight / 3
+			this.topPaneHeight = oneThird * 2
+		}
+
+		this.ro = new ResizeObserver(onWindowResize)
+
+		this.ro.observe(this.$el)
+
+		onWindowResize()
+		this.scrollBottom()
+	},
+	beforeDestroy() {
+		if (this.ro) {
+			// call both unoobserve and disconnect to avoid memory leaks
+			this.ro.unobserve(this.$el)
+			this.ro.disconnect()
+		}
+
+		if (this.socket) {
+			// unbind events
+			this.socket.off(socketEvents.znifferFrame)
+		}
+
+		if (this.timeoutScroll) {
+			clearTimeout(this.timeoutScroll)
+		}
 	},
 	data() {
 		return {
+			start: 0,
+			endIndex: 22,
+			busy: false,
+			rowHeight: 32,
+			perPage: 22,
+			topPaneHeight: 500,
 			frames: [],
 			headers: [
-				{ text: 'Timestamp', value: 'timestamp' },
+				{ text: 'Timestamp', value: 'timestamp', width: 160 },
 				{ text: 'Type', value: 'type' },
 				{ text: 'Channel', value: 'channel' },
 				{ text: 'Sequence #', value: 'sequenceNumber' },
@@ -114,16 +234,80 @@ export default {
 				{ text: 'Source', value: 'sourceNodeId' },
 				{ text: 'Destination', value: 'destinationNodeId' },
 				{ text: 'RSSI', value: 'rssi' },
-				{ text: 'Protocol Data Rate', value: 'protocolDataRate' },
+				{
+					text: 'Protocol Data Rate',
+					value: 'protocolDataRate',
+					width: 175,
+				},
 				{ text: 'Tx Power', value: 'txPower' },
 				{ text: 'Payload', value: 'payload' },
-				{ text: 'Repeaters', value: 'repeaters' },
+				{ text: 'Repeaters', value: 'repeaters', width: 200 },
 			],
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
-		jsonToList,
+		...mapActions(useBaseStore, ['showSnackbar', 'setZnifferState']),
+		scrollBottom() {
+			const el = this.$refs.framesTable?.$el
+			if (el) {
+				el.scrollTo(0, el.scrollHeight)
+				this.$nextTick(() => {
+					this.loadMore(null, null, true)
+				})
+			}
+		},
+		scrollToRow(index) {
+			const table = this.$refs.framesTable.$el.querySelector('table')
+			const row = table.rows[index]
+			if (row) {
+				row.scrollIntoView(true)
+			}
+		},
+		async onScroll(e) {
+			// debounce if scrolling fast
+			if (this.timeoutScroll) {
+				clearTimeout(this.timeoutScroll)
+			}
+
+			this.timeoutScroll = setTimeout(async () => {
+				// rows to show
+				const { scrollTop } = e.target
+				const rows = Math.ceil(scrollTop / this.rowHeight)
+				// start index
+				this.start =
+					rows + this.perPage >= this.totalFrames &&
+					this.perPage <= this.totalFrames
+						? this.totalFrames - this.perPage
+						: rows
+				await this.$nextTick()
+				e.target.scrollTop = scrollTop
+			}, 10)
+		},
+		loadMore(entries, observer, isIntersecting) {
+			if (isIntersecting) {
+				const indexesLeft = this.totalFrames - this.endIndex
+				if (indexesLeft < this.perPage) {
+					this.start = this.endIndex + indexesLeft - this.perPage
+					this.endIndex = this.totalFrames
+				} else {
+					this.inventoryStartIndex += this.perPage
+					this.endIndex += this.perPage
+				}
+				this.scrollToRow(this.perPage)
+			}
+		},
+		loadLess(entries, observer, isIntersecting) {
+			if (isIntersecting) {
+				if (this.start < this.perPage) {
+					this.start = 0
+					this.endIndex = this.perPage
+				} else {
+					this.start -= this.perPage
+					this.endIndex -= this.perPage
+				}
+				this.scrollToRow(5)
+			}
+		},
 		getRegion(region) {
 			return (
 				rfRegions.find((r) => r.value === region)?.text ||
@@ -219,22 +403,32 @@ export default {
 			}
 		},
 	},
-	mounted() {
-		// init socket events
-
-		this.socket.on(socketEvents.znifferFrame, (data) => {
-			this.frames.push(data)
-
-			if (this.frames.length > 1000) {
-				this.frames.shift()
-			}
-		})
-	},
-	beforeDestroy() {
-		if (this.socket) {
-			// unbind events
-			this.socket.off(socketEvents.znifferFrame)
-		}
-	},
 }
 </script>
+
+<style scoped>
+.truncate {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+#framesTable::-webkit-scrollbar {
+	height: 5px;
+	width: 8px;
+	background: rgba(0, 0, 0, 0.233);
+	padding-right: 10;
+}
+
+#framesTable::-webkit-scrollbar-thumb {
+	background: var(--v-primary-base);
+	border-radius: 1ex;
+	-webkit-border-radius: 1ex;
+}
+.single-line {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+</style>

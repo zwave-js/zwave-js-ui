@@ -20,7 +20,7 @@ export const socketEvents = Object.freeze({
 	validateDSK: 'VALIDATE_DSK',
 	inclusionAborted: 'INCLUSION_ABORTED',
 	znifferFrame: 'ZNIFFER_FRAME',
-	znifferError: 'ZNIFFER_ERROR',
+	znifferState: 'ZNIFFER_STATE',
 })
 
 // events from client ---> server

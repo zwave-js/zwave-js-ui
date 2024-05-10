@@ -20,7 +20,7 @@ export enum socketEvents {
 	validateDSK = 'VALIDATE_DSK',
 	inclusionAborted = 'INCLUSION_ABORTED',
 	znifferFrame = 'ZNIFFER_FRAME',
-	znifferError = 'ZNIFFER_ERROR',
+	znifferState = 'ZNIFFER_STATE',
 }
 
 // events from client ---> server

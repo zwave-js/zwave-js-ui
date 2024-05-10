@@ -628,6 +628,7 @@ export default {
 			'init',
 			'initNodes',
 			'setAppInfo',
+			'setZnifferState',
 			'onUserLogged',
 			'updateValue',
 			'setValue',
@@ -994,6 +995,7 @@ export default {
 		},
 		onInit(data) {
 			this.setAppInfo(data.info)
+			this.setZnifferState(data.zniffer)
 			this.setControllerStatus({
 				error: data.error,
 				status: data.cntStatus,
