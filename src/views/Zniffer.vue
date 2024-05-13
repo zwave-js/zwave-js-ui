@@ -37,8 +37,9 @@
 						<v-data-table
 							:headers="headers"
 							:items="framesLimited"
+							fixed-header
 							dense
-							v-scroll.self="onScroll"
+							:height="topPaneHeight - 80"
 							:style="{
 								height: `${topPaneHeight - 80}px`,
 								maxHeight: `${topPaneHeight - 80}px`,
@@ -153,8 +154,8 @@ import {
 	protocolDataRateToString,
 	isRssiError,
 	rssiToString,
-	// getEnumMemberName,
-	// ZWaveFrameType,
+	getEnumMemberName,
+	ZWaveFrameType,
 } from 'zwave-js/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
 
@@ -194,6 +195,7 @@ export default {
 		this.socket.on(socketEvents.znifferFrame, (data) => {
 			this.frames.push(data)
 
+			this.bindScroll()
 			this.scrollBottom()
 		})
 
@@ -233,6 +235,7 @@ export default {
 		return {
 			start: 0,
 			busy: false,
+			scrollWrapper: null,
 			rowHeight: 32,
 			perPage: 22,
 			topPaneHeight: 500,
@@ -260,10 +263,22 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar', 'setZnifferState']),
-		scrollBottom() {
+		bindScroll() {
+			if (this.scrollWrapper) return
+			// find v-data-table__wrapper element inside #framesTable
 			const el = this.$refs.framesTable?.$el
+
 			if (el) {
-				el.scrollTo(0, el.scrollHeight)
+				const wrapper = el.getElementsByClassName(
+					'v-data-table__wrapper',
+				)[0]
+				wrapper.addEventListener('scroll', this.onScroll.bind(this))
+				this.scrollWrapper = wrapper
+			}
+		},
+		scrollBottom() {
+			if (this.scrollWrapper) {
+				this.scrollWrapper.scrollTo(0, this.scrollWrapper.scrollHeight)
 			}
 		},
 		scrollToRow(index) {
@@ -293,7 +308,6 @@ export default {
 				e.target.scrollTop = scrollTop
 			}, 10)
 		},
-
 		getRegion(region) {
 			return (
 				rfRegions.find((r) => r.value === region)?.text ||
@@ -316,7 +330,7 @@ export default {
 				: 'None, direct connection'
 		},
 		getType(item) {
-			return item.type // getEnumMemberName(ZWaveFrameType, item.type)
+			return getEnumMemberName(ZWaveFrameType, item.type)
 		},
 		getRssi(item) {
 			if (item.rssi && !isRssiError(item.rssi)) {
@@ -400,18 +414,19 @@ export default {
 	overflow: hidden;
 }
 
-#framesTable::-webkit-scrollbar {
+#framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar {
 	height: 5px;
 	width: 8px;
 	background: rgba(0, 0, 0, 0.233);
 	padding-right: 10;
 }
 
-#framesTable::-webkit-scrollbar-thumb {
+#framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar-thumb {
 	background: var(--v-primary-base);
 	border-radius: 1ex;
 	-webkit-border-radius: 1ex;
 }
+
 .single-line {
 	white-space: nowrap;
 	overflow: hidden;
