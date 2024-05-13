@@ -203,7 +203,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 			const socketFrame: SocketFrame = {
 				...frame,
 				corrupted: false,
-				payload: '',
+				payload: '' as any,
 				timestamp: Date.now(),
 			}
 
@@ -212,8 +212,9 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 					socketFrame.parsedPayload = this.ccToLogRecord(
 						frame.payload,
 					)
+				} else {
+					socketFrame.payload = buffer2hex(frame.payload)
 				}
-				socketFrame.payload = buffer2hex(frame.payload as Buffer)
 			}
 
 			this.socket.emit(socketEvents.znifferFrame, socketFrame)
@@ -223,7 +224,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 			const socketFrame: SocketFrame = {
 				...frame,
 				corrupted: true,
-				payload: buffer2hex(frame.payload),
+				payload: buffer2hex(frame.payload) as any,
 				timestamp: Date.now(),
 			}
 

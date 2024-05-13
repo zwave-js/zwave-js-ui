@@ -37,6 +37,8 @@
 						<v-data-table
 							:headers="headers"
 							:items="framesLimited"
+							@click:row="onRowClick"
+							single-select
 							fixed-header
 							dense
 							:height="topPaneHeight - 80"
@@ -77,15 +79,13 @@
 							</template>
 
 							<template v-slot:[`item.payload`]="{ item }">
-								<cc-tree-view
-									v-if="item.parsedPayload"
-									:value="item.parsedPayload"
-								>
-								</cc-tree-view>
-								<p v-else-if="item.payload">
+								<span v-if="item.parsedPayload">
+									{{ item.parsedPayload.tags.join(' - ') }}
+								</span>
+								<span v-else-if="item.payload">
 									{{ item.payload }}
-								</p>
-								<p v-else>---</p>
+								</span>
+								<span v-else>---</span>
 							</template>
 
 							<template v-if="start > 0" v-slot:[`body.prepend`]>
@@ -135,8 +135,7 @@
 			</div>
 			<multipane-resizer></multipane-resizer>
 			<div class="pane" :style="{ flexGrow: 1, minHeight: '200px' }">
-				<!-- add a fake div full width and fill heigh color red -->
-				<div class="fill" style="background-color: red"></div>
+				<frame-details :value="selectedFrame" />
 			</div>
 		</multipane>
 	</v-container>
@@ -155,6 +154,7 @@ import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import { rfRegions } from '../lib/items.js'
+import { uuid } from '../lib/utils'
 
 export default {
 	name: 'Zniffer',
@@ -162,10 +162,10 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ccTreeView: () => import('../components/custom/CCTreeView.vue'),
 		Multipane: () => import('../components/custom/Multipane.vue'),
 		MultipaneResizer: () =>
 			import('../components/custom/MultipaneResizer.vue'),
+		FrameDetails: () => import('../components//custom/FrameDetails.vue'),
 	},
 	computed: {
 		...mapState(useBaseStore, ['zniffer', 'znifferState']),
@@ -185,6 +185,7 @@ export default {
 	},
 	mounted() {
 		this.socket.on(socketEvents.znifferFrame, (data) => {
+			data.id = uuid()
 			this.frames.push(data)
 
 			this.bindScroll()
@@ -227,6 +228,7 @@ export default {
 		return {
 			start: 0,
 			busy: false,
+			selectedFrame: null,
 			scrollWrapper: null,
 			rowHeight: 32,
 			perPage: 22,
@@ -252,6 +254,15 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar', 'setZnifferState']),
+		onRowClick(frame, { select, isSelected }) {
+			if (isSelected) {
+				this.selectedFrame = null
+				select(false)
+			} else {
+				this.selectedFrame = frame
+				select(true)
+			}
+		},
 		bindScroll() {
 			if (this.scrollWrapper) return
 			// find v-data-table__wrapper element inside #framesTable

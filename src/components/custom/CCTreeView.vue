@@ -1,5 +1,5 @@
 <template>
-	<v-treeview dense :items="items"></v-treeview>
+	<v-treeview open-all dense :items="items"></v-treeview>
 </template>
 
 <script>
