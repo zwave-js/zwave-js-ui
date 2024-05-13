@@ -1,5 +1,5 @@
 <template>
-	<v-treeview :items="items"></v-treeview>
+	<v-treeview dense :items="items"></v-treeview>
 </template>
 
 <script>
@@ -42,7 +42,7 @@ export default {
 	data: () => ({}),
 	computed: {
 		items() {
-			return this.parseEntry(this.entry)
+			return this.parseEntry(this.value)
 		},
 	},
 	methods: {
@@ -75,7 +75,7 @@ export default {
 						} else {
 							children.push({
 								id: `${root}.${prop}`,
-								name: entry.message[prop],
+								name: `${prop}: ${entry.message[prop]}`,
 							})
 						}
 					}
