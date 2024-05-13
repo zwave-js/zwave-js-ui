@@ -13,7 +13,7 @@ import { Server as SocketServer } from 'socket.io'
 import { socketEvents } from './SocketEvents'
 import { ZwaveConfig } from './ZwaveClient'
 import { logsDir, storeDir } from '../config/app'
-import { joinPath, parseSecurityKeys } from './utils'
+import { buffer2hex, joinPath, parseSecurityKeys } from './utils'
 import { isDocker } from '@zwave-js/shared'
 import { basename } from 'path'
 
@@ -44,6 +44,7 @@ const ZNIFFER_LOG_FILE = joinPath(logsDir, 'zniffer_%DATE%.log')
 const ZNIFFER_CAPTURE_FILE = joinPath(storeDir, 'zniffer_capture_%DATE%.zlf')
 
 export type SocketFrame = (Frame | CorruptedFrame) & {
+	payload: string
 	parsedPayload?: Record<string, any>
 	corrupted: boolean
 	timestamp: number
@@ -67,6 +68,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	private error: string
 
 	private _started = false
+
+	private restartTimeout: NodeJS.Timeout
 
 	get started() {
 		return this._started
@@ -112,7 +115,23 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.zniffer = new Zniffer(config.port, znifferOptions)
 
 		logger.info('Initing Zniffer...')
-		this.zniffer.init().catch((error) => this.onError(error))
+		this.init().catch(() => {})
+	}
+
+	private async init() {
+		try {
+			await this.zniffer.init()
+		} catch (error) {
+			this.onError(error)
+
+			logger.info('Retrying in 5s...')
+
+			await this.close()
+
+			this.restartTimeout = setTimeout(() => {
+				this.init().catch(() => {})
+			}, 5000)
+		}
 	}
 
 	private onError(error: Error) {
@@ -157,6 +176,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	public async close() {
+		if (this.restartTimeout) clearTimeout(this.restartTimeout)
+
 		if (this.zniffer) {
 			this.zniffer.removeAllListeners()
 			await this.stop()
@@ -182,11 +203,17 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 			const socketFrame: SocketFrame = {
 				...frame,
 				corrupted: false,
+				payload: '',
 				timestamp: Date.now(),
 			}
 
-			if ('payload' in frame && frame.payload instanceof CommandClass) {
-				socketFrame.parsedPayload = this.ccToLogRecord(frame.payload)
+			if ('payload' in frame) {
+				if (frame.payload instanceof CommandClass) {
+					socketFrame.parsedPayload = this.ccToLogRecord(
+						frame.payload,
+					)
+				}
+				socketFrame.payload = buffer2hex(frame.payload as Buffer)
 			}
 
 			this.socket.emit(socketEvents.znifferFrame, socketFrame)
@@ -196,6 +223,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 			const socketFrame: SocketFrame = {
 				...frame,
 				corrupted: true,
+				payload: buffer2hex(frame.payload),
 				timestamp: Date.now(),
 			}
 

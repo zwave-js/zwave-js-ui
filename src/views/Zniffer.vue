@@ -62,10 +62,6 @@
 								{{ item.channel }}
 							</template>
 
-							<template v-slot:[`item.region`]="{ item }">
-								{{ getRegion(item.region) }}
-							</template>
-
 							<template v-slot:[`item.rssi`]="{ item }">
 								{{ getRssi(item) }}
 							</template>
@@ -87,13 +83,9 @@
 								>
 								</cc-tree-view>
 								<p v-else-if="item.payload">
-									{{ item.payload.data }}
+									{{ item.payload }}
 								</p>
 								<p v-else>---</p>
-							</template>
-
-							<template v-slot:[`item.repeaters`]="{ item }">
-								{{ getRepeaters(item) }}
 							</template>
 
 							<template v-if="start > 0" v-slot:[`body.prepend`]>
@@ -242,22 +234,19 @@ export default {
 			frames: [],
 			headers: [
 				{ text: 'Timestamp', value: 'timestamp', width: 160 },
-				{ text: 'Type', value: 'type' },
-				{ text: 'Channel', value: 'channel' },
-				{ text: 'Sequence #', value: 'sequenceNumber' },
-				{ text: 'Home Id', value: 'homeId' },
-				{ text: 'Region', value: 'region' },
-				{ text: 'Source', value: 'sourceNodeId' },
-				{ text: 'Destination', value: 'destinationNodeId' },
-				{ text: 'RSSI', value: 'rssi' },
 				{
 					text: 'Protocol Data Rate',
 					value: 'protocolDataRate',
 					width: 175,
 				},
-				{ text: 'Tx Power', value: 'txPower' },
+				{ text: 'RSSI', value: 'rssi' },
+				{ text: 'Channel', value: 'channel' },
+				{ text: 'Delta', value: 'delta' },
+				{ text: 'Source', value: 'sourceNodeId' },
+				{ text: 'Destination', value: 'destinationNodeId' },
+				{ text: 'Home Id', value: 'homeId' },
+				{ text: 'Type', value: 'type' },
 				{ text: 'Payload', value: 'payload' },
-				{ text: 'Repeaters', value: 'repeaters', width: 200 },
 			],
 		}
 	},
