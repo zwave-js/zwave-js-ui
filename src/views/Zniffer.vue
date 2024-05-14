@@ -40,6 +40,7 @@
 							v-intersect.once="bindScroll"
 							:headers="headers"
 							:items="framesLimited"
+							:item-style="getRowStyle"
 							@click:row="onRowClick"
 							single-select
 							fixed-header
@@ -276,6 +277,40 @@ export default {
 				this.selectedFrame = frame
 				select(true)
 			}
+		},
+		getRowStyle(frame) {
+			const style = {
+				backgroundColor: '',
+			}
+
+			switch (frame.type) {
+				case ZWaveFrameType.Singlecast:
+					style.backgroundColor = 'rgba(0, 255, 0, 0.1)'
+					break
+				case ZWaveFrameType.Multicast:
+					style.backgroundColor = 'rgba(0, 0, 255, 0.1)'
+					break
+				case ZWaveFrameType.AckDirect:
+					style.backgroundColor = 'rgba(255, 0, 0, 0.1)'
+					break
+				case ZWaveFrameType.ExplorerNormal:
+					style.backgroundColor = 'rgba(255, 255, 0, 0.1)'
+					break
+				case ZWaveFrameType.ExplorerSearchResult:
+					style.backgroundColor = 'rgba(255, 0, 255, 0.1)'
+					break
+				case ZWaveFrameType.ExplorerInclusionRequest:
+					style.backgroundColor = 'rgba(0, 255, 255, 0.1)'
+					break
+				case ZWaveFrameType.BeamStart:
+					style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+					break
+				case ZWaveFrameType.BeamStop:
+					style.backgroundColor = 'rgba(0, 0, 0, 0.1)'
+					break
+			}
+
+			return style
 		},
 		bindTopPaneObserver() {
 			const onTopPaneResize = (e) => {
