@@ -1,5 +1,5 @@
 <template>
-	<v-container class="fill">
+	<v-container class="fill px-3" style="max-width: unset">
 		<multipane class="horizontal-panes" layout="horizontal">
 			<div
 				class="pane"
