@@ -144,12 +144,12 @@
 </template>
 <script>
 import {
-	protocolDataRateToString,
 	isRssiError,
 	rssiToString,
 	getEnumMemberName,
 	ZWaveFrameType,
 } from 'zwave-js/safe'
+import { znifferProtocolDataRateToString } from '@zwave-js/core/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
 
 import { mapState, mapActions } from 'pinia'
@@ -363,7 +363,7 @@ export default {
 		},
 		getProtocolDataRate(item) {
 			return item.protocolDataRate !== undefined
-				? protocolDataRateToString(item.protocolDataRate)
+				? znifferProtocolDataRateToString(item.protocolDataRate)
 				: '---'
 		},
 		async sendAction(data = {}) {
