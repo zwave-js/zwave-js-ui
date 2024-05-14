@@ -61,7 +61,7 @@
 					</v-col>
 					<v-col class="pa-0 pt-2">
 						<v-select
-							label="Zniffer requency"
+							label="Zniffer frequency"
 							persistent-hint
 							style="max-width: 300px"
 							hint="The frequency to initialize the Zniffer with. If not specified, the current setting will be kept."
@@ -317,7 +317,7 @@ export default {
 				{
 					text: 'Protocol Data Rate',
 					value: 'protocolDataRate',
-					width: 175,
+					width: 180,
 				},
 				{ text: 'RSSI', value: 'rssi' },
 				{ text: 'Ch', value: 'channel' },
