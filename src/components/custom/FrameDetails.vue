@@ -61,37 +61,25 @@
 							<td>Ack Requested</td>
 							<td>{{ value.ackRequested }}</td>
 						</tr>
-						<tr>
+						<tr v-if="value.direction">
 							<td>Direction</td>
 							<td>{{ value.direction }}</td>
 						</tr>
-						<tr>
+						<tr v-if="value.hop">
 							<td>Hop</td>
 							<td>{{ value.hop }}</td>
 						</tr>
-						<tr>
+						<tr v-if="value.repeaters">
 							<td>Repeaters</td>
 							<td>{{ value.repeaters }}</td>
 						</tr>
-						<tr>
+						<tr v-if="value.routedAck">
 							<td>Routed Ack</td>
 							<td>{{ value.routedAck }}</td>
 						</tr>
-						<tr>
+						<tr v-if="value.routedError">
 							<td>Routed Error</td>
 							<td>{{ value.routedError }}</td>
-						</tr>
-						<tr>
-							<td>Corrupted</td>
-							<td>{{ value.corrupted }}</td>
-						</tr>
-						<tr>
-							<td>Timestamp</td>
-							<td>{{ value.timestamp }}</td>
-						</tr>
-						<tr>
-							<td>Delta</td>
-							<td>{{ value.delta }}</td>
 						</tr>
 					</tbody>
 				</template>

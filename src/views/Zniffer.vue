@@ -160,7 +160,7 @@
 			</div>
 			<multipane-resizer></multipane-resizer>
 			<div class="pane pa-2" :style="{ flexGrow: 1, minHeight: '200px' }">
-				<frame-details class="mt-1" :value="selectedFrame" />
+				<frame-details class="my-1" :value="selectedFrame" />
 			</div>
 		</multipane>
 	</v-container>
