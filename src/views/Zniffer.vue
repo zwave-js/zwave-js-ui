@@ -11,7 +11,7 @@
 				}"
 			>
 				<v-row class="fill" v-if="zniffer.enabled">
-					<v-col cols="6">
+					<v-col class="pa-0 pt-2" cols="6">
 						<v-text-field
 							v-model="search"
 							clearable
@@ -29,7 +29,7 @@
 							label="Search"
 						></v-text-field>
 					</v-col>
-					<v-col class="mt-4" cols="6">
+					<v-col class="mt-4 pa-0 pt-2" cols="6">
 						<v-btn
 							color="green darken-1"
 							text
@@ -63,7 +63,7 @@
 							single-select
 							fixed-header
 							dense
-							:height="topPaneHeight - 130"
+							:height="topPaneHeight - offsetTop"
 							id="framesTable"
 							ref="framesTable"
 							hide-default-footer
@@ -207,7 +207,7 @@ export default {
 	watch: {
 		topPaneHeight(v) {
 			if (this.scrollWrapper) {
-				this.scrollWrapper.style.height = `${v - 130}px`
+				this.scrollWrapper.style.height = `${v - this.offsetTop}px`
 			}
 		},
 		search(v) {
@@ -276,6 +276,7 @@ export default {
 	data() {
 		return {
 			start: 0,
+			offsetTop: 115,
 			search: '',
 			searchError: false,
 			busy: false,
