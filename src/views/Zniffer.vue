@@ -11,7 +11,25 @@
 				}"
 			>
 				<v-row class="fill" v-if="zniffer.enabled">
-					<v-col cols="12">
+					<v-col cols="6">
+						<v-text-field
+							v-model="search"
+							clearable
+							flat
+							persistent-hint
+							hint="Search expression. Valid values are: homeId, channel, source, dest, protocolDataRate"
+							:error="searchError"
+							:error-messages="
+								searchError ? ['Invalid search'] : []
+							"
+							solo-inverted
+							single-line
+							class="ma-2"
+							prepend-inner-icon="search"
+							label="Search"
+						></v-text-field>
+					</v-col>
+					<v-col class="mt-4" cols="6">
 						<v-btn
 							color="green darken-1"
 							text
@@ -45,41 +63,13 @@
 							single-select
 							fixed-header
 							dense
-							:height="topPaneHeight - 80"
+							:height="topPaneHeight - 130"
 							id="framesTable"
 							ref="framesTable"
 							hide-default-footer
 							disable-pagination
 							:mobile-breakpoint="-1"
 						>
-							<template v-slot:top>
-								<v-row>
-									<v-col cols="12" sm="6">
-										<v-text-field
-											v-model="search"
-											clearable
-											flat
-											persistent-hint
-											hint="Search expression. Valid values are: homeId, channel, source, dest, protocolDataRate"
-											:error="searchError"
-											:error-messages="
-												searchError
-													? ['Invalid search']
-													: []
-											"
-											solo-inverted
-											single-line
-											class="ma-2"
-											style="
-												max-width: 500px;
-												min-width: 250px;
-											"
-											prepend-inner-icon="search"
-											label="Search"
-										></v-text-field>
-									</v-col>
-								</v-row>
-							</template>
 							<template v-slot:[`item.timestamp`]="{ item }">
 								{{ new Date(item.timestamp).toLocaleString() }}
 							</template>
@@ -217,7 +207,7 @@ export default {
 	watch: {
 		topPaneHeight(v) {
 			if (this.scrollWrapper) {
-				this.scrollWrapper.style.height = `${v - 80}px`
+				this.scrollWrapper.style.height = `${v - 130}px`
 			}
 		},
 		search(v) {

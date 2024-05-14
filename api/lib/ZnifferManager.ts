@@ -181,6 +181,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		if (this.zniffer) {
 			this.zniffer.removeAllListeners()
 			await this.stop()
+			await this.zniffer.destroy()
 		}
 	}
 
