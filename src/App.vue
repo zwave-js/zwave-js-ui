@@ -662,6 +662,7 @@ export default {
 			'addNodeEvent',
 			'updateNode',
 			'removeNode',
+			'setZnifferState',
 		]),
 		copyVersion() {
 			const el = document.createElement('textarea')
@@ -1140,6 +1141,10 @@ export default {
 				socketEvents.grantSecurityClasses,
 				this.onGrantSecurityClasses.bind(this),
 			)
+
+			this.socket.on(socketEvents.znifferState, (data) => {
+				this.setZnifferState(data)
+			})
 			// don't await this, will cause a loop of calls
 			this.getConfig()
 		},

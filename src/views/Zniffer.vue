@@ -29,7 +29,7 @@
 							label="Search"
 						></v-text-field>
 					</v-col>
-					<v-col class="mt-4 pa-0 pt-2" cols="6">
+					<v-col class="mt-4 pa-0 pt-2" cols="3">
 						<v-btn
 							color="green darken-1"
 							text
@@ -58,6 +58,21 @@
 							@click="createCapture()"
 							>Save Capture</v-btn
 						>
+					</v-col>
+					<v-col class="pa-0 pt-2">
+						<v-select
+							label="Zniffer requency"
+							persistent-hint
+							style="max-width: 300px"
+							hint="The frequency to initialize the Zniffer with. If not specified, the current setting will be kept."
+							:items="znifferRegions"
+							v-model="frequency"
+							clearable
+							@click:clear="frequency = znifferState?.frequency"
+							append-icon="send"
+							@click:append="setFrequency"
+						>
+						</v-select>
 					</v-col>
 
 					<v-col cols="12">
@@ -166,20 +181,21 @@
 	</v-container>
 </template>
 <script>
-import {
-	isRssiError,
-	rssiToString,
-	getEnumMemberName,
-	ZWaveFrameType,
-} from 'zwave-js/safe'
-import { znifferProtocolDataRateToString } from '@zwave-js/core/safe'
+import { ZWaveFrameType } from 'zwave-js/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
 
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
-import { rfRegions } from '../lib/items.js'
-import { uuid } from '../lib/utils'
+import { znifferRegions } from '../lib/items.js'
+import {
+	uuid,
+	getRegion,
+	getRepeaters,
+	getType,
+	getRssi,
+	getProtocolDataRate,
+} from '../lib/utils'
 
 export default {
 	name: 'Zniffer',
@@ -217,6 +233,11 @@ export default {
 				this.scrollWrapper.style.height = `${v - this.offsetTop}px`
 			}
 		},
+		znifferState(state) {
+			if (state?.frequency) {
+				this.frequency = state.frequency
+			}
+		},
 		search(v) {
 			if (this.searchTimeout) {
 				clearTimeout(this.searchTimeout)
@@ -231,6 +252,8 @@ export default {
 		},
 	},
 	mounted() {
+		this.frequency = this.znifferState?.frequency
+
 		this.socket.on(socketEvents.znifferFrame, (data) => {
 			data.id = uuid()
 			const lastFrame = this.frames[this.frames.length - 1]
@@ -238,10 +261,6 @@ export default {
 			this.frames.push(data)
 
 			this.scrollBottom()
-		})
-
-		this.socket.on(socketEvents.znifferState, (data) => {
-			this.setZnifferState(data)
 		})
 
 		this.onWindowResize = () => {
@@ -277,6 +296,8 @@ export default {
 	},
 	data() {
 		return {
+			znifferRegions,
+			frequency: null,
 			start: 0,
 			offsetTop: 125,
 			search: '',
@@ -308,7 +329,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar', 'setZnifferState']),
+		...mapActions(useBaseStore, ['showSnackbar']),
 		filterFrames(search) {
 			if (!search || search.trim() === '') {
 				this.framesFiltered = this.frames
@@ -395,6 +416,9 @@ export default {
 		bindTopPaneObserver() {
 			const onTopPaneResize = (e) => {
 				this.topPaneHeight = e[0].contentRect.height
+				this.perPage = Math.ceil(
+					(this.topPaneHeight - this.offsetTop) / this.rowHeight,
+				)
 			}
 
 			this.roTopPane = new ResizeObserver(onTopPaneResize)
@@ -451,42 +475,11 @@ export default {
 			const ms = date.getMilliseconds()
 			return `${date.toTimeString().split(' ')[0]}.${ms}`
 		},
-		getRegion(region) {
-			return (
-				rfRegions.find((r) => r.value === region)?.text ||
-				`Unknown region ${region}`
-			)
-		},
-		getRepeaters(item) {
-			const repRSSI = item.repeaterRSSI || []
-			return item.repeaters?.length > 0
-				? item.repeaters
-						.map(
-							(r, i) =>
-								`${r}${
-									repRSSI[i] && !isRssiError(repRSSI[i])
-										? ` (${rssiToString(repRSSI[i])})`
-										: ''
-								}`,
-						)
-						.join(', ')
-				: 'None, direct connection'
-		},
-		getType(item) {
-			return getEnumMemberName(ZWaveFrameType, item.type)
-		},
-		getRssi(item) {
-			if (item.rssi && !isRssiError(item.rssi)) {
-				return rssiToString(item.rssi) + ' dBm'
-			}
-
-			return item.rssiRaw
-		},
-		getProtocolDataRate(item) {
-			return item.protocolDataRate !== undefined
-				? znifferProtocolDataRateToString(item.protocolDataRate)
-				: '---'
-		},
+		getRegion,
+		getRepeaters,
+		getType,
+		getRssi,
+		getProtocolDataRate,
 		async sendAction(data = {}) {
 			return new Promise((resolve) => {
 				if (this.socket.connected) {
@@ -513,6 +506,19 @@ export default {
 					this.showSnackbar('Socket disconnected', 'error')
 				}
 			})
+		},
+		async setFrequency() {
+			const response = await this.sendAction({
+				apiName: 'setFrequency',
+				frequency: this.frequency,
+			})
+
+			if (response.success) {
+				this.showSnackbar(
+					`Zniffer frequency changed successfully`,
+					'success',
+				)
+			}
 		},
 		async startZniffer() {
 			const response = await this.sendAction({

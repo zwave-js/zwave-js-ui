@@ -67,17 +67,10 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 	private error: string
 
-	private _started = false
-
 	private restartTimeout: NodeJS.Timeout
 
 	get started() {
-		return this._started
-	}
-
-	set started(value: boolean) {
-		this._started = value
-		this.onStateChange()
+		return this.zniffer.active
 	}
 
 	constructor(config: ZnifferConfig, socket: SocketServer) {
@@ -85,8 +78,6 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 		this.config = config
 		this.socket = socket
-
-		this.started = false
 
 		if (!config.enabled) {
 			logger.info('Zniffer is DISABLED')
@@ -194,7 +185,17 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return {
 			error: this.error,
 			started: this.started,
+			frequency: this.zniffer?.currentFrequency,
 		}
+	}
+
+	public async setFrequency(frequency: number) {
+		this.checkReady()
+
+		logger.info(`Setting Zniffer frequency to ${frequency}`)
+		await this.zniffer.setFrequency(frequency)
+
+		logger.info(`Zniffer frequency set to ${frequency}`)
 	}
 
 	private ccToLogRecord(commandClass: CommandClass): Record<string, any> {
@@ -236,7 +237,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info('Starting...')
 		await this.zniffer.start()
 
-		this.started = true
+		this.onStateChange()
 
 		logger.info('ZnifferManager started')
 	}
@@ -252,7 +253,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info('Stopping...')
 		await this.zniffer.stop()
 
-		this.started = false
+		this.onStateChange()
 
 		logger.info('ZnifferManager stopped')
 	}

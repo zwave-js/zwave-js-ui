@@ -6,7 +6,7 @@
 					<tbody>
 						<tr>
 							<td>Type</td>
-							<td>{{ value.type }}</td>
+							<td>{{ getType(value) }}</td>
 						</tr>
 						<tr>
 							<td>Protocol</td>
@@ -27,19 +27,15 @@
 						</tr>
 						<tr>
 							<td>Region</td>
-							<td>{{ value.region }}</td>
+							<td>{{ getRegion(value.region) }}</td>
 						</tr>
 						<tr>
-							<td>RSSI Raw</td>
-							<td>{{ value.rssiRaw }}</td>
+							<td>RSSI</td>
+							<td>{{ getRssi(value) }}</td>
 						</tr>
 						<tr>
 							<td>Protocol Data Rate</td>
-							<td>{{ value.protocolDataRate }}</td>
-						</tr>
-						<tr>
-							<td>Speed Modified</td>
-							<td>{{ value.speedModified }}</td>
+							<td>{{ getProtocolDataRate(value) }}</td>
 						</tr>
 						<tr>
 							<td>Sequence Number</td>
@@ -47,7 +43,7 @@
 						</tr>
 						<tr>
 							<td>Home ID</td>
-							<td>{{ value.homeId }}</td>
+							<td>{{ value.homeId?.toString(16) }}</td>
 						</tr>
 						<tr>
 							<td>Source Node ID</td>
@@ -71,7 +67,7 @@
 						</tr>
 						<tr v-if="value.repeaters">
 							<td>Repeaters</td>
-							<td>{{ value.repeaters }}</td>
+							<td>{{ getRepeaters(value) }}</td>
 						</tr>
 						<tr v-if="value.routedAck">
 							<td>Routed Ack</td>
@@ -89,7 +85,14 @@
 </template>
 
 <script>
-import { jsonToList } from '../../lib/utils.js'
+import {
+	jsonToList,
+	getRegion,
+	getRepeaters,
+	getType,
+	getRssi,
+	getProtocolDataRate,
+} from '../../lib/utils.js'
 
 export default {
 	props: {
@@ -110,7 +113,13 @@ export default {
 			return jsonToList(this.value, { ignore })
 		},
 	},
-	methods: {},
+	methods: {
+		getRegion,
+		getRepeaters,
+		getType,
+		getRssi,
+		getProtocolDataRate,
+	},
 }
 </script>
 

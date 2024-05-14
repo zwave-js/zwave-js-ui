@@ -1,5 +1,17 @@
-import { isValidDSK, Protocols } from '@zwave-js/core/safe'
+import {
+	isValidDSK,
+	Protocols,
+	znifferProtocolDataRateToString,
+} from '@zwave-js/core/safe'
 import colors from 'vuetify/lib/util/colors'
+
+import {
+	isRssiError,
+	rssiToString,
+	getEnumMemberName,
+	ZWaveFrameType,
+} from 'zwave-js/safe'
+import { znifferRegions } from './items'
 
 export function copy(o) {
 	return JSON.parse(JSON.stringify(o))
@@ -201,4 +213,41 @@ export function getProtocolColor(node) {
 		default:
 			return colors.grey.base
 	}
+}
+
+export function getRegion(region) {
+	return (
+		znifferRegions.find((r) => r.value === region)?.text ||
+		`Unknown region ${region}`
+	)
+}
+export function getRepeaters(item) {
+	const repRSSI = item.repeaterRSSI || []
+	return item.repeaters?.length > 0
+		? item.repeaters
+				.map(
+					(r, i) =>
+						`${r}${
+							repRSSI[i] && !isRssiError(repRSSI[i])
+								? ` (${rssiToString(repRSSI[i])})`
+								: ''
+						}`,
+				)
+				.join(', ')
+		: 'None, direct connection'
+}
+export function getType(item) {
+	return getEnumMemberName(ZWaveFrameType, item.type)
+}
+export function getRssi(item) {
+	if (item.rssi && !isRssiError(item.rssi)) {
+		return rssiToString(item.rssi) + ' dBm'
+	}
+
+	return item.rssiRaw
+}
+export function getProtocolDataRate(item) {
+	return item.protocolDataRate !== undefined
+		? znifferProtocolDataRateToString(item.protocolDataRate)
+		: '---'
 }
