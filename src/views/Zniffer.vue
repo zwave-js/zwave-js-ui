@@ -3,12 +3,14 @@
 		<multipane class="horizontal-panes" layout="horizontal">
 			<div
 				class="pane"
+				ref="topPane"
+				v-intersect.once="bindTopPaneObserver"
 				:style="{
 					minHeight: '500px',
 					height: `${topPaneHeight}px`,
 				}"
 			>
-				<v-row v-if="zniffer.enabled">
+				<v-row class="fill" v-if="zniffer.enabled">
 					<v-col cols="12">
 						<v-btn
 							color="green darken-1"
@@ -35,6 +37,7 @@
 
 					<v-col cols="12">
 						<v-data-table
+							v-intersect.once="bindScroll"
 							:headers="headers"
 							:items="framesLimited"
 							@click:row="onRowClick"
@@ -42,11 +45,6 @@
 							fixed-header
 							dense
 							:height="topPaneHeight - 80"
-							:style="{
-								height: `${topPaneHeight - 80}px`,
-								maxHeight: `${topPaneHeight - 80}px`,
-								overflow: 'auto',
-							}"
 							id="framesTable"
 							ref="framesTable"
 							hide-default-footer
@@ -76,6 +74,10 @@
 
 							<template v-slot:[`item.type`]="{ item }">
 								{{ getType(item) }}
+							</template>
+
+							<template v-slot:[`item.homeId`]="{ item }">
+								{{ item.homeId?.toString(16) }}
 							</template>
 
 							<template v-slot:[`item.payload`]="{ item }">
@@ -134,7 +136,7 @@
 				</v-row>
 			</div>
 			<multipane-resizer></multipane-resizer>
-			<div class="pane" :style="{ flexGrow: 1, minHeight: '200px' }">
+			<div class="pane pa-2" :style="{ flexGrow: 1, minHeight: '200px' }">
 				<frame-details :value="selectedFrame" />
 			</div>
 		</multipane>
@@ -183,12 +185,20 @@ export default {
 			return this.rowHeight * (this.totalFrames - lastIndex + 1)
 		},
 	},
+	watch: {
+		topPaneHeight(v) {
+			if (this.scrollWrapper) {
+				this.scrollWrapper.style.height = `${v - 80}px`
+			}
+		},
+	},
 	mounted() {
 		this.socket.on(socketEvents.znifferFrame, (data) => {
 			data.id = uuid()
+			const lastFrame = this.frames[this.frames.length - 1]
+			data.delta = lastFrame ? data.timestamp - lastFrame.timestamp : 0
 			this.frames.push(data)
 
-			this.bindScroll()
 			this.scrollBottom()
 		})
 
@@ -202,7 +212,6 @@ export default {
 		}
 
 		this.ro = new ResizeObserver(onWindowResize)
-
 		this.ro.observe(this.$el)
 
 		onWindowResize()
@@ -213,6 +222,11 @@ export default {
 			// call both unoobserve and disconnect to avoid memory leaks
 			this.ro.unobserve(this.$el)
 			this.ro.disconnect()
+		}
+
+		if (this.roTopPane) {
+			this.roTopPane.unobserve(this.$refs.topPane)
+			this.roTopPane.disconnect()
 		}
 
 		if (this.socket) {
@@ -243,7 +257,7 @@ export default {
 				},
 				{ text: 'RSSI', value: 'rssi' },
 				{ text: 'Channel', value: 'channel' },
-				{ text: 'Delta', value: 'delta' },
+				{ text: 'Delta [ms]', value: 'delta' },
 				{ text: 'Source', value: 'sourceNodeId' },
 				{ text: 'Destination', value: 'destinationNodeId' },
 				{ text: 'Home Id', value: 'homeId' },
@@ -262,6 +276,14 @@ export default {
 				this.selectedFrame = frame
 				select(true)
 			}
+		},
+		bindTopPaneObserver() {
+			const onTopPaneResize = (e) => {
+				this.topPaneHeight = e[0].contentRect.height
+			}
+
+			this.roTopPane = new ResizeObserver(onTopPaneResize)
+			this.roTopPane.observe(this.$refs.topPane)
 		},
 		bindScroll() {
 			if (this.scrollWrapper) return

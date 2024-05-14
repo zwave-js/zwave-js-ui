@@ -163,7 +163,7 @@ export default {
 .multipane-resizer {
 	display: block;
 	position: relative;
-	z-index: 2;
+	z-index: 2 !important;
 	margin: 0;
 	background-color: #ccc;
 }
