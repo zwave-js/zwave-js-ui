@@ -10,7 +10,7 @@
 						</tr>
 						<tr>
 							<td>Protocol</td>
-							<td>{{ value.protocol }}</td>
+							<td>{{ getProtocol(value) }}</td>
 						</tr>
 						<tr>
 							<td>Payload</td>
@@ -89,6 +89,7 @@ import {
 	getRepeaters,
 	getType,
 	getRssi,
+	getProtocol,
 	getProtocolDataRate,
 } from '../../lib/utils.js'
 
@@ -117,6 +118,7 @@ export default {
 		getType,
 		getRssi,
 		getProtocolDataRate,
+		getProtocol,
 	},
 }
 </script>
