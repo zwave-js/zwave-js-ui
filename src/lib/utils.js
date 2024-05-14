@@ -246,7 +246,7 @@ export function getType(item) {
 }
 export function getRssi(item) {
 	if (item.rssi && !isRssiError(item.rssi)) {
-		return rssiToString(item.rssi) + ' dBm'
+		return rssiToString(item.rssi)
 	}
 
 	return item.rssiRaw
