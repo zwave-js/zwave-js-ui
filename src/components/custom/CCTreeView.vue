@@ -1,5 +1,9 @@
 <template>
-	<v-treeview open-all dense :items="items"></v-treeview>
+	<v-treeview open-all dense :items="items">
+		<template v-slot:label="{ item }">
+			<span style="white-space: pre-wrap">{{ item.name }}</span>
+		</template>
+	</v-treeview>
 </template>
 
 <script>

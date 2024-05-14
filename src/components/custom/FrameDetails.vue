@@ -1,10 +1,101 @@
 <template>
 	<v-row>
 		<v-col style="white-space: pre-wrap">
-			{{ parsed }}
-		</v-col>
-		<v-col v-if="value && value.parsedPayload">
-			<CCTreeView :value="value.parsedPayload"></CCTreeView>
+			<v-simple-table dense>
+				<template v-slot:default>
+					<tbody>
+						<tr>
+							<td>Type</td>
+							<td>{{ value.type }}</td>
+						</tr>
+						<tr>
+							<td>Protocol</td>
+							<td>{{ value.protocol }}</td>
+						</tr>
+						<tr>
+							<td>Payload</td>
+							<td v-if="value.parsedPayload">
+								<CCTreeView
+									:value="value.parsedPayload"
+								></CCTreeView>
+							</td>
+							<td v-else>{{ value.payload }}</td>
+						</tr>
+						<tr>
+							<td>Channel</td>
+							<td>{{ value.channel }}</td>
+						</tr>
+						<tr>
+							<td>Region</td>
+							<td>{{ value.region }}</td>
+						</tr>
+						<tr>
+							<td>RSSI Raw</td>
+							<td>{{ value.rssiRaw }}</td>
+						</tr>
+						<tr>
+							<td>Protocol Data Rate</td>
+							<td>{{ value.protocolDataRate }}</td>
+						</tr>
+						<tr>
+							<td>Speed Modified</td>
+							<td>{{ value.speedModified }}</td>
+						</tr>
+						<tr>
+							<td>Sequence Number</td>
+							<td>{{ value.sequenceNumber }}</td>
+						</tr>
+						<tr>
+							<td>Home ID</td>
+							<td>{{ value.homeId }}</td>
+						</tr>
+						<tr>
+							<td>Source Node ID</td>
+							<td>{{ value.sourceNodeId }}</td>
+						</tr>
+						<tr>
+							<td>Destination Node ID</td>
+							<td>{{ value.destinationNodeId }}</td>
+						</tr>
+						<tr>
+							<td>Ack Requested</td>
+							<td>{{ value.ackRequested }}</td>
+						</tr>
+						<tr>
+							<td>Direction</td>
+							<td>{{ value.direction }}</td>
+						</tr>
+						<tr>
+							<td>Hop</td>
+							<td>{{ value.hop }}</td>
+						</tr>
+						<tr>
+							<td>Repeaters</td>
+							<td>{{ value.repeaters }}</td>
+						</tr>
+						<tr>
+							<td>Routed Ack</td>
+							<td>{{ value.routedAck }}</td>
+						</tr>
+						<tr>
+							<td>Routed Error</td>
+							<td>{{ value.routedError }}</td>
+						</tr>
+						<tr>
+							<td>Corrupted</td>
+							<td>{{ value.corrupted }}</td>
+						</tr>
+						<tr>
+							<td>Timestamp</td>
+							<td>{{ value.timestamp }}</td>
+						</tr>
+						<tr>
+							<td>Delta</td>
+							<td>{{ value.delta }}</td>
+						</tr>
+					</tbody>
+				</template>
+			</v-simple-table>
 		</v-col>
 	</v-row>
 </template>
