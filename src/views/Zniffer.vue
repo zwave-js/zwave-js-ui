@@ -244,23 +244,18 @@ export default {
 			this.setZnifferState(data)
 		})
 
-		const onWindowResize = () => {
+		this.onWindowResize = () => {
 			const oneThird = window.innerHeight / 3
 			this.topPaneHeight = oneThird * 2
 		}
 
-		this.ro = new ResizeObserver(onWindowResize)
-		this.ro.observe(this.$el)
+		window.addEventListener('resize', this.onWindowResize)
 
-		onWindowResize()
+		this.onWindowResize()
 		this.scrollBottom()
 	},
 	beforeDestroy() {
-		if (this.ro) {
-			// call both unoobserve and disconnect to avoid memory leaks
-			this.ro.unobserve(this.$el)
-			this.ro.disconnect()
-		}
+		window.removeEventListener('resize', this.onWindowResize)
 
 		if (this.roTopPane) {
 			this.roTopPane.unobserve(this.$refs.topPane)
