@@ -17,7 +17,7 @@
 							clearable
 							flat
 							persistent-hint
-							hint="Search expression. Valid values are: homeId, channel, source, dest, protocolDataRate"
+							hint="Search expression. Valid values are: homeId, ch, src, dest, protocolDataRate"
 							:error="searchError"
 							:error-messages="
 								searchError ? ['Invalid search'] : []
@@ -295,10 +295,10 @@ export default {
 					width: 175,
 				},
 				{ text: 'RSSI', value: 'rssi' },
-				{ text: 'Channel', value: 'channel' },
+				{ text: 'Ch', value: 'channel' },
 				{ text: 'Delta [ms]', value: 'delta' },
-				{ text: 'Source', value: 'sourceNodeId' },
-				{ text: 'Destination', value: 'destinationNodeId' },
+				{ text: 'Src', value: 'sourceNodeId' },
+				{ text: 'Dest', value: 'destinationNodeId' },
 				{ text: 'Home Id', value: 'homeId' },
 				{ text: 'Type', value: 'type' },
 				{ text: 'Payload', value: 'payload' },
@@ -315,7 +315,7 @@ export default {
 
 			try {
 				const fn = new Function(
-					'homeId, channel, source, dest, protocolDataRate',
+					'homeId, ch, src, dest, protocolDataRate',
 					`return ${search.replace(/\\/g, '\\\\')}`,
 				)
 
