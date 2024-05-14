@@ -1,4 +1,4 @@
-import { RFRegion, Protocols } from 'zwave-js/safe'
+import { RFRegion, Protocols, ZnifferRegion } from 'zwave-js/safe'
 
 export const rfRegions = Object.keys(RFRegion)
 	.filter((k) => isNaN(k))
@@ -6,6 +6,15 @@ export const rfRegions = Object.keys(RFRegion)
 		text: key,
 		value: RFRegion[key],
 	}))
+	.sort((a, b) => a.text.localeCompare(b.text))
+
+export const znifferRegions = Object.keys(ZnifferRegion)
+	.filter((k) => isNaN(k))
+	.map((key) => ({
+		text: key,
+		value: ZnifferRegion[key],
+	}))
+	.sort((a, b) => a.text.localeCompare(b.text))
 
 export const protocolsItems = [
 	{

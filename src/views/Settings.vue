@@ -1268,7 +1268,7 @@
 											label="Default frequency"
 											persistent-hint
 											hint="The frequency to initialize the Zniffer with. If not specified, the current setting will be kept."
-											:items="rfRegions"
+											:items="znifferRegions"
 											clearable
 											v-model="
 												newZniffer.defaultFrequency
@@ -1877,7 +1877,7 @@ import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
 import { wait, copy, isUndef } from '../lib/utils'
-import { rfRegions } from '../lib/items'
+import { rfRegions, znifferRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
@@ -2002,6 +2002,7 @@ export default {
 	data() {
 		return {
 			rfRegions,
+			znifferRegions,
 			valid_zwave: true,
 			dialogValue: false,
 			sslDisabled: false,
