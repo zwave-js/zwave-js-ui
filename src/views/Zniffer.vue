@@ -31,7 +31,7 @@
 							text
 							:disabled="!znifferState.started"
 							@click="createCapture()"
-							>Capture</v-btn
+							>Save Capture</v-btn
 						>
 					</v-col>
 
