@@ -481,7 +481,7 @@ export default {
 			}
 
 			if (this.zniffer?.enabled) {
-				pages.splice(1, 0, {
+				pages.push({
 					icon: 'preview',
 					title: 'Zniffer',
 					path: Routes.zniffer,
