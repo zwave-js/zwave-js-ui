@@ -68,7 +68,9 @@
 							:items="znifferRegions"
 							v-model="frequency"
 							clearable
-							@click:clear="frequency = znifferState?.frequency"
+							@click:clear="
+								() => (frequency = znifferState.frequency)
+							"
 							append-icon="send"
 							@click:append="setFrequency"
 						>

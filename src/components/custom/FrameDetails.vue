@@ -43,7 +43,13 @@
 						</tr>
 						<tr>
 							<td>Home ID</td>
-							<td>{{ value.homeId?.toString(16) }}</td>
+							<td>
+								{{
+									value.homeId
+										? value.homeId.toString(16)
+										: ''
+								}}
+							</td>
 						</tr>
 						<tr>
 							<td>Route</td>
