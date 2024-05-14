@@ -1,7 +1,7 @@
 <template>
 	<v-row>
-		<v-col style="white-space: pre-wrap">
-			<v-simple-table dense>
+		<v-col>
+			<v-simple-table v-if="value" dense>
 				<template v-slot:default>
 					<tbody>
 						<tr>
