@@ -410,7 +410,7 @@ export default {
 			}
 		},
 		scrollBottom() {
-			if (this.scrollWrapper) {
+			if (this.scrollWrapper && !this.selectedFrame) {
 				this.scrollWrapper.scrollTo(0, this.scrollWrapper.scrollHeight)
 			}
 		},
