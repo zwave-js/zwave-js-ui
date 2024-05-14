@@ -59,6 +59,8 @@
 											v-model="search"
 											clearable
 											flat
+											persistent-hint
+											hint="Search expression. Valid values are: homeId, channel, source, dest, protocolDataRate"
 											:error="searchError"
 											:error-messages="
 												searchError
@@ -69,7 +71,7 @@
 											single-line
 											class="ma-2"
 											style="
-												max-width: 250px;
+												max-width: 500px;
 												min-width: 250px;
 											"
 											prepend-inner-icon="search"
