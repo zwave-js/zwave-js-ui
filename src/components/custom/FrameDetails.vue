@@ -27,7 +27,7 @@
 						</tr>
 						<tr>
 							<td>Region</td>
-							<td>{{ getRegion(value.region) }}</td>
+							<td>{{ getRegion(value) }}</td>
 						</tr>
 						<tr>
 							<td>RSSI</td>
@@ -46,14 +46,10 @@
 							<td>{{ value.homeId?.toString(16) }}</td>
 						</tr>
 						<tr>
-							<td>Source Node ID</td>
-							<td>{{ value.sourceNodeId }}</td>
+							<td>Route</td>
+							<td>{{ getRepeaters(value) }}</td>
 						</tr>
-						<tr>
-							<td>Destination Node ID</td>
-							<td>{{ value.destinationNodeId }}</td>
-						</tr>
-						<tr>
+						<tr v-if="value.ackRequested !== undefined">
 							<td>Ack Requested</td>
 							<td>{{ value.ackRequested }}</td>
 						</tr>

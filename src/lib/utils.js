@@ -215,26 +215,31 @@ export function getProtocolColor(node) {
 	}
 }
 
-export function getRegion(region) {
+export function getRegion(item) {
 	return (
-		znifferRegions.find((r) => r.value === region)?.text ||
-		`Unknown region ${region}`
+		znifferRegions.find((r) => r.value === item?.region)?.text ||
+		`Unknown region ${item?.region}`
 	)
 }
 export function getRepeaters(item) {
 	const repRSSI = item.repeaterRSSI || []
-	return item.repeaters?.length > 0
-		? item.repeaters
-				.map(
-					(r, i) =>
-						`${r}${
-							repRSSI[i] && !isRssiError(repRSSI[i])
-								? ` (${rssiToString(repRSSI[i])})`
-								: ''
-						}`,
-				)
-				.join(', ')
-		: 'None, direct connection'
+	const repeatersString =
+		item.repeaters?.length > 0
+			? item.repeaters
+					.map(
+						(r, i) =>
+							`${r}${
+								repRSSI[i] && !isRssiError(repRSSI[i])
+									? ` (${rssiToString(repRSSI[i])})`
+									: ''
+							}`,
+					)
+					.join(' > ')
+			: ''
+
+	return `${item.sourceNodeId} >${
+		repeatersString ? ' ' + repeatersString + ' ' : ''
+	}> ${item.destinationNodeId}`
 }
 export function getType(item) {
 	return getEnumMemberName(ZWaveFrameType, item.type)

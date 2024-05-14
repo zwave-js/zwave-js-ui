@@ -190,7 +190,6 @@ import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import { znifferRegions } from '../lib/items.js'
 import {
 	uuid,
-	getRegion,
 	getRepeaters,
 	getType,
 	getRssi,
@@ -475,7 +474,6 @@ export default {
 			const ms = date.getMilliseconds()
 			return `${date.toTimeString().split(' ')[0]}.${ms}`
 		},
-		getRegion,
 		getRepeaters,
 		getType,
 		getRssi,
