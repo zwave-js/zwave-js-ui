@@ -78,7 +78,7 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:[`item.timestamp`]="{ item }">
-								{{ new Date(item.timestamp).toLocaleString() }}
+								{{ getTimestamp(item.timestamp) }}
 							</template>
 
 							<template v-slot:[`item.channel`]="{ item }">
@@ -296,6 +296,7 @@ export default {
 			framesFiltered: [],
 			headers: [
 				{ text: 'Timestamp', value: 'timestamp', width: 160 },
+				{ text: 'Delta [ms]', value: 'delta' },
 				{
 					text: 'Protocol Data Rate',
 					value: 'protocolDataRate',
@@ -303,10 +304,9 @@ export default {
 				},
 				{ text: 'RSSI', value: 'rssi' },
 				{ text: 'Ch', value: 'channel' },
-				{ text: 'Delta [ms]', value: 'delta' },
+				{ text: 'Home Id', value: 'homeId' },
 				{ text: 'Src', value: 'sourceNodeId' },
 				{ text: 'Dest', value: 'destinationNodeId' },
-				{ text: 'Home Id', value: 'homeId' },
 				{ text: 'Type', value: 'type' },
 				{ text: 'Payload', value: 'payload' },
 			],
@@ -450,6 +450,12 @@ export default {
 				e.target.scrollTop = scrollTop
 			}, 10)
 		},
+		getTimestamp(timestamp) {
+			// format timestamp HH:mm:ss.fff
+			const date = new Date(timestamp)
+			const ms = date.getMilliseconds()
+			return `${date.toTimeString().split(' ')[0]}.${ms}`
+		},
 		getRegion(region) {
 			return (
 				rfRegions.find((r) => r.value === region)?.text ||
@@ -476,7 +482,7 @@ export default {
 		},
 		getRssi(item) {
 			if (item.rssi && !isRssiError(item.rssi)) {
-				return rssiToString(item.rssi)
+				return rssiToString(item.rssi) + ' dBm'
 			}
 
 			return item.rssiRaw
