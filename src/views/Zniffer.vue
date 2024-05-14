@@ -53,7 +53,30 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:top>
-								<!-- Top template -->
+								<v-row>
+									<v-col cols="12" sm="6">
+										<v-text-field
+											v-model="search"
+											clearable
+											flat
+											:error="searchError"
+											:error-messages="
+												searchError
+													? ['Invalid search']
+													: []
+											"
+											solo-inverted
+											single-line
+											class="ma-2"
+											style="
+												max-width: 250px;
+												min-width: 250px;
+											"
+											prepend-inner-icon="search"
+											label="Search"
+										></v-text-field>
+									</v-col>
+								</v-row>
 							</template>
 							<template v-slot:[`item.timestamp`]="{ item }">
 								{{ new Date(item.timestamp).toLocaleString() }}
@@ -173,7 +196,10 @@ export default {
 	computed: {
 		...mapState(useBaseStore, ['zniffer', 'znifferState']),
 		framesLimited() {
-			return this.frames.slice(this.start, this.perPage + this.start)
+			return this.framesFiltered.slice(
+				this.start,
+				this.perPage + this.start,
+			)
 		},
 		totalFrames() {
 			return this.frames.length
@@ -191,6 +217,18 @@ export default {
 			if (this.scrollWrapper) {
 				this.scrollWrapper.style.height = `${v - 80}px`
 			}
+		},
+		search(v) {
+			if (this.searchTimeout) {
+				clearTimeout(this.searchTimeout)
+			}
+
+			this.searchTimeout = setTimeout(() => {
+				this.filterFrames(v)
+			}, 300)
+		},
+		frames() {
+			this.filterFrames(this.search)
 		},
 	},
 	mounted() {
@@ -238,10 +276,16 @@ export default {
 		if (this.timeoutScroll) {
 			clearTimeout(this.timeoutScroll)
 		}
+
+		if (this.searchTimeout) {
+			clearTimeout(this.searchTimeout)
+		}
 	},
 	data() {
 		return {
 			start: 0,
+			search: '',
+			searchError: false,
 			busy: false,
 			selectedFrame: null,
 			scrollWrapper: null,
@@ -249,6 +293,7 @@ export default {
 			perPage: 22,
 			topPaneHeight: 500,
 			frames: [],
+			framesFiltered: [],
 			headers: [
 				{ text: 'Timestamp', value: 'timestamp', width: 160 },
 				{
@@ -269,6 +314,40 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar', 'setZnifferState']),
+		filterFrames(search) {
+			if (!search || search.trim() === '') {
+				this.framesFiltered = this.frames
+				return
+			}
+
+			try {
+				const fn = new Function(
+					'homeId, channel, source, dest, protocolDataRate',
+					`return ${search.replace(/\\/g, '\\\\')}`,
+				)
+
+				this.framesFiltered = this.frames.filter((frame) => {
+					const {
+						homeId,
+						channel,
+						sourceNodeId,
+						destinationNodeId,
+						protocolDataRate,
+					} = frame
+					return fn(
+						homeId,
+						channel,
+						sourceNodeId,
+						destinationNodeId,
+						protocolDataRate,
+					)
+				})
+
+				this.searchError = false
+			} catch (e) {
+				this.searchError = true
+			}
+		},
 		onRowClick(frame, { select, isSelected }) {
 			if (isSelected) {
 				this.selectedFrame = null
