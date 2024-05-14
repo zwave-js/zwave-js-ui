@@ -194,7 +194,7 @@ export default {
 			)
 		},
 		totalFrames() {
-			return this.frames.length
+			return this.framesFiltered.length
 		},
 		startHeight() {
 			return this.start * this.rowHeight
