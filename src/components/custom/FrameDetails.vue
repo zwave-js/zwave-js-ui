@@ -61,10 +61,6 @@
 							<td>Hop</td>
 							<td>{{ value.hop }}</td>
 						</tr>
-						<tr v-if="value.repeaters">
-							<td>Repeaters</td>
-							<td>{{ getRepeaters(value) }}</td>
-						</tr>
 						<tr v-if="value.routedAck">
 							<td>Routed Ack</td>
 							<td>{{ value.routedAck }}</td>
