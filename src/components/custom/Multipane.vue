@@ -165,22 +165,61 @@ export default {
 	position: relative;
 	z-index: 2 !important;
 	margin: 0;
-	background-color: #ccc;
 }
 
 .layout-h > .multipane-resizer {
 	width: 100%;
-	height: 10px;
-	margin-top: -10px;
+	height: 5px;
+	margin-top: -5px;
 	top: 5px;
 	cursor: row-resize;
+
+	&:before {
+		display: block;
+		content: '';
+		width: 40px;
+		height: 3px;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin-top: -1.5px;
+		margin-left: -20px;
+		border-top: 1px solid #ccc;
+		border-bottom: 1px solid #ccc;
+	}
+
+	&:hover {
+		&:before {
+			border-color: #999;
+		}
+	}
 }
 
 .layout-v > .multipane-resizer {
-	width: 10px;
+	width: 5px;
 	height: 100%;
-	margin-left: -10px;
+	margin-left: -5px;
 	left: 5px;
 	cursor: col-resize;
+
+	&:before {
+		display: block;
+		content: '';
+		width: 3px;
+		height: 40px;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		margin-top: -20px;
+		margin-left: -1.5px;
+		border-left: 1px solid #ccc;
+		border-right: 1px solid #ccc;
+	}
+
+	&:hover {
+		&:before {
+			border-color: #999;
+		}
+	}
 }
 </style>
