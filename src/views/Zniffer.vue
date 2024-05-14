@@ -276,7 +276,7 @@ export default {
 	data() {
 		return {
 			start: 0,
-			offsetTop: 115,
+			offsetTop: 125,
 			search: '',
 			searchError: false,
 			busy: false,
