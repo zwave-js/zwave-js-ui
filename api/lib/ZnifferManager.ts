@@ -121,6 +121,46 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	private async init() {
 		try {
 			await this.zniffer.init()
+
+			this.zniffer.on('frame', (frame) => {
+				const socketFrame: SocketFrame = {
+					...frame,
+					corrupted: false,
+					payload: '' as any,
+					timestamp: Date.now(),
+				}
+
+				if ('payload' in frame) {
+					if (frame.payload instanceof CommandClass) {
+						socketFrame.parsedPayload = this.ccToLogRecord(
+							frame.payload,
+						)
+					} else {
+						socketFrame.payload = buffer2hex(frame.payload)
+					}
+				}
+
+				this.socket.emit(socketEvents.znifferFrame, socketFrame)
+			})
+
+			this.zniffer.on('corrupted frame', (frame) => {
+				const socketFrame: SocketFrame = {
+					...frame,
+					corrupted: true,
+					payload: buffer2hex(frame.payload) as any,
+					timestamp: Date.now(),
+				}
+
+				this.socket.emit(socketEvents.znifferFrame, socketFrame)
+			})
+
+			this.zniffer.on('error', (error) => {
+				this.onError(error)
+			})
+
+			this.zniffer.on('ready', () => {
+				logger.info('Zniffer ready')
+			})
 		} catch (error) {
 			this.onError(error)
 
@@ -199,46 +239,6 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.started = true
 
 		logger.info('ZnifferManager started')
-
-		this.zniffer.on('frame', (frame) => {
-			const socketFrame: SocketFrame = {
-				...frame,
-				corrupted: false,
-				payload: '' as any,
-				timestamp: Date.now(),
-			}
-
-			if ('payload' in frame) {
-				if (frame.payload instanceof CommandClass) {
-					socketFrame.parsedPayload = this.ccToLogRecord(
-						frame.payload,
-					)
-				} else {
-					socketFrame.payload = buffer2hex(frame.payload)
-				}
-			}
-
-			this.socket.emit(socketEvents.znifferFrame, socketFrame)
-		})
-
-		this.zniffer.on('corrupted frame', (frame) => {
-			const socketFrame: SocketFrame = {
-				...frame,
-				corrupted: true,
-				payload: buffer2hex(frame.payload) as any,
-				timestamp: Date.now(),
-			}
-
-			this.socket.emit(socketEvents.znifferFrame, socketFrame)
-		})
-
-		this.zniffer.on('error', (error) => {
-			this.onError(error)
-		})
-
-		this.zniffer.on('ready', () => {
-			logger.info('Zniffer ready')
-		})
 	}
 
 	public async stop() {
