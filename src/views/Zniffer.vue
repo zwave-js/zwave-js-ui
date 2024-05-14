@@ -474,7 +474,9 @@ export default {
 			// format timestamp HH:mm:ss.fff
 			const date = new Date(timestamp)
 			const ms = date.getMilliseconds()
-			return `${date.toTimeString().split(' ')[0]}.${ms}`
+			return `${date.toTimeString().split(' ')[0]}.${ms
+				.toString()
+				.padEnd(3, '0')}`
 		},
 		getRepeaters,
 		getType,
