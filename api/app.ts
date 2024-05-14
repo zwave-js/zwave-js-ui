@@ -760,9 +760,11 @@ function setupSocket(server: HttpServer) {
 					case 'stop':
 						res = await zniffer.stop()
 						break
-					case 'capture':
+					case 'saveCaptureToFile':
 						res = await zniffer.saveCaptureToFile()
 						break
+					default:
+						throw new Error(`Unknown ZNIFFER api ${data.apiName}`)
 				}
 			} catch (error) {
 				logger.error('Error while calling ZNIFFER api', error)

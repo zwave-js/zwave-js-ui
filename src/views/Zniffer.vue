@@ -17,7 +17,7 @@
 							clearable
 							flat
 							persistent-hint
-							hint="Search expression. Valid values are: homeId, ch, src, dest, protocolDataRate"
+							hint="Search expression. Valid values are: homeId, ch, src, dest, protocolDataRate. Ex: src === 1 && dest === 2"
 							:error="searchError"
 							:error-messages="
 								searchError ? ['Invalid search'] : []
@@ -43,6 +43,13 @@
 							text
 							@click="stopZniffer()"
 							>Stop</v-btn
+						>
+						<v-btn
+							color="orange darken-1"
+							:disabled="frames.length === 0"
+							text
+							@click="clearFrames()"
+							>Clear</v-btn
 						>
 						<v-btn
 							color="blue darken-1"
@@ -328,7 +335,7 @@ export default {
 						protocolDataRate,
 					} = frame
 					return fn(
-						homeId,
+						homeId?.toString(16),
 						channel,
 						sourceNodeId,
 						destinationNodeId,
@@ -523,6 +530,10 @@ export default {
 			if (response.success) {
 				this.showSnackbar(`Zniffer stopped`, 'success')
 			}
+		},
+		clearFrames() {
+			this.frames = []
+			this.framesFiltered = []
 		},
 		async createCapture() {
 			const response = await this.sendAction({
