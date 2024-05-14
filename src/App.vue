@@ -542,6 +542,9 @@ export default {
 		darkMode(val) {
 			this.$vuetify.theme.dark = !!val
 		},
+		pages() {
+			this.verifyRoute()
+		},
 		controllerNode(node) {
 			if (!node) return
 
@@ -613,6 +616,27 @@ export default {
 		}
 	},
 	methods: {
+		verifyRoute() {
+			// ensure the actual route is available in pages otherwise redirect to the first one
+			if (
+				this.$route.meta.requiresAuth &&
+				this.pages.findIndex((p) => p.path === this.$route.path) === -1
+			) {
+				const preferred = ['control-panel', 'zniffer', 'settings']
+
+				const allowed = this.pages.filter((p) =>
+					preferred.includes(p.path),
+				)
+
+				const path = allowed.length ? allowed[0].path : undefined
+
+				if (path) {
+					this.$router.replace(path)
+				} else {
+					this.$router.replace(this.pages[0].path)
+				}
+			}
+		},
 		showNodesManager(step) {
 			// used in ControlPanel.vue
 			this.$refs.nodesManager.show(step)
