@@ -355,7 +355,9 @@ export default {
 				backgroundColor: '',
 			}
 
-			if (frame.corrupted) {
+			if (this.selectedFrame && this.selectedFrame.id === frame.id) {
+				style.backgroundColor = 'rgba(0, 0, 255, 0.5)'
+			} else if (frame.corrupted) {
 				style.backgroundColor = 'rgba(255, 0, 0, 0.1)'
 			} else {
 				switch (frame.type) {
