@@ -116,6 +116,10 @@
 								{{ getType(item) }}
 							</template>
 
+							<template v-slot:[`item.sourceNodeId`]="{ item }">
+								<span v-html="getRoute(item)"></span>
+							</template>
+
 							<template v-slot:[`item.homeId`]="{ item }">
 								{{ item.homeId?.toString(16) }}
 							</template>
@@ -192,7 +196,7 @@ import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import { znifferRegions } from '../lib/items.js'
 import {
 	uuid,
-	getRepeaters,
+	getRoute,
 	getType,
 	getRssi,
 	getProtocolDataRate,
@@ -322,8 +326,7 @@ export default {
 				{ text: 'RSSI', value: 'rssi' },
 				{ text: 'Ch', value: 'channel' },
 				{ text: 'Home Id', value: 'homeId' },
-				{ text: 'Src', value: 'sourceNodeId' },
-				{ text: 'Dest', value: 'destinationNodeId' },
+				{ text: 'Route', value: 'sourceNodeId' },
 				{ text: 'Type', value: 'type' },
 				{ text: 'Payload', value: 'payload' },
 			],
@@ -478,7 +481,7 @@ export default {
 				.toString()
 				.padEnd(3, '0')}`
 		},
-		getRepeaters,
+		getRoute,
 		getType,
 		getRssi,
 		getProtocolDataRate,

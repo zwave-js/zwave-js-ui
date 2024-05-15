@@ -48,19 +48,11 @@
 						</tr>
 						<tr>
 							<td>Route</td>
-							<td>{{ getRepeaters(value) }}</td>
+							<td v-html="getRoute(value)"></td>
 						</tr>
 						<tr v-if="value.ackRequested !== undefined">
 							<td>Ack Requested</td>
 							<td>{{ value.ackRequested }}</td>
-						</tr>
-						<tr v-if="value.direction">
-							<td>Direction</td>
-							<td>{{ value.direction }}</td>
-						</tr>
-						<tr v-if="value.hop">
-							<td>Hop</td>
-							<td>{{ value.hop }}</td>
 						</tr>
 						<tr v-if="value.routedAck">
 							<td>Routed Ack</td>
@@ -84,7 +76,7 @@
 import {
 	jsonToList,
 	getRegion,
-	getRepeaters,
+	getRoute,
 	getType,
 	getRssi,
 	getProtocol,
@@ -112,7 +104,7 @@ export default {
 	},
 	methods: {
 		getRegion,
-		getRepeaters,
+		getRoute,
 		getType,
 		getRssi,
 		getProtocolDataRate,

@@ -221,19 +221,24 @@ export function getRegion(item) {
 		`Unknown region ${item?.region}`
 	)
 }
-export function getRepeaters(item) {
+export function getRoute(item) {
 	const repRSSI = item.repeaterRSSI || []
 	const dir = item.direction === 'inbound' ? '←' : '→'
+	const hop = item.hop !== undefined ? item.hop : -1
 	const repeatersString =
 		item.repeaters?.length > 0
 			? item.repeaters
 					.map(
 						(r, i) =>
-							`${r}${
+							`${
+								hop === i
+									? '<b class="text-decoration-underline">'
+									: ''
+							}${r}${
 								repRSSI[i] && !isRssiError(repRSSI[i])
 									? ` (${rssiToString(repRSSI[i])})`
 									: ''
-							}`,
+							}${hop === i ? '</b>' : ''}`,
 					)
 					.join(` ${dir} `)
 			: ''
