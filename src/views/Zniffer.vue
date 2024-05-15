@@ -1,5 +1,5 @@
 <template>
-	<v-container class="fill px-3" style="max-width: unset">
+	<v-container class="px-3" style="max-width: unset">
 		<multipane class="horizontal-panes" layout="horizontal">
 			<div
 				class="pane"
@@ -10,7 +10,7 @@
 					height: `${topPaneHeight}px`,
 				}"
 			>
-				<v-row class="fill" v-if="zniffer.enabled">
+				<v-row v-if="zniffer.enabled">
 					<v-col class="pa-0 pt-2" cols="6">
 						<v-text-field
 							v-model="search"

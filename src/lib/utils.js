@@ -223,6 +223,7 @@ export function getRegion(item) {
 }
 export function getRepeaters(item) {
 	const repRSSI = item.repeaterRSSI || []
+	const dir = item.direction === 'inbound' ? '←' : '→'
 	const repeatersString =
 		item.repeaters?.length > 0
 			? item.repeaters
@@ -234,12 +235,12 @@ export function getRepeaters(item) {
 									: ''
 							}`,
 					)
-					.join(' > ')
+					.join(` ${dir} `)
 			: ''
 
-	return `${item.sourceNodeId} >${
-		repeatersString ? ' ' + repeatersString + ' ' : ''
-	}> ${item.destinationNodeId}`
+	return `${item.sourceNodeId} ${
+		repeatersString ? ` ${dir} ${repeatersString} ${dir}` : dir
+	} ${item.destinationNodeId}`
 }
 export function getType(item) {
 	return getEnumMemberName(ZWaveFrameType, item.type)
