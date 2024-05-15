@@ -299,9 +299,7 @@ export default {
 			}
 		},
 		znifferState(state) {
-			if (state?.frequency) {
-				this.frequency = state.frequency
-			}
+			this.frequency = state.frequency ?? null
 		},
 		search(v) {
 			if (this.searchTimeout) {

@@ -195,9 +195,10 @@ const useBaseStore = defineStore('base', {
 			this.appInfo.newConfigVersion = data.newConfigVersion
 		},
 		setZnifferState(data) {
-			this.znifferState.error = data?.error ?? ''
-			this.znifferState.started = data?.started ?? false
-			this.znifferState.frequency = data?.frequency ?? false
+			this.znifferState = {
+				...this.znifferState,
+				...data,
+			}
 		},
 		setValue(valueId) {
 			const toReplace = this.getValue(valueId)
