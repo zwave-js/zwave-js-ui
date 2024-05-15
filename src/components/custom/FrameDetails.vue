@@ -1,7 +1,7 @@
 <template>
-	<v-row>
+	<v-row v-if="value">
 		<v-col>
-			<v-simple-table v-if="value" dense>
+			<v-simple-table dense>
 				<template v-slot:default>
 					<tbody>
 						<tr>
@@ -69,7 +69,7 @@
 				</template>
 			</v-simple-table>
 		</v-col>
-		<v-col v-if="value && value.payload">
+		<v-col v-if="value.payload || value.parsedPayload">
 			<CCTreeView
 				v-if="value.parsedPayload"
 				:value="value.parsedPayload"
@@ -79,7 +79,7 @@
 				readonly
 				label="Payload"
 				v-model="value.payload"
-				rows="5"
+				rows="10"
 			></v-text-area>
 		</v-col>
 	</v-row>
@@ -87,7 +87,6 @@
 
 <script>
 import {
-	jsonToList,
 	getRegion,
 	getRoute,
 	getType,
@@ -104,17 +103,6 @@ export default {
 		CCTreeView: () => import('./CCTreeView.vue'),
 	},
 	data: () => ({}),
-	computed: {
-		parsed() {
-			if (!this.value) return ''
-
-			const ignore = ['id']
-			if (this.value.parsedPayload) {
-				ignore.push('parsedPayload', 'payload')
-			}
-			return jsonToList(this.value, { ignore })
-		},
-	},
 	methods: {
 		getRegion,
 		getRoute,
