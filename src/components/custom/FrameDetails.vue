@@ -74,13 +74,13 @@
 				v-if="value.parsedPayload"
 				:value="value.parsedPayload"
 			></CCTreeView>
-			<v-text-area
+			<v-textarea
 				v-else
 				readonly
 				label="Payload"
 				v-model="value.payload"
 				rows="10"
-			></v-text-area>
+			></v-textarea>
 		</v-col>
 	</v-row>
 </template>
