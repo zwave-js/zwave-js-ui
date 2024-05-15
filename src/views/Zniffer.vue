@@ -6,7 +6,7 @@
 				ref="topPane"
 				v-intersect.once="bindTopPaneObserver"
 				:style="{
-					minHeight: '500px',
+					minHeight: '300px',
 					height: `${topPaneHeight}px`,
 				}"
 			>
@@ -240,7 +240,13 @@
 				</v-row>
 			</div>
 			<multipane-resizer></multipane-resizer>
-			<div class="pane pa-2" :style="{ flexGrow: 1, minHeight: '200px' }">
+			<div
+				class="pane pa-2"
+				style="flex-grow: 1; overflow-y: scroll; overflow-x: hidden"
+				:style="{
+					height: `calc(100vh - ${topPaneHeight + 110}px)`,
+				}"
+			>
 				<frame-details class="my-1" :value="selectedFrame" />
 			</div>
 		</multipane>
@@ -628,6 +634,7 @@ export default {
 	overflow: hidden;
 }
 
+.pane::-webkit-scrollbar,
 #framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar {
 	height: 5px;
 	width: 8px;
@@ -635,6 +642,7 @@ export default {
 	padding-right: 10;
 }
 
+.pane::-webkit-scrollbar-thumb,
 #framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar-thumb {
 	background: var(--v-primary-base);
 	border-radius: 1ex;
