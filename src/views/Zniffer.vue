@@ -40,12 +40,16 @@
 											<p>
 												Write a custom filter function
 												in JS. Function arguments are:
+												frame (the full frame object),
 												homeId, ch, src, dest,
 												protocolDataRate, hop, dir
 												(direction), repeaters.
 											</p>
 											<strong>Examples:</strong>
 											<ul>
+												<li>
+													<code>frame.corrupted</code>
+												</li>
 												<li>
 													<code
 														>src === 1 && dest ===
@@ -399,30 +403,21 @@ export default {
 
 			try {
 				const fn = new Function(
-					'homeId, ch, src, dest, protocolDataRate, hop, dir, repeaters',
+					'frame, homeId, ch, src, dest, protocolDataRate, hop, dir, repeaters',
 					`return ${search.replace(/\\/g, '\\\\')}`,
 				)
 
 				this.framesFiltered = this.frames.filter((frame) => {
-					const {
-						homeId,
-						channel,
-						sourceNodeId,
-						destinationNodeId,
-						protocolDataRate,
-						hop,
-						direction,
-						repeaters,
-					} = frame
 					return fn(
-						homeId?.toString(16) || '',
-						channel,
-						sourceNodeId,
-						destinationNodeId,
-						protocolDataRate,
-						hop,
-						direction,
-						repeaters || [],
+						frame,
+						frame.homeId?.toString(16) || '',
+						frame.channel,
+						frame.sourceNodeId,
+						frame.destinationNodeId,
+						frame.protocolDataRate,
+						frame.hop,
+						frame.direction,
+						frame.repeaters || [],
 					)
 				})
 

@@ -12,10 +12,6 @@
 							<td>Protocol</td>
 							<td>{{ getProtocol(value) }}</td>
 						</tr>
-						<tr v-if="!value.parsedPayload">
-							<td>Payload</td>
-							<td>{{ value.payload }}</td>
-						</tr>
 						<tr>
 							<td>Channel</td>
 							<td>{{ value.channel }}</td>
@@ -73,8 +69,18 @@
 				</template>
 			</v-simple-table>
 		</v-col>
-		<v-col v-if="value && value.parsedPayload">
-			<CCTreeView :value="value.parsedPayload"></CCTreeView>
+		<v-col v-if="value && value.payload">
+			<CCTreeView
+				v-if="value.parsedPayload"
+				:value="value.parsedPayload"
+			></CCTreeView>
+			<v-text-area
+				v-else
+				readonly
+				label="Payload"
+				v-model="value.payload"
+				rows="5"
+			></v-text-area>
 		</v-col>
 	</v-row>
 </template>
