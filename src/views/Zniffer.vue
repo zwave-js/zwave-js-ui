@@ -386,6 +386,7 @@ export default {
 		filterFrames(search) {
 			if (!search || search.trim() === '') {
 				this.framesFiltered = this.frames
+				this.searchError = false
 				return
 			}
 
