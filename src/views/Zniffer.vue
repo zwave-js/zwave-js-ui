@@ -17,7 +17,7 @@
 							clearable
 							flat
 							persistent-hint
-							hint="Search expression. Valid values are: homeId, ch, src, dest, protocolDataRate. Ex: src === 1 && dest === 2"
+							hint="Search expression using JS. Click on info button for more info"
 							:error="searchError"
 							:error-messages="
 								searchError ? ['Invalid search'] : []
@@ -27,7 +27,57 @@
 							class="ma-2"
 							prepend-inner-icon="search"
 							label="Search"
-						></v-text-field>
+						>
+							<template v-slot:append>
+								<v-menu offset-y>
+									<template v-slot:activator="{ on }">
+										<v-icon v-on="on" color="grey" size="20"
+											>info</v-icon
+										>
+									</template>
+									<v-card>
+										<v-card-text>
+											<p>
+												Search expression. Valid values
+												are: homeId, ch, src, dest,
+												protocolDataRate, hop, dir
+												(direction).
+											</p>
+											<strong>Examples:</strong>
+											<ul>
+												<li>
+													<code
+														>src === 1 && dest ===
+														2</code
+													>
+												</li>
+												<li>
+													<code
+														>protocolDataRate ===
+														'100kbps'</code
+													>
+												</li>
+												<li>
+													<code
+														>homeId ===
+														'12345678'</code
+													>
+												</li>
+												<li>
+													<code>hop > 1</code>
+												</li>
+
+												<li>
+													<code
+														>dir === 'inbound'</code
+													>
+												</li>
+											</ul>
+										</v-card-text>
+									</v-card>
+								</v-menu>
+							</template>
+						</v-text-field>
 					</v-col>
 					<v-col class="mt-4 pa-0 pt-2" cols="3">
 						<v-btn
@@ -341,7 +391,7 @@ export default {
 
 			try {
 				const fn = new Function(
-					'homeId, ch, src, dest, protocolDataRate',
+					'homeId, ch, src, dest, protocolDataRate, hop, dir',
 					`return ${search.replace(/\\/g, '\\\\')}`,
 				)
 
@@ -352,6 +402,8 @@ export default {
 						sourceNodeId,
 						destinationNodeId,
 						protocolDataRate,
+						hop,
+						direction,
 					} = frame
 					return fn(
 						homeId?.toString(16),
@@ -359,6 +411,8 @@ export default {
 						sourceNodeId,
 						destinationNodeId,
 						protocolDataRate,
+						hop,
+						direction,
 					)
 				})
 
