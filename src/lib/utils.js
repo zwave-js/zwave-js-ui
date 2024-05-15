@@ -232,7 +232,7 @@ export function getRoute(item) {
 	].map(
 		(r, i) =>
 			`${r}${
-				repRSSI[i] && !isRssiError(repRSSI[i - 1])
+				repRSSI[i - 1] && !isRssiError(repRSSI[i - 1])
 					? ` (${rssiToString(repRSSI[i - 1])})`
 					: ''
 			}`,
