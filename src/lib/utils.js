@@ -225,27 +225,36 @@ export function getRoute(item) {
 	const repRSSI = item.repeaterRSSI || []
 	const dir = item.direction === 'inbound' ? '←' : '→'
 	const hop = item.hop !== undefined ? item.hop : -1
-	const repeatersString =
-		item.repeaters?.length > 0
-			? item.repeaters
-					.map(
-						(r, i) =>
-							`${
-								hop === i
-									? '<b class="text-decoration-underline">'
-									: ''
-							}${r}${
-								repRSSI[i] && !isRssiError(repRSSI[i])
-									? ` (${rssiToString(repRSSI[i])})`
-									: ''
-							}${hop === i ? '</b>' : ''}`,
-					)
-					.join(` ${dir} `)
-			: ''
+	const route = [
+		item.sourceNodeId,
+		...(item.repeaters || []),
+		item.destinationNodeId,
+	].map(
+		(r, i) =>
+			`${r}${
+				repRSSI[i] && !isRssiError(repRSSI[i - 1])
+					? ` (${rssiToString(repRSSI[i - 1])})`
+					: ''
+			}`,
+	)
 
-	return `${item.sourceNodeId} ${
-		repeatersString ? ` ${dir} ${repeatersString} ${dir}` : dir
-	} ${item.destinationNodeId}`
+	let routeString = ''
+
+	if (hop >= 0) {
+		// highlight the hop
+		for (let i = 0; i < route.length; i++) {
+			routeString += route[i]
+			if (i < route.length - 1) {
+				routeString += ` ${
+					hop === i ? '<b class="text-decoration-underline">' : ''
+				}${dir}${hop === i ? '</b>' : ''} `
+			}
+		}
+	} else {
+		routeString = route.join(` ${dir} `)
+	}
+
+	return routeString
 }
 export function getType(item) {
 	return getEnumMemberName(ZWaveFrameType, item.type)

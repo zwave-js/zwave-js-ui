@@ -38,10 +38,11 @@
 									<v-card>
 										<v-card-text>
 											<p>
-												Search expression. Valid values
-												are: homeId, ch, src, dest,
+												Write a custom filter function
+												in JS. Function arguments are:
+												homeId, ch, src, dest,
 												protocolDataRate, hop, dir
-												(direction).
+												(direction), repeaters.
 											</p>
 											<strong>Examples:</strong>
 											<ul>
@@ -70,6 +71,12 @@
 												<li>
 													<code
 														>dir === 'inbound'</code
+													>
+												</li>
+												<li>
+													<code
+														>repeaters.length >
+														0</code
 													>
 												</li>
 											</ul>
@@ -392,7 +399,7 @@ export default {
 
 			try {
 				const fn = new Function(
-					'homeId, ch, src, dest, protocolDataRate, hop, dir',
+					'homeId, ch, src, dest, protocolDataRate, hop, dir, repeaters',
 					`return ${search.replace(/\\/g, '\\\\')}`,
 				)
 
@@ -405,15 +412,17 @@ export default {
 						protocolDataRate,
 						hop,
 						direction,
+						repeaters,
 					} = frame
 					return fn(
-						homeId?.toString(16),
+						homeId?.toString(16) || '',
 						channel,
 						sourceNodeId,
 						destinationNodeId,
 						protocolDataRate,
 						hop,
 						direction,
+						repeaters || [],
 					)
 				})
 
