@@ -30,7 +30,14 @@
 						</tr>
 						<tr>
 							<td>Protocol Data Rate</td>
-							<td>{{ getProtocolDataRate(value) }}</td>
+							<td>
+								{{
+									getProtocolDataRate(value) +
+									(value.speedModified
+										? ' (speed modified)'
+										: '')
+								}}
+							</td>
 						</tr>
 						<tr>
 							<td>Sequence Number</td>
