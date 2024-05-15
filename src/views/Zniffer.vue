@@ -62,9 +62,8 @@
 					<v-col class="pa-0 pt-2">
 						<v-select
 							label="Zniffer frequency"
-							persistent-hint
 							style="max-width: 300px"
-							hint="The frequency to initialize the Zniffer with. If not specified, the current setting will be kept."
+							hide-details
 							:items="znifferRegions"
 							v-model="frequency"
 							clearable
