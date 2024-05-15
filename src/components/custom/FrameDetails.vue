@@ -48,7 +48,7 @@
 						</tr>
 						<tr>
 							<td>Route</td>
-							<td v-html="getRoute(value)"></td>
+							<td v-html="getRoute(value, true)"></td>
 						</tr>
 						<tr v-if="value.ackRequested !== undefined">
 							<td>Ack Requested</td>

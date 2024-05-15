@@ -221,7 +221,7 @@ export function getRegion(item) {
 		`Unknown region ${item?.region}`
 	)
 }
-export function getRoute(item) {
+export function getRoute(item, withRssi = false) {
 	const repRSSI = item.repeaterRSSI || []
 	const dir = item.direction === 'inbound' ? '←' : '→'
 	const hop = item.hop !== undefined ? item.hop : -1
@@ -232,7 +232,7 @@ export function getRoute(item) {
 	].map(
 		(r, i) =>
 			`${r}${
-				repRSSI[i - 1] && !isRssiError(repRSSI[i - 1])
+				withRssi && repRSSI[i - 1] && !isRssiError(repRSSI[i - 1])
 					? ` (${rssiToString(repRSSI[i - 1])})`
 					: ''
 			}`,
