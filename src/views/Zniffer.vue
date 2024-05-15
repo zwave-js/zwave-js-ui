@@ -11,7 +11,12 @@
 				}"
 			>
 				<v-row v-if="zniffer.enabled">
-					<v-col class="pa-0 pt-2" cols="6">
+					<v-col
+						ref="settingCol"
+						v-resize="onTopColResize"
+						class="pa-0 pt-2"
+						cols="6"
+					>
 						<v-text-field
 							v-model="search"
 							clearable
@@ -299,10 +304,8 @@ export default {
 		},
 	},
 	watch: {
-		topPaneHeight(v) {
-			if (this.scrollWrapper) {
-				this.scrollWrapper.style.height = `${v - this.offsetTop}px`
-			}
+		topPaneHeight() {
+			this.resizeScrollWrapper()
 		},
 		znifferState(state) {
 			this.frequency = state.frequency ?? null
@@ -381,15 +384,15 @@ export default {
 			framesFiltered: [],
 			headers: [
 				{ text: 'Timestamp', value: 'timestamp', width: 160 },
-				{ text: 'Delta [ms]', value: 'delta' },
+				{ text: 'Delta [ms]', value: 'delta', width: 150 },
 				{
 					text: 'Protocol Data Rate',
 					value: 'protocolDataRate',
 					width: 180,
 				},
-				{ text: 'RSSI', value: 'rssi' },
-				{ text: 'Ch', value: 'channel' },
-				{ text: 'Home Id', value: 'homeId' },
+				{ text: 'RSSI', value: 'rssi', width: 100 },
+				{ text: 'Ch', value: 'channel', width: 100 },
+				{ text: 'Home Id', value: 'homeId', width: 100 },
 				{ text: 'Route', value: 'sourceNodeId' },
 				{ text: 'Type', value: 'type' },
 				{ text: 'Payload', value: 'payload' },
@@ -398,6 +401,17 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		onTopColResize() {
+			this.offsetTop = this.$refs.settingCol.clientHeight + 20
+			this.resizeScrollWrapper()
+		},
+		resizeScrollWrapper() {
+			if (this.scrollWrapper) {
+				this.scrollWrapper.style.height = `${
+					this.topPaneHeight - this.offsetTop
+				}px`
+			}
+		},
 		filterFrames(search) {
 			if (!search || search.trim() === '') {
 				this.framesFiltered = this.frames
