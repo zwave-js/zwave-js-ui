@@ -349,13 +349,9 @@ export default {
 				clearTimeout(this.queueTimeout)
 			}
 
-			if (this.framesQueue.length > 30) {
+			this.queueTimeout = setTimeout(() => {
 				this.emptyQueue()
-			} else {
-				this.queueTimeout = setTimeout(() => {
-					this.emptyQueue()
-				}, 100)
-			}
+			}, 50)
 		},
 		search(v) {
 			if (this.searchTimeout) {
