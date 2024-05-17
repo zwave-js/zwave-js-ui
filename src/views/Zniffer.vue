@@ -60,7 +60,7 @@
 							:error-messages="
 								searchError ? ['Invalid search'] : []
 							"
-							solo-inverted
+							solo
 							single-line
 							class="ma-2"
 							prepend-inner-icon="search"
