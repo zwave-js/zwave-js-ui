@@ -178,7 +178,7 @@
 
 							<template v-slot:[`item.payload`]="{ item }">
 								<span v-if="item.parsedPayload">
-									{{ item.parsedPayload.tags.join(' - ') }}
+									{{ getPayloadTags(item.parsedPayload) }}
 								</span>
 								<span v-else-if="item.payload">
 									{{ item.payload }}
@@ -548,6 +548,16 @@ export default {
 			}
 
 			return style
+		},
+		getPayloadTags(payload, prev = []) {
+			const tags = [
+				...prev,
+				...(payload.tags || []),
+				...(payload.encapsulated || []).map((e) =>
+					this.getPayloadTags(e, prev),
+				),
+			]
+			return tags.join(' > ')
 		},
 		bindTopPaneObserver() {
 			const onTopPaneResize = (e) => {

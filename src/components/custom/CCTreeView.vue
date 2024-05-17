@@ -1,20 +1,47 @@
 <template>
-	<v-treeview open-all dense :items="items">
+	<!-- <v-treeview open-all dense :items="items">
 		<template v-slot:label="{ item }">
 			<span style="white-space: pre-wrap">{{ item.name }}</span>
 		</template>
-	</v-treeview>
+	</v-treeview> -->
+
+	<!-- created nested divs that will format like a tree and each nested value should be indentend to right with a left border -->
+	<div :style="{ marginLeft: level * 10 + 'px' }" class="tree">
+		<div v-for="item in items" :key="item.id" class="tree-item">
+			<div
+				:style="{
+					border: level === 0 ? 'none' : '',
+					borderColor: $vuetify.theme.dark ? '#ccc' : '#333',
+				}"
+				class="tree-item-label"
+			>
+				<!-- item.name | item.value in a table like view -->
+				<strong class="tree-item-name" style="white-space: pre-wrap">{{
+					item.name
+				}}</strong>
+				<div
+					class="tree-item-value"
+					v-if="item.value"
+					style="white-space: pre-wrap"
+				>
+					{{ item.value }}
+				</div>
+			</div>
+			<div class="tree-item-children"></div>
+			<CCTreeView :value="item.children" :level="level + 1" />
+		</div>
+	</div>
 </template>
 
 <script>
 /**
  * The format of the `entry` will be an object like:
  * interface FrameCCLogEntry {
-	tags: string[]
-	message?: {
+		tags: string[]
+		message?: {
+			[key: string]: string | number | boolean | FrameCCLogEntry[]
+		}
 		encapsulated?: FrameCCLogEntry[]
-		[key: string]: string | number | boolean | FrameCCLogEntry[]
-	}
     }
 
     Starting from that we will parse it to the following format:
@@ -40,13 +67,23 @@
  */
 
 export default {
+	name: 'CCTreeView',
 	props: {
-		value: Object,
+		value: {
+			type: [Object, Array],
+			default: () => ({}),
+		},
+		level: {
+			type: Number,
+			default: 0,
+		},
 	},
 	data: () => ({}),
 	computed: {
 		items() {
-			return this.parseEntry(this.value)
+			return Array.isArray(this.value)
+				? this.value
+				: this.parseEntry(this.value)
 		},
 	},
 	methods: {
@@ -64,20 +101,19 @@ export default {
 					for (const prop in entry.message) {
 						children.push({
 							id: `${root}.${prop}`,
-							name: `${prop}: ${entry.message[prop]}`,
+							name: `${prop}`,
+							value: entry.message[prop],
 						})
 					}
 				} else if (key === 'encapsulated') {
 					for (let i = 0; i < entry.encapsulated.length; i++) {
 						const encapsulated = entry.encapsulated[i]
-						children.push({
-							id: `${root}.encapsulated[${i}]`,
-							name: encapsulated.tags.join(', '),
-							children: this.parseEntry(
+						children.push(
+							...this.parseEntry(
 								encapsulated,
 								`${root}.encapsulated[${i}]`,
 							),
-						})
+						)
 					}
 				}
 			}
@@ -86,3 +122,25 @@ export default {
 	},
 }
 </script>
+
+<style scoped>
+.tree {
+	display: flex;
+	flex-direction: column;
+}
+
+.tree-item {
+	display: flex;
+	flex-direction: column;
+}
+
+.tree-item-label {
+	border-left: 1px solid #ccc;
+	display: flex;
+	padding-left: 5px;
+}
+
+.tree-item-name {
+	width: 200px;
+}
+</style>
