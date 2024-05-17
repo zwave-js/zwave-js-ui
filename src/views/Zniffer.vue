@@ -354,6 +354,7 @@ export default {
 		},
 		frames() {
 			this.filterFrames(this.search)
+			this.scrollBottom()
 		},
 	},
 	mounted() {
@@ -362,8 +363,6 @@ export default {
 			const lastFrame = this.frames[this.frames.length - 1]
 			data.delta = lastFrame ? data.timestamp - lastFrame.timestamp : 0
 			this.frames.push(data)
-
-			this.scrollBottom()
 		})
 
 		this.onWindowResize = () => {
@@ -374,7 +373,6 @@ export default {
 		window.addEventListener('resize', this.onWindowResize)
 
 		this.onWindowResize()
-		this.scrollBottom()
 		this.clearFrequency()
 	},
 	beforeDestroy() {
@@ -552,7 +550,7 @@ export default {
 		getPayloadTags(payload, prev = []) {
 			const tags = [
 				...prev,
-				...(payload.tags || []),
+				payload.tags?.join(' '),
 				...(payload.encapsulated || []).map((e) =>
 					this.getPayloadTags(e, prev),
 				),
@@ -611,9 +609,7 @@ export default {
 					this.perPage <= this.totalFrames
 						? this.totalFrames - this.perPage
 						: rows
-				await this.$nextTick()
-				e.target.scrollTop = scrollTop
-			}, 10)
+			}, 100)
 		},
 		getTimestamp(timestamp) {
 			// format timestamp HH:mm:ss.fff

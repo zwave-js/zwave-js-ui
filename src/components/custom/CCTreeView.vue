@@ -1,5 +1,11 @@
 <template>
-	<v-treeview open-all dense :items="items">
+	<v-treeview
+		ref="treeview"
+		:open.sync="openIds"
+		open-all
+		dense
+		:items="items"
+	>
 		<template v-slot:label="{ item }">
 			<v-row class="ma-0 pa-0" dense>
 				<strong class="tree-item-name" style="white-space: pre-wrap">{{
@@ -88,7 +94,9 @@ export default {
 			default: 0,
 		},
 	},
-	data: () => ({}),
+	data: () => ({
+		openIds: [],
+	}),
 	computed: {
 		items() {
 			return Array.isArray(this.value)
@@ -100,6 +108,7 @@ export default {
 		parseEntry(entry, root = 'root') {
 			const items = []
 			const children = []
+			this.openIds = []
 			for (const key in entry) {
 				if (key === 'tags') {
 					items.push({
@@ -127,6 +136,8 @@ export default {
 					}
 				}
 			}
+
+			this.openIds.push(...items.map((item) => item.id))
 			return items
 		},
 	},
