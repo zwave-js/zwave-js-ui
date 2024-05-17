@@ -68,13 +68,17 @@ export default {
 						})
 					}
 				} else if (key === 'encapsulated') {
-					children.push({
-						id: `${root}.encapsulated`,
-						name: entry.encapsulated.tags.join(', '),
-						children: entry.encapsulated?.map((e, i) =>
-							this.parseEntry(e, `${root}.encapsulated[${i}]`),
-						),
-					})
+					for (let i = 0; i < entry.encapsulated.length; i++) {
+						const encapsulated = entry.encapsulated[i]
+						children.push({
+							id: `${root}.encapsulated[${i}]`,
+							name: encapsulated.tags.join(', '),
+							children: this.parseEntry(
+								encapsulated,
+								`${root}.encapsulated[${i}]`,
+							),
+						})
+					}
 				}
 			}
 			return items
