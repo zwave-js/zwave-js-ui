@@ -343,6 +343,20 @@ export default {
 				}, 3000)
 			}
 		},
+		framesQueue() {
+			// used to improve performances when lot of frames comes all together
+			if (this.queueTimeout) {
+				clearTimeout(this.queueTimeout)
+			}
+
+			if (this.framesQueue.length > 30) {
+				this.emptyQueue()
+			} else {
+				this.queueTimeout = setTimeout(() => {
+					this.emptyQueue()
+				}, 100)
+			}
+		},
 		search(v) {
 			if (this.searchTimeout) {
 				clearTimeout(this.searchTimeout)
@@ -362,7 +376,7 @@ export default {
 			data.id = uuid()
 			const lastFrame = this.frames[this.frames.length - 1]
 			data.delta = lastFrame ? data.timestamp - lastFrame.timestamp : 0
-			this.frames.push(data)
+			this.framesQueue.push(data)
 		})
 
 		this.onWindowResize = () => {
@@ -415,6 +429,7 @@ export default {
 			topPaneHeight: 500,
 			frames: [],
 			framesFiltered: [],
+			framesQueue: [],
 			headers: [
 				{
 					text: 'Timestamp',
@@ -450,6 +465,10 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		emptyQueue() {
+			this.frames.push(...this.framesQueue)
+			this.framesQueue = []
+		},
 		async clearFrequency() {
 			// needed to handle the clear event on select
 			await this.$nextTick()
