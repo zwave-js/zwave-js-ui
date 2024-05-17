@@ -62,24 +62,19 @@ export default {
 					})
 				} else if (key === 'message') {
 					for (const prop in entry.message) {
-						if (prop === 'encapsulated') {
-							children.push({
-								id: `${root}.encapsulated`,
-								name: entry.encapsulated.tags.join(', '),
-								children: entry.encapsulated?.map((e, i) =>
-									this.parseEntry(
-										e,
-										`${root}.encapsulated[${i}]`,
-									),
-								),
-							})
-						} else {
-							children.push({
-								id: `${root}.${prop}`,
-								name: `${prop}: ${entry.message[prop]}`,
-							})
-						}
+						children.push({
+							id: `${root}.${prop}`,
+							name: `${prop}: ${entry.message[prop]}`,
+						})
 					}
+				} else if (key === 'encapsulated') {
+					children.push({
+						id: `${root}.encapsulated`,
+						name: entry.encapsulated.tags.join(', '),
+						children: entry.encapsulated?.map((e, i) =>
+							this.parseEntry(e, `${root}.encapsulated[${i}]`),
+						),
+					})
 				}
 			}
 			return items
