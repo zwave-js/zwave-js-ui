@@ -129,21 +129,6 @@
 						</v-text-field>
 					</v-col>
 
-					<v-col>
-						<v-select
-							label="Zniffer frequency"
-							style="max-width: 300px"
-							hide-details
-							:items="znifferRegions"
-							v-model="frequency"
-							clearable
-							@click:clear="clearFrequency"
-							append-icon="send"
-							@click:append="setFrequency"
-						>
-						</v-select>
-					</v-col>
-
 					<v-col cols="12">
 						<v-data-table
 							v-intersect.once="bindScroll"
@@ -257,6 +242,39 @@
 				<frame-details class="my-1" :value="selectedFrame" />
 			</div>
 		</multipane>
+
+		<v-btn
+			color="primary"
+			@click="drawer = !drawer"
+			dark
+			fab
+			hover
+			bottom
+			right
+			fixed
+		>
+			<v-icon v-if="drawer">close</v-icon>
+			<v-icon v-else>menu</v-icon>
+		</v-btn>
+
+		<v-navigation-drawer v-model="drawer" absolute right>
+			<v-card class="fill">
+				<v-card-title>Settings</v-card-title>
+				<v-card-text>
+					<v-select
+						label="Zniffer frequency"
+						hide-details
+						:items="znifferRegions"
+						v-model="frequency"
+						clearable
+						@click:clear="clearFrequency"
+						append-icon="send"
+						@click:append="setFrequency"
+					>
+					</v-select>
+				</v-card-text>
+			</v-card>
+		</v-navigation-drawer>
 	</v-container>
 </template>
 <script>
@@ -370,6 +388,8 @@ export default {
 	data() {
 		return {
 			znifferRegions,
+			fab: false,
+			drawer: false,
 			frequency: null,
 			start: 0,
 			offsetTop: 125,
