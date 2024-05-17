@@ -267,9 +267,8 @@
 						:items="znifferRegions"
 						v-model="frequency"
 						clearable
-						@click:clear="clearFrequency"
 						append-icon="send"
-						@click:append="setFrequency"
+						@change="setFrequency"
 					>
 					</v-select>
 				</v-card-text>

@@ -195,6 +195,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info(`Setting Zniffer frequency to ${frequency}`)
 		await this.zniffer.setFrequency(frequency)
 
+		this.onStateChange()
+
 		logger.info(`Zniffer frequency set to ${frequency}`)
 	}
 
