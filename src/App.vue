@@ -79,7 +79,10 @@
 
 				<v-spacer></v-spacer>
 
-				<v-tooltip v-if="appInfo.controllerStatus" bottom>
+				<v-tooltip
+					v-if="zwave.enabled && appInfo.controllerStatus"
+					bottom
+				>
 					<template v-slot:activator="{ on }">
 						<div
 							v-on="on"
@@ -104,7 +107,10 @@
 					</div>
 				</v-tooltip>
 
-				<v-tooltip v-if="appInfo.controllerStatus" bottom>
+				<v-tooltip
+					v-if="zwave.enabled && appInfo.controllerStatus"
+					bottom
+				>
 					<template v-slot:activator="{ on }">
 						<v-icon
 							class="ml-3"

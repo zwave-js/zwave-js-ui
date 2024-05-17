@@ -11,6 +11,39 @@
 				}"
 			>
 				<v-row v-if="zniffer.enabled">
+					<v-col style="max-width: 220px" class="mt-4 pt-2">
+						<v-btn-toggle dense multiple>
+							<v-btn
+								color="green darken-1"
+								:disabled="znifferState.started"
+								@click="startZniffer()"
+							>
+								<v-icon>play_arrow</v-icon>
+							</v-btn>
+							<v-btn
+								color="red darken-1"
+								:disabled="!znifferState.started"
+								@click="stopZniffer()"
+							>
+								<v-icon>stop</v-icon>
+							</v-btn>
+							<v-btn
+								color="orange darken-1"
+								:disabled="frames.length === 0"
+								@click="clearFrames()"
+							>
+								<v-icon>clear</v-icon>
+							</v-btn>
+
+							<v-btn
+								color="blue darken-1"
+								:disabled="!znifferState.started"
+								@click="createCapture()"
+							>
+								<v-icon>save</v-icon>
+							</v-btn>
+						</v-btn-toggle>
+					</v-col>
 					<v-col
 						ref="settingCol"
 						v-resize="onTopColResize"
@@ -95,37 +128,8 @@
 							</template>
 						</v-text-field>
 					</v-col>
-					<v-col class="mt-4 pa-0 pt-2" cols="3">
-						<v-btn
-							color="green darken-1"
-							text
-							:disabled="znifferState.started"
-							@click="startZniffer()"
-							>Start</v-btn
-						>
-						<v-btn
-							color="red darken-1"
-							:disabled="!znifferState.started"
-							text
-							@click="stopZniffer()"
-							>Stop</v-btn
-						>
-						<v-btn
-							color="orange darken-1"
-							:disabled="frames.length === 0"
-							text
-							@click="clearFrames()"
-							>Clear</v-btn
-						>
-						<v-btn
-							color="blue darken-1"
-							text
-							:disabled="!znifferState.started"
-							@click="createCapture()"
-							>Save Capture</v-btn
-						>
-					</v-col>
-					<v-col class="pa-0 pt-2">
+
+					<v-col>
 						<v-select
 							label="Zniffer frequency"
 							style="max-width: 300px"
@@ -133,9 +137,7 @@
 							:items="znifferRegions"
 							v-model="frequency"
 							clearable
-							@click:clear="
-								() => (frequency = znifferState.frequency)
-							"
+							@click:clear="clearFrequency"
 							append-icon="send"
 							@click:append="setFrequency"
 						>
@@ -307,8 +309,8 @@ export default {
 		topPaneHeight() {
 			this.resizeScrollWrapper()
 		},
-		znifferState(state) {
-			this.frequency = state.frequency ?? null
+		znifferState() {
+			this.clearFrequency()
 		},
 		search(v) {
 			if (this.searchTimeout) {
@@ -324,8 +326,6 @@ export default {
 		},
 	},
 	mounted() {
-		this.frequency = this.znifferState?.frequency
-
 		this.socket.on(socketEvents.znifferFrame, (data) => {
 			data.id = uuid()
 			const lastFrame = this.frames[this.frames.length - 1]
@@ -344,6 +344,7 @@ export default {
 
 		this.onWindowResize()
 		this.scrollBottom()
+		this.clearFrequency()
 	},
 	beforeDestroy() {
 		window.removeEventListener('resize', this.onWindowResize)
@@ -401,6 +402,11 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		async clearFrequency() {
+			// needed to handle the clear event on select
+			await this.$nextTick()
+			this.frequency = this.znifferState?.frequency ?? null
+		},
 		onTopColResize() {
 			this.offsetTop = this.$refs.settingCol.clientHeight + 20
 			this.resizeScrollWrapper()
