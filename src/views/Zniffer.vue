@@ -266,10 +266,17 @@
 						hide-details
 						:items="znifferRegions"
 						v-model="frequency"
-						clearable
-						append-icon="send"
 						@change="setFrequency"
 					>
+						<template v-slot:prepend>
+							<v-icon>signal_cellular_alt</v-icon>
+						</template>
+
+						<template v-slot:append-outer>
+							<v-icon color="success" v-if="frequencySuccess"
+								>check_circle</v-icon
+							>
+						</template>
 					</v-select>
 				</v-card-text>
 			</v-card>
@@ -328,6 +335,13 @@ export default {
 		},
 		znifferState() {
 			this.clearFrequency()
+		},
+		frequencySuccess(v) {
+			if (v) {
+				setTimeout(() => {
+					this.frequencySuccess = false
+				}, 3000)
+			}
 		},
 		search(v) {
 			if (this.searchTimeout) {
@@ -390,6 +404,7 @@ export default {
 			fab: false,
 			drawer: false,
 			frequency: null,
+			frequencySuccess: false,
 			start: 0,
 			offsetTop: 125,
 			search: '',
@@ -586,10 +601,11 @@ export default {
 		getType,
 		getRssi,
 		getProtocolDataRate,
-		async sendAction(data = {}) {
+		async sendAction(data = {}, { hideInfo } = {}) {
 			return new Promise((resolve) => {
 				if (this.socket.connected) {
-					this.showSnackbar(`API ${data.apiName} called`, 'info')
+					if (!hideInfo)
+						this.showSnackbar(`API ${data.apiName} called`, 'info')
 
 					this.socket.emit(
 						socketActions.zniffer,
@@ -614,16 +630,16 @@ export default {
 			})
 		},
 		async setFrequency() {
-			const response = await this.sendAction({
-				apiName: 'setFrequency',
-				frequency: this.frequency,
-			})
+			const response = await this.sendAction(
+				{
+					apiName: 'setFrequency',
+					frequency: this.frequency,
+				},
+				{ hideInfo: true },
+			)
 
 			if (response.success) {
-				this.showSnackbar(
-					`Zniffer frequency changed successfully`,
-					'success',
-				)
+				this.frequencySuccess = true
 			}
 		},
 		async startZniffer() {
