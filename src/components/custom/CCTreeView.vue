@@ -152,7 +152,11 @@ export default {
 } */
 
 .tree-item-name {
-	width: 160px;
+}
+
+.tree-item-value {
+	color: #666;
+	padding-left: 5px;
 }
 
 .v-treeview::v-deep .v-treeview-node__root {
