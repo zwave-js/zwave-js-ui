@@ -65,15 +65,12 @@ export default {
 						if (prop === 'encapsulated') {
 							children.push({
 								id: `${root}.encapsulated`,
-								name: entry.message.encapsulated.tags.join(
-									', ',
-								),
-								children: entry.message.encapsulated?.map(
-									(e, i) =>
-										this.parseEntry(
-											e,
-											`${root}.encapsulated[${i}]`,
-										),
+								name: entry.encapsulated.tags.join(', '),
+								children: entry.encapsulated?.map((e, i) =>
+									this.parseEntry(
+										e,
+										`${root}.encapsulated[${i}]`,
+									),
 								),
 							})
 						} else {
