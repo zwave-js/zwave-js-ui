@@ -1,12 +1,23 @@
 <template>
-	<!-- <v-treeview open-all dense :items="items">
+	<v-treeview open-all dense :items="items">
 		<template v-slot:label="{ item }">
-			<span style="white-space: pre-wrap">{{ item.name }}</span>
+			<v-row class="ma-0 pa-0" dense>
+				<strong class="tree-item-name" style="white-space: pre-wrap">{{
+					item.name
+				}}</strong>
+				<div
+					class="tree-item-value"
+					v-if="item.value"
+					style="white-space: pre-wrap"
+				>
+					{{ item.value }}
+				</div>
+			</v-row>
 		</template>
-	</v-treeview> -->
+	</v-treeview>
 
 	<!-- created nested divs that will format like a tree and each nested value should be indentend to right with a left border -->
-	<div :style="{ marginLeft: level * 10 + 'px' }" class="tree">
+	<!-- <div :style="{ marginLeft: level * 10 + 'px' }" class="tree">
 		<div v-for="item in items" :key="item.id" class="tree-item">
 			<div
 				:style="{
@@ -15,7 +26,6 @@
 				}"
 				class="tree-item-label"
 			>
-				<!-- item.name | item.value in a table like view -->
 				<strong class="tree-item-name" style="white-space: pre-wrap">{{
 					item.name
 				}}</strong>
@@ -30,7 +40,7 @@
 			<div class="tree-item-children"></div>
 			<CCTreeView :value="item.children" :level="level + 1" />
 		</div>
-	</div>
+	</div> -->
 </template>
 
 <script>
@@ -124,7 +134,7 @@ export default {
 </script>
 
 <style scoped>
-.tree {
+/* .tree {
 	display: flex;
 	flex-direction: column;
 }
@@ -138,9 +148,14 @@ export default {
 	border-left: 1px solid #ccc;
 	display: flex;
 	padding-left: 5px;
-}
+	padding-top: 2px;
+} */
 
 .tree-item-name {
-	width: 200px;
+	width: 160px;
+}
+
+.v-treeview::v-deep .v-treeview-node__root {
+	min-height: 20px;
 }
 </style>
