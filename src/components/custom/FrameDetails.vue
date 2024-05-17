@@ -1,7 +1,7 @@
 <template>
 	<v-row v-if="value">
 		<v-col>
-			<v-simple-table dense>
+			<v-simple-table class="frame-details" dense>
 				<template v-slot:default>
 					<tbody>
 						<tr>
@@ -114,4 +114,8 @@ export default {
 }
 </script>
 
-<style></style>
+<style scoped>
+.frame-details::v-deep td:first-child {
+	max-width: 50px !important;
+}
+</style>
