@@ -7,7 +7,7 @@
 				}}</strong>
 				<div
 					class="tree-item-value"
-					v-if="item.value"
+					v-if="item.value !== undefined"
 					style="white-space: pre-wrap"
 				>
 					{{ item.value }}
