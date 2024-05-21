@@ -144,6 +144,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 				this.init().catch(() => {})
 			}, 5000)
 		}
+
+		this.onStateChange()
 	}
 
 	private parseFrame(
