@@ -10,6 +10,7 @@ import {
 	rssiToString,
 	getEnumMemberName,
 	ZWaveFrameType,
+	LongRangeFrameType,
 } from 'zwave-js/safe'
 import { znifferRegions } from './items'
 
@@ -257,7 +258,11 @@ export function getRoute(item, withRssi = false) {
 	return routeString
 }
 export function getType(item) {
-	return getEnumMemberName(ZWaveFrameType, item.type)
+	if (item.protocol === Protocols.ZWaveLongRange) {
+		return getEnumMemberName(LongRangeFrameType, item.type)
+	} else {
+		return getEnumMemberName(ZWaveFrameType, item.type)
+	}
 }
 export function getRssi(item) {
 	if (item.rssi && !isRssiError(item.rssi)) {
