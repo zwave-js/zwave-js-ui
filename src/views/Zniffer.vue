@@ -284,7 +284,8 @@
 	</v-container>
 </template>
 <script>
-import { ZWaveFrameType } from 'zwave-js/safe'
+import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js/safe'
+import { Protocols } from '@zwave-js/core/safe'
 import { socketEvents } from '@server/lib/SocketEvents'
 
 import { mapState, mapActions } from 'pinia'
@@ -532,31 +533,54 @@ export default {
 			} else if (frame.corrupted) {
 				style.backgroundColor = 'rgba(255, 0, 0, 0.1)'
 			} else {
-				switch (frame.type) {
-					case ZWaveFrameType.Singlecast:
-						style.backgroundColor = 'rgba(0, 255, 0, 0.1)'
-						break
-					case ZWaveFrameType.Multicast:
-						style.backgroundColor = 'rgba(0, 0, 255, 0.1)'
-						break
-					case ZWaveFrameType.AckDirect:
-						style.backgroundColor = 'rgba(255, 165, 0, 0.1)'
-						break
-					case ZWaveFrameType.ExplorerNormal:
-						style.backgroundColor = 'rgba(255, 255, 0, 0.1)'
-						break
-					case ZWaveFrameType.ExplorerSearchResult:
-						style.backgroundColor = 'rgba(255, 0, 255, 0.1)'
-						break
-					case ZWaveFrameType.ExplorerInclusionRequest:
-						style.backgroundColor = 'rgba(0, 255, 255, 0.1)'
-						break
-					case ZWaveFrameType.BeamStart:
-						style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
-						break
-					case ZWaveFrameType.BeamStop:
-						style.backgroundColor = 'rgba(0, 0, 0, 0.1)'
-						break
+				if (frame.protocol === Protocols.ZWaveLongRange) {
+					switch (frame.type) {
+						case LongRangeFrameType.Singlecast:
+							style.backgroundColor = 'rgba(0, 255, 0, 0.1)'
+							break
+						case LongRangeFrameType.Ack:
+							style.backgroundColor = 'rgba(255, 165, 0, 0.1)'
+							break
+						case LongRangeFrameType.BeamStart:
+							style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+							break
+						case LongRangeFrameType.BeamStop:
+							style.backgroundColor = 'rgba(0, 0, 0, 0.1)'
+							break
+						case LongRangeFrameType.Broadcast:
+							style.backgroundColor = 'rgba(165, 0, 255, 0.1)'
+							break
+					}
+				} else {
+					switch (frame.type) {
+						case ZWaveFrameType.Singlecast:
+							style.backgroundColor = 'rgba(0, 255, 0, 0.1)'
+							break
+						case ZWaveFrameType.Multicast:
+							style.backgroundColor = 'rgba(0, 0, 255, 0.1)'
+							break
+						case ZWaveFrameType.AckDirect:
+							style.backgroundColor = 'rgba(255, 165, 0, 0.1)'
+							break
+						case ZWaveFrameType.ExplorerNormal:
+							style.backgroundColor = 'rgba(255, 255, 0, 0.1)'
+							break
+						case ZWaveFrameType.ExplorerSearchResult:
+							style.backgroundColor = 'rgba(255, 0, 255, 0.1)'
+							break
+						case ZWaveFrameType.ExplorerInclusionRequest:
+							style.backgroundColor = 'rgba(0, 255, 255, 0.1)'
+							break
+						case ZWaveFrameType.BeamStart:
+							style.backgroundColor = 'rgba(255, 255, 255, 0.1)'
+							break
+						case ZWaveFrameType.BeamStop:
+							style.backgroundColor = 'rgba(0, 0, 0, 0.1)'
+							break
+						case ZWaveFrameType.Broadcast:
+							style.backgroundColor = 'rgba(165, 0, 255, 0.1)'
+							break
+					}
 				}
 			}
 
