@@ -39,6 +39,10 @@
 							<td>Sequence Number</td>
 							<td>{{ value.sequenceNumber }}</td>
 						</tr>
+						<tr v-if="value.payload">
+							<td>Payload</td>
+							<td>{{ value.payload }}</td>
+						</tr>
 						<tr>
 							<td>Home ID</td>
 							<td>
@@ -69,16 +73,28 @@
 				</template>
 			</v-simple-table>
 		</v-col>
-		<v-col v-if="value.payload || value.parsedPayload">
-			<CCTreeView
+		<v-col>
+			<v-btn
 				v-if="value.parsedPayload"
+				small
+				@click="showRaw = !showRaw"
+				:color="showRaw ? 'primary' : 'secondary'"
+				class="mb-2"
+			>
+				{{ showRaw ? 'Parsed' : 'Raw' }}
+			</v-btn>
+
+			<CCTreeView
+				v-if="value.parsedPayload && !showRaw"
 				:value="value.parsedPayload"
 			></CCTreeView>
 			<v-textarea
 				v-else
 				readonly
-				label="Payload"
-				v-model="value.payload"
+				hide-details
+				no-resize
+				label="Raw"
+				v-model="value.raw"
 				rows="10"
 			></v-textarea>
 		</v-col>
@@ -102,7 +118,9 @@ export default {
 	components: {
 		CCTreeView: () => import('./CCTreeView.vue'),
 	},
-	data: () => ({}),
+	data: () => ({
+		showRaw: false,
+	}),
 	methods: {
 		getRegion,
 		getRoute,
