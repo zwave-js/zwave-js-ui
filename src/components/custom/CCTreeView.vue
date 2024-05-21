@@ -1,5 +1,11 @@
 <template>
-	<v-treeview ref="treeview" open-all dense :items="items">
+	<v-treeview
+		v-if="items.length > 0"
+		ref="treeview"
+		open-all
+		dense
+		:items="items"
+	>
 		<template v-slot:label="{ item }">
 			<v-row class="ma-0 pa-0" dense>
 				<strong class="tree-item-name" style="white-space: pre-wrap">{{
@@ -88,12 +94,23 @@ export default {
 			default: 0,
 		},
 	},
-	data: () => ({}),
-	computed: {
-		items() {
-			return Array.isArray(this.value)
-				? this.value
-				: this.parseEntry(this.value)
+	data: () => ({
+		items: [],
+	}),
+	watch: {
+		value: {
+			immediate: true,
+			handler() {
+				if (Array.isArray(this.value)) {
+					this.items = this.value
+				} else {
+					// trick used to reset the treeview and expand all nodes on change
+					this.items = []
+					this.$nextTick(() => {
+						this.items = this.parseEntry(this.value)
+					})
+				}
+			},
 		},
 	},
 	methods: {
