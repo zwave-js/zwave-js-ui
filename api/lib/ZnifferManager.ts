@@ -48,6 +48,7 @@ export type SocketFrame = (Frame | CorruptedFrame) & {
 	parsedPayload?: Record<string, any>
 	corrupted: boolean
 	timestamp: number
+	raw: string
 }
 
 export interface FrameCCLogEntry {
@@ -113,34 +114,14 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		try {
 			await this.zniffer.init()
 
-			this.zniffer.on('frame', (frame) => {
-				const socketFrame: SocketFrame = {
-					...frame,
-					corrupted: false,
-					payload: '' as any,
-					timestamp: Date.now(),
-				}
-
-				if ('payload' in frame) {
-					if (frame.payload instanceof CommandClass) {
-						socketFrame.parsedPayload = this.ccToLogRecord(
-							frame.payload,
-						)
-					} else {
-						socketFrame.payload = buffer2hex(frame.payload)
-					}
-				}
+			this.zniffer.on('frame', (frame, rawData) => {
+				const socketFrame = this.parseFrame(frame, rawData)
 
 				this.socket.emit(socketEvents.znifferFrame, socketFrame)
 			})
 
-			this.zniffer.on('corrupted frame', (frame) => {
-				const socketFrame: SocketFrame = {
-					...frame,
-					corrupted: true,
-					payload: buffer2hex(frame.payload) as any,
-					timestamp: Date.now(),
-				}
+			this.zniffer.on('corrupted frame', (frame, rawData) => {
+				const socketFrame = this.parseFrame(frame, rawData)
 
 				this.socket.emit(socketEvents.znifferFrame, socketFrame)
 			})
@@ -163,6 +144,30 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 				this.init().catch(() => {})
 			}, 5000)
 		}
+	}
+
+	private parseFrame(
+		frame: Frame | CorruptedFrame,
+		rawData: Buffer,
+		timestamp = Date.now(),
+	): SocketFrame {
+		const socketFrame: SocketFrame = {
+			...frame,
+			corrupted: !('protocol' in frame),
+			payload: '' as any,
+			timestamp,
+			raw: buffer2hex(rawData),
+		}
+
+		if ('payload' in frame) {
+			if (frame.payload instanceof CommandClass) {
+				socketFrame.parsedPayload = this.ccToLogRecord(frame.payload)
+			} else {
+				socketFrame.payload = buffer2hex(frame.payload)
+			}
+		}
+
+		return socketFrame
 	}
 
 	private onError(error: Error) {
@@ -189,6 +194,18 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		}
 	}
 
+	public getFrames() {
+		this.checkReady()
+
+		return this.zniffer.capturedFrames.map((frame) => {
+			return this.parseFrame(
+				frame.parsedFrame,
+				frame.frameData,
+				frame.timestamp.getTime(),
+			)
+		})
+	}
+
 	public async setFrequency(frequency: number) {
 		this.checkReady()
 
@@ -201,21 +218,29 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	}
 
 	private ccToLogRecord(commandClass: CommandClass): Record<string, any> {
-		const parsed: Record<string, any> = commandClass.toLogEntry(
-			this.zniffer as any,
-		)
+		try {
+			const parsed: Record<string, any> = commandClass.toLogEntry(
+				this.zniffer as any,
+			)
 
-		if (isEncapsulatingCommandClass(commandClass)) {
-			parsed.encapsulated = [
-				this.ccToLogRecord(commandClass.encapsulated),
-			]
-		} else if (isMultiEncapsulatingCommandClass(commandClass)) {
-			parsed.encapsulated = [
-				commandClass.encapsulated.map((cc) => this.ccToLogRecord(cc)),
-			]
+			if (isEncapsulatingCommandClass(commandClass)) {
+				parsed.encapsulated = [
+					this.ccToLogRecord(commandClass.encapsulated),
+				]
+			} else if (isMultiEncapsulatingCommandClass(commandClass)) {
+				parsed.encapsulated = [
+					commandClass.encapsulated.map((cc) =>
+						this.ccToLogRecord(cc),
+					),
+				]
+			}
+			return parsed
+		} catch (error) {
+			logger.error('Error parsing command class:', error)
+			return {
+				error: error.message,
+			}
 		}
-
-		return parsed
 	}
 
 	public async close() {
@@ -241,7 +266,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 		this.onStateChange()
 
-		logger.info('ZnifferManager started')
+		logger.info('Started')
 	}
 
 	public async stop() {
@@ -257,7 +282,16 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 		this.onStateChange()
 
-		logger.info('ZnifferManager stopped')
+		logger.info('Stopped')
+	}
+
+	public clear() {
+		this.checkReady()
+
+		logger.info('Clearing...')
+		this.zniffer.clearCapturedFrames()
+
+		logger.info('Frames cleared')
 	}
 
 	public async saveCaptureToFile() {

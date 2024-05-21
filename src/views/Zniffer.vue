@@ -369,17 +369,16 @@ export default {
 		},
 	},
 	mounted() {
-		this.socket.on(socketEvents.znifferFrame, (data) => {
-			data.id = uuid()
-			const lastFrame = this.frames[this.frames.length - 1]
-			data.delta = lastFrame ? data.timestamp - lastFrame.timestamp : 0
-			this.framesQueue.push(data)
-		})
+		this.socket.on(socketEvents.znifferFrame, this.addFrame)
 
 		this.onWindowResize = () => {
 			const oneThird = window.innerHeight / 3
 			this.topPaneHeight = oneThird * 2
 		}
+
+		this.socket.on('connect', this.onConnnect)
+
+		this.getFrames()
 
 		window.addEventListener('resize', this.onWindowResize)
 
@@ -397,6 +396,7 @@ export default {
 		if (this.socket) {
 			// unbind events
 			this.socket.off(socketEvents.znifferFrame)
+			this.socket.off('connect', this.onConnnect)
 		}
 
 		if (this.timeoutScroll) {
@@ -465,6 +465,15 @@ export default {
 		emptyQueue() {
 			this.frames.push(...this.framesQueue)
 			this.framesQueue = []
+		},
+		onConnnect() {
+			this.getFrames()
+		},
+		addFrame(data) {
+			data.id = uuid()
+			const lastFrame = this.frames[this.frames.length - 1]
+			data.delta = lastFrame ? data.timestamp - lastFrame.timestamp : 0
+			this.framesQueue.push(data)
 		},
 		async clearFrequency() {
 			// needed to handle the clear event on select
@@ -690,6 +699,21 @@ export default {
 				}
 			})
 		},
+		async getFrames() {
+			const response = await this.sendAction(
+				{
+					apiName: 'getFrames',
+				},
+				{
+					hideInfo: true,
+				},
+			)
+
+			if (response.success) {
+				this.frames = []
+				response.result.forEach(this.addFrame)
+			}
+		},
 		async setFrequency() {
 			const response = await this.sendAction(
 				{
@@ -721,9 +745,16 @@ export default {
 				this.showSnackbar(`Zniffer stopped`, 'success')
 			}
 		},
-		clearFrames() {
-			this.frames = []
-			this.framesFiltered = []
+		async clearFrames() {
+			const response = await this.sendAction({
+				apiName: 'clear',
+			})
+
+			if (response.success) {
+				this.showSnackbar(`Zniffer cleared`, 'success')
+				this.frames = []
+				this.framesFiltered = []
+			}
 		},
 		async createCapture() {
 			const response = await this.sendAction({
