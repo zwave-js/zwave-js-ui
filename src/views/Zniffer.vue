@@ -637,13 +637,6 @@ export default {
 				this.scrollWrapper.scrollTo(0, this.scrollWrapper.scrollHeight)
 			}
 		},
-		scrollToRow(index) {
-			const table = this.$refs.framesTable.$el.querySelector('table')
-			const row = table.rows[index]
-			if (row) {
-				row.scrollIntoView(true)
-			}
-		},
 		async onScroll(e) {
 			// debounce if scrolling fast
 			if (this.timeoutScroll) {
@@ -660,7 +653,7 @@ export default {
 					this.perPage <= this.totalFrames
 						? this.totalFrames - this.perPage
 						: rows
-			}, 100)
+			}, 50)
 		},
 		getTimestamp(timestamp) {
 			// format timestamp HH:mm:ss.fff
