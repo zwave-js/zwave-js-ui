@@ -464,8 +464,10 @@ export default {
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		emptyQueue() {
-			this.frames.push(...this.framesQueue)
-			this.framesQueue = []
+			if (this.framesQueue.length > 0) {
+				this.frames.push(...this.framesQueue)
+				this.framesQueue = []
+			}
 		},
 		onConnnect() {
 			this.getFrames()
