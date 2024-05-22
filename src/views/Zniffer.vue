@@ -11,7 +11,7 @@
 				}"
 			>
 				<v-row v-if="zniffer.enabled">
-					<v-col style="max-width: 220px" class="mt-4 pt-2">
+					<v-col style="max-width: 220px; margin-top: 7px">
 						<v-btn-toggle dense multiple>
 							<v-btn
 								color="green darken-1"
@@ -60,7 +60,8 @@
 							:error-messages="
 								searchError ? ['Invalid search'] : []
 							"
-							solo
+							outlined
+							dense
 							single-line
 							class="ma-2"
 							prepend-inner-icon="search"

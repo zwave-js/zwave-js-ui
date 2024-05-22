@@ -74,29 +74,19 @@
 			</v-simple-table>
 		</v-col>
 		<v-col>
-			<v-btn
-				v-if="value.parsedPayload"
-				small
-				@click="showRaw = !showRaw"
-				:color="showRaw ? 'primary' : 'secondary'"
-				class="mb-2"
-			>
-				{{ showRaw ? 'Parsed' : 'Raw' }}
-			</v-btn>
-
-			<CCTreeView
-				v-if="value.parsedPayload && !showRaw"
-				:value="value.parsedPayload"
-			></CCTreeView>
 			<v-textarea
-				v-else
 				readonly
 				hide-details
+				solo
 				no-resize
-				label="Raw"
 				v-model="value.raw"
-				rows="10"
+				rows="5"
 			></v-textarea>
+			<CCTreeView
+				class="mt-2"
+				v-if="value.parsedPayload"
+				:value="value.parsedPayload"
+			></CCTreeView>
 		</v-col>
 	</v-row>
 </template>
@@ -118,9 +108,7 @@ export default {
 	components: {
 		CCTreeView: () => import('./CCTreeView.vue'),
 	},
-	data: () => ({
-		showRaw: false,
-	}),
+	data: () => ({}),
 	methods: {
 		getRegion,
 		getRoute,
