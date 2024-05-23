@@ -127,10 +127,14 @@ export default {
 					})
 				} else if (key === 'message') {
 					for (const prop in entry.message) {
+						const value = entry.message[prop]
 						children.push({
 							id: `${root}.${prop}`,
 							name: `${prop}`,
-							value: entry.message[prop],
+							value:
+								typeof value === 'string'
+									? value.trimStart()
+									: value,
 						})
 					}
 				} else if (key === 'encapsulated') {
