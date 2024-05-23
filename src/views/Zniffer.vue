@@ -373,8 +373,7 @@ export default {
 		this.socket.on(socketEvents.znifferFrame, this.addFrame)
 
 		this.onWindowResize = () => {
-			const oneThird = window.innerHeight / 3
-			this.topPaneHeight = oneThird * 2
+			this.topPaneHeight = window.innerHeight / 2
 		}
 
 		this.socket.on('connect', this.onConnnect)

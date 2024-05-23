@@ -76,11 +76,12 @@
 		<v-col>
 			<v-textarea
 				readonly
+				label="Raw"
 				hide-details
 				solo
 				no-resize
 				v-model="value.raw"
-				rows="5"
+				rows="2"
 			></v-textarea>
 			<CCTreeView
 				class="mt-2"
