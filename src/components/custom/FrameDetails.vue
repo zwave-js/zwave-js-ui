@@ -74,20 +74,20 @@
 			</v-simple-table>
 		</v-col>
 		<v-col>
+			<CCTreeView
+				class="mt-2"
+				v-if="value.parsedPayload"
+				:value="value.parsedPayload"
+			></CCTreeView>
+			<span class="text-caption">Raw</span>
 			<v-textarea
 				readonly
-				label="Raw"
 				hide-details
 				solo
 				no-resize
 				v-model="value.raw"
 				rows="2"
 			></v-textarea>
-			<CCTreeView
-				class="mt-2"
-				v-if="value.parsedPayload"
-				:value="value.parsedPayload"
-			></CCTreeView>
 		</v-col>
 	</v-row>
 </template>
