@@ -400,7 +400,9 @@ export default {
 
 		this.socket.on('connect', this.onConnnect)
 
-		this.getFrames()
+		if (this.socket.connected) {
+			this.onConnnect()
+		}
 
 		window.addEventListener('resize', this.onWindowResize)
 
