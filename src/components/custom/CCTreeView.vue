@@ -13,6 +13,7 @@
 				}}</strong>
 				<div
 					class="tree-item-value"
+					:class="item.name === 'payload' ? 'mono' : ''"
 					v-if="item.value !== undefined"
 					style="white-space: pre-wrap"
 				>

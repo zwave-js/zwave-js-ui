@@ -81,6 +81,7 @@
 			></CCTreeView>
 			<span class="text-caption">Raw</span>
 			<v-textarea
+				class="mono"
 				readonly
 				hide-details
 				solo
