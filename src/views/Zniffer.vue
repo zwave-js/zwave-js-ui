@@ -269,7 +269,7 @@
 			<v-icon v-else>menu</v-icon>
 		</v-btn>
 
-		<v-navigation-drawer v-model="drawer" absolute right>
+		<v-navigation-drawer v-model="drawer" absolute right style="z-index: 2">
 			<v-card class="fill">
 				<v-card-title> Settings </v-card-title>
 				<v-card-text>
