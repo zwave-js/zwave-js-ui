@@ -171,7 +171,10 @@
 							<template
 								v-slot:[`item.protocolDataRate`]="{ item }"
 							>
-								{{ getProtocolDataRate(item) }}
+								{{
+									getProtocolDataRate(item) +
+									(item.speedModified ? ' 🐌' : '')
+								}}
 							</template>
 
 							<template v-slot:[`item.type`]="{ item }">
