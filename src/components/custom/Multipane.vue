@@ -224,10 +224,10 @@ export default {
 
 	background-image: linear-gradient(
 		to right,
-		transparent 33%,
-		var(--color) 33%,
-		var(--color) 66%,
-		transparent 66%
+		transparent 40%,
+		var(--color) 40%,
+		var(--color) 60%,
+		transparent 60%
 	);
 
 	&:before {
