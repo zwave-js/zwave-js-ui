@@ -161,10 +161,17 @@ export default {
 }
 
 .multipane-resizer {
-	display: block;
-	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
 	z-index: 2 !important;
 	margin: 0;
+
+	--color: #e0e0e0;
+	&:hover {
+		--color: #999;
+	}
 }
 
 .layout-h > .multipane-resizer {
@@ -174,24 +181,37 @@ export default {
 	top: 5px;
 	cursor: row-resize;
 
+	background-image: linear-gradient(
+		to bottom,
+		transparent 40%,
+		var(--color) 40%,
+		var(--color) 60%,
+		transparent 60%
+	);
+
 	&:before {
 		display: block;
 		content: '';
 		width: 40px;
-		height: 4px;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		margin-top: -1.5px;
-		margin-left: -20px;
-		border-top: 1px solid #ccc;
-		border-bottom: 1px solid #ccc;
-	}
+		height: 3px;
 
-	&:hover {
-		&:before {
-			border-color: #999;
-		}
+		background-image: linear-gradient(
+			to right,
+			white 24%,
+			var(--color) 24%,
+			var(--color) 32%,
+			white 32%,
+			white 47%,
+			var(--color) 47%,
+			var(--color) 54%,
+			white 54%,
+			white 69%,
+			var(--color) 69%,
+			var(--color) 77%,
+			white 77%
+		);
+
+		background-repeat: repeat-y;
 	}
 }
 
@@ -202,24 +222,37 @@ export default {
 	left: 5px;
 	cursor: col-resize;
 
+	background-image: linear-gradient(
+		to right,
+		transparent 33%,
+		var(--color) 33%,
+		var(--color) 66%,
+		transparent 66%
+	);
+
 	&:before {
 		display: block;
 		content: '';
-		width: 4px;
+		width: 3px;
 		height: 40px;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		margin-top: -20px;
-		margin-left: -1.5px;
-		border-left: 1px solid #ccc;
-		border-right: 1px solid #ccc;
-	}
 
-	&:hover {
-		&:before {
-			border-color: #999;
-		}
+		background-image: linear-gradient(
+			to bottom,
+			white 24%,
+			var(--color) 24%,
+			var(--color) 32%,
+			white 32%,
+			white 47%,
+			var(--color) 47%,
+			var(--color) 54%,
+			white 54%,
+			white 69%,
+			var(--color) 69%,
+			var(--color) 77%,
+			white 77%
+		);
+
+		background-repeat: repeat-x;
 	}
 }
 </style>

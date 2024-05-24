@@ -241,9 +241,7 @@
 					</v-col>
 				</v-row>
 			</div>
-			<multipane-resizer>
-				<v-divider style="margin-top: 2.5px" />
-			</multipane-resizer>
+			<multipane-resizer />
 			<div
 				class="pane pa-2"
 				style="flex-grow: 1; overflow-y: scroll; overflow-x: hidden"
