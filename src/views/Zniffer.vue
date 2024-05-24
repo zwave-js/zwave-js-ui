@@ -513,7 +513,7 @@ export default {
 				{
 					text: 'Protocol Data Rate',
 					value: 'protocolDataRate',
-					width: 180,
+					width: 200,
 					sortable: false,
 				},
 				{ text: 'RSSI', value: 'rssi', width: 100, sortable: false },

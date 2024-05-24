@@ -75,7 +75,7 @@
 		</v-col>
 		<v-col>
 			<CCTreeView
-				class="mt-2"
+				class="my-2"
 				v-if="value.parsedPayload"
 				:value="value.parsedPayload"
 			></CCTreeView>
