@@ -13,35 +13,25 @@
 				<v-row v-if="zniffer.enabled">
 					<v-col style="max-width: 220px; margin-top: 7px">
 						<v-btn-toggle dense multiple>
-							<v-btn
-								color="green darken-1"
-								:disabled="znifferState.started"
-								@click="startZniffer()"
+							<v-tooltip
+								bottom
+								v-for="button in buttons"
+								:key="button.label"
+								:target="`#${button.id}`"
 							>
-								<v-icon>play_arrow</v-icon>
-							</v-btn>
-							<v-btn
-								color="red darken-1"
-								:disabled="!znifferState.started"
-								@click="stopZniffer()"
-							>
-								<v-icon>stop</v-icon>
-							</v-btn>
-							<v-btn
-								color="orange darken-1"
-								:disabled="frames.length === 0"
-								@click="clearFrames()"
-							>
-								<v-icon>clear</v-icon>
-							</v-btn>
-
-							<v-btn
-								color="blue darken-1"
-								:disabled="!znifferState.started"
-								@click="createCapture()"
-							>
-								<v-icon>save</v-icon>
-							</v-btn>
+								<template v-slot:activator="{ on }">
+									<v-btn
+										:id="button.id"
+										:color="button.color"
+										:disabled="button.disabled"
+										@click="button.action"
+										v-on="on"
+									>
+										<v-icon>{{ button.icon }}</v-icon>
+									</v-btn>
+								</template>
+								<span>{{ button.tooltip }}</span>
+							</v-tooltip>
 						</v-btn-toggle>
 					</v-col>
 					<v-col
@@ -335,6 +325,42 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['zniffer', 'znifferState']),
+		buttons() {
+			return [
+				{
+					id: 'start',
+					icon: 'play_arrow',
+					color: 'success',
+					tooltip: 'Start Zniffer',
+					action: this.startZniffer,
+					disabled: this.znifferState?.started,
+				},
+				{
+					id: 'stop',
+					icon: 'stop',
+					color: 'error',
+					tooltip: 'Stop Zniffer',
+					action: this.stopZniffer,
+					disabled: !this.znifferState?.started,
+				},
+				{
+					id: 'clear',
+					icon: 'delete',
+					color: 'warning',
+					tooltip: 'Clear Zniffer',
+					action: this.clearFrames,
+					disabled: !this.frames.length,
+				},
+				{
+					id: 'save',
+					icon: 'save',
+					color: 'primary',
+					tooltip: 'Save capture',
+					action: this.createCapture,
+					disabled: !this.frames.length,
+				},
+			]
+		},
 		framesLimited() {
 			return this.framesFiltered.slice(
 				this.start,
