@@ -91,6 +91,11 @@
 			></v-textarea>
 		</v-col>
 	</v-row>
+	<v-row class="fill" justify="center" align="center" v-else>
+		<v-col class="text-center caption">
+			<span dense>Click on a frame in table to see details</span>
+		</v-col>
+	</v-row>
 </template>
 
 <script>
