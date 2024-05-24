@@ -178,7 +178,7 @@ export default {
 		display: block;
 		content: '';
 		width: 40px;
-		height: 3px;
+		height: 4px;
 		position: absolute;
 		top: 50%;
 		left: 50%;
@@ -205,7 +205,7 @@ export default {
 	&:before {
 		display: block;
 		content: '';
-		width: 3px;
+		width: 4px;
 		height: 40px;
 		position: absolute;
 		top: 50%;

@@ -127,6 +127,15 @@
 									</v-card>
 								</v-menu>
 							</template>
+							<!-- add to append-outer slot the total numer of frames -->
+
+							<template v-slot:append-outer>
+								<span
+									v-if="totalFrames"
+									class="caption grey--text"
+									># Frames: {{ totalFrames }}</span
+								>
+							</template>
 						</v-text-field>
 					</v-col>
 
@@ -232,7 +241,9 @@
 					</v-col>
 				</v-row>
 			</div>
-			<multipane-resizer></multipane-resizer>
+			<multipane-resizer>
+				<v-divider style="margin-top: 2.5px" />
+			</multipane-resizer>
 			<div
 				class="pane pa-2"
 				style="flex-grow: 1; overflow-y: scroll; overflow-x: hidden"
