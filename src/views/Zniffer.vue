@@ -242,7 +242,7 @@
 				</v-row>
 				<v-row v-else>
 					<v-col cols="12">
-						<v-alert type="info">
+						<v-alert text type="info">
 							<span
 								>Zniffer is disabled, enable it in
 								settings</span
