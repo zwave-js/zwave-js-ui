@@ -271,25 +271,41 @@
 
 		<v-navigation-drawer v-model="drawer" absolute right>
 			<v-card class="fill">
-				<v-card-title>Settings</v-card-title>
+				<v-card-title> Settings </v-card-title>
 				<v-card-text>
-					<v-select
-						label="Zniffer frequency"
-						hide-details
-						:items="znifferRegions"
-						v-model="frequency"
-						@change="setFrequency"
-					>
-						<template v-slot:prepend>
-							<v-icon>signal_cellular_alt</v-icon>
-						</template>
-
-						<template v-slot:append-outer>
-							<v-icon color="success" v-if="frequencySuccess"
-								>check_circle</v-icon
+					<v-row>
+						<v-col cols="12">
+							<v-btn
+								text
+								small
+								color="primary"
+								@click="openInWindow('Zniffer', 800, 1500)"
 							>
-						</template>
-					</v-select>
+								Open in new<v-icon>open_in_new</v-icon>
+							</v-btn>
+						</v-col>
+						<v-col cols="12">
+							<v-select
+								label="Zniffer frequency"
+								hide-details
+								:items="znifferRegions"
+								v-model="frequency"
+								@change="setFrequency"
+							>
+								<template v-slot:prepend>
+									<v-icon>signal_cellular_alt</v-icon>
+								</template>
+
+								<template v-slot:append-outer>
+									<v-icon
+										color="success"
+										v-if="frequencySuccess"
+										>check_circle</v-icon
+									>
+								</template>
+							</v-select>
+						</v-col>
+					</v-row>
 				</v-card-text>
 			</v-card>
 		</v-navigation-drawer>
@@ -310,6 +326,7 @@ import {
 	getRssi,
 	getProtocolDataRate,
 	humanFriendlyNumber,
+	openInWindow,
 } from '../lib/utils'
 
 export default {
@@ -517,6 +534,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		openInWindow,
 		humanFriendlyNumber,
 		emptyQueue() {
 			if (this.framesQueue.length > 0) {

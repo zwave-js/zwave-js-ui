@@ -79,6 +79,7 @@ import { socketEvents } from '@server/lib/SocketEvents'
 import { AnsiUp } from 'ansi_up'
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
+import { openInWindow } from '../lib/utils'
 
 const ansiUp = new AnsiUp()
 
@@ -119,14 +120,7 @@ export default {
 			this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))
 		},
 		newWindow() {
-			const newwindow = window.open(
-				window.location.href + '/#no-topbar',
-				'DEBUG',
-				'height=800,width=600,status=no,toolbar:no,scrollbars:no,menubar:no', // check https://www.w3schools.com/jsref/met_win_open.asp for all available specs
-			)
-			if (window.focus) {
-				newwindow.focus()
-			}
+			openInWindow('DEBUG')
 		},
 	},
 	mounted() {

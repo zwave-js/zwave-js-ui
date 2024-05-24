@@ -549,7 +549,7 @@ export default {
 			this.$vuetify.theme.dark = !!val
 		},
 		pages() {
-			this.verifyRoute()
+			// this.verifyRoute()
 		},
 		controllerNode(node) {
 			if (!node) return
