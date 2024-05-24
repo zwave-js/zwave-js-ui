@@ -315,7 +315,6 @@ import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
 import { znifferRegions } from '../lib/items.js'
 import {
-	uuid,
 	getRoute,
 	getType,
 	getRssi,
@@ -453,6 +452,12 @@ export default {
 			framesQueue: [],
 			headers: [
 				{
+					text: '#',
+					value: 'id',
+					width: 80,
+					sortable: false,
+				},
+				{
 					text: 'Timestamp',
 					value: 'timestamp',
 					width: 160,
@@ -497,8 +502,12 @@ export default {
 			this.getFrames()
 		},
 		addFrame(data) {
-			data.id = uuid()
-			const lastFrame = this.frames[this.frames.length - 1]
+			const lastFrame =
+				this.framesQueue.length > 0
+					? this.framesQueue[this.framesQueue.length - 1]
+					: this.frames[this.frames.length - 1]
+
+			data.id = lastFrame ? lastFrame.id + 1 : 1
 			data.delta = lastFrame ? data.timestamp - lastFrame.timestamp : 0
 			this.framesQueue.push(data)
 		},
