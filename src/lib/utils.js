@@ -276,3 +276,17 @@ export function getProtocolDataRate(item) {
 		? znifferProtocolDataRateToString(item.protocolDataRate)
 		: '---'
 }
+
+/**  Human friendly number suffix */
+export function humanFriendlyNumber(n, d) {
+	const d2 = Math.pow(10, d)
+	const s = ' KMGTPE'
+	let i = 0
+	const c = 1000
+
+	while ((n >= c || n <= -c) && ++i < s.length) n = n / c
+
+	i = i >= s.length ? s.length - 1 : i
+
+	return Math.round(n * d2) / d2 + s[i]
+}

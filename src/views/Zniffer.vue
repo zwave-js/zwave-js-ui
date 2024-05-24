@@ -130,11 +130,18 @@
 							<!-- add to append-outer slot the total numer of frames -->
 
 							<template v-slot:append-outer>
-								<span
+								<v-col
+									style="margin-top: -7px"
 									v-if="totalFrames"
-									class="caption grey--text"
-									># Frames: {{ totalFrames }}</span
+									class="pa-0 caption grey--text text-center"
 								>
+									<p class="mb-0">Frames</p>
+									<p class="mb-0">
+										{{
+											humanFriendlyNumber(totalFrames, 2)
+										}}
+									</p>
+								</v-col>
 							</template>
 						</v-text-field>
 					</v-col>
@@ -313,6 +320,7 @@ import {
 	getType,
 	getRssi,
 	getProtocolDataRate,
+	humanFriendlyNumber,
 } from '../lib/utils'
 
 export default {
@@ -476,6 +484,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		humanFriendlyNumber,
 		emptyQueue() {
 			if (this.framesQueue.length > 0) {
 				this.frames.push(...this.framesQueue)
