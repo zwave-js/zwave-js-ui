@@ -169,8 +169,14 @@ export default {
 	margin: 0;
 
 	--color: #e0e0e0;
+	--theme-color: white; // Add a variable for theme color
+
 	&:hover {
 		--color: #999;
+	}
+
+	&.dark {
+		--theme-color: #121212;
 	}
 }
 
@@ -197,18 +203,18 @@ export default {
 
 		background-image: linear-gradient(
 			to right,
-			white 24%,
+			var(--theme-color) 24%,
 			var(--color) 24%,
 			var(--color) 32%,
-			white 32%,
-			white 47%,
+			var(--theme-color) 32%,
+			var(--theme-color) 47%,
 			var(--color) 47%,
 			var(--color) 54%,
-			white 54%,
-			white 69%,
+			var(--theme-color) 54%,
+			var(--theme-color) 69%,
 			var(--color) 69%,
 			var(--color) 77%,
-			white 77%
+			var(--theme-color) 77%
 		);
 
 		background-repeat: repeat-y;
@@ -238,18 +244,18 @@ export default {
 
 		background-image: linear-gradient(
 			to bottom,
-			white 24%,
+			var(--theme-color) 24%,
 			var(--color) 24%,
 			var(--color) 32%,
-			white 32%,
-			white 47%,
+			var(--theme-color) 32%,
+			var(--theme-color) 47%,
 			var(--color) 47%,
 			var(--color) 54%,
-			white 54%,
-			white 69%,
+			var(--theme-color) 54%,
+			var(--theme-color) 69%,
 			var(--color) 69%,
 			var(--color) 77%,
-			white 77%
+			var(--theme-color) 77%
 		);
 
 		background-repeat: repeat-x;

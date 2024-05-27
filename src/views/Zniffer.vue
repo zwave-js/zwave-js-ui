@@ -241,7 +241,7 @@
 					</v-col>
 				</v-row>
 			</div>
-			<multipane-resizer />
+			<multipane-resizer :class="$vuetify.theme.dark ? 'dark' : ''" />
 			<div
 				class="pane pa-2"
 				style="flex-grow: 1; overflow-y: scroll; overflow-x: hidden"
