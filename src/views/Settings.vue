@@ -515,7 +515,10 @@
 											label="Serial Port"
 											hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
 											persistent-hint
-											:rules="[rules.required]"
+											:rules="[
+												rules.required,
+												differentPorts,
+											]"
 											required
 											:items="serial_ports"
 										></v-combobox>
@@ -1038,7 +1041,10 @@
 											label="Serial Port"
 											hint="Ex /dev/ttyUSB0. If your port is not listed here just write the port path here"
 											persistent-hint
-											:rules="[rules.required]"
+											:rules="[
+												rules.required,
+												differentPorts,
+											]"
 											required
 											:items="serial_ports"
 										></v-combobox>
@@ -1963,6 +1969,14 @@ export default {
 			return (
 				(this.newMqtt.auth && !!this.newMqtt.username) ||
 				'This field is required.'
+			)
+		},
+		differentPorts() {
+			return (
+				(this.newZwave.enabled &&
+					this.newZniffer.enabled &&
+					this.newZwave.port !== this.newZniffer.port) ||
+				'Zniffer and Z-Wave ports must be different.'
 			)
 		},
 		validPayload() {
