@@ -228,6 +228,21 @@
 								</tr>
 							</template>
 						</v-data-table>
+						<v-btn
+							:color="autoScroll ? 'error' : 'purple'"
+							@click="autoScroll = !autoScroll"
+							dark
+							small
+							fab
+							hover
+							bottom
+							right
+							absolute
+							style="margin-bottom: 30px"
+						>
+							<v-icon v-if="autoScroll">stop</v-icon>
+							<v-icon v-else>unfold_more</v-icon>
+						</v-btn>
 					</v-col>
 				</v-row>
 				<v-row v-else>
@@ -528,6 +543,7 @@ export default {
 				{ text: 'Type', value: 'type', sortable: false },
 				{ text: 'Payload', value: 'payload', sortable: false },
 			],
+			autoScroll: true,
 		}
 	},
 	methods: {
@@ -604,9 +620,11 @@ export default {
 		onRowClick(frame, { select, isSelected }) {
 			if (isSelected) {
 				this.selectedFrame = null
+				this.autoScroll = true
 				select(false)
 			} else {
 				this.selectedFrame = frame
+				this.autoScroll = false
 				select(true)
 			}
 		},
@@ -708,7 +726,7 @@ export default {
 			}
 		},
 		scrollBottom() {
-			if (this.scrollWrapper && !this.selectedFrame) {
+			if (this.scrollWrapper && this.autoScroll) {
 				this.scrollWrapper.scrollTo(0, this.scrollWrapper.scrollHeight)
 			}
 		},
