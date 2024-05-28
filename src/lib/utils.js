@@ -304,7 +304,7 @@ export function openInWindow(title, height = 800, width = 600) {
 }
 
 export function getProtocolIcon(protocol) {
-	if (typeof longRange === 'boolean') {
+	if (typeof protocol === 'boolean') {
 		protocol = protocol ? Protocols.ZWaveLongRange : Protocols.ZWave
 	}
 
