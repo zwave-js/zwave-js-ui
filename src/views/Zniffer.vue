@@ -168,10 +168,17 @@
 							<template
 								v-slot:[`item.protocolDataRate`]="{ item }"
 							>
-								{{
-									getProtocolDataRate(item) +
-									(item.speedModified ? ' 🐌' : '')
-								}}
+								<div class="d-flex text-center">
+									<rich-value
+										:value="getProtocolIcon(item.protocol)"
+									/>
+									<span class="ml-1">
+										{{
+											getProtocolDataRate(item, false) +
+											(item.speedModified ? ' 🐌' : '')
+										}}
+									</span>
+								</div>
 							</template>
 
 							<template v-slot:[`item.type`]="{ item }">
@@ -340,6 +347,7 @@ import {
 	getProtocolDataRate,
 	humanFriendlyNumber,
 	openInWindow,
+	getProtocolIcon,
 } from '../lib/utils'
 
 export default {
@@ -351,6 +359,7 @@ export default {
 		Multipane: () => import('../components/custom/Multipane.vue'),
 		MultipaneResizer: () =>
 			import('../components/custom/MultipaneResizer.vue'),
+		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
 		FrameDetails: () => import('../components//custom/FrameDetails.vue'),
 	},
 	computed: {
@@ -548,6 +557,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		getProtocolIcon,
 		openInWindow,
 		humanFriendlyNumber,
 		emptyQueue() {

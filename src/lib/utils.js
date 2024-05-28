@@ -13,6 +13,7 @@ import {
 	LongRangeFrameType,
 } from 'zwave-js/safe'
 import { znifferRegions } from './items'
+import { mdiZWave } from '@mdi/js'
 
 export function copy(o) {
 	return JSON.parse(JSON.stringify(o))
@@ -271,9 +272,9 @@ export function getRssi(item) {
 
 	return item.rssiRaw
 }
-export function getProtocolDataRate(item) {
+export function getProtocolDataRate(item, withProtocol = true) {
 	return item.protocolDataRate !== undefined
-		? znifferProtocolDataRateToString(item.protocolDataRate)
+		? znifferProtocolDataRateToString(item.protocolDataRate, withProtocol)
 		: '---'
 }
 
@@ -299,5 +300,20 @@ export function openInWindow(title, height = 800, width = 600) {
 	)
 	if (window.focus) {
 		newwindow.focus()
+	}
+}
+
+export function getProtocolIcon(protocol) {
+	if (typeof longRange === 'boolean') {
+		protocol = protocol ? Protocols.ZWaveLongRange : Protocols.ZWave
+	}
+
+	return {
+		align: 'center',
+		icon: mdiZWave,
+		iconStyle: `color: ${getProtocolColor({
+			protocol,
+		})}`,
+		description: getProtocol({ protocol }),
 	}
 }
