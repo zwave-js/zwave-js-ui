@@ -235,21 +235,27 @@
 								</tr>
 							</template>
 						</v-data-table>
-						<v-btn
-							:color="autoScroll ? 'error' : 'purple'"
-							@click="autoScroll = !autoScroll"
-							dark
-							small
-							fab
-							hover
-							bottom
-							right
-							absolute
-							style="margin-bottom: 30px"
-						>
-							<v-icon v-if="autoScroll">stop</v-icon>
-							<v-icon v-else>unfold_more</v-icon>
-						</v-btn>
+
+						<v-tooltip v-if="!autoScroll" left>
+							<template v-slot:activator="{ on }">
+								<v-btn
+									color="purple"
+									@click="autoScroll = true"
+									dark
+									small
+									fab
+									hover
+									top
+									absolute
+									right
+									style="top: 40px"
+									v-on="on"
+								>
+									<v-icon>vertical_align_bottom</v-icon>
+								</v-btn>
+							</template>
+							<span>Enable autoscroll</span>
+						</v-tooltip>
 					</v-col>
 				</v-row>
 				<v-row v-else>
@@ -747,6 +753,8 @@ export default {
 			}
 
 			this.timeoutScroll = setTimeout(async () => {
+				const prevStart = this.start
+
 				// rows to show
 				const { scrollTop } = e.target
 				const rows = Math.ceil(scrollTop / this.rowHeight)
@@ -756,6 +764,11 @@ export default {
 					this.perPage <= this.totalFrames
 						? this.totalFrames - this.perPage
 						: rows
+
+				const direction = prevStart < this.start ? 'down' : 'up'
+				if (this.autoScroll && direction === 'up') {
+					this.autoScroll = false
+				}
 			}, 50)
 		},
 		getTimestamp(timestamp) {
