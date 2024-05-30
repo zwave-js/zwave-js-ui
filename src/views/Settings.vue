@@ -1973,9 +1973,9 @@ export default {
 		},
 		differentPorts() {
 			return (
-				(this.newZwave.enabled &&
-					this.newZniffer.enabled &&
-					this.newZwave.port !== this.newZniffer.port) ||
+				!this.newZwave.enabled ||
+				!this.newZniffer.enabled ||
+				this.newZwave.port !== this.newZniffer.port ||
 				'Zniffer and Z-Wave ports must be different.'
 			)
 		},
