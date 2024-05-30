@@ -30,26 +30,6 @@
 		</div>
 
 		<div class="d-flex align-center" v-else>
-			<!-- Prefix loader with tooltip -->
-			<v-tooltip v-if="value.toUpdate" bottom>
-				<template v-slot:activator="{ on }">
-					<v-progress-circular
-						v-on="on"
-						indeterminate
-						class="mr-2"
-						size="20"
-						:color="
-							node?.status === 'Asleep' ? 'warning' : 'primary'
-						"
-					></v-progress-circular>
-				</template>
-				<span>{{
-					node?.status === 'Asleep'
-						? 'Wake up your device in order to send commands'
-						: 'Set value in progress...'
-				}}</span>
-			</v-tooltip>
-
 			<!-- ### VALUEID INPUTS ### -->
 
 			<!-- Text Input -->
@@ -312,6 +292,26 @@
 					>
 				</template>
 				<span class="help">{{ '[' + value.id + '] ' + help }}</span>
+			</v-tooltip>
+
+			<!-- Suffix loader with tooltip -->
+			<v-tooltip v-if="value.toUpdate" bottom>
+				<template v-slot:activator="{ on }">
+					<v-progress-circular
+						v-on="on"
+						indeterminate
+						class="ml-2"
+						size="20"
+						:color="
+							node?.status === 'Asleep' ? 'warning' : 'primary'
+						"
+					></v-progress-circular>
+				</template>
+				<span>{{
+					node?.status === 'Asleep'
+						? 'Wake up your device in order to send commands'
+						: 'Set value in progress...'
+				}}</span>
 			</v-tooltip>
 		</div>
 	</div>
