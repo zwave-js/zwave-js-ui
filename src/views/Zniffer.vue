@@ -240,7 +240,7 @@
 							<template v-slot:activator="{ on }">
 								<v-btn
 									color="purple"
-									@click="autoScroll = true"
+									@click="enableAutoScroll()"
 									dark
 									small
 									fab
@@ -741,9 +741,16 @@ export default {
 				this.scrollWrapper = wrapper
 			}
 		},
+		enableAutoScroll() {
+			this.autoScroll = true
+			this.scrollBottom()
+		},
 		scrollBottom() {
 			if (this.scrollWrapper && this.autoScroll) {
-				this.scrollWrapper.scrollTo(0, this.scrollWrapper.scrollHeight)
+				this.scrollWrapper.scrollTo(
+					0,
+					this.scrollWrapper.scrollHeight + this.rowHeight,
+				)
 			}
 		},
 		async onScroll(e) {
@@ -765,7 +772,7 @@ export default {
 						? this.totalFrames - this.perPage
 						: rows
 
-				const direction = prevStart < this.start ? 'down' : 'up'
+				const direction = prevStart <= this.start ? 'down' : 'up'
 				if (this.autoScroll && direction === 'up') {
 					this.autoScroll = false
 				}
