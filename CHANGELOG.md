@@ -1,5 +1,25 @@
 
 
+# [9.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.12.0...v9.13.0) (2024-05-30)
+
+
+### Bug Fixes
+
+* **ui:** cleaner rebuild routes hint ([e51cf52](https://github.com/zwave-js/zwave-js-ui/commit/e51cf52bea1d1795f75fdf68abfbe9568131cfaf))
+* **ui:** groups associations for LR nodes ([#3702](https://github.com/zwave-js/zwave-js-ui/issues/3702)) ([3b9505b](https://github.com/zwave-js/zwave-js-ui/commit/3b9505b91db14749a7379df090dba4a6c5907f6c))
+* **ui:** move valueId spinner after control ([efbfe13](https://github.com/zwave-js/zwave-js-ui/commit/efbfe1386495d9e22413c3542a6249ed42353d71)), closes [#3726](https://github.com/zwave-js/zwave-js-ui/issues/3726)
+
+
+### Features
+
+* bump @zwave-js/server to 1.35.0 ([#3710](https://github.com/zwave-js/zwave-js-ui/issues/3710)) ([18b89db](https://github.com/zwave-js/zwave-js-ui/commit/18b89dbf5d5223590a586e46f753eb91d72a9cee))
+* bump mqtt@5.6.0 ([a18d1a5](https://github.com/zwave-js/zwave-js-ui/commit/a18d1a555d1b9c64e7b4082c64bd2519bf570dbf))
+* bump zwave-js@12.6.0 ([#3704](https://github.com/zwave-js/zwave-js-ui/issues/3704)) ([db51955](https://github.com/zwave-js/zwave-js-ui/commit/db519556c161c1e82c2f393abaea1f7324f6f196))
+* bump zwave-js@12.7.0 ([#3712](https://github.com/zwave-js/zwave-js-ui/issues/3712)) ([68d1f6a](https://github.com/zwave-js/zwave-js-ui/commit/68d1f6a45acc80b69adf4bac9b5d5156554c1c81))
+* bump zwave-js@12.8.1 ([#3715](https://github.com/zwave-js/zwave-js-ui/issues/3715)) ([3adf71a](https://github.com/zwave-js/zwave-js-ui/commit/3adf71a129da25663541d9107043dc40e3c18425))
+* bump zwave-js@12.9.1 ([#3725](https://github.com/zwave-js/zwave-js-ui/issues/3725)) ([4e47111](https://github.com/zwave-js/zwave-js-ui/commit/4e471115f04180be398bbd7602b6b0c9467821ab))
+* zniffer ([#3706](https://github.com/zwave-js/zwave-js-ui/issues/3706)) ([18ffbe2](https://github.com/zwave-js/zwave-js-ui/commit/18ffbe2d8b5bd3963c4eae48a0b9d0d653d34d71))
+
 # [9.12.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.11.1...v9.12.0) (2024-04-29)
 
 
