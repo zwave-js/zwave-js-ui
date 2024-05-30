@@ -34,7 +34,14 @@
 						:color="item.path === $route.path ? 'primary' : ''"
 					>
 						<v-list-item-action>
-							<v-icon>{{ item.icon }}</v-icon>
+							<v-badge
+								color="red"
+								:value="item.badge"
+								:content="item.badge"
+								dot
+							>
+								<v-icon>{{ item.icon }}</v-icon>
+							</v-badge>
 						</v-list-item-action>
 						<v-list-item-content>
 							<v-list-item-title
@@ -447,6 +454,7 @@ export default {
 			'controllerNode',
 			'zniffer',
 			'zwave',
+			'znifferState',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
@@ -491,7 +499,14 @@ export default {
 					icon: 'preview',
 					title: 'Zniffer',
 					path: Routes.zniffer,
+					badge: this.znifferState?.started ? 1 : 0,
 				})
+			}
+
+			for (const p of pages) {
+				if (p.badge === undefined) {
+					p.badge = 0
+				}
 			}
 
 			return pages
