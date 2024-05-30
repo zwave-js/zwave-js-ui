@@ -71,7 +71,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	private restartTimeout: NodeJS.Timeout
 
 	get started() {
-		return this.zniffer.active
+		return !!this.zniffer?.active
 	}
 
 	constructor(config: ZnifferConfig, socket: SocketServer) {
