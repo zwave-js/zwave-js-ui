@@ -1,5 +1,13 @@
 
 
+## [9.13.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.0...v9.13.1) (2024-05-30)
+
+
+### Bug Fixes
+
+* **ui:** serial port validation ([f7f846e](https://github.com/zwave-js/zwave-js-ui/commit/f7f846e28f2f9d368f9c690d208df89a56cde717)), closes [#3728](https://github.com/zwave-js/zwave-js-ui/issues/3728)
+* **zniffer:** possible error when zniffer is disabled ([6c42bf8](https://github.com/zwave-js/zwave-js-ui/commit/6c42bf86b3a4d1b01f3370af389a23f20f84ebce)), closes [#3729](https://github.com/zwave-js/zwave-js-ui/issues/3729)
+
 # [9.13.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.12.0...v9.13.0) (2024-05-30)
 
 
