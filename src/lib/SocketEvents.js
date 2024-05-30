@@ -1,4 +1,4 @@
-export const socketEvents = {
+export const socketEvents = Object.freeze({
 	init: 'INIT', // automatically sent when a new client connects to the socket
 	controller: 'CONTROLLER_CMD', // controller status updates
 	connected: 'CONNECTED', // socket status
@@ -19,12 +19,15 @@ export const socketEvents = {
 	grantSecurityClasses: 'GRANT_SECURITY_CLASSES',
 	validateDSK: 'VALIDATE_DSK',
 	inclusionAborted: 'INCLUSION_ABORTED',
-}
+	znifferFrame: 'ZNIFFER_FRAME',
+	znifferState: 'ZNIFFER_STATE',
+})
 
 // events from client ---> server
-export const inboundEvents = {
+export const inboundEvents = Object.freeze({
 	init: 'INITED', // get all nodes
 	zwave: 'ZWAVE_API', // call a zwave api
 	hass: 'HASS_API', // call an hass api
 	mqtt: 'MQTT_API', // call an mqtt api
-}
+	zniffer: 'ZNIFFER_API', // call a zniffer api
+})

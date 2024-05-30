@@ -34,7 +34,14 @@
 						:color="item.path === $route.path ? 'primary' : ''"
 					>
 						<v-list-item-action>
-							<v-icon>{{ item.icon }}</v-icon>
+							<v-badge
+								color="red"
+								:value="item.badge"
+								:content="item.badge"
+								dot
+							>
+								<v-icon>{{ item.icon }}</v-icon>
+							</v-badge>
 						</v-list-item-action>
 						<v-list-item-content>
 							<v-list-item-title
@@ -79,7 +86,10 @@
 
 				<v-spacer></v-spacer>
 
-				<v-tooltip v-if="appInfo.controllerStatus" bottom>
+				<v-tooltip
+					v-if="zwave.enabled && appInfo.controllerStatus"
+					bottom
+				>
 					<template v-slot:activator="{ on }">
 						<div
 							v-on="on"
@@ -104,7 +114,10 @@
 					</div>
 				</v-tooltip>
 
-				<v-tooltip v-if="appInfo.controllerStatus" bottom>
+				<v-tooltip
+					v-if="zwave.enabled && appInfo.controllerStatus"
+					bottom
+				>
 					<template v-slot:activator="{ on }">
 						<v-icon
 							class="ml-3"
@@ -439,11 +452,65 @@ export default {
 			'auth',
 			'appInfo',
 			'controllerNode',
+			'zniffer',
+			'zwave',
+			'znifferState',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
+		pages() {
+			const pages = [
+				{ icon: 'settings', title: 'Settings', path: Routes.settings },
+				{ icon: 'bug_report', title: 'Debug', path: Routes.debug },
+				{ icon: 'folder', title: 'Store', path: Routes.store },
+			]
+
+			if (this.zwave?.enabled) {
+				pages.unshift(
+					{
+						icon: 'widgets',
+						title: 'Control Panel',
+						path: Routes.controlPanel,
+					},
+					{
+						icon: 'qr_code_scanner',
+						title: 'Smart Start',
+						path: Routes.smartStart,
+					},
+				)
+
+				pages.splice(3, 0, {
+					icon: 'movie_filter',
+					title: 'Scenes',
+					path: Routes.scenes,
+				})
+
+				pages.push({
+					icon: 'share',
+					title: 'Network graph',
+					path: Routes.mesh,
+				})
+			}
+
+			if (this.zniffer?.enabled) {
+				pages.push({
+					icon: 'preview',
+					title: 'Zniffer',
+					path: Routes.zniffer,
+					badge: this.znifferState?.started ? 1 : 0,
+				})
+			}
+
+			for (const p of pages) {
+				if (p.badge === undefined) {
+					p.badge = 0
+				}
+			}
+
+			return pages
+		},
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
 		},
@@ -495,6 +562,9 @@ export default {
 		},
 		darkMode(val) {
 			this.$vuetify.theme.dark = !!val
+		},
+		pages() {
+			// this.verifyRoute()
 		},
 		controllerNode(node) {
 			if (!node) return
@@ -556,23 +626,6 @@ export default {
 					tooltip: 'Logout',
 				},
 			],
-			pages: [
-				{
-					icon: 'widgets',
-					title: 'Control Panel',
-					path: Routes.controlPanel,
-				},
-				{
-					icon: 'qr_code_scanner',
-					title: 'Smart Start',
-					path: Routes.smartStart,
-				},
-				{ icon: 'settings', title: 'Settings', path: Routes.settings },
-				{ icon: 'movie_filter', title: 'Scenes', path: Routes.scenes },
-				{ icon: 'bug_report', title: 'Debug', path: Routes.debug },
-				{ icon: 'folder', title: 'Store', path: Routes.store },
-				{ icon: 'share', title: 'Network graph', path: Routes.mesh },
-			],
 			status: '',
 			statusColor: '',
 			drawer: false,
@@ -584,6 +637,27 @@ export default {
 		}
 	},
 	methods: {
+		verifyRoute() {
+			// ensure the actual route is available in pages otherwise redirect to the first one
+			if (
+				this.$route.meta.requiresAuth &&
+				this.pages.findIndex((p) => p.path === this.$route.path) === -1
+			) {
+				const preferred = ['control-panel', 'zniffer', 'settings']
+
+				const allowed = this.pages.filter((p) =>
+					preferred.includes(p.path),
+				)
+
+				const path = allowed.length ? allowed[0].path : undefined
+
+				if (path) {
+					this.$router.replace(path)
+				} else {
+					this.$router.replace(this.pages[0].path)
+				}
+			}
+		},
 		showNodesManager(step) {
 			// used in ControlPanel.vue
 			this.$refs.nodesManager.show(step)
@@ -599,6 +673,7 @@ export default {
 			'init',
 			'initNodes',
 			'setAppInfo',
+			'setZnifferState',
 			'onUserLogged',
 			'updateValue',
 			'setValue',
@@ -608,6 +683,7 @@ export default {
 			'addNodeEvent',
 			'updateNode',
 			'removeNode',
+			'setZnifferState',
 		]),
 		copyVersion() {
 			const el = document.createElement('textarea')
@@ -965,6 +1041,7 @@ export default {
 		},
 		onInit(data) {
 			this.setAppInfo(data.info)
+			this.setZnifferState(data.zniffer)
 			this.setControllerStatus({
 				error: data.error,
 				status: data.cntStatus,
@@ -1085,6 +1162,10 @@ export default {
 				socketEvents.grantSecurityClasses,
 				this.onGrantSecurityClasses.bind(this),
 			)
+
+			this.socket.on(socketEvents.znifferState, (data) => {
+				this.setZnifferState(data)
+			})
 			// don't await this, will cause a loop of calls
 			this.getConfig()
 		},

@@ -1,5 +1,19 @@
-import { isValidDSK, Protocols } from '@zwave-js/core/safe'
+import {
+	isValidDSK,
+	Protocols,
+	znifferProtocolDataRateToString,
+} from '@zwave-js/core/safe'
 import colors from 'vuetify/lib/util/colors'
+
+import {
+	isRssiError,
+	rssiToString,
+	getEnumMemberName,
+	ZWaveFrameType,
+	LongRangeFrameType,
+} from 'zwave-js/safe'
+import { znifferRegions } from './items'
+import { mdiZWave } from '@mdi/js'
 
 export function copy(o) {
 	return JSON.parse(JSON.stringify(o))
@@ -200,5 +214,106 @@ export function getProtocolColor(node) {
 			return colors.purple.base
 		default:
 			return colors.grey.base
+	}
+}
+
+export function getRegion(item) {
+	return (
+		znifferRegions.find((r) => r.value === item?.region)?.text ||
+		`Unknown region ${item?.region}`
+	)
+}
+export function getRoute(item, withRssi = false) {
+	const repRSSI = item.repeaterRSSI || []
+	const dir = item.direction === 'inbound' ? '←' : '→'
+	const hop = item.hop !== undefined ? item.hop : -1
+	const route = [
+		item.sourceNodeId,
+		...(item.repeaters || []),
+		item.destinationNodeId,
+	].map(
+		(r, i) =>
+			`${r}${
+				withRssi && repRSSI[i - 1] && !isRssiError(repRSSI[i - 1])
+					? ` (${rssiToString(repRSSI[i - 1])})`
+					: ''
+			}`,
+	)
+
+	let routeString = ''
+
+	if (hop >= 0) {
+		// highlight the hop
+		for (let i = 0; i < route.length; i++) {
+			routeString += route[i]
+			if (i < route.length - 1) {
+				routeString += ` ${
+					hop === i ? '<b class="text-decoration-underline">' : ''
+				}${dir}${hop === i ? '</b>' : ''} `
+			}
+		}
+	} else {
+		routeString = route.join(` ${dir} `)
+	}
+
+	return routeString
+}
+export function getType(item) {
+	if (item.protocol === Protocols.ZWaveLongRange) {
+		return getEnumMemberName(LongRangeFrameType, item.type)
+	} else {
+		return getEnumMemberName(ZWaveFrameType, item.type)
+	}
+}
+export function getRssi(item) {
+	if (item.rssi && !isRssiError(item.rssi)) {
+		return rssiToString(item.rssi)
+	}
+
+	return item.rssiRaw
+}
+export function getProtocolDataRate(item, withProtocol = true) {
+	return item.protocolDataRate !== undefined
+		? znifferProtocolDataRateToString(item.protocolDataRate, withProtocol)
+		: '---'
+}
+
+/**  Human friendly number suffix */
+export function humanFriendlyNumber(n, d) {
+	const d2 = Math.pow(10, d)
+	const s = ' KMGTPE'
+	let i = 0
+	const c = 1000
+
+	while ((n >= c || n <= -c) && ++i < s.length) n = n / c
+
+	i = i >= s.length ? s.length - 1 : i
+
+	return Math.round(n * d2) / d2 + s[i]
+}
+
+export function openInWindow(title, height = 800, width = 600) {
+	const newwindow = window.open(
+		window.location.href + '/#no-topbar',
+		title,
+		`height=${height},width=${width},status=no,toolbar:no,scrollbars:no,menubar:no`, // check https://www.w3schools.com/jsref/met_win_open.asp for all available specs
+	)
+	if (window.focus) {
+		newwindow.focus()
+	}
+}
+
+export function getProtocolIcon(protocol) {
+	if (typeof protocol === 'boolean') {
+		protocol = protocol ? Protocols.ZWaveLongRange : Protocols.ZWave
+	}
+
+	return {
+		align: 'center',
+		icon: mdiZWave,
+		iconStyle: `color: ${getProtocolColor({
+			protocol,
+		})}`,
+		description: getProtocol({ protocol }),
 	}
 }

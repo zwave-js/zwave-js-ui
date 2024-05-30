@@ -48,6 +48,7 @@ import * as utils from './lib/utils'
 import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
+import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager'
 
 const createCertificate = promisify(generate)
 
@@ -158,6 +159,7 @@ socketManager.authMiddleware = function (
 }
 
 let gw: Gateway // the gateway instance
+let zniffer: ZnifferManager // the zniffer instance
 const plugins: CustomPlugin[] = []
 let pluginsRouter: Router
 
@@ -257,6 +259,7 @@ export async function startServer(port: number | string, host?: string) {
 	setupInterceptor()
 	await loadSnippets()
 	await loadManager()
+	startZniffer(settings.zniffer)
 	await startGateway(settings)
 }
 
@@ -422,6 +425,12 @@ async function startGateway(settings: Settings) {
 	}
 
 	restarting = false
+}
+
+function startZniffer(settings: ZnifferConfig) {
+	if (settings) {
+		zniffer = new ZnifferManager(settings, socketManager.io)
+	}
 }
 
 async function destroyPlugins() {
@@ -619,10 +628,17 @@ function setupSocket(server: HttpServer) {
 		// Server: https://socket.io/docs/v4/server-application-structure/#all-event-handlers-are-registered-in-the-indexjs-file
 		// Client: https://socket.io/docs/v4/client-api/#socketemiteventname-args
 		socket.on(inboundEvents.init, (data, cb = noop) => {
+			let state = {} as any
+
 			if (gw.zwave) {
-				const state = gw.zwave.getState()
-				cb(state)
+				state = gw.zwave.getState()
 			}
+
+			if (zniffer) {
+				state.zniffer = zniffer.status()
+			}
+
+			cb(state)
 		})
 
 		socket.on(
@@ -724,6 +740,49 @@ function setupSocket(server: HttpServer) {
 			const result = {
 				success: !err,
 				message: err || 'Success HASS api call',
+				result: res,
+				api: data.apiName,
+			}
+
+			cb(result)
+		})
+
+		// eslint-disable-next-line @typescript-eslint/no-misused-promises
+		socket.on(inboundEvents.zniffer, async (data, cb = noop) => {
+			logger.info(`Zniffer api call: ${data.api}`)
+
+			let res: any, err: string
+			try {
+				switch (data.apiName) {
+					case 'start':
+						res = await zniffer.start()
+						break
+					case 'stop':
+						res = await zniffer.stop()
+						break
+					case 'clear':
+						res = zniffer.clear()
+						break
+					case 'getFrames':
+						res = zniffer.getFrames()
+						break
+					case 'setFrequency':
+						res = await zniffer.setFrequency(data.frequency)
+						break
+					case 'saveCaptureToFile':
+						res = await zniffer.saveCaptureToFile()
+						break
+					default:
+						throw new Error(`Unknown ZNIFFER api ${data.apiName}`)
+				}
+			} catch (error) {
+				logger.error('Error while calling ZNIFFER api', error)
+				err = error.message
+			}
+
+			const result = {
+				success: !err,
+				message: err || 'Success ZNIFFER api call',
 				result: res,
 				api: data.apiName,
 			}
@@ -1074,15 +1133,50 @@ app.post(
 			}
 			// TODO: validate settings using calss-validator
 			const settings = req.body
+
+			const actualSettings = jsonStore.get(store.settings) as Settings
+
+			const shouldRestartGw = !utils.deepEqual(
+				{
+					zwave: actualSettings.zwave,
+					gateway: actualSettings.gateway,
+					mqtt: actualSettings.mqtt,
+				},
+				{
+					zwave: settings.zwave,
+					gateway: settings.gateway,
+					mqtt: settings.mqtt,
+				},
+			)
+
+			const shouldRestartZniffer = !utils.deepEqual(
+				actualSettings.zniffer,
+				settings.zniffer,
+			)
+
+			// nothing changed, consider it a forced restart
+			const restartAll = !shouldRestartGw && !shouldRestartZniffer
+
 			restarting = true
 			await jsonStore.put(store.settings, settings)
-			await gw.close()
-			await destroyPlugins()
-			// reload loggers settings
-			setupLogging(settings)
-			// restart clients and gateway
-			await startGateway(settings)
-			backupManager.init(gw.zwave)
+
+			if (restartAll || shouldRestartGw) {
+				await gw.close()
+
+				await destroyPlugins()
+				// reload loggers settings
+				setupLogging(settings)
+				// restart clients and gateway
+				await startGateway(settings)
+				backupManager.init(gw.zwave)
+			}
+
+			if (restartAll || shouldRestartZniffer) {
+				if (zniffer) {
+					await zniffer.close()
+				}
+				startZniffer(settings.zniffer)
+			}
 
 			res.json({
 				success: true,

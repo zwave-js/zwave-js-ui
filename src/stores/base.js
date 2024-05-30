@@ -24,6 +24,7 @@ const useBaseStore = defineStore('base', {
 			smartStartTable: {},
 		}),
 		zwave: {
+			enabled: true,
 			port: '/dev/zwave',
 			allowBootloaderOnly: false,
 			commandsTimeout: 30,
@@ -35,7 +36,6 @@ const useBaseStore = defineStore('base', {
 					measured0dBm: undefined,
 				},
 			},
-			logEnabled: true,
 			securityKeys: {
 				S2_Unauthenticated: '',
 				S2_Authenticated: '',
@@ -47,6 +47,7 @@ const useBaseStore = defineStore('base', {
 				S2_AccessControl: '',
 			},
 			deviceConfigPriorityDir: '',
+			logEnabled: true,
 			logToFile: true,
 			maxFiles: 7,
 			serverEnabled: false,
@@ -81,6 +82,25 @@ const useBaseStore = defineStore('base', {
 			username: undefined,
 			password: undefined,
 		},
+		zniffer: {
+			enabled: false,
+			port: '',
+			logEnabled: true,
+			logToFile: true,
+			maxFiles: 7,
+			securityKeys: {
+				S2_Unauthenticated: '',
+				S2_Authenticated: '',
+				S2_AccessControl: '',
+				S0_Legacy: '',
+			},
+			securityKeysLongRange: {
+				S2_Authenticated: '',
+				S2_AccessControl: '',
+			},
+			convertRSSI: false,
+			defaultFrequency: undefined,
+		},
 		devices: [],
 		gateway: {
 			type: 0,
@@ -106,6 +126,11 @@ const useBaseStore = defineStore('base', {
 			serverVersion: '',
 			controllerStatus: 'Unknown',
 			newConfigVersion: undefined,
+		},
+		znifferState: {
+			error: '',
+			started: false,
+			frequency: false,
 		},
 		ui: {
 			darkMode: settings.load('dark', false),
@@ -168,6 +193,12 @@ const useBaseStore = defineStore('base', {
 			this.appInfo.zwaveVersion = data.zwaveVersion
 			this.appInfo.serverVersion = data.serverVersion
 			this.appInfo.newConfigVersion = data.newConfigVersion
+		},
+		setZnifferState(data) {
+			this.znifferState = {
+				...this.znifferState,
+				...data,
+			}
 		},
 		setValue(valueId) {
 			const toReplace = this.getValue(valueId)
@@ -466,6 +497,7 @@ const useBaseStore = defineStore('base', {
 					this.zwave.rf.txPower = {}
 				}
 				Object.assign(this.mqtt, conf.mqtt || {})
+				Object.assign(this.zniffer, conf.zniffer || {})
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
 				Object.assign(this.ui, conf.ui || {})

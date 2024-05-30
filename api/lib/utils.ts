@@ -1,8 +1,9 @@
 // eslint-disable-next-line one-var
-import { ValueID } from 'zwave-js'
+import { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
 import path, { resolve } from 'path'
 import crypto from 'crypto'
 import { readFileSync } from 'fs'
+import type { ZwaveConfig } from './ZwaveClient'
 
 // don't use import here, it will break the build
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -310,4 +311,64 @@ export function parseJSON(str: string): any {
 		}
 		return v
 	})
+}
+
+export function parseSecurityKeys(
+	config: ZwaveConfig,
+	options: PartialZWaveOptions | ZnifferOptions,
+): void {
+	config.securityKeys = config.securityKeys || {}
+
+	if (process.env.NETWORK_KEY) {
+		config.securityKeys.S0_Legacy = process.env.NETWORK_KEY
+	}
+
+	const availableKeys = [
+		'S2_Unauthenticated',
+		'S2_Authenticated',
+		'S2_AccessControl',
+		'S0_Legacy',
+	]
+
+	const envKeys = Object.keys(process.env)
+		.filter((k) => k?.startsWith('KEY_'))
+		.map((k) => k.substring(4))
+
+	// load security keys from env
+	for (const k of envKeys) {
+		if (availableKeys.includes(k)) {
+			config.securityKeys[k] = process.env[`KEY_${k}`]
+		}
+	}
+
+	options.securityKeys = {}
+	options.securityKeysLongRange = {}
+
+	// convert security keys to buffer
+	for (const key in config.securityKeys) {
+		if (
+			availableKeys.includes(key) &&
+			config.securityKeys[key].length === 32
+		) {
+			options.securityKeys[key] = Buffer.from(
+				config.securityKeys[key],
+				'hex',
+			)
+		}
+	}
+
+	config.securityKeysLongRange = config.securityKeysLongRange || {}
+
+	// convert security keys to buffer
+	for (const key in config.securityKeysLongRange) {
+		if (
+			availableKeys.includes(key) &&
+			config.securityKeysLongRange[key].length === 32
+		) {
+			options.securityKeysLongRange[key] = Buffer.from(
+				config.securityKeysLongRange[key],
+				'hex',
+			)
+		}
+	}
 }

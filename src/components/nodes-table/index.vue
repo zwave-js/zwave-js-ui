@@ -202,13 +202,10 @@
 				:value="richValue(item, 'protocol')"
 			/>
 			<div class="d-flex" v-else>
-				<rich-value
-					class="mr-1"
-					:value="getControllerProtocolIcon(false)"
-				/>
+				<rich-value class="mr-1" :value="getProtocolIcon(false)" />
 				<rich-value
 					v-if="item.supportsLongRange"
-					:value="getControllerProtocolIcon(true)"
+					:value="getProtocolIcon(true)"
 				/>
 			</div>
 		</template>

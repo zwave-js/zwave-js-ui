@@ -13,6 +13,7 @@ export interface SocketManagerEventCallbacks {
 	[inboundEvents.zwave]: (socket: Socket, data: any) => void
 	[inboundEvents.hass]: (socket: Socket, data: any) => void
 	[inboundEvents.mqtt]: (socket: Socket, data: any) => void
+	[inboundEvents.zniffer]: (socket: Socket, data: any) => void
 	clients: (
 		event: 'connection' | 'disconnect',
 		sockets: Map<string, Socket>,

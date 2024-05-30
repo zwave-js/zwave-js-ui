@@ -569,6 +569,7 @@ export type NodeEvent = {
 }
 
 export type ZwaveConfig = {
+	enabled?: boolean
 	allowBootloaderOnly?: boolean
 	port?: string
 	networkKey?: string
@@ -2122,268 +2123,218 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 * Method used to start Z-Wave connection using configuration `port`
 	 */
 	async connect() {
-		if (!this.driverReady) {
-			// this could happen when the driver fails the connect and a reconnect timeout triggers
-			if (this.closed || this.checkIfDestroyed()) {
+		if (this.cfg.enabled === false) {
+			logger.info('Z-Wave driver DISABLED')
+			return
+		}
+
+		if (this.driverReady) {
+			logger.info(`Driver already connected to ${this.cfg.port}`)
+			return
+		}
+
+		// this could happen when the driver fails the connect and a reconnect timeout triggers
+		if (this.closed || this.checkIfDestroyed()) {
+			return
+		}
+
+		if (!this.cfg?.port) {
+			logger.warn('Z-Wave driver not inited, no port configured')
+			return
+		}
+
+		// extend options with hidden `options`
+		const zwaveOptions: PartialZWaveOptions = {
+			allowBootloaderOnly: this.cfg.allowBootloaderOnly || false,
+			storage: {
+				cacheDir: storeDir,
+				deviceConfigPriorityDir:
+					this.cfg.deviceConfigPriorityDir || deviceConfigPriorityDir,
+			},
+			logConfig: {
+				// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
+				enabled: this.cfg.logEnabled,
+				level: this.cfg.logLevel
+					? loglevels[this.cfg.logLevel]
+					: 'info',
+				logToFile: this.cfg.logToFile,
+				filename: ZWAVEJS_LOG_FILE,
+				forceConsole: isDocker() ? !this.cfg.logToFile : false,
+				maxFiles: this.cfg.maxFiles || 7,
+				nodeFilter:
+					this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
+						? this.cfg.nodeFilter.map((n) => parseInt(n))
+						: undefined,
+			},
+			emitValueUpdateAfterSetValue: true,
+			apiKeys: {
+				firmwareUpdateService:
+					'421e29797c3c2926f84efc737352d6190354b3b526a6dce6633674dd33a8a4f964c794f5',
+			},
+			timeouts: {
+				report: this.cfg.higherReportsTimeout ? 10000 : undefined,
+				sendToSleep: this.cfg.sendToSleepTimeout,
+				response: this.cfg.responseTimeout,
+			},
+			features: {
+				unresponsiveControllerRecovery: this.cfg
+					.disableControllerRecovery
+					? false
+					: true,
+			},
+			userAgent: {
+				[utils.pkgJson.name]: utils.pkgJson.version,
+			},
+		}
+
+		if (this.cfg.rf) {
+			const { region, txPower } = this.cfg.rf
+
+			zwaveOptions.rf = {}
+
+			if (region) {
+				zwaveOptions.rf.region = region
+			}
+
+			if (
+				txPower &&
+				typeof txPower.measured0dBm === 'number' &&
+				typeof txPower.powerlevel === 'number'
+			) {
+				zwaveOptions.rf.txPower = txPower
+			}
+		}
+
+		// ensure deviceConfigPriorityDir exists to prevent warnings #2374
+		// lgtm [js/path-injection]
+		await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
+
+		// when not set let zwavejs handle this based on the environment
+		if (typeof this.cfg.enableSoftReset === 'boolean') {
+			zwaveOptions.features.softReset = this.cfg.enableSoftReset
+		}
+
+		// when server is not enabled, disable the user callbacks set/remove
+		// so it can be used through MQTT
+		if (!this.cfg.serverEnabled) {
+			zwaveOptions.inclusionUserCallbacks = {
+				...this.inclusionUserCallbacks,
+			}
+		}
+
+		if (this.cfg.scales) {
+			const scales: Record<string | number, string | number> = {}
+			for (const s of this.cfg.scales) {
+				scales[s.key] = s.label
+			}
+
+			zwaveOptions.preferences = {
+				scales,
+			}
+		}
+
+		Object.assign(zwaveOptions, this.cfg.options)
+
+		let s0Key: string
+
+		// back compatibility
+		if (this.cfg.networkKey) {
+			s0Key = this.cfg.networkKey
+			delete this.cfg.networkKey
+		}
+
+		this.cfg.securityKeys = this.cfg.securityKeys || {}
+
+		// update settings to fix compatibility
+		if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
+			this.cfg.securityKeys.S0_Legacy = s0Key
+			const settings = jsonStore.get(store.settings)
+			settings.zwave = this.cfg
+			await jsonStore.put(store.settings, settings)
+		}
+
+		utils.parseSecurityKeys(this.cfg, zwaveOptions)
+
+		try {
+			// init driver here because if connect fails the driver is destroyed
+			// this could throw so include in the try/catch
+			this._driver = new Driver(this.cfg.port, zwaveOptions)
+			this._driver.on('error', this._onDriverError.bind(this))
+			this._driver.once('driver ready', this._onDriverReady.bind(this))
+			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
+			this._driver.on(
+				'bootloader ready',
+				this._onBootLoaderReady.bind(this),
+			)
+
+			logger.info(`Connecting to ${this.cfg.port}`)
+
+			// setup user callbacks only if there are connected clients
+			this.hasUserCallbacks =
+				(await this.socket.fetchSockets()).length > 0
+
+			if (this.hasUserCallbacks) {
+				this.setUserCallbacks()
+			}
+
+			await this._driver.start()
+
+			if (this.checkIfDestroyed()) {
 				return
 			}
 
-			if (!this.cfg?.port) {
-				logger.warn('Z-Wave driver not inited, no port configured')
-				return
-			}
+			if (this.cfg.serverEnabled) {
+				this.server = new ZwavejsServer(this._driver, {
+					port: this.cfg.serverPort || 3000,
+					host: this.cfg.serverHost,
+					logger: LogManager.module('Z-Wave-Server'),
+					enableDNSServiceDiscovery:
+						!this.cfg.serverServiceDiscoveryDisabled,
+				})
 
-			// extend options with hidden `options`
-			const zwaveOptions: PartialZWaveOptions = {
-				allowBootloaderOnly: this.cfg.allowBootloaderOnly || false,
-				storage: {
-					cacheDir: storeDir,
-					deviceConfigPriorityDir:
-						this.cfg.deviceConfigPriorityDir ||
-						deviceConfigPriorityDir,
-				},
-				logConfig: {
-					// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-					enabled: this.cfg.logEnabled,
-					level: this.cfg.logLevel
-						? loglevels[this.cfg.logLevel]
-						: 'info',
-					logToFile: this.cfg.logToFile,
-					filename: ZWAVEJS_LOG_FILE,
-					forceConsole: isDocker() ? !this.cfg.logToFile : false,
-					maxFiles: this.cfg.maxFiles || 7,
-					nodeFilter:
-						this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
-							? this.cfg.nodeFilter.map((n) => parseInt(n))
-							: undefined,
-				},
-				emitValueUpdateAfterSetValue: true,
-				apiKeys: {
-					firmwareUpdateService:
-						'421e29797c3c2926f84efc737352d6190354b3b526a6dce6633674dd33a8a4f964c794f5',
-				},
-				timeouts: {
-					report: this.cfg.higherReportsTimeout ? 10000 : undefined,
-					sendToSleep: this.cfg.sendToSleepTimeout,
-					response: this.cfg.responseTimeout,
-				},
-				features: {
-					unresponsiveControllerRecovery: this.cfg
-						.disableControllerRecovery
-						? false
-						: true,
-				},
-				userAgent: {
-					[utils.pkgJson.name]: utils.pkgJson.version,
-				},
-			}
+				this.server.on('error', () => {
+					// this is already logged by the server but we need this to prevent
+					// unhandled exceptions
+				})
 
-			if (this.cfg.rf) {
-				const { region, txPower } = this.cfg.rf
-
-				zwaveOptions.rf = {}
-
-				if (region) {
-					zwaveOptions.rf.region = region
-				}
-
-				if (
-					txPower &&
-					typeof txPower.measured0dBm === 'number' &&
-					typeof txPower.powerlevel === 'number'
-				) {
-					zwaveOptions.rf.txPower = txPower
-				}
-			}
-
-			// ensure deviceConfigPriorityDir exists to prevent warnings #2374
-			// lgtm [js/path-injection]
-			await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
-
-			// when not set let zwavejs handle this based on the environment
-			if (typeof this.cfg.enableSoftReset === 'boolean') {
-				zwaveOptions.features.softReset = this.cfg.enableSoftReset
-			}
-
-			// when server is not enabled, disable the user callbacks set/remove
-			// so it can be used through MQTT
-			if (!this.cfg.serverEnabled) {
-				zwaveOptions.inclusionUserCallbacks = {
-					...this.inclusionUserCallbacks,
-				}
-			}
-
-			if (this.cfg.scales) {
-				const scales: Record<string | number, string | number> = {}
-				for (const s of this.cfg.scales) {
-					scales[s.key] = s.label
-				}
-
-				zwaveOptions.preferences = {
-					scales,
-				}
-			}
-
-			Object.assign(zwaveOptions, this.cfg.options)
-
-			let s0Key: string
-
-			// back compatibility
-			if (this.cfg.networkKey) {
-				s0Key = this.cfg.networkKey
-				delete this.cfg.networkKey
-			}
-
-			this.cfg.securityKeys = this.cfg.securityKeys || {}
-
-			if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
-				this.cfg.securityKeys.S0_Legacy = s0Key
-				const settings = jsonStore.get(store.settings)
-				settings.zwave = this.cfg
-				await jsonStore.put(store.settings, settings)
-			} else if (process.env.NETWORK_KEY) {
-				this.cfg.securityKeys.S0_Legacy = process.env.NETWORK_KEY
-			}
-
-			const availableKeys = [
-				'S2_Unauthenticated',
-				'S2_Authenticated',
-				'S2_AccessControl',
-				'S0_Legacy',
-			]
-
-			const envKeys = Object.keys(process.env)
-				.filter((k) => k?.startsWith('KEY_'))
-				.map((k) => k.substring(4))
-
-			// load security keys from env
-			for (const k of envKeys) {
-				if (availableKeys.includes(k)) {
-					this.cfg.securityKeys[k] = process.env[`KEY_${k}`]
-				}
-			}
-
-			zwaveOptions.securityKeys = {}
-			zwaveOptions.securityKeysLongRange = {}
-
-			// convert security keys to buffer
-			for (const key in this.cfg.securityKeys) {
-				if (
-					availableKeys.includes(key) &&
-					this.cfg.securityKeys[key].length === 32
-				) {
-					zwaveOptions.securityKeys[key] = Buffer.from(
-						this.cfg.securityKeys[key],
-						'hex',
-					)
-				}
-			}
-
-			this.cfg.securityKeysLongRange =
-				this.cfg.securityKeysLongRange || {}
-
-			// convert security keys to buffer
-			for (const key in this.cfg.securityKeysLongRange) {
-				if (
-					availableKeys.includes(key) &&
-					this.cfg.securityKeysLongRange[key].length === 32
-				) {
-					zwaveOptions.securityKeysLongRange[key] = Buffer.from(
-						this.cfg.securityKeysLongRange[key],
-						'hex',
-					)
-				}
-			}
-
-			try {
-				// init driver here because if connect fails the driver is destroyed
-				// this could throw so include in the try/catch
-				this._driver = new Driver(this.cfg.port, zwaveOptions)
-				this._driver.on('error', this._onDriverError.bind(this))
-				this._driver.once(
-					'driver ready',
-					this._onDriverReady.bind(this),
-				)
-				this._driver.on(
-					'all nodes ready',
-					this._onScanComplete.bind(this),
-				)
-				this._driver.on(
-					'bootloader ready',
-					this._onBootLoaderReady.bind(this),
-				)
-
-				logger.info(`Connecting to ${this.cfg.port}`)
-
-				// setup user callbacks only if there are connected clients
-				this.hasUserCallbacks =
-					(await this.socket.fetchSockets()).length > 0
-
-				if (this.hasUserCallbacks) {
-					this.setUserCallbacks()
-				}
-
-				await this._driver.start()
-
-				if (this.checkIfDestroyed()) {
-					return
-				}
-
-				if (this.cfg.serverEnabled) {
-					this.server = new ZwavejsServer(this._driver, {
-						port: this.cfg.serverPort || 3000,
-						host: this.cfg.serverHost,
-						logger: LogManager.module('Z-Wave-Server'),
-						enableDNSServiceDiscovery:
-							!this.cfg.serverServiceDiscoveryDisabled,
+				this.server.on('hard reset', () => {
+					logger.info('Hard reset requested by ZwaveJS Server')
+					this.restart().catch((err) => {
+						logger.error(err)
 					})
+				})
+			}
 
-					this.server.on('error', () => {
-						// this is already logged by the server but we need this to prevent
-						// unhandled exceptions
-					})
+			if (this.cfg.enableStatistics) {
+				this.enableStatistics()
+			}
 
-					this.server.on('hard reset', () => {
-						logger.info('Hard reset requested by ZwaveJS Server')
-						this.restart().catch((err) => {
-							logger.error(err)
-						})
-					})
-				}
-
-				if (this.cfg.enableStatistics) {
-					this.enableStatistics()
-				}
-
-				this.status = ZwaveClientStatus.CONNECTED
-			} catch (error) {
-				// destroy diver instance when it fails
-				if (this._driver) {
-					this._driver.destroy().catch((err) => {
-						logger.error(
-							`Error while destroying driver ${err.message}`,
-							error,
-						)
-					})
-				}
-
-				if (this.checkIfDestroyed()) {
-					return
-				}
-
-				this._onDriverError(error, true)
-
-				if (error.code !== ZWaveErrorCodes.Driver_InvalidOptions) {
-					this.backoffRestart()
-				} else {
+			this.status = ZwaveClientStatus.CONNECTED
+		} catch (error) {
+			// destroy diver instance when it fails
+			if (this._driver) {
+				this._driver.destroy().catch((err) => {
 					logger.error(
-						`Invalid options for driver: ${error.message}`,
+						`Error while destroying driver ${err.message}`,
 						error,
 					)
-				}
+				})
 			}
-		} else {
-			logger.info(`Driver already connected to ${this.cfg.port}`)
+
+			if (this.checkIfDestroyed()) {
+				return
+			}
+
+			this._onDriverError(error, true)
+
+			if (error.code !== ZWaveErrorCodes.Driver_InvalidOptions) {
+				this.backoffRestart()
+			} else {
+				logger.error(
+					`Invalid options for driver: ${error.message}`,
+					error,
+				)
+			}
 		}
 	}
 
