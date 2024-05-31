@@ -10,6 +10,7 @@ const log = logger.get('Store:Base')
 
 const useBaseStore = defineStore('base', {
 	state: () => ({
+		inited: false,
 		auth: undefined,
 		controllerId: undefined,
 		serial_ports: [],
@@ -556,6 +557,8 @@ const useBaseStore = defineStore('base', {
 				this.initPorts(data.serial_ports)
 				this.initScales(data.scales)
 				this.initDevices(data.devices)
+
+				this.inited = true
 			}
 		},
 		setDarkMode(value) {

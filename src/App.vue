@@ -271,12 +271,21 @@
 		<main style="height: 100%">
 			<v-main style="height: 100%">
 				<router-view
-					v-if="auth !== undefined"
+					v-if="auth !== undefined && inited"
 					@import="importFile"
 					@export="exportConfiguration"
 					@showConfirm="confirm"
 					:socket="socket"
 				/>
+				<v-container v-else-if="auth !== undefined && !inited">
+					<!-- put some skeleton loaders while loading settings -->
+					<v-skeleton-loader
+						v-for="(s, i) in skeletons"
+						:key="`skeleton-${i}`"
+						:type="s"
+						:loading="true"
+					></v-skeleton-loader>
+				</v-container>
 				<v-row
 					style="height: 100%"
 					align="center"
@@ -455,11 +464,34 @@ export default {
 			'zniffer',
 			'zwave',
 			'znifferState',
+			'inited',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
+		skeletons() {
+			// return the skeletons array based on actual route
+			const route = this.$route.path
+
+			switch (route) {
+				case Routes.controlPanel:
+					return ['actions', 'table']
+				case Routes.settings:
+					return ['list-item-two-line@10']
+				case Routes.store:
+					return ['list-item-two-line@10', 'divider']
+				case Routes.mesh:
+					return ['list-item-two-line, image']
+				case Routes.zniffer:
+				case Routes.debug:
+				case Routes.scenes:
+				case Routes.smartStart:
+					return ['table']
+				default:
+					return ['']
+			}
+		},
 		pages() {
 			const pages = [
 				{ icon: 'settings', title: 'Settings', path: Routes.settings },
