@@ -523,6 +523,10 @@ export default {
 					required: true,
 					key: 'protocol',
 					items: protocolsItems,
+					disabled:
+						existingItem &&
+						(!existingItem.supportedProtocols ||
+							existingItem.supportedProtocols.length < 2),
 					hint: 'Inclusion protocol to use',
 					default: existingItem
 						? existingItem.protocol
