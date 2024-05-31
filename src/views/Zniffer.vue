@@ -525,38 +525,63 @@ export default {
 				{
 					text: '#',
 					value: 'id',
-					width: 80,
+					width: '10ch',
 					sortable: false,
 				},
 				{
 					text: 'Timestamp',
 					value: 'timestamp',
-					width: 160,
+					width: '12ch',
 					sortable: false,
+					class: 'no-wrap',
 				},
 				{
 					text: 'Delta [ms]',
 					value: 'delta',
-					width: 150,
+					width: '4ch',
 					sortable: false,
 				},
 				{
 					text: 'Protocol Data Rate',
 					value: 'protocolDataRate',
-					width: 200,
+					width: '20ch',
 					sortable: false,
 				},
-				{ text: 'RSSI', value: 'rssi', width: 100, sortable: false },
-				{ text: 'Ch', value: 'channel', width: 100, sortable: false },
+				{
+					text: 'RSSI',
+					value: 'rssi',
+					width: '4ch',
+					sortable: false,
+				},
+				{
+					text: 'Ch',
+					value: 'channel',
+					width: '4ch',
+					sortable: false,
+				},
 				{
 					text: 'Home Id',
 					value: 'homeId',
-					width: 100,
+					width: '8ch',
+					sortable: false,
+					class: 'no-wrap',
+				},
+				{
+					text: 'Type',
+					width: '8ch',
+					value: 'type',
 					sortable: false,
 				},
-				{ text: 'Route', value: 'sourceNodeId', sortable: false },
-				{ text: 'Type', value: 'type', sortable: false },
-				{ text: 'Payload', value: 'payload', sortable: false },
+				{
+					text: 'Route',
+					value: 'sourceNodeId',
+					sortable: false,
+				},
+				{
+					text: 'Payload',
+					value: 'payload',
+					sortable: false,
+				},
 			],
 			autoScroll: true,
 		}
@@ -715,7 +740,7 @@ export default {
 					this.getPayloadTags(e, prev),
 				),
 			]
-			return tags.join(' > ')
+			return tags.filter((t) => !!t).join(' > ')
 		},
 		bindTopPaneObserver() {
 			const onTopPaneResize = (e) => {
@@ -893,10 +918,11 @@ export default {
 </script>
 
 <style scoped>
-.truncate {
-	display: -webkit-box;
+#framesTable::v-deep td {
+	white-space: nowrap;
+	/* display: -webkit-box;
 	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
+	-webkit-box-orient: vertical; */
 	overflow: hidden;
 }
 
