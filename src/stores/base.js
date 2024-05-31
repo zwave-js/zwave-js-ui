@@ -545,7 +545,7 @@ const useBaseStore = defineStore('base', {
 		init(data) {
 			if (data) {
 				if (data.tz) {
-					this.tz = data.tzd
+					this.tz = data.tz
 				}
 
 				if (data.locale) {
