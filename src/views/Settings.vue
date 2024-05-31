@@ -1058,6 +1058,16 @@
 												class="font-weight-bold primary--text"
 											>
 												Security Keys
+
+												<v-btn
+													class="ml-2"
+													small
+													outlined
+													color="warning"
+													@click="copyKeysZniffer()"
+												>
+													Copy from Driver
+												</v-btn>
 											</v-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
@@ -2163,6 +2173,12 @@ export default {
 			'init',
 			'showSnackbar',
 		]),
+		copyKeysZniffer() {
+			this.newZniffer.securityKeys = copy(this.newZwave.securityKeys)
+			this.newZniffer.securityKeysLongRange = copy(
+				this.newZwave.securityKeysLongRange,
+			)
+		},
 		validTxPower() {
 			const { powerlevel, measured0dBm } = this.newZwave.rf?.txPower ?? {}
 
