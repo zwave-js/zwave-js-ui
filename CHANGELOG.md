@@ -1,5 +1,20 @@
 
 
+## [9.13.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.1...v9.13.2) (2024-05-31)
+
+
+### Bug Fixes
+
+* **ui:** frames table style optimizations ([73e6713](https://github.com/zwave-js/zwave-js-ui/commit/73e671310408de7fda2a1480df8d98a36f305ce5)), closes [#3732](https://github.com/zwave-js/zwave-js-ui/issues/3732)
+* **ui:** hide protocol selection when editing smart start entry that doesn't support long range ([b939f97](https://github.com/zwave-js/zwave-js-ui/commit/b939f979a72242ab2da7106cc052c1943300b507)), closes [#3735](https://github.com/zwave-js/zwave-js-ui/issues/3735)
+* **ui:** tz not fetched correctly ([a603a22](https://github.com/zwave-js/zwave-js-ui/commit/a603a22a7a981659bb06f7efdf1d6a0e7fb8ead0))
+
+
+### Features
+
+* **ui:** add skeleton loaders while initing ([94d5410](https://github.com/zwave-js/zwave-js-ui/commit/94d54106d504d822430be6e8883b30dda464f05e)), closes [#3733](https://github.com/zwave-js/zwave-js-ui/issues/3733)
+* **ui:** button to copy keys from driver to zniffer ([0c5b1f1](https://github.com/zwave-js/zwave-js-ui/commit/0c5b1f131ded8cbe2e079ea034f6d700b355cce8)), closes [#3731](https://github.com/zwave-js/zwave-js-ui/issues/3731)
+
 ## [9.13.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.0...v9.13.1) (2024-05-30)
 
 
