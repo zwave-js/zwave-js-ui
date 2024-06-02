@@ -271,13 +271,15 @@
 		<main style="height: 100%">
 			<v-main style="height: 100%">
 				<router-view
-					v-if="auth !== undefined && inited"
+					v-if="auth !== undefined && (skeletons == '' || inited)"
 					@import="importFile"
 					@export="exportConfiguration"
 					@showConfirm="confirm"
 					:socket="socket"
 				/>
-				<v-container v-else-if="auth !== undefined && !inited">
+				<v-container
+					v-else-if="auth !== undefined && !!skeletons && !inited"
+				>
 					<!-- put some skeleton loaders while loading settings -->
 					<v-skeleton-loader
 						v-for="(s, i) in skeletons"
