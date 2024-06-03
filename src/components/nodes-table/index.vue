@@ -15,7 +15,7 @@
 		@input="managedNodes.selected = $event"
 		@click:row="toggleExpanded($event)"
 		item-key="id"
-		class="elevation-1"
+		class="elevation-1 nodes-table"
 		show-expand
 		show-select
 		:search="search"
@@ -134,7 +134,7 @@
 					@change="managedNodes.setPropFilter(column.value, $event)"
 					@update:group-by="managedNodes.groupBy = $event"
 				></column-filter>
-				{{ header.text }}
+				<span style="padding-right: 1px">{{ header.text }}</span>
 			</span>
 		</template>
 		<template
@@ -327,3 +327,18 @@
 </template>
 <script src="./nodes-table.js"></script>
 <style scoped src="./nodes-table.css"></style>
+<style>
+.nodes-table {
+	table {
+		tr {
+			th {
+				white-space: nowrap;
+			}
+			th,
+			td {
+				padding: 0 8px !important;
+			}
+		}
+	}
+}
+</style>
