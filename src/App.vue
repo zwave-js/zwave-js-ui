@@ -270,22 +270,25 @@
 		</div>
 		<main style="height: 100%">
 			<v-main style="height: 100%">
-				<router-view
-					v-if="auth !== undefined && inited"
-					@import="importFile"
-					@export="exportConfiguration"
-					@showConfirm="confirm"
-					:socket="socket"
-				/>
-				<v-container v-else-if="auth !== undefined && !inited">
-					<!-- put some skeleton loaders while loading settings -->
-					<v-skeleton-loader
-						v-for="(s, i) in skeletons"
-						:key="`skeleton-${i}`"
-						:type="s"
-						:loading="true"
-					></v-skeleton-loader>
-				</v-container>
+				<template v-if="auth !== undefined">
+					<router-view
+						v-if="inited || !skeletons"
+						@import="importFile"
+						@export="exportConfiguration"
+						@showConfirm="confirm"
+						:socket="socket"
+					/>
+					<!-- put some skeleton loaders while fetching settings -->
+					<v-container v-else>
+						<v-skeleton-loader
+							v-for="(s, i) in skeletons"
+							:key="`skeleton-${i}`"
+							:type="s"
+							:loading="true"
+						></v-skeleton-loader>
+					</v-container>
+				</template>
+				<!-- Show loading splash screen while checking for auth -->
 				<v-row
 					style="height: 100%"
 					align="center"
@@ -489,7 +492,7 @@ export default {
 				case Routes.smartStart:
 					return ['table']
 				default:
-					return ['']
+					return null
 			}
 		},
 		pages() {
