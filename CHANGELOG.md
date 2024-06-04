@@ -1,5 +1,13 @@
 
 
+## [9.13.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.2...v9.13.3) (2024-06-03)
+
+
+### Bug Fixes
+
+* **ui:** blank login screen ([478f1b6](https://github.com/zwave-js/zwave-js-ui/commit/478f1b64605f97fcc157df83caf15ff8c13dfad1)), closes [#3737](https://github.com/zwave-js/zwave-js-ui/issues/3737)
+* **ui:** nodes table header from breaking line ([#3738](https://github.com/zwave-js/zwave-js-ui/issues/3738)) ([93e4ecf](https://github.com/zwave-js/zwave-js-ui/commit/93e4ecfa0bb53a33605da94077090b852b4b53e4))
+
 ## [9.13.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.1...v9.13.2) (2024-05-31)
 
 

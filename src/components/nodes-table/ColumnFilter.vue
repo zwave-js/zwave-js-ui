@@ -7,6 +7,7 @@
 				v-bind="attrs"
 				v-on="on"
 				title="Filter options..."
+				style="padding-right: 2px; padding-bottom: 3px"
 			>
 				{{ hasFilter ? 'filter_list_alt' : 'filter_list' }}
 			</v-icon>
