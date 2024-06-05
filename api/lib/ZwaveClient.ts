@@ -798,7 +798,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.closed = false
 		this.driverReady = false
-		this.hasUserCallbacks = false
 		this.scenes = jsonStore.get(store.scenes)
 
 		this._nodes = new Map()
@@ -2299,9 +2298,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				this.server.on('hard reset', () => {
 					logger.info('Hard reset requested by ZwaveJS Server')
-					this.restart().catch((err) => {
-						logger.error(err)
-					})
+					this.init()
 				})
 			}
 
@@ -3929,8 +3926,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			await this._driver.hardReset()
 			this.init()
-			// we didn't removed them
-			this.hasUserCallbacks = true
 		} else {
 			throw new DriverNotReadyError()
 		}
