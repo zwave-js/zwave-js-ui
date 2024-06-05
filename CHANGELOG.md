@@ -1,5 +1,17 @@
 
 
+## [9.13.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.3...v9.13.4) (2024-06-05)
+
+
+### Bug Fixes
+
+* set up events before calling `Zniffer.init()` ([#3745](https://github.com/zwave-js/zwave-js-ui/issues/3745)) ([66ff0e3](https://github.com/zwave-js/zwave-js-ui/commit/66ff0e3403a1db5e561bb198a01056f66b4979b5))
+
+
+### Features
+
+* bump zwave-js@12.10.0 ([#3752](https://github.com/zwave-js/zwave-js-ui/issues/3752)) ([184db69](https://github.com/zwave-js/zwave-js-ui/commit/184db696f63aa217d6d4e262497c21398f3d983d))
+
 ## [9.13.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.2...v9.13.3) (2024-06-03)
 
 
