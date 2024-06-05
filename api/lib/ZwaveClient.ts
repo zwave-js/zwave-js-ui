@@ -3929,6 +3929,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.driverReady) {
 			await this._driver.hardReset()
 			this.init()
+			// we didn't removed them
+			this.hasUserCallbacks = true
 		} else {
 			throw new DriverNotReadyError()
 		}
