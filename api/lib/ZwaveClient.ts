@@ -4334,16 +4334,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
-			this.server
-				.start(!this.hasUserCallbacks)
-				.then(() => {
-					logger.info('Z-Wave server started')
-				})
-				.catch((error) => {
-					logger.error(
-						`Failed to start zwave-js server: ${error.message}`,
-					)
-				})
+			// fix prevent to start server when already inited
+			if (!this.server['server']) {
+				this.server
+					.start(!this.hasUserCallbacks)
+					.then(() => {
+						logger.info('Z-Wave server started')
+					})
+					.catch((error) => {
+						logger.error(
+							`Failed to start zwave-js server: ${error.message}`,
+						)
+					})
+			}
 		}
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
