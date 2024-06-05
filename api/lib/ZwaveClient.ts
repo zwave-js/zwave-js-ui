@@ -2259,7 +2259,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// this could throw so include in the try/catch
 			this._driver = new Driver(this.cfg.port, zwaveOptions)
 			this._driver.on('error', this._onDriverError.bind(this))
-			this._driver.once('driver ready', this._onDriverReady.bind(this))
+			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
 			this._driver.on(
 				'bootloader ready',
