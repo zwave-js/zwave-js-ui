@@ -4229,10 +4229,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _onDriverReady() {
 		/*
-	Now the controller interview is complete. This means we know which nodes
-	are included in the network, but they might not be ready yet.
-	The node interview will continue in the background.
-  */
+			Now the controller interview is complete. This means we know which nodes
+			are included in the network, but they might not be ready yet.
+			The node interview will continue in the background.
+
+			NOTE: This can be called also after an Hard Reset
+		*/
 
 		// driver ready
 		this.status = ZwaveClientStatus.DRIVER_READY
@@ -4243,25 +4245,31 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._updateControllerStatus('Driver ready')
 
-		this._inclusionStateInterval = setInterval(() => {
-			if (
-				this._driver.controller.inclusionState !== this._inclusionState
-			) {
-				this._inclusionState = this._driver.controller.inclusionState
+		if (this._inclusionStateInterval) {
+			this._inclusionStateInterval = setInterval(() => {
+				if (
+					this._driver.controller.inclusionState !==
+					this._inclusionState
+				) {
+					this._inclusionState =
+						this._driver.controller.inclusionState
 
-				this.sendToSocket(socketEvents.controller, {
-					status: this._cntStatus,
-					error: this._error,
-					inclusionState: this._inclusionState,
-				})
-			}
-		}, 2000)
+					this.sendToSocket(socketEvents.controller, {
+						status: this._cntStatus,
+						error: this._error,
+						inclusionState: this._inclusionState,
+					})
+				}
+			}, 2000)
+		}
 
 		try {
 			// this must be done only after driver is ready
 			this._scheduledConfigCheck().catch(() => {
 				/* ignore */
 			})
+
+			this.driver.controller.removeAllListeners()
 
 			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
