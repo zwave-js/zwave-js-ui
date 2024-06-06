@@ -2192,7 +2192,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			zwaveOptions.rf = {}
 
-			if (region) {
+			if (typeof region === 'number') {
 				zwaveOptions.rf.region = region
 			}
 
