@@ -798,7 +798,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.closed = false
 		this.driverReady = false
-		this.hasUserCallbacks = false
 		this.scenes = jsonStore.get(store.scenes)
 
 		this._nodes = new Map()
@@ -2260,7 +2259,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// this could throw so include in the try/catch
 			this._driver = new Driver(this.cfg.port, zwaveOptions)
 			this._driver.on('error', this._onDriverError.bind(this))
-			this._driver.once('driver ready', this._onDriverReady.bind(this))
+			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
 			this._driver.on(
 				'bootloader ready',
@@ -2299,9 +2298,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				this.server.on('hard reset', () => {
 					logger.info('Hard reset requested by ZwaveJS Server')
-					this.restart().catch((err) => {
-						logger.error(err)
-					})
+					this.init()
 				})
 			}
 
@@ -3928,9 +3925,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async hardReset() {
 		if (this.driverReady) {
 			await this._driver.hardReset()
-			this.restart().catch((err) => {
-				logger.error(err)
-			})
+			this.init()
 		} else {
 			throw new DriverNotReadyError()
 		}
@@ -4234,10 +4229,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _onDriverReady() {
 		/*
-	Now the controller interview is complete. This means we know which nodes
-	are included in the network, but they might not be ready yet.
-	The node interview will continue in the background.
-  */
+			Now the controller interview is complete. This means we know which nodes
+			are included in the network, but they might not be ready yet.
+			The node interview will continue in the background.
+
+			NOTE: This can be called also after an Hard Reset
+		*/
 
 		// driver ready
 		this.status = ZwaveClientStatus.DRIVER_READY
@@ -4248,25 +4245,33 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._updateControllerStatus('Driver ready')
 
-		this._inclusionStateInterval = setInterval(() => {
-			if (
-				this._driver.controller.inclusionState !== this._inclusionState
-			) {
-				this._inclusionState = this._driver.controller.inclusionState
+		if (this._inclusionStateInterval) {
+			this._inclusionStateInterval = setInterval(() => {
+				if (!this.driverReady) return
 
-				this.sendToSocket(socketEvents.controller, {
-					status: this._cntStatus,
-					error: this._error,
-					inclusionState: this._inclusionState,
-				})
-			}
-		}, 2000)
+				if (
+					this._driver.controller.inclusionState !==
+					this._inclusionState
+				) {
+					this._inclusionState =
+						this._driver.controller.inclusionState
+
+					this.sendToSocket(socketEvents.controller, {
+						status: this._cntStatus,
+						error: this._error,
+						inclusionState: this._inclusionState,
+					})
+				}
+			}, 2000)
+		}
 
 		try {
 			// this must be done only after driver is ready
 			this._scheduledConfigCheck().catch(() => {
 				/* ignore */
 			})
+
+			this.driver.controller.removeAllListeners()
 
 			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
@@ -4331,16 +4336,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
-			this.server
-				.start(!this.hasUserCallbacks)
-				.then(() => {
-					logger.info('Z-Wave server started')
-				})
-				.catch((error) => {
-					logger.error(
-						`Failed to start zwave-js server: ${error.message}`,
-					)
-				})
+			// fix prevent to start server when already inited
+			if (!this.server['server']) {
+				this.server
+					.start(!this.hasUserCallbacks)
+					.then(() => {
+						logger.info('Z-Wave server started')
+					})
+					.catch((error) => {
+						logger.error(
+							`Failed to start zwave-js server: ${error.message}`,
+						)
+					})
+			}
 		}
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
