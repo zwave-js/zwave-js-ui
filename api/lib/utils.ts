@@ -329,15 +329,29 @@ export function parseSecurityKeys(
 		'S2_AccessControl',
 		'S0_Legacy',
 	]
+	const availableLongRangeKeys = [
+		'S2_Authenticated',
+		'S2_AccessControl',
+	]
 
 	const envKeys = Object.keys(process.env)
 		.filter((k) => k?.startsWith('KEY_'))
 		.map((k) => k.substring(4))
 
+	const longRangeEnvKeys = Object.keys(process.env)
+		.filter((k) => k?.startsWith('KEY_LR_'))
+		.map((k) => k.substring(7))
+
 	// load security keys from env
 	for (const k of envKeys) {
 		if (availableKeys.includes(k)) {
 			config.securityKeys[k] = process.env[`KEY_${k}`]
+		}
+	}
+	// load long range security keys from env
+	for (const k of envKeys) {
+		if (availableLongRangeKeys.includes(k)) {
+			config.securityKeysLongRange[k] = process.env[`KEY_LR_${k}`]
 		}
 	}
 
@@ -359,10 +373,10 @@ export function parseSecurityKeys(
 
 	config.securityKeysLongRange = config.securityKeysLongRange || {}
 
-	// convert security keys to buffer
+	// convert long range security keys to buffer
 	for (const key in config.securityKeysLongRange) {
 		if (
-			availableKeys.includes(key) &&
+			availableLongRangeKeys.includes(key) &&
 			config.securityKeysLongRange[key].length === 32
 		) {
 			options.securityKeysLongRange[key] = Buffer.from(

@@ -8,6 +8,8 @@ This is the list of the supported environment variables:
   - `KEY_S2_Unauthenticated`
   - `KEY_S2_Authenticated`
   - `KEY_S2_AccessControl`
+  - `KEY_LR_S2_Authenticated`
+  - `KEY_LR_S2_AccessControl`
 - HTTPS:
   - `HTTPS`: Enable https
   - `SSL_CERTIFICATE` (optional): Absolute path to SSL certificate (for Docker, ensure this is the path as it appears within the container)
