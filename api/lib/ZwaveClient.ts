@@ -731,6 +731,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private _inclusionState: InclusionState = undefined
 
+	private _controllerListenersAdded: boolean = false
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
 	}
@@ -1184,6 +1185,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this._driver) {
 			await this._driver.destroy()
 			this._driver = null
+			this._controllerListenersAdded = false
 		}
 
 		if (!keepListeners) {
@@ -2258,6 +2260,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
 			this._driver = new Driver(this.cfg.port, zwaveOptions)
+			this._controllerListenersAdded = false
 			this._driver.on('error', this._onDriverError.bind(this))
 			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
@@ -4271,39 +4274,55 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				/* ignore */
 			})
 
-			this.driver.controller.removeAllListeners()
-
-			this.driver.controller
-				.on('inclusion started', this._onInclusionStarted.bind(this))
-				.on('exclusion started', this._onExclusionStarted.bind(this))
-				.on('inclusion stopped', this._onInclusionStopped.bind(this))
-				.on('exclusion stopped', this._onExclusionStopped.bind(this))
-				.on('inclusion failed', this._onInclusionFailed.bind(this))
-				.on('exclusion failed', this._onExclusionFailed.bind(this))
-				.on('node found', this._onNodeFound.bind(this))
-				.on('node added', this._onNodeAdded.bind(this))
-				.on('node removed', this._onNodeRemoved.bind(this))
-				.on(
-					'rebuild routes progress',
-					this._onRebuildRoutesProgress.bind(this),
-				)
-				.on('rebuild routes done', this._onRebuildRoutesDone.bind(this))
-				.on(
-					'statistics updated',
-					this._onControllerStatisticsUpdated.bind(this),
-				)
-				.on(
-					'firmware update progress',
-					this._onControllerFirmwareUpdateProgress.bind(this),
-				)
-				.on(
-					'firmware update finished',
-					this._onControllerFirmwareUpdateFinished.bind(this),
-				)
-				.on(
-					'status changed',
-					this._onControllerStatusChanged.bind(this),
-				)
+			if (!this._controllerListenersAdded) {
+				this._controllerListenersAdded = true
+				this.driver.controller
+					.on(
+						'inclusion started',
+						this._onInclusionStarted.bind(this),
+					)
+					.on(
+						'exclusion started',
+						this._onExclusionStarted.bind(this),
+					)
+					.on(
+						'inclusion stopped',
+						this._onInclusionStopped.bind(this),
+					)
+					.on(
+						'exclusion stopped',
+						this._onExclusionStopped.bind(this),
+					)
+					.on('inclusion failed', this._onInclusionFailed.bind(this))
+					.on('exclusion failed', this._onExclusionFailed.bind(this))
+					.on('node found', this._onNodeFound.bind(this))
+					.on('node added', this._onNodeAdded.bind(this))
+					.on('node removed', this._onNodeRemoved.bind(this))
+					.on(
+						'rebuild routes progress',
+						this._onRebuildRoutesProgress.bind(this),
+					)
+					.on(
+						'rebuild routes done',
+						this._onRebuildRoutesDone.bind(this),
+					)
+					.on(
+						'statistics updated',
+						this._onControllerStatisticsUpdated.bind(this),
+					)
+					.on(
+						'firmware update progress',
+						this._onControllerFirmwareUpdateProgress.bind(this),
+					)
+					.on(
+						'firmware update finished',
+						this._onControllerFirmwareUpdateFinished.bind(this),
+					)
+					.on(
+						'status changed',
+						this._onControllerStatusChanged.bind(this),
+					)
+			}
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
