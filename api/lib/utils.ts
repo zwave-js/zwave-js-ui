@@ -329,10 +329,7 @@ export function parseSecurityKeys(
 		'S2_AccessControl',
 		'S0_Legacy',
 	]
-	const availableLongRangeKeys = [
-		'S2_Authenticated',
-		'S2_AccessControl',
-	]
+	const availableLongRangeKeys = ['S2_Authenticated', 'S2_AccessControl']
 
 	const envKeys = Object.keys(process.env)
 		.filter((k) => k?.startsWith('KEY_'))
@@ -349,7 +346,7 @@ export function parseSecurityKeys(
 		}
 	}
 	// load long range security keys from env
-	for (const k of envKeys) {
+	for (const k of longRangeEnvKeys) {
 		if (availableLongRangeKeys.includes(k)) {
 			config.securityKeysLongRange[k] = process.env[`KEY_LR_${k}`]
 		}
