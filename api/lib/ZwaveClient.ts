@@ -203,6 +203,7 @@ export const allowedApis = validateMethods([
 	'updateFirmware',
 	'firmwareUpdateOTW',
 	'abortFirmwareUpdate',
+	'dumpNode',
 	'getAvailableFirmwareUpdates',
 	'firmwareUpdateOTA',
 	'sendCommand',
@@ -3896,6 +3897,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		} else {
 			throw new DriverNotReadyError()
 		}
+	}
+
+	dumpNode(nodeId: number) {
+		if (this.driverReady) {
+			const zwaveNode = this.getNode(nodeId)
+
+			if (!zwaveNode) {
+				throw Error(`Node ${nodeId} not found`)
+			}
+
+			return zwaveNode.createDump()
+		}
+
+		throw new DriverNotReadyError()
 	}
 
 	beginRebuildingRoutes(options?: RebuildRoutesOptions): boolean {
