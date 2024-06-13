@@ -518,7 +518,10 @@ export default {
 			return [
 				{
 					text: 'Export json',
-					options: [{ name: 'Export', action: 'exportNode' }],
+					options: [
+						{ name: 'Export', action: 'exportNode' },
+						{ name: 'Dump', action: 'dumpNode' },
+					],
 					icon: 'get_app',
 					desc: 'Export this node in a json file',
 				},

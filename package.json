@@ -28,7 +28,7 @@
     "dev": "vite",
     "dev-https": "SERVER_SSL='true' npm run dev",
     "dev:server": "nodemon",
-    "server": "ts-node -r esbuild-register api/bin/www.ts",
+    "server": "node -r ./esbuild-register.js api/bin/www.ts",
     "fake-stick": "npx mock-server -- -c server_config.js",
     "start": "node --preserve-symlinks server/bin/www.js",
     "bundle": "node esbuild.js",

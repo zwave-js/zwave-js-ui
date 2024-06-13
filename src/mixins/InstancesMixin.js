@@ -577,6 +577,14 @@ export default {
 								this.app.handleFwUpdateResponse(response)
 								break
 
+							case 'dumpNode':
+								this.app.exportConfiguration(
+									response.result,
+									'node_' + response.result.id + '_dump',
+									'json',
+								)
+								break
+
 							default:
 								this.showSnackbar(
 									`API ${response.api} ended successfully`,
