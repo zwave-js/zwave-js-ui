@@ -1,5 +1,22 @@
 
 
+# [9.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.4...v9.14.0) (2024-06-17)
+
+
+### Bug Fixes
+
+* do not remove controller event listeners ([#3767](https://github.com/zwave-js/zwave-js-ui/issues/3767)) ([9478c29](https://github.com/zwave-js/zwave-js-ui/commit/9478c298f4e44211159a9859ea93533ca817784c))
+* ensure driver is ready in inclusion state interval ([628e49a](https://github.com/zwave-js/zwave-js-ui/commit/628e49add061f3c2d1550ff95b4ce5d9da0d5f7a))
+* setting default region to EU ([#3756](https://github.com/zwave-js/zwave-js-ui/issues/3756)) ([247534b](https://github.com/zwave-js/zwave-js-ui/commit/247534bae2861ba3df084c4867db7d5193a50aac))
+
+
+### Features
+
+* add dump node action ([#3768](https://github.com/zwave-js/zwave-js-ui/issues/3768)) ([f07a854](https://github.com/zwave-js/zwave-js-ui/commit/f07a854e0b2f6be5a08ce746c4ef991dfca8e2b7))
+* bump zwave-js@12.10.1 ([#3755](https://github.com/zwave-js/zwave-js-ui/issues/3755)) ([75808a9](https://github.com/zwave-js/zwave-js-ui/commit/75808a9210e183ae2de6b760ebd1bd7c68a14039))
+* bump zwave-js@12.11.0 ([#3762](https://github.com/zwave-js/zwave-js-ui/issues/3762)) ([724045c](https://github.com/zwave-js/zwave-js-ui/commit/724045c8bbb1b36112893447e7f242cb50bf588a))
+* **env:** add Long Range key overrides from env ([#3766](https://github.com/zwave-js/zwave-js-ui/issues/3766)) ([c12448c](https://github.com/zwave-js/zwave-js-ui/commit/c12448c6a9582cd8c807063739f152c724b0094a))
+
 ## [9.13.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.3...v9.13.4) (2024-06-05)
 
 
