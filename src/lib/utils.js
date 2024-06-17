@@ -228,9 +228,13 @@ export function getRoute(item, withRssi = false) {
 	const dir = item.direction === 'inbound' ? '←' : '→'
 	const hop = item.hop !== undefined ? item.hop : -1
 	const route = [
-		item.sourceNodeId,
+		item.direction === 'outbound'
+			? item.sourceNodeId
+			: item.destinationNodeId,
 		...(item.repeaters || []),
-		item.destinationNodeId,
+		item.direction === 'outbound'
+			? item.destinationNodeId
+			: item.sourceNodeId,
 	].map(
 		(r, i) =>
 			`${r}${
@@ -247,9 +251,13 @@ export function getRoute(item, withRssi = false) {
 		for (let i = 0; i < route.length; i++) {
 			routeString += route[i]
 			if (i < route.length - 1) {
-				routeString += ` ${
-					hop === i ? '<b class="text-decoration-underline">' : ''
-				}${dir}${hop === i ? '</b>' : ''} `
+				if (i === item.failedHop) {
+					routeString += ' ! '
+				} else {
+					routeString += ` ${
+						hop === i ? '<b class="text-decoration-underline">' : ''
+					}${dir}${hop === i ? '</b>' : ''} `
+				}
 			}
 		}
 	} else {
