@@ -519,8 +519,8 @@ export default {
 				{
 					text: 'Export json',
 					options: [
-						{ name: 'Export', action: 'exportNode' },
-						{ name: 'Dump', action: 'dumpNode' },
+						{ name: 'UI', action: 'exportNode' },
+						{ name: 'Driver', action: 'dumpNode' },
 					],
 					icon: 'get_app',
 					desc: 'Export this node in a json file',
