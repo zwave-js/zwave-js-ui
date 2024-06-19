@@ -1,5 +1,20 @@
 
 
+## [9.14.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.0...v9.14.1) (2024-06-19)
+
+
+### Bug Fixes
+
+* inclusion state not updating ([5a9a0f0](https://github.com/zwave-js/zwave-js-ui/commit/5a9a0f0f9cc6c48efeff3e71da4bba4ef1b542ac))
+* **ui:** clarify export json options ([ed77c68](https://github.com/zwave-js/zwave-js-ui/commit/ed77c688feaed2f0a84aeec35e1c42dd8422ae34))
+* **zniffer:** route display for inbound frames, show failed hop ([#3774](https://github.com/zwave-js/zwave-js-ui/issues/3774)) ([107f147](https://github.com/zwave-js/zwave-js-ui/commit/107f147f7fb8d958dc7d57a291dfbd703d6760d4))
+
+
+### Features
+
+* bump zwave-js@12.11.1 ([#3776](https://github.com/zwave-js/zwave-js-ui/issues/3776)) ([02b3881](https://github.com/zwave-js/zwave-js-ui/commit/02b3881b4fa59617a1f6ba87e1ce787b15c0c3da))
+* **ui:** allow to change name/loc of provisioning entries binded to included nodes ([74b2fae](https://github.com/zwave-js/zwave-js-ui/commit/74b2fae044c6a1c0f5978a66e31e8d7e5e936462)), closes [#3699](https://github.com/zwave-js/zwave-js-ui/issues/3699)
+
 # [9.14.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.13.4...v9.14.0) (2024-06-17)
 
 
