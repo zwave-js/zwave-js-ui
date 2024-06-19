@@ -4263,7 +4263,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._updateControllerStatus('Driver ready')
 
-		if (this._inclusionStateInterval) {
+		if (!this._inclusionStateInterval) {
 			this._inclusionStateInterval = setInterval(() => {
 				if (!this.driverReady) return
 
