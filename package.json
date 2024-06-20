@@ -39,7 +39,7 @@
     "lint:markdownlint": "markdownlint '**/*.md'",
     "lint-fix:markdownlint": "markdownlint --fix '**/*.md'",
     "test": "npm-run-all 'test:*'",
-    "test:server": "mocha -r esbuild-register './test/**/*.test.ts'",
+    "test:server": "mocha -r ./esbuild-register.js './test/**/*.test.ts'",
     "test:ui": "mocha -r @babel/register src/modules",
     "docs": "docsify serve ./docs",
     "coverage": "c8 --clean npm run test",

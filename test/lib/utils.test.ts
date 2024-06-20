@@ -2,8 +2,9 @@ import chai, { expect } from 'chai'
 import proxyquire from 'proxyquire'
 import sinon, { SinonStub } from 'sinon'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-chai.use(require('sinon-chai'))
+import sinonChai from 'sinon-chai'
+
+chai.use(sinonChai)
 
 declare let process: NodeJS.Process & {
 	pkg?: boolean

@@ -1,11 +1,12 @@
 import chai, { expect } from 'chai'
 import Gateway, { closeWatchers } from '../../api/lib/Gateway'
 import { ZUINode } from '../../api/lib/ZwaveClient'
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-chai.use(require('sinon-chai'))
+import sinonChai from 'sinon-chai'
+
+chai.use(sinonChai)
 
 describe('#Gateway', () => {
-	const gw = new Gateway({ type: 0 }, null, null)
+	const gw = new Gateway({ type: 0 }, null as any, null as any)
 	closeWatchers()
 	describe('#setDiscoveryValue()', () => {
 		let untouchedPayload: Record<string | number, any>
