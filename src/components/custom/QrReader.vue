@@ -238,7 +238,7 @@ export default {
 						calculateScanRegion: this.smallQr
 							? (v) => {
 									return this.smallQrCodeRegion(v)
-							  }
+								}
 							: null,
 					},
 				)

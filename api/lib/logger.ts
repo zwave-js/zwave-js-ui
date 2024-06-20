@@ -9,7 +9,7 @@ import { DeepPartial, joinPath } from './utils'
 import * as path from 'path'
 import { readdir, stat, unlink } from 'fs/promises'
 import { Stats } from 'fs'
-import escapeStringRegexp from 'escape-string-regexp'
+import escapeStringRegexp from '@esm2cjs/escape-string-regexp'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format

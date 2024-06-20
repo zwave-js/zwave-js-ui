@@ -23,8 +23,8 @@ export class Settings {
 					valStr === 'false'
 						? false
 						: valStr === 'true'
-						  ? true
-						  : defaultVal
+							? true
+							: defaultVal
 				break
 			case 'number':
 				val = valStr && !isNaN(valStr) ? Number(valStr) : defaultVal

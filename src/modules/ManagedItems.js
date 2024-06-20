@@ -481,7 +481,7 @@ export class ManagedItems {
 					displayStyle: '',
 					description: '',
 					rawValue: this.getPropValue(item, propName),
-			  }
+				}
 	}
 }
 

@@ -4,11 +4,11 @@ import proxyquire from 'proxyquire'
 import { StorageHelper } from '../../api/lib/jsonStore'
 import sinon from 'sinon'
 import { StoreFile, StoreKeys } from '../../api/config/store'
+import sinonChai from 'sinon-chai'
+import chaiAsPromised from 'chai-as-promised'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-chai.use(require('chai-as-promised'))
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-chai.use(require('sinon-chai'))
+chai.use(sinonChai)
+chai.use(chaiAsPromised)
 
 describe('#jsonStore', () => {
 	describe('#getFile()', () => {

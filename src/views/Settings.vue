@@ -221,8 +221,8 @@
 										{{
 											item.enablePoll
 												? 'Interval: ' +
-												  item.pollInterval +
-												  's'
+													item.pollInterval +
+													's'
 												: 'No'
 										}}
 									</template>

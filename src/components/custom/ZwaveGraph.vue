@@ -248,8 +248,8 @@
 										hoverNode.productLabel +
 										(hoverNode.productDescription
 											? ' (' +
-											  hoverNode.productDescription +
-											  ')'
+												hoverNode.productDescription +
+												')'
 											: '')
 									}}</v-list-item-content
 								>

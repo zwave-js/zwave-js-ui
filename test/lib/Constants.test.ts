@@ -2,7 +2,9 @@ import chai, { expect } from 'chai'
 // const sinon = require('sinon')
 // const _ = require('lodash')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-chai.use(require('sinon-chai'))
+import sinonChai from 'sinon-chai'
+
+chai.use(sinonChai)
 
 import * as mod from '../../api/lib/Constants'
 

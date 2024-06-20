@@ -910,7 +910,7 @@ export default class Gateway {
 										node,
 										node.values[v],
 									) as string,
-							  )
+								)
 							: null
 					}
 
