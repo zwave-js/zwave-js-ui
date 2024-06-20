@@ -53,8 +53,7 @@
     "changelog-init": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it",
     "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/logo.svg",
-		"browser": "chromium-browser --user-data-dir=/tmp/zui-data --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure=https://localhost:8092 https://localhost:8092"
-
+    "browser": "chromium-browser --user-data-dir=/tmp/zui-data --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure=https://localhost:8092 https://localhost:8092"
   },
   "browserslist": [
     "> 1%",
@@ -62,6 +61,7 @@
     "not ie <= 8"
   ],
   "dependencies": {
+    "@esm2cjs/escape-string-regexp": "^5.0.0",
     "@jamescoyle/vue-icon": "^0.1.2",
     "@kvaster/zwavejs-prom": "^0.0.2",
     "@mdi/js": "7.4.47",
@@ -77,7 +77,6 @@
     "cronstrue": "^2.50.0",
     "csurf": "^1.11.0",
     "dotenv": "^16.4.5",
-    "escape-string-regexp": "^4.0.0",
     "express": "^4.19.2",
     "express-rate-limit": "^7.3.1",
     "express-session": "^1.18.0",
