@@ -437,7 +437,7 @@ export default {
 						(node.firmwareUpdate.sentFragments /
 							node.firmwareUpdate.totalFragments) *
 							100,
-				  )
+					)
 				: null
 		},
 		readyRichValue(node) {

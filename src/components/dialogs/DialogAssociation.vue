@@ -47,7 +47,7 @@
 														? getEndpointLabel(
 																node,
 																item.endpoint,
-														  )
+															)
 														: 'No Endpoint'
 												}}</v-list-item-subtitle>
 											</v-list-item-content>
@@ -143,7 +143,7 @@ export default {
 						(n) =>
 							n.id !== this.node.id &&
 							n.protocol !== Protocols.ZWaveLongRange,
-				  )
+					)
 		},
 		endpoints() {
 			return this.getEndpointItems(this.node)
@@ -160,7 +160,7 @@ export default {
 						(a) =>
 							a.groupId === this.group.group.value &&
 							a.endpoint === this.group.endpoint,
-				  ).length
+					).length
 				: 0
 		},
 		endpointGroups() {

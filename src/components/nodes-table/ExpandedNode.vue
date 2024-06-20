@@ -466,7 +466,7 @@ export default {
 							icon: 'dangerous',
 							desc: 'Manage nodes that are dead and/or marked as failed with the controller',
 						},
-				  ]
+					]
 
 			if (this.node.protocol !== Protocols.ZWaveLongRange) {
 				nodeActions.splice(1, 0, {
@@ -497,7 +497,7 @@ export default {
 									"This action will remove all associations of this node. This will also clear lifeline association with controller node, the node won't report state changes until that is set up again",
 							},
 						},
-				  ]
+					]
 
 			const CCActions = []
 

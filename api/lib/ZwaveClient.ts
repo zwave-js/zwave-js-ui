@@ -1394,10 +1394,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										ScheduleEntryLockScheduleKind.WeekDay,
 										s,
 									)
-							  )
+								)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
-							  ].getWeekDaySchedule(slot)
+								].getWeekDaySchedule(slot)
 
 						pushSchedule(weeklySchedules, slot, schedule, enabled)
 					}
@@ -1420,10 +1420,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										ScheduleEntryLockScheduleKind.YearDay,
 										s,
 									)
-							  )
+								)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
-							  ].getYearDaySchedule(slot)
+								].getYearDaySchedule(slot)
 
 						pushSchedule(yearlySchedules, slot, schedule, enabled)
 					}
@@ -1447,10 +1447,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										ScheduleEntryLockScheduleKind.DailyRepeating,
 										s,
 									)
-							  )
+								)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
-							  ].getDailyRepeatingSchedule(slot)
+								].getDailyRepeatingSchedule(slot)
 
 						pushSchedule(dailySchedules, slot, schedule, enabled)
 					}
@@ -1586,7 +1586,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							...slot,
 							...schedule,
 							enabled: true,
-					  }
+						}
 
 				if (isDelete) {
 					if (slotIndex !== -1) {
@@ -6157,8 +6157,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						zwaveValueMeta.type === 'number'
 							? parseInt(k)
 							: zwaveValueMeta.type === 'boolean'
-							  ? k === 'true'
-							  : k,
+								? k === 'true'
+								: k,
 				})
 			}
 		} else {

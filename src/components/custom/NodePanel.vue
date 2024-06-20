@@ -561,13 +561,13 @@ export default {
 					? {
 							title: 'Data Rate',
 							text: protocolDataRate,
-					  }
+						}
 					: null,
 				routeSpeed
 					? {
 							title: 'Route Speed',
 							text: routeSpeed,
-					  }
+						}
 					: null,
 				{
 					title: 'Repeaters',
@@ -577,7 +577,7 @@ export default {
 					? {
 							title: 'Route failed between',
 							text: routeFailed,
-					  }
+						}
 					: null,
 			].filter((r) => !!r)
 		},

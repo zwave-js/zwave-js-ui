@@ -101,7 +101,7 @@ export default defineConfig(({ mode }) => {
 				? {
 						key: path.resolve(__dirname, 'certs/server.key'),
 						cert: path.resolve(__dirname, 'certs/server.crt'),
-				  }
+					}
 				: false,
 			base: distFolder,
 			host: '0.0.0.0',
