@@ -52,7 +52,9 @@
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s && git add CHANGELOG.md",
     "changelog-init": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it",
-    "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/logo.svg"
+    "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/logo.svg",
+		"browser": "chromium-browser --user-data-dir=/tmp/zui-data --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure=https://localhost:8092 https://localhost:8092"
+
   },
   "browserslist": [
     "> 1%",
@@ -170,8 +172,8 @@
     "ts-morph": "^20.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
-    "vite": "^4.4.11",
-    "vite-plugin-pwa": "^0.16.5",
+    "vite": "^5.3.1",
+    "vite-plugin-pwa": "^0.20.0",
     "vue-template-compiler": "^2.7.16"
   },
   "engines": {
