@@ -522,6 +522,7 @@ export type ZUINode = {
 	powerlevel?: number
 	measured0dBm?: number
 	RFRegion?: RFRegion
+	rfRegions?: { text: string, value: number }[]
 	isFrequentListening?: FLiRS
 	isRouting?: boolean
 	keepAwake?: boolean
@@ -6029,6 +6030,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		node.deviceId = this._getDeviceID(node)
 		node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
+
+		if(node.isControllerNode) {
+			node.rfRegions = this.driver.controller.getSupportedRFRegions()?.toSorted().map(
+				(region) => ({
+					value: region,
+					text: getEnumMemberName(RFRegion, region),
+				}),
+			) ?? []
+		}
 	}
 
 	async updateControllerNodeProps(
