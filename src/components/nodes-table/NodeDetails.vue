@@ -206,12 +206,12 @@
 								<v-col align-self="center">
 									{{ className }}
 								</v-col>
-								<v-col class="text-right pr-5">
+								<v-col class="text-right">
 									<v-btn
 										v-if="canResetConfig(group[0])"
 										@click.stop="resetAllConfig()"
 										color="error"
-										class="mb-1"
+										class="mb-1 mr-3"
 										outlined
 										x-small
 									>
