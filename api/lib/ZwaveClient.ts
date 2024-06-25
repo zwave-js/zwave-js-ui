@@ -6032,12 +6032,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
 
 		if(node.isControllerNode) {
-			node.rfRegions = this.driver.controller.getSupportedRFRegions()?.toSorted().map(
+			node.rfRegions = this.driver.controller.getSupportedRFRegions()?.map(
 				(region) => ({
 					value: region,
 					text: getEnumMemberName(RFRegion, region),
-				}),
-			) ?? []
+				})).sort((a, b) => a.text.localeCompare(b.text)) ?? []
 		}
 	}
 
