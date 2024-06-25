@@ -1,5 +1,18 @@
 
 
+## [9.14.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.2...v9.14.3) (2024-06-25)
+
+
+### Bug Fixes
+
+* **ui:** configuration CC `Reset` button spacing ([f386c4f](https://github.com/zwave-js/zwave-js-ui/commit/f386c4f94c4727578919c2277a81f47b62ed6155))
+
+
+### Features
+
+* bump zwave-js@12.12.0 ([#3784](https://github.com/zwave-js/zwave-js-ui/issues/3784)) ([459be7a](https://github.com/zwave-js/zwave-js-ui/commit/459be7a5dcddd90dff4bf6bf917b0058fe0ccb39))
+* show supported controller rf regions ([#3785](https://github.com/zwave-js/zwave-js-ui/issues/3785)) ([c7929e9](https://github.com/zwave-js/zwave-js-ui/commit/c7929e9c233a452fb09257f774b93284d185b67d))
+
 ## [9.14.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.1...v9.14.2) (2024-06-22)
 
 
