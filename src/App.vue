@@ -1,5 +1,5 @@
 <template>
-	<v-app :dark="darkMode">
+	<v-app>
 		<div
 			v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar"
 		>
@@ -595,8 +595,11 @@ export default {
 			this.title = value.name || ''
 			this.startSocket()
 		},
+		systemDark() {
+			this.updateDarkMode(this.darkMode)
+		},
 		darkMode(val) {
-			this.$vuetify.theme.dark = !!val
+			this.updateDarkMode(val)
 		},
 		pages() {
 			// this.verifyRoute()
@@ -669,6 +672,8 @@ export default {
 			hideTopbar: false,
 			title: '',
 			messages: [],
+			systemDark: false,
+			mq_system_dark: null,
 		}
 	},
 	methods: {
@@ -1573,6 +1578,14 @@ export default {
 				log.error(error)
 			}
 		},
+		updateSystemDark(update) {
+			this.systemDark = update.matches
+		},
+		updateDarkMode(value) {
+			// Set to system defualt if null
+			this.$vuetify.theme.dark =
+				value === null ? this.systemDark : !!value
+		},
 	},
 	beforeMount() {
 		manager.register(instances.APP, this)
@@ -1590,21 +1603,25 @@ export default {
 
 		const settings = useBaseStore().settings
 
-		// system dark mode
-		const systemThemeDark = !!window.matchMedia(
-			'(prefers-color-scheme: dark)',
-		).matches
-
-		// set the dark mode to the system dark mode if it's different
-		if (settings.load('dark') === undefined) {
-			useBaseStore().setDarkMode(systemThemeDark)
-		} else {
-			// load the theme from localstorage
-			// this is needed to prevent the theme switch on load
-			// this will be overriden by settings value once `initSettings`
-			// base store method is called
-			this.$vuetify.theme.dark = settings.load('dark', false)
+		// Event listener to capture system dark changes.
+		if (this.mq_system_dark === null && window) {
+			this.mq_system_dark = window.matchMedia(
+				'(prefers-color-scheme: dark)',
+			)
+			this.mq_system_dark.addEventListener(
+				'change',
+				this.updateSystemDark,
+			)
 		}
+
+		// pre-load System Dark
+		this.updateSystemDark(this.mq_system_dark)
+
+		// load the theme from localstorage
+		// this is needed to prevent the theme switch on load
+		// this will be overriden by settings value once `initSettings`
+		// base store method is called
+		this.updateDarkMode(settings.load('dark', null))
 
 		useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'showSnackbar') {
@@ -1614,6 +1631,14 @@ export default {
 				this.checkAuth()
 			}
 		})
+	},
+	beforeUnmount() {
+		if (this.mq_system_dark !== null) {
+			this.mq_system_dark.removeEventListener(
+				'change',
+				this.updateSystemDark,
+			)
+		}
 	},
 	beforeDestroy() {
 		if (this.socket) this.socket.close()
