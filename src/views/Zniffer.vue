@@ -422,7 +422,7 @@ export default {
 		endHeight() {
 			const lastIndex = this.start + this.perPage
 			return this.rowHeight * (this.totalFrames - lastIndex + 1)
-		}
+		},
 	},
 	watch: {
 		topPaneHeight() {

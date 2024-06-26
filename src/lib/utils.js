@@ -312,8 +312,8 @@ export function openInWindow(title, height = 800, width = 600) {
 }
 
 export function isPopupWindow() {
-	return window.opener !== null && window.opener !== window;
-  }
+	return window.opener !== null && window.opener !== window
+}
 
 export function getProtocolIcon(protocol) {
 	if (typeof protocol === 'boolean') {
