@@ -1,5 +1,17 @@
 
 
+## [9.14.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.3...v9.14.4) (2024-06-26)
+
+
+### Bug Fixes
+
+* **ui:** hide open in new window inside popup window ([28dc90b](https://github.com/zwave-js/zwave-js-ui/commit/28dc90badc2355c49c7294a8fe83fa8559b3808e))
+
+
+### Features
+
+* bump zwave-js@12.12.1 ([#3787](https://github.com/zwave-js/zwave-js-ui/issues/3787)) ([2010e1e](https://github.com/zwave-js/zwave-js-ui/commit/2010e1ecfb5f5fbbb9d059c76ca8db67b909926f))
+
 ## [9.14.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.2...v9.14.3) (2024-06-25)
 
 
