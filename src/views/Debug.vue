@@ -91,7 +91,7 @@ import { socketEvents } from '@server/lib/SocketEvents'
 import { AnsiUp } from 'ansi_up'
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
-import { openInWindow } from '../lib/utils'
+import { isPopupWindow, openInWindow } from '../lib/utils'
 
 const ansiUp = new AnsiUp()
 
@@ -152,7 +152,7 @@ export default {
 					color: 'primary',
 					tooltip: 'Open in window',
 					action: this.newWindow,
-					disabled: false,
+					disabled: isPopupWindow(),
 				},
 			]
 		},

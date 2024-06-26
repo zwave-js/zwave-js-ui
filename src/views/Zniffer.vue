@@ -300,7 +300,7 @@
 				<v-card-title> Settings </v-card-title>
 				<v-card-text>
 					<v-row>
-						<v-col cols="12">
+						<v-col v-if="!isPopup" cols="12">
 							<v-btn
 								text
 								small
@@ -354,6 +354,7 @@ import {
 	humanFriendlyNumber,
 	openInWindow,
 	getProtocolIcon,
+	isPopupWindow,
 } from '../lib/utils'
 
 export default {
@@ -421,7 +422,7 @@ export default {
 		endHeight() {
 			const lastIndex = this.start + this.perPage
 			return this.rowHeight * (this.totalFrames - lastIndex + 1)
-		},
+		}
 	},
 	watch: {
 		topPaneHeight() {
@@ -504,6 +505,7 @@ export default {
 	data() {
 		return {
 			znifferRegions,
+			isPopup: isPopupWindow(),
 			fab: false,
 			drawer: false,
 			frequency: null,
