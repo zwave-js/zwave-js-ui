@@ -4290,7 +4290,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (!this._controllerListenersAdded) {
 				this._controllerListenersAdded = true
 				this.driver.controller
-					.on('inclusion started', (e) =>
+					.on(
+						'inclusion started',
 						this._onInclusionStarted.bind(this),
 					)
 					.on(
