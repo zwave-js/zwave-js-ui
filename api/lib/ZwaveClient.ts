@@ -102,6 +102,7 @@ import {
 	InclusionUserCallbacks,
 	InclusionState,
 	ProvisioningEntryStatus,
+	AssociationCheckResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -126,11 +127,6 @@ export const deviceConfigPriorityDir = storeDir + '/config'
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
 })
-
-export async function loadManager() {
-	await configManager.loadNamedScales()
-	await configManager.loadSensorTypes()
-}
 
 const logger = LogManager.module('Z-Wave')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -1778,13 +1774,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (zwaveNode) {
 			try {
 				for (const a of associations) {
-					if (
-						this._driver.controller.isAssociationAllowed(
+					const checkResult =
+						this._driver.controller.checkAssociation(
 							source,
 							groupId,
 							a,
 						)
-					) {
+					if (checkResult === AssociationCheckResult.OK) {
 						this.logNode(
 							zwaveNode,
 							'info',
@@ -1802,7 +1798,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						this.logNode(
 							zwaveNode,
 							'warn',
-							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}, association not allowed`,
+							// FIXME: We should explain the reason why it failed in human-readable form, see doc comments of AssociationCheckResult
+							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}: ${getEnumMemberName(AssociationCheckResult, checkResult)}`,
 						)
 					}
 				}
@@ -4293,8 +4290,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (!this._controllerListenersAdded) {
 				this._controllerListenersAdded = true
 				this.driver.controller
-					.on(
-						'inclusion started',
+					.on('inclusion started', (e) =>
 						this._onInclusionStarted.bind(this),
 					)
 					.on(
@@ -4602,9 +4598,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	private _onInclusionStarted(secure: boolean) {
+	private _onInclusionStarted(strategy: InclusionStrategy) {
+		const secure = strategy !== InclusionStrategy.Insecure
 		const message = `${secure ? 'Secure' : 'Non-secure'} inclusion started`
 		this._updateControllerStatus(message)
+		// FIXME: Should the frontend also accept the strategy instead of the boolean?
 		this.emit('event', EventSource.CONTROLLER, 'inclusion started', secure)
 	}
 
@@ -5571,7 +5569,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				endpoint.nodeId,
 				'error',
-				`Notification received but node doesn't exists`,
+				`Notification received but node doesn't exist`,
 			)
 
 			return
@@ -5985,7 +5983,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.keepAwake = zwaveNode.keepAwake
 		node.maxDataRate = zwaveNode.maxDataRate
 		node.deviceClass = {
-			basic: zwaveNode.deviceClass?.basic.key,
+			basic: zwaveNode.deviceClass?.basic,
 			generic: zwaveNode.deviceClass?.generic.key,
 			specific: zwaveNode.deviceClass?.specific.key,
 		}

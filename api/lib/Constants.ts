@@ -1,4 +1,4 @@
-import { ConfigManager } from '@zwave-js/config'
+import { getMeter, getMeterScale } from '@zwave-js/core'
 
 interface IGenericMap {
 	[key: number]: string
@@ -113,19 +113,13 @@ export function productionType(index: number): Record<string, any> {
 		},
 	}
 }
-export function meterType(
-	ccSpecific: IMeterCCSpecific,
-	configManager: ConfigManager,
-): any {
-	const meter = configManager.lookupMeter(ccSpecific.meterType)
-	const scale = configManager.lookupMeterScale(
-		ccSpecific.meterType,
-		ccSpecific.scale,
-	)
+export function meterType(ccSpecific: IMeterCCSpecific): any {
+	const meter = getMeter(ccSpecific.meterType)
+	const scale = getMeterScale(ccSpecific.meterType, ccSpecific.scale)
 
 	const cfg = {
-		sensor: meter ? meter.name : 'unknown',
-		objectId: scale ? scale.label : `unknown${ccSpecific.scale}`,
+		sensor: meter?.name || 'unknown',
+		objectId: scale?.label || `unknown${ccSpecific.scale}`,
 		props: {},
 	}
 
