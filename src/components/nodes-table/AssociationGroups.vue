@@ -79,6 +79,7 @@ import { mapState, mapActions } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { AssociationCheckResult, getEnumMemberName } from 'zwave-js/safe'
 
 export default {
 	components: {
@@ -179,11 +180,16 @@ export default {
 			const response = await this.app.apiRequest('addAssociations', args)
 
 			if (response.success) {
-				if (response.result) {
+				const checkResult = response.result[0]
+
+				if (checkResult === AssociationCheckResult.OK) {
 					this.showSnackbar('Association added', 'success')
 					this.getAssociations()
 				} else {
-					this.showSnackbar('Error while adding association', 'error')
+					this.showSnackbar(
+						`Error while adding association: ${getEnumMemberName(AssociationCheckResult, checkResult)}`,
+						'error',
+					)
 				}
 			}
 			this.dialogAssociation = false
