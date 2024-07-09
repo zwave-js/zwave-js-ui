@@ -14,10 +14,10 @@ jobs:
       matrix:
         node-version: [18.18.2] # NB: when pkg-fetch bumps binaries, this must be updated
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Use Node.js 18.18.2
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
