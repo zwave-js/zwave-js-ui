@@ -96,12 +96,7 @@
 								</v-col>
 
 								<v-col v-if="associationError" cols="12">
-									<v-alert
-										text
-										dismissible
-										dense
-										type="error"
-									>
+									<v-alert text dense type="error">
 										{{ associationError }}
 									</v-alert>
 								</v-col>
@@ -119,7 +114,7 @@
 				<v-btn
 					color="blue darken-1"
 					text
-					:disabled="nodesInGroup >= maxNodes"
+					:disabled="nodesInGroup >= maxNodes || associationError"
 					@click="$refs.form.validate() && $emit('add', group)"
 					>ADD</v-btn
 				>
