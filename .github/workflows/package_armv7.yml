@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.18.2] # NB: when pkg-fetch bumps binaries, this must be updated
+        node-version: [18.19.1] # NB: when pkg-fetch bumps binaries, this must be updated
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 18.18.2
+      - name: Use Node.js 18.19.1
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
