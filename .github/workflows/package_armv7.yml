@@ -43,7 +43,7 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}:/app"
 
-          base_image: arm32v7/node:18-bookworm
+          base_image: '--platform=linux/armv7 arm32v7/node:18-bookworm'
 
           # Rebuild .node modules for amv7
           run: |
