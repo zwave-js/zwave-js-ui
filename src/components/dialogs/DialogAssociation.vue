@@ -263,7 +263,23 @@ export default {
 
 				if (checkResult === AssociationCheckResult.OK) {
 					this.associationError = ''
+				} else if (
+					checkResult ===
+					AssociationCheckResult.Forbidden_SecurityClassMismatch
+				) {
+					this.associationError = `Association not allowed: Node ${this.node.id} does not have the same security class as Node ${target}!`
+				} else if (
+					checkResult ===
+					AssociationCheckResult.Forbidden_DestinationSecurityClassNotGranted
+				) {
+					this.associationError = `Association not allowed: Node ${this.node.id} was not granted the highest security class of Node ${target}!`
+				} else if (
+					checkResult ===
+					AssociationCheckResult.Forbidden_NoSupportedCCs
+				) {
+					this.associationError = `Association not allowed: Node ${this.node.id} sends no commands in this group that Node ${target} supports!`
 				} else {
+					// This should not happen, but just in case
 					this.associationError = `Association not allowed: ${getEnumMemberName(
 						AssociationCheckResult,
 						checkResult,
