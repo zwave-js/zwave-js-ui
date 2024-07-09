@@ -73,7 +73,7 @@
 										v-model="group.target"
 										:items="filteredNodes"
 										return-object
-										:rules="[required]"
+										:rules="[required, allowedAssociation]"
 										hint="Node to add to the association group"
 										persistent-hint
 										item-text="_name"
@@ -190,6 +190,20 @@ export default {
 		}
 	},
 	methods: {
+		allowedAssociation() {
+			const mainNode = this.node
+			const targetNode = this.group.target
+
+			if (!mainNode || !targetNode) {
+				return true
+			}
+
+			if (mainNode.security !== targetNode.security) {
+				return `Association not allowed, "${targetNode._name}" security is different from "${mainNode._name}"`
+			}
+
+			return true
+		},
 		resetGroup() {
 			this.group = Object.assign({}, this.defaultGroup)
 		},
