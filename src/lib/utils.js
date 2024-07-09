@@ -329,3 +329,10 @@ export function getProtocolIcon(protocol) {
 		description: getProtocol({ protocol }),
 	}
 }
+
+export function getAssociationAddress(ass) {
+	return {
+		nodeId: ass.nodeId,
+		endpoint: ass.endpoint === null ? undefined : ass.endpoint,
+	}
+}

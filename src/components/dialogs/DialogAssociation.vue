@@ -94,6 +94,17 @@
 										:items="targetEndpoints"
 									></v-select>
 								</v-col>
+
+								<v-col v-if="associationError" cols="12">
+									<v-alert
+										text
+										dismissible
+										dense
+										type="error"
+									>
+										{{ associationError }}
+									</v-alert>
+								</v-col>
 							</v-col>
 						</v-row>
 					</v-form>
@@ -121,8 +132,13 @@
 import { Protocols } from '@zwave-js/core/safe'
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import { getAssociationAddress } from '../../lib/utils'
+import { AssociationCheckResult } from '@zwave-js/cc/safe'
+import { getEnumMemberName } from 'zwave-js/safe'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
+	mixins: [InstancesMixin],
 	props: {
 		value: Boolean,
 		associations: Array,
@@ -132,6 +148,15 @@ export default {
 		value() {
 			this.$refs.form && this.$refs.form.resetValidation()
 			this.resetGroup()
+			this.associationError = ''
+		},
+		group: {
+			deep: true,
+			handler() {
+				if (this.$refs.form?.validate()) {
+					this.allowedAssociation()
+				}
+			},
 		},
 	},
 	computed: {
@@ -185,11 +210,67 @@ export default {
 		return {
 			valid: true,
 			group: {},
+			associationError: '',
 			defaultGroup: { endpoint: null },
 			required: (v) => !!v || 'This field is required',
 		}
 	},
 	methods: {
+		getAssociationAddress,
+		async allowedAssociation() {
+			const association = this.group
+			const target = !isNaN(association.target)
+				? parseInt(association.target)
+				: association.target?.id
+
+			if (isNaN(target)) {
+				this.associationError = ''
+				return
+			}
+
+			const group = association.group
+
+			if (!group) {
+				this.associationError = ''
+				return
+			}
+
+			const toAdd = { nodeId: target }
+
+			if (group.multiChannel && association.targetEndpoint >= 0) {
+				toAdd.endpoint = association.targetEndpoint
+			}
+
+			const args = [
+				this.getAssociationAddress({
+					nodeId: this.node.id,
+					endpoint: association.endpoint,
+				}),
+				group.value,
+				toAdd,
+			]
+
+			const response = await this.app.apiRequest(
+				'checkAssociation',
+				args,
+				{
+					showInfo: false,
+				},
+			)
+
+			if (response.success) {
+				const checkResult = response.result
+
+				if (checkResult === AssociationCheckResult.OK) {
+					this.associationError = ''
+				} else {
+					this.associationError = `Association not allowed: ${getEnumMemberName(
+						AssociationCheckResult,
+						checkResult,
+					)}`
+				}
+			}
+		},
 		resetGroup() {
 			this.group = Object.assign({}, this.defaultGroup)
 		},
