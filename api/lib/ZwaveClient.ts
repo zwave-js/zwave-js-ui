@@ -3069,7 +3069,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async setRFRegion(region: RFRegion): Promise<boolean> {
 		if (this.driverReady) {
 			const result = await this._driver.controller.setRFRegion(region)
+
 			await this.updateControllerNodeProps(null, ['RFRegion'])
+
 			return result
 		}
 
