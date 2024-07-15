@@ -5,7 +5,7 @@
     "preserveSymlinks": true,
     "resolveJsonModule": true,
     "outDir": "server",
-
+    "esModuleInterop": true,
     // TODO: Turn this on and fix all the errors
     "strict": false
   },
