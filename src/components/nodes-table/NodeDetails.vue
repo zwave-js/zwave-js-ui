@@ -603,7 +603,11 @@ export default {
 				)
 
 				if (response.success) {
-					this.showSnackbar('Powerlevel updated', 'success')
+					if (response.result) {
+						this.showSnackbar('Powerlevel updated', 'success')
+					} else {
+						this.showSnackbar('Powerlevel update failed', 'error')
+					}
 				}
 			}
 		},
@@ -613,7 +617,11 @@ export default {
 				const response = await this.app.apiRequest('setRFRegion', args)
 
 				if (response.success) {
-					this.showSnackbar('RF Region updated', 'success')
+					if (response.result) {
+						this.showSnackbar('RF Region updated', 'success')
+					} else {
+						this.showSnackbar('RF Region update failed', 'error')
+					}
 				}
 			}
 		},
