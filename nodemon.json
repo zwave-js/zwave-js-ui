@@ -1,5 +1,5 @@
 {
-	"watch": ["**/*.ts", "package.json", "tsconfig.json", "../node-zwave-js/packages/*/build/**/*.js"],
+	"watch": ["**/*.ts", "package.json", "tsconfig.json"],
 	"ext": "ts,json,js",
 	"ignore": ["pkg", "store", "node_modules", "src", "dist", "server"],
 	"exec": "node --inspect=7004 --trace-warnings -r ./esbuild-register api/bin/www.ts"
