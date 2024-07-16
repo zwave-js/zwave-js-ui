@@ -21,6 +21,7 @@ export enum socketEvents {
 	inclusionAborted = 'INCLUSION_ABORTED',
 	znifferFrame = 'ZNIFFER_FRAME',
 	znifferState = 'ZNIFFER_STATE',
+	linkStatistics = 'LINK_STATISTICS',
 }
 
 // events from client ---> server

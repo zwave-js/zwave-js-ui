@@ -3682,6 +3682,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	async runLinkStatistics(nodeId: number, options: any): Promise<boolean> {
+		if (this.driverReady) {
+			const result = await this.getNode(nodeId).runLinkStatistics(
+				options,
+				this._onLinkStatisticsProgress.bind(this, {
+					nodeId,
+				}),
+			)
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	/**
 	 * Check node routes health
 	 */
@@ -4778,6 +4792,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			totalRounds,
 			lastRating,
 			lastResult,
+		})
+	}
+
+	private _onLinkStatisticsProgress(
+		request: { nodeId: number },
+		...args: any[]
+	) {
+		const message = `Link statistics ${request.nodeId}: ${args.join(', ')}`
+		this._updateControllerStatus(message)
+		this.sendToSocket(socketEvents.linkStatistics, {
+			request,
+			args,
 		})
 	}
 
