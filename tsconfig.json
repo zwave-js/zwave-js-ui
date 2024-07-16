@@ -1,13 +1,17 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
+    "lib": ["es2023"],
+    "module": "node16",
+    "target": "es2022",
     // Necessary to support yarn portals with the node-modules linker, used by yarn link (berry)
     "preserveSymlinks": true,
     "resolveJsonModule": true,
     "outDir": "server",
     "esModuleInterop": true,
     // TODO: Turn this on and fix all the errors
-    "strict": false
+    "strict": false,
+    "skipLibCheck": true,
+    "moduleResolution": "node16"
   },
   "include": [
     "api/**/*.ts",
