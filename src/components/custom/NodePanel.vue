@@ -298,7 +298,7 @@
 						color="purple"
 						small
 						rounded
-						@click="dialogLinkStatistics = true"
+						@click="dialogLinkReliability = true"
 						>Link Statistics
 						<v-icon>leak_add</v-icon>
 					</v-btn>
@@ -352,10 +352,10 @@
 			:node="node"
 		/>
 
-		<dialog-link-statistics
+		<dialog-link-reliability
 			v-if="node && !node.isControllerNode"
-			v-model="dialogLinkStatistics"
-			@close="dialogLinkStatistics = false"
+			v-model="dialogLinkReliability"
+			@close="dialogLinkReliability = false"
 			:socket="socket"
 			:node="node"
 		/>
@@ -417,8 +417,8 @@ export default {
 		BgRssiChart: () => import('@/components/custom/BgRssiChart.vue'),
 		DialogHealthCheck: () =>
 			import('@/components/dialogs/DialogHealthCheck.vue'),
-		DialogLinkStatistics: () =>
-			import('@/components/dialogs/DialogLinkStatistics.vue'),
+		DialogLinkReliability: () =>
+			import('@/components/dialogs/DialogLinkReliability.vue'),
 		draggable,
 	},
 	props: {
@@ -437,7 +437,7 @@ export default {
 	data: () => ({
 		showFullscreen: false,
 		dialogHealth: false,
-		dialogLinkStatistics: false,
+		dialogLinkReliability: false,
 		discoverLoading: false,
 		routesChanged: false,
 		returnRoutes: [],

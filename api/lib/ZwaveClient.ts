@@ -102,6 +102,7 @@ import {
 	InclusionUserCallbacks,
 	InclusionState,
 	ProvisioningEntryStatus,
+	LinkReliabilityCheckResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -229,8 +230,8 @@ export const allowedApis = validateMethods([
 	'checkLifelineHealth',
 	'abortHealthCheck',
 	'checkRouteHealth',
-	'runLinkStatistics',
-	'abortLinkStatistics',
+	'checkLinkReliability',
+	'abortLinkReliabilityCheck',
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
 	'getSchedules',
@@ -3684,24 +3685,27 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
-	async runLinkStatistics(nodeId: number, options: any): Promise<boolean> {
+	async checkLinkReliability(
+		nodeId: number,
+		options: any,
+	): Promise<LinkReliabilityCheckResult> {
 		if (this.driverReady) {
-			const result = await this.getNode(nodeId).runLinkStatistics(
-				options,
-				this._onLinkStatisticsProgress.bind(this, {
-					nodeId,
-				}),
-			)
+			const result = await this.getNode(nodeId).checkLinkReliability({
+				...options,
+				onProgress: (progress) =>
+					this._onLinkReliabilityCheckProgress({ nodeId }, progress),
+			})
+
 			return result
 		}
 
 		throw new DriverNotReadyError()
 	}
 
-	async abortLinkStatistics(nodeId: number): Promise<boolean> {
+	abortLinkReliabilityCheck(nodeId: number): void {
 		if (this.driverReady) {
-			const result = await this.getNode(nodeId).abortLinkStatistics()
-			return result
+			this.getNode(nodeId).abortLinkReliabilityCheck()
+			return
 		}
 
 		throw new DriverNotReadyError()
@@ -4806,13 +4810,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 	}
 
-	private _onLinkStatisticsProgress(
+	private _onLinkReliabilityCheckProgress(
 		request: { nodeId: number },
 		...args: any[]
 	) {
-		const message = `Link statistics ${request.nodeId}: ${args.join(', ')}`
-		this._updateControllerStatus(message)
-		this.sendToSocket(socketEvents.linkStatistics, {
+		// const message = `Link statistics ${request.nodeId}: ${args.join(', ')}`
+		// this._updateControllerStatus(message)
+		this.sendToSocket(socketEvents.linkReliability, {
 			request,
 			args,
 		})

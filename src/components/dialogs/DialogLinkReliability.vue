@@ -32,6 +32,8 @@
 								v-model.number="interval"
 								suffix="ms"
 								type="number"
+								:min="1"
+								:max="10000"
 								persistent-hint
 							></v-text-field>
 						</v-col>
@@ -41,6 +43,8 @@
 								label="Iterations"
 								v-model.number="iterations"
 								type="number"
+								:min="1"
+								:max="10000"
 								persistent-hint
 							></v-text-field>
 						</v-col>
@@ -49,14 +53,14 @@
 					<v-row class="mb-2" justify="space-around">
 						<v-btn
 							color="green darken-1"
-							@click="runStatistics"
+							@click="checkLinkReliability"
 							:disabled="running"
 							:loading="running"
 							>Run</v-btn
 						>
 						<v-btn
 							color="red darken-1"
-							@click="stopLinkStatistics"
+							@click="abortLinkReliabilityCheck"
 							:disabled="!running"
 							>Stop</v-btn
 						>
@@ -72,28 +76,44 @@
 										>Commands Sent</v-list-item-title
 									>
 									<v-list-item-subtitle>{{
-										statistics?.commandsSent
+										statistics.commandsSent
 									}}</v-list-item-subtitle>
 								</v-list-item-content>
 							</v-list-item>
 							<v-list-item>
 								<v-list-item-content>
 									<v-list-item-title
-										>Tx Errors</v-list-item-title
+										>Failed Commands</v-list-item-title
 									>
-									<v-list-item-subtitle>{{
-										statistics?.txErrors
-									}}</v-list-item-subtitle>
+									<v-list-item-subtitle
+										>{{ statistics.commandErrors }} ({{
+											(
+												(statistics.commandErrors /
+													statistics.rounds) *
+												100
+											).toFixed(1)
+										}}
+										%)</v-list-item-subtitle
+									>
 								</v-list-item-content>
 							</v-list-item>
-							<v-list-item>
+							<v-list-item
+								v-if="statistics?.missingResponses != undefined"
+							>
 								<v-list-item-content>
 									<v-list-item-title
-										>Missed Responses</v-list-item-title
+										>Missing Responses</v-list-item-title
 									>
-									<v-list-item-subtitle>{{
-										statistics?.missedResponses
-									}}</v-list-item-subtitle>
+									<v-list-item-subtitle
+										>{{ statistics.missingResponses }} ({{
+											(
+												(statistics.missingResponses /
+													statistics.commandsSent) *
+												100
+											).toFixed(1)
+										}}
+										%)</v-list-item-subtitle
+									>
 								</v-list-item-content>
 							</v-list-item>
 						</v-list>
@@ -103,20 +123,59 @@
 								<thead>
 									<tr>
 										<th class="text-left"></th>
-										<th class="text-left">Avg</th>
 										<th class="text-left">Min</th>
 										<th class="text-left">Max</th>
+										<th class="text-left">Avg</th>
 									</tr>
 								</thead>
 								<tbody>
+									<tr>
+										<td>Latency [ms]</td>
+										<td>{{ statistics.latency.min }}</td>
+										<td>{{ statistics.latency.max }}</td>
+										<td>
+											{{
+												Math.round(
+													statistics.latency.average,
+												)
+											}}
+										</td>
+									</tr>
+									<tr>
+										<td>ACK RSSI [dBm]</td>
+										<td>{{ statistics.ackRSSI.min }}</td>
+										<td>{{ statistics.ackRSSI.max }}</td>
+										<td>
+											{{
+												Math.round(
+													statistics.ackRSSI.average,
+												)
+											}}
+										</td>
+									</tr>
 									<tr
-										v-for="stat in Object.keys(statistics)"
-										:key="`stat-${stat}`"
+										v-if="
+											Number.isFinite(
+												statistics.responseRSSI
+													?.average,
+											)
+										"
 									>
-										<td>{{ stat }}</td>
-										<td>{{ statistics[stat].avg }}</td>
-										<td>{{ statistics[stat].min }}</td>
-										<td>{{ statistics[stat].max }}</td>
+										<td>Response RSSI [dBm]</td>
+										<td>
+											{{ statistics.responseRSSI.min }}
+										</td>
+										<td>
+											{{ statistics.responseRSSI.max }}
+										</td>
+										<td>
+											{{
+												Math.round(
+													statistics.responseRSSI
+														.average,
+												)
+											}}
+										</td>
 									</tr>
 								</tbody>
 							</template>
@@ -172,6 +231,7 @@ export default {
 			isRunning: false,
 			mode: 'Lifeline',
 			modes: [
+				// FIXME: Fill with enum variants
 				{
 					text: 'Basic Set On/Off',
 					value: 0,
@@ -188,7 +248,7 @@ export default {
 		exportResults() {
 			this.app.exportConfiguration(
 				this.results,
-				`linkStatistics_${this.activeNode.id}-${this.statistics}`,
+				`linkReliability_${this.activeNode.id}-${this.statistics}`,
 				'json',
 			)
 		},
@@ -203,25 +263,23 @@ export default {
 			if (open) {
 				this.activeNode = copy(this.node)
 
-				this.bindEvent(
-					'linkStatistics',
-					this.onLinkStatistics.bind(this),
-				)
+				this.bindEvent('linkReliability', this.onProgress.bind(this))
 			} else if (open === false) {
 				this.unbindEvents()
 				if (this.running) {
-					this.stopLinkStatistics()
+					this.abortLinkReliabilityCheck()
 				}
 			}
 		},
-		onLinkStatistics(data) {
+		onProgress(data) {
 			// eslint-disable-next-line no-unused-vars
-			// TODO: update statistics
+			this.statistics = data.args[0]
 		},
-		async stopLinkStatistics() {
-			const response = await this.app.apiRequest(`abortLinkStatistics`, [
-				this.activeNode.id,
-			])
+		async abortLinkReliabilityCheck() {
+			const response = await this.app.apiRequest(
+				`abortLinkReliabilityCheck`,
+				[this.activeNode.id],
+			)
 
 			if (response.success) {
 				this.showSnackbar('Link statistics aborted', 'success')
@@ -229,18 +287,17 @@ export default {
 
 			this.running = false
 		},
-		async runStatistics() {
+		async checkLinkReliability() {
 			this.running = true
 
 			const response = await this.app.apiRequest(
-				`runLinkStatistics`,
+				`checkLinkReliability`,
 				[
 					this.activeNode.id,
 					{
 						mode: this.mode,
-						infinite: this.infinite,
 						interval: this.interval,
-						iterations: this.iterations,
+						rounds: this.infinite ? undefined : this.iterations,
 					},
 				],
 				{
@@ -248,6 +305,8 @@ export default {
 					errorSnack: false,
 				},
 			)
+
+			this.running = false
 
 			if (response.success) {
 				this.statistics = response.result
