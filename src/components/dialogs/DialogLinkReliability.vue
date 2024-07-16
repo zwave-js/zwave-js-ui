@@ -19,12 +19,6 @@
 								persistent-hint
 							></v-select>
 						</v-col>
-						<v-col cols="6">
-							<v-checkbox
-								v-model="infinite"
-								label="Infinite"
-							></v-checkbox>
-						</v-col>
 
 						<v-col cols="6">
 							<v-text-field
@@ -39,14 +33,29 @@
 						</v-col>
 
 						<v-col cols="6">
-							<v-text-field
-								label="Iterations"
-								v-model.number="iterations"
-								type="number"
-								:min="1"
-								:max="10000"
-								persistent-hint
-							></v-text-field>
+							<v-radio-group
+								class="justify-center"
+								row
+								v-model="infinite"
+							>
+								<v-radio
+									label="Infinite"
+									:value="true"
+								></v-radio>
+								<v-radio label="" :value="false">
+									<template v-slot:label>
+										<v-text-field
+											:disabled="infinite"
+											label="Iterations"
+											v-model.number="iterations"
+											type="number"
+											:min="1"
+											:max="10000"
+											persistent-hint
+										></v-text-field>
+									</template>
+								</v-radio>
+							</v-radio-group>
 						</v-col>
 					</v-row>
 
@@ -283,13 +292,10 @@ export default {
 
 			if (response.success) {
 				this.showSnackbar('Link statistics aborted', 'success')
+				this.running = false
 			}
-
-			this.running = false
 		},
 		async checkLinkReliability() {
-			this.running = true
-
 			const response = await this.app.apiRequest(
 				`checkLinkReliability`,
 				[
@@ -306,10 +312,9 @@ export default {
 				},
 			)
 
-			this.running = false
-
 			if (response.success) {
 				this.statistics = response.result
+				this.running = true
 			} else {
 				this.showSnackbar(
 					response.message || 'Health check failed',
