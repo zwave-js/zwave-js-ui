@@ -216,6 +216,7 @@ export default {
 		},
 		onLinkStatistics(data) {
 			// eslint-disable-next-line no-unused-vars
+			// TODO: update statistics
 		},
 		async stopLinkStatistics() {
 			const response = await this.app.apiRequest(`abortLinkStatistics`, [

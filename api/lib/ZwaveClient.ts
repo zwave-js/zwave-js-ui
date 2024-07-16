@@ -229,6 +229,8 @@ export const allowedApis = validateMethods([
 	'checkLifelineHealth',
 	'abortHealthCheck',
 	'checkRouteHealth',
+	'runLinkStatistics',
+	'abortLinkStatistics',
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
 	'getSchedules',
@@ -3690,6 +3692,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					nodeId,
 				}),
 			)
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	async abortLinkStatistics(nodeId: number): Promise<boolean> {
+		if (this.driverReady) {
+			const result = await this.getNode(nodeId).abortLinkStatistics()
 			return result
 		}
 
