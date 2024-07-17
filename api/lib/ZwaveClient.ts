@@ -102,6 +102,7 @@ import {
 	InclusionUserCallbacks,
 	InclusionState,
 	ProvisioningEntryStatus,
+	LinkReliabilityCheckResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -229,6 +230,8 @@ export const allowedApis = validateMethods([
 	'checkLifelineHealth',
 	'abortHealthCheck',
 	'checkRouteHealth',
+	'checkLinkReliability',
+	'abortLinkReliabilityCheck',
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
 	'getSchedules',
@@ -3682,6 +3685,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	async checkLinkReliability(
+		nodeId: number,
+		options: any,
+	): Promise<LinkReliabilityCheckResult> {
+		if (this.driverReady) {
+			const result = await this.getNode(nodeId).checkLinkReliability({
+				...options,
+				onProgress: (progress) =>
+					this._onLinkReliabilityCheckProgress({ nodeId }, progress),
+			})
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	abortLinkReliabilityCheck(nodeId: number): void {
+		if (this.driverReady) {
+			this.getNode(nodeId).abortLinkReliabilityCheck()
+			return
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	/**
 	 * Check node routes health
 	 */
@@ -4778,6 +4807,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			totalRounds,
 			lastRating,
 			lastResult,
+		})
+	}
+
+	private _onLinkReliabilityCheckProgress(
+		request: { nodeId: number },
+		...args: any[]
+	) {
+		// const message = `Link statistics ${request.nodeId}: ${args.join(', ')}`
+		// this._updateControllerStatus(message)
+		this.sendToSocket(socketEvents.linkReliability, {
+			request,
+			args,
 		})
 	}
 
