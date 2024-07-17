@@ -80,7 +80,8 @@
 					<v-row v-if="statistics" class="ma-3" justify="center">
 						<v-progress-linear
 							v-if="running"
-							indeterminate
+							:indeterminate="this.infinite"
+							:value="this.infinite ? null : this.progress"
 							color="green darken-1"
 						></v-progress-linear>
 						<v-list dense>
@@ -255,6 +256,7 @@ export default {
 			interval: 250,
 			iterations: 25,
 			statistics: null,
+			progress: 0,
 		}
 	},
 	methods: {
@@ -273,6 +275,7 @@ export default {
 			this.running = false
 			this.interval = 250
 			this.iterations = 25
+			this.progress = 0
 
 			if (open) {
 				this.activeNode = copy(this.node)
@@ -288,6 +291,9 @@ export default {
 		onProgress(data) {
 			// eslint-disable-next-line no-unused-vars
 			this.statistics = data.args[0]
+			this.progress = Math.round(
+				(this.statistics.rounds / this.iterations) * 100,
+			)
 		},
 		async abortLinkReliabilityCheck() {
 			const response = await this.app.apiRequest(
@@ -321,6 +327,7 @@ export default {
 			)
 
 			this.running = false
+			this.progress = 0
 
 			if (response.success) {
 				this.statistics = response.result
