@@ -86,7 +86,7 @@
 						<v-list dense>
 							<v-list-item>
 								<v-list-item-content>
-									<v-list-item-title
+									<v-list-item-title class="info--text"
 										>Commands Sent</v-list-item-title
 									>
 									<v-list-item-subtitle>{{
@@ -96,7 +96,7 @@
 							</v-list-item>
 							<v-list-item>
 								<v-list-item-content>
-									<v-list-item-title
+									<v-list-item-title class="error--text"
 										>Failed Commands</v-list-item-title
 									>
 									<v-list-item-subtitle
@@ -115,7 +115,7 @@
 								v-if="statistics?.missingResponses != undefined"
 							>
 								<v-list-item-content>
-									<v-list-item-title
+									<v-list-item-title class="error--text"
 										>Missing Responses</v-list-item-title
 									>
 									<v-list-item-subtitle
