@@ -546,7 +546,19 @@ const useBaseStore = defineStore('base', {
 		init(data) {
 			if (data) {
 				if (data.tz) {
-					this.tz = data.tz
+					// validate timezone
+					try {
+						new Intl.DateTimeFormat(undefined, {
+							timeZone: data.tz,
+						})
+						this.tz = data.tz
+					} catch (e) {
+						log.error('Invalid timezone:', data.tz)
+						this.showSnackbar(
+							`Invalid timezone: ${data.tz}`,
+							'error',
+						)
+					}
 				}
 
 				if (data.locale) {
