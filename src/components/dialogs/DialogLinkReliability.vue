@@ -59,16 +59,16 @@
 						</v-col>
 					</v-row>
 
-					<v-row class="mb-2" justify="space-around">
+					<v-row class="mb-4" justify="space-around">
 						<v-btn
-							color="green darken-1"
+							color="success"
 							@click="checkLinkReliability"
 							:disabled="running"
 							:loading="running"
 							>Run</v-btn
 						>
 						<v-btn
-							color="red darken-1"
+							color="error"
 							@click="abortLinkReliabilityCheck"
 							:disabled="!running"
 							>Stop</v-btn
