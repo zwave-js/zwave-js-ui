@@ -1,5 +1,20 @@
 
 
+# [9.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.6...v9.15.0) (2024-07-17)
+
+
+### Bug Fixes
+
+* **ui:** do not allow to call `rebuildNodeRoutes` to multiple nodes ([9c80bd3](https://github.com/zwave-js/zwave-js-ui/commit/9c80bd30e322e7bdbe8de17d4a214c706b2eb28d)), closes [#3559](https://github.com/zwave-js/zwave-js-ui/issues/3559)
+* **ui:** validate timezone on ui ([1c315ea](https://github.com/zwave-js/zwave-js-ui/commit/1c315ea34a6dc9a7dd1b87fc727e90ff04263b77)), closes [#3807](https://github.com/zwave-js/zwave-js-ui/issues/3807)
+
+
+### Features
+
+* bump zwave-js@12.12.5 ([#3811](https://github.com/zwave-js/zwave-js-ui/issues/3811)) ([7061e91](https://github.com/zwave-js/zwave-js-ui/commit/7061e91f069178d4e1269ef15417b80280bdf139))
+* bump zwave-js@12.13.0 ([#3815](https://github.com/zwave-js/zwave-js-ui/issues/3815)) ([07404d5](https://github.com/zwave-js/zwave-js-ui/commit/07404d5db5e3e1497dcc4ab77a84a72a9c610b17))
+* link reliability checks ([#3814](https://github.com/zwave-js/zwave-js-ui/issues/3814)) ([f2fc6d6](https://github.com/zwave-js/zwave-js-ui/commit/f2fc6d6984706c22ecb494ba7848a85c1af5b354))
+
 ## [9.14.6](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.5...v9.14.6) (2024-07-11)
 
 
