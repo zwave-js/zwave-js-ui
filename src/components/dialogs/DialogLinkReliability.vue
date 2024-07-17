@@ -11,9 +11,10 @@
 			<v-card-text>
 				<v-container>
 					<v-row class="ma-3" justify="start">
-						<v-col cols="6">
+						<v-col cols="12">
 							<v-select
 								label="Mode"
+								style="max-width: 325px"
 								v-model="mode"
 								:items="modes"
 								persistent-hint
@@ -21,28 +22,15 @@
 						</v-col>
 
 						<v-col cols="6">
-							<v-text-field
-								label="Interval"
-								v-model.number="interval"
-								suffix="ms"
-								type="number"
-								:min="1"
-								:max="10000"
-								persistent-hint
-							></v-text-field>
-						</v-col>
-
-						<v-col cols="6">
 							<v-radio-group
 								class="justify-center"
-								row
 								v-model="infinite"
 							>
 								<v-radio
 									label="Infinite"
 									:value="true"
 								></v-radio>
-								<v-radio label="" :value="false">
+								<v-radio label="XX" :value="false">
 									<template v-slot:label>
 										<v-text-field
 											:disabled="infinite"
@@ -56,6 +44,18 @@
 									</template>
 								</v-radio>
 							</v-radio-group>
+						</v-col>
+
+						<v-col cols="6" class="justify-center">
+							<v-text-field
+								label="Interval"
+								v-model.number="interval"
+								suffix="ms"
+								type="number"
+								:min="1"
+								:max="10000"
+								persistent-hint
+							></v-text-field>
 						</v-col>
 					</v-row>
 
@@ -77,7 +77,12 @@
 
 					<v-divider></v-divider>
 
-					<v-row v-if="statistics" class="ma-3" justify="start">
+					<v-row v-if="statistics" class="ma-3" justify="center">
+						<v-progress-linear
+							v-if="running"
+							indeterminate
+							color="green darken-1"
+						></v-progress-linear>
 						<v-list dense>
 							<v-list-item>
 								<v-list-item-content>
@@ -290,12 +295,15 @@ export default {
 				[this.activeNode.id],
 			)
 
+			this.running = false
+
 			if (response.success) {
 				this.showSnackbar('Link statistics aborted', 'success')
-				this.running = false
 			}
 		},
 		async checkLinkReliability() {
+			this.running = true
+
 			const response = await this.app.apiRequest(
 				`checkLinkReliability`,
 				[
@@ -312,9 +320,10 @@ export default {
 				},
 			)
 
+			this.running = false
+
 			if (response.success) {
 				this.statistics = response.result
-				this.running = true
 			} else {
 				this.showSnackbar(
 					response.message || 'Health check failed',
