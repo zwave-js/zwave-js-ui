@@ -65,7 +65,7 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@kvaster/zwavejs-prom": "^0.0.2",
     "@mdi/js": "7.4.47",
-    "@zwave-js/server": "github:zwave-js/zwave-js-server#zwave-js-13",
+    "@zwave-js/server": "^1.37.0",
     "@zwave-js/winston-daily-rotate-file": "^4.5.6-1",
     "ansi_up": "^6.0.2",
     "archiver": "^7.0.1",
@@ -110,7 +110,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
-    "zwave-js": "^13.0.0-beta.6"
+    "zwave-js": "^13.0.0"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
