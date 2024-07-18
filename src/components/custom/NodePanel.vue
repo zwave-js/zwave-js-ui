@@ -293,6 +293,16 @@
 						<v-icon>monitor_heart</v-icon>
 					</v-btn>
 				</v-col>
+				<v-col class="pa-1">
+					<v-btn
+						color="purple"
+						small
+						rounded
+						@click="dialogLinkReliability = true"
+						>Link Statistics
+						<v-icon>leak_add</v-icon>
+					</v-btn>
+				</v-col>
 				<v-col v-if="!isLongRange" class="pa-1">
 					<v-btn
 						color="error"
@@ -341,6 +351,15 @@
 			:socket="socket"
 			:node="node"
 		/>
+
+		<dialog-link-reliability
+			v-if="node && !node.isControllerNode"
+			v-model="dialogLinkReliability"
+			@close="dialogLinkReliability = false"
+			:socket="socket"
+			:node="node"
+		/>
+
 		<v-dialog
 			fullscreen
 			persistent
@@ -398,6 +417,8 @@ export default {
 		BgRssiChart: () => import('@/components/custom/BgRssiChart.vue'),
 		DialogHealthCheck: () =>
 			import('@/components/dialogs/DialogHealthCheck.vue'),
+		DialogLinkReliability: () =>
+			import('@/components/dialogs/DialogLinkReliability.vue'),
 		draggable,
 	},
 	props: {
@@ -416,6 +437,7 @@ export default {
 	data: () => ({
 		showFullscreen: false,
 		dialogHealth: false,
+		dialogLinkReliability: false,
 		discoverLoading: false,
 		routesChanged: false,
 		returnRoutes: [],
