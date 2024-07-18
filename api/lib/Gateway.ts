@@ -1566,7 +1566,6 @@ export default class Gateway {
 						if (valueId.ccSpecific) {
 							sensor = Constants.meterType(
 								valueId.ccSpecific as IMeterCCSpecific,
-								this._zwave.driver.configManager,
 							)
 
 							sensor.objectId += '_' + valueId.property

@@ -9,12 +9,7 @@ import jsonStore from './lib/jsonStore'
 import * as loggers from './lib/logger'
 import MqttClient from './lib/MqttClient'
 import SocketManager from './lib/SocketManager'
-import ZWaveClient, {
-	CallAPIResult,
-	configManager,
-	loadManager,
-	SensorTypeScale,
-} from './lib/ZwaveClient'
+import ZWaveClient, { CallAPIResult, SensorTypeScale } from './lib/ZwaveClient'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
@@ -49,6 +44,7 @@ import backupManager from './lib/BackupManager'
 import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
 import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager'
+import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 
 const createCertificate = promisify(generate)
 
@@ -258,7 +254,6 @@ export async function startServer(port: number | string, host?: string) {
 	setupSocket(server)
 	setupInterceptor()
 	await loadSnippets()
-	await loadManager()
 	startZniffer(settings.zniffer)
 	await startGateway(settings)
 }
@@ -1061,15 +1056,15 @@ app.get(
 	apisLimiter,
 	isAuthenticated,
 	async function (req, res) {
-		const sensorTypes = configManager.sensorTypes
-		const sensorScalesGroups = configManager.namedScales
+		const allSensors = getAllSensors()
+		const namedScaleGroups = getAllNamedScaleGroups()
 
 		const scales: SensorTypeScale[] = []
 
-		for (const [key, group] of sensorScalesGroups) {
-			for (const [, scale] of group) {
+		for (const group of namedScaleGroups) {
+			for (const scale of Object.values(group.scales)) {
 				scales.push({
-					key: key,
+					key: group.name,
 					sensor: group.name,
 					unit: scale.unit,
 					label: scale.label,
@@ -1078,8 +1073,8 @@ app.get(
 			}
 		}
 
-		for (const [, sensor] of sensorTypes) {
-			for (const [, scale] of sensor.scales) {
+		for (const sensor of allSensors) {
+			for (const scale of Object.values(sensor.scales)) {
 				scales.push({
 					key: sensor.key,
 					sensor: sensor.label,

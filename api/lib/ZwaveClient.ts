@@ -102,6 +102,7 @@ import {
 	InclusionUserCallbacks,
 	InclusionState,
 	ProvisioningEntryStatus,
+	AssociationCheckResult,
 	LinkReliabilityCheckResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
@@ -127,11 +128,6 @@ export const deviceConfigPriorityDir = storeDir + '/config'
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
 })
-
-export async function loadManager() {
-	await configManager.loadNamedScales()
-	await configManager.loadSensorTypes()
-}
 
 const logger = LogManager.module('Z-Wave')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -162,6 +158,7 @@ export const allowedApis = validateMethods([
 	'getNodeNeighbors',
 	'discoverNodeNeighbors',
 	'getAssociations',
+	'checkAssociation',
 	'addAssociations',
 	'removeAssociations',
 	'removeAllAssociations',
@@ -1764,6 +1761,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Check if a given association is allowed
+	 */
+	checkAssociation(
+		source: AssociationAddress,
+		groupId: number,
+		association: AssociationAddress,
+	) {
+		return this.driver.controller.checkAssociation(
+			source,
+			groupId,
+			association,
+		)
+	}
+
+	/**
 	 * Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
 	 */
 	async addAssociations(
@@ -1778,53 +1790,41 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
 		}`
 
-		if (zwaveNode) {
-			try {
-				for (const a of associations) {
-					if (
-						this._driver.controller.isAssociationAllowed(
-							source,
-							groupId,
-							a,
-						)
-					) {
-						this.logNode(
-							zwaveNode,
-							'info',
-							`Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`,
-						)
+		if (!zwaveNode) {
+			throw new Error(`Node ${source.nodeId} not found`)
+		}
 
-						await this._driver.controller.addAssociations(
-							source,
-							groupId,
-							[a],
-						)
+		const result: AssociationCheckResult[] = []
 
-						return true
-					} else {
-						this.logNode(
-							zwaveNode,
-							'warn',
-							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}, association not allowed`,
-						)
-					}
-				}
-			} catch (error) {
+		for (const a of associations) {
+			const checkResult = this._driver.controller.checkAssociation(
+				source,
+				groupId,
+				a,
+			)
+
+			result.push(checkResult)
+
+			if (checkResult === AssociationCheckResult.OK) {
+				this.logNode(
+					zwaveNode,
+					'info',
+					`Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`,
+				)
+
+				await this._driver.controller.addAssociations(source, groupId, [
+					a,
+				])
+			} else {
 				this.logNode(
 					zwaveNode,
 					'warn',
-					`Error while adding associations to ${sourceMsg}: ${error.message}`,
+					`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}: ${getEnumMemberName(AssociationCheckResult, checkResult)}`,
 				)
 			}
-		} else {
-			this.logNode(
-				zwaveNode,
-				'warn',
-				`Error while adding associations to ${sourceMsg}, node not found`,
-			)
 		}
 
-		return false
+		return result
 	}
 
 	/**
@@ -4631,7 +4631,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	private _onInclusionStarted(secure: boolean) {
+	private _onInclusionStarted(strategy: InclusionStrategy) {
+		const secure = strategy !== InclusionStrategy.Insecure
 		const message = `${secure ? 'Secure' : 'Non-secure'} inclusion started`
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion started', secure)
@@ -5612,7 +5613,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				endpoint.nodeId,
 				'error',
-				`Notification received but node doesn't exists`,
+				`Notification received but node doesn't exist`,
 			)
 
 			return
@@ -6026,7 +6027,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.keepAwake = zwaveNode.keepAwake
 		node.maxDataRate = zwaveNode.maxDataRate
 		node.deviceClass = {
-			basic: zwaveNode.deviceClass?.basic.key,
+			basic: zwaveNode.deviceClass?.basic,
 			generic: zwaveNode.deviceClass?.generic.key,
 			specific: zwaveNode.deviceClass?.specific.key,
 		}
