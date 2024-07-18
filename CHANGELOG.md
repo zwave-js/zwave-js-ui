@@ -1,5 +1,13 @@
 
 
+# [9.16.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.15.0...v9.16.0) (2024-07-18)
+
+
+### Features
+
+* support for Z-Wave JS v13 ([#3799](https://github.com/zwave-js/zwave-js-ui/issues/3799)) ([35f5e7c](https://github.com/zwave-js/zwave-js-ui/commit/35f5e7c43811bf3c7f5136c6c5b9d453aedbd97a))
+* **ui:** show association error in association dialog ([#3804](https://github.com/zwave-js/zwave-js-ui/issues/3804)) ([f919273](https://github.com/zwave-js/zwave-js-ui/commit/f919273448bfc82745fba4e1a6029a933c75765a))
+
 # [9.15.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.14.6...v9.15.0) (2024-07-17)
 
 
