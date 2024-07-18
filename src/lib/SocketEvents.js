@@ -21,6 +21,7 @@ export const socketEvents = Object.freeze({
 	inclusionAborted: 'INCLUSION_ABORTED',
 	znifferFrame: 'ZNIFFER_FRAME',
 	znifferState: 'ZNIFFER_STATE',
+	linkReliability: 'LINK_RELIABILITY',
 })
 
 // events from client ---> server
