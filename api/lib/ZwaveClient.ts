@@ -158,6 +158,7 @@ export const allowedApis = validateMethods([
 	'getNodeNeighbors',
 	'discoverNodeNeighbors',
 	'getAssociations',
+	'checkAssociation',
 	'addAssociations',
 	'removeAssociations',
 	'removeAllAssociations',
@@ -1757,6 +1758,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		return toReturn
+	}
+
+	/**
+	 * Check if a given association is allowed
+	 */
+	checkAssociation(
+		source: AssociationAddress,
+		groupId: number,
+		association: AssociationAddress,
+	) {
+		return this.driver.controller.checkAssociation(
+			source,
+			groupId,
+			association,
+		)
 	}
 
 	/**

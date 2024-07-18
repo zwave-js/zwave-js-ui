@@ -81,6 +81,7 @@ import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { getEnumMemberName } from 'zwave-js/safe'
 import { AssociationCheckResult } from '@zwave-js/cc/safe'
+import { getAssociationAddress } from '../../lib/utils'
 
 export default {
 	components: {
@@ -112,12 +113,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		getAssociationAddress(ass) {
-			return {
-				nodeId: ass.nodeId,
-				endpoint: ass.endpoint === null ? undefined : ass.endpoint,
-			}
-		},
+		getAssociationAddress,
 		getNodeName(nodeId) {
 			const node = this.nodes[this.nodesMap.get(nodeId)]
 			return node ? node._name : 'NodeID_' + nodeId
