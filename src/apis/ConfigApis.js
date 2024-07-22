@@ -66,7 +66,7 @@ export default {
 				Accept: 'application/json',
 			},
 		})
-		if (response.type === 'opaqueredirect') {
+		if (response.type === 'opaqueredirect' || response.status === 401) {
 			throw new axios.AxiosError(
 				'Caught redirect for auth-enabled, rethrowing',
 				response.status,
