@@ -143,7 +143,7 @@
 										<th class="text-left">Avg</th>
 									</tr>
 								</thead>
-								<tbody>
+								<tbody v-if="statistics.latency">
 									<tr>
 										<td>Latency [ms]</td>
 										<td>{{ statistics.latency.min }}</td>
@@ -152,6 +152,18 @@
 											{{
 												Math.round(
 													statistics.latency.average,
+												)
+											}}
+										</td>
+									</tr>
+									<tr>
+										<td>Round-Trip Time [ms]</td>
+										<td>{{ statistics.rtt.min }}</td>
+										<td>{{ statistics.rtt.max }}</td>
+										<td>
+											{{
+												Math.round(
+													statistics.rtt.average,
 												)
 											}}
 										</td>
