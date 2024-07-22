@@ -5,7 +5,7 @@
 				:style="bStyle"
 				v-on="on"
 				@click.stop="
-					$emit('action', 'refreshInfo', {
+					sendAction('refreshInfo', {
 						nodeId: node.id,
 					})
 				"
@@ -24,7 +24,9 @@
 </template>
 
 <script>
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
+	mixins: [InstancesMixin],
 	props: {
 		node: {
 			type: Object,
