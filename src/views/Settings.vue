@@ -1365,12 +1365,12 @@
 			</v-expansion-panels>
 
 			<v-container cols="12" sm="6" class="ml-1">
-				<v-switch
-					hint="Enable this to use Z-Wave JS UI only as Control Panel"
+				<inverted-checkbox
 					persistent-hint
-					label="Disable MQTT Gateway"
+					label="MQTT Gateway"
+					hint="Enable MQTT gateway"
 					v-model="newMqtt.disabled"
-				></v-switch>
+				></inverted-checkbox>
 			</v-container>
 
 			<v-expansion-panels
@@ -1909,6 +1909,8 @@ export default {
 		DialogGatewayValue: () =>
 			import('@/components/dialogs/DialogGatewayValue.vue'),
 		fileInput: () => import('@/components/custom/file-input.vue'),
+		invertedCheckbox: () =>
+			import('@/components/custom/InvertedCheckbox.vue'),
 	},
 	props: {
 		socket: {
