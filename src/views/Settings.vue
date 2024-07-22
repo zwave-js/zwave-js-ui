@@ -1735,14 +1735,14 @@
 										v-if="newZwave.serverEnabled"
 										cols="6"
 									>
-										<v-switch
-											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
+										<inverted-checkbox
+											hint="Allows applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
 											persistent-hint
-											label="Disable DNS Discovery"
+											label="DNS Discovery"
 											v-model="
 												newZwave.serverServiceDiscoveryDisabled
 											"
-										></v-switch>
+										></inverted-checkbox>
 									</v-col>
 								</v-row>
 								<v-row v-if="!newMqtt.disabled">
