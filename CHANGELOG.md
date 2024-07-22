@@ -1,5 +1,20 @@
 
 
+## [9.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.1...v9.16.2) (2024-07-22)
+
+
+### Bug Fixes
+
+* **ui:** loading animation stay infinitely on ([3bcbd8b](https://github.com/zwave-js/zwave-js-ui/commit/3bcbd8b6c9e642828fec6aa38ecb467ae9448fcb)), closes [#3791](https://github.com/zwave-js/zwave-js-ui/issues/3791)
+* **ui:** re-interview badge not working ([cac4a0d](https://github.com/zwave-js/zwave-js-ui/commit/cac4a0d118699bfb03399c55e7253ca672de3643)), closes [#3819](https://github.com/zwave-js/zwave-js-ui/issues/3819)
+* **ui:** unable to add association ([903ed58](https://github.com/zwave-js/zwave-js-ui/commit/903ed5802ecd279cc86f8c29a2ce637245061ba6)), closes [#3822](https://github.com/zwave-js/zwave-js-ui/issues/3822)
+* **ui:** use inverted checkbox to clarify settings ([#3823](https://github.com/zwave-js/zwave-js-ui/issues/3823)) ([7b48ad9](https://github.com/zwave-js/zwave-js-ui/commit/7b48ad9eb33dd4b6729fca269f2874d5eb226a7f))
+
+
+### Features
+
+* support link check modifications in zwave-js 13.0.2 ([#3824](https://github.com/zwave-js/zwave-js-ui/issues/3824)) ([0eb63a7](https://github.com/zwave-js/zwave-js-ui/commit/0eb63a71c4f1794a2ebf5a62494e720088947578))
+
 ## [9.16.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.0...v9.16.1) (2024-07-19)
 
 
