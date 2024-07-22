@@ -114,7 +114,7 @@
 				<v-btn
 					color="blue darken-1"
 					text
-					:disabled="nodesInGroup >= maxNodes || associationError"
+					:disabled="nodesInGroup >= maxNodes || !!associationError"
 					@click="$refs.form.validate() && $emit('add', group)"
 					>ADD</v-btn
 				>
