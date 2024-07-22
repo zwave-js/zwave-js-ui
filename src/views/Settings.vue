@@ -1365,12 +1365,12 @@
 			</v-expansion-panels>
 
 			<v-container cols="12" sm="6" class="ml-1">
-				<v-switch
-					hint="Enable this to use Z-Wave JS UI only as Control Panel"
+				<inverted-checkbox
 					persistent-hint
-					label="Disable MQTT Gateway"
+					label="MQTT Gateway"
+					hint="Enable MQTT gateway"
 					v-model="newMqtt.disabled"
-				></v-switch>
+				></inverted-checkbox>
 			</v-container>
 
 			<v-expansion-panels
@@ -1735,14 +1735,14 @@
 										v-if="newZwave.serverEnabled"
 										cols="6"
 									>
-										<v-switch
-											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
+										<inverted-checkbox
+											hint="Allows applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
 											persistent-hint
-											label="Disable DNS Discovery"
+											label="DNS Discovery"
 											v-model="
 												newZwave.serverServiceDiscoveryDisabled
 											"
-										></v-switch>
+										></inverted-checkbox>
 									</v-col>
 								</v-row>
 								<v-row v-if="!newMqtt.disabled">
@@ -1909,6 +1909,8 @@ export default {
 		DialogGatewayValue: () =>
 			import('@/components/dialogs/DialogGatewayValue.vue'),
 		fileInput: () => import('@/components/custom/file-input.vue'),
+		invertedCheckbox: () =>
+			import('@/components/custom/InvertedCheckbox.vue'),
 	},
 	props: {
 		socket: {
