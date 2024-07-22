@@ -19,6 +19,13 @@ export default function loadProgressBar(config, instance = axios) {
 		const update = (e) => {
 			const { loaded, total } = e
 
+			// for some reason (maybe a race condition) seems we can get
+			// events emitted even when request is already closed
+			// fixes #3791
+			if (requestsCounter === 0) {
+				return
+			}
+
 			// sometimes `total` is undefined, in that case simply call `inc` without params
 			if (loaded !== undefined && total !== undefined) {
 				NProgress.set(calculatePercentage(loaded, total))
