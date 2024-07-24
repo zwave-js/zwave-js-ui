@@ -671,7 +671,7 @@ export default {
 				}
 
 				this.updateItem(item)
-			} else {
+			} else if (Object.keys(item).length > 0 && !item.dsk) {
 				this.showSnackbar('DSK is required', 'error')
 			}
 		},
