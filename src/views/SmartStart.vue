@@ -634,10 +634,6 @@ export default {
 				]
 			}
 
-			if (existingItem && existingItem.supportedProtocols?.length < 2) {
-				inputs.splice(3, 1)
-			}
-
 			let item = await this.app.confirm(
 				(existingItem ? 'Update' : 'New') + ' entry',
 				'',
