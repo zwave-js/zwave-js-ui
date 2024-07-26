@@ -2129,8 +2129,8 @@ export default {
 				validNodeLog: (values) => {
 					return (
 						!values ||
-						values.every((v) => v > 0 && v < 233) ||
-						'Nodes must be between 1-232'
+						values.every((v) => v > 0 && v < 4000) ||
+						'Nodes must be between 1-4000'
 					)
 				},
 				validName: (value) => {
