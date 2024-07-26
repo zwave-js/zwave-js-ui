@@ -1,5 +1,15 @@
 
 
+## [9.16.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.2...v9.16.3) (2024-07-26)
+
+
+### Bug Fixes
+
+* **ui:** hidden security classes inputs when editing provisioning entry ([a038ab1](https://github.com/zwave-js/zwave-js-ui/commit/a038ab183e96199b85fb5048d214eea8f87618cf))
+* **ui:** star image not visible on HA Addon ([2ffc1e5](https://github.com/zwave-js/zwave-js-ui/commit/2ffc1e55db98afb2a383bfb83813b72f0376fe19)), closes [#3492](https://github.com/zwave-js/zwave-js-ui/issues/3492)
+* **ui:** trigger page reload on 401 (fix basic auth) ([#3825](https://github.com/zwave-js/zwave-js-ui/issues/3825)) ([176ef24](https://github.com/zwave-js/zwave-js-ui/commit/176ef248cdc87c1c7857a66c3fba37f34eca99ae))
+* **ui:** wrong dsk error when editing provisioning entries ([549de6b](https://github.com/zwave-js/zwave-js-ui/commit/549de6bc8d387266c4befa6d4081ab652ea4fa19))
+
 ## [9.16.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.1...v9.16.2) (2024-07-22)
 
 
