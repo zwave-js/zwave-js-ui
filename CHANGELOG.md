@@ -1,5 +1,12 @@
 
 
+## [9.16.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.3...v9.16.4) (2024-07-30)
+
+
+### Bug Fixes
+
+* **ui:** log nodes rules to allow ids up to 4k ([942df8b](https://github.com/zwave-js/zwave-js-ui/commit/942df8b92c7cfcad8a5b8acae618dec0c13718ce)), closes [#3827](https://github.com/zwave-js/zwave-js-ui/issues/3827)
+
 ## [9.16.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.2...v9.16.3) (2024-07-26)
 
 
