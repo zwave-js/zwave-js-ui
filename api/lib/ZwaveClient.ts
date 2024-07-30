@@ -729,8 +729,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
 		abort: this._onAbortInclusion.bind(this),
 	}
-	private _inclusionStateInterval: NodeJS.Timeout
-
 	private _inclusionState: InclusionState = undefined
 
 	private _controllerListenersAdded: boolean = false
@@ -1134,11 +1132,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.status = ZwaveClientStatus.CLOSED
 		this.closed = true
 		this.driverReady = false
-
-		if (this._inclusionStateInterval) {
-			clearInterval(this._inclusionStateInterval)
-			this._inclusionStateInterval = null
-		}
 
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
@@ -2384,6 +2377,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			process.nextTick(() => {
 				this.socket.emit(evtName, data, ...args)
 			})
+		}
+	}
+
+	private async sendInitToSockets() {
+		const sockets = await this.socket.fetchSockets()
+
+		for (const socket of sockets) {
+			// force send init to all connected sockets
+			socket.emit(socketEvents.init, this.getState())
 		}
 	}
 
@@ -4293,26 +4295,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._updateControllerStatus('Driver ready')
 
-		if (!this._inclusionStateInterval) {
-			this._inclusionStateInterval = setInterval(() => {
-				if (!this.driverReady) return
-
-				if (
-					this._driver.controller.inclusionState !==
-					this._inclusionState
-				) {
-					this._inclusionState =
-						this._driver.controller.inclusionState
-
-					this.sendToSocket(socketEvents.controller, {
-						status: this._cntStatus,
-						error: this._error,
-						inclusionState: this._inclusionState,
-					})
-				}
-			}, 2000)
-		}
-
 		try {
 			// this must be done only after driver is ready
 			this._scheduledConfigCheck().catch(() => {
@@ -4337,6 +4319,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					.on(
 						'exclusion stopped',
 						this._onExclusionStopped.bind(this),
+					)
+					.on(
+						'inclusion state changed',
+						this._onInclusionStateChanged.bind(this),
 					)
 					.on('inclusion failed', this._onInclusionFailed.bind(this))
 					.on('exclusion failed', this._onExclusionFailed.bind(this))
@@ -4417,12 +4403,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 
-		const sockets = await this.socket.fetchSockets()
-
-		for (const socket of sockets) {
-			// force send init to all connected sockets
-			socket.emit(socketEvents.init, this.getState())
-		}
+		await this.sendInitToSockets()
 
 		this.loadFakeNodes().catch((e) => {
 			logger.error(`Error while loading fake nodes: ${e.message}`)
@@ -4655,6 +4636,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const message = 'Exclusion stopped'
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'exclusion stopped')
+	}
+
+	private _onInclusionStateChanged(state: InclusionState) {
+		if (state !== this._inclusionState) {
+			this._inclusionState = state
+
+			this.sendToSocket(socketEvents.controller, {
+				status: this._cntStatus,
+				error: this._error,
+				inclusionState: this._inclusionState,
+			})
+		}
 	}
 
 	private _onInclusionFailed() {
