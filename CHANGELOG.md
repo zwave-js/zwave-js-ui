@@ -1,5 +1,14 @@
 
 
+# [9.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.4...v9.17.0) (2024-08-07)
+
+
+### Features
+
+* bump zwave-js@13.0.3 ([#3832](https://github.com/zwave-js/zwave-js-ui/issues/3832)) ([2aa3adc](https://github.com/zwave-js/zwave-js-ui/commit/2aa3adc743cccb8b0474e6f64d306183ab379c2d))
+* bump zwave-js@13.1.0 ([#3839](https://github.com/zwave-js/zwave-js-ui/issues/3839)) ([e590d88](https://github.com/zwave-js/zwave-js-ui/commit/e590d88ed996a8d0b8b0d0342edec9c28b29f529))
+* use `inclusion state changed` event ([#3833](https://github.com/zwave-js/zwave-js-ui/issues/3833)) ([a452b02](https://github.com/zwave-js/zwave-js-ui/commit/a452b024f0f88b1afc523b691924c81e149f62f7))
+
 ## [9.16.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.3...v9.16.4) (2024-07-30)
 
 
