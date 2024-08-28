@@ -137,6 +137,7 @@ const useBaseStore = defineStore('base', {
 			darkMode: settings.load('dark', false),
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
+			streamerMode: settings.load('streamerMode', false),
 		},
 	}),
 	getters: {
@@ -591,6 +592,10 @@ const useBaseStore = defineStore('base', {
 		setNavTabs(value) {
 			settings.store('navTabs', value)
 			this.ui.navTabs = value
+		},
+		setStreamerMode(value) {
+			settings.store('streamerMode', value)
+			this.ui.streamerMode = value
 		},
 		setCompactMode(value) {
 			settings.store('compact', value)

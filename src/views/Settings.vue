@@ -47,6 +47,14 @@
 									v-model="internalNavTabs"
 								></v-switch>
 							</v-col>
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable this to hide sensitive informations from the UI"
+									persistent-hint
+									label="Streamer mode"
+									v-model="internalStreamerMode"
+								></v-switch>
+							</v-col>
 						</v-row>
 					</v-expansion-panel-content>
 					<v-divider />
@@ -569,6 +577,11 @@
 												]"
 												persistent-hint
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Unauthenticated',
@@ -601,6 +614,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -632,6 +650,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -659,6 +682,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S0_Legacy',
@@ -704,6 +732,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -736,6 +769,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -1094,6 +1132,11 @@
 												]"
 												persistent-hint
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Unauthenticated',
@@ -1126,6 +1169,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -1157,6 +1205,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -1184,6 +1237,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S0_Legacy',
@@ -1229,6 +1287,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -1261,6 +1324,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -1935,6 +2003,14 @@ export default {
 				this.setNavTabs(value)
 			},
 		},
+		internalStreamerMode: {
+			get() {
+				return this.streamerMode
+			},
+			set(value) {
+				this.setStreamerMode(value)
+			},
+		},
 		filteredScales() {
 			if (this.newZwave.scales && this.newZwave.scales.length > 0) {
 				return this.scales.filter(
@@ -2018,6 +2094,7 @@ export default {
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
 			navTabs: (store) => store.ui.navTabs,
+			streamerMode: (store) => store.ui.streamerMode,
 		}),
 	},
 	watch: {
@@ -2171,6 +2248,7 @@ export default {
 		...mapActions(useBaseStore, [
 			'setDarkMode',
 			'setNavTabs',
+			'setStreamerMode',
 			'initSettings',
 			'init',
 			'showSnackbar',
