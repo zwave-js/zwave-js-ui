@@ -137,7 +137,7 @@ const useBaseStore = defineStore('base', {
 			darkMode: settings.load('dark', false),
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
-			streamerMode: false,
+			streamerMode: settings.load('streamerMode', false),
 		},
 	}),
 	getters: {
