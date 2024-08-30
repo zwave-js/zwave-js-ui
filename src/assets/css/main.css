@@ -9,6 +9,11 @@
   padding-right: 10;
 }
 
+/* hide scroolbars on body */
+body::-webkit-scrollbar {
+  display: none;
+}
+
 ::-webkit-scrollbar-thumb {
   background: black;
   border-radius: 1ex;
@@ -27,11 +32,11 @@ https://syntackle.com/blog/changes-to-scrollbar-styling-in-chrome-121/
 }
 
 /* Hacky hack. Remove scrollbars for 320 width screens */
-@media screen and (max-width: 320px) {
+/* @media screen and (max-width: 320px) {
   body::-webkit-scrollbar {
     display: none;
   }
-}
+} */
 
 .mono {
 	font-family: Fira Code, Consolas, 'Andale Mono WT', 'Andale Mono',

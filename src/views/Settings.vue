@@ -1,10 +1,11 @@
 <template>
-	<v-container fluid grid-list-md class="pa-4 pt-8">
+	<v-container fluid grid-list-md class="pt-8 px-0">
 		<v-form
 			id="form_settings"
 			@submit.prevent="update"
 			v-model="valid_zwave"
 			ref="form_settings"
+			class="pb-6 mx-2"
 		>
 			<v-expansion-panels
 				accordion
@@ -1432,14 +1433,14 @@
 				</v-expansion-panel>
 			</v-expansion-panels>
 
-			<v-container cols="12" sm="6" class="ml-1">
+			<v-col cols="12" sm="6" class="ml-1">
 				<inverted-checkbox
 					persistent-hint
 					label="MQTT Gateway"
 					hint="Enable MQTT gateway"
 					v-model="newMqtt.disabled"
 				></inverted-checkbox>
-			</v-container>
+			</v-col>
 
 			<v-expansion-panels
 				accordion
@@ -1908,45 +1909,43 @@
 				:devices="devices"
 			/>
 		</v-form>
-
 		<v-row
 			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
-			class="mt-2 mb-3"
+			space-be
+			class="sticky-buttons py-3 px-4"
+			:style="{
+				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
+			}"
 		>
-			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
-				color="red darken-1"
-				text
-				@click="resetConfig"
-			>
+			<v-btn class="mr-2" small color="red darken-1" @click="resetConfig">
 				Reset
 				<v-icon right dark>clear</v-icon>
 			</v-btn>
 			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
+				class="mr-2"
+				small
 				color="purple darken-1"
-				text
 				@click="importSettings"
 			>
 				Import
 				<v-icon right dark>file_upload</v-icon>
 			</v-btn>
 			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
+				class="mr-2"
+				small
 				color="green darken-1"
-				text
 				@click="exportSettings"
 			>
 				Export
 				<v-icon right dark>file_download</v-icon>
 			</v-btn>
 			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
+				class="mr-5"
+				small
 				color="blue darken-1"
-				text
 				type="submit"
 				:loading="saving"
-				:disabled="saving"
+				:disabled="saving || !settingsChanged"
 				form="form_settings"
 			>
 				Save
@@ -1960,7 +1959,7 @@
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
-import { wait, copy, isUndef } from '../lib/utils'
+import { wait, copy, isUndef, deepEqual } from '../lib/utils'
 import { rfRegions, znifferRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
@@ -2010,6 +2009,15 @@ export default {
 			set(value) {
 				this.setStreamerMode(value)
 			},
+		},
+		settingsChanged() {
+			if (!deepEqual(this.newMqtt, this.mqtt)) return true
+			if (!deepEqual(this.newGateway, this.gateway)) return true
+			if (!deepEqual(this.newZwave, this.zwave)) return true
+			if (!deepEqual(this.newBackup, this.backup)) return true
+			if (!deepEqual(this.newZniffer, this.zniffer)) return true
+
+			return false
 		},
 		filteredScales() {
 			if (this.newZwave.scales && this.newZwave.scales.length > 0) {
@@ -2574,6 +2582,23 @@ export default {
 			}
 		},
 	},
+	beforeRouteLeave(to, from, next) {
+		if (this.settingsChanged) {
+			this.app
+				.confirm(
+					'Attention',
+					'You have unsaved changes. Do you really want to leave?',
+					'alert',
+				)
+				.then((res) => {
+					if (res) {
+						next()
+					}
+				})
+		} else {
+			next()
+		}
+	},
 	mounted() {
 		// hide socket status indicator from toolbar
 		this.$emit('updateStatus')
@@ -2585,5 +2610,11 @@ export default {
 <style scoped>
 .expansion-panels-outlined {
 	border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.sticky-buttons {
+	position: sticky;
+	z-index: 3; /* to be above tables */
+	bottom: 30px;
 }
 </style>
