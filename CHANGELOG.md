@@ -1,5 +1,20 @@
 
 
+# [9.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.17.0...v9.18.0) (2024-08-30)
+
+
+### Bug Fixes
+
+* **ui:** allow to perform OTW update from controller advanced actions ([5e06fee](https://github.com/zwave-js/zwave-js-ui/commit/5e06fee50f2a9381422f62654f38082db52e7a49)), closes [#3844](https://github.com/zwave-js/zwave-js-ui/issues/3844)
+
+
+### Features
+
+* bump @zwave-js/server@1.38.0 ([#3872](https://github.com/zwave-js/zwave-js-ui/issues/3872)) ([978e2b3](https://github.com/zwave-js/zwave-js-ui/commit/978e2b38db47366173152c4eb56e836a62aa8ef0))
+* bump zwave-js@13.2.0 ([#3849](https://github.com/zwave-js/zwave-js-ui/issues/3849)) ([cfcde4a](https://github.com/zwave-js/zwave-js-ui/commit/cfcde4a61113139ac2436e3d8338e9d0a6299397))
+* **ui:** add streamer mode setting to hide sensitive informations ([#3867](https://github.com/zwave-js/zwave-js-ui/issues/3867)) ([f8387b4](https://github.com/zwave-js/zwave-js-ui/commit/f8387b4caeecc269aaf3d713f6043201de552ba8))
+* **ui:** settings ui improvements ([#3871](https://github.com/zwave-js/zwave-js-ui/issues/3871)) ([fe93420](https://github.com/zwave-js/zwave-js-ui/commit/fe93420a596dc5dd96d55e1715b4326626c58ac7))
+
 # [9.17.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.16.4...v9.17.0) (2024-08-07)
 
 
