@@ -1,11 +1,11 @@
 <template>
-	<v-container fluid grid-list-md class="pa-4 pt-8">
+	<v-container fluid grid-list-md class="pt-8 px-0">
 		<v-form
 			id="form_settings"
 			@submit.prevent="update"
 			v-model="valid_zwave"
 			ref="form_settings"
-			class="pb-6"
+			class="pb-6 mx-2"
 		>
 			<v-expansion-panels
 				accordion
@@ -1912,7 +1912,10 @@
 		<v-row
 			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
 			space-be
-			class="sticky-buttons mt-2"
+			class="sticky-buttons py-3 px-4"
+			:style="{
+				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
+			}"
 		>
 			<v-btn class="mr-2" small color="red darken-1" @click="resetConfig">
 				Reset
@@ -2612,6 +2615,6 @@ export default {
 .sticky-buttons {
 	position: sticky;
 	z-index: 3; /* to be above tables */
-	bottom: 40px;
+	bottom: 30px;
 }
 </style>
