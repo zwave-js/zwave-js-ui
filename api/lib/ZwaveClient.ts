@@ -104,6 +104,7 @@ import {
 	ProvisioningEntryStatus,
 	AssociationCheckResult,
 	LinkReliabilityCheckResult,
+	DeviceClass,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -467,6 +468,7 @@ export interface FwFile {
 export interface ZUIEndpoint {
 	index: number
 	label?: string
+	deviceClass?: DeviceClass
 }
 
 export enum ZUIScheduleEntryLockMode {
@@ -6007,6 +6009,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return {
 				index: e.index,
 				label: e.endpointLabel || defaultLabel,
+				deviceClass: e.deviceClass,
 			}
 		})
 		node.isSecure = zwaveNode.isSecure
