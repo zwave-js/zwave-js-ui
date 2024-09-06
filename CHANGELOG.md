@@ -1,5 +1,12 @@
 
 
+## [9.18.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.18.0...v9.18.1) (2024-09-06)
+
+
+### Bug Fixes
+
+* **discovery:** use valueId endpoint device class for multilevel switch CC discovery ([#3877](https://github.com/zwave-js/zwave-js-ui/issues/3877)) ([a467854](https://github.com/zwave-js/zwave-js-ui/commit/a4678543e3b2ff3bb70f43aa2a5e88deb18428c2))
+
 # [9.18.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.17.0...v9.18.0) (2024-08-30)
 
 
