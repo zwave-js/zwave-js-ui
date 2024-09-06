@@ -467,6 +467,11 @@ export interface FwFile {
 export interface ZUIEndpoint {
 	index: number
 	label?: string
+	deviceClass: {
+		basic: number
+		generic: number
+		specific: number
+	}
 }
 
 export enum ZUIScheduleEntryLockMode {
@@ -6007,6 +6012,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return {
 				index: e.index,
 				label: e.endpointLabel || defaultLabel,
+				deviceClass: {
+					basic: e.deviceClass?.basic,
+					generic: e.deviceClass?.generic.key,
+					specific: e.deviceClass?.specific.key,
+				},
 			}
 		})
 		node.isSecure = zwaveNode.isSecure

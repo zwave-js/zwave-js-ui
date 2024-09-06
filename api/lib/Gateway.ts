@@ -1237,6 +1237,10 @@ export default class Gateway {
 
 			const cmdClass = valueId.commandClass
 
+			const deviceClass =
+				node.endpoints[valueId.endpoint]?.deviceClass ??
+				node.deviceClass
+
 			switch (cmdClass) {
 				case CommandClasses['Binary Switch']:
 				case CommandClasses['All Switch']:
@@ -1256,8 +1260,8 @@ export default class Gateway {
 					if (valueId.isCurrentValue) {
 						const specificDeviceClass =
 							Constants.specificDeviceClass(
-								node.deviceClass.generic,
-								node.deviceClass.specific,
+								deviceClass.generic,
+								deviceClass.specific,
 							)
 						// Use a cover_position configuration if ...
 						if (
