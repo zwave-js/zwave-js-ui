@@ -45,7 +45,6 @@ import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
 import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
-import { Writable } from 'stream'
 
 const createCertificate = promisify(generate)
 
@@ -441,14 +440,9 @@ async function destroyPlugins() {
 
 function setupInterceptor() {
 	// intercept logs and redirect them to socket
-	loggers.logStream.pipe(
-		new Writable({
-			write(chunk, encoding, callback) {
-				socketManager.io.emit(socketEvents.debug, chunk.toString())
-				callback()
-			},
-		}),
-	)
+	loggers.logStream.on('data', (chunk) => {
+		socketManager.io.emit(socketEvents.debug, chunk.toString())
+	})
 }
 
 async function parseDir(dir: string): Promise<StoreFileEntry[]> {

@@ -124,7 +124,6 @@ import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
-import { PassThrough } from 'stream'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -2268,7 +2267,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveOptions.logConfig.transports = [logTransport]
 
 		logTransport.stream.on('data', (data) => {
-			LogManager.logStream.push(Buffer.from(data.message))
+			this.socket.emit(socketEvents.debug, data.message.toString())
 		})
 
 		try {
