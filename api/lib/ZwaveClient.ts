@@ -16,7 +16,9 @@ import {
 	ZWaveDataRate,
 	ZWaveErrorCodes,
 	Protocols,
+	createDefaultTransportFormat,
 } from '@zwave-js/core'
+import { JSONTransport } from '@zwave-js/log-transport-json'
 import { isDocker } from '@zwave-js/shared'
 import {
 	AssociationAddress,
@@ -2258,6 +2260,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
+
+		const logTransport = new JSONTransport()
+		logTransport.format = createDefaultTransportFormat(true, false)
+
+		zwaveOptions.logConfig.transports = [logTransport]
+
+		logTransport.stream.pipe(LogManager.logStream)
 
 		try {
 			// init driver here because if connect fails the driver is destroyed
