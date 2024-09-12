@@ -77,7 +77,7 @@
     "cronstrue": "^2.50.0",
     "csurf": "^1.11.0",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "express": "^4.21.0",
     "express-rate-limit": "^7.3.1",
     "express-session": "^1.18.0",
     "extract-zip": "^2.0.1",
