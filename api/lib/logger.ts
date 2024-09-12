@@ -10,7 +10,7 @@ import * as path from 'path'
 import { readdir, stat, unlink } from 'fs/promises'
 import { Stats } from 'fs'
 import escapeStringRegexp from '@esm2cjs/escape-string-regexp'
-import { Writable } from 'stream'
+import { PassThrough } from 'stream'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
@@ -103,11 +103,8 @@ export function customFormat(
 	return combine(...formats)
 }
 
-export const logStream = new Writable()
-logStream._write = function (chunk, encoding, done) {
-	// noop
-	done()
-}
+export const logStream = new PassThrough()
+
 /**
  * Create the base transports based on settings provided
  */
