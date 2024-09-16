@@ -200,6 +200,9 @@
 								<span v-else-if="item.payload">
 									{{ item.payload }}
 								</span>
+								<span v-else-if="item.routedAck"
+									>ROUTED ACK</span
+								>
 								<span v-else>---</span>
 							</template>
 
@@ -680,6 +683,8 @@ export default {
 				style.backgroundColor = 'rgba(0, 0, 255, 0.5)'
 			} else if (frame.corrupted) {
 				style.backgroundColor = 'rgba(255, 0, 0, 0.1)'
+			} else if (frame.routedAck) {
+				style.backgroundColor = 'rgba(255, 165, 0, 0.1)'
 			} else {
 				if (frame.protocol === Protocols.ZWaveLongRange) {
 					switch (frame.type) {
