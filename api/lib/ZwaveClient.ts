@@ -4296,6 +4296,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.driverReady = true
 
+		this._inclusionState = this.driver.controller.inclusionState
+
 		logger.info('Z-Wave driver is ready')
 
 		this._updateControllerStatus('Driver ready')
