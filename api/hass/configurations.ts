@@ -21,6 +21,18 @@ type HassDeviceKey =
 	| 'config_switch'
 	| 'config_number'
 
+export type ColorMode =
+	| 'unknown'
+	| 'onoff'
+	| 'brightness'
+	| 'color_temp'
+	| 'hs'
+	| 'xy'
+	| 'rgb'
+	| 'rgbw'
+	| 'rgbww'
+	| 'white'
+
 const configurations: Record<HassDeviceKey, HassDevice> = {
 	// Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
 	binary_sensor: {
