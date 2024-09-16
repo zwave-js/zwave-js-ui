@@ -21,6 +21,7 @@ type HassDeviceKey =
 	| 'config_switch'
 	| 'config_number'
 
+// https://github.com/home-assistant/core/blob/2e76b1f834ea26ef3e1726930812cb4c2ea82518/homeassistant/components/light/__init__.py#L65C1-L81C48
 export type ColorMode =
 	| 'unknown'
 	| 'onoff'
