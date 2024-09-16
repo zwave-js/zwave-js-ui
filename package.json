@@ -66,7 +66,6 @@
     "@kvaster/zwavejs-prom": "^0.0.2",
     "@mdi/js": "7.4.47",
     "@zwave-js/server": "^1.38.0",
-    "@zwave-js/winston-daily-rotate-file": "^4.5.6-1",
     "ansi_up": "^6.0.2",
     "archiver": "^7.0.1",
     "axios": "^1.7.2",
@@ -110,6 +109,7 @@
     "vuedraggable": "^2.24.3",
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
+    "winston-daily-rotate-file": "^5.0.0",
     "zwave-js": "^13.3.0"
   },
   "devDependencies": {

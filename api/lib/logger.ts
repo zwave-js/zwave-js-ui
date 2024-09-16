@@ -1,6 +1,6 @@
 import DailyRotateFile, {
 	DailyRotateFileTransportOptions,
-} from '@zwave-js/winston-daily-rotate-file'
+} from 'winston-daily-rotate-file'
 import { ensureDirSync } from 'fs-extra'
 import winston from 'winston'
 import { logsDir, storeDir } from '../config/app'
