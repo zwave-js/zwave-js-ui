@@ -5,7 +5,7 @@ import { AlarmSensorType, SetValueAPIOptions } from 'zwave-js'
 import { CommandClasses, ValueID } from '@zwave-js/core'
 import * as Constants from './Constants'
 import { LogLevel, module } from './logger'
-import hassCfg from '../hass/configurations'
+import hassCfg, { ColorMode } from '../hass/configurations'
 import hassDevices from '../hass/devices'
 import { storeDir } from '../config/app'
 import { IClientPublishOptions } from 'mqtt'
@@ -1286,6 +1286,9 @@ export default class Gateway {
 							cfg.discovery_payload.payload_close = 0
 						} else {
 							cfg = utils.copy(hassCfg.light_dimmer)
+							cfg.discovery_payload.supported_color_modes = [
+								'brightness',
+							] as ColorMode[]
 							cfg.discovery_payload.brightness_state_topic =
 								getTopic
 							cfg.discovery_payload.brightness_command_topic =
@@ -2623,6 +2626,12 @@ export default class Gateway {
 
 		const endpoint = currentColorValue.endpoint
 
+		const supportedColors: ColorMode[] = []
+
+		cfg.discovery_payload.supported_color_modes = supportedColors
+
+		supportedColors.push('rgb')
+
 		// current color values are automatically added later in discoverValue function
 		cfg.values = []
 
@@ -2646,10 +2655,11 @@ export default class Gateway {
 			switchValue = `37-${endpoint}-currentValue`
 		}
 
-		/* Find the control switch of the device Brightness or Binary
-     If multilevel is not there use binary
-     Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
-  */
+		/* 
+			Find the control switch of the device Brightness or Binary
+			If multilevel is not there use binary
+			Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
+		*/
 		let discoveredStateTopic: string
 		let discoveredCommandTopic: string
 
@@ -2677,12 +2687,14 @@ export default class Gateway {
 		}
 
 		if (brightnessValue) {
+			supportedColors.push('brightness')
 			cfg.discovery_payload.brightness_state_topic = discoveredStateTopic
 			cfg.discovery_payload.brightness_command_topic =
 				discoveredCommandTopic
 			cfg.discovery_payload.state_topic = discoveredStateTopic
 			cfg.discovery_payload.command_topic = discoveredCommandTopic
 		} else if (switchValue) {
+			supportedColors.push('onoff')
 			cfg.discovery_payload.state_topic = discoveredStateTopic
 			cfg.discovery_payload.command_topic = discoveredCommandTopic
 
@@ -2695,6 +2707,7 @@ export default class Gateway {
 
 		// if whitevalue exists, use currentColor value to get/set white
 		if (whiteValue && currentColorValue) {
+			supportedColors.push('white')
 			// still use currentColor but change the template
 			cfg.discovery_payload.color_temp_state_topic =
 				cfg.discovery_payload.rgb_state_topic
