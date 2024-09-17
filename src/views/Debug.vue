@@ -1,33 +1,6 @@
 <template>
 	<v-container grid-list-md>
 		<v-row>
-			<v-col cols="12">
-				<v-alert
-					class="mb-0"
-					v-if="
-						!zwave.logEnabled ||
-						!gateway.logEnabled ||
-						zwave.logToFile
-					"
-					dense
-					text
-					type="warning"
-				>
-					<p class="ma-1" v-if="!zwave.logEnabled">
-						• ZwaveJS Logs are disabled. Please enable it on
-						"Settings > Z-Wave" in order to see Application logs
-					</p>
-					<p class="ma-1" v-if="!gateway.logEnabled">
-						• Application Logs are disabled. Please enable it on
-						"Settings > General" in order to see ZwaveJS logs
-					</p>
-					<p class="ma-1" v-if="zwave.logToFile">
-						• ZwaveJS "Log to file" is enabled. Disable it in order
-						to see ZwaveJS logs
-					</p>
-				</v-alert>
-			</v-col>
-
 			<v-col style="max-width: 220px; margin-top: -2px">
 				<v-btn-toggle dense multiple>
 					<v-tooltip
@@ -89,7 +62,7 @@
 import { socketEvents } from '@server/lib/SocketEvents'
 
 import { AnsiUp } from 'ansi_up'
-import { mapState, mapActions } from 'pinia'
+import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { isPopupWindow, openInWindow } from '../lib/utils'
 
@@ -104,10 +77,6 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapState(useBaseStore, ['zwave', 'gateway']),
-		logDisabled() {
-			return !this.zwave.logEnabled || !this.gateway.logEnabled
-		},
 		filteredLogs() {
 			if (!this.filter) {
 				return this.debug
@@ -188,6 +157,12 @@ export default {
 			if (this.debugActive) {
 				data = ansiUp.ansi_to_html(data)
 				data = data.replace(/\n/g, '</br>')
+				if (!data.endsWith('</br>')) {
+					data += '</br>'
+				}
+
+				// remove background colors styles
+				data = data.replace(/background-color:rgb\([0-9, ]+\)/g, '')
 				// \b[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z\b
 				this.debug.push(data)
 
