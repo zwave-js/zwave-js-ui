@@ -440,24 +440,9 @@ async function destroyPlugins() {
 
 function setupInterceptor() {
 	// intercept logs and redirect them to socket
-	const interceptor = (
-		write: (
-			buffer: string | Uint8Array,
-			cb?: (err?: Error) => void,
-		) => void,
-	) => {
-		return function (...args: any[]): boolean {
-			socketManager.io.emit(socketEvents.debug, args[0]?.toString())
-			return write.apply(process.stdout, args)
-		}
-	}
-
-	process.stdout.write = interceptor(
-		process.stdout.write.bind(process.stdout),
-	)
-	process.stderr.write = interceptor(
-		process.stderr.write.bind(process.stderr),
-	)
+	loggers.logStream.on('data', (chunk) => {
+		socketManager.io.emit(socketEvents.debug, chunk.toString())
+	})
 }
 
 async function parseDir(dir: string): Promise<StoreFileEntry[]> {

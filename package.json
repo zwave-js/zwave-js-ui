@@ -65,6 +65,7 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@kvaster/zwavejs-prom": "^0.0.2",
     "@mdi/js": "7.4.47",
+    "@zwave-js/log-transport-json": "^3.0.0",
     "@zwave-js/server": "^1.38.0",
     "ansi_up": "^6.0.2",
     "archiver": "^7.0.1",
