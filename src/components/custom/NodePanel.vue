@@ -99,7 +99,7 @@
 					</div>
 
 					<div v-if="nlwr">
-						<v-subheader>Next Last working route</v-subheader>
+						<v-subheader>Next to Last working route</v-subheader>
 						<v-list-item dense v-for="(s, i) in nlwr" :key="i">
 							<v-list-item-content>{{
 								s.title
