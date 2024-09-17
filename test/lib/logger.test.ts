@@ -56,7 +56,7 @@ describe('logger.js', () => {
 	describe('customTransports()', () => {
 		it('should have one transport by default', () => {
 			const transports = customTransports(sanitizedConfig('-', {}))
-			return expect(transports.length).to.equal(1)
+			return expect(transports.length).to.equal(2)
 		})
 	})
 
@@ -73,7 +73,7 @@ describe('logger.js', () => {
 		it('should have the default log level', () =>
 			expect(logger1.level).to.equal('info'))
 		it('should have one transport only', () =>
-			expect(logger1.transports.length).to.be.equal(1))
+			expect(logger1.transports.length).to.be.equal(2))
 	})
 
 	describe('setup() (init)', () => {
@@ -93,7 +93,7 @@ describe('logger.js', () => {
 		it('should change the log level', () =>
 			expect(logger1.level).to.equal('warn'))
 		it('should have 2 transports', () =>
-			expect(logger1.transports.length).to.be.equal(2))
+			expect(logger1.transports.length).to.be.equal(3))
 	})
 
 	describe('setup() (reconfigure)', () => {
@@ -108,7 +108,7 @@ describe('logger.js', () => {
 			// Test pre-conditions:
 			expect(logger1.module).to.equal('mod')
 			expect(logger1.level).to.equal('warn')
-			expect(logger1.transports.length).to.be.equal(1)
+			expect(logger1.transports.length).to.be.equal(2)
 			// Change logger configuration:
 			logger1.setup({
 				logEnabled: false,
@@ -118,7 +118,7 @@ describe('logger.js', () => {
 			// Test post-conditions:
 			expect(logger1.module).to.equal('mod')
 			expect(logger1.level).to.equal('error')
-			expect(logger1.transports.length).to.be.equal(2)
+			expect(logger1.transports.length).to.be.equal(3)
 		})
 	})
 
@@ -137,10 +137,10 @@ describe('logger.js', () => {
 			// Test pre-conditions:
 			expect(logger1.module).to.equal('mod1')
 			expect(logger1.level).to.equal('warn')
-			expect(logger1.transports.length).to.be.equal(1)
+			expect(logger1.transports.length).to.be.equal(2)
 			expect(logger2.module).to.equal('mod2')
 			expect(logger2.level).to.equal('warn')
-			expect(logger2.transports.length).to.be.equal(1)
+			expect(logger2.transports.length).to.be.equal(2)
 			// Change logger configuration:
 			setupAll({
 				logEnabled: false,
@@ -150,10 +150,10 @@ describe('logger.js', () => {
 			// Test post-conditions:
 			expect(logger1.module).to.equal('mod1')
 			expect(logger1.level).to.equal('error')
-			expect(logger1.transports.length).to.be.equal(2)
+			expect(logger1.transports.length).to.be.equal(3)
 			expect(logger2.module).to.equal('mod2')
 			expect(logger2.level).to.equal('error')
-			expect(logger2.transports.length).to.be.equal(2)
+			expect(logger2.transports.length).to.be.equal(3)
 		})
 		it('should not change the logger config of non-zwave-js-ui loggers', () => {
 			logger1 = module('mod1').setup({
