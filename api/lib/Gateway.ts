@@ -1270,6 +1270,7 @@ export default class Gateway {
 								'specific_type_class_b_motor_control',
 								'specific_type_class_c_motor_control',
 								'specific_type_class_motor_multiposition',
+								'specific_type_motor_multiposition',
 							].includes(specificDeviceClass) ||
 							node.deviceId === '615-0-258' // Issue #3088
 						) {
