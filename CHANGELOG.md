@@ -1,5 +1,26 @@
 
 
+# [9.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.18.1...v9.19.0) (2024-09-17)
+
+
+### Bug Fixes
+
+* `unknown` inclusion state ([f9418aa](https://github.com/zwave-js/zwave-js-ui/commit/f9418aac1220c92744a9aef7a6a7de0f2d166483)), closes [#3891](https://github.com/zwave-js/zwave-js-ui/issues/3891)
+* remove obsolete @zwave-js/winston-daily-rotate-file in favor of original package ([#3897](https://github.com/zwave-js/zwave-js-ui/issues/3897)) ([7414c06](https://github.com/zwave-js/zwave-js-ui/commit/7414c066b9f51b48dbf792b9df537c7d9d30c03d))
+* **ui:** correct legend wrt nlwr ([#3889](https://github.com/zwave-js/zwave-js-ui/issues/3889)) ([e10bc79](https://github.com/zwave-js/zwave-js-ui/commit/e10bc797b46f9455bc06f8e6fe39ac6e69bcee76))
+* **ui:** improve network graph popup visibility ([#3896](https://github.com/zwave-js/zwave-js-ui/issues/3896)) ([ca84d51](https://github.com/zwave-js/zwave-js-ui/commit/ca84d5168ea8288d5c0c68566eead426f0d21cf0))
+* **ui:** improve node route rebuilding description ([8d1957b](https://github.com/zwave-js/zwave-js-ui/commit/8d1957b2b008f05ba58235a951a5037ed0112e91)), closes [#3898](https://github.com/zwave-js/zwave-js-ui/issues/3898)
+* **ui:** routed ack frames row style ([#3893](https://github.com/zwave-js/zwave-js-ui/issues/3893)) ([6e93060](https://github.com/zwave-js/zwave-js-ui/commit/6e93060c52caa0907720fb07b54e95ac03043bac))
+
+
+### Features
+
+* add INGRESS_TOKEN env variable to set the ingress session cookie ([#3892](https://github.com/zwave-js/zwave-js-ui/issues/3892)) ([66c930c](https://github.com/zwave-js/zwave-js-ui/commit/66c930c73e3b945fb29b9292ab4966d113f219c7))
+* always show driver/app logs on debug UI even when log settings are disabled ([#3884](https://github.com/zwave-js/zwave-js-ui/issues/3884)) ([40a557e](https://github.com/zwave-js/zwave-js-ui/commit/40a557edb15d61f0633899bd783b1baebd873616))
+* bump zwave-js@13.3.0 ([#3885](https://github.com/zwave-js/zwave-js-ui/issues/3885)) ([c4a9bfd](https://github.com/zwave-js/zwave-js-ui/commit/c4a9bfd54959324ca07ed9a8f301c40c3aca02f9))
+* bump zwave-js@13.3.1 ([#3899](https://github.com/zwave-js/zwave-js-ui/issues/3899)) ([1362782](https://github.com/zwave-js/zwave-js-ui/commit/136278288f064898f7a72205a815b9827914b6c8))
+* **discovery:** add `supported_color_modes` to lights ([#3895](https://github.com/zwave-js/zwave-js-ui/issues/3895)) ([b3df21c](https://github.com/zwave-js/zwave-js-ui/commit/b3df21cda0c1f9a3d358518fb709debb157334fe))
+
 ## [9.18.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.18.0...v9.18.1) (2024-09-06)
 
 
