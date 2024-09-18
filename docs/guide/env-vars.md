@@ -2,6 +2,8 @@
 
 This is the list of the supported environment variables:
 
+- `DEFAULT_USERNAME`: The default username when auth is enabled.
+- `DEFAULT_PASSWORD`: The default password when auth is enabled.
 - `NETWORK_KEY`: Z-Wave S0 Network key. **Deprecated**
 - Network keys:
   - `KEY_S0_Legacy`

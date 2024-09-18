@@ -16,8 +16,8 @@ export const backupsDir: string =
 export const nvmBackupsDir: string = joinPath(backupsDir, 'nvm')
 export const storeBackupsDir: string = joinPath(backupsDir, 'store')
 
-export const defaultUser: string = 'admin'
-export const defaultPsw: string = 'zwave'
+export const defaultUser: string = process.env.DEFAULT_USERNAME || 'admin'
+export const defaultPsw: string = process.env.DEFAULT_PASSWORD || 'zwave'
 // lgtm [js/hardcoded-credentials]
 export const sessionSecret: string =
 	process.env.SESSION_SECRET || 'DEFAULT_SESSION_SECRET_CHANGE_ME'
