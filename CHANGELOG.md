@@ -1,5 +1,20 @@
 
 
+# [9.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.19.0...v9.20.0) (2024-09-23)
+
+
+### Bug Fixes
+
+* **discovery:** define units for scene and configuration values ([#3905](https://github.com/zwave-js/zwave-js-ui/issues/3905)) ([27c5e80](https://github.com/zwave-js/zwave-js-ui/commit/27c5e80b013a51d1e4e1bfbbccf0f8a172dc0183))
+* **discovery:** improve covers discovery ([#3900](https://github.com/zwave-js/zwave-js-ui/issues/3900)) ([2557cbc](https://github.com/zwave-js/zwave-js-ui/commit/2557cbc57d078d6f441970083d07ecfe10613e24))
+* **ui:** debug log text-area not fully visible ([5eda3b7](https://github.com/zwave-js/zwave-js-ui/commit/5eda3b7902ddac2e876cd4305922d94983578e74))
+* **ui:** increese debug logs window height ([4c76e61](https://github.com/zwave-js/zwave-js-ui/commit/4c76e61cabb8930d248224f81cd8ab7e0a748638)), closes [#3908](https://github.com/zwave-js/zwave-js-ui/issues/3908)
+
+
+### Features
+
+* make default credentials for auth customizable ([#3902](https://github.com/zwave-js/zwave-js-ui/issues/3902)) ([572035a](https://github.com/zwave-js/zwave-js-ui/commit/572035ae2a106bb4bda9a9ca88401f177955e498))
+
 # [9.19.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.18.1...v9.19.0) (2024-09-17)
 
 
