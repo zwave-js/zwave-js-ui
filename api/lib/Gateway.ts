@@ -1336,6 +1336,10 @@ export default class Gateway {
 						valueId.property,
 						valueId.propertyKey,
 					)
+					if (valueId.value?.unit) {
+						cfg.discovery_payload.value_template =
+							"{{ value_json.value.value | default('') }}"
+					}
 					break
 				case CommandClasses['Binary Sensor']: {
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/BinarySensorCC.ts#L41
@@ -1647,9 +1651,25 @@ export default class Gateway {
 						sensor.objectId,
 					)
 
+					let unit = null
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/scales.json
 					if (valueId.unit) {
-						cfg.discovery_payload.unit_of_measurement = valueId.unit
+						unit = valueId.unit
+					} else if (valueId.value?.unit) {
+						unit = valueId.value.unit
+					}
+
+					if (unit) {
+						// Home Assistant requires time units to be abbreviated
+						// https://github.com/home-assistant/core/blob/d7ac4bd65379e11461c7ce0893d3533d8d8b8cbf/homeassistant/const.py#L408
+						if (unit === 'seconds') {
+							unit = 's'
+						} else if (unit === 'minutes') {
+							unit = 'min'
+						} else if (unit === 'hours') {
+							unit = 'h'
+						}
+						cfg.discovery_payload.unit_of_measurement = unit
 					}
 
 					Object.assign(cfg.discovery_payload, sensor.props || {})
@@ -1708,6 +1728,7 @@ export default class Gateway {
 							if (valueId.max !== 100) {
 								cfg.discovery_payload.max = valueId.max
 							}
+
 							break
 						default:
 							return
