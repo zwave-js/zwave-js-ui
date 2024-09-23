@@ -141,7 +141,7 @@ export default {
 			this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))
 		},
 		newWindow() {
-			openInWindow('DEBUG')
+			openInWindow('DEBUG', 1000)
 		},
 	},
 	mounted() {
