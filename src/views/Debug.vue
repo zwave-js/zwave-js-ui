@@ -40,7 +40,7 @@
 				></v-text-field>
 			</v-col>
 
-			<v-col class="pt-0" cols="12">
+			<v-col class="pt-0 mb-5" cols="12">
 				<div
 					id="debug_window"
 					style="
