@@ -111,7 +111,7 @@
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^13.3.1"
+    "zwave-js": "^13.4.0"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
