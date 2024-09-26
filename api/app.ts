@@ -1522,6 +1522,7 @@ app.post(
 			await multerPromise(multerUpload, req, res)
 
 			isRestore = req.body.restore === 'true'
+			const folder = req.body.folder
 
 			file = req.files[0]
 
@@ -1532,7 +1533,10 @@ app.post(
 			if (isRestore) {
 				await extract(file.path, { dir: storeDir })
 			} else {
-				await move(file.path, path.join(storeDir, file.originalname))
+				const destinationPath = getSafePath(
+					path.join(storeDir, folder, file.originalname),
+				)
+				await move(file.path, destinationPath)
 			}
 
 			res.json({ success: true })
