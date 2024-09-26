@@ -2016,6 +2016,7 @@ export default {
 			if (!deepEqual(this.newZwave, this.zwave)) return true
 			if (!deepEqual(this.newBackup, this.backup)) return true
 			if (!deepEqual(this.newZniffer, this.zniffer)) return true
+			if (!deepEqual(this.ui, this.prevUi)) return true
 
 			return false
 		},
@@ -2118,6 +2119,7 @@ export default {
 			dialogValue: false,
 			sslDisabled: false,
 			saving: false,
+			prevUi: null,
 			newGateway: {},
 			newMqtt: {},
 			newZwave: {
@@ -2561,6 +2563,14 @@ export default {
 			this.newZniffer = copy(this.zniffer)
 			this.newMqtt = copy(this.mqtt)
 			this.newBackup = copy(this.backup)
+
+			if (this.prevUi) {
+				this.internalDarkMode = this.prevUi.darkMode
+				this.internalNavTabs = this.prevUi.navTabs
+				this.internalStreamerMode = this.prevUi.streamerMode
+			} else {
+				this.prevUi = copy(this.ui)
+			}
 		},
 		async getConfig() {
 			try {
