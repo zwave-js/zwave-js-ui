@@ -404,7 +404,7 @@ export default {
 			if (
 				await this.app.confirm(
 					'Attention',
-					`Are you sure you want to delete the file ${item.name}?`,
+					`Are you sure you want to delete the file <code>${item.name}</code>?`,
 					'alert',
 				)
 			) {
@@ -638,7 +638,7 @@ export default {
 				isNew ||
 				(await this.app.confirm(
 					'Attention',
-					`Are you sure you want to overwrite the content of the file ${this.selected.name}?`,
+					`Are you sure you want to overwrite the content of the file <code>${this.selected.name}<code>?`,
 					'alert',
 				))
 			) {
