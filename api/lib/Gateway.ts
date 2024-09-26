@@ -431,6 +431,37 @@ export default class Gateway {
 						// for other command classes use the mode_map
 						payload = hassDevice.mode_map[payload]
 					}
+				} else if (
+					hassDevice.type === 'cover' &&
+					valueId.property === 'targetValue'
+				) {
+					// ref issue https://github.com/zwave-js/zwave-js-ui/issues/3862
+					if (payload === hassDevice.discovery_payload.payload_open) {
+						this._zwave
+							.writeValue(
+								{
+									...valueId,
+									property: 'Up',
+								},
+								true,
+							)
+							.catch(() => {})
+						return null
+					} else if (
+						payload === hassDevice.discovery_payload.payload_close
+					) {
+						this._zwave
+							.writeValue(
+								{
+									...valueId,
+									property: 'Down',
+								},
+								true,
+							)
+							.catch(() => {})
+
+						return null
+					}
 				}
 			}
 
@@ -2271,7 +2302,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Handle broadcast request reeived from Mqtt client
+	 * Handle broadcast request received from Mqtt client
 	 */
 	private async _onBroadRequest(
 		parts: string[],
@@ -2290,6 +2321,11 @@ export default class Gateway {
 					this.topicValues[values[0]],
 					this.topicValues[values[0]].conf,
 				)
+
+				if (payload === null) {
+					return
+				}
+
 				for (let i = 0; i < values.length; i++) {
 					await this._zwave.writeValue(
 						this.topicValues[values[i]],
@@ -2332,6 +2368,11 @@ export default class Gateway {
 
 		if (valueId) {
 			const value = this.parsePayload(payload, valueId, valueId.conf)
+
+			if (value === null) {
+				return
+			}
+
 			await this._zwave.writeValue(valueId, value, payload?.options)
 		} else {
 			logger.debug(`No writeable valueId found for ${valueTopic}`)
