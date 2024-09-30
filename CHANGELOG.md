@@ -1,5 +1,18 @@
 
 
+# [9.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.20.0...v9.21.0) (2024-09-27)
+
+
+### Bug Fixes
+
+* **ui:** ui settings not persisted ([#3914](https://github.com/zwave-js/zwave-js-ui/issues/3914)) ([1bea0e7](https://github.com/zwave-js/zwave-js-ui/commit/1bea0e7fd44fff0bd0b33186b6850decb07c14f9))
+
+
+### Features
+
+* allow to upload a file to a specific folder ([#3915](https://github.com/zwave-js/zwave-js-ui/issues/3915)) ([c98c2c4](https://github.com/zwave-js/zwave-js-ui/commit/c98c2c4e1a94524b5d2e703e0fc7fe1e2a3e2a70))
+* bump zwave-js@13.4.0 ([#3912](https://github.com/zwave-js/zwave-js-ui/issues/3912)) ([b9dd414](https://github.com/zwave-js/zwave-js-ui/commit/b9dd4146389da7f46fc16b4825f59a7fb8c59adb))
+
 # [9.20.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.19.0...v9.20.0) (2024-09-23)
 
 
