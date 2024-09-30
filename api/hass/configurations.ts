@@ -145,6 +145,7 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 			position_closed: 0,
 			payload_open: '99',
 			payload_close: '0',
+			payload_stop: 'stop',
 		},
 	},
 	// Barrier operator support for zwave-js (numeric commands/states)

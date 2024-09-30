@@ -436,7 +436,10 @@ export default class Gateway {
 					valueId.property === 'targetValue'
 				) {
 					// ref issue https://github.com/zwave-js/zwave-js-ui/issues/3862
-					if (payload === hassDevice.discovery_payload.payload_open) {
+					if (
+						payload ===
+						(hassDevice.discovery_payload.payload_stop ?? 'STOP')
+					) {
 						this._zwave
 							.writeValue(
 								{
@@ -446,20 +449,6 @@ export default class Gateway {
 								true,
 							)
 							.catch(() => {})
-						return null
-					} else if (
-						payload === hassDevice.discovery_payload.payload_close
-					) {
-						this._zwave
-							.writeValue(
-								{
-									...valueId,
-									property: 'Down',
-								},
-								true,
-							)
-							.catch(() => {})
-
 						return null
 					}
 				}
