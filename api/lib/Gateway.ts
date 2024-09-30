@@ -446,7 +446,7 @@ export default class Gateway {
 									...valueId,
 									property: 'Up',
 								},
-								true,
+								false,
 							)
 							.catch(() => {})
 						return null
