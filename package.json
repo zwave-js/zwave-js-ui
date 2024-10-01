@@ -44,7 +44,7 @@
     "docs": "docsify serve ./docs",
     "coverage": "c8 --clean npm run test",
     "record-coverage": "c8 report --reporter=text-lcov --all --exclude='test/*' --exclude=.git --exclude=.eslintrc.js --exclude=.postcssrc.js --exclude=wallaby.js > ./coverage/lcov.info",
-    "build": "npm-run-all 'build:*'",
+    "build": "npm-run-all build:*",
     "build:server": "tsc",
     "build:ui": "vite build",
     "clean": "tsc --build --clean",
