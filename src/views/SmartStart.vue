@@ -65,6 +65,11 @@
 				</v-btn>
 			</template>
 
+			<template v-slot:[`item.dsk`]="{ item }">
+				<span v-if="streamerMode">*********</span>
+				<span v-else> {{ item.dsk }} </span>
+			</template>
+
 			<template v-slot:[`item.status`]="{ item }">
 				<v-switch
 					v-model="item.status"
@@ -345,6 +350,11 @@ export default {
 				})
 			},
 			deep: true,
+		},
+	},
+	computed: {
+		streamerMode() {
+			return useBaseStore().ui.streamerMode
 		},
 	},
 	data() {
