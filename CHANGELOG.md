@@ -1,5 +1,13 @@
 
 
+## [9.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.21.0...v9.21.1) (2024-10-02)
+
+
+### Bug Fixes
+
+* **discovery:** correctly handle up/down commands for covers ([#3916](https://github.com/zwave-js/zwave-js-ui/issues/3916)) ([1582b2a](https://github.com/zwave-js/zwave-js-ui/commit/1582b2ad5eabcc9dae21e67257560d42f092f758))
+* **ui:** hide dsk codes when streamer mode is enabled ([c0785b7](https://github.com/zwave-js/zwave-js-ui/commit/c0785b7a970e4cef79e1a3d1613e8ff64e5fe15c)), closes [#3921](https://github.com/zwave-js/zwave-js-ui/issues/3921)
+
 # [9.21.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.20.0...v9.21.0) (2024-09-27)
 
 
