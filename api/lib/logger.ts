@@ -19,6 +19,8 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
+let fileTransport: winston.transport = null
+
 // ensure store and logs directories exist
 ensureDirSync(storeDir)
 ensureDirSync(logsDir)
@@ -130,31 +132,33 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 	transportsList.push(streamTransport)
 
 	if (config.logToFile) {
-		let fileTransport: winston.transport
-		if (process.env.DISABLE_LOG_ROTATION === 'true') {
-			fileTransport = new transports.File({
-				format: customFormat(config, true),
-				filename: config.filePath,
-				level: config.level,
-			})
-		} else {
-			const options: DailyRotateFileTransportOptions = {
-				filename: config.filePath,
-				auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
-				datePattern: 'YYYY-MM-DD',
-				createSymlink: true,
-				symlinkName: path
-					.basename(config.filePath)
-					.replace(`_%DATE%`, '_current'),
-				zippedArchive: true,
-				maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
-				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
-				level: config.level,
-				format: customFormat(config, true),
-			}
-			fileTransport = new DailyRotateFile(options)
+		// setup file transport only once (see issue #2937)
+		if (!fileTransport) {
+			if (process.env.DISABLE_LOG_ROTATION === 'true') {
+				fileTransport = new transports.File({
+					format: customFormat(config, true),
+					filename: config.filePath,
+					level: config.level,
+				})
+			} else {
+				const options: DailyRotateFileTransportOptions = {
+					filename: config.filePath,
+					auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
+					datePattern: 'YYYY-MM-DD',
+					createSymlink: true,
+					symlinkName: path
+						.basename(config.filePath)
+						.replace(`_%DATE%`, '_current'),
+					zippedArchive: true,
+					maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
+					maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
+					level: config.level,
+					format: customFormat(config, true),
+				}
+				fileTransport = new DailyRotateFile(options)
 
-			setupCleanJob(options)
+				setupCleanJob(options)
+			}
 		}
 
 		transportsList.push(fileTransport)
@@ -198,6 +202,10 @@ export function module(module: string): ModuleLogger {
  */
 export function setupAll(config: DeepPartial<GatewayConfig>) {
 	stopCleanJob()
+
+	fileTransport.close()
+
+	fileTransport = null
 
 	logContainer.loggers.forEach((logger: ModuleLogger) => {
 		logger.setup(config)
