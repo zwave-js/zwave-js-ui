@@ -19,7 +19,7 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
-let fileTransport: winston.transport = null
+let transportsList: winston.transport[] = null
 
 // ensure store and logs directories exist
 ensureDirSync(storeDir)
@@ -111,7 +111,12 @@ export const logStream = new PassThrough()
  * Create the base transports based on settings provided
  */
 export function customTransports(config: LoggerConfig): winston.transport[] {
-	const transportsList: winston.transport[] = []
+	// setup transports only once (see issue #2937)
+	if (transportsList) {
+		return transportsList
+	}
+
+	transportsList = []
 
 	if (process.env.ZUI_NO_CONSOLE !== 'true') {
 		transportsList.push(
@@ -132,37 +137,37 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 	transportsList.push(streamTransport)
 
 	if (config.logToFile) {
-		// setup file transport only once (see issue #2937)
-		if (!fileTransport) {
-			if (process.env.DISABLE_LOG_ROTATION === 'true') {
-				fileTransport = new transports.File({
-					format: customFormat(config, true),
-					filename: config.filePath,
-					level: config.level,
-				})
-			} else {
-				const options: DailyRotateFileTransportOptions = {
-					filename: config.filePath,
-					auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
-					datePattern: 'YYYY-MM-DD',
-					createSymlink: true,
-					symlinkName: path
-						.basename(config.filePath)
-						.replace(`_%DATE%`, '_current'),
-					zippedArchive: true,
-					maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
-					maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
-					level: config.level,
-					format: customFormat(config, true),
-				}
-				fileTransport = new DailyRotateFile(options)
+		let fileTransport: winston.transport
 
-				setupCleanJob(options)
+		if (process.env.DISABLE_LOG_ROTATION === 'true') {
+			fileTransport = new transports.File({
+				format: customFormat(config, true),
+				filename: config.filePath,
+				level: config.level,
+			})
+		} else {
+			const options: DailyRotateFileTransportOptions = {
+				filename: config.filePath,
+				auditFile: joinPath(logsDir, 'zui-logs.audit.json'),
+				datePattern: 'YYYY-MM-DD',
+				createSymlink: true,
+				symlinkName: path
+					.basename(config.filePath)
+					.replace(`_%DATE%`, '_current'),
+				zippedArchive: true,
+				maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
+				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
+				level: config.level,
+				format: customFormat(config, true),
 			}
+			fileTransport = new DailyRotateFile(options)
+
+			setupCleanJob(options)
 		}
 
 		transportsList.push(fileTransport)
 	}
+
 	return transportsList
 }
 
@@ -203,9 +208,11 @@ export function module(module: string): ModuleLogger {
 export function setupAll(config: DeepPartial<GatewayConfig>) {
 	stopCleanJob()
 
-	fileTransport.close()
+	transportsList.forEach((t) => {
+		t.close()
+	})
 
-	fileTransport = null
+	transportsList = null
 
 	logContainer.loggers.forEach((logger: ModuleLogger) => {
 		logger.setup(config)
