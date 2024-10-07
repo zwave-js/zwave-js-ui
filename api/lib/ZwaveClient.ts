@@ -4757,7 +4757,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeRemoved(zwaveNode: ZWaveNode, reason: RemoveNodeReason) {
-		this.logNode(zwaveNode, 'info', 'Removed, reason: ' + reason)
+		this.logNode(
+			zwaveNode,
+			'info',
+			'Removed, reason: ' + getEnumMemberName(RemoveNodeReason, reason),
+		)
 		zwaveNode.removeAllListeners()
 
 		this.emit(
