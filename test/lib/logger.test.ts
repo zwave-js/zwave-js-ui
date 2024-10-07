@@ -93,7 +93,7 @@ describe('logger.js', () => {
 		it('should change the log level', () =>
 			expect(logger1.level).to.equal('warn'))
 		it('should have 2 transports', () =>
-			expect(logger1.transports.length).to.be.equal(3))
+			expect(logger1.transports.length).to.be.equal(2))
 	})
 
 	describe('setup() (reconfigure)', () => {
@@ -118,7 +118,7 @@ describe('logger.js', () => {
 			// Test post-conditions:
 			expect(logger1.module).to.equal('mod')
 			expect(logger1.level).to.equal('error')
-			expect(logger1.transports.length).to.be.equal(3)
+			expect(logger1.transports.length).to.be.equal(2)
 		})
 	})
 

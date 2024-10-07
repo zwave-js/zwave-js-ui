@@ -209,7 +209,9 @@ export function setupAll(config: DeepPartial<GatewayConfig>) {
 	stopCleanJob()
 
 	transportsList.forEach((t) => {
-		t.close()
+		if (typeof t.close === 'function') {
+			t.close()
+		}
 	})
 
 	transportsList = null
