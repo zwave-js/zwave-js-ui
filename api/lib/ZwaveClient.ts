@@ -572,7 +572,7 @@ export type ZUINode = {
 }
 
 export type NodeEvent = {
-	event: ZwaveNodeEvents
+	event: ZwaveNodeEvents | 'status changed'
 	args: any[]
 	time: Date
 }
@@ -4588,6 +4588,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this._updateControllerStatus(message)
+		this._onNodeEvent(
+			'status changed',
+			this.getNode(this.driver.controller.ownNodeId),
+			status,
+		)
 		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
 
@@ -5127,7 +5132,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeEvent(
-		eventName: ZwaveNodeEvents,
+		eventName: ZwaveNodeEvents | 'status changed',
 		zwaveNode: ZWaveNode,
 		...eventArgs: any[]
 	) {
