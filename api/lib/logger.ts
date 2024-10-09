@@ -1,6 +1,6 @@
 import DailyRotateFile, {
 	DailyRotateFileTransportOptions,
-} from '@zwave-js/winston-daily-rotate-file'
+} from 'winston-daily-rotate-file'
 import { ensureDirSync } from 'fs-extra'
 import winston from 'winston'
 import { logsDir, storeDir } from '../config/app'
@@ -9,7 +9,8 @@ import { DeepPartial, joinPath } from './utils'
 import * as path from 'path'
 import { readdir, stat, unlink } from 'fs/promises'
 import { Stats } from 'fs'
-import escapeStringRegexp from 'escape-string-regexp'
+import escapeStringRegexp from '@esm2cjs/escape-string-regexp'
+import { PassThrough } from 'stream'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, label, printf, colorize, splat } = format
@@ -101,6 +102,9 @@ export function customFormat(
 
 	return combine(...formats)
 }
+
+export const logStream = new PassThrough()
+
 /**
  * Create the base transports based on settings provided
  */
@@ -116,6 +120,14 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 			}),
 		)
 	}
+
+	const streamTransport = new transports.Stream({
+		format: customFormat(config),
+		level: config.level,
+		stream: logStream,
+	})
+
+	transportsList.push(streamTransport)
 
 	if (config.logToFile) {
 		let fileTransport: winston.transport

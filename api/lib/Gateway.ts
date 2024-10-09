@@ -5,7 +5,7 @@ import { AlarmSensorType, SetValueAPIOptions } from 'zwave-js'
 import { CommandClasses, ValueID } from '@zwave-js/core'
 import * as Constants from './Constants'
 import { LogLevel, module } from './logger'
-import hassCfg from '../hass/configurations'
+import hassCfg, { ColorMode } from '../hass/configurations'
 import hassDevices from '../hass/devices'
 import { storeDir } from '../config/app'
 import { IClientPublishOptions } from 'mqtt'
@@ -430,6 +430,26 @@ export default class Gateway {
 					) {
 						// for other command classes use the mode_map
 						payload = hassDevice.mode_map[payload]
+					}
+				} else if (
+					hassDevice.type === 'cover' &&
+					valueId.property === 'targetValue'
+				) {
+					// ref issue https://github.com/zwave-js/zwave-js-ui/issues/3862
+					if (
+						payload ===
+						(hassDevice.discovery_payload.payload_stop ?? 'STOP')
+					) {
+						this._zwave
+							.writeValue(
+								{
+									...valueId,
+									property: 'Up',
+								},
+								false,
+							)
+							.catch(() => {})
+						return null
 					}
 				}
 			}
@@ -910,7 +930,7 @@ export default class Gateway {
 										node,
 										node.values[v],
 									) as string,
-							  )
+								)
 							: null
 					}
 
@@ -1237,6 +1257,10 @@ export default class Gateway {
 
 			const cmdClass = valueId.commandClass
 
+			const deviceClass =
+				node.endpoints[valueId.endpoint]?.deviceClass ??
+				node.deviceClass
+
 			switch (cmdClass) {
 				case CommandClasses['Binary Switch']:
 				case CommandClasses['All Switch']:
@@ -1256,8 +1280,8 @@ export default class Gateway {
 					if (valueId.isCurrentValue) {
 						const specificDeviceClass =
 							Constants.specificDeviceClass(
-								node.deviceClass.generic,
-								node.deviceClass.specific,
+								deviceClass.generic,
+								deviceClass.specific,
 							)
 						// Use a cover_position configuration if ...
 						if (
@@ -1266,6 +1290,7 @@ export default class Gateway {
 								'specific_type_class_b_motor_control',
 								'specific_type_class_c_motor_control',
 								'specific_type_class_motor_multiposition',
+								'specific_type_motor_multiposition',
 							].includes(specificDeviceClass) ||
 							node.deviceId === '615-0-258' // Issue #3088
 						) {
@@ -1282,6 +1307,9 @@ export default class Gateway {
 							cfg.discovery_payload.payload_close = 0
 						} else {
 							cfg = utils.copy(hassCfg.light_dimmer)
+							cfg.discovery_payload.supported_color_modes = [
+								'brightness',
+							] as ColorMode[]
 							cfg.discovery_payload.brightness_state_topic =
 								getTopic
 							cfg.discovery_payload.brightness_command_topic =
@@ -1328,6 +1356,10 @@ export default class Gateway {
 						valueId.property,
 						valueId.propertyKey,
 					)
+					if (valueId.value?.unit) {
+						cfg.discovery_payload.value_template =
+							"{{ value_json.value.value | default('') }}"
+					}
 					break
 				case CommandClasses['Binary Sensor']: {
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/zwave-js/src/lib/commandclass/BinarySensorCC.ts#L41
@@ -1566,7 +1598,6 @@ export default class Gateway {
 						if (valueId.ccSpecific) {
 							sensor = Constants.meterType(
 								valueId.ccSpecific as IMeterCCSpecific,
-								this._zwave.driver.configManager,
 							)
 
 							sensor.objectId += '_' + valueId.property
@@ -1640,9 +1671,25 @@ export default class Gateway {
 						sensor.objectId,
 					)
 
+					let unit = null
 					// https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/scales.json
 					if (valueId.unit) {
-						cfg.discovery_payload.unit_of_measurement = valueId.unit
+						unit = valueId.unit
+					} else if (valueId.value?.unit) {
+						unit = valueId.value.unit
+					}
+
+					if (unit) {
+						// Home Assistant requires time units to be abbreviated
+						// https://github.com/home-assistant/core/blob/d7ac4bd65379e11461c7ce0893d3533d8d8b8cbf/homeassistant/const.py#L408
+						if (unit === 'seconds') {
+							unit = 's'
+						} else if (unit === 'minutes') {
+							unit = 'min'
+						} else if (unit === 'hours') {
+							unit = 'h'
+						}
+						cfg.discovery_payload.unit_of_measurement = unit
 					}
 
 					Object.assign(cfg.discovery_payload, sensor.props || {})
@@ -1701,6 +1748,7 @@ export default class Gateway {
 							if (valueId.max !== 100) {
 								cfg.discovery_payload.max = valueId.max
 							}
+
 							break
 						default:
 							return
@@ -2243,7 +2291,7 @@ export default class Gateway {
 	}
 
 	/**
-	 * Handle broadcast request reeived from Mqtt client
+	 * Handle broadcast request received from Mqtt client
 	 */
 	private async _onBroadRequest(
 		parts: string[],
@@ -2262,6 +2310,11 @@ export default class Gateway {
 					this.topicValues[values[0]],
 					this.topicValues[values[0]].conf,
 				)
+
+				if (payload === null) {
+					return
+				}
+
 				for (let i = 0; i < values.length; i++) {
 					await this._zwave.writeValue(
 						this.topicValues[values[i]],
@@ -2304,6 +2357,11 @@ export default class Gateway {
 
 		if (valueId) {
 			const value = this.parsePayload(payload, valueId, valueId.conf)
+
+			if (value === null) {
+				return
+			}
+
 			await this._zwave.writeValue(valueId, value, payload?.options)
 		} else {
 			logger.debug(`No writeable valueId found for ${valueTopic}`)
@@ -2620,6 +2678,12 @@ export default class Gateway {
 
 		const endpoint = currentColorValue.endpoint
 
+		const supportedColors: ColorMode[] = []
+
+		cfg.discovery_payload.supported_color_modes = supportedColors
+
+		supportedColors.push('rgb')
+
 		// current color values are automatically added later in discoverValue function
 		cfg.values = []
 
@@ -2643,10 +2707,11 @@ export default class Gateway {
 			switchValue = `37-${endpoint}-currentValue`
 		}
 
-		/* Find the control switch of the device Brightness or Binary
-     If multilevel is not there use binary
-     Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
-  */
+		/* 
+			Find the control switch of the device Brightness or Binary
+			If multilevel is not there use binary
+			Some devices use also endpoint + 1 as on/off/brightness... try to guess that too!
+		*/
 		let discoveredStateTopic: string
 		let discoveredCommandTopic: string
 
@@ -2674,12 +2739,14 @@ export default class Gateway {
 		}
 
 		if (brightnessValue) {
+			supportedColors.push('brightness')
 			cfg.discovery_payload.brightness_state_topic = discoveredStateTopic
 			cfg.discovery_payload.brightness_command_topic =
 				discoveredCommandTopic
 			cfg.discovery_payload.state_topic = discoveredStateTopic
 			cfg.discovery_payload.command_topic = discoveredCommandTopic
 		} else if (switchValue) {
+			supportedColors.push('onoff')
 			cfg.discovery_payload.state_topic = discoveredStateTopic
 			cfg.discovery_payload.command_topic = discoveredCommandTopic
 
@@ -2692,6 +2759,7 @@ export default class Gateway {
 
 		// if whitevalue exists, use currentColor value to get/set white
 		if (whiteValue && currentColorValue) {
+			supportedColors.push('white')
 			// still use currentColor but change the template
 			cfg.discovery_payload.color_temp_state_topic =
 				cfg.discovery_payload.rgb_state_topic

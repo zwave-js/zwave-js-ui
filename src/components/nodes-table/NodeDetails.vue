@@ -85,7 +85,7 @@
 				>
 					<v-select
 						label="RF Region"
-						:items="rfRegions"
+						:items="node.rfRegions"
 						v-model="node.RFRegion"
 					>
 						<template v-slot:append-outer>
@@ -206,12 +206,12 @@
 								<v-col align-self="center">
 									{{ className }}
 								</v-col>
-								<v-col class="text-right pr-5">
+								<v-col class="text-right">
 									<v-btn
 										v-if="canResetConfig(group[0])"
 										@click.stop="resetAllConfig()"
 										color="error"
-										class="mb-1"
+										class="mb-1 mr-3"
 										outlined
 										x-small
 									>
@@ -346,7 +346,6 @@
 <script>
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
-import { rfRegions } from '../../lib/items'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
@@ -384,7 +383,6 @@ export default {
 				parameter: 1,
 				valueFormat: ConfigValueFormat.UnsignedInteger,
 			},
-			rfRegions,
 		}
 	},
 	computed: {

@@ -415,7 +415,20 @@ export default {
 		},
 		advancedActions() {
 			const nodeActions = this.node.isControllerNode
-				? []
+				? [
+						{
+							text: 'Firmware update OTW',
+							options: [
+								{
+									name: 'Update',
+									action: 'firmwareUpdateOTW',
+								},
+							],
+							icon: 'update',
+							color: 'red',
+							desc: 'Perform a firmware update OTW (Over The Wire)',
+						},
+					]
 				: [
 						{
 							text: 'Firmware update',
@@ -466,7 +479,7 @@ export default {
 							icon: 'dangerous',
 							desc: 'Manage nodes that are dead and/or marked as failed with the controller',
 						},
-				  ]
+					]
 
 			if (this.node.protocol !== Protocols.ZWaveLongRange) {
 				nodeActions.splice(1, 0, {
@@ -497,7 +510,7 @@ export default {
 									"This action will remove all associations of this node. This will also clear lifeline association with controller node, the node won't report state changes until that is set up again",
 							},
 						},
-				  ]
+					]
 
 			const CCActions = []
 
@@ -518,7 +531,10 @@ export default {
 			return [
 				{
 					text: 'Export json',
-					options: [{ name: 'Export', action: 'exportNode' }],
+					options: [
+						{ name: 'UI', action: 'exportNode' },
+						{ name: 'Driver', action: 'dumpNode' },
+					],
 					icon: 'get_app',
 					desc: 'Export this node in a json file',
 				},

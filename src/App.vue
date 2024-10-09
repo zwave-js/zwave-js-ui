@@ -775,7 +775,7 @@ export default {
 								? ` (${getEnumMemberName(
 										SecurityBootstrapFailure,
 										result.lowSecurityReason,
-								  )})`
+									)})`
 								: ''
 						}
 					</p>

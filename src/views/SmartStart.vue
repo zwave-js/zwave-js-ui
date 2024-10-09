@@ -7,10 +7,6 @@
 			style="margin-bottom: 80px"
 			:search="search"
 			:options.sync="tableOptions"
-			@focus:row="onRowFocus"
-			@blur:row="onRowBlur"
-			@mouseenter:row="onRowFocus"
-			@mouseleave:row="onRowBlur"
 		>
 			<template v-slot:top>
 				<v-col class="pt-0" dense>
@@ -69,6 +65,11 @@
 				</v-btn>
 			</template>
 
+			<template v-slot:[`item.dsk`]="{ item }">
+				<span v-if="streamerMode">*********</span>
+				<span v-else> {{ item.dsk }} </span>
+			</template>
+
 			<template v-slot:[`item.status`]="{ item }">
 				<v-switch
 					v-model="item.status"
@@ -88,6 +89,10 @@
 					:disabled="!!item.nodeId"
 					dense
 					rounded
+					@focus="onRowFocus($event, item)"
+					@blur="onRowBlur($event, item)"
+					@mouseenter="onRowFocus($event, item)"
+					@mouseleave="onRowBlur($event, item)"
 					small
 					outlined
 					:color="getProtocolColor(item)"
@@ -99,69 +104,94 @@
 			<template
 				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
 			>
-				<v-checkbox
-					v-model="item.securityClasses.s2AccessControl"
-					@change="onChange(item)"
-					:disabled="
-						!!item.nodeId ||
-						!item.requestedSecurityClasses.s2AccessControl
-					"
-					hide-details
-					dense
-				></v-checkbox>
+				<div
+					@focus="onRowFocus($event, item)"
+					@blur="onRowBlur($event, item)"
+					@mouseenter="onRowFocus($event, item)"
+					@mouseleave="onRowBlur($event, item)"
+				>
+					<v-checkbox
+						v-model="item.securityClasses.s2AccessControl"
+						@change="onChange(item)"
+						:disabled="
+							!!item.nodeId ||
+							!item.requestedSecurityClasses.s2AccessControl
+						"
+						hide-details
+						dense
+					></v-checkbox>
+				</div>
 			</template>
 			<template
 				v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
 			>
-				<v-checkbox
-					v-model="item.securityClasses.s2Authenticated"
-					@change="onChange(item)"
-					:disabled="
-						!!item.nodeId ||
-						!item.requestedSecurityClasses.s2Authenticated
-					"
-					hide-details
-					dense
-				></v-checkbox>
+				<div
+					@focus="onRowFocus($event, item)"
+					@blur="onRowBlur($event, item)"
+					@mouseenter="onRowFocus($event, item)"
+					@mouseleave="onRowBlur($event, item)"
+				>
+					<v-checkbox
+						v-model="item.securityClasses.s2Authenticated"
+						@change="onChange(item)"
+						:disabled="
+							!!item.nodeId ||
+							!item.requestedSecurityClasses.s2Authenticated
+						"
+						hide-details
+						dense
+					></v-checkbox>
+				</div>
 			</template>
 			<template
 				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
 			>
-				<v-checkbox
-					v-if="item.protocol === Protocols.ZWave"
-					v-model="item.securityClasses.s2Unauthenticated"
-					:disabled="
-						!!item.nodeId ||
-						!item.requestedSecurityClasses.s2Unauthenticated
-					"
-					@change="onChange(item)"
-					hide-details
-					dense
-				></v-checkbox>
-				<span v-else></span>
+				<div
+					@focus="onRowFocus($event, item)"
+					@blur="onRowBlur($event, item)"
+					@mouseenter="onRowFocus($event, item)"
+					@mouseleave="onRowBlur($event, item)"
+				>
+					<v-checkbox
+						v-if="item.protocol === Protocols.ZWave"
+						v-model="item.securityClasses.s2Unauthenticated"
+						:disabled="
+							!!item.nodeId ||
+							!item.requestedSecurityClasses.s2Unauthenticated
+						"
+						@change="onChange(item)"
+						hide-details
+						dense
+					></v-checkbox>
+					<span v-else></span>
+				</div>
 			</template>
 			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
-				<v-checkbox
-					v-if="item.protocol === Protocols.ZWave"
-					v-model="item.securityClasses.s0Legacy"
-					:disabled="
-						!!item.nodeId || !item.requestedSecurityClasses.s0Legacy
-					"
-					@change="onChange(item)"
-					hide-details
-					dense
-				></v-checkbox>
-				<span v-else></span>
+				<div
+					@focus="onRowFocus($event, item)"
+					@blur="onRowBlur($event, item)"
+					@mouseenter="onRowFocus($event, item)"
+					@mouseleave="onRowBlur($event, item)"
+				>
+					<v-checkbox
+						v-if="item.protocol === Protocols.ZWave"
+						v-model="item.securityClasses.s0Legacy"
+						:disabled="
+							!!item.nodeId ||
+							!item.requestedSecurityClasses.s0Legacy
+						"
+						@change="onChange(item)"
+						hide-details
+						dense
+					></v-checkbox>
+					<span v-else></span>
+				</div>
 			</template>
 			<template v-slot:[`item.actions`]="{ item }">
 				<v-icon small color="red" @click="removeItem(item)"
 					>delete</v-icon
 				>
-				<v-icon
-					v-if="!item.nodeId"
-					small
-					color="success"
-					@click="editItem(item)"
+				<v-icon small color="success" @click="editItem(item)"
 					>edit</v-icon
 				>
 			</template>
@@ -322,6 +352,11 @@ export default {
 			deep: true,
 		},
 	},
+	computed: {
+		streamerMode() {
+			return useBaseStore().ui.streamerMode
+		},
+	},
 	data() {
 		return {
 			items: [],
@@ -389,7 +424,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		onRowFocus(event, { item }) {
+		onRowFocus(event, item) {
 			if (item.nodeId) {
 				// get mouse position
 				this.x = event.clientX + 10
@@ -507,31 +542,7 @@ export default {
 				this.edited = true
 			}
 
-			const inputs = [
-				{
-					type: 'text',
-					label: 'DSK',
-					required: true,
-					key: 'dsk',
-					hint: 'Enter the full DSK code (dashes included) for your device',
-					rules: [validDsk],
-					default: existingItem ? existingItem.dsk : '',
-				},
-				{
-					type: 'list',
-					label: 'Protocol',
-					required: true,
-					key: 'protocol',
-					items: protocolsItems,
-					disabled:
-						existingItem &&
-						(!existingItem.supportedProtocols ||
-							existingItem.supportedProtocols.length < 2),
-					hint: 'Inclusion protocol to use',
-					default: existingItem
-						? existingItem.protocol
-						: Protocols.ZWave,
-				},
+			let inputs = [
 				{
 					type: 'text',
 					label: 'Name',
@@ -548,61 +559,89 @@ export default {
 					hint: 'The node location',
 					default: existingItem ? existingItem.location : '',
 				},
-				{
-					type: 'checkbox',
-					label: 'S2 Access Control',
-					key: 's2AccessControl',
-					disabled: existingItem
-						? !existingItem.requestedSecurityClasses.s2AccessControl
-						: false,
-					default: existingItem
-						? existingItem.securityClasses.s2AccessControl
-						: false,
-				},
-				{
-					type: 'checkbox',
-					label: 'S2 Authenticated',
-					key: 's2Authenticated',
-					disabled: existingItem
-						? !existingItem.requestedSecurityClasses.s2Authenticated
-						: false,
-					default: existingItem
-						? existingItem.securityClasses.s2Authenticated
-						: false,
-				},
-				{
-					type: 'checkbox',
-					label: 'S2 Unauthenticated',
-					key: 's2Unauthenticated',
-					disabled: existingItem
-						? !existingItem.requestedSecurityClasses
-								.s2Unauthenticated
-						: false,
-					default: existingItem
-						? existingItem.securityClasses.s2Unauthenticated
-						: false,
-					show: (item) => {
-						return item.protocol === Protocols.ZWave
-					},
-				},
-				{
-					type: 'checkbox',
-					label: 'S0 Legacy',
-					key: 's0Legacy',
-					disabled: existingItem
-						? !existingItem.requestedSecurityClasses.s0Legacy
-						: false,
-					default: existingItem
-						? existingItem.securityClasses.s0Legacy
-						: false,
-					show: (item) => {
-						return item.protocol === Protocols.ZWave
-					},
-				},
 			]
 
-			if (existingItem && existingItem.supportedProtocols?.length < 2) {
-				inputs.splice(1, 1)
+			if (!existingItem?.nodeId) {
+				inputs = [
+					...inputs,
+					{
+						type: 'text',
+						label: 'DSK',
+						required: true,
+						key: 'dsk',
+						hint: 'Enter the full DSK code (dashes included) for your device',
+						rules: [validDsk],
+						default: existingItem ? existingItem.dsk : '',
+					},
+					{
+						type: 'list',
+						label: 'Protocol',
+						required: true,
+						key: 'protocol',
+						items: protocolsItems,
+						disabled:
+							existingItem &&
+							(!existingItem.supportedProtocols ||
+								existingItem.supportedProtocols.length < 2),
+						hint: 'Inclusion protocol to use',
+						default: existingItem
+							? existingItem.protocol
+							: Protocols.ZWave,
+					},
+					{
+						type: 'checkbox',
+						label: 'S2 Access Control',
+						key: 's2AccessControl',
+						disabled: existingItem
+							? !existingItem.requestedSecurityClasses
+									.s2AccessControl
+							: false,
+						default: existingItem
+							? existingItem.securityClasses.s2AccessControl
+							: false,
+					},
+					{
+						type: 'checkbox',
+						label: 'S2 Authenticated',
+						key: 's2Authenticated',
+						disabled: existingItem
+							? !existingItem.requestedSecurityClasses
+									.s2Authenticated
+							: false,
+						default: existingItem
+							? existingItem.securityClasses.s2Authenticated
+							: false,
+					},
+					{
+						type: 'checkbox',
+						label: 'S2 Unauthenticated',
+						key: 's2Unauthenticated',
+						disabled: existingItem
+							? !existingItem.requestedSecurityClasses
+									.s2Unauthenticated
+							: false,
+						default: existingItem
+							? existingItem.securityClasses.s2Unauthenticated
+							: false,
+						show: (item) => {
+							return item.protocol === Protocols.ZWave
+						},
+					},
+					{
+						type: 'checkbox',
+						label: 'S0 Legacy',
+						key: 's0Legacy',
+						disabled: existingItem
+							? !existingItem.requestedSecurityClasses.s0Legacy
+							: false,
+						default: existingItem
+							? existingItem.securityClasses.s0Legacy
+							: false,
+						show: (item) => {
+							return item.protocol === Protocols.ZWave
+						},
+					},
+				]
 			}
 
 			let item = await this.app.confirm(
@@ -616,19 +655,21 @@ export default {
 				},
 			)
 
-			if (item.dsk) {
-				const securityClasses = {
-					s2Unauthenticated: item.s2Unauthenticated,
-					s2Authenticated: item.s2Authenticated,
-					s2AccessControl: item.s2AccessControl,
-					s0Legacy: item.s0Legacy,
-				}
-				delete item.s2AccessControl
-				delete item.s2Authenticated
-				delete item.s2Unauthenticated
-				delete item.s0Legacy
+			if (item.dsk || existingItem?.nodeId) {
+				if (!existingItem?.nodeId) {
+					const securityClasses = {
+						s2Unauthenticated: item.s2Unauthenticated,
+						s2Authenticated: item.s2Authenticated,
+						s2AccessControl: item.s2AccessControl,
+						s0Legacy: item.s0Legacy,
+					}
+					delete item.s2AccessControl
+					delete item.s2Authenticated
+					delete item.s2Unauthenticated
+					delete item.s0Legacy
 
-				item.securityClasses = securityClasses
+					item.securityClasses = securityClasses
+				}
 
 				if (existingItem) {
 					// extend existing item props that are not shown in dialog
@@ -636,6 +677,8 @@ export default {
 				}
 
 				this.updateItem(item)
+			} else if (Object.keys(item).length > 0 && !item.dsk) {
+				this.showSnackbar('DSK is required', 'error')
 			}
 		},
 		async removeItem(item) {

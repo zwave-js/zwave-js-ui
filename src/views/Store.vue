@@ -21,7 +21,7 @@
 					style="max-height: calc(100vh - 64px); overflow-y: auto"
 				>
 					<template v-slot:prepend="{ item, open }">
-						<v-icon color="#FFC107" v-if="!item.ext">
+						<v-icon color="#FFC107" v-if="item.children">
 							{{ open ? 'folder_open' : 'folder' }}
 						</v-icon>
 						<v-icon color="blue" v-else> text_snippet </v-icon>
@@ -34,22 +34,72 @@
 					</template>
 					<template v-slot:append="{ item }">
 						<v-row justify-end class="ma-1">
+							<v-menu v-if="item.children" offset-y>
+								<template v-slot:activator="{ on }">
+									<v-icon v-on="on">more_vert</v-icon>
+								</template>
+								<v-list class="py-0" dense>
+									<v-list-item
+										dense
+										@click.stop="writeFile(item.path, true)"
+									>
+										<v-list-item-icon>
+											<v-icon color="yellow"
+												>create_new_folder</v-icon
+											>
+										</v-list-item-icon>
+										<v-list-item-title
+											>Create New
+											Folder</v-list-item-title
+										>
+									</v-list-item>
+									<v-list-item
+										dense
+										@click.stop="
+											writeFile(item.path, false)
+										"
+									>
+										<v-list-item-icon>
+											<v-icon color="primary"
+												>post_add</v-icon
+											>
+										</v-list-item-icon>
+										<v-list-item-title
+											>Add File</v-list-item-title
+										>
+									</v-list-item>
+									<v-list-item
+										dense
+										v-if="!item.isRoot"
+										@click.stop="deleteFile(item)"
+									>
+										<v-list-item-icon>
+											<v-icon color="red">delete</v-icon>
+										</v-list-item-icon>
+										<v-list-item-title
+											>Delete</v-list-item-title
+										>
+									</v-list-item>
+									<v-list-item
+										dense
+										@click.stop="uploadFile(item)"
+									>
+										<v-list-item-icon>
+											<v-icon color="orange"
+												>upload</v-icon
+											>
+										</v-list-item-icon>
+										<v-list-item-title
+											>Upload File</v-list-item-title
+										>
+									</v-list-item>
+								</v-list>
+							</v-menu>
+							<!-- only show delete -->
 							<v-icon
-								v-if="item.children"
-								@click.stop="writeFile(item.path, true)"
-								color="yellow"
-								>create_new_folder</v-icon
-							>
-							<v-icon
-								v-if="item.children"
-								@click.stop="writeFile(item.path, false)"
-								color="primary"
-								>post_add</v-icon
-							>
-							<v-icon
-								v-if="!item.isRoot"
-								@click.stop="deleteFile(item)"
+								v-else
 								color="red"
+								@click.stop="deleteFile(item)"
 								>delete</v-icon
 							>
 						</v-row>
@@ -82,7 +132,7 @@
 								dark
 								small
 								color="green"
-								@click="restoreZip"
+								@click="restoreZip()"
 								v-bind="attrs"
 								v-on="on"
 							>
@@ -99,7 +149,7 @@
 								dark
 								small
 								color="orange"
-								@click="uploadFile"
+								@click="uploadFile()"
 								v-bind="attrs"
 								v-on="on"
 							>
@@ -330,6 +380,9 @@ export default {
 
 			return this.active[0]
 		},
+		storePath() {
+			return this.items[0]?.path
+		},
 	},
 	data() {
 		return {
@@ -351,7 +404,7 @@ export default {
 			if (
 				await this.app.confirm(
 					'Attention',
-					`Are you sure you want to delete the file ${item.name}?`,
+					`Are you sure you want to delete the file <code>${item.name}</code>?`,
 					'alert',
 				)
 			) {
@@ -503,23 +556,37 @@ export default {
 				}
 			}
 		},
-		async uploadFile() {
-			const upload = await this.app.confirm('Upload file', '', 'info', {
-				confirmText: 'Upload',
-				inputs: [
-					{
-						type: 'file',
-						label: 'File',
-						required: true,
-						key: 'file',
-					},
-				],
-			})
+		async uploadFile(folder) {
+			const folderPath = folder
+				? folder.path.replace(this.storePath, '')
+				: ''
+			const upload = await this.app.confirm(
+				`Upload file`,
+				`Destination folder: <code>${folderPath || 'root'}</code>`,
+				'info',
+				{
+					confirmText: 'Upload',
+					width: 500,
+					inputs: [
+						{
+							type: 'file',
+							label: 'File',
+							required: true,
+							key: 'file',
+						},
+					],
+				},
+			)
 
 			if (upload.file) {
 				try {
 					const formData = new FormData()
 					formData.append('upload', upload.file)
+
+					if (folderPath) {
+						formData.append('folder', folderPath)
+					}
+
 					const res = await ConfigApis.storeUpload(formData)
 					if (!res.success)
 						throw new Error(res.message || 'Upload failed')
@@ -571,7 +638,7 @@ export default {
 				isNew ||
 				(await this.app.confirm(
 					'Attention',
-					`Are you sure you want to overwrite the content of the file ${this.selected.name}?`,
+					`Are you sure you want to overwrite the content of the file <code>${this.selected.name}<code>?`,
 					'alert',
 				))
 			) {

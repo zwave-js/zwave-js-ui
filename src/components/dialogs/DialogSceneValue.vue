@@ -46,7 +46,7 @@
 												(item.label || item.id) +
 												(item.endpoint > 0
 													? ' - Endpoint ' +
-													  item.endpoint
+														item.endpoint
 													: '')
 											}}</v-list-item-title>
 											<v-list-item-subtitle

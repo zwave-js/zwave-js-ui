@@ -1,34 +1,7 @@
 <template>
 	<v-container grid-list-md>
 		<v-row>
-			<v-col cols="12">
-				<v-alert
-					class="mb-0"
-					v-if="
-						!zwave.logEnabled ||
-						!gateway.logEnabled ||
-						zwave.logToFile
-					"
-					dense
-					text
-					type="warning"
-				>
-					<p class="ma-1" v-if="!zwave.logEnabled">
-						• ZwaveJS Logs are disabled. Please enable it on
-						"Settings > Z-Wave" in order to see Application logs
-					</p>
-					<p class="ma-1" v-if="!gateway.logEnabled">
-						• Application Logs are disabled. Please enable it on
-						"Settings > General" in order to see ZwaveJS logs
-					</p>
-					<p class="ma-1" v-if="zwave.logToFile">
-						• ZwaveJS "Log to file" is enabled. Disable it in order
-						to see ZwaveJS logs
-					</p>
-				</v-alert>
-			</v-col>
-
-			<v-col style="max-width: 220px; margin-top: -2px">
+			<v-col style="max-width: 260px; margin-top: -2px">
 				<v-btn-toggle dense multiple>
 					<v-tooltip
 						bottom
@@ -67,9 +40,10 @@
 				></v-text-field>
 			</v-col>
 
-			<v-col class="pt-0" cols="12">
+			<v-col class="pt-0 mb-5" cols="12">
 				<div
 					id="debug_window"
+					@scroll="onScroll"
 					style="
 						height: 800px;
 						width: 100%;
@@ -89,9 +63,9 @@
 import { socketEvents } from '@server/lib/SocketEvents'
 
 import { AnsiUp } from 'ansi_up'
-import { mapState, mapActions } from 'pinia'
+import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
-import { openInWindow } from '../lib/utils'
+import { isPopupWindow, openInWindow } from '../lib/utils'
 
 const ansiUp = new AnsiUp()
 
@@ -104,10 +78,6 @@ export default {
 	},
 	watch: {},
 	computed: {
-		...mapState(useBaseStore, ['zwave', 'gateway']),
-		logDisabled() {
-			return !this.zwave.logEnabled || !this.gateway.logEnabled
-		},
 		filteredLogs() {
 			if (!this.filter) {
 				return this.debug
@@ -152,7 +122,16 @@ export default {
 					color: 'primary',
 					tooltip: 'Open in window',
 					action: this.newWindow,
-					disabled: false,
+					disabled: isPopupWindow(),
+				},
+				{
+					id: 'scroll',
+					label: 'Scroll',
+					icon: 'vertical_align_bottom',
+					color: 'purple',
+					tooltip: 'Enable auto scroll',
+					action: this.enableAutoScroll,
+					disabled: this.autoScroll,
 				},
 			]
 		},
@@ -163,6 +142,7 @@ export default {
 			filter: '',
 			debugActive: true,
 			hideTopbar: false,
+			autoScroll: true,
 		}
 	},
 	methods: {
@@ -172,7 +152,34 @@ export default {
 			this.showSnackbar('Debug ' + (v ? 'activated' : 'disabled'))
 		},
 		newWindow() {
-			openInWindow('DEBUG')
+			openInWindow('DEBUG', 1000)
+		},
+		enableAutoScroll() {
+			this.autoScroll = true
+			this.scrollBottom()
+		},
+		scrollBottom() {
+			if (!this.autoScroll) {
+				return
+			}
+
+			this.$nextTick(() => {
+				const textarea = document.getElementById('debug_window')
+				if (textarea) {
+					// textarea could be hidden
+					textarea.scrollTop = textarea.scrollHeight
+				}
+			})
+		},
+		onScroll(event) {
+			// if scrolling up, disable autoscroll
+			const scrollTop = event.target.scrollTop
+
+			if (scrollTop < this.prevScrollTop) {
+				this.autoScroll = false
+			}
+			// no need to make this reative
+			this.prevScrollTop = scrollTop
 		},
 	},
 	mounted() {
@@ -188,6 +195,12 @@ export default {
 			if (this.debugActive) {
 				data = ansiUp.ansi_to_html(data)
 				data = data.replace(/\n/g, '</br>')
+				if (!data.endsWith('</br>')) {
+					data += '</br>'
+				}
+
+				// remove background colors styles
+				data = data.replace(/background-color:rgb\([0-9, ]+\)/g, '')
 				// \b[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}.[0-9]{3}Z\b
 				this.debug.push(data)
 
@@ -195,11 +208,7 @@ export default {
 					this.debug.shift()
 				}
 
-				const textarea = document.getElementById('debug_window')
-				if (textarea) {
-					// textarea could be hidden
-					textarea.scrollTop = textarea.scrollHeight
-				}
+				this.scrollBottom()
 			}
 		})
 	},

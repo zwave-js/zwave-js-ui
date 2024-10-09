@@ -18,7 +18,7 @@
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/MVg9wc2HE "Buy Me A Coffee") [<img style="background:#ccc;border-radius:10px" alt="PayPal" src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-color.svg" width="200" height="40px" />](https://paypal.me/daniellando) [![Patreon](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/bePatron?u=16906849) [<img src="https://liberapay.com/assets/widgets/donate.svg" alt="Donate using Liberapay" />](https://liberapay.com/robertsLando/donate)[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/I2I1JN3M5)
 
-[![dockeri.co](https://dockerico.blankenship.io/image/zwavejs/zwave-js-ui)](https://hub.docker.com/r/zwavejs/zwave-js-ui)
+[![dockeri.co](https://dockerico.blankenship.io/image/zwavejs/zwave-js-ui)](https://hub.docker.com/r/zwavejs/zwave-js-ui) [![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-black.svg)](https://snapcraft.io/zwave-js-ui)
 
 Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 
@@ -38,10 +38,17 @@ Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 - **Debug Logs in the UI**: See debug logs directly from the UI
 - **Access Store Files in the UI**: Access the files are stored in the persistent `store` folder directly from the UI
 - **Network Graph**: Provides a beautiful map showing how nodes are communicating with the controller
-- **Supports the Official Home Assistant Integration**: Can act as the backend driver for the official Home Assistant integration, using the same driver and socket server as the official addon
-- **Supports Home Assistant Discovery via MQTT**: In lieu of the official integation, can be used to expose Z-Wave devices to Home Assistant via MQTT discovery.
-- **Supported by Domoticz** (beta 2021.1) using MQTT Autodiscovery.
 - **Automatic/Scheduled backups**: Scheduled backup of NVM and store directory. It's also possible to enable automatic backups of NVM before every node inclusion/exclusion/replace, this ensures to create a safe restore point before any operation that can cause a network corruption.
+- **Zniffer Support**: Supports Zniffer mode for debugging Z-Wave traffic
+- **Dianogsitics**: Use Healtcheck and Link quality tools to diagnose network issues
+
+## Software integrations
+
+- [Home Assistant](https://www.home-assistant.io/): using the official [addon](https://github.com/hassio-addons/addon-zwave-js-ui) or standalone installation through plain MQTT or MQTT Discovery. See [docs](https://zwave-js.github.io/zwave-js-ui/#/homeassistant/homeassistant-mqtt)
+- [Domoticz](https://www.domoticz.com/): using MQTT Discovery. See [docs](https://www.domoticz.com/wiki/Zwave-JS-UI)
+- [OpenHAB](https://www.openhab.org/): using MQTT Discovery. See [docs](https://community.openhab.org/t/zwave-js-ui-in-place-of-oh-zwave-binding/150007/102)
+- [Jeedom](https://www.jeedom.com/en/): using official Z-Wave JS [plugin](https://doc.jeedom.com/en_US/plugins/automation%20protocol/zwavejs/beta/)
+- [HomeSeer](https://homeseer.com/): Using [Z-Wave Plus Plugin](https://docs.homeseer.com/products/setting-up-the-z-wave-plus-plugin)
 
 ## Documentation
 

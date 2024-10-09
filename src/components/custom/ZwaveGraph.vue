@@ -248,8 +248,8 @@
 										hoverNode.productLabel +
 										(hoverNode.productDescription
 											? ' (' +
-											  hoverNode.productDescription +
-											  ')'
+												hoverNode.productDescription +
+												')'
 											: '')
 									}}</v-list-item-content
 								>
@@ -376,7 +376,6 @@ export default {
 			selectedNodes: [],
 			showReturnRoutes: true,
 			showApplicationRoutes: true,
-			starSvg: '/star.svg',
 			menuX: 0,
 			menuY: 0,
 			menu: false,
@@ -1016,7 +1015,8 @@ export default {
 				const starArrow = {
 					enabled: true,
 					type: 'image',
-					src: this.starSvg,
+					// don't use path here, seems vis-network doens't respect X-External-Path header causing 404 on HA Addon (issue https://github.com/zwave-js/zwave-js-ui/issues/3492)
+					src: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNyIgaGVpZ2h0PSIxNSIgdmlld0JveD0iLTEgLTEgMTcgMTYiPgogIDxwYXRoIGQ9Im03LjUgMCAyLjI0IDQuNiA1IC43NS0zLjYyIDMuNTkuODYgNS4wNi00LjQ4LTIuNEwzLjAyIDE0bC44Ni01LjA2TC4yNiA1LjM1bDUtLjc0Wm0wIDAiIHN0eWxlPSJzdHJva2U6IzAwMDtmaWxsLXJ1bGU6bm9uemVybztmaWxsOiNmZmM5MDE7ZmlsbC1vcGFjaXR5OjEiLz4KPC9zdmc+',
 					scaleFactor: 1,
 				}
 

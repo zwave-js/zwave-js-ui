@@ -283,6 +283,22 @@ export default {
 					desc: 'Write a custom JS function using the ZwaveJS Driver',
 				},
 				{
+					text: 'Rebuild Node Routes',
+					options: [
+						{
+							name: 'Rebuild',
+							action: 'rebuildNodeRoutes',
+							args: {
+								confirm:
+									'Rebuilding routes of a specific node. This action causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+							},
+						},
+					],
+					icon: 'healing',
+					color: 'warning',
+					desc: 'Discover and assign new routes between a specific node to the controller and his neighbors',
+				},
+				{
 					text: 'NVM Management',
 					options: [
 						{ name: 'Backup', action: 'backupNVMRaw' },
@@ -332,6 +348,7 @@ export default {
 					return valid || 'This field is required.'
 				},
 			},
+			/** Actions to show when there is one or more selected nodes in table */
 			selectedActions: [
 				{
 					text: 'Re-interview Node',
@@ -358,22 +375,6 @@ export default {
 					],
 					icon: 'cached',
 					desc: 'Update all CC values and metadata. Use only when many values seems stale',
-				},
-				{
-					text: 'Rebuild Routes',
-					options: [
-						{
-							name: 'Rebuild',
-							action: 'rebuildNodeRoutes',
-							args: {
-								confirm:
-									'Rebuilding routes causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
-							},
-						},
-					],
-					icon: 'healing',
-					color: 'warning',
-					desc: 'Discover and assign new routes from nodes to the controller and other nodes.',
 				},
 				{
 					text: 'Ping',

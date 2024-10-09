@@ -200,6 +200,9 @@
 								<span v-else-if="item.payload">
 									{{ item.payload }}
 								</span>
+								<span v-else-if="item.routedAck"
+									>ROUTED ACK</span
+								>
 								<span v-else>---</span>
 							</template>
 
@@ -300,7 +303,7 @@
 				<v-card-title> Settings </v-card-title>
 				<v-card-text>
 					<v-row>
-						<v-col cols="12">
+						<v-col v-if="!isPopup" cols="12">
 							<v-btn
 								text
 								small
@@ -354,6 +357,7 @@ import {
 	humanFriendlyNumber,
 	openInWindow,
 	getProtocolIcon,
+	isPopupWindow,
 } from '../lib/utils'
 
 export default {
@@ -504,6 +508,7 @@ export default {
 	data() {
 		return {
 			znifferRegions,
+			isPopup: isPopupWindow(),
 			fab: false,
 			drawer: false,
 			frequency: null,
@@ -678,6 +683,8 @@ export default {
 				style.backgroundColor = 'rgba(0, 0, 255, 0.5)'
 			} else if (frame.corrupted) {
 				style.backgroundColor = 'rgba(255, 0, 0, 0.1)'
+			} else if (frame.routedAck) {
+				style.backgroundColor = 'rgba(255, 165, 0, 0.1)'
 			} else {
 				if (frame.protocol === Protocols.ZWaveLongRange) {
 					switch (frame.type) {

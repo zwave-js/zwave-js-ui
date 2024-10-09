@@ -11,10 +11,17 @@ const proxyHostname = process.env.SERVER_HOST
 	? process.env.SERVER_HOST
 	: 'localhost'
 const proxyPort = process.env.SERVER_PORT ? process.env.SERVER_PORT : '8091'
+const ingressToken = process.env.INGRESS_TOKEN
 
 const proxyURL = process.env.SERVER_URL
 	? process.env.SERVER_URL
 	: `${proxyScheme}://${proxyHostname}:${proxyPort}`
+
+const headers = ingressToken
+	? {
+			headers: { cookie: `ingress_session=${ingressToken}` },
+		}
+	: {}
 
 // const proxyWebSocketScheme = process.env.SERVER_SSL ? 'wss' : 'ws'
 // const proxyWebSocketURL = `${proxyWebSocketScheme}://${proxyHostname}:${proxyPort}`
@@ -101,7 +108,7 @@ export default defineConfig(({ mode }) => {
 				? {
 						key: path.resolve(__dirname, 'certs/server.key'),
 						cert: path.resolve(__dirname, 'certs/server.crt'),
-				  }
+					}
 				: false,
 			base: distFolder,
 			host: '0.0.0.0',
@@ -112,16 +119,19 @@ export default defineConfig(({ mode }) => {
 					ws: true,
 					secure: false, // allow self signed certificates
 					changeOrigin: true,
+					...headers,
 				},
 				'/health': {
 					target: proxyURL,
 					secure: false,
 					changeOrigin: true,
+					...headers,
 				},
 				'/api': {
 					target: proxyURL,
 					secure: false,
 					changeOrigin: true,
+					...headers,
 				},
 			},
 		},

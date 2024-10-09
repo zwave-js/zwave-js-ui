@@ -21,6 +21,19 @@ type HassDeviceKey =
 	| 'config_switch'
 	| 'config_number'
 
+// https://github.com/home-assistant/core/blob/2e76b1f834ea26ef3e1726930812cb4c2ea82518/homeassistant/components/light/__init__.py#L65C1-L81C48
+export type ColorMode =
+	| 'unknown'
+	| 'onoff'
+	| 'brightness'
+	| 'color_temp'
+	| 'hs'
+	| 'xy'
+	| 'rgb'
+	| 'rgbw'
+	| 'rgbww'
+	| 'white'
+
 const configurations: Record<HassDeviceKey, HassDevice> = {
 	// Binary sensor https://www.home-assistant.io/components/binary_sensor.mqtt
 	binary_sensor: {
@@ -132,6 +145,7 @@ const configurations: Record<HassDeviceKey, HassDevice> = {
 			position_closed: 0,
 			payload_open: '99',
 			payload_close: '0',
+			payload_stop: 'stop',
 		},
 	},
 	// Barrier operator support for zwave-js (numeric commands/states)

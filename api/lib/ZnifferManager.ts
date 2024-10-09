@@ -105,6 +105,25 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		parseSecurityKeys(config, znifferOptions)
 
 		this.zniffer = new Zniffer(config.port, znifferOptions)
+		this.zniffer.on('error', (error) => {
+			this.onError(error)
+		})
+
+		this.zniffer.on('frame', (frame, rawData) => {
+			const socketFrame = this.parseFrame(frame, rawData)
+
+			this.socket.emit(socketEvents.znifferFrame, socketFrame)
+		})
+
+		this.zniffer.on('corrupted frame', (frame, rawData) => {
+			const socketFrame = this.parseFrame(frame, rawData)
+
+			this.socket.emit(socketEvents.znifferFrame, socketFrame)
+		})
+
+		this.zniffer.on('ready', () => {
+			logger.info('Zniffer ready')
+		})
 
 		logger.info('Initing Zniffer...')
 		this.init().catch(() => {})
@@ -113,33 +132,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 	private async init() {
 		try {
 			await this.zniffer.init()
-
-			this.zniffer.on('frame', (frame, rawData) => {
-				const socketFrame = this.parseFrame(frame, rawData)
-
-				this.socket.emit(socketEvents.znifferFrame, socketFrame)
-			})
-
-			this.zniffer.on('corrupted frame', (frame, rawData) => {
-				const socketFrame = this.parseFrame(frame, rawData)
-
-				this.socket.emit(socketEvents.znifferFrame, socketFrame)
-			})
-
-			this.zniffer.on('error', (error) => {
-				this.onError(error)
-			})
-
-			this.zniffer.on('ready', () => {
-				logger.info('Zniffer ready')
-			})
 		} catch (error) {
-			this.onError(error)
-
 			logger.info('Retrying in 5s...')
-
-			await this.close()
-
 			this.restartTimeout = setTimeout(() => {
 				this.init().catch(() => {})
 			}, 5000)
@@ -221,9 +215,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 	private ccToLogRecord(commandClass: CommandClass): Record<string, any> {
 		try {
-			const parsed: Record<string, any> = commandClass.toLogEntry(
-				this.zniffer as any,
-			)
+			const parsed: Record<string, any> = commandClass.toLogEntry()
 
 			if (isEncapsulatingCommandClass(commandClass)) {
 				parsed.encapsulated = [

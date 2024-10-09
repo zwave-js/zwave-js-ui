@@ -21,3 +21,4 @@ that you can use to redirect to a different backend:
 - **SERVER_SSL**: [Default: undefined] if set to a value it will use _https_/_wss_ to connect to the backend;
 - **SERVER_URL**: [Default: use the other variables] the full URL for the backend API, IE: `https://zwavetomqtt.home.net:8443/`
 - **SERVER_WS_URL**: [Default: use the other variables] the full URL for the backend Socket, IE: `wss://zwavetomqtt.home.net:8443/`
+- **INGRESS_TOKEN**: [Default: undefined] a token to set the ingress session cookie if you want to develop against a remote backend via an Hass.io Ingress;

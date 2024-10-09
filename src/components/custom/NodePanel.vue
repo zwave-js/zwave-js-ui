@@ -99,7 +99,7 @@
 					</div>
 
 					<div v-if="nlwr">
-						<v-subheader>Next Last working route</v-subheader>
+						<v-subheader>Next to Last working route</v-subheader>
 						<v-list-item dense v-for="(s, i) in nlwr" :key="i">
 							<v-list-item-content>{{
 								s.title
@@ -293,6 +293,16 @@
 						<v-icon>monitor_heart</v-icon>
 					</v-btn>
 				</v-col>
+				<v-col class="pa-1">
+					<v-btn
+						color="purple"
+						small
+						rounded
+						@click="dialogLinkReliability = true"
+						>Link Statistics
+						<v-icon>leak_add</v-icon>
+					</v-btn>
+				</v-col>
 				<v-col v-if="!isLongRange" class="pa-1">
 					<v-btn
 						color="error"
@@ -341,6 +351,15 @@
 			:socket="socket"
 			:node="node"
 		/>
+
+		<dialog-link-reliability
+			v-if="node && !node.isControllerNode"
+			v-model="dialogLinkReliability"
+			@close="dialogLinkReliability = false"
+			:socket="socket"
+			:node="node"
+		/>
+
 		<v-dialog
 			fullscreen
 			persistent
@@ -398,6 +417,8 @@ export default {
 		BgRssiChart: () => import('@/components/custom/BgRssiChart.vue'),
 		DialogHealthCheck: () =>
 			import('@/components/dialogs/DialogHealthCheck.vue'),
+		DialogLinkReliability: () =>
+			import('@/components/dialogs/DialogLinkReliability.vue'),
 		draggable,
 	},
 	props: {
@@ -416,6 +437,7 @@ export default {
 	data: () => ({
 		showFullscreen: false,
 		dialogHealth: false,
+		dialogLinkReliability: false,
 		discoverLoading: false,
 		routesChanged: false,
 		returnRoutes: [],
@@ -561,13 +583,13 @@ export default {
 					? {
 							title: 'Data Rate',
 							text: protocolDataRate,
-					  }
+						}
 					: null,
 				routeSpeed
 					? {
 							title: 'Route Speed',
 							text: routeSpeed,
-					  }
+						}
 					: null,
 				{
 					title: 'Repeaters',
@@ -577,7 +599,7 @@ export default {
 					? {
 							title: 'Route failed between',
 							text: routeFailed,
-					  }
+						}
 					: null,
 			].filter((r) => !!r)
 		},

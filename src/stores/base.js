@@ -137,6 +137,7 @@ const useBaseStore = defineStore('base', {
 			darkMode: settings.load('dark', null), // Null = System Default
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
+			streamerMode: settings.load('streamerMode', false),
 		},
 	}),
 	getters: {
@@ -546,7 +547,19 @@ const useBaseStore = defineStore('base', {
 		init(data) {
 			if (data) {
 				if (data.tz) {
-					this.tz = data.tz
+					// validate timezone
+					try {
+						new Intl.DateTimeFormat(undefined, {
+							timeZone: data.tz,
+						})
+						this.tz = data.tz
+					} catch (e) {
+						log.error('Invalid timezone:', data.tz)
+						this.showSnackbar(
+							`Invalid timezone: ${data.tz}`,
+							'error',
+						)
+					}
 				}
 
 				if (data.locale) {
@@ -579,6 +592,10 @@ const useBaseStore = defineStore('base', {
 		setNavTabs(value) {
 			settings.store('navTabs', value)
 			this.ui.navTabs = value
+		},
+		setStreamerMode(value) {
+			settings.store('streamerMode', value)
+			this.ui.streamerMode = value
 		},
 		setCompactMode(value) {
 			settings.store('compact', value)

@@ -2,12 +2,16 @@
 
 This is the list of the supported environment variables:
 
+- `DEFAULT_USERNAME`: The default username when auth is enabled.
+- `DEFAULT_PASSWORD`: The default password when auth is enabled.
 - `NETWORK_KEY`: Z-Wave S0 Network key. **Deprecated**
 - Network keys:
   - `KEY_S0_Legacy`
   - `KEY_S2_Unauthenticated`
   - `KEY_S2_Authenticated`
   - `KEY_S2_AccessControl`
+  - `KEY_LR_S2_Authenticated`
+  - `KEY_LR_S2_AccessControl`
 - HTTPS:
   - `HTTPS`: Enable https
   - `SSL_CERTIFICATE` (optional): Absolute path to SSL certificate (for Docker, ensure this is the path as it appears within the container)

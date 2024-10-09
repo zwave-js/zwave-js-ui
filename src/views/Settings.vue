@@ -1,10 +1,11 @@
 <template>
-	<v-container fluid grid-list-md class="pa-4 pt-8">
+	<v-container fluid grid-list-md class="pt-8 px-0">
 		<v-form
 			id="form_settings"
 			@submit.prevent="update"
 			v-model="valid_zwave"
 			ref="form_settings"
+			class="pb-6 mx-2"
 		>
 			<v-expansion-panels
 				accordion
@@ -62,6 +63,14 @@
 									persistent-hint
 									label="Use tabs for navigation"
 									v-model="internalNavTabs"
+								></v-switch>
+							</v-col>
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable this to hide sensitive informations from the UI"
+									persistent-hint
+									label="Streamer mode"
+									v-model="internalStreamerMode"
 								></v-switch>
 							</v-col>
 						</v-row>
@@ -238,8 +247,8 @@
 										{{
 											item.enablePoll
 												? 'Interval: ' +
-												  item.pollInterval +
-												  's'
+													item.pollInterval +
+													's'
 												: 'No'
 										}}
 									</template>
@@ -586,6 +595,11 @@
 												]"
 												persistent-hint
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Unauthenticated',
@@ -618,6 +632,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -649,6 +668,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -676,6 +700,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S0_Legacy',
@@ -721,6 +750,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -753,6 +787,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -1111,6 +1150,11 @@
 												]"
 												persistent-hint
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Unauthenticated',
@@ -1143,6 +1187,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -1174,6 +1223,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -1201,6 +1255,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S0_Legacy',
@@ -1246,6 +1305,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_Authenticated',
@@ -1278,6 +1342,11 @@
 													),
 												]"
 												append-outer-icon="wifi_protected_setup"
+												:type="
+													streamerMode
+														? 'password'
+														: 'text'
+												"
 												@click:append-outer="
 													randomKey(
 														'S2_AccessControl',
@@ -1381,14 +1450,14 @@
 				</v-expansion-panel>
 			</v-expansion-panels>
 
-			<v-container cols="12" sm="6" class="ml-1">
-				<v-switch
-					hint="Enable this to use Z-Wave JS UI only as Control Panel"
+			<v-col cols="12" sm="6" class="ml-1">
+				<inverted-checkbox
 					persistent-hint
-					label="Disable MQTT Gateway"
+					label="MQTT Gateway"
+					hint="Enable MQTT gateway"
 					v-model="newMqtt.disabled"
-				></v-switch>
-			</v-container>
+				></inverted-checkbox>
+			</v-col>
 
 			<v-expansion-panels
 				accordion
@@ -1752,14 +1821,14 @@
 										v-if="newZwave.serverEnabled"
 										cols="6"
 									>
-										<v-switch
-											hint="Disable this to prevent applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
+										<inverted-checkbox
+											hint="Allows applications like Home Assistant to automatically detect and connect to your Z-Wave JS UI instance"
 											persistent-hint
-											label="Disable DNS Discovery"
+											label="DNS Discovery"
 											v-model="
 												newZwave.serverServiceDiscoveryDisabled
 											"
-										></v-switch>
+										></inverted-checkbox>
 									</v-col>
 								</v-row>
 								<v-row v-if="!newMqtt.disabled">
@@ -1857,45 +1926,43 @@
 				:devices="devices"
 			/>
 		</v-form>
-
 		<v-row
 			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
-			class="mt-2 mb-3"
+			space-be
+			class="sticky-buttons py-3 px-4"
+			:style="{
+				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
+			}"
 		>
-			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
-				color="red darken-1"
-				text
-				@click="resetConfig"
-			>
+			<v-btn class="mr-2" small color="red darken-1" @click="resetConfig">
 				Reset
 				<v-icon right dark>clear</v-icon>
 			</v-btn>
 			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
+				class="mr-2"
+				small
 				color="purple darken-1"
-				text
 				@click="importSettings"
 			>
 				Import
 				<v-icon right dark>file_upload</v-icon>
 			</v-btn>
 			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
+				class="mr-2"
+				small
 				color="green darken-1"
-				text
 				@click="exportSettings"
 			>
 				Export
 				<v-icon right dark>file_download</v-icon>
 			</v-btn>
 			<v-btn
-				:small="$vuetify.breakpoint.xsOnly"
+				class="mr-5"
+				small
 				color="blue darken-1"
-				text
 				type="submit"
 				:loading="saving"
-				:disabled="saving"
+				:disabled="saving || !settingsChanged"
 				form="form_settings"
 			>
 				Save
@@ -1909,7 +1976,7 @@
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
-import { wait, copy, isUndef } from '../lib/utils'
+import { wait, copy, isUndef, deepEqual } from '../lib/utils'
 import { rfRegions, znifferRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
@@ -1926,6 +1993,8 @@ export default {
 		DialogGatewayValue: () =>
 			import('@/components/dialogs/DialogGatewayValue.vue'),
 		fileInput: () => import('@/components/custom/file-input.vue'),
+		invertedCheckbox: () =>
+			import('@/components/custom/InvertedCheckbox.vue'),
 	},
 	props: {
 		socket: {
@@ -1953,6 +2022,24 @@ export default {
 			set(value) {
 				this.setNavTabs(value)
 			},
+		},
+		internalStreamerMode: {
+			get() {
+				return this.streamerMode
+			},
+			set(value) {
+				this.setStreamerMode(value)
+			},
+		},
+		settingsChanged() {
+			if (!deepEqual(this.newMqtt, this.mqtt)) return true
+			if (!deepEqual(this.newGateway, this.gateway)) return true
+			if (!deepEqual(this.newZwave, this.zwave)) return true
+			if (!deepEqual(this.newBackup, this.backup)) return true
+			if (!deepEqual(this.newZniffer, this.zniffer)) return true
+			if (!deepEqual(this.ui, this.prevUi)) return true
+
+			return false
 		},
 		filteredScales() {
 			if (this.newZwave.scales && this.newZwave.scales.length > 0) {
@@ -2037,6 +2124,7 @@ export default {
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.ui.darkMode,
 			navTabs: (store) => store.ui.navTabs,
+			streamerMode: (store) => store.ui.streamerMode,
 		}),
 	},
 	watch: {
@@ -2052,6 +2140,7 @@ export default {
 			dialogValue: false,
 			sslDisabled: false,
 			saving: false,
+			prevUi: null,
 			newGateway: {},
 			newMqtt: {},
 			newZwave: {
@@ -2148,8 +2237,8 @@ export default {
 				validNodeLog: (values) => {
 					return (
 						!values ||
-						values.every((v) => v > 0 && v < 233) ||
-						'Nodes must be between 1-232'
+						values.every((v) => v > 0 && v < 4000) ||
+						'Nodes must be between 1-4000'
 					)
 				},
 				validName: (value) => {
@@ -2190,6 +2279,7 @@ export default {
 		...mapActions(useBaseStore, [
 			'setDarkMode',
 			'setNavTabs',
+			'setStreamerMode',
 			'initSettings',
 			'init',
 			'showSnackbar',
@@ -2494,6 +2584,14 @@ export default {
 			this.newZniffer = copy(this.zniffer)
 			this.newMqtt = copy(this.mqtt)
 			this.newBackup = copy(this.backup)
+
+			if (this.prevUi) {
+				this.internalDarkMode = this.prevUi.darkMode
+				this.internalNavTabs = this.prevUi.navTabs
+				this.internalStreamerMode = this.prevUi.streamerMode
+			} else {
+				this.prevUi = copy(this.ui)
+			}
 		},
 		async getConfig() {
 			try {
@@ -2515,6 +2613,23 @@ export default {
 			}
 		},
 	},
+	beforeRouteLeave(to, from, next) {
+		if (this.settingsChanged) {
+			this.app
+				.confirm(
+					'Attention',
+					'You have unsaved changes. Do you really want to leave?',
+					'alert',
+				)
+				.then((res) => {
+					if (res) {
+						next()
+					}
+				})
+		} else {
+			next()
+		}
+	},
 	mounted() {
 		// hide socket status indicator from toolbar
 		this.$emit('updateStatus')
@@ -2526,5 +2641,11 @@ export default {
 <style scoped>
 .expansion-panels-outlined {
 	border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.sticky-buttons {
+	position: sticky;
+	z-index: 3; /* to be above tables */
+	bottom: 30px;
 }
 </style>

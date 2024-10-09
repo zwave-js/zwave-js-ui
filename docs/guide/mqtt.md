@@ -1913,6 +1913,29 @@ Payload:
 
 </details>
 
+#### `dumpNode`
+
+```ts
+dumpNode(nodeId: number): import("/home/daniel/GitProjects/zwave-js-ui/node_modules/zwave-js/build/lib/node/Dump").NodeDump;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/dumpNode/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
 #### `beginRebuildingRoutes`
 
 ```ts

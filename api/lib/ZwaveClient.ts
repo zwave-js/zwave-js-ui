@@ -16,7 +16,9 @@ import {
 	ZWaveDataRate,
 	ZWaveErrorCodes,
 	Protocols,
+	createDefaultTransportFormat,
 } from '@zwave-js/core'
+import { JSONTransport } from '@zwave-js/log-transport-json'
 import { isDocker } from '@zwave-js/shared'
 import {
 	AssociationAddress,
@@ -102,6 +104,8 @@ import {
 	InclusionUserCallbacks,
 	InclusionState,
 	ProvisioningEntryStatus,
+	AssociationCheckResult,
+	LinkReliabilityCheckResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -126,11 +130,6 @@ export const deviceConfigPriorityDir = storeDir + '/config'
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
 })
-
-export async function loadManager() {
-	await configManager.loadNamedScales()
-	await configManager.loadSensorTypes()
-}
 
 const logger = LogManager.module('Z-Wave')
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -161,6 +160,7 @@ export const allowedApis = validateMethods([
 	'getNodeNeighbors',
 	'discoverNodeNeighbors',
 	'getAssociations',
+	'checkAssociation',
 	'addAssociations',
 	'removeAssociations',
 	'removeAllAssociations',
@@ -203,6 +203,7 @@ export const allowedApis = validateMethods([
 	'updateFirmware',
 	'firmwareUpdateOTW',
 	'abortFirmwareUpdate',
+	'dumpNode',
 	'getAvailableFirmwareUpdates',
 	'firmwareUpdateOTA',
 	'sendCommand',
@@ -228,6 +229,8 @@ export const allowedApis = validateMethods([
 	'checkLifelineHealth',
 	'abortHealthCheck',
 	'checkRouteHealth',
+	'checkLinkReliability',
+	'abortLinkReliabilityCheck',
 	'syncNodeDateAndTime',
 	'manuallyIdleNotificationValue',
 	'getSchedules',
@@ -466,6 +469,11 @@ export interface FwFile {
 export interface ZUIEndpoint {
 	index: number
 	label?: string
+	deviceClass: {
+		basic: number
+		generic: number
+		specific: number
+	}
 }
 
 export enum ZUIScheduleEntryLockMode {
@@ -521,6 +529,7 @@ export type ZUINode = {
 	powerlevel?: number
 	measured0dBm?: number
 	RFRegion?: RFRegion
+	rfRegions?: { text: string; value: number }[]
 	isFrequentListening?: FLiRS
 	isRouting?: boolean
 	keepAwake?: boolean
@@ -563,7 +572,7 @@ export type ZUINode = {
 }
 
 export type NodeEvent = {
-	event: ZwaveNodeEvents
+	event: ZwaveNodeEvents | 'status changed'
 	args: any[]
 	time: Date
 }
@@ -727,10 +736,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		validateDSKAndEnterPIN: this._onValidateDSK.bind(this),
 		abort: this._onAbortInclusion.bind(this),
 	}
-	private _inclusionStateInterval: NodeJS.Timeout
-
 	private _inclusionState: InclusionState = undefined
 
+	private _controllerListenersAdded: boolean = false
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
 	}
@@ -798,7 +806,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.closed = false
 		this.driverReady = false
-		this.hasUserCallbacks = false
 		this.scenes = jsonStore.get(store.scenes)
 
 		this._nodes = new Map()
@@ -1133,11 +1140,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = true
 		this.driverReady = false
 
-		if (this._inclusionStateInterval) {
-			clearInterval(this._inclusionStateInterval)
-			this._inclusionStateInterval = null
-		}
-
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
 			this.commandsTimeout = null
@@ -1185,6 +1187,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this._driver) {
 			await this._driver.destroy()
 			this._driver = null
+			this._controllerListenersAdded = false
 		}
 
 		if (!keepListeners) {
@@ -1392,10 +1395,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										ScheduleEntryLockScheduleKind.WeekDay,
 										s,
 									)
-							  )
+								)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
-							  ].getWeekDaySchedule(slot)
+								].getWeekDaySchedule(slot)
 
 						pushSchedule(weeklySchedules, slot, schedule, enabled)
 					}
@@ -1418,10 +1421,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										ScheduleEntryLockScheduleKind.YearDay,
 										s,
 									)
-							  )
+								)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
-							  ].getYearDaySchedule(slot)
+								].getYearDaySchedule(slot)
 
 						pushSchedule(yearlySchedules, slot, schedule, enabled)
 					}
@@ -1445,10 +1448,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 										ScheduleEntryLockScheduleKind.DailyRepeating,
 										s,
 									)
-							  )
+								)
 							: await zwaveNode.commandClasses[
 									'Schedule Entry Lock'
-							  ].getDailyRepeatingSchedule(slot)
+								].getDailyRepeatingSchedule(slot)
 
 						pushSchedule(dailySchedules, slot, schedule, enabled)
 					}
@@ -1584,7 +1587,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							...slot,
 							...schedule,
 							enabled: true,
-					  }
+						}
 
 				if (isDelete) {
 					if (slotIndex !== -1) {
@@ -1758,6 +1761,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Check if a given association is allowed
+	 */
+	checkAssociation(
+		source: AssociationAddress,
+		groupId: number,
+		association: AssociationAddress,
+	) {
+		return this.driver.controller.checkAssociation(
+			source,
+			groupId,
+			association,
+		)
+	}
+
+	/**
 	 * Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface)
 	 */
 	async addAssociations(
@@ -1772,53 +1790,41 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			(source.endpoint ? ' Endpoint ' + source.endpoint : '')
 		}`
 
-		if (zwaveNode) {
-			try {
-				for (const a of associations) {
-					if (
-						this._driver.controller.isAssociationAllowed(
-							source,
-							groupId,
-							a,
-						)
-					) {
-						this.logNode(
-							zwaveNode,
-							'info',
-							`Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`,
-						)
+		if (!zwaveNode) {
+			throw new Error(`Node ${source.nodeId} not found`)
+		}
 
-						await this._driver.controller.addAssociations(
-							source,
-							groupId,
-							[a],
-						)
+		const result: AssociationCheckResult[] = []
 
-						return true
-					} else {
-						this.logNode(
-							zwaveNode,
-							'warn',
-							`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}, association not allowed`,
-						)
-					}
-				}
-			} catch (error) {
+		for (const a of associations) {
+			const checkResult = this._driver.controller.checkAssociation(
+				source,
+				groupId,
+				a,
+			)
+
+			result.push(checkResult)
+
+			if (checkResult === AssociationCheckResult.OK) {
+				this.logNode(
+					zwaveNode,
+					'info',
+					`Adding Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}`,
+				)
+
+				await this._driver.controller.addAssociations(source, groupId, [
+					a,
+				])
+			} else {
 				this.logNode(
 					zwaveNode,
 					'warn',
-					`Error while adding associations to ${sourceMsg}: ${error.message}`,
+					`Unable to add Node ${a.nodeId} to Group ${groupId} of ${sourceMsg}: ${getEnumMemberName(AssociationCheckResult, checkResult)}`,
 				)
 			}
-		} else {
-			this.logNode(
-				zwaveNode,
-				'warn',
-				`Error while adding associations to ${sourceMsg}, node not found`,
-			)
 		}
 
-		return false
+		return result
 	}
 
 	/**
@@ -2192,7 +2198,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			zwaveOptions.rf = {}
 
-			if (region) {
+			if (typeof region === 'number') {
 				zwaveOptions.rf.region = region
 			}
 
@@ -2255,12 +2261,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
 
+		const logTransport = new JSONTransport()
+		logTransport.format = createDefaultTransportFormat(true, false)
+
+		zwaveOptions.logConfig.transports = [logTransport]
+
+		logTransport.stream.on('data', (data) => {
+			this.socket.emit(socketEvents.debug, data.message.toString())
+		})
+
 		try {
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
 			this._driver = new Driver(this.cfg.port, zwaveOptions)
+			this._controllerListenersAdded = false
 			this._driver.on('error', this._onDriverError.bind(this))
-			this._driver.once('driver ready', this._onDriverReady.bind(this))
+			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
 			this._driver.on(
 				'bootloader ready',
@@ -2299,9 +2315,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 				this.server.on('hard reset', () => {
 					logger.info('Hard reset requested by ZwaveJS Server')
-					this.restart().catch((err) => {
-						logger.error(err)
-					})
+					this.init()
 				})
 			}
 
@@ -2379,6 +2393,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			process.nextTick(() => {
 				this.socket.emit(evtName, data, ...args)
 			})
+		}
+	}
+
+	private async sendInitToSockets() {
+		const sockets = await this.socket.fetchSockets()
+
+		for (const socket of sockets) {
+			// force send init to all connected sockets
+			socket.emit(socketEvents.init, this.getState())
 		}
 	}
 
@@ -3680,6 +3703,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	async checkLinkReliability(
+		nodeId: number,
+		options: any,
+	): Promise<LinkReliabilityCheckResult> {
+		if (this.driverReady) {
+			const result = await this.getNode(nodeId).checkLinkReliability({
+				...options,
+				onProgress: (progress) =>
+					this._onLinkReliabilityCheckProgress({ nodeId }, progress),
+			})
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	abortLinkReliabilityCheck(nodeId: number): void {
+		if (this.driverReady) {
+			this.getNode(nodeId).abortLinkReliabilityCheck()
+			return
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	/**
 	 * Check node routes health
 	 */
@@ -3898,6 +3947,20 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	dumpNode(nodeId: number) {
+		if (this.driverReady) {
+			const zwaveNode = this.getNode(nodeId)
+
+			if (!zwaveNode) {
+				throw Error(`Node ${nodeId} not found`)
+			}
+
+			return zwaveNode.createDump()
+		}
+
+		throw new DriverNotReadyError()
+	}
+
 	beginRebuildingRoutes(options?: RebuildRoutesOptions): boolean {
 		if (this.driverReady) {
 			return this._driver.controller.beginRebuildingRoutes(options)
@@ -3928,9 +3991,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async hardReset() {
 		if (this.driverReady) {
 			await this._driver.hardReset()
-			this.restart().catch((err) => {
-				logger.error(err)
-			})
+			this.init()
 		} else {
 			throw new DriverNotReadyError()
 		}
@@ -4234,33 +4295,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private async _onDriverReady() {
 		/*
-	Now the controller interview is complete. This means we know which nodes
-	are included in the network, but they might not be ready yet.
-	The node interview will continue in the background.
-  */
+			Now the controller interview is complete. This means we know which nodes
+			are included in the network, but they might not be ready yet.
+			The node interview will continue in the background.
+
+			NOTE: This can be called also after an Hard Reset
+		*/
 
 		// driver ready
 		this.status = ZwaveClientStatus.DRIVER_READY
 
 		this.driverReady = true
 
+		this._inclusionState = this.driver.controller.inclusionState
+
 		logger.info('Z-Wave driver is ready')
 
 		this._updateControllerStatus('Driver ready')
-
-		this._inclusionStateInterval = setInterval(() => {
-			if (
-				this._driver.controller.inclusionState !== this._inclusionState
-			) {
-				this._inclusionState = this._driver.controller.inclusionState
-
-				this.sendToSocket(socketEvents.controller, {
-					status: this._cntStatus,
-					error: this._error,
-					inclusionState: this._inclusionState,
-				})
-			}
-		}, 2000)
 
 		try {
 			// this must be done only after driver is ready
@@ -4268,37 +4319,59 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				/* ignore */
 			})
 
-			this.driver.controller
-				.on('inclusion started', this._onInclusionStarted.bind(this))
-				.on('exclusion started', this._onExclusionStarted.bind(this))
-				.on('inclusion stopped', this._onInclusionStopped.bind(this))
-				.on('exclusion stopped', this._onExclusionStopped.bind(this))
-				.on('inclusion failed', this._onInclusionFailed.bind(this))
-				.on('exclusion failed', this._onExclusionFailed.bind(this))
-				.on('node found', this._onNodeFound.bind(this))
-				.on('node added', this._onNodeAdded.bind(this))
-				.on('node removed', this._onNodeRemoved.bind(this))
-				.on(
-					'rebuild routes progress',
-					this._onRebuildRoutesProgress.bind(this),
-				)
-				.on('rebuild routes done', this._onRebuildRoutesDone.bind(this))
-				.on(
-					'statistics updated',
-					this._onControllerStatisticsUpdated.bind(this),
-				)
-				.on(
-					'firmware update progress',
-					this._onControllerFirmwareUpdateProgress.bind(this),
-				)
-				.on(
-					'firmware update finished',
-					this._onControllerFirmwareUpdateFinished.bind(this),
-				)
-				.on(
-					'status changed',
-					this._onControllerStatusChanged.bind(this),
-				)
+			if (!this._controllerListenersAdded) {
+				this._controllerListenersAdded = true
+				this.driver.controller
+					.on(
+						'inclusion started',
+						this._onInclusionStarted.bind(this),
+					)
+					.on(
+						'exclusion started',
+						this._onExclusionStarted.bind(this),
+					)
+					.on(
+						'inclusion stopped',
+						this._onInclusionStopped.bind(this),
+					)
+					.on(
+						'exclusion stopped',
+						this._onExclusionStopped.bind(this),
+					)
+					.on(
+						'inclusion state changed',
+						this._onInclusionStateChanged.bind(this),
+					)
+					.on('inclusion failed', this._onInclusionFailed.bind(this))
+					.on('exclusion failed', this._onExclusionFailed.bind(this))
+					.on('node found', this._onNodeFound.bind(this))
+					.on('node added', this._onNodeAdded.bind(this))
+					.on('node removed', this._onNodeRemoved.bind(this))
+					.on(
+						'rebuild routes progress',
+						this._onRebuildRoutesProgress.bind(this),
+					)
+					.on(
+						'rebuild routes done',
+						this._onRebuildRoutesDone.bind(this),
+					)
+					.on(
+						'statistics updated',
+						this._onControllerStatisticsUpdated.bind(this),
+					)
+					.on(
+						'firmware update progress',
+						this._onControllerFirmwareUpdateProgress.bind(this),
+					)
+					.on(
+						'firmware update finished',
+						this._onControllerFirmwareUpdateFinished.bind(this),
+					)
+					.on(
+						'status changed',
+						this._onControllerStatusChanged.bind(this),
+					)
+			}
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -4331,26 +4404,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// start server only when driver is ready. Fixes #602
 		if (this.cfg.serverEnabled && this.server) {
-			this.server
-				.start(!this.hasUserCallbacks)
-				.then(() => {
-					logger.info('Z-Wave server started')
-				})
-				.catch((error) => {
-					logger.error(
-						`Failed to start zwave-js server: ${error.message}`,
-					)
-				})
+			// fix prevent to start server when already inited
+			if (!this.server['server']) {
+				this.server
+					.start(!this.hasUserCallbacks)
+					.then(() => {
+						logger.info('Z-Wave server started')
+					})
+					.catch((error) => {
+						logger.error(
+							`Failed to start zwave-js server: ${error.message}`,
+						)
+					})
+			}
 		}
 
 		logger.info(`Scanning network with homeid: ${homeHex}`)
 
-		const sockets = await this.socket.fetchSockets()
-
-		for (const socket of sockets) {
-			// force send init to all connected sockets
-			socket.emit(socketEvents.init, this.getState())
-		}
+		await this.sendInitToSockets()
 
 		this.loadFakeNodes().catch((e) => {
 			logger.error(`Error while loading fake nodes: ${e.message}`)
@@ -4517,6 +4588,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this._updateControllerStatus(message)
+		this._onNodeEvent(
+			'status changed',
+			this.getNode(this.driver.controller.ownNodeId),
+			status,
+		)
 		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
 
@@ -4559,7 +4635,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	private _onInclusionStarted(secure: boolean) {
+	private _onInclusionStarted(strategy: InclusionStrategy) {
+		const secure = strategy !== InclusionStrategy.Insecure
 		const message = `${secure ? 'Secure' : 'Non-secure'} inclusion started`
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'inclusion started', secure)
@@ -4582,6 +4659,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const message = 'Exclusion stopped'
 		this._updateControllerStatus(message)
 		this.emit('event', EventSource.CONTROLLER, 'exclusion stopped')
+	}
+
+	private _onInclusionStateChanged(state: InclusionState) {
+		if (state !== this._inclusionState) {
+			this._inclusionState = state
+
+			this.sendToSocket(socketEvents.controller, {
+				status: this._cntStatus,
+				error: this._error,
+				inclusionState: this._inclusionState,
+			})
+		}
 	}
 
 	private _onInclusionFailed() {
@@ -4673,7 +4762,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeRemoved(zwaveNode: ZWaveNode, reason: RemoveNodeReason) {
-		this.logNode(zwaveNode, 'info', 'Removed, reason: ' + reason)
+		this.logNode(
+			zwaveNode,
+			'info',
+			'Removed, reason: ' + getEnumMemberName(RemoveNodeReason, reason),
+		)
 		zwaveNode.removeAllListeners()
 
 		this.emit(
@@ -4735,6 +4828,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			totalRounds,
 			lastRating,
 			lastResult,
+		})
+	}
+
+	private _onLinkReliabilityCheckProgress(
+		request: { nodeId: number },
+		...args: any[]
+	) {
+		// const message = `Link statistics ${request.nodeId}: ${args.join(', ')}`
+		// this._updateControllerStatus(message)
+		this.sendToSocket(socketEvents.linkReliability, {
+			request,
+			args,
 		})
 	}
 
@@ -5027,7 +5132,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeEvent(
-		eventName: ZwaveNodeEvents,
+		eventName: ZwaveNodeEvents | 'status changed',
 		zwaveNode: ZWaveNode,
 		...eventArgs: any[]
 	) {
@@ -5528,7 +5633,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.logNode(
 				endpoint.nodeId,
 				'error',
-				`Notification received but node doesn't exists`,
+				`Notification received but node doesn't exist`,
 			)
 
 			return
@@ -5929,6 +6034,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return {
 				index: e.index,
 				label: e.endpointLabel || defaultLabel,
+				deviceClass: {
+					basic: e.deviceClass?.basic,
+					generic: e.deviceClass?.generic.key,
+					specific: e.deviceClass?.specific.key,
+				},
 			}
 		})
 		node.isSecure = zwaveNode.isSecure
@@ -5942,7 +6052,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		node.keepAwake = zwaveNode.keepAwake
 		node.maxDataRate = zwaveNode.maxDataRate
 		node.deviceClass = {
-			basic: zwaveNode.deviceClass?.basic.key,
+			basic: zwaveNode.deviceClass?.basic,
 			generic: zwaveNode.deviceClass?.generic.key,
 			specific: zwaveNode.deviceClass?.specific.key,
 		}
@@ -5987,6 +6097,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		node.deviceId = this._getDeviceID(node)
 		node.hasDeviceConfigChanged = zwaveNode.hasDeviceConfigChanged()
+
+		if (node.isControllerNode) {
+			node.rfRegions =
+				this.driver.controller
+					.getSupportedRFRegions()
+					?.map((region) => ({
+						value: region,
+						text: getEnumMemberName(RFRegion, region),
+					}))
+					.sort((a, b) => a.text.localeCompare(b.text)) ?? []
+		}
 	}
 
 	async updateControllerNodeProps(
@@ -6115,8 +6236,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						zwaveValueMeta.type === 'number'
 							? parseInt(k)
 							: zwaveValueMeta.type === 'boolean'
-							  ? k === 'true'
-							  : k,
+								? k === 'true'
+								: k,
 				})
 			}
 		} else {
