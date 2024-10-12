@@ -133,6 +133,12 @@
 	</div>
 </template>
 <script>
+// The BarcodeDetector Web API is not yet supported in all browsers,
+// and "qr-scanner" defaults to a suboptimal implementation if it is not available.
+// The following import makes a better implementation available that is based on a
+// WebAssembly port of ZXing:
+import 'barcode-detector/side-effects'
+
 import QrScanner from 'qr-scanner'
 import { wait } from '../../lib/utils.js'
 import logger from '../../lib/logger'
