@@ -137,13 +137,24 @@
 // and "qr-scanner" defaults to a suboptimal implementation if it is not available.
 // The following import makes a better implementation available that is based on a
 // WebAssembly port of ZXing:
+import { setZXingModuleOverrides } from 'barcode-detector/pure'
 import 'barcode-detector/side-effects'
-
-import QrScanner from 'qr-scanner'
 import { wait } from '../../lib/utils.js'
 import logger from '../../lib/logger'
 
 const log = logger.get('QrReader')
+
+import QrScanner from 'qr-scanner'
+import wasmFile from 'zxing-wasm/reader/zxing_reader.wasm?url'
+
+setZXingModuleOverrides({
+	locateFile: (path, prefix) => {
+		if (path.endsWith('.wasm')) {
+			return wasmFile
+		}
+		return prefix + path
+	},
+})
 
 export default {
 	props: {
