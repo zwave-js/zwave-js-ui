@@ -133,11 +133,28 @@
 	</div>
 </template>
 <script>
-import QrScanner from 'qr-scanner'
+// The BarcodeDetector Web API is not yet supported in all browsers,
+// and "qr-scanner" defaults to a suboptimal implementation if it is not available.
+// The following import makes a better implementation available that is based on a
+// WebAssembly port of ZXing:
+import { setZXingModuleOverrides } from 'barcode-detector'
 import { wait } from '../../lib/utils.js'
 import logger from '../../lib/logger'
 
 const log = logger.get('QrReader')
+
+import QrScanner from 'qr-scanner'
+
+setZXingModuleOverrides({
+	locateFile: (path, prefix) => {
+		if (path.endsWith('.wasm')) {
+			// This file has been copied from node_modules/zxing-wasm/dist/reader/ to public/
+			// Don't forget to update the file when updating the node_module
+			return 'zxing_reader.wasm'
+		}
+		return prefix + path
+	},
+})
 
 export default {
 	props: {

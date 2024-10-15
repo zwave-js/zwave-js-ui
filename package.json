@@ -70,6 +70,7 @@
     "ansi_up": "^6.0.2",
     "archiver": "^7.0.1",
     "axios": "^1.7.2",
+    "barcode-detector": "^2.2.11",
     "connect-history-api-fallback": "2.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -111,7 +112,8 @@
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^13.9.0"
+    "zwave-js": "^13.9.0",
+    "zxing-wasm": "^1.2.15"
   },
   "devDependencies": {
     "@actions/github": "^6.0.0",
