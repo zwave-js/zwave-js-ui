@@ -443,7 +443,7 @@ export default {
 				{
 					icon: 'more_horiz',
 					textColor: '',
-					text: 'Next last working route',
+					text: 'Next to last working route',
 				},
 				{
 					color: '#8b0000',
@@ -1197,7 +1197,7 @@ export default {
 					RouteKind.LWR,
 				)
 
-				// parse node NLWR (next last working route)
+				// parse node NLWR (next to last working route)
 				this.parseRouteStats(
 					edges,
 					hubNode,
