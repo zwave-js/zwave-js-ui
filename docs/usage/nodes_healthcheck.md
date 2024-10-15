@@ -6,7 +6,7 @@ Starting from 8.17.0 version Network Graph shows nodes connection based on known
 
 - **Priority route**: set by the user, it's the first route the controller tries
 - **Last working route**: the last route that worked for the node
-- **Next last working route**: the next route that will be tried if the last working route fails
+- **Next to last working route**: the next route that will be tried if the last working route fails
 
 By clicking on nodes a panel will open containing more detailed node information. At the bottom of this panel there is a button `DIAGNOSE` that opens a dialog that allows to perform health checks on that node.
 
