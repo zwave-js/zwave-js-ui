@@ -168,6 +168,12 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 		transportsList.push(fileTransport)
 	}
 
+	// giving that we re-use transports, each module will subscribe to events
+	// increeasing the default limit of 100 prevents warnings
+	transportsList.forEach((t) => {
+		t.setMaxListeners(100)
+	})
+
 	return transportsList
 }
 
