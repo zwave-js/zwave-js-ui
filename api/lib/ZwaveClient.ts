@@ -572,7 +572,7 @@ export type ZUINode = {
 }
 
 export type NodeEvent = {
-	event: ZwaveNodeEvents
+	event: ZwaveNodeEvents | 'status changed'
 	args: any[]
 	time: Date
 }
@@ -594,6 +594,7 @@ export type ZwaveConfig = {
 	}>
 	serverEnabled?: boolean
 	enableSoftReset?: boolean
+	disableWatchdog?: boolean
 	deviceConfigPriorityDir?: string
 	serverPort?: number
 	serverHost?: string
@@ -709,7 +710,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
-	private _lockOTWUpdates: boolean
 	private _lockGetSchedule: boolean
 	private _cancelGetSchedule: boolean
 
@@ -2187,6 +2187,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					.disableControllerRecovery
 					? false
 					: true,
+				watchdog: this.cfg.disableWatchdog ? false : true,
 			},
 			userAgent: {
 				[utils.pkgJson.name]: utils.pkgJson.version,
@@ -3837,11 +3838,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async firmwareUpdateOTW(
 		file: FwFile,
 	): Promise<ControllerFirmwareUpdateResult> {
-		if (this._lockOTWUpdates) {
-			throw Error('Firmware update already in progress')
-		}
-
-		this._lockOTWUpdates = true
 		try {
 			if (backupManager.backupOnEvent) {
 				this.nvmEvent = 'before_controller_fw_update_otw'
@@ -3860,10 +3856,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const result = await this.driver.controller.firmwareUpdateOTW(
 				firmware.data,
 			)
-			this._lockOTWUpdates = false
 			return result
 		} catch (e) {
-			this._lockOTWUpdates = false
 			throw Error(`Error while updating firmware: ${e.message}`)
 		}
 	}
@@ -4588,6 +4582,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this._updateControllerStatus(message)
+		this._onNodeEvent(
+			'status changed',
+			this.getNode(this.driver.controller.ownNodeId),
+			status,
+		)
 		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
 
@@ -5127,7 +5126,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	 *
 	 */
 	private _onNodeEvent(
-		eventName: ZwaveNodeEvents,
+		eventName: ZwaveNodeEvents | 'status changed',
 		zwaveNode: ZWaveNode,
 		...eventArgs: any[]
 	) {
@@ -5733,6 +5732,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	private _onNodeInfoReceived(zwaveNode: ZWaveNode) {
+		this.logNode(zwaveNode, 'info', `Node info (NIF) received`)
+
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node info received',
+			this.zwaveNodeToJSON(zwaveNode),
+		)
+	}
+
 	/**
 	 * Emitted when we receive a node `firmware update progress` event
 	 *
@@ -5851,6 +5861,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._onNodeFirmwareUpdateFinished.bind(this),
 			)
 			.on('statistics updated', this._onNodeStatisticsUpdated.bind(this))
+			.on('node info received', this._onNodeInfoReceived.bind(this))
 
 		const events: ZwaveNodeEvents[] = [
 			'ready',

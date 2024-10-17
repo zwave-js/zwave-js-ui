@@ -1,5 +1,27 @@
 
 
+# [9.23.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.22.0...v9.23.0) (2024-10-14)
+
+
+### Features
+
+* bump zwave-js@13.9.0 ([#3948](https://github.com/zwave-js/zwave-js-ui/issues/3948)) ([d61e6ef](https://github.com/zwave-js/zwave-js-ui/commit/d61e6ef8b497b7e7b6d0026d743d27a0314824fd))
+
+# [9.22.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.21.1...v9.22.0) (2024-10-11)
+
+
+### Bug Fixes
+
+* add controller status changes to controller events ([#3932](https://github.com/zwave-js/zwave-js-ui/issues/3932)) ([3f95e30](https://github.com/zwave-js/zwave-js-ui/commit/3f95e3083bd7ebef284a42a0a0327d3cc124e209))
+* translate removal reason enum value to its name ([18bddac](https://github.com/zwave-js/zwave-js-ui/commit/18bddac35c48f94a4358fe9160fe01eb8d8ea66e)), closes [#3927](https://github.com/zwave-js/zwave-js-ui/issues/3927)
+
+
+### Features
+
+* bump zwave-js@13.5.0 ([#3930](https://github.com/zwave-js/zwave-js-ui/issues/3930)) ([75ad9e9](https://github.com/zwave-js/zwave-js-ui/commit/75ad9e97d0f83ceb074e0e3f981a053663df512b))
+* bump zwave-js@13.8.0 ([#3941](https://github.com/zwave-js/zwave-js-ui/issues/3941)) ([7d1f11d](https://github.com/zwave-js/zwave-js-ui/commit/7d1f11db489ab9ea77f5cb4d2e6776c1f618f159))
+* **ui:** allow to toggle auto-scroll on debug window ([#3933](https://github.com/zwave-js/zwave-js-ui/issues/3933)) ([b9b335c](https://github.com/zwave-js/zwave-js-ui/commit/b9b335c91ffead5ac38c4eab523fc28179fa86bb))
+
 ## [9.21.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.21.0...v9.21.1) (2024-10-02)
 
 

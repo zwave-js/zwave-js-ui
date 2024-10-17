@@ -182,26 +182,33 @@ export default {
 						return
 					}
 				} else if (action === 'beginRebuildingRoutes') {
-					const { includeSleeping } = await this.app.confirm(
-						'Info',
-						'Rebuilding routes causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
-						'info',
-						{
-							confirmText: 'Rebuild',
-							inputs: [
-								{
-									type: 'checkbox',
-									label: 'Include sleeping nodes',
-									key: 'includeSleeping',
-									default: false,
-								},
-							],
-						},
-					)
+					const { includeSleeping, deletePriorityReturnRoutes } =
+						await this.app.confirm(
+							'Info',
+							'Rebuilding routes causes a lot of traffic, can take minutes up to hours and users have to expect degraded performance while it is going on',
+							'info',
+							{
+								confirmText: 'Rebuild',
+								inputs: [
+									{
+										type: 'checkbox',
+										label: 'Include sleeping nodes',
+										key: 'includeSleeping',
+										default: false,
+									},
+									{
+										type: 'checkbox',
+										label: 'Delete priority return routes',
+										key: 'deletePriorityReturnRoutes',
+										default: false,
+									},
+								],
+							},
+						)
 					if (includeSleeping === undefined) {
 						return
 					}
-					args.push({ includeSleeping })
+					args.push({ includeSleeping, deletePriorityReturnRoutes })
 				} else if (action === 'firmwareUpdateOTW') {
 					const result = await this.app.confirm(
 						'Firmware update OTW',

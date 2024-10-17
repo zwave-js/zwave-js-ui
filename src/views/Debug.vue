@@ -1,7 +1,7 @@
 <template>
 	<v-container grid-list-md>
 		<v-row>
-			<v-col style="max-width: 220px; margin-top: -2px">
+			<v-col style="max-width: 260px; margin-top: -2px">
 				<v-btn-toggle dense multiple>
 					<v-tooltip
 						bottom
@@ -43,6 +43,7 @@
 			<v-col class="pt-0 mb-5" cols="12">
 				<div
 					id="debug_window"
+					@scroll="onScroll"
 					style="
 						height: 800px;
 						width: 100%;
@@ -123,6 +124,15 @@ export default {
 					action: this.newWindow,
 					disabled: isPopupWindow(),
 				},
+				{
+					id: 'scroll',
+					label: 'Scroll',
+					icon: 'vertical_align_bottom',
+					color: 'purple',
+					tooltip: 'Enable auto scroll',
+					action: this.enableAutoScroll,
+					disabled: this.autoScroll,
+				},
 			]
 		},
 	},
@@ -132,6 +142,7 @@ export default {
 			filter: '',
 			debugActive: true,
 			hideTopbar: false,
+			autoScroll: true,
 		}
 	},
 	methods: {
@@ -142,6 +153,33 @@ export default {
 		},
 		newWindow() {
 			openInWindow('DEBUG', 1000)
+		},
+		enableAutoScroll() {
+			this.autoScroll = true
+			this.scrollBottom()
+		},
+		scrollBottom() {
+			if (!this.autoScroll) {
+				return
+			}
+
+			this.$nextTick(() => {
+				const textarea = document.getElementById('debug_window')
+				if (textarea) {
+					// textarea could be hidden
+					textarea.scrollTop = textarea.scrollHeight
+				}
+			})
+		},
+		onScroll(event) {
+			// if scrolling up, disable autoscroll
+			const scrollTop = event.target.scrollTop
+
+			if (scrollTop < this.prevScrollTop) {
+				this.autoScroll = false
+			}
+			// no need to make this reative
+			this.prevScrollTop = scrollTop
 		},
 	},
 	mounted() {
@@ -170,11 +208,7 @@ export default {
 					this.debug.shift()
 				}
 
-				const textarea = document.getElementById('debug_window')
-				if (textarea) {
-					// textarea could be hidden
-					textarea.scrollTop = textarea.scrollHeight
-				}
+				this.scrollBottom()
 			}
 		})
 	},
