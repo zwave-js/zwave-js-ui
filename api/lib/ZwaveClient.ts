@@ -5732,6 +5732,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	private _onNodeInfoReceived(zwaveNode: ZWaveNode) {
+		this.logNode(zwaveNode, 'info', `Node info (NIF) received`)
+
+		this.emit(
+			'event',
+			EventSource.NODE,
+			'node info received',
+			this.zwaveNodeToJSON(zwaveNode),
+		)
+	}
+
 	/**
 	 * Emitted when we receive a node `firmware update progress` event
 	 *
@@ -5850,6 +5861,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this._onNodeFirmwareUpdateFinished.bind(this),
 			)
 			.on('statistics updated', this._onNodeStatisticsUpdated.bind(this))
+			.on('node info received', this._onNodeInfoReceived.bind(this))
 
 		const events: ZwaveNodeEvents[] = [
 			'ready',
