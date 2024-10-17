@@ -594,6 +594,7 @@ export type ZwaveConfig = {
 	}>
 	serverEnabled?: boolean
 	enableSoftReset?: boolean
+	disableWatchdog?: boolean
 	deviceConfigPriorityDir?: string
 	serverPort?: number
 	serverHost?: string
@@ -2186,6 +2187,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					.disableControllerRecovery
 					? false
 					: true,
+				watchdog: this.cfg.disableWatchdog ? false : true,
 			},
 			userAgent: {
 				[utils.pkgJson.name]: utils.pkgJson.version,

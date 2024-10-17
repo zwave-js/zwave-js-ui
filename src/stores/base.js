@@ -60,6 +60,7 @@ const useBaseStore = defineStore('base', {
 			maxNodeEventsQueueSize: 100,
 			higherReportsTimeout: false,
 			disableControllerRecovery: false,
+			disableWatchdog: false,
 		},
 		backup: {
 			storeBackup: false,

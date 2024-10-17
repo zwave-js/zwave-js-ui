@@ -854,6 +854,7 @@
 											v-model="newZwave.enableSoftReset"
 										></v-switch>
 									</v-col>
+
 									<input
 										type="hidden"
 										:value="newZwave.disclaimerVersion"
@@ -1022,14 +1023,22 @@
 										></v-checkbox>
 									</v-col>
 									<v-col cols="12" sm="6">
-										<v-checkbox
+										<inverted-checkbox
 											hint="When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own."
 											persistent-hint
-											label="Disable controller recovery"
+											label="Controller recovery"
 											v-model="
 												newZwave.disableControllerRecovery
 											"
-										></v-checkbox>
+										></inverted-checkbox>
+									</v-col>
+									<v-col cols="12" sm="6">
+										<inverted-checkbox
+											persistent-hint
+											label="Watchdog"
+											hint="Controllers of the 700 series and newer have a hardware watchdog that can be enabled to automatically reset the chip in case it becomes unresponsive. This option controls whether the watchdog should be enabled"
+											v-model="newZwave.disableWatchdog"
+										></inverted-checkbox>
 									</v-col>
 									<input
 										type="hidden"
