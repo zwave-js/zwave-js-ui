@@ -1,5 +1,23 @@
 
 
+# [9.24.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.23.0...v9.24.0) (2024-10-17)
+
+
+### Bug Fixes
+
+* re-use file transport instance when setup loggers ([#3928](https://github.com/zwave-js/zwave-js-ui/issues/3928)) ([ded941b](https://github.com/zwave-js/zwave-js-ui/commit/ded941bb6c28bc0947cf991cd72be173cb6e996e))
+* remove OTA firmware update lock, allow parallel fw updates ([f929686](https://github.com/zwave-js/zwave-js-ui/commit/f9296865273497195444337f2e5772df2852c8c1)), closes [#3936](https://github.com/zwave-js/zwave-js-ui/issues/3936)
+* **ui:** scanning of small QR codes ([#3946](https://github.com/zwave-js/zwave-js-ui/issues/3946)) ([6420ee4](https://github.com/zwave-js/zwave-js-ui/commit/6420ee4f0ee69549a55009c704641d1e7ef10120))
+* **ui:** typo on NLWR, it's "next to last working route" ([#3951](https://github.com/zwave-js/zwave-js-ui/issues/3951)) ([b4baf4a](https://github.com/zwave-js/zwave-js-ui/commit/b4baf4af232db69f7017b0546cfb987355649a35))
+
+
+### Features
+
+* add option to allow disabling controller watchdog ([5b7cf9e](https://github.com/zwave-js/zwave-js-ui/commit/5b7cf9e2d01136d3d72600894c686c40d020df86)), closes [#3936](https://github.com/zwave-js/zwave-js-ui/issues/3936)
+* allow to set `deletePriorityReturnRoutes` option when rebuilding return routes ([99f7b9a](https://github.com/zwave-js/zwave-js-ui/commit/99f7b9adf877235ef9077cf9f03ab2ac61f3894c)), closes [#3936](https://github.com/zwave-js/zwave-js-ui/issues/3936)
+* bump zwave-js@13.9.1 ([#3955](https://github.com/zwave-js/zwave-js-ui/issues/3955)) ([2e0b76e](https://github.com/zwave-js/zwave-js-ui/commit/2e0b76e43d26d8dc384cd5615b6997b054d324dd))
+* listen for `node info received` event ([#3954](https://github.com/zwave-js/zwave-js-ui/issues/3954)) ([8f873a2](https://github.com/zwave-js/zwave-js-ui/commit/8f873a2edf96fbe6a3b776653550012426311a18))
+
 # [9.23.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.22.0...v9.23.0) (2024-10-14)
 
 
