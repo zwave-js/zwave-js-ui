@@ -709,7 +709,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
-	private _lockOTWUpdates: boolean
 	private _lockGetSchedule: boolean
 	private _cancelGetSchedule: boolean
 
@@ -3837,11 +3836,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async firmwareUpdateOTW(
 		file: FwFile,
 	): Promise<ControllerFirmwareUpdateResult> {
-		if (this._lockOTWUpdates) {
-			throw Error('Firmware update already in progress')
-		}
-
-		this._lockOTWUpdates = true
 		try {
 			if (backupManager.backupOnEvent) {
 				this.nvmEvent = 'before_controller_fw_update_otw'
@@ -3860,10 +3854,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const result = await this.driver.controller.firmwareUpdateOTW(
 				firmware.data,
 			)
-			this._lockOTWUpdates = false
 			return result
 		} catch (e) {
-			this._lockOTWUpdates = false
 			throw Error(`Error while updating firmware: ${e.message}`)
 		}
 	}
