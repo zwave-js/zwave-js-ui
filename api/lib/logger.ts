@@ -19,6 +19,8 @@ export const defaultLogFile = 'z-ui_%DATE%.log'
 
 export const disableColors = process.env.NO_LOG_COLORS === 'true'
 
+let transportsList: winston.transport[] = null
+
 // ensure store and logs directories exist
 ensureDirSync(storeDir)
 ensureDirSync(logsDir)
@@ -109,7 +111,12 @@ export const logStream = new PassThrough()
  * Create the base transports based on settings provided
  */
 export function customTransports(config: LoggerConfig): winston.transport[] {
-	const transportsList: winston.transport[] = []
+	// setup transports only once (see issue #2937)
+	if (transportsList) {
+		return transportsList
+	}
+
+	transportsList = []
 
 	if (process.env.ZUI_NO_CONSOLE !== 'true') {
 		transportsList.push(
@@ -131,6 +138,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 
 	if (config.logToFile) {
 		let fileTransport: winston.transport
+
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {
 			fileTransport = new transports.File({
 				format: customFormat(config, true),
@@ -159,6 +167,13 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 
 		transportsList.push(fileTransport)
 	}
+
+	// giving that we re-use transports, each module will subscribe to events
+	// increeasing the default limit of 100 prevents warnings
+	transportsList.forEach((t) => {
+		t.setMaxListeners(100)
+	})
+
 	return transportsList
 }
 
@@ -198,6 +213,14 @@ export function module(module: string): ModuleLogger {
  */
 export function setupAll(config: DeepPartial<GatewayConfig>) {
 	stopCleanJob()
+
+	transportsList.forEach((t) => {
+		if (typeof t.close === 'function') {
+			t.close()
+		}
+	})
+
+	transportsList = null
 
 	logContainer.loggers.forEach((logger: ModuleLogger) => {
 		logger.setup(config)
