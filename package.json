@@ -105,7 +105,7 @@
     "v-snackbars": "^3.2.8",
     "vis-data": "^7.1.9",
     "vis-network": "^9.1.9",
-    "vue": "^2.7.14",
+    "vue": "^3.0.0",
     "vue-prism-editor": "^1.3.0",
     "vue-router": "^3.6.5",
     "vuedraggable": "^2.24.3",
