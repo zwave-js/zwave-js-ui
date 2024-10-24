@@ -5621,7 +5621,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onNodeNotification: ZWaveNotificationCallback = (...parms) => {
 		const [endpoint, ccId, args] = parms
 
-		const zwaveNode = endpoint.getNodeUnsafe()
+		const zwaveNode = endpoint.tryGetNode()
 
 		if (!zwaveNode) {
 			this.logNode(
