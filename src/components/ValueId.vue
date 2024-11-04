@@ -53,7 +53,7 @@
 				:append-outer-icon="!disable_send ? 'send' : null"
 				:suffix="value.unit"
 				:min="value.min != value.max ? value.min : null"
-				:step="1"
+				:step="value.step || 1"
 				persistent-hint
 				:max="value.min != value.max ? value.max : null"
 				:hint="help"
@@ -79,7 +79,7 @@
 				<v-text-field
 					:type="value.type === 'number' ? 'number' : 'text'"
 					:min="value.min != value.max ? value.min : null"
-					:step="1"
+					:step="value.step || 1"
 					persistent-hint
 					:readonly="disable_send"
 					:max="value.min != value.max ? value.max : null"
