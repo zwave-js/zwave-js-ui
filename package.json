@@ -66,7 +66,7 @@
 		"@kvaster/zwavejs-prom": "^0.0.2",
 		"@mdi/js": "7.4.47",
 		"@zwave-js/log-transport-json": "^3.0.0",
-		"@zwave-js/server": "^1.38.0",
+		"@zwave-js/server": "^1.40.0",
 		"ansi_up": "^6.0.2",
 		"archiver": "^7.0.1",
 		"axios": "^1.7.2",
@@ -112,7 +112,7 @@
 		"vuetify": "^2.7.2",
 		"winston": "^3.13.0",
 		"winston-daily-rotate-file": "^5.0.0",
-		"zwave-js": "14.0.0-beta.1",
+		"zwave-js": "^14.0.0",
 		"zxing-wasm": "^1.2.15"
 	},
 	"devDependencies": {
@@ -177,12 +177,6 @@
 		"vite": "^5.3.1",
 		"vite-plugin-pwa": "^0.20.0",
 		"vue-template-compiler": "^2.7.16"
-	},
-	"overrides": {
-		"zwave-js@^13.2.0": "$zwave-js",
-		"@zwave-js/log-transport-json": {
-			"@zwave-js/core": "14.0.0-beta.1"
-		}
 	},
 	"engines": {
 		"node": ">= 18.12"
