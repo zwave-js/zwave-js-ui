@@ -291,7 +291,7 @@ export default {
 							label: 'File',
 							hint: 'Firmware file',
 							key: 'file',
-							accept: '.bin,.exe,.ex_,.hex,.gbl,.otz,.ota,.hec',
+							accept: '.bin,.exe,.ex_,.hex,.gbl,.otz,.ota,.hec,.zip',
 						}
 
 						const targetInput = {
