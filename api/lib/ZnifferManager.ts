@@ -144,7 +144,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 	private parseFrame(
 		frame: Frame | CorruptedFrame,
-		rawData: Buffer,
+		rawData: Uint8Array,
 		timestamp = Date.now(),
 	): SocketFrame {
 		const socketFrame: SocketFrame = {
@@ -196,7 +196,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return this.zniffer.capturedFrames.map((frame) => {
 			return this.parseFrame(
 				frame.parsedFrame,
-				frame.frameData,
+				Buffer.from(frame.frameData),
 				frame.timestamp.getTime(),
 			)
 		})

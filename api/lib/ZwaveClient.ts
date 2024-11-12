@@ -125,6 +125,7 @@ import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
+import { isUint8Array } from 'util/types'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -4928,7 +4929,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		logger.warn('Inclusion aborted')
 	}
 
-	async backupNVMRaw() {
+	async backupNVMRaw(): Promise<{ data: Buffer; fileName: string }> {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
@@ -4947,7 +4948,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		await writeFile(utils.joinPath(nvmBackupsDir, fileName + '.bin'), data)
 
-		return { data, fileName }
+		return { data: Buffer.from(data.buffer), fileName }
 	}
 
 	private _onBackupNVMProgress(bytesRead: number, totalBytes: number) {
@@ -5637,7 +5638,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private _onNodeNotification: ZWaveNotificationCallback = (...parms) => {
 		const [endpoint, ccId, args] = parms
 
-		const zwaveNode = endpoint.getNodeUnsafe()
+		const zwaveNode = endpoint.tryGetNode()
 
 		if (!zwaveNode) {
 			this.logNode(
@@ -6436,13 +6437,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 
 			let newValue = args.newValue
-			if (Buffer.isBuffer(newValue)) {
+			if (isUint8Array(newValue)) {
 				// encode Buffers as HEX strings
 				newValue = utils.buffer2hex(newValue)
 			}
 
 			let prevValue = args.prevValue
-			if (Buffer.isBuffer(prevValue)) {
+			if (isUint8Array(prevValue)) {
 				// encode Buffers as HEX strings
 				prevValue = utils.buffer2hex(prevValue)
 			}
@@ -6505,8 +6506,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	// ------- Utils ------------------------
 
 	private _parseNotification(parameters) {
-		if (Buffer.isBuffer(parameters)) {
-			return parameters.toString('hex')
+		if (isUint8Array(parameters)) {
+			return Buffer.from(parameters.buffer).toString('hex')
 		} else if (parameters instanceof Duration) {
 			return parameters.toMilliseconds()
 		} else {
