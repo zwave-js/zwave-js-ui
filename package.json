@@ -66,7 +66,7 @@
       "@kvaster/zwavejs-prom": "^0.0.2",
       "@mdi/js": "7.4.47",
       "@zwave-js/log-transport-json": "^3.0.0",
-      "@zwave-js/server": "^1.39.0",
+      "@zwave-js/server": "^1.40.0",
       "ansi_up": "^6.0.2",
       "archiver": "^7.0.1",
       "axios": "^1.7.2",
