@@ -1,5 +1,21 @@
 
 
+# [9.27.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.26.0...v9.27.0) (2024-11-12)
+
+
+### Bug Fixes
+
+* **ui:** add support for `step` on value ids inputs ([1107718](https://github.com/zwave-js/zwave-js-ui/commit/1107718f674e222aa1b4efdfe4a397b68c37341d))
+
+
+### Features
+
+* allow to upload firmware in zip files ([#3985](https://github.com/zwave-js/zwave-js-ui/issues/3985)) ([5fecb60](https://github.com/zwave-js/zwave-js-ui/commit/5fecb603157fab6f70656ab4846a692a840f68bf))
+* bump zwave-js@14.3.1 ([#3993](https://github.com/zwave-js/zwave-js-ui/issues/3993)) ([ce079d2](https://github.com/zwave-js/zwave-js-ui/commit/ce079d267a5eef633883aa2e171e8f8c14f87373))
+* **ui:** allow to specify rf region in OTA fw updates when it's unknown ([#3984](https://github.com/zwave-js/zwave-js-ui/issues/3984)) ([b7a8c4d](https://github.com/zwave-js/zwave-js-ui/commit/b7a8c4df25b9806feea6d39ad06a7dff4fb1e690))
+* **ui:** re-order Z-Wave settings, prevent setting invalid regions ([#3981](https://github.com/zwave-js/zwave-js-ui/issues/3981)) ([cf7142e](https://github.com/zwave-js/zwave-js-ui/commit/cf7142e534190511e41df057a11b7ff2edee86c3))
+* zwave-js@14.3.0 and @zwave-js/server@1.40.0 ([#3960](https://github.com/zwave-js/zwave-js-ui/issues/3960)) ([b2c0372](https://github.com/zwave-js/zwave-js-ui/commit/b2c03724ff09c1e9add07df6f20292991feada6b))
+
 # [9.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.25.0...v9.26.0) (2024-10-30)
 
 
