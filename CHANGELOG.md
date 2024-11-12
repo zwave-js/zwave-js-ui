@@ -1,5 +1,13 @@
 
 
+## [9.27.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.0...v9.27.1) (2024-11-12)
+
+
+### Bug Fixes
+
+* bump zwave-js to 14.3.2 ([#4000](https://github.com/zwave-js/zwave-js-ui/issues/4000)) ([db86eb9](https://github.com/zwave-js/zwave-js-ui/commit/db86eb9dc5403bd3b537da237e9677a34693eef0))
+* replace `import.meta.url` with CJS shim ([#3996](https://github.com/zwave-js/zwave-js-ui/issues/3996)) ([c156075](https://github.com/zwave-js/zwave-js-ui/commit/c156075f1d664dadb426cbdfaa223dc603a49ecc))
+
 # [9.27.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.26.0...v9.27.0) (2024-11-12)
 
 
