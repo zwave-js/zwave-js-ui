@@ -21,7 +21,7 @@ import {
 	tryUnzipFirmwareFile,
 } from '@zwave-js/core'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { isDocker } from '@zwave-js/shared'
+import { isDocker, isUint8Array } from '@zwave-js/shared'
 import {
 	AssociationAddress,
 	AssociationGroup,
@@ -126,7 +126,6 @@ import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
-import { isUint8Array } from 'util/types'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -465,7 +464,7 @@ export interface BackgroundRSSIPoint {
 
 export interface FwFile {
 	name: string
-	data: Buffer
+	data: Uint8Array
 	target?: number
 }
 
@@ -3895,7 +3894,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			for (const f of files) {
 				let { data, name } = f
-				if (data instanceof Buffer) {
+				if (isUint8Array(data)) {
 					try {
 						let format: FirmwareFileFormat
 						if (name.endsWith('.zip')) {
