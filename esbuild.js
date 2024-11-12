@@ -21,7 +21,7 @@ async function patchPkgJson(path) {
 	const pkgJsonPath = join(outputDir, path, 'package.json')
 	const pkgJson = require('./' + pkgJsonPath)
 	cleanPkgJson(pkgJson)
-	delete pkgJson.exports
+	delete pkgJson.scripts
 	await writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2))
 }
 
