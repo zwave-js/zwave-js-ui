@@ -543,6 +543,8 @@
 											required
 										></v-text-field>
 									</v-col>
+
+									<!-- SECURITY KEYS -->
 									<v-row
 										class="mt-0"
 										v-if="newZwave.securityKeys"
@@ -784,262 +786,338 @@
 											></v-text-field>
 										</v-col>
 									</v-row>
-									<v-col cols="12"> </v-col>
-									<v-col cols="12" sm="6">
-										<v-select
-											label="RF Region"
-											persistent-hint
-											hint="Select the RF region of your Z-Wave stick. Used to set the correct frequency and channel for your region. If you are unsure, check the label on your stick or the manual. Leave this empty to use the default region of your stick."
-											:items="rfRegions"
-											clearable
-											v-model="newZwave.rf.region"
-										>
-										</v-select>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-text-field
-											label="Normal Power Level"
-											v-model.number="
-												newZwave.rf.txPower.powerlevel
-											"
-											persistent-hint
-											:min="-10"
-											:max="20"
-											:step="0.1"
-											hint="Power level in dBm. Min -10, Max +20"
-											suffix="dBm"
-											type="number"
-											:rules="[validTxPower]"
-										></v-text-field>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-text-field
-											label="Measured output power at 0 dBml"
-											persistent-hint
-											v-model.number="
-												newZwave.rf.txPower.measured0dBm
-											"
-											:min="-10"
-											:max="10"
-											:step="0.1"
-											hint="Measured output power at 0 dBm in dBm. Min -10, Max +10"
-											suffix="dBm"
-											type="number"
-											:rules="[validTxPower]"
-										></v-text-field>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-switch
-											hint="Enable this to start driver in bootloader only mode, useful to recover sticks when an FW upgrade fails. When this is enabled stick will NOT be able to communicate with the network."
-											persistent-hint
-											label="Bootloader only"
-											v-model="
-												newZwave.allowBootloaderOnly
-											"
-										></v-switch>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-switch
-											hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"
-											persistent-hint
-											label="Enable statistics"
-											v-model="newZwave.enableStatistics"
-										></v-switch>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-switch
-											label="Soft Reset"
-											hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled. NB: Disabling this functionality only affects 500 series and older controllers"
-											persistent-hint
-											v-model="newZwave.enableSoftReset"
-										></v-switch>
-									</v-col>
+									<!-- END: SECURITY KEYS -->
 
-									<input
-										type="hidden"
-										:value="newZwave.disclaimerVersion"
-									/>
-									<v-col cols="12" sm="6">
-										<v-autocomplete
-											hint="Select preferred sensors scales. You can select a scale For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
-											persistent-hint
-											label="Preferred scales"
-											:items="filteredScales"
-											multiple
-											:item-text="scaleName"
-											:rules="[rules.uniqueSensorType]"
-											chips
-											return-object
-											deletable-chips
-											v-model="newZwave.scales"
-										>
-											<template
-												v-slot:item="{
-													item,
-													attrs,
-													on,
-												}"
+									<!-- RADIO CONFIGURATION -->
+									<v-row class="mt-0">
+										<v-col cols="12" class="mb-n8">
+											<v-subheader
+												class="font-weight-bold primary--text mb-0"
 											>
-												<v-list-item
-													v-on="on"
-													v-bind="attrs"
-													two-line
+												Default Radio configuration
+											</v-subheader>
+										</v-col>
+										<v-col cols="6">
+											<v-select
+												label="RF Region"
+												persistent-hint
+												hint="Will be applied on every startup if the current region of your Z-Wave controller differs. Leave this empty to use the default region of your stick. Not all controllers support changing the region."
+												:items="rfRegions"
+												clearable
+												v-model="newZwave.rf.region"
+											>
+											</v-select>
+										</v-col>
+									</v-row>
+									<v-row class="mt-0">
+										<v-col cols="12" sm="6">
+											<v-text-field
+												label="Normal Power Level"
+												v-model.number="
+													newZwave.rf.txPower
+														.powerlevel
+												"
+												persistent-hint
+												:min="-10"
+												:max="20"
+												:step="0.1"
+												hint="Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
+												suffix="dBm"
+												type="number"
+												:rules="[validTxPower]"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												label="Measured output power at 0 dBm"
+												persistent-hint
+												v-model.number="
+													newZwave.rf.txPower
+														.measured0dBm
+												"
+												:min="-10"
+												:max="10"
+												:step="0.1"
+												hint="Measured output power at 0 dBm in dBm. Min -10, Max +10. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
+												suffix="dBm"
+												type="number"
+												:rules="[validTxPower]"
+											></v-text-field>
+										</v-col>
+									</v-row>
+									<!-- END: RADIO CONFIGURATION -->
+
+									<!-- DRIVER LOGS -->
+									<v-row class="mt-0">
+										<v-col cols="12" class="mb-n8">
+											<v-subheader
+												class="font-weight-bold primary--text mb-0"
+											>
+												Driver logs
+											</v-subheader>
+										</v-col>
+
+										<v-col cols="12" sm="6">
+											<v-switch
+												hint="Required for debugging issue reports"
+												persistent-hint
+												label="Enable driver logs"
+												v-model="newZwave.logEnabled"
+											></v-switch>
+										</v-col>
+										<v-col
+											v-if="newZwave.logEnabled"
+											cols="12"
+											sm="6"
+										>
+											<v-select
+												:items="logLevels"
+												v-model="newZwave.logLevel"
+												label="Log Level"
+											></v-select>
+										</v-col>
+										<v-col
+											v-if="newZwave.logEnabled"
+											cols="12"
+											sm="6"
+										>
+											<v-switch
+												hint="Store zwave logs in a file (stored in store folder)"
+												persistent-hint
+												label="Log to file"
+												v-model="newZwave.logToFile"
+											></v-switch>
+										</v-col>
+										<v-col
+											cols="12"
+											sm="6"
+											v-if="newZwave.logEnabled"
+										>
+											<v-text-field
+												v-model.number="
+													newZwave.maxFiles
+												"
+												label="Max files"
+												:rules="[rules.required]"
+												required
+												persistent-hint
+												hint="Maximum number of log files to keep"
+												type="number"
+											></v-text-field>
+										</v-col>
+										<v-col
+											v-if="newZwave.logEnabled"
+											cols="12"
+											sm="6"
+										>
+											<v-combobox
+												hint="Choose which nodes to log. Leave this empty to log all nodes"
+												persistent-hint
+												label="Log nodes"
+												:items="
+													newZwave.nodeFilter || []
+												"
+												multiple
+												:rules="[rules.validNodeLog]"
+												chips
+												deletable-chips
+												v-model="newZwave.nodeFilter"
+											></v-combobox>
+										</v-col>
+									</v-row>
+									<!-- END: DRIVER LOGS -->
+
+									<!-- STARTUP AND RECOVERY BEHAVIOR -->
+									<v-row class="mt-0">
+										<v-col cols="12" class="mb-n8">
+											<v-subheader
+												class="font-weight-bold primary--text mb-0"
+											>
+												Startup and recovery behavior
+											</v-subheader>
+										</v-col>
+
+										<v-col cols="12" sm="6">
+											<v-switch
+												label="Soft Reset"
+												hint="Soft Reset is required after some commands like changing the RF region or restoring an NVM backup. Because it may cause problems in Docker containers with certain Z-Wave sticks, this functionality may be disabled. NB: Disabling this functionality only affects 500 series and older controllers"
+												persistent-hint
+												v-model="
+													newZwave.enableSoftReset
+												"
+											></v-switch>
+										</v-col>
+
+										<v-col cols="12" sm="6">
+											<v-switch
+												hint="Enable this to start driver in bootloader only mode, useful to recover sticks when an FW upgrade fails. When this is enabled stick will NOT be able to communicate with the network."
+												persistent-hint
+												label="Bootloader only"
+												v-model="
+													newZwave.allowBootloaderOnly
+												"
+											></v-switch>
+										</v-col>
+
+										<v-col cols="12" sm="6">
+											<inverted-checkbox
+												hint="When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own."
+												persistent-hint
+												label="Controller recovery"
+												v-model="
+													newZwave.disableControllerRecovery
+												"
+											></inverted-checkbox>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<inverted-checkbox
+												persistent-hint
+												label="Watchdog"
+												hint="Controllers of the 700 series and newer have a hardware watchdog that can be enabled to automatically reset the chip in case it becomes unresponsive. This option controls whether the watchdog should be enabled"
+												v-model="
+													newZwave.disableWatchdog
+												"
+											></inverted-checkbox>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model.number="
+													newZwave.responseTimeout
+												"
+												label="Response timeout"
+												required
+												persistent-hint
+												suffix="ms"
+												hint="How long to wait for a controller response. Leave blank to use default (10000ms)"
+												type="number"
+											></v-text-field>
+										</v-col>
+
+										<v-col cols="12" sm="6">
+											<v-checkbox
+												hint="This can help with the inclusion or interview of some devices, but can also slow down communication a lot."
+												persistent-hint
+												label="Increase node report timeout"
+												v-model="
+													newZwave.higherReportsTimeout
+												"
+											></v-checkbox>
+										</v-col>
+									</v-row>
+									<!-- END: STARTUP AND RECOVERY BEHAVIOR -->
+
+									<!-- MISC -->
+									<v-row class="mt-0">
+										<v-col cols="12" class="mb-n8">
+											<v-subheader
+												class="font-weight-bold primary--text mb-0"
+											>
+												Misc settings
+											</v-subheader>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-switch
+												hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"
+												persistent-hint
+												label="Enable statistics"
+												v-model="
+													newZwave.enableStatistics
+												"
+											></v-switch>
+										</v-col>
+
+										<input
+											type="hidden"
+											:value="newZwave.disclaimerVersion"
+										/>
+										<v-col cols="12" sm="6">
+											<v-autocomplete
+												hint="Select preferred sensors scales. You can select a scale For more info check https://github.com/zwave-js/node-zwave-js/blob/master/packages/config/config/sensorTypes.json"
+												persistent-hint
+												label="Preferred scales"
+												:items="filteredScales"
+												multiple
+												:item-text="scaleName"
+												:rules="[
+													rules.uniqueSensorType,
+												]"
+												chips
+												return-object
+												deletable-chips
+												v-model="newZwave.scales"
+											>
+												<template
+													v-slot:item="{
+														item,
+														attrs,
+														on,
+													}"
 												>
-													<v-list-item-content>
-														<v-list-item-title>{{
-															scaleName(item)
-														}}</v-list-item-title>
-														<v-list-item-subtitle>{{
-															item.description ||
-															''
-														}}</v-list-item-subtitle>
-													</v-list-item-content>
-												</v-list-item>
-											</template>
-										</v-autocomplete>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-switch
-											hint="Enable zwave-js logging"
-											persistent-hint
-											label="Log Enabled"
-											v-model="newZwave.logEnabled"
-										></v-switch>
-									</v-col>
-									<v-col
-										v-if="newZwave.logEnabled"
-										cols="12"
-										sm="6"
-									>
-										<v-select
-											:items="logLevels"
-											v-model="newZwave.logLevel"
-											label="Log Level"
-										></v-select>
-									</v-col>
-									<v-col
-										v-if="newZwave.logEnabled"
-										cols="12"
-										sm="6"
-									>
-										<v-switch
-											hint="Store zwave logs in a file (stored in store folder)"
-											persistent-hint
-											label="Log to file"
-											v-model="newZwave.logToFile"
-										></v-switch>
-									</v-col>
-									<v-col
-										cols="12"
-										sm="6"
-										v-if="newZwave.logEnabled"
-									>
-										<v-text-field
-											v-model.number="newZwave.maxFiles"
-											label="Max files"
-											:rules="[rules.required]"
-											required
-											persistent-hint
-											hint="Maximum number of log files to keep"
-											type="number"
-										></v-text-field>
-									</v-col>
-									<v-col
-										v-if="newZwave.logEnabled"
-										cols="12"
-										sm="6"
-									>
-										<v-combobox
-											hint="Choose which nodes to log. Leave this empty to log all nodes"
-											persistent-hint
-											label="Log nodes"
-											:items="newZwave.nodeFilter || []"
-											multiple
-											:rules="[rules.validNodeLog]"
-											chips
-											deletable-chips
-											v-model="newZwave.nodeFilter"
-										></v-combobox>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-text-field
-											v-model.number="
-												newZwave.commandsTimeout
-											"
-											label="Inclusion/Exclusion timeout"
-											:rules="[rules.required]"
-											required
-											suffix="seconds"
-											hint="Seconds to wait before to stop inclusion/exclusion mode"
-											type="number"
-										></v-text-field>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-text-field
-											v-model.number="
-												newZwave.sendToSleepTimeout
-											"
-											label="Send to sleep timeout"
-											required
-											persistent-hint
-											suffix="ms"
-											hint="How long to wait without pending commands before sending a node back to sleep. Leave blank to use default (250ms)"
-											type="number"
-										></v-text-field>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-text-field
-											v-model.number="
-												newZwave.responseTimeout
-											"
-											label="Response timeout"
-											required
-											persistent-hint
-											suffix="ms"
-											hint="How long to wait for a controller response. Leave blank to use default (10000ms)"
-											type="number"
-										></v-text-field>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-text-field
-											v-model.number="
-												newZwave.maxNodeEventsQueueSize
-											"
-											label="Node events queue size"
-											:rules="[rules.required]"
-											required
-											hint="Each node stores a queue of events. This is the maximum size of the queue"
-											type="number"
-										></v-text-field>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<v-checkbox
-											hint="This can help with the inclusion or interview of some devices, but can also slow down communication a lot."
-											persistent-hint
-											label="Increase node report timeout"
-											v-model="
-												newZwave.higherReportsTimeout
-											"
-										></v-checkbox>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<inverted-checkbox
-											hint="When disabled, commands will simply fail when the controller is unresponsive and nodes may get randomly marked as dead until the controller recovers on its own."
-											persistent-hint
-											label="Controller recovery"
-											v-model="
-												newZwave.disableControllerRecovery
-											"
-										></inverted-checkbox>
-									</v-col>
-									<v-col cols="12" sm="6">
-										<inverted-checkbox
-											persistent-hint
-											label="Watchdog"
-											hint="Controllers of the 700 series and newer have a hardware watchdog that can be enabled to automatically reset the chip in case it becomes unresponsive. This option controls whether the watchdog should be enabled"
-											v-model="newZwave.disableWatchdog"
-										></inverted-checkbox>
-									</v-col>
+													<v-list-item
+														v-on="on"
+														v-bind="attrs"
+														two-line
+													>
+														<v-list-item-content>
+															<v-list-item-title
+																>{{
+																	scaleName(
+																		item,
+																	)
+																}}</v-list-item-title
+															>
+															<v-list-item-subtitle
+																>{{
+																	item.description ||
+																	''
+																}}</v-list-item-subtitle
+															>
+														</v-list-item-content>
+													</v-list-item>
+												</template>
+											</v-autocomplete>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model.number="
+													newZwave.commandsTimeout
+												"
+												label="Inclusion/Exclusion timeout"
+												:rules="[rules.required]"
+												required
+												suffix="seconds"
+												hint="Seconds to wait before to stop inclusion/exclusion mode"
+												type="number"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model.number="
+													newZwave.sendToSleepTimeout
+												"
+												label="Send to sleep timeout"
+												required
+												persistent-hint
+												suffix="ms"
+												hint="How long to wait without pending commands before sending a node back to sleep. Leave blank to use default (250ms)"
+												type="number"
+											></v-text-field>
+										</v-col>
+										<v-col cols="12" sm="6">
+											<v-text-field
+												v-model.number="
+													newZwave.maxNodeEventsQueueSize
+												"
+												label="Node events queue size"
+												:rules="[rules.required]"
+												required
+												hint="Each node stores a queue of events. This is the maximum size of the queue"
+												type="number"
+											></v-text-field>
+										</v-col>
+									</v-row>
+									<!-- END: MISC -->
+
 									<input
 										type="hidden"
 										:value="newZwave.options"

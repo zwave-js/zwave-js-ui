@@ -1,5 +1,22 @@
 
 
+# [9.26.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.25.0...v9.26.0) (2024-10-30)
+
+
+### Features
+
+* bump @zwave-js/server@1.39.0 ([#3970](https://github.com/zwave-js/zwave-js-ui/issues/3970)) ([ab24962](https://github.com/zwave-js/zwave-js-ui/commit/ab2496231ff3e8403d5b06e5f92df24b908781d6))
+* bump zwave-js@13.10.2 ([#3965](https://github.com/zwave-js/zwave-js-ui/issues/3965)) ([f909f84](https://github.com/zwave-js/zwave-js-ui/commit/f909f84185cdad7bcf6e8b7d37c65da1b781cad2))
+* bump zwave-js@13.10.3 ([#3968](https://github.com/zwave-js/zwave-js-ui/issues/3968)) ([885ea26](https://github.com/zwave-js/zwave-js-ui/commit/885ea266644412af3c81b859543f00c5148147bf))
+
+# [9.25.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.24.0...v9.25.0) (2024-10-25)
+
+
+### Features
+
+* bump zwave-js@13.10.0 ([#3962](https://github.com/zwave-js/zwave-js-ui/issues/3962)) ([1f40beb](https://github.com/zwave-js/zwave-js-ui/commit/1f40beb44d5133a95b0b7cb3d95373559322bc93))
+* bump zwave-js@13.10.1 ([#3964](https://github.com/zwave-js/zwave-js-ui/issues/3964)) ([5f7ee3e](https://github.com/zwave-js/zwave-js-ui/commit/5f7ee3e4121428e3f922e0be7d01906493c27fea))
+
 # [9.24.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.23.0...v9.24.0) (2024-10-17)
 
 

@@ -7,6 +7,11 @@ export const rfRegions = Object.keys(RFRegion)
 		text: key,
 		value: RFRegion[key],
 	}))
+	.filter(
+		(region) =>
+			region.value !== RFRegion.Unknown &&
+			region.value !== RFRegion['Default (EU)'],
+	)
 	.sort((a, b) => a.text.localeCompare(b.text))
 
 export const znifferRegions = Object.keys(ZnifferRegion)
