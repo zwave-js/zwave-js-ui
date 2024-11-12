@@ -5,7 +5,8 @@
 				<v-row justify="center" class="mb-2 text-center" dense>
 					<v-btn
 						:disabled="loading"
-						text
+						outlined
+						class="my-auto"
 						color="green"
 						@click="checkUpdates"
 						>Check updates</v-btn
@@ -15,7 +16,7 @@
 						hide-details
 						dense
 						label="Include pre-releases"
-						class="ml-1"
+						class="ml-2 my-auto"
 					>
 					</v-checkbox>
 					<v-checkbox
@@ -23,9 +24,25 @@
 						hide-details
 						dense
 						label="Show downgrades"
-						class="ml-1"
+						class="ml-2 my-auto"
 					>
 					</v-checkbox>
+					<v-select
+						v-if="
+							controllerNode &&
+							controllerNode.rfRegion === undefined
+						"
+						style="max-width: 200px"
+						class="ml-2 mb-2"
+						label="Rf Region"
+						hide-details
+						:items="rfRegions"
+						v-model="rfRegion"
+					>
+						<template v-slot:prepend>
+							<v-icon>signal_cellular_alt</v-icon>
+						</template>
+					</v-select>
 				</v-row>
 			</v-col>
 
@@ -139,8 +156,9 @@
 
 <script>
 import useBaseStore from '../../stores/base.js'
-import { mapActions } from 'pinia'
+import { mapActions, mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { rfRegions } from '../../lib/items.js'
 
 export default {
 	components: {},
@@ -151,6 +169,8 @@ export default {
 	mixins: [InstancesMixin],
 	data() {
 		return {
+			rfRegions,
+			rfRegion: null,
 			fwUpdates: [],
 			loading: false,
 			includePrereleases: false,
@@ -158,6 +178,7 @@ export default {
 		}
 	},
 	computed: {
+		...mapState(useBaseStore, ['controllerNode']),
 		filteredUpdates() {
 			return this.fwUpdates.filter(
 				(u) => !u.downgrade || (u.downgrade && this.showDowngrades),
@@ -172,15 +193,22 @@ export default {
 		async checkUpdates() {
 			this.loading = true
 			this.fwUpdates = []
+			const options = {
+				includePrereleases: this.includePrereleases,
+			}
+
+			if (
+				this.controllerNode &&
+				this.controllerNode.rfRegion === undefined
+			) {
+				options.rfRegion = this.rfRegion
+			}
+
 			const response = await this.app.apiRequest(
 				'getAvailableFirmwareUpdates',
-				[
-					this.node.id,
-					{
-						includePrereleases: this.includePrereleases,
-					},
-				],
+				[this.node.id, options],
 			)
+
 			this.loading = false
 
 			if (response.success) {
