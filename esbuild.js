@@ -22,7 +22,6 @@ async function patchPkgJson(path) {
 	const pkgJson = require('./' + pkgJsonPath)
 	cleanPkgJson(pkgJson)
 	delete pkgJson.scripts
-	delete pkgJson.exports
 	await writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2))
 }
 
@@ -108,6 +107,15 @@ async function main() {
 			'direct-eval': 'silent',
 		},
 		external: externals,
+
+		// Prevent esbuild from adding a "2" to the names of CC classes for some reason.
+		keepNames: true,
+
+		// Fix import.meta.url in CJS output
+		define: {
+			'import.meta.url': '__import_meta_url',
+		},
+		inject: ['esbuild-import-meta-url-shim.js'],
 	}
 
 	await esbuild.build(config)
