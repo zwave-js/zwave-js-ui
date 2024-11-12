@@ -18,6 +18,7 @@ import {
 	Protocols,
 	createDefaultTransportFormat,
 	FirmwareFileFormat,
+	tryUnzipFirmwareFile,
 } from '@zwave-js/core'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { isDocker } from '@zwave-js/shared'
