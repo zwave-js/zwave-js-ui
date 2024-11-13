@@ -1,5 +1,7 @@
 
 
+## [9.27.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.1...v9.27.2) (2024-11-13)
+
 ## [9.27.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.0...v9.27.1) (2024-11-12)
 
 
