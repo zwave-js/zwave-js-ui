@@ -2553,13 +2553,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		props: Pick<ZUINode, 'defaultTransitionDuration' | 'defaultVolume'>,
 	) {
 		const node = this._nodes.get(nodeId)
+		const zwaveNode = this.getNode(nodeId)
 
-		if (!node) {
+		if (!zwaveNode) {
 			throw Error('Invalid Node ID')
 		}
 
 		for (const k in props) {
-			node[k] = props[k]
+			zwaveNode[k] = props[k]
+			if (node) node[k] = props[k]
 		}
 	}
 
