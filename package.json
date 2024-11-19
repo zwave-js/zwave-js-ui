@@ -55,11 +55,6 @@
     "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/logo.svg",
     "browser": "chromium-browser --user-data-dir=/tmp/zui-data --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure=https://localhost:8092 https://localhost:8092"
   },
-  "overrides": {
-    "vite": {
-      "rollup": "npm:@rollup/wasm-node"
-    }
-  },
   "browserslist": [
     "> 1%",
     "last 2 versions",
@@ -172,6 +167,7 @@
     "proxyquire": "^2.1.3",
     "release-it": "^17.3.0",
     "rimraf": "^5.0.7",
+    "rollup": "@rollup/wasm-node@^4.27.3",
     "sass": "1.77.6",
     "semver": "^7.6.2",
     "sinon": "^18.0.0",
@@ -182,6 +178,9 @@
     "vite": "^5.3.1",
     "vite-plugin-pwa": "^0.20.0",
     "vue-template-compiler": "^2.7.16"
+  },
+  "overrides": {
+    "rollup": "$rollup"
   },
   "engines": {
     "node": ">= 18.12"
