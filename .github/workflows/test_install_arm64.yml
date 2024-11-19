@@ -1,0 +1,35 @@
+name: Test install arm64
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  test-install:
+    name: Test install and build
+    runs-on: macos-14
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+      
+      - name: Check arch is arm64
+        run: |
+          if [[ $(uname -m) != "arm64" ]]; then
+            echo "This job should run on arm64 architecture"
+            exit 1
+          fi
+
+      - name: Install and pre-build
+        run: |
+          npm ci
+          npm run build
