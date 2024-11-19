@@ -370,7 +370,7 @@
 					{{ message.title }}
 				</p>
 				<p
-					style="margin-bottom: 0; white-space: pre-line"
+					style="margin-bottom: 0; white-space: pre-wrap"
 					v-text="
 						typeof message === 'object' ? message.text : message
 					"
