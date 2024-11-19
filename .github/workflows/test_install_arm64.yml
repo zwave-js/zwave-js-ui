@@ -21,6 +21,13 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
+      
+      - name: Check arch is arm64
+        run: |
+          if [[ $(uname -m) != "arm64" ]]; then
+            echo "This job should run on arm64 architecture"
+            exit 1
+          fi
 
       - name: Install and pre-build
         run: |
