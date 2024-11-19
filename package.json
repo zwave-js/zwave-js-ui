@@ -179,7 +179,7 @@
     "vue-template-compiler": "^2.7.16"
   },
   "overrides": {
-    "rollup": "4.18.0"
+    "rollup": "npm:@rollup/wasm-node"
   },
   "engines": {
     "node": ">= 18.12"
