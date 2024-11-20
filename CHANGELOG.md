@@ -1,5 +1,14 @@
 
 
+## [9.27.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.2...v9.27.3) (2024-11-20)
+
+
+### Bug Fixes
+
+* rollup not working on arm ([#4018](https://github.com/zwave-js/zwave-js-ui/issues/4018)) ([7048d05](https://github.com/zwave-js/zwave-js-ui/commit/7048d05198560fb1279ad82040470493628d7ce7))
+* save value change options on ZWaveNode instance ([#4009](https://github.com/zwave-js/zwave-js-ui/issues/4009)) ([75981c1](https://github.com/zwave-js/zwave-js-ui/commit/75981c12edfb57d076c956a888d7d3edeaae8489))
+* **ui:** better app logs spacing ([#4019](https://github.com/zwave-js/zwave-js-ui/issues/4019)) ([4b84b21](https://github.com/zwave-js/zwave-js-ui/commit/4b84b21a0bfb1f12a7e0ec5fc89949451c0e724d))
+
 ## [9.27.2](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.1...v9.27.2) (2024-11-13)
 
 ## [9.27.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.0...v9.27.1) (2024-11-12)
