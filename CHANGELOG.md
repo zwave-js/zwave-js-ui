@@ -1,5 +1,13 @@
 
 
+## [9.27.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.3...v9.27.4) (2024-11-21)
+
+
+### Bug Fixes
+
+* bump zwave-js and zwave-js-server ([#4024](https://github.com/zwave-js/zwave-js-ui/issues/4024)) ([9f9fc56](https://github.com/zwave-js/zwave-js-ui/commit/9f9fc56fa1a459ecc0ff20aad2ce52b61888648d))
+* **ui:** vertical scrollbars not visible ([db1b647](https://github.com/zwave-js/zwave-js-ui/commit/db1b64727294cb482a5f9c7fb4ccaaabe8920328)), closes [#4014](https://github.com/zwave-js/zwave-js-ui/issues/4014)
+
 ## [9.27.3](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.2...v9.27.3) (2024-11-20)
 
 
