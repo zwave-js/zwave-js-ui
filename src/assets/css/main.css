@@ -5,13 +5,8 @@
 ::-webkit-scrollbar {
   height: 10px;
   width: 8px;
-  background: rgba(0, 0, 0, 0.233);
+  background: rgba(0, 0, 0, 0.4);
   padding-right: 10;
-}
-
-/* hide scroolbars on body */
-body::-webkit-scrollbar {
-  display: none;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -27,7 +22,7 @@ https://syntackle.com/blog/changes-to-scrollbar-styling-in-chrome-121/
 @supports not selector(::-webkit-scrollbar) {
   html {
       scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.233);
+      scrollbar-color: rgba(0, 0, 0, 0.4);
   }
 }
 
