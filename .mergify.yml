@@ -1,24 +1,24 @@
 queue_rules:
   - name: default
-    conditions:
-      # Conditions to get out of the queue (= merged)
-      - label=automerge
-
-pull_request_rules:
-  - name: automatic merge dependabot
-    conditions:
+    queue_conditions:
       - base=master
       - author=dependabot[bot]
       - label!=major
       - label=automerge
-    actions:
-      queue:
-        method: squash
-        name: default
+    merge_conditions:
+      # Conditions to get out of the queue (= merged)
+      - label=automerge
+      - label=workflow-bump
+    merge_method: squash
 
+pull_request_rules:
   - name: approve dependabot
     conditions:
       - author=dependabot[bot]
     actions:
       review:
         message: 'Thanks Dependabot! :rocket:'
+  - name: refactored queue action rule
+    conditions: []
+    actions:
+      queue:
