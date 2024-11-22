@@ -1,5 +1,12 @@
 
 
+## [9.27.5](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.4...v9.27.5) (2024-11-22)
+
+
+### Bug Fixes
+
+* missing @zwave-js/server package.json in bundle ([a0f9e0c](https://github.com/zwave-js/zwave-js-ui/commit/a0f9e0caddc012e476bbf7fbd45b6688cf67bd8c)), closes [#4027](https://github.com/zwave-js/zwave-js-ui/issues/4027)
+
 ## [9.27.4](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.3...v9.27.4) (2024-11-21)
 
 
