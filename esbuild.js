@@ -82,6 +82,7 @@ async function main() {
 	const externals = [
 		'@serialport/bindings-cpp/prebuilds',
 		'zwave-js/package.json',
+		'@zwave-js/server/package.json',
 		'@zwave-js/config/package.json',
 		'@zwave-js/config/config',
 		'@zwave-js/config/build',
@@ -126,6 +127,8 @@ async function main() {
 	const content = (await readFile(outfile, 'utf-8')).replace(
 		/__dirname, "\.\.\/"/g,
 		'__dirname, "./node_modules/@serialport/bindings-cpp"',
+	).replace(
+		`"../../package.json"`, `"./node_modules/@zwave-js/server/package.json"`
 	)
 
 	await writeFile(outfile, content)
@@ -176,6 +179,7 @@ async function main() {
 
 	await patchPkgJson('node_modules/@zwave-js/config')
 	await patchPkgJson('node_modules/zwave-js')
+	await patchPkgJson('node_modules/@zwave-js/server')
 }
 
 main().catch((err) => {
