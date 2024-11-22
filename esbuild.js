@@ -124,12 +124,15 @@ async function main() {
 	console.log(`Build took ${Date.now() - start}ms`)
 	await printSize(outfile)
 
-	const content = (await readFile(outfile, 'utf-8')).replace(
-		/__dirname, "\.\.\/"/g,
-		'__dirname, "./node_modules/@serialport/bindings-cpp"',
-	).replace(
-		`"../../package.json"`, `"./node_modules/@zwave-js/server/package.json"`
-	)
+	const content = (await readFile(outfile, 'utf-8'))
+		.replace(
+			/__dirname, "\.\.\/"/g,
+			'__dirname, "./node_modules/@serialport/bindings-cpp"',
+		)
+		.replace(
+			`"../../package.json"`,
+			`"./node_modules/@zwave-js/server/package.json"`,
+		)
 
 	await writeFile(outfile, content)
 
