@@ -30,7 +30,7 @@
 					<v-select
 						v-if="
 							controllerNode &&
-							controllerNode.rfRegion === undefined
+							controllerNode.RFRegion === undefined
 						"
 						style="max-width: 200px"
 						class="ml-2 mb-2"
@@ -199,7 +199,7 @@ export default {
 
 			if (
 				this.controllerNode &&
-				this.controllerNode.rfRegion === undefined
+				this.controllerNode.RFRegion === undefined
 			) {
 				options.rfRegion = this.rfRegion
 			}
