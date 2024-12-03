@@ -1,5 +1,18 @@
 
 
+## [9.27.8](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.7...v9.27.8) (2024-12-03)
+
+
+### Bug Fixes
+
+* hide rf region select when it's known ([a1e23bc](https://github.com/zwave-js/zwave-js-ui/commit/a1e23bcc4b637d58165665847fd8968e6c87c069)), closes [#4045](https://github.com/zwave-js/zwave-js-ui/issues/4045)
+* wrong log module on log messages ([db352cb](https://github.com/zwave-js/zwave-js-ui/commit/db352cbeb8154d20eb2bb4982aec0a0caaede310))
+
+
+### Features
+
+* bump zwave-js@14.3.7 ([#4046](https://github.com/zwave-js/zwave-js-ui/issues/4046)) ([b544d38](https://github.com/zwave-js/zwave-js-ui/commit/b544d380a838257fda3526bb2deb0c917aca9a09))
+
 ## [9.27.7](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.6...v9.27.7) (2024-11-22)
 
 
