@@ -118,7 +118,7 @@
 					<small
 						>Increasing the TX power (normal power level) may be
 						<b>illegal</b>, depending on where you are
-						located</small
+						located. </small
 					>
 
 					<small
