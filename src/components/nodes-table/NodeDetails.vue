@@ -113,13 +113,12 @@
 				<v-alert text type="warning">
 					<strong
 						>DO NOT CHANGE THESE VALUES UNLESS YOU KNOW WHAT YOU ARE
-						DOING </strong
-					>
+						DOING
+					</strong>
 					<small
 						>Increasing the TX power (normal power level) may be
-						<b>illegal</b>, depending on where you are
-						located. </small
-					>
+						<b>illegal</b>, depending on where you are located.
+					</small>
 
 					<small
 						>Increasing the TX power will only make the nodes "hear"
