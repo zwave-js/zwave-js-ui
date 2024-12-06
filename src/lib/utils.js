@@ -224,6 +224,10 @@ export function getRegion(item) {
 	)
 }
 export function getRoute(item, withRssi = false) {
+	if (item.corrupted) {
+		return ''
+	}
+
 	const repRSSI = item.repeaterRSSI || []
 	const dir = item.direction === 'inbound' ? '←' : '→'
 	const hop = item.hop !== undefined ? item.hop : -1
@@ -267,6 +271,10 @@ export function getRoute(item, withRssi = false) {
 	return routeString
 }
 export function getType(item) {
+	if (item.corrupted) {
+		return ''
+	}
+
 	if (item.protocol === Protocols.ZWaveLongRange) {
 		return getEnumMemberName(LongRangeFrameType, item.type)
 	} else {
