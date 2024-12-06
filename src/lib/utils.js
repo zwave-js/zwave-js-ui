@@ -170,13 +170,36 @@ export function deepEqual(a, b) {
 	return a === b || JSON.stringify(a) === JSON.stringify(b)
 }
 
+export function safeDeepEqual(a, b) {
+	if (a === b) return true
+
+	if (typeof a !== 'object' || typeof b !== 'object') return false
+
+	if (Array.isArray(a) !== Array.isArray(b)) return false
+
+	if (Array.isArray(a)) {
+		return arraysEqual(a, b)
+	}
+
+	const keysA = Object.keys(a)
+	const keysB = Object.keys(b)
+
+	if (keysA.length !== keysB.length) return false
+
+	for (const key of keysA) {
+		if (!safeDeepEqual(a[key], b[key])) return false
+	}
+
+	return true
+}
+
 export function arraysEqual(a, b) {
 	if (a === b) return true
 	if (a == null || b == null) return false
 	if (a.length !== b.length) return false
 
 	for (let i = 0; i < a.length; ++i) {
-		if (a[i] !== b[i]) return false
+		if (!safeDeepEqual(a[i], b[i])) return false
 	}
 
 	return true
