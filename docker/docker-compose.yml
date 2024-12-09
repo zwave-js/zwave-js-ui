@@ -8,7 +8,6 @@ services:
     stop_signal: SIGINT
     environment:
       - SESSION_SECRET=mysupersecretkey
-      - ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
       # Uncomment if you want logs time and dates to match your timezone instead of UTC
       # Available at https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
       #- TZ=America/New_York

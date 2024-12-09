@@ -110,7 +110,7 @@ import {
 	LinkReliabilityCheckResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { logsDir, nvmBackupsDir, storeDir } from '../config/app'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
 import store from '../config/store'
 import jsonStore from './jsonStore'
 import * as LogManager from './logger'
@@ -2195,6 +2195,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			userAgent: {
 				[utils.pkgJson.name]: utils.pkgJson.version,
 			},
+		}
+
+		// when no env is specified copy config db to store dir
+		// fixes issues with pkg (and no more need to set this env on docker)
+		if (!process.env.ZWAVEJS_EXTERNAL_CONFIG) {
+			zwaveOptions.storage.deviceConfigExternalDir = configDbDir
 		}
 
 		if (this.cfg.rf) {
