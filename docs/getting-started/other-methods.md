@@ -55,7 +55,6 @@ Run with custom storage path:
 
 ```bash
 STORE_DIR=~/.zwave-js-ui \
-ZWAVEJS_EXTERNAL_CONFIG=~/.zwave-js-ui/.config-db \
 zwave-js-ui
 ```
 
@@ -77,7 +76,6 @@ module.exports = {
         script: "zwave-js-ui",
         env: {
           STORE_DIR: "~/.zwave-js-ui",
-          ZWAVEJS_EXTERNAL_CONFIG: "~/.zwave-js-ui/.config-db",
         },
       },
   ]

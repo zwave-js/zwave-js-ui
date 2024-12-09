@@ -95,7 +95,6 @@ RUN mkdir my_dist \
 FROM node:18.14.2-bullseye
 LABEL maintainer="robertsLando"
 
-ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
 ENV NODE_ENV=production
 
 RUN \

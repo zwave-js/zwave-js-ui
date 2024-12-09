@@ -68,8 +68,6 @@ FROM base AS runtime
 # Copy files from previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
-ENV ZWAVEJS_EXTERNAL_CONFIG=/usr/src/app/store/.config-db
-
 ENV TAG_NAME=${image_name}
 
 ENV NODE_ENV=production
