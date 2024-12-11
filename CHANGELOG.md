@@ -1,5 +1,18 @@
 
 
+# [9.28.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.8...v9.28.0) (2024-12-11)
+
+
+### Bug Fixes
+
+* **ui:** correctly display CRC errors on zniffer ([#4039](https://github.com/zwave-js/zwave-js-ui/issues/4039)) ([f868b69](https://github.com/zwave-js/zwave-js-ui/commit/f868b694c8dfdcf5e2957a7db9bde39c2d99ca24))
+* **ui:** typo on NodeDetails.vue ([#4052](https://github.com/zwave-js/zwave-js-ui/issues/4052)) ([9a22a9e](https://github.com/zwave-js/zwave-js-ui/commit/9a22a9e684a7baeffafb12f886b7295437f809bc))
+
+
+### Features
+
+* add default value for external Z-Wave JS config database path ([#4055](https://github.com/zwave-js/zwave-js-ui/issues/4055)) ([4b446b9](https://github.com/zwave-js/zwave-js-ui/commit/4b446b9beebe8e38e2dfb46fc95a42d4dcb4574f))
+
 ## [9.27.8](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.7...v9.27.8) (2024-12-03)
 
 
