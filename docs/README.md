@@ -40,7 +40,7 @@ Full featured Z-Wave **Control Panel** and MQTT **Gateway**.
 - **Network Graph**: Provides a beautiful map showing how nodes are communicating with the controller
 - **Automatic/Scheduled backups**: Scheduled backup of NVM and store directory. It's also possible to enable automatic backups of NVM before every node inclusion/exclusion/replace, this ensures to create a safe restore point before any operation that can cause a network corruption.
 - **Zniffer Support**: Supports Zniffer mode for debugging Z-Wave traffic
-- **Dianogsitics**: Use Healtcheck and Link quality tools to diagnose network issues
+- **Diagnostics**: Use Healtcheck and Link quality tools to diagnose network issues
 
 ## Software integrations
 
