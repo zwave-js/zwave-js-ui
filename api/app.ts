@@ -343,6 +343,7 @@ async function loadCertKey(): Promise<{
 		try {
 			const result = await createCertificate([], {
 				days: 99999,
+				keySize: 2048,
 			})
 
 			key = result.private
