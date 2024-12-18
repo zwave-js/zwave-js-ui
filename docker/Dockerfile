@@ -22,7 +22,7 @@ RUN \
         build-base \
         linux-headers \
         python3-dev \
-        npm
+        npm=10.9.1-r0
 
 COPY . .
 
