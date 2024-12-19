@@ -475,6 +475,10 @@ export default {
 							text: 'Failed Nodes',
 							options: [
 								{ name: 'Remove', action: 'removeFailedNode' },
+								{
+									name: 'Replace',
+									action: 'replaceFailedNode',
+								},
 							],
 							icon: 'dangerous',
 							desc: 'Manage nodes that are dead and/or marked as failed with the controller',
