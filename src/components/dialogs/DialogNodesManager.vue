@@ -1176,10 +1176,20 @@ export default {
 				this.pushStep('replaceInclusionMode')
 			}
 		},
-		show(step) {
+		show(step, stepValues) {
 			this.isOpen = true
 			this.$emit('open')
-			this.init(true, step)
+			if (stepValues) {
+				this.init(true)
+				this.steps = []
+				for (const s in stepValues) {
+					this.pushStep(s)
+					const step = this.steps[this.steps.length - 1]
+					Object.assign(step.values, stepValues[s])
+				}
+			} else {
+				this.init(true, step)
+			}
 		},
 		close() {
 			this.isOpen = false
