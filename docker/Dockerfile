@@ -1,13 +1,13 @@
 ARG image=zwave-js-ui
 
-FROM alpine:3.18.4 as base
+FROM alpine:3.21.0 AS base
 
 RUN apk add --no-cache \
     openssl \
     libusb \
     tzdata \
     eudev \
-    nodejs=18.20.1-r0
+    nodejs=22.11.0-r0
 
 # https://pkgs.alpinelinux.org/packages?name=nodejs&branch=edge&repo=&arch=&maintainer=
 
@@ -22,7 +22,7 @@ RUN \
         build-base \
         linux-headers \
         python3-dev \
-        npm=9.6.6-r0
+        npm=10.9.1-r0
 
 COPY . .
 
@@ -68,7 +68,7 @@ FROM base AS runtime
 # Copy files from previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
-ENV TAG_NAME=${image_name}
+ENV TAG_NAME=${image}
 
 ENV NODE_ENV=production
 
