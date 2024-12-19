@@ -168,7 +168,7 @@
 							<template
 								v-slot:[`item.protocolDataRate`]="{ item }"
 							>
-								<span v-if="item.corrupted">----</span>
+								<span v-if="item.corrupted"></span>
 								<div v-else class="d-flex text-center">
 									<rich-value
 										:value="getProtocolIcon(item.protocol)"
@@ -198,7 +198,7 @@
 
 							<template v-slot:[`item.payload`]="{ item }">
 								<code v-if="item.corrupted"> CRC Error </code>
-								<span v-if="item.parsedPayload">
+								<span v-else-if="item.parsedPayload">
 									{{ getPayloadTags(item.parsedPayload) }}
 								</span>
 								<span
