@@ -693,9 +693,9 @@ export default {
 				}
 			}
 		},
-		showNodesManager(step) {
+		showNodesManager(stepOrStepsValues) {
 			// used in ControlPanel.vue
-			this.$refs.nodesManager.show(step)
+			this.$refs.nodesManager.show(stepOrStepsValues)
 		},
 		onGrantSecurityClasses(requested) {
 			if (this.nodesManagerDialog) {
