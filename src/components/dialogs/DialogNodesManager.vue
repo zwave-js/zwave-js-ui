@@ -1176,14 +1176,14 @@ export default {
 				this.pushStep('replaceInclusionMode')
 			}
 		},
-		show(stepOrStepsValues) {
+		async show(stepOrStepsValues) {
 			this.isOpen = true
 			this.$emit('open')
 			if (typeof stepOrStepsValues === 'object') {
 				this.init(true)
 				this.steps = []
 				for (const s in stepOrStepsValues) {
-					const step = this.pushStep(s)
+					const step = await this.pushStep(s)
 					Object.assign(step.values, stepOrStepsValues[s])
 				}
 			} else {
