@@ -1176,19 +1176,18 @@ export default {
 				this.pushStep('replaceInclusionMode')
 			}
 		},
-		show(step, stepValues) {
+		show(stepOrStepsValues) {
 			this.isOpen = true
 			this.$emit('open')
-			if (stepValues) {
+			if (typeof stepOrStepsValues === 'object') {
 				this.init(true)
 				this.steps = []
-				for (const s in stepValues) {
-					this.pushStep(s)
-					const step = this.steps[this.steps.length - 1]
-					Object.assign(step.values, stepValues[s])
+				for (const s in stepOrStepsValues) {
+					const step = this.pushStep(s)
+					Object.assign(step.values, stepOrStepsValues[s])
 				}
 			} else {
-				this.init(true, step)
+				this.init(true, stepOrStepsValues)
 			}
 		},
 		close() {
@@ -1243,9 +1242,12 @@ export default {
 				typeof step === 'string' ? this.availableSteps[step] : step
 			s.index = this.steps.length + 1
 			this.alert = null
-			this.steps.push(copy(s))
+			const newStep = copy(s)
+			this.steps.push(newStep)
 			await this.$nextTick()
-			this.currentStep = s.index
+			this.currentStep = newStep.index
+
+			return newStep
 		},
 		stopAction() {
 			this.stopped = true

@@ -507,7 +507,7 @@ export default {
 					args.push(options)
 				} else if (action === 'replaceFailedNode') {
 					// open nodes manager dialog
-					this.app.showNodesManager('replaceFailed', {
+					this.app.showNodesManager({
 						action: { action: 1 },
 						replaceFailed: { replaceId: nodeId },
 						replaceInclusionMode: { inclusionMode: 0 },
