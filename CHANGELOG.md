@@ -1,5 +1,19 @@
 
 
+# [9.29.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.28.0...v9.29.0) (2024-12-20)
+
+
+### Bug Fixes
+
+* increase key size to 2048 for certificate generation ([4222d04](https://github.com/zwave-js/zwave-js-ui/commit/4222d040e7e060ea7d24da257e51a1369ff48854))
+* **ui:** cleanup CRC error frames apperance ([75fc924](https://github.com/zwave-js/zwave-js-ui/commit/75fc9246d50484e7192bec4f143b70e4960ef0a2))
+* **ui:** remove unnecessary validation rule for config priority directory ([655fc92](https://github.com/zwave-js/zwave-js-ui/commit/655fc927900f0ee7e6276661a4465386c43d5d50))
+
+
+### Features
+
+* **ui:** add shortcut to replace a failed node from node advanced actions ([#4068](https://github.com/zwave-js/zwave-js-ui/issues/4068)) ([24b9082](https://github.com/zwave-js/zwave-js-ui/commit/24b9082a6f801e5972e28f7fd58669369ea063e2))
+
 # [9.28.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.27.8...v9.28.0) (2024-12-11)
 
 
