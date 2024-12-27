@@ -198,19 +198,6 @@ export default {
 					desc: 'Export all nodes in a json file. Useful for debugging purposes',
 				},
 				{
-					text: 'Rebuild Routes',
-					options: [
-						{
-							name: 'Begin',
-							action: 'beginRebuildingRoutes',
-						},
-						{ name: 'Stop', action: 'stopRebuildingRoutes' },
-					],
-					icon: 'healing',
-					color: 'warning',
-					desc: 'Force nodes to establish new connections to the controller',
-				},
-				{
 					text: 'Re-interview Nodes',
 					options: [
 						{
@@ -375,6 +362,19 @@ export default {
 					],
 					icon: 'cached',
 					desc: 'Update all CC values and metadata. Use only when many values seems stale',
+				},
+				{
+					text: 'Rebuild Routes',
+					options: [
+						{
+							name: 'Begin',
+							action: 'beginRebuildingRoutes',
+						},
+						{ name: 'Stop', action: 'stopRebuildingRoutes' },
+					],
+					icon: 'healing',
+					color: 'warning',
+					desc: 'Force nodes to establish new connections to the controller',
 				},
 				{
 					text: 'Ping',
