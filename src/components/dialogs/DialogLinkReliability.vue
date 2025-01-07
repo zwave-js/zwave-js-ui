@@ -266,7 +266,7 @@ export default {
 			],
 			infinite: false,
 			interval: 250,
-			iterations: 25,
+			iterations: 100,
 			statistics: null,
 			progress: 0,
 		}
