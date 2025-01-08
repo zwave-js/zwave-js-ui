@@ -15,4 +15,4 @@ Using `wget`:
 
 Using `curl`:
 
-`curl localhost:8091/health/zwave -H "Accept: text/plain`
+`curl localhost:8091/health/zwave -H "Accept: text/plain"`
