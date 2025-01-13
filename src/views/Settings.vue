@@ -33,12 +33,29 @@
 					<v-expansion-panel-content>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
-								<v-switch
-									hint="Enable dark mode"
-									persistent-hint
+								<v-input
 									label="Dark mode"
-									v-model="internalDarkMode"
-								></v-switch>
+									hint="Eanble System Defined, Dark, or Light modes"
+									persistent-hint
+								>
+									<v-btn-toggle
+										v-model="btnGrpDarkMode"
+										divided
+										manditory
+									>
+										<v-btn value="auto">
+											<v-icon>laptop</v-icon>
+										</v-btn>
+
+										<v-btn value="true">
+											<v-icon>dark_mode</v-icon>
+										</v-btn>
+
+										<v-btn value="false">
+											<v-icon>light_mode</v-icon>
+										</v-btn>
+									</v-btn-toggle>
+								</v-input>
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch
@@ -2072,12 +2089,16 @@ export default {
 		},
 	},
 	computed: {
-		internalDarkMode: {
+		btnGrpDarkMode: {
 			get() {
-				return this.darkMode
+				if (this.darkMode === null) return 'auto'
+				if (this.darkMode === true) return 'true'
+				return 'false'
 			},
 			set(value) {
-				this.setDarkMode(value)
+				if (value === 'auto') this.setDarkMode(null)
+				else if (value === 'true') this.setDarkMode(true)
+				else this.setDarkMode(false)
 			},
 		},
 		internalNavTabs: {
