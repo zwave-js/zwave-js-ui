@@ -59,7 +59,7 @@ jobs:
           failure() &&
           github.event_name == 'pull_request' &&
           steps.lint.outputs.changed == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lint-fix
           path: fix.patch
