@@ -1,5 +1,16 @@
 
 
+## [9.29.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.29.0...v9.29.1) (2025-01-16)
+
+
+### Bug Fixes
+
+* do not allow to set `Unknown` and `Default (EU)` regions ([a9c8e3a](https://github.com/zwave-js/zwave-js-ui/commit/a9c8e3a3d14ebae3fc05bf7c9c290e1f627fdf0c))
+* **ui:** allow to call rebuild routes against multiple nodes at once ([848a543](https://github.com/zwave-js/zwave-js-ui/commit/848a54387b255600b0d81bcaa99a703784bf23b1)), closes [#3559](https://github.com/zwave-js/zwave-js-ui/issues/3559)
+* **ui:** editing Color Switch CC HEX color does not work ([ca030dc](https://github.com/zwave-js/zwave-js-ui/commit/ca030dceb3df16ce035cf46dbd17784d9a3dcc88)), closes [#4085](https://github.com/zwave-js/zwave-js-ui/issues/4085)
+* **ui:** set default iterations for link reliability check to 100 ([#4082](https://github.com/zwave-js/zwave-js-ui/issues/4082)) ([f99c28b](https://github.com/zwave-js/zwave-js-ui/commit/f99c28b3341fb1c050b83d8b6e210d9bf215cfc6))
+* **ui:** show rebuild node routes only when there are node selected ([ac1cbb3](https://github.com/zwave-js/zwave-js-ui/commit/ac1cbb30acac1dac563a136dd07368b2a6b2ab6a)), closes [#4087](https://github.com/zwave-js/zwave-js-ui/issues/4087)
+
 # [9.29.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.28.0...v9.29.0) (2024-12-20)
 
 
