@@ -6137,6 +6137,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					?.map((region) => ({
 						value: region,
 						text: getEnumMemberName(RFRegion, region),
+						disabled:
+							region === RFRegion.Unknown ||
+							region === RFRegion['Default (EU)'],
 					}))
 					.sort((a, b) => a.text.localeCompare(b.text)) ?? []
 		}

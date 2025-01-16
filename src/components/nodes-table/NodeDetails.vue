@@ -78,11 +78,7 @@
 						</template>
 					</v-text-field>
 				</v-col>
-				<v-col
-					v-if="node.RFRegion !== undefined"
-					cols="12"
-					style="max-width: 300px"
-				>
+				<v-col cols="12" style="max-width: 300px">
 					<v-select
 						label="RF Region"
 						:items="node.rfRegions"
