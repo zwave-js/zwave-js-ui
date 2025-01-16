@@ -19,6 +19,7 @@ import {
 	createDefaultTransportFormat,
 	FirmwareFileFormat,
 	tryUnzipFirmwareFile,
+	extractFirmwareAsync,
 } from '@zwave-js/core'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { isDocker } from '@zwave-js/shared'
@@ -34,7 +35,6 @@ import {
 	Driver,
 	ExclusionOptions,
 	ExclusionStrategy,
-	extractFirmware,
 	FirmwareUpdateCapabilities,
 	FirmwareUpdateProgress,
 	FirmwareUpdateResult,
@@ -3858,7 +3858,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			try {
 				const format = guessFirmwareFileFormat(file.name, file.data)
-				firmware = extractFirmware(file.data, format)
+				firmware = await extractFirmwareAsync(file.data, format)
 			} catch (err) {
 				throw Error(
 					`Unable to extract firmware from file '${file.name}'`,
@@ -3873,7 +3873,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	updateFirmware(
+	async updateFirmware(
 		nodeId: number,
 		files: FwFile[],
 	): Promise<FirmwareUpdateResult> {
@@ -3921,7 +3921,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							format = guessFirmwareFileFormat(name, data)
 						}
 
-						const firmware = extractFirmware(data, format)
+						const firmware = await extractFirmwareAsync(
+							data,
+							format,
+						)
 						if (f.target !== undefined) {
 							firmware.firmwareTarget = f.target
 						}
@@ -4471,8 +4474,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				sentFragments: progress.sentFragments,
 				totalFragments: progress.totalFragments,
 				progress: progress.progress,
-				currentFile: 1,
-				totalFiles: 1,
+				currentFile: node.firmwareUpdate?.currentFile ?? 1,
+				totalFiles: node.firmwareUpdate?.currentFile ?? 1,
 			}
 
 			// send at most 4msg per second
@@ -6693,7 +6696,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	) {
 		const interval = setInterval(() => {
 			const totalFilesFragments = totalFiles * fragmentsPerFile
-			const progress = this.nodes.get(nodeId)?.firmwareUpdate || {
+			const progress = this.nodes.get(nodeId).firmwareUpdate ?? {
 				totalFiles,
 				currentFile: 1,
 				sentFragments: 0,
