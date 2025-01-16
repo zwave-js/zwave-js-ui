@@ -123,6 +123,7 @@
 						<v-card>
 							<v-card-text class="pa-0">
 								<v-color-picker
+									v-if="menu"
 									hide-mode-switch
 									v-model="color"
 									flat
