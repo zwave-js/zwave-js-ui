@@ -194,7 +194,7 @@
 								>
 									<template v-slot:top>
 										<v-btn
-											color="blue darken-1"
+											color="primary"
 											text
 											@click="dialogValue = true"
 										>
@@ -241,14 +241,14 @@
 										<v-icon
 											small
 											class="mr-2"
-											color="green"
+											color="success"
 											@click="editItem(item)"
 										>
 											edit
 										</v-icon>
 										<v-icon
 											small
-											color="red"
+											color="error"
 											@click="deleteItem(item)"
 										>
 											delete
@@ -276,7 +276,7 @@
 								>
 									<template v-slot:top>
 										<v-btn
-											color="blue darken-1"
+											color="primary"
 											text
 											@click="editJob()"
 										>
@@ -295,7 +295,9 @@
 									>
 										<v-icon
 											:color="
-												item.enabled ? 'green' : 'red'
+												item.enabled
+													? 'success'
+													: 'error'
 											"
 										>
 											{{
@@ -310,7 +312,9 @@
 									>
 										<v-icon
 											:color="
-												item.runOnInit ? 'green' : 'red'
+												item.runOnInit
+													? 'success'
+													: 'error'
 											"
 										>
 											{{
@@ -326,14 +330,14 @@
 										<v-icon
 											small
 											class="mr-2"
-											color="green"
+											color="warning"
 											@click="editJob(item)"
 										>
 											edit
 										</v-icon>
 										<v-icon
 											small
-											color="red"
+											color="error"
 											@click="deleteJob(item)"
 										>
 											delete
@@ -2003,32 +2007,28 @@
 				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
-			<v-btn class="mr-2" small color="red darken-1" @click="resetConfig">
+			<v-btn class="mr-2" small color="error" @click="resetConfig">
 				Reset
 				<v-icon right dark>clear</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-2"
 				small
-				color="purple darken-1"
+				color="purple"
+				dark
 				@click="importSettings"
 			>
 				Import
 				<v-icon right dark>file_upload</v-icon>
 			</v-btn>
-			<v-btn
-				class="mr-2"
-				small
-				color="green darken-1"
-				@click="exportSettings"
-			>
+			<v-btn class="mr-2" small color="success" @click="exportSettings">
 				Export
 				<v-icon right dark>file_download</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-5"
 				small
-				color="blue darken-1"
+				color="primary"
 				type="submit"
 				:loading="saving"
 				:disabled="saving || !settingsChanged"

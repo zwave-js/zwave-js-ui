@@ -4,12 +4,12 @@
 			<center v-on="on">
 				<blink-icon
 					icon="north"
-					:activeColor="node.errorTransmit ? 'error' : 'green'"
+					:activeColor="node.errorTransmit ? 'error' : 'success'"
 					:active="now - node.lastTransmit < 200"
 				/>
 				<blink-icon
 					icon="south"
-					:activeColor="node.errorReceive ? 'error' : 'green'"
+					:activeColor="node.errorReceive ? 'error' : 'success'"
 					:active="now - node.lastReceive < 200"
 				/>
 				<div class="text-caption">

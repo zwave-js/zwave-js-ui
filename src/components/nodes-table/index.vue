@@ -95,7 +95,7 @@
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-btn
-							color="blue darken-1"
+							color="primary"
 							class="my-auto"
 							text
 							v-on="on"
@@ -109,7 +109,7 @@
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-btn
-							color="blue darken-1"
+							color="primary"
 							class="my-auto"
 							text
 							v-on="on"

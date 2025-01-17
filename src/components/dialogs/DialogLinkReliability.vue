@@ -82,7 +82,7 @@
 							v-if="running"
 							:indeterminate="this.infinite"
 							:value="this.infinite ? null : this.progress"
-							color="green darken-1"
+							color="success"
 						></v-progress-linear>
 						<v-list dense>
 							<v-list-item>
