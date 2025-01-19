@@ -108,6 +108,9 @@ import {
 	ProvisioningEntryStatus,
 	AssociationCheckResult,
 	LinkReliabilityCheckResult,
+	JoinNetworkOptions,
+	JoinNetworkStrategy,
+	JoinNetworkResult,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -217,6 +220,8 @@ export const allowedApis = validateMethods([
 	'checkForConfigUpdates',
 	'installConfigUpdate',
 	'shutdownZwaveAPI',
+	'startLearnMode',
+	'stopLearnMode',
 	'pingNode',
 	'restart',
 	'grantSecurityClasses',
@@ -2889,6 +2894,48 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		} else {
 			throw new DriverNotReadyError()
 		}
+	}
+
+	/**
+	 * Stops learn mode
+	 */
+	stopLearnMode(): Promise<boolean> {
+		if (this.driverReady) {
+			if (this.commandsTimeout) {
+				clearTimeout(this.commandsTimeout)
+				this.commandsTimeout = null
+			}
+			return this._driver.controller.stopJoiningNetwork()
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Starts learn mode
+	 */
+	async startLearnMode(): Promise<JoinNetworkResult> {
+		if (this.driverReady) {
+			if (this.commandsTimeout) {
+				clearTimeout(this.commandsTimeout)
+				this.commandsTimeout = null
+			}
+
+			this.commandsTimeout = setTimeout(
+				() => {
+					this.stopLearnMode().catch(logger.error)
+				},
+				(this.cfg.commandsTimeout || 0) * 1000 || 30000,
+			)
+
+			let joinNetworkOptions: JoinNetworkOptions = {
+				strategy: JoinNetworkStrategy.Default
+			}
+
+			return this._driver.controller.beginJoiningNetwork(joinNetworkOptions)
+		}
+
+		throw new DriverNotReadyError()
 	}
 
 	/**

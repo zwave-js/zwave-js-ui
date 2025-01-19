@@ -308,6 +308,21 @@ export default {
 					color: 'warning',
 					desc: 'Allows to shutdown the Zwave API to safely unplug the Zwave stick.',
 				},
+				{
+					text: 'Learn mode',
+					options: [
+						{
+							name: 'Start',
+							action: 'startLearnMode',
+							args: {
+								confirm:
+									'Initiate lear mode on primary controller first and then click OK here.',
+							},
+						},
+					],
+					icon: 'join_inner',
+					desc: 'Instruct controller to run learning mode (can join pre-existing network)',
+				},
 			],
 			rules: {
 				required: (value) => {
