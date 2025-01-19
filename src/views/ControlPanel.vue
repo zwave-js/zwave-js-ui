@@ -316,7 +316,7 @@ export default {
 							action: 'startLearnMode',
 							args: {
 								confirm:
-									'Initiate lear mode on primary controller first and then click OK here.',
+									'Initiate learn mode on primary controller first and then click OK here.',
 							},
 						},
 					],
