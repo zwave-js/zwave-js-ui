@@ -3,7 +3,6 @@ import {
 	Protocols,
 	znifferProtocolDataRateToString,
 } from '@zwave-js/core/safe'
-import colors from 'vuetify/lib/util/colors'
 
 import {
 	isRssiError,
@@ -209,11 +208,11 @@ export function getProtocol(node) {
 export function getProtocolColor(node) {
 	switch (node.protocol) {
 		case Protocols.ZWave:
-			return colors.blue.base
+			return 'primary'
 		case Protocols.ZWaveLongRange:
-			return colors.purple.base
+			return 'purple'
 		default:
-			return colors.grey.base
+			return 'grey'
 	}
 }
 

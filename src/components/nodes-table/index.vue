@@ -265,7 +265,7 @@
 				<v-chip
 					small
 					:color="interviewStageColor(`${item.interviewStage}`)"
-					text-color="white"
+					text-color="black"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular
