@@ -2928,8 +2928,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				(this.cfg.commandsTimeout || 0) * 1000 || 30000,
 			)
 
-			let joinNetworkOptions: JoinNetworkOptions = {
-				strategy: JoinNetworkStrategy.Default
+			const joinNetworkOptions: JoinNetworkOptions = {
+				strategy: JoinNetworkStrategy.Default,
 			}
 
 			return this._driver.controller.beginJoiningNetwork(joinNetworkOptions)
