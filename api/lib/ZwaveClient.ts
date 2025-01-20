@@ -2932,7 +2932,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				strategy: JoinNetworkStrategy.Default,
 			}
 
-			return this._driver.controller.beginJoiningNetwork(joinNetworkOptions)
+			return this._driver.controller.beginJoiningNetwork(
+				joinNetworkOptions,
+			)
 		}
 
 		throw new DriverNotReadyError()
