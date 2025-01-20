@@ -213,6 +213,19 @@ export default {
 					desc: 'Clear all info about all nodes and make a new full interview. Use when nodes has wrong or missing capabilities',
 				},
 				{
+					text: 'Rebuild Routes',
+					options: [
+						{
+							name: 'Begin',
+							action: 'beginRebuildingRoutes',
+						},
+						{ name: 'Stop', action: 'stopRebuildingRoutes' },
+					],
+					icon: 'healing',
+					color: 'warning',
+					desc: 'Force nodes to establish new connections to the controller',
+				},
+				{
 					text: 'Hard Reset',
 					options: [
 						{
@@ -365,19 +378,6 @@ export default {
 					],
 					icon: 'cached',
 					desc: 'Update all CC values and metadata. Use only when many values seems stale',
-				},
-				{
-					text: 'Rebuild Routes',
-					options: [
-						{
-							name: 'Begin',
-							action: 'beginRebuildingRoutes',
-						},
-						{ name: 'Stop', action: 'stopRebuildingRoutes' },
-					],
-					icon: 'healing',
-					color: 'warning',
-					desc: 'Force nodes to establish new connections to the controller',
 				},
 				{
 					text: 'Rebuild Node Routes',
