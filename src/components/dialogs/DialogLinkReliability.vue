@@ -281,6 +281,7 @@ export default {
 			)
 		},
 		init(open) {
+			const wasRunning = this.running
 			this.mode = 0
 			this.statistics = null
 			this.infinite = false
@@ -295,7 +296,7 @@ export default {
 				this.bindEvent('linkReliability', this.onProgress.bind(this))
 			} else if (open === false) {
 				this.unbindEvents()
-				if (this.running) {
+				if (wasRunning) {
 					this.abortLinkReliabilityCheck()
 				}
 			}

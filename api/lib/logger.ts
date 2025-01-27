@@ -88,7 +88,6 @@ export function customFormat(noColor = false): winston.Logform.Format {
 	// must be added at last
 	formats.push(
 		printf((info) => {
-			info.module = info.module?.toUpperCase() || '-'
 			if (!noColor) {
 				info.timestamp = colorizer.colorize('time', info.timestamp)
 				info.module = colorizer.colorize('module', info.module)
@@ -185,10 +184,11 @@ export function setupLogger(
 	const sanitized = sanitizedConfig(module, config)
 	// Winston automatically reuses an existing module logger
 	const logger = container.add(module) as ModuleLogger
+	const moduleName = module.toUpperCase() || '-'
 	logger.configure({
 		format: combine(
 			format((info) => {
-				info.module = logger.module
+				info.module = moduleName
 				return info
 			})(),
 			format.errors({ stack: true }),
