@@ -140,6 +140,10 @@ export default {
 							: ' This node is Asleep, so you should wake it up first.'
 					}`,
 					'info',
+					{
+						confirmText: 'Yes',
+						cancelText: 'No',
+					},
 				)
 			}
 			const response = await this.app.apiRequest('getAssociations', [
