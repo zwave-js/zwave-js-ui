@@ -1,5 +1,23 @@
 
 
+# [9.30.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.29.1...v9.30.0) (2025-01-27)
+
+
+### Bug Fixes
+
+* **logger:** standardize module name formatting to uppercase ([dfa47a9](https://github.com/zwave-js/zwave-js-ui/commit/dfa47a949101fe23c79aff9e0b02faaad11592aa))
+* store nodes preferences in `nodes.json` using homeHex ([#4104](https://github.com/zwave-js/zwave-js-ui/issues/4104)) ([e913f10](https://github.com/zwave-js/zwave-js-ui/commit/e913f10b0c1cb008de22148a07a5763e8633defa))
+* **ui:** abort link reliability check on dialog close ([54224d2](https://github.com/zwave-js/zwave-js-ui/commit/54224d21a080ed19d3a6c214d95db23f2a86e3fb)), closes [#4105](https://github.com/zwave-js/zwave-js-ui/issues/4105)
+* **ui:** cleaner popup text when refreshing associations ([abe7137](https://github.com/zwave-js/zwave-js-ui/commit/abe71370a31c31635144dff0b2731eea649842e6)), closes [#4100](https://github.com/zwave-js/zwave-js-ui/issues/4100)
+* **ui:** move rebuild routes back to general actions ([c5d9691](https://github.com/zwave-js/zwave-js-ui/commit/c5d96914ebf2aafed52f675288b7ee15693647d9)), closes [#3559](https://github.com/zwave-js/zwave-js-ui/issues/3559)
+* use `uncaughtException` to catch missing exceptions ([4905e0c](https://github.com/zwave-js/zwave-js-ui/commit/4905e0c2c64f8c7c60bf456cbae611ff16f99200)), closes [#4098](https://github.com/zwave-js/zwave-js-ui/issues/4098)
+
+
+### Features
+
+* bump @kvaster/zwavejs-prom plugin to 0.0.3 ([c373290](https://github.com/zwave-js/zwave-js-ui/commit/c373290a949122624307debe189d935af9de1acd)), closes [#4096](https://github.com/zwave-js/zwave-js-ui/issues/4096)
+* **mqtt-discovery:** gateway values setting to enable by default Configuration CC entities ([#4106](https://github.com/zwave-js/zwave-js-ui/issues/4106)) ([81ebd61](https://github.com/zwave-js/zwave-js-ui/commit/81ebd61d6204f707f4628512b05dfe953e0796ed))
+
 ## [9.29.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.29.0...v9.29.1) (2025-01-16)
 
 
