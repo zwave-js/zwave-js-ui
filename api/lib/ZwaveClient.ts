@@ -2510,7 +2510,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			const nodes = jsonStore.get(store.nodes)
 
-			nodes[this.homeHex] = this.storeNodes
+			// remove empty objects keys
+			nodes[this.homeHex] = Object.keys(this.storeNodes).reduce(
+				(acc, k) => {
+					if (Object.keys(this.storeNodes[k]).length > 0) {
+						acc[k] = this.storeNodes[k]
+					}
+					return acc
+				},
+				{},
+			)
 
 			logger.debug('Updating store nodes.json')
 			await jsonStore.put(store.nodes, nodes)
