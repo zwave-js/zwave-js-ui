@@ -164,6 +164,7 @@ export type GatewayValue = {
 	receiveFunction?: string
 	qos?: 0 | 1 | 2
 	retain?: boolean
+	ccConfigEnableDiscovery?: boolean
 }
 
 export type ScheduledJob = {
@@ -1753,6 +1754,13 @@ export default class Gateway {
 						default:
 							return
 					}
+
+					// by default configuration CC discovery entities are disabled
+					// them can be enabled by setting ccConfigEnableDiscovery to true
+					// on gateway values configuration
+					cfg.discovery_payload.enabled_by_default =
+						!!valueConf?.ccConfigEnableDiscovery
+
 					break
 				}
 				default:
