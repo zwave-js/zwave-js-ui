@@ -2466,7 +2466,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ------------NODES MANAGEMENT-----------------------------------
 
-	getStoreNodes() {
+	async getStoreNodes() {
 		if (!this.homeHex) {
 			throw new Error('HomeHex not set')
 		}
@@ -2488,15 +2488,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			nodes = storeNodes
 		}
 
-		// ensure store nodes are stored using homeHex
 		const keys = Object.keys(nodes)
 
+		// ensure store nodes are stored using homeHex
 		if (keys.length > 0 && !keys[0].startsWith('0x')) {
-			nodes[this.homeHex] = nodes
-			this.updateStoreNodes(false).catch(() => {})
+			this.storeNodes = nodes
+			await jsonStore.put(store.nodes, {
+				[this.homeHex]: nodes,
+			})
+		} else {
+			this.storeNodes = nodes[this.homeHex] || {}
 		}
-
-		this.storeNodes = nodes[this.homeHex] || {}
 	}
 
 	async updateStoreNodes(throwError = true) {
@@ -4430,6 +4432,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// reset retries
 		this.backoffRetry = 0
 
+		this.driverInfo.homeid = this._driver.controller.homeId
+		const homeHex = '0x' + this.driverInfo?.homeid?.toString(16)
+		this.driverInfo.name = homeHex
+		this.driverInfo.controllerId = this._driver.controller.ownNodeId
+
+		// needs home hex to be set
+		await this.getStoreNodes()
+
 		for (const [, node] of this._driver.controller.nodes) {
 			// node added will not be triggered if the node is in cache
 			this._createNode(node.id)
@@ -4441,15 +4451,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		this.driverInfo.homeid = this._driver.controller.homeId
-		const homeHex = '0x' + this.driverInfo?.homeid?.toString(16)
-		this.driverInfo.name = homeHex
-		this.driverInfo.controllerId = this._driver.controller.ownNodeId
-
 		this.emit('event', EventSource.DRIVER, 'driver ready', this.driverInfo)
-
-		// needs home hex to be set
-		this.getStoreNodes()
 
 		this._error = undefined
 
