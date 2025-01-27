@@ -1598,7 +1598,7 @@ async function gracefuShutdown() {
 	return process.exit()
 }
 
-process.on('unhandledRejection', (reason) => {
+process.on('uncaughtException', (reason) => {
 	const stack = (reason as any).stack || ''
 	logger.error(
 		// eslint-disable-next-line @typescript-eslint/no-base-to-string
