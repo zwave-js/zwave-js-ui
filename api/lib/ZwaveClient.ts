@@ -812,23 +812,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.scenes = jsonStore.get(store.scenes)
 
 		this._nodes = new Map()
-		this.storeNodes = jsonStore.get(store.nodes)
-
-		// convert store nodes from array to object
-		if (Array.isArray(this.storeNodes)) {
-			const storeNodes = {}
-
-			for (let i = 0; i < this.storeNodes.length; i++) {
-				if (this.storeNodes[i]) {
-					storeNodes[i] = this.storeNodes[i]
-				}
-			}
-
-			this.storeNodes = storeNodes
-
-			// eslint-disable-next-line @typescript-eslint/no-floating-promises
-			this.updateStoreNodes(false)
-		}
 
 		this._devices = {}
 		this.driverInfo = {}
@@ -2483,10 +2466,52 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	// ------------NODES MANAGEMENT-----------------------------------
 
+	getStoreNodes() {
+		if (!this.homeHex) {
+			throw new Error('HomeHex not set')
+		}
+
+		let nodes = jsonStore.get(store.nodes)
+
+		// back compatibility fixes
+
+		// convert store nodes from array to object
+		if (Array.isArray(nodes)) {
+			const storeNodes = {}
+
+			for (let i = 0; i < nodes.length; i++) {
+				if (nodes[i]) {
+					storeNodes[i] = nodes[i]
+				}
+			}
+
+			nodes = storeNodes
+		}
+
+		// ensure store nodes are stored using homeHex
+		const keys = Object.keys(nodes)
+
+		if (keys.length > 0 && !keys[0].startsWith('0x')) {
+			nodes[this.homeHex] = nodes
+			this.updateStoreNodes(false).catch(() => {})
+		}
+
+		this.storeNodes = nodes[this.homeHex] || {}
+	}
+
 	async updateStoreNodes(throwError = true) {
 		try {
+			if (!this.homeHex) {
+				logger.warn('HomeHex not set, skipping storeDevices')
+				return
+			}
+
+			const nodes = jsonStore.get(store.nodes)
+
+			nodes[this.homeHex] = this.storeNodes
+
 			logger.debug('Updating store nodes.json')
-			await jsonStore.put(store.nodes, this.storeNodes)
+			await jsonStore.put(store.nodes, nodes)
 		} catch (error) {
 			logger.error(
 				`Error while updating store nodes: ${error.message}`,
@@ -4422,6 +4447,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.driverInfo.controllerId = this._driver.controller.ownNodeId
 
 		this.emit('event', EventSource.DRIVER, 'driver ready', this.driverInfo)
+
+		// needs home hex to be set
+		this.getStoreNodes()
 
 		this._error = undefined
 
