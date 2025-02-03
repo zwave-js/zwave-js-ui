@@ -159,11 +159,13 @@ export default {
 		filteredNodes() {
 			return this.node.protocol === Protocols.ZWaveLongRange
 				? [this.controllerNode]
-				: this.nodes.filter(
-						(n) =>
-							n.id !== this.node.id &&
-							n.protocol !== Protocols.ZWaveLongRange,
-					)
+				: this.nodes
+						.filter(
+							(n) =>
+								n.id !== this.node.id &&
+								n.protocol !== Protocols.ZWaveLongRange,
+						)
+						.sort((a, b) => a._name.localeCompare(b._name))
 		},
 		endpoints() {
 			return this.getEndpointItems(this.node)
