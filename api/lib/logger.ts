@@ -248,7 +248,7 @@ export function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 	if (settings.maxFiles !== undefined) {
 		const matches = settings.maxFiles.toString().match(/(\d+)([dhm])/)
 
-		if (settings.maxFiles) {
+		if (matches) {
 			const value = parseInt(matches[1])
 			const unit = matches[2]
 			switch (unit) {
