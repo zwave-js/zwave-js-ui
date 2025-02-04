@@ -154,7 +154,18 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:[`item.timestamp`]="{ item }">
-								{{ getTimestamp(item.timestamp) }}
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on }">
+										<span v-on="on">{{
+											getTimestamp(item.timestamp)
+										}}</span>
+									</template>
+									<span>{{
+										new Date(
+											item.timestamp,
+										).toLocaleDateString()
+									}}</span>
+								</v-tooltip>
 							</template>
 
 							<template v-slot:[`item.channel`]="{ item }">
