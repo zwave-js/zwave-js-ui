@@ -645,6 +645,8 @@ export default {
 			}
 
 			try {
+				// sanitize search function, convert assignment to comparison
+				search = search.replace(/([^=])=([^=])/g, '$1==$2')
 				const fn = new Function(
 					'frame, homeId, ch, src, dest, protocolDataRate, hop, dir, repeaters',
 					`return ${search.replace(/\\/g, '\\\\')}`,
