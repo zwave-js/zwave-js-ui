@@ -47,7 +47,7 @@
 						outlined
 						text
 						:disabled="schedule.numSlots <= items.length"
-						color="green"
+						color="success"
 						@click="editSlot()"
 						class="mb-2"
 						>Add</v-btn
@@ -66,7 +66,7 @@
 				</template>
 
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="red" @click="removeSlot(item.slot)"
+					<v-icon small color="error" @click="removeSlot(item.slot)"
 						>delete</v-icon
 					>
 					<v-icon small color="success" @click="editSlot(item.slot)"

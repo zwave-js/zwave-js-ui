@@ -60,7 +60,7 @@
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
-														color="green accent-4"
+														color="success"
 														small
 														>add_circle</v-icon
 													>
@@ -97,9 +97,7 @@
 										>
 											<template v-slot:label>
 												<div class="option">
-													<v-icon
-														color="red accent-4"
-														small
+													<v-icon color="error" small
 														>remove_circle</v-icon
 													>
 													<strong>Exclusion</strong>
@@ -219,7 +217,7 @@
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
-														color="green accent-4"
+														color="success"
 														small
 														>add_circle</v-icon
 													>
@@ -392,7 +390,7 @@
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
-														color="green accent-4"
+														color="success"
 														small
 														>enhanced_encryption</v-icon
 													>
