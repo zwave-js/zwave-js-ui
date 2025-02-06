@@ -499,7 +499,6 @@ export interface ZUIScheduleConfig<T> {
 }
 
 export type ZUINode = {
-	dsk: string
 	id: number
 	deviceConfig?: DeviceConfig
 	manufacturerId?: number
@@ -573,6 +572,7 @@ export type ZUINode = {
 	defaultVolume?: number
 	protocol?: Protocols
 	supportsLongRange?: boolean
+	dsk?: string
 }
 
 export type NodeEvent = {
