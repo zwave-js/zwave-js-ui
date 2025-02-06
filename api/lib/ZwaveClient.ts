@@ -499,6 +499,7 @@ export interface ZUIScheduleConfig<T> {
 }
 
 export type ZUINode = {
+	dsk: string
 	id: number
 	deviceConfig?: DeviceConfig
 	manufacturerId?: number
@@ -6138,6 +6139,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
 
 		node.protocol = zwaveNode.protocol
+		node.dsk = dskToString(zwaveNode.dsk)
 		const storedNode = this.storeNodes[nodeId]
 
 		if (storedNode) {
