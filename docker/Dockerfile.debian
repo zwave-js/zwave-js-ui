@@ -60,7 +60,7 @@ RUN apt-get update && apt-get install -y \
 # Copy files from the previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
-ENV TAG_NAME=${image_name}
+ENV TAG_NAME=${image}
 
 ENV NODE_ENV=production
 
