@@ -1118,11 +1118,11 @@ app.post(
 			let shouldRestartGw = false
 			let shouldRestartZniffer = false
 
+			const actualSettings = jsonStore.get(store.settings) as Settings
+
 			// TODO: validate settings using calss-validator
 			// when settings is null consider a force restart
 			if (settings && Object.keys(settings).length > 0) {
-				const actualSettings = jsonStore.get(store.settings) as Settings
-
 				shouldRestartGw = !utils.deepEqual(
 					{
 						zwave: actualSettings.zwave,
@@ -1147,7 +1147,7 @@ app.post(
 				await jsonStore.put(store.settings, settings)
 			} else {
 				restartAll = true
-				settings = jsonStore.get(store.settings) as Settings
+				settings = actualSettings
 			}
 
 			if (restartAll || shouldRestartGw) {
