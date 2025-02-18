@@ -1112,36 +1112,47 @@ app.post(
 					'Gateway is restarting, wait a moment before doing another request',
 				)
 			}
+			let settings = req.body
+
+			let restartAll = false
+			let shouldRestartGw = false
+			let shouldRestartZniffer = false
+
 			// TODO: validate settings using calss-validator
-			const settings = req.body
+			// when settings is null consider a force restart
+			if (settings && Object.keys(settings).length > 0) {
+				const actualSettings = jsonStore.get(store.settings) as Settings
 
-			const actualSettings = jsonStore.get(store.settings) as Settings
+				shouldRestartGw = !utils.deepEqual(
+					{
+						zwave: actualSettings.zwave,
+						gateway: actualSettings.gateway,
+						mqtt: actualSettings.mqtt,
+					},
+					{
+						zwave: settings.zwave,
+						gateway: settings.gateway,
+						mqtt: settings.mqtt,
+					},
+				)
 
-			const shouldRestartGw = !utils.deepEqual(
-				{
-					zwave: actualSettings.zwave,
-					gateway: actualSettings.gateway,
-					mqtt: actualSettings.mqtt,
-				},
-				{
-					zwave: settings.zwave,
-					gateway: settings.gateway,
-					mqtt: settings.mqtt,
-				},
-			)
+				shouldRestartZniffer = !utils.deepEqual(
+					actualSettings.zniffer,
+					settings.zniffer,
+				)
 
-			const shouldRestartZniffer = !utils.deepEqual(
-				actualSettings.zniffer,
-				settings.zniffer,
-			)
+				// nothing changed, consider it a forced restart
+				restartAll = !shouldRestartGw && !shouldRestartZniffer
 
-			// nothing changed, consider it a forced restart
-			const restartAll = !shouldRestartGw && !shouldRestartZniffer
-
-			restarting = true
-			await jsonStore.put(store.settings, settings)
+				await jsonStore.put(store.settings, settings)
+			} else {
+				restartAll = true
+				settings = jsonStore.get(store.settings) as Settings
+			}
 
 			if (restartAll || shouldRestartGw) {
+				restarting = true
+
 				await gw.close()
 
 				await destroyPlugins()
@@ -1165,6 +1176,7 @@ app.post(
 				data: settings,
 			})
 		} catch (error) {
+			restarting = false
 			logger.error(error)
 			res.json({ success: false, message: error.message })
 		}
