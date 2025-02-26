@@ -2698,6 +2698,8 @@ export default {
 	mounted() {
 		// hide socket status indicator from toolbar
 		this.$emit('updateStatus')
+		// get config is also called in app.vue
+		this.resetConfig()
 		this.getConfig()
 	},
 }

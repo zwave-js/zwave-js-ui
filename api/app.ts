@@ -1112,36 +1112,47 @@ app.post(
 					'Gateway is restarting, wait a moment before doing another request',
 				)
 			}
-			// TODO: validate settings using calss-validator
-			const settings = req.body
+			let settings = req.body
+
+			let restartAll = false
+			let shouldRestartGw = false
+			let shouldRestartZniffer = false
 
 			const actualSettings = jsonStore.get(store.settings) as Settings
 
-			const shouldRestartGw = !utils.deepEqual(
-				{
-					zwave: actualSettings.zwave,
-					gateway: actualSettings.gateway,
-					mqtt: actualSettings.mqtt,
-				},
-				{
-					zwave: settings.zwave,
-					gateway: settings.gateway,
-					mqtt: settings.mqtt,
-				},
-			)
+			// TODO: validate settings using calss-validator
+			// when settings is null consider a force restart
+			if (settings && Object.keys(settings).length > 0) {
+				shouldRestartGw = !utils.deepEqual(
+					{
+						zwave: actualSettings.zwave,
+						gateway: actualSettings.gateway,
+						mqtt: actualSettings.mqtt,
+					},
+					{
+						zwave: settings.zwave,
+						gateway: settings.gateway,
+						mqtt: settings.mqtt,
+					},
+				)
 
-			const shouldRestartZniffer = !utils.deepEqual(
-				actualSettings.zniffer,
-				settings.zniffer,
-			)
+				shouldRestartZniffer = !utils.deepEqual(
+					actualSettings.zniffer,
+					settings.zniffer,
+				)
 
-			// nothing changed, consider it a forced restart
-			const restartAll = !shouldRestartGw && !shouldRestartZniffer
+				// nothing changed, consider it a forced restart
+				restartAll = !shouldRestartGw && !shouldRestartZniffer
 
-			restarting = true
-			await jsonStore.put(store.settings, settings)
+				await jsonStore.put(store.settings, settings)
+			} else {
+				restartAll = true
+				settings = actualSettings
+			}
 
 			if (restartAll || shouldRestartGw) {
+				restarting = true
+
 				await gw.close()
 
 				await destroyPlugins()
@@ -1165,6 +1176,7 @@ app.post(
 				data: settings,
 			})
 		} catch (error) {
+			restarting = false
 			logger.error(error)
 			res.json({ success: false, message: error.message })
 		}

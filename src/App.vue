@@ -98,7 +98,7 @@
 									? 'rgb(244, 67, 54)'
 									: '',
 							}"
-							class="controller-status text-truncate"
+							class="px-1 controller-status text-truncate"
 						>
 							{{ appInfo.controllerStatus.status }}
 						</div>
@@ -199,7 +199,10 @@
 					</template>
 				</v-tooltip>
 
+				<!-- Topbar collapsable menu items -->
+
 				<span v-if="auth">
+					<!-- Show more button on smaller screens -->
 					<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
 						<template v-slot:activator="{ on }">
 							<v-btn small v-on="on" icon>
@@ -223,6 +226,7 @@
 						</v-list>
 					</v-menu>
 
+					<!-- Menu items -->
 					<span v-else class="text-no-wrap">
 						<v-menu
 							v-for="item in menu"
@@ -591,7 +595,7 @@ export default {
 		},
 	},
 	watch: {
-		$route: function (value) {
+		$route(value) {
 			this.title = value.name || ''
 			this.startSocket()
 		},
@@ -654,6 +658,11 @@ export default {
 					icon: 'lock',
 					func: this.showPasswordDialog,
 					tooltip: 'Password',
+				},
+				{
+					icon: 'refresh',
+					func: this.restart,
+					tooltip: 'Restart',
 				},
 				{
 					icon: 'logout',
@@ -819,7 +828,7 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
-		showSnackbar: function (text, color, timeout) {
+		showSnackbar(text, color, timeout) {
 			const message = {
 				message: text,
 				color: color || 'info',
@@ -883,7 +892,7 @@ export default {
 				}
 			})
 		},
-		updateStatus: function (status, color) {
+		updateStatus(status, color) {
 			this.status = status
 			this.statusColor = color
 		},
@@ -916,10 +925,10 @@ export default {
 				)
 			}
 		},
-		importFile: function (ext) {
+		importFile(ext) {
 			const self = this
 			// Check for the various File API support.
-			return new Promise(function (resolve, reject) {
+			return new Promise((resolve, reject) => {
 				if (
 					window.File &&
 					window.FileReader &&
@@ -928,7 +937,7 @@ export default {
 				) {
 					const input = document.createElement('input')
 					input.type = 'file'
-					input.addEventListener('change', function (event) {
+					input.addEventListener('change', (event) => {
 						const files = event.target.files
 
 						if (files && files.length > 0) {
@@ -937,7 +946,7 @@ export default {
 
 							reader.addEventListener(
 								'load',
-								function (fileReaderEvent) {
+								(fileReaderEvent) => {
 									let err
 									let data = fileReaderEvent.target.result
 
@@ -976,7 +985,7 @@ export default {
 				}
 			})
 		},
-		exportConfiguration: function (data, fileName, ext) {
+		exportConfiguration(data, fileName, ext) {
 			ext = ext || 'json'
 			const textMime = ['json', 'jsonl', 'txt', 'log', 'js', 'ts']
 			const contentType = textMime.includes(ext)
@@ -998,6 +1007,29 @@ export default {
 			a.download = fileName + '.' + (ext || 'json')
 			a.target = '_self'
 			a.click()
+		},
+		async restart() {
+			const result = await this.confirm(
+				'Restart',
+				'Are you sure you want to restart the ZUI?',
+				'warning',
+				{
+					width: 400,
+				},
+			)
+
+			if (result) {
+				try {
+					const data = await ConfigApis.updateConfig(false)
+
+					this.showSnackbar(
+						data.message,
+						data.success ? 'success' : 'error',
+					)
+				} catch (error) {
+					log.error(error)
+				}
+			}
 		},
 		async getConfig() {
 			try {
