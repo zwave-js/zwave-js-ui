@@ -188,7 +188,7 @@
 				</div>
 			</template>
 			<template v-slot:[`item.actions`]="{ item }">
-				<v-icon small color="red" @click="removeItem(item)"
+				<v-icon small color="error" @click="removeItem(item)"
 					>delete</v-icon
 				>
 				<v-icon small color="success" @click="editItem(item)"
@@ -205,7 +205,7 @@
 			class="mb-7"
 		>
 			<template v-slot:activator>
-				<v-btn v-model="fab" color="blue darken-3" dark fab>
+				<v-btn v-model="fab" color="primary" dark fab>
 					<v-icon v-if="fab"> close </v-icon>
 					<v-icon v-else> menu </v-icon>
 				</v-btn>
@@ -265,7 +265,7 @@
 						dark
 						small
 						@click="importList"
-						color="red"
+						color="error"
 						v-bind="attrs"
 						v-on="on"
 					>
