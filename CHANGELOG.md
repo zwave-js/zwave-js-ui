@@ -1,5 +1,23 @@
 
 
+# [9.31.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.1...v9.31.0) (2025-02-27)
+
+
+### Bug Fixes
+
+* **logger:** ensure maxFiles validation checks for valid format ([3d36c39](https://github.com/zwave-js/zwave-js-ui/commit/3d36c3915c814121376bb99c1d7bf43d1e062f69))
+* **ui:** pressing save on settings on initial load could lead to clear actual settings ([65d1362](https://github.com/zwave-js/zwave-js-ui/commit/65d136259ba6da688873e262e531b60bb56e7745)), closes [#4128](https://github.com/zwave-js/zwave-js-ui/issues/4128)
+* **ui:** sanitize search function to convert assignment to comparison in zniffer ([6a9b851](https://github.com/zwave-js/zwave-js-ui/commit/6a9b851ded4e22d437cc25d11260ecb6f5e52583)), closes [#4117](https://github.com/zwave-js/zwave-js-ui/issues/4117)
+* **ui:** sort filtered nodes by name ([ca07b5d](https://github.com/zwave-js/zwave-js-ui/commit/ca07b5d3b9bd7cfcd757261547c2421b960a59b2)), closes [#4114](https://github.com/zwave-js/zwave-js-ui/issues/4114)
+
+
+### Features
+
+* add restart button on topbar ([#4132](https://github.com/zwave-js/zwave-js-ui/issues/4132)) ([d5af88d](https://github.com/zwave-js/zwave-js-ui/commit/d5af88d3e4940fe8eddf07ee5200a3d2890933cd))
+* bump zwave-js@14.3.10 ([#4135](https://github.com/zwave-js/zwave-js-ui/issues/4135)) ([a208bac](https://github.com/zwave-js/zwave-js-ui/commit/a208bac5e0e4da44e396b0feccb5d9d147bb975d))
+* bump zwave-js@14.3.9 ([#4131](https://github.com/zwave-js/zwave-js-ui/issues/4131)) ([831172a](https://github.com/zwave-js/zwave-js-ui/commit/831172a17d1b725625d7bc4b443f3ff88170eb1d))
+* **ui:** show full date when hovering timestamp on zniffer ([#4118](https://github.com/zwave-js/zwave-js-ui/issues/4118)) ([4ebbbf8](https://github.com/zwave-js/zwave-js-ui/commit/4ebbbf8d99604aa7163aec674eecbf19ff9a4f13))
+
 ## [9.30.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.0...v9.30.1) (2025-01-28)
 
 
