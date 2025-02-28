@@ -16,13 +16,13 @@ import {
 	ZWaveDataRate,
 	ZWaveErrorCodes,
 	Protocols,
-	createDefaultTransportFormat,
 	FirmwareFileFormat,
 	tryUnzipFirmwareFile,
-	extractFirmwareAsync,
+	extractFirmware,
 } from '@zwave-js/core'
+import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { isDocker } from '@zwave-js/shared'
+import { isDocker } from './utils'
 import {
 	AssociationAddress,
 	AssociationGroup,
@@ -3897,7 +3897,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			try {
 				const format = guessFirmwareFileFormat(file.name, file.data)
-				firmware = await extractFirmwareAsync(file.data, format)
+				firmware = await extractFirmware(file.data, format)
 			} catch (err) {
 				throw Error(
 					`Unable to extract firmware from file '${file.name}'`,
@@ -3960,10 +3960,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							format = guessFirmwareFileFormat(name, data)
 						}
 
-						const firmware = await extractFirmwareAsync(
-							data,
-							format,
-						)
+						const firmware = await extractFirmware(data, format)
 						if (f.target !== undefined) {
 							firmware.firmwareTarget = f.target
 						}

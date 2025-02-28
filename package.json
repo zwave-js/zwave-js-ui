@@ -66,7 +66,7 @@
     "@kvaster/zwavejs-prom": "^0.0.3",
     "@mdi/js": "7.4.47",
     "@zwave-js/log-transport-json": "^3.0.0",
-    "@zwave-js/server": "^1.40.2",
+    "@zwave-js/server": "zwave-js/zwave-js-server#v15",
     "ansi_up": "^6.0.2",
     "archiver": "^7.0.1",
     "axios": "^1.7.2",
@@ -179,10 +179,12 @@
     "vue-template-compiler": "^2.7.16"
   },
   "overrides": {
-    "rollup": "npm:@rollup/wasm-node"
+    "rollup": "npm:@rollup/wasm-node",
+    "@zwave-js/core": "15.0.0-beta.0",
+    "@zwave-js/shared": "15.0.0-beta.0"
   },
   "engines": {
-    "node": ">= 18.12"
+    "node": ">= 20"
   },
   "pkg": {
     "scripts": [
