@@ -108,6 +108,7 @@ import {
 	ProvisioningEntryStatus,
 	AssociationCheckResult,
 	LinkReliabilityCheckResult,
+	DriverMode,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -465,7 +466,7 @@ export interface BackgroundRSSIPoint {
 
 export interface FwFile {
 	name: string
-	data: Buffer | Uint8Array
+	data: Uint8Array
 	target?: number
 }
 
@@ -2137,7 +2138,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// extend options with hidden `options`
 		const zwaveOptions: PartialZWaveOptions = {
-			allowBootloaderOnly: this.cfg.allowBootloaderOnly || false,
+			bootloaderMode: this.cfg.allowBootloaderOnly ? 'allow' : 'recover',
 			storage: {
 				cacheDir: storeDir,
 				deviceConfigPriorityDir:
@@ -2981,7 +2982,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (strategy === InclusionStrategy.Security_S2) {
 				let inclusionOptions: ReplaceNodeOptions
 				if (options?.qrString) {
-					const parsedQr = parseQRCodeString(options.qrString)
+					const parsedQr = await parseQRCodeString(options.qrString)
 
 					if (parsedQr) {
 						// when replacing a failed node you cannot use smart start so always use qrcode for provisioning
@@ -3206,7 +3207,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						break
 					case InclusionStrategy.Security_S2:
 						if (options?.qrString) {
-							const parsedQr = parseQRCodeString(options.qrString)
+							const parsedQr = await parseQRCodeString(
+								options.qrString,
+							)
 							if (!parsedQr) {
 								throw Error(`Invalid QR code string`)
 							}
@@ -3216,7 +3219,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 							} else if (
 								parsedQr.version === QRCodeVersion.SmartStart
 							) {
-								this.provisionSmartStartNode(parsedQr)
+								await this.provisionSmartStartNode(parsedQr)
 								return true
 							} else {
 								throw Error(`Invalid QR code version`)
@@ -3939,7 +3942,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			for (const f of files) {
 				let { data, name } = f
-				if (data instanceof Buffer) {
+				if (isUint8Array(data)) {
 					try {
 						let format: FirmwareFileFormat
 						if (name.endsWith('.zip')) {
@@ -4143,7 +4146,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		logger.log('info', 'Calling api %s with args: %o', apiName, args)
 
-		if (this.driverReady || this.driver?.isInBootloader()) {
+		if (this.driverReady || this.driver?.mode === DriverMode.Bootloader) {
 			try {
 				const allowed =
 					typeof this[apiName] === 'function' &&
@@ -5007,7 +5010,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(`Backup NVM progress: ${progress}%`)
 	}
 
-	async restoreNVM(data: Buffer, useRaw = false) {
+	async restoreNVM(data: Uint8Array, useRaw = false) {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
@@ -5093,12 +5096,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.driver.controller.unprovisionSmartStartNode(dskOrNodeId)
 	}
 
-	parseQRCodeString(qrString: string): {
+	async parseQRCodeString(qrString: string): Promise<{
 		parsed?: QRProvisioningInformation
 		nodeId?: number
 		exists: boolean
-	} {
-		const parsed = parseQRCodeString(qrString)
+	}> {
+		const parsed = await parseQRCodeString(qrString)
 		let node: ZWaveNode | undefined
 		let exists = false
 
@@ -5117,14 +5120,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	provisionSmartStartNode(entry: PlannedProvisioningEntry | string) {
+	async provisionSmartStartNode(entry: PlannedProvisioningEntry | string) {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}
 
 		if (typeof entry === 'string') {
 			// it's a qrcode
-			entry = parseQRCodeString(entry)
+			entry = await parseQRCodeString(entry)
 		}
 
 		if (!entry.dsk) {
@@ -5719,10 +5722,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		} else if (ccId === CommandClasses['Entry Control']) {
 			valueId.property = args.eventType.toString()
 			valueId.propertyKey = args.dataType
-			data =
-				args.eventData instanceof Buffer
-					? utils.buffer2hex(args.eventData)
-					: args.eventData
+			data = isUint8Array(args.eventData)
+				? utils.buffer2hex(args.eventData)
+				: args.eventData
 		} else if (ccId === CommandClasses['Multilevel Switch']) {
 			valueId.property = getEnumMemberName(
 				MultilevelSwitchCommand,
