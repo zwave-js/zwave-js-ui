@@ -26,9 +26,9 @@ import { isDocker } from './utils'
 import {
 	AssociationAddress,
 	AssociationGroup,
-	ControllerFirmwareUpdateProgress,
-	ControllerFirmwareUpdateResult,
-	ControllerFirmwareUpdateStatus,
+	OTWFirmwareUpdateProgress,
+	OTWFirmwareUpdateResult,
+	OTWFirmwareUpdateStatus,
 	ControllerStatistics,
 	ControllerStatus,
 	DataRate,
@@ -2276,6 +2276,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'bootloader ready',
 				this._onBootLoaderReady.bind(this),
 			)
+			this._driver.on(
+				'firmware update progress',
+				this._onOTWFirmwareUpdateProgress.bind(this),
+			)
+			this._driver.on(
+				'firmware update finished',
+				this._onOTWFirmwareUpdateFinished.bind(this),
+			)
 
 			logger.info(`Connecting to ${this.cfg.port}`)
 
@@ -3885,9 +3893,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to trigger an update of controller FW
 	 */
-	async firmwareUpdateOTW(
-		file: FwFile,
-	): Promise<ControllerFirmwareUpdateResult> {
+	async firmwareUpdateOTW(file: FwFile): Promise<OTWFirmwareUpdateResult> {
 		try {
 			if (backupManager.backupOnEvent) {
 				this.nvmEvent = 'before_controller_fw_update_otw'
@@ -3903,9 +3909,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					`Unable to extract firmware from file '${file.name}'`,
 				)
 			}
-			const result = await this.driver.controller.firmwareUpdateOTW(
-				firmware.data,
-			)
+			const result = await this.driver.firmwareUpdateOTW(firmware.data)
 			return result
 		} catch (e) {
 			throw Error(`Error while updating firmware: ${e.message}`)
@@ -4419,14 +4423,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						this._onControllerStatisticsUpdated.bind(this),
 					)
 					.on(
-						'firmware update progress',
-						this._onControllerFirmwareUpdateProgress.bind(this),
-					)
-					.on(
-						'firmware update finished',
-						this._onControllerFirmwareUpdateFinished.bind(this),
-					)
-					.on(
 						'status changed',
 						this._onControllerStatusChanged.bind(this),
 					)
@@ -4503,9 +4499,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
-	private _onControllerFirmwareUpdateProgress(
-		progress: ControllerFirmwareUpdateProgress,
-	) {
+	private _onOTWFirmwareUpdateProgress(progress: OTWFirmwareUpdateProgress) {
 		const nodeId = this.driver.controller.ownNodeId
 		const node = this.nodes.get(nodeId)
 		if (node) {
@@ -4519,7 +4513,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// send at most 4msg per second
 			this.throttle(
-				this._onControllerFirmwareUpdateProgress.name,
+				this._onOTWFirmwareUpdateProgress.name,
 				this.emitNodeUpdate.bind(this, node, {
 					firmwareUpdate: node.firmwareUpdate,
 				} as utils.DeepPartial<ZUINode>),
@@ -4536,9 +4530,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
-	private _onControllerFirmwareUpdateFinished(
-		result: ControllerFirmwareUpdateResult,
-	) {
+	private _onOTWFirmwareUpdateFinished(result: OTWFirmwareUpdateResult) {
 		const nodeId = this.driver.controller.ownNodeId
 		const node = this.nodes.get(nodeId)
 		const zwaveNode = this.driver.controller.nodes.get(nodeId)
@@ -4551,7 +4543,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				firmwareUpdateResult: {
 					success: result.success,
 					status: getEnumMemberName(
-						ControllerFirmwareUpdateStatus,
+						OTWFirmwareUpdateStatus,
 						result.status,
 					),
 				},
@@ -4562,7 +4554,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			`Controller ${zwaveNode.id} firmware update OTW finished ${
 				result.success ? 'successfully' : 'with error'
 			}.\n   Status: ${getEnumMemberName(
-				ControllerFirmwareUpdateStatus,
+				OTWFirmwareUpdateStatus,
 				result.status,
 			)}. Result: ${JSON.stringify(result)}.`,
 		)
@@ -6753,8 +6745,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				let api: 'firmwareUpdateOTW' | 'firmwareUpdateOTA'
 				if (this.nodes.get(nodeId).isControllerNode) {
 					api = 'firmwareUpdateOTW'
-					this._onControllerFirmwareUpdateFinished({
-						status: ControllerFirmwareUpdateStatus.OK,
+					this._onOTWFirmwareUpdateFinished({
+						status: OTWFirmwareUpdateStatus.OK,
 						success: true,
 					})
 				} else {
@@ -6798,7 +6790,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					.catch(() => {
 						//noop
 					})
-				this._onControllerFirmwareUpdateProgress({
+				this._onOTWFirmwareUpdateProgress({
 					sentFragments: progress.sentFragments,
 					totalFragments: progress.totalFragments,
 					progress: progress.progress,
