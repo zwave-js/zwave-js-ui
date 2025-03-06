@@ -87,7 +87,7 @@ export function customFormat(noColor = false): winston.Logform.Format {
 
 	// must be added at last
 	formats.push(
-		printf((info) => {
+		printf((info: any) => {
 			if (!noColor) {
 				info.timestamp = colorizer.colorize('time', info.timestamp)
 				info.module = colorizer.colorize('module', info.module)
