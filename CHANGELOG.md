@@ -1,5 +1,13 @@
 
 
+# [9.32.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.31.0...v9.32.0) (2025-03-10)
+
+
+### Features
+
+* bump zwave-js@14.3.11 ([#4141](https://github.com/zwave-js/zwave-js-ui/issues/4141)) ([ce645d9](https://github.com/zwave-js/zwave-js-ui/commit/ce645d9dc7cacc1c9bbd62e66b4ad057677cc501))
+* support changing max. LR powerlevel ([#4140](https://github.com/zwave-js/zwave-js-ui/issues/4140)) ([a95cc51](https://github.com/zwave-js/zwave-js-ui/commit/a95cc519c25a05ea721a4a8f8a097a513298150a))
+
 # [9.31.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.1...v9.31.0) (2025-02-27)
 
 
