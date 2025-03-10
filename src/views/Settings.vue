@@ -2045,7 +2045,7 @@
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
-import { wait, copy, isUndef, deepEqual } from '../lib/utils'
+import { wait, copy, isUndef, safeDeepEqual } from '../lib/utils'
 import { rfRegions, znifferRegions } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
@@ -2097,12 +2097,12 @@ export default {
 			},
 		},
 		settingsChanged() {
-			if (!deepEqual(this.newMqtt, this.mqtt)) return true
-			if (!deepEqual(this.newGateway, this.gateway)) return true
-			if (!deepEqual(this.newZwave, this.zwave)) return true
-			if (!deepEqual(this.newBackup, this.backup)) return true
-			if (!deepEqual(this.newZniffer, this.zniffer)) return true
-			if (!deepEqual(this.ui, this.prevUi)) return true
+			if (!safeDeepEqual(this.newMqtt, this.mqtt)) return true
+			if (!safeDeepEqual(this.newGateway, this.gateway)) return true
+			if (!safeDeepEqual(this.newZwave, this.zwave)) return true
+			if (!safeDeepEqual(this.newBackup, this.backup)) return true
+			if (!safeDeepEqual(this.newZniffer, this.zniffer)) return true
+			if (!safeDeepEqual(this.ui, this.prevUi)) return true
 
 			return false
 		},
