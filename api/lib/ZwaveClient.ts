@@ -175,6 +175,7 @@ export const allowedApis = validateMethods([
 	'pollValue',
 	'setPowerlevel',
 	'setRFRegion',
+	'setMaxLRPowerLevel',
 	'updateControllerNodeProps',
 	'startInclusion',
 	'startExclusion',
@@ -531,6 +532,7 @@ export type ZUINode = {
 	isControllerNode?: boolean
 	powerlevel?: number
 	measured0dBm?: number
+	maxLongRangePowerlevel?: number
 	RFRegion?: RFRegion
 	rfRegions?: { text: string; value: number }[]
 	isFrequentListening?: FLiRS
@@ -621,6 +623,7 @@ export type ZwaveConfig = {
 	disableControllerRecovery?: boolean
 	rf?: {
 		region?: RFRegion
+		maxLongRangePowerlevel?: number
 		txPower?: {
 			powerlevel: number
 			measured0dBm: number
@@ -2187,12 +2190,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this.cfg.rf) {
-			const { region, txPower } = this.cfg.rf
+			const { region, txPower, maxLongRangePowerlevel } = this.cfg.rf
 
 			zwaveOptions.rf = {}
 
 			if (typeof region === 'number') {
 				zwaveOptions.rf.region = region
+			}
+
+			if (typeof maxLongRangePowerlevel === 'number') {
+				zwaveOptions.rf.maxLongRangePowerlevel = maxLongRangePowerlevel
 			}
 
 			if (
@@ -3138,6 +3145,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async setRFRegion(region: RFRegion): Promise<boolean> {
 		if (this.driverReady) {
 			const result = await this._driver.controller.setRFRegion(region)
+			await this.updateControllerNodeProps(null, ['RFRegion'])
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	async setMaxLRPowerLevel(powerlevel: number): Promise<boolean> {
+		if (this.driverReady) {
+			const result =
+				await this._driver.controller.setMaxLongRangePowerlevel(
+					powerlevel,
+				)
 			await this.updateControllerNodeProps(null, ['RFRegion'])
 			return result
 		}
@@ -6189,7 +6209,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	async updateControllerNodeProps(
 		node?: ZUINode,
-		props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion'],
+		props: Array<'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'> = [
+			'powerlevel',
+			'RFRegion',
+			'maxLongRangePowerlevel',
+		],
 	) {
 		node = node || this.nodes.get(this._driver.controller.ownNodeId)
 		if (props.includes('powerlevel')) {
@@ -6228,11 +6252,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
+		if (props.includes('maxLongRangePowerlevel')) {
+			if (
+				this._driver.controller.isSerialAPISetupCommandSupported(
+					SerialAPISetupCommand.GetLongRangeMaximumTxPower,
+				)
+			) {
+				const limit =
+					await this._driver.controller.getMaxLongRangePowerlevel()
+				node.maxLongRangePowerlevel = limit
+			} else {
+				logger.info('LR powerlevel is not supported by controller')
+			}
+		}
+
 		this.emitNodeUpdate(node, {
 			powerlevel: node.powerlevel,
 			measured0dBm: node.measured0dBm,
 			RFRegion: node.RFRegion,
 			supportsLongRange: node.supportsLongRange,
+			maxLongRangePowerlevel: node.maxLongRangePowerlevel,
 		})
 	}
 
