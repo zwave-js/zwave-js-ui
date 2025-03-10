@@ -750,6 +750,11 @@ function setupSocket(server: HttpServer) {
 					case 'setFrequency':
 						res = await zniffer.setFrequency(data.frequency)
 						break
+					case 'setLRChannelConfig':
+						res = await zniffer.setLRChannelConfig(
+							data.channelConfig,
+						)
+						break
 					case 'saveCaptureToFile':
 						res = await zniffer.saveCaptureToFile()
 						break
