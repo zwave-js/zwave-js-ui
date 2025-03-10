@@ -14,7 +14,7 @@ import { socketEvents } from './SocketEvents'
 import { ZwaveConfig } from './ZwaveClient'
 import { logsDir, storeDir } from '../config/app'
 import { buffer2hex, joinPath, parseSecurityKeys } from './utils'
-import { isDocker } from '@zwave-js/shared'
+import { isDocker } from './utils'
 import { basename } from 'path'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -186,7 +186,15 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return {
 			error: this.error,
 			started: this.started,
+			supportedFrequencies: Object.fromEntries(
+				this.zniffer?.supportedFrequencies ?? [],
+			),
 			frequency: this.zniffer?.currentFrequency,
+			lrRegions: Array.from(this.zniffer?.lrRegions ?? []),
+			supportedLRChannelConfigs: Object.fromEntries(
+				this.zniffer?.supportedLRChannelConfigs ?? [],
+			),
+			lrChannelConfig: this.zniffer?.currentLRChannelConfig,
 		}
 	}
 
@@ -211,6 +219,19 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		this.onStateChange()
 
 		logger.info(`Zniffer frequency set to ${frequency}`)
+	}
+
+	public async setLRChannelConfig(channelConfig: number) {
+		this.checkReady()
+
+		logger.info(
+			`Setting Zniffer LR channel configuration to ${channelConfig}`,
+		)
+		await this.zniffer.setLRChannelConfig(channelConfig)
+
+		this.onStateChange()
+
+		logger.info(`Zniffer LR channel configuration set to ${channelConfig}`)
 	}
 
 	private ccToLogRecord(commandClass: CommandClass): Record<string, any> {
