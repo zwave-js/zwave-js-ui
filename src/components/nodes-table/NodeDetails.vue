@@ -337,7 +337,7 @@
 											<v-btn
 												width="60px"
 												@click.stop="configurationGet()"
-												color="green"
+												color="success"
 												x-small
 												dark
 											>
