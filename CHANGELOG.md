@@ -1,5 +1,13 @@
 
 
+# [9.33.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.32.0...v9.33.0) (2025-03-12)
+
+
+### Features
+
+* bump @zwave-js/server to 1.40.3 ([28c7b40](https://github.com/zwave-js/zwave-js-ui/commit/28c7b402024da145e2990bc105065d3fed37add5))
+* bump zwave-js@14.3.12 ([#4143](https://github.com/zwave-js/zwave-js-ui/issues/4143)) ([abdc4d1](https://github.com/zwave-js/zwave-js-ui/commit/abdc4d11f2afa0f93becf9b77e7894ca47de1cb1))
+
 # [9.32.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.31.0...v9.32.0) (2025-03-10)
 
 
