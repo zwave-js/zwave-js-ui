@@ -1,5 +1,13 @@
 
 
+## [9.33.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.0...v9.33.1) (2025-03-18)
+
+
+### Bug Fixes
+
+* add type annotation for info parameter in customFormat logger ([24aca53](https://github.com/zwave-js/zwave-js-ui/commit/24aca5374d710663eb649f972efb58db9469aa49))
+* explicitly add @zwave-js/core and @zwave-js/shared deps ([7522c29](https://github.com/zwave-js/zwave-js-ui/commit/7522c293b38f35d906ec69e07b91509f113183c2)), closes [#4145](https://github.com/zwave-js/zwave-js-ui/issues/4145)
+
 # [9.33.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.32.0...v9.33.0) (2025-03-12)
 
 
