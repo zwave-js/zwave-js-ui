@@ -1,5 +1,12 @@
 
 
+## [10.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.1...v10.0.2) (2025-03-19)
+
+
+### Bug Fixes
+
+* update Dockerfile to use Node.js 20 and streamline Alpine base image ([#4154](https://github.com/zwave-js/zwave-js-ui/issues/4154)) ([caf9f14](https://github.com/zwave-js/zwave-js-ui/commit/caf9f14d5d2fb7d76ecbb90491e2054e3e0b3de7))
+
 ## [10.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.0...v10.0.1) (2025-03-19)
 
 
