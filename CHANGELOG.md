@@ -1,5 +1,7 @@
 
 
+# [10.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.1...v10.0.0) (2025-03-19)
+
 ## [9.33.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.0...v9.33.1) (2025-03-18)
 
 
