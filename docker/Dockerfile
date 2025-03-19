@@ -4,7 +4,7 @@ ARG ALPINE_VERSION=3.18.4
 
 FROM node:${NODE_VERSION}-alpine AS node
 
-FROM alpine:${ALPINE_VERSION} as base
+FROM alpine:${ALPINE_VERSION} AS base
 
 RUN apk add --no-cache \
     openssl \
@@ -76,7 +76,7 @@ FROM base AS runtime
 # Copy files from previous build stage
 COPY --from=build-zui /usr/src/app /usr/src/app
 
-ENV TAG_NAME=${image_name}
+ENV TAG_NAME=${image}
 
 ENV NODE_ENV=production
 
