@@ -65,10 +65,8 @@
     "@jamescoyle/vue-icon": "^0.1.2",
     "@kvaster/zwavejs-prom": "^0.0.3",
     "@mdi/js": "7.4.47",
-    "@zwave-js/core": "^14.3.9",
     "@zwave-js/log-transport-json": "^3.0.0",
-    "@zwave-js/server": "^1.40.3",
-    "@zwave-js/shared": "^14.3.7",
+    "@zwave-js/server": "^3.0.0",
     "ansi_up": "^6.0.2",
     "archiver": "^7.0.1",
     "axios": "^1.7.2",
@@ -114,7 +112,7 @@
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^14.3.12",
+    "zwave-js": "^15.0.1",
     "zxing-wasm": "^1.2.15"
   },
   "devDependencies": {
@@ -184,7 +182,7 @@
     "rollup": "npm:@rollup/wasm-node"
   },
   "engines": {
-    "node": ">= 18.12"
+    "node": ">= 20"
   },
   "pkg": {
     "scripts": [
