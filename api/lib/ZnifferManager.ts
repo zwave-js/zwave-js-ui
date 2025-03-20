@@ -14,7 +14,7 @@ import { socketEvents } from './SocketEvents'
 import { ZwaveConfig } from './ZwaveClient'
 import { logsDir, storeDir } from '../config/app'
 import { buffer2hex, joinPath, parseSecurityKeys } from './utils'
-import { isDocker } from '@zwave-js/shared'
+import { isDocker } from './utils'
 import { basename } from 'path'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires

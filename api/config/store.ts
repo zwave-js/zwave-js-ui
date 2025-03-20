@@ -36,7 +36,7 @@ const store: Record<StoreKeys, StoreFile> = {
 		},
 	},
 	scenes: { file: 'scenes.json', default: [] },
-	nodes: { file: 'nodes.json', default: [] },
+	nodes: { file: 'nodes.json', default: {} },
 	users: { file: 'users.json', default: [] },
 }
 

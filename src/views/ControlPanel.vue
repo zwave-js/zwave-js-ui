@@ -198,19 +198,6 @@ export default {
 					desc: 'Export all nodes in a json file. Useful for debugging purposes',
 				},
 				{
-					text: 'Rebuild Routes',
-					options: [
-						{
-							name: 'Begin',
-							action: 'beginRebuildingRoutes',
-						},
-						{ name: 'Stop', action: 'stopRebuildingRoutes' },
-					],
-					icon: 'healing',
-					color: 'warning',
-					desc: 'Force nodes to establish new connections to the controller',
-				},
-				{
 					text: 'Re-interview Nodes',
 					options: [
 						{
@@ -224,6 +211,19 @@ export default {
 					icon: 'history',
 					color: 'warning',
 					desc: 'Clear all info about all nodes and make a new full interview. Use when nodes has wrong or missing capabilities',
+				},
+				{
+					text: 'Rebuild Routes',
+					options: [
+						{
+							name: 'Begin',
+							action: 'beginRebuildingRoutes',
+						},
+						{ name: 'Stop', action: 'stopRebuildingRoutes' },
+					],
+					icon: 'healing',
+					color: 'warning',
+					desc: 'Force nodes to establish new connections to the controller',
 				},
 				{
 					text: 'Hard Reset',
@@ -281,22 +281,6 @@ export default {
 					],
 					icon: 'code',
 					desc: 'Write a custom JS function using the ZwaveJS Driver',
-				},
-				{
-					text: 'Rebuild Node Routes',
-					options: [
-						{
-							name: 'Rebuild',
-							action: 'rebuildNodeRoutes',
-							args: {
-								confirm:
-									'Rebuilding routes of a specific node. This action causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
-							},
-						},
-					],
-					icon: 'healing',
-					color: 'warning',
-					desc: 'Discover and assign new routes between a specific node to the controller and his neighbors',
 				},
 				{
 					text: 'NVM Management',
@@ -375,6 +359,22 @@ export default {
 					],
 					icon: 'cached',
 					desc: 'Update all CC values and metadata. Use only when many values seems stale',
+				},
+				{
+					text: 'Rebuild Node Routes',
+					options: [
+						{
+							name: 'Rebuild',
+							action: 'rebuildNodeRoutes',
+							args: {
+								confirm:
+									'Rebuilding routes of a specific node. This action causes a lot of traffic, can take minutes up to hours and you can expect degraded performance while it is going on',
+							},
+						},
+					],
+					icon: 'healing',
+					color: 'warning',
+					desc: 'Discover and assign new routes between a specific node to the controller and his neighbors',
 				},
 				{
 					text: 'Ping',

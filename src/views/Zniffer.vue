@@ -154,7 +154,18 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:[`item.timestamp`]="{ item }">
-								{{ getTimestamp(item.timestamp) }}
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on }">
+										<span v-on="on">{{
+											getTimestamp(item.timestamp)
+										}}</span>
+									</template>
+									<span>{{
+										new Date(
+											item.timestamp,
+										).toLocaleDateString()
+									}}</span>
+								</v-tooltip>
 							</template>
 
 							<template v-slot:[`item.channel`]="{ item }">
@@ -645,6 +656,8 @@ export default {
 			}
 
 			try {
+				// sanitize search function, convert assignment to comparison
+				search = search.replace(/([^=])=([^=])/g, '$1==$2')
 				const fn = new Function(
 					'frame, homeId, ch, src, dest, protocolDataRate, hop, dir, repeaters',
 					`return ${search.replace(/\\/g, '\\\\')}`,

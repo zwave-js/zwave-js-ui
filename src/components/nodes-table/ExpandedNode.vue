@@ -415,20 +415,7 @@ export default {
 		},
 		advancedActions() {
 			const nodeActions = this.node.isControllerNode
-				? [
-						{
-							text: 'Firmware update OTW',
-							options: [
-								{
-									name: 'Update',
-									action: 'firmwareUpdateOTW',
-								},
-							],
-							icon: 'update',
-							color: 'red',
-							desc: 'Perform a firmware update OTW (Over The Wire)',
-						},
-					]
+				? []
 				: [
 						{
 							text: 'Firmware update',
@@ -475,6 +462,10 @@ export default {
 							text: 'Failed Nodes',
 							options: [
 								{ name: 'Remove', action: 'removeFailedNode' },
+								{
+									name: 'Replace',
+									action: 'replaceFailedNode',
+								},
 							],
 							icon: 'dangerous',
 							desc: 'Manage nodes that are dead and/or marked as failed with the controller',

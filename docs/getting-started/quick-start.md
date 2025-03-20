@@ -62,4 +62,4 @@ A [complete](usage/setup.md) guide to the settings is available. At minimum, you
 
 Like described in [this](https://www.youtube.com/watch?v=tHqZhNcFEvA) video USB sticks directly connected to USB ports can cause interference and so affecting the communication with the Z-Wave devices. To avoid this, it is recommended to use a USB extension cable to move the stick away from the computer.
 
-For a full list of thrubleshooting tips, check [here](troubleshooting/troubleshooting.md)
+For a full list of troubleshooting tips, check [here](troubleshooting/troubleshooting.md)

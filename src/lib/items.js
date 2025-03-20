@@ -6,12 +6,10 @@ export const rfRegions = Object.keys(RFRegion)
 	.map((key) => ({
 		text: key,
 		value: RFRegion[key],
+		disabled:
+			RFRegion[key] === RFRegion.Unknown ||
+			RFRegion[key] === RFRegion['Default (EU)'],
 	}))
-	.filter(
-		(region) =>
-			region.value !== RFRegion.Unknown &&
-			region.value !== RFRegion['Default (EU)'],
-	)
 	.sort((a, b) => a.text.localeCompare(b.text))
 
 export const znifferRegions = Object.keys(ZnifferRegion)
@@ -19,6 +17,9 @@ export const znifferRegions = Object.keys(ZnifferRegion)
 	.map((key) => ({
 		text: key,
 		value: ZnifferRegion[key],
+		disabled:
+			RFRegion[key] === RFRegion.Unknown ||
+			RFRegion[key] === RFRegion['Default (EU)'],
 	}))
 	.sort((a, b) => a.text.localeCompare(b.text))
 
@@ -30,5 +31,16 @@ export const protocolsItems = [
 	{
 		text: 'Z-Wave Long Range',
 		value: Protocols.ZWaveLongRange,
+	},
+]
+
+export const maxLRPowerLevels = [
+	{
+		text: '+14 dBm',
+		value: 14,
+	},
+	{
+		text: '+20 dBm',
+		value: 20,
 	},
 ]

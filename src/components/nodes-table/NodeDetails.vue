@@ -36,6 +36,34 @@
 			>
 
 			<v-row>
+				<v-col cols="12" style="max-width: 300px">
+					<v-select
+						label="RF Region"
+						:items="node.rfRegions"
+						v-model="node.RFRegion"
+					>
+						<template v-slot:append-outer>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="updateControllerNodeProp('RFRegion')"
+							>
+								<v-icon>refresh</v-icon>
+							</v-btn>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="updateRFRegion"
+							>
+								<v-icon>send</v-icon>
+							</v-btn>
+						</template>
+					</v-select>
+				</v-col>
+			</v-row>
+			<v-row>
 				<v-col cols="12" sm="6" style="max-width: 300px">
 					<v-text-field
 						label="Normal Power Level"
@@ -78,22 +106,24 @@
 						</template>
 					</v-text-field>
 				</v-col>
-				<v-col
-					v-if="node.RFRegion !== undefined"
-					cols="12"
-					style="max-width: 300px"
-				>
+			</v-row>
+			<v-row v-if="node.supportsLongRange">
+				<v-col cols="12" style="max-width: 300px">
 					<v-select
-						label="RF Region"
-						:items="node.rfRegions"
-						v-model="node.RFRegion"
+						label="Maximum LR Power Level"
+						:items="maxLRPowerLevels"
+						v-model="node.maxLongRangePowerlevel"
 					>
 						<template v-slot:append-outer>
 							<v-btn
 								color="primary"
 								small
 								icon
-								@click="updateControllerNodeProp('RFRegion')"
+								@click="
+									updateControllerNodeProp(
+										'maxLongRangePowerlevel',
+									)
+								"
 							>
 								<v-icon>refresh</v-icon>
 							</v-btn>
@@ -101,7 +131,7 @@
 								color="primary"
 								small
 								icon
-								@click="updateRFRegion"
+								@click="updateMaxLRPowerLevel"
 							>
 								<v-icon>send</v-icon>
 							</v-btn>
@@ -345,6 +375,7 @@
 <script>
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
+import { maxLRPowerLevels } from '../../lib/items'
 import { ConfigValueFormat } from '@zwave-js/core/safe'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
@@ -364,6 +395,7 @@ export default {
 			locError: null,
 			nameError: null,
 			options: {},
+			maxLRPowerLevels,
 			newName: this.node.name,
 			newLoc: this.node.loc,
 			configCCValueFormats: [
@@ -613,6 +645,22 @@ export default {
 
 				if (response.success) {
 					this.showSnackbar('RF Region updated', 'success')
+				}
+			}
+		},
+		async updateMaxLRPowerLevel() {
+			if (this.node) {
+				const args = [this.node.maxLongRangePowerlevel]
+				const response = await this.app.apiRequest(
+					'setMaxLRPowerLevel',
+					args,
+				)
+
+				if (response.success) {
+					this.showSnackbar(
+						'Maximum LR power level updated',
+						'success',
+					)
 				}
 			}
 		},

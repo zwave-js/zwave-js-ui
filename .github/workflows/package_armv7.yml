@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x] # NB: when pkg-fetch bumps binaries, this must be updated
+        node-version: [20.x] # NB: when pkg-fetch bumps binaries, this must be updated
     steps:
       - uses: actions/checkout@v4
 
@@ -36,7 +36,7 @@ jobs:
           dockerRunArgs: |
             --volume "${PWD}:/app"
 
-          base_image: '--platform=linux/arm/v7 arm32v7/node:18-bookworm'
+          base_image: '--platform=linux/arm/v7 arm32v7/node:20-bookworm'
 
           # Rebuild .node modules for amv7
           run: |
@@ -45,13 +45,13 @@ jobs:
 
       - name: Build for armv7
         run: |
-          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node18/built-v18.19.1-linux-armv7 -LOJ
-          export PKG_NODE_PATH=$(pwd)/built-v18.19.1-linux-armv7
+          curl https://github.com/yao-pkg/pkg-binaries/releases/download/node20/built-v20.11.0-linux-armv7 -LOJ
+          export PKG_NODE_PATH=$(pwd)/built-v20.11.0-linux-armv7
           npm run pkg -- --bundle --skip-build --arch=armv7
 
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pkg-build
           path: ./build/pkg/*.zip
