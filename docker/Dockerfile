@@ -29,8 +29,7 @@ RUN \
         jq \
         build-base \
         linux-headers \
-        python3-dev \
-        npm=10.9.1-r0
+        python3-dev
 
 COPY . .
 
