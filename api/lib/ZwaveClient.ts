@@ -128,6 +128,7 @@ import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
 import { isUint8Array } from 'util/types'
+import { PkgFsBindings } from './PkgFsBindings'
 
 export const deviceConfigPriorityDir = storeDir + '/config'
 
@@ -2210,6 +2211,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			) {
 				zwaveOptions.rf.txPower = txPower
 			}
+		}
+
+		// @ts-expect-error this is defined when running in a pkg bundle
+		if (process.pkg) {
+			// Ensure Z-Wave JS is looking for the configuration files in the right place
+			// when running inside a pkg bundle
+			zwaveOptions.host ??= {}
+			zwaveOptions.host.fs = new PkgFsBindings()
 		}
 
 		// ensure deviceConfigPriorityDir exists to prevent warnings #2374
