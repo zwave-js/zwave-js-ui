@@ -197,7 +197,7 @@
       "node_modules/@serialport/**",
       "node_modules/@zwave-js/serial/node_modules/@serialport/**",
       "node_modules/zwave-js/node_modules/@serialport/**",
-      "node_modules/@zwave-js/config/**"
+      "node_modules/@zwave-js/config/config/**"
     ]
   },
   "release-it": {
