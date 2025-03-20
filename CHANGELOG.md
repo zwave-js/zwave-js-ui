@@ -1,5 +1,12 @@
 
 
+## [10.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.2...v10.0.3) (2025-03-20)
+
+
+### Bug Fixes
+
+* config sync inside `pkg` binaries ([#4159](https://github.com/zwave-js/zwave-js-ui/issues/4159)) ([3ca34f6](https://github.com/zwave-js/zwave-js-ui/commit/3ca34f60778b1054e0cfcf27201b2a9c09ba9710))
+
 ## [10.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.1...v10.0.2) (2025-03-19)
 
 
