@@ -1,5 +1,13 @@
 
 
+# [10.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.3...v10.1.0) (2025-03-21)
+
+
+### Features
+
+* bump zwave-js@15.0.2 to fix enum `Indicator` not defined in `pkg` bundle ([#4163](https://github.com/zwave-js/zwave-js-ui/issues/4163)) ([0ff07e0](https://github.com/zwave-js/zwave-js-ui/commit/0ff07e0ad6c8f0ff1b0149b2c121a158a1448bfb))
+* support changing Zniffer LR channel config, dynamically populate frequency list ([#4139](https://github.com/zwave-js/zwave-js-ui/issues/4139)) ([58d03ed](https://github.com/zwave-js/zwave-js-ui/commit/58d03ed84c5fd5aeb4b49b2f9e1c82e59fb62542))
+
 ## [10.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.2...v10.0.3) (2025-03-20)
 
 
