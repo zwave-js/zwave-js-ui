@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x]
 
     steps:
       - name: Checkout Z-Wave JS UI
@@ -32,12 +32,12 @@ jobs:
         run: npm ci
 
       - name: Lint
-        if: matrix['node-version'] == '18.x'
+        if: matrix['node-version'] == '20.x'
         run: npm run lint
 
       - name: Prepare lint auto-fix patch
         if: |
-          matrix['node-version'] == '18.x' &&
+          matrix['node-version'] == '20.x' &&
           failure() &&
           github.event_name == 'pull_request'
         id: lint
@@ -55,7 +55,7 @@ jobs:
           fi
       - name: Upload Patch
         if: |
-          matrix['node-version'] == '18.x' &&
+          matrix['node-version'] == '20.x' &&
           failure() &&
           github.event_name == 'pull_request' &&
           steps.lint.outputs.changed == 'true'
@@ -68,13 +68,13 @@ jobs:
         run: npm run test
 
       - name: Generate coverage report
-        if: matrix['node-version'] == '18.x'
+        if: matrix['node-version'] == '20.x'
         run: |
           npm run coverage
           npm run record-coverage
 
       - name: Coveralls
         uses: coverallsapp/github-action@master
-        if: matrix['node-version'] == '18.x'
+        if: matrix['node-version'] == '20.x'
         with:
           github-token: ${{ secrets.github_token }}

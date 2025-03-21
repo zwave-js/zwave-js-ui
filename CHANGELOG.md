@@ -1,5 +1,52 @@
 
 
+## [10.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.2...v10.0.3) (2025-03-20)
+
+
+### Bug Fixes
+
+* config sync inside `pkg` binaries ([#4159](https://github.com/zwave-js/zwave-js-ui/issues/4159)) ([3ca34f6](https://github.com/zwave-js/zwave-js-ui/commit/3ca34f60778b1054e0cfcf27201b2a9c09ba9710))
+
+## [10.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.1...v10.0.2) (2025-03-19)
+
+
+### Bug Fixes
+
+* update Dockerfile to use Node.js 20 and streamline Alpine base image ([#4154](https://github.com/zwave-js/zwave-js-ui/issues/4154)) ([caf9f14](https://github.com/zwave-js/zwave-js-ui/commit/caf9f14d5d2fb7d76ecbb90491e2054e3e0b3de7))
+
+## [10.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.0...v10.0.1) (2025-03-19)
+
+
+### Bug Fixes
+
+* drop node 18 from workflows ([#4151](https://github.com/zwave-js/zwave-js-ui/issues/4151)) ([1d848df](https://github.com/zwave-js/zwave-js-ui/commit/1d848dfa34e5f9a7165e2ead229efd7a10f494c8))
+
+# [10.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.1...v10.0.0) (2025-03-19)
+
+## [9.33.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.0...v9.33.1) (2025-03-18)
+
+
+### Bug Fixes
+
+* add type annotation for info parameter in customFormat logger ([24aca53](https://github.com/zwave-js/zwave-js-ui/commit/24aca5374d710663eb649f972efb58db9469aa49))
+* explicitly add @zwave-js/core and @zwave-js/shared deps ([7522c29](https://github.com/zwave-js/zwave-js-ui/commit/7522c293b38f35d906ec69e07b91509f113183c2)), closes [#4145](https://github.com/zwave-js/zwave-js-ui/issues/4145)
+
+# [9.33.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.32.0...v9.33.0) (2025-03-12)
+
+
+### Features
+
+* bump @zwave-js/server to 1.40.3 ([28c7b40](https://github.com/zwave-js/zwave-js-ui/commit/28c7b402024da145e2990bc105065d3fed37add5))
+* bump zwave-js@14.3.12 ([#4143](https://github.com/zwave-js/zwave-js-ui/issues/4143)) ([abdc4d1](https://github.com/zwave-js/zwave-js-ui/commit/abdc4d11f2afa0f93becf9b77e7894ca47de1cb1))
+
+# [9.32.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.31.0...v9.32.0) (2025-03-10)
+
+
+### Features
+
+* bump zwave-js@14.3.11 ([#4141](https://github.com/zwave-js/zwave-js-ui/issues/4141)) ([ce645d9](https://github.com/zwave-js/zwave-js-ui/commit/ce645d9dc7cacc1c9bbd62e66b4ad057677cc501))
+* support changing max. LR powerlevel ([#4140](https://github.com/zwave-js/zwave-js-ui/issues/4140)) ([a95cc51](https://github.com/zwave-js/zwave-js-ui/commit/a95cc519c25a05ea721a4a8f8a097a513298150a))
+
 # [9.31.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.1...v9.31.0) (2025-02-27)
 
 

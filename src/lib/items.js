@@ -40,3 +40,14 @@ export const protocolsItems = [
 		value: Protocols.ZWaveLongRange,
 	},
 ]
+
+export const maxLRPowerLevels = [
+	{
+		text: '+14 dBm',
+		value: 14,
+	},
+	{
+		text: '+20 dBm',
+		value: 20,
+	},
+]
