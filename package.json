@@ -181,9 +181,7 @@
     "vue-template-compiler": "^2.7.16"
   },
   "overrides": {
-    "rollup": "npm:@rollup/wasm-node",
-    "@zwave-js/core": "15.0.0-beta.3-pr-7665-cabc874",
-    "@zwave-js/shared": "15.0.0-beta.3-pr-7665-cabc874"
+    "rollup": "npm:@rollup/wasm-node"
   },
   "engines": {
     "node": ">= 20"
