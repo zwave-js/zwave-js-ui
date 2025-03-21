@@ -133,7 +133,11 @@ const useBaseStore = defineStore('base', {
 		znifferState: {
 			error: '',
 			started: false,
+			supportedFrequencies: {},
 			frequency: false,
+			lrRegions: [],
+			supportedLRChannelConfigs: {},
+			lrChannelConfig: false,
 		},
 		ui: {
 			darkMode: settings.load('dark', false),
