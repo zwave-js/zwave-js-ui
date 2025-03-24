@@ -1,5 +1,12 @@
 
 
+## [10.1.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.0...v10.1.1) (2025-03-24)
+
+
+### Bug Fixes
+
+* normalize paths for pkg on Windows ([#4168](https://github.com/zwave-js/zwave-js-ui/issues/4168)) ([c1d935b](https://github.com/zwave-js/zwave-js-ui/commit/c1d935bb25bad0494a936c02f1834c0b8b187629))
+
 # [10.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.3...v10.1.0) (2025-03-21)
 
 
