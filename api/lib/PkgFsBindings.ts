@@ -6,27 +6,32 @@ import path from 'node:path'
 // when running inside a `pkg` bundle. In this case, it will resolve its embedded
 // configuration dir to the path "/config", but the files reside in "node_modules/@zwave-js/config/config" instead.
 
-const CONFIG_PATH = '/config'
+const CONFIG_PATH = path.resolve('/config')
+console.log('CONFIG_PATH', CONFIG_PATH)
 const CONFIG_PATH_IN_PKG = path.join(
 	__dirname,
 	`node_modules/@zwave-js/config/config`,
 )
 
 export class PkgFsBindings implements FileSystem {
-	readFile(path: string): Promise<Uint8Array> {
-		if (path.startsWith(CONFIG_PATH)) {
-			path = path.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
+	readFile(filePath: string): Promise<Uint8Array> {
+		filePath = path.normalize(filePath)
+		if (filePath.startsWith(CONFIG_PATH)) {
+			filePath = filePath.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
 		}
-		return nodeFs.readFile(path)
+		return nodeFs.readFile(filePath)
 	}
-	writeFile(path: string, data: Uint8Array): Promise<void> {
-		if (path.startsWith(CONFIG_PATH)) {
+	writeFile(filePath: string, data: Uint8Array): Promise<void> {
+		filePath = path.normalize(filePath)
+		if (filePath.startsWith(CONFIG_PATH)) {
 			// The pkg assets are readonly
 			return
 		}
-		return nodeFs.writeFile(path, data)
+		return nodeFs.writeFile(filePath, data)
 	}
 	copyFile(source: string, dest: string): Promise<void> {
+		source = path.normalize(source)
+		dest = path.normalize(dest)
 		if (dest.startsWith(CONFIG_PATH)) {
 			// The pkg assets are readonly
 			return
@@ -37,7 +42,7 @@ export class PkgFsBindings implements FileSystem {
 		return nodeFs.copyFile(source, dest)
 	}
 	open(
-		path: string,
+		filePath: string,
 		flags: {
 			read: boolean
 			write: boolean
@@ -45,40 +50,45 @@ export class PkgFsBindings implements FileSystem {
 			truncate: boolean
 		},
 	): Promise<FileHandle> {
-		if (path.startsWith(CONFIG_PATH) && flags.write) {
+		filePath = path.normalize(filePath)
+		if (filePath.startsWith(CONFIG_PATH) && flags.write) {
 			// The pkg assets are readonly
-			throw new Error(`${path} is not writable`)
+			throw new Error(`${filePath} is not writable`)
 		}
-		if (path.startsWith(CONFIG_PATH)) {
-			path = path.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
+		if (filePath.startsWith(CONFIG_PATH)) {
+			filePath = filePath.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
 		}
-		return nodeFs.open(path, flags)
+		return nodeFs.open(filePath, flags)
 	}
-	readDir(path: string): Promise<string[]> {
-		if (path.startsWith(CONFIG_PATH)) {
-			path = path.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
+	readDir(dirPath: string): Promise<string[]> {
+		dirPath = path.normalize(dirPath)
+		if (dirPath.startsWith(CONFIG_PATH)) {
+			dirPath = dirPath.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
 		}
-		return nodeFs.readDir(path)
+		return nodeFs.readDir(dirPath)
 	}
-	stat(path: string): Promise<FSStats> {
-		if (path.startsWith(CONFIG_PATH)) {
-			path = path.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
+	stat(filePath: string): Promise<FSStats> {
+		filePath = path.normalize(filePath)
+		if (filePath.startsWith(CONFIG_PATH)) {
+			filePath = filePath.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
 		}
-		return nodeFs.stat(path)
+		return nodeFs.stat(filePath)
 	}
-	ensureDir(path: string): Promise<void> {
-		if (path.startsWith(CONFIG_PATH)) {
-			// The pkg assets are readonly
-			return
-		}
-		return nodeFs.ensureDir(path)
-	}
-	deleteDir(path: string): Promise<void> {
-		if (path.startsWith(CONFIG_PATH)) {
+	ensureDir(dirPath: string): Promise<void> {
+		dirPath = path.normalize(dirPath)
+		if (dirPath.startsWith(CONFIG_PATH)) {
 			// The pkg assets are readonly
 			return
 		}
-		return nodeFs.deleteDir(path)
+		return nodeFs.ensureDir(dirPath)
+	}
+	deleteDir(dirPath: string): Promise<void> {
+		dirPath = path.normalize(dirPath)
+		if (dirPath.startsWith(CONFIG_PATH)) {
+			// The pkg assets are readonly
+			return
+		}
+		return nodeFs.deleteDir(dirPath)
 	}
 	makeTempDir(prefix: string): Promise<string> {
 		return nodeFs.makeTempDir(prefix)
