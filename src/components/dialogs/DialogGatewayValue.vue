@@ -133,12 +133,12 @@
 								></v-text-field>
 							</v-col>
 							<v-col cols="6">
-								<v-switch
+								<v-checkbox
 									label="Poll"
 									hint="Enable poll of this value. ATTENTION: This could create lot traffic in your network and kill the life of battery powered devices. Use at your own risk"
 									persistent-hint
 									v-model="editedValue.enablePoll"
-								></v-switch>
+								></v-checkbox>
 							</v-col>
 							<v-col v-if="editedValue.enablePoll" cols="6">
 								<v-text-field
@@ -151,25 +151,31 @@
 									type="number"
 								></v-text-field>
 							</v-col>
-							<!--
-              <v-col cols="6">
-                <v-switch
-                  label="Verify changes"
-                  hint="Verify changes of this value"
-                  persistent-hint
-                  v-model="editedValue.verifyChanges"
-                ></v-switch>
-              </v-col>
 
-              -->
+							<v-col
+								cols="6"
+								v-if="
+									editedValue.value &&
+									editedValue.value.commandClass === 112
+								"
+							>
+								<v-checkbox
+									label="Enable discovery"
+									hint="Configuration CC values are disabled by default in MQTT discovery. Set this to true to force enable them"
+									persistent-hint
+									v-model="
+										editedValue.ccConfigEnableDiscovery
+									"
+								></v-checkbox>
+							</v-col>
 
 							<v-col cols="6">
-								<v-switch
+								<v-checkbox
 									label="Parse send"
 									hint="Create a function that parse the value sent via MQTT"
 									persistent-hint
 									v-model="editedValue.parseSend"
-								></v-switch>
+								></v-checkbox>
 							</v-col>
 
 							<v-container v-if="editedValue.parseSend">
@@ -189,12 +195,12 @@
 							</v-container>
 
 							<v-col cols="6">
-								<v-switch
+								<v-checkbox
 									label="Parse receive"
 									hint="Create a function that parse the received value from MQTT"
 									persistent-hint
 									v-model="editedValue.parseReceive"
-								></v-switch>
+								></v-checkbox>
 							</v-col>
 
 							<v-container v-if="editedValue.parseReceive">

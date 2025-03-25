@@ -87,7 +87,7 @@ export function customFormat(noColor = false): winston.Logform.Format {
 
 	// must be added at last
 	formats.push(
-		printf((info) => {
+		printf((info: any) => {
 			if (!noColor) {
 				info.timestamp = colorizer.colorize('time', info.timestamp)
 				info.module = colorizer.colorize('module', info.module)
@@ -248,7 +248,7 @@ export function setupCleanJob(settings: DailyRotateFileTransportOptions) {
 	if (settings.maxFiles !== undefined) {
 		const matches = settings.maxFiles.toString().match(/(\d+)([dhm])/)
 
-		if (settings.maxFiles) {
+		if (matches) {
 			const value = parseInt(matches[1])
 			const unit = matches[2]
 			switch (unit) {

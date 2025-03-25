@@ -1,6 +1,6 @@
 {
   "name": "zwave-js-ui",
-  "version": "9.29.1",
+  "version": "10.1.2",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "keywords": [
     "mqtt",
@@ -53,7 +53,9 @@
     "changelog-init": "conventional-changelog -p angular -i CHANGELOG.md -s -r 0",
     "release": "read -p 'GITHUB_TOKEN: ' GITHUB_TOKEN && export GITHUB_TOKEN=$GITHUB_TOKEN && release-it",
     "generate-pwa-assets": "npx @vite-pwa/assets-generator --preset minimal public/logo.svg",
-    "browser": "chromium-browser --user-data-dir=/tmp/zui-data --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure=https://localhost:8092 https://localhost:8092"
+    "browser": "chromium-browser --user-data-dir=/tmp/zui-data --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure=https://localhost:8092 https://localhost:8092",
+    "docker:build": "docker build -f docker/Dockerfile -t zwavejs/zwave-js-ui:latest .",
+    "docker:run": "docker run -p 8092:8092 zwavejs/zwave-js-ui:latest"
   },
   "browserslist": [
     "> 1%",
@@ -66,7 +68,7 @@
     "@kvaster/zwavejs-prom": "^0.0.3",
     "@mdi/js": "7.4.47",
     "@zwave-js/log-transport-json": "^3.0.0",
-    "@zwave-js/server": "^1.40.2",
+    "@zwave-js/server": "^3.0.0",
     "ansi_up": "^6.0.2",
     "archiver": "^7.0.1",
     "axios": "^1.7.2",
@@ -112,7 +114,7 @@
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^14.3.7",
+    "zwave-js": "^15.0.3",
     "zxing-wasm": "^1.2.15"
   },
   "devDependencies": {
@@ -148,7 +150,7 @@
     "conventional-changelog-cli": "^5.0.0",
     "docsify": "^4.13.1",
     "docsify-cli": "^4.4.4",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.25.1",
     "esbuild-register": "^3.5.0",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
@@ -182,7 +184,7 @@
     "rollup": "npm:@rollup/wasm-node"
   },
   "engines": {
-    "node": ">= 18.12"
+    "node": ">= 20"
   },
   "pkg": {
     "scripts": [
@@ -195,7 +197,7 @@
       "node_modules/@serialport/**",
       "node_modules/@zwave-js/serial/node_modules/@serialport/**",
       "node_modules/zwave-js/node_modules/@serialport/**",
-      "node_modules/@zwave-js/config/config/devices/**"
+      "node_modules/@zwave-js/config/config/**"
     ]
   },
   "release-it": {

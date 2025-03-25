@@ -2,7 +2,7 @@
 import { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
 import path, { resolve } from 'path'
 import crypto from 'crypto'
-import { readFileSync } from 'fs'
+import { readFileSync, statSync } from 'fs'
 import type { ZwaveConfig } from './ZwaveClient'
 
 // don't use import here, it will break the build
@@ -382,4 +382,30 @@ export function parseSecurityKeys(
 			)
 		}
 	}
+}
+
+function hasDockerEnv() {
+	try {
+		statSync('/.dockerenv')
+		return true
+	} catch {
+		return false
+	}
+}
+
+function hasDockerCGroup() {
+	try {
+		return readFileSync('/proc/self/cgroup', 'utf8').includes('docker')
+	} catch {
+		return false
+	}
+}
+
+let isDockerCached: boolean
+
+export function isDocker(): boolean {
+	// TODO: Use `??=` when targeting Node.js 16.
+	isDockerCached ??= hasDockerEnv() || hasDockerCGroup()
+
+	return isDockerCached
 }

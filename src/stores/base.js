@@ -32,6 +32,7 @@ const useBaseStore = defineStore('base', {
 			logLevel: 'debug',
 			rf: {
 				region: undefined,
+				maxLongRangePowerlevel: undefined,
 				txPower: {
 					powerlevel: undefined,
 					measured0dBm: undefined,
@@ -132,7 +133,11 @@ const useBaseStore = defineStore('base', {
 		znifferState: {
 			error: '',
 			started: false,
+			supportedFrequencies: {},
 			frequency: false,
+			lrRegions: [],
+			supportedLRChannelConfigs: {},
+			lrChannelConfig: false,
 		},
 		ui: {
 			darkMode: settings.load('dark', false),
