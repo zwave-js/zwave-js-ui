@@ -7,7 +7,6 @@ import path from 'node:path'
 // configuration dir to the path "/config", but the files reside in "node_modules/@zwave-js/config/config" instead.
 
 const CONFIG_PATH = path.resolve('/config')
-console.log('CONFIG_PATH', CONFIG_PATH)
 const CONFIG_PATH_IN_PKG = path.join(
 	__dirname,
 	`node_modules/@zwave-js/config/config`,
