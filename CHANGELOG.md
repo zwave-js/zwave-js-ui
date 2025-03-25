@@ -1,5 +1,17 @@
 
 
+## [10.1.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.1...v10.1.2) (2025-03-25)
+
+
+### Bug Fixes
+
+* remove leftover `console.log` statement ([#4171](https://github.com/zwave-js/zwave-js-ui/issues/4171)) ([b93c4da](https://github.com/zwave-js/zwave-js-ui/commit/b93c4da672ecf375d6fe332cfc2c1ee670ad8d2f))
+
+
+### Features
+
+* bump zwave-js@15.0.3 ([#4172](https://github.com/zwave-js/zwave-js-ui/issues/4172)) ([4f403ce](https://github.com/zwave-js/zwave-js-ui/commit/4f403ceea59d8d26dc20db9b364188cc945be238))
+
 ## [10.1.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.0...v10.1.1) (2025-03-24)
 
 
