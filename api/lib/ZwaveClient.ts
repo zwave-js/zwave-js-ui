@@ -111,7 +111,7 @@ import {
 	JoinNetworkOptions,
 	JoinNetworkStrategy,
 	JoinNetworkResult,
-	DriverMode
+	DriverMode,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
