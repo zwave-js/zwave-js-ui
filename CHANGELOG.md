@@ -1,5 +1,14 @@
 
 
+## [10.1.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.2...v10.1.3) (2025-03-27)
+
+
+### Bug Fixes
+
+* **discovery:** improve check for updating thermostats discovery ([#4176](https://github.com/zwave-js/zwave-js-ui/issues/4176)) ([a6d908d](https://github.com/zwave-js/zwave-js-ui/commit/a6d908d9a13c05009a766f65f59617993b429155))
+* **ui:** enhance help method to include min and max values ([3c64537](https://github.com/zwave-js/zwave-js-ui/commit/3c645378fa2c67807b4204692fccaf5d624e583c)), closes [#3789](https://github.com/zwave-js/zwave-js-ui/issues/3789)
+* **ui:** restart button not visible when auth is not enabled ([f89158b](https://github.com/zwave-js/zwave-js-ui/commit/f89158b87310efa63a77f19365c0481fc0557b59)), closes [#4177](https://github.com/zwave-js/zwave-js-ui/issues/4177)
+
 ## [10.1.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.1...v10.1.2) (2025-03-25)
 
 
