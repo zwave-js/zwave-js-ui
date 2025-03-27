@@ -86,6 +86,7 @@
 
 				<v-spacer></v-spacer>
 
+				<!-- Controller status -->
 				<v-tooltip
 					v-if="zwave.enabled && appInfo.controllerStatus"
 					bottom
@@ -114,10 +115,8 @@
 					</div>
 				</v-tooltip>
 
-				<v-tooltip
-					v-if="zwave.enabled && appInfo.controllerStatus"
-					bottom
-				>
+				<!-- Inlcusion state -->
+				<v-tooltip v-if="zwave.enabled && inclusionState" bottom>
 					<template v-slot:activator="{ on }">
 						<v-icon
 							class="ml-3"
@@ -132,6 +131,7 @@
 					<span>{{ inclusionState.message }}</span>
 				</v-tooltip>
 
+				<!-- Websocket status -->
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-icon
@@ -147,6 +147,7 @@
 					<span>{{ status }}</span>
 				</v-tooltip>
 
+				<!-- Info panel -->
 				<v-tooltip z-index="9999" bottom open-on-click>
 					<template v-slot:activator="{ on }">
 						<v-icon
@@ -180,6 +181,7 @@
 					</div>
 				</v-tooltip>
 
+				<!-- Update badge -->
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-badge
@@ -200,75 +202,67 @@
 				</v-tooltip>
 
 				<!-- Topbar collapsable menu items -->
+				<!-- Show more button on smaller screens -->
+				<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
+					<template v-slot:activator="{ on }">
+						<v-btn small v-on="on" icon>
+							<v-icon>more_vert</v-icon>
+						</v-btn>
+					</template>
 
-				<span v-if="auth">
-					<!-- Show more button on smaller screens -->
-					<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
+					<v-list>
+						<v-list-item
+							v-for="(item, i) in menu"
+							:key="i"
+							@click="item.func"
+						>
+							<v-list-item-action>
+								<v-icon>{{ item.icon }}</v-icon>
+							</v-list-item-action>
+							<v-list-item-title>{{
+								item.tooltip
+							}}</v-list-item-title>
+						</v-list-item>
+					</v-list>
+				</v-menu>
+
+				<!-- Menu items -->
+				<span v-else class="text-no-wrap">
+					<v-menu v-for="item in menu" :key="item.text" bottom left>
 						<template v-slot:activator="{ on }">
-							<v-btn small v-on="on" icon>
-								<v-icon>more_vert</v-icon>
+							<v-btn
+								small
+								class="mr-2"
+								v-on="on"
+								icon
+								@click="item.func"
+							>
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on }">
+										<v-icon
+											dark
+											color="primary"
+											v-on="on"
+											>{{ item.icon }}</v-icon
+										>
+									</template>
+									<span>{{ item.tooltip }}</span>
+								</v-tooltip>
 							</v-btn>
 						</template>
 
-						<v-list>
+						<v-list v-if="item.menu">
 							<v-list-item
-								v-for="(item, i) in menu"
+								v-for="(menu, i) in item.menu"
 								:key="i"
-								@click="item.func"
+								@click="menu.func"
 							>
-								<v-list-item-action>
-									<v-icon>{{ item.icon }}</v-icon>
-								</v-list-item-action>
 								<v-list-item-title>{{
-									item.tooltip
+									menu.title
 								}}</v-list-item-title>
 							</v-list-item>
 						</v-list>
 					</v-menu>
-
-					<!-- Menu items -->
-					<span v-else class="text-no-wrap">
-						<v-menu
-							v-for="item in menu"
-							:key="item.text"
-							bottom
-							left
-						>
-							<template v-slot:activator="{ on }">
-								<v-btn
-									small
-									class="mr-2"
-									v-on="on"
-									icon
-									@click="item.func"
-								>
-									<v-tooltip bottom>
-										<template v-slot:activator="{ on }">
-											<v-icon
-												dark
-												color="primary"
-												v-on="on"
-												>{{ item.icon }}</v-icon
-											>
-										</template>
-										<span>{{ item.tooltip }}</span>
-									</v-tooltip>
-								</v-btn>
-							</template>
-
-							<v-list v-if="item.menu">
-								<v-list-item
-									v-for="(menu, i) in item.menu"
-									:key="i"
-									@click="menu.func"
-								>
-									<v-list-item-title>{{
-										menu.title
-									}}</v-list-item-title>
-								</v-list-item>
-							</v-list>
-						</v-menu>
-					</span>
 				</span>
 			</v-app-bar>
 		</div>
@@ -477,6 +471,34 @@ export default {
 			darkMode: (store) => store.ui.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
+		menu() {
+			const items = [
+				{
+					icon: 'lock',
+					authOnly: true,
+					func: this.showPasswordDialog,
+					tooltip: 'Password',
+				},
+				{
+					icon: 'refresh',
+					func: this.restart,
+					tooltip: 'Restart',
+				},
+				{
+					icon: 'logout',
+					authOnly: true,
+					func: this.logout,
+					tooltip: 'Logout',
+				},
+			]
+
+			return items.filter((item) => {
+				if (item.authOnly) {
+					return this.auth
+				}
+				return true
+			})
+		},
 		skeletons() {
 			// return the skeletons array based on actual route
 			const route = this.$route.path
@@ -653,23 +675,6 @@ export default {
 			loaderIndeterminate: false,
 			password: {},
 			nodesManagerDialog: false,
-			menu: [
-				{
-					icon: 'lock',
-					func: this.showPasswordDialog,
-					tooltip: 'Password',
-				},
-				{
-					icon: 'refresh',
-					func: this.restart,
-					tooltip: 'Restart',
-				},
-				{
-					icon: 'logout',
-					func: this.logout,
-					tooltip: 'Logout',
-				},
-			],
 			status: '',
 			statusColor: '',
 			drawer: false,
