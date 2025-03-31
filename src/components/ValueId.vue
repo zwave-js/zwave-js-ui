@@ -412,12 +412,19 @@ export default {
 			return '[' + this.value.id + '] ' + this.value.label
 		},
 		help() {
-			return (
-				(this.value.description ? this.value.description + ' ' : '') +
-				(this.value.default !== undefined && !this.value.list
-					? `(Default: ${this.value.default})`
-					: '')
-			)
+			return `${this.value.description ? `${this.value.description} ` : ''}${
+				this.value.default !== undefined && !this.value.list
+					? `(Default: ${this.value.default}${
+							this.value.max !== undefined
+								? `, max: ${this.value.max}`
+								: ''
+						}${
+							this.value.min !== undefined
+								? `, min: ${this.value.min}`
+								: ''
+						})`
+					: ''
+			}`
 		},
 		color: {
 			get: function () {

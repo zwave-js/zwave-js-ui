@@ -1986,7 +1986,7 @@ export default class Gateway {
 		if (
 			this.config.hassDiscovery &&
 			changed &&
-			valueId.list &&
+			valueId.commandClass === CommandClasses['Thermostat Mode'] &&
 			this.discovered[valueId.id]
 		) {
 			const hassDevice = this.discovered[valueId.id]
