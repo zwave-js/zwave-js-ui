@@ -1,5 +1,17 @@
 
 
+## [10.1.5](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.4...v10.1.5) (2025-04-07)
+
+
+### Bug Fixes
+
+* config path resolution inside pkg on Windows ([#4190](https://github.com/zwave-js/zwave-js-ui/issues/4190)) ([8a8847a](https://github.com/zwave-js/zwave-js-ui/commit/8a8847a43c56b4a94bb39ac0b6583e2e27b06c0f))
+
+
+### Features
+
+* bump zwave-js@15.0.5 ([#4191](https://github.com/zwave-js/zwave-js-ui/issues/4191)) ([7e351fe](https://github.com/zwave-js/zwave-js-ui/commit/7e351fe0bffb58d994571486c97402a40325e9a6))
+
 ## [10.1.4](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.3...v10.1.4) (2025-04-02)
 
 
