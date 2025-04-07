@@ -129,8 +129,9 @@ import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
 import { isUint8Array } from 'util/types'
 import { PkgFsBindings } from './PkgFsBindings'
+import { join } from 'path'
 
-export const deviceConfigPriorityDir = storeDir + '/config'
+export const deviceConfigPriorityDir = join(storeDir, 'config')
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
