@@ -114,7 +114,7 @@
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^15.0.4",
+    "zwave-js": "^15.0.5",
     "zxing-wasm": "^1.2.15"
   },
   "devDependencies": {
