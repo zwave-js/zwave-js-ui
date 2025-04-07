@@ -6,7 +6,10 @@ import path from 'node:path'
 // when running inside a `pkg` bundle. In this case, it will resolve its embedded
 // configuration dir to the path "/config", but the files reside in "node_modules/@zwave-js/config/config" instead.
 
-const CONFIG_PATH = path.resolve('/config')
+// Inside a pkg bundle, the current filename/directory is always "C:\...",
+// so the config dir needs to be resolved relative to __filename, otherwise
+// it would be relative to the current working directory, which might not be on the same drive.
+const CONFIG_PATH = path.resolve(__filename, '/config')
 const CONFIG_PATH_IN_PKG = path.join(
 	__dirname,
 	`node_modules/@zwave-js/config/config`,
