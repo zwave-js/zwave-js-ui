@@ -627,41 +627,6 @@ export default {
 		pages() {
 			// this.verifyRoute()
 		},
-		controllerNode(node) {
-			if (!node) return
-
-			if (node.firmwareUpdate) {
-				if (!this.dialogLoader) {
-					this.loaderTitle = ''
-					this.loaderText =
-						'Updating controller firmware, please wait...'
-					this.dialogLoader = true
-				}
-				this.loaderProgress = node.firmwareUpdate.progress
-				this.loaderIndeterminate = this.loaderProgress === 0
-			} else if (node.firmwareUpdateResult) {
-				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
-				this.loaderProgress = -1
-				this.loaderTitle = ''
-				const result = node.firmwareUpdateResult
-
-				useBaseStore().updateNode(
-					{
-						id: node.id,
-						firmwareUpdateResult: false,
-					},
-					true,
-				)
-
-				this.loaderText = `<span style="white-space: break-spaces;" class="${
-					result.success ? 'success' : 'error'
-				}--text">Controller firmware update finished ${
-					result.success
-						? 'successfully. It may take a few seconds for the stick to restart.'
-						: 'with error'
-				}.\n Status: ${result.status}</span>`
-			}
-		},
 	},
 	data() {
 		return {
@@ -717,6 +682,31 @@ export default {
 			}
 			this.showNodesManager('')
 			this.$refs.nodesManager.onGrantSecurityCC(requested)
+		},
+		onOTWFirmwareUpdate(data) {
+			const { progress, result } = data
+			if (progress) {
+				if (!this.dialogLoader) {
+					this.loaderTitle = ''
+					this.loaderText =
+						'Updating controller firmware, please wait...'
+					this.dialogLoader = true
+				}
+				this.loaderProgress = progress.progress
+				this.loaderIndeterminate = this.loaderProgress === 0
+			} else if (result) {
+				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
+				this.loaderProgress = -1
+				this.loaderTitle = ''
+
+				this.loaderText = `<span style="white-space: break-spaces;" class="${
+					result.success ? 'success' : 'error'
+				}--text">Controller firmware update finished ${
+					result.success
+						? 'successfully. It may take a few seconds for the stick to restart.'
+						: 'with error'
+				}.\n Status: ${result.status}</span>`
+			}
 		},
 		...mapActions(useBaseStore, [
 			'init',
@@ -1238,6 +1228,11 @@ export default {
 			this.socket.on(socketEvents.znifferState, (data) => {
 				this.setZnifferState(data)
 			})
+
+			this.socket.on(
+				socketEvents.otwFirmwareUpdate,
+				this.onOTWFirmwareUpdate.bind(this),
+			)
 			// don't await this, will cause a loop of calls
 			this.getConfig()
 		},

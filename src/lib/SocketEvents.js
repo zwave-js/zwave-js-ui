@@ -22,6 +22,7 @@ export const socketEvents = Object.freeze({
 	znifferFrame: 'ZNIFFER_FRAME',
 	znifferState: 'ZNIFFER_STATE',
 	linkReliability: 'LINK_RELIABILITY',
+	otwFirmwareUpdate: 'OTW_FIRMWARE_UPDATE',
 })
 
 // events from client ---> server
