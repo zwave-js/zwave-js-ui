@@ -3177,7 +3177,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				await this._driver.controller.setMaxLongRangePowerlevel(
 					powerlevel,
 				)
-			await this.updateControllerNodeProps(null, ['RFRegion'])
+			await this.updateControllerNodeProps(null, [
+				'maxLongRangePowerlevel',
+			])
 			return result
 		}
 
