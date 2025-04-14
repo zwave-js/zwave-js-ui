@@ -129,7 +129,6 @@ Enable this to use Z-Wave JS UI as only a Control Panel
      - `endpoint`: the endpoint number (if the node has more then one endpoint)
      - `property`: the value [property](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
      - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
-     - `mqtt_name` the [sanitized](https://github.com/zwave-js/zwave-js-ui/blob/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f/api/lib/utils.ts#L193) `name` set in MQTT Settings (for interacting with zwave-js-ui)
 
   2. **Named Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
@@ -142,7 +141,6 @@ Enable this to use Z-Wave JS UI as only a Control Panel
      - `?endpoint`: Used only with multi-instance devices. Endpoints, other than the main endpoint (0), will have: `endpoint_<endpoint>`
      - `propertyName`: the value [propertyName](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
      - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
-     - `mqtt_name` the [sanitized](https://github.com/zwave-js/zwave-js-ui/blob/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f/api/lib/utils.ts#L193) `name` set in MQTT Settings (for interacting with zwave-js-ui)
 
   3. **Configured Manually**: _Needs configuration_. The topic where Z-Wave values are published will be:
 
@@ -152,7 +150,6 @@ Enable this to use Z-Wave JS UI as only a Control Panel
      - `node_location`: location of the Z-Wave Node (optional, if not present will not be added to the topic)
      - `node_name`: name of the node, if not set will be `nodeID_<node_id>`
      - `value_topic`: the topic you want to use for that value (taken from gateway values table).
-     - `mqtt_name` the [sanitized](https://github.com/zwave-js/zwave-js-ui/blob/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f/api/lib/utils.ts#L193) `name` set in MQTT Settings (for interacting with zwave-js-ui)
 
 - **Payload type**: The content of the payload when an update is published:
 
