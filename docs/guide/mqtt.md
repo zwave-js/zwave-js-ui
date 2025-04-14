@@ -2,7 +2,7 @@
 
 You have access to almost all of the [Z-Wave JS APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) via MQTT.
 
-The placeholder `<mqtt_name>` in the mqtt topic is the name configured in the MQTT settings.
+The placeholder `<mqtt_name>` in the mqtt topic is the [sanitized](https://github.com/zwave-js/zwave-js-ui/blob/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f/api/lib/utils.ts#L193)  `name` configured in the MQTT settings.
 
 ## Z-Wave Events
 
