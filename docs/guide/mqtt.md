@@ -2,6 +2,8 @@
 
 You have access to almost all of the [Z-Wave JS APIs](https://zwave-js.github.io/node-zwave-js/#/README) (and more) via MQTT.
 
+The `mqtt_name` wildcard in the topic is the [sanitized](https://github.com/zwave-js/zwave-js-ui/blob/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f/api/lib/utils.ts#L193) `name` set in the MQTT Settings
+
 ## Z-Wave Events
 
 If the **Send Z-Wave Events** flag of Gateway settings is enabled all Z-Wave JS events are published to MQTT. There are [Driver](https://zwave-js.github.io/node-zwave-js/#/api/driver?id=driver-events), [Node](https://zwave-js.github.io/node-zwave-js/#/api/node?id=zwavenode-events) and [Controller](https://zwave-js.github.io/node-zwave-js/#/api/node?id=controller-events) events
