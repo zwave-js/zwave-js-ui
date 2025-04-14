@@ -130,8 +130,6 @@ Enable this to use Z-Wave JS UI as only a Control Panel
      - `property`: the value [property](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
      - `propertyKey`: the value [propertyKey](https://zwave-js.github.io/node-zwave-js/#/api/valueid)
 
-     Note that `<mqtt_name>` will also be the numerical id of if the controller node
-
   2. **Named Topics**: _Automatically configured_. The topic where zwave values are published will be:
 
      `<mqtt_prefix>/<?node_location>/<node_name>/<class_name>/<?endpoint>/<propertyName>/<propertyKey>`
