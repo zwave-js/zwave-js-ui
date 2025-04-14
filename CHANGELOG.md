@@ -1,5 +1,17 @@
 
 
+# [10.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.5...v10.2.0) (2025-04-14)
+
+
+### Bug Fixes
+
+* refresh LR powerlevel, not region after setting LR powerlevel ([#4198](https://github.com/zwave-js/zwave-js-ui/issues/4198)) ([741878a](https://github.com/zwave-js/zwave-js-ui/commit/741878a41dfb6763b98a2dc9f2ccd98235ccdffa))
+
+
+### Features
+
+* bump zwave-js@15.0.6 ([#4201](https://github.com/zwave-js/zwave-js-ui/issues/4201)) ([9df8b19](https://github.com/zwave-js/zwave-js-ui/commit/9df8b1916a7bcc7c61fbd6a372155e6f035ccf13))
+
 ## [10.1.5](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.4...v10.1.5) (2025-04-07)
 
 
