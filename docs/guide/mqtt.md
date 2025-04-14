@@ -58,7 +58,7 @@ Payload:
 
 Example calling [startLevelChange](https://github.com/zwave-js/node-zwave-js/blob/c695ee81cb2b1d3cf15e3db1cc14b1e41a911cc0/packages/zwave-js/src/lib/commandclass/MultilevelSwitchCC.ts) command:
 
-Topic: `zwavejs/_CLIENTS/ZWAVE_GATEWAY-<yourName>/api/sendCommand/set`
+Topic: `zwavejs/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/sendCommand/set`
 
 Payload:
 
