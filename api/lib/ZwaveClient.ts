@@ -3177,7 +3177,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				await this._driver.controller.setMaxLongRangePowerlevel(
 					powerlevel,
 				)
-			await this.updateControllerNodeProps(null, ['RFRegion'])
+			await this.updateControllerNodeProps(null, [
+				'maxLongRangePowerlevel',
+			])
 			return result
 		}
 
@@ -4530,58 +4532,35 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onOTWFirmwareUpdateProgress(progress: OTWFirmwareUpdateProgress) {
-		const nodeId = this.driver.controller.ownNodeId
-		const node = this.nodes.get(nodeId)
-		if (node) {
-			node.firmwareUpdate = {
-				sentFragments: progress.sentFragments,
-				totalFragments: progress.totalFragments,
-				progress: progress.progress,
-				currentFile: node.firmwareUpdate?.currentFile ?? 1,
-				totalFiles: node.firmwareUpdate?.currentFile ?? 1,
-			}
-
-			// send at most 4msg per second
-			this.throttle(
-				this._onOTWFirmwareUpdateProgress.name,
-				this.emitNodeUpdate.bind(this, node, {
-					firmwareUpdate: node.firmwareUpdate,
-				} as utils.DeepPartial<ZUINode>),
-				250,
-			)
-		}
+		this.throttle(
+			this._onOTWFirmwareUpdateProgress.name,
+			this.sendToSocket.bind(this, socketEvents.otwFirmwareUpdate, {
+				progress,
+			}),
+			250,
+		)
 
 		this.emit(
 			'event',
-			EventSource.CONTROLLER,
+			EventSource.DRIVER,
 			'controller firmware update progress',
-			this.zwaveNodeToJSON(this.driver.controller.nodes.get(nodeId)),
 			progress,
 		)
 	}
 
 	private _onOTWFirmwareUpdateFinished(result: OTWFirmwareUpdateResult) {
-		const nodeId = this.driver.controller.ownNodeId
-		const node = this.nodes.get(nodeId)
-		const zwaveNode = this.driver.controller.nodes.get(nodeId)
-
-		if (node) {
-			node.firmwareUpdate = undefined
-
-			this.emitNodeUpdate(node, {
-				firmwareUpdate: false,
-				firmwareUpdateResult: {
-					success: result.success,
-					status: getEnumMemberName(
-						OTWFirmwareUpdateStatus,
-						result.status,
-					),
-				},
-			} as any)
-		}
+		this.sendToSocket(socketEvents.otwFirmwareUpdate, {
+			result: {
+				success: result.success,
+				status: getEnumMemberName(
+					OTWFirmwareUpdateStatus,
+					result.status,
+				),
+			},
+		})
 
 		logger.info(
-			`Controller ${zwaveNode.id} firmware update OTW finished ${
+			`Controller firmware update OTW finished ${
 				result.success ? 'successfully' : 'with error'
 			}.\n   Status: ${getEnumMemberName(
 				OTWFirmwareUpdateStatus,
@@ -4591,9 +4570,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.emit(
 			'event',
-			EventSource.CONTROLLER,
+			EventSource.DRIVER,
 			'controller firmware update finished',
-			this.zwaveNodeToJSON(zwaveNode),
 			result,
 		)
 	}

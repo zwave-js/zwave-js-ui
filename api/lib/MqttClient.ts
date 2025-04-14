@@ -529,7 +529,10 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 		// It's an action
 		if (parts[0] === MqttClient.CLIENTS_PREFIX) {
-			if (parts.length < 3) return
+			if (parts.length < 3 || parts[1] !== this._clientID) {
+				// it could be we receive a message from another Z-UI client, ignore it
+				return
+			}
 
 			const action = MqttClient.ACTIONS.indexOf(parts[2])
 
