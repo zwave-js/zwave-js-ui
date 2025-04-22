@@ -1,5 +1,17 @@
 
 
+# [10.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.2.0...v10.3.0) (2025-04-22)
+
+
+### Bug Fixes
+
+* ignore messages from non-matching Z-UI clients in MQTT handling ([0e08e3a](https://github.com/zwave-js/zwave-js-ui/commit/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f)), closes [#4196](https://github.com/zwave-js/zwave-js-ui/issues/4196)
+
+
+### Features
+
+* expose values of the controller node ([#4206](https://github.com/zwave-js/zwave-js-ui/issues/4206)) ([5fd7a94](https://github.com/zwave-js/zwave-js-ui/commit/5fd7a9425d535688d2377e0a524929df4bf34758))
+
 # [10.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.5...v10.2.0) (2025-04-14)
 
 
