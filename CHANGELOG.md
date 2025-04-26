@@ -1,5 +1,12 @@
 
 
+## [10.3.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.2...v10.3.3) (2025-04-26)
+
+
+### Features
+
+* bump zwave-js@15.1.3 ([#4212](https://github.com/zwave-js/zwave-js-ui/issues/4212)) ([9a8bd58](https://github.com/zwave-js/zwave-js-ui/commit/9a8bd581c1dc03f0ec603f7c3ca1f08b372bf582))
+
 ## [10.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.1...v10.3.2) (2025-04-26)
 
 
