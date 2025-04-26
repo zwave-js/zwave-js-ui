@@ -1,5 +1,12 @@
 
 
+## [10.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.1...v10.3.2) (2025-04-26)
+
+
+### Bug Fixes
+
+* avoid error `isAnySendDataMessage is not a function` ([#4211](https://github.com/zwave-js/zwave-js-ui/issues/4211)) ([80f87dc](https://github.com/zwave-js/zwave-js-ui/commit/80f87dc915754d60b799cff47c9d40df00c1a776))
+
 ## [10.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.0...v10.3.1) (2025-04-24)
 
 
