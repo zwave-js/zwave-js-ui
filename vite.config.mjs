@@ -53,6 +53,9 @@ export default defineConfig(({ mode }) => {
 				workbox: {
 					globIgnores: ['**/api/**'],
 				},
+				injectManifest: {
+					maximumFileSizeToCacheInBytes: 2500000,
+				},
 				manifest: {
 					name: process.env.VITE_TITLE,
 					description: process.env.VITE_TITLE,
