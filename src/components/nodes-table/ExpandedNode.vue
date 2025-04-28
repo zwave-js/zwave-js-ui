@@ -327,8 +327,8 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import {
 	SetValueStatus,
 	setValueWasUnsupervisedOrSucceeded,
-} from '@zwave-js/cc/safe'
-import { Protocols } from '@zwave-js/core/safe'
+} from '@zwave-js/cc'
+import { Protocols } from '@zwave-js/core'
 
 export default {
 	props: {

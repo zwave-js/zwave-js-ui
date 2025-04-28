@@ -10,7 +10,7 @@
 <script>
 import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
-import { isRssiError } from 'zwave-js/safe'
+import { isRssiError } from '@zwave-js/core'
 
 // eslint-disable-next-line no-unused-vars
 function touchZoomPlugin(opts) {

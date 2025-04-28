@@ -380,7 +380,7 @@
 </template>
 <script>
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js/safe'
-import { Protocols, RFRegion } from '@zwave-js/core/safe'
+import { Protocols, RFRegion } from '@zwave-js/core'
 import { socketEvents } from '@server/lib/SocketEvents'
 
 import { mapState, mapActions } from 'pinia'

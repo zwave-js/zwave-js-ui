@@ -670,7 +670,7 @@
 
 <script>
 import { mapState } from 'pinia'
-import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core'
 
 import {
 	parseSecurityClasses,

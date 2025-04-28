@@ -1,5 +1,9 @@
-import { RFRegion, Protocols } from 'zwave-js/safe'
-import { ZnifferLRChannelConfig, ZnifferRegion } from '@zwave-js/core/safe'
+import {
+	ZnifferLRChannelConfig,
+	ZnifferRegion,
+	RFRegion,
+	Protocols,
+} from '@zwave-js/core'
 
 export const rfRegions = Object.keys(RFRegion)
 	.filter((k) => isNaN(k))

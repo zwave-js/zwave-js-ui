@@ -434,12 +434,9 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@server/lib/SocketEvents'
-import {
-	getEnumMemberName,
-	SecurityBootstrapFailure,
-	FirmwareUpdateStatus,
-	InclusionState,
-} from 'zwave-js/safe'
+import { getEnumMemberName } from '@zwave-js/shared'
+import { FirmwareUpdateStatus } from '@zwave-js/cc'
+import { SecurityBootstrapFailure, InclusionState } from 'zwave-js/safe'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import { uuid } from './lib/utils'
 
