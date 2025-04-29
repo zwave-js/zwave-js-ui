@@ -379,7 +379,7 @@
 	</v-container>
 </template>
 <script>
-import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js/safe'
+import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { Protocols, RFRegion } from '@zwave-js/core'
 import { socketEvents } from '@server/lib/SocketEvents'
 

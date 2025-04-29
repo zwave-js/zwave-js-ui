@@ -8,7 +8,7 @@ import {
 import colors from 'vuetify/lib/util/colors'
 
 import { getEnumMemberName } from '@zwave-js/shared'
-import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js/safe'
+import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { znifferRegions } from './items'
 import { mdiZWave } from '@mdi/js'
 

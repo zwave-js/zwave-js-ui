@@ -679,7 +679,7 @@ import {
 	validTopic,
 } from '../../lib/utils.js'
 import useBaseStore from '../../stores/base.js'
-import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js/safe'
+import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
