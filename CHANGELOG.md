@@ -1,5 +1,177 @@
 
 
+## [10.3.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.2...v10.3.3) (2025-04-26)
+
+
+### Features
+
+* bump zwave-js@15.1.3 ([#4212](https://github.com/zwave-js/zwave-js-ui/issues/4212)) ([9a8bd58](https://github.com/zwave-js/zwave-js-ui/commit/9a8bd581c1dc03f0ec603f7c3ca1f08b372bf582))
+
+## [10.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.1...v10.3.2) (2025-04-26)
+
+
+### Bug Fixes
+
+* avoid error `isAnySendDataMessage is not a function` ([#4211](https://github.com/zwave-js/zwave-js-ui/issues/4211)) ([80f87dc](https://github.com/zwave-js/zwave-js-ui/commit/80f87dc915754d60b799cff47c9d40df00c1a776))
+
+## [10.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.0...v10.3.1) (2025-04-24)
+
+
+### Features
+
+* bump zwave-js@15.1.0 ([#4208](https://github.com/zwave-js/zwave-js-ui/issues/4208)) ([97683f2](https://github.com/zwave-js/zwave-js-ui/commit/97683f286630616ab575a3ff21cfbdbf3e2cb610))
+
+# [10.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.2.0...v10.3.0) (2025-04-22)
+
+
+### Bug Fixes
+
+* ignore messages from non-matching Z-UI clients in MQTT handling ([0e08e3a](https://github.com/zwave-js/zwave-js-ui/commit/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f)), closes [#4196](https://github.com/zwave-js/zwave-js-ui/issues/4196)
+
+
+### Features
+
+* expose values of the controller node ([#4206](https://github.com/zwave-js/zwave-js-ui/issues/4206)) ([5fd7a94](https://github.com/zwave-js/zwave-js-ui/commit/5fd7a9425d535688d2377e0a524929df4bf34758))
+
+# [10.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.5...v10.2.0) (2025-04-14)
+
+
+### Bug Fixes
+
+* refresh LR powerlevel, not region after setting LR powerlevel ([#4198](https://github.com/zwave-js/zwave-js-ui/issues/4198)) ([741878a](https://github.com/zwave-js/zwave-js-ui/commit/741878a41dfb6763b98a2dc9f2ccd98235ccdffa))
+
+
+### Features
+
+* bump zwave-js@15.0.6 ([#4201](https://github.com/zwave-js/zwave-js-ui/issues/4201)) ([9df8b19](https://github.com/zwave-js/zwave-js-ui/commit/9df8b1916a7bcc7c61fbd6a372155e6f035ccf13))
+
+## [10.1.5](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.4...v10.1.5) (2025-04-07)
+
+
+### Bug Fixes
+
+* config path resolution inside pkg on Windows ([#4190](https://github.com/zwave-js/zwave-js-ui/issues/4190)) ([8a8847a](https://github.com/zwave-js/zwave-js-ui/commit/8a8847a43c56b4a94bb39ac0b6583e2e27b06c0f))
+
+
+### Features
+
+* bump zwave-js@15.0.5 ([#4191](https://github.com/zwave-js/zwave-js-ui/issues/4191)) ([7e351fe](https://github.com/zwave-js/zwave-js-ui/commit/7e351fe0bffb58d994571486c97402a40325e9a6))
+
+## [10.1.4](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.3...v10.1.4) (2025-04-02)
+
+
+### Features
+
+* bump zwave-js@15.0.4 ([#4185](https://github.com/zwave-js/zwave-js-ui/issues/4185)) ([90faddc](https://github.com/zwave-js/zwave-js-ui/commit/90faddc2a617ff7c77f578527a1d4481604b6aa3))
+
+## [10.1.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.2...v10.1.3) (2025-03-27)
+
+
+### Bug Fixes
+
+* **discovery:** improve check for updating thermostats discovery ([#4176](https://github.com/zwave-js/zwave-js-ui/issues/4176)) ([a6d908d](https://github.com/zwave-js/zwave-js-ui/commit/a6d908d9a13c05009a766f65f59617993b429155))
+* **ui:** enhance help method to include min and max values ([3c64537](https://github.com/zwave-js/zwave-js-ui/commit/3c645378fa2c67807b4204692fccaf5d624e583c)), closes [#3789](https://github.com/zwave-js/zwave-js-ui/issues/3789)
+* **ui:** restart button not visible when auth is not enabled ([f89158b](https://github.com/zwave-js/zwave-js-ui/commit/f89158b87310efa63a77f19365c0481fc0557b59)), closes [#4177](https://github.com/zwave-js/zwave-js-ui/issues/4177)
+
+## [10.1.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.1...v10.1.2) (2025-03-25)
+
+
+### Bug Fixes
+
+* remove leftover `console.log` statement ([#4171](https://github.com/zwave-js/zwave-js-ui/issues/4171)) ([b93c4da](https://github.com/zwave-js/zwave-js-ui/commit/b93c4da672ecf375d6fe332cfc2c1ee670ad8d2f))
+
+
+### Features
+
+* bump zwave-js@15.0.3 ([#4172](https://github.com/zwave-js/zwave-js-ui/issues/4172)) ([4f403ce](https://github.com/zwave-js/zwave-js-ui/commit/4f403ceea59d8d26dc20db9b364188cc945be238))
+
+## [10.1.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.0...v10.1.1) (2025-03-24)
+
+
+### Bug Fixes
+
+* normalize paths for pkg on Windows ([#4168](https://github.com/zwave-js/zwave-js-ui/issues/4168)) ([c1d935b](https://github.com/zwave-js/zwave-js-ui/commit/c1d935bb25bad0494a936c02f1834c0b8b187629))
+
+# [10.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.3...v10.1.0) (2025-03-21)
+
+
+### Features
+
+* bump zwave-js@15.0.2 to fix enum `Indicator` not defined in `pkg` bundle ([#4163](https://github.com/zwave-js/zwave-js-ui/issues/4163)) ([0ff07e0](https://github.com/zwave-js/zwave-js-ui/commit/0ff07e0ad6c8f0ff1b0149b2c121a158a1448bfb))
+* support changing Zniffer LR channel config, dynamically populate frequency list ([#4139](https://github.com/zwave-js/zwave-js-ui/issues/4139)) ([58d03ed](https://github.com/zwave-js/zwave-js-ui/commit/58d03ed84c5fd5aeb4b49b2f9e1c82e59fb62542))
+
+## [10.0.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.2...v10.0.3) (2025-03-20)
+
+
+### Bug Fixes
+
+* config sync inside `pkg` binaries ([#4159](https://github.com/zwave-js/zwave-js-ui/issues/4159)) ([3ca34f6](https://github.com/zwave-js/zwave-js-ui/commit/3ca34f60778b1054e0cfcf27201b2a9c09ba9710))
+
+## [10.0.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.1...v10.0.2) (2025-03-19)
+
+
+### Bug Fixes
+
+* update Dockerfile to use Node.js 20 and streamline Alpine base image ([#4154](https://github.com/zwave-js/zwave-js-ui/issues/4154)) ([caf9f14](https://github.com/zwave-js/zwave-js-ui/commit/caf9f14d5d2fb7d76ecbb90491e2054e3e0b3de7))
+
+## [10.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.0.0...v10.0.1) (2025-03-19)
+
+
+### Bug Fixes
+
+* drop node 18 from workflows ([#4151](https://github.com/zwave-js/zwave-js-ui/issues/4151)) ([1d848df](https://github.com/zwave-js/zwave-js-ui/commit/1d848dfa34e5f9a7165e2ead229efd7a10f494c8))
+
+# [10.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.1...v10.0.0) (2025-03-19)
+
+## [9.33.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.33.0...v9.33.1) (2025-03-18)
+
+
+### Bug Fixes
+
+* add type annotation for info parameter in customFormat logger ([24aca53](https://github.com/zwave-js/zwave-js-ui/commit/24aca5374d710663eb649f972efb58db9469aa49))
+* explicitly add @zwave-js/core and @zwave-js/shared deps ([7522c29](https://github.com/zwave-js/zwave-js-ui/commit/7522c293b38f35d906ec69e07b91509f113183c2)), closes [#4145](https://github.com/zwave-js/zwave-js-ui/issues/4145)
+
+# [9.33.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.32.0...v9.33.0) (2025-03-12)
+
+
+### Features
+
+* bump @zwave-js/server to 1.40.3 ([28c7b40](https://github.com/zwave-js/zwave-js-ui/commit/28c7b402024da145e2990bc105065d3fed37add5))
+* bump zwave-js@14.3.12 ([#4143](https://github.com/zwave-js/zwave-js-ui/issues/4143)) ([abdc4d1](https://github.com/zwave-js/zwave-js-ui/commit/abdc4d11f2afa0f93becf9b77e7894ca47de1cb1))
+
+# [9.32.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.31.0...v9.32.0) (2025-03-10)
+
+
+### Features
+
+* bump zwave-js@14.3.11 ([#4141](https://github.com/zwave-js/zwave-js-ui/issues/4141)) ([ce645d9](https://github.com/zwave-js/zwave-js-ui/commit/ce645d9dc7cacc1c9bbd62e66b4ad057677cc501))
+* support changing max. LR powerlevel ([#4140](https://github.com/zwave-js/zwave-js-ui/issues/4140)) ([a95cc51](https://github.com/zwave-js/zwave-js-ui/commit/a95cc519c25a05ea721a4a8f8a097a513298150a))
+
+# [9.31.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.1...v9.31.0) (2025-02-27)
+
+
+### Bug Fixes
+
+* **logger:** ensure maxFiles validation checks for valid format ([3d36c39](https://github.com/zwave-js/zwave-js-ui/commit/3d36c3915c814121376bb99c1d7bf43d1e062f69))
+* **ui:** pressing save on settings on initial load could lead to clear actual settings ([65d1362](https://github.com/zwave-js/zwave-js-ui/commit/65d136259ba6da688873e262e531b60bb56e7745)), closes [#4128](https://github.com/zwave-js/zwave-js-ui/issues/4128)
+* **ui:** sanitize search function to convert assignment to comparison in zniffer ([6a9b851](https://github.com/zwave-js/zwave-js-ui/commit/6a9b851ded4e22d437cc25d11260ecb6f5e52583)), closes [#4117](https://github.com/zwave-js/zwave-js-ui/issues/4117)
+* **ui:** sort filtered nodes by name ([ca07b5d](https://github.com/zwave-js/zwave-js-ui/commit/ca07b5d3b9bd7cfcd757261547c2421b960a59b2)), closes [#4114](https://github.com/zwave-js/zwave-js-ui/issues/4114)
+
+
+### Features
+
+* add restart button on topbar ([#4132](https://github.com/zwave-js/zwave-js-ui/issues/4132)) ([d5af88d](https://github.com/zwave-js/zwave-js-ui/commit/d5af88d3e4940fe8eddf07ee5200a3d2890933cd))
+* bump zwave-js@14.3.10 ([#4135](https://github.com/zwave-js/zwave-js-ui/issues/4135)) ([a208bac](https://github.com/zwave-js/zwave-js-ui/commit/a208bac5e0e4da44e396b0feccb5d9d147bb975d))
+* bump zwave-js@14.3.9 ([#4131](https://github.com/zwave-js/zwave-js-ui/issues/4131)) ([831172a](https://github.com/zwave-js/zwave-js-ui/commit/831172a17d1b725625d7bc4b443f3ff88170eb1d))
+* **ui:** show full date when hovering timestamp on zniffer ([#4118](https://github.com/zwave-js/zwave-js-ui/issues/4118)) ([4ebbbf8](https://github.com/zwave-js/zwave-js-ui/commit/4ebbbf8d99604aa7163aec674eecbf19ff9a4f13))
+
+## [9.30.1](https://github.com/zwave-js/zwave-js-ui/compare/v9.30.0...v9.30.1) (2025-01-28)
+
+
+### Features
+
+* bump zwave-js@14.3.8 ([#4108](https://github.com/zwave-js/zwave-js-ui/issues/4108)) ([8b8837e](https://github.com/zwave-js/zwave-js-ui/commit/8b8837ecb53a932b4f923e80219799dcb69473f5))
+
 # [9.30.0](https://github.com/zwave-js/zwave-js-ui/compare/v9.29.1...v9.30.0) (2025-01-27)
 
 

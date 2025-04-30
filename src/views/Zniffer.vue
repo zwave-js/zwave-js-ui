@@ -154,7 +154,18 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:[`item.timestamp`]="{ item }">
-								{{ getTimestamp(item.timestamp) }}
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on }">
+										<span v-on="on">{{
+											getTimestamp(item.timestamp)
+										}}</span>
+									</template>
+									<span>{{
+										new Date(
+											item.timestamp,
+										).toLocaleDateString()
+									}}</span>
+								</v-tooltip>
 							</template>
 
 							<template v-slot:[`item.channel`]="{ item }">
@@ -340,6 +351,27 @@
 								</template>
 							</v-select>
 						</v-col>
+						<v-col cols="12" v-if="lrChannelConfigAvailable">
+							<v-select
+								label="LR Channel Configuration"
+								hide-details
+								:items="znifferLRChannelConfigs"
+								v-model="lrChannelConfig"
+								@change="setLRChannelConfig"
+							>
+								<template v-slot:prepend>
+									<v-icon>wifi_channel</v-icon>
+								</template>
+
+								<template v-slot:append-outer>
+									<v-icon
+										color="success"
+										v-if="lrChannelConfigSuccess"
+										>check_circle</v-icon
+									>
+								</template>
+							</v-select>
+						</v-col>
 					</v-row>
 				</v-card-text>
 			</v-card>
@@ -347,14 +379,17 @@
 	</v-container>
 </template>
 <script>
-import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js/safe'
-import { Protocols } from '@zwave-js/core/safe'
+import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
+import { Protocols, RFRegion } from '@zwave-js/core'
 import { socketEvents } from '@server/lib/SocketEvents'
 
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
-import { znifferRegions } from '../lib/items.js'
+import {
+	znifferRegions as defaultZnifferRegions,
+	znifferLRChannelConfigs as defaultZnifferLRChannelConfigs,
+} from '../lib/items.js'
 import {
 	getRoute,
 	getType,
@@ -438,12 +473,19 @@ export default {
 			this.resizeScrollWrapper()
 		},
 		znifferState() {
-			this.clearFrequency()
+			this.clearZnifferConfiguration()
 		},
 		frequencySuccess(v) {
 			if (v) {
 				setTimeout(() => {
 					this.frequencySuccess = false
+				}, 3000)
+			}
+		},
+		lrChannelConfigSuccess(v) {
+			if (v) {
+				setTimeout(() => {
+					this.lrChannelConfigSuccess = false
 				}, 3000)
 			}
 		},
@@ -487,7 +529,7 @@ export default {
 		window.addEventListener('resize', this.onWindowResize)
 
 		this.onWindowResize()
-		this.clearFrequency()
+		this.clearZnifferConfiguration()
 	},
 	beforeDestroy() {
 		window.removeEventListener('resize', this.onWindowResize)
@@ -513,12 +555,17 @@ export default {
 	},
 	data() {
 		return {
-			znifferRegions,
+			znifferRegions: defaultZnifferRegions,
+			znifferLRChannelConfigs: defaultZnifferLRChannelConfigs,
 			isPopup: isPopupWindow(),
 			fab: false,
 			drawer: false,
 			frequency: null,
 			frequencySuccess: false,
+			lrRegions: [],
+			lrChannelConfigAvailable: false,
+			lrChannelConfig: null,
+			lrChannelConfigSuccess: false,
 			start: 0,
 			offsetTop: 125,
 			search: '',
@@ -621,10 +668,47 @@ export default {
 			data.delta = lastFrame ? data.timestamp - lastFrame.timestamp : 0
 			this.framesQueue.push(data)
 		},
-		async clearFrequency() {
+		async clearZnifferConfiguration() {
 			// needed to handle the clear event on select
 			await this.$nextTick()
-			this.frequency = this.znifferState?.frequency ?? null
+
+			if (this.znifferState) {
+				this.znifferRegions = Object.entries(
+					this.znifferState.supportedFrequencies,
+				)
+					.map(([key, value]) => {
+						const region = parseInt(key, 10)
+						return {
+							text: value,
+							value: region,
+							disabled:
+								region === RFRegion.Unknown ||
+								region === RFRegion['Default (EU)'],
+						}
+					})
+					.sort((a, b) => a.text.localeCompare(b.text))
+				this.frequency = this.znifferState.frequency
+				this.lrRegions = this.znifferState.lrRegions
+				this.znifferLRChannelConfigs = Object.entries(
+					this.znifferState.supportedLRChannelConfigs,
+				).map(([key, value]) => {
+					return {
+						text: value,
+						value: parseInt(key, 10),
+					}
+				})
+				this.lrChannelConfig = this.znifferState.lrChannelConfig
+				this.lrChannelConfigAvailable = this.lrRegions.includes(
+					this.frequency,
+				)
+			} else {
+				this.znifferRegions = defaultZnifferRegions
+				this.frequency = null
+				this.lrRegions = []
+				this.znifferLRChannelConfigs = defaultZnifferLRChannelConfigs
+				this.lrChannelConfig = null
+				this.lrChannelConfigAvailable = false
+			}
 		},
 		onTopColResize() {
 			this.offsetTop = this.$refs.settingCol.clientHeight + 20
@@ -645,6 +729,8 @@ export default {
 			}
 
 			try {
+				// sanitize search function, convert assignment to comparison
+				search = search.replace(/([^=])=([^=])/g, '$1==$2')
 				const fn = new Function(
 					'frame, homeId, ch, src, dest, protocolDataRate, hop, dir, repeaters',
 					`return ${search.replace(/\\/g, '\\\\')}`,
@@ -882,6 +968,19 @@ export default {
 
 			if (response.success) {
 				this.frequencySuccess = true
+			}
+		},
+		async setLRChannelConfig() {
+			const response = await this.sendAction(
+				{
+					apiName: 'setLRChannelConfig',
+					channelConfig: this.lrChannelConfig,
+				},
+				{ hideInfo: true },
+			)
+
+			if (response.success) {
+				this.lrChannelConfigSuccess = true
 			}
 		},
 		async startZniffer() {

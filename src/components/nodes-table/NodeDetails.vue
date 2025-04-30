@@ -36,6 +36,34 @@
 			>
 
 			<v-row>
+				<v-col cols="12" style="max-width: 300px">
+					<v-select
+						label="RF Region"
+						:items="node.rfRegions"
+						v-model="node.RFRegion"
+					>
+						<template v-slot:append-outer>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="updateControllerNodeProp('RFRegion')"
+							>
+								<v-icon>refresh</v-icon>
+							</v-btn>
+							<v-btn
+								color="primary"
+								small
+								icon
+								@click="updateRFRegion"
+							>
+								<v-icon>send</v-icon>
+							</v-btn>
+						</template>
+					</v-select>
+				</v-col>
+			</v-row>
+			<v-row>
 				<v-col cols="12" sm="6" style="max-width: 300px">
 					<v-text-field
 						label="Normal Power Level"
@@ -78,18 +106,24 @@
 						</template>
 					</v-text-field>
 				</v-col>
+			</v-row>
+			<v-row v-if="node.supportsLongRange">
 				<v-col cols="12" style="max-width: 300px">
 					<v-select
-						label="RF Region"
-						:items="node.rfRegions"
-						v-model="node.RFRegion"
+						label="Maximum LR Power Level"
+						:items="maxLRPowerLevels"
+						v-model="node.maxLongRangePowerlevel"
 					>
 						<template v-slot:append-outer>
 							<v-btn
 								color="primary"
 								small
 								icon
-								@click="updateControllerNodeProp('RFRegion')"
+								@click="
+									updateControllerNodeProp(
+										'maxLongRangePowerlevel',
+									)
+								"
 							>
 								<v-icon>refresh</v-icon>
 							</v-btn>
@@ -97,7 +131,7 @@
 								color="primary"
 								small
 								icon
-								@click="updateRFRegion"
+								@click="updateMaxLRPowerLevel"
 							>
 								<v-icon>send</v-icon>
 							</v-btn>
@@ -137,11 +171,14 @@
 			</v-col>
 		</template>
 
-		<div v-if="!node.isControllerNode">
-			<v-subheader class="title" style="padding: 0"
+		<div>
+			<v-subheader
+				class="title"
+				style="padding: 0"
+				v-if="!node.isControllerNode"
 				>Send Options</v-subheader
 			>
-			<v-row class="mt-0">
+			<v-row class="mt-0" v-if="!node.isControllerNode">
 				<v-col
 					cols="12"
 					sm="6"
@@ -183,7 +220,7 @@
 
 			<!-- NODE VALUES -->
 
-			<v-row>
+			<v-row v-if="!node.isControllerNode || node.values.length">
 				<v-subheader class="title">Values</v-subheader>
 
 				<v-expansion-panels
@@ -249,7 +286,10 @@
 							</v-row>
 							<v-row>
 								<v-col
-									v-if="className.startsWith('Configuration')"
+									v-if="
+										className.startsWith('Configuration') &&
+										!node.isControllerNode
+									"
 									cols="12"
 									sm="6"
 									md="4"
@@ -341,10 +381,10 @@
 <script>
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
-import { ConfigValueFormat } from '@zwave-js/core/safe'
+import { maxLRPowerLevels } from '../../lib/items'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { isUnsupervisedOrSucceeded } from '@zwave-js/core/safe'
+import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
 
 export default {
 	props: {
@@ -360,6 +400,7 @@ export default {
 			locError: null,
 			nameError: null,
 			options: {},
+			maxLRPowerLevels,
 			newName: this.node.name,
 			newLoc: this.node.loc,
 			configCCValueFormats: [
@@ -609,6 +650,22 @@ export default {
 
 				if (response.success) {
 					this.showSnackbar('RF Region updated', 'success')
+				}
+			}
+		},
+		async updateMaxLRPowerLevel() {
+			if (this.node) {
+				const args = [this.node.maxLongRangePowerlevel]
+				const response = await this.app.apiRequest(
+					'setMaxLRPowerLevel',
+					args,
+				)
+
+				if (response.success) {
+					this.showSnackbar(
+						'Maximum LR power level updated',
+						'success',
+					)
 				}
 			}
 		},

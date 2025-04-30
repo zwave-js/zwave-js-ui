@@ -327,8 +327,8 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import {
 	SetValueStatus,
 	setValueWasUnsupervisedOrSucceeded,
-} from '@zwave-js/cc/safe'
-import { Protocols } from '@zwave-js/core/safe'
+} from '@zwave-js/cc'
+import { Protocols } from '@zwave-js/core'
 
 export default {
 	props: {
@@ -415,20 +415,7 @@ export default {
 		},
 		advancedActions() {
 			const nodeActions = this.node.isControllerNode
-				? [
-						{
-							text: 'Firmware update OTW',
-							options: [
-								{
-									name: 'Update',
-									action: 'firmwareUpdateOTW',
-								},
-							],
-							icon: 'update',
-							color: 'error',
-							desc: 'Perform a firmware update OTW (Over The Wire)',
-						},
-					]
+				? []
 				: [
 						{
 							text: 'Firmware update',

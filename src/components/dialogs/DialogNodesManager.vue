@@ -668,7 +668,7 @@
 
 <script>
 import { mapState } from 'pinia'
-import { tryParseDSKFromQRCodeString } from '@zwave-js/core/safe'
+import { tryParseDSKFromQRCodeString } from '@zwave-js/core'
 
 import {
 	parseSecurityClasses,
@@ -677,7 +677,7 @@ import {
 	validTopic,
 } from '../../lib/utils.js'
 import useBaseStore from '../../stores/base.js'
-import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js/safe'
+import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {

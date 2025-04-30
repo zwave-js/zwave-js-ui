@@ -79,8 +79,8 @@ import { mapState, mapActions } from 'pinia'
 
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { getEnumMemberName } from 'zwave-js/safe'
-import { AssociationCheckResult } from '@zwave-js/cc/safe'
+import { getEnumMemberName } from '@zwave-js/shared'
+import { AssociationCheckResult } from '@zwave-js/cc'
 import { getAssociationAddress } from '../../lib/utils'
 
 export default {

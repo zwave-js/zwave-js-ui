@@ -86,6 +86,7 @@
 
 				<v-spacer></v-spacer>
 
+				<!-- Controller status -->
 				<v-tooltip
 					v-if="zwave.enabled && appInfo.controllerStatus"
 					bottom
@@ -98,7 +99,7 @@
 									? 'rgb(244, 67, 54)'
 									: '',
 							}"
-							class="controller-status text-truncate"
+							class="px-1 controller-status text-truncate"
 						>
 							{{ appInfo.controllerStatus.status }}
 						</div>
@@ -114,10 +115,8 @@
 					</div>
 				</v-tooltip>
 
-				<v-tooltip
-					v-if="zwave.enabled && appInfo.controllerStatus"
-					bottom
-				>
+				<!-- Inlcusion state -->
+				<v-tooltip v-if="zwave.enabled && inclusionState" bottom>
 					<template v-slot:activator="{ on }">
 						<v-icon
 							class="ml-3"
@@ -132,6 +131,7 @@
 					<span>{{ inclusionState.message }}</span>
 				</v-tooltip>
 
+				<!-- Websocket status -->
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-icon
@@ -147,6 +147,7 @@
 					<span>{{ status }}</span>
 				</v-tooltip>
 
+				<!-- Info panel -->
 				<v-tooltip z-index="9999" bottom open-on-click>
 					<template v-slot:activator="{ on }">
 						<v-icon
@@ -180,6 +181,7 @@
 					</div>
 				</v-tooltip>
 
+				<!-- Update badge -->
 				<v-tooltip bottom>
 					<template v-slot:activator="{ on }">
 						<v-badge
@@ -199,72 +201,68 @@
 					</template>
 				</v-tooltip>
 
-				<span v-if="auth">
-					<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
+				<!-- Topbar collapsable menu items -->
+				<!-- Show more button on smaller screens -->
+				<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
+					<template v-slot:activator="{ on }">
+						<v-btn small v-on="on" icon>
+							<v-icon>more_vert</v-icon>
+						</v-btn>
+					</template>
+
+					<v-list>
+						<v-list-item
+							v-for="(item, i) in menu"
+							:key="i"
+							@click="item.func"
+						>
+							<v-list-item-action>
+								<v-icon>{{ item.icon }}</v-icon>
+							</v-list-item-action>
+							<v-list-item-title>{{
+								item.tooltip
+							}}</v-list-item-title>
+						</v-list-item>
+					</v-list>
+				</v-menu>
+
+				<!-- Menu items -->
+				<span v-else class="text-no-wrap">
+					<v-menu v-for="item in menu" :key="item.text" bottom left>
 						<template v-slot:activator="{ on }">
-							<v-btn small v-on="on" icon>
-								<v-icon>more_vert</v-icon>
+							<v-btn
+								small
+								class="mr-2"
+								v-on="on"
+								icon
+								@click="item.func"
+							>
+								<v-tooltip bottom>
+									<template v-slot:activator="{ on }">
+										<v-icon
+											dark
+											color="primary"
+											v-on="on"
+											>{{ item.icon }}</v-icon
+										>
+									</template>
+									<span>{{ item.tooltip }}</span>
+								</v-tooltip>
 							</v-btn>
 						</template>
 
-						<v-list>
+						<v-list v-if="item.menu">
 							<v-list-item
-								v-for="(item, i) in menu"
+								v-for="(menu, i) in item.menu"
 								:key="i"
-								@click="item.func"
+								@click="menu.func"
 							>
-								<v-list-item-action>
-									<v-icon>{{ item.icon }}</v-icon>
-								</v-list-item-action>
 								<v-list-item-title>{{
-									item.tooltip
+									menu.title
 								}}</v-list-item-title>
 							</v-list-item>
 						</v-list>
 					</v-menu>
-
-					<span v-else class="text-no-wrap">
-						<v-menu
-							v-for="item in menu"
-							:key="item.text"
-							bottom
-							left
-						>
-							<template v-slot:activator="{ on }">
-								<v-btn
-									small
-									class="mr-2"
-									v-on="on"
-									icon
-									@click="item.func"
-								>
-									<v-tooltip bottom>
-										<template v-slot:activator="{ on }">
-											<v-icon
-												dark
-												color="primary"
-												v-on="on"
-												>{{ item.icon }}</v-icon
-											>
-										</template>
-										<span>{{ item.tooltip }}</span>
-									</v-tooltip>
-								</v-btn>
-							</template>
-
-							<v-list v-if="item.menu">
-								<v-list-item
-									v-for="(menu, i) in item.menu"
-									:key="i"
-									@click="menu.func"
-								>
-									<v-list-item-title>{{
-										menu.title
-									}}</v-list-item-title>
-								</v-list-item>
-							</v-list>
-						</v-menu>
-					</span>
 				</span>
 			</v-app-bar>
 		</div>
@@ -436,12 +434,9 @@ import {
 	socketEvents,
 	inboundEvents as socketActions,
 } from '@server/lib/SocketEvents'
-import {
-	getEnumMemberName,
-	SecurityBootstrapFailure,
-	FirmwareUpdateStatus,
-	InclusionState,
-} from 'zwave-js/safe'
+import { getEnumMemberName } from '@zwave-js/shared'
+import { FirmwareUpdateStatus } from '@zwave-js/cc'
+import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import { uuid } from './lib/utils'
 
@@ -473,6 +468,34 @@ export default {
 			darkMode: (store) => store.ui.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
+		menu() {
+			const items = [
+				{
+					icon: 'lock',
+					authOnly: true,
+					func: this.showPasswordDialog,
+					tooltip: 'Password',
+				},
+				{
+					icon: 'refresh',
+					func: this.restart,
+					tooltip: 'Restart',
+				},
+				{
+					icon: 'logout',
+					authOnly: true,
+					func: this.logout,
+					tooltip: 'Logout',
+				},
+			]
+
+			return items.filter((item) => {
+				if (item.authOnly) {
+					return this.auth
+				}
+				return true
+			})
+		},
 		skeletons() {
 			// return the skeletons array based on actual route
 			const route = this.$route.path
@@ -591,7 +614,7 @@ export default {
 		},
 	},
 	watch: {
-		$route: function (value) {
+		$route(value) {
 			this.title = value.name || ''
 			this.startSocket()
 		},
@@ -600,41 +623,6 @@ export default {
 		},
 		pages() {
 			// this.verifyRoute()
-		},
-		controllerNode(node) {
-			if (!node) return
-
-			if (node.firmwareUpdate) {
-				if (!this.dialogLoader) {
-					this.loaderTitle = ''
-					this.loaderText =
-						'Updating controller firmware, please wait...'
-					this.dialogLoader = true
-				}
-				this.loaderProgress = node.firmwareUpdate.progress
-				this.loaderIndeterminate = this.loaderProgress === 0
-			} else if (node.firmwareUpdateResult) {
-				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
-				this.loaderProgress = -1
-				this.loaderTitle = ''
-				const result = node.firmwareUpdateResult
-
-				useBaseStore().updateNode(
-					{
-						id: node.id,
-						firmwareUpdateResult: false,
-					},
-					true,
-				)
-
-				this.loaderText = `<span style="white-space: break-spaces;" class="${
-					result.success ? 'success' : 'error'
-				}--text">Controller firmware update finished ${
-					result.success
-						? 'successfully. It may take a few seconds for the stick to restart.'
-						: 'with error'
-				}.\n Status: ${result.status}</span>`
-			}
 		},
 	},
 	data() {
@@ -649,18 +637,6 @@ export default {
 			loaderIndeterminate: false,
 			password: {},
 			nodesManagerDialog: false,
-			menu: [
-				{
-					icon: 'lock',
-					func: this.showPasswordDialog,
-					tooltip: 'Password',
-				},
-				{
-					icon: 'logout',
-					func: this.logout,
-					tooltip: 'Logout',
-				},
-			],
 			status: '',
 			statusColor: '',
 			drawer: false,
@@ -703,6 +679,31 @@ export default {
 			}
 			this.showNodesManager('')
 			this.$refs.nodesManager.onGrantSecurityCC(requested)
+		},
+		onOTWFirmwareUpdate(data) {
+			const { progress, result } = data
+			if (progress) {
+				if (!this.dialogLoader) {
+					this.loaderTitle = ''
+					this.loaderText =
+						'Updating controller firmware, please wait...'
+					this.dialogLoader = true
+				}
+				this.loaderProgress = progress.progress
+				this.loaderIndeterminate = this.loaderProgress === 0
+			} else if (result) {
+				this.dialogLoader = true // always open it to show the result, in case no progress is done it would be closed
+				this.loaderProgress = -1
+				this.loaderTitle = ''
+
+				this.loaderText = `<span style="white-space: break-spaces;" class="${
+					result.success ? 'success' : 'error'
+				}--text">Controller firmware update finished ${
+					result.success
+						? 'successfully. It may take a few seconds for the stick to restart.'
+						: 'with error'
+				}.\n Status: ${result.status}</span>`
+			}
 		},
 		...mapActions(useBaseStore, [
 			'init',
@@ -819,7 +820,7 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
-		showSnackbar: function (text, color, timeout) {
+		showSnackbar(text, color, timeout) {
 			const message = {
 				message: text,
 				color: color || 'info',
@@ -883,7 +884,7 @@ export default {
 				}
 			})
 		},
-		updateStatus: function (status, color) {
+		updateStatus(status, color) {
 			this.status = status
 			this.statusColor = color
 		},
@@ -916,10 +917,10 @@ export default {
 				)
 			}
 		},
-		importFile: function (ext) {
+		importFile(ext) {
 			const self = this
 			// Check for the various File API support.
-			return new Promise(function (resolve, reject) {
+			return new Promise((resolve, reject) => {
 				if (
 					window.File &&
 					window.FileReader &&
@@ -928,7 +929,7 @@ export default {
 				) {
 					const input = document.createElement('input')
 					input.type = 'file'
-					input.addEventListener('change', function (event) {
+					input.addEventListener('change', (event) => {
 						const files = event.target.files
 
 						if (files && files.length > 0) {
@@ -937,7 +938,7 @@ export default {
 
 							reader.addEventListener(
 								'load',
-								function (fileReaderEvent) {
+								(fileReaderEvent) => {
 									let err
 									let data = fileReaderEvent.target.result
 
@@ -976,7 +977,7 @@ export default {
 				}
 			})
 		},
-		exportConfiguration: function (data, fileName, ext) {
+		exportConfiguration(data, fileName, ext) {
 			ext = ext || 'json'
 			const textMime = ['json', 'jsonl', 'txt', 'log', 'js', 'ts']
 			const contentType = textMime.includes(ext)
@@ -998,6 +999,29 @@ export default {
 			a.download = fileName + '.' + (ext || 'json')
 			a.target = '_self'
 			a.click()
+		},
+		async restart() {
+			const result = await this.confirm(
+				'Restart',
+				'Are you sure you want to restart the ZUI?',
+				'warning',
+				{
+					width: 400,
+				},
+			)
+
+			if (result) {
+				try {
+					const data = await ConfigApis.updateConfig(false)
+
+					this.showSnackbar(
+						data.message,
+						data.success ? 'success' : 'error',
+					)
+				} catch (error) {
+					log.error(error)
+				}
+			}
 		},
 		async getConfig() {
 			try {
@@ -1201,6 +1225,11 @@ export default {
 			this.socket.on(socketEvents.znifferState, (data) => {
 				this.setZnifferState(data)
 			})
+
+			this.socket.on(
+				socketEvents.otwFirmwareUpdate,
+				this.onOTWFirmwareUpdate.bind(this),
+			)
 			// don't await this, will cause a loop of calls
 			this.getConfig()
 		},

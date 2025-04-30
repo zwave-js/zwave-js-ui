@@ -124,12 +124,12 @@
 </template>
 
 <script>
-import { Protocols } from '@zwave-js/core/safe'
+import { Protocols } from '@zwave-js/core'
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import { getAssociationAddress } from '../../lib/utils'
-import { AssociationCheckResult } from '@zwave-js/cc/safe'
-import { getEnumMemberName } from 'zwave-js/safe'
+import { AssociationCheckResult } from '@zwave-js/cc'
+import { getEnumMemberName } from '@zwave-js/shared'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
@@ -159,11 +159,13 @@ export default {
 		filteredNodes() {
 			return this.node.protocol === Protocols.ZWaveLongRange
 				? [this.controllerNode]
-				: this.nodes.filter(
-						(n) =>
-							n.id !== this.node.id &&
-							n.protocol !== Protocols.ZWaveLongRange,
-					)
+				: this.nodes
+						.filter(
+							(n) =>
+								n.id !== this.node.id &&
+								n.protocol !== Protocols.ZWaveLongRange,
+						)
+						.sort((a, b) => a._name.localeCompare(b._name))
 		},
 		endpoints() {
 			return this.getEndpointItems(this.node)

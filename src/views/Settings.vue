@@ -811,6 +811,20 @@
 											>
 											</v-select>
 										</v-col>
+										<v-col cols="6">
+											<v-select
+												label="Maximum LR Power Level"
+												persistent-hint
+												hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
+												:items="maxLRPowerLevels"
+												clearable
+												v-model="
+													newZwave.rf
+														.maxLongRangePowerlevel
+												"
+											>
+											</v-select>
+										</v-col>
 									</v-row>
 									<v-row class="mt-0">
 										<v-col cols="12" sm="6">
@@ -2046,7 +2060,7 @@ import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
 import { wait, copy, isUndef, deepEqual } from '../lib/utils'
-import { rfRegions, znifferRegions } from '../lib/items'
+import { rfRegions, znifferRegions, maxLRPowerLevels } from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
@@ -2201,6 +2215,7 @@ export default {
 		return {
 			rfRegions,
 			znifferRegions,
+			maxLRPowerLevels,
 			valid_zwave: true,
 			dialogValue: false,
 			sslDisabled: false,
@@ -2372,7 +2387,7 @@ export default {
 			return (
 				(validPower && validMeasured) ||
 				(!validPower && !validMeasured) ||
-				'Both powerlevel and measured 0 dBm must be set when using custom tx power'
+				'Both powerlevel and measured 0 dBm must be set when using custom TX power'
 			)
 		},
 		parseCron(cron) {
@@ -2698,6 +2713,8 @@ export default {
 	mounted() {
 		// hide socket status indicator from toolbar
 		this.$emit('updateStatus')
+		// get config is also called in app.vue
+		this.resetConfig()
 		this.getConfig()
 	},
 }
