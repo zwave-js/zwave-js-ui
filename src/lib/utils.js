@@ -2,16 +2,13 @@ import {
 	isValidDSK,
 	Protocols,
 	znifferProtocolDataRateToString,
-} from '@zwave-js/core/safe'
-import colors from 'vuetify/lib/util/colors'
-
-import {
 	isRssiError,
 	rssiToString,
-	getEnumMemberName,
-	ZWaveFrameType,
-	LongRangeFrameType,
-} from 'zwave-js/safe'
+} from '@zwave-js/core'
+import colors from 'vuetify/lib/util/colors'
+
+import { getEnumMemberName } from '@zwave-js/shared'
+import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { znifferRegions } from './items'
 import { mdiZWave } from '@mdi/js'
 

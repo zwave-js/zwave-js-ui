@@ -296,8 +296,8 @@ import {
 	protocolDataRateToString,
 	rssiToString,
 	isRssiError,
-} from 'zwave-js/safe'
-import { RouteKind } from '@zwave-js/core/safe'
+	RouteKind,
+} from '@zwave-js/core'
 import { uuid, arraysEqual } from '../../lib/utils'
 import useBaseStore from '../../stores/base.js'
 import { mapState } from 'pinia'

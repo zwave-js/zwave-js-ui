@@ -382,10 +382,9 @@
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
-import { ConfigValueFormat } from '@zwave-js/core/safe'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { isUnsupervisedOrSucceeded } from '@zwave-js/core/safe'
+import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
 
 export default {
 	props: {

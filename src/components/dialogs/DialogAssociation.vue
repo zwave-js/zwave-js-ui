@@ -124,12 +124,12 @@
 </template>
 
 <script>
-import { Protocols } from '@zwave-js/core/safe'
+import { Protocols } from '@zwave-js/core'
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
 import { getAssociationAddress } from '../../lib/utils'
-import { AssociationCheckResult } from '@zwave-js/cc/safe'
-import { getEnumMemberName } from 'zwave-js/safe'
+import { AssociationCheckResult } from '@zwave-js/cc'
+import { getEnumMemberName } from '@zwave-js/shared'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
