@@ -7,7 +7,13 @@ import {
 	IClientSubscribeOptions,
 	connect,
 } from 'mqtt'
-import { allSettled, parseJSON, sanitizeTopic, pkgJson } from './utils'
+import {
+	allSettled,
+	parseJSON,
+	sanitizeTopic,
+	pkgJson,
+	stringifyJSON,
+} from './utils'
 import { module } from './logger'
 import { TypedEventEmitter } from './EventEmitter'
 import { storeDir } from '../config/app'
@@ -311,7 +317,7 @@ class MqttClient extends TypedEventEmitter<MqttClientEventCallbacks> {
 
 			this.client.publish(
 				topic,
-				JSON.stringify(data),
+				stringifyJSON(data),
 				options,
 				function (err) {
 					if (err) {

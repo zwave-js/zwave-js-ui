@@ -4,6 +4,7 @@ import path, { resolve } from 'path'
 import crypto from 'crypto'
 import { readFileSync, statSync } from 'fs'
 import type { ZwaveConfig } from './ZwaveClient'
+import { isUint8Array } from 'util/types'
 
 // don't use import here, it will break the build
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -308,6 +309,21 @@ export function parseJSON(str: string): any {
 			Array.isArray(v.data)
 		) {
 			return Buffer.from(v.data)
+		}
+		return v
+	})
+}
+
+/**
+ * Correctly stringify a JSON object with uint8array support
+ */
+export function stringifyJSON(obj: any): string {
+	return JSON.stringify(obj, (k, v) => {
+		if (isUint8Array(v)) {
+			return {
+				type: 'Buffer',
+				data: Array.from(v.values()),
+			}
 		}
 		return v
 	})
