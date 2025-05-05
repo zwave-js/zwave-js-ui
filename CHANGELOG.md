@@ -1,5 +1,22 @@
 
 
+# [10.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.3...v10.4.0) (2025-05-05)
+
+
+### Bug Fixes
+
+* correct serialization of Uint8Array in MQTT messages ([#4215](https://github.com/zwave-js/zwave-js-ui/issues/4215)) ([d2c182d](https://github.com/zwave-js/zwave-js-ui/commit/d2c182d7ba1317060d2936fc07689e873a790a11))
+
+
+### Features
+
+* update zwave-js to 15.3.0, always add event handlers after `driver ready` event ([#4219](https://github.com/zwave-js/zwave-js-ui/issues/4219)) ([64ae6b4](https://github.com/zwave-js/zwave-js-ui/commit/64ae6b4fd5290e592839049c5bf884bfed38d0e2))
+
+
+### Performance Improvements
+
+* eliminate usage of zwave-js's `/safe` entrypoints and reduce bundle size by 60% ([#4214](https://github.com/zwave-js/zwave-js-ui/issues/4214)) ([60d08ce](https://github.com/zwave-js/zwave-js-ui/commit/60d08cea5ea50134983105701c0cddce53b874f9))
+
 ## [10.3.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.2...v10.3.3) (2025-04-26)
 
 

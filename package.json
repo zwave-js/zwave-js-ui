@@ -1,6 +1,6 @@
 {
   "name": "zwave-js-ui",
-  "version": "10.3.3",
+  "version": "10.4.0",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "keywords": [
     "mqtt",
