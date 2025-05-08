@@ -151,6 +151,12 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 						device_class: 'current',
 					}
 					break
+				case 0x06: // Power factor
+					cfg.props = {
+						state_class: 'measurement',
+						device_class: 'power_factor',
+					}
+					break
 				default:
 					cfg.props = {
 						device_class: 'power',
