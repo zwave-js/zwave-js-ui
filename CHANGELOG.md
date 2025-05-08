@@ -1,5 +1,12 @@
 
 
+## [10.4.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.1...v10.4.2) (2025-05-08)
+
+
+### Bug Fixes
+
+* bump Z-Wave JS Server to 3.0.2 ([#4227](https://github.com/zwave-js/zwave-js-ui/issues/4227)) ([f349990](https://github.com/zwave-js/zwave-js-ui/commit/f34999065997e8c418f7c404c6a7a9d8777a626e))
+
 ## [10.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.0...v10.4.1) (2025-05-07)
 
 
