@@ -954,6 +954,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 	}
 
+	private clearThrottle(key: string) {
+		const entry = this.throttledFunctions.get(key)
+		if (entry) {
+			if (entry.timeout) {
+				clearTimeout(entry.timeout)
+			}
+			this.throttledFunctions.delete(key)
+		}
+	}
+
 	/**
 	 * Returns the driver ZWaveNode object
 	 */
@@ -4528,6 +4538,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onOTWFirmwareUpdateFinished(result: OTWFirmwareUpdateResult) {
+		// prevent progress event to come after finish
+		this.clearThrottle(this._onOTWFirmwareUpdateProgress.name)
+
 		this.sendToSocket(socketEvents.otwFirmwareUpdate, {
 			result: {
 				success: result.success,
@@ -5834,6 +5847,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const node = this.nodes.get(zwaveNode.id)
 			if (node) {
 				node.firmwareUpdate = undefined
+
+				this.clearThrottle(
+					this._onNodeFirmwareUpdateProgress.name + '_' + node.id,
+				)
 
 				this.emitNodeUpdate(node, {
 					firmwareUpdate: false,
