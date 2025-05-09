@@ -157,7 +157,7 @@
 				</v-alert>
 
 				<v-alert
-					class="pb-0"
+					class="mb-0"
 					text
 					style="white-space: break-spaces"
 					type="info"
