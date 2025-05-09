@@ -23,7 +23,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="blue darken-1"
+							color="primary"
 							text
 							@click="storeDevices(false)"
 							>Store</v-btn
@@ -39,7 +39,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="red darken-1"
+							color="error"
 							text
 							@click="storeDevices(true)"
 							>Remove Store</v-btn
@@ -54,7 +54,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="green darken-1"
+							color="success"
 							text
 							@click="rediscoverNode"
 							>Rediscover Node</v-btn
@@ -70,7 +70,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="yellow darken-1"
+							color="warning"
 							text
 							@click="disableDiscovery"
 							>Disable Discovery</v-btn
@@ -125,7 +125,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="blue darken-1"
+							color="primary"
 							:disabled="errorDevice"
 							text
 							@click="addDevice()"
@@ -139,7 +139,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="blue darken-1"
+							color="primary"
 							:disabled="errorDevice"
 							text
 							@click="updateDeviceJSON()"
@@ -156,7 +156,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="green darken-1"
+							color="success"
 							:disabled="errorDevice"
 							text
 							@click="rediscoverDevice"
@@ -170,7 +170,7 @@
 					<template v-slot:activator="{ on }">
 						<v-btn
 							v-on="on"
-							color="red darken-1"
+							color="error"
 							:disabled="errorDevice"
 							text
 							@click="deleteDevice"
