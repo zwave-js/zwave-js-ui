@@ -41,6 +41,13 @@
 						label="RF Region"
 						:items="node.rfRegions"
 						v-model="node.RFRegion"
+						:disabled="node.RFRegion === undefined"
+						:hint="
+							node.RFRegion === undefined
+								? 'Not supported by your controller'
+								: ''
+						"
+						:persistent-hint
 					>
 						<template v-slot:append-outer>
 							<v-btn
