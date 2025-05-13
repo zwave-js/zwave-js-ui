@@ -47,7 +47,7 @@
 								? 'Not supported by your controller'
 								: ''
 						"
-						:persistent-hint
+						persistent-hint
 					>
 						<template v-slot:append-outer>
 							<v-btn
