@@ -6718,6 +6718,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					values[this._getValueID(value)] = value
 				}
 				node.values = values
+				node.inited = false // so nodeInited event is triggered
 				this._nodes.set(node.id, node)
 				this.emitNodeUpdate(node)
 			}
