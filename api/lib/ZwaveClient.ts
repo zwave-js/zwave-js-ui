@@ -6719,6 +6719,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}
 				node.values = values
 				node.inited = false // so nodeInited event is triggered
+				node.hassDevices = {}
 				this._nodes.set(node.id, node)
 				this.emitNodeUpdate(node)
 			}
