@@ -1617,6 +1617,28 @@ export default {
 			this.hideTopbar = true
 		}
 
+		document.addEventListener(
+			'swUpdated',
+			(event) => {
+				this.confirm(
+					'Update available',
+					'New version available, do you want to refresh the page?',
+					'info',
+					{
+						cancelText: 'No',
+						confirmText: 'Yes',
+						width: 400,
+					},
+				).then(async (result) => {
+					if (result) {
+						await event.detail.updateSW()
+						// do not reload page
+					}
+				})
+			},
+			{ once: true },
+		)
+
 		const settings = useBaseStore().settings
 
 		// system dark mode
