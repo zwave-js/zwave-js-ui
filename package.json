@@ -177,7 +177,7 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
     "vite": "^5.3.1",
-    "vite-plugin-pwa": "^0.20.0",
+    "vite-plugin-pwa": "^1.0.0",
     "vue-template-compiler": "^2.7.16"
   },
   "overrides": {
