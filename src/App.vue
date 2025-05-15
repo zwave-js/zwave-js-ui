@@ -684,11 +684,10 @@ export default {
 			const { progress, result } = data
 			if (progress) {
 				if (!this.dialogLoader) {
-					this.loaderTitle = ''
-					this.loaderText =
-						'Updating controller firmware, please wait...'
 					this.dialogLoader = true
 				}
+				this.loaderTitle = ''
+				this.loaderText = 'Updating controller firmware, please wait...'
 				this.loaderProgress = progress.progress
 				this.loaderIndeterminate = this.loaderProgress === 0
 			} else if (result) {
