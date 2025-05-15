@@ -2763,7 +2763,7 @@ export default class Gateway {
 			cfg.discovery_payload.on_command_type = 'last'
 		}
 
-		const whiteValue = node.values[`51-${endpoint}-currentcolor-0`]
+		const whiteValue = node.values[`51-${endpoint}-currentColor-0`]
 
 		// if whitevalue exists, use currentColor value to get/set white
 		if (whiteValue && currentColorValue) {

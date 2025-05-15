@@ -1,5 +1,21 @@
 
 
+# [10.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.2...v10.5.0) (2025-05-14)
+
+
+### Bug Fixes
+
+* **discovery:** cold/warmwhite support ([fe83a9a](https://github.com/zwave-js/zwave-js-ui/commit/fe83a9ae23165f13be8e7346e2e34f7f4a938a90)), closes [#4232](https://github.com/zwave-js/zwave-js-ui/issues/4232)
+* **discovery:** correctly set `power_factor` device class ([e4000c3](https://github.com/zwave-js/zwave-js-ui/commit/e4000c30272b8e81f77b19bace118a575f3781b8)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+* **nodes-table:** disable RF Region selection when not supported ([cf88c28](https://github.com/zwave-js/zwave-js-ui/commit/cf88c28b03e407817f29eb9e4edab60eef41da19)), closes [#4235](https://github.com/zwave-js/zwave-js-ui/issues/4235)
+* update vite-plugin-pwa to version 1.0.0 and remove service worker file ([18ba316](https://github.com/zwave-js/zwave-js-ui/commit/18ba316ea271340559f027188aba2e7bf9c988db))
+
+
+### Features
+
+* bump zwave-js@15.4.1 ([#4236](https://github.com/zwave-js/zwave-js-ui/issues/4236)) ([361f54d](https://github.com/zwave-js/zwave-js-ui/commit/361f54d512dda2578c4da15e212a0d2dd0892024))
+* implement service worker update prompt ([ef7efd0](https://github.com/zwave-js/zwave-js-ui/commit/ef7efd072fef922a3cefbf80073079888dc3a69e))
+
 ## [10.4.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.1...v10.4.2) (2025-05-08)
 
 

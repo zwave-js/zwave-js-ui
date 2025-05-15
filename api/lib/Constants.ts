@@ -155,6 +155,7 @@ export function meterType(ccSpecific: IMeterCCSpecific): any {
 					cfg.props = {
 						state_class: 'measurement',
 						device_class: 'power_factor',
+						unit_of_measurement: 'None', // https://github.com/home-assistant/core/blob/00627b82e0f791c01146f49c9e12e878395366f4/homeassistant/components/sensor/const.py#L314-L318
 					}
 					break
 				default:
