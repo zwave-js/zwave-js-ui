@@ -1,5 +1,18 @@
 
 
+## [10.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.0...v10.5.1) (2025-05-15)
+
+
+### Bug Fixes
+
+* **discovery:** override unit_of_measurement for power_factor meter discovery ([e093382](https://github.com/zwave-js/zwave-js-ui/commit/e0933825aa46da637c50ff1cb8a43ca378c18909)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+* otw update and node firmware update progress hangs on finish ([#4229](https://github.com/zwave-js/zwave-js-ui/issues/4229)) ([5f36bc9](https://github.com/zwave-js/zwave-js-ui/commit/5f36bc95d63d8bcb4ef6476a596313814b557527))
+
+
+### Features
+
+* bump zwave-js@15.4.2 ([#4239](https://github.com/zwave-js/zwave-js-ui/issues/4239)) ([9c1311a](https://github.com/zwave-js/zwave-js-ui/commit/9c1311ae02a7555f451e9800d435c41b26753e8f))
+
 # [10.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.2...v10.5.0) (2025-05-14)
 
 
