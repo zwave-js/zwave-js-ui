@@ -110,13 +110,7 @@
 				v-else-if="loading || node.firmwareUpdate"
 			>
 				<v-progress-circular indeterminate color="primary" />
-				<p class="text-caption">
-					{{
-						node.firmwareUpdate
-							? 'Update in progress...'
-							: 'Remember to wake up sleeping devices...'
-					}}
-				</p>
+				<p class="text-caption">Update in progress...</p>
 			</v-col>
 			<v-col class="text-center" v-else>
 				<h1 class="title">No updates available</h1>
