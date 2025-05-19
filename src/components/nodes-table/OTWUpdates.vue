@@ -38,12 +38,12 @@
 				</v-row>
 			</v-col>
 
-			<template v-if="filteredUpdates.length > 0 && !node.firmwareUpdate">
+			<template v-if="this.fwUpdates.length > 0 && !node.firmwareUpdate">
 				<v-col
 					cols="12"
 					sm="6"
 					md="4"
-					v-for="u in filteredUpdates"
+					v-for="u in this.fwUpdates"
 					:key="u.version"
 				>
 					<v-card dense elevation="5">
@@ -160,16 +160,10 @@ export default {
 			fwUpdates: [],
 			loading: false,
 			includePrereleases: false,
-			showDowngrades: false,
 		}
 	},
 	computed: {
 		...mapState(useBaseStore, ['controllerNode']),
-		filteredUpdates() {
-			return this.fwUpdates.filter(
-				(u) => !u.downgrade || (u.downgrade && this.showDowngrades),
-			)
-		},
 	},
 	mounted() {
 		this.checkUpdates()
@@ -219,29 +213,25 @@ export default {
 		async updateFirmware(update) {
 			if (
 				await this.app.confirm(
-					`OTA ${update.downgrade ? 'Downgrade' : 'Upgrade'}`,
-					`<p>Are you sure you want to ${
-						update.downgrade ? 'downgrade' : 'upgrade'
-					} node to <b>v${update.version}</b>?</p>
+					`Firmware Upgrade`,
+					`<p>Are you sure you want to upgrade your controller to <b>v${update.version}</b>?</p>
 
 					<p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
 
-					<p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start an over-the-air (OTA) firmware update for the given node.</p>
+					<p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start the upgrade process.</p>
 
 					`,
-					update.downgrade ? 'error' : 'warning',
+					'warning',
 					{
-						confirmText: `${
-							update.downgrade ? 'Downgrade' : 'Upgrade'
-						}`,
+						confirmText: 'Upgrade',
 						cancelText: 'Cancel',
 						width: '500px',
 					},
 				)
 			) {
 				const response = await this.app.apiRequest(
-					'firmwareUpdateOTA',
-					[this.node.id, update],
+					'firmwareAutoUpdateOTW',
+					[update],
 				)
 
 				await this.app.handleFwUpdateResponse(response)

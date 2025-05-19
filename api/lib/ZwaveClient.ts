@@ -209,6 +209,7 @@ export const allowedApis = validateMethods([
 	'refreshInfo',
 	'updateFirmware',
 	'firmwareUpdateOTW',
+	'firmwareAutoUpdateOTW',
 	'abortFirmwareUpdate',
 	'dumpNode',
 	'getAvailableFirmwareUpdates',
@@ -3927,6 +3928,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Used to trigger an update of controller FW via the Z-Wave JS firmware update service
+	 */
+	async firmwareAutoUpdateOTW(
+		updateInfo: FirmwareUpdateInfo,
+	): Promise<OTWFirmwareUpdateResult> {
+		try {
+			if (backupManager.backupOnEvent) {
+				this.nvmEvent = 'before_controller_fw_update_otw'
+				await backupManager.backupNvm()
+			}
+
+			return await this.driver.firmwareUpdateOTW(updateInfo)
+		} catch (e) {
+			throw Error(`Error while updating firmware: ${e.message}`)
+		}
 	}
 
 	/**
