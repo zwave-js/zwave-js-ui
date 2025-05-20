@@ -209,7 +209,6 @@ export const allowedApis = validateMethods([
 	'refreshInfo',
 	'updateFirmware',
 	'firmwareUpdateOTW',
-	'firmwareAutoUpdateOTW',
 	'abortFirmwareUpdate',
 	'dumpNode',
 	'getAvailableFirmwareUpdates',
@@ -3931,33 +3930,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Used to trigger an update of controller FW via the Z-Wave JS firmware update service
+	 * Used to trigger an update of controller FW
 	 */
-	async firmwareAutoUpdateOTW(
-		updateInfo: FirmwareUpdateInfo,
+	async firmwareUpdateOTW(
+		file: FwFile | FirmwareUpdateInfo,
 	): Promise<OTWFirmwareUpdateResult> {
 		try {
 			if (backupManager.backupOnEvent) {
 				this.nvmEvent = 'before_controller_fw_update_otw'
 				await backupManager.backupNvm()
 			}
-
-			return await this.driver.firmwareUpdateOTW(updateInfo)
-		} catch (e) {
-			throw Error(`Error while updating firmware: ${e.message}`)
-		}
-	}
-
-	/**
-	 * Used to trigger an update of controller FW
-	 */
-	async firmwareUpdateOTW(file: FwFile): Promise<OTWFirmwareUpdateResult> {
-		try {
-			if (backupManager.backupOnEvent) {
-				this.nvmEvent = 'before_controller_fw_update_otw'
-				await backupManager.backupNvm()
-			}
 			let firmware: Firmware
+
+			if (file['files']) {
+				return await this.driver.firmwareUpdateOTW(
+					file as FirmwareUpdateInfo,
+				)
+			}
+
+			file = file as FwFile
 
 			try {
 				const format = guessFirmwareFileFormat(file.name, file.data)

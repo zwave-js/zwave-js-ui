@@ -29,7 +29,7 @@ export default {
 				)
 			) {
 				const response = await this.app.apiRequest(
-					'firmwareAutoUpdateOTW',
+					'firmwareUpdateOTW',
 					[update],
 				)
 
