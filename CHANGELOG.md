@@ -1,5 +1,18 @@
 
 
+# [10.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.1...v10.6.0) (2025-05-28)
+
+
+### Bug Fixes
+
+* **discovery:** set unit_of_measurement to null for power_factor meter ([f6b55ae](https://github.com/zwave-js/zwave-js-ui/commit/f6b55ae9b5936fdc7ce34b6c0b15433be519dc9b)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+
+
+### Features
+
+* bump zwave-js@15.5.0 ([#4244](https://github.com/zwave-js/zwave-js-ui/issues/4244)) ([5767c35](https://github.com/zwave-js/zwave-js-ui/commit/5767c351ef97efb7e5e1db533c25784019368517))
+* bump zwave-js@15.6.0 ([#4248](https://github.com/zwave-js/zwave-js-ui/issues/4248)) ([2ebc153](https://github.com/zwave-js/zwave-js-ui/commit/2ebc15380115d3a50c3a6f0f91a25656ad246a28))
+
 ## [10.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.0...v10.5.1) (2025-05-15)
 
 
