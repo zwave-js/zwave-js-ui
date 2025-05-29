@@ -1,5 +1,12 @@
 
 
+## [10.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.0...v10.6.1) (2025-05-29)
+
+
+### Features
+
+* add support for `disableOptimisticValueUpdate` driver option ([081ed29](https://github.com/zwave-js/zwave-js-ui/commit/081ed2977827b6fe19c5140d24c9aacf35b18cfc)), closes [#4247](https://github.com/zwave-js/zwave-js-ui/issues/4247)
+
 # [10.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.1...v10.6.0) (2025-05-28)
 
 
