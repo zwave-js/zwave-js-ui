@@ -613,6 +613,7 @@ export type ZwaveConfig = {
 	sendToSleepTimeout?: number
 	responseTimeout?: number
 	enableStatistics?: boolean
+	disableOptimisticValueUpdate?: boolean
 	disclaimerVersion?: number
 	options?: ZWaveOptions
 	// healNetwork?: boolean
@@ -2192,6 +2193,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			userAgent: {
 				[utils.pkgJson.name]: utils.pkgJson.version,
 			},
+			disableOptimisticValueUpdate: this.cfg.disableOptimisticValueUpdate,
 		}
 
 		// when no env is specified copy config db to store dir
