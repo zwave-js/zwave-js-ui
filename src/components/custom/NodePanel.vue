@@ -399,8 +399,9 @@ import {
 	protocolDataRateToString,
 	isRssiError,
 	rssiToString,
-} from 'zwave-js/safe'
-import { Protocols, zwaveDataRateToString } from '@zwave-js/core/safe'
+	Protocols,
+	zwaveDataRateToString,
+} from '@zwave-js/core'
 import draggable from 'vuedraggable'
 
 import { Routes } from '../../router/index.js'

@@ -132,8 +132,9 @@ import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
 import { socketEvents } from './SocketEvents'
 import { isUint8Array } from 'util/types'
 import { PkgFsBindings } from './PkgFsBindings'
+import { join } from 'path'
 
-export const deviceConfigPriorityDir = storeDir + '/config'
+export const deviceConfigPriorityDir = join(storeDir, 'config')
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -617,6 +618,7 @@ export type ZwaveConfig = {
 	sendToSleepTimeout?: number
 	responseTimeout?: number
 	enableStatistics?: boolean
+	disableOptimisticValueUpdate?: boolean
 	disclaimerVersion?: number
 	options?: ZWaveOptions
 	// healNetwork?: boolean
@@ -751,7 +753,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 	private _inclusionState: InclusionState = undefined
 
-	private _controllerListenersAdded: boolean = false
 	public get driverReady() {
 		return this.driver && this._driverReady && !this.closed
 	}
@@ -956,6 +957,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// discard the old function and store the new one
 			entry.fn = fn
+		}
+	}
+
+	private clearThrottle(key: string) {
+		const entry = this.throttledFunctions.get(key)
+		if (entry) {
+			if (entry.timeout) {
+				clearTimeout(entry.timeout)
+			}
+			this.throttledFunctions.delete(key)
 		}
 	}
 
@@ -1183,7 +1194,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this._driver) {
 			await this._driver.destroy()
 			this._driver = null
-			this._controllerListenersAdded = false
 		}
 
 		if (!keepListeners) {
@@ -2188,6 +2198,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			userAgent: {
 				[utils.pkgJson.name]: utils.pkgJson.version,
 			},
+			disableOptimisticValueUpdate: this.cfg.disableOptimisticValueUpdate,
 		}
 
 		// when no env is specified copy config db to store dir
@@ -2289,7 +2300,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
 			this._driver = new Driver(this.cfg.port, zwaveOptions)
-			this._controllerListenersAdded = false
 			this._driver.on('error', this._onDriverError.bind(this))
 			this._driver.on('driver ready', this._onDriverReady.bind(this))
 			this._driver.on('all nodes ready', this._onScanComplete.bind(this))
@@ -3225,7 +3235,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				await this._driver.controller.setMaxLongRangePowerlevel(
 					powerlevel,
 				)
-			await this.updateControllerNodeProps(null, ['RFRegion'])
+			await this.updateControllerNodeProps(null, [
+				'maxLongRangePowerlevel',
+			])
 			return result
 		}
 
@@ -4460,51 +4472,33 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				/* ignore */
 			})
 
-			if (!this._controllerListenersAdded) {
-				this._controllerListenersAdded = true
-				this.driver.controller
-					.on(
-						'inclusion started',
-						this._onInclusionStarted.bind(this),
-					)
-					.on(
-						'exclusion started',
-						this._onExclusionStarted.bind(this),
-					)
-					.on(
-						'inclusion stopped',
-						this._onInclusionStopped.bind(this),
-					)
-					.on(
-						'exclusion stopped',
-						this._onExclusionStopped.bind(this),
-					)
-					.on(
-						'inclusion state changed',
-						this._onInclusionStateChanged.bind(this),
-					)
-					.on('inclusion failed', this._onInclusionFailed.bind(this))
-					.on('exclusion failed', this._onExclusionFailed.bind(this))
-					.on('node found', this._onNodeFound.bind(this))
-					.on('node added', this._onNodeAdded.bind(this))
-					.on('node removed', this._onNodeRemoved.bind(this))
-					.on(
-						'rebuild routes progress',
-						this._onRebuildRoutesProgress.bind(this),
-					)
-					.on(
-						'rebuild routes done',
-						this._onRebuildRoutesDone.bind(this),
-					)
-					.on(
-						'statistics updated',
-						this._onControllerStatisticsUpdated.bind(this),
-					)
-					.on(
-						'status changed',
-						this._onControllerStatusChanged.bind(this),
-					)
-			}
+			this.driver.controller
+				.on('inclusion started', this._onInclusionStarted.bind(this))
+				.on('exclusion started', this._onExclusionStarted.bind(this))
+				.on('inclusion stopped', this._onInclusionStopped.bind(this))
+				.on('exclusion stopped', this._onExclusionStopped.bind(this))
+				.on(
+					'inclusion state changed',
+					this._onInclusionStateChanged.bind(this),
+				)
+				.on('inclusion failed', this._onInclusionFailed.bind(this))
+				.on('exclusion failed', this._onExclusionFailed.bind(this))
+				.on('node found', this._onNodeFound.bind(this))
+				.on('node added', this._onNodeAdded.bind(this))
+				.on('node removed', this._onNodeRemoved.bind(this))
+				.on(
+					'rebuild routes progress',
+					this._onRebuildRoutesProgress.bind(this),
+				)
+				.on('rebuild routes done', this._onRebuildRoutesDone.bind(this))
+				.on(
+					'statistics updated',
+					this._onControllerStatisticsUpdated.bind(this),
+				)
+				.on(
+					'status changed',
+					this._onControllerStatusChanged.bind(this),
+				)
 		} catch (error) {
 			// Fixes freak error in "driver ready" handler #1309
 			logger.error(error.message)
@@ -4578,58 +4572,38 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onOTWFirmwareUpdateProgress(progress: OTWFirmwareUpdateProgress) {
-		const nodeId = this.driver.controller.ownNodeId
-		const node = this.nodes.get(nodeId)
-		if (node) {
-			node.firmwareUpdate = {
-				sentFragments: progress.sentFragments,
-				totalFragments: progress.totalFragments,
-				progress: progress.progress,
-				currentFile: node.firmwareUpdate?.currentFile ?? 1,
-				totalFiles: node.firmwareUpdate?.currentFile ?? 1,
-			}
-
-			// send at most 4msg per second
-			this.throttle(
-				this._onOTWFirmwareUpdateProgress.name,
-				this.emitNodeUpdate.bind(this, node, {
-					firmwareUpdate: node.firmwareUpdate,
-				} as utils.DeepPartial<ZUINode>),
-				250,
-			)
-		}
+		this.throttle(
+			this._onOTWFirmwareUpdateProgress.name,
+			this.sendToSocket.bind(this, socketEvents.otwFirmwareUpdate, {
+				progress,
+			}),
+			250,
+		)
 
 		this.emit(
 			'event',
-			EventSource.CONTROLLER,
+			EventSource.DRIVER,
 			'controller firmware update progress',
-			this.zwaveNodeToJSON(this.driver.controller.nodes.get(nodeId)),
 			progress,
 		)
 	}
 
 	private _onOTWFirmwareUpdateFinished(result: OTWFirmwareUpdateResult) {
-		const nodeId = this.driver.controller.ownNodeId
-		const node = this.nodes.get(nodeId)
-		const zwaveNode = this.driver.controller.nodes.get(nodeId)
+		// prevent progress event to come after finish
+		this.clearThrottle(this._onOTWFirmwareUpdateProgress.name)
 
-		if (node) {
-			node.firmwareUpdate = undefined
-
-			this.emitNodeUpdate(node, {
-				firmwareUpdate: false,
-				firmwareUpdateResult: {
-					success: result.success,
-					status: getEnumMemberName(
-						OTWFirmwareUpdateStatus,
-						result.status,
-					),
-				},
-			} as any)
-		}
+		this.sendToSocket(socketEvents.otwFirmwareUpdate, {
+			result: {
+				success: result.success,
+				status: getEnumMemberName(
+					OTWFirmwareUpdateStatus,
+					result.status,
+				),
+			},
+		})
 
 		logger.info(
-			`Controller ${zwaveNode.id} firmware update OTW finished ${
+			`Controller firmware update OTW finished ${
 				result.success ? 'successfully' : 'with error'
 			}.\n   Status: ${getEnumMemberName(
 				OTWFirmwareUpdateStatus,
@@ -4639,9 +4613,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this.emit(
 			'event',
-			EventSource.CONTROLLER,
+			EventSource.DRIVER,
 			'controller firmware update finished',
-			this.zwaveNodeToJSON(zwaveNode),
 			result,
 		)
 	}
@@ -5926,6 +5899,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (node) {
 				node.firmwareUpdate = undefined
 
+				this.clearThrottle(
+					this._onNodeFirmwareUpdateProgress.name + '_' + node.id,
+				)
+
 				this.emitNodeUpdate(node, {
 					firmwareUpdate: false,
 				} as any)
@@ -6809,6 +6786,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					values[this._getValueID(value)] = value
 				}
 				node.values = values
+				node.inited = false // so nodeInited event is triggered
+				node.hassDevices = {}
 				this._nodes.set(node.id, node)
 				this.emitNodeUpdate(node)
 			}

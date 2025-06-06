@@ -1028,6 +1028,18 @@
 												Misc settings
 											</v-subheader>
 										</v-col>
+
+										<v-col cols="12" sm="6">
+											<v-switch
+												hint="Some SET-type commands optimistically update the current value to match the target value when the device acknowledges the command. While this generally makes UIs feel more responsive, it is not necessary for devices which report their status on their own and can lead to confusing behavior when dealing with slow devices like blinds."
+												persistent-hint
+												label="Disable optimistic value updates"
+												v-model="
+													newZwave.disableOptimisticValueUpdate
+												"
+											></v-switch>
+										</v-col>
+
 										<v-col cols="12" sm="6">
 											<v-switch
 												hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"

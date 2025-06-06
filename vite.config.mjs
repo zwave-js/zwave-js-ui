@@ -39,9 +39,12 @@ export default defineConfig(({ mode }) => {
 		plugins: [
 			vue2(),
 			VitePWA({
-				registerType: 'autoUpdate',
+				// do not reload application automatically but show a popup to user
+				registerType: 'prompt',
+				// when using inject manifes you can provide your own service worker
 				strategies: 'injectManifest',
-				injectRegister: 'auto',
+				// register service worker manually
+				injectRegister: false,
 				// https://vite-pwa-org.netlify.app/guide/inject-manifest.html#plugin-configuration-2
 				srcDir: 'src',
 				filename: 'sw.js',
@@ -51,6 +54,9 @@ export default defineConfig(({ mode }) => {
 					/* other options */
 				},
 				workbox: {
+					cleanupOutdatedCaches: true,
+					skipWaiting: true,
+					clientsClaim: true,
 					globIgnores: ['**/api/**'],
 				},
 				manifest: {
@@ -139,6 +145,7 @@ export default defineConfig(({ mode }) => {
 			outDir: distFolder,
 			sourcemap: false,
 			emptyOutDir: true,
+			chunkSizeWarningLimit: 1600,
 		},
 	}
 })

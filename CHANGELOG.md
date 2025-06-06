@@ -1,5 +1,149 @@
 
 
+## [10.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.0...v10.6.1) (2025-05-29)
+
+
+### Features
+
+* add support for `disableOptimisticValueUpdate` driver option ([081ed29](https://github.com/zwave-js/zwave-js-ui/commit/081ed2977827b6fe19c5140d24c9aacf35b18cfc)), closes [#4247](https://github.com/zwave-js/zwave-js-ui/issues/4247)
+
+# [10.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.1...v10.6.0) (2025-05-28)
+
+
+### Bug Fixes
+
+* **discovery:** set unit_of_measurement to null for power_factor meter ([f6b55ae](https://github.com/zwave-js/zwave-js-ui/commit/f6b55ae9b5936fdc7ce34b6c0b15433be519dc9b)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+
+
+### Features
+
+* bump zwave-js@15.5.0 ([#4244](https://github.com/zwave-js/zwave-js-ui/issues/4244)) ([5767c35](https://github.com/zwave-js/zwave-js-ui/commit/5767c351ef97efb7e5e1db533c25784019368517))
+* bump zwave-js@15.6.0 ([#4248](https://github.com/zwave-js/zwave-js-ui/issues/4248)) ([2ebc153](https://github.com/zwave-js/zwave-js-ui/commit/2ebc15380115d3a50c3a6f0f91a25656ad246a28))
+
+## [10.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.0...v10.5.1) (2025-05-15)
+
+
+### Bug Fixes
+
+* **discovery:** override unit_of_measurement for power_factor meter discovery ([e093382](https://github.com/zwave-js/zwave-js-ui/commit/e0933825aa46da637c50ff1cb8a43ca378c18909)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+* otw update and node firmware update progress hangs on finish ([#4229](https://github.com/zwave-js/zwave-js-ui/issues/4229)) ([5f36bc9](https://github.com/zwave-js/zwave-js-ui/commit/5f36bc95d63d8bcb4ef6476a596313814b557527))
+
+
+### Features
+
+* bump zwave-js@15.4.2 ([#4239](https://github.com/zwave-js/zwave-js-ui/issues/4239)) ([9c1311a](https://github.com/zwave-js/zwave-js-ui/commit/9c1311ae02a7555f451e9800d435c41b26753e8f))
+
+# [10.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.2...v10.5.0) (2025-05-14)
+
+
+### Bug Fixes
+
+* **discovery:** cold/warmwhite support ([fe83a9a](https://github.com/zwave-js/zwave-js-ui/commit/fe83a9ae23165f13be8e7346e2e34f7f4a938a90)), closes [#4232](https://github.com/zwave-js/zwave-js-ui/issues/4232)
+* **discovery:** correctly set `power_factor` device class ([e4000c3](https://github.com/zwave-js/zwave-js-ui/commit/e4000c30272b8e81f77b19bace118a575f3781b8)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+* **nodes-table:** disable RF Region selection when not supported ([cf88c28](https://github.com/zwave-js/zwave-js-ui/commit/cf88c28b03e407817f29eb9e4edab60eef41da19)), closes [#4235](https://github.com/zwave-js/zwave-js-ui/issues/4235)
+* update vite-plugin-pwa to version 1.0.0 and remove service worker file ([18ba316](https://github.com/zwave-js/zwave-js-ui/commit/18ba316ea271340559f027188aba2e7bf9c988db))
+
+
+### Features
+
+* bump zwave-js@15.4.1 ([#4236](https://github.com/zwave-js/zwave-js-ui/issues/4236)) ([361f54d](https://github.com/zwave-js/zwave-js-ui/commit/361f54d512dda2578c4da15e212a0d2dd0892024))
+* implement service worker update prompt ([ef7efd0](https://github.com/zwave-js/zwave-js-ui/commit/ef7efd072fef922a3cefbf80073079888dc3a69e))
+
+## [10.4.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.1...v10.4.2) (2025-05-08)
+
+
+### Bug Fixes
+
+* bump Z-Wave JS Server to 3.0.2 ([#4227](https://github.com/zwave-js/zwave-js-ui/issues/4227)) ([f349990](https://github.com/zwave-js/zwave-js-ui/commit/f34999065997e8c418f7c404c6a7a9d8777a626e))
+
+## [10.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.0...v10.4.1) (2025-05-07)
+
+
+### Features
+
+* bump zwave-js@15.3.1 ([#4226](https://github.com/zwave-js/zwave-js-ui/issues/4226)) ([90aa1f6](https://github.com/zwave-js/zwave-js-ui/commit/90aa1f653d5c71d03672ba914d1f2a750e182aa2))
+
+# [10.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.3...v10.4.0) (2025-05-05)
+
+
+### Bug Fixes
+
+* correct serialization of Uint8Array in MQTT messages ([#4215](https://github.com/zwave-js/zwave-js-ui/issues/4215)) ([d2c182d](https://github.com/zwave-js/zwave-js-ui/commit/d2c182d7ba1317060d2936fc07689e873a790a11))
+
+
+### Features
+
+* update zwave-js to 15.3.0, always add event handlers after `driver ready` event ([#4219](https://github.com/zwave-js/zwave-js-ui/issues/4219)) ([64ae6b4](https://github.com/zwave-js/zwave-js-ui/commit/64ae6b4fd5290e592839049c5bf884bfed38d0e2))
+
+
+### Performance Improvements
+
+* eliminate usage of zwave-js's `/safe` entrypoints and reduce bundle size by 60% ([#4214](https://github.com/zwave-js/zwave-js-ui/issues/4214)) ([60d08ce](https://github.com/zwave-js/zwave-js-ui/commit/60d08cea5ea50134983105701c0cddce53b874f9))
+
+## [10.3.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.2...v10.3.3) (2025-04-26)
+
+
+### Features
+
+* bump zwave-js@15.1.3 ([#4212](https://github.com/zwave-js/zwave-js-ui/issues/4212)) ([9a8bd58](https://github.com/zwave-js/zwave-js-ui/commit/9a8bd581c1dc03f0ec603f7c3ca1f08b372bf582))
+
+## [10.3.2](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.1...v10.3.2) (2025-04-26)
+
+
+### Bug Fixes
+
+* avoid error `isAnySendDataMessage is not a function` ([#4211](https://github.com/zwave-js/zwave-js-ui/issues/4211)) ([80f87dc](https://github.com/zwave-js/zwave-js-ui/commit/80f87dc915754d60b799cff47c9d40df00c1a776))
+
+## [10.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.3.0...v10.3.1) (2025-04-24)
+
+
+### Features
+
+* bump zwave-js@15.1.0 ([#4208](https://github.com/zwave-js/zwave-js-ui/issues/4208)) ([97683f2](https://github.com/zwave-js/zwave-js-ui/commit/97683f286630616ab575a3ff21cfbdbf3e2cb610))
+
+# [10.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.2.0...v10.3.0) (2025-04-22)
+
+
+### Bug Fixes
+
+* ignore messages from non-matching Z-UI clients in MQTT handling ([0e08e3a](https://github.com/zwave-js/zwave-js-ui/commit/0e08e3a79e02656f47dc5b058ec08c02bbf6d90f)), closes [#4196](https://github.com/zwave-js/zwave-js-ui/issues/4196)
+
+
+### Features
+
+* expose values of the controller node ([#4206](https://github.com/zwave-js/zwave-js-ui/issues/4206)) ([5fd7a94](https://github.com/zwave-js/zwave-js-ui/commit/5fd7a9425d535688d2377e0a524929df4bf34758))
+
+# [10.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.5...v10.2.0) (2025-04-14)
+
+
+### Bug Fixes
+
+* refresh LR powerlevel, not region after setting LR powerlevel ([#4198](https://github.com/zwave-js/zwave-js-ui/issues/4198)) ([741878a](https://github.com/zwave-js/zwave-js-ui/commit/741878a41dfb6763b98a2dc9f2ccd98235ccdffa))
+
+
+### Features
+
+* bump zwave-js@15.0.6 ([#4201](https://github.com/zwave-js/zwave-js-ui/issues/4201)) ([9df8b19](https://github.com/zwave-js/zwave-js-ui/commit/9df8b1916a7bcc7c61fbd6a372155e6f035ccf13))
+
+## [10.1.5](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.4...v10.1.5) (2025-04-07)
+
+
+### Bug Fixes
+
+* config path resolution inside pkg on Windows ([#4190](https://github.com/zwave-js/zwave-js-ui/issues/4190)) ([8a8847a](https://github.com/zwave-js/zwave-js-ui/commit/8a8847a43c56b4a94bb39ac0b6583e2e27b06c0f))
+
+
+### Features
+
+* bump zwave-js@15.0.5 ([#4191](https://github.com/zwave-js/zwave-js-ui/issues/4191)) ([7e351fe](https://github.com/zwave-js/zwave-js-ui/commit/7e351fe0bffb58d994571486c97402a40325e9a6))
+
+## [10.1.4](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.3...v10.1.4) (2025-04-02)
+
+
+### Features
+
+* bump zwave-js@15.0.4 ([#4185](https://github.com/zwave-js/zwave-js-ui/issues/4185)) ([90faddc](https://github.com/zwave-js/zwave-js-ui/commit/90faddc2a617ff7c77f578527a1d4481604b6aa3))
+
 ## [10.1.3](https://github.com/zwave-js/zwave-js-ui/compare/v10.1.2...v10.1.3) (2025-03-27)
 
 

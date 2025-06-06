@@ -411,13 +411,13 @@
 
 <script>
 import { copy } from '@/lib/utils'
-import { getEnumMemberName } from 'zwave-js/safe'
-import { Powerlevel } from '@zwave-js/cc/safe'
+import { getEnumMemberName } from '@zwave-js/shared'
+import { Powerlevel } from '@zwave-js/cc'
 import { mapActions, mapState } from 'pinia'
+import { Protocols } from '@zwave-js/core'
 
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { Protocols } from '@zwave-js/core/safe'
 
 export default {
 	components: {},

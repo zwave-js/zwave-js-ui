@@ -41,6 +41,13 @@
 						label="RF Region"
 						:items="node.rfRegions"
 						v-model="node.RFRegion"
+						:disabled="node.RFRegion === undefined"
+						:hint="
+							node.RFRegion === undefined
+								? 'Not supported by your controller'
+								: ''
+						"
+						persistent-hint
 					>
 						<template v-slot:append-outer>
 							<v-btn
@@ -171,11 +178,14 @@
 			</v-col>
 		</template>
 
-		<div v-if="!node.isControllerNode">
-			<v-subheader class="title" style="padding: 0"
+		<div>
+			<v-subheader
+				class="title"
+				style="padding: 0"
+				v-if="!node.isControllerNode"
 				>Send Options</v-subheader
 			>
-			<v-row class="mt-0">
+			<v-row class="mt-0" v-if="!node.isControllerNode">
 				<v-col
 					cols="12"
 					sm="6"
@@ -217,7 +227,7 @@
 
 			<!-- NODE VALUES -->
 
-			<v-row>
+			<v-row v-if="!node.isControllerNode || node.values.length">
 				<v-subheader class="title">Values</v-subheader>
 
 				<v-expansion-panels
@@ -283,7 +293,10 @@
 							</v-row>
 							<v-row>
 								<v-col
-									v-if="className.startsWith('Configuration')"
+									v-if="
+										className.startsWith('Configuration') &&
+										!node.isControllerNode
+									"
 									cols="12"
 									sm="6"
 									md="4"
@@ -376,10 +389,9 @@
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
-import { ConfigValueFormat } from '@zwave-js/core/safe'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { isUnsupervisedOrSucceeded } from '@zwave-js/core/safe'
+import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
 
 export default {
 	props: {

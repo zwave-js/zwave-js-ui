@@ -317,7 +317,7 @@
 	</v-container>
 </template>
 <script>
-import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core/safe'
+import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core'
 import { mapActions } from 'pinia'
 import {
 	parseSecurityClasses,
