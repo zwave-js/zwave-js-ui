@@ -11,7 +11,7 @@
 				}"
 			>
 				<v-row v-if="zniffer.enabled">
-					<v-col style="max-width: 220px; margin-top: 7px">
+					<v-col style="max-width: 270px; margin-top: 7px">
 						<v-btn-toggle dense multiple>
 							<v-tooltip
 								bottom
@@ -315,6 +315,15 @@
 			<v-icon v-else>menu</v-icon>
 		</v-btn>
 
+		<!-- Hidden file input for loading captures -->
+		<input
+			ref="fileInput"
+			type="file"
+			accept=".zlf"
+			style="display: none"
+			@change="handleFileSelect"
+		/>
+
 		<v-navigation-drawer v-model="drawer" absolute right style="z-index: 2">
 			<v-card class="fill">
 				<v-card-title> Settings </v-card-title>
@@ -440,6 +449,14 @@ export default {
 					tooltip: 'Clear Zniffer',
 					action: this.clearFrames,
 					disabled: !this.frames.length,
+				},
+				{
+					id: 'load',
+					icon: 'folder_open',
+					color: 'info',
+					tooltip: 'Load capture from file',
+					action: this.loadCapture,
+					disabled: false,
 				},
 				{
 					id: 'save',
@@ -1024,6 +1041,68 @@ export default {
 					'success',
 				)
 			}
+		},
+		loadCapture() {
+			// Trigger file dialog
+			this.$refs.fileInput.click()
+		},
+		async handleFileSelect(event) {
+			const file = event.target.files[0]
+			if (!file) return
+
+			try {
+				await this.uploadAndLoadCapture(file)
+			} catch (error) {
+				this.showSnackbar(
+					`Error loading capture: ${error.message}`,
+					'error',
+				)
+			} finally {
+				// Reset file input
+				event.target.value = ''
+			}
+		},
+		uploadAndLoadCapture(file) {
+			return new Promise((resolve, reject) => {
+				const reader = new FileReader()
+
+				reader.onload = async (e) => {
+					try {
+						const byteArray = new Uint8Array(e.target.result)
+
+						const response = await this.sendAction(
+							{
+								apiName: 'loadCaptureFromBuffer',
+								buffer: Array.from(byteArray),
+							},
+							{
+								hideInfo: true,
+							},
+						)
+
+						if (response.success) {
+							// Refresh frames to show loaded data
+							await this.getFrames()
+							resolve(response)
+						} else {
+							reject(
+								new Error(
+									response.message ||
+										'Failed to load capture',
+								),
+							)
+						}
+					} catch (error) {
+						reject(error)
+					}
+				}
+
+				reader.onerror = () => {
+					reject(new Error('Failed to read file'))
+				}
+
+				reader.readAsArrayBuffer(file)
+			})
 		},
 	},
 }

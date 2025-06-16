@@ -758,6 +758,11 @@ function setupSocket(server: HttpServer) {
 					case 'saveCaptureToFile':
 						res = await zniffer.saveCaptureToFile()
 						break
+					case 'loadCaptureFromBuffer': {
+						const buffer = Buffer.from(data.buffer)
+						res = zniffer.loadCaptureFromBuffer(buffer)
+						break
+					}
 					default:
 						throw new Error(`Unknown ZNIFFER api ${data.apiName}`)
 				}
