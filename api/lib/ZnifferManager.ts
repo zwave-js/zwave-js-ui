@@ -308,6 +308,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 		logger.info('Frames cleared')
 	}
+
 	public loadCaptureFromBuffer(buffer: Buffer) {
 		this.checkReady()
 
@@ -320,7 +321,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		} catch (error) {
 			logger.error('Error loading capture:', error)
 			return {
-				error: `Failed to load capture: ${error.message}`,
+				error: `Failed to load capture: ${(error as Error).message}`,
 			}
 		}
 	}

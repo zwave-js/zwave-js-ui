@@ -768,7 +768,7 @@ function setupSocket(server: HttpServer) {
 				}
 			} catch (error) {
 				logger.error('Error while calling ZNIFFER api', error)
-				err = error.message
+				err = (error as Error).message
 			}
 
 			const result = {

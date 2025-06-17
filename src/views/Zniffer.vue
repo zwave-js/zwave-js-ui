@@ -315,15 +315,6 @@
 			<v-icon v-else>menu</v-icon>
 		</v-btn>
 
-		<!-- Hidden file input for loading captures -->
-		<input
-			ref="fileInput"
-			type="file"
-			accept=".zlf"
-			style="display: none"
-			@change="handleFileSelect"
-		/>
-
 		<v-navigation-drawer v-model="drawer" absolute right style="z-index: 2">
 			<v-card class="fill">
 				<v-card-title> Settings </v-card-title>
@@ -395,6 +386,7 @@ import { socketEvents } from '@server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 import {
 	znifferRegions as defaultZnifferRegions,
 	znifferLRChannelConfigs as defaultZnifferLRChannelConfigs,
@@ -412,6 +404,7 @@ import {
 
 export default {
 	name: 'Zniffer',
+	mixins: [InstancesMixin],
 	props: {
 		socket: Object,
 	},
@@ -1042,67 +1035,36 @@ export default {
 				)
 			}
 		},
-		loadCapture() {
-			// Trigger file dialog
-			this.$refs.fileInput.click()
-		},
-		async handleFileSelect(event) {
-			const file = event.target.files[0]
-			if (!file) return
-
+		async loadCapture() {
 			try {
-				await this.uploadAndLoadCapture(file)
+				const { data: buffer } = await this.app.importFile('zlf')
+
+				if (!buffer) return // User cancelled file selection
+
+				const response = await this.sendAction(
+					{
+						apiName: 'loadCaptureFromBuffer',
+						buffer: Array.from(new Uint8Array(buffer)),
+					},
+					{
+						hideInfo: true,
+					},
+				)
+
+				if (response.success) {
+					// Refresh frames to show loaded data
+					await this.getFrames()
+				} else {
+					throw new Error(
+						response.message || 'Failed to load capture',
+					)
+				}
 			} catch (error) {
 				this.showSnackbar(
 					`Error loading capture: ${error.message}`,
 					'error',
 				)
-			} finally {
-				// Reset file input
-				event.target.value = ''
 			}
-		},
-		uploadAndLoadCapture(file) {
-			return new Promise((resolve, reject) => {
-				const reader = new FileReader()
-
-				reader.onload = async (e) => {
-					try {
-						const byteArray = new Uint8Array(e.target.result)
-
-						const response = await this.sendAction(
-							{
-								apiName: 'loadCaptureFromBuffer',
-								buffer: Array.from(byteArray),
-							},
-							{
-								hideInfo: true,
-							},
-						)
-
-						if (response.success) {
-							// Refresh frames to show loaded data
-							await this.getFrames()
-							resolve(response)
-						} else {
-							reject(
-								new Error(
-									response.message ||
-										'Failed to load capture',
-								),
-							)
-						}
-					} catch (error) {
-						reject(error)
-					}
-				}
-
-				reader.onerror = () => {
-					reject(new Error('Failed to read file'))
-				}
-
-				reader.readAsArrayBuffer(file)
-			})
 		},
 	},
 }
