@@ -309,13 +309,13 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info('Frames cleared')
 	}
 
-	public loadCaptureFromBuffer(buffer: Buffer) {
+	public async loadCaptureFromBuffer(buffer: Buffer) {
 		this.checkReady()
 
 		logger.info(`Loading capture from buffer (${buffer.length} bytes)`)
 
 		try {
-			this.zniffer.loadCaptureFromBuffer(buffer)
+			await this.zniffer.loadCaptureFromBuffer(buffer)
 
 			logger.info(`Successfully loaded capture`)
 		} catch (error) {

@@ -1037,7 +1037,7 @@ export default {
 		},
 		async loadCapture() {
 			try {
-				const { data: buffer } = await this.app.importFile('zlf')
+				const { data: buffer } = await this.app.importFile('buffer')
 
 				if (!buffer) return // User cancelled file selection
 
