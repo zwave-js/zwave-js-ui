@@ -1,5 +1,13 @@
 
 
+# [10.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.1...v10.7.0) (2025-06-18)
+
+
+### Features
+
+* bump zwave-js@15.7.0 ([#4261](https://github.com/zwave-js/zwave-js-ui/issues/4261)) ([328b1f1](https://github.com/zwave-js/zwave-js-ui/commit/328b1f131a1ce2e586fef79a08ff147fdbd05fc8))
+* load and display saved Zniffer captures ([#4260](https://github.com/zwave-js/zwave-js-ui/issues/4260)) ([9476f51](https://github.com/zwave-js/zwave-js-ui/commit/9476f51e71db31b26fdb39d4dbb710f46c174b28))
+
 ## [10.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.0...v10.6.1) (2025-05-29)
 
 
