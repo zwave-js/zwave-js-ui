@@ -1002,7 +1002,7 @@ export default {
 		async restart() {
 			const result = await this.confirm(
 				'Restart',
-				'Are you sure you want to restart the ZUI?',
+				'Are you sure you want to restart ZUI?',
 				'warning',
 				{
 					width: 400,
