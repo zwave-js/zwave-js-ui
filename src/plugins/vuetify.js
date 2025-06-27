@@ -15,14 +15,14 @@ const opts = {
 	theme: {
 		options: { customProperties: true }, // enable sass/scss variables
 		themes: {
-			dark: {
-				purple: '#BA68C8',
-				primary: '#42A5F5',
-				warning: '#FFB74D',
-				success: '#81C784',
-				error: '#EF5350',
-				info: '#42A5F5',
-			},
+			// dark: {
+			// 	purple: '#BA68C8',
+			// 	primary: '#42A5F5',
+			// 	warning: '#FFB74D',
+			// 	success: '#81C784',
+			// 	error: '#EF5350',
+			// 	info: '#42A5F5',
+			// },
 		},
 	},
 }
