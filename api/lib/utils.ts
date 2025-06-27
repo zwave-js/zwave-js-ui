@@ -284,7 +284,7 @@ export function bufferFromHex(hex: string): Buffer {
  */
 export function buffer2hex(buffer: Uint8Array): string {
 	if (buffer.length === 0) return ''
-	return `0x${Buffer.from(buffer.buffer).toString('hex')}`
+	return `0x${Buffer.from(buffer).toString('hex')}`
 }
 
 export function allSettled(promises: Promise<any>[]): Promise<any> {

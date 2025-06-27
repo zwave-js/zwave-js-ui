@@ -55,6 +55,7 @@ const useBaseStore = defineStore('base', {
 			serverEnabled: false,
 			serverServiceDiscoveryDisabled: false,
 			enableSoftReset: true,
+			disableOptimisticValueUpdate: false,
 			enableStatistics: undefined, // keep it undefined so the user dialog will show up
 			serverPort: 3000,
 			serverHost: undefined,

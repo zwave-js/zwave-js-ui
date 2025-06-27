@@ -613,6 +613,7 @@ export type ZwaveConfig = {
 	sendToSleepTimeout?: number
 	responseTimeout?: number
 	enableStatistics?: boolean
+	disableOptimisticValueUpdate?: boolean
 	disclaimerVersion?: number
 	options?: ZWaveOptions
 	// healNetwork?: boolean
@@ -951,6 +952,16 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 			// discard the old function and store the new one
 			entry.fn = fn
+		}
+	}
+
+	private clearThrottle(key: string) {
+		const entry = this.throttledFunctions.get(key)
+		if (entry) {
+			if (entry.timeout) {
+				clearTimeout(entry.timeout)
+			}
+			this.throttledFunctions.delete(key)
 		}
 	}
 
@@ -2182,6 +2193,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			userAgent: {
 				[utils.pkgJson.name]: utils.pkgJson.version,
 			},
+			disableOptimisticValueUpdate: this.cfg.disableOptimisticValueUpdate,
 		}
 
 		// when no env is specified copy config db to store dir
@@ -4528,6 +4540,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private _onOTWFirmwareUpdateFinished(result: OTWFirmwareUpdateResult) {
+		// prevent progress event to come after finish
+		this.clearThrottle(this._onOTWFirmwareUpdateProgress.name)
+
 		this.sendToSocket(socketEvents.otwFirmwareUpdate, {
 			result: {
 				success: result.success,
@@ -5834,6 +5849,10 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			const node = this.nodes.get(zwaveNode.id)
 			if (node) {
 				node.firmwareUpdate = undefined
+
+				this.clearThrottle(
+					this._onNodeFirmwareUpdateProgress.name + '_' + node.id,
+				)
 
 				this.emitNodeUpdate(node, {
 					firmwareUpdate: false,

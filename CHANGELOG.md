@@ -1,5 +1,46 @@
 
 
+# [10.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.1...v10.7.0) (2025-06-18)
+
+
+### Features
+
+* bump zwave-js@15.7.0 ([#4261](https://github.com/zwave-js/zwave-js-ui/issues/4261)) ([328b1f1](https://github.com/zwave-js/zwave-js-ui/commit/328b1f131a1ce2e586fef79a08ff147fdbd05fc8))
+* load and display saved Zniffer captures ([#4260](https://github.com/zwave-js/zwave-js-ui/issues/4260)) ([9476f51](https://github.com/zwave-js/zwave-js-ui/commit/9476f51e71db31b26fdb39d4dbb710f46c174b28))
+
+## [10.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.0...v10.6.1) (2025-05-29)
+
+
+### Features
+
+* add support for `disableOptimisticValueUpdate` driver option ([081ed29](https://github.com/zwave-js/zwave-js-ui/commit/081ed2977827b6fe19c5140d24c9aacf35b18cfc)), closes [#4247](https://github.com/zwave-js/zwave-js-ui/issues/4247)
+
+# [10.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.1...v10.6.0) (2025-05-28)
+
+
+### Bug Fixes
+
+* **discovery:** set unit_of_measurement to null for power_factor meter ([f6b55ae](https://github.com/zwave-js/zwave-js-ui/commit/f6b55ae9b5936fdc7ce34b6c0b15433be519dc9b)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+
+
+### Features
+
+* bump zwave-js@15.5.0 ([#4244](https://github.com/zwave-js/zwave-js-ui/issues/4244)) ([5767c35](https://github.com/zwave-js/zwave-js-ui/commit/5767c351ef97efb7e5e1db533c25784019368517))
+* bump zwave-js@15.6.0 ([#4248](https://github.com/zwave-js/zwave-js-ui/issues/4248)) ([2ebc153](https://github.com/zwave-js/zwave-js-ui/commit/2ebc15380115d3a50c3a6f0f91a25656ad246a28))
+
+## [10.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v10.5.0...v10.5.1) (2025-05-15)
+
+
+### Bug Fixes
+
+* **discovery:** override unit_of_measurement for power_factor meter discovery ([e093382](https://github.com/zwave-js/zwave-js-ui/commit/e0933825aa46da637c50ff1cb8a43ca378c18909)), closes [#4220](https://github.com/zwave-js/zwave-js-ui/issues/4220)
+* otw update and node firmware update progress hangs on finish ([#4229](https://github.com/zwave-js/zwave-js-ui/issues/4229)) ([5f36bc9](https://github.com/zwave-js/zwave-js-ui/commit/5f36bc95d63d8bcb4ef6476a596313814b557527))
+
+
+### Features
+
+* bump zwave-js@15.4.2 ([#4239](https://github.com/zwave-js/zwave-js-ui/issues/4239)) ([9c1311a](https://github.com/zwave-js/zwave-js-ui/commit/9c1311ae02a7555f451e9800d435c41b26753e8f))
+
 # [10.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.4.2...v10.5.0) (2025-05-14)
 
 
