@@ -48,13 +48,11 @@
 			class="elevation-1"
 		>
 			<template v-slot:top>
-				<v-btn color="red darken-1" text @click="removeScene"
-					>Delete</v-btn
-				>
-				<v-btn color="green darken-1" text @click="activateScene"
+				<v-btn color="error" text @click="removeScene">Delete</v-btn>
+				<v-btn color="success" text @click="activateScene"
 					>Activate</v-btn
 				>
-				<v-btn color="blue darken-1" text @click="dialogValue = true"
+				<v-btn color="primary" text @click="dialogValue = true"
 					>New Value</v-btn
 				>
 			</template>
@@ -73,12 +71,12 @@
 					<td>
 						<v-icon
 							small
-							color="green"
+							color="success"
 							class="mr-2"
 							@click="editItem(item)"
 							>edit</v-icon
 						>
-						<v-icon small color="red" @click="deleteItem(item)"
+						<v-icon small color="error" @click="deleteItem(item)"
 							>delete</v-icon
 						>
 					</td>

@@ -7,7 +7,7 @@
 						:disabled="loading"
 						outlined
 						class="my-auto"
-						color="green"
+						color="success"
 						@click="checkUpdates"
 						>Check updates</v-btn
 					>

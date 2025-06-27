@@ -225,7 +225,7 @@
 						:color="
 							value.newValue === true && !value.list
 								? 'white'
-								: 'green'
+								: 'success'
 						"
 						dark
 						@click="updateValue(value, true)"
@@ -235,7 +235,7 @@
 							:color="
 								value.newValue === true && !value.list
 									? 'white'
-									: 'green'
+									: 'success'
 							"
 							style="rotate: 90deg"
 							>horizontal_rule</v-icon
@@ -255,7 +255,7 @@
 						:color="
 							value.newValue === false && !value.list
 								? 'white'
-								: 'red'
+								: 'error'
 						"
 						@click="updateValue(value, false)"
 						dark
@@ -265,7 +265,7 @@
 							:color="
 								value.newValue === false && !value.list
 									? 'white'
-									: 'red'
+									: 'error'
 							"
 							>radio_button_unchecked</v-icon
 						>
