@@ -54,7 +54,7 @@
 					</v-btn>
 					<v-btn
 						dark
-						color="green"
+						color="success"
 						depressed
 						@click="advancedShowDialog = true"
 					>
@@ -430,6 +430,7 @@ export default {
 								},
 							],
 							icon: 'update',
+							color: 'error',
 							desc: 'Start/Stop a firmware update',
 						},
 						{
@@ -467,6 +468,7 @@ export default {
 									action: 'replaceFailedNode',
 								},
 							],
+							color: 'error',
 							icon: 'dangerous',
 							desc: 'Manage nodes that are dead and/or marked as failed with the controller',
 						},
@@ -486,6 +488,7 @@ export default {
 						},
 					],
 					icon: 'healing',
+					color: 'warning',
 					desc: 'Discover and assign new routes from node to the controller and other nodes.',
 				})
 			}
@@ -496,6 +499,7 @@ export default {
 						{
 							name: 'Clear',
 							action: 'removeAllAssociations',
+							color: 'error',
 							args: {
 								confirm:
 									"This action will remove all associations of this node. This will also clear lifeline association with controller node, the node won't report state changes until that is set up again",
@@ -576,6 +580,7 @@ export default {
 						},
 					],
 					icon: 'link_off',
+					color: 'error',
 					desc: 'Clear all node associations / Remove node from all associations',
 				},
 				...CCActions,

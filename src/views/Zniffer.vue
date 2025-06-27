@@ -11,7 +11,7 @@
 				}"
 			>
 				<v-row v-if="zniffer.enabled">
-					<v-col style="max-width: 220px; margin-top: 7px">
+					<v-col style="max-width: 270px; margin-top: 7px">
 						<v-btn-toggle dense multiple>
 							<v-tooltip
 								bottom
@@ -386,6 +386,7 @@ import { socketEvents } from '@server/lib/SocketEvents'
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { inboundEvents as socketActions } from '@server/lib/SocketEvents'
+import InstancesMixin from '../mixins/InstancesMixin.js'
 import {
 	znifferRegions as defaultZnifferRegions,
 	znifferLRChannelConfigs as defaultZnifferLRChannelConfigs,
@@ -403,6 +404,7 @@ import {
 
 export default {
 	name: 'Zniffer',
+	mixins: [InstancesMixin],
 	props: {
 		socket: Object,
 	},
@@ -423,7 +425,7 @@ export default {
 					color: 'success',
 					tooltip: 'Start Zniffer',
 					action: this.startZniffer,
-					disabled: this.znifferState?.started,
+					disabled: this.viewState === 'recording',
 				},
 				{
 					id: 'stop',
@@ -431,7 +433,7 @@ export default {
 					color: 'error',
 					tooltip: 'Stop Zniffer',
 					action: this.stopZniffer,
-					disabled: !this.znifferState?.started,
+					disabled: this.viewState !== 'recording',
 				},
 				{
 					id: 'clear',
@@ -439,7 +441,16 @@ export default {
 					color: 'warning',
 					tooltip: 'Clear Zniffer',
 					action: this.clearFrames,
-					disabled: !this.frames.length,
+					disabled:
+						this.frames.length === 0 || this.viewState === 'loaded',
+				},
+				{
+					id: 'load',
+					icon: 'folder_open',
+					color: 'info',
+					tooltip: 'Load capture from file',
+					action: this.loadCapture,
+					disabled: this.viewState === 'recording',
 				},
 				{
 					id: 'save',
@@ -447,7 +458,8 @@ export default {
 					color: 'primary',
 					tooltip: 'Save capture',
 					action: this.createCapture,
-					disabled: !this.frames.length,
+					disabled:
+						this.frames.length === 0 || this.viewState === 'loaded',
 				},
 			]
 		},
@@ -474,6 +486,12 @@ export default {
 		},
 		znifferState() {
 			this.clearZnifferConfiguration()
+			// Sync the view state with the zniffer state
+			if (this.znifferState?.started && this.viewState !== 'recording') {
+				this.viewState = 'recording'
+			} else if (this.viewState === 'recording') {
+				this.viewState = 'stopped'
+			}
 		},
 		frequencySuccess(v) {
 			if (v) {
@@ -511,6 +529,16 @@ export default {
 		frames() {
 			this.filterFrames(this.search)
 			this.scrollBottom()
+
+			if (this.viewState === 'initial' && this.frames.length > 0) {
+				// If we were in initial state and suddenly have frames,
+				// the Zniffer might be active
+				if (this.znifferState?.started) {
+					this.viewState = 'recording'
+				} else {
+					this.viewState = 'stopped'
+				}
+			}
 		},
 	},
 	mounted() {
@@ -530,6 +558,7 @@ export default {
 
 		this.onWindowResize()
 		this.clearZnifferConfiguration()
+		this.initializeViewState()
 	},
 	beforeDestroy() {
 		window.removeEventListener('resize', this.onWindowResize)
@@ -570,6 +599,7 @@ export default {
 			offsetTop: 125,
 			search: '',
 			searchError: false,
+			viewState: 'initial', // 'initial', 'recording', 'stopped', 'loaded'
 			busy: false,
 			selectedFrame: null,
 			scrollWrapper: null,
@@ -649,14 +679,31 @@ export default {
 		getProtocolIcon,
 		openInWindow,
 		humanFriendlyNumber,
+		initializeViewState() {
+			// Verify that the initial view state is set correctly
+			if (this.znifferState?.started) {
+				this.viewState = 'recording'
+			} else if (this.frames.length > 0) {
+				this.viewState = 'stopped'
+			} else {
+				this.viewState = 'initial'
+			}
+		},
 		emptyQueue() {
 			if (this.framesQueue.length > 0) {
 				this.frames.push(...this.framesQueue)
 				this.framesQueue = []
 			}
 		},
-		onConnnect() {
-			this.getFrames()
+		async onConnnect() {
+			await this.getFrames()
+
+			// Try to restore the correct initial state
+			if (this.viewState === 'initial' && this.frames.length > 0) {
+				this.viewState = this.znifferState?.started
+					? 'recording'
+					: 'stopped'
+			}
 		},
 		addFrame(data) {
 			const lastFrame =
@@ -984,11 +1031,22 @@ export default {
 			}
 		},
 		async startZniffer() {
+			// If in loaded state, confirm discarding current trace
+			if (this.viewState === 'loaded' && this.frames.length > 0) {
+				const confirmed = await this.app.confirm(
+					'Discard loaded trace',
+					'Are you sure you want to discard the currently loaded trace?',
+					'warning',
+				)
+				if (!confirmed) return
+			}
+
 			const response = await this.sendAction({
 				apiName: 'start',
 			})
 
 			if (response.success) {
+				this.viewState = 'recording'
 				this.showSnackbar(`Zniffer started`, 'success')
 			}
 		},
@@ -998,6 +1056,7 @@ export default {
 			})
 
 			if (response.success) {
+				this.viewState = 'stopped'
 				this.showSnackbar(`Zniffer stopped`, 'success')
 			}
 		},
@@ -1010,6 +1069,13 @@ export default {
 				this.showSnackbar(`Zniffer cleared`, 'success')
 				this.frames = []
 				this.framesFiltered = []
+				// If currently in stopped or loaded state, go to initial state
+				if (
+					this.viewState === 'stopped' ||
+					this.viewState === 'loaded'
+				) {
+					this.viewState = 'initial'
+				}
 			}
 		},
 		async createCapture() {
@@ -1022,6 +1088,59 @@ export default {
 				this.showSnackbar(
 					`Capture "${result.name}" created in store`,
 					'success',
+				)
+			}
+		},
+		async loadCapture() {
+			try {
+				// State-based confirmation logic
+				if (this.frames.length > 0) {
+					if (this.viewState === 'recording') {
+						const confirmed = await this.app.confirm(
+							'Stop recording',
+							'Are you sure you want to stop recording and discard the recorded frames?',
+							'warning',
+						)
+						if (!confirmed) return
+						// Stop recording first
+						await this.stopZniffer()
+					} else if (this.viewState === 'stopped') {
+						const confirmed = await this.app.confirm(
+							'Discard recorded frames',
+							'Are you sure you want to discard the recorded frames?',
+							'warning',
+						)
+						if (!confirmed) return
+					}
+				}
+
+				const { data: buffer } = await this.app.importFile('buffer')
+
+				if (!buffer) return // User cancelled file selection
+
+				const response = await this.sendAction(
+					{
+						apiName: 'loadCaptureFromBuffer',
+						buffer: Array.from(new Uint8Array(buffer)),
+					},
+					{
+						hideInfo: true,
+					},
+				)
+
+				if (response.success) {
+					// Refresh frames to show loaded data
+					this.viewState = 'loaded'
+					await this.getFrames()
+				} else {
+					throw new Error(
+						response.message || 'Failed to load capture',
+					)
+				}
+			} catch (error) {
+				this.showSnackbar(
+					`Error loading capture: ${error.message}`,
+					'error',
 				)
 			}
 		},

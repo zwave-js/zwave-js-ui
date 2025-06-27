@@ -68,7 +68,7 @@
 		<v-speed-dial bottom fab right fixed v-model="fab">
 			<template v-slot:activator>
 				<v-btn
-					:color="selected.length === 0 ? 'blue darken-2' : 'success'"
+					:color="selected.length === 0 ? 'primary' : 'success'"
 					dark
 					fab
 					hover
@@ -85,7 +85,7 @@
 						v-if="selected.length === 0"
 						dark
 						small
-						color="green"
+						color="success"
 						@click="showNodesManager()"
 						v-bind="attrs"
 						v-on="on"
@@ -234,7 +234,7 @@ export default {
 						},
 					],
 					icon: 'warning',
-					color: 'red',
+					color: 'error',
 					desc: 'Reset controller to factory defaults (all paired devices will be removed)',
 				},
 				{
@@ -301,7 +301,7 @@ export default {
 						},
 					],
 					icon: 'update',
-					color: 'red',
+					color: 'error',
 					desc: 'Perform a firmware update OTW (Over The Wire)',
 				},
 				{

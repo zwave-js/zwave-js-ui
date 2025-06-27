@@ -97,17 +97,21 @@ export default {
 					divider: true,
 					stats: {
 						...this.createStat('CAN', 'CAN'),
-						...this.createStat('NAK', 'NAK', 'red'),
-						...this.createStat('timeoutACK', 'Timeout ACK', 'red'),
+						...this.createStat('NAK', 'NAK', 'error'),
+						...this.createStat(
+							'timeoutACK',
+							'Timeout ACK',
+							'error',
+						),
 						...this.createStat(
 							'timeoutResponse',
 							'Timeout Response',
-							'red',
+							'error',
 						),
 						...this.createStat(
 							'timeoutCallback',
 							'Timeout Callback',
-							'red',
+							'error',
 						),
 					},
 					cols: 6,
@@ -121,12 +125,12 @@ export default {
 						...this.createStat(
 							'commandsDroppedTX',
 							'Dropped TX',
-							'red',
+							'error',
 						),
 						...this.createStat(
 							'commandsDroppedRX',
 							'Dropped RX',
-							'red',
+							'error',
 						),
 					},
 					cols: 3,
@@ -143,12 +147,12 @@ export default {
 						...this.createStat(
 							'messagesDroppedTX',
 							'Dropped TX',
-							'red',
+							'error',
 						),
 						...this.createStat(
 							'messagesDroppedRX',
 							'Dropped RX',
-							'red',
+							'error',
 						),
 					},
 					cols: 3,
