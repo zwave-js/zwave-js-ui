@@ -51,6 +51,9 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		currentTheme() {
+			return this.$vuetify.theme.currentTheme
+		},
 	},
 	data: function () {
 		return {
@@ -100,12 +103,12 @@ export default {
 							v.icon = mdiCheckCircle
 							v.iconStyle =
 								node.security === 'S0_Legacy'
-									? `color: ${colors.orange.base}`
-									: `color: ${colors.green.base}`
+									? `color: ${this.currentTheme.warning}`
+									: `color: ${this.currentTheme.success}`
 							v.description = node.security
 						} else if (node.isSecure === false) {
 							v.icon = mdiMinusCircle
-							v.iconStyle = `color: ${colors.red.base}`
+							v.iconStyle = `color: ${this.currentTheme.error}`
 							v.description = 'No security'
 						}
 						return v
@@ -123,12 +126,12 @@ export default {
 							},
 							true: {
 								icon: mdiCheckCircle,
-								iconStyle: `color: ${colors.green.base}`,
+								iconStyle: `color: ${this.currentTheme.success}`,
 								description: 'Beaming is supported',
 							},
 							false: {
 								icon: mdiMinusCircle,
-								iconStyle: `color: ${colors.red.base}`,
+								iconStyle: `color: ${this.currentTheme.error}`,
 								description: 'Beaming is unsupported',
 							},
 						}),
@@ -141,7 +144,7 @@ export default {
 							align: 'center',
 							icon: node.ready ? mdiMinusCircle : mdiHelpCircle,
 							iconStyle: node.ready
-								? `color: ${colors.red.base}`
+								? `color: ${this.currentTheme.error}`
 								: 'color: grey',
 							description: node.ready
 								? 'No'
@@ -149,7 +152,7 @@ export default {
 						}
 						if (node.zwavePlusVersion === undefined) return v
 						v.description = `ZWave+ version: ${node.zwavePlusVersion}`
-						v.iconStyle = `color: ${colors.green.base}`
+						v.iconStyle = `color: ${this.currentTheme.success}`
 						if (node.zwavePlusVersion === 1) {
 							v.icon = mdiNumeric1Circle
 						} else if (node.zwavePlusVersion === 2) {
@@ -169,7 +172,7 @@ export default {
 							align: 'center',
 							icon: node.ready ? mdiMinusCircle : mdiHelpCircle,
 							iconStyle: node.ready
-								? `color: ${colors.red.base}`
+								? `color: ${this.currentTheme.error}`
 								: 'color: grey',
 							description: node.ready ? 'No' : 'Unknown Protocol',
 						}
@@ -198,19 +201,19 @@ export default {
 						switch (node.status) {
 							case 'Asleep':
 								v.icon = mdiSleep
-								v.iconStyle = `color: ${colors.orange.base}`
+								v.iconStyle = `color: ${this.currentTheme.warning}`
 								break
 							case 'Awake':
 								v.icon = mdiEmoticon
-								v.iconStyle = `color: ${colors.green.base}`
+								v.iconStyle = `color: ${this.currentTheme.success}`
 								break
 							case 'Dead':
 								v.icon = mdiEmoticonDead
-								v.iconStyle = `color: ${colors.red.base}`
+								v.iconStyle = `color: ${this.currentTheme.error}`
 								break
 							case 'Alive':
 								v.icon = mdiCheckCircle
-								v.iconStyle = `color: ${colors.green.base}`
+								v.iconStyle = `color: ${this.currentTheme.success}`
 								break
 						}
 						return v
@@ -249,11 +252,11 @@ export default {
 		getRebuildRoutesIcon(status) {
 			switch (status) {
 				case 'done':
-					return { icon: 'done', color: 'green' }
+					return { icon: 'done', color: 'success' }
 				case 'failed':
-					return { icon: 'error', color: 'red' }
+					return { icon: 'error', color: 'error' }
 				case 'skipped':
-					return { icon: 'next_plan', color: 'blue' }
+					return { icon: 'next_plan', color: 'primary' }
 			}
 
 			return undefined
@@ -285,17 +288,21 @@ export default {
 		interviewStageColor(status) {
 			let map = {
 				None: 'grey',
-				ProtocolInfo: 'red',
-				NodeInfo: 'orange',
-				CommandClasses: 'orange',
-				OverwriteConfig: 'blue',
-				Complete: 'green',
+				ProtocolInfo: 'error',
+				NodeInfo: 'warning',
+				CommandClasses: 'warning',
+				OverwriteConfig: 'primary',
+				Complete: 'success',
 			}
 			return map[status] || 'grey'
 		},
 		powerRichValue(node) {
+			console.log(
+				'powerRichValue',
+				this.$vuetify.theme.currentTheme.success,
+			)
 			let level = node.minBatteryLevel
-			let iconStyle = `color: ${colors.green.base}`
+			let iconStyle = `color: ${this.$vuetify.theme.currentTheme.success}`
 			let icon = ''
 			let label = ''
 			let description = ''
@@ -307,10 +314,10 @@ export default {
 				description = getBatteryDescription(node)
 				if (level <= 10) {
 					icon = mdiBatteryAlertVariantOutline
-					iconStyle = `color: ${colors.red.base}`
+					iconStyle = `color: ${this.currentTheme.error}`
 				} else if (level <= 30) {
 					icon = mdiBattery20
-					iconStyle = `color: ${colors.orange.base}`
+					iconStyle = `color: ${this.currentTheme.warning}`
 				} else if (level <= 70) {
 					icon = mdiBattery50
 				} else if (level <= 90) {

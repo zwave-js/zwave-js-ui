@@ -5,7 +5,6 @@ import {
 	isRssiError,
 	rssiToString,
 } from '@zwave-js/core'
-import colors from 'vuetify/lib/util/colors'
 
 import { getEnumMemberName } from '@zwave-js/shared'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
@@ -206,11 +205,11 @@ export function getProtocol(node) {
 export function getProtocolColor(node) {
 	switch (node.protocol) {
 		case Protocols.ZWave:
-			return colors.blue.base
+			return 'primary'
 		case Protocols.ZWaveLongRange:
-			return colors.purple.base
+			return 'purple'
 		default:
-			return colors.grey.base
+			return 'grey'
 	}
 }
 

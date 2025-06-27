@@ -10,14 +10,14 @@
 				<template v-slot:top>
 					<v-btn
 						text
-						color="green"
+						color="success"
 						@click="dialogAssociation = true"
 						class="mb-2"
 						>Add</v-btn
 					>
 					<v-btn
 						text
-						color="red"
+						color="error"
 						@click="removeAllAssociations"
 						class="mb-2"
 						>Remove All</v-btn
@@ -57,7 +57,7 @@
 					}}
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="red" @click="removeAssociation(item)"
+					<v-icon small color="error" @click="removeAssociation(item)"
 						>delete</v-icon
 					>
 				</template>

@@ -21,10 +21,10 @@
 					style="max-height: calc(100vh - 64px); overflow-y: auto"
 				>
 					<template v-slot:prepend="{ item, open }">
-						<v-icon color="#FFC107" v-if="item.children">
+						<v-icon color="warning" v-if="item.children">
 							{{ open ? 'folder_open' : 'folder' }}
 						</v-icon>
-						<v-icon color="blue" v-else> text_snippet </v-icon>
+						<v-icon color="primary" v-else> text_snippet </v-icon>
 					</template>
 					<template v-slot:label="{ item }">
 						<span class="subtitle-2">{{ item.name }}</span>
@@ -44,7 +44,7 @@
 										@click.stop="writeFile(item.path, true)"
 									>
 										<v-list-item-icon>
-											<v-icon color="yellow"
+											<v-icon color="warning"
 												>create_new_folder</v-icon
 											>
 										</v-list-item-icon>
@@ -74,7 +74,9 @@
 										@click.stop="deleteFile(item)"
 									>
 										<v-list-item-icon>
-											<v-icon color="red">delete</v-icon>
+											<v-icon color="error"
+												>delete</v-icon
+											>
 										</v-list-item-icon>
 										<v-list-item-title
 											>Delete</v-list-item-title
@@ -85,7 +87,7 @@
 										@click.stop="uploadFile(item)"
 									>
 										<v-list-item-icon>
-											<v-icon color="orange"
+											<v-icon color="warning"
 												>upload</v-icon
 											>
 										</v-list-item-icon>
@@ -98,7 +100,7 @@
 							<!-- only show delete -->
 							<v-icon
 								v-else
-								color="red"
+								color="error"
 								@click.stop="deleteFile(item)"
 								>delete</v-icon
 							>
@@ -114,13 +116,7 @@
 				</div>
 				<v-speed-dial bottom fab right absolute v-model="fab">
 					<template v-slot:activator>
-						<v-btn
-							color="blue darken-2"
-							dark
-							fab
-							hover
-							v-model="fab"
-						>
+						<v-btn color="primary" dark fab hover v-model="fab">
 							<v-icon v-if="fab">close</v-icon>
 							<v-icon v-else>settings</v-icon>
 						</v-btn>
@@ -131,7 +127,7 @@
 								fab
 								dark
 								small
-								color="green"
+								color="success"
 								@click="restoreZip()"
 								v-bind="attrs"
 								v-on="on"
@@ -148,7 +144,7 @@
 								fab
 								dark
 								small
-								color="orange"
+								color="warining"
 								@click="uploadFile()"
 								v-bind="attrs"
 								v-on="on"
@@ -182,7 +178,7 @@
 								fab
 								dark
 								small
-								color="yellow"
+								color="warning"
 								@click="refreshTree"
 								v-bind="attrs"
 								v-on="on"
@@ -218,7 +214,7 @@
 								fab
 								dark
 								small
-								color="red"
+								color="error"
 								@click="deleteSelected"
 								v-bind="attrs"
 								v-on="on"
@@ -271,19 +267,11 @@
 					<div class="sticky-bottom pa-0" v-if="!notSupported">
 						<v-toolbar>
 							<v-spacer></v-spacer>
-							<v-btn
-								color="purple darken-1"
-								text
-								@click="writeFile"
-							>
+							<v-btn color="purple" text @click="writeFile">
 								SAVE
 								<v-icon right dark>save</v-icon>
 							</v-btn>
-							<v-btn
-								color="green darken-1"
-								text
-								@click="downloadFile"
-							>
+							<v-btn color="success" text @click="downloadFile">
 								DOWNLOAD
 								<v-icon right dark>file_download</v-icon>
 							</v-btn>

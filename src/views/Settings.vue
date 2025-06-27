@@ -194,7 +194,7 @@
 								>
 									<template v-slot:top>
 										<v-btn
-											color="blue darken-1"
+											color="primary"
 											text
 											@click="dialogValue = true"
 										>
@@ -241,14 +241,14 @@
 										<v-icon
 											small
 											class="mr-2"
-											color="green"
+											color="success"
 											@click="editItem(item)"
 										>
 											edit
 										</v-icon>
 										<v-icon
 											small
-											color="red"
+											color="error"
 											@click="deleteItem(item)"
 										>
 											delete
@@ -276,7 +276,7 @@
 								>
 									<template v-slot:top>
 										<v-btn
-											color="blue darken-1"
+											color="primary"
 											text
 											@click="editJob()"
 										>
@@ -295,7 +295,9 @@
 									>
 										<v-icon
 											:color="
-												item.enabled ? 'green' : 'red'
+												item.enabled
+													? 'success'
+													: 'error'
 											"
 										>
 											{{
@@ -310,7 +312,9 @@
 									>
 										<v-icon
 											:color="
-												item.runOnInit ? 'green' : 'red'
+												item.runOnInit
+													? 'success'
+													: 'error'
 											"
 										>
 											{{
@@ -326,14 +330,14 @@
 										<v-icon
 											small
 											class="mr-2"
-											color="green"
+											color="warning"
 											@click="editJob(item)"
 										>
 											edit
 										</v-icon>
 										<v-icon
 											small
-											color="red"
+											color="error"
 											@click="deleteJob(item)"
 										>
 											delete
@@ -1028,6 +1032,18 @@
 												Misc settings
 											</v-subheader>
 										</v-col>
+
+										<v-col cols="12" sm="6">
+											<v-switch
+												hint="Some SET-type commands optimistically update the current value to match the target value when the device acknowledges the command. While this generally makes UIs feel more responsive, it is not necessary for devices which report their status on their own and can lead to confusing behavior when dealing with slow devices like blinds."
+												persistent-hint
+												label="Disable optimistic value updates"
+												v-model="
+													newZwave.disableOptimisticValueUpdate
+												"
+											></v-switch>
+										</v-col>
+
 										<v-col cols="12" sm="6">
 											<v-switch
 												hint="Usage statistics allows us to gain insight how `zwave-js` is used, which manufacturers and devices are most prevalent and where to best focus our efforts in order to improve `zwave-js` the most. We do not store any personal information. Details can be found under https://zwave-js.github.io/node-zwave-js/#/data-collection/data-collection?id=usage-statistics"
@@ -2017,32 +2033,28 @@
 				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
-			<v-btn class="mr-2" small color="red darken-1" @click="resetConfig">
+			<v-btn class="mr-2" small color="error" @click="resetConfig">
 				Reset
 				<v-icon right dark>clear</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-2"
 				small
-				color="purple darken-1"
+				color="purple"
+				dark
 				@click="importSettings"
 			>
 				Import
 				<v-icon right dark>file_upload</v-icon>
 			</v-btn>
-			<v-btn
-				class="mr-2"
-				small
-				color="green darken-1"
-				@click="exportSettings"
-			>
+			<v-btn class="mr-2" small color="success" @click="exportSettings">
 				Export
 				<v-icon right dark>file_download</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-5"
 				small
-				color="blue darken-1"
+				color="primary"
 				type="submit"
 				:loading="saving"
 				:disabled="saving || !settingsChanged"

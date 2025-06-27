@@ -35,7 +35,7 @@
 					>
 						<v-list-item-action>
 							<v-badge
-								color="red"
+								color="error"
 								:value="item.badge"
 								:content="item.badge"
 								dot
@@ -139,7 +139,7 @@
 							dark
 							medium
 							style="cursor: default"
-							:color="statusColor || 'orange'"
+							:color="statusColor || 'warning'"
 							v-on="on"
 							>swap_horizontal_circle</v-icon
 						>
@@ -189,7 +189,7 @@
 							class="mr-3"
 							:content="updateAvailable"
 							:value="updateAvailable"
-							color="red"
+							color="error"
 							overlap
 						>
 							<v-btn small icon @click="showUpdateDialog">
@@ -595,13 +595,13 @@ export default {
 				case InclusionState.Excluding:
 					toReturn.message = 'Exclusion is active'
 					toReturn.icon = 'cancel'
-					toReturn.color = 'red'
+					toReturn.color = 'error'
 					break
 				case InclusionState.Busy:
 					toReturn.message =
 						'Waiting for inclusion/exclusion to complete...'
 					toReturn.icon = 'hourglass_bottom'
-					toReturn.color = 'yellow'
+					toReturn.color = 'warning'
 					break
 				case InclusionState.SmartStart:
 					toReturn.message = 'SmartStart inclusion is active'
@@ -799,8 +799,8 @@ export default {
 			options = options || {}
 
 			const levelMap = {
-				warning: 'orange',
-				alert: 'red',
+				warning: 'warning',
+				alert: 'error',
 			}
 
 			options.color = options.color || levelMap[level] || 'primary'
@@ -811,8 +811,8 @@ export default {
 			options = options || {}
 
 			const levelMap = {
-				warning: 'orange',
-				alert: 'red',
+				warning: 'warning',
+				alert: 'error',
 			}
 
 			options.color = options.color || levelMap[level] || 'primary'
@@ -1002,7 +1002,7 @@ export default {
 		async restart() {
 			const result = await this.confirm(
 				'Restart',
-				'Are you sure you want to restart the ZUI?',
+				'Are you sure you want to restart ZUI?',
 				'warning',
 				{
 					width: 400,
@@ -1134,7 +1134,7 @@ export default {
 			})
 
 			this.socket.on('connect', () => {
-				this.updateStatus('Connected', 'green')
+				this.updateStatus('Connected', 'success')
 				log.info('Socket connected')
 				this.socket.emit(
 					socketActions.init,
@@ -1156,7 +1156,7 @@ export default {
 
 			this.socket.on('disconnect', () => {
 				log.info('Socket disconnected')
-				this.updateStatus('Disconnected', 'red')
+				this.updateStatus('Disconnected', 'error')
 			})
 
 			this.socket.on('error', (err) => {
@@ -1164,7 +1164,7 @@ export default {
 			})
 
 			this.socket.on('reconnecting', () => {
-				this.updateStatus('Reconnecting', 'yellow')
+				this.updateStatus('Reconnecting', 'warning')
 			})
 
 			if (log.enabledFor(logger.DEBUG)) {
