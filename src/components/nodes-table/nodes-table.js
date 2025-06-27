@@ -29,6 +29,7 @@ import {
 	getProtocol,
 	getProtocolColor,
 } from '../../lib/utils.js'
+import { instances, manager } from '../../lib/instanceManager.js'
 
 export default {
 	props: {
@@ -51,8 +52,11 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		app() {
+			return manager.getInstance(instances.APP)
+		},
 		currentTheme() {
-			return this.$vuetify.theme.currentTheme
+			return this.app.currentTheme
 		},
 	},
 	data: function () {
@@ -180,7 +184,7 @@ export default {
 
 						v.icon = mdiZWave
 						v.description = getProtocol(node)
-						v.iconStyle = `color: ${getProtocolColor(node)}`
+						v.iconStyle = `color: ${getProtocolColor(node, this.currentTheme)}`
 						return v
 					},
 				},
@@ -261,7 +265,9 @@ export default {
 
 			return undefined
 		},
-		getProtocolIcon,
+		getProtocolIcon(protocol) {
+			return getProtocolIcon(protocol, this.currentTheme)
+		},
 		groupValue(group) {
 			return this.managedNodes.groupValue(group)
 		},
@@ -297,12 +303,9 @@ export default {
 			return map[status] || 'grey'
 		},
 		powerRichValue(node) {
-			console.log(
-				'powerRichValue',
-				this.$vuetify.theme.currentTheme.success,
-			)
+			console.log('powerRichValue', this.currentTheme.success)
 			let level = node.minBatteryLevel
-			let iconStyle = `color: ${this.$vuetify.theme.currentTheme.success}`
+			let iconStyle = `color: ${this.currentTheme.success}`
 			let icon = ''
 			let label = ''
 			let description = ''

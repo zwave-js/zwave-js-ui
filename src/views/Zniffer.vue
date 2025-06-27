@@ -120,10 +120,7 @@
 							<!-- add to append-outer slot the total numer of frames -->
 
 							<template v-slot:append-outer>
-								<v-col
-									style="margin-top: -7px"
-									v-if="totalFrames"
-									class="pa-0 caption grey--text text-center"
+								<v-colappaption grey--text text-center"
 								>
 									<p class="mb-0">Frames</p>
 									<p class="mb-0">
@@ -401,6 +398,7 @@ import {
 	getProtocolIcon,
 	isPopupWindow,
 } from '../lib/utils'
+import { instances, manager } from '../lib/instanceManager.js'
 
 export default {
 	name: 'Zniffer',
@@ -417,6 +415,9 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['zniffer', 'znifferState']),
+		app() {
+			return manager.getInstance(instances.APP)
+		},
 		buttons() {
 			return [
 				{
@@ -676,7 +677,6 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
-		getProtocolIcon,
 		openInWindow,
 		humanFriendlyNumber,
 		initializeViewState() {
@@ -688,6 +688,9 @@ export default {
 			} else {
 				this.viewState = 'initial'
 			}
+		},
+		getProtocolIcon(protocol) {
+			return getProtocolIcon(protocol, this.app.currentTheme)
 		},
 		emptyQueue() {
 			if (this.framesQueue.length > 0) {
