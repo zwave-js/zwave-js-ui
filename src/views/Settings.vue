@@ -33,12 +33,13 @@
 					<v-expansion-panel-content>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
-								<v-switch
-									hint="Enable dark mode"
+								<v-select
+									hint="Force dark/light mode or select color scheme automatically based on the system preference"
 									persistent-hint
-									label="Dark mode"
-									v-model="internalDarkMode"
-								></v-switch>
+									label="Color scheme"
+									:items="colorSchemes"
+									v-model="internalColorScheme"
+								></v-select>
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch
@@ -2030,7 +2031,7 @@
 			space-be
 			class="sticky-buttons py-3 px-4"
 			:style="{
-				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
+				backgroundColor: darkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
 			<v-btn class="mr-2" small color="error" @click="resetConfig">
@@ -2071,6 +2072,7 @@
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
+import { colorSchemes } from '../lib/colorScheme'
 import { wait, copy, isUndef, deepEqual } from '../lib/utils'
 import { rfRegions, znifferRegions, maxLRPowerLevels } from '../lib/items'
 import cronstrue from 'cronstrue'
@@ -2098,12 +2100,12 @@ export default {
 		},
 	},
 	computed: {
-		internalDarkMode: {
+		internalColorScheme: {
 			get() {
-				return this.darkMode
+				return this.colorScheme
 			},
 			set(value) {
-				this.setDarkMode(value)
+				this.setColorScheme(value)
 			},
 		},
 		internalNavTabs: {
@@ -2213,7 +2215,8 @@ export default {
 			'ui',
 		]),
 		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
+			colorScheme: (store) => store.ui.colorScheme,
+			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 			streamerMode: (store) => store.ui.streamerMode,
 		}),
@@ -2365,11 +2368,12 @@ export default {
 					)
 				},
 			},
+			colorSchemes,
 		}
 	},
 	methods: {
 		...mapActions(useBaseStore, [
-			'setDarkMode',
+			'setColorScheme',
 			'setNavTabs',
 			'setStreamerMode',
 			'initSettings',
@@ -2678,7 +2682,7 @@ export default {
 			this.newBackup = copy(this.backup)
 
 			if (this.prevUi) {
-				this.internalDarkMode = this.prevUi.darkMode
+				this.internalColorScheme = this.prevUi.colorScheme
 				this.internalNavTabs = this.prevUi.navTabs
 				this.internalStreamerMode = this.prevUi.streamerMode
 			} else {

@@ -56,13 +56,14 @@
 							hide-details
 							label="Remember Me"
 						></v-checkbox>
-						<v-checkbox
+						<v-select
 							prepend-icon="null"
 							hide-details
 							persistent-hint
-							label="Dark mode"
-							v-model="internalDarkMode"
-						></v-checkbox>
+							label="Color scheme"
+							:items="colorSchemes"
+							v-model="internalColorScheme"
+						></v-select>
 					</v-form>
 				</v-card-text>
 				<v-card-actions class="justify-center">
@@ -96,6 +97,7 @@
 <script>
 import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
+import { colorSchemes } from '../lib/colorScheme'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'
 
@@ -119,18 +121,19 @@ export default {
 					return !!value || 'This field is required.'
 				},
 			},
+			colorSchemes,
 		}
 	},
 	computed: {
 		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
+			colorScheme: (store) => store.ui.colorScheme,
 		}),
-		internalDarkMode: {
+		internalColorScheme: {
 			get() {
-				return this.darkMode
+				return this.colorScheme
 			},
 			set(value) {
-				this.setDarkMode(value)
+				this.setColorScheme(value)
 			},
 		},
 	},
@@ -159,6 +162,8 @@ export default {
 			} else {
 				localStorage.removeItem('user')
 			}
+
+			this.initColorScheme()
 		} else {
 			this.error = true
 			this.error_type = 'error'
@@ -166,7 +171,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['setDarkMode']),
+		...mapActions(useBaseStore, ['initColorScheme', 'setColorScheme']),
 		isLocalStorageSupported() {
 			const testKey = 'test'
 			const storage = window.localStorage
