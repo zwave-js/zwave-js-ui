@@ -40,7 +40,7 @@
 					<v-select
 						label="RF Region"
 						:items="node.rfRegions"
-						v-model="node.RFRegion"
+						v-model="selectedRFRegion"
 						:disabled="node.RFRegion === undefined"
 						:hint="
 							node.RFRegion === undefined
@@ -80,6 +80,13 @@
 						:step="0.1"
 						suffix="dBm"
 						type="number"
+						:disabled="isAutoPowerLevelEnabled"
+						:hint="
+							isAutoPowerLevelEnabled
+								? 'Automatic mode enabled in settings'
+								: ''
+						"
+						persistent-hint
 					></v-text-field>
 				</v-col>
 				<v-col cols="12" sm="6" style="max-width: 300px">
@@ -120,8 +127,18 @@
 						label="Maximum LR Power Level"
 						:items="maxLRPowerLevels"
 						v-model="node.maxLongRangePowerlevel"
+						:disabled="isAutoLRPowerLevelEnabled"
+						:hint="
+							isAutoLRPowerLevelEnabled
+								? 'Automatic mode enabled in settings'
+								: ''
+						"
+						persistent-hint
 					>
-						<template v-slot:append-outer>
+						<template
+							v-if="!isAutoLRPowerLevelEnabled"
+							v-slot:append-outer
+						>
 							<v-btn
 								color="primary"
 								small
@@ -146,7 +163,7 @@
 					</v-select>
 				</v-col>
 			</v-row>
-			<v-col style="max-width: 700px" dense>
+			<v-col v-if="showPowerWarnings" style="max-width: 700px" dense>
 				<v-alert text type="warning">
 					<strong
 						>DO NOT CHANGE THESE VALUES UNLESS YOU KNOW WHAT YOU ARE
@@ -391,7 +408,11 @@ import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
+import {
+	isUnsupervisedOrSucceeded,
+	ConfigValueFormat,
+	RFRegion,
+} from '@zwave-js/core'
 
 export default {
 	props: {
@@ -410,6 +431,7 @@ export default {
 			maxLRPowerLevels,
 			newName: this.node.name,
 			newLoc: this.node.loc,
+			selectedRFRegion: this.node.RFRegion,
 			configCCValueFormats: [
 				{
 					text: 'Signed',
@@ -429,7 +451,33 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(useBaseStore, ['mqtt']),
+		...mapState(useBaseStore, ['mqtt', 'zwave']),
+		regionSupportsAutoPowerlevel() {
+			return [
+				RFRegion.Europe,
+				RFRegion['Europe (Long Range)'],
+				RFRegion.USA,
+				RFRegion['USA (Long Range)'],
+			].includes(this.node?.RFRegion)
+		},
+		isAutoPowerLevelEnabled() {
+			return (
+				this.zwave.rf?.txPower?.powerlevel === 'auto' &&
+				this.regionSupportsAutoPowerlevel
+			)
+		},
+		isAutoLRPowerLevelEnabled() {
+			return (
+				this.zwave.rf?.maxLongRangePowerlevel === 'auto' &&
+				this.regionSupportsAutoPowerlevel
+			)
+		},
+		showPowerWarnings() {
+			// Hide warnings when auto mode is enabled for supported regions
+			return (
+				!this.isAutoPowerLevelEnabled && !this.isAutoLRPowerLevelEnabled
+			)
+		},
 		commandGroups() {
 			if (this.node) {
 				const groups = {}
@@ -652,7 +700,7 @@ export default {
 		},
 		async updateRFRegion() {
 			if (this.node) {
-				const args = [this.node.RFRegion]
+				const args = [this.selectedRFRegion]
 				const response = await this.app.apiRequest('setRFRegion', args)
 
 				if (response.success) {

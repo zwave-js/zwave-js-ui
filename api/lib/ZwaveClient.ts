@@ -627,10 +627,10 @@ export type ZwaveConfig = {
 	disableControllerRecovery?: boolean
 	rf?: {
 		region?: RFRegion
-		maxLongRangePowerlevel?: number
+		maxLongRangePowerlevel?: number | 'auto'
 		txPower?: {
-			powerlevel: number
-			measured0dBm: number
+			powerlevel: number | 'auto'
+			measured0dBm?: number
 		}
 	}
 }
@@ -2211,16 +2211,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveOptions.rf.region = region
 			}
 
-			if (typeof maxLongRangePowerlevel === 'number') {
+			if (
+				maxLongRangePowerlevel === 'auto' ||
+				typeof maxLongRangePowerlevel === 'number'
+			) {
 				zwaveOptions.rf.maxLongRangePowerlevel = maxLongRangePowerlevel
 			}
 
-			if (
-				txPower &&
-				typeof txPower.measured0dBm === 'number' &&
-				typeof txPower.powerlevel === 'number'
-			) {
-				zwaveOptions.rf.txPower = txPower
+			if (txPower) {
+				if (
+					txPower.powerlevel === 'auto' ||
+					typeof txPower.powerlevel === 'number'
+				) {
+					zwaveOptions.rf.txPower ??= {}
+					zwaveOptions.rf.txPower.powerlevel = txPower.powerlevel
+				}
+				if (typeof txPower.measured0dBm === 'number') {
+					zwaveOptions.rf.txPower ??= {}
+					zwaveOptions.rf.txPower.measured0dBm = txPower.measured0dBm
+				}
 			}
 		}
 
@@ -3173,7 +3182,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async setRFRegion(region: RFRegion): Promise<boolean> {
 		if (this.driverReady) {
 			const result = await this._driver.controller.setRFRegion(region)
-			await this.updateControllerNodeProps(null, ['RFRegion'])
+
+			// Determine which properties need updating
+			const propsToUpdate: Array<
+				'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'
+			> = ['RFRegion']
+
+			// If powerlevels are in auto mode, refresh them after region change
+			if (this.cfg.rf?.txPower?.powerlevel === 'auto') {
+				propsToUpdate.push('powerlevel')
+			}
+			if (this.cfg.rf?.maxLongRangePowerlevel === 'auto') {
+				propsToUpdate.push('maxLongRangePowerlevel')
+			}
+
+			await this.updateControllerNodeProps(null, propsToUpdate)
 			return result
 		}
 
