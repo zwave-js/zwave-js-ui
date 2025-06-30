@@ -120,7 +120,10 @@
 							<!-- add to append-outer slot the total numer of frames -->
 
 							<template v-slot:append-outer>
-								<v-colappaption grey--text text-center"
+								<v-col
+									v-if="totalFrames"
+									style="margin-top: -7px"
+									class="pa-0 caption grey--text text-center"
 								>
 									<p class="mb-0">Frames</p>
 									<p class="mb-0">
