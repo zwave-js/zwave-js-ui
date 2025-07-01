@@ -812,18 +812,31 @@
 											</v-select>
 										</v-col>
 										<v-col cols="6">
-											<v-select
-												label="Maximum LR Power Level"
+											<v-switch
+												hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
 												persistent-hint
-												hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
-												:items="maxLRPowerLevels"
-												clearable
-												v-model="
+												label="Automatic Power Level"
+												:input-value="
+													newZwave.rf.txPower
+														.powerlevel ===
+														'auto' &&
 													newZwave.rf
-														.maxLongRangePowerlevel
+														.maxLongRangePowerlevel ===
+														'auto'
 												"
-											>
-											</v-select>
+												@change="
+													(function (enabled) {
+														newZwave.rf.txPower.powerlevel =
+															enabled
+																? 'auto'
+																: undefined
+														newZwave.rf.maxLongRangePowerlevel =
+															enabled
+																? 'auto'
+																: undefined
+													})($event)
+												"
+											></v-switch>
 										</v-col>
 									</v-row>
 									<v-row class="mt-0">
@@ -838,9 +851,18 @@
 												:min="-10"
 												:max="20"
 												:step="0.1"
-												hint="Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
+												:hint="
+													newZwave.rf.txPower
+														.powerlevel === 'auto'
+														? 'Automatic mode enabled'
+														: 'Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel.'
+												"
 												suffix="dBm"
 												type="number"
+												:disabled="
+													newZwave.rf.txPower
+														.powerlevel === 'auto'
+												"
 												:rules="[validTxPower]"
 											></v-text-field>
 										</v-col>
@@ -860,6 +882,33 @@
 												type="number"
 												:rules="[validTxPower]"
 											></v-text-field>
+										</v-col>
+									</v-row>
+									<v-row class="mt-0">
+										<v-col cols="6">
+											<v-select
+												label="Maximum LR Power Level"
+												persistent-hint
+												:hint="
+													newZwave.rf
+														.maxLongRangePowerlevel ===
+													'auto'
+														? 'Automatic mode enabled'
+														: 'The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting.'
+												"
+												:items="maxLRPowerLevels"
+												clearable
+												:disabled="
+													newZwave.rf
+														.maxLongRangePowerlevel ===
+													'auto'
+												"
+												v-model="
+													newZwave.rf
+														.maxLongRangePowerlevel
+												"
+											>
+											</v-select>
 										</v-col>
 									</v-row>
 									<!-- END: RADIO CONFIGURATION -->
@@ -2385,22 +2434,25 @@ export default {
 		validTxPower() {
 			const { powerlevel, measured0dBm } = this.newZwave.rf?.txPower ?? {}
 
-			const validPower = !isUndef(powerlevel)
-			const validMeasured = !isUndef(measured0dBm)
-
-			if (validPower && (powerlevel < -10 || powerlevel > 20)) {
-				return 'Power level must be between -10 and 20'
+			// The calibration value is optional
+			if (
+				typeof measured0dBm === 'number' &&
+				(measured0dBm < -10 || measured0dBm > 10)
+			) {
+				return 'Measured @ 0dBm must be between -10 and 10'
 			}
 
-			if (validMeasured && (measured0dBm < -10 || measured0dBm > 10)) {
-				return 'Measured 0dBm must be between -10 and 10'
+			if (isUndef(powerlevel) || powerlevel === 'auto') {
+				return
 			}
 
-			return (
-				(validPower && validMeasured) ||
-				(!validPower && !validMeasured) ||
-				'Both powerlevel and measured 0 dBm must be set when using custom TX power'
-			)
+			if (
+				typeof powerlevel !== 'number' ||
+				powerlevel < -10 ||
+				powerlevel > 20
+			) {
+				return 'Powerlevel must be between -10 and 20'
+			}
 		},
 		parseCron(cron) {
 			let res
