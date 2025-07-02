@@ -202,12 +202,12 @@ export function getProtocol(node) {
 	}
 }
 
-export function getProtocolColor(node) {
+export function getProtocolColor(node, currentTheme) {
 	switch (node.protocol) {
 		case Protocols.ZWave:
-			return 'primary'
+			return currentTheme.info
 		case Protocols.ZWaveLongRange:
-			return 'purple'
+			return currentTheme.purple
 		default:
 			return 'grey'
 	}
@@ -319,7 +319,7 @@ export function isPopupWindow() {
 	return window.opener !== null && window.opener !== window
 }
 
-export function getProtocolIcon(protocol) {
+export function getProtocolIcon(protocol, currentTheme) {
 	if (typeof protocol === 'boolean') {
 		protocol = protocol ? Protocols.ZWaveLongRange : Protocols.ZWave
 	}
@@ -327,9 +327,12 @@ export function getProtocolIcon(protocol) {
 	return {
 		align: 'center',
 		icon: mdiZWave,
-		iconStyle: `color: ${getProtocolColor({
-			protocol,
-		})}`,
+		iconStyle: `color: ${getProtocolColor(
+			{
+				protocol,
+			},
+			currentTheme,
+		)}`,
 		description: getProtocol({ protocol }),
 	}
 }

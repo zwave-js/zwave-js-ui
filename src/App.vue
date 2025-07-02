@@ -612,6 +612,14 @@ export default {
 
 			return toReturn
 		},
+		currentTheme() {
+			const { isDark, themes } = this.$vuetify.theme
+			if (isDark) {
+				return themes.dark
+			} else {
+				return themes.light
+			}
+		},
 	},
 	watch: {
 		$route(value) {

@@ -437,7 +437,9 @@ export default {
 			this.showInfoTooltip = false
 		},
 		getProtocol,
-		getProtocolColor,
+		getProtocolColor(node) {
+			return getProtocolColor(node, this.app.currentTheme)
+		},
 		showNodeDialog(entity) {
 			const node = this.nodes.find((n) => n.id === entity.nodeId)
 			if (node) {
