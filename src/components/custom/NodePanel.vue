@@ -423,7 +423,7 @@ export default {
 		draggable,
 	},
 	props: {
-		value: {
+		modelValue: {
 			type: Boolean,
 			default: false,
 		},
@@ -435,6 +435,7 @@ export default {
 			type: Object,
 		},
 	},
+	emits: ['update:modelValue'],
 	data: () => ({
 		showFullscreen: false,
 		dialogHealth: false,
@@ -478,10 +479,10 @@ export default {
 		},
 		_value: {
 			get() {
-				return this.value
+				return this.modelValue
 			},
 			set(val) {
-				this.$emit('input', val)
+				this.$emit('update:modelValue', val)
 			},
 		},
 		lwr() {

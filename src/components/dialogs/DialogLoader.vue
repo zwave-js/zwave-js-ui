@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" :persistent="!ended" width="500">
+	<v-dialog v-model="localValue" :persistent="!ended" width="500">
 		<v-card>
 			<v-card-title v-if="title">
 				<span class="headline">{{ title }}</span>
@@ -8,7 +8,7 @@
 				v-if="ended"
 				icon
 				x-small
-				@click="$emit('input', false)"
+				@click="$emit('update:modelValue', false)"
 				style="position: absolute; right: 5px; top: 5px"
 			>
 				<v-icon>close</v-icon>
@@ -34,7 +34,7 @@
 <script>
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Boolean,
 			default: false,
 		},
@@ -55,7 +55,16 @@ export default {
 			default: false,
 		},
 	},
+	emits: ['update:modelValue'],
 	computed: {
+		localValue: {
+			get() {
+				return this.modelValue
+			},
+			set(value) {
+				this.$emit('update:modelValue', value)
+			},
+		},
 		ended() {
 			return this.progress === 100 || this.progress === -1
 		},
