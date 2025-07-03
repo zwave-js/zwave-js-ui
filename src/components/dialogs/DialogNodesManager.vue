@@ -21,7 +21,7 @@
 					elevation="0"
 				>
 					<v-stepper-header>
-						<template v-for="s in steps" :key="`${s.key}-step`">
+						<div v-for="s in steps" :key="`${s.key}-step`">
 							<v-stepper-step
 								:complete="currentStep > s.index"
 								:step="s.index"
@@ -35,9 +35,8 @@
 
 							<v-divider
 								v-if="s.index !== steps.length"
-								:key="s.index"
 							></v-divider>
-						</template>
+						</div>
 					</v-stepper-header>
 
 					<v-stepper-items>

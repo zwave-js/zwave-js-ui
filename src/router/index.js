@@ -1,8 +1,5 @@
-import {
-	createRouter,
-	createWebHashHistory,
-	defineAsyncComponent,
-} from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
+import { defineAsyncComponent } from 'vue'
 
 // Use defineAsyncComponent for lazy loading
 const ControlPanel = defineAsyncComponent(

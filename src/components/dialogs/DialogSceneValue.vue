@@ -1,5 +1,10 @@
 <template>
-	<v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="500px" persistent>
+	<v-dialog
+		:model-value="modelValue"
+		@update:model-value="$emit('update:modelValue', $event)"
+		max-width="500px"
+		persistent
+	>
 		<v-card>
 			<v-card-title>
 				<span class="headline">Add association</span>

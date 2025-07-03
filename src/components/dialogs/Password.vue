@@ -1,9 +1,9 @@
 <template>
 	<!-- DIALOG PASSWORD -->
-	<v-dialog 
-		:model-value="show" 
+	<v-dialog
+		:model-value="show"
 		@update:model-value="$emit('update:show', $event)"
-		@click:outside="$emit('close')" 
+		@click:outside="$emit('close')"
 		max-width="500px"
 	>
 		<v-card>

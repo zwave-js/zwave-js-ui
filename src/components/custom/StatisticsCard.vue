@@ -1,10 +1,7 @@
 <template>
 	<v-row v-if="node" class="pa-4">
-		<template v-for="(section, name) in props" :key="`section-${name}`">
-			<v-col 
-				cols="12" 
-				:sm="section.cols"
-			>
+		<div v-for="(section, name) in props" :key="`section-${name}`">
+			<v-col cols="12" :sm="section.cols">
 				<div>
 					<h1 class="text-caption text-uppercase grey--text mb-2">
 						{{ name }}
@@ -32,7 +29,7 @@
 				v-if="section.divider"
 				class="my-4"
 			/>
-		</template>
+		</div>
 	</v-row>
 </template>
 

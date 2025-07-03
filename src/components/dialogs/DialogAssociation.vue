@@ -1,5 +1,10 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog
+		:model-value="modelValue"
+		@update:model-value="$emit('update:modelValue', $event)"
+		max-width="500px"
+		persistent
+	>
 		<v-card>
 			<v-card-title>
 				<span class="headline">New Association</span>
@@ -135,10 +140,11 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	mixins: [InstancesMixin],
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		associations: Array,
 		node: Object,
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	watch: {
 		value() {
 			this.$refs.form && this.$refs.form.resetValidation()

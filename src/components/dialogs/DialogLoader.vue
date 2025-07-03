@@ -1,5 +1,10 @@
 <template>
-	<v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" :persistent="!ended" width="500">
+	<v-dialog
+		:model-value="modelValue"
+		@update:model-value="$emit('update:modelValue', $event)"
+		:persistent="!ended"
+		width="500"
+	>
 		<v-card>
 			<v-card-title v-if="title">
 				<span class="headline">{{ title }}</span>
