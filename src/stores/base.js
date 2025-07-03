@@ -141,7 +141,7 @@ const useBaseStore = defineStore('base', {
 			lrChannelConfig: false,
 		},
 		ui: {
-			darkMode: settings.load('dark', false),
+			darkMode: settings.load('dark', null), // Null = System Default
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
 			streamerMode: settings.load('streamerMode', false),
