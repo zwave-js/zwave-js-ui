@@ -238,14 +238,14 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	components: {},
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		node: Object,
 		socket: Object,
 	},
-	emits: ['close', 'save', 'input'],
+	emits: ['close', 'save', 'update:modelValue'],
 	mixins: [InstancesMixin],
 	watch: {
-		value(v) {
+		modelValue(v) {
 			this.init(v)
 		},
 	},
@@ -253,10 +253,10 @@ export default {
 		// ...mapState(useBaseStore, ['nodes']),
 		localValue: {
 			get() {
-				return this.value
+				return this.modelValue
 			},
 			set(value) {
-				this.$emit('input', value)
+				this.$emit('update:modelValue', value)
 			},
 		},
 	},

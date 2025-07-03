@@ -29,7 +29,7 @@
 <script>
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: [Array, String],
 		},
 		keyProp: {
@@ -59,13 +59,14 @@ export default {
 			default: false,
 		},
 	},
+	emits: ['update:modelValue', 'onFileSelect', 'formData'],
 	data() {
 		return {
 			filename: '',
 		}
 	},
 	watch: {
-		value(v) {
+		modelValue(v) {
 			this.filename = v
 		},
 	},
@@ -84,7 +85,7 @@ export default {
 		},
 		clearInput() {
 			this.filename = null
-			this.$emit('input', this.filename)
+			this.$emit('update:modelValue', this.filename)
 			this.$emit('onFileSelect', { files: [], key: this.keyProp })
 			this.$emit('formData', null)
 		},
@@ -108,7 +109,7 @@ export default {
 				this.filename = $event.target.value.split('\\').pop()
 			}
 
-			this.$emit('input', this.filename)
+			this.$emit('update:modelValue', this.filename)
 			this.$emit('onFileSelect', { files: files, key: this.keyProp })
 			this.$emit('formData', form)
 		},

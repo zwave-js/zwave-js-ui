@@ -117,9 +117,10 @@ import draggable from 'vuedraggable'
 export default {
 	props: {
 		input: Object,
-		value: Array,
+		modelValue: Array,
 		toggleEdit: { type: Boolean, default: true },
 	},
+	emits: ['update:modelValue'],
 	components: {
 		draggable,
 	},
@@ -131,10 +132,10 @@ export default {
 	computed: {
 		items: {
 			get() {
-				return this.value || []
+				return this.modelValue || []
 			},
 			set(val) {
-				this.$emit('input', val)
+				this.$emit('update:modelValue', val)
 			},
 		},
 	},

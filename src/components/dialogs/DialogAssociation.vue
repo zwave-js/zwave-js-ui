@@ -135,13 +135,13 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	mixins: [InstancesMixin],
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		associations: Array,
 		node: Object,
 	},
-	emits: ['close', 'save', 'input'],
+	emits: ['close', 'save', 'update:modelValue'],
 	watch: {
-		value() {
+		modelValue() {
 			this.$refs.form && this.$refs.form.resetValidation()
 			this.resetGroup()
 			this.associationError = ''
@@ -159,10 +159,10 @@ export default {
 		...mapState(useBaseStore, ['controllerNode', 'nodes']),
 		localValue: {
 			get() {
-				return this.value
+				return this.modelValue
 			},
 			set(value) {
-				this.$emit('input', value)
+				this.$emit('update:modelValue', value)
 			},
 		},
 		filteredNodes() {

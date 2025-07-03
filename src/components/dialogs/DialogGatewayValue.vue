@@ -258,16 +258,16 @@ export default {
 			import('vue-prism-editor').then((m) => m.PrismEditor),
 	},
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		gw_type: Number,
 		title: String,
 		editedValue: Object,
 		devices: Array,
 	},
-	emits: ['close', 'save', 'input'],
+	emits: ['close', 'save', 'update:modelValue'],
 	watch: {
 		// eslint-disable-next-line no-unused-vars
-		value(val) {
+		modelValue(val) {
 			this.$refs.form && this.$refs.form.resetValidation()
 			if (val) {
 				this.isNew = !this.editedValue.device
@@ -278,10 +278,10 @@ export default {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
 		localValue: {
 			get() {
-				return this.value
+				return this.modelValue
 			},
 			set(value) {
-				this.$emit('input', value)
+				this.$emit('update:modelValue', value)
 			},
 		},
 		deviceValues() {

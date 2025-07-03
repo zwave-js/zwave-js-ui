@@ -8,7 +8,7 @@
 				v-if="ended"
 				icon
 				x-small
-				@click="$emit('input', false)"
+				@click="$emit('update:modelValue', false)"
 				style="position: absolute; right: 5px; top: 5px"
 			>
 				<v-icon>close</v-icon>
@@ -34,7 +34,7 @@
 <script>
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Boolean,
 			default: false,
 		},
@@ -55,14 +55,14 @@ export default {
 			default: false,
 		},
 	},
-	emits: ['input'],
+	emits: ['update:modelValue'],
 	computed: {
 		localValue: {
 			get() {
-				return this.value
+				return this.modelValue
 			},
 			set(value) {
-				this.$emit('input', value)
+				this.$emit('update:modelValue', value)
 			},
 		},
 		ended() {
