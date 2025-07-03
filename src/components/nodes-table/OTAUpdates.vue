@@ -20,6 +20,7 @@
 					>
 					</v-checkbox>
 					<v-checkbox
+						v-if="showDowngrades !== undefined"
 						v-model="showDowngrades"
 						hide-details
 						dense
@@ -96,6 +97,7 @@
 								</v-list-item-icon>
 								<v-list-item-content>
 									<v-list-item-title
+										v-if="f.target !== undefined"
 										>Target:
 										{{ f.target }}</v-list-item-title
 									>
