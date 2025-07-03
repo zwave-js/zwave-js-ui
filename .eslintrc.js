@@ -16,7 +16,7 @@ module.exports = {
 		'plugin:prettier/recommended',
 	],
 	// required to lint *.vue files
-	plugins: ['vue', 'babel'],
+	plugins: ['vue', 'babel', 'vuetify'],
 	// add your custom rules here
 	rules: {
 		// allow async-await

@@ -1,28 +1,54 @@
 // src/plugins/vuetify.js
 
-import Vue from 'vue'
-import Vuetify from 'vuetify'
-import 'vuetify/dist/vuetify.min.css'
-import 'material-design-icons-iconfont/dist/material-design-icons.css' // Ensure you are using css-loader
+import { createVuetify } from 'vuetify'
+import 'vuetify/styles'
+import { md } from 'vuetify/iconsets/md'
+import 'material-design-icons-iconfont/dist/material-design-icons.css'
 
-Vue.use(Vuetify)
-
-/** @type { import('vuetify').UserVuetifyPreset } */
+/** @type { import('vuetify').VuetifyOptions } */
 const opts = {
 	icons: {
-		iconfont: 'md',
+		defaultSet: 'md',
+		sets: {
+			md,
+		}
 	},
 	theme: {
-		options: { customProperties: true }, // enable sass/scss variables
 		themes: {
 			dark: {
-				purple: '#BA68C8',
+				colors: {
+					purple: '#BA68C8',
+				},
 			},
 			light: {
-				purple: '#BA68C8',
+				colors: {
+					purple: '#BA68C8',
+				},
 			},
+		},
+	},
+	defaults: {
+		// Keep v2 input style with underlined variant
+		VTextField: {
+			variant: 'underlined',
+		},
+		VSelect: {
+			variant: 'underlined',
+		},
+		VTextarea: {
+			variant: 'underlined',
+		},
+		VAutocomplete: {
+			variant: 'underlined',
+		},
+		VCombobox: {
+			variant: 'underlined',
+		},
+		// Keep v2 button style with text variant as default
+		VBtn: {
+			variant: 'text',
 		},
 	},
 }
 
-export default new Vuetify(opts)
+export default createVuetify(opts)

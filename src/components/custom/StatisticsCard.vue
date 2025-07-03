@@ -1,10 +1,9 @@
 <template>
 	<v-row v-if="node" class="pa-4">
-		<template v-for="(section, name) in props">
+		<template v-for="(section, name) in props" :key="`section-content-${name}`">
 			<v-col
 				cols="12"
 				:sm="section.cols"
-				:key="`section-content-${name}`"
 			>
 				<div>
 					<h1 class="text-caption text-uppercase grey--text mb-2">

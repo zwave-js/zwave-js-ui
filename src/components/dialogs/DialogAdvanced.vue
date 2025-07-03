@@ -1,7 +1,8 @@
 <template>
 	<v-dialog
 		@keydown.esc="$emit('close')"
-		v-model="value"
+		:model-value="modelValue"
+		@update:model-value="$emit('update:modelValue', $event)"
 		persistent
 		max-width="800"
 	>
@@ -40,13 +41,14 @@
 <script>
 export default {
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		actions: Array,
 		title: {
 			type: String,
 			default: 'Advanced',
 		},
 	},
+	emits: ['close', 'update:modelValue'],
 	data() {
 		return {}
 	},

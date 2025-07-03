@@ -352,39 +352,14 @@
 			:indeterminate="loaderIndeterminate"
 		></LoaderDialog>
 
-		<v-snackbars
-			:objects.sync="messages"
-			:timeout="5000"
-			top
-			right
-			style="margin-top: 10px"
-		>
-			<template v-slot="{ message }">
-				<p
-					style="margin-bottom: 2px"
-					class="font-weight-bold"
-					v-if="message && message.title"
-				>
-					{{ message.title }}
-				</p>
-				<p
-					style="margin-bottom: 0; white-space: pre-wrap"
-					v-text="
-						typeof message === 'object' ? message.text : message
-					"
-				></p>
-			</template>
-			<template v-slot:action="{ close }">
-				<v-btn text @click="close">Close</v-btn>
-			</template>
-		</v-snackbars>
-
 		<DialogNodesManager
 			@open="nodesManagerDialog = true"
 			@close="nodesManagerDialog = false"
 			:socket="socket"
 			ref="nodesManager"
 		/>
+		
+		<VSonner />
 	</v-app>
 </template>
 
@@ -416,7 +391,8 @@ code {
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
-import VSnackbars from 'v-snackbars'
+import { toast } from 'vuetify-sonner'
+import { VSonner } from 'vuetify-sonner'
 
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm.vue'
@@ -448,9 +424,9 @@ export default {
 	components: {
 		PasswordDialog,
 		LoaderDialog,
-		VSnackbars,
 		Confirm,
 		DialogNodesManager,
+		VSonner,
 	},
 	name: 'app',
 	computed: {
@@ -652,7 +628,6 @@ export default {
 			topbar: [],
 			hideTopbar: false,
 			title: '',
-			messages: [],
 		}
 	},
 	methods: {
@@ -828,15 +803,14 @@ export default {
 			return this.$refs.confirm2.open(title, text, options)
 		},
 		showSnackbar(text, color, timeout) {
-			const message = {
-				message: text,
-				color: color || 'info',
-				timeout,
-			}
-
-			this.messages.push(message)
-
-			return message
+			const type = color === 'error' ? 'error' 
+				: color === 'success' ? 'success'
+				: color === 'warning' ? 'warning'
+				: 'info'
+			
+			return toast[type](text, {
+				duration: timeout || 5000,
+			})
 		},
 		apiRequest(
 			apiName,
