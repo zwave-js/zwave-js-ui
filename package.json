@@ -42,6 +42,7 @@
     "test:server": "mocha -r ./esbuild-register.js './test/**/*.test.ts'",
     "test:ui": "mocha -r @babel/register src/modules",
     "docs": "docsify serve ./docs",
+    "docs:generate": "node -r ./esbuild-register.js genereteDocs.ts",
     "coverage": "c8 --clean npm run test",
     "record-coverage": "c8 report --reporter=text-lcov --all --exclude='test/*' --exclude=.git --exclude=.eslintrc.js --exclude=.postcssrc.js --exclude=wallaby.js > ./coverage/lcov.info",
     "build": "npm-run-all build:*",
