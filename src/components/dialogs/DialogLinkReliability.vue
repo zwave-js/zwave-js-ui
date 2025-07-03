@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" max-width="800px" persistent>
+	<v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" max-width="800px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="headline"
@@ -238,19 +238,23 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	components: {},
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		node: Object,
 		socket: Object,
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	mixins: [InstancesMixin],
 	watch: {
 		value(v) {
 			this.init(v)
 		},
+	emits: ['close', 'save', 'update:modelValue'],
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	computed: {
 		// ...mapState(useBaseStore, ['nodes']),
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	data() {
 		return {
 			running: false,
@@ -263,6 +267,7 @@ export default {
 					text: 'Basic Set On/Off',
 					value: 0,
 				},
+	emits: ['close', 'save', 'update:modelValue'],
 			],
 			infinite: false,
 			interval: 250,
@@ -271,6 +276,7 @@ export default {
 			progress: 0,
 		}
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		exportResults() {
@@ -280,6 +286,7 @@ export default {
 				'json',
 			)
 		},
+	emits: ['close', 'save', 'update:modelValue'],
 		init(open) {
 			const wasRunning = this.running
 			this.mode = 0
@@ -301,6 +308,7 @@ export default {
 				}
 			}
 		},
+	emits: ['close', 'save', 'update:modelValue'],
 		onProgress(data) {
 			// eslint-disable-next-line no-unused-vars
 			this.statistics = data.args[0]
@@ -308,6 +316,7 @@ export default {
 				(this.statistics.rounds / this.iterations) * 100,
 			)
 		},
+	emits: ['close', 'save', 'update:modelValue'],
 		async abortLinkReliabilityCheck() {
 			const response = await this.app.apiRequest(
 				`abortLinkReliabilityCheck`,
@@ -320,6 +329,7 @@ export default {
 				this.showSnackbar('Link statistics aborted', 'success')
 			}
 		},
+	emits: ['close', 'save', 'update:modelValue'],
 		async checkLinkReliability() {
 			this.running = true
 
@@ -332,11 +342,13 @@ export default {
 						interval: this.interval,
 						rounds: this.infinite ? undefined : this.iterations,
 					},
+	emits: ['close', 'save', 'update:modelValue'],
 				],
 				{
 					infoSnack: true,
 					errorSnack: false,
 				},
+	emits: ['close', 'save', 'update:modelValue'],
 			)
 
 			this.running = false
@@ -351,9 +363,12 @@ export default {
 				)
 			}
 		},
+	emits: ['close', 'save', 'update:modelValue'],
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	beforeDestroy() {
 		this.init(false)
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 }
 </script>

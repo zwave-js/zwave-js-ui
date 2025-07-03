@@ -1,8 +1,8 @@
 <template>
 	<v-row v-if="node" class="pa-4">
-		<template v-for="(section, name) in props" :key="`section-content-${name}`">
-			<v-col
-				cols="12"
+		<template v-for="(section, name) in props" :key="`section-${name}`">
+			<v-col 
+				cols="12" 
 				:sm="section.cols"
 			>
 				<div>
@@ -28,7 +28,6 @@
 				</div>
 			</v-col>
 			<v-divider
-				:key="`section-divider-${name}`"
 				:vertical="$vuetify.breakpoint.smAndUp"
 				v-if="section.divider"
 				class="my-4"

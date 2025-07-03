@@ -358,7 +358,7 @@
 			:socket="socket"
 			ref="nodesManager"
 		/>
-		
+
 		<VSonner />
 	</v-app>
 </template>
@@ -803,11 +803,15 @@ export default {
 			return this.$refs.confirm2.open(title, text, options)
 		},
 		showSnackbar(text, color, timeout) {
-			const type = color === 'error' ? 'error' 
-				: color === 'success' ? 'success'
-				: color === 'warning' ? 'warning'
-				: 'info'
-			
+			const type =
+				color === 'error'
+					? 'error'
+					: color === 'success'
+						? 'success'
+						: color === 'warning'
+							? 'warning'
+							: 'info'
+
 			return toast[type](text, {
 				duration: timeout || 5000,
 			})

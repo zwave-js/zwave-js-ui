@@ -1,7 +1,13 @@
-import { createRouter, createWebHashHistory, defineAsyncComponent } from 'vue-router'
+import {
+	createRouter,
+	createWebHashHistory,
+	defineAsyncComponent,
+} from 'vue-router'
 
 // Use defineAsyncComponent for lazy loading
-const ControlPanel = defineAsyncComponent(() => import('@/views/ControlPanel.vue'))
+const ControlPanel = defineAsyncComponent(
+	() => import('@/views/ControlPanel.vue'),
+)
 const Settings = defineAsyncComponent(() => import('@/views/Settings.vue'))
 const Mesh = defineAsyncComponent(() => import('@/views/Mesh.vue'))
 const Store = defineAsyncComponent(() => import('@/views/Store.vue'))
@@ -10,7 +16,9 @@ const Debug = defineAsyncComponent(() => import('@/views/Debug.vue'))
 const Login = defineAsyncComponent(() => import('@/views/Login.vue'))
 const ErrorPage = defineAsyncComponent(() => import('@/views/ErrorPage.vue'))
 const SmartStart = defineAsyncComponent(() => import('@/views/SmartStart.vue'))
-const ControllerChart = defineAsyncComponent(() => import('@/views/ControllerChart.vue'))
+const ControllerChart = defineAsyncComponent(
+	() => import('@/views/ControllerChart.vue'),
+)
 const Zniffer = defineAsyncComponent(() => import('@/views/Zniffer.vue'))
 
 import ConfigApis from '../apis/ConfigApis'
@@ -129,7 +137,7 @@ const router = createRouter({
 	],
 })
 
-router.beforeEach(async (to, from) => {
+router.beforeEach(async (to) => {
 	// no matching routes found
 	if (to.matched.length === 0) {
 		return {

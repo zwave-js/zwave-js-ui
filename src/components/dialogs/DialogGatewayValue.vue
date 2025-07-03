@@ -1,5 +1,10 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog 
+		:model-value="modelValue" 
+		@update:model-value="$emit('update:modelValue', $event)"
+		max-width="500px" 
+		persistent
+	>
 		<v-card>
 			<v-card-title>
 				<span class="headline">{{ title }}</span>
@@ -258,15 +263,16 @@ export default {
 			import('vue-prism-editor').then((m) => m.PrismEditor),
 	},
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		gw_type: Number,
 		title: String,
 		editedValue: Object,
 		devices: Array,
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	watch: {
 		// eslint-disable-next-line no-unused-vars
-		value(val) {
+		modelValue(val) {
 			this.$refs.form && this.$refs.form.resetValidation()
 			if (val) {
 				this.isNew = !this.editedValue.device

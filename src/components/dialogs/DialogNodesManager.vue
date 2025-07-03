@@ -21,9 +21,8 @@
 					elevation="0"
 				>
 					<v-stepper-header>
-						<template v-for="s in steps">
+						<template v-for="s in steps" :key="`${s.key}-step`">
 							<v-stepper-step
-								:key="`${s.key}-step`"
 								:complete="currentStep > s.index"
 								:step="s.index"
 								:editable="

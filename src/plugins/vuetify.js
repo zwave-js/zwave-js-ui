@@ -11,7 +11,7 @@ const opts = {
 		defaultSet: 'md',
 		sets: {
 			md,
-		}
+		},
 	},
 	theme: {
 		themes: {

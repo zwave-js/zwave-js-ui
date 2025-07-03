@@ -1,6 +1,11 @@
 <template>
 	<!-- DIALOG PASSWORD -->
-	<v-dialog v-model="show" @click:outside="$emit('close')" max-width="500px">
+	<v-dialog 
+		:model-value="show" 
+		@update:model-value="$emit('update:show', $event)"
+		@click:outside="$emit('close')" 
+		max-width="500px"
+	>
 		<v-card>
 			<v-card-title>
 				<span class="headline">Password Change</span>
@@ -89,6 +94,7 @@ export default {
 		show: Boolean,
 		password: Object,
 	},
+	emits: ['close', 'save', 'update:show'],
 	watch: {
 		show() {
 			this.$refs.form && this.$refs.form.reset()

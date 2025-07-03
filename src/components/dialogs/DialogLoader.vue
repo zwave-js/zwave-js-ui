@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" :persistent="!ended" width="500">
+	<v-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" :persistent="!ended" width="500">
 		<v-card>
 			<v-card-title v-if="title">
 				<span class="headline">{{ title }}</span>
@@ -34,7 +34,7 @@
 <script>
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Boolean,
 			default: false,
 		},
@@ -55,6 +55,7 @@ export default {
 			default: false,
 		},
 	},
+	emits: ['input', 'update:modelValue'],
 	computed: {
 		ended() {
 			return this.progress === 100 || this.progress === -1
