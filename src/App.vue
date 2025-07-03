@@ -359,7 +359,7 @@
 			ref="nodesManager"
 		/>
 
-		<VSonner />
+			<VSonner position="top-right" :duration="5000" offset="50px" />
 	</v-app>
 </template>
 
