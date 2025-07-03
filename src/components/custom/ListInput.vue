@@ -6,36 +6,38 @@
 
 			<v-icon v-if="input.prefix" class="ml-5">arrow_downward</v-icon>
 
-			<draggable v-model="items" handle=".handle">
-				<v-list-item v-for="(item, i) in items" :key="`${i}_${item}`">
-					<v-list-item-action class="mr-0" style="min-width: 0px">
-						<slot name="item-action" :item="item"></slot>
-					</v-list-item-action>
-					<v-list-item-content>
-						<v-row class="ma-0 d-block">
-							<v-icon
-								v-if="toggleEdit"
-								class="handle"
-								style="cursor: move"
-								color="primary lighten-2"
-								>drag_indicator</v-icon
-							>
-							<span class="text-caption"> {{ i + 1 }}.</span>
-							<span style="font-size: 0.9rem">
-								{{ getItemName(item) }}
-							</span>
-							<v-btn
-								v-if="toggleEdit"
-								icon
-								small
-								@click="deleteItem(i)"
-								color="error"
-							>
-								<v-icon small>delete</v-icon>
-							</v-btn>
-						</v-row>
-					</v-list-item-content>
-				</v-list-item>
+			<draggable v-model="items" handle=".handle" :item-key="getItemKey">
+				<template #item="{ element: item, index: i }">
+					<v-list-item>
+						<v-list-item-action class="mr-0" style="min-width: 0px">
+							<slot name="item-action" :item="item"></slot>
+						</v-list-item-action>
+						<v-list-item-content>
+							<v-row class="ma-0 d-block">
+								<v-icon
+									v-if="toggleEdit"
+									class="handle"
+									style="cursor: move"
+									color="primary lighten-2"
+									>drag_indicator</v-icon
+								>
+								<span class="text-caption"> {{ i + 1 }}.</span>
+								<span style="font-size: 0.9rem">
+									{{ getItemName(item) }}
+								</span>
+								<v-btn
+									v-if="toggleEdit"
+									icon
+									small
+									@click="deleteItem(i)"
+									color="error"
+								>
+									<v-icon small>delete</v-icon>
+								</v-btn>
+							</v-row>
+						</v-list-item-content>
+					</v-list-item>
+				</template>
 			</draggable>
 
 			<v-icon v-if="input.prefix && items.length > 0" class="ml-5"
@@ -178,6 +180,9 @@ export default {
 					this.input.itemText || 'text'
 				] ?? item
 			)
+		},
+		getItemKey(item, index) {
+			return `${index}_${item}`
 		},
 	},
 }

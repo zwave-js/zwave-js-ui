@@ -1,8 +1,7 @@
 <template>
 	<!-- DIALOG PASSWORD -->
 	<v-dialog
-		:model-value="show"
-		@update:model-value="$emit('update:show', $event)"
+		v-model="localShow"
 		@click:outside="$emit('close')"
 		max-width="500px"
 	>
@@ -112,6 +111,14 @@ export default {
 		}
 	},
 	computed: {
+		localShow: {
+			get() {
+				return this.show
+			},
+			set(value) {
+				this.$emit('update:show', value)
+			},
+		},
 		passwordMatch() {
 			return (
 				this.password.new === this.password.confirmNew ||

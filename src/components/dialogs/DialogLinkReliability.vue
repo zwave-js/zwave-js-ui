@@ -1,10 +1,5 @@
 <template>
-	<v-dialog
-		:model-value="modelValue"
-		@update:model-value="$emit('update:modelValue', $event)"
-		max-width="800px"
-		persistent
-	>
+	<v-dialog v-model="localValue" max-width="800px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="headline"
@@ -243,11 +238,11 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	components: {},
 	props: {
-		modelValue: Boolean, // show or hide
+		value: Boolean, // show or hide
 		node: Object,
 		socket: Object,
 	},
-	emits: ['close', 'save', 'update:modelValue'],
+	emits: ['close', 'save', 'input'],
 	mixins: [InstancesMixin],
 	watch: {
 		value(v) {
@@ -256,6 +251,14 @@ export default {
 	},
 	computed: {
 		// ...mapState(useBaseStore, ['nodes']),
+		localValue: {
+			get() {
+				return this.value
+			},
+			set(value) {
+				this.$emit('input', value)
+			},
+		},
 	},
 	data() {
 		return {

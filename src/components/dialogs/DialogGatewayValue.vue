@@ -1,10 +1,5 @@
 <template>
-	<v-dialog
-		:model-value="modelValue"
-		@update:model-value="$emit('update:modelValue', $event)"
-		max-width="500px"
-		persistent
-	>
+	<v-dialog v-model="localValue" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="headline">{{ title }}</span>
@@ -263,16 +258,16 @@ export default {
 			import('vue-prism-editor').then((m) => m.PrismEditor),
 	},
 	props: {
-		modelValue: Boolean,
+		value: Boolean,
 		gw_type: Number,
 		title: String,
 		editedValue: Object,
 		devices: Array,
 	},
-	emits: ['close', 'save', 'update:modelValue'],
+	emits: ['close', 'save', 'input'],
 	watch: {
 		// eslint-disable-next-line no-unused-vars
-		modelValue(val) {
+		value(val) {
 			this.$refs.form && this.$refs.form.resetValidation()
 			if (val) {
 				this.isNew = !this.editedValue.device
@@ -281,6 +276,14 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		localValue: {
+			get() {
+				return this.value
+			},
+			set(value) {
+				this.$emit('input', value)
+			},
+		},
 		deviceValues() {
 			const device = this.devices.find(
 				(d) => d.value == this.editedValue.device,
