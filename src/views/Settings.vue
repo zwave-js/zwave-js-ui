@@ -33,13 +33,9 @@
 					<v-expansion-panel-content>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
-								<v-select
-									hint="Force dark/light mode or select color scheme automatically based on the system preference"
-									persistent-hint
-									label="Color scheme"
-									:items="colorSchemes"
+								<color-scheme
 									v-model="internalColorScheme"
-								></v-select>
+								></color-scheme>
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch
@@ -2072,7 +2068,6 @@
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
-import { colorSchemes } from '../lib/colorScheme'
 import { wait, copy, isUndef, deepEqual } from '../lib/utils'
 import { rfRegions, znifferRegions, maxLRPowerLevels } from '../lib/items'
 import cronstrue from 'cronstrue'
@@ -2087,6 +2082,7 @@ export default {
 	name: 'Settings',
 	mixins: [InstancesMixin],
 	components: {
+		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
 		DialogGatewayValue: () =>
 			import('@/components/dialogs/DialogGatewayValue.vue'),
 		fileInput: () => import('@/components/custom/file-input.vue'),
@@ -2368,7 +2364,6 @@ export default {
 					)
 				},
 			},
-			colorSchemes,
 		}
 	},
 	methods: {

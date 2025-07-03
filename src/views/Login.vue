@@ -56,14 +56,11 @@
 							hide-details
 							label="Remember Me"
 						></v-checkbox>
-						<v-select
+						<color-scheme
 							prepend-icon="null"
 							hide-details
-							persistent-hint
-							label="Color scheme"
-							:items="colorSchemes"
 							v-model="internalColorScheme"
-						></v-select>
+						></color-scheme>
 					</v-form>
 				</v-card-text>
 				<v-card-actions class="justify-center">
@@ -97,7 +94,6 @@
 <script>
 import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
-import { colorSchemes } from '../lib/colorScheme'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'
 
@@ -106,6 +102,9 @@ import { mapState, mapActions } from 'pinia'
 const log = logger.get('Login')
 
 export default {
+	components: {
+		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
+	},
 	data() {
 		return {
 			username: '',
@@ -121,7 +120,6 @@ export default {
 					return !!value || 'This field is required.'
 				},
 			},
-			colorSchemes,
 		}
 	},
 	computed: {
