@@ -577,6 +577,7 @@ export type ZUINode = {
 	defaultVolume?: number
 	protocol?: Protocols
 	supportsLongRange?: boolean
+	dsk?: string
 }
 
 export type NodeEvent = {
@@ -6158,6 +6159,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			zwaveNode.getFirmwareUpdateCapabilitiesCached()
 
 		node.protocol = zwaveNode.protocol
+		node.dsk = dskToString(zwaveNode.dsk)
 		const storedNode = this.storeNodes[nodeId]
 
 		if (storedNode) {
