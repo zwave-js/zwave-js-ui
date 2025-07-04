@@ -529,7 +529,7 @@ const useBaseStore = defineStore('base', {
 		initColorScheme() {
 			prefersColorSchemeDark.addEventListener('change', (event) => {
 				// Bail if the color scheme is not set by the system.
-				if (this.ui.colorScheme != 'system') {
+				if (this.ui.colorScheme !== 'system') {
 					return
 				}
 
