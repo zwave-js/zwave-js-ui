@@ -41,14 +41,14 @@ export const colorSchemeToDarkMode = (colorScheme) => {
  * @returns {ColorScheme}
  */
 export const loadColorScheme = (settings) => {
-	const darkMode = settings.load('darkMode', undefined)
+	const darkMode = settings.load('dark', undefined)
 	let defaultColorScheme
 	switch (darkMode) {
-		case false:
+		case 'false':
 			defaultColorScheme = 'light'
 			break
 
-		case true:
+		case 'true':
 			defaultColorScheme = 'dark'
 			break
 
