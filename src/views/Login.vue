@@ -59,7 +59,6 @@
 						<color-scheme
 							prepend-icon="null"
 							hide-details
-							v-model="internalColorScheme"
 						></color-scheme>
 					</v-form>
 				</v-card-text>
@@ -97,7 +96,7 @@ import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'
 
-import { mapState, mapActions } from 'pinia'
+import { mapActions } from 'pinia'
 
 const log = logger.get('Login')
 
@@ -121,19 +120,6 @@ export default {
 				},
 			},
 		}
-	},
-	computed: {
-		...mapState(useBaseStore, {
-			colorScheme: (store) => store.ui.colorScheme,
-		}),
-		internalColorScheme: {
-			get() {
-				return this.colorScheme
-			},
-			set(value) {
-				this.setColorScheme(value)
-			},
-		},
 	},
 	watch: {
 		error: function (newValue) {
@@ -169,7 +155,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['initColorScheme', 'setColorScheme']),
+		...mapActions(useBaseStore, ['initColorScheme']),
 		isLocalStorageSupported() {
 			const testKey = 'test'
 			const storage = window.localStorage

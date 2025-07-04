@@ -33,9 +33,7 @@
 					<v-expansion-panel-content>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
-								<color-scheme
-									v-model="internalColorScheme"
-								></color-scheme>
+								<color-scheme />
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch

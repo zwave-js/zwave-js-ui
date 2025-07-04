@@ -12,6 +12,9 @@
 
 <script>
 import { colorSchemes } from '../../lib/colorScheme'
+import useBaseStore from '../../stores/base.js'
+
+import { mapState, mapActions } from 'pinia'
 
 export default {
 	props: {
@@ -21,10 +24,6 @@ export default {
 		prependIcon: {
 			type: String,
 		},
-		value: {
-			type: String,
-			default: 'system',
-		},
 	},
 	data() {
 		return {
@@ -32,14 +31,20 @@ export default {
 		}
 	},
 	computed: {
+		...mapState(useBaseStore, {
+			colorScheme: (store) => store.ui.colorScheme,
+		}),
 		internalColorScheme: {
 			get() {
-				return this.value
+				return this.colorScheme
 			},
 			set(value) {
-				this.$emit('input', value)
+				this.setColorScheme(value)
 			},
 		},
+	},
+	methods: {
+		...mapActions(useBaseStore, ['setColorScheme']),
 	},
 }
 </script>
