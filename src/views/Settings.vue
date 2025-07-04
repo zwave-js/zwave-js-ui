@@ -33,12 +33,7 @@
 					<v-expansion-panel-content>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
-								<v-switch
-									hint="Enable dark mode"
-									persistent-hint
-									label="Dark mode"
-									v-model="internalDarkMode"
-								></v-switch>
+								<color-scheme />
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch
@@ -2079,7 +2074,7 @@
 			space-be
 			class="sticky-buttons py-3 px-4"
 			:style="{
-				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
+				backgroundColor: darkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
 			<v-btn class="mr-2" small color="error" @click="resetConfig">
@@ -2134,6 +2129,7 @@ export default {
 	name: 'Settings',
 	mixins: [InstancesMixin],
 	components: {
+		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
 		DialogGatewayValue: () =>
 			import('@/components/dialogs/DialogGatewayValue.vue'),
 		fileInput: () => import('@/components/custom/file-input.vue'),
@@ -2147,12 +2143,12 @@ export default {
 		},
 	},
 	computed: {
-		internalDarkMode: {
+		internalColorScheme: {
 			get() {
-				return this.darkMode
+				return this.colorScheme
 			},
 			set(value) {
-				this.setDarkMode(value)
+				this.setColorScheme(value)
 			},
 		},
 		internalNavTabs: {
@@ -2262,7 +2258,8 @@ export default {
 			'ui',
 		]),
 		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
+			colorScheme: (store) => store.ui.colorScheme,
+			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 			streamerMode: (store) => store.ui.streamerMode,
 		}),
@@ -2418,7 +2415,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, [
-			'setDarkMode',
+			'setColorScheme',
 			'setNavTabs',
 			'setStreamerMode',
 			'initSettings',
@@ -2730,7 +2727,7 @@ export default {
 			this.newBackup = copy(this.backup)
 
 			if (this.prevUi) {
-				this.internalDarkMode = this.prevUi.darkMode
+				this.internalColorScheme = this.prevUi.colorScheme
 				this.internalNavTabs = this.prevUi.navTabs
 				this.internalStreamerMode = this.prevUi.streamerMode
 			} else {
