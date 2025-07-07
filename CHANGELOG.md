@@ -1,5 +1,22 @@
 
 
+# [10.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.7.0...v10.8.0) (2025-07-07)
+
+
+### Bug Fixes
+
+* **ui:** correct template syntax for total frames display in Zniffer component ([6e5f0a4](https://github.com/zwave-js/zwave-js-ui/commit/6e5f0a4a97edd2afe27729352ad0747b5b4d7b95))
+* **ui:** enhance theme handling and protocol color management ([d0efbb1](https://github.com/zwave-js/zwave-js-ui/commit/d0efbb105cccd5e4faa875b40251e7240bda1a95))
+* **ui:** typo in restart prompt ([#4263](https://github.com/zwave-js/zwave-js-ui/issues/4263)) ([9e4bc7e](https://github.com/zwave-js/zwave-js-ui/commit/9e4bc7efa202167faca5a3cbb2186b1f2ba6a506))
+
+
+### Features
+
+* bump zwave-js@15.8.0 ([#4264](https://github.com/zwave-js/zwave-js-ui/issues/4264)) ([cc15d30](https://github.com/zwave-js/zwave-js-ui/commit/cc15d3057467794b33ef22821e99880aafe31a45))
+* implement automatic powerlevel setting for US/EU regions ([#4269](https://github.com/zwave-js/zwave-js-ui/issues/4269)) ([ef54a21](https://github.com/zwave-js/zwave-js-ui/commit/ef54a21d2b62d34305895e0f3c0724f3731403d3))
+* **ui:** improve colors contrast in dark mode ([#4092](https://github.com/zwave-js/zwave-js-ui/issues/4092)) ([c630ea4](https://github.com/zwave-js/zwave-js-ui/commit/c630ea468bad4f9f5578714b16919acb0843e245))
+* **ui:** support system preference color scheme ([#4266](https://github.com/zwave-js/zwave-js-ui/issues/4266)) ([03bad6c](https://github.com/zwave-js/zwave-js-ui/commit/03bad6cadf4da4f601c2357ea521798b3e0f485b))
+
 # [10.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.1...v10.7.0) (2025-06-18)
 
 
