@@ -37,9 +37,9 @@ const useBaseStore = defineStore('base', {
 			logLevel: 'debug',
 			rf: {
 				region: undefined,
-				maxLongRangePowerlevel: undefined,
+				maxLongRangePowerlevel: 'auto',
 				txPower: {
-					powerlevel: undefined,
+					powerlevel: 'auto',
 					measured0dBm: undefined,
 				},
 			},
