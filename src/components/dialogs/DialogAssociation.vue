@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="localValue" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="headline">New Association</span>
@@ -135,12 +135,13 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	mixins: [InstancesMixin],
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		associations: Array,
 		node: Object,
 	},
+	emits: ['close', 'save', 'update:modelValue'],
 	watch: {
-		value() {
+		modelValue() {
 			this.$refs.form && this.$refs.form.resetValidation()
 			this.resetGroup()
 			this.associationError = ''
@@ -156,6 +157,14 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['controllerNode', 'nodes']),
+		localValue: {
+			get() {
+				return this.modelValue
+			},
+			set(value) {
+				this.$emit('update:modelValue', value)
+			},
+		},
 		filteredNodes() {
 			return this.node.protocol === Protocols.ZWaveLongRange
 				? [this.controllerNode]

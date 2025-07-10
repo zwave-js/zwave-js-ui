@@ -1,5 +1,5 @@
 import path from 'path'
-import vue2 from '@vitejs/plugin-vue2'
+import vue from '@vitejs/plugin-vue'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import * as pkgJson from './package.json'
@@ -37,7 +37,7 @@ export default defineConfig(({ mode }) => {
 	return {
 		base: './',
 		plugins: [
-			vue2(),
+			vue(),
 			VitePWA({
 				// do not reload application automatically but show a popup to user
 				registerType: 'prompt',

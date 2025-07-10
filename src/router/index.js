@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 // DON'T use lazy loading here, it would break application running behind a proxy
 const ControlPanel = () => import('@/views/ControlPanel.vue')
@@ -17,8 +16,6 @@ const Zniffer = () => import('@/views/Zniffer.vue')
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
 
-Vue.use(Router)
-
 export const Routes = {
 	login: '/',
 	error: '/error',
@@ -35,8 +32,8 @@ export const Routes = {
 
 Routes.main = Routes.controlPanel
 
-const router = new Router({
-	mode: 'hash',
+const router = createRouter({
+	history: createWebHashHistory(),
 	routes: [
 		{
 			path: Routes.login,
@@ -132,14 +129,13 @@ const router = new Router({
 	],
 })
 
-router.beforeEach(async (to, from, next) => {
-	// no metching routes found
+router.beforeEach(async (to) => {
+	// no matching routes found
 	if (to.matched.length === 0) {
-		router.push({
+		return {
 			path: Routes.error,
 			query: { code: 404, message: 'Not Found', path: to.path },
-		})
-		return
+		}
 	}
 
 	const store = useBaseStore()
@@ -150,13 +146,12 @@ router.beforeEach(async (to, from, next) => {
 
 	if (store.auth === false) {
 		if (to.path === Routes.login) {
-			next({
+			return {
 				path: Routes.main,
-			})
+			}
 		} else {
-			next()
+			return true
 		}
-		return
 	}
 
 	// permissions required by the requested route
@@ -192,23 +187,23 @@ router.beforeEach(async (to, from, next) => {
 	if (route.auth) {
 		if (user.notLogged) {
 			// user not logged redirect to login page
-			next({
+			return {
 				path: Routes.login,
 				params: { nextUrl: to.fullPath },
-			})
+			}
 		} else {
 			// user logged, let it go
-			next()
+			return true
 		}
 	} else if (user.notLogged) {
 		// doesn't require auth and user is not logged
-		next()
+		return true
 	} else {
 		// user is logged
-		next({
+		return {
 			path: Routes.main,
 			params: { nextUrl: to.fullPath },
-		})
+		}
 	}
 })
 

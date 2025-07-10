@@ -6,9 +6,9 @@
 
 			<v-icon v-if="input.prefix" class="ml-5">arrow_downward</v-icon>
 
-			<draggable v-model="items" handle=".handle">
-				<template v-for="(item, i) in items">
-					<v-list-item :key="`${i}_${item}`">
+			<draggable v-model="items" handle=".handle" :item-key="getItemKey">
+				<template #item="{ element: item, index: i }">
+					<v-list-item>
 						<v-list-item-action class="mr-0" style="min-width: 0px">
 							<slot name="item-action" :item="item"></slot>
 						</v-list-item-action>
@@ -117,9 +117,10 @@ import draggable from 'vuedraggable'
 export default {
 	props: {
 		input: Object,
-		value: Array,
+		modelValue: Array,
 		toggleEdit: { type: Boolean, default: true },
 	},
+	emits: ['update:modelValue'],
 	components: {
 		draggable,
 	},
@@ -131,10 +132,10 @@ export default {
 	computed: {
 		items: {
 			get() {
-				return this.value || []
+				return this.modelValue || []
 			},
 			set(val) {
-				this.$emit('input', val)
+				this.$emit('update:modelValue', val)
 			},
 		},
 	},
@@ -180,6 +181,9 @@ export default {
 					this.input.itemText || 'text'
 				] ?? item
 			)
+		},
+		getItemKey(item, index) {
+			return `${index}_${item}`
 		},
 	},
 }
