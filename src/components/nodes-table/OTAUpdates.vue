@@ -97,7 +97,10 @@
 								</v-list-item-icon>
 								<v-list-item-content>
 									<v-list-item-title
-										v-if="f.target !== undefined"
+										v-if="
+											!hideTargets &&
+											f.target !== undefined
+										"
 										>Target:
 										{{ f.target }}</v-list-item-title
 									>
@@ -177,6 +180,7 @@ export default {
 			loading: false,
 			includePrereleases: false,
 			showDowngrades: false,
+			hideTargets: false,
 		}
 	},
 	computed: {

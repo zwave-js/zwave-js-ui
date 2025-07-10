@@ -6,6 +6,7 @@ export default {
 	data() {
 		return {
 			showDowngrades: undefined,
+			hideTargets: true,
 		}
 	},
 	methods: {
