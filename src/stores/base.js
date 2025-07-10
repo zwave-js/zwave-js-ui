@@ -514,16 +514,6 @@ const useBaseStore = defineStore('base', {
 					this.zwave.rf.txPower = {}
 				}
 
-				// for some reason this could be set to empty strings so
-				// json store will not override them when using `merge`
-				if (!this.zwave.rf.maxLongRangePowerlevel) {
-					this.zwave.rf.maxLongRangePowerlevel = 'auto'
-				}
-
-				if (!this.zwave.rf.txPower.powerlevel) {
-					this.zwave.rf.txPower.powerlevel = 'auto'
-				}
-
 				Object.assign(this.mqtt, conf.mqtt || {})
 				Object.assign(this.zniffer, conf.zniffer || {})
 				Object.assign(this.gateway, conf.gateway || {})
