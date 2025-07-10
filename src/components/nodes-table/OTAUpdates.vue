@@ -8,10 +8,13 @@
 </template>
 
 <script>
+import InstancesMixin from '../../mixins/InstancesMixin.js'
+
 export default {
 	components: {
 		FirmwareUpdates: () => import('../custom/FirmwareUpdates.vue'),
 	},
+	mixins: [InstancesMixin],
 	props: {
 		node: {
 			type: Object,
