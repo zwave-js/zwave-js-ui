@@ -879,9 +879,8 @@
 												:rules="[validTxPower]"
 											></v-text-field>
 										</v-col>
-									</v-row>
-									<v-row class="mt-0">
-										<v-col cols="6">
+
+										<v-col cols="12" sm="6">
 											<v-select
 												label="Maximum LR Power Level"
 												persistent-hint
