@@ -837,7 +837,20 @@
 									</v-row>
 									<v-row class="mt-0">
 										<v-col cols="12" sm="6">
+											<v-checkbox
+												hint="Automatically set power levels based on your RF Region"
+												persistent-hint
+												label="Auto power levels"
+												v-model="
+													newZwave.rf.autoPowerlevels
+												"
+											></v-checkbox>
+										</v-col>
+										<v-col cols="12" sm="6">
 											<v-text-field
+												v-if="
+													!newZwave.rf.autoPowerlevels
+												"
 												label="Normal Power Level"
 												v-model.number="
 													newZwave.rf.txPower
@@ -883,6 +896,9 @@
 										<v-col cols="12" sm="6">
 											<v-select
 												label="Maximum LR Power Level"
+												v-if="
+													!newZwave.rf.autoPowerlevels
+												"
 												persistent-hint
 												:hint="
 													newZwave.rf

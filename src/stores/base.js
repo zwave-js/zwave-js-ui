@@ -38,6 +38,7 @@ const useBaseStore = defineStore('base', {
 			rf: {
 				region: undefined,
 				maxLongRangePowerlevel: 'auto',
+				autoPowerlevels: true,
 				txPower: {
 					powerlevel: 'auto',
 					measured0dBm: undefined,

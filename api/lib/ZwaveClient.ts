@@ -628,6 +628,7 @@ export type ZwaveConfig = {
 	rf?: {
 		region?: RFRegion
 		maxLongRangePowerlevel?: number | 'auto'
+		autoPowerlevels?: boolean
 		txPower?: {
 			powerlevel: number | 'auto'
 			measured0dBm?: number
@@ -2203,7 +2204,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this.cfg.rf) {
-			const { region, txPower, maxLongRangePowerlevel } = this.cfg.rf
+			const { region, txPower, maxLongRangePowerlevel, autoPowerlevels } =
+				this.cfg.rf
 
 			zwaveOptions.rf = {}
 
@@ -2211,21 +2213,30 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				zwaveOptions.rf.region = region
 			}
 
+			if (autoPowerlevels) {
+				zwaveOptions.rf.maxLongRangePowerlevel = 'auto'
+				zwaveOptions.rf.txPower ??= {}
+				zwaveOptions.rf.txPower.powerlevel = 'auto'
+			}
+
 			if (
-				maxLongRangePowerlevel === 'auto' ||
-				typeof maxLongRangePowerlevel === 'number'
+				!autoPowerlevels &&
+				(maxLongRangePowerlevel === 'auto' ||
+					typeof maxLongRangePowerlevel === 'number')
 			) {
 				zwaveOptions.rf.maxLongRangePowerlevel = maxLongRangePowerlevel
 			}
 
 			if (txPower) {
 				if (
-					txPower.powerlevel === 'auto' ||
-					typeof txPower.powerlevel === 'number'
+					!autoPowerlevels &&
+					(txPower.powerlevel === 'auto' ||
+						typeof txPower.powerlevel === 'number')
 				) {
 					zwaveOptions.rf.txPower ??= {}
 					zwaveOptions.rf.txPower.powerlevel = txPower.powerlevel
 				}
+
 				if (typeof txPower.measured0dBm === 'number') {
 					zwaveOptions.rf.txPower ??= {}
 					zwaveOptions.rf.txPower.measured0dBm = txPower.measured0dBm
