@@ -1,4 +1,9 @@
 import { defineStore } from 'pinia'
+import {
+	colorSchemeToDarkMode,
+	loadColorScheme,
+	prefersColorSchemeDark,
+} from '../lib/colorScheme'
 import { $set, deepEqual } from '../lib/utils'
 import logger from '../lib/logger'
 
@@ -32,9 +37,9 @@ const useBaseStore = defineStore('base', {
 			logLevel: 'debug',
 			rf: {
 				region: undefined,
-				maxLongRangePowerlevel: undefined,
+				maxLongRangePowerlevel: 'auto',
 				txPower: {
-					powerlevel: undefined,
+					powerlevel: 'auto',
 					measured0dBm: undefined,
 				},
 			},
@@ -141,10 +146,13 @@ const useBaseStore = defineStore('base', {
 			lrChannelConfig: false,
 		},
 		ui: {
-			darkMode: settings.load('dark', false),
+			colorScheme: loadColorScheme(settings),
 			navTabs: settings.load('navTabs', false),
 			compactMode: settings.load('compact', false),
 			streamerMode: settings.load('streamerMode', false),
+		},
+		uiState: {
+			darkMode: colorSchemeToDarkMode(loadColorScheme(settings)),
 		},
 	}),
 	getters: {
@@ -505,16 +513,43 @@ const useBaseStore = defineStore('base', {
 				if (!this.zwave.rf.txPower) {
 					this.zwave.rf.txPower = {}
 				}
+
+				// for some reason this could be set to empty strings so
+				// json store will not override them when using `merge`
+				if (!this.zwave.rf.maxLongRangePowerlevel) {
+					this.zwave.rf.maxLongRangePowerlevel = 'auto'
+				}
+
+				if (!this.zwave.rf.txPower.powerlevel) {
+					this.zwave.rf.txPower.powerlevel = 'auto'
+				}
+
 				Object.assign(this.mqtt, conf.mqtt || {})
 				Object.assign(this.zniffer, conf.zniffer || {})
 				Object.assign(this.gateway, conf.gateway || {})
 				Object.assign(this.backup, conf.backup || {})
 				Object.assign(this.ui, conf.ui || {})
-
-				// ensure local storage is in sync with the store
-				// to prevent theme switch on startup
-				this.setDarkMode(this.ui.darkMode)
 			}
+		},
+		/**
+		 * Initialize the color scheme by:
+		 * - Setting up an event listener for preferred color scheme changes.
+		 *     This will set the dark mode only if `ui.colorScheme` is `'system'`.
+		 * - Setting the color scheme and dark mode to the value in settings.
+		 */
+		initColorScheme() {
+			prefersColorSchemeDark.addEventListener('change', (event) => {
+				// Bail if the color scheme is not set by the system.
+				if (this.ui.colorScheme !== 'system') {
+					return
+				}
+
+				this.setDarkMode(event.matches)
+			})
+
+			// ensure local storage is in sync with the store
+			// to prevent theme switch on startup
+			this.setColorScheme(this.ui.colorScheme)
 		},
 		initPorts(ports) {
 			if (ports) {
@@ -574,6 +609,7 @@ const useBaseStore = defineStore('base', {
 				}
 
 				this.initSettings(data.settings)
+				this.initColorScheme()
 				this.initPorts(data.serial_ports)
 				this.initScales(data.scales)
 				this.initDevices(data.devices)
@@ -581,10 +617,18 @@ const useBaseStore = defineStore('base', {
 				this.inited = true
 			}
 		},
+		/**
+		 * Sets the {@link ColorScheme} and updates the {@link DarkMode} accordingly.
+		 * @param {ColorScheme} value
+		 */
+		setColorScheme(value) {
+			settings.store('colorScheme', value)
+			this.ui.colorScheme = value
+			this.setDarkMode(colorSchemeToDarkMode(value))
+		},
 		setDarkMode(value) {
-			settings.store('dark', value)
 			// the `darkMode` watcher in App.vue will change vuetify theme
-			this.ui.darkMode = value
+			this.uiState.darkMode = value
 
 			const metaThemeColor = document.querySelector(
 				'meta[name=theme-color]',

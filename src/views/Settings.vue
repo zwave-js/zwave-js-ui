@@ -33,12 +33,7 @@
 					<v-expansion-panel-content>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
-								<v-switch
-									hint="Enable dark mode"
-									persistent-hint
-									label="Dark mode"
-									v-model="internalDarkMode"
-								></v-switch>
+								<color-scheme />
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch
@@ -804,9 +799,10 @@
 											<v-select
 												label="RF Region"
 												persistent-hint
-												hint="Will be applied on every startup if the current region of your Z-Wave controller differs. Leave this empty to use the default region of your stick. Not all controllers support changing the region."
+												hint="Will be used to automatically configure your controller for the region you are in. Not all controllers support changing the RF region."
 												:items="rfRegions"
-												clearable
+												:rules="[rules.required]"
+												required
 												v-model="newZwave.rf.region"
 											>
 											</v-select>
@@ -883,9 +879,8 @@
 												:rules="[validTxPower]"
 											></v-text-field>
 										</v-col>
-									</v-row>
-									<v-row class="mt-0">
-										<v-col cols="6">
+
+										<v-col cols="12" sm="6">
 											<v-select
 												label="Maximum LR Power Level"
 												persistent-hint
@@ -2079,7 +2074,7 @@
 			space-be
 			class="sticky-buttons py-3 px-4"
 			:style="{
-				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
+				backgroundColor: darkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
 			<v-btn class="mr-2" small color="error" @click="resetConfig">
@@ -2121,7 +2116,11 @@ import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
 import { wait, copy, isUndef, deepEqual } from '../lib/utils'
-import { rfRegions, znifferRegions, maxLRPowerLevels } from '../lib/items'
+import {
+	settingsRfRegions,
+	znifferRegions,
+	maxLRPowerLevels,
+} from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
@@ -2134,6 +2133,7 @@ export default {
 	name: 'Settings',
 	mixins: [InstancesMixin],
 	components: {
+		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
 		DialogGatewayValue: () =>
 			import('@/components/dialogs/DialogGatewayValue.vue'),
 		fileInput: () => import('@/components/custom/file-input.vue'),
@@ -2147,12 +2147,12 @@ export default {
 		},
 	},
 	computed: {
-		internalDarkMode: {
+		internalColorScheme: {
 			get() {
-				return this.darkMode
+				return this.colorScheme
 			},
 			set(value) {
-				this.setDarkMode(value)
+				this.setColorScheme(value)
 			},
 		},
 		internalNavTabs: {
@@ -2262,7 +2262,8 @@ export default {
 			'ui',
 		]),
 		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
+			colorScheme: (store) => store.ui.colorScheme,
+			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 			streamerMode: (store) => store.ui.streamerMode,
 		}),
@@ -2274,7 +2275,7 @@ export default {
 	},
 	data() {
 		return {
-			rfRegions,
+			rfRegions: settingsRfRegions,
 			znifferRegions,
 			maxLRPowerLevels,
 			valid_zwave: true,
@@ -2418,7 +2419,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, [
-			'setDarkMode',
+			'setColorScheme',
 			'setNavTabs',
 			'setStreamerMode',
 			'initSettings',
@@ -2730,7 +2731,7 @@ export default {
 			this.newBackup = copy(this.backup)
 
 			if (this.prevUi) {
-				this.internalDarkMode = this.prevUi.darkMode
+				this.internalColorScheme = this.prevUi.colorScheme
 				this.internalNavTabs = this.prevUi.navTabs
 				this.internalStreamerMode = this.prevUi.streamerMode
 			} else {

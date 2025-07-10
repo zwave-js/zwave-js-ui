@@ -32,8 +32,14 @@ const store: Record<StoreKeys, StoreFile> = {
 			zwave: {
 				deviceConfigPriorityDir,
 				enableSoftReset: true,
+				rf: {
+					maxLongRangePowerlevel: 'auto',
+					txPower: {
+						powerlevel: 'auto',
+					},
+				},
 			},
-		},
+		} satisfies Settings,
 	},
 	scenes: { file: 'scenes.json', default: [] },
 	nodes: { file: 'nodes.json', default: {} },
