@@ -1,12 +1,31 @@
-<script>
-import OTAUpdates from './OTAUpdates.vue'
+<template>
+	<FirmwareUpdates
+		:node="node"
+		:socket="socket"
+		:hide-targets="true"
+		:hide-downgrades="true"
+		@update-firmware="updateFirmware"
+	/>
+</template>
 
+<script>
 export default {
-	extends: OTAUpdates,
+	components: {
+		FirmwareUpdates: () => import('../custom/FirmwareUpdates.vue'),
+	},
+	props: {
+		node: {
+			type: Object,
+			required: true,
+		},
+		socket: {
+			type: Object,
+			required: true,
+		},
+	},
 	data() {
 		return {
 			showDowngrades: undefined,
-			hideTargets: true,
 		}
 	},
 	methods: {
@@ -16,11 +35,11 @@ export default {
 					`Firmware Upgrade`,
 					`<p>Are you sure you want to upgrade your controller to <b>v${update.version}</b>?</p>
 
-					<p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
+                    <p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
 
-					<p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start the upgrade process.</p>
+                    <p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start the upgrade process.</p>
 
-					`,
+                    `,
 					'warning',
 					{
 						confirmText: 'Upgrade',
