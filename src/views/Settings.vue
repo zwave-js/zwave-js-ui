@@ -799,9 +799,10 @@
 											<v-select
 												label="RF Region"
 												persistent-hint
-												hint="Will be applied on every startup if the current region of your Z-Wave controller differs. Leave this empty to use the default region of your stick. Not all controllers support changing the region."
+												hint="Will be used to automatically configure your controller for the region you are in. Not all controllers support changing the RF region."
 												:items="rfRegions"
-												clearable
+												:rules="[rules.required]"
+												required
 												v-model="newZwave.rf.region"
 											>
 											</v-select>
@@ -878,9 +879,8 @@
 												:rules="[validTxPower]"
 											></v-text-field>
 										</v-col>
-									</v-row>
-									<v-row class="mt-0">
-										<v-col cols="6">
+
+										<v-col cols="12" sm="6">
 											<v-select
 												label="Maximum LR Power Level"
 												persistent-hint
@@ -2116,7 +2116,11 @@ import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
 import { wait, copy, isUndef, deepEqual } from '../lib/utils'
-import { rfRegions, znifferRegions, maxLRPowerLevels } from '../lib/items'
+import {
+	settingsRfRegions,
+	znifferRegions,
+	maxLRPowerLevels,
+} from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
@@ -2271,7 +2275,7 @@ export default {
 	},
 	data() {
 		return {
-			rfRegions,
+			rfRegions: settingsRfRegions,
 			znifferRegions,
 			maxLRPowerLevels,
 			valid_zwave: true,
