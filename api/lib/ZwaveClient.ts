@@ -3984,13 +3984,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to trigger an update of controller FW
 	 */
-	async firmwareUpdateOTW(file: FwFile): Promise<OTWFirmwareUpdateResult> {
+	async firmwareUpdateOTW(
+		file: FwFile | FirmwareUpdateInfo,
+	): Promise<OTWFirmwareUpdateResult> {
 		try {
 			if (backupManager.backupOnEvent) {
 				this.nvmEvent = 'before_controller_fw_update_otw'
 				await backupManager.backupNvm()
 			}
 			let firmware: Firmware
+
+			if (file['files']) {
+				return await this.driver.firmwareUpdateOTW(
+					file as FirmwareUpdateInfo,
+				)
+			}
+
+			file = file as FwFile
 
 			try {
 				const format = guessFirmwareFileFormat(file.name, file.data)
