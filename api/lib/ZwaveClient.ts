@@ -2151,6 +2151,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
+		let shouldUpdateSettings = false
+
 		// extend options with hidden `options`
 		const zwaveOptions: PartialZWaveOptions = {
 			bootloaderMode: this.cfg.allowBootloaderOnly ? 'allow' : 'recover',
@@ -2204,13 +2206,24 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this.cfg.rf) {
-			const { region, txPower, maxLongRangePowerlevel, autoPowerlevels } =
-				this.cfg.rf
+			const { region, txPower, maxLongRangePowerlevel } = this.cfg.rf
 
+			let { autoPowerlevels } = this.cfg.rf
 			zwaveOptions.rf = {}
 
 			if (typeof region === 'number') {
 				zwaveOptions.rf.region = region
+			}
+
+			if (
+				autoPowerlevels === undefined &&
+				typeof maxLongRangePowerlevel !== 'number' &&
+				typeof txPower?.powerlevel !== 'number'
+			) {
+				// if no autoPowerlevels and maxLongRangePowerlevel is set, assume autoPowerlevels is true
+				autoPowerlevels = true
+				this.cfg.rf.autoPowerlevels = true
+				shouldUpdateSettings = true
 			}
 
 			if (autoPowerlevels) {
@@ -2295,9 +2308,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// update settings to fix compatibility
 		if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
 			this.cfg.securityKeys.S0_Legacy = s0Key
-			const settings = jsonStore.get(store.settings)
-			settings.zwave = this.cfg
-			await jsonStore.put(store.settings, settings)
+			shouldUpdateSettings = true
 		}
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
@@ -2312,6 +2323,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		try {
+			if (shouldUpdateSettings) {
+				const settings = jsonStore.get(store.settings)
+				settings.zwave = this.cfg
+				await jsonStore.put(store.settings, settings)
+			}
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
 			this._driver = new Driver(this.cfg.port, zwaveOptions)
