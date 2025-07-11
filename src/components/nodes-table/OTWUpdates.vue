@@ -2,7 +2,8 @@
 	<FirmwareUpdates
 		:node="node"
 		:socket="socket"
-		update-type="OTA"
+		:hide-targets="true"
+		:hide-downgrades="true"
 		@update-firmware="updateFirmware"
 	/>
 </template>
@@ -26,35 +27,33 @@ export default {
 		},
 	},
 	data() {
-		return {}
+		return {
+			showDowngrades: undefined,
+		}
 	},
 	methods: {
 		async updateFirmware(update) {
 			if (
 				await this.app.confirm(
-					`OTA ${update.downgrade ? 'Downgrade' : 'Upgrade'}`,
-					`<p>Are you sure you want to ${
-						update.downgrade ? 'downgrade' : 'upgrade'
-					} node to <b>v${update.version}</b>?</p>
-                                        
+					`Firmware Upgrade`,
+					`<p>Are you sure you want to upgrade your controller to <b>v${update.version}</b>?</p>
+
                     <p><strong>We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed</strong></p>
-                    
-                    <p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start an over-the-air (OTA) firmware update for the given node.</p>
-    
+
+                    <p>This will download the desired firmware update from the <a href="https://github.com/zwave-js/firmware-updates/">Z-Wave JS firmware update service</a> and start the upgrade process.</p>
+
                     `,
-					update.downgrade ? 'error' : 'warning',
+					'warning',
 					{
-						confirmText: `${
-							update.downgrade ? 'Downgrade' : 'Upgrade'
-						}`,
+						confirmText: 'Upgrade',
 						cancelText: 'Cancel',
 						width: '500px',
 					},
 				)
 			) {
 				const response = await this.app.apiRequest(
-					'firmwareUpdateOTA',
-					[this.node.id, update],
+					'firmwareUpdateOTW',
+					[update],
 				)
 
 				await this.app.handleFwUpdateResponse(response)
@@ -63,3 +62,5 @@ export default {
 	},
 }
 </script>
+
+<style></style>
