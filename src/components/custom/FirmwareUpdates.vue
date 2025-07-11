@@ -28,21 +28,21 @@
 						class="ml-2 my-auto"
 					>
 					</v-checkbox>
+				</v-row>
+				<v-row justify="center" class="pt-2 text-center" dense>
 					<v-alert
-						v-if="
-							controllerNode &&
-							controllerNode.RFRegion === undefined &&
-							!zwave.rf.region
-						"
-						type="warning"
+						type="info"
 						dense
+						text
 						class="ml-2 mb-2"
 						style="max-width: 400px"
 					>
 						<small>
-							<v-icon small>settings</v-icon>
-							Configure your RF region in the settings to get
-							region-specific firmware updates.
+							{{
+								invalidRfRegion
+									? 'To get region-specific firmware updates, you need to configure your current region in the settings.'
+									: `Firmware updates include updates specific to ${zwave.rf.region}. If this is not correct, you can change it in the settings.`
+							}}
 						</small>
 					</v-alert>
 				</v-row>
@@ -202,6 +202,13 @@ export default {
 		filteredUpdates() {
 			return this.fwUpdates.filter(
 				(u) => !u.downgrade || (u.downgrade && this.showDowngrades),
+			)
+		},
+		invalidRfRegion() {
+			return (
+				this.controllerNode &&
+				this.controllerNode.RFRegion === undefined &&
+				!this.zwave.rf.region
 			)
 		},
 	},
