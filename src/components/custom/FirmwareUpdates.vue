@@ -29,7 +29,12 @@
 					>
 					</v-checkbox>
 				</v-row>
-				<v-row justify="center" class="pt-2 text-center" dense>
+				<v-row
+					v-if="controllerNode.RFRegion === undefined"
+					justify="center"
+					class="pt-2 text-center"
+					dense
+				>
 					<v-alert
 						type="info"
 						dense
@@ -41,7 +46,7 @@
 							{{
 								invalidRfRegion
 									? 'To get region-specific firmware updates, you need to configure your current region in the settings.'
-									: `Firmware updates include updates specific to ${zwave.rf.region}. If this is not correct, you can change it in the settings.`
+									: `Firmware updates include updates specific to ${RFRegion[zwave.rf.region]}. If this is not correct, you can change it in the settings.`
 							}}
 						</small>
 					</v-alert>
@@ -164,7 +169,7 @@
 import useBaseStore from '../../stores/base.js'
 import { mapActions, mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { rfRegions } from '../../lib/items.js'
+import { RFRegion } from '@zwave-js/core'
 
 export default {
 	components: {},
@@ -189,7 +194,7 @@ export default {
 	mixins: [InstancesMixin],
 	data() {
 		return {
-			rfRegions,
+			RFRegion,
 			rfRegion: null,
 			fwUpdates: [],
 			loading: false,
