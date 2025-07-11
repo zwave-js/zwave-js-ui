@@ -28,22 +28,28 @@
 						class="ml-2 my-auto"
 					>
 					</v-checkbox>
-					<v-select
-						v-if="
-							controllerNode &&
-							controllerNode.RFRegion === undefined
-						"
-						style="max-width: 200px"
+				</v-row>
+				<v-row
+					v-if="controllerNode.RFRegion === undefined"
+					justify="center"
+					class="pt-2 text-center"
+					dense
+				>
+					<v-alert
+						type="info"
+						dense
+						text
 						class="ml-2 mb-2"
-						label="Rf Region"
-						hide-details
-						:items="rfRegions"
-						v-model="rfRegion"
+						style="max-width: 400px"
 					>
-						<template v-slot:prepend>
-							<v-icon>signal_cellular_alt</v-icon>
-						</template>
-					</v-select>
+						<small>
+							{{
+								invalidRfRegion
+									? 'To get region-specific firmware updates, you need to configure your current region in the settings.'
+									: `Firmware updates include updates specific to ${RFRegion[zwave.rf.region]}. If this is not correct, you can change it in the settings.`
+							}}
+						</small>
+					</v-alert>
 				</v-row>
 			</v-col>
 
@@ -163,7 +169,7 @@
 import useBaseStore from '../../stores/base.js'
 import { mapActions, mapState } from 'pinia'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import { rfRegions } from '../../lib/items.js'
+import { RFRegion } from '@zwave-js/core'
 
 export default {
 	components: {},
@@ -188,7 +194,7 @@ export default {
 	mixins: [InstancesMixin],
 	data() {
 		return {
-			rfRegions,
+			RFRegion,
 			rfRegion: null,
 			fwUpdates: [],
 			loading: false,
@@ -197,10 +203,17 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(useBaseStore, ['controllerNode']),
+		...mapState(useBaseStore, ['controllerNode', 'zwave']),
 		filteredUpdates() {
 			return this.fwUpdates.filter(
 				(u) => !u.downgrade || (u.downgrade && this.showDowngrades),
+			)
+		},
+		invalidRfRegion() {
+			return (
+				this.controllerNode &&
+				this.controllerNode.RFRegion === undefined &&
+				!this.zwave.rf.region
 			)
 		},
 	},
@@ -218,9 +231,10 @@ export default {
 
 			if (
 				this.controllerNode &&
-				this.controllerNode.RFRegion === undefined
+				this.controllerNode.RFRegion === undefined &&
+				this.zwave.rf.region
 			) {
-				options.rfRegion = this.rfRegion
+				options.rfRegion = this.zwave.rf.region
 			}
 
 			const response = await this.app.apiRequest(
