@@ -812,25 +812,8 @@
 												hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
 												persistent-hint
 												label="Automatic Power Level"
-												:input-value="
-													newZwave.rf.txPower
-														.powerlevel ===
-														'auto' &&
-													newZwave.rf
-														.maxLongRangePowerlevel ===
-														'auto'
-												"
-												@change="
-													(function (enabled) {
-														newZwave.rf.txPower.powerlevel =
-															enabled
-																? 'auto'
-																: undefined
-														newZwave.rf.maxLongRangePowerlevel =
-															enabled
-																? 'auto'
-																: undefined
-													})($event)
+												v-model="
+													newZwave.rf.autoPowerlevels
 												"
 											></v-switch>
 										</v-col>
@@ -838,6 +821,9 @@
 									<v-row class="mt-0">
 										<v-col cols="12" sm="6">
 											<v-text-field
+												v-if="
+													!newZwave.rf.autoPowerlevels
+												"
 												label="Normal Power Level"
 												v-model.number="
 													newZwave.rf.txPower
@@ -847,18 +833,9 @@
 												:min="-10"
 												:max="20"
 												:step="0.1"
-												:hint="
-													newZwave.rf.txPower
-														.powerlevel === 'auto'
-														? 'Automatic mode enabled'
-														: 'Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel.'
-												"
+												hint="Power level in dBm. Min -10, Max +14 or +20, depending on the Z-Wave chip. Will be applied on every startup if the current setting of your Z-Wave controller differs. Not all controllers support changing the powerlevel."
 												suffix="dBm"
 												type="number"
-												:disabled="
-													newZwave.rf.txPower
-														.powerlevel === 'auto'
-												"
 												:rules="[validTxPower]"
 											></v-text-field>
 										</v-col>
@@ -883,21 +860,13 @@
 										<v-col cols="12" sm="6">
 											<v-select
 												label="Maximum LR Power Level"
-												persistent-hint
-												:hint="
-													newZwave.rf
-														.maxLongRangePowerlevel ===
-													'auto'
-														? 'Automatic mode enabled'
-														: 'The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting.'
+												v-if="
+													!newZwave.rf.autoPowerlevels
 												"
+												persistent-hint
+												hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
 												:items="maxLRPowerLevels"
 												clearable
-												:disabled="
-													newZwave.rf
-														.maxLongRangePowerlevel ===
-													'auto'
-												"
 												v-model="
 													newZwave.rf
 														.maxLongRangePowerlevel

@@ -114,6 +114,9 @@
 			>
 				<v-icon small left>auto_mode</v-icon> OTA Updates
 			</v-tab>
+			<v-tab key="otw" v-if="node.isControllerNode" class="justify-start">
+				<v-icon small left>auto_mode</v-icon> Firmware Updates
+			</v-tab>
 			<v-tab key="events" class="justify-start">
 				<v-icon small left>list_alt</v-icon> Events
 			</v-tab>
@@ -198,6 +201,15 @@
 					transition="slide-y-transition"
 				>
 					<OTAUpdates :node="node" :socket="socket" />
+				</v-tab-item>
+
+				<!-- TAB OTW UPDATES -->
+				<v-tab-item
+					v-if="node.isControllerNode"
+					key="otw"
+					transition="slide-y-transition"
+				>
+					<OTWUpdates :node="node" :socket="socket" />
 				</v-tab-item>
 
 				<!-- TAB EVENTS -->
@@ -351,6 +363,7 @@ export default {
 		DialogAdvanced: () => import('@/components/dialogs/DialogAdvanced.vue'),
 		StatisticsCard: () => import('@/components/custom/StatisticsCard.vue'),
 		OTAUpdates: () => import('./OTAUpdates.vue'),
+		OTWUpdates: () => import('./OTWUpdates.vue'),
 		UserCodeTable: () => import('./UserCodeTable.vue'),
 	},
 	computed: {
