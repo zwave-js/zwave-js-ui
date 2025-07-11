@@ -1,5 +1,16 @@
 
 
+# [10.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.8.0...v10.9.0) (2025-07-11)
+
+
+### Features
+
+* add auto power levels option for RF configuration in settings ([#4281](https://github.com/zwave-js/zwave-js-ui/issues/4281)) ([e5007e8](https://github.com/zwave-js/zwave-js-ui/commit/e5007e88d76c63a787efb859959d35ce631071c1))
+* bump zwave-js@15.9.0 ([#4283](https://github.com/zwave-js/zwave-js-ui/issues/4283)) ([7abd215](https://github.com/zwave-js/zwave-js-ui/commit/7abd215827f012df6eec15b544163f84dfd73eb1))
+* make RF region setting mandatory, enable auto-powerlevel by default ([#4277](https://github.com/zwave-js/zwave-js-ui/issues/4277)) ([49d00ad](https://github.com/zwave-js/zwave-js-ui/commit/49d00ad0d7212861b64eacdc32408b28c4ec8a00))
+* support OTW updates via update service ([#4243](https://github.com/zwave-js/zwave-js-ui/issues/4243)) ([205e227](https://github.com/zwave-js/zwave-js-ui/commit/205e227227b39ddc0169911b5eba47de4094691c))
+* use default RF region from settings for OTA update check ([#4278](https://github.com/zwave-js/zwave-js-ui/issues/4278)) ([8083af3](https://github.com/zwave-js/zwave-js-ui/commit/8083af337c49e4e366c8cd295936b35033b045b0))
+
 # [10.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.7.0...v10.8.0) (2025-07-07)
 
 
