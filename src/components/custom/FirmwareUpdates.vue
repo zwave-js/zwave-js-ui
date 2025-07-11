@@ -28,22 +28,23 @@
 						class="ml-2 my-auto"
 					>
 					</v-checkbox>
-					<v-select
+					<v-alert
 						v-if="
 							controllerNode &&
-							controllerNode.RFRegion === undefined
+							controllerNode.RFRegion === undefined &&
+							!zwave.rf.region
 						"
-						style="max-width: 200px"
+						type="warning"
+						dense
 						class="ml-2 mb-2"
-						label="Rf Region"
-						hide-details
-						:items="rfRegions"
-						v-model="rfRegion"
+						style="max-width: 400px"
 					>
-						<template v-slot:prepend>
-							<v-icon>signal_cellular_alt</v-icon>
-						</template>
-					</v-select>
+						<small>
+							<v-icon small>settings</v-icon>
+							Configure your RF region in the settings to get
+							region-specific firmware updates.
+						</small>
+					</v-alert>
 				</v-row>
 			</v-col>
 
@@ -197,7 +198,7 @@ export default {
 		}
 	},
 	computed: {
-		...mapState(useBaseStore, ['controllerNode']),
+		...mapState(useBaseStore, ['controllerNode', 'zwave']),
 		filteredUpdates() {
 			return this.fwUpdates.filter(
 				(u) => !u.downgrade || (u.downgrade && this.showDowngrades),
@@ -218,9 +219,10 @@ export default {
 
 			if (
 				this.controllerNode &&
-				this.controllerNode.RFRegion === undefined
+				this.controllerNode.RFRegion === undefined &&
+				this.zwave.rf.region
 			) {
-				options.rfRegion = this.rfRegion
+				options.rfRegion = this.zwave.rf.region
 			}
 
 			const response = await this.app.apiRequest(
