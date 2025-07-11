@@ -127,16 +127,16 @@
 						label="Maximum LR Power Level"
 						:items="maxLRPowerLevels"
 						v-model="node.maxLongRangePowerlevel"
-						:disabled="isAutoLRPowerLevelEnabled"
+						:disabled="isAutoPowerLevelEnabled"
 						:hint="
-							isAutoLRPowerLevelEnabled
+							isAutoPowerLevelEnabled
 								? 'Automatic mode enabled in settings'
 								: ''
 						"
 						persistent-hint
 					>
 						<template
-							v-if="!isAutoLRPowerLevelEnabled"
+							v-if="!isAutoPowerLevelEnabled"
 							v-slot:append-outer
 						>
 							<v-btn
@@ -462,21 +462,13 @@ export default {
 		},
 		isAutoPowerLevelEnabled() {
 			return (
-				this.zwave.rf?.txPower?.powerlevel === 'auto' &&
-				this.regionSupportsAutoPowerlevel
-			)
-		},
-		isAutoLRPowerLevelEnabled() {
-			return (
-				this.zwave.rf?.maxLongRangePowerlevel === 'auto' &&
+				this.zwave.rf.autoPowerlevels &&
 				this.regionSupportsAutoPowerlevel
 			)
 		},
 		showPowerWarnings() {
 			// Hide warnings when auto mode is enabled for supported regions
-			return (
-				!this.isAutoPowerLevelEnabled && !this.isAutoLRPowerLevelEnabled
-			)
+			return !this.isAutoPowerLevelEnabled
 		},
 		commandGroups() {
 			if (this.node) {
