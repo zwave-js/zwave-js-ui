@@ -2220,7 +2220,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				typeof maxLongRangePowerlevel !== 'number' &&
 				typeof txPower?.powerlevel !== 'number'
 			) {
-				// if no autoPowerlevels and maxLongRangePowerlevel is set, assume autoPowerlevels is true
+				// if autoPowerlevels is undefined and maxLongRangePowerlevel is not a number (likely '' or undefined), assume autoPowerlevels is true
 				autoPowerlevels = true
 				this.cfg.rf.autoPowerlevels = true
 				shouldUpdateSettings = true
