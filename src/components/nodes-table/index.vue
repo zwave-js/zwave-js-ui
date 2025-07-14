@@ -9,8 +9,8 @@
 		}"
 		:expanded.sync="expanded"
 		:value="managedNodes.selected"
-		:options="managedNodes.tableOptions"
 		:custom-sort="sort"
+		:options="managedNodes.tableOptions"
 		@update:options="managedNodes.tableOptions = $event"
 		@input="managedNodes.selected = $event"
 		@click:row="toggleExpanded($event)"
@@ -21,7 +21,7 @@
 		:search="search"
 		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
-		<template v-slot:top>
+		<template v-slot:top="{ pagination, options, updateOptions }">
 			<v-row class="my-4 ml-1" justify-start>
 				<v-text-field
 					v-model="search"
@@ -119,6 +119,16 @@
 					</template>
 					<span>Reset all table settings</span>
 				</v-tooltip>
+
+				<v-spacer></v-spacer>
+				<v-data-footer
+					style="border-top: none"
+					class="mr-2"
+					:pagination="pagination"
+					:items-per-page-text="'Rows'"
+					:options="managedNodes.tableOptions"
+					@update:options="managedNodes.tableOptions = $event"
+				/>
 			</v-row>
 		</template>
 		<template
