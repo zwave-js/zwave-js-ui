@@ -50,15 +50,23 @@
 			<v-text-field
 				v-else-if="!value.list && value.type === 'number'"
 				type="number"
-				:append-outer-icon="!disable_send ? 'send' : null"
+				:append-outer-icon="
+					!disable_send && !numberOutOfRange ? 'send' : null
+				"
 				:suffix="value.unit"
 				:min="value.min != value.max ? value.min : null"
 				:step="value.step || 1"
 				persistent-hint
 				:max="value.min != value.max ? value.max : null"
 				:hint="help"
+				:error="numberOutOfRange"
+				:error-messages="
+					numberOutOfRange
+						? `Value must be between ${value.min} and ${value.max}`
+						: ''
+				"
 				v-model.number="value.newValue"
-				@click:append-outer="updateValue(value)"
+				@click:append-outer="!numberOutOfRange && updateValue(value)"
 			></v-text-field>
 
 			<!-- Object Input -->
@@ -365,6 +373,14 @@ export default {
 				this.value.states?.length > 0
 				? this.value.states.find((s) => s.value === true)?.text
 				: null
+		},
+		numberOutOfRange() {
+			const min = this.value.min ?? -Infinity
+			const max = this.value.max ?? Infinity
+			return (
+				this.value.type === 'number' &&
+				(this.value.newValue < min || this.value.newValue > max)
+			)
 		},
 		falseLabel() {
 			return this.value.type === 'boolean' &&
