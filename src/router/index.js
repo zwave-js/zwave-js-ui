@@ -1,8 +1,4 @@
-import {
-	createRouter,
-	createWebHashHistory,
-	defineAsyncComponent,
-} from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 // DON'T use lazy loading here, it would break application running behind a proxy
 const ControlPanel = () => import('@/views/ControlPanel.vue')

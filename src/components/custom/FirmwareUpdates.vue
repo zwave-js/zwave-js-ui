@@ -2,7 +2,7 @@
 	<v-container grid-list-md>
 		<v-row class="ml-5">
 			<v-col v-show="!node.firmwareUpdate" cols="12">
-				<v-row justify="center" class="mb-2 text-center" dense>
+				<v-row justify="center" class="mb-2 text-center">
 					<v-btn
 						:disabled="loading"
 						variant="outlined"
@@ -14,7 +14,7 @@
 					<v-checkbox
 						v-model="includePrereleases"
 						hide-details
-						dense
+						density="compact"
 						label="Include pre-releases"
 						class="ml-2 my-auto"
 					>
@@ -23,7 +23,7 @@
 						v-if="!hideDowngrades"
 						v-model="showDowngrades"
 						hide-details
-						dense
+						density="compact"
 						label="Show downgrades"
 						class="ml-2 my-auto"
 					>
@@ -33,7 +33,6 @@
 					v-if="controllerNode.RFRegion === undefined"
 					justify="center"
 					class="pt-2 text-center"
-					dense
 				>
 					<v-alert
 						type="info"
@@ -61,7 +60,7 @@
 					v-for="u in filteredUpdates"
 					:key="u.version"
 				>
-					<v-card dense elevation="5">
+					<v-card density="compact" elevation="5">
 						<v-card-title>
 							<v-icon>mdi-update</v-icon>
 							<span class="text-h5"

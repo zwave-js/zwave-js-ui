@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" :persistent="!ended" width="500">
+	<v-dialog v-model="_value" :persistent="!ended" width="500">
 		<v-card>
 			<v-card-title v-if="title">
 				<span class="text-h5">{{ title }}</span>
@@ -58,6 +58,14 @@ export default {
 	computed: {
 		ended() {
 			return this.progress === 100 || this.progress === -1
+		},
+		_value: {
+			get() {
+				return this.value
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
 		},
 	},
 }

@@ -9,16 +9,17 @@
 			:options.sync="tableOptions"
 		>
 			<template v-slot:top>
-				<v-col class="pt-0" dense>
+				<v-col class="pt-0">
 					<h2 class="pa-3">Provisioning Entries</h2>
 					<missing-keys-alert />
 					<v-menu
 						v-model="showInfoTooltip"
-						:position-x="x"
-						:position-y="y"
-						absolute
-						offset-y
-						offset-x
+						location="bottom left"
+						:style="{
+							position: 'fixed',
+							left: x + 'px',
+							top: y + 'px',
+						}"
 					>
 						<v-list density="compact">
 							<v-list-item density="compact">
@@ -87,7 +88,7 @@
 					"
 					@click="toggleProtocol(item)"
 					:disabled="!!item.nodeId"
-					dense
+					density="compact"
 					rounded
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -118,7 +119,7 @@
 							!item.requestedSecurityClasses.s2AccessControl
 						"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 				</div>
 			</template>
@@ -139,7 +140,7 @@
 							!item.requestedSecurityClasses.s2Authenticated
 						"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 				</div>
 			</template>
@@ -161,7 +162,7 @@
 						"
 						@update:model-value="onChange(item)"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 					<span v-else></span>
 				</div>
@@ -182,7 +183,7 @@
 						"
 						@update:model-value="onChange(item)"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 					<span v-else></span>
 				</div>

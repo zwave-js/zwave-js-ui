@@ -105,7 +105,7 @@
 							@click.stop
 							@update:model-value="updateDevice(item)"
 							hide-details
-							dense
+							density="compact"
 						></v-checkbox>
 					</template>
 					<template v-slot:[`item.ignoreDiscovery`]="{ item }">

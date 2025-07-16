@@ -23,7 +23,7 @@
 						id="login-form"
 						@submit.prevent="login"
 						ref="form"
-						lazy-validation
+						validate-on="lazy"
 					>
 						<v-text-field
 							required

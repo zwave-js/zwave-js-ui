@@ -2,7 +2,7 @@
 	<v-menu
 		:model-value="show"
 		:close-on-content-click="false"
-		:offset-y="true"
+		location="bottom"
 	>
 		<template v-slot:activator="{ props }">
 			<v-icon

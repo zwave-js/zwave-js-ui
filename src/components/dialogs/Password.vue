@@ -1,13 +1,17 @@
 <template>
 	<!-- DIALOG PASSWORD -->
-	<v-dialog v-model="show" @click:outside="$emit('close')" max-width="500px">
+	<v-dialog
+		v-model="_value"
+		@click:outside="$emit('close')"
+		max-width="500px"
+	>
 		<v-card>
 			<v-card-title>
 				<span class="text-h5">Password Change</span>
 			</v-card-title>
 			<v-card-text>
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form v-model="valid" ref="form" validate-on="lazy">
 						<v-row dense>
 							<v-col cols="12">
 								<v-text-field
@@ -88,11 +92,11 @@
 export default {
 	name: 'Password',
 	props: {
-		show: Boolean,
+		value: Boolean,
 		password: Object,
 	},
 	watch: {
-		show() {
+		value() {
 			this.$refs.form && this.$refs.form.reset()
 		},
 	},
@@ -113,6 +117,14 @@ export default {
 				this.password.new === this.password.confirmNew ||
 				"Password doesn't match"
 			)
+		},
+		_value: {
+			get() {
+				return this.value
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
 		},
 	},
 	methods: {

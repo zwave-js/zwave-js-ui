@@ -12,11 +12,11 @@
 									v-for="(item, i) in legends"
 									:key="i"
 								>
-									<v-list-item-icon>
+									<template v-slot:prepend>
 										<v-icon :color="item.color">{{
 											item.icon || 'turned_in'
 										}}</v-icon>
-									</v-list-item-icon>
+									</template>
 
 									<v-list-item-title
 										:style="{ color: item.textColor }"
@@ -32,11 +32,11 @@
 									v-for="(item, i) in edgesLegend"
 									:key="i"
 								>
-									<v-list-item-icon>
+									<template v-slot:prepend>
 										<v-icon :color="item.color">{{
 											item.icon || 'turned_in'
 										}}</v-icon>
-									</v-list-item-icon>
+									</template>
 
 									<v-list-item-title
 										:style="{ color: item.textColor }"
@@ -140,11 +140,7 @@
 								:disabled="selectedNodes.length === 0"
 							></v-checkbox>
 
-							<v-badge
-								color="error"
-								overlap
-								v-model="shouldReload"
-							>
+							<v-badge color="error" v-model="shouldReload">
 								<v-btn color="primary" @click="paintGraph">
 									Reload graph
 								</v-btn>
@@ -208,8 +204,12 @@
 				<v-menu
 					v-model="menu"
 					:close-on-content-click="false"
-					:position-x="menuX"
-					:position-y="menuY"
+					location="bottom left"
+					:style="{
+						position: 'fixed',
+						left: menuX + 'px',
+						top: menuY + 'px',
+					}"
 				>
 					<v-card v-if="hoverNode">
 						<v-list-subheader class="font-weight-bold">{{
@@ -225,44 +225,42 @@
 						>
 							<v-list-item density="compact">
 								ID
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{ hoverNode.id }}</v-list-item-content
-								>
+								<template v-slot:append>
+									<span class="align-end font-weight-bold">{{
+										hoverNode.id
+									}}</span>
+								</template>
 							</v-list-item>
 							<v-list-item density="compact">
 								Product
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{
+								<template v-slot:append>
+									<span class="align-end font-weight-bold">{{
 										hoverNode.productLabel +
 										(hoverNode.productDescription
 											? ' (' +
 												hoverNode.productDescription +
 												')'
 											: '')
-									}}</v-list-item-content
-								>
+									}}</span>
+								</template>
 							</v-list-item>
 							<v-list-item density="compact">
 								Power
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{
+								<template v-slot:append>
+									<span class="align-end font-weight-bold">{{
 										hoverNode.minBatteryLevel
 											? hoverNode.minBatteryLevel + '%'
 											: 'MAIN'
-									}}</v-list-item-content
-								>
+									}}</span>
+								</template>
 							</v-list-item>
 							<v-list-item density="compact">
 								Neighbors
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{
+								<template v-slot:append>
+									<span class="align-end font-weight-bold">{{
 										hoverNode.neighbors.join(', ') || 'None'
-									}}</v-list-item-content
-								>
+									}}</span>
+								</template>
 							</v-list-item>
 						</v-list>
 					</v-card>

@@ -46,7 +46,6 @@
 						>
 						<v-menu
 							:close-on-content-click="false"
-							offset-y
 							location="bottom"
 							open-on-click
 							content-class="help-menu"

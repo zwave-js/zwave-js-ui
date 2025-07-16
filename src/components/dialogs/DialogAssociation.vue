@@ -7,7 +7,7 @@
 
 			<v-card-text>
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form v-model="valid" ref="form" validate-on="lazy">
 						<v-row>
 							<v-col cols="12">
 								<v-select

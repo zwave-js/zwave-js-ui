@@ -179,9 +179,7 @@
 										bordered
 										:content="'v' + item.firmwareVersion"
 										:model-value="!!item.firmwareVersion"
-										offset-x="50"
-										offset-y="20"
-										overlap
+										:offset="[50, 20]"
 									>
 										<div
 											v-if="
@@ -191,12 +189,10 @@
 										>
 											<v-tooltip location="bottom">
 												<template
-													v-slot:activator="{
-														props,
-													}"
+													v-slot:activator="{ props }"
 												>
 													<div
-														v-on="v-bind="props""
+														v-bind="props"
 														class="text-h4"
 													>
 														<rich-value
@@ -233,15 +229,13 @@
 										>
 											<v-tooltip location="bottom">
 												<template
-													v-slot:activator="{
-														props,
-													}"
+													v-slot:activator="{ props }"
 												>
 													<v-progress-circular
 														indeterminate
 														class="ma-1"
 														size="32"
-														v-on="v-bind="props""
+														v-bind="props"
 														color="primary"
 													></v-progress-circular>
 												</template>

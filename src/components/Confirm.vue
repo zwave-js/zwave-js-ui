@@ -22,7 +22,7 @@
 					<v-form
 						v-model="valid"
 						ref="form"
-						lazy-validation
+						validate-on="lazy"
 						@submit.prevent="agree"
 					>
 						<v-row>

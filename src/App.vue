@@ -8,16 +8,17 @@
 				clipped-left
 				:rail="mini"
 				v-model="drawer"
-				app
 			>
 				<v-list nav class="py-0">
 					<v-list-item :class="mini && 'px-0'">
-						<v-list-item-avatar>
-							<img
-								style="padding: 3px; border-radius: 0"
-								src="/logo.svg"
-							/>
-						</v-list-item-avatar>
+						<template #prepend>
+							<v-avatar>
+								<img
+									style="padding: 3px; border-radius: 0"
+									src="/logo.svg"
+								/>
+							</v-avatar>
+						</template>
 
 						<v-list-item-title>{{
 							'Z-Wave JS UI'
@@ -51,7 +52,7 @@
 				</v-list>
 			</v-navigation-drawer>
 
-			<v-app-bar app>
+			<v-app-bar>
 				<template v-if="!navTabs || $vuetify.breakpoint.smAndDown">
 					<v-app-bar-nav-icon @click.stop="toggleDrawer" />
 					<v-toolbar-title v-if="$vuetify.breakpoint.smAndUp">
@@ -192,7 +193,6 @@
 							:content="updateAvailable"
 							:model-value="updateAvailable"
 							color="error"
-							overlap
 						>
 							<v-btn size="small" icon @click="showUpdateDialog">
 								<v-icon size="medium" color="primary"
@@ -317,8 +317,14 @@
 				</v-row>
 				<v-footer
 					v-if="$route.path !== '/store'"
-					fixed
 					class="text-center"
+					style="
+						position: fixed;
+						bottom: 0;
+						left: 0;
+						right: 0;
+						z-index: 1000;
+					"
 				>
 					<v-col
 						class="d-flex pa-0 justify-center text-caption"
@@ -344,7 +350,7 @@
 		<PasswordDialog
 			@updatePassword="updatePassword()"
 			@close="closePasswordDialog()"
-			:show="dialog_password"
+			v-model="dialog_password"
 			:password="password"
 		/>
 

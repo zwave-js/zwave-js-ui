@@ -16,9 +16,9 @@
 			</v-tab>
 		</v-tabs>
 
-		<v-tabs-items grow v-model="scanTab">
+		<v-tabs-window grow v-model="scanTab">
 			<!-- QR-Code  -->
-			<v-tab-item>
+			<v-tabs-window-item>
 				<v-card flat>
 					<v-card-text>
 						<v-select
@@ -61,10 +61,10 @@
 						</div>
 					</v-card-text>
 				</v-card>
-			</v-tab-item>
+			</v-tabs-window-item>
 
 			<!-- Image import -->
-			<v-tab-item>
+			<v-tabs-window-item>
 				<v-card flat>
 					<v-card-text>
 						<v-file-input
@@ -95,10 +95,10 @@
 						</v-col>
 					</v-card-text>
 				</v-card>
-			</v-tab-item>
+			</v-tabs-window-item>
 
 			<!-- Text  -->
-			<v-tab-item>
+			<v-tabs-window-item>
 				<v-form
 					ref="qrForm"
 					v-model="qrForm"
@@ -127,8 +127,8 @@
 						</v-card-actions>
 					</v-card>
 				</v-form>
-			</v-tab-item>
-		</v-tabs-items>
+			</v-tabs-window-item>
+		</v-tabs-window>
 		<v-alert density="compact" v-if="qrCodeError" type="error">{{
 			qrCodeError
 		}}</v-alert>

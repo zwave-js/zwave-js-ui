@@ -131,23 +131,23 @@
 			</v-tab>
 
 			<!-- TABS -->
-			<v-tabs-items
+			<v-tabs-window
 				style="background: transparent; padding-bottom: 10px"
 				touchless
 				v-model="currentTab"
 			>
 				<!-- TAB NODE -->
-				<v-tab-item key="node" transition="slide-y-transition">
+				<v-tabs-window-item key="node" transition="slide-y-transition">
 					<node-details
 						ref="nodeDetails"
 						:headers="headers"
 						:node="node"
 						@updateValue="updateValue"
 					></node-details>
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB METADATA -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="nodeMetadata"
 					key="manual"
 					transition="slide-y-transition"
@@ -171,51 +171,57 @@
 							</span>
 						</p>
 					</section>
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB HOMEASSISTANT -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="showHass"
 					key="homeassistant"
 					transition="slide-y-transition"
 				>
 					<home-assistant :node="node" :socket="socket" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB GROUPS -->
-				<v-tab-item key="groups" transition="slide-y-transition">
+				<v-tabs-window-item
+					key="groups"
+					transition="slide-y-transition"
+				>
 					<association-groups :node="node" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB USERS -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="node.schedule"
 					key="users"
 					transition="slide-y-transition"
 				>
 					<user-code-table :node="node" @updateValue="updateValue" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB OTA UPDATES -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="!node.isControllerNode"
 					key="ota"
 					transition="slide-y-transition"
 				>
 					<OTAUpdates :node="node" :socket="socket" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB OTW UPDATES -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="node.isControllerNode"
 					key="otw"
 					transition="slide-y-transition"
 				>
 					<OTWUpdates :node="node" :socket="socket" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB EVENTS -->
-				<v-tab-item key="events" transition="slide-y-transition">
+				<v-tabs-window-item
+					key="events"
+					transition="slide-y-transition"
+				>
 					<v-container grid-list-md>
 						<v-text-field
 							v-model="searchEvents"
@@ -298,10 +304,10 @@
 							</div>
 						</v-col>
 					</v-container>
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB DEBUG INFO -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="$vuetify.breakpoint.mdAndUp"
 					key="debug"
 					transition="slide-y-transition"
@@ -319,8 +325,8 @@
 							@click:append="copyText"
 						></v-textarea>
 					</v-container>
-				</v-tab-item>
-			</v-tabs-items>
+				</v-tabs-window-item>
+			</v-tabs-window>
 		</v-tabs>
 
 		<DialogAdvanced

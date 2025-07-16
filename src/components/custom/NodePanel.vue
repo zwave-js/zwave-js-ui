@@ -15,61 +15,63 @@
 			>
 				<v-list-item density="compact">
 					ID
-					<v-list-item-content class="align-end">{{
-						node.id
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{ node.id }}</span>
+					</template>
 				</v-list-item>
 				<v-list-item density="compact">
 					Status
-					<v-list-item-content class="align-end">{{
-						node.status
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{ node.status }}</span>
+					</template>
 				</v-list-item>
 				<v-list-item density="compact">
 					Protocol
-					<v-list-item-content class="align-end">{{
-						getProtocol(node)
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{ getProtocol(node) }}</span>
+					</template>
 				</v-list-item>
 				<v-list-item density="compact">
 					Code
-					<v-list-item-content class="align-end">{{
-						node.productLabel
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{ node.productLabel }}</span>
+					</template>
 				</v-list-item>
 				<v-list-item density="compact">
 					Product
-					<v-list-item-content class="align-end">{{
-						node.productDescription
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{
+							node.productDescription
+						}}</span>
+					</template>
 				</v-list-item>
 				<v-list-item density="compact">
 					Manufacturer
-					<v-list-item-content class="align-end">{{
-						node.manufacturer
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{ node.manufacturer }}</span>
+					</template>
 				</v-list-item>
 				<v-list-item v-if="node.name">
 					Name
-					<v-list-item-content class="align-end">{{
-						node.name
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{ node.name }}</span>
+					</template>
 				</v-list-item>
 				<v-list-item v-if="node.loc">
 					Location
-					<v-list-item-content class="align-end">{{
-						node.loc
-					}}</v-list-item-content>
+					<template v-slot:append>
+						<span class="align-end">{{ node.loc }}</span>
+					</template>
 				</v-list-item>
 				<v-list-item v-if="node.neighbors && !isLongRange">
 					Neighbors
-					<v-list-item-content class="align-end"
-						>{{
+					<template v-slot:append>
+						<span class="align-end">{{
 							node.neighbors.length > 0
 								? node.neighbors.join(', ')
 								: 'None'
-						}}
-					</v-list-item-content>
+						}}</span>
+					</template>
 					<v-list-item-action v-if="!node.isControllerNode">
 						<v-btn
 							class="ml-2"
@@ -84,9 +86,12 @@
 				</v-list-item>
 				<v-list-item density="compact">
 					Statistics
-					<v-list-item-content class="align-end"
-						><statistics-arrows inactive-color="black" :node="node"
-					/></v-list-item-content>
+					<template v-slot:append>
+						<statistics-arrows
+							inactive-color="black"
+							:node="node"
+						/>
+					</template>
 				</v-list-item>
 				<!-- <div v-if="lwr">
 						<v-subheader>Last working route</v-subheader>
@@ -113,7 +118,7 @@
 					</div> -->
 
 				<div v-if="!node.isControllerNode && !isLongRange">
-					<v-subheader
+					<v-list-subheader
 						>Priority route
 						<v-btn
 							v-if="appRoute"
@@ -140,7 +145,7 @@
 							>Set
 							<v-icon size="x-small">route</v-icon>
 						</v-btn>
-					</v-subheader>
+					</v-list-subheader>
 					<div v-if="appRoute && !isLongRange" class="text-caption">
 						<v-list-item
 							density="compact"
@@ -148,16 +153,16 @@
 							:key="i"
 						>
 							{{ s.title }}
-							<v-list-item-content class="align-end">{{
-								s.text
-							}}</v-list-item-content>
+							<template v-slot:append>
+								<span class="align-end">{{ s.text }}</span>
+							</template>
 						</v-list-item>
 					</div>
 					<p class="text-center" v-else>None</p>
 				</div>
 
 				<div v-if="!node.isControllerNode && !isLongRange">
-					<v-subheader
+					<v-list-subheader
 						>Return routes
 						<v-btn
 							v-if="!routesChanged"
@@ -177,7 +182,7 @@
 							>Add
 							<v-icon size="x-small">route</v-icon>
 						</v-btn>
-					</v-subheader>
+					</v-list-subheader>
 					<div>
 						<div v-if="returnRoutes.length > 0">
 							<table class="fill-width">
