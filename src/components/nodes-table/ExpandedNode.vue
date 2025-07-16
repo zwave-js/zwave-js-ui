@@ -84,56 +84,88 @@
 
 		<v-divider class="my-4" />
 
-		<v-tabs
-			v-model="currentTab"
-			show-arrows
-			class="bg-transparent mb-4"
-			:direction="$vuetify.display.mdAndUp ? 'vertical' : 'horizontal'"
+		<div
+			:class="[
+				'd-flex',
+				$vuetify.display.mdAndUp ? 'flex-row' : 'flex-column',
+			]"
 		>
-			<v-tab class="justify-start" value="node">
-				<v-icon size="small" start>widgets</v-icon> Node
-			</v-tab>
-			<v-tab v-if="nodeMetadata" class="justify-start" value="manual">
-				<v-icon size="small" start>help</v-icon> Help
-			</v-tab>
-			<v-tab v-if="showHass" class="justify-start" value="homeassistant">
-				<v-icon size="small" start>home</v-icon> Home Assistant
-			</v-tab>
-			<v-tab value="groups" class="justify-start">
-				<v-icon size="small" start>device_hub</v-icon> Groups
-			</v-tab>
-			<v-tab v-if="node.schedule" value="users" class="justify-start">
-				<v-icon size="small" start>group</v-icon> Users
-			</v-tab>
-			<v-tab
-				value="ota"
-				v-if="!node.isControllerNode"
-				class="justify-start"
+			<v-tabs
+				v-model="currentTab"
+				show-arrows
+				class="bg-transparent mb-4"
+				:direction="
+					$vuetify.display.mdAndUp ? 'vertical' : 'horizontal'
+				"
 			>
-				<v-icon size="small" start>auto_mode</v-icon> OTA Updates
-			</v-tab>
-			<v-tab
-				value="otw"
-				v-if="node.isControllerNode"
-				class="justify-start"
-			>
-				<v-icon size="small" start>auto_mode</v-icon> Firmware Updates
-			</v-tab>
-			<v-tab value="events" class="justify-start">
-				<v-icon size="small" start>list_alt</v-icon> Events
-			</v-tab>
-			<v-tab
-				v-if="$vuetify.display.mdAndUp"
-				class="justify-start"
-				value="debug"
-			>
-				<v-icon size="small" start>bug_report</v-icon> Debug Info
-			</v-tab>
+				<v-tab
+					prepend-icon="widgets"
+					value="node"
+					class="justify-start"
+					text="Node"
+				/>
+				<v-tab
+					v-if="nodeMetadata"
+					prepend-icon="help"
+					value="manual"
+					class="justify-start"
+					text="Help"
+					W
+				/>
+				<v-tab
+					v-if="showHass"
+					prepend-icon="home"
+					value="homeassistant"
+					class="justify-start"
+					text="Home Assistant"
+				/>
+				<v-tab
+					prepend-icon="device_hub"
+					value="groups"
+					class="justify-start"
+					text="Groups"
+				/>
+				<v-tab
+					v-if="node.schedule"
+					prepend-icon="group"
+					value="users"
+					class="justify-start"
+					text="Users"
+				/>
+				<v-tab
+					value="ota"
+					v-if="!node.isControllerNode"
+					prepend-icon="auto_mode"
+					class="justify-start"
+					text="OTA Updates"
+				/>
+				<v-tab
+					value="otw"
+					v-if="node.isControllerNode"
+					prepend-icon="auto_mode"
+					class="justify-start"
+					text="Firmware Updates"
+				/>
+				<v-tab
+					prepend-icon="list_alt"
+					value="events"
+					class="justify-start"
+					text="Events"
+				/>
+				<v-tab
+					v-if="$vuetify.display.mdAndUp"
+					prepend-icon="bug_report"
+					class="justify-start"
+					value="debug"
+					text="Debug Info"
+				/>
+			</v-tabs>
 
 			<!-- TABS -->
 			<v-tabs-window
 				style="background: transparent; padding-bottom: 10px"
 				touchless
+				class="fill"
 				v-model="currentTab"
 			>
 				<!-- TAB NODE -->
@@ -326,7 +358,7 @@
 					</v-container>
 				</v-tabs-window-item>
 			</v-tabs-window>
-		</v-tabs>
+		</div>
 
 		<DialogAdvanced
 			v-model="advancedShowDialog"

@@ -18,69 +18,50 @@
 
 		<!-- HASS DEVICES -->
 		<v-row v-if="hassDevices.length > 0">
-			<v-col cols="12" md="6" pa-1>
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="primary"
-							variant="text"
-							@click="storeDevices(false)"
-							>Store</v-btn
-						>
-					</template>
-					<span
-						>Store all discovered devices in nodes.json in store
-						directory. Prevents re-discovery on startup</span
-					>
-				</v-tooltip>
+			<v-col cols="12" md="6">
+				<v-btn
+					v-tooltip:bottom="
+						'Store all discovered devices in nodes.json in store directory. Prevents re-discovery on startup'
+					"
+					color="primary"
+					variant="text"
+					@click="storeDevices(false)"
+				>
+					Store
+				</v-btn>
 
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="error"
-							variant="text"
-							@click="storeDevices(true)"
-							>Remove Store</v-btn
-						>
-					</template>
-					<span
-						>Remove devices from nodes.json in store directory</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-tooltip:bottom="
+						'Remove devices from nodes.json in store directory'
+					"
+					color="error"
+					variant="text"
+					@click="storeDevices(true)"
+				>
+					Remove Store
+				</v-btn>
 
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="success"
-							variant="text"
-							@click="rediscoverNode"
-							>Rediscover Node</v-btn
-						>
-					</template>
-					<span
-						>Rediscover all node entities. Useful when changing node
-						name/location and need to recalculate topics</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-tooltip:bottom="
+						'Rediscover all node entities. Useful when changing node name/location and need to recalculate topics'
+					"
+					color="success"
+					variant="text"
+					@click="rediscoverNode"
+				>
+					Rediscover Node
+				</v-btn>
 
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="warning"
-							variant="text"
-							@click="disableDiscovery"
-							>Disable Discovery</v-btn
-						>
-					</template>
-					<span
-						>Set the ignoreDiscovery flag to true on all entities of
-						this node to skip the discovery of them</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-tooltip:bottom="
+						'Set the ignoreDiscovery flag to true on all entities of this node to skip the discovery of them'
+					"
+					color="warning"
+					variant="text"
+					@click="disableDiscovery"
+				>
+					Disable Discovery
+				</v-btn>
 
 				<v-data-table
 					:headers="headers_hass"
