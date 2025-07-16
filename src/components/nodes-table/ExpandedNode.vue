@@ -31,21 +31,17 @@
 				</span>
 			</v-col>
 			<v-col
-				:class="
-					$vuetify.display.smAndDown ? 'text-center' : 'text-end'
-				"
+				:class="$vuetify.display.smAndDown ? 'text-center' : 'text-end'"
 			>
 				<v-item-group class="v-btn-toggle">
 					<v-btn
 						color="primary"
 						variant="outlined"
 						@click="toggleStatistics"
+						:prepend-icon="statisticsOpeningIndicator"
+						append-icon="multiline_chart"
 					>
-						<v-icon start>
-							{{ statisticsOpeningIndicator }}
-						</v-icon>
 						Statistics
-						<v-icon color="primary" end> multiline_chart </v-icon>
 					</v-btn>
 					<v-btn
 						v-if="!node.isControllerNode"
@@ -241,7 +237,7 @@
 									<template v-slot:activator="{ props }">
 										<v-btn
 											@click="toggleAutoScroll()"
-											icon
+											icon="autorenew"
 											:color="autoScroll ? 'primary' : ''"
 											:class="
 												autoScroll
@@ -249,9 +245,7 @@
 													: ''
 											"
 											v-bind="props"
-										>
-											<v-icon>autorenew</v-icon>
-										</v-btn>
+										/>
 									</template>
 									<span>Enable/Disable auto scroll</span>
 								</v-tooltip>
@@ -260,7 +254,7 @@
 									<template v-slot:activator="{ props }">
 										<v-btn
 											@click="toggleSort()"
-											icon
+											icon="swap_vert"
 											:color="
 												inverseSort ? 'primary' : ''
 											"
@@ -270,9 +264,7 @@
 													: ''
 											"
 											v-bind="props"
-										>
-											<v-icon>swap_vert</v-icon>
-										</v-btn>
+										/>
 									</template>
 									<span>Inverse Sort</span>
 								</v-tooltip>
@@ -365,16 +357,26 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		AssociationGroups: defineAsyncComponent(() =>
-			import('@/components/nodes-table/AssociationGroups.vue')),
-		HomeAssistant: defineAsyncComponent(() =>
-			import('@/components/nodes-table/HomeAssistant.vue')),
-		NodeDetails: defineAsyncComponent(() => import('@/components/nodes-table/NodeDetails.vue')),
-		DialogAdvanced: defineAsyncComponent(() => import('@/components/dialogs/DialogAdvanced.vue')),
-		StatisticsCard: defineAsyncComponent(() => import('@/components/custom/StatisticsCard.vue')),
+		AssociationGroups: defineAsyncComponent(
+			() => import('@/components/nodes-table/AssociationGroups.vue'),
+		),
+		HomeAssistant: defineAsyncComponent(
+			() => import('@/components/nodes-table/HomeAssistant.vue'),
+		),
+		NodeDetails: defineAsyncComponent(
+			() => import('@/components/nodes-table/NodeDetails.vue'),
+		),
+		DialogAdvanced: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogAdvanced.vue'),
+		),
+		StatisticsCard: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsCard.vue'),
+		),
 		OTAUpdates: defineAsyncComponent(() => import('./OTAUpdates.vue')),
 		OTWUpdates: defineAsyncComponent(() => import('./OTWUpdates.vue')),
-		UserCodeTable: defineAsyncComponent(() => import('./UserCodeTable.vue')),
+		UserCodeTable: defineAsyncComponent(
+			() => import('./UserCodeTable.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),

@@ -31,13 +31,11 @@
 							</span>
 							<v-btn
 								v-if="toggleEdit"
-								icon
+								icon="delete"
 								size="small"
 								@click="deleteItem(i)"
 								color="error"
-							>
-								<v-icon size="small">delete</v-icon>
-							</v-btn>
+							/>
 						</v-row>
 					</v-list-item>
 				</template>

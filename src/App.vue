@@ -11,9 +11,15 @@
 				<v-list nav class="py-0">
 					<v-list-item :class="mini && 'px-0'">
 						<template #prepend>
-							<v-avatar>
+							<v-avatar size="40">
 								<img
-									style="padding: 3px; border-radius: 0"
+									style="
+										padding: 4px;
+										border-radius: 0;
+										width: 100%;
+										height: 100%;
+										object-fit: contain;
+									"
 									src="/logo.svg"
 								/>
 							</v-avatar>
@@ -125,7 +131,7 @@
 					<template v-slot:activator="{ props }">
 						<v-icon
 							class="ml-3"
-							size="medium"
+							size="large"
 							style="cursor: default"
 							:color="inclusionState.color"
 							v-bind="props"
@@ -140,7 +146,7 @@
 					<template v-slot:activator="{ props }">
 						<v-icon
 							class="mr-3 ml-3"
-							size="medium"
+							size="large"
 							style="cursor: default"
 							:color="statusColor || 'warning'"
 							v-bind="props"
@@ -154,7 +160,7 @@
 				<v-tooltip z-index="9999" location="bottom" open-on-click>
 					<template v-slot:activator="{ props }">
 						<v-icon
-							size="medium"
+							size="large"
 							class="mr-3"
 							style="cursor: default"
 							color="primary"
@@ -193,10 +199,11 @@
 							:model-value="updateAvailable"
 							color="error"
 						>
-							<v-btn size="small" icon @click="showUpdateDialog">
-								<v-icon size="medium" color="primary"
-									>history</v-icon
-								>
+							<v-btn
+								icon="history"
+								color="primary"
+								@click="showUpdateDialog"
+							>
 							</v-btn>
 						</v-badge>
 					</template>
@@ -207,7 +214,7 @@
 				<v-menu v-if="$vuetify.display.xs" location="bottom left">
 					<template v-slot:activator="{ props }">
 						<v-btn size="small" v-bind="props" icon>
-							<v-icon>more_vert</v-icon>
+							<v-icon size="large">more_vert</v-icon>
 						</v-btn>
 					</template>
 
@@ -242,16 +249,12 @@
 								icon
 								@click="item.func"
 							>
-								<v-tooltip location="bottom">
-									<template v-slot:activator="{ props }">
-										<v-icon
-											color="primary"
-											v-bind="props"
-											>{{ item.icon }}</v-icon
-										>
-									</template>
-									<span>{{ item.tooltip }}</span>
-								</v-tooltip>
+								<v-icon
+									v-tooltip:bottom="item.tooltip"
+									size="large"
+									color="primary"
+									>{{ item.icon }}</v-icon
+								>
 							</v-btn>
 						</template>
 

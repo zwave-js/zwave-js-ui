@@ -98,8 +98,12 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ZwaveGraph: defineAsyncComponent(() => import('@/components/custom/ZwaveGraph.vue')),
-		NodePanel: defineAsyncComponent(() => import('@/components/custom/NodePanel.vue')),
+		ZwaveGraph: defineAsyncComponent(
+			() => import('@/components/custom/ZwaveGraph.vue'),
+		),
+		NodePanel: defineAsyncComponent(
+			() => import('@/components/custom/NodePanel.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),

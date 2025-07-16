@@ -9,9 +9,7 @@
 			<v-card-title>
 				<span class="text-h5">{{ title }}</span>
 				<v-spacer></v-spacer>
-				<v-btn icon @click="$emit('close')"
-					><v-icon>close</v-icon></v-btn
-				>
+				<v-btn icon="close" @click="$emit('close')" />
 			</v-card-title>
 
 			<v-card-text>

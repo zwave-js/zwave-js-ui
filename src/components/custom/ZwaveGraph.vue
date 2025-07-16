@@ -59,31 +59,24 @@
 								variant="solo"
 							>
 								<template v-slot:append-outer>
-									<v-tooltip location="bottom">
-										<template v-slot:activator="{ props }">
-											<v-btn
-												v-bind="props"
-												@click="
-													invertLocationsFilter =
-														!invertLocationsFilter
-												"
-												icon
-												:color="
-													invertLocationsFilter
-														? 'primary'
-														: ''
-												"
-												:class="
-													invertLocationsFilter
-														? 'border-primary'
-														: ''
-												"
-											>
-												<v-icon>loop</v-icon>
-											</v-btn>
-										</template>
-										<span>Invert selection</span>
-									</v-tooltip>
+									<v-btn
+										v-tooltip:bottom="'Invert selection'"
+										@click="
+											invertLocationsFilter =
+												!invertLocationsFilter
+										"
+										icon="loop"
+										:color="
+											invertLocationsFilter
+												? 'primary'
+												: ''
+										"
+										:class="
+											invertLocationsFilter
+												? 'border-primary'
+												: ''
+										"
+									/>
 								</template>
 							</v-autocomplete>
 
@@ -100,31 +93,22 @@
 								variant="solo"
 							>
 								<template v-slot:append-outer>
-									<v-tooltip location="bottom">
-										<template v-slot:activator="{ props }">
-											<v-btn
-												v-bind="props"
-												@click="
-													invertNodesFilter =
-														!invertNodesFilter
-												"
-												icon
-												:color="
-													invertNodesFilter
-														? 'primary'
-														: ''
-												"
-												:class="
-													invertNodesFilter
-														? 'border-primary'
-														: ''
-												"
-											>
-												<v-icon>loop</v-icon>
-											</v-btn>
-										</template>
-										<span>Invert selection</span>
-									</v-tooltip>
+									<v-btn
+										v-tooltip:bottom="'Invert selection'"
+										@click="
+											invertNodesFilter =
+												!invertNodesFilter
+										"
+										icon="loop"
+										:color="
+											invertNodesFilter ? 'primary' : ''
+										"
+										:class="
+											invertNodesFilter
+												? 'border-primary'
+												: ''
+										"
+									/>
 								</template>
 							</v-autocomplete>
 

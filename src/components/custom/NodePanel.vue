@@ -71,16 +71,16 @@
 								? node.neighbors.join(', ')
 								: 'None'
 						}}</span>
-					</template>
-					<template v-if="!node.isControllerNode" #append>
 						<v-btn
+							v-if="!node.isControllerNode"
 							class="ml-2"
 							color="primary"
 							size="x-small"
 							:loading="discoverLoading"
 							@click="discoverNeighbors()"
-							>Discover
-							<v-icon size="x-small">search</v-icon>
+							icon="search"
+						>
+							Discover
 						</v-btn>
 					</template>
 				</v-list-item>
@@ -384,11 +384,9 @@
 				<v-card-text class="pt-4">
 					<v-btn
 						style="position: absolute; top: 10px; right: 10px"
-						icon
+						icon="close"
 						@click="showFullscreen = false"
-					>
-						<v-icon>close</v-icon>
-					</v-btn>
+					/>
 					<bg-rssi-chart :node="node" fill-size />
 				</v-card-text>
 			</v-card>
@@ -427,13 +425,18 @@ import { copy, getProtocol } from '../../lib/utils'
 export default {
 	mixins: [InstancesMixin],
 	components: {
-		StatisticsArrows: defineAsyncComponent(() =>
-			import('@/components/custom/StatisticsArrows.vue')),
-		BgRssiChart: defineAsyncComponent(() => import('@/components/custom/BgRssiChart.vue')),
-		DialogHealthCheck: defineAsyncComponent(() =>
-			import('@/components/dialogs/DialogHealthCheck.vue')),
-		DialogLinkReliability: defineAsyncComponent(() =>
-			import('@/components/dialogs/DialogLinkReliability.vue')),
+		StatisticsArrows: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsArrows.vue'),
+		),
+		BgRssiChart: defineAsyncComponent(
+			() => import('@/components/custom/BgRssiChart.vue'),
+		),
+		DialogHealthCheck: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogHealthCheck.vue'),
+		),
+		DialogLinkReliability: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogLinkReliability.vue'),
+		),
 		draggable,
 	},
 	props: {
@@ -540,6 +543,7 @@ export default {
 				this.routesChanged = false
 			},
 			immediate: true,
+			deep: true,
 		},
 	},
 	methods: {

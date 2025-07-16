@@ -11,9 +11,7 @@
 			:disabled="disabled"
 			ref="fileTextField"
 		></v-text-field>
-		<v-btn style="margin: 0" icon @click.stop="clearInput()">
-			<v-icon>clear</v-icon>
-		</v-btn>
+		<v-btn style="margin: 0" icon="clear" @click.stop="clearInput()" />
 		<input
 			style="position: absolute; left: -99999px"
 			type="file"

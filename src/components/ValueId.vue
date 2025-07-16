@@ -230,18 +230,9 @@
 								: 'success'
 						"
 						@click="updateValue(value, true)"
+						:icon="!trueLabel ? 'horizontal_rule' : undefined"
 					>
-						<v-icon
-							v-if="!trueLabel"
-							:color="
-								value.newValue === true && !value.list
-									? 'white'
-									: 'success'
-							"
-							style="rotate: 90deg"
-							>horizontal_rule</v-icon
-						>
-						<span v-else>{{ trueLabel }}</span>
+						<span v-if="trueLabel">{{ trueLabel }}</span>
 					</v-btn>
 					<v-btn
 						variant="outlined"
@@ -259,17 +250,11 @@
 								: 'error'
 						"
 						@click="updateValue(value, false)"
+						:icon="
+							!falseLabel ? 'radio_button_unchecked' : undefined
+						"
 					>
-						<v-icon
-							v-if="!falseLabel"
-							:color="
-								value.newValue === false && !value.list
-									? 'white'
-									: 'error'
-							"
-							>radio_button_unchecked</v-icon
-						>
-						<span v-else>{{ falseLabel }}</span>
+						<span v-if="falseLabel">{{ falseLabel }}</span>
 					</v-btn>
 				</v-btn-toggle>
 				<div v-if="help" class="text-caption mt-2 help">{{ help }}</div>
@@ -295,24 +280,18 @@
 			</v-tooltip>
 
 			<!-- Suffix loader with tooltip -->
-			<v-tooltip v-if="value.toUpdate" location="bottom">
-				<template v-slot:activator="{ props }">
-					<v-progress-circular
-						v-bind="props"
-						indeterminate
-						class="ml-2"
-						size="20"
-						:color="
-							node?.status === 'Asleep' ? 'warning' : 'primary'
-						"
-					></v-progress-circular>
-				</template>
-				<span>{{
+			<v-progress-circular
+				v-if="value.toUpdate"
+				v-tooltip:bottom="
 					node?.status === 'Asleep'
 						? 'Wake up your device in order to send commands'
 						: 'Set value in progress...'
-				}}</span>
-			</v-tooltip>
+				"
+				indeterminate
+				class="ml-2"
+				size="20"
+				:color="node?.status === 'Asleep' ? 'warning' : 'primary'"
+			></v-progress-circular>
 		</div>
 	</div>
 </template>
@@ -329,8 +308,8 @@
 	font-weight: bold !important;
 }
 
-.valueid-slot::v-deep .v-messages__message,
-.valueid-slot::v-deep .help {
+.valueid-slot :deep(.v-messages__message),
+.valueid-slot :deep(.help) {
 	white-space: pre-line;
 }
 </style>

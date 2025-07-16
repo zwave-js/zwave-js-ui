@@ -103,7 +103,9 @@ const log = logger.get('Login')
 
 export default {
 	components: {
-		ColorScheme: defineAsyncComponent(() => import('@/components/custom/ColorScheme.vue')),
+		ColorScheme: defineAsyncComponent(
+			() => import('@/components/custom/ColorScheme.vue'),
+		),
 	},
 	data() {
 		return {

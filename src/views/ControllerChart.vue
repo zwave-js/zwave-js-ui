@@ -11,7 +11,9 @@ import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		BgRssiChart: defineAsyncComponent(() => import('../components/custom/BgRssiChart.vue')),
+		BgRssiChart: defineAsyncComponent(
+			() => import('../components/custom/BgRssiChart.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['controllerNode']),

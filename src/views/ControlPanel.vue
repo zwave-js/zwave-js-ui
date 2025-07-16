@@ -65,48 +65,38 @@
 			:title="advancedDialogTitle"
 		/>
 
-		<v-speed-dial bottom fab right fixed v-model="fab">
-			<template v-slot:activator>
+		<v-speed-dial v-model="fab" location="bottom end">
+			<template v-slot:activator="{ props }">
 				<v-btn
 					:color="selected.length === 0 ? 'primary' : 'success'"
 					variant="fab"
 					hover
-					v-model="fab"
+					v-bind="props"
 				>
 					<v-icon v-if="fab">close</v-icon>
 					<v-icon v-else>menu</v-icon>
 				</v-btn>
 			</template>
-			<v-tooltip location="left">
-				<template v-slot:activator="{ props }">
-					<v-btn
-						variant="fab"
-						v-if="selected.length === 0"
-						size="small"
-						color="success"
-						@click="showNodesManager()"
-						v-bind="props"
-					>
-						<v-icon>all_inclusive</v-icon>
-					</v-btn>
-				</template>
-				<span>Manage nodes</span>
-			</v-tooltip>
+			<v-btn
+				v-if="selected.length === 0"
+				v-tooltip:left="'Manage nodes'"
+				variant="fab"
+				size="small"
+				color="success"
+				@click="showNodesManager()"
+			>
+				<v-icon>all_inclusive</v-icon>
+			</v-btn>
 
-			<v-tooltip location="left">
-				<template v-slot:activator="{ props }">
-					<v-btn
-						variant="fab"
-						size="small"
-						color="purple"
-						@click="advancedShowDialog = true"
-						v-bind="props"
-					>
-						<v-icon>auto_fix_high</v-icon>
-					</v-btn>
-				</template>
-				<span>Advanced actions</span>
-			</v-tooltip>
+			<v-btn
+				v-tooltip:left="'Advanced actions'"
+				variant="fab"
+				size="small"
+				color="purple"
+				@click="advancedShowDialog = true"
+			>
+				<v-icon>auto_fix_high</v-icon>
+			</v-btn>
 		</v-speed-dial>
 	</div>
 </template>
@@ -131,10 +121,18 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		NodesTable: defineAsyncComponent(() => import('@/components/nodes-table/index.vue')),
-		DialogAdvanced: defineAsyncComponent(() => import('@/components/dialogs/DialogAdvanced.vue')),
-		StatisticsCard: defineAsyncComponent(() => import('@/components/custom/StatisticsCard.vue')),
-		SmartView: defineAsyncComponent(() => import('@/components/nodes-table/SmartView.vue')),
+		NodesTable: defineAsyncComponent(
+			() => import('@/components/nodes-table/index.vue'),
+		),
+		DialogAdvanced: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogAdvanced.vue'),
+		),
+		StatisticsCard: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsCard.vue'),
+		),
+		SmartView: defineAsyncComponent(
+			() => import('@/components/nodes-table/SmartView.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),

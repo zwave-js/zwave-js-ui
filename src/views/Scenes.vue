@@ -97,13 +97,15 @@
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	name: 'Scenes',
 	mixins: [InstancesMixin],
 	components: {
-		DialogSceneValue: () =>
-			import('@/components/dialogs/DialogSceneValue.vue'),
+		DialogSceneValue: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogSceneValue.vue'),
+		),
 	},
 	watch: {
 		selectedScene() {

@@ -392,11 +392,7 @@
 											/>
 										</v-col>
 										<v-col
-											:cols="
-												$vuetify.display.xs
-													? 4
-													: 3
-											"
+											:cols="$vuetify.display.xs ? 4 : 3"
 										>
 											<v-select
 												label="Format"

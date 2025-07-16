@@ -2101,12 +2101,18 @@ export default {
 	name: 'Settings',
 	mixins: [InstancesMixin],
 	components: {
-		ColorScheme: defineAsyncComponent(() => import('@/components/custom/ColorScheme.vue')),
-		DialogGatewayValue: defineAsyncComponent(() =>
-			import('@/components/dialogs/DialogGatewayValue.vue')),
-		fileInput: defineAsyncComponent(() => import('@/components/custom/file-input.vue')),
-		invertedCheckbox: defineAsyncComponent(() =>
-			import('@/components/custom/InvertedCheckbox.vue')),
+		ColorScheme: defineAsyncComponent(
+			() => import('@/components/custom/ColorScheme.vue'),
+		),
+		DialogGatewayValue: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogGatewayValue.vue'),
+		),
+		fileInput: defineAsyncComponent(
+			() => import('@/components/custom/file-input.vue'),
+		),
+		invertedCheckbox: defineAsyncComponent(
+			() => import('@/components/custom/InvertedCheckbox.vue'),
+		),
 	},
 	props: {
 		socket: {

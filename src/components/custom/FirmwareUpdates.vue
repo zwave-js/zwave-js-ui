@@ -74,9 +74,10 @@
 								size="small"
 								:color="u.downgrade ? 'warning' : 'success'"
 								@click="handleUpdateFirmware(u)"
-								><v-icon size="small">{{
+								:prepend-icon="
 									u.downgrade ? 'download' : 'upload'
-								}}</v-icon>
+								"
+							>
 								{{ u.downgrade ? 'Downgrade' : 'Update' }}
 							</v-btn>
 						</v-card-title>
@@ -115,12 +116,9 @@
 									<v-btn
 										title="Download"
 										@click="download(f.url)"
-										icon
-									>
-										<v-icon color="success"
-											>download</v-icon
-										>
-									</v-btn>
+										icon="download"
+										color="success"
+									/>
 								</template>
 							</v-list-item>
 						</v-card-text>

@@ -51,9 +51,11 @@
 							content-class="help-menu"
 						>
 							<template v-slot:activator="{ props }">
-								<v-btn color="primary" v-bind="props">
-									<v-icon>help</v-icon>
-								</v-btn>
+								<v-btn
+									color="primary"
+									icon="help"
+									v-bind="props"
+								/>
 							</template>
 							<v-list density="compact">
 								<v-list-item>

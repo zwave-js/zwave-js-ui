@@ -9,7 +9,7 @@
 			<v-card-title>
 				<span class="text-h5">Nodes Manager</span>
 				<v-spacer></v-spacer>
-				<v-btn icon @click="close()"><v-icon>clear</v-icon></v-btn>
+				<v-btn icon="clear" @click="close()" />
 			</v-card-title>
 
 			<v-divider />
@@ -689,7 +689,9 @@ export default {
 		socket: Object,
 	},
 	components: {
-		MissingKeysAlert: defineAsyncComponent(() => import('../custom/MissingKeysAlert.vue')),
+		MissingKeysAlert: defineAsyncComponent(
+			() => import('../custom/MissingKeysAlert.vue'),
+		),
 	},
 	mixins: [InstancesMixin],
 	data() {

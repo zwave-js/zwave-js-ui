@@ -43,7 +43,9 @@ export default {
 		},
 	},
 	components: {
-		BlinkIcon: defineAsyncComponent(() => import('@/components/custom/BlinkIcon.vue')),
+		BlinkIcon: defineAsyncComponent(
+			() => import('@/components/custom/BlinkIcon.vue'),
+		),
 	},
 	data() {
 		return {

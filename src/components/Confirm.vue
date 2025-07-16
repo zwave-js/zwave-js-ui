@@ -180,12 +180,9 @@
 												? 'outlined'
 												: undefined
 										"
+										:prepend-icon="input.icon"
 									>
-										<v-icon
-											class="mr-2"
-											v-if="input.icon"
-											>{{ input.icon }}</v-icon
-										>{{ input.label }}</v-btn
+										{{ input.label }}</v-btn
 									>
 								</v-container>
 							</v-col>
@@ -415,7 +412,7 @@ export default {
 </script>
 
 <style scoped>
-.v-card::v-deep .sticky-title {
+.v-card :deep(.sticky-title) {
 	position: sticky;
 	top: 0;
 	z-index: 3;
@@ -423,7 +420,7 @@ export default {
 	border-bottom: 1px solid var(--v-secondary-base);
 }
 
-.v-card::v-deep .sticky-actions {
+.v-card :deep(.sticky-actions) {
 	position: sticky;
 	z-index: 3;
 	bottom: 0;

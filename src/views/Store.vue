@@ -10,13 +10,13 @@
 			>
 				<v-treeview
 					v-if="!loadingStore"
-					:active.sync="active"
-					v-model="selectedFiles"
+					v-model:activated="active"
+					v-model:selected="selectedFiles"
 					:items="items"
 					activatable
 					selectable
-					item-key="path"
-					:open.sync="openFolders"
+					item-value="path"
+					v-model:opened="openFolders"
 					return-object
 					style="max-height: calc(100vh - 64px); overflow-y: auto"
 				>
@@ -114,13 +114,13 @@
 						style="align-self: center"
 					></v-progress-circular>
 				</div>
-				<v-speed-dial bottom fab right absolute v-model="fab">
-					<template v-slot:activator>
+				<v-speed-dial v-model="fab" location="bottom end">
+					<template v-slot:activator="{ props }">
 						<v-btn
 							color="primary"
 							variant="fab"
 							hover
-							v-model="fab"
+							v-bind="props"
 						>
 							<v-icon v-if="fab">close</v-icon>
 							<v-icon v-else>settings</v-icon>

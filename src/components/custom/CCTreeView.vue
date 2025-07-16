@@ -3,10 +3,10 @@
 		v-if="items.length > 0"
 		ref="treeview"
 		open-all
-		dense
+		density="compact"
 		:items="items"
 	>
-		<template v-slot:label="{ item }">
+		<template v-slot:title="{ item }">
 			<v-row class="ma-0 pa-0" dense>
 				<strong class="tree-item-name" style="white-space: pre-wrap">{{
 					item.name
@@ -101,6 +101,7 @@ export default {
 	watch: {
 		value: {
 			immediate: true,
+			deep: true,
 			handler() {
 				if (Array.isArray(this.value)) {
 					this.items = this.value
@@ -183,7 +184,7 @@ export default {
 	padding-left: 5px;
 }
 
-.v-treeview::v-deep .v-treeview-node__root {
+.v-treeview :deep(.v-treeview-node__root) {
 	min-height: 20px;
 }
 </style>

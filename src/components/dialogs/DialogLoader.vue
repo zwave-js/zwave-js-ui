@@ -6,13 +6,11 @@
 			</v-card-title>
 			<v-btn
 				v-if="ended"
-				icon
+				icon="close"
 				size="x-small"
 				@click="$emit('input', false)"
 				style="position: absolute; right: 5px; top: 5px"
-			>
-				<v-icon>close</v-icon>
-			</v-btn>
+			/>
 			<v-card-text :class="{ 'pt-5': !title }" class="text-center">
 				<v-col class="pa-0">
 					<p v-html="text" class="ma-0"></p>

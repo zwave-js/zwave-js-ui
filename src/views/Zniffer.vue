@@ -415,11 +415,18 @@ export default {
 		socket: Object,
 	},
 	components: {
-		Multipane: defineAsyncComponent(() => import('../components/custom/Multipane.vue')),
-		MultipaneResizer: defineAsyncComponent(() =>
-			import('../components/custom/MultipaneResizer.vue')),
-		RichValue: defineAsyncComponent(() => import('@/components/nodes-table/RichValue.vue')),
-		FrameDetails: defineAsyncComponent(() => import('../components//custom/FrameDetails.vue')),
+		Multipane: defineAsyncComponent(
+			() => import('../components/custom/Multipane.vue'),
+		),
+		MultipaneResizer: defineAsyncComponent(
+			() => import('../components/custom/MultipaneResizer.vue'),
+		),
+		RichValue: defineAsyncComponent(
+			() => import('@/components/nodes-table/RichValue.vue'),
+		),
+		FrameDetails: defineAsyncComponent(
+			() => import('../components//custom/FrameDetails.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['zniffer', 'znifferState']),
@@ -1160,7 +1167,7 @@ export default {
 </script>
 
 <style scoped>
-#framesTable::v-deep td {
+#framesTable :deep(td) {
 	white-space: nowrap;
 	/* display: -webkit-box;
 	-webkit-line-clamp: 3;
@@ -1169,7 +1176,7 @@ export default {
 }
 
 .pane::-webkit-scrollbar,
-#framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar {
+#framesTable :deep(.v-data-table__wrapper::-webkit-scrollbar) {
 	height: 5px;
 	width: 8px;
 	background: rgba(0, 0, 0, 0.233);
@@ -1177,7 +1184,7 @@ export default {
 }
 
 .pane::-webkit-scrollbar-thumb,
-#framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar-thumb {
+#framesTable :deep(.v-data-table__wrapper::-webkit-scrollbar-thumb) {
 	background: var(--v-primary-base);
 	border-radius: 1ex;
 	-webkit-border-radius: 1ex;

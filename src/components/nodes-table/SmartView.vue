@@ -361,12 +361,18 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ExpandedNode: defineAsyncComponent(() => import('@/components/nodes-table/ExpandedNode.vue')),
-		RichValue: defineAsyncComponent(() => import('@/components/nodes-table/RichValue.vue')),
-		StatisticsArrows: defineAsyncComponent(() =>
-			import('@/components/custom/StatisticsArrows.vue')),
-		ReinterviewBadge: defineAsyncComponent(() =>
-			import('@/components/custom/ReinterviewBadge.vue')),
+		ExpandedNode: defineAsyncComponent(
+			() => import('@/components/nodes-table/ExpandedNode.vue'),
+		),
+		RichValue: defineAsyncComponent(
+			() => import('@/components/nodes-table/RichValue.vue'),
+		),
+		StatisticsArrows: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsArrows.vue'),
+		),
+		ReinterviewBadge: defineAsyncComponent(
+			() => import('@/components/custom/ReinterviewBadge.vue'),
+		),
 	},
 	watch: {
 		selected() {

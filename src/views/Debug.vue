@@ -3,25 +3,17 @@
 		<v-row>
 			<v-col style="max-width: 260px; margin-top: -2px">
 				<v-btn-toggle density="compact" multiple>
-					<v-tooltip
-						location="bottom"
+					<v-btn
 						v-for="button in buttons"
 						:key="button.label"
-						:target="`#${button.id}`"
+						v-tooltip:bottom="button.tooltip"
+						:id="button.id"
+						:color="button.color"
+						:disabled="button.disabled"
+						@click="button.action"
 					>
-						<template v-slot:activator="{ props }">
-							<v-btn
-								:id="button.id"
-								:color="button.color"
-								:disabled="button.disabled"
-								@click="button.action"
-								v-bind="props"
-							>
-								<v-icon>{{ button.icon }}</v-icon>
-							</v-btn>
-						</template>
-						<span>{{ button.tooltip }}</span>
-					</v-tooltip>
+						<v-icon>{{ button.icon }}</v-icon>
+					</v-btn>
 				</v-btn-toggle>
 			</v-col>
 

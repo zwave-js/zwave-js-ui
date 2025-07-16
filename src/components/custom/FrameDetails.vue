@@ -129,7 +129,7 @@ export default {
 </script>
 
 <style scoped>
-.frame-details::v-deep td:first-child {
+.frame-details :deep(td:first-child) {
 	max-width: 50px !important;
 }
 </style>

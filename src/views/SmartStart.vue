@@ -199,17 +199,17 @@
 		</v-data-table>
 		<v-speed-dial
 			v-model="fab"
-			fixed
-			bottom
-			right
+			location="bottom end"
 			transition="slide-y-reverse-transition"
 			class="mb-7"
 		>
-			<template v-slot:activator>
-				<v-btn v-model="fab" color="primary" variant="fab">
-					<v-icon v-if="fab"> close </v-icon>
-					<v-icon v-else> menu </v-icon>
-				</v-btn>
+			<template v-slot:activator="{ props }">
+				<v-btn
+					v-bind="props"
+					color="primary"
+					variant="fab"
+					:icon="fab ? 'close' : 'menu'"
+				/>
 			</template>
 			<v-tooltip location="left">
 				<template v-slot:activator="{ props }">
@@ -219,9 +219,8 @@
 						@click="editItem()"
 						color="primary"
 						v-bind="props"
-					>
-						<v-icon>add</v-icon>
-					</v-btn>
+						icon="add"
+					/>
 				</template>
 				<span>Add</span>
 			</v-tooltip>
@@ -233,9 +232,8 @@
 						@click="scanItem"
 						color="warning"
 						v-bind="props"
-					>
-						<v-icon>qr_code_scanner</v-icon>
-					</v-btn>
+						icon="qr_code_scanner"
+					/>
 				</template>
 				<span>Scan</span>
 			</v-tooltip>
@@ -247,9 +245,8 @@
 						@click="refreshItems"
 						color="success"
 						v-bind="props"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
+						icon="refresh"
+					/>
 				</template>
 				<span>Refresh</span>
 			</v-tooltip>
@@ -261,9 +258,8 @@
 						@click="importList"
 						color="error"
 						v-bind="props"
-					>
-						<v-icon>file_download</v-icon>
-					</v-btn>
+						icon="file_download"
+					/>
 				</template>
 				<span>Import</span>
 			</v-tooltip>
@@ -275,9 +271,8 @@
 						@click="exportList"
 						color="purple"
 						v-bind="props"
-					>
-						<v-icon>file_upload</v-icon>
-					</v-btn>
+						icon="file_upload"
+					/>
 				</template>
 				<span>Export</span>
 			</v-tooltip>
@@ -295,11 +290,9 @@
 					style="position: absolute; right: 5px; top: 5px"
 					size="x-small"
 					@click="closeDialog()"
-					icon
+					icon="close"
 					variant="fab"
-				>
-					<v-icon>close</v-icon>
-				</v-btn>
+				/>
 				<v-card-text class="pt-3">
 					<expanded-node :node="expandedNode" :socket="socket" />
 				</v-card-text>
@@ -330,9 +323,12 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		ExpandedNode: defineAsyncComponent(() => import('@/components/nodes-table/ExpandedNode.vue')),
-		MissingKeysAlert: defineAsyncComponent(() =>
-			import('@/components/custom/MissingKeysAlert.vue')),
+		ExpandedNode: defineAsyncComponent(
+			() => import('@/components/nodes-table/ExpandedNode.vue'),
+		),
+		MissingKeysAlert: defineAsyncComponent(
+			() => import('@/components/custom/MissingKeysAlert.vue'),
+		),
 	},
 	watch: {
 		tableOptions: {
