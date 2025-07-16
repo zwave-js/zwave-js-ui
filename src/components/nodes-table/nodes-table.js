@@ -30,6 +30,7 @@ import {
 	getProtocolColor,
 } from '../../lib/utils.js'
 import { instances, manager } from '../../lib/instanceManager.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	props: {
@@ -37,13 +38,21 @@ export default {
 	},
 	components: {
 		draggable,
-		ColumnFilter: () => import('@/components/nodes-table/ColumnFilter.vue'),
-		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
-		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
-		StatisticsArrows: () =>
-			import('@/components/custom/StatisticsArrows.vue'),
-		ReinterviewBadge: () =>
-			import('@/components/custom/ReinterviewBadge.vue'),
+		ColumnFilter: defineAsyncComponent(
+			() => import('@/components/nodes-table/ColumnFilter.vue'),
+		),
+		ExpandedNode: defineAsyncComponent(
+			() => import('@/components/nodes-table/ExpandedNode.vue'),
+		),
+		RichValue: defineAsyncComponent(
+			() => import('@/components/nodes-table/RichValue.vue'),
+		),
+		StatisticsArrows: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsArrows.vue'),
+		),
+		ReinterviewBadge: defineAsyncComponent(
+			() => import('@/components/custom/ReinterviewBadge.vue'),
+		),
 	},
 	watch: {
 		'managedNodes.selected': function (val) {
@@ -64,16 +73,6 @@ export default {
 			search: '',
 			managedNodes: null,
 			nodesProps: {
-				/* The node property definition map entries can have the following attributes:
-		   - type (string): The type of the property
-		   - label (string): The label of the property to be displayed as table column
-		   - groupable (boolean): If the column values can be grouped
-		   - customGroupValue (function): Function to format a value for displaying as group value
-		   - customSort (function): Custom sort function for a certain column.
-		   - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
-		   - undefinedPlaceholder (string): The placeholder to use in filter when value is undefined.
-		   - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
-		*/
 				id: { type: 'number', label: 'ID', groupable: false },
 				minBatteryLevel: {
 					type: 'number',

@@ -327,7 +327,7 @@
 </template>
 <script src="./nodes-table.js"></script>
 <style scoped src="./nodes-table.css"></style>
-<style>
+<style lang="scss">
 .nodes-table {
 	table {
 		tr {
