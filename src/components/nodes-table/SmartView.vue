@@ -32,7 +32,7 @@
 							v-model="search"
 							clearable
 							flat
-							solo-inverted
+							variant="solo-inverted"
 							hide-details
 							single-line
 							class="mx-auto my-1"
@@ -45,7 +45,7 @@
 						<v-select
 							v-model="sortBy"
 							flat
-							solo-inverted
+							variant="solo-inverted"
 							single-line
 							hide-details
 							class="mx-auto my-1"
@@ -61,10 +61,10 @@
 							v-model="sortDesc"
 							mandatory
 						>
-							<v-btn depressed :value="false">
+							<v-btn variant="flat" :value="false">
 								<v-icon>arrow_upward</v-icon>
 							</v-btn>
-							<v-btn depressed :value="true">
+							<v-btn variant="flat" :value="true">
 								<v-icon>arrow_downward</v-icon>
 							</v-btn>
 						</v-btn-toggle>
@@ -75,7 +75,7 @@
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
-							<v-icon class="display-4">mdi-image-search</v-icon>
+							<v-icon class="text-h1">mdi-image-search</v-icon>
 							<h3 class="font-weight-light">No nodes Found</h3>
 						</v-col>
 					</v-row>
@@ -86,7 +86,7 @@
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
-							<v-icon class="display-4">mdi-nodes-search</v-icon>
+							<v-icon class="text-h1">mdi-nodes-search</v-icon>
 							<h3 class="font-weight-light">No nodes Found</h3>
 						</v-col>
 					</v-row>
@@ -118,7 +118,7 @@
 							<v-card
 								@click.stop="showNodeDialog(item)"
 								hover
-								outlined
+								border
 								height="150"
 								width="150"
 								class="lighten-2"
@@ -167,18 +167,18 @@
 									</v-row>
 
 									<span
-										class="caption pb-0 font-weight-bold primary--text text-truncate text-capitalize"
+										class="text-caption pb-0 font-weight-bold text-primary text-truncate text-capitalize"
 										>{{ item._name || '---' }}
 									</span>
 									<span
-										class="caption pb-0 font-weight-bold text-truncate text-capitalize"
+										class="text-caption pb-0 font-weight-bold text-truncate text-capitalize"
 										>{{ item.loc || '&#8205;' }}
 									</span>
 
 									<v-badge
 										bordered
 										:content="'v' + item.firmwareVersion"
-										:value="!!item.firmwareVersion"
+										:model-value="!!item.firmwareVersion"
 										offset-x="50"
 										offset-y="20"
 										overlap
@@ -189,15 +189,15 @@
 												'Complete'
 											"
 										>
-											<v-tooltip bottom>
+											<v-tooltip location="bottom">
 												<template
 													v-slot:activator="{
-														on: tooltip,
+														props,
 													}"
 												>
 													<div
-														v-on="{ ...tooltip }"
-														class="display-1"
+														v-on="v-bind="props""
+														class="text-h4"
 													>
 														<rich-value
 															:value="
@@ -231,17 +231,17 @@
 											@click.stop
 											class="text-center"
 										>
-											<v-tooltip bottom>
+											<v-tooltip location="bottom">
 												<template
 													v-slot:activator="{
-														on: tooltip,
+														props,
 													}"
 												>
 													<v-progress-circular
 														indeterminate
 														class="ma-1"
 														size="32"
-														v-on="{ ...tooltip }"
+														v-on="v-bind="props""
 														color="primary"
 													></v-progress-circular>
 												</template>
@@ -263,7 +263,7 @@
 										class="mt-2"
 									>
 										<v-progress-linear
-											:value="
+											:model-value="
 												item.firmwareUpdate.progress
 											"
 											height="5"
@@ -272,7 +272,7 @@
 										>
 										</v-progress-linear>
 										<p
-											class="caption font-weight-bold mb-0 mt-1"
+											class="text-caption font-weight-bold mb-0 mt-1"
 										>
 											{{
 												item.firmwareUpdate.currentFile
@@ -313,10 +313,10 @@
 			<v-card min-height="90vh">
 				<v-btn
 					style="position: absolute; right: 5px; top: 5px"
-					x-small
+					size="x-small"
 					@click="closeDialog()"
 					icon
-					fab
+					variant="fab"
 				>
 					<v-icon>close</v-icon>
 				</v-btn>
@@ -329,7 +329,7 @@
 </template>
 
 <script>
-import colors from 'vuetify/lib/util/colors'
+import colors from 'vuetify/util/colors'
 
 import {
 	mdiAlertCircle,

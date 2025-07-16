@@ -2,7 +2,7 @@
 	<v-dialog v-model="value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="headline">Add association</span>
+				<span class="text-h5">Add association</span>
 			</v-card-title>
 
 			<v-card-text>
@@ -15,7 +15,7 @@
 									label="Node"
 									required
 									return-object
-									item-text="_name"
+									item-title="_name"
 									:rules="[required]"
 									item-value="id"
 									:items="nodes"
@@ -27,7 +27,7 @@
 									label="Value"
 									required
 									return-object
-									item-text="label"
+									item-title="label"
 									:rules="validValue"
 									item-value="id"
 									:items="editedValue.node.values"
@@ -41,22 +41,19 @@
 										}}
 									</template>
 									<template v-slot:item="{ item }">
-										<v-list-item-content>
-											<v-list-item-title>{{
-												(item.label || item.id) +
-												(item.endpoint > 0
-													? ' - Endpoint ' +
-														item.endpoint
-													: '')
-											}}</v-list-item-title>
-											<v-list-item-subtitle
-												style="max-width: 500px"
-												class="text-truncate text-no-wrap"
-												>{{
-													item.description
-												}}</v-list-item-subtitle
-											>
-										</v-list-item-content>
+										<v-list-item-title>{{
+											(item.label || item.id) +
+											(item.endpoint > 0
+												? ' - Endpoint ' + item.endpoint
+												: '')
+										}}</v-list-item-title>
+										<v-list-item-subtitle
+											style="max-width: 500px"
+											class="text-truncate text-no-wrap"
+											>{{
+												item.description
+											}}</v-list-item-subtitle
+										>
 									</template>
 								</v-select>
 							</v-col>
@@ -84,12 +81,15 @@
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Cancel</v-btn
 				>
 				<v-btn
-					color="blue darken-1"
-					text
+					color="blue-darken-1"
+					variant="text"
 					@click="$refs.form.validate() && $emit('save')"
 					>Save</v-btn
 				>

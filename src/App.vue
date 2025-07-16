@@ -1,12 +1,12 @@
 <template>
-	<v-app :dark="darkMode">
+	<v-app>
 		<div
 			v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar"
 		>
 			<v-navigation-drawer
 				v-if="!navTabs || $vuetify.breakpoint.smAndDown"
 				clipped-left
-				:mini-variant="mini"
+				:rail="mini"
 				v-model="drawer"
 				app
 			>
@@ -18,11 +18,10 @@
 								src="/logo.svg"
 							/>
 						</v-list-item-avatar>
-						<v-list-item-content>
-							<v-list-item-title>{{
-								'Z-Wave JS UI'
-							}}</v-list-item-title>
-						</v-list-item-content>
+
+						<v-list-item-title>{{
+							'Z-Wave JS UI'
+						}}</v-list-item-title>
 					</v-list-item>
 				</v-list>
 				<v-divider style="margin-top: 8px"></v-divider>
@@ -36,19 +35,18 @@
 						<v-list-item-action>
 							<v-badge
 								color="error"
-								:value="item.badge"
+								:model-value="item.badge"
 								:content="item.badge"
 								dot
 							>
 								<v-icon>{{ item.icon }}</v-icon>
 							</v-badge>
 						</v-list-item-action>
-						<v-list-item-content>
-							<v-list-item-title
-								class="subtitle-2 font-weight-bold"
-								>{{ item.title }}</v-list-item-title
-							>
-						</v-list-item-content>
+
+						<v-list-item-title
+							class="text-subtitle-2 font-weight-bold"
+							>{{ item.title }}</v-list-item-title
+						>
 					</v-list-item>
 				</v-list>
 			</v-navigation-drawer>
@@ -69,14 +67,18 @@
 							class="smaller-min-width-tabs"
 						>
 							<v-icon
-								:left="item.path === $router.currentRoute.path"
-								:small="item.path === $router.currentRoute.path"
+								:start="item.path === $router.currentRoute.path"
+								:size="
+									item.path === $router.currentRoute.path
+										? 'small'
+										: undefined
+								"
 							>
 								{{ item.icon }}
 							</v-icon>
 							<span
 								v-if="item.path === $router.currentRoute.path"
-								class="subtitle-2"
+								class="text-subtitle-2"
 							>
 								{{ item.title }}
 							</span>
@@ -89,11 +91,11 @@
 				<!-- Controller status -->
 				<v-tooltip
 					v-if="zwave.enabled && appInfo.controllerStatus"
-					bottom
+					location="bottom"
 				>
-					<template v-slot:activator="{ on }">
+					<template v-slot:activator="{ props }">
 						<div
-							v-on="on"
+							v-bind="props"
 							:style="{
 								background: appInfo.controllerStatus.error
 									? 'rgb(244, 67, 54)'
@@ -116,15 +118,17 @@
 				</v-tooltip>
 
 				<!-- Inlcusion state -->
-				<v-tooltip v-if="zwave.enabled && inclusionState" bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip
+					v-if="zwave.enabled && inclusionState"
+					location="bottom"
+				>
+					<template v-slot:activator="{ props }">
 						<v-icon
 							class="ml-3"
-							dark
-							medium
+							size="medium"
 							style="cursor: default"
 							:color="inclusionState.color"
-							v-on="on"
+							v-bind="props"
 							>{{ inclusionState.icon }}</v-icon
 						>
 					</template>
@@ -132,15 +136,14 @@
 				</v-tooltip>
 
 				<!-- Websocket status -->
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-icon
 							class="mr-3 ml-3"
-							dark
-							medium
+							size="medium"
 							style="cursor: default"
 							:color="statusColor || 'warning'"
-							v-on="on"
+							v-bind="props"
 							>swap_horizontal_circle</v-icon
 						>
 					</template>
@@ -148,15 +151,14 @@
 				</v-tooltip>
 
 				<!-- Info panel -->
-				<v-tooltip z-index="9999" bottom open-on-click>
-					<template v-slot:activator="{ on }">
+				<v-tooltip z-index="9999" location="bottom" open-on-click>
+					<template v-slot:activator="{ props }">
 						<v-icon
-							dark
-							medium
+							size="medium"
 							class="mr-3"
 							style="cursor: default"
 							color="primary"
-							v-on="on"
+							v-bind="props"
 							@click="copyVersion"
 							>info</v-icon
 						>
@@ -182,18 +184,18 @@
 				</v-tooltip>
 
 				<!-- Update badge -->
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-badge
-							v-on="on"
+							v-bind="props"
 							class="mr-3"
 							:content="updateAvailable"
-							:value="updateAvailable"
+							:model-value="updateAvailable"
 							color="error"
 							overlap
 						>
-							<v-btn small icon @click="showUpdateDialog">
-								<v-icon dark medium color="primary"
+							<v-btn size="small" icon @click="showUpdateDialog">
+								<v-icon size="medium" color="primary"
 									>history</v-icon
 								>
 							</v-btn>
@@ -203,9 +205,12 @@
 
 				<!-- Topbar collapsable menu items -->
 				<!-- Show more button on smaller screens -->
-				<v-menu v-if="$vuetify.breakpoint.xsOnly" bottom left>
-					<template v-slot:activator="{ on }">
-						<v-btn small v-on="on" icon>
+				<v-menu
+					v-if="$vuetify.breakpoint.xsOnly"
+					location="bottom left"
+				>
+					<template v-slot:activator="{ props }">
+						<v-btn size="small" v-bind="props" icon>
 							<v-icon>more_vert</v-icon>
 						</v-btn>
 					</template>
@@ -228,21 +233,24 @@
 
 				<!-- Menu items -->
 				<span v-else class="text-no-wrap">
-					<v-menu v-for="item in menu" :key="item.text" bottom left>
-						<template v-slot:activator="{ on }">
+					<v-menu
+						v-for="item in menu"
+						:key="item.text"
+						location="bottom left"
+					>
+						<template v-slot:activator="{ props }">
 							<v-btn
-								small
+								size="small"
 								class="mr-2"
-								v-on="on"
+								v-bind="props"
 								icon
 								@click="item.func"
 							>
-								<v-tooltip bottom>
-									<template v-slot:activator="{ on }">
+								<v-tooltip location="bottom">
+									<template v-slot:activator="{ props }">
 										<v-icon
-											dark
 											color="primary"
-											v-on="on"
+											v-bind="props"
 											>{{ item.icon }}</v-icon
 										>
 									</template>
@@ -302,8 +310,8 @@
 							size="200"
 							indeterminate
 						></v-progress-circular>
-						<v-btn text @click="checkAuth" v-else
-							>Retry <v-icon right dark>refresh</v-icon></v-btn
+						<v-btn variant="text" @click="checkAuth" v-else
+							>Retry <v-icon end>refresh</v-icon></v-btn
 						>
 					</v-col>
 				</v-row>
@@ -352,32 +360,7 @@
 			:indeterminate="loaderIndeterminate"
 		></LoaderDialog>
 
-		<v-snackbars
-			:objects.sync="messages"
-			:timeout="5000"
-			top
-			right
-			style="margin-top: 10px"
-		>
-			<template v-slot="{ message }">
-				<p
-					style="margin-bottom: 2px"
-					class="font-weight-bold"
-					v-if="message && message.title"
-				>
-					{{ message.title }}
-				</p>
-				<p
-					style="margin-bottom: 0; white-space: pre-wrap"
-					v-text="
-						typeof message === 'object' ? message.text : message
-					"
-				></p>
-			</template>
-			<template v-slot:action="{ close }">
-				<v-btn text @click="close">Close</v-btn>
-			</template>
-		</v-snackbars>
+		<VSonner position="top-right" :duration="5000" offset="50px" />
 
 		<DialogNodesManager
 			@open="nodesManagerDialog = true"
@@ -416,7 +399,7 @@ code {
 <script>
 // https://github.com/socketio/socket.io-client/blob/master/docs/API.md
 import io from 'socket.io-client'
-import VSnackbars from 'v-snackbars'
+import { toast, VSonner } from 'vuetify-sonner'
 
 import ConfigApis from '@/apis/ConfigApis'
 import Confirm from '@/components/Confirm.vue'
@@ -448,9 +431,9 @@ export default {
 	components: {
 		PasswordDialog,
 		LoaderDialog,
-		VSnackbars,
 		Confirm,
 		DialogNodesManager,
+		VSonner,
 	},
 	name: 'app',
 	computed: {
@@ -652,7 +635,6 @@ export default {
 			topbar: [],
 			hideTopbar: false,
 			title: '',
-			messages: [],
 		}
 	},
 	methods: {
@@ -827,16 +809,26 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
-		showSnackbar(text, color, timeout) {
-			const message = {
-				message: text,
-				color: color || 'info',
-				timeout,
+		showSnackbar(text, color, timeout = 5000) {
+			// Use vuetify-sonner for notifications
+			const toastOptions = {
+				duration: timeout,
 			}
 
-			this.messages.push(message)
-
-			return message
+			switch (color) {
+				case 'error':
+					toast.error(text, toastOptions)
+					break
+				case 'success':
+					toast.success(text, toastOptions)
+					break
+				case 'warning':
+					toast.warning(text, toastOptions)
+					break
+				default:
+					toast(text, toastOptions)
+					break
+			}
 		},
 		apiRequest(
 			apiName,
@@ -1663,7 +1655,7 @@ export default {
 			}
 		})
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.socket) this.socket.close()
 	},
 }

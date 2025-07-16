@@ -1,65 +1,68 @@
 <template>
 	<v-container class="pt-0" v-show="_value">
 		<v-col class="pa-0 pb-2" v-if="_value && node">
-			<v-subheader
+			<v-list-subheader
 				class="font-weight-bold"
 				style="position: sticky; top: 0; z-index: 10"
 				>Node properties
 				<v-icon @click="_value = false" class="close-btn"
 					>clear</v-icon
-				></v-subheader
+				></v-list-subheader
 			>
-			<v-list dense style="min-width: 300px; background: transparent">
-				<v-list-item dense>
-					<v-list-item-content>ID</v-list-item-content>
+			<v-list
+				density="compact"
+				style="min-width: 300px; background: transparent"
+			>
+				<v-list-item density="compact">
+					ID
 					<v-list-item-content class="align-end">{{
 						node.id
 					}}</v-list-item-content>
 				</v-list-item>
-				<v-list-item dense>
-					<v-list-item-content>Status</v-list-item-content>
+				<v-list-item density="compact">
+					Status
 					<v-list-item-content class="align-end">{{
 						node.status
 					}}</v-list-item-content>
 				</v-list-item>
-				<v-list-item dense>
-					<v-list-item-content>Protocol</v-list-item-content>
+				<v-list-item density="compact">
+					Protocol
 					<v-list-item-content class="align-end">{{
 						getProtocol(node)
 					}}</v-list-item-content>
 				</v-list-item>
-				<v-list-item dense>
-					<v-list-item-content>Code</v-list-item-content>
+				<v-list-item density="compact">
+					Code
 					<v-list-item-content class="align-end">{{
 						node.productLabel
 					}}</v-list-item-content>
 				</v-list-item>
-				<v-list-item dense>
-					<v-list-item-content>Product</v-list-item-content>
+				<v-list-item density="compact">
+					Product
 					<v-list-item-content class="align-end">{{
 						node.productDescription
 					}}</v-list-item-content>
 				</v-list-item>
-				<v-list-item dense>
-					<v-list-item-content>Manufacturer</v-list-item-content>
+				<v-list-item density="compact">
+					Manufacturer
 					<v-list-item-content class="align-end">{{
 						node.manufacturer
 					}}</v-list-item-content>
 				</v-list-item>
 				<v-list-item v-if="node.name">
-					<v-list-item-content>Name</v-list-item-content>
+					Name
 					<v-list-item-content class="align-end">{{
 						node.name
 					}}</v-list-item-content>
 				</v-list-item>
 				<v-list-item v-if="node.loc">
-					<v-list-item-content>Location</v-list-item-content>
+					Location
 					<v-list-item-content class="align-end">{{
 						node.loc
 					}}</v-list-item-content>
 				</v-list-item>
 				<v-list-item v-if="node.neighbors && !isLongRange">
-					<v-list-item-content>Neighbors</v-list-item-content>
+					Neighbors
 					<v-list-item-content class="align-end"
 						>{{
 							node.neighbors.length > 0
@@ -71,17 +74,16 @@
 						<v-btn
 							class="ml-2"
 							color="primary"
-							x-small
+							size="x-small"
 							:loading="discoverLoading"
-							dark
 							@click="discoverNeighbors()"
 							>Discover
-							<v-icon x-small>search</v-icon>
+							<v-icon size="x-small">search</v-icon>
 						</v-btn>
 					</v-list-item-action>
 				</v-list-item>
-				<v-list-item dense>
-					<v-list-item-content>Statistics</v-list-item-content>
+				<v-list-item density="compact">
+					Statistics
 					<v-list-item-content class="align-end"
 						><statistics-arrows inactive-color="black" :node="node"
 					/></v-list-item-content>
@@ -117,35 +119,35 @@
 							v-if="appRoute"
 							class="ml-2"
 							color="error"
-							x-small
+							size="x-small"
 							@click="deleteRoute('appRoute')"
 							>Delete
-							<v-icon x-small>delete</v-icon>
+							<v-icon size="x-small">delete</v-icon>
 						</v-btn>
 						<v-btn
 							class="ml-2"
 							color="success"
-							x-small
-							dark
+							size="x-small"
 							@click="getRoute('appRoute')"
 							>Get
-							<v-icon x-small>refresh</v-icon>
+							<v-icon size="x-small">refresh</v-icon>
 						</v-btn>
 						<v-btn
 							class="ml-2"
 							color="purple"
-							x-small
-							dark
+							size="x-small"
 							@click="setRoute('appRoute')"
 							>Set
-							<v-icon x-small>route</v-icon>
+							<v-icon size="x-small">route</v-icon>
 						</v-btn>
 					</v-subheader>
 					<div v-if="appRoute && !isLongRange" class="text-caption">
-						<v-list-item dense v-for="(s, i) in appRoute" :key="i">
-							<v-list-item-content>{{
-								s.title
-							}}</v-list-item-content>
+						<v-list-item
+							density="compact"
+							v-for="(s, i) in appRoute"
+							:key="i"
+						>
+							{{ s.title }}
 							<v-list-item-content class="align-end">{{
 								s.text
 							}}</v-list-item-content>
@@ -161,21 +163,19 @@
 							v-if="!routesChanged"
 							class="ml-2"
 							color="success"
-							x-small
-							dark
+							size="x-small"
 							@click="getRouteReturnRoutes()"
 							>Get
-							<v-icon x-small>refresh</v-icon>
+							<v-icon size="x-small">refresh</v-icon>
 						</v-btn>
 						<v-btn
 							:disabled="returnRoutes.length === 4"
 							class="ml-2"
 							color="purple"
-							x-small
-							dark
+							size="x-small"
 							@click="addReturnRoute()"
 							>Add
-							<v-icon x-small>route</v-icon>
+							<v-icon size="x-small">route</v-icon>
 						</v-btn>
 					</v-subheader>
 					<div>
@@ -198,54 +198,60 @@
 									handle=".handle"
 									:move="checkMove"
 									tag="tbody"
+									:item-key="
+										(item, index) => `returnRoute_${index}`
+									"
 								>
-									<tr
-										v-for="(r, i) in returnRoutes"
-										:key="`returnRoute_${i}`"
-										dense
-										class="text-caption text-center"
-									>
-										<td>
-											<v-icon
-												v-if="!r.isPriority"
-												class="handle"
-												style="cursor: move"
-												color="primary lighten-2"
-												>drag_indicator</v-icon
-											>
-										</td>
-										<td>
-											{{
-												r.repeaters.length > 0
-													? r.repeaters.join(', ')
-													: 'Direct connection'
-											}}
-										</td>
-										<td>
-											{{
-												zwaveDataRateToString(
-													r.routeSpeed,
-												)
-											}}
-										</td>
-										<td>
-											<v-icon
-												v-if="r.isPriority"
-												color="success"
-												small
-												>check</v-icon
-											>
-										</td>
-										<td>
-											<v-icon
-												color="error"
-												small
-												@click="deleteReturnRoute(r)"
-												>delete</v-icon
-											>
-										</td>
-										<td></td>
-									</tr>
+									<template #item="{ element: r, index: i }">
+										<tr
+											:key="`returnRoute_${i}`"
+											dense
+											class="text-caption text-center"
+										>
+											<td>
+												<v-icon
+													v-if="!r.isPriority"
+													class="handle"
+													style="cursor: move"
+													color="primary-lighten-2"
+													>drag_indicator</v-icon
+												>
+											</td>
+											<td>
+												{{
+													r.repeaters.length > 0
+														? r.repeaters.join(', ')
+														: 'Direct connection'
+												}}
+											</td>
+											<td>
+												{{
+													zwaveDataRateToString(
+														r.routeSpeed,
+													)
+												}}
+											</td>
+											<td>
+												<v-icon
+													v-if="r.isPriority"
+													color="success"
+													size="small"
+													>check</v-icon
+												>
+											</td>
+											<td>
+												<v-icon
+													color="error"
+													size="small"
+													@click="
+														deleteReturnRoute(r)
+													"
+													>delete</v-icon
+												>
+											</td>
+											<td></td>
+										</tr>
+									</template>
 								</draggable>
 							</table>
 						</div>
@@ -257,22 +263,20 @@
 								v-if="routesChanged"
 								class="ma-2"
 								color="success"
-								x-small
-								dark
+								size="x-small"
 								@click="setReturnRoutes()"
 								>Save
-								<v-icon x-small>save</v-icon>
+								<v-icon size="x-small">save</v-icon>
 							</v-btn>
 
 							<v-btn
 								v-if="routesChanged"
 								class="ma-2"
 								color="error"
-								x-small
-								dark
+								size="x-small"
 								@click="resetReturnRoutes()"
 								>Reset
-								<v-icon x-small>clear</v-icon>
+								<v-icon size="x-small">clear</v-icon>
 							</v-btn>
 						</v-row>
 					</div>
@@ -286,7 +290,7 @@
 				<v-col class="pa-1">
 					<v-btn
 						color="primary"
-						small
+						size="small"
 						rounded
 						@click="dialogHealth = true"
 						>Diagnose
@@ -296,7 +300,7 @@
 				<v-col class="pa-1">
 					<v-btn
 						color="purple"
-						small
+						size="small"
 						rounded
 						@click="dialogLinkReliability = true"
 						>Link Statistics
@@ -306,7 +310,7 @@
 				<v-col v-if="!isLongRange" class="pa-1">
 					<v-btn
 						color="error"
-						small
+						size="small"
 						rounded
 						@click="rebuildNodeRoutes(node)"
 						>Rebuild Routes
@@ -314,7 +318,11 @@
 					</v-btn>
 				</v-col>
 				<v-col class="pa-1">
-					<v-btn color="success" small rounded @click="pingNode(node)"
+					<v-btn
+						color="success"
+						size="small"
+						rounded
+						@click="pingNode(node)"
 						>Ping
 						<v-icon>settings_ethernet</v-icon>
 					</v-btn>
@@ -324,21 +332,21 @@
 				<!-- Full screen button -->
 				<v-btn
 					color="primary"
-					small
+					size="small"
 					rounded
 					@click="showFullscreen = true"
 					>Full Screen
-					<v-icon small>fullscreen</v-icon>
+					<v-icon size="small">fullscreen</v-icon>
 				</v-btn>
 
 				<v-btn
-					small
+					size="small"
 					class="ml-2"
 					color="warning"
 					rounded
 					@click="newWindow()"
 					>Open
-					<v-icon small>open_in_new</v-icon>
+					<v-icon size="small">open_in_new</v-icon>
 				</v-btn>
 
 				<bg-rssi-chart class="mt-2" :node="node" />

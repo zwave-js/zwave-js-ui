@@ -5,7 +5,7 @@
 				<v-row justify="center" class="mb-2 text-center" dense>
 					<v-btn
 						:disabled="loading"
-						outlined
+						variant="outlined"
 						class="my-auto"
 						color="success"
 						@click="checkUpdates"
@@ -37,7 +37,7 @@
 				>
 					<v-alert
 						type="info"
-						dense
+						density="compact"
 						text
 						class="ml-2 mb-2"
 						style="max-width: 400px"
@@ -64,18 +64,18 @@
 					<v-card dense elevation="5">
 						<v-card-title>
 							<v-icon>mdi-update</v-icon>
-							<span class="headline"
+							<span class="text-h5"
 								><strong
 									>v{{ u.version }} [{{ u.channel }}]</strong
 								></span
 							>
 							<v-spacer></v-spacer>
 							<v-btn
-								outlined
-								small
+								variant="outlined"
+								size="small"
 								:color="u.downgrade ? 'warning' : 'success'"
 								@click="handleUpdateFirmware(u)"
-								><v-icon small>{{
+								><v-icon size="small">{{
 									u.downgrade ? 'download' : 'upload'
 								}}</v-icon>
 								{{ u.downgrade ? 'Downgrade' : 'Update' }}
@@ -83,8 +83,8 @@
 						</v-card-title>
 						<v-divider class="mx-4"></v-divider>
 						<v-card-text>
-							<v-subheader class="subtitle-1"
-								><strong>Changelog</strong></v-subheader
+							<v-list-subheader class="text-subtitle-1"
+								><strong>Changelog</strong></v-list-subheader
 							>
 							<p
 								class="text-caption ml-4"
@@ -94,27 +94,25 @@
 							<v-list-item
 								v-for="f in u.files"
 								:key="f.url"
-								two-line
-								dense
+								lines="two"
+								density="compact"
 								style="border-bottom: 1px solid #e0e0e0"
 							>
-								<v-list-item-icon class="my-auto mr-3">
+								<template #prepend>
 									<v-icon color="primary">widgets</v-icon>
-								</v-list-item-icon>
-								<v-list-item-content>
-									<v-list-item-title
-										v-if="
-											!hideTargets &&
-											f.target !== undefined
-										"
-										>Target:
-										{{ f.target }}</v-list-item-title
-									>
-									<v-list-item-subtitle>{{
-										f.url
-									}}</v-list-item-subtitle>
-								</v-list-item-content>
-								<v-list-item-icon class="my-auto">
+								</template>
+
+								<v-list-item-title
+									v-if="
+										!hideTargets && f.target !== undefined
+									"
+									>Target: {{ f.target }}</v-list-item-title
+								>
+								<v-list-item-subtitle>{{
+									f.url
+								}}</v-list-item-subtitle>
+
+								<template #append>
 									<v-btn
 										title="Download"
 										@click="download(f.url)"
@@ -124,7 +122,7 @@
 											>download</v-icon
 										>
 									</v-btn>
-								</v-list-item-icon>
+								</template>
 							</v-list-item>
 						</v-card-text>
 					</v-card>
@@ -144,7 +142,7 @@
 				</p>
 			</v-col>
 			<v-col class="text-center" v-else>
-				<h1 class="title">No updates available</h1>
+				<h1 class="text-h6">No updates available</h1>
 				<span
 					>This service relies on
 					<a

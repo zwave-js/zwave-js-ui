@@ -7,7 +7,7 @@
 	>
 		<v-row class="mt-2" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
-				<span class="title grey--text">Device </span>
+				<span class="text-h6 text-grey">Device </span>
 				<br />
 				<span class="subtitle font-weight-bold font-monospace">
 					{{ node.hexId }}
@@ -19,7 +19,7 @@
 				<br />
 				<span
 					v-if="$vuetify.breakpoint.smAndDown"
-					class="comment font-weight-bold primary--text"
+					class="comment font-weight-bold text-primary"
 				>
 					{{
 						`${node.manufacturer || ''}${
@@ -36,26 +36,28 @@
 				"
 			>
 				<v-item-group class="v-btn-toggle">
-					<v-btn color="primary" outlined @click="toggleStatistics">
-						<v-icon left>
+					<v-btn
+						color="primary"
+						variant="outlined"
+						@click="toggleStatistics"
+					>
+						<v-icon start>
 							{{ statisticsOpeningIndicator }}
 						</v-icon>
 						Statistics
-						<v-icon color="primary" right> multiline_chart </v-icon>
+						<v-icon color="primary" end> multiline_chart </v-icon>
 					</v-btn>
 					<v-btn
-						dark
 						v-if="!node.isControllerNode"
 						color="primary"
 						@click.stop="pingNode(node)"
-						depressed
+						variant="flat"
 					>
 						Ping
 					</v-btn>
 					<v-btn
-						dark
 						color="success"
-						depressed
+						variant="flat"
 						@click="advancedShowDialog = true"
 					>
 						Advanced
@@ -79,7 +81,7 @@
 		</v-row>
 
 		<v-row no-gutters>
-			<v-sheet v-if="showStatistics" class="my-4" outlined rounded>
+			<v-sheet v-if="showStatistics" class="my-4" border rounded>
 				<statistics-card title="Statistics" :node="node" />
 			</v-sheet>
 		</v-row>
@@ -89,43 +91,43 @@
 		<v-tabs
 			v-model="currentTab"
 			show-arrows
-			class="transparent mb-4"
-			:vertical="$vuetify.breakpoint.mdAndUp"
+			class="bg-transparent mb-4"
+			:direction="$vuetify.breakpoint.mdAndUp ? 'vertical' : undefined"
 		>
 			<v-tab class="justify-start" key="node">
-				<v-icon small left>widgets</v-icon> Node
+				<v-icon size="small" start>widgets</v-icon> Node
 			</v-tab>
 			<v-tab v-if="nodeMetadata" class="justify-start" key="manual">
-				<v-icon small left>help</v-icon> Help
+				<v-icon size="small" start>help</v-icon> Help
 			</v-tab>
 			<v-tab v-if="showHass" class="justify-start" key="homeassistant">
-				<v-icon small left>home</v-icon> Home Assistant
+				<v-icon size="small" start>home</v-icon> Home Assistant
 			</v-tab>
 			<v-tab key="groups" class="justify-start">
-				<v-icon small left>device_hub</v-icon> Groups
+				<v-icon size="small" start>device_hub</v-icon> Groups
 			</v-tab>
 			<v-tab v-if="node.schedule" key="users" class="justify-start">
-				<v-icon small left>group</v-icon> Users
+				<v-icon size="small" start>group</v-icon> Users
 			</v-tab>
 			<v-tab
 				key="ota"
 				v-if="!node.isControllerNode"
 				class="justify-start"
 			>
-				<v-icon small left>auto_mode</v-icon> OTA Updates
+				<v-icon size="small" start>auto_mode</v-icon> OTA Updates
 			</v-tab>
 			<v-tab key="otw" v-if="node.isControllerNode" class="justify-start">
-				<v-icon small left>auto_mode</v-icon> Firmware Updates
+				<v-icon size="small" start>auto_mode</v-icon> Firmware Updates
 			</v-tab>
 			<v-tab key="events" class="justify-start">
-				<v-icon small left>list_alt</v-icon> Events
+				<v-icon size="small" start>list_alt</v-icon> Events
 			</v-tab>
 			<v-tab
 				v-if="$vuetify.breakpoint.mdAndUp"
 				class="justify-start"
 				key="debug"
 			>
-				<v-icon small left>bug_report</v-icon> Debug Info
+				<v-icon size="small" start>bug_report</v-icon> Debug Info
 			</v-tab>
 
 			<!-- TABS -->
@@ -156,7 +158,7 @@
 						class="px-8 py-4"
 					>
 						<h1 class="text-uppercase">{{ meta }}</h1>
-						<p class="caption">
+						<p class="text-caption">
 							<v-btn
 								v-if="meta === 'manual'"
 								:href="nodeMetadata[meta]"
@@ -225,9 +227,12 @@
 							style="max-width: 300px"
 							clearable
 						>
-							<template slot="append-outer">
-								<v-tooltip v-if="!inverseSort" bottom>
-									<template v-slot:activator="{ on, attrs }">
+							<template v-slot:append-outer>
+								<v-tooltip
+									v-if="!inverseSort"
+									location="bottom"
+								>
+									<template v-slot:activator="{ props }">
 										<v-btn
 											@click="toggleAutoScroll()"
 											icon
@@ -237,8 +242,7 @@
 													? 'border-primary'
 													: ''
 											"
-											v-bind="attrs"
-											v-on="on"
+											v-bind="props"
 										>
 											<v-icon>autorenew</v-icon>
 										</v-btn>
@@ -246,8 +250,8 @@
 									<span>Enable/Disable auto scroll</span>
 								</v-tooltip>
 
-								<v-tooltip bottom>
-									<template v-slot:activator="{ on, attrs }">
+								<v-tooltip location="bottom">
+									<template v-slot:activator="{ props }">
 										<v-btn
 											@click="toggleSort()"
 											icon
@@ -259,8 +263,7 @@
 													? 'border-primary'
 													: ''
 											"
-											v-bind="attrs"
-											v-on="on"
+											v-bind="props"
 										>
 											<v-icon>swap_vert</v-icon>
 										</v-btn>

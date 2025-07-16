@@ -2,13 +2,13 @@
 	<v-container grid-list-md>
 		<v-row>
 			<v-col cols="12">
-				<v-btn text @click="importScenes">
+				<v-btn variant="text" @click="importScenes">
 					Import
-					<v-icon right dark color="primary">file_upload</v-icon>
+					<v-icon end color="primary">file_upload</v-icon>
 				</v-btn>
-				<v-btn text @click="exportScenes">
+				<v-btn variant="text" @click="exportScenes">
 					Export
-					<v-icon right dark color="primary">file_download</v-icon>
+					<v-icon end color="primary">file_download</v-icon>
 				</v-btn>
 			</v-col>
 
@@ -17,7 +17,7 @@
 					label="Scene"
 					v-model="selectedScene"
 					:items="scenesWithId"
-					item-text="label"
+					item-title="label"
 					item-value="sceneid"
 				></v-select>
 			</v-col>
@@ -25,8 +25,8 @@
 			<v-col cols="12" sm="6">
 				<v-text-field
 					label="New Scene"
-					append-outer-icon="send"
-					@click:append-outer="createScene"
+					append-icon="send"
+					@click:append="createScene"
 					v-model.trim="newScene"
 				></v-text-field>
 			</v-col>
@@ -48,11 +48,16 @@
 			class="elevation-1"
 		>
 			<template v-slot:top>
-				<v-btn color="error" text @click="removeScene">Delete</v-btn>
-				<v-btn color="success" text @click="activateScene"
+				<v-btn color="error" variant="text" @click="removeScene"
+					>Delete</v-btn
+				>
+				<v-btn color="success" variant="text" @click="activateScene"
 					>Activate</v-btn
 				>
-				<v-btn color="primary" text @click="dialogValue = true"
+				<v-btn
+					color="primary"
+					variant="text"
+					@click="dialogValue = true"
 					>New Value</v-btn
 				>
 			</template>
@@ -70,13 +75,16 @@
 					</td>
 					<td>
 						<v-icon
-							small
+							size="small"
 							color="success"
 							class="mr-2"
 							@click="editItem(item)"
 							>edit</v-icon
 						>
-						<v-icon small color="error" @click="deleteItem(item)"
+						<v-icon
+							size="small"
+							color="error"
+							@click="deleteItem(item)"
 							>delete</v-icon
 						>
 					</td>

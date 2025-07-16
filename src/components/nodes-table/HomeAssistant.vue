@@ -1,6 +1,6 @@
 <template>
 	<v-col>
-		<v-subheader>Home Assistant - Devices</v-subheader>
+		<v-list-subheader>Home Assistant - Devices</v-list-subheader>
 
 		<v-alert
 			max-width="1150"
@@ -19,12 +19,12 @@
 		<!-- HASS DEVICES -->
 		<v-row v-if="hassDevices.length > 0">
 			<v-col cols="12" md="6" pa-1>
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="primary"
-							text
+							variant="text"
 							@click="storeDevices(false)"
 							>Store</v-btn
 						>
@@ -35,12 +35,12 @@
 					>
 				</v-tooltip>
 
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="error"
-							text
+							variant="text"
 							@click="storeDevices(true)"
 							>Remove Store</v-btn
 						>
@@ -50,12 +50,12 @@
 					>
 				</v-tooltip>
 
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="success"
-							text
+							variant="text"
 							@click="rediscoverNode"
 							>Rediscover Node</v-btn
 						>
@@ -66,12 +66,12 @@
 					>
 				</v-tooltip>
 
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="warning"
-							text
+							variant="text"
 							@click="disableDiscovery"
 							>Disable Discovery</v-btn
 						>
@@ -103,7 +103,7 @@
 						<v-checkbox
 							v-model="item.persistent"
 							@click.stop
-							@change="updateDevice(item)"
+							@update:model-value="updateDevice(item)"
 							hide-details
 							dense
 						></v-checkbox>
@@ -113,7 +113,7 @@
 							@click.stop="toggleField(item, 'ignoreDiscovery')"
 							:color="item.ignoreDiscovery ? 'error' : 'success'"
 							rounded
-							x-small
+							size="x-small"
 						>
 							{{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
 						</v-btn>
@@ -121,13 +121,13 @@
 				</v-data-table>
 			</v-col>
 			<v-col cols="12" md="6" pa-1>
-				<v-tooltip v-if="!selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip v-if="!selectedDevice" location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="primary"
 							:disabled="errorDevice"
-							text
+							variant="text"
 							@click="addDevice()"
 							>Add</v-btn
 						>
@@ -135,13 +135,13 @@
 					<span>Add this device to discovered entities</span>
 				</v-tooltip>
 
-				<v-tooltip v-if="selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip v-if="selectedDevice" location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="primary"
 							:disabled="errorDevice"
-							text
+							variant="text"
 							@click="updateDeviceJSON()"
 							>Update</v-btn
 						>
@@ -152,13 +152,13 @@
 					>
 				</v-tooltip>
 
-				<v-tooltip v-if="selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip v-if="selectedDevice" location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="success"
 							:disabled="errorDevice"
-							text
+							variant="text"
 							@click="rediscoverDevice"
 							>Rediscover</v-btn
 						>
@@ -166,13 +166,13 @@
 					<span>Send this payload to HA</span>
 				</v-tooltip>
 
-				<v-tooltip v-if="selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip v-if="selectedDevice" location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
-							v-on="on"
+							v-bind="props"
 							color="error"
 							:disabled="errorDevice"
-							text
+							variant="text"
 							@click="deleteDevice"
 							>Delete</v-btn
 						>
@@ -188,7 +188,7 @@
 				></v-textarea>
 			</v-col>
 		</v-row>
-		<div style="margin: 20px" class="subtitle-1" v-else>
+		<div style="margin: 20px" class="text-subtitle-1" v-else>
 			No Hass Devices
 		</div>
 	</v-col>

@@ -1,5 +1,5 @@
 import draggable from 'vuedraggable'
-import colors from 'vuetify/lib/util/colors'
+import colors from 'vuetify/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
 
 import { mapState } from 'pinia'

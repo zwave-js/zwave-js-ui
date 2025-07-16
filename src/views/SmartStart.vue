@@ -20,8 +20,8 @@
 						offset-y
 						offset-x
 					>
-						<v-list dense>
-							<v-list-item dense>
+						<v-list density="compact">
+							<v-list-item density="compact">
 								<v-list-item-title>
 									When an entry has a Node associated it
 									cannot be edited
@@ -36,7 +36,7 @@
 								v-model="search"
 								clearable
 								flat
-								solo-inverted
+								variant="solo-inverted"
 								hide-details
 								single-line
 								class="ma-2"
@@ -55,13 +55,13 @@
 				<v-btn
 					v-if="item.nodeId"
 					color="primary"
-					small
+					size="small"
 					rounded
 					@click.stop="showNodeDialog(item)"
 				>
 					{{ item.nodeId }}
 
-					<v-icon class="ml-2" small>open_in_new</v-icon>
+					<v-icon class="ml-2" size="small">open_in_new</v-icon>
 				</v-btn>
 			</template>
 
@@ -73,8 +73,8 @@
 			<template v-slot:[`item.status`]="{ item }">
 				<v-switch
 					v-model="item.status"
-					@change="onChange(item)"
-					dense
+					@update:model-value="onChange(item)"
+					density="compact"
 				></v-switch>
 			</template>
 
@@ -93,12 +93,12 @@
 					@blur="onRowBlur($event, item)"
 					@mouseenter="onRowFocus($event, item)"
 					@mouseleave="onRowBlur($event, item)"
-					small
-					outlined
+					size="small"
+					variant="outlined"
 					:color="getProtocolColor(item)"
 					>{{ getProtocol(item) }}</v-btn
 				>
-				<span class="caption" v-else> Z-Wave </span>
+				<span class="text-caption" v-else> Z-Wave </span>
 			</template>
 
 			<template
@@ -112,7 +112,7 @@
 				>
 					<v-checkbox
 						v-model="item.securityClasses.s2AccessControl"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						:disabled="
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s2AccessControl
@@ -133,7 +133,7 @@
 				>
 					<v-checkbox
 						v-model="item.securityClasses.s2Authenticated"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						:disabled="
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s2Authenticated
@@ -159,7 +159,7 @@
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s2Unauthenticated
 						"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						hide-details
 						dense
 					></v-checkbox>
@@ -180,7 +180,7 @@
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s0Legacy
 						"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						hide-details
 						dense
 					></v-checkbox>
@@ -188,10 +188,10 @@
 				</div>
 			</template>
 			<template v-slot:[`item.actions`]="{ item }">
-				<v-icon small color="error" @click="removeItem(item)"
+				<v-icon size="small" color="error" @click="removeItem(item)"
 					>delete</v-icon
 				>
-				<v-icon small color="success" @click="editItem(item)"
+				<v-icon size="small" color="success" @click="editItem(item)"
 					>edit</v-icon
 				>
 			</template>
@@ -205,85 +205,75 @@
 			class="mb-7"
 		>
 			<template v-slot:activator>
-				<v-btn v-model="fab" color="primary" dark fab>
+				<v-btn v-model="fab" color="primary" variant="fab">
 					<v-icon v-if="fab"> close </v-icon>
 					<v-icon v-else> menu </v-icon>
 				</v-btn>
 			</template>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
+			<v-tooltip location="left">
+				<template v-slot:activator="{ props }">
 					<v-btn
-						fab
-						dark
-						small
+						variant="fab"
+						size="small"
 						@click="editItem()"
 						color="primary"
-						v-bind="attrs"
-						v-on="on"
+						v-bind="props"
 					>
 						<v-icon>add</v-icon>
 					</v-btn>
 				</template>
 				<span>Add</span>
 			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
+			<v-tooltip location="left">
+				<template v-slot:activator="{ props }">
 					<v-btn
-						fab
-						dark
-						small
+						variant="fab"
+						size="small"
 						@click="scanItem"
 						color="warning"
-						v-bind="attrs"
-						v-on="on"
+						v-bind="props"
 					>
 						<v-icon>qr_code_scanner</v-icon>
 					</v-btn>
 				</template>
 				<span>Scan</span>
 			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
+			<v-tooltip location="left">
+				<template v-slot:activator="{ props }">
 					<v-btn
-						fab
-						dark
-						small
+						variant="fab"
+						size="small"
 						@click="refreshItems"
 						color="success"
-						v-bind="attrs"
-						v-on="on"
+						v-bind="props"
 					>
 						<v-icon>refresh</v-icon>
 					</v-btn>
 				</template>
 				<span>Refresh</span>
 			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
+			<v-tooltip location="left">
+				<template v-slot:activator="{ props }">
 					<v-btn
-						fab
-						dark
-						small
+						variant="fab"
+						size="small"
 						@click="importList"
 						color="error"
-						v-bind="attrs"
-						v-on="on"
+						v-bind="props"
 					>
 						<v-icon>file_download</v-icon>
 					</v-btn>
 				</template>
 				<span>Import</span>
 			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
+			<v-tooltip location="left">
+				<template v-slot:activator="{ props }">
 					<v-btn
-						fab
-						dark
-						small
+						variant="fab"
+						size="small"
 						@click="exportList"
 						color="purple"
-						v-bind="attrs"
-						v-on="on"
+						v-bind="props"
 					>
 						<v-icon>file_upload</v-icon>
 					</v-btn>
@@ -302,10 +292,10 @@
 			<v-card min-height="90vh">
 				<v-btn
 					style="position: absolute; right: 5px; top: 5px"
-					x-small
+					size="x-small"
 					@click="closeDialog()"
 					icon
-					fab
+					variant="fab"
 				>
 					<v-icon>close</v-icon>
 				</v-btn>
@@ -417,7 +407,7 @@ export default {
 			this.refreshItems()
 		})
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.socket) {
 			this.unbindEvents()
 		}

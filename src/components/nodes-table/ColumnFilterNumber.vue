@@ -31,10 +31,10 @@
 						label="Values"
 						clearable
 						chips
-						deletableChips
-						dense
+						closable-chips
+						density="compact"
 						multiple
-						@change="change"
+						@update:model-value="change"
 					></v-select>
 				</v-col>
 			</v-row>

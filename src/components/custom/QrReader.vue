@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<v-tabs v-model="scanTab" grow icons-and-text>
+		<v-tabs v-model="scanTab" grow stacked>
 			<v-tab>
 				Scan
 				<v-icon>photo_camera</v-icon>
@@ -26,7 +26,7 @@
 							v-model="selectedCamera"
 							label="Camera"
 							hide-details
-							item-text="label"
+							item-title="label"
 							item-value="id"
 						></v-select>
 
@@ -39,7 +39,7 @@
 
 						<div>
 							<center class="mt-5" v-if="loadingQr">
-								<p class="caption">Loading camera</p>
+								<p class="text-caption">Loading camera</p>
 								<v-progress-circular
 									indeterminate
 								></v-progress-circular>
@@ -87,7 +87,9 @@
 							class="mt-2 dropzone text-center"
 						>
 							<v-icon size="60px">cloud_upload</v-icon>
-							<p class="caption font-weight-bold text-uppercase">
+							<p
+								class="text-caption font-weight-bold text-uppercase"
+							>
 								Drop the image here
 							</p>
 						</v-col>
@@ -127,7 +129,7 @@
 				</v-form>
 			</v-tab-item>
 		</v-tabs-items>
-		<v-alert dense v-if="qrCodeError" type="error">{{
+		<v-alert density="compact" v-if="qrCodeError" type="error">{{
 			qrCodeError
 		}}</v-alert>
 	</div>
@@ -189,7 +191,7 @@ export default {
 	mounted() {
 		this.initialize()
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.destroyReader()
 	},
 	watch: {

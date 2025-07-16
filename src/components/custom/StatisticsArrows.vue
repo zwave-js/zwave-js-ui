@@ -1,7 +1,7 @@
 <template>
-	<v-tooltip bottom>
-		<template v-slot:activator="{ on }">
-			<center v-on="on">
+	<v-tooltip location="bottom">
+		<template v-slot:activator="{ props }">
+			<center v-bind="props">
 				<blink-icon
 					icon="north"
 					:activeColor="node.errorTransmit ? 'error' : 'success'"
@@ -64,7 +64,7 @@ export default {
 			this.now = Date.now()
 		}, 200)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		clearInterval(this.nowInterval)
 	},
 }

@@ -1,11 +1,11 @@
 <template>
 	<div class="valueid-slot">
-		<v-subheader class="valueid-label">{{ label }} </v-subheader>
+		<v-list-subheader class="valueid-label">{{ label }} </v-list-subheader>
 
 		<v-btn
 			@click="resetConfig"
 			v-if="canResetConfiguration"
-			x-small
+			size="x-small"
 			color="error"
 			>Reset</v-btn
 		>
@@ -18,13 +18,13 @@
 				<v-btn
 					@click="idleNotification"
 					v-if="canIdleNotification"
-					small
+					size="small"
 					color="primary"
 					>Idle</v-btn
 				>
 			</div>
 
-			<div v-if="help" class="caption mt-1 help">
+			<div v-if="help" class="text-caption mt-1 help">
 				{{ help }}
 			</div>
 		</div>
@@ -38,19 +38,19 @@
 					!value.list &&
 					(value.type === 'string' || value.type === 'buffer')
 				"
-				:append-outer-icon="!disable_send ? 'send' : null"
+				:append-icon="!disable_send ? 'send' : null"
 				:suffix="value.unit"
 				persistent-hint
 				:hint="help"
 				v-model="value.newValue"
-				@click:append-outer="updateValue(value)"
+				@click:append="updateValue(value)"
 			></v-text-field>
 
 			<!-- Number Input -->
 			<v-text-field
 				v-else-if="!value.list && value.type === 'number'"
 				type="number"
-				:append-outer-icon="
+				:append-icon="
 					!disable_send && !numberOutOfRange ? 'send' : null
 				"
 				:suffix="value.unit"
@@ -66,20 +66,20 @@
 						: ''
 				"
 				v-model.number="value.newValue"
-				@click:append-outer="!numberOutOfRange && updateValue(value)"
+				@click:append="!numberOutOfRange && updateValue(value)"
 			></v-text-field>
 
 			<!-- Object Input -->
 			<v-text-field
 				v-else-if="!value.list && value.type === 'any'"
-				:append-outer-icon="!disable_send ? 'send' : null"
+				:append-icon="!disable_send ? 'send' : null"
 				:suffix="value.unit"
 				persistent-hint
 				:error="!!error"
 				:error-messages="error"
 				:hint="help"
 				v-model="parsedValue"
-				@click:append-outer="updateValue(value)"
+				@click:append="updateValue(value)"
 			></v-text-field>
 
 			<!-- Duration Input -->
@@ -100,8 +100,8 @@
 					v-model="value.newValue.unit"
 					:readonly="disable_send"
 					persistent-hint
-					:append-outer-icon="!disable_send ? 'send' : null"
-					@click:append-outer="updateValue(value)"
+					:append-icon="!disable_send ? 'send' : null"
+					@click:append="updateValue(value)"
 				></v-select>
 			</div>
 
@@ -109,24 +109,23 @@
 			<v-text-field
 				style="max-width: 250px; margin-top: 10px"
 				flat
-				solo
+				variant="solo"
 				v-else-if="value.type === 'color'"
 				v-model="color"
 				persistent-hint
-				:append-outer-icon="!disable_send ? 'send' : null"
+				:append-icon="!disable_send ? 'send' : null"
 				:hint="help"
-				@click:append-outer="updateValue(value)"
+				@click:append="updateValue(value)"
 			>
 				<template v-slot:append>
 					<v-menu
 						v-model="menu"
-						top
-						nudge-bottom="105"
-						nudge-left="16"
+						location="top"
+						:offset="[16, 105]"
 						:close-on-content-click="false"
 					>
-						<template v-slot:activator="{ on }">
-							<div :style="pickerStyle" v-on="on" />
+						<template v-slot:activator="{ props }">
+							<div :style="pickerStyle" v-bind="props" />
 						</template>
 						<v-card>
 							<v-card-text class="pa-0">
@@ -160,12 +159,12 @@
 				:hint="help"
 				persistent-hint
 				:return-object="false"
-				:item-text="itemText"
+				:item-title="itemText"
 				item-value="value"
 				:suffix="value.unit"
-				:append-outer-icon="!disable_send ? 'send' : null"
+				:append-icon="!disable_send ? 'send' : null"
 				v-model="value.newValue"
-				@click:append-outer="updateValue(value)"
+				@click:append="updateValue(value)"
 			>
 				<template v-slot:selection="{ item }">
 					<span>
@@ -193,17 +192,17 @@
 				persistent-hint
 				chips
 				:suffix="value.unit"
-				:item-text="itemText"
+				:item-title="itemText"
 				item-value="value"
 				:type="value.type === 'number' ? 'number' : 'text'"
 				:return-object="false"
-				:append-outer-icon="!disable_send ? 'send' : null"
+				:append-icon="!disable_send ? 'send' : null"
 				v-model="value.newValue"
 				ref="myCombo"
-				@click:append-outer="updateValue(value)"
+				@click:append="updateValue(value)"
 			>
-				<template v-slot:selection="{ attrs, item, selected }">
-					<v-chip v-bind="attrs" :input-value="selected">
+				<template v-slot:chip="{ attrs, item, selected }">
+					<v-chip v-bind="attrs" :model-value="selected">
 						<span>
 							{{ itemText(selectedItem || item) }}
 						</span>
@@ -221,7 +220,7 @@
 			>
 				<v-btn-toggle class="my-2" v-model="value.newValue" rounded>
 					<v-btn
-						outlined
+						variant="outlined"
 						height="40px"
 						:value="true"
 						:style="{
@@ -235,7 +234,6 @@
 								? 'white'
 								: 'success'
 						"
-						dark
 						@click="updateValue(value, true)"
 					>
 						<v-icon
@@ -251,7 +249,7 @@
 						<span v-else>{{ trueLabel }}</span>
 					</v-btn>
 					<v-btn
-						outlined
+						variant="outlined"
 						height="40px"
 						:value="false"
 						:style="{
@@ -266,7 +264,6 @@
 								: 'error'
 						"
 						@click="updateValue(value, false)"
-						dark
 					>
 						<v-icon
 							v-if="!falseLabel"
@@ -280,21 +277,20 @@
 						<span v-else>{{ falseLabel }}</span>
 					</v-btn>
 				</v-btn-toggle>
-				<div v-if="help" class="caption mt-2 help">{{ help }}</div>
+				<div v-if="help" class="text-caption mt-2 help">{{ help }}</div>
 			</div>
 
 			<!-- Button Input -->
 			<v-tooltip
 				v-else-if="value.type === 'boolean' && !value.readable"
-				right
+				location="right"
 			>
-				<template v-slot:activator="{ on }">
+				<template v-slot:activator="{ props }">
 					<v-btn
 						max-width="100%"
-						small
-						v-on="on"
+						size="small"
+						v-bind="props"
 						color="primary"
-						dark
 						@click="updateValue(value)"
 						class="mb-2 mt-2"
 						>{{ trueLabel || falseLabel || value.label }}</v-btn
@@ -304,10 +300,10 @@
 			</v-tooltip>
 
 			<!-- Suffix loader with tooltip -->
-			<v-tooltip v-if="value.toUpdate" bottom>
-				<template v-slot:activator="{ on }">
+			<v-tooltip v-if="value.toUpdate" location="bottom">
+				<template v-slot:activator="{ props }">
 					<v-progress-circular
-						v-on="on"
+						v-bind="props"
 						indeterminate
 						class="ml-2"
 						size="20"

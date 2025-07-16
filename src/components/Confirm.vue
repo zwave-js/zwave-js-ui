@@ -7,14 +7,8 @@
 		:persistent="options.persistent"
 	>
 		<v-card>
-			<v-toolbar
-				class="sticky-title"
-				:color="options.color"
-				dark
-				dense
-				flat
-			>
-				<v-toolbar-title class="white--text">{{
+			<v-toolbar class="sticky-title" :color="options.color" dense flat>
+				<v-toolbar-title class="text-white">{{
 					title
 				}}</v-toolbar-title>
 			</v-toolbar>
@@ -89,12 +83,12 @@
 										!input.autocomplete
 									"
 									v-model="values[input.key]"
-									:item-text="input.itemText || 'text'"
+									:item-title="input.itemText || 'text'"
 									:item-value="input.itemValue || 'value'"
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
-									@change="
+									@update:model-value="
 										inputProps[input.key].onChange($event)
 									"
 									:persistent-hint="!!input.hint"
@@ -110,12 +104,12 @@
 										input.autocomplete
 									"
 									v-model="values[input.key]"
-									:item-text="input.itemText || 'text'"
+									:item-title="input.itemText || 'text'"
 									:item-value="input.itemValue || 'value'"
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
-									@change="
+									@update:model-value="
 										inputProps[input.key].onChange($event)
 									"
 									:persistent-hint="!!input.hint"
@@ -130,7 +124,7 @@
 										input.allowManualEntry
 									"
 									v-model="values[input.key]"
-									:item-text="input.itemText || 'text'"
+									:item-title="input.itemText || 'text'"
 									:item-value="input.itemValue || 'value'"
 									chips
 									:items="input.items"
@@ -181,7 +175,11 @@
 											inputProps[input.key].onChange()
 										"
 										:color="input.color"
-										:outlined="input.outlined"
+										:variant="
+											input.outlined
+												? 'outlined'
+												: undefined
+										"
 									>
 										<v-icon
 											class="mr-2"
@@ -208,7 +206,7 @@
 				<v-btn
 					v-if="!options.qrScan"
 					@click="agree"
-					text
+					variant="text"
 					:color="options.color"
 					>{{ options.confirmText }}</v-btn
 				>
@@ -216,7 +214,7 @@
 					v-if="options.cancelText && !options.noCancel"
 					@keydown.esc="cancel"
 					@click="cancel"
-					text
+					variant="text"
 					>{{ options.cancelText }}</v-btn
 				>
 			</v-card-actions>

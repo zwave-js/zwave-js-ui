@@ -2,12 +2,12 @@
 	<v-dialog v-model="value" :persistent="!ended" width="500">
 		<v-card>
 			<v-card-title v-if="title">
-				<span class="headline">{{ title }}</span>
+				<span class="text-h5">{{ title }}</span>
 			</v-card-title>
 			<v-btn
 				v-if="ended"
 				icon
-				x-small
+				size="x-small"
 				@click="$emit('input', false)"
 				style="position: absolute; right: 5px; top: 5px"
 			>
@@ -18,7 +18,7 @@
 					<p v-html="text" class="ma-0"></p>
 					<div v-if="!ended">
 						<v-progress-linear
-							:value="progress"
+							:model-value="progress"
 							:indeterminate="indeterminate"
 							class="mt-1"
 						>

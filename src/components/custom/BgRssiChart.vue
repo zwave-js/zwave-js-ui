@@ -223,9 +223,6 @@ export default {
 	beforeUnmount() {
 		this.destroy()
 	},
-	beforeDestroy() {
-		this.destroy()
-	},
 	methods: {
 		checkRssiError(v) {
 			return isRssiError(v) ? null : v

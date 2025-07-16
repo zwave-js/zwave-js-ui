@@ -2,12 +2,12 @@
 	<div class="fill-height">
 		<v-expansion-panels v-model="openPanel">
 			<v-expansion-panel>
-				<v-expansion-panel-header> Options </v-expansion-panel-header>
-				<v-expansion-panel-content>
+				<v-expansion-panel-title> Options </v-expansion-panel-title>
+				<v-expansion-panel-text>
 					<v-row>
 						<v-col>
-							<v-subheader>Legend</v-subheader>
-							<v-list dense>
+							<v-list-subheader>Legend</v-list-subheader>
+							<v-list density="compact">
 								<v-list-item
 									v-for="(item, i) in legends"
 									:key="i"
@@ -17,18 +17,17 @@
 											item.icon || 'turned_in'
 										}}</v-icon>
 									</v-list-item-icon>
-									<v-list-item-content>
-										<v-list-item-title
-											:style="{ color: item.textColor }"
-											v-text="item.text"
-										></v-list-item-title>
-									</v-list-item-content>
+
+									<v-list-item-title
+										:style="{ color: item.textColor }"
+										v-text="item.text"
+									></v-list-item-title>
 								</v-list-item>
 							</v-list>
 						</v-col>
 						<v-col>
-							<v-subheader>Edges</v-subheader>
-							<v-list dense>
+							<v-list-subheader>Edges</v-list-subheader>
+							<v-list density="compact">
 								<v-list-item
 									v-for="(item, i) in edgesLegend"
 									:key="i"
@@ -38,17 +37,16 @@
 											item.icon || 'turned_in'
 										}}</v-icon>
 									</v-list-item-icon>
-									<v-list-item-content>
-										<v-list-item-title
-											:style="{ color: item.textColor }"
-											v-text="item.text"
-										></v-list-item-title>
-									</v-list-item-content>
+
+									<v-list-item-title
+										:style="{ color: item.textColor }"
+										v-text="item.text"
+									></v-list-item-title>
 								</v-list-item>
 							</v-list>
 						</v-col>
 						<v-col>
-							<v-subheader>Filters</v-subheader>
+							<v-list-subheader>Filters</v-list-subheader>
 
 							<v-autocomplete
 								:items="locations"
@@ -57,17 +55,14 @@
 								label="Locations filter"
 								clearable
 								chips
-								deletable-chips
-								solo
+								closable-chips
+								variant="solo"
 							>
-								<template slot="append-outer">
-									<v-tooltip bottom>
-										<template
-											v-slot:activator="{ on, attrs }"
-										>
+								<template v-slot:append-outer>
+									<v-tooltip location="bottom">
+										<template v-slot:activator="{ props }">
 											<v-btn
-												v-bind="attrs"
-												v-on="on"
+												v-bind="props"
 												@click="
 													invertLocationsFilter =
 														!invertLocationsFilter
@@ -98,20 +93,17 @@
 								multiple
 								label="Nodes filter"
 								clearable
-								item-text="_name"
+								item-title="_name"
 								item-value="id"
 								chips
-								deletable-chips
-								solo
+								closable-chips
+								variant="solo"
 							>
-								<template slot="append-outer">
-									<v-tooltip bottom>
-										<template
-											v-slot:activator="{ on, attrs }"
-										>
+								<template v-slot:append-outer>
+									<v-tooltip location="bottom">
+										<template v-slot:activator="{ props }">
 											<v-btn
-												v-bind="attrs"
-												v-on="on"
+												v-bind="props"
 												@click="
 													invertNodesFilter =
 														!invertNodesFilter
@@ -171,7 +163,7 @@
 						</v-col>
 
 						<!-- <v-col>
-							<v-subheader>Grouping</v-subheader>
+							<v-list-subheader>Grouping</v-list-subheader>
 
 							<v-radio-group v-model="grouping">
 								<v-radio
@@ -183,7 +175,7 @@
 							</v-radio-group>
 						</v-col> -->
 					</v-row>
-				</v-expansion-panel-content>
+				</v-expansion-panel-text>
 			</v-expansion-panel>
 		</v-expansion-panels>
 
@@ -220,28 +212,26 @@
 					:position-y="menuY"
 				>
 					<v-card v-if="hoverNode">
-						<v-subheader class="font-weight-bold">{{
+						<v-list-subheader class="font-weight-bold">{{
 							hoverNode._name
-						}}</v-subheader>
+						}}</v-list-subheader>
 
 						<v-divider></v-divider>
 
 						<v-list
 							style="min-width: 300px; background: transparent"
-							dense
+							density="compact"
 							class="pa-0 text-caption"
 						>
-							<v-list-item dense>
-								<v-list-item-content>ID</v-list-item-content>
+							<v-list-item density="compact">
+								ID
 								<v-list-item-content
 									class="align-end font-weight-bold"
 									>{{ hoverNode.id }}</v-list-item-content
 								>
 							</v-list-item>
-							<v-list-item dense>
-								<v-list-item-content
-									>Product</v-list-item-content
-								>
+							<v-list-item density="compact">
+								Product
 								<v-list-item-content
 									class="align-end font-weight-bold"
 									>{{
@@ -254,8 +244,8 @@
 									}}</v-list-item-content
 								>
 							</v-list-item>
-							<v-list-item dense>
-								<v-list-item-content>Power</v-list-item-content>
+							<v-list-item density="compact">
+								Power
 								<v-list-item-content
 									class="align-end font-weight-bold"
 									>{{
@@ -265,10 +255,8 @@
 									}}</v-list-item-content
 								>
 							</v-list-item>
-							<v-list-item dense>
-								<v-list-item-content
-									>Neighbors</v-list-item-content
-								>
+							<v-list-item density="compact">
+								Neighbors
 								<v-list-item-content
 									class="align-end font-weight-bold"
 									>{{
@@ -565,7 +553,7 @@ export default {
 			}
 		})
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.refreshTimeout) {
 			clearTimeout(this.refreshTimeout)
 		}

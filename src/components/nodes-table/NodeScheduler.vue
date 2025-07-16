@@ -5,7 +5,7 @@
 				class="ma-2"
 				style="max-width: 200px"
 				v-model="mode"
-				dense
+				density="compact"
 				:items="supportedModes"
 				persistent-hint
 				:hint="`Max slots: ${this.schedule.numSlots}`"
@@ -23,9 +23,9 @@
 				<template v-slot:top>
 					<v-btn
 						v-if="!loading"
-						small
-						outlined
-						text
+						size="small"
+						variant="outlined"
+						variant="text"
 						color="primary"
 						@click="refresh()"
 						class="mb-2"
@@ -33,9 +33,9 @@
 					>
 					<v-btn
 						v-else
-						small
-						outlined
-						text
+						size="small"
+						variant="outlined"
+						variant="text"
 						color="error"
 						@click="cancel()"
 						class="mb-2"
@@ -43,9 +43,9 @@
 					>
 
 					<v-btn
-						small
-						outlined
-						text
+						size="small"
+						variant="outlined"
+						variant="text"
 						:disabled="schedule.numSlots <= items.length"
 						color="success"
 						@click="editSlot()"
@@ -54,10 +54,10 @@
 					>
 
 					<v-btn
-						small
-						outlined
+						size="small"
+						variant="outlined"
 						v-if="mode !== activeMode && items.length > 0"
-						text
+						variant="text"
 						color="warning"
 						@click="enableMode()"
 						class="mb-2"
@@ -66,10 +66,16 @@
 				</template>
 
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="error" @click="removeSlot(item.slot)"
+					<v-icon
+						size="small"
+						color="error"
+						@click="removeSlot(item.slot)"
 						>delete</v-icon
 					>
-					<v-icon small color="success" @click="editSlot(item.slot)"
+					<v-icon
+						size="small"
+						color="success"
+						@click="editSlot(item.slot)"
 						>edit</v-icon
 					>
 				</template>

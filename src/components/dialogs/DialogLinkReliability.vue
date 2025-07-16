@@ -2,7 +2,7 @@
 	<v-dialog v-model="value" max-width="800px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="headline"
+				<span class="text-h5"
 					>Node {{ activeNode ? activeNode.id : '' }} - Link
 					Statistics</span
 				>
@@ -81,59 +81,53 @@
 						<v-progress-linear
 							v-if="running"
 							:indeterminate="this.infinite"
-							:value="this.infinite ? null : this.progress"
+							:model-value="this.infinite ? null : this.progress"
 							color="success"
 						></v-progress-linear>
-						<v-list dense>
+						<v-list density="compact">
 							<v-list-item>
-								<v-list-item-content>
-									<v-list-item-title class="info--text"
-										>Commands Sent</v-list-item-title
-									>
-									<v-list-item-subtitle>{{
-										statistics.commandsSent
-									}}</v-list-item-subtitle>
-								</v-list-item-content>
+								<v-list-item-title class="text-info"
+									>Commands Sent</v-list-item-title
+								>
+								<v-list-item-subtitle>{{
+									statistics.commandsSent
+								}}</v-list-item-subtitle>
 							</v-list-item>
 							<v-list-item>
-								<v-list-item-content>
-									<v-list-item-title class="error--text"
-										>Failed Commands</v-list-item-title
-									>
-									<v-list-item-subtitle
-										>{{ statistics.commandErrors }} ({{
-											(
-												(statistics.commandErrors /
-													statistics.rounds) *
-												100
-											).toFixed(1)
-										}}
-										%)</v-list-item-subtitle
-									>
-								</v-list-item-content>
+								<v-list-item-title class="text-error"
+									>Failed Commands</v-list-item-title
+								>
+								<v-list-item-subtitle
+									>{{ statistics.commandErrors }} ({{
+										(
+											(statistics.commandErrors /
+												statistics.rounds) *
+											100
+										).toFixed(1)
+									}}
+									%)</v-list-item-subtitle
+								>
 							</v-list-item>
 							<v-list-item
 								v-if="statistics?.missingResponses != undefined"
 							>
-								<v-list-item-content>
-									<v-list-item-title class="error--text"
-										>Missing Responses</v-list-item-title
-									>
-									<v-list-item-subtitle
-										>{{ statistics.missingResponses }} ({{
-											(
-												(statistics.missingResponses /
-													statistics.commandsSent) *
-												100
-											).toFixed(1)
-										}}
-										%)</v-list-item-subtitle
-									>
-								</v-list-item-content>
+								<v-list-item-title class="text-error"
+									>Missing Responses</v-list-item-title
+								>
+								<v-list-item-subtitle
+									>{{ statistics.missingResponses }} ({{
+										(
+											(statistics.missingResponses /
+												statistics.commandsSent) *
+											100
+										).toFixed(1)
+									}}
+									%)</v-list-item-subtitle
+								>
 							</v-list-item>
 						</v-list>
 
-						<v-simple-table>
+						<v-table>
 							<template v-slot:default>
 								<thead>
 									<tr>
@@ -206,14 +200,17 @@
 									</tr>
 								</tbody>
 							</template>
-						</v-simple-table>
+						</v-table>
 					</v-row>
 				</v-container>
 			</v-card-text>
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Close</v-btn
 				>
 			</v-card-actions>
@@ -352,7 +349,7 @@ export default {
 			}
 		},
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.init(false)
 	},
 }

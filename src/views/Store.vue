@@ -27,70 +27,70 @@
 						<v-icon color="primary" v-else> text_snippet </v-icon>
 					</template>
 					<template v-slot:label="{ item }">
-						<span class="subtitle-2">{{ item.name }}</span>
-						<div class="caption grey--text">
+						<span class="text-subtitle-2">{{ item.name }}</span>
+						<div class="text-caption text-grey">
 							{{ item.size !== 'n/a' ? item.size : '' }}
 						</div>
 					</template>
 					<template v-slot:append="{ item }">
 						<v-row justify-end class="ma-1">
-							<v-menu v-if="item.children" offset-y>
-								<template v-slot:activator="{ on }">
-									<v-icon v-on="on">more_vert</v-icon>
+							<v-menu v-if="item.children" location="bottom">
+								<template v-slot:activator="{ props }">
+									<v-icon v-bind="props">more_vert</v-icon>
 								</template>
-								<v-list class="py-0" dense>
+								<v-list class="py-0" density="compact">
 									<v-list-item
-										dense
+										density="compact"
 										@click.stop="writeFile(item.path, true)"
 									>
-										<v-list-item-icon>
+										<template #prepend>
 											<v-icon color="warning"
 												>create_new_folder</v-icon
 											>
-										</v-list-item-icon>
+										</template>
 										<v-list-item-title
 											>Create New
 											Folder</v-list-item-title
 										>
 									</v-list-item>
 									<v-list-item
-										dense
+										density="compact"
 										@click.stop="
 											writeFile(item.path, false)
 										"
 									>
-										<v-list-item-icon>
+										<template #prepend>
 											<v-icon color="primary"
 												>post_add</v-icon
 											>
-										</v-list-item-icon>
+										</template>
 										<v-list-item-title
 											>Add File</v-list-item-title
 										>
 									</v-list-item>
 									<v-list-item
-										dense
+										density="compact"
 										v-if="!item.isRoot"
 										@click.stop="deleteFile(item)"
 									>
-										<v-list-item-icon>
+										<template #prepend>
 											<v-icon color="error"
 												>delete</v-icon
 											>
-										</v-list-item-icon>
+										</template>
 										<v-list-item-title
 											>Delete</v-list-item-title
 										>
 									</v-list-item>
 									<v-list-item
-										dense
+										density="compact"
 										@click.stop="uploadFile(item)"
 									>
-										<v-list-item-icon>
+										<template #prepend>
 											<v-icon color="warning"
 												>upload</v-icon
 											>
-										</v-list-item-icon>
+										</template>
 										<v-list-item-title
 											>Upload File</v-list-item-title
 										>
@@ -116,21 +116,24 @@
 				</div>
 				<v-speed-dial bottom fab right absolute v-model="fab">
 					<template v-slot:activator>
-						<v-btn color="primary" dark fab hover v-model="fab">
+						<v-btn
+							color="primary"
+							variant="fab"
+							hover
+							v-model="fab"
+						>
 							<v-icon v-if="fab">close</v-icon>
 							<v-icon v-else>settings</v-icon>
 						</v-btn>
 					</template>
-					<v-tooltip left>
-						<template v-slot:activator="{ on, attrs }">
+					<v-tooltip location="left">
+						<template v-slot:activator="{ props }">
 							<v-btn
-								fab
-								dark
-								small
+								variant="fab"
+								size="small"
 								color="success"
 								@click="restoreZip()"
-								v-bind="attrs"
-								v-on="on"
+								v-bind="props"
 							>
 								<v-icon>restore</v-icon>
 							</v-btn>
@@ -138,16 +141,14 @@
 						<span>Restore</span>
 					</v-tooltip>
 
-					<v-tooltip left>
-						<template v-slot:activator="{ on, attrs }">
+					<v-tooltip location="left">
+						<template v-slot:activator="{ props }">
 							<v-btn
-								fab
-								dark
-								small
+								variant="fab"
+								size="small"
 								color="warining"
 								@click="uploadFile()"
-								v-bind="attrs"
-								v-on="on"
+								v-bind="props"
 							>
 								<v-icon>upload</v-icon>
 							</v-btn>
@@ -155,16 +156,14 @@
 						<span>Upload File</span>
 					</v-tooltip>
 
-					<v-tooltip left>
-						<template v-slot:activator="{ on, attrs }">
+					<v-tooltip location="left">
+						<template v-slot:activator="{ props }">
 							<v-btn
-								fab
-								dark
-								small
+								variant="fab"
+								size="small"
 								color="purple"
 								@click="backupStore"
-								v-bind="attrs"
-								v-on="on"
+								v-bind="props"
 							>
 								<v-icon>backup</v-icon>
 							</v-btn>
@@ -172,16 +171,14 @@
 						<span>Backup</span>
 					</v-tooltip>
 
-					<v-tooltip left>
-						<template v-slot:activator="{ on, attrs }">
+					<v-tooltip location="left">
+						<template v-slot:activator="{ props }">
 							<v-btn
-								fab
-								dark
-								small
+								variant="fab"
+								size="small"
 								color="warning"
 								@click="refreshTree"
-								v-bind="attrs"
-								v-on="on"
+								v-bind="props"
 							>
 								<v-icon>refresh</v-icon>
 							</v-btn>
@@ -189,17 +186,15 @@
 						<span>Refresh</span>
 					</v-tooltip>
 
-					<v-tooltip left>
-						<template v-slot:activator="{ on, attrs }">
+					<v-tooltip location="left">
+						<template v-slot:activator="{ props }">
 							<v-btn
 								v-if="selectedFiles.length > 0"
-								fab
-								dark
-								small
+								variant="fab"
+								size="small"
 								color="primary"
 								@click="downloadSelectedZip"
-								v-bind="attrs"
-								v-on="on"
+								v-bind="props"
 							>
 								<v-icon>file_download</v-icon>
 							</v-btn>
@@ -207,17 +202,15 @@
 						<span>Download selected</span>
 					</v-tooltip>
 
-					<v-tooltip left>
-						<template v-slot:activator="{ on, attrs }">
+					<v-tooltip location="left">
+						<template v-slot:activator="{ props }">
 							<v-btn
 								v-if="selectedFiles.length > 0"
-								fab
-								dark
-								small
+								variant="fab"
+								size="small"
 								color="error"
 								@click="deleteSelected"
-								v-bind="attrs"
-								v-on="on"
+								v-bind="props"
 							>
 								<v-icon>delete</v-icon>
 							</v-btn>
@@ -232,9 +225,9 @@
 			<v-col class="text-center overflow-y-auto d-flex justify-center">
 				<div
 					v-if="!selected || !selected.ext"
-					class="title grey--text text--lighten-1 font-weight-light align-self-center"
+					class="text-h6 text-grey-lighten-1 font-weight-light align-self-center"
 				>
-					<v-icon color="grey lighten-4" x-large>
+					<v-icon color="grey-lighten-4" size="x-large">
 						text_snippet
 					</v-icon>
 					<br />
@@ -242,7 +235,7 @@
 				</div>
 				<div
 					v-else-if="loadingFile"
-					class="title grey--text text--lighten-1 font-weight-light align-self-center"
+					class="text-h6 text-grey-lighten-1 font-weight-light align-self-center"
 				>
 					<v-progress-circular
 						indeterminate
@@ -267,13 +260,21 @@
 					<div class="sticky-bottom pa-0" v-if="!notSupported">
 						<v-toolbar>
 							<v-spacer></v-spacer>
-							<v-btn color="purple" text @click="writeFile">
+							<v-btn
+								color="purple"
+								variant="text"
+								@click="writeFile"
+							>
 								SAVE
-								<v-icon right dark>save</v-icon>
+								<v-icon end>save</v-icon>
 							</v-btn>
-							<v-btn color="success" text @click="downloadFile">
+							<v-btn
+								color="success"
+								variant="text"
+								@click="downloadFile"
+							>
 								DOWNLOAD
-								<v-icon right dark>file_download</v-icon>
+								<v-icon end>file_download</v-icon>
 							</v-btn>
 						</v-toolbar>
 					</div>
@@ -718,6 +719,6 @@ export default {
 	async mounted() {
 		await this.refreshTree()
 	},
-	beforeDestroy() {},
+	beforeUnmount() {},
 }
 </script>

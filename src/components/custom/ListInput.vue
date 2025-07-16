@@ -1,41 +1,44 @@
 <template>
 	<div>
-		<v-list dense>
+		<v-list density="compact">
 			<v-list-item v-if="input.prefix" v-text="input.prefix" key="prefix">
 			</v-list-item>
 
 			<v-icon v-if="input.prefix" class="ml-5">arrow_downward</v-icon>
 
-			<draggable v-model="items" handle=".handle">
-				<template v-for="(item, i) in items">
-					<v-list-item :key="`${i}_${item}`">
+			<draggable
+				v-model="items"
+				handle=".handle"
+				:item-key="(item, index) => `${index}_${item}`"
+			>
+				<template #item="{ element: item, index: i }">
+					<v-list-item>
 						<v-list-item-action class="mr-0" style="min-width: 0px">
 							<slot name="item-action" :item="item"></slot>
 						</v-list-item-action>
-						<v-list-item-content>
-							<v-row class="ma-0 d-block">
-								<v-icon
-									v-if="toggleEdit"
-									class="handle"
-									style="cursor: move"
-									color="primary lighten-2"
-									>drag_indicator</v-icon
-								>
-								<span class="text-caption"> {{ i + 1 }}.</span>
-								<span style="font-size: 0.9rem">
-									{{ getItemName(item) }}
-								</span>
-								<v-btn
-									v-if="toggleEdit"
-									icon
-									small
-									@click="deleteItem(i)"
-									color="error"
-								>
-									<v-icon small>delete</v-icon>
-								</v-btn>
-							</v-row>
-						</v-list-item-content>
+
+						<v-row class="ma-0 d-block">
+							<v-icon
+								v-if="toggleEdit"
+								class="handle"
+								style="cursor: move"
+								color="primary-lighten-2"
+								>drag_indicator</v-icon
+							>
+							<span class="text-caption"> {{ i + 1 }}.</span>
+							<span style="font-size: 0.9rem">
+								{{ getItemName(item) }}
+							</span>
+							<v-btn
+								v-if="toggleEdit"
+								icon
+								size="small"
+								@click="deleteItem(i)"
+								color="error"
+							>
+								<v-icon size="small">delete</v-icon>
+							</v-btn>
+						</v-row>
 					</v-list-item>
 				</template>
 			</draggable>
@@ -54,15 +57,15 @@
 				:label="input.label"
 				:hint="input.hint"
 				:required="input.required"
-				dense
+				density="compact"
 				:maxlength="input.maxLength"
 				:persistent-hint="!!input.hint"
 				type="text"
 				:suffix="input.suffix"
 				:prefix="input.prefix"
 				@keyup.enter="addItem"
-				append-outer-icon="add"
-				@click:append-outer="addItem"
+				append-icon="add"
+				@click:append="addItem"
 			></v-text-field>
 			<v-select
 				v-if="input.inputType === 'select'"
@@ -72,9 +75,9 @@
 				:persistent-hint="!!input.hint"
 				:items="inputItems"
 				:item-value="input.itemValue"
-				:item-text="input.itemText"
-				dense
-				@change="addItem"
+				:item-title="input.itemText"
+				density="compact"
+				@update:model-value="addItem"
 			></v-select>
 			<v-autocomplete
 				v-if="input.inputType === 'autocomplete'"
@@ -84,9 +87,9 @@
 				:hint="input.hint"
 				:items="inputItems"
 				:item-value="input.itemValue"
-				:item-text="input.itemText"
-				dense
-				@change="addItem"
+				:item-title="input.itemText"
+				density="compact"
+				@update:model-value="addItem"
 				@keyup.enter="addItem"
 			></v-autocomplete>
 			<v-combobox
@@ -97,15 +100,15 @@
 				:persistent-hint="!!input.hint"
 				:items="inputItems"
 				:item-value="input.itemValue"
-				:item-text="input.itemText"
-				dense
+				:item-title="input.itemText"
+				density="compact"
 				@change="addItem"
 				@keyup.enter="addItem"
 				chips
-				deletable-chips
+				closable-chips
 				:return-object="false"
-				append-outer-icon="add"
-				@click:append-outer="addItem"
+				append-icon="add"
+				@click:append="addItem"
 			></v-combobox>
 		</div>
 	</div>

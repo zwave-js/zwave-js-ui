@@ -3,7 +3,7 @@
 	<v-dialog v-model="show" @click:outside="$emit('close')" max-width="500px">
 		<v-card>
 			<v-card-title>
-				<span class="headline">Password Change</span>
+				<span class="text-h5">Password Change</span>
 			</v-card-title>
 			<v-card-text>
 				<v-container grid-list-md>
@@ -67,11 +67,13 @@
 			</v-card-text>
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="primary" text @click="closeDialog()">Close</v-btn>
+				<v-btn color="primary" variant="text" @click="closeDialog()"
+					>Close</v-btn
+				>
 				<v-btn
 					color="primary"
 					:disabled="!valid"
-					text
+					variant="text"
 					@click="updatePassword()"
 					>Save</v-btn
 				>

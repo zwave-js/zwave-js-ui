@@ -7,7 +7,7 @@
 				:key="`section-content-${name}`"
 			>
 				<div>
-					<h1 class="text-caption text-uppercase grey--text mb-2">
+					<h1 class="text-caption text-uppercase text-grey mb-2">
 						{{ name }}
 					</h1>
 					<v-row dense>

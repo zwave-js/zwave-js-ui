@@ -1,28 +1,50 @@
 // src/plugins/vuetify.js
 
-import Vue from 'vue'
-import Vuetify from 'vuetify'
-import 'vuetify/dist/vuetify.min.css'
+import { createVuetify } from 'vuetify'
+import 'vuetify/styles'
+import { md } from 'vuetify/iconsets/md'
 import 'material-design-icons-iconfont/dist/material-design-icons.css' // Ensure you are using css-loader
 
-Vue.use(Vuetify)
-
-/** @type { import('vuetify').UserVuetifyPreset } */
 const opts = {
 	icons: {
-		iconfont: 'md',
+		defaultSet: 'md',
+		sets: {
+			md,
+		},
 	},
 	theme: {
-		options: { customProperties: true }, // enable sass/scss variables
+		defaultTheme: 'light',
 		themes: {
 			dark: {
-				purple: '#BA68C8',
+				colors: {
+					purple: '#BA68C8',
+				},
 			},
 			light: {
-				purple: '#BA68C8',
+				colors: {
+					purple: '#BA68C8',
+				},
 			},
+		},
+	},
+	// Set default variants for backward compatibility
+	defaults: {
+		VTextField: {
+			variant: 'underlined',
+		},
+		VSelect: {
+			variant: 'underlined',
+		},
+		VCombobox: {
+			variant: 'underlined',
+		},
+		VAutocomplete: {
+			variant: 'underlined',
+		},
+		VBtn: {
+			variant: 'text',
 		},
 	},
 }
 
-export default new Vuetify(opts)
+export default createVuetify(opts)

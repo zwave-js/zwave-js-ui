@@ -12,20 +12,20 @@
 			>
 				<v-row v-if="zniffer.enabled">
 					<v-col style="max-width: 270px; margin-top: 7px">
-						<v-btn-toggle dense multiple>
+						<v-btn-toggle density="compact" multiple>
 							<v-tooltip
-								bottom
+								location="bottom"
 								v-for="button in buttons"
 								:key="button.label"
 								:target="`#${button.id}`"
 							>
-								<template v-slot:activator="{ on }">
+								<template v-slot:activator="{ props }">
 									<v-btn
 										:id="button.id"
 										:color="button.color"
 										:disabled="button.disabled"
 										@click="button.action"
-										v-on="on"
+										v-bind="props"
 									>
 										<v-icon>{{ button.icon }}</v-icon>
 									</v-btn>
@@ -50,17 +50,20 @@
 							:error-messages="
 								searchError ? ['Invalid search'] : []
 							"
-							outlined
-							dense
+							variant="outlined"
+							density="compact"
 							single-line
 							class="ma-2"
 							prepend-inner-icon="search"
 							label="Search"
 						>
 							<template v-slot:append>
-								<v-menu offset-y>
-									<template v-slot:activator="{ on }">
-										<v-icon v-on="on" color="grey" size="20"
+								<v-menu location="bottom">
+									<template v-slot:activator="{ props }">
+										<v-icon
+											v-bind="props"
+											color="grey"
+											size="20"
 											>info</v-icon
 										>
 									</template>
@@ -123,7 +126,7 @@
 								<v-col
 									v-if="totalFrames"
 									style="margin-top: -7px"
-									class="pa-0 caption grey--text text-center"
+									class="pa-0 text-caption text-grey text-center"
 								>
 									<p class="mb-0">Frames</p>
 									<p class="mb-0">
@@ -141,7 +144,7 @@
 							v-intersect.once="bindScroll"
 							:headers="headers"
 							:items="framesLimited"
-							:item-style="getRowStyle"
+							:row-props="getRowStyle"
 							@click:row="onRowClick"
 							single-select
 							fixed-header
@@ -154,9 +157,9 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:[`item.timestamp`]="{ item }">
-								<v-tooltip bottom>
-									<template v-slot:activator="{ on }">
-										<span v-on="on">{{
+								<v-tooltip location="bottom">
+									<template v-slot:activator="{ props }">
+										<span v-bind="props">{{
 											getTimestamp(item.timestamp)
 										}}</span>
 									</template>
@@ -256,20 +259,18 @@
 							</template>
 						</v-data-table>
 
-						<v-tooltip v-if="!autoScroll" left>
-							<template v-slot:activator="{ on }">
+						<v-tooltip v-if="!autoScroll" location="left">
+							<template v-slot:activator="{ props }">
 								<v-btn
 									color="purple"
 									@click="enableAutoScroll()"
-									dark
-									small
-									fab
+									size="small"
+									variant="fab"
 									hover
-									top
+									location="top right"
 									absolute
-									right
 									style="top: 40px"
-									v-on="on"
+									v-bind="props"
 								>
 									<v-icon>vertical_align_bottom</v-icon>
 								</v-btn>
@@ -304,26 +305,29 @@
 		<v-btn
 			color="primary"
 			@click="drawer = !drawer"
-			dark
-			fab
+			variant="fab"
 			hover
-			bottom
-			right
+			location="bottom right"
 			fixed
 		>
 			<v-icon v-if="drawer">close</v-icon>
 			<v-icon v-else>menu</v-icon>
 		</v-btn>
 
-		<v-navigation-drawer v-model="drawer" absolute right style="z-index: 2">
+		<v-navigation-drawer
+			v-model="drawer"
+			absolute
+			location="right"
+			style="z-index: 2"
+		>
 			<v-card class="fill">
 				<v-card-title> Settings </v-card-title>
 				<v-card-text>
 					<v-row>
 						<v-col v-if="!isPopup" cols="12">
 							<v-btn
-								text
-								small
+								variant="text"
+								size="small"
 								color="primary"
 								@click="openInWindow('Zniffer', 800, 1500)"
 							>
@@ -336,7 +340,7 @@
 								hide-details
 								:items="znifferRegions"
 								v-model="frequency"
-								@change="setFrequency"
+								@update:model-value="setFrequency"
 							>
 								<template v-slot:prepend>
 									<v-icon>signal_cellular_alt</v-icon>
@@ -357,7 +361,7 @@
 								hide-details
 								:items="znifferLRChannelConfigs"
 								v-model="lrChannelConfig"
-								@change="setLRChannelConfig"
+								@update:model-value="setLRChannelConfig"
 							>
 								<template v-slot:prepend>
 									<v-icon>wifi_channel</v-icon>
@@ -564,7 +568,7 @@ export default {
 		this.clearZnifferConfiguration()
 		this.initializeViewState()
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		window.removeEventListener('resize', this.onWindowResize)
 
 		if (this.roTopPane) {

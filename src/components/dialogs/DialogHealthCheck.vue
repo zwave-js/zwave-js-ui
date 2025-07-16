@@ -2,7 +2,7 @@
 	<v-dialog v-model="value" max-width="800px" persistent>
 		<v-card :loading="loading">
 			<v-card-title>
-				<span class="headline"
+				<span class="text-h5"
 					>Node {{ activeNode ? activeNode.id : '' }} - Health
 					check</span
 				>
@@ -20,7 +20,7 @@
 								return-object
 								hint="Target node to run the route health check on"
 								persistent-hint
-								item-text="_name"
+								item-title="_name"
 								item-value="id"
 							></v-combobox>
 						</v-col>
@@ -47,16 +47,16 @@
 						<v-menu
 							:close-on-content-click="false"
 							offset-y
-							bottom
+							location="bottom"
 							open-on-click
 							content-class="help-menu"
 						>
-							<template v-slot:activator="{ on, attrs }">
-								<v-btn color="primary" v-on="on" v-bind="attrs">
+							<template v-slot:activator="{ props }">
+								<v-btn color="primary" v-bind="props">
 									<v-icon>help</v-icon>
 								</v-btn>
 							</template>
-							<v-list dense>
+							<v-list density="compact">
 								<v-list-item>
 									<v-list-item-content class="ma-0">
 										<v-list-item-title
@@ -72,97 +72,79 @@
 									</v-list-item-content>
 								</v-list-item>
 								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Latency</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>The maximum time it took to send a
-											ping to the node. Lower = better,
-											ideally 10 ms. Will use the time in
-											TX reports if available, otherwise
-											fall back to measuring the round
-											trip time.</v-list-item-subtitle
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>Latency</v-list-item-title
+									>
+									<v-list-item-subtitle
+										>The maximum time it took to send a ping
+										to the node. Lower = better, ideally 10
+										ms. Will use the time in TX reports if
+										available, otherwise fall back to
+										measuring the round trip
+										time.</v-list-item-subtitle
+									>
 								</v-list-item>
 								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>No. Neighbors</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>How many routing neighbors this
-											node has. Higher = better, ideally >
-											2</v-list-item-subtitle
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>No. Neighbors</v-list-item-title
+									>
+									<v-list-item-subtitle
+										>How many routing neighbors this node
+										has. Higher = better, ideally >
+										2</v-list-item-subtitle
+									>
 								</v-list-item>
 								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Failed Pings
-											node</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>How many pings were not ACKed by
-											the node. Lower = better, ideally
-											0.</v-list-item-subtitle
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>Failed Pings node</v-list-item-title
+									>
+									<v-list-item-subtitle
+										>How many pings were not ACKed by the
+										node. Lower = better, ideally
+										0.</v-list-item-subtitle
+									>
 								</v-list-item>
 								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Min Power Level</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>The minimum powerlevel where all
-											pings from the (source) node were
-											ACKed by the target node /
-											controller. Lower = better, ideally
-											-6dBm or less. Only available if the
-											(source) node supports Powerlevel
-											CC</v-list-item-subtitle
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>Min Power Level</v-list-item-title
+									>
+									<v-list-item-subtitle
+										>The minimum powerlevel where all pings
+										from the (source) node were ACKed by the
+										target node / controller. Lower =
+										better, ideally -6dBm or less. Only
+										available if the (source) node supports
+										Powerlevel CC</v-list-item-subtitle
+									>
 								</v-list-item>
 								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Failed pings
-											Controller</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>If no powerlevel was found where
-											the controller ACKed all pings from
-											the node, this contains the number
-											of pings that weren't ACKed. Lower =
-											better, ideally
-											0.</v-list-item-subtitle
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>Failed pings
+										Controller</v-list-item-title
+									>
+									<v-list-item-subtitle
+										>If no powerlevel was found where the
+										controller ACKed all pings from the
+										node, this contains the number of pings
+										that weren't ACKed. Lower = better,
+										ideally 0.</v-list-item-subtitle
+									>
 								</v-list-item>
 								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>SNR Margin</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>An estimation of the
-											Signal-to-Noise Ratio Margin in dBm.
-											Only available if the controller
-											supports TX
-											reports.</v-list-item-subtitle
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>SNR Margin</v-list-item-title
+									>
+									<v-list-item-subtitle
+										>An estimation of the Signal-to-Noise
+										Ratio Margin in dBm. Only available if
+										the controller supports TX
+										reports.</v-list-item-subtitle
+									>
 								</v-list-item>
 								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Rating</v-list-item-title
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>Rating</v-list-item-title
+									>
 								</v-list-item>
 							</v-list>
 							<v-data-table
@@ -200,7 +182,7 @@
 							v-if="averages.numNeighbors && !isLR"
 							class="text-center"
 						>
-							<p class="mb-1 subtitle-1 font-weight-bold">
+							<p class="mb-1 text-subtitle-1 font-weight-bold">
 								No. Neighbors
 							</p>
 							<span
@@ -213,7 +195,7 @@
 						</v-col>
 
 						<v-col v-if="averages.rating" class="text-center">
-							<p class="mb-1 subtitle-1 font-weight-bold">
+							<p class="mb-1 text-subtitle-1 font-weight-bold">
 								Rating
 							</p>
 							<span
@@ -237,7 +219,7 @@
 					>
 						<template v-slot:top>
 							<v-btn
-								text
+								variant="text"
 								v-if="!loading && resultsTargetNode >= 0"
 								color="primary"
 								@click="exportResults"
@@ -250,7 +232,7 @@
 								rounded
 								style="min-width: 80px"
 								height="25"
-								:value="item.rating * 10"
+								:model-value="item.rating * 10"
 								:color="getRatingColor(item.rating)"
 								:indeterminate="item.rating === undefined"
 							>
@@ -394,7 +376,10 @@
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Close</v-btn
 				>
 			</v-card-actions>
@@ -741,7 +726,7 @@ export default {
 			}
 		},
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.init(false)
 	},
 }

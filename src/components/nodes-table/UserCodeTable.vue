@@ -47,7 +47,7 @@
 		</template>
 		<template v-slot:[`item.schedule`]="{ item }">
 			<v-btn
-				x-small
+				size="x-small"
 				:color="item.schedule.enabled ? 'success' : 'error'"
 				@click="setEnabled(item)"
 				>{{ item.schedule.enabled ? 'Enabled' : 'Disabled' }}</v-btn

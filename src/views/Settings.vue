@@ -8,29 +8,29 @@
 			class="pb-6 mx-2"
 		>
 			<v-expansion-panels
-				accordion
+				variant="accordion"
 				multiple
 				flat
 				class="expansion-panels-outlined"
 			>
 				<v-expansion-panel key="UI">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> UI </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('general')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
 								<color-scheme />
@@ -52,27 +52,27 @@
 								></v-switch>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 				<v-expansion-panel key="General">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> General </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('general')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row class="mb-5">
@@ -108,7 +108,7 @@
 											]"
 											multiple
 											chips
-											deletable-chips
+											closable-chips
 											v-model="newGateway.plugins"
 										></v-combobox>
 									</v-col>
@@ -167,10 +167,10 @@
 										></v-checkbox>
 									</v-col>
 								</v-row>
-								<v-subheader class="font-weight-bold">
+								<v-list-subheader class="font-weight-bold">
 									Devices values configuration
-								</v-subheader>
-								<div class="mb-5 caption">
+								</v-list-subheader>
+								<div class="mb-5 text-caption">
 									Add here valueIds specific configurations
 									for each device. This means that if you
 									create an entry here this configuration will
@@ -190,7 +190,7 @@
 									<template v-slot:top>
 										<v-btn
 											color="primary"
-											text
+											variant="text"
 											@click="dialogValue = true"
 										>
 											<v-icon>add</v-icon>
@@ -234,7 +234,7 @@
 										v-slot:[`item.actions`]="{ item }"
 									>
 										<v-icon
-											small
+											size="small"
 											class="mr-2"
 											color="success"
 											@click="editItem(item)"
@@ -242,7 +242,7 @@
 											edit
 										</v-icon>
 										<v-icon
-											small
+											size="small"
 											color="error"
 											@click="deleteItem(item)"
 										>
@@ -251,10 +251,10 @@
 									</template>
 								</v-data-table>
 
-								<v-subheader class="font-weight-bold">
+								<v-list-subheader class="font-weight-bold">
 									Scheduled Jobs
-								</v-subheader>
-								<div class="mb-5 caption">
+								</v-list-subheader>
+								<div class="mb-5 text-caption">
 									Add here a list of scheduled jobs that will
 									run specified driver function based on a
 									cron expression.
@@ -272,7 +272,7 @@
 									<template v-slot:top>
 										<v-btn
 											color="primary"
-											text
+											variant="text"
 											@click="editJob()"
 										>
 											<v-icon>add</v-icon>
@@ -323,7 +323,7 @@
 										v-slot:[`item.actions`]="{ item }"
 									>
 										<v-icon
-											small
+											size="small"
 											class="mr-2"
 											color="warning"
 											@click="editJob(item)"
@@ -331,7 +331,7 @@
 											edit
 										</v-icon>
 										<v-icon
-											small
+											size="small"
 											color="error"
 											@click="deleteJob(item)"
 										>
@@ -341,29 +341,31 @@
 								</v-data-table>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Backup">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> Backup </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('backup')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
-						<v-subheader><strong>STORE</strong></v-subheader>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
+						<v-list-subheader
+							><strong>STORE</strong></v-list-subheader
+						>
 
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
@@ -416,13 +418,13 @@
 						</v-row>
 
 						<v-divider />
-						<v-subheader
+						<v-list-subheader
 							><strong
 								>Controller (NVM) Backup</strong
-							></v-subheader
+							></v-list-subheader
 						>
 
-						<v-alert dense text type="warning">
+						<v-alert density="compact" text type="warning">
 							Some 700 series controllers may stop functioning
 							properly after an NVM backup. Z-Wave JS will try to
 							restart (soft reset) the controller afterwards to
@@ -480,12 +482,12 @@
 								></v-text-field>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Zwave">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center">
 								<v-row align-self="center">
@@ -504,16 +506,16 @@
 								<v-btn
 									@click.stop="openDocs('zwave')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content v-if="newZwave.enabled">
+					</v-expansion-panel-title>
+					<v-expansion-panel-text v-if="newZwave.enabled">
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -548,11 +550,11 @@
 										v-if="newZwave.securityKeys"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -577,13 +579,13 @@
 													),
 												]"
 												persistent-hint
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Unauthenticated',
 														newZwave.securityKeys,
@@ -614,13 +616,13 @@
 														newZwave.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZwave.securityKeys,
@@ -650,13 +652,13 @@
 														newZwave.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZwave.securityKeys,
@@ -682,13 +684,13 @@
 														newZwave.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S0_Legacy',
 														newZwave.securityKeys,
@@ -702,11 +704,11 @@
 										v-if="newZwave.securityKeysLongRange"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys (Long Range)
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -732,13 +734,13 @@
 														newZwave.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZwave.securityKeysLongRange,
@@ -769,13 +771,13 @@
 														newZwave.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZwave.securityKeysLongRange,
@@ -789,11 +791,11 @@
 									<!-- RADIO CONFIGURATION -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Default Radio configuration
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="6">
 											<v-select
@@ -880,11 +882,11 @@
 									<!-- DRIVER LOGS -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Driver logs
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 
 										<v-col cols="12" sm="6">
@@ -950,7 +952,7 @@
 												multiple
 												:rules="[rules.validNodeLog]"
 												chips
-												deletable-chips
+												closable-chips
 												v-model="newZwave.nodeFilter"
 											></v-combobox>
 										</v-col>
@@ -960,11 +962,11 @@
 									<!-- STARTUP AND RECOVERY BEHAVIOR -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Startup and recovery behavior
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 
 										<v-col cols="12" sm="6">
@@ -1039,11 +1041,11 @@
 									<!-- MISC -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Misc settings
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 
 										<v-col cols="12" sm="6">
@@ -1079,13 +1081,13 @@
 												label="Preferred scales"
 												:items="filteredScales"
 												multiple
-												:item-text="scaleName"
+												:item-title="scaleName"
 												:rules="[
 													rules.uniqueSensorType,
 												]"
 												chips
 												return-object
-												deletable-chips
+												closable-chips
 												v-model="newZwave.scales"
 											>
 												<template
@@ -1098,23 +1100,15 @@
 													<v-list-item
 														v-on="on"
 														v-bind="attrs"
-														two-line
+														lines="two"
 													>
-														<v-list-item-content>
-															<v-list-item-title
-																>{{
-																	scaleName(
-																		item,
-																	)
-																}}</v-list-item-title
-															>
-															<v-list-item-subtitle
-																>{{
-																	item.description ||
-																	''
-																}}</v-list-item-subtitle
-															>
-														</v-list-item-content>
+														<v-list-item-title>{{
+															scaleName(item)
+														}}</v-list-item-title>
+														<v-list-item-subtitle>{{
+															item.description ||
+															''
+														}}</v-list-item-subtitle>
 													</v-list-item>
 												</template>
 											</v-autocomplete>
@@ -1167,12 +1161,12 @@
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Zniffer">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center">
 								<v-row align-self="center">
@@ -1190,16 +1184,16 @@
 								<v-btn
 									@click.stop="openDocs('zniffer')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content v-if="newZniffer.enabled">
+					</v-expansion-panel-title>
+					<v-expansion-panel-text v-if="newZniffer.enabled">
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -1222,21 +1216,21 @@
 										v-if="newZniffer.securityKeys"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys
 
 												<v-btn
 													class="ml-2"
-													small
-													outlined
+													size="small"
+													variant="outlined"
 													color="warning"
 													@click="copyKeysZniffer()"
 												>
 													Copy from Driver
 												</v-btn>
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -1261,13 +1255,13 @@
 													),
 												]"
 												persistent-hint
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Unauthenticated',
 														newZniffer.securityKeys,
@@ -1298,13 +1292,13 @@
 														newZniffer.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZniffer.securityKeys,
@@ -1334,13 +1328,13 @@
 														newZniffer.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZniffer.securityKeys,
@@ -1366,13 +1360,13 @@
 														newZniffer.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S0_Legacy',
 														newZniffer.securityKeys,
@@ -1386,11 +1380,11 @@
 										v-if="newZniffer.securityKeysLongRange"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys (Long Range)
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -1416,13 +1410,13 @@
 														newZniffer.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZniffer.securityKeysLongRange,
@@ -1453,13 +1447,13 @@
 														newZniffer.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZniffer.securityKeysLongRange,
@@ -1551,14 +1545,14 @@
 											multiple
 											:rules="[rules.validNodeLog]"
 											chips
-											deletable-chips
+											closable-chips
 											v-model="newZniffer.nodeFilter"
 										></v-combobox>
 									</v-col>
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 				</v-expansion-panel>
 			</v-expansion-panels>
 
@@ -1572,29 +1566,29 @@
 			</v-col>
 
 			<v-expansion-panels
-				accordion
+				variant="accordion"
 				multiple
 				flat
 				class="expansion-panels-outlined"
 			>
 				<v-expansion-panel key="mqtt" v-if="!newMqtt.disabled">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> MQTT </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('mqtt')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -1767,28 +1761,28 @@
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="gateway" v-if="!newMqtt.disabled">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> Gateway </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('gateway')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -1867,28 +1861,28 @@
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Hass">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> Home Assistant </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('home-assistant')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -2024,7 +2018,7 @@
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 				</v-expansion-panel>
 			</v-expansion-panels>
 
@@ -2046,27 +2040,31 @@
 				backgroundColor: darkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
-			<v-btn class="mr-2" small color="error" @click="resetConfig">
+			<v-btn class="mr-2" size="small" color="error" @click="resetConfig">
 				Reset
-				<v-icon right dark>clear</v-icon>
+				<v-icon end dark>clear</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-2"
-				small
+				size="small"
 				color="purple"
-				dark
 				@click="importSettings"
 			>
 				Import
-				<v-icon right dark>file_upload</v-icon>
+				<v-icon end>file_upload</v-icon>
 			</v-btn>
-			<v-btn class="mr-2" small color="success" @click="exportSettings">
+			<v-btn
+				class="mr-2"
+				size="small"
+				color="success"
+				@click="exportSettings"
+			>
 				Export
-				<v-icon right dark>file_download</v-icon>
+				<v-icon end dark>file_download</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-5"
-				small
+				size="small"
 				color="primary"
 				type="submit"
 				:loading="saving"
@@ -2074,7 +2072,7 @@
 				form="form_settings"
 			>
 				Save
-				<v-icon right dark>save</v-icon>
+				<v-icon end dark>save</v-icon>
 			</v-btn>
 		</v-row>
 	</v-container>

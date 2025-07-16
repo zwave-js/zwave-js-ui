@@ -7,7 +7,7 @@
 	>
 		<v-card :loading="loading">
 			<v-card-title>
-				<span class="headline">Nodes Manager</span>
+				<span class="text-h5">Nodes Manager</span>
 				<v-spacer></v-spacer>
 				<v-btn icon @click="close()"><v-icon>clear</v-icon></v-btn>
 			</v-card-title>
@@ -61,7 +61,7 @@
 												<div class="option">
 													<v-icon
 														color="success"
-														small
+														size="small"
 														>add_circle</v-icon
 													>
 													<strong>Inclusion</strong>
@@ -79,8 +79,8 @@
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
-														color="amber accent-4"
-														small
+														color="amber-accent-4"
+														size="small"
 														>autorenew</v-icon
 													>
 													<strong>Replace</strong>
@@ -97,7 +97,9 @@
 										>
 											<template v-slot:label>
 												<div class="option">
-													<v-icon color="error" small
+													<v-icon
+														color="error"
+														size="small"
 														>remove_circle</v-icon
 													>
 													<strong>Exclusion</strong>
@@ -145,7 +147,7 @@
 										chips
 										hint="Failed node to remove. Write the node Id and press enter if not present"
 										persistent-hint
-										item-text="_name"
+										item-title="_name"
 									></v-combobox>
 									<v-card-actions>
 										<v-btn
@@ -218,7 +220,7 @@
 												<div class="option">
 													<v-icon
 														color="success"
-														small
+														size="small"
 														>add_circle</v-icon
 													>
 													<strong>Default</strong>
@@ -248,7 +250,7 @@
 												<div class="option">
 													<v-icon
 														color="primary"
-														small
+														size="small"
 														>smart_button</v-icon
 													>
 													<strong
@@ -273,8 +275,8 @@
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
-														color="amber accent-4"
-														small
+														color="amber-accent-4"
+														size="small"
 														>lock</v-icon
 													>
 													<strong
@@ -292,7 +294,9 @@
 										>
 											<template v-slot:label>
 												<div class="option">
-													<v-icon color="error" small
+													<v-icon
+														color="error"
+														size="small"
 														>no_encryption</v-icon
 													>
 													<strong
@@ -319,20 +323,20 @@
 										>
 										<p
 											v-if="state === 'start'"
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										>
 											Inclusion is started. Please put
 											your device in INCLUSION MODE
 										</p>
 										<p
 											v-else-if="nvmProgress > 0"
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										>
 											Waiting for NVM Backup...
 										</p>
 										<p
 											v-else
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										>
 											Inclusion stopped. Checking for
 											changes...
@@ -372,7 +376,7 @@
 												<div class="option">
 													<v-icon
 														color="primary"
-														small
+														size="small"
 														>smart_button</v-icon
 													>
 													<strong
@@ -391,7 +395,7 @@
 												<div class="option">
 													<v-icon
 														color="success"
-														small
+														size="small"
 														>enhanced_encryption</v-icon
 													>
 													<strong>S2</strong>
@@ -404,7 +408,7 @@
 												<div class="option">
 													<v-icon
 														color="primary"
-														small
+														size="small"
 														>lock</v-icon
 													>
 													<strong>S0</strong>
@@ -416,8 +420,8 @@
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
-														color="amber accent-4"
-														small
+														color="amber-accent-4"
+														size="small"
 														>no_encryption</v-icon
 													>
 													<strong
@@ -442,7 +446,7 @@
 												primary"
 											>all_inclusive</v-icon
 										>
-										<p class="mt-3 headline text-center">
+										<p class="mt-3 text-h5 text-center">
 											Inclusion is started. Please put
 											your device in INCLUSION MODE
 										</p>
@@ -546,7 +550,7 @@
 												indeterminate
 												color="primary"
 											></v-progress-circular>
-											<p class="mt-3 headline">
+											<p class="mt-3 text-h5">
 												Waiting response from node...
 											</p>
 										</v-col>
@@ -563,7 +567,7 @@
 											hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
 											inputmode="numeric"
 											v-model.trim="s.values.pin"
-											validate-on-blur
+											validate-on="blur"
 											:error="
 												!!s.values.pin &&
 												validPin(s.values.pin) !== true
@@ -613,7 +617,7 @@
 												indeterminate
 												color="primary"
 											></v-progress-circular>
-											<p class="mt-3 headline">
+											<p class="mt-3 text-h5">
 												Waiting response from node...
 											</p>
 										</v-col>
@@ -639,12 +643,12 @@
 										>
 										<p
 											v-text="s.text"
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										></p>
 										<p
 											v-if="s.error"
 											v-text="s.error"
-											class="headline text-center error--text"
+											class="text-h5 text-center text-error"
 										></p>
 									</v-col>
 								</v-card-text>
@@ -656,7 +660,7 @@
 				<v-alert
 					class="mt-3 mb-0"
 					v-if="alert"
-					dense
+					density="compact"
 					text
 					:type="alert.type"
 					>{{ alert.text }}</v-alert
@@ -889,7 +893,7 @@ export default {
 
 		window.addEventListener('keydown', this.onKeypressed)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.init(false)
 		window.removeEventListener('keydown', this.onKeypressed)
 	},

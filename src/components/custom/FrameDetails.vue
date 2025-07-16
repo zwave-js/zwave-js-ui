@@ -1,7 +1,7 @@
 <template>
 	<v-row v-if="value">
 		<v-col>
-			<v-simple-table class="frame-details" dense>
+			<v-table class="frame-details" dense>
 				<template v-slot:default>
 					<tbody>
 						<tr>
@@ -71,7 +71,7 @@
 						</tr>
 					</tbody>
 				</template>
-			</v-simple-table>
+			</v-table>
 		</v-col>
 		<v-col>
 			<CCTreeView
@@ -84,7 +84,7 @@
 				class="mono"
 				readonly
 				hide-details
-				solo
+				variant="solo"
 				no-resize
 				v-model="value.raw"
 				rows="2"
@@ -92,7 +92,7 @@
 		</v-col>
 	</v-row>
 	<v-row class="fill" justify="center" align="center" v-else>
-		<v-col class="text-center caption">
+		<v-col class="text-center text-caption">
 			<span dense>Click on a frame in table to see details</span>
 		</v-col>
 	</v-row>

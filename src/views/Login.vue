@@ -73,7 +73,7 @@
 						>Login</v-btn
 					>
 				</v-card-actions>
-				<v-alert dismissible :type="error_type" v-model="error">{{
+				<v-alert closable :type="error_type" v-model="error">{{
 					error_text
 				}}</v-alert>
 			</v-card>

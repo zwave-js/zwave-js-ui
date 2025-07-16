@@ -6,21 +6,21 @@
 					<v-item-group class="v-btn-toggle">
 						<v-btn
 							color="primary"
-							outlined
+							variant="outlined"
 							@click="toggleControllerStatistics"
 						>
-							<v-icon left>
+							<v-icon start>
 								{{ statisticsOpeningIndicator }}
 							</v-icon>
 							Controller statistics
-							<v-icon color="primary" right>
+							<v-icon color="primary" end>
 								multiline_chart
 							</v-icon>
 						</v-btn>
 						<v-btn
 							color="primary"
 							v-if="$vuetify.breakpoint.mdAndUp"
-							:outlined="!compactMode"
+							:variant="!compactMode ? 'outlined' : undefined"
 							@click.stop="compactMode = !compactMode"
 						>
 							Compact
@@ -31,7 +31,7 @@
 			<v-expand-transition>
 				<v-row v-show="showControllerStatistics">
 					<v-col class="mb-8">
-						<v-sheet outlined rounded>
+						<v-sheet border rounded>
 							<StatisticsCard
 								v-if="!!controllerNode"
 								title="Controller Statistics"
@@ -69,8 +69,7 @@
 			<template v-slot:activator>
 				<v-btn
 					:color="selected.length === 0 ? 'primary' : 'success'"
-					dark
-					fab
+					variant="fab"
 					hover
 					v-model="fab"
 				>
@@ -78,17 +77,15 @@
 					<v-icon v-else>menu</v-icon>
 				</v-btn>
 			</template>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
+			<v-tooltip location="left">
+				<template v-slot:activator="{ props }">
 					<v-btn
-						fab
+						variant="fab"
 						v-if="selected.length === 0"
-						dark
-						small
+						size="small"
 						color="success"
 						@click="showNodesManager()"
-						v-bind="attrs"
-						v-on="on"
+						v-bind="props"
 					>
 						<v-icon>all_inclusive</v-icon>
 					</v-btn>
@@ -96,16 +93,14 @@
 				<span>Manage nodes</span>
 			</v-tooltip>
 
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
+			<v-tooltip location="left">
+				<template v-slot:activator="{ props }">
 					<v-btn
-						fab
-						dark
-						small
+						variant="fab"
+						size="small"
 						color="purple"
 						@click="advancedShowDialog = true"
-						v-bind="attrs"
-						v-on="on"
+						v-bind="props"
 					>
 						<v-icon>auto_fix_high</v-icon>
 					</v-btn>
@@ -460,7 +455,7 @@ export default {
 			this.setRebuildRoutesProgress.bind(this),
 		)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.socket) {
 			this.unbindEvents()
 		}

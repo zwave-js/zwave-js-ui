@@ -1,19 +1,19 @@
 <template>
-	<v-tooltip v-if="!!node.hasDeviceConfigChanged" bottom>
-		<template v-slot:activator="{ on }">
+	<v-tooltip v-if="!!node.hasDeviceConfigChanged" location="bottom">
+		<template v-slot:activator="{ props }">
 			<v-btn
 				:style="bStyle"
-				v-on="on"
+				v-bind="props"
 				@click.stop="
 					sendAction('refreshInfo', {
 						nodeId: node.id,
 					})
 				"
 				color="warning"
-				fab
+				variant="fab"
 				height="20"
 				width="20"
-				><v-icon x-small>update</v-icon></v-btn
+				><v-icon size="x-small">update</v-icon></v-btn
 			>
 		</template>
 		<span>
