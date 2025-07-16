@@ -53,11 +53,13 @@ export default {
 	data() {
 		return {
 			hideNoDataStats: false,
-			defaultColor: this.$vuetify.theme.current.colors.primary,
 		}
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		defaultColor() {
+			return this.$vuetify.theme.current.colors.primary
+		},
 		total() {
 			return this.nodes.reduce(
 				(acc, node) => {

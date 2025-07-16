@@ -303,7 +303,6 @@ export default {
 			return map[status] || 'grey'
 		},
 		powerRichValue(node) {
-			console.log('powerRichValue', this.currentTheme.success)
 			let level = node.minBatteryLevel
 			let iconStyle = `color: ${this.currentTheme.success}`
 			let icon = ''

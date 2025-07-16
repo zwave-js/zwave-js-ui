@@ -602,7 +602,7 @@ export default {
 		},
 		currentTheme() {
 			const { global } = this.$vuetify.theme
-			return global.current.value
+			return global.current.colors
 		},
 	},
 	watch: {
