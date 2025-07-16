@@ -175,7 +175,7 @@ export class ManagedItems {
 	_getTableHeaderForColumn(colName) {
 		const propDef = this.propDefs[colName]
 		const header = {
-			value: colName,
+			key: colName,
 			title: propDef.label === undefined ? colName : propDef.label,
 			type: propDef.type === undefined ? 'string' : propDef.type,
 			groupable:

@@ -29,7 +29,7 @@
 			<div
 				:style="{
 					border: level === 0 ? 'none' : '',
-					borderColor: $vuetify.theme.dark ? '#ccc' : '#333',
+					borderColor: $vuetify.theme.current.dark ? '#ccc' : '#333',
 				}"
 				class="tree-item-label"
 			>

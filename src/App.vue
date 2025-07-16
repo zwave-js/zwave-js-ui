@@ -41,7 +41,7 @@
 						<template #prepend>
 							<v-badge
 								color="error"
-								:model-value="item.badge"
+								:model-value="!!item.badge"
 								:content="item.badge"
 								dot
 							>
@@ -196,7 +196,7 @@
 							v-bind="props"
 							class="mr-3"
 							:content="updateAvailable"
-							:model-value="updateAvailable"
+							:model-value="!!updateAvailable"
 							color="error"
 						>
 							<v-btn
@@ -611,7 +611,7 @@ export default {
 			this.startSocket()
 		},
 		darkMode(val) {
-			this.$vuetify.theme.global.name = val ? 'dark' : 'light'
+			this.$vuetify.theme.change(val ? 'dark' : 'light')
 		},
 		pages() {
 			// this.verifyRoute()
@@ -1643,7 +1643,7 @@ export default {
 		// this is needed to prevent the theme switch on load
 		// this will be overriden by settings value once `initSettings`
 		// base store method is called
-		this.$vuetify.theme.global.name = darkMode ? 'dark' : 'light'
+		this.$vuetify.theme.change(darkMode ? 'dark' : 'light')
 
 		useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'showSnackbar') {

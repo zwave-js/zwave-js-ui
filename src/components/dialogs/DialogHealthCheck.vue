@@ -440,24 +440,24 @@ export default {
 		headers() {
 			if (this.mode === 'Lifeline') {
 				return [
-					{ title: 'Max latency', value: 'latency' },
-					{ title: 'Failed pings', value: 'failedPingsNode' },
-					{ title: 'Route Changes', value: 'routeChanges' },
-					{ title: 'SNR margin', value: 'snrMargin' },
+					{ title: 'Max latency', key: 'latency' },
+					{ title: 'Failed pings', key: 'failedPingsNode' },
+					{ title: 'Route Changes', key: 'routeChanges' },
+					{ title: 'SNR margin', key: 'snrMargin' },
 					{
 						title: 'Min power level w/o errors',
-						value: 'minPowerlevel',
+						key: 'minPowerlevel',
 					},
-					{ title: 'Rating', value: 'rating' },
+					{ title: 'Rating', key: 'rating' },
 				]
 			} else {
 				return [
-					{ title: 'Failed pings', value: 'failedPingsToSource' },
+					{ title: 'Failed pings', key: 'failedPingsToSource' },
 					{
 						title: 'Min Power Level w/o errors',
-						value: 'minPowerlevelSource',
+						key: 'minPowerlevelSource',
 					},
-					{ title: 'Rating', value: 'rating' },
+					{ title: 'Rating', key: 'rating' },
 				]
 			}
 		},
@@ -473,26 +473,26 @@ export default {
 			averages: null,
 			mode: 'Lifeline',
 			hintHeaders: [
-				{ title: 'Rating', value: 'rating', sortable: false },
+				{ title: 'Rating', key: 'rating', sortable: false },
 				{
 					title: 'Failed pings',
-					value: 'failedPings',
+					key: 'failedPings',
 					sortable: false,
 				},
-				{ title: 'Max latency (*)', value: 'latency', sortable: false },
+				{ title: 'Max latency (*)', key: 'latency', sortable: false },
 				{
 					title: 'No. of Neighbors',
-					value: 'neighbors',
+					key: 'neighbors',
 					sortable: false,
 				},
 				{
 					title: 'SNR margin (*)',
-					value: 'snrMargin',
+					key: 'snrMargin',
 					sortable: false,
 				},
 				{
 					title: 'Min power level w/o errors',
-					value: 'minPowerlevel',
+					key: 'minPowerlevel',
 					sortable: false,
 				},
 			],

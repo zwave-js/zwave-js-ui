@@ -22,7 +22,7 @@
 				>
 					<v-stepper-header>
 						<template v-for="s in steps" :key="`${s.key}-step`">
-							<v-stepper-step
+							<v-stepper-item
 								:complete="currentStep > s.index"
 								:step="s.index"
 								:editable="
@@ -31,7 +31,7 @@
 								"
 							>
 								{{ s.title }}
-							</v-stepper-step>
+							</v-stepper-item>
 
 							<v-divider
 								v-if="s.index !== steps.length"
@@ -40,8 +40,8 @@
 						</template>
 					</v-stepper-header>
 
-					<v-stepper-items>
-						<v-stepper-content
+					<v-stepper-window>
+						<v-stepper-window-item
 							v-for="s in steps"
 							:key="`${s.key}-content`"
 							:step="s.index"
@@ -652,8 +652,8 @@
 									</v-col>
 								</v-card-text>
 							</v-card>
-						</v-stepper-content>
-					</v-stepper-items>
+						</v-stepper-window-item>
+					</v-stepper-window>
 				</v-stepper>
 
 				<v-alert

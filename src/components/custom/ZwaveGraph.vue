@@ -292,7 +292,7 @@ export default {
 			return this.isDark ? '#ddd' : '#333'
 		},
 		isDark() {
-			return this.$vuetify.theme.dark
+			return this.$vuetify.theme.current.dark
 		},
 		locations() {
 			// get unique locations array from nodes
