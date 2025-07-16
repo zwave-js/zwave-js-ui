@@ -186,7 +186,7 @@
 					ref="content"
 				></div>
 				<v-menu
-					v-model="menu"
+					v-model="showMenu"
 					:close-on-content-click="false"
 					location="bottom left"
 					:style="{
@@ -348,7 +348,7 @@ export default {
 			showApplicationRoutes: true,
 			menuX: 0,
 			menuY: 0,
-			menu: false,
+			showMenu: false,
 			hoverNode: null,
 			liveUpdate: false,
 			shouldReload: false,
@@ -885,7 +885,7 @@ export default {
 					this.hoverNode = item
 					this.menuX = event.clientX + 5
 					this.menuY = event.clientY + 5
-					this.menu = true
+					this.showMenu = true
 					this.hoverNodeTimeout = null
 				}, 1000)
 			}
@@ -896,7 +896,7 @@ export default {
 				this.hoverNodeTimeout = null
 			} else {
 				// hide menu
-				this.menu = false
+				this.showMenu = false
 				this.hoverNode = null
 			}
 		},

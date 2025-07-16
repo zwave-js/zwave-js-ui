@@ -220,7 +220,7 @@
 
 					<v-list>
 						<v-list-item
-							v-for="(item, i) in menu"
+							v-for="(item, i) in menuItems"
 							:key="i"
 							@click="item.func"
 						>
@@ -237,7 +237,7 @@
 				<!-- Menu items -->
 				<span v-else class="text-no-wrap">
 					<v-menu
-						v-for="item in menu"
+						v-for="item in menuItems"
 						:key="item.text"
 						location="bottom left"
 					>
@@ -456,7 +456,7 @@ export default {
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
-		menu() {
+		menuItems() {
 			const items = [
 				{
 					icon: 'lock',

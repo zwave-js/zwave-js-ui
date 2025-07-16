@@ -4,15 +4,9 @@
 		v-model="managedNodes.selected"
 		:headers="managedNodes.tableHeaders"
 		:items="managedNodes.filteredItems"
-		:footer-props="{
-			itemsPerPageOptions: [10, 20, 50, 100, -1],
-		}"
 		v-model:expanded="expanded"
-		:value="managedNodes.selected"
-		:options="managedNodes.tableOptions"
+		v-model:options="managedNodes.tableOptions"
 		:custom-sort="sort"
-		@update:options="managedNodes.tableOptions = $event"
-		@input="managedNodes.selected = $event"
 		@click:row="toggleExpanded($event)"
 		item-key="id"
 		class="elevation-1 nodes-table"
@@ -56,27 +50,32 @@
 							<draggable
 								v-model="managedNodes.tableColumns"
 								handle=".handle"
+								item-key="name"
 							>
-								<v-checkbox
-									v-for="col in managedNodes.tableColumns"
-									:key="col.name"
-									v-model="col.visible"
-									:value="col.visible"
-									hide-details
-									:label="
-										managedNodes.propDefs[col.name].label
-									"
-									:model-value="col.visible"
-									@update:model-value="col.visible = !!$event"
-								>
-									<template v-slot:prepend>
-										<v-icon
-											class="handle"
-											style="cursor: move"
-											>drag_indicator</v-icon
-										>
-									</template>
-								</v-checkbox>
+								<template #item="{ element: col }">
+									<v-checkbox
+										:key="col.name"
+										v-model="col.visible"
+										:value="col.visible"
+										hide-details
+										:label="
+											managedNodes.propDefs[col.name]
+												.label
+										"
+										:model-value="col.visible"
+										@update:model-value="
+											col.visible = !!$event
+										"
+									>
+										<template v-slot:prepend>
+											<v-icon
+												class="handle"
+												style="cursor: move"
+												>drag_indicator</v-icon
+											>
+										</template>
+									</v-checkbox>
+								</template>
 							</draggable>
 						</v-card-text>
 						<v-card-actions>
@@ -311,11 +310,10 @@
 		<template v-slot:[`item.lastActive`]="{ item }">
 			<statistics-arrows :node="item"></statistics-arrows>
 		</template>
-		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
-			<td :colspan="isMobile ? 1 : headers.length">
+		<template v-slot:[`expanded-row`]="{ columns: headers, item }">
+			<td :colspan="$vuetify.display.xs ? 1 : headers.length">
 				<expanded-node
 					:headers="headers"
-					:isMobile="isMobile"
 					:node="item"
 					:socket="socket"
 				/>

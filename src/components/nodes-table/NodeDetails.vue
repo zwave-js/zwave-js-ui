@@ -472,11 +472,11 @@ export default {
 			selectedRFRegion: this.node.RFRegion,
 			configCCValueFormats: [
 				{
-					text: 'Signed',
+					title: 'Signed',
 					value: ConfigValueFormat.SignedInteger,
 				},
 				{
-					text: 'Unsigned',
+					title: 'Unsigned',
 					value: ConfigValueFormat.UnsignedInteger,
 				},
 			],

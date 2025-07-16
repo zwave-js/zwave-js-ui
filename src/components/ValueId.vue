@@ -11,9 +11,11 @@
 		>
 
 		<!-- Not writeable value -->
-		<div v-if="!value.writeable">
+		<div v-if="!modelValue.writeable">
 			<div class="readonly mt-5">
-				{{ parsedValue + (value.unit ? ' ' + value.unit : '') }}
+				{{
+					parsedValue + (modelValue.unit ? ' ' + modelValue.unit : '')
+				}}
 
 				<v-btn
 					@click="idleNotification"
@@ -35,73 +37,81 @@
 			<!-- Text Input -->
 			<v-text-field
 				v-if="
-					!value.list &&
-					(value.type === 'string' || value.type === 'buffer')
+					!modelValue.list &&
+					(modelValue.type === 'string' ||
+						modelValue.type === 'buffer')
 				"
 				:append-icon="!disable_send ? 'send' : null"
-				:suffix="value.unit"
+				:suffix="modelValue.unit"
 				persistent-hint
 				:hint="help"
-				v-model="value.newValue"
-				@click:append="updateValue(value)"
+				v-model="modelValue.newValue"
+				@click:append="updateValue(modelValue)"
 			></v-text-field>
 
 			<!-- Number Input -->
 			<v-text-field
-				v-else-if="!value.list && value.type === 'number'"
+				v-else-if="!modelValue.list && modelValue.type === 'number'"
 				type="number"
 				:append-icon="
 					!disable_send && !numberOutOfRange ? 'send' : null
 				"
-				:suffix="value.unit"
-				:min="value.min != value.max ? value.min : null"
-				:step="value.step || 1"
+				:suffix="modelValue.unit"
+				:min="modelValue.min != modelValue.max ? modelValue.min : null"
+				:step="modelValue.step || 1"
 				persistent-hint
-				:max="value.min != value.max ? value.max : null"
+				:max="modelValue.min != modelValue.max ? modelValue.max : null"
 				:hint="help"
 				:error="numberOutOfRange"
 				:error-messages="
 					numberOutOfRange
-						? `Value must be between ${value.min} and ${value.max}`
+						? `Value must be between ${modelValue.min} and ${modelValue.max}`
 						: ''
 				"
-				v-model.number="value.newValue"
-				@click:append="!numberOutOfRange && updateValue(value)"
+				v-model.number="modelValue.newValue"
+				@click:append="!numberOutOfRange && updateValue(modelValue)"
 			></v-text-field>
 
 			<!-- Object Input -->
 			<v-text-field
-				v-else-if="!value.list && value.type === 'any'"
+				v-else-if="!modelValue.list && modelValue.type === 'any'"
 				:append-icon="!disable_send ? 'send' : null"
-				:suffix="value.unit"
+				:suffix="modelValue.unit"
 				persistent-hint
 				:error="!!error"
 				:error-messages="error"
 				:hint="help"
 				v-model="parsedValue"
-				@click:append="updateValue(value)"
+				@click:append="updateValue(modelValue)"
 			></v-text-field>
 
 			<!-- Duration Input -->
-			<div style="display: flex" v-else-if="value.type === 'duration'">
+			<div
+				style="display: flex"
+				v-else-if="modelValue.type === 'duration'"
+			>
 				<v-text-field
-					:type="value.type === 'number' ? 'number' : 'text'"
-					:min="value.min != value.max ? value.min : null"
-					:step="value.step || 1"
+					:type="modelValue.type === 'number' ? 'number' : 'text'"
+					:min="
+						modelValue.min != modelValue.max ? modelValue.min : null
+					"
+					:step="modelValue.step || 1"
 					persistent-hint
 					:readonly="disable_send"
-					:max="value.min != value.max ? value.max : null"
+					:max="
+						modelValue.min != modelValue.max ? modelValue.max : null
+					"
 					:hint="help"
-					v-model.number="value.newValue.value"
+					v-model.number="modelValue.newValue.value"
 				></v-text-field>
 				<v-select
 					style="margin-left: 10px; min-width: 105px; width: 135px"
 					:items="durations"
-					v-model="value.newValue.unit"
+					v-model="modelValue.newValue.unit"
 					:readonly="disable_send"
 					persistent-hint
 					:append-icon="!disable_send ? 'send' : null"
-					@click:append="updateValue(value)"
+					@click:append="updateValue(modelValue)"
 				></v-select>
 			</div>
 
@@ -110,26 +120,33 @@
 				style="max-width: 250px; margin-top: 10px"
 				flat
 				variant="solo"
-				v-else-if="value.type === 'color'"
+				v-else-if="modelValue.type === 'color'"
 				v-model="color"
 				persistent-hint
 				:append-icon="!disable_send ? 'send' : null"
 				:hint="help"
-				@click:append="updateValue(value)"
+				@click:append="updateValue(modelValue)"
 			>
 				<template v-slot:append>
 					<v-menu
-						v-model="menu"
+						v-model="showMenu"
 						location="top"
 						:offset="[16, 105]"
 						:close-on-content-click="false"
 					>
 						<template v-slot:activator="{ props }">
-							<div :style="pickerStyle" v-bind="props" />
+							<div
+								class="ml-2"
+								:style="pickerStyle"
+								v-bind="props"
+							/>
 						</template>
 						<v-card>
 							<v-card-text class="pa-0">
-								<v-color-picker v-if="menu" v-model="color" />
+								<v-color-picker
+									v-if="showMenu"
+									v-model="color"
+								/>
 							</v-card-text>
 						</v-card>
 					</v-menu>
@@ -139,9 +156,9 @@
 			<!-- Select Input -->
 			<v-select
 				v-else-if="
-					value.list &&
-					!value.allowManualEntry &&
-					value.type !== 'boolean'
+					modelValue.list &&
+					!modelValue.allowManualEntry &&
+					modelValue.type !== 'boolean'
 				"
 				:items="items"
 				:style="{
@@ -156,10 +173,10 @@
 				:return-object="false"
 				:item-title="itemText"
 				item-value="value"
-				:suffix="value.unit"
+				:suffix="modelValue.unit"
 				:append-icon="!disable_send ? 'send' : null"
-				v-model="value.newValue"
-				@click:append="updateValue(value)"
+				v-model="modelValue.newValue"
+				@click:append="updateValue(modelValue)"
 			>
 				<template v-slot:selection="{ item }">
 					<span>
@@ -171,9 +188,9 @@
 			<!-- Select Input with Manual Entry -->
 			<v-combobox
 				v-else-if="
-					value.list &&
-					value.allowManualEntry &&
-					value.type !== 'boolean'
+					modelValue.list &&
+					modelValue.allowManualEntry &&
+					modelValue.type !== 'boolean'
 				"
 				:items="items"
 				:style="{
@@ -186,15 +203,15 @@
 				:hint="help"
 				persistent-hint
 				chips
-				:suffix="value.unit"
+				:suffix="modelValue.unit"
 				:item-title="itemText"
 				item-value="value"
-				:type="value.type === 'number' ? 'number' : 'text'"
+				:type="modelValue.type === 'number' ? 'number' : 'text'"
 				:return-object="false"
 				:append-icon="!disable_send ? 'send' : null"
-				v-model="value.newValue"
+				v-model="modelValue.newValue"
 				ref="myCombo"
-				@click:append="updateValue(value)"
+				@click:append="updateValue(modelValue)"
 			>
 				<template v-slot:chip="{ attrs, item, selected }">
 					<v-chip v-bind="attrs" :model-value="selected">
@@ -208,28 +225,32 @@
 			<!-- On/Off Input -->
 			<div
 				v-else-if="
-					value.type === 'boolean' &&
-					((value.writeable && value.readable) ||
-						(value.states && value.states.length === 2))
+					modelValue.type === 'boolean' &&
+					((modelValue.writeable && modelValue.readable) ||
+						(modelValue.states && modelValue.states.length === 2))
 				"
 			>
-				<v-btn-toggle class="my-2" v-model="value.newValue" rounded>
+				<v-btn-toggle
+					class="my-2"
+					v-model="modelValue.newValue"
+					rounded
+				>
 					<v-btn
 						variant="outlined"
 						height="40px"
 						:value="true"
 						:style="{
 							background:
-								value.newValue === true && !value.list
+								modelValue.newValue === true && !modelValue.list
 									? '#4CAF50'
 									: '',
 						}"
 						:color="
-							value.newValue === true && !value.list
+							modelValue.newValue === true && !modelValue.list
 								? 'white'
 								: 'success'
 						"
-						@click="updateValue(value, true)"
+						@click="updateValue(modelValue, true)"
 						:icon="!trueLabel ? 'horizontal_rule' : undefined"
 					>
 						<span v-if="trueLabel">{{ trueLabel }}</span>
@@ -240,16 +261,17 @@
 						:value="false"
 						:style="{
 							background:
-								value.newValue === false && !value.list
+								modelValue.newValue === false &&
+								!modelValue.list
 									? '#f44336'
 									: '',
 						}"
 						:color="
-							value.newValue === false && !value.list
+							modelValue.newValue === false && !modelValue.list
 								? 'white'
 								: 'error'
 						"
-						@click="updateValue(value, false)"
+						@click="updateValue(modelValue, false)"
 						:icon="
 							!falseLabel ? 'radio_button_unchecked' : undefined
 						"
@@ -262,7 +284,9 @@
 
 			<!-- Button Input -->
 			<v-tooltip
-				v-else-if="value.type === 'boolean' && !value.readable"
+				v-else-if="
+					modelValue.type === 'boolean' && !modelValue.readable
+				"
 				location="right"
 			>
 				<template v-slot:activator="{ props }">
@@ -271,17 +295,21 @@
 						size="small"
 						v-bind="props"
 						color="primary"
-						@click="updateValue(value)"
+						@click="updateValue(modelValue)"
 						class="mb-2 mt-2"
-						>{{ trueLabel || falseLabel || value.label }}</v-btn
+						>{{
+							trueLabel || falseLabel || modelValue.label
+						}}</v-btn
 					>
 				</template>
-				<span class="help">{{ '[' + value.id + '] ' + help }}</span>
+				<span class="help">{{
+					'[' + modelValue.id + '] ' + help
+				}}</span>
 			</v-tooltip>
 
 			<!-- Suffix loader with tooltip -->
 			<v-progress-circular
-				v-if="value.toUpdate"
+				v-if="modelValue.toUpdate"
 				v-tooltip:bottom="
 					node?.status === 'Asleep'
 						? 'Wake up your device in order to send commands'
@@ -320,7 +348,7 @@ import useBaseStore from '../stores/base.js'
 
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 		},
 		disable_send: {
@@ -333,80 +361,81 @@ export default {
 	data() {
 		return {
 			durations: ['seconds', 'minutes'],
-			menu: false,
+			showMenu: false,
 			error: null,
 		}
 	},
 	computed: {
 		trueLabel() {
-			return this.value.type === 'boolean' &&
-				this.value.states?.length > 0
-				? this.value.states.find((s) => s.value === true)?.text
+			return this.modelValue.type === 'boolean' &&
+				this.modelValue.states?.length > 0
+				? this.modelValue.states.find((s) => s.value === true)?.text
 				: null
 		},
 		numberOutOfRange() {
-			const min = this.value.min ?? -Infinity
-			const max = this.value.max ?? Infinity
+			const min = this.modelValue.min ?? -Infinity
+			const max = this.modelValue.max ?? Infinity
 			return (
-				this.value.type === 'number' &&
-				(this.value.newValue < min || this.value.newValue > max)
+				this.modelValue.type === 'number' &&
+				(this.modelValue.newValue < min ||
+					this.modelValue.newValue > max)
 			)
 		},
 		falseLabel() {
-			return this.value.type === 'boolean' &&
-				this.value.states?.length > 0
-				? this.value.states.find((s) => s.value === false)?.text
+			return this.modelValue.type === 'boolean' &&
+				this.modelValue.states?.length > 0
+				? this.modelValue.states.find((s) => s.value === false)?.text
 				: null
 		},
 		selectedItem() {
 			const value =
-				this.value.type === 'number'
-					? Number(this.value.newValue)
-					: this.value.newValue
-			if (!this.value.states) return null
-			else return this.value.states.find((s) => s.value === value)
+				this.modelValue.type === 'number'
+					? Number(this.modelValue.newValue)
+					: this.modelValue.newValue
+			if (!this.modelValue.states) return null
+			else return this.modelValue.states.find((s) => s.value === value)
 		},
 		canIdleNotification() {
-			if (!this.value || this.disable_send) return false
+			if (!this.modelValue || this.disable_send) return false
 
 			// feat #3051
 			return (
-				this.value.commandClassName === 'Notification' &&
-				this.value.states?.find((s) => s.value === 0)
+				this.modelValue.commandClassName === 'Notification' &&
+				this.modelValue.states?.find((s) => s.value === 0)
 			)
 		},
 		canResetConfiguration() {
-			if (!this.value || this.disable_send) return false
+			if (!this.modelValue || this.disable_send) return false
 
 			return (
-				this.value.writeable &&
-				this.value.commandClass === 112 &&
-				this.value.commandClassVersion > 3
+				this.modelValue.writeable &&
+				this.modelValue.commandClass === 112 &&
+				this.modelValue.commandClassVersion > 3
 			)
 		},
 		items() {
 			if (this.selectedItem) {
-				return this.value.states
+				return this.modelValue.states
 			} else {
 				return [
-					{ value: this.value.newValue, text: 'Custom' },
-					...this.value.states,
+					{ value: this.modelValue.newValue, text: 'Custom' },
+					...this.modelValue.states,
 				]
 			}
 		},
 		label() {
-			return '[' + this.value.id + '] ' + this.value.label
+			return '[' + this.modelValue.id + '] ' + this.modelValue.label
 		},
 		help() {
-			return `${this.value.description ? `${this.value.description} ` : ''}${
-				this.value.default !== undefined && !this.value.list
-					? `(Default: ${this.value.default}${
-							this.value.max !== undefined
-								? `, max: ${this.value.max}`
+			return `${this.modelValue.description ? `${this.modelValue.description} ` : ''}${
+				this.modelValue.default !== undefined && !this.modelValue.list
+					? `(Default: ${this.modelValue.default}${
+							this.modelValue.max !== undefined
+								? `, max: ${this.modelValue.max}`
 								: ''
 						}${
-							this.value.min !== undefined
-								? `, min: ${this.value.min}`
+							this.modelValue.min !== undefined
+								? `, min: ${this.modelValue.min}`
 								: ''
 						})`
 					: ''
@@ -414,39 +443,41 @@ export default {
 		},
 		color: {
 			get: function () {
-				return '#' + (this.value.newValue || 'ffffff').toUpperCase()
+				return (
+					'#' + (this.modelValue.newValue || 'ffffff').toUpperCase()
+				)
 			},
 			set: function (v) {
-				this.value.newValue = v ? v.substr(1, 7) : null
+				this.modelValue.newValue = v ? v.substr(1, 7) : null
 			},
 		},
 		parsedValue: {
 			get: function () {
-				if (typeof this.value.newValue === 'object') {
-					return JSON.stringify(this.value.newValue)
+				if (typeof this.modelValue.newValue === 'object') {
+					return JSON.stringify(this.modelValue.newValue)
 				} else if (
-					this.value.states &&
-					this.value.newValue !== undefined
+					this.modelValue.states &&
+					this.modelValue.newValue !== undefined
 				) {
 					return this.itemText(
-						this.selectedItem || this.value.newValue,
+						this.selectedItem || this.modelValue.newValue,
 					)
-				} else if (this.value === null) {
+				} else if (this.modelValue === null) {
 					return '(unknown)'
-				} else if (this.value === undefined) {
+				} else if (this.modelValue === undefined) {
 					return '(missing)'
 				}
-				return this.value.newValue
+				return this.modelValue.newValue
 			},
 			set: function (v) {
 				try {
-					if (this.value.type === 'any') {
-						this.value.newValue = JSON.parse(v)
+					if (this.modelValue.type === 'any') {
+						this.modelValue.newValue = JSON.parse(v)
 					} else if (
 						typeof v === 'string' &&
-						this.value.type === 'number'
+						this.modelValue.type === 'number'
 					) {
-						this.value.newValue = Number(v)
+						this.modelValue.newValue = Number(v)
 					}
 
 					this.error = null
@@ -456,7 +487,7 @@ export default {
 			},
 		},
 		pickerStyle() {
-			if (this.value.type !== 'color') return null
+			if (this.modelValue.type !== 'color') return null
 			return {
 				backgroundColor: this.color,
 				cursor: 'pointer',
@@ -465,7 +496,7 @@ export default {
 					(this.$vuetify.theme.current.dark ? 'white' : 'black'),
 				height: '30px',
 				width: '30px',
-				borderRadius: this.menu ? '50%' : '4px',
+				borderRadius: this.showMenu ? '50%' : '4px',
 				transition: 'border-radius 200ms ease-in-out',
 			}
 		},
@@ -480,7 +511,7 @@ export default {
 					commandClass: 112,
 				},
 				'reset',
-				[this.value.property],
+				[this.modelValue.property],
 			])
 
 			if (response.success) {
@@ -492,7 +523,7 @@ export default {
 
 			const response = await app.apiRequest(
 				'manuallyIdleNotificationValue',
-				[this.value],
+				[this.modelValue],
 				{
 					infoSnack: false,
 					errorSnack: true,
@@ -509,7 +540,7 @@ export default {
 		itemText(item) {
 			if (typeof item === 'object') {
 				return `[${item.value}] ${item.text}${
-					this.value.default === item.value ? ' (Default)' : ''
+					this.modelValue.default === item.value ? ' (Default)' : ''
 				}`
 			} else {
 				return item
@@ -523,7 +554,7 @@ export default {
 				this.$refs.myCombo.$refs.input._value !== null
 			) {
 				// trick used to send the value in combobox without the need to press enter
-				this.value.newValue = this.$refs.myCombo.$refs.input._value
+				this.modelValue.newValue = this.$refs.myCombo.$refs.input._value
 			}
 
 			if (customValue !== undefined) {

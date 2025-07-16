@@ -88,40 +88,44 @@
 			v-model="currentTab"
 			show-arrows
 			class="bg-transparent mb-4"
-			:direction="$vuetify.display.mdAndUp ? 'vertical' : undefined"
+			:direction="$vuetify.display.mdAndUp ? 'vertical' : 'horizontal'"
 		>
-			<v-tab class="justify-start" key="node">
+			<v-tab class="justify-start" value="node">
 				<v-icon size="small" start>widgets</v-icon> Node
 			</v-tab>
-			<v-tab v-if="nodeMetadata" class="justify-start" key="manual">
+			<v-tab v-if="nodeMetadata" class="justify-start" value="manual">
 				<v-icon size="small" start>help</v-icon> Help
 			</v-tab>
-			<v-tab v-if="showHass" class="justify-start" key="homeassistant">
+			<v-tab v-if="showHass" class="justify-start" value="homeassistant">
 				<v-icon size="small" start>home</v-icon> Home Assistant
 			</v-tab>
-			<v-tab key="groups" class="justify-start">
+			<v-tab value="groups" class="justify-start">
 				<v-icon size="small" start>device_hub</v-icon> Groups
 			</v-tab>
-			<v-tab v-if="node.schedule" key="users" class="justify-start">
+			<v-tab v-if="node.schedule" value="users" class="justify-start">
 				<v-icon size="small" start>group</v-icon> Users
 			</v-tab>
 			<v-tab
-				key="ota"
+				value="ota"
 				v-if="!node.isControllerNode"
 				class="justify-start"
 			>
 				<v-icon size="small" start>auto_mode</v-icon> OTA Updates
 			</v-tab>
-			<v-tab key="otw" v-if="node.isControllerNode" class="justify-start">
+			<v-tab
+				value="otw"
+				v-if="node.isControllerNode"
+				class="justify-start"
+			>
 				<v-icon size="small" start>auto_mode</v-icon> Firmware Updates
 			</v-tab>
-			<v-tab key="events" class="justify-start">
+			<v-tab value="events" class="justify-start">
 				<v-icon size="small" start>list_alt</v-icon> Events
 			</v-tab>
 			<v-tab
 				v-if="$vuetify.display.mdAndUp"
 				class="justify-start"
-				key="debug"
+				value="debug"
 			>
 				<v-icon size="small" start>bug_report</v-icon> Debug Info
 			</v-tab>
@@ -133,7 +137,10 @@
 				v-model="currentTab"
 			>
 				<!-- TAB NODE -->
-				<v-tabs-window-item key="node" transition="slide-y-transition">
+				<v-tabs-window-item
+					value="node"
+					transition="slide-y-transition"
+				>
 					<node-details
 						ref="nodeDetails"
 						:headers="headers"
@@ -145,7 +152,7 @@
 				<!-- TAB METADATA -->
 				<v-tabs-window-item
 					v-if="nodeMetadata"
-					key="manual"
+					value="manual"
 					transition="slide-y-transition"
 				>
 					<section
@@ -172,7 +179,7 @@
 				<!-- TAB HOMEASSISTANT -->
 				<v-tabs-window-item
 					v-if="showHass"
-					key="homeassistant"
+					value="homeassistant"
 					transition="slide-y-transition"
 				>
 					<home-assistant :node="node" :socket="socket" />
@@ -180,7 +187,7 @@
 
 				<!-- TAB GROUPS -->
 				<v-tabs-window-item
-					key="groups"
+					value="groups"
 					transition="slide-y-transition"
 				>
 					<association-groups :node="node" />
@@ -189,7 +196,7 @@
 				<!-- TAB USERS -->
 				<v-tabs-window-item
 					v-if="node.schedule"
-					key="users"
+					value="users"
 					transition="slide-y-transition"
 				>
 					<user-code-table :node="node" @updateValue="updateValue" />
@@ -198,7 +205,7 @@
 				<!-- TAB OTA UPDATES -->
 				<v-tabs-window-item
 					v-if="!node.isControllerNode"
-					key="ota"
+					value="ota"
 					transition="slide-y-transition"
 				>
 					<OTAUpdates :node="node" :socket="socket" />
@@ -207,7 +214,7 @@
 				<!-- TAB OTW UPDATES -->
 				<v-tabs-window-item
 					v-if="node.isControllerNode"
-					key="otw"
+					value="otw"
 					transition="slide-y-transition"
 				>
 					<OTWUpdates :node="node" :socket="socket" />
@@ -215,7 +222,7 @@
 
 				<!-- TAB EVENTS -->
 				<v-tabs-window-item
-					key="events"
+					value="events"
 					transition="slide-y-transition"
 				>
 					<v-container grid-list-md>
@@ -351,7 +358,6 @@ export default {
 			type: Array,
 			default: () => [],
 		},
-		isMobile: Boolean,
 		node: Object,
 		socket: Object,
 	},
@@ -380,6 +386,9 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		isMobile() {
+			return this.$vuetify.display.xs
+		},
 		isLongRange() {
 			if (!this.node) return false
 
