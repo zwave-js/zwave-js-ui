@@ -94,26 +94,22 @@
 					</template>
 				</v-list-item>
 				<!-- <div v-if="lwr">
-						<v-subheader>Last working route</v-subheader>
-						<v-list-item dense v-for="(s, i) in lwr" :key="i">
-							<v-list-item-content>{{
-								s.title
-							}}</v-list-item-content>
-							<v-list-item-content class="align-end">{{
-								s.text
-							}}</v-list-item-content>
+						<v-list-subheader>Last working route</v-list-subheader>
+						<v-list-item density="compact" v-for="(s, i) in lwr" :key="i">
+							{{ s.title }}
+							<template v-slot:append>
+								<span class="align-end">{{ s.text }}</span>
+							</template>
 						</v-list-item>
 					</div>
 
 					<div v-if="nlwr">
-						<v-subheader>Next to Last working route</v-subheader>
-						<v-list-item dense v-for="(s, i) in nlwr" :key="i">
-							<v-list-item-content>{{
-								s.title
-							}}</v-list-item-content>
-							<v-list-item-content class="align-end">{{
-								s.text
-							}}</v-list-item-content>
+						<v-list-subheader>Next to Last working route</v-list-subheader>
+						<v-list-item density="compact" v-for="(s, i) in nlwr" :key="i">
+							{{ s.title }}
+							<template v-slot:append>
+								<span class="align-end">{{ s.text }}</span>
+							</template>
 						</v-list-item>
 					</div> -->
 

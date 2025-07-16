@@ -30,7 +30,7 @@
 						}}</v-list-item-title>
 					</v-list-item>
 				</v-list>
-				<v-divider style="margin-top: 8px"></v-divider>
+				<v-divider></v-divider>
 				<v-list nav>
 					<v-list-item
 						v-for="item in pages"

@@ -288,7 +288,7 @@
 								<!-- <v-checkbox
                   hide-details
                   dense
-                  :input-value="isSelected(item)"
+                  :active="isSelected(item)"
                   @change="(v) => select(item, v)"
                   @click.stop
                   style="position: absolute; right: 0px; top: 0px"
