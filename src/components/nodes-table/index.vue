@@ -26,10 +26,8 @@
 				<v-text-field
 					v-model="search"
 					clearable
-					flat
-					variant="solo-inverted"
+					variant="solo"
 					hide-details
-					single-line
 					class="ma-2"
 					style="max-width: 250px; min-width: 250px"
 					prepend-inner-icon="search"
