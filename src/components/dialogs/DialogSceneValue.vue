@@ -87,10 +87,7 @@
 					@click="$emit('close')"
 					>Cancel</v-btn
 				>
-				<v-btn
-					color="blue-darken-1"
-					variant="text"
-					@click="$refs.form.validate() && $emit('save')"
+				<v-btn color="blue-darken-1" variant="text" @click="handleSave"
 					>Save</v-btn
 				>
 			</v-card-actions>
@@ -137,6 +134,14 @@ export default {
 				(v) => (v && v.writeable) || 'This value is Read Only',
 			],
 		}
+	},
+	methods: {
+		async handleSave() {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
+				this.$emit('save')
+			}
+		},
 	},
 }
 </script>

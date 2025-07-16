@@ -900,8 +900,9 @@ export default {
 		window.removeEventListener('keydown', this.onKeypressed)
 	},
 	methods: {
-		submitNameLoc() {
-			if (this.$refs.namingForm[0].validate()) {
+		async submitNameLoc() {
+			const result = await this.$refs.namingForm[0].validate()
+			if (result.valid) {
 				this.nextStep()
 			}
 		},

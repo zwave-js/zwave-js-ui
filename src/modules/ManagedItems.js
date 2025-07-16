@@ -176,7 +176,7 @@ export class ManagedItems {
 		const propDef = this.propDefs[colName]
 		const header = {
 			value: colName,
-			text: propDef.label === undefined ? colName : propDef.label,
+			title: propDef.label === undefined ? colName : propDef.label,
 			type: propDef.type === undefined ? 'string' : propDef.type,
 			groupable:
 				propDef.groupable === undefined ? true : !!propDef.groupable,

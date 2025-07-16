@@ -120,7 +120,7 @@
 					color="blue-darken-1"
 					variant="text"
 					:disabled="nodesInGroup >= maxNodes || !!associationError"
-					@click="$refs.form.validate() && $emit('add', group)"
+					@click="handleAdd"
 					>ADD</v-btn
 				>
 			</v-card-actions>
@@ -152,8 +152,9 @@ export default {
 		},
 		group: {
 			deep: true,
-			handler() {
-				if (this.$refs.form?.validate()) {
+			async handler() {
+				const result = await this.$refs.form?.validate()
+				if (result?.valid) {
 					this.allowedAssociation()
 				}
 			},
@@ -227,6 +228,12 @@ export default {
 	},
 	methods: {
 		getAssociationAddress,
+		async handleAdd() {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
+				this.$emit('add', this.group)
+			}
+		},
 		async allowedAssociation() {
 			const association = this.group
 			const target = !isNaN(association.target)

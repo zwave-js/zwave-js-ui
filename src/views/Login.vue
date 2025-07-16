@@ -178,7 +178,8 @@ export default {
 				return
 			}
 
-			if (forced === true || this.$refs.form.validate()) {
+			const result = await this.$refs.form.validate()
+			if (forced === true || result.valid) {
 				try {
 					let user = {
 						username: this.username,

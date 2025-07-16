@@ -100,11 +100,11 @@ export default {
 			associations: [],
 			dialogAssociation: false,
 			headers: [
-				{ text: 'Endpoint', value: 'endpoint' },
-				{ text: 'Group', value: 'groupId' },
-				{ text: 'Node', value: 'nodeId' },
-				{ text: 'Target Endpoint', value: 'targetEndpoint' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'Endpoint', value: 'endpoint' },
+				{ title: 'Group', value: 'groupId' },
+				{ title: 'Node', value: 'nodeId' },
+				{ title: 'Target Endpoint', value: 'targetEndpoint' },
+				{ title: 'Actions', value: 'actions', sortable: false },
 			],
 		}
 	},

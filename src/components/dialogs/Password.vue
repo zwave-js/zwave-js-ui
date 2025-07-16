@@ -129,8 +129,9 @@ export default {
 		},
 	},
 	methods: {
-		updatePassword: function () {
-			if (this.$refs.form.validate()) {
+		updatePassword: async function () {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
 				this.$emit('updatePassword')
 			}
 		},

@@ -231,7 +231,7 @@
 				<v-btn
 					color="blue-darken-1"
 					variant="text"
-					@click="$refs.form.validate() && $emit('save')"
+					@click="handleSave"
 					>{{ isNew ? 'Add' : 'Update' }}</v-btn
 				>
 			</v-card-actions>
@@ -386,6 +386,12 @@ export default {
 		},
 		isSensor(v) {
 			return v && (v.commandClass === 0x31 || v.commandClass === 0x32)
+		},
+		async handleSave() {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
+				this.$emit('save')
+			}
 		},
 	},
 }

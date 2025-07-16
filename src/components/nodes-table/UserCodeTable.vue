@@ -97,15 +97,15 @@ export default {
 		return {
 			statuses: [
 				{
-					text: 'Available',
+					title: 'Available',
 					value: 0,
 				},
 				{
-					text: 'Enabled',
+					title: 'Enabled',
 					value: 1,
 				},
 				{
-					text: 'Disabled',
+					title: 'Disabled',
 					value: 2,
 				},
 			],
@@ -117,13 +117,13 @@ export default {
 	computed: {
 		headers() {
 			const base = [
-				{ text: 'User Id', value: 'id' },
-				{ text: 'Code', value: 'code' },
-				{ text: 'Status', value: 'status' },
+				{ title: 'User Id', value: 'id' },
+				{ title: 'Code', value: 'code' },
+				{ title: 'Status', value: 'status' },
 			]
 
 			if (this.node.schedule) {
-				base.push({ text: 'Scheduling', value: 'schedule' })
+				base.push({ title: 'Scheduling', value: 'schedule' })
 			}
 
 			return base

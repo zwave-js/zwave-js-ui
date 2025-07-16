@@ -211,11 +211,11 @@ export default {
 			deviceJSON: '',
 			errorDevice: false,
 			headers_hass: [
-				{ text: 'Id', value: 'id' },
-				{ text: 'Type', value: 'type' },
-				{ text: 'Object id', value: 'object_id' },
-				{ text: 'Persistent', value: 'persistent' },
-				{ text: 'Discovery', value: 'ignoreDiscovery' },
+				{ title: 'Id', value: 'id' },
+				{ title: 'Type', value: 'type' },
+				{ title: 'Object id', value: 'object_id' },
+				{ title: 'Persistent', value: 'persistent' },
+				{ title: 'Discovery', value: 'ignoreDiscovery' },
 			],
 			selectedDevice: null,
 		}

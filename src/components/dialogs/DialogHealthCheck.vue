@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="modelValue" max-width="800px" persistent>
+	<v-dialog v-model="_value" max-width="800px" persistent>
 		<v-card :loading="loading">
 			<v-card-title>
 				<span class="text-h5"
@@ -440,24 +440,24 @@ export default {
 		headers() {
 			if (this.mode === 'Lifeline') {
 				return [
-					{ text: 'Max latency', value: 'latency' },
-					{ text: 'Failed pings', value: 'failedPingsNode' },
-					{ text: 'Route Changes', value: 'routeChanges' },
-					{ text: 'SNR margin', value: 'snrMargin' },
+					{ title: 'Max latency', value: 'latency' },
+					{ title: 'Failed pings', value: 'failedPingsNode' },
+					{ title: 'Route Changes', value: 'routeChanges' },
+					{ title: 'SNR margin', value: 'snrMargin' },
 					{
-						text: 'Min power level w/o errors',
+						title: 'Min power level w/o errors',
 						value: 'minPowerlevel',
 					},
-					{ text: 'Rating', value: 'rating' },
+					{ title: 'Rating', value: 'rating' },
 				]
 			} else {
 				return [
-					{ text: 'Failed pings', value: 'failedPingsToSource' },
+					{ title: 'Failed pings', value: 'failedPingsToSource' },
 					{
-						text: 'Min Power Level w/o errors',
+						title: 'Min Power Level w/o errors',
 						value: 'minPowerlevelSource',
 					},
-					{ text: 'Rating', value: 'rating' },
+					{ title: 'Rating', value: 'rating' },
 				]
 			}
 		},
@@ -473,17 +473,25 @@ export default {
 			averages: null,
 			mode: 'Lifeline',
 			hintHeaders: [
-				{ text: 'Rating', value: 'rating', sortable: false },
-				{ text: 'Failed pings', value: 'failedPings', sortable: false },
-				{ text: 'Max latency (*)', value: 'latency', sortable: false },
+				{ title: 'Rating', value: 'rating', sortable: false },
 				{
-					text: 'No. of Neighbors',
+					title: 'Failed pings',
+					value: 'failedPings',
+					sortable: false,
+				},
+				{ title: 'Max latency (*)', value: 'latency', sortable: false },
+				{
+					title: 'No. of Neighbors',
 					value: 'neighbors',
 					sortable: false,
 				},
-				{ text: 'SNR margin (*)', value: 'snrMargin', sortable: false },
 				{
-					text: 'Min power level w/o errors',
+					title: 'SNR margin (*)',
+					value: 'snrMargin',
+					sortable: false,
+				},
+				{
+					title: 'Min power level w/o errors',
 					value: 'minPowerlevel',
 					sortable: false,
 				},

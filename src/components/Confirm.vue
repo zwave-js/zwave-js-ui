@@ -381,9 +381,10 @@ export default {
 				this.reject = reject
 			})
 		},
-		agree() {
+		async agree() {
 			if (this.options.inputs) {
-				if (this.$refs.form.validate()) {
+				const result = await this.$refs.form.validate()
+				if (result.valid) {
 					this.dialog = false
 					this.resolve(this.values)
 					this.reset()

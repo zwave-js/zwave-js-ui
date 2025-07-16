@@ -183,7 +183,7 @@
 									:items-per-page-options="[
 										10,
 										20,
-										{ text: 'All', value: -1 },
+										{ title: 'All', value: -1 },
 									]"
 									class="elevation-1"
 								>
@@ -265,7 +265,7 @@
 									:items-per-page-options="[
 										10,
 										20,
-										{ text: 'All', value: -1 },
+										{ title: 'All', value: -1 },
 									]"
 									class="elevation-1"
 								>
@@ -2270,56 +2270,56 @@ export default {
 			editedIndex: -1,
 			defaultValue: {},
 			logLevels: [
-				{ text: 'Error', value: 'error' },
-				{ text: 'Warn', value: 'warn' },
-				{ text: 'Info', value: 'info' },
-				{ text: 'Verbose', value: 'verbose' },
-				{ text: 'Debug', value: 'debug' },
-				{ text: 'Silly', value: 'silly' },
+				{ title: 'Error', value: 'error' },
+				{ title: 'Warn', value: 'warn' },
+				{ title: 'Info', value: 'info' },
+				{ title: 'Verbose', value: 'verbose' },
+				{ title: 'Debug', value: 'debug' },
+				{ title: 'Silly', value: 'silly' },
 			],
 			headers: [
-				{ text: 'Device', value: 'device' },
-				{ text: 'Value', value: 'value', sortable: false },
-				{ text: 'Topic', value: 'topic' },
-				{ text: 'Post Operation', value: 'postOperation' },
-				{ text: 'Poll', value: 'enablePoll' },
-				// { text: 'Changes', value: 'verifyChanges' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'Device', value: 'device' },
+				{ title: 'Value', value: 'value', sortable: false },
+				{ title: 'Topic', value: 'topic' },
+				{ title: 'Post Operation', value: 'postOperation' },
+				{ title: 'Poll', value: 'enablePoll' },
+				// { title: 'Changes', value: 'verifyChanges' },
+				{ title: 'Actions', value: 'actions', sortable: false },
 			],
 			headersJobs: [
-				{ text: 'Name', value: 'name' },
-				{ text: 'Enabled', value: 'enabled' },
-				{ text: 'On Init', value: 'runOnInit' },
-				{ text: 'Code', value: 'code' },
-				{ text: 'Cron', value: 'cron' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'Name', value: 'name' },
+				{ title: 'Enabled', value: 'enabled' },
+				{ title: 'On Init', value: 'runOnInit' },
+				{ title: 'Code', value: 'code' },
+				{ title: 'Cron', value: 'cron' },
+				{ title: 'Actions', value: 'actions', sortable: false },
 			],
 			e1: true,
 			gw_types: [
 				{
-					text: 'ValueID topics',
+					title: 'ValueID topics',
 					value: 0,
 				},
 				{
-					text: 'Named topics',
+					title: 'Named topics',
 					value: 1,
 				},
 				{
-					text: 'Configured Manually',
+					title: 'Configured Manually',
 					value: 2,
 				},
 			],
 			py_types: [
 				{
-					text: 'JSON Time-Value',
+					title: 'JSON Time-Value',
 					value: 0,
 				},
 				{
-					text: 'Entire Z-Wave value Object',
+					title: 'Entire Z-Wave value Object',
 					value: 1,
 				},
 				{
-					text: 'Just value',
+					title: 'Just value',
 					value: 2,
 				},
 			],
@@ -2674,7 +2674,8 @@ export default {
 		async update() {
 			// let inputs to unfocus and trigger any change event, nextTick is not working here
 			await wait(200)
-			if (this.$refs.form_settings.validate()) {
+			const result = await this.$refs.form_settings.validate()
+			if (result.valid) {
 				try {
 					this.saving = true
 					useBaseStore().resetNodes()

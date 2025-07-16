@@ -627,62 +627,62 @@ export default {
 			framesQueue: [],
 			headers: [
 				{
-					text: '#',
+					title: '#',
 					value: 'id',
 					width: '10ch',
 					sortable: false,
 				},
 				{
-					text: 'Timestamp',
+					title: 'Timestamp',
 					value: 'timestamp',
 					width: '12ch',
 					sortable: false,
 					class: 'no-wrap',
 				},
 				{
-					text: 'Delta [ms]',
+					title: 'Delta [ms]',
 					value: 'delta',
 					width: '4ch',
 					sortable: false,
 				},
 				{
-					text: 'Protocol Data Rate',
+					title: 'Protocol Data Rate',
 					value: 'protocolDataRate',
 					width: '20ch',
 					sortable: false,
 				},
 				{
-					text: 'RSSI',
+					title: 'RSSI',
 					value: 'rssi',
 					width: '4ch',
 					sortable: false,
 				},
 				{
-					text: 'Ch',
+					title: 'Ch',
 					value: 'channel',
 					width: '4ch',
 					sortable: false,
 				},
 				{
-					text: 'Home Id',
+					title: 'Home Id',
 					value: 'homeId',
 					width: '8ch',
 					sortable: false,
 					class: 'no-wrap',
 				},
 				{
-					text: 'Type',
+					title: 'Type',
 					width: '8ch',
 					value: 'type',
 					sortable: false,
 				},
 				{
-					text: 'Route',
+					title: 'Route',
 					value: 'sourceNodeId',
 					sortable: false,
 				},
 				{
-					text: 'Payload',
+					title: 'Payload',
 					value: 'payload',
 					sortable: false,
 				},
@@ -744,7 +744,7 @@ export default {
 					.map(([key, value]) => {
 						const region = parseInt(key, 10)
 						return {
-							text: value,
+							title: value,
 							value: region,
 							disabled:
 								region === RFRegion.Unknown ||
@@ -758,7 +758,7 @@ export default {
 					this.znifferState.supportedLRChannelConfigs,
 				).map(([key, value]) => {
 					return {
-						text: value,
+						title: value,
 						value: parseInt(key, 10),
 					}
 				})

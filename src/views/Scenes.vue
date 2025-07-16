@@ -137,12 +137,12 @@ export default {
 			editedValue: {},
 			editedIndex: -1,
 			headers_scenes: [
-				{ text: 'Value ID', value: 'id' },
-				{ text: 'Node', value: 'nodeId' },
-				{ text: 'Label', value: 'label' },
-				{ text: 'Value', value: 'value' },
-				{ text: 'Timeout', value: 'timeout' },
-				{ text: 'Actions', sortable: false },
+				{ title: 'Value ID', value: 'id' },
+				{ title: 'Node', value: 'nodeId' },
+				{ title: 'Label', value: 'label' },
+				{ title: 'Value', value: 'value' },
+				{ title: 'Timeout', value: 'timeout' },
+				{ title: 'Actions', sortable: false },
 			],
 		}
 	},
