@@ -6,7 +6,7 @@
 			class="elevation-1"
 			style="margin-bottom: 80px"
 			:search="search"
-			:options.sync="tableOptions"
+			v-model:options="tableOptions"
 		>
 			<template v-slot:top>
 				<v-col class="pt-0">
@@ -197,86 +197,15 @@
 				>
 			</template>
 		</v-data-table>
-		<v-speed-dial
+		<base-fab
 			v-model="fab"
 			location="bottom end"
 			transition="slide-y-reverse-transition"
 			class="mb-7"
-		>
-			<template v-slot:activator="{ props }">
-				<v-btn
-					v-bind="props"
-					color="primary"
-					variant="fab"
-					:icon="fab ? 'close' : 'menu'"
-				/>
-			</template>
-			<v-tooltip location="left">
-				<template v-slot:activator="{ props }">
-					<v-btn
-						variant="fab"
-						size="small"
-						@click="editItem()"
-						color="primary"
-						v-bind="props"
-						icon="add"
-					/>
-				</template>
-				<span>Add</span>
-			</v-tooltip>
-			<v-tooltip location="left">
-				<template v-slot:activator="{ props }">
-					<v-btn
-						variant="fab"
-						size="small"
-						@click="scanItem"
-						color="warning"
-						v-bind="props"
-						icon="qr_code_scanner"
-					/>
-				</template>
-				<span>Scan</span>
-			</v-tooltip>
-			<v-tooltip location="left">
-				<template v-slot:activator="{ props }">
-					<v-btn
-						variant="fab"
-						size="small"
-						@click="refreshItems"
-						color="success"
-						v-bind="props"
-						icon="refresh"
-					/>
-				</template>
-				<span>Refresh</span>
-			</v-tooltip>
-			<v-tooltip location="left">
-				<template v-slot:activator="{ props }">
-					<v-btn
-						variant="fab"
-						size="small"
-						@click="importList"
-						color="error"
-						v-bind="props"
-						icon="file_download"
-					/>
-				</template>
-				<span>Import</span>
-			</v-tooltip>
-			<v-tooltip location="left">
-				<template v-slot:activator="{ props }">
-					<v-btn
-						variant="fab"
-						size="small"
-						@click="exportList"
-						color="purple"
-						v-bind="props"
-						icon="file_upload"
-					/>
-				</template>
-				<span>Export</span>
-			</v-tooltip>
-		</v-speed-dial>
+			icon-open="menu"
+			icon-close="close"
+			:items="fabItems"
+		/>
 
 		<v-dialog
 			:fullscreen="$vuetify.display.xs"
@@ -286,12 +215,11 @@
 			@keydown.exit="closeDialog()"
 		>
 			<v-card min-height="90vh">
-				<v-btn
+				<v-fab
 					style="position: absolute; right: 5px; top: 5px"
 					size="x-small"
 					@click="closeDialog()"
 					icon="close"
-					variant="fab"
 				/>
 				<v-card-text class="pt-3">
 					<expanded-node :node="expandedNode" :socket="socket" />
@@ -323,6 +251,9 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
+		BaseFab: defineAsyncComponent(
+			() => import('@/components/custom/BaseFab.vue'),
+		),
 		ExpandedNode: defineAsyncComponent(
 			() => import('@/components/nodes-table/ExpandedNode.vue'),
 		),
@@ -343,6 +274,40 @@ export default {
 	computed: {
 		streamerMode() {
 			return useBaseStore().ui.streamerMode
+		},
+		fabItems() {
+			return [
+				{
+					icon: 'add',
+					color: 'primary',
+					action: () => this.editItem(),
+					tooltip: 'Add',
+				},
+				{
+					icon: 'qr_code_scanner',
+					color: 'warning',
+					action: () => this.scanItem(),
+					tooltip: 'Scan',
+				},
+				{
+					icon: 'refresh',
+					color: 'success',
+					action: () => this.refreshItems(),
+					tooltip: 'Refresh',
+				},
+				{
+					icon: 'file_download',
+					color: 'error',
+					action: () => this.importList(),
+					tooltip: 'Import',
+				},
+				{
+					icon: 'file_upload',
+					color: 'purple',
+					action: () => this.exportList(),
+					tooltip: 'Export',
+				},
+			]
 		},
 	},
 	data() {

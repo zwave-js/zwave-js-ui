@@ -7,7 +7,7 @@
 		:footer-props="{
 			itemsPerPageOptions: [10, 20, 50, 100, -1],
 		}"
-		:expanded.sync="expanded"
+		v-model:expanded="expanded"
 		:value="managedNodes.selected"
 		:options="managedNodes.tableOptions"
 		:custom-sort="sort"

@@ -261,11 +261,10 @@
 
 						<v-tooltip v-if="!autoScroll" location="left">
 							<template v-slot:activator="{ props }">
-								<v-btn
+								<v-fab
 									color="purple"
 									@click="enableAutoScroll()"
 									size="small"
-									variant="fab"
 									hover
 									location="top right"
 									absolute
@@ -273,7 +272,7 @@
 									v-bind="props"
 								>
 									<v-icon>vertical_align_bottom</v-icon>
-								</v-btn>
+								</v-fab>
 							</template>
 							<span>Enable autoscroll</span>
 						</v-tooltip>
@@ -302,17 +301,16 @@
 			</div>
 		</multipane>
 
-		<v-btn
+		<v-fab
 			color="primary"
 			@click="drawer = !drawer"
-			variant="fab"
 			hover
 			location="bottom right"
 			fixed
 		>
 			<v-icon v-if="drawer">close</v-icon>
 			<v-icon v-else>menu</v-icon>
-		</v-btn>
+		</v-fab>
 
 		<v-navigation-drawer
 			v-model="drawer"

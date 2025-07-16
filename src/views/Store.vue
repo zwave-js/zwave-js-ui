@@ -114,110 +114,13 @@
 						style="align-self: center"
 					></v-progress-circular>
 				</div>
-				<v-speed-dial v-model="fab" location="bottom end">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							color="primary"
-							variant="fab"
-							hover
-							v-bind="props"
-						>
-							<v-icon v-if="fab">close</v-icon>
-							<v-icon v-else>settings</v-icon>
-						</v-btn>
-					</template>
-					<v-tooltip location="left">
-						<template v-slot:activator="{ props }">
-							<v-btn
-								variant="fab"
-								size="small"
-								color="success"
-								@click="restoreZip()"
-								v-bind="props"
-							>
-								<v-icon>restore</v-icon>
-							</v-btn>
-						</template>
-						<span>Restore</span>
-					</v-tooltip>
-
-					<v-tooltip location="left">
-						<template v-slot:activator="{ props }">
-							<v-btn
-								variant="fab"
-								size="small"
-								color="warining"
-								@click="uploadFile()"
-								v-bind="props"
-							>
-								<v-icon>upload</v-icon>
-							</v-btn>
-						</template>
-						<span>Upload File</span>
-					</v-tooltip>
-
-					<v-tooltip location="left">
-						<template v-slot:activator="{ props }">
-							<v-btn
-								variant="fab"
-								size="small"
-								color="purple"
-								@click="backupStore"
-								v-bind="props"
-							>
-								<v-icon>backup</v-icon>
-							</v-btn>
-						</template>
-						<span>Backup</span>
-					</v-tooltip>
-
-					<v-tooltip location="left">
-						<template v-slot:activator="{ props }">
-							<v-btn
-								variant="fab"
-								size="small"
-								color="warning"
-								@click="refreshTree"
-								v-bind="props"
-							>
-								<v-icon>refresh</v-icon>
-							</v-btn>
-						</template>
-						<span>Refresh</span>
-					</v-tooltip>
-
-					<v-tooltip location="left">
-						<template v-slot:activator="{ props }">
-							<v-btn
-								v-if="selectedFiles.length > 0"
-								variant="fab"
-								size="small"
-								color="primary"
-								@click="downloadSelectedZip"
-								v-bind="props"
-							>
-								<v-icon>file_download</v-icon>
-							</v-btn>
-						</template>
-						<span>Download selected</span>
-					</v-tooltip>
-
-					<v-tooltip location="left">
-						<template v-slot:activator="{ props }">
-							<v-btn
-								v-if="selectedFiles.length > 0"
-								variant="fab"
-								size="small"
-								color="error"
-								@click="deleteSelected"
-								v-bind="props"
-							>
-								<v-icon>delete</v-icon>
-							</v-btn>
-						</template>
-						<span>Delete selected</span>
-					</v-tooltip>
-				</v-speed-dial>
+				<base-fab
+					v-model="fab"
+					location="bottom end"
+					icon-open="settings"
+					icon-close="close"
+					:items="fabItems"
+				/>
 			</v-col>
 
 			<v-divider class="mx-0" vertical></v-divider>
@@ -348,6 +251,7 @@ import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import { defineAsyncComponent } from 'vue'
 
 const log = logger.get('Store')
 
@@ -355,6 +259,9 @@ export default {
 	name: 'Store',
 	mixins: [InstancesMixin],
 	components: {
+		BaseFab: defineAsyncComponent(
+			() => import('@/components/custom/BaseFab.vue'),
+		),
 		PrismEditor: () =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
 	},
@@ -371,6 +278,51 @@ export default {
 		},
 		storePath() {
 			return this.items[0]?.path
+		},
+		fabItems() {
+			const items = [
+				{
+					icon: 'restore',
+					color: 'success',
+					action: () => this.restoreZip(),
+					tooltip: 'Restore',
+				},
+				{
+					icon: 'upload',
+					color: 'warning',
+					action: () => this.uploadFile(),
+					tooltip: 'Upload File',
+				},
+				{
+					icon: 'backup',
+					color: 'purple',
+					action: () => this.backupStore(),
+					tooltip: 'Backup',
+				},
+				{
+					icon: 'refresh',
+					color: 'warning',
+					action: () => this.refreshTree(),
+					tooltip: 'Refresh',
+				},
+			]
+
+			if (this.selectedFiles.length > 0) {
+				items.push({
+					icon: 'file_download',
+					color: 'primary',
+					action: () => this.downloadSelectedZip(),
+					tooltip: 'Download selected',
+				})
+				items.push({
+					icon: 'delete',
+					color: 'error',
+					action: () => this.deleteSelected(),
+					tooltip: 'Delete selected',
+				})
+			}
+
+			return items
 		},
 	},
 	data() {

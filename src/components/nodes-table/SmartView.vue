@@ -308,15 +308,12 @@
 			@keydown.exit="closeDialog()"
 		>
 			<v-card min-height="90vh">
-				<v-btn
+				<v-fab
 					style="position: absolute; right: 5px; top: 5px"
 					size="x-small"
 					@click="closeDialog()"
-					icon
-					variant="fab"
-				>
-					<v-icon>close</v-icon>
-				</v-btn>
+					icon="close"
+				/>
 				<v-card-text class="pt-3">
 					<expanded-node :node="expandedNode" :socket="socket" />
 				</v-card-text>

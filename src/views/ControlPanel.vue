@@ -65,39 +65,14 @@
 			:title="advancedDialogTitle"
 		/>
 
-		<v-speed-dial v-model="fab" location="bottom end">
-			<template v-slot:activator="{ props }">
-				<v-btn
-					:color="selected.length === 0 ? 'primary' : 'success'"
-					variant="fab"
-					hover
-					v-bind="props"
-				>
-					<v-icon v-if="fab">close</v-icon>
-					<v-icon v-else>menu</v-icon>
-				</v-btn>
-			</template>
-			<v-btn
-				v-if="selected.length === 0"
-				v-tooltip:left="'Manage nodes'"
-				variant="fab"
-				size="small"
-				color="success"
-				@click="showNodesManager()"
-			>
-				<v-icon>all_inclusive</v-icon>
-			</v-btn>
-
-			<v-btn
-				v-tooltip:left="'Advanced actions'"
-				variant="fab"
-				size="small"
-				color="purple"
-				@click="advancedShowDialog = true"
-			>
-				<v-icon>auto_fix_high</v-icon>
-			</v-btn>
-		</v-speed-dial>
+		<base-fab
+			v-model="fab"
+			location="bottom end"
+			:color="selected.length === 0 ? 'primary' : 'success'"
+			icon-open="menu"
+			icon-close="close"
+			:items="fabItems"
+		/>
 	</div>
 </template>
 
@@ -133,9 +108,37 @@ export default {
 		SmartView: defineAsyncComponent(
 			() => import('@/components/nodes-table/SmartView.vue'),
 		),
+		BaseFab: defineAsyncComponent(
+			() => import('@/components/custom/BaseFab.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
+		fabItems() {
+			const items = []
+
+			// Show "Manage nodes" button only when no nodes are selected
+			if (this.selected.length === 0) {
+				items.push({
+					icon: 'all_inclusive',
+					color: 'success',
+					tooltip: 'Manage nodes',
+					action: () => this.showNodesManager(),
+				})
+			}
+
+			// Always show "Advanced actions" button
+			items.push({
+				icon: 'auto_fix_high',
+				color: 'purple',
+				tooltip: 'Advanced actions',
+				action: () => {
+					this.advancedShowDialog = true
+				},
+			})
+
+			return items
+		},
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
