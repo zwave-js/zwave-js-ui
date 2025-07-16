@@ -1,7 +1,7 @@
 <template>
 	<v-tooltip location="bottom">
 		<template v-slot:activator="{ props }">
-			<center v-bind="props">
+			<div v-bind="props" class="center-content">
 				<blink-icon
 					icon="north"
 					:activeColor="node.errorTransmit ? 'error' : 'success'"
@@ -21,7 +21,7 @@
 						}}
 					</i>
 				</div>
-			</center>
+			</div>
 		</template>
 		<span style="white-space: pre-wrap">{{
 			node.statistics ? jsonToList(node.statistics) : '-----'
@@ -73,4 +73,8 @@ export default {
 }
 </script>
 
-<style></style>
+<style scoped>
+.center-content {
+	text-align: center;
+}
+</style>
