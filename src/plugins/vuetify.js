@@ -2,15 +2,16 @@
 
 import { createVuetify } from 'vuetify'
 import 'vuetify/styles'
-import { md } from 'vuetify/iconsets/md'
+import { aliases, md } from 'vuetify/iconsets/md'
 import 'material-design-icons-iconfont/dist/material-design-icons.css' // Ensure you are using css-loader
 
 const inputVariant = 'underlined'
 const defaultColor = 'primary'
 
-const opts = {
+export default createVuetify({
 	icons: {
 		defaultSet: 'md',
+		aliases,
 		sets: {
 			md,
 		},
@@ -61,6 +62,4 @@ const opts = {
 			variant: 'text',
 		},
 	},
-}
-
-export default createVuetify(opts)
+})

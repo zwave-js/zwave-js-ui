@@ -13,9 +13,9 @@
 			>
 				<template #item="{ element: item, index: i }">
 					<v-list-item>
-						<v-list-item-action class="mr-0" style="min-width: 0px">
+						<template #prepend>
 							<slot name="item-action" :item="item"></slot>
-						</v-list-item-action>
+						</template>
 
 						<v-row class="ma-0 d-block">
 							<v-icon

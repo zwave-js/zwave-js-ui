@@ -121,7 +121,7 @@ export default {
 		},
 		_value: {
 			get() {
-				return this.value
+				return this.modelValue
 			},
 			set(val) {
 				this.$emit('update:modelValue', val)

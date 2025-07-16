@@ -72,7 +72,7 @@
 								: 'None'
 						}}</span>
 					</template>
-					<v-list-item-action v-if="!node.isControllerNode">
+					<template v-if="!node.isControllerNode" #append>
 						<v-btn
 							class="ml-2"
 							color="primary"
@@ -82,7 +82,7 @@
 							>Discover
 							<v-icon size="x-small">search</v-icon>
 						</v-btn>
-					</v-list-item-action>
+					</template>
 				</v-list-item>
 				<v-list-item density="compact">
 					Statistics

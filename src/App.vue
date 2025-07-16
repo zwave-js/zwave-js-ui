@@ -5,7 +5,6 @@
 		>
 			<v-navigation-drawer
 				v-if="!navTabs || $vuetify.display.smAndDown"
-				clipped-left
 				:rail="mini"
 				v-model="drawer"
 			>
@@ -33,7 +32,7 @@
 						:to="item.path === '#' ? '' : item.path"
 						:color="item.path === $route.path ? 'primary' : ''"
 					>
-						<v-list-item-action>
+						<template #prepend>
 							<v-badge
 								color="error"
 								:model-value="item.badge"
@@ -42,7 +41,7 @@
 							>
 								<v-icon>{{ item.icon }}</v-icon>
 							</v-badge>
-						</v-list-item-action>
+						</template>
 
 						<v-list-item-title
 							class="text-subtitle-2 font-weight-bold"
@@ -68,9 +67,9 @@
 							class="smaller-min-width-tabs"
 						>
 							<v-icon
-								:start="item.path === $router.currentRoute.path"
+								:start="item.path === $route.path"
 								:size="
-									item.path === $router.currentRoute.path
+									item.path === $route.path
 										? 'small'
 										: undefined
 								"
@@ -78,7 +77,7 @@
 								{{ item.icon }}
 							</v-icon>
 							<span
-								v-if="item.path === $router.currentRoute.path"
+								v-if="item.path === $route.path"
 								class="text-subtitle-2"
 							>
 								{{ item.title }}
@@ -218,9 +217,9 @@
 							:key="i"
 							@click="item.func"
 						>
-							<v-list-item-action>
+							<template #prepend>
 								<v-icon>{{ item.icon }}</v-icon>
-							</v-list-item-action>
+							</template>
 							<v-list-item-title>{{
 								item.tooltip
 							}}</v-list-item-title>
@@ -599,12 +598,8 @@ export default {
 			return toReturn
 		},
 		currentTheme() {
-			const { isDark, themes } = this.$vuetify.theme
-			if (isDark) {
-				return themes.dark
-			} else {
-				return themes.light
-			}
+			const { global } = this.$vuetify.theme
+			return global.current.value
 		},
 	},
 	watch: {
@@ -613,7 +608,7 @@ export default {
 			this.startSocket()
 		},
 		darkMode(val) {
-			this.$vuetify.theme.dark = !!val
+			this.$vuetify.theme.global.name = val ? 'dark' : 'light'
 		},
 		pages() {
 			// this.verifyRoute()
@@ -1645,7 +1640,7 @@ export default {
 		// this is needed to prevent the theme switch on load
 		// this will be overriden by settings value once `initSettings`
 		// base store method is called
-		this.$vuetify.theme.dark = darkMode
+		this.$vuetify.theme.global.name = darkMode ? 'dark' : 'light'
 
 		useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'showSnackbar') {
