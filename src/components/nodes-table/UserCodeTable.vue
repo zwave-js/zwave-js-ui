@@ -82,12 +82,13 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	mixins: [InstancesMixin],
 	props: { node: Object },
-	components: { NodeScheduler: () => import('./NodeScheduler.vue') },
+	components: { NodeScheduler: defineAsyncComponent(() => import('./NodeScheduler.vue')) },
 	data() {
 		return {
 			statuses: [

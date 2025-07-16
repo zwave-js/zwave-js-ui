@@ -30,6 +30,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { jsonToList } from '@/lib/utils'
 import { mapActions } from 'pinia'
 import useBaseStore from '../../stores/base.js'
@@ -42,7 +43,7 @@ export default {
 		},
 	},
 	components: {
-		BlinkIcon: () => import('@/components/custom/BlinkIcon.vue'),
+		BlinkIcon: defineAsyncComponent(() => import('@/components/custom/BlinkIcon.vue')),
 	},
 	data() {
 		return {

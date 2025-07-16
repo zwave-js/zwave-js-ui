@@ -444,6 +444,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
@@ -461,7 +462,7 @@ export default {
 		node: Object,
 	},
 	components: {
-		ValueID: () => import('../ValueId.vue'),
+		ValueID: defineAsyncComponent(() => import('../ValueId.vue')),
 	},
 	mixins: [InstancesMixin],
 	data() {

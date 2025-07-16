@@ -339,6 +339,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { jsonToList } from '@/lib/utils'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
@@ -364,16 +365,16 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		AssociationGroups: () =>
-			import('@/components/nodes-table/AssociationGroups.vue'),
-		HomeAssistant: () =>
-			import('@/components/nodes-table/HomeAssistant.vue'),
-		NodeDetails: () => import('@/components/nodes-table/NodeDetails.vue'),
-		DialogAdvanced: () => import('@/components/dialogs/DialogAdvanced.vue'),
-		StatisticsCard: () => import('@/components/custom/StatisticsCard.vue'),
-		OTAUpdates: () => import('./OTAUpdates.vue'),
-		OTWUpdates: () => import('./OTWUpdates.vue'),
-		UserCodeTable: () => import('./UserCodeTable.vue'),
+		AssociationGroups: defineAsyncComponent(() =>
+			import('@/components/nodes-table/AssociationGroups.vue')),
+		HomeAssistant: defineAsyncComponent(() =>
+			import('@/components/nodes-table/HomeAssistant.vue')),
+		NodeDetails: defineAsyncComponent(() => import('@/components/nodes-table/NodeDetails.vue')),
+		DialogAdvanced: defineAsyncComponent(() => import('@/components/dialogs/DialogAdvanced.vue')),
+		StatisticsCard: defineAsyncComponent(() => import('@/components/custom/StatisticsCard.vue')),
+		OTAUpdates: defineAsyncComponent(() => import('./OTAUpdates.vue')),
+		OTWUpdates: defineAsyncComponent(() => import('./OTWUpdates.vue')),
+		UserCodeTable: defineAsyncComponent(() => import('./UserCodeTable.vue')),
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),

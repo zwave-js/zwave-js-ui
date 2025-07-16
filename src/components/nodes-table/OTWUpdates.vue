@@ -9,11 +9,12 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	components: {
-		FirmwareUpdates: () => import('../custom/FirmwareUpdates.vue'),
+		FirmwareUpdates: defineAsyncComponent(() => import('../custom/FirmwareUpdates.vue')),
 	},
 	mixins: [InstancesMixin],
 	props: {

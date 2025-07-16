@@ -407,6 +407,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import {
 	ProtocolDataRate,
 	protocolDataRateToString,
@@ -426,13 +427,13 @@ import { copy, getProtocol } from '../../lib/utils'
 export default {
 	mixins: [InstancesMixin],
 	components: {
-		StatisticsArrows: () =>
-			import('@/components/custom/StatisticsArrows.vue'),
-		BgRssiChart: () => import('@/components/custom/BgRssiChart.vue'),
-		DialogHealthCheck: () =>
-			import('@/components/dialogs/DialogHealthCheck.vue'),
-		DialogLinkReliability: () =>
-			import('@/components/dialogs/DialogLinkReliability.vue'),
+		StatisticsArrows: defineAsyncComponent(() =>
+			import('@/components/custom/StatisticsArrows.vue')),
+		BgRssiChart: defineAsyncComponent(() => import('@/components/custom/BgRssiChart.vue')),
+		DialogHealthCheck: defineAsyncComponent(() =>
+			import('@/components/dialogs/DialogHealthCheck.vue')),
+		DialogLinkReliability: defineAsyncComponent(() =>
+			import('@/components/dialogs/DialogLinkReliability.vue')),
 		draggable,
 	},
 	props: {

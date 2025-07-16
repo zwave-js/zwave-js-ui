@@ -7,10 +7,11 @@
 <script>
 import { mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		BgRssiChart: () => import('../components/custom/BgRssiChart.vue'),
+		BgRssiChart: defineAsyncComponent(() => import('../components/custom/BgRssiChart.vue')),
 	},
 	computed: {
 		...mapState(useBaseStore, ['controllerNode']),

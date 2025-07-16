@@ -2079,6 +2079,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
@@ -2100,12 +2101,12 @@ export default {
 	name: 'Settings',
 	mixins: [InstancesMixin],
 	components: {
-		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
-		DialogGatewayValue: () =>
-			import('@/components/dialogs/DialogGatewayValue.vue'),
-		fileInput: () => import('@/components/custom/file-input.vue'),
-		invertedCheckbox: () =>
-			import('@/components/custom/InvertedCheckbox.vue'),
+		ColorScheme: defineAsyncComponent(() => import('@/components/custom/ColorScheme.vue')),
+		DialogGatewayValue: defineAsyncComponent(() =>
+			import('@/components/dialogs/DialogGatewayValue.vue')),
+		fileInput: defineAsyncComponent(() => import('@/components/custom/file-input.vue')),
+		invertedCheckbox: defineAsyncComponent(() =>
+			import('@/components/custom/InvertedCheckbox.vue')),
 	},
 	props: {
 		socket: {

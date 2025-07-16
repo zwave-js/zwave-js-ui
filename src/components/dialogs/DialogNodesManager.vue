@@ -670,6 +670,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState } from 'pinia'
 import { tryParseDSKFromQRCodeString } from '@zwave-js/core'
 
@@ -688,7 +689,7 @@ export default {
 		socket: Object,
 	},
 	components: {
-		MissingKeysAlert: () => import('../custom/MissingKeysAlert.vue'),
+		MissingKeysAlert: defineAsyncComponent(() => import('../custom/MissingKeysAlert.vue')),
 	},
 	mixins: [InstancesMixin],
 	data() {

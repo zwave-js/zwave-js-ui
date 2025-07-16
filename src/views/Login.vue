@@ -91,6 +91,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
@@ -102,7 +103,7 @@ const log = logger.get('Login')
 
 export default {
 	components: {
-		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
+		ColorScheme: defineAsyncComponent(() => import('@/components/custom/ColorScheme.vue')),
 	},
 	data() {
 		return {

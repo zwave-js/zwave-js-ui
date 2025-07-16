@@ -326,6 +326,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import colors from 'vuetify/util/colors'
 
 import {
@@ -360,12 +361,12 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
-		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
-		StatisticsArrows: () =>
-			import('@/components/custom/StatisticsArrows.vue'),
-		ReinterviewBadge: () =>
-			import('@/components/custom/ReinterviewBadge.vue'),
+		ExpandedNode: defineAsyncComponent(() => import('@/components/nodes-table/ExpandedNode.vue')),
+		RichValue: defineAsyncComponent(() => import('@/components/nodes-table/RichValue.vue')),
+		StatisticsArrows: defineAsyncComponent(() =>
+			import('@/components/custom/StatisticsArrows.vue')),
+		ReinterviewBadge: defineAsyncComponent(() =>
+			import('@/components/custom/ReinterviewBadge.vue')),
 	},
 	watch: {
 		selected() {

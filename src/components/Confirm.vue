@@ -232,13 +232,14 @@ import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { wrapFunc, noop } from '../lib/utils'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
 		PrismEditor: () =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
-		QrReader: () => import('./custom/QrReader.vue'),
-		ListInput: () => import('./custom/ListInput.vue'),
+		QrReader: defineAsyncComponent(() => import('./custom/QrReader.vue')),
+		ListInput: defineAsyncComponent(() => import('./custom/ListInput.vue')),
 	},
 	data: () => ({
 		dialog: false,

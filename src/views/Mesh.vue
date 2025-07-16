@@ -86,6 +86,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
@@ -97,8 +98,8 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ZwaveGraph: () => import('@/components/custom/ZwaveGraph.vue'),
-		NodePanel: () => import('@/components/custom/NodePanel.vue'),
+		ZwaveGraph: defineAsyncComponent(() => import('@/components/custom/ZwaveGraph.vue')),
+		NodePanel: defineAsyncComponent(() => import('@/components/custom/NodePanel.vue')),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),

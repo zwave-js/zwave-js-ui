@@ -112,6 +112,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ConfigApis from '@/apis/ConfigApis'
 import { mapState, mapActions } from 'pinia'
 
@@ -130,10 +131,10 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		NodesTable: () => import('@/components/nodes-table/index.vue'),
-		DialogAdvanced: () => import('@/components/dialogs/DialogAdvanced.vue'),
-		StatisticsCard: () => import('@/components/custom/StatisticsCard.vue'),
-		SmartView: () => import('@/components/nodes-table/SmartView.vue'),
+		NodesTable: defineAsyncComponent(() => import('@/components/nodes-table/index.vue')),
+		DialogAdvanced: defineAsyncComponent(() => import('@/components/dialogs/DialogAdvanced.vue')),
+		StatisticsCard: defineAsyncComponent(() => import('@/components/custom/StatisticsCard.vue')),
+		SmartView: defineAsyncComponent(() => import('@/components/nodes-table/SmartView.vue')),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),

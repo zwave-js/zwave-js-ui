@@ -99,9 +99,11 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
+
 export default {
 	components: {
-		ValueID: () => import('@/components/ValueId.vue'),
+		ValueID: defineAsyncComponent(() => import('@/components/ValueId.vue')),
 	},
 	props: {
 		modelValue: Boolean,

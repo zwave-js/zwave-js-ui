@@ -308,6 +308,7 @@
 	</v-container>
 </template>
 <script>
+import { defineAsyncComponent } from 'vue'
 import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core'
 import { mapActions } from 'pinia'
 import {
@@ -329,9 +330,9 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
-		MissingKeysAlert: () =>
-			import('@/components/custom/MissingKeysAlert.vue'),
+		ExpandedNode: defineAsyncComponent(() => import('@/components/nodes-table/ExpandedNode.vue')),
+		MissingKeysAlert: defineAsyncComponent(() =>
+			import('@/components/custom/MissingKeysAlert.vue')),
 	},
 	watch: {
 		tableOptions: {

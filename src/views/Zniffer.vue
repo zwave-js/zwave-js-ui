@@ -383,6 +383,7 @@
 	</v-container>
 </template>
 <script>
+import { defineAsyncComponent } from 'vue'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { Protocols, RFRegion } from '@zwave-js/core'
 import { socketEvents } from '@server/lib/SocketEvents'
@@ -414,11 +415,11 @@ export default {
 		socket: Object,
 	},
 	components: {
-		Multipane: () => import('../components/custom/Multipane.vue'),
-		MultipaneResizer: () =>
-			import('../components/custom/MultipaneResizer.vue'),
-		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
-		FrameDetails: () => import('../components//custom/FrameDetails.vue'),
+		Multipane: defineAsyncComponent(() => import('../components/custom/Multipane.vue')),
+		MultipaneResizer: defineAsyncComponent(() =>
+			import('../components/custom/MultipaneResizer.vue')),
+		RichValue: defineAsyncComponent(() => import('@/components/nodes-table/RichValue.vue')),
+		FrameDetails: defineAsyncComponent(() => import('../components//custom/FrameDetails.vue')),
 	},
 	computed: {
 		...mapState(useBaseStore, ['zniffer', 'znifferState']),

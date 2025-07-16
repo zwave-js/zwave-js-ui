@@ -59,14 +59,15 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 
 export default {
 	components: {
-		ColumnFilterBoolean: () => import('./ColumnFilterBoolean.vue'),
-		ColumnFilterDate: () => import('./ColumnFilterDate.vue'),
-		ColumnFilterNumber: () => import('./ColumnFilterNumber.vue'),
-		ColumnFilterString: () => import('./ColumnFilterString.vue'),
+		ColumnFilterBoolean: defineAsyncComponent(() => import('./ColumnFilterBoolean.vue')),
+		ColumnFilterDate: defineAsyncComponent(() => import('./ColumnFilterDate.vue')),
+		ColumnFilterNumber: defineAsyncComponent(() => import('./ColumnFilterNumber.vue')),
+		ColumnFilterString: defineAsyncComponent(() => import('./ColumnFilterString.vue')),
 	},
 	props: {
 		value: {
