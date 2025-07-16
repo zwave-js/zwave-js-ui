@@ -340,7 +340,7 @@
 				<!-- TAB DEBUG INFO -->
 				<v-tabs-window-item
 					v-if="$vuetify.display.mdAndUp"
-					key="debug"
+					value="debug"
 					transition="slide-y-transition"
 				>
 					<v-container grid-list-md>

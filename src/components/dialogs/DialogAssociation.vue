@@ -30,7 +30,7 @@
 									return-object
 								>
 									<template v-slot:selection="{ item }">
-										{{ item.text }}
+										{{ item.title }}
 									</template>
 									<template v-slot:item="{ item, attrs, on }">
 										<v-list-item
@@ -39,7 +39,7 @@
 											lines="two"
 										>
 											<v-list-item-title>{{
-												`[${item.value}] ${item.text}`
+												`[${item.value}] ${item.title}`
 											}}</v-list-item-title>
 											<v-list-item-subtitle>{{
 												item.endpoint >= 0
@@ -320,13 +320,13 @@ export default {
 			const endpoints = []
 
 			if (noEndpoint) {
-				endpoints.unshift({ text: 'No Endpoint', value: null })
+				endpoints.unshift({ title: 'No Endpoint', value: null })
 			}
 
 			if (node && node.endpoints) {
 				for (const endpoint of node.endpoints) {
 					endpoints.push({
-						text: endpoint.label,
+						title: endpoint.label,
 						value: endpoint.index,
 					})
 				}

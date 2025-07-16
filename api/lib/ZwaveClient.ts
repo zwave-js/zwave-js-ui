@@ -398,7 +398,7 @@ export type ZUIDeviceClass = {
 }
 
 export type ZUINodeGroups = {
-	text: string
+	title: string
 	value: number
 	endpoint: number
 	maxNodes: number
@@ -1693,7 +1693,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				for (const [groupIndex, group] of groups) {
 					// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=associationgroup-interface
 					node.groups.push({
-						text: group.label,
+						title: group.label,
 						endpoint: endpoint,
 						value: groupIndex,
 						maxNodes: group.maxNodes,

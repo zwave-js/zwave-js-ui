@@ -66,7 +66,8 @@
 				<v-data-table
 					:headers="headers_hass"
 					:items="hassDevices"
-					single-select
+					show-select
+					select-strategy="single"
 					item-key="id"
 					@click:row="selectDevice"
 					class="elevation-1"
@@ -250,8 +251,8 @@ export default {
 				}
 			})
 		},
-		selectDevice(item, row) {
-			row.select(!row.isSelected)
+		selectDevice(event, { item, toggleSelect, internalItem, index }) {
+			toggleSelect(internalItem, index, event)
 			this.selectedDevice = this.selectedDevice === item ? null : item
 		},
 		async addDevice() {

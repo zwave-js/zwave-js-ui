@@ -8,27 +8,29 @@
 				class="elevation-1"
 			>
 				<template v-slot:top>
-					<v-btn
-						variant="text"
-						color="success"
-						@click="dialogAssociation = true"
-						class="mb-2"
-						>Add</v-btn
-					>
-					<v-btn
-						variant="text"
-						color="error"
-						@click="removeAllAssociations"
-						class="mb-2"
-						>Remove All</v-btn
-					>
-					<v-btn
-						variant="text"
-						color="primary"
-						@click="getAssociations(true)"
-						class="mb-2"
-						>Refresh</v-btn
-					>
+					<div class="d-flex">
+						<v-btn
+							variant="text"
+							color="success"
+							@click="dialogAssociation = true"
+							class="mb-2"
+							>Add</v-btn
+						>
+						<v-btn
+							variant="text"
+							color="error"
+							@click="removeAllAssociations"
+							class="mb-2"
+							>Remove All</v-btn
+						>
+						<v-btn
+							variant="text"
+							color="primary"
+							@click="getAssociations(true)"
+							class="mb-2"
+							>Refresh</v-btn
+						>
+					</div>
 				</template>
 				<template v-slot:[`item.groupId`]="{ item }">
 					{{
@@ -85,11 +87,13 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { getEnumMemberName } from '@zwave-js/shared'
 import { AssociationCheckResult } from '@zwave-js/cc'
 import { getAssociationAddress } from '../../lib/utils'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		DialogAssociation: () =>
-			import('@/components/dialogs/DialogAssociation.vue'),
+		DialogAssociation: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogAssociation.vue'),
+		),
 	},
 	mixins: [InstancesMixin],
 	props: {

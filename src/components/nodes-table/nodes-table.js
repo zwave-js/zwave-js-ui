@@ -247,11 +247,6 @@ export default {
 					)
 				: null
 		},
-		toggleExpanded(item) {
-			this.expanded = this.expanded.includes(item)
-				? this.expanded.filter((i) => i !== item)
-				: [...this.expanded, item]
-		},
 		getRebuildRoutesIcon(status) {
 			switch (status) {
 				case 'done':

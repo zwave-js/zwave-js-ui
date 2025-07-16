@@ -808,26 +808,26 @@ export default {
 
 			return this.$refs.confirm2.open(title, text, options)
 		},
-		showSnackbar(text, color, timeout = 5000) {
-			// Use vuetify-sonner for notifications
+		showSnackbar(text, color, timeout = 3000) {
 			const toastOptions = {
 				duration: timeout,
+				cardProps: {
+					color: 'info',
+					minWidth: '200',
+				},
+				prependIcon: 'info',
 			}
 
-			switch (color) {
-				case 'error':
-					toast.error(text, toastOptions)
-					break
-				case 'success':
-					toast.success(text, toastOptions)
-					break
-				case 'warning':
-					toast.warning(text, toastOptions)
-					break
-				default:
-					toast(text, toastOptions)
-					break
+			const iconMap = {
+				error: 'error',
+				success: 'check_circle',
+				warning: 'warning',
+				info: 'info',
 			}
+			toastOptions.cardProps.color = color || 'info'
+			toastOptions.prependIcon = iconMap[color] || 'info'
+
+			toast(text, toastOptions)
 		},
 		apiRequest(
 			apiName,

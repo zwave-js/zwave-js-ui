@@ -146,7 +146,8 @@
 							:items="framesLimited"
 							:row-props="getRowStyle"
 							@click:row="onRowClick"
-							single-select
+							show-select
+							select-strategy="single"
 							fixed-header
 							dense
 							:height="topPaneHeight - offsetTop"
@@ -820,16 +821,18 @@ export default {
 				this.searchError = true
 			}
 		},
-		onRowClick(frame, { select, isSelected }) {
+		onRowClick(
+			event,
+			{ item, toggleSelect, internalItem, index, isSelected },
+		) {
 			if (isSelected) {
 				this.selectedFrame = null
 				this.autoScroll = true
-				select(false)
 			} else {
-				this.selectedFrame = frame
+				this.selectedFrame = item
 				this.autoScroll = false
-				select(true)
 			}
+			toggleSelect(internalItem, index, event)
 		},
 		getRowStyle(frame) {
 			const style = {

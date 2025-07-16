@@ -10,6 +10,7 @@
 		@click:row="toggleExpanded($event)"
 		item-key="id"
 		class="elevation-1 nodes-table"
+		expand-on-click
 		show-expand
 		show-select
 		:search="search"
