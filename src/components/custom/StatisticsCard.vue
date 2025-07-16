@@ -53,7 +53,7 @@ export default {
 	data() {
 		return {
 			hideNoDataStats: false,
-			defaultColor: this.$vuetify.theme.themes.light.primary,
+			defaultColor: this.$vuetify.theme.current.colors.primary,
 		}
 	},
 	computed: {

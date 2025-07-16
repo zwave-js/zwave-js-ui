@@ -21,8 +21,8 @@
 
 		<!-- <v-overlay
 			:style="{
-				color: $vuetify.theme.dark ? 'white' : 'black',
-				backgroundColor: $vuetify.theme.dark ? 'black' : 'white',
+				color: $vuetify.theme.current.dark ? 'white' : 'black',
+				backgroundColor: $vuetify.theme.current.dark ? 'black' : 'white',
 			}"
 			opacity="0"
 			z-index="9999"
@@ -32,7 +32,7 @@
 				style="position: absolute; top: 10px; right: 10px"
 				icon
 				large
-				:color="$vuetify.theme.dark ? 'white' : 'black'"
+				:color="$vuetify.theme.current.dark ? 'white' : 'black'"
 				@click="showFullscreen = false"
 			>
 				<v-icon>close</v-icon>
