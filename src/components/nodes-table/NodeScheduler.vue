@@ -24,7 +24,6 @@
 					<v-btn
 						v-if="!loading"
 						size="small"
-						variant="outlined"
 						variant="text"
 						color="primary"
 						@click="refresh()"
@@ -34,7 +33,6 @@
 					<v-btn
 						v-else
 						size="small"
-						variant="outlined"
 						variant="text"
 						color="error"
 						@click="cancel()"
@@ -44,7 +42,6 @@
 
 					<v-btn
 						size="small"
-						variant="outlined"
 						variant="text"
 						:disabled="schedule.numSlots <= items.length"
 						color="success"
@@ -55,9 +52,8 @@
 
 					<v-btn
 						size="small"
-						variant="outlined"
-						v-if="mode !== activeMode && items.length > 0"
 						variant="text"
+						v-if="mode !== activeMode && items.length > 0"
 						color="warning"
 						@click="enableMode()"
 						class="mb-2"

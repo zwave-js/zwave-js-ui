@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="_value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="text-h5">New Association</span>
@@ -140,12 +140,12 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	mixins: [InstancesMixin],
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		associations: Array,
 		node: Object,
 	},
 	watch: {
-		value() {
+		modelValue() {
 			this.$refs.form && this.$refs.form.resetValidation()
 			this.resetGroup()
 			this.associationError = ''
@@ -206,6 +206,14 @@ export default {
 			} catch (error) {}
 
 			return groups
+		},
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
 		},
 	},
 	data() {

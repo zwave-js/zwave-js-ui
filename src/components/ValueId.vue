@@ -129,12 +129,7 @@
 						</template>
 						<v-card>
 							<v-card-text class="pa-0">
-								<v-color-picker
-									v-if="menu"
-									hide-mode-switch
-									v-model="color"
-									flat
-								/>
+								<v-color-picker v-if="menu" v-model="color" />
 							</v-card-text>
 						</v-card>
 					</v-menu>
@@ -150,9 +145,9 @@
 				"
 				:items="items"
 				:style="{
-					'max-width': $vuetify.breakpoint.smAndDown
+					'max-width': $vuetify.display.smAndDown
 						? '280px'
-						: $vuetify.breakpoint.smOnly
+						: $vuetify.display.sm
 							? '400px'
 							: 'auto',
 				}"
@@ -182,9 +177,9 @@
 				"
 				:items="items"
 				:style="{
-					'max-width': $vuetify.breakpoint.smAndDown
+					'max-width': $vuetify.display.smAndDown
 						? '280px'
-						: $vuetify.breakpoint.smOnly
+						: $vuetify.display.sm
 							? '400px'
 							: 'auto',
 				}"

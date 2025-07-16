@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" max-width="800px" persistent>
+	<v-dialog v-model="_value" max-width="800px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="text-h5"
@@ -235,18 +235,25 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	components: {},
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		node: Object,
 		socket: Object,
 	},
 	mixins: [InstancesMixin],
 	watch: {
-		value(v) {
+		modelValue(v) {
 			this.init(v)
 		},
 	},
 	computed: {
-		// ...mapState(useBaseStore, ['nodes']),
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 	},
 	data() {
 		return {

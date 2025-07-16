@@ -121,8 +121,11 @@
 								border
 								height="150"
 								width="150"
-								class="lighten-2"
-								:color="isSelected(item) ? 'blue' : ''"
+								:color="
+									isSelected(item)
+										? 'blue-lighten-2'
+										: 'grey-lighten-2'
+								"
 							>
 								<v-card-text
 									class="text-center pa-1 d-flex flex-column"
@@ -298,7 +301,7 @@
 		</v-data-iterator>
 
 		<v-dialog
-			:fullscreen="$vuetify.breakpoint.xs"
+			:fullscreen="$vuetify.display.xs"
 			max-width="1200px"
 			v-model="expandedNodeDialog"
 			persistent

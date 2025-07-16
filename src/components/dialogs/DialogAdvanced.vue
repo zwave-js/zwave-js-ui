@@ -1,7 +1,7 @@
 <template>
 	<v-dialog
 		@keydown.esc="$emit('close')"
-		v-model="value"
+		v-model="_value"
 		persistent
 		max-width="800"
 	>
@@ -15,7 +15,7 @@
 			</v-card-title>
 
 			<v-card-text>
-				<div :class="['action-grid', $vuetify.breakpoint.name]">
+				<div :class="['action-grid', $vuetify.display.name]">
 					<div v-for="(a, i) in actions" :key="i">
 						<v-icon :color="a.color || 'primary'" size="x-large">{{
 							a.icon
@@ -40,17 +40,27 @@
 <script>
 export default {
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		actions: Array,
 		title: {
 			type: String,
 			default: 'Advanced',
 		},
 	},
+	emits: ['close'],
 	data() {
 		return {}
 	},
-	computed: {},
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
+	},
 	methods: {},
 }
 </script>

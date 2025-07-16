@@ -2033,7 +2033,7 @@
 			/>
 		</v-form>
 		<v-row
-			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
+			:justify="$vuetify.display.xs ? 'center' : 'end'"
 			space-be
 			class="sticky-buttons py-3 px-4"
 			:style="{
@@ -2042,7 +2042,7 @@
 		>
 			<v-btn class="mr-2" size="small" color="error" @click="resetConfig">
 				Reset
-				<v-icon end dark>clear</v-icon>
+				<v-icon end>clear</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-2"
@@ -2060,7 +2060,7 @@
 				@click="exportSettings"
 			>
 				Export
-				<v-icon end dark>file_download</v-icon>
+				<v-icon end>file_download</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-5"
@@ -2072,7 +2072,7 @@
 				form="form_settings"
 			>
 				Save
-				<v-icon end dark>save</v-icon>
+				<v-icon end>save</v-icon>
 			</v-btn>
 		</v-row>
 	</v-container>

@@ -5,6 +5,9 @@ import 'vuetify/styles'
 import { md } from 'vuetify/iconsets/md'
 import 'material-design-icons-iconfont/dist/material-design-icons.css' // Ensure you are using css-loader
 
+const inputVariant = 'underlined'
+const defaultColor = 'primary'
+
 const opts = {
 	icons: {
 		defaultSet: 'md',
@@ -29,17 +32,30 @@ const opts = {
 	},
 	// Set default variants for backward compatibility
 	defaults: {
+		VSwitch: { color: defaultColor },
+		VCheckbox: { color: defaultColor },
+		VRadioGroup: { color: defaultColor },
 		VTextField: {
-			variant: 'underlined',
-		},
-		VSelect: {
-			variant: 'underlined',
-		},
-		VCombobox: {
-			variant: 'underlined',
+			variant: inputVariant,
+			color: defaultColor,
 		},
 		VAutocomplete: {
-			variant: 'underlined',
+			variant: inputVariant,
+		},
+		VTextarea: {
+			variant: inputVariant,
+		},
+		VSelect: {
+			variant: inputVariant,
+		},
+		VCombobox: {
+			variant: inputVariant,
+		},
+		VNumberInput: {
+			variant: inputVariant,
+		},
+		VFileInput: {
+			variant: inputVariant,
 		},
 		VBtn: {
 			variant: 'text',

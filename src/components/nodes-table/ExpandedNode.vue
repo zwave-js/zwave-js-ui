@@ -1,7 +1,7 @@
 <template>
 	<div
 		:style="`max-width: calc(100vw - ${
-			$vuetify.breakpoint.lgAndUp ? 120 : 70
+			$vuetify.display.lgAndUp ? 120 : 70
 		}px)`"
 		v-if="node"
 	>
@@ -18,7 +18,7 @@
 				</v-icon>
 				<br />
 				<span
-					v-if="$vuetify.breakpoint.smAndDown"
+					v-if="$vuetify.display.smAndDown"
 					class="comment font-weight-bold text-primary"
 				>
 					{{
@@ -32,7 +32,7 @@
 			</v-col>
 			<v-col
 				:class="
-					$vuetify.breakpoint.smAndDown ? 'text-center' : 'text-end'
+					$vuetify.display.smAndDown ? 'text-center' : 'text-end'
 				"
 			>
 				<v-item-group class="v-btn-toggle">
@@ -92,7 +92,7 @@
 			v-model="currentTab"
 			show-arrows
 			class="bg-transparent mb-4"
-			:direction="$vuetify.breakpoint.mdAndUp ? 'vertical' : undefined"
+			:direction="$vuetify.display.mdAndUp ? 'vertical' : undefined"
 		>
 			<v-tab class="justify-start" key="node">
 				<v-icon size="small" start>widgets</v-icon> Node
@@ -123,7 +123,7 @@
 				<v-icon size="small" start>list_alt</v-icon> Events
 			</v-tab>
 			<v-tab
-				v-if="$vuetify.breakpoint.mdAndUp"
+				v-if="$vuetify.display.mdAndUp"
 				class="justify-start"
 				key="debug"
 			>
@@ -308,7 +308,7 @@
 
 				<!-- TAB DEBUG INFO -->
 				<v-tabs-window-item
-					v-if="$vuetify.breakpoint.mdAndUp"
+					v-if="$vuetify.display.mdAndUp"
 					key="debug"
 					transition="slide-y-transition"
 				>

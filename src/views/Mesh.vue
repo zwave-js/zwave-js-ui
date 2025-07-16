@@ -41,7 +41,7 @@
 		</v-overlay> -->
 
 		<node-panel
-			v-if="$vuetify.breakpoint.mdAndUp"
+			v-if="$vuetify.display.mdAndUp"
 			:node="selectedNode"
 			:socket="socket"
 			v-model="showProperties"
@@ -199,7 +199,7 @@ export default {
 		async nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode
-			if (this.$vuetify.breakpoint.mdAndUp && this.showProperties) {
+			if (this.$vuetify.display.mdAndUp && this.showProperties) {
 				await this.$nextTick()
 				this.makeDivDraggable()
 			}

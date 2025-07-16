@@ -213,14 +213,27 @@
 						hint="Ex: '10s' (10 seconds)"
 						persistent-hint
 						v-model.trim="options.transitionDuration"
-						append-icon="clear"
-						@click:append="
-							options.transitionDuration =
-								node.defaultTransitionDuration || ''
-						"
-						append-icon="save"
-						@click:append="setDefaults('transitionDuration')"
-					></v-text-field>
+					>
+						<template v-slot:append>
+							<v-btn
+								icon
+								size="small"
+								@click="
+									options.transitionDuration =
+										node.defaultTransitionDuration || ''
+								"
+							>
+								<v-icon>clear</v-icon>
+							</v-btn>
+							<v-btn
+								icon
+								size="small"
+								@click="setDefaults('transitionDuration')"
+							>
+								<v-icon>save</v-icon>
+							</v-btn>
+						</template>
+					</v-text-field>
 				</v-col>
 				<v-col
 					cols="12"
@@ -232,12 +245,37 @@
 						hint="The volume (for the Sound Switch CC)"
 						persistent-hint
 						v-model.trim="options.volume"
-						append-icon="clear"
-						@click:append="
-							options.volume = node.defaultVolume || ''
-						"
-						append-icon="save"
-						@click:append="setDefaults('volume')"
+					>
+						<template v-slot:append>
+							<v-btn
+								icon
+								size="small"
+								@click="
+									options.volume = node.defaultVolume || ''
+								"
+							>
+								<v-icon>clear</v-icon>
+							</v-btn>
+							<v-btn
+								icon
+								size="small"
+								@click="setDefaults('volume')"
+							>
+								<v-icon>save</v-icon>
+							</v-btn>
+						</template>
+					</v-text-field>
+				</v-col>
+				<v-col
+					cols="12"
+					sm="6"
+					style="max-width: 300px; padding-top: 0"
+				>
+					<v-text-field
+						label="Volume"
+						hint="The volume (for the Sound Switch CC)"
+						persistent-hint
+						v-model.trim="options.volume"
 					></v-text-field>
 				</v-col>
 			</v-row>
@@ -355,7 +393,7 @@
 										</v-col>
 										<v-col
 											:cols="
-												$vuetify.breakpoint.xsOnly
+												$vuetify.display.xs
 													? 4
 													: 3
 											"

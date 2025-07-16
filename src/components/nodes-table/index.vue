@@ -83,7 +83,7 @@
 						</v-card-text>
 						<v-card-actions>
 							<v-btn
-								@click.native="
+								@click="
 									managedNodes.tableColumns =
 										managedNodes.initialTableColumns
 								"
@@ -99,7 +99,7 @@
 							class="my-auto"
 							variant="text"
 							v-bind="props"
-							@click.native="managedNodes.setFilterToSelected()"
+							@click="managedNodes.setFilterToSelected()"
 							:disabled="managedNodes.selected.length === 0"
 							>Filter Selected</v-btn
 						>
@@ -113,7 +113,7 @@
 							class="my-auto"
 							variant="text"
 							v-bind="props"
-							@click.native="managedNodes.reset()"
+							@click="managedNodes.reset()"
 							>Reset Table</v-btn
 						>
 					</template>
@@ -124,8 +124,9 @@
 		<template
 			v-for="column in managedNodes.tableHeaders"
 			v-slot:[`header.${column.value}`]="{ header }"
+			:key="column.value"
 		>
-			<span :key="column.value">
+			<span>
 				<column-filter
 					:column="column"
 					:value="managedNodes.filters[column.value]"
@@ -265,7 +266,6 @@
 				<v-chip
 					size="small"
 					:color="interviewStageColor(`${item.interviewStage}`)"
-					text-color="black"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular

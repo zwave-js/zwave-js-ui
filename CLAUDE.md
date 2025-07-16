@@ -5,21 +5,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build and Development Commands
 
 ### Frontend (UI)
+
 - `npm run dev` - Start development server on port 8092 with hot reloading
 - `npm run build:ui` - Build the Vue.js frontend application
 - `npm run dev-https` - Start development server with HTTPS enabled
 
 ### Backend (API/Server)
+
 - `npm run dev:server` - Start backend server in development mode with nodemon
 - `npm run server` - Start production server using compiled TypeScript
 - `npm run build:server` - Compile TypeScript API code to JavaScript
 - `npm run start` - Start production server from compiled code
 
 ### Full Stack
+
 - `npm run build` - Build both frontend and backend
 - `npm run bundle` - Bundle the application using esbuild
 
 ### Testing and Quality
+
 - `npm run test` - Run all tests (both server and UI)
 - `npm run test:server` - Run backend tests with Mocha
 - `npm run test:ui` - Run frontend tests
@@ -28,6 +32,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - `npm run coverage` - Run tests with coverage reporting
 
 ### Development Tools
+
 - `npm run fake-stick` - Start mock Z-Wave controller for testing
 - `npm run docs` - Serve documentation with Docsify
 - `npm run pkg` - Create binary packages
@@ -36,6 +41,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Architecture
 
 ### Technology Stack
+
 - **Backend**: Node.js, Express, TypeScript, Socket.IO, MQTT, Z-Wave JS
 - **Frontend**: Vue 2.7, Vuetify, Pinia (state management)
 - **Build Tools**: Vite (frontend), esbuild (backend), TypeScript
@@ -43,6 +49,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Core Components
 
 #### Backend Architecture (`api/`)
+
 - **app.ts**: Main Express application with middleware, routing, and Socket.IO setup
 - **lib/ZwaveClient.ts**: Z-Wave JS driver integration and device management
 - **lib/Gateway.ts**: Core gateway logic connecting Z-Wave to MQTT
@@ -52,6 +59,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **lib/ZnifferManager.ts**: Z-Wave network sniffing functionality
 
 #### Frontend Architecture (`src/`)
+
 - **main.js**: Vue application entry point
 - **App.vue**: Root component
 - **views/**: Page components (ControlPanel, Settings, Mesh, etc.)
@@ -60,6 +68,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **router/**: Vue Router configuration
 
 #### Key Directories
+
 - **api/**: TypeScript backend code
 - **src/**: Vue frontend code
 - **server/**: Compiled JavaScript backend (build output)
@@ -70,35 +79,41 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Development Patterns
 
 #### API Structure
+
 - RESTful APIs under `/api/` prefix
 - Socket.IO events for real-time communication
 - JWT authentication when enabled
 - Rate limiting on sensitive endpoints
 
 #### Z-Wave Integration
+
 - Uses Z-Wave JS library for device communication
 - Gateway pattern translates Z-Wave events to MQTT
 - Supports both named and value ID based topics
 - Home Assistant MQTT discovery integration
 
 #### State Management
+
 - Backend state managed through Z-Wave JS and custom stores
 - Frontend uses Pinia for reactive state
 - Real-time updates via Socket.IO events
 
 ### Configuration and Settings
+
 - Settings stored in `store/settings.json`
 - Runtime configuration through environment variables
 - Custom device configurations in `store/customDevices.json`
 - Backup configurations in `store/backups/`
 
 ### Testing Strategy
+
 - Backend tests use Mocha with TypeScript support
 - Frontend tests use Mocha with Babel
 - Test files use `.test.ts` or `.test.js` extensions
 - Coverage reporting with c8
 
 ### Build and Deployment
+
 - Backend compiled from TypeScript to JavaScript
 - Frontend bundled with Vite
 - Docker support with multi-stage builds
@@ -125,6 +140,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Vue 3 Migration Progress
 
 ### ✅ Completed
+
 - Updated package.json dependencies: Vue 3, Vuetify 3, Vue Router 4, vuedraggable v4
 - Replaced `v-snackbars` with `vuetify-sonner` for notifications
 - Updated build tools: `@vitejs/plugin-vue` (replacing vue2 plugin), Vite 6
@@ -141,6 +157,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Development Server:** Now successfully starts with Vue 3 + Vuetify 3
 
 ### ✅ Additional Completed
+
 - **Systematic Vuetify Component Migration:**
   - Fixed all `v-subheader` → `v-list-subheader` (22 instances across 6 files)
   - Fixed all `v-list-item-icon` → template slots (6 instances)
@@ -153,6 +170,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   - Fixed Vue 3 template key placement (1 instance)
 
 ### ✅ Recently Completed (Major Cleanup)
+
 - **v-list-item-content** replacement (15+ instances across 3 files)
 - **v-tabs-items/v-tab-item** updates (9 instances across 2 files)
 - **lazy-validation** removal (7 instances across 5 dialog files)
@@ -165,6 +183,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **unused imports** cleanup (1 instance)
 
 ### 🔄 Final Remaining Issues (28 → down from 204 - 86% reduction!)
+
 - **hide-mode-switch/flat** props (ValueId.vue - 2 instances)
 - **@change** event updates (ListInput.vue - 1 instance)
 - **v-list-item-content** (DialogHealthCheck.vue - 1 instance)
@@ -177,6 +196,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **minor parsing errors** (6 instances)
 
 ### 📋 Manual Migration Tasks Required
+
 1. Update all Vue components to use Vue 3 Composition API patterns
 2. Replace `v-model` with `v-model:modelValue` where needed
 3. Update all Vuetify components per migration guide

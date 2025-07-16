@@ -284,7 +284,7 @@
 		</v-speed-dial>
 
 		<v-dialog
-			:fullscreen="$vuetify.breakpoint.xs"
+			:fullscreen="$vuetify.display.xs"
 			max-width="1200px"
 			v-model="expandedNodeDialog"
 			persistent

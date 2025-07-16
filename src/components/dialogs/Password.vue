@@ -92,14 +92,15 @@
 export default {
 	name: 'Password',
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		password: Object,
 	},
 	watch: {
-		value() {
+		modelValue() {
 			this.$refs.form && this.$refs.form.reset()
 		},
 	},
+	emits: ['update:modelValue', 'updatePassword', 'close'],
 	data() {
 		return {
 			valid: true,

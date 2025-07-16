@@ -4,7 +4,7 @@
 			v-if="$route.meta.requiresAuth && auth !== undefined && !hideTopbar"
 		>
 			<v-navigation-drawer
-				v-if="!navTabs || $vuetify.breakpoint.smAndDown"
+				v-if="!navTabs || $vuetify.display.smAndDown"
 				clipped-left
 				:rail="mini"
 				v-model="drawer"
@@ -53,9 +53,9 @@
 			</v-navigation-drawer>
 
 			<v-app-bar>
-				<template v-if="!navTabs || $vuetify.breakpoint.smAndDown">
+				<template v-if="!navTabs || $vuetify.display.smAndDown">
 					<v-app-bar-nav-icon @click.stop="toggleDrawer" />
-					<v-toolbar-title v-if="$vuetify.breakpoint.smAndUp">
+					<v-toolbar-title v-if="$vuetify.display.smAndUp">
 						{{ title }}
 					</v-toolbar-title>
 				</template>
@@ -205,10 +205,7 @@
 
 				<!-- Topbar collapsable menu items -->
 				<!-- Show more button on smaller screens -->
-				<v-menu
-					v-if="$vuetify.breakpoint.xsOnly"
-					location="bottom left"
-				>
+				<v-menu v-if="$vuetify.display.xs" location="bottom left">
 					<template v-slot:activator="{ props }">
 						<v-btn size="small" v-bind="props" icon>
 							<v-icon>more_vert</v-icon>
@@ -329,7 +326,7 @@
 					<v-col
 						class="d-flex pa-0 justify-center text-caption"
 						:style="{
-							fontSize: $vuetify.breakpoint.xsOnly
+							fontSize: $vuetify.display.xs
 								? '0.7rem !important'
 								: '',
 						}"
@@ -781,9 +778,7 @@ export default {
 			}
 		},
 		toggleDrawer() {
-			if (
-				['xs', 'sm', 'md'].indexOf(this.$vuetify.breakpoint.name) >= 0
-			) {
+			if (['xs', 'sm', 'md'].indexOf(this.$vuetify.display.name) >= 0) {
 				this.mini = false
 				this.drawer = !this.drawer
 			} else {
@@ -1614,7 +1609,7 @@ export default {
 		this.checkAuth()
 	},
 	mounted() {
-		if (this.$vuetify.breakpoint.lg || this.$vuetify.breakpoint.xl) {
+		if (this.$vuetify.display.lg || this.$vuetify.display.xl) {
 			this.toggleDrawer()
 		}
 

@@ -102,7 +102,7 @@
 				:item-value="input.itemValue"
 				:item-title="input.itemText"
 				density="compact"
-				@change="addItem"
+				@update:model-value="addItem"
 				@keyup.enter="addItem"
 				chips
 				closable-chips
@@ -120,7 +120,7 @@ import draggable from 'vuedraggable'
 export default {
 	props: {
 		input: Object,
-		value: Array,
+		modelValue: Array,
 		toggleEdit: { type: Boolean, default: true },
 	},
 	components: {
@@ -134,10 +134,10 @@ export default {
 	computed: {
 		items: {
 			get() {
-				return this.value || []
+				return this.modelValue || []
 			},
 			set(val) {
-				this.$emit('input', val)
+				this.$emit('update:modelValue', val)
 			},
 		},
 	},

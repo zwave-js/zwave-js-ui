@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="_value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="text-h5">{{ title }}</span>
@@ -258,7 +258,7 @@ export default {
 			import('vue-prism-editor').then((m) => m.PrismEditor),
 	},
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		gw_type: Number,
 		title: String,
 		editedValue: Object,
@@ -275,6 +275,14 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 		deviceValues() {
 			const device = this.devices.find(
 				(d) => d.value == this.editedValue.device,

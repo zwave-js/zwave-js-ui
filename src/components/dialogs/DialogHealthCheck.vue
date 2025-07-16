@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" max-width="800px" persistent>
+	<v-dialog v-model="modelValue" max-width="800px" persistent>
 		<v-card :loading="loading">
 			<v-card-title>
 				<span class="text-h5"
@@ -57,18 +57,16 @@
 							</template>
 							<v-list density="compact">
 								<v-list-item>
-									<v-list-item-content class="ma-0">
-										<v-list-item-title
-											>Route changes</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>How many times at least one new
-											route was needed. Lower = better,
-											ideally 0. Only available if the
-											controller supports TX
-											reports</v-list-item-subtitle
-										>
-									</v-list-item-content>
+									<v-list-item-title
+										>Route changes</v-list-item-title
+									>
+									<v-list-item-subtitle
+										>How many times at least one new route
+										was needed. Lower = better, ideally 0.
+										Only available if the controller
+										supports TX
+										reports</v-list-item-subtitle
+									>
 								</v-list-item>
 								<v-list-item>
 									<v-list-item-title
@@ -406,18 +404,26 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	components: {},
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		node: Object,
 		socket: Object,
 	},
 	mixins: [InstancesMixin],
 	watch: {
-		value(v) {
+		modelValue(v) {
 			this.init(v)
 		},
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 		isLR() {
 			return this.activeNode?.protocol === Protocols.ZWaveLongRange
 		},

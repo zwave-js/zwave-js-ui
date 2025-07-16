@@ -97,7 +97,7 @@
     "multer": "^1.4.5-lts.1",
     "native-url": "^0.3.4",
     "nprogress": "^0.2.0",
-    "pinia": "^2.1.7",
+    "pinia": "^3.0.2",
     "prismjs": "^1.29.0",
     "qr-scanner": "^1.4.2",
     "selfsigned": "^2.4.1",
@@ -179,7 +179,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5",
     "vite": "^6.0.0",
-    "vite-plugin-pwa": "^0.21.0"
+    "vite-plugin-pwa": "^0.21.0",
+    "vite-plugin-vuetify": "^2.1.1"
   },
   "overrides": {
     "rollup": "npm:@rollup/wasm-node"

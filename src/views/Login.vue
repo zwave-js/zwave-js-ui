@@ -3,8 +3,8 @@
 		<v-col elevation="12" cols="12" class="pa-0 fill-height">
 			<v-card
 				class="mx-auto"
-				:class="$vuetify.breakpoint.smAndDown ? '' : 'ml-10'"
-				:width="$vuetify.breakpoint.smAndDown ? '100%' : '500'"
+				:class="$vuetify.display.smAndDown ? '' : 'ml-10'"
+				:width="$vuetify.display.smAndDown ? '100%' : '500'"
 				height="100%"
 				tile
 			>

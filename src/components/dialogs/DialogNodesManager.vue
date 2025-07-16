@@ -572,7 +572,7 @@
 												validPin(s.values.pin) !== true
 											"
 											:suffix="
-												$vuetify.breakpoint.xsOnly
+												$vuetify.display.xs
 													? ''
 													: s.suffix
 											"
@@ -581,7 +581,7 @@
 
 										<code
 											class="code font-weight-bold"
-											v-if="$vuetify.breakpoint.xsOnly"
+											v-if="$vuetify.display.xs"
 										>
 											{{ s.suffix }}
 										</code>

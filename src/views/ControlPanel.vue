@@ -19,7 +19,7 @@
 						</v-btn>
 						<v-btn
 							color="primary"
-							v-if="$vuetify.breakpoint.mdAndUp"
+							v-if="$vuetify.display.mdAndUp"
 							:variant="!compactMode ? 'outlined' : undefined"
 							@click.stop="compactMode = !compactMode"
 						>
@@ -146,7 +146,7 @@ export default {
 				: 'arrow_drop_down'
 		},
 		compact() {
-			return this.$vuetify.breakpoint.smAndDown || this.compactMode
+			return this.$vuetify.display.smAndDown || this.compactMode
 		},
 		compactMode: {
 			get() {

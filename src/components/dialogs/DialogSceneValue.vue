@@ -1,5 +1,5 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="_value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
 				<span class="text-h5">Add association</span>
@@ -104,15 +104,25 @@ export default {
 		ValueID: () => import('@/components/ValueId.vue'),
 	},
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		title: String,
 		editedValue: Object,
 		nodes: Array,
 	},
 	watch: {
 		// eslint-disable-next-line no-unused-vars
-		value(val) {
+		modelValue(val) {
 			this.$refs.form && this.$refs.form.resetValidation()
+		},
+	},
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
 		},
 	},
 	data() {
