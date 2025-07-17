@@ -233,7 +233,7 @@
 				<v-btn-toggle
 					class="my-2"
 					v-model="modelValue.newValue"
-					rounded
+					rounded="xl"
 				>
 					<v-btn
 						variant="outlined"
@@ -293,6 +293,7 @@
 					<v-btn
 						max-width="100%"
 						size="small"
+						variant="flat"
 						v-bind="props"
 						color="primary"
 						@click="updateValue(modelValue)"

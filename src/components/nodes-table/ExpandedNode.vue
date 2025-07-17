@@ -3,6 +3,7 @@
 		:style="`max-width: calc(100vw - ${
 			$vuetify.display.lgAndUp ? 120 : 70
 		}px)`"
+		class="mx-2"
 		v-if="node"
 	>
 		<v-row class="mt-2" align="center">
