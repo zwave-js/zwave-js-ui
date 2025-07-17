@@ -196,8 +196,10 @@
 						<h1 class="text-uppercase">{{ meta }}</h1>
 						<p class="text-caption">
 							<v-btn
+								class="ma-2"
 								v-if="meta === 'manual'"
 								:href="nodeMetadata[meta]"
+								variant="flat"
 								color="primary"
 							>
 								DOWNLOAD
