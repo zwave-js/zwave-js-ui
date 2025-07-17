@@ -3,8 +3,9 @@
 		<v-container fluid class="pa-4">
 			<v-row class="py-4 align-center" no-gutters>
 				<v-col :class="compact ? 'text-center' : 'text-end'">
-					<v-item-group class="v-btn-toggle">
+					<v-btn-group multiple>
 						<v-btn
+							:active="showControllerStatistics"
 							color="primary"
 							variant="outlined"
 							@click="toggleControllerStatistics"
@@ -20,12 +21,13 @@
 						<v-btn
 							color="primary"
 							v-if="$vuetify.display.mdAndUp"
-							:variant="!compactMode ? 'outlined' : undefined"
+							variant="flat"
+							:active="compactMode"
 							@click.stop="compactMode = !compactMode"
 						>
 							Compact
 						</v-btn>
-					</v-item-group>
+					</v-btn-group>
 				</v-col>
 			</v-row>
 			<v-expand-transition>

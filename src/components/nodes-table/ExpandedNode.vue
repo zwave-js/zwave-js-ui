@@ -33,7 +33,7 @@
 			<v-col
 				:class="$vuetify.display.smAndDown ? 'text-center' : 'text-end'"
 			>
-				<v-item-group class="v-btn-toggle">
+				<v-btn-group class="ml-2" multiple>
 					<v-btn
 						color="primary"
 						variant="outlined"
@@ -58,7 +58,7 @@
 					>
 						Advanced
 					</v-btn>
-				</v-item-group>
+				</v-btn-group>
 			</v-col>
 		</v-row>
 
