@@ -17,7 +17,7 @@
 			:search="search"
 			v-model="selected"
 			item-key="id"
-			:sort-by="sortBy.toLowerCase()"
+			:sort-by="[sortBy.toLowerCase()]"
 			:sort-desc="sortDesc"
 			hide-default-footer
 			:itemsPerPage="-1"
@@ -75,7 +75,7 @@
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
-							<v-icon class="text-h1">mdi-image-search</v-icon>
+							<v-icon class="text-h1">search</v-icon>
 							<h3 class="font-weight-light">No nodes Found</h3>
 						</v-col>
 					</v-row>
@@ -86,7 +86,7 @@
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
-							<v-icon class="text-h1">mdi-nodes-search</v-icon>
+							<v-icon class="text-h1">search</v-icon>
 							<h3 class="font-weight-light">No nodes Found</h3>
 						</v-col>
 					</v-row>
@@ -111,20 +111,20 @@
 					<v-row justify="center" class="pa-0">
 						<v-col
 							v-for="item in items"
-							:key="item.id"
+							:key="item.raw.id"
 							width="170px"
 							style="max-width: 170px"
 						>
 							<v-card
-								@click.stop="showNodeDialog(item)"
+								@click.stop="showNodeDialog(item.raw)"
 								hover
 								border
 								height="150"
 								width="150"
 								:color="
 									isSelected(item)
-										? 'blue-lighten-2'
-										: 'grey-lighten-2'
+										? $vuetify.theme.current.colors.primary
+										: $vuetify.theme.current.colors.surface
 								"
 							>
 								<v-card-text
@@ -136,7 +136,10 @@
 									>
 										<strong
 											@click.stop="
-												select(item, !isSelected(item))
+												select(
+													[item],
+													!isSelected(item),
+												)
 											"
 											title="Click to select"
 											style="
@@ -147,46 +150,50 @@
 												border-radius: 4px;
 											"
 										>
-											{{ padId(item.id) }}
+											{{ padId(item.raw.id) }}
 										</strong>
 
 										<rich-value
-											:value="powerRichValue(item)"
+											:value="powerRichValue(item.raw)"
 										/>
 
 										<rich-value
 											:value="
-												rebuildRoutesRichValue(item)
+												rebuildRoutesRichValue(item.raw)
 											"
 										/>
 
 										<rich-value
-											:value="securityRichValue(item)"
+											:value="securityRichValue(item.raw)"
 										/>
 
 										<rich-value
-											:value="readyRichValue(item)"
+											:value="readyRichValue(item.raw)"
 										/>
 									</v-row>
 
 									<span
 										class="text-caption pb-0 font-weight-bold text-primary text-truncate text-capitalize"
-										>{{ item._name || '---' }}
+										>{{ item.raw._name || '---' }}
 									</span>
 									<span
 										class="text-caption pb-0 font-weight-bold text-truncate text-capitalize"
-										>{{ item.loc || '&#8205;' }}
+										>{{ item.raw.loc || '&#8205;' }}
 									</span>
 
 									<v-badge
 										bordered
-										:content="'v' + item.firmwareVersion"
-										:model-value="!!item.firmwareVersion"
+										:content="
+											'v' + item.raw.firmwareVersion
+										"
+										:model-value="
+											!!item.raw.firmwareVersion
+										"
 										:offset="[50, 20]"
 									>
 										<div
 											v-if="
-												item.interviewStage ===
+												item.raw.interviewStage ===
 												'Complete'
 											"
 										>
@@ -201,7 +208,7 @@
 														<rich-value
 															:value="
 																statusRichValue(
-																	item,
+																	item.raw,
 																)
 															"
 														/>
@@ -211,13 +218,13 @@
 													style="
 														white-space: pre-wrap;
 													"
-													v-text="nodeInfo(item)"
+													v-text="nodeInfo(item.raw)"
 												>
 												</span>
 											</v-tooltip>
 
 											<reinterview-badge
-												:node="item"
+												:node="item.raw"
 												:b-style="{
 													position: 'absolute',
 													top: '0',
@@ -245,7 +252,7 @@
 												<span
 													>Interview stage:
 													{{
-														item.interviewStage
+														item.raw.interviewStage
 													}}</span
 												>
 											</v-tooltip>
@@ -254,14 +261,14 @@
 
 									<div
 										v-if="
-											item.firmwareUpdate &&
-											!item.isControllerNode
+											item.raw.firmwareUpdate &&
+											!item.raw.isControllerNode
 										"
 										class="mt-2"
 									>
 										<v-progress-linear
 											:model-value="
-												item.firmwareUpdate.progress
+												item.raw.firmwareUpdate.progress
 											"
 											height="5"
 											class="mt-1"
@@ -272,24 +279,26 @@
 											class="text-caption font-weight-bold mb-0 mt-1"
 										>
 											{{
-												item.firmwareUpdate.currentFile
+												item.raw.firmwareUpdate
+													.currentFile
 											}}/{{
-												item.firmwareUpdate.totalFiles
-											}}: {{ getProgress(item) }}%
+												item.raw.firmwareUpdate
+													.totalFiles
+											}}: {{ getProgress(item.raw) }}%
 										</p>
 									</div>
 
 									<statistics-arrows
 										v-else
-										:node="item"
+										:node="item.raw"
 									></statistics-arrows>
 								</v-card-text>
 
 								<!-- <v-checkbox
                   hide-details
                   dense
-                  :active="isSelected(item)"
-                  @change="(v) => select(item, v)"
+                  :active="isSelected(item.raw)"
+                  @change="(v) => select(item.raw, v)"
                   @click.stop
                   style="position: absolute; right: 0px; top: 0px"
                 ></v-checkbox> -->
@@ -310,11 +319,12 @@
 			<v-card min-height="90vh">
 				<v-fab
 					style="position: absolute; right: 5px; top: 5px"
-					size="x-small"
+					size="small"
+					variant="text"
 					@click="closeDialog()"
 					icon="close"
 				/>
-				<v-card-text class="pt-3">
+				<v-card-text class="pt-5">
 					<expanded-node :node="expandedNode" :socket="socket" />
 				</v-card-text>
 			</v-card>
@@ -385,23 +395,23 @@ export default {
 			sortBy: 'id',
 			keys: [
 				{
-					text: 'ID',
+					title: 'ID',
 					value: 'id',
 				},
 				{
-					text: 'Name',
+					title: 'Name',
 					value: 'name',
 				},
 				{
-					text: 'Location',
+					title: 'Location',
 					value: 'loc',
 				},
 				{
-					text: 'Status',
+					title: 'Status',
 					value: 'status',
 				},
 				{
-					text: 'Ready',
+					title: 'Ready',
 					value: 'ready',
 				},
 			],
