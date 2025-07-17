@@ -1,13 +1,13 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="_value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="headline">{{ title }}</span>
+				<span class="text-h5">{{ title }}</span>
 			</v-card-title>
 
 			<v-card-text>
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form v-model="valid" ref="form" validate-on="lazy">
 						<v-row>
 							<v-col cols="12">
 								<v-select
@@ -15,7 +15,7 @@
 									label="Device"
 									required
 									:rules="[required]"
-									item-text="name"
+									item-title="name"
 									:items="devices"
 								></v-select>
 							</v-col>
@@ -31,7 +31,7 @@
 									required
 									return-object
 									:rules="[required]"
-									item-text="label"
+									item-title="label"
 									item-value="id"
 									:items="deviceValues"
 								>
@@ -44,22 +44,19 @@
 										}}
 									</template>
 									<template v-slot:item="{ item }">
-										<v-list-item-content>
-											<v-list-item-title>{{
-												(item.label || item.id) +
-												(item.endpoint > 0
-													? ' - Endpoint ' +
-														item.endpoint
-													: '')
-											}}</v-list-item-title>
-											<v-list-item-subtitle
-												style="max-width: 500px"
-												class="text-truncate text-no-wrap"
-												>{{
-													item.description
-												}}</v-list-item-subtitle
-											>
-										</v-list-item-content>
+										<v-list-item-title>{{
+											(item.label || item.id) +
+											(item.endpoint > 0
+												? ' - Endpoint ' + item.endpoint
+												: '')
+										}}</v-list-item-title>
+										<v-list-item-subtitle
+											style="max-width: 500px"
+											class="text-truncate text-no-wrap"
+											>{{
+												item.description
+											}}</v-list-item-subtitle
+										>
 									</template>
 								</v-select>
 							</v-col>
@@ -74,7 +71,7 @@
 									v-model="editedValue.device_class"
 									label="Device Class"
 									hint="Specify a device class for Home assistant"
-									item-text="name"
+									item-title="name"
 									:items="deviceClasses"
 								></v-select>
 							</v-col>
@@ -225,13 +222,16 @@
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Cancel</v-btn
 				>
 				<v-btn
-					color="blue darken-1"
-					text
-					@click="$refs.form.validate() && $emit('save')"
+					color="blue-darken-1"
+					variant="text"
+					@click="handleSave"
 					>{{ isNew ? 'Add' : 'Update' }}</v-btn
 				>
 			</v-card-actions>
@@ -258,7 +258,7 @@ export default {
 			import('vue-prism-editor').then((m) => m.PrismEditor),
 	},
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		gw_type: Number,
 		title: String,
 		editedValue: Object,
@@ -275,6 +275,14 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 		deviceValues() {
 			const device = this.devices.find(
 				(d) => d.value == this.editedValue.device,
@@ -378,6 +386,12 @@ export default {
 		},
 		isSensor(v) {
 			return v && (v.commandClass === 0x31 || v.commandClass === 0x32)
+		},
+		async handleSave() {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
+				this.$emit('save')
+			}
 		},
 	},
 }

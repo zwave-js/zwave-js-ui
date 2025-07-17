@@ -35,12 +35,12 @@ const testPropDefs = {
 	},
 }
 const testItemHeaders = [
-	{ value: 'id', text: 'ID', type: 'number', groupable: false },
-	{ value: 'name', text: 'Name', type: 'string', groupable: true },
-	{ value: 'value', text: 'Value', type: 'string', groupable: true },
+	{ value: 'id', title: 'ID', type: 'number', groupable: false },
+	{ value: 'name', title: 'Name', type: 'string', groupable: true },
+	{ value: 'value', title: 'Value', type: 'string', groupable: true },
 	{
 		value: 'nestedValue',
-		text: 'Nested value',
+		title: 'Nested value',
 		type: 'string',
 		groupable: true,
 		customValue: testPropDefs.nestedValue.customValue,
@@ -176,7 +176,7 @@ describe('ManagedItems', () => {
 				'test_',
 			)
 			expect(managedItems.allTableHeaders).to.be.eql([
-				{ text: 'id', type: 'string', value: 'id', groupable: true },
+				{ title: 'id', type: 'string', value: 'id', groupable: true },
 			])
 		})
 		it('returns table headers using given values', () => {
@@ -193,10 +193,10 @@ describe('ManagedItems', () => {
 				{ name: 'info', visible: false },
 			]
 			expect(managedItems.tableHeaders).to.eql([
-				{ value: 'id', text: 'ID', type: 'number', groupable: false },
+				{ value: 'id', title: 'ID', type: 'number', groupable: false },
 				{
 					value: 'value',
-					text: 'Value',
+					title: 'Value',
 					type: 'string',
 					groupable: true,
 				},

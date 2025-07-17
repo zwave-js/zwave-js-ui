@@ -1,11 +1,14 @@
 <template>
-	<v-menu :value="show" :close-on-content-click="false" :offset-y="true">
-		<template v-slot:activator="{ on, attrs }">
+	<v-menu
+		:model-value="show"
+		:close-on-content-click="false"
+		location="bottom"
+	>
+		<template v-slot:activator="{ props }">
 			<v-icon
-				small
+				size="small"
 				v-on:click="showOptions"
-				v-bind="attrs"
-				v-on="on"
+				v-bind="props"
 				title="Filter options..."
 				style="padding-right: 2px; padding-bottom: 3px"
 			>
@@ -13,7 +16,7 @@
 			</v-icon>
 		</template>
 		<v-card>
-			<v-icon small v-on:click="hideOptions" right>close</v-icon>
+			<v-icon size="small" v-on:click="hideOptions" end>close</v-icon>
 			<column-filter-boolean
 				v-if="column.type == 'boolean'"
 				:value="value"
@@ -41,7 +44,9 @@
 				label="Group values"
 				class="ml-4"
 				:value="groupBy"
-				@change="$emit('update:group-by', $event ? [column.value] : [])"
+				@update:model-value="
+					$emit('update:group-by', $event ? [column.value] : [])
+				"
 			></v-checkbox>
 			<v-card-actions>
 				<v-btn @click="clearFilter">Clear</v-btn>
@@ -54,14 +59,23 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 
 export default {
 	components: {
-		ColumnFilterBoolean: () => import('./ColumnFilterBoolean.vue'),
-		ColumnFilterDate: () => import('./ColumnFilterDate.vue'),
-		ColumnFilterNumber: () => import('./ColumnFilterNumber.vue'),
-		ColumnFilterString: () => import('./ColumnFilterString.vue'),
+		ColumnFilterBoolean: defineAsyncComponent(
+			() => import('./ColumnFilterBoolean.vue'),
+		),
+		ColumnFilterDate: defineAsyncComponent(
+			() => import('./ColumnFilterDate.vue'),
+		),
+		ColumnFilterNumber: defineAsyncComponent(
+			() => import('./ColumnFilterNumber.vue'),
+		),
+		ColumnFilterString: defineAsyncComponent(
+			() => import('./ColumnFilterString.vue'),
+		),
 	},
 	props: {
 		value: {

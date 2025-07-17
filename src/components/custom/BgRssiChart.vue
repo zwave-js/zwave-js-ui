@@ -223,9 +223,6 @@ export default {
 	beforeUnmount() {
 		this.destroy()
 	},
-	beforeDestroy() {
-		this.destroy()
-	},
 	methods: {
 		checkRssiError(v) {
 			return isRssiError(v) ? null : v
@@ -324,10 +321,14 @@ export default {
 				plugins: [touchZoomPlugin()],
 				axes: [
 					{
-						stroke: this.$vuetify.theme.dark ? '#fff' : '#000',
+						stroke: this.$vuetify.theme.current.dark
+							? '#fff'
+							: '#000',
 					},
 					{
-						stroke: this.$vuetify.theme.dark ? '#fff' : '#000',
+						stroke: this.$vuetify.theme.current.dark
+							? '#fff'
+							: '#000',
 					},
 				],
 				series: [

@@ -7,7 +7,7 @@
 						:indeterminate="value.boolValue == null"
 						v-model="value.boolValue"
 						label="Boolean value"
-						@change="change"
+						@update:model-value="change"
 					></v-checkbox>
 				</v-col>
 			</v-row>

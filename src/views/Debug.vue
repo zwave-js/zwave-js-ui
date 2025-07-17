@@ -2,34 +2,26 @@
 	<v-container grid-list-md>
 		<v-row>
 			<v-col style="max-width: 260px; margin-top: -2px">
-				<v-btn-toggle dense multiple>
-					<v-tooltip
-						bottom
+				<v-btn-toggle density="compact" multiple>
+					<v-btn
 						v-for="button in buttons"
 						:key="button.label"
-						:target="`#${button.id}`"
+						v-tooltip:bottom="button.tooltip"
+						:id="button.id"
+						:color="button.color"
+						:disabled="button.disabled"
+						@click="button.action"
 					>
-						<template v-slot:activator="{ on }">
-							<v-btn
-								:id="button.id"
-								:color="button.color"
-								:disabled="button.disabled"
-								@click="button.action"
-								v-on="on"
-							>
-								<v-icon>{{ button.icon }}</v-icon>
-							</v-btn>
-						</template>
-						<span>{{ button.tooltip }}</span>
-					</v-tooltip>
+						<v-icon>{{ button.icon }}</v-icon>
+					</v-btn>
 				</v-btn-toggle>
 			</v-col>
 
 			<v-col class="pa-2" cols="6">
 				<v-text-field
 					flat
-					outlined
-					dense
+					variant="outlined"
+					density="compact"
 					single-line
 					style="max-width: 300px"
 					label="Filter logs"
@@ -212,7 +204,7 @@ export default {
 			}
 		})
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.socket) {
 			// unbind events
 			this.socket.off(socketEvents.debug)

@@ -4,18 +4,13 @@
 		v-model="managedNodes.selected"
 		:headers="managedNodes.tableHeaders"
 		:items="managedNodes.filteredItems"
-		:footer-props="{
-			itemsPerPageOptions: [10, 20, 50, 100, -1],
-		}"
-		:expanded.sync="expanded"
-		:value="managedNodes.selected"
-		:options="managedNodes.tableOptions"
+		v-model:expanded="expanded"
+		v-model:options="managedNodes.tableOptions"
 		:custom-sort="sort"
-		@update:options="managedNodes.tableOptions = $event"
-		@input="managedNodes.selected = $event"
 		@click:row="toggleExpanded($event)"
 		item-key="id"
 		class="elevation-1 nodes-table"
+		expand-on-click
 		show-expand
 		show-select
 		:search="search"
@@ -26,10 +21,8 @@
 				<v-text-field
 					v-model="search"
 					clearable
-					flat
-					solo-inverted
+					variant="solo"
 					hide-details
-					single-line
 					class="ma-2"
 					style="max-width: 250px; min-width: 250px"
 					prepend-inner-icon="search"
@@ -38,18 +31,18 @@
 				<v-menu
 					v-model="headersMenu"
 					:close-on-content-click="false"
-					@input="
+					@update:model-value="
 						managedNodes.tableColumns = managedNodes.tableColumns
 					"
 				>
-					<template v-slot:activator="{ on }">
+					<template v-slot:activator="{ props }">
 						<v-btn
 							class="my-auto"
 							color="primary"
-							outlined
-							v-on="on"
+							variant="outlined"
+							v-bind="props"
 						>
-							<v-icon left small>table_chart</v-icon>
+							<v-icon start size="small">table_chart</v-icon>
 							Columns
 						</v-btn>
 					</template>
@@ -58,32 +51,37 @@
 							<draggable
 								v-model="managedNodes.tableColumns"
 								handle=".handle"
+								item-key="name"
 							>
-								<v-checkbox
-									v-for="col in managedNodes.tableColumns"
-									:key="col.name"
-									v-model="col.visible"
-									:value="col.visible"
-									hide-details
-									:label="
-										managedNodes.propDefs[col.name].label
-									"
-									:input-value="col.visible"
-									@change="col.visible = !!$event"
-								>
-									<template v-slot:prepend>
-										<v-icon
-											class="handle"
-											style="cursor: move"
-											>drag_indicator</v-icon
-										>
-									</template>
-								</v-checkbox>
+								<template #item="{ element: col }">
+									<v-checkbox
+										:key="col.name"
+										v-model="col.visible"
+										:value="col.visible"
+										hide-details
+										:label="
+											managedNodes.propDefs[col.name]
+												.label
+										"
+										:model-value="col.visible"
+										@update:model-value="
+											col.visible = !!$event
+										"
+									>
+										<template v-slot:prepend>
+											<v-icon
+												class="handle"
+												style="cursor: move"
+												>drag_indicator</v-icon
+											>
+										</template>
+									</v-checkbox>
+								</template>
 							</draggable>
 						</v-card-text>
 						<v-card-actions>
 							<v-btn
-								@click.native="
+								@click="
 									managedNodes.tableColumns =
 										managedNodes.initialTableColumns
 								"
@@ -92,28 +90,28 @@
 						</v-card-actions>
 					</v-card>
 				</v-menu>
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
 							color="primary"
 							class="my-auto"
-							text
-							v-on="on"
-							@click.native="managedNodes.setFilterToSelected()"
+							variant="text"
+							v-bind="props"
+							@click="managedNodes.setFilterToSelected()"
 							:disabled="managedNodes.selected.length === 0"
 							>Filter Selected</v-btn
 						>
 					</template>
 					<span>Show only selected nodes</span>
 				</v-tooltip>
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
+				<v-tooltip location="bottom">
+					<template v-slot:activator="{ props }">
 						<v-btn
 							color="primary"
 							class="my-auto"
-							text
-							v-on="on"
-							@click.native="managedNodes.reset()"
+							variant="text"
+							v-bind="props"
+							@click="managedNodes.reset()"
 							>Reset Table</v-btn
 						>
 					</template>
@@ -124,8 +122,9 @@
 		<template
 			v-for="column in managedNodes.tableHeaders"
 			v-slot:[`header.${column.value}`]="{ header }"
+			:key="column.value"
 		>
-			<span :key="column.value">
+			<span>
 				<column-filter
 					:column="column"
 					:value="managedNodes.filters[column.value]"
@@ -141,11 +140,11 @@
 			v-slot:[`group.header`]="{ group, headers, toggle, remove, isOpen }"
 		>
 			<td :colspan="headers.length">
-				<v-btn @click="toggle" x-small icon :ref="group">
+				<v-btn @click="toggle" size="x-small" icon :ref="group">
 					<v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
 				</v-btn>
 				<span>{{ groupValue(group) }}</span>
-				<v-btn x-small icon @click="remove"
+				<v-btn size="x-small" icon @click="remove"
 					><v-icon>close</v-icon></v-btn
 				>
 			</td>
@@ -238,11 +237,11 @@
 						getRebuildRoutesIcon(item.rebuildRoutesProgress) !==
 						undefined
 					"
-					bottom
+					location="bottom"
 				>
-					<template v-slot:activator="{ on }">
+					<template v-slot:activator="{ props }">
 						<v-icon
-							v-on="on"
+							v-bind="props"
 							class="ml-3"
 							v-text="
 								getRebuildRoutesIcon(item.rebuildRoutesProgress)
@@ -263,9 +262,8 @@
 		<template v-slot:[`item.interviewStage`]="{ item }">
 			<div v-if="!item.isControllerNode" style="text-align: center">
 				<v-chip
-					small
+					size="small"
 					:color="interviewStageColor(`${item.interviewStage}`)"
-					text-color="black"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular
@@ -282,16 +280,16 @@
 			<div style="text-align: center">
 				<div v-if="item.firmwareUpdate && !item.isControllerNode">
 					<v-progress-circular
-						:value="item.firmwareUpdate.progress"
+						:model-value="item.firmwareUpdate.progress"
 						size="50"
 						class="mt-1"
 						color="primary"
 					>
-						<span class="caption">{{
+						<span class="text-caption">{{
 							item.firmwareUpdate.progress
 						}}</span>
 					</v-progress-circular>
-					<p class="caption font-weight-bold mb-0 mt-1">
+					<p class="text-caption font-weight-bold mb-0 mt-1">
 						{{ item.firmwareUpdate.currentFile }}/{{
 							item.firmwareUpdate.totalFiles
 						}}: {{ getProgress(item) }}%
@@ -313,11 +311,10 @@
 		<template v-slot:[`item.lastActive`]="{ item }">
 			<statistics-arrows :node="item"></statistics-arrows>
 		</template>
-		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
-			<td :colspan="isMobile ? 1 : headers.length">
+		<template v-slot:[`expanded-row`]="{ columns: headers, item }">
+			<td :colspan="$vuetify.display.xs ? 1 : headers.length">
 				<expanded-node
 					:headers="headers"
-					:isMobile="isMobile"
 					:node="item"
 					:socket="socket"
 				/>
@@ -327,7 +324,7 @@
 </template>
 <script src="./nodes-table.js"></script>
 <style scoped src="./nodes-table.css"></style>
-<style>
+<style lang="scss">
 .nodes-table {
 	table {
 		tr {

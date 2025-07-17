@@ -12,11 +12,12 @@ module.exports = {
 		// https://github.com/vuejs/eslint-plugin-vue#priority-a-essential-error-prevention
 		// consider switching to `plugin:vue/strongly-recommended` or `plugin:vue/recommended` for stricter rules.
 		'eslint:recommended',
-		'plugin:vue/essential',
+		'plugin:vue/vue3-essential',
+		'plugin:vuetify/base',
 		'plugin:prettier/recommended',
 	],
 	// required to lint *.vue files
-	plugins: ['vue', 'babel'],
+	plugins: ['vue', 'babel', 'vuetify'],
 	// add your custom rules here
 	rules: {
 		// allow async-await

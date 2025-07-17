@@ -17,7 +17,7 @@
 			:search="search"
 			v-model="selected"
 			item-key="id"
-			:sort-by="sortBy.toLowerCase()"
+			:sort-by="[sortBy.toLowerCase()]"
 			:sort-desc="sortDesc"
 			hide-default-footer
 			:itemsPerPage="-1"
@@ -32,7 +32,7 @@
 							v-model="search"
 							clearable
 							flat
-							solo-inverted
+							variant="solo-inverted"
 							hide-details
 							single-line
 							class="mx-auto my-1"
@@ -45,7 +45,7 @@
 						<v-select
 							v-model="sortBy"
 							flat
-							solo-inverted
+							variant="solo-inverted"
 							single-line
 							hide-details
 							class="mx-auto my-1"
@@ -61,10 +61,10 @@
 							v-model="sortDesc"
 							mandatory
 						>
-							<v-btn depressed :value="false">
+							<v-btn variant="flat" :value="false">
 								<v-icon>arrow_upward</v-icon>
 							</v-btn>
-							<v-btn depressed :value="true">
+							<v-btn variant="flat" :value="true">
 								<v-icon>arrow_downward</v-icon>
 							</v-btn>
 						</v-btn-toggle>
@@ -75,7 +75,7 @@
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
-							<v-icon class="display-4">mdi-image-search</v-icon>
+							<v-icon class="text-h1">search</v-icon>
 							<h3 class="font-weight-light">No nodes Found</h3>
 						</v-col>
 					</v-row>
@@ -86,7 +86,7 @@
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
-							<v-icon class="display-4">mdi-nodes-search</v-icon>
+							<v-icon class="text-h1">search</v-icon>
 							<h3 class="font-weight-light">No nodes Found</h3>
 						</v-col>
 					</v-row>
@@ -111,18 +111,21 @@
 					<v-row justify="center" class="pa-0">
 						<v-col
 							v-for="item in items"
-							:key="item.id"
+							:key="item.raw.id"
 							width="170px"
 							style="max-width: 170px"
 						>
 							<v-card
-								@click.stop="showNodeDialog(item)"
+								@click.stop="showNodeDialog(item.raw)"
 								hover
-								outlined
+								border
 								height="150"
 								width="150"
-								class="lighten-2"
-								:color="isSelected(item) ? 'blue' : ''"
+								:color="
+									isSelected(item)
+										? $vuetify.theme.current.colors.primary
+										: $vuetify.theme.current.colors.surface
+								"
 							>
 								<v-card-text
 									class="text-center pa-1 d-flex flex-column"
@@ -133,7 +136,10 @@
 									>
 										<strong
 											@click.stop="
-												select(item, !isSelected(item))
+												select(
+													[item],
+													!isSelected(item),
+												)
 											"
 											title="Click to select"
 											style="
@@ -144,65 +150,65 @@
 												border-radius: 4px;
 											"
 										>
-											{{ padId(item.id) }}
+											{{ padId(item.raw.id) }}
 										</strong>
 
 										<rich-value
-											:value="powerRichValue(item)"
+											:value="powerRichValue(item.raw)"
 										/>
 
 										<rich-value
 											:value="
-												rebuildRoutesRichValue(item)
+												rebuildRoutesRichValue(item.raw)
 											"
 										/>
 
 										<rich-value
-											:value="securityRichValue(item)"
+											:value="securityRichValue(item.raw)"
 										/>
 
 										<rich-value
-											:value="readyRichValue(item)"
+											:value="readyRichValue(item.raw)"
 										/>
 									</v-row>
 
 									<span
-										class="caption pb-0 font-weight-bold primary--text text-truncate text-capitalize"
-										>{{ item._name || '---' }}
+										class="text-caption pb-0 font-weight-bold text-primary text-truncate text-capitalize"
+										>{{ item.raw._name || '---' }}
 									</span>
 									<span
-										class="caption pb-0 font-weight-bold text-truncate text-capitalize"
-										>{{ item.loc || '&#8205;' }}
+										class="text-caption pb-0 font-weight-bold text-truncate text-capitalize"
+										>{{ item.raw.loc || '&#8205;' }}
 									</span>
 
 									<v-badge
 										bordered
-										:content="'v' + item.firmwareVersion"
-										:value="!!item.firmwareVersion"
-										offset-x="50"
-										offset-y="20"
-										overlap
+										:content="
+											'v' + item.raw.firmwareVersion
+										"
+										:model-value="
+											!!item.raw.firmwareVersion
+										"
+										:offset="[50, 20]"
 									>
 										<div
 											v-if="
-												item.interviewStage ===
+												item.raw.interviewStage ===
 												'Complete'
 											"
 										>
-											<v-tooltip bottom>
+											<v-tooltip location="bottom">
 												<template
-													v-slot:activator="{
-														on: tooltip,
-													}"
+													v-slot:activator="{ props }"
 												>
 													<div
-														v-on="{ ...tooltip }"
-														class="display-1"
+														v-bind="props"
+														class="text-h4"
 													>
 														<rich-value
 															:value="
 																statusRichValue(
-																	item,
+																	item.raw,
 																)
 															"
 														/>
@@ -212,13 +218,13 @@
 													style="
 														white-space: pre-wrap;
 													"
-													v-text="nodeInfo(item)"
+													v-text="nodeInfo(item.raw)"
 												>
 												</span>
 											</v-tooltip>
 
 											<reinterview-badge
-												:node="item"
+												:node="item.raw"
 												:b-style="{
 													position: 'absolute',
 													top: '0',
@@ -231,24 +237,22 @@
 											@click.stop
 											class="text-center"
 										>
-											<v-tooltip bottom>
+											<v-tooltip location="bottom">
 												<template
-													v-slot:activator="{
-														on: tooltip,
-													}"
+													v-slot:activator="{ props }"
 												>
 													<v-progress-circular
 														indeterminate
 														class="ma-1"
 														size="32"
-														v-on="{ ...tooltip }"
+														v-bind="props"
 														color="primary"
 													></v-progress-circular>
 												</template>
 												<span
 													>Interview stage:
 													{{
-														item.interviewStage
+														item.raw.interviewStage
 													}}</span
 												>
 											</v-tooltip>
@@ -257,14 +261,14 @@
 
 									<div
 										v-if="
-											item.firmwareUpdate &&
-											!item.isControllerNode
+											item.raw.firmwareUpdate &&
+											!item.raw.isControllerNode
 										"
 										class="mt-2"
 									>
 										<v-progress-linear
-											:value="
-												item.firmwareUpdate.progress
+											:model-value="
+												item.raw.firmwareUpdate.progress
 											"
 											height="5"
 											class="mt-1"
@@ -272,27 +276,29 @@
 										>
 										</v-progress-linear>
 										<p
-											class="caption font-weight-bold mb-0 mt-1"
+											class="text-caption font-weight-bold mb-0 mt-1"
 										>
 											{{
-												item.firmwareUpdate.currentFile
+												item.raw.firmwareUpdate
+													.currentFile
 											}}/{{
-												item.firmwareUpdate.totalFiles
-											}}: {{ getProgress(item) }}%
+												item.raw.firmwareUpdate
+													.totalFiles
+											}}: {{ getProgress(item.raw) }}%
 										</p>
 									</div>
 
 									<statistics-arrows
 										v-else
-										:node="item"
+										:node="item.raw"
 									></statistics-arrows>
 								</v-card-text>
 
 								<!-- <v-checkbox
                   hide-details
                   dense
-                  :input-value="isSelected(item)"
-                  @change="(v) => select(item, v)"
+                  :active="isSelected(item.raw)"
+                  @change="(v) => select(item.raw, v)"
                   @click.stop
                   style="position: absolute; right: 0px; top: 0px"
                 ></v-checkbox> -->
@@ -304,23 +310,21 @@
 		</v-data-iterator>
 
 		<v-dialog
-			:fullscreen="$vuetify.breakpoint.xs"
+			:fullscreen="$vuetify.display.xs"
 			max-width="1200px"
 			v-model="expandedNodeDialog"
 			persistent
 			@keydown.exit="closeDialog()"
 		>
 			<v-card min-height="90vh">
-				<v-btn
+				<v-fab
 					style="position: absolute; right: 5px; top: 5px"
-					x-small
+					size="small"
+					variant="text"
 					@click="closeDialog()"
-					icon
-					fab
-				>
-					<v-icon>close</v-icon>
-				</v-btn>
-				<v-card-text class="pt-3">
+					icon="close"
+				/>
+				<v-card-text class="pt-5">
 					<expanded-node :node="expandedNode" :socket="socket" />
 				</v-card-text>
 			</v-card>
@@ -329,7 +333,8 @@
 </template>
 
 <script>
-import colors from 'vuetify/lib/util/colors'
+import { defineAsyncComponent } from 'vue'
+import colors from 'vuetify/util/colors'
 
 import {
 	mdiAlertCircle,
@@ -363,12 +368,18 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
-		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
-		StatisticsArrows: () =>
-			import('@/components/custom/StatisticsArrows.vue'),
-		ReinterviewBadge: () =>
-			import('@/components/custom/ReinterviewBadge.vue'),
+		ExpandedNode: defineAsyncComponent(
+			() => import('@/components/nodes-table/ExpandedNode.vue'),
+		),
+		RichValue: defineAsyncComponent(
+			() => import('@/components/nodes-table/RichValue.vue'),
+		),
+		StatisticsArrows: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsArrows.vue'),
+		),
+		ReinterviewBadge: defineAsyncComponent(
+			() => import('@/components/custom/ReinterviewBadge.vue'),
+		),
 	},
 	watch: {
 		selected() {
@@ -384,23 +395,23 @@ export default {
 			sortBy: 'id',
 			keys: [
 				{
-					text: 'ID',
+					title: 'ID',
 					value: 'id',
 				},
 				{
-					text: 'Name',
+					title: 'Name',
 					value: 'name',
 				},
 				{
-					text: 'Location',
+					title: 'Location',
 					value: 'loc',
 				},
 				{
-					text: 'Status',
+					title: 'Status',
 					value: 'status',
 				},
 				{
-					text: 'Ready',
+					title: 'Ready',
 					value: 'ready',
 				},
 			],

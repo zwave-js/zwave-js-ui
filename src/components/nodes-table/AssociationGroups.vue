@@ -8,27 +8,29 @@
 				class="elevation-1"
 			>
 				<template v-slot:top>
-					<v-btn
-						text
-						color="success"
-						@click="dialogAssociation = true"
-						class="mb-2"
-						>Add</v-btn
-					>
-					<v-btn
-						text
-						color="error"
-						@click="removeAllAssociations"
-						class="mb-2"
-						>Remove All</v-btn
-					>
-					<v-btn
-						text
-						color="primary"
-						@click="getAssociations(true)"
-						class="mb-2"
-						>Refresh</v-btn
-					>
+					<div class="d-flex">
+						<v-btn
+							variant="text"
+							color="success"
+							@click="dialogAssociation = true"
+							class="mb-2"
+							>Add</v-btn
+						>
+						<v-btn
+							variant="text"
+							color="error"
+							@click="removeAllAssociations"
+							class="mb-2"
+							>Remove All</v-btn
+						>
+						<v-btn
+							variant="text"
+							color="primary"
+							@click="getAssociations(true)"
+							class="mb-2"
+							>Refresh</v-btn
+						>
+					</div>
 				</template>
 				<template v-slot:[`item.groupId`]="{ item }">
 					{{
@@ -57,7 +59,10 @@
 					}}
 				</template>
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="error" @click="removeAssociation(item)"
+					<v-icon
+						size="small"
+						color="error"
+						@click="removeAssociation(item)"
 						>delete</v-icon
 					>
 				</template>
@@ -82,11 +87,13 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { getEnumMemberName } from '@zwave-js/shared'
 import { AssociationCheckResult } from '@zwave-js/cc'
 import { getAssociationAddress } from '../../lib/utils'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		DialogAssociation: () =>
-			import('@/components/dialogs/DialogAssociation.vue'),
+		DialogAssociation: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogAssociation.vue'),
+		),
 	},
 	mixins: [InstancesMixin],
 	props: {
@@ -97,11 +104,11 @@ export default {
 			associations: [],
 			dialogAssociation: false,
 			headers: [
-				{ text: 'Endpoint', value: 'endpoint' },
-				{ text: 'Group', value: 'groupId' },
-				{ text: 'Node', value: 'nodeId' },
-				{ text: 'Target Endpoint', value: 'targetEndpoint' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'Endpoint', key: 'endpoint' },
+				{ title: 'Group', key: 'groupId' },
+				{ title: 'Node', key: 'nodeId' },
+				{ title: 'Target Endpoint', key: 'targetEndpoint' },
+				{ title: 'Actions', key: 'actions', sortable: false },
 			],
 		}
 	},
