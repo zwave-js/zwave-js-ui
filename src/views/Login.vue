@@ -8,13 +8,13 @@
 				height="100%"
 				tile
 			>
-				<v-card-title style="">
-					<v-avatar style="border-radius: 0" size="40px">
-						<img src="/logo.svg" alt="Logo" />
-					</v-avatar>
-					<v-toolbar-title style="margin-left: 20px"
-						>Z-Wave JS UI</v-toolbar-title
-					>
+				<v-card-title>
+					<div class="d-flex align-center">
+						<Logo size="50" />
+						<v-toolbar-title style="margin-left: 20px"
+							>Z-Wave JS UI</v-toolbar-title
+						>
+					</div>
 				</v-card-title>
 
 				<v-card-text>
@@ -67,6 +67,7 @@
 						color="primary"
 						style="min-width: 150px; margin: 10px"
 						rounded
+						variant="flat"
 						class="mb-6"
 						type="submit"
 						form="login-form"
@@ -96,8 +97,8 @@ import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'
-
 import { mapActions } from 'pinia'
+import Logo from '@/components/Logo.vue'
 
 const log = logger.get('Login')
 
@@ -106,6 +107,7 @@ export default {
 		ColorScheme: defineAsyncComponent(
 			() => import('@/components/custom/ColorScheme.vue'),
 		),
+		Logo,
 	},
 	data() {
 		return {

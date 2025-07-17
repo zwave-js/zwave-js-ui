@@ -8,27 +8,18 @@
 				:rail="mini"
 				v-model="drawer"
 			>
-				<v-list nav class="py-0">
-					<v-list-item :class="mini && 'px-0'">
-						<template #prepend>
-							<v-avatar size="40">
-								<img
-									style="
-										padding: 4px;
-										border-radius: 0;
-										width: 100%;
-										height: 100%;
-										object-fit: contain;
-									"
-									src="/logo.svg"
-								/>
-							</v-avatar>
-						</template>
+				<v-list nav>
+					<div class="d-flex align-center">
+						<v-list-item :class="mini && 'px-0'">
+							<template #prepend>
+								<Logo size="40" />
+							</template>
 
-						<v-list-item-title>{{
-							'Z-Wave JS UI'
-						}}</v-list-item-title>
-					</v-list-item>
+							<v-list-item-title>{{
+								'Z-Wave JS UI'
+							}}</v-list-item-title>
+						</v-list-item>
+					</div>
 				</v-list>
 				<v-divider></v-divider>
 				<v-list nav>
@@ -427,6 +418,7 @@ import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
 import { uuid } from './lib/utils'
+import Logo from '@/components/Logo.vue'
 
 let socketQueue = []
 
@@ -439,6 +431,7 @@ export default {
 		Confirm,
 		DialogNodesManager,
 		VSonner,
+		Logo,
 	},
 	name: 'app',
 	computed: {
