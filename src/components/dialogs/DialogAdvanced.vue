@@ -7,9 +7,11 @@
 	>
 		<v-card>
 			<v-card-title>
-				<span class="text-h5">{{ title }}</span>
-				<v-spacer></v-spacer>
-				<v-btn icon="close" @click="$emit('close')" />
+				<v-row class="pa-3" align="center">
+					<span class="text-h5">{{ title }}</span>
+					<v-spacer></v-spacer>
+					<v-btn icon="close" @click="$emit('close')" />
+				</v-row>
 			</v-card-title>
 
 			<v-card-text>
