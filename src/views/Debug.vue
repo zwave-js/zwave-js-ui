@@ -1,20 +1,21 @@
 <template>
 	<v-container grid-list-md>
 		<v-row>
-			<v-col style="max-width: 260px; margin-top: -2px">
-				<v-btn-toggle density="compact" multiple>
+			<v-col style="max-width: 280px; margin-top: -2px">
+				<v-btn-group density="compact" multiple>
 					<v-btn
+						size="small"
 						v-for="button in buttons"
 						:key="button.label"
 						v-tooltip:bottom="button.tooltip"
 						:id="button.id"
-						:color="button.color"
+						:color="button.disabled ? 'grey' : button.color"
 						:disabled="button.disabled"
 						@click="button.action"
 					>
 						<v-icon>{{ button.icon }}</v-icon>
 					</v-btn>
-				</v-btn-toggle>
+				</v-btn-group>
 			</v-col>
 
 			<v-col class="pa-2" cols="6">

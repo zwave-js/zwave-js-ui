@@ -182,21 +182,21 @@
 									</span>
 
 									<v-badge
+										v-if="
+											item.raw.interviewStage ===
+											'Complete'
+										"
+										class="align-self-center"
 										bordered
+										offset-y="2"
 										:content="
 											'v' + item.raw.firmwareVersion
 										"
 										:model-value="
 											!!item.raw.firmwareVersion
 										"
-										:offset="[50, 20]"
 									>
-										<div
-											v-if="
-												item.raw.interviewStage ===
-												'Complete'
-											"
-										>
+										<div>
 											<v-tooltip location="bottom">
 												<template
 													v-slot:activator="{ props }"
@@ -232,32 +232,29 @@
 												}"
 											></reinterview-badge>
 										</div>
-										<div
-											v-else
-											@click.stop
-											class="text-center"
-										>
-											<v-tooltip location="bottom">
-												<template
-													v-slot:activator="{ props }"
-												>
-													<v-progress-circular
-														indeterminate
-														class="ma-1"
-														size="32"
-														v-bind="props"
-														color="primary"
-													></v-progress-circular>
-												</template>
-												<span
-													>Interview stage:
-													{{
-														item.raw.interviewStage
-													}}</span
-												>
-											</v-tooltip>
-										</div>
 									</v-badge>
+
+									<div v-else @click.stop class="text-center">
+										<v-tooltip location="bottom">
+											<template
+												v-slot:activator="{ props }"
+											>
+												<v-progress-circular
+													indeterminate
+													class="ma-1"
+													size="32"
+													v-bind="props"
+													color="primary"
+												></v-progress-circular>
+											</template>
+											<span
+												>Interview stage:
+												{{
+													item.raw.interviewStage
+												}}</span
+											>
+										</v-tooltip>
+									</div>
 
 									<div
 										v-if="

@@ -11,28 +11,21 @@
 				}"
 			>
 				<v-row v-if="zniffer.enabled">
-					<v-col style="max-width: 270px; margin-top: 7px">
-						<v-btn-toggle density="compact" multiple>
-							<v-tooltip
-								location="bottom"
+					<v-col style="max-width: 280px; margin-top: 7px">
+						<v-btn-group density="compact" multiple>
+							<v-btn
+								size="small"
 								v-for="button in buttons"
-								:key="button.label"
-								:target="`#${button.id}`"
+								:key="button.id"
+								:id="button.id"
+								:color="button.disabled ? 'grey' : button.color"
+								:disabled="button.disabled"
+								@click="button.action"
+								v-tooltip:bottom="button.tooltip"
 							>
-								<template v-slot:activator="{ props }">
-									<v-btn
-										:id="button.id"
-										:color="button.color"
-										:disabled="button.disabled"
-										@click="button.action"
-										v-bind="props"
-									>
-										<v-icon>{{ button.icon }}</v-icon>
-									</v-btn>
-								</template>
-								<span>{{ button.tooltip }}</span>
-							</v-tooltip>
-						</v-btn-toggle>
+								<v-icon>{{ button.icon }}</v-icon>
+							</v-btn>
+						</v-btn-group>
 					</v-col>
 					<v-col
 						ref="settingCol"
