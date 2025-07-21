@@ -121,8 +121,8 @@
 		</template>
 		<template
 			v-for="column in managedNodes.tableHeaders"
-			v-slot:[`header.${column.value}`]="{ header }"
-			:key="column.value"
+			v-slot:[`header.${column.key}`]="{ header }"
+			:key="column.key"
 		>
 			<span>
 				<column-filter
