@@ -28,9 +28,9 @@
 							>
 								<v-radio
 									label="Infinite"
-									:value="true"
+									:modelValue="true"
 								></v-radio>
-								<v-radio label="XX" :value="false">
+								<v-radio label="XX" :modelValue="false">
 									<template v-slot:label>
 										<v-text-field
 											:disabled="infinite"

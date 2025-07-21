@@ -57,15 +57,10 @@
 									<v-checkbox
 										:key="col.name"
 										v-model="col.visible"
-										:value="col.visible"
 										hide-details
 										:label="
 											managedNodes.propDefs[col.name]
 												.label
-										"
-										:model-value="col.visible"
-										@update:model-value="
-											col.visible = !!$event
 										"
 									>
 										<template v-slot:prepend>
@@ -121,19 +116,19 @@
 		</template>
 		<template
 			v-for="column in managedNodes.tableHeaders"
-			v-slot:[`header.${column.key}`]="{ header }"
+			v-slot:[`header.${column.key}`]="{ column: header }"
 			:key="column.key"
 		>
 			<span>
 				<column-filter
 					:column="column"
-					:value="managedNodes.filters[column.value]"
-					:items="managedNodes.propValues[column.value]"
-					:group-by="managedNodes.groupBy === [column.value]"
-					@change="managedNodes.setPropFilter(column.value, $event)"
+					:modelValue="managedNodes.filters[column.key]"
+					:items="managedNodes.propValues[column.key]"
+					:group-by="managedNodes.groupBy === [column.key]"
+					@change="managedNodes.setPropFilter(column.key, $event)"
 					@update:group-by="managedNodes.groupBy = $event"
 				></column-filter>
-				<span style="padding-right: 1px">{{ header.text }}</span>
+				<span style="padding-right: 1px">{{ header.title }}</span>
 			</span>
 		</template>
 		<template

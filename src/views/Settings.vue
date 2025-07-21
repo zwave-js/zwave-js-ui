@@ -1072,7 +1072,9 @@
 
 										<input
 											type="hidden"
-											:value="newZwave.disclaimerVersion"
+											:modelValue="
+												newZwave.disclaimerVersion
+											"
 										/>
 										<v-col cols="12" sm="6">
 											<v-autocomplete
@@ -1156,7 +1158,7 @@
 
 									<input
 										type="hidden"
-										:value="newZwave.options"
+										:modelValue="newZwave.options"
 									/>
 								</v-row>
 							</v-card-text>
@@ -1908,7 +1910,7 @@
 										></v-text-field>
 										<input
 											type="hidden"
-											:value="
+											:modelValue="
 												newZwave.serverServiceDiscoveryDisabled
 											"
 										/>

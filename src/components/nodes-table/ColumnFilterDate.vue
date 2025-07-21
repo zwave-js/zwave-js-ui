@@ -6,7 +6,7 @@
 					<v-text-field
 						type="datetime-local"
 						label="From"
-						v-model="value.from"
+						v-model="modelValue.from"
 						:rules="rules.from"
 						clearable
 						@change="change"
@@ -14,7 +14,7 @@
 					<v-text-field
 						type="datetime-local"
 						label="To"
-						v-model="value.to"
+						v-model="modelValue.to"
 						:rules="rules.to"
 						clearable
 						@change="change"
@@ -29,7 +29,7 @@
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => ColumnFilterHelper.defaultFilter('string'),
 			required: true,
@@ -42,15 +42,15 @@ export default {
 				from: [
 					(v) =>
 						!v ||
-						!this.value.to ||
-						v <= this.value.to ||
+						!this.modelValue.to ||
+						v <= this.modelValue.to ||
 						'From date should not be after to date',
 				],
 				to: [
 					(v) =>
 						!v ||
-						!this.value.from ||
-						v >= this.value.from ||
+						!this.modelValue.from ||
+						v >= this.modelValue.from ||
 						'To date should not be before from date',
 				],
 			},
@@ -58,7 +58,7 @@ export default {
 	},
 	methods: {
 		change() {
-			this.$emit('change', this.value, this.valid)
+			this.$emit('change', this.modelValue, this.valid)
 		},
 	},
 }

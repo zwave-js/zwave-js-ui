@@ -54,7 +54,7 @@
 									>
 										<v-radio
 											:disabled="state === 'start'"
-											:value="0"
+											:modelValue="0"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -73,7 +73,7 @@
 										</v-radio>
 										<v-radio
 											:disabled="state === 'start'"
-											:value="1"
+											:modelValue="1"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -92,7 +92,7 @@
 										</v-radio>
 										<v-radio
 											:disabled="state === 'start'"
-											:value="2"
+											:modelValue="2"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -213,7 +213,9 @@
 									>
 										<missing-keys-alert />
 										<v-radio
-											:value="InclusionStrategy.Default"
+											:modelValue="
+												InclusionStrategy.Default
+											"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -241,7 +243,7 @@
 											persistent-hint
 										></v-checkbox>
 										<v-radio
-											:value="
+											:modelValue="
 												InclusionStrategy.SmartStart
 											"
 										>
@@ -267,7 +269,7 @@
 											</template>
 										</v-radio>
 										<v-radio
-											:value="
+											:modelValue="
 												InclusionStrategy.Security_S0
 											"
 										>
@@ -289,7 +291,9 @@
 											</template>
 										</v-radio>
 										<v-radio
-											:value="InclusionStrategy.Insecure"
+											:modelValue="
+												InclusionStrategy.Insecure
+											"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -370,7 +374,7 @@
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
-										<v-radio :value="1">
+										<v-radio :modelValue="1">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -389,7 +393,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="4">
+										<v-radio :modelValue="4">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -402,7 +406,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="3">
+										<v-radio :modelValue="3">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -415,7 +419,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :value="2">
+										<v-radio :modelValue="2">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon

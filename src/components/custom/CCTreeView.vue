@@ -45,7 +45,7 @@
 				</div>
 			</div>
 			<div class="tree-item-children"></div>
-			<CCTreeView :value="item.children" :level="level + 1" />
+			<CCTreeView :modelValue="item.children" :level="level + 1" />
 		</div>
 	</div> -->
 </template>

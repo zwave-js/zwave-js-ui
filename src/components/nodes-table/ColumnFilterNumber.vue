@@ -6,7 +6,7 @@
 					<v-text-field
 						type="number"
 						label="Min"
-						v-model="value.min"
+						v-model="modelValue.min"
 						:rules="rules.min"
 						clearable
 						@change="change"
@@ -16,7 +16,7 @@
 					<v-text-field
 						type="number"
 						label="Max"
-						v-model="value.max"
+						v-model="modelValue.max"
 						:rules="rules.max"
 						clearable
 						@change="change"
@@ -46,7 +46,7 @@
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => ColumnFilterHelper.defaultFilter('string'),
 			required: true,
@@ -66,16 +66,16 @@ export default {
 
 				if (undefinedPlaceholder) {
 					return (
-						this.value.values?.map((v) =>
+						this.modelValue.values?.map((v) =>
 							v === undefined ? undefinedPlaceholder : v,
 						) ?? []
 					)
 				} else {
-					return this.value.values ?? []
+					return this.modelValue.values ?? []
 				}
 			},
 			set(v) {
-				this.value.values = v
+				this.modelValue.values = v
 			},
 		},
 	},
@@ -87,16 +87,16 @@ export default {
 					(v) => !v || v >= 0 || 'Minimum should not be negative',
 					(v) =>
 						!v ||
-						!this.value.max ||
-						v <= this.value.max ||
+						!this.modelValue.max ||
+						v <= this.modelValue.max ||
 						'Minimum should not be above maximum',
 				],
 				max: [
 					(v) => !v || v >= 0 || 'Maximum should not be negative',
 					(v) =>
 						!v ||
-						!this.value.min ||
-						v >= this.value.min ||
+						!this.modelValue.min ||
+						v >= this.modelValue.min ||
 						'Maximum should not be below minimum',
 				],
 			},
@@ -104,7 +104,7 @@ export default {
 	},
 	methods: {
 		change() {
-			this.$emit('change', this.value, this.valid)
+			this.$emit('change', this.modelValue, this.valid)
 		},
 	},
 }

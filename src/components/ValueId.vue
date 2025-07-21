@@ -238,7 +238,7 @@
 					<v-btn
 						variant="outlined"
 						height="40px"
-						:value="true"
+						:modelValue="true"
 						:style="{
 							background:
 								modelValue.newValue === true && !modelValue.list
@@ -258,7 +258,7 @@
 					<v-btn
 						variant="outlined"
 						height="40px"
-						:value="false"
+						:modelValue="false"
 						:style="{
 							background:
 								modelValue.newValue === false &&

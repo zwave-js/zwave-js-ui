@@ -1,13 +1,9 @@
 <template>
-	<v-menu
-		:model-value="show"
-		:close-on-content-click="false"
-		location="bottom"
-	>
+	<v-menu v-model="show" :close-on-content-click="false" location="bottom">
 		<template v-slot:activator="{ props }">
 			<v-icon
 				size="small"
-				v-on:click="showOptions"
+				@click="showOptions"
 				v-bind="props"
 				title="Filter options..."
 				style="padding-right: 2px; padding-bottom: 3px"
@@ -15,27 +11,27 @@
 				{{ hasFilter ? 'filter_list_alt' : 'filter_list' }}
 			</v-icon>
 		</template>
-		<v-card>
-			<v-icon size="small" v-on:click="hideOptions" end>close</v-icon>
+		<v-card :min-width="300">
+			<v-icon size="small" @click="hideOptions" end>close</v-icon>
 			<column-filter-boolean
 				v-if="column.type == 'boolean'"
-				:value="value"
+				:modelValue="modelValue"
 				@change="change"
 			></column-filter-boolean>
 			<column-filter-date
 				v-if="column.type == 'date'"
-				:value="value"
+				:modelValue="modelValue"
 				@change="change"
 			></column-filter-date>
 			<column-filter-number
 				v-if="column.type == 'number'"
-				:value="value"
+				:modelValue="modelValue"
 				:items="items"
 				@change="change"
 			></column-filter-number>
 			<column-filter-string
 				v-if="column.type == 'string'"
-				:value="value"
+				:modelValue="modelValue"
 				:items="items"
 				@change="change"
 			></column-filter-string>
@@ -43,9 +39,9 @@
 				v-if="column.groupable != false"
 				label="Group values"
 				class="ml-4"
-				:value="groupBy"
+				:modelValue="groupBy"
 				@update:model-value="
-					$emit('update:group-by', $event ? [column.value] : [])
+					$emit('update:group-by', $event ? [column.key] : [])
 				"
 			></v-checkbox>
 			<v-card-actions>
@@ -78,7 +74,7 @@ export default {
 		),
 	},
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => {},
 			required: true,
@@ -107,7 +103,7 @@ export default {
 	},
 	computed: {
 		hasFilter() {
-			return this.hasDeepValue(this.value)
+			return this.hasDeepValue(this.modelValue)
 		},
 	},
 	methods: {
@@ -144,12 +140,12 @@ export default {
 		resetToDefaults() {
 			// Non-destructive value reset to prevent vue warnings:
 			const defaults = ColumnFilterHelper.defaultFilter(this.column.type)
-			Object.assign(this.value, defaults)
-			for (const key in this.value) {
-				if (Object.hasOwnProperty.call(this.value, key)) {
-					Object.keys(this.value).forEach(() => {
+			Object.assign(this.modelValue, defaults)
+			for (const key in this.modelValue) {
+				if (Object.hasOwnProperty.call(this.modelValue, key)) {
+					Object.keys(this.modelValue).forEach(() => {
 						if (!Object.keys(defaults).includes(key)) {
-							delete this.value.key
+							delete this.modelValue.key
 						}
 					})
 				}
@@ -157,7 +153,7 @@ export default {
 		},
 		clearFilter() {
 			this.resetToDefaults()
-			this.change(this.value, true)
+			this.change(this.modelValue, true)
 		},
 	},
 }

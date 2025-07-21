@@ -6,7 +6,7 @@
 					<v-text-field
 						label="Search"
 						hint="Supports regular expressions"
-						v-model="value.match"
+						v-model="modelValue.match"
 						:rules="rules.match"
 						clearable
 						@change="change"
@@ -16,7 +16,7 @@
 			<v-row>
 				<v-col>
 					<v-select
-						v-model="value.values"
+						v-model="modelValue.values"
 						:items="items"
 						label="Values"
 						clearable
@@ -36,7 +36,7 @@
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => ColumnFilterHelper.defaultFilter('string'),
 			required: true,
@@ -57,7 +57,7 @@ export default {
 	},
 	methods: {
 		change() {
-			this.$emit('change', this.value, this.valid)
+			this.$emit('change', this.modelValue, this.valid)
 		},
 		validateRegex(rex) {
 			let res

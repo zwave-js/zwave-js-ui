@@ -60,10 +60,10 @@
 							v-model="sortDesc"
 							mandatory
 						>
-							<v-btn variant="flat" :value="false">
+							<v-btn variant="flat" :modelValue="false">
 								<v-icon>arrow_upward</v-icon>
 							</v-btn>
-							<v-btn variant="flat" :value="true">
+							<v-btn variant="flat" :modelValue="true">
 								<v-icon>arrow_downward</v-icon>
 							</v-btn>
 						</v-btn-toggle>
