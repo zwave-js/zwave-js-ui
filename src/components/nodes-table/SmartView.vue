@@ -17,8 +17,7 @@
 			:search="search"
 			v-model="selected"
 			item-key="id"
-			:sort-by="[sortBy.toLowerCase()]"
-			:sort-desc="sortDesc"
+			:sort-by="sortingRules"
 			hide-default-footer
 			:itemsPerPage="-1"
 		>
@@ -57,7 +56,7 @@
 					</div>
 					<div>
 						<v-btn-toggle
-							class="mx-auto my-1"
+							class="mx-auto my-2"
 							v-model="sortDesc"
 							mandatory
 						>
@@ -385,6 +384,12 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		sortingRules() {
+			return {
+				key: this.sortBy.toLowerCase(),
+				order: this.sortDesc ? 'desc' : 'asc',
+			}
+		},
 	},
 	data() {
 		return {
