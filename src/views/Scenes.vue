@@ -48,18 +48,21 @@
 			class="elevation-1"
 		>
 			<template v-slot:top>
-				<v-btn color="error" variant="text" @click="removeScene"
-					>Delete</v-btn
-				>
-				<v-btn color="success" variant="text" @click="activateScene"
-					>Activate</v-btn
-				>
-				<v-btn
-					color="primary"
-					variant="text"
-					@click="dialogValue = true"
-					>New Value</v-btn
-				>
+				<div class="d-flex flex-row">
+					<v-btn color="error" variant="text" @click="removeScene"
+						>Delete</v-btn
+					>
+					<v-btn color="success" variant="text" @click="activateScene"
+						>Activate</v-btn
+					>
+
+					<v-btn
+						color="primary"
+						variant="text"
+						@click="dialogValue = true"
+						>New Value</v-btn
+					>
+				</div>
 			</template>
 
 			<template v-slot:item="{ item }">
@@ -137,11 +140,11 @@ export default {
 			editedValue: {},
 			editedIndex: -1,
 			headers_scenes: [
-				{ title: 'Value ID', value: 'id' },
-				{ title: 'Node', value: 'nodeId' },
-				{ title: 'Label', value: 'label' },
-				{ title: 'Value', value: 'value' },
-				{ title: 'Timeout', value: 'timeout' },
+				{ title: 'Value ID', key: 'id' },
+				{ title: 'Node', key: 'nodeId' },
+				{ title: 'Label', key: 'label' },
+				{ title: 'Value', key: 'value' },
+				{ title: 'Timeout', key: 'timeout' },
 				{ title: 'Actions', sortable: false },
 			],
 		}
