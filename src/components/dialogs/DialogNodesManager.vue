@@ -56,7 +56,7 @@
 									>
 										<v-radio
 											:disabled="state === 'start'"
-											value="0"
+											:value="0"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -75,7 +75,7 @@
 										</v-radio>
 										<v-radio
 											:disabled="state === 'start'"
-											value="1"
+											:value="1"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -94,7 +94,7 @@
 										</v-radio>
 										<v-radio
 											:disabled="state === 'start'"
-											value="2"
+											:value="2"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -117,6 +117,7 @@
 										<v-btn
 											v-if="state !== 'start'"
 											color="primary"
+											variant="flat"
 											@click.stop="nextStep"
 											class="next-btn"
 											@keypress.enter="nextStep"
@@ -126,6 +127,7 @@
 
 										<v-btn
 											v-else
+											variant="flat"
 											color="error"
 											class="next-btn"
 											@click="stopAction"
@@ -152,6 +154,7 @@
 									></v-combobox>
 									<v-card-actions>
 										<v-btn
+											variant="flat"
 											color="primary"
 											@click.stop="nextStep"
 											class="next-btn"
@@ -196,6 +199,7 @@
 
 									<v-card-actions>
 										<v-btn
+											variant="flat"
 											:disabled="!validNaming"
 											color="primary"
 											@click.stop="submitNameLoc"
@@ -347,6 +351,7 @@
 									<v-card-actions>
 										<v-btn
 											v-if="!loading"
+											variant="flat"
 											color="primary"
 											@click.stop="nextStep"
 											class="next-btn"
@@ -356,6 +361,7 @@
 										</v-btn>
 										<v-btn
 											v-if="state === 'start'"
+											variant="flat"
 											color="error"
 											@click="stopAction"
 										>
@@ -372,7 +378,7 @@
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
-										<v-radio value="1">
+										<v-radio :value="1">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -391,7 +397,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio value="4">
+										<v-radio :value="4">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -404,7 +410,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio value="3">
+										<v-radio :value="3">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -417,7 +423,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio value="2">
+										<v-radio :value="2">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -456,6 +462,7 @@
 									<v-card-actions>
 										<v-btn
 											v-if="!loading"
+											variant="flat"
 											color="primary"
 											@click.stop="nextStep"
 											class="next-btn"
@@ -465,6 +472,7 @@
 										</v-btn>
 										<v-btn
 											v-if="state === 'start'"
+											variant="flat"
 											color="error"
 											@click="stopAction"
 										>
@@ -528,6 +536,7 @@
 										<v-card-actions>
 											<v-btn
 												v-if="!aborted"
+												variant="flat"
 												color="primary"
 												@click.stop="nextStep"
 												class="next-btn"
@@ -538,6 +547,7 @@
 
 											<v-btn
 												color="error"
+												variant="flat"
 												@click="abortInclusion"
 											>
 												Abort
@@ -591,6 +601,7 @@
 										<v-card-actions>
 											<v-btn
 												v-if="!aborted"
+												variant="flat"
 												color="primary"
 												:disabled="
 													validPin(s.values.pin) !==
@@ -605,6 +616,7 @@
 
 											<v-btn
 												color="error"
+												variant="flat"
 												@click="abortInclusion"
 											>
 												Abort
