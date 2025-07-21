@@ -27,6 +27,11 @@
 							<v-stepper-item
 								:complete="currentStep > s.index"
 								:value="s.index"
+								:color="
+									currentStep > s.index
+										? 'success'
+										: 'primary'
+								"
 								:editable="
 									!['s2Classes', 's2Pin'].includes(s.key) &&
 									!loading
