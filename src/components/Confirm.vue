@@ -83,7 +83,7 @@
 										!input.autocomplete
 									"
 									v-model="values[input.key]"
-									:item-title="input.itemText || 'text'"
+									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
@@ -104,7 +104,7 @@
 										input.autocomplete
 									"
 									v-model="values[input.key]"
-									:item-title="input.itemText || 'text'"
+									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
@@ -124,7 +124,7 @@
 										input.allowManualEntry
 									"
 									v-model="values[input.key]"
-									:item-title="input.itemText || 'text'"
+									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
 									chips
 									:items="input.items"
@@ -297,12 +297,8 @@ export default {
 
 				if (!inited) {
 					if (input.default !== undefined) {
-						// without this code block is bugged, don't simply assign
-						this.$set(
-							this.values,
-							input.key,
-							values[input.key] ?? input.default,
-						)
+						this.values[input.key] =
+							values[input.key] ?? input.default
 					}
 
 					if (input.rules) {
