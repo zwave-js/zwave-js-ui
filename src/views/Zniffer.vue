@@ -777,7 +777,7 @@ export default {
 			}
 		},
 		onTopColResize() {
-			this.offsetTop = this.$refs.settingCol.clientHeight + 20
+			this.offsetTop = this.$refs.settingCol.$el.clientHeight + 20
 			this.resizeScrollWrapper()
 		},
 		resizeScrollWrapper() {
@@ -918,7 +918,7 @@ export default {
 			}
 
 			this.roTopPane = new ResizeObserver(onTopPaneResize)
-			this.roTopPane.observe(this.$refs.topPane.$el)
+			this.roTopPane.observe(this.$refs.topPane)
 		},
 		bindScroll() {
 			if (this.scrollWrapper) return
