@@ -17,6 +17,7 @@
 					selectable
 					item-value="path"
 					v-model:opened="openFolders"
+					:load-children="getFolderItems"
 					return-object
 					style="max-height: calc(100vh - 64px); overflow-y: auto"
 				>
@@ -26,7 +27,7 @@
 						</v-icon>
 						<v-icon color="primary" v-else> text_snippet </v-icon>
 					</template>
-					<template v-slot:label="{ item }">
+					<template v-slot:title="{ item }">
 						<span class="text-subtitle-2">{{ item.name }}</span>
 						<div class="text-caption text-grey">
 							{{ item.size !== 'n/a' ? item.size : '' }}
@@ -262,8 +263,9 @@ export default {
 		BaseFab: defineAsyncComponent(
 			() => import('@/components/custom/BaseFab.vue'),
 		),
-		PrismEditor: () =>
+		PrismEditor: defineAsyncComponent(() =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
+		),
 	},
 	watch: {
 		selected() {
@@ -640,6 +642,18 @@ export default {
 				this.loadingFile = false
 			}
 		},
+		async getFolderItems(folder) {
+			try {
+				const data = await ConfigApis.getFile(folder.path)
+				if (data.success) {
+					folder.children = data.data
+				} else {
+					throw Error(data.message)
+				}
+			} catch (error) {
+				this.showSnackbar(error.message, 'error')
+			}
+		},
 		async refreshTree(reset) {
 			try {
 				const data = await ConfigApis.getStore()
@@ -671,6 +685,5 @@ export default {
 	async mounted() {
 		await this.refreshTree()
 	},
-	beforeUnmount() {},
 }
 </script>
