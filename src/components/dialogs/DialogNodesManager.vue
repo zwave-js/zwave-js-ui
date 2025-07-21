@@ -7,9 +7,11 @@
 	>
 		<v-card :loading="loading">
 			<v-card-title>
-				<span class="text-h5">Nodes Manager</span>
-				<v-spacer></v-spacer>
-				<v-btn icon="clear" @click="close()" />
+				<v-row class="pa-2" align="center">
+					<span class="text-h5">Nodes Manager</span>
+					<v-spacer></v-spacer>
+					<v-btn icon="clear" @click="close()" />
+				</v-row>
 			</v-card-title>
 
 			<v-divider />
@@ -17,14 +19,14 @@
 			<v-card-text v-if="isOpen" class="pa-0">
 				<v-stepper
 					v-model="currentStep"
-					@change="changeStep"
+					@update:model-value="changeStep"
 					elevation="0"
 				>
 					<v-stepper-header>
 						<template v-for="s in steps" :key="`${s.key}-step`">
 							<v-stepper-item
 								:complete="currentStep > s.index"
-								:step="s.index"
+								:value="s.index"
 								:editable="
 									!['s2Classes', 's2Pin'].includes(s.key) &&
 									!loading
@@ -44,7 +46,7 @@
 						<v-stepper-window-item
 							v-for="s in steps"
 							:key="`${s.key}-content`"
-							:step="s.index"
+							:value="s.index"
 						>
 							<v-card ref="content" elevation="0">
 								<v-card-text v-if="s.key == 'action'">
@@ -54,7 +56,7 @@
 									>
 										<v-radio
 											:disabled="state === 'start'"
-											:modelValue="0"
+											value="0"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -73,7 +75,7 @@
 										</v-radio>
 										<v-radio
 											:disabled="state === 'start'"
-											:modelValue="1"
+											value="1"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -92,7 +94,7 @@
 										</v-radio>
 										<v-radio
 											:disabled="state === 'start'"
-											:modelValue="2"
+											value="2"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -213,9 +215,7 @@
 									>
 										<missing-keys-alert />
 										<v-radio
-											:modelValue="
-												InclusionStrategy.Default
-											"
+											:value="InclusionStrategy.Default"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -243,7 +243,7 @@
 											persistent-hint
 										></v-checkbox>
 										<v-radio
-											:modelValue="
+											:value="
 												InclusionStrategy.SmartStart
 											"
 										>
@@ -269,7 +269,7 @@
 											</template>
 										</v-radio>
 										<v-radio
-											:modelValue="
+											:value="
 												InclusionStrategy.Security_S0
 											"
 										>
@@ -291,9 +291,7 @@
 											</template>
 										</v-radio>
 										<v-radio
-											:modelValue="
-												InclusionStrategy.Insecure
-											"
+											:value="InclusionStrategy.Insecure"
 										>
 											<template v-slot:label>
 												<div class="option">
@@ -374,7 +372,7 @@
 										v-model="s.values.inclusionMode"
 										mandatory
 									>
-										<v-radio :modelValue="1">
+										<v-radio value="1">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -393,7 +391,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :modelValue="4">
+										<v-radio value="4">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -406,7 +404,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :modelValue="3">
+										<v-radio value="3">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon
@@ -419,7 +417,7 @@
 												</div>
 											</template>
 										</v-radio>
-										<v-radio :modelValue="2">
+										<v-radio value="2">
 											<template v-slot:label>
 												<div class="option">
 													<v-icon

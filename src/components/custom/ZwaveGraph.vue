@@ -150,7 +150,7 @@
 									v-for="(item, i) in groupingLegend"
 									:key="i"
 									:label="item.text"
-									:modelValue="item.value"
+									:value="item.value"
 								></v-radio>
 							</v-radio-group>
 						</v-col> -->
