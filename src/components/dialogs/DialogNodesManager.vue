@@ -2,7 +2,7 @@
 	<v-dialog
 		v-model="isOpen"
 		@keydown.esc="close()"
-		max-width="800px"
+		max-width="1000px"
 		persistent
 	>
 		<v-card :loading="loading">
