@@ -293,7 +293,7 @@
 					height: `calc(100vh - ${topPaneHeight + 110}px)`,
 				}"
 			>
-				<frame-details class="my-1" :value="selectedFrame" />
+				<frame-details class="my-1" :modelValue="selectedFrame" />
 			</div>
 		</multipane>
 
@@ -825,7 +825,7 @@ export default {
 			event,
 			{ item, toggleSelect, internalItem, index, isSelected },
 		) {
-			if (isSelected) {
+			if (isSelected(item)) {
 				this.selectedFrame = null
 				this.autoScroll = true
 			} else {

@@ -86,7 +86,7 @@
 export default {
 	name: 'CCTreeView',
 	props: {
-		value: {
+		modelValue: {
 			type: [Object, Array],
 			default: () => ({}),
 		},
@@ -99,17 +99,17 @@ export default {
 		items: [],
 	}),
 	watch: {
-		value: {
+		modelValue: {
 			immediate: true,
 			deep: true,
 			handler() {
-				if (Array.isArray(this.value)) {
-					this.items = this.value
+				if (Array.isArray(this.modelValue)) {
+					this.items = this.modelValue
 				} else {
 					// trick used to reset the treeview and expand all nodes on change
 					this.items = []
 					this.$nextTick(() => {
-						this.items = this.parseEntry(this.value)
+						this.items = this.parseEntry(this.modelValue)
 					})
 				}
 			},

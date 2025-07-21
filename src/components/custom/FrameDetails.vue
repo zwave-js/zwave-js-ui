@@ -1,7 +1,7 @@
 <template>
 	<v-row v-if="modelValue">
 		<v-col>
-			<v-table class="frame-details" dense>
+			<v-table class="frame-details" density="compact">
 				<template v-slot:default>
 					<tbody>
 						<tr>
