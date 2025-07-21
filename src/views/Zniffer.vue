@@ -140,7 +140,6 @@
 							:row-props="getRowStyle"
 							@click:row="onRowClick"
 							show-select
-							select-strategy="single"
 							fixed-header
 							dense
 							:height="topPaneHeight - offsetTop"
@@ -301,8 +300,9 @@
 			color="primary"
 			@click="drawer = !drawer"
 			hover
+			app
+			icon
 			location="bottom right"
-			fixed
 		>
 			<v-icon v-if="drawer">close</v-icon>
 			<v-icon v-else>menu</v-icon>
@@ -377,7 +377,7 @@
 	</v-container>
 </template>
 <script>
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, nextTick } from 'vue'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { Protocols, RFRegion } from '@zwave-js/core'
 import { socketEvents } from '@server/lib/SocketEvents'
@@ -517,15 +517,18 @@ export default {
 				}, 3000)
 			}
 		},
-		framesQueue() {
-			// used to improve performances when lot of frames comes all together
-			if (this.queueTimeout) {
-				clearTimeout(this.queueTimeout)
-			}
+		framesQueue: {
+			deep: 1,
+			handler() {
+				// used to improve performances when lot of frames comes all together
+				if (this.queueTimeout) {
+					clearTimeout(this.queueTimeout)
+				}
 
-			this.queueTimeout = setTimeout(() => {
-				this.emptyQueue()
-			}, 50)
+				this.queueTimeout = setTimeout(() => {
+					this.emptyQueue()
+				}, 50)
+			},
 		},
 		search(v) {
 			if (this.searchTimeout) {
@@ -536,19 +539,22 @@ export default {
 				this.filterFrames(v)
 			}, 300)
 		},
-		frames() {
-			this.filterFrames(this.search)
-			this.scrollBottom()
+		frames: {
+			deep: 1,
+			handler() {
+				this.filterFrames(this.search)
+				this.scrollBottom()
 
-			if (this.viewState === 'initial' && this.frames.length > 0) {
-				// If we were in initial state and suddenly have frames,
-				// the Zniffer might be active
-				if (this.znifferState?.started) {
-					this.viewState = 'recording'
-				} else {
-					this.viewState = 'stopped'
+				if (this.viewState === 'initial' && this.frames.length > 0) {
+					// If we were in initial state and suddenly have frames,
+					// the Zniffer might be active
+					if (this.znifferState?.started) {
+						this.viewState = 'recording'
+					} else {
+						this.viewState = 'stopped'
+					}
 				}
-			}
+			},
 		},
 	},
 	mounted() {
@@ -729,7 +735,7 @@ export default {
 		},
 		async clearZnifferConfiguration() {
 			// needed to handle the clear event on select
-			await this.$nextTick()
+			await nextTick()
 
 			if (this.znifferState) {
 				this.znifferRegions = Object.entries(
@@ -745,7 +751,7 @@ export default {
 								region === RFRegion['Default (EU)'],
 						}
 					})
-					.sort((a, b) => a.text.localeCompare(b.text))
+					.sort((a, b) => a.text?.localeCompare(b.text))
 				this.frequency = this.znifferState.frequency
 				this.lrRegions = this.znifferState.lrRegions
 				this.znifferLRChannelConfigs = Object.entries(
@@ -919,10 +925,10 @@ export default {
 			const el = this.$refs.framesTable?.$el
 
 			if (el) {
-				const wrapper = el.getElementsByClassName(
-					'v-data-table__wrapper',
-				)[0]
-				wrapper.addEventListener('scroll', this.onScroll.bind(this))
+				const wrapper = el.querySelector('.v-table__wrapper')
+				wrapper.addEventListener('scroll', this.onScroll.bind(this), {
+					passive: true,
+				})
 				this.scrollWrapper = wrapper
 			}
 		},
