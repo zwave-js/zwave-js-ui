@@ -141,7 +141,7 @@
 							@click:row="onRowClick"
 							show-select
 							fixed-header
-							dense
+							density="compact"
 							:height="topPaneHeight - offsetTop"
 							id="framesTable"
 							ref="framesTable"
@@ -259,6 +259,7 @@
 									@click="enableAutoScroll()"
 									size="small"
 									hover
+									icon
 									location="top right"
 									absolute
 									style="top: 40px"
@@ -619,7 +620,7 @@ export default {
 			busy: false,
 			selectedFrame: null,
 			scrollWrapper: null,
-			rowHeight: 32,
+			rowHeight: 41,
 			perPage: 22,
 			topPaneHeight: 500,
 			frames: [],
@@ -917,7 +918,7 @@ export default {
 			}
 
 			this.roTopPane = new ResizeObserver(onTopPaneResize)
-			this.roTopPane.observe(this.$refs.topPane)
+			this.roTopPane.observe(this.$refs.topPane.$el)
 		},
 		bindScroll() {
 			if (this.scrollWrapper) return
@@ -1178,7 +1179,7 @@ export default {
 }
 
 .pane::-webkit-scrollbar,
-#framesTable :deep(.v-data-table__wrapper::-webkit-scrollbar) {
+#framesTable :deep(.v-table__wrapper::-webkit-scrollbar) {
 	height: 5px;
 	width: 8px;
 	background: rgba(0, 0, 0, 0.233);
@@ -1186,7 +1187,7 @@ export default {
 }
 
 .pane::-webkit-scrollbar-thumb,
-#framesTable :deep(.v-data-table__wrapper::-webkit-scrollbar-thumb) {
+#framesTable :deep(.v-table__wrapper::-webkit-scrollbar-thumb) {
 	background: var(--v-primary-base);
 	border-radius: 1ex;
 	-webkit-border-radius: 1ex;
