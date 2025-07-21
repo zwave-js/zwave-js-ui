@@ -20,8 +20,8 @@
 							? 'right'
 							: undefined,
 				}"
+				variant="flat"
 				:key="i"
-				theme="dark"
 				:icon="item.icon"
 				:color="item.color"
 				:size="

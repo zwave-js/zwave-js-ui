@@ -303,6 +303,7 @@
 			hover
 			app
 			icon
+			size="large"
 			location="bottom right"
 		>
 			<v-icon v-if="drawer">close</v-icon>
