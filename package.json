@@ -94,7 +94,7 @@
     "morgan": "~1.10.0",
     "mqtt": "^5.7.2",
     "mqtt-jsonl-store": "^0.2.1",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.2",
     "native-url": "^0.3.4",
     "nprogress": "^0.2.0",
     "pinia": "^2.1.7",
