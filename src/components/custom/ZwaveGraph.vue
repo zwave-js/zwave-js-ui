@@ -556,7 +556,7 @@ export default {
 		onResize() {
 			// when container resizes get its height and set content to that
 			// so that the graph can be resized
-			this.containerHeight = this.$refs.container.offsetHeight
+			this.containerHeight = this.$refs.container.$el.offsetHeight
 			const maxHeight = window.innerHeight - 180
 			// prevent to grow bigger then window height
 			if (this.containerHeight > maxHeight) {
