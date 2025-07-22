@@ -56,10 +56,7 @@
 							hide-details
 							label="Remember Me"
 						></v-checkbox>
-						<color-scheme
-							prepend-icon="null"
-							hide-details
-						></color-scheme>
+						<color-scheme hide-details></color-scheme>
 					</v-form>
 				</v-card-text>
 				<v-card-actions class="justify-center">

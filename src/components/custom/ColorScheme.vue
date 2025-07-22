@@ -5,7 +5,7 @@
 		label="Color scheme"
 		:hide-details="hideDetails"
 		:items="colorSchemes"
-		:prepend="prependIcon"
+		:prepend-icon="prependIcon"
 		v-model="internalColorScheme"
 	></v-select>
 </template>
