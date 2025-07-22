@@ -1,6 +1,6 @@
 {
   "name": "zwave-js-ui",
-  "version": "10.7.0",
+  "version": "10.9.0",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "keywords": [
     "mqtt",
@@ -40,8 +40,9 @@
     "lint-fix:markdownlint": "markdownlint --fix '**/*.md'",
     "test": "npm-run-all 'test:*'",
     "test:server": "mocha -r ./esbuild-register.js './test/**/*.test.ts'",
-    "test:ui": "mocha -r @babel/register src/modules",
+    "test:ui": "mocha -r @babel/register src/**/*.test.js",
     "docs": "docsify serve ./docs",
+    "docs:generate": "node -r ./esbuild-register.js genereteDocs.ts",
     "coverage": "c8 --clean npm run test",
     "record-coverage": "c8 report --reporter=text-lcov --all --exclude='test/*' --exclude=.git --exclude=.eslintrc.js --exclude=.postcssrc.js --exclude=wallaby.js > ./coverage/lcov.info",
     "build": "npm-run-all build:*",
@@ -114,7 +115,7 @@
     "vuetify": "^2.7.2",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^15.8.0",
+    "zwave-js": "^15.9.0",
     "zxing-wasm": "^1.2.15"
   },
   "devDependencies": {

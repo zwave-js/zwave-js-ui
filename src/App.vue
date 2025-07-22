@@ -465,7 +465,7 @@ export default {
 			'inited',
 		]),
 		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
+			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 		}),
 		menu() {
@@ -611,6 +611,14 @@ export default {
 			}
 
 			return toReturn
+		},
+		currentTheme() {
+			const { isDark, themes } = this.$vuetify.theme
+			if (isDark) {
+				return themes.dark
+			} else {
+				return themes.light
+			}
 		},
 	},
 	watch: {
@@ -1638,23 +1646,13 @@ export default {
 			{ once: true },
 		)
 
-		const settings = useBaseStore().settings
-
 		// system dark mode
-		const systemThemeDark = !!window.matchMedia(
-			'(prefers-color-scheme: dark)',
-		).matches
+		const darkMode = useBaseStore().uiState.darkMode
 
-		// set the dark mode to the system dark mode if it's different
-		if (settings.load('dark') === undefined) {
-			useBaseStore().setDarkMode(systemThemeDark)
-		} else {
-			// load the theme from localstorage
-			// this is needed to prevent the theme switch on load
-			// this will be overriden by settings value once `initSettings`
-			// base store method is called
-			this.$vuetify.theme.dark = settings.load('dark', false)
-		}
+		// this is needed to prevent the theme switch on load
+		// this will be overriden by settings value once `initSettings`
+		// base store method is called
+		this.$vuetify.theme.dark = darkMode
 
 		useBaseStore().$onAction(({ name, args }) => {
 			if (name === 'showSnackbar') {

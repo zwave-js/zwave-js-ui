@@ -56,13 +56,10 @@
 							hide-details
 							label="Remember Me"
 						></v-checkbox>
-						<v-checkbox
+						<color-scheme
 							prepend-icon="null"
 							hide-details
-							persistent-hint
-							label="Dark mode"
-							v-model="internalDarkMode"
-						></v-checkbox>
+						></color-scheme>
 					</v-form>
 				</v-card-text>
 				<v-card-actions class="justify-center">
@@ -99,11 +96,14 @@ import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'
 
-import { mapState, mapActions } from 'pinia'
+import { mapActions } from 'pinia'
 
 const log = logger.get('Login')
 
 export default {
+	components: {
+		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
+	},
 	data() {
 		return {
 			username: '',
@@ -120,19 +120,6 @@ export default {
 				},
 			},
 		}
-	},
-	computed: {
-		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
-		}),
-		internalDarkMode: {
-			get() {
-				return this.darkMode
-			},
-			set(value) {
-				this.setDarkMode(value)
-			},
-		},
 	},
 	watch: {
 		error: function (newValue) {
@@ -159,6 +146,8 @@ export default {
 			} else {
 				localStorage.removeItem('user')
 			}
+
+			this.initColorScheme()
 		} else {
 			this.error = true
 			this.error_type = 'error'
@@ -166,7 +155,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['setDarkMode']),
+		...mapActions(useBaseStore, ['initColorScheme']),
 		isLocalStorageSupported() {
 			const testKey = 'test'
 			const storage = window.localStorage

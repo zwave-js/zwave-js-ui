@@ -632,10 +632,11 @@ export type ZwaveConfig = {
 	disableControllerRecovery?: boolean
 	rf?: {
 		region?: RFRegion
-		maxLongRangePowerlevel?: number
+		maxLongRangePowerlevel?: number | 'auto'
+		autoPowerlevels?: boolean
 		txPower?: {
-			powerlevel: number
-			measured0dBm: number
+			powerlevel: number | 'auto'
+			measured0dBm?: number
 		}
 	}
 }
@@ -2155,6 +2156,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			return
 		}
 
+		let shouldUpdateSettings = false
+
 		// extend options with hidden `options`
 		const zwaveOptions: PartialZWaveOptions = {
 			bootloaderMode: this.cfg.allowBootloaderOnly ? 'allow' : 'recover',
@@ -2210,22 +2213,52 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.cfg.rf) {
 			const { region, txPower, maxLongRangePowerlevel } = this.cfg.rf
 
+			let { autoPowerlevels } = this.cfg.rf
 			zwaveOptions.rf = {}
 
 			if (typeof region === 'number') {
 				zwaveOptions.rf.region = region
 			}
 
-			if (typeof maxLongRangePowerlevel === 'number') {
-				zwaveOptions.rf.maxLongRangePowerlevel = maxLongRangePowerlevel
+			if (
+				autoPowerlevels === undefined &&
+				typeof maxLongRangePowerlevel !== 'number' &&
+				typeof txPower?.powerlevel !== 'number'
+			) {
+				// if autoPowerlevels is undefined and maxLongRangePowerlevel is not a number (likely '' or undefined), assume autoPowerlevels is true
+				autoPowerlevels = true
+				this.cfg.rf.autoPowerlevels = true
+				shouldUpdateSettings = true
+			}
+
+			if (autoPowerlevels) {
+				zwaveOptions.rf.maxLongRangePowerlevel = 'auto'
+				zwaveOptions.rf.txPower ??= {}
+				zwaveOptions.rf.txPower.powerlevel = 'auto'
 			}
 
 			if (
-				txPower &&
-				typeof txPower.measured0dBm === 'number' &&
-				typeof txPower.powerlevel === 'number'
+				!autoPowerlevels &&
+				(maxLongRangePowerlevel === 'auto' ||
+					typeof maxLongRangePowerlevel === 'number')
 			) {
-				zwaveOptions.rf.txPower = txPower
+				zwaveOptions.rf.maxLongRangePowerlevel = maxLongRangePowerlevel
+			}
+
+			if (txPower) {
+				if (
+					!autoPowerlevels &&
+					(txPower.powerlevel === 'auto' ||
+						typeof txPower.powerlevel === 'number')
+				) {
+					zwaveOptions.rf.txPower ??= {}
+					zwaveOptions.rf.txPower.powerlevel = txPower.powerlevel
+				}
+
+				if (typeof txPower.measured0dBm === 'number') {
+					zwaveOptions.rf.txPower ??= {}
+					zwaveOptions.rf.txPower.measured0dBm = txPower.measured0dBm
+				}
 			}
 		}
 
@@ -2280,9 +2313,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// update settings to fix compatibility
 		if (s0Key && !this.cfg.securityKeys.S0_Legacy) {
 			this.cfg.securityKeys.S0_Legacy = s0Key
-			const settings = jsonStore.get(store.settings)
-			settings.zwave = this.cfg
-			await jsonStore.put(store.settings, settings)
+			shouldUpdateSettings = true
 		}
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
@@ -2297,6 +2328,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		})
 
 		try {
+			if (shouldUpdateSettings) {
+				const settings = jsonStore.get(store.settings)
+				settings.zwave = this.cfg
+				await jsonStore.put(store.settings, settings)
+			}
 			// init driver here because if connect fails the driver is destroyed
 			// this could throw so include in the try/catch
 			this._driver = new Driver(this.cfg.port, zwaveOptions)
@@ -3222,7 +3258,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	async setRFRegion(region: RFRegion): Promise<boolean> {
 		if (this.driverReady) {
 			const result = await this._driver.controller.setRFRegion(region)
-			await this.updateControllerNodeProps(null, ['RFRegion'])
+
+			// Determine which properties need updating
+			const propsToUpdate: Array<
+				'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'
+			> = ['RFRegion']
+
+			// If powerlevels are in auto mode, refresh them after region change
+			if (this.cfg.rf?.txPower?.powerlevel === 'auto') {
+				propsToUpdate.push('powerlevel')
+			}
+			if (this.cfg.rf?.maxLongRangePowerlevel === 'auto') {
+				propsToUpdate.push('maxLongRangePowerlevel')
+			}
+
+			await this.updateControllerNodeProps(null, propsToUpdate)
 			return result
 		}
 
@@ -3983,13 +4033,23 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Used to trigger an update of controller FW
 	 */
-	async firmwareUpdateOTW(file: FwFile): Promise<OTWFirmwareUpdateResult> {
+	async firmwareUpdateOTW(
+		file: FwFile | FirmwareUpdateInfo,
+	): Promise<OTWFirmwareUpdateResult> {
 		try {
 			if (backupManager.backupOnEvent) {
 				this.nvmEvent = 'before_controller_fw_update_otw'
 				await backupManager.backupNvm()
 			}
 			let firmware: Firmware
+
+			if (file['files']) {
+				return await this.driver.firmwareUpdateOTW(
+					file as FirmwareUpdateInfo,
+				)
+			}
+
+			file = file as FwFile
 
 			try {
 				const format = guessFirmwareFileFormat(file.name, file.data)
