@@ -213,7 +213,7 @@ export default {
 			return (
 				this.controllerNode &&
 				this.controllerNode.RFRegion === undefined &&
-				!this.zwave.rf.region
+				this.zwave.rf.region === undefined
 			)
 		},
 	},
@@ -232,7 +232,7 @@ export default {
 			if (
 				this.controllerNode &&
 				this.controllerNode.RFRegion === undefined &&
-				this.zwave.rf.region
+				this.zwave.rf.region !== undefined
 			) {
 				options.rfRegion = this.zwave.rf.region
 			}
