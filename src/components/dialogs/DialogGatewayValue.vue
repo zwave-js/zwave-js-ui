@@ -37,26 +37,32 @@
 								>
 									<template v-slot:selection="{ item }">
 										{{
-											(item.label || item.id) +
-											(item.endpoint > 1
-												? ' - Endpoint ' + item.endpoint
+											(item.raw.label || item.raw.id) +
+											(item.raw.endpoint > 1
+												? ' - Endpoint ' +
+													item.raw.endpoint
 												: '')
 										}}
 									</template>
-									<template v-slot:item="{ item }">
-										<v-list-item-title>{{
-											(item.label || item.id) +
-											(item.endpoint > 0
-												? ' - Endpoint ' + item.endpoint
-												: '')
-										}}</v-list-item-title>
-										<v-list-item-subtitle
-											style="max-width: 500px"
-											class="text-truncate text-no-wrap"
-											>{{
-												item.description
-											}}</v-list-item-subtitle
+									<template
+										v-slot:item="{ item, props: itemProps }"
+									>
+										<v-list-item
+											v-bind="itemProps"
+											:title="
+												(item.raw.label ||
+													item.raw.id) +
+												(item.raw.endpoint > 0
+													? ' - Endpoint ' +
+														item.raw.endpoint
+													: '')
+											"
+											:subtitle="
+												item.raw.description ||
+												'No description available'
+											"
 										>
+										</v-list-item>
 									</template>
 								</v-select>
 							</v-col>
@@ -96,10 +102,10 @@
 									label="QoS"
 									hint="If specified, overrides the default QoS in MQTT settings"
 									:items="[
-										{ text: '', value: undefined },
-										{ text: '0: At most once', value: 0 },
-										{ text: '1: At least once', value: 1 },
-										{ text: '2: Exactly once', value: 2 },
+										{ title: '', value: undefined },
+										{ title: '0: At most once', value: 0 },
+										{ title: '1: At least once', value: 1 },
+										{ title: '2: Exactly once', value: 2 },
 									]"
 									persistent-hint
 									required
@@ -113,9 +119,9 @@
 									persistent-hint
 									hint="If specified, overrides the default retain in MQTT settings"
 									:items="[
-										{ text: '', value: undefined },
-										{ text: 'True', value: true },
-										{ text: 'False', value: false },
+										{ title: '', value: undefined },
+										{ title: 'True', value: true },
+										{ title: 'False', value: false },
 									]"
 									required
 									type="number"
@@ -251,11 +257,13 @@ import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
 
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		PrismEditor: () =>
+		PrismEditor: defineAsyncComponent(() =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
+		),
 	},
 	props: {
 		modelValue: Boolean,
