@@ -182,16 +182,16 @@ export class ManagedItems {
 				propDef.groupable === undefined ? true : !!propDef.groupable,
 		}
 
-		if (propDef.sortable !== false) {
+		if (
+			propDef.sortable !== false &&
+			typeof propDef.customSort === 'function'
+		) {
 			header.sortRaw = (a, b) => {
 				const sortIng = this.tableOptions.sortBy.find(
 					(s) => s.key === colName,
 				)
 				const sortDesc = sortIng?.order === 'desc'
-				if (typeof propDef.customSort === 'function')
-					return propDef.customSort(sortDesc, a, b)
-
-				return this.sort(colName, sortDesc, a, b)
+				return propDef.customSort(sortDesc, a, b)
 			}
 		}
 
@@ -199,7 +199,7 @@ export class ManagedItems {
 		if (propDef.customGroupValue)
 			header.customGroupValue = propDef.customGroupValue
 
-		if (propDef.customValue) header.customValue = propDef.customValue
+		if (propDef.customValue) header.value = propDef.customValue
 		if (propDef.richValue) header.richValue = propDef.richValue
 		return header
 	}
@@ -431,15 +431,6 @@ export class ManagedItems {
 			)
 		}
 		return this.groupByTitle + ': ' + formattedGroup
-	}
-
-	sort(propName, sortDesc, a, b) {
-		let valA = this.getPropValue(a, propName, '')
-		let valB = this.getPropValue(b, propName, '')
-		let res = valA < valB ? -1 : valA > valB ? 1 : 0
-
-		res = sortDesc ? -res : res
-		return res
 	}
 
 	/**

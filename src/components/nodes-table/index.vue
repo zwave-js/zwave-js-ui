@@ -13,6 +13,7 @@
 		expand-on-click
 		show-expand
 		show-select
+		return-object
 		:search="search"
 		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
@@ -229,44 +230,37 @@
 					color="primary"
 				></v-progress-circular>
 
-				<v-tooltip
+				<v-icon
 					v-else-if="
 						getRebuildRoutesIcon(item.rebuildRoutesProgress) !==
 						undefined
 					"
-					location="bottom"
+					class="ml-3"
+					v-tooltip:bottom="item.rebuildRoutesProgress.toUpperCase()"
+					:color="
+						getRebuildRoutesIcon(item.rebuildRoutesProgress).color
+					"
 				>
-					<template v-slot:activator="{ props }">
-						<v-icon
-							v-bind="props"
-							class="ml-3"
-							v-text="
-								getRebuildRoutesIcon(item.rebuildRoutesProgress)
-									.icon
-							"
-							:color="
-								getRebuildRoutesIcon(item.rebuildRoutesProgress)
-									.color
-							"
-						></v-icon>
-					</template>
-					<span>{{ item.rebuildRoutesProgress.toUpperCase() }}</span>
-				</v-tooltip>
+					{{ getRebuildRoutesIcon(item.rebuildRoutesProgress).icon }}
+				</v-icon>
 				<div v-else>{{ item.rebuildRoutesProgress }}</div>
 			</div>
 			<div v-else></div>
 		</template>
 		<template v-slot:[`item.interviewStage`]="{ item }">
-			<div v-if="!item.isControllerNode" style="text-align: center">
+			<div
+				v-if="!item.isControllerNode"
+				class="d-flex flex-column align-center pa-1"
+			>
 				<v-chip
 					size="small"
 					:color="interviewStageColor(`${item.interviewStage}`)"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular
-					class="ml-3"
 					v-if="item.interviewStage !== 'Complete'"
 					indeterminate
+					class="mt-1"
 					size="20"
 					color="primary"
 				></v-progress-circular>
@@ -275,11 +269,14 @@
 		</template>
 		<template v-slot:[`item.firmwareVersion`]="{ item }">
 			<div style="text-align: center">
-				<div v-if="item.firmwareUpdate && !item.isControllerNode">
+				<div
+					v-if="item.firmwareUpdate && !item.isControllerNode"
+					class="d-flex flex-column align-center pa-1"
+				>
 					<v-progress-circular
 						:model-value="item.firmwareUpdate.progress"
 						size="50"
-						class="mt-1"
+						class="my-1"
 						color="primary"
 					>
 						<span class="text-caption">{{
