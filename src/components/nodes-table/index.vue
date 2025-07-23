@@ -118,6 +118,9 @@
 					v-model:group-by="managedNodes.groupBy"
 					:column="column"
 					:items="managedNodes.propValues[column.key]"
+					@update:filter="
+						managedNodes.setPropFilter(column.key, $event)
+					"
 				></column-filter>
 				<span style="padding-right: 1px">{{ column.title }}</span>
 			</span>

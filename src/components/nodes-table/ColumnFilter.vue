@@ -101,6 +101,11 @@ export default {
 		groupBy() {
 			this.show = false
 		},
+		show(val) {
+			if (val === false) {
+				this.updateFilter()
+			}
+		},
 	},
 	computed: {
 		hasFilter() {
@@ -112,7 +117,6 @@ export default {
 			},
 			set(value) {
 				this.$emit('update:modelValue', value)
-				this.change(value)
 			},
 		},
 		_groupBy: {
@@ -145,12 +149,15 @@ export default {
 		hideOptions() {
 			this.show = false
 		},
-		change(value) {
+		updateFilter() {
 			if (this.valid === true) {
 				// Emit minimal storable filter spec (with empty default values removed):
 				this.$emit(
 					'update:filter',
-					ColumnFilterHelper.filterSpec(this.column.type, value),
+					ColumnFilterHelper.filterSpec(
+						this.column.type,
+						this._value,
+					),
 				)
 			}
 		},
