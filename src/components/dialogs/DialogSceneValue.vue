@@ -34,26 +34,32 @@
 								>
 									<template v-slot:selection="{ item }">
 										{{
-											(item.label || item.id) +
-											(item.endpoint > 1
-												? ' - Endpoint ' + item.endpoint
+											(item.raw.label || item.raw.id) +
+											(item.raw.endpoint > 1
+												? ' - Endpoint ' +
+													item.raw.endpoint
 												: '')
 										}}
 									</template>
-									<template v-slot:item="{ item }">
-										<v-list-item-title>{{
-											(item.label || item.id) +
-											(item.endpoint > 0
-												? ' - Endpoint ' + item.endpoint
-												: '')
-										}}</v-list-item-title>
-										<v-list-item-subtitle
-											style="max-width: 500px"
-											class="text-truncate text-no-wrap"
-											>{{
-												item.description
-											}}</v-list-item-subtitle
+									<template
+										v-slot:item="{ item, props: itemProps }"
+									>
+										<v-list-item
+											v-bind="itemProps"
+											:title="
+												(item.raw.label ||
+													item.raw.id) +
+												(item.raw.endpoint > 0
+													? ' - Endpoint ' +
+														item.raw.endpoint
+													: '')
+											"
+											:subtitle="
+												item.raw.description ||
+												'No description available'
+											"
 										>
+										</v-list-item>
 									</template>
 								</v-select>
 							</v-col>

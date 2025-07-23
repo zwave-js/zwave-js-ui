@@ -122,7 +122,9 @@ export default {
 		...mapState(useBaseStore, ['nodes']),
 		scenesWithId() {
 			return this.scenes.map((s) => {
+				if (s.parsed) return s
 				s.label = `[${s.sceneid}] ${s.label}`
+				s.parsed = true
 				return s
 			})
 		},

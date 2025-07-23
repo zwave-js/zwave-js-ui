@@ -233,8 +233,9 @@ import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		PrismEditor: () =>
+		PrismEditor: defineAsyncComponent(() =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
+		),
 		QrReader: defineAsyncComponent(() => import('./custom/QrReader.vue')),
 		ListInput: defineAsyncComponent(() => import('./custom/ListInput.vue')),
 	},
