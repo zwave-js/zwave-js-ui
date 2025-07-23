@@ -4,10 +4,9 @@
 			<v-row>
 				<v-col>
 					<v-checkbox
-						:indeterminate="modelValue.boolValue == null"
-						v-model="modelValue.boolValue"
+						:indeterminate="_value.boolValue == null"
+						v-model="_value.boolValue"
 						label="Boolean value"
-						@update:model-value="change"
 					></v-checkbox>
 				</v-col>
 			</v-row>
@@ -25,9 +24,14 @@ export default {
 			required: true,
 		},
 	},
-	methods: {
-		change() {
-			this.$emit('change', this.modelValue, true)
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(v) {
+				this.$emit('update:modelValue', v)
+			},
 		},
 	},
 }

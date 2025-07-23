@@ -6,6 +6,7 @@
 		:items="managedNodes.filteredItems"
 		v-model:expanded="expanded"
 		v-model:options="managedNodes.tableOptions"
+		:group-by="managedNodes.groupBy"
 		:custom-sort="sort"
 		@click:row="toggleExpanded($event)"
 		item-key="id"
@@ -85,33 +86,25 @@
 						</v-card-actions>
 					</v-card>
 				</v-menu>
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							color="primary"
-							class="my-auto"
-							variant="text"
-							v-bind="props"
-							@click="managedNodes.setFilterToSelected()"
-							:disabled="managedNodes.selected.length === 0"
-							>Filter Selected</v-btn
-						>
-					</template>
-					<span>Show only selected nodes</span>
-				</v-tooltip>
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							color="primary"
-							class="my-auto"
-							variant="text"
-							v-bind="props"
-							@click="managedNodes.reset()"
-							>Reset Table</v-btn
-						>
-					</template>
-					<span>Reset all table settings</span>
-				</v-tooltip>
+				<v-btn
+					color="primary"
+					class="my-auto"
+					variant="text"
+					v-tooltip:bottom="'Show only selected nodes'"
+					@click="managedNodes.setFilterToSelected()"
+					:disabled="managedNodes.selected.length === 0"
+				>
+					Filter Selected
+				</v-btn>
+				<v-btn
+					color="primary"
+					class="my-auto"
+					variant="text"
+					v-tooltip:bottom="'Reset all table settings'"
+					@click="managedNodes.reset()"
+				>
+					Reset Table
+				</v-btn>
 			</v-row>
 		</template>
 		<template
@@ -121,28 +114,35 @@
 		>
 			<span>
 				<column-filter
+					v-model="managedNodes.filters[column.key]"
+					v-model:group-by="managedNodes.groupBy"
 					:column="column"
-					:modelValue="managedNodes.filters[column.key]"
 					:items="managedNodes.propValues[column.key]"
-					:group-by="managedNodes.groupBy === [column.key]"
-					@change="managedNodes.setPropFilter(column.key, $event)"
-					@update:group-by="managedNodes.groupBy = $event"
 				></column-filter>
 				<span style="padding-right: 1px">{{ header.title }}</span>
 			</span>
 		</template>
 		<template
-			v-slot:[`group.header`]="{ group, headers, toggle, remove, isOpen }"
+			v-slot:[`group-header`]="{
+				item,
+				columns,
+				toggleGroup,
+				isGroupOpen,
+			}"
 		>
-			<td :colspan="headers.length">
-				<v-btn @click="toggle" size="x-small" icon :ref="group">
-					<v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
-				</v-btn>
-				<span>{{ groupValue(group) }}</span>
-				<v-btn size="x-small" icon @click="remove"
-					><v-icon>close</v-icon></v-btn
-				>
-			</td>
+			<tr>
+				<td :colspan="columns.length">
+					<v-btn @click="toggleGroup(item)" size="x-small" icon>
+						<v-icon>{{
+							isGroupOpen(item) ? 'remove' : 'add'
+						}}</v-icon>
+					</v-btn>
+					<span>{{ groupValue(item) }}</span>
+					<v-btn size="x-small" icon @click="toggleGroup(item)"
+						><v-icon>close</v-icon></v-btn
+					>
+				</td>
+			</tr>
 		</template>
 		<template v-slot:[`item.id`]="{ item }">
 			<div class="d-flex">

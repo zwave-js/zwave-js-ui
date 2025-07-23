@@ -15,34 +15,30 @@
 			<v-icon size="small" @click="hideOptions" end>close</v-icon>
 			<column-filter-boolean
 				v-if="column.type == 'boolean'"
-				:modelValue="modelValue"
-				@change="change"
+				v-model="_value"
 			></column-filter-boolean>
 			<column-filter-date
 				v-if="column.type == 'date'"
-				:modelValue="modelValue"
-				@change="change"
+				v-model="_value"
+				v-model:valid="valid"
 			></column-filter-date>
 			<column-filter-number
 				v-if="column.type == 'number'"
-				:modelValue="modelValue"
+				v-model="_value"
+				v-model:valid="valid"
 				:items="items"
-				@change="change"
 			></column-filter-number>
 			<column-filter-string
 				v-if="column.type == 'string'"
-				:modelValue="modelValue"
+				v-model="_value"
+				v-model:valid="valid"
 				:items="items"
-				@change="change"
 			></column-filter-string>
 			<v-checkbox
 				v-if="column.groupable != false"
 				label="Group values"
 				class="ml-4"
-				:modelValue="groupBy"
-				@update:model-value="
-					$emit('update:group-by', $event ? [column.key] : [])
-				"
+				v-model="_groupBy"
 			></v-checkbox>
 			<v-card-actions>
 				<v-btn @click="clearFilter">Clear</v-btn>
@@ -90,8 +86,8 @@ export default {
 			required: true,
 		},
 		groupBy: {
-			type: Boolean,
-			default: () => false,
+			type: Array,
+			default: () => [],
 			required: false,
 		},
 	},
@@ -104,6 +100,26 @@ export default {
 	computed: {
 		hasFilter() {
 			return this.hasDeepValue(this.modelValue)
+		},
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(value) {
+				this.$emit('update:modelValue', value)
+				this.change(value)
+			},
+		},
+		_groupBy: {
+			get() {
+				return !!this.groupBy.find((g) => g.key === this.column.key)
+			},
+			set(value) {
+				this.$emit(
+					'update:group-by',
+					value ? [{ key: this.column.key }] : [],
+				)
+			},
 		},
 	},
 	methods: {
@@ -124,12 +140,11 @@ export default {
 		hideOptions() {
 			this.show = false
 		},
-		change(value, valid) {
-			this.valid = valid
-			if (valid === true) {
+		change(value) {
+			if (this.valid === true) {
 				// Emit minimal storable filter spec (with empty default values removed):
 				this.$emit(
-					'change',
+					'update:filter',
 					ColumnFilterHelper.filterSpec(this.column.type, value),
 				)
 			}
@@ -153,7 +168,7 @@ export default {
 		},
 		clearFilter() {
 			this.resetToDefaults()
-			this.change(this.modelValue, true)
+			this.valid = true
 		},
 	},
 }

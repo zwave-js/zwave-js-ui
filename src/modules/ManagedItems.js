@@ -39,10 +39,10 @@ export class ManagedItems {
 				: this.filters
 
 		// sometimes columns are updated in new releases, this allows us to show them
-		if (!this.loadSetting('cleared2', false)) {
+		if (!this.loadSetting('cleared3', false)) {
 			this._filters = this.initialFilters
 			this._columns = this.initialTableColumns
-			this.storeSetting('cleared2', true)
+			this.storeSetting('cleared3', true)
 		}
 
 		this._selected = this.initialSelected
@@ -257,7 +257,7 @@ export class ManagedItems {
 	 */
 	get initialFilters() {
 		return this.allTableHeaders.reduce((values, h) => {
-			values[h.value] = {}
+			values[h.key] = {}
 			return values
 		}, {})
 	}
@@ -296,7 +296,7 @@ export class ManagedItems {
 		const undefinedPlaceholder =
 			this.propDefs[propName].undefinedPlaceholder
 
-		// when undeginedPlaceholder is set, we need to replace the filter value with undefined
+		// when undefinedPlaceholder is set, we need to replace the filter value with undefined
 		if (undefinedPlaceholder && filterDef?.values) {
 			filterDef.values = filterDef.values.map((f) =>
 				f === undefinedPlaceholder ? undefined : f,
@@ -331,10 +331,9 @@ export class ManagedItems {
 	 * @param {String} groupValue Property group value
 	 */
 	get groupByTitle() {
-		const propDef = this.propDefs[this.groupBy[0]]
-		return propDef !== undefined && propDef.label
-			? propDef.label
-			: this.groupBy[0]
+		const groupKey = this.groupBy?.[0]?.key
+		const propDef = this.propDefs[groupKey]
+		return propDef !== undefined && propDef.label ? propDef.label : groupKey
 	}
 
 	/**
@@ -342,7 +341,7 @@ export class ManagedItems {
 	 * @param {String} propName Property name
 	 */
 	isGroupBy(propName) {
-		return this.groupBy.includes(propName)
+		return !!this.groupBy.find((g) => g.key === propName)
 	}
 
 	// Selection handling
@@ -405,19 +404,18 @@ export class ManagedItems {
 
 	/**
 	 * Determine the label to be displayed when grouped
-	 * @param {any} group Value of the group
+	 * @param {string} group Value of the group
 	 * @returns Label to be displayed for the group respecting a possibly existent customGroupValue
 	 */
 	groupValue(group) {
 		let formattedGroup = group
+		const groupKey = this.groupBy?.[0].key
 		if (
-			this.groupBy &&
-			this.groupBy[0] &&
-			this.propDefs[this.groupBy[0]] &&
-			typeof this.propDefs[this.groupBy[0]].customGroupValue ===
-				'function'
+			groupKey &&
+			this.propDefs[groupKey] &&
+			typeof this.propDefs[groupKey].customGroupValue === 'function'
 		) {
-			formattedGroup = this.propDefs[this.groupBy[0]].customGroupValue(
+			formattedGroup = this.propDefs[groupKey].customGroupValue(
 				group,
 				this.groupBy,
 			)

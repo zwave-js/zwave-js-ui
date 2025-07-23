@@ -263,7 +263,7 @@ export default {
 			return getProtocolIcon(protocol, this.currentTheme)
 		},
 		groupValue(group) {
-			return this.managedNodes.groupValue(group)
+			return this.managedNodes.groupValue(group.value)
 		},
 		richValue(item, propName) {
 			return this.managedNodes.richValue(item, propName)
