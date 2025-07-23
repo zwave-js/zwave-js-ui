@@ -97,6 +97,11 @@ export default {
 			show: false,
 		}
 	},
+	watch: {
+		groupBy() {
+			this.show = false
+		},
+	},
 	computed: {
 		hasFilter() {
 			return this.hasDeepValue(this.modelValue)

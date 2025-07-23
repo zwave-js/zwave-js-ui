@@ -109,7 +109,7 @@
 		</template>
 		<template
 			v-for="column in managedNodes.tableHeaders"
-			v-slot:[`header.${column.key}`]="{ column: header }"
+			v-slot:[`header.${column.key}`]="{ isSorted, getSortIcon }"
 			:key="column.key"
 		>
 			<span>
@@ -119,7 +119,10 @@
 					:column="column"
 					:items="managedNodes.propValues[column.key]"
 				></column-filter>
-				<span style="padding-right: 1px">{{ header.title }}</span>
+				<span style="padding-right: 1px">{{ column.title }}</span>
+			</span>
+			<span v-if="isSorted(column)">
+				<v-icon>{{ getSortIcon(column) }}</v-icon>
 			</span>
 		</template>
 		<template
