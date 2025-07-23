@@ -7,8 +7,7 @@
 		v-model:expanded="expanded"
 		v-model:options="managedNodes.tableOptions"
 		:group-by="managedNodes.groupBy"
-		:custom-sort="sort"
-		@click:row="toggleExpanded($event)"
+		:sort-by="managedNodes.sortBy"
 		item-key="id"
 		class="elevation-1 nodes-table"
 		expand-on-click

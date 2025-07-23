@@ -7,6 +7,7 @@
 			style="margin-bottom: 80px"
 			:search="search"
 			v-model:options="tableOptions"
+			:sort-by="tableOptions.sortBy"
 		>
 			<template v-slot:top>
 				<v-col class="pt-0">
@@ -320,7 +321,7 @@ export default {
 			fab: false,
 			search: '',
 			tableOptions: {
-				sortBy: ['nodeId'],
+				sortBy: [{ key: 'nodeId' }],
 			},
 			expandedNode: null,
 			expandedNodeDialog: false,
@@ -356,12 +357,8 @@ export default {
 		this.tableOptions = useBaseStore().getPreference('smartStartTable', {
 			page: 1,
 			itemsPerPage: 10,
-			sortBy: ['nodeId'],
-			sortDesc: [false],
+			sortBy: [{ key: 'nodeId' }],
 			groupBy: [],
-			groupDesc: [],
-			mustSort: false,
-			multiSort: false,
 		})
 
 		this.refreshItems()

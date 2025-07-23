@@ -181,10 +181,24 @@ export class ManagedItems {
 			groupable:
 				propDef.groupable === undefined ? true : !!propDef.groupable,
 		}
+
+		if (propDef.sortable !== false) {
+			header.sortRaw = (a, b) => {
+				const sortIng = this.tableOptions.sortBy.find(
+					(s) => s.key === colName,
+				)
+				const sortDesc = sortIng?.order === 'desc'
+				if (typeof propDef.customSort === 'function')
+					return propDef.customSort(sortDesc, a, b)
+
+				return this.sort(colName, sortDesc, a, b)
+			}
+		}
+
 		// NOTE: These extend the VDataTable headers:
 		if (propDef.customGroupValue)
 			header.customGroupValue = propDef.customGroupValue
-		if (propDef.customSort) header.customSort = propDef.customSort
+
 		if (propDef.customValue) header.customValue = propDef.customValue
 		if (propDef.richValue) header.richValue = propDef.richValue
 		return header
@@ -377,12 +391,8 @@ export class ManagedItems {
 		return {
 			page: 1,
 			itemsPerPage: 10,
-			sortBy: ['id'],
-			sortDesc: [false],
+			sortBy: [{ key: 'id', order: 'asc' }],
 			groupBy: [],
-			groupDesc: [],
-			mustSort: false,
-			multiSort: false,
 		}
 	}
 
@@ -423,43 +433,13 @@ export class ManagedItems {
 		return this.groupByTitle + ': ' + formattedGroup
 	}
 
-	/**
-	 * Sort the items by a certain property respecting an existing customSort function
-	 * @param {array} items Items to be sorted
-	 * @param {array} sortBy Array with properties to sort by (only one is supported!)
-	 * @param {array} sortDesc Array with boolean values to sort in descending order if true, ascending otherwise (only one is supported!)
-	 * @returns Sorted array of items
-	 */
-	sort(items, sortBy, sortDesc) {
-		// TODO: Why is this.propDefs undefined when this method is directly attached to a VDataTable using 'custom-sort'?
-		// See https://stackoverflow.com/a/54612408
-		if (!sortBy[0] || !this.propDefs || !this.propDefs[sortBy[0]]) {
-			return items
-		}
-		items.sort((a, b) => {
-			let propName = sortBy[0]
-			if (
-				this.propDefs[sortBy[0]] &&
-				typeof this.propDefs[sortBy[0]].customSort === 'function'
-			) {
-				// Use special sort function if one is defined for the sortBy column
-				return this.propDefs[sortBy[0]].customSort(
-					items,
-					sortBy,
-					sortDesc,
-					a,
-					b,
-				)
-			} else {
-				// Standard sort for every other column
-				let valA = this.getPropValue(a, propName, '')
-				let valB = this.getPropValue(b, propName, '')
-				let res = valA < valB ? -1 : valA > valB ? 1 : 0
-				res = sortDesc[0] ? -res : res
-				return res
-			}
-		})
-		return items
+	sort(propName, sortDesc, a, b) {
+		let valA = this.getPropValue(a, propName, '')
+		let valB = this.getPropValue(b, propName, '')
+		let res = valA < valB ? -1 : valA > valB ? 1 : 0
+
+		res = sortDesc ? -res : res
+		return res
 	}
 
 	/**

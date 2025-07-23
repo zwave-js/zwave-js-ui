@@ -81,8 +81,8 @@ export default {
 						group
 							? `Battery level: ${group}%`
 							: 'Mains-powered or battery level unknown',
-					customSort: (items, sortBy, sortDesc, nodeA, nodeB) =>
-						this.powerSort(items, sortBy, sortDesc, nodeA, nodeB),
+					customSort: (sortDesc, nodeA, nodeB) =>
+						this.powerSort(sortDesc, nodeA, nodeB),
 					customValue: (node) => node.minBatteryLevel, // Note: Not required here but kept as demo for use of customValue()
 					richValue: (node) => this.powerRichValue(node),
 					undefinedPlaceholder: 'Mains', // must match the text of undefined value
@@ -268,9 +268,6 @@ export default {
 		richValue(item, propName) {
 			return this.managedNodes.richValue(item, propName)
 		},
-		sort(items, sortBy, sortDesc) {
-			return this.managedNodes.sort(items, sortBy, sortDesc)
-		},
 		booleanRichValue(value, valueMap) {
 			let map =
 				value === undefined
@@ -337,14 +334,14 @@ export default {
 				rawValue: level,
 			}
 		},
-		powerSort(items, sortBy, sortDesc, nodeA, nodeB) {
+		powerSort(sortDesc, nodeA, nodeB) {
 			// Special sort for power column
 			let levelA = nodeA.isListening ? 101 : nodeA.minBatteryLevel || 0
 
 			let levelB = nodeB.isListening ? 101 : nodeB.minBatteryLevel || 0
 
 			let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
-			res = sortDesc[0] ? -res : res
+			res = sortDesc ? -res : res
 			return res
 		},
 	},
