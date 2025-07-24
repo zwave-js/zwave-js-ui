@@ -196,7 +196,7 @@
 					}"
 				>
 					<v-card v-if="hoverNode">
-						<v-list-subheader class="font-weight-bold">{{
+						<v-list-subheader class="ml-2 font-weight-bold">{{
 							hoverNode._name
 						}}</v-list-subheader>
 
