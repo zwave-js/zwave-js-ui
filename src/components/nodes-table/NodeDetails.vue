@@ -403,6 +403,7 @@
 										</v-col>
 										<v-col class="d-flex" style="gap: 10px">
 											<v-btn
+												variant="flat"
 												width="60px"
 												@click.stop="configurationGet()"
 												color="success"
@@ -411,6 +412,7 @@
 												GET
 											</v-btn>
 											<v-btn
+												variant="flat"
 												width="60px"
 												@click.stop="configurationSet()"
 												color="primary"
@@ -419,6 +421,7 @@
 												SET
 											</v-btn>
 											<v-btn
+												variant="flat"
 												v-if="canResetConfig(group[0])"
 												width="60px"
 												@click.stop="resetConfig"

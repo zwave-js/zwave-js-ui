@@ -230,47 +230,30 @@
 						(modelValue.states && modelValue.states.length === 2))
 				"
 			>
-				<v-btn-toggle
+				<v-btn-group
 					class="my-2"
 					v-model="modelValue.newValue"
 					rounded="xl"
 				>
 					<v-btn
-						variant="outlined"
+						:variant="
+							modelValue.newValue === true ? 'flat' : 'outlined'
+						"
 						height="40px"
 						:modelValue="true"
-						:style="{
-							background:
-								modelValue.newValue === true && !modelValue.list
-									? '#4CAF50'
-									: '',
-						}"
-						:color="
-							modelValue.newValue === true && !modelValue.list
-								? 'white'
-								: 'success'
-						"
+						color="success"
 						@click="updateValue(modelValue, true)"
 						:icon="!trueLabel ? 'horizontal_rule' : undefined"
 					>
 						<span v-if="trueLabel">{{ trueLabel }}</span>
 					</v-btn>
 					<v-btn
-						variant="outlined"
+						:variant="
+							modelValue.newValue === false ? 'flat' : 'outlined'
+						"
 						height="40px"
 						:modelValue="false"
-						:style="{
-							background:
-								modelValue.newValue === false &&
-								!modelValue.list
-									? '#f44336'
-									: '',
-						}"
-						:color="
-							modelValue.newValue === false && !modelValue.list
-								? 'white'
-								: 'error'
-						"
+						color="error"
 						@click="updateValue(modelValue, false)"
 						:icon="
 							!falseLabel ? 'radio_button_unchecked' : undefined
@@ -278,7 +261,7 @@
 					>
 						<span v-if="falseLabel">{{ falseLabel }}</span>
 					</v-btn>
-				</v-btn-toggle>
+				</v-btn-group>
 				<div v-if="help" class="text-caption mt-2 help">{{ help }}</div>
 			</div>
 
