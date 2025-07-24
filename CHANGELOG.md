@@ -1,5 +1,18 @@
 
 
+# [10.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.9.0...v10.10.0) (2025-07-24)
+
+
+### Bug Fixes
+
+* region check for OTA updates ([#4299](https://github.com/zwave-js/zwave-js-ui/issues/4299)) ([4c8cae9](https://github.com/zwave-js/zwave-js-ui/commit/4c8cae9c21c325025d6f979d0ac82f7fa4712d9c))
+
+
+### Features
+
+* bump zwave-js@15.10.0 ([#4300](https://github.com/zwave-js/zwave-js-ui/issues/4300)) ([88787c1](https://github.com/zwave-js/zwave-js-ui/commit/88787c11dc772a134c484489aeffe3c26dbc0aed))
+* **ui:** validate number inputs against min/max from config ([#4288](https://github.com/zwave-js/zwave-js-ui/issues/4288)) ([6e71238](https://github.com/zwave-js/zwave-js-ui/commit/6e7123827cbb3c261790f0d10db766e8c671904d)), closes [#4285](https://github.com/zwave-js/zwave-js-ui/issues/4285)
+
 # [10.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.8.0...v10.9.0) (2025-07-11)
 
 
