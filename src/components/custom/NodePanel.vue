@@ -74,13 +74,14 @@
 						<v-btn
 							v-if="!node.isControllerNode"
 							class="ml-2"
+							variant="flat"
 							color="primary"
 							size="x-small"
 							:loading="discoverLoading"
 							@click="discoverNeighbors()"
-							icon="search"
 						>
 							Discover
+							<v-icon class="ml-1" size="small">search</v-icon>
 						</v-btn>
 					</template>
 				</v-list-item>
@@ -118,6 +119,7 @@
 						>Priority route
 						<v-btn
 							v-if="appRoute"
+							variant="flat"
 							class="ml-2"
 							color="error"
 							size="x-small"
@@ -126,6 +128,7 @@
 							<v-icon size="x-small">delete</v-icon>
 						</v-btn>
 						<v-btn
+							variant="flat"
 							class="ml-2"
 							color="success"
 							size="x-small"
@@ -134,6 +137,7 @@
 							<v-icon size="x-small">refresh</v-icon>
 						</v-btn>
 						<v-btn
+							variant="flat"
 							class="ml-2"
 							color="purple"
 							size="x-small"
@@ -162,6 +166,7 @@
 						>Return routes
 						<v-btn
 							v-if="!routesChanged"
+							variant="flat"
 							class="ml-2"
 							color="success"
 							size="x-small"
@@ -171,6 +176,7 @@
 						</v-btn>
 						<v-btn
 							:disabled="returnRoutes.length === 4"
+							variant="flat"
 							class="ml-2"
 							color="purple"
 							size="x-small"
@@ -262,6 +268,7 @@
 						<v-row dense>
 							<v-btn
 								v-if="routesChanged"
+								variant="flat"
 								class="ma-2"
 								color="success"
 								size="x-small"
@@ -272,6 +279,7 @@
 
 							<v-btn
 								v-if="routesChanged"
+								variant="flat"
 								class="ma-2"
 								color="error"
 								size="x-small"
@@ -290,6 +298,7 @@
 			>
 				<v-col class="pa-1">
 					<v-btn
+						variant="flat"
 						color="primary"
 						size="small"
 						rounded
@@ -300,6 +309,7 @@
 				</v-col>
 				<v-col class="pa-1">
 					<v-btn
+						variant="flat"
 						color="purple"
 						size="small"
 						rounded
@@ -310,6 +320,7 @@
 				</v-col>
 				<v-col v-if="!isLongRange" class="pa-1">
 					<v-btn
+						variant="flat"
 						color="error"
 						size="small"
 						rounded
@@ -320,6 +331,7 @@
 				</v-col>
 				<v-col class="pa-1">
 					<v-btn
+						variant="flat"
 						color="success"
 						size="small"
 						rounded
@@ -331,26 +343,31 @@
 			</v-row>
 			<v-row v-else class="mt-1" justify="center">
 				<!-- Full screen button -->
-				<v-btn
-					color="primary"
-					size="small"
-					rounded
-					@click="showFullscreen = true"
-					>Full Screen
-					<v-icon size="small">fullscreen</v-icon>
-				</v-btn>
+				<v-col :cols="12" align="center" class="pa-0">
+					<v-btn
+						variant="flat"
+						color="primary"
+						size="small"
+						rounded
+						@click="showFullscreen = true"
+						>Full Screen
+						<v-icon size="small">fullscreen</v-icon>
+					</v-btn>
 
-				<v-btn
-					size="small"
-					class="ml-2"
-					color="warning"
-					rounded
-					@click="newWindow()"
-					>Open
-					<v-icon size="small">open_in_new</v-icon>
-				</v-btn>
-
-				<bg-rssi-chart class="mt-2" :node="node" />
+					<v-btn
+						variant="flat"
+						size="small"
+						class="ml-2"
+						color="warning"
+						rounded
+						@click="newWindow()"
+						>Open
+						<v-icon size="small">open_in_new</v-icon>
+					</v-btn>
+				</v-col>
+				<v-col :cols="12" class="pa-2">
+					<bg-rssi-chart class="mt-2" :node="node" />
+				</v-col>
 			</v-row>
 		</v-col>
 		<dialog-health-check
@@ -377,13 +394,14 @@
 			v-model="showFullscreen"
 		>
 			<v-card v-if="node && node.isControllerNode">
-				<v-card-text class="pt-4">
+				<v-card-text class="pt-4 fill">
 					<v-btn
+						variant="flat"
 						style="position: absolute; top: 10px; right: 10px"
 						icon="close"
 						@click="showFullscreen = false"
 					/>
-					<bg-rssi-chart :node="node" fill-size />
+					<bg-rssi-chart class="mt-3" :node="node" fill-size />
 				</v-card-text>
 			</v-card>
 		</v-dialog>
@@ -436,7 +454,7 @@ export default {
 		draggable,
 	},
 	props: {
-		value: {
+		modelValue: {
 			type: Boolean,
 			default: false,
 		},
@@ -491,10 +509,10 @@ export default {
 		},
 		_value: {
 			get() {
-				return this.value
+				return this.modelValue
 			},
 			set(val) {
-				this.$emit('input', val)
+				this.$emit('update:modelValue', val)
 			},
 		},
 		lwr() {

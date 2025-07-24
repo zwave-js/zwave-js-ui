@@ -86,7 +86,7 @@
 </style>
 
 <script>
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, nextTick } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
@@ -205,7 +205,7 @@ export default {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode
 			if (this.$vuetify.display.mdAndUp && this.showProperties) {
-				await this.$nextTick()
+				await nextTick()
 				this.makeDivDraggable()
 			}
 		},
