@@ -476,15 +476,15 @@ export default {
 		Protocols,
 		dataRateItems: [
 			{
-				text: '100 Kbps',
+				title: '100 Kbps',
 				value: ProtocolDataRate.ZWave_100k,
 			},
 			{
-				text: '40 Kbps',
+				title: '40 Kbps',
 				value: ProtocolDataRate.ZWave_40k,
 			},
 			{
-				text: '9.6 Kbps',
+				title: '9.6 Kbps',
 				value: ProtocolDataRate.ZWave_9k6,
 			},
 		],
