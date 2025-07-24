@@ -25,6 +25,7 @@
 							<v-radio-group
 								class="justify-center"
 								v-model="infinite"
+								inline
 							>
 								<v-radio
 									label="Infinite"
@@ -32,7 +33,7 @@
 								></v-radio>
 								<v-radio label="XX" :value="false">
 									<template v-slot:label>
-										<v-text-field
+										<v-number-input
 											:disabled="infinite"
 											label="Iterations"
 											v-model.number="iterations"
@@ -40,14 +41,14 @@
 											:min="1"
 											:max="10000"
 											persistent-hint
-										></v-text-field>
+										></v-number-input>
 									</template>
 								</v-radio>
 							</v-radio-group>
 						</v-col>
 
 						<v-col cols="6" class="justify-center">
-							<v-text-field
+							<v-number-input
 								label="Interval"
 								v-model.number="interval"
 								suffix="ms"
@@ -55,12 +56,13 @@
 								:min="1"
 								:max="10000"
 								persistent-hint
-							></v-text-field>
+							></v-number-input>
 						</v-col>
 					</v-row>
 
 					<v-row class="mb-4" justify="space-around">
 						<v-btn
+							variant="flat"
 							color="success"
 							@click="checkLinkReliability"
 							:disabled="running"
@@ -68,6 +70,7 @@
 							>Run</v-btn
 						>
 						<v-btn
+							variant="flat"
 							color="error"
 							@click="abortLinkReliabilityCheck"
 							:disabled="!running"
@@ -77,14 +80,19 @@
 
 					<v-divider></v-divider>
 
-					<v-row v-if="statistics" class="ma-3" justify="center">
+					<v-row
+						v-if="statistics"
+						class="ma-3"
+						justify="center"
+						align="center"
+					>
 						<v-progress-linear
 							v-if="running"
 							:indeterminate="this.infinite"
 							:model-value="this.infinite ? null : this.progress"
 							color="success"
 						></v-progress-linear>
-						<v-list density="compact">
+						<v-list class="mr-2" density="compact">
 							<v-list-item>
 								<v-list-item-title class="text-info"
 									>Commands Sent</v-list-item-title
@@ -260,11 +268,11 @@ export default {
 			running: false,
 			activeNode: null,
 			isRunning: false,
-			mode: 'Lifeline',
+			mode: 0,
 			modes: [
 				// FIXME: Fill with enum variants
 				{
-					text: 'Basic Set On/Off',
+					title: 'Basic Set On/Off',
 					value: 0,
 				},
 			],
