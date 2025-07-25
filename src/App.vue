@@ -115,43 +115,30 @@
 				</v-tooltip>
 
 				<!-- Inlcusion state -->
-				<v-tooltip
+				<v-icon
 					v-if="zwave.enabled && inclusionState"
-					location="bottom"
+					class="ml-3"
+					style="cursor: default"
+					:color="inclusionState.color"
+					v-tooltip:bottom="inclusionState.message"
 				>
-					<template v-slot:activator="{ props }">
-						<v-icon
-							class="ml-3"
-							size="large"
-							style="cursor: default"
-							:color="inclusionState.color"
-							v-bind="props"
-							>{{ inclusionState.icon }}</v-icon
-						>
-					</template>
-					<span>{{ inclusionState.message }}</span>
-				</v-tooltip>
+					{{ inclusionState.icon }}
+				</v-icon>
 
 				<!-- Websocket status -->
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-icon
-							class="mr-3 ml-3"
-							size="large"
-							style="cursor: default"
-							:color="statusColor || 'warning'"
-							v-bind="props"
-							>swap_horizontal_circle</v-icon
-						>
-					</template>
-					<span>{{ status }}</span>
-				</v-tooltip>
+				<v-icon
+					class="mr-3 ml-3"
+					style="cursor: default"
+					:color="statusColor || 'warning'"
+					v-tooltip:bottom="status"
+				>
+					swap_horizontal_circle
+				</v-icon>
 
 				<!-- Info panel -->
 				<v-tooltip z-index="9999" location="bottom" open-on-click>
 					<template v-slot:activator="{ props }">
 						<v-icon
-							size="large"
 							class="mr-3"
 							style="cursor: default"
 							color="primary"
@@ -181,24 +168,21 @@
 				</v-tooltip>
 
 				<!-- Update badge -->
-				<v-tooltip location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-badge
-							v-bind="props"
-							class="mr-3"
-							:content="updateAvailable"
-							:model-value="!!updateAvailable"
-							color="error"
-						>
-							<v-btn
-								icon="history"
-								color="primary"
-								@click="showUpdateDialog"
-							>
-							</v-btn>
-						</v-badge>
-					</template>
-				</v-tooltip>
+				<v-badge
+					class="mr-3"
+					:content="updateAvailable"
+					:model-value="!!updateAvailable"
+					v-tooltip:bottom="`Check Updates`"
+					color="error"
+				>
+					<v-btn
+						icon="history"
+						color="primary"
+						density="compact"
+						@click="showUpdateDialog"
+					>
+					</v-btn>
+				</v-badge>
 
 				<!-- Topbar collapsable menu items -->
 				<!-- Show more button on smaller screens -->
@@ -234,18 +218,14 @@
 					>
 						<template v-slot:activator="{ props }">
 							<v-btn
-								size="small"
+								density="compact"
 								class="mr-2"
 								v-bind="props"
-								icon
+								v-tooltip:bottom="item.tooltip"
+								color="primary"
+								:icon="item.icon"
 								@click="item.func"
 							>
-								<v-icon
-									v-tooltip:bottom="item.tooltip"
-									size="large"
-									color="primary"
-									>{{ item.icon }}</v-icon
-								>
 							</v-btn>
 						</template>
 
