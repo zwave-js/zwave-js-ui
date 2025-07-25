@@ -38,7 +38,7 @@
 							(g) =>
 								g.value === item.groupId &&
 								g.endpoint === item.endpoint,
-						).text
+						).title
 					}}
 				</template>
 				<template v-slot:[`item.nodeId`]="{ item }">

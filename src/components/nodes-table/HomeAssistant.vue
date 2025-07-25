@@ -92,9 +92,9 @@
 					</template>
 					<template v-slot:[`item.ignoreDiscovery`]="{ item }">
 						<v-btn
+							variant="flat"
 							@click.stop="toggleField(item, 'ignoreDiscovery')"
 							:color="item.ignoreDiscovery ? 'error' : 'success'"
-							rounded
 							size="x-small"
 						>
 							{{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
