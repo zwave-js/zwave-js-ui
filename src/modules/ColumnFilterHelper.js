@@ -49,20 +49,20 @@ export class ColumnFilterHelper {
 
 	static filterByFilterSpec(nodes, headers, filters) {
 		for (const column of headers) {
-			const filter = filters ? filters[column.value] : undefined
+			const filter = filters ? filters[column.key] : undefined
 			if (!filter) continue
 			switch (column.type) {
 				case 'number':
-					nodes = nodes.filterNumberCol(column.value, filter)
+					nodes = nodes.filterNumberCol(column.key, filter)
 					break
 				case 'string':
-					nodes = nodes.filterStringCol(column.value, filter)
+					nodes = nodes.filterStringCol(column.key, filter)
 					break
 				case 'boolean':
-					nodes = nodes.filterBoolCol(column.value, filter)
+					nodes = nodes.filterBoolCol(column.key, filter)
 					break
 				case 'date':
-					nodes = nodes.filterDateCol(column.value, filter)
+					nodes = nodes.filterDateCol(column.key, filter)
 					break
 			}
 		}

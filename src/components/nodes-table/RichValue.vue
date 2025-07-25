@@ -11,6 +11,7 @@
 			:justify-start="value.align === 'left'"
 			:justify-center="value.align === 'center'"
 			:justify-end="value.align === 'right'"
+			style="z-index: unset"
 		>
 			<svg-icon
 				type="mdi"

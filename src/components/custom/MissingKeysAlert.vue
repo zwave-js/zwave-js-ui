@@ -1,8 +1,8 @@
 <template>
 	<v-alert
 		max-width="600px"
-		dense
-		border="left"
+		density="compact"
+		border="start"
 		type="warning"
 		v-if="missingKeys.length > 0 || missingZwlrKeys.length > 0"
 	>

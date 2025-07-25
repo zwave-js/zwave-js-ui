@@ -11,28 +11,21 @@
 				}"
 			>
 				<v-row v-if="zniffer.enabled">
-					<v-col style="max-width: 270px; margin-top: 7px">
-						<v-btn-toggle dense multiple>
-							<v-tooltip
-								bottom
+					<v-col style="max-width: 280px; margin-top: 7px">
+						<v-btn-group density="compact" multiple>
+							<v-btn
+								size="small"
 								v-for="button in buttons"
-								:key="button.label"
-								:target="`#${button.id}`"
+								:key="button.id"
+								:id="button.id"
+								:color="button.disabled ? 'grey' : button.color"
+								:disabled="button.disabled"
+								@click="button.action"
+								v-tooltip:bottom="button.tooltip"
 							>
-								<template v-slot:activator="{ on }">
-									<v-btn
-										:id="button.id"
-										:color="button.color"
-										:disabled="button.disabled"
-										@click="button.action"
-										v-on="on"
-									>
-										<v-icon>{{ button.icon }}</v-icon>
-									</v-btn>
-								</template>
-								<span>{{ button.tooltip }}</span>
-							</v-tooltip>
-						</v-btn-toggle>
+								<v-icon>{{ button.icon }}</v-icon>
+							</v-btn>
+						</v-btn-group>
 					</v-col>
 					<v-col
 						ref="settingCol"
@@ -50,17 +43,20 @@
 							:error-messages="
 								searchError ? ['Invalid search'] : []
 							"
-							outlined
-							dense
+							variant="outlined"
+							density="compact"
 							single-line
 							class="ma-2"
 							prepend-inner-icon="search"
 							label="Search"
 						>
 							<template v-slot:append>
-								<v-menu offset-y>
-									<template v-slot:activator="{ on }">
-										<v-icon v-on="on" color="grey" size="20"
+								<v-menu location="bottom">
+									<template v-slot:activator="{ props }">
+										<v-icon
+											v-bind="props"
+											color="grey"
+											size="20"
 											>info</v-icon
 										>
 									</template>
@@ -123,7 +119,7 @@
 								<v-col
 									v-if="totalFrames"
 									style="margin-top: -7px"
-									class="pa-0 caption grey--text text-center"
+									class="pa-0 text-caption text-grey text-center"
 								>
 									<p class="mb-0">Frames</p>
 									<p class="mb-0">
@@ -141,11 +137,11 @@
 							v-intersect.once="bindScroll"
 							:headers="headers"
 							:items="framesLimited"
-							:item-style="getRowStyle"
+							:row-props="getRowStyle"
 							@click:row="onRowClick"
-							single-select
+							show-select
 							fixed-header
-							dense
+							density="compact"
 							:height="topPaneHeight - offsetTop"
 							id="framesTable"
 							ref="framesTable"
@@ -154,9 +150,9 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:[`item.timestamp`]="{ item }">
-								<v-tooltip bottom>
-									<template v-slot:activator="{ on }">
-										<span v-on="on">{{
+								<v-tooltip location="bottom">
+									<template v-slot:activator="{ props }">
+										<span v-bind="props">{{
 											getTimestamp(item.timestamp)
 										}}</span>
 									</template>
@@ -256,23 +252,21 @@
 							</template>
 						</v-data-table>
 
-						<v-tooltip v-if="!autoScroll" left>
-							<template v-slot:activator="{ on }">
-								<v-btn
+						<v-tooltip v-if="!autoScroll" location="left">
+							<template v-slot:activator="{ props }">
+								<v-fab
 									color="purple"
 									@click="enableAutoScroll()"
-									dark
-									small
-									fab
+									size="small"
 									hover
-									top
+									icon
+									location="top right"
 									absolute
-									right
 									style="top: 40px"
-									v-on="on"
+									v-bind="props"
 								>
 									<v-icon>vertical_align_bottom</v-icon>
-								</v-btn>
+								</v-fab>
 							</template>
 							<span>Enable autoscroll</span>
 						</v-tooltip>
@@ -289,7 +283,9 @@
 					</v-col>
 				</v-row>
 			</div>
-			<multipane-resizer :class="$vuetify.theme.dark ? 'dark' : ''" />
+			<multipane-resizer
+				:class="$vuetify.theme.current.dark ? 'dark' : ''"
+			/>
 			<div
 				class="pane pa-2"
 				style="flex-grow: 1; overflow-y: scroll; overflow-x: hidden"
@@ -297,33 +293,37 @@
 					height: `calc(100vh - ${topPaneHeight + 110}px)`,
 				}"
 			>
-				<frame-details class="my-1" :value="selectedFrame" />
+				<frame-details class="my-1" :modelValue="selectedFrame" />
 			</div>
 		</multipane>
 
-		<v-btn
+		<v-fab
 			color="primary"
 			@click="drawer = !drawer"
-			dark
-			fab
 			hover
-			bottom
-			right
-			fixed
+			app
+			icon
+			size="large"
+			location="bottom right"
 		>
 			<v-icon v-if="drawer">close</v-icon>
 			<v-icon v-else>menu</v-icon>
-		</v-btn>
+		</v-fab>
 
-		<v-navigation-drawer v-model="drawer" absolute right style="z-index: 2">
+		<v-navigation-drawer
+			v-model="drawer"
+			absolute
+			location="right"
+			style="z-index: 2"
+		>
 			<v-card class="fill">
 				<v-card-title> Settings </v-card-title>
 				<v-card-text>
 					<v-row>
 						<v-col v-if="!isPopup" cols="12">
 							<v-btn
-								text
-								small
+								variant="text"
+								size="small"
 								color="primary"
 								@click="openInWindow('Zniffer', 800, 1500)"
 							>
@@ -336,7 +336,7 @@
 								hide-details
 								:items="znifferRegions"
 								v-model="frequency"
-								@change="setFrequency"
+								@update:model-value="setFrequency"
 							>
 								<template v-slot:prepend>
 									<v-icon>signal_cellular_alt</v-icon>
@@ -357,7 +357,7 @@
 								hide-details
 								:items="znifferLRChannelConfigs"
 								v-model="lrChannelConfig"
-								@change="setLRChannelConfig"
+								@update:model-value="setLRChannelConfig"
 							>
 								<template v-slot:prepend>
 									<v-icon>wifi_channel</v-icon>
@@ -379,6 +379,7 @@
 	</v-container>
 </template>
 <script>
+import { defineAsyncComponent, nextTick } from 'vue'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
 import { Protocols, RFRegion } from '@zwave-js/core'
 import { socketEvents } from '@server/lib/SocketEvents'
@@ -410,11 +411,18 @@ export default {
 		socket: Object,
 	},
 	components: {
-		Multipane: () => import('../components/custom/Multipane.vue'),
-		MultipaneResizer: () =>
-			import('../components/custom/MultipaneResizer.vue'),
-		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
-		FrameDetails: () => import('../components//custom/FrameDetails.vue'),
+		Multipane: defineAsyncComponent(
+			() => import('../components/custom/Multipane.vue'),
+		),
+		MultipaneResizer: defineAsyncComponent(
+			() => import('../components/custom/MultipaneResizer.vue'),
+		),
+		RichValue: defineAsyncComponent(
+			() => import('@/components/nodes-table/RichValue.vue'),
+		),
+		FrameDetails: defineAsyncComponent(
+			() => import('../components//custom/FrameDetails.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['zniffer', 'znifferState']),
@@ -511,15 +519,18 @@ export default {
 				}, 3000)
 			}
 		},
-		framesQueue() {
-			// used to improve performances when lot of frames comes all together
-			if (this.queueTimeout) {
-				clearTimeout(this.queueTimeout)
-			}
+		framesQueue: {
+			deep: 1,
+			handler() {
+				// used to improve performances when lot of frames comes all together
+				if (this.queueTimeout) {
+					clearTimeout(this.queueTimeout)
+				}
 
-			this.queueTimeout = setTimeout(() => {
-				this.emptyQueue()
-			}, 50)
+				this.queueTimeout = setTimeout(() => {
+					this.emptyQueue()
+				}, 50)
+			},
 		},
 		search(v) {
 			if (this.searchTimeout) {
@@ -530,19 +541,22 @@ export default {
 				this.filterFrames(v)
 			}, 300)
 		},
-		frames() {
-			this.filterFrames(this.search)
-			this.scrollBottom()
+		frames: {
+			deep: 1,
+			handler() {
+				this.filterFrames(this.search)
+				this.scrollBottom()
 
-			if (this.viewState === 'initial' && this.frames.length > 0) {
-				// If we were in initial state and suddenly have frames,
-				// the Zniffer might be active
-				if (this.znifferState?.started) {
-					this.viewState = 'recording'
-				} else {
-					this.viewState = 'stopped'
+				if (this.viewState === 'initial' && this.frames.length > 0) {
+					// If we were in initial state and suddenly have frames,
+					// the Zniffer might be active
+					if (this.znifferState?.started) {
+						this.viewState = 'recording'
+					} else {
+						this.viewState = 'stopped'
+					}
 				}
-			}
+			},
 		},
 	},
 	mounted() {
@@ -564,7 +578,7 @@ export default {
 		this.clearZnifferConfiguration()
 		this.initializeViewState()
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		window.removeEventListener('resize', this.onWindowResize)
 
 		if (this.roTopPane) {
@@ -607,7 +621,7 @@ export default {
 			busy: false,
 			selectedFrame: null,
 			scrollWrapper: null,
-			rowHeight: 32,
+			rowHeight: 41,
 			perPage: 22,
 			topPaneHeight: 500,
 			frames: [],
@@ -615,63 +629,63 @@ export default {
 			framesQueue: [],
 			headers: [
 				{
-					text: '#',
-					value: 'id',
+					title: '#',
+					key: 'id',
 					width: '10ch',
 					sortable: false,
 				},
 				{
-					text: 'Timestamp',
-					value: 'timestamp',
+					title: 'Timestamp',
+					key: 'timestamp',
 					width: '12ch',
 					sortable: false,
 					class: 'no-wrap',
 				},
 				{
-					text: 'Delta [ms]',
-					value: 'delta',
+					title: 'Delta [ms]',
+					key: 'delta',
 					width: '4ch',
 					sortable: false,
 				},
 				{
-					text: 'Protocol Data Rate',
-					value: 'protocolDataRate',
+					title: 'Protocol Data Rate',
+					key: 'protocolDataRate',
 					width: '20ch',
 					sortable: false,
 				},
 				{
-					text: 'RSSI',
-					value: 'rssi',
+					title: 'RSSI',
+					key: 'rssi',
 					width: '4ch',
 					sortable: false,
 				},
 				{
-					text: 'Ch',
-					value: 'channel',
+					title: 'Ch',
+					key: 'channel',
 					width: '4ch',
 					sortable: false,
 				},
 				{
-					text: 'Home Id',
-					value: 'homeId',
+					title: 'Home Id',
+					key: 'homeId',
 					width: '8ch',
 					sortable: false,
 					class: 'no-wrap',
 				},
 				{
-					text: 'Type',
+					title: 'Type',
 					width: '8ch',
-					value: 'type',
+					key: 'type',
 					sortable: false,
 				},
 				{
-					text: 'Route',
-					value: 'sourceNodeId',
+					title: 'Route',
+					key: 'sourceNodeId',
 					sortable: false,
 				},
 				{
-					text: 'Payload',
-					value: 'payload',
+					title: 'Payload',
+					key: 'payload',
 					sortable: false,
 				},
 			],
@@ -723,7 +737,7 @@ export default {
 		},
 		async clearZnifferConfiguration() {
 			// needed to handle the clear event on select
-			await this.$nextTick()
+			await nextTick()
 
 			if (this.znifferState) {
 				this.znifferRegions = Object.entries(
@@ -732,21 +746,21 @@ export default {
 					.map(([key, value]) => {
 						const region = parseInt(key, 10)
 						return {
-							text: value,
+							title: value,
 							value: region,
 							disabled:
 								region === RFRegion.Unknown ||
 								region === RFRegion['Default (EU)'],
 						}
 					})
-					.sort((a, b) => a.text.localeCompare(b.text))
+					.sort((a, b) => a.text?.localeCompare(b.text))
 				this.frequency = this.znifferState.frequency
 				this.lrRegions = this.znifferState.lrRegions
 				this.znifferLRChannelConfigs = Object.entries(
 					this.znifferState.supportedLRChannelConfigs,
 				).map(([key, value]) => {
 					return {
-						text: value,
+						title: value,
 						value: parseInt(key, 10),
 					}
 				})
@@ -764,7 +778,7 @@ export default {
 			}
 		},
 		onTopColResize() {
-			this.offsetTop = this.$refs.settingCol.clientHeight + 20
+			this.offsetTop = this.$refs.settingCol.$el.clientHeight + 20
 			this.resizeScrollWrapper()
 		},
 		resizeScrollWrapper() {
@@ -808,16 +822,18 @@ export default {
 				this.searchError = true
 			}
 		},
-		onRowClick(frame, { select, isSelected }) {
-			if (isSelected) {
+		onRowClick(
+			event,
+			{ item, toggleSelect, internalItem, index, isSelected },
+		) {
+			if (isSelected(item)) {
 				this.selectedFrame = null
 				this.autoScroll = true
-				select(false)
 			} else {
-				this.selectedFrame = frame
+				this.selectedFrame = item
 				this.autoScroll = false
-				select(true)
 			}
+			toggleSelect(internalItem, index, event)
 		},
 		getRowStyle(frame) {
 			const style = {
@@ -911,10 +927,10 @@ export default {
 			const el = this.$refs.framesTable?.$el
 
 			if (el) {
-				const wrapper = el.getElementsByClassName(
-					'v-data-table__wrapper',
-				)[0]
-				wrapper.addEventListener('scroll', this.onScroll.bind(this))
+				const wrapper = el.querySelector('.v-table__wrapper')
+				wrapper.addEventListener('scroll', this.onScroll.bind(this), {
+					passive: true,
+				})
 				this.scrollWrapper = wrapper
 			}
 		},
@@ -1155,7 +1171,7 @@ export default {
 </script>
 
 <style scoped>
-#framesTable::v-deep td {
+#framesTable :deep(td) {
 	white-space: nowrap;
 	/* display: -webkit-box;
 	-webkit-line-clamp: 3;
@@ -1164,7 +1180,7 @@ export default {
 }
 
 .pane::-webkit-scrollbar,
-#framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar {
+#framesTable :deep(.v-table__wrapper::-webkit-scrollbar) {
 	height: 5px;
 	width: 8px;
 	background: rgba(0, 0, 0, 0.233);
@@ -1172,7 +1188,7 @@ export default {
 }
 
 .pane::-webkit-scrollbar-thumb,
-#framesTable::v-deep .v-data-table__wrapper::-webkit-scrollbar-thumb {
+#framesTable :deep(.v-table__wrapper::-webkit-scrollbar-thumb) {
 	background: var(--v-primary-base);
 	border-radius: 1ex;
 	-webkit-border-radius: 1ex;

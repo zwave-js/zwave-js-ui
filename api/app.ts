@@ -461,7 +461,7 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 					// hide config-db
 					continue
 				}
-				entry.children = await parseDir(entry.path)
+				entry.children = []
 				sortStore(entry.children)
 			} else {
 				entry.ext = file.split('.').pop()
@@ -1382,7 +1382,9 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 				// lgtm [js/path-injection]
 				data = await fs.readFile(reqPath, 'utf8')
 			} else {
-				throw Error('Path is not a file')
+				// read directory
+				// lgtm [js/path-injection]
+				data = await parseDir(reqPath)
 			}
 		} else {
 			data = [

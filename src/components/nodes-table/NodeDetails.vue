@@ -4,35 +4,35 @@
 			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
 					label="Name"
-					append-outer-icon="send"
+					append-icon="send"
 					:error="!!nameError"
 					:error-messages="nameError"
 					v-model.trim="newName"
 					clearable
 					clear-icon="refresh"
 					@click:clear="resetName"
-					@click:append-outer="updateName"
+					@click:append="updateName"
 				></v-text-field>
 			</v-col>
 
 			<v-col cols="12" sm="6" style="max-width: 300px">
 				<v-text-field
 					label="Location"
-					append-outer-icon="send"
+					append-icon="send"
 					v-model.trim="newLoc"
 					:error="!!locError"
 					:error-messages="locError"
 					clearable
 					clear-icon="refresh"
 					@click:clear="resetLocation"
-					@click:append-outer="updateLoc"
+					@click:append="updateLoc"
 				></v-text-field>
 			</v-col>
 		</v-row>
 
 		<template v-if="node.isControllerNode">
-			<v-subheader class="title" style="padding: 0"
-				>Controller Options</v-subheader
+			<v-list-subheader class="text-h6" style="padding: 0"
+				>Controller Options</v-list-subheader
 			>
 
 			<v-row>
@@ -52,7 +52,7 @@
 						<template v-slot:append-outer>
 							<v-btn
 								color="primary"
-								small
+								size="small"
 								icon
 								@click="updateControllerNodeProp('RFRegion')"
 							>
@@ -60,7 +60,7 @@
 							</v-btn>
 							<v-btn
 								color="primary"
-								small
+								size="small"
 								icon
 								@click="updateRFRegion"
 							>
@@ -92,7 +92,7 @@
 				<v-col cols="12" sm="6" style="max-width: 300px">
 					<v-text-field
 						label="Measured output power at 0 dBm"
-						append-outer-icon="send"
+						append-icon="send"
 						v-model.number="node.measured0dBm"
 						:min="-10"
 						:max="10"
@@ -103,7 +103,7 @@
 						<template v-slot:append-outer>
 							<v-btn
 								color="primary"
-								small
+								size="small"
 								icon
 								@click="updateControllerNodeProp('powerlevel')"
 							>
@@ -111,7 +111,7 @@
 							</v-btn>
 							<v-btn
 								color="primary"
-								small
+								size="small"
 								icon
 								@click="updatePowerLevel"
 							>
@@ -141,7 +141,7 @@
 						>
 							<v-btn
 								color="primary"
-								small
+								size="small"
 								icon
 								@click="
 									updateControllerNodeProp(
@@ -153,7 +153,7 @@
 							</v-btn>
 							<v-btn
 								color="primary"
-								small
+								size="small"
 								icon
 								@click="updateMaxLRPowerLevel"
 							>
@@ -196,11 +196,11 @@
 		</template>
 
 		<div>
-			<v-subheader
-				class="title"
+			<v-list-subheader
+				class="text-h6"
 				style="padding: 0"
 				v-if="!node.isControllerNode"
-				>Send Options</v-subheader
+				>Send Options</v-list-subheader
 			>
 			<v-row class="mt-0" v-if="!node.isControllerNode">
 				<v-col
@@ -213,14 +213,27 @@
 						hint="Ex: '10s' (10 seconds)"
 						persistent-hint
 						v-model.trim="options.transitionDuration"
-						append-icon="clear"
-						@click:append="
-							options.transitionDuration =
-								node.defaultTransitionDuration || ''
-						"
-						append-outer-icon="save"
-						@click:append-outer="setDefaults('transitionDuration')"
-					></v-text-field>
+					>
+						<template v-slot:append>
+							<v-btn
+								icon
+								size="small"
+								@click="
+									options.transitionDuration =
+										node.defaultTransitionDuration || ''
+								"
+							>
+								<v-icon>clear</v-icon>
+							</v-btn>
+							<v-btn
+								icon
+								size="small"
+								@click="setDefaults('transitionDuration')"
+							>
+								<v-icon>save</v-icon>
+							</v-btn>
+						</template>
+					</v-text-field>
 				</v-col>
 				<v-col
 					cols="12"
@@ -232,12 +245,37 @@
 						hint="The volume (for the Sound Switch CC)"
 						persistent-hint
 						v-model.trim="options.volume"
-						append-icon="clear"
-						@click:append="
-							options.volume = node.defaultVolume || ''
-						"
-						append-outer-icon="save"
-						@click:append-outer="setDefaults('volume')"
+					>
+						<template v-slot:append>
+							<v-btn
+								icon
+								size="small"
+								@click="
+									options.volume = node.defaultVolume || ''
+								"
+							>
+								<v-icon>clear</v-icon>
+							</v-btn>
+							<v-btn
+								icon
+								size="small"
+								@click="setDefaults('volume')"
+							>
+								<v-icon>save</v-icon>
+							</v-btn>
+						</template>
+					</v-text-field>
+				</v-col>
+				<v-col
+					cols="12"
+					sm="6"
+					style="max-width: 300px; padding-top: 0"
+				>
+					<v-text-field
+						label="Volume"
+						hint="The volume (for the Sound Switch CC)"
+						persistent-hint
+						v-model.trim="options.volume"
 					></v-text-field>
 				</v-col>
 			</v-row>
@@ -245,11 +283,11 @@
 			<!-- NODE VALUES -->
 
 			<v-row v-if="!node.isControllerNode || node.values.length">
-				<v-subheader class="title">Values</v-subheader>
+				<v-list-subheader class="text-h6">Values</v-list-subheader>
 
 				<v-expansion-panels
 					class="expansion-panels-outlined"
-					accordion
+					variant="accordion"
 					multiple
 					flat
 				>
@@ -257,7 +295,7 @@
 						v-for="(group, className) in commandGroups"
 						:key="className"
 					>
-						<v-expansion-panel-header>
+						<v-expansion-panel-title>
 							<v-row no-gutters>
 								<v-col align-self="center">
 									{{ className }}
@@ -268,11 +306,13 @@
 										@click.stop="resetAllConfig()"
 										color="error"
 										class="mb-1 mr-3"
-										outlined
-										x-small
+										variant="outlined"
+										size="x-small"
 									>
 										Reset
-										<v-icon x-small right>clear</v-icon>
+										<v-icon size="x-small" end
+											>clear</v-icon
+										>
 									</v-btn>
 									<v-btn
 										v-if="group[0]"
@@ -283,16 +323,18 @@
 											)
 										"
 										color="primary"
-										outlined
-										x-small
+										variant="outlined"
+										size="x-small"
 									>
 										Refresh
-										<v-icon x-small right>refresh</v-icon>
+										<v-icon size="x-small" end
+											>refresh</v-icon
+										>
 									</v-btn>
 								</v-col>
 							</v-row>
-						</v-expansion-panel-header>
-						<v-expansion-panel-content>
+						</v-expansion-panel-title>
+						<v-expansion-panel-text>
 							<v-row>
 								<v-col
 									cols="12"
@@ -318,9 +360,9 @@
 									sm="6"
 									md="4"
 								>
-									<v-subheader class="valueid-label"
+									<v-list-subheader class="valueid-label"
 										>Custom Configuration
-									</v-subheader>
+									</v-list-subheader>
 
 									<v-row>
 										<v-col cols="3">
@@ -350,11 +392,7 @@
 											/>
 										</v-col>
 										<v-col
-											:cols="
-												$vuetify.breakpoint.xsOnly
-													? 4
-													: 3
-											"
+											:cols="$vuetify.display.xs ? 4 : 3"
 										>
 											<v-select
 												label="Format"
@@ -365,27 +403,29 @@
 										</v-col>
 										<v-col class="d-flex" style="gap: 10px">
 											<v-btn
+												variant="flat"
 												width="60px"
 												@click.stop="configurationGet()"
 												color="success"
-												x-small
-												dark
+												size="x-small"
 											>
 												GET
 											</v-btn>
 											<v-btn
+												variant="flat"
 												width="60px"
 												@click.stop="configurationSet()"
 												color="primary"
-												x-small
+												size="x-small"
 											>
 												SET
 											</v-btn>
 											<v-btn
+												variant="flat"
 												v-if="canResetConfig(group[0])"
 												width="60px"
 												@click.stop="resetConfig"
-												x-small
+												size="x-small"
 												color="error"
 												>Reset</v-btn
 											>
@@ -393,7 +433,7 @@
 									</v-row>
 								</v-col>
 							</v-row>
-						</v-expansion-panel-content>
+						</v-expansion-panel-text>
 						<v-divider></v-divider>
 					</v-expansion-panel>
 				</v-expansion-panels>
@@ -403,6 +443,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState, mapActions } from 'pinia'
 import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
@@ -420,7 +461,7 @@ export default {
 		node: Object,
 	},
 	components: {
-		ValueID: () => import('../ValueId.vue'),
+		ValueID: defineAsyncComponent(() => import('../ValueId.vue')),
 	},
 	mixins: [InstancesMixin],
 	data() {
@@ -434,11 +475,11 @@ export default {
 			selectedRFRegion: this.node.RFRegion,
 			configCCValueFormats: [
 				{
-					text: 'Signed',
+					title: 'Signed',
 					value: ConfigValueFormat.SignedInteger,
 				},
 				{
-					text: 'Unsigned',
+					title: 'Unsigned',
 					value: ConfigValueFormat.UnsignedInteger,
 				},
 			],

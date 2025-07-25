@@ -5,7 +5,7 @@
 				class="ma-2"
 				style="max-width: 200px"
 				v-model="mode"
-				dense
+				density="compact"
 				:items="supportedModes"
 				persistent-hint
 				:hint="`Max slots: ${this.schedule.numSlots}`"
@@ -23,9 +23,8 @@
 				<template v-slot:top>
 					<v-btn
 						v-if="!loading"
-						small
-						outlined
-						text
+						size="small"
+						variant="text"
 						color="primary"
 						@click="refresh()"
 						class="mb-2"
@@ -33,9 +32,8 @@
 					>
 					<v-btn
 						v-else
-						small
-						outlined
-						text
+						size="small"
+						variant="text"
 						color="error"
 						@click="cancel()"
 						class="mb-2"
@@ -43,9 +41,8 @@
 					>
 
 					<v-btn
-						small
-						outlined
-						text
+						size="small"
+						variant="text"
 						:disabled="schedule.numSlots <= items.length"
 						color="success"
 						@click="editSlot()"
@@ -54,10 +51,9 @@
 					>
 
 					<v-btn
-						small
-						outlined
+						size="small"
+						variant="text"
 						v-if="mode !== activeMode && items.length > 0"
-						text
 						color="warning"
 						@click="enableMode()"
 						class="mb-2"
@@ -66,10 +62,16 @@
 				</template>
 
 				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="error" @click="removeSlot(item.slot)"
+					<v-icon
+						size="small"
+						color="error"
+						@click="removeSlot(item.slot)"
 						>delete</v-icon
 					>
-					<v-icon small color="success" @click="editSlot(item.slot)"
+					<v-icon
+						size="small"
+						color="success"
+						@click="editSlot(item.slot)"
 						>edit</v-icon
 					>
 				</template>
@@ -89,51 +91,51 @@ import { padNumber, copy } from '../../lib/utils.js'
 
 const months = [
 	{
-		text: 'January',
+		title: 'January',
 		value: 1,
 	},
 	{
-		text: 'February',
+		title: 'February',
 		value: 2,
 	},
 	{
-		text: 'March',
+		title: 'March',
 		value: 3,
 	},
 	{
-		text: 'April',
+		title: 'April',
 		value: 4,
 	},
 	{
-		text: 'May',
+		title: 'May',
 		value: 5,
 	},
 	{
-		text: 'June',
+		title: 'June',
 		value: 6,
 	},
 	{
-		text: 'July',
+		title: 'July',
 		value: 7,
 	},
 	{
-		text: 'August',
+		title: 'August',
 		value: 8,
 	},
 	{
-		text: 'September',
+		title: 'September',
 		value: 9,
 	},
 	{
-		text: 'October',
+		title: 'October',
 		value: 10,
 	},
 	{
-		text: 'November',
+		title: 'November',
 		value: 11,
 	},
 	{
-		text: 'December',
+		title: 'December',
 		value: 12,
 	},
 ]
@@ -150,7 +152,7 @@ export default {
 			mode: 'daily',
 			weekdays: Object.keys(ScheduleEntryLockWeekday)
 				.map((key) => ({
-					text: key,
+					title: key,
 					value: ScheduleEntryLockWeekday[key],
 				}))
 				.filter((w) => typeof w.value === 'number'),
@@ -181,9 +183,9 @@ export default {
 		},
 		modes() {
 			const modes = [
-				{ text: 'Daily', value: 'daily' },
-				{ text: 'Weekly', value: 'weekly' },
-				{ text: 'Yearly', value: 'yearly' },
+				{ title: 'Daily', value: 'daily' },
+				{ title: 'Weekly', value: 'weekly' },
+				{ title: 'Yearly', value: 'yearly' },
 			]
 
 			for (const m of modes) {
@@ -260,31 +262,35 @@ export default {
 		},
 		headers() {
 			let headers = [
-				{ text: 'Slot Id', value: 'slotId' },
-				{ text: 'Start', value: 'start' },
+				{ title: 'Slot Id', value: 'slotId' },
+				{ title: 'Start', value: 'start' },
 			]
 
 			switch (this.mode) {
 				case 'daily':
 					headers = [
 						...headers,
-						{ text: 'Weekdays', value: 'weekdays' },
-						{ text: 'Duration', value: 'duration' },
+						{ title: 'Weekdays', value: 'weekdays' },
+						{ title: 'Duration', value: 'duration' },
 					]
 					break
 				case 'weekly':
 					headers = [
 						...headers,
-						{ text: 'Weekday', value: 'weekday' },
-						{ text: 'Stop', value: 'stop' },
+						{ title: 'Weekday', value: 'weekday' },
+						{ title: 'Stop', value: 'stop' },
 					]
 					break
 				case 'yearly':
-					headers = [...headers, { text: 'Stop', value: 'stop' }]
+					headers = [...headers, { title: 'Stop', value: 'stop' }]
 					break
 			}
 
-			headers.push({ text: 'Actions', value: 'actions', sortable: false })
+			headers.push({
+				title: 'Actions',
+				value: 'actions',
+				sortable: false,
+			})
 
 			return headers
 		},

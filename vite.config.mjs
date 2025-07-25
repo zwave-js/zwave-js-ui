@@ -1,7 +1,8 @@
 import path from 'path'
-import vue2 from '@vitejs/plugin-vue2'
+import vue from '@vitejs/plugin-vue'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import * as pkgJson from './package.json'
 
 const distFolder = path.resolve(__dirname, 'dist')
@@ -37,7 +38,16 @@ export default defineConfig(({ mode }) => {
 	return {
 		base: './',
 		plugins: [
-			vue2(),
+			vue(),
+			vuetify({
+				template: {
+					transformAssetUrls,
+				},
+				autoImport: {
+					labs: true,
+					directives: true,
+				},
+			}),
 			VitePWA({
 				// do not reload application automatically but show a popup to user
 				registerType: 'prompt',

@@ -4,20 +4,16 @@
 		v-model="managedNodes.selected"
 		:headers="managedNodes.tableHeaders"
 		:items="managedNodes.filteredItems"
-		:footer-props="{
-			itemsPerPageOptions: [10, 20, 50, 100, -1],
-		}"
-		:expanded.sync="expanded"
-		:value="managedNodes.selected"
-		:options="managedNodes.tableOptions"
-		:custom-sort="sort"
-		@update:options="managedNodes.tableOptions = $event"
-		@input="managedNodes.selected = $event"
-		@click:row="toggleExpanded($event)"
+		v-model:expanded="expanded"
+		v-model:options="managedNodes.tableOptions"
+		:group-by="managedNodes.groupBy"
+		:sort-by="managedNodes.sortBy"
 		item-key="id"
 		class="elevation-1 nodes-table"
+		expand-on-click
 		show-expand
 		show-select
+		return-object
 		:search="search"
 		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
@@ -26,10 +22,8 @@
 				<v-text-field
 					v-model="search"
 					clearable
-					flat
-					solo-inverted
+					variant="outlined"
 					hide-details
-					single-line
 					class="ma-2"
 					style="max-width: 250px; min-width: 250px"
 					prepend-inner-icon="search"
@@ -38,18 +32,18 @@
 				<v-menu
 					v-model="headersMenu"
 					:close-on-content-click="false"
-					@input="
+					@update:model-value="
 						managedNodes.tableColumns = managedNodes.tableColumns
 					"
 				>
-					<template v-slot:activator="{ on }">
+					<template v-slot:activator="{ props }">
 						<v-btn
 							class="my-auto"
 							color="primary"
-							outlined
-							v-on="on"
+							variant="outlined"
+							v-bind="props"
 						>
-							<v-icon left small>table_chart</v-icon>
+							<v-icon start size="small">table_chart</v-icon>
 							Columns
 						</v-btn>
 					</template>
@@ -58,32 +52,32 @@
 							<draggable
 								v-model="managedNodes.tableColumns"
 								handle=".handle"
+								item-key="name"
 							>
-								<v-checkbox
-									v-for="col in managedNodes.tableColumns"
-									:key="col.name"
-									v-model="col.visible"
-									:value="col.visible"
-									hide-details
-									:label="
-										managedNodes.propDefs[col.name].label
-									"
-									:input-value="col.visible"
-									@change="col.visible = !!$event"
-								>
-									<template v-slot:prepend>
-										<v-icon
-											class="handle"
-											style="cursor: move"
-											>drag_indicator</v-icon
-										>
-									</template>
-								</v-checkbox>
+								<template #item="{ element: col }">
+									<v-checkbox
+										:key="col.name"
+										v-model="col.visible"
+										hide-details
+										:label="
+											managedNodes.propDefs[col.name]
+												.label
+										"
+									>
+										<template v-slot:prepend>
+											<v-icon
+												class="handle"
+												style="cursor: move"
+												>drag_indicator</v-icon
+											>
+										</template>
+									</v-checkbox>
+								</template>
 							</draggable>
 						</v-card-text>
 						<v-card-actions>
 							<v-btn
-								@click.native="
+								@click="
 									managedNodes.tableColumns =
 										managedNodes.initialTableColumns
 								"
@@ -92,63 +86,69 @@
 						</v-card-actions>
 					</v-card>
 				</v-menu>
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							color="primary"
-							class="my-auto"
-							text
-							v-on="on"
-							@click.native="managedNodes.setFilterToSelected()"
-							:disabled="managedNodes.selected.length === 0"
-							>Filter Selected</v-btn
-						>
-					</template>
-					<span>Show only selected nodes</span>
-				</v-tooltip>
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							color="primary"
-							class="my-auto"
-							text
-							v-on="on"
-							@click.native="managedNodes.reset()"
-							>Reset Table</v-btn
-						>
-					</template>
-					<span>Reset all table settings</span>
-				</v-tooltip>
+				<v-btn
+					color="primary"
+					class="my-auto"
+					variant="text"
+					v-tooltip:bottom="'Show only selected nodes'"
+					@click="managedNodes.setFilterToSelected()"
+					:disabled="managedNodes.selected.length === 0"
+				>
+					Filter Selected
+				</v-btn>
+				<v-btn
+					color="primary"
+					class="my-auto"
+					variant="text"
+					v-tooltip:bottom="'Reset all table settings'"
+					@click="managedNodes.reset()"
+				>
+					Reset Table
+				</v-btn>
 			</v-row>
 		</template>
 		<template
 			v-for="column in managedNodes.tableHeaders"
-			v-slot:[`header.${column.value}`]="{ header }"
+			v-slot:[`header.${column.key}`]="{ isSorted, getSortIcon }"
+			:key="column.key"
 		>
-			<span :key="column.value">
+			<span>
 				<column-filter
+					v-model="managedNodes.filters[column.key]"
+					v-model:group-by="managedNodes.groupBy"
 					:column="column"
-					:value="managedNodes.filters[column.value]"
-					:items="managedNodes.propValues[column.value]"
-					:group-by="managedNodes.groupBy === [column.value]"
-					@change="managedNodes.setPropFilter(column.value, $event)"
-					@update:group-by="managedNodes.groupBy = $event"
+					:items="managedNodes.propValues[column.key]"
+					@update:filter="
+						managedNodes.setPropFilter(column.key, $event)
+					"
 				></column-filter>
-				<span style="padding-right: 1px">{{ header.text }}</span>
+				<span style="padding-right: 1px">{{ column.title }}</span>
+			</span>
+			<span v-if="isSorted(column)">
+				<v-icon>{{ getSortIcon(column) }}</v-icon>
 			</span>
 		</template>
 		<template
-			v-slot:[`group.header`]="{ group, headers, toggle, remove, isOpen }"
+			v-slot:[`group-header`]="{
+				item,
+				columns,
+				toggleGroup,
+				isGroupOpen,
+			}"
 		>
-			<td :colspan="headers.length">
-				<v-btn @click="toggle" x-small icon :ref="group">
-					<v-icon>{{ isOpen ? 'remove' : 'add' }}</v-icon>
-				</v-btn>
-				<span>{{ groupValue(group) }}</span>
-				<v-btn x-small icon @click="remove"
-					><v-icon>close</v-icon></v-btn
-				>
-			</td>
+			<tr>
+				<td :colspan="columns.length">
+					<v-btn @click="toggleGroup(item)" size="x-small" icon>
+						<v-icon>{{
+							isGroupOpen(item) ? 'remove' : 'add'
+						}}</v-icon>
+					</v-btn>
+					<span>{{ groupValue(item) }}</span>
+					<v-btn size="x-small" icon @click="toggleGroup(item)"
+						><v-icon>close</v-icon></v-btn
+					>
+				</td>
+			</tr>
 		</template>
 		<template v-slot:[`item.id`]="{ item }">
 			<div class="d-flex">
@@ -233,45 +233,37 @@
 					color="primary"
 				></v-progress-circular>
 
-				<v-tooltip
+				<v-icon
 					v-else-if="
 						getRebuildRoutesIcon(item.rebuildRoutesProgress) !==
 						undefined
 					"
-					bottom
+					class="ml-3"
+					v-tooltip:bottom="item.rebuildRoutesProgress.toUpperCase()"
+					:color="
+						getRebuildRoutesIcon(item.rebuildRoutesProgress).color
+					"
 				>
-					<template v-slot:activator="{ on }">
-						<v-icon
-							v-on="on"
-							class="ml-3"
-							v-text="
-								getRebuildRoutesIcon(item.rebuildRoutesProgress)
-									.icon
-							"
-							:color="
-								getRebuildRoutesIcon(item.rebuildRoutesProgress)
-									.color
-							"
-						></v-icon>
-					</template>
-					<span>{{ item.rebuildRoutesProgress.toUpperCase() }}</span>
-				</v-tooltip>
+					{{ getRebuildRoutesIcon(item.rebuildRoutesProgress).icon }}
+				</v-icon>
 				<div v-else>{{ item.rebuildRoutesProgress }}</div>
 			</div>
 			<div v-else></div>
 		</template>
 		<template v-slot:[`item.interviewStage`]="{ item }">
-			<div v-if="!item.isControllerNode" style="text-align: center">
+			<div
+				v-if="!item.isControllerNode"
+				class="d-flex flex-column align-center pa-1"
+			>
 				<v-chip
-					small
+					size="small"
 					:color="interviewStageColor(`${item.interviewStage}`)"
-					text-color="black"
 					>{{ item.interviewStage }}</v-chip
 				>
 				<v-progress-circular
-					class="ml-3"
 					v-if="item.interviewStage !== 'Complete'"
 					indeterminate
+					class="mt-1"
 					size="20"
 					color="primary"
 				></v-progress-circular>
@@ -280,18 +272,21 @@
 		</template>
 		<template v-slot:[`item.firmwareVersion`]="{ item }">
 			<div style="text-align: center">
-				<div v-if="item.firmwareUpdate && !item.isControllerNode">
+				<div
+					v-if="item.firmwareUpdate && !item.isControllerNode"
+					class="d-flex flex-column align-center pa-1"
+				>
 					<v-progress-circular
-						:value="item.firmwareUpdate.progress"
+						:model-value="item.firmwareUpdate.progress"
 						size="50"
-						class="mt-1"
+						class="my-1"
 						color="primary"
 					>
-						<span class="caption">{{
+						<span class="text-caption">{{
 							item.firmwareUpdate.progress
 						}}</span>
 					</v-progress-circular>
-					<p class="caption font-weight-bold mb-0 mt-1">
+					<p class="text-caption font-weight-bold mb-0 mt-1">
 						{{ item.firmwareUpdate.currentFile }}/{{
 							item.firmwareUpdate.totalFiles
 						}}: {{ getProgress(item) }}%
@@ -313,11 +308,10 @@
 		<template v-slot:[`item.lastActive`]="{ item }">
 			<statistics-arrows :node="item"></statistics-arrows>
 		</template>
-		<template v-slot:[`expanded-item`]="{ headers, item, isMobile }">
-			<td :colspan="isMobile ? 1 : headers.length">
+		<template v-slot:[`expanded-row`]="{ columns: headers, item }">
+			<td :colspan="$vuetify.display.xs ? 1 : headers.length">
 				<expanded-node
 					:headers="headers"
-					:isMobile="isMobile"
 					:node="item"
 					:socket="socket"
 				/>
@@ -327,7 +321,7 @@
 </template>
 <script src="./nodes-table.js"></script>
 <style scoped src="./nodes-table.css"></style>
-<style>
+<style lang="scss">
 .nodes-table {
 	table {
 		tr {

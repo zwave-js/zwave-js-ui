@@ -1,13 +1,17 @@
 <template>
 	<!-- DIALOG PASSWORD -->
-	<v-dialog v-model="show" @click:outside="$emit('close')" max-width="500px">
+	<v-dialog
+		v-model="_value"
+		@click:outside="$emit('close')"
+		max-width="500px"
+	>
 		<v-card>
 			<v-card-title>
-				<span class="headline">Password Change</span>
+				<span class="text-h5">Password Change</span>
 			</v-card-title>
 			<v-card-text>
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form v-model="valid" ref="form" validate-on="lazy">
 						<v-row dense>
 							<v-col cols="12">
 								<v-text-field
@@ -67,11 +71,13 @@
 			</v-card-text>
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="primary" text @click="closeDialog()">Close</v-btn>
+				<v-btn color="primary" variant="text" @click="closeDialog()"
+					>Close</v-btn
+				>
 				<v-btn
 					color="primary"
 					:disabled="!valid"
-					text
+					variant="text"
 					@click="updatePassword()"
 					>Save</v-btn
 				>
@@ -86,14 +92,15 @@
 export default {
 	name: 'Password',
 	props: {
-		show: Boolean,
+		modelValue: Boolean,
 		password: Object,
 	},
 	watch: {
-		show() {
+		modelValue() {
 			this.$refs.form && this.$refs.form.reset()
 		},
 	},
+	emits: ['update:modelValue', 'updatePassword', 'close'],
 	data() {
 		return {
 			valid: true,
@@ -112,10 +119,19 @@ export default {
 				"Password doesn't match"
 			)
 		},
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 	},
 	methods: {
-		updatePassword: function () {
-			if (this.$refs.form.validate()) {
+		updatePassword: async function () {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
 				this.$emit('updatePassword')
 			}
 		},

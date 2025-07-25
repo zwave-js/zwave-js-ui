@@ -1,5 +1,5 @@
 import draggable from 'vuedraggable'
-import colors from 'vuetify/lib/util/colors'
+import colors from 'vuetify/util/colors'
 import { ManagedItems } from '@/modules/ManagedItems'
 
 import { mapState } from 'pinia'
@@ -30,6 +30,7 @@ import {
 	getProtocolColor,
 } from '../../lib/utils.js'
 import { instances, manager } from '../../lib/instanceManager.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	props: {
@@ -37,13 +38,21 @@ export default {
 	},
 	components: {
 		draggable,
-		ColumnFilter: () => import('@/components/nodes-table/ColumnFilter.vue'),
-		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
-		RichValue: () => import('@/components/nodes-table/RichValue.vue'),
-		StatisticsArrows: () =>
-			import('@/components/custom/StatisticsArrows.vue'),
-		ReinterviewBadge: () =>
-			import('@/components/custom/ReinterviewBadge.vue'),
+		ColumnFilter: defineAsyncComponent(
+			() => import('@/components/nodes-table/ColumnFilter.vue'),
+		),
+		ExpandedNode: defineAsyncComponent(
+			() => import('@/components/nodes-table/ExpandedNode.vue'),
+		),
+		RichValue: defineAsyncComponent(
+			() => import('@/components/nodes-table/RichValue.vue'),
+		),
+		StatisticsArrows: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsArrows.vue'),
+		),
+		ReinterviewBadge: defineAsyncComponent(
+			() => import('@/components/custom/ReinterviewBadge.vue'),
+		),
 	},
 	watch: {
 		'managedNodes.selected': function (val) {
@@ -64,16 +73,6 @@ export default {
 			search: '',
 			managedNodes: null,
 			nodesProps: {
-				/* The node property definition map entries can have the following attributes:
-		   - type (string): The type of the property
-		   - label (string): The label of the property to be displayed as table column
-		   - groupable (boolean): If the column values can be grouped
-		   - customGroupValue (function): Function to format a value for displaying as group value
-		   - customSort (function): Custom sort function for a certain column.
-		   - customValue (function): Function to dynamically extract the value from a given node if it is not directly accessible using the key of the definition.
-		   - undefinedPlaceholder (string): The placeholder to use in filter when value is undefined.
-		   - richValue (function): Function to return an object representing a value enriched with additional information (icon, label, styling) to be displayed in the table.
-		*/
 				id: { type: 'number', label: 'ID', groupable: false },
 				minBatteryLevel: {
 					type: 'number',
@@ -82,8 +81,8 @@ export default {
 						group
 							? `Battery level: ${group}%`
 							: 'Mains-powered or battery level unknown',
-					customSort: (items, sortBy, sortDesc, nodeA, nodeB) =>
-						this.powerSort(items, sortBy, sortDesc, nodeA, nodeB),
+					customSort: (sortDesc, nodeA, nodeB) =>
+						this.powerSort(sortDesc, nodeA, nodeB),
 					customValue: (node) => node.minBatteryLevel, // Note: Not required here but kept as demo for use of customValue()
 					richValue: (node) => this.powerRichValue(node),
 					undefinedPlaceholder: 'Mains', // must match the text of undefined value
@@ -248,11 +247,6 @@ export default {
 					)
 				: null
 		},
-		toggleExpanded(item) {
-			this.expanded = this.expanded.includes(item)
-				? this.expanded.filter((i) => i !== item)
-				: [...this.expanded, item]
-		},
 		getRebuildRoutesIcon(status) {
 			switch (status) {
 				case 'done':
@@ -269,13 +263,10 @@ export default {
 			return getProtocolIcon(protocol, this.currentTheme)
 		},
 		groupValue(group) {
-			return this.managedNodes.groupValue(group)
+			return this.managedNodes.groupValue(group.value)
 		},
 		richValue(item, propName) {
 			return this.managedNodes.richValue(item, propName)
-		},
-		sort(items, sortBy, sortDesc) {
-			return this.managedNodes.sort(items, sortBy, sortDesc)
 		},
 		booleanRichValue(value, valueMap) {
 			let map =
@@ -303,7 +294,6 @@ export default {
 			return map[status] || 'grey'
 		},
 		powerRichValue(node) {
-			console.log('powerRichValue', this.currentTheme.success)
 			let level = node.minBatteryLevel
 			let iconStyle = `color: ${this.currentTheme.success}`
 			let icon = ''
@@ -344,14 +334,14 @@ export default {
 				rawValue: level,
 			}
 		},
-		powerSort(items, sortBy, sortDesc, nodeA, nodeB) {
+		powerSort(sortDesc, nodeA, nodeB) {
 			// Special sort for power column
 			let levelA = nodeA.isListening ? 101 : nodeA.minBatteryLevel || 0
 
 			let levelB = nodeB.isListening ? 101 : nodeB.minBatteryLevel || 0
 
 			let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
-			res = sortDesc[0] ? -res : res
+			res = sortDesc ? -res : res
 			return res
 		},
 	},

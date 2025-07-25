@@ -1,30 +1,28 @@
 <template>
 	<v-card-text>
-		<v-form v-model="valid">
+		<v-form v-model="_valid">
 			<v-row>
 				<v-col>
 					<v-text-field
 						label="Search"
 						hint="Supports regular expressions"
-						v-model="value.match"
+						v-model="_value.match"
 						:rules="rules.match"
 						clearable
-						@change="change"
 					></v-text-field>
 				</v-col>
 			</v-row>
 			<v-row>
 				<v-col>
 					<v-select
-						v-model="value.values"
+						v-model="_value.values"
 						:items="items"
 						label="Values"
 						clearable
 						chips
-						deletableChips
-						dense
+						closable-chips
+						density="compact"
 						multiple
-						@change="change"
 					></v-select>
 				</v-col>
 			</v-row>
@@ -36,10 +34,15 @@
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => ColumnFilterHelper.defaultFilter('string'),
 			required: true,
+		},
+		valid: {
+			type: Boolean,
+			default: false,
+			required: false,
 		},
 		items: {
 			type: Array,
@@ -47,18 +50,32 @@ export default {
 			required: true,
 		},
 	},
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(v) {
+				this.$emit('update:modelValue', v)
+			},
+		},
+		_valid: {
+			get() {
+				return this.valid
+			},
+			set(v) {
+				this.$emit('update:valid', v)
+			},
+		},
+	},
 	data() {
 		return {
-			valid: false,
 			rules: {
 				match: [(v) => this.validateRegex(v)],
 			},
 		}
 	},
 	methods: {
-		change() {
-			this.$emit('change', this.value, this.valid)
-		},
 		validateRegex(rex) {
 			let res
 			try {
