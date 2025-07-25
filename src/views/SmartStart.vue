@@ -38,11 +38,11 @@
 								v-model="search"
 								clearable
 								flat
-								variant="solo-inverted"
+								variant="outlined"
 								hide-details
 								single-line
 								class="ma-2"
-								style="max-width: 250px; min-width: 250px"
+								style="max-width: 300px; min-width: 250px"
 								prepend-inner-icon="search"
 								label="Search"
 								append-icon="refresh"
@@ -77,6 +77,7 @@
 					v-model="item.status"
 					@update:model-value="onChange(item)"
 					density="compact"
+					hide-details
 				></v-switch>
 			</template>
 

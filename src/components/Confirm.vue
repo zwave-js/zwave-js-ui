@@ -252,7 +252,7 @@ export default {
 		defaultOptions: {
 			color: 'primary',
 			width: 290,
-			zIndex: 200,
+			zIndex: 2500,
 			confirmText: 'Yes',
 			cancelText: 'Cancel',
 			persistent: false,

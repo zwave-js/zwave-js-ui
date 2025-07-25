@@ -11,60 +11,55 @@
 			>
 			<v-list
 				density="compact"
+				class="text-start"
 				style="min-width: 300px; background: transparent"
 			>
-				<v-list-item density="compact">
-					ID
+				<v-list-item title="ID" density="compact">
 					<template v-slot:append>
 						<span class="align-end">{{ node.id }}</span>
 					</template>
 				</v-list-item>
-				<v-list-item density="compact">
-					Status
+				<v-list-item title="Status" density="compact">
 					<template v-slot:append>
 						<span class="align-end">{{ node.status }}</span>
 					</template>
 				</v-list-item>
-				<v-list-item density="compact">
-					Protocol
+				<v-list-item title="Protocol" density="compact">
 					<template v-slot:append>
 						<span class="align-end">{{ getProtocol(node) }}</span>
 					</template>
 				</v-list-item>
-				<v-list-item density="compact">
-					Code
+				<v-list-item title="Code" density="compact">
 					<template v-slot:append>
 						<span class="align-end">{{ node.productLabel }}</span>
 					</template>
 				</v-list-item>
-				<v-list-item density="compact">
-					Product
+				<v-list-item title="Product" density="compact">
 					<template v-slot:append>
 						<span class="align-end">{{
 							node.productDescription
 						}}</span>
 					</template>
 				</v-list-item>
-				<v-list-item density="compact">
-					Manufacturer
+				<v-list-item title="Manufacturer" density="compact">
 					<template v-slot:append>
 						<span class="align-end">{{ node.manufacturer }}</span>
 					</template>
 				</v-list-item>
-				<v-list-item v-if="node.name">
-					Name
+				<v-list-item title="Name" v-if="node.name">
 					<template v-slot:append>
 						<span class="align-end">{{ node.name }}</span>
 					</template>
 				</v-list-item>
-				<v-list-item v-if="node.loc">
-					Location
+				<v-list-item title="Location" v-if="node.loc">
 					<template v-slot:append>
 						<span class="align-end">{{ node.loc }}</span>
 					</template>
 				</v-list-item>
-				<v-list-item v-if="node.neighbors && !isLongRange">
-					Neighbors
+				<v-list-item
+					title="Neighbors"
+					v-if="node.neighbors && !isLongRange"
+				>
 					<template v-slot:append>
 						<span class="align-end">{{
 							node.neighbors.length > 0
@@ -85,8 +80,7 @@
 						</v-btn>
 					</template>
 				</v-list-item>
-				<v-list-item density="compact">
-					Statistics
+				<v-list-item title="Statistics" density="compact">
 					<template v-slot:append>
 						<statistics-arrows
 							inactive-color="black"
@@ -184,6 +178,28 @@
 							>Add
 							<v-icon size="x-small">route</v-icon>
 						</v-btn>
+
+						<v-btn
+							v-if="routesChanged"
+							variant="flat"
+							class="ml-2"
+							color="success"
+							size="x-small"
+							@click="setReturnRoutes()"
+							>Save
+							<v-icon size="x-small">save</v-icon>
+						</v-btn>
+
+						<v-btn
+							v-if="routesChanged"
+							variant="flat"
+							class="ml-2"
+							color="error"
+							size="x-small"
+							@click="resetReturnRoutes()"
+							>Reset
+							<v-icon size="x-small">clear</v-icon>
+						</v-btn>
 					</v-list-subheader>
 					<div>
 						<div v-if="returnRoutes.length > 0">
@@ -265,29 +281,6 @@
 						<div v-else>
 							<p class="text-center">None</p>
 						</div>
-						<v-row dense>
-							<v-btn
-								v-if="routesChanged"
-								variant="flat"
-								class="ma-2"
-								color="success"
-								size="x-small"
-								@click="setReturnRoutes()"
-								>Save
-								<v-icon size="x-small">save</v-icon>
-							</v-btn>
-
-							<v-btn
-								v-if="routesChanged"
-								variant="flat"
-								class="ma-2"
-								color="error"
-								size="x-small"
-								@click="resetReturnRoutes()"
-								>Reset
-								<v-icon size="x-small">clear</v-icon>
-							</v-btn>
-						</v-row>
 					</div>
 				</div>
 			</v-list>

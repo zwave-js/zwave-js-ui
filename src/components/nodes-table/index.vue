@@ -22,7 +22,7 @@
 				<v-text-field
 					v-model="search"
 					clearable
-					variant="solo"
+					variant="outlined"
 					hide-details
 					class="ma-2"
 					style="max-width: 250px; min-width: 250px"

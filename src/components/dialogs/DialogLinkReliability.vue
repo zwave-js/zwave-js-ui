@@ -11,7 +11,7 @@
 			<v-card-text>
 				<v-container>
 					<v-row class="ma-3" justify="start">
-						<v-col cols="12">
+						<v-col cols="12" align="center">
 							<v-select
 								label="Mode"
 								style="max-width: 325px"
@@ -21,7 +21,7 @@
 							></v-select>
 						</v-col>
 
-						<v-col cols="6">
+						<v-col cols="12" sm="6">
 							<v-radio-group
 								class="justify-center"
 								v-model="infinite"
@@ -47,7 +47,7 @@
 							</v-radio-group>
 						</v-col>
 
-						<v-col cols="6" class="justify-center">
+						<v-col cols="12" sm="6" class="mt-4">
 							<v-number-input
 								label="Interval"
 								v-model.number="interval"
