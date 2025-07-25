@@ -35,15 +35,15 @@ const testPropDefs = {
 	},
 }
 const testItemHeaders = [
-	{ value: 'id', title: 'ID', type: 'number', groupable: false },
-	{ value: 'name', title: 'Name', type: 'string', groupable: true },
-	{ value: 'value', title: 'Value', type: 'string', groupable: true },
+	{ key: 'id', title: 'ID', type: 'number', groupable: false },
+	{ key: 'name', title: 'Name', type: 'string', groupable: true },
+	{ key: 'value', title: 'Value', type: 'string', groupable: true },
 	{
-		value: 'nestedValue',
+		key: 'nestedValue',
 		title: 'Nested value',
 		type: 'string',
 		groupable: true,
-		customValue: testPropDefs.nestedValue.customValue,
+		value: testPropDefs.nestedValue.customValue,
 	},
 ]
 function getNewManagedTestItems() {
@@ -101,11 +101,11 @@ describe('ManagedItems', () => {
 		})
 		it('resets the table sorting', () => {
 			const managedItems = getNewManagedTestItems()
-			managedItems.tableOptions.sortBy = ['value']
-			managedItems.tableOptions.sortDesc = [true]
+			managedItems.tableOptions.sortBy = [{ key: 'value' }]
 			managedItems.reset()
-			expect(managedItems.tableOptions.sortBy).to.eql(['id'])
-			expect(managedItems.tableOptions.sortDesc).to.eql([false])
+			expect(managedItems.tableOptions.sortBy).to.eql([
+				{ key: 'id', order: 'asc' },
+			])
 		})
 	})
 	describe('#setFilterToSelected', () => {
@@ -176,7 +176,7 @@ describe('ManagedItems', () => {
 				'test_',
 			)
 			expect(managedItems.allTableHeaders).to.be.eql([
-				{ title: 'id', type: 'string', value: 'id', groupable: true },
+				{ title: 'id', type: 'string', key: 'id', groupable: true },
 			])
 		})
 		it('returns table headers using given values', () => {
@@ -193,9 +193,9 @@ describe('ManagedItems', () => {
 				{ name: 'info', visible: false },
 			]
 			expect(managedItems.tableHeaders).to.eql([
-				{ value: 'id', title: 'ID', type: 'number', groupable: false },
+				{ key: 'id', title: 'ID', type: 'number', groupable: false },
 				{
-					value: 'value',
+					key: 'value',
 					title: 'Value',
 					type: 'string',
 					groupable: true,
@@ -211,12 +211,12 @@ describe('ManagedItems', () => {
 				new LocalStorageMock(),
 				'test_',
 			)
-			managedItems.groupBy = ['value']
+			managedItems.groupBy = [{ key: 'value' }]
 			expect(managedItems.groupByTitle).to.eql('value')
 		})
 		it('returns the group by title from a given propDef label', () => {
 			const managedItems = getNewManagedTestItems()
-			managedItems.groupBy = ['value']
+			managedItems.groupBy = [{ key: 'value' }]
 			expect(managedItems.groupByTitle).to.eql('Value')
 		})
 	})
