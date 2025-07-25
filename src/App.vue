@@ -784,6 +784,7 @@ export default {
 		showSnackbar(text, color, timeout = 3000) {
 			const toastOptions = {
 				duration: timeout,
+				progressBar: true,
 				cardProps: {
 					color: 'info',
 					minWidth: '300',
