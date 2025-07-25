@@ -1,9 +1,13 @@
 <template>
-	<v-menu v-model="show" :close-on-content-click="false" location="bottom">
+	<v-menu
+		v-model="isVisible"
+		:close-on-content-click="false"
+		location="bottom"
+	>
 		<template v-slot:activator="{ props }">
 			<v-icon
 				size="small"
-				@click="showOptions"
+				@click.stop="showOptions()"
 				v-bind="props"
 				title="Filter options..."
 				style="padding-right: 2px; padding-bottom: 3px"
@@ -12,7 +16,7 @@
 			</v-icon>
 		</template>
 		<v-card :min-width="300">
-			<v-icon size="small" @click="hideOptions" end>close</v-icon>
+			<v-icon size="small" @click.stop="hideOptions()" end>close</v-icon>
 			<column-filter-boolean
 				v-if="column.type == 'boolean'"
 				v-model="_value"
@@ -94,14 +98,14 @@ export default {
 	data() {
 		return {
 			valid: true,
-			show: false,
+			isVisible: false,
 		}
 	},
 	watch: {
 		groupBy() {
-			this.show = false
+			this.isVisible = false
 		},
-		show(val) {
+		isVisible(val) {
 			if (val === false) {
 				this.updateFilter()
 			}
@@ -144,10 +148,10 @@ export default {
 			)
 		},
 		showOptions() {
-			this.show = true
+			this.isVisible = true
 		},
 		hideOptions() {
-			this.show = false
+			this.isVisible = false
 		},
 		updateFilter() {
 			if (this.valid === true) {

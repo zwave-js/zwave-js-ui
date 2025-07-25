@@ -786,9 +786,16 @@ export default {
 				duration: timeout,
 				cardProps: {
 					color: 'info',
-					minWidth: '200',
+					minWidth: '300',
 				},
 				prependIcon: 'info',
+				action: {
+					buttonProps: {
+						icon: 'close',
+						size: 'small',
+					},
+					onClick: () => {},
+				},
 			}
 
 			const iconMap = {
@@ -801,6 +808,23 @@ export default {
 			toastOptions.prependIcon = iconMap[color] || 'info'
 
 			toast(text, toastOptions)
+		},
+		showLoadingSnack(promise, options) {
+			return toast.toastOriginal.promise(promise, {
+				loading: options.loading || 'Loading...',
+				success: (data) => {
+					this.showSnackbar(options.successText || data, 'success')
+					return data
+				},
+				error: (data) => {
+					this.showSnackbar(options.errorText || data, 'error')
+					return data
+				},
+				action: {
+					label: 'Close',
+					onClick: () => {},
+				},
+			})
 		},
 		apiRequest(
 			apiName,
