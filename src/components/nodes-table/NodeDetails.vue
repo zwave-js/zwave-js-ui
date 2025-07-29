@@ -49,7 +49,7 @@
 						"
 						persistent-hint
 					>
-						<template #append-outer>
+						<template #append>
 							<v-btn
 								color="primary"
 								size="small"
@@ -100,7 +100,7 @@
 						suffix="dBm"
 						type="number"
 					>
-						<template #append-outer>
+						<template #append>
 							<v-btn
 								color="primary"
 								size="small"
@@ -135,7 +135,7 @@
 						"
 						persistent-hint
 					>
-						<template v-if="!isAutoPowerLevelEnabled" #append-outer>
+						<template v-if="!isAutoPowerLevelEnabled" #append>
 							<v-btn
 								color="primary"
 								size="small"

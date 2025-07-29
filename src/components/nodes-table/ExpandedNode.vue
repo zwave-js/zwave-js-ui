@@ -271,7 +271,7 @@
 							style="max-width: 300px"
 							clearable
 						>
-							<template #append-outer>
+							<template #append>
 								<v-btn
 									v-if="!inverseSort"
 									@click="toggleAutoScroll()"

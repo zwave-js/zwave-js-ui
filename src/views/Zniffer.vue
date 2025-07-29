@@ -113,9 +113,9 @@
 									</v-card>
 								</v-menu>
 							</template>
-							<!-- add to append-outer slot the total numer of frames -->
+							<!-- add to append slot the total numer of frames -->
 
-							<template #append-outer>
+							<template #append>
 								<v-col
 									v-if="totalFrames"
 									style="margin-top: -7px"
@@ -333,7 +333,7 @@
 									<v-icon>signal_cellular_alt</v-icon>
 								</template>
 
-								<template #append-outer>
+								<template #append>
 									<v-icon
 										color="success"
 										v-if="frequencySuccess"
@@ -354,7 +354,7 @@
 									<v-icon>wifi_channel</v-icon>
 								</template>
 
-								<template #append-outer>
+								<template #append>
 									<v-icon
 										color="success"
 										v-if="lrChannelConfigSuccess"

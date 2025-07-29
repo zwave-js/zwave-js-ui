@@ -60,7 +60,7 @@
 								closable-chips
 								variant="solo"
 							>
-								<template #append-outer>
+								<template #append>
 									<v-btn
 										v-tooltip:bottom="'Invert selection'"
 										@click="
@@ -94,7 +94,7 @@
 								closable-chips
 								variant="solo"
 							>
-								<template #append-outer>
+								<template #append>
 									<v-btn
 										v-tooltip:bottom="'Invert selection'"
 										@click="
