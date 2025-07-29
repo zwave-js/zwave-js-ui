@@ -10,14 +10,13 @@
 			>
 				<v-list nav>
 					<div class="d-flex align-center">
-						<v-list-item :class="mini && 'px-0'">
+						<v-list-item
+							:class="mini && 'px-0'"
+							:title="'Z-Wave JS UI'"
+						>
 							<template #prepend>
 								<Logo size="40" />
 							</template>
-
-							<v-list-item-title>{{
-								'Z-Wave JS UI'
-							}}</v-list-item-title>
 						</v-list-item>
 					</div>
 				</v-list>
@@ -1574,7 +1573,7 @@ export default {
 					// means we never saw the changelog for this version
 					const result = await this.confirm(
 						`Changelog`,
-						`<div style="line-height: 1.5rem">${changelog}</div>`,
+						`<div style="line-height: 1.5rem;" class="pa-4">${changelog}</div>`,
 						'info',
 						{
 							width: 1000,
