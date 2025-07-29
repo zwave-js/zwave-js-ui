@@ -197,13 +197,9 @@
 							v-for="(item, i) in menuItems"
 							:key="i"
 							@click="item.func"
+							:title="item.tooltip"
+							:prepend-icon="item.icon"
 						>
-							<template #prepend>
-								<v-icon>{{ item.icon }}</v-icon>
-							</template>
-							<v-list-item-title>{{
-								item.tooltip
-							}}</v-list-item-title>
 						</v-list-item>
 					</v-list>
 				</v-menu>
@@ -233,10 +229,8 @@
 								v-for="(menu, i) in item.menu"
 								:key="i"
 								@click="menu.func"
+								:title="menu.tooltip"
 							>
-								<v-list-item-title>{{
-									menu.title
-								}}</v-list-item-title>
 							</v-list-item>
 						</v-list>
 					</v-menu>

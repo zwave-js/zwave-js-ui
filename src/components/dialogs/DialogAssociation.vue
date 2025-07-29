@@ -37,18 +37,16 @@
 											v-on="on"
 											v-bind="attrs"
 											lines="two"
-										>
-											<v-list-item-title>{{
-												`[${item.value}] ${item.title}`
-											}}</v-list-item-title>
-											<v-list-item-subtitle>{{
+											:title="item.title"
+											:subtitle="
 												item.endpoint >= 0
 													? getEndpointLabel(
 															node,
 															item.endpoint,
 														)
 													: 'No Endpoint'
-											}}</v-list-item-subtitle>
+											"
+										>
 										</v-list-item>
 									</template>
 								</v-select>

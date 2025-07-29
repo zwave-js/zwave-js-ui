@@ -43,58 +43,49 @@
 									<v-list-item
 										density="compact"
 										@click.stop="writeFile(item.path, true)"
+										title="New Folder"
 									>
 										<template #prepend>
 											<v-icon color="warning"
 												>create_new_folder</v-icon
 											>
 										</template>
-										<v-list-item-title
-											>Create New
-											Folder</v-list-item-title
-										>
 									</v-list-item>
 									<v-list-item
 										density="compact"
 										@click.stop="
 											writeFile(item.path, false)
 										"
+										title="New File"
 									>
 										<template #prepend>
 											<v-icon color="primary"
 												>post_add</v-icon
 											>
 										</template>
-										<v-list-item-title
-											>Add File</v-list-item-title
-										>
 									</v-list-item>
 									<v-list-item
 										density="compact"
 										v-if="!item.isRoot"
 										@click.stop="deleteFile(item)"
+										title="Delete"
 									>
 										<template #prepend>
 											<v-icon color="error"
 												>delete</v-icon
 											>
 										</template>
-										<v-list-item-title
-											>Delete</v-list-item-title
-										>
 									</v-list-item>
 									<v-list-item
 										density="compact"
 										@click.stop="uploadFile(item)"
+										title="Upload File"
 									>
 										<template #prepend>
-											<v-icon color="warning"
+											<v-icon color="success"
 												>upload</v-icon
 											>
 										</template>
-										<v-list-item-title
-											>Upload File</v-list-item-title
-										>
 									</v-list-item>
 								</v-list>
 							</v-menu>

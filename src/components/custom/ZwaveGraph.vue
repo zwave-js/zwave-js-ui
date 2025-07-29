@@ -20,8 +20,9 @@
 
 									<v-list-item-title
 										:style="{ color: item.textColor }"
-										v-text="item.text"
-									></v-list-item-title>
+									>
+										{{ item.text }}</v-list-item-title
+									>
 								</v-list-item>
 							</v-list>
 						</v-col>
@@ -40,8 +41,9 @@
 
 									<v-list-item-title
 										:style="{ color: item.textColor }"
-										v-text="item.text"
-									></v-list-item-title>
+									>
+										{{ item.text }}
+									</v-list-item-title>
 								</v-list-item>
 							</v-list>
 						</v-col>

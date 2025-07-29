@@ -1103,14 +1103,15 @@
 														v-on="on"
 														v-bind="attrs"
 														lines="two"
-													>
-														<v-list-item-title>{{
-															scaleName(item)
-														}}</v-list-item-title>
-														<v-list-item-subtitle>{{
-															item.description ||
+														:title="
+															scaleName(item.raw)
+														"
+														:subtitle="
+															item.raw
+																.description ||
 															''
-														}}</v-list-item-subtitle>
+														"
+													>
 													</v-list-item>
 												</template>
 											</v-autocomplete>
