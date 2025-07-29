@@ -135,10 +135,7 @@
 						"
 						persistent-hint
 					>
-						<template
-							v-if="!isAutoPowerLevelEnabled"
-							#append-outer
-						>
+						<template v-if="!isAutoPowerLevelEnabled" #append-outer>
 							<v-btn
 								color="primary"
 								size="small"

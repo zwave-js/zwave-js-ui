@@ -187,9 +187,7 @@
 							</p>
 						</template>
 
-						<template
-							#[`item.failedPingsToSource`]="{ item }"
-						>
+						<template #[`item.failedPingsToSource`]="{ item }">
 							<p
 								class="mb-0"
 								v-if="item.failedPingsToSource !== undefined"
@@ -220,9 +218,7 @@
 							</p>
 						</template>
 
-						<template
-							#[`item.minPowerlevelSource`]="{ item }"
-						>
+						<template #[`item.minPowerlevelSource`]="{ item }">
 							<p
 								class="mb-0"
 								v-if="item.minPowerlevelSource !== undefined"
