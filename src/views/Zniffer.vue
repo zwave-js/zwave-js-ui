@@ -112,14 +112,10 @@
 										</v-card-text>
 									</v-card>
 								</v-menu>
-							</template>
-							<!-- add to append slot the total numer of frames -->
-
-							<template #append>
 								<v-col
 									v-if="totalFrames"
 									style="margin-top: -7px"
-									class="pa-0 text-caption text-grey text-center"
+									class="pa-0 ml-3 text-caption text-grey text-center"
 								>
 									<p class="mb-0">Frames</p>
 									<p class="mb-0">
@@ -129,6 +125,7 @@
 									</p>
 								</v-col>
 							</template>
+							<!-- add to append slot the total numer of frames -->
 						</v-text-field>
 					</v-col>
 
@@ -826,7 +823,7 @@ export default {
 			}
 			toggleSelect(internalItem, index, event)
 		},
-		getRowStyle(frame) {
+		getRowStyle({ item: frame }) {
 			const style = {
 				backgroundColor: '',
 			}
@@ -889,7 +886,7 @@ export default {
 				}
 			}
 
-			return style
+			return { style }
 		},
 		getPayloadTags(payload, prev = []) {
 			const tags = [
@@ -1183,7 +1180,7 @@ export default {
 
 .pane::-webkit-scrollbar-thumb,
 #framesTable :deep(.v-table__wrapper::-webkit-scrollbar-thumb) {
-	background: var(--v-primary-base);
+	background: v-bind('$vuetify.theme.current.colors.primary');
 	border-radius: 1ex;
 	-webkit-border-radius: 1ex;
 }
