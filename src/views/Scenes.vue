@@ -65,33 +65,24 @@
 				</div>
 			</template>
 
-			<template v-slot:item="{ item }">
-				<tr>
-					<td class="text-xs">{{ item.id }}</td>
-					<td class="text-xs">{{ item.nodeId }}</td>
-					<td class="text-xs">{{ item.label }}</td>
-					<td class="text-xs">{{ item.value }}</td>
-					<td class="text-xs">
-						{{
-							item.timeout ? 'After ' + item.timeout + 's' : 'No'
-						}}
-					</td>
-					<td>
-						<v-icon
-							size="small"
-							color="success"
-							class="mr-2"
-							@click="editItem(item)"
-							>edit</v-icon
-						>
-						<v-icon
-							size="small"
-							color="error"
-							@click="deleteItem(item)"
-							>delete</v-icon
-						>
-					</td>
-				</tr>
+			<template v-slot:[`item.timeout`]="{ item }">
+				<td class="text-xs">
+					{{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}
+				</td>
+			</template>
+			<template v-slot:[`item.Actions`]="{ item }">
+				<td>
+					<v-icon
+						size="small"
+						color="success"
+						class="mr-2"
+						@click="editItem(item)"
+						>edit</v-icon
+					>
+					<v-icon size="small" color="error" @click="deleteItem(item)"
+						>delete</v-icon
+					>
+				</td>
 			</template>
 		</v-data-table>
 	</v-container>
@@ -122,10 +113,10 @@ export default {
 		...mapState(useBaseStore, ['nodes']),
 		scenesWithId() {
 			return this.scenes.map((s) => {
-				if (s.parsed) return s
-				s.label = `[${s.sceneid}] ${s.label}`
-				s.parsed = true
-				return s
+				return {
+					...s,
+					label: `[${s.sceneid}] ${s.label}`,
+				}
 			})
 		},
 		dialogTitle() {
