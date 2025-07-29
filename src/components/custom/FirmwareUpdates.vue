@@ -62,24 +62,29 @@
 				>
 					<v-card density="compact" elevation="5">
 						<v-card-title>
-							<v-icon>mdi-update</v-icon>
-							<span class="text-h5"
-								><strong
-									>v{{ u.version }} [{{ u.channel }}]</strong
-								></span
-							>
-							<v-spacer></v-spacer>
-							<v-btn
-								variant="outlined"
-								size="small"
-								:color="u.downgrade ? 'warning' : 'success'"
-								@click="handleUpdateFirmware(u)"
-								:prepend-icon="
-									u.downgrade ? 'download' : 'upload'
-								"
-							>
-								{{ u.downgrade ? 'Downgrade' : 'Update' }}
-							</v-btn>
+							<v-row class="ma-1">
+								<v-icon>update</v-icon>
+								<span class="text-h5 ml-2"
+									><strong
+										>v{{ u.version }} [{{
+											u.channel
+										}}]</strong
+									></span
+								>
+
+								<v-spacer></v-spacer>
+								<v-btn
+									variant="outlined"
+									size="small"
+									:color="u.downgrade ? 'warning' : 'success'"
+									@click="handleUpdateFirmware(u)"
+									:prepend-icon="
+										u.downgrade ? 'download' : 'upload'
+									"
+								>
+									{{ u.downgrade ? 'Downgrade' : 'Update' }}
+								</v-btn>
+							</v-row>
 						</v-card-title>
 						<v-divider class="mx-4"></v-divider>
 						<v-card-text>

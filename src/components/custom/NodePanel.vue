@@ -293,6 +293,7 @@
 					<v-btn
 						variant="flat"
 						color="primary"
+						class="fill"
 						size="small"
 						rounded
 						@click="dialogHealth = true"
@@ -304,6 +305,7 @@
 					<v-btn
 						variant="flat"
 						color="purple"
+						class="fill"
 						size="small"
 						rounded
 						@click="dialogLinkReliability = true"
@@ -315,6 +317,7 @@
 					<v-btn
 						variant="flat"
 						color="error"
+						class="fill"
 						size="small"
 						rounded
 						@click="rebuildNodeRoutes(node)"
@@ -326,6 +329,7 @@
 					<v-btn
 						variant="flat"
 						color="success"
+						class="fill"
 						size="small"
 						rounded
 						@click="pingNode(node)"
