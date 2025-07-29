@@ -298,7 +298,10 @@
 							</template>
 						</v-text-field>
 
-						<v-col ref="eventsList" class="pa-5 events-list">
+						<v-col
+							:ref="onEventsListInited"
+							class="pa-5 events-list"
+						>
 							<div
 								v-for="(event, index) in filteredNodeEvents"
 								:key="'event_' + index + event.time"
@@ -649,9 +652,6 @@ export default {
 			},
 			deep: 1,
 		},
-		currentTab() {
-			this.scrollBottom()
-		},
 		inverseSort() {
 			this.savePreferences()
 		},
@@ -838,11 +838,19 @@ export default {
 		toggleSort() {
 			this.inverseSort = !this.inverseSort
 		},
+		onEventsListInited(element) {
+			if (element) {
+				this.eventsListEl = element.$el
+				this.scrollBottom()
+			} else {
+				this.eventsListEl = null
+			}
+		},
 		async scrollBottom() {
 			if (!this.autoScroll || this.inverseSort) {
 				return
 			}
-			const el = this.$refs.eventsList?.$el
+			const el = this.eventsListEl
 			if (el) {
 				await nextTick()
 				el.scrollTop = el.scrollHeight
