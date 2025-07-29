@@ -899,6 +899,10 @@ export default {
 						? 'installConfigUpdate'
 						: 'checkForConfigUpdates',
 					[],
+					{
+						infoSnack: false,
+						errorSnack: true,
+					},
 				)
 
 				this.showSnackbar(
