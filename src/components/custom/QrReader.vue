@@ -18,10 +18,13 @@
 
 		<v-tabs-window grow v-model="scanTab">
 			<!-- QR-Code  -->
-			<v-tabs-window-item>
+			<v-tabs-window-item id="qr-code-scan">
 				<v-card flat>
 					<v-card-text>
 						<v-select
+							:menu-props="{
+								attach: '#qr-code-scan',
+							}"
 							:items="videoDevices"
 							v-model="selectedCamera"
 							label="Camera"
@@ -38,24 +41,31 @@
 						></v-checkbox>
 
 						<div>
-							<center class="mt-5" v-if="loadingQr">
+							<div
+								class="d-flex flex-column align-center mt-5"
+								v-if="loadingQr"
+							>
 								<p class="text-caption">Loading camera</p>
 								<v-progress-circular
+									class="mt-2"
 									indeterminate
 								></v-progress-circular>
-							</center>
-							<center class="mt-5" v-else-if="retryQrLoad">
+							</div>
+							<div
+								class="d-flex flex-column align-center mt-5"
+								v-else-if="retryQrLoad"
+							>
 								<v-btn @click.stop="retryQr" color="primary"
 									>Retry</v-btn
 								>
-							</center>
+							</div>
 							<video
 								class="mx-auto"
 								ref="reader"
 								:style="{
 									opacity: loadingQr || retryQrLoad ? 0 : 1,
 									width: '100%',
-									minHeight: '400px',
+									minHeight: '300px',
 								}"
 							></video>
 						</div>
