@@ -181,9 +181,11 @@ export default {
 
 			if (response.success) {
 				this.scenes = response.result
-				this.selectedScene = this.scenes.length
-					? this.scenes[0].sceneid
-					: null
+				if (!this.selectedScene) {
+					this.selectedScene = this.scenes.length
+						? this.scenes[0].sceneid
+						: null
+				}
 			}
 		},
 		async createScene() {
