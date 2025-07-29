@@ -30,17 +30,17 @@
 									return-object
 								>
 									<template #selection="{ item }">
-										{{ item.title }}
+										{{ item.raw.title }}
 									</template>
 									<template #item="{ item, props }">
 										<v-list-item
 											v-bind="props"
-											:title="item.title"
+											:title="item.raw.title"
 											:subtitle="
-												item.endpoint >= 0
+												item.raw.endpoint >= 0
 													? getEndpointLabel(
 															node,
-															item.endpoint,
+															item.raw.endpoint,
 														)
 													: 'No Endpoint'
 											"
