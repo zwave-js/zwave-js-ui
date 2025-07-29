@@ -8,7 +8,7 @@
 				v-if="ended"
 				icon="close"
 				size="x-small"
-				@click="$emit('input', false)"
+				@click="_value = false"
 				style="position: absolute; right: 5px; top: 5px"
 			/>
 			<v-card-text :class="{ 'pt-5': !title }" class="text-center">

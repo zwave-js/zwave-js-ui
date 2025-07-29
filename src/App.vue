@@ -652,12 +652,12 @@ export default {
 				this.loaderProgress = -1
 				this.loaderTitle = ''
 
-				this.loaderText = `<span style="white-space: break-spaces;" class="${
+				this.loaderText = `<span style="white-space: break-spaces;" class="text-${
 					result.success ? 'success' : 'error'
-				}--text">Controller firmware update finished ${
+				}">Controller firmware update finished ${
 					result.success
-						? 'successfully. It may take a few seconds for the stick to restart.'
-						: 'with error'
+						? 'successfully 🎉. It may take a few seconds for the stick to restart.'
+						: 'with error ❌'
 				}.\n Status: ${result.status}</span>`
 			}
 		},
