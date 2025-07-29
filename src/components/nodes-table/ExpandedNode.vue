@@ -870,11 +870,11 @@ export default {
 }
 
 .log-row:nth-of-type(even) {
-	background: var(--v-secondary-lighten5);
+	background: v-bind('$vuetify.theme.current.colors.secondary');
 	color: #000;
 }
 
 .log-row:hover {
-	outline: 1px solid var(--v-secondary-lighten4);
+	outline: 1px solid v-bind('$vuetify.theme.current.colors.secondary');
 }
 </style>

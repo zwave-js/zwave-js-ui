@@ -424,7 +424,6 @@ export default {
 	top: 0;
 	z-index: 3;
 	background-color: inherit;
-	border-bottom: 1px solid var(--v-secondary-base);
 }
 
 .v-card :deep(.sticky-actions) {
