@@ -263,21 +263,24 @@
 					<v-container grid-list-md>
 						<v-text-field
 							v-model="searchEvents"
+							variant="outlined"
+							density="compact"
 							prepend-icon="search"
 							label="Search"
 							class="pa-3"
 							single-line
 							hide-details
-							style="max-width: 300px"
+							style="max-width: 400px"
 							clearable
 						>
 							<template #append>
 								<v-btn
 									v-if="!inverseSort"
+									:variant="autoScroll ? 'flat' : 'outlined'"
+									size="small"
 									@click="toggleAutoScroll()"
 									icon="autorenew"
-									:color="autoScroll ? 'primary' : ''"
-									:class="autoScroll ? 'border-primary' : ''"
+									color="primary"
 									v-tooltip:bottom="
 										'Enable/Disable auto scroll'
 									"
@@ -286,8 +289,10 @@
 								<v-btn
 									@click="toggleSort()"
 									icon="swap_vert"
-									:color="inverseSort ? 'primary' : ''"
-									:class="inverseSort ? 'border-primary' : ''"
+									class="ml-2"
+									:variant="inverseSort ? 'flat' : 'outlined'"
+									size="small"
+									color="primary"
 									v-tooltip:bottom="'Inverse Sort'"
 								/>
 							</template>

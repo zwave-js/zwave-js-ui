@@ -83,7 +83,7 @@
 							</p>
 							<span
 								:class="
-									getRatingColor(averages.rating) + '--text'
+									'text-' + getRatingColor(averages.rating)
 								"
 								class="text-h3"
 								>{{ averages.rating }}/10</span
@@ -371,36 +371,36 @@ export default {
 		},
 		getNeighborsColor(value) {
 			if (value > 2) {
-				return 'success--text'
+				return 'text-success'
 			} else if (value === 0) {
-				return 'error--text'
+				return 'text-error'
 			} else {
-				return 'warning--text'
+				return 'text-warning'
 			}
 		},
 		getLatencyColor(value) {
 			if (value <= 100) {
-				return 'success--text'
+				return 'text-success'
 			} else if (value <= 500) {
-				return 'warning--text'
+				return 'text-warning'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		getSnrMarginColor(value) {
 			if (value >= 17) {
-				return 'success--text'
+				return 'text-success'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		getFailedPingsColor(value) {
 			if (value === 0) {
-				return 'success--text'
+				return 'text-success'
 			} else if (value === 1) {
-				return 'warning--text'
+				return 'text-warning'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		getRatingColor(rating) {
@@ -421,11 +421,11 @@ export default {
 			if (v === undefined) {
 				return ''
 			} else if (v >= 6) {
-				return 'success--text'
+				return 'text-success'
 			} else if (v >= 3) {
-				return 'warning--text'
+				return 'text-warning'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		init(open) {
