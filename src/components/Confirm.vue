@@ -22,6 +22,7 @@
 					<v-form
 						v-model="valid"
 						ref="form"
+						:id="id"
 						validate-on="lazy"
 						@submit.prevent="agree"
 					>
@@ -72,11 +73,13 @@
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
 									:hint="input.hint"
+									:hide-details="!input.hint"
 									:persistent-hint="!!input.hint"
 									:required="input.required"
 									:disabled="input.disabled"
 								></v-checkbox>
 								<v-select
+									:menu-props="menuProps"
 									v-if="
 										input.type === 'list' &&
 										!input.allowManualEntry &&
@@ -103,6 +106,7 @@
 										!input.allowManualEntry &&
 										input.autocomplete
 									"
+									:menu-props="menuProps"
 									v-model="values[input.key]"
 									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
@@ -123,6 +127,7 @@
 										input.type === 'list' &&
 										input.allowManualEntry
 									"
+									:menu-props="menuProps"
 									v-model="values[input.key]"
 									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
@@ -240,6 +245,7 @@ export default {
 		ListInput: defineAsyncComponent(() => import('./custom/ListInput.vue')),
 	},
 	data: () => ({
+		id: `confirm-form-${Math.random().toString(36).substring(2, 9)}`,
 		dialog: false,
 		resolve: null,
 		reject: null,
@@ -271,6 +277,9 @@ export default {
 					this.cancel()
 				}
 			},
+		},
+		menuProps() {
+			return { attach: `#${this.id}` }
 		},
 		inputs() {
 			const values = this.options.values || {}

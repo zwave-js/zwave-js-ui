@@ -191,7 +191,11 @@
 				</div>
 			</template>
 			<template v-slot:[`item.actions`]="{ item }">
-				<v-icon size="small" color="error" @click="removeItem(item)"
+				<v-icon
+					class="mr-2"
+					size="small"
+					color="error"
+					@click="removeItem(item)"
 					>delete</v-icon
 				>
 				<v-icon size="small" color="success" @click="editItem(item)"
