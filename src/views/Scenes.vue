@@ -66,23 +66,19 @@
 			</template>
 
 			<template v-slot:[`item.timeout`]="{ item }">
-				<td class="text-xs">
-					{{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}
-				</td>
+				{{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}
 			</template>
-			<template v-slot:[`item.Actions`]="{ item }">
-				<td>
-					<v-icon
-						size="small"
-						color="success"
-						class="mr-2"
-						@click="editItem(item)"
-						>edit</v-icon
-					>
-					<v-icon size="small" color="error" @click="deleteItem(item)"
-						>delete</v-icon
-					>
-				</td>
+			<template v-slot:[`item.actions`]="{ item }">
+				<v-icon
+					size="small"
+					color="success"
+					class="mr-2"
+					@click="editItem(item)"
+					>edit</v-icon
+				>
+				<v-icon size="small" color="error" @click="deleteItem(item)"
+					>delete</v-icon
+				>
 			</template>
 		</v-data-table>
 	</v-container>
@@ -138,7 +134,7 @@ export default {
 				{ title: 'Label', key: 'label' },
 				{ title: 'Value', key: 'value' },
 				{ title: 'Timeout', key: 'timeout' },
-				{ title: 'Actions', sortable: false },
+				{ title: 'Actions', key: 'actions', sortable: false },
 			],
 		}
 	},
