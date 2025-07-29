@@ -741,7 +741,7 @@ export default {
 								region === RFRegion['Default (EU)'],
 						}
 					})
-					.sort((a, b) => a.text?.localeCompare(b.text))
+					.sort((a, b) => a.title?.localeCompare(b.title))
 				this.frequency = this.znifferState.frequency
 				this.lrRegions = this.znifferState.lrRegions
 				this.znifferLRChannelConfigs = Object.entries(
