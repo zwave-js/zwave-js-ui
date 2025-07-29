@@ -1,5 +1,5 @@
 <template>
-	<div :title="value.description">
+	<div v-tooltip:bottom="value.description">
 		<span
 			v-if="value !== undefined && value.icon === ''"
 			:style="'padding-top: 4px; ' + value.displayStyle"

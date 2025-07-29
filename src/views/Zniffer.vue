@@ -150,18 +150,15 @@
 							:mobile-breakpoint="-1"
 						>
 							<template v-slot:[`item.timestamp`]="{ item }">
-								<v-tooltip location="bottom">
-									<template v-slot:activator="{ props }">
-										<span v-bind="props">{{
-											getTimestamp(item.timestamp)
-										}}</span>
-									</template>
-									<span>{{
+								<span
+									v-tooltip:bottom="
 										new Date(
 											item.timestamp,
 										).toLocaleDateString()
-									}}</span>
-								</v-tooltip>
+									"
+								>
+									{{ getTimestamp(item.timestamp) }}
+								</span>
 							</template>
 
 							<template v-slot:[`item.channel`]="{ item }">
@@ -252,24 +249,20 @@
 							</template>
 						</v-data-table>
 
-						<v-tooltip v-if="!autoScroll" location="left">
-							<template v-slot:activator="{ props }">
-								<v-fab
-									color="purple"
-									@click="enableAutoScroll()"
-									size="small"
-									hover
-									icon
-									location="top right"
-									absolute
-									style="top: 40px"
-									v-bind="props"
-								>
-									<v-icon>vertical_align_bottom</v-icon>
-								</v-fab>
-							</template>
-							<span>Enable autoscroll</span>
-						</v-tooltip>
+						<v-fab
+							v-if="!autoScroll"
+							color="purple"
+							@click="enableAutoScroll()"
+							size="small"
+							hover
+							icon
+							location="top right"
+							absolute
+							style="top: 40px"
+							v-tooltip:bottom="'Enable autoscroll'"
+						>
+							<v-icon>vertical_align_bottom</v-icon>
+						</v-fab>
 					</v-col>
 				</v-row>
 				<v-row v-else>

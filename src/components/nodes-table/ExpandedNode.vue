@@ -272,44 +272,24 @@
 							clearable
 						>
 							<template v-slot:append-outer>
-								<v-tooltip
+								<v-btn
 									v-if="!inverseSort"
-									location="bottom"
-								>
-									<template v-slot:activator="{ props }">
-										<v-btn
-											@click="toggleAutoScroll()"
-											icon="autorenew"
-											:color="autoScroll ? 'primary' : ''"
-											:class="
-												autoScroll
-													? 'border-primary'
-													: ''
-											"
-											v-bind="props"
-										/>
-									</template>
-									<span>Enable/Disable auto scroll</span>
-								</v-tooltip>
+									@click="toggleAutoScroll()"
+									icon="autorenew"
+									:color="autoScroll ? 'primary' : ''"
+									:class="autoScroll ? 'border-primary' : ''"
+									v-tooltip:bottom="
+										'Enable/Disable auto scroll'
+									"
+								/>
 
-								<v-tooltip location="bottom">
-									<template v-slot:activator="{ props }">
-										<v-btn
-											@click="toggleSort()"
-											icon="swap_vert"
-											:color="
-												inverseSort ? 'primary' : ''
-											"
-											:class="
-												inverseSort
-													? 'border-primary'
-													: ''
-											"
-											v-bind="props"
-										/>
-									</template>
-									<span>Inverse Sort</span>
-								</v-tooltip>
+								<v-btn
+									@click="toggleSort()"
+									icon="swap_vert"
+									:color="inverseSort ? 'primary' : ''"
+									:class="inverseSort ? 'border-primary' : ''"
+									v-tooltip:bottom="'Inverse Sort'"
+								/>
 							</template>
 						</v-text-field>
 

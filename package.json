@@ -186,7 +186,7 @@
     "rollup": "npm:@rollup/wasm-node"
   },
   "engines": {
-    "node": ">= 20"
+    "node": ">= 20.19"
   },
   "pkg": {
     "scripts": [

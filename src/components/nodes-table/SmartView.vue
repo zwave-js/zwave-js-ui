@@ -140,7 +140,7 @@
 													!isSelected(item),
 												)
 											"
-											title="Click to select"
+											v-tooltip:bottom="'Click to select'"
 											style="
 												font-size: 14px;
 												line-height: 1.3;
@@ -234,25 +234,16 @@
 									</v-badge>
 
 									<div v-else @click.stop class="text-center">
-										<v-tooltip location="bottom">
-											<template
-												v-slot:activator="{ props }"
-											>
-												<v-progress-circular
-													indeterminate
-													class="ma-1"
-													size="32"
-													v-bind="props"
-													color="primary"
-												></v-progress-circular>
-											</template>
-											<span
-												>Interview stage:
-												{{
-													item.raw.interviewStage
-												}}</span
-											>
-										</v-tooltip>
+										<v-progress-circular
+											indeterminate
+											class="ma-1"
+											size="32"
+											color="primary"
+											v-tooltip:bottom="
+												'Interview stage: ' +
+												item.raw.interviewStage
+											"
+										></v-progress-circular>
 									</div>
 
 									<div

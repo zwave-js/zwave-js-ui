@@ -103,64 +103,51 @@
 				</v-data-table>
 			</v-col>
 			<v-col cols="12" md="6" pa-1>
-				<v-tooltip v-if="!selectedDevice" location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="primary"
-							:disabled="errorDevice"
-							variant="text"
-							@click="addDevice()"
-							>Add</v-btn
-						>
-					</template>
-					<span>Add this device to discovered entities</span>
-				</v-tooltip>
+				<v-btn
+					v-if="!selectedDevice"
+					v-tooltip:bottom="'Add this device to discovered entities'"
+					color="primary"
+					:disabled="errorDevice"
+					variant="text"
+					@click="addDevice()"
+				>
+					Add
+				</v-btn>
 
-				<v-tooltip v-if="selectedDevice" location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="primary"
-							:disabled="errorDevice"
-							variant="text"
-							@click="updateDeviceJSON()"
-							>Update</v-btn
-						>
-					</template>
-					<span
-						>Update the in-memory discover template. You have to
-						press Rediscover in order to send this to HA</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-if="selectedDevice"
+					v-tooltip:bottom="
+						'Update the in-memory discover template. You have to press Rediscover in order to send this to HA'
+					"
+					color="primary"
+					:disabled="errorDevice"
+					variant="text"
+					@click="updateDeviceJSON()"
+				>
+					Update
+				</v-btn>
 
-				<v-tooltip v-if="selectedDevice" location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="success"
-							:disabled="errorDevice"
-							variant="text"
-							@click="rediscoverDevice"
-							>Rediscover</v-btn
-						>
-					</template>
-					<span>Send this payload to HA</span>
-				</v-tooltip>
+				<v-btn
+					v-if="selectedDevice"
+					v-tooltip:bottom="'Send this payload to HA'"
+					color="success"
+					:disabled="errorDevice"
+					variant="text"
+					@click="rediscoverDevice"
+				>
+					Rediscover
+				</v-btn>
 
-				<v-tooltip v-if="selectedDevice" location="bottom">
-					<template v-slot:activator="{ props }">
-						<v-btn
-							v-bind="props"
-							color="error"
-							:disabled="errorDevice"
-							variant="text"
-							@click="deleteDevice"
-							>Delete</v-btn
-						>
-					</template>
-					<span>Delete this entity</span>
-				</v-tooltip>
+				<v-btn
+					v-if="selectedDevice"
+					v-tooltip:bottom="'Delete this entity'"
+					color="error"
+					:disabled="errorDevice"
+					variant="text"
+					@click="deleteDevice"
+				>
+					Delete
+				</v-btn>
 
 				<v-textarea
 					label="Hass Device JSON"
