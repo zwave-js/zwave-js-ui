@@ -69,7 +69,7 @@
 	position: absolute;
 	top: 150px;
 	left: 30px;
-	background: #ccccccaa;
+	background: v-bind('$vuetify.theme.current.colors.surface');
 	border: 2px solid black;
 	border-radius: 20px;
 	max-width: 500px;
