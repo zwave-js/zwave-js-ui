@@ -81,7 +81,7 @@
 				hide-default-footer
 				disable-pagination
 			>
-				<template v-slot:footer>
+				<template #footer>
 					<p class="mb-0 text-caption">
 						<code>*</code> Due to missing insight into re-routing
 						attempts between two nodes, some of the values for the

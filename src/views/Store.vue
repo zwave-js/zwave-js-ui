@@ -21,22 +21,22 @@
 					return-object
 					style="max-height: calc(100vh - 64px); overflow-y: auto"
 				>
-					<template v-slot:prepend="{ item, open }">
+					<template #prepend="{ item, open }">
 						<v-icon color="warning" v-if="item.children">
 							{{ open ? 'folder_open' : 'folder' }}
 						</v-icon>
 						<v-icon color="primary" v-else> text_snippet </v-icon>
 					</template>
-					<template v-slot:title="{ item }">
+					<template #title="{ item }">
 						<span class="text-subtitle-2">{{ item.name }}</span>
 						<div class="text-caption text-grey">
 							{{ item.size !== 'n/a' ? item.size : '' }}
 						</div>
 					</template>
-					<template v-slot:append="{ item }">
+					<template #append="{ item }">
 						<v-row justify-end class="ma-1">
 							<v-menu v-if="item.children" location="bottom">
-								<template v-slot:activator="{ props }">
+								<template #activator="{ props }">
 									<v-icon v-bind="props">more_vert</v-icon>
 								</template>
 								<v-list class="py-0" density="compact">

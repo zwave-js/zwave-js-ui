@@ -127,14 +127,14 @@
 				:hint="help"
 				@click:append="updateValue(modelValue)"
 			>
-				<template v-slot:append>
+				<template #append>
 					<v-menu
 						v-model="showMenu"
 						location="top"
 						:offset="[16, 105]"
 						:close-on-content-click="false"
 					>
-						<template v-slot:activator="{ props }">
+						<template #activator="{ props }">
 							<div
 								class="ml-2"
 								:style="pickerStyle"
@@ -178,7 +178,7 @@
 				v-model="modelValue.newValue"
 				@click:append="updateValue(modelValue)"
 			>
-				<template v-slot:selection="{ item }">
+				<template #selection="{ item }">
 					<span>
 						{{ itemText(selectedItem || item) }}
 					</span>
@@ -213,7 +213,7 @@
 				ref="myCombo"
 				@click:append="updateValue(modelValue)"
 			>
-				<template v-slot:chip="{ attrs, item, selected }">
+				<template #chip="{ attrs, item, selected }">
 					<v-chip v-bind="attrs" :model-value="selected">
 						<span>
 							{{ itemText(selectedItem || item) }}
@@ -272,7 +272,7 @@
 				"
 				location="right"
 			>
-				<template v-slot:activator="{ props }">
+				<template #activator="{ props }">
 					<v-btn
 						max-width="100%"
 						size="small"

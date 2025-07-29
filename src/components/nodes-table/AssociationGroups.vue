@@ -7,7 +7,7 @@
 				item-key="id"
 				class="elevation-1"
 			>
-				<template v-slot:top>
+				<template #top>
 					<div class="d-flex">
 						<v-btn
 							variant="text"
@@ -32,7 +32,7 @@
 						>
 					</div>
 				</template>
-				<template v-slot:[`item.groupId`]="{ item }">
+				<template #[`item.groupId`]="{ item }">
 					{{
 						node.groups.find(
 							(g) =>
@@ -41,24 +41,24 @@
 						).title
 					}}
 				</template>
-				<template v-slot:[`item.nodeId`]="{ item }">
+				<template #[`item.nodeId`]="{ item }">
 					{{ getNodeName(item.nodeId) }}
 				</template>
-				<template v-slot:[`item.endpoint`]="{ item }">
+				<template #[`item.endpoint`]="{ item }">
 					{{
 						item.endpoint >= 0
 							? getEndpointLabel(node.id, item.endpoint)
 							: 'None'
 					}}
 				</template>
-				<template v-slot:[`item.targetEndpoint`]="{ item }">
+				<template #[`item.targetEndpoint`]="{ item }">
 					{{
 						item.targetEndpoint >= 0
 							? getEndpointLabel(item.nodeId, item.targetEndpoint)
 							: 'None'
 					}}
 				</template>
-				<template v-slot:[`item.actions`]="{ item }">
+				<template #[`item.actions`]="{ item }">
 					<v-icon
 						size="small"
 						color="error"

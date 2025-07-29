@@ -12,7 +12,7 @@
 									v-for="(item, i) in legends"
 									:key="i"
 								>
-									<template v-slot:prepend>
+									<template #prepend>
 										<v-icon :color="item.color">{{
 											item.icon || 'turned_in'
 										}}</v-icon>
@@ -33,7 +33,7 @@
 									v-for="(item, i) in edgesLegend"
 									:key="i"
 								>
-									<template v-slot:prepend>
+									<template #prepend>
 										<v-icon :color="item.color">{{
 											item.icon || 'turned_in'
 										}}</v-icon>
@@ -60,7 +60,7 @@
 								closable-chips
 								variant="solo"
 							>
-								<template v-slot:append-outer>
+								<template #append-outer>
 									<v-btn
 										v-tooltip:bottom="'Invert selection'"
 										@click="
@@ -94,7 +94,7 @@
 								closable-chips
 								variant="solo"
 							>
-								<template v-slot:append-outer>
+								<template #append-outer>
 									<v-btn
 										v-tooltip:bottom="'Invert selection'"
 										@click="
@@ -211,7 +211,7 @@
 						>
 							<v-list-item density="compact">
 								ID
-								<template v-slot:append>
+								<template #append>
 									<span class="align-end font-weight-bold">{{
 										hoverNode.id
 									}}</span>
@@ -219,7 +219,7 @@
 							</v-list-item>
 							<v-list-item density="compact">
 								Product
-								<template v-slot:append>
+								<template #append>
 									<span class="align-end font-weight-bold">{{
 										hoverNode.productLabel +
 										(hoverNode.productDescription
@@ -232,7 +232,7 @@
 							</v-list-item>
 							<v-list-item density="compact">
 								Power
-								<template v-slot:append>
+								<template #append>
 									<span class="align-end font-weight-bold">{{
 										hoverNode.minBatteryLevel
 											? hoverNode.minBatteryLevel + '%'
@@ -242,7 +242,7 @@
 							</v-list-item>
 							<v-list-item density="compact">
 								Neighbors
-								<template v-slot:append>
+								<template #append>
 									<span class="align-end font-weight-bold">{{
 										hoverNode.neighbors.join(', ') || 'None'
 									}}</span>

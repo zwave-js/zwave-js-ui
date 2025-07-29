@@ -32,7 +32,7 @@
 									:value="true"
 								></v-radio>
 								<v-radio label="XX" :value="false">
-									<template v-slot:label>
+									<template #label>
 										<v-number-input
 											:disabled="infinite"
 											label="Iterations"
@@ -136,7 +136,7 @@
 						</v-list>
 
 						<v-table>
-							<template v-slot:default>
+							<template #default>
 								<thead>
 									<tr>
 										<th class="text-left"></th>

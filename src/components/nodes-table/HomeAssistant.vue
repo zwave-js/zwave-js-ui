@@ -72,16 +72,16 @@
 					@click:row="selectDevice"
 					class="elevation-1"
 				>
-					<template v-slot:[`item.id`]="{ item }">
+					<template #[`item.id`]="{ item }">
 						{{ item.id }}
 					</template>
-					<template v-slot:[`item.type`]="{ item }">
+					<template #[`item.type`]="{ item }">
 						{{ item.type }}
 					</template>
-					<template v-slot:[`item.object_id`]="{ item }">
+					<template #[`item.object_id`]="{ item }">
 						{{ item.object_id }}
 					</template>
-					<template v-slot:[`item.persistent`]="{ item }">
+					<template #[`item.persistent`]="{ item }">
 						<v-checkbox
 							v-model="item.persistent"
 							@click.stop
@@ -90,7 +90,7 @@
 							density="compact"
 						></v-checkbox>
 					</template>
-					<template v-slot:[`item.ignoreDiscovery`]="{ item }">
+					<template #[`item.ignoreDiscovery`]="{ item }">
 						<v-btn
 							variant="flat"
 							@click.stop="toggleField(item, 'ignoreDiscovery')"

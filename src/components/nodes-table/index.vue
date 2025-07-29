@@ -17,7 +17,7 @@
 		:search="search"
 		style="margin-bottom: 50px; padding-bottom: 0 !important"
 	>
-		<template v-slot:top>
+		<template #top>
 			<v-row class="my-4 ml-1" justify-start>
 				<v-text-field
 					v-model="search"
@@ -36,7 +36,7 @@
 						managedNodes.tableColumns = managedNodes.tableColumns
 					"
 				>
-					<template v-slot:activator="{ props }">
+					<template #activator="{ props }">
 						<v-btn
 							class="my-auto"
 							color="primary"
@@ -64,7 +64,7 @@
 												.label
 										"
 									>
-										<template v-slot:prepend>
+										<template #prepend>
 											<v-icon
 												class="handle"
 												style="cursor: move"
@@ -109,7 +109,7 @@
 		</template>
 		<template
 			v-for="column in managedNodes.tableHeaders"
-			v-slot:[`header.${column.key}`]="{ isSorted, getSortIcon }"
+			#[`header.${column.key}`]="{ isSorted, getSortIcon }"
 			:key="column.key"
 		>
 			<span>
@@ -129,12 +129,7 @@
 			</span>
 		</template>
 		<template
-			v-slot:[`group-header`]="{
-				item,
-				columns,
-				toggleGroup,
-				isGroupOpen,
-			}"
+			#[`group-header`]="{ item, columns, toggleGroup, isGroupOpen }"
 		>
 			<tr>
 				<td :colspan="columns.length">
@@ -150,53 +145,53 @@
 				</td>
 			</tr>
 		</template>
-		<template v-slot:[`item.id`]="{ item }">
+		<template #[`item.id`]="{ item }">
 			<div class="d-flex">
 				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
 
 				<reinterview-badge :node="item"></reinterview-badge>
 			</div>
 		</template>
-		<template v-slot:[`item.minBatteryLevel`]="{ item }">
+		<template #[`item.minBatteryLevel`]="{ item }">
 			<rich-value :value="richValue(item, 'minBatteryLevel')" />
 		</template>
-		<template v-slot:[`item.manufacturer`]="{ item }">
+		<template #[`item.manufacturer`]="{ item }">
 			{{ item.manufacturer }}
 		</template>
-		<template v-slot:[`item.productDescription`]="{ item }">
+		<template #[`item.productDescription`]="{ item }">
 			{{ item.productDescription }}
 		</template>
-		<template v-slot:[`item.productLabel`]="{ item }">
+		<template #[`item.productLabel`]="{ item }">
 			{{ item.productLabel }}
 		</template>
-		<template v-slot:[`item.name`]="{ item }">
+		<template #[`item.name`]="{ item }">
 			{{ item.name || '' }}
 		</template>
-		<template v-slot:[`item.loc`]="{ item }">
+		<template #[`item.loc`]="{ item }">
 			{{ item.loc || '' }}
 		</template>
-		<template v-slot:[`item.security`]="{ item }">
+		<template #[`item.security`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'security')"
 			/>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.supportsBeaming`]="{ item }">
+		<template #[`item.supportsBeaming`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'supportsBeaming')"
 			/>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.zwavePlusVersion`]="{ item }">
+		<template #[`item.zwavePlusVersion`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'zwavePlusVersion')"
 			/>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.protocol`]="{ item }">
+		<template #[`item.protocol`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'protocol')"
@@ -209,21 +204,21 @@
 				/>
 			</div>
 		</template>
-		<template v-slot:[`item.failed`]="{ item }">
+		<template #[`item.failed`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'failed')"
 			/>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.status`]="{ item }">
+		<template #[`item.status`]="{ item }">
 			<rich-value
 				v-if="!item.isControllerNode"
 				:value="richValue(item, 'status')"
 			/>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.rebuildRoutesProgress`]="{ item }">
+		<template #[`item.rebuildRoutesProgress`]="{ item }">
 			<div v-if="!item.isControllerNode">
 				<v-progress-circular
 					class="ml-3"
@@ -250,7 +245,7 @@
 			</div>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.interviewStage`]="{ item }">
+		<template #[`item.interviewStage`]="{ item }">
 			<div
 				v-if="!item.isControllerNode"
 				class="d-flex flex-column align-center pa-1"
@@ -270,7 +265,7 @@
 			</div>
 			<div v-else></div>
 		</template>
-		<template v-slot:[`item.firmwareVersion`]="{ item }">
+		<template #[`item.firmwareVersion`]="{ item }">
 			<div style="text-align: center">
 				<div
 					v-if="item.firmwareUpdate && !item.isControllerNode"
@@ -305,10 +300,10 @@
 				></div>
 			</div>
 		</template>
-		<template v-slot:[`item.lastActive`]="{ item }">
+		<template #[`item.lastActive`]="{ item }">
 			<statistics-arrows :node="item"></statistics-arrows>
 		</template>
-		<template v-slot:[`expanded-row`]="{ columns: headers, item }">
+		<template #[`expanded-row`]="{ columns: headers, item }">
 			<td :colspan="$vuetify.display.xs ? 1 : headers.length">
 				<expanded-node
 					:headers="headers"

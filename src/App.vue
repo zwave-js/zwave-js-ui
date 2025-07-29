@@ -89,7 +89,7 @@
 					v-if="zwave.enabled && appInfo.controllerStatus"
 					location="bottom"
 				>
-					<template v-slot:activator="{ props }">
+					<template #activator="{ props }">
 						<div
 							v-bind="props"
 							:style="{
@@ -136,7 +136,7 @@
 
 				<!-- Info panel -->
 				<v-tooltip z-index="9999" location="bottom" open-on-click>
-					<template v-slot:activator="{ props }">
+					<template #activator="{ props }">
 						<v-icon
 							class="mr-3"
 							style="cursor: default"
@@ -186,7 +186,7 @@
 				<!-- Topbar collapsable menu items -->
 				<!-- Show more button on smaller screens -->
 				<v-menu v-if="$vuetify.display.xs" location="bottom left">
-					<template v-slot:activator="{ props }">
+					<template #activator="{ props }">
 						<v-btn size="small" v-bind="props" icon>
 							<v-icon size="large">more_vert</v-icon>
 						</v-btn>
@@ -211,7 +211,7 @@
 						:key="item.text"
 						location="bottom left"
 					>
-						<template v-slot:activator="{ props }">
+						<template #activator="{ props }">
 							<v-btn
 								density="compact"
 								class="mr-2"

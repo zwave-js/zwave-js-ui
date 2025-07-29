@@ -8,7 +8,7 @@
 		/>
 
 		<!-- <v-speed-dial style="left: 100px" bottom fab left fixed v-model="fab">
-			<template v-slot:activator>
+			<template #activator>
 				<v-btn color="primary" variant="fab" hover v-model="fab">
 					<v-icon v-if="fab">close</v-icon>
 					<v-icon v-else>add</v-icon>

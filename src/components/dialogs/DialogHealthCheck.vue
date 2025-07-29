@@ -100,7 +100,7 @@
 						hide-default-footer
 						:items-per-page="-1"
 					>
-						<template v-slot:top>
+						<template #top>
 							<v-row class="py-2" align="center" justify="center">
 								<v-btn
 									variant="flat"
@@ -113,7 +113,7 @@
 								</v-btn>
 							</v-row>
 						</template>
-						<template v-slot:[`item.rating`]="{ item }">
+						<template #[`item.rating`]="{ item }">
 							<v-progress-linear
 								rounded
 								style="min-width: 80px"
@@ -127,14 +127,14 @@
 								>
 							</v-progress-linear>
 						</template>
-						<template v-slot:[`item.latency`]="{ item }">
+						<template #[`item.latency`]="{ item }">
 							<strong
 								:class="getLatencyColor(item.latency)"
 								v-if="item.latency !== undefined"
 								>{{ item.latency }} ms</strong
 							>
 						</template>
-						<template v-slot:[`item.snrMargin`]="{ item }">
+						<template #[`item.snrMargin`]="{ item }">
 							<strong
 								:class="getSnrMarginColor(item.snrMargin)"
 								v-if="item.snrMargin !== undefined"
@@ -142,13 +142,13 @@
 							>
 						</template>
 
-						<template v-slot:[`item.routeChanges`]="{ item }">
+						<template #[`item.routeChanges`]="{ item }">
 							<strong v-if="item.routeChanges !== undefined">{{
 								item.routeChanges
 							}}</strong>
 						</template>
 
-						<template v-slot:[`item.minPowerlevel`]="{ item }">
+						<template #[`item.minPowerlevel`]="{ item }">
 							<strong
 								:class="getPowerLevelColor(item.minPowerlevel)"
 								v-if="item.minPowerlevel !== undefined"
@@ -156,7 +156,7 @@
 							>
 						</template>
 
-						<template v-slot:[`item.failedPingsNode`]="{ item }">
+						<template #[`item.failedPingsNode`]="{ item }">
 							<p
 								class="mb-0"
 								v-if="item.failedPingsNode !== undefined"
@@ -188,7 +188,7 @@
 						</template>
 
 						<template
-							v-slot:[`item.failedPingsToSource`]="{ item }"
+							#[`item.failedPingsToSource`]="{ item }"
 						>
 							<p
 								class="mb-0"
@@ -221,7 +221,7 @@
 						</template>
 
 						<template
-							v-slot:[`item.minPowerlevelSource`]="{ item }"
+							#[`item.minPowerlevelSource`]="{ item }"
 						>
 							<p
 								class="mb-0"

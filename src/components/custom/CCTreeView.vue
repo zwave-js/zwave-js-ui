@@ -6,7 +6,7 @@
 		density="compact"
 		:items="items"
 	>
-		<template v-slot:title="{ item }">
+		<template #title="{ item }">
 			<v-row class="ma-0 pa-0" dense>
 				<strong class="tree-item-name" style="white-space: pre-wrap">{{
 					item.name

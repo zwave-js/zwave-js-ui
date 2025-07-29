@@ -20,7 +20,7 @@
 				dense
 				:mobile-breakpoint="0"
 			>
-				<template v-slot:top>
+				<template #top>
 					<v-btn
 						v-if="!loading"
 						size="small"
@@ -61,7 +61,7 @@
 					>
 				</template>
 
-				<template v-slot:[`item.actions`]="{ item }">
+				<template #[`item.actions`]="{ item }">
 					<v-icon
 						size="small"
 						color="error"

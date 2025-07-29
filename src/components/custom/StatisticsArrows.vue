@@ -1,6 +1,6 @@
 <template>
 	<v-tooltip location="bottom">
-		<template v-slot:activator="{ props }">
+		<template #activator="{ props }">
 			<div v-bind="props" class="center-content">
 				<blink-icon
 					icon="north"

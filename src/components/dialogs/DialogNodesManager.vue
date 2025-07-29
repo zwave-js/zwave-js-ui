@@ -63,7 +63,7 @@
 											:disabled="state === 'start'"
 											:value="0"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="success"
@@ -82,7 +82,7 @@
 											:disabled="state === 'start'"
 											:value="1"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="amber-accent-4"
@@ -101,7 +101,7 @@
 											:disabled="state === 'start'"
 											:value="2"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="error"
@@ -226,7 +226,7 @@
 										<v-radio
 											:value="InclusionStrategy.Default"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="success"
@@ -256,7 +256,7 @@
 												InclusionStrategy.SmartStart
 											"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="primary"
@@ -282,7 +282,7 @@
 												InclusionStrategy.Security_S0
 											"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="amber-accent-4"
@@ -302,7 +302,7 @@
 										<v-radio
 											:value="InclusionStrategy.Insecure"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="error"
@@ -384,7 +384,7 @@
 										mandatory
 									>
 										<v-radio :value="1">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="primary"
@@ -403,7 +403,7 @@
 											</template>
 										</v-radio>
 										<v-radio :value="4">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="success"
@@ -416,7 +416,7 @@
 											</template>
 										</v-radio>
 										<v-radio :value="3">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="primary"
@@ -429,7 +429,7 @@
 											</template>
 										</v-radio>
 										<v-radio :value="2">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="amber-accent-4"

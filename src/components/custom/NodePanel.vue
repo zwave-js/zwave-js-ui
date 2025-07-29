@@ -15,44 +15,44 @@
 				style="min-width: 300px; background: transparent"
 			>
 				<v-list-item title="ID" density="compact">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{ node.id }}</span>
 					</template>
 				</v-list-item>
 				<v-list-item title="Status" density="compact">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{ node.status }}</span>
 					</template>
 				</v-list-item>
 				<v-list-item title="Protocol" density="compact">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{ getProtocol(node) }}</span>
 					</template>
 				</v-list-item>
 				<v-list-item title="Code" density="compact">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{ node.productLabel }}</span>
 					</template>
 				</v-list-item>
 				<v-list-item title="Product" density="compact">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{
 							node.productDescription
 						}}</span>
 					</template>
 				</v-list-item>
 				<v-list-item title="Manufacturer" density="compact">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{ node.manufacturer }}</span>
 					</template>
 				</v-list-item>
 				<v-list-item title="Name" v-if="node.name">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{ node.name }}</span>
 					</template>
 				</v-list-item>
 				<v-list-item title="Location" v-if="node.loc">
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{ node.loc }}</span>
 					</template>
 				</v-list-item>
@@ -60,7 +60,7 @@
 					title="Neighbors"
 					v-if="node.neighbors && !isLongRange"
 				>
-					<template v-slot:append>
+					<template #append>
 						<span class="align-end">{{
 							node.neighbors.length > 0
 								? node.neighbors.join(', ')
@@ -81,7 +81,7 @@
 					</template>
 				</v-list-item>
 				<v-list-item title="Statistics" density="compact">
-					<template v-slot:append>
+					<template #append>
 						<statistics-arrows
 							inactive-color="black"
 							:node="node"
@@ -92,7 +92,7 @@
 						<v-list-subheader>Last working route</v-list-subheader>
 						<v-list-item density="compact" v-for="(s, i) in lwr" :key="i">
 							{{ s.title }}
-							<template v-slot:append>
+							<template #append>
 								<span class="align-end">{{ s.text }}</span>
 							</template>
 						</v-list-item>
@@ -102,7 +102,7 @@
 						<v-list-subheader>Next to Last working route</v-list-subheader>
 						<v-list-item density="compact" v-for="(s, i) in nlwr" :key="i">
 							{{ s.title }}
-							<template v-slot:append>
+							<template #append>
 								<span class="align-end">{{ s.text }}</span>
 							</template>
 						</v-list-item>
@@ -147,7 +147,7 @@
 							:key="i"
 						>
 							{{ s.title }}
-							<template v-slot:append>
+							<template #append>
 								<span class="align-end">{{ s.text }}</span>
 							</template>
 						</v-list-item>

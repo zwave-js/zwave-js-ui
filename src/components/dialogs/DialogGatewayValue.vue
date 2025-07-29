@@ -35,7 +35,7 @@
 									item-value="id"
 									:items="deviceValues"
 								>
-									<template v-slot:selection="{ item }">
+									<template #selection="{ item }">
 										{{
 											(item.raw.label || item.raw.id) +
 											(item.raw.endpoint > 1
@@ -45,7 +45,7 @@
 										}}
 									</template>
 									<template
-										v-slot:item="{ item, props: itemProps }"
+										#item="{ item, props: itemProps }"
 									>
 										<v-list-item
 											v-bind="itemProps"

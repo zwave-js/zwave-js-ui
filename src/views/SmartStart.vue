@@ -9,7 +9,7 @@
 			v-model:options="tableOptions"
 			:sort-by="tableOptions.sortBy"
 		>
-			<template v-slot:top>
+			<template #top>
 				<v-col class="pt-0">
 					<h2 class="pa-3">Provisioning Entries</h2>
 					<missing-keys-alert />
@@ -53,7 +53,7 @@
 				</v-col>
 			</template>
 
-			<template v-slot:[`item.nodeId`]="{ item }">
+			<template #[`item.nodeId`]="{ item }">
 				<v-btn
 					v-if="item.nodeId"
 					color="primary"
@@ -67,12 +67,12 @@
 				</v-btn>
 			</template>
 
-			<template v-slot:[`item.dsk`]="{ item }">
+			<template #[`item.dsk`]="{ item }">
 				<span v-if="streamerMode">*********</span>
 				<span v-else> {{ item.dsk }} </span>
 			</template>
 
-			<template v-slot:[`item.status`]="{ item }">
+			<template #[`item.status`]="{ item }">
 				<v-switch
 					v-model="item.status"
 					@update:model-value="onChange(item)"
@@ -81,7 +81,7 @@
 				></v-switch>
 			</template>
 
-			<template v-slot:[`item.protocol`]="{ item }">
+			<template #[`item.protocol`]="{ item }">
 				<v-btn
 					v-if="
 						item.supportedProtocols?.includes(
@@ -104,9 +104,7 @@
 				<span class="text-caption" v-else> Z-Wave </span>
 			</template>
 
-			<template
-				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
-			>
+			<template #[`item.securityClasses.s2AccessControl`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -125,9 +123,7 @@
 					></v-checkbox>
 				</div>
 			</template>
-			<template
-				v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
-			>
+			<template #[`item.securityClasses.s2Authenticated`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -146,9 +142,7 @@
 					></v-checkbox>
 				</div>
 			</template>
-			<template
-				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
-			>
+			<template #[`item.securityClasses.s2Unauthenticated`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -169,7 +163,7 @@
 					<span v-else></span>
 				</div>
 			</template>
-			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
+			<template #[`item.securityClasses.s0Legacy`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -190,7 +184,7 @@
 					<span v-else></span>
 				</div>
 			</template>
-			<template v-slot:[`item.actions`]="{ item }">
+			<template #[`item.actions`]="{ item }">
 				<v-icon
 					class="mr-2"
 					size="small"

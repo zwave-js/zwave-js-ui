@@ -4,7 +4,7 @@
 		:close-on-content-click="false"
 		location="bottom"
 	>
-		<template v-slot:activator="{ props }">
+		<template #activator="{ props }">
 			<v-icon
 				size="small"
 				@click.stop="showOptions()"

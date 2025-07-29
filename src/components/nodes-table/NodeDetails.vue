@@ -49,7 +49,7 @@
 						"
 						persistent-hint
 					>
-						<template v-slot:append-outer>
+						<template #append-outer>
 							<v-btn
 								color="primary"
 								size="small"
@@ -100,7 +100,7 @@
 						suffix="dBm"
 						type="number"
 					>
-						<template v-slot:append-outer>
+						<template #append-outer>
 							<v-btn
 								color="primary"
 								size="small"
@@ -137,7 +137,7 @@
 					>
 						<template
 							v-if="!isAutoPowerLevelEnabled"
-							v-slot:append-outer
+							#append-outer
 						>
 							<v-btn
 								color="primary"
@@ -214,7 +214,7 @@
 						persistent-hint
 						v-model.trim="options.transitionDuration"
 					>
-						<template v-slot:append>
+						<template #append>
 							<v-btn
 								icon
 								size="small"
@@ -246,7 +246,7 @@
 						persistent-hint
 						v-model.trim="options.volume"
 					>
-						<template v-slot:append>
+						<template #append>
 							<v-btn
 								icon
 								size="small"

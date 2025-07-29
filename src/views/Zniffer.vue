@@ -50,9 +50,9 @@
 							prepend-inner-icon="search"
 							label="Search"
 						>
-							<template v-slot:append>
+							<template #append>
 								<v-menu location="bottom">
-									<template v-slot:activator="{ props }">
+									<template #activator="{ props }">
 										<v-icon
 											v-bind="props"
 											color="grey"
@@ -115,7 +115,7 @@
 							</template>
 							<!-- add to append-outer slot the total numer of frames -->
 
-							<template v-slot:append-outer>
+							<template #append-outer>
 								<v-col
 									v-if="totalFrames"
 									style="margin-top: -7px"
@@ -149,7 +149,7 @@
 							disable-pagination
 							:mobile-breakpoint="-1"
 						>
-							<template v-slot:[`item.timestamp`]="{ item }">
+							<template #[`item.timestamp`]="{ item }">
 								<span
 									v-tooltip:bottom="
 										new Date(
@@ -161,17 +161,15 @@
 								</span>
 							</template>
 
-							<template v-slot:[`item.channel`]="{ item }">
+							<template #[`item.channel`]="{ item }">
 								{{ item.channel }}
 							</template>
 
-							<template v-slot:[`item.rssi`]="{ item }">
+							<template #[`item.rssi`]="{ item }">
 								{{ getRssi(item) }}
 							</template>
 
-							<template
-								v-slot:[`item.protocolDataRate`]="{ item }"
-							>
+							<template #[`item.protocolDataRate`]="{ item }">
 								<span v-if="item.corrupted"></span>
 								<div v-else class="d-flex text-center">
 									<rich-value
@@ -186,21 +184,21 @@
 								</div>
 							</template>
 
-							<template v-slot:[`item.type`]="{ item }">
+							<template #[`item.type`]="{ item }">
 								<span>
 									{{ getType(item) }}
 								</span>
 							</template>
 
-							<template v-slot:[`item.sourceNodeId`]="{ item }">
+							<template #[`item.sourceNodeId`]="{ item }">
 								<span v-html="getRoute(item)"></span>
 							</template>
 
-							<template v-slot:[`item.homeId`]="{ item }">
+							<template #[`item.homeId`]="{ item }">
 								{{ item.homeId?.toString(16) }}
 							</template>
 
-							<template v-slot:[`item.payload`]="{ item }">
+							<template #[`item.payload`]="{ item }">
 								<code v-if="item.corrupted"> CRC Error </code>
 								<span v-else-if="item.parsedPayload">
 									{{ getPayloadTags(item.parsedPayload) }}
@@ -216,7 +214,7 @@
 								<span v-else>---</span>
 							</template>
 
-							<template v-if="start > 0" v-slot:[`body.prepend`]>
+							<template v-if="start > 0" #[`body.prepend`]>
 								<tr>
 									<td
 										:colspan="headers.length"
@@ -233,7 +231,7 @@
 							</template>
 							<template
 								v-if="start + perPage <= totalFrames"
-								v-slot:[`body.append`]
+								#[`body.append`]
 							>
 								<tr>
 									<td
@@ -331,11 +329,11 @@
 								v-model="frequency"
 								@update:model-value="setFrequency"
 							>
-								<template v-slot:prepend>
+								<template #prepend>
 									<v-icon>signal_cellular_alt</v-icon>
 								</template>
 
-								<template v-slot:append-outer>
+								<template #append-outer>
 									<v-icon
 										color="success"
 										v-if="frequencySuccess"
@@ -352,11 +350,11 @@
 								v-model="lrChannelConfig"
 								@update:model-value="setLRChannelConfig"
 							>
-								<template v-slot:prepend>
+								<template #prepend>
 									<v-icon>wifi_channel</v-icon>
 								</template>
 
-								<template v-slot:append-outer>
+								<template #append-outer>
 									<v-icon
 										color="success"
 										v-if="lrChannelConfigSuccess"

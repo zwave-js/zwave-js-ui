@@ -29,10 +29,10 @@
 									:rules="[required]"
 									return-object
 								>
-									<template v-slot:selection="{ item }">
+									<template #selection="{ item }">
 										{{ item.title }}
 									</template>
-									<template v-slot:item="{ item, props }">
+									<template #item="{ item, props }">
 										<v-list-item
 											v-bind="props"
 											:title="item.title"

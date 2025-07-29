@@ -21,7 +21,7 @@
 			hide-default-footer
 			:itemsPerPage="-1"
 		>
-			<template v-slot:header>
+			<template #header>
 				<div
 					class="my-2 d-flex justify-center"
 					style="column-gap: 10px; flex-wrap: wrap"
@@ -70,7 +70,7 @@
 					</div>
 				</div>
 			</template>
-			<template v-slot:no-data>
+			<template #no-data>
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
@@ -81,7 +81,7 @@
 				</v-container>
 			</template>
 
-			<template v-slot:no-results>
+			<template #no-results>
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
@@ -92,7 +92,7 @@
 				</v-container>
 			</template>
 
-			<template v-slot:loading>
+			<template #loading>
 				<v-container>
 					<v-row class="pa-0">
 						<v-col cols="12" class="text-center">
@@ -105,7 +105,7 @@
 				</v-container>
 			</template>
 
-			<template v-slot:default="{ items, isSelected, select }">
+			<template #default="{ items, isSelected, select }">
 				<v-container style="min-height: 600px">
 					<v-row justify="center" class="pa-0">
 						<v-col
@@ -198,7 +198,7 @@
 										<div>
 											<v-tooltip location="bottom">
 												<template
-													v-slot:activator="{ props }"
+													#activator="{ props }"
 												>
 													<div
 														v-bind="props"

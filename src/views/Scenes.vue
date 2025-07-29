@@ -47,7 +47,7 @@
 			:items="scene_values"
 			class="elevation-1"
 		>
-			<template v-slot:top>
+			<template #top>
 				<div class="d-flex flex-row">
 					<v-btn color="error" variant="text" @click="removeScene"
 						>Delete</v-btn
@@ -65,10 +65,10 @@
 				</div>
 			</template>
 
-			<template v-slot:[`item.timeout`]="{ item }">
+			<template #[`item.timeout`]="{ item }">
 				{{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}
 			</template>
-			<template v-slot:[`item.actions`]="{ item }">
+			<template #[`item.actions`]="{ item }">
 				<v-icon
 					size="small"
 					color="success"

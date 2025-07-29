@@ -187,7 +187,7 @@
 									]"
 									class="elevation-1"
 								>
-									<template v-slot:top>
+									<template #top>
 										<v-btn
 											color="primary"
 											variant="text"
@@ -198,10 +198,10 @@
 											New Value
 										</v-btn>
 									</template>
-									<template v-slot:[`item.device`]="{ item }">
+									<template #[`item.device`]="{ item }">
 										{{ deviceName(item.device) }}
 									</template>
-									<template v-slot:[`item.value`]="{ item }">
+									<template #[`item.value`]="{ item }">
 										{{
 											item.value.label +
 											' (' +
@@ -209,19 +209,17 @@
 											')'
 										}}
 									</template>
-									<template v-slot:[`item.topic`]="{ item }">
+									<template #[`item.topic`]="{ item }">
 										{{ item.topic }}
 									</template>
 									<template
-										v-slot:[`item.postOperation`]="{ item }"
+										#[`item.postOperation`]="{ item }"
 									>
 										{{
 											item.postOperation || 'No operation'
 										}}
 									</template>
-									<template
-										v-slot:[`item.enablePoll`]="{ item }"
-									>
+									<template #[`item.enablePoll`]="{ item }">
 										{{
 											item.enablePoll
 												? 'Interval: ' +
@@ -230,9 +228,7 @@
 												: 'No'
 										}}
 									</template>
-									<template
-										v-slot:[`item.actions`]="{ item }"
-									>
+									<template #[`item.actions`]="{ item }">
 										<v-icon
 											size="small"
 											class="mr-2"
@@ -269,7 +265,7 @@
 									]"
 									class="elevation-1"
 								>
-									<template v-slot:top>
+									<template #top>
 										<v-btn
 											color="primary"
 											variant="text"
@@ -280,14 +276,12 @@
 											New Value
 										</v-btn>
 									</template>
-									<template v-slot:[`item.code`]="{ item }">
+									<template #[`item.code`]="{ item }">
 										<code>{{
 											item.code.substring(0, 30)
 										}}</code>
 									</template>
-									<template
-										v-slot:[`item.enabled`]="{ item }"
-									>
+									<template #[`item.enabled`]="{ item }">
 										<v-icon
 											:color="
 												item.enabled
@@ -302,9 +296,7 @@
 											}}
 										</v-icon>
 									</template>
-									<template
-										v-slot:[`item.runOnInit`]="{ item }"
-									>
+									<template #[`item.runOnInit`]="{ item }">
 										<v-icon
 											:color="
 												item.runOnInit
@@ -319,9 +311,7 @@
 											}}
 										</v-icon>
 									</template>
-									<template
-										v-slot:[`item.actions`]="{ item }"
-									>
+									<template #[`item.actions`]="{ item }">
 										<v-icon
 											size="small"
 											class="mr-2"
@@ -1093,10 +1083,7 @@
 												v-model="newZwave.scales"
 											>
 												<template
-													v-slot:item="{
-														item,
-														props,
-													}"
+													#item="{ item, props }"
 												>
 													<v-list-item
 														v-bind="props"
