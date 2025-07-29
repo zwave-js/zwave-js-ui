@@ -25,6 +25,7 @@
 					<v-text-field
 						v-model="editingState[item.id].newCode"
 						label="Code"
+						style="max-width: 250px"
 						single-line
 					>
 						<template #append>
@@ -60,6 +61,7 @@
 					<v-select
 						v-model="editingState[item.id].newStatus"
 						:items="statuses"
+						style="max-width: 250px"
 						label="Status"
 						single-line
 					>
