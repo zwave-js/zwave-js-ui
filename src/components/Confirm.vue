@@ -235,6 +235,7 @@ import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { wrapFunc, noop } from '../lib/utils'
 import { defineAsyncComponent } from 'vue'
+import { nextTick } from 'vue'
 
 export default {
 	components: {
@@ -367,7 +368,7 @@ export default {
 		},
 		async onDetect(qrString) {
 			this.dialog = false
-			await this.$nextTick()
+			await nextTick()
 			this.resolve(qrString)
 			this.reset()
 		},

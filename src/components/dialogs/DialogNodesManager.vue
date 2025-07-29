@@ -702,6 +702,7 @@ import {
 import useBaseStore from '../../stores/base.js'
 import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { nextTick } from 'vue'
 
 export default {
 	props: {
@@ -1268,7 +1269,7 @@ export default {
 			this.alert = null
 			const newStep = copy(s)
 			this.steps.push(newStep)
-			await this.$nextTick()
+			await nextTick()
 			this.currentStep = newStep.index
 
 			return newStep

@@ -51,6 +51,8 @@
 </template>
 
 <script>
+import { nextTick } from 'vue'
+
 /**
  * The format of the `entry` will be an object like:
  * interface FrameCCLogEntry {
@@ -108,7 +110,7 @@ export default {
 				} else {
 					// trick used to reset the treeview and expand all nodes on change
 					this.items = []
-					this.$nextTick(() => {
+					nextTick(() => {
 						this.items = this.parseEntry(this.modelValue)
 					})
 				}

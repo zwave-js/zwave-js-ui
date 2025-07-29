@@ -59,6 +59,7 @@ import { AnsiUp } from 'ansi_up'
 import { mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import { isPopupWindow, openInWindow } from '../lib/utils'
+import { nextTick } from 'vue'
 
 const ansiUp = new AnsiUp()
 
@@ -156,7 +157,7 @@ export default {
 				return
 			}
 
-			this.$nextTick(() => {
+			nextTick(() => {
 				const textarea = document.getElementById('debug_window')
 				if (textarea) {
 					// textarea could be hidden

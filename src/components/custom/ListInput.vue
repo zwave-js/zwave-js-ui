@@ -113,6 +113,7 @@
 </template>
 
 <script>
+import { nextTick } from 'vue'
 import draggable from 'vuedraggable'
 
 export default {
@@ -163,7 +164,7 @@ export default {
 					this.inputItems.indexOf(this.getItem(this.item)),
 					1,
 				)
-				await this.$nextTick()
+				await nextTick()
 				this.item = null
 			}
 		},

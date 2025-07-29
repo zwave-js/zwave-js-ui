@@ -370,6 +370,7 @@ import {
 	setValueWasUnsupervisedOrSucceeded,
 } from '@zwave-js/cc'
 import { Protocols } from '@zwave-js/core'
+import { nextTick } from 'vue'
 
 export default {
 	props: {
@@ -642,8 +643,11 @@ export default {
 		},
 	},
 	watch: {
-		'node.eventsQueue'() {
-			this.scrollBottom()
+		'node.eventsQueue': {
+			handler() {
+				this.scrollBottom()
+			},
+			deep: 1,
 		},
 		currentTab() {
 			this.scrollBottom()
@@ -838,9 +842,9 @@ export default {
 			if (!this.autoScroll || this.inverseSort) {
 				return
 			}
-			const el = this.$refs.eventsList
+			const el = this.$refs.eventsList?.$el
 			if (el) {
-				await this.$nextTick()
+				await nextTick()
 				el.scrollTop = el.scrollHeight
 			}
 		},
