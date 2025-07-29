@@ -11,54 +11,52 @@
 				:hint="`Max slots: ${this.schedule.numSlots}`"
 			></v-select>
 		</v-row>
-		<v-row justify="center" class="pa-1">
+		<v-row justify="center" class="mx-auto mt-2" style="max-width: 600px">
 			<v-data-table
 				:headers="headers"
 				:items="items"
-				item-key="id"
+				item-key="slotId"
 				:loading="loading"
 				dense
 				:mobile-breakpoint="0"
 			>
 				<template #top>
-					<v-btn
-						v-if="!loading"
-						size="small"
-						variant="text"
-						color="primary"
-						@click="refresh()"
-						class="mb-2"
-						>Refresh</v-btn
-					>
-					<v-btn
-						v-else
-						size="small"
-						variant="text"
-						color="error"
-						@click="cancel()"
-						class="mb-2"
-						>Stop</v-btn
-					>
+					<v-row class="my-1" density="compatct" justify="center">
+						<v-btn
+							v-if="!loading"
+							size="small"
+							variant="text"
+							color="primary"
+							@click="refresh()"
+							>Refresh</v-btn
+						>
+						<v-btn
+							v-else
+							size="small"
+							variant="text"
+							color="error"
+							@click="cancel()"
+							>Stop</v-btn
+						>
 
-					<v-btn
-						size="small"
-						variant="text"
-						:disabled="schedule.numSlots <= items.length"
-						color="success"
-						@click="editSlot()"
-						class="mb-2"
-						>Add</v-btn
-					>
+						<v-btn
+							size="small"
+							variant="text"
+							:disabled="schedule.numSlots <= items.length"
+							color="success"
+							@click="editSlot()"
+							>Add</v-btn
+						>
 
-					<v-btn
-						size="small"
-						variant="text"
-						v-if="mode !== activeMode && items.length > 0"
-						color="warning"
-						@click="enableMode()"
-						class="mb-2"
-						>Enable</v-btn
-					>
+						<v-btn
+							size="small"
+							variant="text"
+							v-if="mode !== activeMode && items.length > 0"
+							color="warning"
+							@click="enableMode()"
+							>Enable</v-btn
+						>
+					</v-row>
 				</template>
 
 				<template #[`item.actions`]="{ item }">
@@ -69,6 +67,7 @@
 						>delete</v-icon
 					>
 					<v-icon
+						class="ml-2"
 						size="small"
 						color="success"
 						@click="editSlot(item.slot)"
@@ -144,7 +143,7 @@ export default {
 	mixins: [InstancesMixin],
 	props: {
 		node: Object,
-		user: Object,
+		_user: Object,
 		activeMode: String,
 	},
 	data() {
@@ -199,7 +198,7 @@ export default {
 		items() {
 			const items = []
 
-			for (const s of this.user.schedule.slots) {
+			for (const s of this._user.schedule.slots) {
 				if (s.type !== this.mode) continue
 
 				let item = {
@@ -258,37 +257,39 @@ export default {
 				items.push(item)
 			}
 
+			console.log('items', items)
+
 			return items
 		},
 		headers() {
 			let headers = [
-				{ title: 'Slot Id', value: 'slotId' },
-				{ title: 'Start', value: 'start' },
+				{ title: 'Slot Id', key: 'slotId' },
+				{ title: 'Start', key: 'start' },
 			]
 
 			switch (this.mode) {
 				case 'daily':
 					headers = [
 						...headers,
-						{ title: 'Weekdays', value: 'weekdays' },
-						{ title: 'Duration', value: 'duration' },
+						{ title: 'Weekdays', key: 'weekdays' },
+						{ title: 'Duration', key: 'duration' },
 					]
 					break
 				case 'weekly':
 					headers = [
 						...headers,
-						{ title: 'Weekday', value: 'weekday' },
-						{ title: 'Stop', value: 'stop' },
+						{ title: 'Weekday', key: 'weekday' },
+						{ title: 'Stop', key: 'stop' },
 					]
 					break
 				case 'yearly':
-					headers = [...headers, { title: 'Stop', value: 'stop' }]
+					headers = [...headers, { title: 'Stop', key: 'stop' }]
 					break
 			}
 
 			headers.push({
 				title: 'Actions',
-				value: 'actions',
+				key: 'actions',
 				sortable: false,
 			})
 
@@ -355,7 +356,7 @@ export default {
 				this.mode,
 				{
 					slotId: slot.slotId,
-					userId: this.user.id,
+					userId: this._user.id,
 				},
 			])
 
@@ -574,7 +575,7 @@ export default {
 			const response = await this.app.apiRequest('setSchedule', [
 				this.node.id,
 				this.mode,
-				{ ...res, userId: this.user.id },
+				{ ...res, userId: this._user.id },
 			])
 
 			if (response.success) {
