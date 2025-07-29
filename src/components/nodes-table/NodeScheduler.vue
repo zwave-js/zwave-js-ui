@@ -257,8 +257,6 @@ export default {
 				items.push(item)
 			}
 
-			console.log('items', items)
-
 			return items
 		},
 		headers() {
