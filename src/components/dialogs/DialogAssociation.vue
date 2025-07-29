@@ -32,11 +32,9 @@
 									<template v-slot:selection="{ item }">
 										{{ item.title }}
 									</template>
-									<template v-slot:item="{ item, attrs, on }">
+									<template v-slot:item="{ item, props }">
 										<v-list-item
-											v-on="on"
-											v-bind="attrs"
-											lines="two"
+											v-bind="props"
 											:title="item.title"
 											:subtitle="
 												item.endpoint >= 0

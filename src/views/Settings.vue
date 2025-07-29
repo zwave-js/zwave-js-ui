@@ -1095,14 +1095,11 @@
 												<template
 													v-slot:item="{
 														item,
-														attrs,
-														on,
+														props,
 													}"
 												>
 													<v-list-item
-														v-on="on"
-														v-bind="attrs"
-														lines="two"
+														v-bind="props"
 														:title="
 															scaleName(item.raw)
 														"
