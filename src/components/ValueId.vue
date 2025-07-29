@@ -1,13 +1,16 @@
 <template>
 	<div class="valueid-slot">
-		<v-list-subheader class="valueid-label">{{ label }} </v-list-subheader>
-
-		<v-btn
-			@click="resetConfig"
-			v-if="canResetConfiguration"
-			size="x-small"
-			color="error"
-			>Reset</v-btn
+		<v-list-subheader class="valueid-label"
+			>{{ label }}
+			<v-btn
+				class="ml-2 mb-1"
+				@click="resetConfig"
+				v-if="canResetConfiguration"
+				size="x-small"
+				variant="outlined"
+				color="error"
+				>Reset</v-btn
+			></v-list-subheader
 		>
 
 		<!-- Not writeable value -->

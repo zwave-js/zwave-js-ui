@@ -302,7 +302,7 @@
 										v-if="canResetConfig(group[0])"
 										@click.stop="resetAllConfig()"
 										color="error"
-										class="mb-1 mr-3"
+										class="mr-3"
 										variant="outlined"
 										size="x-small"
 									>
@@ -313,7 +313,7 @@
 									</v-btn>
 									<v-btn
 										v-if="group[0]"
-										class="mb-1"
+										class="mr-1"
 										@click.stop="
 											refreshCCValues(
 												group[0].commandClass,
