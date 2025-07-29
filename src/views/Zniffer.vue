@@ -1102,6 +1102,9 @@ export default {
 					`Capture "${result.name}" created in store`,
 					'success',
 				)
+				// Trigger download of the Zniffer capture
+				const fileName = result.name.replace('.zlf', '')
+				this.app.exportConfiguration(result.data, fileName, 'zlf')
 			}
 		},
 		async loadCapture() {
