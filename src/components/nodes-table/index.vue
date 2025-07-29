@@ -7,7 +7,7 @@
 		v-model:expanded="expanded"
 		v-model:options="managedNodes.tableOptions"
 		:group-by="managedNodes.groupBy"
-		:sort-by="managedNodes.sortBy"
+		:sort-by="managedNodes.tableOptions.sortBy"
 		item-key="id"
 		class="elevation-1 nodes-table"
 		expand-on-click
