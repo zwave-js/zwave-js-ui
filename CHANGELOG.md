@@ -1,5 +1,18 @@
 
 
+# [11.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.11.0...v11.0.0) (2025-07-30)
+
+
+### Bug Fixes
+
+* **ui:** nodes manager name/location step disabled next ([ac7dc4d](https://github.com/zwave-js/zwave-js-ui/commit/ac7dc4d445ae18c41be1d89ee517ea2041a80249))
+
+
+### Features
+
+* move to Vue/Vuetify 3 ([#4290](https://github.com/zwave-js/zwave-js-ui/issues/4290)) ([e6ef07c](https://github.com/zwave-js/zwave-js-ui/commit/e6ef07cb6396baa615cb6abdc6a6fac0edcfc600))
+* **ui:** enhance button group with icons and conditional styling ([5b88a26](https://github.com/zwave-js/zwave-js-ui/commit/5b88a260043ba51472a1924766ea5c5a6a4b36ec))
+
 # [10.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.10.0...v10.11.0) (2025-07-29)
 
 
