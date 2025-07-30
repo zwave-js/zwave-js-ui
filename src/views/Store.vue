@@ -668,9 +668,7 @@ export default {
 			}
 
 			// open first level by default
-			if (this.openFolders.length === 0) {
-				this.openFolders.push(this.items[0])
-			}
+			this.openFolders = [this.items[0]]
 		},
 	},
 	async mounted() {
