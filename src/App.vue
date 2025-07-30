@@ -240,13 +240,7 @@
 		<main style="height: 100%">
 			<v-main style="height: 100%">
 				<template v-if="auth !== undefined">
-					<router-view
-						v-if="inited || !skeletons"
-						@import="importFile"
-						@export="exportConfiguration"
-						@showConfirm="confirm"
-						:socket="socket"
-					/>
+					<router-view v-if="inited || !skeletons" :socket="socket" />
 					<!-- put some skeleton loaders while fetching settings -->
 					<v-container v-else>
 						<v-skeleton-loader
@@ -911,7 +905,6 @@ export default {
 			}
 		},
 		importFile(ext) {
-			const self = this
 			// Check for the various File API support.
 			return new Promise((resolve, reject) => {
 				if (
@@ -923,44 +916,47 @@ export default {
 					const input = document.createElement('input')
 					input.type = 'file'
 					input.addEventListener('change', (event) => {
+						// Remove the input element after use
+						input.remove()
+
+						/** @type {Blob[]} */
 						const files = event.target.files
 
 						if (files && files.length > 0) {
 							const file = files[0]
-							const reader = new FileReader()
 
-							reader.addEventListener(
-								'load',
-								(fileReaderEvent) => {
-									let err
-									let data = fileReaderEvent.target.result
-
+							let readPromise
+							if (ext === 'buffer') {
+								readPromise = file.arrayBuffer()
+							} else {
+								readPromise = file.text().then((text) => {
 									if (ext === 'json') {
 										try {
-											data = JSON.parse(data)
+											return JSON.parse(text)
 										} catch (e) {
-											self.showSnackbar(
-												'Error while parsing input file, check console for more info',
-												'error',
+											log.error('Error parsing JSON:', e)
+											throw new Error(
+												'Invalid JSON, check console for more info',
 											)
-											console.error(e)
-											err = e
 										}
 									}
-
-									if (err) {
-										reject(err)
-									} else {
-										resolve({ data, file })
-									}
-								},
-							)
-
-							if (ext === 'buffer') {
-								reader.readAsArrayBuffer(file)
-							} else {
-								reader.readAsText(file)
+									return text
+								})
 							}
+
+							readPromise
+								.then((data) => {
+									log.debug('File loaded:', file.name, data)
+									resolve({ data, file })
+								})
+								.catch((error) => {
+									log.error('Error reading file:', error)
+									this.showSnackbar(
+										`Error reading file: ${error.message}`,
+										'error',
+									)
+									reject(error)
+								})
 						}
 					})
 

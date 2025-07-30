@@ -2027,7 +2027,12 @@
 				backgroundColor: darkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
-			<v-btn class="mr-2" size="small" color="error" @click="resetConfig">
+			<v-btn
+				class="mr-2"
+				size="small"
+				color="error"
+				@click="resetConfig()"
+			>
 				Reset
 				<v-icon end>clear</v-icon>
 			</v-btn>
@@ -2499,7 +2504,7 @@ export default {
 			try {
 				const { data } = await this.app.importFile('json')
 				if (data.zwave && data.mqtt && data.gateway) {
-					this.initSettings(data)
+					this.resetConfig(data)
 					this.showSnackbar(
 						'Configuration imported successfully',
 						'success',
@@ -2675,6 +2680,7 @@ export default {
 						data.success ? 'success' : 'error',
 					)
 					this.initSettings(data.data)
+					this.resetConfig()
 				} catch (error) {
 					log.error(error)
 				}
@@ -2685,20 +2691,34 @@ export default {
 				)
 			}
 		},
-		resetConfig() {
-			this.newGateway = copy(this.gateway)
-			this.newZwave = copy(this.zwave)
-			this.newZniffer = copy(this.zniffer)
-			this.newMqtt = copy(this.mqtt)
-			this.newBackup = copy(this.backup)
-
-			if (this.prevUi) {
-				this.internalColorScheme = this.prevUi.colorScheme
-				this.internalNavTabs = this.prevUi.navTabs
-				this.internalStreamerMode = this.prevUi.streamerMode
-			} else {
-				this.prevUi = copy(this.ui)
+		resetConfig(importedSettings) {
+			const settings = {
+				mqtt: this.mqtt,
+				gateway: this.gateway,
+				zwave: this.zwave,
+				zniffer: this.zniffer,
+				backup: this.backup,
+				ui: this.ui,
+				...(importedSettings || {}),
 			}
+			this.newGateway = copy(settings.gateway)
+			this.newZwave = copy(settings.zwave)
+			this.newZniffer = copy(settings.zniffer)
+			this.newMqtt = copy(settings.mqtt)
+			this.newBackup = copy(settings.backup)
+
+			// `prevUi` is used as backup of the initial UI status as
+			// base store `ui is updated every time the user changes UI settings
+			if (this.prevUi === null) {
+				this.prevUi = copy(settings.ui)
+			}
+
+			const uiState = importedSettings?.ui || this.prevUi
+
+			// set UI computed props. This props will also update base store `ui` props
+			this.internalColorScheme = uiState.colorScheme
+			this.internalNavTabs = uiState.navTabs
+			this.internalStreamerMode = uiState.streamerMode
 		},
 		async getConfig() {
 			try {
