@@ -233,36 +233,49 @@
 						(modelValue.states && modelValue.states.length === 2))
 				"
 			>
-				<v-btn-group
-					class="my-2"
-					v-model="modelValue.newValue"
-					rounded="xl"
-				>
+				<v-btn-group class="my-2" rounded="xl">
 					<v-btn
 						:variant="
 							modelValue.newValue === true ? 'flat' : 'outlined'
 						"
-						height="40px"
 						:modelValue="true"
 						color="success"
 						@click="updateValue(modelValue, true)"
-						:icon="!trueLabel ? 'horizontal_rule' : undefined"
 					>
 						<span v-if="trueLabel">{{ trueLabel }}</span>
+						<v-icon
+							size="large"
+							:color="
+								modelValue.newValue === true && !modelValue.list
+									? 'white'
+									: 'success'
+							"
+							style="rotate: 90deg"
+							v-else
+						>
+							horizontal_rule
+						</v-icon>
 					</v-btn>
 					<v-btn
 						:variant="
 							modelValue.newValue === false ? 'flat' : 'outlined'
 						"
-						height="40px"
 						:modelValue="false"
 						color="error"
 						@click="updateValue(modelValue, false)"
-						:icon="
-							!falseLabel ? 'radio_button_unchecked' : undefined
-						"
 					>
 						<span v-if="falseLabel">{{ falseLabel }}</span>
+						<v-icon
+							v-else
+							size="large"
+							:color="
+								modelValue.newValue === false &&
+								!modelValue.list
+									? 'white'
+									: 'error'
+							"
+							>radio_button_unchecked</v-icon
+						>
 					</v-btn>
 				</v-btn-group>
 				<div v-if="help" class="text-caption mt-2 help">{{ help }}</div>
