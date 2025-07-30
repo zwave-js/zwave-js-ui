@@ -1,23 +1,21 @@
 <template>
 	<v-card-text>
-		<v-form v-model="valid">
+		<v-form v-model="_valid">
 			<v-row>
 				<v-col>
 					<v-text-field
 						type="datetime-local"
 						label="From"
-						v-model="value.from"
+						v-model="_value.from"
 						:rules="rules.from"
 						clearable
-						@change="change"
 					></v-text-field>
 					<v-text-field
 						type="datetime-local"
 						label="To"
-						v-model="value.to"
+						v-model="_value.to"
 						:rules="rules.to"
 						clearable
-						@change="change"
 					></v-text-field>
 				</v-col>
 			</v-row>
@@ -29,37 +27,54 @@
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => ColumnFilterHelper.defaultFilter('string'),
 			required: true,
 		},
+		valid: {
+			type: Boolean,
+			default: false,
+			required: false,
+		},
+	},
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(v) {
+				this.$emit('update:modelValue', v)
+			},
+		},
+		_valid: {
+			get() {
+				return this.valid
+			},
+			set(v) {
+				this.$emit('update:valid', v)
+			},
+		},
 	},
 	data() {
 		return {
-			valid: false,
 			rules: {
 				from: [
 					(v) =>
 						!v ||
-						!this.value.to ||
-						v <= this.value.to ||
+						!this._value.to ||
+						v <= this._value.to ||
 						'From date should not be after to date',
 				],
 				to: [
 					(v) =>
 						!v ||
-						!this.value.from ||
-						v >= this.value.from ||
+						!this._value.from ||
+						v >= this._value.from ||
 						'To date should not be before from date',
 				],
 			},
 		}
-	},
-	methods: {
-		change() {
-			this.$emit('change', this.value, this.valid)
-		},
 	},
 }
 </script>

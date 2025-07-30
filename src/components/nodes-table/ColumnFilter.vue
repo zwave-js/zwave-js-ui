@@ -1,47 +1,48 @@
 <template>
-	<v-menu :value="show" :close-on-content-click="false" :offset-y="true">
-		<template v-slot:activator="{ on, attrs }">
+	<v-menu
+		v-model="isVisible"
+		:close-on-content-click="false"
+		location="bottom"
+	>
+		<template #activator="{ props }">
 			<v-icon
-				small
-				v-on:click="showOptions"
-				v-bind="attrs"
-				v-on="on"
-				title="Filter options..."
+				size="small"
+				@click.stop="showOptions()"
+				v-bind="props"
+				v-tooltip:bottom="'Filter options...'"
 				style="padding-right: 2px; padding-bottom: 3px"
 			>
 				{{ hasFilter ? 'filter_list_alt' : 'filter_list' }}
 			</v-icon>
 		</template>
-		<v-card>
-			<v-icon small v-on:click="hideOptions" right>close</v-icon>
+		<v-card :min-width="300">
+			<v-icon size="small" @click.stop="hideOptions()" end>close</v-icon>
 			<column-filter-boolean
 				v-if="column.type == 'boolean'"
-				:value="value"
-				@change="change"
+				v-model="_value"
 			></column-filter-boolean>
 			<column-filter-date
 				v-if="column.type == 'date'"
-				:value="value"
-				@change="change"
+				v-model="_value"
+				v-model:valid="valid"
 			></column-filter-date>
 			<column-filter-number
 				v-if="column.type == 'number'"
-				:value="value"
+				v-model="_value"
+				v-model:valid="valid"
 				:items="items"
-				@change="change"
 			></column-filter-number>
 			<column-filter-string
 				v-if="column.type == 'string'"
-				:value="value"
+				v-model="_value"
+				v-model:valid="valid"
 				:items="items"
-				@change="change"
 			></column-filter-string>
 			<v-checkbox
 				v-if="column.groupable != false"
 				label="Group values"
 				class="ml-4"
-				:value="groupBy"
-				@change="$emit('update:group-by', $event ? [column.value] : [])"
+				v-model="_groupBy"
 			></v-checkbox>
 			<v-card-actions>
 				<v-btn @click="clearFilter">Clear</v-btn>
@@ -54,17 +55,26 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 
 export default {
 	components: {
-		ColumnFilterBoolean: () => import('./ColumnFilterBoolean.vue'),
-		ColumnFilterDate: () => import('./ColumnFilterDate.vue'),
-		ColumnFilterNumber: () => import('./ColumnFilterNumber.vue'),
-		ColumnFilterString: () => import('./ColumnFilterString.vue'),
+		ColumnFilterBoolean: defineAsyncComponent(
+			() => import('./ColumnFilterBoolean.vue'),
+		),
+		ColumnFilterDate: defineAsyncComponent(
+			() => import('./ColumnFilterDate.vue'),
+		),
+		ColumnFilterNumber: defineAsyncComponent(
+			() => import('./ColumnFilterNumber.vue'),
+		),
+		ColumnFilterString: defineAsyncComponent(
+			() => import('./ColumnFilterString.vue'),
+		),
 	},
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => {},
 			required: true,
@@ -80,20 +90,49 @@ export default {
 			required: true,
 		},
 		groupBy: {
-			type: Boolean,
-			default: () => false,
+			type: Array,
+			default: () => [],
 			required: false,
 		},
 	},
 	data() {
 		return {
 			valid: true,
-			show: false,
+			isVisible: false,
 		}
+	},
+	watch: {
+		groupBy() {
+			this.isVisible = false
+		},
+		isVisible(val) {
+			if (val === false) {
+				this.updateFilter()
+			}
+		},
 	},
 	computed: {
 		hasFilter() {
-			return this.hasDeepValue(this.value)
+			return this.hasDeepValue(this.modelValue)
+		},
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(value) {
+				this.$emit('update:modelValue', value)
+			},
+		},
+		_groupBy: {
+			get() {
+				return !!this.groupBy.find((g) => g.key === this.column.key)
+			},
+			set(value) {
+				this.$emit(
+					'update:group-by',
+					value ? [{ key: this.column.key }] : [],
+				)
+			},
 		},
 	},
 	methods: {
@@ -109,18 +148,20 @@ export default {
 			)
 		},
 		showOptions() {
-			this.show = true
+			this.isVisible = true
 		},
 		hideOptions() {
-			this.show = false
+			this.isVisible = false
 		},
-		change(value, valid) {
-			this.valid = valid
-			if (valid === true) {
+		updateFilter() {
+			if (this.valid === true) {
 				// Emit minimal storable filter spec (with empty default values removed):
 				this.$emit(
-					'change',
-					ColumnFilterHelper.filterSpec(this.column.type, value),
+					'update:filter',
+					ColumnFilterHelper.filterSpec(
+						this.column.type,
+						this._value,
+					),
 				)
 			}
 		},
@@ -130,12 +171,12 @@ export default {
 		resetToDefaults() {
 			// Non-destructive value reset to prevent vue warnings:
 			const defaults = ColumnFilterHelper.defaultFilter(this.column.type)
-			Object.assign(this.value, defaults)
-			for (const key in this.value) {
-				if (Object.hasOwnProperty.call(this.value, key)) {
-					Object.keys(this.value).forEach(() => {
+			Object.assign(this.modelValue, defaults)
+			for (const key in this.modelValue) {
+				if (Object.hasOwnProperty.call(this.modelValue, key)) {
+					Object.keys(this.modelValue).forEach(() => {
 						if (!Object.keys(defaults).includes(key)) {
-							delete this.value.key
+							delete this.modelValue.key
 						}
 					})
 				}
@@ -143,7 +184,7 @@ export default {
 		},
 		clearFilter() {
 			this.resetToDefaults()
-			this.change(this.value, true)
+			this.valid = true
 		},
 	},
 }

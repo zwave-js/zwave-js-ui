@@ -1,13 +1,13 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="_value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="headline">New Association</span>
+				<span class="text-h5">New Association</span>
 			</v-card-title>
 
 			<v-card-text>
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form v-model="valid" ref="form" validate-on="lazy">
 						<v-row>
 							<v-col cols="12">
 								<v-select
@@ -29,28 +29,22 @@
 									:rules="[required]"
 									return-object
 								>
-									<template v-slot:selection="{ item }">
-										{{ item.text }}
+									<template #selection="{ item }">
+										{{ item.raw.title }}
 									</template>
-									<template v-slot:item="{ item, attrs, on }">
+									<template #item="{ item, props }">
 										<v-list-item
-											v-on="on"
-											v-bind="attrs"
-											two-line
+											v-bind="props"
+											:title="item.raw.title"
+											:subtitle="
+												item.raw.endpoint >= 0
+													? getEndpointLabel(
+															node,
+															item.raw.endpoint,
+														)
+													: 'No Endpoint'
+											"
 										>
-											<v-list-item-content>
-												<v-list-item-title>{{
-													`[${item.value}] ${item.text}`
-												}}</v-list-item-title>
-												<v-list-item-subtitle>{{
-													item.endpoint >= 0
-														? getEndpointLabel(
-																node,
-																item.endpoint,
-															)
-														: 'No Endpoint'
-												}}</v-list-item-subtitle>
-											</v-list-item-content>
 										</v-list-item>
 									</template>
 								</v-select>
@@ -76,7 +70,7 @@
 										:rules="[required]"
 										hint="Node to add to the association group"
 										persistent-hint
-										item-text="_name"
+										item-title="_name"
 									></v-combobox>
 								</v-col>
 
@@ -96,7 +90,11 @@
 								</v-col>
 
 								<v-col v-if="associationError" cols="12">
-									<v-alert text dense type="error">
+									<v-alert
+										text
+										density="compact"
+										type="error"
+									>
 										{{ associationError }}
 									</v-alert>
 								</v-col>
@@ -108,14 +106,17 @@
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Cancel</v-btn
 				>
 				<v-btn
-					color="blue darken-1"
-					text
+					color="blue-darken-1"
+					variant="text"
 					:disabled="nodesInGroup >= maxNodes || !!associationError"
-					@click="$refs.form.validate() && $emit('add', group)"
+					@click="handleAdd"
 					>ADD</v-btn
 				>
 			</v-card-actions>
@@ -135,20 +136,21 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	mixins: [InstancesMixin],
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		associations: Array,
 		node: Object,
 	},
 	watch: {
-		value() {
+		modelValue() {
 			this.$refs.form && this.$refs.form.resetValidation()
 			this.resetGroup()
 			this.associationError = ''
 		},
 		group: {
 			deep: true,
-			handler() {
-				if (this.$refs.form?.validate()) {
+			async handler() {
+				const result = await this.$refs.form?.validate()
+				if (result?.valid) {
 					this.allowedAssociation()
 				}
 			},
@@ -202,6 +204,14 @@ export default {
 
 			return groups
 		},
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 	},
 	data() {
 		return {
@@ -214,6 +224,12 @@ export default {
 	},
 	methods: {
 		getAssociationAddress,
+		async handleAdd() {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
+				this.$emit('add', this.group)
+			}
+		},
 		async allowedAssociation() {
 			const association = this.group
 			const target = !isNaN(association.target)
@@ -300,13 +316,13 @@ export default {
 			const endpoints = []
 
 			if (noEndpoint) {
-				endpoints.unshift({ text: 'No Endpoint', value: null })
+				endpoints.unshift({ title: 'No Endpoint', value: null })
 			}
 
 			if (node && node.endpoints) {
 				for (const endpoint of node.endpoints) {
 					endpoints.push({
-						text: endpoint.label,
+						title: endpoint.label,
 						value: endpoint.index,
 					})
 				}

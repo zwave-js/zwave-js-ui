@@ -53,7 +53,7 @@ export default {
 	mounted() {
 		this.color = this.inactiveColor
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		clearInterval(this.blinkInterval)
 	},
 }

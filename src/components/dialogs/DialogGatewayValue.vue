@@ -1,13 +1,13 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="_value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="headline">{{ title }}</span>
+				<span class="text-h5">{{ title }}</span>
 			</v-card-title>
 
 			<v-card-text>
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form v-model="valid" ref="form" validate-on="lazy">
 						<v-row>
 							<v-col cols="12">
 								<v-select
@@ -15,7 +15,7 @@
 									label="Device"
 									required
 									:rules="[required]"
-									item-text="name"
+									item-title="name"
 									:items="devices"
 								></v-select>
 							</v-col>
@@ -31,35 +31,38 @@
 									required
 									return-object
 									:rules="[required]"
-									item-text="label"
+									item-title="label"
 									item-value="id"
 									:items="deviceValues"
 								>
-									<template v-slot:selection="{ item }">
+									<template #selection="{ item }">
 										{{
-											(item.label || item.id) +
-											(item.endpoint > 1
-												? ' - Endpoint ' + item.endpoint
+											(item.raw.label || item.raw.id) +
+											(item.raw.endpoint > 1
+												? ' - Endpoint ' +
+													item.raw.endpoint
 												: '')
 										}}
 									</template>
-									<template v-slot:item="{ item }">
-										<v-list-item-content>
-											<v-list-item-title>{{
-												(item.label || item.id) +
-												(item.endpoint > 0
+									<template
+										#item="{ item, props: itemProps }"
+									>
+										<v-list-item
+											v-bind="itemProps"
+											:title="
+												(item.raw.label ||
+													item.raw.id) +
+												(item.raw.endpoint > 0
 													? ' - Endpoint ' +
-														item.endpoint
+														item.raw.endpoint
 													: '')
-											}}</v-list-item-title>
-											<v-list-item-subtitle
-												style="max-width: 500px"
-												class="text-truncate text-no-wrap"
-												>{{
-													item.description
-												}}</v-list-item-subtitle
-											>
-										</v-list-item-content>
+											"
+											:subtitle="
+												item.raw.description ||
+												'No description available'
+											"
+										>
+										</v-list-item>
 									</template>
 								</v-select>
 							</v-col>
@@ -74,7 +77,7 @@
 									v-model="editedValue.device_class"
 									label="Device Class"
 									hint="Specify a device class for Home assistant"
-									item-text="name"
+									item-title="name"
 									:items="deviceClasses"
 								></v-select>
 							</v-col>
@@ -99,10 +102,10 @@
 									label="QoS"
 									hint="If specified, overrides the default QoS in MQTT settings"
 									:items="[
-										{ text: '', value: undefined },
-										{ text: '0: At most once', value: 0 },
-										{ text: '1: At least once', value: 1 },
-										{ text: '2: Exactly once', value: 2 },
+										{ title: '', value: undefined },
+										{ title: '0: At most once', value: 0 },
+										{ title: '1: At least once', value: 1 },
+										{ title: '2: Exactly once', value: 2 },
 									]"
 									persistent-hint
 									required
@@ -116,9 +119,9 @@
 									persistent-hint
 									hint="If specified, overrides the default retain in MQTT settings"
 									:items="[
-										{ text: '', value: undefined },
-										{ text: 'True', value: true },
-										{ text: 'False', value: false },
+										{ title: '', value: undefined },
+										{ title: 'True', value: true },
+										{ title: 'False', value: false },
 									]"
 									required
 									type="number"
@@ -225,13 +228,16 @@
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Cancel</v-btn
 				>
 				<v-btn
-					color="blue darken-1"
-					text
-					@click="$refs.form.validate() && $emit('save')"
+					color="blue-darken-1"
+					variant="text"
+					@click="handleSave"
 					>{{ isNew ? 'Add' : 'Update' }}</v-btn
 				>
 			</v-card-actions>
@@ -251,14 +257,16 @@ import 'prismjs/themes/prism-tomorrow.css' // import syntax highlighting styles
 
 import { mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		PrismEditor: () =>
+		PrismEditor: defineAsyncComponent(() =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
+		),
 	},
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		gw_type: Number,
 		title: String,
 		editedValue: Object,
@@ -275,6 +283,14 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 		deviceValues() {
 			const device = this.devices.find(
 				(d) => d.value == this.editedValue.device,
@@ -378,6 +394,12 @@ export default {
 		},
 		isSensor(v) {
 			return v && (v.commandClass === 0x31 || v.commandClass === 0x32)
+		},
+		async handleSave() {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
+				this.$emit('save')
+			}
 		},
 	},
 }

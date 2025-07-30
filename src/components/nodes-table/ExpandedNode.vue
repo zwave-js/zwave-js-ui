@@ -1,13 +1,14 @@
 <template>
 	<div
 		:style="`max-width: calc(100vw - ${
-			$vuetify.breakpoint.lgAndUp ? 120 : 70
+			$vuetify.display.lgAndUp ? 120 : 70
 		}px)`"
+		class="mx-2"
 		v-if="node"
 	>
 		<v-row class="mt-2" align="center">
 			<v-col style="min-width: 200px" class="ml-4">
-				<span class="title grey--text">Device </span>
+				<span class="text-h6 text-grey">Device </span>
 				<br />
 				<span class="subtitle font-weight-bold font-monospace">
 					{{ node.hexId }}
@@ -18,8 +19,8 @@
 				</v-icon>
 				<br />
 				<span
-					v-if="$vuetify.breakpoint.smAndDown"
-					class="comment font-weight-bold primary--text"
+					v-if="$vuetify.display.smAndDown"
+					class="comment font-weight-bold text-primary"
 				>
 					{{
 						`${node.manufacturer || ''}${
@@ -31,36 +32,34 @@
 				</span>
 			</v-col>
 			<v-col
-				:class="
-					$vuetify.breakpoint.smAndDown ? 'text-center' : 'text-end'
-				"
+				:class="$vuetify.display.smAndDown ? 'text-center' : 'text-end'"
 			>
-				<v-item-group class="v-btn-toggle">
-					<v-btn color="primary" outlined @click="toggleStatistics">
-						<v-icon left>
-							{{ statisticsOpeningIndicator }}
-						</v-icon>
+				<v-btn-group class="ml-2" multiple>
+					<v-btn
+						color="primary"
+						variant="outlined"
+						@click="toggleStatistics"
+						:prepend-icon="statisticsOpeningIndicator"
+						append-icon="multiline_chart"
+					>
 						Statistics
-						<v-icon color="primary" right> multiline_chart </v-icon>
 					</v-btn>
 					<v-btn
-						dark
 						v-if="!node.isControllerNode"
 						color="primary"
 						@click.stop="pingNode(node)"
-						depressed
+						variant="flat"
 					>
 						Ping
 					</v-btn>
 					<v-btn
-						dark
 						color="success"
-						depressed
+						variant="flat"
 						@click="advancedShowDialog = true"
 					>
 						Advanced
 					</v-btn>
-				</v-item-group>
+				</v-btn-group>
 			</v-col>
 		</v-row>
 
@@ -79,75 +78,114 @@
 		</v-row>
 
 		<v-row no-gutters>
-			<v-sheet v-if="showStatistics" class="my-4" outlined rounded>
+			<v-sheet v-if="showStatistics" class="my-4" border rounded>
 				<statistics-card title="Statistics" :node="node" />
 			</v-sheet>
 		</v-row>
 
 		<v-divider class="my-4" />
 
-		<v-tabs
-			v-model="currentTab"
-			show-arrows
-			class="transparent mb-4"
-			:vertical="$vuetify.breakpoint.mdAndUp"
+		<div
+			:class="[
+				'd-flex',
+				$vuetify.display.mdAndUp ? 'flex-row' : 'flex-column',
+			]"
 		>
-			<v-tab class="justify-start" key="node">
-				<v-icon small left>widgets</v-icon> Node
-			</v-tab>
-			<v-tab v-if="nodeMetadata" class="justify-start" key="manual">
-				<v-icon small left>help</v-icon> Help
-			</v-tab>
-			<v-tab v-if="showHass" class="justify-start" key="homeassistant">
-				<v-icon small left>home</v-icon> Home Assistant
-			</v-tab>
-			<v-tab key="groups" class="justify-start">
-				<v-icon small left>device_hub</v-icon> Groups
-			</v-tab>
-			<v-tab v-if="node.schedule" key="users" class="justify-start">
-				<v-icon small left>group</v-icon> Users
-			</v-tab>
-			<v-tab
-				key="ota"
-				v-if="!node.isControllerNode"
-				class="justify-start"
+			<v-tabs
+				v-model="currentTab"
+				show-arrows
+				class="bg-transparent mb-4"
+				:direction="
+					$vuetify.display.mdAndUp ? 'vertical' : 'horizontal'
+				"
 			>
-				<v-icon small left>auto_mode</v-icon> OTA Updates
-			</v-tab>
-			<v-tab key="otw" v-if="node.isControllerNode" class="justify-start">
-				<v-icon small left>auto_mode</v-icon> Firmware Updates
-			</v-tab>
-			<v-tab key="events" class="justify-start">
-				<v-icon small left>list_alt</v-icon> Events
-			</v-tab>
-			<v-tab
-				v-if="$vuetify.breakpoint.mdAndUp"
-				class="justify-start"
-				key="debug"
-			>
-				<v-icon small left>bug_report</v-icon> Debug Info
-			</v-tab>
+				<v-tab
+					prepend-icon="widgets"
+					value="node"
+					class="justify-start"
+					text="Node"
+				/>
+				<v-tab
+					v-if="nodeMetadata"
+					prepend-icon="help"
+					value="manual"
+					class="justify-start"
+					text="Help"
+					W
+				/>
+				<v-tab
+					v-if="showHass"
+					prepend-icon="home"
+					value="homeassistant"
+					class="justify-start"
+					text="Home Assistant"
+				/>
+				<v-tab
+					prepend-icon="device_hub"
+					value="groups"
+					class="justify-start"
+					text="Groups"
+				/>
+				<v-tab
+					v-if="node.schedule"
+					prepend-icon="group"
+					value="users"
+					class="justify-start"
+					text="Users"
+				/>
+				<v-tab
+					value="ota"
+					v-if="!node.isControllerNode"
+					prepend-icon="auto_mode"
+					class="justify-start"
+					text="OTA Updates"
+				/>
+				<v-tab
+					value="otw"
+					v-if="node.isControllerNode"
+					prepend-icon="auto_mode"
+					class="justify-start"
+					text="Firmware Updates"
+				/>
+				<v-tab
+					prepend-icon="list_alt"
+					value="events"
+					class="justify-start"
+					text="Events"
+				/>
+				<v-tab
+					v-if="$vuetify.display.mdAndUp"
+					prepend-icon="bug_report"
+					class="justify-start"
+					value="debug"
+					text="Debug Info"
+				/>
+			</v-tabs>
 
 			<!-- TABS -->
-			<v-tabs-items
+			<v-tabs-window
 				style="background: transparent; padding-bottom: 10px"
 				touchless
+				class="fill"
 				v-model="currentTab"
 			>
 				<!-- TAB NODE -->
-				<v-tab-item key="node" transition="slide-y-transition">
+				<v-tabs-window-item
+					value="node"
+					transition="slide-y-transition"
+				>
 					<node-details
 						ref="nodeDetails"
 						:headers="headers"
 						:node="node"
 						@updateValue="updateValue"
 					></node-details>
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB METADATA -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="nodeMetadata"
-					key="manual"
+					value="manual"
 					transition="slide-y-transition"
 				>
 					<section
@@ -156,10 +194,12 @@
 						class="px-8 py-4"
 					>
 						<h1 class="text-uppercase">{{ meta }}</h1>
-						<p class="caption">
+						<p class="text-caption">
 							<v-btn
+								class="ma-2"
 								v-if="meta === 'manual'"
 								:href="nodeMetadata[meta]"
+								variant="flat"
 								color="primary"
 							>
 								DOWNLOAD
@@ -169,108 +209,99 @@
 							</span>
 						</p>
 					</section>
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB HOMEASSISTANT -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="showHass"
-					key="homeassistant"
+					value="homeassistant"
 					transition="slide-y-transition"
 				>
 					<home-assistant :node="node" :socket="socket" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB GROUPS -->
-				<v-tab-item key="groups" transition="slide-y-transition">
+				<v-tabs-window-item
+					value="groups"
+					transition="slide-y-transition"
+				>
 					<association-groups :node="node" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB USERS -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="node.schedule"
-					key="users"
+					value="users"
 					transition="slide-y-transition"
 				>
 					<user-code-table :node="node" @updateValue="updateValue" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB OTA UPDATES -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="!node.isControllerNode"
-					key="ota"
+					value="ota"
 					transition="slide-y-transition"
 				>
 					<OTAUpdates :node="node" :socket="socket" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB OTW UPDATES -->
-				<v-tab-item
+				<v-tabs-window-item
 					v-if="node.isControllerNode"
-					key="otw"
+					value="otw"
 					transition="slide-y-transition"
 				>
 					<OTWUpdates :node="node" :socket="socket" />
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB EVENTS -->
-				<v-tab-item key="events" transition="slide-y-transition">
+				<v-tabs-window-item
+					value="events"
+					transition="slide-y-transition"
+				>
 					<v-container grid-list-md>
 						<v-text-field
 							v-model="searchEvents"
+							variant="outlined"
+							density="compact"
 							prepend-icon="search"
 							label="Search"
 							class="pa-3"
 							single-line
 							hide-details
-							style="max-width: 300px"
+							style="max-width: 400px"
 							clearable
 						>
-							<template slot="append-outer">
-								<v-tooltip v-if="!inverseSort" bottom>
-									<template v-slot:activator="{ on, attrs }">
-										<v-btn
-											@click="toggleAutoScroll()"
-											icon
-											:color="autoScroll ? 'primary' : ''"
-											:class="
-												autoScroll
-													? 'border-primary'
-													: ''
-											"
-											v-bind="attrs"
-											v-on="on"
-										>
-											<v-icon>autorenew</v-icon>
-										</v-btn>
-									</template>
-									<span>Enable/Disable auto scroll</span>
-								</v-tooltip>
+							<template #append>
+								<v-btn
+									v-if="!inverseSort"
+									:variant="autoScroll ? 'flat' : 'outlined'"
+									size="small"
+									@click="toggleAutoScroll()"
+									icon="autorenew"
+									color="primary"
+									v-tooltip:bottom="
+										'Enable/Disable auto scroll'
+									"
+								/>
 
-								<v-tooltip bottom>
-									<template v-slot:activator="{ on, attrs }">
-										<v-btn
-											@click="toggleSort()"
-											icon
-											:color="
-												inverseSort ? 'primary' : ''
-											"
-											:class="
-												inverseSort
-													? 'border-primary'
-													: ''
-											"
-											v-bind="attrs"
-											v-on="on"
-										>
-											<v-icon>swap_vert</v-icon>
-										</v-btn>
-									</template>
-									<span>Inverse Sort</span>
-								</v-tooltip>
+								<v-btn
+									@click="toggleSort()"
+									icon="swap_vert"
+									class="ml-2"
+									:variant="inverseSort ? 'flat' : 'outlined'"
+									size="small"
+									color="primary"
+									v-tooltip:bottom="'Inverse Sort'"
+								/>
 							</template>
 						</v-text-field>
 
-						<v-col ref="eventsList" class="pa-5 events-list">
+						<v-col
+							:ref="onEventsListInited"
+							class="pa-5 events-list"
+						>
 							<div
 								v-for="(event, index) in filteredNodeEvents"
 								:key="'event_' + index + event.time"
@@ -295,12 +326,12 @@
 							</div>
 						</v-col>
 					</v-container>
-				</v-tab-item>
+				</v-tabs-window-item>
 
 				<!-- TAB DEBUG INFO -->
-				<v-tab-item
-					v-if="$vuetify.breakpoint.mdAndUp"
-					key="debug"
+				<v-tabs-window-item
+					v-if="$vuetify.display.mdAndUp"
+					value="debug"
 					transition="slide-y-transition"
 				>
 					<v-container grid-list-md>
@@ -316,9 +347,9 @@
 							@click:append="copyText"
 						></v-textarea>
 					</v-container>
-				</v-tab-item>
-			</v-tabs-items>
-		</v-tabs>
+				</v-tabs-window-item>
+			</v-tabs-window>
+		</div>
 
 		<DialogAdvanced
 			v-model="advancedShowDialog"
@@ -330,6 +361,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { jsonToList } from '@/lib/utils'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../../stores/base.js'
@@ -341,6 +373,7 @@ import {
 	setValueWasUnsupervisedOrSucceeded,
 } from '@zwave-js/cc'
 import { Protocols } from '@zwave-js/core'
+import { nextTick } from 'vue'
 
 export default {
 	props: {
@@ -349,25 +382,37 @@ export default {
 			type: Array,
 			default: () => [],
 		},
-		isMobile: Boolean,
 		node: Object,
 		socket: Object,
 	},
 	mixins: [InstancesMixin],
 	components: {
-		AssociationGroups: () =>
-			import('@/components/nodes-table/AssociationGroups.vue'),
-		HomeAssistant: () =>
-			import('@/components/nodes-table/HomeAssistant.vue'),
-		NodeDetails: () => import('@/components/nodes-table/NodeDetails.vue'),
-		DialogAdvanced: () => import('@/components/dialogs/DialogAdvanced.vue'),
-		StatisticsCard: () => import('@/components/custom/StatisticsCard.vue'),
-		OTAUpdates: () => import('./OTAUpdates.vue'),
-		OTWUpdates: () => import('./OTWUpdates.vue'),
-		UserCodeTable: () => import('./UserCodeTable.vue'),
+		AssociationGroups: defineAsyncComponent(
+			() => import('@/components/nodes-table/AssociationGroups.vue'),
+		),
+		HomeAssistant: defineAsyncComponent(
+			() => import('@/components/nodes-table/HomeAssistant.vue'),
+		),
+		NodeDetails: defineAsyncComponent(
+			() => import('@/components/nodes-table/NodeDetails.vue'),
+		),
+		DialogAdvanced: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogAdvanced.vue'),
+		),
+		StatisticsCard: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsCard.vue'),
+		),
+		OTAUpdates: defineAsyncComponent(() => import('./OTAUpdates.vue')),
+		OTWUpdates: defineAsyncComponent(() => import('./OTWUpdates.vue')),
+		UserCodeTable: defineAsyncComponent(
+			() => import('./UserCodeTable.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['gateway', 'mqtt']),
+		isMobile() {
+			return this.$vuetify.display.xs
+		},
 		isLongRange() {
 			if (!this.node) return false
 
@@ -601,11 +646,11 @@ export default {
 		},
 	},
 	watch: {
-		'node.eventsQueue'() {
-			this.scrollBottom()
-		},
-		currentTab() {
-			this.scrollBottom()
+		'node.eventsQueue': {
+			handler() {
+				this.scrollBottom()
+			},
+			deep: 1,
 		},
 		inverseSort() {
 			this.savePreferences()
@@ -793,13 +838,21 @@ export default {
 		toggleSort() {
 			this.inverseSort = !this.inverseSort
 		},
+		onEventsListInited(element) {
+			if (element) {
+				this.eventsListEl = element.$el
+				this.scrollBottom()
+			} else {
+				this.eventsListEl = null
+			}
+		},
 		async scrollBottom() {
 			if (!this.autoScroll || this.inverseSort) {
 				return
 			}
-			const el = this.$refs.eventsList
+			const el = this.eventsListEl
 			if (el) {
-				await this.$nextTick()
+				await nextTick()
 				el.scrollTop = el.scrollHeight
 			}
 		},
@@ -829,11 +882,11 @@ export default {
 }
 
 .log-row:nth-of-type(even) {
-	background: var(--v-secondary-lighten5);
+	background: v-bind('$vuetify.theme.current.colors.secondary');
 	color: #000;
 }
 
 .log-row:hover {
-	outline: 1px solid var(--v-secondary-lighten4);
+	outline: 1px solid v-bind('$vuetify.theme.current.colors.secondary');
 }
 </style>

@@ -1,5 +1,4 @@
-import Vue from 'vue'
-import Router from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 
 // DON'T use lazy loading here, it would break application running behind a proxy
 const ControlPanel = () => import('@/views/ControlPanel.vue')
@@ -17,8 +16,6 @@ const Zniffer = () => import('@/views/Zniffer.vue')
 import ConfigApis from '../apis/ConfigApis'
 import useBaseStore from '../stores/base'
 
-Vue.use(Router)
-
 export const Routes = {
 	login: '/',
 	error: '/error',
@@ -35,8 +32,8 @@ export const Routes = {
 
 Routes.main = Routes.controlPanel
 
-const router = new Router({
-	mode: 'hash',
+const router = createRouter({
+	history: createWebHashHistory(),
 	routes: [
 		{
 			path: Routes.login,

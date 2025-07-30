@@ -1,5 +1,5 @@
 <template>
-	<div :title="value.description">
+	<div v-tooltip:bottom="value.description">
 		<span
 			v-if="value !== undefined && value.icon === ''"
 			:style="'padding-top: 4px; ' + value.displayStyle"
@@ -11,6 +11,7 @@
 			:justify-start="value.align === 'left'"
 			:justify-center="value.align === 'center'"
 			:justify-end="value.align === 'right'"
+			style="z-index: unset"
 		>
 			<svg-icon
 				type="mdi"

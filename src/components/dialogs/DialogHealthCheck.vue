@@ -1,8 +1,8 @@
 <template>
-	<v-dialog v-model="value" max-width="800px" persistent>
+	<v-dialog v-model="_value" max-width="800px" persistent>
 		<v-card :loading="loading">
 			<v-card-title>
-				<span class="headline"
+				<span class="text-h5"
 					>Node {{ activeNode ? activeNode.id : '' }} - Health
 					check</span
 				>
@@ -20,7 +20,7 @@
 								return-object
 								hint="Target node to run the route health check on"
 								persistent-hint
-								item-text="_name"
+								item-title="_name"
 								item-value="id"
 							></v-combobox>
 						</v-col>
@@ -39,156 +39,21 @@
 
 					<v-row class="mb-2" justify="space-around">
 						<v-btn
+							variant="flat"
 							:color="loading ? 'error' : 'success'"
 							:disabled="!targetNode"
 							@click="loading ? stopHealth() : checkHealth()"
 							>{{ loading ? 'Stop' : 'Check' }}</v-btn
 						>
-						<v-menu
-							:close-on-content-click="false"
-							offset-y
-							bottom
-							open-on-click
-							content-class="help-menu"
+
+						<v-btn
+							variant="flat"
+							color="primary"
+							@click="infoMenu = true"
 						>
-							<template v-slot:activator="{ on, attrs }">
-								<v-btn color="primary" v-on="on" v-bind="attrs">
-									<v-icon>help</v-icon>
-								</v-btn>
-							</template>
-							<v-list dense>
-								<v-list-item>
-									<v-list-item-content class="ma-0">
-										<v-list-item-title
-											>Route changes</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>How many times at least one new
-											route was needed. Lower = better,
-											ideally 0. Only available if the
-											controller supports TX
-											reports</v-list-item-subtitle
-										>
-									</v-list-item-content>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Latency</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>The maximum time it took to send a
-											ping to the node. Lower = better,
-											ideally 10 ms. Will use the time in
-											TX reports if available, otherwise
-											fall back to measuring the round
-											trip time.</v-list-item-subtitle
-										>
-									</v-list-item-content>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>No. Neighbors</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>How many routing neighbors this
-											node has. Higher = better, ideally >
-											2</v-list-item-subtitle
-										>
-									</v-list-item-content>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Failed Pings
-											node</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>How many pings were not ACKed by
-											the node. Lower = better, ideally
-											0.</v-list-item-subtitle
-										>
-									</v-list-item-content>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Min Power Level</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>The minimum powerlevel where all
-											pings from the (source) node were
-											ACKed by the target node /
-											controller. Lower = better, ideally
-											-6dBm or less. Only available if the
-											(source) node supports Powerlevel
-											CC</v-list-item-subtitle
-										>
-									</v-list-item-content>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Failed pings
-											Controller</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>If no powerlevel was found where
-											the controller ACKed all pings from
-											the node, this contains the number
-											of pings that weren't ACKed. Lower =
-											better, ideally
-											0.</v-list-item-subtitle
-										>
-									</v-list-item-content>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>SNR Margin</v-list-item-title
-										>
-										<v-list-item-subtitle
-											>An estimation of the
-											Signal-to-Noise Ratio Margin in dBm.
-											Only available if the controller
-											supports TX
-											reports.</v-list-item-subtitle
-										>
-									</v-list-item-content>
-								</v-list-item>
-								<v-list-item>
-									<v-list-item-content>
-										<v-list-item-title
-											>Rating</v-list-item-title
-										>
-									</v-list-item-content>
-								</v-list-item>
-							</v-list>
-							<v-data-table
-								:headers="hintHeaders"
-								:items="hintValues"
-								class="elevation-1"
-								:mobile-breakpoint="0"
-								hide-default-footer
-								disable-pagination
-							>
-								<template v-slot:footer>
-									<p class="mb-0 text-caption">
-										<code>*</code> Due to missing insight
-										into re-routing attempts between two
-										nodes, some of the values for the for
-										the route check rating don't exist here
-										and are only present in lifeline checks
-										(when target node is the controller).
-										Furthermore, it is not guaranteed that a
-										route between two nodes and lifeline
-										with the same health rating have the
-										same quality.
-									</p>
-								</template>
-							</v-data-table>
-						</v-menu>
+							Info
+							<v-icon>help</v-icon>
+						</v-btn>
 					</v-row>
 
 					<v-row
@@ -200,7 +65,7 @@
 							v-if="averages.numNeighbors && !isLR"
 							class="text-center"
 						>
-							<p class="mb-1 subtitle-1 font-weight-bold">
+							<p class="mb-1 text-subtitle-1 font-weight-bold">
 								No. Neighbors
 							</p>
 							<span
@@ -213,12 +78,12 @@
 						</v-col>
 
 						<v-col v-if="averages.rating" class="text-center">
-							<p class="mb-1 subtitle-1 font-weight-bold">
+							<p class="mb-1 text-subtitle-1 font-weight-bold">
 								Rating
 							</p>
 							<span
 								:class="
-									getRatingColor(averages.rating) + '--text'
+									'text-' + getRatingColor(averages.rating)
 								"
 								class="text-h3"
 								>{{ averages.rating }}/10</span
@@ -235,22 +100,25 @@
 						hide-default-footer
 						:items-per-page="-1"
 					>
-						<template v-slot:top>
-							<v-btn
-								text
-								v-if="!loading && resultsTargetNode >= 0"
-								color="primary"
-								@click="exportResults"
-								class="mb-2"
-								>Export</v-btn
-							>
+						<template #top>
+							<v-row class="py-2" align="center" justify="center">
+								<v-btn
+									variant="flat"
+									v-if="!loading && resultsTargetNode >= 0"
+									color="primary"
+									@click="exportResults"
+									class="mb-2"
+									>Export
+									<v-icon>file_download</v-icon>
+								</v-btn>
+							</v-row>
 						</template>
-						<template v-slot:[`item.rating`]="{ item }">
+						<template #[`item.rating`]="{ item }">
 							<v-progress-linear
 								rounded
 								style="min-width: 80px"
 								height="25"
-								:value="item.rating * 10"
+								:model-value="item.rating * 10"
 								:color="getRatingColor(item.rating)"
 								:indeterminate="item.rating === undefined"
 							>
@@ -259,14 +127,14 @@
 								>
 							</v-progress-linear>
 						</template>
-						<template v-slot:[`item.latency`]="{ item }">
+						<template #[`item.latency`]="{ item }">
 							<strong
 								:class="getLatencyColor(item.latency)"
 								v-if="item.latency !== undefined"
 								>{{ item.latency }} ms</strong
 							>
 						</template>
-						<template v-slot:[`item.snrMargin`]="{ item }">
+						<template #[`item.snrMargin`]="{ item }">
 							<strong
 								:class="getSnrMarginColor(item.snrMargin)"
 								v-if="item.snrMargin !== undefined"
@@ -274,13 +142,13 @@
 							>
 						</template>
 
-						<template v-slot:[`item.routeChanges`]="{ item }">
+						<template #[`item.routeChanges`]="{ item }">
 							<strong v-if="item.routeChanges !== undefined">{{
 								item.routeChanges
 							}}</strong>
 						</template>
 
-						<template v-slot:[`item.minPowerlevel`]="{ item }">
+						<template #[`item.minPowerlevel`]="{ item }">
 							<strong
 								:class="getPowerLevelColor(item.minPowerlevel)"
 								v-if="item.minPowerlevel !== undefined"
@@ -288,7 +156,7 @@
 							>
 						</template>
 
-						<template v-slot:[`item.failedPingsNode`]="{ item }">
+						<template #[`item.failedPingsNode`]="{ item }">
 							<p
 								class="mb-0"
 								v-if="item.failedPingsNode !== undefined"
@@ -319,9 +187,7 @@
 							</p>
 						</template>
 
-						<template
-							v-slot:[`item.failedPingsToSource`]="{ item }"
-						>
+						<template #[`item.failedPingsToSource`]="{ item }">
 							<p
 								class="mb-0"
 								v-if="item.failedPingsToSource !== undefined"
@@ -352,9 +218,7 @@
 							</p>
 						</template>
 
-						<template
-							v-slot:[`item.minPowerlevelSource`]="{ item }"
-						>
+						<template #[`item.minPowerlevelSource`]="{ item }">
 							<p
 								class="mb-0"
 								v-if="item.minPowerlevelSource !== undefined"
@@ -394,20 +258,20 @@
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Close</v-btn
 				>
 			</v-card-actions>
 		</v-card>
+		<dialog-health-check-info
+			v-model="infoMenu"
+			v-if="infoMenu"
+		></dialog-health-check-info>
 	</v-dialog>
 </template>
-
-<style>
-.help-menu {
-	max-height: 90vh;
-	overflow: scroll;
-}
-</style>
 
 <script>
 import { copy } from '@/lib/utils'
@@ -418,22 +282,35 @@ import { Protocols } from '@zwave-js/core'
 
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
-	components: {},
+	components: {
+		DialogHealthCheckInfo: defineAsyncComponent(
+			() => import('./DialogHealthCheckInfo.vue'),
+		),
+	},
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		node: Object,
 		socket: Object,
 	},
 	mixins: [InstancesMixin],
 	watch: {
-		value(v) {
+		modelValue(v) {
 			this.init(v)
 		},
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 		isLR() {
 			return this.activeNode?.protocol === Protocols.ZWaveLongRange
 		},
@@ -448,24 +325,24 @@ export default {
 		headers() {
 			if (this.mode === 'Lifeline') {
 				return [
-					{ text: 'Max latency', value: 'latency' },
-					{ text: 'Failed pings', value: 'failedPingsNode' },
-					{ text: 'Route Changes', value: 'routeChanges' },
-					{ text: 'SNR margin', value: 'snrMargin' },
+					{ title: 'Max latency', key: 'latency' },
+					{ title: 'Failed pings', key: 'failedPingsNode' },
+					{ title: 'Route Changes', key: 'routeChanges' },
+					{ title: 'SNR margin', key: 'snrMargin' },
 					{
-						text: 'Min power level w/o errors',
-						value: 'minPowerlevel',
+						title: 'Min power level w/o errors',
+						key: 'minPowerlevel',
 					},
-					{ text: 'Rating', value: 'rating' },
+					{ title: 'Rating', key: 'rating' },
 				]
 			} else {
 				return [
-					{ text: 'Failed pings', value: 'failedPingsToSource' },
+					{ title: 'Failed pings', key: 'failedPingsToSource' },
 					{
-						text: 'Min Power Level w/o errors',
-						value: 'minPowerlevelSource',
+						title: 'Min Power Level w/o errors',
+						key: 'minPowerlevelSource',
 					},
-					{ text: 'Rating', value: 'rating' },
+					{ title: 'Rating', key: 'rating' },
 				]
 			}
 		},
@@ -473,6 +350,7 @@ export default {
 	data() {
 		return {
 			loading: false,
+			infoMenu: false,
 			results: [],
 			rounds: 5,
 			targetNode: null,
@@ -480,88 +358,6 @@ export default {
 			resultsTargetNode: null,
 			averages: null,
 			mode: 'Lifeline',
-			hintHeaders: [
-				{ text: 'Rating', value: 'rating', sortable: false },
-				{ text: 'Failed pings', value: 'failedPings', sortable: false },
-				{ text: 'Max latency (*)', value: 'latency', sortable: false },
-				{
-					text: 'No. of Neighbors',
-					value: 'neighbors',
-					sortable: false,
-				},
-				{ text: 'SNR margin (*)', value: 'snrMargin', sortable: false },
-				{
-					text: 'Min power level w/o errors',
-					value: 'minPowerlevel',
-					sortable: false,
-				},
-			],
-			hintValues: [
-				{
-					rating: 10,
-					failedPings: 0,
-					latency: '≤ 50 ms',
-					neighbors: '> 2',
-					snrMargin: '≥ 17dBm',
-					minPowerlevel: '≤ -6dBm',
-				},
-				{
-					rating: 9,
-					failedPings: 0,
-					latency: '≤ 100 ms',
-					neighbors: '> 2',
-					snrMargin: '≥ 17dBm',
-					minPowerlevel: '≤ -6dBm',
-				},
-				{
-					rating: 8,
-					failedPings: 0,
-					latency: '≤ 100 ms',
-					neighbors: '≤ 2',
-					snrMargin: '≥ 17dBm',
-					minPowerlevel: '≤ -6dBm',
-				},
-				{
-					rating: 7,
-					failedPings: 0,
-					latency: '≤ 100ms',
-					neighbors: '> 2',
-				},
-				{
-					rating: 6,
-					failedPings: 0,
-					latency: '≤ 100ms',
-					neighbors: '≤ 2',
-				},
-				{
-					rating: 5,
-					failedPings: 0,
-					latency: '≤ 250ms',
-				},
-				{
-					rating: 4,
-					failedPings: 0,
-					latency: '≤ 500 ms',
-				},
-				{
-					rating: 3,
-					failedPings: 1,
-					latency: '≤ 1000ms',
-				},
-				{
-					rating: 2,
-					failedPings: '≤ 2',
-					latency: '> 1000ms',
-				},
-				{
-					rating: 1,
-					failedPings: '≤ 9',
-				},
-				{
-					rating: 0,
-					failedPings: 10,
-				},
-			],
 		}
 	},
 	methods: {
@@ -575,36 +371,36 @@ export default {
 		},
 		getNeighborsColor(value) {
 			if (value > 2) {
-				return 'success--text'
+				return 'text-success'
 			} else if (value === 0) {
-				return 'error--text'
+				return 'text-error'
 			} else {
-				return 'warning--text'
+				return 'text-warning'
 			}
 		},
 		getLatencyColor(value) {
 			if (value <= 100) {
-				return 'success--text'
+				return 'text-success'
 			} else if (value <= 500) {
-				return 'warning--text'
+				return 'text-warning'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		getSnrMarginColor(value) {
 			if (value >= 17) {
-				return 'success--text'
+				return 'text-success'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		getFailedPingsColor(value) {
 			if (value === 0) {
-				return 'success--text'
+				return 'text-success'
 			} else if (value === 1) {
-				return 'warning--text'
+				return 'text-warning'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		getRatingColor(rating) {
@@ -625,11 +421,11 @@ export default {
 			if (v === undefined) {
 				return ''
 			} else if (v >= 6) {
-				return 'success--text'
+				return 'text-success'
 			} else if (v >= 3) {
-				return 'warning--text'
+				return 'text-warning'
 			} else {
-				return 'error--text'
+				return 'text-error'
 			}
 		},
 		init(open) {
@@ -741,7 +537,7 @@ export default {
 			}
 		},
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.init(false)
 	},
 }

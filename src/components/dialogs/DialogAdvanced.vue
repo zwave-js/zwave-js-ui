@@ -1,23 +1,23 @@
 <template>
 	<v-dialog
 		@keydown.esc="$emit('close')"
-		v-model="value"
+		v-model="_value"
 		persistent
 		max-width="800"
 	>
 		<v-card>
 			<v-card-title>
-				<span class="headline">{{ title }}</span>
-				<v-spacer></v-spacer>
-				<v-btn icon @click="$emit('close')"
-					><v-icon>close</v-icon></v-btn
-				>
+				<v-row class="pa-3" align="center">
+					<span class="text-h5">{{ title }}</span>
+					<v-spacer></v-spacer>
+					<v-btn icon="close" @click="$emit('close')" />
+				</v-row>
 			</v-card-title>
 
 			<v-card-text>
-				<div :class="['action-grid', $vuetify.breakpoint.name]">
+				<div :class="['action-grid', $vuetify.display.name]">
 					<div v-for="(a, i) in actions" :key="i">
-						<v-icon :color="a.color || 'primary'" x-large>{{
+						<v-icon :color="a.color || 'primary'" size="x-large">{{
 							a.icon
 						}}</v-icon>
 						<div style="font-size: 1.1rem">{{ a.text }}</div>
@@ -26,7 +26,7 @@
 							v-for="(o, i) in a.options"
 							:key="i"
 							@click="$emit('action', o.action, o.args)"
-							text
+							variant="text"
 							:color="a.color || 'primary'"
 							>{{ o.name }}</v-btn
 						>
@@ -40,17 +40,27 @@
 <script>
 export default {
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		actions: Array,
 		title: {
 			type: String,
 			default: 'Advanced',
 		},
 	},
+	emits: ['close'],
 	data() {
 		return {}
 	},
-	computed: {},
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
+	},
 	methods: {},
 }
 </script>

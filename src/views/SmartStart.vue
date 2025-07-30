@@ -6,22 +6,24 @@
 			class="elevation-1"
 			style="margin-bottom: 80px"
 			:search="search"
-			:options.sync="tableOptions"
+			v-model:options="tableOptions"
+			:sort-by="tableOptions.sortBy"
 		>
-			<template v-slot:top>
-				<v-col class="pt-0" dense>
+			<template #top>
+				<v-col class="pt-0">
 					<h2 class="pa-3">Provisioning Entries</h2>
 					<missing-keys-alert />
 					<v-menu
 						v-model="showInfoTooltip"
-						:position-x="x"
-						:position-y="y"
-						absolute
-						offset-y
-						offset-x
+						location="bottom left"
+						:style="{
+							position: 'fixed',
+							left: x + 'px',
+							top: y + 'px',
+						}"
 					>
-						<v-list dense>
-							<v-list-item dense>
+						<v-list density="compact">
+							<v-list-item density="compact">
 								<v-list-item-title>
 									When an entry has a Node associated it
 									cannot be edited
@@ -36,11 +38,11 @@
 								v-model="search"
 								clearable
 								flat
-								solo-inverted
+								variant="outlined"
 								hide-details
 								single-line
 								class="ma-2"
-								style="max-width: 250px; min-width: 250px"
+								style="max-width: 300px; min-width: 250px"
 								prepend-inner-icon="search"
 								label="Search"
 								append-icon="refresh"
@@ -51,34 +53,35 @@
 				</v-col>
 			</template>
 
-			<template v-slot:[`item.nodeId`]="{ item }">
+			<template #[`item.nodeId`]="{ item }">
 				<v-btn
 					v-if="item.nodeId"
 					color="primary"
-					small
+					size="small"
 					rounded
 					@click.stop="showNodeDialog(item)"
 				>
 					{{ item.nodeId }}
 
-					<v-icon class="ml-2" small>open_in_new</v-icon>
+					<v-icon class="ml-2" size="small">open_in_new</v-icon>
 				</v-btn>
 			</template>
 
-			<template v-slot:[`item.dsk`]="{ item }">
+			<template #[`item.dsk`]="{ item }">
 				<span v-if="streamerMode">*********</span>
 				<span v-else> {{ item.dsk }} </span>
 			</template>
 
-			<template v-slot:[`item.status`]="{ item }">
+			<template #[`item.status`]="{ item }">
 				<v-switch
 					v-model="item.status"
-					@change="onChange(item)"
-					dense
+					@update:model-value="onChange(item)"
+					density="compact"
+					hide-details
 				></v-switch>
 			</template>
 
-			<template v-slot:[`item.protocol`]="{ item }">
+			<template #[`item.protocol`]="{ item }">
 				<v-btn
 					v-if="
 						item.supportedProtocols?.includes(
@@ -87,23 +90,21 @@
 					"
 					@click="toggleProtocol(item)"
 					:disabled="!!item.nodeId"
-					dense
+					density="compact"
 					rounded
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
 					@mouseenter="onRowFocus($event, item)"
 					@mouseleave="onRowBlur($event, item)"
-					small
-					outlined
+					size="small"
+					variant="outlined"
 					:color="getProtocolColor(item)"
 					>{{ getProtocol(item) }}</v-btn
 				>
-				<span class="caption" v-else> Z-Wave </span>
+				<span class="text-caption" v-else> Z-Wave </span>
 			</template>
 
-			<template
-				v-slot:[`item.securityClasses.s2AccessControl`]="{ item }"
-			>
+			<template #[`item.securityClasses.s2AccessControl`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -112,19 +113,17 @@
 				>
 					<v-checkbox
 						v-model="item.securityClasses.s2AccessControl"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						:disabled="
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s2AccessControl
 						"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 				</div>
 			</template>
-			<template
-				v-slot:[`item.securityClasses.s2Authenticated`]="{ item }"
-			>
+			<template #[`item.securityClasses.s2Authenticated`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -133,19 +132,17 @@
 				>
 					<v-checkbox
 						v-model="item.securityClasses.s2Authenticated"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						:disabled="
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s2Authenticated
 						"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 				</div>
 			</template>
-			<template
-				v-slot:[`item.securityClasses.s2Unauthenticated`]="{ item }"
-			>
+			<template #[`item.securityClasses.s2Unauthenticated`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -159,14 +156,14 @@
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s2Unauthenticated
 						"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 					<span v-else></span>
 				</div>
 			</template>
-			<template v-slot:[`item.securityClasses.s0Legacy`]="{ item }">
+			<template #[`item.securityClasses.s0Legacy`]="{ item }">
 				<div
 					@focus="onRowFocus($event, item)"
 					@blur="onRowBlur($event, item)"
@@ -180,135 +177,50 @@
 							!!item.nodeId ||
 							!item.requestedSecurityClasses.s0Legacy
 						"
-						@change="onChange(item)"
+						@update:model-value="onChange(item)"
 						hide-details
-						dense
+						density="compact"
 					></v-checkbox>
 					<span v-else></span>
 				</div>
 			</template>
-			<template v-slot:[`item.actions`]="{ item }">
-				<v-icon small color="error" @click="removeItem(item)"
+			<template #[`item.actions`]="{ item }">
+				<v-icon
+					class="mr-2"
+					size="small"
+					color="error"
+					@click="removeItem(item)"
 					>delete</v-icon
 				>
-				<v-icon small color="success" @click="editItem(item)"
+				<v-icon size="small" color="success" @click="editItem(item)"
 					>edit</v-icon
 				>
 			</template>
 		</v-data-table>
-		<v-speed-dial
+		<base-fab
 			v-model="fab"
-			fixed
-			bottom
-			right
+			location="bottom end"
 			transition="slide-y-reverse-transition"
 			class="mb-7"
-		>
-			<template v-slot:activator>
-				<v-btn v-model="fab" color="primary" dark fab>
-					<v-icon v-if="fab"> close </v-icon>
-					<v-icon v-else> menu </v-icon>
-				</v-btn>
-			</template>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						fab
-						dark
-						small
-						@click="editItem()"
-						color="primary"
-						v-bind="attrs"
-						v-on="on"
-					>
-						<v-icon>add</v-icon>
-					</v-btn>
-				</template>
-				<span>Add</span>
-			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						fab
-						dark
-						small
-						@click="scanItem"
-						color="warning"
-						v-bind="attrs"
-						v-on="on"
-					>
-						<v-icon>qr_code_scanner</v-icon>
-					</v-btn>
-				</template>
-				<span>Scan</span>
-			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						fab
-						dark
-						small
-						@click="refreshItems"
-						color="success"
-						v-bind="attrs"
-						v-on="on"
-					>
-						<v-icon>refresh</v-icon>
-					</v-btn>
-				</template>
-				<span>Refresh</span>
-			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						fab
-						dark
-						small
-						@click="importList"
-						color="error"
-						v-bind="attrs"
-						v-on="on"
-					>
-						<v-icon>file_download</v-icon>
-					</v-btn>
-				</template>
-				<span>Import</span>
-			</v-tooltip>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						fab
-						dark
-						small
-						@click="exportList"
-						color="purple"
-						v-bind="attrs"
-						v-on="on"
-					>
-						<v-icon>file_upload</v-icon>
-					</v-btn>
-				</template>
-				<span>Export</span>
-			</v-tooltip>
-		</v-speed-dial>
+			icon-open="menu"
+			icon-close="close"
+			:items="fabItems"
+		/>
 
 		<v-dialog
-			:fullscreen="$vuetify.breakpoint.xs"
+			:fullscreen="$vuetify.display.xs"
 			max-width="1200px"
 			v-model="expandedNodeDialog"
 			persistent
 			@keydown.exit="closeDialog()"
 		>
 			<v-card min-height="90vh">
-				<v-btn
+				<v-fab
 					style="position: absolute; right: 5px; top: 5px"
-					x-small
+					size="x-small"
 					@click="closeDialog()"
-					icon
-					fab
-				>
-					<v-icon>close</v-icon>
-				</v-btn>
+					icon="close"
+				/>
 				<v-card-text class="pt-3">
 					<expanded-node :node="expandedNode" :socket="socket" />
 				</v-card-text>
@@ -317,6 +229,7 @@
 	</v-container>
 </template>
 <script>
+import { defineAsyncComponent } from 'vue'
 import { tryParseDSKFromQRCodeString, Protocols } from '@zwave-js/core'
 import { mapActions } from 'pinia'
 import {
@@ -338,9 +251,15 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		ExpandedNode: () => import('@/components/nodes-table/ExpandedNode.vue'),
-		MissingKeysAlert: () =>
-			import('@/components/custom/MissingKeysAlert.vue'),
+		BaseFab: defineAsyncComponent(
+			() => import('@/components/custom/BaseFab.vue'),
+		),
+		ExpandedNode: defineAsyncComponent(
+			() => import('@/components/nodes-table/ExpandedNode.vue'),
+		),
+		MissingKeysAlert: defineAsyncComponent(
+			() => import('@/components/custom/MissingKeysAlert.vue'),
+		),
 	},
 	watch: {
 		tableOptions: {
@@ -356,6 +275,40 @@ export default {
 		streamerMode() {
 			return useBaseStore().ui.streamerMode
 		},
+		fabItems() {
+			return [
+				{
+					icon: 'add',
+					color: 'primary',
+					action: () => this.editItem(),
+					tooltip: 'Add',
+				},
+				{
+					icon: 'qr_code_scanner',
+					color: 'warning',
+					action: () => this.scanItem(),
+					tooltip: 'Scan',
+				},
+				{
+					icon: 'refresh',
+					color: 'success',
+					action: () => this.refreshItems(),
+					tooltip: 'Refresh',
+				},
+				{
+					icon: 'file_download',
+					color: 'error',
+					action: () => this.importList(),
+					tooltip: 'Import',
+				},
+				{
+					icon: 'file_upload',
+					color: 'purple',
+					action: () => this.exportList(),
+					tooltip: 'Export',
+				},
+			]
+		},
 	},
 	data() {
 		return {
@@ -367,34 +320,34 @@ export default {
 			fab: false,
 			search: '',
 			tableOptions: {
-				sortBy: ['nodeId'],
+				sortBy: [{ key: 'nodeId' }],
 			},
 			expandedNode: null,
 			expandedNodeDialog: false,
 			headers: [
-				{ text: 'ID', value: 'nodeId' },
-				{ text: 'Name', value: 'name' },
-				{ text: 'Location', value: 'location' },
-				{ text: 'Active', value: 'status' },
-				{ text: 'Protocol', value: 'protocol' },
-				{ text: 'DSK', value: 'dsk' },
+				{ title: 'ID', key: 'nodeId' },
+				{ title: 'Name', key: 'name' },
+				{ title: 'Location', key: 'location' },
+				{ title: 'Active', key: 'status' },
+				{ title: 'Protocol', key: 'protocol' },
+				{ title: 'DSK', key: 'dsk' },
 				{
-					text: 'S2 Access Control',
-					value: 'securityClasses.s2AccessControl',
+					title: 'S2 Access Control',
+					key: 'securityClasses.s2AccessControl',
 				},
 				{
-					text: 'S2 Authenticated',
-					value: 'securityClasses.s2Authenticated',
+					title: 'S2 Authenticated',
+					key: 'securityClasses.s2Authenticated',
 				},
 				{
-					text: 'S2 Unauthenticated',
-					value: 'securityClasses.s2Unauthenticated',
+					title: 'S2 Unauthenticated',
+					key: 'securityClasses.s2Unauthenticated',
 				},
-				{ text: 'S0 Legacy', value: 'securityClasses.s0Legacy' },
-				{ text: 'Manufacturer', value: 'manufacturer' },
-				{ text: 'Label', value: 'label' },
-				{ text: 'Description', value: 'description' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'S0 Legacy', key: 'securityClasses.s0Legacy' },
+				{ title: 'Manufacturer', key: 'manufacturer' },
+				{ title: 'Label', key: 'label' },
+				{ title: 'Description', key: 'description' },
+				{ title: 'Actions', key: 'actions', sortable: false },
 			],
 			edited: false,
 		}
@@ -403,12 +356,8 @@ export default {
 		this.tableOptions = useBaseStore().getPreference('smartStartTable', {
 			page: 1,
 			itemsPerPage: 10,
-			sortBy: ['nodeId'],
-			sortDesc: [false],
+			sortBy: [{ key: 'nodeId' }],
 			groupBy: [],
-			groupDesc: [],
-			mustSort: false,
-			multiSort: false,
 		})
 
 		this.refreshItems()
@@ -417,7 +366,7 @@ export default {
 			this.refreshItems()
 		})
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.socket) {
 			this.unbindEvents()
 		}
