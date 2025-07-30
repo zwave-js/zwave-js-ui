@@ -205,7 +205,6 @@
 									<v-card-actions>
 										<v-btn
 											variant="flat"
-											:disabled="!validNaming"
 											color="primary"
 											@click.stop="submitNameLoc"
 											class="next-btn"
