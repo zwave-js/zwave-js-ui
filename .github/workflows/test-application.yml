@@ -77,11 +77,8 @@ jobs:
             
             - name: Start Broker container
               run: |
-                  docker run -d --name broker -p 1883:1883 moscajs/aedes:latest
+                  docker run -d --name broker --network="host" eclipse-mosquitto:latest
                   
-            - name: Ensure mosquitto_pub is installed
-              run: sudo apt-get update && sudo apt-get install -y mosquitto-clients
-
             - name: Start backend
               run: |
                   nohup npm run server > server.log 2>&1 &
@@ -90,8 +87,8 @@ jobs:
             - name: Publish to MQTT topic
               timeout-minutes: 1
               run: |
-                  mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
-                  mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3" -C 1
+                  docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
+                  docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3" -C 1
 
             - name: Output backend logs
               run: |
