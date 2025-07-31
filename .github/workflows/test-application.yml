@@ -84,7 +84,7 @@ jobs:
                   nohup npm run server > server.log 2>&1 &
                   sleep 25
             
-            - name: Publish to MQTT topic
+            - name: Test MQTT write and read
               timeout-minutes: 1
               run: |
                   docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
