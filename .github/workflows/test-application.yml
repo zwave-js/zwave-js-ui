@@ -37,12 +37,11 @@ jobs:
                       "logLevel": "debug",
                       "logEnabled": true,
                        "logToFile": true,
-                       "serverEnabled": true,
+                       "serverEnabled": true
                     },
                     "mqtt": {
                         "name": "zwavejs2mqtt",
                         "host": "localhost",
-                        "port": 1883,
                         "port": 1883,
                         "qos": 1,
                         "prefix": "zwave",
@@ -61,7 +60,7 @@ jobs:
                         "logLevel": "debug",
                         "logToFile": true
                     },
-                     "backup": {
+                    "backup": {
                         "storeBackup": true,
                         "storeCron": "10 9 * * *",
                         "storeKeep": 7,
