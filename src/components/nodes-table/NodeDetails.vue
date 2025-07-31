@@ -36,7 +36,7 @@
 			>
 
 			<v-row>
-				<v-col cols="12" style="max-width: 300px">
+				<v-col cols="12" style="max-width: 350px">
 					<v-select
 						label="RF Region"
 						:items="node.rfRegions"
@@ -50,28 +50,39 @@
 						persistent-hint
 					>
 						<template #append>
-							<v-btn
-								color="primary"
-								size="small"
-								icon
-								@click="updateControllerNodeProp('RFRegion')"
+							<div
+								class="d-flex flex-row"
+								style="
+									margin-top: -8px;
+									gap: 5px;
+									margin-left: 5px;
+								"
 							>
-								<v-icon>refresh</v-icon>
-							</v-btn>
-							<v-btn
-								color="primary"
-								size="small"
-								icon
-								@click="updateRFRegion"
-							>
-								<v-icon>send</v-icon>
-							</v-btn>
+								<v-btn
+									color="primary"
+									size="small"
+									icon
+									@click="
+										updateControllerNodeProp('RFRegion')
+									"
+								>
+									<v-icon>refresh</v-icon>
+								</v-btn>
+								<v-btn
+									color="primary"
+									size="small"
+									icon
+									@click="updateRFRegion"
+								>
+									<v-icon>send</v-icon>
+								</v-btn>
+							</div>
 						</template>
 					</v-select>
 				</v-col>
 			</v-row>
 			<v-row>
-				<v-col cols="12" sm="6" style="max-width: 300px">
+				<v-col cols="12" sm="6" style="max-width: 350px">
 					<v-text-field
 						label="Normal Power Level"
 						v-model.number="node.powerlevel"
@@ -89,9 +100,10 @@
 						persistent-hint
 					></v-text-field>
 				</v-col>
-				<v-col cols="12" sm="6" style="max-width: 300px">
+				<v-col cols="12" sm="6" style="max-width: 350px">
 					<v-text-field
 						label="Measured output power at 0 dBm"
+						hide-details
 						append-icon="send"
 						v-model.number="node.measured0dBm"
 						:min="-10"
@@ -101,28 +113,39 @@
 						type="number"
 					>
 						<template #append>
-							<v-btn
-								color="primary"
-								size="small"
-								icon
-								@click="updateControllerNodeProp('powerlevel')"
+							<div
+								class="d-flex flex-row"
+								style="
+									margin-top: -8px;
+									gap: 5px;
+									margin-left: 5px;
+								"
 							>
-								<v-icon>refresh</v-icon>
-							</v-btn>
-							<v-btn
-								color="primary"
-								size="small"
-								icon
-								@click="updatePowerLevel"
-							>
-								<v-icon>send</v-icon>
-							</v-btn>
+								<v-btn
+									color="primary"
+									size="small"
+									icon
+									@click="
+										updateControllerNodeProp('powerlevel')
+									"
+								>
+									<v-icon>refresh</v-icon>
+								</v-btn>
+								<v-btn
+									color="primary"
+									size="small"
+									icon
+									@click="updatePowerLevel"
+								>
+									<v-icon>send</v-icon>
+								</v-btn>
+							</div>
 						</template>
 					</v-text-field>
 				</v-col>
 			</v-row>
 			<v-row v-if="node.supportsLongRange">
-				<v-col cols="12" style="max-width: 300px">
+				<v-col cols="12" style="max-width: 350px">
 					<v-select
 						label="Maximum LR Power Level"
 						:items="maxLRPowerLevels"
@@ -136,26 +159,35 @@
 						persistent-hint
 					>
 						<template v-if="!isAutoPowerLevelEnabled" #append>
-							<v-btn
-								color="primary"
-								size="small"
-								icon
-								@click="
-									updateControllerNodeProp(
-										'maxLongRangePowerlevel',
-									)
+							<div
+								class="d-flex flex-row"
+								style="
+									margin-top: -8px;
+									gap: 5px;
+									margin-left: 5px;
 								"
 							>
-								<v-icon>refresh</v-icon>
-							</v-btn>
-							<v-btn
-								color="primary"
-								size="small"
-								icon
-								@click="updateMaxLRPowerLevel"
-							>
-								<v-icon>send</v-icon>
-							</v-btn>
+								<v-btn
+									color="primary"
+									size="small"
+									icon
+									@click="
+										updateControllerNodeProp(
+											'maxLongRangePowerlevel',
+										)
+									"
+								>
+									<v-icon>refresh</v-icon>
+								</v-btn>
+								<v-btn
+									color="primary"
+									size="small"
+									icon
+									@click="updateMaxLRPowerLevel"
+								>
+									<v-icon>send</v-icon>
+								</v-btn>
+							</div>
 						</template>
 					</v-select>
 				</v-col>
@@ -212,23 +244,28 @@
 						v-model.trim="options.transitionDuration"
 					>
 						<template #append>
-							<v-btn
-								icon
-								size="small"
-								@click="
-									options.transitionDuration =
-										node.defaultTransitionDuration || ''
-								"
+							<div
+								class="d-flex flex-row"
+								style="margin-top: -8px; gap: 5px"
 							>
-								<v-icon>clear</v-icon>
-							</v-btn>
-							<v-btn
-								icon
-								size="small"
-								@click="setDefaults('transitionDuration')"
-							>
-								<v-icon>save</v-icon>
-							</v-btn>
+								<v-btn
+									icon
+									size="small"
+									@click="
+										options.transitionDuration =
+											node.defaultTransitionDuration || ''
+									"
+								>
+									<v-icon>clear</v-icon>
+								</v-btn>
+								<v-btn
+									icon
+									size="small"
+									@click="setDefaults('transitionDuration')"
+								>
+									<v-icon>save</v-icon>
+								</v-btn>
+							</div>
 						</template>
 					</v-text-field>
 				</v-col>
@@ -244,22 +281,28 @@
 						v-model.trim="options.volume"
 					>
 						<template #append>
-							<v-btn
-								icon
-								size="small"
-								@click="
-									options.volume = node.defaultVolume || ''
-								"
+							<div
+								class="d-flex flex-row"
+								style="margin-top: -8px; gap: 5px"
 							>
-								<v-icon>clear</v-icon>
-							</v-btn>
-							<v-btn
-								icon
-								size="small"
-								@click="setDefaults('volume')"
-							>
-								<v-icon>save</v-icon>
-							</v-btn>
+								<v-btn
+									icon
+									size="small"
+									@click="
+										options.volume =
+											node.defaultVolume || ''
+									"
+								>
+									<v-icon>clear</v-icon>
+								</v-btn>
+								<v-btn
+									icon
+									size="small"
+									@click="setDefaults('volume')"
+								>
+									<v-icon>save</v-icon>
+								</v-btn>
+							</div>
 						</template>
 					</v-text-field>
 				</v-col>
