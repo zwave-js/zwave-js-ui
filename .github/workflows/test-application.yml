@@ -77,19 +77,19 @@ jobs:
             
             - name: Start Mosquitto container
               run: |
-                  docker run -d --name mosquitto -p 1883:1883 eclipse-mosquitto
+                  docker run -d --name broker -p 1883:1883 moscajs/aedes:latest
                   
             - name: Start backend
               run: |
                   nohup npm run server > server.log 2>&1 &
-                  sleep 10
+                  sleep 5
 
             - name: Output backend logs
               run: cat server.log
             
-            - name: Output mosquitto logs
+            - name: Output broker logs
               run: |
-                  docker logs mosquitto
+                  docker logs broker
 
             - name: Ensure backend is running
               run: |
