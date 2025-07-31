@@ -32,7 +32,7 @@ jobs:
               run: |
                   echo '{
                     "zwave": {
-                      "port": "tcp://:::5555",
+                      "port": "tcp://127.0.0.1:5555",
                       "enabled": true,
                       "logLevel": "debug",
                       "logEnabled": true,
@@ -41,7 +41,7 @@ jobs:
                     },
                     "mqtt": {
                         "name": "zwavejs2mqtt",
-                        "host": "localhost",
+                        "host": "127.0.0.1",
                         "port": 1883,
                         "qos": 1,
                         "prefix": "zwave",
