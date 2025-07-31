@@ -59,6 +59,16 @@ npm run dev:server   # Starts backend on port 8091
 npm run build:server # Backend only (outputs to build/)
 ```
 
+### Fake stick
+
+In order to emulate a Z-Wave stick, you can use the `fake-stick` command:
+
+```bash
+npm run fake-stick
+```
+
+This will spawn a fake Z-Wave stick using `server_config.js` configuration. By default the stick listens on `tcp://:::5555` and this can be used as `path` in zwave settings.
+
 ---
 
 ## Code Organization
