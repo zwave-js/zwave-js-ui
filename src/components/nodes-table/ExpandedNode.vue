@@ -14,7 +14,11 @@
 					{{ node.hexId }}
 				</span>
 
-				<v-icon @click="openLink(node.dbLink)" class="ml-2">
+				<v-icon
+					@click="openLink(node.dbLink)"
+					class="ml-2"
+					v-tooltip:bottom="'See device config'"
+				>
 					open_in_new
 				</v-icon>
 				<br />

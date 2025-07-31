@@ -61,6 +61,7 @@
 								<v-btn
 									color="primary"
 									size="small"
+									v-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp('RFRegion')
@@ -71,6 +72,7 @@
 								<v-btn
 									color="primary"
 									size="small"
+									v-tooltip:bottom="`Save`"
 									icon
 									@click="updateRFRegion"
 								>
@@ -124,6 +126,7 @@
 								<v-btn
 									color="primary"
 									size="small"
+									v-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp('powerlevel')
@@ -134,6 +137,7 @@
 								<v-btn
 									color="primary"
 									size="small"
+									v-tooltip:bottom="`Save`"
 									icon
 									@click="updatePowerLevel"
 								>
@@ -170,6 +174,7 @@
 								<v-btn
 									color="primary"
 									size="small"
+									v-tooltip:bottom="`Refresh`"
 									icon
 									@click="
 										updateControllerNodeProp(
@@ -182,6 +187,7 @@
 								<v-btn
 									color="primary"
 									size="small"
+									v-tooltip:bottom="`Save`"
 									icon
 									@click="updateMaxLRPowerLevel"
 								>
@@ -251,6 +257,7 @@
 								<v-btn
 									icon
 									size="small"
+									v-tooltip:bottom="`Clear`"
 									@click="
 										options.transitionDuration =
 											node.defaultTransitionDuration || ''
@@ -261,6 +268,7 @@
 								<v-btn
 									icon
 									size="small"
+									v-tooltip:bottom="`Save`"
 									@click="setDefaults('transitionDuration')"
 								>
 									<v-icon>save</v-icon>
@@ -288,6 +296,7 @@
 								<v-btn
 									icon
 									size="small"
+									v-tooltip:bottom="`Clear`"
 									@click="
 										options.volume =
 											node.defaultVolume || ''
@@ -298,6 +307,7 @@
 								<v-btn
 									icon
 									size="small"
+									v-tooltip:bottom="`Save`"
 									@click="setDefaults('volume')"
 								>
 									<v-icon>save</v-icon>
@@ -305,18 +315,6 @@
 							</div>
 						</template>
 					</v-text-field>
-				</v-col>
-				<v-col
-					cols="12"
-					sm="6"
-					style="max-width: 300px; padding-top: 0"
-				>
-					<v-text-field
-						label="Volume"
-						hint="The volume (for the Sound Switch CC)"
-						persistent-hint
-						v-model.trim="options.volume"
-					></v-text-field>
 				</v-col>
 			</v-row>
 
