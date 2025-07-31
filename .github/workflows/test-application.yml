@@ -75,14 +75,23 @@ jobs:
                   }' > store/settings.json
             
             
-            - name: Start Mosquitto container
+            - name: Start Broker container
               run: |
                   docker run -d --name broker -p 1883:1883 moscajs/aedes:latest
                   
+            - name: Ensure mosquitto_pub is installed
+              run: sudo apt-get update && sudo apt-get install -y mosquitto-clients
+
             - name: Start backend
               run: |
                   nohup npm run server > server.log 2>&1 &
                   sleep 15
+            
+            - name: Publish to MQTT topic
+              run: |
+                  mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
+                  # subscribe to the same topic without "set" to verify the message
+                  mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3" -C 1
 
             - name: Output backend logs
               run: cat server.log
@@ -98,3 +107,4 @@ jobs:
                   fi
                   echo "Backend is running successfully."
 
+           
