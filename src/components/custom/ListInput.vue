@@ -25,12 +25,13 @@
 								color="primary-lighten-2"
 								>drag_indicator</v-icon
 							>
-							<span class="text-caption"> {{ i + 1 }}.</span>
+							<span class="text-caption mr-1"> {{ i + 1 }}.</span>
 							<span style="font-size: 0.9rem">
 								{{ getItemName(item) }}
 							</span>
 							<v-btn
 								v-if="toggleEdit"
+								class="ml-1"
 								icon="delete"
 								size="small"
 								@click="deleteItem(i)"
@@ -67,6 +68,7 @@
 			></v-text-field>
 			<v-select
 				v-if="input.inputType === 'select'"
+				:menu-props="menuProps"
 				v-model="item"
 				:label="input.label"
 				:hint="input.hint"
@@ -79,6 +81,7 @@
 			></v-select>
 			<v-autocomplete
 				v-if="input.inputType === 'autocomplete'"
+				:menu-props="menuProps"
 				v-model.trim="item"
 				:label="input.label"
 				:persistent-hint="!!input.hint"
@@ -92,6 +95,7 @@
 			></v-autocomplete>
 			<v-combobox
 				v-if="input.inputType === 'combobox'"
+				:menu-props="menuProps"
 				v-model.trim="item"
 				:label="input.label"
 				:hint="input.hint"
@@ -121,6 +125,7 @@ export default {
 		input: Object,
 		modelValue: Array,
 		toggleEdit: { type: Boolean, default: true },
+		menuProps: Object,
 	},
 	components: {
 		draggable,

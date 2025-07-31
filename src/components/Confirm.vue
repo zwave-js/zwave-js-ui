@@ -145,6 +145,7 @@
 								</v-combobox>
 								<list-input
 									v-if="input.type === 'array' && input.list"
+									:menu-props="menuProps"
 									v-model="values[input.key]"
 									:rules="inputProps[input.key].rules"
 									:input="input"
