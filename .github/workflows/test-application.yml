@@ -82,7 +82,7 @@ jobs:
             - name: Start backend
               run: |
                   nohup npm run server > server.log 2>&1 &
-                  sleep 5
+                  sleep 15
 
             - name: Output backend logs
               run: cat server.log
