@@ -82,7 +82,7 @@ jobs:
             - name: Start backend
               run: |
                   nohup npm run server > server.log 2>&1 &
-                  sleep 30
+                  sleep 25
             
             - name: Publish to MQTT topic
               timeout-minutes: 1
