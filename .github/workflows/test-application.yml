@@ -85,16 +85,18 @@ jobs:
             - name: Start backend
               run: |
                   nohup npm run server > server.log 2>&1 &
-                  sleep 15
+                  sleep 5
             
             - name: Publish to MQTT topic
               run: |
                   mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
                   # subscribe to the same topic without "set" to verify the message
-                  mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3" -C 1
+                  mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3" -C 2
 
             - name: Output backend logs
-              run: cat server.log
+              run: |
+                sleep 5
+                cat server.log
             
             - name: Output broker logs
               run: |
