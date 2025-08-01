@@ -2449,7 +2449,7 @@ export default {
 
 			if (data) {
 				data = data.replace(/0x|,|\s/gi, '')
-				this.$set(obj, key, data)
+				obj[key] = data.toUpperCase()
 				event.preventDefault()
 			}
 		},
@@ -2484,7 +2484,7 @@ export default {
 				key += x.length === 2 ? x : '0' + x
 			}
 
-			this.$set(obj, k, key)
+			obj[k] = key
 		},
 		readFile(file, callback) {
 			const reader = new FileReader()

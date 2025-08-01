@@ -360,11 +360,8 @@ export default {
 		async updateDeviceJSON() {
 			if (!this.errorDevice) {
 				const updated = JSON.parse(this.deviceJSON)
-				this.$set(
-					this.node.hassDevices,
-					this.selectedDevice.id,
-					updated,
-				)
+				this.node.hassDevices[this.selectedDevice.id] = updated
+
 				await this.updateDevice(updated)
 			}
 		},

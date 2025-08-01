@@ -4,7 +4,7 @@ import {
 	loadColorScheme,
 	prefersColorSchemeDark,
 } from '../lib/colorScheme'
-import { $set, deepEqual } from '../lib/utils'
+import { deepEqual } from '../lib/utils'
 import logger from '../lib/logger'
 
 import { Settings } from '../modules/Settings'
@@ -344,7 +344,7 @@ const useBaseStore = defineStore('base', {
 			for (const nodeId in neighbors) {
 				const node = this.getNode(nodeId)
 				if (node) {
-					$set(node, 'neighbors', neighbors[nodeId])
+					node.neighbors = neighbors[nodeId]
 				}
 			}
 		},
@@ -500,7 +500,7 @@ const useBaseStore = defineStore('base', {
 			for (const [nodeId, progress] of nodesProgress) {
 				const node = this.getNode(nodeId)
 				if (node) {
-					$set(node, 'rebuildRoutesProgress', progress)
+					node.rebuildRoutesProgress = progress
 				}
 			}
 		},
