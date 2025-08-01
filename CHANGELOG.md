@@ -1,5 +1,22 @@
 
 
+## [11.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.0...v11.0.1) (2025-08-01)
+
+
+### Bug Fixes
+
+* UI doesn't generate security keys ([1fae61b](https://github.com/zwave-js/zwave-js-ui/commit/1fae61b34c89f8e43ceee84aec17dee6e862efee))
+* **ui:** add tooltips for buttons in NodeDetails component for better user guidance ([8b3d74d](https://github.com/zwave-js/zwave-js-ui/commit/8b3d74dd82073fe4a1e812dba69b3d3b734118f5))
+* **ui:** adjust column widths and improve button layout in NodeDetails component ([c57ba61](https://github.com/zwave-js/zwave-js-ui/commit/c57ba6160444351418559036e5f3eec8db2b6c5f))
+* **ui:** persist items-per-page in control panel ([d1e7691](https://github.com/zwave-js/zwave-js-ui/commit/d1e7691e83e12040f0f19cbb5103c97c3866ef8b)), closes [#4315](https://github.com/zwave-js/zwave-js-ui/issues/4315)
+* **ui:** priority routes select menu not visible ([ba925ec](https://github.com/zwave-js/zwave-js-ui/commit/ba925ec6beb52c09a616931f2fe452210bcbd493)), closes [#4311](https://github.com/zwave-js/zwave-js-ui/issues/4311)
+* **ui:** sticky to default scrollbars ([87657b4](https://github.com/zwave-js/zwave-js-ui/commit/87657b44ae2e08ec649dad52f0234776e86a25ff)), closes [#4316](https://github.com/zwave-js/zwave-js-ui/issues/4316)
+
+
+### Features
+
+* **ci:** add GitHub Actions workflow for testing application with fake Z-Wave stick ([#4314](https://github.com/zwave-js/zwave-js-ui/issues/4314)) ([1933677](https://github.com/zwave-js/zwave-js-ui/commit/19336772b3f1fb920a4586852451d7d66e17cedd))
+
 # [11.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.11.0...v11.0.0) (2025-07-30)
 
 
