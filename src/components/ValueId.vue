@@ -10,8 +10,18 @@
 				variant="outlined"
 				color="error"
 				>Reset</v-btn
-			></v-list-subheader
-		>
+			>
+
+			<v-chip
+				v-if="isDefault"
+				v-tooltip:bottom="'This value is set to its default'"
+				class="ml-2 mb-1"
+				size="x-small"
+				variant="outlined"
+				color="primary"
+				>Default</v-chip
+			>
+		</v-list-subheader>
 
 		<!-- Not writeable value -->
 		<div v-if="!modelValue.writeable">
@@ -371,6 +381,12 @@ export default {
 				this.modelValue.states?.length > 0
 				? this.modelValue.states.find((s) => s.value === true)?.text
 				: null
+		},
+		isDefault() {
+			return (
+				this.modelValue.default !== undefined &&
+				this.modelValue.default === this.modelValue.newValue
+			)
 		},
 		numberOutOfRange() {
 			const min = this.modelValue.min ?? -Infinity
