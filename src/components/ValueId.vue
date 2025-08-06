@@ -563,16 +563,6 @@ export default {
 			}
 		},
 		updateValue(v, customValue) {
-			// needed for on/off control to update the newValue
-
-			if (
-				this.$refs.myCombo &&
-				this.$refs.myCombo.$refs.input._value !== null
-			) {
-				// trick used to send the value in combobox without the need to press enter
-				this.modelValue.newValue = this.$refs.myCombo.$refs.input._value
-			}
-
 			if (customValue !== undefined) {
 				v.newValue = customValue
 			}
