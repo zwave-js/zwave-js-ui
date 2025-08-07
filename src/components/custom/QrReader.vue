@@ -85,7 +85,7 @@
 							show-size
 							accept="image/*"
 							counter
-							@change="onQrImport"
+							@update:modelValue="onQrImport"
 						></v-file-input>
 
 						<v-col
