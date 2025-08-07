@@ -606,6 +606,11 @@ export default {
 				},
 			)
 
+			// cancelled
+			if (Object.keys(item).length === 0) {
+				return
+			}
+
 			if (item.dsk || existingItem?.nodeId) {
 				if (!existingItem?.nodeId) {
 					const securityClasses = {
@@ -628,7 +633,7 @@ export default {
 				}
 
 				this.updateItem(item)
-			} else if (Object.keys(item).length > 0 && !item.dsk) {
+			} else if (!item.dsk) {
 				this.showSnackbar('DSK is required', 'error')
 			}
 		},
