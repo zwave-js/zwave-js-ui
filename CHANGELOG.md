@@ -1,5 +1,19 @@
 
 
+# [11.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.1...v11.1.0) (2025-08-07)
+
+
+### Bug Fixes
+
+* **ui:** cancel editing in smart start still triggers an undate ([87bae75](https://github.com/zwave-js/zwave-js-ui/commit/87bae75ad4e9163a77a0d68a317d468b330076e1))
+* **ui:** importing QR code not working ([dfc1f0f](https://github.com/zwave-js/zwave-js-ui/commit/dfc1f0f9f98a4a7437e7ec1922a6100862555292)), closes [#4324](https://github.com/zwave-js/zwave-js-ui/issues/4324)
+* **ui:** unable to change some configuration values ([cb098e1](https://github.com/zwave-js/zwave-js-ui/commit/cb098e16b7be1fc2456c0758d3d1796669ce3847)), closes [#4322](https://github.com/zwave-js/zwave-js-ui/issues/4322)
+
+
+### Features
+
+* **ui:** add tooltip for default value indication in ValueId component ([facd64c](https://github.com/zwave-js/zwave-js-ui/commit/facd64ccadee03635850c2877060be779fbff586)), closes [#4313](https://github.com/zwave-js/zwave-js-ui/issues/4313)
+
 ## [11.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.0...v11.0.1) (2025-08-01)
 
 
