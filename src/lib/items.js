@@ -8,13 +8,13 @@ import {
 export const rfRegions = Object.keys(RFRegion)
 	.filter((k) => isNaN(k))
 	.map((key) => ({
-		text: key,
+		title: key,
 		value: RFRegion[key],
 		disabled:
 			RFRegion[key] === RFRegion.Unknown ||
 			RFRegion[key] === RFRegion['Default (EU)'],
 	}))
-	.sort((a, b) => a.text.localeCompare(b.text))
+	.sort((a, b) => a.title.localeCompare(b.title))
 
 export const settingsRfRegions = Object.keys(RFRegion)
 	.filter((k) => isNaN(k))
@@ -31,47 +31,47 @@ export const settingsRfRegions = Object.keys(RFRegion)
 		)
 	})
 	.map((key) => ({
-		text: key,
+		title: key,
 		value: RFRegion[key],
 	}))
-	.sort((a, b) => a.text.localeCompare(b.text))
+	.sort((a, b) => a.title.localeCompare(b.title))
 
 export const znifferRegions = Object.keys(ZnifferRegion)
 	.filter((k) => isNaN(k))
 	.map((key) => ({
-		text: key,
+		title: key,
 		value: ZnifferRegion[key],
 		disabled:
 			RFRegion[key] === RFRegion.Unknown ||
 			RFRegion[key] === RFRegion['Default (EU)'],
 	}))
-	.sort((a, b) => a.text.localeCompare(b.text))
+	.sort((a, b) => a.title.localeCompare(b.title))
 
 export const znifferLRChannelConfigs = Object.keys(ZnifferLRChannelConfig)
 	.filter((k) => isNaN(k))
 	.map((key) => ({
-		text: key,
+		title: key,
 		value: ZnifferLRChannelConfig[key],
 	}))
 
 export const protocolsItems = [
 	{
-		text: 'Z-Wave',
+		title: 'Z-Wave',
 		value: Protocols.ZWave,
 	},
 	{
-		text: 'Z-Wave Long Range',
+		title: 'Z-Wave Long Range',
 		value: Protocols.ZWaveLongRange,
 	},
 ]
 
 export const maxLRPowerLevels = [
 	{
-		text: '+14 dBm',
+		title: '+14 dBm',
 		value: 14,
 	},
 	{
-		text: '+20 dBm',
+		title: '+20 dBm',
 		value: 20,
 	},
 ]

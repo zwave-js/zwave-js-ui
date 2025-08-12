@@ -1,5 +1,70 @@
 
 
+# [11.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.1...v11.1.0) (2025-08-07)
+
+
+### Bug Fixes
+
+* **ui:** cancel editing in smart start still triggers an undate ([87bae75](https://github.com/zwave-js/zwave-js-ui/commit/87bae75ad4e9163a77a0d68a317d468b330076e1))
+* **ui:** importing QR code not working ([dfc1f0f](https://github.com/zwave-js/zwave-js-ui/commit/dfc1f0f9f98a4a7437e7ec1922a6100862555292)), closes [#4324](https://github.com/zwave-js/zwave-js-ui/issues/4324)
+* **ui:** unable to change some configuration values ([cb098e1](https://github.com/zwave-js/zwave-js-ui/commit/cb098e16b7be1fc2456c0758d3d1796669ce3847)), closes [#4322](https://github.com/zwave-js/zwave-js-ui/issues/4322)
+
+
+### Features
+
+* **ui:** add tooltip for default value indication in ValueId component ([facd64c](https://github.com/zwave-js/zwave-js-ui/commit/facd64ccadee03635850c2877060be779fbff586)), closes [#4313](https://github.com/zwave-js/zwave-js-ui/issues/4313)
+
+## [11.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.0...v11.0.1) (2025-08-01)
+
+
+### Bug Fixes
+
+* UI doesn't generate security keys ([1fae61b](https://github.com/zwave-js/zwave-js-ui/commit/1fae61b34c89f8e43ceee84aec17dee6e862efee))
+* **ui:** add tooltips for buttons in NodeDetails component for better user guidance ([8b3d74d](https://github.com/zwave-js/zwave-js-ui/commit/8b3d74dd82073fe4a1e812dba69b3d3b734118f5))
+* **ui:** adjust column widths and improve button layout in NodeDetails component ([c57ba61](https://github.com/zwave-js/zwave-js-ui/commit/c57ba6160444351418559036e5f3eec8db2b6c5f))
+* **ui:** persist items-per-page in control panel ([d1e7691](https://github.com/zwave-js/zwave-js-ui/commit/d1e7691e83e12040f0f19cbb5103c97c3866ef8b)), closes [#4315](https://github.com/zwave-js/zwave-js-ui/issues/4315)
+* **ui:** priority routes select menu not visible ([ba925ec](https://github.com/zwave-js/zwave-js-ui/commit/ba925ec6beb52c09a616931f2fe452210bcbd493)), closes [#4311](https://github.com/zwave-js/zwave-js-ui/issues/4311)
+* **ui:** sticky to default scrollbars ([87657b4](https://github.com/zwave-js/zwave-js-ui/commit/87657b44ae2e08ec649dad52f0234776e86a25ff)), closes [#4316](https://github.com/zwave-js/zwave-js-ui/issues/4316)
+
+
+### Features
+
+* **ci:** add GitHub Actions workflow for testing application with fake Z-Wave stick ([#4314](https://github.com/zwave-js/zwave-js-ui/issues/4314)) ([1933677](https://github.com/zwave-js/zwave-js-ui/commit/19336772b3f1fb920a4586852451d7d66e17cedd))
+
+# [11.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.11.0...v11.0.0) (2025-07-30)
+
+
+### Bug Fixes
+
+* **ui:** nodes manager name/location step disabled next ([ac7dc4d](https://github.com/zwave-js/zwave-js-ui/commit/ac7dc4d445ae18c41be1d89ee517ea2041a80249))
+
+
+### Features
+
+* move to Vue/Vuetify 3 ([#4290](https://github.com/zwave-js/zwave-js-ui/issues/4290)) ([e6ef07c](https://github.com/zwave-js/zwave-js-ui/commit/e6ef07cb6396baa615cb6abdc6a6fac0edcfc600))
+* **ui:** enhance button group with icons and conditional styling ([5b88a26](https://github.com/zwave-js/zwave-js-ui/commit/5b88a260043ba51472a1924766ea5c5a6a4b36ec))
+
+# [10.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.10.0...v10.11.0) (2025-07-29)
+
+
+### Features
+
+* bump @zwave-js/server@3.2.1 ([#4302](https://github.com/zwave-js/zwave-js-ui/issues/4302)) ([5a4324a](https://github.com/zwave-js/zwave-js-ui/commit/5a4324a10ad719fd7aef0469c43be32d95c2792f))
+* download Zniffer capture after saving ([#4301](https://github.com/zwave-js/zwave-js-ui/issues/4301)) ([5206508](https://github.com/zwave-js/zwave-js-ui/commit/520650896d33dacfe03cecf3a7ce552a6bdcdcce))
+
+# [10.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.9.0...v10.10.0) (2025-07-24)
+
+
+### Bug Fixes
+
+* region check for OTA updates ([#4299](https://github.com/zwave-js/zwave-js-ui/issues/4299)) ([4c8cae9](https://github.com/zwave-js/zwave-js-ui/commit/4c8cae9c21c325025d6f979d0ac82f7fa4712d9c))
+
+
+### Features
+
+* bump zwave-js@15.10.0 ([#4300](https://github.com/zwave-js/zwave-js-ui/issues/4300)) ([88787c1](https://github.com/zwave-js/zwave-js-ui/commit/88787c11dc772a134c484489aeffe3c26dbc0aed))
+* **ui:** validate number inputs against min/max from config ([#4288](https://github.com/zwave-js/zwave-js-ui/issues/4288)) ([6e71238](https://github.com/zwave-js/zwave-js-ui/commit/6e7123827cbb3c261790f0d10db766e8c671904d)), closes [#4285](https://github.com/zwave-js/zwave-js-ui/issues/4285)
+
 # [10.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.8.0...v10.9.0) (2025-07-11)
 
 

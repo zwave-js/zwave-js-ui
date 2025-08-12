@@ -2,13 +2,13 @@
 	<v-container grid-list-md>
 		<v-row>
 			<v-col cols="12">
-				<v-btn text @click="importScenes">
+				<v-btn variant="text" @click="importScenes">
 					Import
-					<v-icon right dark color="primary">file_upload</v-icon>
+					<v-icon end color="primary">file_upload</v-icon>
 				</v-btn>
-				<v-btn text @click="exportScenes">
+				<v-btn variant="text" @click="exportScenes">
 					Export
-					<v-icon right dark color="primary">file_download</v-icon>
+					<v-icon end color="primary">file_download</v-icon>
 				</v-btn>
 			</v-col>
 
@@ -17,7 +17,7 @@
 					label="Scene"
 					v-model="selectedScene"
 					:items="scenesWithId"
-					item-text="label"
+					item-title="label"
 					item-value="sceneid"
 				></v-select>
 			</v-col>
@@ -25,8 +25,8 @@
 			<v-col cols="12" sm="6">
 				<v-text-field
 					label="New Scene"
-					append-outer-icon="send"
-					@click:append-outer="createScene"
+					append-icon="send"
+					@click:append="createScene"
 					v-model.trim="newScene"
 				></v-text-field>
 			</v-col>
@@ -47,40 +47,38 @@
 			:items="scene_values"
 			class="elevation-1"
 		>
-			<template v-slot:top>
-				<v-btn color="error" text @click="removeScene">Delete</v-btn>
-				<v-btn color="success" text @click="activateScene"
-					>Activate</v-btn
-				>
-				<v-btn color="primary" text @click="dialogValue = true"
-					>New Value</v-btn
-				>
+			<template #top>
+				<div class="d-flex flex-row">
+					<v-btn color="error" variant="text" @click="removeScene"
+						>Delete</v-btn
+					>
+					<v-btn color="success" variant="text" @click="activateScene"
+						>Activate</v-btn
+					>
+
+					<v-btn
+						color="primary"
+						variant="text"
+						@click="dialogValue = true"
+						>New Value</v-btn
+					>
+				</div>
 			</template>
 
-			<template v-slot:item="{ item }">
-				<tr>
-					<td class="text-xs">{{ item.id }}</td>
-					<td class="text-xs">{{ item.nodeId }}</td>
-					<td class="text-xs">{{ item.label }}</td>
-					<td class="text-xs">{{ item.value }}</td>
-					<td class="text-xs">
-						{{
-							item.timeout ? 'After ' + item.timeout + 's' : 'No'
-						}}
-					</td>
-					<td>
-						<v-icon
-							small
-							color="success"
-							class="mr-2"
-							@click="editItem(item)"
-							>edit</v-icon
-						>
-						<v-icon small color="error" @click="deleteItem(item)"
-							>delete</v-icon
-						>
-					</td>
-				</tr>
+			<template #[`item.timeout`]="{ item }">
+				{{ item.timeout ? 'After ' + item.timeout + 's' : 'No' }}
+			</template>
+			<template #[`item.actions`]="{ item }">
+				<v-icon
+					size="small"
+					color="success"
+					class="mr-2"
+					@click="editItem(item)"
+					>edit</v-icon
+				>
+				<v-icon size="small" color="error" @click="deleteItem(item)"
+					>delete</v-icon
+				>
 			</template>
 		</v-data-table>
 	</v-container>
@@ -89,13 +87,15 @@
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	name: 'Scenes',
 	mixins: [InstancesMixin],
 	components: {
-		DialogSceneValue: () =>
-			import('@/components/dialogs/DialogSceneValue.vue'),
+		DialogSceneValue: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogSceneValue.vue'),
+		),
 	},
 	watch: {
 		selectedScene() {
@@ -109,8 +109,10 @@ export default {
 		...mapState(useBaseStore, ['nodes']),
 		scenesWithId() {
 			return this.scenes.map((s) => {
-				s.label = `[${s.sceneid}] ${s.label}`
-				return s
+				return {
+					...s,
+					label: `[${s.sceneid}] ${s.label}`,
+				}
 			})
 		},
 		dialogTitle() {
@@ -127,12 +129,12 @@ export default {
 			editedValue: {},
 			editedIndex: -1,
 			headers_scenes: [
-				{ text: 'Value ID', value: 'id' },
-				{ text: 'Node', value: 'nodeId' },
-				{ text: 'Label', value: 'label' },
-				{ text: 'Value', value: 'value' },
-				{ text: 'Timeout', value: 'timeout' },
-				{ text: 'Actions', sortable: false },
+				{ title: 'Value ID', key: 'id' },
+				{ title: 'Node', key: 'nodeId' },
+				{ title: 'Label', key: 'label' },
+				{ title: 'Value', key: 'value' },
+				{ title: 'Timeout', key: 'timeout' },
+				{ title: 'Actions', key: 'actions', sortable: false },
 			],
 		}
 	},
@@ -179,6 +181,11 @@ export default {
 
 			if (response.success) {
 				this.scenes = response.result
+				if (!this.selectedScene) {
+					this.selectedScene = this.scenes.length
+						? this.scenes[0].sceneid
+						: null
+				}
 			}
 		},
 		async createScene() {

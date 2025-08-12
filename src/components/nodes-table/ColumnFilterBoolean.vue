@@ -4,10 +4,9 @@
 			<v-row>
 				<v-col>
 					<v-checkbox
-						:indeterminate="value.boolValue == null"
-						v-model="value.boolValue"
+						:indeterminate="_value.boolValue == null"
+						v-model="_value.boolValue"
 						label="Boolean value"
-						@change="change"
 					></v-checkbox>
 				</v-col>
 			</v-row>
@@ -19,15 +18,20 @@
 import ColumnFilterHelper from '@/modules/ColumnFilterHelper'
 export default {
 	props: {
-		value: {
+		modelValue: {
 			type: Object,
 			default: () => ColumnFilterHelper.defaultFilter('string'),
 			required: true,
 		},
 	},
-	methods: {
-		change() {
-			this.$emit('change', this.value, true)
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(v) {
+				this.$emit('update:modelValue', v)
+			},
 		},
 	},
 }

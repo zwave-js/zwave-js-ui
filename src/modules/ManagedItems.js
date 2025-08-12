@@ -39,10 +39,10 @@ export class ManagedItems {
 				: this.filters
 
 		// sometimes columns are updated in new releases, this allows us to show them
-		if (!this.loadSetting('cleared2', false)) {
+		if (!this.loadSetting('cleared3', false)) {
 			this._filters = this.initialFilters
 			this._columns = this.initialTableColumns
-			this.storeSetting('cleared2', true)
+			this.storeSetting('cleared3', true)
 		}
 
 		this._selected = this.initialSelected
@@ -175,17 +175,31 @@ export class ManagedItems {
 	_getTableHeaderForColumn(colName) {
 		const propDef = this.propDefs[colName]
 		const header = {
-			value: colName,
-			text: propDef.label === undefined ? colName : propDef.label,
+			key: colName,
+			title: propDef.label === undefined ? colName : propDef.label,
 			type: propDef.type === undefined ? 'string' : propDef.type,
 			groupable:
 				propDef.groupable === undefined ? true : !!propDef.groupable,
 		}
+
+		if (
+			propDef.sortable !== false &&
+			typeof propDef.customSort === 'function'
+		) {
+			header.sortRaw = (a, b) => {
+				const sortIng = this.tableOptions.sortBy.find(
+					(s) => s.key === colName,
+				)
+				const sortDesc = sortIng?.order === 'desc'
+				return propDef.customSort(sortDesc, a, b)
+			}
+		}
+
 		// NOTE: These extend the VDataTable headers:
 		if (propDef.customGroupValue)
 			header.customGroupValue = propDef.customGroupValue
-		if (propDef.customSort) header.customSort = propDef.customSort
-		if (propDef.customValue) header.customValue = propDef.customValue
+
+		if (propDef.customValue) header.value = propDef.customValue
 		if (propDef.richValue) header.richValue = propDef.richValue
 		return header
 	}
@@ -257,7 +271,7 @@ export class ManagedItems {
 	 */
 	get initialFilters() {
 		return this.allTableHeaders.reduce((values, h) => {
-			values[h.value] = {}
+			values[h.key] = {}
 			return values
 		}, {})
 	}
@@ -296,7 +310,7 @@ export class ManagedItems {
 		const undefinedPlaceholder =
 			this.propDefs[propName].undefinedPlaceholder
 
-		// when undeginedPlaceholder is set, we need to replace the filter value with undefined
+		// when undefinedPlaceholder is set, we need to replace the filter value with undefined
 		if (undefinedPlaceholder && filterDef?.values) {
 			filterDef.values = filterDef.values.map((f) =>
 				f === undefinedPlaceholder ? undefined : f,
@@ -331,10 +345,9 @@ export class ManagedItems {
 	 * @param {String} groupValue Property group value
 	 */
 	get groupByTitle() {
-		const propDef = this.propDefs[this.groupBy[0]]
-		return propDef !== undefined && propDef.label
-			? propDef.label
-			: this.groupBy[0]
+		const groupKey = this.groupBy?.[0]?.key
+		const propDef = this.propDefs[groupKey]
+		return propDef !== undefined && propDef.label ? propDef.label : groupKey
 	}
 
 	/**
@@ -342,7 +355,7 @@ export class ManagedItems {
 	 * @param {String} propName Property name
 	 */
 	isGroupBy(propName) {
-		return this.groupBy.includes(propName)
+		return !!this.groupBy.find((g) => g.key === propName)
 	}
 
 	// Selection handling
@@ -378,12 +391,8 @@ export class ManagedItems {
 		return {
 			page: 1,
 			itemsPerPage: 10,
-			sortBy: ['id'],
-			sortDesc: [false],
+			sortBy: [{ key: 'id', order: 'asc' }],
 			groupBy: [],
-			groupDesc: [],
-			mustSort: false,
-			multiSort: false,
 		}
 	}
 
@@ -405,63 +414,23 @@ export class ManagedItems {
 
 	/**
 	 * Determine the label to be displayed when grouped
-	 * @param {any} group Value of the group
+	 * @param {string} group Value of the group
 	 * @returns Label to be displayed for the group respecting a possibly existent customGroupValue
 	 */
 	groupValue(group) {
 		let formattedGroup = group
+		const groupKey = this.groupBy?.[0].key
 		if (
-			this.groupBy &&
-			this.groupBy[0] &&
-			this.propDefs[this.groupBy[0]] &&
-			typeof this.propDefs[this.groupBy[0]].customGroupValue ===
-				'function'
+			groupKey &&
+			this.propDefs[groupKey] &&
+			typeof this.propDefs[groupKey].customGroupValue === 'function'
 		) {
-			formattedGroup = this.propDefs[this.groupBy[0]].customGroupValue(
+			formattedGroup = this.propDefs[groupKey].customGroupValue(
 				group,
 				this.groupBy,
 			)
 		}
 		return this.groupByTitle + ': ' + formattedGroup
-	}
-
-	/**
-	 * Sort the items by a certain property respecting an existing customSort function
-	 * @param {array} items Items to be sorted
-	 * @param {array} sortBy Array with properties to sort by (only one is supported!)
-	 * @param {array} sortDesc Array with boolean values to sort in descending order if true, ascending otherwise (only one is supported!)
-	 * @returns Sorted array of items
-	 */
-	sort(items, sortBy, sortDesc) {
-		// TODO: Why is this.propDefs undefined when this method is directly attached to a VDataTable using 'custom-sort'?
-		// See https://stackoverflow.com/a/54612408
-		if (!sortBy[0] || !this.propDefs || !this.propDefs[sortBy[0]]) {
-			return items
-		}
-		items.sort((a, b) => {
-			let propName = sortBy[0]
-			if (
-				this.propDefs[sortBy[0]] &&
-				typeof this.propDefs[sortBy[0]].customSort === 'function'
-			) {
-				// Use special sort function if one is defined for the sortBy column
-				return this.propDefs[sortBy[0]].customSort(
-					items,
-					sortBy,
-					sortDesc,
-					a,
-					b,
-				)
-			} else {
-				// Standard sort for every other column
-				let valA = this.getPropValue(a, propName, '')
-				let valB = this.getPropValue(b, propName, '')
-				let res = valA < valB ? -1 : valA > valB ? 1 : 0
-				res = sortDesc[0] ? -res : res
-				return res
-			}
-		})
-		return items
 	}
 
 	/**

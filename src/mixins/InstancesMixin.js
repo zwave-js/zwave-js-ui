@@ -212,8 +212,8 @@ export default {
 				} else if (action === 'firmwareUpdateOTW') {
 					const result = await this.app.confirm(
 						'Firmware update OTW',
-						`<h3 class="red--text">We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed.</h3>
-						<h3 class="mt-2 red--text">A failure during this process may leave your controller in recovery mode, rendering it unusable until a correct firmware image is uploaded. In case of 500 series controllers a failure on this process is likely unrecoverable.</h3>
+						`<h3 class="text-error">We don't take any responsibility if devices upgraded using Z-Wave JS don't work after an update. Always double-check that the correct update is about to be installed.</h3>
+						<h3 class="mt-2 text-error">A failure during this process may leave your controller in recovery mode, rendering it unusable until a correct firmware image is uploaded. In case of 500 series controllers a failure on this process is likely unrecoverable.</h3>
 						`,
 						'alert',
 						{

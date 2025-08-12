@@ -403,7 +403,7 @@ export type ZUIDeviceClass = {
 }
 
 export type ZUINodeGroups = {
-	text: string
+	title: string
 	value: number
 	endpoint: number
 	maxNodes: number
@@ -542,7 +542,7 @@ export type ZUINode = {
 	measured0dBm?: number
 	maxLongRangePowerlevel?: number
 	RFRegion?: RFRegion
-	rfRegions?: { text: string; value: number }[]
+	rfRegions?: { title: string; value: number }[]
 	isFrequentListening?: FLiRS
 	isRouting?: boolean
 	keepAwake?: boolean
@@ -1698,7 +1698,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				for (const [groupIndex, group] of groups) {
 					// https://zwave-js.github.io/node-zwave-js/#/api/controller?id=associationgroup-interface
 					node.groups.push({
-						text: group.label,
+						title: group.label,
 						endpoint: endpoint,
 						value: groupIndex,
 						maxNodes: group.maxNodes,
@@ -6284,12 +6284,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					.getSupportedRFRegions()
 					?.map((region) => ({
 						value: region,
-						text: getEnumMemberName(RFRegion, region),
+						title: getEnumMemberName(RFRegion, region),
 						disabled:
 							region === RFRegion.Unknown ||
 							region === RFRegion['Default (EU)'],
 					}))
-					.sort((a, b) => a.text.localeCompare(b.text)) ?? []
+					.sort((a, b) => a.title.localeCompare(b.title)) ?? []
 		}
 	}
 

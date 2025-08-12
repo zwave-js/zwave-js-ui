@@ -1,6 +1,6 @@
 <template>
 	<v-col>
-		<v-subheader>Home Assistant - Devices</v-subheader>
+		<v-list-subheader>Home Assistant - Devices</v-list-subheader>
 
 		<v-alert
 			max-width="1150"
@@ -18,102 +18,84 @@
 
 		<!-- HASS DEVICES -->
 		<v-row v-if="hassDevices.length > 0">
-			<v-col cols="12" md="6" pa-1>
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="primary"
-							text
-							@click="storeDevices(false)"
-							>Store</v-btn
-						>
-					</template>
-					<span
-						>Store all discovered devices in nodes.json in store
-						directory. Prevents re-discovery on startup</span
-					>
-				</v-tooltip>
+			<v-col cols="12" md="6">
+				<v-btn
+					v-tooltip:bottom="
+						'Store all discovered devices in nodes.json in store directory. Prevents re-discovery on startup'
+					"
+					color="primary"
+					variant="text"
+					@click="storeDevices(false)"
+				>
+					Store
+				</v-btn>
 
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="error"
-							text
-							@click="storeDevices(true)"
-							>Remove Store</v-btn
-						>
-					</template>
-					<span
-						>Remove devices from nodes.json in store directory</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-tooltip:bottom="
+						'Remove devices from nodes.json in store directory'
+					"
+					color="error"
+					variant="text"
+					@click="storeDevices(true)"
+				>
+					Remove Store
+				</v-btn>
 
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="success"
-							text
-							@click="rediscoverNode"
-							>Rediscover Node</v-btn
-						>
-					</template>
-					<span
-						>Rediscover all node entities. Useful when changing node
-						name/location and need to recalculate topics</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-tooltip:bottom="
+						'Rediscover all node entities. Useful when changing node name/location and need to recalculate topics'
+					"
+					color="success"
+					variant="text"
+					@click="rediscoverNode"
+				>
+					Rediscover Node
+				</v-btn>
 
-				<v-tooltip bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="warning"
-							text
-							@click="disableDiscovery"
-							>Disable Discovery</v-btn
-						>
-					</template>
-					<span
-						>Set the ignoreDiscovery flag to true on all entities of
-						this node to skip the discovery of them</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-tooltip:bottom="
+						'Set the ignoreDiscovery flag to true on all entities of this node to skip the discovery of them'
+					"
+					color="warning"
+					variant="text"
+					@click="disableDiscovery"
+				>
+					Disable Discovery
+				</v-btn>
 
 				<v-data-table
 					:headers="headers_hass"
 					:items="hassDevices"
-					single-select
+					show-select
+					select-strategy="single"
 					item-key="id"
 					@click:row="selectDevice"
 					class="elevation-1"
 				>
-					<template v-slot:[`item.id`]="{ item }">
+					<template #[`item.id`]="{ item }">
 						{{ item.id }}
 					</template>
-					<template v-slot:[`item.type`]="{ item }">
+					<template #[`item.type`]="{ item }">
 						{{ item.type }}
 					</template>
-					<template v-slot:[`item.object_id`]="{ item }">
+					<template #[`item.object_id`]="{ item }">
 						{{ item.object_id }}
 					</template>
-					<template v-slot:[`item.persistent`]="{ item }">
+					<template #[`item.persistent`]="{ item }">
 						<v-checkbox
 							v-model="item.persistent"
 							@click.stop
-							@change="updateDevice(item)"
+							@update:model-value="updateDevice(item)"
 							hide-details
-							dense
+							density="compact"
 						></v-checkbox>
 					</template>
-					<template v-slot:[`item.ignoreDiscovery`]="{ item }">
+					<template #[`item.ignoreDiscovery`]="{ item }">
 						<v-btn
+							variant="flat"
 							@click.stop="toggleField(item, 'ignoreDiscovery')"
 							:color="item.ignoreDiscovery ? 'error' : 'success'"
-							rounded
-							x-small
+							size="x-small"
 						>
 							{{ item.ignoreDiscovery ? 'Disabled' : 'Enabled' }}
 						</v-btn>
@@ -121,64 +103,51 @@
 				</v-data-table>
 			</v-col>
 			<v-col cols="12" md="6" pa-1>
-				<v-tooltip v-if="!selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="primary"
-							:disabled="errorDevice"
-							text
-							@click="addDevice()"
-							>Add</v-btn
-						>
-					</template>
-					<span>Add this device to discovered entities</span>
-				</v-tooltip>
+				<v-btn
+					v-if="!selectedDevice"
+					v-tooltip:bottom="'Add this device to discovered entities'"
+					color="primary"
+					:disabled="errorDevice"
+					variant="text"
+					@click="addDevice()"
+				>
+					Add
+				</v-btn>
 
-				<v-tooltip v-if="selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="primary"
-							:disabled="errorDevice"
-							text
-							@click="updateDeviceJSON()"
-							>Update</v-btn
-						>
-					</template>
-					<span
-						>Update the in-memory discover template. You have to
-						press Rediscover in order to send this to HA</span
-					>
-				</v-tooltip>
+				<v-btn
+					v-if="selectedDevice"
+					v-tooltip:bottom="
+						'Update the in-memory discover template. You have to press Rediscover in order to send this to HA'
+					"
+					color="primary"
+					:disabled="errorDevice"
+					variant="text"
+					@click="updateDeviceJSON()"
+				>
+					Update
+				</v-btn>
 
-				<v-tooltip v-if="selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="success"
-							:disabled="errorDevice"
-							text
-							@click="rediscoverDevice"
-							>Rediscover</v-btn
-						>
-					</template>
-					<span>Send this payload to HA</span>
-				</v-tooltip>
+				<v-btn
+					v-if="selectedDevice"
+					v-tooltip:bottom="'Send this payload to HA'"
+					color="success"
+					:disabled="errorDevice"
+					variant="text"
+					@click="rediscoverDevice"
+				>
+					Rediscover
+				</v-btn>
 
-				<v-tooltip v-if="selectedDevice" bottom>
-					<template v-slot:activator="{ on }">
-						<v-btn
-							v-on="on"
-							color="error"
-							:disabled="errorDevice"
-							text
-							@click="deleteDevice"
-							>Delete</v-btn
-						>
-					</template>
-					<span>Delete this entity</span>
-				</v-tooltip>
+				<v-btn
+					v-if="selectedDevice"
+					v-tooltip:bottom="'Delete this entity'"
+					color="error"
+					:disabled="errorDevice"
+					variant="text"
+					@click="deleteDevice"
+				>
+					Delete
+				</v-btn>
 
 				<v-textarea
 					label="Hass Device JSON"
@@ -188,7 +157,7 @@
 				></v-textarea>
 			</v-col>
 		</v-row>
-		<div style="margin: 20px" class="subtitle-1" v-else>
+		<div style="margin: 20px" class="text-subtitle-1" v-else>
 			No Hass Devices
 		</div>
 	</v-col>
@@ -211,11 +180,11 @@ export default {
 			deviceJSON: '',
 			errorDevice: false,
 			headers_hass: [
-				{ text: 'Id', value: 'id' },
-				{ text: 'Type', value: 'type' },
-				{ text: 'Object id', value: 'object_id' },
-				{ text: 'Persistent', value: 'persistent' },
-				{ text: 'Discovery', value: 'ignoreDiscovery' },
+				{ title: 'Id', value: 'id' },
+				{ title: 'Type', value: 'type' },
+				{ title: 'Object id', value: 'object_id' },
+				{ title: 'Persistent', value: 'persistent' },
+				{ title: 'Discovery', value: 'ignoreDiscovery' },
 			],
 			selectedDevice: null,
 		}
@@ -269,8 +238,8 @@ export default {
 				}
 			})
 		},
-		selectDevice(item, row) {
-			row.select(!row.isSelected)
+		selectDevice(event, { item, toggleSelect, internalItem, index }) {
+			toggleSelect(internalItem, index, event)
 			this.selectedDevice = this.selectedDevice === item ? null : item
 		},
 		async addDevice() {
@@ -391,11 +360,8 @@ export default {
 		async updateDeviceJSON() {
 			if (!this.errorDevice) {
 				const updated = JSON.parse(this.deviceJSON)
-				this.$set(
-					this.node.hassDevices,
-					this.selectedDevice.id,
-					updated,
-				)
+				this.node.hassDevices[this.selectedDevice.id] = updated
+
 				await this.updateDevice(updated)
 			}
 		},

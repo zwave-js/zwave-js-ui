@@ -3,18 +3,18 @@
 		<v-col elevation="12" cols="12" class="pa-0 fill-height">
 			<v-card
 				class="mx-auto"
-				:class="$vuetify.breakpoint.smAndDown ? '' : 'ml-10'"
-				:width="$vuetify.breakpoint.smAndDown ? '100%' : '500'"
+				:class="$vuetify.display.smAndDown ? '' : 'ml-10'"
+				:width="$vuetify.display.smAndDown ? '100%' : '500'"
 				height="100%"
 				tile
 			>
-				<v-card-title style="">
-					<v-avatar style="border-radius: 0" size="40px">
-						<img src="/logo.svg" alt="Logo" />
-					</v-avatar>
-					<v-toolbar-title style="margin-left: 20px"
-						>Z-Wave JS UI</v-toolbar-title
-					>
+				<v-card-title>
+					<div class="d-flex align-center">
+						<Logo size="50" />
+						<v-toolbar-title style="margin-left: 20px"
+							>Z-Wave JS UI</v-toolbar-title
+						>
+					</div>
 				</v-card-title>
 
 				<v-card-text>
@@ -23,7 +23,7 @@
 						id="login-form"
 						@submit.prevent="login"
 						ref="form"
-						lazy-validation
+						validate-on="lazy"
 					>
 						<v-text-field
 							required
@@ -56,10 +56,7 @@
 							hide-details
 							label="Remember Me"
 						></v-checkbox>
-						<color-scheme
-							prepend-icon="null"
-							hide-details
-						></color-scheme>
+						<color-scheme hide-details></color-scheme>
 					</v-form>
 				</v-card-text>
 				<v-card-actions class="justify-center">
@@ -67,13 +64,14 @@
 						color="primary"
 						style="min-width: 150px; margin: 10px"
 						rounded
+						variant="flat"
 						class="mb-6"
 						type="submit"
 						form="login-form"
 						>Login</v-btn
 					>
 				</v-card-actions>
-				<v-alert dismissible :type="error_type" v-model="error">{{
+				<v-alert closable :type="error_type" v-model="error">{{
 					error_text
 				}}</v-alert>
 			</v-card>
@@ -91,18 +89,22 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'
-
 import { mapActions } from 'pinia'
+import Logo from '@/components/Logo.vue'
 
 const log = logger.get('Login')
 
 export default {
 	components: {
-		ColorScheme: () => import('@/components/custom/ColorScheme.vue'),
+		ColorScheme: defineAsyncComponent(
+			() => import('@/components/custom/ColorScheme.vue'),
+		),
+		Logo,
 	},
 	data() {
 		return {
@@ -175,7 +177,8 @@ export default {
 				return
 			}
 
-			if (forced === true || this.$refs.form.validate()) {
+			const result = await this.$refs.form.validate()
+			if (forced === true || result.valid) {
 				try {
 					let user = {
 						username: this.username,

@@ -1,8 +1,8 @@
 <template>
-	<v-dialog v-model="value" max-width="800px" persistent>
+	<v-dialog v-model="_value" max-width="800px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="headline"
+				<span class="text-h5"
 					>Node {{ activeNode ? activeNode.id : '' }} - Link
 					Statistics</span
 				>
@@ -11,7 +11,7 @@
 			<v-card-text>
 				<v-container>
 					<v-row class="ma-3" justify="start">
-						<v-col cols="12">
+						<v-col cols="12" align="center">
 							<v-select
 								label="Mode"
 								style="max-width: 325px"
@@ -21,18 +21,19 @@
 							></v-select>
 						</v-col>
 
-						<v-col cols="6">
+						<v-col cols="12" sm="6">
 							<v-radio-group
 								class="justify-center"
 								v-model="infinite"
+								inline
 							>
 								<v-radio
 									label="Infinite"
 									:value="true"
 								></v-radio>
 								<v-radio label="XX" :value="false">
-									<template v-slot:label>
-										<v-text-field
+									<template #label>
+										<v-number-input
 											:disabled="infinite"
 											label="Iterations"
 											v-model.number="iterations"
@@ -40,14 +41,14 @@
 											:min="1"
 											:max="10000"
 											persistent-hint
-										></v-text-field>
+										></v-number-input>
 									</template>
 								</v-radio>
 							</v-radio-group>
 						</v-col>
 
-						<v-col cols="6" class="justify-center">
-							<v-text-field
+						<v-col cols="12" sm="6" class="mt-4">
+							<v-number-input
 								label="Interval"
 								v-model.number="interval"
 								suffix="ms"
@@ -55,12 +56,13 @@
 								:min="1"
 								:max="10000"
 								persistent-hint
-							></v-text-field>
+							></v-number-input>
 						</v-col>
 					</v-row>
 
 					<v-row class="mb-4" justify="space-around">
 						<v-btn
+							variant="flat"
 							color="success"
 							@click="checkLinkReliability"
 							:disabled="running"
@@ -68,6 +70,7 @@
 							>Run</v-btn
 						>
 						<v-btn
+							variant="flat"
 							color="error"
 							@click="abortLinkReliabilityCheck"
 							:disabled="!running"
@@ -77,64 +80,63 @@
 
 					<v-divider></v-divider>
 
-					<v-row v-if="statistics" class="ma-3" justify="center">
+					<v-row
+						v-if="statistics"
+						class="ma-3"
+						justify="center"
+						align="center"
+					>
 						<v-progress-linear
 							v-if="running"
 							:indeterminate="this.infinite"
-							:value="this.infinite ? null : this.progress"
+							:model-value="this.infinite ? null : this.progress"
 							color="success"
 						></v-progress-linear>
-						<v-list dense>
+						<v-list class="mr-2" density="compact">
 							<v-list-item>
-								<v-list-item-content>
-									<v-list-item-title class="info--text"
-										>Commands Sent</v-list-item-title
-									>
-									<v-list-item-subtitle>{{
-										statistics.commandsSent
-									}}</v-list-item-subtitle>
-								</v-list-item-content>
+								<v-list-item-title class="text-info"
+									>Commands Sent</v-list-item-title
+								>
+								<v-list-item-subtitle>{{
+									statistics.commandsSent
+								}}</v-list-item-subtitle>
 							</v-list-item>
 							<v-list-item>
-								<v-list-item-content>
-									<v-list-item-title class="error--text"
-										>Failed Commands</v-list-item-title
-									>
-									<v-list-item-subtitle
-										>{{ statistics.commandErrors }} ({{
-											(
-												(statistics.commandErrors /
-													statistics.rounds) *
-												100
-											).toFixed(1)
-										}}
-										%)</v-list-item-subtitle
-									>
-								</v-list-item-content>
+								<v-list-item-title class="text-error"
+									>Failed Commands</v-list-item-title
+								>
+								<v-list-item-subtitle
+									>{{ statistics.commandErrors }} ({{
+										(
+											(statistics.commandErrors /
+												statistics.rounds) *
+											100
+										).toFixed(1)
+									}}
+									%)</v-list-item-subtitle
+								>
 							</v-list-item>
 							<v-list-item
 								v-if="statistics?.missingResponses != undefined"
 							>
-								<v-list-item-content>
-									<v-list-item-title class="error--text"
-										>Missing Responses</v-list-item-title
-									>
-									<v-list-item-subtitle
-										>{{ statistics.missingResponses }} ({{
-											(
-												(statistics.missingResponses /
-													statistics.commandsSent) *
-												100
-											).toFixed(1)
-										}}
-										%)</v-list-item-subtitle
-									>
-								</v-list-item-content>
+								<v-list-item-title class="text-error"
+									>Missing Responses</v-list-item-title
+								>
+								<v-list-item-subtitle
+									>{{ statistics.missingResponses }} ({{
+										(
+											(statistics.missingResponses /
+												statistics.commandsSent) *
+											100
+										).toFixed(1)
+									}}
+									%)</v-list-item-subtitle
+								>
 							</v-list-item>
 						</v-list>
 
-						<v-simple-table>
-							<template v-slot:default>
+						<v-table>
+							<template #default>
 								<thead>
 									<tr>
 										<th class="text-left"></th>
@@ -206,14 +208,17 @@
 									</tr>
 								</tbody>
 							</template>
-						</v-simple-table>
+						</v-table>
 					</v-row>
 				</v-container>
 			</v-card-text>
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Close</v-btn
 				>
 			</v-card-actions>
@@ -238,29 +243,36 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 export default {
 	components: {},
 	props: {
-		value: Boolean, // show or hide
+		modelValue: Boolean, // show or hide
 		node: Object,
 		socket: Object,
 	},
 	mixins: [InstancesMixin],
 	watch: {
-		value(v) {
+		modelValue(v) {
 			this.init(v)
 		},
 	},
 	computed: {
-		// ...mapState(useBaseStore, ['nodes']),
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
+		},
 	},
 	data() {
 		return {
 			running: false,
 			activeNode: null,
 			isRunning: false,
-			mode: 'Lifeline',
+			mode: 0,
 			modes: [
 				// FIXME: Fill with enum variants
 				{
-					text: 'Basic Set On/Off',
+					title: 'Basic Set On/Off',
 					value: 0,
 				},
 			],
@@ -352,7 +364,7 @@ export default {
 			}
 		},
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.init(false)
 	},
 }

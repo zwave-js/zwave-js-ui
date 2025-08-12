@@ -7,14 +7,8 @@
 		:persistent="options.persistent"
 	>
 		<v-card>
-			<v-toolbar
-				class="sticky-title"
-				:color="options.color"
-				dark
-				dense
-				flat
-			>
-				<v-toolbar-title class="white--text">{{
+			<v-toolbar class="sticky-title" :color="options.color" dense flat>
+				<v-toolbar-title class="text-white">{{
 					title
 				}}</v-toolbar-title>
 			</v-toolbar>
@@ -28,7 +22,8 @@
 					<v-form
 						v-model="valid"
 						ref="form"
-						lazy-validation
+						:id="id"
+						validate-on="lazy"
 						@submit.prevent="agree"
 					>
 						<v-row>
@@ -78,23 +73,25 @@
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
 									:hint="input.hint"
+									:hide-details="!input.hint"
 									:persistent-hint="!!input.hint"
 									:required="input.required"
 									:disabled="input.disabled"
 								></v-checkbox>
 								<v-select
+									:menu-props="menuProps"
 									v-if="
 										input.type === 'list' &&
 										!input.allowManualEntry &&
 										!input.autocomplete
 									"
 									v-model="values[input.key]"
-									:item-text="input.itemText || 'text'"
+									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
-									@change="
+									@update:model-value="
 										inputProps[input.key].onChange($event)
 									"
 									:persistent-hint="!!input.hint"
@@ -109,13 +106,14 @@
 										!input.allowManualEntry &&
 										input.autocomplete
 									"
+									:menu-props="menuProps"
 									v-model="values[input.key]"
-									:item-text="input.itemText || 'text'"
+									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
 									:items="input.items"
 									:rules="inputProps[input.key].rules"
 									:label="input.label"
-									@change="
+									@update:model-value="
 										inputProps[input.key].onChange($event)
 									"
 									:persistent-hint="!!input.hint"
@@ -129,8 +127,9 @@
 										input.type === 'list' &&
 										input.allowManualEntry
 									"
+									:menu-props="menuProps"
 									v-model="values[input.key]"
-									:item-text="input.itemText || 'text'"
+									:item-title="input.itemText || 'title'"
 									:item-value="input.itemValue || 'value'"
 									chips
 									:items="input.items"
@@ -146,6 +145,7 @@
 								</v-combobox>
 								<list-input
 									v-if="input.type === 'array' && input.list"
+									:menu-props="menuProps"
 									v-model="values[input.key]"
 									:rules="inputProps[input.key].rules"
 									:input="input"
@@ -181,13 +181,14 @@
 											inputProps[input.key].onChange()
 										"
 										:color="input.color"
-										:outlined="input.outlined"
+										:variant="
+											input.outlined
+												? 'outlined'
+												: undefined
+										"
+										:prepend-icon="input.icon"
 									>
-										<v-icon
-											class="mr-2"
-											v-if="input.icon"
-											>{{ input.icon }}</v-icon
-										>{{ input.label }}</v-btn
+										{{ input.label }}</v-btn
 									>
 								</v-container>
 							</v-col>
@@ -208,7 +209,7 @@
 				<v-btn
 					v-if="!options.qrScan"
 					@click="agree"
-					text
+					variant="text"
 					:color="options.color"
 					>{{ options.confirmText }}</v-btn
 				>
@@ -216,7 +217,7 @@
 					v-if="options.cancelText && !options.noCancel"
 					@keydown.esc="cancel"
 					@click="cancel"
-					text
+					variant="text"
 					>{{ options.cancelText }}</v-btn
 				>
 			</v-card-actions>
@@ -234,15 +235,19 @@ import 'prismjs/components/prism-clike'
 import 'prismjs/components/prism-javascript'
 import 'prismjs/themes/prism-tomorrow.css'
 import { wrapFunc, noop } from '../lib/utils'
+import { defineAsyncComponent } from 'vue'
+import { nextTick } from 'vue'
 
 export default {
 	components: {
-		PrismEditor: () =>
+		PrismEditor: defineAsyncComponent(() =>
 			import('vue-prism-editor').then((m) => m.PrismEditor),
-		QrReader: () => import('./custom/QrReader.vue'),
-		ListInput: () => import('./custom/ListInput.vue'),
+		),
+		QrReader: defineAsyncComponent(() => import('./custom/QrReader.vue')),
+		ListInput: defineAsyncComponent(() => import('./custom/ListInput.vue')),
 	},
 	data: () => ({
+		id: `confirm-form-${Math.random().toString(36).substring(2, 9)}`,
 		dialog: false,
 		resolve: null,
 		reject: null,
@@ -255,7 +260,7 @@ export default {
 		defaultOptions: {
 			color: 'primary',
 			width: 290,
-			zIndex: 200,
+			zIndex: 2500,
 			confirmText: 'Yes',
 			cancelText: 'Cancel',
 			persistent: false,
@@ -274,6 +279,9 @@ export default {
 					this.cancel()
 				}
 			},
+		},
+		menuProps() {
+			return { attach: `#${this.id}` }
 		},
 		inputs() {
 			const values = this.options.values || {}
@@ -301,12 +309,8 @@ export default {
 
 				if (!inited) {
 					if (input.default !== undefined) {
-						// without this code block is bugged, don't simply assign
-						this.$set(
-							this.values,
-							input.key,
-							values[input.key] ?? input.default,
-						)
+						this.values[input.key] =
+							values[input.key] ?? input.default
 					}
 
 					if (input.rules) {
@@ -365,7 +369,7 @@ export default {
 		},
 		async onDetect(qrString) {
 			this.dialog = false
-			await this.$nextTick()
+			await nextTick()
 			this.resolve(qrString)
 			this.reset()
 		},
@@ -385,9 +389,10 @@ export default {
 				this.reject = reject
 			})
 		},
-		agree() {
+		async agree() {
 			if (this.options.inputs) {
-				if (this.$refs.form.validate()) {
+				const result = await this.$refs.form.validate()
+				if (result.valid) {
 					this.dialog = false
 					this.resolve(this.values)
 					this.reset()
@@ -416,15 +421,14 @@ export default {
 </script>
 
 <style scoped>
-.v-card::v-deep .sticky-title {
+.v-card :deep(.sticky-title) {
 	position: sticky;
 	top: 0;
 	z-index: 3;
 	background-color: inherit;
-	border-bottom: 1px solid var(--v-secondary-base);
 }
 
-.v-card::v-deep .sticky-actions {
+.v-card :deep(.sticky-actions) {
 	position: sticky;
 	z-index: 3;
 	bottom: 0;
