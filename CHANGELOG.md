@@ -1,5 +1,12 @@
 
 
+## [11.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.0...v11.2.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* **ui:** reinterview badge visibility ([1ab4ee5](https://github.com/zwave-js/zwave-js-ui/commit/1ab4ee548516eb28e16aba620c0bd4ed38e5fbae))
+
 # [11.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.1.0...v11.2.0) (2025-08-27)
 
 
