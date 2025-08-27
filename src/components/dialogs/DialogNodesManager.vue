@@ -216,109 +216,128 @@
 								</v-card-text>
 
 								<v-card-text v-if="s.key == 'inclusionMode'">
-									<v-radio-group
-										v-if="!loading"
-										v-model="s.values.inclusionMode"
-										mandatory
-									>
-										<missing-keys-alert />
-										<v-radio
-											:value="InclusionStrategy.Default"
+									<div v-if="!loading">
+										<v-radio-group
+											:modelValue="s.values.inclusionMode"
+											@update:modelValue="
+												setInclusionMode
+											"
+											mandatory
 										>
-											<template #label>
-												<div class="option">
-													<v-icon
-														color="success"
-														size="small"
-														>add_circle</v-icon
-													>
-													<strong>Default</strong>
-													<small
-														>S2 when supported, S0
-														only when necessary, no
-														encryption otherwise.
-														Requires user
-														interaction</small
-													>
-												</div>
-											</template>
-										</v-radio>
+											<missing-keys-alert />
+											<v-radio
+												:value="
+													InclusionStrategy.Default
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="success"
+															size="small"
+															>add_circle</v-icon
+														>
+														<strong>Default</strong>
+														<small
+															>S2 when supported,
+															S0 only when
+															necessary, no
+															encryption
+															otherwise. Requires
+															user
+															interaction</small
+														>
+													</div>
+												</template>
+											</v-radio>
+											<v-radio
+												:value="
+													InclusionStrategy.SmartStart
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="primary"
+															size="small"
+															>smart_button</v-icon
+														>
+														<strong
+															>Scan QR
+															Code</strong
+														>
+														<small
+															>S2 only. Allows
+															pre-configuring the
+															device inclusion
+															settings, which will
+															then happen without
+															user
+															interaction</small
+														>
+													</div>
+												</template>
+											</v-radio>
+											<v-radio
+												:value="
+													InclusionStrategy.Security_S0
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="amber-accent-4"
+															size="small"
+															>lock</v-icon
+														>
+														<strong
+															>S0
+															encryption</strong
+														>
+														<small
+															>Use S0
+															encryption</small
+														>
+													</div>
+												</template>
+											</v-radio>
+											<v-radio
+												:value="
+													InclusionStrategy.Insecure
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="error"
+															size="small"
+															>no_encryption</v-icon
+														>
+														<strong
+															>No
+															encryption</strong
+														>
+														<small
+															>Do not use
+															encryption</small
+														>
+													</div>
+												</template>
+											</v-radio>
+										</v-radio-group>
+
 										<v-checkbox
-											class="mt-0 ml-5"
+											v-if="
+												s.values.inclusionMode ==
+												InclusionStrategy.Default
+											"
+											class="mb-2"
 											v-model="s.values.forceSecurity"
 											label="Force Security"
 											hint="Prefer S0 over no encryption"
 											persistent-hint
 										></v-checkbox>
-										<v-radio
-											:value="
-												InclusionStrategy.SmartStart
-											"
-										>
-											<template #label>
-												<div class="option">
-													<v-icon
-														color="primary"
-														size="small"
-														>smart_button</v-icon
-													>
-													<strong
-														>Scan QR Code</strong
-													>
-													<small
-														>S2 only. Allows
-														pre-configuring the
-														device inclusion
-														settings, which will
-														then happen without user
-														interaction</small
-													>
-												</div>
-											</template>
-										</v-radio>
-										<v-radio
-											:value="
-												InclusionStrategy.Security_S0
-											"
-										>
-											<template #label>
-												<div class="option">
-													<v-icon
-														color="amber-accent-4"
-														size="small"
-														>lock</v-icon
-													>
-													<strong
-														>S0 encryption</strong
-													>
-													<small
-														>Use S0
-														encryption</small
-													>
-												</div>
-											</template>
-										</v-radio>
-										<v-radio
-											:value="InclusionStrategy.Insecure"
-										>
-											<template #label>
-												<div class="option">
-													<v-icon
-														color="error"
-														size="small"
-														>no_encryption</v-icon
-													>
-													<strong
-														>No encryption</strong
-													>
-													<small
-														>Do not use
-														encryption</small
-													>
-												</div>
-											</template>
-										</v-radio>
-									</v-radio-group>
+									</div>
 
 									<v-col
 										v-else
@@ -919,6 +938,15 @@ export default {
 		window.removeEventListener('keydown', this.onKeypressed)
 	},
 	methods: {
+		setInclusionMode(v) {
+			const s = this.steps[this.currentStep - 1]
+			if (typeof v !== 'number') {
+				s.values.forceSecurity = v
+				return
+			}
+
+			s.values.inclusionMode = v
+		},
 		async submitNameLoc() {
 			const result = await this.$refs.namingForm[0].validate()
 			if (result.valid) {
