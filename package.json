@@ -147,7 +147,7 @@
     "@yao-pkg/pkg": "^6.1.1",
     "c8": "^10.1.2",
     "chai": "^4.4.1",
-    "chai-as-promised": "^8.0.0",
+    "chai-as-promised": "^8.0.2",
     "conventional-changelog-cli": "^5.0.0",
     "docsify": "^4.13.1",
     "docsify-cli": "^4.4.4",
