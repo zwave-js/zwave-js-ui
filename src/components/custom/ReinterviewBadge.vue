@@ -1,6 +1,6 @@
 <template>
-	<v-fab
-		v-if="!!node.hasDeviceConfigChanged"
+	<v-btn
+		v-if="!node.hasDeviceConfigChanged"
 		v-tooltip:bottom="
 			'Auto-discovered functionality has changed since the last interview; re-interview to apply'
 		"
@@ -10,10 +10,12 @@
 				nodeId: node.id,
 			})
 		"
+		variant="flat"
 		color="warning"
-		height="20"
-		width="20"
+		size="small"
+		density="compact"
 		icon="update"
+		class="my-auto"
 	/>
 </template>
 
