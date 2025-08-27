@@ -5,12 +5,14 @@ import { StorageHelper } from '../../api/lib/jsonStore'
 import sinon from 'sinon'
 import { StoreFile, StoreKeys } from '../../api/config/store'
 import sinonChai from 'sinon-chai'
-import chaiAsPromised from 'chai-as-promised'
 
 chai.use(sinonChai)
-chai.use(chaiAsPromised)
 
 describe('#jsonStore', () => {
+	before(async () => {
+		const chaiAsPromised = await import('chai-as-promised')
+		chai.use(chaiAsPromised.default)
+	})
 	describe('#getFile()', () => {
 		const config = { file: 'foo', default: { foo: 'defaultbar' } }
 
