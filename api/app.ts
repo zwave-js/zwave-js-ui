@@ -509,9 +509,7 @@ if (process.env.TRUST_PROXY) {
 
 app.use(
 	morgan(
-		loggers.disableColors
-			? ':remote-addr :method :url :status :res[content-length] - :response-time ms'
-			: ':remote-addr :method :url :status :res[content-length] - :response-time ms',
+		':remote-addr :method :url :status :res[content-length] - :response-time ms',
 		{
 			stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
 		},
