@@ -66,7 +66,7 @@ npm run test
 ### Individual Test Suites
 - Backend only: `npm run test:server` -- ~2 seconds
 - Frontend only: `npm run test:ui` -- ~1 second  
-- With coverage: `npm run coverage` -- ~5 seconds
+- With coverage: `npm run coverage` -- ~12 seconds (includes detailed coverage report)
 
 ## Code Quality and Validation
 
