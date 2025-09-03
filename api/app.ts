@@ -508,9 +508,14 @@ if (process.env.TRUST_PROXY) {
 }
 
 app.use(
-	morgan(loggers.disableColors ? 'tiny' : 'dev', {
-		stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
-	}) as RequestHandler,
+	morgan(
+		loggers.disableColors
+			? ':remote-addr :method :url :status :res[content-length] - :response-time ms'
+			: ':remote-addr :method :url :status :res[content-length] - :response-time ms',
+		{
+			stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
+		},
+	) as RequestHandler,
 )
 app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
