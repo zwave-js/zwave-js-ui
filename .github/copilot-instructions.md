@@ -4,6 +4,24 @@
 
 Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with Node.js, TypeScript, Vue 3, and Vuetify 3.
 
+## Commit and PR Standards
+
+**ALWAYS follow conventional commit standards for all commits and PR titles/descriptions:**
+
+### Commit Messages
+- Use conventional commit format: `type(scope): description`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+- Examples:
+  - `feat(ui): add device configuration panel`
+  - `fix(zwave): resolve connection timeout issues`
+  - `docs: update installation instructions`
+  - `chore: update dependencies`
+
+### PR Titles and Descriptions
+- PR titles must follow conventional commit format
+- Descriptions should clearly explain the changes and their impact
+- Include issue references (e.g., "Fixes #1234")
+
 ## Bootstrap and Development Setup
 
 ### Prerequisites and Installation
@@ -71,38 +89,86 @@ npm run test
 ## Code Quality and Validation
 
 ### Linting (ALWAYS run before committing)
-```bash
-npm run lint
-```
-- Runs ESLint for .js/.ts/.vue files
-- Runs markdownlint for documentation
-- Must pass for CI to succeed
-
-### Auto-fix Linting Issues
+**ALWAYS run lint-fix first, then lint:**
 ```bash
 npm run lint-fix
+npm run lint
 ```
-- Takes ~20 seconds to complete
-- Automatically fixes ESLint and markdownlint issues
-- Run this before `npm run lint` if there are fixable issues
+- `npm run lint-fix` takes ~20 seconds and automatically fixes ESLint and markdownlint issues
+- `npm run lint` validates all remaining issues that require manual fixes
+- Runs ESLint for .js/.ts/.vue files and markdownlint for documentation
+- All linting must pass for CI to succeed
+- This workflow speeds up development by fixing auto-fixable issues first
 
 ## Manual Validation Scenarios
 
 After making changes, ALWAYS test these complete user scenarios:
 
 ### Basic Application Functionality
-1. Start all development servers (mock-stick, dev:server, dev)
-2. Navigate to http://localhost:8092
-3. Verify the Z-Wave JS UI loads with sidebar navigation
-4. Check that the Control Panel page displays without errors
-5. Verify Settings page is accessible and loads configuration options
-6. Confirm the application connects to the mock Z-Wave controller
+1. Start mock Z-Wave controller: `npm run fake-stick`
+2. Create proper settings configuration:
+   ```bash
+   echo '{
+     "zwave": {
+       "port": "tcp://127.0.0.1:5555",
+       "enabled": true,
+       "logLevel": "debug",
+       "logEnabled": true,
+       "logToFile": true,
+       "serverEnabled": true
+     },
+     "mqtt": {
+       "name": "zwavejs2mqtt",
+       "host": "127.0.0.1",
+       "port": 1883,
+       "qos": 1,
+       "prefix": "zwave",
+       "reconnectPeriod": 3000,
+       "retain": true,
+       "clean": true,
+       "disabled": false
+     },
+     "gateway": {
+       "type": 0,
+       "payloadType": 0,
+       "nodeNames": true,
+       "hassDiscovery": true,
+       "discoveryPrefix": "homeassistant",
+       "logEnabled": true,
+       "logLevel": "debug",
+       "logToFile": true
+     },
+     "backup": {
+       "storeBackup": true,
+       "storeCron": "10 9 * * *",
+       "storeKeep": 7,
+       "nvmBackup": true,
+       "nvmBackupOnEvent": false,
+       "nvmCron": "19 9 * * *",
+       "nvmKeep": 7,
+       "enabled": true,
+       "cron": "0 * * * *",
+       "keep": 2
+     }
+   }' > store/settings.json
+   ```
+3. Start backend development server: `npm run dev:server`
+4. Start frontend development server: `npm run dev`
+5. Navigate to http://localhost:8092
+6. Verify the Z-Wave JS UI loads with sidebar navigation
+7. Check that the Control Panel page displays without errors
+8. Verify Settings page is accessible and loads configuration options
+9. Confirm the application connects to the mock Z-Wave controller at tcp://127.0.0.1:5555
 
 ### Z-Wave Integration Testing
-1. Ensure mock-stick is running on port 5555
-2. In Settings, configure Z-Wave connection to use mock port
-3. Test basic Z-Wave operations (if applicable to your changes)
-4. Verify MQTT functionality (if enabled in settings)
+1. Ensure mock-stick is running on port 5555: `npm run fake-stick`
+2. Ensure proper settings.json exists in store/ directory (see Basic Application Functionality step 2)
+3. Start backend server: `npm run dev:server` or `npm run server`
+4. Test Z-Wave connection to tcp://127.0.0.1:5555
+5. Verify MQTT functionality if enabled in settings
+6. Check that Z-Wave devices are discovered and controllable through the UI
+
+**Note**: The settings.json configuration is critical for proper Z-Wave and MQTT integration. Reference `.github/workflows/test-application.yml` for the exact configuration used in CI testing.
 
 ### Build Validation
 1. Run full build: `npm run build`
@@ -153,8 +219,9 @@ npm run bundle
 ### Adding New Features
 1. Backend changes: Edit files in api/, restart dev:server
 2. Frontend changes: Edit files in src/, hot reload is automatic
-3. Always run tests: `npm run test`
-4. Always run linting: `npm run lint-fix && npm run lint`
+3. Always run linting first: `npm run lint-fix && npm run lint`
+4. Always run tests: `npm run test`
+5. Follow conventional commit standards for all commits
 
 ### Database and Storage
 - Application uses JSON file storage in store/ directory
