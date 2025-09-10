@@ -52,5 +52,5 @@ jobs:
           const aiResponse = process.env.AI_RESPONSE;
           console.log('Raw AI response:', JSON.stringify(aiResponse));
 
-          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.js`);
           return bot.classifyIssueFeedback({github, context}, aiResponse);
