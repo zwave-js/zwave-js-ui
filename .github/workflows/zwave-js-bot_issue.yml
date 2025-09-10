@@ -1,0 +1,56 @@
+name: 'Z-Wave Bot: Issue created/edited'
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  # Notify issue author when they post in the wrong repository
+  check-issue-repo:
+    runs-on: [ubuntu-latest]
+
+    steps:
+    - name: Checkout master branch
+      uses: actions/checkout@v4
+
+    - name: Classify issue body using AI
+      id: ai_detection
+      uses: actions/ai-inference@v2.0.1
+      with:
+        model: openai/gpt-4o-mini
+
+        system-prompt: |
+          You are a moderator for the Z-Wave JS UI Github repository. Your goal is to assist users with finding the correct repository to report their issues.
+
+          Analyze the issue description and determine whether it:
+          - is likely related to the UI, like visual bugs, mentions of UI elements, some functionality is not exposed, ...
+          - or refers to more low-level issues like problems communicating with devices or the controller, incorrect device behavior, mentions hardware issues, ...
+
+          If you are uncertain (less than 75% confident), reply with "unknown"
+          If the issue is related to the UI, reply with "UI"
+          If the issue is more low-level, reply with "driver"
+          Do not respond with anything else.
+
+        prompt: |
+          Analyze the following issue description and classify it according to the rules above:
+
+          ```
+          ${{ github.event.issue.body }}
+          ```
+
+        max-tokens: 100
+
+    - name: Give feedback
+      uses: actions/github-script@v7
+      id: feedback
+      env:
+        AI_RESPONSE: ${{ steps.ai_detection.outputs.response }}
+      with:
+        github-token: ${{secrets.BOT_TOKEN}}
+        result-encoding: string
+        script: |
+          const aiResponse = process.env.AI_RESPONSE;
+          console.log('Raw AI response:', JSON.stringify(aiResponse));
+
+          const bot = require(`${process.env.GITHUB_WORKSPACE}/.github/bot-scripts/index.cjs`);
+          return bot.classifyIssueFeedback({github, context}, aiResponse);
