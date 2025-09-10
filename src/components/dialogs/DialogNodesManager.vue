@@ -333,9 +333,8 @@
 											"
 											class="mb-2"
 											v-model="s.values.forceSecurity"
-											label="Force Security"
-											hint="Prefer S0 over no encryption"
-											persistent-hint
+											label="Prefer S0 over no encryption"
+											hide-details
 										></v-checkbox>
 									</div>
 
