@@ -215,6 +215,7 @@ export const allowedApis = validateMethods([
 	'abortFirmwareUpdate',
 	'dumpNode',
 	'getAvailableFirmwareUpdates',
+	'getAllAvailableFirmwareUpdates',
 	'firmwareUpdateOTA',
 	'sendCommand',
 	'writeValue',
@@ -3211,6 +3212,19 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// 		},
 			// 	},
 			// ] as FirmwareUpdateInfo[]
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	async getAllAvailableFirmwareUpdates(options?: GetFirmwareUpdatesOptions) {
+		if (this.driverReady) {
+			const result =
+				await this._driver.controller.getAllAvailableFirmwareUpdates(
+					options,
+				)
 
 			return result
 		}

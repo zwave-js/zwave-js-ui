@@ -155,6 +155,7 @@ const useBaseStore = defineStore('base', {
 		uiState: {
 			darkMode: colorSchemeToDarkMode(loadColorScheme(settings)),
 		},
+		firmwareUpdatesStatus: {}, // nodeId -> { available: [], dismissed: boolean, lastCheck: timestamp }
 	}),
 	getters: {
 		controllerNode() {
@@ -654,6 +655,24 @@ const useBaseStore = defineStore('base', {
 				'preferences',
 				pref ? Object.assign(this.preferences, pref) : this.preferences,
 			)
+		},
+		setFirmwareUpdatesStatus(nodeId, status) {
+			this.firmwareUpdatesStatus[nodeId] = {
+				...this.firmwareUpdatesStatus[nodeId],
+				...status,
+			}
+		},
+		dismissFirmwareUpdate(nodeId) {
+			if (this.firmwareUpdatesStatus[nodeId]) {
+				this.firmwareUpdatesStatus[nodeId].dismissed = true
+			}
+		},
+		clearFirmwareUpdatesDismissed() {
+			Object.keys(this.firmwareUpdatesStatus).forEach((nodeId) => {
+				if (this.firmwareUpdatesStatus[nodeId]) {
+					this.firmwareUpdatesStatus[nodeId].dismissed = false
+				}
+			})
 		},
 	},
 })
