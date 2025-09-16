@@ -1,5 +1,18 @@
 
 
+# [11.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.1...v11.3.0) (2025-09-16)
+
+
+### Bug Fixes
+
+* **ui:** cleaner label for `Force security` checkbox ([42a28e9](https://github.com/zwave-js/zwave-js-ui/commit/42a28e9662633fc52cb6030dba82ad10ac0b6bdd)), closes [#4363](https://github.com/zwave-js/zwave-js-ui/issues/4363)
+
+
+### Features
+
+* add source IP in request logs ([#4356](https://github.com/zwave-js/zwave-js-ui/issues/4356)) ([7e87c32](https://github.com/zwave-js/zwave-js-ui/commit/7e87c3223be61a02db2c0f41b2ad959cbb473b0f)), closes [#4355](https://github.com/zwave-js/zwave-js-ui/issues/4355)
+* bump zwave-js@15.13.0 ([#4370](https://github.com/zwave-js/zwave-js-ui/issues/4370)) ([1fbb158](https://github.com/zwave-js/zwave-js-ui/commit/1fbb158066760695c2a463b634f8315bfa8b269f))
+
 ## [11.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.0...v11.2.1) (2025-08-27)
 
 
