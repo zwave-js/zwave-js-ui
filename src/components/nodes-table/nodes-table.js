@@ -347,10 +347,6 @@ export default {
 		res = sortDesc ? -res : res
 		return res
 		},
-		openNodeFirmwareTab(nodeId) {
-			// Emit event to parent to open the specific node's firmware tab
-			this.$emit('open-node-firmware-tab', nodeId)
-		},
 	},
 	mounted() {
 		this.managedNodes = new ManagedItems(

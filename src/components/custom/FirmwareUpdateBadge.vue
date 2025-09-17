@@ -55,8 +55,8 @@ export default {
 	},
 	methods: {
 		openFirmwareUpdateTab() {
-			// Emit event to expand node and open firmware update tab
-			this.$emit('open-node-firmware-tab', this.node.id)
+			// Use app instance to show firmware update dialog
+			this.app.showFirmwareUpdateDialog(this.node)
 		},
 	},
 }

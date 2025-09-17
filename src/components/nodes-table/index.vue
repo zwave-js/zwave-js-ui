@@ -158,7 +158,6 @@
 				<firmware-update-badge
 					class="ml-1"
 					:node="item"
-					@open-node-firmware-tab="openNodeFirmwareTab"
 				></firmware-update-badge>
 			</div>
 		</template>
