@@ -12,13 +12,15 @@
 			/>
 
 			<v-card-text>
-				<FirmwareUpdates
-					v-if="node && socket"
+				<OTWUpdates
+					v-if="node && socket && node.isControllerNode"
 					:node="node"
 					:socket="socket"
-					:hideDowngrades="false"
-					:hideTargets="false"
-					@update-firmware="handleUpdateFirmware"
+				/>
+				<OTAUpdates
+					v-else-if="node && socket"
+					:node="node"
+					:socket="socket"
 				/>
 			</v-card-text>
 		</v-card>
@@ -26,11 +28,13 @@
 </template>
 
 <script>
-import FirmwareUpdates from '@/components/custom/FirmwareUpdates.vue'
+import OTAUpdates from '@/components/nodes-table/OTAUpdates.vue'
+import OTWUpdates from '@/components/nodes-table/OTWUpdates.vue'
 
 export default {
 	components: {
-		FirmwareUpdates,
+		OTAUpdates,
+		OTWUpdates,
 	},
 	props: {
 		modelValue: {
@@ -46,7 +50,7 @@ export default {
 			default: null,
 		},
 	},
-	emits: ['update:modelValue', 'update-firmware'],
+	emits: ['update:modelValue'],
 	computed: {
 		_value: {
 			get() {
@@ -55,11 +59,6 @@ export default {
 			set(val) {
 				this.$emit('update:modelValue', val)
 			},
-		},
-	},
-	methods: {
-		handleUpdateFirmware(update) {
-			this.$emit('update-firmware', update)
 		},
 	},
 }

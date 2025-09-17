@@ -336,7 +336,6 @@
 			v-model="firmwareUpdateDialog"
 			:node="firmwareUpdateNode"
 			:socket="socket"
-			@update-firmware="onUpdateFirmware"
 		/>
 	</v-app>
 </template>
@@ -723,12 +722,6 @@ export default {
 		showFirmwareUpdateDialog(node) {
 			this.firmwareUpdateNode = node
 			this.firmwareUpdateDialog = true
-		},
-		onUpdateFirmware(update) {
-			// Handle firmware update request - could emit to control panel or handle directly
-			this.$emit('update-firmware', { node: this.firmwareUpdateNode, update })
-			// Close the dialog after initiating update
-			this.firmwareUpdateDialog = false
 		},
 		async onNodeAdded({ node, result }) {
 			if (!this.nodesManagerDialog) {

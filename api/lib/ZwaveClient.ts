@@ -3270,16 +3270,34 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 						this.storeNodes[nodeId] = {} as any
 					}
 
+					// Filter out downgrades from nodeUpdates
+					const filteredUpdates = (nodeUpdates || []).filter(
+						(update) => !update.downgrade,
+					)
+
 					// Update stored firmware update info
 					this.storeNodes[nodeId].availableFirmwareUpdates =
-						nodeUpdates || []
+						filteredUpdates
 					this.storeNodes[nodeId].lastFirmwareUpdateCheck = now
+
+					// Clean up dismissed updates map to only contain elements that exist in available firmware updates
+					const existingDismissed =
+						this.storeNodes[nodeId].firmwareUpdatesDismissed || {}
+					const cleanedDismissed: { [version: string]: boolean } = {}
+					
+					for (const update of filteredUpdates) {
+						if (existingDismissed[update.version]) {
+							cleanedDismissed[update.version] = true
+						}
+					}
+					this.storeNodes[nodeId].firmwareUpdatesDismissed = cleanedDismissed
 
 					// Update in-memory node
 					const node = this._nodes.get(nodeId)
 					if (node) {
-						node.availableFirmwareUpdates = nodeUpdates || []
+						node.availableFirmwareUpdates = filteredUpdates
 						node.lastFirmwareUpdateCheck = now
+						node.firmwareUpdatesDismissed = cleanedDismissed
 
 						// Emit update to frontend
 						this.emitNodeUpdate(node, {
@@ -3287,12 +3305,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 								node.availableFirmwareUpdates,
 							lastFirmwareUpdateCheck:
 								node.lastFirmwareUpdateCheck,
+							firmwareUpdatesDismissed:
+								node.firmwareUpdatesDismissed,
 						})
 					}
 
-					if (nodeUpdates && nodeUpdates.length > 0) {
+					if (filteredUpdates && filteredUpdates.length > 0) {
 						logger.info(
-							`Found ${nodeUpdates.length} firmware update(s) for node ${nodeId}`,
+							`Found ${filteredUpdates.length} firmware update(s) for node ${nodeId}`,
 						)
 					}
 				}
@@ -5073,6 +5093,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'node added',
 			this.zwaveNodeToJSON(zwaveNode),
 		)
+
+		// Check for firmware updates after a device is added
+		this.checkAllNodesFirmwareUpdates().catch((error) => {
+			logger.warn(
+				`Firmware update check after node added failed: ${error.message}`,
+			)
+		})
 	}
 
 	/**
@@ -6982,13 +7009,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		const nextCheckMillis = 60 * 60 * 1000 // 1 hour
+		// Schedule next check for a random time between 1 AM and 5 AM tomorrow
+		const now = new Date()
+		const nextCheck = new Date()
+		nextCheck.setDate(now.getDate() + 1) // Tomorrow
+		
+		// Random hour between 1 and 5 AM (1-4 hours, so 1, 2, 3, or 4 AM)
+		const randomHour = Math.floor(Math.random() * 4) + 1
+		nextCheck.setHours(randomHour, 0, 0, 0)
 
-		logger.info(`Next firmware update check scheduled in 1 hour`)
+		const waitMillis = nextCheck.getTime() - now.getTime()
+
+		logger.info(`Next firmware update check scheduled for: ${nextCheck}`)
 
 		this.firmwareUpdateCheckTimeout = setTimeout(
 			this._scheduledFirmwareUpdateCheck.bind(this),
-			nextCheckMillis,
+			waitMillis > 0 ? waitMillis : 1000,
 		)
 	}
 
