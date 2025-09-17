@@ -3253,53 +3253,60 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		logger.info('Starting bulk firmware update check for all nodes')
-		
+
 		try {
-			const result = await this._driver.controller.getAllAvailableFirmwareUpdates(options)
-			
+			const result =
+				await this._driver.controller.getAllAvailableFirmwareUpdates(
+					options,
+				)
+
 			if (result) {
 				const now = Date.now()
-				
+
 				// Process results for each node
-				Object.keys(result).forEach(nodeIdStr => {
-					const nodeId = parseInt(nodeIdStr)
-					const nodeUpdates = result[nodeIdStr]
-					
+				for (const [nodeId, nodeUpdates] of result) {
 					// Ensure store entry exists
 					if (!this.storeNodes[nodeId]) {
 						this.storeNodes[nodeId] = {} as any
 					}
-					
+
 					// Update stored firmware update info
-					this.storeNodes[nodeId].availableFirmwareUpdates = nodeUpdates || []
+					this.storeNodes[nodeId].availableFirmwareUpdates =
+						nodeUpdates || []
 					this.storeNodes[nodeId].lastFirmwareUpdateCheck = now
-					
+
 					// Update in-memory node
 					const node = this._nodes.get(nodeId)
 					if (node) {
 						node.availableFirmwareUpdates = nodeUpdates || []
 						node.lastFirmwareUpdateCheck = now
-						
+
 						// Emit update to frontend
 						this.emitNodeUpdate(node, {
-							availableFirmwareUpdates: node.availableFirmwareUpdates,
-							lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
+							availableFirmwareUpdates:
+								node.availableFirmwareUpdates,
+							lastFirmwareUpdateCheck:
+								node.lastFirmwareUpdateCheck,
 						})
 					}
-					
+
 					if (nodeUpdates && nodeUpdates.length > 0) {
-						logger.info(`Found ${nodeUpdates.length} firmware update(s) for node ${nodeId}`)
+						logger.info(
+							`Found ${nodeUpdates.length} firmware update(s) for node ${nodeId}`,
+						)
 					}
-				})
-				
+				}
+
 				// Save to nodes.json
 				await this.updateStoreNodes()
-				logger.info('Bulk firmware update check completed and saved to nodes.json')
 			}
-			
+
 			return result
 		} catch (error) {
-			logger.error('Error during bulk firmware update check:', error.message)
+			logger.error(
+				'Error during bulk firmware update check:',
+				error.message,
+			)
 			throw error
 		}
 	}
@@ -3312,15 +3319,15 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.storeNodes[nodeId]) {
 			this.storeNodes[nodeId] = {} as any
 		}
-		
+
 		// Initialize dismissal tracking if not exists
 		if (!this.storeNodes[nodeId].firmwareUpdatesDismissed) {
 			this.storeNodes[nodeId].firmwareUpdatesDismissed = {}
 		}
-		
+
 		// Mark version as dismissed
 		this.storeNodes[nodeId].firmwareUpdatesDismissed[version] = true
-		
+
 		// Update in-memory node
 		const node = this._nodes.get(nodeId)
 		if (node) {
@@ -3328,17 +3335,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				node.firmwareUpdatesDismissed = {}
 			}
 			node.firmwareUpdatesDismissed[version] = true
-			
+
 			// Emit update to frontend
 			this.emitNodeUpdate(node, {
 				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
 			})
 		}
-		
+
 		// Save to nodes.json
 		await this.updateStoreNodes()
 		logger.info(`Dismissed firmware update ${version} for node ${nodeId}`)
-		
+
 		return true
 	}
 
@@ -3350,10 +3357,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!node?.availableFirmwareUpdates) {
 			return []
 		}
-		
+
 		// Filter out dismissed updates
-		return node.availableFirmwareUpdates.filter(update => {
-			const dismissed = node.firmwareUpdatesDismissed?.[update.version] || false
+		return node.availableFirmwareUpdates.filter((update) => {
+			const dismissed =
+				node.firmwareUpdatesDismissed?.[update.version] || false
 			return !dismissed
 		})
 	}
@@ -6272,9 +6280,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			customSUCReturnRoutes:
 				this._driver.controller.getCustomSUCReturnRoutesCached(nodeId),
 			applicationRoute: null,
-			availableFirmwareUpdates: this.storeNodes[nodeId]?.availableFirmwareUpdates || [],
-			firmwareUpdatesDismissed: this.storeNodes[nodeId]?.firmwareUpdatesDismissed || {},
-			lastFirmwareUpdateCheck: this.storeNodes[nodeId]?.lastFirmwareUpdateCheck || 0,
+			availableFirmwareUpdates:
+				this.storeNodes[nodeId]?.availableFirmwareUpdates || [],
+			firmwareUpdatesDismissed:
+				this.storeNodes[nodeId]?.firmwareUpdatesDismissed || {},
+			lastFirmwareUpdateCheck:
+				this.storeNodes[nodeId]?.lastFirmwareUpdateCheck || 0,
 		}
 
 		this._nodes.set(nodeId, node)
@@ -6966,10 +6977,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		try {
 			await this.checkAllNodesFirmwareUpdates()
 		} catch (error) {
-			logger.warn(`Scheduled firmware update check has failed: ${error.message}`)
+			logger.warn(
+				`Scheduled firmware update check has failed: ${error.message}`,
+			)
 		}
 
-		// Schedule next check in 1 hour (3600000 milliseconds)
 		const nextCheckMillis = 60 * 60 * 1000 // 1 hour
 
 		logger.info(`Next firmware update check scheduled in 1 hour`)
