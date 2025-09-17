@@ -7,12 +7,13 @@
 		:style="bStyle"
 		@click.stop="openFirmwareUpdateTab"
 		variant="flat"
-		color="info"
-		size="small"
+		color="warning"
 		density="compact"
-		icon="system_update"
+		icon="auto_mode"
 		class="my-auto"
-	/>
+	>
+		<v-icon size="x-small">auto_mode</v-icon>
+	</v-btn>
 </template>
 
 <script>
@@ -34,17 +35,21 @@ export default {
 		hasAvailableFirmwareUpdate() {
 			const updates = this.node.availableFirmwareUpdates || []
 			const dismissed = this.node.firmwareUpdatesDismissed || {}
-			
+
 			// Filter out dismissed updates
-			const nonDismissedUpdates = updates.filter(update => !dismissed[update.version])
+			const nonDismissedUpdates = updates.filter(
+				(update) => !dismissed[update.version],
+			)
 			return nonDismissedUpdates.length > 0
 		},
 		availableUpdatesCount() {
 			const updates = this.node.availableFirmwareUpdates || []
 			const dismissed = this.node.firmwareUpdatesDismissed || {}
-			
+
 			// Filter out dismissed updates
-			const nonDismissedUpdates = updates.filter(update => !dismissed[update.version])
+			const nonDismissedUpdates = updates.filter(
+				(update) => !dismissed[update.version],
+			)
 			return nonDismissedUpdates.length
 		},
 	},

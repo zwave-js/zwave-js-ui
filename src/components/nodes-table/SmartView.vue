@@ -238,7 +238,9 @@
 													top: '0',
 													left: '54px',
 												}"
-												@open-node-firmware-tab="openNodeFirmwareTab"
+												@open-node-firmware-tab="
+													openNodeFirmwareTab
+												"
 											></firmware-update-badge>
 										</div>
 									</v-badge>
