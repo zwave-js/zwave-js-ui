@@ -6,40 +6,6 @@
 			:nodes="nodes"
 			@node-click="nodeClick"
 		/>
-
-		<!-- <v-speed-dial style="left: 100px" bottom fab left fixed v-model="fab">
-			<template #activator>
-				<v-btn color="primary" variant="fab" hover v-model="fab">
-					<v-icon v-if="fab">close</v-icon>
-					<v-icon v-else>add</v-icon>
-				</v-btn>
-			</template>
-			<v-btn variant="fab" small color="success" @click="debounceRefresh">
-				<v-icon>refresh</v-icon>
-			</v-btn>
-		</v-speed-dial> -->
-
-		<!-- <v-overlay
-			:style="{
-				color: $vuetify.theme.current.dark ? 'white' : 'black',
-				backgroundColor: $vuetify.theme.current.dark ? 'black' : 'white',
-			}"
-			opacity="0"
-			z-index="9999"
-			v-if="showFullscreen"
-		>
-			<v-btn
-				style="position: absolute; top: 10px; right: 10px"
-				icon
-				large
-				:color="$vuetify.theme.current.dark ? 'white' : 'black'"
-				@click="showFullscreen = false"
-			>
-				<v-icon>close</v-icon>
-			</v-btn>
-			<bg-rssi-chart :node="selectedNode" fill-size />
-		</v-overlay> -->
-
 		<node-panel
 			v-if="$vuetify.display.mdAndUp"
 			:node="selectedNode"
@@ -111,10 +77,8 @@ export default {
 	documentListeners: {},
 	data() {
 		return {
-			// fab: false,
 			selectedNode: null,
 			showProperties: false,
-			// refreshTimeout: null,
 		}
 	},
 	methods: {
@@ -209,32 +173,6 @@ export default {
 				this.makeDivDraggable()
 			}
 		},
-		debounceRefresh() {
-			if (this.refreshTimeout) {
-				clearTimeout(this.refreshTimeout)
-			}
-
-			this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
-		},
-		async refresh() {
-			const response = await this.app.apiRequest('refreshNeighbors', [], {
-				infoSnack: false,
-				errorSnack: false, // prevent to show error
-			})
-
-			if (response.success) {
-				this.showSnackbar('Nodes Neighbors updated', 'success')
-				this.setNeighbors(response.result)
-			}
-		},
-	},
-	mounted() {
-		this.debounceRefresh()
-	},
-	beforeUnmount() {
-		if (this.refreshTimeout) {
-			clearTimeout(this.refreshTimeout)
-		}
 	},
 }
 </script>
