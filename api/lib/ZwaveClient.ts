@@ -1195,11 +1195,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			}
 		}
 
-		if (this.firmwareUpdateCheckTimeout) {
-			clearTimeout(this.firmwareUpdateCheckTimeout)
-			this.firmwareUpdateCheckTimeout = null
-		}
-
 		for (const [key, entry] of this.throttledFunctions) {
 			clearTimeout(entry.timeout)
 			this.throttledFunctions.delete(key)
