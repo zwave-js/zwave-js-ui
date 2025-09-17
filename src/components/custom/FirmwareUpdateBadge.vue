@@ -2,10 +2,10 @@
 	<v-btn
 		v-if="hasAvailableFirmwareUpdate"
 		v-tooltip:bottom="
-			'Firmware update available for this device. Click to dismiss.'
+			`${availableUpdatesCount} firmware update(s) available. Click to open firmware update tab.`
 		"
 		:style="bStyle"
-		@click.stop="dismissFirmwareUpdate"
+		@click.stop="openFirmwareUpdateTab"
 		variant="flat"
 		color="info"
 		size="small"
@@ -16,11 +16,10 @@
 </template>
 
 <script>
-import { mapState, mapActions } from 'pinia'
-import useBaseStore from '../../stores/base.js'
-import { firmwareUpdateChecker } from '../../lib/FirmwareUpdateChecker.js'
+import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
+	mixins: [InstancesMixin],
 	props: {
 		node: {
 			type: Object,
@@ -32,27 +31,27 @@ export default {
 		},
 	},
 	computed: {
-		...mapState(useBaseStore, ['firmwareUpdatesStatus']),
 		hasAvailableFirmwareUpdate() {
-			const nodeUpdates = this.firmwareUpdatesStatus?.[this.node.id]
-			return (
-				nodeUpdates &&
-				nodeUpdates.available &&
-				nodeUpdates.available.length > 0 &&
-				!nodeUpdates.dismissed
-			)
+			const updates = this.node.availableFirmwareUpdates || []
+			const dismissed = this.node.firmwareUpdatesDismissed || {}
+			
+			// Filter out dismissed updates
+			const nonDismissedUpdates = updates.filter(update => !dismissed[update.version])
+			return nonDismissedUpdates.length > 0
+		},
+		availableUpdatesCount() {
+			const updates = this.node.availableFirmwareUpdates || []
+			const dismissed = this.node.firmwareUpdatesDismissed || {}
+			
+			// Filter out dismissed updates
+			const nonDismissedUpdates = updates.filter(update => !dismissed[update.version])
+			return nonDismissedUpdates.length
 		},
 	},
 	methods: {
-		...mapActions(useBaseStore, ['showSnackbar']),
-		dismissFirmwareUpdate() {
-			firmwareUpdateChecker.dismissNodeUpdate(this.node.id)
-			const updateCount =
-				this.firmwareUpdatesStatus[this.node.id]?.available?.length || 0
-			this.showSnackbar(
-				`Dismissed ${updateCount} firmware update(s) for node ${this.node.id}`,
-				'info',
-			)
+		openFirmwareUpdateTab() {
+			// Emit event to expand node and open firmware update tab
+			this.$emit('open-node-firmware-tab', this.node.id)
 		},
 	},
 }

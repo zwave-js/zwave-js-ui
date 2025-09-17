@@ -183,24 +183,6 @@
 					</v-btn>
 				</v-badge>
 
-				<v-badge
-					class="mr-3"
-					:content="firmwareUpdatesAvailable"
-					:model-value="!!firmwareUpdatesAvailable"
-					v-tooltip:bottom="
-						`${firmwareUpdatesAvailable} firmware update(s) available`
-					"
-					color="info"
-				>
-					<v-btn
-						icon="system_update"
-						color="primary"
-						density="compact"
-						@click="showFirmwareUpdatesDialog"
-					>
-					</v-btn>
-				</v-badge>
-
 				<!-- Topbar collapsable menu items -->
 				<!-- Show more button on smaller screens -->
 				<v-menu v-if="$vuetify.display.xs" location="bottom left">
@@ -392,7 +374,6 @@ import { Routes } from '@/router'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from './stores/base.js'
 import { manager, instances } from './lib/instanceManager'
-import { firmwareUpdateChecker } from './lib/FirmwareUpdateChecker.js'
 import logger from './lib/logger'
 
 import {
@@ -430,7 +411,6 @@ export default {
 			'zwave',
 			'znifferState',
 			'inited',
-			'firmwareUpdatesStatus',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
@@ -539,20 +519,6 @@ export default {
 		},
 		updateAvailable() {
 			return this.appInfo.newConfigVersion ? 1 : 0
-		},
-		firmwareUpdatesAvailable() {
-			const firmwareStatus = this.firmwareUpdatesStatus
-			let count = 0
-			Object.keys(firmwareStatus).forEach((nodeId) => {
-				const nodeStatus = firmwareStatus[nodeId]
-				if (
-					nodeStatus?.available?.length > 0 &&
-					!nodeStatus.dismissed
-				) {
-					count++
-				}
-			})
-			return count
 		},
 		inclusionState() {
 			const state = this.appInfo.controllerStatus?.inclusionState
@@ -938,67 +904,6 @@ export default {
 				)
 			}
 		},
-		async showFirmwareUpdatesDialog() {
-			const firmwareStatus = this.firmwareUpdatesStatus
-			const nodesWithUpdates = []
-
-			Object.keys(firmwareStatus).forEach((nodeId) => {
-				const nodeStatus = firmwareStatus[nodeId]
-				if (
-					nodeStatus?.available?.length > 0 &&
-					!nodeStatus.dismissed
-				) {
-					const node = this.getNode(parseInt(nodeId))
-					if (node) {
-						nodesWithUpdates.push({
-							id: nodeId,
-							name: node.name || `Node ${nodeId}`,
-							updates: nodeStatus.available.length,
-						})
-					}
-				}
-			})
-
-			let message = ''
-			if (nodesWithUpdates.length === 0) {
-				message =
-					'<div style="text-align:center"><p>No firmware updates available at the moment.</p><p>Press <b>CHECK ALL</b> to trigger a new bulk check for all devices.</p><p>By default, checks are automatically done every hour</p></div>'
-			} else {
-				const nodesList = nodesWithUpdates
-					.map(
-						(n) =>
-							`<li><b>${n.name}</b>: ${n.updates} update(s)</li>`,
-					)
-					.join('')
-				message = `<div style="text-align:center"><p>Firmware updates available for <b>${nodesWithUpdates.length}</b> device(s):</p><ul style="text-align:left; display:inline-block;">${nodesList}</ul><p>Go to <b>Control Panel > Device > Firmware Update</b> to install updates.</p></div>`
-			}
-
-			const result = await this.confirm(
-				'Firmware updates',
-				message,
-				'info',
-				{
-					width: 600,
-					cancelText:
-						nodesWithUpdates.length > 0 ? 'Dismiss All' : 'Close',
-					confirmText: 'Check All',
-				},
-			)
-
-			if (result) {
-				// Manual bulk check requested
-				firmwareUpdateChecker.checkAllFirmwareUpdates()
-				this.showSnackbar('Firmware update check started')
-			} else if (nodesWithUpdates.length > 0) {
-				// Dismiss all notifications
-				nodesWithUpdates.forEach((node) => {
-					firmwareUpdateChecker.dismissNodeUpdate(parseInt(node.id))
-				})
-				this.showSnackbar(
-					`Dismissed ${nodesWithUpdates.length} firmware update notification(s)`,
-				)
-			}
-		},
 		importFile(ext) {
 			// Check for the various File API support.
 			return new Promise((resolve, reject) => {
@@ -1192,16 +1097,6 @@ export default {
 			})
 			// convert node values in array
 			this.initNodes(data.nodes)
-
-			// Start firmware update checker if Z-Wave is ready
-			if (
-				data.cntStatus === 'Ready' &&
-				data.nodes &&
-				Object.keys(data.nodes).length > 0
-			) {
-				log.info('Starting firmware update checker')
-				firmwareUpdateChecker.start(60) // Check every hour
-			}
 		},
 		async startSocket() {
 			if (

@@ -343,9 +343,13 @@ export default {
 
 			let levelB = nodeB.isListening ? 101 : nodeB.minBatteryLevel || 0
 
-			let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
-			res = sortDesc ? -res : res
-			return res
+		let res = levelA < levelB ? -1 : levelA > levelB ? 1 : 0
+		res = sortDesc ? -res : res
+		return res
+		},
+		openNodeFirmwareTab(nodeId) {
+			// Emit event to parent to open the specific node's firmware tab
+			this.$emit('open-node-firmware-tab', nodeId)
 		},
 	},
 	mounted() {
