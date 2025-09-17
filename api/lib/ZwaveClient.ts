@@ -3284,13 +3284,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 					const existingDismissed =
 						this.storeNodes[nodeId].firmwareUpdatesDismissed || {}
 					const cleanedDismissed: { [version: string]: boolean } = {}
-					
+
 					for (const update of filteredUpdates) {
 						if (existingDismissed[update.version]) {
 							cleanedDismissed[update.version] = true
 						}
 					}
-					this.storeNodes[nodeId].firmwareUpdatesDismissed = cleanedDismissed
+					this.storeNodes[nodeId].firmwareUpdatesDismissed =
+						cleanedDismissed
 
 					// Update in-memory node
 					const node = this._nodes.get(nodeId)
@@ -7013,7 +7014,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const now = new Date()
 		const nextCheck = new Date()
 		nextCheck.setDate(now.getDate() + 1) // Tomorrow
-		
+
 		// Random hour between 1 and 5 AM (1-4 hours, so 1, 2, 3, or 4 AM)
 		const randomHour = Math.floor(Math.random() * 4) + 1
 		nextCheck.setHours(randomHour, 0, 0, 0)

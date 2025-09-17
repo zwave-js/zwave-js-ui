@@ -2,7 +2,9 @@
 	<v-dialog v-model="_value" max-width="900px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="text-h5">Firmware Updates - Node {{ node?.id }}</span>
+				<span class="text-h5"
+					>Firmware Updates - Node {{ node?.id }}</span
+				>
 			</v-card-title>
 			<v-btn
 				icon="close"
@@ -13,15 +15,11 @@
 
 			<v-card-text>
 				<OTWUpdates
-					v-if="node && socket && node.isControllerNode"
+					v-if="node && node.isControllerNode"
 					:node="node"
 					:socket="socket"
 				/>
-				<OTAUpdates
-					v-else-if="node && socket"
-					:node="node"
-					:socket="socket"
-				/>
+				<OTAUpdates v-else-if="node" :node="node" :socket="socket" />
 			</v-card-text>
 		</v-card>
 	</v-dialog>
