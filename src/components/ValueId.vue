@@ -1,7 +1,7 @@
 <template>
 	<div class="valueid-slot">
-		<v-list-subheader class="valueid-label"
-			>{{ label }}
+		<div class="valueid-label text-subtitle-2">
+			{{ label }}
 			<v-btn
 				class="ml-2 mb-1"
 				@click="resetConfig"
@@ -21,7 +21,7 @@
 				color="primary"
 				>Default</v-chip
 			>
-		</v-list-subheader>
+		</div>
 
 		<!-- Not writeable value -->
 		<div v-if="!modelValue.writeable">
@@ -339,6 +339,7 @@
 	font-weight: bold !important;
 	padding-left: 0 !important;
 	margin-bottom: -10px !important;
+	white-space: unset;
 }
 
 .readonly {

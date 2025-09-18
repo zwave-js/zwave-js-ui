@@ -1,5 +1,43 @@
 
 
+# [11.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.1...v11.3.0) (2025-09-16)
+
+
+### Bug Fixes
+
+* **ui:** cleaner label for `Force security` checkbox ([42a28e9](https://github.com/zwave-js/zwave-js-ui/commit/42a28e9662633fc52cb6030dba82ad10ac0b6bdd)), closes [#4363](https://github.com/zwave-js/zwave-js-ui/issues/4363)
+
+
+### Features
+
+* add source IP in request logs ([#4356](https://github.com/zwave-js/zwave-js-ui/issues/4356)) ([7e87c32](https://github.com/zwave-js/zwave-js-ui/commit/7e87c3223be61a02db2c0f41b2ad959cbb473b0f)), closes [#4355](https://github.com/zwave-js/zwave-js-ui/issues/4355)
+* bump zwave-js@15.13.0 ([#4370](https://github.com/zwave-js/zwave-js-ui/issues/4370)) ([1fbb158](https://github.com/zwave-js/zwave-js-ui/commit/1fbb158066760695c2a463b634f8315bfa8b269f))
+
+## [11.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.0...v11.2.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* **ui:** reinterview badge visibility ([1ab4ee5](https://github.com/zwave-js/zwave-js-ui/commit/1ab4ee548516eb28e16aba620c0bd4ed38e5fbae))
+
+# [11.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.1.0...v11.2.0) (2025-08-27)
+
+
+### Bug Fixes
+
+* device firmware update target dropdown ([d23c179](https://github.com/zwave-js/zwave-js-ui/commit/d23c1799d114cf1f3e1b7ab42bc6adb17c5902bb)), closes [#4332](https://github.com/zwave-js/zwave-js-ui/issues/4332)
+* **tests:** disable nodejs experimental strip types flag ([b51edb1](https://github.com/zwave-js/zwave-js-ui/commit/b51edb14702d620d1184efd87e7a7e4d070451c8))
+* **ui:** config update icon style ([7e7caf7](https://github.com/zwave-js/zwave-js-ui/commit/7e7caf7b583aedcdf09af80efa0b3134b3626778)), closes [#4328](https://github.com/zwave-js/zwave-js-ui/issues/4328)
+* **ui:** unable to set `Force security` in nodes manager dialog ([07059be](https://github.com/zwave-js/zwave-js-ui/commit/07059bef80c8660a381b1a941732f8308926c988)), closes [#4329](https://github.com/zwave-js/zwave-js-ui/issues/4329)
+* **ui:** value id labels should not be ellipsed ([7b4a55a](https://github.com/zwave-js/zwave-js-ui/commit/7b4a55a6bc6fc3e379f7e68ef3ad96a53f7856b3)), closes [#4339](https://github.com/zwave-js/zwave-js-ui/issues/4339)
+
+
+### Features
+
+* bump zwave-js@15.11.0 ([#4330](https://github.com/zwave-js/zwave-js-ui/issues/4330)) ([a984133](https://github.com/zwave-js/zwave-js-ui/commit/a984133d6b51c3ecc1caa3a9501f3a20e9063329))
+* bump zwave-js@15.12.0 ([#4348](https://github.com/zwave-js/zwave-js-ui/issues/4348)) ([b287a57](https://github.com/zwave-js/zwave-js-ui/commit/b287a57afeb699ee7b9f08549e94d6aee2305d04))
+* **ui, zwaveclient:** learn/secondary controller mode ([#4097](https://github.com/zwave-js/zwave-js-ui/issues/4097)) ([c64197f](https://github.com/zwave-js/zwave-js-ui/commit/c64197fd20f70293e31e5c79c03cb95df5b89db9))
+
 # [11.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.1...v11.1.0) (2025-08-07)
 
 

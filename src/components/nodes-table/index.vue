@@ -150,7 +150,10 @@
 			<div class="d-flex">
 				<v-chip>{{ item.id.toString().padStart(3, '0') }}</v-chip>
 
-				<reinterview-badge :node="item"></reinterview-badge>
+				<reinterview-badge
+					class="ml-1"
+					:node="item"
+				></reinterview-badge>
 			</div>
 		</template>
 		<template #[`item.minBatteryLevel`]="{ item }">

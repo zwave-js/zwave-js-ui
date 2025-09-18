@@ -302,7 +302,7 @@ export default {
 							hint: 'Target to update',
 							key: 'target',
 							items: targets.map((t) => ({
-								text: 'Target ' + t,
+								title: 'Target ' + t,
 								value: t,
 							})),
 						}
