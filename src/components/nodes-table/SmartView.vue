@@ -230,6 +230,15 @@
 													left: '31px',
 												}"
 											></reinterview-badge>
+
+											<firmware-update-badge
+												:node="item.raw"
+												:b-style="{
+													position: 'absolute',
+													top: '0',
+													left: '54px',
+												}"
+											></firmware-update-badge>
 										</div>
 									</v-badge>
 
@@ -366,6 +375,9 @@ export default {
 		),
 		ReinterviewBadge: defineAsyncComponent(
 			() => import('@/components/custom/ReinterviewBadge.vue'),
+		),
+		FirmwareUpdateBadge: defineAsyncComponent(
+			() => import('@/components/custom/FirmwareUpdateBadge.vue'),
 		),
 	},
 	watch: {
