@@ -5,14 +5,6 @@ import { RFRegion } from '@zwave-js/core'
 
 chai.use(sinonChai)
 
-// Mock the ZwaveClient module dependencies
-const mockLogger = {
-	info: sinon.stub(),
-	error: sinon.stub(),
-	debug: sinon.stub(),
-	warn: sinon.stub(),
-}
-
 // Mock ZwaveClient with minimal implementation for testing
 class MockZwaveClient {
 	private _driver: any
