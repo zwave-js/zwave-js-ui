@@ -19,22 +19,13 @@
 				<v-btn
 					color="primary"
 					variant="text"
-					@click="openCreateDialog"
+					@click="editItem()"
 					:disabled="!newGroupName"
 				>
 					Create Group
 				</v-btn>
 			</v-col>
 		</v-row>
-
-		<DialogGroupEdit
-			@save="saveGroup"
-			@close="closeDialog"
-			v-model="dialogGroup"
-			:title="dialogTitle"
-			:editedGroup="editedGroup"
-			:nodes="physicalNodes"
-		/>
 
 		<v-data-table
 			:headers="headers_groups"
@@ -79,38 +70,22 @@
 import { mapState, mapActions } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
-import { defineAsyncComponent } from 'vue'
 
 export default {
 	name: 'Groups',
 	mixins: [InstancesMixin],
-	components: {
-		DialogGroupEdit: defineAsyncComponent(
-			() => import('@/components/dialogs/DialogGroupEdit.vue'),
-		),
-	},
-	watch: {
-		dialogGroup(val) {
-			val || this.closeDialog()
-		},
-	},
+	components: {},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
 		physicalNodes() {
 			// Only return physical nodes (not virtual ones)
 			return this.nodes.filter((node) => !node.virtual)
 		},
-		dialogTitle() {
-			return this.editedIndex === -1 ? 'New Group' : 'Edit Group'
-		},
 	},
 	data() {
 		return {
-			dialogGroup: false,
 			groups: [],
 			newGroupName: '',
-			editedGroup: {},
-			editedIndex: -1,
 			headers_groups: [
 				{ title: 'ID', key: 'id' },
 				{ title: 'Name', key: 'name' },
@@ -140,21 +115,89 @@ export default {
 				this.groups = response.result || []
 			}
 		},
-		openCreateDialog() {
-			this.editedIndex = -1
-			this.editedGroup = {
-				name: this.newGroupName,
-				nodeIds: [],
+		async editItem(existingGroup) {
+			const isEdit = !!existingGroup
+			
+			let inputs = [
+				{
+					type: 'text',
+					label: 'Group Name',
+					required: true,
+					key: 'name',
+					hint: 'Enter a descriptive name for this multicast group',
+					default: isEdit ? existingGroup.name : this.newGroupName,
+				},
+				{
+					type: 'list',
+					label: 'Nodes',
+					required: true,
+					key: 'nodeIds',
+					multiple: true,
+					items: this.physicalNodes.map(node => ({
+						title: node.name || `Node ${node.id}`,
+						value: node.id
+					})),
+					hint: 'Select at least 1 node for the multicast group',
+					default: isEdit ? existingGroup.nodeIds : [],
+					rules: [(value) => {
+						if (!value || value.length === 0) {
+							return 'Please select at least one node'
+						}
+						return true
+					}],
+				},
+			]
+
+			let result = await this.app.confirm(
+				isEdit ? 'Edit Group' : 'New Group',
+				'',
+				'info',
+				{
+					confirmText: isEdit ? 'Update' : 'Create',
+					width: 500,
+					inputs,
+				},
+			)
+
+			// cancelled
+			if (!result || Object.keys(result).length === 0) {
+				return
 			}
-			this.dialogGroup = true
-		},
-		editItem(item) {
-			this.editedIndex = this.groups.indexOf(item)
-			this.editedGroup = {
-				...item,
-				nodeIds: [...item.nodeIds], // Create a copy of the array
+
+			// Validate inputs
+			if (!result.name || !result.nodeIds || result.nodeIds.length === 0) {
+				this.showSnackbar(
+					'Please provide a name and select at least one node',
+					'error',
+				)
+				return
 			}
-			this.dialogGroup = true
+
+			let response
+			if (isEdit) {
+				// Update existing group
+				response = await this.app.apiRequest('_updateGroup', [
+					existingGroup.id,
+					result.name,
+					result.nodeIds,
+				])
+			} else {
+				// Create new group
+				response = await this.app.apiRequest('_createGroup', [
+					result.name,
+					result.nodeIds,
+				])
+			}
+
+			if (response.success) {
+				const action = isEdit ? 'updated' : 'created'
+				this.showSnackbar(`Group ${action}`, 'success')
+				this.refreshGroups()
+				// Clear the input field after successful creation
+				if (!isEdit) {
+					this.newGroupName = ''
+				}
+			}
 		},
 		async deleteItem(group) {
 			if (
@@ -172,48 +215,6 @@ export default {
 					this.showSnackbar('Group deleted', 'success')
 					this.refreshGroups()
 				}
-			}
-		},
-		closeDialog() {
-			this.dialogGroup = false
-			setTimeout(() => {
-				this.editedGroup = {}
-				this.editedIndex = -1
-				this.newGroupName = ''
-			}, 300)
-		},
-		async saveGroup() {
-			const group = this.editedGroup
-
-			if (!group.name || !group.nodeIds || group.nodeIds.length === 0) {
-				this.showSnackbar(
-					'Please provide a name and select at least one node',
-					'error',
-				)
-				return
-			}
-
-			let response
-			if (this.editedIndex === -1) {
-				// Create new group
-				response = await this.app.apiRequest('_createGroup', [
-					group.name,
-					group.nodeIds,
-				])
-			} else {
-				// Update existing group
-				response = await this.app.apiRequest('_updateGroup', [
-					group.id,
-					group.name,
-					group.nodeIds,
-				])
-			}
-
-			if (response.success) {
-				const action = this.editedIndex === -1 ? 'created' : 'updated'
-				this.showSnackbar(`Group ${action}`, 'success')
-				this.refreshGroups()
-				this.closeDialog()
 			}
 		},
 	},
