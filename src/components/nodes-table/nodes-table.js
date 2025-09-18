@@ -91,6 +91,28 @@ export default {
 				productDescription: { type: 'string', label: 'Product' },
 				productLabel: { type: 'string', label: 'Product code' },
 				name: { type: 'string', label: 'Name' },
+				virtual: {
+					type: 'boolean',
+					label: 'Virtual',
+					richValue: (node) =>
+						this.booleanRichValue(node.virtual, {
+							true: {
+								icon: 'cloud',
+								iconStyle: 'color: purple',
+								description: 'Virtual Node',
+							},
+							false: {
+								icon: 'device_hub',
+								iconStyle: 'color: green',
+								description: 'Physical Node',
+							},
+							default: {
+								icon: 'device_hub',
+								iconStyle: 'color: green',
+								description: 'Physical Node',
+							},
+						}),
+				},
 				loc: { type: 'string', label: 'Location' },
 				security: {
 					type: 'string',

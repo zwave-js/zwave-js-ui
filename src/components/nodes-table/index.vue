@@ -169,7 +169,20 @@
 			{{ item.productLabel }}
 		</template>
 		<template #[`item.name`]="{ item }">
-			{{ item.name || '' }}
+			<div class="d-flex align-center">
+				<span>{{ item.virtual ? item.name : item.name || '' }}</span>
+				<v-chip
+					v-if="item.virtual"
+					size="x-small"
+					color="purple"
+					class="ml-2"
+				>
+					VIRTUAL
+				</v-chip>
+			</div>
+		</template>
+		<template #[`item.virtual`]="{ item }">
+			<rich-value :value="richValue(item, 'virtual')" />
 		</template>
 		<template #[`item.loc`]="{ item }">
 			{{ item.loc || '' }}
