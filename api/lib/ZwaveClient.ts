@@ -983,9 +983,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
-	 * Returns the driver ZWaveNode object
+	 * Returns the driver ZWaveNode object, or null for virtual nodes (nodeId > 0xfff)
 	 */
-	getNode(nodeId: number): ZWaveNode {
+	getNode(nodeId: number): ZWaveNode | null {
+		// For virtual nodes (multicast groups and broadcast nodes), return null
+		// since they don't have actual ZWaveNode instances
+		if (nodeId > 0xfff) {
+			return null
+		}
 		return this._driver.controller.nodes.get(nodeId)
 	}
 
@@ -4164,7 +4169,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		rounds = 5,
 	): Promise<LifelineHealthCheckSummary & { targetNodeId: number }> {
 		if (this.driverReady) {
-			const result = await this.getNode(nodeId).checkLifelineHealth(
+			const zwaveNode = this.getNode(nodeId)
+			if (!zwaveNode) {
+				throw new Error(`Node ${nodeId} not found or is a virtual node`)
+			}
+			const result = await zwaveNode.checkLifelineHealth(
 				rounds,
 				this._onHealthCheckProgress.bind(this, {
 					nodeId,
@@ -4182,7 +4191,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		options: any,
 	): Promise<LinkReliabilityCheckResult> {
 		if (this.driverReady) {
-			const result = await this.getNode(nodeId).checkLinkReliability({
+			const zwaveNode = this.getNode(nodeId)
+			if (!zwaveNode) {
+				throw new Error(`Node ${nodeId} not found or is a virtual node`)
+			}
+			const result = await zwaveNode.checkLinkReliability({
 				...options,
 				onProgress: (progress) =>
 					this._onLinkReliabilityCheckProgress({ nodeId }, progress),
@@ -4196,7 +4209,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	abortLinkReliabilityCheck(nodeId: number): void {
 		if (this.driverReady) {
-			this.getNode(nodeId).abortLinkReliabilityCheck()
+			const zwaveNode = this.getNode(nodeId)
+			if (!zwaveNode) {
+				throw new Error(`Node ${nodeId} not found or is a virtual node`)
+			}
+			zwaveNode.abortLinkReliabilityCheck()
 			return
 		}
 
@@ -5036,11 +5053,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		this._updateControllerStatus(message)
-		this._onNodeEvent(
-			'status changed',
-			this.getNode(this.driver.controller.ownNodeId),
-			status,
-		)
+		const controllerNode = this.getNode(this.driver.controller.ownNodeId)
+		if (controllerNode) {
+			this._onNodeEvent(
+				'status changed',
+				controllerNode,
+				status,
+			)
+		}
 		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
 
