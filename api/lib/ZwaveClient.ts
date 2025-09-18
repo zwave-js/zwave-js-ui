@@ -707,6 +707,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private scenes: ZUIScene[]
 	private groups: Group[]
 	private _nodes: Map<number, ZUINode>
+	private _multicastGroups: Map<number, any>
 	private storeNodes: Record<number, Partial<ZUINode>>
 	private _devices: Record<string, Partial<ZUINode>>
 	private driverInfo: ZUIDriverInfo
@@ -833,6 +834,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.groups = jsonStore.get(store.groups)
 
 		this._nodes = new Map()
+		this._multicastGroups = new Map()
 
 		this._devices = {}
 		this.driverInfo = {}
@@ -2911,6 +2913,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		// Remove virtual node
 		this._nodes.delete(id)
 
+		// Remove stored multicast group instance
+		this._multicastGroups.delete(id)
+
 		this.groups.splice(groupIndex, 1)
 		await jsonStore.put(store.groups, this.groups)
 
@@ -2934,8 +2939,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (!this.driverReady) return
 
 		try {
-			// Create virtual node (we don't need to use the multicastGroup object directly)
-			this._driver.controller.getMulticastGroup(group.nodeIds)
+			// Create and store the multicast group instance
+			const multicastGroup = this._driver.controller.getMulticastGroup(group.nodeIds)
+			this._multicastGroups.set(group.id, multicastGroup)
 
 			const virtualNode: ZUINode = {
 				id: group.id,
