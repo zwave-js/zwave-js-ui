@@ -161,9 +161,11 @@
 										<v-btn
 											variant="flat"
 											color="primary"
-											@click.stop="nextStep"
+											@click.stop="submitReplaceFailed"
 											class="next-btn"
-											@keypress.enter="nextStep"
+											@keypress.enter="
+												submitReplaceFailed
+											"
 										>
 											Next
 										</v-btn>
@@ -952,6 +954,27 @@ export default {
 				this.nextStep()
 			}
 		},
+		submitReplaceFailed() {
+			const s = this.steps[this.currentStep - 1]
+			const replaceId = s.values.replaceId
+
+			// Validate that a node has been selected
+			if (!replaceId) {
+				this.showSnackbar('Please select a node to replace', 'error')
+				return
+			}
+
+			// Additional validation for numeric input
+			if (typeof replaceId !== 'object') {
+				const nodeId = parseInt(replaceId, 10)
+				if (isNaN(nodeId) || nodeId <= 0) {
+					this.showSnackbar('Please enter a valid node ID', 'error')
+					return
+				}
+			}
+
+			this.nextStep()
+		},
 		validPin(pin) {
 			return pin?.length === 5 || 'PIN must be 5 digits'
 		},
@@ -1223,6 +1246,7 @@ export default {
 				this.loading = true
 				await this.app.apiRequest('validateDSK', [pin])
 			} else if (s.key === 'replaceFailed') {
+				// Validation should have been done in submitReplaceFailed
 				this.currentAction = 'Inclusion'
 				this.pushStep('replaceInclusionMode')
 			}
