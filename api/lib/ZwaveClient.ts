@@ -3262,12 +3262,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// Determine which properties need updating
 			const propsToUpdate: Array<
 				'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'
-			> = ['RFRegion']
+			> = ['RFRegion', 'powerlevel']
 
-			// If powerlevels are in auto mode, refresh them after region change
-			if (this.cfg.rf?.txPower?.powerlevel === 'auto') {
-				propsToUpdate.push('powerlevel')
-			}
+			// If LR powerlevel is in auto mode, refresh it after region change
 			if (this.cfg.rf?.maxLongRangePowerlevel === 'auto') {
 				propsToUpdate.push('maxLongRangePowerlevel')
 			}
