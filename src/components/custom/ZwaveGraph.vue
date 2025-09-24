@@ -181,12 +181,27 @@
 				ref="container"
 				v-resize="onResize"
 			>
-				<div
+				<VueFlow
+					:nodes="vueFlowNodes"
+					:edges="vueFlowEdges"
 					:style="{
 						height: containerHeight + 'px',
 					}"
-					ref="content"
-				></div>
+					:fitViewOnInit="true"
+					:snapToGrid="false"
+					:zoomOnDoubleClick="false"
+					@nodesInitialized="onNodesInitialized"
+					@nodeClick="handleNodeClick"
+					@nodeMouseEnter="handleNodeMouseEnter"
+					@nodeMouseLeave="handleNodeMouseLeave"
+					@nodeDragStart="handleNodeDragStart"
+					@nodeDragStop="handleNodeDragStop"
+					@selectionChange="handleSelectionChange"
+				>
+					<Background />
+					<Controls />
+					<MiniMap />
+				</VueFlow>
 				<v-menu
 					v-model="showMenu"
 					:close-on-content-click="false"
@@ -259,9 +274,15 @@
 <style></style>
 
 <script>
-import { Network } from 'vis-network'
-import 'vis-network/styles/vis-network.css'
-// when need to test this, just uncomment this line and find replace `this.nodes` with `testNodes`
+import { VueFlow, useVueFlow } from '@vue-flow/core'
+import { Controls } from '@vue-flow/controls'
+import { MiniMap } from '@vue-flow/minimap'
+import { Background } from '@vue-flow/background'
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+import '@vue-flow/controls/dist/style.css'
+import '@vue-flow/minimap/dist/style.css'
+// when need to test this, just uncommented this line and find replace `this.nodes` with `testNodes`
 // import fakeNodes from '@/assets/testNodes.json'
 import {
 	ProtocolDataRate,
@@ -280,6 +301,21 @@ const ReturnRouteKind = {
 }
 
 export default {
+	name: 'ZwaveGraph',
+	components: {
+		VueFlow,
+		Controls,
+		MiniMap,
+		Background,
+	},
+	setup() {
+		const { fitView, getSelectedNodes, getSelectedEdges } = useVueFlow()
+		return {
+			fitView,
+			getSelectedNodes,
+			getSelectedEdges,
+		}
+	},
 	props: {
 		nodes: {
 			type: [Array],
@@ -287,9 +323,6 @@ export default {
 	},
 	computed: {
 		...mapState(useBaseStore, ['controllerNode']),
-		content() {
-			return this.$refs.content
-		},
 		fontColor() {
 			return this.isDark ? '#ddd' : '#333'
 		},
@@ -337,8 +370,44 @@ export default {
 		allNodes() {
 			return this.nodes // replace this with `fakeNodes` when testing
 		},
+		vueFlowNodes() {
+			const { nodes } = this.parseNodes()
+			return nodes.map((node) => ({
+				id: String(node.id),
+				type: this.getNodeType(node),
+				position: node.position || {
+					x: Math.random() * 500,
+					y: Math.random() * 500,
+				},
+				data: {
+					label: node.label,
+					...node,
+				},
+				style: this.getNodeStyle(node),
+				draggable: true,
+				selectable: true,
+				hidden: node.hidden || false,
+			}))
+		},
+		vueFlowEdges() {
+			const { edges } = this.parseNodes()
+			return edges.map((edge) => ({
+				id: String(edge.id),
+				source: String(edge.from),
+				target: String(edge.to),
+				type: 'default',
+				animated: false,
+				style: this.getEdgeStyle(edge),
+				label: edge.label || '',
+				labelStyle: this.getEdgeLabelStyle(edge),
+				data: {
+					...edge,
+				},
+				hidden: edge.hidden || false,
+			}))
+		},
 	},
-	network: null, // do not make this reactive, see https://github.com/visjs/vis-network/issues/173#issuecomment-541435420
+	// Remove vis-network instance reference as it's no longer needed
 	unsubscribeUpdate: null, // pinia update action unsubscribe function
 	data() {
 		return {
@@ -467,50 +536,18 @@ export default {
 				this.setSelection()
 			}
 		},
-		showReturnRoutes(v) {
-			// hide/show all edges with returnRoute = true
-			if (
-				this.network &&
-				!this.loading &&
-				this.selectedNodes.length > 0
-			) {
-				const { edges } = this.network.body.data
-
-				const edgesToUpdate = []
-
-				edges.forEach((e) => {
-					if (e.routeKind >= ReturnRouteKind.PRIORITY) {
-						edgesToUpdate.push({
-							id: e.id,
-							hidden: !v,
-						})
-					}
-				})
-
-				edges.update(edgesToUpdate)
+		showReturnRoutes() {
+			// Vue Flow will handle this via the computed vueFlowEdges property
+			// Just trigger a re-render by calling handleSelectNode
+			if (!this.loading && this.selectedNodes.length > 0) {
+				this.handleSelectNode({ nodes: this.selectedNodes })
 			}
 		},
-		showApplicationRoutes(v) {
-			// hide/show all edges with returnRoute = false
-			if (
-				this.network &&
-				!this.loading &&
-				this.selectedNodes.length > 0
-			) {
-				const { edges } = this.network.body.data
-
-				const edgesToUpdate = []
-
-				edges.forEach((e) => {
-					if (e.routeKind === RouteKind.Application) {
-						edgesToUpdate.push({
-							id: e.id,
-							hidden: !v,
-						})
-					}
-				})
-
-				edges.update(edgesToUpdate)
+		showApplicationRoutes() {
+			// Vue Flow will handle this via the computed vueFlowEdges property
+			// Just trigger a re-render by calling handleSelectNode
+			if (!this.loading && this.selectedNodes.length > 0) {
+				this.handleSelectNode({ nodes: this.selectedNodes })
 			}
 		},
 	},
@@ -555,6 +592,53 @@ export default {
 		this.unsubscribeUpdate()
 	},
 	methods: {
+		getNodeType(node) {
+			// Vue Flow uses default node type, we'll style with CSS
+			// Could be extended to return different types based on node properties
+			return node.shape === 'star' ? 'default' : 'default'
+		},
+		getNodeStyle(node) {
+			const styles = {
+				borderWidth: '2px',
+				borderStyle: 'solid',
+				borderColor: node.color || '#ccc',
+				backgroundColor: node.color || '#f0f0f0',
+				color: node.font?.color || this.fontColor,
+				borderRadius: '8px',
+				padding: '8px',
+				fontSize: '12px',
+				textAlign: 'center',
+				minWidth: '80px',
+				maxWidth: '180px',
+			}
+
+			// Different shapes based on node type
+			if (node.shape === 'star') {
+				styles.borderRadius = '50%'
+				styles.clipPath =
+					'polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%)'
+			} else if (node.shape === 'hexagon') {
+				styles.clipPath =
+					'polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)'
+			} else if (node.shape === 'square') {
+				styles.borderRadius = '4px'
+			}
+
+			return styles
+		},
+		getEdgeStyle(edge) {
+			return {
+				stroke: edge.color || '#666',
+				strokeWidth: edge.width || 2,
+				strokeDasharray: edge.dashes ? edge.dashes.join(',') : 'none',
+			}
+		},
+		getEdgeLabelStyle(edge) {
+			return {
+				fontSize: edge.font?.size || 0,
+				fill: edge.font?.color || this.fontColor,
+			}
+		},
 		onResize() {
 			// when container resizes get its height and set content to that
 			// so that the graph can be resized
@@ -576,11 +660,9 @@ export default {
 			}
 		},
 		destroyNetwork() {
-			if (this.network) {
-				this.network.destroy()
-				this.network = null
-				this.content.innerHTML = ''
-			}
+			// Vue Flow doesn't need explicit destruction
+			// Just reset loading state
+			this.loading = false
 		},
 		debounceRefresh() {
 			if (this.refreshTimeout) {
@@ -591,15 +673,19 @@ export default {
 
 			this.refreshTimeout = setTimeout(this.paintGraph.bind(this), 1000)
 		},
+		// eslint-disable-next-line no-unused-vars
 		onNodeUpdate(node) {
 			if (this.updateTimeout) {
 				clearTimeout(this.updateTimeout)
 			}
 
-			if (this.network && !this.loading) {
-				const { nodes, edges } = this.network.body.data
+			if (!this.loading) {
+				// Vue Flow will handle the update via computed properties reactivity
+				// The computed vueFlowNodes and vueFlowEdges will automatically update
+				// when the underlying data changes
 
-				const edgesToRemove = []
+				// Update priority edges tracking
+				const { edges } = this.parseNodes()
 				const allEdges = {} // edgeId => [edge, edge, ...]
 				const removedIds = [] // removed edgeIds
 
@@ -607,11 +693,8 @@ export default {
 					const edgeId = this.getEdgeId(e)
 
 					if (e.routeOf === node.id) {
-						edgesToRemove.push(e.id)
 						if (this.priorityEdges[edgeId]?.id === e.id) {
 							delete this.priorityEdges[edgeId]
-							// we deleted the edge with the higher protocolDataRate
-							// keep track of it so we can update this later
 							removedIds.push(edgeId)
 						}
 					} else if (allEdges[edgeId]) {
@@ -621,12 +704,12 @@ export default {
 					}
 				})
 
-				// update the edge with hight protocolDataRate to prevent
-				// having unconneted nodes
+				// update the edge with highest protocolDataRate to prevent
+				// having unconnected nodes
 				for (const edgeId of removedIds) {
 					const edges = allEdges[edgeId]
 					if (edges) {
-						// set the edge with hight protocolDataRate
+						// set the edge with highest protocolDataRate
 						this.priorityEdges[edgeId] = edges.reduce(
 							(prev, curr) =>
 								prev.protocolDataRate > curr.protocolDataRate
@@ -636,17 +719,10 @@ export default {
 					}
 				}
 
-				nodes.remove(node.id)
-				edges.remove(edgesToRemove)
-				const result = this.parseNode(node)
-				nodes.add(result.node)
-				edges.add(result.edges)
-
 				const params = {
 					nodes: this.selectedNodes,
 				}
 
-				this.network.setSelection(params)
 				this.handleSelectNode(params)
 			}
 		},
@@ -668,7 +744,7 @@ export default {
 			}
 		},
 		setSelection() {
-			if (this.network && !this.loading) {
+			if (!this.loading) {
 				const emptyFilters =
 					this.nodesFilter.length === 0 &&
 					this.locationsFilter.length === 0 &&
@@ -683,121 +759,87 @@ export default {
 				const params = {
 					nodes: all ? [] : this.selectedNodes,
 				}
-				this.network.setSelection(params)
+
 				this.handleSelectNode(params)
 			}
 		},
 		paintGraph() {
 			this.shouldReload = false
-
-			this.destroyNetwork()
-
 			this.priorityEdges = {}
-
 			this.loading = true
 
-			const { edges, nodes } = this.parseNodes()
-
-			const container = this.content
-			const data = {
-				nodes,
-				edges,
-			}
-			const options = {
-				interaction: {
-					// https://visjs.github.io/vis-network/docs/network/interaction.html#
-					hover: true,
-					navigationButtons: true,
-					keyboard: true,
-					multiselect: true,
-					hideEdgesOnDrag: false,
-					hideEdgesOnZoom: false,
-					hideNodesOnDrag: false,
-					hoverConnectedEdges: false,
-					selectable: true,
-					selectConnectedEdges: false,
-					tooltipDelay: 1000,
-					zoomSpeed: 1,
-					zoomView: true,
-				},
-				nodes: {
-					borderWidth: 2,
-					widthConstraint: {
-						maximum: 180,
-					},
-					// shadow: true,
-				},
-				edges: {
-					width: 2,
-					// shadow: true,
-				},
-				physics: {
-					enabled: true, // enabling physics reduces performance a lot
-					stabilization: {
-						enabled: true,
-						iterations: 50,
-						updateInterval: 50,
-						onlyDynamicEdges: false,
-						fit: true,
-					},
-					barnesHut: {
-						theta: 0.99,
-						damping: 0.9,
-						avoidOverlap: 0.15,
-					},
-				},
-			}
-
-			this.network = new Network(container, data, options)
-
-			// event handlers
-			// https://visjs.github.io/vis-network/docs/network/#Events
-			this.network.once('stabilizationIterationsDone', () => {
+			// Vue Flow will handle the rendering via computed properties
+			// Just need to trigger reactivity and fit view
+			this.$nextTick(() => {
 				this.loading = false
 				this.setSelection()
+				this.fitView()
 			})
+		},
+		onNodesInitialized() {
+			this.loading = false
+			this.setSelection()
+		},
+		handleNodeClick(event) {
+			const nodeId = event.node.id
+			if (nodeId) {
+				const node = this.allNodes.find(
+					(n) => n.id === parseInt(nodeId),
+				)
+				this.$emit('node-click', node)
+			} else {
+				this.$emit('node-click', null)
+			}
+		},
+		handleNodeMouseEnter(event) {
+			if (this.dragging) return
+			const nodeId = event.node.id
+			const item = this.allNodes.find((n) => n.id === parseInt(nodeId))
 
-			this.network.on('click', this.handleClick.bind(this))
-
-			this.network.on('hoverNode', this.handleHoverNode.bind(this))
-			this.network.on('blurNode', this.handleBlurNode.bind(this))
-
-			this.network.on('dragStart', this.handleDragStart.bind(this))
-			this.network.on('dragEnd', this.handleDragEnd.bind(this))
-
-			this.network.on('select', this.handleSelectNode.bind(this))
-
-			// this.network.on('hoverEdge', function (e) {
-			// 	this.body.data.edges.update({
-			// 		id: e.edge,
-			// 		font: {
-			// 			size: 12,
-			// 		},
-			// 	})
-			// })
-
-			// this.network.on('blurEdge', function (e) {
-			// 	this.body.data.edges.update({
-			// 		id: e.edge,
-			// 		font: {
-			// 			size: 0,
-			// 		},
-			// 	})
-			// })
+			if (item) {
+				this.hoverNodeTimeout = setTimeout(() => {
+					this.hoverNode = item
+					// Get mouse position from the event
+					this.menuX = event.event?.clientX || 100
+					this.menuY = event.event?.clientY || 100
+					this.showMenu = true
+					this.hoverNodeTimeout = null
+				}, 1000)
+			}
+		},
+		handleNodeMouseLeave() {
+			if (this.hoverNodeTimeout) {
+				clearTimeout(this.hoverNodeTimeout)
+				this.hoverNodeTimeout = null
+			} else {
+				this.showMenu = false
+				this.hoverNode = null
+			}
+		},
+		handleNodeDragStart() {
+			this.dragging = true
+		},
+		handleNodeDragStop() {
+			this.dragging = false
+		},
+		handleSelectionChange(selection) {
+			const nodeIds = selection.nodes.map((node) => parseInt(node.id))
+			this.selectedNodes = nodeIds
+			this.handleSelectNode({ nodes: nodeIds })
 		},
 		handleSelectNode(params) {
 			let { nodes: selectedNodes } = params
 
-			const { edges, nodes } = this.network.body.data
+			// For Vue Flow, we need to work with the computed data instead of network data
+			const edges = this.vueFlowEdges
+			const nodes = this.vueFlowNodes
 			const repeaters = []
-
-			const edgesToUpdate = []
-			const nodesToUpdate = []
 
 			// click on controller
 			if (
 				selectedNodes.length === 1 &&
-				nodes.get(selectedNodes[0]).isControllerNode
+				nodes.find((n) => parseInt(n.id) === selectedNodes[0])?.data
+					?.isControllerNode
 			) {
 				selectedNodes = []
 			}
@@ -806,115 +848,53 @@ export default {
 
 			const showAll = selectedNodes.length === 0
 
-			// DataSet: https://visjs.github.io/vis-data/data/dataset.html
+			// Update edge visibility based on selection
 			edges.forEach((e) => {
-				const edgeId = this.getEdgeId(e)
+				const edgeId = this.getEdgeId({ from: e.source, to: e.target })
 				const shouldBeHidden =
 					(showAll && this.priorityEdges[edgeId]?.id !== e.id) ||
 					(selectedNodes.length > 0 &&
-						!selectedNodes.includes(e.routeOf))
+						!selectedNodes.includes(e.data?.routeOf))
 
 				let checkboxHide = false
 
 				if (!showAll) {
 					if (
-						e.routeKind === RouteKind.Application &&
+						e.data?.routeKind === RouteKind.Application &&
 						!this.showApplicationRoutes
 					) {
 						checkboxHide = true
 					} else if (
-						e.routeKind >= ReturnRouteKind.PRIORITY &&
+						e.data?.routeKind >= ReturnRouteKind.PRIORITY &&
 						!this.showReturnRoutes
 					) {
 						checkboxHide = true
 					}
 				}
 
-				const fontSize = showAll ? 0 : 12
-
-				if (shouldBeHidden !== e.hidden || fontSize !== e.font.size) {
-					edgesToUpdate.push({
-						id: e.id,
-						hidden: shouldBeHidden || checkboxHide,
-						font: {
-							size: fontSize,
-						},
-					})
-				}
+				e.hidden = shouldBeHidden || checkboxHide
 
 				if (!shouldBeHidden) {
-					repeaters.push(e.from)
-					repeaters.push(e.to)
+					repeaters.push(parseInt(e.source))
+					repeaters.push(parseInt(e.target))
 				}
 			})
 
-			edges.update(edgesToUpdate)
-
+			// Update node visibility based on selection
 			nodes.forEach((n) => {
+				const nodeId = parseInt(n.id)
 				const shouldBeHidden =
 					selectedNodes.length > 0 &&
-					!selectedNodes.includes(n.id) &&
-					!repeaters.includes(n.id)
+					!selectedNodes.includes(nodeId) &&
+					!repeaters.includes(nodeId)
 
-				if (shouldBeHidden !== n.hidden) {
-					nodesToUpdate.push({
-						id: n.id,
-						hidden: shouldBeHidden,
-						color: n.color,
-					})
-				}
+				n.hidden = shouldBeHidden
 			})
 
-			nodes.update(nodesToUpdate)
-
-			this.network.fit()
-		},
-		handleDragStart() {
-			this.dragging = true
-		},
-		handleDragEnd() {
-			this.dragging = false
-		},
-		handleHoverNode(params) {
-			// show menu
-			if (this.dragging) return
-			const { node, event } = params
-
-			const item = this.allNodes.find((n) => n.id === node)
-
-			if (item) {
-				this.hoverNodeTimeout = setTimeout(() => {
-					this.hoverNode = item
-					this.menuX = event.clientX + 5
-					this.menuY = event.clientY + 5
-					this.showMenu = true
-					this.hoverNodeTimeout = null
-				}, 1000)
-			}
-		},
-		handleBlurNode() {
-			if (this.hoverNodeTimeout) {
-				clearTimeout(this.hoverNodeTimeout)
-				this.hoverNodeTimeout = null
-			} else {
-				// hide menu
-				this.showMenu = false
-				this.hoverNode = null
-			}
-		},
-		handleClick(params) {
-			if (params.event) {
-				params.event.preventDefault()
-				// https://visjs.github.io/vis-network/docs/network/#events
-				// Add interactivity
-				const nodeId = params.nodes[0]
-				if (nodeId) {
-					const node = this.allNodes.find((n) => n.id === nodeId)
-					this.$emit('node-click', node)
-				} else {
-					this.$emit('node-click', null)
-				}
-			}
+			// Fit view after selection changes
+			this.$nextTick(() => {
+				this.fitView()
+			})
 		},
 		parseRouteStats(
 			edges,
