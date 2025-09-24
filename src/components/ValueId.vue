@@ -556,7 +556,9 @@ export default {
 		},
 		itemText(item) {
 			if (typeof item === 'object') {
-				return `[${item.value}] ${item.text}${
+				// Only show the text part if it exists and is not undefined
+				const textPart = item.text !== undefined ? ` ${item.text}` : ''
+				return `[${item.value}]${textPart}${
 					this.modelValue.default === item.value ? ' (Default)' : ''
 				}`
 			} else {
