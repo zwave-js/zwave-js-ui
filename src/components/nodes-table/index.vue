@@ -154,6 +154,11 @@
 					class="ml-1"
 					:node="item"
 				></reinterview-badge>
+
+				<firmware-update-badge
+					class="ml-1"
+					:node="item"
+				></firmware-update-badge>
 			</div>
 		</template>
 		<template #[`item.minBatteryLevel`]="{ item }">

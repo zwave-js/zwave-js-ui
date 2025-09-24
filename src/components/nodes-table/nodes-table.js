@@ -53,6 +53,9 @@ export default {
 		ReinterviewBadge: defineAsyncComponent(
 			() => import('@/components/custom/ReinterviewBadge.vue'),
 		),
+		FirmwareUpdateBadge: defineAsyncComponent(
+			() => import('@/components/custom/FirmwareUpdateBadge.vue'),
+		),
 	},
 	watch: {
 		'managedNodes.selected': function (val) {
