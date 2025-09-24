@@ -7,13 +7,20 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 ## Commit and PR Standards
 
 **ALWAYS follow conventional commit standards for all commits and PR titles/descriptions:**
+**ALWAYS split work into multiple commits instead of doing a single big commit at the end of implementation.**
 
 ### Commit Messages
 - Use conventional commit format: `type(scope): description`
 - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+- **Split large features into multiple focused commits:**
+  - Backend changes should be separate from frontend changes
+  - Each major component or functionality should be its own commit
+  - Bug fixes should be separate commits from feature additions
 - Examples:
-  - `feat(ui): add device configuration panel`
-  - `fix(zwave): resolve connection timeout issues`
+  - `feat(backend): add groups storage and CRUD APIs`
+  - `feat(frontend): add Groups management interface`
+  - `fix(backend): store multicast group instances locally`
+  - `refactor(frontend): replace dialog with app.confirm pattern`
   - `docs: update installation instructions`
   - `chore: update dependencies`
 
@@ -21,6 +28,106 @@ Z-Wave JS UI is a full-featured Z-Wave Control Panel and MQTT Gateway built with
 - PR titles must follow conventional commit format
 - Descriptions should clearly explain the changes and their impact
 - Include issue references (e.g., "Fixes #1234")
+
+## Frontend Development Patterns
+
+### Using app.confirm for Forms Instead of Creating Dialog Components
+
+**ALWAYS use app.confirm with inputs instead of creating dedicated dialog components for simple forms.**
+
+The `app.confirm` method supports form inputs and should be used instead of creating new Vue dialog components. Check `src/components/Confirm.vue` for supported input types.
+
+#### Supported Input Types:
+- `text` - Text field
+- `number` - Number input 
+- `boolean` - Switch input
+- `checkbox` - Checkbox input
+- `list` - Select/Autocomplete/Combobox (supports `multiple: true`)
+- `array` - Complex list inputs
+
+#### Example Usage (from SmartStart.vue):
+```javascript
+async editItem(existingItem) {
+  let inputs = [
+    {
+      type: 'text',
+      label: 'Name',
+      required: true,
+      key: 'name',
+      hint: 'The node name',
+      default: existingItem ? existingItem.name : '',
+    },
+    {
+      type: 'list',
+      label: 'Protocol',
+      required: true,
+      key: 'protocol',
+      items: protocolsItems,
+      hint: 'Inclusion protocol to use',
+      default: existingItem ? existingItem.protocol : Protocols.ZWave,
+    },
+    {
+      type: 'checkbox',
+      label: 'S2 Access Control',
+      key: 's2AccessControl',
+      default: existingItem ? existingItem.securityClasses.s2AccessControl : false,
+    },
+  ]
+
+  let result = await this.app.confirm(
+    (existingItem ? 'Update' : 'New') + ' entry',
+    '',
+    'info',
+    {
+      confirmText: existingItem ? 'Update' : 'Add',
+      width: 500,
+      inputs,
+    },
+  )
+
+  // cancelled
+  if (Object.keys(result).length === 0) {
+    return
+  }
+
+  // Handle result...
+}
+```
+
+#### Input Configuration Options:
+- `type`: Input type (required)
+- `label`: Field label (required)  
+- `key`: Property key for result object (required)
+- `required`: Whether field is required
+- `default`: Default value
+- `hint`: Help text shown below field
+- `rules`: Array of validation functions
+- `disabled`: Whether field is disabled
+- `multiple`: For list types, allows multiple selection
+- `items`: For list types, array of options with `title`/`value` properties
+
+#### Multiple Selection Example (Groups.vue):
+```javascript
+{
+  type: 'list',
+  label: 'Nodes',
+  required: true,
+  key: 'nodeIds',
+  multiple: true,
+  items: this.physicalNodes.map(node => ({
+    title: node.name || `Node ${node.id}`,
+    value: node.id
+  })),
+  hint: 'Select at least 1 node for the multicast group',
+  default: existingGroup ? existingGroup.nodeIds : [],
+  rules: [(value) => {
+    if (!value || value.length === 0) {
+      return 'Please select at least one node'
+    }
+    return true
+  }],
+}
+```
 
 ## Bootstrap and Development Setup
 
