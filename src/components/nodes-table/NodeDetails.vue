@@ -282,11 +282,11 @@
 					sm="6"
 					style="max-width: 300px; padding-top: 0"
 				>
-					<v-text-field
+					<v-number-input
 						label="Volume"
 						hint="The volume (for the Sound Switch CC)"
 						persistent-hint
-						v-model.trim="options.volume"
+						v-model.number="options.volume"
 					>
 						<template #append>
 							<div
@@ -314,7 +314,7 @@
 								</v-btn>
 							</div>
 						</template>
-					</v-text-field>
+					</v-number-input>
 				</v-col>
 			</v-row>
 
