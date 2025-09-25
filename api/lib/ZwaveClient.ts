@@ -3264,12 +3264,26 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'
 			> = ['RFRegion']
 
+			const supportsAutoPowerlevel =
+				region === RFRegion.Europe ||
+				region === RFRegion['Europe (Long Range)'] ||
+				region === RFRegion.USA ||
+				region === RFRegion['USA (Long Range)']
+
 			// If powerlevels are in auto mode, refresh them after region change
-			if (this.cfg.rf?.txPower?.powerlevel === 'auto') {
-				propsToUpdate.push('powerlevel')
-			}
-			if (this.cfg.rf?.maxLongRangePowerlevel === 'auto') {
-				propsToUpdate.push('maxLongRangePowerlevel')
+			if (supportsAutoPowerlevel) {
+				if (
+					this.cfg.rf?.autoPowerlevels ||
+					this.cfg.rf?.txPower?.powerlevel === 'auto'
+				) {
+					propsToUpdate.push('powerlevel')
+				}
+				if (
+					this.cfg.rf?.autoPowerlevels ||
+					this.cfg.rf?.maxLongRangePowerlevel === 'auto'
+				) {
+					propsToUpdate.push('maxLongRangePowerlevel')
+				}
 			}
 
 			await this.updateControllerNodeProps(null, propsToUpdate)
