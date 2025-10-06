@@ -273,7 +273,6 @@ export default {
 		devices: Array,
 	},
 	watch: {
-		// eslint-disable-next-line no-unused-vars
 		value(val) {
 			this.$refs.form && this.$refs.form.resetValidation()
 			if (val) {
@@ -294,7 +293,7 @@ export default {
 		deviceValues() {
 			const device = this.devices.find(
 				(d) => d.value == this.editedValue.device,
-			) // eslint-disable-line eqeqeq
+			)
 			return device ? device.values : []
 		},
 		deviceClasses() {
@@ -304,7 +303,6 @@ export default {
 			if (!v) {
 				return []
 			} else if (v.commandClass === 0x30) {
-				// eslint-disable-line eqeqeq
 				return [
 					// sensor binary: https://www.home-assistant.io/integrations/binary_sensor/
 					'battery',

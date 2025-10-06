@@ -7,7 +7,12 @@
 		:persistent="options.persistent"
 	>
 		<v-card>
-			<v-toolbar class="sticky-title" :color="options.color" dense flat>
+			<v-toolbar
+				class="sticky-title"
+				:color="options.color"
+				density="compact"
+				flat
+			>
 				<v-toolbar-title class="text-white">{{
 					title
 				}}</v-toolbar-title>

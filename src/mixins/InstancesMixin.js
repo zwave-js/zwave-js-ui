@@ -1,5 +1,5 @@
 import { manager, instances } from '../lib/instanceManager'
-import { socketEvents } from '@server/lib/SocketEvents.js'
+import { socketEvents } from '@server/lib/SocketEvents'
 import ConfigApis from '@/apis/ConfigApis'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-floating-promises */
 import chai, { expect } from 'chai'
 import proxyquire from 'proxyquire'
 import { StorageHelper } from '../../api/lib/jsonStore'

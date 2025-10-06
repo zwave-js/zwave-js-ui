@@ -62,7 +62,7 @@ function multerPromise(
 	return new Promise((resolve, reject) => {
 		m(req, res, (err: any) => {
 			if (err) {
-				reject(err)
+				reject(err as Error)
 			} else {
 				resolve()
 			}
@@ -406,7 +406,6 @@ async function startGateway(settings: Settings) {
 					logger: loggers.module(pluginName),
 				}
 				const instance = createPlugin(
-					// eslint-disable-next-line @typescript-eslint/no-var-requires
 					require(plugin) as PluginConstructor,
 					pluginsContext,
 					pluginName,
@@ -599,7 +598,6 @@ const csrfProtection = csrf({
 
 // ### SOCKET SETUP
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {}
 
 /**
@@ -627,7 +625,7 @@ function setupSocket(server: HttpServer) {
 
 		socket.on(
 			inboundEvents.zwave,
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+
 			async (data, cb = noop) => {
 				if (gw.zwave) {
 					if (!data.args) data.args = []
@@ -645,7 +643,6 @@ function setupSocket(server: HttpServer) {
 			},
 		)
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on(inboundEvents.mqtt, (data, cb = noop) => {
 			logger.info(`Mqtt api call: ${data.api}`)
 
@@ -677,7 +674,6 @@ function setupSocket(server: HttpServer) {
 			cb(result)
 		})
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on(inboundEvents.hass, async (data, cb = noop) => {
 			logger.info(`Hass api call: ${data.apiName}`)
 
@@ -731,7 +727,6 @@ function setupSocket(server: HttpServer) {
 			cb(result)
 		})
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on(inboundEvents.zniffer, async (data, cb = noop) => {
 			logger.info(`Zniffer api call: ${data.api}`)
 
@@ -1628,13 +1623,11 @@ async function gracefuShutdown() {
 process.on('uncaughtException', (reason) => {
 	const stack = (reason as any).stack || ''
 	logger.error(
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		`Unhandled Rejection, reason: ${reason}${stack ? `\n${stack}` : ''}`,
 	)
 })
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	process.once(signal as NodeJS.Signals, gracefuShutdown)
 }
 
