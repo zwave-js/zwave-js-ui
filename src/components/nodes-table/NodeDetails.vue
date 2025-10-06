@@ -490,8 +490,8 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import {
 	isUnsupervisedOrSucceeded,
 	ConfigValueFormat,
-	RFRegion,
 } from '@zwave-js/core'
+import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
 
 export default {
 	props: {
@@ -532,12 +532,7 @@ export default {
 	computed: {
 		...mapState(useBaseStore, ['mqtt', 'zwave']),
 		regionSupportsAutoPowerlevel() {
-			return [
-				RFRegion.Europe,
-				RFRegion['Europe (Long Range)'],
-				RFRegion.USA,
-				RFRegion['USA (Long Range)'],
-			].includes(this.node?.RFRegion)
+			return regionSupportsAutoPowerlevel(this.node?.RFRegion)
 		},
 		isAutoPowerLevelEnabled() {
 			return (

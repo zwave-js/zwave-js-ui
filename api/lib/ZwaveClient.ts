@@ -132,6 +132,7 @@ import { socketEvents } from './SocketEvents'
 import { isUint8Array } from 'util/types'
 import { PkgFsBindings } from './PkgFsBindings'
 import { join } from 'path'
+import { regionSupportsAutoPowerlevel } from './shared'
 
 export const deviceConfigPriorityDir = join(storeDir, 'config')
 
@@ -3262,11 +3263,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'
 			> = ['RFRegion']
 
-			const supportsAutoPowerlevel =
-				region === RFRegion.Europe ||
-				region === RFRegion['Europe (Long Range)'] ||
-				region === RFRegion.USA ||
-				region === RFRegion['USA (Long Range)']
+			const supportsAutoPowerlevel = regionSupportsAutoPowerlevel(region)
 
 			// If powerlevels are in auto mode, refresh them after region change
 			if (supportsAutoPowerlevel) {
