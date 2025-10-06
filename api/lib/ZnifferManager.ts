@@ -204,6 +204,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return this.zniffer.capturedFrames.map((frame) => {
 			return this.parseFrame(
 				frame.parsedFrame,
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
 				Buffer.from(frame.frameData),
 				frame.timestamp.getTime(),
 			)
@@ -315,6 +317,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info(`Loading capture from buffer (${buffer.length} bytes)`)
 
 		try {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
 			await this.zniffer.loadCaptureFromBuffer(buffer)
 
 			logger.info(`Successfully loaded capture`)
