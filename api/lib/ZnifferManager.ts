@@ -18,7 +18,6 @@ import { isDocker } from './utils'
 import { basename } from 'path'
 import { readFile } from 'fs/promises'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const loglevels = require('triple-beam').configs.npm.levels
 
 export type ZnifferConfig = Pick<
@@ -37,7 +36,7 @@ export type ZnifferConfig = Pick<
 	defaultFrequency?: number
 }
 
-export interface ZnifferManagerEventCallbacks {}
+export type ZnifferManagerEventCallbacks = Record<string, never>
 
 const logger = module('ZnifferManager')
 
@@ -205,6 +204,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return this.zniffer.capturedFrames.map((frame) => {
 			return this.parseFrame(
 				frame.parsedFrame,
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
 				Buffer.from(frame.frameData),
 				frame.timestamp.getTime(),
 			)
@@ -316,6 +317,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info(`Loading capture from buffer (${buffer.length} bytes)`)
 
 		try {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
 			await this.zniffer.loadCaptureFromBuffer(buffer)
 
 			logger.info(`Successfully loaded capture`)

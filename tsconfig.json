@@ -1,6 +1,8 @@
 {
-  "extends": "@tsconfig/node18/tsconfig.json",
+  "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
+    "moduleResolution": "bundler",
+    "module": "ES2022",
     // Necessary to support yarn portals with the node-modules linker, used by yarn link (berry)
     "preserveSymlinks": true,
     "resolveJsonModule": true,

@@ -21,7 +21,6 @@ import { ensureDir } from 'fs-extra'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'path'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const url = require('native-url')
 
 const logger = module('Mqtt')
