@@ -487,10 +487,7 @@ import { validTopic } from '../../lib/utils'
 import { maxLRPowerLevels } from '../../lib/items'
 import useBaseStore from '../../stores/base.js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
-import {
-	isUnsupervisedOrSucceeded,
-	ConfigValueFormat,
-} from '@zwave-js/core'
+import { isUnsupervisedOrSucceeded, ConfigValueFormat } from '@zwave-js/core'
 import { regionSupportsAutoPowerlevel } from '@server/lib/shared'
 
 export default {

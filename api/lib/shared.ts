@@ -1,5 +1,3 @@
-
-
 import { RFRegion } from 'zwave-js'
 
 export function regionSupportsAutoPowerlevel(region: RFRegion): boolean {
