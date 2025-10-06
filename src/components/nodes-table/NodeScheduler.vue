@@ -17,7 +17,7 @@
 				:items="items"
 				item-key="slotId"
 				:loading="loading"
-				dense
+				density="compact"
 				:mobile-breakpoint="0"
 			>
 				<template #top>

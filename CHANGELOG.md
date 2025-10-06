@@ -1,5 +1,18 @@
 
 
+## [11.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.0...v11.3.1) (2025-09-24)
+
+
+### Bug Fixes
+
+* **ui:** remove useless refresh neighbors call when opening mesh graph ([#4372](https://github.com/zwave-js/zwave-js-ui/issues/4372)) ([aff315d](https://github.com/zwave-js/zwave-js-ui/commit/aff315d500b48ea3cd4a07a69ab477186bbc6732))
+* **ui:** use a v-number-input for colume input ([fb03fb9](https://github.com/zwave-js/zwave-js-ui/commit/fb03fb9d8816b69860338385db482ab583174fe6)), closes [#4387](https://github.com/zwave-js/zwave-js-ui/issues/4387)
+
+
+### Features
+
+* bump zwave-js@15.14.0 ([#4373](https://github.com/zwave-js/zwave-js-ui/issues/4373)) ([20029b3](https://github.com/zwave-js/zwave-js-ui/commit/20029b31a78fbe6453973882c5d93f1dee0e6423))
+
 # [11.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.1...v11.3.0) (2025-09-16)
 
 

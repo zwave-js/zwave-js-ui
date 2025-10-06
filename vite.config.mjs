@@ -5,6 +5,12 @@ import { VitePWA } from 'vite-plugin-pwa'
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import * as pkgJson from './package.json'
 
+import { globSync } from 'glob'
+
+const vuetifyComponents = globSync(
+	'node_modules/vuetify/lib/components/V*',
+).map((file) => file.replace('node_modules/vuetify/lib', 'vuetify'))
+
 const distFolder = path.resolve(__dirname, 'dist')
 
 const proxyScheme = process.env.SERVER_SSL ? 'https' : 'http'
@@ -37,6 +43,15 @@ export default defineConfig(({ mode }) => {
 	process.env.VITE_API_ENDPOINT = proxyURL
 	return {
 		base: './',
+		// Optimize dependencies to prevent reloads during development
+		optimizeDeps: {
+			include: [
+				...vuetifyComponents.filter(
+					// VOverflowBtn has an issue during optimization, see https://github.com/vuetifyjs/vuetify-loader/issues/350#issuecomment-3129253379
+					(dep) => !dep.includes('VOverflowBtn'),
+				),
+			],
+		},
 		plugins: [
 			vue(),
 			vuetify({
@@ -110,7 +125,7 @@ export default defineConfig(({ mode }) => {
 				},
 				{
 					find: /^@server\/(.+)/,
-					replacement: `${path.resolve(__dirname, 'src')}/$1`,
+					replacement: `${path.resolve(__dirname, 'server')}/$1`,
 				},
 			],
 			preserveSymlinks: true,

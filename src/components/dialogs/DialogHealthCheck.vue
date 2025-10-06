@@ -451,7 +451,6 @@ export default {
 			}
 		},
 		onHealthCheckProgress(data) {
-			// eslint-disable-next-line no-unused-vars
 			const { request, round, totalRounds, lastResult } = data
 
 			// prevent showing results of other requests
