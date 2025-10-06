@@ -12,9 +12,7 @@ import uPlot from 'uplot'
 import 'uplot/dist/uPlot.min.css'
 import { isRssiError } from '@zwave-js/core'
 
-// eslint-disable-next-line no-unused-vars
 function touchZoomPlugin(opts) {
-	// eslint-disable-next-line no-unused-vars
 	function init(u, opts, data) {
 		let over = u.over
 		let rect, oxRange, oyRange, xVal, yVal

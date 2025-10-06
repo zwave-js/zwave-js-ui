@@ -465,7 +465,6 @@ export default class Gateway {
 					else if (op.includes('+')) op = op.replace(/\+/, '-')
 					else if (op.includes('-')) op = op.replace(/-/, '+')
 
-					// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 					payload = eval(`${payload}${op}`)
 				}
 
@@ -2438,8 +2437,6 @@ export default class Gateway {
 		let result = null
 
 		try {
-			/* eslint-disable no-new-func */
-			// eslint-disable-next-line @typescript-eslint/no-implied-eval
 			const parseFunc = new Function(
 				'value',
 				'valueId',
