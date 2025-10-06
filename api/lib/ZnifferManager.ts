@@ -205,7 +205,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return this.zniffer.capturedFrames.map((frame) => {
 			return this.parseFrame(
 				frame.parsedFrame,
-				Buffer.from(frame.frameData),
+				frame.frameData,
 				frame.timestamp.getTime(),
 			)
 		})
@@ -316,7 +316,9 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info(`Loading capture from buffer (${buffer.length} bytes)`)
 
 		try {
-			await this.zniffer.loadCaptureFromBuffer(buffer)
+			await this.zniffer.loadCaptureFromBuffer(
+				buffer as unknown as Uint8Array,
+			)
 
 			logger.info(`Successfully loaded capture`)
 		} catch (error) {
