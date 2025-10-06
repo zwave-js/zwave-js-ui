@@ -1,13 +1,13 @@
 <template>
-	<v-dialog v-model="value" max-width="500px" persistent>
+	<v-dialog v-model="_value" max-width="500px" persistent>
 		<v-card>
 			<v-card-title>
-				<span class="headline">Add association</span>
+				<span class="text-h5">Add association</span>
 			</v-card-title>
 
 			<v-card-text>
 				<v-container grid-list-md>
-					<v-form v-model="valid" ref="form" lazy-validation>
+					<v-form v-model="valid" ref="form" validate-on="lazy">
 						<v-row>
 							<v-col cols="12">
 								<v-select
@@ -15,7 +15,7 @@
 									label="Node"
 									required
 									return-object
-									item-text="_name"
+									item-title="_name"
 									:rules="[required]"
 									item-value="id"
 									:items="nodes"
@@ -27,36 +27,39 @@
 									label="Value"
 									required
 									return-object
-									item-text="label"
+									item-title="label"
 									:rules="validValue"
 									item-value="id"
 									:items="editedValue.node.values"
 								>
-									<template v-slot:selection="{ item }">
+									<template #selection="{ item }">
 										{{
-											(item.label || item.id) +
-											(item.endpoint > 1
-												? ' - Endpoint ' + item.endpoint
+											(item.raw.label || item.raw.id) +
+											(item.raw.endpoint > 1
+												? ' - Endpoint ' +
+													item.raw.endpoint
 												: '')
 										}}
 									</template>
-									<template v-slot:item="{ item }">
-										<v-list-item-content>
-											<v-list-item-title>{{
-												(item.label || item.id) +
-												(item.endpoint > 0
+									<template
+										#item="{ item, props: itemProps }"
+									>
+										<v-list-item
+											v-bind="itemProps"
+											:title="
+												(item.raw.label ||
+													item.raw.id) +
+												(item.raw.endpoint > 0
 													? ' - Endpoint ' +
-														item.endpoint
+														item.raw.endpoint
 													: '')
-											}}</v-list-item-title>
-											<v-list-item-subtitle
-												style="max-width: 500px"
-												class="text-truncate text-no-wrap"
-												>{{
-													item.description
-												}}</v-list-item-subtitle
-											>
-										</v-list-item-content>
+											"
+											:subtitle="
+												item.raw.description ||
+												'No description available'
+											"
+										>
+										</v-list-item>
 									</template>
 								</v-select>
 							</v-col>
@@ -84,13 +87,13 @@
 
 			<v-card-actions>
 				<v-spacer></v-spacer>
-				<v-btn color="blue darken-1" text @click="$emit('close')"
+				<v-btn
+					color="blue-darken-1"
+					variant="text"
+					@click="$emit('close')"
 					>Cancel</v-btn
 				>
-				<v-btn
-					color="blue darken-1"
-					text
-					@click="$refs.form.validate() && $emit('save')"
+				<v-btn color="blue-darken-1" variant="text" @click="handleSave"
 					>Save</v-btn
 				>
 			</v-card-actions>
@@ -99,20 +102,32 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
+
 export default {
 	components: {
-		ValueID: () => import('@/components/ValueId.vue'),
+		ValueID: defineAsyncComponent(() => import('@/components/ValueId.vue')),
 	},
 	props: {
-		value: Boolean,
+		modelValue: Boolean,
 		title: String,
 		editedValue: Object,
 		nodes: Array,
 	},
 	watch: {
 		// eslint-disable-next-line no-unused-vars
-		value(val) {
+		modelValue(val) {
 			this.$refs.form && this.$refs.form.resetValidation()
+		},
+	},
+	computed: {
+		_value: {
+			get() {
+				return this.modelValue
+			},
+			set(val) {
+				this.$emit('update:modelValue', val)
+			},
 		},
 	},
 	data() {
@@ -125,6 +140,14 @@ export default {
 				(v) => (v && v.writeable) || 'This value is Read Only',
 			],
 		}
+	},
+	methods: {
+		async handleSave() {
+			const result = await this.$refs.form.validate()
+			if (result.valid) {
+				this.$emit('save')
+			}
+		},
 	},
 }
 </script>

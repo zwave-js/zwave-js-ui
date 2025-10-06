@@ -6,42 +6,8 @@
 			:nodes="nodes"
 			@node-click="nodeClick"
 		/>
-
-		<!-- <v-speed-dial style="left: 100px" bottom fab left fixed v-model="fab">
-			<template v-slot:activator>
-				<v-btn color="blue darken-2" dark fab hover v-model="fab">
-					<v-icon v-if="fab">close</v-icon>
-					<v-icon v-else>add</v-icon>
-				</v-btn>
-			</template>
-			<v-btn fab dark small color="green" @click="debounceRefresh">
-				<v-icon>refresh</v-icon>
-			</v-btn>
-		</v-speed-dial> -->
-
-		<!-- <v-overlay
-			:style="{
-				color: $vuetify.theme.dark ? 'white' : 'black',
-				backgroundColor: $vuetify.theme.dark ? 'black' : 'white',
-			}"
-			opacity="0"
-			z-index="9999"
-			v-if="showFullscreen"
-		>
-			<v-btn
-				style="position: absolute; top: 10px; right: 10px"
-				icon
-				large
-				:color="$vuetify.theme.dark ? 'white' : 'black'"
-				@click="showFullscreen = false"
-			>
-				<v-icon>close</v-icon>
-			</v-btn>
-			<bg-rssi-chart :node="selectedNode" fill-size />
-		</v-overlay> -->
-
 		<node-panel
-			v-if="$vuetify.breakpoint.mdAndUp"
+			v-if="$vuetify.display.mdAndUp"
 			:node="selectedNode"
 			:socket="socket"
 			v-model="showProperties"
@@ -69,7 +35,7 @@
 	position: absolute;
 	top: 150px;
 	left: 30px;
-	background: #ccccccaa;
+	background: v-bind('$vuetify.theme.current.colors.surface');
 	border: 2px solid black;
 	border-radius: 20px;
 	max-width: 500px;
@@ -86,6 +52,7 @@
 </style>
 
 <script>
+import { defineAsyncComponent, nextTick } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import useBaseStore from '../stores/base.js'
 import InstancesMixin from '../mixins/InstancesMixin.js'
@@ -97,8 +64,12 @@ export default {
 		socket: Object,
 	},
 	components: {
-		ZwaveGraph: () => import('@/components/custom/ZwaveGraph.vue'),
-		NodePanel: () => import('@/components/custom/NodePanel.vue'),
+		ZwaveGraph: defineAsyncComponent(
+			() => import('@/components/custom/ZwaveGraph.vue'),
+		),
+		NodePanel: defineAsyncComponent(
+			() => import('@/components/custom/NodePanel.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
@@ -106,10 +77,8 @@ export default {
 	documentListeners: {},
 	data() {
 		return {
-			// fab: false,
 			selectedNode: null,
 			showProperties: false,
-			// refreshTimeout: null,
 		}
 	},
 	methods: {
@@ -199,37 +168,11 @@ export default {
 		async nodeClick(node) {
 			this.selectedNode = this.selectedNode === node ? null : node
 			this.showProperties = !!this.selectedNode
-			if (this.$vuetify.breakpoint.mdAndUp && this.showProperties) {
-				await this.$nextTick()
+			if (this.$vuetify.display.mdAndUp && this.showProperties) {
+				await nextTick()
 				this.makeDivDraggable()
 			}
 		},
-		debounceRefresh() {
-			if (this.refreshTimeout) {
-				clearTimeout(this.refreshTimeout)
-			}
-
-			this.refreshTimeout = setTimeout(this.refresh.bind(this), 500)
-		},
-		async refresh() {
-			const response = await this.app.apiRequest('refreshNeighbors', [], {
-				infoSnack: false,
-				errorSnack: false, // prevent to show error
-			})
-
-			if (response.success) {
-				this.showSnackbar('Nodes Neighbors updated', 'success')
-				this.setNeighbors(response.result)
-			}
-		},
-	},
-	mounted() {
-		this.debounceRefresh()
-	},
-	beforeDestroy() {
-		if (this.refreshTimeout) {
-			clearTimeout(this.refreshTimeout)
-		}
 	},
 }
 </script>

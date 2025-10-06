@@ -3,35 +3,37 @@
 		<v-container fluid class="pa-4">
 			<v-row class="py-4 align-center" no-gutters>
 				<v-col :class="compact ? 'text-center' : 'text-end'">
-					<v-item-group class="v-btn-toggle">
+					<v-btn-group multiple>
 						<v-btn
+							:active="showControllerStatistics"
 							color="primary"
-							outlined
+							variant="outlined"
 							@click="toggleControllerStatistics"
 						>
-							<v-icon left>
+							<v-icon start>
 								{{ statisticsOpeningIndicator }}
 							</v-icon>
 							Controller statistics
-							<v-icon color="primary" right>
+							<v-icon color="primary" end>
 								multiline_chart
 							</v-icon>
 						</v-btn>
 						<v-btn
 							color="primary"
-							v-if="$vuetify.breakpoint.mdAndUp"
-							:outlined="!compactMode"
+							v-if="$vuetify.display.mdAndUp"
+							variant="flat"
+							:active="compactMode"
 							@click.stop="compactMode = !compactMode"
 						>
 							Compact
 						</v-btn>
-					</v-item-group>
+					</v-btn-group>
 				</v-col>
 			</v-row>
 			<v-expand-transition>
 				<v-row v-show="showControllerStatistics">
 					<v-col class="mb-8">
-						<v-sheet outlined rounded>
+						<v-sheet border rounded>
 							<StatisticsCard
 								v-if="!!controllerNode"
 								title="Controller Statistics"
@@ -65,58 +67,19 @@
 			:title="advancedDialogTitle"
 		/>
 
-		<v-speed-dial bottom fab right fixed v-model="fab">
-			<template v-slot:activator>
-				<v-btn
-					:color="selected.length === 0 ? 'blue darken-2' : 'success'"
-					dark
-					fab
-					hover
-					v-model="fab"
-				>
-					<v-icon v-if="fab">close</v-icon>
-					<v-icon v-else>menu</v-icon>
-				</v-btn>
-			</template>
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						fab
-						v-if="selected.length === 0"
-						dark
-						small
-						color="green"
-						@click="showNodesManager()"
-						v-bind="attrs"
-						v-on="on"
-					>
-						<v-icon>all_inclusive</v-icon>
-					</v-btn>
-				</template>
-				<span>Manage nodes</span>
-			</v-tooltip>
-
-			<v-tooltip left>
-				<template v-slot:activator="{ on, attrs }">
-					<v-btn
-						fab
-						dark
-						small
-						color="purple"
-						@click="advancedShowDialog = true"
-						v-bind="attrs"
-						v-on="on"
-					>
-						<v-icon>auto_fix_high</v-icon>
-					</v-btn>
-				</template>
-				<span>Advanced actions</span>
-			</v-tooltip>
-		</v-speed-dial>
+		<base-fab
+			v-model="fab"
+			location="bottom end"
+			:color="selected.length === 0 ? 'primary' : 'success'"
+			icon-open="menu"
+			icon-close="close"
+			:items="fabItems"
+		/>
 	</div>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ConfigApis from '@/apis/ConfigApis'
 import { mapState, mapActions } from 'pinia'
 
@@ -135,13 +98,49 @@ export default {
 	},
 	mixins: [InstancesMixin],
 	components: {
-		NodesTable: () => import('@/components/nodes-table/index.vue'),
-		DialogAdvanced: () => import('@/components/dialogs/DialogAdvanced.vue'),
-		StatisticsCard: () => import('@/components/custom/StatisticsCard.vue'),
-		SmartView: () => import('@/components/nodes-table/SmartView.vue'),
+		NodesTable: defineAsyncComponent(
+			() => import('@/components/nodes-table/index.vue'),
+		),
+		DialogAdvanced: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogAdvanced.vue'),
+		),
+		StatisticsCard: defineAsyncComponent(
+			() => import('@/components/custom/StatisticsCard.vue'),
+		),
+		SmartView: defineAsyncComponent(
+			() => import('@/components/nodes-table/SmartView.vue'),
+		),
+		BaseFab: defineAsyncComponent(
+			() => import('@/components/custom/BaseFab.vue'),
+		),
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
+		fabItems() {
+			const items = []
+
+			// Show "Manage nodes" button only when no nodes are selected
+			if (this.selected.length === 0) {
+				items.push({
+					icon: 'all_inclusive',
+					color: 'success',
+					tooltip: 'Manage nodes',
+					action: () => this.showNodesManager(),
+				})
+			}
+
+			// Always show "Advanced actions" button
+			items.push({
+				icon: 'auto_fix_high',
+				color: 'purple',
+				tooltip: 'Advanced actions',
+				action: () => {
+					this.advancedShowDialog = true
+				},
+			})
+
+			return items
+		},
 		timeoutMs() {
 			return this.zwave.commandsTimeout * 1000 + 800 // add small buffer
 		},
@@ -151,7 +150,7 @@ export default {
 				: 'arrow_drop_down'
 		},
 		compact() {
-			return this.$vuetify.breakpoint.smAndDown || this.compactMode
+			return this.$vuetify.display.smAndDown || this.compactMode
 		},
 		compactMode: {
 			get() {
@@ -234,7 +233,7 @@ export default {
 						},
 					],
 					icon: 'warning',
-					color: 'red',
+					color: 'error',
 					desc: 'Reset controller to factory defaults (all paired devices will be removed)',
 				},
 				{
@@ -301,7 +300,7 @@ export default {
 						},
 					],
 					icon: 'update',
-					color: 'red',
+					color: 'error',
 					desc: 'Perform a firmware update OTW (Over The Wire)',
 				},
 				{
@@ -320,6 +319,25 @@ export default {
 					icon: 'power_off',
 					color: 'warning',
 					desc: 'Allows to shutdown the Zwave API to safely unplug the Zwave stick.',
+				},
+				{
+					text: 'Learn mode',
+					options: [
+						{
+							name: 'Start',
+							action: 'startLearnMode',
+							args: {
+								confirm:
+									'Initiate learn mode on primary controller first and then click OK here.',
+							},
+						},
+						{
+							name: 'Stop',
+							action: 'stopLearnMode',
+						},
+					],
+					icon: 'join_inner',
+					desc: 'Instruct controller to run learning mode (can join pre-existing network)',
 				},
 			],
 			rules: {
@@ -460,7 +478,7 @@ export default {
 			this.setRebuildRoutesProgress.bind(this),
 		)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.socket) {
 			this.unbindEvents()
 		}

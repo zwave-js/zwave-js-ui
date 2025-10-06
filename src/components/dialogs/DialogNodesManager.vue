@@ -2,14 +2,16 @@
 	<v-dialog
 		v-model="isOpen"
 		@keydown.esc="close()"
-		max-width="800px"
+		max-width="1000px"
 		persistent
 	>
 		<v-card :loading="loading">
 			<v-card-title>
-				<span class="headline">Nodes Manager</span>
-				<v-spacer></v-spacer>
-				<v-btn icon @click="close()"><v-icon>clear</v-icon></v-btn>
+				<v-row class="pa-2" align="center">
+					<span class="text-h5">Nodes Manager</span>
+					<v-spacer></v-spacer>
+					<v-btn icon="clear" @click="close()" />
+				</v-row>
 			</v-card-title>
 
 			<v-divider />
@@ -17,22 +19,26 @@
 			<v-card-text v-if="isOpen" class="pa-0">
 				<v-stepper
 					v-model="currentStep"
-					@change="changeStep"
+					@update:model-value="changeStep"
 					elevation="0"
 				>
 					<v-stepper-header>
-						<template v-for="s in steps">
-							<v-stepper-step
-								:key="`${s.key}-step`"
+						<template v-for="s in steps" :key="`${s.key}-step`">
+							<v-stepper-item
 								:complete="currentStep > s.index"
-								:step="s.index"
+								:value="s.index"
+								:color="
+									currentStep > s.index
+										? 'success'
+										: 'primary'
+								"
 								:editable="
 									!['s2Classes', 's2Pin'].includes(s.key) &&
 									!loading
 								"
 							>
 								{{ s.title }}
-							</v-stepper-step>
+							</v-stepper-item>
 
 							<v-divider
 								v-if="s.index !== steps.length"
@@ -41,11 +47,11 @@
 						</template>
 					</v-stepper-header>
 
-					<v-stepper-items>
-						<v-stepper-content
+					<v-stepper-window>
+						<v-stepper-window-item
 							v-for="s in steps"
 							:key="`${s.key}-content`"
-							:step="s.index"
+							:value="s.index"
 						>
 							<v-card ref="content" elevation="0">
 								<v-card-text v-if="s.key == 'action'">
@@ -57,11 +63,11 @@
 											:disabled="state === 'start'"
 											:value="0"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
-														color="green accent-4"
-														small
+														color="success"
+														size="small"
 														>add_circle</v-icon
 													>
 													<strong>Inclusion</strong>
@@ -76,11 +82,11 @@
 											:disabled="state === 'start'"
 											:value="1"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
-														color="amber accent-4"
-														small
+														color="amber-accent-4"
+														size="small"
 														>autorenew</v-icon
 													>
 													<strong>Replace</strong>
@@ -95,11 +101,11 @@
 											:disabled="state === 'start'"
 											:value="2"
 										>
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
-														color="red accent-4"
-														small
+														color="error"
+														size="small"
 														>remove_circle</v-icon
 													>
 													<strong>Exclusion</strong>
@@ -116,6 +122,7 @@
 										<v-btn
 											v-if="state !== 'start'"
 											color="primary"
+											variant="flat"
 											@click.stop="nextStep"
 											class="next-btn"
 											@keypress.enter="nextStep"
@@ -125,6 +132,7 @@
 
 										<v-btn
 											v-else
+											variant="flat"
 											color="error"
 											class="next-btn"
 											@click="stopAction"
@@ -147,10 +155,11 @@
 										chips
 										hint="Failed node to remove. Write the node Id and press enter if not present"
 										persistent-hint
-										item-text="_name"
+										item-title="_name"
 									></v-combobox>
 									<v-card-actions>
 										<v-btn
+											variant="flat"
 											color="primary"
 											@click.stop="nextStep"
 											class="next-btn"
@@ -165,7 +174,7 @@
 									<v-form
 										ref="namingForm"
 										v-model="validNaming"
-										lazy-validation
+										validate-on="lazy"
 										@submit.prevent
 									>
 										<p>
@@ -195,7 +204,7 @@
 
 									<v-card-actions>
 										<v-btn
-											:disabled="!validNaming"
+											variant="flat"
 											color="primary"
 											@click.stop="submitNameLoc"
 											class="next-btn"
@@ -207,107 +216,127 @@
 								</v-card-text>
 
 								<v-card-text v-if="s.key == 'inclusionMode'">
-									<v-radio-group
-										v-if="!loading"
-										v-model="s.values.inclusionMode"
-										mandatory
-									>
-										<missing-keys-alert />
-										<v-radio
-											:value="InclusionStrategy.Default"
+									<div v-if="!loading">
+										<v-radio-group
+											:modelValue="s.values.inclusionMode"
+											@update:modelValue="
+												setInclusionMode
+											"
+											mandatory
 										>
-											<template v-slot:label>
-												<div class="option">
-													<v-icon
-														color="green accent-4"
-														small
-														>add_circle</v-icon
-													>
-													<strong>Default</strong>
-													<small
-														>S2 when supported, S0
-														only when necessary, no
-														encryption otherwise.
-														Requires user
-														interaction</small
-													>
-												</div>
-											</template>
-										</v-radio>
+											<missing-keys-alert />
+											<v-radio
+												:value="
+													InclusionStrategy.Default
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="success"
+															size="small"
+															>add_circle</v-icon
+														>
+														<strong>Default</strong>
+														<small
+															>S2 when supported,
+															S0 only when
+															necessary, no
+															encryption
+															otherwise. Requires
+															user
+															interaction</small
+														>
+													</div>
+												</template>
+											</v-radio>
+											<v-radio
+												:value="
+													InclusionStrategy.SmartStart
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="primary"
+															size="small"
+															>smart_button</v-icon
+														>
+														<strong
+															>Scan QR
+															Code</strong
+														>
+														<small
+															>S2 only. Allows
+															pre-configuring the
+															device inclusion
+															settings, which will
+															then happen without
+															user
+															interaction</small
+														>
+													</div>
+												</template>
+											</v-radio>
+											<v-radio
+												:value="
+													InclusionStrategy.Security_S0
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="amber-accent-4"
+															size="small"
+															>lock</v-icon
+														>
+														<strong
+															>S0
+															encryption</strong
+														>
+														<small
+															>Use S0
+															encryption</small
+														>
+													</div>
+												</template>
+											</v-radio>
+											<v-radio
+												:value="
+													InclusionStrategy.Insecure
+												"
+											>
+												<template #label>
+													<div class="option">
+														<v-icon
+															color="error"
+															size="small"
+															>no_encryption</v-icon
+														>
+														<strong
+															>No
+															encryption</strong
+														>
+														<small
+															>Do not use
+															encryption</small
+														>
+													</div>
+												</template>
+											</v-radio>
+										</v-radio-group>
+
 										<v-checkbox
-											class="mt-0 ml-5"
+											v-if="
+												s.values.inclusionMode ==
+												InclusionStrategy.Default
+											"
+											class="mb-2"
 											v-model="s.values.forceSecurity"
-											label="Force Security"
-											hint="Prefer S0 over no encryption"
-											persistent-hint
+											label="Prefer S0 over no encryption"
+											hide-details
 										></v-checkbox>
-										<v-radio
-											:value="
-												InclusionStrategy.SmartStart
-											"
-										>
-											<template v-slot:label>
-												<div class="option">
-													<v-icon
-														color="primary"
-														small
-														>smart_button</v-icon
-													>
-													<strong
-														>Scan QR Code</strong
-													>
-													<small
-														>S2 only. Allows
-														pre-configuring the
-														device inclusion
-														settings, which will
-														then happen without user
-														interaction</small
-													>
-												</div>
-											</template>
-										</v-radio>
-										<v-radio
-											:value="
-												InclusionStrategy.Security_S0
-											"
-										>
-											<template v-slot:label>
-												<div class="option">
-													<v-icon
-														color="amber accent-4"
-														small
-														>lock</v-icon
-													>
-													<strong
-														>S0 encryption</strong
-													>
-													<small
-														>Use S0
-														encryption</small
-													>
-												</div>
-											</template>
-										</v-radio>
-										<v-radio
-											:value="InclusionStrategy.Insecure"
-										>
-											<template v-slot:label>
-												<div class="option">
-													<v-icon color="error" small
-														>no_encryption</v-icon
-													>
-													<strong
-														>No encryption</strong
-													>
-													<small
-														>Do not use
-														encryption</small
-													>
-												</div>
-											</template>
-										</v-radio>
-									</v-radio-group>
+									</div>
 
 									<v-col
 										v-else
@@ -321,20 +350,20 @@
 										>
 										<p
 											v-if="state === 'start'"
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										>
 											Inclusion is started. Please put
 											your device in INCLUSION MODE
 										</p>
 										<p
 											v-else-if="nvmProgress > 0"
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										>
 											Waiting for NVM Backup...
 										</p>
 										<p
 											v-else
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										>
 											Inclusion stopped. Checking for
 											changes...
@@ -344,6 +373,7 @@
 									<v-card-actions>
 										<v-btn
 											v-if="!loading"
+											variant="flat"
 											color="primary"
 											@click.stop="nextStep"
 											class="next-btn"
@@ -353,6 +383,7 @@
 										</v-btn>
 										<v-btn
 											v-if="state === 'start'"
+											variant="flat"
 											color="error"
 											@click="stopAction"
 										>
@@ -370,11 +401,11 @@
 										mandatory
 									>
 										<v-radio :value="1">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="primary"
-														small
+														size="small"
 														>smart_button</v-icon
 													>
 													<strong
@@ -389,11 +420,11 @@
 											</template>
 										</v-radio>
 										<v-radio :value="4">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
-														color="green accent-4"
-														small
+														color="success"
+														size="small"
 														>enhanced_encryption</v-icon
 													>
 													<strong>S2</strong>
@@ -402,11 +433,11 @@
 											</template>
 										</v-radio>
 										<v-radio :value="3">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
 														color="primary"
-														small
+														size="small"
 														>lock</v-icon
 													>
 													<strong>S0</strong>
@@ -415,11 +446,11 @@
 											</template>
 										</v-radio>
 										<v-radio :value="2">
-											<template v-slot:label>
+											<template #label>
 												<div class="option">
 													<v-icon
-														color="amber accent-4"
-														small
+														color="amber-accent-4"
+														size="small"
 														>no_encryption</v-icon
 													>
 													<strong
@@ -444,7 +475,7 @@
 												primary"
 											>all_inclusive</v-icon
 										>
-										<p class="mt-3 headline text-center">
+										<p class="mt-3 text-h5 text-center">
 											Inclusion is started. Please put
 											your device in INCLUSION MODE
 										</p>
@@ -453,6 +484,7 @@
 									<v-card-actions>
 										<v-btn
 											v-if="!loading"
+											variant="flat"
 											color="primary"
 											@click.stop="nextStep"
 											class="next-btn"
@@ -462,6 +494,7 @@
 										</v-btn>
 										<v-btn
 											v-if="state === 'start'"
+											variant="flat"
 											color="error"
 											@click="stopAction"
 										>
@@ -525,6 +558,7 @@
 										<v-card-actions>
 											<v-btn
 												v-if="!aborted"
+												variant="flat"
 												color="primary"
 												@click.stop="nextStep"
 												class="next-btn"
@@ -535,6 +569,7 @@
 
 											<v-btn
 												color="error"
+												variant="flat"
 												@click="abortInclusion"
 											>
 												Abort
@@ -548,7 +583,7 @@
 												indeterminate
 												color="primary"
 											></v-progress-circular>
-											<p class="mt-3 headline">
+											<p class="mt-3 text-h5">
 												Waiting response from node...
 											</p>
 										</v-col>
@@ -565,13 +600,13 @@
 											hint="Enter the 5-digit PIN for your device and verify that the rest of digits matches the one that can be found on your device manual"
 											inputmode="numeric"
 											v-model.trim="s.values.pin"
-											validate-on-blur
+											validate-on="blur"
 											:error="
 												!!s.values.pin &&
 												validPin(s.values.pin) !== true
 											"
 											:suffix="
-												$vuetify.breakpoint.xsOnly
+												$vuetify.display.xs
 													? ''
 													: s.suffix
 											"
@@ -580,7 +615,7 @@
 
 										<code
 											class="code font-weight-bold"
-											v-if="$vuetify.breakpoint.xsOnly"
+											v-if="$vuetify.display.xs"
 										>
 											{{ s.suffix }}
 										</code>
@@ -588,6 +623,7 @@
 										<v-card-actions>
 											<v-btn
 												v-if="!aborted"
+												variant="flat"
 												color="primary"
 												:disabled="
 													validPin(s.values.pin) !==
@@ -602,6 +638,7 @@
 
 											<v-btn
 												color="error"
+												variant="flat"
 												@click="abortInclusion"
 											>
 												Abort
@@ -615,7 +652,7 @@
 												indeterminate
 												color="primary"
 											></v-progress-circular>
-											<p class="mt-3 headline">
+											<p class="mt-3 text-h5">
 												Waiting response from node...
 											</p>
 										</v-col>
@@ -641,24 +678,24 @@
 										>
 										<p
 											v-text="s.text"
-											class="mt-3 headline text-center"
+											class="mt-3 text-h5 text-center"
 										></p>
 										<p
 											v-if="s.error"
 											v-text="s.error"
-											class="headline text-center error--text"
+											class="text-h5 text-center text-error"
 										></p>
 									</v-col>
 								</v-card-text>
 							</v-card>
-						</v-stepper-content>
-					</v-stepper-items>
+						</v-stepper-window-item>
+					</v-stepper-window>
 				</v-stepper>
 
 				<v-alert
 					class="mt-3 mb-0"
 					v-if="alert"
-					dense
+					density="compact"
 					text
 					:type="alert.type"
 					>{{ alert.text }}</v-alert
@@ -669,6 +706,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapState } from 'pinia'
 import { tryParseDSKFromQRCodeString } from '@zwave-js/core'
 
@@ -681,13 +719,16 @@ import {
 import useBaseStore from '../../stores/base.js'
 import { InclusionStrategy, SecurityBootstrapFailure } from 'zwave-js'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
+import { nextTick } from 'vue'
 
 export default {
 	props: {
 		socket: Object,
 	},
 	components: {
-		MissingKeysAlert: () => import('../custom/MissingKeysAlert.vue'),
+		MissingKeysAlert: defineAsyncComponent(
+			() => import('../custom/MissingKeysAlert.vue'),
+		),
 	},
 	mixins: [InstancesMixin],
 	data() {
@@ -891,13 +932,23 @@ export default {
 
 		window.addEventListener('keydown', this.onKeypressed)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.init(false)
 		window.removeEventListener('keydown', this.onKeypressed)
 	},
 	methods: {
-		submitNameLoc() {
-			if (this.$refs.namingForm[0].validate()) {
+		setInclusionMode(v) {
+			const s = this.steps[this.currentStep - 1]
+			if (typeof v !== 'number') {
+				s.values.forceSecurity = v
+				return
+			}
+
+			s.values.inclusionMode = v
+		},
+		async submitNameLoc() {
+			const result = await this.$refs.namingForm[0].validate()
+			if (result.valid) {
 				this.nextStep()
 			}
 		},
@@ -1244,7 +1295,7 @@ export default {
 			this.alert = null
 			const newStep = copy(s)
 			this.steps.push(newStep)
-			await this.$nextTick()
+			await nextTick()
 			this.currentStep = newStep.index
 
 			return newStep

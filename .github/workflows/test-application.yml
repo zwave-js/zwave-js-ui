@@ -1,0 +1,109 @@
+name: Test Application
+
+on:
+    push:
+        branches:
+            - master
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    test-e2e:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Set up Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: 'npm'
+
+            - name: Install dependencies
+              run: npm ci
+
+            - name: Spawn fake stick
+              run: |
+                  nohup npm run fake-stick &
+
+            - name: Create settings.json
+              run: |
+                  echo '{
+                    "zwave": {
+                      "port": "tcp://127.0.0.1:5555",
+                      "enabled": true,
+                      "logLevel": "debug",
+                      "logEnabled": true,
+                       "logToFile": true,
+                       "serverEnabled": true
+                    },
+                    "mqtt": {
+                        "name": "zwavejs2mqtt",
+                        "host": "127.0.0.1",
+                        "port": 1883,
+                        "qos": 1,
+                        "prefix": "zwave",
+                        "reconnectPeriod": 3000,
+                        "retain": true,
+                        "clean": true,
+                        "disabled": false
+                    },
+                    "gateway": {
+                        "type": 0,
+                        "payloadType": 0,
+                        "nodeNames": true,
+                        "hassDiscovery": true,
+                        "discoveryPrefix": "homeassistant",
+                        "logEnabled": true,
+                        "logLevel": "debug",
+                        "logToFile": true
+                    },
+                    "backup": {
+                        "storeBackup": true,
+                        "storeCron": "10 9 * * *",
+                        "storeKeep": 7,
+                        "nvmBackup": true,
+                        "nvmBackupOnEvent": false,
+                        "nvmCron": "19 9 * * *",
+                        "nvmKeep": 7,
+                        "enabled": true,
+                        "cron": "0 * * * *",
+                        "keep": 2
+                    }
+                  }' > store/settings.json
+            
+            
+            - name: Start Broker container
+              run: |
+                  docker run -d --name broker --network="host" eclipse-mosquitto:latest
+                  
+            - name: Start backend
+              run: |
+                  nohup npm run server > server.log 2>&1 &
+                  sleep 25
+            
+            - name: Test MQTT write and read
+              timeout-minutes: 1
+              run: |
+                  docker exec broker mosquitto_pub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/targetValue/3/set" -m "1"
+                  docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1
+
+            - name: Output backend logs
+              run: |
+                sleep 5
+                cat server.log
+            
+            - name: Output broker logs
+              run: |
+                  docker logs broker
+
+            - name: Ensure backend is running
+              run: |
+                  if ! pgrep -f "npm run server" > /dev/null; then
+                    echo "Backend crashed!" && exit 1
+                  fi
+                  echo "Backend is running successfully."
+
+           

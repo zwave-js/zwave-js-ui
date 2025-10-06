@@ -3,10 +3,10 @@
 		v-if="items.length > 0"
 		ref="treeview"
 		open-all
-		dense
+		density="compact"
 		:items="items"
 	>
-		<template v-slot:label="{ item }">
+		<template #title="{ item }">
 			<v-row class="ma-0 pa-0" dense>
 				<strong class="tree-item-name" style="white-space: pre-wrap">{{
 					item.name
@@ -29,7 +29,7 @@
 			<div
 				:style="{
 					border: level === 0 ? 'none' : '',
-					borderColor: $vuetify.theme.dark ? '#ccc' : '#333',
+					borderColor: $vuetify.theme.current.dark ? '#ccc' : '#333',
 				}"
 				class="tree-item-label"
 			>
@@ -45,12 +45,14 @@
 				</div>
 			</div>
 			<div class="tree-item-children"></div>
-			<CCTreeView :value="item.children" :level="level + 1" />
+			<CCTreeView :modelValue="item.children" :level="level + 1" />
 		</div>
 	</div> -->
 </template>
 
 <script>
+import { nextTick } from 'vue'
+
 /**
  * The format of the `entry` will be an object like:
  * interface FrameCCLogEntry {
@@ -86,7 +88,7 @@
 export default {
 	name: 'CCTreeView',
 	props: {
-		value: {
+		modelValue: {
 			type: [Object, Array],
 			default: () => ({}),
 		},
@@ -99,16 +101,17 @@ export default {
 		items: [],
 	}),
 	watch: {
-		value: {
+		modelValue: {
 			immediate: true,
+			deep: true,
 			handler() {
-				if (Array.isArray(this.value)) {
-					this.items = this.value
+				if (Array.isArray(this.modelValue)) {
+					this.items = this.modelValue
 				} else {
 					// trick used to reset the treeview and expand all nodes on change
 					this.items = []
-					this.$nextTick(() => {
-						this.items = this.parseEntry(this.value)
+					nextTick(() => {
+						this.items = this.parseEntry(this.modelValue)
 					})
 				}
 			},
@@ -183,7 +186,7 @@ export default {
 	padding-left: 5px;
 }
 
-.v-treeview::v-deep .v-treeview-node__root {
+.v-treeview :deep(.v-treeview-node__root) {
 	min-height: 20px;
 }
 </style>

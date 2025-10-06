@@ -3,7 +3,7 @@
 		<v-row align="center" justify="center">
 			<v-col cols="12" sm="8" md="4">
 				<v-card class="elevation-12">
-					<v-toolbar dark color="primary">
+					<v-toolbar color="primary">
 						<v-btn icon @click="$router.go(-2)">
 							<v-icon>arrow_back</v-icon>
 						</v-btn>
@@ -19,7 +19,7 @@
 						<v-container fill-height text-xs-center>
 							<v-row justify="center">
 								<v-col>
-									<strong class="headline font-weight-bold">
+									<strong class="text-h5 font-weight-bold">
 										Error while requesting resource at
 										<code>{{ query.path }}</code>
 									</strong>

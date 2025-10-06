@@ -5,7 +5,6 @@ import {
 	isRssiError,
 	rssiToString,
 } from '@zwave-js/core'
-import colors from 'vuetify/lib/util/colors'
 
 import { getEnumMemberName } from '@zwave-js/shared'
 import { ZWaveFrameType, LongRangeFrameType } from 'zwave-js'
@@ -107,11 +106,6 @@ export function validDsk(dsk) {
 	return isValidDSK(dsk) || 'Code not valid'
 }
 
-// Does something like vue $set: https://github.com/vuejs/vue/blob/edf7df0c837557dd3ea8d7b42ad8d4b21858ade0/dist/vue.common.dev.js#L1058
-export function $set(o, p, v) {
-	return Object.assign(o, { [p]: v })
-}
-
 export function jsonToList(obj, options = {}, level = 0) {
 	if (obj === null || obj === undefined) {
 		return ''
@@ -203,14 +197,14 @@ export function getProtocol(node) {
 	}
 }
 
-export function getProtocolColor(node) {
+export function getProtocolColor(node, currentTheme) {
 	switch (node.protocol) {
 		case Protocols.ZWave:
-			return colors.blue.base
+			return currentTheme.info
 		case Protocols.ZWaveLongRange:
-			return colors.purple.base
+			return currentTheme.purple
 		default:
-			return colors.grey.base
+			return 'grey'
 	}
 }
 
@@ -320,7 +314,7 @@ export function isPopupWindow() {
 	return window.opener !== null && window.opener !== window
 }
 
-export function getProtocolIcon(protocol) {
+export function getProtocolIcon(protocol, currentTheme) {
 	if (typeof protocol === 'boolean') {
 		protocol = protocol ? Protocols.ZWaveLongRange : Protocols.ZWave
 	}
@@ -328,9 +322,12 @@ export function getProtocolIcon(protocol) {
 	return {
 		align: 'center',
 		icon: mdiZWave,
-		iconStyle: `color: ${getProtocolColor({
-			protocol,
-		})}`,
+		iconStyle: `color: ${getProtocolColor(
+			{
+				protocol,
+			},
+			currentTheme,
+		)}`,
 		description: getProtocol({ protocol }),
 	}
 }

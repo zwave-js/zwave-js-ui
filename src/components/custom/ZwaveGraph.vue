@@ -2,53 +2,53 @@
 	<div class="fill-height">
 		<v-expansion-panels v-model="openPanel">
 			<v-expansion-panel>
-				<v-expansion-panel-header> Options </v-expansion-panel-header>
-				<v-expansion-panel-content>
+				<v-expansion-panel-title> Options </v-expansion-panel-title>
+				<v-expansion-panel-text>
 					<v-row>
 						<v-col>
-							<v-subheader>Legend</v-subheader>
-							<v-list dense>
+							<v-list-subheader>Legend</v-list-subheader>
+							<v-list density="compact">
 								<v-list-item
 									v-for="(item, i) in legends"
 									:key="i"
 								>
-									<v-list-item-icon>
+									<template #prepend>
 										<v-icon :color="item.color">{{
 											item.icon || 'turned_in'
 										}}</v-icon>
-									</v-list-item-icon>
-									<v-list-item-content>
-										<v-list-item-title
-											:style="{ color: item.textColor }"
-											v-text="item.text"
-										></v-list-item-title>
-									</v-list-item-content>
+									</template>
+
+									<v-list-item-title
+										:style="{ color: item.textColor }"
+									>
+										{{ item.text }}</v-list-item-title
+									>
 								</v-list-item>
 							</v-list>
 						</v-col>
 						<v-col>
-							<v-subheader>Edges</v-subheader>
-							<v-list dense>
+							<v-list-subheader>Edges</v-list-subheader>
+							<v-list density="compact">
 								<v-list-item
 									v-for="(item, i) in edgesLegend"
 									:key="i"
 								>
-									<v-list-item-icon>
+									<template #prepend>
 										<v-icon :color="item.color">{{
 											item.icon || 'turned_in'
 										}}</v-icon>
-									</v-list-item-icon>
-									<v-list-item-content>
-										<v-list-item-title
-											:style="{ color: item.textColor }"
-											v-text="item.text"
-										></v-list-item-title>
-									</v-list-item-content>
+									</template>
+
+									<v-list-item-title
+										:style="{ color: item.textColor }"
+									>
+										{{ item.text }}
+									</v-list-item-title>
 								</v-list-item>
 							</v-list>
 						</v-col>
 						<v-col>
-							<v-subheader>Filters</v-subheader>
+							<v-list-subheader>Filters</v-list-subheader>
 
 							<v-autocomplete
 								:items="locations"
@@ -57,38 +57,28 @@
 								label="Locations filter"
 								clearable
 								chips
-								deletable-chips
-								solo
+								closable-chips
+								variant="solo"
 							>
-								<template slot="append-outer">
-									<v-tooltip bottom>
-										<template
-											v-slot:activator="{ on, attrs }"
-										>
-											<v-btn
-												v-bind="attrs"
-												v-on="on"
-												@click="
-													invertLocationsFilter =
-														!invertLocationsFilter
-												"
-												icon
-												:color="
-													invertLocationsFilter
-														? 'primary'
-														: ''
-												"
-												:class="
-													invertLocationsFilter
-														? 'border-primary'
-														: ''
-												"
-											>
-												<v-icon>loop</v-icon>
-											</v-btn>
-										</template>
-										<span>Invert selection</span>
-									</v-tooltip>
+								<template #append>
+									<v-btn
+										v-tooltip:bottom="'Invert selection'"
+										@click="
+											invertLocationsFilter =
+												!invertLocationsFilter
+										"
+										icon="loop"
+										:color="
+											invertLocationsFilter
+												? 'primary'
+												: ''
+										"
+										:class="
+											invertLocationsFilter
+												? 'border-primary'
+												: ''
+										"
+									/>
 								</template>
 							</v-autocomplete>
 
@@ -98,41 +88,29 @@
 								multiple
 								label="Nodes filter"
 								clearable
-								item-text="_name"
+								item-title="_name"
 								item-value="id"
 								chips
-								deletable-chips
-								solo
+								closable-chips
+								variant="solo"
 							>
-								<template slot="append-outer">
-									<v-tooltip bottom>
-										<template
-											v-slot:activator="{ on, attrs }"
-										>
-											<v-btn
-												v-bind="attrs"
-												v-on="on"
-												@click="
-													invertNodesFilter =
-														!invertNodesFilter
-												"
-												icon
-												:color="
-													invertNodesFilter
-														? 'primary'
-														: ''
-												"
-												:class="
-													invertNodesFilter
-														? 'border-primary'
-														: ''
-												"
-											>
-												<v-icon>loop</v-icon>
-											</v-btn>
-										</template>
-										<span>Invert selection</span>
-									</v-tooltip>
+								<template #append>
+									<v-btn
+										v-tooltip:bottom="'Invert selection'"
+										@click="
+											invertNodesFilter =
+												!invertNodesFilter
+										"
+										icon="loop"
+										:color="
+											invertNodesFilter ? 'primary' : ''
+										"
+										:class="
+											invertNodesFilter
+												? 'border-primary'
+												: ''
+										"
+									/>
 								</template>
 							</v-autocomplete>
 
@@ -148,11 +126,7 @@
 								:disabled="selectedNodes.length === 0"
 							></v-checkbox>
 
-							<v-badge
-								color="error"
-								overlap
-								v-model="shouldReload"
-							>
+							<v-badge color="error" v-model="shouldReload">
 								<v-btn color="primary" @click="paintGraph">
 									Reload graph
 								</v-btn>
@@ -171,7 +145,7 @@
 						</v-col>
 
 						<!-- <v-col>
-							<v-subheader>Grouping</v-subheader>
+							<v-list-subheader>Grouping</v-list-subheader>
 
 							<v-radio-group v-model="grouping">
 								<v-radio
@@ -183,7 +157,7 @@
 							</v-radio-group>
 						</v-col> -->
 					</v-row>
-				</v-expansion-panel-content>
+				</v-expansion-panel-text>
 			</v-expansion-panel>
 		</v-expansion-panels>
 
@@ -214,67 +188,65 @@
 					ref="content"
 				></div>
 				<v-menu
-					v-model="menu"
+					v-model="showMenu"
 					:close-on-content-click="false"
-					:position-x="menuX"
-					:position-y="menuY"
+					location="bottom left"
+					:style="{
+						position: 'fixed',
+						left: menuX + 'px',
+						top: menuY + 'px',
+					}"
 				>
 					<v-card v-if="hoverNode">
-						<v-subheader class="font-weight-bold">{{
+						<v-list-subheader class="ml-2 font-weight-bold">{{
 							hoverNode._name
-						}}</v-subheader>
+						}}</v-list-subheader>
 
 						<v-divider></v-divider>
 
 						<v-list
 							style="min-width: 300px; background: transparent"
-							dense
+							density="compact"
 							class="pa-0 text-caption"
 						>
-							<v-list-item dense>
-								<v-list-item-content>ID</v-list-item-content>
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{ hoverNode.id }}</v-list-item-content
-								>
+							<v-list-item density="compact">
+								ID
+								<template #append>
+									<span class="align-end font-weight-bold">{{
+										hoverNode.id
+									}}</span>
+								</template>
 							</v-list-item>
-							<v-list-item dense>
-								<v-list-item-content
-									>Product</v-list-item-content
-								>
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{
+							<v-list-item density="compact">
+								Product
+								<template #append>
+									<span class="align-end font-weight-bold">{{
 										hoverNode.productLabel +
 										(hoverNode.productDescription
 											? ' (' +
 												hoverNode.productDescription +
 												')'
 											: '')
-									}}</v-list-item-content
-								>
+									}}</span>
+								</template>
 							</v-list-item>
-							<v-list-item dense>
-								<v-list-item-content>Power</v-list-item-content>
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{
+							<v-list-item density="compact">
+								Power
+								<template #append>
+									<span class="align-end font-weight-bold">{{
 										hoverNode.minBatteryLevel
 											? hoverNode.minBatteryLevel + '%'
 											: 'MAIN'
-									}}</v-list-item-content
-								>
+									}}</span>
+								</template>
 							</v-list-item>
-							<v-list-item dense>
-								<v-list-item-content
-									>Neighbors</v-list-item-content
-								>
-								<v-list-item-content
-									class="align-end font-weight-bold"
-									>{{
+							<v-list-item density="compact">
+								Neighbors
+								<template #append>
+									<span class="align-end font-weight-bold">{{
 										hoverNode.neighbors.join(', ') || 'None'
-									}}</v-list-item-content
-								>
+									}}</span>
+								</template>
 							</v-list-item>
 						</v-list>
 					</v-card>
@@ -322,7 +294,7 @@ export default {
 			return this.isDark ? '#ddd' : '#333'
 		},
 		isDark() {
-			return this.$vuetify.theme.dark
+			return this.$vuetify.theme.current.dark
 		},
 		locations() {
 			// get unique locations array from nodes
@@ -378,7 +350,7 @@ export default {
 			showApplicationRoutes: true,
 			menuX: 0,
 			menuY: 0,
-			menu: false,
+			showMenu: false,
 			hoverNode: null,
 			liveUpdate: false,
 			shouldReload: false,
@@ -565,7 +537,7 @@ export default {
 			}
 		})
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		if (this.refreshTimeout) {
 			clearTimeout(this.refreshTimeout)
 		}
@@ -586,7 +558,7 @@ export default {
 		onResize() {
 			// when container resizes get its height and set content to that
 			// so that the graph can be resized
-			this.containerHeight = this.$refs.container.offsetHeight
+			this.containerHeight = this.$refs.container.$el.offsetHeight
 			const maxHeight = window.innerHeight - 180
 			// prevent to grow bigger then window height
 			if (this.containerHeight > maxHeight) {
@@ -915,7 +887,7 @@ export default {
 					this.hoverNode = item
 					this.menuX = event.clientX + 5
 					this.menuY = event.clientY + 5
-					this.menu = true
+					this.showMenu = true
 					this.hoverNodeTimeout = null
 				}, 1000)
 			}
@@ -926,7 +898,7 @@ export default {
 				this.hoverNodeTimeout = null
 			} else {
 				// hide menu
-				this.menu = false
+				this.showMenu = false
 				this.hoverNode = null
 			}
 		},

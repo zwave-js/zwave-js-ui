@@ -16,6 +16,7 @@ import { logsDir, storeDir } from '../config/app'
 import { buffer2hex, joinPath, parseSecurityKeys } from './utils'
 import { isDocker } from './utils'
 import { basename } from 'path'
+import { readFile } from 'fs/promises'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const loglevels = require('triple-beam').configs.npm.levels
@@ -336,9 +337,14 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info(`Saving capture to ${filePath}`)
 		await this.zniffer.saveCaptureToFile(filePath)
 		logger.info('Capture saved')
+
+		// Read the saved file to return its content for download
+		const data = await readFile(filePath)
+
 		return {
 			path: filePath,
 			name: basename(filePath),
+			data: data,
 		}
 	}
 }

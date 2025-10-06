@@ -33,7 +33,7 @@ const store: Record<StoreKeys, StoreFile> = {
 				deviceConfigPriorityDir,
 				enableSoftReset: true,
 			},
-		},
+		} satisfies Settings,
 	},
 	scenes: { file: 'scenes.json', default: [] },
 	nodes: { file: 'nodes.json', default: {} },

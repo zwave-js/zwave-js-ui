@@ -1,15 +1,15 @@
 <template>
-	<v-tooltip bottom>
-		<template v-slot:activator="{ on }">
-			<center v-on="on">
+	<v-tooltip location="bottom">
+		<template #activator="{ props }">
+			<div v-bind="props" class="center-content">
 				<blink-icon
 					icon="north"
-					:activeColor="node.errorTransmit ? 'error' : 'green'"
+					:activeColor="node.errorTransmit ? 'error' : 'success'"
 					:active="now - node.lastTransmit < 200"
 				/>
 				<blink-icon
 					icon="south"
-					:activeColor="node.errorReceive ? 'error' : 'green'"
+					:activeColor="node.errorReceive ? 'error' : 'success'"
 					:active="now - node.lastReceive < 200"
 				/>
 				<div class="text-caption">
@@ -21,7 +21,7 @@
 						}}
 					</i>
 				</div>
-			</center>
+			</div>
 		</template>
 		<span style="white-space: pre-wrap">{{
 			node.statistics ? jsonToList(node.statistics) : '-----'
@@ -30,6 +30,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { jsonToList } from '@/lib/utils'
 import { mapActions } from 'pinia'
 import useBaseStore from '../../stores/base.js'
@@ -42,7 +43,9 @@ export default {
 		},
 	},
 	components: {
-		BlinkIcon: () => import('@/components/custom/BlinkIcon.vue'),
+		BlinkIcon: defineAsyncComponent(
+			() => import('@/components/custom/BlinkIcon.vue'),
+		),
 	},
 	data() {
 		return {
@@ -64,10 +67,14 @@ export default {
 			this.now = Date.now()
 		}, 200)
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		clearInterval(this.nowInterval)
 	},
 }
 </script>
 
-<style></style>
+<style scoped>
+.center-content {
+	text-align: center;
+}
+</style>

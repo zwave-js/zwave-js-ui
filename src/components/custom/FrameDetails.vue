@@ -1,35 +1,35 @@
 <template>
-	<v-row v-if="value">
+	<v-row v-if="modelValue">
 		<v-col>
-			<v-simple-table class="frame-details" dense>
-				<template v-slot:default>
+			<v-table class="frame-details" density="compact">
+				<template #default>
 					<tbody>
 						<tr>
 							<td>Type</td>
-							<td>{{ getType(value) }}</td>
+							<td>{{ getType(modelValue) }}</td>
 						</tr>
 						<tr>
 							<td>Protocol</td>
-							<td>{{ getProtocol(value) }}</td>
+							<td>{{ getProtocol(modelValue) }}</td>
 						</tr>
 						<tr>
 							<td>Channel</td>
-							<td>{{ value.channel }}</td>
+							<td>{{ modelValue.channel }}</td>
 						</tr>
 						<tr>
 							<td>Region</td>
-							<td>{{ getRegion(value) }}</td>
+							<td>{{ getRegion(modelValue) }}</td>
 						</tr>
 						<tr>
 							<td>RSSI</td>
-							<td>{{ getRssi(value) }}</td>
+							<td>{{ getRssi(modelValue) }}</td>
 						</tr>
 						<tr>
 							<td>Protocol Data Rate</td>
 							<td>
 								{{
-									getProtocolDataRate(value) +
-									(value.speedModified
+									getProtocolDataRate(modelValue) +
+									(modelValue.speedModified
 										? ' (speed modified)'
 										: '')
 								}}
@@ -37,68 +37,69 @@
 						</tr>
 						<tr>
 							<td>Sequence Number</td>
-							<td>{{ value.sequenceNumber }}</td>
+							<td>{{ modelValue.sequenceNumber }}</td>
 						</tr>
-						<tr v-if="value.payload">
+						<tr v-if="modelValue.payload">
 							<td>Payload</td>
-							<td>{{ value.payload }}</td>
+							<td>{{ modelValue.payload }}</td>
 						</tr>
 						<tr>
 							<td>Home ID</td>
 							<td>
 								{{
-									value.homeId
-										? value.homeId.toString(16)
+									modelValue.homeId
+										? modelValue.homeId.toString(16)
 										: ''
 								}}
 							</td>
 						</tr>
 						<tr>
 							<td>Route</td>
-							<td v-html="getRoute(value, true)"></td>
+							<td v-html="getRoute(modelValue, true)"></td>
 						</tr>
-						<tr v-if="value.ackRequested !== undefined">
+						<tr v-if="modelValue.ackRequested !== undefined">
 							<td>Ack Requested</td>
-							<td>{{ value.ackRequested }}</td>
+							<td>{{ modelValue.ackRequested }}</td>
 						</tr>
-						<tr v-if="value.routedAck">
+						<tr v-if="modelValue.routedAck">
 							<td>Routed Ack</td>
-							<td>{{ value.routedAck }}</td>
+							<td>{{ modelValue.routedAck }}</td>
 						</tr>
-						<tr v-if="value.routedError">
+						<tr v-if="modelValue.routedError">
 							<td>Routed Error</td>
-							<td>{{ value.routedError }}</td>
+							<td>{{ modelValue.routedError }}</td>
 						</tr>
 					</tbody>
 				</template>
-			</v-simple-table>
+			</v-table>
 		</v-col>
 		<v-col>
 			<CCTreeView
 				class="my-2"
-				v-if="value.parsedPayload"
-				:value="value.parsedPayload"
+				v-if="modelValue.parsedPayload"
+				:modelValue="modelValue.parsedPayload"
 			></CCTreeView>
 			<span class="text-caption">Raw</span>
 			<v-textarea
 				class="mono"
 				readonly
 				hide-details
-				solo
+				variant="solo"
 				no-resize
-				v-model="value.raw"
+				v-model="modelValue.raw"
 				rows="2"
 			></v-textarea>
 		</v-col>
 	</v-row>
 	<v-row class="fill" justify="center" align="center" v-else>
-		<v-col class="text-center caption">
+		<v-col class="text-center text-caption">
 			<span dense>Click on a frame in table to see details</span>
 		</v-col>
 	</v-row>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import {
 	getRegion,
 	getRoute,
@@ -110,10 +111,10 @@ import {
 
 export default {
 	props: {
-		value: Object,
+		modelValue: Object,
 	},
 	components: {
-		CCTreeView: () => import('./CCTreeView.vue'),
+		CCTreeView: defineAsyncComponent(() => import('./CCTreeView.vue')),
 	},
 	data: () => ({}),
 	methods: {
@@ -128,7 +129,7 @@ export default {
 </script>
 
 <style scoped>
-.frame-details::v-deep td:first-child {
+.frame-details :deep(td:first-child) {
 	max-width: 50px !important;
 }
 </style>

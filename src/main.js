@@ -1,4 +1,4 @@
-import Vue from 'vue'
+import { createApp } from 'vue'
 import pinia from './plugins/pinia'
 import vuetify from './plugins/vuetify' // path to vuetify export
 import router from './router'
@@ -22,12 +22,10 @@ const updateSW = registerSW({
 	interval: 60 * 60 * 1000, // 1 hour
 })
 
-Vue.config.productionTip = false
-Vue.config.devtools = true
+const app = createApp(App)
 
-new Vue({
-	pinia,
-	vuetify,
-	router,
-	render: (h) => h(App),
-}).$mount('#app')
+app.use(pinia)
+app.use(vuetify)
+app.use(router)
+
+app.mount('#app')

@@ -244,6 +244,37 @@ Payload:
 
 </details>
 
+#### `checkAssociation`
+
+```ts
+checkAssociation(
+	source: AssociationAddress,
+	groupId: number,
+	association: AssociationAddress,
+): AssociationCheckResult;
+```
+
+Check if a given association is allowed.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkAssociation/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		source,
+		groupId,
+		association
+	]
+}
+```
+
+</details>
+
 #### `addAssociations`
 
 ```ts
@@ -251,7 +282,7 @@ async addAssociations(
 	source: AssociationAddress,
 	groupId: number,
 	associations: AssociationAddress[],
-): Promise<boolean>;
+): Promise<AssociationCheckResult[]>;
 ```
 
 Add a node to the array of specified [associations](https://zwave-js.github.io/node-zwave-js/#/api/controller?id=association-interface).
@@ -1154,6 +1185,29 @@ Payload:
 
 </details>
 
+#### `setMaxLRPowerLevel`
+
+```ts
+async setMaxLRPowerLevel(powerlevel: number): Promise<boolean>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/setMaxLRPowerLevel/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		powerlevel
+	]
+}
+```
+
+</details>
+
 #### `startInclusion`
 
 ```ts
@@ -1706,6 +1760,56 @@ Payload:
 
 </details>
 
+#### `checkLinkReliability`
+
+```ts
+async checkLinkReliability(
+	nodeId: number,
+	options: any,
+): Promise<LinkReliabilityCheckResult>;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/checkLinkReliability/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId,
+		options
+	]
+}
+```
+
+</details>
+
+#### `abortLinkReliabilityCheck`
+
+```ts
+abortLinkReliabilityCheck(nodeId: number): void;
+```
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/abortLinkReliabilityCheck/set`
+
+Payload:
+
+```json
+{
+	"args": [
+		nodeId
+	]
+}
+```
+
+</details>
+
 #### `checkRouteHealth`
 
 ```ts
@@ -1842,8 +1946,8 @@ Payload:
 
 ```ts
 async firmwareUpdateOTW(
-	file: FwFile,
-): Promise<ControllerFirmwareUpdateResult>;
+	file: FwFile | FirmwareUpdateInfo,
+): Promise<OTWFirmwareUpdateResult>;
 ```
 
 Used to trigger an update of controller FW.
@@ -1868,7 +1972,7 @@ Payload:
 #### `updateFirmware`
 
 ```ts
-updateFirmware(
+async updateFirmware(
 	nodeId: number,
 	files: FwFile[],
 ): Promise<FirmwareUpdateResult>;
@@ -1918,7 +2022,7 @@ Payload:
 #### `dumpNode`
 
 ```ts
-dumpNode(nodeId: number): import("/home/daniel/GitProjects/zwave-js-ui/node_modules/zwave-js/build/lib/node/Dump").NodeDump;
+dumpNode(nodeId: number): NodeDump;
 ```
 
 <details>
@@ -2224,7 +2328,7 @@ Payload:
 #### `backupNVMRaw`
 
 ```ts
-async backupNVMRaw(): Promise<{ data: Buffer; fileName: string; }>;
+async backupNVMRaw(): Promise<{ data: Buffer; fileName: string }>;
 ```
 
 <details>
@@ -2245,7 +2349,7 @@ Payload:
 #### `restoreNVM`
 
 ```ts
-async restoreNVM(data: Buffer, useRaw = false): Promise<void>;
+async restoreNVM(data: Uint8Array, useRaw = false): Promise<void>;
 ```
 
 <details>
@@ -2336,11 +2440,11 @@ Payload:
 #### `parseQRCodeString`
 
 ```ts
-parseQRCodeString(qrString: string): {
+async parseQRCodeString(qrString: string): Promise<{
 	parsed?: QRProvisioningInformation
 	nodeId?: number
 	exists: boolean
-};
+}>;
 ```
 
 <details>
@@ -2363,7 +2467,7 @@ Payload:
 #### `provisionSmartStartNode`
 
 ```ts
-provisionSmartStartNode(entry: PlannedProvisioningEntry | string): PlannedProvisioningEntry;
+async provisionSmartStartNode(entry: PlannedProvisioningEntry | string): Promise<PlannedProvisioningEntry>;
 ```
 
 <details>
@@ -2388,7 +2492,11 @@ Payload:
 ```ts
 async updateControllerNodeProps(
 	node?: ZUINode,
-	props: Array<'powerlevel' | 'RFRegion'> = ['powerlevel', 'RFRegion'],
+	props: Array<'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'> = [
+		'powerlevel',
+		'RFRegion',
+		'maxLongRangePowerlevel',
+	],
 ): Promise<void>;
 ```
 

@@ -8,37 +8,32 @@
 			class="pb-6 mx-2"
 		>
 			<v-expansion-panels
-				accordion
+				variant="accordion"
 				multiple
 				flat
 				class="expansion-panels-outlined"
 			>
 				<v-expansion-panel key="UI">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> UI </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('general')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
-								<v-switch
-									hint="Enable dark mode"
-									persistent-hint
-									label="Dark mode"
-									v-model="internalDarkMode"
-								></v-switch>
+								<color-scheme />
 							</v-col>
 							<v-col cols="12" sm="6">
 								<v-switch
@@ -57,27 +52,27 @@
 								></v-switch>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 				<v-expansion-panel key="General">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> General </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('general')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row class="mb-5">
@@ -113,7 +108,7 @@
 											]"
 											multiple
 											chips
-											deletable-chips
+											closable-chips
 											v-model="newGateway.plugins"
 										></v-combobox>
 									</v-col>
@@ -172,10 +167,10 @@
 										></v-checkbox>
 									</v-col>
 								</v-row>
-								<v-subheader class="font-weight-bold">
+								<v-list-subheader class="font-weight-bold">
 									Devices values configuration
-								</v-subheader>
-								<div class="mb-5 caption">
+								</v-list-subheader>
+								<div class="mb-5 text-caption">
 									Add here valueIds specific configurations
 									for each device. This means that if you
 									create an entry here this configuration will
@@ -188,14 +183,14 @@
 									:items-per-page-options="[
 										10,
 										20,
-										{ text: 'All', value: -1 },
+										{ title: 'All', value: -1 },
 									]"
 									class="elevation-1"
 								>
-									<template v-slot:top>
+									<template #top>
 										<v-btn
-											color="blue darken-1"
-											text
+											color="primary"
+											variant="text"
 											@click="dialogValue = true"
 										>
 											<v-icon>add</v-icon>
@@ -203,10 +198,10 @@
 											New Value
 										</v-btn>
 									</template>
-									<template v-slot:[`item.device`]="{ item }">
+									<template #[`item.device`]="{ item }">
 										{{ deviceName(item.device) }}
 									</template>
-									<template v-slot:[`item.value`]="{ item }">
+									<template #[`item.value`]="{ item }">
 										{{
 											item.value.label +
 											' (' +
@@ -214,19 +209,17 @@
 											')'
 										}}
 									</template>
-									<template v-slot:[`item.topic`]="{ item }">
+									<template #[`item.topic`]="{ item }">
 										{{ item.topic }}
 									</template>
 									<template
-										v-slot:[`item.postOperation`]="{ item }"
+										#[`item.postOperation`]="{ item }"
 									>
 										{{
 											item.postOperation || 'No operation'
 										}}
 									</template>
-									<template
-										v-slot:[`item.enablePoll`]="{ item }"
-									>
+									<template #[`item.enablePoll`]="{ item }">
 										{{
 											item.enablePoll
 												? 'Interval: ' +
@@ -235,20 +228,18 @@
 												: 'No'
 										}}
 									</template>
-									<template
-										v-slot:[`item.actions`]="{ item }"
-									>
+									<template #[`item.actions`]="{ item }">
 										<v-icon
-											small
+											size="small"
 											class="mr-2"
-											color="green"
+											color="success"
 											@click="editItem(item)"
 										>
 											edit
 										</v-icon>
 										<v-icon
-											small
-											color="red"
+											size="small"
+											color="error"
 											@click="deleteItem(item)"
 										>
 											delete
@@ -256,10 +247,10 @@
 									</template>
 								</v-data-table>
 
-								<v-subheader class="font-weight-bold">
+								<v-list-subheader class="font-weight-bold">
 									Scheduled Jobs
-								</v-subheader>
-								<div class="mb-5 caption">
+								</v-list-subheader>
+								<div class="mb-5 text-caption">
 									Add here a list of scheduled jobs that will
 									run specified driver function based on a
 									cron expression.
@@ -270,14 +261,14 @@
 									:items-per-page-options="[
 										10,
 										20,
-										{ text: 'All', value: -1 },
+										{ title: 'All', value: -1 },
 									]"
 									class="elevation-1"
 								>
-									<template v-slot:top>
+									<template #top>
 										<v-btn
-											color="blue darken-1"
-											text
+											color="primary"
+											variant="text"
 											@click="editJob()"
 										>
 											<v-icon>add</v-icon>
@@ -285,17 +276,17 @@
 											New Value
 										</v-btn>
 									</template>
-									<template v-slot:[`item.code`]="{ item }">
+									<template #[`item.code`]="{ item }">
 										<code>{{
 											item.code.substring(0, 30)
 										}}</code>
 									</template>
-									<template
-										v-slot:[`item.enabled`]="{ item }"
-									>
+									<template #[`item.enabled`]="{ item }">
 										<v-icon
 											:color="
-												item.enabled ? 'green' : 'red'
+												item.enabled
+													? 'success'
+													: 'error'
 											"
 										>
 											{{
@@ -305,12 +296,12 @@
 											}}
 										</v-icon>
 									</template>
-									<template
-										v-slot:[`item.runOnInit`]="{ item }"
-									>
+									<template #[`item.runOnInit`]="{ item }">
 										<v-icon
 											:color="
-												item.runOnInit ? 'green' : 'red'
+												item.runOnInit
+													? 'success'
+													: 'error'
 											"
 										>
 											{{
@@ -320,20 +311,18 @@
 											}}
 										</v-icon>
 									</template>
-									<template
-										v-slot:[`item.actions`]="{ item }"
-									>
+									<template #[`item.actions`]="{ item }">
 										<v-icon
-											small
+											size="small"
 											class="mr-2"
-											color="green"
+											color="warning"
 											@click="editJob(item)"
 										>
 											edit
 										</v-icon>
 										<v-icon
-											small
-											color="red"
+											size="small"
+											color="error"
 											@click="deleteJob(item)"
 										>
 											delete
@@ -342,29 +331,31 @@
 								</v-data-table>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Backup">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> Backup </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('backup')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
-						<v-subheader><strong>STORE</strong></v-subheader>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
+						<v-list-subheader
+							><strong>STORE</strong></v-list-subheader
+						>
 
 						<v-row class="mb-5">
 							<v-col cols="12" sm="6">
@@ -417,13 +408,13 @@
 						</v-row>
 
 						<v-divider />
-						<v-subheader
+						<v-list-subheader
 							><strong
 								>Controller (NVM) Backup</strong
-							></v-subheader
+							></v-list-subheader
 						>
 
-						<v-alert dense text type="warning">
+						<v-alert density="compact" text type="warning">
 							Some 700 series controllers may stop functioning
 							properly after an NVM backup. Z-Wave JS will try to
 							restart (soft reset) the controller afterwards to
@@ -481,12 +472,12 @@
 								></v-text-field>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Zwave">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center">
 								<v-row align-self="center">
@@ -505,16 +496,16 @@
 								<v-btn
 									@click.stop="openDocs('zwave')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content v-if="newZwave.enabled">
+					</v-expansion-panel-title>
+					<v-expansion-panel-text v-if="newZwave.enabled">
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -549,11 +540,11 @@
 										v-if="newZwave.securityKeys"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -578,13 +569,13 @@
 													),
 												]"
 												persistent-hint
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Unauthenticated',
 														newZwave.securityKeys,
@@ -615,13 +606,13 @@
 														newZwave.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZwave.securityKeys,
@@ -651,13 +642,13 @@
 														newZwave.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZwave.securityKeys,
@@ -683,13 +674,13 @@
 														newZwave.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S0_Legacy',
 														newZwave.securityKeys,
@@ -703,11 +694,11 @@
 										v-if="newZwave.securityKeysLongRange"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys (Long Range)
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -733,13 +724,13 @@
 														newZwave.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZwave.securityKeysLongRange,
@@ -770,13 +761,13 @@
 														newZwave.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZwave.securityKeysLongRange,
@@ -790,41 +781,41 @@
 									<!-- RADIO CONFIGURATION -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Default Radio configuration
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="6">
 											<v-select
 												label="RF Region"
 												persistent-hint
-												hint="Will be applied on every startup if the current region of your Z-Wave controller differs. Leave this empty to use the default region of your stick. Not all controllers support changing the region."
+												hint="Will be used to automatically configure your controller for the region you are in. Not all controllers support changing the RF region."
 												:items="rfRegions"
-												clearable
+												:rules="[rules.required]"
+												required
 												v-model="newZwave.rf.region"
 											>
 											</v-select>
 										</v-col>
 										<v-col cols="6">
-											<v-select
-												label="Maximum LR Power Level"
+											<v-switch
+												hint="When enabled, both normal and LR power levels will be automatically set to legal limits based on the RF region whenever the region is changed. Only supported for Europe and USA regions."
 												persistent-hint
-												hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
-												:items="maxLRPowerLevels"
-												clearable
+												label="Automatic Power Level"
 												v-model="
-													newZwave.rf
-														.maxLongRangePowerlevel
+													newZwave.rf.autoPowerlevels
 												"
-											>
-											</v-select>
+											></v-switch>
 										</v-col>
 									</v-row>
 									<v-row class="mt-0">
 										<v-col cols="12" sm="6">
 											<v-text-field
+												v-if="
+													!newZwave.rf.autoPowerlevels
+												"
 												label="Normal Power Level"
 												v-model.number="
 													newZwave.rf.txPower
@@ -857,17 +848,35 @@
 												:rules="[validTxPower]"
 											></v-text-field>
 										</v-col>
+
+										<v-col cols="12" sm="6">
+											<v-select
+												label="Maximum LR Power Level"
+												v-if="
+													!newZwave.rf.autoPowerlevels
+												"
+												persistent-hint
+												hint="The maximum power level to be used by the dynamic power algorithm of Z-Wave LR. Will be applied on every startup if the current setting of your Z-Wave controller differs. Only LR-capable controllers support this setting."
+												:items="maxLRPowerLevels"
+												clearable
+												v-model="
+													newZwave.rf
+														.maxLongRangePowerlevel
+												"
+											>
+											</v-select>
+										</v-col>
 									</v-row>
 									<!-- END: RADIO CONFIGURATION -->
 
 									<!-- DRIVER LOGS -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Driver logs
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 
 										<v-col cols="12" sm="6">
@@ -933,7 +942,7 @@
 												multiple
 												:rules="[rules.validNodeLog]"
 												chips
-												deletable-chips
+												closable-chips
 												v-model="newZwave.nodeFilter"
 											></v-combobox>
 										</v-col>
@@ -943,11 +952,11 @@
 									<!-- STARTUP AND RECOVERY BEHAVIOR -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Startup and recovery behavior
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 
 										<v-col cols="12" sm="6">
@@ -1022,11 +1031,11 @@
 									<!-- MISC -->
 									<v-row class="mt-0">
 										<v-col cols="12" class="mb-n8">
-											<v-subheader
-												class="font-weight-bold primary--text mb-0"
+											<v-list-subheader
+												class="font-weight-bold text-primary mb-0"
 											>
 												Misc settings
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 
 										<v-col cols="12" sm="6">
@@ -1053,7 +1062,9 @@
 
 										<input
 											type="hidden"
-											:value="newZwave.disclaimerVersion"
+											:modelValue="
+												newZwave.disclaimerVersion
+											"
 										/>
 										<v-col cols="12" sm="6">
 											<v-autocomplete
@@ -1062,42 +1073,29 @@
 												label="Preferred scales"
 												:items="filteredScales"
 												multiple
-												:item-text="scaleName"
+												:item-title="scaleName"
 												:rules="[
 													rules.uniqueSensorType,
 												]"
 												chips
 												return-object
-												deletable-chips
+												closable-chips
 												v-model="newZwave.scales"
 											>
 												<template
-													v-slot:item="{
-														item,
-														attrs,
-														on,
-													}"
+													#item="{ item, props }"
 												>
 													<v-list-item
-														v-on="on"
-														v-bind="attrs"
-														two-line
+														v-bind="props"
+														:title="
+															scaleName(item.raw)
+														"
+														:subtitle="
+															item.raw
+																.description ||
+															''
+														"
 													>
-														<v-list-item-content>
-															<v-list-item-title
-																>{{
-																	scaleName(
-																		item,
-																	)
-																}}</v-list-item-title
-															>
-															<v-list-item-subtitle
-																>{{
-																	item.description ||
-																	''
-																}}</v-list-item-subtitle
-															>
-														</v-list-item-content>
 													</v-list-item>
 												</template>
 											</v-autocomplete>
@@ -1145,17 +1143,17 @@
 
 									<input
 										type="hidden"
-										:value="newZwave.options"
+										:modelValue="newZwave.options"
 									/>
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Zniffer">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center">
 								<v-row align-self="center">
@@ -1173,16 +1171,16 @@
 								<v-btn
 									@click.stop="openDocs('zniffer')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content v-if="newZniffer.enabled">
+					</v-expansion-panel-title>
+					<v-expansion-panel-text v-if="newZniffer.enabled">
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -1205,21 +1203,21 @@
 										v-if="newZniffer.securityKeys"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys
 
 												<v-btn
 													class="ml-2"
-													small
-													outlined
+													size="small"
+													variant="outlined"
 													color="warning"
 													@click="copyKeysZniffer()"
 												>
 													Copy from Driver
 												</v-btn>
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -1244,13 +1242,13 @@
 													),
 												]"
 												persistent-hint
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Unauthenticated',
 														newZniffer.securityKeys,
@@ -1281,13 +1279,13 @@
 														newZniffer.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZniffer.securityKeys,
@@ -1317,13 +1315,13 @@
 														newZniffer.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZniffer.securityKeys,
@@ -1349,13 +1347,13 @@
 														newZniffer.securityKeys,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S0_Legacy',
 														newZniffer.securityKeys,
@@ -1369,11 +1367,11 @@
 										v-if="newZniffer.securityKeysLongRange"
 									>
 										<v-col cols="12">
-											<v-subheader
-												class="font-weight-bold primary--text"
+											<v-list-subheader
+												class="font-weight-bold text-primary"
 											>
 												Security Keys (Long Range)
-											</v-subheader>
+											</v-list-subheader>
 										</v-col>
 										<v-col cols="12" sm="6">
 											<v-text-field
@@ -1399,13 +1397,13 @@
 														newZniffer.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_Authenticated',
 														newZniffer.securityKeysLongRange,
@@ -1436,13 +1434,13 @@
 														newZniffer.securityKeysLongRange,
 													),
 												]"
-												append-outer-icon="wifi_protected_setup"
+												append-icon="wifi_protected_setup"
 												:type="
 													streamerMode
 														? 'password'
 														: 'text'
 												"
-												@click:append-outer="
+												@click:append="
 													randomKey(
 														'S2_AccessControl',
 														newZniffer.securityKeysLongRange,
@@ -1534,14 +1532,14 @@
 											multiple
 											:rules="[rules.validNodeLog]"
 											chips
-											deletable-chips
+											closable-chips
 											v-model="newZniffer.nodeFilter"
 										></v-combobox>
 									</v-col>
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 				</v-expansion-panel>
 			</v-expansion-panels>
 
@@ -1555,29 +1553,29 @@
 			</v-col>
 
 			<v-expansion-panels
-				accordion
+				variant="accordion"
 				multiple
 				flat
 				class="expansion-panels-outlined"
 			>
 				<v-expansion-panel key="mqtt" v-if="!newMqtt.disabled">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> MQTT </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('mqtt')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -1750,28 +1748,28 @@
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="gateway" v-if="!newMqtt.disabled">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> Gateway </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('gateway')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -1850,28 +1848,28 @@
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 					<v-divider />
 				</v-expansion-panel>
 
 				<v-expansion-panel key="Hass">
-					<v-expansion-panel-header>
+					<v-expansion-panel-title>
 						<v-row no-gutters>
 							<v-col align-self="center"> Home Assistant </v-col>
 							<v-col class="text-right pr-5">
 								<v-btn
 									@click.stop="openDocs('home-assistant')"
 									color="primary"
-									outlined
-									x-small
+									variant="outlined"
+									size="x-small"
 								>
 									Docs
-									<v-icon x-small right>launch</v-icon>
+									<v-icon size="x-small" end>launch</v-icon>
 								</v-btn>
 							</v-col>
 						</v-row>
-					</v-expansion-panel-header>
-					<v-expansion-panel-content>
+					</v-expansion-panel-title>
+					<v-expansion-panel-text>
 						<v-card flat>
 							<v-card-text>
 								<v-row>
@@ -1897,7 +1895,7 @@
 										></v-text-field>
 										<input
 											type="hidden"
-											:value="
+											:modelValue="
 												newZwave.serverServiceDiscoveryDisabled
 											"
 										/>
@@ -2007,7 +2005,7 @@
 								</v-row>
 							</v-card-text>
 						</v-card>
-					</v-expansion-panel-content>
+					</v-expansion-panel-text>
 				</v-expansion-panel>
 			</v-expansion-panels>
 
@@ -2022,57 +2020,67 @@
 			/>
 		</v-form>
 		<v-row
-			:justify="$vuetify.breakpoint.xsOnly ? 'center' : 'end'"
+			:justify="$vuetify.display.xs ? 'center' : 'end'"
 			space-be
 			class="sticky-buttons py-3 px-4"
 			:style="{
-				backgroundColor: internalDarkMode ? '#272727' : '#f5f5f5',
+				backgroundColor: darkMode ? '#272727' : '#f5f5f5',
 			}"
 		>
-			<v-btn class="mr-2" small color="red darken-1" @click="resetConfig">
+			<v-btn
+				class="mr-2"
+				size="small"
+				color="error"
+				@click="resetConfig()"
+			>
 				Reset
-				<v-icon right dark>clear</v-icon>
+				<v-icon end>clear</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-2"
-				small
-				color="purple darken-1"
+				size="small"
+				color="purple"
 				@click="importSettings"
 			>
 				Import
-				<v-icon right dark>file_upload</v-icon>
+				<v-icon end>file_upload</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-2"
-				small
-				color="green darken-1"
+				size="small"
+				color="success"
 				@click="exportSettings"
 			>
 				Export
-				<v-icon right dark>file_download</v-icon>
+				<v-icon end>file_download</v-icon>
 			</v-btn>
 			<v-btn
 				class="mr-5"
-				small
-				color="blue darken-1"
+				size="small"
+				color="primary"
 				type="submit"
 				:loading="saving"
 				:disabled="saving || !settingsChanged"
 				form="form_settings"
 			>
 				Save
-				<v-icon right dark>save</v-icon>
+				<v-icon end>save</v-icon>
 			</v-btn>
 		</v-row>
 	</v-container>
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import { mapActions, mapState } from 'pinia'
 import ConfigApis from '@/apis/ConfigApis'
 import { parse } from 'native-url'
 import { wait, copy, isUndef, deepEqual } from '../lib/utils'
-import { rfRegions, znifferRegions, maxLRPowerLevels } from '../lib/items'
+import {
+	settingsRfRegions,
+	znifferRegions,
+	maxLRPowerLevels,
+} from '../lib/items'
 import cronstrue from 'cronstrue'
 import useBaseStore from '../stores/base'
 
@@ -2085,11 +2093,18 @@ export default {
 	name: 'Settings',
 	mixins: [InstancesMixin],
 	components: {
-		DialogGatewayValue: () =>
-			import('@/components/dialogs/DialogGatewayValue.vue'),
-		fileInput: () => import('@/components/custom/file-input.vue'),
-		invertedCheckbox: () =>
-			import('@/components/custom/InvertedCheckbox.vue'),
+		ColorScheme: defineAsyncComponent(
+			() => import('@/components/custom/ColorScheme.vue'),
+		),
+		DialogGatewayValue: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogGatewayValue.vue'),
+		),
+		fileInput: defineAsyncComponent(
+			() => import('@/components/custom/file-input.vue'),
+		),
+		invertedCheckbox: defineAsyncComponent(
+			() => import('@/components/custom/InvertedCheckbox.vue'),
+		),
 	},
 	props: {
 		socket: {
@@ -2098,12 +2113,12 @@ export default {
 		},
 	},
 	computed: {
-		internalDarkMode: {
+		internalColorScheme: {
 			get() {
-				return this.darkMode
+				return this.colorScheme
 			},
 			set(value) {
-				this.setDarkMode(value)
+				this.setColorScheme(value)
 			},
 		},
 		internalNavTabs: {
@@ -2213,7 +2228,8 @@ export default {
 			'ui',
 		]),
 		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
+			colorScheme: (store) => store.ui.colorScheme,
+			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 			streamerMode: (store) => store.ui.streamerMode,
 		}),
@@ -2225,7 +2241,7 @@ export default {
 	},
 	data() {
 		return {
-			rfRegions,
+			rfRegions: settingsRfRegions,
 			znifferRegions,
 			maxLRPowerLevels,
 			valid_zwave: true,
@@ -2246,56 +2262,56 @@ export default {
 			editedIndex: -1,
 			defaultValue: {},
 			logLevels: [
-				{ text: 'Error', value: 'error' },
-				{ text: 'Warn', value: 'warn' },
-				{ text: 'Info', value: 'info' },
-				{ text: 'Verbose', value: 'verbose' },
-				{ text: 'Debug', value: 'debug' },
-				{ text: 'Silly', value: 'silly' },
+				{ title: 'Error', value: 'error' },
+				{ title: 'Warn', value: 'warn' },
+				{ title: 'Info', value: 'info' },
+				{ title: 'Verbose', value: 'verbose' },
+				{ title: 'Debug', value: 'debug' },
+				{ title: 'Silly', value: 'silly' },
 			],
 			headers: [
-				{ text: 'Device', value: 'device' },
-				{ text: 'Value', value: 'value', sortable: false },
-				{ text: 'Topic', value: 'topic' },
-				{ text: 'Post Operation', value: 'postOperation' },
-				{ text: 'Poll', value: 'enablePoll' },
-				// { text: 'Changes', value: 'verifyChanges' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'Device', key: 'device' },
+				{ title: 'Value', key: 'value', sortable: false },
+				{ title: 'Topic', key: 'topic' },
+				{ title: 'Post Operation', key: 'postOperation' },
+				{ title: 'Poll', key: 'enablePoll' },
+				// { title: 'Changes', key: 'verifyChanges' },
+				{ title: 'Actions', key: 'actions', sortable: false },
 			],
 			headersJobs: [
-				{ text: 'Name', value: 'name' },
-				{ text: 'Enabled', value: 'enabled' },
-				{ text: 'On Init', value: 'runOnInit' },
-				{ text: 'Code', value: 'code' },
-				{ text: 'Cron', value: 'cron' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'Name', key: 'name' },
+				{ title: 'Enabled', key: 'enabled' },
+				{ title: 'On Init', key: 'runOnInit' },
+				{ title: 'Code', key: 'code' },
+				{ title: 'Cron', key: 'cron' },
+				{ title: 'Actions', key: 'actions', sortable: false },
 			],
 			e1: true,
 			gw_types: [
 				{
-					text: 'ValueID topics',
+					title: 'ValueID topics',
 					value: 0,
 				},
 				{
-					text: 'Named topics',
+					title: 'Named topics',
 					value: 1,
 				},
 				{
-					text: 'Configured Manually',
+					title: 'Configured Manually',
 					value: 2,
 				},
 			],
 			py_types: [
 				{
-					text: 'JSON Time-Value',
+					title: 'JSON Time-Value',
 					value: 0,
 				},
 				{
-					text: 'Entire Z-Wave value Object',
+					title: 'Entire Z-Wave value Object',
 					value: 1,
 				},
 				{
-					text: 'Just value',
+					title: 'Just value',
 					value: 2,
 				},
 			],
@@ -2369,7 +2385,7 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, [
-			'setDarkMode',
+			'setColorScheme',
 			'setNavTabs',
 			'setStreamerMode',
 			'initSettings',
@@ -2385,22 +2401,25 @@ export default {
 		validTxPower() {
 			const { powerlevel, measured0dBm } = this.newZwave.rf?.txPower ?? {}
 
-			const validPower = !isUndef(powerlevel)
-			const validMeasured = !isUndef(measured0dBm)
-
-			if (validPower && (powerlevel < -10 || powerlevel > 20)) {
-				return 'Power level must be between -10 and 20'
+			// The calibration value is optional
+			if (
+				typeof measured0dBm === 'number' &&
+				(measured0dBm < -10 || measured0dBm > 10)
+			) {
+				return 'Measured @ 0dBm must be between -10 and 10'
 			}
 
-			if (validMeasured && (measured0dBm < -10 || measured0dBm > 10)) {
-				return 'Measured 0dBm must be between -10 and 10'
+			if (isUndef(powerlevel) || powerlevel === 'auto') {
+				return
 			}
 
-			return (
-				(validPower && validMeasured) ||
-				(!validPower && !validMeasured) ||
-				'Both powerlevel and measured 0 dBm must be set when using custom TX power'
-			)
+			if (
+				typeof powerlevel !== 'number' ||
+				powerlevel < -10 ||
+				powerlevel > 20
+			) {
+				return 'Powerlevel must be between -10 and 20'
+			}
 		},
 		parseCron(cron) {
 			let res
@@ -2430,7 +2449,7 @@ export default {
 
 			if (data) {
 				data = data.replace(/0x|,|\s/gi, '')
-				this.$set(obj, key, data)
+				obj[key] = data.toUpperCase()
 				event.preventDefault()
 			}
 		},
@@ -2465,7 +2484,7 @@ export default {
 				key += x.length === 2 ? x : '0' + x
 			}
 
-			this.$set(obj, k, key)
+			obj[k] = key
 		},
 		readFile(file, callback) {
 			const reader = new FileReader()
@@ -2485,7 +2504,7 @@ export default {
 			try {
 				const { data } = await this.app.importFile('json')
 				if (data.zwave && data.mqtt && data.gateway) {
-					this.initSettings(data)
+					this.resetConfig(data)
 					this.showSnackbar(
 						'Configuration imported successfully',
 						'success',
@@ -2647,7 +2666,8 @@ export default {
 		async update() {
 			// let inputs to unfocus and trigger any change event, nextTick is not working here
 			await wait(200)
-			if (this.$refs.form_settings.validate()) {
+			const result = await this.$refs.form_settings.validate()
+			if (result.valid) {
 				try {
 					this.saving = true
 					useBaseStore().resetNodes()
@@ -2660,6 +2680,7 @@ export default {
 						data.success ? 'success' : 'error',
 					)
 					this.initSettings(data.data)
+					this.resetConfig()
 				} catch (error) {
 					log.error(error)
 				}
@@ -2670,20 +2691,34 @@ export default {
 				)
 			}
 		},
-		resetConfig() {
-			this.newGateway = copy(this.gateway)
-			this.newZwave = copy(this.zwave)
-			this.newZniffer = copy(this.zniffer)
-			this.newMqtt = copy(this.mqtt)
-			this.newBackup = copy(this.backup)
-
-			if (this.prevUi) {
-				this.internalDarkMode = this.prevUi.darkMode
-				this.internalNavTabs = this.prevUi.navTabs
-				this.internalStreamerMode = this.prevUi.streamerMode
-			} else {
-				this.prevUi = copy(this.ui)
+		resetConfig(importedSettings) {
+			const settings = {
+				mqtt: this.mqtt,
+				gateway: this.gateway,
+				zwave: this.zwave,
+				zniffer: this.zniffer,
+				backup: this.backup,
+				ui: this.ui,
+				...(importedSettings || {}),
 			}
+			this.newGateway = copy(settings.gateway)
+			this.newZwave = copy(settings.zwave)
+			this.newZniffer = copy(settings.zniffer)
+			this.newMqtt = copy(settings.mqtt)
+			this.newBackup = copy(settings.backup)
+
+			// `prevUi` is used as backup of the initial UI status as
+			// base store `ui is updated every time the user changes UI settings
+			if (this.prevUi === null) {
+				this.prevUi = copy(settings.ui)
+			}
+
+			const uiState = importedSettings?.ui || this.prevUi
+
+			// set UI computed props. This props will also update base store `ui` props
+			this.internalColorScheme = uiState.colorScheme
+			this.internalNavTabs = uiState.navTabs
+			this.internalStreamerMode = uiState.streamerMode
 		},
 		async getConfig() {
 			try {

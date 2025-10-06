@@ -4,54 +4,97 @@
 		:items="userCodes"
 		:items-per-page="-1"
 		:mobile-breakpoint="0"
+		item-key="id"
 		:footer-props="{
 			showFirstLastPage: true,
 		}"
 		dense
 		:show-expand="!!node.schedule"
+		expand-on-click
 	>
-		<template v-slot:[`item.code`]="props">
-			<v-edit-dialog
-				@open="newCode = props.item.code"
-				@close="newCode = ''"
-				@save="setUserCode(props.item)"
-				large
-			>
-				{{ props.item.code || '-------' }}
-				<template v-slot:input>
+		<template #[`item.code`]="{ item }">
+			<div>
+				<span
+					v-if="!editingState[item.id]?.editingCode"
+					style="cursor: pointer"
+					@click.stop="startEditing(item, 'code')"
+				>
+					{{ item.code || '-------' }}
+				</span>
+				<div v-else>
 					<v-text-field
-						v-model="newCode"
+						v-model="editingState[item.id].newCode"
 						label="Code"
+						style="max-width: 250px"
 						single-line
-					></v-text-field>
-				</template>
-			</v-edit-dialog>
+					>
+						<template #append>
+							<v-icon
+								class="mr-2"
+								color="success"
+								style="cursor: pointer"
+								@click.stop="setUserCode(item)"
+							>
+								check
+							</v-icon>
+							<v-icon
+								color="error"
+								style="cursor: pointer"
+								@click.stop="cancelEditing(item, 'code')"
+							>
+								close
+							</v-icon>
+						</template>
+					</v-text-field>
+				</div>
+			</div>
 		</template>
-		<template v-slot:[`item.status`]="props">
-			<v-edit-dialog
-				@open="newStatus = props.item.status"
-				@close="newStatus = -1"
-				@save="setUserStatus(props.item)"
-				large
-			>
-				{{ getStatus(props.item.status) || '-------' }}
-				<template v-slot:input>
+		<template #[`item.status`]="{ item }">
+			<div>
+				<span
+					v-if="!editingState[item.id]?.editingStatus"
+					@click.stop="startEditing(item, 'status')"
+				>
+					{{ getStatus(item.status) || '-------' }}
+				</span>
+				<div v-else>
 					<v-select
-						v-model="newStatus"
+						v-model="editingState[item.id].newStatus"
 						:items="statuses"
+						style="max-width: 250px"
 						label="Status"
 						single-line
-					></v-select>
-				</template>
-			</v-edit-dialog>
+					>
+						<template #append>
+							<v-icon
+								class="mr-2"
+								color="success"
+								style="cursor: pointer"
+								@click.stop="setUserStatus(item)"
+							>
+								check
+							</v-icon>
+							<v-icon
+								color="error"
+								style="cursor: pointer"
+								@click.stop="cancelEditing(item, 'status')"
+							>
+								close
+							</v-icon>
+						</template>
+					</v-select>
+				</div>
+			</div>
 		</template>
-		<template v-slot:[`item.schedule`]="{ item }">
+		<template #[`item.schedule`]="{ item }">
 			<v-btn
-				x-small
+				size="x-small"
+				variant="flat"
 				:color="item.schedule.enabled ? 'success' : 'error'"
 				@click="setEnabled(item)"
-				>{{ item.schedule.enabled ? 'Enabled' : 'Disabled' }}</v-btn
 			>
+				{{ item.schedule.enabled ? 'Enabled' : 'Disabled' }}
+			</v-btn>
 			<p class="mb-0">
 				Mode:
 				<b class="text-capitalize">{{ item.schedule.type || '---' }}</b>
@@ -60,17 +103,17 @@
 						item.schedule.slots.filter(
 							(s) => s.type === item.schedule.type,
 						).length
-					}}</b
-				>
+					}}
+				</b>
 			</p>
 		</template>
 
-		<template v-slot:expanded-item="{ headers, item }">
+		<template #[`expanded-row`]="{ columns: headers, item }">
 			<td :colspan="headers.length">
 				<node-scheduler
 					v-if="node.userCodes.available.includes(item.id)"
 					:node="node"
-					:user="item"
+					:_user="item"
 					:activeMode="item.schedule.type"
 				></node-scheduler>
 				<p class="text-center ma-3" v-else>
@@ -82,43 +125,47 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import InstancesMixin from '../../mixins/InstancesMixin.js'
 
 export default {
 	mixins: [InstancesMixin],
 	props: { node: Object },
-	components: { NodeScheduler: () => import('./NodeScheduler.vue') },
+	components: {
+		NodeScheduler: defineAsyncComponent(
+			() => import('./NodeScheduler.vue'),
+		),
+	},
 	data() {
 		return {
 			statuses: [
 				{
-					text: 'Available',
+					title: 'Available',
 					value: 0,
 				},
 				{
-					text: 'Enabled',
+					title: 'Enabled',
 					value: 1,
 				},
 				{
-					text: 'Disabled',
+					title: 'Disabled',
 					value: 2,
 				},
 			],
 			loading: false,
-			newCode: '',
-			newStatus: -1,
+			editingState: {}, // External object to manage editing state
 		}
 	},
 	computed: {
 		headers() {
 			const base = [
-				{ text: 'User Id', value: 'id' },
-				{ text: 'Code', value: 'code' },
-				{ text: 'Status', value: 'status' },
+				{ title: 'User Id', key: 'id' },
+				{ title: 'Code', key: 'code' },
+				{ title: 'Status', key: 'status' },
 			]
 
 			if (this.node.schedule) {
-				base.push({ text: 'Scheduling', value: 'schedule' })
+				base.push({ title: 'Scheduling', key: 'schedule' })
 			}
 
 			return base
@@ -145,10 +192,42 @@ export default {
 				toReturn[id] = code
 			}
 
-			return toReturn
+			// element at index 0 is null and this breaks data-table
+			return toReturn.filter((c) => !!c)
 		},
 	},
 	methods: {
+		startEditing(item, prop) {
+			const id = item.id
+			if (!this.editingState[id]) {
+				this.editingState[id] = {
+					editingCode: false,
+					newCode: '',
+					editingStatus: false,
+					newStatus: '',
+				}
+			}
+
+			const state = this.editingState[id]
+
+			if (prop === 'code') {
+				state.editingCode = true
+				state.newCode = item.code || ''
+			} else if (prop === 'status') {
+				state.editingStatus = true
+				state.newStatus = item.status
+			}
+		},
+		cancelEditing(item, prop) {
+			const id = item.id
+			if (this.editingState[id]) {
+				if (prop === 'code') {
+					this.editingState[id].editingCode = false
+				} else if (prop === 'status') {
+					this.editingState[id].editingStatus = false
+				}
+			}
+		},
 		async setEnabled(user) {
 			const enabled = !user.schedule.enabled
 			const response = await this.app.apiRequest('setEnabledSchedule', [
@@ -199,22 +278,24 @@ export default {
 			)
 		},
 		async setUserCode(item) {
-			const code = this.newCode
+			const code = this.editingState[item.id].newCode
 			const valueId = this.getValueId(item.id, 'userCode')
 
 			if (!valueId) return
 
 			valueId.newValue = code
 			this.$emit('updateValue', valueId)
+			this.cancelEditing(item, 'code')
 		},
 		async setUserStatus(item) {
-			const status = this.newStatus
+			const status = this.editingState[item.id].newStatus
 			const valueId = this.getValueId(item.id, 'userIdStatus')
 
 			if (!valueId) return
 
 			valueId.newValue = status
 			this.$emit('updateValue', valueId)
+			this.cancelEditing(item, 'status')
 		},
 	},
 }

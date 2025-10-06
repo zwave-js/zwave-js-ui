@@ -7,57 +7,62 @@
 				item-key="id"
 				class="elevation-1"
 			>
-				<template v-slot:top>
-					<v-btn
-						text
-						color="green"
-						@click="dialogAssociation = true"
-						class="mb-2"
-						>Add</v-btn
-					>
-					<v-btn
-						text
-						color="red"
-						@click="removeAllAssociations"
-						class="mb-2"
-						>Remove All</v-btn
-					>
-					<v-btn
-						text
-						color="primary"
-						@click="getAssociations(true)"
-						class="mb-2"
-						>Refresh</v-btn
-					>
+				<template #top>
+					<div class="d-flex">
+						<v-btn
+							variant="text"
+							color="success"
+							@click="dialogAssociation = true"
+							class="mb-2"
+							>Add</v-btn
+						>
+						<v-btn
+							variant="text"
+							color="error"
+							@click="removeAllAssociations"
+							class="mb-2"
+							>Remove All</v-btn
+						>
+						<v-btn
+							variant="text"
+							color="primary"
+							@click="getAssociations(true)"
+							class="mb-2"
+							>Refresh</v-btn
+						>
+					</div>
 				</template>
-				<template v-slot:[`item.groupId`]="{ item }">
+				<template #[`item.groupId`]="{ item }">
 					{{
 						node.groups.find(
 							(g) =>
 								g.value === item.groupId &&
 								g.endpoint === item.endpoint,
-						).text
+						).title
 					}}
 				</template>
-				<template v-slot:[`item.nodeId`]="{ item }">
+				<template #[`item.nodeId`]="{ item }">
 					{{ getNodeName(item.nodeId) }}
 				</template>
-				<template v-slot:[`item.endpoint`]="{ item }">
+				<template #[`item.endpoint`]="{ item }">
 					{{
 						item.endpoint >= 0
 							? getEndpointLabel(node.id, item.endpoint)
 							: 'None'
 					}}
 				</template>
-				<template v-slot:[`item.targetEndpoint`]="{ item }">
+				<template #[`item.targetEndpoint`]="{ item }">
 					{{
 						item.targetEndpoint >= 0
 							? getEndpointLabel(item.nodeId, item.targetEndpoint)
 							: 'None'
 					}}
 				</template>
-				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="red" @click="removeAssociation(item)"
+				<template #[`item.actions`]="{ item }">
+					<v-icon
+						size="small"
+						color="error"
+						@click="removeAssociation(item)"
 						>delete</v-icon
 					>
 				</template>
@@ -82,11 +87,13 @@ import InstancesMixin from '../../mixins/InstancesMixin.js'
 import { getEnumMemberName } from '@zwave-js/shared'
 import { AssociationCheckResult } from '@zwave-js/cc'
 import { getAssociationAddress } from '../../lib/utils'
+import { defineAsyncComponent } from 'vue'
 
 export default {
 	components: {
-		DialogAssociation: () =>
-			import('@/components/dialogs/DialogAssociation.vue'),
+		DialogAssociation: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogAssociation.vue'),
+		),
 	},
 	mixins: [InstancesMixin],
 	props: {
@@ -97,11 +104,11 @@ export default {
 			associations: [],
 			dialogAssociation: false,
 			headers: [
-				{ text: 'Endpoint', value: 'endpoint' },
-				{ text: 'Group', value: 'groupId' },
-				{ text: 'Node', value: 'nodeId' },
-				{ text: 'Target Endpoint', value: 'targetEndpoint' },
-				{ text: 'Actions', value: 'actions', sortable: false },
+				{ title: 'Endpoint', key: 'endpoint' },
+				{ title: 'Group', key: 'groupId' },
+				{ title: 'Node', key: 'nodeId' },
+				{ title: 'Target Endpoint', key: 'targetEndpoint' },
+				{ title: 'Actions', key: 'actions', sortable: false },
 			],
 		}
 	},

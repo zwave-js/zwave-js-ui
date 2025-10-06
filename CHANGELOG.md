@@ -1,5 +1,149 @@
 
 
+## [11.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.0...v11.3.1) (2025-09-24)
+
+
+### Bug Fixes
+
+* **ui:** remove useless refresh neighbors call when opening mesh graph ([#4372](https://github.com/zwave-js/zwave-js-ui/issues/4372)) ([aff315d](https://github.com/zwave-js/zwave-js-ui/commit/aff315d500b48ea3cd4a07a69ab477186bbc6732))
+* **ui:** use a v-number-input for colume input ([fb03fb9](https://github.com/zwave-js/zwave-js-ui/commit/fb03fb9d8816b69860338385db482ab583174fe6)), closes [#4387](https://github.com/zwave-js/zwave-js-ui/issues/4387)
+
+
+### Features
+
+* bump zwave-js@15.14.0 ([#4373](https://github.com/zwave-js/zwave-js-ui/issues/4373)) ([20029b3](https://github.com/zwave-js/zwave-js-ui/commit/20029b31a78fbe6453973882c5d93f1dee0e6423))
+
+# [11.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.1...v11.3.0) (2025-09-16)
+
+
+### Bug Fixes
+
+* **ui:** cleaner label for `Force security` checkbox ([42a28e9](https://github.com/zwave-js/zwave-js-ui/commit/42a28e9662633fc52cb6030dba82ad10ac0b6bdd)), closes [#4363](https://github.com/zwave-js/zwave-js-ui/issues/4363)
+
+
+### Features
+
+* add source IP in request logs ([#4356](https://github.com/zwave-js/zwave-js-ui/issues/4356)) ([7e87c32](https://github.com/zwave-js/zwave-js-ui/commit/7e87c3223be61a02db2c0f41b2ad959cbb473b0f)), closes [#4355](https://github.com/zwave-js/zwave-js-ui/issues/4355)
+* bump zwave-js@15.13.0 ([#4370](https://github.com/zwave-js/zwave-js-ui/issues/4370)) ([1fbb158](https://github.com/zwave-js/zwave-js-ui/commit/1fbb158066760695c2a463b634f8315bfa8b269f))
+
+## [11.2.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.0...v11.2.1) (2025-08-27)
+
+
+### Bug Fixes
+
+* **ui:** reinterview badge visibility ([1ab4ee5](https://github.com/zwave-js/zwave-js-ui/commit/1ab4ee548516eb28e16aba620c0bd4ed38e5fbae))
+
+# [11.2.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.1.0...v11.2.0) (2025-08-27)
+
+
+### Bug Fixes
+
+* device firmware update target dropdown ([d23c179](https://github.com/zwave-js/zwave-js-ui/commit/d23c1799d114cf1f3e1b7ab42bc6adb17c5902bb)), closes [#4332](https://github.com/zwave-js/zwave-js-ui/issues/4332)
+* **tests:** disable nodejs experimental strip types flag ([b51edb1](https://github.com/zwave-js/zwave-js-ui/commit/b51edb14702d620d1184efd87e7a7e4d070451c8))
+* **ui:** config update icon style ([7e7caf7](https://github.com/zwave-js/zwave-js-ui/commit/7e7caf7b583aedcdf09af80efa0b3134b3626778)), closes [#4328](https://github.com/zwave-js/zwave-js-ui/issues/4328)
+* **ui:** unable to set `Force security` in nodes manager dialog ([07059be](https://github.com/zwave-js/zwave-js-ui/commit/07059bef80c8660a381b1a941732f8308926c988)), closes [#4329](https://github.com/zwave-js/zwave-js-ui/issues/4329)
+* **ui:** value id labels should not be ellipsed ([7b4a55a](https://github.com/zwave-js/zwave-js-ui/commit/7b4a55a6bc6fc3e379f7e68ef3ad96a53f7856b3)), closes [#4339](https://github.com/zwave-js/zwave-js-ui/issues/4339)
+
+
+### Features
+
+* bump zwave-js@15.11.0 ([#4330](https://github.com/zwave-js/zwave-js-ui/issues/4330)) ([a984133](https://github.com/zwave-js/zwave-js-ui/commit/a984133d6b51c3ecc1caa3a9501f3a20e9063329))
+* bump zwave-js@15.12.0 ([#4348](https://github.com/zwave-js/zwave-js-ui/issues/4348)) ([b287a57](https://github.com/zwave-js/zwave-js-ui/commit/b287a57afeb699ee7b9f08549e94d6aee2305d04))
+* **ui, zwaveclient:** learn/secondary controller mode ([#4097](https://github.com/zwave-js/zwave-js-ui/issues/4097)) ([c64197f](https://github.com/zwave-js/zwave-js-ui/commit/c64197fd20f70293e31e5c79c03cb95df5b89db9))
+
+# [11.1.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.1...v11.1.0) (2025-08-07)
+
+
+### Bug Fixes
+
+* **ui:** cancel editing in smart start still triggers an undate ([87bae75](https://github.com/zwave-js/zwave-js-ui/commit/87bae75ad4e9163a77a0d68a317d468b330076e1))
+* **ui:** importing QR code not working ([dfc1f0f](https://github.com/zwave-js/zwave-js-ui/commit/dfc1f0f9f98a4a7437e7ec1922a6100862555292)), closes [#4324](https://github.com/zwave-js/zwave-js-ui/issues/4324)
+* **ui:** unable to change some configuration values ([cb098e1](https://github.com/zwave-js/zwave-js-ui/commit/cb098e16b7be1fc2456c0758d3d1796669ce3847)), closes [#4322](https://github.com/zwave-js/zwave-js-ui/issues/4322)
+
+
+### Features
+
+* **ui:** add tooltip for default value indication in ValueId component ([facd64c](https://github.com/zwave-js/zwave-js-ui/commit/facd64ccadee03635850c2877060be779fbff586)), closes [#4313](https://github.com/zwave-js/zwave-js-ui/issues/4313)
+
+## [11.0.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.0.0...v11.0.1) (2025-08-01)
+
+
+### Bug Fixes
+
+* UI doesn't generate security keys ([1fae61b](https://github.com/zwave-js/zwave-js-ui/commit/1fae61b34c89f8e43ceee84aec17dee6e862efee))
+* **ui:** add tooltips for buttons in NodeDetails component for better user guidance ([8b3d74d](https://github.com/zwave-js/zwave-js-ui/commit/8b3d74dd82073fe4a1e812dba69b3d3b734118f5))
+* **ui:** adjust column widths and improve button layout in NodeDetails component ([c57ba61](https://github.com/zwave-js/zwave-js-ui/commit/c57ba6160444351418559036e5f3eec8db2b6c5f))
+* **ui:** persist items-per-page in control panel ([d1e7691](https://github.com/zwave-js/zwave-js-ui/commit/d1e7691e83e12040f0f19cbb5103c97c3866ef8b)), closes [#4315](https://github.com/zwave-js/zwave-js-ui/issues/4315)
+* **ui:** priority routes select menu not visible ([ba925ec](https://github.com/zwave-js/zwave-js-ui/commit/ba925ec6beb52c09a616931f2fe452210bcbd493)), closes [#4311](https://github.com/zwave-js/zwave-js-ui/issues/4311)
+* **ui:** sticky to default scrollbars ([87657b4](https://github.com/zwave-js/zwave-js-ui/commit/87657b44ae2e08ec649dad52f0234776e86a25ff)), closes [#4316](https://github.com/zwave-js/zwave-js-ui/issues/4316)
+
+
+### Features
+
+* **ci:** add GitHub Actions workflow for testing application with fake Z-Wave stick ([#4314](https://github.com/zwave-js/zwave-js-ui/issues/4314)) ([1933677](https://github.com/zwave-js/zwave-js-ui/commit/19336772b3f1fb920a4586852451d7d66e17cedd))
+
+# [11.0.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.11.0...v11.0.0) (2025-07-30)
+
+
+### Bug Fixes
+
+* **ui:** nodes manager name/location step disabled next ([ac7dc4d](https://github.com/zwave-js/zwave-js-ui/commit/ac7dc4d445ae18c41be1d89ee517ea2041a80249))
+
+
+### Features
+
+* move to Vue/Vuetify 3 ([#4290](https://github.com/zwave-js/zwave-js-ui/issues/4290)) ([e6ef07c](https://github.com/zwave-js/zwave-js-ui/commit/e6ef07cb6396baa615cb6abdc6a6fac0edcfc600))
+* **ui:** enhance button group with icons and conditional styling ([5b88a26](https://github.com/zwave-js/zwave-js-ui/commit/5b88a260043ba51472a1924766ea5c5a6a4b36ec))
+
+# [10.11.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.10.0...v10.11.0) (2025-07-29)
+
+
+### Features
+
+* bump @zwave-js/server@3.2.1 ([#4302](https://github.com/zwave-js/zwave-js-ui/issues/4302)) ([5a4324a](https://github.com/zwave-js/zwave-js-ui/commit/5a4324a10ad719fd7aef0469c43be32d95c2792f))
+* download Zniffer capture after saving ([#4301](https://github.com/zwave-js/zwave-js-ui/issues/4301)) ([5206508](https://github.com/zwave-js/zwave-js-ui/commit/520650896d33dacfe03cecf3a7ce552a6bdcdcce))
+
+# [10.10.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.9.0...v10.10.0) (2025-07-24)
+
+
+### Bug Fixes
+
+* region check for OTA updates ([#4299](https://github.com/zwave-js/zwave-js-ui/issues/4299)) ([4c8cae9](https://github.com/zwave-js/zwave-js-ui/commit/4c8cae9c21c325025d6f979d0ac82f7fa4712d9c))
+
+
+### Features
+
+* bump zwave-js@15.10.0 ([#4300](https://github.com/zwave-js/zwave-js-ui/issues/4300)) ([88787c1](https://github.com/zwave-js/zwave-js-ui/commit/88787c11dc772a134c484489aeffe3c26dbc0aed))
+* **ui:** validate number inputs against min/max from config ([#4288](https://github.com/zwave-js/zwave-js-ui/issues/4288)) ([6e71238](https://github.com/zwave-js/zwave-js-ui/commit/6e7123827cbb3c261790f0d10db766e8c671904d)), closes [#4285](https://github.com/zwave-js/zwave-js-ui/issues/4285)
+
+# [10.9.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.8.0...v10.9.0) (2025-07-11)
+
+
+### Features
+
+* add auto power levels option for RF configuration in settings ([#4281](https://github.com/zwave-js/zwave-js-ui/issues/4281)) ([e5007e8](https://github.com/zwave-js/zwave-js-ui/commit/e5007e88d76c63a787efb859959d35ce631071c1))
+* bump zwave-js@15.9.0 ([#4283](https://github.com/zwave-js/zwave-js-ui/issues/4283)) ([7abd215](https://github.com/zwave-js/zwave-js-ui/commit/7abd215827f012df6eec15b544163f84dfd73eb1))
+* make RF region setting mandatory, enable auto-powerlevel by default ([#4277](https://github.com/zwave-js/zwave-js-ui/issues/4277)) ([49d00ad](https://github.com/zwave-js/zwave-js-ui/commit/49d00ad0d7212861b64eacdc32408b28c4ec8a00))
+* support OTW updates via update service ([#4243](https://github.com/zwave-js/zwave-js-ui/issues/4243)) ([205e227](https://github.com/zwave-js/zwave-js-ui/commit/205e227227b39ddc0169911b5eba47de4094691c))
+* use default RF region from settings for OTA update check ([#4278](https://github.com/zwave-js/zwave-js-ui/issues/4278)) ([8083af3](https://github.com/zwave-js/zwave-js-ui/commit/8083af337c49e4e366c8cd295936b35033b045b0))
+
+# [10.8.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.7.0...v10.8.0) (2025-07-07)
+
+
+### Bug Fixes
+
+* **ui:** correct template syntax for total frames display in Zniffer component ([6e5f0a4](https://github.com/zwave-js/zwave-js-ui/commit/6e5f0a4a97edd2afe27729352ad0747b5b4d7b95))
+* **ui:** enhance theme handling and protocol color management ([d0efbb1](https://github.com/zwave-js/zwave-js-ui/commit/d0efbb105cccd5e4faa875b40251e7240bda1a95))
+* **ui:** typo in restart prompt ([#4263](https://github.com/zwave-js/zwave-js-ui/issues/4263)) ([9e4bc7e](https://github.com/zwave-js/zwave-js-ui/commit/9e4bc7efa202167faca5a3cbb2186b1f2ba6a506))
+
+
+### Features
+
+* bump zwave-js@15.8.0 ([#4264](https://github.com/zwave-js/zwave-js-ui/issues/4264)) ([cc15d30](https://github.com/zwave-js/zwave-js-ui/commit/cc15d3057467794b33ef22821e99880aafe31a45))
+* implement automatic powerlevel setting for US/EU regions ([#4269](https://github.com/zwave-js/zwave-js-ui/issues/4269)) ([ef54a21](https://github.com/zwave-js/zwave-js-ui/commit/ef54a21d2b62d34305895e0f3c0724f3731403d3))
+* **ui:** improve colors contrast in dark mode ([#4092](https://github.com/zwave-js/zwave-js-ui/issues/4092)) ([c630ea4](https://github.com/zwave-js/zwave-js-ui/commit/c630ea468bad4f9f5578714b16919acb0843e245))
+* **ui:** support system preference color scheme ([#4266](https://github.com/zwave-js/zwave-js-ui/issues/4266)) ([03bad6c](https://github.com/zwave-js/zwave-js-ui/commit/03bad6cadf4da4f601c2357ea521798b3e0f485b))
+
 # [10.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v10.6.1...v10.7.0) (2025-06-18)
 
 

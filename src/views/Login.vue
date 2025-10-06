@@ -3,18 +3,18 @@
 		<v-col elevation="12" cols="12" class="pa-0 fill-height">
 			<v-card
 				class="mx-auto"
-				:class="$vuetify.breakpoint.smAndDown ? '' : 'ml-10'"
-				:width="$vuetify.breakpoint.smAndDown ? '100%' : '500'"
+				:class="$vuetify.display.smAndDown ? '' : 'ml-10'"
+				:width="$vuetify.display.smAndDown ? '100%' : '500'"
 				height="100%"
 				tile
 			>
-				<v-card-title style="">
-					<v-avatar style="border-radius: 0" size="40px">
-						<img src="/logo.svg" alt="Logo" />
-					</v-avatar>
-					<v-toolbar-title style="margin-left: 20px"
-						>Z-Wave JS UI</v-toolbar-title
-					>
+				<v-card-title>
+					<div class="d-flex align-center">
+						<Logo size="50" />
+						<v-toolbar-title style="margin-left: 20px"
+							>Z-Wave JS UI</v-toolbar-title
+						>
+					</div>
 				</v-card-title>
 
 				<v-card-text>
@@ -23,7 +23,7 @@
 						id="login-form"
 						@submit.prevent="login"
 						ref="form"
-						lazy-validation
+						validate-on="lazy"
 					>
 						<v-text-field
 							required
@@ -56,13 +56,7 @@
 							hide-details
 							label="Remember Me"
 						></v-checkbox>
-						<v-checkbox
-							prepend-icon="null"
-							hide-details
-							persistent-hint
-							label="Dark mode"
-							v-model="internalDarkMode"
-						></v-checkbox>
+						<color-scheme hide-details></color-scheme>
 					</v-form>
 				</v-card-text>
 				<v-card-actions class="justify-center">
@@ -70,13 +64,14 @@
 						color="primary"
 						style="min-width: 150px; margin: 10px"
 						rounded
+						variant="flat"
 						class="mb-6"
 						type="submit"
 						form="login-form"
 						>Login</v-btn
 					>
 				</v-card-actions>
-				<v-alert dismissible :type="error_type" v-model="error">{{
+				<v-alert closable :type="error_type" v-model="error">{{
 					error_text
 				}}</v-alert>
 			</v-card>
@@ -94,16 +89,23 @@
 </style>
 
 <script>
+import { defineAsyncComponent } from 'vue'
 import ConfigApis from '@/apis/ConfigApis'
 import { Routes } from '@/router'
 import useBaseStore from '../stores/base.js'
 import logger from '../lib/logger'
-
-import { mapState, mapActions } from 'pinia'
+import { mapActions } from 'pinia'
+import Logo from '@/components/Logo.vue'
 
 const log = logger.get('Login')
 
 export default {
+	components: {
+		ColorScheme: defineAsyncComponent(
+			() => import('@/components/custom/ColorScheme.vue'),
+		),
+		Logo,
+	},
 	data() {
 		return {
 			username: '',
@@ -120,19 +122,6 @@ export default {
 				},
 			},
 		}
-	},
-	computed: {
-		...mapState(useBaseStore, {
-			darkMode: (store) => store.ui.darkMode,
-		}),
-		internalDarkMode: {
-			get() {
-				return this.darkMode
-			},
-			set(value) {
-				this.setDarkMode(value)
-			},
-		},
 	},
 	watch: {
 		error: function (newValue) {
@@ -159,6 +148,8 @@ export default {
 			} else {
 				localStorage.removeItem('user')
 			}
+
+			this.initColorScheme()
 		} else {
 			this.error = true
 			this.error_type = 'error'
@@ -166,7 +157,7 @@ export default {
 		}
 	},
 	methods: {
-		...mapActions(useBaseStore, ['setDarkMode']),
+		...mapActions(useBaseStore, ['initColorScheme']),
 		isLocalStorageSupported() {
 			const testKey = 'test'
 			const storage = window.localStorage
@@ -186,7 +177,8 @@ export default {
 				return
 			}
 
-			if (forced === true || this.$refs.form.validate()) {
+			const result = await this.$refs.form.validate()
+			if (forced === true || result.valid) {
 				try {
 					let user = {
 						username: this.username,

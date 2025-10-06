@@ -1,13 +1,12 @@
 <template>
 	<v-row v-if="node" class="pa-4">
-		<template v-for="(section, name) in props">
-			<v-col
-				cols="12"
-				:sm="section.cols"
-				:key="`section-content-${name}`"
-			>
+		<template
+			v-for="(section, name) in props"
+			:key="`section-content-${name}`"
+		>
+			<v-col cols="12" :sm="section.cols">
 				<div>
-					<h1 class="text-caption text-uppercase grey--text mb-2">
+					<h1 class="text-caption text-uppercase text-grey mb-2">
 						{{ name }}
 					</h1>
 					<v-row dense>
@@ -30,7 +29,7 @@
 			</v-col>
 			<v-divider
 				:key="`section-divider-${name}`"
-				:vertical="$vuetify.breakpoint.smAndUp"
+				:vertical="$vuetify.display.smAndUp"
 				v-if="section.divider"
 				class="my-4"
 			/>
@@ -54,11 +53,13 @@ export default {
 	data() {
 		return {
 			hideNoDataStats: false,
-			defaultColor: this.$vuetify.theme.themes.light.primary,
 		}
 	},
 	computed: {
 		...mapState(useBaseStore, ['nodes']),
+		defaultColor() {
+			return this.$vuetify.theme.current.colors.primary
+		},
 		total() {
 			return this.nodes.reduce(
 				(acc, node) => {
@@ -97,17 +98,21 @@ export default {
 					divider: true,
 					stats: {
 						...this.createStat('CAN', 'CAN'),
-						...this.createStat('NAK', 'NAK', 'red'),
-						...this.createStat('timeoutACK', 'Timeout ACK', 'red'),
+						...this.createStat('NAK', 'NAK', 'error'),
+						...this.createStat(
+							'timeoutACK',
+							'Timeout ACK',
+							'error',
+						),
 						...this.createStat(
 							'timeoutResponse',
 							'Timeout Response',
-							'red',
+							'error',
 						),
 						...this.createStat(
 							'timeoutCallback',
 							'Timeout Callback',
-							'red',
+							'error',
 						),
 					},
 					cols: 6,
@@ -121,12 +126,12 @@ export default {
 						...this.createStat(
 							'commandsDroppedTX',
 							'Dropped TX',
-							'red',
+							'error',
 						),
 						...this.createStat(
 							'commandsDroppedRX',
 							'Dropped RX',
-							'red',
+							'error',
 						),
 					},
 					cols: 3,
@@ -143,12 +148,12 @@ export default {
 						...this.createStat(
 							'messagesDroppedTX',
 							'Dropped TX',
-							'red',
+							'error',
 						),
 						...this.createStat(
 							'messagesDroppedRX',
 							'Dropped RX',
-							'red',
+							'error',
 						),
 					},
 					cols: 3,

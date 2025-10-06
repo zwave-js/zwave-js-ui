@@ -5,71 +5,72 @@
 				class="ma-2"
 				style="max-width: 200px"
 				v-model="mode"
-				dense
+				density="compact"
 				:items="supportedModes"
 				persistent-hint
 				:hint="`Max slots: ${this.schedule.numSlots}`"
 			></v-select>
 		</v-row>
-		<v-row justify="center" class="pa-1">
+		<v-row justify="center" class="mx-auto mt-2" style="max-width: 600px">
 			<v-data-table
 				:headers="headers"
 				:items="items"
-				item-key="id"
+				item-key="slotId"
 				:loading="loading"
 				dense
 				:mobile-breakpoint="0"
 			>
-				<template v-slot:top>
-					<v-btn
-						v-if="!loading"
-						small
-						outlined
-						text
-						color="primary"
-						@click="refresh()"
-						class="mb-2"
-						>Refresh</v-btn
-					>
-					<v-btn
-						v-else
-						small
-						outlined
-						text
-						color="error"
-						@click="cancel()"
-						class="mb-2"
-						>Stop</v-btn
-					>
+				<template #top>
+					<v-row class="my-1" density="compatct" justify="center">
+						<v-btn
+							v-if="!loading"
+							size="small"
+							variant="text"
+							color="primary"
+							@click="refresh()"
+							>Refresh</v-btn
+						>
+						<v-btn
+							v-else
+							size="small"
+							variant="text"
+							color="error"
+							@click="cancel()"
+							>Stop</v-btn
+						>
 
-					<v-btn
-						small
-						outlined
-						text
-						:disabled="schedule.numSlots <= items.length"
-						color="green"
-						@click="editSlot()"
-						class="mb-2"
-						>Add</v-btn
-					>
+						<v-btn
+							size="small"
+							variant="text"
+							:disabled="schedule.numSlots <= items.length"
+							color="success"
+							@click="editSlot()"
+							>Add</v-btn
+						>
 
-					<v-btn
-						small
-						outlined
-						v-if="mode !== activeMode && items.length > 0"
-						text
-						color="warning"
-						@click="enableMode()"
-						class="mb-2"
-						>Enable</v-btn
-					>
+						<v-btn
+							size="small"
+							variant="text"
+							v-if="mode !== activeMode && items.length > 0"
+							color="warning"
+							@click="enableMode()"
+							>Enable</v-btn
+						>
+					</v-row>
 				</template>
 
-				<template v-slot:[`item.actions`]="{ item }">
-					<v-icon small color="red" @click="removeSlot(item.slot)"
+				<template #[`item.actions`]="{ item }">
+					<v-icon
+						size="small"
+						color="error"
+						@click="removeSlot(item.slot)"
 						>delete</v-icon
 					>
-					<v-icon small color="success" @click="editSlot(item.slot)"
+					<v-icon
+						class="ml-2"
+						size="small"
+						color="success"
+						@click="editSlot(item.slot)"
 						>edit</v-icon
 					>
 				</template>
@@ -89,51 +90,51 @@ import { padNumber, copy } from '../../lib/utils.js'
 
 const months = [
 	{
-		text: 'January',
+		title: 'January',
 		value: 1,
 	},
 	{
-		text: 'February',
+		title: 'February',
 		value: 2,
 	},
 	{
-		text: 'March',
+		title: 'March',
 		value: 3,
 	},
 	{
-		text: 'April',
+		title: 'April',
 		value: 4,
 	},
 	{
-		text: 'May',
+		title: 'May',
 		value: 5,
 	},
 	{
-		text: 'June',
+		title: 'June',
 		value: 6,
 	},
 	{
-		text: 'July',
+		title: 'July',
 		value: 7,
 	},
 	{
-		text: 'August',
+		title: 'August',
 		value: 8,
 	},
 	{
-		text: 'September',
+		title: 'September',
 		value: 9,
 	},
 	{
-		text: 'October',
+		title: 'October',
 		value: 10,
 	},
 	{
-		text: 'November',
+		title: 'November',
 		value: 11,
 	},
 	{
-		text: 'December',
+		title: 'December',
 		value: 12,
 	},
 ]
@@ -142,7 +143,7 @@ export default {
 	mixins: [InstancesMixin],
 	props: {
 		node: Object,
-		user: Object,
+		_user: Object,
 		activeMode: String,
 	},
 	data() {
@@ -150,7 +151,7 @@ export default {
 			mode: 'daily',
 			weekdays: Object.keys(ScheduleEntryLockWeekday)
 				.map((key) => ({
-					text: key,
+					title: key,
 					value: ScheduleEntryLockWeekday[key],
 				}))
 				.filter((w) => typeof w.value === 'number'),
@@ -181,9 +182,9 @@ export default {
 		},
 		modes() {
 			const modes = [
-				{ text: 'Daily', value: 'daily' },
-				{ text: 'Weekly', value: 'weekly' },
-				{ text: 'Yearly', value: 'yearly' },
+				{ title: 'Daily', value: 'daily' },
+				{ title: 'Weekly', value: 'weekly' },
+				{ title: 'Yearly', value: 'yearly' },
 			]
 
 			for (const m of modes) {
@@ -197,7 +198,7 @@ export default {
 		items() {
 			const items = []
 
-			for (const s of this.user.schedule.slots) {
+			for (const s of this._user.schedule.slots) {
 				if (s.type !== this.mode) continue
 
 				let item = {
@@ -260,31 +261,35 @@ export default {
 		},
 		headers() {
 			let headers = [
-				{ text: 'Slot Id', value: 'slotId' },
-				{ text: 'Start', value: 'start' },
+				{ title: 'Slot Id', key: 'slotId' },
+				{ title: 'Start', key: 'start' },
 			]
 
 			switch (this.mode) {
 				case 'daily':
 					headers = [
 						...headers,
-						{ text: 'Weekdays', value: 'weekdays' },
-						{ text: 'Duration', value: 'duration' },
+						{ title: 'Weekdays', key: 'weekdays' },
+						{ title: 'Duration', key: 'duration' },
 					]
 					break
 				case 'weekly':
 					headers = [
 						...headers,
-						{ text: 'Weekday', value: 'weekday' },
-						{ text: 'Stop', value: 'stop' },
+						{ title: 'Weekday', key: 'weekday' },
+						{ title: 'Stop', key: 'stop' },
 					]
 					break
 				case 'yearly':
-					headers = [...headers, { text: 'Stop', value: 'stop' }]
+					headers = [...headers, { title: 'Stop', key: 'stop' }]
 					break
 			}
 
-			headers.push({ text: 'Actions', value: 'actions', sortable: false })
+			headers.push({
+				title: 'Actions',
+				key: 'actions',
+				sortable: false,
+			})
 
 			return headers
 		},
@@ -349,7 +354,7 @@ export default {
 				this.mode,
 				{
 					slotId: slot.slotId,
-					userId: this.user.id,
+					userId: this._user.id,
 				},
 			])
 
@@ -568,7 +573,7 @@ export default {
 			const response = await this.app.apiRequest('setSchedule', [
 				this.node.id,
 				this.mode,
-				{ ...res, userId: this.user.id },
+				{ ...res, userId: this._user.id },
 			])
 
 			if (response.success) {

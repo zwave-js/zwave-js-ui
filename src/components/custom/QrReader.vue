@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<v-tabs v-model="scanTab" grow icons-and-text>
+		<v-tabs v-model="scanTab" grow stacked>
 			<v-tab>
 				Scan
 				<v-icon>photo_camera</v-icon>
@@ -16,17 +16,20 @@
 			</v-tab>
 		</v-tabs>
 
-		<v-tabs-items grow v-model="scanTab">
+		<v-tabs-window grow v-model="scanTab">
 			<!-- QR-Code  -->
-			<v-tab-item>
+			<v-tabs-window-item id="qr-code-scan">
 				<v-card flat>
 					<v-card-text>
 						<v-select
+							:menu-props="{
+								attach: '#qr-code-scan',
+							}"
 							:items="videoDevices"
 							v-model="selectedCamera"
 							label="Camera"
 							hide-details
-							item-text="label"
+							item-title="label"
 							item-value="id"
 						></v-select>
 
@@ -38,33 +41,40 @@
 						></v-checkbox>
 
 						<div>
-							<center class="mt-5" v-if="loadingQr">
-								<p class="caption">Loading camera</p>
+							<div
+								class="d-flex flex-column align-center mt-5"
+								v-if="loadingQr"
+							>
+								<p class="text-caption">Loading camera</p>
 								<v-progress-circular
+									class="mt-2"
 									indeterminate
 								></v-progress-circular>
-							</center>
-							<center class="mt-5" v-else-if="retryQrLoad">
+							</div>
+							<div
+								class="d-flex flex-column align-center mt-5"
+								v-else-if="retryQrLoad"
+							>
 								<v-btn @click.stop="retryQr" color="primary"
 									>Retry</v-btn
 								>
-							</center>
+							</div>
 							<video
 								class="mx-auto"
 								ref="reader"
 								:style="{
 									opacity: loadingQr || retryQrLoad ? 0 : 1,
 									width: '100%',
-									minHeight: '400px',
+									minHeight: '300px',
 								}"
 							></video>
 						</div>
 					</v-card-text>
 				</v-card>
-			</v-tab-item>
+			</v-tabs-window-item>
 
 			<!-- Image import -->
-			<v-tab-item>
+			<v-tabs-window-item>
 				<v-card flat>
 					<v-card-text>
 						<v-file-input
@@ -75,7 +85,7 @@
 							show-size
 							accept="image/*"
 							counter
-							@change="onQrImport"
+							@update:modelValue="onQrImport"
 						></v-file-input>
 
 						<v-col
@@ -87,16 +97,18 @@
 							class="mt-2 dropzone text-center"
 						>
 							<v-icon size="60px">cloud_upload</v-icon>
-							<p class="caption font-weight-bold text-uppercase">
+							<p
+								class="text-caption font-weight-bold text-uppercase"
+							>
 								Drop the image here
 							</p>
 						</v-col>
 					</v-card-text>
 				</v-card>
-			</v-tab-item>
+			</v-tabs-window-item>
 
 			<!-- Text  -->
-			<v-tab-item>
+			<v-tabs-window-item>
 				<v-form
 					ref="qrForm"
 					v-model="qrForm"
@@ -125,9 +137,9 @@
 						</v-card-actions>
 					</v-card>
 				</v-form>
-			</v-tab-item>
-		</v-tabs-items>
-		<v-alert dense v-if="qrCodeError" type="error">{{
+			</v-tabs-window-item>
+		</v-tabs-window>
+		<v-alert density="compact" v-if="qrCodeError" type="error">{{
 			qrCodeError
 		}}</v-alert>
 	</div>
@@ -189,7 +201,7 @@ export default {
 	mounted() {
 		this.initialize()
 	},
-	beforeDestroy() {
+	beforeUnmount() {
 		this.destroyReader()
 	},
 	watch: {

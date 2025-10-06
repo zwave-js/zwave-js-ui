@@ -461,7 +461,7 @@ async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 					// hide config-db
 					continue
 				}
-				entry.children = await parseDir(entry.path)
+				entry.children = []
 				sortStore(entry.children)
 			} else {
 				entry.ext = file.split('.').pop()
@@ -508,9 +508,12 @@ if (process.env.TRUST_PROXY) {
 }
 
 app.use(
-	morgan(loggers.disableColors ? 'tiny' : 'dev', {
-		stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
-	}) as RequestHandler,
+	morgan(
+		':remote-addr :method :url :status :res[content-length] - :response-time ms',
+		{
+			stream: { write: (msg: string) => logger.info(msg.trimEnd()) },
+		},
+	) as RequestHandler,
 )
 app.use(express.json({ limit: '50mb' }) as RequestHandler)
 app.use(
@@ -1382,7 +1385,9 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 				// lgtm [js/path-injection]
 				data = await fs.readFile(reqPath, 'utf8')
 			} else {
-				throw Error('Path is not a file')
+				// read directory
+				// lgtm [js/path-injection]
+				data = await parseDir(reqPath)
 			}
 		} else {
 			data = [
