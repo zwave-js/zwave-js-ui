@@ -1,4 +1,3 @@
-// eslint-disable-next-line one-var
 import { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
 import path, { resolve } from 'path'
 import crypto from 'crypto'
@@ -7,7 +6,7 @@ import type { ZwaveConfig } from './ZwaveClient'
 import { isUint8Array } from 'util/types'
 
 // don't use import here, it will break the build
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 export const pkgJson = require('../../package.json')
 
 let VERSION: string
@@ -33,8 +32,7 @@ export interface ErrnoException extends Error {
 	stack?: string
 }
 
-// eslint-disable-next-line @typescript-eslint/ban-types
-export type Constructor<T = {}> = new (...args: any[]) => T
+export type Constructor<T = object> = new (...args: any[]) => T
 
 export function applyMixin(
 	target: Constructor,
@@ -43,7 +41,7 @@ export function applyMixin(
 ): void {
 	// Figure out the inheritance chain of the mixin
 	const inheritanceChain: Constructor[] = [mixin]
-	// eslint-disable-next-line no-constant-condition
+
 	while (true) {
 		const current = inheritanceChain[0]
 		const base = Object.getPrototypeOf(current)
@@ -217,8 +215,7 @@ export function removeSlash(str: string | number): string {
 /**
  * Check if an object has a property
  */
-// eslint-disable-next-line @typescript-eslint/ban-types
-export function hasProperty(obj: {}, prop: string): boolean {
+export function hasProperty(obj: Record<string, any>, prop: string): boolean {
 	return Object.prototype.hasOwnProperty.call(obj, prop)
 }
 

@@ -314,7 +314,6 @@ export default {
 			}
 		},
 		onProgress(data) {
-			// eslint-disable-next-line no-unused-vars
 			this.statistics = data.args[0]
 			this.progress = Math.round(
 				(this.statistics.rounds / this.iterations) * 100,

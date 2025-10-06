@@ -18,7 +18,6 @@ import { isDocker } from './utils'
 import { basename } from 'path'
 import { readFile } from 'fs/promises'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const loglevels = require('triple-beam').configs.npm.levels
 
 export type ZnifferConfig = Pick<
@@ -37,7 +36,7 @@ export type ZnifferConfig = Pick<
 	defaultFrequency?: number
 }
 
-export interface ZnifferManagerEventCallbacks {}
+export type ZnifferManagerEventCallbacks = Record<string, never>
 
 const logger = module('ZnifferManager')
 

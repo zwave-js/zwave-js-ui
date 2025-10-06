@@ -1,4 +1,3 @@
-// eslint-disable-next-line one-var
 import {
 	CommandClasses,
 	ConfigurationMetadata,
@@ -141,7 +140,7 @@ export const configManager = new ConfigManager({
 })
 
 const logger = LogManager.module('Z-Wave')
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const loglevels = require('triple-beam').configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
@@ -2123,7 +2122,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		const AsyncFunction = Object.getPrototypeOf(
-			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			async function () {},
 		).constructor
 
