@@ -111,6 +111,7 @@ import {
 	JoinNetworkStrategy,
 	JoinNetworkResult,
 	DriverMode,
+	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
 import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
@@ -5823,36 +5824,42 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		let data = null
 
-		if (ccId === CommandClasses.Notification) {
-			valueId.property = args.label
-			valueId.propertyKey = args.eventLabel
-
-			data = this._parseNotification(args.parameters)
-		} else if (ccId === CommandClasses['Entry Control']) {
-			valueId.property = args.eventType.toString()
-			valueId.propertyKey = args.dataType
-			data = isUint8Array(args.eventData)
-				? utils.buffer2hex(args.eventData)
-				: args.eventData
-		} else if (ccId === CommandClasses['Multilevel Switch']) {
-			valueId.property = getEnumMemberName(
-				MultilevelSwitchCommand,
-				args.eventType as number,
-			)
-			data = args.direction
-		} else if (ccId === CommandClasses.Powerlevel) {
-			// ignore, this should be handled in zwave-js
-			return
-		} else {
-			this.logNode(
-				zwaveNode,
-				'error',
-				'Unknown notification received CC %s: %o',
-				valueId.commandClassName,
-				args,
-			)
-
-			return
+		switch (ccId) {
+			case CommandClasses.Notification:
+				valueId.property = args.label
+				valueId.propertyKey = args.eventLabel
+				data = this._parseNotification(args.parameters)
+				break
+			case CommandClasses['Entry Control']:
+				valueId.property = args.eventType.toString()
+				valueId.propertyKey = args.dataType
+				data = isUint8Array(args.eventData)
+					? utils.buffer2hex(args.eventData)
+					: args.eventData
+				break
+			case CommandClasses['Multilevel Switch']:
+				valueId.property = getEnumMemberName(
+					MultilevelSwitchCommand,
+					args.eventType as number,
+				)
+				data = args.direction
+				break
+			case CommandClasses.Powerlevel:
+				// ignore, this should be handled in zwave-js
+				return
+			case CommandClasses['Battery']:
+				valueId.property = args.eventType
+				data = getEnumMemberName(BatteryReplacementStatus, args.urgency)
+				break
+			default:
+				this.logNode(
+					zwaveNode,
+					'error',
+					'Unknown notification received CC %s: %o',
+					valueId.commandClassName,
+					args,
+				)
+				return
 		}
 
 		valueId.id = this._getValueID(valueId, true)
