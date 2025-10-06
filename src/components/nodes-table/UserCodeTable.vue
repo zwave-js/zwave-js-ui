@@ -8,7 +8,7 @@
 		:footer-props="{
 			showFirstLastPage: true,
 		}"
-		dense
+		density="compact"
 		:show-expand="!!node.schedule"
 		expand-on-click
 	>

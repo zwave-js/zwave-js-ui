@@ -1,4 +1,3 @@
-// eslint-disable-next-line one-var
 import {
 	CommandClasses,
 	ConfigurationMetadata,
@@ -134,6 +133,7 @@ import { socketEvents } from './SocketEvents'
 import { isUint8Array } from 'util/types'
 import { PkgFsBindings } from './PkgFsBindings'
 import { join } from 'path'
+import { regionSupportsAutoPowerlevel } from './shared'
 
 export const deviceConfigPriorityDir = join(storeDir, 'config')
 
@@ -142,7 +142,7 @@ export const configManager = new ConfigManager({
 })
 
 const logger = LogManager.module('Z-Wave')
-// eslint-disable-next-line @typescript-eslint/no-var-requires
+
 const loglevels = require('triple-beam').configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
@@ -2124,7 +2124,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		const AsyncFunction = Object.getPrototypeOf(
-			// eslint-disable-next-line @typescript-eslint/no-empty-function
 			async function () {},
 		).constructor
 
@@ -3265,12 +3264,22 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				'powerlevel' | 'RFRegion' | 'maxLongRangePowerlevel'
 			> = ['RFRegion']
 
+			const supportsAutoPowerlevel = regionSupportsAutoPowerlevel(region)
+
 			// If powerlevels are in auto mode, refresh them after region change
-			if (this.cfg.rf?.txPower?.powerlevel === 'auto') {
-				propsToUpdate.push('powerlevel')
-			}
-			if (this.cfg.rf?.maxLongRangePowerlevel === 'auto') {
-				propsToUpdate.push('maxLongRangePowerlevel')
+			if (supportsAutoPowerlevel) {
+				if (
+					this.cfg.rf?.autoPowerlevels ||
+					this.cfg.rf?.txPower?.powerlevel === 'auto'
+				) {
+					propsToUpdate.push('powerlevel')
+				}
+				if (
+					this.cfg.rf?.autoPowerlevels ||
+					this.cfg.rf?.maxLongRangePowerlevel === 'auto'
+				) {
+					propsToUpdate.push('maxLongRangePowerlevel')
+				}
 			}
 
 			await this.updateControllerNodeProps(null, propsToUpdate)

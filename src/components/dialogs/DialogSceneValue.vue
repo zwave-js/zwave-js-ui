@@ -115,7 +115,6 @@ export default {
 		nodes: Array,
 	},
 	watch: {
-		// eslint-disable-next-line no-unused-vars
 		modelValue(val) {
 			this.$refs.form && this.$refs.form.resetValidation()
 		},
