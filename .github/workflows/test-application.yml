@@ -81,7 +81,8 @@ jobs:
                   
             - name: Start backend
               run: |
-                  nohup npm run server > server.log 2>&1 &
+                  npm run build:server
+                  nohup npm start > server.log 2>&1 &
                   sleep 25
             
             - name: Test MQTT write and read
