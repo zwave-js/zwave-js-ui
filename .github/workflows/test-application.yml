@@ -91,15 +91,18 @@ jobs:
                   docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1
 
             - name: Output backend logs
+              if: always()
               run: |
                 sleep 5
                 cat server.log
             
             - name: Output broker logs
+              if: always()
               run: |
                   docker logs broker
 
             - name: Ensure backend is running
+              if: always()
               run: |
                   if ! pgrep -f "npm run server" > /dev/null; then
                     echo "Backend crashed!" && exit 1
