@@ -105,7 +105,7 @@ jobs:
             - name: Ensure backend is running
               if: always()
               run: |
-                  if ! pgrep -f "npm run server" > /dev/null; then
+                  if ! pgrep -f "npm start" > /dev/null; then
                     echo "Backend crashed!" && exit 1
                   fi
                   echo "Backend is running successfully."
