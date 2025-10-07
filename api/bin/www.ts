@@ -4,10 +4,10 @@
 /**
  * Module dependencies.
  */
-import jsonStore from '../lib/jsonStore'
-import store from '../config/store'
-import * as conf from '../config/app'
-import app, { startServer } from '../app'
+import jsonStore from '../lib/jsonStore.ts'
+import store from '../config/store.ts'
+import * as conf from '../config/app.ts'
+import app, { startServer } from '../app.ts'
 
 console.log(
 	`  ______  __          __                      _  _____     _    _ _____ \n |___  /  \\ \\        / /                     | |/ ____|   | |  | |_   _|\n    / /____\\ \\  /\\  / /_ ___   _____         | | (___     | |  | | | |  \n   / /______\\ \\/  \\/ / _\' \\ \\ / / _ \\    _   | |\\___ \\    | |  | | | |  \n  / /__      \\  /\\  / (_| |\\ V /  __/   | |__| |____) |   | |__| |_| |_ \n /_____|      \\/  \\/ \\__,_| \\_/ \\___|    \\____/|_____/     \\____/|_____|\n`,

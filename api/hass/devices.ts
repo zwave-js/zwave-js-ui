@@ -1,6 +1,6 @@
 // Place here repeated patterns
 
-import { HassDevice } from '../lib/ZwaveClient'
+import { HassDevice } from '../lib/ZwaveClient.ts'
 
 const FAN_DIMMER: HassDevice = {
 	type: 'fan',

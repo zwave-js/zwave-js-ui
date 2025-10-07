@@ -1,10 +1,10 @@
 'use strict'
 
 import { Server as HttpServer } from 'http'
-import { module } from './logger'
+import { module } from './logger.ts'
 import { Server as SocketServer, Socket } from 'socket.io'
-import { TypedEventEmitter } from './EventEmitter'
-import { inboundEvents } from './SocketEvents'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import { inboundEvents } from './SocketEvents.ts'
 
 const logger = module('Socket')
 

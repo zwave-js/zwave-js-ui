@@ -1,11 +1,17 @@
-const { defineConfig, globalIgnores } = require('eslint/config')
+import { defineConfig, globalIgnores } from 'eslint/config'
+import { fileURLToPath } from 'url'
+import { dirname } from 'path'
 
-const globals = require('globals')
-const vue = require('eslint-plugin-vue')
-const vuetify = require('eslint-plugin-vuetify')
-const js = require('@eslint/js')
+import globals from 'globals'
+import vue from 'eslint-plugin-vue'
+import vuetify from 'eslint-plugin-vuetify'
+import importPlugin from 'eslint-plugin-import'
+import js from '@eslint/js'
 
-const { FlatCompat } = require('@eslint/eslintrc')
+import { FlatCompat } from '@eslint/eslintrc'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 const compat = new FlatCompat({
 	baseDirectory: __dirname,
@@ -13,7 +19,7 @@ const compat = new FlatCompat({
 	allConfig: js.configs.all,
 })
 
-module.exports = defineConfig([
+export default defineConfig([
 	{
 		languageOptions: {
 			globals: {
@@ -63,6 +69,10 @@ module.exports = defineConfig([
 			},
 		},
 
+		plugins: {
+			import: importPlugin,
+		},
+
 		extends: compat.extends(
 			'plugin:@typescript-eslint/recommended',
 			'plugin:@typescript-eslint/recommended-requiring-type-checking',
@@ -84,6 +94,15 @@ module.exports = defineConfig([
 			'@typescript-eslint/no-unsafe-enum-comparison': 'off',
 			'@typescript-eslint/no-unused-vars': 'off',
 			'@typescript-eslint/no-require-imports': 'off',
+
+			// Enforce .ts extensions for local imports
+			'import/extensions': [
+				'error',
+				'always',
+				{
+					ignorePackages: true,
+				},
+			],
 		},
 	},
 	globalIgnores([

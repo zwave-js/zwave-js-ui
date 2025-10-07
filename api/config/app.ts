@@ -1,4 +1,4 @@
-import { joinPath } from '../lib/utils'
+import { joinPath } from '../lib/utils.ts'
 import { config } from 'dotenv'
 
 config({ path: './.env.app' })

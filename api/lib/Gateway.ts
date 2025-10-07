@@ -1,15 +1,15 @@
 import * as fs from 'fs'
 import * as path from 'path'
-import * as utils from './utils'
+import * as utils from './utils.ts'
 import { AlarmSensorType, SetValueAPIOptions } from 'zwave-js'
 import { CommandClasses, ValueID } from '@zwave-js/core'
-import * as Constants from './Constants'
-import { LogLevel, module } from './logger'
-import hassCfg, { ColorMode } from '../hass/configurations'
-import hassDevices from '../hass/devices'
-import { storeDir } from '../config/app'
+import * as Constants from './Constants.ts'
+import { LogLevel, module } from './logger.ts'
+import hassCfg, { ColorMode } from '../hass/configurations.ts'
+import hassDevices from '../hass/devices.ts'
+import { storeDir } from '../config/app.ts'
 import { IClientPublishOptions } from 'mqtt'
-import MqttClient from './MqttClient'
+import MqttClient from './MqttClient.ts'
 import ZwaveClient, {
 	AllowedApis,
 	CallAPIResult,
@@ -18,11 +18,11 @@ import ZwaveClient, {
 	ZUINode,
 	ZUIValueId,
 	ZUIValueIdState,
-} from './ZwaveClient'
+} from './ZwaveClient.ts'
 import Cron from 'croner'
 
 import crypto from 'crypto'
-import { IMeterCCSpecific } from './Constants'
+import { IMeterCCSpecific } from './Constants.ts'
 
 const logger = module('Gateway')
 

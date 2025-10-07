@@ -13,10 +13,10 @@ import {
 	sanitizeTopic,
 	pkgJson,
 	stringifyJSON,
-} from './utils'
-import { module } from './logger'
-import { TypedEventEmitter } from './EventEmitter'
-import { storeDir } from '../config/app'
+} from './utils.ts'
+import { module } from './logger.ts'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import { storeDir } from '../config/app.ts'
 import { ensureDir } from 'fs-extra'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'path'

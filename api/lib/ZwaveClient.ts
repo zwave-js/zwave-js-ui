@@ -21,7 +21,7 @@ import {
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { isDocker } from './utils'
+import { isDocker } from  './utils.ts'
 import {
 	AssociationAddress,
 	AssociationGroup,
@@ -114,26 +114,26 @@ import {
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
-import store from '../config/store'
-import jsonStore from './jsonStore'
-import * as LogManager from './logger'
-import * as utils from './utils'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from  '../config/app.ts'
+import store from  '../config/store.ts'
+import jsonStore from  './jsonStore.ts'
+import * as LogManager from  './logger.ts'
+import * as utils from  './utils.ts'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import { ensureDir, exists, mkdirp, writeFile } from 'fs-extra'
 import { Server as SocketServer } from 'socket.io'
-import { TypedEventEmitter } from './EventEmitter'
-import { GatewayValue } from './Gateway'
+import { TypedEventEmitter } from  './EventEmitter.ts'
+import { GatewayValue } from  './Gateway.ts'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
-import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
-import { socketEvents } from './SocketEvents'
+import backupManager, { NVM_BACKUP_PREFIX } from  './BackupManager.ts'
+import { socketEvents } from  './SocketEvents.ts'
 import { isUint8Array } from 'util/types'
-import { PkgFsBindings } from './PkgFsBindings'
+import { PkgFsBindings } from  './PkgFsBindings.ts'
 import { join } from 'path'
-import { regionSupportsAutoPowerlevel } from './shared'
+import { regionSupportsAutoPowerlevel } from  './shared.ts'
 
 export const deviceConfigPriorityDir = join(storeDir, 'config')
 

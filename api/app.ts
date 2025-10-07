@@ -3,13 +3,16 @@ import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import csrf from 'csurf'
 import morgan from 'morgan'
-import store, { Settings, User } from './config/store'
-import Gateway, { GatewayConfig, GatewayType } from './lib/Gateway'
-import jsonStore from './lib/jsonStore'
-import * as loggers from './lib/logger'
-import MqttClient from './lib/MqttClient'
-import SocketManager from './lib/SocketManager'
-import ZWaveClient, { CallAPIResult, SensorTypeScale } from './lib/ZwaveClient'
+import store, { Settings, User } from './config/store.ts'
+import Gateway, { GatewayConfig, GatewayType } from './lib/Gateway.ts'
+import jsonStore from './lib/jsonStore.ts'
+import * as loggers from './lib/logger.ts'
+import MqttClient from './lib/MqttClient.ts'
+import SocketManager from './lib/SocketManager.ts'
+import ZWaveClient, {
+	CallAPIResult,
+	SensorTypeScale,
+} from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
@@ -32,18 +35,18 @@ import {
 	snippetsDir,
 	storeDir,
 	tmpDir,
-} from './config/app'
+} from './config/app.ts'
 import {
 	createPlugin,
 	CustomPlugin,
 	PluginConstructor,
-} from './lib/CustomPlugin'
-import { inboundEvents, socketEvents } from './lib/SocketEvents'
-import * as utils from './lib/utils'
-import backupManager from './lib/BackupManager'
+} from './lib/CustomPlugin.ts'
+import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
+import * as utils from './lib/utils.ts'
+import backupManager from './lib/BackupManager.ts'
 import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
-import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager'
+import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 
 const createCertificate = promisify(generate)

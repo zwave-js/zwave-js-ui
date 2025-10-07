@@ -7,14 +7,14 @@ import {
 	Zniffer,
 	ZnifferOptions,
 } from 'zwave-js'
-import { TypedEventEmitter } from './EventEmitter'
-import { module } from './logger'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import { module } from './logger.ts'
 import { Server as SocketServer } from 'socket.io'
-import { socketEvents } from './SocketEvents'
-import { ZwaveConfig } from './ZwaveClient'
-import { logsDir, storeDir } from '../config/app'
-import { buffer2hex, joinPath, parseSecurityKeys } from './utils'
-import { isDocker } from './utils'
+import { socketEvents } from './SocketEvents.ts'
+import { ZwaveConfig } from './ZwaveClient.ts'
+import { logsDir, storeDir } from '../config/app.ts'
+import { buffer2hex, joinPath, parseSecurityKeys } from './utils.ts'
+import { isDocker } from './utils.ts'
 import { basename } from 'path'
 import { readFile } from 'fs/promises'
 
