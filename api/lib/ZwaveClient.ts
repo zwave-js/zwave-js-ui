@@ -21,7 +21,7 @@ import {
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { isDocker } from  './utils.ts'
+import { isDocker } from './utils.ts'
 import {
 	AssociationAddress,
 	AssociationGroup,
@@ -114,26 +114,29 @@ import {
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from  '../config/app.ts'
-import store from  '../config/store.ts'
-import jsonStore from  './jsonStore.ts'
-import * as LogManager from  './logger.ts'
-import * as utils from  './utils.ts'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import store from '../config/store.ts'
+import jsonStore from './jsonStore.ts'
+import * as LogManager from './logger.ts'
+import * as utils from './utils.ts'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
-import { ensureDir, exists, mkdirp, writeFile } from 'fs-extra'
+import fs from 'fs-extra'
 import { Server as SocketServer } from 'socket.io'
-import { TypedEventEmitter } from  './EventEmitter.ts'
-import { GatewayValue } from  './Gateway.ts'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import { GatewayValue } from './Gateway.ts'
 
 import { ConfigManager, DeviceConfig } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
-import backupManager, { NVM_BACKUP_PREFIX } from  './BackupManager.ts'
-import { socketEvents } from  './SocketEvents.ts'
+import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
+import { socketEvents } from './SocketEvents.ts'
 import { isUint8Array } from 'util/types'
-import { PkgFsBindings } from  './PkgFsBindings.ts'
+import { PkgFsBindings } from './PkgFsBindings.ts'
 import { join } from 'path'
-import { regionSupportsAutoPowerlevel } from  './shared.ts'
+import { regionSupportsAutoPowerlevel } from './shared.ts'
+import tripleBeam from 'triple-beam'
+
+const { ensureDir, exists, mkdirp, writeFile } = fs
 
 export const deviceConfigPriorityDir = join(storeDir, 'config')
 
@@ -143,7 +146,7 @@ export const configManager = new ConfigManager({
 
 const logger = LogManager.module('Z-Wave')
 
-const loglevels = require('triple-beam').configs.npm.levels
+const loglevels = tripleBeam.configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 

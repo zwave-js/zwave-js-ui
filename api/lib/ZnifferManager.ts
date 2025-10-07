@@ -17,8 +17,9 @@ import { buffer2hex, joinPath, parseSecurityKeys } from './utils.ts'
 import { isDocker } from './utils.ts'
 import { basename } from 'path'
 import { readFile } from 'fs/promises'
+import tripleBeam from 'triple-beam'
 
-const loglevels = require('triple-beam').configs.npm.levels
+const loglevels = tripleBeam.configs.npm.levels
 
 export type ZnifferConfig = Pick<
 	ZwaveConfig,

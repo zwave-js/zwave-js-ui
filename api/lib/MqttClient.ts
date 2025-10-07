@@ -20,7 +20,9 @@ import { storeDir } from '../config/app.ts'
 import { ensureDir } from 'fs-extra'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'path'
+import { createRequire } from 'module'
 
+const require = createRequire(import.meta.url)
 const url = require('native-url')
 
 const logger = module('Mqtt')

@@ -2,14 +2,17 @@ import { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
 import path, { resolve } from 'path'
 import crypto from 'crypto'
 import { readFileSync, statSync } from 'fs'
-import type { ZwaveConfig } from  './ZwaveClient.ts'
+import type { ZwaveConfig } from './ZwaveClient.ts'
 import { isUint8Array } from 'util/types'
+import { createRequire } from 'module'
 
 // don't use import here, it will break the build
-
-export const pkgJson = require('../../package.json')
+const require = createRequire(import.meta.url)
+const pkg = require('../../package.json')
 
 let VERSION: string
+
+export const pkgJson = pkg
 
 export interface Snippet {
 	name: string
@@ -80,6 +83,9 @@ export function fileDate(date?: Date) {
 }
 
 /** Where package.json is */
+export const __filename = new URL('', import.meta.url).pathname
+export const __dirname = path.dirname(__filename)
+
 export const basePath = __filename.endsWith('index.js')
 	? resolve(__dirname) // esbuild bundle
 	: resolve(__dirname, '..', '..')
@@ -174,11 +180,9 @@ export function getVersion(): string {
 					.trim()
 			}
 
-			VERSION = `${pkgJson.version}${
-				rev ? '.' + rev.substring(0, 7) : ''
-			}`
+			VERSION = `${pkg.version}${rev ? '.' + rev.substring(0, 7) : ''}`
 		} catch {
-			VERSION = pkgJson.version
+			VERSION = pkg.version
 		}
 	}
 

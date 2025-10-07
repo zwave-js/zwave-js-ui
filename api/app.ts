@@ -19,7 +19,7 @@ import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
-import fs, { mkdirp, move, readdir, rm, stat } from 'fs-extra'
+import fs from 'fs-extra'
 import { createServer as createHttpServer, Server as HttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
 import jwt from 'jsonwebtoken'
@@ -48,6 +48,8 @@ import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
 import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
+
+const { mkdirp, move, readdir, rm, stat } = fs
 
 const createCertificate = promisify(generate)
 

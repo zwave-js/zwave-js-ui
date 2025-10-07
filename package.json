@@ -187,7 +187,8 @@
     "vite-plugin-vuetify": "^2.1.1"
   },
   "overrides": {
-    "rollup": "npm:@rollup/wasm-node"
+    "rollup": "npm:@rollup/wasm-node",
+    "alcalzone-shared": "^5.0.0"
   },
   "engines": {
     "node": ">= 20.19"

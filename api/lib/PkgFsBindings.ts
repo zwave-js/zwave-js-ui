@@ -2,6 +2,8 @@ import { FileHandle, FSStats, type FileSystem } from '@zwave-js/shared/bindings'
 import { fs as nodeFs } from '@zwave-js/core/bindings/fs/node'
 import path from 'node:path'
 
+const __filename = new URL('', import.meta.url).pathname
+const __dirname = path.dirname(__filename)
 // Ensures that the Z-Wave JS driver is looking for the right files in the right place
 // when running inside a `pkg` bundle. In this case, it will resolve its embedded
 // configuration dir to the path "/config", but the files reside in "node_modules/@zwave-js/config/config" instead.

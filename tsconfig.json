@@ -2,10 +2,10 @@
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
     // Module settings for ESM output
-    "module": "ES2022",
+    "module": "esnext",
     "moduleResolution": "bundler",
-    "target": "ES2022",
-    
+    "target": "esnext",
+
     // Necessary to support yarn portals with the node-modules linker, used by yarn link (berry)
     "preserveSymlinks": true,
     "resolveJsonModule": true,
