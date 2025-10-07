@@ -1,5 +1,5 @@
 import chai, { expect } from 'chai'
-import proxyquire from 'proxyquire'
+import esmock from 'esmock'
 import type { SinonStub } from 'sinon'
 import sinon from 'sinon'
 
@@ -14,10 +14,15 @@ const snapshotPath = '/snapshot/zui'
 
 describe('#utils', () => {
 	describe('#getPath()', () => {
-		const utils = proxyquire('../../api/lib/utils', {
-			path: {
-				resolve: () => snapshotPath,
-			},
+		let utils: any
+
+		before(async () => {
+			utils = await esmock('../../api/lib/utils.ts', {
+				path: {
+					resolve: () => snapshotPath,
+					join: (...args: string[]) => args.join('/'),
+				},
+			})
 		})
 
 		it('write && process.pkg', () => {
@@ -39,27 +44,30 @@ describe('#utils', () => {
 	})
 
 	describe('#joinPath()', () => {
-		let path: { join: SinonStub; resolve: () => string }
-		let utils
+		let pathMock: { join: SinonStub; resolve: () => string }
+		let utils: any
 
-		before(() => {
-			path = { join: sinon.stub(), resolve: () => snapshotPath }
-			utils = proxyquire('../../api/lib/utils', {
-				path: path,
+		before(async () => {
+			pathMock = {
+				join: sinon.stub(),
+				resolve: () => snapshotPath,
+			}
+			utils = await esmock('../../api/lib/utils.ts', {
+				path: pathMock,
 			})
 		})
 
 		it('zero length', () => {
 			utils.joinPath()
-			return expect(path.join.callCount).to.equal(1)
+			return expect(pathMock.join.callCount).to.equal(1)
 		})
 		it('1 length', () => {
 			utils.joinPath('foo')
-			return expect(path.join).to.have.been.calledWith('foo')
+			return expect(pathMock.join).to.have.been.calledWith('foo')
 		})
 		it('first arg bool gets new path 0', () => {
 			utils.joinPath(true, 'bar')
-			return expect(path.join).to.have.been.calledWithExactly(
+			return expect(pathMock.join).to.have.been.calledWithExactly(
 				snapshotPath,
 				'bar',
 			)

@@ -1,8 +1,10 @@
-const esbuild = require('esbuild')
-const { cp, stat, readFile, writeFile } = require('fs/promises')
-const { exists, emptyDir } = require('fs-extra')
-const { join } = require('path')
+import esbuild from 'esbuild'
+import { cp, stat, readFile, writeFile } from 'fs/promises'
+import { exists, emptyDir } from 'fs-extra'
+import { join } from 'path'
+import { createRequire } from 'module'
 
+const require = createRequire(import.meta.url)
 const outputDir = 'build'
 
 function cleanPkgJson(json) {

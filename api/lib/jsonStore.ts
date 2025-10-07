@@ -9,11 +9,21 @@ import { createWriteStream } from 'fs'
 import fsExtra from 'fs-extra'
 import type { Response } from 'express'
 
-const { readFile, writeFile } = jsonFile
 const { mkdirp, existsSync } = fsExtra
 const logger = module('Store')
 
 export const STORE_BACKUP_PREFIX = 'store-backup_'
+
+// Default dependencies for production use
+const defaultDeps = {
+	readFile: jsonFile.readFile.bind(jsonFile),
+	writeFile: jsonFile.writeFile.bind(jsonFile),
+}
+
+export interface StorageHelperDeps {
+	readFile?: typeof jsonFile.readFile
+	writeFile?: typeof jsonFile.writeFile
+}
 
 /**
 Constructor
@@ -21,13 +31,17 @@ Constructor
 export class StorageHelper {
 	private _store: Record<StoreKeys, any>
 	private config: Record<StoreKeys, StoreFile>
+	private readFile: typeof jsonFile.readFile
+	private writeFile: typeof jsonFile.writeFile
 
 	public get store() {
 		return this._store
 	}
 
-	constructor() {
+	constructor(deps?: StorageHelperDeps) {
 		this._store = {} as Record<StoreKeys, any>
+		this.readFile = deps?.readFile || defaultDeps.readFile
+		this.writeFile = deps?.writeFile || defaultDeps.writeFile
 	}
 
 	async init(config: Record<StoreKeys, StoreFile>) {
@@ -92,11 +106,11 @@ export class StorageHelper {
 		})
 	}
 
-	private async _getFile(config: StoreFile) {
+	public async _getFile(config: StoreFile) {
 		let err: { code: string } | undefined
 		let data: any
 		try {
-			data = await readFile(utils.joinPath(storeDir, config.file))
+			data = await this.readFile(utils.joinPath(storeDir, config.file))
 		} catch (error) {
 			err = error
 		}
@@ -129,7 +143,7 @@ export class StorageHelper {
 	}
 
 	async put(model: StoreFile, data: any) {
-		await writeFile(utils.joinPath(storeDir, model.file), data)
+		await this.writeFile(utils.joinPath(storeDir, model.file), data)
 		this._store[model.file] = data
 		return data
 	}
