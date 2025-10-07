@@ -82,7 +82,6 @@ export function fileDate(date?: Date) {
 	return date.toISOString().slice(-24).replace(/\D/g, '').slice(0, 14)
 }
 
-/** Where package.json is */
 export const __filename = new URL('', import.meta.url).pathname
 export const __dirname = path.dirname(__filename)
 
