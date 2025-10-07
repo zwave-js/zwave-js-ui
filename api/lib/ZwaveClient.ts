@@ -137,13 +137,11 @@ import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
 import { socketEvents } from './SocketEvents.ts'
 import { isUint8Array } from 'util/types'
 import { PkgFsBindings } from './PkgFsBindings.ts'
-import { join } from 'path'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import tripleBeam from 'triple-beam'
+import { deviceConfigPriorityDir } from './Constants.ts'
 
 const { ensureDir, exists, mkdirp, writeFile } = fs
-
-export const deviceConfigPriorityDir = join(storeDir, 'config')
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,

@@ -5,6 +5,10 @@ import { readFile, writeFile } from 'fs/promises'
 
 import * as prettier from 'prettier'
 import { join } from 'path'
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+
+const __dirname = join(new URL(import.meta.url).pathname, '..')
 
 // Make the linter happy
 export async function formatWithPrettier(
@@ -55,6 +59,10 @@ function printMethodDeclaration(method: MethodDeclaration): string {
 		ret += ': ' + method.getSignature().getReturnType().getText(method)
 	}
 	ret += ';'
+
+	// remove import(xxx) from types
+	ret = ret.replace(/import\(([^)]+)\)\./g, '')
+
 	return fixPrinterErrors(ret)
 }
 
