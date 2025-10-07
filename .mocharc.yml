@@ -1,5 +1,1 @@
 recursive: true
-spec:
-  - 'test/**/*.test.ts'
-watch-files:
-  - 'test/**/*.ts'

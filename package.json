@@ -40,7 +40,7 @@
     "lint:markdownlint": "markdownlint '**/*.md'",
     "lint-fix:markdownlint": "markdownlint --fix '**/*.md'",
     "test": "npm-run-all 'test:*'",
-    "test:server": "tsx node_modules/.bin/mocha",
+    "test:server": "tsx node_modules/.bin/mocha test/**/*.test.ts",
     "test:ui": "mocha -r @babel/register src/**/*.test.js",
     "docs": "docsify serve ./docs",
     "docs:generate": "node --experimental-transform-types genereteDocs.ts",
