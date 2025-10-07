@@ -1,88 +1,68 @@
-import {
-	CommandClasses,
+import type {
 	ConfigurationMetadata,
-	dskToString,
-	Duration,
 	Firmware,
-	isUnsupervisedOrSucceeded,
 	Route,
-	RouteKind,
-	SecurityClass,
 	SupervisionResult,
-	SupervisionStatus,
 	ValueMetadataNumeric,
 	ValueMetadataString,
 	ZWaveDataRate,
+	FirmwareFileFormat,
+} from '@zwave-js/core'
+import {
+	CommandClasses,
+	dskToString,
+	Duration,
+	isUnsupervisedOrSucceeded,
+	RouteKind,
+	SecurityClass,
+	SupervisionStatus,
 	ZWaveErrorCodes,
 	Protocols,
-	FirmwareFileFormat,
 	tryUnzipFirmwareFile,
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
 import { isDocker } from './utils.ts'
-import {
+import type {
 	AssociationAddress,
 	AssociationGroup,
 	OTWFirmwareUpdateProgress,
 	OTWFirmwareUpdateResult,
-	OTWFirmwareUpdateStatus,
 	ControllerStatistics,
-	ControllerStatus,
 	DataRate,
-	Driver,
 	ExclusionOptions,
-	ExclusionStrategy,
 	FirmwareUpdateCapabilities,
 	FirmwareUpdateProgress,
 	FirmwareUpdateResult,
-	FirmwareUpdateStatus,
 	FLiRS,
 	FoundNode,
 	GetFirmwareUpdatesOptions,
-	guessFirmwareFileFormat,
 	RebuildRoutesOptions,
 	RebuildRoutesStatus,
 	InclusionGrant,
 	InclusionOptions,
 	InclusionResult,
-	InclusionStrategy,
-	InterviewStage,
-	libVersion,
 	LifelineHealthCheckResult,
 	LifelineHealthCheckSummary,
-	MultilevelSwitchCommand,
 	NodeInterviewFailedEventArgs,
 	NodeStatistics,
-	NodeStatus,
 	NodeType,
 	PlannedProvisioningEntry,
 	ProtocolVersion,
-	QRCodeVersion,
 	QRProvisioningInformation,
 	RefreshInfoOptions,
-	RemoveNodeReason,
 	ReplaceNodeOptions,
-	RFRegion,
 	RouteHealthCheckResult,
 	RouteHealthCheckSummary,
-	ScheduleEntryLockCC,
 	ScheduleEntryLockDailyRepeatingSchedule,
-	ScheduleEntryLockScheduleKind,
 	ScheduleEntryLockSlotId,
 	ScheduleEntryLockWeekDaySchedule,
 	ScheduleEntryLockYearDaySchedule,
-	SerialAPISetupCommand,
 	SetValueAPIOptions,
-	setValueFailed,
 	SetValueResult,
-	SetValueStatus,
-	setValueWasUnsupervisedOrSucceeded,
 	SmartStartProvisioningEntry,
 	TranslatedValueID,
-	UserCodeCC,
-	UserIDStatus,
 	ValueID,
 	ValueMetadata,
 	ValueType,
@@ -104,12 +84,36 @@ import {
 	PartialZWaveOptions,
 	InclusionUserCallbacks,
 	InclusionState,
-	ProvisioningEntryStatus,
-	AssociationCheckResult,
 	LinkReliabilityCheckResult,
 	JoinNetworkOptions,
-	JoinNetworkStrategy,
 	JoinNetworkResult,
+} from 'zwave-js'
+import {
+	OTWFirmwareUpdateStatus,
+	ControllerStatus,
+	Driver,
+	ExclusionStrategy,
+	FirmwareUpdateStatus,
+	guessFirmwareFileFormat,
+	InclusionStrategy,
+	InterviewStage,
+	libVersion,
+	MultilevelSwitchCommand,
+	NodeStatus,
+	QRCodeVersion,
+	RemoveNodeReason,
+	RFRegion,
+	ScheduleEntryLockCC,
+	ScheduleEntryLockScheduleKind,
+	SerialAPISetupCommand,
+	setValueFailed,
+	SetValueStatus,
+	setValueWasUnsupervisedOrSucceeded,
+	UserCodeCC,
+	UserIDStatus,
+	ProvisioningEntryStatus,
+	AssociationCheckResult,
+	JoinNetworkStrategy,
 	DriverMode,
 	BatteryReplacementStatus,
 } from 'zwave-js'
@@ -122,11 +126,12 @@ import * as utils from './utils.ts'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import fs from 'fs-extra'
-import { Server as SocketServer } from 'socket.io'
+import type { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
-import { GatewayValue } from './Gateway.ts'
+import type { GatewayValue } from './Gateway.ts'
 
-import { ConfigManager, DeviceConfig } from '@zwave-js/config'
+import type { DeviceConfig } from '@zwave-js/config'
+import { ConfigManager } from '@zwave-js/config'
 import { readFile } from 'fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
 import { socketEvents } from './SocketEvents.ts'

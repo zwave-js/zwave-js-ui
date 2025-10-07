@@ -1,4 +1,5 @@
-import { FileHandle, FSStats, type FileSystem } from '@zwave-js/shared/bindings'
+import type { FileHandle, FSStats } from '@zwave-js/shared/bindings'
+import { type FileSystem } from '@zwave-js/shared/bindings'
 import { fs as nodeFs } from '@zwave-js/core/bindings/fs/node'
 import path from 'node:path'
 

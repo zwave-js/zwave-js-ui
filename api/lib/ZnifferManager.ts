@@ -1,17 +1,15 @@
+import type { CorruptedFrame, Frame, ZnifferOptions } from 'zwave-js'
 import {
 	CommandClass,
-	CorruptedFrame,
-	Frame,
 	isEncapsulatingCommandClass,
 	isMultiEncapsulatingCommandClass,
 	Zniffer,
-	ZnifferOptions,
 } from 'zwave-js'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import { module } from './logger.ts'
-import { Server as SocketServer } from 'socket.io'
+import type { Server as SocketServer } from 'socket.io'
 import { socketEvents } from './SocketEvents.ts'
-import { ZwaveConfig } from './ZwaveClient.ts'
+import type { ZwaveConfig } from './ZwaveClient.ts'
 import { logsDir, storeDir } from '../config/app.ts'
 import { buffer2hex, joinPath, parseSecurityKeys } from './utils.ts'
 import { isDocker } from './utils.ts'

@@ -1,13 +1,13 @@
 import jsonFile from 'jsonfile'
 import { storeBackupsDir, storeDir } from '../config/app.ts'
-import { StoreFile, StoreKeys } from '../config/store.ts'
+import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
 import * as utils from './utils.ts'
 import { recursive as merge } from 'merge'
 import archiver from 'archiver'
 import { createWriteStream } from 'fs'
 import fsExtra from 'fs-extra'
-import { Response } from 'express'
+import type { Response } from 'express'
 
 const { readFile, writeFile } = jsonFile
 const { mkdirp, existsSync } = fsExtra

@@ -1,8 +1,9 @@
 'use strict'
 
-import { Server as HttpServer } from 'http'
+import type { Server as HttpServer } from 'http'
 import { module } from './logger.ts'
-import { Server as SocketServer, Socket } from 'socket.io'
+import type { Socket } from 'socket.io'
+import { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import { inboundEvents } from './SocketEvents.ts'
 

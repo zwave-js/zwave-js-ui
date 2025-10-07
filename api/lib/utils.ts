@@ -1,4 +1,4 @@
-import { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
+import type { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
 import path, { resolve } from 'path'
 import crypto from 'crypto'
 import { readFileSync, statSync } from 'fs'

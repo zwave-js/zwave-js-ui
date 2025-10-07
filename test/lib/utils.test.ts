@@ -1,6 +1,7 @@
 import chai, { expect } from 'chai'
 import proxyquire from 'proxyquire'
-import sinon, { SinonStub } from 'sinon'
+import type { SinonStub } from 'sinon'
+import sinon from 'sinon'
 
 import sinonChai from 'sinon-chai'
 

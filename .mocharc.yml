@@ -1,3 +1,8 @@
 recursive: true
+spec:
+  - 'test/**/*.test.ts'
+exclude:
+  - 'test/lib/jsonStore.test.ts'
+  - 'test/lib/utils.test.ts'
 watch-files:
   - 'test/**/*.ts'

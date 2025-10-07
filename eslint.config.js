@@ -95,6 +95,15 @@ export default defineConfig([
 			'@typescript-eslint/no-unused-vars': 'off',
 			'@typescript-eslint/no-require-imports': 'off',
 
+			// Enforce type-only imports
+			'@typescript-eslint/consistent-type-imports': [
+				'error',
+				{
+					prefer: 'type-imports',
+					fixStyle: 'separate-type-imports',
+				},
+			],
+
 			// Enforce .ts extensions for local imports
 			'import/extensions': [
 				'error',

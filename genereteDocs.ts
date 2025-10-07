@@ -1,5 +1,6 @@
-import { MethodDeclaration, Project, SourceFile } from 'ts-morph'
-import { allowedApis } from './api/lib/ZwaveClient'
+import type { MethodDeclaration, SourceFile } from 'ts-morph'
+import { Project } from 'ts-morph'
+import { allowedApis } from './api/lib/ZwaveClient.ts'
 import { readFile, writeFile } from 'fs/promises'
 
 import * as prettier from 'prettier'
@@ -45,7 +46,7 @@ function printMethodDeclaration(method: MethodDeclaration): string {
 	method.getDecorators().forEach((d) => d.remove())
 	const start = method.getStart()
 
-	const end = method.getBody().getStart()
+	const end = method.getBody()?.getStart() ?? method.getEnd()
 	let ret = method
 		.getText()
 		.substring(0, end - start)

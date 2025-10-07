@@ -1,18 +1,19 @@
-import express, { Request, RequestHandler, Response, Router } from 'express'
+import type { Request, RequestHandler, Response, Router } from 'express'
+import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import csrf from 'csurf'
 import morgan from 'morgan'
-import store, { Settings, User } from './config/store.ts'
-import Gateway, { GatewayConfig, GatewayType } from './lib/Gateway.ts'
+import type { Settings, User } from './config/store.ts'
+import store from './config/store.ts'
+import type { GatewayConfig } from './lib/Gateway.ts'
+import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
-import ZWaveClient, {
-	CallAPIResult,
-	SensorTypeScale,
-} from './lib/ZwaveClient.ts'
+import type { CallAPIResult, SensorTypeScale } from './lib/ZwaveClient.ts'
+import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
@@ -20,12 +21,13 @@ import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
 import fs from 'fs-extra'
-import { createServer as createHttpServer, Server as HttpServer } from 'http'
+import type { Server as HttpServer } from 'http'
+import { createServer as createHttpServer } from 'http'
 import { createServer as createHttpsServer } from 'https'
 import jwt from 'jsonwebtoken'
 import path from 'path'
 import sessionStore from 'session-file-store'
-import { Socket } from 'socket.io'
+import type { Socket } from 'socket.io'
 import { promisify } from 'util'
 import { Driver, libVersion } from 'zwave-js'
 import {
@@ -36,17 +38,15 @@ import {
 	storeDir,
 	tmpDir,
 } from './config/app.ts'
-import {
-	createPlugin,
-	CustomPlugin,
-	PluginConstructor,
-} from './lib/CustomPlugin.ts'
+import type { CustomPlugin, PluginConstructor } from './lib/CustomPlugin.ts'
+import { createPlugin } from './lib/CustomPlugin.ts'
 import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
 import * as utils from './lib/utils.ts'
 import backupManager from './lib/BackupManager.ts'
 import { readFile, realpath } from 'fs/promises'
 import { generate } from 'selfsigned'
-import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager.ts'
+import type { ZnifferConfig } from './lib/ZnifferManager.ts'
+import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 
 const { mkdirp, move, readdir, rm, stat } = fs

@@ -1,12 +1,12 @@
 'use strict'
 
-import {
+import type {
 	MqttClient as Client,
 	IClientOptions,
 	IClientPublishOptions,
 	IClientSubscribeOptions,
-	connect,
 } from 'mqtt'
+import { connect } from 'mqtt'
 import {
 	allSettled,
 	parseJSON,
