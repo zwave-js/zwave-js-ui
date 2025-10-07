@@ -1,5 +1,12 @@
 
 
+## [11.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.0...v11.4.1) (2025-10-07)
+
+
+### Bug Fixes
+
+* restore commonjs build ([#4405](https://github.com/zwave-js/zwave-js-ui/issues/4405)) ([f9e51ad](https://github.com/zwave-js/zwave-js-ui/commit/f9e51ad2d0f9c39b465acae65a028249c125868f)), closes [#4401](https://github.com/zwave-js/zwave-js-ui/issues/4401)
+
 # [11.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.1...v11.4.0) (2025-10-06)
 
 

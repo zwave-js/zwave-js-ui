@@ -123,7 +123,7 @@ export default defineConfig(({ mode }) => {
 				},
 				{
 					find: /^@server\/(.+)/,
-					replacement: `${path.resolve(__dirname, 'server')}/$1`,
+					replacement: `${path.resolve(__dirname, 'src')}/$1`,
 				},
 			],
 			preserveSymlinks: true,
