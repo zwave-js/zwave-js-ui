@@ -1,11 +1,11 @@
 import type { MethodDeclaration, SourceFile } from 'ts-morph'
 import { Project } from 'ts-morph'
 import { allowedApis } from './api/lib/ZwaveClient.ts'
-import { readFile, writeFile } from 'fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 
 import * as prettier from 'prettier'
-import { join } from 'path'
-import { createRequire } from 'module'
+import { join } from 'node:path'
+import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 
 const __dirname = join(new URL(import.meta.url).pathname, '..')

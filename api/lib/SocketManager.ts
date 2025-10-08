@@ -1,6 +1,6 @@
 'use strict'
 
-import type { Server as HttpServer } from 'http'
+import type { Server as HttpServer } from 'node:http'
 import { module } from './logger.ts'
 import type { Socket } from 'socket.io'
 import { Server as SocketServer } from 'socket.io'

@@ -5,7 +5,7 @@ import { module } from './logger.ts'
 import * as utils from './utils.ts'
 import { recursive as merge } from 'merge'
 import archiver from 'archiver'
-import { createWriteStream } from 'fs'
+import { createWriteStream } from 'node:fs'
 import fsExtra from 'fs-extra'
 import type { Response } from 'express'
 

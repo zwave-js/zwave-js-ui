@@ -6,11 +6,11 @@ import { logsDir, storeDir } from '../config/app.ts'
 import type { GatewayConfig } from './Gateway.ts'
 import type { DeepPartial } from './utils.ts'
 import { joinPath } from './utils.ts'
-import * as path from 'path'
-import { readdir, stat, unlink } from 'fs/promises'
-import type { Stats } from 'fs'
+import * as path from 'node:path'
+import { readdir, stat, unlink } from 'node:fs/promises'
+import type { Stats } from 'node:fs'
 import escapeStringRegexp from '@esm2cjs/escape-string-regexp'
-import { PassThrough } from 'stream'
+import { PassThrough } from 'node:stream'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, printf, colorize, splat } = format

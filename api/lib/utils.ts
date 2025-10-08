@@ -1,10 +1,10 @@
 import type { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
-import path, { resolve } from 'path'
-import crypto from 'crypto'
-import { readFileSync, statSync } from 'fs'
+import path, { resolve } from 'node:path'
+import crypto from 'node:crypto'
+import { readFileSync, statSync } from 'node:fs'
 import type { ZwaveConfig } from './ZwaveClient.ts'
-import { isUint8Array } from 'util/types'
-import { createRequire } from 'module'
+import { isUint8Array } from 'node:util/types'
+import { createRequire } from 'node:module'
 
 // don't use import here, it will break the build
 const require = createRequire(import.meta.url)

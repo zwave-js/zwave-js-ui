@@ -1,5 +1,5 @@
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as utils from './utils.ts'
 import type { SetValueAPIOptions } from 'zwave-js'
 import { AlarmSensorType } from 'zwave-js'
@@ -26,7 +26,7 @@ import type {
 import type ZwaveClient from './ZwaveClient.ts'
 import Cron from 'croner'
 
-import crypto from 'crypto'
+import crypto from 'node:crypto'
 import type { IMeterCCSpecific } from './Constants.ts'
 
 const logger = module('Gateway')

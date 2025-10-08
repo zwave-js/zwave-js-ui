@@ -13,8 +13,8 @@ import type { ZwaveConfig } from './ZwaveClient.ts'
 import { logsDir, storeDir } from '../config/app.ts'
 import { buffer2hex, joinPath, parseSecurityKeys } from './utils.ts'
 import { isDocker } from './utils.ts'
-import { basename } from 'path'
-import { readFile } from 'fs/promises'
+import { basename } from 'node:path'
+import { readFile } from 'node:fs/promises'
 import tripleBeam from 'triple-beam'
 
 const loglevels = tripleBeam.configs.npm.levels

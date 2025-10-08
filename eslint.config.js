@@ -6,6 +6,7 @@ import globals from 'globals'
 import vue from 'eslint-plugin-vue'
 import vuetify from 'eslint-plugin-vuetify'
 import importPlugin from 'eslint-plugin-import'
+import unicorn from 'eslint-plugin-unicorn'
 import js from '@eslint/js'
 
 import { FlatCompat } from '@eslint/eslintrc'
@@ -71,6 +72,7 @@ export default defineConfig([
 
 		plugins: {
 			import: importPlugin,
+			unicorn: unicorn,
 		},
 
 		extends: compat.extends(
@@ -112,6 +114,9 @@ export default defineConfig([
 					ignorePackages: true,
 				},
 			],
+
+			// Enforce node: protocol for Node.js built-in modules
+			'unicorn/prefer-node-protocol': 'error',
 		},
 	},
 	globalIgnores([
