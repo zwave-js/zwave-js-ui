@@ -1001,7 +1001,7 @@ export default {
 
 			if (result) {
 				try {
-					const data = await ConfigApis.updateConfig(false)
+					const data = await ConfigApis.updateConfig(null)
 
 					this.showSnackbar(
 						data.message,
