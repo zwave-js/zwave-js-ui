@@ -5,7 +5,7 @@ import { MqttConfig } from '../lib/MqttClient'
 import { ZnifferConfig } from '../lib/ZnifferManager'
 import { ZwaveConfig, deviceConfigPriorityDir } from '../lib/ZwaveClient'
 
-export type StoreKeys = 'settings' | 'scenes' | 'nodes' | 'users'
+export type StoreKeys = 'settings' | 'scenes' | 'nodes' | 'users' | 'groups'
 
 export interface StoreFile {
 	file: string
@@ -16,6 +16,12 @@ export interface User {
 	username: string
 	passwordHash: string
 	token?: string
+}
+
+export interface Group {
+	id: number
+	name: string
+	nodeIds: number[]
 }
 
 export interface Settings {
@@ -38,6 +44,7 @@ const store: Record<StoreKeys, StoreFile> = {
 	scenes: { file: 'scenes.json', default: [] },
 	nodes: { file: 'nodes.json', default: {} },
 	users: { file: 'users.json', default: [] },
+	groups: { file: 'groups.json', default: [] },
 }
 
 export default store
