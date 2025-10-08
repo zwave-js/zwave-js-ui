@@ -12,7 +12,6 @@
     "requireBranch": "master"
   },
   "hooks": {
-    "before:release": "./package.sh --bundle"
   },
   "npm": {
     "publish": true

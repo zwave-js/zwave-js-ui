@@ -11,9 +11,9 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      - uses: actions/github-script@v6
+      - uses: actions/github-script@v8
         name: Post release notes to Discord
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
