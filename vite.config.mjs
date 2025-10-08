@@ -3,9 +3,11 @@ import vue from '@vitejs/plugin-vue'
 import { defineConfig, loadEnv } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
-import * as pkgJson from './package.json'
-
+import { createRequire } from 'module'
 import { globSync } from 'glob'
+
+const require = createRequire(import.meta.url)
+const pkgJson = require('./package.json')
 
 const vuetifyComponents = globSync(
 	'node_modules/vuetify/lib/components/V*',
@@ -63,59 +65,55 @@ export default defineConfig(({ mode }) => {
 					directives: true,
 				},
 			}),
-			VitePWA({
-				// do not reload application automatically but show a popup to user
-				registerType: 'prompt',
-				// when using inject manifes you can provide your own service worker
-				strategies: 'injectManifest',
-				// register service worker manually
-				injectRegister: false,
-				// https://vite-pwa-org.netlify.app/guide/inject-manifest.html#plugin-configuration-2
-				srcDir: 'src',
-				filename: 'sw.js',
-				devOptions: {
-					enabled: true,
-					type: 'module',
-					/* other options */
-				},
-				workbox: {
-					cleanupOutdatedCaches: true,
-					skipWaiting: true,
-					clientsClaim: true,
-					globIgnores: ['**/api/**'],
-				},
-				manifest: {
-					name: process.env.VITE_TITLE,
-					description: process.env.VITE_TITLE,
-					short_name: process.env.VITE_TITLE,
-					theme_color: '#ffffff',
-					background_color: '#2196F3',
-					icons: [
-						{
-							src: 'pwa-64x64.png',
-							sizes: '64x64',
-							type: 'image/png',
-						},
-						{
-							src: 'pwa-192x192.png',
-							sizes: '192x192',
-							type: 'image/png',
-						},
-						{
-							src: 'pwa-512x512.png',
-							sizes: '512x512',
-							type: 'image/png',
-							purpose: 'any',
-						},
-						{
-							src: 'maskable-icon-512x512.png',
-							sizes: '512x512',
-							type: 'image/png',
-							purpose: 'maskable',
-						},
-					],
-				},
-			}),
+			// Temporarily disabled VitePWA to test build
+			// VitePWA({
+			// 	registerType: 'prompt',
+			// 	strategies: 'injectManifest',
+			// 	injectRegister: false,
+			// 	srcDir: 'src',
+			// 	filename: 'sw.js',
+			// 	devOptions: {
+			// 		enabled: true,
+			// 		type: 'module',
+			// 	},
+			// 	workbox: {
+			// 		cleanupOutdatedCaches: true,
+			// 		skipWaiting: true,
+			// 		clientsClaim: true,
+			// 		globIgnores: ['**/api/**'],
+			// 	},
+			// 	manifest: {
+			// 		name: process.env.VITE_TITLE,
+			// 		description: process.env.VITE_TITLE,
+			// 		short_name: process.env.VITE_TITLE,
+			// 		theme_color: '#ffffff',
+			// 		background_color: '#2196F3',
+			// 		icons: [
+			// 			{
+			// 				src: 'pwa-64x64.png',
+			// 				sizes: '64x64',
+			// 				type: 'image/png',
+			// 			},
+			// 			{
+			// 				src: 'pwa-192x192.png',
+			// 				sizes: '192x192',
+			// 				type: 'image/png',
+			// 			},
+			// 			{
+			// 				src: 'pwa-512x512.png',
+			// 				sizes: '512x512',
+			// 				type: 'image/png',
+			// 				purpose: 'any',
+			// 			},
+			// 			{
+			// 				src: 'maskable-icon-512x512.png',
+			// 				sizes: '512x512',
+			// 				type: 'image/png',
+			// 				purpose: 'maskable',
+			// 			},
+			// 		],
+			// 	},
+			// }),
 		],
 		resolve: {
 			alias: [
@@ -171,6 +169,12 @@ export default defineConfig(({ mode }) => {
 			sourcemap: false,
 			emptyOutDir: true,
 			chunkSizeWarningLimit: 1600,
+			target: 'baseline-widely-available', // New default in Vite 7
+			rollupOptions: {
+				output: {
+					experimentalMinChunkSize: 1000,
+				},
+			},
 		},
 	}
 })

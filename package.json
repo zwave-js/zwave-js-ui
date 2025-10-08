@@ -107,12 +107,12 @@
     "uplot": "^1.6.30",
     "vis-data": "^7.1.9",
     "vis-network": "^9.1.9",
-    "vue": "^3.5.0",
+    "vue": "^3.5.22",
     "vue-prism-editor": "^2.0.0-alpha.2",
-    "vue-router": "^4.5.0",
+    "vue-router": "^4.5.1",
     "vuedraggable": "^4.1.0",
-    "vuetify": "^3.9.2",
-    "vuetify-sonner": "^0.3.0",
+    "vuetify": "^3.10.4",
+    "vuetify-sonner": "^0.3.21",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
     "zwave-js": "^15.15.0",
@@ -145,7 +145,7 @@
     "@types/sinon-chai": "^3.2.12",
     "@typescript-eslint/eslint-plugin": "^8.45.0",
     "@typescript-eslint/parser": "^8.45.0",
-    "@vitejs/plugin-vue": "^5.2.0",
+    "@vitejs/plugin-vue": "^6.0.1",
     "@yao-pkg/pkg": "^6.1.1",
     "c8": "^10.1.2",
     "chai": "^4.4.1",
@@ -181,9 +181,9 @@
     "ts-morph": "^20.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
-    "vite": "^6.0.0",
-    "vite-plugin-pwa": "^0.21.0",
-    "vite-plugin-vuetify": "^2.1.1"
+    "vite": "^7.1.9",
+    "vite-plugin-pwa": "^1.0.3",
+    "vite-plugin-vuetify": "^2.1.2"
   },
   "overrides": {
     "rollup": "npm:@rollup/wasm-node"
