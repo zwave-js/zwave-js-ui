@@ -31,6 +31,27 @@ jobs:
         run: |
           npm run pkg -- --bundle --skip-build
 
+      - name: Test built package
+        run: |
+          
+          echo "Testing application startup..."
+          timeout 10s ./build/pkg/zwave-js-ui-linux &
+          app_pid=$!
+          
+          # Wait a few seconds for the app to start
+          sleep 5
+          
+          # Check if process is still running (indicates successful startup)
+          if kill -0 $app_pid 2>/dev/null; then
+            echo "Package test passed: Application started successfully"
+            # Kill the application
+            kill $app_pid 2>/dev/null || true
+            wait $app_pid 2>/dev/null || true
+          else
+            echo "Package test failed: Application failed to start or crashed immediately"
+            exit 1
+          fi
+
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
