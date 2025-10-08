@@ -2,9 +2,7 @@ import esbuild from 'esbuild'
 import { cp, stat, readFile, writeFile } from 'fs/promises'
 import { exists, emptyDir } from 'fs-extra'
 import { join } from 'path'
-import { createRequire } from 'module'
 
-const require = createRequire(import.meta.url)
 const outputDir = 'build'
 
 function cleanPkgJson(json) {
@@ -15,13 +13,17 @@ function cleanPkgJson(json) {
 	return json
 }
 
+async function readJson(path) {
+	return JSON.parse(await readFile(path, 'utf-8'))
+}
+
 /**
  * Remove useless fields from package.json, this is needed mostly for `pkg`
  * otherwise it will try to bundle dependencies
  */
 async function patchPkgJson(path) {
 	const pkgJsonPath = join(outputDir, path, 'package.json')
-	const pkgJson = require('./' + pkgJsonPath)
+	const pkgJson = await readJson(pkgJsonPath)
 	cleanPkgJson(pkgJson)
 	delete pkgJson.scripts
 	await writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2))
@@ -118,7 +120,7 @@ async function main() {
 		define: {
 			'import.meta.url': '__import_meta_url',
 		},
-		inject: ['esbuild-import-meta-url-shim.js'],
+		inject: ['./esbuild-import-meta-url-shim.js'],
 	}
 
 	await esbuild.build(config)
@@ -165,8 +167,8 @@ async function main() {
 		}
 	}
 
-	// create main patched packege.json
-	const pkgJson = require('./package.json')
+	// create main patched package.json
+	const pkgJson = await readJson('package.json')
 	cleanPkgJson(pkgJson)
 
 	pkgJson.scripts = {
