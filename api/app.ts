@@ -1120,11 +1120,9 @@ app.post(
 					'Gateway is restarting, wait a moment before doing another request',
 				)
 			}
-			let settings = req.body
-			// Extract restart flag from request body, default to true for backward compatibility
-			const shouldRestart = settings.restart !== false
-			// Remove restart flag from settings object
-			delete settings.restart
+			// Extract restart flag and data from request body, default to true for backward compatibility
+			const shouldRestart = req.body.restart !== false
+			let settings = req.body.data
 
 			let restartAll = false
 			let shouldRestartGw = false
