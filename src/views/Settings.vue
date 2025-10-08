@@ -2669,10 +2669,38 @@ export default {
 			const result = await this.$refs.form_settings.validate()
 			if (result.valid) {
 				try {
+					// Show confirmation dialog with restart option
+					const restartOptions = await this.app.confirm(
+						'Save Settings',
+						'Do you want to restart the Z-Wave JS driver to apply the changes?',
+						'info',
+						{
+							width: 500,
+							inputs: [
+								{
+									type: 'checkbox',
+									key: 'restart',
+									label: 'Restart Z-Wave JS driver',
+									default: true,
+									hint: 'Most changes require a restart to take effect. Uncheck this to save without restarting.',
+								},
+							],
+						},
+					)
+
+					// User cancelled the dialog
+					if (
+						!restartOptions ||
+						Object.keys(restartOptions).length === 0
+					) {
+						return
+					}
+
 					this.saving = true
 					useBaseStore().resetNodes()
 					const data = await ConfigApis.updateConfig(
 						this.getSettingsJSON(),
+						restartOptions.restart,
 					)
 					this.saving = false
 					this.showSnackbar(
@@ -2683,6 +2711,7 @@ export default {
 					this.resetConfig()
 				} catch (error) {
 					log.error(error)
+					this.saving = false
 				}
 			} else {
 				this.showSnackbar(

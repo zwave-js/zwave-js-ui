@@ -1121,6 +1121,10 @@ app.post(
 				)
 			}
 			let settings = req.body
+			// Extract restart flag from request body, default to true for backward compatibility
+			const shouldRestart = settings.restart !== false
+			// Remove restart flag from settings object
+			delete settings.restart
 
 			let restartAll = false
 			let shouldRestartGw = false
@@ -1158,29 +1162,34 @@ app.post(
 				settings = actualSettings
 			}
 
-			if (restartAll || shouldRestartGw) {
-				restarting = true
+			// Only restart if shouldRestart flag is true
+			if (shouldRestart) {
+				if (restartAll || shouldRestartGw) {
+					restarting = true
 
-				await gw.close()
+					await gw.close()
 
-				await destroyPlugins()
-				// reload loggers settings
-				setupLogging(settings)
-				// restart clients and gateway
-				await startGateway(settings)
-				backupManager.init(gw.zwave)
-			}
-
-			if (restartAll || shouldRestartZniffer) {
-				if (zniffer) {
-					await zniffer.close()
+					await destroyPlugins()
+					// reload loggers settings
+					setupLogging(settings)
+					// restart clients and gateway
+					await startGateway(settings)
+					backupManager.init(gw.zwave)
 				}
-				startZniffer(settings.zniffer)
+
+				if (restartAll || shouldRestartZniffer) {
+					if (zniffer) {
+						await zniffer.close()
+					}
+					startZniffer(settings.zniffer)
+				}
 			}
 
 			res.json({
 				success: true,
-				message: 'Configuration updated successfully',
+				message: shouldRestart
+					? 'Configuration updated successfully'
+					: 'Configuration saved successfully (restart required to apply changes)',
 				data: settings,
 			})
 		} catch (error) {

@@ -87,8 +87,8 @@ export default {
 		const response = await request.get('/settings')
 		return response.data
 	},
-	async updateConfig(data) {
-		const response = await request.post('/settings', data)
+	async updateConfig(data, restart = true) {
+		const response = await request.post('/settings', { ...data, restart })
 		return response.data
 	},
 	async updateStats(enableStatistics) {
