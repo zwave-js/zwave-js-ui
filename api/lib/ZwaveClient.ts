@@ -21,6 +21,8 @@ import {
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
+import winston from 'winston'
+import DailyRotateFile from 'winston-daily-rotate-file'
 import { isDocker } from './utils'
 import {
 	AssociationAddress,
@@ -133,6 +135,7 @@ import { socketEvents } from './SocketEvents'
 import { isUint8Array } from 'util/types'
 import { PkgFsBindings } from './PkgFsBindings'
 import { join } from 'path'
+import * as path from 'path'
 import { regionSupportsAutoPowerlevel } from './shared'
 
 export const deviceConfigPriorityDir = join(storeDir, 'config')
@@ -2318,14 +2321,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		utils.parseSecurityKeys(this.cfg, zwaveOptions)
 
-		const logTransport = new JSONTransport()
-		logTransport.format = createDefaultTransportFormat(true, false)
-
-		zwaveOptions.logConfig.transports = [logTransport]
-
-		logTransport.stream.on('data', (data) => {
-			this.socket.emit(socketEvents.debug, data.message.toString())
-		})
+		// Setup driver logging based on format setting
+		this.setupDriverLogging(zwaveOptions)
 
 		try {
 			if (shouldUpdateSettings) {
@@ -6961,6 +6958,96 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				)
 			}
 		}, 1000)
+	}
+
+
+	private setupDriverLogging(zwaveOptions: PartialZWaveOptions) {
+		const logFormat = this.getLogFormat()
+
+		if (logFormat === 'json') {
+			this.setupJsonDriverLogging(zwaveOptions)
+		} else {
+			this.setupTextDriverLogging(zwaveOptions)
+		}
+	}
+
+	private getLogFormat(): 'text' | 'json' {
+		const settings = jsonStore.get(store.settings)
+		return settings?.gateway?.logFormat || 'text'
+	}
+
+	private setupJsonDriverLogging(zwaveOptions: PartialZWaveOptions) {
+		const transports = []
+
+		const parseFormat = this.createParseDriverJsonFormat()
+		const jsonFormat = winston.format.combine(
+			parseFormat(),
+			winston.format.json(),
+		)
+
+		// Console transport
+		transports.push(new winston.transports.Console({
+			format: jsonFormat,
+		}))
+
+		// File transport (if enabled)
+		if (this.cfg.logToFile) {
+			transports.push(new DailyRotateFile({
+				filename: ZWAVEJS_LOG_FILE,
+				auditFile: utils.joinPath(logsDir, 'zwavejs-logs.audit.json'),
+				datePattern: 'YYYY-MM-DD',
+				createSymlink: true,
+				symlinkName: path.basename(ZWAVEJS_LOG_FILE).replace('_%DATE%', '_current'),
+				zippedArchive: true,
+				maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
+				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
+				format: jsonFormat,
+			}))
+		}
+
+		// WebSocket transport with JSON format
+		const jsonTransport = new JSONTransport()
+		jsonTransport.format = jsonFormat
+		transports.push(jsonTransport)
+
+		// Configure driver
+		zwaveOptions.logConfig = {
+			...zwaveOptions.logConfig,
+			enabled: false,
+			raw: true,
+			showLogo: false,
+			transports: transports,
+		}
+
+		// Stream JSON logs to WebSocket for debug view
+		jsonTransport.stream.on('data', (data) => {
+			this.socket.emit(socketEvents.debug, data.message.toString())
+		})
+	}
+
+	private setupTextDriverLogging(zwaveOptions: PartialZWaveOptions) {
+		const logTransport = new JSONTransport()
+		logTransport.format = createDefaultTransportFormat(true, false)
+
+		zwaveOptions.logConfig.transports = [logTransport]
+
+		logTransport.stream.on('data', (data) => {
+			this.socket.emit(socketEvents.debug, data.message.toString())
+		})
+	}
+
+	private createParseDriverJsonFormat() {
+		return winston.format((info) => {
+			if (typeof info.message === 'string' && info.message.startsWith('{')) {
+				try {
+					const parsed = JSON.parse(info.message)
+					info.message = parsed
+				} catch (e) {
+					// Keep as string if parsing fails
+				}
+			}
+			return info
+		})
 	}
 }
 

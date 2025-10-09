@@ -70,8 +70,22 @@ export function sanitizedConfig(
 /**
  * Return a custom logger format
  */
-export function customFormat(noColor = false): winston.Logform.Format {
+export function customFormat(
+	noColor = false,
+	logFormat: 'text' | 'json' = 'text',
+): winston.Logform.Format {
 	noColor = noColor || disableColors
+
+	if (logFormat === 'json') {
+		// JSON format for all outputs
+		return combine(
+			timestamp(),
+			format.errors({ stack: true }),
+			format.json(),
+		)
+	}
+
+	// Existing text format
 	const formats: winston.Logform.Format[] = [
 		splat(), // used for formats like: logger.log('info', Message %s', strinVal)
 		timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS' }),
@@ -106,7 +120,10 @@ export const logStream = new PassThrough()
 /**
  * Create the base transports based on settings provided
  */
-export function customTransports(config: LoggerConfig): winston.transport[] {
+export function customTransports(
+	config: LoggerConfig,
+	logFormat: 'text' | 'json' = 'text',
+): winston.transport[] {
 	// setup transports only once (see issue #2937)
 	if (transportsList) {
 		return transportsList
@@ -117,7 +134,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 	if (process.env.ZUI_NO_CONSOLE !== 'true') {
 		transportsList.push(
 			new transports.Console({
-				format: customFormat(),
+				format: customFormat(false, logFormat),
 				level: config.level,
 				stderrLevels: ['error'],
 			}),
@@ -125,7 +142,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 	}
 
 	const streamTransport = new transports.Stream({
-		format: customFormat(),
+		format: customFormat(false, logFormat),
 		level: config.level,
 		stream: logStream,
 	})
@@ -137,7 +154,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 
 		if (process.env.DISABLE_LOG_ROTATION === 'true') {
 			fileTransport = new transports.File({
-				format: customFormat(true),
+				format: customFormat(true, logFormat),
 				filename: config.filePath,
 				level: config.level,
 			})
@@ -154,7 +171,7 @@ export function customTransports(config: LoggerConfig): winston.transport[] {
 				maxFiles: process.env.ZUI_LOG_MAXFILES || '7d',
 				maxSize: process.env.ZUI_LOG_MAXSIZE || '50m',
 				level: config.level,
-				format: customFormat(true),
+				format: customFormat(true, logFormat),
 			}
 			fileTransport = new DailyRotateFile(options)
 
@@ -182,6 +199,7 @@ export function setupLogger(
 	config?: DeepPartial<GatewayConfig>,
 ): ModuleLogger {
 	const sanitized = sanitizedConfig(module, config)
+	const logFormat = config?.logFormat || 'text'
 	// Winston automatically reuses an existing module logger
 	const logger = container.add(module) as ModuleLogger
 	const moduleName = module.toUpperCase() || '-'
@@ -196,7 +214,7 @@ export function setupLogger(
 		), // to correctly parse errors
 		silent: !sanitized.enabled,
 		level: sanitized.level,
-		transports: customTransports(sanitized),
+		transports: customTransports(sanitized, logFormat),
 	})
 	logger.module = module
 	logger.setup = (cfg) => setupLogger(container, module, cfg)

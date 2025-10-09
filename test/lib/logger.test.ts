@@ -3,6 +3,7 @@ import * as utils from '../../api/lib/utils'
 import { logsDir } from '../../api/config/app'
 import {
 	customTransports,
+	customFormat,
 	defaultLogFile,
 	ModuleLogger,
 	sanitizedConfig,
@@ -175,6 +176,26 @@ describe('logger.js', () => {
 			// Test post-conditions:
 			expect(logger1.level).to.equal('error')
 			expect(logger2.level).to.equal('warn')
+		})
+	})
+
+	describe('customFormat()', () => {
+		it('should return format object when logFormat is json', () => {
+			const format = customFormat(false, 'json')
+			expect(format).to.be.an('object')
+			expect(format).to.have.property('transform')
+		})
+
+		it('should return format object when logFormat is text', () => {
+			const format = customFormat(true, 'text')
+			expect(format).to.be.an('object')
+			expect(format).to.have.property('transform')
+		})
+
+		it('should return format object when logFormat is undefined', () => {
+			const format = customFormat(true, undefined)
+			expect(format).to.be.an('object')
+			expect(format).to.have.property('transform')
 		})
 	})
 })
