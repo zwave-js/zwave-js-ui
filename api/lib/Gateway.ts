@@ -191,6 +191,7 @@ export type GatewayConfig = {
 	logEnabled?: boolean
 	logLevel?: LogLevel
 	logToFile?: boolean
+	logFormat?: 'text' | 'json'
 	values?: GatewayValue[]
 	jobs?: ScheduledJob[]
 	plugins?: string[]

@@ -138,6 +138,20 @@
 										md="4"
 										v-if="newGateway.logEnabled"
 									>
+										<v-select
+											:items="logFormats"
+											v-model="newGateway.logFormat"
+											label="Log Format"
+											hint="Choose between human-readable text or structured JSON logging"
+											persistent-hint
+										></v-select>
+									</v-col>
+									<v-col
+										cols="12"
+										sm="6"
+										md="4"
+										v-if="newGateway.logEnabled"
+									>
 										<v-switch
 											hint="Store logs in a file. Default: store/zwave-js-ui_%DATE%.log"
 											persistent-hint
@@ -2268,6 +2282,10 @@ export default {
 				{ title: 'Verbose', value: 'verbose' },
 				{ title: 'Debug', value: 'debug' },
 				{ title: 'Silly', value: 'silly' },
+			],
+			logFormats: [
+				{ title: 'Text (Human-readable)', value: 'text' },
+				{ title: 'JSON (Structured)', value: 'json' },
 			],
 			headers: [
 				{ title: 'Device', key: 'device' },
