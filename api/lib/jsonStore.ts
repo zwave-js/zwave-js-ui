@@ -106,7 +106,7 @@ export class StorageHelper {
 		})
 	}
 
-	public async _getFile(config: StoreFile) {
+	private async _getFile(config: StoreFile) {
 		let err: { code: string } | undefined
 		let data: any
 		try {
