@@ -1163,15 +1163,24 @@ app.post(
 						'userAgent',
 					]
 
+					// Find which Z-Wave properties actually changed
+					const changedZwaveKeys = Object.keys(
+						settings.zwave || {},
+					).filter((key) => {
+						return !utils.deepEqual(
+							actualSettings.zwave?.[key],
+							settings.zwave?.[key],
+						)
+					})
+
 					// Check if only editable options changed
-					const zwaveKeys = Object.keys(settings.zwave || {})
-					const onlyEditableChanged = zwaveKeys.every((key) =>
+					const onlyEditableChanged = changedZwaveKeys.every((key) =>
 						editableZWaveProps.includes(key),
 					)
 
 					if (
 						onlyEditableChanged &&
-						zwaveKeys.length > 0 &&
+						changedZwaveKeys.length > 0 &&
 						gw &&
 						gw.zwave &&
 						gw.zwave.driver
@@ -1205,43 +1214,41 @@ app.post(
 					gw.zwave.driver
 				) {
 					try {
+						// Build editable options object with only changed properties
 						const editableOptions: any = {}
-						if (settings.zwave.attempts)
-							editableOptions.attempts = settings.zwave.attempts
-						if (
-							settings.zwave.disableOptimisticValueUpdate !==
-							undefined
-						)
-							editableOptions.disableOptimisticValueUpdate =
-								settings.zwave.disableOptimisticValueUpdate
-						if (
-							settings.zwave.emitValueUpdateAfterSetValue !==
-							undefined
-						)
-							editableOptions.emitValueUpdateAfterSetValue =
-								settings.zwave.emitValueUpdateAfterSetValue
-						if (settings.zwave.inclusionUserCallbacks)
-							editableOptions.inclusionUserCallbacks =
-								settings.zwave.inclusionUserCallbacks
-						if (settings.zwave.joinNetworkUserCallbacks)
-							editableOptions.joinNetworkUserCallbacks =
-								settings.zwave.joinNetworkUserCallbacks
-						if (settings.zwave.interview)
-							editableOptions.interview = settings.zwave.interview
-						if (settings.zwave.logConfig)
-							editableOptions.logConfig = settings.zwave.logConfig
-						if (settings.zwave.preferences)
-							editableOptions.preferences =
-								settings.zwave.preferences
-						if (settings.zwave.vendor)
-							editableOptions.vendor = settings.zwave.vendor
-						if (settings.zwave.userAgent)
-							editableOptions.userAgent = settings.zwave.userAgent
+						const editableZWaveProps = [
+							'attempts',
+							'disableOptimisticValueUpdate',
+							'emitValueUpdateAfterSetValue',
+							'inclusionUserCallbacks',
+							'joinNetworkUserCallbacks',
+							'interview',
+							'logConfig',
+							'preferences',
+							'vendor',
+							'userAgent',
+						]
 
-						gw.zwave.driver.updateOptions(editableOptions)
-						logger.info(
-							'Updated Z-Wave driver options without restart',
-						)
+						// Only include properties that actually changed
+						for (const key of editableZWaveProps) {
+							if (
+								!utils.deepEqual(
+									actualSettings.zwave?.[key],
+									settings.zwave?.[key],
+								) &&
+								settings.zwave?.[key] !== undefined
+							) {
+								editableOptions[key] = settings.zwave[key]
+							}
+						}
+
+						if (Object.keys(editableOptions).length > 0) {
+							gw.zwave.driver.updateOptions(editableOptions)
+							logger.info(
+								'Updated Z-Wave driver options without restart:',
+								Object.keys(editableOptions).join(', '),
+							)
+						}
 					} catch (error) {
 						logger.error('Error updating driver options', error)
 						// If update fails, require restart
