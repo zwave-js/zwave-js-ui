@@ -1,4 +1,6 @@
 import { getMeter, getMeterScale } from '@zwave-js/core'
+import { join } from 'node:path'
+import { storeDir } from '../config/app.ts'
 
 interface IGenericMap {
 	[key: number]: string
@@ -42,6 +44,8 @@ export interface IMeterCCSpecific {
 	scale: number
 	meterType: number
 }
+
+export const deviceConfigPriorityDir = join(storeDir, 'config')
 
 // https://github.com/OpenZWave/open-zwave/blob/0d94c9427bbd19e47457578bccc60b16c6679b49/config/Localization.xml#L606
 const _productionMap: IGenericMap = {

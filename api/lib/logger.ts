@@ -1,16 +1,15 @@
-import DailyRotateFile, {
-	DailyRotateFileTransportOptions,
-} from 'winston-daily-rotate-file'
-import { ensureDirSync } from 'fs-extra'
+import type { DailyRotateFileTransportOptions } from 'winston-daily-rotate-file'
+import DailyRotateFile from 'winston-daily-rotate-file'
 import winston from 'winston'
-import { logsDir, storeDir } from '../config/app'
-import { GatewayConfig } from './Gateway'
-import { DeepPartial, joinPath } from './utils'
-import * as path from 'path'
-import { readdir, stat, unlink } from 'fs/promises'
-import { Stats } from 'fs'
+import { logsDir, storeDir } from '../config/app.ts'
+import type { GatewayConfig } from './Gateway.ts'
+import type { DeepPartial } from './utils.ts'
+import { joinPath, ensureDirSync } from './utils.ts'
+import * as path from 'node:path'
+import { readdir, stat, unlink } from 'node:fs/promises'
+import type { Stats } from 'node:fs'
 import escapeStringRegexp from '@esm2cjs/escape-string-regexp'
-import { PassThrough } from 'stream'
+import { PassThrough } from 'node:stream'
 
 const { format, transports, addColors } = winston
 const { combine, timestamp, printf, colorize, splat } = format

@@ -1,11 +1,26 @@
 {
   "extends": "@tsconfig/node22/tsconfig.json",
   "compilerOptions": {
+    // Module settings for ESM output
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+
     // Necessary to support yarn portals with the node-modules linker, used by yarn link (berry)
     "preserveSymlinks": true,
     "resolveJsonModule": true,
+    
+    // Automatically rewrite import extensions from .ts to .js
+    "rewriteRelativeImportExtensions": true,
+    
+    // Output directory
     "outDir": "server",
-
+    
+    // ESM compatibility
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
+    
     // TODO: Turn this on and fix all the errors
     "strict": false
   },

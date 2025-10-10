@@ -1,24 +1,23 @@
+import type { CorruptedFrame, Frame, ZnifferOptions } from 'zwave-js'
 import {
 	CommandClass,
-	CorruptedFrame,
-	Frame,
 	isEncapsulatingCommandClass,
 	isMultiEncapsulatingCommandClass,
 	Zniffer,
-	ZnifferOptions,
 } from 'zwave-js'
-import { TypedEventEmitter } from './EventEmitter'
-import { module } from './logger'
-import { Server as SocketServer } from 'socket.io'
-import { socketEvents } from './SocketEvents'
-import { ZwaveConfig } from './ZwaveClient'
-import { logsDir, storeDir } from '../config/app'
-import { buffer2hex, joinPath, parseSecurityKeys } from './utils'
-import { isDocker } from './utils'
-import { basename } from 'path'
-import { readFile } from 'fs/promises'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import { module } from './logger.ts'
+import type { Server as SocketServer } from 'socket.io'
+import { socketEvents } from './SocketEvents.ts'
+import type { ZwaveConfig } from './ZwaveClient.ts'
+import { logsDir, storeDir } from '../config/app.ts'
+import { buffer2hex, joinPath, parseSecurityKeys } from './utils.ts'
+import { isDocker } from './utils.ts'
+import { basename } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import tripleBeam from 'triple-beam'
 
-const loglevels = require('triple-beam').configs.npm.levels
+const loglevels = tripleBeam.configs.npm.levels
 
 export type ZnifferConfig = Pick<
 	ZwaveConfig,

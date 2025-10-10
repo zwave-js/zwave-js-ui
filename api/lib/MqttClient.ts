@@ -1,27 +1,26 @@
 'use strict'
 
-import {
+import type {
 	MqttClient as Client,
 	IClientOptions,
 	IClientPublishOptions,
 	IClientSubscribeOptions,
-	connect,
 } from 'mqtt'
+import { connect } from 'mqtt'
 import {
 	allSettled,
 	parseJSON,
 	sanitizeTopic,
 	pkgJson,
 	stringifyJSON,
-} from './utils'
-import { module } from './logger'
-import { TypedEventEmitter } from './EventEmitter'
-import { storeDir } from '../config/app'
-import { ensureDir } from 'fs-extra'
+} from './utils.ts'
+import { module } from './logger.ts'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import { storeDir } from '../config/app.ts'
+import { ensureDir } from './utils.ts'
 import { Manager } from 'mqtt-jsonl-store'
-import { join } from 'path'
-
-const url = require('native-url')
+import { join } from 'node:path'
+import url from 'native-url'
 
 const logger = module('Mqtt')
 

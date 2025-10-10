@@ -1,8 +1,8 @@
 // @ts-check
-const { CommandClasses } = require('@zwave-js/core')
-const { ccCaps } = require('@zwave-js/testing')
+import { CommandClasses } from '@zwave-js/core'
+import { ccCaps } from '@zwave-js/testing'
 
-module.exports.default = {
+export default {
 	nodes: [
 		{
 			id: 2,

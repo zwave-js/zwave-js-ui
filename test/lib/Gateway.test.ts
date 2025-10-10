@@ -1,6 +1,6 @@
 import chai, { expect } from 'chai'
-import Gateway, { closeWatchers } from '../../api/lib/Gateway'
-import { ZUINode } from '../../api/lib/ZwaveClient'
+import Gateway, { closeWatchers } from '../../api/lib/Gateway.ts'
+import type { ZUINode } from '../../api/lib/ZwaveClient.ts'
 import sinonChai from 'sinon-chai'
 
 chai.use(sinonChai)

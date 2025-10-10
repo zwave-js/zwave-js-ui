@@ -1,88 +1,68 @@
-import {
-	CommandClasses,
+import type {
 	ConfigurationMetadata,
-	dskToString,
-	Duration,
 	Firmware,
-	isUnsupervisedOrSucceeded,
 	Route,
-	RouteKind,
-	SecurityClass,
 	SupervisionResult,
-	SupervisionStatus,
 	ValueMetadataNumeric,
 	ValueMetadataString,
 	ZWaveDataRate,
+	FirmwareFileFormat,
+} from '@zwave-js/core'
+import {
+	CommandClasses,
+	dskToString,
+	Duration,
+	isUnsupervisedOrSucceeded,
+	RouteKind,
+	SecurityClass,
+	SupervisionStatus,
 	ZWaveErrorCodes,
 	Protocols,
-	FirmwareFileFormat,
 	tryUnzipFirmwareFile,
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { isDocker } from './utils'
-import {
+import { isDocker } from './utils.ts'
+import type {
 	AssociationAddress,
 	AssociationGroup,
 	OTWFirmwareUpdateProgress,
 	OTWFirmwareUpdateResult,
-	OTWFirmwareUpdateStatus,
 	ControllerStatistics,
-	ControllerStatus,
 	DataRate,
-	Driver,
 	ExclusionOptions,
-	ExclusionStrategy,
 	FirmwareUpdateCapabilities,
 	FirmwareUpdateProgress,
 	FirmwareUpdateResult,
-	FirmwareUpdateStatus,
 	FLiRS,
 	FoundNode,
 	GetFirmwareUpdatesOptions,
-	guessFirmwareFileFormat,
 	RebuildRoutesOptions,
 	RebuildRoutesStatus,
 	InclusionGrant,
 	InclusionOptions,
 	InclusionResult,
-	InclusionStrategy,
-	InterviewStage,
-	libVersion,
 	LifelineHealthCheckResult,
 	LifelineHealthCheckSummary,
-	MultilevelSwitchCommand,
 	NodeInterviewFailedEventArgs,
 	NodeStatistics,
-	NodeStatus,
 	NodeType,
 	PlannedProvisioningEntry,
 	ProtocolVersion,
-	QRCodeVersion,
 	QRProvisioningInformation,
 	RefreshInfoOptions,
-	RemoveNodeReason,
 	ReplaceNodeOptions,
-	RFRegion,
 	RouteHealthCheckResult,
 	RouteHealthCheckSummary,
-	ScheduleEntryLockCC,
 	ScheduleEntryLockDailyRepeatingSchedule,
-	ScheduleEntryLockScheduleKind,
 	ScheduleEntryLockSlotId,
 	ScheduleEntryLockWeekDaySchedule,
 	ScheduleEntryLockYearDaySchedule,
-	SerialAPISetupCommand,
 	SetValueAPIOptions,
-	setValueFailed,
 	SetValueResult,
-	SetValueStatus,
-	setValueWasUnsupervisedOrSucceeded,
 	SmartStartProvisioningEntry,
 	TranslatedValueID,
-	UserCodeCC,
-	UserIDStatus,
 	ValueID,
 	ValueMetadata,
 	ValueType,
@@ -104,38 +84,61 @@ import {
 	PartialZWaveOptions,
 	InclusionUserCallbacks,
 	InclusionState,
-	ProvisioningEntryStatus,
-	AssociationCheckResult,
 	LinkReliabilityCheckResult,
 	JoinNetworkOptions,
-	JoinNetworkStrategy,
 	JoinNetworkResult,
+} from 'zwave-js'
+import {
+	OTWFirmwareUpdateStatus,
+	ControllerStatus,
+	Driver,
+	ExclusionStrategy,
+	FirmwareUpdateStatus,
+	guessFirmwareFileFormat,
+	InclusionStrategy,
+	InterviewStage,
+	libVersion,
+	MultilevelSwitchCommand,
+	NodeStatus,
+	QRCodeVersion,
+	RemoveNodeReason,
+	RFRegion,
+	ScheduleEntryLockCC,
+	ScheduleEntryLockScheduleKind,
+	SerialAPISetupCommand,
+	setValueFailed,
+	SetValueStatus,
+	setValueWasUnsupervisedOrSucceeded,
+	UserCodeCC,
+	UserIDStatus,
+	ProvisioningEntryStatus,
+	AssociationCheckResult,
+	JoinNetworkStrategy,
 	DriverMode,
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
-import store from '../config/store'
-import jsonStore from './jsonStore'
-import * as LogManager from './logger'
-import * as utils from './utils'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import store from '../config/store.ts'
+import jsonStore from './jsonStore.ts'
+import * as LogManager from './logger.ts'
+import * as utils from './utils.ts'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
-import { ensureDir, exists, mkdirp, writeFile } from 'fs-extra'
-import { Server as SocketServer } from 'socket.io'
-import { TypedEventEmitter } from './EventEmitter'
-import { GatewayValue } from './Gateway'
+import type { Server as SocketServer } from 'socket.io'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import type { GatewayValue } from './Gateway.ts'
 
-import { ConfigManager, DeviceConfig } from '@zwave-js/config'
-import { readFile } from 'fs/promises'
-import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
-import { socketEvents } from './SocketEvents'
-import { isUint8Array } from 'util/types'
-import { PkgFsBindings } from './PkgFsBindings'
-import { join } from 'path'
-import { regionSupportsAutoPowerlevel } from './shared'
-
-export const deviceConfigPriorityDir = join(storeDir, 'config')
+import type { DeviceConfig } from '@zwave-js/config'
+import { ConfigManager } from '@zwave-js/config'
+import { readFile, writeFile } from 'node:fs/promises'
+import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
+import { socketEvents } from './SocketEvents.ts'
+import { isUint8Array } from 'node:util/types'
+import { PkgFsBindings } from './PkgFsBindings.ts'
+import { regionSupportsAutoPowerlevel } from './shared.ts'
+import tripleBeam from 'triple-beam'
+import { deviceConfigPriorityDir } from './Constants.ts'
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -143,7 +146,7 @@ export const configManager = new ConfigManager({
 
 const logger = LogManager.module('Z-Wave')
 
-const loglevels = require('triple-beam').configs.npm.levels
+const loglevels = tripleBeam.configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
@@ -2272,7 +2275,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// ensure deviceConfigPriorityDir exists to prevent warnings #2374
 		// lgtm [js/path-injection]
-		await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
+		await utils.ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
 
 		// when not set let zwavejs handle this based on the environment
 		if (typeof this.cfg.enableSoftReset === 'boolean') {
@@ -5108,7 +5111,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const fileName = `${NVM_BACKUP_PREFIX}${utils.fileDate()}${event}`
 
-		await mkdirp(nvmBackupsDir)
+		await utils.ensureDir(nvmBackupsDir)
 
 		await writeFile(utils.joinPath(nvmBackupsDir, fileName + '.bin'), data)
 
@@ -6853,7 +6856,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private async loadFakeNodes() {
 		const filePath = utils.joinPath(true, 'fakeNodes.json')
 		// load fake nodes from `fakeNodes.json` for testing
-		if (await exists(filePath)) {
+		if (await utils.pathExists(filePath)) {
 			const fakeNodes = JSON.parse(await readFile(filePath, 'utf-8'))
 			for (const node of fakeNodes) {
 				// convert valueIds array to map

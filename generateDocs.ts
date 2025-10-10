@@ -1,9 +1,14 @@
-import { MethodDeclaration, Project, SourceFile } from 'ts-morph'
-import { allowedApis } from './api/lib/ZwaveClient'
-import { readFile, writeFile } from 'fs/promises'
+import type { MethodDeclaration, SourceFile } from 'ts-morph'
+import { Project } from 'ts-morph'
+import { allowedApis } from './api/lib/ZwaveClient.ts'
+import { readFile, writeFile } from 'node:fs/promises'
 
 import * as prettier from 'prettier'
-import { join } from 'path'
+import { join } from 'node:path'
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+
+const __dirname = join(new URL(import.meta.url).pathname, '..')
 
 // Make the linter happy
 export async function formatWithPrettier(
@@ -45,7 +50,7 @@ function printMethodDeclaration(method: MethodDeclaration): string {
 	method.getDecorators().forEach((d) => d.remove())
 	const start = method.getStart()
 
-	const end = method.getBody().getStart()
+	const end = method.getBody()?.getStart() ?? method.getEnd()
 	let ret = method
 		.getText()
 		.substring(0, end - start)
@@ -54,6 +59,10 @@ function printMethodDeclaration(method: MethodDeclaration): string {
 		ret += ': ' + method.getSignature().getReturnType().getText(method)
 	}
 	ret += ';'
+
+	// remove import(xxx) from types
+	ret = ret.replace(/import\(([^)]+)\)\./g, '')
+
 	return fixPrinterErrors(ret)
 }
 

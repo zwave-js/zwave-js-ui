@@ -1,0 +1,11 @@
+diff --git a/node_modules/native-url/third_party/url.d.ts b/node_modules/native-url/third_party/url.d.ts
+index ced41a3..b745f83 100644
+--- a/node_modules/native-url/third_party/url.d.ts
++++ b/node_modules/native-url/third_party/url.d.ts
+@@ -141,3 +141,5 @@ declare module 'url' {
+     [Symbol.iterator](): IterableIterator<[string, string]>;
+   }
+ }
++
++export default url;
+\ No newline at end of file
