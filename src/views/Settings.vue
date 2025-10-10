@@ -2669,49 +2669,70 @@ export default {
 			const result = await this.$refs.form_settings.validate()
 			if (result.valid) {
 				try {
-					// Show confirmation dialog with restart option
-					const restartOptions = await this.app.confirm(
-						'Save Settings',
-						'Do you want to restart the Z-Wave JS driver to apply the changes?',
-						'info',
-						{
-							width: 500,
-							inputs: [
-								{
-									type: 'checkbox',
-									key: 'restart',
-									label: 'Restart Z-Wave JS driver',
-									default: true,
-									hint: 'Most changes require a restart to take effect. Uncheck this to save without restarting.',
-								},
-							],
-						},
-					)
-
-					// User cancelled the dialog
-					if (
-						!restartOptions ||
-						Object.keys(restartOptions).length === 0
-					) {
-						return
-					}
-
 					this.saving = true
 					useBaseStore().resetNodes()
 					const data = await ConfigApis.updateConfig(
 						this.getSettingsJSON(),
-						restartOptions.restart,
 					)
 					this.saving = false
+
+					// Show success message
 					this.showSnackbar(
 						data.message,
 						data.success ? 'success' : 'error',
 					)
+
 					this.initSettings(data.data)
 					this.resetConfig()
+
+					// If restart is required, ask user
+					if (data.success && data.shouldRestart) {
+						const restartConfirm = await this.app.confirm(
+							'Restart Required',
+							'Do you want to restart the Z-Wave JS driver to apply the changes?',
+							'info',
+							{
+								width: 500,
+								inputs: [
+									{
+										type: 'checkbox',
+										key: 'restart',
+										label: 'Restart Z-Wave JS driver',
+										default: true,
+										hint: 'Changes require a restart to take effect. Uncheck to restart manually later.',
+									},
+								],
+							},
+						)
+
+						// If user confirmed restart
+						if (
+							restartConfirm &&
+							Object.keys(restartConfirm).length > 0 &&
+							restartConfirm.restart
+						) {
+							try {
+								this.saving = true
+								const restartData =
+									await ConfigApis.restartGateway()
+								this.saving = false
+								this.showSnackbar(
+									restartData.message,
+									restartData.success ? 'success' : 'error',
+								)
+							} catch (error) {
+								this.saving = false
+								this.showSnackbar(
+									'Failed to restart gateway',
+									'error',
+								)
+								log.error(error)
+							}
+						}
+					}
 				} catch (error) {
-					log.error(error)
 					this.saving = false
+					log.error(error)
 				}
 			} else {
 				this.showSnackbar(
