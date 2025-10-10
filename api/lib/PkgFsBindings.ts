@@ -2,8 +2,9 @@ import type { FileHandle, FSStats } from '@zwave-js/shared/bindings'
 import { type FileSystem } from '@zwave-js/shared/bindings'
 import { fs as nodeFs } from '@zwave-js/core/bindings/fs/node'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const __filename = new URL('', import.meta.url).pathname
+const __filename = fileURLToPath(new URL('', import.meta.url))
 const __dirname = path.dirname(__filename)
 // Ensures that the Z-Wave JS driver is looking for the right files in the right place
 // when running inside a `pkg` bundle. In this case, it will resolve its embedded

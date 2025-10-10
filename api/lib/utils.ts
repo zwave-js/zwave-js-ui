@@ -6,6 +6,7 @@ import type { ZwaveConfig } from './ZwaveClient.ts'
 import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
 import { mkdir, access } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 
 // don't use import here, it will break the build
 const require = createRequire(import.meta.url)
@@ -83,7 +84,7 @@ export function fileDate(date?: Date) {
 	return date.toISOString().slice(-24).replace(/\D/g, '').slice(0, 14)
 }
 
-export const __filename = new URL('', import.meta.url).pathname
+export const __filename = fileURLToPath(new URL('', import.meta.url))
 export const __dirname = path.dirname(__filename)
 
 export const basePath = __filename.endsWith('index.js')
