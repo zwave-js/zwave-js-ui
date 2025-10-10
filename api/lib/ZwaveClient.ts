@@ -125,14 +125,13 @@ import * as LogManager from './logger.ts'
 import * as utils from './utils.ts'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
-import fs from 'fs-extra'
 import type { Server as SocketServer } from 'socket.io'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import type { GatewayValue } from './Gateway.ts'
 
 import type { DeviceConfig } from '@zwave-js/config'
 import { ConfigManager } from '@zwave-js/config'
-import { readFile } from 'node:fs/promises'
+import { readFile, writeFile } from 'node:fs/promises'
 import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
 import { socketEvents } from './SocketEvents.ts'
 import { isUint8Array } from 'node:util/types'
@@ -140,8 +139,6 @@ import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import tripleBeam from 'triple-beam'
 import { deviceConfigPriorityDir } from './Constants.ts'
-
-const { ensureDir, exists, mkdirp, writeFile } = fs
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -2278,7 +2275,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// ensure deviceConfigPriorityDir exists to prevent warnings #2374
 		// lgtm [js/path-injection]
-		await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
+		await utils.ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
 
 		// when not set let zwavejs handle this based on the environment
 		if (typeof this.cfg.enableSoftReset === 'boolean') {
@@ -5114,7 +5111,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const fileName = `${NVM_BACKUP_PREFIX}${utils.fileDate()}${event}`
 
-		await mkdirp(nvmBackupsDir)
+		await utils.ensureDir(nvmBackupsDir)
 
 		await writeFile(utils.joinPath(nvmBackupsDir, fileName + '.bin'), data)
 
@@ -6859,7 +6856,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private async loadFakeNodes() {
 		const filePath = utils.joinPath(true, 'fakeNodes.json')
 		// load fake nodes from `fakeNodes.json` for testing
-		if (await exists(filePath)) {
+		if (await utils.pathExists(filePath)) {
 			const fakeNodes = JSON.parse(await readFile(filePath, 'utf-8'))
 			for (const node of fakeNodes) {
 				// convert valueIds array to map

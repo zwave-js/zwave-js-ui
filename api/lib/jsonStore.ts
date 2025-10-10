@@ -2,14 +2,12 @@ import jsonFile from 'jsonfile'
 import { storeBackupsDir, storeDir } from '../config/app.ts'
 import type { StoreFile, StoreKeys } from '../config/store.ts'
 import { module } from './logger.ts'
-import * as utils from './utils.ts'
 import { recursive as merge } from 'merge'
 import archiver from 'archiver'
-import { createWriteStream } from 'node:fs'
-import fsExtra from 'fs-extra'
+import { createWriteStream, existsSync } from 'node:fs'
 import type { Response } from 'express'
+import { ensureDir, fileDate, joinPath } from './utils.ts'
 
-const { mkdirp, existsSync } = fsExtra
 const logger = module('Store')
 
 export const STORE_BACKUP_PREFIX = 'store-backup_'
@@ -56,12 +54,12 @@ export class StorageHelper {
 	}
 
 	async backup(res?: Response): Promise<string> {
-		const backupFile = `${STORE_BACKUP_PREFIX}${utils.fileDate()}.zip`
+		const backupFile = `${STORE_BACKUP_PREFIX}${fileDate()}.zip`
 
-		await mkdirp(storeBackupsDir)
+		await ensureDir(storeBackupsDir)
 
 		const fileStream = createWriteStream(
-			utils.joinPath(storeBackupsDir, backupFile),
+			joinPath(storeBackupsDir, backupFile),
 		)
 
 		return new Promise((resolve, reject) => {
@@ -94,7 +92,7 @@ export class StorageHelper {
 
 			for (const model in this.config) {
 				const config: StoreFile = this.config[model]
-				const filePath = utils.joinPath(storeDir, config.file)
+				const filePath = joinPath(storeDir, config.file)
 				if (existsSync(filePath)) {
 					archive.file(filePath, {
 						name: config.file,
@@ -110,7 +108,7 @@ export class StorageHelper {
 		let err: { code: string } | undefined
 		let data: any
 		try {
-			data = await this.readFile(utils.joinPath(storeDir, config.file))
+			data = await this.readFile(joinPath(storeDir, config.file))
 		} catch (error) {
 			err = error
 		}
@@ -143,7 +141,7 @@ export class StorageHelper {
 	}
 
 	async put(model: StoreFile, data: any) {
-		await this.writeFile(utils.joinPath(storeDir, model.file), data)
+		await this.writeFile(joinPath(storeDir, model.file), data)
 		this._store[model.file] = data
 		return data
 	}

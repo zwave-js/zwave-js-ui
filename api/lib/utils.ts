@@ -5,6 +5,7 @@ import { readFileSync, statSync } from 'node:fs'
 import type { ZwaveConfig } from './ZwaveClient.ts'
 import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
+import { mkdir, access } from 'node:fs/promises'
 
 // don't use import here, it will break the build
 const require = createRequire(import.meta.url)
@@ -424,4 +425,49 @@ export function isDocker(): boolean {
 	isDockerCached ??= hasDockerEnv() || hasDockerCGroup()
 
 	return isDockerCached
+}
+
+/**
+ * Ensures that a directory exists. If the directory does not exist, it creates it recursively.
+ * @param dir The directory path to ensure
+ */
+export async function ensureDir(dir: string): Promise<void> {
+	try {
+		await mkdir(dir, { recursive: true })
+	} catch (err) {
+		// Ignore error if directory already exists
+		if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
+			throw err
+		}
+	}
+}
+
+/**
+ * Synchronously ensures that a directory exists. If the directory does not exist, it creates it recursively.
+ * @param dir The directory path to ensure
+ */
+export function ensureDirSync(dir: string): void {
+	const { mkdirSync } = require('node:fs')
+	try {
+		mkdirSync(dir, { recursive: true })
+	} catch (err) {
+		// Ignore error if directory already exists
+		if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
+			throw err
+		}
+	}
+}
+
+/**
+ * Checks if a file or directory exists
+ * @param path The path to check
+ * @returns Promise that resolves to true if the path exists, false otherwise
+ */
+export async function pathExists(path: string): Promise<boolean> {
+	try {
+		await access(path)
+		return true
+	} catch {
+		return false
+	}
 }

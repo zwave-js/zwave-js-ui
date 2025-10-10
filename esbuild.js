@@ -1,7 +1,15 @@
 import esbuild from 'esbuild'
-import { cp, stat, readFile, writeFile } from 'fs/promises'
-import { exists, emptyDir } from 'fs-extra'
+import { cp, stat, readFile, writeFile, rm, access } from 'fs/promises'
 import { join } from 'path'
+
+async function pathExists(path) {
+	try {
+		await access(path)
+		return true
+	} catch {
+		return false
+	}
+}
 
 const outputDir = 'build'
 
@@ -79,7 +87,7 @@ async function printSize(fileName) {
 async function main() {
 	const start = Date.now()
 	// clean build folder
-	await emptyDir(outputDir)
+	await rm(outputDir, { recursive: true, force: true })
 
 	const outfile = `${outputDir}/index.js`
 
@@ -159,7 +167,7 @@ async function main() {
 	// copy assets to build folder
 	for (const ext of externals) {
 		const path = ext.startsWith('./') ? ext : `node_modules/${ext}`
-		if (await exists(path)) {
+		if (await pathExists(path)) {
 			console.log(`Copying "${path}" to "${outputDir}" folder`)
 			await cp(path, `${outputDir}/${path}`, { recursive: true })
 		} else {

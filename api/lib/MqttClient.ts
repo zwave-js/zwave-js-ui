@@ -17,7 +17,7 @@ import {
 import { module } from './logger.ts'
 import { TypedEventEmitter } from './EventEmitter.ts'
 import { storeDir } from '../config/app.ts'
-import { ensureDir } from 'fs-extra'
+import { ensureDir } from './utils.ts'
 import { Manager } from 'mqtt-jsonl-store'
 import { join } from 'node:path'
 import url from 'native-url'
