@@ -1,7 +1,7 @@
 <template>
 	<v-dialog v-model="_value" max-width="900px" persistent>
 		<v-card>
-			<v-card-title>
+			<v-card-title class="px-4 py-3">
 				<span class="text-h5"
 					>Firmware Updates - Node {{ node?.id }}</span
 				>
@@ -10,16 +10,24 @@
 				icon="close"
 				size="x-small"
 				@click="_value = false"
-				style="position: absolute; right: 5px; top: 5px"
+				style="position: absolute; right: 10px; top: 10px"
 			/>
 
-			<v-card-text>
+			<v-card-text class="px-4">
 				<OTWUpdates
 					v-if="node && node.isControllerNode"
 					:node="node"
 					:socket="socket"
+					:dialog-mode="true"
+					@close-dialog="closeDialog"
 				/>
-				<OTAUpdates v-else-if="node" :node="node" :socket="socket" />
+				<OTAUpdates
+					v-else-if="node"
+					:node="node"
+					:socket="socket"
+					:dialog-mode="true"
+					@close-dialog="closeDialog"
+				/>
 			</v-card-text>
 		</v-card>
 	</v-dialog>
@@ -57,6 +65,11 @@ export default {
 			set(val) {
 				this.$emit('update:modelValue', val)
 			},
+		},
+	},
+	methods: {
+		closeDialog() {
+			this._value = false
 		},
 	},
 }

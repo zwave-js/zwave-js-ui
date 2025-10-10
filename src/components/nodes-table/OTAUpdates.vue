@@ -2,6 +2,7 @@
 	<FirmwareUpdates
 		:node="node"
 		:socket="socket"
+		:dialog-mode="dialogMode"
 		update-type="OTA"
 		@update-firmware="updateFirmware"
 	/>
@@ -27,7 +28,12 @@ export default {
 			type: Object,
 			required: true,
 		},
+		dialogMode: {
+			type: Boolean,
+			default: false,
+		},
 	},
+	emits: ['close-dialog'],
 	data() {
 		return {}
 	},
@@ -55,6 +61,11 @@ export default {
 					},
 				)
 			) {
+				// Close the dialog before starting the update
+				if (this.dialogMode) {
+					this.$emit('close-dialog')
+				}
+
 				const response = await this.app.apiRequest(
 					'firmwareUpdateOTA',
 					[this.node.id, update],

@@ -7019,22 +7019,18 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			)
 		}
 
-		// Schedule next check for a random time between 1 AM and 5 AM tomorrow
-		const now = new Date()
-		const nextCheck = new Date()
-		nextCheck.setDate(now.getDate() + 1) // Tomorrow
+		// Schedule next check for a random delay between 23 and 25 hours to avoid thundering herd problem
+		const minHours = 23
+		const maxHours = 25
+		const randomHours = minHours + Math.random() * (maxHours - minHours)
+		const waitMillis = randomHours * 60 * 60 * 1000
 
-		// Random hour between 1 and 5 AM (1-4 hours, so 1, 2, 3, or 4 AM)
-		const randomHour = Math.floor(Math.random() * 4) + 1
-		nextCheck.setHours(randomHour, 0, 0, 0)
-
-		const waitMillis = nextCheck.getTime() - now.getTime()
-
-		logger.info(`Next firmware update check scheduled for: ${nextCheck}`)
+		const nextCheckTime = new Date(Date.now() + waitMillis)
+		logger.info(`Next firmware update check scheduled for: ${nextCheckTime}`)
 
 		this.firmwareUpdateCheckTimeout = setTimeout(
 			this._scheduledFirmwareUpdateCheck.bind(this),
-			waitMillis > 0 ? waitMillis : 1000,
+			waitMillis,
 		)
 	}
 
