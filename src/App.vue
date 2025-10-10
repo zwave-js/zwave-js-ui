@@ -1001,7 +1001,7 @@ export default {
 
 			if (result) {
 				try {
-					const data = await ConfigApis.updateConfig(false)
+					const data = await ConfigApis.restartGateway()
 
 					this.showSnackbar(
 						data.message,

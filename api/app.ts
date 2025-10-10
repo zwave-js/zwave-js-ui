@@ -1122,66 +1122,197 @@ app.post(
 			}
 			let settings = req.body
 
-			let restartAll = false
+			let shouldRestart = false
 			let shouldRestartGw = false
 			let shouldRestartZniffer = false
+			let canUpdateZwaveOptions = false
 
 			const actualSettings = jsonStore.get(store.settings) as Settings
 
 			// TODO: validate settings using calss-validator
 			// when settings is null consider a force restart
 			if (settings && Object.keys(settings).length > 0) {
-				shouldRestartGw = !utils.deepEqual(
-					{
-						zwave: actualSettings.zwave,
-						gateway: actualSettings.gateway,
-						mqtt: actualSettings.mqtt,
-					},
-					{
-						zwave: settings.zwave,
-						gateway: settings.gateway,
-						mqtt: settings.mqtt,
-					},
+				// Check if gateway settings changed
+				const gatewayChanged = !utils.deepEqual(
+					actualSettings.gateway,
+					settings.gateway,
+				)
+				const mqttChanged = !utils.deepEqual(
+					actualSettings.mqtt,
+					settings.mqtt,
 				)
 
+				if (gatewayChanged || mqttChanged) {
+					shouldRestartGw = true
+					shouldRestart = true
+				}
+
+				// Check if Z-Wave settings changed
+				if (!utils.deepEqual(actualSettings.zwave, settings.zwave)) {
+					// Determine which Z-Wave options changed
+					const editableZWaveProps = [
+						'attempts',
+						'disableOptimisticValueUpdate',
+						'emitValueUpdateAfterSetValue',
+						'inclusionUserCallbacks',
+						'joinNetworkUserCallbacks',
+						'interview',
+						'logConfig',
+						'preferences',
+						'vendor',
+						'userAgent',
+					]
+
+					// Find which Z-Wave properties actually changed
+					const changedZwaveKeys = Object.keys(
+						settings.zwave || {},
+					).filter((key) => {
+						return !utils.deepEqual(
+							actualSettings.zwave?.[key],
+							settings.zwave?.[key],
+						)
+					})
+
+					// Check if only editable options changed
+					const onlyEditableChanged = changedZwaveKeys.every((key) =>
+						editableZWaveProps.includes(key),
+					)
+
+					if (
+						onlyEditableChanged &&
+						changedZwaveKeys.length > 0 &&
+						gw &&
+						gw.zwave &&
+						gw.zwave.driver
+					) {
+						// Can update options without restart
+						canUpdateZwaveOptions = true
+					} else {
+						// Need full restart
+						shouldRestartGw = true
+						shouldRestart = true
+					}
+				}
+
+				// Check if Zniffer settings changed
 				shouldRestartZniffer = !utils.deepEqual(
 					actualSettings.zniffer,
 					settings.zniffer,
 				)
-
-				// nothing changed, consider it a forced restart
-				restartAll = !shouldRestartGw && !shouldRestartZniffer
-
-				await jsonStore.put(store.settings, settings)
-			} else {
-				restartAll = true
-				settings = actualSettings
-			}
-
-			if (restartAll || shouldRestartGw) {
-				restarting = true
-
-				await gw.close()
-
-				await destroyPlugins()
-				// reload loggers settings
-				setupLogging(settings)
-				// restart clients and gateway
-				await startGateway(settings)
-				backupManager.init(gw.zwave)
-			}
-
-			if (restartAll || shouldRestartZniffer) {
-				if (zniffer) {
-					await zniffer.close()
+				if (shouldRestartZniffer) {
+					shouldRestart = true
 				}
-				startZniffer(settings.zniffer)
+
+				// Save settings to file
+				await jsonStore.put(store.settings, settings)
+
+				// Update driver options if only editable options changed
+				if (
+					canUpdateZwaveOptions &&
+					gw &&
+					gw.zwave &&
+					gw.zwave.driver
+				) {
+					try {
+						// Build editable options object with only changed properties
+						const editableOptions: any = {}
+						const editableZWaveProps = [
+							'attempts',
+							'disableOptimisticValueUpdate',
+							'emitValueUpdateAfterSetValue',
+							'inclusionUserCallbacks',
+							'joinNetworkUserCallbacks',
+							'interview',
+							'logConfig',
+							'preferences',
+							'vendor',
+							'userAgent',
+						]
+
+						// Only include properties that actually changed
+						for (const key of editableZWaveProps) {
+							if (
+								!utils.deepEqual(
+									actualSettings.zwave?.[key],
+									settings.zwave?.[key],
+								) &&
+								settings.zwave?.[key] !== undefined
+							) {
+								editableOptions[key] = settings.zwave[key]
+							}
+						}
+
+						if (Object.keys(editableOptions).length > 0) {
+							gw.zwave.driver.updateOptions(editableOptions)
+							logger.info(
+								'Updated Z-Wave driver options without restart:',
+								Object.keys(editableOptions).join(', '),
+							)
+						}
+					} catch (error) {
+						logger.error('Error updating driver options', error)
+						// If update fails, require restart
+						shouldRestart = true
+						shouldRestartGw = true
+					}
+				}
+			} else {
+				// Force restart if no settings provided
+				shouldRestart = true
+				settings = actualSettings
 			}
 
 			res.json({
 				success: true,
-				message: 'Configuration updated successfully',
+				message: shouldRestart
+					? 'Configuration saved. Restart required to apply changes.'
+					: 'Configuration updated successfully',
 				data: settings,
+				shouldRestart,
+			})
+		} catch (error) {
+			restarting = false
+			logger.error(error)
+			res.json({ success: false, message: error.message })
+		}
+	},
+)
+
+// restart gateway
+app.post(
+	'/api/restart',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			if (restarting) {
+				throw Error(
+					'Gateway is already restarting, wait a moment before doing another request',
+				)
+			}
+
+			const settings = jsonStore.get(store.settings) as Settings
+
+			restarting = true
+
+			// Close gateway and restart
+			await gw.close()
+			await destroyPlugins()
+			if (settings.gateway) {
+				setupLogging({ gateway: settings.gateway })
+			}
+			await startGateway(settings)
+			backupManager.init(gw.zwave)
+
+			// Restart Zniffer if enabled
+			if (zniffer) {
+				await zniffer.close()
+			}
+			startZniffer(settings.zniffer)
+
+			res.json({
+				success: true,
+				message: 'Gateway restarted successfully',
 			})
 		} catch (error) {
 			restarting = false
