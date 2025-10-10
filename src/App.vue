@@ -331,6 +331,12 @@
 			:socket="socket"
 			ref="nodesManager"
 		/>
+
+		<DialogFirmwareUpdate
+			v-model="firmwareUpdateDialog"
+			:node="firmwareUpdateNode"
+			:socket="socket"
+		/>
 	</v-app>
 </template>
 
@@ -384,6 +390,7 @@ import { getEnumMemberName } from '@zwave-js/shared'
 import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
+import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
 import { uuid } from './lib/utils'
 import Logo from '@/components/Logo.vue'
 
@@ -397,6 +404,7 @@ export default {
 		LoaderDialog,
 		Confirm,
 		DialogNodesManager,
+		DialogFirmwareUpdate,
 		VSonner,
 		Logo,
 	},
@@ -589,6 +597,8 @@ export default {
 			loaderIndeterminate: false,
 			password: {},
 			nodesManagerDialog: false,
+			firmwareUpdateDialog: false,
+			firmwareUpdateNode: null,
 			status: '',
 			statusColor: '',
 			drawer: false,
@@ -708,6 +718,10 @@ export default {
 		showPasswordDialog() {
 			this.password = {}
 			this.dialog_password = true
+		},
+		showFirmwareUpdateDialog(node) {
+			this.firmwareUpdateNode = node
+			this.firmwareUpdateDialog = true
 		},
 		async onNodeAdded({ node, result }) {
 			if (!this.nodesManagerDialog) {
