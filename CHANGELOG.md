@@ -1,5 +1,27 @@
 
 
+## [11.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.0...v11.4.1) (2025-10-07)
+
+
+### Bug Fixes
+
+* restore commonjs build ([#4405](https://github.com/zwave-js/zwave-js-ui/issues/4405)) ([f9e51ad](https://github.com/zwave-js/zwave-js-ui/commit/f9e51ad2d0f9c39b465acae65a028249c125868f)), closes [#4401](https://github.com/zwave-js/zwave-js-ui/issues/4401)
+
+# [11.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.1...v11.4.0) (2025-10-06)
+
+
+### Bug Fixes
+
+* refresh normal powerlevel after region change in auto mode ([#4391](https://github.com/zwave-js/zwave-js-ui/issues/4391)) ([81f4848](https://github.com/zwave-js/zwave-js-ui/commit/81f48486f05ff8b8e2357fb11a129454e652a881))
+* **ui:** prevent "undefined" text in parameter chips with manual entry ([#4388](https://github.com/zwave-js/zwave-js-ui/issues/4388)) ([defef2c](https://github.com/zwave-js/zwave-js-ui/commit/defef2c1fb8361888d6759ae3289dc6234a404d7)), closes [#4354](https://github.com/zwave-js/zwave-js-ui/issues/4354)
+* **ui:** prevent replace failed node without selecting a node ([#4380](https://github.com/zwave-js/zwave-js-ui/issues/4380)) ([a2ae434](https://github.com/zwave-js/zwave-js-ui/commit/a2ae4345ffb35a15568aded22c0bb03040b0b3ba)), closes [#4379](https://github.com/zwave-js/zwave-js-ui/issues/4379)
+
+
+### Features
+
+* bump zwave-js@15.15.0 ([#4394](https://github.com/zwave-js/zwave-js-ui/issues/4394)) ([7b0285f](https://github.com/zwave-js/zwave-js-ui/commit/7b0285f3d13c7bcfa1670adc66ece1c688793692))
+* notification handling of battery status support ([#4398](https://github.com/zwave-js/zwave-js-ui/issues/4398)) ([69b28c4](https://github.com/zwave-js/zwave-js-ui/commit/69b28c46d8979e0703be6a8320081b57a36f70de)), closes [#4396](https://github.com/zwave-js/zwave-js-ui/issues/4396)
+
 ## [11.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.0...v11.3.1) (2025-09-24)
 
 

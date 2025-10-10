@@ -1,6 +1,6 @@
 {
   "name": "zwave-js-ui",
-  "version": "11.3.1",
+  "version": "11.4.1",
   "description": "Z-Wave Control Panel and MQTT Gateway",
   "keywords": [
     "mqtt",
@@ -204,29 +204,5 @@
       "node_modules/zwave-js/node_modules/@serialport/**",
       "node_modules/@zwave-js/config/config/**"
     ]
-  },
-  "release-it": {
-    "github": {
-      "release": true,
-      "assets": [
-        "build/pkg/*.zip"
-      ]
-    },
-    "git": {
-      "tagName": "v${version}",
-      "requireCleanWorkingDir": false
-    },
-    "hooks": {
-      "before:release": "./package.sh --bundle"
-    },
-    "npm": {
-      "publish": true
-    },
-    "plugins": {
-      "@release-it/conventional-changelog": {
-        "preset": "angular",
-        "infile": "CHANGELOG.md"
-      }
-    }
   }
 }

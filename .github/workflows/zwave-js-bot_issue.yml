@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Checkout master branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Classify issue body using AI
       id: ai_detection
