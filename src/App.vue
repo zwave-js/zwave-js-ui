@@ -1310,6 +1310,7 @@ export default {
 			}`
 
 			let message = ''
+			let showDialog = true
 
 			if (result.success) {
 				if (
@@ -1321,11 +1322,8 @@ export default {
 				} else if (
 					result.status === FirmwareUpdateStatus.OK_RestartPending
 				) {
-					message = `<p>The device will now restart.${
-						result.waitTime
-							? ` This will take approximately <b>${result.waitTime}</b> seconds.`
-							: ''
-					}</p>`
+					// Don't show dialog for restart pending - device will restart automatically
+					showDialog = false
 				} else if (
 					// status is OK_NoRestart
 					result.waitTime &&
@@ -1381,11 +1379,14 @@ export default {
 				}
 			}
 
-			this.confirm(title, message, 'info', {
-				confirmText: 'Ok',
-				noCancel: true,
-				color: result.success ? 'success' : 'error',
-			})
+			// Only show the dialog if there's a meaningful message that requires user acknowledgment
+			if (showDialog && message) {
+				this.confirm(title, message, 'info', {
+					confirmText: 'Ok',
+					noCancel: true,
+					color: result.success ? 'success' : 'error',
+				})
+			}
 		},
 		async getRelease(project, version) {
 			try {
