@@ -98,7 +98,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -150,7 +150,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -460,7 +460,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -719,7 +719,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -851,7 +851,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -872,7 +872,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -971,7 +971,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -994,7 +994,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -1019,7 +1019,53 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
+}
+```
+
+</details>
+
+#### `stopLearnMode`
+
+```ts
+stopLearnMode(): Promise<boolean>;
+```
+
+Stops learn mode.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/stopLearnMode/set`
+
+Payload:
+
+```json
+{
+  "args": []
+}
+```
+
+</details>
+
+#### `startLearnMode`
+
+```ts
+async startLearnMode(): Promise<JoinNetworkResult>;
+```
+
+Starts learn mode.
+
+<details>
+<summary>Mqtt usage</summary>
+
+Topic: `zwave/_CLIENTS/ZWAVE_GATEWAY-<mqtt_name>/api/startLearnMode/set`
+
+Payload:
+
+```json
+{
+  "args": []
 }
 ```
 
@@ -1090,7 +1136,7 @@ Payload:
 async getAvailableFirmwareUpdates(
 	nodeId: number,
 	options?: GetFirmwareUpdatesOptions,
-): Promise<{ version: string; changelog: string; channel: "stable" | "beta"; files: FirmwareUpdateFileInfo[]; downgrade: boolean; normalizedVersion: string; device: { manufacturerId: number; productType: number; productId: number; firmwareVersion: string; rfRegion?: RFRegion; }; }[]>;
+): Promise<{ version: string; changelog: string; channel: "stable" | "beta"; files: FirmwareUpdateFileInfo[]; downgrade: boolean; normalizedVersion: string; region?: string; device: { manufacturerId: number; productType: number; productId: number; firmwareVersion: string; rfRegion?: RFRegion; }; }[]>;
 ```
 
 <details>
@@ -1290,7 +1336,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -1313,7 +1359,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -2080,7 +2126,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -2101,7 +2147,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -2122,7 +2168,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -2319,7 +2365,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -2340,7 +2386,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 
@@ -2385,7 +2431,7 @@ Payload:
 
 ```json
 {
-	"args": []
+  "args": []
 }
 ```
 

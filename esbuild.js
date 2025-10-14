@@ -1,7 +1,15 @@
-const esbuild = require('esbuild')
-const { cp, stat, readFile, writeFile } = require('fs/promises')
-const { exists, emptyDir } = require('fs-extra')
-const { join } = require('path')
+import esbuild from 'esbuild'
+import { cp, stat, readFile, writeFile, rm, access } from 'fs/promises'
+import { join } from 'path'
+
+async function pathExists(path) {
+	try {
+		await access(path)
+		return true
+	} catch {
+		return false
+	}
+}
 
 const outputDir = 'build'
 
@@ -13,13 +21,17 @@ function cleanPkgJson(json) {
 	return json
 }
 
+async function readJson(path) {
+	return JSON.parse(await readFile(path, 'utf-8'))
+}
+
 /**
  * Remove useless fields from package.json, this is needed mostly for `pkg`
  * otherwise it will try to bundle dependencies
  */
 async function patchPkgJson(path) {
 	const pkgJsonPath = join(outputDir, path, 'package.json')
-	const pkgJson = require('./' + pkgJsonPath)
+	const pkgJson = await readJson(pkgJsonPath)
 	cleanPkgJson(pkgJson)
 	delete pkgJson.scripts
 	await writeFile(pkgJsonPath, JSON.stringify(pkgJson, null, 2))
@@ -75,7 +87,7 @@ async function printSize(fileName) {
 async function main() {
 	const start = Date.now()
 	// clean build folder
-	await emptyDir(outputDir)
+	await rm(outputDir, { recursive: true, force: true })
 
 	const outfile = `${outputDir}/index.js`
 
@@ -116,7 +128,7 @@ async function main() {
 		define: {
 			'import.meta.url': '__import_meta_url',
 		},
-		inject: ['esbuild-import-meta-url-shim.js'],
+		inject: ['./esbuild-import-meta-url-shim.js'],
 	}
 
 	await esbuild.build(config)
@@ -130,9 +142,10 @@ async function main() {
 			'__dirname, "./node_modules/@serialport/bindings-cpp"',
 		)
 		.replace(
-			`"../../package.json"`,
-			`"./node_modules/@zwave-js/server/package.json"`,
+			`("../../package.json").version`,
+			`("./node_modules/@zwave-js/server/package.json").version`,
 		)
+		.replace(`("../../package.json")`, `("./package.json")`)
 
 	await writeFile(outfile, content)
 
@@ -154,7 +167,7 @@ async function main() {
 	// copy assets to build folder
 	for (const ext of externals) {
 		const path = ext.startsWith('./') ? ext : `node_modules/${ext}`
-		if (await exists(path)) {
+		if (await pathExists(path)) {
 			console.log(`Copying "${path}" to "${outputDir}" folder`)
 			await cp(path, `${outputDir}/${path}`, { recursive: true })
 		} else {
@@ -162,8 +175,8 @@ async function main() {
 		}
 	}
 
-	// create main patched packege.json
-	const pkgJson = require('./package.json')
+	// create main patched package.json
+	const pkgJson = await readJson('package.json')
 	cleanPkgJson(pkgJson)
 
 	pkgJson.scripts = {

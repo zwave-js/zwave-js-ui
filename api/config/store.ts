@@ -1,9 +1,10 @@
 // config/store.js
 
-import { GatewayConfig } from '../lib/Gateway'
-import { MqttConfig } from '../lib/MqttClient'
-import { ZnifferConfig } from '../lib/ZnifferManager'
-import { ZwaveConfig, deviceConfigPriorityDir } from '../lib/ZwaveClient'
+import type { GatewayConfig } from '../lib/Gateway.ts'
+import type { MqttConfig } from '../lib/MqttClient.ts'
+import type { ZnifferConfig } from '../lib/ZnifferManager.ts'
+import type { ZwaveConfig } from '../lib/ZwaveClient.ts'
+import { deviceConfigPriorityDir } from '../lib/Constants.ts'
 
 export type StoreKeys = 'settings' | 'scenes' | 'nodes' | 'users'
 

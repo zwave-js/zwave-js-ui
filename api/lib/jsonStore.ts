@@ -1,17 +1,27 @@
-import { readFile, writeFile } from 'jsonfile'
-import { storeBackupsDir, storeDir } from '../config/app'
-import { StoreFile, StoreKeys } from '../config/store'
-import { module } from './logger'
-import * as utils from './utils'
+import jsonFile from 'jsonfile'
+import { storeBackupsDir, storeDir } from '../config/app.ts'
+import type { StoreFile, StoreKeys } from '../config/store.ts'
+import { module } from './logger.ts'
 import { recursive as merge } from 'merge'
 import archiver from 'archiver'
-import { createWriteStream } from 'fs'
-import { mkdirp, existsSync } from 'fs-extra'
-import { Response } from 'express'
+import { createWriteStream, existsSync } from 'node:fs'
+import type { Response } from 'express'
+import { ensureDir, fileDate, joinPath } from './utils.ts'
 
 const logger = module('Store')
 
 export const STORE_BACKUP_PREFIX = 'store-backup_'
+
+// Default dependencies for production use
+const defaultDeps = {
+	readFile: jsonFile.readFile.bind(jsonFile),
+	writeFile: jsonFile.writeFile.bind(jsonFile),
+}
+
+export interface StorageHelperDeps {
+	readFile?: typeof jsonFile.readFile
+	writeFile?: typeof jsonFile.writeFile
+}
 
 /**
 Constructor
@@ -19,13 +29,17 @@ Constructor
 export class StorageHelper {
 	private _store: Record<StoreKeys, any>
 	private config: Record<StoreKeys, StoreFile>
+	private readFile: typeof jsonFile.readFile
+	private writeFile: typeof jsonFile.writeFile
 
 	public get store() {
 		return this._store
 	}
 
-	constructor() {
+	constructor(deps?: StorageHelperDeps) {
 		this._store = {} as Record<StoreKeys, any>
+		this.readFile = deps?.readFile || defaultDeps.readFile
+		this.writeFile = deps?.writeFile || defaultDeps.writeFile
 	}
 
 	async init(config: Record<StoreKeys, StoreFile>) {
@@ -40,12 +54,12 @@ export class StorageHelper {
 	}
 
 	async backup(res?: Response): Promise<string> {
-		const backupFile = `${STORE_BACKUP_PREFIX}${utils.fileDate()}.zip`
+		const backupFile = `${STORE_BACKUP_PREFIX}${fileDate()}.zip`
 
-		await mkdirp(storeBackupsDir)
+		await ensureDir(storeBackupsDir)
 
 		const fileStream = createWriteStream(
-			utils.joinPath(storeBackupsDir, backupFile),
+			joinPath(storeBackupsDir, backupFile),
 		)
 
 		return new Promise((resolve, reject) => {
@@ -78,7 +92,7 @@ export class StorageHelper {
 
 			for (const model in this.config) {
 				const config: StoreFile = this.config[model]
-				const filePath = utils.joinPath(storeDir, config.file)
+				const filePath = joinPath(storeDir, config.file)
 				if (existsSync(filePath)) {
 					archive.file(filePath, {
 						name: config.file,
@@ -94,7 +108,7 @@ export class StorageHelper {
 		let err: { code: string } | undefined
 		let data: any
 		try {
-			data = await readFile(utils.joinPath(storeDir, config.file))
+			data = await this.readFile(joinPath(storeDir, config.file))
 		} catch (error) {
 			err = error
 		}
@@ -127,7 +141,7 @@ export class StorageHelper {
 	}
 
 	async put(model: StoreFile, data: any) {
-		await writeFile(utils.joinPath(storeDir, model.file), data)
+		await this.writeFile(joinPath(storeDir, model.file), data)
 		this._store[model.file] = data
 		return data
 	}

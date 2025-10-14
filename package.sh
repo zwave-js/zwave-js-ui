@@ -33,11 +33,6 @@ ask() {
 	done
 }
 
-pkg() {
-	echo "Executing command: npx pkg $@"
-	npx pkg $@
-}
-
 APP=$(node -p "require('./package.json').name")
 PKG_FOLDER="pkg"
 
@@ -58,6 +53,11 @@ if [[ "$@" == *"--arch"* ]]; then
 else
 	ARCH=$(uname -m)
 fi
+
+pack() {
+	echo executing: pkg . --out-path $PKG_FOLDER --options experimental-require-module -t $1 $2
+	npx pkg . --out-path $PKG_FOLDER --options experimental-require-module -t $1 $2
+}
 
 echo "## Architecture: $ARCH"
 
@@ -82,11 +82,11 @@ if [ ! -z "$1" ]; then
 	fi
 
 	if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
-		pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER
+		pack node$NODE_MAJOR-linux-arm64
 	elif [ "$ARCH" = "armv7" ]; then
-		pkg package.json -t node$NODE_MAJOR-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
+		pack node$NODE_MAJOR-linux-armv7 --public-packages=*
 	else
-		pkg package.json -t node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64  --out-path $PKG_FOLDER
+		pack node$NODE_MAJOR-linux-x64,node$NODE_MAJOR-win-x64
 	fi
 
 else
@@ -115,32 +115,32 @@ else
 		case "$REPLY" in
 			1)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node$NODE_MAJOR-linux-x64 --out-path $PKG_FOLDER
+				pack node$NODE_MAJOR-linux-x64
 				break
 				;;
 			2)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node$NODE_MAJOR-linux-armv7 --out-path $PKG_FOLDER --public-packages=*
+				pack node$NODE_MAJOR-linux-armv7 --public-packages=*
 				break
 				;;
 			3)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node$NODE_MAJOR-linux-armv6 --out-path $PKG_FOLDER --public-packages=*
+				pack node$NODE_MAJOR-linux-armv6 --public-packages=*
 				break
 				;;
 			4)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node$NODE_MAJOR-linux-x86 --out-path $PKG_FOLDER
+				pack node$NODE_MAJOR-linux-x86
 				break
 				;;
 			5)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node$NODE_MAJOR-alpine-x64 --out-path $PKG_FOLDER
+				pack node$NODE_MAJOR-alpine-x64
 				break
 				;;
 			6)
 				echo "## Creating application package in $PKG_FOLDER folder"
-				pkg package.json -t node$NODE_MAJOR-linux-arm64 --out-path $PKG_FOLDER --public-packages=*
+				pack node$NODE_MAJOR-linux-arm64 --public-packages=*
 				break
 				;;
 			*)
