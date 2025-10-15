@@ -556,11 +556,26 @@ export default {
 			immediate: true,
 			deep: true,
 		},
+		async _value(val) {
+			// When panel opens, refresh node neighbors
+			if (val && this.node && !this.node.isControllerNode) {
+				await this.refreshNodeNeighbors()
+			}
+		},
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
 		getProtocol,
 		zwaveDataRateToString,
+		async refreshNodeNeighbors() {
+			if (!this.node) return
+
+			try {
+				await this.app.apiRequest('getNodeNeighbors', [this.node.id])
+			} catch (error) {
+				// Silent fail - neighbors will be shown from cached data
+			}
+		},
 		checkMove(evt) {
 			const { futureIndex } = evt.draggedContext
 			const hasPriority = this.returnRoutes.some((r) => r.isPriority)
