@@ -1,5 +1,19 @@
 
 
+# [11.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.1...v11.5.0) (2025-10-15)
+
+
+### Bug Fixes
+
+* **ui:** refresh node neighbors when opening node panel in zwave graph ([#4416](https://github.com/zwave-js/zwave-js-ui/issues/4416)) ([800dff9](https://github.com/zwave-js/zwave-js-ui/commit/800dff92475d6b0f4f0bb30ad9bac4d3497f4e72)), closes [#4409](https://github.com/zwave-js/zwave-js-ui/issues/4409) [#4409](https://github.com/zwave-js/zwave-js-ui/issues/4409) [/github.com/zwave-js/zwave-js-ui/discussions/4409#discussioncomment-14623043](https://github.com//github.com/zwave-js/zwave-js-ui/discussions/4409/issues/discussioncomment-14623043) [zwave-js/zwave-js-ui#4412](https://github.com/zwave-js/zwave-js-ui/issues/4412)
+
+
+### Features
+
+* bump zwave-js@15.15.2 ([#4417](https://github.com/zwave-js/zwave-js-ui/issues/4417)) ([3df5c94](https://github.com/zwave-js/zwave-js-ui/commit/3df5c9466b8e5f6d65bbd637279472f402e6d2fa))
+* bump zwave-js@15.15.3 ([#4420](https://github.com/zwave-js/zwave-js-ui/issues/4420)) ([57a7da7](https://github.com/zwave-js/zwave-js-ui/commit/57a7da75071890eb8614f2813b4d9ceeb44afdc3))
+* implement backend-based firmware update checking with optimized scheduling and refined dialog UX ([#4371](https://github.com/zwave-js/zwave-js-ui/issues/4371)) ([6a02bf4](https://github.com/zwave-js/zwave-js-ui/commit/6a02bf49f4a5bb37f5726af95751eaabf00eb563)), closes [#4366](https://github.com/zwave-js/zwave-js-ui/issues/4366)
+
 ## [11.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.0...v11.4.1) (2025-10-07)
 
 
