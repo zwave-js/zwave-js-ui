@@ -116,7 +116,7 @@
     "vuetify-sonner": "^0.3.0",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "zwave-js": "^15.15.2",
+    "zwave-js": "^15.15.3",
     "zxing-wasm": "^1.2.15"
   },
   "devDependencies": {
