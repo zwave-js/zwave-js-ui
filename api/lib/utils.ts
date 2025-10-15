@@ -1,15 +1,20 @@
-import { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
-import path, { resolve } from 'path'
-import crypto from 'crypto'
-import { readFileSync, statSync } from 'fs'
-import type { ZwaveConfig } from './ZwaveClient'
-import { isUint8Array } from 'util/types'
+import type { PartialZWaveOptions, ValueID, ZnifferOptions } from 'zwave-js'
+import path, { resolve } from 'node:path'
+import crypto from 'node:crypto'
+import { readFileSync, statSync } from 'node:fs'
+import type { ZwaveConfig } from './ZwaveClient.ts'
+import { isUint8Array } from 'node:util/types'
+import { createRequire } from 'node:module'
+import { mkdir, access } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 
 // don't use import here, it will break the build
-
-export const pkgJson = require('../../package.json')
+const require = createRequire(import.meta.url)
+const pkg = require('../../package.json')
 
 let VERSION: string
+
+export const pkgJson = pkg
 
 export interface Snippet {
 	name: string
@@ -79,7 +84,9 @@ export function fileDate(date?: Date) {
 	return date.toISOString().slice(-24).replace(/\D/g, '').slice(0, 14)
 }
 
-/** Where package.json is */
+export const __filename = fileURLToPath(new URL('', import.meta.url))
+export const __dirname = path.dirname(__filename)
+
 export const basePath = __filename.endsWith('index.js')
 	? resolve(__dirname) // esbuild bundle
 	: resolve(__dirname, '..', '..')
@@ -174,11 +181,9 @@ export function getVersion(): string {
 					.trim()
 			}
 
-			VERSION = `${pkgJson.version}${
-				rev ? '.' + rev.substring(0, 7) : ''
-			}`
+			VERSION = `${pkg.version}${rev ? '.' + rev.substring(0, 7) : ''}`
 		} catch {
-			VERSION = pkgJson.version
+			VERSION = pkg.version
 		}
 	}
 
@@ -421,4 +426,49 @@ export function isDocker(): boolean {
 	isDockerCached ??= hasDockerEnv() || hasDockerCGroup()
 
 	return isDockerCached
+}
+
+/**
+ * Ensures that a directory exists. If the directory does not exist, it creates it recursively.
+ * @param dir The directory path to ensure
+ */
+export async function ensureDir(dir: string): Promise<void> {
+	try {
+		await mkdir(dir, { recursive: true })
+	} catch (err) {
+		// Ignore error if directory already exists
+		if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
+			throw err
+		}
+	}
+}
+
+/**
+ * Synchronously ensures that a directory exists. If the directory does not exist, it creates it recursively.
+ * @param dir The directory path to ensure
+ */
+export function ensureDirSync(dir: string): void {
+	const { mkdirSync } = require('node:fs')
+	try {
+		mkdirSync(dir, { recursive: true })
+	} catch (err) {
+		// Ignore error if directory already exists
+		if ((err as NodeJS.ErrnoException).code !== 'EEXIST') {
+			throw err
+		}
+	}
+}
+
+/**
+ * Checks if a file or directory exists
+ * @param path The path to check
+ * @returns Promise that resolves to true if the path exists, false otherwise
+ */
+export async function pathExists(path: string): Promise<boolean> {
+	try {
+		await access(path)
+		return true
+	} catch {
+		return false
+	}
 }

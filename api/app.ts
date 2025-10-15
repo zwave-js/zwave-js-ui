@@ -1,29 +1,33 @@
-import express, { Request, RequestHandler, Response, Router } from 'express'
+import type { Request, RequestHandler, Response, Router } from 'express'
+import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import csrf from 'csurf'
 import morgan from 'morgan'
-import store, { Settings, User } from './config/store'
-import Gateway, { GatewayConfig, GatewayType } from './lib/Gateway'
-import jsonStore from './lib/jsonStore'
-import * as loggers from './lib/logger'
-import MqttClient from './lib/MqttClient'
-import SocketManager from './lib/SocketManager'
-import ZWaveClient, { CallAPIResult, SensorTypeScale } from './lib/ZwaveClient'
+import type { Settings, User } from './config/store.ts'
+import store from './config/store.ts'
+import type { GatewayConfig } from './lib/Gateway.ts'
+import Gateway, { GatewayType } from './lib/Gateway.ts'
+import jsonStore from './lib/jsonStore.ts'
+import * as loggers from './lib/logger.ts'
+import MqttClient from './lib/MqttClient.ts'
+import SocketManager from './lib/SocketManager.ts'
+import type { CallAPIResult, SensorTypeScale } from './lib/ZwaveClient.ts'
+import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
-import fs, { mkdirp, move, readdir, rm, stat } from 'fs-extra'
-import { createServer as createHttpServer, Server as HttpServer } from 'http'
-import { createServer as createHttpsServer } from 'https'
+import type { Server as HttpServer } from 'node:http'
+import { createServer as createHttpServer } from 'node:http'
+import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
-import path from 'path'
+import path from 'node:path'
 import sessionStore from 'session-file-store'
-import { Socket } from 'socket.io'
-import { promisify } from 'util'
+import type { Socket } from 'socket.io'
+import { promisify } from 'node:util'
 import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
@@ -32,18 +36,26 @@ import {
 	snippetsDir,
 	storeDir,
 	tmpDir,
-} from './config/app'
+} from './config/app.ts'
+import type { CustomPlugin, PluginConstructor } from './lib/CustomPlugin.ts'
+import { createPlugin } from './lib/CustomPlugin.ts'
+import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
+import * as utils from './lib/utils.ts'
+import backupManager from './lib/BackupManager.ts'
 import {
-	createPlugin,
-	CustomPlugin,
-	PluginConstructor,
-} from './lib/CustomPlugin'
-import { inboundEvents, socketEvents } from './lib/SocketEvents'
-import * as utils from './lib/utils'
-import backupManager from './lib/BackupManager'
-import { readFile, realpath } from 'fs/promises'
+	readFile,
+	realpath,
+	readdir,
+	stat,
+	rm,
+	rename,
+	writeFile,
+	lstat,
+	mkdir,
+} from 'node:fs/promises'
 import { generate } from 'selfsigned'
-import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager'
+import type { ZnifferConfig } from './lib/ZnifferManager.ts'
+import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 
 const createCertificate = promisify(generate)
@@ -72,7 +84,7 @@ function multerPromise(
 
 const Storage = diskStorage({
 	async destination(reqD, file, callback) {
-		await mkdirp(tmpDir)
+		await utils.ensureDir(tmpDir)
 		callback(null, tmpDir)
 	},
 	filename(reqF, file, callback) {
@@ -262,7 +274,7 @@ const defaultSnippets: utils.Snippet[] = []
 
 async function loadSnippets() {
 	const localSnippetsDir = utils.joinPath(false, 'snippets')
-	await mkdirp(snippetsDir)
+	await utils.ensureDir(snippetsDir)
 
 	const files = await readdir(localSnippetsDir)
 	for (const file of files) {
@@ -329,8 +341,8 @@ async function loadCertKey(): Promise<{
 	let cert: string
 
 	try {
-		cert = await fs.readFile(certFile, 'utf8')
-		key = await fs.readFile(keyFile, 'utf8')
+		cert = await readFile(certFile, 'utf8')
+		key = await readFile(keyFile, 'utf8')
 	} catch (error) {
 		// noop
 	}
@@ -349,8 +361,8 @@ async function loadCertKey(): Promise<{
 			key = result.private
 			cert = result.cert
 
-			await fs.writeFile(utils.joinPath(storeDir, 'key.pem'), key)
-			await fs.writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
+			await writeFile(utils.joinPath(storeDir, 'key.pem'), key)
+			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
 			logger.info('New cert and key created')
 		} catch (error) {
 			logger.error('Error creating cert and key for HTTPS', error)
@@ -447,14 +459,14 @@ function setupInterceptor() {
 
 async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 	const toReturn = []
-	const files = await fs.readdir(dir)
+	const files = await readdir(dir)
 	for (const file of files) {
 		try {
 			const entry: StoreFileEntry = {
 				name: path.basename(file),
 				path: utils.joinPath(dir, file),
 			}
-			const stats = await fs.lstat(entry.path)
+			const stats = await lstat(entry.path)
 			if (stats.isDirectory()) {
 				if (entry.path === process.env.ZWAVEJS_EXTERNAL_CONFIG) {
 					// hide config-db
@@ -1498,18 +1510,18 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 		if (req.query.path) {
 			const reqPath = getSafePath(req)
 			// lgtm [js/path-injection]
-			let stat = await fs.lstat(reqPath)
+			let stat = await lstat(reqPath)
 
 			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
 				getSafePath(realPath)
-				stat = await fs.lstat(realPath)
+				stat = await lstat(realPath)
 			}
 
 			if (stat.isFile()) {
 				// lgtm [js/path-injection]
-				data = await fs.readFile(reqPath, 'utf8')
+				data = await readFile(reqPath, 'utf8')
 			} else {
 				// read directory
 				// lgtm [js/path-injection]
@@ -1542,7 +1554,7 @@ app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 		if (!isNew) {
 			// lgtm [js/path-injection]
-			const stat = await fs.lstat(reqPath)
+			const stat = await lstat(reqPath)
 
 			if (!stat.isFile()) {
 				throw Error('Path is not a file')
@@ -1551,10 +1563,10 @@ app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 		if (!isDirectory) {
 			// lgtm [js/path-injection]
-			await fs.writeFile(reqPath, req.body.content, 'utf8')
+			await writeFile(reqPath, req.body.content, 'utf8')
 		} else {
 			// lgtm [js/path-injection]
-			await fs.mkdir(reqPath)
+			await mkdir(reqPath)
 		}
 
 		res.json({ success: true })
@@ -1573,7 +1585,7 @@ app.delete(
 			const reqPath = getSafePath(req)
 
 			// lgtm [js/path-injection]
-			await fs.remove(reqPath)
+			await rm(reqPath, { recursive: true, force: true })
 
 			res.json({ success: true })
 		} catch (error) {
@@ -1591,7 +1603,7 @@ app.put(
 		try {
 			const files = req.body.files || []
 			for (const f of files) {
-				await fs.remove(f)
+				await rm(f, { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
@@ -1629,7 +1641,7 @@ app.post(
 		archive.pipe(res)
 
 		for (const f of files) {
-			const s = await fs.lstat(f)
+			const s = await lstat(f)
 			const name = f.replace(storeDir, '')
 			if (s.isFile()) {
 				archive.file(f, { name })
@@ -1690,7 +1702,7 @@ app.post(
 				const destinationPath = getSafePath(
 					path.join(storeDir, folder, file.originalname),
 				)
-				await move(file.path, destinationPath)
+				await rename(file.path, destinationPath)
 			}
 
 			res.json({ success: true })

@@ -1,88 +1,68 @@
-import {
-	CommandClasses,
+import type {
 	ConfigurationMetadata,
-	dskToString,
-	Duration,
 	Firmware,
-	isUnsupervisedOrSucceeded,
 	Route,
-	RouteKind,
-	SecurityClass,
 	SupervisionResult,
-	SupervisionStatus,
 	ValueMetadataNumeric,
 	ValueMetadataString,
 	ZWaveDataRate,
+	FirmwareFileFormat,
+} from '@zwave-js/core'
+import {
+	CommandClasses,
+	dskToString,
+	Duration,
+	isUnsupervisedOrSucceeded,
+	RouteKind,
+	SecurityClass,
+	SupervisionStatus,
 	ZWaveErrorCodes,
 	Protocols,
-	FirmwareFileFormat,
 	tryUnzipFirmwareFile,
 	extractFirmware,
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { isDocker } from './utils'
-import {
+import { isDocker } from './utils.ts'
+import type {
 	AssociationAddress,
 	AssociationGroup,
 	OTWFirmwareUpdateProgress,
 	OTWFirmwareUpdateResult,
-	OTWFirmwareUpdateStatus,
 	ControllerStatistics,
-	ControllerStatus,
 	DataRate,
-	Driver,
 	ExclusionOptions,
-	ExclusionStrategy,
 	FirmwareUpdateCapabilities,
 	FirmwareUpdateProgress,
 	FirmwareUpdateResult,
-	FirmwareUpdateStatus,
 	FLiRS,
 	FoundNode,
 	GetFirmwareUpdatesOptions,
-	guessFirmwareFileFormat,
 	RebuildRoutesOptions,
 	RebuildRoutesStatus,
 	InclusionGrant,
 	InclusionOptions,
 	InclusionResult,
-	InclusionStrategy,
-	InterviewStage,
-	libVersion,
 	LifelineHealthCheckResult,
 	LifelineHealthCheckSummary,
-	MultilevelSwitchCommand,
 	NodeInterviewFailedEventArgs,
 	NodeStatistics,
-	NodeStatus,
 	NodeType,
 	PlannedProvisioningEntry,
 	ProtocolVersion,
-	QRCodeVersion,
 	QRProvisioningInformation,
 	RefreshInfoOptions,
-	RemoveNodeReason,
 	ReplaceNodeOptions,
-	RFRegion,
 	RouteHealthCheckResult,
 	RouteHealthCheckSummary,
-	ScheduleEntryLockCC,
 	ScheduleEntryLockDailyRepeatingSchedule,
-	ScheduleEntryLockScheduleKind,
 	ScheduleEntryLockSlotId,
 	ScheduleEntryLockWeekDaySchedule,
 	ScheduleEntryLockYearDaySchedule,
-	SerialAPISetupCommand,
 	SetValueAPIOptions,
-	setValueFailed,
 	SetValueResult,
-	SetValueStatus,
-	setValueWasUnsupervisedOrSucceeded,
 	SmartStartProvisioningEntry,
 	TranslatedValueID,
-	UserCodeCC,
-	UserIDStatus,
 	ValueID,
 	ValueMetadata,
 	ValueType,
@@ -104,38 +84,61 @@ import {
 	PartialZWaveOptions,
 	InclusionUserCallbacks,
 	InclusionState,
-	ProvisioningEntryStatus,
-	AssociationCheckResult,
 	LinkReliabilityCheckResult,
 	JoinNetworkOptions,
-	JoinNetworkStrategy,
 	JoinNetworkResult,
+} from 'zwave-js'
+import {
+	OTWFirmwareUpdateStatus,
+	ControllerStatus,
+	Driver,
+	ExclusionStrategy,
+	FirmwareUpdateStatus,
+	guessFirmwareFileFormat,
+	InclusionStrategy,
+	InterviewStage,
+	libVersion,
+	MultilevelSwitchCommand,
+	NodeStatus,
+	QRCodeVersion,
+	RemoveNodeReason,
+	RFRegion,
+	ScheduleEntryLockCC,
+	ScheduleEntryLockScheduleKind,
+	SerialAPISetupCommand,
+	setValueFailed,
+	SetValueStatus,
+	setValueWasUnsupervisedOrSucceeded,
+	UserCodeCC,
+	UserIDStatus,
+	ProvisioningEntryStatus,
+	AssociationCheckResult,
+	JoinNetworkStrategy,
 	DriverMode,
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
-import store from '../config/store'
-import jsonStore from './jsonStore'
-import * as LogManager from './logger'
-import * as utils from './utils'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import store from '../config/store.ts'
+import jsonStore from './jsonStore.ts'
+import * as LogManager from './logger.ts'
+import * as utils from './utils.ts'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
-import { ensureDir, exists, mkdirp, writeFile } from 'fs-extra'
-import { Server as SocketServer } from 'socket.io'
-import { TypedEventEmitter } from './EventEmitter'
-import { GatewayValue } from './Gateway'
+import type { Server as SocketServer } from 'socket.io'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import type { GatewayValue } from './Gateway.ts'
 
-import { ConfigManager, DeviceConfig } from '@zwave-js/config'
-import { readFile } from 'fs/promises'
-import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager'
-import { socketEvents } from './SocketEvents'
-import { isUint8Array } from 'util/types'
-import { PkgFsBindings } from './PkgFsBindings'
-import { join } from 'path'
-import { regionSupportsAutoPowerlevel } from './shared'
-
-export const deviceConfigPriorityDir = join(storeDir, 'config')
+import type { DeviceConfig } from '@zwave-js/config'
+import { ConfigManager } from '@zwave-js/config'
+import { readFile, writeFile } from 'node:fs/promises'
+import backupManager, { NVM_BACKUP_PREFIX } from './BackupManager.ts'
+import { socketEvents } from './SocketEvents.ts'
+import { isUint8Array } from 'node:util/types'
+import { PkgFsBindings } from './PkgFsBindings.ts'
+import { regionSupportsAutoPowerlevel } from './shared.ts'
+import tripleBeam from 'triple-beam'
+import { deviceConfigPriorityDir } from './Constants.ts'
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -143,7 +146,7 @@ export const configManager = new ConfigManager({
 
 const logger = LogManager.module('Z-Wave')
 
-const loglevels = require('triple-beam').configs.npm.levels
+const loglevels = tripleBeam.configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
@@ -216,6 +219,10 @@ export const allowedApis = validateMethods([
 	'abortFirmwareUpdate',
 	'dumpNode',
 	'getAvailableFirmwareUpdates',
+	'getAllAvailableFirmwareUpdates',
+	'checkAllNodesFirmwareUpdates',
+	'dismissFirmwareUpdate',
+	'getNodeFirmwareUpdates',
 	'firmwareUpdateOTA',
 	'sendCommand',
 	'writeValue',
@@ -583,6 +590,9 @@ export type ZUINode = {
 	defaultVolume?: number
 	protocol?: Protocols
 	supportsLongRange?: boolean
+	availableFirmwareUpdates?: FirmwareUpdateInfo[]
+	firmwareUpdatesDismissed?: { [version: string]: boolean }
+	lastFirmwareUpdateCheck?: number
 }
 
 export type NodeEvent = {
@@ -724,6 +734,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
+	private firmwareUpdateCheckTimeout: NodeJS.Timeout
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -1167,6 +1178,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.updatesCheckTimeout) {
 			clearTimeout(this.updatesCheckTimeout)
 			this.updatesCheckTimeout = null
+		}
+
+		if (this.firmwareUpdateCheckTimeout) {
+			clearTimeout(this.firmwareUpdateCheckTimeout)
+			this.firmwareUpdateCheckTimeout = null
 		}
 
 		if (this.statelessTimeouts) {
@@ -2272,7 +2288,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// ensure deviceConfigPriorityDir exists to prevent warnings #2374
 		// lgtm [js/path-injection]
-		await ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
+		await utils.ensureDir(zwaveOptions.storage.deviceConfigPriorityDir)
 
 		// when not set let zwavejs handle this based on the environment
 		if (typeof this.cfg.enableSoftReset === 'boolean') {
@@ -3216,6 +3232,162 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		throw new DriverNotReadyError()
+	}
+
+	async getAllAvailableFirmwareUpdates(options?: GetFirmwareUpdatesOptions) {
+		if (this.driverReady) {
+			const result =
+				await this._driver.controller.getAllAvailableFirmwareUpdates(
+					options,
+				)
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Check firmware updates for all nodes and store results in nodes.json
+	 */
+	async checkAllNodesFirmwareUpdates(options?: GetFirmwareUpdatesOptions) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		logger.info('Starting bulk firmware update check for all nodes')
+
+		try {
+			const result =
+				await this._driver.controller.getAllAvailableFirmwareUpdates(
+					options,
+				)
+
+			if (result) {
+				const now = Date.now()
+
+				// Process results for each node
+				for (const [nodeId, nodeUpdates] of result) {
+					// Ensure store entry exists
+					if (!this.storeNodes[nodeId]) {
+						this.storeNodes[nodeId] = {} as any
+					}
+
+					// Filter out downgrades from nodeUpdates
+					const filteredUpdates = (nodeUpdates || []).filter(
+						(update) => !update.downgrade,
+					)
+
+					// Update stored firmware update info
+					this.storeNodes[nodeId].availableFirmwareUpdates =
+						filteredUpdates
+					this.storeNodes[nodeId].lastFirmwareUpdateCheck = now
+
+					// Clean up dismissed updates map to only contain elements that exist in available firmware updates
+					const existingDismissed =
+						this.storeNodes[nodeId].firmwareUpdatesDismissed || {}
+					const cleanedDismissed: { [version: string]: boolean } = {}
+
+					for (const update of filteredUpdates) {
+						if (existingDismissed[update.version]) {
+							cleanedDismissed[update.version] = true
+						}
+					}
+					this.storeNodes[nodeId].firmwareUpdatesDismissed =
+						cleanedDismissed
+
+					// Update in-memory node
+					const node = this._nodes.get(nodeId)
+					if (node) {
+						node.availableFirmwareUpdates = filteredUpdates
+						node.lastFirmwareUpdateCheck = now
+						node.firmwareUpdatesDismissed = cleanedDismissed
+
+						// Emit update to frontend
+						this.emitNodeUpdate(node, {
+							availableFirmwareUpdates:
+								node.availableFirmwareUpdates,
+							lastFirmwareUpdateCheck:
+								node.lastFirmwareUpdateCheck,
+							firmwareUpdatesDismissed:
+								node.firmwareUpdatesDismissed,
+						})
+					}
+
+					if (filteredUpdates && filteredUpdates.length > 0) {
+						logger.info(
+							`Found ${filteredUpdates.length} firmware update(s) for node ${nodeId}`,
+						)
+					}
+				}
+
+				// Save to nodes.json
+				await this.updateStoreNodes()
+			}
+
+			return result
+		} catch (error) {
+			logger.error(
+				'Error during bulk firmware update check:',
+				error.message,
+			)
+			throw error
+		}
+	}
+
+	/**
+	 * Dismiss firmware update for a specific node and version
+	 */
+	async dismissFirmwareUpdate(nodeId: number, version: string) {
+		// Ensure store entry exists
+		if (!this.storeNodes[nodeId]) {
+			this.storeNodes[nodeId] = {} as any
+		}
+
+		// Initialize dismissal tracking if not exists
+		if (!this.storeNodes[nodeId].firmwareUpdatesDismissed) {
+			this.storeNodes[nodeId].firmwareUpdatesDismissed = {}
+		}
+
+		// Mark version as dismissed
+		this.storeNodes[nodeId].firmwareUpdatesDismissed[version] = true
+
+		// Update in-memory node
+		const node = this._nodes.get(nodeId)
+		if (node) {
+			if (!node.firmwareUpdatesDismissed) {
+				node.firmwareUpdatesDismissed = {}
+			}
+			node.firmwareUpdatesDismissed[version] = true
+
+			// Emit update to frontend
+			this.emitNodeUpdate(node, {
+				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
+			})
+		}
+
+		// Save to nodes.json
+		await this.updateStoreNodes()
+		logger.info(`Dismissed firmware update ${version} for node ${nodeId}`)
+
+		return true
+	}
+
+	/**
+	 * Get available non-dismissed firmware updates for a node
+	 */
+	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfo[] {
+		const node = this._nodes.get(nodeId)
+		if (!node?.availableFirmwareUpdates) {
+			return []
+		}
+
+		// Filter out dismissed updates
+		return node.availableFirmwareUpdates.filter((update) => {
+			const dismissed =
+				node.firmwareUpdatesDismissed?.[update.version] || false
+			return !dismissed
+		})
 	}
 
 	async firmwareUpdateOTA(nodeId: number, updateInfo: FirmwareUpdateInfo) {
@@ -4542,6 +4714,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				/* ignore */
 			})
 
+			// Schedule periodic firmware update checks
+			this._scheduledFirmwareUpdateCheck().catch(() => {
+				/* ignore */
+			})
+
 			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
 				.on('exclusion started', this._onExclusionStarted.bind(this))
@@ -4930,6 +5107,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'node added',
 			this.zwaveNodeToJSON(zwaveNode),
 		)
+
+		// Check for firmware updates after a device is added
+		this.checkAllNodesFirmwareUpdates().catch((error) => {
+			logger.warn(
+				`Firmware update check after node added failed: ${error.message}`,
+			)
+		})
 	}
 
 	/**
@@ -5108,7 +5292,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		const fileName = `${NVM_BACKUP_PREFIX}${utils.fileDate()}${event}`
 
-		await mkdirp(nvmBackupsDir)
+		await utils.ensureDir(nvmBackupsDir)
 
 		await writeFile(utils.joinPath(nvmBackupsDir, fileName + '.bin'), data)
 
@@ -6143,6 +6327,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			customSUCReturnRoutes:
 				this._driver.controller.getCustomSUCReturnRoutesCached(nodeId),
 			applicationRoute: null,
+			availableFirmwareUpdates:
+				this.storeNodes[nodeId]?.availableFirmwareUpdates || [],
+			firmwareUpdatesDismissed:
+				this.storeNodes[nodeId]?.firmwareUpdatesDismissed || {},
+			lastFirmwareUpdateCheck:
+				this.storeNodes[nodeId]?.lastFirmwareUpdateCheck || 0,
 		}
 
 		this._nodes.set(nodeId, node)
@@ -6830,6 +7020,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		)
 	}
 
+	private async _scheduledFirmwareUpdateCheck() {
+		try {
+			await this.checkAllNodesFirmwareUpdates()
+		} catch (error) {
+			logger.warn(
+				`Scheduled firmware update check has failed: ${error.message}`,
+			)
+		}
+
+		// Schedule next check for a random delay between 23 and 25 hours to avoid thundering herd problem
+		const minHours = 23
+		const maxHours = 25
+		const randomHours = minHours + Math.random() * (maxHours - minHours)
+		const waitMillis = randomHours * 60 * 60 * 1000
+
+		const nextCheckTime = new Date(Date.now() + waitMillis)
+		logger.info(
+			`Next firmware update check scheduled for: ${nextCheckTime}`,
+		)
+
+		this.firmwareUpdateCheckTimeout = setTimeout(
+			this._scheduledFirmwareUpdateCheck.bind(this),
+			waitMillis,
+		)
+	}
+
 	/**
 	 * Try to poll a value, don't throw. Used in the setTimeout
 	 *
@@ -6853,7 +7069,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private async loadFakeNodes() {
 		const filePath = utils.joinPath(true, 'fakeNodes.json')
 		// load fake nodes from `fakeNodes.json` for testing
-		if (await exists(filePath)) {
+		if (await utils.pathExists(filePath)) {
 			const fakeNodes = JSON.parse(await readFile(filePath, 'utf-8'))
 			for (const node of fakeNodes) {
 				// convert valueIds array to map

@@ -2,6 +2,7 @@
 	<FirmwareUpdates
 		:node="node"
 		:socket="socket"
+		:dialog-mode="dialogMode"
 		:hide-targets="true"
 		:hide-downgrades="true"
 		@update-firmware="updateFirmware"
@@ -28,7 +29,12 @@ export default {
 			type: Object,
 			required: true,
 		},
+		dialogMode: {
+			type: Boolean,
+			default: false,
+		},
 	},
+	emits: ['close-dialog'],
 	data() {
 		return {
 			showDowngrades: undefined,
@@ -54,6 +60,11 @@ export default {
 					},
 				)
 			) {
+				// Close the dialog before starting the update
+				if (this.dialogMode) {
+					this.$emit('close-dialog')
+				}
+
 				const response = await this.app.apiRequest(
 					'firmwareUpdateOTW',
 					[update],
