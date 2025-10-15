@@ -1,9 +1,10 @@
 <template>
 	<v-container grid-list-md>
-		<v-row class="ml-5">
+		<v-row :class="dialogMode ? '' : 'ml-5'">
 			<v-col v-show="!node.firmwareUpdate" cols="12">
 				<v-row justify="center" class="mb-2 text-center">
 					<v-btn
+						v-if="!dialogMode"
 						:disabled="loading"
 						variant="outlined"
 						class="my-auto"
@@ -16,7 +17,7 @@
 						hide-details
 						density="compact"
 						label="Include pre-releases"
-						class="ml-2 my-auto"
+						:class="dialogMode ? 'my-auto' : 'ml-2 my-auto'"
 					>
 					</v-checkbox>
 					<v-checkbox
@@ -55,8 +56,8 @@
 			<template v-if="filteredUpdates.length > 0 && !node.firmwareUpdate">
 				<v-col
 					cols="12"
-					sm="6"
-					md="4"
+					:sm="dialogMode ? '12' : '6'"
+					:md="dialogMode ? '6' : '4'"
 					v-for="u in filteredUpdates"
 					:key="u.version"
 				>
@@ -187,6 +188,10 @@ export default {
 			default: false,
 		},
 		hideTargets: {
+			type: Boolean,
+			default: false,
+		},
+		dialogMode: {
 			type: Boolean,
 			default: false,
 		},

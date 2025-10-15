@@ -219,6 +219,10 @@ export const allowedApis = validateMethods([
 	'abortFirmwareUpdate',
 	'dumpNode',
 	'getAvailableFirmwareUpdates',
+	'getAllAvailableFirmwareUpdates',
+	'checkAllNodesFirmwareUpdates',
+	'dismissFirmwareUpdate',
+	'getNodeFirmwareUpdates',
 	'firmwareUpdateOTA',
 	'sendCommand',
 	'writeValue',
@@ -586,6 +590,9 @@ export type ZUINode = {
 	defaultVolume?: number
 	protocol?: Protocols
 	supportsLongRange?: boolean
+	availableFirmwareUpdates?: FirmwareUpdateInfo[]
+	firmwareUpdatesDismissed?: { [version: string]: boolean }
+	lastFirmwareUpdateCheck?: number
 }
 
 export type NodeEvent = {
@@ -727,6 +734,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private commandsTimeout: NodeJS.Timeout
 	private healTimeout: NodeJS.Timeout
 	private updatesCheckTimeout: NodeJS.Timeout
+	private firmwareUpdateCheckTimeout: NodeJS.Timeout
 	private pollIntervals: Record<string, NodeJS.Timeout>
 
 	private _lockNeighborsRefresh: boolean
@@ -1170,6 +1178,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		if (this.updatesCheckTimeout) {
 			clearTimeout(this.updatesCheckTimeout)
 			this.updatesCheckTimeout = null
+		}
+
+		if (this.firmwareUpdateCheckTimeout) {
+			clearTimeout(this.firmwareUpdateCheckTimeout)
+			this.firmwareUpdateCheckTimeout = null
 		}
 
 		if (this.statelessTimeouts) {
@@ -3221,6 +3234,162 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		throw new DriverNotReadyError()
 	}
 
+	async getAllAvailableFirmwareUpdates(options?: GetFirmwareUpdatesOptions) {
+		if (this.driverReady) {
+			const result =
+				await this._driver.controller.getAllAvailableFirmwareUpdates(
+					options,
+				)
+
+			return result
+		}
+
+		throw new DriverNotReadyError()
+	}
+
+	/**
+	 * Check firmware updates for all nodes and store results in nodes.json
+	 */
+	async checkAllNodesFirmwareUpdates(options?: GetFirmwareUpdatesOptions) {
+		if (!this.driverReady) {
+			throw new DriverNotReadyError()
+		}
+
+		logger.info('Starting bulk firmware update check for all nodes')
+
+		try {
+			const result =
+				await this._driver.controller.getAllAvailableFirmwareUpdates(
+					options,
+				)
+
+			if (result) {
+				const now = Date.now()
+
+				// Process results for each node
+				for (const [nodeId, nodeUpdates] of result) {
+					// Ensure store entry exists
+					if (!this.storeNodes[nodeId]) {
+						this.storeNodes[nodeId] = {} as any
+					}
+
+					// Filter out downgrades from nodeUpdates
+					const filteredUpdates = (nodeUpdates || []).filter(
+						(update) => !update.downgrade,
+					)
+
+					// Update stored firmware update info
+					this.storeNodes[nodeId].availableFirmwareUpdates =
+						filteredUpdates
+					this.storeNodes[nodeId].lastFirmwareUpdateCheck = now
+
+					// Clean up dismissed updates map to only contain elements that exist in available firmware updates
+					const existingDismissed =
+						this.storeNodes[nodeId].firmwareUpdatesDismissed || {}
+					const cleanedDismissed: { [version: string]: boolean } = {}
+
+					for (const update of filteredUpdates) {
+						if (existingDismissed[update.version]) {
+							cleanedDismissed[update.version] = true
+						}
+					}
+					this.storeNodes[nodeId].firmwareUpdatesDismissed =
+						cleanedDismissed
+
+					// Update in-memory node
+					const node = this._nodes.get(nodeId)
+					if (node) {
+						node.availableFirmwareUpdates = filteredUpdates
+						node.lastFirmwareUpdateCheck = now
+						node.firmwareUpdatesDismissed = cleanedDismissed
+
+						// Emit update to frontend
+						this.emitNodeUpdate(node, {
+							availableFirmwareUpdates:
+								node.availableFirmwareUpdates,
+							lastFirmwareUpdateCheck:
+								node.lastFirmwareUpdateCheck,
+							firmwareUpdatesDismissed:
+								node.firmwareUpdatesDismissed,
+						})
+					}
+
+					if (filteredUpdates && filteredUpdates.length > 0) {
+						logger.info(
+							`Found ${filteredUpdates.length} firmware update(s) for node ${nodeId}`,
+						)
+					}
+				}
+
+				// Save to nodes.json
+				await this.updateStoreNodes()
+			}
+
+			return result
+		} catch (error) {
+			logger.error(
+				'Error during bulk firmware update check:',
+				error.message,
+			)
+			throw error
+		}
+	}
+
+	/**
+	 * Dismiss firmware update for a specific node and version
+	 */
+	async dismissFirmwareUpdate(nodeId: number, version: string) {
+		// Ensure store entry exists
+		if (!this.storeNodes[nodeId]) {
+			this.storeNodes[nodeId] = {} as any
+		}
+
+		// Initialize dismissal tracking if not exists
+		if (!this.storeNodes[nodeId].firmwareUpdatesDismissed) {
+			this.storeNodes[nodeId].firmwareUpdatesDismissed = {}
+		}
+
+		// Mark version as dismissed
+		this.storeNodes[nodeId].firmwareUpdatesDismissed[version] = true
+
+		// Update in-memory node
+		const node = this._nodes.get(nodeId)
+		if (node) {
+			if (!node.firmwareUpdatesDismissed) {
+				node.firmwareUpdatesDismissed = {}
+			}
+			node.firmwareUpdatesDismissed[version] = true
+
+			// Emit update to frontend
+			this.emitNodeUpdate(node, {
+				firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
+			})
+		}
+
+		// Save to nodes.json
+		await this.updateStoreNodes()
+		logger.info(`Dismissed firmware update ${version} for node ${nodeId}`)
+
+		return true
+	}
+
+	/**
+	 * Get available non-dismissed firmware updates for a node
+	 */
+	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfo[] {
+		const node = this._nodes.get(nodeId)
+		if (!node?.availableFirmwareUpdates) {
+			return []
+		}
+
+		// Filter out dismissed updates
+		return node.availableFirmwareUpdates.filter((update) => {
+			const dismissed =
+				node.firmwareUpdatesDismissed?.[update.version] || false
+			return !dismissed
+		})
+	}
+
 	async firmwareUpdateOTA(nodeId: number, updateInfo: FirmwareUpdateInfo) {
 		if (this.driverReady) {
 			const node = this._nodes.get(nodeId)
@@ -4545,6 +4714,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				/* ignore */
 			})
 
+			// Schedule periodic firmware update checks
+			this._scheduledFirmwareUpdateCheck().catch(() => {
+				/* ignore */
+			})
+
 			this.driver.controller
 				.on('inclusion started', this._onInclusionStarted.bind(this))
 				.on('exclusion started', this._onExclusionStarted.bind(this))
@@ -4933,6 +5107,13 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'node added',
 			this.zwaveNodeToJSON(zwaveNode),
 		)
+
+		// Check for firmware updates after a device is added
+		this.checkAllNodesFirmwareUpdates().catch((error) => {
+			logger.warn(
+				`Firmware update check after node added failed: ${error.message}`,
+			)
+		})
 	}
 
 	/**
@@ -6146,6 +6327,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			customSUCReturnRoutes:
 				this._driver.controller.getCustomSUCReturnRoutesCached(nodeId),
 			applicationRoute: null,
+			availableFirmwareUpdates:
+				this.storeNodes[nodeId]?.availableFirmwareUpdates || [],
+			firmwareUpdatesDismissed:
+				this.storeNodes[nodeId]?.firmwareUpdatesDismissed || {},
+			lastFirmwareUpdateCheck:
+				this.storeNodes[nodeId]?.lastFirmwareUpdateCheck || 0,
 		}
 
 		this._nodes.set(nodeId, node)
@@ -6830,6 +7017,32 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.updatesCheckTimeout = setTimeout(
 			this._scheduledConfigCheck.bind(this),
 			waitMillis > 0 ? waitMillis : 1000,
+		)
+	}
+
+	private async _scheduledFirmwareUpdateCheck() {
+		try {
+			await this.checkAllNodesFirmwareUpdates()
+		} catch (error) {
+			logger.warn(
+				`Scheduled firmware update check has failed: ${error.message}`,
+			)
+		}
+
+		// Schedule next check for a random delay between 23 and 25 hours to avoid thundering herd problem
+		const minHours = 23
+		const maxHours = 25
+		const randomHours = minHours + Math.random() * (maxHours - minHours)
+		const waitMillis = randomHours * 60 * 60 * 1000
+
+		const nextCheckTime = new Date(Date.now() + waitMillis)
+		logger.info(
+			`Next firmware update check scheduled for: ${nextCheckTime}`,
+		)
+
+		this.firmwareUpdateCheckTimeout = setTimeout(
+			this._scheduledFirmwareUpdateCheck.bind(this),
+			waitMillis,
 		)
 	}
 
