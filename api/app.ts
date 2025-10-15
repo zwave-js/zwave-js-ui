@@ -372,6 +372,25 @@ async function loadCertKey(): Promise<{
 	return { cert, key }
 }
 
+/**
+ * Convert scales configuration to preferences format
+ * This matches the conversion in ZwaveClient.connect()
+ */
+function convertScalesToPreferences(scales: SensorTypeScale[] | undefined) {
+	if (!scales || scales.length === 0) {
+		return undefined
+	}
+
+	const scalesRecord: Record<string | number, string | number> = {}
+	for (const s of scales) {
+		scalesRecord[s.key] = s.label
+	}
+
+	return {
+		scales: scalesRecord,
+	}
+}
+
 function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
 	loggers.setupAll(settings ? settings.gateway : null)
 }
@@ -1161,21 +1180,19 @@ app.post(
 
 				// Check if Z-Wave settings changed
 				if (!utils.deepEqual(actualSettings.zwave, settings.zwave)) {
-					// Determine which Z-Wave options changed
-					const editableZWaveProps = [
-						'attempts',
+					// Only these Z-Wave options can be updated without restart
+					// These match the user-configurable settings in our UI
+					const editableZWaveSettings = [
 						'disableOptimisticValueUpdate',
-						'emitValueUpdateAfterSetValue',
-						'inclusionUserCallbacks',
-						'joinNetworkUserCallbacks',
-						'interview',
-						'logConfig',
-						'preferences',
-						'vendor',
-						'userAgent',
+						'scales', // maps to preferences.scales
+						'logEnabled',
+						'logLevel',
+						'logToFile',
+						'maxFiles',
+						'nodeFilter',
 					]
 
-					// Find which Z-Wave properties actually changed
+					// Find which Z-Wave settings actually changed
 					const changedZwaveKeys = Object.keys(
 						settings.zwave || {},
 					).filter((key) => {
@@ -1187,7 +1204,7 @@ app.post(
 
 					// Check if only editable options changed
 					const onlyEditableChanged = changedZwaveKeys.every((key) =>
-						editableZWaveProps.includes(key),
+						editableZWaveSettings.includes(key),
 					)
 
 					if (
@@ -1227,30 +1244,86 @@ app.post(
 				) {
 					try {
 						// Build editable options object with only changed properties
+						// Map our settings to PartialZWaveOptions format
 						const editableOptions: any = {}
-						const editableZWaveProps = [
-							'attempts',
-							'disableOptimisticValueUpdate',
-							'emitValueUpdateAfterSetValue',
-							'inclusionUserCallbacks',
-							'joinNetworkUserCallbacks',
-							'interview',
-							'logConfig',
-							'preferences',
-							'vendor',
-							'userAgent',
-						]
 
-						// Only include properties that actually changed
-						for (const key of editableZWaveProps) {
-							if (
-								!utils.deepEqual(
-									actualSettings.zwave?.[key],
-									settings.zwave?.[key],
-								) &&
-								settings.zwave?.[key] !== undefined
-							) {
-								editableOptions[key] = settings.zwave[key]
+						// Check disableOptimisticValueUpdate
+						if (
+							!utils.deepEqual(
+								actualSettings.zwave
+									?.disableOptimisticValueUpdate,
+								settings.zwave?.disableOptimisticValueUpdate,
+							) &&
+							settings.zwave?.disableOptimisticValueUpdate !==
+								undefined
+						) {
+							editableOptions.disableOptimisticValueUpdate =
+								settings.zwave.disableOptimisticValueUpdate
+						}
+
+						// Check scales (maps to preferences.scales)
+						if (
+							!utils.deepEqual(
+								actualSettings.zwave?.scales,
+								settings.zwave?.scales,
+							)
+						) {
+							const preferences = convertScalesToPreferences(
+								settings.zwave?.scales,
+							)
+							if (preferences) {
+								editableOptions.preferences = preferences
+							}
+						}
+
+						// Check logConfig properties
+						const logConfigChanged =
+							!utils.deepEqual(
+								actualSettings.zwave?.logEnabled,
+								settings.zwave?.logEnabled,
+							) ||
+							!utils.deepEqual(
+								actualSettings.zwave?.logLevel,
+								settings.zwave?.logLevel,
+							) ||
+							!utils.deepEqual(
+								actualSettings.zwave?.logToFile,
+								settings.zwave?.logToFile,
+							) ||
+							!utils.deepEqual(
+								actualSettings.zwave?.maxFiles,
+								settings.zwave?.maxFiles,
+							) ||
+							!utils.deepEqual(
+								actualSettings.zwave?.nodeFilter,
+								settings.zwave?.nodeFilter,
+							)
+
+						if (logConfigChanged) {
+							// Build logConfig object from our settings
+							const loglevels: Record<string, any> = {
+								error: 'error',
+								warn: 'warn',
+								info: 'info',
+								verbose: 'verbose',
+								debug: 'debug',
+								silly: 'silly',
+							}
+
+							editableOptions.logConfig = {
+								enabled: settings.zwave?.logEnabled,
+								level: settings.zwave?.logLevel
+									? loglevels[settings.zwave.logLevel]
+									: 'info',
+								logToFile: settings.zwave?.logToFile,
+								maxFiles: settings.zwave?.maxFiles || 7,
+								nodeFilter:
+									settings.zwave?.nodeFilter &&
+									settings.zwave.nodeFilter.length > 0
+										? settings.zwave.nodeFilter.map(
+												(n: string) => parseInt(n),
+											)
+										: undefined,
 							}
 						}
 
