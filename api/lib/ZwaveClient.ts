@@ -7036,7 +7036,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		const waitMillis = randomHours * 60 * 60 * 1000
 
 		const nextCheckTime = new Date(Date.now() + waitMillis)
-		logger.info(`Next firmware update check scheduled for: ${nextCheckTime}`)
+		logger.info(
+			`Next firmware update check scheduled for: ${nextCheckTime}`,
+		)
 
 		this.firmwareUpdateCheckTimeout = setTimeout(
 			this._scheduledFirmwareUpdateCheck.bind(this),
