@@ -1,7 +1,7 @@
 // List of Home-Assistant configuration for MQTT Discovery
 // https://www.home-assistant.io/docs/mqtt/discovery/
 
-import { HassDevice } from '../lib/ZwaveClient'
+import type { HassDevice } from '../lib/ZwaveClient.ts'
 
 type HassDeviceKey =
 	| 'binary_sensor'

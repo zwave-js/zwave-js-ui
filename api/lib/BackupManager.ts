@@ -1,11 +1,11 @@
-import store from '../config/store'
-import { module } from './logger'
-import jsonStore, { STORE_BACKUP_PREFIX } from './jsonStore'
+import store from '../config/store.ts'
+import { module } from './logger.ts'
+import jsonStore, { STORE_BACKUP_PREFIX } from './jsonStore.ts'
 import Cron from 'croner'
-import { readdir, unlink } from 'fs/promises'
-import { nvmBackupsDir, storeBackupsDir } from '../config/app'
-import { joinPath } from './utils'
-import type ZwaveClient from './ZwaveClient'
+import { readdir, unlink } from 'node:fs/promises'
+import { nvmBackupsDir, storeBackupsDir } from '../config/app.ts'
+import { joinPath } from './utils.ts'
+import type ZwaveClient from './ZwaveClient.ts'
 
 export const NVM_BACKUP_PREFIX = 'NVM_'
 
