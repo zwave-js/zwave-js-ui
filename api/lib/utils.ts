@@ -472,3 +472,61 @@ export async function pathExists(path: string): Promise<boolean> {
 		return false
 	}
 }
+
+export type SensorTypeScale = {
+	key: string | number
+	sensor: string
+	label: string
+	unit?: string
+	description?: string
+}
+
+/**
+ * Convert scales configuration to preferences format for Z-Wave driver options
+ * This converts the array format used in our settings to the Record format expected by the driver
+ * @param scales Array of scale configurations
+ * @returns Preferences object with scales Record, or undefined if no scales provided
+ */
+export function convertScalesToPreferences(
+	scales: SensorTypeScale[] | undefined,
+) {
+	if (!scales || scales.length === 0) {
+		return undefined
+	}
+
+	const scalesRecord: Record<string | number, string | number> = {}
+	for (const s of scales) {
+		scalesRecord[s.key] = s.label
+	}
+
+	return {
+		scales: scalesRecord,
+	}
+}
+
+/**
+ * Build logConfig object for Z-Wave driver options from individual log settings
+ * @param config Object containing log configuration properties
+ * @returns Partial logConfig object for driver options
+ */
+export function buildLogConfig(config: {
+	logEnabled?: boolean
+	logLevel?: string
+	logToFile?: boolean
+	maxFiles?: number
+	nodeFilter?: string[]
+}) {
+	const tripleBeam = require('triple-beam')
+	const loglevels = tripleBeam.configs.npm.levels
+
+	return {
+		enabled: config.logEnabled,
+		level: config.logLevel ? loglevels[config.logLevel] : 'info',
+		logToFile: config.logToFile,
+		maxFiles: config.maxFiles || 7,
+		nodeFilter:
+			config.nodeFilter && config.nodeFilter.length > 0
+				? config.nodeFilter.map((n: string) => parseInt(n))
+				: undefined,
+	}
+}

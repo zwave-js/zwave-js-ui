@@ -12,7 +12,7 @@ import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
-import type { CallAPIResult, SensorTypeScale } from './lib/ZwaveClient.ts'
+import type { CallAPIResult } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
@@ -370,25 +370,6 @@ async function loadCertKey(): Promise<{
 	}
 
 	return { cert, key }
-}
-
-/**
- * Convert scales configuration to preferences format
- * This matches the conversion in ZwaveClient.connect()
- */
-function convertScalesToPreferences(scales: SensorTypeScale[] | undefined) {
-	if (!scales || scales.length === 0) {
-		return undefined
-	}
-
-	const scalesRecord: Record<string | number, string | number> = {}
-	for (const s of scales) {
-		scalesRecord[s.key] = s.label
-	}
-
-	return {
-		scales: scalesRecord,
-	}
 }
 
 function setupLogging(settings: { gateway: utils.DeepPartial<GatewayConfig> }) {
@@ -1084,7 +1065,7 @@ app.get(
 		const allSensors = getAllSensors()
 		const namedScaleGroups = getAllNamedScaleGroups()
 
-		const scales: SensorTypeScale[] = []
+		const scales: utils.SensorTypeScale[] = []
 
 		for (const group of namedScaleGroups) {
 			for (const scale of Object.values(group.scales)) {
@@ -1268,9 +1249,10 @@ app.post(
 								settings.zwave?.scales,
 							)
 						) {
-							const preferences = convertScalesToPreferences(
-								settings.zwave?.scales,
-							)
+							const preferences =
+								utils.convertScalesToPreferences(
+									settings.zwave?.scales,
+								)
 							if (preferences) {
 								editableOptions.preferences = preferences
 							}
@@ -1301,30 +1283,13 @@ app.post(
 
 						if (logConfigChanged) {
 							// Build logConfig object from our settings
-							const loglevels: Record<string, any> = {
-								error: 'error',
-								warn: 'warn',
-								info: 'info',
-								verbose: 'verbose',
-								debug: 'debug',
-								silly: 'silly',
-							}
-
-							editableOptions.logConfig = {
-								enabled: settings.zwave?.logEnabled,
-								level: settings.zwave?.logLevel
-									? loglevels[settings.zwave.logLevel]
-									: 'info',
+							editableOptions.logConfig = utils.buildLogConfig({
+								logEnabled: settings.zwave?.logEnabled,
+								logLevel: settings.zwave?.logLevel,
 								logToFile: settings.zwave?.logToFile,
-								maxFiles: settings.zwave?.maxFiles || 7,
-								nodeFilter:
-									settings.zwave?.nodeFilter &&
-									settings.zwave.nodeFilter.length > 0
-										? settings.zwave.nodeFilter.map(
-												(n: string) => parseInt(n),
-											)
-										: undefined,
-							}
+								maxFiles: settings.zwave?.maxFiles,
+								nodeFilter: settings.zwave?.nodeFilter,
+							})
 						}
 
 						if (Object.keys(editableOptions).length > 0) {
