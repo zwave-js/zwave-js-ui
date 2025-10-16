@@ -2706,11 +2706,7 @@ export default {
 						)
 
 						// If user confirmed restart
-						if (
-							restartConfirm &&
-							Object.keys(restartConfirm).length > 0 &&
-							restartConfirm.restart
-						) {
+						if (restartConfirm?.restart) {
 							try {
 								this.saving = true
 								const restartData =
