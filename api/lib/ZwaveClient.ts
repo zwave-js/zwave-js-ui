@@ -3669,6 +3669,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.sendToSocket(socketEvents.rebuildRoutesProgress, [
 				[nodeId, status],
 			])
+
+			// Refresh priority and custom SUC return routes after rebuild completes
+			// as they may have been deleted during the rebuild process
+			this.getCustomSUCReturnRoute(nodeId)
+			this.getPrioritySUCReturnRoute(nodeId)
+
 			return result
 		}
 
