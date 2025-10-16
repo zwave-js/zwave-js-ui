@@ -7,6 +7,10 @@ import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
 import { mkdir, access } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import { logsDir } from '../config/app.ts'
+import tripleBeam from 'triple-beam'
+
+const loglevels = tripleBeam.configs.npm.levels
 
 // don't use import here, it will break the build
 const require = createRequire(import.meta.url)
@@ -519,12 +523,7 @@ export function buildLogConfig(
 		maxFiles?: number
 		nodeFilter?: string[]
 	}>,
-	filename?: string,
-	forceConsole?: boolean,
-) {
-	const tripleBeam = require('triple-beam')
-	const loglevels = tripleBeam.configs.npm.levels
-
+): PartialZWaveOptions['logConfig'] {
 	return {
 		enabled: config.logEnabled,
 		level: config.logLevel ? loglevels[config.logLevel] : 'info',
@@ -534,7 +533,7 @@ export function buildLogConfig(
 			config.nodeFilter && config.nodeFilter.length > 0
 				? config.nodeFilter.map((n: string) => parseInt(n))
 				: undefined,
-		...(filename !== undefined && { filename }),
-		...(forceConsole !== undefined && { forceConsole }),
+		filename: joinPath(logsDir, 'zwavejs_%DATE%.log'),
+		forceConsole: isDocker() ? !this.cfg.logToFile : false,
 	}
 }

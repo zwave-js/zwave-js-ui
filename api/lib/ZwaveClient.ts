@@ -342,8 +342,6 @@ export type SensorTypeScale = {
 
 export type AllowedApis = (typeof allowedApis)[number]
 
-const ZWAVEJS_LOG_FILE = utils.joinPath(logsDir, 'zwavejs_%DATE%.log')
-
 export type ZUIValueIdState = {
 	text: string
 	value: number | string | boolean
@@ -2179,14 +2177,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				deviceConfigPriorityDir:
 					this.cfg.deviceConfigPriorityDir || deviceConfigPriorityDir,
 			},
-			logConfig: {
-				// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-				...utils.buildLogConfig(
-					this.cfg,
-					ZWAVEJS_LOG_FILE,
-					isDocker() ? !this.cfg.logToFile : false,
-				),
-			},
+			// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
+			logConfig: utils.buildLogConfig(this.cfg),
 			emitValueUpdateAfterSetValue: true,
 			apiKeys: {
 				firmwareUpdateService:
