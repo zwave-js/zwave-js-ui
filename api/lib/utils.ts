@@ -503,13 +503,7 @@ export function buildPreferences(
  * Build logConfig object for Z-Wave driver options from Z-Wave configuration
  */
 export function buildLogConfig(
-	config: DeepPartial<{
-		logEnabled?: boolean
-		logLevel?: string
-		logToFile?: boolean
-		maxFiles?: number
-		nodeFilter?: string[]
-	}>,
+	config: ZwaveConfig,
 ): PartialZWaveOptions['logConfig'] {
 	return {
 		enabled: config.logEnabled,
