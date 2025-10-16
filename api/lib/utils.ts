@@ -505,17 +505,23 @@ export function convertScalesToPreferences(
 }
 
 /**
- * Build logConfig object for Z-Wave driver options from individual log settings
- * @param config Object containing log configuration properties
+ * Build logConfig object for Z-Wave driver options from Z-Wave configuration
+ * @param config Z-Wave configuration object
+ * @param filename Optional log filename (for ZwaveClient usage)
+ * @param forceConsole Optional flag to force console output (for ZwaveClient usage)
  * @returns Partial logConfig object for driver options
  */
-export function buildLogConfig(config: {
-	logEnabled?: boolean
-	logLevel?: string
-	logToFile?: boolean
-	maxFiles?: number
-	nodeFilter?: string[]
-}) {
+export function buildLogConfig(
+	config: DeepPartial<{
+		logEnabled?: boolean
+		logLevel?: string
+		logToFile?: boolean
+		maxFiles?: number
+		nodeFilter?: string[]
+	}>,
+	filename?: string,
+	forceConsole?: boolean,
+) {
 	const tripleBeam = require('triple-beam')
 	const loglevels = tripleBeam.configs.npm.levels
 
@@ -528,5 +534,7 @@ export function buildLogConfig(config: {
 			config.nodeFilter && config.nodeFilter.length > 0
 				? config.nodeFilter.map((n: string) => parseInt(n))
 				: undefined,
+		...(filename !== undefined && { filename }),
+		...(forceConsole !== undefined && { forceConsole }),
 	}
 }

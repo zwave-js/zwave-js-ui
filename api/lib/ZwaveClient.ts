@@ -2181,15 +2181,11 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			},
 			logConfig: {
 				// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-				...utils.buildLogConfig({
-					logEnabled: this.cfg.logEnabled,
-					logLevel: this.cfg.logLevel,
-					logToFile: this.cfg.logToFile,
-					maxFiles: this.cfg.maxFiles,
-					nodeFilter: this.cfg.nodeFilter,
-				}),
-				filename: ZWAVEJS_LOG_FILE,
-				forceConsole: isDocker() ? !this.cfg.logToFile : false,
+				...utils.buildLogConfig(
+					this.cfg,
+					ZWAVEJS_LOG_FILE,
+					isDocker() ? !this.cfg.logToFile : false,
+				),
 			},
 			emitValueUpdateAfterSetValue: true,
 			apiKeys: {

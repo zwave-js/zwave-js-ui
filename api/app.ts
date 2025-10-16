@@ -1283,13 +1283,9 @@ app.post(
 
 						if (logConfigChanged) {
 							// Build logConfig object from our settings
-							editableOptions.logConfig = utils.buildLogConfig({
-								logEnabled: settings.zwave?.logEnabled,
-								logLevel: settings.zwave?.logLevel,
-								logToFile: settings.zwave?.logToFile,
-								maxFiles: settings.zwave?.maxFiles,
-								nodeFilter: settings.zwave?.nodeFilter,
-							})
+							editableOptions.logConfig = utils.buildLogConfig(
+								settings.zwave || {},
+							)
 						}
 
 						if (Object.keys(editableOptions).length > 0) {
