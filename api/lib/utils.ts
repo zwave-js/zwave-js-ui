@@ -488,8 +488,6 @@ export type SensorTypeScale = {
 /**
  * Convert scales configuration to preferences format for Z-Wave driver options
  * This converts the array format used in our settings to the Record format expected by the driver
- * @param scales Array of scale configurations
- * @returns Preferences object with scales Record, or undefined if no scales provided
  */
 export function convertScalesToPreferences(
 	scales: SensorTypeScale[] | undefined,
@@ -510,10 +508,6 @@ export function convertScalesToPreferences(
 
 /**
  * Build logConfig object for Z-Wave driver options from Z-Wave configuration
- * @param config Z-Wave configuration object
- * @param filename Optional log filename (for ZwaveClient usage)
- * @param forceConsole Optional flag to force console output (for ZwaveClient usage)
- * @returns Partial logConfig object for driver options
  */
 export function buildLogConfig(
 	config: DeepPartial<{
