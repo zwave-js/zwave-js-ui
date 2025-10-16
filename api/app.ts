@@ -12,7 +12,7 @@ import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
-import type { CallAPIResult } from './lib/ZwaveClient.ts'
+import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
 import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
@@ -1065,7 +1065,7 @@ app.get(
 		const allSensors = getAllSensors()
 		const namedScaleGroups = getAllNamedScaleGroups()
 
-		const scales: utils.SensorTypeScale[] = []
+		const scales: ZwaveConfig['scales'] = []
 
 		for (const group of namedScaleGroups) {
 			for (const scale of Object.values(group.scales)) {
@@ -1159,13 +1159,17 @@ app.post(
 					shouldRestart = true
 				}
 
+				let changedZwaveKeys: string[] = []
+
 				// Check if Z-Wave settings changed
 				if (!utils.deepEqual(actualSettings.zwave, settings.zwave)) {
 					// Only these Z-Wave options can be updated without restart
 					// These match the user-configurable settings in our UI
 					const editableZWaveSettings = [
 						'disableOptimisticValueUpdate',
-						'scales', // maps to preferences.scales
+						// preferences
+						'scales',
+						// logConfig
 						'logEnabled',
 						'logLevel',
 						'logToFile',
@@ -1174,14 +1178,14 @@ app.post(
 					]
 
 					// Find which Z-Wave settings actually changed
-					const changedZwaveKeys = Object.keys(
-						settings.zwave || {},
-					).filter((key) => {
-						return !utils.deepEqual(
-							actualSettings.zwave?.[key],
-							settings.zwave?.[key],
-						)
-					})
+					changedZwaveKeys = Object.keys(settings.zwave || {}).filter(
+						(key) => {
+							return !utils.deepEqual(
+								actualSettings.zwave?.[key],
+								settings.zwave?.[key],
+							)
+						},
+					)
 
 					// Check if only editable options changed
 					const onlyEditableChanged = changedZwaveKeys.every((key) =>
@@ -1230,10 +1234,8 @@ app.post(
 
 						// Check disableOptimisticValueUpdate
 						if (
-							!utils.deepEqual(
-								actualSettings.zwave
-									?.disableOptimisticValueUpdate,
-								settings.zwave?.disableOptimisticValueUpdate,
+							changedZwaveKeys.includes(
+								'disableOptimisticValueUpdate',
 							) &&
 							settings.zwave?.disableOptimisticValueUpdate !==
 								undefined
@@ -1244,10 +1246,8 @@ app.post(
 
 						// Check scales (maps to preferences.scales)
 						if (
-							!utils.deepEqual(
-								actualSettings.zwave?.scales,
-								settings.zwave?.scales,
-							)
+							changedZwaveKeys.includes('scales') &&
+							settings.zwave?.scales !== undefined
 						) {
 							const preferences = utils.buildPreferences(
 								settings.zwave || {},
@@ -1259,26 +1259,18 @@ app.post(
 
 						// Check logConfig properties
 						const logConfigChanged =
-							!utils.deepEqual(
-								actualSettings.zwave?.logEnabled,
-								settings.zwave?.logEnabled,
-							) ||
-							!utils.deepEqual(
-								actualSettings.zwave?.logLevel,
-								settings.zwave?.logLevel,
-							) ||
-							!utils.deepEqual(
-								actualSettings.zwave?.logToFile,
-								settings.zwave?.logToFile,
-							) ||
-							!utils.deepEqual(
-								actualSettings.zwave?.maxFiles,
-								settings.zwave?.maxFiles,
-							) ||
-							!utils.deepEqual(
-								actualSettings.zwave?.nodeFilter,
-								settings.zwave?.nodeFilter,
-							)
+							[
+								'logEnabled',
+								'logLevel',
+								'logToFile',
+								'maxFiles',
+								'nodeFilter',
+							].filter((key) => {
+								return (
+									changedZwaveKeys.includes(key) &&
+									settings.zwave?.[key] !== undefined
+								)
+							}).length > 0
 
 						if (logConfigChanged) {
 							// Build logConfig object from our settings
