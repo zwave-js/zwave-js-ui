@@ -1249,10 +1249,9 @@ app.post(
 								settings.zwave?.scales,
 							)
 						) {
-							const preferences =
-								utils.convertScalesToPreferences(
-									settings.zwave?.scales,
-								)
+							const preferences = utils.buildPreferences(
+								settings.zwave || {},
+							)
 							if (preferences) {
 								editableOptions.preferences = preferences
 							}

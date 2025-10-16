@@ -477,21 +477,14 @@ export async function pathExists(path: string): Promise<boolean> {
 	}
 }
 
-export type SensorTypeScale = {
-	key: string | number
-	sensor: string
-	label: string
-	unit?: string
-	description?: string
-}
-
 /**
  * Convert scales configuration to preferences format for Z-Wave driver options
  * This converts the array format used in our settings to the Record format expected by the driver
  */
-export function convertScalesToPreferences(
-	scales: SensorTypeScale[] | undefined,
-) {
+export function buildPreferences(
+	config: ZwaveConfig,
+): PartialZWaveOptions['preferences'] {
+	const { scales } = config
 	if (!scales || scales.length === 0) {
 		return undefined
 	}

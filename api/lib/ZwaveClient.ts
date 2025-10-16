@@ -2286,9 +2286,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this.cfg.scales) {
-			const preferences = utils.convertScalesToPreferences(
-				this.cfg.scales,
-			)
+			const preferences = utils.buildPreferences(this.cfg)
 			if (preferences) {
 				zwaveOptions.preferences = preferences
 			}
