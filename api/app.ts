@@ -1195,9 +1195,7 @@ app.post(
 					if (
 						onlyEditableChanged &&
 						changedZwaveKeys.length > 0 &&
-						gw &&
-						gw.zwave &&
-						gw.zwave.driver
+						gw?.zwave?.driver
 					) {
 						// Can update options without restart
 						canUpdateZwaveOptions = true
@@ -1221,12 +1219,7 @@ app.post(
 				await jsonStore.put(store.settings, settings)
 
 				// Update driver options if only editable options changed
-				if (
-					canUpdateZwaveOptions &&
-					gw &&
-					gw.zwave &&
-					gw.zwave.driver
-				) {
+				if (canUpdateZwaveOptions && gw?.zwave?.driver) {
 					try {
 						// Build editable options object with only changed properties
 						// Map our settings to PartialZWaveOptions format
