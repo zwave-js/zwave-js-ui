@@ -3672,6 +3672,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			// Refresh priority and custom SUC return routes after rebuild completes
 			// as they may have been deleted during the rebuild process
+			await this.getPriorityRoute(nodeId)
 			this.getCustomSUCReturnRoute(nodeId)
 			this.getPrioritySUCReturnRoute(nodeId)
 
