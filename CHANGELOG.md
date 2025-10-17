@@ -1,5 +1,14 @@
 
 
+## [11.5.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.1...v11.5.2) (2025-10-17)
+
+
+### Bug Fixes
+
+* log store path during application startup ([44338d7](https://github.com/zwave-js/zwave-js-ui/commit/44338d7f7191a734e7f445a2727dae20a6cc12b9))
+* remove .npmignore and update files in package.json ([20a76e2](https://github.com/zwave-js/zwave-js-ui/commit/20a76e218112077a32c76c6fb25313b8fac9156c))
+* restore release-it hooks ([f7ba20e](https://github.com/zwave-js/zwave-js-ui/commit/f7ba20e0f137caea4d787f29ec5f013802309336))
+
 ## [11.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.0...v11.5.1) (2025-10-17)
 
 
