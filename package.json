@@ -25,6 +25,14 @@
   "license": "MIT",
   "author": "Daniel Lando <daniel.sorridi@gmail.com>",
   "bin": "server/bin/www.js",
+  "files": [
+    "dist",
+    "server",
+    "snippets",
+    "package.json",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "postinstall": "patch-package",
     "dev": "vite",
