@@ -1,5 +1,12 @@
 
 
+## [11.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.0...v11.5.1) (2025-10-17)
+
+
+### Bug Fixes
+
+* move patch-package to deps to fix npm issue ([d08e0f4](https://github.com/zwave-js/zwave-js-ui/commit/d08e0f41ef0fd06e6e34b7088b7693624732cfe3))
+
 # [11.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.1...v11.5.0) (2025-10-15)
 
 
