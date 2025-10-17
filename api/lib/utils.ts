@@ -7,6 +7,10 @@ import { isUint8Array } from 'node:util/types'
 import { createRequire } from 'node:module'
 import { mkdir, access } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
+import { logsDir } from '../config/app.ts'
+import tripleBeam from 'triple-beam'
+
+const loglevels = tripleBeam.configs.npm.levels
 
 // don't use import here, it will break the build
 const require = createRequire(import.meta.url)
@@ -470,5 +474,47 @@ export async function pathExists(path: string): Promise<boolean> {
 		return true
 	} catch {
 		return false
+	}
+}
+
+/**
+ * Convert scales configuration to preferences format for Z-Wave driver options
+ * This converts the array format used in our settings to the Record format expected by the driver
+ */
+export function buildPreferences(
+	config: ZwaveConfig,
+): PartialZWaveOptions['preferences'] {
+	const { scales } = config
+	if (!scales || scales.length === 0) {
+		return undefined
+	}
+
+	const scalesRecord: Record<string | number, string | number> = {}
+	for (const s of scales) {
+		scalesRecord[s.key] = s.label
+	}
+
+	return {
+		scales: scalesRecord,
+	}
+}
+
+/**
+ * Build logConfig object for Z-Wave driver options from Z-Wave configuration
+ */
+export function buildLogConfig(
+	config: ZwaveConfig,
+): PartialZWaveOptions['logConfig'] {
+	return {
+		enabled: config.logEnabled,
+		level: config.logLevel ? loglevels[config.logLevel] : 'info',
+		logToFile: config.logToFile,
+		maxFiles: config.maxFiles || 7,
+		nodeFilter:
+			config.nodeFilter && config.nodeFilter.length > 0
+				? config.nodeFilter.map((n: string) => parseInt(n))
+				: undefined,
+		filename: joinPath(logsDir, 'zwavejs_%DATE%.log'),
+		forceConsole: isDocker() ? !this.cfg.logToFile : false,
 	}
 }
