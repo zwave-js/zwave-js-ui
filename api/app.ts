@@ -1163,8 +1163,12 @@ app.post(
 
 				// Check if Z-Wave settings changed
 				if (!utils.deepEqual(actualSettings.zwave, settings.zwave)) {
-					// Only these Z-Wave options can be updated without restart
-					// These match the user-configurable settings in our UI
+					// These are ZwaveClient configuration properties that map to
+					// driver.updateOptions() parameters. The commented names show
+					// the corresponding driver option keys:
+					// - 'scales' maps to 'preferences.scales'
+					// - 'logEnabled', 'logLevel', etc. map to 'logConfig' properties
+					// - 'disableOptimisticValueUpdate' maps directly
 					const editableZWaveSettings = [
 						'disableOptimisticValueUpdate',
 						// preferences
