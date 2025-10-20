@@ -1,10 +1,7 @@
 {
   "$schema": "https://unpkg.com/release-it@19/schema/release-it.json",
   "github": {
-    "release": true,
-    "assets": [
-      "build/pkg/*.zip"
-    ]
+    "release": true
   },
   "git": {
     "tagName": "v${version}",
@@ -12,6 +9,9 @@
     "requireBranch": "master"
   },
   "hooks": {
+     "before:init": [
+      "npm run build"
+    ]
   },
   "npm": {
     "publish": true
