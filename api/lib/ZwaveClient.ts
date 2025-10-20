@@ -3675,14 +3675,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.getCustomSUCReturnRoute(nodeId)
 			this.getPrioritySUCReturnRoute(nodeId)
 
-			// Clear application route as it's also deleted during rebuild
-			if (node.applicationRoute) {
-				node.applicationRoute = null
-				this.emitStatistics(node, {
-					applicationRoute: null,
-				})
-			}
-
 			return result
 		}
 
