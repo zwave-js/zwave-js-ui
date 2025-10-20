@@ -418,7 +418,7 @@ async function startGateway(settings: Settings) {
 					logger: loggers.module(pluginName),
 				}
 				const instance = createPlugin(
-					require(plugin) as PluginConstructor,
+					(await import(plugin)) as PluginConstructor,
 					pluginsContext,
 					pluginName,
 				)
