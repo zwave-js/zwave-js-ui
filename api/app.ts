@@ -510,6 +510,7 @@ function sortStore(store: StoreFileEntry[]) {
 
 logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
+logger.info('Store path:' + storeDir)
 
 if (process.env.TRUST_PROXY) {
 	app.set(
