@@ -57,7 +57,9 @@ import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
+import { createRequire } from 'node:module'
 
+const require = createRequire(import.meta.url)
 const createCertificate = promisify(generate)
 
 declare module 'express-session' {
@@ -418,7 +420,7 @@ async function startGateway(settings: Settings) {
 					logger: loggers.module(pluginName),
 				}
 				const instance = createPlugin(
-					(await import(plugin)) as PluginConstructor,
+					require(plugin) as PluginConstructor,
 					pluginsContext,
 					pluginName,
 				)
