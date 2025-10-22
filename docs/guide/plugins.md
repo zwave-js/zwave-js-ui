@@ -24,23 +24,23 @@ In order to implement a plugin, you need to create a class with a constructor th
 Here is a minimal example of a custom plugin:
 
 ```js
-function MyPlugin (ctx) {
-  this.zwave = ctx.zwave
-  this.mqtt = ctx.mqtt
-  this.logger = ctx.logger
-  this.express = ctx.app
+export default class MyPlugin {
+  constructor(ctx) {
+    this.zwave = ctx.zwave;
+    this.mqtt = ctx.mqtt;
+    this.logger = ctx.logger;
+    this.express = ctx.app;
 
-  // this.express.get('/my-route', function(req, res) {...})
-  // this.mqtt.publish(...)
-  // this.zwave.on('valueChanged', onValueChanged)
-  // ... add all the stuff you need here
+    // this.express.get('/my-route', (req, res) => { ... });
+    // this.mqtt.publish(...);
+    // this.zwave.on('valueChanged', this.onValueChanged);
+    // ... add all the stuff you need here
+  }
+
+  async destroy() {
+    // clean up the state
+  }
 }
-
-MyPlugin.prototype.destroy = async function () {
-  // clean up the state
-}
-
-module.export = MyPlugin
 ```
 
 Types and interfaces are available [here](https://github.com/zwave-js/zwave-js-ui/blob/master/api/lib/CustomPlugin.ts)
