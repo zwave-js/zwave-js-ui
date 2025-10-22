@@ -419,8 +419,10 @@ async function startGateway(settings: Settings) {
 					app: pluginsRouter,
 					logger: loggers.module(pluginName),
 				}
+				const constructor = (await import(plugin))
+					.default as PluginConstructor
 				const instance = createPlugin(
-					require(plugin) as PluginConstructor,
+					constructor,
 					pluginsContext,
 					pluginName,
 				)
