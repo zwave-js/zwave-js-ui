@@ -81,6 +81,7 @@
 									@click="dismissUpdate(u)"
 									icon="close"
 									v-tooltip:bottom="'Dismiss this update'"
+									aria-label="Dismiss this update"
 									class="mr-2"
 								>
 								</v-btn>
