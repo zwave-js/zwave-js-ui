@@ -51,6 +51,14 @@
 									v-model="internalStreamerMode"
 								></v-switch>
 							</v-col>
+							<v-col cols="12" sm="6">
+								<v-switch
+									hint="Enable this to use compact view by default in the Control Panel (can be toggled with the Compact button)"
+									persistent-hint
+									label="Compact view by default"
+									v-model="internalCompactMode"
+								></v-switch>
+							</v-col>
 						</v-row>
 					</v-expansion-panel-text>
 					<v-divider />
@@ -2148,6 +2156,14 @@ export default {
 				this.setStreamerMode(value)
 			},
 		},
+		internalCompactMode: {
+			get() {
+				return this.compactMode
+			},
+			set(value) {
+				this.setCompactMode(value)
+			},
+		},
 		settingsChanged() {
 			if (!deepEqual(this.newMqtt, this.mqtt)) return true
 			if (!deepEqual(this.newGateway, this.gateway)) return true
@@ -2243,6 +2259,7 @@ export default {
 			darkMode: (store) => store.uiState.darkMode,
 			navTabs: (store) => store.ui.navTabs,
 			streamerMode: (store) => store.ui.streamerMode,
+			compactMode: (store) => store.ui.compactMode,
 		}),
 	},
 	watch: {
@@ -2399,6 +2416,7 @@ export default {
 			'setColorScheme',
 			'setNavTabs',
 			'setStreamerMode',
+			'setCompactMode',
 			'initSettings',
 			'init',
 			'showSnackbar',
@@ -2686,13 +2704,59 @@ export default {
 						this.getSettingsJSON(),
 					)
 					this.saving = false
+
+					// Show success message
 					this.showSnackbar(
 						data.message,
 						data.success ? 'success' : 'error',
 					)
+
 					this.initSettings(data.data)
 					this.resetConfig()
+
+					// If restart is required, ask user
+					if (data.success && data.shouldRestart) {
+						const restartConfirm = await this.app.confirm(
+							'Restart Required',
+							'Do you want to restart the Z-Wave JS driver to apply the changes?',
+							'info',
+							{
+								width: 500,
+								inputs: [
+									{
+										type: 'checkbox',
+										key: 'restart',
+										label: 'Restart Z-Wave JS driver',
+										default: true,
+										hint: 'Changes require a restart to take effect. Uncheck to restart manually later.',
+									},
+								],
+							},
+						)
+
+						// If user confirmed restart
+						if (restartConfirm?.restart) {
+							try {
+								this.saving = true
+								const restartData =
+									await ConfigApis.restartGateway()
+								this.saving = false
+								this.showSnackbar(
+									restartData.message,
+									restartData.success ? 'success' : 'error',
+								)
+							} catch (error) {
+								this.saving = false
+								this.showSnackbar(
+									'Failed to restart gateway',
+									'error',
+								)
+								log.error(error)
+							}
+						}
+					}
 				} catch (error) {
+					this.saving = false
 					log.error(error)
 				}
 			} else {
@@ -2730,6 +2794,7 @@ export default {
 			this.internalColorScheme = uiState.colorScheme
 			this.internalNavTabs = uiState.navTabs
 			this.internalStreamerMode = uiState.streamerMode
+			this.internalCompactMode = uiState.compactMode
 		},
 		async getConfig() {
 			try {
