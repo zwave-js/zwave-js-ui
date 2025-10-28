@@ -2675,13 +2675,59 @@ export default {
 						this.getSettingsJSON(),
 					)
 					this.saving = false
+
+					// Show success message
 					this.showSnackbar(
 						data.message,
 						data.success ? 'success' : 'error',
 					)
+
 					this.initSettings(data.data)
 					this.resetConfig()
+
+					// If restart is required, ask user
+					if (data.success && data.shouldRestart) {
+						const restartConfirm = await this.app.confirm(
+							'Restart Required',
+							'Do you want to restart the Z-Wave JS driver to apply the changes?',
+							'info',
+							{
+								width: 500,
+								inputs: [
+									{
+										type: 'checkbox',
+										key: 'restart',
+										label: 'Restart Z-Wave JS driver',
+										default: true,
+										hint: 'Changes require a restart to take effect. Uncheck to restart manually later.',
+									},
+								],
+							},
+						)
+
+						// If user confirmed restart
+						if (restartConfirm?.restart) {
+							try {
+								this.saving = true
+								const restartData =
+									await ConfigApis.restartGateway()
+								this.saving = false
+								this.showSnackbar(
+									restartData.message,
+									restartData.success ? 'success' : 'error',
+								)
+							} catch (error) {
+								this.saving = false
+								this.showSnackbar(
+									'Failed to restart gateway',
+									'error',
+								)
+								log.error(error)
+							}
+						}
+					}
 				} catch (error) {
+					this.saving = false
 					log.error(error)
 				}
 			} else {
