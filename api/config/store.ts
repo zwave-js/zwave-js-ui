@@ -33,6 +33,7 @@ const store: Record<StoreKeys, StoreFile> = {
 			zwave: {
 				deviceConfigPriorityDir,
 				enableSoftReset: true,
+				disableAutomaticFirmwareUpdateChecks: false,
 			},
 		} satisfies Settings,
 	},

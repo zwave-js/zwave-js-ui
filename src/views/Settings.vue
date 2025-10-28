@@ -1060,6 +1060,17 @@
 											></v-switch>
 										</v-col>
 
+										<v-col cols="12" sm="6">
+											<v-switch
+												hint="When enabled, the application will not automatically check for firmware updates in the background. You can still manually check for updates from the node's firmware update tab."
+												persistent-hint
+												label="Disable automatic firmware update checks"
+												v-model="
+													newZwave.disableAutomaticFirmwareUpdateChecks
+												"
+											></v-switch>
+										</v-col>
+
 										<input
 											type="hidden"
 											:modelValue="
