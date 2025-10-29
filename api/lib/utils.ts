@@ -515,6 +515,6 @@ export function buildLogConfig(
 				? config.nodeFilter.map((n: string) => parseInt(n))
 				: undefined,
 		filename: joinPath(logsDir, 'zwavejs_%DATE%.log'),
-		forceConsole: isDocker() ? !this.cfg.logToFile : false,
+		forceConsole: isDocker() ? !config.logToFile : false,
 	}
 }
