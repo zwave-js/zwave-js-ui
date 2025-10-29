@@ -77,6 +77,17 @@
 								<v-btn
 									variant="outlined"
 									size="small"
+									color="error"
+									@click="dismissUpdate(u)"
+									icon="close"
+									v-tooltip:bottom="'Dismiss this update'"
+									aria-label="Dismiss this update"
+									class="mr-2"
+								>
+								</v-btn>
+								<v-btn
+									variant="outlined"
+									size="small"
 									:color="u.downgrade ? 'warning' : 'success'"
 									@click="handleUpdateFirmware(u)"
 									:prepend-icon="
@@ -227,6 +238,38 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		async dismissUpdate(update) {
+			const confirmed = await this.app.confirm(
+				'Dismiss firmware update',
+				`Are you sure you want to dismiss firmware update v${update.version}? This will hide the update notification for this version until the next time the device's firmware updates are checked.`,
+				'warning',
+			)
+
+			if (!confirmed) {
+				return
+			}
+
+			const response = await this.app.apiRequest(
+				'dismissFirmwareUpdate',
+				[this.node.id, update.version],
+			)
+
+			if (response.success) {
+				this.showSnackbar(
+					`Firmware update v${update.version} dismissed`,
+					'success',
+				)
+				// Remove the dismissed update from the local list
+				this.fwUpdates = this.fwUpdates.filter(
+					(u) => u.version !== update.version,
+				)
+			} else {
+				this.showSnackbar(
+					`Failed to dismiss firmware update: ${response.message}`,
+					'error',
+				)
+			}
+		},
 		async checkUpdates() {
 			this.loading = true
 			this.fwUpdates = []

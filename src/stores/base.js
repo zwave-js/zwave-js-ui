@@ -69,6 +69,7 @@ const useBaseStore = defineStore('base', {
 			higherReportsTimeout: false,
 			disableControllerRecovery: false,
 			disableWatchdog: false,
+			disableAutomaticFirmwareUpdateChecks: false,
 		},
 		backup: {
 			storeBackup: false,

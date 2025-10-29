@@ -636,6 +636,7 @@ export type ZwaveConfig = {
 	maxNodeEventsQueueSize?: number
 	higherReportsTimeout?: boolean
 	disableControllerRecovery?: boolean
+	disableAutomaticFirmwareUpdateChecks?: boolean
 	rf?: {
 		region?: RFRegion
 		maxLongRangePowerlevel?: number | 'auto'
@@ -5092,12 +5093,14 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this.zwaveNodeToJSON(zwaveNode),
 		)
 
-		// Check for firmware updates after a device is added
-		this.checkAllNodesFirmwareUpdates().catch((error) => {
-			logger.warn(
-				`Firmware update check after node added failed: ${error.message}`,
-			)
-		})
+		// Check for firmware updates after a device is added (unless disabled)
+		if (!this.cfg.disableAutomaticFirmwareUpdateChecks) {
+			this.checkAllNodesFirmwareUpdates().catch((error) => {
+				logger.warn(
+					`Firmware update check after node added failed: ${error.message}`,
+				)
+			})
+		}
 	}
 
 	/**
@@ -7005,6 +7008,12 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	private async _scheduledFirmwareUpdateCheck() {
+		// Check if automatic firmware update checks are disabled
+		if (this.cfg.disableAutomaticFirmwareUpdateChecks) {
+			logger.info('Automatic firmware update checks are disabled')
+			return
+		}
+
 		try {
 			await this.checkAllNodesFirmwareUpdates()
 		} catch (error) {
