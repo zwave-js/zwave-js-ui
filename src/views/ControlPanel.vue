@@ -405,6 +405,18 @@ export default {
 					icon: 'swap_horiz',
 					desc: 'Ping node to check if it is alive',
 				},
+				{
+					text: 'Failed Nodes',
+					options: [
+						{
+							name: 'Remove',
+							action: 'removeFailedNode',
+						},
+					],
+					color: 'error',
+					icon: 'dangerous',
+					desc: 'Manage nodes that are dead and/or marked as failed with the controller',
+				},
 			],
 			showControllerStatistics: false,
 		}
