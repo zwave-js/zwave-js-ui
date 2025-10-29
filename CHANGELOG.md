@@ -1,5 +1,21 @@
 
 
+# [11.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.2...v11.6.0) (2025-10-29)
+
+
+### Bug Fixes
+
+* refresh route data after rebuilding node routes to update UI ([#4422](https://github.com/zwave-js/zwave-js-ui/issues/4422)) ([de64c22](https://github.com/zwave-js/zwave-js-ui/commit/de64c222d50805782ec5815421229961cbf4554d)), closes [zwave-js/zwave-js-ui#4295](https://github.com/zwave-js/zwave-js-ui/issues/4295) [zwave-js/zwave-js-ui#4295](https://github.com/zwave-js/zwave-js-ui/issues/4295)
+* update plugin import to use dynamic import syntax ([#4429](https://github.com/zwave-js/zwave-js-ui/issues/4429)) ([9ad1318](https://github.com/zwave-js/zwave-js-ui/commit/9ad13183df32e741dad98117fdaf3c56be399bf8)), closes [#4427](https://github.com/zwave-js/zwave-js-ui/issues/4427)
+
+
+### Features
+
+* add option to disable automatic firmware update checks and dismiss updates ([#4441](https://github.com/zwave-js/zwave-js-ui/issues/4441)) ([b121d81](https://github.com/zwave-js/zwave-js-ui/commit/b121d8134b4d7fcebf3ae54a02076c7b0b32613d)), closes [#4439](https://github.com/zwave-js/zwave-js-ui/issues/4439) [#4440](https://github.com/zwave-js/zwave-js-ui/issues/4440) [zwave-js/zwave-js-ui#4440](https://github.com/zwave-js/zwave-js-ui/issues/4440)
+* **settings:** intelligent restart with hot-reload for editable Z-Wave options ([#4413](https://github.com/zwave-js/zwave-js-ui/issues/4413)) ([d574d8b](https://github.com/zwave-js/zwave-js-ui/commit/d574d8ba9cdeb9f943b4e62dca1928e99134a72e)), closes [zwave-js/zwave-js-ui#4410](https://github.com/zwave-js/zwave-js-ui/issues/4410)
+* **ui:** add UI setting to make compact view the default ([#4437](https://github.com/zwave-js/zwave-js-ui/issues/4437)) ([6812d59](https://github.com/zwave-js/zwave-js-ui/commit/6812d592618cfc1a742d5e6394bfa5074daac41d)), closes [#4433](https://github.com/zwave-js/zwave-js-ui/issues/4433) [zwave-js/zwave-js-ui#4436](https://github.com/zwave-js/zwave-js-ui/issues/4436)
+* **ui:** allow removing multiple failed nodes ([#4434](https://github.com/zwave-js/zwave-js-ui/issues/4434)) ([8eec845](https://github.com/zwave-js/zwave-js-ui/commit/8eec845ead39b46488ddce9fc4f88641499cc152))
+
 ## [11.5.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.1...v11.5.2) (2025-10-17)
 
 
