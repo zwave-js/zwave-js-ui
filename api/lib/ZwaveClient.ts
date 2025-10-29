@@ -137,7 +137,6 @@ import { socketEvents } from './SocketEvents.ts'
 import { isUint8Array } from 'node:util/types'
 import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
-import tripleBeam from 'triple-beam'
 import { deviceConfigPriorityDir } from './Constants.ts'
 
 export const configManager = new ConfigManager({
@@ -145,8 +144,6 @@ export const configManager = new ConfigManager({
 })
 
 const logger = LogManager.module('Z-Wave')
-
-const loglevels = tripleBeam.configs.npm.levels
 
 const NEIGHBORS_LOCK_REFRESH = 60 * 1000
 
@@ -344,8 +341,6 @@ export type SensorTypeScale = {
 }
 
 export type AllowedApis = (typeof allowedApis)[number]
-
-const ZWAVEJS_LOG_FILE = utils.joinPath(logsDir, 'zwavejs_%DATE%.log')
 
 export type ZUIValueIdState = {
 	text: string
@@ -2182,21 +2177,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				deviceConfigPriorityDir:
 					this.cfg.deviceConfigPriorityDir || deviceConfigPriorityDir,
 			},
-			logConfig: {
-				// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
-				enabled: this.cfg.logEnabled,
-				level: this.cfg.logLevel
-					? loglevels[this.cfg.logLevel]
-					: 'info',
-				logToFile: this.cfg.logToFile,
-				filename: ZWAVEJS_LOG_FILE,
-				forceConsole: isDocker() ? !this.cfg.logToFile : false,
-				maxFiles: this.cfg.maxFiles || 7,
-				nodeFilter:
-					this.cfg.nodeFilter && this.cfg.nodeFilter.length > 0
-						? this.cfg.nodeFilter.map((n) => parseInt(n))
-						: undefined,
-			},
+			// https://zwave-js.github.io/node-zwave-js/#/api/driver?id=logconfig
+			logConfig: utils.buildLogConfig(this.cfg),
 			emitValueUpdateAfterSetValue: true,
 			apiKeys: {
 				firmwareUpdateService:
@@ -2304,13 +2286,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		}
 
 		if (this.cfg.scales) {
-			const scales: Record<string | number, string | number> = {}
-			for (const s of this.cfg.scales) {
-				scales[s.key] = s.label
-			}
-
-			zwaveOptions.preferences = {
-				scales,
+			const preferences = utils.buildPreferences(this.cfg)
+			if (preferences) {
+				zwaveOptions.preferences = preferences
 			}
 		}
 
