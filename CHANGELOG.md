@@ -1,5 +1,12 @@
 
 
+## [11.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.0...v11.6.1) (2025-10-29)
+
+
+### Bug Fixes
+
+* docker issue on buildLogConfig ([641d3ce](https://github.com/zwave-js/zwave-js-ui/commit/641d3ce835fd06f158e12ae868fe8302c709dbd6)), closes [#4443](https://github.com/zwave-js/zwave-js-ui/issues/4443)
+
 # [11.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.2...v11.6.0) (2025-10-29)
 
 
