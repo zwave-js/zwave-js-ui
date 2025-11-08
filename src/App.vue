@@ -1636,7 +1636,8 @@ export default {
 				).then(async (result) => {
 					if (result) {
 						await event.detail.updateSW()
-						// do not reload page
+						// Reload the page to ensure the new version is loaded properly
+						window.location.reload()
 					}
 				})
 			},
