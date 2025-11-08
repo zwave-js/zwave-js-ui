@@ -1185,14 +1185,18 @@ app.post(
 					]
 
 					// Find which Z-Wave settings actually changed
-					changedZwaveKeys = Object.keys(settings.zwave || {}).filter(
-						(key) => {
-							return !utils.deepEqual(
-								actualSettings.zwave?.[key],
-								settings.zwave?.[key],
-							)
-						},
-					)
+					// Only check keys that exist in actual settings to avoid detecting
+					// new default properties added by the UI as "changed"
+					const allKeys = new Set([
+						...Object.keys(actualSettings.zwave || {}),
+						...Object.keys(settings.zwave || {}),
+					])
+					changedZwaveKeys = Array.from(allKeys).filter((key) => {
+						return !utils.deepEqual(
+							actualSettings.zwave?.[key],
+							settings.zwave?.[key],
+						)
+					})
 
 					logger.debug('Z-Wave settings changed:', {
 						changedKeys: changedZwaveKeys,
