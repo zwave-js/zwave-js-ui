@@ -558,7 +558,7 @@ export default {
 		},
 		async _value(val) {
 			// When panel opens, refresh node neighbors
-			if (val && this.node && !this.node.isControllerNode) {
+			if (val && this.node) {
 				await this.refreshNodeNeighbors()
 			}
 		},
