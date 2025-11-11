@@ -1198,7 +1198,7 @@ app.post(
 						)
 					})
 
-					logger.debug('Z-Wave settings changed:', {
+					logger.log('debug', 'Z-Wave settings changed: %o', {
 						changedKeys: changedZwaveKeys,
 						hasDriver: !!gw?.zwave?.driver,
 					})
@@ -1208,11 +1208,15 @@ app.post(
 						editableZWaveSettings.includes(key),
 					)
 
-					logger.debug('Checking if can update without restart:', {
-						onlyEditableChanged,
-						changedKeysLength: changedZwaveKeys.length,
-						hasDriver: !!gw?.zwave?.driver,
-					})
+					logger.log(
+						'debug',
+						'Checking if can update without restart: %o',
+						{
+							onlyEditableChanged,
+							changedKeysLength: changedZwaveKeys.length,
+							hasDriver: !!gw?.zwave?.driver,
+						},
+					)
 
 					if (
 						onlyEditableChanged &&
