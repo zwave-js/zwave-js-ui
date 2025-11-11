@@ -929,6 +929,8 @@ export default {
 			if (!args) {
 				const res = await this.promptRoute(prefix, suffix)
 
+				if (!res) return
+
 				const { repeaters, routeSpeed } = res
 
 				args = []
