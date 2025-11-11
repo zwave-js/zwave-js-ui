@@ -1185,18 +1185,37 @@ app.post(
 					]
 
 					// Find which Z-Wave settings actually changed
-					changedZwaveKeys = Object.keys(settings.zwave || {}).filter(
-						(key) => {
-							return !utils.deepEqual(
-								actualSettings.zwave?.[key],
-								settings.zwave?.[key],
-							)
-						},
-					)
+					// Only check keys that exist in actual settings to avoid detecting
+					// new default properties added by the UI as "changed"
+					const allKeys = new Set([
+						...Object.keys(actualSettings.zwave || {}),
+						...Object.keys(settings.zwave || {}),
+					])
+					changedZwaveKeys = Array.from(allKeys).filter((key) => {
+						return !utils.deepEqual(
+							actualSettings.zwave?.[key],
+							settings.zwave?.[key],
+						)
+					})
+
+					logger.log('debug', 'Z-Wave settings changed: %o', {
+						changedKeys: changedZwaveKeys,
+						hasDriver: !!gw?.zwave?.driver,
+					})
 
 					// Check if only editable options changed
 					const onlyEditableChanged = changedZwaveKeys.every((key) =>
 						editableZWaveSettings.includes(key),
+					)
+
+					logger.log(
+						'debug',
+						'Checking if can update without restart: %o',
+						{
+							onlyEditableChanged,
+							changedKeysLength: changedZwaveKeys.length,
+							hasDriver: !!gw?.zwave?.driver,
+						},
 					)
 
 					if (
@@ -1206,10 +1225,20 @@ app.post(
 					) {
 						// Can update options without restart
 						canUpdateZwaveOptions = true
+						logger.info(
+							'Z-Wave settings can be updated without restart',
+						)
 					} else {
 						// Need full restart
 						shouldRestartGw = true
 						shouldRestart = true
+						logger.info('Z-Wave settings require full restart', {
+							reason: !onlyEditableChanged
+								? 'non-editable settings changed'
+								: changedZwaveKeys.length === 0
+									? 'no keys changed'
+									: 'driver not available',
+						})
 					}
 				}
 
