@@ -3352,6 +3352,76 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	}
 
 	/**
+	 * Check for firmware updates after a firmware update completes
+	 * This ensures the availableFirmwareUpdates is refreshed and cleared if no updates remain
+	 */
+	private async _checkFirmwareUpdatesAfterUpdate(nodeId: number) {
+		if (!this.driverReady) {
+			return
+		}
+
+		try {
+			// Get updated firmware information
+			const updates =
+				await this._driver.controller.getAvailableFirmwareUpdates(
+					nodeId,
+				)
+
+			// Filter out downgrades
+			const filteredUpdates = (updates || []).filter(
+				(update) => !update.downgrade,
+			)
+
+			// Ensure store entry exists
+			if (!this.storeNodes[nodeId]) {
+				this.storeNodes[nodeId] = {} as any
+			}
+
+			// Update stored firmware update info
+			this.storeNodes[nodeId].availableFirmwareUpdates = filteredUpdates
+			this.storeNodes[nodeId].lastFirmwareUpdateCheck = Date.now()
+
+			// Clean up dismissed updates map to only contain elements that exist in available firmware updates
+			const existingDismissed =
+				this.storeNodes[nodeId].firmwareUpdatesDismissed || {}
+			const cleanedDismissed: { [version: string]: boolean } = {}
+
+			for (const update of filteredUpdates) {
+				if (existingDismissed[update.version]) {
+					cleanedDismissed[update.version] = true
+				}
+			}
+			this.storeNodes[nodeId].firmwareUpdatesDismissed = cleanedDismissed
+
+			// Update in-memory node
+			const node = this._nodes.get(nodeId)
+			if (node) {
+				node.availableFirmwareUpdates = filteredUpdates
+				node.lastFirmwareUpdateCheck = Date.now()
+				node.firmwareUpdatesDismissed = cleanedDismissed
+
+				// Emit update to frontend
+				this.emitNodeUpdate(node, {
+					availableFirmwareUpdates: node.availableFirmwareUpdates,
+					lastFirmwareUpdateCheck: node.lastFirmwareUpdateCheck,
+					firmwareUpdatesDismissed: node.firmwareUpdatesDismissed,
+				})
+			}
+
+			// Save to nodes.json
+			await this.updateStoreNodes()
+
+			logger.info(
+				`Checked firmware updates for node ${nodeId} after update completion. Found ${filteredUpdates.length} update(s)`,
+			)
+		} catch (error) {
+			logger.error(
+				`Failed to check firmware updates for node ${nodeId} after update: ${error.message}`,
+			)
+		}
+	}
+
+	/**
 	 * Get available non-dismissed firmware updates for a node
 	 */
 	getNodeFirmwareUpdates(nodeId: number): FirmwareUpdateInfo[] {
@@ -6170,6 +6240,17 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			if (result.reInterview) {
 				this.logNode(zwaveNode, 'info', 'Will be re-interviewed')
 			}
+
+			// Query for new firmware updates and clear available updates if necessary
+			this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
+				(error) => {
+					this.logNode(
+						zwaveNode,
+						'error',
+						`Failed to check firmware updates after update: ${error.message}`,
+					)
+				},
+			)
 
 			this.emit(
 				'event',
