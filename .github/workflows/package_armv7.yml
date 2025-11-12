@@ -46,7 +46,7 @@ jobs:
       - name: Build for armv7
         run: |
           curl https://github.com/yao-pkg/pkg-binaries/releases/download/node20/node-v20.19.5-linux-armv7 -LOJ
-          export PKG_NODE_PATH=$(pwd)/built-v20.19.5-linux-armv7
+          export PKG_NODE_PATH=$(pwd)/node-v20.19.5-linux-armv7
           npm run pkg -- --bundle --skip-build --arch=armv7
 
       - name: Upload artifacts
