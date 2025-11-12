@@ -23,7 +23,6 @@ import {
 } from '@zwave-js/core'
 import { createDefaultTransportFormat } from '@zwave-js/core/bindings/log/node'
 import { JSONTransport } from '@zwave-js/log-transport-json'
-import { isDocker } from './utils.ts'
 import type {
 	AssociationAddress,
 	AssociationGroup,
@@ -118,7 +117,7 @@ import {
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.ts'
+import { configDbDir, nvmBackupsDir, storeDir } from '../config/app.ts'
 import store from '../config/store.ts'
 import jsonStore from './jsonStore.ts'
 import * as LogManager from './logger.ts'
@@ -477,7 +476,7 @@ export interface BackgroundRSSIPoint {
 
 export interface FwFile {
 	name: string
-	data: Uint8Array
+	data: Uint8Array<ArrayBuffer>
 	target?: number
 }
 
@@ -5291,7 +5290,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(`Backup NVM progress: ${progress}%`)
 	}
 
-	async restoreNVM(data: Uint8Array, useRaw = false) {
+	async restoreNVM(data: Uint8Array<ArrayBuffer>, useRaw = false) {
 		if (!this.driverReady) {
 			throw new DriverNotReadyError()
 		}

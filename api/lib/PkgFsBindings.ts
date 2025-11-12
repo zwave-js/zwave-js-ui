@@ -20,14 +20,14 @@ const CONFIG_PATH_IN_PKG = path.join(
 )
 
 export class PkgFsBindings implements FileSystem {
-	readFile(filePath: string): Promise<Uint8Array> {
+	readFile(filePath: string): Promise<Uint8Array<ArrayBuffer>> {
 		filePath = path.normalize(filePath)
 		if (filePath.startsWith(CONFIG_PATH)) {
 			filePath = filePath.replace(CONFIG_PATH, CONFIG_PATH_IN_PKG)
 		}
 		return nodeFs.readFile(filePath)
 	}
-	writeFile(filePath: string, data: Uint8Array): Promise<void> {
+	writeFile(filePath: string, data: Uint8Array<ArrayBuffer>): Promise<void> {
 		filePath = path.normalize(filePath)
 		if (filePath.startsWith(CONFIG_PATH)) {
 			// The pkg assets are readonly
