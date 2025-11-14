@@ -137,6 +137,7 @@ import { isUint8Array } from 'node:util/types'
 import { PkgFsBindings } from './PkgFsBindings.ts'
 import { regionSupportsAutoPowerlevel } from './shared.ts'
 import { deviceConfigPriorityDir } from './Constants.ts'
+import { createRequire } from 'node:module'
 
 export const configManager = new ConfigManager({
 	deviceConfigPriorityDir,
@@ -2139,6 +2140,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		).constructor
 
 		const fn = new AsyncFunction('driver', code)
+		const require = createRequire(import.meta.url)
 
 		return fn.call({ zwaveClient: this, require, logger }, this._driver)
 	}
