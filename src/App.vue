@@ -630,7 +630,8 @@ export default {
 				this.$router.push('/control-panel')
 			}
 			// Set a timestamp to trigger the dialog opening
-			this.updateState({ debugCaptureFinishTrigger: Date.now() })
+			const store = useBaseStore()
+			store.debugCaptureFinishTrigger = Date.now()
 		},
 		verifyRoute() {
 			// ensure the actual route is available in pages otherwise redirect to the first one
@@ -703,7 +704,6 @@ export default {
 			'updateNode',
 			'removeNode',
 			'setZnifferState',
-			'updateState',
 		]),
 		copyVersion() {
 			const el = document.createElement('textarea')
