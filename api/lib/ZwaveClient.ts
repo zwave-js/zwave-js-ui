@@ -588,6 +588,7 @@ export type ZUINode = {
 	availableFirmwareUpdates?: FirmwareUpdateInfo[]
 	firmwareUpdatesDismissed?: { [version: string]: boolean }
 	lastFirmwareUpdateCheck?: number
+	pendingFirmwareUpdateCheckAfterInterview?: boolean
 }
 
 export type NodeEvent = {
@@ -5775,6 +5776,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._onNodeStatus(zwaveNode, true)
 
+		// Check for firmware updates after interview if this was triggered by a firmware update
+		// This ensures we check with the updated firmware version instead of stale cached data
+		if (node?.pendingFirmwareUpdateCheckAfterInterview) {
+			node.pendingFirmwareUpdateCheckAfterInterview = false
+			this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
+				(error) => {
+					this.logNode(
+						zwaveNode,
+						'error',
+						`Failed to check firmware updates after interview: ${error.message}`,
+					)
+				},
+			)
+		}
+
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -6233,20 +6249,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (result.reInterview) {
 				this.logNode(zwaveNode, 'info', 'Will be re-interviewed')
-			}
-
-			// Query for new firmware updates and clear available updates if necessary
-			// (unless automatic firmware update checks are disabled)
-			if (!this.cfg.disableAutomaticFirmwareUpdateChecks) {
-				this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
-					(error) => {
-						this.logNode(
-							zwaveNode,
-							'error',
-							`Failed to check firmware updates after update: ${error.message}`,
-						)
-					},
-				)
+				// Mark node for firmware update check after interview completes
+				// to avoid race condition with stale firmware version
+				if (node && !this.cfg.disableAutomaticFirmwareUpdateChecks) {
+					node.pendingFirmwareUpdateCheckAfterInterview = true
+				}
+			} else {
+				// Query for new firmware updates immediately if not re-interviewing
+				// (unless automatic firmware update checks are disabled)
+				if (!this.cfg.disableAutomaticFirmwareUpdateChecks) {
+					this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
+						(error) => {
+							this.logNode(
+								zwaveNode,
+								'error',
+								`Failed to check firmware updates after update: ${error.message}`,
+							)
+						},
+					)
+				}
 			}
 
 			this.emit(
