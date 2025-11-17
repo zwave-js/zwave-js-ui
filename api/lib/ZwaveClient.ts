@@ -1159,6 +1159,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.closed = true
 		this.driverReady = false
 
+		// Clear pending firmware update checks
+		this._nodesPendingFirmwareUpdateCheck.clear()
+
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
 			this.commandsTimeout = null
@@ -5809,6 +5812,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		args: NodeInterviewFailedEventArgs,
 	) {
+		// Clean up pending firmware update check if interview fails
+		this._nodesPendingFirmwareUpdateCheck.delete(zwaveNode.id)
+
 		this.logNode(
 			zwaveNode,
 			'error',
