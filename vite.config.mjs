@@ -80,8 +80,6 @@ export default defineConfig(({ mode }) => {
 				},
 				workbox: {
 					cleanupOutdatedCaches: true,
-					skipWaiting: true,
-					clientsClaim: true,
 					globIgnores: ['**/api/**'],
 				},
 				manifest: {
