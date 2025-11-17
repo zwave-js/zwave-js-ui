@@ -69,6 +69,7 @@ const useBaseStore = defineStore('base', {
 			higherReportsTimeout: false,
 			disableControllerRecovery: false,
 			disableWatchdog: false,
+			disableAutomaticFirmwareUpdateChecks: false,
 		},
 		backup: {
 			storeBackup: false,
@@ -190,11 +191,11 @@ const useBaseStore = defineStore('base', {
 				return null
 			}
 		},
-		// eslint-disable-next-line no-unused-vars
+
 		showSnackbar(text, color = 'info', timeout = 3000) {
 			// empty mutation, will be caught in App.vue $onAction
 		},
-		// eslint-disable-next-line no-unused-vars
+
 		updateMeshGraph(node) {
 			// empty mutation, will be caught in Mesh.vue $onAction
 		},

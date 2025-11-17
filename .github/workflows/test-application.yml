@@ -13,12 +13,12 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v5
 
             - name: Set up Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@v5
               with:
-                  node-version: '20'
+                  node-version: '22'
                   cache: 'npm'
 
             - name: Install dependencies
@@ -81,7 +81,8 @@ jobs:
                   
             - name: Start backend
               run: |
-                  nohup npm run server > server.log 2>&1 &
+                  npm run build:server
+                  nohup npm start > server.log 2>&1 &
                   sleep 25
             
             - name: Test MQTT write and read
@@ -91,17 +92,20 @@ jobs:
                   docker exec broker mosquitto_sub -h localhost -p 1883 -t "zwave/nodeID_2/106/0/currentValue/3" -C 1
 
             - name: Output backend logs
+              if: always()
               run: |
                 sleep 5
                 cat server.log
             
             - name: Output broker logs
+              if: always()
               run: |
                   docker logs broker
 
             - name: Ensure backend is running
+              if: always()
               run: |
-                  if ! pgrep -f "npm run server" > /dev/null; then
+                  if ! pgrep -f "npm start" > /dev/null; then
                     echo "Backend crashed!" && exit 1
                   fi
                   echo "Backend is running successfully."

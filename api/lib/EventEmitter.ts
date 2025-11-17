@@ -1,5 +1,5 @@
-import EventEmitter from 'events'
-import { applyMixin } from './utils'
+import EventEmitter from 'node:events'
+import { applyMixin } from './utils.ts'
 
 /**
  * A type-safe EventEmitter interface to use in place of Node.js's EventEmitter.

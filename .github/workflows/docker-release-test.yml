@@ -17,12 +17,12 @@ jobs:
       packages: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0 # fetch everything
           ref: ${{ github.event.inputs.branch }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: 'npm'
@@ -65,7 +65,7 @@ jobs:
           npm run build
 
       - name: build+push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         timeout-minutes: 120
         with:
           platforms: linux/arm64,linux/amd64,linux/arm/v6,linux/arm/v7

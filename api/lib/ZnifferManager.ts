@@ -1,25 +1,23 @@
+import type { CorruptedFrame, Frame, ZnifferOptions } from 'zwave-js'
 import {
 	CommandClass,
-	CorruptedFrame,
-	Frame,
 	isEncapsulatingCommandClass,
 	isMultiEncapsulatingCommandClass,
 	Zniffer,
-	ZnifferOptions,
 } from 'zwave-js'
-import { TypedEventEmitter } from './EventEmitter'
-import { module } from './logger'
-import { Server as SocketServer } from 'socket.io'
-import { socketEvents } from './SocketEvents'
-import { ZwaveConfig } from './ZwaveClient'
-import { logsDir, storeDir } from '../config/app'
-import { buffer2hex, joinPath, parseSecurityKeys } from './utils'
-import { isDocker } from './utils'
-import { basename } from 'path'
-import { readFile } from 'fs/promises'
+import { TypedEventEmitter } from './EventEmitter.ts'
+import { module } from './logger.ts'
+import type { Server as SocketServer } from 'socket.io'
+import { socketEvents } from './SocketEvents.ts'
+import type { ZwaveConfig } from './ZwaveClient.ts'
+import { logsDir, storeDir } from '../config/app.ts'
+import { buffer2hex, joinPath, parseSecurityKeys } from './utils.ts'
+import { isDocker } from './utils.ts'
+import { basename } from 'node:path'
+import { readFile } from 'node:fs/promises'
+import tripleBeam from 'triple-beam'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const loglevels = require('triple-beam').configs.npm.levels
+const loglevels = tripleBeam.configs.npm.levels
 
 export type ZnifferConfig = Pick<
 	ZwaveConfig,
@@ -37,7 +35,7 @@ export type ZnifferConfig = Pick<
 	defaultFrequency?: number
 }
 
-export interface ZnifferManagerEventCallbacks {}
+export type ZnifferManagerEventCallbacks = Record<string, never>
 
 const logger = module('ZnifferManager')
 
@@ -145,7 +143,7 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 
 	private parseFrame(
 		frame: Frame | CorruptedFrame,
-		rawData: Uint8Array,
+		rawData: Uint8Array<ArrayBuffer>,
 		timestamp = Date.now(),
 	): SocketFrame {
 		const socketFrame: SocketFrame = {
@@ -205,6 +203,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		return this.zniffer.capturedFrames.map((frame) => {
 			return this.parseFrame(
 				frame.parsedFrame,
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-expect-error
 				Buffer.from(frame.frameData),
 				frame.timestamp.getTime(),
 			)
@@ -316,6 +316,8 @@ export default class ZnifferManager extends TypedEventEmitter<ZnifferManagerEven
 		logger.info(`Loading capture from buffer (${buffer.length} bytes)`)
 
 		try {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
 			await this.zniffer.loadCaptureFromBuffer(buffer)
 
 			logger.info(`Successfully loaded capture`)

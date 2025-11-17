@@ -1,15 +1,19 @@
-name: Build pkg arm64
+name: Build pkg x64
 
 on:
   release:
     types:
       - created
   workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   build:
     name: Build package and attach to release
-    runs-on: ubuntu-24.04-arm
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [20.x]
@@ -27,10 +31,31 @@ jobs:
           npm ci
           npm run build
 
-      - name: Build for arm64
+      - name: Build for x64
         run: |
-          npm run pkg -- --bundle --skip-build --arch=arm64
-      
+          npm run pkg -- --bundle --skip-build
+
+      - name: Test built package
+        run: |
+          
+          echo "Testing application startup..."
+          timeout 10s ./build/pkg/zwave-js-ui-linux &
+          app_pid=$!
+          
+          # Wait a few seconds for the app to start
+          sleep 5
+          
+          # Check if process is still running (indicates successful startup)
+          if kill -0 $app_pid 2>/dev/null; then
+            echo "Package test passed: Application started successfully"
+            # Kill the application
+            kill $app_pid 2>/dev/null || true
+            wait $app_pid 2>/dev/null || true
+          else
+            echo "Package test failed: Application failed to start or crashed immediately"
+            exit 1
+          fi
+
       - name: Upload artifacts
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4

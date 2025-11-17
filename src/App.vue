@@ -331,6 +331,12 @@
 			:socket="socket"
 			ref="nodesManager"
 		/>
+
+		<DialogFirmwareUpdate
+			v-model="firmwareUpdateDialog"
+			:node="firmwareUpdateNode"
+			:socket="socket"
+		/>
 	</v-app>
 </template>
 
@@ -384,6 +390,7 @@ import { getEnumMemberName } from '@zwave-js/shared'
 import { FirmwareUpdateStatus } from '@zwave-js/cc'
 import { SecurityBootstrapFailure, InclusionState } from 'zwave-js'
 import DialogNodesManager from '@/components/dialogs/DialogNodesManager.vue'
+import DialogFirmwareUpdate from '@/components/dialogs/DialogFirmwareUpdate.vue'
 import { uuid } from './lib/utils'
 import Logo from '@/components/Logo.vue'
 
@@ -397,6 +404,7 @@ export default {
 		LoaderDialog,
 		Confirm,
 		DialogNodesManager,
+		DialogFirmwareUpdate,
 		VSonner,
 		Logo,
 	},
@@ -595,6 +603,8 @@ export default {
 			loaderIndeterminate: false,
 			password: {},
 			nodesManagerDialog: false,
+			firmwareUpdateDialog: false,
+			firmwareUpdateNode: null,
 			status: '',
 			statusColor: '',
 			drawer: false,
@@ -714,6 +724,10 @@ export default {
 		showPasswordDialog() {
 			this.password = {}
 			this.dialog_password = true
+		},
+		showFirmwareUpdateDialog(node) {
+			this.firmwareUpdateNode = node
+			this.firmwareUpdateDialog = true
 		},
 		async onNodeAdded({ node, result }) {
 			if (!this.nodesManagerDialog) {
@@ -1007,7 +1021,7 @@ export default {
 
 			if (result) {
 				try {
-					const data = await ConfigApis.updateConfig(false)
+					const data = await ConfigApis.restartGateway()
 
 					this.showSnackbar(
 						data.message,
@@ -1302,6 +1316,7 @@ export default {
 			}`
 
 			let message = ''
+			let showDialog = true
 
 			if (result.success) {
 				if (
@@ -1313,11 +1328,8 @@ export default {
 				} else if (
 					result.status === FirmwareUpdateStatus.OK_RestartPending
 				) {
-					message = `<p>The device will now restart.${
-						result.waitTime
-							? ` This will take approximately <b>${result.waitTime}</b> seconds.`
-							: ''
-					}</p>`
+					// Don't show dialog for restart pending - device will restart automatically
+					showDialog = false
 				} else if (
 					// status is OK_NoRestart
 					result.waitTime &&
@@ -1373,11 +1385,14 @@ export default {
 				}
 			}
 
-			this.confirm(title, message, 'info', {
-				confirmText: 'Ok',
-				noCancel: true,
-				color: result.success ? 'success' : 'error',
-			})
+			// Only show the dialog if there's a meaningful message that requires user acknowledgment
+			if (showDialog && message) {
+				this.confirm(title, message, 'info', {
+					confirmText: 'Ok',
+					noCancel: true,
+					color: result.success ? 'success' : 'error',
+				})
+			}
 		},
 		async getRelease(project, version) {
 			try {
@@ -1627,7 +1642,23 @@ export default {
 				).then(async (result) => {
 					if (result) {
 						await event.detail.updateSW()
-						// do not reload page
+						// Wait for the new service worker to take control before reloading
+						if (navigator.serviceWorker) {
+							await new Promise((resolve) => {
+								const onControllerChange = () => {
+									navigator.serviceWorker.removeEventListener(
+										'controllerchange',
+										onControllerChange,
+									)
+									resolve()
+								}
+								navigator.serviceWorker.addEventListener(
+									'controllerchange',
+									onControllerChange,
+								)
+							})
+						}
+						window.location.reload()
 					}
 				})
 			},

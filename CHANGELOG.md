@@ -1,5 +1,108 @@
 
 
+# [11.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.1...v11.7.0) (2025-11-12)
+
+
+### Bug Fixes
+
+* changedZwaveKeys incorrectly includes UI defaults as changes ([#4454](https://github.com/zwave-js/zwave-js-ui/issues/4454)) ([371032c](https://github.com/zwave-js/zwave-js-ui/commit/371032c6768ad06deff874259d04e4eb6f65dd97)), closes [#4413](https://github.com/zwave-js/zwave-js-ui/issues/4413) [zwave-js/zwave-js-ui#4453](https://github.com/zwave-js/zwave-js-ui/issues/4453)
+* correct PKG_NODE_PATH in armv7 build workflow ([1ef89e5](https://github.com/zwave-js/zwave-js-ui/commit/1ef89e5f14daeaa891f705d2497e64f50e640923))
+* refresh node neighbors on panel open for all node types ([3d2addc](https://github.com/zwave-js/zwave-js-ui/commit/3d2addc255f60472fa0f867f35a6083499818fc6))
+* **ui:** add null check in setRoute to handle cancelled dialog ([#4450](https://github.com/zwave-js/zwave-js-ui/issues/4450)) ([b472afc](https://github.com/zwave-js/zwave-js-ui/commit/b472afc5d498d426cfb24f8cee755de1bd937d5f))
+
+
+### Features
+
+* bump zwave-js@15.16.0 ([#4448](https://github.com/zwave-js/zwave-js-ui/issues/4448)) ([6d7fca0](https://github.com/zwave-js/zwave-js-ui/commit/6d7fca0907839f16b0a804c733759e0a54554647))
+
+## [11.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.0...v11.6.1) (2025-10-29)
+
+
+### Bug Fixes
+
+* docker issue on buildLogConfig ([641d3ce](https://github.com/zwave-js/zwave-js-ui/commit/641d3ce835fd06f158e12ae868fe8302c709dbd6)), closes [#4443](https://github.com/zwave-js/zwave-js-ui/issues/4443)
+
+# [11.6.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.2...v11.6.0) (2025-10-29)
+
+
+### Bug Fixes
+
+* refresh route data after rebuilding node routes to update UI ([#4422](https://github.com/zwave-js/zwave-js-ui/issues/4422)) ([de64c22](https://github.com/zwave-js/zwave-js-ui/commit/de64c222d50805782ec5815421229961cbf4554d)), closes [zwave-js/zwave-js-ui#4295](https://github.com/zwave-js/zwave-js-ui/issues/4295) [zwave-js/zwave-js-ui#4295](https://github.com/zwave-js/zwave-js-ui/issues/4295)
+* update plugin import to use dynamic import syntax ([#4429](https://github.com/zwave-js/zwave-js-ui/issues/4429)) ([9ad1318](https://github.com/zwave-js/zwave-js-ui/commit/9ad13183df32e741dad98117fdaf3c56be399bf8)), closes [#4427](https://github.com/zwave-js/zwave-js-ui/issues/4427)
+
+
+### Features
+
+* add option to disable automatic firmware update checks and dismiss updates ([#4441](https://github.com/zwave-js/zwave-js-ui/issues/4441)) ([b121d81](https://github.com/zwave-js/zwave-js-ui/commit/b121d8134b4d7fcebf3ae54a02076c7b0b32613d)), closes [#4439](https://github.com/zwave-js/zwave-js-ui/issues/4439) [#4440](https://github.com/zwave-js/zwave-js-ui/issues/4440) [zwave-js/zwave-js-ui#4440](https://github.com/zwave-js/zwave-js-ui/issues/4440)
+* **settings:** intelligent restart with hot-reload for editable Z-Wave options ([#4413](https://github.com/zwave-js/zwave-js-ui/issues/4413)) ([d574d8b](https://github.com/zwave-js/zwave-js-ui/commit/d574d8ba9cdeb9f943b4e62dca1928e99134a72e)), closes [zwave-js/zwave-js-ui#4410](https://github.com/zwave-js/zwave-js-ui/issues/4410)
+* **ui:** add UI setting to make compact view the default ([#4437](https://github.com/zwave-js/zwave-js-ui/issues/4437)) ([6812d59](https://github.com/zwave-js/zwave-js-ui/commit/6812d592618cfc1a742d5e6394bfa5074daac41d)), closes [#4433](https://github.com/zwave-js/zwave-js-ui/issues/4433) [zwave-js/zwave-js-ui#4436](https://github.com/zwave-js/zwave-js-ui/issues/4436)
+* **ui:** allow removing multiple failed nodes ([#4434](https://github.com/zwave-js/zwave-js-ui/issues/4434)) ([8eec845](https://github.com/zwave-js/zwave-js-ui/commit/8eec845ead39b46488ddce9fc4f88641499cc152))
+
+## [11.5.2](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.1...v11.5.2) (2025-10-17)
+
+
+### Bug Fixes
+
+* log store path during application startup ([44338d7](https://github.com/zwave-js/zwave-js-ui/commit/44338d7f7191a734e7f445a2727dae20a6cc12b9))
+* remove .npmignore and update files in package.json ([20a76e2](https://github.com/zwave-js/zwave-js-ui/commit/20a76e218112077a32c76c6fb25313b8fac9156c))
+* restore release-it hooks ([f7ba20e](https://github.com/zwave-js/zwave-js-ui/commit/f7ba20e0f137caea4d787f29ec5f013802309336))
+
+## [11.5.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.5.0...v11.5.1) (2025-10-17)
+
+
+### Bug Fixes
+
+* move patch-package to deps to fix npm issue ([d08e0f4](https://github.com/zwave-js/zwave-js-ui/commit/d08e0f41ef0fd06e6e34b7088b7693624732cfe3))
+
+# [11.5.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.1...v11.5.0) (2025-10-15)
+
+
+### Bug Fixes
+
+* **ui:** refresh node neighbors when opening node panel in zwave graph ([#4416](https://github.com/zwave-js/zwave-js-ui/issues/4416)) ([800dff9](https://github.com/zwave-js/zwave-js-ui/commit/800dff92475d6b0f4f0bb30ad9bac4d3497f4e72)), closes [#4409](https://github.com/zwave-js/zwave-js-ui/issues/4409) [#4409](https://github.com/zwave-js/zwave-js-ui/issues/4409) [/github.com/zwave-js/zwave-js-ui/discussions/4409#discussioncomment-14623043](https://github.com//github.com/zwave-js/zwave-js-ui/discussions/4409/issues/discussioncomment-14623043) [zwave-js/zwave-js-ui#4412](https://github.com/zwave-js/zwave-js-ui/issues/4412)
+
+
+### Features
+
+* bump zwave-js@15.15.2 ([#4417](https://github.com/zwave-js/zwave-js-ui/issues/4417)) ([3df5c94](https://github.com/zwave-js/zwave-js-ui/commit/3df5c9466b8e5f6d65bbd637279472f402e6d2fa))
+* bump zwave-js@15.15.3 ([#4420](https://github.com/zwave-js/zwave-js-ui/issues/4420)) ([57a7da7](https://github.com/zwave-js/zwave-js-ui/commit/57a7da75071890eb8614f2813b4d9ceeb44afdc3))
+* implement backend-based firmware update checking with optimized scheduling and refined dialog UX ([#4371](https://github.com/zwave-js/zwave-js-ui/issues/4371)) ([6a02bf4](https://github.com/zwave-js/zwave-js-ui/commit/6a02bf49f4a5bb37f5726af95751eaabf00eb563)), closes [#4366](https://github.com/zwave-js/zwave-js-ui/issues/4366)
+
+## [11.4.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.4.0...v11.4.1) (2025-10-07)
+
+
+### Bug Fixes
+
+* restore commonjs build ([#4405](https://github.com/zwave-js/zwave-js-ui/issues/4405)) ([f9e51ad](https://github.com/zwave-js/zwave-js-ui/commit/f9e51ad2d0f9c39b465acae65a028249c125868f)), closes [#4401](https://github.com/zwave-js/zwave-js-ui/issues/4401)
+
+# [11.4.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.1...v11.4.0) (2025-10-06)
+
+
+### Bug Fixes
+
+* refresh normal powerlevel after region change in auto mode ([#4391](https://github.com/zwave-js/zwave-js-ui/issues/4391)) ([81f4848](https://github.com/zwave-js/zwave-js-ui/commit/81f48486f05ff8b8e2357fb11a129454e652a881))
+* **ui:** prevent "undefined" text in parameter chips with manual entry ([#4388](https://github.com/zwave-js/zwave-js-ui/issues/4388)) ([defef2c](https://github.com/zwave-js/zwave-js-ui/commit/defef2c1fb8361888d6759ae3289dc6234a404d7)), closes [#4354](https://github.com/zwave-js/zwave-js-ui/issues/4354)
+* **ui:** prevent replace failed node without selecting a node ([#4380](https://github.com/zwave-js/zwave-js-ui/issues/4380)) ([a2ae434](https://github.com/zwave-js/zwave-js-ui/commit/a2ae4345ffb35a15568aded22c0bb03040b0b3ba)), closes [#4379](https://github.com/zwave-js/zwave-js-ui/issues/4379)
+
+
+### Features
+
+* bump zwave-js@15.15.0 ([#4394](https://github.com/zwave-js/zwave-js-ui/issues/4394)) ([7b0285f](https://github.com/zwave-js/zwave-js-ui/commit/7b0285f3d13c7bcfa1670adc66ece1c688793692))
+* notification handling of battery status support ([#4398](https://github.com/zwave-js/zwave-js-ui/issues/4398)) ([69b28c4](https://github.com/zwave-js/zwave-js-ui/commit/69b28c46d8979e0703be6a8320081b57a36f70de)), closes [#4396](https://github.com/zwave-js/zwave-js-ui/issues/4396)
+
+## [11.3.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.3.0...v11.3.1) (2025-09-24)
+
+
+### Bug Fixes
+
+* **ui:** remove useless refresh neighbors call when opening mesh graph ([#4372](https://github.com/zwave-js/zwave-js-ui/issues/4372)) ([aff315d](https://github.com/zwave-js/zwave-js-ui/commit/aff315d500b48ea3cd4a07a69ab477186bbc6732))
+* **ui:** use a v-number-input for colume input ([fb03fb9](https://github.com/zwave-js/zwave-js-ui/commit/fb03fb9d8816b69860338385db482ab583174fe6)), closes [#4387](https://github.com/zwave-js/zwave-js-ui/issues/4387)
+
+
+### Features
+
+* bump zwave-js@15.14.0 ([#4373](https://github.com/zwave-js/zwave-js-ui/issues/4373)) ([20029b3](https://github.com/zwave-js/zwave-js-ui/commit/20029b31a78fbe6453973882c5d93f1dee0e6423))
+
 # [11.3.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.2.1...v11.3.0) (2025-09-16)
 
 

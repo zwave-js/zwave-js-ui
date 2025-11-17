@@ -1,29 +1,33 @@
-import express, { Request, RequestHandler, Response, Router } from 'express'
+import type { Request, RequestHandler, Response, Router } from 'express'
+import express from 'express'
 import history from 'connect-history-api-fallback'
 import cors from 'cors'
 import csrf from 'csurf'
 import morgan from 'morgan'
-import store, { Settings, User } from './config/store'
-import Gateway, { GatewayConfig, GatewayType } from './lib/Gateway'
-import jsonStore from './lib/jsonStore'
-import * as loggers from './lib/logger'
-import MqttClient from './lib/MqttClient'
-import SocketManager from './lib/SocketManager'
-import ZWaveClient, { CallAPIResult, SensorTypeScale } from './lib/ZwaveClient'
+import type { Settings, User } from './config/store.ts'
+import store from './config/store.ts'
+import type { GatewayConfig } from './lib/Gateway.ts'
+import Gateway, { GatewayType } from './lib/Gateway.ts'
+import jsonStore from './lib/jsonStore.ts'
+import * as loggers from './lib/logger.ts'
+import MqttClient from './lib/MqttClient.ts'
+import SocketManager from './lib/SocketManager.ts'
+import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
+import ZWaveClient from './lib/ZwaveClient.ts'
 import multer, { diskStorage } from 'multer'
 import extract from 'extract-zip'
 import { serverVersion } from '@zwave-js/server'
 import archiver from 'archiver'
 import rateLimit from 'express-rate-limit'
 import session from 'express-session'
-import fs, { mkdirp, move, readdir, rm, stat } from 'fs-extra'
-import { createServer as createHttpServer, Server as HttpServer } from 'http'
-import { createServer as createHttpsServer } from 'https'
+import type { Server as HttpServer } from 'node:http'
+import { createServer as createHttpServer } from 'node:http'
+import { createServer as createHttpsServer } from 'node:https'
 import jwt from 'jsonwebtoken'
-import path from 'path'
+import path from 'node:path'
 import sessionStore from 'session-file-store'
-import { Socket } from 'socket.io'
-import { promisify } from 'util'
+import type { Socket } from 'socket.io'
+import { promisify } from 'node:util'
 import { Driver, libVersion } from 'zwave-js'
 import {
 	defaultPsw,
@@ -32,18 +36,26 @@ import {
 	snippetsDir,
 	storeDir,
 	tmpDir,
-} from './config/app'
+} from './config/app.ts'
+import type { CustomPlugin, PluginConstructor } from './lib/CustomPlugin.ts'
+import { createPlugin } from './lib/CustomPlugin.ts'
+import { inboundEvents, socketEvents } from './lib/SocketEvents.ts'
+import * as utils from './lib/utils.ts'
+import backupManager from './lib/BackupManager.ts'
 import {
-	createPlugin,
-	CustomPlugin,
-	PluginConstructor,
-} from './lib/CustomPlugin'
-import { inboundEvents, socketEvents } from './lib/SocketEvents'
-import * as utils from './lib/utils'
-import backupManager from './lib/BackupManager'
-import { readFile, realpath } from 'fs/promises'
+	readFile,
+	realpath,
+	readdir,
+	stat,
+	rm,
+	rename,
+	writeFile,
+	lstat,
+	mkdir,
+} from 'node:fs/promises'
 import { generate } from 'selfsigned'
-import ZnifferManager, { ZnifferConfig } from './lib/ZnifferManager'
+import type { ZnifferConfig } from './lib/ZnifferManager.ts'
+import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
 
 const createCertificate = promisify(generate)
@@ -62,7 +74,7 @@ function multerPromise(
 	return new Promise((resolve, reject) => {
 		m(req, res, (err: any) => {
 			if (err) {
-				reject(err)
+				reject(err as Error)
 			} else {
 				resolve()
 			}
@@ -72,7 +84,7 @@ function multerPromise(
 
 const Storage = diskStorage({
 	async destination(reqD, file, callback) {
-		await mkdirp(tmpDir)
+		await utils.ensureDir(tmpDir)
 		callback(null, tmpDir)
 	},
 	filename(reqF, file, callback) {
@@ -262,7 +274,7 @@ const defaultSnippets: utils.Snippet[] = []
 
 async function loadSnippets() {
 	const localSnippetsDir = utils.joinPath(false, 'snippets')
-	await mkdirp(snippetsDir)
+	await utils.ensureDir(snippetsDir)
 
 	const files = await readdir(localSnippetsDir)
 	for (const file of files) {
@@ -329,8 +341,8 @@ async function loadCertKey(): Promise<{
 	let cert: string
 
 	try {
-		cert = await fs.readFile(certFile, 'utf8')
-		key = await fs.readFile(keyFile, 'utf8')
+		cert = await readFile(certFile, 'utf8')
+		key = await readFile(keyFile, 'utf8')
 	} catch (error) {
 		// noop
 	}
@@ -349,8 +361,8 @@ async function loadCertKey(): Promise<{
 			key = result.private
 			cert = result.cert
 
-			await fs.writeFile(utils.joinPath(storeDir, 'key.pem'), key)
-			await fs.writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
+			await writeFile(utils.joinPath(storeDir, 'key.pem'), key)
+			await writeFile(utils.joinPath(storeDir, 'cert.pem'), cert)
 			logger.info('New cert and key created')
 		} catch (error) {
 			logger.error('Error creating cert and key for HTTPS', error)
@@ -405,9 +417,10 @@ async function startGateway(settings: Settings) {
 					app: pluginsRouter,
 					logger: loggers.module(pluginName),
 				}
+				const constructor = (await import(plugin))
+					.default as PluginConstructor
 				const instance = createPlugin(
-					// eslint-disable-next-line @typescript-eslint/no-var-requires
-					require(plugin) as PluginConstructor,
+					constructor,
 					pluginsContext,
 					pluginName,
 				)
@@ -448,14 +461,14 @@ function setupInterceptor() {
 
 async function parseDir(dir: string): Promise<StoreFileEntry[]> {
 	const toReturn = []
-	const files = await fs.readdir(dir)
+	const files = await readdir(dir)
 	for (const file of files) {
 		try {
 			const entry: StoreFileEntry = {
 				name: path.basename(file),
 				path: utils.joinPath(dir, file),
 			}
-			const stats = await fs.lstat(entry.path)
+			const stats = await lstat(entry.path)
 			if (stats.isDirectory()) {
 				if (entry.path === process.env.ZWAVEJS_EXTERNAL_CONFIG) {
 					// hide config-db
@@ -499,6 +512,7 @@ function sortStore(store: StoreFileEntry[]) {
 
 logger.info(`Version: ${utils.getVersion()}`)
 logger.info('Application path:' + utils.getPath(true))
+logger.info('Store path:' + storeDir)
 
 if (process.env.TRUST_PROXY) {
 	app.set(
@@ -599,7 +613,6 @@ const csrfProtection = csrf({
 
 // ### SOCKET SETUP
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const noop = () => {}
 
 /**
@@ -627,7 +640,7 @@ function setupSocket(server: HttpServer) {
 
 		socket.on(
 			inboundEvents.zwave,
-			// eslint-disable-next-line @typescript-eslint/no-misused-promises
+
 			async (data, cb = noop) => {
 				if (gw.zwave) {
 					if (!data.args) data.args = []
@@ -645,7 +658,6 @@ function setupSocket(server: HttpServer) {
 			},
 		)
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on(inboundEvents.mqtt, (data, cb = noop) => {
 			logger.info(`Mqtt api call: ${data.api}`)
 
@@ -677,7 +689,6 @@ function setupSocket(server: HttpServer) {
 			cb(result)
 		})
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on(inboundEvents.hass, async (data, cb = noop) => {
 			logger.info(`Hass api call: ${data.apiName}`)
 
@@ -731,7 +742,6 @@ function setupSocket(server: HttpServer) {
 			cb(result)
 		})
 
-		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		socket.on(inboundEvents.zniffer, async (data, cb = noop) => {
 			logger.info(`Zniffer api call: ${data.api}`)
 
@@ -1058,7 +1068,7 @@ app.get(
 		const allSensors = getAllSensors()
 		const namedScaleGroups = getAllNamedScaleGroups()
 
-		const scales: SensorTypeScale[] = []
+		const scales: ZwaveConfig['scales'] = []
 
 		for (const group of namedScaleGroups) {
 			for (const scale of Object.values(group.scales)) {
@@ -1127,66 +1137,248 @@ app.post(
 			}
 			let settings = req.body
 
-			let restartAll = false
+			let shouldRestart = false
 			let shouldRestartGw = false
 			let shouldRestartZniffer = false
+			let canUpdateZwaveOptions = false
 
 			const actualSettings = jsonStore.get(store.settings) as Settings
 
 			// TODO: validate settings using calss-validator
 			// when settings is null consider a force restart
 			if (settings && Object.keys(settings).length > 0) {
-				shouldRestartGw = !utils.deepEqual(
-					{
-						zwave: actualSettings.zwave,
-						gateway: actualSettings.gateway,
-						mqtt: actualSettings.mqtt,
-					},
-					{
-						zwave: settings.zwave,
-						gateway: settings.gateway,
-						mqtt: settings.mqtt,
-					},
+				// Check if gateway settings changed
+				const gatewayChanged = !utils.deepEqual(
+					actualSettings.gateway,
+					settings.gateway,
+				)
+				const mqttChanged = !utils.deepEqual(
+					actualSettings.mqtt,
+					settings.mqtt,
 				)
 
+				if (gatewayChanged || mqttChanged) {
+					shouldRestartGw = true
+					shouldRestart = true
+				}
+
+				let changedZwaveKeys: string[] = []
+
+				// Check if Z-Wave settings changed
+				if (!utils.deepEqual(actualSettings.zwave, settings.zwave)) {
+					// These are ZwaveClient configuration properties that map to
+					// driver.updateOptions() parameters. The commented names show
+					// the corresponding driver option keys:
+					// - 'scales' maps to 'preferences.scales'
+					// - 'logEnabled', 'logLevel', etc. map to 'logConfig' properties
+					// - 'disableOptimisticValueUpdate' maps directly
+					const editableZWaveSettings = [
+						'disableOptimisticValueUpdate',
+						// preferences
+						'scales',
+						// logConfig
+						'logEnabled',
+						'logLevel',
+						'logToFile',
+						'maxFiles',
+						'nodeFilter',
+					]
+
+					// Find which Z-Wave settings actually changed
+					// Only check keys that exist in actual settings to avoid detecting
+					// new default properties added by the UI as "changed"
+					const allKeys = new Set([
+						...Object.keys(actualSettings.zwave || {}),
+						...Object.keys(settings.zwave || {}),
+					])
+					changedZwaveKeys = Array.from(allKeys).filter((key) => {
+						return !utils.deepEqual(
+							actualSettings.zwave?.[key],
+							settings.zwave?.[key],
+						)
+					})
+
+					logger.log('debug', 'Z-Wave settings changed: %o', {
+						changedKeys: changedZwaveKeys,
+						hasDriver: !!gw?.zwave?.driver,
+					})
+
+					// Check if only editable options changed
+					const onlyEditableChanged = changedZwaveKeys.every((key) =>
+						editableZWaveSettings.includes(key),
+					)
+
+					logger.log(
+						'debug',
+						'Checking if can update without restart: %o',
+						{
+							onlyEditableChanged,
+							changedKeysLength: changedZwaveKeys.length,
+							hasDriver: !!gw?.zwave?.driver,
+						},
+					)
+
+					if (
+						onlyEditableChanged &&
+						changedZwaveKeys.length > 0 &&
+						gw?.zwave?.driver
+					) {
+						// Can update options without restart
+						canUpdateZwaveOptions = true
+						logger.info(
+							'Z-Wave settings can be updated without restart',
+						)
+					} else {
+						// Need full restart
+						shouldRestartGw = true
+						shouldRestart = true
+						logger.info('Z-Wave settings require full restart', {
+							reason: !onlyEditableChanged
+								? 'non-editable settings changed'
+								: changedZwaveKeys.length === 0
+									? 'no keys changed'
+									: 'driver not available',
+						})
+					}
+				}
+
+				// Check if Zniffer settings changed
 				shouldRestartZniffer = !utils.deepEqual(
 					actualSettings.zniffer,
 					settings.zniffer,
 				)
-
-				// nothing changed, consider it a forced restart
-				restartAll = !shouldRestartGw && !shouldRestartZniffer
-
-				await jsonStore.put(store.settings, settings)
-			} else {
-				restartAll = true
-				settings = actualSettings
-			}
-
-			if (restartAll || shouldRestartGw) {
-				restarting = true
-
-				await gw.close()
-
-				await destroyPlugins()
-				// reload loggers settings
-				setupLogging(settings)
-				// restart clients and gateway
-				await startGateway(settings)
-				backupManager.init(gw.zwave)
-			}
-
-			if (restartAll || shouldRestartZniffer) {
-				if (zniffer) {
-					await zniffer.close()
+				if (shouldRestartZniffer) {
+					shouldRestart = true
 				}
-				startZniffer(settings.zniffer)
+
+				// Save settings to file
+				await jsonStore.put(store.settings, settings)
+
+				// Update driver options if only editable options changed
+				if (canUpdateZwaveOptions && gw?.zwave?.driver) {
+					try {
+						// Build editable options object with only changed properties
+						// Map our settings to PartialZWaveOptions format
+						const editableOptions: any = {}
+
+						// Check disableOptimisticValueUpdate
+						if (
+							changedZwaveKeys.includes(
+								'disableOptimisticValueUpdate',
+							) &&
+							settings.zwave?.disableOptimisticValueUpdate !==
+								undefined
+						) {
+							editableOptions.disableOptimisticValueUpdate =
+								settings.zwave.disableOptimisticValueUpdate
+						}
+
+						// Check scales (maps to preferences.scales)
+						if (
+							changedZwaveKeys.includes('scales') &&
+							settings.zwave?.scales !== undefined
+						) {
+							const preferences = utils.buildPreferences(
+								settings.zwave || {},
+							)
+							if (preferences) {
+								editableOptions.preferences = preferences
+							}
+						}
+
+						// Check logConfig properties
+						const logConfigChanged =
+							[
+								'logEnabled',
+								'logLevel',
+								'logToFile',
+								'maxFiles',
+								'nodeFilter',
+							].filter((key) => {
+								return (
+									changedZwaveKeys.includes(key) &&
+									settings.zwave?.[key] !== undefined
+								)
+							}).length > 0
+
+						if (logConfigChanged) {
+							// Build logConfig object from our settings
+							editableOptions.logConfig = utils.buildLogConfig(
+								settings.zwave || {},
+							)
+						}
+
+						if (Object.keys(editableOptions).length > 0) {
+							gw.zwave.driver.updateOptions(editableOptions)
+							logger.info(
+								'Updated Z-Wave driver options without restart:',
+								Object.keys(editableOptions).join(', '),
+							)
+						}
+					} catch (error) {
+						logger.error('Error updating driver options', error)
+						// If update fails, require restart
+						shouldRestart = true
+						shouldRestartGw = true
+					}
+				}
+			} else {
+				// Force restart if no settings provided
+				shouldRestart = true
+				settings = actualSettings
 			}
 
 			res.json({
 				success: true,
-				message: 'Configuration updated successfully',
+				message: shouldRestart
+					? 'Configuration saved. Restart required to apply changes.'
+					: 'Configuration updated successfully',
 				data: settings,
+				shouldRestart,
+			})
+		} catch (error) {
+			restarting = false
+			logger.error(error)
+			res.json({ success: false, message: error.message })
+		}
+	},
+)
+
+// restart gateway
+app.post(
+	'/api/restart',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			if (restarting) {
+				throw Error(
+					'Gateway is already restarting, wait a moment before doing another request',
+				)
+			}
+
+			const settings = jsonStore.get(store.settings) as Settings
+
+			restarting = true
+
+			// Close gateway and restart
+			await gw.close()
+			await destroyPlugins()
+			if (settings.gateway) {
+				setupLogging({ gateway: settings.gateway })
+			}
+			await startGateway(settings)
+			backupManager.init(gw.zwave)
+
+			// Restart Zniffer if enabled
+			if (zniffer) {
+				await zniffer.close()
+			}
+			startZniffer(settings.zniffer)
+
+			res.json({
+				success: true,
+				message: 'Gateway restarted successfully',
 			})
 		} catch (error) {
 			restarting = false
@@ -1372,18 +1564,18 @@ app.get('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 		if (req.query.path) {
 			const reqPath = getSafePath(req)
 			// lgtm [js/path-injection]
-			let stat = await fs.lstat(reqPath)
+			let stat = await lstat(reqPath)
 
 			// check symlink is secure
 			if (stat.isSymbolicLink()) {
 				const realPath = await realpath(reqPath)
 				getSafePath(realPath)
-				stat = await fs.lstat(realPath)
+				stat = await lstat(realPath)
 			}
 
 			if (stat.isFile()) {
 				// lgtm [js/path-injection]
-				data = await fs.readFile(reqPath, 'utf8')
+				data = await readFile(reqPath, 'utf8')
 			} else {
 				// read directory
 				// lgtm [js/path-injection]
@@ -1416,7 +1608,7 @@ app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 		if (!isNew) {
 			// lgtm [js/path-injection]
-			const stat = await fs.lstat(reqPath)
+			const stat = await lstat(reqPath)
 
 			if (!stat.isFile()) {
 				throw Error('Path is not a file')
@@ -1425,10 +1617,10 @@ app.put('/api/store', storeLimiter, isAuthenticated, async function (req, res) {
 
 		if (!isDirectory) {
 			// lgtm [js/path-injection]
-			await fs.writeFile(reqPath, req.body.content, 'utf8')
+			await writeFile(reqPath, req.body.content, 'utf8')
 		} else {
 			// lgtm [js/path-injection]
-			await fs.mkdir(reqPath)
+			await mkdir(reqPath)
 		}
 
 		res.json({ success: true })
@@ -1447,7 +1639,7 @@ app.delete(
 			const reqPath = getSafePath(req)
 
 			// lgtm [js/path-injection]
-			await fs.remove(reqPath)
+			await rm(reqPath, { recursive: true, force: true })
 
 			res.json({ success: true })
 		} catch (error) {
@@ -1465,7 +1657,7 @@ app.put(
 		try {
 			const files = req.body.files || []
 			for (const f of files) {
-				await fs.remove(f)
+				await rm(f, { recursive: true, force: true })
 			}
 			res.json({ success: true })
 		} catch (error) {
@@ -1503,7 +1695,7 @@ app.post(
 		archive.pipe(res)
 
 		for (const f of files) {
-			const s = await fs.lstat(f)
+			const s = await lstat(f)
 			const name = f.replace(storeDir, '')
 			if (s.isFile()) {
 				archive.file(f, { name })
@@ -1564,7 +1756,7 @@ app.post(
 				const destinationPath = getSafePath(
 					path.join(storeDir, folder, file.originalname),
 				)
-				await move(file.path, destinationPath)
+				await rename(file.path, destinationPath)
 			}
 
 			res.json({ success: true })
@@ -1628,13 +1820,11 @@ async function gracefuShutdown() {
 process.on('uncaughtException', (reason) => {
 	const stack = (reason as any).stack || ''
 	logger.error(
-		// eslint-disable-next-line @typescript-eslint/no-base-to-string
 		`Unhandled Rejection, reason: ${reason}${stack ? `\n${stack}` : ''}`,
 	)
 })
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	process.once(signal as NodeJS.Signals, gracefuShutdown)
 }
 

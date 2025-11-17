@@ -1,9 +1,10 @@
 <template>
 	<v-container grid-list-md>
-		<v-row class="ml-5">
+		<v-row :class="dialogMode ? '' : 'ml-5'">
 			<v-col v-show="!node.firmwareUpdate" cols="12">
 				<v-row justify="center" class="mb-2 text-center">
 					<v-btn
+						v-if="!dialogMode"
 						:disabled="loading"
 						variant="outlined"
 						class="my-auto"
@@ -16,7 +17,7 @@
 						hide-details
 						density="compact"
 						label="Include pre-releases"
-						class="ml-2 my-auto"
+						:class="dialogMode ? 'my-auto' : 'ml-2 my-auto'"
 					>
 					</v-checkbox>
 					<v-checkbox
@@ -55,8 +56,8 @@
 			<template v-if="filteredUpdates.length > 0 && !node.firmwareUpdate">
 				<v-col
 					cols="12"
-					sm="6"
-					md="4"
+					:sm="dialogMode ? '12' : '6'"
+					:md="dialogMode ? '6' : '4'"
 					v-for="u in filteredUpdates"
 					:key="u.version"
 				>
@@ -73,6 +74,17 @@
 								>
 
 								<v-spacer></v-spacer>
+								<v-btn
+									variant="outlined"
+									size="small"
+									color="error"
+									@click="dismissUpdate(u)"
+									icon="close"
+									v-tooltip:bottom="'Dismiss this update'"
+									aria-label="Dismiss this update"
+									class="mr-2"
+								>
+								</v-btn>
 								<v-btn
 									variant="outlined"
 									size="small"
@@ -190,6 +202,10 @@ export default {
 			type: Boolean,
 			default: false,
 		},
+		dialogMode: {
+			type: Boolean,
+			default: false,
+		},
 	},
 	mixins: [InstancesMixin],
 	data() {
@@ -222,6 +238,38 @@ export default {
 	},
 	methods: {
 		...mapActions(useBaseStore, ['showSnackbar']),
+		async dismissUpdate(update) {
+			const confirmed = await this.app.confirm(
+				'Dismiss firmware update',
+				`Are you sure you want to dismiss firmware update v${update.version}? This will hide the update notification for this version until the next time the device's firmware updates are checked.`,
+				'warning',
+			)
+
+			if (!confirmed) {
+				return
+			}
+
+			const response = await this.app.apiRequest(
+				'dismissFirmwareUpdate',
+				[this.node.id, update.version],
+			)
+
+			if (response.success) {
+				this.showSnackbar(
+					`Firmware update v${update.version} dismissed`,
+					'success',
+				)
+				// Remove the dismissed update from the local list
+				this.fwUpdates = this.fwUpdates.filter(
+					(u) => u.version !== update.version,
+				)
+			} else {
+				this.showSnackbar(
+					`Failed to dismiss firmware update: ${response.message}`,
+					'error',
+				)
+			}
+		},
 		async checkUpdates() {
 			this.loading = true
 			this.fwUpdates = []

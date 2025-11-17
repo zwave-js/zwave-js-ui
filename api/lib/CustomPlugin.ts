@@ -1,7 +1,7 @@
-import { Router } from 'express'
-import MqttClient from './MqttClient'
-import { ModuleLogger } from './logger'
-import ZwaveClient from './ZwaveClient'
+import type { Router } from 'express'
+import type MqttClient from './MqttClient.ts'
+import type { ModuleLogger } from './logger.ts'
+import type ZwaveClient from './ZwaveClient.ts'
 
 export interface PluginContext {
 	zwave: ZwaveClient
