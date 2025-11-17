@@ -588,7 +588,6 @@ export type ZUINode = {
 	availableFirmwareUpdates?: FirmwareUpdateInfo[]
 	firmwareUpdatesDismissed?: { [version: string]: boolean }
 	lastFirmwareUpdateCheck?: number
-	pendingFirmwareUpdateCheckAfterInterview?: boolean
 }
 
 export type NodeEvent = {
@@ -744,6 +743,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	private restartTimeout: NodeJS.Timeout
 
 	private driverFunctionCache: utils.Snippet[] = []
+
+	// Tracks node IDs that are pending firmware update check after interview completes
+	private _nodesPendingFirmwareUpdateCheck: Set<number> = new Set()
 
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
@@ -5778,8 +5780,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		// Check for firmware updates after interview if this was triggered by a firmware update
 		// This ensures we check with the updated firmware version instead of stale cached data
-		if (node?.pendingFirmwareUpdateCheckAfterInterview) {
-			node.pendingFirmwareUpdateCheckAfterInterview = false
+		if (this._nodesPendingFirmwareUpdateCheck.has(zwaveNode.id)) {
+			this._nodesPendingFirmwareUpdateCheck.delete(zwaveNode.id)
 			this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
 				(error) => {
 					this.logNode(
@@ -6251,8 +6253,8 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				this.logNode(zwaveNode, 'info', 'Will be re-interviewed')
 				// Mark node for firmware update check after interview completes
 				// to avoid race condition with stale firmware version
-				if (node && !this.cfg.disableAutomaticFirmwareUpdateChecks) {
-					node.pendingFirmwareUpdateCheckAfterInterview = true
+				if (!this.cfg.disableAutomaticFirmwareUpdateChecks) {
+					this._nodesPendingFirmwareUpdateCheck.add(zwaveNode.id)
 				}
 			} else {
 				// Query for new firmware updates immediately if not re-interviewing
