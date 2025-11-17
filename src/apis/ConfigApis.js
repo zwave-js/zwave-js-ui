@@ -157,4 +157,50 @@ export default {
 		const response = await request.post('/versions', { disableChangelog })
 		return response.data
 	},
+	// ---- DEBUG CAPTURE -----
+	async getDebugStatus() {
+		const response = await request.get('/debug/status')
+		return response.data
+	},
+	async startDebugCapture() {
+		const response = await request.post('/debug/start')
+		return response.data
+	},
+	async stopDebugCapture(nodeIds = []) {
+		const response = await axios({
+			method: 'post',
+			url: '/debug/stop',
+			data: { nodeIds },
+			responseType: 'blob',
+		})
+
+		// Trigger download
+		const url = window.URL.createObjectURL(new Blob([response.data]))
+		const link = document.createElement('a')
+		link.href = url
+
+		// Get filename from Content-Disposition header
+		const contentDisposition = response.headers['content-disposition']
+		let filename = 'zwave-debug.zip'
+		if (contentDisposition) {
+			const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(
+				contentDisposition,
+			)
+			if (matches != null && matches[1]) {
+				filename = matches[1].replace(/['"]/g, '')
+			}
+		}
+
+		link.setAttribute('download', filename)
+		document.body.appendChild(link)
+		link.click()
+		link.remove()
+		window.URL.revokeObjectURL(url)
+
+		return { success: true }
+	},
+	async cancelDebugCapture() {
+		const response = await request.post('/debug/cancel')
+		return response.data
+	},
 }

@@ -1789,92 +1789,107 @@ app.get('/api/debug/status', apisLimiter, isAuthenticated, function (req, res) {
 	})
 })
 
-app.post('/api/debug/start', apisLimiter, isAuthenticated, async function (req, res) {
-	try {
-		if (debugManager.isSessionActive()) {
-			return res.json({
+app.post(
+	'/api/debug/start',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			if (debugManager.isSessionActive()) {
+				return res.json({
+					success: false,
+					message: 'A debug session is already active',
+				})
+			}
+
+			const settings: Settings =
+				jsonStore.get(store.settings) || ({} as Settings)
+			const originalLogLevel = settings.gateway?.logLevel || 'info'
+
+			await debugManager.startSession(
+				logContainer,
+				gw.zwave,
+				originalLogLevel,
+			)
+
+			res.json({
+				success: true,
+				message: 'Debug capture started',
+			})
+		} catch (err) {
+			logger.error('Error starting debug session:', err)
+			res.json({
 				success: false,
-				message: 'A debug session is already active',
+				message: err.message,
 			})
 		}
+	},
+)
 
-		const settings: Settings =
-			jsonStore.get(store.settings) || ({} as Settings)
-		const originalLogLevel = settings.gateway?.logLevel || 'info'
+app.post(
+	'/api/debug/stop',
+	apisLimiter,
+	isAuthenticated,
+	async function (req, res) {
+		try {
+			if (!debugManager.isSessionActive()) {
+				return res.json({
+					success: false,
+					message: 'No active debug session',
+				})
+			}
 
-		await debugManager.startSession(
-			logContainer,
-			gw.zwave,
-			originalLogLevel,
-		)
+			const nodeIds: number[] = req.body.nodeIds || []
 
-		res.json({
-			success: true,
-			message: 'Debug capture started',
-		})
-	} catch (err) {
-		logger.error('Error starting debug session:', err)
-		res.json({
-			success: false,
-			message: err.message,
-		})
-	}
-})
+			const archive = await debugManager.stopSession(
+				logContainer,
+				gw.zwave,
+				nodeIds,
+			)
 
-app.post('/api/debug/stop', apisLimiter, isAuthenticated, async function (req, res) {
-	try {
-		if (!debugManager.isSessionActive()) {
-			return res.json({
+			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+			res.attachment(`zwave-debug-${timestamp}.zip`)
+			res.setHeader('Content-Type', 'application/zip')
+
+			archive.pipe(res)
+		} catch (err) {
+			logger.error('Error stopping debug session:', err)
+			res.json({
 				success: false,
-				message: 'No active debug session',
+				message: err.message,
 			})
 		}
+	},
+)
 
-		const nodeIds: number[] = req.body.nodeIds || []
+app.post(
+	'/api/debug/cancel',
+	apisLimiter,
+	isAuthenticated,
+	function (req, res) {
+		try {
+			if (!debugManager.isSessionActive()) {
+				return res.json({
+					success: false,
+					message: 'No active debug session',
+				})
+			}
 
-		const archive = await debugManager.stopSession(
-			logContainer,
-			gw.zwave,
-			nodeIds,
-		)
+			debugManager.cancelSession(logContainer, gw.zwave)
 
-		const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-		res.attachment(`zwave-debug-${timestamp}.zip`)
-		res.setHeader('Content-Type', 'application/zip')
-
-		archive.pipe(res)
-	} catch (err) {
-		logger.error('Error stopping debug session:', err)
-		res.json({
-			success: false,
-			message: err.message,
-		})
-	}
-})
-
-app.post('/api/debug/cancel', apisLimiter, isAuthenticated, function (req, res) {
-	try {
-		if (!debugManager.isSessionActive()) {
-			return res.json({
+			res.json({
+				success: true,
+				message: 'Debug capture cancelled',
+			})
+		} catch (err) {
+			logger.error('Error cancelling debug session:', err)
+			res.json({
 				success: false,
-				message: 'No active debug session',
+				message: err.message,
 			})
 		}
-
-		debugManager.cancelSession(logContainer, gw.zwave)
-
-		res.json({
-			success: true,
-			message: 'Debug capture cancelled',
-		})
-	} catch (err) {
-		logger.error('Error cancelling debug session:', err)
-		res.json({
-			success: false,
-			message: err.message,
-		})
-	}
-})
+	},
+)
 
 // ### ERROR HANDLERS
 

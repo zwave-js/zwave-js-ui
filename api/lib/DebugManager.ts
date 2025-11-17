@@ -155,9 +155,12 @@ class DebugManager {
 				}
 			} catch (error) {
 				// Log error but continue with other nodes
-				archive.append(`Error dumping node ${nodeId}: ${error.message}`, {
-					name: `node-${nodeId}-error.txt`,
-				})
+				archive.append(
+					`Error dumping node ${nodeId}: ${error.message}`,
+					{
+						name: `node-${nodeId}-error.txt`,
+					},
+				)
 			}
 		}
 
@@ -165,8 +168,7 @@ class DebugManager {
 		const metadata = {
 			startTime: session.startTime.toISOString(),
 			endTime: new Date().toISOString(),
-			duration:
-				new Date().getTime() - session.startTime.getTime() + 'ms',
+			duration: new Date().getTime() - session.startTime.getTime() + 'ms',
 			nodesIncluded: nodeIds,
 			logCount: session.logs.length,
 		}

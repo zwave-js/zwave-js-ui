@@ -67,6 +67,8 @@
 			:title="advancedDialogTitle"
 		/>
 
+		<DialogDebugCapture v-model="debugCaptureDialog" />
+
 		<base-fab
 			v-model="fab"
 			location="bottom end"
@@ -103,6 +105,9 @@ export default {
 		),
 		DialogAdvanced: defineAsyncComponent(
 			() => import('@/components/dialogs/DialogAdvanced.vue'),
+		),
+		DialogDebugCapture: defineAsyncComponent(
+			() => import('@/components/dialogs/DialogDebugCapture.vue'),
 		),
 		StatisticsCard: defineAsyncComponent(
 			() => import('@/components/custom/StatisticsCard.vue'),
@@ -180,6 +185,7 @@ export default {
 			selected: [],
 			settings: new Settings(localStorage),
 			advancedShowDialog: false,
+			debugCaptureDialog: false,
 			generalActions: [
 				{
 					text: 'Backup',
@@ -195,6 +201,13 @@ export default {
 					options: [{ name: 'Export', action: 'exportDump' }],
 					icon: 'bug_report',
 					desc: 'Export all nodes in a json file. Useful for debugging purposes',
+				},
+				{
+					text: 'Debug Capture',
+					options: [{ name: 'Start', action: 'startDebugCapture' }],
+					icon: 'troubleshoot',
+					color: 'info',
+					desc: 'Start capturing debug logs. Perform the action you want to debug, then stop to download a complete debug package',
 				},
 				{
 					text: 'Re-interview Nodes',
@@ -437,6 +450,8 @@ export default {
 				this.exportConfiguration()
 			} else if (action === 'exportDump') {
 				this.exportDump()
+			} else if (action === 'startDebugCapture') {
+				this.debugCaptureDialog = true
 			} else {
 				this.sendAction(action, { ...args, nodes: this.selected })
 			}
