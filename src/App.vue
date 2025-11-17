@@ -625,8 +625,12 @@ export default {
 	},
 	methods: {
 		finishDebugCapture() {
-			// Emit event to ControlPanel to open the finish dialog
-			this.$root.$emit('openDebugCaptureFinish')
+			// Navigate to control panel and set a flag to open the dialog
+			if (this.$route.path !== '/control-panel') {
+				this.$router.push('/control-panel')
+			}
+			// Set a timestamp to trigger the dialog opening
+			this.updateState({ debugCaptureFinishTrigger: Date.now() })
 		},
 		verifyRoute() {
 			// ensure the actual route is available in pages otherwise redirect to the first one
@@ -699,6 +703,7 @@ export default {
 			'updateNode',
 			'removeNode',
 			'setZnifferState',
+			'updateState',
 		]),
 		copyVersion() {
 			const el = document.createElement('textarea')

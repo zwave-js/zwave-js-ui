@@ -124,7 +124,12 @@ export default {
 		),
 	},
 	computed: {
-		...mapState(useBaseStore, ['nodes', 'zwave', 'controllerNode']),
+		...mapState(useBaseStore, [
+			'nodes',
+			'zwave',
+			'controllerNode',
+			'debugCaptureFinishTrigger',
+		]),
 		fabItems() {
 			const items = []
 
@@ -182,7 +187,13 @@ export default {
 			}`
 		},
 	},
-	watch: {},
+	watch: {
+		debugCaptureFinishTrigger(val) {
+			if (val) {
+				this.openDebugCaptureFinish()
+			}
+		},
+	},
 	data() {
 		return {
 			fab: false,
@@ -518,15 +529,11 @@ export default {
 			'rebuildRoutesProgress',
 			this.setRebuildRoutesProgress.bind(this),
 		)
-		// Listen for event from App.vue to open finish dialog
-		this.$root.$on('openDebugCaptureFinish', this.openDebugCaptureFinish)
 	},
 	beforeUnmount() {
 		if (this.socket) {
 			this.unbindEvents()
 		}
-		// Remove event listener
-		this.$root.$off('openDebugCaptureFinish', this.openDebugCaptureFinish)
 	},
 }
 </script>
