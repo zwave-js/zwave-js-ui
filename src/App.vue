@@ -124,6 +124,20 @@
 					{{ inclusionState.icon }}
 				</v-icon>
 
+				<!-- Debug Capture Indicator -->
+				<v-btn
+					v-if="debugCaptureActive"
+					icon
+					class="mr-3"
+					color="error"
+					v-tooltip:bottom="
+						'Debug capture in progress - Click to finish'
+					"
+					@click="finishDebugCapture"
+				>
+					<v-icon>troubleshoot</v-icon>
+				</v-btn>
+
 				<!-- Websocket status -->
 				<v-icon
 					class="mr-3 ml-3"
@@ -419,6 +433,7 @@ export default {
 			'zwave',
 			'znifferState',
 			'inited',
+			'debugCaptureActive',
 		]),
 		...mapState(useBaseStore, {
 			darkMode: (store) => store.uiState.darkMode,
@@ -609,6 +624,10 @@ export default {
 		}
 	},
 	methods: {
+		finishDebugCapture() {
+			// Emit event to ControlPanel to open the finish dialog
+			this.$root.$emit('openDebugCaptureFinish')
+		},
 		verifyRoute() {
 			// ensure the actual route is available in pages otherwise redirect to the first one
 			if (

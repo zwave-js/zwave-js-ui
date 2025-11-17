@@ -25,6 +25,7 @@ const useBaseStore = defineStore('base', {
 		user: {},
 		tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		locale: undefined, // uses default browser locale
+		debugCaptureActive: false, // Track if debug capture is active
 		preferences: settings.load('preferences', {
 			eventsList: {},
 			smartStartTable: {},

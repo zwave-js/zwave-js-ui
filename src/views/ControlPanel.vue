@@ -67,7 +67,11 @@
 			:title="advancedDialogTitle"
 		/>
 
-		<DialogDebugCapture v-model="debugCaptureDialog" />
+		<DialogDebugCapture
+			v-model="debugCaptureDialog"
+			@captureStarted="onDebugCaptureStarted"
+			@captureStopped="onDebugCaptureStopped"
+		/>
 
 		<base-fab
 			v-model="fab"
@@ -185,7 +189,8 @@ export default {
 			selected: [],
 			settings: new Settings(localStorage),
 			advancedShowDialog: false,
-			debugCaptureDialog: false,
+			debugCaptureDialog: null, // null, 'start', or 'finish'
+			debugCaptureActive: false,
 			generalActions: [
 				{
 					text: 'Backup',
@@ -451,7 +456,7 @@ export default {
 			} else if (action === 'exportDump') {
 				this.exportDump()
 			} else if (action === 'startDebugCapture') {
-				this.debugCaptureDialog = true
+				this.debugCaptureDialog = 'start'
 			} else {
 				this.sendAction(action, { ...args, nodes: this.selected })
 			}
@@ -498,17 +503,30 @@ export default {
 		toggleControllerStatistics() {
 			this.showControllerStatistics = !this.showControllerStatistics
 		},
+		onDebugCaptureStarted() {
+			this.updateState({ debugCaptureActive: true })
+		},
+		onDebugCaptureStopped() {
+			this.updateState({ debugCaptureActive: false })
+		},
+		openDebugCaptureFinish() {
+			this.debugCaptureDialog = 'finish'
+		},
 	},
 	mounted() {
 		this.bindEvent(
 			'rebuildRoutesProgress',
 			this.setRebuildRoutesProgress.bind(this),
 		)
+		// Listen for event from App.vue to open finish dialog
+		this.$root.$on('openDebugCaptureFinish', this.openDebugCaptureFinish)
 	},
 	beforeUnmount() {
 		if (this.socket) {
 			this.unbindEvents()
 		}
+		// Remove event listener
+		this.$root.$off('openDebugCaptureFinish', this.openDebugCaptureFinish)
 	},
 }
 </script>
