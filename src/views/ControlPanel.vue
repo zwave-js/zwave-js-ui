@@ -454,6 +454,7 @@ export default {
 		...mapActions(useBaseStore, [
 			'setRebuildRoutesProgress',
 			'showSnackbar',
+			'updateState',
 		]),
 		jsonToList,
 		showNodesManager() {

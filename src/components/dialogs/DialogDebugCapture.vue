@@ -1,11 +1,6 @@
 <template>
 	<!-- Start Dialog -->
-	<v-dialog
-		v-model="showStartDialog"
-		max-width="600"
-		persistent
-		:fullscreen="$vuetify.display.mobile"
-	>
+	<v-dialog v-model="showStartDialog" max-width="600px" persistent>
 		<v-card>
 			<v-card-title class="text-h5">
 				<v-icon class="mr-2">troubleshoot</v-icon>
@@ -13,35 +8,30 @@
 			</v-card-title>
 
 			<v-card-text>
-				<v-alert type="info" variant="tonal" class="mb-4">
-					<div class="text-body-1 mb-2">
-						This wizard will help you collect a complete debug
-						package.
-					</div>
-					<div class="text-body-2">When you start the capture:</div>
-					<ul class="ml-4 mt-2">
-						<li>Log levels will be automatically set to debug</li>
-						<li>All logs will be captured to temporary files</li>
-						<li>The system will continue running normally</li>
-					</ul>
-				</v-alert>
+				<p class="text-body-1 mb-3">
+					This wizard will help you collect a complete debug package.
+				</p>
 
-				<v-alert type="warning" variant="tonal" class="mb-4">
-					<div class="text-body-1 mb-2">
-						<strong>Next steps:</strong>
-					</div>
-					<ul class="ml-4">
-						<li>
-							After starting, reproduce the issue you want to
-							debug
-						</li>
-						<li>
-							Click the debug indicator in the top bar when you're
-							done
-						</li>
-						<li>Select which devices to include in the package</li>
-					</ul>
-				</v-alert>
+				<p class="text-body-2 mb-2">When you start the capture:</p>
+				<ul class="ml-4 mb-4">
+					<li>Log levels will be automatically set to debug</li>
+					<li>All logs will be captured to temporary files</li>
+					<li>The system will continue running normally</li>
+				</ul>
+
+				<p class="text-body-2 mb-2">
+					<strong>Next steps:</strong>
+				</p>
+				<ul class="ml-4 mb-4">
+					<li>
+						After starting, reproduce the issue you want to debug
+					</li>
+					<li>
+						Click the debug indicator in the top bar when you're
+						done
+					</li>
+					<li>Select which devices to include in the package</li>
+				</ul>
 
 				<div v-if="error" class="text-error mb-4">
 					{{ error }}
@@ -68,12 +58,7 @@
 	</v-dialog>
 
 	<!-- Finish Dialog -->
-	<v-dialog
-		v-model="showFinishDialog"
-		max-width="800"
-		persistent
-		:fullscreen="$vuetify.display.mobile"
-	>
+	<v-dialog v-model="showFinishDialog" max-width="800px" persistent>
 		<v-card>
 			<v-card-title class="text-h5">
 				<v-icon class="mr-2">troubleshoot</v-icon>
@@ -81,15 +66,15 @@
 			</v-card-title>
 
 			<v-card-text>
-				<v-alert type="success" variant="tonal" class="mb-4">
-					<v-icon class="mr-2">check_circle</v-icon>
+				<p class="text-body-1 mb-4">
+					<v-icon class="mr-2" color="success">check_circle</v-icon>
 					Debug capture completed!
-				</v-alert>
+				</p>
 
-				<v-alert type="info" variant="tonal" class="mb-4">
+				<p class="text-body-2 mb-3">
 					Select the devices you want to include node dumps for. This
 					will add detailed device information to the debug package.
-				</v-alert>
+				</p>
 
 				<v-text-field
 					v-model="search"
