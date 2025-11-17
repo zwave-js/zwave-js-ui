@@ -10,6 +10,7 @@ export interface DebugSession {
 	logStream: PassThrough
 	transport: winston.transport
 	originalLogLevel: string
+	driverDebugTransport?: any
 }
 
 class DebugManager {
@@ -53,9 +54,12 @@ class DebugManager {
 		// Add transport to all existing loggers
 		logContainer.loggers.forEach((logger: winston.Logger) => {
 			logger.add(transport)
+			// Also set logger level to debug
+			logger.level = 'debug'
 		})
 
 		// Update driver log level to debug using updateLogConfig
+		let driverDebugTransport: any = undefined
 		if (zwaveClient.driverReady) {
 			const { createDefaultTransportFormat } = await import(
 				'@zwave-js/core/bindings/log/node'
@@ -72,6 +76,9 @@ class DebugManager {
 				logs.push(data.message.toString())
 			})
 
+			driverDebugTransport = debugTransport
+
+			// Update log config to debug level with new transport
 			zwaveClient.driver.updateLogConfig({
 				level: 'debug',
 				transports: [debugTransport],
@@ -84,6 +91,7 @@ class DebugManager {
 			logStream,
 			transport,
 			originalLogLevel,
+			driverDebugTransport,
 		}
 	}
 
@@ -101,13 +109,14 @@ class DebugManager {
 
 		const session = this.session
 
-		// Remove the debug transport from all loggers
+		// Remove the debug transport from all loggers and restore log level
 		logContainer.loggers.forEach((logger: winston.Logger) => {
 			logger.remove(session.transport)
+			logger.level = session.originalLogLevel
 		})
 
 		// Restore original driver log level
-		if (zwaveClient.driverReady) {
+		if (zwaveClient.driverReady && session.driverDebugTransport) {
 			const { createDefaultTransportFormat } = await import(
 				'@zwave-js/core/bindings/log/node'
 			)
@@ -122,6 +131,11 @@ class DebugManager {
 				level: session.originalLogLevel as any,
 				transports: [logTransport],
 			})
+
+			// Clean up debug transport
+			if (session.driverDebugTransport.stream) {
+				session.driverDebugTransport.stream.destroy()
+			}
 		}
 
 		// Create archive
@@ -189,26 +203,43 @@ class DebugManager {
 	/**
 	 * Cancel the current debug session without generating a package
 	 */
-	cancelSession(
+	async cancelSession(
 		logContainer: winston.Container,
 		zwaveClient: ZWaveClient,
-	): void {
+	): Promise<void> {
 		if (!this.session) {
 			throw new Error('No active debug session')
 		}
 
 		const session = this.session
 
-		// Remove the debug transport from all loggers
+		// Remove the debug transport from all loggers and restore log level
 		logContainer.loggers.forEach((logger: winston.Logger) => {
 			logger.remove(session.transport)
+			logger.level = session.originalLogLevel
 		})
 
 		// Restore original driver log level
-		if (zwaveClient.driverReady) {
+		if (zwaveClient.driverReady && session.driverDebugTransport) {
+			const { createDefaultTransportFormat } = await import(
+				'@zwave-js/core/bindings/log/node'
+			)
+			const { JSONTransport } = await import(
+				'@zwave-js/log-transport-json'
+			)
+
+			const logTransport = new JSONTransport()
+			logTransport.format = createDefaultTransportFormat(true, false)
+
 			zwaveClient.driver.updateLogConfig({
 				level: session.originalLogLevel as any,
+				transports: [logTransport],
 			})
+
+			// Clean up debug transport
+			if (session.driverDebugTransport.stream) {
+				session.driverDebugTransport.stream.destroy()
+			}
 		}
 
 		// Clean up session

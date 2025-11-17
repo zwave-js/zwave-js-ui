@@ -1866,7 +1866,7 @@ app.post(
 	'/api/debug/cancel',
 	apisLimiter,
 	isAuthenticated,
-	function (req, res) {
+	async function (req, res) {
 		try {
 			if (!debugManager.isSessionActive()) {
 				return res.json({
@@ -1875,7 +1875,7 @@ app.post(
 				})
 			}
 
-			debugManager.cancelSession(logContainer, gw.zwave)
+			await debugManager.cancelSession(logContainer, gw.zwave)
 
 			res.json({
 				success: true,
