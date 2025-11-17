@@ -1,13 +1,18 @@
-import { PassThrough } from 'node:stream'
 import type winston from 'winston'
 import { customFormat } from './logger.ts'
 import archiver from 'archiver'
 import type ZWaveClient from './ZwaveClient.ts'
+import { joinPath } from './utils.ts'
+import { storeDir } from '../config/app.ts'
+import { rm, mkdir } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+
+const debugTempDir = joinPath(storeDir, '.debug-temp')
 
 export interface DebugSession {
 	startTime: Date
-	logs: string[]
-	logStream: PassThrough
+	logFilePath: string
+	driverLogFilePath: string
 	transport: winston.transport
 	originalLogLevel: string
 	driverDebugTransport?: any
@@ -15,6 +20,16 @@ export interface DebugSession {
 
 class DebugManager {
 	private session: DebugSession | null = null
+
+	/**
+	 * Initialize the debug manager by cleaning up any old temp files
+	 */
+	async init(): Promise<void> {
+		// Clean up old debug temp directory on startup
+		if (existsSync(debugTempDir)) {
+			await rm(debugTempDir, { recursive: true, force: true })
+		}
+	}
 
 	/**
 	 * Check if a debug session is active
@@ -35,20 +50,22 @@ class DebugManager {
 			throw new Error('A debug session is already active')
 		}
 
-		const logStream = new PassThrough()
-		const logs: string[] = []
+		// Ensure debug temp directory exists
+		await mkdir(debugTempDir, { recursive: true })
 
-		// Create a stream transport to capture logs
+		const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+		const logFilePath = joinPath(debugTempDir, `ui-logs-${timestamp}.log`)
+		const driverLogFilePath = joinPath(
+			debugTempDir,
+			`driver-logs-${timestamp}.log`,
+		)
+
+		// Create a file transport to capture UI logs
 		const { transports } = await import('winston')
-		const transport = new transports.Stream({
+		const transport = new transports.File({
+			filename: logFilePath,
 			format: customFormat(true),
 			level: 'debug',
-			stream: logStream,
-		})
-
-		// Collect logs into array
-		logStream.on('data', (chunk: Buffer) => {
-			logs.push(chunk.toString())
 		})
 
 		// Add transport to all existing loggers
@@ -71,9 +88,11 @@ class DebugManager {
 			const debugTransport = new JSONTransport()
 			debugTransport.format = createDefaultTransportFormat(false, true)
 
-			// Capture driver logs
+			// Write driver logs to file
+			const fs = await import('node:fs')
+			const driverLogStream = fs.createWriteStream(driverLogFilePath)
 			debugTransport.stream.on('data', (data) => {
-				logs.push(data.message.toString())
+				driverLogStream.write(data.message.toString() + '\n')
 			})
 
 			driverDebugTransport = debugTransport
@@ -87,8 +106,8 @@ class DebugManager {
 
 		this.session = {
 			startTime: new Date(),
-			logs,
-			logStream,
+			logFilePath,
+			driverLogFilePath,
 			transport,
 			originalLogLevel,
 			driverDebugTransport,
@@ -102,7 +121,10 @@ class DebugManager {
 		logContainer: winston.Container,
 		zwaveClient: ZWaveClient,
 		nodeIds: number[],
-	): Promise<NodeJS.ReadableStream> {
+	): Promise<{
+		archive: NodeJS.ReadableStream
+		cleanup: () => Promise<void>
+	}> {
 		if (!this.session) {
 			throw new Error('No active debug session')
 		}
@@ -114,6 +136,11 @@ class DebugManager {
 			logger.remove(session.transport)
 			logger.level = session.originalLogLevel
 		})
+
+		// Close the file transport to flush any remaining logs
+		if (typeof session.transport.close === 'function') {
+			session.transport.close()
+		}
 
 		// Restore original driver log level
 		if (zwaveClient.driverReady && session.driverDebugTransport) {
@@ -138,16 +165,28 @@ class DebugManager {
 			}
 		}
 
+		// Wait a bit to ensure all logs are flushed to disk
+		await new Promise((resolve) => setTimeout(resolve, 100))
+
 		// Create archive
 		const archive = archiver('zip', {
 			zlib: { level: 9 }, // Maximum compression
 		})
 
-		// Add logs to archive
-		const logsContent = session.logs.join('\n')
-		archive.append(logsContent, {
-			name: `debug-logs-${session.startTime.toISOString()}.log`,
-		})
+		// Add UI logs to archive
+		const fs = await import('node:fs')
+		if (fs.existsSync(session.logFilePath)) {
+			archive.file(session.logFilePath, {
+				name: `ui-logs-${session.startTime.toISOString()}.log`,
+			})
+		}
+
+		// Add driver logs to archive
+		if (fs.existsSync(session.driverLogFilePath)) {
+			archive.file(session.driverLogFilePath, {
+				name: `driver-logs-${session.startTime.toISOString()}.log`,
+			})
+		}
 
 		// Add node dumps to archive
 		for (const nodeId of nodeIds) {
@@ -184,7 +223,6 @@ class DebugManager {
 			endTime: new Date().toISOString(),
 			duration: new Date().getTime() - session.startTime.getTime() + 'ms',
 			nodesIncluded: nodeIds,
-			logCount: session.logs.length,
 		}
 		archive.append(JSON.stringify(metadata, null, 2), {
 			name: 'session-metadata.json',
@@ -193,11 +231,25 @@ class DebugManager {
 		// Finalize the archive
 		await archive.finalize()
 
-		// Clean up session
-		session.logStream.destroy()
+		// Prepare cleanup function to delete temp files after download
+		const cleanup = async () => {
+			try {
+				if (fs.existsSync(session.logFilePath)) {
+					await rm(session.logFilePath, { force: true })
+				}
+				if (fs.existsSync(session.driverLogFilePath)) {
+					await rm(session.driverLogFilePath, { force: true })
+				}
+			} catch (error) {
+				// Log but don't throw - cleanup is best effort
+				console.error('Error cleaning up debug temp files:', error)
+			}
+		}
+
+		// Clear session
 		this.session = null
 
-		return archive
+		return { archive, cleanup }
 	}
 
 	/**
@@ -218,6 +270,11 @@ class DebugManager {
 			logger.remove(session.transport)
 			logger.level = session.originalLogLevel
 		})
+
+		// Close the file transport
+		if (typeof session.transport.close === 'function') {
+			session.transport.close()
+		}
 
 		// Restore original driver log level
 		if (zwaveClient.driverReady && session.driverDebugTransport) {
@@ -242,8 +299,21 @@ class DebugManager {
 			}
 		}
 
-		// Clean up session
-		session.logStream.destroy()
+		// Clean up temp files
+		try {
+			const fs = await import('node:fs')
+			if (fs.existsSync(session.logFilePath)) {
+				await rm(session.logFilePath, { force: true })
+			}
+			if (fs.existsSync(session.driverLogFilePath)) {
+				await rm(session.driverLogFilePath, { force: true })
+			}
+		} catch (error) {
+			// Log but don't throw - cleanup is best effort
+			console.error('Error cleaning up debug temp files:', error)
+		}
+
+		// Clear session
 		this.session = null
 	}
 }

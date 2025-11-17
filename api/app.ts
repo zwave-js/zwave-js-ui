@@ -269,6 +269,7 @@ export async function startServer(port: number | string, host?: string) {
 	setupInterceptor()
 	await loadSnippets()
 	startZniffer(settings.zniffer)
+	await debugManager.init() // Clean up any old debug temp files
 	await startGateway(settings)
 }
 
@@ -1841,7 +1842,7 @@ app.post(
 
 			const nodeIds: number[] = req.body.nodeIds || []
 
-			const archive = await debugManager.stopSession(
+			const { archive, cleanup } = await debugManager.stopSession(
 				logContainer,
 				gw.zwave,
 				nodeIds,
@@ -1850,6 +1851,11 @@ app.post(
 			const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
 			res.attachment(`zwave-debug-${timestamp}.zip`)
 			res.setHeader('Content-Type', 'application/zip')
+
+			// Clean up temp files after the archive has been sent
+			archive.on('end', async () => {
+				await cleanup()
+			})
 
 			archive.pipe(res)
 		} catch (err) {
