@@ -379,4 +379,6 @@ export function stopCleanJob() {
 	}
 }
 
+export { logContainer }
+
 export default logContainer.loggers

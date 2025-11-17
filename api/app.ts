@@ -10,6 +10,7 @@ import type { GatewayConfig } from './lib/Gateway.ts'
 import Gateway, { GatewayType } from './lib/Gateway.ts'
 import jsonStore from './lib/jsonStore.ts'
 import * as loggers from './lib/logger.ts'
+import { logContainer } from './lib/logger.ts'
 import MqttClient from './lib/MqttClient.ts'
 import SocketManager from './lib/SocketManager.ts'
 import type { CallAPIResult, ZwaveConfig } from './lib/ZwaveClient.ts'
@@ -57,6 +58,7 @@ import { generate } from 'selfsigned'
 import type { ZnifferConfig } from './lib/ZnifferManager.ts'
 import ZnifferManager from './lib/ZnifferManager.ts'
 import { getAllNamedScaleGroups, getAllSensors } from '@zwave-js/core'
+import debugManager from './lib/DebugManager.ts'
 
 const createCertificate = promisify(generate)
 
@@ -1776,6 +1778,101 @@ app.get('/api/snippet', apisLimiter, async function (req, res) {
 		res.json({ success: true, data: snippets })
 	} catch (err) {
 		res.json({ success: false, message: err.message })
+	}
+})
+
+// Debug capture endpoints
+app.get('/api/debug/status', apisLimiter, isAuthenticated, function (req, res) {
+	res.json({
+		success: true,
+		active: debugManager.isSessionActive(),
+	})
+})
+
+app.post('/api/debug/start', apisLimiter, isAuthenticated, async function (req, res) {
+	try {
+		if (debugManager.isSessionActive()) {
+			return res.json({
+				success: false,
+				message: 'A debug session is already active',
+			})
+		}
+
+		const settings: Settings =
+			jsonStore.get(store.settings) || ({} as Settings)
+		const originalLogLevel = settings.gateway?.logLevel || 'info'
+
+		await debugManager.startSession(
+			logContainer,
+			gw.zwave,
+			originalLogLevel,
+		)
+
+		res.json({
+			success: true,
+			message: 'Debug capture started',
+		})
+	} catch (err) {
+		logger.error('Error starting debug session:', err)
+		res.json({
+			success: false,
+			message: err.message,
+		})
+	}
+})
+
+app.post('/api/debug/stop', apisLimiter, isAuthenticated, async function (req, res) {
+	try {
+		if (!debugManager.isSessionActive()) {
+			return res.json({
+				success: false,
+				message: 'No active debug session',
+			})
+		}
+
+		const nodeIds: number[] = req.body.nodeIds || []
+
+		const archive = await debugManager.stopSession(
+			logContainer,
+			gw.zwave,
+			nodeIds,
+		)
+
+		const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
+		res.attachment(`zwave-debug-${timestamp}.zip`)
+		res.setHeader('Content-Type', 'application/zip')
+
+		archive.pipe(res)
+	} catch (err) {
+		logger.error('Error stopping debug session:', err)
+		res.json({
+			success: false,
+			message: err.message,
+		})
+	}
+})
+
+app.post('/api/debug/cancel', apisLimiter, isAuthenticated, function (req, res) {
+	try {
+		if (!debugManager.isSessionActive()) {
+			return res.json({
+				success: false,
+				message: 'No active debug session',
+			})
+		}
+
+		debugManager.cancelSession(logContainer, gw.zwave)
+
+		res.json({
+			success: true,
+			message: 'Debug capture cancelled',
+		})
+	} catch (err) {
+		logger.error('Error cancelling debug session:', err)
+		res.json({
+			success: false,
+			message: err.message,
+		})
 	}
 })
 
