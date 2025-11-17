@@ -15,7 +15,6 @@ import {
 	isUnsupervisedOrSucceeded,
 	NODE_ID_BROADCAST,
 	NODE_ID_BROADCAST_LR,
-	Route,
 	RouteKind,
 	SecurityClass,
 	SupervisionStatus,
