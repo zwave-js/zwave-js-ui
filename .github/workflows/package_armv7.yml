@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build package and attach to release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
         node-version: [22.x] # NB: when pkg-fetch bumps binaries, this must be updated
@@ -27,7 +27,7 @@ jobs:
           npm ci
           npm run build
       
-      - uses: uraimo/run-on-arch-action@v2
+      - uses: uraimo/run-on-arch-action@v3
         name: Package
         with:
           arch: none # armv7

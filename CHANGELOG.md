@@ -1,5 +1,20 @@
 
 
+# [11.7.0](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.1...v11.7.0) (2025-11-12)
+
+
+### Bug Fixes
+
+* changedZwaveKeys incorrectly includes UI defaults as changes ([#4454](https://github.com/zwave-js/zwave-js-ui/issues/4454)) ([371032c](https://github.com/zwave-js/zwave-js-ui/commit/371032c6768ad06deff874259d04e4eb6f65dd97)), closes [#4413](https://github.com/zwave-js/zwave-js-ui/issues/4413) [zwave-js/zwave-js-ui#4453](https://github.com/zwave-js/zwave-js-ui/issues/4453)
+* correct PKG_NODE_PATH in armv7 build workflow ([1ef89e5](https://github.com/zwave-js/zwave-js-ui/commit/1ef89e5f14daeaa891f705d2497e64f50e640923))
+* refresh node neighbors on panel open for all node types ([3d2addc](https://github.com/zwave-js/zwave-js-ui/commit/3d2addc255f60472fa0f867f35a6083499818fc6))
+* **ui:** add null check in setRoute to handle cancelled dialog ([#4450](https://github.com/zwave-js/zwave-js-ui/issues/4450)) ([b472afc](https://github.com/zwave-js/zwave-js-ui/commit/b472afc5d498d426cfb24f8cee755de1bd937d5f))
+
+
+### Features
+
+* bump zwave-js@15.16.0 ([#4448](https://github.com/zwave-js/zwave-js-ui/issues/4448)) ([6d7fca0](https://github.com/zwave-js/zwave-js-ui/commit/6d7fca0907839f16b0a804c733759e0a54554647))
+
 ## [11.6.1](https://github.com/zwave-js/zwave-js-ui/compare/v11.6.0...v11.6.1) (2025-10-29)
 
 

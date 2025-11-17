@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build package and attach to release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     strategy:
       matrix:
         node-version: [20.x]
@@ -26,22 +26,6 @@ jobs:
         run: |
           npm ci
           npm run build
-
-      - uses: uraimo/run-on-arch-action@v2
-        name: Package
-        with:
-          arch: none # arm64
-          distro: none # bullseye
-
-          dockerRunArgs: |
-            --volume "${PWD}:/app"
-
-          base_image: '--platform=linux/arm64 arm64v8/node:20-bullseye'
-
-          # Rebuild .node modules for am64
-          run: |
-            cd /app
-            npm rebuild
 
       - name: Build for arm64
         run: |
