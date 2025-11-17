@@ -1655,7 +1655,23 @@ export default {
 				).then(async (result) => {
 					if (result) {
 						await event.detail.updateSW()
-						// do not reload page
+						// Wait for the new service worker to take control before reloading
+						if (navigator.serviceWorker) {
+							await new Promise((resolve) => {
+								const onControllerChange = () => {
+									navigator.serviceWorker.removeEventListener(
+										'controllerchange',
+										onControllerChange,
+									)
+									resolve()
+								}
+								navigator.serviceWorker.addEventListener(
+									'controllerchange',
+									onControllerChange,
+								)
+							})
+						}
+						window.location.reload()
 					}
 				})
 			},
