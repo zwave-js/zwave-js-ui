@@ -201,7 +201,6 @@ export default {
 			settings: new Settings(localStorage),
 			advancedShowDialog: false,
 			debugCaptureDialog: null, // null, 'start', or 'finish'
-			debugCaptureActive: false,
 			generalActions: [
 				{
 					text: 'Backup',
@@ -454,7 +453,6 @@ export default {
 		...mapActions(useBaseStore, [
 			'setRebuildRoutesProgress',
 			'showSnackbar',
-			'updateState',
 		]),
 		jsonToList,
 		showNodesManager() {
@@ -516,10 +514,12 @@ export default {
 			this.showControllerStatistics = !this.showControllerStatistics
 		},
 		onDebugCaptureStarted() {
-			this.updateState({ debugCaptureActive: true })
+			const store = useBaseStore()
+			store.debugCaptureActive = true
 		},
 		onDebugCaptureStopped() {
-			this.updateState({ debugCaptureActive: false })
+			const store = useBaseStore()
+			store.debugCaptureActive = false
 		},
 		openDebugCaptureFinish() {
 			this.debugCaptureDialog = 'finish'
