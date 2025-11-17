@@ -117,7 +117,7 @@ export default {
 		},
 		async editItem(existingGroup) {
 			const isEdit = !!existingGroup
-			
+
 			let inputs = [
 				{
 					type: 'text',
@@ -133,18 +133,20 @@ export default {
 					required: true,
 					key: 'nodeIds',
 					multiple: true,
-					items: this.physicalNodes.map(node => ({
+					items: this.physicalNodes.map((node) => ({
 						title: node.name || `Node ${node.id}`,
-						value: node.id
+						value: node.id,
 					})),
 					hint: 'Select at least 1 node for the multicast group',
 					default: isEdit ? existingGroup.nodeIds : [],
-					rules: [(value) => {
-						if (!value || value.length === 0) {
-							return 'Please select at least one node'
-						}
-						return true
-					}],
+					rules: [
+						(value) => {
+							if (!value || value.length === 0) {
+								return 'Please select at least one node'
+							}
+							return true
+						},
+					],
 				},
 			]
 
@@ -165,7 +167,11 @@ export default {
 			}
 
 			// Validate inputs
-			if (!result.name || !result.nodeIds || result.nodeIds.length === 0) {
+			if (
+				!result.name ||
+				!result.nodeIds ||
+				result.nodeIds.length === 0
+			) {
 				this.showSnackbar(
 					'Please provide a name and select at least one node',
 					'error',

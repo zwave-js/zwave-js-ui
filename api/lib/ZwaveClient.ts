@@ -119,11 +119,12 @@ import {
 	BatteryReplacementStatus,
 } from 'zwave-js'
 import { getEnumMemberName, parseQRCodeString } from 'zwave-js/Utils'
-import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app'
-import store, { Group } from '../config/store'
-import jsonStore from './jsonStore'
-import * as LogManager from './logger'
-import * as utils from './utils'
+import { configDbDir, logsDir, nvmBackupsDir, storeDir } from '../config/app.js'
+import type { Group } from '../config/store.js'
+import store from '../config/store.js'
+import jsonStore from './jsonStore.js'
+import * as LogManager from './logger.js'
+import * as utils from './utils.js'
 
 import { serverVersion, ZwavejsServer } from '@zwave-js/server'
 import type { Server as SocketServer } from 'socket.io'
@@ -993,7 +994,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 	/**
 	 * Returns the driver ZWaveNode object, or multicast group/broadcast node for virtual nodes (nodeId > 0xfff)
 	 */
-	getNode(nodeId: number): ZWaveNode | any {
+	getNode(nodeId: number): any {
 		// For virtual nodes (multicast groups and broadcast nodes), return the stored multicast group instance
 		if (nodeId > 0xfff) {
 			return this._multicastGroups.get(nodeId) || null
@@ -2940,7 +2941,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		try {
 			// Create and store the multicast group instance
-			const multicastGroup = this._driver.controller.getMulticastGroup(group.nodeIds)
+			const multicastGroup = this._driver.controller.getMulticastGroup(
+				group.nodeIds,
+			)
 			this._multicastGroups.set(group.id, multicastGroup)
 
 			const virtualNode: ZUINode = {
@@ -3052,7 +3055,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			// Create and store standard broadcast node
 			const broadcastNode = this._driver.controller.getBroadcastNode()
 			this._multicastGroups.set(NODE_ID_BROADCAST, broadcastNode)
-			
+
 			const broadcastVirtualNode: ZUINode = {
 				id: NODE_ID_BROADCAST,
 				name: 'Broadcast',
@@ -3068,7 +3071,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			this._nodes.set(NODE_ID_BROADCAST, broadcastVirtualNode)
 			this.sendToSocket(socketEvents.nodeAdded, broadcastVirtualNode)
 
-			// Create LR broadcast node  
+			// Create LR broadcast node
 			// Note: LR broadcast might not be available in all drivers, so we'll use the same approach
 			const broadcastLRVirtualNode: ZUINode = {
 				id: NODE_ID_BROADCAST_LR,
@@ -5292,11 +5295,7 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this._updateControllerStatus(message)
 		const controllerNode = this.getNode(this.driver.controller.ownNodeId)
 		if (controllerNode) {
-			this._onNodeEvent(
-				'status changed',
-				controllerNode,
-				status,
-			)
+			this._onNodeEvent('status changed', controllerNode, status)
 		}
 		this.emit('event', EventSource.CONTROLLER, 'status changed', status)
 	}
