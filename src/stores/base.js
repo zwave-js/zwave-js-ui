@@ -26,7 +26,6 @@ const useBaseStore = defineStore('base', {
 		tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
 		locale: undefined, // uses default browser locale
 		debugCaptureActive: false, // Track if debug capture is active
-		debugCaptureFinishTrigger: null, // Timestamp to trigger finish dialog
 		preferences: settings.load('preferences', {
 			eventsList: {},
 			smartStartTable: {},
