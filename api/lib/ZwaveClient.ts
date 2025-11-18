@@ -754,6 +754,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 	private driverFunctionCache: utils.Snippet[] = []
 
+	// Tracks node IDs that are pending firmware update check after interview completes
+	private _nodesPendingFirmwareUpdateCheck: Set<number> = new Set()
+
 	// Foreach valueId, we store a callback function to be called when the value changes
 	private valuesObservers: Record<string, ValueIdObserver> = {}
 
@@ -1171,6 +1174,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		this.status = ZwaveClientStatus.CLOSED
 		this.closed = true
 		this.driverReady = false
+
+		// Clear pending firmware update checks
+		this._nodesPendingFirmwareUpdateCheck.clear()
 
 		if (this.commandsTimeout) {
 			clearTimeout(this.commandsTimeout)
@@ -6079,6 +6085,21 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 		this._onNodeStatus(zwaveNode, true)
 
+		// Check for firmware updates after interview if this was triggered by a firmware update
+		// This ensures we check with the updated firmware version instead of stale cached data
+		if (this._nodesPendingFirmwareUpdateCheck.has(zwaveNode.id)) {
+			this._nodesPendingFirmwareUpdateCheck.delete(zwaveNode.id)
+			this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
+				(error) => {
+					this.logNode(
+						zwaveNode,
+						'error',
+						`Failed to check firmware updates after interview: ${error.message}`,
+					)
+				},
+			)
+		}
+
 		this.emit(
 			'event',
 			EventSource.NODE,
@@ -6095,6 +6116,9 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 		zwaveNode: ZWaveNode,
 		args: NodeInterviewFailedEventArgs,
 	) {
+		// Clean up pending firmware update check if interview fails
+		this._nodesPendingFirmwareUpdateCheck.delete(zwaveNode.id)
+
 		this.logNode(
 			zwaveNode,
 			'error',
@@ -6537,20 +6561,25 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 
 			if (result.reInterview) {
 				this.logNode(zwaveNode, 'info', 'Will be re-interviewed')
-			}
-
-			// Query for new firmware updates and clear available updates if necessary
-			// (unless automatic firmware update checks are disabled)
-			if (!this.cfg.disableAutomaticFirmwareUpdateChecks) {
-				this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
-					(error) => {
-						this.logNode(
-							zwaveNode,
-							'error',
-							`Failed to check firmware updates after update: ${error.message}`,
-						)
-					},
-				)
+				// Mark node for firmware update check after interview completes
+				// to avoid race condition with stale firmware version
+				if (!this.cfg.disableAutomaticFirmwareUpdateChecks) {
+					this._nodesPendingFirmwareUpdateCheck.add(zwaveNode.id)
+				}
+			} else {
+				// Query for new firmware updates immediately if not re-interviewing
+				// (unless automatic firmware update checks are disabled)
+				if (!this.cfg.disableAutomaticFirmwareUpdateChecks) {
+					this._checkFirmwareUpdatesAfterUpdate(zwaveNode.id).catch(
+						(error) => {
+							this.logNode(
+								zwaveNode,
+								'error',
+								`Failed to check firmware updates after update: ${error.message}`,
+							)
+						},
+					)
+				}
 			}
 
 			this.emit(
