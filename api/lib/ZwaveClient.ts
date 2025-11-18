@@ -5169,12 +5169,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 			'node added',
 			this.zwaveNodeToJSON(zwaveNode),
 		)
-
-		this._checkNodeFirmwareUpdates(node.id).catch((error) => {
-			logger.warn(
-				`Firmware update check after node added failed: ${error.message}`,
-			)
-		})
 	}
 
 	/**
