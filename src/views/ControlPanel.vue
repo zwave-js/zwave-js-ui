@@ -129,193 +129,7 @@ export default {
 			'zwave',
 			'controllerNode',
 			'debugCaptureFinishTrigger',
-			'debugCaptureActive',
 		]),
-		generalActions() {
-			// Base actions array
-			const actions = [
-				{
-					text: 'Backup',
-					options: [
-						{ name: 'Import', action: 'import' },
-						{ name: 'Export', action: 'export' },
-					],
-					icon: 'save',
-					desc: 'Save or load `nodes.json` file with names and locations',
-				},
-				{
-					text: 'Dump',
-					options: [{ name: 'Export', action: 'exportDump' }],
-					icon: 'bug_report',
-					desc: 'Export all nodes in a json file. Useful for debugging purposes',
-				},
-			]
-
-			// Debug Capture - change button based on active state
-			if (this.debugCaptureActive) {
-				actions.push({
-					text: 'Debug Capture',
-					options: [{ name: 'Stop', action: 'stopDebugCapture' }],
-					icon: 'troubleshoot',
-					color: 'error',
-					desc: 'Stop capturing debug logs and download the debug package',
-				})
-			} else {
-				actions.push({
-					text: 'Debug Capture',
-					options: [{ name: 'Start', action: 'startDebugCapture' }],
-					icon: 'troubleshoot',
-					color: 'info',
-					desc: 'Start capturing debug logs. Perform the action you want to debug, then stop to download a complete debug package',
-				})
-			}
-
-			// Rest of the actions
-			actions.push(
-				{
-					text: 'Re-interview Nodes',
-					options: [
-						{
-							name: 'Start',
-							action: 'refreshInfo',
-							args: {
-								broadcast: true,
-							},
-						},
-					],
-					icon: 'history',
-					color: 'warning',
-					desc: 'Clear all info about all nodes and make a new full interview. Use when nodes has wrong or missing capabilities',
-				},
-				{
-					text: 'Rebuild Routes',
-					options: [
-						{
-							name: 'Begin',
-							action: 'beginRebuildingRoutes',
-						},
-						{ name: 'Stop', action: 'stopRebuildingRoutes' },
-					],
-					icon: 'healing',
-					color: 'warning',
-					desc: 'Force nodes to establish new connections to the controller',
-				},
-				{
-					text: 'Hard Reset',
-					options: [
-						{
-							name: 'Factory Reset',
-							action: 'hardReset',
-						},
-					],
-					icon: 'warning',
-					color: 'error',
-					desc: 'Reset controller to factory defaults (all paired devices will be removed)',
-				},
-				{
-					text: 'Soft Reset',
-					options: [
-						{
-							name: 'Soft Reset',
-							action: 'softReset',
-							args: {
-								confirm: `<p>Are you sure you want to soft-reset your controller?</p>
-									<p>USB modules will reconnect, meaning that they might get a new address. Make sure to configure your device address in a way that prevents it from changing, e.g. by using <code>/dev/serial/by-id/...</code> on Linux.</p>
-									<p><strong>This method may cause problems in Docker containers with certain Z-Wave stick.</strong> If that happens, you may need to restart your host OS and docker container.</p>`,
-							},
-						},
-					],
-					icon: 'refresh',
-					color: 'warning',
-					desc: 'Instruct the controller to soft-reset (restart)',
-				},
-				{
-					text: 'Failed Nodes',
-					options: [
-						{
-							name: 'Remove all',
-							action: 'removeFailedNode',
-							args: {
-								broadcast: true,
-							},
-						},
-					],
-					icon: 'dangerous',
-					color: 'error',
-					desc: 'Manage nodes that are dead and/or marked as failed with the controller',
-				},
-				{
-					text: 'Driver function',
-					options: [
-						{
-							name: 'Write',
-							action: 'driverFunction',
-						},
-					],
-					icon: 'code',
-					color: 'info',
-					desc: 'Write a custom JS function using the ZwaveJS Driver',
-				},
-				{
-					text: 'NVM Management',
-					options: [
-						{
-							name: 'Backup',
-							action: 'backupNVMRaw',
-						},
-						{
-							name: 'Restore',
-							action: 'restoreNVM',
-						},
-					],
-					icon: 'update',
-					color: 'info',
-					desc: "Backup/Restore controller's NVM (Non Volatile Memory)",
-				},
-				{
-					text: 'Firmware update OTW',
-					options: [
-						{
-							name: 'Update',
-							action: 'updateFirmware',
-						},
-					],
-					icon: 'update',
-					color: 'info',
-					desc: 'Perform a firmware update OTW (Over The Wire)',
-				},
-				{
-					text: 'Shutdown Zwave API',
-					options: [
-						{
-							name: 'Shutdown',
-							action: 'shutdownZwaveAPI',
-						},
-					],
-					icon: 'power_off',
-					color: 'error',
-					desc: 'Allows to shutdown the Zwave API to safely unplug the Zwave stick.',
-				},
-				{
-					text: 'Learn mode',
-					options: [
-						{
-							name: 'Start',
-							action: 'startLearnMode',
-						},
-						{
-							name: 'Stop',
-							action: 'stopLearnMode',
-						},
-					],
-					icon: 'join_inner',
-					color: 'warning',
-					desc: 'Instruct controller to run learning mode (can join pre-existing network)',
-				},
-			)
-
-			return actions
-		},
 		fabItems() {
 			const items = []
 
@@ -387,6 +201,173 @@ export default {
 			settings: new Settings(localStorage),
 			advancedShowDialog: false,
 			debugCaptureDialog: null, // null, 'start', or 'finish'
+			generalActions: [
+				{
+					text: 'Backup',
+					options: [
+						{ name: 'Import', action: 'import' },
+						{ name: 'Export', action: 'export' },
+					],
+					icon: 'save',
+					desc: 'Save or load `nodes.json` file with names and locations',
+				},
+				{
+					text: 'Dump',
+					options: [{ name: 'Export', action: 'exportDump' }],
+					icon: 'bug_report',
+					desc: 'Export all nodes in a json file. Useful for debugging purposes',
+				},
+				{
+					text: 'Debug Capture',
+					options: [{ name: 'Start', action: 'startDebugCapture' }],
+					icon: 'troubleshoot',
+					color: 'info',
+					desc: 'Start capturing debug logs. Perform the action you want to debug, then stop to download a complete debug package',
+				},
+				{
+					text: 'Re-interview Nodes',
+					options: [
+						{
+							name: 'Start',
+							action: 'refreshInfo',
+							args: {
+								broadcast: true,
+							},
+						},
+					],
+					icon: 'history',
+					color: 'warning',
+					desc: 'Clear all info about all nodes and make a new full interview. Use when nodes has wrong or missing capabilities',
+				},
+				{
+					text: 'Rebuild Routes',
+					options: [
+						{
+							name: 'Begin',
+							action: 'beginRebuildingRoutes',
+						},
+						{ name: 'Stop', action: 'stopRebuildingRoutes' },
+					],
+					icon: 'healing',
+					color: 'warning',
+					desc: 'Force nodes to establish new connections to the controller',
+				},
+				{
+					text: 'Hard Reset',
+					options: [
+						{
+							name: 'Factory Reset',
+							action: 'hardReset',
+						},
+					],
+					icon: 'warning',
+					color: 'error',
+					desc: 'Reset controller to factory defaults (all paired devices will be removed)',
+				},
+				{
+					text: 'Soft Reset',
+					options: [
+						{
+							name: 'Soft Reset',
+							action: 'softReset',
+							args: {
+								confirm: `<p>Are you sure you want to soft-reset your controller?</p>
+									<p>USB modules will reconnect, meaning that they might get a new address. Make sure to configure your device address in a way that prevents it from changing, e.g. by using <code>/dev/serial/by-id/...</code> on Linux.</p>
+									<p><strong>This method may cause problems in Docker containers with certain Z-Wave stick.</strong> If that happens, you may need to restart your host OS and docker container.</p>`,
+							},
+						},
+					],
+					icon: 'refresh',
+					color: 'warning',
+					desc: 'Instruct the controller to soft-reset (restart)',
+				},
+				{
+					text: 'Failed Nodes',
+					options: [
+						{
+							name: 'Remove all',
+							action: 'removeFailedNode',
+							args: {
+								broadcast: true,
+								confirm:
+									'This action will remove all failed nodes. ATTENTION: this will skip sleeping nodes to prevent unwanted behaviours',
+							},
+						},
+					],
+					icon: 'dangerous',
+					color: 'error',
+					desc: 'Manage nodes that are dead and/or marked as failed with the controller',
+				},
+				{
+					text: 'Driver function',
+					options: [
+						{
+							name: 'Write',
+							action: 'driverFunction',
+						},
+					],
+					icon: 'code',
+					desc: 'Write a custom JS function using the ZwaveJS Driver',
+				},
+				{
+					text: 'NVM Management',
+					options: [
+						{ name: 'Backup', action: 'backupNVMRaw' },
+						{ name: 'Restore', action: 'restoreNVM' },
+					],
+					icon: 'update',
+					color: 'warning',
+					desc: "Backup/Restore controller's NVM (Non Volatile Memory)",
+				},
+				{
+					text: 'Firmware update OTW',
+					options: [
+						{
+							name: 'Update',
+							action: 'firmwareUpdateOTW',
+						},
+					],
+					icon: 'update',
+					color: 'error',
+					desc: 'Perform a firmware update OTW (Over The Wire)',
+				},
+				{
+					text: 'Shutdown Zwave API',
+					options: [
+						{
+							name: 'Shutdown',
+							action: 'shutdownZwaveAPI',
+							args: {
+								confirm:
+									'Are you sure you want to shutdown the Zwave API? You will have to unplug and replug the Zwave stick manually to restart it.',
+								confirmLevel: 'warning',
+							},
+						},
+					],
+					icon: 'power_off',
+					color: 'warning',
+					desc: 'Allows to shutdown the Zwave API to safely unplug the Zwave stick.',
+				},
+				{
+					text: 'Learn mode',
+					options: [
+						{
+							name: 'Start',
+							action: 'startLearnMode',
+							args: {
+								confirm:
+									'Initiate learn mode on primary controller first and then click OK here.',
+							},
+						},
+						{
+							name: 'Stop',
+							action: 'stopLearnMode',
+						},
+					],
+					icon: 'join_inner',
+					desc: 'Instruct controller to run learning mode (can join pre-existing network)',
+				},
+			],
 			rules: {
 				required: (value) => {
 					let valid = false
@@ -486,8 +467,6 @@ export default {
 				this.exportDump()
 			} else if (action === 'startDebugCapture') {
 				this.debugCaptureDialog = 'start'
-			} else if (action === 'stopDebugCapture') {
-				this.openDebugCaptureFinish()
 			} else {
 				this.sendAction(action, { ...args, nodes: this.selected })
 			}

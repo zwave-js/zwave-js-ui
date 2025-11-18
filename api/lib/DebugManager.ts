@@ -2,10 +2,10 @@ import type winston from 'winston'
 import { customFormat } from './logger.ts'
 import archiver from 'archiver'
 import type ZWaveClient from './ZwaveClient.ts'
-import { joinPath } from './utils.ts'
+import { joinPath, pathExists } from './utils.ts'
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
-import { existsSync, createWriteStream } from 'node:fs'
+import { createWriteStream } from 'node:fs'
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 
@@ -26,7 +26,7 @@ class DebugManager {
 	 */
 	async init(): Promise<void> {
 		// Clean up old debug temp directory on startup
-		if (existsSync(debugTempDir)) {
+		if (await pathExists(debugTempDir)) {
 			await rm(debugTempDir, { recursive: true, force: true })
 		}
 	}
@@ -173,14 +173,14 @@ class DebugManager {
 		})
 
 		// Add UI logs to archive
-		if (existsSync(session.logFilePath)) {
+		if (await pathExists(session.logFilePath)) {
 			archive.file(session.logFilePath, {
 				name: `ui-logs-${session.startTime.toISOString()}.log`,
 			})
 		}
 
 		// Add driver logs to archive
-		if (existsSync(session.driverLogFilePath)) {
+		if (await pathExists(session.driverLogFilePath)) {
 			archive.file(session.driverLogFilePath, {
 				name: `driver-logs-${session.startTime.toISOString()}.log`,
 			})
@@ -323,10 +323,10 @@ class DebugManager {
 		driverLogFilePath: string,
 	): Promise<void> {
 		try {
-			if (existsSync(logFilePath)) {
+			if (await pathExists(logFilePath)) {
 				await rm(logFilePath, { force: true })
 			}
-			if (existsSync(driverLogFilePath)) {
+			if (await pathExists(driverLogFilePath)) {
 				await rm(driverLogFilePath, { force: true })
 			}
 		} catch (error) {
