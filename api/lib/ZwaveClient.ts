@@ -6244,20 +6244,6 @@ class ZwaveClient extends TypedEventEmitter<ZwaveClientEventCallbacks> {
 				}.\n   Result: ${JSON.stringify(result)}.`,
 			)
 
-			if (result.reInterview) {
-				this.logNode(zwaveNode, 'info', 'Will be re-interviewed')
-			} else {
-				// Query for new firmware updates immediately if not re-interviewing
-				// (unless automatic firmware update checks are disabled)
-				this._checkNodeFirmwareUpdates(zwaveNode.id).catch((error) => {
-					this.logNode(
-						zwaveNode,
-						'error',
-						`Failed to check firmware updates after update: ${error.message}`,
-					)
-				})
-			}
-
 			this.emit(
 				'event',
 				EventSource.NODE,
