@@ -638,6 +638,9 @@ function setupSocket(server: HttpServer) {
 				state.zniffer = zniffer.status()
 			}
 
+			// Add debug session status
+			state.debugCaptureActive = debugManager.isSessionActive()
+
 			cb(state)
 		})
 

@@ -5,7 +5,7 @@ import type ZWaveClient from './ZwaveClient.ts'
 import { joinPath } from './utils.ts'
 import { storeDir } from '../config/app.ts'
 import { rm, mkdir } from 'node:fs/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, createWriteStream } from 'node:fs'
 
 const debugTempDir = joinPath(storeDir, '.debug-temp')
 
@@ -89,8 +89,7 @@ class DebugManager {
 			debugTransport.format = createDefaultTransportFormat(false, true)
 
 			// Write driver logs to file
-			const fs = await import('node:fs')
-			const driverLogStream = fs.createWriteStream(driverLogFilePath)
+			const driverLogStream = createWriteStream(driverLogFilePath)
 			debugTransport.stream.on('data', (data) => {
 				driverLogStream.write(data.message.toString() + '\n')
 			})
@@ -174,15 +173,14 @@ class DebugManager {
 		})
 
 		// Add UI logs to archive
-		const fs = await import('node:fs')
-		if (fs.existsSync(session.logFilePath)) {
+		if (existsSync(session.logFilePath)) {
 			archive.file(session.logFilePath, {
 				name: `ui-logs-${session.startTime.toISOString()}.log`,
 			})
 		}
 
 		// Add driver logs to archive
-		if (fs.existsSync(session.driverLogFilePath)) {
+		if (existsSync(session.driverLogFilePath)) {
 			archive.file(session.driverLogFilePath, {
 				name: `driver-logs-${session.startTime.toISOString()}.log`,
 			})
@@ -233,17 +231,10 @@ class DebugManager {
 
 		// Prepare cleanup function to delete temp files after download
 		const cleanup = async () => {
-			try {
-				if (fs.existsSync(session.logFilePath)) {
-					await rm(session.logFilePath, { force: true })
-				}
-				if (fs.existsSync(session.driverLogFilePath)) {
-					await rm(session.driverLogFilePath, { force: true })
-				}
-			} catch (error) {
-				// Log but don't throw - cleanup is best effort
-				console.error('Error cleaning up debug temp files:', error)
-			}
+			await this.cleanupTempFiles(
+				session.logFilePath,
+				session.driverLogFilePath,
+			)
 		}
 
 		// Clear session
@@ -277,7 +268,31 @@ class DebugManager {
 		}
 
 		// Restore original driver log level
-		if (zwaveClient.driverReady && session.driverDebugTransport) {
+		await this.restoreDriverLogLevel(
+			zwaveClient,
+			session.originalLogLevel,
+			session.driverDebugTransport,
+		)
+
+		// Clean up temp files
+		await this.cleanupTempFiles(
+			session.logFilePath,
+			session.driverLogFilePath,
+		)
+
+		// Clear session
+		this.session = null
+	}
+
+	/**
+	 * Restore the driver log level after a debug session
+	 */
+	private async restoreDriverLogLevel(
+		zwaveClient: ZWaveClient,
+		originalLogLevel: string,
+		driverDebugTransport: any,
+	): Promise<void> {
+		if (zwaveClient.driverReady && driverDebugTransport) {
 			const { createDefaultTransportFormat } = await import(
 				'@zwave-js/core/bindings/log/node'
 			)
@@ -289,32 +304,35 @@ class DebugManager {
 			logTransport.format = createDefaultTransportFormat(true, false)
 
 			zwaveClient.driver.updateLogConfig({
-				level: session.originalLogLevel as any,
+				level: originalLogLevel as any,
 				transports: [logTransport],
 			})
 
 			// Clean up debug transport
-			if (session.driverDebugTransport.stream) {
-				session.driverDebugTransport.stream.destroy()
+			if (driverDebugTransport.stream) {
+				driverDebugTransport.stream.destroy()
 			}
 		}
+	}
 
-		// Clean up temp files
+	/**
+	 * Clean up temporary files
+	 */
+	private async cleanupTempFiles(
+		logFilePath: string,
+		driverLogFilePath: string,
+	): Promise<void> {
 		try {
-			const fs = await import('node:fs')
-			if (fs.existsSync(session.logFilePath)) {
-				await rm(session.logFilePath, { force: true })
+			if (existsSync(logFilePath)) {
+				await rm(logFilePath, { force: true })
 			}
-			if (fs.existsSync(session.driverLogFilePath)) {
-				await rm(session.driverLogFilePath, { force: true })
+			if (existsSync(driverLogFilePath)) {
+				await rm(driverLogFilePath, { force: true })
 			}
 		} catch (error) {
 			// Log but don't throw - cleanup is best effort
 			console.error('Error cleaning up debug temp files:', error)
 		}
-
-		// Clear session
-		this.session = null
 	}
 }
 
